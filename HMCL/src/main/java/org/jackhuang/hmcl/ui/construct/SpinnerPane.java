@@ -18,8 +18,6 @@
 package org.jackhuang.hmcl.ui.construct;
 
 import com.jfoenix.controls.JFXSpinner;
-import javafx.beans.DefaultProperty;
-import javafx.beans.InvalidationListener;
 import javafx.beans.property.*;
 import javafx.event.Event;
 import javafx.event.EventHandler;
@@ -33,14 +31,12 @@ import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.animation.ContainerAnimations;
 import org.jackhuang.hmcl.ui.animation.TransitionPane;
 
-@DefaultProperty("content")
+/// A spinner pane that can show spinner, failed reason, or content.
 public class SpinnerPane extends Control {
-    private final ObjectProperty<Node> content = new SimpleObjectProperty<>(this, "content");
-    private final BooleanProperty loading = new SimpleBooleanProperty(this, "loading");
-    private final StringProperty failedReason = new SimpleStringProperty(this, "failedReason");
+    private static final String DEFAULT_STYLE_CLASS = "spinner-pane";
 
     public SpinnerPane() {
-        getStyleClass().add("spinner-pane");
+        getStyleClass().add(DEFAULT_STYLE_CLASS);
     }
 
     public void showSpinner() {
@@ -52,60 +48,136 @@ public class SpinnerPane extends Control {
         setLoading(false);
     }
 
-    public Node getContent() {
-        return content.get();
+    private void updateContent() {
+        if (getSkin() instanceof Skin skin) {
+            skin.updateContent();
+        }
     }
 
+    private ObjectProperty<Node> content;
+
     public ObjectProperty<Node> contentProperty() {
+        if (content == null)
+            content = new ObjectPropertyBase<>() {
+                @Override
+                public Object getBean() {
+                    return SpinnerPane.this;
+                }
+
+                @Override
+                public String getName() {
+                    return "content";
+                }
+
+                @Override
+                protected void invalidated() {
+                    updateContent();
+                }
+            };
         return content;
     }
 
-    public void setContent(Node content) {
-        this.content.set(content);
+    public Node getContent() {
+        return contentProperty().get();
     }
 
-    public boolean isLoading() {
-        return loading.get();
+    public void setContent(Node content) {
+        contentProperty().set(content);
     }
+
+    private BooleanProperty loading;
 
     public BooleanProperty loadingProperty() {
+        if (loading == null)
+            loading = new BooleanPropertyBase() {
+                @Override
+                public Object getBean() {
+                    return SpinnerPane.this;
+                }
+
+                @Override
+                public String getName() {
+                    return "loading";
+                }
+
+                @Override
+                protected void invalidated() {
+                    updateContent();
+                }
+            };
         return loading;
     }
 
-    public void setLoading(boolean loading) {
-        this.loading.set(loading);
+    public boolean isLoading() {
+        return loading != null && loading.get();
     }
 
-    public String getFailedReason() {
-        return failedReason.get();
+    public void setLoading(boolean loading) {
+        loadingProperty().set(loading);
     }
+
+    private StringProperty failedReason;
 
     public StringProperty failedReasonProperty() {
+        if (failedReason == null)
+            failedReason = new StringPropertyBase() {
+                @Override
+                public Object getBean() {
+                    return SpinnerPane.this;
+                }
+
+                @Override
+                public String getName() {
+                    return "failedReason";
+                }
+
+                @Override
+                protected void invalidated() {
+                    updateContent();
+                }
+            };
         return failedReason;
     }
 
-    public void setFailedReason(String failedReason) {
-        this.failedReason.set(failedReason);
+    public String getFailedReason() {
+        return failedReason != null ? failedReason.get() : null;
     }
 
+    public void setFailedReason(String failedReason) {
+        failedReasonProperty().set(failedReason);
+    }
+
+    private ObjectProperty<EventHandler<Event>> onFailedAction;
+
     public final ObjectProperty<EventHandler<Event>> onFailedActionProperty() {
+        if (onFailedAction == null) {
+            onFailedAction = new ObjectPropertyBase<>() {
+                @Override
+                public Object getBean() {
+                    return SpinnerPane.this;
+                }
+
+                @Override
+                public String getName() {
+                    return "onFailedAction";
+                }
+
+                @Override
+                protected void invalidated() {
+                    setEventHandler(FAILED_ACTION, get());
+                }
+            };
+        }
         return onFailedAction;
+    }
+
+    public final EventHandler<Event> getOnFailedAction() {
+        return onFailedAction != null ? onFailedAction.get() : null;
     }
 
     public final void setOnFailedAction(EventHandler<Event> value) {
         onFailedActionProperty().set(value);
     }
-
-    public final EventHandler<Event> getOnFailedAction() {
-        return onFailedActionProperty().get();
-    }
-
-    private final ObjectProperty<EventHandler<Event>> onFailedAction = new SimpleObjectProperty<EventHandler<Event>>(this, "onFailedAction") {
-        @Override
-        protected void invalidated() {
-            setEventHandler(FAILED_ACTION, get());
-        }
-    };
 
     @Override
     protected SkinBase<SpinnerPane> createDefaultSkin() {
@@ -113,47 +185,58 @@ public class SpinnerPane extends Control {
     }
 
     private static final class Skin extends SkinBase<SpinnerPane> {
-        private final JFXSpinner spinner = new JFXSpinner();
-        private final StackPane contentPane = new StackPane();
-        private final StackPane topPane = new StackPane();
         private final TransitionPane root = new TransitionPane();
-        private final StackPane failedPane = new StackPane();
-        private final Label failedReasonLabel = new Label();
-        @SuppressWarnings("FieldCanBeLocal") // prevent from gc.
-        private final InvalidationListener observer;
 
         Skin(SpinnerPane control) {
             super(control);
 
-            topPane.getChildren().setAll(spinner);
-            topPane.getStyleClass().add("notice-pane");
-            failedPane.getStyleClass().add("notice-pane");
-            failedPane.getChildren().setAll(failedReasonLabel);
-            FXUtils.onClicked(failedPane, () -> {
-                EventHandler<Event> action = control.getOnFailedAction();
-                if (action != null)
-                    action.handle(new Event(FAILED_ACTION));
-            });
+            updateContent();
+            this.getChildren().setAll(root);
+        }
 
-            FXUtils.onChangeAndOperate(getSkinnable().content, newValue -> {
-                if (newValue == null) {
+        private StackPane contentPane;
+        private StackPane spinnerPane;
+        private StackPane failedPane;
+        private Label failedReasonLabel;
+
+        void updateContent() {
+            SpinnerPane control = getSkinnable();
+
+            Node nextContent;
+            if (control.isLoading()) {
+                if (spinnerPane == null) {
+                    spinnerPane = new StackPane(new JFXSpinner());
+                    spinnerPane.getStyleClass().add("notice-pane");
+                }
+                nextContent = spinnerPane;
+            } else if (control.getFailedReason() != null) {
+                if (failedPane == null) {
+                    failedReasonLabel = new Label();
+                    failedPane = new StackPane(failedReasonLabel);
+                    failedPane.getStyleClass().add("notice-pane");
+                    FXUtils.onClicked(failedPane, () -> control.fireEvent(new Event(SpinnerPane.FAILED_ACTION)));
+                }
+                failedReasonLabel.setText(control.getFailedReason());
+                nextContent = failedPane;
+            } else {
+                if (contentPane == null) {
+                    contentPane = new StackPane();
+                }
+
+                Node content = control.getContent();
+                if (content != null)
+                    contentPane.getChildren().setAll(content);
+                else
                     contentPane.getChildren().clear();
-                } else {
-                    contentPane.getChildren().setAll(newValue);
-                }
-            });
-            getChildren().setAll(root);
 
-            observer = FXUtils.observeWeak(() -> {
-                if (getSkinnable().getFailedReason() != null) {
-                    root.setContent(failedPane, ContainerAnimations.FADE);
-                    failedReasonLabel.setText(getSkinnable().getFailedReason());
-                } else if (getSkinnable().isLoading()) {
-                    root.setContent(topPane, ContainerAnimations.FADE);
-                } else {
-                    root.setContent(contentPane, ContainerAnimations.FADE);
-                }
-            }, getSkinnable().loadingProperty(), getSkinnable().failedReasonProperty());
+                nextContent = contentPane;
+            }
+
+            if (nextContent != failedPane && failedReasonLabel != null) {
+                failedReasonLabel.setText(null);
+            }
+
+            root.setContent(nextContent, ContainerAnimations.FADE);
         }
     }
 

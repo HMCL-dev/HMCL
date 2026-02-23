@@ -30,6 +30,7 @@ import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.FXUtils;
 
 import java.util.Locale;
+import java.util.function.Consumer;
 
 public class HintPane extends VBox {
     private final Text label = new Text();
@@ -66,7 +67,11 @@ public class HintPane extends VBox {
     }
 
     public void setSegment(String segment) {
-        flow.getChildren().setAll(FXUtils.parseSegment(segment, Controllers::onHyperlinkAction));
+        this.setSegment(segment, Controllers::onHyperlinkAction);
+    }
+
+    public void setSegment(String segment, Consumer<String> hyperlinkAction) {
+        flow.getChildren().setAll(FXUtils.parseSegment(segment, hyperlinkAction));
     }
 
     public void setChildren(Node... children) {

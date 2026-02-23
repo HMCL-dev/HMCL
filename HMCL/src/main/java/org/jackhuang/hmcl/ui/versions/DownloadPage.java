@@ -27,9 +27,17 @@ import javafx.beans.property.SimpleBooleanProperty;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
-import javafx.scene.control.*;
-import javafx.scene.image.ImageView;
-import javafx.scene.layout.*;
+import javafx.scene.control.Control;
+import javafx.scene.control.Label;
+import javafx.scene.control.ScrollPane;
+import javafx.scene.control.Skin;
+import javafx.scene.control.SkinBase;
+import javafx.scene.layout.BorderPane;
+import javafx.scene.layout.HBox;
+import javafx.scene.layout.Priority;
+import javafx.scene.layout.Region;
+import javafx.scene.layout.StackPane;
+import javafx.scene.layout.VBox;
 import javafx.stage.FileChooser;
 import org.jackhuang.hmcl.download.LibraryAnalyzer;
 import org.jackhuang.hmcl.game.HMCLGameRepository;
@@ -46,7 +54,11 @@ import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
 import org.jackhuang.hmcl.ui.construct.*;
 import org.jackhuang.hmcl.ui.decorator.DecoratorPage;
-import org.jackhuang.hmcl.util.*;
+import org.jackhuang.hmcl.util.Lang;
+import org.jackhuang.hmcl.util.Pair;
+import org.jackhuang.hmcl.util.SimpleMultimap;
+import org.jackhuang.hmcl.util.StringUtils;
+import org.jackhuang.hmcl.util.TaskCancellationAction;
 import org.jackhuang.hmcl.util.i18n.I18n;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.javafx.BindingMapping;
@@ -54,7 +66,14 @@ import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
 import org.jetbrains.annotations.Nullable;
 
 import java.nio.file.Path;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.EnumMap;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -212,13 +231,11 @@ public class DownloadPage extends Control implements DecoratorPage {
             pane.getChildren().add(descriptionPane);
             descriptionPane.getStyleClass().add("card-non-transparent");
             {
-                ImageView imageView = new ImageView();
-                imageView.setFitWidth(40);
-                imageView.setFitHeight(40);
+                var imageContainer = new ImageContainer(40);
                 if (StringUtils.isNotBlank(getSkinnable().addon.getIconUrl())) {
-                    imageView.imageProperty().bind(FXUtils.newRemoteImage(getSkinnable().addon.getIconUrl(), 80, 80, true, true));
+                    imageContainer.imageProperty().bind(FXUtils.newRemoteImage(getSkinnable().addon.getIconUrl(), 80, 80, true, true));
                 }
-                descriptionPane.getChildren().add(FXUtils.limitingSize(imageView, 40, 40));
+                descriptionPane.getChildren().add(imageContainer);
 
                 TwoLineListItem content = new TwoLineListItem();
                 HBox.setHgrow(content, Priority.ALWAYS);
@@ -341,10 +358,8 @@ public class DownloadPage extends Control implements DecoratorPage {
             pane.setAlignment(Pos.CENTER_LEFT);
             TwoLineListItem content = new TwoLineListItem();
             HBox.setHgrow(content, Priority.ALWAYS);
-            ImageView imageView = new ImageView();
-            imageView.setFitWidth(40);
-            imageView.setFitHeight(40);
-            pane.getChildren().setAll(FXUtils.limitingSize(imageView, 40, 40), content);
+            var imageView = new ImageContainer(40);
+            pane.getChildren().setAll(imageView, content);
 
             RipplerContainer container = new RipplerContainer(pane);
             FXUtils.onClicked(container, () -> {
@@ -517,8 +532,10 @@ public class DownloadPage extends Control implements DecoratorPage {
 
         private void loadDependencies(RemoteMod.Version version, DownloadPage selfPage, SpinnerPane spinnerPane, ComponentList dependenciesList) {
             spinnerPane.setLoading(true);
-            Task.supplyAsync(() -> {
+            Task.composeAsync(() -> {
+                // TODO: Massive tasks may cause OOM.
                 EnumMap<RemoteMod.DependencyType, List<Node>> dependencies = new EnumMap<>(RemoteMod.DependencyType.class);
+                List<Task<?>> queue = new ArrayList<>(version.getDependencies().size());
                 for (RemoteMod.Dependency dependency : version.getDependencies()) {
                     if (dependency.getType() == RemoteMod.DependencyType.INCOMPATIBLE || dependency.getType() == RemoteMod.DependencyType.BROKEN) {
                         continue;
@@ -531,11 +548,22 @@ public class DownloadPage extends Control implements DecoratorPage {
                         list.add(title);
                         dependencies.put(dependency.getType(), list);
                     }
-                    DependencyModItem dependencyModItem = new DependencyModItem(selfPage.page, dependency.load(), selfPage.version, selfPage.callback);
-                    dependencies.get(dependency.getType()).add(dependencyModItem);
+
+                    queue.add(Task.supplyAsync(Schedulers.io(), dependency::load)
+                            .setSignificance(Task.TaskSignificance.MINOR)
+                            .thenAcceptAsync(Schedulers.javafx(), dep -> {
+                                if (dep == RemoteMod.BROKEN) {
+                                    return;
+                                }
+                                DependencyModItem dependencyModItem = new DependencyModItem(selfPage.page, dep, selfPage.version, selfPage.callback);
+                                dependencies.get(dependency.getType()).add(dependencyModItem);
+                            })
+                            .setSignificance(Task.TaskSignificance.MINOR));
                 }
 
-                return dependencies.values().stream().flatMap(Collection::stream).collect(Collectors.toList());
+                return Task.allOf(queue).thenSupplyAsync(() ->
+                        dependencies.values().stream().flatMap(Collection::stream).collect(Collectors.toList())
+                );
             }).whenComplete(Schedulers.javafx(), (result, exception) -> {
                 spinnerPane.setLoading(false);
                 if (exception == null) {

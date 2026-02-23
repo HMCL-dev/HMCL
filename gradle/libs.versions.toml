@@ -18,7 +18,8 @@ pci-ids = "0.4.0"
 java-info = "1.0"
 authlib-injector = "1.2.7"
 monet-fx = "0.4.0"
-terracotta = "0.4.1"
+terracotta = "0.4.2"
+nayuki-qrcodegen = "1.8.0"
 
 # testing
 junit = "6.0.1"
@@ -49,6 +50,7 @@ pci-ids = { module = "org.glavo:pci-ids", version.ref = "pci-ids" }
 java-info = { module = "org.glavo:java-info", version.ref = "java-info" }
 authlib-injector = { module = "org.glavo.hmcl:authlib-injector", version.ref = "authlib-injector" }
 monet-fx = { module = "org.glavo:MonetFX", version.ref = "monet-fx" }
+nayuki-qrcodegen = { module = "io.nayuki:qrcodegen", version.ref = "nayuki-qrcodegen" }
 
 # testing
 junit-jupiter = { module = "org.junit.jupiter:junit-jupiter", version.ref = "junit" }
