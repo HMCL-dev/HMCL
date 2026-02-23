@@ -68,7 +68,7 @@ public final class WorldInfoPage extends SpinnerPane implements WorldManagePage.
     private final World world;
     private CompoundTag levelDat;
 
-    private final JFXImageView iconImageView = new JFXImageView(32);
+    private final ImageContainer iconImageView = new ImageContainer(32);
 
     public WorldInfoPage(WorldManagePage worldManagePage) {
         this.worldManagePage = worldManagePage;

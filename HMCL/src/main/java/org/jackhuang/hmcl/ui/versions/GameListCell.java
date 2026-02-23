@@ -41,7 +41,7 @@ public final class GameListCell extends ListCell<GameListItem> {
 
     private final Region graphic;
 
-    private final JFXImageView imageView;
+    private final ImageContainer imageView;
     private final TwoLineListItem content;
 
     private final JFXRadioButton chkSelected;
@@ -86,7 +86,7 @@ public final class GameListCell extends ListCell<GameListItem> {
             center.setSpacing(8);
             center.setAlignment(Pos.CENTER_LEFT);
 
-            this.imageView = new JFXImageView(32);
+            this.imageView = new ImageContainer(32);
 
             this.content = new TwoLineListItem();
             BorderPane.setAlignment(content, Pos.CENTER);

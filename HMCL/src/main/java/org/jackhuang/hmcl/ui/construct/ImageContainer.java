@@ -17,6 +17,8 @@
  */
 package org.jackhuang.hmcl.ui.construct;
 
+import javafx.beans.property.BooleanProperty;
+import javafx.beans.property.ObjectProperty;
 import javafx.css.CssMetaData;
 import javafx.css.Styleable;
 import javafx.css.StyleableDoubleProperty;
@@ -24,43 +26,35 @@ import javafx.css.StyleableProperty;
 import javafx.css.converter.SizeConverter;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
+import javafx.scene.layout.StackPane;
 import javafx.scene.shape.Rectangle;
 import org.jackhuang.hmcl.ui.FXUtils;
 
 import java.util.ArrayList;
 import java.util.List;
 
-/// A custom ImageView with corner radius support.
-public class JFXImageView extends ImageView {
+/// A custom ImageView with fixed size and corner radius support.
+public class ImageContainer extends StackPane {
 
+    private final ImageView imageView = new ImageView();
     private final Rectangle clip = new Rectangle();
 
-    public JFXImageView(double size) {
+    public ImageContainer(double size) {
         this(size, size);
     }
 
-    public JFXImageView(double width, double height) {
+    public ImageContainer(double width, double height) {
+        FXUtils.setLimitWidth(this, width);
+        FXUtils.setLimitHeight(this, height);
+
         clip.setWidth(width);
         clip.setHeight(height);
-
         updateCornerRadius(getCornerRadius());
-
         this.setClip(clip);
 
-        this.setPreserveRatio(true);
-        imageProperty().addListener((obs, oldImage, newImage) -> {
-            if (newImage != null && (newImage.getWidth() > width || newImage.getHeight() > height)) {
-                setFitHeight(height);
-                setFitWidth(width);
-            } else {
-                setFitHeight(-1);
-                setFitWidth(-1);
-            }
-        });
-    }
-
-    public void setLimitSize(double width, double height) {
-        FXUtils.limitSize(this, width, height);
+        imageView.setPreserveRatio(true);
+        FXUtils.limitSize(imageView, width, height);
+        this.getChildren().setAll(imageView);
     }
 
     private void updateCornerRadius(double radius) {
@@ -77,7 +71,7 @@ public class JFXImageView extends ImageView {
             cornerRadius = new StyleableDoubleProperty() {
                 @Override
                 public Object getBean() {
-                    return JFXImageView.this;
+                    return ImageContainer.this;
                 }
 
                 @Override
@@ -108,21 +102,45 @@ public class JFXImageView extends ImageView {
         cornerRadiusProperty().set(radius);
     }
 
+    public ObjectProperty<Image> imageProperty() {
+        return imageView.imageProperty();
+    }
+
+    public Image getImage() {
+        return imageView.getImage();
+    }
+
+    public void setImage(Image image) {
+        imageView.setImage(image);
+    }
+
+    public BooleanProperty smoothProperty() {
+        return imageView.smoothProperty();
+    }
+
+    public boolean isSmooth() {
+        return imageView.isSmooth();
+    }
+
+    public void setSmooth(boolean smooth) {
+        imageView.setSmooth(smooth);
+    }
+
     @Override
     public List<CssMetaData<? extends Styleable, ?>> getCssMetaData() {
         return StyleableProperties.STYLEABLES;
     }
 
     private static final class StyleableProperties {
-        private static final CssMetaData<JFXImageView, Number> CORNER_RADIUS =
+        private static final CssMetaData<ImageContainer, Number> CORNER_RADIUS =
                 new CssMetaData<>("-jfx-corner-radius", SizeConverter.getInstance(), DEFAULT_CORNER_RADIUS) {
                     @Override
-                    public boolean isSettable(JFXImageView control) {
+                    public boolean isSettable(ImageContainer control) {
                         return control.cornerRadius == null || !control.cornerRadius.isBound();
                     }
 
                     @Override
-                    public StyleableProperty<Number> getStyleableProperty(JFXImageView control) {
+                    public StyleableProperty<Number> getStyleableProperty(ImageContainer control) {
                         return control.cornerRadiusProperty();
                     }
                 };
@@ -130,11 +148,9 @@ public class JFXImageView extends ImageView {
         private static final List<CssMetaData<? extends Styleable, ?>> STYLEABLES;
 
         static {
-            var styleables = new ArrayList<>(ImageView.getClassCssMetaData());
+            var styleables = new ArrayList<>(StackPane.getClassCssMetaData());
             styleables.add(CORNER_RADIUS);
             STYLEABLES = List.copyOf(styleables);
-
         }
-
     }
 }

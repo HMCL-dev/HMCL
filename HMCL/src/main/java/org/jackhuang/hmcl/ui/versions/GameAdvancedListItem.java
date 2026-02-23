@@ -26,14 +26,14 @@ import org.jackhuang.hmcl.setting.VersionIconType;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.WeakListenerHolder;
 import org.jackhuang.hmcl.ui.construct.AdvancedListItem;
-import org.jackhuang.hmcl.ui.construct.JFXImageView;
+import org.jackhuang.hmcl.ui.construct.ImageContainer;
 
 import java.util.function.Consumer;
 
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 public class GameAdvancedListItem extends AdvancedListItem {
-    private final JFXImageView imageView;
+    private final ImageContainer imageView;
     private final WeakListenerHolder holder = new WeakListenerHolder();
     private Profile profile;
     @SuppressWarnings("unused")
@@ -41,7 +41,7 @@ public class GameAdvancedListItem extends AdvancedListItem {
 
     @SuppressWarnings("SuspiciousNameCombination")
     public GameAdvancedListItem() {
-        this.imageView = new JFXImageView(LEFT_GRAPHIC_SIZE);
+        this.imageView = new ImageContainer(LEFT_GRAPHIC_SIZE);
         Node imageViewWrapper = FXUtils.limitingSize(imageView, LEFT_GRAPHIC_SIZE, LEFT_GRAPHIC_SIZE);
         imageView.setMouseTransparent(true);
         AdvancedListItem.setAlignment(imageViewWrapper, Pos.CENTER);

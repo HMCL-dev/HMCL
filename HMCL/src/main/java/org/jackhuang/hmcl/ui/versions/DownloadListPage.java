@@ -34,7 +34,6 @@ import javafx.scene.Cursor;
 import javafx.scene.Node;
 import javafx.scene.control.*;
 import javafx.scene.image.Image;
-import javafx.scene.image.ImageView;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.*;
@@ -534,7 +533,7 @@ public class DownloadListPage extends Control implements DecoratorPage, VersionP
                     private final StackPane wrapper = new StackPane();
 
                     private final TwoLineListItem content = new TwoLineListItem();
-                    private final ImageView imageView = new JFXImageView(40);
+                    private final ImageContainer imageContainer = new ImageContainer(40);
 
                     {
                         setPadding(PADDING);
@@ -544,9 +543,9 @@ public class DownloadListPage extends Control implements DecoratorPage, VersionP
                         container.setCursor(Cursor.HAND);
                         container.setAlignment(Pos.CENTER_LEFT);
 
-                        imageView.setMouseTransparent(true);
+                        imageContainer.setMouseTransparent(true);
 
-                        container.getChildren().setAll(FXUtils.limitingSize(imageView, 40, 40), content);
+                        container.getChildren().setAll(FXUtils.limitingSize(imageContainer, 40, 40), content);
                         HBox.setHgrow(content, Priority.ALWAYS);
 
                         this.graphic = new RipplerContainer(container);
@@ -579,7 +578,7 @@ public class DownloadListPage extends Control implements DecoratorPage, VersionP
                                 if (getSkinnable().shouldDisplayCategory(category))
                                     content.addTag(getSkinnable().getLocalizedCategory(category));
                             }
-                            iconLoader.load(imageView.imageProperty(), item.getIconUrl());
+                            iconLoader.load(imageContainer.imageProperty(), item.getIconUrl());
                             setGraphic(wrapper);
                         }
                     }

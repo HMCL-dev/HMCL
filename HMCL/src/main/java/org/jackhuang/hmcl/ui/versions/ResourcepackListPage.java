@@ -177,7 +177,7 @@ public final class ResourcepackListPage extends ListPageBase<ResourcepackListPag
     }
 
     private static final class ResourcepackListCell extends MDListCell<ResourcepackInfoObject> {
-        private final JFXImageView imageView = new JFXImageView(32);
+        private final ImageContainer imageView = new ImageContainer(32);
         private final TwoLineListItem content = new TwoLineListItem();
         private final JFXButton btnReveal = new JFXButton();
         private final JFXButton btnDelete = new JFXButton();
