@@ -32,7 +32,6 @@ import javafx.scene.control.Label;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.control.Skin;
 import javafx.scene.control.SkinBase;
-import javafx.scene.image.ImageView;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
@@ -237,13 +236,11 @@ public class DownloadPage extends Control implements DecoratorPage {
             descriptionPane.getStyleClass().add("card-non-transparent");
             BorderPane.setMargin(descriptionPane, new Insets(11, 11, 0, 11));
             {
-                ImageView imageView = new ImageView();
-                imageView.setFitWidth(40);
-                imageView.setFitHeight(40);
+                var imageContainer = new ImageContainer(40);
                 if (StringUtils.isNotBlank(getSkinnable().addon.getIconUrl())) {
-                    imageView.imageProperty().bind(FXUtils.newRemoteImage(getSkinnable().addon.getIconUrl(), 80, 80, true, true));
+                    imageContainer.imageProperty().bind(FXUtils.newRemoteImage(getSkinnable().addon.getIconUrl(), 80, 80, true, true));
                 }
-                descriptionPane.getChildren().add(FXUtils.limitingSize(imageView, 40, 40));
+                descriptionPane.getChildren().add(imageContainer);
 
                 TwoLineListItem content = new TwoLineListItem();
                 HBox.setHgrow(content, Priority.ALWAYS);
@@ -362,10 +359,8 @@ public class DownloadPage extends Control implements DecoratorPage {
             pane.setAlignment(Pos.CENTER_LEFT);
             TwoLineListItem content = new TwoLineListItem();
             HBox.setHgrow(content, Priority.ALWAYS);
-            ImageView imageView = new ImageView();
-            imageView.setFitWidth(40);
-            imageView.setFitHeight(40);
-            pane.getChildren().setAll(FXUtils.limitingSize(imageView, 40, 40), content);
+            var imageView = new ImageContainer(40);
+            pane.getChildren().setAll(imageView, content);
 
             RipplerContainer container = new RipplerContainer(pane);
             FXUtils.onClicked(container, () -> {
