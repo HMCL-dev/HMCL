@@ -48,7 +48,7 @@ public class GameRulePage extends ListPageBase<GameRuleInfo<?>> implements World
 
     private final World world;
     private CompoundTag levelDat;
-    final BooleanProperty readOnly;
+    private final BooleanProperty readOnly;
 
     private final ObservableList<GameRuleInfo<?>> gameRuleList;
     private final FilteredList<GameRuleInfo<?>> modifiedItems;
@@ -155,6 +155,10 @@ public class GameRulePage extends ListPageBase<GameRuleInfo<?>> implements World
 
     public void applyRuleModifiedType() {
         applyModifiedFilter(ruleModifiedType);
+    }
+
+    public BooleanProperty readOnlyProperty() {
+        return readOnly;
     }
 
     public boolean isBatchUpdating() {

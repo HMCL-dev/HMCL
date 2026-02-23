@@ -42,22 +42,20 @@ import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 class GameRulePageSkin extends SkinBase<GameRulePage> {
 
-    private final HBox toolBar;
-    private final JFXTextField searchField;
     private final JFXListView<GameRuleInfo<?>> listView = new JFXListView<>();
 
     GameRulePageSkin(GameRulePage skinnable) {
         super(skinnable);
-        ComponentList root = new ComponentList();
-        StackPane pane = new StackPane(root);
+        ComponentList contentList = new ComponentList();
+        StackPane rootContainer = new StackPane(contentList);
         {
-            pane.setPadding(new Insets(10));
-            pane.getStyleClass().addAll("notice-pane", "no-padding");
+            rootContainer.setPadding(new Insets(10));
+            rootContainer.getStyleClass().addAll("notice-pane", "no-padding");
 
-            getChildren().add(pane);
+            getChildren().add(rootContainer);
         }
 
-        toolBar = new HBox();
+        HBox toolBar = new HBox();
         {
             toolBar.setAlignment(Pos.CENTER);
             toolBar.setPadding(new Insets(0, 5, 0, 5));
@@ -73,7 +71,7 @@ class GameRulePageSkin extends SkinBase<GameRulePage> {
                 viewFilterComboBox.setPrefWidth(100);
             }
 
-            searchField = new JFXTextField();
+            JFXTextField searchField = new JFXTextField();
             {
                 searchField.setPromptText(i18n("search"));
                 PauseTransition searchPause = new PauseTransition(Duration.millis(300));
@@ -87,10 +85,10 @@ class GameRulePageSkin extends SkinBase<GameRulePage> {
                             skinnable::resettingAllGameRule,
                             getSkinnable().getModifiedItems(),
                             () -> getSkinnable().applyRuleModifiedType())));
-            resetAllButton.disableProperty().bind(getSkinnable().readOnly);
+            resetAllButton.disableProperty().bind(getSkinnable().readOnlyProperty());
 
             toolBar.getChildren().addAll(searchField, new Label(i18n("gamerule.filter")), viewFilterComboBox, resetAllButton);
-            root.getContent().add(toolBar);
+            contentList.getContent().add(toolBar);
         }
 
         SpinnerPane center = new SpinnerPane();
@@ -101,10 +99,10 @@ class GameRulePageSkin extends SkinBase<GameRulePage> {
             center.setContent(listView);
 
             listView.setItems(getSkinnable().getDisplayedItems());
-            listView.setCellFactory(x -> new GameRuleListCell(listView, getSkinnable().readOnly));
+            listView.setCellFactory(x -> new GameRuleListCell(listView, getSkinnable().readOnlyProperty()));
             FXUtils.ignoreEvent(listView, KeyEvent.KEY_PRESSED, e -> e.getCode() == KeyCode.ESCAPE);
 
-            root.getContent().add(center);
+            contentList.getContent().add(center);
         }
     }
 
@@ -133,17 +131,16 @@ class GameRulePageSkin extends SkinBase<GameRulePage> {
         }
 
         private HBox buildNodeForIntGameRule(GameRuleInfo.IntGameRuleInfo gameRule) {
-            HBox cellBox = new HBox();
-            HBox.setHgrow(cellBox, Priority.ALWAYS);
-
-            LinePane cellPane = new LinePane();
+            LinePane textFieldResetPane = new LinePane();
+            HBox itemWrapper = new HBox(textFieldResetPane);
+            HBox.setHgrow(itemWrapper, Priority.ALWAYS);
             {
-                HBox.setHgrow(cellPane, Priority.ALWAYS);
+                HBox.setHgrow(textFieldResetPane, Priority.ALWAYS);
                 if (StringUtils.isNotBlank(gameRule.getDisplayName())) {
-                    cellPane.setTitle(gameRule.getDisplayName());
-                    cellPane.setSubtitle(gameRule.getRuleKey());
+                    textFieldResetPane.setTitle(gameRule.getDisplayName());
+                    textFieldResetPane.setSubtitle(gameRule.getRuleKey());
                 } else {
-                    cellPane.setTitle(gameRule.getRuleKey());
+                    textFieldResetPane.setTitle(gameRule.getRuleKey());
                 }
 
                 JFXTextField textField = new JFXTextField();
@@ -156,37 +153,36 @@ class GameRulePageSkin extends SkinBase<GameRulePage> {
 
                     textField.setPrefWidth(150);
                 }
-                cellPane.setRight(new HBox(12, textField, buildResetButton(gameRule)));
+                textFieldResetPane.setRight(new HBox(12, textField, buildResetButton(gameRule)));
             }
-            cellBox.getChildren().addAll(cellPane);
 
-            return cellBox;
+            return itemWrapper;
         }
 
         private HBox buildNodeForBooleanGameRule(GameRuleInfo.BooleanGameRuleInfo gameRule) {
-            LineToggleResetButton toggleButton = new LineToggleResetButton();
-            HBox cellBox = new HBox(toggleButton);
+            LineToggleResetButton toggleResetButton = new LineToggleResetButton();
+            HBox itemWrapper = new HBox(toggleResetButton);
             {
-                HBox.setHgrow(toggleButton, Priority.ALWAYS);
-                toggleButton.selectedProperty().bindBidirectional(gameRule.currentValueProperty());
+                HBox.setHgrow(toggleResetButton, Priority.ALWAYS);
+                toggleResetButton.selectedProperty().bindBidirectional(gameRule.currentValueProperty());
 
                 if (StringUtils.isNotBlank(gameRule.getDisplayName())) {
-                    toggleButton.setTitle(gameRule.getDisplayName());
-                    toggleButton.setSubtitle(gameRule.getRuleKey());
+                    toggleResetButton.setTitle(gameRule.getDisplayName());
+                    toggleResetButton.setSubtitle(gameRule.getRuleKey());
                 } else {
-                    toggleButton.setTitle(gameRule.getRuleKey());
+                    toggleResetButton.setTitle(gameRule.getRuleKey());
                 }
 
                 if (gameRule.getDefaultValue() != null) {
-                    toggleButton.setDefaultSelect(gameRule.getDefaultValue());
-                    toggleButton.setResetButtonTooltipWhenEnable(i18n("gamerule.restore_default_values.tooltip", gameRule.getDefaultValueText()));
-                    toggleButton.setResetButtonTooltipWhenDisable(i18n("gamerule.now_is_default_values.tooltip"));
+                    toggleResetButton.setDefaultSelect(gameRule.getDefaultValue());
+                    toggleResetButton.setResetButtonTooltipWhenEnable(i18n("gamerule.restore_default_values.tooltip", gameRule.getDefaultValueText()));
+                    toggleResetButton.setResetButtonTooltipWhenDisable(i18n("gamerule.now_is_default_values.tooltip"));
                 } else {
-                    toggleButton.setResetButtonTooltipWhenDisable(i18n("gamerule.not_have_default_values.tooltip"));
+                    toggleResetButton.setResetButtonTooltipWhenDisable(i18n("gamerule.not_have_default_values.tooltip"));
                 }
             }
 
-            return cellBox;
+            return itemWrapper;
         }
 
         private StackPane buildResetButton(GameRuleInfo<?> gameRule) {
