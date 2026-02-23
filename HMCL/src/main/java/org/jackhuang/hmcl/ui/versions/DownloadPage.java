@@ -32,7 +32,6 @@ import javafx.scene.control.Label;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.control.Skin;
 import javafx.scene.control.SkinBase;
-import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.Region;
@@ -224,17 +223,12 @@ public class DownloadPage extends Control implements DecoratorPage {
             VBox pane = new VBox(8);
             pane.getStyleClass().add("gray-background");
             pane.setPadding(new Insets(10));
-            ScrollPane scrollPane = new ScrollPane(pane);
-            FXUtils.smoothScrolling(scrollPane);
-            scrollPane.setFitToWidth(true);
-            scrollPane.setFitToHeight(true);
 
             HBox descriptionPane = new HBox(8);
             descriptionPane.setMinHeight(Region.USE_PREF_SIZE);
             descriptionPane.setAlignment(Pos.CENTER);
             pane.getChildren().add(descriptionPane);
             descriptionPane.getStyleClass().add("card-non-transparent");
-            BorderPane.setMargin(descriptionPane, new Insets(11, 11, 0, 11));
             {
                 var imageContainer = new ImageContainer(40);
                 if (StringUtils.isNotBlank(getSkinnable().addon.getIconUrl())) {
@@ -283,8 +277,12 @@ public class DownloadPage extends Control implements DecoratorPage {
                 spinnerPane.setOnFailedAction(e -> getSkinnable().loadModVersions());
 
                 ComponentList list = new ComponentList();
-                StackPane.setAlignment(list, Pos.TOP_CENTER);
-                spinnerPane.setContent(list);
+                ScrollPane scrollPane = new ScrollPane(list);
+                FXUtils.smoothScrolling(scrollPane);
+                scrollPane.setFitToWidth(true);
+                scrollPane.setFitToHeight(true);
+                StackPane.setAlignment(scrollPane, Pos.TOP_CENTER);
+                spinnerPane.setContent(scrollPane);
 
                 FXUtils.onChangeAndOperate(control.loaded, loaded -> {
                     if (control.versions == null) return;
@@ -338,7 +336,7 @@ public class DownloadPage extends Control implements DecoratorPage {
                 });
             }
 
-            getChildren().setAll(scrollPane);
+            getChildren().setAll(pane);
         }
     }
 
