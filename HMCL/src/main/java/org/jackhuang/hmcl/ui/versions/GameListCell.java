@@ -25,7 +25,6 @@ import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Cursor;
 import javafx.scene.control.ListCell;
-import javafx.scene.image.ImageView;
 import javafx.scene.input.MouseButton;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
@@ -42,7 +41,7 @@ public final class GameListCell extends ListCell<GameListItem> {
 
     private final Region graphic;
 
-    private final ImageView imageView;
+    private final ImageContainer imageView;
     private final TwoLineListItem content;
 
     private final JFXRadioButton chkSelected;
@@ -87,8 +86,7 @@ public final class GameListCell extends ListCell<GameListItem> {
             center.setSpacing(8);
             center.setAlignment(Pos.CENTER_LEFT);
 
-            this.imageView = new ImageView();
-            FXUtils.limitSize(imageView, 32, 32);
+            this.imageView = new ImageContainer(32);
 
             this.content = new TwoLineListItem();
             BorderPane.setAlignment(content, Pos.CENTER);
