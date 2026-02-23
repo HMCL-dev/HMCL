@@ -37,7 +37,6 @@ import javafx.event.EventDispatcher;
 import javafx.event.EventHandler;
 import javafx.event.EventType;
 import javafx.geometry.Bounds;
-import javafx.geometry.Pos;
 import javafx.geometry.Rectangle2D;
 import javafx.scene.Cursor;
 import javafx.scene.Node;
@@ -51,7 +50,6 @@ import javafx.scene.input.*;
 import javafx.scene.layout.ColumnConstraints;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.Region;
-import javafx.scene.layout.StackPane;
 import javafx.scene.paint.Color;
 import javafx.scene.paint.Paint;
 import javafx.scene.shape.Rectangle;
@@ -415,14 +413,6 @@ public final class FXUtils {
 
     public static double getLimitHeight(Region region) {
         return region.getMaxHeight();
-    }
-
-    public static Node limitingSize(Node node, double width, double height) {
-        StackPane pane = new StackPane(node);
-        pane.setAlignment(Pos.CENTER);
-        FXUtils.setLimitWidth(pane, width);
-        FXUtils.setLimitHeight(pane, height);
-        return pane;
     }
 
     public static void limitCellWidth(ListView<?> listView, ListCell<?> cell) {

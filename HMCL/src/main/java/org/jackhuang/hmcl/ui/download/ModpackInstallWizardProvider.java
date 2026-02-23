@@ -47,6 +47,7 @@ public final class ModpackInstallWizardProvider implements WizardProvider {
     private final Path file;
     private final String updateVersion;
     private String iconUrl;
+    private boolean hasSource;
 
     public ModpackInstallWizardProvider(Profile profile) {
         this(profile, null, null);
@@ -79,6 +80,7 @@ public final class ModpackInstallWizardProvider implements WizardProvider {
         if (StringUtils.isNotBlank(iconUrl))
             settings.put(LocalModpackPage.MODPACK_ICON_URL, iconUrl);
         settings.put(ModpackPage.PROFILE, profile);
+        hasSource = settings.containsKey(LocalModpackPage.MODPACK_FILE) || settings.containsKey(RemoteModpackPage.MODPACK_SERVER_MANIFEST);
     }
 
     private Task<?> finishModpackInstallingAsync(SettingsMap settings) {
@@ -156,7 +158,6 @@ public final class ModpackInstallWizardProvider implements WizardProvider {
 
     @Override
     public Node createPage(WizardController controller, int step, SettingsMap settings) {
-        boolean hasSource = controller.getSettings().containsKey(LocalModpackPage.MODPACK_FILE) || settings.containsKey(RemoteModpackPage.MODPACK_SERVER_MANIFEST);
         if (hasSource) {
             return switch (step) {
                 case 0 -> createModpackInstallPage(controller);
