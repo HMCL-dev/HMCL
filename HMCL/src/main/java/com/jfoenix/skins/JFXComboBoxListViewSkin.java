@@ -87,7 +87,7 @@ public class JFXComboBoxListViewSkin<T> extends ComboBoxListViewSkin<T> {
         this.focusedLine.getTransforms().add(this.scale);
         this.focusedLine.setManaged(false);
         if (comboBox.isEditable()) {
-            comboBox.getEditor().setStyle("-fx-background-color:TRANSPARENT;-fx-padding: 4 0.666667em 4 0.666667em");
+            comboBox.getEditor().setStyle("-fx-background-color:TRANSPARENT;-fx-padding: 4 8 4 8");
             comboBox.getEditor().promptTextProperty().unbind();
             comboBox.getEditor().setPromptText(null);
             comboBox.getEditor().textProperty().addListener((o, oldVal, newVal) -> {

@@ -360,7 +360,6 @@ public final class VersionSettingsPage extends StackPane implements DecoratorPag
                     cboWindowsSize.setPrefWidth(150);
                     right.setLeft(cboWindowsSize);
                     cboWindowsSize.setEditable(true);
-                    cboWindowsSize.setStyle("-fx-padding: 4 4 4 16");
                     cboWindowsSize.setPromptText("854x480");
                     cboWindowsSize.getItems().setAll(getSupportedResolutions());
 
