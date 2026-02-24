@@ -20,16 +20,18 @@ package org.jackhuang.hmcl.ui.construct;
 import com.jfoenix.controls.JFXPopup;
 import javafx.beans.InvalidationListener;
 import javafx.beans.binding.Bindings;
-import javafx.beans.property.*;
+import javafx.beans.property.ListProperty;
+import javafx.beans.property.ObjectProperty;
+import javafx.beans.property.SimpleListProperty;
+import javafx.beans.property.SimpleObjectProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.css.PseudoClass;
 import javafx.geometry.Pos;
 import javafx.scene.control.Label;
-import javafx.scene.input.MouseButton;
-import javafx.scene.input.MouseEvent;
-import javafx.scene.input.ScrollEvent;
-import javafx.scene.layout.*;
+import javafx.scene.input.*;
+import javafx.scene.layout.StackPane;
+import javafx.scene.layout.VBox;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
 import org.jackhuang.hmcl.util.javafx.MappedObservableList;
@@ -50,6 +52,8 @@ public final class LineSelectButton<T> extends LineButton {
 
     public LineSelectButton() {
         this.getStyleClass().add(DEFAULT_STYLE_CLASS);
+
+        this.addEventHandler(KeyEvent.KEY_PRESSED, this::handleKeyEvent);
 
         InvalidationListener updateTrailingText = observable -> {
             T value = getValue();
@@ -80,6 +84,8 @@ public final class LineSelectButton<T> extends LineButton {
         if (popup == null) {
             PopupMenu popupMenu = new PopupMenu();
             this.popup = new JFXPopup(popupMenu);
+
+            popupMenu.addEventHandler(KeyEvent.KEY_PRESSED, this::handleKeyEvent);
 
             ripplerContainer.addEventFilter(ScrollEvent.ANY, ignored -> popup.hide());
 
@@ -213,4 +219,22 @@ public final class LineSelectButton<T> extends LineButton {
         return items.get();
     }
 
+    private void handleKeyEvent(KeyEvent event) {
+        ObservableList<T> list = getItems();
+        if (list == null || list.isEmpty()) return;
+        int index = list.indexOf(getValue());
+
+        var code = event.getCode();
+
+        if (code == KeyCode.UP && index > 0) {
+            setValue(list.get(index - 1));
+        } else if (code == KeyCode.DOWN && index < list.size() - 1) {
+            setValue(list.get(index + 1));
+        } else if (code == KeyCode.ENTER || code == KeyCode.ESCAPE) {
+            if (popup != null && popup.isShowing()) {
+                popup.hide();
+                event.consume();
+            }
+        }
+    }
 }
