@@ -518,13 +518,13 @@ public final class ResourcePackListPage extends ListPageBase<ResourcePackListPag
         protected void updateControl(ResourcePackInfoObject item, boolean empty) {
             pseudoClassStateChanged(WARNING, false);
 
-            if (empty || item == null) {
-                return;
-            }
+            if (empty || item == null) return;
+
             this.object = item;
             ResourcePackFile file = item.getFile();
             imageContainer.setImage(item.getIcon());
 
+            content.getTags().clear();
             content.setTitle(file.getFileName());
             content.setSubtitle(file.getFileNameWithExtension());
 

@@ -23,7 +23,7 @@ public sealed abstract class ResourcePackFile extends LocalAddonFile implements 
     }
 
     public static boolean isFileResourcePack(Path file) {
-        return Files.exists(file) && (file.toString().toLowerCase(Locale.ROOT).endsWith(".zip") || Files.isRegularFile(file.resolve("pack.mcmeta")));
+        return Files.exists(file) && (Files.isRegularFile(file.resolve("pack.mcmeta")) || file.toString().toLowerCase(Locale.ROOT).endsWith(".zip"));
     }
 
     protected final ResourcePackManager manager;

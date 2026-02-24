@@ -32,16 +32,16 @@ import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 public class AddonCheckUpdatesTask<T extends LocalAddonFile> extends Task<List<LocalAddonFile.AddonUpdate>> {
     private final List<Task<LocalAddonFile.AddonUpdate>> dependents;
 
-    public AddonCheckUpdatesTask(String gameVersion, Collection<T> mods) {
-        dependents = mods.stream().map(mod ->
+    public AddonCheckUpdatesTask(String gameVersion, Collection<T> addons) {
+        dependents = addons.stream().map(addon ->
                 Task.supplyAsync(Schedulers.io(), () -> {
                     LocalAddonFile.AddonUpdate candidate = null;
                     for (RemoteMod.Type type : RemoteMod.Type.values()) {
                         LocalAddonFile.AddonUpdate update = null;
                         try {
-                            update = mod.checkUpdates(gameVersion, type);
+                            update = addon.checkUpdates(gameVersion, type);
                         } catch (IOException e) {
-                            LOG.warning(String.format("Cannot check update for mod %s.", mod.getFileName()), e);
+                            LOG.warning(String.format("Cannot check update for addon %s.", addon.getFileName()), e);
                         }
                         if (update == null) {
                             continue;
@@ -53,7 +53,7 @@ public class AddonCheckUpdatesTask<T extends LocalAddonFile> extends Task<List<L
                     }
 
                     return candidate;
-                }).setName(mod.getFileName()).setSignificance(TaskSignificance.MAJOR).withCounter("update.checking")
+                }).setName(addon.getFileName()).setSignificance(TaskSignificance.MAJOR).withCounter("update.checking")
         ).toList();
 
         setStage("update.checking");

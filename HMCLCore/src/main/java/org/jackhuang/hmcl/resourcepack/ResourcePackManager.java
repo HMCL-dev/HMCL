@@ -196,7 +196,7 @@ public final class ResourcePackManager extends LocalAddonManager<ResourcePackFil
     private Map<String, String> loadOptions() {
         Map<String, String> options = new LinkedHashMap<>();
         if (!Files.isRegularFile(optionsFile)) return options;
-        try (var stream = Files.lines(optionsFile)) {
+        try (var stream = Files.lines(optionsFile, StandardCharsets.UTF_8)) {
             stream.forEach(s -> {
                 if (StringUtils.isNotBlank(s)) {
                     var entry = s.split(":", 2);
