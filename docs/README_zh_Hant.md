@@ -1,13 +1,28 @@
-# Hello Minecraft! Launcher
+<!-- #BEGIN COPY -->
+<!-- #PROPERTY NAME=TITLE -->
+<div align="center">
+    <img src="/HMCL/src/main/resources/assets/img/icon@8x.png" alt="HMCL Logo" width="64"/>
+</div>
+
+<h1 align="center">Hello Minecraft! Launcher</h1>
+<!-- #END COPY -->
 
 <!-- #BEGIN COPY -->
 <!-- #PROPERTY NAME=BADGES -->
-[![CNB](https://img.shields.io/badge/cnb-mirror-ff6200?logo=cloudnativebuild)](https://cnb.cool/HMCL-dev/HMCL)
-[![Downloads](https://img.shields.io/github/downloads/HMCL-dev/HMCL/total?label=Downloads&style=flat)](https://github.com/HMCL-dev/HMCL/releases)
-![Stars](https://img.shields.io/github/stars/HMCL-dev/HMCL?style=flat)
-[![Discord](https://img.shields.io/discord/995291757799538688.svg?label=&logo=discord&logoColor=ffffff&color=7389D8&labelColor=6A7EC2)](https://discord.gg/jVvC7HfM6U)
-[![QQ Group](https://img.shields.io/badge/QQ-HMCL-bright?label=&logo=qq&logoColor=ffffff&color=1EBAFC&labelColor=1DB0EF&logoSize=auto)](https://docs.hmcl.net/groups.html)
+<div align="center">
+
+[![GitHub](https://img.shields.io/badge/GitHub-repo-blue?style=flat-square&logo=github)](https://github.com/HMCL-dev/HMCL)
+[![CNB](https://img.shields.io/badge/CNB-mirror-ff6200?style=flat-square&logo=cloudnativebuild)](https://cnb.cool/HMCL-dev/HMCL)
+[![Gitee](https://img.shields.io/badge/Gitee-mirror-c71d23?style=flat-square&logo=gitee)](https://gitee.com/huanghongxun/HMCL)
+
+[![QQ Group](https://img.shields.io/badge/QQ-gray?style=flat-square&logo=qq&logoColor=ffffff)](https://docs.hmcl.net/groups.html)
+[![Discord](https://img.shields.io/badge/Discord-gray?style=flat-square&logo=discord)](https://discord.gg/jVvC7HfM6U)
+[![Bilibili](https://img.shields.io/badge/Bilibili-gray?style=flat-square&logo=bilibili)](https://space.bilibili.com/20314891)
+
+</div>
 <!-- #END COPY -->
+
+---
 
 <!-- #BEGIN LANGUAGE_SWITCHER -->
 English ([Standard](README.md), [uʍoᗡ ǝpᴉsd∩](README_en_Qabs.md)) | **中文** ([简体](README_zh.md), **繁體**, [文言](README_lzh.md)) | [日本語](README_ja.md) | [español](README_es.md) | [русский](README_ru.md) | [українська](README_uk.md)
@@ -15,7 +30,7 @@ English ([Standard](README.md), [uʍoᗡ ǝpᴉsd∩](README_en_Qabs.md)) | **�
 
 ## 簡介
 
-HMCL 是一款開源、跨平臺的 Minecraft 啟動器，支援模組管理、遊戲客製化、遊戲自動安裝 (Forge、NeoForge、Cleanroom、Fabric、Quilt、LiteLoader 和 OptiFine)、模組包建立、介面客製化等功能。
+HMCL 是一款開源、跨平臺的 Minecraft 啟動器，支援模組管理、遊戲客製化、遊戲自動安裝 (Forge、NeoForge、Cleanroom、Fabric、Legacy Fabric、Quilt、LiteLoader 和 OptiFine)、模組包建立、介面客製化等功能。
 
 HMCL 有著強大的跨平臺能力。它不僅支援 Windows、Linux、macOS、FreeBSD 等常見的作業系統，同時也支援 x86、ARM、RISC-V、MIPS、LoongArch 等不同的 CPU 架構。你可以使用 HMCL 在不同平臺上輕鬆地遊玩 Minecraft。
 
@@ -23,11 +38,31 @@ HMCL 有著強大的跨平臺能力。它不僅支援 Windows、Linux、macOS、
 
 ## 下載
 
-請從 [HMCL 官網](https://hmcl.huangyuhui.net/download) 下載最新版本的 HMCL。
+你可以透過這些管道下載 HMCL：
 
-你也可以在 [GitHub Releases](https://github.com/HMCL-dev/HMCL/releases) 中下載最新版本的 HMCL。
+- [HMCL 官方網站](https://hmcl.huangyuhui.net/download)
+- [GitHub Release](https://github.com/HMCL-dev/HMCL/releases)
+- [CNB Release](https://cnb.cool/HMCL-dev/HMCL/-/releases)
 
-雖然並不強制，但仍建議透過 HMCL 官網下載啟動器。
+## 參與貢獻
+
+HMCL 是一個由社群驅動的開源專案，歡迎任何人參與貢獻程式碼或提出建議。
+
+你可以透過以下方式參與 HMCL 的開發：
+
+- 透過在 GitHub 上[建立 Issue](https://github.com/HMCL-dev/HMCL/issues/new/choose) 來回報 Bug 或提出功能請求。
+- 透過在 GitHub 上 Fork 倉庫並[提交 Pull Request](https://github.com/HMCL-dev/HMCL/compare) 來貢獻程式碼。
+
+在參與貢獻前，請閱讀[貢獻指南](./Contributing_zh_Hant.md)，其中包含以下內容：
+
+- [如何從原始碼構建並開啟 HMCL](./Contributing_zh_Hant.md#構建-hmcl)
+- [透過除錯選項調整 HMCL 的行為](./Contributing_zh_Hant.md#除錯選項)
+
+## 貢獻者
+
+自 2015 年以來，HMCL 已經有超過 120 位貢獻者參與其中，感謝他們的辛勤付出！
+
+[![Contributors](https://contrib.rocks/image?repo=HMCL-dev/HMCL)](https://github.com/HMCL-dev/HMCL/graphs/contributors)
 
 ## 開源協議
 
@@ -40,31 +75,3 @@ HMCL 有著強大的跨平臺能力。它不僅支援 Windows、Linux、macOS、
    該程式的名稱及版本號可在 [此處](https://github.com/HMCL-dev/HMCL/blob/javafx/HMCL/src/main/java/org/jackhuang/hmcl/Metadata.java#L33-L35) 修改。
 
 2. 你不得移除該程式所顯示的版權宣告。(依據 [GPLv3, 7(b)](https://github.com/HMCL-dev/HMCL/blob/11820e31a85d8989e41d97476712b07e7094b190/LICENSE#L368-L370))
-
-## 貢獻
-
-如果你想提交一個 Pull Request，必須遵守如下要求：
-
-* IDE：IntelliJ IDEA
-* 編譯器：Java 17+
-
-### 編譯
-
-參閱[構建指南](./Building_zh.md)頁面。
-
-## JVM 選項 (用於除錯)
-
-| 參數                                         | 簡介                                                                 |
-| -------------------------------------------- | -------------------------------------------------------------------- |
-| `-Dhmcl.home=<path>`                         | 覆蓋 HMCL 使用者目錄                                                 |
-| `-Dhmcl.self_integrity_check.disable=true`   | 檢查更新時不檢查本體完整性                                           |
-| `-Dhmcl.bmclapi.override=<url>`              | 覆蓋 BMCLAPI 的 API Root，預設值為 `https://bmclapi2.bangbang93.com` |
-| `-Dhmcl.font.override=<font family>`         | 覆蓋字族                                                             |
-| `-Dhmcl.version.override=<version>`          | 覆蓋版本號                                                           |
-| `-Dhmcl.update_source.override=<url>`        | 覆蓋 HMCL 更新來源                                                   |
-| `-Dhmcl.authlibinjector.location=<path>`     | 使用指定的 authlib-injector (而非下載一個)                           |
-| `-Dhmcl.openjfx.repo=<maven repository url>` | 添加用於下載 OpenJFX 的自訂 Maven 倉庫                               |
-| `-Dhmcl.native.encoding=<encoding>`          | 覆蓋原生編碼                                                         |
-| `-Dhmcl.microsoft.auth.id=<App ID>`          | 覆蓋 Microsoft OAuth App ID                                          |
-| `-Dhmcl.microsoft.auth.secret=<App Secret>`  | 覆蓋 Microsoft OAuth App 金鑰                                        |
-| `-Dhmcl.curseforge.apikey=<Api Key>`         | 覆蓋 CurseForge API 金鑰                                        |

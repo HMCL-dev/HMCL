@@ -1,13 +1,28 @@
-# Hello Minecraft! Launcher
+<!-- #BEGIN COPY -->
+<!-- #PROPERTY NAME=TITLE -->
+<div align="center">
+    <img src="/HMCL/src/main/resources/assets/img/icon@8x.png" alt="HMCL Logo" width="64"/>
+</div>
+
+<h1 align="center">Hello Minecraft! Launcher</h1>
+<!-- #END COPY -->
 
 <!-- #BEGIN COPY -->
 <!-- #PROPERTY NAME=BADGES -->
-[![CNB](https://img.shields.io/badge/cnb-mirror-ff6200?logo=cloudnativebuild)](https://cnb.cool/HMCL-dev/HMCL)
-[![Downloads](https://img.shields.io/github/downloads/HMCL-dev/HMCL/total?label=Downloads&style=flat)](https://github.com/HMCL-dev/HMCL/releases)
-![Stars](https://img.shields.io/github/stars/HMCL-dev/HMCL?style=flat)
-[![Discord](https://img.shields.io/discord/995291757799538688.svg?label=&logo=discord&logoColor=ffffff&color=7389D8&labelColor=6A7EC2)](https://discord.gg/jVvC7HfM6U)
-[![QQ Group](https://img.shields.io/badge/QQ-HMCL-bright?label=&logo=qq&logoColor=ffffff&color=1EBAFC&labelColor=1DB0EF&logoSize=auto)](https://docs.hmcl.net/groups.html)
+<div align="center">
+
+[![GitHub](https://img.shields.io/badge/GitHub-repo-blue?style=flat-square&logo=github)](https://github.com/HMCL-dev/HMCL)
+[![CNB](https://img.shields.io/badge/CNB-mirror-ff6200?style=flat-square&logo=cloudnativebuild)](https://cnb.cool/HMCL-dev/HMCL)
+[![Gitee](https://img.shields.io/badge/Gitee-mirror-c71d23?style=flat-square&logo=gitee)](https://gitee.com/huanghongxun/HMCL)
+
+[![QQ Group](https://img.shields.io/badge/QQ-gray?style=flat-square&logo=qq&logoColor=ffffff)](https://docs.hmcl.net/groups.html)
+[![Discord](https://img.shields.io/badge/Discord-gray?style=flat-square&logo=discord)](https://discord.gg/jVvC7HfM6U)
+[![Bilibili](https://img.shields.io/badge/Bilibili-gray?style=flat-square&logo=bilibili)](https://space.bilibili.com/20314891)
+
+</div>
 <!-- #END COPY -->
+
+---
 
 <!-- #BEGIN LANGUAGE_SWITCHER -->
 English ([Standard](README.md), [uʍoᗡ ǝpᴉsd∩](README_en_Qabs.md)) | 中文 ([简体](README_zh.md), [繁體](README_zh_Hant.md), [文言](README_lzh.md)) | [日本語](README_ja.md) | [español](README_es.md) | [русский](README_ru.md) | **українська**
@@ -15,7 +30,7 @@ English ([Standard](README.md), [uʍoᗡ ǝpᴉsd∩](README_en_Qabs.md)) | 中�
 
 ## Вступ
 
-HMCL — це відкритий, кросплатформний лаунчер для Minecraft, який підтримує керування модами, налаштування гри, встановлення модлоадерів (Forge, NeoForge, Cleanroom, Fabric, Quilt, LiteLoader та OptiFine), створення модпаків, налаштування інтерфейсу та багато іншого.
+HMCL — це відкритий, кросплатформний лаунчер для Minecraft, який підтримує керування модами, налаштування гри, встановлення модлоадерів (Forge, NeoForge, Cleanroom, Fabric, Legacy Fabric, Quilt, LiteLoader та OptiFine), створення модпаків, налаштування інтерфейсу та багато іншого.
 
 HMCL має чудові кросплатформні можливості. Він працює не лише на різних операційних системах, таких як Windows, Linux, macOS і FreeBSD, а й підтримує різні архітектури процесорів, такі як x86, ARM, RISC-V, MIPS і LoongArch. Ви можете легко насолоджуватися Minecraft на різних платформах за допомогою HMCL.
 
@@ -39,24 +54,3 @@ HMCL має чудові кросплатформні можливості. Ві
 
 * IDE: IntelliJ IDEA
 * Компілятор: Java 17+
-
-### Компіляція
-
-Дивіться сторінку [Посібник зі збірки](./Building.md).
-
-## JVM Options (for debugging)
-
-| Parameter                                    | Description                                                                                   |
-|----------------------------------------------|-----------------------------------------------------------------------------------------------|
-| `-Dhmcl.home=<path>`                         | Override HMCL directory                                                                       |
-| `-Dhmcl.self_integrity_check.disable=true`   | Bypass the self integrity check when checking for updates                                     |
-| `-Dhmcl.bmclapi.override=<url>`              | Override API Root of BMCLAPI download provider. Defaults to `https://bmclapi2.bangbang93.com` |
-| `-Dhmcl.font.override=<font family>`         | Override font family                                                                          |
-| `-Dhmcl.version.override=<version>`          | Override the version number                                                                   |
-| `-Dhmcl.update_source.override=<url>`        | Override the update source for HMCL itself                                                    |
-| `-Dhmcl.authlibinjector.location=<path>`     | Use the specified authlib-injector (instead of downloading one)                               |
-| `-Dhmcl.openjfx.repo=<maven repository url>` | Add custom Maven repository for downloading OpenJFX                                           |
-| `-Dhmcl.native.encoding=<encoding>`          | Override the native encoding                                                                  |
-| `-Dhmcl.microsoft.auth.id=<App ID>`          | Override Microsoft OAuth App ID                                                               |
-| `-Dhmcl.microsoft.auth.secret=<App Secret>`  | Override Microsoft OAuth App Secret                                                           |
-| `-Dhmcl.curseforge.apikey=<Api Key>`         | Override CurseForge API Key                                                                   |

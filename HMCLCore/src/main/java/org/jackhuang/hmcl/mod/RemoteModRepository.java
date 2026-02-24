@@ -32,6 +32,7 @@ public interface RemoteModRepository {
         MOD,
         MODPACK,
         RESOURCE_PACK,
+        SHADER_PACK,
         WORLD,
         CUSTOMIZATION
     }
@@ -90,6 +91,10 @@ public interface RemoteModRepository {
     Optional<RemoteMod.Version> getRemoteVersionByLocalFile(LocalModFile localModFile, Path file) throws IOException;
 
     RemoteMod getModById(String id) throws IOException;
+
+    default RemoteMod resolveDependency(String id) throws IOException {
+        return getModById(id);
+    }
 
     RemoteMod.File getModFile(String modId, String fileId) throws IOException;
 

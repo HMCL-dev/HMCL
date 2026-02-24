@@ -53,9 +53,9 @@ public final class RemoteModpackPage extends ModpackPage {
             return;
         }
 
-        lblName.setText(manifest.getName());
-        lblVersion.setText(manifest.getVersion());
-        lblAuthor.setText(manifest.getAuthor());
+        nameProperty.set(manifest.getName());
+        versionProperty.set(manifest.getVersion());
+        authorProperty.set(manifest.getAuthor());
 
         Profile profile = controller.getSettings().get(ModpackPage.PROFILE);
         String name = controller.getSettings().get(MODPACK_NAME);

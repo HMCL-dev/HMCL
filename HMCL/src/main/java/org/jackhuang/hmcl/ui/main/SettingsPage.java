@@ -18,7 +18,6 @@
 package org.jackhuang.hmcl.ui.main;
 
 import com.jfoenix.controls.JFXButton;
-import com.jfoenix.controls.JFXComboBox;
 import com.jfoenix.controls.JFXRadioButton;
 import javafx.application.Platform;
 import javafx.beans.InvalidationListener;
@@ -40,11 +39,8 @@ import org.jackhuang.hmcl.setting.Settings;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
-import org.jackhuang.hmcl.ui.construct.ComponentList;
-import org.jackhuang.hmcl.ui.construct.ComponentSublist;
+import org.jackhuang.hmcl.ui.construct.*;
 import org.jackhuang.hmcl.ui.construct.MessageDialogPane.MessageType;
-import org.jackhuang.hmcl.ui.construct.MultiFileItem;
-import org.jackhuang.hmcl.ui.construct.OptionToggleButton;
 import org.jackhuang.hmcl.upgrade.RemoteVersion;
 import org.jackhuang.hmcl.upgrade.UpdateChannel;
 import org.jackhuang.hmcl.upgrade.UpdateChecker;
@@ -63,15 +59,12 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
 import static org.jackhuang.hmcl.setting.ConfigHolder.config;
-import static org.jackhuang.hmcl.ui.FXUtils.stringConverter;
 import static org.jackhuang.hmcl.util.Lang.thread;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 import static org.jackhuang.hmcl.util.javafx.ExtendedProperties.selectedItemPropertyFor;
@@ -88,7 +81,7 @@ public final class SettingsPage extends ScrollPane {
         this.setFitToWidth(true);
 
         VBox rootPane = new VBox();
-        rootPane.setPadding(new Insets(32, 10, 32, 10));
+        rootPane.setPadding(new Insets(10));
         this.setContent(rootPane);
         FXUtils.smoothScrolling(this);
 
@@ -185,20 +178,21 @@ public final class SettingsPage extends ScrollPane {
                 }
 
                 {
-                    VBox content = new VBox();
-                    content.setSpacing(8);
-
-                    JFXRadioButton chkUpdateStable = new JFXRadioButton(i18n("update.channel.stable"));
-                    JFXRadioButton chkUpdateDev = new JFXRadioButton(i18n("update.channel.dev"));
+                    VBox content = new VBox(12);
+                    content.setPadding(new Insets(8, 0, 0, 0));
 
                     updateChannelGroup = new ToggleGroup();
-                    chkUpdateDev.setToggleGroup(updateChannelGroup);
-                    chkUpdateDev.setUserData(UpdateChannel.DEVELOPMENT);
-                    chkUpdateStable.setToggleGroup(updateChannelGroup);
+
+                    JFXRadioButton chkUpdateStable = new JFXRadioButton(i18n("update.channel.stable"));
                     chkUpdateStable.setUserData(UpdateChannel.STABLE);
+                    chkUpdateStable.setToggleGroup(updateChannelGroup);
+
+                    JFXRadioButton chkUpdateDev = new JFXRadioButton(i18n("update.channel.dev"));
+                    chkUpdateDev.setUserData(UpdateChannel.DEVELOPMENT);
+                    chkUpdateDev.setToggleGroup(updateChannelGroup);
 
                     Label noteWrapper = new Label(i18n("update.note"));
-                    VBox.setMargin(noteWrapper, new Insets(10, 0, 0, 0));
+                    VBox.setMargin(noteWrapper, new Insets(8, 0, 0, 0));
 
                     content.getChildren().setAll(chkUpdateStable, chkUpdateDev, noteWrapper);
 
@@ -208,7 +202,7 @@ public final class SettingsPage extends ScrollPane {
             }
 
             {
-                OptionToggleButton previewPane = new OptionToggleButton();
+                LineToggleButton previewPane = new LineToggleButton();
                 previewPane.setTitle(i18n("update.preview"));
                 previewPane.setSubtitle(i18n("update.preview.subtitle"));
                 previewPane.selectedProperty().bindBidirectional(config().acceptPreviewUpdateProperty());
@@ -226,7 +220,6 @@ public final class SettingsPage extends ScrollPane {
 
             {
                 MultiFileItem<EnumCommonDirectory> fileCommonLocation = new MultiFileItem<>();
-                fileCommonLocation.selectedDataProperty().bindBidirectional(config().commonDirTypeProperty());
                 fileCommonLocation.loadChildren(Arrays.asList(
                         new MultiFileItem.Option<>(i18n("launcher.cache_directory.default"), EnumCommonDirectory.DEFAULT),
                         new MultiFileItem.FileOption<>(i18n("settings.custom"), EnumCommonDirectory.CUSTOM)
@@ -234,6 +227,7 @@ public final class SettingsPage extends ScrollPane {
                                 .setDirectory(true)
                                 .bindBidirectional(config().commonDirectoryProperty())
                 ));
+                fileCommonLocation.selectedDataProperty().bindBidirectional(config().commonDirTypeProperty());
 
                 ComponentSublist fileCommonLocationSublist = new ComponentSublist();
                 fileCommonLocationSublist.getContent().add(fileCommonLocation);
@@ -252,33 +246,27 @@ public final class SettingsPage extends ScrollPane {
             }
 
             {
-                BorderPane languagePane = new BorderPane();
-
-                Label left = new Label(i18n("settings.launcher.language"));
-                BorderPane.setAlignment(left, Pos.CENTER_LEFT);
-                languagePane.setLeft(left);
+                var chooseLanguagePane = new LineSelectButton<SupportedLocale>();
+                chooseLanguagePane.setTitle(i18n("settings.launcher.language"));
+                chooseLanguagePane.setSubtitle(i18n("settings.take_effect_after_restart"));
 
                 SupportedLocale currentLocale = I18n.getLocale();
-                JFXComboBox<SupportedLocale> cboLanguage = new JFXComboBox<>();
-                cboLanguage.setConverter(stringConverter(locale -> {
+                chooseLanguagePane.setConverter(locale -> {
                     if (locale.isDefault())
                         return locale.getDisplayName(currentLocale);
                     else if (locale.isSameLanguage(currentLocale))
                         return locale.getDisplayName(locale);
                     else
                         return locale.getDisplayName(currentLocale) + " - " + locale.getDisplayName(locale);
-                }));
-                cboLanguage.getItems().setAll(SupportedLocale.getSupportedLocales());
-                selectedItemPropertyFor(cboLanguage).bindBidirectional(config().localizationProperty());
+                });
+                chooseLanguagePane.setItems(SupportedLocale.getSupportedLocales());
+                chooseLanguagePane.valueProperty().bindBidirectional(config().localizationProperty());
 
-                FXUtils.setLimitWidth(cboLanguage, 300);
-                languagePane.setRight(cboLanguage);
-
-                settingsPane.getContent().add(languagePane);
+                settingsPane.getContent().add(chooseLanguagePane);
             }
 
             {
-                OptionToggleButton disableAutoGameOptionsPane = new OptionToggleButton();
+                LineToggleButton disableAutoGameOptionsPane = new LineToggleButton();
                 disableAutoGameOptionsPane.setTitle(i18n("settings.launcher.disable_auto_game_options"));
                 disableAutoGameOptionsPane.selectedProperty().bindBidirectional(config().disableAutoGameOptionsProperty());
 
@@ -324,6 +312,19 @@ public final class SettingsPage extends ScrollPane {
             return;
         }
         UpdateHandler.updateFrom(target);
+    }
+
+    private static String getEntryName(Set<String> entryNames, String name) {
+        if (entryNames.add(name)) {
+            return name;
+        }
+
+        for (long i = 1; ; i++) {
+            String newName = name + "." + i;
+            if (entryNames.add(newName)) {
+                return newName;
+            }
+        }
     }
 
     /// This method guarantees to close both `input` and the current zip entry.
@@ -385,6 +386,8 @@ public final class SettingsPage extends ScrollPane {
                     try (var os = Files.newOutputStream(outputFile);
                          var zos = new ZipOutputStream(os)) {
 
+                        Set<String> entryNames = new HashSet<>();
+
                         for (Path path : recentLogFiles) {
                             String fileName = FileUtils.getName(path);
                             String extension = StringUtils.substringAfterLast(fileName, '.');
@@ -406,7 +409,7 @@ public final class SettingsPage extends ScrollPane {
                                     input = null;
                                 }
 
-                                String entryName = StringUtils.substringBeforeLast(fileName, ".");
+                                String entryName = getEntryName(entryNames, StringUtils.substringBeforeLast(fileName, "."));
                                 if (input != null && exportLogFile(zos, path, entryName, input, buffer))
                                     continue;
                             }
@@ -423,10 +426,10 @@ public final class SettingsPage extends ScrollPane {
                                 continue;
                             }
 
-                            exportLogFile(zos, path, fileName, input, buffer);
+                            exportLogFile(zos, path, getEntryName(entryNames, fileName), input, buffer);
                         }
 
-                        zos.putNextEntry(new ZipEntry("hmcl-latest.log"));
+                        zos.putNextEntry(new ZipEntry(getEntryName(entryNames, "hmcl-latest.log")));
                         LOG.exportLogs(zos);
                         zos.closeEntry();
                     }

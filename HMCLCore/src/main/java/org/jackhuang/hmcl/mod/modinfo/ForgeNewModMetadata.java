@@ -8,6 +8,7 @@ import com.google.gson.JsonParseException;
 import com.google.gson.JsonPrimitive;
 import com.google.gson.annotations.JsonAdapter;
 import com.moandjiezana.toml.Toml;
+import kala.compress.archivers.zip.ZipArchiveEntry;
 import org.jackhuang.hmcl.mod.LocalModFile;
 import org.jackhuang.hmcl.mod.ModLoaderType;
 import org.jackhuang.hmcl.mod.ModManager;
@@ -16,14 +17,13 @@ import org.jackhuang.hmcl.util.gson.JsonSerializable;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.gson.Validation;
 import org.jackhuang.hmcl.util.io.CompressingUtils;
+import org.jackhuang.hmcl.util.tree.ZipFileTree;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.lang.reflect.Type;
-import java.nio.file.FileSystem;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -149,33 +149,33 @@ public final class ForgeNewModMetadata {
         }
     }
 
-    public static LocalModFile fromForgeFile(ModManager modManager, Path modFile, FileSystem fs) throws IOException {
-        return fromFile(modManager, modFile, fs, ModLoaderType.FORGE);
+    public static LocalModFile fromForgeFile(ModManager modManager, Path modFile, ZipFileTree tree) throws IOException {
+        return fromFile(modManager, modFile, tree, ModLoaderType.FORGE);
     }
 
-    public static LocalModFile fromNeoForgeFile(ModManager modManager, Path modFile, FileSystem fs) throws IOException {
-        return fromFile(modManager, modFile, fs, ModLoaderType.NEO_FORGED);
+    public static LocalModFile fromNeoForgeFile(ModManager modManager, Path modFile, ZipFileTree tree) throws IOException {
+        return fromFile(modManager, modFile, tree, ModLoaderType.NEO_FORGED);
     }
 
-    private static LocalModFile fromFile(ModManager modManager, Path modFile, FileSystem fs, ModLoaderType modLoaderType) throws IOException {
+    private static LocalModFile fromFile(ModManager modManager, Path modFile, ZipFileTree tree, ModLoaderType modLoaderType) throws IOException {
         if (modLoaderType != ModLoaderType.FORGE && modLoaderType != ModLoaderType.NEO_FORGED) {
             throw new IOException("Invalid mod loader: " + modLoaderType);
         }
 
         if (modLoaderType == ModLoaderType.NEO_FORGED) {
             try {
-                return fromFile0("META-INF/neoforge.mods.toml", modLoaderType, modManager, modFile, fs);
+                return fromFile0("META-INF/neoforge.mods.toml", modLoaderType, modManager, modFile, tree);
             } catch (Exception ignored) {
             }
         }
 
         try {
-            return fromFile0("META-INF/mods.toml", modLoaderType, modManager, modFile, fs);
+            return fromFile0("META-INF/mods.toml", modLoaderType, modManager, modFile, tree);
         } catch (Exception ignored) {
         }
 
         try {
-            return fromEmbeddedMod(modManager, modFile, fs, modLoaderType);
+            return fromEmbeddedMod(modManager, modFile, tree, modLoaderType);
         } catch (Exception ignored) {
         }
 
@@ -187,19 +187,19 @@ public final class ForgeNewModMetadata {
             ModLoaderType modLoaderType,
             ModManager modManager,
             Path modFile,
-            FileSystem fs) throws IOException, JsonParseException {
-        Path modToml = fs.getPath(tomlPath);
-        if (Files.notExists(modToml))
+            ZipFileTree tree) throws IOException, JsonParseException {
+        ZipArchiveEntry modToml = tree.getEntry(tomlPath);
+        if (modToml == null)
             throw new IOException("File " + modFile + " is not a Forge 1.13+ or NeoForge mod.");
-        Toml toml = new Toml().read(Files.readString(modToml));
+        Toml toml = new Toml().read(tree.readTextEntry(modToml));
         ForgeNewModMetadata metadata = toml.to(ForgeNewModMetadata.class);
         if (metadata == null || metadata.getMods().isEmpty())
             throw new IOException("Mod " + modFile + " `mods.toml` is malformed..");
         Mod mod = metadata.getMods().get(0);
-        Path manifestMF = fs.getPath("META-INF/MANIFEST.MF");
+        ZipArchiveEntry manifestMF = tree.getEntry("META-INF/MANIFEST.MF");
         String jarVersion = "";
-        if (Files.exists(manifestMF)) {
-            try (InputStream is = Files.newInputStream(manifestMF)) {
+        if (manifestMF != null) {
+            try (InputStream is = tree.getInputStream(manifestMF)) {
                 Manifest manifest = new Manifest(is);
                 jarVersion = manifest.getMainAttributes().getValue(Attributes.Name.IMPLEMENTATION_VERSION);
             } catch (IOException e) {
@@ -215,30 +215,30 @@ public final class ForgeNewModMetadata {
                 metadata.getLogoFile());
     }
 
-    private static LocalModFile fromEmbeddedMod(ModManager modManager, Path modFile, FileSystem fs, ModLoaderType modLoaderType) throws IOException {
-        Path manifestFile = fs.getPath("META-INF/MANIFEST.MF");
-        if (!Files.isRegularFile(manifestFile))
-            throw new IOException("Missing  MANIFEST.MF in file " + manifestFile);
+    private static LocalModFile fromEmbeddedMod(ModManager modManager, Path modFile, ZipFileTree tree, ModLoaderType modLoaderType) throws IOException {
+        ZipArchiveEntry manifestFile = tree.getEntry("META-INF/MANIFEST.MF");
+        if (manifestFile == null)
+            throw new IOException("Missing MANIFEST.MF in file " + modFile);
 
         Manifest manifest;
-        try (InputStream input = Files.newInputStream(manifestFile)) {
+        try (InputStream input = tree.getInputStream(manifestFile)) {
             manifest = new Manifest(input);
         }
 
-        List<Path> embeddedModFiles = List.of();
+        List<ZipArchiveEntry> embeddedModFiles = List.of();
 
         String embeddedDependenciesMod = manifest.getMainAttributes().getValue("Embedded-Dependencies-Mod");
         if (embeddedDependenciesMod != null) {
-            Path embeddedModFile = fs.getPath(embeddedDependenciesMod);
-            if (!Files.isRegularFile(embeddedModFile)) {
-                LOG.warning("Missing embedded-dependencies-mod: " + embeddedModFile);
+            ZipArchiveEntry embeddedModFile = tree.getEntry(embeddedDependenciesMod);
+            if (embeddedModFile == null) {
+                LOG.warning("Missing embedded-dependencies-mod: " + embeddedDependenciesMod);
                 throw new IOException();
             }
             embeddedModFiles = List.of(embeddedModFile);
         } else {
-            Path jarInJarMetadata = fs.getPath("META-INF/jarjar/metadata.json");
-            if (Files.isRegularFile(jarInJarMetadata)) {
-                JarInJarMetadata metadata = JsonUtils.fromJsonFile(jarInJarMetadata, JarInJarMetadata.class);
+            ZipArchiveEntry jarInJarMetadata = tree.getEntry("META-INF/jarjar/metadata.json");
+            if (jarInJarMetadata != null) {
+                JarInJarMetadata metadata = JsonUtils.fromJsonFully(tree.getInputStream(jarInJarMetadata), JarInJarMetadata.class);
                 if (metadata == null)
                     throw new IOException("Invalid metadata file: " + jarInJarMetadata);
 
@@ -246,11 +246,11 @@ public final class ForgeNewModMetadata {
 
                 embeddedModFiles = new ArrayList<>();
                 for (EmbeddedJarMetadata jar : metadata.jars) {
-                    Path path = fs.getPath(jar.path);
-                    if (Files.isRegularFile(path)) {
+                    ZipArchiveEntry path = tree.getEntry(jar.path);
+                    if (path != null) {
                         embeddedModFiles.add(path);
                     } else {
-                        LOG.warning("Missing embedded-dependencies-mod: " + path);
+                        LOG.warning("Missing embedded-dependencies-mod: " + jar.path);
                     }
                 }
             }
@@ -262,10 +262,10 @@ public final class ForgeNewModMetadata {
 
         Path tempFile = Files.createTempFile("hmcl-", ".zip");
         try {
-            for (Path embeddedModFile : embeddedModFiles) {
-                Files.copy(embeddedModFile, tempFile, StandardCopyOption.REPLACE_EXISTING);
-                try (FileSystem embeddedFs = CompressingUtils.createReadOnlyZipFileSystem(tempFile)) {
-                    return fromFile(modManager, modFile, embeddedFs, modLoaderType);
+            for (ZipArchiveEntry embeddedModFile : embeddedModFiles) {
+                tree.extractTo(embeddedModFile, tempFile);
+                try (ZipFileTree embeddedTree = CompressingUtils.openZipTree(tempFile)) {
+                    return fromFile(modManager, modFile, embeddedTree, modLoaderType);
                 } catch (Exception ignored) {
                 }
             }
@@ -277,7 +277,12 @@ public final class ForgeNewModMetadata {
     }
 
     private static ModLoaderType analyzeLoader(Toml toml, String modID, ModLoaderType loader) throws IOException {
-        List<HashMap<String, Object>> dependencies = toml.getList("dependencies." + modID);
+        List<HashMap<String, Object>> dependencies = null;
+        try {
+            dependencies = toml.getList("dependencies." + modID);
+        } catch (ClassCastException ignored) { // https://github.com/HMCL-dev/HMCL/issues/5068
+        }
+
         if (dependencies == null) {
             try {
                 dependencies = toml.getList("dependencies"); // ??? I have no idea why some of the Forge mods use [[dependencies]]

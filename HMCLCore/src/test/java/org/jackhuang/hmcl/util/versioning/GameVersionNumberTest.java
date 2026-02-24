@@ -450,14 +450,17 @@ public final class GameVersionNumberTest {
         assertNormalized("1.16_combat-4", "Combat Test 8");
         assertNormalized("1.16_combat-5", "Combat Test 8b");
         assertNormalized("1.16_combat-6", "Combat Test 8c");
+        assertNormalized("1.16.2-pre1", "1.16.2 Pre-release 1"); // https://github.com/HMCL-dev/HMCL/pull/5476
         assertNormalized("1.18_experimental-snapshot-1", "1.18 Experimental Snapshot 1");
-        assertNormalized("1.18_experimental-snapshot-2", "1.18 Experimental Snapshot 2");
-        assertNormalized("1.18_experimental-snapshot-3", "1.18 Experimental Snapshot 3");
-        assertNormalized("1.18_experimental-snapshot-4", "1.18 Experimental Snapshot 4");
-        assertNormalized("1.18_experimental-snapshot-5", "1.18 Experimental Snapshot 5");
-        assertNormalized("1.18_experimental-snapshot-6", "1.18 Experimental Snapshot 6");
+        assertNormalized("1.18_experimental-snapshot-2", "1.18 experimental snapshot 2");
+        assertNormalized("1.18_experimental-snapshot-3", "1.18 experimental snapshot 3");
+        assertNormalized("1.18_experimental-snapshot-4", "1.18 experimental snapshot 4");
+        assertNormalized("1.18_experimental-snapshot-5", "1.18 experimental snapshot 5");
+        assertNormalized("1.18_experimental-snapshot-6", "1.18 experimental snapshot 6");
+        assertNormalized("1.18_experimental-snapshot-7", "1.18 experimental snapshot 7");
         assertNormalized("1.19_deep_dark_experimental_snapshot-1", "Deep Dark Experimental Snapshot 1");
         assertNormalized("20w14infinite", "20w14~");
+        assertNormalized("22w13oneBlockAtATime", "22w13oneblockatatime");
     }
 
     @Test

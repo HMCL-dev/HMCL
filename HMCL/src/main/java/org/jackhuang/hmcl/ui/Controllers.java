@@ -19,6 +19,7 @@ package org.jackhuang.hmcl.ui;
 
 import com.jfoenix.controls.JFXButton;
 import com.jfoenix.controls.JFXDialogLayout;
+import com.jfoenix.validation.base.ValidatorBase;
 import javafx.animation.KeyFrame;
 import javafx.animation.KeyValue;
 import javafx.animation.Timeline;
@@ -72,9 +73,10 @@ import java.nio.file.Path;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
-import static org.jackhuang.hmcl.setting.ConfigHolder.*;
-import static org.jackhuang.hmcl.util.logging.Logger.LOG;
+import static org.jackhuang.hmcl.setting.ConfigHolder.config;
+import static org.jackhuang.hmcl.setting.ConfigHolder.globalConfig;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
+import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 public final class Controllers {
     public static final String JAVA_VERSION_TIP = "javaVersion";
@@ -505,8 +507,8 @@ public final class Controllers {
         return prompt(title, onResult, "");
     }
 
-    public static CompletableFuture<String> prompt(String title, FutureCallback<String> onResult, String initialValue) {
-        InputDialogPane pane = new InputDialogPane(title, initialValue, onResult);
+    public static CompletableFuture<String> prompt(String title, FutureCallback<String> onResult, String initialValue, ValidatorBase... validators) {
+        InputDialogPane pane = new InputDialogPane(title, initialValue, onResult, validators);
         dialog(pane);
         return pane.getCompletableFuture();
     }

@@ -18,7 +18,8 @@
 package org.jackhuang.hmcl.ui;
 
 import com.jfoenix.controls.*;
-import javafx.animation.*;
+import javafx.animation.Animation;
+import javafx.animation.Interpolator;
 import javafx.application.Platform;
 import javafx.beans.InvalidationListener;
 import javafx.beans.Observable;
@@ -26,33 +27,37 @@ import javafx.beans.WeakInvalidationListener;
 import javafx.beans.WeakListener;
 import javafx.beans.binding.Bindings;
 import javafx.beans.property.*;
-import javafx.beans.value.*;
+import javafx.beans.value.ChangeListener;
+import javafx.beans.value.ObservableBooleanValue;
+import javafx.beans.value.ObservableValue;
+import javafx.beans.value.WeakChangeListener;
 import javafx.collections.ObservableMap;
 import javafx.event.Event;
 import javafx.event.EventDispatcher;
 import javafx.event.EventHandler;
 import javafx.event.EventType;
 import javafx.geometry.Bounds;
-import javafx.geometry.Pos;
 import javafx.geometry.Rectangle2D;
 import javafx.scene.Cursor;
 import javafx.scene.Node;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
-import javafx.scene.control.Label;
-import javafx.scene.control.ScrollPane;
 import javafx.scene.control.*;
 import javafx.scene.control.skin.VirtualFlow;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.input.*;
-import javafx.scene.layout.*;
+import javafx.scene.layout.ColumnConstraints;
+import javafx.scene.layout.Priority;
+import javafx.scene.layout.Region;
 import javafx.scene.paint.Color;
 import javafx.scene.paint.Paint;
 import javafx.scene.shape.Rectangle;
 import javafx.scene.text.Text;
 import javafx.scene.text.TextFlow;
-import javafx.stage.*;
+import javafx.stage.FileChooser;
+import javafx.stage.Screen;
+import javafx.stage.Stage;
 import javafx.util.Callback;
 import javafx.util.Duration;
 import javafx.util.StringConverter;
@@ -61,9 +66,13 @@ import org.jackhuang.hmcl.task.CacheFileTask;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.ui.animation.AnimationUtils;
+import org.jackhuang.hmcl.ui.construct.IconedMenuItem;
+import org.jackhuang.hmcl.ui.construct.MenuSeparator;
+import org.jackhuang.hmcl.ui.construct.PopupMenu;
 import org.jackhuang.hmcl.ui.image.ImageLoader;
 import org.jackhuang.hmcl.ui.image.ImageUtils;
-import org.jackhuang.hmcl.util.*;
+import org.jackhuang.hmcl.util.Lang;
+import org.jackhuang.hmcl.util.ResourceNotFoundError;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.io.NetworkUtils;
 import org.jackhuang.hmcl.util.javafx.ExtendedProperties;
@@ -88,12 +97,14 @@ import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
 import java.lang.ref.WeakReference;
-import java.net.*;
+import java.net.HttpURLConnection;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.net.URLConnection;
 import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.PathMatcher;
-import java.util.List;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.*;
@@ -102,8 +113,8 @@ import java.util.regex.Pattern;
 
 import static org.jackhuang.hmcl.util.Lang.thread;
 import static org.jackhuang.hmcl.util.Lang.tryCast;
-import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
+import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 public final class FXUtils {
     private FXUtils() {
@@ -137,6 +148,7 @@ public final class FXUtils {
     public static final @Nullable ReadOnlyObjectProperty<Color> ACCENT_COLOR;
 
     public static final @Nullable MethodHandle TEXT_TRUNCATED_PROPERTY;
+    public static final @Nullable MethodHandle FOCUS_VISIBLE_PROPERTY;
 
     static {
         String jfxVersion = System.getProperty("javafx.version");
@@ -203,6 +215,20 @@ public final class FXUtils {
             }
         }
         TEXT_TRUNCATED_PROPERTY = textTruncatedProperty;
+
+        MethodHandle focusVisibleProperty = null;
+        if (JAVAFX_MAJOR_VERSION >= 19) {
+            try {
+                focusVisibleProperty = MethodHandles.publicLookup().findVirtual(
+                        Node.class,
+                        "focusVisibleProperty",
+                        MethodType.methodType(ReadOnlyBooleanProperty.class)
+                );
+            } catch (Throwable e) {
+                LOG.warning("Failed to lookup focusVisibleProperty", e);
+            }
+        }
+        FOCUS_VISIBLE_PROPERTY = focusVisibleProperty;
     }
 
     public static final String DEFAULT_MONOSPACE_FONT = OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS ? "Consolas" : "Monospace";
@@ -389,12 +415,18 @@ public final class FXUtils {
         return region.getMaxHeight();
     }
 
-    public static Node limitingSize(Node node, double width, double height) {
-        StackPane pane = new StackPane(node);
-        pane.setAlignment(Pos.CENTER);
-        FXUtils.setLimitWidth(pane, width);
-        FXUtils.setLimitHeight(pane, height);
-        return pane;
+    public static void limitCellWidth(ListView<?> listView, ListCell<?> cell) {
+        ReadOnlyDoubleProperty widthProperty;
+
+        if (listView.lookup(".clipped-container") instanceof Region clippedContainer) {
+            widthProperty = clippedContainer.widthProperty();
+        } else {
+            widthProperty = listView.widthProperty();
+        }
+
+        cell.maxWidthProperty().bind(widthProperty);
+        cell.prefWidthProperty().bind(widthProperty);
+        cell.minWidthProperty().bind(widthProperty);
     }
 
     public static void smoothScrolling(ScrollPane scrollPane) {
@@ -413,6 +445,20 @@ public final class FXUtils {
         if (TEXT_TRUNCATED_PROPERTY != null) {
             try {
                 return (ReadOnlyBooleanProperty) TEXT_TRUNCATED_PROPERTY.invokeExact(labeled);
+            } catch (RuntimeException | Error e) {
+                throw e;
+            } catch (Throwable e) {
+                throw new RuntimeException(e);
+            }
+        } else {
+            return null;
+        }
+    }
+
+    public static @Nullable ReadOnlyBooleanProperty focusVisibleProperty(Node node) {
+        if (FOCUS_VISIBLE_PROPERTY != null) {
+            try {
+                return (ReadOnlyBooleanProperty) FOCUS_VISIBLE_PROPERTY.invokeExact(node);
             } catch (RuntimeException | Error e) {
                 throw e;
             } catch (Throwable e) {
@@ -1188,12 +1234,14 @@ public final class FXUtils {
 
     public static Task<Image> getRemoteImageTask(String url, int requestedWidth, int requestedHeight, boolean preserveRatio, boolean smooth) {
         return new CacheFileTask(url)
+                .setSignificance(Task.TaskSignificance.MINOR)
                 .thenApplyAsync(file -> loadImage(file, requestedWidth, requestedHeight, preserveRatio, smooth))
                 .setSignificance(Task.TaskSignificance.MINOR);
     }
 
     public static Task<Image> getRemoteImageTask(URI uri, int requestedWidth, int requestedHeight, boolean preserveRatio, boolean smooth) {
         return new CacheFileTask(uri)
+                .setSignificance(Task.TaskSignificance.MINOR)
                 .thenApplyAsync(file -> loadImage(file, requestedWidth, requestedHeight, preserveRatio, smooth))
                 .setSignificance(Task.TaskSignificance.MINOR);
     }
@@ -1208,6 +1256,7 @@ public final class FXUtils {
                         LOG.warning("An exception encountered while loading remote image: " + url, exception);
                     }
                 })
+                .setSignificance(Task.TaskSignificance.MINOR)
                 .start();
         return image;
     }
@@ -1232,8 +1281,8 @@ public final class FXUtils {
         return button;
     }
 
-    public static Label newSafeTruncatedLabel(String text) {
-        Label label = new Label(text);
+    public static Label newSafeTruncatedLabel() {
+        Label label = new Label();
         label.setTextOverrun(OverrunStyle.CENTER_WORD_ELLIPSIS);
         showTooltipWhenTruncated(label);
         return label;
@@ -1309,16 +1358,10 @@ public final class FXUtils {
     }
 
     public static <T> Callback<ListView<T>, ListCell<T>> jfxListCellFactory(Function<T, Node> graphicBuilder) {
-        Holder<Object> lastCell = new Holder<>();
         return view -> new JFXListCell<T>() {
             @Override
             public void updateItem(T item, boolean empty) {
                 super.updateItem(item, empty);
-
-                // https://mail.openjdk.org/pipermail/openjfx-dev/2022-July/034764.html
-                if (this == lastCell.value && !isVisible())
-                    return;
-                lastCell.value = this;
 
                 if (!empty) {
                     setContentDisplay(ContentDisplay.GRAPHIC_ONLY);
@@ -1364,7 +1407,16 @@ public final class FXUtils {
 
     public static void onClicked(Node node, Runnable action) {
         node.addEventHandler(MouseEvent.MOUSE_CLICKED, e -> {
-            if (e.getButton() == MouseButton.PRIMARY && e.getClickCount() == 1) {
+            if (e.getButton() == MouseButton.PRIMARY) {
+                action.run();
+                e.consume();
+            }
+        });
+    }
+
+    public static void onSecondaryButtonClicked(Node node, Runnable action) {
+        node.addEventHandler(MouseEvent.MOUSE_CLICKED, e -> {
+            if (e.getButton() == MouseButton.SECONDARY) {
                 action.run();
                 e.consume();
             }
@@ -1408,16 +1460,6 @@ public final class FXUtils {
             updater.accept(list.get((index + list.size()) % list.size()));
             event.consume();
         });
-    }
-
-    public static void clearFocus(Node node) {
-        Scene scene = node.getScene();
-        if (scene != null) {
-            Parent root = scene.getRoot();
-            if (root != null) {
-                root.requestFocus();
-            }
-        }
     }
 
     public static void copyOnDoubleClick(Labeled label) {
@@ -1575,5 +1617,40 @@ public final class FXUtils {
         return (availableSpaceAbove > menuHeight && availableSpaceBelow < menuHeight)
                 ? JFXPopup.PopupVPosition.BOTTOM  // Show menu below the button, expanding downward
                 : JFXPopup.PopupVPosition.TOP;    // Show menu above the button, expanding upward
+    }
+
+    public static void useJFXContextMenu(TextInputControl control) {
+        control.setContextMenu(null);
+
+        PopupMenu menu = new PopupMenu();
+        JFXPopup popup = new JFXPopup(menu);
+        popup.setAutoHide(true);
+
+        control.setOnContextMenuRequested(e -> {
+            boolean hasNoSelection = control.getSelectedText().isEmpty();
+
+            IconedMenuItem undo = new IconedMenuItem(SVG.UNDO, i18n("menu.undo"), control::undo, popup);
+            IconedMenuItem redo = new IconedMenuItem(SVG.REDO, i18n("menu.redo"), control::redo, popup);
+            IconedMenuItem cut = new IconedMenuItem(SVG.CONTENT_CUT, i18n("menu.cut"), control::cut, popup);
+            IconedMenuItem copy = new IconedMenuItem(SVG.CONTENT_COPY, i18n("menu.copy"), control::copy, popup);
+            IconedMenuItem paste = new IconedMenuItem(SVG.CONTENT_PASTE, i18n("menu.paste"), control::paste, popup);
+            IconedMenuItem delete = new IconedMenuItem(SVG.DELETE, i18n("menu.deleteselection"), () -> control.replaceSelection(""), popup);
+            IconedMenuItem selectall = new IconedMenuItem(SVG.SELECT_ALL, i18n("menu.selectall"), control::selectAll, popup);
+
+            menu.getContent().setAll(undo, redo, new MenuSeparator(), cut, copy, paste, delete, new MenuSeparator(), selectall);
+
+            undo.setDisable(!control.isUndoable());
+            redo.setDisable(!control.isRedoable());
+            cut.setDisable(hasNoSelection);
+            delete.setDisable(hasNoSelection);
+            copy.setDisable(hasNoSelection);
+            paste.setDisable(!Clipboard.getSystemClipboard().hasString());
+            selectall.setDisable(control.getText() == null || control.getText().isEmpty());
+
+            JFXPopup.PopupVPosition vPosition = determineOptimalPopupPosition(control, popup);
+            popup.show(control, vPosition, JFXPopup.PopupHPosition.LEFT, e.getX(), vPosition == JFXPopup.PopupVPosition.TOP ? e.getY() : e.getY() - control.getHeight());
+
+            e.consume();
+        });
     }
 }

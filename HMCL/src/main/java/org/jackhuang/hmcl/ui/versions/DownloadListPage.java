@@ -30,13 +30,10 @@ import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
+import javafx.scene.Cursor;
 import javafx.scene.Node;
-import javafx.scene.control.Control;
-import javafx.scene.control.Label;
-import javafx.scene.control.Skin;
-import javafx.scene.control.SkinBase;
+import javafx.scene.control.*;
 import javafx.scene.image.Image;
-import javafx.scene.image.ImageView;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.*;
@@ -52,33 +49,22 @@ import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.WeakListenerHolder;
-import org.jackhuang.hmcl.ui.construct.FloatListCell;
-import org.jackhuang.hmcl.ui.construct.SpinnerPane;
-import org.jackhuang.hmcl.ui.construct.TwoLineListItem;
+import org.jackhuang.hmcl.ui.construct.*;
 import org.jackhuang.hmcl.ui.decorator.DecoratorPage;
-import org.jackhuang.hmcl.util.AggregatedObservableList;
-import org.jackhuang.hmcl.util.Holder;
-import org.jackhuang.hmcl.util.Lang;
-import org.jackhuang.hmcl.util.StringUtils;
+import org.jackhuang.hmcl.util.*;
 import org.jackhuang.hmcl.util.i18n.I18n;
-import org.jackhuang.hmcl.util.io.NetworkUtils;
 import org.jackhuang.hmcl.util.javafx.BindingMapping;
 import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
 import org.jetbrains.annotations.NotNull;
 
-import java.lang.ref.WeakReference;
 import java.net.URI;
 import java.util.*;
-import java.util.concurrent.CancellationException;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.CompletionException;
 import java.util.stream.Collectors;
 
 import static org.jackhuang.hmcl.ui.FXUtils.ignoreEvent;
 import static org.jackhuang.hmcl.ui.FXUtils.stringConverter;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 import static org.jackhuang.hmcl.util.javafx.ExtendedProperties.selectedItemPropertyFor;
-import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 public class DownloadListPage extends Control implements DecoratorPage, VersionPage.VersionLoadable {
     protected final ReadOnlyObjectWrapper<State> state = new ReadOnlyObjectWrapper<>();
@@ -208,6 +194,10 @@ public class DownloadListPage extends Control implements DecoratorPage, VersionP
                 : i18n("curse.category." + category);
     }
 
+    protected boolean shouldDisplayCategory(String category) {
+        return !"minecraft".equals(category);
+    }
+
     private String getLocalizedCategoryIndent(ModDownloadListPageSkin.CategoryIndented category) {
         return StringUtils.repeats(' ', category.indent * 4) +
                 (category.getCategory() == null
@@ -243,9 +233,17 @@ public class DownloadListPage extends Control implements DecoratorPage, VersionP
 
     private static class ModDownloadListPageSkin extends SkinBase<DownloadListPage> {
         private final JFXListView<RemoteMod> listView = new JFXListView<>();
+        private final RemoteImageLoader iconLoader = new RemoteImageLoader() {
+            @Override
+            protected @NotNull Task<Image> createLoadTask(@NotNull URI uri) {
+                return FXUtils.getRemoteImageTask(uri, 80, 80, true, true);
+            }
+        };
 
         protected ModDownloadListPageSkin(DownloadListPage control) {
             super(control);
+
+            listView.getStyleClass().add("no-horizontal-scrollbar");
 
             BorderPane pane = new BorderPane();
 
@@ -373,6 +371,7 @@ public class DownloadListPage extends Control implements DecoratorPage, VersionP
                 IntegerProperty filterID = new SimpleIntegerProperty(this, "Filter ID", 0);
                 IntegerProperty currentFilterID = new SimpleIntegerProperty(this, "Current Filter ID", -1);
                 EventHandler<ActionEvent> searchAction = e -> {
+                    iconLoader.clearInvalidCache();
                     if (currentFilterID.get() != -1 && currentFilterID.get() != filterID.get()) {
                         control.pageOffset.set(0);
                     }
@@ -523,100 +522,64 @@ public class DownloadListPage extends Control implements DecoratorPage, VersionP
 
                 spinnerPane.setContent(listView);
                 Bindings.bindContent(listView.getItems(), getSkinnable().items);
-                FXUtils.onClicked(listView, () -> {
-                    if (listView.getSelectionModel().getSelectedIndex() < 0)
-                        return;
-                    RemoteMod selectedItem = listView.getSelectionModel().getSelectedItem();
-                    Controllers.navigate(new DownloadPage(getSkinnable(), selectedItem, getSkinnable().getProfileVersion(), getSkinnable().callback));
-                });
-
+                listView.setSelectionModel(new NoneMultipleSelectionModel<>());
                 // ListViewBehavior would consume ESC pressed event, preventing us from handling it, so we ignore it here
                 ignoreEvent(listView, KeyEvent.KEY_PRESSED, e -> e.getCode() == KeyCode.ESCAPE);
-                var iconCache = new WeakHashMap<String, WeakReference<CompletableFuture<Image>>>();
-                listView.setCellFactory(x -> new FloatListCell<>(listView) {
+
+                listView.setCellFactory(x -> new ListCell<>() {
+                    private static final Insets PADDING = new Insets(9, 9, 0, 9);
+
+                    private final RipplerContainer graphic;
+                    private final StackPane wrapper = new StackPane();
+
                     private final TwoLineListItem content = new TwoLineListItem();
-                    private final ImageView imageView = new ImageView();
+                    private final ImageContainer imageContainer = new ImageContainer(40);
 
                     {
+                        setPadding(PADDING);
+
                         HBox container = new HBox(8);
+                        container.setPadding(new Insets(8));
+                        container.setCursor(Cursor.HAND);
                         container.setAlignment(Pos.CENTER_LEFT);
-                        pane.getChildren().add(container);
 
-                        imageView.setFitWidth(40);
-                        imageView.setFitHeight(40);
+                        imageContainer.setMouseTransparent(true);
 
-                        container.getChildren().setAll(FXUtils.limitingSize(imageView, 40, 40), content);
+                        container.getChildren().setAll(imageContainer, content);
                         HBox.setHgrow(content, Priority.ALWAYS);
+
+                        this.graphic = new RipplerContainer(container);
+                        wrapper.getChildren().setAll(this.graphic);
+                        wrapper.getStyleClass().add("card-no-padding");
+
+                        FXUtils.onClicked(wrapper, () -> {
+                            RemoteMod item = getItem();
+                            if (item != null)
+                                Controllers.navigate(new DownloadPage(getSkinnable(), item, getSkinnable().getProfileVersion(), getSkinnable().callback));
+                        });
+
+                        setPrefWidth(0);
+
+                        FXUtils.limitCellWidth(listView, this);
+
                     }
 
                     @Override
-                    protected void updateControl(RemoteMod dataItem, boolean empty) {
-                        if (empty) return;
-                        ModTranslations.Mod mod = ModTranslations.getTranslationsByRepositoryType(getSkinnable().repository.getType()).getModByCurseForgeId(dataItem.getSlug());
-                        content.setTitle(mod != null && I18n.isUseChinese() ? mod.getDisplayName() : dataItem.getTitle());
-                        content.setSubtitle(dataItem.getDescription());
-                        content.getTags().clear();
-                        dataItem.getCategories().stream()
-                                .map(category -> getSkinnable().getLocalizedCategory(category))
-                                .forEach(content::addTag);
-                        loadIcon(dataItem);
-                    }
-
-                    private void loadIcon(RemoteMod mod) {
-                        if (StringUtils.isBlank(mod.getIconUrl())) {
-                            imageView.setImage(null);
-                            return;
-                        }
-
-                        WeakReference<CompletableFuture<Image>> cacheRef = iconCache.get(mod.getIconUrl());
-                        CompletableFuture<Image> cache;
-                        if (cacheRef != null && (cache = cacheRef.get()) != null) {
-                            loadIcon(cache, mod.getIconUrl());
-                            return;
-                        }
-
-                        URI iconUrl = NetworkUtils.toURIOrNull(mod.getIconUrl());
-                        if (iconUrl == null) {
-                            imageView.setImage(null);
-                            return;
-                        }
-
-                        CompletableFuture<Image> future = new CompletableFuture<>();
-                        WeakReference<CompletableFuture<Image>> futureRef = new WeakReference<>(future);
-                        iconCache.put(mod.getIconUrl(), futureRef);
-
-                        FXUtils.getRemoteImageTask(iconUrl, 80, 80, true, true)
-                                .whenComplete(Schedulers.defaultScheduler(), (result, exception) -> {
-                                    if (exception == null) {
-                                        future.complete(result);
-                                    } else {
-                                        LOG.warning("Failed to load image from " + iconUrl, exception);
-                                        future.completeExceptionally(exception);
-                                    }
-                                }).start();
-                        loadIcon(future, mod.getIconUrl());
-                    }
-
-                    private void loadIcon(@NotNull CompletableFuture<Image> future,
-                                          @NotNull String iconUrl) {
-                        Image image;
-                        try {
-                            image = future.getNow(null);
-                        } catch (CancellationException | CompletionException ignored) {
-                            imageView.setImage(null);
-                            return;
-                        }
-
-                        if (image != null) {
-                            imageView.setImage(image);
+                    protected void updateItem(RemoteMod item, boolean empty) {
+                        super.updateItem(item, empty);
+                        if (empty || item == null) {
+                            setGraphic(null);
                         } else {
-                            imageView.setImage(null);
-                            future.thenAcceptAsync(result -> {
-                                RemoteMod item = getItem();
-                                if (item != null && iconUrl.equals(item.getIconUrl())) {
-                                    this.imageView.setImage(result);
-                                }
-                            }, Schedulers.javafx());
+                            ModTranslations.Mod mod = ModTranslations.getTranslationsByRepositoryType(getSkinnable().repository.getType()).getModByCurseForgeId(item.getSlug());
+                            content.setTitle(mod != null && I18n.isUseChinese() ? mod.getDisplayName() : item.getTitle());
+                            content.setSubtitle(item.getDescription());
+                            content.getTags().clear();
+                            for (String category : item.getCategories()) {
+                                if (getSkinnable().shouldDisplayCategory(category))
+                                    content.addTag(getSkinnable().getLocalizedCategory(category));
+                            }
+                            iconLoader.load(imageContainer.imageProperty(), item.getIconUrl());
+                            setGraphic(wrapper);
                         }
                     }
                 });

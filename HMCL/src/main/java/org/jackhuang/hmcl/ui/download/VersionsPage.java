@@ -38,6 +38,8 @@ import org.jackhuang.hmcl.download.fabric.FabricAPIRemoteVersion;
 import org.jackhuang.hmcl.download.fabric.FabricRemoteVersion;
 import org.jackhuang.hmcl.download.forge.ForgeRemoteVersion;
 import org.jackhuang.hmcl.download.game.GameRemoteVersion;
+import org.jackhuang.hmcl.download.legacyfabric.LegacyFabricAPIRemoteVersion;
+import org.jackhuang.hmcl.download.legacyfabric.LegacyFabricRemoteVersion;
 import org.jackhuang.hmcl.download.liteloader.LiteLoaderRemoteVersion;
 import org.jackhuang.hmcl.download.neoforge.NeoForgeRemoteVersion;
 import org.jackhuang.hmcl.download.optifine.OptiFineRemoteVersion;
@@ -57,9 +59,7 @@ import org.jackhuang.hmcl.ui.construct.TwoLineListItem;
 import org.jackhuang.hmcl.ui.wizard.Navigation;
 import org.jackhuang.hmcl.ui.wizard.Refreshable;
 import org.jackhuang.hmcl.ui.wizard.WizardPage;
-import org.jackhuang.hmcl.util.Holder;
 import org.jackhuang.hmcl.util.NativePatcher;
-import org.jackhuang.hmcl.util.SettingsMap;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.i18n.I18n;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
@@ -130,11 +130,6 @@ public final class VersionsPage extends Control implements WizardPage, Refreshab
         return title;
     }
 
-    @Override
-    public void cleanup(SettingsMap settings) {
-        settings.remove(libraryId);
-    }
-
     private void onRefresh() {
         refresh();
     }
@@ -164,11 +159,10 @@ public final class VersionsPage extends Control implements WizardPage, Refreshab
         private final ImageView imageView = new ImageView();
         private final StackPane pane = new StackPane();
 
-        private final Holder<RemoteVersionListCell> lastCell;
-
-        RemoteVersionListCell(Holder<RemoteVersionListCell> lastCell, VersionsPage control) {
-            this.lastCell = lastCell;
+        RemoteVersionListCell(VersionsPage control) {
             this.control = control;
+
+            imageView.setMouseTransparent(true);
 
             HBox hbox = new HBox(16);
             HBox.setHgrow(twoLineListItem, Priority.ALWAYS);
@@ -179,10 +173,7 @@ public final class VersionsPage extends Control implements WizardPage, Refreshab
             {
                 if ("game".equals(control.libraryId)) {
                     JFXButton wikiButton = newToggleButton4(SVG.GLOBE_BOOK);
-                    wikiButton.setOnAction(event -> {
-                        onOpenWiki();
-                        FXUtils.clearFocus(wikiButton);
-                    });
+                    wikiButton.setOnAction(event -> onOpenWiki());
                     FXUtils.installFastTooltip(wikiButton, i18n("wiki.tooltip"));
                     actions.getChildren().add(wikiButton);
                 }
@@ -221,11 +212,6 @@ public final class VersionsPage extends Control implements WizardPage, Refreshab
         @Override
         public void updateItem(RemoteVersion remoteVersion, boolean empty) {
             super.updateItem(remoteVersion, empty);
-
-            // https://mail.openjdk.org/pipermail/openjfx-dev/2022-July/034764.html
-            if (this == lastCell.value && !isVisible())
-                return;
-            lastCell.value = this;
 
             if (empty) {
                 setGraphic(null);
@@ -282,6 +268,8 @@ public final class VersionsPage extends Control implements WizardPage, Refreshab
                     iconType = VersionIconType.CLEANROOM;
                 else if (remoteVersion instanceof NeoForgeRemoteVersion)
                     iconType = VersionIconType.NEO_FORGE;
+                else if (remoteVersion instanceof LegacyFabricRemoteVersion || remoteVersion instanceof LegacyFabricAPIRemoteVersion)
+                    iconType = VersionIconType.LEGACY_FABRIC;
                 else if (remoteVersion instanceof FabricRemoteVersion || remoteVersion instanceof FabricAPIRemoteVersion)
                     iconType = VersionIconType.FABRIC;
                 else if (remoteVersion instanceof QuiltRemoteVersion || remoteVersion instanceof QuiltAPIRemoteVersion)
@@ -398,8 +386,7 @@ public final class VersionsPage extends Control implements WizardPage, Refreshab
 
                         control.versions.addListener((InvalidationListener) o -> updateList());
 
-                        Holder<RemoteVersionListCell> lastCell = new Holder<>();
-                        list.setCellFactory(listView -> new RemoteVersionListCell(lastCell, control));
+                        list.setCellFactory(listView -> new RemoteVersionListCell(control));
 
                         ComponentList.setVgrow(list, Priority.ALWAYS);
 

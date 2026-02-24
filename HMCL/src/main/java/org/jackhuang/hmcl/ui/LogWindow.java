@@ -17,11 +17,7 @@
  */
 package org.jackhuang.hmcl.ui;
 
-import com.jfoenix.controls.JFXButton;
-import com.jfoenix.controls.JFXCheckBox;
-import com.jfoenix.controls.JFXComboBox;
-import com.jfoenix.controls.JFXListView;
-import com.sun.jna.Pointer;
+import com.jfoenix.controls.*;
 import javafx.application.Platform;
 import javafx.beans.InvalidationListener;
 import javafx.beans.binding.Bindings;
@@ -29,31 +25,27 @@ import javafx.beans.property.*;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.css.PseudoClass;
-import javafx.event.EventHandler;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
-import javafx.scene.control.Label;
 import javafx.scene.control.*;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.MouseButton;
 import javafx.scene.layout.*;
 import javafx.stage.Stage;
-import javafx.stage.WindowEvent;
 import org.jackhuang.hmcl.game.GameDumpGenerator;
 import org.jackhuang.hmcl.game.Log;
 import org.jackhuang.hmcl.setting.StyleSheets;
 import org.jackhuang.hmcl.theme.Themes;
+import org.jackhuang.hmcl.ui.construct.MessageDialogPane;
 import org.jackhuang.hmcl.ui.construct.NoneMultipleSelectionModel;
 import org.jackhuang.hmcl.ui.construct.SpinnerPane;
-import org.jackhuang.hmcl.util.Holder;
 import org.jackhuang.hmcl.util.CircularArrayList;
 import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.Log4jLevel;
-import org.jackhuang.hmcl.util.platform.*;
-import org.jackhuang.hmcl.util.platform.windows.Dwmapi;
-import org.jackhuang.hmcl.util.platform.windows.WinConstants;
-import org.jackhuang.hmcl.util.platform.windows.WinTypes;
+import org.jackhuang.hmcl.util.StringUtils;
+import org.jackhuang.hmcl.util.platform.ManagedProcess;
+import org.jackhuang.hmcl.util.platform.SystemUtils;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -66,8 +58,8 @@ import java.util.stream.Collectors;
 
 import static org.jackhuang.hmcl.setting.ConfigHolder.config;
 import static org.jackhuang.hmcl.util.Lang.thread;
-import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
+import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 /**
  * @author huangyuhui
@@ -90,41 +82,13 @@ public final class LogWindow extends Stage {
     private final LogWindowImpl impl;
     private final ManagedProcess gameProcess;
 
-    @SuppressWarnings("unused")
-    private Object windowsDarkModeListenerHolder;
-
-    {
-        if (OperatingSystem.SYSTEM_VERSION.isAtLeast(OSVersion.WINDOWS_11) && NativeUtils.USE_JNA && Dwmapi.INSTANCE != null) {
-            this.addEventFilter(WindowEvent.WINDOW_SHOWN, new EventHandler<>() {
-                @Override
-                public void handle(WindowEvent event) {
-                    LogWindow.this.removeEventFilter(WindowEvent.WINDOW_SHOWN, this);
-
-                    windowsDarkModeListenerHolder = FXUtils.onWeakChangeAndOperate(Themes.darkModeProperty(), darkMode -> {
-                        if (LogWindow.this.isShowing()) {
-                            WindowsNativeUtils.getWindowHandle(LogWindow.this).ifPresent(handle -> {
-                                if (handle == WinTypes.HANDLE.INVALID_VALUE)
-                                    return;
-
-                                Dwmapi.INSTANCE.DwmSetWindowAttribute(
-                                        new WinTypes.HANDLE(Pointer.createConstant(handle)),
-                                        WinConstants.DWMWA_USE_IMMERSIVE_DARK_MODE,
-                                        new WinTypes.BOOLByReference(new WinTypes.BOOL(darkMode)),
-                                        WinTypes.BOOL.SIZE
-                                );
-                            });
-                        }
-                    });
-                }
-            });
-        }
-    }
-
     public LogWindow(ManagedProcess gameProcess) {
         this(gameProcess, new CircularArrayList<>());
     }
 
     public LogWindow(ManagedProcess gameProcess, CircularArrayList<Log> logs) {
+        Themes.applyNativeDarkMode(this);
+
         this.logs = logs;
         this.impl = new LogWindowImpl();
         setScene(new Scene(impl, 800, 480));
@@ -200,10 +164,12 @@ public final class LogWindow extends Stage {
         private final StringProperty[] buttonText = new StringProperty[LEVELS.length];
         private final BooleanProperty[] showLevel = new BooleanProperty[LEVELS.length];
         private final JFXComboBox<Integer> cboLines = new JFXComboBox<>();
+        private final StackPane stackPane = new StackPane();
 
         LogWindowImpl() {
             getStyleClass().add("log-window");
 
+            listView.getProperties().put("no-smooth-scrolling", true);
             listView.setItems(FXCollections.observableList(new CircularArrayList<>(logs.size())));
 
             for (int i = 0; i < LEVELS.length; i++) {
@@ -241,9 +207,8 @@ public final class LogWindow extends Stage {
                 }
 
                 Platform.runLater(() -> {
-                    Alert alert = new Alert(Alert.AlertType.INFORMATION, i18n("settings.launcher.launcher_log.export.success", logFile));
-                    alert.setTitle(i18n("settings.launcher.launcher_log.export"));
-                    alert.showAndWait();
+                    var dialog = new MessageDialogPane.Builder(i18n("settings.launcher.launcher_log.export.success", logFile), i18n("message.success"), MessageDialogPane.MessageType.SUCCESS).ok(null).build();
+                    DialogUtils.show(stackPane, dialog);
                 });
 
                 FXUtils.showFileInExplorer(logFile);
@@ -267,9 +232,8 @@ public final class LogWindow extends Stage {
                     LOG.warning("Failed to create minecraft jstack dump", e);
 
                     Platform.runLater(() -> {
-                        Alert alert = new Alert(Alert.AlertType.ERROR, i18n("logwindow.export_dump"));
-                        alert.setTitle(i18n("message.error"));
-                        alert.showAndWait();
+                        var dialog = new MessageDialogPane.Builder(i18n("logwindow.export_dump") + "\n" + StringUtils.getStackTrace(e), i18n("message.error"), MessageDialogPane.MessageType.ERROR).ok(null).build();
+                        DialogUtils.show(stackPane, dialog);
                     });
                 }
 
@@ -294,13 +258,16 @@ public final class LogWindow extends Stage {
         private static final PseudoClass SELECTED = PseudoClass.getPseudoClass("selected");
 
         private final Set<ListCell<Log>> selected = new HashSet<>();
+        private final JFXSnackbar snackbar = new JFXSnackbar();
 
         LogWindowSkin(LogWindowImpl control) {
             super(control);
 
             VBox vbox = new VBox(3);
             vbox.setPadding(new Insets(3, 0, 3, 0));
-            getChildren().setAll(vbox);
+            getSkinnable().stackPane.getChildren().setAll(vbox);
+            getChildren().setAll(getSkinnable().stackPane);
+            snackbar.registerSnackbarContainer(getSkinnable().stackPane);
 
             {
                 BorderPane borderPane = new BorderPane();
@@ -343,8 +310,7 @@ public final class LogWindow extends Stage {
 
                 listView.setStyle("-fx-font-family: \"" + Lang.requireNonNullElse(config().getFontFamily(), FXUtils.DEFAULT_MONOSPACE_FONT)
                         + "\"; -fx-font-size: " + config().getFontSize() + "px;");
-                Holder<Object> lastCell = new Holder<>();
-                listView.setCellFactory(x -> new ListCell<Log>() {
+                listView.setCellFactory(x -> new ListCell<>() {
                     {
                         x.setSelectionModel(new NoneMultipleSelectionModel<>());
                         getStyleClass().add("log-window-list-cell");
@@ -388,11 +354,6 @@ public final class LogWindow extends Stage {
                     protected void updateItem(Log item, boolean empty) {
                         super.updateItem(item, empty);
 
-                        // https://mail.openjdk.org/pipermail/openjfx-dev/2022-July/034764.html
-                        if (this == lastCell.value && !isVisible())
-                            return;
-                        lastCell.value = this;
-
                         pseudoClassStateChanged(EMPTY, empty);
                         pseudoClassStateChanged(FATAL, !empty && item.getLevel() == Log4jLevel.FATAL);
                         pseudoClassStateChanged(ERROR, !empty && item.getLevel() == Log4jLevel.ERROR);
@@ -422,7 +383,8 @@ public final class LogWindow extends Stage {
                             }
                         }
 
-                        FXUtils.copyText(stringBuilder.toString());
+                        FXUtils.copyText(stringBuilder.toString(), null);
+                        snackbar.fireEvent(new JFXSnackbar.SnackbarEvent(new JFXSnackbarLayout(i18n("message.copied"))));
                     }
                 });
 
