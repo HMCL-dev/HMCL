@@ -30,7 +30,6 @@ import javafx.scene.Node;
 import javafx.scene.control.ListCell;
 import javafx.scene.control.Skin;
 import javafx.scene.control.Tooltip;
-import javafx.scene.image.ImageView;
 import javafx.scene.input.MouseButton;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
@@ -243,7 +242,7 @@ public final class WorldListPage extends ListPageBase<World> implements VersionP
         private final WorldListPage page;
 
         private final RipplerContainer graphic;
-        private final ImageView imageView;
+        private final ImageContainer imageView;
         private final Tooltip leftTooltip;
         private final TwoLineListItem content;
         private final JFXButton btnLaunch;
@@ -262,9 +261,8 @@ public final class WorldListPage extends ListPageBase<World> implements VersionP
                 root.setLeft(left);
                 left.setPadding(new Insets(0, 8, 0, 0));
 
-                this.imageView = new ImageView();
+                this.imageView = new ImageContainer(32);
                 left.getChildren().add(imageView);
-                FXUtils.limitSize(imageView, 32, 32);
             }
 
             {
