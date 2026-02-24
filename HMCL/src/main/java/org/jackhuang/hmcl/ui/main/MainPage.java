@@ -19,10 +19,7 @@ package org.jackhuang.hmcl.ui.main;
 
 import com.jfoenix.controls.JFXButton;
 import com.jfoenix.controls.JFXPopup;
-import javafx.animation.KeyFrame;
-import javafx.animation.KeyValue;
-import javafx.animation.PauseTransition;
-import javafx.animation.Timeline;
+import javafx.animation.*;
 import javafx.beans.property.*;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
@@ -230,7 +227,7 @@ public final class MainPage extends StackPane implements DecoratorPage {
                             currentLabel.setText(null);
                             graphic.getChildren().setAll(launchLabel);
                             launchButton.setOnAction(e -> {
-                                if (pauseTransition.getStatus() != javafx.animation.Animation.Status.RUNNING) {
+                                if (pauseTransition.getStatus() != Animation.Status.RUNNING) {
                                     MainPage.this.launchNoGame();
                                     pauseTransition.playFromStart();
                                 }
@@ -243,7 +240,7 @@ public final class MainPage extends StackPane implements DecoratorPage {
                             currentLabel.setText(currentGame);
                             graphic.getChildren().setAll(launchLabel, currentLabel);
                             launchButton.setOnAction(e -> {
-                                if (pauseTransition.getStatus() != javafx.animation.Animation.Status.RUNNING) {
+                                if (pauseTransition.getStatus() != Animation.Status.RUNNING) {
                                     MainPage.this.launch();
                                     pauseTransition.playFromStart();
                                 }
