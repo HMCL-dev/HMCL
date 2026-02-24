@@ -18,7 +18,6 @@
 package org.jackhuang.hmcl.ui.main;
 
 import com.jfoenix.controls.JFXButton;
-import com.jfoenix.controls.JFXComboBox;
 import com.jfoenix.controls.JFXRadioButton;
 import javafx.application.Platform;
 import javafx.beans.InvalidationListener;
@@ -40,11 +39,8 @@ import org.jackhuang.hmcl.setting.Settings;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
-import org.jackhuang.hmcl.ui.construct.ComponentList;
-import org.jackhuang.hmcl.ui.construct.ComponentSublist;
+import org.jackhuang.hmcl.ui.construct.*;
 import org.jackhuang.hmcl.ui.construct.MessageDialogPane.MessageType;
-import org.jackhuang.hmcl.ui.construct.MultiFileItem;
-import org.jackhuang.hmcl.ui.construct.OptionToggleButton;
 import org.jackhuang.hmcl.upgrade.RemoteVersion;
 import org.jackhuang.hmcl.upgrade.UpdateChannel;
 import org.jackhuang.hmcl.upgrade.UpdateChecker;
@@ -69,7 +65,6 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
 import static org.jackhuang.hmcl.setting.ConfigHolder.config;
-import static org.jackhuang.hmcl.ui.FXUtils.stringConverter;
 import static org.jackhuang.hmcl.util.Lang.thread;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 import static org.jackhuang.hmcl.util.javafx.ExtendedProperties.selectedItemPropertyFor;
@@ -183,20 +178,21 @@ public final class SettingsPage extends ScrollPane {
                 }
 
                 {
-                    VBox content = new VBox();
-                    content.setSpacing(8);
-
-                    JFXRadioButton chkUpdateStable = new JFXRadioButton(i18n("update.channel.stable"));
-                    JFXRadioButton chkUpdateDev = new JFXRadioButton(i18n("update.channel.dev"));
+                    VBox content = new VBox(12);
+                    content.setPadding(new Insets(8, 0, 0, 0));
 
                     updateChannelGroup = new ToggleGroup();
-                    chkUpdateDev.setToggleGroup(updateChannelGroup);
-                    chkUpdateDev.setUserData(UpdateChannel.DEVELOPMENT);
-                    chkUpdateStable.setToggleGroup(updateChannelGroup);
+
+                    JFXRadioButton chkUpdateStable = new JFXRadioButton(i18n("update.channel.stable"));
                     chkUpdateStable.setUserData(UpdateChannel.STABLE);
+                    chkUpdateStable.setToggleGroup(updateChannelGroup);
+
+                    JFXRadioButton chkUpdateDev = new JFXRadioButton(i18n("update.channel.dev"));
+                    chkUpdateDev.setUserData(UpdateChannel.DEVELOPMENT);
+                    chkUpdateDev.setToggleGroup(updateChannelGroup);
 
                     Label noteWrapper = new Label(i18n("update.note"));
-                    VBox.setMargin(noteWrapper, new Insets(10, 0, 0, 0));
+                    VBox.setMargin(noteWrapper, new Insets(8, 0, 0, 0));
 
                     content.getChildren().setAll(chkUpdateStable, chkUpdateDev, noteWrapper);
 
@@ -206,7 +202,7 @@ public final class SettingsPage extends ScrollPane {
             }
 
             {
-                OptionToggleButton previewPane = new OptionToggleButton();
+                LineToggleButton previewPane = new LineToggleButton();
                 previewPane.setTitle(i18n("update.preview"));
                 previewPane.setSubtitle(i18n("update.preview.subtitle"));
                 previewPane.selectedProperty().bindBidirectional(config().acceptPreviewUpdateProperty());
@@ -250,37 +246,27 @@ public final class SettingsPage extends ScrollPane {
             }
 
             {
-                BorderPane languagePane = new BorderPane();
-
-                VBox left = new VBox();
-                Label title = new Label(i18n("settings.launcher.language"));
-                title.getStyleClass().add("title");
-                Label subtitle = new Label(i18n("settings.take_effect_after_restart"));
-                subtitle.getStyleClass().add("subtitle");
-                left.getChildren().setAll(title, subtitle);
-                languagePane.setLeft(left);
+                var chooseLanguagePane = new LineSelectButton<SupportedLocale>();
+                chooseLanguagePane.setTitle(i18n("settings.launcher.language"));
+                chooseLanguagePane.setSubtitle(i18n("settings.take_effect_after_restart"));
 
                 SupportedLocale currentLocale = I18n.getLocale();
-                JFXComboBox<SupportedLocale> cboLanguage = new JFXComboBox<>();
-                cboLanguage.setConverter(stringConverter(locale -> {
+                chooseLanguagePane.setConverter(locale -> {
                     if (locale.isDefault())
                         return locale.getDisplayName(currentLocale);
                     else if (locale.isSameLanguage(currentLocale))
                         return locale.getDisplayName(locale);
                     else
                         return locale.getDisplayName(currentLocale) + " - " + locale.getDisplayName(locale);
-                }));
-                cboLanguage.getItems().setAll(SupportedLocale.getSupportedLocales());
-                selectedItemPropertyFor(cboLanguage).bindBidirectional(config().localizationProperty());
+                });
+                chooseLanguagePane.setItems(SupportedLocale.getSupportedLocales());
+                chooseLanguagePane.valueProperty().bindBidirectional(config().localizationProperty());
 
-                FXUtils.setLimitWidth(cboLanguage, 300);
-                languagePane.setRight(cboLanguage);
-
-                settingsPane.getContent().add(languagePane);
+                settingsPane.getContent().add(chooseLanguagePane);
             }
 
             {
-                OptionToggleButton disableAutoGameOptionsPane = new OptionToggleButton();
+                LineToggleButton disableAutoGameOptionsPane = new LineToggleButton();
                 disableAutoGameOptionsPane.setTitle(i18n("settings.launcher.disable_auto_game_options"));
                 disableAutoGameOptionsPane.selectedProperty().bindBidirectional(config().disableAutoGameOptionsProperty());
 

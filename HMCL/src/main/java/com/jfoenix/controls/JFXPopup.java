@@ -127,6 +127,10 @@ public class JFXPopup extends PopupControl {
     /// @param initOffsetX on the x-axis
     /// @param initOffsetY on the y-axis
     public void show(Node node, PopupVPosition vAlign, PopupHPosition hAlign, double initOffsetX, double initOffsetY) {
+        show(node, vAlign, hAlign, initOffsetX, initOffsetY, false);
+    }
+
+    public void show(Node node, PopupVPosition vAlign, PopupHPosition hAlign, double initOffsetX, double initOffsetY, boolean attachToNode) {
         if (!isShowing()) {
             Scene scene = node.getScene();
             if (scene == null || scene.getWindow() == null) {
@@ -137,10 +141,13 @@ public class JFXPopup extends PopupControl {
 
             boolean isRTL = node.getEffectiveNodeOrientation() == NodeOrientation.RIGHT_TO_LEFT;
 
-            this.show(parent,
-                    parent.getX() + scene.getX() + origin.getX() + (hAlign == PopupHPosition.RIGHT ? ((Region) node).getWidth() : 0),
-                    parent.getY() + origin.getY() + scene.getY() + (vAlign == PopupVPosition.BOTTOM ? ((Region) node).getHeight() : 0)
-            );
+            double anchorX = parent.getX() + scene.getX() + origin.getX() + (hAlign == PopupHPosition.RIGHT ? ((Region) node).getWidth() : 0);
+            double anchorY = parent.getY() + origin.getY() + scene.getY() + (vAlign == PopupVPosition.BOTTOM ? ((Region) node).getHeight() : 0);
+
+            if (attachToNode)
+                this.show(node, anchorX, anchorY);
+            else
+                this.show(parent, anchorX, anchorY);
 
             ((JFXPopupSkin) getSkin()).reset(vAlign, isRTL ? hAlign.getOpposite() : hAlign, isRTL ? -initOffsetX : initOffsetX, initOffsetY);
             Platform.runLater(() -> ((JFXPopupSkin) getSkin()).animate());

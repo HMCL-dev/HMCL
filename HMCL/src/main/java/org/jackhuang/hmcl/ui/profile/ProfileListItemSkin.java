@@ -19,6 +19,7 @@ package org.jackhuang.hmcl.ui.profile;
 
 import com.jfoenix.controls.JFXButton;
 import javafx.css.PseudoClass;
+import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
 import javafx.scene.control.SkinBase;
@@ -30,11 +31,10 @@ import org.jackhuang.hmcl.ui.construct.RipplerContainer;
 import org.jackhuang.hmcl.ui.construct.TwoLineListItem;
 
 public class ProfileListItemSkin extends SkinBase<ProfileListItem> {
-    private final PseudoClass SELECTED = PseudoClass.getPseudoClass("selected");
+    private static final PseudoClass SELECTED = PseudoClass.getPseudoClass("selected");
 
     public ProfileListItemSkin(ProfileListItem skinnable) {
         super(skinnable);
-
 
         BorderPane root = new BorderPane();
         root.setPickOnBounds(false);
@@ -46,7 +46,9 @@ public class ProfileListItemSkin extends SkinBase<ProfileListItem> {
 
         FXUtils.onClicked(getSkinnable(), () -> getSkinnable().setSelected(true));
 
-        Node left = FXUtils.wrap(SVG.FOLDER);
+        Node left = SVG.FOLDER.createIcon(20);
+        left.setMouseTransparent(true);
+        BorderPane.setMargin(left, new Insets(0, 6, 0, 6));
         root.setLeft(left);
         BorderPane.setAlignment(left, Pos.CENTER_LEFT);
 

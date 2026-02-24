@@ -28,16 +28,15 @@ import javafx.css.PseudoClass;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Cursor;
-import javafx.scene.Node;
 import javafx.scene.control.Control;
 import javafx.scene.control.Label;
 import javafx.scene.control.Skin;
 import javafx.scene.control.SkinBase;
-import javafx.scene.image.ImageView;
 import javafx.scene.input.MouseButton;
 import javafx.scene.layout.*;
 import org.jackhuang.hmcl.download.LibraryAnalyzer;
 import org.jackhuang.hmcl.setting.VersionIconType;
+import org.jackhuang.hmcl.ui.construct.ImageContainer;
 import org.jackhuang.hmcl.ui.construct.RipplerContainer;
 import org.jackhuang.hmcl.util.i18n.I18n;
 import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
@@ -194,8 +193,9 @@ public class InstallerItem extends Control {
             mutualIncompatible(incompatibleMap, forge, fabric, quilt, neoForge, cleanroom, legacyfabric);
             addIncompatibles(incompatibleMap, liteLoader, fabric, quilt, neoForge, cleanroom, legacyfabric);
             addIncompatibles(incompatibleMap, optiFine, fabric, quilt, neoForge, cleanroom, liteLoader, legacyfabric);
-            addIncompatibles(incompatibleMap, fabricApi, forge, quiltApi, neoForge, liteLoader, optiFine, cleanroom, legacyfabricApi, legacyfabricApi);
+            addIncompatibles(incompatibleMap, fabricApi, forge, quiltApi, neoForge, liteLoader, optiFine, cleanroom, legacyfabric, legacyfabricApi);
             addIncompatibles(incompatibleMap, quiltApi, forge, fabric, fabricApi, neoForge, liteLoader, optiFine, cleanroom, legacyfabric, legacyfabricApi);
+            addIncompatibles(incompatibleMap, legacyfabricApi, forge, fabric, fabricApi, neoForge, liteLoader, optiFine, cleanroom, quilt, quiltApi);
 
             for (Map.Entry<InstallerItem, Set<InstallerItem>> entry : incompatibleMap.entrySet()) {
                 InstallerItem item = entry.getKey();
@@ -294,14 +294,14 @@ public class InstallerItem extends Control {
             paneWrapper.pseudoClassStateChanged(CARD, control.style == Style.CARD);
 
             if (control.iconType != null) {
-                ImageView view = new ImageView(control.iconType.getIcon());
-                Node node = FXUtils.limitingSize(view, 32, 32);
-                node.setMouseTransparent(true);
-                node.getStyleClass().add("installer-item-image");
-                pane.getChildren().add(node);
+                var imageContainer = new ImageContainer(32);
+                imageContainer.setImage(control.iconType.getIcon());
+                imageContainer.setMouseTransparent(true);
+                imageContainer.getStyleClass().add("installer-item-image");
+                pane.getChildren().add(imageContainer);
 
                 if (control.style == Style.CARD) {
-                    VBox.setMargin(node, new Insets(8, 0, 16, 0));
+                    VBox.setMargin(imageContainer, new Insets(8, 0, 16, 0));
                 }
             }
 
@@ -342,6 +342,7 @@ public class InstallerItem extends Control {
             BorderPane.setAlignment(statusLabel, Pos.CENTER_LEFT);
 
             HBox buttonsContainer = new HBox();
+            buttonsContainer.setPickOnBounds(false);
             buttonsContainer.setSpacing(8);
             buttonsContainer.setAlignment(Pos.CENTER);
             pane.getChildren().add(buttonsContainer);
