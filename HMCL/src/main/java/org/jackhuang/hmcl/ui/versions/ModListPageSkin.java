@@ -556,7 +556,7 @@ final class ModListPageSkin extends SkinBase<ModListPage> {
         TwoLineListItem content = new TwoLineListItem();
         JFXButton restoreButton = FXUtils.newToggleButton4(SVG.RESTORE);
         JFXButton infoButton = FXUtils.newToggleButton4(SVG.INFO);
-        JFXButton revealButton = FXUtils.newToggleButton4(SVG.FOLDER_OPEN);
+        JFXButton revealButton = FXUtils.newToggleButton4(SVG.FOLDER);
         BooleanProperty booleanProperty;
 
         Tooltip warningTooltip;
