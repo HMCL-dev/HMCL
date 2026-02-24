@@ -36,7 +36,6 @@ import org.jackhuang.hmcl.util.io.JarUtils;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
 
 import java.io.IOException;
-import java.lang.management.ManagementFactory;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -177,14 +176,18 @@ public final class UpdateHandler {
     private static void startJava(Path jar, String... appArgs) throws IOException {
         List<String> commandline = new ArrayList<>();
         commandline.add(JavaRuntime.getDefault().getBinary().toString());
+
         try {
-            commandline.addAll(ManagementFactory.getRuntimeMXBean().getInputArguments());
+            Class<?> clazz = Class.forName("jdk.internal.misc.VM");
+            String[] arguments = (String[]) clazz.getDeclaredMethod("getRuntimeArguments").invoke(null);
+            commandline.addAll(List.of(arguments));
         } catch (Throwable t) {
+            LOG.warning("Failed to get vm arguments", t);
+
             for (Map.Entry<Object, Object> entry : System.getProperties().entrySet()) {
                 Object key = entry.getKey();
                 if (key instanceof String stringKey) {
-                    if (stringKey.startsWith("hmcl.") || stringKey.startsWith("glass.")
-                        || stringKey.startsWith("javafx.") || stringKey.startsWith("prism.")) {
+                    if (stringKey.startsWith("hmcl.")) {
                         commandline.add("-D" + key + "=" + entry.getValue());
                     }
                 }
