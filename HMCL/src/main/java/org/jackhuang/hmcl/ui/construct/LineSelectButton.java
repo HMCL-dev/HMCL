@@ -226,11 +226,19 @@ public final class LineSelectButton<T> extends LineButton {
 
         var code = event.getCode();
 
-        if (code == KeyCode.UP && index > 0) {
-            setValue(list.get(index - 1));
+        if (code == KeyCode.UP) {
+            if (index > 0) {
+                setValue(list.get(index - 1));
+            } else {
+                setValue(list.get(list.size() - 1));
+            }
             event.consume();
-        } else if (code == KeyCode.DOWN && index < list.size() - 1) {
-            setValue(list.get(index + 1));
+        } else if (code == KeyCode.DOWN) {
+            if (index < list.size() - 1) {
+                setValue(list.get(index + 1));
+            } else {
+                setValue(list.get(0));
+            }
             event.consume();
         } else if (code == KeyCode.ENTER || code == KeyCode.ESCAPE) {
             if (popup != null && popup.isShowing()) {
