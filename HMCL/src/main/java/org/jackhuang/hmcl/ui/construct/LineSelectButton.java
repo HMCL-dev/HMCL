@@ -228,8 +228,10 @@ public final class LineSelectButton<T> extends LineButton {
 
         if (code == KeyCode.UP && index > 0) {
             setValue(list.get(index - 1));
+            event.consume();
         } else if (code == KeyCode.DOWN && index < list.size() - 1) {
             setValue(list.get(index + 1));
+            event.consume();
         } else if (code == KeyCode.ENTER || code == KeyCode.ESCAPE) {
             if (popup != null && popup.isShowing()) {
                 popup.hide();
