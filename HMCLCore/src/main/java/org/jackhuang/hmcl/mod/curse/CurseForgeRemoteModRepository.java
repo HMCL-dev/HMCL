@@ -135,6 +135,7 @@ public final class CurseForgeRemoteModRepository implements RemoteModRepository 
 
             Response<List<CurseAddon>> response = null;
 
+            IOException exception = null;
             List<URI> candidates = downloadProvider.injectURLWithCandidates(NetworkUtils.withQuery(PREFIX + "/v1/mods/search", query));
             for (URI candidate : candidates) {
                 LOG.info("Fetching " + candidate);
@@ -146,12 +147,20 @@ public final class CurseForgeRemoteModRepository implements RemoteModRepository 
                     }
                     break;
                 } catch (IOException e) {
-                    LOG.warning("Failed to get mods from " + candidate, e);
+                    LOG.warning("Failed to search addons: " + candidate, e);
+                    if (candidates.size() == 1) {
+                        exception = e;
+                    } else {
+                        if (exception == null) {
+                            exception = new IOException("Failed to search addons");
+                        }
+                        exception.addSuppressed(e);
+                    }
                 }
             }
 
             if (response == null) {
-                throw new IOException("No candidates found");
+                throw exception != null ? exception : new IOException("No candidates found");
             }
 
             // https://github.com/HMCL-dev/HMCL/issues/1549
