@@ -37,6 +37,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.net.URI;
 import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.time.Instant;
@@ -54,6 +55,7 @@ import java.util.stream.Stream;
 import static org.jackhuang.hmcl.util.Lang.mapOf;
 import static org.jackhuang.hmcl.util.Pair.pair;
 import static org.jackhuang.hmcl.util.gson.JsonUtils.listTypeOf;
+import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 public final class ModrinthRemoteModRepository implements RemoteModRepository {
     public static final ModrinthRemoteModRepository MODS = new ModrinthRemoteModRepository("mod");
@@ -112,9 +114,30 @@ public final class ModrinthRemoteModRepository implements RemoteModRepository {
                     pair("limit", Integer.toString(pageSize)),
                     pair("index", convertSortType(sort))
             );
-            Response<ProjectSearchResult> response = HttpRequest.GET(downloadProvider.injectURL(NetworkUtils.withQuery(PREFIX + "/v2/search", query)))
-                    .getJson(Response.typeOf(ProjectSearchResult.class));
-            return new SearchResult(response.getHits().stream().map(ProjectSearchResult::toMod), (int) Math.ceil((double) response.totalHits / pageSize));
+
+
+            List<URI> candidates = downloadProvider.injectURLWithCandidates(NetworkUtils.withQuery(PREFIX + "/v2/search", query));
+            IOException exception = null;
+            for (URI candidate : candidates) {
+                try {
+                    LOG.info("Fetching " + candidate);
+                    Response<ProjectSearchResult> response = HttpRequest.GET(candidate.toString())
+                            .getJson(Response.typeOf(ProjectSearchResult.class));
+                    return new SearchResult(response.getHits().stream().map(ProjectSearchResult::toMod), (int) Math.ceil((double) response.totalHits / pageSize));
+                } catch (IOException e) {
+                    LOG.warning("Failed to search addons: " + candidate, e);
+                    if (candidates.size() == 1) {
+                        exception = e;
+                    } else {
+                        if (exception == null) {
+                            exception = new IOException("Failed to search addons");
+                        }
+                        exception.addSuppressed(e);
+                    }
+                }
+            }
+
+            throw exception != null ? exception : new IOException("No candidates found");
         } finally {
             SEMAPHORE.release();
         }
