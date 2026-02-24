@@ -12,7 +12,6 @@ import javafx.geometry.Pos;
 import javafx.scene.Node;
 import javafx.scene.control.*;
 import javafx.scene.image.Image;
-import javafx.scene.image.ImageView;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.HBox;
@@ -461,7 +460,7 @@ public final class ResourcePackListPage extends ListPageBase<ResourcePackListPag
         private final ResourcePackListPage page;
 
         private final JFXCheckBox checkBox;
-        private final ImageView imageView = new ImageView();
+        private final ImageContainer imageContainer = new ImageContainer(24);
         private final TwoLineListItem content = new TwoLineListItem();
         private final JFXButton btnReveal = new JFXButton();
         private final JFXButton btnInfo = new JFXButton();
@@ -498,20 +497,16 @@ public final class ResourcePackListPage extends ListPageBase<ResourcePackListPag
                 }
             };
 
-            imageView.setFitWidth(24);
-            imageView.setFitHeight(24);
-            imageView.setPreserveRatio(true);
-
             HBox.setHgrow(content, Priority.ALWAYS);
             content.setMouseTransparent(true);
 
             btnReveal.getStyleClass().add("toggle-icon4");
-            btnReveal.setGraphic(FXUtils.limitingSize(SVG.FOLDER.createIcon(24), 24, 24));
+            btnReveal.setGraphic(SVG.FOLDER.createIcon());
 
             btnInfo.getStyleClass().add("toggle-icon4");
-            btnInfo.setGraphic(FXUtils.limitingSize(SVG.INFO.createIcon(24), 24, 24));
+            btnInfo.setGraphic(SVG.INFO.createIcon());
 
-            root.getChildren().setAll(checkBox, imageView, content, btnReveal, btnInfo);
+            root.getChildren().setAll(checkBox, imageContainer, content, btnReveal, btnInfo);
 
             setSelectable();
 
@@ -528,7 +523,7 @@ public final class ResourcePackListPage extends ListPageBase<ResourcePackListPag
             }
             this.object = item;
             ResourcePackFile file = item.getFile();
-            imageView.setImage(item.getIcon());
+            imageContainer.setImage(item.getIcon());
 
             content.setTitle(file.getFileName());
             content.setSubtitle(file.getFileNameWithExtension());
@@ -566,9 +561,8 @@ public final class ResourcePackListPage extends ListPageBase<ResourcePackListPag
             Stage stage = Controllers.getStage();
             maxWidthProperty().bind(stage.widthProperty().multiply(0.7));
 
-            ImageView imageView = new ImageView();
-            imageView.setImage(packInfoObject.getIcon());
-            FXUtils.limitSize(imageView, 40, 40);
+            ImageContainer imageContainer = new ImageContainer(40);
+            imageContainer.setImage(packInfoObject.getIcon());
 
             TwoLineListItem title = new TwoLineListItem();
             title.setTitle(pack.getFileName());
@@ -580,7 +574,7 @@ public final class ResourcePackListPage extends ListPageBase<ResourcePackListPag
                 title.addTagWarning(getWarning(compatibility));
             }
 
-            titleContainer.getChildren().setAll(FXUtils.limitingSize(imageView, 40, 40), title);
+            titleContainer.getChildren().setAll(imageContainer, title);
             setHeading(titleContainer);
 
             Label description = new Label(Objects.requireNonNullElse(pack.getDescription(), "").toString());
