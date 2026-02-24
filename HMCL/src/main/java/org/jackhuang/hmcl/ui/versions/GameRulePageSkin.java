@@ -108,31 +108,38 @@ class GameRulePageSkin extends SkinBase<GameRulePage> {
 
     static class GameRuleListCell extends MDListCell<GameRuleInfo<?>> {
 
+        HBox hBox = new HBox();
+        // Although updateControl should be called when being reused, I don't know why it gets called when clicking the cell, leading to unexpected updates.
+        // Therefore, I determine whether an update is needed by comparing with lastItem.
+        GameRuleInfo<?> lastItem;
+
         public GameRuleListCell(JFXListView<GameRuleInfo<?>> listView, BooleanProperty readOnly) {
             super(listView);
             this.disableProperty().bind(readOnly);
+
+            getContainer().getChildren().setAll(hBox);
         }
 
         @Override
         protected void updateControl(GameRuleInfo<?> item, boolean empty) {
             if (empty) return;
 
-            HBox hBox = null;
-            if (item instanceof GameRuleInfo.IntGameRuleInfo intInfo) {
-                hBox = buildNodeForIntGameRule(intInfo);
-            } else if (item instanceof GameRuleInfo.BooleanGameRuleInfo booleanInfo) {
-                hBox = buildNodeForBooleanGameRule(booleanInfo);
-            }
-            if (hBox != null) {
-                getContainer().getChildren().setAll(hBox);
+            if (lastItem == null || lastItem != item) {
+                lastItem = item;
             } else {
-                getContainer().getChildren().clear();
+                return;
+            }
+
+            if (item instanceof GameRuleInfo.IntGameRuleInfo intInfo) {
+                buildNodeForIntGameRule(intInfo, hBox);
+            } else if (item instanceof GameRuleInfo.BooleanGameRuleInfo booleanInfo) {
+                buildNodeForBooleanGameRule(booleanInfo, hBox);
             }
         }
 
-        private HBox buildNodeForIntGameRule(GameRuleInfo.IntGameRuleInfo gameRule) {
+        private void buildNodeForIntGameRule(GameRuleInfo.IntGameRuleInfo gameRule, HBox itemWrapper) {
             LinePane textFieldResetPane = new LinePane();
-            HBox itemWrapper = new HBox(textFieldResetPane);
+            itemWrapper.getChildren().setAll(textFieldResetPane);
             HBox.setHgrow(itemWrapper, Priority.ALWAYS);
             {
                 HBox.setHgrow(textFieldResetPane, Priority.ALWAYS);
@@ -155,13 +162,11 @@ class GameRulePageSkin extends SkinBase<GameRulePage> {
                 }
                 textFieldResetPane.setRight(new HBox(12, textField, buildResetButton(gameRule)));
             }
-
-            return itemWrapper;
         }
 
-        private HBox buildNodeForBooleanGameRule(GameRuleInfo.BooleanGameRuleInfo gameRule) {
+        private void buildNodeForBooleanGameRule(GameRuleInfo.BooleanGameRuleInfo gameRule, HBox itemWrapper) {
             LineToggleResetButton toggleResetButton = new LineToggleResetButton();
-            HBox itemWrapper = new HBox(toggleResetButton);
+            itemWrapper.getChildren().setAll(toggleResetButton);
             {
                 HBox.setHgrow(toggleResetButton, Priority.ALWAYS);
                 toggleResetButton.selectedProperty().bindBidirectional(gameRule.currentValueProperty());
@@ -181,8 +186,6 @@ class GameRulePageSkin extends SkinBase<GameRulePage> {
                     toggleResetButton.setResetButtonTooltipWhenDisable(i18n("gamerule.not_have_default_values.tooltip"));
                 }
             }
-
-            return itemWrapper;
         }
 
         private StackPane buildResetButton(GameRuleInfo<?> gameRule) {
