@@ -34,7 +34,6 @@ import javafx.scene.Cursor;
 import javafx.scene.Node;
 import javafx.scene.control.*;
 import javafx.scene.image.Image;
-import javafx.scene.image.ImageView;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.*;
@@ -50,10 +49,7 @@ import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.WeakListenerHolder;
-import org.jackhuang.hmcl.ui.construct.NoneMultipleSelectionModel;
-import org.jackhuang.hmcl.ui.construct.RipplerContainer;
-import org.jackhuang.hmcl.ui.construct.SpinnerPane;
-import org.jackhuang.hmcl.ui.construct.TwoLineListItem;
+import org.jackhuang.hmcl.ui.construct.*;
 import org.jackhuang.hmcl.ui.decorator.DecoratorPage;
 import org.jackhuang.hmcl.util.*;
 import org.jackhuang.hmcl.util.i18n.I18n;
@@ -541,7 +537,7 @@ public class DownloadListPage extends Control implements DecoratorPage, VersionP
                     private final StackPane wrapper = new StackPane();
 
                     private final TwoLineListItem content = new TwoLineListItem();
-                    private final ImageView imageView = new ImageView();
+                    private final ImageContainer imageContainer = new ImageContainer(40);
 
                     {
                         setPadding(PADDING);
@@ -551,11 +547,9 @@ public class DownloadListPage extends Control implements DecoratorPage, VersionP
                         container.setCursor(Cursor.HAND);
                         container.setAlignment(Pos.CENTER_LEFT);
 
-                        imageView.setFitWidth(40);
-                        imageView.setFitHeight(40);
-                        imageView.setMouseTransparent(true);
+                        imageContainer.setMouseTransparent(true);
 
-                        container.getChildren().setAll(FXUtils.limitingSize(imageView, 40, 40), content);
+                        container.getChildren().setAll(imageContainer, content);
                         HBox.setHgrow(content, Priority.ALWAYS);
 
                         this.graphic = new RipplerContainer(container);
@@ -588,7 +582,7 @@ public class DownloadListPage extends Control implements DecoratorPage, VersionP
                                 if (getSkinnable().shouldDisplayCategory(category))
                                     content.addTag(getSkinnable().getLocalizedCategory(category));
                             }
-                            iconLoader.load(imageView.imageProperty(), item.getIconUrl());
+                            iconLoader.load(imageContainer.imageProperty(), item.getIconUrl());
                             setGraphic(wrapper);
                         }
                     }
