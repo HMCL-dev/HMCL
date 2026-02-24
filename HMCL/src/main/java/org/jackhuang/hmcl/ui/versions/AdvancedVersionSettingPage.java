@@ -152,6 +152,9 @@ public final class AdvancedVersionSettingPage extends StackPane implements Decor
         workaroundWarning.setText(i18n("settings.advanced.workaround.warning"));
 
         {
+            ComponentSublist unsupportedOptionsSublist = new ComponentSublist();
+            unsupportedOptionsSublist.setTitle(i18n("settings.advanced.unsupported_system_options"));
+
             nativesDirItem = new MultiFileItem<>();
             nativesDirSublist = new ComponentSublist();
             nativesDirSublist.getContent().add(nativesDirItem);
@@ -177,6 +180,10 @@ public final class AdvancedVersionSettingPage extends StackPane implements Decor
             });
             rendererPane.setItems(Renderer.values());
 
+            if (OperatingSystem.CURRENT_OS != OperatingSystem.WINDOWS) {
+                unsupportedOptionsSublist.getContent().addAll(rendererPane);
+            }
+
             noJVMArgsPane = new LineToggleButton();
             noJVMArgsPane.setTitle(i18n("settings.advanced.no_jvm_args"));
 
@@ -199,17 +206,25 @@ public final class AdvancedVersionSettingPage extends StackPane implements Decor
             useNativeOpenALPane = new LineToggleButton();
             useNativeOpenALPane.setTitle(i18n("settings.advanced.use_native_openal"));
 
-            workaroundPane.getContent().setAll(
-                    nativesDirSublist, rendererPane, noJVMArgsPane, noOptimizingJVMArgsPane, noGameCheckPane,
-                    noJVMCheckPane, noNativesPatchPane
-            );
+            if (OperatingSystem.CURRENT_OS != OperatingSystem.WINDOWS) {
+                workaroundPane.getContent().setAll(
+                        nativesDirSublist, noJVMArgsPane, noOptimizingJVMArgsPane, noGameCheckPane,
+                        noJVMCheckPane, noNativesPatchPane
+                );
+            } else {
+                workaroundPane.getContent().setAll(
+                        nativesDirSublist, rendererPane, noJVMArgsPane, noOptimizingJVMArgsPane, noGameCheckPane,
+                        noJVMCheckPane, noNativesPatchPane
+                );
+            }
 
             if (OperatingSystem.CURRENT_OS.isLinuxOrBSD()) {
                 workaroundPane.getContent().addAll(useNativeGLFWPane, useNativeOpenALPane);
             } else {
-                ComponentSublist unsupportedOptionsSublist = new ComponentSublist();
-                unsupportedOptionsSublist.setTitle(i18n("settings.advanced.unsupported_system_options"));
                 unsupportedOptionsSublist.getContent().addAll(useNativeGLFWPane, useNativeOpenALPane);
+            }
+
+            if (!unsupportedOptionsSublist.getContent().isEmpty()) {
                 workaroundPane.getContent().add(unsupportedOptionsSublist);
             }
         }
