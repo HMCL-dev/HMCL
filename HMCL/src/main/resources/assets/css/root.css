@@ -532,6 +532,7 @@
 }
 
 .jfx-layout-heading {
+    -fx-font-weight: BOLD;
     -fx-font-size: 20.0px;
     -fx-alignment: center-left;
     -fx-padding: 5.0 0.0 5.0 0.0;
@@ -572,6 +573,41 @@
     -fx-text-fill: -monet-on-surface;
 }
 
+/*******************************************************************************
+ *                                                                             *
+ * Microsoft Login Dialog                                                      *
+ *                                                                             *
+ ******************************************************************************/
+
+.microsoft-login-dialog:bodyonly {
+    -fx-padding: 0px 0px 0px 0px;
+}
+
+.method-title {
+    -fx-text-fill: -monet-on-surface;
+    -fx-font-weight: bold;
+}
+
+.method-desc {
+    -fx-text-fill: -monet-outline;
+    -fx-font-size: 0.9em;
+    -fx-line-spacing: 2;
+    -fx-wrap-text: true;
+    -fx-text-alignment: center;
+}
+
+.code-box {
+    -fx-background-color: -monet-surface-variant;
+    -fx-background-radius: 6;
+    -fx-padding: 0 10 0 10;
+    -fx-alignment: center;
+}
+
+.code-box .code-label {
+    -fx-font-size: 22px;
+    -fx-font-weight: bold;
+    -fx-text-fill: -monet-primary;
+}
 
 /*******************************************************************************
  *                                                                             *
@@ -755,31 +791,39 @@
  *                                                                             *
  ******************************************************************************/
 
-.svg-slider .thumb {
-    -fx-stroke: -monet-on-surface;
-    -fx-fill: -monet-on-surface;
+.jfx-slider .track,
+.jfx-slider:vertical .track {
+    -fx-background-color: -monet-secondary-container;
+    -fx-background-radius: 5;
+    -fx-background-insets: 0;
+    -fx-pref-width: 2px;
+    -fx-pref-height: 2px;
 }
 
-.jfx-slider:disabled {
-    -fx-opacity: 0.4;
-}
-
-/*******************************************************
-*                           						   *
-* For the main demo sliders 						   *
-*                          							   *
-*******************************************************/
-
-.jfx-slider {
-    -jfx-indicator-position: right;
-}
-
-.jfx-slider .track {
-    -fx-background-color: -monet-on-surface-variant-transparent-38;
-}
-
-.jfx-slider .thumb {
+.jfx-slider .thumb,
+.jfx-slider:focused .thumb {
     -fx-background-color: -monet-primary;
+    -fx-background-radius: 20;
+    -fx-background-insets: 0;
+}
+
+.jfx-slider .colored-track {
+    -fx-background-color: -monet-primary;
+    -fx-background-radius: 5 0 0 5;
+    -fx-background-insets: 0;
+}
+
+.jfx-slider .slider-value {
+    -fx-stroke: -monet-inverse-on-surface;
+    -fx-font-size: 10;
+}
+
+.jfx-slider .animated-thumb {
+    -fx-pref-width: 30px;
+    -fx-pref-height: 30px;
+    -fx-background-color: -monet-inverse-surface;
+    -fx-background-radius: 50% 50% 50% 0%;
+    -fx-background-insets: 0;
 }
 
 /*******************************************************************************
@@ -868,22 +912,27 @@
 *                                                                              *
 *******************************************************************************/
 
-.jfx-progress-bar {
-    -fx-pref-width: 500.0;
-}
-
-.jfx-progress-bar > .track, .jfx-progress-bar > .bar {
-    -fx-background-radius: 0;
-    -fx-background-insets: 0;
-}
-
 .jfx-progress-bar > .track {
     -fx-background-color: -monet-secondary-container;
 }
 
-.jfx-progress-bar > .bar {
+.jfx-progress-bar > .bar,
+.jfx-progress-bar:indeterminate > .bar{
     -fx-background-color: -monet-primary;
+    -fx-padding: 1.5;
 }
+
+.jfx-progress-bar > .secondary-bar,
+.jfx-progress-bar:indeterminate > .secondary-bar {
+    -fx-background-color: -monet-secondary;
+}
+
+.jfx-progress-bar > .track,
+.jfx-progress-bar > .bar {
+    -fx-background-radius: 0;
+    -fx-background-insets: 0;
+}
+
 
 /*******************************************************************************
 *                                                                              *
@@ -1016,6 +1065,13 @@
     -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.26), 10, 0.12, -1, 2);
 }
 
+.card-no-padding {
+    -fx-background-color: -monet-surface-container-low-transparent-80;
+    -fx-background-radius: 4;
+
+    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.26), 10, 0.12, -1, 2);
+}
+
 .card-non-transparent {
     -fx-background-color: -monet-surface-container-low;
     -fx-background-radius: 4;
@@ -1052,10 +1108,6 @@
     -fx-border-width: 1 0 0 0;
     -fx-padding: 10 16 10 16;
     -fx-font-size: 12;
-}
-
-.options-list-item > .line-component .line-component-container {
-    -fx-padding: 10 16 10 16;
 }
 
 .options-list-item .svg {
@@ -1400,21 +1452,19 @@
 *                                                                              *
 *******************************************************************************/
 
-.jfx-spinner > .arc {
-    -fx-stroke-width: 3.0;
-    -fx-fill: transparent;
+.jfx-spinner .arc {
     -fx-stroke: -monet-primary-container;
 }
 
-.jfx-spinner .arc {
-    -fx-stroke-line-cap: round;
+.jfx-spinner:determinate .percentage {
+    -fx-fill: -monet-on-surface-variant;
 }
 
 .first-spinner {
     -jfx-radius: 20;
 }
 
-.first-spinner > .arc {
+.first-spinner .arc {
     -fx-stroke-width: 5.0;
 }
 
@@ -1422,7 +1472,7 @@
     -jfx-radius: 10;
 }
 
-.small-spinner > .arc {
+.small-spinner .arc {
     -fx-stroke-width: 3.0;
 }
 
@@ -1430,7 +1480,7 @@
     -jfx-radius: 10;
 }
 
-.small-spinner-pane .jfx-spinner > .arc {
+.small-spinner-pane .jfx-spinner .arc {
     -fx-stroke-width: 3.0;
 }
 
@@ -1438,7 +1488,7 @@
     -jfx-radius: 30;
 }
 
-.second-spinner > .arc {
+.second-spinner .arc {
     -fx-stroke-width: 5.0;
 }
 
@@ -1446,7 +1496,7 @@
     -jfx-radius: 40;
 }
 
-.third-spinner > .arc {
+.third-spinner .arc {
     -fx-stroke-width: 5.0;
 }
 
@@ -1454,7 +1504,7 @@
     -jfx-radius: 50;
 }
 
-.fourth-spinner > .arc {
+.fourth-spinner .arc {
     -fx-stroke-width: 5.0;
 }
 
@@ -1462,7 +1512,7 @@
     -jfx-radius: 60;
 }
 
-.fifth-spinner > .arc {
+.fifth-spinner .arc {
     -fx-stroke-width: 5.0;
 }
 
@@ -1470,7 +1520,7 @@
     -jfx-radius: 70;
 }
 
-.sixth-spinner > .arc {
+.sixth-spinner .arc {
     -fx-stroke-width: 5.0;
 }
 
@@ -1478,7 +1528,7 @@
     -jfx-radius: 80;
 }
 
-.seventh-spinner > .arc {
+.seventh-spinner .arc {
     -fx-stroke-width: 5.0;
 }
 
@@ -1886,6 +1936,14 @@
  * Line Component                                                              *
  *                                                                             *
  ******************************************************************************/
+
+.line-component .line-component-container {
+    -fx-padding: 10 16 10 16;
+}
+
+.line-component.no-padding .line-component-container {
+    -fx-padding: 0;
+}
 
 .line-component:large-title .title-label {
     -fx-font-size: 15px;

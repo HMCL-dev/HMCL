@@ -106,13 +106,18 @@ public final class TaskListPane extends StackPane {
     }
 
     @FXThread
-    private void addStages(@NotNull Collection<String> stages) {
-        for (String stage : stages) {
-            stageNodes.computeIfAbsent(stage, s -> {
-                StageNode node = new StageNode(stage);
+    private void addStagesHints(@NotNull Collection<Task.StagesHint> hints) {
+        for (Task.StagesHint hint : hints) {
+            StageNode node = stageNodes.get(hint.stage());
+
+            if (node == null) {
+                node = new StageNode(hint.stage());
+                stageNodes.put(hint.stage(), node);
                 listView.getItems().add(node);
-                return node;
-            });
+            }
+            for (String stage : hint.aliases()) {
+                stageNodes.put(stage, node);
+            }
         }
     }
 
@@ -129,7 +134,7 @@ public final class TaskListPane extends StackPane {
                 Platform.runLater(() -> {
                     stageNodes.clear();
                     listView.getItems().clear();
-                    addStages(executor.getStages());
+                    addStagesHints(executor.getHints());
                     updateProgressNodePadding();
                 });
             }
@@ -138,7 +143,7 @@ public final class TaskListPane extends StackPane {
             public void onReady(Task<?> task) {
                 if (task instanceof Task.StagesHintTask) {
                     Platform.runLater(() -> {
-                        addStages(((Task<?>.StagesHintTask) task).getStages());
+                        addStagesHints(((Task<?>.StagesHintTask) task).getHints());
                         updateProgressNodePadding();
                     });
                 }
@@ -394,6 +399,8 @@ public final class TaskListPane extends StackPane {
     }
 
     private static final class StageNode extends Node {
+        private int runningTasksCount = 0;
+
         private enum Status {
             WAITING(SVG.MORE_HORIZ),
             RUNNING(SVG.ARROW_FORWARD),
@@ -454,17 +461,23 @@ public final class TaskListPane extends StackPane {
         }
 
         private void begin() {
-            if (status.get() == Status.WAITING) {
+            runningTasksCount++;
+            if (status.get() == Status.WAITING || status.get() == Status.SUCCESS) {
                 status.set(Status.RUNNING);
             }
         }
 
-        public void fail() {
-            status.set(Status.FAILED);
+        public void succeed() {
+            runningTasksCount = Math.max(0, runningTasksCount - 1);
+
+            if (runningTasksCount == 0) {
+                status.set(Status.SUCCESS);
+            }
         }
 
-        public void succeed() {
-            status.set(Status.SUCCESS);
+        public void fail() {
+            runningTasksCount = Math.max(0, runningTasksCount - 1);
+            status.set(Status.FAILED);
         }
 
         public void count() {
