@@ -493,7 +493,7 @@ public class DownloadPage extends Control implements DecoratorPage {
             scrollPane.setFitToWidth(true);
             scrollPane.setFitToHeight(true);
             FXUtils.smoothScrolling(scrollPane);
-            FXUtils.forceRadii(scrollPane, 4);
+            FXUtils.setOverflowHidden(scrollPane, (double) 4 * 2);
             spinnerPane.setContent(scrollPane);
             box.getChildren().add(spinnerPane);
             VBox.setVgrow(spinnerPane, Priority.SOMETIMES);

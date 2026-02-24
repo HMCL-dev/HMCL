@@ -1663,8 +1663,4 @@ public final class FXUtils {
             e.consume();
         });
     }
-
-    public static void forceRadii(Region region, double radii) {
-        setOverflowHidden(region, radii * 2);
-    }
 }
