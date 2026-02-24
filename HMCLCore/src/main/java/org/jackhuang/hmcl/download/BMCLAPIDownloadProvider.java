@@ -98,8 +98,7 @@ public final class BMCLAPIDownloadProvider implements DownloadProvider {
                 pair("https://api.modrinth.com", "https://mod.mcimirror.top/modrinth"),
                 pair("https://cdn.modrinth.com", "https://mod.mcimirror.top"),
                 pair("https://api.curseforge.com", "https://mod.mcimirror.top/curseforge"),
-                pair("https://edge.forgecdn.net", "https://mod.mcimirror.top"),
-                pair("https://mediafilez.forgecdn.net", "https://mod.mcimirror.top")
+                pair("https://edge.forgecdn.net", "https://mod.mcimirror.top")
         );
     }
 
