@@ -90,6 +90,7 @@ public class GameRulePage extends ListPageBase<GameRuleInfo<?>> implements World
         if (!Files.isDirectory(world.getFile())) {
             LOG.warning("Failed to load level.dat");
             setFailedReason(i18n("world.info.failed"));
+            return;
         }
 
         this.levelDat = world.getLevelData();

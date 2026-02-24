@@ -43,7 +43,7 @@ public class NumberRangeValidator extends ValidatorBase {
 
     private void evalTextInputField() {
         TextInputControl textField = ((TextInputControl) srcControl.get());
-        Double intOrNull = Lang.toDoubleOrNull(textField.getText());
+        Integer intOrNull = Lang.toIntOrNull(textField.getText());
 
         if (intOrNull == null) {
             hasErrors.set(false);

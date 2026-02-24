@@ -113,7 +113,7 @@ public sealed abstract class GameRule permits GameRule.BooleanGameRule, GameRule
             return Optional.of(new GameRuleNBT.IntGameRuleNBT(intTag));
         } else if (tag instanceof ByteTag byteTag) {
             return Optional.of(new GameRuleNBT.ByteGameRuleNBT(byteTag));
-        } else if (tag instanceof StringTag stringTag && (stringTag.getValue().equals("true") || stringTag.getValue().equals("false"))) {
+        } else if (tag instanceof StringTag stringTag && ("true".equalsIgnoreCase(stringTag.getValue()) || "false".equalsIgnoreCase(stringTag.getValue()))) {
             return Optional.of(new GameRuleNBT.StringByteGameRuleNBT(stringTag));
         } else if (tag instanceof StringTag stringTag && Lang.toIntOrNull(stringTag.getValue()) != null) {
             return Optional.of(new GameRuleNBT.StringIntGameRuleNBT(stringTag));
@@ -321,7 +321,8 @@ public sealed abstract class GameRule permits GameRule.BooleanGameRule, GameRule
             switch (jsonObject.get("type").getAsString()) {
                 case "int" -> gameRule = new IntGameRule();
                 case "boolean" -> gameRule = new BooleanGameRule();
-                default -> throw new JsonParseException("Unknown GameRule type: " + jsonObject.get("type").getAsString());
+                default ->
+                        throw new JsonParseException("Unknown GameRule type: " + jsonObject.get("type").getAsString());
             }
             return gameRule.deserialize(jsonObject, type, context);
         }
@@ -331,18 +332,19 @@ public sealed abstract class GameRule permits GameRule.BooleanGameRule, GameRule
         private static final Map<String, GameRule> metaDataGameRuleMap = new HashMap<>();
 
         static {
-            try {
-                InputStream is = GameRule.class.getResourceAsStream("/assets/gamerule/gamerule.json");
-                String jsonContent = IOUtils.readFullyAsString(is);
-                List<GameRule> gameRules = JsonUtils.fromNonNullJson(jsonContent, JsonUtils.listTypeOf(GameRule.class));
+            try (InputStream is = GameRule.class.getResourceAsStream("/assets/gamerule/gamerule.json")) {
+                if (is == null) {
+                    LOG.warning("Cannot find /assets/gamerule/gamerule.json");
+                } else {
+                    String jsonContent = IOUtils.readFullyAsString(is);
+                    List<GameRule> gameRules = JsonUtils.fromNonNullJson(jsonContent, JsonUtils.listTypeOf(GameRule.class));
 
-                for (GameRule gameRule : gameRules) {
-                    for (String s : gameRule.ruleKey) {
-                        metaDataGameRuleMap.put(s, gameRule);
+                    for (GameRule gameRule : gameRules) {
+                        for (String s : gameRule.ruleKey) {
+                            metaDataGameRuleMap.put(s, gameRule);
+                        }
                     }
                 }
-            } catch (NullPointerException e) {
-                LOG.warning("Cannot find /assets/gamerule/gamerule.json", e);
             } catch (IOException e) {
                 LOG.warning("Cannot read gamerule.json", e);
             } catch (JsonParseException e) {

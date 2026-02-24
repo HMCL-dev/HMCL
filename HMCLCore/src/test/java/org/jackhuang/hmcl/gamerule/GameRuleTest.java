@@ -32,16 +32,17 @@ import static org.junit.jupiter.api.Assertions.*;
 
 public class GameRuleTest {
 
-    private String getMataDataJson() throws IOException {
-        InputStream is = GameRule.class.getResourceAsStream("/assets/gamerule/gamerule.json");
-        return IOUtils.readFullyAsString(is);
+    private String getMetaDataJson() throws IOException {
+        try (InputStream is = GameRule.class.getResourceAsStream("/assets/gamerule/gamerule.json")) {
+            return IOUtils.readFullyAsString(is);
+        }
     }
 
     @Test
-    public void testParseMataData() throws IOException {
+    public void testParseMetaData() throws IOException {
         Map<String, GameRule> metaDataGameRuleMap = new HashMap<>();
 
-        String jsonContent = getMataDataJson();
+        String jsonContent = getMetaDataJson();
         List<GameRule> gameRules = JsonUtils.fromNonNullJson(jsonContent, JsonUtils.listTypeOf(GameRule.class));
 
         for (GameRule gameRule : gameRules) {
