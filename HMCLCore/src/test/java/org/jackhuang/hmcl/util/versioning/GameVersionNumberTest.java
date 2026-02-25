@@ -510,7 +510,6 @@ public final class GameVersionNumberTest {
         assertEquals("1.21.11", getReleaseOfSnapshot("25w45a"));
         assertEquals("1.21.11", getReleaseOfSnapshot("25w45a_unobfuscated"));
         assertEquals("1.21.11", getReleaseOfSnapshot("1.21.11-pre3"));
-        assertEquals("1.21.11", getReleaseOfSnapshot("1.21.11-pre3"));
         assertEquals("26.1", getReleaseOfSnapshot("26.1-snapshot-9"));
         assertNull(getReleaseOfSnapshot("26.1"));
         assertNull(getReleaseOfSnapshot("20w14infinite"));
