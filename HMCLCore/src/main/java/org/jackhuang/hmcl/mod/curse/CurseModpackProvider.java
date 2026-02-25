@@ -28,7 +28,6 @@ import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.io.CompressingUtils;
 import org.jackhuang.hmcl.util.io.IOUtils;
 
-import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.charset.Charset;
@@ -52,11 +51,11 @@ public final class CurseModpackProvider implements ModpackProvider {
     }
 
     @Override
-    public Task<?> createUpdateTask(DefaultDependencyManager dependencyManager, String name, File zipFile, Modpack modpack, Set<? extends ModpackFile> selectedFiles) throws MismatchedModpackTypeException {
-        if (!(modpack.getManifest() instanceof CurseManifest))
+    public Task<?> createUpdateTask(DefaultDependencyManager dependencyManager, String name, Path zipFile, Modpack modpack, Set<? extends ModpackFile> selectedFiles) throws MismatchedModpackTypeException {
+        if (!(modpack.getManifest() instanceof CurseManifest curseManifest))
             throw new MismatchedModpackTypeException(getName(), modpack.getManifest().getProvider().getName());
 
-        return new ModpackUpdateTask(dependencyManager.getGameRepository(), name, new CurseInstallTask(dependencyManager, zipFile, modpack, (CurseManifest) modpack.getManifest(), name, selectedFiles));
+        return new ModpackUpdateTask(dependencyManager.getGameRepository(), name, new CurseInstallTask(dependencyManager, zipFile, modpack, curseManifest, name, selectedFiles));
     }
 
     @Override
@@ -72,7 +71,7 @@ public final class CurseModpackProvider implements ModpackProvider {
 
         return new Modpack(manifest.getName(), manifest.getAuthor(), manifest.getVersion(), manifest.getMinecraft().getGameVersion(), description, encoding, manifest) {
             @Override
-            public Task<?> getInstallTask(DefaultDependencyManager dependencyManager, File zipFile, String name, Set<? extends ModpackFile> selectedFiles) {
+            public Task<?> getInstallTask(DefaultDependencyManager dependencyManager, Path zipFile, String name, String iconUrl, Set<? extends ModpackFile> selectedFiles) {
                 return new CurseInstallTask(dependencyManager, zipFile, this, manifest, name, selectedFiles);
             }
         };

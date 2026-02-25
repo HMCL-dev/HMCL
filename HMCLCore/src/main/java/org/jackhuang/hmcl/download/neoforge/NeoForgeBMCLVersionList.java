@@ -42,12 +42,7 @@ public final class NeoForgeBMCLVersionList extends VersionList<NeoForgeRemoteVer
 
     @Override
     public boolean hasType() {
-        return false;
-    }
-
-    @Override
-    public Task<?> loadAsync() {
-        throw new UnsupportedOperationException("NeoForgeBMCLVersionList does not support loading the entire NeoForge remote version list.");
+        return true;
     }
 
     @Override

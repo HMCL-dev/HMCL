@@ -18,14 +18,9 @@
 package org.jackhuang.hmcl.upgrade;
 
 import org.jackhuang.hmcl.task.FileDownloadTask;
-import org.jackhuang.hmcl.util.Pack200Utils;
-import org.tukaani.xz.XZInputStream;
 
-import java.io.ByteArrayInputStream;
-import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.jar.JarOutputStream;
 
 final class HMCLDownloadTask extends FileDownloadTask {
 
@@ -45,15 +40,6 @@ final class HMCLDownloadTask extends FileDownloadTask {
             switch (archiveFormat) {
                 case JAR:
                     break;
-
-                case PACK_XZ:
-                    byte[] raw = Files.readAllBytes(target);
-                    try (InputStream in = new XZInputStream(new ByteArrayInputStream(raw));
-                         JarOutputStream out = new JarOutputStream(Files.newOutputStream(target))) {
-                        Pack200Utils.unpack(in, out);
-                    }
-                    break;
-
                 default:
                     throw new IllegalArgumentException("Unknown format: " + archiveFormat);
             }

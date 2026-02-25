@@ -24,13 +24,11 @@ import com.jfoenix.controls.JFXTextField;
 import javafx.application.Platform;
 import javafx.beans.InvalidationListener;
 import javafx.geometry.Insets;
+import javafx.geometry.VPos;
 import javafx.scene.control.Label;
 import javafx.scene.input.DragEvent;
 import javafx.scene.input.TransferMode;
 import javafx.scene.layout.*;
-import org.jackhuang.hmcl.ui.skin.SkinCanvas;
-import org.jackhuang.hmcl.ui.skin.animation.SkinAniRunning;
-import org.jackhuang.hmcl.ui.skin.animation.SkinAniWavingArms;
 import org.jackhuang.hmcl.auth.offline.OfflineAccount;
 import org.jackhuang.hmcl.auth.offline.Skin;
 import org.jackhuang.hmcl.auth.yggdrasil.TextureModel;
@@ -39,15 +37,19 @@ import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.construct.*;
+import org.jackhuang.hmcl.ui.skin.SkinCanvas;
+import org.jackhuang.hmcl.ui.skin.animation.SkinAniRunning;
+import org.jackhuang.hmcl.ui.skin.animation.SkinAniWavingArms;
+import org.jackhuang.hmcl.util.io.FileUtils;
 
-import java.io.File;
+import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.UUID;
 
 import static org.jackhuang.hmcl.ui.FXUtils.onEscPressed;
 import static org.jackhuang.hmcl.ui.FXUtils.stringConverter;
-import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
+import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 public class OfflineAccountSkinPane extends StackPane {
     private final OfflineAccount account;
@@ -81,16 +83,16 @@ public class OfflineAccountSkinPane extends StackPane {
 
         canvas.addEventHandler(DragEvent.DRAG_OVER, e -> {
             if (e.getDragboard().hasFiles()) {
-                File file = e.getDragboard().getFiles().get(0);
-                if (file.getAbsolutePath().endsWith(".png"))
+                Path file = e.getDragboard().getFiles().get(0).toPath();
+                if (FileUtils.getName(file).endsWith(".png"))
                     e.acceptTransferModes(TransferMode.COPY);
             }
         });
         canvas.addEventHandler(DragEvent.DRAG_DROPPED, e -> {
             if (e.isAccepted()) {
-                File skin = e.getDragboard().getFiles().get(0);
+                Path skin = e.getDragboard().getFiles().get(0).toPath();
                 Platform.runLater(() -> {
-                    skinSelector.setValue(skin.getAbsolutePath());
+                    skinSelector.setValue(FileUtils.getAbsolutePath(skin));
                     skinItem.setSelectedData(Skin.Type.LOCAL_FILE);
                 });
             }
@@ -108,6 +110,7 @@ public class OfflineAccountSkinPane extends StackPane {
 
         cslApiField.setPromptText(i18n("account.skin.type.csl_api.location.hint"));
         cslApiField.setValidators(new URLValidator());
+        FXUtils.setValidateWhileTextChanged(cslApiField, true);
 
         skinItem.loadChildren(Arrays.asList(
                 new MultiFileItem.Option<>(i18n("message.default"), Skin.Type.DEFAULT),
@@ -158,7 +161,9 @@ public class OfflineAccountSkinPane extends StackPane {
 
         FXUtils.onChangeAndOperate(skinItem.selectedDataProperty(), selectedData -> {
             GridPane gridPane = new GridPane();
-            gridPane.setPadding(new Insets(0, 0, 0, 10));
+            // Increase bottom padding to prevent the prompt from overlapping with the dialog action area
+
+            gridPane.setPadding(new Insets(0, 0, 45, 10));
             gridPane.setHgap(16);
             gridPane.setVgap(8);
             gridPane.getColumnConstraints().setAll(new ColumnConstraints(), FXUtils.getColumnHgrowing());
@@ -171,9 +176,23 @@ public class OfflineAccountSkinPane extends StackPane {
                 case LITTLE_SKIN:
                     HintPane hint = new HintPane(MessageDialogPane.MessageType.INFO);
                     hint.setText(i18n("account.skin.type.little_skin.hint"));
+
+                    // Spanning two columns and expanding horizontally
+                    GridPane.setColumnSpan(hint, 2);
+                    GridPane.setHgrow(hint, Priority.ALWAYS);
+                    hint.setMaxWidth(Double.MAX_VALUE);
+
+                    // Force top alignment within cells (to avoid vertical offset caused by the baseline)
+                    GridPane.setValignment(hint, VPos.TOP);
+
+                    // Set a fixed height as the preferred height to prevent the GridPane from stretching or leaving empty space.
+                    hint.setMaxHeight(Region.USE_PREF_SIZE);
+                    hint.setMinHeight(Region.USE_PREF_SIZE);
+
                     gridPane.addRow(0, hint);
                     break;
                 case LOCAL_FILE:
+                    gridPane.setPadding(new Insets(0, 0, 0, 10));
                     gridPane.addRow(0, new Label(i18n("account.skin.model")), modelCombobox);
                     gridPane.addRow(1, new Label(i18n("account.skin")), skinSelector);
                     gridPane.addRow(2, new Label(i18n("account.cape")), capeSelector);
@@ -199,6 +218,10 @@ public class OfflineAccountSkinPane extends StackPane {
         cancelButton.getStyleClass().add("dialog-cancel");
         cancelButton.setOnAction(e -> fireEvent(new DialogCloseEvent()));
         onEscPressed(this, cancelButton::fire);
+
+        acceptButton.disableProperty().bind(
+                skinItem.selectedDataProperty().isEqualTo(Skin.Type.CUSTOM_SKIN_LOADER_API)
+                        .and(cslApiField.activeValidatorProperty().isNotNull()));
 
         layout.setActions(littleSkinLink, acceptButton, cancelButton);
     }

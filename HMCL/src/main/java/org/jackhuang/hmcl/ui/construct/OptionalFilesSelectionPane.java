@@ -29,11 +29,9 @@ import javafx.scene.image.ImageView;
 import javafx.scene.layout.*;
 import org.jackhuang.hmcl.mod.ModpackFile;
 import org.jackhuang.hmcl.mod.RemoteMod;
-import org.jackhuang.hmcl.setting.Theme;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
-import org.jackhuang.hmcl.util.Holder;
 
 import java.util.HashSet;
 import java.util.List;
@@ -73,8 +71,7 @@ public class OptionalFilesSelectionPane extends BorderPane {
     }
 
     public void setOptionalFileList(List<? extends ModpackFile> files) {
-        Holder<Object> holder = new Holder<>();
-        list.setCellFactory(it -> new OptionalFileEntry(list, holder));
+        list.setCellFactory(it -> new OptionalFileEntry(list));
         List<ModpackFile> optionalFiles = files.stream().filter(ModpackFile::isOptional).collect(Collectors.toList());
         list.getItems().setAll(optionalFiles);
         selected = new HashSet<>(files);
@@ -116,8 +113,8 @@ public class OptionalFilesSelectionPane extends BorderPane {
             }
         };
 
-        public OptionalFileEntry(JFXListView<ModpackFile> listView, Holder<Object> lastCell) {
-            super(listView, lastCell);
+        public OptionalFileEntry(JFXListView<ModpackFile> listView) {
+            super(listView);
             container.setPickOnBounds(false);
             container.setAlignment(Pos.CENTER_LEFT);
             HBox.setHgrow(content, Priority.ALWAYS);
@@ -126,7 +123,7 @@ public class OptionalFilesSelectionPane extends BorderPane {
             container.getChildren().setAll(checkBox, content);
 
             infoButton.getStyleClass().add("toggle-icon4");
-            infoButton.setGraphic(FXUtils.limitingSize(SVG.INFO.createIcon(Theme.blackFill(), 24), 24, 24));
+            infoButton.setGraphic(SVG.INFO.createIcon());
             container.getChildren().add(infoButton);
             getContainer().getChildren().setAll(container);
         }

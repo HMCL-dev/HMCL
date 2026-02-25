@@ -90,12 +90,17 @@ public class VersionNumberTest {
         assertLessThan("1.99999999999999999999", "1.199999999999999999999");
         assertLessThan("1.99999999999999999999", "2");
         assertLessThan("1.99999999999999999999", "2.0");
+        assertLessThan("1.0", "1.0-zzz");
+        assertLessThan("1.0-beta.1", "1.0");
+        assertLessThan("1.0-alpha.1", "1.0-beta.1");
+        assertLessThan("3.6.15", "3.6.15.289");
+        assertLessThan("3.6.15.289", "3.6.16");
     }
 
     @Test
     public void testSorting() {
         final Comparator<String> comparator = ((Comparator<String>) VersionNumber::compare).thenComparing(String::compareTo);
-        final List<String> input = Collections.unmodifiableList(Arrays.asList(
+        final List<String> input = List.of(
                 "0",
                 "0.10.0",
                 "1.6.4",
@@ -120,6 +125,9 @@ public class VersionNumberTest {
                 "1.8.9",
                 "1.8.9-forge1902",
                 "1.9",
+                "1.10-alpha.2",
+                "1.10-beta.1",
+                "1.10-beta.2",
                 "1.10",
                 "1.10.2",
                 "1.10.2-AOE",
@@ -140,7 +148,8 @@ public class VersionNumberTest {
                 "1.99999999999999999999",
                 "2",
                 "2.0",
-                "2.1"));
+                "2.1"
+        );
 
         List<String> output = new ArrayList<>(input);
         output.sort(comparator);

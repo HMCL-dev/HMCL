@@ -21,9 +21,7 @@ import com.jfoenix.controls.JFXButton;
 import com.jfoenix.controls.JFXTextField;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.property.StringProperty;
-import javafx.geometry.Insets;
 import javafx.geometry.Pos;
-import javafx.scene.control.Label;
 import javafx.scene.control.SkinBase;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.VBox;
@@ -110,17 +108,13 @@ public final class JavaInstallPage extends WizardSinglePage {
 
 
             {
-                BorderPane namePane = new BorderPane();
+                var namePane = new LinePane();
                 {
-                    Label label = new Label(i18n("java.install.name"));
-                    BorderPane.setAlignment(label, Pos.CENTER_LEFT);
-                    namePane.setLeft(label);
+                    namePane.setTitle(i18n("java.install.name"));
 
                     nameField = new JFXTextField();
                     nameField.textProperty().bindBidirectional(control.nameProperty);
                     FXUtils.setLimitWidth(nameField, 200);
-                    BorderPane.setAlignment(nameField, Pos.CENTER_RIGHT);
-                    BorderPane.setMargin(nameField, new Insets(0, 0, 12, 0));
                     namePane.setRight(nameField);
                     nameField.setValidators(
                             new RequiredValidator(),
@@ -176,15 +170,9 @@ public final class JavaInstallPage extends WizardSinglePage {
         }
 
         private void addInfo(String name, String value) {
-            BorderPane pane = new BorderPane();
-
-            pane.setLeft(new Label(name));
-
-            Label valueLabel = FXUtils.truncatedLabel(value, 60);
-            FXUtils.copyOnDoubleClick(valueLabel);
-            BorderPane.setAlignment(valueLabel, Pos.CENTER_RIGHT);
-            pane.setCenter(valueLabel);
-
+            LineTextPane pane = new LineTextPane();
+            pane.setTitle(name);
+            pane.setText(value);
             this.componentList.getContent().add(pane);
         }
     }

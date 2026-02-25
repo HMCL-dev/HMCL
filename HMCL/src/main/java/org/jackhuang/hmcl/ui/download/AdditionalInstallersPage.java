@@ -29,8 +29,8 @@ import org.jackhuang.hmcl.game.Version;
 import org.jackhuang.hmcl.ui.InstallerItem;
 import org.jackhuang.hmcl.ui.wizard.WizardController;
 import org.jackhuang.hmcl.util.Lang;
+import org.jackhuang.hmcl.util.SettingsMap;
 
-import java.util.Map;
 import java.util.Optional;
 
 import static org.jackhuang.hmcl.download.LibraryAnalyzer.LibraryType.MINECRAFT;
@@ -109,6 +109,6 @@ class AdditionalInstallersPage extends AbstractInstallersPage {
     }
 
     @Override
-    public void cleanup(Map<String, Object> settings) {
+    public void cleanup(SettingsMap settings) {
     }
 }

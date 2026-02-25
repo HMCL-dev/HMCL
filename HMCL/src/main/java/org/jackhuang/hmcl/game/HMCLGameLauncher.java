@@ -21,15 +21,17 @@ import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.auth.AuthInfo;
 import org.jackhuang.hmcl.launch.DefaultLauncher;
 import org.jackhuang.hmcl.launch.ProcessListener;
-import org.jackhuang.hmcl.util.i18n.I18n;
+import org.jackhuang.hmcl.util.i18n.LocaleUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.platform.ManagedProcess;
 import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
 
-import java.io.File;
 import java.io.IOException;
-import java.util.Map;
+import java.nio.file.*;
+import java.util.*;
+import java.util.stream.Stream;
 
+import static org.jackhuang.hmcl.setting.ConfigHolder.config;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 /**
@@ -58,61 +60,83 @@ public final class HMCLGameLauncher extends DefaultLauncher {
     }
 
     private void generateOptionsTxt() {
-        File optionsFile = new File(repository.getRunDirectory(version.getId()), "options.txt");
-        File configFolder = new File(repository.getRunDirectory(version.getId()), "config");
-
-        if (optionsFile.exists()) {
+        if (config().isDisableAutoGameOptions())
             return;
-        }
 
-        if (configFolder.isDirectory()) {
-            if (findFiles(configFolder, "options.txt")) {
-                return;
+        Path runDir = repository.getRunDirectory(version.getId());
+        Path optionsFile = runDir.resolve("options.txt");
+        Path configFolder = runDir.resolve("config");
+
+        if (Files.exists(optionsFile))
+            return;
+
+        if (Files.isDirectory(configFolder)) {
+            try (Stream<Path> stream = Files.walk(configFolder, 2, FileVisitOption.FOLLOW_LINKS)) {
+                if (stream.anyMatch(file -> "options.txt".equals(FileUtils.getName(file))))
+                    return;
+            } catch (IOException e) {
+                LOG.warning("Failed to visit config folder", e);
             }
         }
 
-        if (!I18n.isUseChinese()) {
-            return;
-        }
+        Locale locale = Locale.getDefault();
 
-        String lang;
         /*
-            1.0-     ：没有语言选项，遇到这些版本时不设置
-            1.1 ~ 5  ：zh_CN 时正常，zh_cn 时崩溃（最后两位字母必须大写，否则将会 NPE 崩溃）
-            1.6 ~ 10 ：zh_CN 时正常，zh_cn 时自动切换为英文
-            1.11 ~ 12：zh_cn 时正常，zh_CN 时虽然显示了中文但语言设置会错误地显示选择英文
-            1.13+    ：zh_cn 时正常，zh_CN 时自动切换为英文
+         *  1.0         : No language option, do not set for these versions
+         *  1.1  ~ 1.5  : zh_CN works fine, zh_cn will crash (the last two letters must be uppercase, otherwise it will cause an NPE crash)
+         *  1.6  ~ 1.10 : zh_CN works fine, zh_cn will automatically switch to English
+         *  1.11 ~ 1.12 : zh_cn works fine, zh_CN will display Chinese but the language setting will incorrectly show English as selected
+         *  1.13+       : zh_cn works fine, zh_CN will automatically switch to English
          */
         GameVersionNumber gameVersion = GameVersionNumber.asGameVersion(repository.getGameVersion(version));
-        if (gameVersion.compareTo("1.1") < 0) {
-            lang = null;
-        } else if (gameVersion.compareTo("1.11") < 0) {
-            lang = "zh_CN";
-        } else {
-            lang = "zh_cn";
-        }
+        if (gameVersion.compareTo("1.1") < 0)
+            return;
 
-        if (lang != null) {
-            try {
-                FileUtils.writeText(optionsFile, String.format("lang:%s\n", lang));
-            } catch (IOException e) {
-                LOG.warning("Unable to generate options.txt", e);
-            }
+        String lang = normalizedLanguageTag(locale, gameVersion);
+        if (lang.isEmpty())
+            return;
+
+        if (gameVersion.compareTo("1.11") >= 0)
+            lang = lang.toLowerCase(Locale.ROOT);
+
+        try {
+            Files.createDirectories(optionsFile.getParent());
+            Files.writeString(optionsFile, String.format("lang:%s\n", lang));
+        } catch (IOException e) {
+            LOG.warning("Unable to generate options.txt", e);
         }
     }
 
-    private boolean findFiles(File folder, String fileName) {
-        File[] fs = folder.listFiles();
-        if (fs != null) {
-            for (File f : fs) {
-                if (f.isDirectory())
-                    if (f.listFiles((dir, name) -> name.equals(fileName)) != null)
-                        return true;
-                if (f.getName().equals(fileName))
-                    return true;
+    private static String normalizedLanguageTag(Locale locale, GameVersionNumber gameVersion) {
+        String region = locale.getCountry();
+
+        return switch (LocaleUtils.getRootLanguage(locale)) {
+            case "ar" -> "ar_SA";
+            case "es" -> "es_ES";
+            case "ja" -> "ja_JP";
+            case "ru" -> "ru_RU";
+            case "uk" -> "uk_UA";
+            case "zh" -> {
+                if ("lzh".equals(locale.getLanguage()) && gameVersion.compareTo("1.16") >= 0)
+                    yield "lzh";
+
+                String script = LocaleUtils.getScript(locale);
+                if ("Hant".equals(script)) {
+                    if ((region.equals("HK") || region.equals("MO") && gameVersion.compareTo("1.16") >= 0))
+                        yield "zh_HK";
+                    yield "zh_TW";
+                }
+                yield "zh_CN";
             }
-        }
-        return false;
+            case "en" -> {
+                if ("Qabs".equals(LocaleUtils.getScript(locale)) && gameVersion.compareTo("1.16") >= 0) {
+                    yield "en_UD";
+                }
+
+                yield "";
+            }
+            default -> "";
+        };
     }
 
     @Override
@@ -122,7 +146,7 @@ public final class HMCLGameLauncher extends DefaultLauncher {
     }
 
     @Override
-    public void makeLaunchScript(File scriptFile) throws IOException {
+    public void makeLaunchScript(Path scriptFile) throws IOException {
         generateOptionsTxt();
         super.makeLaunchScript(scriptFile);
     }

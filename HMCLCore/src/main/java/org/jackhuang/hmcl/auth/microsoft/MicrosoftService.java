@@ -69,9 +69,9 @@ public class MicrosoftService {
         return profileRepository;
     }
 
-    public MicrosoftSession authenticate() throws AuthenticationException {
+    public MicrosoftSession authenticate(OAuth.GrantFlow flow) throws AuthenticationException {
         try {
-            OAuth.Result result = OAuth.MICROSOFT.authenticate(OAuth.GrantFlow.DEVICE, new OAuth.Options(SCOPE, callback));
+            OAuth.Result result = OAuth.MICROSOFT.authenticate(flow, new OAuth.Options(SCOPE, callback));
             return authenticateViaLiveAccessToken(result.getAccessToken(), result.getRefreshToken());
         } catch (IOException e) {
             throw new ServerDisconnectException(e);
@@ -321,16 +321,16 @@ public class MicrosoftService {
         public static final long ADD_FAMILY = 2148916238L;
     }
 
-    public static class XBox400Exception extends AuthenticationException {
+    public final static class XBox400Exception extends AuthenticationException {
     }
 
-    public static class NoMinecraftJavaEditionProfileException extends AuthenticationException {
+    public final static class NoMinecraftJavaEditionProfileException extends AuthenticationException {
     }
 
-    public static class NoXuiException extends AuthenticationException {
+    public final static class NoXuiException extends AuthenticationException {
     }
 
-    private static class XBoxLiveAuthenticationResponseDisplayClaims {
+    private final static class XBoxLiveAuthenticationResponseDisplayClaims {
         List<Map<Object, Object>> xui;
     }
 
@@ -356,7 +356,7 @@ public class MicrosoftService {
      * XErr Candidates: 2148916233 = missing XBox account 2148916238 = child account
      * not linked to a family
      */
-    private static class XBoxLiveAuthenticationResponse extends MicrosoftErrorResponse {
+    private final static class XBoxLiveAuthenticationResponse extends MicrosoftErrorResponse {
         @SerializedName("IssueInstant")
         String issueInstant;
 
@@ -370,7 +370,7 @@ public class MicrosoftService {
         XBoxLiveAuthenticationResponseDisplayClaims displayClaims;
     }
 
-    private static class MinecraftLoginWithXBoxResponse {
+    private final static class MinecraftLoginWithXBoxResponse {
         @SerializedName("username")
         String username;
 
@@ -387,14 +387,14 @@ public class MicrosoftService {
         int expiresIn;
     }
 
-    private static class MinecraftStoreResponseItem {
+    private final static class MinecraftStoreResponseItem {
         @SerializedName("name")
         String name;
         @SerializedName("signature")
         String signature;
     }
 
-    private static class MinecraftStoreResponse extends MinecraftErrorResponse {
+    private final static class MinecraftStoreResponse extends MinecraftErrorResponse {
         @SerializedName("items")
         List<MinecraftStoreResponseItem> items;
 
@@ -405,7 +405,7 @@ public class MicrosoftService {
         String keyId;
     }
 
-    public static class MinecraftProfileResponseSkin implements Validation {
+    public final static class MinecraftProfileResponseSkin implements Validation {
         public String id;
         public String state;
         public String url;

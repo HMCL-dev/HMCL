@@ -20,9 +20,11 @@ package org.jackhuang.hmcl.mod;
 public enum ModLoaderType {
     UNKNOWN,
     FORGE,
+    CLEANROOM,
     NEO_FORGED,
     FABRIC,
     QUILT,
     LITE_LOADER,
-    PACK;
+    LEGACY_FABRIC,
+    PACK
 }

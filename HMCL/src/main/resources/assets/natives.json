@@ -781,6 +781,182 @@
         }
       }
     },
+    "org.lwjgl:lwjgl:3.4.1": {
+      "name": "org.lwjgl:lwjgl:3.4.1",
+      "downloads": {
+        "artifact": {
+          "path": "org/lwjgl/lwjgl/3.4.1/lwjgl-3.4.1.jar",
+          "url": "https://repo1.maven.org/maven2/org/lwjgl/lwjgl/3.4.1/lwjgl-3.4.1.jar",
+          "sha1": "6105690714874b995aa7812e4f7732a21109276c",
+          "size": 1157957
+        }
+      }
+    },
+    "org.lwjgl:lwjgl:3.4.1:natives-linux": {
+      "name": "org.lwjgl:lwjgl:3.4.1:natives-linux-arm64",
+      "downloads": {
+        "artifact": {
+          "path": "org/lwjgl/lwjgl/3.4.1/lwjgl-3.4.1-natives-linux-arm64.jar",
+          "url": "https://repo1.maven.org/maven2/org/lwjgl/lwjgl/3.4.1/lwjgl-3.4.1-natives-linux-arm64.jar",
+          "sha1": "46883f3b622d8b4d7f27b627ca3360cda3db0e0e",
+          "size": 120615
+        }
+      }
+    },
+    "org.lwjgl:lwjgl-jemalloc:3.4.1": {
+      "name": "org.lwjgl:lwjgl-jemalloc:3.4.1",
+      "downloads": {
+        "artifact": {
+          "path": "org/lwjgl/lwjgl-jemalloc/3.4.1/lwjgl-jemalloc-3.4.1.jar",
+          "url": "https://repo1.maven.org/maven2/org/lwjgl/lwjgl-jemalloc/3.4.1/lwjgl-jemalloc-3.4.1.jar",
+          "sha1": "16b663092854fc6adfe0a941e61cae2bb2e437b6",
+          "size": 47872
+        }
+      }
+    },
+    "org.lwjgl:lwjgl-jemalloc:3.4.1:natives-linux": {
+      "name": "org.lwjgl:lwjgl-jemalloc:3.4.1:natives-linux-arm64",
+      "downloads": {
+        "artifact": {
+          "path": "org/lwjgl/lwjgl-jemalloc/3.4.1/lwjgl-jemalloc-3.4.1-natives-linux-arm64.jar",
+          "url": "https://repo1.maven.org/maven2/org/lwjgl/lwjgl-jemalloc/3.4.1/lwjgl-jemalloc-3.4.1-natives-linux-arm64.jar",
+          "sha1": "7891964dfb723209c6d02b0401432348fb707cc0",
+          "size": 238730
+        }
+      }
+    },
+    "org.lwjgl:lwjgl-openal:3.4.1": {
+      "name": "org.lwjgl:lwjgl-openal:3.4.1",
+      "downloads": {
+        "artifact": {
+          "path": "org/lwjgl/lwjgl-openal/3.4.1/lwjgl-openal-3.4.1.jar",
+          "url": "https://repo1.maven.org/maven2/org/lwjgl/lwjgl-openal/3.4.1/lwjgl-openal-3.4.1.jar",
+          "sha1": "8508bd60589de0539aa465b78fcf838efd07ae9a",
+          "size": 153919
+        }
+      }
+    },
+    "org.lwjgl:lwjgl-openal:3.4.1:natives-linux": {
+      "name": "org.lwjgl:lwjgl-openal:3.4.1:natives-linux-arm64",
+      "downloads": {
+        "artifact": {
+          "path": "org/lwjgl/lwjgl-openal/3.4.1/lwjgl-openal-3.4.1-natives-linux-arm64.jar",
+          "url": "https://repo1.maven.org/maven2/org/lwjgl/lwjgl-openal/3.4.1/lwjgl-openal-3.4.1-natives-linux-arm64.jar",
+          "sha1": "3729b70cdd42df5571b075e051fa2fc8586dc538",
+          "size": 839895
+        }
+      }
+    },
+    "org.lwjgl:lwjgl-opengl:3.4.1": {
+      "name": "org.lwjgl:lwjgl-opengl:3.4.1",
+      "downloads": {
+        "artifact": {
+          "path": "org/lwjgl/lwjgl-opengl/3.4.1/lwjgl-opengl-3.4.1.jar",
+          "url": "https://repo1.maven.org/maven2/org/lwjgl/lwjgl-opengl/3.4.1/lwjgl-opengl-3.4.1.jar",
+          "sha1": "830412cab823c029cda6b9729f9d2ed36cf79959",
+          "size": 937660
+        }
+      }
+    },
+    "org.lwjgl:lwjgl-opengl:3.4.1:natives-linux": {
+      "name": "org.lwjgl:lwjgl-opengl:3.4.1:natives-linux-arm64",
+      "downloads": {
+        "artifact": {
+          "path": "org/lwjgl/lwjgl-opengl/3.4.1/lwjgl-opengl-3.4.1-natives-linux-arm64.jar",
+          "url": "https://repo1.maven.org/maven2/org/lwjgl/lwjgl-opengl/3.4.1/lwjgl-opengl-3.4.1-natives-linux-arm64.jar",
+          "sha1": "61a4103e56bbaeb74ad3f19ec14299fd6891c4b0",
+          "size": 79752
+        }
+      }
+    },
+    "org.lwjgl:lwjgl-glfw:3.4.1": {
+      "name": "org.lwjgl:lwjgl-glfw:3.4.1",
+      "downloads": {
+        "artifact": {
+          "path": "org/lwjgl/lwjgl-glfw/3.4.1/lwjgl-glfw-3.4.1.jar",
+          "url": "https://repo1.maven.org/maven2/org/lwjgl/lwjgl-glfw/3.4.1/lwjgl-glfw-3.4.1.jar",
+          "sha1": "a782b1ddd175c9107bf300fd92920579ea65e2a4",
+          "size": 151893
+        }
+      }
+    },
+    "org.lwjgl:lwjgl-glfw:3.4.1:natives-linux": {
+      "name": "org.lwjgl:lwjgl-glfw:3.4.1:natives-linux-arm64",
+      "downloads": {
+        "artifact": {
+          "path": "org/lwjgl/lwjgl-glfw/3.4.1/lwjgl-glfw-3.4.1-natives-linux-arm64.jar",
+          "url": "https://repo1.maven.org/maven2/org/lwjgl/lwjgl-glfw/3.4.1/lwjgl-glfw-3.4.1-natives-linux-arm64.jar",
+          "sha1": "e5e87034c47118960746077dba46280e8de864b3",
+          "size": 141530
+        }
+      }
+    },
+    "org.lwjgl:lwjgl-stb:3.4.1": {
+      "name": "org.lwjgl:lwjgl-stb:3.4.1",
+      "downloads": {
+        "artifact": {
+          "path": "org/lwjgl/lwjgl-stb/3.4.1/lwjgl-stb-3.4.1.jar",
+          "url": "https://repo1.maven.org/maven2/org/lwjgl/lwjgl-stb/3.4.1/lwjgl-stb-3.4.1.jar",
+          "sha1": "f077c3dafc31924fbe8acb0b913f08977ba27f8e",
+          "size": 142927
+        }
+      }
+    },
+    "org.lwjgl:lwjgl-stb:3.4.1:natives-linux": {
+      "name": "org.lwjgl:lwjgl-stb:3.4.1:natives-linux-arm64",
+      "downloads": {
+        "artifact": {
+          "path": "org/lwjgl/lwjgl-stb/3.4.1/lwjgl-stb-3.4.1-natives-linux-arm64.jar",
+          "url": "https://repo1.maven.org/maven2/org/lwjgl/lwjgl-stb/3.4.1/lwjgl-stb-3.4.1-natives-linux-arm64.jar",
+          "sha1": "3bc107f901f931fea07cb0d80b1d74a34b806a2b",
+          "size": 259116
+        }
+      }
+    },
+    "org.lwjgl:lwjgl-tinyfd:3.4.1": {
+      "name": "org.lwjgl:lwjgl-tinyfd:3.4.1",
+      "downloads": {
+        "artifact": {
+          "path": "org/lwjgl/lwjgl-tinyfd/3.4.1/lwjgl-tinyfd-3.4.1.jar",
+          "url": "https://repo1.maven.org/maven2/org/lwjgl/lwjgl-tinyfd/3.4.1/lwjgl-tinyfd-3.4.1.jar",
+          "sha1": "562697d40dbd2ed0424bf24dcf65d51170f81adf",
+          "size": 15931
+        }
+      }
+    },
+    "org.lwjgl:lwjgl-tinyfd:3.4.1:natives-linux": {
+      "name": "org.lwjgl:lwjgl-tinyfd:3.4.1:natives-linux-arm64",
+      "downloads": {
+        "artifact": {
+          "path": "org/lwjgl/lwjgl-tinyfd/3.4.1/lwjgl-tinyfd-3.4.1-natives-linux-arm64.jar",
+          "url": "https://repo1.maven.org/maven2/org/lwjgl/lwjgl-tinyfd/3.4.1/lwjgl-tinyfd-3.4.1-natives-linux-arm64.jar",
+          "sha1": "20771d2b4e01f5295156912ab62e170508aef618",
+          "size": 45433
+        }
+      }
+    },
+    "org.lwjgl:lwjgl-freetype:3.4.1": {
+      "name": "org.lwjgl:lwjgl-freetype:3.4.1",
+      "downloads": {
+        "artifact": {
+          "path": "org/lwjgl/lwjgl-freetype/3.4.1/lwjgl-freetype-3.4.1.jar",
+          "url": "https://repo1.maven.org/maven2/org/lwjgl/lwjgl-freetype/3.4.1/lwjgl-freetype-3.4.1.jar",
+          "sha1": "caa75a37e857efc9b0686e434d708d6420c5b6ea",
+          "size": 464342
+        }
+      }
+    },
+    "org.lwjgl:lwjgl-freetype:3.4.1:natives-linux": {
+      "name": "org.lwjgl:lwjgl-freetype:3.4.1:natives-linux-arm64",
+      "downloads": {
+        "artifact": {
+          "path": "org/lwjgl/lwjgl-freetype/3.4.1/lwjgl-freetype-3.4.1-natives-linux-arm64.jar",
+          "url": "https://repo1.maven.org/maven2/org/lwjgl/lwjgl-freetype/3.4.1/lwjgl-freetype-3.4.1-natives-linux-arm64.jar",
+          "sha1": "8f37d0da3386ff602ec54cd06626881895711041",
+          "size": 1309568
+        }
+      }
+    },
     "org.lwjgl.lwjgl:lwjgl-platform:2.9.0:natives": {
       "name": "org.glavo.hmcl:lwjgl2-natives:2.9.3",
       "downloads": {
@@ -2485,6 +2661,34 @@
       }
     },
     "org.lwjgl:lwjgl-freetype:3.3.3:natives-linux": null,
+    "org.lwjgl:lwjgl:3.4.1:natives-linux": {
+      "name": "org.glavo.hmcl:lwjgl3-natives:3.4.1-rc1",
+      "downloads": {
+        "classifiers": {
+          "linux-loongarch64": {
+            "path": "org/glavo/hmcl/lwjgl3-natives/3.4.1-rc1/lwjgl3-natives-3.4.1-rc1-linux-loongarch64.jar",
+            "url": "https://repo1.maven.org/maven2/org/glavo/hmcl/lwjgl3-natives/3.4.1-rc1-linux-loongarch64/lwjgl3-natives-3.4.1-rc1-linux-loongarch64.jar",
+            "sha1": "3fed872fc2f9929d2be25389dd312dfb48e9f89e",
+            "size": 22854580
+          }
+        }
+      },
+      "extract": {
+        "exclude": [
+          "META-INF/"
+        ]
+      },
+      "natives": {
+        "linux": "linux-loongarch64"
+      }
+    },
+    "org.lwjgl:lwjgl-jemalloc:3.4.1:natives-linux": null,
+    "org.lwjgl:lwjgl-openal:3.4.1:natives-linux": null,
+    "org.lwjgl:lwjgl-opengl:3.4.1:natives-linux": null,
+    "org.lwjgl:lwjgl-glfw:3.4.1:natives-linux": null,
+    "org.lwjgl:lwjgl-stb:3.4.1:natives-linux": null,
+    "org.lwjgl:lwjgl-tinyfd:3.4.1:natives-linux": null,
+    "org.lwjgl:lwjgl-freetype:3.4.1:natives-linux": null,
     "net.java.dev.jna:jna:5.8.0": {
       "name": "net.java.dev.jna:jna:5.13.0",
       "downloads": {
@@ -3979,6 +4183,182 @@
         }
       }
     },
+    "org.lwjgl:lwjgl:3.4.1": {
+      "name": "org.lwjgl:lwjgl:3.4.1",
+      "downloads": {
+        "artifact": {
+          "path": "org/lwjgl/lwjgl/3.4.1/lwjgl-3.4.1.jar",
+          "url": "https://repo1.maven.org/maven2/org/lwjgl/lwjgl/3.4.1/lwjgl-3.4.1.jar",
+          "sha1": "6105690714874b995aa7812e4f7732a21109276c",
+          "size": 1157957
+        }
+      }
+    },
+    "org.lwjgl:lwjgl:3.4.1:natives-linux": {
+      "name": "org.lwjgl:lwjgl:3.4.1:natives-linux-riscv64",
+      "downloads": {
+        "artifact": {
+          "path": "org/lwjgl/lwjgl/3.4.1/lwjgl-3.4.1-natives-linux-riscv64.jar",
+          "url": "https://repo1.maven.org/maven2/org/lwjgl/lwjgl/3.4.1/lwjgl-3.4.1-natives-linux-riscv64.jar",
+          "sha1": "a43b5208883562d31b5a2de1810aa82e2f2bf0ba",
+          "size": 88670
+        }
+      }
+    },
+    "org.lwjgl:lwjgl-jemalloc:3.4.1": {
+      "name": "org.lwjgl:lwjgl-jemalloc:3.4.1",
+      "downloads": {
+        "artifact": {
+          "path": "org/lwjgl/lwjgl-jemalloc/3.4.1/lwjgl-jemalloc-3.4.1.jar",
+          "url": "https://repo1.maven.org/maven2/org/lwjgl/lwjgl-jemalloc/3.4.1/lwjgl-jemalloc-3.4.1.jar",
+          "sha1": "16b663092854fc6adfe0a941e61cae2bb2e437b6",
+          "size": 47872
+        }
+      }
+    },
+    "org.lwjgl:lwjgl-jemalloc:3.4.1:natives-linux": {
+      "name": "org.lwjgl:lwjgl-jemalloc:3.4.1:natives-linux-riscv64",
+      "downloads": {
+        "artifact": {
+          "path": "org/lwjgl/lwjgl-jemalloc/3.4.1/lwjgl-jemalloc-3.4.1-natives-linux-riscv64.jar",
+          "url": "https://repo1.maven.org/maven2/org/lwjgl/lwjgl-jemalloc/3.4.1/lwjgl-jemalloc-3.4.1-natives-linux-riscv64.jar",
+          "sha1": "ac7be1f86e87df030e668c02df2dec27c44da32b",
+          "size": 216564
+        }
+      }
+    },
+    "org.lwjgl:lwjgl-openal:3.4.1": {
+      "name": "org.lwjgl:lwjgl-openal:3.4.1",
+      "downloads": {
+        "artifact": {
+          "path": "org/lwjgl/lwjgl-openal/3.4.1/lwjgl-openal-3.4.1.jar",
+          "url": "https://repo1.maven.org/maven2/org/lwjgl/lwjgl-openal/3.4.1/lwjgl-openal-3.4.1.jar",
+          "sha1": "8508bd60589de0539aa465b78fcf838efd07ae9a",
+          "size": 153919
+        }
+      }
+    },
+    "org.lwjgl:lwjgl-openal:3.4.1:natives-linux": {
+      "name": "org.lwjgl:lwjgl-openal:3.4.1:natives-linux-riscv64",
+      "downloads": {
+        "artifact": {
+          "path": "org/lwjgl/lwjgl-openal/3.4.1/lwjgl-openal-3.4.1-natives-linux-riscv64.jar",
+          "url": "https://repo1.maven.org/maven2/org/lwjgl/lwjgl-openal/3.4.1/lwjgl-openal-3.4.1-natives-linux-riscv64.jar",
+          "sha1": "652b9424f529dccc79694f2124709083d2712104",
+          "size": 829997
+        }
+      }
+    },
+    "org.lwjgl:lwjgl-opengl:3.4.1": {
+      "name": "org.lwjgl:lwjgl-opengl:3.4.1",
+      "downloads": {
+        "artifact": {
+          "path": "org/lwjgl/lwjgl-opengl/3.4.1/lwjgl-opengl-3.4.1.jar",
+          "url": "https://repo1.maven.org/maven2/org/lwjgl/lwjgl-opengl/3.4.1/lwjgl-opengl-3.4.1.jar",
+          "sha1": "830412cab823c029cda6b9729f9d2ed36cf79959",
+          "size": 937660
+        }
+      }
+    },
+    "org.lwjgl:lwjgl-opengl:3.4.1:natives-linux": {
+      "name": "org.lwjgl:lwjgl-opengl:3.4.1:natives-linux-riscv64",
+      "downloads": {
+        "artifact": {
+          "path": "org/lwjgl/lwjgl-opengl/3.4.1/lwjgl-opengl-3.4.1-natives-linux-riscv64.jar",
+          "url": "https://repo1.maven.org/maven2/org/lwjgl/lwjgl-opengl/3.4.1/lwjgl-opengl-3.4.1-natives-linux-riscv64.jar",
+          "sha1": "8a6f47236738e3c682e98e15a13cf0358c1da85c",
+          "size": 58079
+        }
+      }
+    },
+    "org.lwjgl:lwjgl-glfw:3.4.1": {
+      "name": "org.lwjgl:lwjgl-glfw:3.4.1",
+      "downloads": {
+        "artifact": {
+          "path": "org/lwjgl/lwjgl-glfw/3.4.1/lwjgl-glfw-3.4.1.jar",
+          "url": "https://repo1.maven.org/maven2/org/lwjgl/lwjgl-glfw/3.4.1/lwjgl-glfw-3.4.1.jar",
+          "sha1": "a782b1ddd175c9107bf300fd92920579ea65e2a4",
+          "size": 151893
+        }
+      }
+    },
+    "org.lwjgl:lwjgl-glfw:3.4.1:natives-linux": {
+      "name": "org.lwjgl:lwjgl-glfw:3.4.1:natives-linux-riscv64",
+      "downloads": {
+        "artifact": {
+          "path": "org/lwjgl/lwjgl-glfw/3.4.1/lwjgl-glfw-3.4.1-natives-linux-riscv64.jar",
+          "url": "https://repo1.maven.org/maven2/org/lwjgl/lwjgl-glfw/3.4.1/lwjgl-glfw-3.4.1-natives-linux-riscv64.jar",
+          "sha1": "d76ed6846bff9804cfd1adb84b068728645a097b",
+          "size": 120912
+        }
+      }
+    },
+    "org.lwjgl:lwjgl-stb:3.4.1": {
+      "name": "org.lwjgl:lwjgl-stb:3.4.1",
+      "downloads": {
+        "artifact": {
+          "path": "org/lwjgl/lwjgl-stb/3.4.1/lwjgl-stb-3.4.1.jar",
+          "url": "https://repo1.maven.org/maven2/org/lwjgl/lwjgl-stb/3.4.1/lwjgl-stb-3.4.1.jar",
+          "sha1": "f077c3dafc31924fbe8acb0b913f08977ba27f8e",
+          "size": 142927
+        }
+      }
+    },
+    "org.lwjgl:lwjgl-stb:3.4.1:natives-linux": {
+      "name": "org.lwjgl:lwjgl-stb:3.4.1:natives-linux-riscv64",
+      "downloads": {
+        "artifact": {
+          "path": "org/lwjgl/lwjgl-stb/3.4.1/lwjgl-stb-3.4.1-natives-linux-riscv64.jar",
+          "url": "https://repo1.maven.org/maven2/org/lwjgl/lwjgl-stb/3.4.1/lwjgl-stb-3.4.1-natives-linux-riscv64.jar",
+          "sha1": "f1d8fe25d44e26c40f4dd4c48189323675467578",
+          "size": 224156
+        }
+      }
+    },
+    "org.lwjgl:lwjgl-tinyfd:3.4.1": {
+      "name": "org.lwjgl:lwjgl-tinyfd:3.4.1",
+      "downloads": {
+        "artifact": {
+          "path": "org/lwjgl/lwjgl-tinyfd/3.4.1/lwjgl-tinyfd-3.4.1.jar",
+          "url": "https://repo1.maven.org/maven2/org/lwjgl/lwjgl-tinyfd/3.4.1/lwjgl-tinyfd-3.4.1.jar",
+          "sha1": "562697d40dbd2ed0424bf24dcf65d51170f81adf",
+          "size": 15931
+        }
+      }
+    },
+    "org.lwjgl:lwjgl-tinyfd:3.4.1:natives-linux": {
+      "name": "org.lwjgl:lwjgl-tinyfd:3.4.1:natives-linux-riscv64",
+      "downloads": {
+        "artifact": {
+          "path": "org/lwjgl/lwjgl-tinyfd/3.4.1/lwjgl-tinyfd-3.4.1-natives-linux-riscv64.jar",
+          "url": "https://repo1.maven.org/maven2/org/lwjgl/lwjgl-tinyfd/3.4.1/lwjgl-tinyfd-3.4.1-natives-linux-riscv64.jar",
+          "sha1": "6aa204e5047e9f272c7271119105833cc0ddfd27",
+          "size": 46650
+        }
+      }
+    },
+    "org.lwjgl:lwjgl-freetype:3.4.1": {
+      "name": "org.lwjgl:lwjgl-freetype:3.4.1",
+      "downloads": {
+        "artifact": {
+          "path": "org/lwjgl/lwjgl-freetype/3.4.1/lwjgl-freetype-3.4.1.jar",
+          "url": "https://repo1.maven.org/maven2/org/lwjgl/lwjgl-freetype/3.4.1/lwjgl-freetype-3.4.1.jar",
+          "sha1": "caa75a37e857efc9b0686e434d708d6420c5b6ea",
+          "size": 464342
+        }
+      }
+    },
+    "org.lwjgl:lwjgl-freetype:3.4.1:natives-linux": {
+      "name": "org.lwjgl:lwjgl-freetype:3.4.1:natives-linux-riscv64",
+      "downloads": {
+        "artifact": {
+          "path": "org/lwjgl/lwjgl-freetype/3.4.1/lwjgl-freetype-3.4.1-natives-linux-riscv64.jar",
+          "url": "https://repo1.maven.org/maven2/org/lwjgl/lwjgl-freetype/3.4.1/lwjgl-freetype-3.4.1-natives-linux-riscv64.jar",
+          "sha1": "737708c27a49ba5884ef347565fcb9964e8d85a9",
+          "size": 1249074
+        }
+      }
+    },
     "com.github.oshi:oshi-core:6.6.5": {
       "name": "com.github.oshi:oshi-core:6.8.0",
       "downloads": {
@@ -4005,6 +4385,17 @@
           "url": "https://repo1.maven.org/maven2/org/glavo/mesa-loader-windows/25.0.3/mesa-loader-windows-25.0.3-x64.jar",
           "sha1": "b2552fcc8c98e95b4559c39f2ff87cdb3aaaa513",
           "size": 27971214
+        }
+      }
+    },
+    "software-renderer-loader": {
+      "name": "org.glavo:llvmpipe-loader:1.0",
+      "downloads": {
+        "artifact": {
+          "path": "org/glavo/llvmpipe-loader/1.0/llvmpipe-loader-1.0.jar",
+          "url": "https://repo1.maven.org/maven2/org/glavo/llvmpipe-loader/1.0/llvmpipe-loader-1.0.jar",
+          "sha1": "ff255415e5c4b2a18970da0a8e552b557ca013ae",
+          "size": 12964773
         }
       }
     }
@@ -5755,6 +6146,182 @@
           "url": "https://repo1.maven.org/maven2/org/lwjgl/lwjgl-freetype/3.3.4/lwjgl-freetype-3.3.4-natives-freebsd.jar",
           "sha1": "67d6775292771087cb3d5ba1239bf9bf42fb3bd7",
           "size": 1176759
+        }
+      }
+    },
+    "org.lwjgl:lwjgl:3.4.1": {
+      "name": "org.lwjgl:lwjgl:3.4.1",
+      "downloads": {
+        "artifact": {
+          "path": "org/lwjgl/lwjgl/3.4.1/lwjgl-3.4.1.jar",
+          "url": "https://repo1.maven.org/maven2/org/lwjgl/lwjgl/3.4.1/lwjgl-3.4.1.jar",
+          "sha1": "6105690714874b995aa7812e4f7732a21109276c",
+          "size": 1157957
+        }
+      }
+    },
+    "org.lwjgl:lwjgl:3.4.1:natives-linux": {
+      "name": "org.lwjgl:lwjgl:3.4.1:natives-freebsd",
+      "downloads": {
+        "artifact": {
+          "path": "org/lwjgl/lwjgl/3.4.1/lwjgl-3.4.1-natives-freebsd.jar",
+          "url": "https://repo1.maven.org/maven2/org/lwjgl/lwjgl/3.4.1/lwjgl-3.4.1-natives-freebsd.jar",
+          "sha1": "0b1c18e52be76ce4e0a05e323e01060406887351",
+          "size": 102712
+        }
+      }
+    },
+    "org.lwjgl:lwjgl-jemalloc:3.4.1": {
+      "name": "org.lwjgl:lwjgl-jemalloc:3.4.1",
+      "downloads": {
+        "artifact": {
+          "path": "org/lwjgl/lwjgl-jemalloc/3.4.1/lwjgl-jemalloc-3.4.1.jar",
+          "url": "https://repo1.maven.org/maven2/org/lwjgl/lwjgl-jemalloc/3.4.1/lwjgl-jemalloc-3.4.1.jar",
+          "sha1": "16b663092854fc6adfe0a941e61cae2bb2e437b6",
+          "size": 47872
+        }
+      }
+    },
+    "org.lwjgl:lwjgl-jemalloc:3.4.1:natives-linux": {
+      "name": "org.lwjgl:lwjgl-jemalloc:3.4.1:natives-freebsd",
+      "downloads": {
+        "artifact": {
+          "path": "org/lwjgl/lwjgl-jemalloc/3.4.1/lwjgl-jemalloc-3.4.1-natives-freebsd.jar",
+          "url": "https://repo1.maven.org/maven2/org/lwjgl/lwjgl-jemalloc/3.4.1/lwjgl-jemalloc-3.4.1-natives-freebsd.jar",
+          "sha1": "a9565df163061a20bd3062dd7eb240d019e748b2",
+          "size": 159419
+        }
+      }
+    },
+    "org.lwjgl:lwjgl-openal:3.4.1": {
+      "name": "org.lwjgl:lwjgl-openal:3.4.1",
+      "downloads": {
+        "artifact": {
+          "path": "org/lwjgl/lwjgl-openal/3.4.1/lwjgl-openal-3.4.1.jar",
+          "url": "https://repo1.maven.org/maven2/org/lwjgl/lwjgl-openal/3.4.1/lwjgl-openal-3.4.1.jar",
+          "sha1": "8508bd60589de0539aa465b78fcf838efd07ae9a",
+          "size": 153919
+        }
+      }
+    },
+    "org.lwjgl:lwjgl-openal:3.4.1:natives-linux": {
+      "name": "org.lwjgl:lwjgl-openal:3.4.1:natives-freebsd",
+      "downloads": {
+        "artifact": {
+          "path": "org/lwjgl/lwjgl-openal/3.4.1/lwjgl-openal-3.4.1-natives-freebsd.jar",
+          "url": "https://repo1.maven.org/maven2/org/lwjgl/lwjgl-openal/3.4.1/lwjgl-openal-3.4.1-natives-freebsd.jar",
+          "sha1": "c28d721b930590df368c9503fd84f06e4a3211f5",
+          "size": 830092
+        }
+      }
+    },
+    "org.lwjgl:lwjgl-opengl:3.4.1": {
+      "name": "org.lwjgl:lwjgl-opengl:3.4.1",
+      "downloads": {
+        "artifact": {
+          "path": "org/lwjgl/lwjgl-opengl/3.4.1/lwjgl-opengl-3.4.1.jar",
+          "url": "https://repo1.maven.org/maven2/org/lwjgl/lwjgl-opengl/3.4.1/lwjgl-opengl-3.4.1.jar",
+          "sha1": "830412cab823c029cda6b9729f9d2ed36cf79959",
+          "size": 937660
+        }
+      }
+    },
+    "org.lwjgl:lwjgl-opengl:3.4.1:natives-linux": {
+      "name": "org.lwjgl:lwjgl-opengl:3.4.1:natives-freebsd",
+      "downloads": {
+        "artifact": {
+          "path": "org/lwjgl/lwjgl-opengl/3.4.1/lwjgl-opengl-3.4.1-natives-freebsd.jar",
+          "url": "https://repo1.maven.org/maven2/org/lwjgl/lwjgl-opengl/3.4.1/lwjgl-opengl-3.4.1-natives-freebsd.jar",
+          "sha1": "fdde3b33c1fb4c9329da9e741fa894266baef71f",
+          "size": 81739
+        }
+      }
+    },
+    "org.lwjgl:lwjgl-glfw:3.4.1": {
+      "name": "org.lwjgl:lwjgl-glfw:3.4.1",
+      "downloads": {
+        "artifact": {
+          "path": "org/lwjgl/lwjgl-glfw/3.4.1/lwjgl-glfw-3.4.1.jar",
+          "url": "https://repo1.maven.org/maven2/org/lwjgl/lwjgl-glfw/3.4.1/lwjgl-glfw-3.4.1.jar",
+          "sha1": "a782b1ddd175c9107bf300fd92920579ea65e2a4",
+          "size": 151893
+        }
+      }
+    },
+    "org.lwjgl:lwjgl-glfw:3.4.1:natives-linux": {
+      "name": "org.lwjgl:lwjgl-glfw:3.4.1:natives-freebsd",
+      "downloads": {
+        "artifact": {
+          "path": "org/lwjgl/lwjgl-glfw/3.4.1/lwjgl-glfw-3.4.1-natives-freebsd.jar",
+          "url": "https://repo1.maven.org/maven2/org/lwjgl/lwjgl-glfw/3.4.1/lwjgl-glfw-3.4.1-natives-freebsd.jar",
+          "sha1": "c367840595bdaa6f84830138c8b5cf59618b60fa",
+          "size": 106220
+        }
+      }
+    },
+    "org.lwjgl:lwjgl-stb:3.4.1": {
+      "name": "org.lwjgl:lwjgl-stb:3.4.1",
+      "downloads": {
+        "artifact": {
+          "path": "org/lwjgl/lwjgl-stb/3.4.1/lwjgl-stb-3.4.1.jar",
+          "url": "https://repo1.maven.org/maven2/org/lwjgl/lwjgl-stb/3.4.1/lwjgl-stb-3.4.1.jar",
+          "sha1": "f077c3dafc31924fbe8acb0b913f08977ba27f8e",
+          "size": 142927
+        }
+      }
+    },
+    "org.lwjgl:lwjgl-stb:3.4.1:natives-linux": {
+      "name": "org.lwjgl:lwjgl-stb:3.4.1:natives-freebsd",
+      "downloads": {
+        "artifact": {
+          "path": "org/lwjgl/lwjgl-stb/3.4.1/lwjgl-stb-3.4.1-natives-freebsd.jar",
+          "url": "https://repo1.maven.org/maven2/org/lwjgl/lwjgl-stb/3.4.1/lwjgl-stb-3.4.1-natives-freebsd.jar",
+          "sha1": "299c873b02718f5a11bc31279189d434a7279c15",
+          "size": 224821
+        }
+      }
+    },
+    "org.lwjgl:lwjgl-tinyfd:3.4.1": {
+      "name": "org.lwjgl:lwjgl-tinyfd:3.4.1",
+      "downloads": {
+        "artifact": {
+          "path": "org/lwjgl/lwjgl-tinyfd/3.4.1/lwjgl-tinyfd-3.4.1.jar",
+          "url": "https://repo1.maven.org/maven2/org/lwjgl/lwjgl-tinyfd/3.4.1/lwjgl-tinyfd-3.4.1.jar",
+          "sha1": "562697d40dbd2ed0424bf24dcf65d51170f81adf",
+          "size": 15931
+        }
+      }
+    },
+    "org.lwjgl:lwjgl-tinyfd:3.4.1:natives-linux": {
+      "name": "org.lwjgl:lwjgl-tinyfd:3.4.1:natives-freebsd",
+      "downloads": {
+        "artifact": {
+          "path": "org/lwjgl/lwjgl-tinyfd/3.4.1/lwjgl-tinyfd-3.4.1-natives-freebsd.jar",
+          "url": "https://repo1.maven.org/maven2/org/lwjgl/lwjgl-tinyfd/3.4.1/lwjgl-tinyfd-3.4.1-natives-freebsd.jar",
+          "sha1": "c7cabb0cf65ab1025667335bf4e4df3af9ef4e01",
+          "size": 40471
+        }
+      }
+    },
+    "org.lwjgl:lwjgl-freetype:3.4.1": {
+      "name": "org.lwjgl:lwjgl-freetype:3.4.1",
+      "downloads": {
+        "artifact": {
+          "path": "org/lwjgl/lwjgl-freetype/3.4.1/lwjgl-freetype-3.4.1.jar",
+          "url": "https://repo1.maven.org/maven2/org/lwjgl/lwjgl-freetype/3.4.1/lwjgl-freetype-3.4.1.jar",
+          "sha1": "caa75a37e857efc9b0686e434d708d6420c5b6ea",
+          "size": 464342
+        }
+      }
+    },
+    "org.lwjgl:lwjgl-freetype:3.4.1:natives-linux": {
+      "name": "org.lwjgl:lwjgl-freetype:3.4.1:natives-freebsd",
+      "downloads": {
+        "artifact": {
+          "path": "org/lwjgl/lwjgl-freetype/3.4.1/lwjgl-freetype-3.4.1-natives-freebsd.jar",
+          "url": "https://repo1.maven.org/maven2/org/lwjgl/lwjgl-freetype/3.4.1/lwjgl-freetype-3.4.1-natives-freebsd.jar",
+          "sha1": "d7e622ab389bb8549617b0b20db5824b7b2e262b",
+          "size": 1217256
         }
       }
     },

@@ -18,10 +18,13 @@
 package org.jackhuang.hmcl.setting;
 
 import javafx.beans.property.ObjectProperty;
+import javafx.beans.property.ReadOnlyObjectProperty;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.scene.text.Font;
 import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.util.Lazy;
+import org.jackhuang.hmcl.util.i18n.I18n;
+import org.jackhuang.hmcl.util.i18n.LocaleUtils;
 import org.jackhuang.hmcl.util.io.JarUtils;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
 import org.jackhuang.hmcl.util.platform.SystemUtils;
@@ -32,8 +35,7 @@ import java.net.MalformedURLException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.Locale;
-import java.util.Objects;
+import java.util.*;
 
 import static org.jackhuang.hmcl.setting.ConfigHolder.config;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
@@ -50,7 +52,21 @@ public final class FontManager {
     public static final double DEFAULT_FONT_SIZE = 12.0f;
 
     private static final Lazy<Font> DEFAULT_FONT = new Lazy<>(() -> {
-        Font font = tryLoadDefaultFont(Metadata.HMCL_CURRENT_DIRECTORY);
+        Font font;
+
+        // Recommended
+
+        font = tryLoadLocalizedFont(Metadata.HMCL_CURRENT_DIRECTORY.resolve("font"));
+        if (font != null)
+            return font;
+
+        font = tryLoadLocalizedFont(Metadata.HMCL_GLOBAL_DIRECTORY.resolve("font"));
+        if (font != null)
+            return font;
+
+        // Legacy
+
+        font = tryLoadDefaultFont(Metadata.HMCL_CURRENT_DIRECTORY);
         if (font != null)
             return font;
 
@@ -69,45 +85,43 @@ public final class FontManager {
                 return font;
         }
 
+        // Default
+
+        String fcMatchPattern;
         if (OperatingSystem.CURRENT_OS.isLinuxOrBSD()
-                && Locale.getDefault() != Locale.ROOT
-                && !"en".equals(Locale.getDefault().getLanguage()))
-            return findByFcMatch();
+                && !(fcMatchPattern = I18n.getLocale().getFcMatchPattern()).isEmpty())
+            return findByFcMatch(fcMatchPattern);
         else
             return null;
     });
 
-    private static final ObjectProperty<FontReference> fontProperty;
+    private static final ObjectProperty<FontReference> font = new SimpleObjectProperty<>();
 
     static {
+        updateFont();
+        LOG.info("Font: " + (font.get() != null ? font.get().family() : "System"));
+    }
+
+    private static void updateFont() {
         String fontFamily = config().getLauncherFontFamily();
         if (fontFamily == null)
             fontFamily = System.getProperty("hmcl.font.override");
         if (fontFamily == null)
             fontFamily = System.getenv("HMCL_FONT");
 
-        FontReference fontReference;
         if (fontFamily == null) {
             Font defaultFont = DEFAULT_FONT.get();
-            fontReference = defaultFont != null ? new FontReference(defaultFont) : null;
-        } else
-            fontReference = new FontReference(fontFamily);
-
-        fontProperty = new SimpleObjectProperty<>(fontReference);
-
-        LOG.info("Font: " + (fontReference != null ? fontReference.getFamily() : "System"));
-        fontProperty.addListener((obs, oldValue, newValue) -> {
-            if (newValue != null)
-                config().setLauncherFontFamily(newValue.getFamily());
-            else
-                config().setLauncherFontFamily(null);
-        });
+            font.set(defaultFont != null ? new FontReference(defaultFont) : null);
+        } else {
+            font.set(new FontReference(fontFamily));
+        }
     }
 
     private static Font tryLoadDefaultFont(Path dir) {
         for (String extension : FONT_EXTENSIONS) {
             Path path = dir.resolve("font." + extension);
             if (Files.isRegularFile(path)) {
+                LOG.info("Load font file: " + path);
                 try {
                     Font font = Font.loadFont(path.toUri().toURL().toExternalForm(), DEFAULT_FONT_SIZE);
                     if (font != null) {
@@ -123,16 +137,47 @@ public final class FontManager {
         return null;
     }
 
-    public static Font findByFcMatch() {
+    private static Font tryLoadLocalizedFont(Path dir) {
+        Map<String, Map<String, Path>> fontFiles = LocaleUtils.findAllLocalizedFiles(dir, "font", Set.of(FONT_EXTENSIONS));
+        if (fontFiles.isEmpty())
+            return null;
+
+        List<Locale> candidateLocales = I18n.getLocale().getCandidateLocales();
+
+        for (Locale locale : candidateLocales) {
+            Map<String, Path> extToFiles = fontFiles.get(LocaleUtils.toLanguageKey(locale));
+            if (extToFiles != null) {
+                for (String ext : FONT_EXTENSIONS) {
+                    Path fontFile = extToFiles.get(ext);
+                    if (fontFile != null) {
+                        LOG.info("Load font file: " + fontFile);
+                        try {
+                            Font font = Font.loadFont(
+                                    fontFile.toAbsolutePath().normalize().toUri().toURL().toExternalForm(),
+                                    DEFAULT_FONT_SIZE);
+                            if (font != null)
+                                return font;
+                        } catch (MalformedURLException ignored) {
+                        }
+
+                        LOG.warning("Failed to load font " + fontFile);
+                    }
+                }
+            }
+        }
+
+        return null;
+    }
+
+    public static Font findByFcMatch(String pattern) {
         Path fcMatch = SystemUtils.which("fc-match");
         if (fcMatch == null)
             return null;
 
         try {
             String result = SystemUtils.run(fcMatch.toString(),
-                    ":lang=" + Locale.getDefault().toLanguageTag(),
+                    pattern,
                     "--format", "%{family}\\n%{file}").trim();
-
             String[] results = result.split("\\n");
             if (results.length != 2 || results[0].isEmpty() || results[1].isEmpty()) {
                 LOG.warning("Unexpected output from fc-match: " + result);
@@ -148,6 +193,7 @@ public final class FontManager {
                 return null;
             }
 
+            LOG.info("Load font file: " + path);
             Font[] fonts = Font.loadFonts(file.toUri().toURL().toExternalForm(), DEFAULT_FONT_SIZE);
             if (fonts == null) {
                 LOG.warning("Failed to load font from " + path);
@@ -181,64 +227,35 @@ public final class FontManager {
         }
     }
 
-    public static ObjectProperty<FontReference> fontProperty() {
-        return fontProperty;
+    public static ReadOnlyObjectProperty<FontReference> fontProperty() {
+        return font;
     }
 
     public static FontReference getFont() {
-        return fontProperty.get();
-    }
-
-    public static void setFont(FontReference font) {
-        fontProperty.set(font);
+        return font.get();
     }
 
     public static void setFontFamily(String fontFamily) {
-        setFont(fontFamily != null ? new FontReference(fontFamily) : null);
+        config().setLauncherFontFamily(fontFamily);
+        updateFont();
     }
 
     // https://github.com/HMCL-dev/HMCL/issues/4072
-    public static final class FontReference {
-        private final @NotNull String family;
-        private final @Nullable String style;
+    public record FontReference(@NotNull String family, @Nullable String style) {
+        public FontReference {
+            Objects.requireNonNull(family);
+        }
 
         public FontReference(@NotNull String family) {
-            this.family = Objects.requireNonNull(family);
-            this.style = null;
+            this(family, null);
         }
 
         public FontReference(@NotNull Font font) {
-            this.family = font.getFamily();
-            this.style = font.getStyle();
-        }
-
-        public @NotNull String getFamily() {
-            return family;
-        }
-
-        public @Nullable String getStyle() {
-            return style;
-        }
-
-        @Override
-        public boolean equals(Object o) {
-            if (!(o instanceof FontReference))
-                return false;
-            FontReference that = (FontReference) o;
-            return Objects.equals(family, that.family) && Objects.equals(style, that.style);
-        }
-
-        @Override
-        public int hashCode() {
-            return Objects.hash(family, style);
-        }
-
-        @Override
-        public String toString() {
-            return String.format("FontReference[family='%s', style='%s']", family, style);
+            this(font.getFamily(), font.getStyle());
         }
     }
 
     private FontManager() {
     }
 }
+

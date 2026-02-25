@@ -27,12 +27,12 @@ import javafx.geometry.Pos;
 import javafx.scene.layout.HBox;
 import javafx.stage.DirectoryChooser;
 import javafx.stage.FileChooser;
-import org.jackhuang.hmcl.setting.Theme;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
+import org.jackhuang.hmcl.util.io.FileUtils;
 
-import java.io.File;
+import java.nio.file.Path;
 
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
@@ -81,14 +81,14 @@ public class FileSelector extends HBox {
         FXUtils.bindString(customField, valueProperty());
 
         JFXButton selectButton = new JFXButton();
-        selectButton.setGraphic(SVG.FOLDER_OPEN.createIcon(Theme.blackFill(), 15));
+        selectButton.setGraphic(SVG.FOLDER_OPEN.createIcon(15));
         selectButton.setOnAction(e -> {
             if (directory) {
                 DirectoryChooser chooser = new DirectoryChooser();
                 chooser.setTitle(chooserTitle);
-                File dir = chooser.showDialog(Controllers.getStage());
+                Path dir = FileUtils.toPath(chooser.showDialog(Controllers.getStage()));
                 if (dir != null) {
-                    String path = dir.getAbsolutePath();
+                    String path = FileUtils.getAbsolutePath(dir);
                     customField.setText(path);
                     value.setValue(path);
                 }
@@ -96,9 +96,9 @@ public class FileSelector extends HBox {
                 FileChooser chooser = new FileChooser();
                 chooser.getExtensionFilters().addAll(getExtensionFilters());
                 chooser.setTitle(chooserTitle);
-                File file = chooser.showOpenDialog(Controllers.getStage());
+                Path file = FileUtils.toPath(chooser.showOpenDialog(Controllers.getStage()));
                 if (file != null) {
-                    String path = file.getAbsolutePath();
+                    String path = FileUtils.getAbsolutePath(file);
                     customField.setText(path);
                     value.setValue(path);
                 }

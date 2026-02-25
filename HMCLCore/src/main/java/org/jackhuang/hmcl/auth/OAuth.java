@@ -24,12 +24,16 @@ import org.jackhuang.hmcl.util.io.HttpRequest;
 import org.jackhuang.hmcl.util.io.NetworkUtils;
 
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
+import java.util.Base64;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 
 import static org.jackhuang.hmcl.util.Lang.mapOf;
 import static org.jackhuang.hmcl.util.Pair.pair;
+import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 public class OAuth {
     public static final OAuth MICROSOFT = new OAuth(
@@ -77,17 +81,31 @@ public class OAuth {
 
     private Result authenticateAuthorizationCode(Options options) throws IOException, InterruptedException, JsonParseException, ExecutionException, AuthenticationException {
         Session session = options.callback.startServer();
-        options.callback.openBrowser(NetworkUtils.withQuery(authorizationURL,
-                mapOf(pair("client_id", options.callback.getClientId()), pair("response_type", "code"),
-                        pair("redirect_uri", session.getRedirectURI()), pair("scope", options.scope),
-                        pair("prompt", "select_account"))));
+
+        String codeVerifier = session.getCodeVerifier();
+        String state = session.getState();
+        String codeChallenge = generateCodeChallenge(codeVerifier);
+
+        options.callback.openBrowser(GrantFlow.AUTHORIZATION_CODE, NetworkUtils.withQuery(authorizationURL,
+                mapOf(pair("client_id", options.callback.getClientId()),
+                        pair("response_type", "code"),
+                        pair("redirect_uri", session.getRedirectURI()),
+                        pair("scope", options.scope),
+                        pair("prompt", "select_account"),
+                        pair("code_challenge", codeChallenge),
+                        pair("state", state),
+                        pair("code_challenge_method", "S256")
+                )));
         String code = session.waitFor();
 
         // Authorization Code -> Token
         AuthorizationResponse response = HttpRequest.POST(accessTokenURL)
-                .form(pair("client_id", options.callback.getClientId()), pair("code", code),
-                        pair("grant_type", "authorization_code"), pair("client_secret", options.callback.getClientSecret()),
-                        pair("redirect_uri", session.getRedirectURI()), pair("scope", options.scope))
+                .form(pair("client_id", options.callback.getClientId()),
+                        pair("code", code),
+                        pair("grant_type", "authorization_code"),
+                        pair("code_verifier", codeVerifier),
+                        pair("redirect_uri", session.getRedirectURI()),
+                        pair("scope", options.scope))
                 .ignoreHttpCode()
                 .retry(5)
                 .getJson(AuthorizationResponse.class);
@@ -106,7 +124,7 @@ public class OAuth {
         options.callback.grantDeviceCode(deviceTokenResponse.userCode, deviceTokenResponse.verificationURI);
 
         // Microsoft OAuth Flow
-        options.callback.openBrowser(deviceTokenResponse.verificationURI);
+        options.callback.openBrowser(GrantFlow.DEVICE, deviceTokenResponse.verificationURI);
 
         long startTime = System.nanoTime();
         long interval = TimeUnit.MILLISECONDS.convert(deviceTokenResponse.interval, TimeUnit.SECONDS);
@@ -153,10 +171,6 @@ public class OAuth {
                     pair("grant_type", "refresh_token")
             );
 
-            if (!options.callback.isPublicClient()) {
-                query.put("client_secret", options.callback.getClientSecret());
-            }
-
             RefreshResponse response = HttpRequest.POST(tokenURL)
                     .form(query)
                     .accept("application/json")
@@ -171,6 +185,20 @@ public class OAuth {
             throw new ServerDisconnectException(e);
         } catch (JsonParseException e) {
             throw new ServerResponseMalformedException(e);
+        }
+    }
+
+    private static String generateCodeChallenge(String codeVerifier) {
+        // https://datatracker.ietf.org/doc/html/rfc7636#section-4.2
+        try {
+            byte[] bytes = codeVerifier.getBytes(StandardCharsets.US_ASCII);
+            MessageDigest messageDigest = MessageDigest.getInstance("SHA-256");
+            messageDigest.update(bytes, 0, bytes.length);
+            byte[] digest = messageDigest.digest();
+            return Base64.getUrlEncoder().withoutPadding().encodeToString(digest);
+        } catch (Exception e) {
+            LOG.warning("Failed to generate code challenge", e);
+            throw new RuntimeException(e);
         }
     }
 
@@ -207,6 +235,9 @@ public class OAuth {
     }
 
     public interface Session {
+        String getState();
+
+        String getCodeVerifier();
 
         String getRedirectURI();
 
@@ -237,15 +268,12 @@ public class OAuth {
         /**
          * Open browser
          *
-         * @param url OAuth url.
+         * @param grantFlow the grant flow.
+         * @param url       OAuth url.
          */
-        void openBrowser(String url) throws IOException;
+        void openBrowser(GrantFlow grantFlow, String url) throws IOException;
 
         String getClientId();
-
-        String getClientSecret();
-
-        boolean isPublicClient();
     }
 
     public enum GrantFlow {
@@ -271,7 +299,7 @@ public class OAuth {
         }
     }
 
-    private static class DeviceTokenResponse extends ErrorResponse {
+    private final static class DeviceTokenResponse extends ErrorResponse {
         @SerializedName("user_code")
         public String userCode;
 
@@ -291,7 +319,7 @@ public class OAuth {
         public int interval;
     }
 
-    private static class TokenResponse extends ErrorResponse {
+    private final static class TokenResponse extends ErrorResponse {
         @SerializedName("token_type")
         public String tokenType;
 
@@ -329,7 +357,7 @@ public class OAuth {
      * redirect URI used to obtain the authorization
      * code.","correlation_id":"??????"}
      */
-    public static class AuthorizationResponse extends ErrorResponse {
+    public final static class AuthorizationResponse extends ErrorResponse {
         @SerializedName("token_type")
         public String tokenType;
 
@@ -352,7 +380,7 @@ public class OAuth {
         public String foci;
     }
 
-    private static class RefreshResponse extends ErrorResponse {
+    private final static class RefreshResponse extends ErrorResponse {
         @SerializedName("expires_in")
         int expiresIn;
 

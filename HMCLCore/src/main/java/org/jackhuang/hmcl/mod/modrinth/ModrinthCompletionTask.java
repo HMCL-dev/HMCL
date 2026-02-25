@@ -28,7 +28,6 @@ import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.io.NetworkUtils;
 
-import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -81,12 +80,12 @@ public class ModrinthCompletionTask extends Task<Void> {
 
         if (manifest == null)
             try {
-                Path versionRoot = repository.getVersionRoot(version).toPath();
+                Path versionRoot = repository.getVersionRoot(version);
                 Path manifestFile = versionRoot.resolve("modrinth.index.json");
                 if (Files.exists(manifestFile))
                     this.manifest = JsonUtils.fromJsonFile(manifestFile, ModrinthManifest.class);
                 Path filesFile = versionRoot.resolve("files.json");
-                if (Files.exists(filesFile)) {
+                if (this.manifest != null && Files.exists(filesFile)) {
                     Set<String> files = new HashSet<>(JsonUtils.fromJsonFile(filesFile, JsonUtils.listTypeOf(String.class)));
                     this.selectedFiles = this.manifest.getFiles().stream().filter(f -> files.contains(f.getPath())).collect(Collectors.toSet());
                 }
@@ -112,10 +111,12 @@ public class ModrinthCompletionTask extends Task<Void> {
         if (manifest == null)
             return;
 
-        Path runDirectory = repository.getRunDirectory(version).toPath().toAbsolutePath().normalize();
+        Path runDirectory = FileUtils.toAbsolute(repository.getRunDirectory(version));
         Path modsDirectory = runDirectory.resolve("mods");
 
-        FileUtils.writeText(new File(repository.getVersionRoot(version), "files.json"), JsonUtils.GSON.toJson(selectedFiles.stream().map(ModpackFile::getPath).collect(Collectors.toList())));
+        JsonUtils.writeToJsonFile(repository.getVersionRoot(version).resolve("files.json"), selectedFiles == null
+            ? List.of()
+            : selectedFiles.stream().map(ModpackFile::getPath).collect(Collectors.toList()));
 
         for (ModrinthManifest.File file : manifest.getFiles()) {
             if (file.getEnv() != null && file.getEnv().getOrDefault("client", "required").equals("unsupported"))

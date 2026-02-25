@@ -33,27 +33,29 @@ import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.construct.MessageDialogPane.MessageType;
 import org.jackhuang.hmcl.ui.wizard.WizardController;
 import org.jackhuang.hmcl.ui.wizard.WizardProvider;
+import org.jackhuang.hmcl.util.SettingsMap;
+import org.jackhuang.hmcl.util.StringUtils;
 
-import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.charset.Charset;
-import java.util.Map;
+import java.nio.file.Path;
 import java.util.Set;
 
-import static org.jackhuang.hmcl.util.Lang.tryCast;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
-public class ModpackInstallWizardProvider implements WizardProvider {
+public final class ModpackInstallWizardProvider implements WizardProvider {
     private final Profile profile;
-    private final File file;
+    private final Path file;
     private final String updateVersion;
+    private String iconUrl;
+    private boolean hasSource;
 
     public ModpackInstallWizardProvider(Profile profile) {
         this(profile, null, null);
     }
 
-    public ModpackInstallWizardProvider(Profile profile, File modpackFile) {
+    public ModpackInstallWizardProvider(Profile profile, Path modpackFile) {
         this(profile, modpackFile, null);
     }
 
@@ -61,29 +63,37 @@ public class ModpackInstallWizardProvider implements WizardProvider {
         this(profile, null, updateVersion);
     }
 
-    public ModpackInstallWizardProvider(Profile profile, File modpackFile, String updateVersion) {
+    public ModpackInstallWizardProvider(Profile profile, Path modpackFile, String updateVersion) {
         this.profile = profile;
         this.file = modpackFile;
         this.updateVersion = updateVersion;
     }
 
+    public void setIconUrl(String iconUrl) {
+        this.iconUrl = iconUrl;
+    }
+
     @Override
-    public void start(Map<String, Object> settings) {
+    public void start(SettingsMap settings) {
         if (file != null)
             settings.put(LocalModpackPage.MODPACK_FILE, file);
         if (updateVersion != null)
             settings.put(LocalModpackPage.MODPACK_NAME, updateVersion);
-        settings.put(PROFILE, profile);
+        if (StringUtils.isNotBlank(iconUrl))
+            settings.put(LocalModpackPage.MODPACK_ICON_URL, iconUrl);
+        settings.put(ModpackPage.PROFILE, profile);
+        hasSource = settings.containsKey(LocalModpackPage.MODPACK_FILE) || settings.containsKey(RemoteModpackPage.MODPACK_SERVER_MANIFEST);
     }
 
-    @SuppressWarnings("unchecked")
-    private Task<?> finishModpackInstallingAsync(Map<String, Object> settings) {
-        File selected = tryCast(settings.get(LocalModpackPage.MODPACK_FILE), File.class).orElse(null);
-        ServerModpackManifest serverModpackManifest = tryCast(settings.get(RemoteModpackPage.MODPACK_SERVER_MANIFEST), ServerModpackManifest.class).orElse(null);
-        Modpack modpack = tryCast(settings.get(LocalModpackPage.MODPACK_MANIFEST), Modpack.class).orElse(null);
-        String name = tryCast(settings.get(LocalModpackPage.MODPACK_NAME), String.class).orElse(null);
-        Charset charset = tryCast(settings.get(LocalModpackPage.MODPACK_CHARSET), Charset.class).orElse(null);
-        boolean isManuallyCreated = tryCast(settings.get(LocalModpackPage.MODPACK_MANUALLY_CREATED), Boolean.class).orElse(false);
+    private Task<?> finishModpackInstallingAsync(SettingsMap settings) {
+        Path selected = settings.get(LocalModpackPage.MODPACK_FILE);
+        ServerModpackManifest serverModpackManifest = settings.get(RemoteModpackPage.MODPACK_SERVER_MANIFEST);
+        Modpack modpack = settings.get(LocalModpackPage.MODPACK_MANIFEST);
+        String name = settings.get(LocalModpackPage.MODPACK_NAME);
+        String iconUrl = settings.get(LocalModpackPage.MODPACK_ICON_URL);
+        Set<? extends ModpackFile> selectedFiles = settings.get(LocalModpackPage.MODPACK_SELECTED_FILES);
+        Charset charset = settings.get(LocalModpackPage.MODPACK_CHARSET);
+        boolean isManuallyCreated = settings.getOrDefault(LocalModpackPage.MODPACK_MANUALLY_CREATED, false);
 
         if (isManuallyCreated) {
             return ModpackHelper.getInstallManuallyCreatedModpackTask(profile, selected, name, charset);
@@ -100,7 +110,7 @@ public class ModpackInstallWizardProvider implements WizardProvider {
                 if (serverModpackManifest != null) {
                     return ModpackHelper.getUpdateTask(profile, serverModpackManifest, modpack.getEncoding(), name, ModpackHelper.readModpackConfiguration(profile.getRepository().getModpackConfiguration(name)));
                 } else {
-                    return ModpackHelper.getUpdateTask(profile, selected, modpack.getEncoding(), name, ModpackHelper.readModpackConfiguration(profile.getRepository().getModpackConfiguration(name)), (Set<? extends ModpackFile>) settings.get(LocalModpackPage.MODPACK_SELECTED_FILES));
+                    return ModpackHelper.getUpdateTask(profile, selected, modpack.getEncoding(), name, ModpackHelper.readModpackConfiguration(profile.getRepository().getModpackConfiguration(name)), selectedFiles);
                 }
             } catch (UnsupportedModpackException | ManuallyCreatedModpackException e) {
                 Controllers.dialog(i18n("modpack.unsupported"), i18n("message.error"), MessageType.ERROR);
@@ -115,48 +125,55 @@ public class ModpackInstallWizardProvider implements WizardProvider {
                 return ModpackHelper.getInstallTask(profile, serverModpackManifest, name, modpack)
                         .thenRunAsync(Schedulers.javafx(), () -> profile.setSelectedVersion(name));
             } else {
-                return ModpackHelper.getInstallTask(profile, selected, name, modpack, (Set<? extends ModpackFile>) settings.get(LocalModpackPage.MODPACK_SELECTED_FILES))
+                return ModpackHelper.getInstallTask(profile, selected, name, modpack, iconUrl, selectedFiles)
                         .thenRunAsync(Schedulers.javafx(), () -> profile.setSelectedVersion(name));
             }
         }
     }
 
     @Override
-    public Object finish(Map<String, Object> settings) {
+    public Object finish(SettingsMap settings) {
         settings.put("title", i18n("install.modpack.installation"));
         settings.put("success_message", i18n("install.success"));
-        settings.put("failure_callback", new FailureCallback() {
-            @Override
-            public void onFail(Map<String, Object> settings, Exception exception, Runnable next) {
-                if (exception instanceof ModpackCompletionException) {
-                    if (exception.getCause() instanceof FileNotFoundException) {
-                        Controllers.dialog(i18n("modpack.type.curse.not_found"), i18n("install.failed"), MessageType.ERROR, next);
-                    } else {
-                        Controllers.dialog(i18n("install.success"), i18n("install.success"), MessageType.SUCCESS, next);
-                    }
+        settings.put(FailureCallback.KEY, (ignored, exception, next) -> {
+            if (exception instanceof ModpackCompletionException) {
+                if (exception.getCause() instanceof FileNotFoundException) {
+                    Controllers.dialog(i18n("modpack.type.curse.not_found"), i18n("install.failed"), MessageType.ERROR, next);
                 } else {
-                    UpdateInstallerWizardProvider.alertFailureMessage(exception, next);
+                    Controllers.dialog(i18n("install.success"), i18n("install.success"), MessageType.SUCCESS, next);
                 }
+            } else {
+                UpdateInstallerWizardProvider.alertFailureMessage(exception, next);
             }
         });
 
         return finishModpackInstallingAsync(settings);
     }
 
+    private static Node createModpackInstallPage(WizardController controller) {
+        if (controller.getSettings().containsKey(LocalModpackPage.MODPACK_FILE))
+            return new LocalModpackPage(controller);
+        else if (controller.getSettings().containsKey(RemoteModpackPage.MODPACK_SERVER_MANIFEST))
+            return new RemoteModpackPage(controller);
+        else
+            throw new IllegalArgumentException();
+    }
+
     @Override
-    public Node createPage(WizardController controller, int step, Map<String, Object> settings) {
-        switch (step) {
-            case 0:
-                return new ModpackSelectionPage(controller);
-            case 1:
-                if (controller.getSettings().containsKey(LocalModpackPage.MODPACK_FILE))
-                    return new LocalModpackPage(controller);
-                else if (controller.getSettings().containsKey(RemoteModpackPage.MODPACK_SERVER_MANIFEST))
-                    return new RemoteModpackPage(controller);
-                else
-                    throw new IllegalArgumentException();
-            default:
-                throw new IllegalStateException("error step " + step + ", settings: " + settings + ", pages: " + controller.getPages());
+    public Node createPage(WizardController controller, int step, SettingsMap settings) {
+        if (hasSource) {
+            return switch (step) {
+                case 0 -> createModpackInstallPage(controller);
+                default -> throw new IllegalStateException(
+                        "error step " + step + ", settings: " + settings + ", pages: " + controller.getPages());
+            };
+        } else {
+            return switch (step) {
+                case 0 -> new ModpackSelectionPage(controller);
+                case 1 -> createModpackInstallPage(controller);
+                default -> throw new IllegalStateException(
+                        "error step " + step + ", settings: " + settings + ", pages: " + controller.getPages());
+            };
         }
     }
 
@@ -164,6 +181,4 @@ public class ModpackInstallWizardProvider implements WizardProvider {
     public boolean cancel() {
         return true;
     }
-
-    public static final String PROFILE = "PROFILE";
 }

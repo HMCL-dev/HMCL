@@ -38,18 +38,16 @@ import org.jackhuang.hmcl.ui.construct.MessageDialogPane;
 import org.jackhuang.hmcl.ui.construct.RequiredValidator;
 import org.jackhuang.hmcl.ui.construct.Validator;
 import org.jackhuang.hmcl.ui.wizard.WizardController;
+import org.jackhuang.hmcl.util.SettingsMap;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.io.CompressingUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
 
-import java.io.File;
 import java.nio.charset.Charset;
 import java.util.Collections;
 import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.nio.file.Path;
 
-import static org.jackhuang.hmcl.util.Lang.tryCast;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
@@ -62,11 +60,11 @@ public final class LocalModpackPage extends ModpackPage {
     public LocalModpackPage(WizardController controller) {
         super(controller);
 
-        Profile profile = (Profile) controller.getSettings().get("PROFILE");
+        Profile profile = controller.getSettings().get(ModpackPage.PROFILE);
 
-        Optional<String> name = tryCast(controller.getSettings().get(MODPACK_NAME), String.class);
-        if (name.isPresent()) {
-            txtModpackName.setText(name.get());
+        String name = controller.getSettings().get(MODPACK_NAME);
+        if (name != null) {
+            txtModpackName.setText(name);
             txtModpackName.setDisable(true);
         } else {
             FXUtils.onChangeAndOperate(installAsVersion, installAsVersion -> {
@@ -86,15 +84,15 @@ public final class LocalModpackPage extends ModpackPage {
 
         btnDescription.setVisible(false);
 
-        File selectedFile;
-        Optional<File> filePath = tryCast(controller.getSettings().get(MODPACK_FILE), File.class);
-        if (filePath.isPresent()) {
-            selectedFile = filePath.get();
+        Path selectedFile;
+        Path filePath = controller.getSettings().get(MODPACK_FILE);
+        if (filePath != null) {
+            selectedFile = filePath;
         } else {
             FileChooser chooser = new FileChooser();
             chooser.setTitle(i18n("modpack.choose"));
             chooser.getExtensionFilters().add(new FileChooser.ExtensionFilter(i18n("modpack"), "*.zip"));
-            selectedFile = chooser.showOpenDialog(Controllers.getStage());
+            selectedFile = FileUtils.toPath(chooser.showOpenDialog(Controllers.getStage()));
             if (selectedFile == null) {
                 controller.onEnd();
                 return;
@@ -104,20 +102,20 @@ public final class LocalModpackPage extends ModpackPage {
         }
 
         showSpinner();
-        Task.supplyAsync(() -> CompressingUtils.findSuitableEncoding(selectedFile.toPath()))
+        Task.supplyAsync(() -> CompressingUtils.findSuitableEncoding(selectedFile))
                 .thenApplyAsync(encoding -> {
                     charset = encoding;
-                    manifest = ModpackHelper.readModpackManifest(selectedFile.toPath(), encoding);
+                    manifest = ModpackHelper.readModpackManifest(selectedFile, encoding);
                     pendingOptionalFiles(manifest);
                     return manifest;
                 })
                 .whenComplete(Schedulers.javafx(), (manifest, exception) -> {
                     if (exception instanceof ManuallyCreatedModpackException) {
                         hideSpinner();
-                        lblName.setText(selectedFile.getName());
+                        nameProperty.set(FileUtils.getName(selectedFile));
                         installAsVersion.set(false);
 
-                        if (!name.isPresent()) {
+                        if (name == null) {
                             // trim: https://github.com/HMCL-dev/HMCL/issues/962
                             txtModpackName.setText(FileUtils.getNameWithoutExtension(selectedFile));
                         }
@@ -134,11 +132,11 @@ public final class LocalModpackPage extends ModpackPage {
                     } else {
                         hideSpinner();
                         controller.getSettings().put(MODPACK_MANIFEST, manifest);
-                        lblName.setText(manifest.getName());
-                        lblVersion.setText(manifest.getVersion());
-                        lblAuthor.setText(manifest.getAuthor());
+                        nameProperty.set(manifest.getName());
+                        versionProperty.set(manifest.getVersion());
+                        authorProperty.set(manifest.getAuthor());
 
-                        if (!name.isPresent()) {
+                        if (name == null) {
                             // trim: https://github.com/HMCL-dev/HMCL/issues/962
                             txtModpackName.setText(manifest.getName().trim());
                         }
@@ -152,6 +150,7 @@ public final class LocalModpackPage extends ModpackPage {
         waitingForOptionalFiles.set(true);
         if (!(manifest.getManifest() instanceof ModpackManifest.SupportOptional)) {
             optionalFiles.setOptionalFileList(Collections.emptyList());
+            waitingForOptionalFiles.set(false);
             return;
         }
         optionalFiles.setPending();
@@ -168,7 +167,7 @@ public final class LocalModpackPage extends ModpackPage {
     }
 
     @Override
-    public void cleanup(Map<String, Object> settings) {
+    public void cleanup(SettingsMap settings) {
         settings.remove(MODPACK_FILE);
     }
 
@@ -203,11 +202,11 @@ public final class LocalModpackPage extends ModpackPage {
             Controllers.navigate(new WebPage(i18n("modpack.description"), manifest.getDescription()));
     }
 
-    public static final String MODPACK_FILE = "MODPACK_FILE";
-    public static final String MODPACK_NAME = "MODPACK_NAME";
-    public static final String MODPACK_MANIFEST = "MODPACK_MANIFEST";
-    public static final String MODPACK_CHARSET = "MODPACK_CHARSET";
-    public static final String MODPACK_MANUALLY_CREATED = "MODPACK_MANUALLY_CREATED";
-
-    public static final String MODPACK_SELECTED_FILES = "MODPACK_SELECTED_FILES";
+    public static final SettingsMap.Key<Path> MODPACK_FILE = new SettingsMap.Key<>("MODPACK_FILE");
+    public static final SettingsMap.Key<String> MODPACK_NAME = new SettingsMap.Key<>("MODPACK_NAME");
+    public static final SettingsMap.Key<Modpack> MODPACK_MANIFEST = new SettingsMap.Key<>("MODPACK_MANIFEST");
+    public static final SettingsMap.Key<Charset> MODPACK_CHARSET = new SettingsMap.Key<>("MODPACK_CHARSET");
+    public static final SettingsMap.Key<Boolean> MODPACK_MANUALLY_CREATED = new SettingsMap.Key<>("MODPACK_MANUALLY_CREATED");
+    public static final SettingsMap.Key<String> MODPACK_ICON_URL = new SettingsMap.Key<>("MODPACK_ICON_URL");
+    public static final SettingsMap.Key<java.util.Set<? extends ModpackFile>> MODPACK_SELECTED_FILES = new SettingsMap.Key<>("MODPACK_SELECTED_FILES");
 }

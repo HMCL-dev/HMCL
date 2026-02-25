@@ -17,42 +17,100 @@
  */
 package org.jackhuang.hmcl.ui.construct;
 
-import javafx.beans.DefaultProperty;
-import javafx.beans.property.ObjectProperty;
-import javafx.beans.property.SimpleObjectProperty;
+import javafx.beans.property.*;
 import javafx.scene.Node;
 
-@DefaultProperty("content")
+import java.util.List;
+import java.util.function.Supplier;
+
 public class ComponentSublist extends ComponentList {
 
-    private final ObjectProperty<Node> headerLeft = new SimpleObjectProperty<>(this, "headerLeft");
-    private final ObjectProperty<Node> headerRight = new SimpleObjectProperty<>(this, "headerRight");
+    Supplier<List<? extends Node>> lazyInitializer;
 
     public ComponentSublist() {
         super();
     }
 
-    public Node getHeaderLeft() {
-        return headerLeft.get();
+    public ComponentSublist(Supplier<List<? extends Node>> lazyInitializer) {
+        this.lazyInitializer = lazyInitializer;
     }
 
-    public ObjectProperty<Node> headerLeftProperty() {
+    void doLazyInit() {
+        if (lazyInitializer != null) {
+            this.getContent().setAll(lazyInitializer.get());
+            setNeedsLayout(true);
+            lazyInitializer = null;
+        }
+    }
+
+    private final StringProperty title = new SimpleStringProperty(this, "title", "Group");
+
+    public StringProperty titleProperty() {
+        return title;
+    }
+
+    public String getTitle() {
+        return titleProperty().get();
+    }
+
+    public void setTitle(String title) {
+        titleProperty().set(title);
+    }
+
+    private StringProperty subtitle;
+
+    public StringProperty subtitleProperty() {
+        if (subtitle == null)
+            subtitle = new SimpleStringProperty(this, "subtitle", "");
+
+        return subtitle;
+    }
+
+    public String getSubtitle() {
+        return subtitleProperty().get();
+    }
+
+    public void setSubtitle(String subtitle) {
+        subtitleProperty().set(subtitle);
+    }
+
+    private boolean hasSubtitle = false;
+
+    public boolean isHasSubtitle() {
+        return hasSubtitle;
+    }
+
+    public void setHasSubtitle(boolean hasSubtitle) {
+        this.hasSubtitle = hasSubtitle;
+    }
+
+    private Node headerLeft;
+
+    public Node getHeaderLeft() {
         return headerLeft;
     }
 
     public void setHeaderLeft(Node headerLeft) {
-        this.headerLeft.set(headerLeft);
+        this.headerLeft = headerLeft;
     }
+
+    private Node headerRight;
 
     public Node getHeaderRight() {
-        return headerRight.get();
-    }
-
-    public ObjectProperty<Node> headerRightProperty() {
         return headerRight;
     }
 
     public void setHeaderRight(Node headerRight) {
-        this.headerRight.set(headerRight);
+        this.headerRight = headerRight;
+    }
+
+    private boolean componentPadding = true;
+
+    public boolean hasComponentPadding() {
+        return componentPadding;
+    }
+
+    public void setComponentPadding(boolean componentPadding) {
+        this.componentPadding = componentPadding;
     }
 }

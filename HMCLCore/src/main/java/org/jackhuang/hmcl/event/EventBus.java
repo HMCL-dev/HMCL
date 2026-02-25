@@ -17,29 +17,32 @@
  */
 package org.jackhuang.hmcl.event;
 
-import java.util.concurrent.ConcurrentHashMap;
+import org.jetbrains.annotations.NotNull;
 
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
-/**
- *
- * @author huangyuhui
- */
-public final class EventBus {
+/// @author huangyuhui
+public final class EventBus extends ClassValue<EventManager<?>> {
 
-    private final ConcurrentHashMap<Class<?>, EventManager<?>> events = new ConcurrentHashMap<>();
+    public static final EventBus EVENT_BUS = new EventBus();
+
+    private EventBus() {
+    }
+
+    @Override
+    protected EventManager<?> computeValue(@NotNull Class<?> type) {
+        return new EventManager<>();
+    }
 
     @SuppressWarnings("unchecked")
     public <T extends Event> EventManager<T> channel(Class<T> clazz) {
-        return (EventManager<T>) events.computeIfAbsent(clazz, ignored -> new EventManager<>());
+        return (EventManager<T>) get(clazz);
     }
 
     @SuppressWarnings("unchecked")
     public Event.Result fireEvent(Event obj) {
         LOG.info(obj + " gets fired");
 
-        return channel((Class<Event>) obj.getClass()).fireEvent(obj);
+        return ((EventManager<Event>) get(obj.getClass())).fireEvent(obj);
     }
-
-    public static final EventBus EVENT_BUS = new EventBus();
 }

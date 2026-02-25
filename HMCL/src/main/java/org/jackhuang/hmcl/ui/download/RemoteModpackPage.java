@@ -19,6 +19,7 @@ package org.jackhuang.hmcl.ui.download;
 
 import javafx.application.Platform;
 import org.jackhuang.hmcl.game.HMCLGameRepository;
+import org.jackhuang.hmcl.mod.Modpack;
 import org.jackhuang.hmcl.mod.server.ServerModpackManifest;
 import org.jackhuang.hmcl.setting.Profile;
 import org.jackhuang.hmcl.ui.Controllers;
@@ -27,13 +28,11 @@ import org.jackhuang.hmcl.ui.construct.MessageDialogPane;
 import org.jackhuang.hmcl.ui.construct.RequiredValidator;
 import org.jackhuang.hmcl.ui.construct.Validator;
 import org.jackhuang.hmcl.ui.wizard.WizardController;
+import org.jackhuang.hmcl.util.SettingsMap;
 import org.jackhuang.hmcl.util.StringUtils;
 
 import java.io.IOException;
-import java.util.Map;
-import java.util.Optional;
 
-import static org.jackhuang.hmcl.util.Lang.tryCast;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 public final class RemoteModpackPage extends ModpackPage {
@@ -42,8 +41,9 @@ public final class RemoteModpackPage extends ModpackPage {
     public RemoteModpackPage(WizardController controller) {
         super(controller);
 
-        manifest = tryCast(controller.getSettings().get(MODPACK_SERVER_MANIFEST), ServerModpackManifest.class)
-                .orElseThrow(() -> new IllegalStateException("MODPACK_SERVER_MANIFEST should exist"));
+        manifest = controller.getSettings().get(MODPACK_SERVER_MANIFEST);
+        if (manifest == null)
+            throw new IllegalStateException("MODPACK_SERVER_MANIFEST should exist");
 
         try {
             controller.getSettings().put(MODPACK_MANIFEST, manifest.toModpack(null));
@@ -53,14 +53,14 @@ public final class RemoteModpackPage extends ModpackPage {
             return;
         }
 
-        lblName.setText(manifest.getName());
-        lblVersion.setText(manifest.getVersion());
-        lblAuthor.setText(manifest.getAuthor());
+        nameProperty.set(manifest.getName());
+        versionProperty.set(manifest.getVersion());
+        authorProperty.set(manifest.getAuthor());
 
-        Profile profile = (Profile) controller.getSettings().get("PROFILE");
-        Optional<String> name = tryCast(controller.getSettings().get(MODPACK_NAME), String.class);
-        if (name.isPresent()) {
-            txtModpackName.setText(name.get());
+        Profile profile = controller.getSettings().get(ModpackPage.PROFILE);
+        String name = controller.getSettings().get(MODPACK_NAME);
+        if (name != null) {
+            txtModpackName.setText(name);
             txtModpackName.setDisable(true);
         } else {
             // trim: https://github.com/HMCL-dev/HMCL/issues/962
@@ -75,7 +75,7 @@ public final class RemoteModpackPage extends ModpackPage {
     }
 
     @Override
-    public void cleanup(Map<String, Object> settings) {
+    public void cleanup(SettingsMap settings) {
         settings.remove(MODPACK_SERVER_MANIFEST);
     }
 
@@ -89,7 +89,7 @@ public final class RemoteModpackPage extends ModpackPage {
         Controllers.navigate(new WebPage(i18n("modpack.description"), manifest.getDescription()));
     }
 
-    public static final String MODPACK_SERVER_MANIFEST = "MODPACK_SERVER_MANIFEST";
-    public static final String MODPACK_NAME = "MODPACK_NAME";
-    public static final String MODPACK_MANIFEST = "MODPACK_MANIFEST";
+    public static final SettingsMap.Key<ServerModpackManifest> MODPACK_SERVER_MANIFEST = new SettingsMap.Key<>("MODPACK_SERVER_MANIFEST");
+    public static final SettingsMap.Key<String> MODPACK_NAME = new SettingsMap.Key<>("MODPACK_NAME");
+    public static final SettingsMap.Key<Modpack> MODPACK_MANIFEST = new SettingsMap.Key<>("MODPACK_MANIFEST");
 }

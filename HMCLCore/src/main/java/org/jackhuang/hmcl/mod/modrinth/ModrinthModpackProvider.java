@@ -25,7 +25,6 @@ import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.io.CompressingUtils;
 
-import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.charset.Charset;
@@ -50,12 +49,11 @@ public final class ModrinthModpackProvider implements ModpackProvider {
     }
 
     @Override
-    public Task<?> createUpdateTask(DefaultDependencyManager dependencyManager, String name, File zipFile, Modpack modpack, Set<? extends ModpackFile> selectedFiles) throws MismatchedModpackTypeException {
-        if (!(modpack.getManifest() instanceof ModrinthManifest))
+    public Task<?> createUpdateTask(DefaultDependencyManager dependencyManager, String name, Path zipFile, Modpack modpack, Set<? extends ModpackFile> selectedFiles) throws MismatchedModpackTypeException {
+        if (!(modpack.getManifest() instanceof ModrinthManifest modrinthManifest))
             throw new MismatchedModpackTypeException(getName(), modpack.getManifest().getProvider().getName());
 
-        // TODO: Fix optional files
-        return new ModpackUpdateTask(dependencyManager.getGameRepository(), name, new ModrinthInstallTask(dependencyManager, zipFile, modpack, (ModrinthManifest) modpack.getManifest(), name, selectedFiles));
+        return new ModpackUpdateTask(dependencyManager.getGameRepository(), name, new ModrinthInstallTask(dependencyManager, zipFile, modpack, modrinthManifest, name, null, selectedFiles));
     }
 
     @Override
@@ -63,8 +61,8 @@ public final class ModrinthModpackProvider implements ModpackProvider {
         ModrinthManifest manifest = JsonUtils.fromNonNullJson(CompressingUtils.readTextZipEntry(zip, "modrinth.index.json"), ModrinthManifest.class);
         return new Modpack(manifest.getName(), "", manifest.getVersionId(), manifest.getGameVersion(), manifest.getSummary(), encoding, manifest) {
             @Override
-            public Task<?> getInstallTask(DefaultDependencyManager dependencyManager, java.io.File zipFile, String name, Set<? extends ModpackFile> selectedFiles) {
-                return new ModrinthInstallTask(dependencyManager, zipFile, this, manifest, name, selectedFiles);
+            public Task<?> getInstallTask(DefaultDependencyManager dependencyManager, Path zipFile, String name, String iconUrl, Set<? extends ModpackFile> selectedFiles) {
+                return new ModrinthInstallTask(dependencyManager, zipFile, this, manifest, name, iconUrl, selectedFiles);
             }
         };
     }

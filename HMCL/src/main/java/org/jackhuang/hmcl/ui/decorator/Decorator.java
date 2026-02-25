@@ -39,18 +39,18 @@ import javafx.scene.paint.Color;
 import javafx.stage.Stage;
 import javafx.stage.StageStyle;
 import javafx.util.Duration;
+import org.jackhuang.hmcl.Launcher;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.animation.AnimationUtils;
+import org.jackhuang.hmcl.ui.animation.Motion;
 import org.jackhuang.hmcl.ui.wizard.Navigation;
+import org.jackhuang.hmcl.util.platform.OperatingSystem;
 
 public class Decorator extends Control {
-    private final ListProperty<Node> drawer = new SimpleListProperty<>(FXCollections.observableArrayList());
     private final ListProperty<Node> content = new SimpleListProperty<>(FXCollections.observableArrayList());
     private final ListProperty<Node> container = new SimpleListProperty<>(FXCollections.observableArrayList());
     private final ObjectProperty<Background> contentBackground = new SimpleObjectProperty<>();
     private final ObjectProperty<DecoratorPage.State> state = new SimpleObjectProperty<>();
-    private final StringProperty drawerTitle = new SimpleStringProperty();
-    private final ObjectProperty<Runnable> onCloseButtonAction = new SimpleObjectProperty<>();
     private final ObjectProperty<EventHandler<ActionEvent>> onCloseNavButtonAction = new SimpleObjectProperty<>();
     private final ObjectProperty<EventHandler<ActionEvent>> onBackNavButtonAction = new SimpleObjectProperty<>();
     private final ObjectProperty<EventHandler<ActionEvent>> onRefreshNavButtonAction = new SimpleObjectProperty<>();
@@ -81,19 +81,19 @@ public class Decorator extends Control {
                 if (playRestoreMinimizeAnimation && !iconified) {
                     playRestoreMinimizeAnimation = false;
                     Timeline timeline = new Timeline(
-                            new KeyFrame(Duration.millis(0),
-                                    new KeyValue(this.opacityProperty(), 0, FXUtils.EASE),
-                                    new KeyValue(this.translateYProperty(), 200, FXUtils.EASE),
-                                    new KeyValue(this.scaleXProperty(), 0.4, FXUtils.EASE),
-                                    new KeyValue(this.scaleYProperty(), 0.4, FXUtils.EASE),
-                                    new KeyValue(this.scaleZProperty(), 0.4, FXUtils.EASE)
+                            new KeyFrame(Duration.ZERO,
+                                    new KeyValue(this.opacityProperty(), 0, Motion.EASE),
+                                    new KeyValue(this.translateYProperty(), 200, Motion.EASE),
+                                    new KeyValue(this.scaleXProperty(), 0.4, Motion.EASE),
+                                    new KeyValue(this.scaleYProperty(), 0.4, Motion.EASE),
+                                    new KeyValue(this.scaleZProperty(), 0.4, Motion.EASE)
                             ),
-                            new KeyFrame(Duration.millis(200),
-                                    new KeyValue(this.opacityProperty(), 1, FXUtils.EASE),
-                                    new KeyValue(this.translateYProperty(), 0, FXUtils.EASE),
-                                    new KeyValue(this.scaleXProperty(), 1, FXUtils.EASE),
-                                    new KeyValue(this.scaleYProperty(), 1, FXUtils.EASE),
-                                    new KeyValue(this.scaleZProperty(), 1, FXUtils.EASE)
+                            new KeyFrame(Motion.SHORT4,
+                                    new KeyValue(this.opacityProperty(), 1, Motion.EASE),
+                                    new KeyValue(this.translateYProperty(), 0, Motion.EASE),
+                                    new KeyValue(this.scaleXProperty(), 1, Motion.EASE),
+                                    new KeyValue(this.scaleYProperty(), 1, Motion.EASE),
+                                    new KeyValue(this.scaleZProperty(), 1, Motion.EASE)
                             )
                     );
                     timeline.play();
@@ -113,18 +113,6 @@ public class Decorator extends Control {
 
     public void setDrawerWrapper(StackPane drawerWrapper) {
         this.drawerWrapper = drawerWrapper;
-    }
-
-    public ObservableList<Node> getDrawer() {
-        return drawer.get();
-    }
-
-    public ListProperty<Node> drawerProperty() {
-        return drawer;
-    }
-
-    public void setDrawer(ObservableList<Node> drawer) {
-        this.drawer.set(drawer);
     }
 
     public ObservableList<Node> getContent() {
@@ -149,30 +137,6 @@ public class Decorator extends Control {
 
     public void setState(DecoratorPage.State state) {
         this.state.set(state);
-    }
-
-    public String getDrawerTitle() {
-        return drawerTitle.get();
-    }
-
-    public StringProperty drawerTitleProperty() {
-        return drawerTitle;
-    }
-
-    public void setDrawerTitle(String drawerTitle) {
-        this.drawerTitle.set(drawerTitle);
-    }
-
-    public Runnable getOnCloseButtonAction() {
-        return onCloseButtonAction.get();
-    }
-
-    public ObjectProperty<Runnable> onCloseButtonActionProperty() {
-        return onCloseButtonAction;
-    }
-
-    public void setOnCloseButtonAction(Runnable onCloseButtonAction) {
-        this.onCloseButtonAction.set(onCloseButtonAction);
     }
 
     public ObservableList<Node> getContainer() {
@@ -273,22 +237,22 @@ public class Decorator extends Control {
     }
 
     public void minimize() {
-        if (AnimationUtils.playWindowAnimation()) {
+        if (AnimationUtils.playWindowAnimation() && OperatingSystem.CURRENT_OS != OperatingSystem.MACOS) {
             playRestoreMinimizeAnimation = true;
             Timeline timeline = new Timeline(
-                    new KeyFrame(Duration.millis(0),
-                            new KeyValue(this.opacityProperty(), 1, FXUtils.EASE),
-                            new KeyValue(this.translateYProperty(), 0, FXUtils.EASE),
-                            new KeyValue(this.scaleXProperty(), 1, FXUtils.EASE),
-                            new KeyValue(this.scaleYProperty(), 1, FXUtils.EASE),
-                            new KeyValue(this.scaleZProperty(), 1, FXUtils.EASE)
+                    new KeyFrame(Duration.ZERO,
+                            new KeyValue(this.opacityProperty(), 1, Motion.EASE),
+                            new KeyValue(this.translateYProperty(), 0, Motion.EASE),
+                            new KeyValue(this.scaleXProperty(), 1, Motion.EASE),
+                            new KeyValue(this.scaleYProperty(), 1, Motion.EASE),
+                            new KeyValue(this.scaleZProperty(), 1, Motion.EASE)
                     ),
-                    new KeyFrame(Duration.millis(200),
-                            new KeyValue(this.opacityProperty(), 0, FXUtils.EASE),
-                            new KeyValue(this.translateYProperty(), 200, FXUtils.EASE),
-                            new KeyValue(this.scaleXProperty(), 0.4, FXUtils.EASE),
-                            new KeyValue(this.scaleYProperty(), 0.4, FXUtils.EASE),
-                            new KeyValue(this.scaleZProperty(), 0.4, FXUtils.EASE)
+                    new KeyFrame(Motion.SHORT4,
+                            new KeyValue(this.opacityProperty(), 0, Motion.EASE),
+                            new KeyValue(this.translateYProperty(), 200, Motion.EASE),
+                            new KeyValue(this.scaleXProperty(), 0.4, Motion.EASE),
+                            new KeyValue(this.scaleYProperty(), 0.4, Motion.EASE),
+                            new KeyValue(this.scaleZProperty(), 0.4, Motion.EASE)
                     )
             );
             timeline.setOnFinished(event -> primaryStage.setIconified(true));
@@ -299,7 +263,26 @@ public class Decorator extends Control {
     }
 
     public void close() {
-        onCloseButtonAction.get().run();
+        if (AnimationUtils.playWindowAnimation()) {
+            Timeline timeline = new Timeline(
+                    new KeyFrame(Duration.millis(0),
+                            new KeyValue(opacityProperty(), 1, Motion.EASE),
+                            new KeyValue(scaleXProperty(), 1, Motion.EASE),
+                            new KeyValue(scaleYProperty(), 1, Motion.EASE),
+                            new KeyValue(scaleZProperty(), 0.3, Motion.EASE)
+                    ),
+                    new KeyFrame(Duration.millis(200),
+                            new KeyValue(opacityProperty(), 0, Motion.EASE),
+                            new KeyValue(scaleXProperty(), 0.8, Motion.EASE),
+                            new KeyValue(scaleYProperty(), 0.8, Motion.EASE),
+                            new KeyValue(scaleZProperty(), 0.8, Motion.EASE)
+                    )
+            );
+            timeline.setOnFinished(event -> Launcher.stopApplication());
+            timeline.play();
+        } else {
+            Launcher.stopApplication();
+        }
     }
 
     public void capableDraggingWindow(Node node) {

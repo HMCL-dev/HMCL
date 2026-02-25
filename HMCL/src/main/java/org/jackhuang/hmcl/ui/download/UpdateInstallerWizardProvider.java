@@ -30,6 +30,7 @@ import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.construct.MessageDialogPane;
 import org.jackhuang.hmcl.ui.wizard.WizardController;
 import org.jackhuang.hmcl.ui.wizard.WizardProvider;
+import org.jackhuang.hmcl.util.SettingsMap;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.i18n.I18n;
 import org.jackhuang.hmcl.util.io.ResponseCodeException;
@@ -39,8 +40,6 @@ import org.jetbrains.annotations.Nullable;
 import java.net.SocketTimeoutException;
 import java.net.URI;
 import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
 import java.util.concurrent.CancellationException;
 import java.util.zip.ZipException;
 
@@ -66,37 +65,37 @@ public final class UpdateInstallerWizardProvider implements WizardProvider {
     }
 
     @Override
-    public void start(Map<String, Object> settings) {
+    public void start(SettingsMap settings) {
     }
 
     @Override
-    public Object finish(Map<String, Object> settings) {
+    public Object finish(SettingsMap settings) {
         settings.put("title", i18n("install.change_version.process"));
         settings.put("success_message", i18n("install.success"));
-        settings.put("failure_callback", (FailureCallback) (settings1, exception, next) -> alertFailureMessage(exception, next));
+        settings.put(FailureCallback.KEY, (settings1, exception, next) -> alertFailureMessage(exception, next));
 
         // We remove library but not save it,
         // so if installation failed will not break down current version.
         Task<Version> ret = Task.supplyAsync(() -> version);
-        List<String> stages = new ArrayList<>();
-        for (Object value : settings.values()) {
-            if (value instanceof RemoteVersion) {
-                RemoteVersion remoteVersion = (RemoteVersion) value;
+        var hints = new ArrayList<Task.StagesHint>();
+        for (Object value : settings.asStringMap().values()) {
+            if (value instanceof RemoteVersion remoteVersion) {
                 ret = ret.thenComposeAsync(version -> dependencyManager.installLibraryAsync(version, remoteVersion));
-                stages.add(String.format("hmcl.install.%s:%s", remoteVersion.getLibraryId(), remoteVersion.getSelfVersion()));
+                hints.add(new Task.StagesHint(String.format("hmcl.install.%s:%s", remoteVersion.getLibraryId(), remoteVersion.getSelfVersion())));
                 if ("game".equals(remoteVersion.getLibraryId())) {
-                    stages.add("hmcl.install.assets");
+                    hints.add(new Task.StagesHint("hmcl.install.libraries"));
+                    hints.add(new Task.StagesHint("hmcl.install.assets"));
                 }
-            } else if (value instanceof RemoveVersionAction) {
-                ret = ret.thenComposeAsync(version -> dependencyManager.removeLibraryAsync(version, ((RemoveVersionAction) value).libraryId));
+            } else if (value instanceof RemoveVersionAction removeVersionAction) {
+                ret = ret.thenComposeAsync(version -> dependencyManager.removeLibraryAsync(version, removeVersionAction.libraryId));
             }
         }
 
-        return ret.thenComposeAsync(profile.getRepository()::saveAsync).thenComposeAsync(profile.getRepository().refreshVersionsAsync()).withStagesHint(stages);
+        return ret.thenComposeAsync(profile.getRepository()::saveAsync).thenComposeAsync(profile.getRepository().refreshVersionsAsync()).withStagesHints(hints);
     }
 
     @Override
-    public Node createPage(WizardController controller, int step, Map<String, Object> settings) {
+    public Node createPage(WizardController controller, int step, SettingsMap settings) {
         switch (step) {
             case 0:
                 return new VersionsPage(controller, i18n("install.installer.choose", i18n("install.installer." + libraryId)), gameVersion, downloadProvider, libraryId, () -> {

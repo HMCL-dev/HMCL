@@ -20,9 +20,11 @@ package org.jackhuang.hmcl.ui.main;
 import javafx.geometry.Insets;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.layout.VBox;
+import org.jackhuang.hmcl.theme.Themes;
 import org.jackhuang.hmcl.ui.FXUtils;
+import org.jackhuang.hmcl.ui.WeakListenerHolder;
 import org.jackhuang.hmcl.ui.construct.ComponentList;
-import org.jackhuang.hmcl.ui.construct.IconedTwoLineListItem;
+import org.jackhuang.hmcl.ui.construct.LineButton;
 import org.jackhuang.hmcl.ui.construct.SpinnerPane;
 
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
@@ -30,6 +32,8 @@ import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 import org.jackhuang.hmcl.Metadata;
 
 public class FeedbackPage extends SpinnerPane {
+
+    private final WeakListenerHolder holder = new WeakListenerHolder();
 
     public FeedbackPage() {
         VBox content = new VBox();
@@ -41,32 +45,44 @@ public class FeedbackPage extends SpinnerPane {
         FXUtils.smoothScrolling(scrollPane);
         setContent(scrollPane);
 
-        ComponentList community = new ComponentList();
+        ComponentList groups = new ComponentList();
         {
-            IconedTwoLineListItem users = new IconedTwoLineListItem();
-            users.setImage(FXUtils.newBuiltinImage("/assets/img/icon.png"));
-            users.setTitle(i18n("feedback.qq_group"));
-            users.setSubtitle(i18n("feedback.qq_group.statement"));
-            users.setExternalLink(Metadata.GROUPS_URL);
+            var users = LineButton.createExternalLinkButton(Metadata.GROUPS_URL);
+            users.setLargeTitle(true);
+            users.setLeading(FXUtils.newBuiltinImage("/assets/img/icon.png"));
+            users.setTitle(i18n("contact.chat.qq_group"));
+            users.setSubtitle(i18n("contact.chat.qq_group.statement"));
 
-            IconedTwoLineListItem github = new IconedTwoLineListItem();
-            github.setImage(FXUtils.newBuiltinImage("/assets/img/github.png"));
-            github.setTitle(i18n("feedback.github"));
-            github.setSubtitle(i18n("feedback.github.statement"));
-            github.setExternalLink("https://github.com/HMCL-dev/HMCL/issues/new/choose");
+            var discord = LineButton.createExternalLinkButton("https://discord.gg/jVvC7HfM6U");
+            discord.setLargeTitle(true);
+            discord.setLeading(FXUtils.newBuiltinImage("/assets/img/discord.png"));
+            discord.setTitle(i18n("contact.chat.discord"));
+            discord.setSubtitle(i18n("contact.chat.discord.statement"));
 
-            IconedTwoLineListItem discord = new IconedTwoLineListItem();
-            discord.setImage(FXUtils.newBuiltinImage("/assets/img/discord.png"));
-            discord.setTitle(i18n("feedback.discord"));
-            discord.setSubtitle(i18n("feedback.discord.statement"));
-            discord.setExternalLink("https://discord.gg/jVvC7HfM6U");
+            groups.getContent().setAll(users, discord);
+        }
 
-            community.getContent().setAll(users, github, discord);
+        ComponentList feedback = new ComponentList();
+        {
+            var github = LineButton.createExternalLinkButton("https://github.com/HMCL-dev/HMCL/issues/new/choose");
+            github.setLargeTitle(true);
+            github.setTitle(i18n("contact.feedback.github"));
+            github.setSubtitle(i18n("contact.feedback.github.statement"));
+
+            holder.add(FXUtils.onWeakChangeAndOperate(Themes.darkModeProperty(), darkMode -> {
+                github.setLeading(darkMode
+                        ? FXUtils.newBuiltinImage("/assets/img/github-white.png")
+                        : FXUtils.newBuiltinImage("/assets/img/github.png"));
+            }));
+
+            feedback.getContent().setAll(github);
         }
 
         content.getChildren().addAll(
-                ComponentList.createComponentListTitle(i18n("feedback.channel")),
-                community
+                ComponentList.createComponentListTitle(i18n("contact.chat")),
+                groups,
+                ComponentList.createComponentListTitle(i18n("contact.feedback")),
+                feedback
         );
 
         this.setContent(content);

@@ -29,12 +29,14 @@ import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 
-import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.*;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
@@ -88,13 +90,12 @@ public final class CurseCompletionTask extends Task<Void> {
 
         if (manifest == null)
             try {
-                Path versionRoot = repository.getVersionRoot(version).toPath();
-
+                Path versionRoot = repository.getVersionRoot(version);
                 Path manifestFile = versionRoot.resolve("manifest.json");
                 if (Files.exists(manifestFile))
                     this.manifest = JsonUtils.fromJsonFile(manifestFile, CurseManifest.class);
                 Path filesFile = versionRoot.resolve("files.json");
-                if (Files.exists(filesFile)) {
+                if (this.manifest != null && Files.exists(filesFile)) {
                     Set<String> files = new HashSet<>(JsonUtils.fromJsonFile(filesFile, JsonUtils.listTypeOf(String.class)));
                     this.selectedFiles = this.manifest.getFiles().stream()
                             .filter(f -> files.contains(f.getPath()))
@@ -122,7 +123,7 @@ public final class CurseCompletionTask extends Task<Void> {
         if (manifest == null)
             return;
 
-        Path root = repository.getVersionRoot(version).toPath();
+        Path root = repository.getVersionRoot(version);
 
         // Because in China, Curse is too difficult to visit,
         // if failed, ignore it and retry next time.
@@ -148,12 +149,14 @@ public final class CurseCompletionTask extends Task<Void> {
                             }
                         })
                         .collect(Collectors.toList()));
-
         JsonUtils.writeToJsonFile(root.resolve("manifest.json"), newManifest);
-        JsonUtils.writeToJsonFile(root.resolve("files.json"), selectedFiles.stream().map(ModpackFile::getPath).collect(Collectors.toList()));
+                JsonUtils.writeToJsonFile(root.resolve("files.json"), selectedFiles == null
+                    ? List.of()
+                    : selectedFiles.stream().map(ModpackFile::getPath).collect(Collectors.toList()));
 
-        File versionRoot = repository.getVersionRoot(modManager.getVersion());
-        File resourcePacksRoot = new File(versionRoot, "resourcepacks"), shaderPacksRoot = new File(versionRoot, "shaderpacks");
+        Path versionRoot = repository.getVersionRoot(modManager.getInstanceId());
+        Path resourcePacksRoot = versionRoot.resolve("resourcepacks");
+        Path shaderPacksRoot = versionRoot.resolve("shaderpacks");
         finished.set(0);
         dependencies = newManifest.getFiles()
                 .stream().parallel()
@@ -161,12 +164,12 @@ public final class CurseCompletionTask extends Task<Void> {
                 .filter(f -> selectedFiles == null || selectedFiles.contains(f))
                 .flatMap(f -> {
                     try {
-                        File path = guessFilePath(f, resourcePacksRoot, shaderPacksRoot);
+                        Path path = guessFilePath(f, resourcePacksRoot, shaderPacksRoot);
                         if (path == null) {
                             return Stream.empty();
                         }
 
-                        var task = new FileDownloadTask(f.getUrl(), path.toPath());
+                        var task = new FileDownloadTask(f.getUrl(), path);
                         task.setCacheRepository(dependency.getCacheRepository());
                         task.setCaching(true);
                         return Stream.of(task.withCounter("hmcl.modpack.download"));
@@ -187,29 +190,30 @@ public final class CurseCompletionTask extends Task<Void> {
 
     /**
      * Guess where to store the file.
-     * @param file The file.
+     *
+     * @param file              The file.
      * @param resourcePacksRoot ./resourcepacks.
-     * @param shaderPacksRoot ./shaderpacks.
+     * @param shaderPacksRoot   ./shaderpacks.
      * @return ./resourcepacks/$filename or ./shaderpacks/$filename or ./mods/$filename if the file doesn't exist. null if the file existed.
      * @throws IOException If IOException was encountered during getting data from CurseForge.
      */
-    private File guessFilePath(CurseManifestFile file, File resourcePacksRoot, File shaderPacksRoot) throws IOException {
+    private Path guessFilePath(CurseManifestFile file, Path resourcePacksRoot, Path shaderPacksRoot) throws IOException {
         RemoteMod mod = CurseForgeRemoteModRepository.MODS.getModById(Integer.toString(file.getProjectID()));
         int classID = ((CurseAddon) mod.getData()).getClassId();
         String fileName = file.getFileName();
-        switch (classID) {
-            case 12: // Resource pack
-            case 6552: { // Shader pack
-                File res = new File(classID == 12 ? resourcePacksRoot : shaderPacksRoot, fileName);
-                return res.exists() ? null : res;
+        return switch (classID) {
+            case 12,       // Resource pack
+                 6552 -> { // Shader pack
+                Path res = (classID == 12 ? resourcePacksRoot : shaderPacksRoot).resolve(fileName);
+                yield Files.exists(res) ? null : res;
             }
-            default: {
+            default -> {
                 if (modManager.hasSimpleMod(fileName)) {
-                    return null;
+                    yield null;
                 }
-                return modManager.getSimpleModPath(fileName).toFile();
+                yield modManager.getSimpleModPath(fileName);
             }
-        }
+        };
     }
 
     @Override

@@ -27,6 +27,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.regex.Pattern;
 
@@ -49,7 +50,7 @@ final class WindowsGPUDetector {
 
     private static List<GraphicsCard> detectByCim() {
         try {
-            String getCimInstance = OperatingSystem.SYSTEM_VERSION.startsWith("6.1")
+            String getCimInstance = OperatingSystem.SYSTEM_VERSION.getVersion().startsWith("6.1")
                     ? "Get-WmiObject"
                     : "Get-CimInstance";
 
@@ -93,6 +94,9 @@ final class WindowsGPUDetector {
             return null;
         } else if (object instanceof String[]) {
             return String.join(" ", (String[]) object);
+        } else if (object instanceof byte[]) {
+            return new String((byte[]) object, StandardCharsets.UTF_16LE)
+                    .replace("\0", "");
         } else {
             return object.toString();
         }
