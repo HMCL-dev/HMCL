@@ -31,7 +31,6 @@ import javafx.scene.control.Label;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.control.SkinBase;
 import javafx.scene.control.Tooltip;
-import javafx.scene.image.ImageView;
 import javafx.scene.layout.*;
 import javafx.stage.FileChooser;
 import javafx.util.Duration;
@@ -43,10 +42,7 @@ import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
 import org.jackhuang.hmcl.ui.animation.ContainerAnimations;
 import org.jackhuang.hmcl.ui.animation.TransitionPane;
-import org.jackhuang.hmcl.ui.construct.ComponentList;
-import org.jackhuang.hmcl.ui.construct.MDListCell;
-import org.jackhuang.hmcl.ui.construct.SpinnerPane;
-import org.jackhuang.hmcl.ui.construct.TwoLineListItem;
+import org.jackhuang.hmcl.ui.construct.*;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.i18n.I18n;
 
@@ -178,8 +174,7 @@ public class BuiltInModListPageSkin extends SkinBase<BuiltInModListPage> {
     }
 
     private class JijModListCell extends MDListCell<ModListPageSkin.ModInfoObject> {
-
-        private final ImageView imageView = new ImageView();
+        private final ImageContainer imageContainer = new ImageContainer(24);
         private final TwoLineListItem content = new TwoLineListItem();
         private JFXPopup activePopup;
         private boolean ignoreNextClick = false;
@@ -193,25 +188,15 @@ public class BuiltInModListPageSkin extends SkinBase<BuiltInModListPage> {
             container.setAlignment(Pos.CENTER_LEFT);
             StackPane.setMargin(container, new Insets(8, 8, 8, 18));
 
-            imageView.setFitWidth(24);
-            imageView.setFitHeight(24);
-            imageView.setPreserveRatio(true);
-
             HBox.setHgrow(content, Priority.ALWAYS);
             content.setMouseTransparent(true);
 
-            container.getChildren().addAll(imageView, content);
+            container.getChildren().addAll(imageContainer, content);
             getContainer().getChildren().setAll(container);
 
             setSelectable();
 
-            this.setOnMousePressed(e -> {
-                if (activePopup != null && activePopup.isShowing()) {
-                    ignoreNextClick = true;
-                } else {
-                    ignoreNextClick = false;
-                }
-            });
+            this.setOnMousePressed(e -> ignoreNextClick = activePopup != null && activePopup.isShowing());
 
             this.setOnMouseClicked(e -> {
                 if (getItem() != null && getItem().getModInfo() != null) {
@@ -245,7 +230,7 @@ public class BuiltInModListPageSkin extends SkinBase<BuiltInModListPage> {
             ModTranslations.Mod modTranslations = dataItem.getModTranslations();
             ModLoaderType modLoaderType = modInfo.getModLoaderType();
 
-            dataItem.loadIcon(imageView, new WeakReference<>(this.itemProperty()));
+            dataItem.loadIcon(imageContainer, new WeakReference<>(this.itemProperty()));
 
             String displayName = modInfo.getName();
             if (modTranslations != null && I18n.isUseChinese()) {
@@ -299,7 +284,7 @@ public class BuiltInModListPageSkin extends SkinBase<BuiltInModListPage> {
         HBox.setHgrow(spacer, Priority.ALWAYS);
 
         JFXButton exportButton = new JFXButton();
-        exportButton.setGraphic(FXUtils.limitingSize(SVG.FILE_EXPORT.createIcon(18), 18, 18));
+        exportButton.setGraphic(SVG.FILE_EXPORT.createIcon(18));
         exportButton.getStyleClass().add("toggle-icon4");
         FXUtils.installFastTooltip(exportButton, i18n("mods.built_in.export.jij_info"));
 
