@@ -70,7 +70,8 @@ public class ModrinthCompletionTask extends Task<Void> {
      * @param version           the existent and physical version.
      * @param manifest          the CurseForgeModpack manifest.
      */
-    public ModrinthCompletionTask(DefaultDependencyManager dependencyManager, String version, ModrinthManifest manifest, Set<? extends ModpackFile> selectedFiles) {
+    public ModrinthCompletionTask(DefaultDependencyManager dependencyManager, String version, ModrinthManifest manifest,
+            Set<? extends ModpackFile> selectedFiles) {
         this.dependency = dependencyManager;
         this.repository = dependencyManager.getGameRepository();
         this.modManager = repository.getModManager(version);
@@ -86,8 +87,12 @@ public class ModrinthCompletionTask extends Task<Void> {
                     this.manifest = JsonUtils.fromJsonFile(manifestFile, ModrinthManifest.class);
                 Path filesFile = versionRoot.resolve("files.json");
                 if (this.manifest != null && Files.exists(filesFile)) {
-                    Set<String> files = new HashSet<>(JsonUtils.fromJsonFile(filesFile, JsonUtils.listTypeOf(String.class)));
-                    this.selectedFiles = this.manifest.getFiles().stream().filter(f -> files.contains(f.getPath())).collect(Collectors.toSet());
+                    Set<String> files = new HashSet<>(
+                            JsonUtils.fromJsonFile(filesFile, JsonUtils.listTypeOf(String.class)));
+                    this.selectedFiles = this.manifest.getFiles().stream().filter(f -> files.contains(f.getPath()))
+                            .collect(Collectors.toSet());
+                } else {
+                    this.selectedFiles = null;
                 }
             } catch (Exception e) {
                 LOG.warning("Unable to read Modrinth modpack manifest.json", e);
@@ -114,9 +119,10 @@ public class ModrinthCompletionTask extends Task<Void> {
         Path runDirectory = FileUtils.toAbsolute(repository.getRunDirectory(version));
         Path modsDirectory = runDirectory.resolve("mods");
 
-        JsonUtils.writeToJsonFile(repository.getVersionRoot(version).resolve("files.json"), selectedFiles == null
-            ? List.of()
-            : selectedFiles.stream().map(ModpackFile::getPath).collect(Collectors.toList()));
+        if (selectedFiles != null) {
+            JsonUtils.writeToJsonFile(repository.getVersionRoot(version).resolve("files.json"),
+                    selectedFiles.stream().map(ModpackFile::getPath).collect(Collectors.toList()));
+        }
 
         for (ModrinthManifest.File file : manifest.getFiles()) {
             if (file.getEnv() != null && file.getEnv().getOrDefault("client", "required").equals("unsupported"))

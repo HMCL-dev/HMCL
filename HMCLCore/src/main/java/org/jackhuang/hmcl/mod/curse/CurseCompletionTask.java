@@ -100,6 +100,8 @@ public final class CurseCompletionTask extends Task<Void> {
                     this.selectedFiles = this.manifest.getFiles().stream()
                             .filter(f -> files.contains(f.getPath()))
                             .collect(Collectors.toSet());
+                } else {
+                    this.selectedFiles = null;
                 }
             } catch (Exception e) {
                 LOG.warning("Unable to read CurseForge modpack manifest.json", e);
@@ -150,9 +152,9 @@ public final class CurseCompletionTask extends Task<Void> {
                         })
                         .collect(Collectors.toList()));
         JsonUtils.writeToJsonFile(root.resolve("manifest.json"), newManifest);
-        JsonUtils.writeToJsonFile(root.resolve("files.json"), selectedFiles == null
-                ? List.of()
-                : selectedFiles.stream().map(ModpackFile::getPath).collect(Collectors.toList()));
+        if (selectedFiles != null) {
+            JsonUtils.writeToJsonFile(root.resolve("files.json"), selectedFiles.stream().map(ModpackFile::getPath).collect(Collectors.toList()));
+        }
 
         Path versionRoot = repository.getVersionRoot(modManager.getInstanceId());
         Path resourcePacksRoot = versionRoot.resolve("resourcepacks");

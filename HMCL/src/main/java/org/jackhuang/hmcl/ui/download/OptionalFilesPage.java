@@ -15,7 +15,7 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-package org.jackhuang.hmcl.ui.construct;
+package org.jackhuang.hmcl.ui.download;
 
 import com.jfoenix.controls.JFXButton;
 import com.jfoenix.controls.JFXCheckBox;
@@ -23,6 +23,9 @@ import com.jfoenix.controls.JFXDialogLayout;
 import com.jfoenix.controls.JFXListView;
 
 import javafx.beans.value.ChangeListener;
+import javafx.beans.value.ObservableBooleanValue;
+import javafx.collections.ObservableList;
+import javafx.collections.ObservableSet;
 import javafx.geometry.Pos;
 import javafx.scene.control.Label;
 import javafx.scene.image.ImageView;
@@ -32,12 +35,15 @@ import org.jackhuang.hmcl.mod.RemoteMod;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
+import org.jackhuang.hmcl.ui.construct.ComponentList;
+import org.jackhuang.hmcl.ui.construct.DialogCloseEvent;
+import org.jackhuang.hmcl.ui.construct.JFXHyperlink;
+import org.jackhuang.hmcl.ui.construct.MDListCell;
+import org.jackhuang.hmcl.ui.construct.SpinnerPane;
+import org.jackhuang.hmcl.ui.construct.TwoLineListItem;
+import org.jackhuang.hmcl.ui.wizard.WizardPage;
 
-import java.util.HashSet;
-import java.util.List;
 import java.util.Optional;
-import java.util.Set;
-import java.util.stream.Collectors;
 
 import static org.jackhuang.hmcl.ui.FXUtils.onEscPressed;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
@@ -46,54 +52,41 @@ import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
  * This page is used to ask player which optional file they want to install
  * Support CurseForge modpack yet
  */
-public class OptionalFilesSelectionPane extends BorderPane {
-    private Set<ModpackFile> selected = new HashSet<>();
-    private Runnable retry;
+public class OptionalFilesPage extends SpinnerPane implements WizardPage {
+    private final ObservableSet<ModpackFile> excludedFiles;
+    private final VBox head = new VBox();
+    private final JFXListView<ModpackFile> body = new JFXListView<>();
+    private final VBox tail = new VBox();
 
-    private final VBox title = new VBox();
-    private final Label retryOptionalFiles = new Label(i18n("modpack.retry_optional_files"));
-    private final Label pendingOptionalFiles = new Label(i18n("modpack.loading_optional_files"));
-    private final Label noOptionalFiles = new Label(i18n("modpack.no_optional_files"));
 
-    private final JFXListView<ModpackFile> list = new JFXListView<>();
+    // FIXME: restore retry functionality
+    public OptionalFilesPage(Runnable install, ObservableBooleanValue loading,
+            ObservableBooleanValue successful, ObservableList<ModpackFile> optionalFiles,
+            ObservableSet<ModpackFile> excludedFiles) {
+        this.excludedFiles = excludedFiles;
 
-    public OptionalFilesSelectionPane() {
-        retryOptionalFiles.setOnMouseClicked(e -> {
-            title.getChildren().remove(retryOptionalFiles);
-            retry.run();
-        });
+        VBox borderPane = new VBox();
+        borderPane.setAlignment(Pos.CENTER);
+        FXUtils.setLimitWidth(borderPane, 500);
+        ComponentList componentList = new ComponentList();
+        {
+            head.getChildren().add(new Label(i18n("modpack.optional_files")));
 
-        Label label = new Label(i18n("modpack.optional_files"));
-        label.getStyleClass().add("subtitle");
-        title.getChildren().add(label);
-        this.setTop(title);
-        setPending();
-    }
+            var descPane = new BorderPane();
+            var btnInstall = FXUtils.newRaisedButton(i18n("button.install"));
+            descPane.setRight(btnInstall);
+            btnInstall.setOnAction(e -> install.run());
+            tail.getChildren().add(descPane);
 
-    public void setOptionalFileList(List<? extends ModpackFile> files) {
-        list.setCellFactory(it -> new OptionalFileEntry(list));
-        List<ModpackFile> optionalFiles = files.stream().filter(ModpackFile::isOptional).collect(Collectors.toList());
-        list.getItems().setAll(optionalFiles);
-        selected = new HashSet<>(files);
-        if (!optionalFiles.isEmpty()) {
-            this.setCenter(list);
-        } else {
-            this.setCenter(noOptionalFiles);
+            componentList.getContent().setAll(head, body, tail);
         }
-    }
 
-    public void setPending() {
-        this.setCenter(pendingOptionalFiles);
-        retry = null;
-    }
+        borderPane.getChildren().setAll(componentList);
+        setContent(borderPane);
+        body.setCellFactory(it -> new OptionalFileEntry(body));
+        body.setItems(optionalFiles);
 
-    public void setRetry(Runnable retry) {
-        title.getChildren().add(retryOptionalFiles);
-        this.retry = retry;
-    }
-
-    public Set<ModpackFile> getSelected() {
-        return selected;
+        loadingProperty().bind(loading);
     }
 
     private class OptionalFileEntry extends MDListCell<ModpackFile> {
@@ -106,9 +99,9 @@ public class OptionalFilesSelectionPane extends BorderPane {
         private ChangeListener<Boolean> selectedListener = (observable, oldValue, newValue) -> {
             if (currentFile != null) {
                 if (newValue) {
-                    selected.add(currentFile);
+                    excludedFiles.remove(currentFile);
                 } else {
-                    selected.remove(currentFile);
+                    excludedFiles.add(currentFile);
                 }
             }
         };
@@ -130,7 +123,8 @@ public class OptionalFilesSelectionPane extends BorderPane {
 
         @Override
         protected void updateControl(ModpackFile item, boolean empty) {
-            if (empty) return;
+            if (empty)
+                return;
             checkBox.selectedProperty().removeListener(selectedListener);
             currentFile = item;
             String name = item.getFileName();
@@ -153,7 +147,7 @@ public class OptionalFilesSelectionPane extends BorderPane {
                 infoButton.setManaged(false);
                 infoButton.setVisible(false);
             }
-            checkBox.setSelected(selected.contains(item));
+            checkBox.setSelected(!excludedFiles.contains(item));
             checkBox.selectedProperty().addListener(selectedListener);
         }
     }
@@ -187,5 +181,10 @@ public class OptionalFilesSelectionPane extends BorderPane {
 
             onEscPressed(this, okButton::fire);
         }
+    }
+
+    @Override
+    public String getTitle() {
+        return i18n("modpack.optional_files"); // FIXME: is this title appropriate?
     }
 }

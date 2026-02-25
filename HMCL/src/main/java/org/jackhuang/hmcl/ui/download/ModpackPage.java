@@ -2,24 +2,21 @@ package org.jackhuang.hmcl.ui.download;
 
 import com.jfoenix.controls.JFXButton;
 import com.jfoenix.controls.JFXTextField;
-import javafx.beans.property.BooleanProperty;
-import javafx.beans.property.SimpleBooleanProperty;
 import javafx.beans.property.StringProperty;
 import javafx.geometry.Pos;
 import javafx.scene.layout.BorderPane;
+import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import org.jackhuang.hmcl.setting.Profile;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.construct.ComponentList;
 import org.jackhuang.hmcl.ui.construct.LinePane;
 import org.jackhuang.hmcl.ui.construct.LineTextPane;
-import org.jackhuang.hmcl.ui.construct.OptionalFilesSelectionPane;
 import org.jackhuang.hmcl.ui.construct.SpinnerPane;
 import org.jackhuang.hmcl.ui.wizard.WizardController;
 import org.jackhuang.hmcl.ui.wizard.WizardPage;
 import org.jackhuang.hmcl.util.SettingsMap;
 
-import static javafx.beans.binding.Bindings.createBooleanBinding;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 public abstract class ModpackPage extends SpinnerPane implements WizardPage {
@@ -33,8 +30,7 @@ public abstract class ModpackPage extends SpinnerPane implements WizardPage {
     protected final JFXTextField txtModpackName;
     protected final JFXButton btnInstall;
     protected final JFXButton btnDescription;
-    protected final OptionalFilesSelectionPane optionalFiles;
-    protected final BooleanProperty waitingForOptionalFiles = new SimpleBooleanProperty(false);
+    protected final JFXButton btnOptionalFiles;
 
     protected ModpackPage(WizardController controller) {
         this.controller = controller;
@@ -73,23 +69,25 @@ public abstract class ModpackPage extends SpinnerPane implements WizardPage {
                 authorProperty = authorPane.textProperty();
             }
 
-            optionalFiles = new OptionalFilesSelectionPane();
-
             var descriptionPane = new BorderPane();
             {
                 btnDescription = FXUtils.newBorderButton(i18n("modpack.description"));
                 btnDescription.setOnAction(e -> onDescribe());
                 descriptionPane.setLeft(btnDescription);
 
+                var installHBox = new HBox(8);
+                btnOptionalFiles = FXUtils.newRaisedButton(i18n("modpack.optional_files"));
+                installHBox.getChildren().add(btnOptionalFiles);
+
                 btnInstall = FXUtils.newRaisedButton(i18n("button.install"));
                 btnInstall.setOnAction(e -> onInstall());
-                btnInstall.disableProperty().bind(createBooleanBinding(() -> !txtModpackName.validate() || waitingForOptionalFiles.get(),
-                        txtModpackName.textProperty(), waitingForOptionalFiles));
-                descriptionPane.setRight(btnInstall);
+                installHBox.getChildren().add(btnInstall);
+
+                descriptionPane.setRight(installHBox);
             }
 
             componentList.getContent().setAll(
-                    archiveNamePane, modpackNamePane, versionPane, authorPane, descriptionPane, optionalFiles);
+                    archiveNamePane, modpackNamePane, versionPane, authorPane, descriptionPane);
         }
         borderPane.getChildren().setAll(componentList);
         setContent(borderPane);
