@@ -41,7 +41,7 @@ import org.jackhuang.hmcl.ui.construct.JFXCheckBoxTableCell;
 import org.jackhuang.hmcl.ui.construct.MessageDialogPane;
 import org.jackhuang.hmcl.ui.construct.PageCloseEvent;
 import org.jackhuang.hmcl.ui.decorator.DecoratorPage;
-import org.jackhuang.hmcl.util.Pair;
+import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.TaskCancellationAction;
 import org.jackhuang.hmcl.util.io.CSVTable;
 
@@ -57,7 +57,6 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import static org.jackhuang.hmcl.ui.FXUtils.onEscPressed;
-import static org.jackhuang.hmcl.util.Pair.pair;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 public class AddonUpdatesPage<F extends LocalAddonFile> extends BorderPane implements DecoratorPage {
@@ -134,9 +133,10 @@ public class AddonUpdatesPage<F extends LocalAddonFile> extends BorderPane imple
         AddonUpdateTask task = new AddonUpdateTask(
                 localAddonManager.getDirectory(),
                 objects.stream()
-                        .filter(o -> o.enabled.get())
-                        .map(object -> pair(object.data.localAddonFile(), object.data.candidate()))
-                        .toList());
+                        .filter(AddonUpdateObject::isEnabled)
+                        .map(AddonUpdateObject::getData)
+                        .toList()
+        );
         Controllers.taskDialog(
                 task.whenComplete(Schedulers.javafx(), exception -> {
                     fireEvent(new PageCloseEvent());
@@ -204,7 +204,7 @@ public class AddonUpdatesPage<F extends LocalAddonFile> extends BorderPane imple
             enabled.set(!data.localAddonFile().isDisabled());
             fileName.set(data.localAddonFile().getFileName());
             currentVersion.set(data.currentVersion().getVersion());
-            targetVersion.set(data.candidate().getVersion());
+            targetVersion.set(data.targetVersion().getVersion());
             switch (data.currentVersion().getSelf().getType()) {
                 case CURSEFORGE:
                     source.set(i18n("mods.curseforge"));
@@ -212,6 +212,10 @@ public class AddonUpdatesPage<F extends LocalAddonFile> extends BorderPane imple
                 case MODRINTH:
                     source.set(i18n("mods.modrinth"));
             }
+        }
+
+        public LocalAddonFile.AddonUpdate getData() {
+            return data;
         }
 
         public boolean isEnabled() {
@@ -279,26 +283,28 @@ public class AddonUpdatesPage<F extends LocalAddonFile> extends BorderPane imple
         private final Collection<Task<?>> dependents;
         private final List<LocalAddonFile> failedAddons = new ArrayList<>();
 
-        AddonUpdateTask(Path addonDirectory, List<Pair<LocalAddonFile, RemoteMod.Version>> addons) {
+        AddonUpdateTask(Path addonDirectory, List<LocalAddonFile.AddonUpdate> addons) {
             setStage("mods.check_updates.confirm");
             getProperties().put("total", addons.size());
 
             this.dependents = new ArrayList<>();
-            for (Pair<LocalAddonFile, RemoteMod.Version> addon : addons) {
-                LocalAddonFile local = addon.getKey();
-                RemoteMod.Version remote = addon.getValue();
+            for (LocalAddonFile.AddonUpdate addon : addons) {
+                LocalAddonFile local = addon.localAddonFile();
+                RemoteMod.Version remote = addon.targetVersion();
                 boolean isDisabled = local.isDisabled();
+                String originalFileName = local.getFile().getFileName().toString();
 
                 dependents.add(Task
                         .runAsync(Schedulers.javafx(), () -> local.setOld(true))
                         .thenComposeAsync(() -> {
-                            String fileName = remote.getFile().getFilename();
+                            String fileName = addon.useRemoteFileName() ? remote.getFile().getFilename() : originalFileName;
                             if (isDisabled)
-                                fileName += LocalAddonManager.DISABLED_EXTENSION;
+                                fileName = StringUtils.addSuffix(fileName, LocalAddonManager.DISABLED_EXTENSION);
 
                             var task = new FileDownloadTask(
                                     remote.getFile().getUrl(),
-                                    addonDirectory.resolve(fileName));
+                                    addonDirectory.resolve(fileName)
+                            );
 
                             task.setName(remote.getName());
                             return task;

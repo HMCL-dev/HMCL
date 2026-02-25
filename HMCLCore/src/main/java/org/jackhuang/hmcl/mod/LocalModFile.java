@@ -52,7 +52,7 @@ public final class LocalModFile extends LocalAddonFile implements Comparable<Loc
     }
 
     public LocalModFile(ModManager modManager, LocalMod mod, Path file, String name, Description description, String authors, String version, String gameVersion, String url, String logoPath) {
-        super(true);
+        super();
         this.modManager = modManager;
         this.mod = mod;
         this.file = file;
@@ -175,6 +175,11 @@ public final class LocalModFile extends LocalAddonFile implements Comparable<Loc
     }
 
     @Override
+    public boolean keepOldFiles() {
+        return true;
+    }
+
+    @Override
     public void markDisabled() throws IOException {
         file = modManager.disableMod(file);
     }
@@ -197,7 +202,7 @@ public final class LocalModFile extends LocalAddonFile implements Comparable<Loc
                 .sorted(Comparator.comparing(RemoteMod.Version::getDatePublished).reversed())
                 .toList();
         if (remoteVersions.isEmpty()) return null;
-        return new AddonUpdate(this, currentVersion.get(), remoteVersions.get(0));
+        return new AddonUpdate(this, currentVersion.get(), remoteVersions.get(0), true);
     }
 
     @Override

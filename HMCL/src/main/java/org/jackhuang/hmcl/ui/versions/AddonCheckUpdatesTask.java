@@ -47,7 +47,7 @@ public class AddonCheckUpdatesTask<T extends LocalAddonFile> extends Task<List<L
                             continue;
                         }
 
-                        if (candidate == null || candidate.candidate().getDatePublished().isBefore(update.candidate().getDatePublished())) {
+                        if (candidate == null || candidate.targetVersion().getDatePublished().isBefore(update.targetVersion().getDatePublished())) {
                             candidate = update;
                         }
                     }

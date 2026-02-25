@@ -23,7 +23,9 @@ public sealed abstract class ResourcePackFile extends LocalAddonFile implements 
     }
 
     public static boolean isFileResourcePack(Path file) {
-        return Files.exists(file) && (Files.isRegularFile(file.resolve("pack.mcmeta")) || file.toString().toLowerCase(Locale.ROOT).endsWith(".zip"));
+        if (Files.isDirectory(file)) return Files.isRegularFile(file.resolve("pack.mcmeta"));
+        if (Files.isRegularFile(file)) return file.toString().toLowerCase(Locale.ROOT).endsWith(".zip");
+        return false;
     }
 
     protected final ResourcePackManager manager;
@@ -34,7 +36,7 @@ public sealed abstract class ResourcePackFile extends LocalAddonFile implements 
     private Compatibility compatibility = null;
 
     protected ResourcePackFile(ResourcePackManager manager, Path file) {
-        super(false);
+        super();
         this.manager = manager;
         this.file = file;
         this.fileName = StringUtils.parseColorEscapes(FileUtils.getNameWithoutExtension(file));
@@ -81,6 +83,11 @@ public sealed abstract class ResourcePackFile extends LocalAddonFile implements 
     @Override
     public void setOld(boolean old) throws IOException {
         this.file = manager.setOld(this, old);
+    }
+
+    @Override
+    public final boolean keepOldFiles() {
+        return false;
     }
 
     @Override

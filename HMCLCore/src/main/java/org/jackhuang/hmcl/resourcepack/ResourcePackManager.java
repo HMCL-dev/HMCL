@@ -189,7 +189,6 @@ public final class ResourcePackManager extends LocalAddonManager<ResourcePackFil
         this.resourcePackDirectory = this.repository.getResourcePackDirectory(this.id);
         this.optionsFile = repository.getRunDirectory(id).resolve("options.txt");
         this.requiredVersion = getPackVersion(minecraftVersion, repository.getVersionJar(id));
-
     }
 
     @NotNull

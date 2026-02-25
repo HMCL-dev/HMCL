@@ -9,10 +9,7 @@ import java.nio.file.Path;
 /// Sub-classes should implement `Comparable`
 public abstract class LocalAddonFile {
 
-    private final boolean keepOldFiles;
-
-    protected LocalAddonFile(boolean keepOldFiles) {
-        this.keepOldFiles = keepOldFiles;
+    protected LocalAddonFile() {
     }
 
     public abstract Path getFile();
@@ -28,17 +25,19 @@ public abstract class LocalAddonFile {
 
     public abstract void setOld(boolean old) throws IOException;
 
-    public boolean keepOldFiles() {
-        return keepOldFiles;
-    }
+    public abstract boolean keepOldFiles();
 
     public abstract void delete() throws IOException;
 
     @Nullable
     public abstract AddonUpdate checkUpdates(String gameVersion, RemoteMod.Type type) throws IOException;
 
-    public record AddonUpdate(LocalAddonFile localAddonFile, RemoteMod.Version currentVersion,
-                              RemoteMod.Version candidate) {
+    public record AddonUpdate(
+            LocalAddonFile localAddonFile,
+            RemoteMod.Version currentVersion,
+            RemoteMod.Version targetVersion,
+            boolean useRemoteFileName
+    ) {
     }
 
 }

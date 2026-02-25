@@ -48,6 +48,7 @@ import java.lang.ref.WeakReference;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
+import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Predicate;
 import java.util.stream.Stream;
 
@@ -77,6 +78,8 @@ public final class ResourcePackListPage extends ListPageBase<ResourcePackListPag
 
     private Path resourcePackDirectory;
     private ResourcePackManager resourcePackManager;
+
+    private final ReentrantLock lock = new ReentrantLock();
 
     public ResourcePackListPage() {
         FXUtils.applyDragListener(this, ResourcePackFile::isFileResourcePack, this::addFiles);
@@ -114,11 +117,16 @@ public final class ResourcePackListPage extends ListPageBase<ResourcePackListPag
         }
         setLoading(true);
         Task.supplyAsync(Schedulers.io(), () -> {
-            resourcePackManager.refresh();
-            return resourcePackManager.getLocalFiles()
-                    .stream()
-                    .map(ResourcePackInfoObject::new)
-                    .toList();
+            lock.lock();
+            try {
+                resourcePackManager.refresh();
+                return resourcePackManager.getLocalFiles()
+                        .stream()
+                        .map(ResourcePackInfoObject::new)
+                        .toList();
+            } finally {
+                lock.unlock();
+            }
         }).whenComplete(Schedulers.javafx(), ((result, exception) -> {
             if (exception == null) {
                 getItems().setAll(result);
