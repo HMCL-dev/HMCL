@@ -18,12 +18,14 @@
 package org.jackhuang.hmcl.ui.versions;
 
 import com.github.steveice10.opennbt.tag.builtin.Tag;
+import javafx.beans.Observable;
 import javafx.beans.binding.Bindings;
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.SimpleBooleanProperty;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.property.StringProperty;
 import org.jackhuang.hmcl.gamerule.GameRule;
+import org.jackhuang.hmcl.gamerule.GameRuleEntry;
 import org.jackhuang.hmcl.gamerule.GameRuleNBT;
 import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.StringUtils;
@@ -42,6 +44,15 @@ public sealed abstract class GameRuleInfo<T> permits GameRuleInfo.BooleanGameRul
 
     private final Runnable onSave;
 
+    public static GameRuleInfo<?> createGameRuleInfo(GameRuleEntry entry, Runnable onSave, GameVersionNumber ver) {
+        if (entry instanceof GameRuleEntry.IntEntry intEntry) {
+            return new GameRuleInfo.IntGameRuleInfo(intEntry.rule(), intEntry.nbt(), onSave, ver);
+        } else if (entry instanceof GameRuleEntry.BooleanEntry booleanEntry) {
+            return new GameRuleInfo.BooleanGameRuleInfo(booleanEntry.rule(), booleanEntry.nbt(), onSave, ver);
+        }
+        throw new IllegalArgumentException();
+    }
+
     private GameRuleInfo(GameRule gameRule, GameRuleNBT<T, ? extends Tag> gameRuleNBT, Runnable onSave) {
         ruleKey = gameRule.getRuleKey().get(0);
         String displayName = "";
@@ -53,17 +64,6 @@ public sealed abstract class GameRuleInfo<T> permits GameRuleInfo.BooleanGameRul
         this.onSave = onSave;
     }
 
-    public static GameRuleInfo<?> createGameRuleInfo(GameRule gameRule, GameRuleNBT<?, ? extends Tag> gameRuleNBT, Runnable onSave, GameVersionNumber gameVersion) {
-        if (gameRule instanceof GameRule.IntGameRule intGameRule) {
-            @SuppressWarnings("unchecked") var typedGameRuleNBT = (GameRuleNBT<Integer, Tag>) gameRuleNBT;
-            return new GameRuleInfo.IntGameRuleInfo(intGameRule, typedGameRuleNBT, onSave, gameVersion);
-        } else if (gameRule instanceof GameRule.BooleanGameRule booleanGameRule) {
-            @SuppressWarnings("unchecked") var typedGameRuleNBT = (GameRuleNBT<Boolean, Tag>) gameRuleNBT;
-            return new GameRuleInfo.BooleanGameRuleInfo(booleanGameRule, typedGameRuleNBT, onSave, gameVersion);
-        }
-        return null;
-    }
-
     public abstract String getCurrentValueText();
 
     public abstract String getDefaultValueText();
@@ -71,6 +71,8 @@ public sealed abstract class GameRuleInfo<T> permits GameRuleInfo.BooleanGameRul
     public abstract T getDefaultValue();
 
     public abstract void resetValue();
+
+    public abstract Observable[] getObservables();
 
     public void save() {
         onSave.run();
@@ -104,7 +106,7 @@ public sealed abstract class GameRuleInfo<T> permits GameRuleInfo.BooleanGameRul
         private final BooleanProperty currentValue;
         private final Boolean defaultValue;
 
-        public BooleanGameRuleInfo(GameRule.BooleanGameRule booleanGameRule, GameRuleNBT<Boolean, Tag> gameRuleNBT, Runnable onSave, GameVersionNumber gameVersionNumber) {
+        public BooleanGameRuleInfo(GameRule.BooleanGameRule booleanGameRule, GameRuleNBT<Boolean, ? extends Tag> gameRuleNBT, Runnable onSave, GameVersionNumber gameVersionNumber) {
             super(booleanGameRule, gameRuleNBT, onSave);
             this.currentValue = new SimpleBooleanProperty(booleanGameRule.getValue());
             this.defaultValue = booleanGameRule.getDefaultValue(gameVersionNumber).orElse(null);
@@ -142,6 +144,11 @@ public sealed abstract class GameRuleInfo<T> permits GameRuleInfo.BooleanGameRul
             }
         }
 
+        @Override
+        public Observable[] getObservables() {
+            return new Observable[]{currentValue};
+        }
+
         public BooleanProperty currentValueProperty() {
             return currentValue;
         }
@@ -153,7 +160,7 @@ public sealed abstract class GameRuleInfo<T> permits GameRuleInfo.BooleanGameRul
         private final int minValue;
         private final int maxValue;
 
-        public IntGameRuleInfo(GameRule.IntGameRule intGameRule, GameRuleNBT<Integer, Tag> gameRuleNBT, Runnable onSave, GameVersionNumber gameVersionNumber) {
+        public IntGameRuleInfo(GameRule.IntGameRule intGameRule, GameRuleNBT<Integer, ? extends Tag> gameRuleNBT, Runnable onSave, GameVersionNumber gameVersionNumber) {
             super(intGameRule, gameRuleNBT, onSave);
             currentValue = new SimpleStringProperty(String.valueOf(intGameRule.getValue()));
             defaultValue = intGameRule.getDefaultValue(gameVersionNumber).orElse(null);
@@ -193,6 +200,11 @@ public sealed abstract class GameRuleInfo<T> permits GameRuleInfo.BooleanGameRul
             if (defaultValue != null) {
                 currentValue.set(String.valueOf(defaultValue));
             }
+        }
+
+        @Override
+        public Observable[] getObservables() {
+            return new Observable[]{currentValue};
         }
 
         public StringProperty currentValueProperty() {

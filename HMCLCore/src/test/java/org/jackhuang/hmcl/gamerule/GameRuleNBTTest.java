@@ -31,7 +31,7 @@ public class GameRuleNBTTest {
     @Test
     public void testByteTag() {
         ByteTag tag = new ByteTag("byte_tag", (byte) 1);
-        GameRuleNBT<?, ? extends Tag> gameRuleNBT = GameRule.createGameRuleNBT(tag).orElseThrow(() -> new AssertionError("Expected GameRuleNBT to be created for ByteTag"));
+        GameRuleNBT<?, ? extends Tag> gameRuleNBT = GameRule.parseFullEntry(tag).map(GameRuleEntry::getGameRuleNBT).orElseThrow(() -> new AssertionError("Expected GameRuleNBT to be created for ByteTag"));
 
         GameRuleNBT.ByteGameRuleNBT byteGameRuleNBT = assertInstanceOf(GameRuleNBT.ByteGameRuleNBT.class, gameRuleNBT);
         byteGameRuleNBT.changeValue(false);
@@ -41,7 +41,7 @@ public class GameRuleNBTTest {
     @Test
     public void testStringByteTag() {
         StringTag tag = new StringTag("string_byte_tag", "true");
-        GameRuleNBT<?, ? extends Tag> gameRuleNBT = GameRule.createGameRuleNBT(tag).orElseThrow(() -> new AssertionError("Expected GameRuleNBT to be created for StringedByteTag"));
+        GameRuleNBT<?, ? extends Tag> gameRuleNBT = GameRule.parseFullEntry(tag).map(GameRuleEntry::getGameRuleNBT).orElseThrow(() -> new AssertionError("Expected GameRuleNBT to be created for StringedByteTag"));
 
         GameRuleNBT.StringByteGameRuleNBT stringedByteGameRuleNBT = assertInstanceOf(GameRuleNBT.StringByteGameRuleNBT.class, gameRuleNBT);
         stringedByteGameRuleNBT.changeValue(false);
@@ -51,7 +51,7 @@ public class GameRuleNBTTest {
     @Test
     public void testIntTag() {
         IntTag tag = new IntTag("int_tag", 1);
-        GameRuleNBT<?, ? extends Tag> gameRuleNBT = GameRule.createGameRuleNBT(tag).orElseThrow(() -> new AssertionError("Expected GameRuleNBT to be created for IntTag"));
+        GameRuleNBT<?, ? extends Tag> gameRuleNBT = GameRule.parseFullEntry(tag).map(GameRuleEntry::getGameRuleNBT).orElseThrow(() -> new AssertionError("Expected GameRuleNBT to be created for IntTag"));
 
         GameRuleNBT.IntGameRuleNBT intGameRuleNBT = assertInstanceOf(GameRuleNBT.IntGameRuleNBT.class, gameRuleNBT);
         intGameRuleNBT.changeValue(2);
@@ -61,7 +61,7 @@ public class GameRuleNBTTest {
     @Test
     public void testStringIntTag() {
         StringTag tag = new StringTag("string_int_tag", "1");
-        GameRuleNBT<?, ? extends Tag> gameRuleNBT = GameRule.createGameRuleNBT(tag).orElseThrow(() -> new AssertionError("Expected GameRuleNBT to be created for StringedIntTag"));
+        GameRuleNBT<?, ? extends Tag> gameRuleNBT = GameRule.parseFullEntry(tag).map(GameRuleEntry::getGameRuleNBT).orElseThrow(() -> new AssertionError("Expected GameRuleNBT to be created for StringedIntTag"));
 
         GameRuleNBT.StringIntGameRuleNBT stringIntGameRuleNBT = assertInstanceOf(GameRuleNBT.StringIntGameRuleNBT.class, gameRuleNBT);
         stringIntGameRuleNBT.changeValue(2);
@@ -71,7 +71,7 @@ public class GameRuleNBTTest {
     @Test
     public void testWrongTag() {
         StringTag tag = new StringTag("wrong_tag", "abc");
-        Optional<GameRuleNBT<?, ? extends Tag>> gameRuleNBT = GameRule.createGameRuleNBT(tag);
+        Optional<GameRuleNBT<?, ? extends Tag>> gameRuleNBT = GameRule.parseFullEntry(tag).map(GameRuleEntry::getGameRuleNBT);
         assertTrue(gameRuleNBT.isEmpty());
     }
 }

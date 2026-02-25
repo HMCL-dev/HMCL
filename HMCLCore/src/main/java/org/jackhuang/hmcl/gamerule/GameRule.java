@@ -62,63 +62,41 @@ public sealed abstract class GameRule permits GameRule.BooleanGameRule, GameRule
         this.displayI18nKey = displayI18nKey;
     }
 
-    /// Retrieves a fully populated GameRule based on an NBT tag.
-    ///
-    /// This combines parsing the tag [#createGameRuleNBT(Tag)] and applying known metadata
-    /// from the provided `gameRuleMap`.
-    public static Optional<GameRule> getFullGameRule(Tag tag) {
-        return createSimpleRuleFromTag(tag).map(simpleGameRule -> {
-            Optional.ofNullable(GameRuleHolder.metaDataGameRuleMap.get(tag.getName()))
-                    .ifPresent(simpleGameRule::applyMetadata);
-            return simpleGameRule;
-        });
-    }
-
-    /// Parses an NBT Tag to create a corresponding [GameRule].
-    ///
-    /// This method handles type coercion:
-    /// * [IntTag] -> [IntGameRule]
-    /// * [ByteTag] -> [BooleanGameRule]
-    /// * [StringTag] -> Tries to parse as [BooleanGameRule] ("true"/"false") or [IntGameRule].
-    ///
-    /// @param tag The NBT tag to parse.
-    /// @return An Optional containing the GameRule if parsing was successful.
-    private static Optional<GameRule> createSimpleRuleFromTag(Tag tag) {
-        String ruleKey = tag.getName();
-
+    public static Optional<GameRuleEntry> parseEntryFromGameRuleTag(Tag tag) {
         if (tag instanceof IntTag intTag) {
-            return Optional.of(new IntGameRule(ruleKey, intTag.getValue()));
+            var rule = new GameRule.IntGameRule(tag.getName(), intTag.getValue());
+            var nbt = new GameRuleNBT.IntGameRuleNBT(intTag);
+            return Optional.of(new GameRuleEntry.IntEntry(rule, nbt));
         } else if (tag instanceof ByteTag byteTag) {
-            return Optional.of(new BooleanGameRule(ruleKey, byteTag.getValue() == 1));
+            var rule = new GameRule.BooleanGameRule(tag.getName(), byteTag.getValue() == 1);
+            var nbt = new GameRuleNBT.ByteGameRuleNBT(byteTag);
+            return Optional.of(new GameRuleEntry.BooleanEntry(rule, nbt));
         } else if (tag instanceof StringTag stringTag) {
             String value = stringTag.getValue();
             if ("true".equalsIgnoreCase(value) || "false".equalsIgnoreCase(value)) {
-                return Optional.of(new BooleanGameRule(ruleKey, Boolean.parseBoolean(value)));
+                var rule = new GameRule.BooleanGameRule(tag.getName(), Boolean.parseBoolean(value));
+                var nbt = new GameRuleNBT.StringByteGameRuleNBT(stringTag);
+                return Optional.of(new GameRuleEntry.BooleanEntry(rule, nbt));
             }
             Integer intValue = Lang.toIntOrNull(value);
             if (intValue != null) {
-                return Optional.of(new IntGameRule(ruleKey, intValue));
+                var rule = new GameRule.IntGameRule(tag.getName(), intValue);
+                var nbt = new GameRuleNBT.StringIntGameRuleNBT(stringTag);
+                return Optional.of(new GameRuleEntry.IntEntry(rule, nbt));
             }
         }
-
         return Optional.empty();
     }
 
-    /// Creates a [GameRuleNBT] wrapper around an NBT Tag.
-    /// Used for unified changing operations back to NBT format.
-    ///
-    /// @see GameRuleNBT
-    public static Optional<GameRuleNBT<?, ? extends Tag>> createGameRuleNBT(Tag tag) {
-        if (tag instanceof IntTag intTag) {
-            return Optional.of(new GameRuleNBT.IntGameRuleNBT(intTag));
-        } else if (tag instanceof ByteTag byteTag) {
-            return Optional.of(new GameRuleNBT.ByteGameRuleNBT(byteTag));
-        } else if (tag instanceof StringTag stringTag && ("true".equalsIgnoreCase(stringTag.getValue()) || "false".equalsIgnoreCase(stringTag.getValue()))) {
-            return Optional.of(new GameRuleNBT.StringByteGameRuleNBT(stringTag));
-        } else if (tag instanceof StringTag stringTag && Lang.toIntOrNull(stringTag.getValue()) != null) {
-            return Optional.of(new GameRuleNBT.StringIntGameRuleNBT(stringTag));
-        }
-        return Optional.empty();
+    public static Optional<GameRuleEntry> parseFullEntry(Tag tag) {
+        return parseEntryFromGameRuleTag(tag).map(entry -> {
+            Optional.ofNullable(GameRuleHolder.metaDataGameRuleMap.get(tag.getName()))
+                    .ifPresent(meta -> {
+                        if (entry instanceof GameRuleEntry.IntEntry e) e.rule().applyMetadata(meta);
+                        else if (entry instanceof GameRuleEntry.BooleanEntry e) e.rule().applyMetadata(meta);
+                    });
+            return entry;
+        });
     }
 
     /// Copies metadata (descriptions, default value and ranges) from the source rule to this instance.

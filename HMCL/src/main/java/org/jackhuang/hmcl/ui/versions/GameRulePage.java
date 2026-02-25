@@ -66,14 +66,7 @@ public class GameRulePage extends ListPageBase<GameRuleInfo<?>> implements World
 
         ruleModifiedType = RuleModifiedType.ALL;
 
-        gameRuleList = FXCollections.observableArrayList(gameRule -> {
-            if (gameRule instanceof GameRuleInfo.BooleanGameRuleInfo booleanGameRuleInfo) {
-                return new Observable[]{booleanGameRuleInfo.currentValueProperty()};
-            } else if (gameRule instanceof GameRuleInfo.IntGameRuleInfo intGameRuleInfo) {
-                return new Observable[]{intGameRuleInfo.currentValueProperty()};
-            }
-            return new Observable[]{};
-        });
+        gameRuleList = FXCollections.observableArrayList(GameRuleInfo::getObservables);
         setItems(gameRuleList);
         modifiedItems = new FilteredList<>(getItems(), GameRuleInfo::getModified);
         saveLevelDatPause = new PauseTransition(Duration.millis(300));
@@ -106,16 +99,15 @@ public class GameRulePage extends ListPageBase<GameRuleInfo<?>> implements World
 
         if (gameRuleCompoundTag == null) {
             LOG.warning("Neither 'game_rules' nor 'GameRules' tag found in level.dat");
+            setFailedReason(i18n("world.info.failed"));
             return;
         }
 
-        gameRuleCompoundTag.iterator().forEachRemaining(gameRuleTag -> {
-            GameRule.createGameRuleNBT(gameRuleTag).ifPresent(gameRuleNBT -> {
-                GameRule.getFullGameRule(gameRuleTag).ifPresent(gameRule -> {
-                    gameRuleList.add(GameRuleInfo.createGameRuleInfo(gameRule, gameRuleNBT, this::saveLevelDatIfNotInBatchUpdating, world.getGameVersion()));
-                });
-            });
-        });
+        gameRuleCompoundTag.iterator().forEachRemaining(tag ->
+                GameRule.parseFullEntry(tag).ifPresent(entry ->
+                        gameRuleList.add(GameRuleInfo.createGameRuleInfo(entry, this::saveLevelDatIfNotInBatchUpdating, world.getGameVersion()))
+                )
+        );
         applyRuleModifiedType();
     }
 
@@ -133,7 +125,7 @@ public class GameRulePage extends ListPageBase<GameRuleInfo<?>> implements World
             case ALL -> modifiedList.setAll(getItems());
             case MODIFIED -> modifiedList.setAll(modifiedItems);
             case UNMODIFIED -> modifiedList.setAll(getItems().stream().filter(gameRuleInfo ->
-                    !modifiedItems.contains(gameRuleInfo)).collect(Collectors.toSet()));
+                    !modifiedItems.contains(gameRuleInfo)).toList());
         }
     }
 
