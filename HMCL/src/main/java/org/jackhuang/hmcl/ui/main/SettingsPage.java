@@ -140,10 +140,8 @@ public final class SettingsPage extends ScrollPane {
                 }
 
                 {
-                    JFXButton btnUpdate = new JFXButton();
+                    JFXButton btnUpdate = FXUtils.newToggleButton4(SVG.UPDATE, 20);
                     btnUpdate.setOnAction(e -> onUpdate());
-                    btnUpdate.getStyleClass().add("toggle-icon4");
-                    btnUpdate.setGraphic(SVG.UPDATE.createIcon(20));
                     FXUtils.installFastTooltip(btnUpdate, i18n("update.tooltip"));
 
                     updateListener = any -> {

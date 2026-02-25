@@ -254,18 +254,14 @@ public final class WorldBackupsPage extends ListPageBase<WorldBackupsPage.Backup
                 root.setRight(right);
                 right.setAlignment(Pos.CENTER_RIGHT);
 
-                JFXButton btnReveal = new JFXButton();
+                JFXButton btnReveal = FXUtils.newToggleButton4(SVG.FOLDER_OPEN);
                 right.getChildren().add(btnReveal);
                 FXUtils.installFastTooltip(btnReveal, i18n("reveal.in_file_manager"));
-                btnReveal.getStyleClass().add("toggle-icon4");
-                btnReveal.setGraphic(SVG.FOLDER_OPEN.createIcon());
                 btnReveal.setOnAction(event -> skinnable.onReveal());
 
-                JFXButton btnDelete = new JFXButton();
+                JFXButton btnDelete = FXUtils.newToggleButton4(SVG.DELETE);
                 right.getChildren().add(btnDelete);
                 FXUtils.installFastTooltip(btnDelete, i18n("world.backup.delete"));
-                btnDelete.getStyleClass().add("toggle-icon4");
-                btnDelete.setGraphic(SVG.DELETE.createIcon());
                 btnDelete.setOnAction(event -> Controllers.confirm(i18n("button.remove.confirm"), i18n("button.remove"), skinnable::onDelete, null));
             }
 

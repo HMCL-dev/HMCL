@@ -1281,6 +1281,13 @@ public final class FXUtils {
         return button;
     }
 
+    public static JFXButton newToggleButton4(SVG icon, int size) {
+        JFXButton button = new JFXButton();
+        button.getStyleClass().add("toggle-icon4");
+        button.setGraphic(icon.createIcon(size));
+        return button;
+    }
+
     public static Label newSafeTruncatedLabel() {
         Label label = new Label();
         label.setTextOverrun(OverrunStyle.CENTER_WORD_ELLIPSIS);
