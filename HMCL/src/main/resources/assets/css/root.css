@@ -1998,6 +1998,7 @@
     -fx-padding: 10;
     -fx-font-size: 12;
     -fx-text-fill: -monet-on-surface;
+    -fx-line-spacing: 2;
 }
 
 .addon-changelog .html-h1 {
@@ -2019,7 +2020,8 @@
 .addon-changelog .html-code-block {
     -fx-padding: 0 3 0 3;
     -fx-background-radius: 5;
-    -fx-background-color: -monet-surface-dim;
+    /* Should be -monet-surface-bright in dark mode and -dim in light mode, however that's not supported */
+    -fx-background-color: -monet-surface-container;
 }
 
 .addon-changelog-table-cell {
