@@ -178,7 +178,7 @@ public class ModrinthManifest implements ModpackManifest, ModpackManifest.Suppor
 
         @Override
         public boolean isOptional() {
-            return env != null && env.get("client").equals("optional");
+            return env != null && "optional".equals(env.get("client"));
         }
     }
 }

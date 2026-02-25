@@ -52,7 +52,7 @@ public class OptionalFilesSelectionPane extends BorderPane {
 
     private final VBox title = new VBox();
     private final Label retryOptionalFiles = new Label(i18n("modpack.retry_optional_files"));
-    private final Label pendingOptionalFiles = new Label(i18n("modpack.pending_optional_files"));
+    private final Label pendingOptionalFiles = new Label(i18n("modpack.loading_optional_files"));
     private final Label noOptionalFiles = new Label(i18n("modpack.no_optional_files"));
 
     private final JFXListView<ModpackFile> list = new JFXListView<>();
