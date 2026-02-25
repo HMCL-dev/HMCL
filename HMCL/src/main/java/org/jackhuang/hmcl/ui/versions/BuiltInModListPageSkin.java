@@ -283,7 +283,7 @@ public class BuiltInModListPageSkin extends SkinBase<BuiltInModListPage> {
             -fx-background-radius: 8;
             -fx-border-color: -fx-box-border;
             -fx-border-radius: 8;
-        """);
+            """);
 
         root.setEffect(new DropShadow(18, Color.rgb(0, 0, 0, 0.30)));
 
