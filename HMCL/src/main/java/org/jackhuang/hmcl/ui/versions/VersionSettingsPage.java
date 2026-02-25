@@ -18,6 +18,7 @@
 package org.jackhuang.hmcl.ui.versions;
 
 import com.jfoenix.controls.*;
+import javafx.application.Platform;
 import javafx.beans.InvalidationListener;
 import javafx.beans.binding.Bindings;
 import javafx.beans.property.*;
@@ -817,7 +818,7 @@ public final class VersionSettingsPage extends StackPane implements DecoratorPag
                 if (Controllers.isStopped())
                     return;
 
-                FXUtils.runInFX(() -> memoryStatusProperty.set(status));
+                Platform.runLater(() -> memoryStatusProperty.set(status));
 
                 try {
                     //noinspection BusyWait
