@@ -19,20 +19,24 @@ package org.jackhuang.hmcl.ui.versions;
 
 import com.jfoenix.controls.JFXButton;
 import com.jfoenix.controls.JFXListView;
-import com.jfoenix.controls.JFXPopup;
 import com.jfoenix.controls.JFXTextField;
 import javafx.animation.PauseTransition;
 import javafx.application.Platform;
 import javafx.beans.binding.Bindings;
+import javafx.geometry.Bounds;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
+import javafx.geometry.Rectangle2D;
 import javafx.scene.Node;
 import javafx.scene.control.Label;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.control.SkinBase;
 import javafx.scene.control.Tooltip;
+import javafx.scene.effect.DropShadow;
 import javafx.scene.layout.*;
+import javafx.scene.paint.Color;
 import javafx.stage.FileChooser;
+import javafx.stage.Popup;
 import javafx.util.Duration;
 import org.jackhuang.hmcl.mod.LocalModFile;
 import org.jackhuang.hmcl.mod.ModLoaderType;
@@ -62,6 +66,7 @@ import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 public class BuiltInModListPageSkin extends SkinBase<BuiltInModListPage> {
 
+    private final StackPane pane;
     private final TransitionPane toolbarPane;
     private final HBox searchBar;
     private final HBox toolbarNormal;
@@ -74,7 +79,7 @@ public class BuiltInModListPageSkin extends SkinBase<BuiltInModListPage> {
     protected BuiltInModListPageSkin(BuiltInModListPage skinnable) {
         super(skinnable);
 
-        StackPane pane = new StackPane();
+        pane = new StackPane();
         pane.setPadding(new Insets(10));
         pane.getStyleClass().addAll("notice-pane");
 
@@ -176,7 +181,7 @@ public class BuiltInModListPageSkin extends SkinBase<BuiltInModListPage> {
     private class JijModListCell extends MDListCell<ModListPageSkin.ModInfoObject> {
         private final ImageContainer imageContainer = new ImageContainer(24);
         private final TwoLineListItem content = new TwoLineListItem();
-        private JFXPopup activePopup;
+        private Popup activePopup;
         private boolean ignoreNextClick = false;
 
         public JijModListCell(JFXListView<ModListPageSkin.ModInfoObject> listView) {
@@ -268,11 +273,19 @@ public class BuiltInModListPageSkin extends SkinBase<BuiltInModListPage> {
         }
     }
 
-    private JFXPopup showBundledPopup(Node anchor, String modName, List<String> bundledMods) {
+    private Popup showBundledPopup(Node anchor, String modName, List<String> bundledMods) {
         VBox root = new VBox(10);
         root.setPadding(new Insets(15));
         root.setMaxHeight(400);
         root.getStyleClass().add("card-pane");
+        root.setStyle(root.getStyle() + """
+            -fx-background-color: -fx-background;
+            -fx-background-radius: 8;
+            -fx-border-color: -fx-box-border;
+            -fx-border-radius: 8;
+        """);
+
+        root.setEffect(new DropShadow(18, Color.rgb(0, 0, 0, 0.30)));
 
         HBox header = new HBox(10);
         header.setAlignment(Pos.CENTER_LEFT);
@@ -287,7 +300,6 @@ public class BuiltInModListPageSkin extends SkinBase<BuiltInModListPage> {
         exportButton.setGraphic(SVG.FILE_EXPORT.createIcon(18));
         exportButton.getStyleClass().add("toggle-icon4");
         FXUtils.installFastTooltip(exportButton, i18n("mods.built_in.export.jij_info"));
-
         exportButton.setOnAction(e -> exportJijList(modName, bundledMods));
 
         header.getChildren().addAll(titleLabel, spacer, exportButton);
@@ -340,8 +352,66 @@ public class BuiltInModListPageSkin extends SkinBase<BuiltInModListPage> {
 
         root.getChildren().addAll(header, searchField, scrollPane);
 
-        JFXPopup popup = new JFXPopup(root);
-        popup.show(anchor, JFXPopup.PopupVPosition.TOP, JFXPopup.PopupHPosition.RIGHT, 0, anchor.getLayoutBounds().getHeight() + 5);
+        StackPane wrapper = new StackPane(root);
+        wrapper.setPadding(new Insets(12));
+        wrapper.setStyle("-fx-background-color: transparent;");
+
+        Popup popup = new Popup();
+        popup.getContent().add(wrapper);
+        popup.setAutoHide(true);
+        popup.setHideOnEscape(true);
+
+        Platform.runLater(() -> {
+            Bounds aScreen = anchor.localToScreen(anchor.getBoundsInLocal());
+            Bounds pScreen = pane.localToScreen(pane.getBoundsInLocal());
+            if (aScreen == null || pScreen == null) return;
+
+            Rectangle2D content = new Rectangle2D(
+                    pScreen.getMinX(),
+                    pScreen.getMinY(),
+                    pScreen.getWidth(),
+                    pScreen.getHeight()
+            );
+
+            final double padding = 8;
+            final double gap = 5;
+
+            wrapper.applyCss();
+            wrapper.layout();
+            double popupW = wrapper.prefWidth(-1);
+            double popupH = wrapper.prefHeight(-1);
+
+            double maxAllowedH = Math.max(120, content.getHeight() - padding * 2);
+            double wrapperExtraH = wrapper.getPadding().getTop() + wrapper.getPadding().getBottom();
+            double maxRootH = Math.max(120, maxAllowedH - wrapperExtraH);
+
+            if (root.prefHeight(-1) > maxRootH) {
+                root.setMaxHeight(maxRootH);
+                wrapper.applyCss();
+                wrapper.layout();
+                popupW = wrapper.prefWidth(-1);
+                popupH = wrapper.prefHeight(-1);
+            }
+
+            double targetX = aScreen.getMaxX() - popupW;
+
+            double downY = aScreen.getMaxY() + gap;
+            double upY = aScreen.getMinY() - gap - popupH;
+
+            double targetY = downY;
+            if (targetY + popupH > content.getMaxY() - padding) targetY = upY;
+
+            double minX = content.getMinX() + padding;
+            double maxX = content.getMaxX() - padding - popupW;
+            targetX = Math.max(minX, Math.min(targetX, maxX));
+
+            double minY = content.getMinY() + padding;
+            double maxY = content.getMaxY() - padding - popupH;
+            targetY = Math.max(minY, Math.min(targetY, maxY));
+
+            popup.show(Controllers.getStage(), targetX, targetY);
+        });
+
         return popup;
     }
 
