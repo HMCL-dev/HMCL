@@ -246,7 +246,11 @@ public final class ResourcePackManager extends LocalAddonManager<ResourcePackFil
         if (Files.isDirectory(resourcePackDirectory)) {
             try (DirectoryStream<Path> directoryStream = Files.newDirectoryStream(resourcePackDirectory)) {
                 for (Path subitem : directoryStream) {
-                    addResourcePackInfo(subitem);
+                    try {
+                        addResourcePackInfo(subitem);
+                    } catch (IOException e) {
+                        LOG.warning("Failed to load resource pack " + subitem, e);
+                    }
                 }
             }
         }

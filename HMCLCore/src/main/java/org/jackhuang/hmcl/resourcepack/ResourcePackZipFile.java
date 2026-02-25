@@ -28,7 +28,7 @@ final class ResourcePackZipFile extends ResourcePackFile {
         PackMcMeta metaTemp = null;
         byte[] iconTemp = null;
 
-        try (var zipFileTree = new ZipFileTree(CompressingUtils.openZipFile(path))) {
+        try (var zipFileTree = CompressingUtils.openZipTree(path)) {
             try {
                 metaTemp = JsonUtils.fromNonNullJson(zipFileTree.readTextEntry("/pack.mcmeta"), PackMcMeta.class);
             } catch (Exception e) {
@@ -37,8 +37,8 @@ final class ResourcePackZipFile extends ResourcePackFile {
 
             var iconEntry = zipFileTree.getEntry("/pack.png");
             if (iconEntry != null) {
-                try (InputStream is = zipFileTree.getInputStream(iconEntry)) {
-                    iconTemp = is.readAllBytes();
+                try {
+                    iconTemp = zipFileTree.readBinaryEntry(iconEntry);
                 } catch (Exception e) {
                     LOG.warning("Failed to load resource pack icon", e);
                 }
