@@ -150,9 +150,9 @@ public final class CurseCompletionTask extends Task<Void> {
                         })
                         .collect(Collectors.toList()));
         JsonUtils.writeToJsonFile(root.resolve("manifest.json"), newManifest);
-                JsonUtils.writeToJsonFile(root.resolve("files.json"), selectedFiles == null
-                    ? List.of()
-                    : selectedFiles.stream().map(ModpackFile::getPath).collect(Collectors.toList()));
+        JsonUtils.writeToJsonFile(root.resolve("files.json"), selectedFiles == null
+                ? List.of()
+                : selectedFiles.stream().map(ModpackFile::getPath).collect(Collectors.toList()));
 
         Path versionRoot = repository.getVersionRoot(modManager.getInstanceId());
         Path resourcePacksRoot = versionRoot.resolve("resourcepacks");
