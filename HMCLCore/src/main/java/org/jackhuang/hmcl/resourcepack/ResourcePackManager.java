@@ -115,7 +115,25 @@ public final class ResourcePackManager extends LocalAddonManager<ResourcePackFil
 
         // See https://zh.minecraft.wiki/w/Pack.mcmeta
         // Also referring to Minecraft's source code
-        if (!(packInfo.minPackVersion().isUnspecified() || packInfo.maxPackVersion().isUnspecified())) {
+        if (packInfo.minPackVersion().isUnspecified() || packInfo.maxPackVersion().isUnspecified()) { // Old format
+            if (!supportedFormatsUnspecified) {
+                PackMcMeta.SupportedFormats supportedFormats = packInfo.supportedFormats();
+                int min = supportedFormats.min();
+                int max = supportedFormats.max();
+                if (max > 64) {
+                    return VersionRange.empty();
+                } else {
+                    if (packFormatUnspecified) return VersionRange.empty();
+                    if (isPackFormatInvalid(min, max, packInfo.packFormat())) return VersionRange.empty();
+                }
+
+                return VersionRange.between(supportedFormats.getMin(), supportedFormats.getMax());
+            } else if (!packFormatUnspecified) {
+                int packFormat = packInfo.packFormat();
+                PackMcMeta.PackVersion packVersion = new PackMcMeta.PackVersion(packFormat, 0);
+                return packFormat > 64 ? VersionRange.empty() : VersionRange.is(packVersion);
+            }
+        } else { // New format
             int minMajor = packInfo.minPackVersion().majorVersion();
             int maxMajor = packInfo.maxPackVersion().majorVersion();
             if (packInfo.minPackVersion().compareTo(packInfo.maxPackVersion()) > 0) {
@@ -145,22 +163,6 @@ public final class ResourcePackManager extends LocalAddonManager<ResourcePackFil
             }
 
             return VersionRange.between(packInfo.minPackVersion(), packInfo.maxPackVersion());
-        } else if (!supportedFormatsUnspecified) {
-            PackMcMeta.SupportedFormats supportedFormats = packInfo.supportedFormats();
-            int min = supportedFormats.min();
-            int max = supportedFormats.max();
-            if (max > 64) {
-                return VersionRange.empty();
-            } else {
-                if (packFormatUnspecified) return VersionRange.empty();
-                if (isPackFormatInvalid(min, max, packInfo.packFormat())) return VersionRange.empty();
-            }
-
-            return VersionRange.between(supportedFormats.getMin(), supportedFormats.getMax());
-        } else if (!packFormatUnspecified) {
-            int packFormat = packInfo.packFormat();
-            PackMcMeta.PackVersion packVersion = new PackMcMeta.PackVersion(packFormat, 0);
-            return packFormat > 64 ? VersionRange.empty() : VersionRange.is(packVersion);
         }
         return VersionRange.empty();
     }
@@ -171,6 +173,24 @@ public final class ResourcePackManager extends LocalAddonManager<ResourcePackFil
             return k < 15;
         } else {
             return true;
+        }
+    }
+
+    private static String serializePackList(List<String> packNames) {
+        try {
+            return StringUtils.serializeStringList(packNames);
+        } catch (Exception e) {
+            LOG.warning("Failed to serialize resource pack list: \n" + packNames, e);
+            return "[]";
+        }
+    }
+
+    private static List<String> deserializePackList(String json) {
+        try {
+            return StringUtils.deserializeStringList(json);
+        } catch (Exception e) {
+            LOG.warning("Failed to deserialize resource pack list: \n" + json, e);
+            return List.of();
         }
     }
 
@@ -306,16 +326,16 @@ public final class ResourcePackManager extends LocalAddonManager<ResourcePackFil
         Map<String, String> options = loadOptions();
         String packId = "file/" + resourcePack.getFileNameWithExtension();
         boolean modified = false;
-        List<String> resourcePacks = new ArrayList<>(StringUtils.deserializeStringList(options.get("resourcePacks")));
+        List<String> resourcePacks = new ArrayList<>(deserializePackList(options.get("resourcePacks")));
         if (!resourcePacks.contains(packId)) {
             resourcePacks.add(packId);
-            options.put("resourcePacks", StringUtils.serializeStringList(resourcePacks));
+            options.put("resourcePacks", serializePackList(resourcePacks));
             modified = true;
         }
-        List<String> incompatibleResourcePacks = new ArrayList<>(StringUtils.deserializeStringList(options.get("incompatibleResourcePacks")));
+        List<String> incompatibleResourcePacks = new ArrayList<>(deserializePackList(options.get("incompatibleResourcePacks")));
         if (!incompatibleResourcePacks.contains(packId) && isIncompatible(resourcePack)) {
             incompatibleResourcePacks.add(packId);
-            options.put("incompatibleResourcePacks", StringUtils.serializeStringList(incompatibleResourcePacks));
+            options.put("incompatibleResourcePacks", serializePackList(incompatibleResourcePacks));
             modified = true;
         }
         if (modified) saveOptions(options);
@@ -326,16 +346,16 @@ public final class ResourcePackManager extends LocalAddonManager<ResourcePackFil
         Map<String, String> options = loadOptions();
         String packId = "file/" + resourcePack.getFileNameWithExtension();
         boolean modified = false;
-        List<String> resourcePacks = new ArrayList<>(StringUtils.deserializeStringList(options.get("resourcePacks")));
+        List<String> resourcePacks = new ArrayList<>(deserializePackList(options.get("resourcePacks")));
         if (resourcePacks.contains(packId)) {
             resourcePacks.remove(packId);
-            options.put("resourcePacks", StringUtils.serializeStringList(resourcePacks));
+            options.put("resourcePacks", serializePackList(resourcePacks));
             modified = true;
         }
-        List<String> incompatibleResourcePacks = new ArrayList<>(StringUtils.deserializeStringList(options.get("incompatibleResourcePacks")));
+        List<String> incompatibleResourcePacks = new ArrayList<>(deserializePackList(options.get("incompatibleResourcePacks")));
         if (incompatibleResourcePacks.contains(packId)) {
             incompatibleResourcePacks.remove(packId);
-            options.put("incompatibleResourcePacks", StringUtils.serializeStringList(incompatibleResourcePacks));
+            options.put("incompatibleResourcePacks", serializePackList(incompatibleResourcePacks));
             modified = true;
         }
         if (modified) saveOptions(options);

@@ -106,6 +106,11 @@ public record PackMcMeta(@SerializedName("pack") PackInfo pack) implements Valid
 
         @Override
         public int compareTo(PackVersion other) {
+            boolean thisUnspecified = this.isUnspecified();
+            boolean otherUnspecified = other.isUnspecified();
+            if (thisUnspecified && otherUnspecified) return 0;
+            if (thisUnspecified) return -1;
+            if (otherUnspecified) return 1;
             int majorCompare = Integer.compare(this.majorVersion, other.majorVersion);
             if (majorCompare != 0) {
                 return majorCompare;

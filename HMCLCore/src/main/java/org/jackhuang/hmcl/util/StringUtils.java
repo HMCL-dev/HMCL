@@ -27,6 +27,7 @@ import java.util.*;
 import java.util.function.Predicate;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.regex.PatternSyntaxException;
 
 /**
  * @author huangyuhui
@@ -259,7 +260,7 @@ public final class StringUtils {
         return false;
     }
 
-    public static Predicate<@Nullable String> compileQuery(String queryString) {
+    public static Predicate<@Nullable String> compileQuery(String queryString) throws PatternSyntaxException {
         Predicate<@Nullable String> predicate;
         if (queryString.startsWith("regex:")) {
             Pattern pattern = Pattern.compile(queryString.substring("regex:".length()));
@@ -611,22 +612,14 @@ public final class StringUtils {
     @Contract(pure = true)
     public static String serializeStringList(List<String> list) {
         if (list == null) return "[]";
-        try {
-            return JsonUtils.UGLY_GSON.toJson(list.stream().filter(Objects::nonNull).toList(), JsonUtils.listTypeOf(String.class).getType());
-        } catch (Exception e) {
-            return "[]";
-        }
+        return JsonUtils.UGLY_GSON.toJson(list.stream().filter(Objects::nonNull).toList(), JsonUtils.listTypeOf(String.class).getType());
     }
 
     /// Turns `["a", "b", "c"]` into `List.of("a", "b", "c")`
     @Contract(pure = true)
     public static List<String> deserializeStringList(String json) {
         if (json == null || json.isBlank()) return List.of();
-        try {
-            return JsonUtils.fromNonNullJson(json, JsonUtils.listTypeOf(String.class));
-        } catch (Exception e) {
-            return List.of();
-        }
+        return JsonUtils.fromNonNullJson(json, JsonUtils.listTypeOf(String.class));
     }
 
     public static class LevCalculator {
