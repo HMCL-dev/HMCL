@@ -23,6 +23,7 @@ import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
 import org.jetbrains.annotations.Nullable;
 import tech.minediamond.micanbt.NBT.NBT;
 import tech.minediamond.micanbt.NBT.NBTCompressType;
+import tech.minediamond.micanbt.path.NBTFinder;
 import tech.minediamond.micanbt.tag.*;
 
 import java.io.IOException;
@@ -48,6 +49,7 @@ public final class World {
     private CompoundTag levelData;
     private Path levelDataPath;
     private CompoundTag worldGenSettingsData;
+    private CompoundTag unifiedWorldGenSettingsData;
     private Path worldGenSettingsDataPath;
     private CompoundTag playerData;
     private Path playerDataPath;
@@ -90,8 +92,8 @@ public final class World {
         return levelData;
     }
 
-    public @Nullable CompoundTag getWorldGenSettingsData() {
-        return worldGenSettingsData;
+    public @Nullable CompoundTag getUnifiedWorldGenSettingsData() {
+        return unifiedWorldGenSettingsData;
     }
 
     public @Nullable CompoundTag getPlayerData() {
@@ -110,12 +112,12 @@ public final class World {
     }
 
     public @Nullable Long getSeed() {
-        // Valid between 1.16(20w20a) and 26.1-snapshot-6 / Valid before 1.16(20w20a)
-        if (levelData.atAny("Data.WorldGenSettings.seed", "Data.RandomSeed") instanceof LongTag seedTag) {
+        // Valid after 1.16(20w20a)
+        if (NBTFinder.get(unifiedWorldGenSettingsData, "seed") instanceof LongTag seedTag) {
             return seedTag.getClonedValue();
         }
-        // Valid after 26.1-snapshot-6
-        else if (worldGenSettingsData != null && worldGenSettingsData.at("data.seed") instanceof LongTag seedTag) {
+        // Valid before 1.16(20w20a)
+        else if (levelData.at("Data.RandomSeed") instanceof LongTag seedTag) {
             return seedTag.getClonedValue();
         }
         return null;
@@ -126,19 +128,13 @@ public final class World {
         if (levelData.at("Data.generatorName") instanceof StringTag generatorNameTag) {
             return "largeBiomes".equals(generatorNameTag.getClonedValue());
         }
-        // Valid after 26.1-snapshot-6
-        else if (worldGenSettingsData != null) {
-            if (worldGenSettingsData.at("data.dimensions.minecraft:overworld.generator.settings") instanceof StringTag settingsTag) {
-                return "minecraft:large_biomes".equals(settingsTag.getClonedValue());
-            }
-        }
         // Valid between 1.16(20w20a) and 1.18(21w37a)
-        else if (levelData.at("Data.WorldGenSettings.dimensions.minecraft:overworld.generator.biome_source.large_biomes") instanceof ByteTag largeBiomesTag) {
+        else if (NBTFinder.get(unifiedWorldGenSettingsData, "dimensions.minecraft:overworld.generator.biome_source.large_biomes") instanceof ByteTag largeBiomesTag) {
             return largeBiomesTag.getClonedValue() == (byte) 1;
         }
-        // Valid between 1.18(21w37a) and 26.1-snapshot-6
+        // Valid after 1.18(21w37a)
         // Note: In versions 1.16(20w20a) and 1.18(21w37a), the settings tag exists but does not indicate large biomes information
-        else if (levelData.at("Data.WorldGenSettings.dimensions.minecraft:overworld.generator.settings") instanceof StringTag settingsTag) {
+        else if (NBTFinder.get(unifiedWorldGenSettingsData, "dimensions.minecraft:overworld.generator.settings") instanceof StringTag settingsTag) {
             return "minecraft:large_biomes".equals(settingsTag.getClonedValue());
         }
         return false;
@@ -248,12 +244,18 @@ public final class World {
 
     private void loadOtherData() throws IOException {
         Path worldGenSettingsDatPath = file.resolve("data/minecraft/world_gen_settings.dat");
-        if (Files.exists(worldGenSettingsDatPath)) {
+        if (levelData.at("Data.WorldGenSettings") instanceof CompoundTag worldGenSettingsTag) {
+            this.worldGenSettingsDataPath = null;
+            this.worldGenSettingsData = worldGenSettingsTag;
+            this.unifiedWorldGenSettingsData = worldGenSettingsData;
+        } else if (Files.exists(worldGenSettingsDatPath)) {
             this.worldGenSettingsDataPath = worldGenSettingsDatPath;
             this.worldGenSettingsData = NBT.read(worldGenSettingsDatPath);
+            this.unifiedWorldGenSettingsData = (CompoundTag) worldGenSettingsData.get("data");
         } else {
             this.worldGenSettingsDataPath = null;
             this.worldGenSettingsData = null;
+            this.unifiedWorldGenSettingsData = null;
         }
 
         if (levelData.at("Data.Player") instanceof CompoundTag playerTag) {

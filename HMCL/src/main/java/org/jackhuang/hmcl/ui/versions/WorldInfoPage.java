@@ -45,6 +45,7 @@ import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.i18n.I18n;
 import org.jackhuang.hmcl.util.io.FileUtils;
+import tech.minediamond.micanbt.path.NBTFinder;
 import tech.minediamond.micanbt.tag.*;
 
 import java.io.IOException;
@@ -252,12 +253,12 @@ public final class WorldInfoPage extends SpinnerPane implements WorldManagePage.
                 generateFeaturesButton.setTitle(i18n("world.info.generate_features"));
                 generateFeaturesButton.setDisable(isReadOnly);
 
-                // Valid between (1.16)20w20a and 26.1-snapshot-6 / Valid before (1.16)20w20a
-                if (dataTag.atAny("WorldGenSettings.generate_features", "MapFeatures") instanceof ByteTag generateFeaturesTag) {
+                // Valid before (1.16)20w20a
+                if (dataTag.at("MapFeatures") instanceof ByteTag generateFeaturesTag) {
                     bindTagAndToggleButton(generateFeaturesTag, generateFeaturesButton);
                 }
-                // Valid after 26.1-snapshot-6
-                else if (world.getWorldGenSettingsData() != null && world.getWorldGenSettingsData().at("data.generate_structures") instanceof ByteTag generateStructures) {
+                // Valid after (1.16)20w20a
+                else if (NBTFinder.findFirst(world.getUnifiedWorldGenSettingsData(), "generate_features", "generate_structures") instanceof ByteTag generateStructures) {
                     bindTagAndToggleButton(generateStructures, generateFeaturesButton);
                 } else {
                     generateFeaturesButton.setDisable(true);
