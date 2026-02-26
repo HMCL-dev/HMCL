@@ -139,10 +139,9 @@ public final class WorldInfoPage extends SpinnerPane implements WorldManagePage.
                     iconImageView.setImage(world.getIcon() == null ? FXUtils.newBuiltinImage("/assets/img/unknown_server.png") : world.getIcon());
                 }
 
-                JFXButton editIconButton = new JFXButton();
-                JFXButton resetIconButton = new JFXButton();
+                JFXButton editIconButton = FXUtils.newToggleButton4(SVG.EDIT, 20);
+                JFXButton resetIconButton = FXUtils.newToggleButton4(SVG.RESTORE, 20);
                 {
-                    editIconButton.setGraphic(SVG.EDIT.createIcon(20));
                     editIconButton.setDisable(isReadOnly);
                     editIconButton.setOnAction(event -> Controllers.confirm(
                             I18n.i18n("world.icon.change.tip"),
@@ -152,13 +151,10 @@ public final class WorldInfoPage extends SpinnerPane implements WorldManagePage.
                             null
                     ));
                     FXUtils.installFastTooltip(editIconButton, i18n("button.edit"));
-                    editIconButton.getStyleClass().add("toggle-icon4");
 
-                    resetIconButton.setGraphic(SVG.RESTORE.createIcon(20));
                     resetIconButton.setDisable(isReadOnly);
                     resetIconButton.setOnAction(event -> this.clearWorldIcon());
                     FXUtils.installFastTooltip(resetIconButton, i18n("button.reset"));
-                    resetIconButton.getStyleClass().add("toggle-icon4");
                 }
 
                 HBox hBox = new HBox(8);
