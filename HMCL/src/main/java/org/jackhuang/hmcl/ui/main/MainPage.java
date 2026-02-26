@@ -109,6 +109,7 @@ public final class MainPage extends StackPane implements DecoratorPage {
         if (I18n.isUpsideDown()) {
             titleIcon.setRotate(180);
             versionLabel.setRotate(180);
+            titleLabel.setRotate(180);
         }
         versionLabel.getStyleClass().add("jfx-main-version-label");
 
