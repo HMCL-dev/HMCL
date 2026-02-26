@@ -57,6 +57,7 @@ dependencies {
     implementation(project(":HMCLBoot"))
     implementation("libs:JFoenix")
     implementation(libs.twelvemonkeys.imageio.webp)
+    implementation(libs.fxsvgimage)
     implementation(libs.java.info)
     implementation(libs.monet.fx)
     implementation(libs.nayuki.qrcodegen)
