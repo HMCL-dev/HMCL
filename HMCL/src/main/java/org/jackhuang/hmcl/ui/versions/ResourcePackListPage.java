@@ -127,7 +127,7 @@ public final class ResourcePackListPage extends ListPageBase<ResourcePackListPag
             } finally {
                 lock.unlock();
             }
-        }).whenComplete(Schedulers.javafx(), ((result, exception) -> {
+        }).whenComplete(Schedulers.javafx(), (result, exception) -> {
             if (exception == null) {
                 getItems().setAll(result);
             } else {
@@ -135,7 +135,7 @@ public final class ResourcePackListPage extends ListPageBase<ResourcePackListPag
                 getItems().clear();
             }
             setLoading(false);
-        })).start();
+        }).start();
     }
 
     public void addFiles(List<Path> files) {
