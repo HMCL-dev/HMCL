@@ -343,7 +343,7 @@ public final class WorldInfoPage extends SpinnerPane implements WorldManagePage.
                 // Valid after 22w14a; prior to this version, the game did not record the last death location data.
                 if (playerTag.at("LastDeathLocation.dimension") instanceof StringTag dimensionTag
                         && playerTag.at("LastDeathLocation.pos") instanceof IntArrayTag posTag
-                        && posTag.length() == 3) {
+                        && posTag.size() == 3) {
                     Dimension dimension = Dimension.of(dimensionTag);
                     if (dimension != null) {
                         lastDeathLocationPane.setText(dimension.formatPosition(posTag));
@@ -357,7 +357,7 @@ public final class WorldInfoPage extends SpinnerPane implements WorldManagePage.
                 // Valid after 1.21.5(25w07a)
                 if (playerTag.at("respawn.dimension") instanceof StringTag dimensionTag
                         && playerTag.at("respawn.pos") instanceof IntArrayTag intArrayTag
-                        && intArrayTag.length() == 3) {
+                        && intArrayTag.size() == 3) {
                     Dimension dimension = Dimension.of(dimensionTag);
                     if (dimension != null) {
                         spawnPane.setText(dimension.formatPosition(intArrayTag));

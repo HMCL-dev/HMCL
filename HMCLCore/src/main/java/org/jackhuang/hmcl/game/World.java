@@ -22,13 +22,11 @@ import org.jackhuang.hmcl.util.io.*;
 import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
 import org.jetbrains.annotations.Nullable;
 import tech.minediamond.micanbt.NBT.NBT;
-import tech.minediamond.micanbt.NBT.NBTWriter;
+import tech.minediamond.micanbt.NBT.NBTCompressType;
 import tech.minediamond.micanbt.tag.*;
 
-import java.io.BufferedOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.OutputStream;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
 import java.nio.channels.FileLock;
@@ -38,7 +36,6 @@ import java.nio.file.*;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Stream;
-import java.util.zip.GZIPOutputStream;
 
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
@@ -416,11 +413,7 @@ public final class World {
         if (!Files.isDirectory(file))
             throw new IOException("Not a valid world directory");
 
-        FileUtils.saveSafely(path, os -> {
-            try (OutputStream bos = new BufferedOutputStream(os); OutputStream gos = new GZIPOutputStream(bos)) {
-                NBTWriter.writeTag(gos, nbt);
-            }
-        });
+        FileUtils.saveSafely(path, os -> NBT.toStream(nbt, os).compressType(NBTCompressType.GZIP).write());
     }
 
     private static boolean isLocked(Path sessionLockFile) {
