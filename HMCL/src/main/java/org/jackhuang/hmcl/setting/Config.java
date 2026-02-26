@@ -460,6 +460,21 @@ public final class Config extends ObservableSetting {
         this.backgroundImageOpacity.set(backgroundImageOpacity);
     }
 
+    @SerializedName("titleBarText")
+    private final StringProperty titleBarText = new SimpleStringProperty("");
+
+    public StringProperty titleBarTextProperty() {
+        return titleBarText;
+    }
+
+    public String getTitleBarText() {
+        return titleBarText.get();
+    }
+
+    public void setTitleBarText(String titleBarText) {
+        this.titleBarText.set(titleBarText);
+    }
+
     // Networks
 
     @SerializedName("autoDownloadThreads")

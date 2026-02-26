@@ -678,6 +678,14 @@
     -fx-font-weight: BOLD;
 }
 
+.jfx-tool-bar .jfx-main-version-label {
+    -fx-font-weight: BOLD;
+    -fx-background-color: white;
+    -fx-text-fill: -monet-primary-container;
+    -fx-background-radius: 4px;
+    -fx-padding: 2px 3px;
+}
+
 .jfx-tool-bar.background {
     -fx-background-color: -monet-primary-container;
 }
