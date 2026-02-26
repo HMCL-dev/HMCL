@@ -50,6 +50,7 @@ import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.logging.Logger;
 import org.jackhuang.hmcl.util.platform.*;
+import org.jackhuang.hmcl.util.platform.windows.WindowsEvents;
 
 import java.io.IOException;
 import java.lang.management.ManagementFactory;
@@ -59,6 +60,7 @@ import java.nio.file.Paths;
 import java.nio.file.attribute.FileTime;
 import java.time.Instant;
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
@@ -289,6 +291,22 @@ public class GameCrashWindow extends Stage {
                                     return 0L;
                                 }
                             });
+
+                    var events = WindowsEvents.getApplicationEvents();
+                    var javaEvents = events.stream().filter((it) -> it != null && it.message() != null && (it.message().contains("java.exe") || it.message().contains("javaw.exe"))).toList();
+                    DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+
+                    if (!javaEvents.isEmpty()) {
+                        javaEvents.forEach(it -> {
+                            Instant compareInstant = LocalDateTime.parse(it.timeCreated(), formatter).atZone(ZoneId.systemDefault()).toInstant();
+                            if (compareInstant.toEpochMilli() > processStartTime) {
+                                LOG.info("Found java event");
+                                LOG.info(String.format("ID: %d | Level: %s | Time: %s",
+                                        it.eventId(), it.level(), it.timeCreated()));
+                                LOG.info("Message: " + it.message());
+                            }
+                        });
+                    }
 
                     return LogExporter.exportLogs(logFile, repository, launchOptions.getVersionName(), logs,
                             new CommandBuilder().addAll(managedProcess.getCommands()).toString(),
