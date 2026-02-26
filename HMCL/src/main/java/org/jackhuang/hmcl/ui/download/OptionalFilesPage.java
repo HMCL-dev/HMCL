@@ -57,10 +57,10 @@ public class OptionalFilesPage extends SpinnerPane implements WizardPage {
     private final VBox head = new VBox();
     private final JFXListView<ModpackFile> body = new JFXListView<>();
     private final VBox tail = new VBox();
+    private final Label lblRetry = new Label(i18n("modpack.retry_optional_files"));
 
 
-    // FIXME: restore retry functionality
-    public OptionalFilesPage(Runnable install, ObservableBooleanValue loading,
+    public OptionalFilesPage(Runnable install, Runnable retry, ObservableBooleanValue loading,
             ObservableBooleanValue successful, ObservableList<ModpackFile> optionalFiles,
             ObservableSet<ModpackFile> excludedFiles) {
         this.excludedFiles = excludedFiles;
@@ -78,7 +78,20 @@ public class OptionalFilesPage extends SpinnerPane implements WizardPage {
             btnInstall.setOnAction(e -> install.run());
             tail.getChildren().add(descPane);
 
-            componentList.getContent().setAll(head, body, tail);
+            lblRetry.setOnMouseClicked(e -> retry.run());
+
+            if (successful.get()) {
+                componentList.getContent().setAll(head, body, tail);
+            } else {
+                componentList.getContent().setAll(head, lblRetry, body, tail);
+            }
+            successful.addListener((obs, oldVal, newVal) -> {
+                if (newVal && !oldVal) {
+                    componentList.getContent().setAll(head, body, tail);
+                } else if (!newVal && oldVal) {
+                    componentList.getContent().setAll(head, lblRetry, body, tail);
+                }
+            });
         }
 
         borderPane.getChildren().setAll(componentList);
@@ -185,6 +198,6 @@ public class OptionalFilesPage extends SpinnerPane implements WizardPage {
 
     @Override
     public String getTitle() {
-        return i18n("modpack.optional_files"); // FIXME: is this title appropriate?
+        return i18n("modpack.optional_files");
     }
 }

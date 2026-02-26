@@ -52,6 +52,7 @@ import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.nio.file.Path;
@@ -72,7 +73,8 @@ public final class LocalModpackPage extends ModpackPage {
     public LocalModpackPage(WizardController controller) {
         super(controller);
         btnOptionalFiles.setOnAction((ev) -> {
-            controller.onNext(new OptionalFilesPage(this::onInstall, loadingOptionalFiles, loadedOptionalFiles,
+            controller.onNext(new OptionalFilesPage(this::onInstall, this::loadOptionalFiles,
+                    loadingOptionalFiles, loadedOptionalFiles,
                     new FilteredList<>(allFiles, ModpackFile::isOptional), excludedFiles));
         });
 
@@ -127,10 +129,11 @@ public final class LocalModpackPage extends ModpackPage {
                     return ModpackHelper.readModpackManifest(selectedFile, encoding);
                 })
                 .whenComplete(Schedulers.javafx(), (manifest, exception) -> {
+                    this.manifest = manifest;
                     if (manifest.getManifest() instanceof ModpackManifest.SupportOptional) {
                         allFiles.setAll(((ModpackManifest.SupportOptional) manifest.getManifest()).getFiles());
                         if (allFiles.stream().anyMatch(ModpackFile::isOptional)) {
-                            loadOptionalFiles(manifest);
+                            loadOptionalFiles();
                             btnOptionalFiles.setVisible(true);
                         }
                     }
@@ -173,7 +176,8 @@ public final class LocalModpackPage extends ModpackPage {
                 }).start();
     }
 
-    private void loadOptionalFiles(Modpack manifest) {
+    private void loadOptionalFiles() {
+        Objects.requireNonNull(manifest);
         loadingOptionalFiles.set(true);
         loadedOptionalFiles.set(false);
         Task.supplyAsync(() -> manifest.getManifest().getProvider().loadFiles(manifest.getManifest()))
