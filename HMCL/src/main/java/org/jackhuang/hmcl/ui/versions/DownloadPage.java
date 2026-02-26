@@ -27,16 +27,9 @@ import javafx.beans.property.SimpleBooleanProperty;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
-import javafx.scene.control.Control;
-import javafx.scene.control.Label;
-import javafx.scene.control.ScrollPane;
-import javafx.scene.control.Skin;
-import javafx.scene.control.SkinBase;
-import javafx.scene.layout.HBox;
-import javafx.scene.layout.Priority;
-import javafx.scene.layout.Region;
-import javafx.scene.layout.StackPane;
-import javafx.scene.layout.VBox;
+import javafx.scene.control.*;
+import javafx.scene.image.*;
+import javafx.scene.layout.*;
 import javafx.stage.FileChooser;
 import org.jackhuang.hmcl.download.LibraryAnalyzer;
 import org.jackhuang.hmcl.game.HMCLGameRepository;
@@ -53,11 +46,7 @@ import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
 import org.jackhuang.hmcl.ui.construct.*;
 import org.jackhuang.hmcl.ui.decorator.DecoratorPage;
-import org.jackhuang.hmcl.util.Lang;
-import org.jackhuang.hmcl.util.Pair;
-import org.jackhuang.hmcl.util.SimpleMultimap;
-import org.jackhuang.hmcl.util.StringUtils;
-import org.jackhuang.hmcl.util.TaskCancellationAction;
+import org.jackhuang.hmcl.util.*;
 import org.jackhuang.hmcl.util.i18n.I18n;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.javafx.BindingMapping;
@@ -65,14 +54,7 @@ import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
 import org.jetbrains.annotations.Nullable;
 
 import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.EnumMap;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -314,25 +296,47 @@ public class DownloadPage extends Control implements DecoratorPage {
                         }
                     }
 
-                    for (String gameVersion : control.versions.keys().stream()
+                    List<String> versionList = control.versions.keys().stream()
+                            .map(gv -> Objects.requireNonNullElse(GameVersionNumber.getReleaseOfSnapshot(gv), gv))
+                            .distinct()
                             .sorted(Collections.reverseOrder(GameVersionNumber::compare))
-                            .toList()) {
-                        List<RemoteMod.Version> versions = control.versions.get(gameVersion);
-                        if (versions == null || versions.isEmpty()) {
-                            continue;
+                            .toList();
+
+                    for (String release : versionList) {
+                        List<String> releases = new ArrayList<>();
+                        List<String> snapshots = new ArrayList<>();
+
+                        for (String gv : control.versions.keys()) {
+                            if (release.equals(Objects.requireNonNullElse(GameVersionNumber.getReleaseOfSnapshot(gv), gv))) {
+                                (gv.equals(release) ? releases : snapshots).add(gv);
+                            }
                         }
 
-                        var sublist = new ComponentSublist(() -> {
-                            ArrayList<ModItem> items = new ArrayList<>(versions.size());
-                            for (RemoteMod.Version v : versions) {
-                                items.add(new ModItem(control.addon, v, control));
-                            }
-                            return items;
-                        });
-                        sublist.getStyleClass().add("no-padding");
-                        sublist.setTitle("Minecraft " + gameVersion);
+                        for (int i = 0; i <= 1; i++) {
+                            // i = 0 -> releases, i = 1 -> snapshots
+                            List<String> target = (i == 0) ? releases : snapshots;
+                            if (target.isEmpty()) continue;
 
-                        list.getContent().add(sublist);
+                            String title = (i == 0) ? "Minecraft " + release
+                                    : String.format("Minecraft %s - %s", release, i18n("version.game.snapshot"));
+
+                            var sublist = new ComponentSublist(() -> {
+                                ArrayList<ModItem> items = new ArrayList<>();
+                                for (String gv : target) {
+                                    List<RemoteMod.Version> versions = control.versions.get(gv);
+                                    if (versions != null) {
+                                        for (RemoteMod.Version v : versions) {
+                                            items.add(new ModItem(control.addon, v, control));
+                                        }
+                                    }
+                                }
+                                return items;
+                            });
+
+                            sublist.getStyleClass().add("no-padding");
+                            sublist.setTitle(title);
+                            list.getContent().add(sublist);
+                        }
                     }
                 });
             }
