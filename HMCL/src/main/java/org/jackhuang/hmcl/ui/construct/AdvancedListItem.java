@@ -17,7 +17,6 @@
  */
 package org.jackhuang.hmcl.ui.construct;
 
-import com.jfoenix.controls.JFXButton;
 import javafx.beans.property.*;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
@@ -85,13 +84,11 @@ public class AdvancedListItem extends Control {
     }
 
     public void setRightAction(SVG icon, Runnable action) {
-        var button = new JFXButton();
+        var button = FXUtils.newToggleButton4(icon, 14);
         button.setOnAction(e -> {
             action.run();
             e.consume();
         });
-        button.getStyleClass().add("toggle-icon4");
-        button.setGraphic(icon.createIcon(14));
         setAlignment(button, Pos.CENTER);
         setRightGraphic(button);
     }

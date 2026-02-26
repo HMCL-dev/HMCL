@@ -60,11 +60,9 @@ public class ProfileListItemSkin extends SkinBase<ProfileListItem> {
         HBox right = new HBox();
         right.setAlignment(Pos.CENTER_RIGHT);
 
-        JFXButton btnRemove = new JFXButton();
+        JFXButton btnRemove = FXUtils.newToggleButton4(SVG.CLOSE, 14);
         btnRemove.setOnAction(e -> skinnable.remove());
-        btnRemove.getStyleClass().add("toggle-icon4");
         BorderPane.setAlignment(btnRemove, Pos.CENTER);
-        btnRemove.setGraphic(SVG.CLOSE.createIcon(14));
         right.getChildren().add(btnRemove);
         root.setRight(right);
 

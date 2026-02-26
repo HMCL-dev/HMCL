@@ -141,7 +141,7 @@ public class MicrosoftAccountLoginPane extends JFXDialogLayout implements Dialog
             hintPane.setText(i18n("account.methods.microsoft.hint"));
             rootContainer.getChildren().add(hintPane);
         } else if (currentStep instanceof Step.StartAuthorizationCodeLogin) {
-            loginButtonSpinner.setLoading(true);
+            loginButtonSpinner.setLoading(false);
             cancelAllTasks();
 
             rootContainer.getChildren().add(new JFXSpinner());
@@ -175,16 +175,20 @@ public class MicrosoftAccountLoginPane extends JFXDialogLayout implements Dialog
         } else if (currentStep instanceof Step.WaitForScanQrCode wait) {
             loginButtonSpinner.setLoading(true);
 
+            String scanUri = "https://www.microsoft.com/link".equals(wait.verificationUri())
+                    ? "https://www.microsoft.com/link?otc=" + wait.userCode()
+                    : wait.verificationUri();
+
             var deviceHint = new HintPane(MessageDialogPane.MessageType.INFO);
             deviceHint.setSegment(i18n("account.methods.microsoft.methods.device.hint",
-                    StringUtils.escapeXmlAttribute(wait.verificationUri()),
+                    StringUtils.escapeXmlAttribute(scanUri),
                     wait.verificationUri(),
                     wait.userCode()
             ));
 
             var qrCode = new SVGPath();
             qrCode.fillProperty().bind(Themes.colorSchemeProperty().getPrimary());
-            qrCode.setContent(QrCodeUtils.toSVGPath(QrCode.encodeText(wait.verificationUri() + "?otc=" + wait.userCode(), QrCode.Ecc.MEDIUM)));
+            qrCode.setContent(QrCodeUtils.toSVGPath(QrCode.encodeText(scanUri, QrCode.Ecc.MEDIUM)));
             qrCode.setScaleX(3);
             qrCode.setScaleY(3);
 

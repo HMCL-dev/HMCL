@@ -296,6 +296,11 @@ public abstract class FetchTask<T> extends Task<T> {
                 exceptions.add(ex);
 
                 LOG.warning("Failed to download " + uri + ", repeat times: " + retryTime + (redirects == null ? "" : ", redirects: " + redirects), ex);
+
+                if (retryTime < retryLimit - 1) {
+                    // Wait for a while before retrying
+                    Thread.sleep(200);
+                }
             }
         }
 
