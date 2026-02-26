@@ -687,7 +687,6 @@ public final class SchematicsPage extends ListPageBase<SchematicsPage.Item> impl
 
                 JFXButton btnReveal = FXUtils.newToggleButton4(SVG.FOLDER_OPEN);
                 FXUtils.installFastTooltip(btnReveal, i18n("reveal.in_file_manager"));
-                btnReveal.getStyleClass().add("toggle-icon4");
                 {
                     var fo = SVG.FOLDER_OPEN.createIcon();
                     var f = SVG.FOLDER.createIcon();
@@ -698,9 +697,7 @@ public final class SchematicsPage extends ListPageBase<SchematicsPage.Item> impl
                     if (item != null) item.onReveal();
                 });
 
-                JFXButton btnExplore = new JFXButton();
-                btnExplore.getStyleClass().add("toggle-icon4");
-                btnExplore.setGraphic(SVG.EXPLORE.createIcon()); // Change the icon if allows editing
+                JFXButton btnExplore = FXUtils.newToggleButton4(SVG.EXPLORE); // Change the icon if allows editing
                 btnExplore.setOnAction(event -> {
                     Item item = getItem();
                     if (item instanceof SchematicItem) {
