@@ -278,10 +278,12 @@ public final class VersionsPage extends Control implements WizardPage, Refreshab
                     iconType = VersionIconType.COMMAND;
 
                 imageView.setImage(iconType.getIcon());
+                String displayGameVersion = I18n.getDisplayVersion(GameVersionNumber.asGameVersion(remoteVersion.getGameVersion()));
+
                 if (twoLineListItem.getSubtitle() == null)
-                    twoLineListItem.setSubtitle(remoteVersion.getGameVersion());
+                    twoLineListItem.setSubtitle(displayGameVersion);
                 else
-                    twoLineListItem.addTag(remoteVersion.getGameVersion());
+                    twoLineListItem.addTag(displayGameVersion);
             }
         }
     }

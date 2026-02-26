@@ -34,8 +34,12 @@ import javafx.scene.layout.*;
 import javafx.scene.text.Text;
 import javafx.stage.FileChooser;
 import javafx.stage.Screen;
-import org.jackhuang.hmcl.game.*;
+import org.jackhuang.hmcl.game.GameDirectoryType;
+import org.jackhuang.hmcl.game.HMCLGameRepository;
+import org.jackhuang.hmcl.game.ProcessPriority;
+import org.jackhuang.hmcl.game.Version;
 import org.jackhuang.hmcl.java.JavaManager;
+import org.jackhuang.hmcl.java.JavaRuntime;
 import org.jackhuang.hmcl.setting.*;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.FXUtils;
@@ -48,7 +52,6 @@ import org.jackhuang.hmcl.util.javafx.BindingMapping;
 import org.jackhuang.hmcl.util.javafx.PropertyUtils;
 import org.jackhuang.hmcl.util.javafx.SafeStringConverter;
 import org.jackhuang.hmcl.util.platform.Architecture;
-import org.jackhuang.hmcl.java.JavaRuntime;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
 import org.jackhuang.hmcl.util.platform.SystemInfo;
 import org.jackhuang.hmcl.util.platform.hardware.PhysicalMemoryStatus;
@@ -99,6 +102,10 @@ public final class VersionSettingsPage extends StackPane implements DecoratorPag
     private final InvalidationListener usesGlobalListener;
     private final ChangeListener<Boolean> specificSettingsListener;
     private final InvalidationListener javaListener = any -> initJavaSubtitle();
+
+    private final ChangeListener<GameDirectoryType> gameDirTypeListener = (ob, o, n) -> fireWorkingDirChanged();
+    private final ChangeListener<String> gameDirListener = (ob, o, n) -> fireWorkingDirChanged();
+
     private boolean updatingJavaSetting = false;
     private boolean updatingSelectedJava = false;
 
@@ -455,12 +462,19 @@ public final class VersionSettingsPage extends StackPane implements DecoratorPag
             else
                 profile.getRepository().globalizeVersionSetting(versionId);
 
-            Platform.runLater(() -> loadVersion(profile, versionId));
+            FXUtils.runInFX(() -> {
+                loadVersion(profile, versionId);
+                fireWorkingDirChanged();
+            });
         };
 
         addEventHandler(Navigator.NavigationEvent.NAVIGATED, this::onDecoratorPageNavigating);
 
         componentList.disableProperty().bind(enableSpecificSettings.not());
+    }
+    
+    private void fireWorkingDirChanged() {
+        FXUtils.runInFX(() -> fireEvent(new VersionPage.WorkingDirChangedEvent()));
     }
 
     @Override
@@ -512,6 +526,9 @@ public final class VersionSettingsPage extends StackPane implements DecoratorPag
             lastVersionSetting.javaDirProperty().removeListener(javaListener);
             lastVersionSetting.defaultJavaPathPropertyProperty().removeListener(javaListener);
             lastVersionSetting.javaVersionProperty().removeListener(javaListener);
+
+            lastVersionSetting.gameDirTypeProperty().removeListener(gameDirTypeListener);
+            lastVersionSetting.gameDirProperty().removeListener(gameDirListener);
 
             gameDirItem.selectedDataProperty().unbindBidirectional(lastVersionSetting.gameDirTypeProperty());
             gameDirSublist.subtitleProperty().unbind();
@@ -588,6 +605,9 @@ public final class VersionSettingsPage extends StackPane implements DecoratorPag
         gameDirItem.selectedDataProperty().bindBidirectional(versionSetting.gameDirTypeProperty());
         gameDirSublist.subtitleProperty().bind(Bindings.createStringBinding(() -> profile.getRepository().getRunDirectory(versionId).toAbsolutePath().normalize().toString(),
                 versionSetting.gameDirProperty(), versionSetting.gameDirTypeProperty()));
+
+        versionSetting.gameDirTypeProperty().addListener(gameDirTypeListener);
+        versionSetting.gameDirProperty().addListener(gameDirListener);
 
         lastVersionSetting = versionSetting;
 

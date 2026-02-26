@@ -33,6 +33,7 @@ import org.jetbrains.annotations.Nullable;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
@@ -42,6 +43,7 @@ import java.util.stream.Stream;
 import static org.jackhuang.hmcl.util.Lang.mapOf;
 import static org.jackhuang.hmcl.util.Pair.pair;
 import static org.jackhuang.hmcl.util.gson.JsonUtils.listTypeOf;
+import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 public final class CurseForgeRemoteModRepository implements RemoteModRepository {
 
@@ -142,10 +144,34 @@ public final class CurseForgeRemoteModRepository implements RemoteModRepository 
             query.put("index", Integer.toString(pageOffset * pageSize));
             query.put("pageSize", Integer.toString(pageSize));
 
-            Response<List<CurseAddon>> response = withApiKey(HttpRequest.GET(downloadProvider.injectURL(NetworkUtils.withQuery(PREFIX + "/v1/mods/search", query))))
-                    .getJson(Response.typeOf(listTypeOf(CurseAddon.class)));
-            if (searchFilter.isEmpty()) {
-                return new SearchResult(response.getData().stream().map(CurseAddon::toMod), calculateTotalPages(response, pageSize));
+            Response<List<CurseAddon>> response = null;
+
+            IOException exception = null;
+            List<URI> candidates = downloadProvider.injectURLWithCandidates(NetworkUtils.withQuery(PREFIX + "/v1/mods/search", query));
+            for (URI candidate : candidates) {
+                LOG.info("Fetching " + candidate);
+                try {
+                    response = withApiKey(HttpRequest.GET(candidate.toString()))
+                            .getJson(Response.typeOf(listTypeOf(CurseAddon.class)));
+                    if (searchFilter.isEmpty()) {
+                        return new SearchResult(response.getData().stream().map(CurseAddon::toMod), calculateTotalPages(response, pageSize));
+                    }
+                    break;
+                } catch (IOException e) {
+                    LOG.warning("Failed to search addons: " + candidate, e);
+                    if (candidates.size() == 1) {
+                        exception = e;
+                    } else {
+                        if (exception == null) {
+                            exception = new IOException("Failed to search addons");
+                        }
+                        exception.addSuppressed(e);
+                    }
+                }
+            }
+
+            if (response == null) {
+                throw exception != null ? exception : new IOException("No candidates found");
             }
 
             // https://github.com/HMCL-dev/HMCL/issues/1549
