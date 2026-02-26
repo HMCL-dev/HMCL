@@ -19,6 +19,7 @@ package org.jackhuang.hmcl.ui.main;
 
 import com.jfoenix.controls.JFXButton;
 import com.jfoenix.controls.JFXPopup;
+import com.jfoenix.effects.JFXDepthManager;
 import javafx.animation.KeyFrame;
 import javafx.animation.KeyValue;
 import javafx.animation.Timeline;
@@ -151,6 +152,7 @@ public final class MainPage extends StackPane implements DecoratorPage {
             announcementCard.getChildren().setAll(titleBar, body);
             announcementCard.setSpacing(16);
             announcementCard.getStyleClass().addAll("card", "announcement");
+            JFXDepthManager.setDepth(announcementCard, 2);
 
             VBox announcementBox = new VBox(16);
             announcementBox.setPadding(new Insets(15));
