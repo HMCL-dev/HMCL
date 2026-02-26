@@ -24,11 +24,7 @@ import org.jackhuang.hmcl.mod.LocalModFile;
 import org.jackhuang.hmcl.mod.ModLoaderType;
 import org.jackhuang.hmcl.mod.RemoteMod;
 import org.jackhuang.hmcl.mod.RemoteModRepository;
-import org.jackhuang.hmcl.util.DigestUtils;
-import org.jackhuang.hmcl.util.Immutable;
-import org.jackhuang.hmcl.util.Lang;
-import org.jackhuang.hmcl.util.Pair;
-import org.jackhuang.hmcl.util.StringUtils;
+import org.jackhuang.hmcl.util.*;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.io.HttpRequest;
 import org.jackhuang.hmcl.util.io.NetworkUtils;
@@ -41,13 +37,7 @@ import java.net.URI;
 import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.time.Instant;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.Semaphore;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -67,6 +57,8 @@ public final class ModrinthRemoteModRepository implements RemoteModRepository {
 
     private static final String PREFIX = "https://api.modrinth.com";
 
+    private static final String BASE = "https://modrinth.com";
+
     private final String projectType;
 
     private ModrinthRemoteModRepository(String projectType) {
@@ -76,6 +68,16 @@ public final class ModrinthRemoteModRepository implements RemoteModRepository {
     @Override
     public Type getType() {
         return Type.MOD;
+    }
+
+    @Override
+    public String getApiBaseUrl() {
+        return PREFIX;
+    }
+
+    @Override
+    public String getBaseUrl() {
+        return BASE;
     }
 
     private static String convertSortType(SortType sortType) {
@@ -208,6 +210,22 @@ public final class ModrinthRemoteModRepository implements RemoteModRepository {
         } finally {
             SEMAPHORE.release();
         }
+    }
+
+    @Override
+    public String getModChangelog(String modId, String versionId) throws IOException {
+        SEMAPHORE.acquireUninterruptibly();
+        try {
+            ProjectVersion version = HttpRequest.GET(PREFIX + "/v2/version/" + versionId).getJson(ProjectVersion.class);
+            return version.getChangelog();
+        } finally {
+            SEMAPHORE.release();
+        }
+    }
+
+    @Override
+    public String getVersionPageUrl(RemoteMod.Version version) {
+        return "%s/mod/%s/version/%s".formatted(BASE, version.getModid(), version.getVersionId()); // Modrinth will help us redirect
     }
 
     @Override
@@ -568,6 +586,7 @@ public final class ModrinthRemoteModRepository implements RemoteModRepository {
 
             return Optional.of(new RemoteMod.Version(
                     this,
+                    getId(),
                     projectId,
                     name,
                     versionNumber,

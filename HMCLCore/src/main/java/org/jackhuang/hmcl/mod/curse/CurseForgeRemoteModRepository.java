@@ -48,6 +48,7 @@ import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 public final class CurseForgeRemoteModRepository implements RemoteModRepository {
 
     private static final String PREFIX = "https://api.curseforge.com";
+    private static final String BASE = "https://www.curseforge.com";
     private static final String apiKey = System.getProperty("hmcl.curseforge.apikey", JarUtils.getAttribute("hmcl.curseforge.apikey", ""));
     private static final Semaphore SEMAPHORE = new Semaphore(16);
 
@@ -75,6 +76,16 @@ public final class CurseForgeRemoteModRepository implements RemoteModRepository 
     @Override
     public Type getType() {
         return type;
+    }
+
+    @Override
+    public String getApiBaseUrl() {
+        return PREFIX;
+    }
+
+    @Override
+    public String getBaseUrl() {
+        return BASE;
     }
 
     private int toModsSearchSortField(SortType sort) {
@@ -264,6 +275,44 @@ public final class CurseForgeRemoteModRepository implements RemoteModRepository 
     }
 
     @Override
+    public String getModChangelog(String modId, String versionId) throws IOException {
+        SEMAPHORE.acquireUninterruptibly();
+        try {
+            Response<String> response = withApiKey(HttpRequest.GET(String.format("%s/v1/mods/%s/files/%s/changelog", PREFIX, modId, versionId)))
+                    .getJson(Response.typeOf(String.class));
+            return response.getData();
+        } finally {
+            SEMAPHORE.release();
+        }
+    }
+
+    @Override
+    public String getVersionPageUrl(RemoteMod.Version version) throws IOException {
+        SEMAPHORE.acquireUninterruptibly();
+        try {
+            Response<CurseAddon> response = withApiKey(HttpRequest.GET(PREFIX + "/v1/mods/" + version.getModid()))
+                    .getJson(Response.typeOf(CurseAddon.class));
+            var addon = response.getData();
+            var classId = addon.getClassId();
+            var clazz = switch (classId) {
+                case SECTION_MOD -> "mc-mods";
+                case SECTION_RESOURCE_PACK -> "texture-packs";
+                case SECTION_WORLD -> "worlds";
+                case SECTION_MODPACK -> "modpacks";
+                case SECTION_DATAPACK -> "data-packs";
+                case SECTION_BUKKIT_PLUGIN -> "bukkit-plugins";
+                case SECTION_ADDONS -> "mc-addons";
+                case SECTION_CUSTOMIZATION -> "customization";
+                case SECTION_SHADER -> "shaders";
+                default -> throw new IllegalArgumentException("Unsupported CurseForge class id [%d]".formatted(classId));
+            };
+            return "%s/minecraft/%s/%s/files/%s".formatted(BASE, clazz, addon.getSlug(), version.getVersionId());
+        } finally {
+            SEMAPHORE.release();
+        }
+    }
+
+    @Override
     public Stream<RemoteModRepository.Category> getCategories() throws IOException {
         SEMAPHORE.acquireUninterruptibly();
         try {
@@ -300,8 +349,10 @@ public final class CurseForgeRemoteModRepository implements RemoteModRepository 
     public static final int SECTION_BUKKIT_PLUGIN = 5;
     public static final int SECTION_MOD = 6;
     public static final int SECTION_RESOURCE_PACK = 12;
+    public static final int SECTION_DATAPACK = 6945;
     public static final int SECTION_WORLD = 17;
     public static final int SECTION_MODPACK = 4471;
+    public static final int SECTION_SHADER = 6552;
     public static final int SECTION_CUSTOMIZATION = 4546;
     public static final int SECTION_ADDONS = 4559; // For Pocket Edition
     public static final int SECTION_UNKNOWN1 = 4944;

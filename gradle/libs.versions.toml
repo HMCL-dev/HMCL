@@ -20,6 +20,7 @@ authlib-injector = "1.2.7"
 monet-fx = "0.4.0"
 terracotta = "0.4.2"
 nayuki-qrcodegen = "1.8.0"
+commonmark = "0.27.1"
 
 # testing
 junit = "6.0.1"
@@ -51,6 +52,11 @@ java-info = { module = "org.glavo:java-info", version.ref = "java-info" }
 authlib-injector = { module = "org.glavo.hmcl:authlib-injector", version.ref = "authlib-injector" }
 monet-fx = { module = "org.glavo:MonetFX", version.ref = "monet-fx" }
 nayuki-qrcodegen = { module = "io.nayuki:qrcodegen", version.ref = "nayuki-qrcodegen" }
+commonmark = { module = "org.commonmark:commonmark", version.ref = "commonmark" }
+commonmark-autolink = { module = "org.commonmark:commonmark-ext-autolink", version.ref = "commonmark" }
+commonmark-underline = { module = "org.commonmark:commonmark-ext-ins", version.ref = "commonmark" }
+commonmark-strikethrough = { module = "org.commonmark:commonmark-ext-gfm-strikethrough", version.ref = "commonmark" }
+commonmark-table = { module = "org.commonmark:commonmark-ext-gfm-tables", version.ref = "commonmark" }
 
 # testing
 junit-jupiter = { module = "org.junit.jupiter:junit-jupiter", version.ref = "junit" }

@@ -419,6 +419,16 @@ public final class Lang {
             action.accept(it1.next(), it2.next());
     }
 
+    public static <T> List<T> copyWithSize(List<T> list, int newSize, T defaultValue) {
+        if (list.size() == newSize) return new ArrayList<>(list);
+        if (list.size() > newSize) return new ArrayList<>(list.subList(0, newSize));
+        List<T> result = new ArrayList<>(newSize);
+        result.addAll(list);
+        for (int i = list.size(); i < newSize; i++)
+            result.add(defaultValue);
+        return result;
+    }
+
     public static Throwable resolveException(Throwable e) {
         if (e instanceof ExecutionException || e instanceof CompletionException)
             return resolveException(e.getCause());
