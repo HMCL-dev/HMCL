@@ -8,11 +8,11 @@
       "releaseTime": "2025-12-09T12:43:15+00:00"
     },
     {
-    "id": "1.21.11-rc3_unobfuscated",
-    "type": "unobfuscated",
-    "url": "https://piston-meta.mojang.com/v1/packages/ce3f7ac6d0e9d23ea4e5f0354b91ff15039d9931/1.21.11-rc3_unobfuscated.json",
-    "time": "2025-12-08T13:59:34+00:00",
-    "releaseTime": "2025-12-08T13:59:34+00:00"
+      "id": "1.21.11-rc3_unobfuscated",
+      "type": "unobfuscated",
+      "url": "https://piston-meta.mojang.com/v1/packages/ce3f7ac6d0e9d23ea4e5f0354b91ff15039d9931/1.21.11-rc3_unobfuscated.json",
+      "time": "2025-12-08T13:59:34+00:00",
+      "releaseTime": "2025-12-08T13:59:34+00:00"
     },
     {
       "id": "1.21.11-rc2_unobfuscated",
