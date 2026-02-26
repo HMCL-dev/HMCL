@@ -55,7 +55,6 @@ import java.time.Duration;
 import java.time.Instant;
 import java.util.Arrays;
 import java.util.Locale;
-import java.util.Optional;
 
 import static org.jackhuang.hmcl.util.i18n.I18n.formatDateTime;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
@@ -253,13 +252,9 @@ public final class WorldInfoPage extends SpinnerPane implements WorldManagePage.
                 generateFeaturesButton.setTitle(i18n("world.info.generate_features"));
                 generateFeaturesButton.setDisable(isReadOnly);
 
-                // Valid between (1.16)20w20a and 26.1-snapshot-6
-                if (dataTag.at("WorldGenSettings.generate_features") instanceof ByteTag generateFeaturesTag) {
+                // Valid between (1.16)20w20a and 26.1-snapshot-6 / Valid before (1.16)20w20a
+                if (dataTag.atAny("WorldGenSettings.generate_features", "MapFeatures") instanceof ByteTag generateFeaturesTag) {
                     bindTagAndToggleButton(generateFeaturesTag, generateFeaturesButton);
-                }
-                // Valid before (1.16)20w20a
-                else if (dataTag.get("MapFeatures") instanceof ByteTag mapFeatures) {
-                    bindTagAndToggleButton(mapFeatures, generateFeaturesButton);
                 }
                 // Valid after 26.1-snapshot-6
                 else if (world.getWorldGenSettingsData() != null && world.getWorldGenSettingsData().at("data.generate_structures") instanceof ByteTag generateStructures) {
@@ -306,13 +301,9 @@ public final class WorldInfoPage extends SpinnerPane implements WorldManagePage.
             {
                 difficultyLockPane.setTitle(i18n("world.info.difficulty_lock"));
                 difficultyLockPane.setDisable(isReadOnly);
-                // Valid before 26.1-snapshot-6
-                if (dataTag.get("DifficultyLocked") instanceof ByteTag difficultyLockedTag) {
+                // Valid before 26.1-snapshot-6 / Valid after 26.1-snapshot-6
+                if (dataTag.atAny("DifficultyLocked", "difficulty_settings.locked") instanceof ByteTag difficultyLockedTag) {
                     bindTagAndToggleButton(difficultyLockedTag, difficultyLockPane);
-                }
-                // Valid after 26.1-snapshot-6
-                else if (dataTag.at("difficulty_settings.locked") instanceof ByteTag lockedTag) {
-                    bindTagAndToggleButton(lockedTag, difficultyLockPane);
                 } else {
                     difficultyLockPane.setDisable(true);
                 }
@@ -379,13 +370,11 @@ public final class WorldInfoPage extends SpinnerPane implements WorldManagePage.
                 playerGameTypePane.setDisable(worldManagePage.isReadOnly());
                 playerGameTypePane.setItems(GameType.items);
 
-                // Valid before 26.1-snapshot-6
-                ByteTag hardcoreTag = Optional.ofNullable(dataTag.get("hardcore") instanceof ByteTag b ? b : null)
-                        // Valid after 26.1-snapshot-6
-                        .orElseGet(() -> dataTag.at("difficulty_settings.hardcore") instanceof ByteTag b ? b : null);
+                // Valid before 26.1-snapshot-6 / Valid after 26.1-snapshot-6
+                Tag hardcore = dataTag.atAny("hardcore", "difficulty_settings.hardcore");
 
                 if (playerTag.get("playerGameType") instanceof IntTag playerGameTypeTag
-                        && hardcoreTag != null) {
+                        && hardcore instanceof ByteTag hardcoreTag) {
                     boolean isHardcore = hardcoreTag.getClonedValue() == 1;
                     GameType gameType = GameType.of(playerGameTypeTag.getClonedValue(), isHardcore);
                     if (gameType != null) {
