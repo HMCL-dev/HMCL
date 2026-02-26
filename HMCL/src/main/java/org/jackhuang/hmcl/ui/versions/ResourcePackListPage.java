@@ -470,8 +470,8 @@ public final class ResourcePackListPage extends ListPageBase<ResourcePackListPag
         private final JFXCheckBox checkBox;
         private final ImageContainer imageContainer = new ImageContainer(24);
         private final TwoLineListItem content = new TwoLineListItem();
-        private final JFXButton btnReveal = new JFXButton();
-        private final JFXButton btnInfo = new JFXButton();
+        private final JFXButton btnReveal = FXUtils.newToggleButton4(SVG.FOLDER);
+        private final JFXButton btnInfo = FXUtils.newToggleButton4(SVG.INFO);
 
         private ResourcePackInfoObject object = null;
 
@@ -507,12 +507,6 @@ public final class ResourcePackListPage extends ListPageBase<ResourcePackListPag
 
             HBox.setHgrow(content, Priority.ALWAYS);
             content.setMouseTransparent(true);
-
-            btnReveal.getStyleClass().add("toggle-icon4");
-            btnReveal.setGraphic(SVG.FOLDER.createIcon());
-
-            btnInfo.getStyleClass().add("toggle-icon4");
-            btnInfo.setGraphic(SVG.INFO.createIcon());
 
             root.getChildren().setAll(checkBox, imageContainer, content, btnReveal, btnInfo);
 

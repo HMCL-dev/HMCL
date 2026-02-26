@@ -106,30 +106,26 @@ public final class GameListCell extends ListCell<GameListItem> {
 
             right.setAlignment(Pos.CENTER_RIGHT);
 
-            this.btnUpgrade = new JFXButton();
+            this.btnUpgrade = FXUtils.newToggleButton4(SVG.UPDATE);
             btnUpgrade.setOnAction(e -> {
                 GameListItem item = this.getItem();
                 if (item != null)
                     item.update();
             });
-            btnUpgrade.getStyleClass().add("toggle-icon4");
-            btnUpgrade.setGraphic(SVG.UPDATE.createIcon());
             FXUtils.installFastTooltip(btnUpgrade, i18n("version.update"));
             right.getChildren().add(btnUpgrade);
 
-            this.btnLaunch = new JFXButton();
+            this.btnLaunch = FXUtils.newToggleButton4(SVG.ROCKET_LAUNCH);
             btnLaunch.setOnAction(e -> {
                 GameListItem item = this.getItem();
                 if (item != null)
                     item.testGame();
             });
-            btnLaunch.getStyleClass().add("toggle-icon4");
             BorderPane.setAlignment(btnLaunch, Pos.CENTER);
-            btnLaunch.setGraphic(SVG.ROCKET_LAUNCH.createIcon());
             FXUtils.installFastTooltip(btnLaunch, i18n("version.launch.test"));
             right.getChildren().add(btnLaunch);
 
-            this.btnManage = new JFXButton();
+            this.btnManage = FXUtils.newToggleButton4(SVG.MORE_VERT);
             btnManage.setOnAction(e -> {
                 GameListItem item = this.getItem();
                 if (item == null)
@@ -139,9 +135,7 @@ public final class GameListCell extends ListCell<GameListItem> {
                 JFXPopup.PopupVPosition vPosition = determineOptimalPopupPosition(root, popup);
                 popup.show(root, vPosition, JFXPopup.PopupHPosition.RIGHT, 0, vPosition == JFXPopup.PopupVPosition.TOP ? root.getHeight() : -root.getHeight());
             });
-            btnManage.getStyleClass().add("toggle-icon4");
             BorderPane.setAlignment(btnManage, Pos.CENTER);
-            btnManage.setGraphic(SVG.MORE_VERT.createIcon());
             FXUtils.installFastTooltip(btnManage, i18n("settings.game.management"));
             right.getChildren().add(btnManage);
         }
