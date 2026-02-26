@@ -32,17 +32,10 @@ import java.util.List;
  * @author huangyuhui
  */
 @Immutable
-public final class CurseManifestMinecraft implements Validation {
-
-    @SerializedName("version")
-    private final String gameVersion;
-
-    @SerializedName("modLoaders")
-    private final List<CurseManifestModLoader> modLoaders;
-
+public record CurseManifestMinecraft(@SerializedName("version") String gameVersion,
+                                     @SerializedName("modLoaders") List<CurseManifestModLoader> modLoaders) implements Validation {
     public CurseManifestMinecraft() {
-        this.gameVersion = "";
-        this.modLoaders = Collections.emptyList();
+        this("", Collections.emptyList());
     }
 
     public CurseManifestMinecraft(String gameVersion, List<CurseManifestModLoader> modLoaders) {
@@ -50,11 +43,8 @@ public final class CurseManifestMinecraft implements Validation {
         this.modLoaders = new ArrayList<>(modLoaders);
     }
 
-    public String getGameVersion() {
-        return gameVersion;
-    }
-
-    public List<CurseManifestModLoader> getModLoaders() {
+    @Override
+    public List<CurseManifestModLoader> modLoaders() {
         return Collections.unmodifiableList(modLoaders);
     }
 
