@@ -19,9 +19,7 @@ package org.jackhuang.hmcl.ui.main;
 
 import com.jfoenix.controls.JFXButton;
 import com.jfoenix.controls.JFXPopup;
-import javafx.animation.KeyFrame;
-import javafx.animation.KeyValue;
-import javafx.animation.Timeline;
+import javafx.animation.*;
 import javafx.beans.property.*;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
@@ -97,6 +95,7 @@ public final class MainPage extends StackPane implements DecoratorPage {
     private TransitionPane announcementPane;
     private final StackPane updatePane;
     private final JFXButton menuButton;
+    private final PauseTransition pauseTransition = new PauseTransition(Duration.millis(500));
 
     {
         HBox titleNode = new HBox(8);
@@ -227,7 +226,12 @@ public final class MainPage extends StackPane implements DecoratorPage {
                             launchLabel.setText(i18n("version.launch.empty"));
                             currentLabel.setText(null);
                             graphic.getChildren().setAll(launchLabel);
-                            launchButton.setOnAction(e -> MainPage.this.launchNoGame());
+                            launchButton.setOnAction(e -> {
+                                if (pauseTransition.getStatus() != Animation.Status.RUNNING) {
+                                    MainPage.this.launchNoGame();
+                                    pauseTransition.playFromStart();
+                                }
+                            });
                             if (tooltip == null)
                                 tooltip = new Tooltip(i18n("version.launch.empty.tooltip"));
                             FXUtils.installFastTooltip(launchButton, tooltip);
@@ -235,7 +239,12 @@ public final class MainPage extends StackPane implements DecoratorPage {
                             launchLabel.setText(i18n("version.launch"));
                             currentLabel.setText(currentGame);
                             graphic.getChildren().setAll(launchLabel, currentLabel);
-                            launchButton.setOnAction(e -> MainPage.this.launch());
+                            launchButton.setOnAction(e -> {
+                                if (pauseTransition.getStatus() != Animation.Status.RUNNING) {
+                                    MainPage.this.launch();
+                                    pauseTransition.playFromStart();
+                                }
+                            });
                             if (tooltip != null)
                                 Tooltip.uninstall(launchButton, tooltip);
                         }
