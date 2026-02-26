@@ -382,14 +382,17 @@ public final class World {
     public static List<World> getWorlds(Path savesDir) {
         if (Files.exists(savesDir)) {
             try (Stream<Path> stream = Files.list(savesDir)) {
-                return stream.flatMap(world -> {
-                    try {
-                        return Stream.of(new World(world.toAbsolutePath().normalize()));
-                    } catch (IOException e) {
-                        LOG.warning("Failed to read world " + world, e);
-                        return Stream.empty();
-                    }
-                }).toList();
+                return stream
+                        .filter(Files::isDirectory)
+                        .flatMap(world -> {
+                            try {
+                                return Stream.of(new World(world.toAbsolutePath().normalize()));
+                            } catch (IOException e) {
+                                LOG.warning("Failed to read world " + world, e);
+                                return Stream.empty();
+                            }
+                        })
+                        .toList();
             } catch (IOException e) {
                 LOG.warning("Failed to read saves", e);
             }
