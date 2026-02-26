@@ -1981,3 +1981,8 @@
 .line-toggle-button .jfx-toggle-button {
     -fx-padding: 0;
 }
+
+.list-tip Text {
+    -fx-font-size: 13;
+    -fx-fill: -monet-on-surface;
+}
