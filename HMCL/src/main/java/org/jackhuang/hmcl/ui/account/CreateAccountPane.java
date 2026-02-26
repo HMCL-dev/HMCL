@@ -564,7 +564,7 @@ public class CreateAccountPane extends JFXDialogLayout implements DialogAware {
         }
     }
 
-    private static class DialogCharacterSelector extends BorderPane implements CharacterSelector {
+    public static class DialogCharacterSelector extends JFXDialogLayout implements CharacterSelector {
 
         private final AdvancedListBox listBox = new AdvancedListBox();
         private final JFXButton cancel = new JFXButton();
@@ -576,17 +576,17 @@ public class CreateAccountPane extends JFXDialogLayout implements DialogAware {
             setStyle("-fx-padding: 8px;");
 
             cancel.setText(i18n("button.cancel"));
-            StackPane.setAlignment(cancel, Pos.BOTTOM_RIGHT);
             cancel.setOnAction(e -> latch.countDown());
+            cancel.getStyleClass().add("dialog-cancel");
 
             listBox.startCategory(i18n("account.choose").toUpperCase(Locale.ROOT));
 
-            setCenter(listBox);
+            setBody(listBox);
 
             HBox hbox = new HBox();
             hbox.setAlignment(Pos.CENTER_RIGHT);
             hbox.getChildren().add(cancel);
-            setBottom(hbox);
+            setActions(hbox);
 
             onEscPressed(this, cancel::fire);
         }
