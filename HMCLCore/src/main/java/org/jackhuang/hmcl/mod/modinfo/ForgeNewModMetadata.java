@@ -207,12 +207,28 @@ public final class ForgeNewModMetadata {
             }
         }
 
+        List<String> bundledMods = new ArrayList<>();
+        ZipArchiveEntry jijEntry = tree.getEntry("META-INF/jarjar/metadata.json");
+        if (jijEntry != null) {
+            try {
+                JarInJarMetadata jijMetadata = JsonUtils.fromJsonFully(tree.getInputStream(jijEntry), JarInJarMetadata.class);
+                if (jijMetadata != null && jijMetadata.jars != null) {
+                    jijMetadata.jars.stream()
+                            .map(jar -> jar.path)
+                            .forEach(bundledMods::add);
+                }
+            } catch (Exception e) {
+                LOG.warning("Failed to parse JarInJar metadata for " + modFile, e);
+            }
+        }
+
         ModLoaderType type = analyzeLoader(toml, mod.getModId(), modLoaderType);
 
         return new LocalModFile(modManager, modManager.getLocalMod(mod.getModId(), type), modFile, mod.getDisplayName(), new LocalModFile.Description(mod.getDescription()),
                 mod.getAuthors(), jarVersion == null ? mod.getVersion() : mod.getVersion().replace("${file.jarVersion}", jarVersion), "",
                 mod.getDisplayURL(),
-                metadata.getLogoFile());
+                metadata.getLogoFile(),
+                bundledMods);
     }
 
     private static LocalModFile fromEmbeddedMod(ModManager modManager, Path modFile, ZipFileTree tree, ModLoaderType modLoaderType) throws IOException {

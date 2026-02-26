@@ -17,6 +17,8 @@
  */
 package org.jackhuang.hmcl.game;
 
+import org.jackhuang.hmcl.mod.LocalModFile;
+import org.jackhuang.hmcl.mod.ModManager;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.io.IOUtils;
 import org.jackhuang.hmcl.util.io.Zipper;
@@ -73,6 +75,68 @@ public final class LogExporter {
                 zipper.putTextFile(LOG.getLogs(), "hmcl.log");
                 zipper.putTextFile(logs, "minecraft.log");
                 zipper.putTextFile(Logger.filterForbiddenToken(launchScript), OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS ? "launch.bat" : "launch.sh");
+
+                try {
+                    ModManager modManager = gameRepository.getModManager(versionId);
+                    modManager.refreshMods();
+
+                    StringBuilder infoBuilder = new StringBuilder();
+
+                    infoBuilder.append("=== Mod List ===").append(System.lineSeparator());
+
+                    Path modsDir = runDirectory.resolve("mods");
+
+                    infoBuilder.append("Filesystem structure of: ").append(modsDir).append(System.lineSeparator());
+                    infoBuilder.append("|-> mods").append(System.lineSeparator());
+
+                    modManager.getMods().stream()
+                            .filter(LocalModFile::isActive)
+                            .sorted((m1, m2) -> String.CASE_INSENSITIVE_ORDER.compare(m1.getName(), m2.getName()))
+                            .forEach(mod -> {
+                                infoBuilder.append("|  |-> ");
+                                infoBuilder.append(mod.getName());
+                                if (StringUtils.isNotBlank(mod.getVersion()) && !"${version}".equals(mod.getVersion())) {
+                                    infoBuilder.append(" (").append(mod.getVersion()).append(")");
+                                }
+                                if (!mod.getName().equals(mod.getFileName())) {
+                                    infoBuilder.append(" [").append(mod.getFileName()).append("]");
+                                }
+                                infoBuilder.append(System.lineSeparator());
+                            });
+
+                    infoBuilder.append(System.lineSeparator());
+                    infoBuilder.append("----------------------------").append(System.lineSeparator());
+                    infoBuilder.append(System.lineSeparator());
+
+                    infoBuilder.append("=== JIJ Info List ===").append(System.lineSeparator());
+
+                    boolean hasJij = false;
+                    for (LocalModFile mod : modManager.getMods()) {
+                        if (mod.isActive() && mod.hasBundledMods()) {
+                            hasJij = true;
+                            infoBuilder.append(mod.getName());
+                            if (!mod.getName().equals(mod.getFileName())) {
+                                infoBuilder.append("[").append(mod.getFileName()).append("]");
+                            }
+                            infoBuilder.append(System.lineSeparator());
+
+                            for (String bundled : mod.getBundledMods()) {
+                                String name = bundled.contains("/") ? bundled.substring(bundled.lastIndexOf('/') + 1) : bundled;
+                                infoBuilder.append("\t|-> ").append(name).append(System.lineSeparator());
+                            }
+                            infoBuilder.append(System.lineSeparator());
+                        }
+                    }
+
+                    if (!hasJij) {
+                        infoBuilder.append("No JIJ INFO found").append(System.lineSeparator());
+                    }
+
+                    zipper.putTextFile(infoBuilder.toString(), "ALL_MOD_JIJ_INFO.txt");
+
+                } catch (Exception e) {
+                    LOG.warning("Failed to export mod info to crash report package", e);
+                }
 
                 for (String id : versions) {
                     Path versionJson = baseDirectory.resolve("versions").resolve(id).resolve(id + ".json");
