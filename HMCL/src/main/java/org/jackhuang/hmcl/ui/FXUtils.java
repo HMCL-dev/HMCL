@@ -1641,7 +1641,7 @@ public final class FXUtils {
             IconedMenuItem cut = new IconedMenuItem(SVG.CONTENT_CUT, i18n("menu.cut"), control::cut, popup);
             IconedMenuItem copy = new IconedMenuItem(SVG.CONTENT_COPY, i18n("menu.copy"), control::copy, popup);
             IconedMenuItem paste = new IconedMenuItem(SVG.CONTENT_PASTE, i18n("menu.paste"), control::paste, popup);
-            IconedMenuItem delete = new IconedMenuItem(SVG.DELETE, i18n("menu.deleteselection"), () -> control.replaceSelection(""), popup);
+            IconedMenuItem delete = new IconedMenuItem(SVG.DELETE_FOREVER, i18n("menu.deleteselection"), () -> control.replaceSelection(""), popup);
             IconedMenuItem selectall = new IconedMenuItem(SVG.SELECT_ALL, i18n("menu.selectall"), control::selectAll, popup);
 
             menu.getContent().setAll(undo, redo, new MenuSeparator(), cut, copy, paste, delete, new MenuSeparator(), selectall);
