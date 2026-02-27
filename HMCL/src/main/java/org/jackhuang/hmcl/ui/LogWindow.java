@@ -241,6 +241,10 @@ public final class LogWindow extends Stage {
             });
         }
 
+        private ManagedProcess getGameProcess() {
+            return gameProcess;
+        }
+
         @Override
         protected Skin<?> createDefaultSkin() {
             return new LogWindowSkin(this);
@@ -423,6 +427,11 @@ public final class LogWindow extends Stage {
                 JFXButton clearButton = new JFXButton(i18n("button.clear"));
                 clearButton.setOnAction(e -> getSkinnable().onClear());
                 hBox.getChildren().setAll(autoScrollCheckBox, exportLogsButton, terminateButton, exportDumpPane, clearButton);
+
+                control.getGameProcess().getProcess().onExit().thenAccept(process -> {
+                    terminateButton.setDisable(true);
+                    exportDumpButton.setDisable(true);
+                });
 
                 vbox.getChildren().add(bottom);
             }
