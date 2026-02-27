@@ -17,9 +17,6 @@
  */
 package org.jackhuang.hmcl.ui.nbt;
 
-import com.github.steveice10.opennbt.tag.builtin.CompoundTag;
-import com.github.steveice10.opennbt.tag.builtin.ListTag;
-import com.github.steveice10.opennbt.tag.builtin.Tag;
 import javafx.scene.control.TreeCell;
 import javafx.scene.control.TreeItem;
 import javafx.scene.control.TreeView;
@@ -27,10 +24,11 @@ import javafx.scene.control.skin.TreeViewSkin;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.util.Callback;
+import org.glavo.nbt.tag.*;
 import org.jackhuang.hmcl.ui.FXUtils;
 
-import java.lang.reflect.Array;
 import java.util.EnumMap;
+import java.util.Locale;
 
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
@@ -55,7 +53,7 @@ public final class NBTTreeView extends TreeView<Tag> {
     }
 
     private static Callback<TreeView<Tag>, TreeCell<Tag>> cellFactory() {
-        EnumMap<NBTTagType, Image> icons = new EnumMap<>(NBTTagType.class);
+        var icons = new EnumMap<TagType, Image>(TagType.class);
 
         return view -> new TreeCell<>() {
             private void setTagText(String text) {
@@ -90,37 +88,47 @@ public final class NBTTreeView extends TreeView<Tag> {
                     return;
                 }
 
-                NBTTagType tagType = NBTTagType.typeOf(item);
-                imageView.setImage(icons.computeIfAbsent(tagType, type -> new Image(type.getIconUrl())));
+                imageView.setImage(icons.computeIfAbsent(item.getType(), type -> {
+                    String tagName;
+
+                    int idx = type.name().indexOf('_');
+                    if (idx < 0) {
+                        tagName = type.name().charAt(0) + type.name().substring(1).toLowerCase(Locale.ROOT);
+                    } else {
+                        tagName = type.name().charAt(0) + type.name().substring(1, idx + 1).toLowerCase(Locale.ROOT)
+                                + type.name().charAt(idx + 1) + type.name().substring(idx + 2).toLowerCase(Locale.ROOT);
+                    }
+
+                    return FXUtils.newBuiltinImage("/assets/img/nbt/TAG_" + tagName + ".png");
+                }));
                 imageView.setFitHeight(16);
                 imageView.setFitWidth(16);
 
                 if (((Item) getTreeItem()).getText() != null) {
                     setText(((Item) getTreeItem()).getText());
                 } else {
-                    switch (tagType) {
-                        case BYTE:
-                        case SHORT:
-                        case INT:
-                        case LONG:
-                        case FLOAT:
-                        case DOUBLE:
-                        case STRING:
-                            setTagText(item.getValue().toString());
-                            break;
-                        case BYTE_ARRAY:
-                        case INT_ARRAY:
-                        case LONG_ARRAY:
-                            setTagText(Array.getLength(item.getValue()));
-                            break;
-                        case LIST:
-                            setTagText(((ListTag) item).size());
-                            break;
-                        case COMPOUND:
-                            setTagText(((CompoundTag) item).size());
-                            break;
-                        default:
-                            setTagText(null);
+                    if (item instanceof ByteTag byteTag) {
+                        setTagText(Byte.toString(byteTag.get()));
+                    } else if (item instanceof ShortTag shortTag) {
+                        setTagText(Short.toString(shortTag.get()));
+                    } else if (item instanceof IntTag intTag) {
+                        setTagText(Integer.toString(intTag.get()));
+                    } else if (item instanceof LongTag longTag) {
+                        setTagText(Long.toString(longTag.get()));
+                    } else if (item instanceof FloatTag floatTag) {
+                        setTagText(Float.toString(floatTag.get()));
+                    } else if (item instanceof DoubleTag doubleTag) {
+                        setTagText(Double.toString(doubleTag.get()));
+                    } else if (item instanceof StringTag stringTag) {
+                        setTagText(stringTag.get());
+                    } else if (item instanceof ArrayTag arrayTag) {
+                        setTagText(arrayTag.size());
+                    } else if (item instanceof CompoundTag<?> compoundTag) {
+                        setTagText(compoundTag.size());
+                    } else if (item instanceof ListTag<?> listTag) {
+                        setTagText(listTag.size());
+                    } else {
+                        setTagText(null);
                     }
                 }
             }
@@ -130,13 +138,13 @@ public final class NBTTreeView extends TreeView<Tag> {
     public static Item buildTree(Tag tag) {
         Item item = new Item(tag);
 
-        if (tag instanceof CompoundTag) {
-            for (Tag subTag : ((CompoundTag) tag)) {
+        if (tag instanceof CompoundTag<?> compoundTag) {
+            for (Tag subTag : compoundTag) {
                 item.getChildren().add(buildTree(subTag));
             }
-        } else if (tag instanceof ListTag) {
+        } else if (tag instanceof ListTag<?> listTag) {
             int idx = 0;
-            for (Tag subTag : ((ListTag) tag)) {
+            for (Tag subTag : listTag) {
                 Item subTree = buildTree(subTag);
                 subTree.setName(String.valueOf(idx++));
                 item.getChildren().add(subTree);
