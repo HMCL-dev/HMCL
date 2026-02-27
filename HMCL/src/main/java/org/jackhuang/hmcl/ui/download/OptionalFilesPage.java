@@ -59,7 +59,6 @@ public class OptionalFilesPage extends SpinnerPane implements WizardPage {
     private final VBox tail = new VBox();
     private final Label lblRetry = new Label(i18n("modpack.retry_optional_files"));
 
-
     public OptionalFilesPage(Runnable install, Runnable retry, ObservableBooleanValue loading,
             ObservableBooleanValue successful, ObservableList<ModpackFile> optionalFiles,
             ObservableSet<ModpackFile> excludedFiles) {
