@@ -17,12 +17,12 @@
  */
 package org.jackhuang.hmcl.ui.nbt;
 
-import com.github.steveice10.opennbt.NBTIO;
-import com.github.steveice10.opennbt.tag.builtin.CompoundTag;
-import com.github.steveice10.opennbt.tag.builtin.IntTag;
-import com.github.steveice10.opennbt.tag.builtin.ListTag;
-import com.github.steveice10.opennbt.tag.builtin.Tag;
 import kala.compress.utils.BoundedInputStream;
+import org.glavo.nbt.io.NBTReader;
+import org.glavo.nbt.tag.CompoundTag;
+import org.glavo.nbt.tag.IntTag;
+import org.glavo.nbt.tag.ListTag;
+import org.glavo.nbt.tag.Tag;
 import org.jackhuang.hmcl.util.io.FileUtils;
 
 import java.io.BufferedInputStream;
@@ -59,10 +59,7 @@ public enum NBTFileType {
                     input = fileInputStream;
                 }
 
-                Tag tag = NBTIO.readTag(input);
-                if (!(tag instanceof CompoundTag))
-                    throw new IOException("Unexpected tag: " + tag);
-                return tag;
+                return NBTReader.readCompoundTag(input);
             }
         }
     },
@@ -81,7 +78,7 @@ public enum NBTFileType {
         @Override
         public Tag read(Path file) throws IOException {
             try (RandomAccessFile r = new RandomAccessFile(file.toFile(), "r")) {
-                ListTag tag = new ListTag(file.getFileName().toString(), CompoundTag.class);
+                var tag = new ListTag<>(file.getFileName().toString(), CompoundTag.class);
                 if (r.length() == 0) {
                     return tag;
                 }
@@ -126,11 +123,7 @@ public enum NBTFileType {
                     }
 
                     try (InputStream in = input) {
-                        Tag chunk = NBTIO.readTag(in);
-                        if (!(chunk instanceof CompoundTag))
-                            throw new IOException("Unexpected tag: " + chunk);
-
-                        tag.add(chunk);
+                        tag.add(NBTReader.readCompoundTag(in));
                     }
                 }
                 return tag;
@@ -141,16 +134,16 @@ public enum NBTFileType {
         public NBTTreeView.Item readAsTree(Path file) throws IOException {
             NBTTreeView.Item item = new NBTTreeView.Item(read(file));
 
-            for (Tag tag : ((ListTag) item.getValue())) {
-                CompoundTag chunk = (CompoundTag) tag;
+            for (Tag tag : ((ListTag<?>) item.getValue())) {
+                CompoundTag<?> chunk = (CompoundTag<?>) tag;
 
                 NBTTreeView.Item tree = NBTTreeView.buildTree(chunk);
 
                 Tag xPos = chunk.get("xPos");
                 Tag zPos = chunk.get("zPos");
 
-                if (xPos instanceof IntTag && zPos instanceof IntTag) {
-                    tree.setText(String.format("Chunk: %d  %d", xPos.getValue(), zPos.getValue()));
+                if (xPos instanceof IntTag xPosTag && zPos instanceof IntTag zPosTag) {
+                    tree.setText(String.format("Chunk: %d  %d", xPosTag.get(), zPosTag.get()));
                 } else {
                     tree.setText("Chunk: Unknown");
                 }
