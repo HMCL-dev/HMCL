@@ -61,14 +61,14 @@ public class ModrinthModpackExportTask extends Task<Void> {
         Optional<RemoteMod.Version> curseForgeVersion = Optional.empty();
 
         try {
-            modrinthVersion = ModrinthRemoteModRepository.MODS.getRemoteVersionByLocalFile(localModFile, file);
+            modrinthVersion = ModrinthRemoteModRepository.MODS.getRemoteVersionByLocalFile(file);
         } catch (IOException e) {
             LOG.warning("Failed to get remote file from Modrinth for: " + file, e);
         }
 
         if (!info.isSkipCurseForgeRemoteFiles() && CurseForgeRemoteModRepository.isAvailable()) {
             try {
-                curseForgeVersion = CurseForgeRemoteModRepository.MODS.getRemoteVersionByLocalFile(localModFile, file);
+                curseForgeVersion = CurseForgeRemoteModRepository.MODS.getRemoteVersionByLocalFile(file);
             } catch (IOException e) {
                 LOG.warning("Failed to get remote file from CurseForge for: " + file, e);
             }

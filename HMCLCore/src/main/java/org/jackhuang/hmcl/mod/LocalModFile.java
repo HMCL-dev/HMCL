@@ -22,12 +22,9 @@ import javafx.beans.property.SimpleBooleanProperty;
 import org.jackhuang.hmcl.util.io.FileUtils;
 
 import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.List;
-import java.util.Objects;
-import java.util.Optional;
+import java.util.*;
 
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
@@ -35,7 +32,7 @@ import static org.jackhuang.hmcl.util.logging.Logger.LOG;
  *
  * @author huangyuhui
  */
-public final class LocalModFile implements Comparable<LocalModFile> {
+public final class LocalModFile extends LocalAddonFile implements Comparable<LocalModFile> {
 
     private Path file;
     private final ModManager modManager;
@@ -55,6 +52,7 @@ public final class LocalModFile implements Comparable<LocalModFile> {
     }
 
     public LocalModFile(ModManager modManager, LocalMod mod, Path file, String name, Description description, String authors, String version, String gameVersion, String url, String logoPath) {
+        super();
         this.modManager = modManager;
         this.mod = mod;
         this.file = file;
@@ -84,7 +82,7 @@ public final class LocalModFile implements Comparable<LocalModFile> {
             }
         };
 
-        fileName = FileUtils.getNameWithoutExtension(ModManager.getModName(file));
+        fileName = FileUtils.getNameWithoutExtension(LocalAddonManager.getLocalAddonName(file));
 
         if (isOld()) {
             mod.getOldFiles().add(this);
@@ -101,6 +99,7 @@ public final class LocalModFile implements Comparable<LocalModFile> {
         return mod;
     }
 
+    @Override
     public Path getFile() {
         return file;
     }
@@ -153,6 +152,7 @@ public final class LocalModFile implements Comparable<LocalModFile> {
         activeProperty.set(active);
     }
 
+    @Override
     public String getFileName() {
         return fileName;
     }
@@ -161,6 +161,7 @@ public final class LocalModFile implements Comparable<LocalModFile> {
         return modManager.isOld(file);
     }
 
+    @Override
     public void setOld(boolean old) throws IOException {
         file = modManager.setOld(this, old);
 
@@ -173,13 +174,27 @@ public final class LocalModFile implements Comparable<LocalModFile> {
         }
     }
 
-    public void disable() throws IOException {
+    @Override
+    public boolean keepOldFiles() {
+        return true;
+    }
+
+    @Override
+    public void markDisabled() throws IOException {
         file = modManager.disableMod(file);
     }
 
-    public ModUpdate checkUpdates(String gameVersion, RemoteModRepository repository) throws IOException {
-        Optional<RemoteMod.Version> currentVersion = repository.getRemoteVersionByLocalFile(this, file);
-        if (!currentVersion.isPresent()) return null;
+    @Override
+    public void delete() throws IOException {
+        Files.deleteIfExists(file);
+    }
+
+    @Override
+    public AddonUpdate checkUpdates(String gameVersion, RemoteMod.Type type) throws IOException {
+        RemoteModRepository repository = type.getRepoForType(RemoteModRepository.Type.MOD);
+        if (repository == null) return null;
+        Optional<RemoteMod.Version> currentVersion = repository.getRemoteVersionByLocalFile(file);
+        if (currentVersion.isEmpty()) return null;
         List<RemoteMod.Version> remoteVersions = repository.getRemoteVersionsById(currentVersion.get().getModid())
                 .filter(version -> version.getGameVersions().contains(gameVersion))
                 .filter(version -> version.getLoaders().contains(getModLoaderType()))
@@ -187,7 +202,7 @@ public final class LocalModFile implements Comparable<LocalModFile> {
                 .sorted(Comparator.comparing(RemoteMod.Version::getDatePublished).reversed())
                 .toList();
         if (remoteVersions.isEmpty()) return null;
-        return new ModUpdate(this, currentVersion.get(), remoteVersions.get(0));
+        return new AddonUpdate(this, currentVersion.get(), remoteVersions.get(0), true);
     }
 
     @Override
@@ -203,30 +218,6 @@ public final class LocalModFile implements Comparable<LocalModFile> {
     @Override
     public int hashCode() {
         return Objects.hash(getFileName());
-    }
-
-    public static class ModUpdate {
-        private final LocalModFile localModFile;
-        private final RemoteMod.Version currentVersion;
-        private final RemoteMod.Version candidate;
-
-        public ModUpdate(LocalModFile localModFile, RemoteMod.Version currentVersion, RemoteMod.Version candidate) {
-            this.localModFile = localModFile;
-            this.currentVersion = currentVersion;
-            this.candidate = candidate;
-        }
-
-        public LocalModFile getLocalMod() {
-            return localModFile;
-        }
-
-        public RemoteMod.Version getCurrentVersion() {
-            return currentVersion;
-        }
-
-        public RemoteMod.Version getCandidate() {
-            return candidate;
-        }
     }
 
     public static class Description {

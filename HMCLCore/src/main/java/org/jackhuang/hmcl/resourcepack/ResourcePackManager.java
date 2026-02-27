@@ -1,0 +1,406 @@
+/*
+ * Hello Minecraft! Launcher
+ * Copyright (C) 2020  huangyuhui <huanghongxun2008@126.com> and contributors
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
+package org.jackhuang.hmcl.resourcepack;
+
+import com.google.gson.annotations.SerializedName;
+import org.jackhuang.hmcl.game.GameRepository;
+import org.jackhuang.hmcl.mod.LocalAddonManager;
+import org.jackhuang.hmcl.mod.modinfo.PackMcMeta;
+import org.jackhuang.hmcl.util.StringUtils;
+import org.jackhuang.hmcl.util.gson.JsonSerializable;
+import org.jackhuang.hmcl.util.gson.JsonUtils;
+import org.jackhuang.hmcl.util.io.CompressingUtils;
+import org.jackhuang.hmcl.util.io.FileUtils;
+import org.jackhuang.hmcl.util.tree.ZipFileTree;
+import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
+import org.jackhuang.hmcl.util.versioning.VersionRange;
+import org.jetbrains.annotations.Contract;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Unmodifiable;
+
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.*;
+import java.util.*;
+
+import static org.jackhuang.hmcl.util.logging.Logger.LOG;
+
+public final class ResourcePackManager extends LocalAddonManager<ResourcePackFile> {
+
+    private static final List<String> RESOURCE_PACK_VERSION_OLD = List.of(
+            "13w24a", // 1
+            "15w31a", // 2
+            "16w32a", // 3
+            "17w48a", // 4
+            "18w47b"  // 5
+    );
+
+    public static final String LEAST_MC_VERSION_RELEASE = "1.6.1";
+    public static final String LEAST_MC_VERSION_SNAPSHOT = "13w24a";
+
+    public static boolean isMcVersionSupported(@NotNull GameVersionNumber version) {
+        return version.isAtLeast(ResourcePackManager.LEAST_MC_VERSION_RELEASE, ResourcePackManager.LEAST_MC_VERSION_SNAPSHOT);
+    }
+
+    @NotNull
+    public static PackMcMeta.PackVersion getPackVersion(GameVersionNumber minecraftVersion, Path gameJar) {
+        for (int i = 0; i < RESOURCE_PACK_VERSION_OLD.size(); i++) {
+            if (minecraftVersion.compareTo(RESOURCE_PACK_VERSION_OLD.get(i)) < 0) {
+                return i == 0 ? PackMcMeta.PackVersion.UNSPECIFIED : new PackMcMeta.PackVersion(i, 0);
+            }
+        }
+        try (var zipFileTree = new ZipFileTree(CompressingUtils.openZipFile(gameJar))) {
+            String versionJson = zipFileTree.readTextEntry("/version.json");
+            try {
+                var info = JsonUtils.fromNonNullJson(versionJson, GameVersionInfo117.class).packVersionInfo();
+                if (info.resourceMajor() > 64) {
+                    return new PackMcMeta.PackVersion(info.resourceMajor(), info.resourceMinor());
+                } else {
+                    return new PackMcMeta.PackVersion(info.resource(), 0);
+                }
+            } catch (Exception e) {
+                LOG.warning("Failed to load Minecraft resource pack version for 25w31a+", e);
+            }
+            try {
+                return new PackMcMeta.PackVersion(JsonUtils.fromNonNullJson(versionJson, GameVersionInfo114.class).packVersion, 0);
+            } catch (Exception e) {
+                LOG.warning("Failed to load Minecraft resource pack version for 18w47b+", e);
+            }
+            return PackMcMeta.PackVersion.UNSPECIFIED;
+        } catch (Exception e) {
+            LOG.error("Failed to load Minecraft resource pack version", e);
+            return PackMcMeta.PackVersion.UNSPECIFIED;
+        }
+    }
+
+    @NotNull
+    @Contract(pure = true)
+    public static VersionRange<PackMcMeta.PackVersion> getResourcePackVersionRangeOld(PackMcMeta.PackInfo packInfo) {
+        if (packInfo == null) {
+            return VersionRange.empty();
+        }
+        boolean supportedFormatsUnspecified = packInfo.supportedFormats().isUnspecified();
+        if (supportedFormatsUnspecified && packInfo.packFormat() <= 0) {
+            return VersionRange.empty();
+        }
+        if (supportedFormatsUnspecified) {
+            return VersionRange.is(new PackMcMeta.PackVersion(packInfo.packFormat(), 0));
+        }
+        return VersionRange.between(packInfo.supportedFormats().getMin(), packInfo.supportedFormats().getMax());
+    }
+
+    @NotNull
+    @Contract(pure = true)
+    public static VersionRange<PackMcMeta.PackVersion> getResourcePackVersionRangeNew(PackMcMeta.PackInfo packInfo) {
+        if (packInfo == null) {
+            return VersionRange.empty();
+        }
+        boolean packFormatUnspecified = packInfo.packFormat() <= 0;
+        boolean supportedFormatsUnspecified = packInfo.supportedFormats().isUnspecified();
+
+        // See https://zh.minecraft.wiki/w/Pack.mcmeta
+        // Also referring to Minecraft's source code
+        if (packInfo.minPackVersion().isUnspecified() || packInfo.maxPackVersion().isUnspecified()) { // Old format
+            if (!supportedFormatsUnspecified) {
+                PackMcMeta.SupportedFormats supportedFormats = packInfo.supportedFormats();
+                int min = supportedFormats.min();
+                int max = supportedFormats.max();
+                if (max > 64) {
+                    return VersionRange.empty();
+                } else {
+                    if (packFormatUnspecified) return VersionRange.empty();
+                    if (isPackFormatInvalid(min, max, packInfo.packFormat())) return VersionRange.empty();
+                }
+
+                return VersionRange.between(supportedFormats.getMin(), supportedFormats.getMax());
+            } else if (!packFormatUnspecified) {
+                int packFormat = packInfo.packFormat();
+                PackMcMeta.PackVersion packVersion = new PackMcMeta.PackVersion(packFormat, 0);
+                return packFormat > 64 ? VersionRange.empty() : VersionRange.is(packVersion);
+            }
+        } else { // New format
+            int minMajor = packInfo.minPackVersion().majorVersion();
+            int maxMajor = packInfo.maxPackVersion().majorVersion();
+            if (packInfo.minPackVersion().compareTo(packInfo.maxPackVersion()) > 0) {
+                return VersionRange.empty();
+            }
+            if (minMajor > 64) {
+                if (!supportedFormatsUnspecified) {
+                    return VersionRange.empty();
+                }
+
+                if (!packFormatUnspecified && isPackFormatInvalid(minMajor, maxMajor, packInfo.packFormat())) {
+                    return VersionRange.empty();
+                }
+            } else {
+                if (supportedFormatsUnspecified) {
+                    return VersionRange.empty();
+                }
+                PackMcMeta.SupportedFormats supportedFormats = packInfo.supportedFormats();
+                if (supportedFormats.min() != minMajor) {
+                    return VersionRange.empty();
+                }
+                if (supportedFormats.max() != maxMajor && supportedFormats.max() != 64) {
+                    return VersionRange.empty();
+                }
+                if (packFormatUnspecified) return VersionRange.empty();
+                if (isPackFormatInvalid(minMajor, maxMajor, packInfo.packFormat())) return VersionRange.empty();
+            }
+
+            return VersionRange.between(packInfo.minPackVersion(), packInfo.maxPackVersion());
+        }
+        return VersionRange.empty();
+    }
+
+    @Contract(pure = true)
+    private static boolean isPackFormatInvalid(int i, int j, int k) {
+        if (k >= i && k <= j) {
+            return k < 15;
+        } else {
+            return true;
+        }
+    }
+
+    private static String serializePackList(List<String> packNames) {
+        try {
+            return StringUtils.serializeStringList(packNames);
+        } catch (Exception e) {
+            LOG.warning("Failed to serialize resource pack list: \n" + packNames, e);
+            return "[]";
+        }
+    }
+
+    private static List<String> deserializePackList(String json) {
+        try {
+            return StringUtils.deserializeStringList(json);
+        } catch (Exception e) {
+            LOG.warning("Failed to deserialize resource pack list: \n" + json, e);
+            return List.of();
+        }
+    }
+
+    private final GameVersionNumber minecraftVersion;
+
+    private final Path resourcePackDirectory;
+
+    private final Path optionsFile;
+    private final @NotNull PackMcMeta.PackVersion requiredVersion;
+
+    private boolean loaded = false;
+
+    public ResourcePackManager(GameRepository repository, String id) {
+        super(repository, id);
+        this.minecraftVersion = GameVersionNumber.asGameVersion(repository.getGameVersion(id));
+        this.resourcePackDirectory = this.repository.getResourcePackDirectory(this.id);
+        this.optionsFile = repository.getRunDirectory(id).resolve("options.txt");
+        this.requiredVersion = getPackVersion(minecraftVersion, repository.getVersionJar(id));
+    }
+
+    @NotNull
+    private Map<String, String> loadOptions() {
+        Map<String, String> options = new LinkedHashMap<>();
+        if (!Files.isRegularFile(optionsFile)) return options;
+        try (var stream = Files.lines(optionsFile, StandardCharsets.UTF_8)) {
+            stream.forEach(s -> {
+                if (StringUtils.isNotBlank(s)) {
+                    var entry = s.split(":", 2);
+                    if (entry.length == 2) {
+                        options.put(entry[0], entry[1]);
+                    }
+                }
+            });
+        } catch (IOException e) {
+            LOG.warning("Failed to read instance options file", e);
+        }
+        return options;
+    }
+
+    private void saveOptions(@NotNull Map<String, String> options) {
+        try {
+            if (!Files.isRegularFile(optionsFile)) {
+                Files.createFile(optionsFile);
+            }
+            StringBuilder sb = new StringBuilder();
+            for (var entry : options.entrySet()) {
+                sb.append(entry.getKey()).append(":").append(entry.getValue()).append(System.lineSeparator());
+            }
+            Files.writeString(optionsFile, sb.toString(), StandardCharsets.UTF_8, StandardOpenOption.TRUNCATE_EXISTING);
+        } catch (IOException e) {
+            LOG.warning("Failed to save instance options file", e);
+        }
+    }
+
+    public GameVersionNumber getMinecraftVersion() {
+        return minecraftVersion;
+    }
+
+    @Override
+    public Path getDirectory() {
+        return resourcePackDirectory;
+    }
+
+    private void addResourcePackInfo(Path file) throws IOException {
+        ResourcePackFile resourcePack = ResourcePackFile.parse(this, file);
+        if (resourcePack != null) localFiles.add(resourcePack);
+    }
+
+    @Override
+    public void refresh() throws IOException {
+        localFiles.clear();
+
+        if (Files.isDirectory(resourcePackDirectory)) {
+            try (DirectoryStream<Path> directoryStream = Files.newDirectoryStream(resourcePackDirectory)) {
+                for (Path subitem : directoryStream) {
+                    try {
+                        addResourcePackInfo(subitem);
+                    } catch (IOException e) {
+                        LOG.warning("Failed to load resource pack " + subitem, e);
+                    }
+                }
+            }
+        }
+        loaded = true;
+    }
+
+    @Override
+    public Comparator<ResourcePackFile> getComparator() {
+        return ResourcePackFile::compareTo;
+    }
+
+    @Override
+    public @Unmodifiable List<ResourcePackFile> getLocalFiles() throws IOException {
+        if (!loaded)
+            refresh();
+        return super.getLocalFiles();
+    }
+
+    public void importResourcePack(Path file) throws IOException, IllegalArgumentException {
+        if (ResourcePackFile.isFileResourcePack(file)) {
+            if (!loaded)
+                refresh();
+            Files.createDirectories(resourcePackDirectory);
+
+            Path newFile = resourcePackDirectory.resolve(file.getFileName());
+            if (Files.isDirectory(file)) {
+                FileUtils.copyDirectory(file, newFile);
+            } else {
+                FileUtils.copyFile(file, newFile);
+            }
+
+            addResourcePackInfo(newFile);
+        } else {
+            throw new IllegalArgumentException("File '" + file + "' is not a resource pack");
+        }
+
+    }
+
+    public boolean removeResourcePacks(Iterable<ResourcePackFile> resourcePacks) throws IOException {
+        boolean modified = false;
+        for (ResourcePackFile resourcePack : resourcePacks) {
+            if (resourcePack != null && resourcePack.manager == this) {
+                resourcePack.delete();
+                localFiles.remove(resourcePack);
+                modified = true;
+            }
+        }
+        return modified;
+    }
+
+    public void enableResourcePack(ResourcePackFile resourcePack) {
+        if (resourcePack.manager != this) return;
+        Map<String, String> options = loadOptions();
+        String packId = "file/" + resourcePack.getFileNameWithExtension();
+        boolean modified = false;
+        List<String> resourcePacks = new ArrayList<>(deserializePackList(options.get("resourcePacks")));
+        if (!resourcePacks.contains(packId)) {
+            resourcePacks.add(packId);
+            options.put("resourcePacks", serializePackList(resourcePacks));
+            modified = true;
+        }
+        List<String> incompatibleResourcePacks = new ArrayList<>(deserializePackList(options.get("incompatibleResourcePacks")));
+        if (!incompatibleResourcePacks.contains(packId) && isIncompatible(resourcePack)) {
+            incompatibleResourcePacks.add(packId);
+            options.put("incompatibleResourcePacks", serializePackList(incompatibleResourcePacks));
+            modified = true;
+        }
+        if (modified) saveOptions(options);
+    }
+
+    public void disableResourcePack(ResourcePackFile resourcePack) {
+        if (resourcePack.manager != this) return;
+        Map<String, String> options = loadOptions();
+        String packId = "file/" + resourcePack.getFileNameWithExtension();
+        boolean modified = false;
+        List<String> resourcePacks = new ArrayList<>(deserializePackList(options.get("resourcePacks")));
+        if (resourcePacks.contains(packId)) {
+            resourcePacks.remove(packId);
+            options.put("resourcePacks", serializePackList(resourcePacks));
+            modified = true;
+        }
+        List<String> incompatibleResourcePacks = new ArrayList<>(deserializePackList(options.get("incompatibleResourcePacks")));
+        if (incompatibleResourcePacks.contains(packId)) {
+            incompatibleResourcePacks.remove(packId);
+            options.put("incompatibleResourcePacks", serializePackList(incompatibleResourcePacks));
+            modified = true;
+        }
+        if (modified) saveOptions(options);
+    }
+
+    public boolean isEnabled(ResourcePackFile resourcePack) {
+        if (resourcePack.manager != this) return false;
+        Map<String, String> options = loadOptions();
+        String packId = "file/" + resourcePack.getFileNameWithExtension();
+        List<String> resourcePacks = StringUtils.deserializeStringList(options.get("resourcePacks"));
+        if (!resourcePacks.contains(packId)) return false;
+        List<String> incompatibleResourcePacks = StringUtils.deserializeStringList(options.get("incompatibleResourcePacks"));
+        return isIncompatible(resourcePack) == incompatibleResourcePacks.contains(packId);
+    }
+
+    public ResourcePackFile.Compatibility getCompatibility(@NotNull ResourcePackFile resourcePack) {
+        if (resourcePack.getMeta() == null || resourcePack.getMeta().pack() == null) return ResourcePackFile.Compatibility.MISSING_PACK_META;
+        if (this.requiredVersion.isUnspecified()) return ResourcePackFile.Compatibility.MISSING_GAME_META;
+        var versionRange = requiredVersion.majorVersion() > 64
+                ? getResourcePackVersionRangeNew(resourcePack.getMeta().pack())
+                : getResourcePackVersionRangeOld(resourcePack.getMeta().pack());
+        if (versionRange.isEmpty())
+            return ResourcePackFile.Compatibility.INVALID;
+        if (versionRange.getMaximum().compareTo(this.requiredVersion) < 0)
+            return ResourcePackFile.Compatibility.TOO_OLD;
+        if (versionRange.getMinimum().compareTo(this.requiredVersion) > 0)
+            return ResourcePackFile.Compatibility.TOO_NEW;
+        return ResourcePackFile.Compatibility.COMPATIBLE;
+    }
+
+    public boolean isIncompatible(@NotNull ResourcePackFile resourcePack) {
+        return getCompatibility(resourcePack) != ResourcePackFile.Compatibility.COMPATIBLE;
+    }
+
+    @JsonSerializable
+    private record GameVersionInfo114(@SerializedName("pack_version") int packVersion) {
+    }
+
+    @JsonSerializable
+    private record GameVersionInfo117(@SerializedName("pack_version") PackVersionInfo117 packVersionInfo) {
+    }
+
+    @JsonSerializable
+    private record PackVersionInfo117(int resource,
+                                      @SerializedName("resource_major") int resourceMajor,
+                                      @SerializedName("resource_minor") int resourceMinor) {
+    }
+}
