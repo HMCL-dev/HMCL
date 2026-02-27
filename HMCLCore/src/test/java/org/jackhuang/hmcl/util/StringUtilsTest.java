@@ -17,12 +17,14 @@
  */
 package org.jackhuang.hmcl.util;
 
+import com.google.gson.JsonSyntaxException;
 import org.junit.jupiter.api.Test;
 
 import java.util.Arrays;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 /**
  * @author Glavo
@@ -67,8 +69,9 @@ public final class StringUtilsTest {
         assertEquals(List.of(), StringUtils.deserializeStringList(null));
         assertEquals(List.of(), StringUtils.deserializeStringList("[]"));
         assertEquals(List.of(), StringUtils.deserializeStringList("[ ]"));
-        assertEquals(List.of(), StringUtils.deserializeStringList("[\"]"));
-        assertEquals(List.of(), StringUtils.deserializeStringList("[\"he\"llo\"]"));
+        assertThrows(JsonSyntaxException.class, () -> StringUtils.deserializeStringList("[\"]"));
+        assertThrows(JsonSyntaxException.class, () -> StringUtils.deserializeStringList("[\"he\"llo\"]"));
+        assertThrows(JsonSyntaxException.class, () -> StringUtils.deserializeStringList("\"hello\""));
         assertEquals(Arrays.asList((String) null), StringUtils.deserializeStringList("[null]"));
         assertEquals(List.of("hello"), StringUtils.deserializeStringList("[\"hello\"]"));
         assertEquals(List.of("he\"llo"), StringUtils.deserializeStringList("[\"he\\\"llo\"]"));
