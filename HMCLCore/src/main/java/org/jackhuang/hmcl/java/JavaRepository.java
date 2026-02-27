@@ -34,7 +34,7 @@ public interface JavaRepository {
 
     Path getManifestFile(Platform platform, String name);
 
-    Collection<JavaRuntime> getAllJava(Platform platform);
+    Collection<Path> getAllJava(Platform platform);
 
     Task<JavaRuntime> getDownloadJavaTask(DownloadProvider downloadProvider, Platform platform, GameJavaVersion gameJavaVersion);
 
