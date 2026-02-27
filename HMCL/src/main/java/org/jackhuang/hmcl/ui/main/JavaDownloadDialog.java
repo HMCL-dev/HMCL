@@ -25,10 +25,8 @@ import javafx.beans.property.SimpleObjectProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.scene.control.Label;
-import javafx.scene.layout.ColumnConstraints;
-import javafx.scene.layout.GridPane;
-import javafx.scene.layout.StackPane;
-import javafx.scene.layout.VBox;
+import javafx.scene.control.ToggleGroup;
+import javafx.scene.layout.*;
 import org.jackhuang.hmcl.download.DownloadProvider;
 import org.jackhuang.hmcl.download.java.JavaDistribution;
 import org.jackhuang.hmcl.download.java.JavaPackageType;
@@ -209,8 +207,7 @@ public final class JavaDownloadDialog extends StackPane {
         private final JFXComboBox<DiscoJavaRemoteVersion> remoteVersionBox;
         private final JFXComboBox<JavaPackageType> packageTypeBox;
         private final Label warningLabel = new Label();
-
-        private final JFXButton downloadButton;
+        
         private final StackPane downloadButtonPane = new StackPane();
 
         private final DownloadProvider downloadProvider = DownloadProviders.getDownloadProvider();
@@ -229,11 +226,18 @@ public final class JavaDownloadDialog extends StackPane {
 
             this.packageTypeBox = new JFXComboBox<>(FXCollections.observableArrayList());
 
-            this.downloadButton = new JFXButton(i18n("download"));
+            JFXButton downloadButton = new JFXButton(i18n("download"));
             downloadButton.setOnAction(e -> onDownload());
             downloadButton.getStyleClass().add("dialog-accept");
             downloadButton.disableProperty().bind(Bindings.isNull(remoteVersionBox.getSelectionModel().selectedItemProperty()));
-            downloadButtonPane.getChildren().setAll(downloadButton);
+            
+            JFXHyperlink getLinkButton = new JFXHyperlink(i18n("button.get_link"));
+            getLinkButton.setOnAction(e -> onGetLink());
+            getLinkButton.disableProperty().bind(Bindings.isNull(remoteVersionBox.getSelectionModel().selectedItemProperty()));
+
+            HBox buttonBox = new HBox(8);
+            buttonBox.getChildren().addAll(downloadButton);
+            downloadButtonPane.getChildren().setAll(buttonBox);
 
             JFXButton cancelButton = new JFXButton(i18n("button.cancel"));
             cancelButton.setOnAction(e -> fireEvent(new DialogCloseEvent()));
@@ -308,11 +312,11 @@ public final class JavaDownloadDialog extends StackPane {
                 warningLabel.setText(null);
 
                 if (list == null || (list.versions != null && list.versions.isEmpty()))
-                    downloadButtonPane.getChildren().setAll(downloadButton);
+                    downloadButtonPane.getChildren().setAll(buttonBox);
                 else if (list.status == DiscoJavaVersionList.Status.LOADING)
                     downloadButtonPane.getChildren().setAll(new JFXSpinner());
                 else {
-                    downloadButtonPane.getChildren().setAll(downloadButton);
+                    downloadButtonPane.getChildren().setAll(buttonBox);
 
                     if (list.status == DiscoJavaVersionList.Status.SUCCESS) {
                         packageTypeBox.getItems().setAll(list.versions.keySet());
@@ -345,7 +349,7 @@ public final class JavaDownloadDialog extends StackPane {
 
             setHeading(new Label(i18n("java.download.title")));
             setBody(body);
-            setActions(warningLabel, downloadButtonPane, cancelButton);
+            setActions(warningLabel, getLinkButton, downloadButtonPane, cancelButton);
             if (platform.getOperatingSystem() == OperatingSystem.LINUX && platform.getArchitecture() == Architecture.RISCV64) {
                 JFXHyperlink hyperlink = new JFXHyperlink(i18n("java.download.banshanjdk-8"));
                 hyperlink.setExternalLink("https://www.zthread.cn/#product");
@@ -427,6 +431,40 @@ public final class JavaDownloadDialog extends StackPane {
                         }
                     })), i18n("java.download"), TaskCancellationAction.NORMAL);
 
+        }
+
+        private void onGetLink() {
+            DiscoJavaDistribution distribution = distributionBox.getSelectionModel().getSelectedItem();
+            DiscoJavaRemoteVersion version = remoteVersionBox.getSelectionModel().getSelectedItem();
+            JavaPackageType packageType = packageTypeBox.getSelectionModel().getSelectedItem();
+
+            if (version == null)
+                return;
+
+            Controllers.taskDialog(new GetTask(downloadProvider.injectURLWithCandidates(version.getLinks().getPkgInfoUri()))
+                    .setExecutor(Schedulers.io())
+                    .thenApplyAsync(json -> {
+                        DiscoResult<DiscoRemoteFileInfo> result = JsonUtils.fromNonNullJson(json, DiscoResult.typeOf(DiscoRemoteFileInfo.class));
+                        if (result.getResult().size() != 1)
+                            throw new IOException("Illegal result: " + json);
+
+                        DiscoRemoteFileInfo fileInfo = result.getResult().get(0);
+                        if (StringUtils.isBlank(fileInfo.getDirectDownloadUri()))
+                            throw new IOException("Missing download URI: " + json);
+
+                        return fileInfo.getDirectDownloadUri();
+                    })
+                    .whenComplete(Schedulers.javafx(), (link, exception) -> {
+                        if (exception == null) {
+                            FXUtils.copyText(link);
+                            fireEvent(new DialogCloseEvent());
+                        } else {
+                            LOG.warning("Failed to get download link", exception);
+                            Controllers.dialog(
+                                    DownloadProviders.localizeErrorMessage(resolveException(exception)),
+                                    i18n("message.failed"));
+                        }
+                    }), i18n("message.getting_link"), TaskCancellationAction.NORMAL);
         }
 
         private DiscoJavaVersionList getJavaVersionList(DiscoJavaDistribution distribution) {
