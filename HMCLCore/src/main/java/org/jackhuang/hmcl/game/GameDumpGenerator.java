@@ -129,9 +129,9 @@ public final class GameDumpGenerator {
     }
 
     private static void writeDumpBodyTo(VirtualMachine vm, Writer writer) throws IOException {
-        int version = JavaInfo.parseVersion(vm.getSystemProperties().get("java.version").toString());
+        int vmVersion = JavaInfo.parseVersion(vm.getSystemProperties().get("java.version").toString());
 
-        if (version >= 11) {
+        if (vmVersion >= 11) {
             execute(vm, "Thread.print -e -l", writer);
         } else {
             execute(vm, "Thread.print -l", writer);
