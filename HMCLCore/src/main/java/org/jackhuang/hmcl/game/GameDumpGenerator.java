@@ -20,6 +20,7 @@ package org.jackhuang.hmcl.game;
 
 import com.sun.tools.attach.AttachNotSupportedException;
 import com.sun.tools.attach.VirtualMachine;
+import org.jackhuang.hmcl.java.JavaInfo;
 import org.jackhuang.hmcl.util.logging.Logger;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
@@ -128,7 +129,13 @@ public final class GameDumpGenerator {
     }
 
     private static void writeDumpBodyTo(VirtualMachine vm, Writer writer) throws IOException {
-        execute(vm, "Thread.print -l", writer);
+        int version = JavaInfo.parseVersion(vm.getSystemProperties().get("java.version").toString());
+
+        if (version >= 11) {
+            execute(vm, "Thread.print -e -l", writer);
+        } else {
+            execute(vm, "Thread.print -l", writer);
+        }
     }
 
     private static VirtualMachine attachVM(String lvmid, Writer writer) throws IOException, InterruptedException {
