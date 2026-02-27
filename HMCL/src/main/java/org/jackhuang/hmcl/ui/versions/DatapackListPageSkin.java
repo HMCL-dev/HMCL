@@ -110,7 +110,7 @@ final class DatapackListPageSkin extends SkinBase<DatapackListPage> {
                     createToolbarButton2(i18n("search"), SVG.SEARCH, () -> isSearching.set(true))
             );
 
-            JFXButton removeButton = createToolbarButton2(i18n("button.remove"), SVG.DELETE, () -> {
+            JFXButton removeButton = createToolbarButton2(i18n("button.remove"), SVG.DELETE_FOREVER, () -> {
                 Controllers.confirm(i18n("button.remove.confirm"), i18n("button.remove"), () -> {
                     skinnable.removeSelected(listView.getSelectionModel().getSelectedItems());
                 }, null);
