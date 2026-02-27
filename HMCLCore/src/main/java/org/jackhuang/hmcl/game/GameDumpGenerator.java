@@ -128,7 +128,7 @@ public final class GameDumpGenerator {
     }
 
     private static void writeDumpBodyTo(VirtualMachine vm, Writer writer) throws IOException {
-        execute(vm, "Thread.print -e -l", writer);
+        execute(vm, "Thread.print -l", writer);
     }
 
     private static VirtualMachine attachVM(String lvmid, Writer writer) throws IOException, InterruptedException {
