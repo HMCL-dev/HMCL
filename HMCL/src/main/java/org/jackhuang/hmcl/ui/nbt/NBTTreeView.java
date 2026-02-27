@@ -20,13 +20,14 @@ package org.jackhuang.hmcl.ui.nbt;
 import com.github.steveice10.opennbt.tag.builtin.CompoundTag;
 import com.github.steveice10.opennbt.tag.builtin.ListTag;
 import com.github.steveice10.opennbt.tag.builtin.Tag;
-import com.jfoenix.controls.JFXTreeView;
 import javafx.scene.control.TreeCell;
 import javafx.scene.control.TreeItem;
 import javafx.scene.control.TreeView;
+import javafx.scene.control.skin.TreeViewSkin;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.util.Callback;
+import org.jackhuang.hmcl.ui.FXUtils;
 
 import java.lang.reflect.Array;
 import java.util.EnumMap;
@@ -36,11 +37,21 @@ import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 /**
  * @author Glavo
  */
-public final class NBTTreeView extends JFXTreeView<Tag> {
+public final class NBTTreeView extends TreeView<Tag> {
 
     public NBTTreeView(NBTTreeView.Item tree) {
         this.setRoot(tree);
+        if (tree != null) tree.setExpanded(true);
         this.setCellFactory(cellFactory());
+    }
+
+    @Override
+    protected javafx.scene.control.Skin<?> createDefaultSkin() {
+        return new TreeViewSkin<Tag>(this) {
+            {
+                FXUtils.smoothScrolling(getVirtualFlow());
+            }
+        };
     }
 
     private static Callback<TreeView<Tag>, TreeCell<Tag>> cellFactory() {
@@ -131,6 +142,9 @@ public final class NBTTreeView extends JFXTreeView<Tag> {
                 item.getChildren().add(subTree);
             }
         }
+        FXUtils.onChangeAndOperate(item.expandedProperty(), expanded -> {
+            if (expanded && item.getChildren().size() == 1) item.getChildren().get(0).setExpanded(true);
+        });
 
         return item;
     }

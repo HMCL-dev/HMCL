@@ -21,6 +21,8 @@ import com.jfoenix.controls.JFXPopup;
 import javafx.application.Platform;
 import javafx.beans.binding.Bindings;
 import javafx.beans.property.*;
+import javafx.event.Event;
+import javafx.event.EventType;
 import javafx.scene.Node;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
@@ -63,6 +65,13 @@ public class VersionPage extends DecoratorAnimatedPage implements DecoratorPage 
 
     private String preferredVersionName = null;
 
+    public static class WorkingDirChangedEvent extends Event {
+        public static final EventType<WorkingDirChangedEvent> EVENT_TYPE = new EventType<>(Event.ANY, "WORKING_DIR_CHANGED");
+        public WorkingDirChangedEvent() {
+            super(EVENT_TYPE);
+        }
+    }
+
     public VersionPage() {
         versionSettingsTab.setNodeSupplier(loadVersionFor(() -> new VersionSettingsPage(false)));
         installerListTab.setNodeSupplier(loadVersionFor(InstallerListPage::new));
@@ -77,6 +86,21 @@ public class VersionPage extends DecoratorAnimatedPage implements DecoratorPage 
 
         addEventHandler(Navigator.NavigationEvent.NAVIGATED, this::onNavigated);
 
+        addEventHandler(WorkingDirChangedEvent.EVENT_TYPE, event -> {
+            if (this.version.get() != null) {
+                if (installerListTab.isInitialized())
+                    installerListTab.getNode().loadVersion(getProfile(), getVersion());
+                if (modListTab.isInitialized())
+                    modListTab.getNode().loadVersion(getProfile(), getVersion());
+                if (resourcePackTab.isInitialized())
+                    resourcePackTab.getNode().loadVersion(getProfile(), getVersion());
+                if (worldListTab.isInitialized())
+                    worldListTab.getNode().loadVersion(getProfile(), getVersion());
+                if (schematicsTab.isInitialized())
+                    schematicsTab.getNode().loadVersion(getProfile(), getVersion());
+            }
+        });
+        
         listenerHolder.add(EventBus.EVENT_BUS.channel(RefreshedVersionsEvent.class).registerWeak(event -> checkSelectedVersion(), EventPriority.HIGHEST));
     }
 

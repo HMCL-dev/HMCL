@@ -140,10 +140,8 @@ public final class SettingsPage extends ScrollPane {
                 }
 
                 {
-                    JFXButton btnUpdate = new JFXButton();
+                    JFXButton btnUpdate = FXUtils.newToggleButton4(SVG.UPDATE, 20);
                     btnUpdate.setOnAction(e -> onUpdate());
-                    btnUpdate.getStyleClass().add("toggle-icon4");
-                    btnUpdate.setGraphic(SVG.UPDATE.createIcon(20));
                     FXUtils.installFastTooltip(btnUpdate, i18n("update.tooltip"));
 
                     updateListener = any -> {
@@ -178,20 +176,21 @@ public final class SettingsPage extends ScrollPane {
                 }
 
                 {
-                    VBox content = new VBox();
-                    content.setSpacing(8);
-
-                    JFXRadioButton chkUpdateStable = new JFXRadioButton(i18n("update.channel.stable"));
-                    JFXRadioButton chkUpdateDev = new JFXRadioButton(i18n("update.channel.dev"));
+                    VBox content = new VBox(12);
+                    content.setPadding(new Insets(8, 0, 0, 0));
 
                     updateChannelGroup = new ToggleGroup();
-                    chkUpdateDev.setToggleGroup(updateChannelGroup);
-                    chkUpdateDev.setUserData(UpdateChannel.DEVELOPMENT);
-                    chkUpdateStable.setToggleGroup(updateChannelGroup);
+
+                    JFXRadioButton chkUpdateStable = new JFXRadioButton(i18n("update.channel.stable"));
                     chkUpdateStable.setUserData(UpdateChannel.STABLE);
+                    chkUpdateStable.setToggleGroup(updateChannelGroup);
+
+                    JFXRadioButton chkUpdateDev = new JFXRadioButton(i18n("update.channel.dev"));
+                    chkUpdateDev.setUserData(UpdateChannel.DEVELOPMENT);
+                    chkUpdateDev.setToggleGroup(updateChannelGroup);
 
                     Label noteWrapper = new Label(i18n("update.note"));
-                    VBox.setMargin(noteWrapper, new Insets(10, 0, 0, 0));
+                    VBox.setMargin(noteWrapper, new Insets(8, 0, 0, 0));
 
                     content.getChildren().setAll(chkUpdateStable, chkUpdateDev, noteWrapper);
 

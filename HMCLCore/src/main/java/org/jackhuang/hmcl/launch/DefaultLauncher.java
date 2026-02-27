@@ -692,7 +692,7 @@ public class DefaultLauncher extends Launcher {
                         writer.write(CommandBuilder.pwshString(entry.getValue()));
                         writer.newLine();
                     }
-                    writer.write("Set-Location -Path ");
+                    writer.write("Set-Location -LiteralPath ");
                     writer.write(CommandBuilder.pwshString(FileUtils.getAbsolutePath(repository.getRunDirectory(version.getId()))));
                     writer.newLine();
 

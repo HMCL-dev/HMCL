@@ -180,7 +180,7 @@ public class PersonalizationPage extends StackPane {
                 }
 
                 Label textOpacity = new Label();
-                FXUtils.setLimitWidth(textOpacity, 35);
+                FXUtils.setLimitWidth(textOpacity, 50);
 
                 StringBinding valueBinding = Bindings.createStringBinding(() -> ((int) slider.getValue()) + "%", slider.valueProperty());
                 textOpacity.textProperty().bind(valueBinding);
@@ -197,8 +197,7 @@ public class PersonalizationPage extends StackPane {
         }
 
         {
-            ComponentList logPane = new ComponentSublist();
-            logPane.setTitle(i18n("settings.launcher.log"));
+            ComponentList logPane = new ComponentList();
 
             {
                 VBox fontPane = new VBox();
@@ -227,9 +226,7 @@ public class PersonalizationPage extends StackPane {
                                 .fallbackTo(12.0)
                                 .asPredicate(Validator.addTo(txtLogFontSize)));
 
-                        JFXButton clearButton = new JFXButton();
-                        clearButton.getStyleClass().add("toggle-icon4");
-                        clearButton.setGraphic(SVG.RESTORE.createIcon());
+                        JFXButton clearButton = FXUtils.newToggleButton4(SVG.RESTORE);
                         clearButton.setOnAction(e -> cboLogFont.setValue(null));
 
                         FXUtils.installFastTooltip(clearButton, i18n("button.reset"));
@@ -254,8 +251,7 @@ public class PersonalizationPage extends StackPane {
         }
 
         {
-            ComponentSublist fontPane = new ComponentSublist();
-            fontPane.setTitle(i18n("settings.launcher.font"));
+            ComponentList fontPane = new ComponentList();
 
             {
                 VBox vbox = new VBox();
@@ -278,9 +274,7 @@ public class PersonalizationPage extends StackPane {
                         cboFont.setValue(config().getLauncherFontFamily());
                         FXUtils.onChange(cboFont.valueProperty(), FontManager::setFontFamily);
 
-                        JFXButton clearButton = new JFXButton();
-                        clearButton.getStyleClass().add("toggle-icon4");
-                        clearButton.setGraphic(SVG.RESTORE.createIcon());
+                        JFXButton clearButton = FXUtils.newToggleButton4(SVG.RESTORE);
                         clearButton.setOnAction(e -> cboFont.setValue(null));
 
                         FXUtils.installFastTooltip(clearButton, i18n("button.reset"));
