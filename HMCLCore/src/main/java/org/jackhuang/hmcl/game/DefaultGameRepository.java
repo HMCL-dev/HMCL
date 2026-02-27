@@ -557,6 +557,10 @@ public class DefaultGameRepository implements GameRepository {
         return getRunDirectory(id).resolve("schematics");
     }
 
+    public Path getServersDatFilePath(String id) {
+        return getRunDirectory(id).resolve("servers.dat");
+    }
+
     @Override
     public String toString() {
         return new ToStringBuilder(this)
