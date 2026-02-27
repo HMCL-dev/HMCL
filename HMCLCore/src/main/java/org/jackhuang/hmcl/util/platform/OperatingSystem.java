@@ -18,6 +18,8 @@
 package org.jackhuang.hmcl.util.platform;
 
 import org.jackhuang.hmcl.util.KeyValuePairUtils;
+import org.jackhuang.hmcl.util.io.FileUtils;
+import org.jackhuang.hmcl.util.io.JarUtils;
 import org.jackhuang.hmcl.util.platform.windows.Kernel32;
 import org.jackhuang.hmcl.util.platform.windows.WinReg;
 
@@ -280,6 +282,27 @@ public enum OperatingSystem {
 
     public static boolean isWindows7OrLater() {
         return SYSTEM_VERSION.isAtLeast(OSVersion.WINDOWS_7);
+    }
+
+    public static boolean isInsideMacAppBundle() {
+        if (CURRENT_OS != MACOS) return false;
+
+        Path thisJar = JarUtils.thisJarPath();
+        if (thisJar == null)
+            return false;
+
+        for (Path current = thisJar.getParent();
+             current != null && current.getParent() != null;
+             current = current.getParent()
+        ) {
+            if ("Contents".equals(FileUtils.getName(current))
+                    && FileUtils.getName(current.getParent()).endsWith(".app")
+                    && Files.exists(current.resolve("Info.plist"))
+            ) {
+                return true;
+            }
+        }
+        return false;
     }
 
     public static Path getWorkingDirectory(String folder) {
