@@ -20,11 +20,17 @@ package org.jackhuang.hmcl.ui.download;
 import javafx.application.Platform;
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.SimpleBooleanProperty;
+import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
+import javafx.collections.ObservableSet;
+import javafx.collections.transformation.FilteredList;
 import javafx.stage.FileChooser;
 import org.jackhuang.hmcl.game.HMCLGameRepository;
 import org.jackhuang.hmcl.game.ManuallyCreatedModpackException;
 import org.jackhuang.hmcl.game.ModpackHelper;
 import org.jackhuang.hmcl.mod.Modpack;
+import org.jackhuang.hmcl.mod.ModpackFile;
+import org.jackhuang.hmcl.mod.ModpackManifest;
 import org.jackhuang.hmcl.setting.Profile;
 import org.jackhuang.hmcl.setting.Profiles;
 import org.jackhuang.hmcl.task.Schedulers;
@@ -40,8 +46,15 @@ import org.jackhuang.hmcl.util.SettingsMap;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.io.CompressingUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
+import org.jetbrains.annotations.Nullable;
 
 import java.nio.charset.Charset;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Objects;
+import java.util.Set;
+import java.util.stream.Collectors;
 import java.nio.file.Path;
 
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
@@ -52,9 +65,18 @@ public final class LocalModpackPage extends ModpackPage {
     private final BooleanProperty installAsVersion = new SimpleBooleanProperty(true);
     private Modpack manifest = null;
     private Charset charset;
+    private final ObservableList<ModpackFile> allFiles = FXCollections.observableList(new ArrayList<>());
+    private final ObservableSet<ModpackFile> excludedFiles = FXCollections.observableSet(new HashSet<>());
+    private final BooleanProperty loadingOptionalFiles = new SimpleBooleanProperty(false);
+    private final BooleanProperty loadedOptionalFiles = new SimpleBooleanProperty(true);
 
     public LocalModpackPage(WizardController controller) {
         super(controller);
+        btnOptionalFiles.setOnAction((ev) -> {
+            controller.onNext(new OptionalFilesPage(this::onInstall, this::loadOptionalFiles,
+                    loadingOptionalFiles, loadedOptionalFiles,
+                    new FilteredList<>(allFiles, ModpackFile::isOptional), excludedFiles));
+        });
 
         Profile profile = controller.getSettings().get(ModpackPage.PROFILE);
 
@@ -67,12 +89,15 @@ public final class LocalModpackPage extends ModpackPage {
                 if (installAsVersion) {
                     txtModpackName.getValidators().setAll(
                             new RequiredValidator(),
-                            new Validator(i18n("install.new_game.already_exists"), str -> !profile.getRepository().versionIdConflicts(str)),
+                            new Validator(i18n("install.new_game.already_exists"),
+                                    str -> !profile.getRepository().versionIdConflicts(str)),
                             new Validator(i18n("install.new_game.malformed"), HMCLGameRepository::isValidVersionId));
                 } else {
                     txtModpackName.getValidators().setAll(
                             new RequiredValidator(),
-                            new Validator(i18n("install.new_game.already_exists"), str -> !ModpackHelper.isExternalGameNameConflicts(str) && Profiles.getProfiles().stream().noneMatch(p -> p.getName().equals(str))),
+                            new Validator(i18n("install.new_game.already_exists"),
+                                    str -> !ModpackHelper.isExternalGameNameConflicts(str)
+                                            && Profiles.getProfiles().stream().noneMatch(p -> p.getName().equals(str))),
                             new Validator(i18n("install.new_game.malformed"), HMCLGameRepository::isValidVersionId));
                 }
             });
@@ -101,10 +126,17 @@ public final class LocalModpackPage extends ModpackPage {
         Task.supplyAsync(() -> CompressingUtils.findSuitableEncoding(selectedFile))
                 .thenApplyAsync(encoding -> {
                     charset = encoding;
-                    manifest = ModpackHelper.readModpackManifest(selectedFile, encoding);
-                    return manifest;
+                    return ModpackHelper.readModpackManifest(selectedFile, encoding);
                 })
                 .whenComplete(Schedulers.javafx(), (manifest, exception) -> {
+                    this.manifest = manifest;
+                    if (manifest.getManifest() instanceof ModpackManifest.SupportOptional) {
+                        allFiles.setAll(((ModpackManifest.SupportOptional) manifest.getManifest()).getFiles());
+                        if (allFiles.stream().anyMatch(ModpackFile::isOptional)) {
+                            loadOptionalFiles();
+                            btnOptionalFiles.setVisible(true);
+                        }
+                    }
                     if (exception instanceof ManuallyCreatedModpackException) {
                         hideSpinner();
                         nameProperty.set(FileUtils.getName(selectedFile));
@@ -115,14 +147,17 @@ public final class LocalModpackPage extends ModpackPage {
                             txtModpackName.setText(FileUtils.getNameWithoutExtension(selectedFile));
                         }
 
-                        Controllers.confirm(i18n("modpack.type.manual.warning"), i18n("install.modpack"), MessageDialogPane.MessageType.WARNING,
-                                () -> {},
+                        Controllers.confirm(i18n("modpack.type.manual.warning"), i18n("install.modpack"),
+                                MessageDialogPane.MessageType.WARNING,
+                                () -> {
+                                },
                                 controller::onEnd);
 
                         controller.getSettings().put(MODPACK_MANUALLY_CREATED, true);
                     } else if (exception != null) {
                         LOG.warning("Failed to read modpack manifest", exception);
-                        Controllers.dialog(i18n("modpack.task.install.error"), i18n("message.error"), MessageDialogPane.MessageType.ERROR);
+                        Controllers.dialog(i18n("modpack.task.install.error"), i18n("message.error"),
+                                MessageDialogPane.MessageType.ERROR);
                         Platform.runLater(controller::onEnd);
                     } else {
                         hideSpinner();
@@ -137,6 +172,25 @@ public final class LocalModpackPage extends ModpackPage {
                         }
 
                         btnDescription.setVisible(StringUtils.isNotBlank(manifest.getDescription()));
+                    }
+                }).start();
+    }
+
+    private void loadOptionalFiles() {
+        Objects.requireNonNull(manifest);
+        loadingOptionalFiles.set(true);
+        loadedOptionalFiles.set(false);
+        Task.supplyAsync(() -> manifest.getManifest().getProvider().loadFiles(manifest.getManifest()))
+                .whenComplete(Schedulers.javafx(), (manifest1, exception) -> {
+                    List<? extends ModpackFile> files = ((ModpackManifest.SupportOptional) manifest
+                            .setManifest(manifest1).getManifest()).getFiles();
+                    allFiles.setAll(files);
+                    loadingOptionalFiles.set(false);
+                    if (exception != null || files.stream()
+                            .anyMatch(s -> s.isOptional() && (s.getMod() == null || s.getFileName() == null))) {
+                        LOG.warning("Failed to load optional files", exception);
+                    } else {
+                        loadedOptionalFiles.set(true);
                     }
                 }).start();
     }
@@ -158,6 +212,7 @@ public final class LocalModpackPage extends ModpackPage {
                     .yesOrNo(() -> {
                         controller.getSettings().put(MODPACK_NAME, name);
                         controller.getSettings().put(MODPACK_CHARSET, charset);
+                        controller.getSettings().put(MODPACK_SELECTED_FILES, getSelectedFiles());
                         controller.onFinish();
                     }, () -> {
                         // The user selects Cancel and does nothing.
@@ -166,8 +221,13 @@ public final class LocalModpackPage extends ModpackPage {
         } else {
             controller.getSettings().put(MODPACK_NAME, name);
             controller.getSettings().put(MODPACK_CHARSET, charset);
+            controller.getSettings().put(MODPACK_SELECTED_FILES, getSelectedFiles());
             controller.onFinish();
         }
+    }
+
+    private @Nullable Set<? extends ModpackFile> getSelectedFiles() {
+        return allFiles.stream().filter(file -> !excludedFiles.contains(file)).collect(Collectors.toSet());
     }
 
     protected void onDescribe() {
@@ -179,6 +239,9 @@ public final class LocalModpackPage extends ModpackPage {
     public static final SettingsMap.Key<String> MODPACK_NAME = new SettingsMap.Key<>("MODPACK_NAME");
     public static final SettingsMap.Key<Modpack> MODPACK_MANIFEST = new SettingsMap.Key<>("MODPACK_MANIFEST");
     public static final SettingsMap.Key<Charset> MODPACK_CHARSET = new SettingsMap.Key<>("MODPACK_CHARSET");
-    public static final SettingsMap.Key<Boolean> MODPACK_MANUALLY_CREATED = new SettingsMap.Key<>("MODPACK_MANUALLY_CREATED");
+    public static final SettingsMap.Key<Boolean> MODPACK_MANUALLY_CREATED = new SettingsMap.Key<>(
+            "MODPACK_MANUALLY_CREATED");
     public static final SettingsMap.Key<String> MODPACK_ICON_URL = new SettingsMap.Key<>("MODPACK_ICON_URL");
+    public static final SettingsMap.Key<Set<? extends ModpackFile>> MODPACK_SELECTED_FILES = new SettingsMap.Key<>(
+            "MODPACK_SELECTED_FILES");
 }

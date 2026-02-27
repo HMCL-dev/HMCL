@@ -17,6 +17,12 @@
  */
 package org.jackhuang.hmcl.mod;
 
+import java.util.List;
+
 public interface ModpackManifest {
     ModpackProvider getProvider();
+
+    interface SupportOptional {
+        List<? extends ModpackFile> getFiles();
+    }
 }
