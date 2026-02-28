@@ -416,15 +416,7 @@ public class CreateAccountPane extends JFXDialogLayout implements DialogAware {
                 add(lblUsername, 0, rowIndex);
 
                 txtUsername = new JFXTextField();
-                txtUsername.setValidators(
-                        new RequiredValidator(),
-                        new Validator(i18n("input.email"), username -> {
-                            if (requiresEmailAsUsername()) {
-                                return username.contains("@");
-                            } else {
-                                return true;
-                            }
-                        }));
+                txtUsername.setValidators(new RequiredValidator());
                 setValidateWhileTextChanged(txtUsername, true);
                 txtUsername.setOnAction(e -> onAction.run());
                 add(txtUsername, 1, rowIndex);
@@ -518,16 +510,6 @@ public class CreateAccountPane extends JFXDialogLayout implements DialogAware {
                     return true;
                 }
             };
-        }
-
-        private boolean requiresEmailAsUsername() {
-            if ((factory instanceof AuthlibInjectorAccountFactory) && this.server != null) {
-                return !server.isNonEmailLogin();
-            }
-            if (factory instanceof BoundAuthlibInjectorAccountFactory bound) {
-                return !bound.getServer().isNonEmailLogin();
-            }
-            return false;
         }
 
         public Object getAdditionalData() {
