@@ -510,10 +510,15 @@ public final class WorldInfoPage extends SpinnerPane implements WorldManagePage.
 
     @Override
     public void refresh() {
-        this.isReadOnly = worldManagePage.isReadOnly();
-        this.levelData = world.getLevelData();
-        this.playerData = world.getPlayerData();
-        updateControls();
+        try {
+            this.isReadOnly = worldManagePage.isReadOnly();
+            this.levelData = world.getLevelData();
+            this.playerData = world.getPlayerData();
+            updateControls();
+        } catch (Exception e) {
+            LOG.warning("Failed to refresh world info", e);
+            setFailedReason(i18n("world.info.failed"));
+        }
     }
 
     private record Dimension(String name) {
