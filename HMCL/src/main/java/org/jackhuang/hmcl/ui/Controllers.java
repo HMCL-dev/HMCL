@@ -252,30 +252,30 @@ public final class Controllers {
             PauseTransition debounce;
 
             switch (sourceProperty.getName()) {
-               case "x": {
-                   targetProperty = stageX;
-                   debounce = debounceX;
-                   break;
-               }
-               case "y": {
-                   targetProperty = stageY;
-                   debounce = debounceY;
-                   break;
-               }
-               case "width": {
-                   targetProperty = stageWidth;
-                   debounce = debounceWidth;
-                   break;
-               }
-               case "height": {
-                   targetProperty = stageHeight;
-                   debounce = debounceHeight;
-                   break;
-               }
-               default: {
-                   targetProperty = null;
-                   debounce = null;
-               }
+                case "x": {
+                    targetProperty = stageX;
+                    debounce = debounceX;
+                    break;
+                }
+                case "y": {
+                    targetProperty = stageY;
+                    debounce = debounceY;
+                    break;
+                }
+                case "width": {
+                    targetProperty = stageWidth;
+                    debounce = debounceWidth;
+                    break;
+                }
+                case "height": {
+                    targetProperty = stageHeight;
+                    debounce = debounceHeight;
+                    break;
+                }
+                default: {
+                    targetProperty = null;
+                    debounce = null;
+                }
             }
 
             if (targetProperty != null
@@ -292,24 +292,24 @@ public final class Controllers {
 
                 if (debounce != null) {
                     debounce.setOnFinished(event -> {
-                       switch (name) {
-                          case "x": {
-                              config().setX(value / SCREEN.getBounds().getWidth());
-                              break;
-                          }
-                          case "y": {
-                              config().setY(value / SCREEN.getBounds().getHeight());
-                              break;
-                          }
-                          case "width": {
-                              config().setWidth(value);
-                              break;
-                          }
-                          case "height": {
-                              config().setHeight(value);
-                              break;
-                          }
-                       }
+                        switch (name) {
+                            case "x": {
+                                config().setX(value / SCREEN.getBounds().getWidth());
+                                break;
+                            }
+                            case "y": {
+                                config().setY(value / SCREEN.getBounds().getHeight());
+                                break;
+                            }
+                            case "width": {
+                                config().setWidth(value);
+                                break;
+                            }
+                            case "height": {
+                                config().setHeight(value);
+                                break;
+                            }
+                        }
                     });
                     debounce.playFromStart();
                 }
