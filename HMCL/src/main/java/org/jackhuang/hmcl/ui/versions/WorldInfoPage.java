@@ -79,7 +79,7 @@ public final class WorldInfoPage extends SpinnerPane implements WorldManagePage.
     }
 
     private void updateControls() {
-        if (!(levelData.get("Data") instanceof CompoundTag dataTag)) return;
+        CompoundTag dataTag = levelData.get("Data");
         CompoundTag playerTag = playerData;
 
         ScrollPane scrollPane = new ScrollPane();
@@ -205,14 +205,16 @@ public final class WorldInfoPage extends SpinnerPane implements WorldManagePage.
             {
                 worldSpawnPoint.setTitle(i18n("world.info.spawn"));
                 String value = "";
-                // Valid after 1.21.9-pre1: spawn.pos (IntArray)
+                // Valid after 1.21.9-pre1
                 if (dataTag.get("spawn") instanceof CompoundTag spawnTag && spawnTag.get("pos") instanceof IntArrayTag posTag) {
                     value = (spawnTag.get("dimension") instanceof StringTag dimensionTag)
                             ? Dimension.of(dimensionTag).formatPosition(posTag)
                             : Dimension.OVERWORLD.formatPosition(posTag);
                 }
                 // Valid before 1.21.9-pre1
-                else if (dataTag.get("SpawnX") instanceof IntTag intX && dataTag.get("SpawnY") instanceof IntTag intY && dataTag.get("SpawnZ") instanceof IntTag intZ) {
+                else if (dataTag.get("SpawnX") instanceof IntTag intX
+                        && dataTag.get("SpawnY") instanceof IntTag intY
+                        && dataTag.get("SpawnZ") instanceof IntTag intZ) {
                     value = Dimension.OVERWORLD.formatPosition(intX.getValue(), intY.getValue(), intZ.getValue());
                 }
                 worldSpawnPoint.setText(value);
@@ -237,6 +239,7 @@ public final class WorldInfoPage extends SpinnerPane implements WorldManagePage.
             {
                 allowCheatsButton.setTitle(i18n("world.info.allow_cheats"));
                 allowCheatsButton.setDisable(isReadOnly);
+
                 bindTagAndToggleButton(dataTag.get("allowCommands"), allowCheatsButton);
             }
 
@@ -248,7 +251,7 @@ public final class WorldInfoPage extends SpinnerPane implements WorldManagePage.
                 if (dataTag.get("MapFeatures") instanceof ByteTag generateFeaturesTag) {
                     bindTagAndToggleButton(generateFeaturesTag, generateFeaturesButton);
                 }
-                // Valid after (1.16)20w20a: Data.WorldGenSettings.generate_features
+                // Valid after (1.16)20w20a
                 else if (world.getUnifiedWorldGenSettingsData() != null) {
                     CompoundTag uwgs = world.getUnifiedWorldGenSettingsData();
                     Tag tag = uwgs.get("generate_features"); // Valid before 26.1-snapshot-6
@@ -267,7 +270,8 @@ public final class WorldInfoPage extends SpinnerPane implements WorldManagePage.
 
                 Difficulty difficulty;
                 // Valid before 26.1-snapshot-6
-                if (dataTag.get("Difficulty") instanceof ByteTag difficultyTag && (difficulty = Difficulty.of(difficultyTag.getValue())) != null) {
+                if (dataTag.get("Difficulty") instanceof ByteTag difficultyTag
+                        && (difficulty = Difficulty.of(difficultyTag.getValue())) != null) {
                     difficultyButton.setValue(difficulty);
                     difficultyButton.valueProperty().addListener((o, oldValue, newValue) -> {
                         if (newValue != null) {
@@ -277,7 +281,9 @@ public final class WorldInfoPage extends SpinnerPane implements WorldManagePage.
                     });
                 }
                 // Valid after 26.1-snapshot-6: difficulty_settings.difficulty (String)
-                else if (dataTag.get("difficulty_settings") instanceof CompoundTag ds && ds.get("difficulty") instanceof StringTag difficultyTag && (difficulty = Difficulty.of(difficultyTag.getValue())) != null) {
+                else if (dataTag.get("difficulty_settings") instanceof CompoundTag difficultySettingTag
+                        && difficultySettingTag.get("difficulty") instanceof StringTag difficultyTag
+                        && (difficulty = Difficulty.of(difficultyTag.getValue())) != null) {
                     difficultyButton.setValue(difficulty);
                     difficultyButton.valueProperty().addListener((o, oldValue, newValue) -> {
                         if (newValue != null) {
@@ -323,9 +329,12 @@ public final class WorldInfoPage extends SpinnerPane implements WorldManagePage.
             var lastDeathLocationPane = new LineTextPane();
             {
                 lastDeathLocationPane.setTitle(i18n("world.info.player.last_death_location"));
-                if (playerTag.get("LastDeathLocation") instanceof CompoundTag ldlTag && ldlTag.get("dimension") instanceof StringTag dimTag && ldlTag.get("pos") instanceof IntArrayTag posTag && posTag.length() == 3) {
-                    Dimension dim = Dimension.of(dimTag);
-                    if (dim != null) lastDeathLocationPane.setText(dim.formatPosition(posTag));
+                // Valid after 22w14a; prior to this version, the game did not record the last death location data.
+                if (playerTag.get("LastDeathLocation") instanceof CompoundTag LastDeathLocationTag) {
+                    Dimension dimension = Dimension.of(LastDeathLocationTag.get("dimension"));
+                    if (dimension != null && LastDeathLocationTag.get("pos") instanceof IntArrayTag posTag) {
+                        lastDeathLocationPane.setText(dimension.formatPosition(posTag));
+                    }
                 }
             }
 
@@ -442,12 +451,17 @@ public final class WorldInfoPage extends SpinnerPane implements WorldManagePage.
                         LOG.warning("Exception happened when saving world info", e);
                     }
                 });
-            } else toggleButton.setDisable(true);
-        } else toggleButton.setDisable(true);
+            } else {
+                toggleButton.setDisable(true);
+            }
+        } else {
+            toggleButton.setDisable(true);
+        }
     }
 
     private void bindTagAndTextField(IntTag intTag, JFXTextField jfxTextField) {
         jfxTextField.setText(intTag.getValue().toString());
+
         jfxTextField.textProperty().addListener((o, oldValue, newValue) -> {
             if (newValue != null) {
                 try {
@@ -458,6 +472,7 @@ public final class WorldInfoPage extends SpinnerPane implements WorldManagePage.
                     }
                 } catch (Exception e) {
                     jfxTextField.setText(oldValue);
+                    LOG.warning("Exception happened when saving level.dat", e);
                 }
             }
         });
@@ -467,6 +482,7 @@ public final class WorldInfoPage extends SpinnerPane implements WorldManagePage.
 
     private void bindTagAndTextField(FloatTag floatTag, JFXTextField jfxTextField) {
         jfxTextField.setText(new DecimalFormat("0.#").format(floatTag.getValue()));
+
         jfxTextField.textProperty().addListener((o, oldValue, newValue) -> {
             if (newValue != null) {
                 try {
@@ -477,6 +493,7 @@ public final class WorldInfoPage extends SpinnerPane implements WorldManagePage.
                     }
                 } catch (Exception e) {
                     jfxTextField.setText(oldValue);
+                    LOG.warning("Exception happened when saving level.dat", e);
                 }
             }
         });
