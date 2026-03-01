@@ -76,7 +76,7 @@ public class CrashWindow extends Stage {
 
         try {
             StyleSheets.init(getScene());
-        } catch (Exception ignored) {}
+        } catch (Throwable ignored) {}
 
         setTitle(i18n("message.error"));
 
