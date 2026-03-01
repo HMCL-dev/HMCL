@@ -215,6 +215,7 @@ public final class WorldInfoPage extends SpinnerPane implements WorldManagePage.
                         && dataTag.get("SpawnZ") instanceof IntTag intZ) {
                     value = Dimension.OVERWORLD.formatPosition(intX.getValue(), intY.getValue(), intZ.getValue());
                 }
+
                 worldSpawnPoint.setText(value);
             }
 
@@ -251,9 +252,10 @@ public final class WorldInfoPage extends SpinnerPane implements WorldManagePage.
                 }
                 // Valid after (1.16)20w20a
                 else if (world.getUnifiedWorldGenSettingsData() != null) {
-                    CompoundTag uwgs = world.getUnifiedWorldGenSettingsData();
-                    Tag tag = uwgs.get("generate_features"); // Valid before 26.1-snapshot-6
-                    if (tag == null) tag = uwgs.get("generate_structures"); // Valid after 26.1-snapshot-6
+                    CompoundTag unifiedWorldGenSettingsDataTag = world.getUnifiedWorldGenSettingsData();
+                    Tag tag = unifiedWorldGenSettingsDataTag.get("generate_features"); // Valid before 26.1-snapshot-6
+                    if (tag == null)
+                        tag = unifiedWorldGenSettingsDataTag.get("generate_structures"); // Valid after 26.1-snapshot-6
                     bindTagAndToggleButton(tag, generateFeaturesButton);
                 } else {
                     generateFeaturesButton.setDisable(true);
@@ -309,12 +311,16 @@ public final class WorldInfoPage extends SpinnerPane implements WorldManagePage.
                 }
             }
 
-            worldInfo.getContent().setAll(worldNamePane, gameVersionPane, iconPane, seedPane, worldSpawnPoint, lastPlayedPane, timePane, allowCheatsButton, generateFeaturesButton, difficultyButton, difficultyLockPane);
+            worldInfo.getContent().setAll(
+                    worldNamePane, gameVersionPane, iconPane, seedPane, worldSpawnPoint, lastPlayedPane, timePane,
+                    allowCheatsButton, generateFeaturesButton, difficultyButton, difficultyLockPane);
+
             rootPane.getChildren().addAll(ComponentList.createComponentListTitle(i18n("world.info")), worldInfo);
         }
 
         if (playerTag != null) {
             ComponentList playerInfo = new ComponentList();
+
             var locationPane = new LineTextPane();
             {
                 locationPane.setTitle(i18n("world.info.player.location"));
@@ -360,28 +366,33 @@ public final class WorldInfoPage extends SpinnerPane implements WorldManagePage.
                 playerGameTypePane.setItems(GameType.items);
 
                 Tag hardcoreTag = dataTag.get("hardcore");
-                if (hardcoreTag == null && dataTag.get("difficulty_settings") instanceof CompoundTag ds) {
-                    hardcoreTag = ds.get("hardcore");
+                if (hardcoreTag == null && dataTag.get("difficulty_settings") instanceof CompoundTag difficultySettingsTag) {
+                    hardcoreTag = difficultySettingsTag.get("hardcore");
                 }
 
-                if (playerTag.get("playerGameType") instanceof IntTag pgtTag && hardcoreTag instanceof ByteTag hTag) {
-                    GameType gt = GameType.of(pgtTag.getValue(), hTag.getValue() == 1);
-                    if (gt != null) {
-                        playerGameTypePane.setValue(gt);
-                        playerGameTypePane.valueProperty().addListener((o, ov, nv) -> {
-                            if (nv != null) {
-                                if (nv == GameType.HARDCORE) {
-                                    pgtTag.setValue(0);
-                                    hTag.setValue((byte) 1);
+                if (playerTag.get("playerGameType") instanceof IntTag playerGameTypeTag && hardcoreTag instanceof ByteTag byteTag) {
+                    boolean isHardcore = byteTag.getValue() == 1;
+                    GameType gameType = GameType.of(playerGameTypeTag.getValue(), isHardcore);
+                    if (gameType != null) {
+                        playerGameTypePane.setValue(gameType);
+                        playerGameTypePane.valueProperty().addListener((o, oldValue, newValue) -> {
+                            if (newValue != null) {
+                                if (newValue == GameType.HARDCORE) {
+                                    playerGameTypeTag.setValue(0); // survival (hardcore worlds are survival+hardcore flag)
+                                    byteTag.setValue((byte) 1);
                                 } else {
-                                    pgtTag.setValue(nv.ordinal());
-                                    hTag.setValue((byte) 0);
+                                    playerGameTypeTag.setValue(newValue.ordinal());
+                                    byteTag.setValue((byte) 0);
                                 }
                                 saveWorldData();
                             }
                         });
-                    } else playerGameTypePane.setDisable(true);
-                } else playerGameTypePane.setDisable(true);
+                    } else {
+                        playerGameTypePane.setDisable(true);
+                    }
+                } else {
+                    playerGameTypePane.setDisable(true);
+                }
             }
 
             var healthPane = new LinePane();
