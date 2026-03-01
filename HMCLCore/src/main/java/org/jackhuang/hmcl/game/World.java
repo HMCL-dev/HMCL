@@ -279,20 +279,18 @@ public final class World {
         if (data.get("Player") instanceof CompoundTag playerTag) {
             this.playerData = playerTag;
             this.playerDataPath = null;
-        } else if (data.get("singleplayer_uuid") instanceof IntArrayTag uuidTag) {
+        } else if (data.get("singleplayer_uuid") instanceof IntArrayTag uuidTag && uuidTag.getValue().length == 4) {
             int[] uuidValue = uuidTag.getValue();
-            if (uuidValue.length == 4) {
-                long mostSigBits = ((long) uuidValue[0] << 32) | (uuidValue[1] & 0xFFFFFFFFL);
-                long leastSigBits = ((long) uuidValue[2] << 32) | (uuidValue[3] & 0xFFFFFFFFL);
-                String playerUUID = new UUID(mostSigBits, leastSigBits).toString();
-                Path playerDatPath = file.resolve("players/data/" + playerUUID + ".dat");
-                if (Files.exists(playerDatPath)) {
-                    this.playerData = readTag(playerDatPath);
-                    this.playerDataPath = playerDatPath;
-                } else {
-                    this.playerData = null;
-                    this.playerDataPath = null;
-                }
+            long mostSigBits = ((long) uuidValue[0] << 32) | (uuidValue[1] & 0xFFFFFFFFL);
+            long leastSigBits = ((long) uuidValue[2] << 32) | (uuidValue[3] & 0xFFFFFFFFL);
+            String playerUUID = new UUID(mostSigBits, leastSigBits).toString();
+            Path playerDatPath = file.resolve("players/data/" + playerUUID + ".dat");
+            if (Files.exists(playerDatPath)) {
+                this.playerData = readTag(playerDatPath);
+                this.playerDataPath = playerDatPath;
+            } else {
+                this.playerData = null;
+                this.playerDataPath = null;
             }
         } else {
             this.playerData = null;
@@ -405,9 +403,16 @@ public final class World {
 
     public void writeWorldData() throws IOException {
         if (!Files.isDirectory(file)) throw new IOException("Not a valid world directory");
+
         writeLevelData();
-        if (worldGenSettingsDataPath != null) writeTag(worldGenSettingsData, worldGenSettingsDataPath);
-        if (playerDataPath != null) writeTag(playerData, playerDataPath);
+
+        if (worldGenSettingsDataPath != null && worldGenSettingsData != null) {
+            writeTag(worldGenSettingsData, worldGenSettingsDataPath);
+        }
+
+        if (playerDataPath != null && playerData != null) {
+            writeTag(playerData, playerDataPath);
+        }
     }
 
     public void writeLevelData() throws IOException {

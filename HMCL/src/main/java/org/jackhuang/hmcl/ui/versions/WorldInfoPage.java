@@ -278,7 +278,7 @@ public final class WorldInfoPage extends SpinnerPane implements WorldManagePage.
                         }
                     });
                 }
-                // Valid after 26.1-snapshot-6: difficulty_settings.difficulty (String)
+                // Valid after 26.1-snapshot-6
                 else if (dataTag.get("difficulty_settings") instanceof CompoundTag difficultySettingTag
                         && difficultySettingTag.get("difficulty") instanceof StringTag difficultyTag
                         && (difficulty = Difficulty.of(difficultyTag.getValue())) != null) {
