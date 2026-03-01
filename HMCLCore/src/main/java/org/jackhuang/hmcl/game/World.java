@@ -289,6 +289,9 @@ public final class World {
                 if (Files.exists(playerDatPath)) {
                     this.playerData = readTag(playerDatPath);
                     this.playerDataPath = playerDatPath;
+                } else {
+                    this.playerData = null;
+                    this.playerDataPath = null;
                 }
             }
         } else {

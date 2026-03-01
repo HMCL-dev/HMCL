@@ -36,8 +36,6 @@ import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.stage.FileChooser;
 import org.jackhuang.hmcl.game.World;
-import org.jackhuang.hmcl.task.Schedulers;
-import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
@@ -513,13 +511,9 @@ public final class WorldInfoPage extends SpinnerPane implements WorldManagePage.
     @Override
     public void refresh() {
         this.isReadOnly = worldManagePage.isReadOnly();
-        this.setLoading(true);
-        Task.runAsync(Schedulers.javafx(), () -> {
-            this.levelData = world.getLevelData();
-            this.playerData = world.getPlayerData();
-            updateControls();
-            setLoading(false);
-        }).start();
+        this.levelData = world.getLevelData();
+        this.playerData = world.getPlayerData();
+        updateControls();
     }
 
     private record Dimension(String name) {
