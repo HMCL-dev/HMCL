@@ -23,6 +23,7 @@ import com.jfoenix.validation.base.ValidatorBase;
 import javafx.animation.KeyFrame;
 import javafx.animation.KeyValue;
 import javafx.animation.Timeline;
+import javafx.animation.PauseTransition;
 import javafx.beans.InvalidationListener;
 import javafx.beans.WeakInvalidationListener;
 import javafx.beans.property.DoubleProperty;
@@ -239,29 +240,42 @@ public final class Controllers {
 
         Controllers.stage = stage;
 
+        final Duration DEBOUNCE_DELAY = Duration.millis(600);
+        final PauseTransition debounceX = new PauseTransition(DEBOUNCE_DELAY);
+        final PauseTransition debounceY = new PauseTransition(DEBOUNCE_DELAY);
+        final PauseTransition debounceWidth = new PauseTransition(DEBOUNCE_DELAY);
+        final PauseTransition debounceHeight = new PauseTransition(DEBOUNCE_DELAY);
+
         stageSizeChangeListener = o -> {
             ReadOnlyDoubleProperty sourceProperty = (ReadOnlyDoubleProperty) o;
             DoubleProperty targetProperty;
+            PauseTransition debounce;
+
             switch (sourceProperty.getName()) {
-                case "x": {
-                    targetProperty = stageX;
-                    break;
-                }
-                case "y": {
-                    targetProperty = stageY;
-                    break;
-                }
-                case "width": {
-                    targetProperty = stageWidth;
-                    break;
-                }
-                case "height": {
-                    targetProperty = stageHeight;
-                    break;
-                }
-                default: {
-                    targetProperty = null;
-                }
+            case "x": {
+                targetProperty = stageX;
+                debounce = debounceX;
+                break;
+            }
+            case "y": {
+                targetProperty = stageY;
+                debounce = debounceY;
+                break;
+            }
+            case "width": {
+                targetProperty = stageWidth;
+                debounce = debounceWidth;
+                break;
+            }
+            case "height": {
+                targetProperty = stageHeight;
+                debounce = debounceHeight;
+                break;
+            }
+            default: {
+                targetProperty = null;
+                debounce = null;
+            }
             }
 
             if (targetProperty != null
@@ -272,6 +286,33 @@ public final class Controllers {
                     !Controllers.stage.isFullScreen() && !Controllers.stage.isMaximized())
             ) {
                 targetProperty.set(sourceProperty.get());
+
+                final String name = sourceProperty.getName();
+                final double value = sourceProperty.get();
+
+                if (debounce != null) {
+                    debounce.setOnFinished(event -> {
+                    switch (name) {
+                        case "x": {
+                        config().setX(value / SCREEN.getBounds().getWidth());
+                        break;
+                        }
+                        case "y": {
+                        config().setY(value / SCREEN.getBounds().getHeight());
+                        break;
+                        }
+                        case "width": {
+                        config().setWidth(value);
+                        break;
+                        }
+                        case "height": {
+                        config().setHeight(value);
+                        break;
+                        }
+                    }
+                    });
+                    debounce.playFromStart();
+                }
             }
         };
 
