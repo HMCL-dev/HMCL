@@ -427,6 +427,20 @@
     -fx-alignment: center;
 }
 
+.crash-window {
+    -fx-background-color: -monet-surface-container;
+}
+
+.crash-window TextArea {
+    -fx-control-inner-background: -monet-surface-container-highest;
+    -fx-text-fill: -monet-on-surface;
+}
+
+.crash-window Button {
+    -fx-background-color: -monet-primary;
+    -fx-text-fill: -monet-on-primary;
+}
+
 /*******************************************************************************
  *                                                                             *
  * Main Page                                                                   *
