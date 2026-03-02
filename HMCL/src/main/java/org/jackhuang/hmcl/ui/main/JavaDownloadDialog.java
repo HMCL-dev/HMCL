@@ -47,6 +47,7 @@ import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.construct.DialogCloseEvent;
 import org.jackhuang.hmcl.ui.construct.DialogPane;
 import org.jackhuang.hmcl.ui.construct.JFXHyperlink;
+import org.jackhuang.hmcl.ui.construct.SpinnerPane;
 import org.jackhuang.hmcl.ui.wizard.SinglePageWizardProvider;
 import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.Result;
@@ -211,7 +212,7 @@ public final class JavaDownloadDialog extends StackPane {
         private final Label warningLabel = new Label();
 
         private final JFXButton downloadButton;
-        private final StackPane downloadButtonPane = new StackPane();
+        private final SpinnerPane downloadButtonPane = new SpinnerPane();
 
         private final DownloadProvider downloadProvider = DownloadProviders.getDownloadProvider();
 
@@ -233,7 +234,8 @@ public final class JavaDownloadDialog extends StackPane {
             downloadButton.setOnAction(e -> onDownload());
             downloadButton.getStyleClass().add("dialog-accept");
             downloadButton.disableProperty().bind(Bindings.isNull(remoteVersionBox.getSelectionModel().selectedItemProperty()));
-            downloadButtonPane.getChildren().setAll(downloadButton);
+            downloadButtonPane.setContent(downloadButton);
+            downloadButtonPane.getStyleClass().add("small-spinner-pane");
 
             JFXButton cancelButton = new JFXButton(i18n("button.cancel"));
             cancelButton.setOnAction(e -> fireEvent(new DialogCloseEvent()));
@@ -308,11 +310,11 @@ public final class JavaDownloadDialog extends StackPane {
                 warningLabel.setText(null);
 
                 if (list == null || (list.versions != null && list.versions.isEmpty()))
-                    downloadButtonPane.getChildren().setAll(downloadButton);
+                    downloadButtonPane.hideSpinner();
                 else if (list.status == DiscoJavaVersionList.Status.LOADING)
-                    downloadButtonPane.getChildren().setAll(new JFXSpinner());
+                    downloadButtonPane.showSpinner();
                 else {
-                    downloadButtonPane.getChildren().setAll(downloadButton);
+                    downloadButtonPane.hideSpinner();
 
                     if (list.status == DiscoJavaVersionList.Status.SUCCESS) {
                         packageTypeBox.getItems().setAll(list.versions.keySet());
