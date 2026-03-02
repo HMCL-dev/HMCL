@@ -80,8 +80,7 @@ public class FileSelector extends HBox {
         JFXTextField customField = new JFXTextField();
         FXUtils.bindString(customField, valueProperty());
 
-        JFXButton selectButton = new JFXButton();
-        selectButton.setGraphic(SVG.FOLDER_OPEN.createIcon(15));
+        JFXButton selectButton = FXUtils.newToggleButton4(SVG.FOLDER_OPEN, 15);
         selectButton.setOnAction(e -> {
             if (directory) {
                 DirectoryChooser chooser = new DirectoryChooser();
