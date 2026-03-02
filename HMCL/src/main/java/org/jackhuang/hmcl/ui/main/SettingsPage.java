@@ -117,6 +117,7 @@ public final class SettingsPage extends ScrollPane {
 
             ObjectProperty<UpdateChannel> updateChannel;
             {
+
                 var updatePane = new LineSelectButton<UpdateChannel>();
                 updateChannel = updatePane.valueProperty();
                 updatePane.setTitle(i18n("update"));
@@ -156,7 +157,6 @@ public final class SettingsPage extends ScrollPane {
                     updateListener.invalidated(null);
 
                 }
-
             }
 
             {
