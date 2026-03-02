@@ -189,6 +189,7 @@ public class SpinnerPane extends Control {
 
         Skin(SpinnerPane control) {
             super(control);
+            root.setClip(null);
 
             updateContent();
             this.getChildren().setAll(root);
@@ -221,6 +222,7 @@ public class SpinnerPane extends Control {
             } else {
                 if (contentPane == null) {
                     contentPane = new StackPane();
+                    contentPane.setClip(null);
                 }
 
                 Node content = control.getContent();
