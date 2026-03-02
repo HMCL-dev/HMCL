@@ -513,6 +513,13 @@ public final class Controllers {
         return pane.getCompletableFuture();
     }
 
+    public static CompletableFuture<String> prompt(String title, FutureCallback<String> onResult, String initialValue, boolean autoClose, ValidatorBase... validators) {
+        InputDialogPane pane = new InputDialogPane(title, initialValue, onResult, validators);
+        pane.setAutoClose(autoClose);
+        dialog(pane);
+        return pane.getCompletableFuture();
+    }
+
     public static CompletableFuture<List<PromptDialogPane.Builder.Question<?>>> prompt(PromptDialogPane.Builder builder) {
         PromptDialogPane pane = new PromptDialogPane(builder);
         dialog(pane);

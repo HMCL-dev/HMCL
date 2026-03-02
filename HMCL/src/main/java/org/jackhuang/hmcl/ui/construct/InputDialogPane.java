@@ -39,6 +39,7 @@ public class InputDialogPane extends JFXDialogLayout implements DialogAware {
     private final Label lblCreationWarning;
     private final SpinnerPane acceptPane;
     private final JFXButton acceptButton;
+    private boolean autoClose = true;
 
     public InputDialogPane(String text, String initialValue, FutureCallback<String> onResult, ValidatorBase... validators) {
         this(text, initialValue, onResult);
@@ -77,7 +78,7 @@ public class InputDialogPane extends JFXDialogLayout implements DialogAware {
                 public void resolve() {
                     acceptPane.hideSpinner();
                     future.complete(textField.getText());
-                    fireEvent(new DialogCloseEvent());
+                    if (autoClose) fireEvent(new DialogCloseEvent());
                 }
 
                 @Override
@@ -98,5 +99,9 @@ public class InputDialogPane extends JFXDialogLayout implements DialogAware {
 
     public CompletableFuture<String> getCompletableFuture() {
         return future;
+    }
+
+    public void setAutoClose(boolean autoClose) {
+        this.autoClose = autoClose;
     }
 }
