@@ -117,25 +117,24 @@ public final class SettingsPage extends ScrollPane {
 
             ObjectProperty<UpdateChannel> updateChannel;
             {
+                final JFXButton btnUpdate = FXUtils.newToggleButton4(SVG.UPDATE, 20);
+                btnUpdate.setOnAction(e -> onUpdate());
+                FXUtils.installFastTooltip(btnUpdate, i18n("update.tooltip"));
 
                 var updatePane = new LineSelectButton<UpdateChannel>();
                 updateChannel = updatePane.valueProperty();
                 updatePane.setTitle(i18n("update"));
                 updatePane.setValue(UpdateChannel.getChannel());
 
-
                 updatePane.setConverter(channel -> i18n("update.channel." + channel.channelName));
                 updatePane.setItems(List.of(UpdateChannel.STABLE, UpdateChannel.DEVELOPMENT));
                 updatePane.setDescriptionConverter(channel -> i18n("update.note." + channel.channelName));
-                settingsPane.getContent().add(updatePane);
 
                 final StringProperty lblUpdate = updatePane.titleProperty();
                 final StringProperty lblUpdateSub = updatePane.subtitleProperty();
 
                 {
-                    JFXButton btnUpdate = FXUtils.newToggleButton4(SVG.UPDATE, 20);
-                    btnUpdate.setOnAction(e -> onUpdate());
-                    FXUtils.installFastTooltip(btnUpdate, i18n("update.tooltip"));
+
 
                     updateListener = any -> {
                         btnUpdate.setVisible(UpdateChecker.isOutdated());
@@ -155,8 +154,9 @@ public final class SettingsPage extends ScrollPane {
                     UpdateChecker.outdatedProperty().addListener(new WeakInvalidationListener(updateListener));
                     UpdateChecker.checkingUpdateProperty().addListener(new WeakInvalidationListener(updateListener));
                     updateListener.invalidated(null);
-
                 }
+
+                settingsPane.getContent().add(updatePane);
             }
 
             {
