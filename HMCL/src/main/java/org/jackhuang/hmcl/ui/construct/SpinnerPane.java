@@ -208,7 +208,6 @@ public class SpinnerPane extends Control {
                 if (spinnerPane == null) {
                     spinnerPane = new StackPane(new JFXSpinner());
                     spinnerPane.getStyleClass().add("notice-pane");
-                    spinnerPane.setClip(null);
                 }
                 nextContent = spinnerPane;
             } else if (control.getFailedReason() != null) {
@@ -216,7 +215,6 @@ public class SpinnerPane extends Control {
                     failedReasonLabel = new Label();
                     failedPane = new StackPane(failedReasonLabel);
                     failedPane.getStyleClass().add("notice-pane");
-                    failedPane.setClip(null);
                     FXUtils.onClicked(failedPane, () -> control.fireEvent(new Event(SpinnerPane.FAILED_ACTION)));
                 }
                 failedReasonLabel.setText(control.getFailedReason());
