@@ -77,6 +77,8 @@ public final class SettingsPage extends ScrollPane {
     @SuppressWarnings("FieldCanBeLocal")
     private final InvalidationListener updateListener;
 
+    private final SpinnerPane spinnerPane = new SpinnerPane();
+
     public SettingsPage() {
         this.setFitToWidth(true);
 
@@ -285,11 +287,12 @@ public final class SettingsPage extends ScrollPane {
                     openLogFolderButton.setDisable(true);
 
                 JFXButton logButton = FXUtils.newBorderButton(i18n("settings.launcher.launcher_log.export"));
+                spinnerPane.setContent(logButton);
                 logButton.setOnAction(e -> onExportLogs());
 
                 HBox buttonBox = new HBox();
                 buttonBox.setSpacing(10);
-                buttonBox.getChildren().addAll(openLogFolderButton, logButton);
+                buttonBox.getChildren().addAll(openLogFolderButton, spinnerPane);
                 BorderPane.setAlignment(buttonBox, Pos.CENTER_RIGHT);
                 debugPane.setRight(buttonBox);
 
@@ -362,6 +365,7 @@ public final class SettingsPage extends ScrollPane {
     }
 
     private void onExportLogs() {
+        spinnerPane.showSpinner();
         thread(() -> {
             String nameBase = "hmcl-exported-logs-" + LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH-mm-ss"));
             List<Path> recentLogFiles = LOG.findRecentLogFiles(5);
@@ -434,11 +438,17 @@ public final class SettingsPage extends ScrollPane {
                 }
             } catch (IOException e) {
                 LOG.warning("Failed to export logs", e);
-                Platform.runLater(() -> Controllers.dialog(i18n("settings.launcher.launcher_log.export.failed") + "\n" + StringUtils.getStackTrace(e), null, MessageType.ERROR));
+                Platform.runLater(() -> {
+                    spinnerPane.showSpinner();
+                    Controllers.dialog(i18n("settings.launcher.launcher_log.export.failed") + "\n" + StringUtils.getStackTrace(e), null, MessageType.ERROR);
+                });
                 return;
             }
 
-            Platform.runLater(() -> Controllers.dialog(i18n("settings.launcher.launcher_log.export.success", outputFile)));
+            Platform.runLater(() -> {
+                spinnerPane.showSpinner();
+                Controllers.dialog(i18n("settings.launcher.launcher_log.export.success", outputFile));
+            });
             FXUtils.showFileInExplorer(outputFile);
         });
     }
