@@ -18,19 +18,18 @@
 package org.jackhuang.hmcl.ui.main;
 
 import com.jfoenix.controls.JFXButton;
-import com.jfoenix.controls.JFXRadioButton;
 import javafx.application.Platform;
 import javafx.beans.InvalidationListener;
 import javafx.beans.WeakInvalidationListener;
 import javafx.beans.binding.Bindings;
 import javafx.beans.property.ObjectProperty;
+import javafx.beans.property.StringProperty;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.geometry.VPos;
 import javafx.scene.Cursor;
 import javafx.scene.control.Label;
 import javafx.scene.control.ScrollPane;
-import javafx.scene.control.ToggleGroup;
 import javafx.scene.layout.*;
 import javafx.scene.text.TextAlignment;
 import org.jackhuang.hmcl.Metadata;
@@ -67,13 +66,9 @@ import java.util.zip.ZipOutputStream;
 import static org.jackhuang.hmcl.setting.ConfigHolder.config;
 import static org.jackhuang.hmcl.util.Lang.thread;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
-import static org.jackhuang.hmcl.util.javafx.ExtendedProperties.selectedItemPropertyFor;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 public final class SettingsPage extends ScrollPane {
-
-    @SuppressWarnings("FieldCanBeLocal")
-    private final ToggleGroup updateChannelGroup;
     @SuppressWarnings("FieldCanBeLocal")
     private final InvalidationListener updateListener;
 
@@ -120,24 +115,21 @@ public final class SettingsPage extends ScrollPane {
                 settingsPane.getContent().add(sponsorPane);
             }
 
+            ObjectProperty<UpdateChannel> updateChannel;
             {
-                ComponentSublist updatePane = new ComponentSublist();
+                var updatePane = new LineSelectButton<UpdateChannel>();
+                updateChannel = updatePane.valueProperty();
                 updatePane.setTitle(i18n("update"));
-                updatePane.setHasSubtitle(true);
+                updatePane.setValue(UpdateChannel.getChannel());
 
-                final Label lblUpdate;
-                final Label lblUpdateSub;
-                {
-                    VBox headerLeft = new VBox();
 
-                    lblUpdate = new Label(i18n("update"));
-                    lblUpdate.getStyleClass().add("title-label");
-                    lblUpdateSub = new Label();
-                    lblUpdateSub.getStyleClass().add("subtitle-label");
+                updatePane.setConverter(channel -> i18n("update.channel." + channel.channelName));
+                updatePane.setItems(List.of(UpdateChannel.STABLE, UpdateChannel.DEVELOPMENT));
+                updatePane.setDescriptionConverter(channel -> i18n("update.note." + channel.channelName));
+                settingsPane.getContent().add(updatePane);
 
-                    headerLeft.getChildren().setAll(lblUpdate, lblUpdateSub);
-                    updatePane.setHeaderLeft(headerLeft);
-                }
+                final StringProperty lblUpdate = updatePane.titleProperty();
+                final StringProperty lblUpdateSub = updatePane.subtitleProperty();
 
                 {
                     JFXButton btnUpdate = FXUtils.newToggleButton4(SVG.UPDATE, 20);
@@ -148,23 +140,14 @@ public final class SettingsPage extends ScrollPane {
                         btnUpdate.setVisible(UpdateChecker.isOutdated());
 
                         if (UpdateChecker.isOutdated()) {
-                            lblUpdateSub.setText(i18n("update.newest_version", UpdateChecker.getLatestVersion().getVersion()));
-                            lblUpdateSub.getStyleClass().setAll("update-label");
-
-                            lblUpdate.setText(i18n("update.found"));
-                            lblUpdate.getStyleClass().setAll("update-label");
+                            lblUpdateSub.set(i18n("update.newest_version", UpdateChecker.getLatestVersion().getVersion()));
+                            lblUpdate.set(i18n("update.found"));
                         } else if (UpdateChecker.isCheckingUpdate()) {
-                            lblUpdateSub.setText(i18n("update.checking"));
-                            lblUpdateSub.getStyleClass().setAll("subtitle-label");
-
-                            lblUpdate.setText(i18n("update"));
-                            lblUpdate.getStyleClass().setAll("title-label");
+                            lblUpdateSub.set(i18n("update.checking"));
+                            lblUpdate.set(i18n("update"));
                         } else {
-                            lblUpdateSub.setText(i18n("update.latest"));
-                            lblUpdateSub.getStyleClass().setAll("subtitle-label");
-
-                            lblUpdate.setText(i18n("update"));
-                            lblUpdate.getStyleClass().setAll("title-label");
+                            lblUpdateSub.set(i18n("update.latest"));
+                            lblUpdate.set(i18n("update"));
                         }
                     };
                     UpdateChecker.latestVersionProperty().addListener(new WeakInvalidationListener(updateListener));
@@ -172,31 +155,8 @@ public final class SettingsPage extends ScrollPane {
                     UpdateChecker.checkingUpdateProperty().addListener(new WeakInvalidationListener(updateListener));
                     updateListener.invalidated(null);
 
-                    updatePane.setHeaderRight(btnUpdate);
                 }
 
-                {
-                    VBox content = new VBox(12);
-                    content.setPadding(new Insets(8, 0, 0, 0));
-
-                    updateChannelGroup = new ToggleGroup();
-
-                    JFXRadioButton chkUpdateStable = new JFXRadioButton(i18n("update.channel.stable"));
-                    chkUpdateStable.setUserData(UpdateChannel.STABLE);
-                    chkUpdateStable.setToggleGroup(updateChannelGroup);
-
-                    JFXRadioButton chkUpdateDev = new JFXRadioButton(i18n("update.channel.dev"));
-                    chkUpdateDev.setUserData(UpdateChannel.DEVELOPMENT);
-                    chkUpdateDev.setToggleGroup(updateChannelGroup);
-
-                    Label noteWrapper = new Label(i18n("update.note"));
-                    VBox.setMargin(noteWrapper, new Insets(8, 0, 0, 0));
-
-                    content.getChildren().setAll(chkUpdateStable, chkUpdateDev, noteWrapper);
-
-                    updatePane.getContent().add(content);
-                }
-                settingsPane.getContent().add(updatePane);
             }
 
             {
@@ -205,8 +165,6 @@ public final class SettingsPage extends ScrollPane {
                 previewPane.setSubtitle(i18n("update.preview.subtitle"));
                 previewPane.selectedProperty().bindBidirectional(config().acceptPreviewUpdateProperty());
 
-                ObjectProperty<UpdateChannel> updateChannel = selectedItemPropertyFor(updateChannelGroup, UpdateChannel.class);
-                updateChannel.set(UpdateChannel.getChannel());
                 InvalidationListener checkUpdateListener = e -> {
                     UpdateChecker.requestCheckUpdate(updateChannel.get(), previewPane.isSelected());
                 };
