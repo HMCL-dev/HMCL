@@ -164,7 +164,7 @@ public final class ModpackSelectionPage extends VBox implements WizardPage {
             } catch (IOException e) {
                 handler.reject(e.getMessage());
             }
-        }, "", new URLValidator());
+        }, "", false, new URLValidator());
     }
 
     public void onChooseRepository() {
