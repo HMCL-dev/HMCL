@@ -19,9 +19,8 @@ package org.jackhuang.hmcl.ui.main;
 
 import com.jfoenix.controls.JFXPopup;
 import javafx.beans.property.ReadOnlyObjectProperty;
-import javafx.scene.control.Label;
+import javafx.scene.layout.Region;
 import org.jackhuang.hmcl.Metadata;
-import org.jackhuang.hmcl.auth.Account;
 import org.jackhuang.hmcl.event.EventBus;
 import org.jackhuang.hmcl.event.RefreshedVersionsEvent;
 import org.jackhuang.hmcl.game.HMCLGameRepository;
@@ -37,11 +36,11 @@ import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
 import org.jackhuang.hmcl.ui.account.AccountAdvancedListItem;
+import org.jackhuang.hmcl.ui.account.AccountListPopupMenu;
 import org.jackhuang.hmcl.ui.animation.AnimationUtils;
 import org.jackhuang.hmcl.ui.construct.AdvancedListBox;
 import org.jackhuang.hmcl.ui.construct.AdvancedListItem;
 import org.jackhuang.hmcl.ui.construct.MessageDialogPane;
-import org.jackhuang.hmcl.ui.construct.PopupMenu;
 import org.jackhuang.hmcl.ui.decorator.DecoratorAnimatedPage;
 import org.jackhuang.hmcl.ui.decorator.DecoratorPage;
 import org.jackhuang.hmcl.ui.download.ModpackInstallWizardProvider;
@@ -67,7 +66,6 @@ import java.util.Locale;
 import java.util.stream.Collectors;
 
 import static org.jackhuang.hmcl.ui.FXUtils.runInFX;
-import static org.jackhuang.hmcl.ui.FXUtils.wrap;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
@@ -148,7 +146,7 @@ public class RootPage extends DecoratorAnimatedPage implements DecoratorPage {
             // first item in left sidebar
             AccountAdvancedListItem accountListItem = new AccountAdvancedListItem();
             accountListItem.setOnAction(e -> Controllers.navigate(Controllers.getAccountListPage()));
-            FXUtils.onSecondaryButtonClicked(accountListItem, () -> showAccountListPopupMenu(accountListItem));
+            FXUtils.onSecondaryButtonClicked(accountListItem, () -> AccountListPopupMenu.show(accountListItem, JFXPopup.PopupVPosition.TOP, JFXPopup.PopupHPosition.LEFT, accountListItem.getWidth(), 0));
             accountListItem.accountProperty().bind(Accounts.selectedAccountProperty());
 
             // second item in left sidebar
@@ -173,16 +171,14 @@ public class RootPage extends DecoratorAnimatedPage implements DecoratorPage {
 
             // third item in left sidebar
             AdvancedListItem gameItem = new AdvancedListItem();
-            gameItem.setLeftGraphic(wrap(SVG.FORMAT_LIST_BULLETED));
-            gameItem.setActionButtonVisible(false);
+            gameItem.setLeftIcon(SVG.FORMAT_LIST_BULLETED);
             gameItem.setTitle(i18n("version.manage"));
             gameItem.setOnAction(e -> Controllers.navigate(Controllers.getGameListPage()));
             FXUtils.onSecondaryButtonClicked(gameItem, () -> showGameListPopupMenu(gameItem));
 
             // forth item in left sidebar
             AdvancedListItem downloadItem = new AdvancedListItem();
-            downloadItem.setLeftGraphic(wrap(SVG.DOWNLOAD));
-            downloadItem.setActionButtonVisible(false);
+            downloadItem.setLeftIcon(SVG.DOWNLOAD);
             downloadItem.setTitle(i18n("download"));
             downloadItem.setOnAction(e -> {
                 Controllers.getDownloadPage().showGameDownloads();
@@ -195,8 +191,7 @@ public class RootPage extends DecoratorAnimatedPage implements DecoratorPage {
 
             // fifth item in left sidebar
             AdvancedListItem launcherSettingsItem = new AdvancedListItem();
-            launcherSettingsItem.setLeftGraphic(wrap(SVG.SETTINGS));
-            launcherSettingsItem.setActionButtonVisible(false);
+            launcherSettingsItem.setLeftIcon(SVG.SETTINGS);
             launcherSettingsItem.setTitle(i18n("settings"));
             launcherSettingsItem.setOnAction(e -> {
                 Controllers.getSettingsPage().showGameSettings(Profiles.getSelectedProfile());
@@ -208,8 +203,7 @@ public class RootPage extends DecoratorAnimatedPage implements DecoratorPage {
 
             // sixth item in left sidebar
             AdvancedListItem terracottaItem = new AdvancedListItem();
-            terracottaItem.setLeftGraphic(wrap(SVG.GRAPH2));
-            terracottaItem.setActionButtonVisible(false);
+            terracottaItem.setLeftIcon(SVG.GRAPH2);
             terracottaItem.setTitle(i18n("terracotta"));
             terracottaItem.setOnAction(e -> {
                 if (TerracottaMetadata.PROVIDER != null) {
@@ -251,37 +245,7 @@ public class RootPage extends DecoratorAnimatedPage implements DecoratorPage {
             setCenter(getSkinnable().getMainPage());
         }
 
-        public void showAccountListPopupMenu(
-                AccountAdvancedListItem accountListItem
-        ) {
-            PopupMenu popupMenu = new PopupMenu();
-            JFXPopup popup = new JFXPopup(popupMenu);
-            AdvancedListBox scrollPane = new AdvancedListBox();
-            scrollPane.getStyleClass().add("no-padding");
-            scrollPane.setPrefWidth(220);
-            scrollPane.setPrefHeight(-1);
-            scrollPane.setMaxHeight(260);
-
-            if (Accounts.getAccounts().isEmpty()) {
-                Label placeholder = new Label(i18n("account.empty"));
-                placeholder.setStyle("-fx-padding: 10px; -fx-text-fill: -monet-on-surface-variant; -fx-font-style: italic;");
-                scrollPane.add(placeholder);
-            } else {
-                for (Account account : Accounts.getAccounts()) {
-                    AccountAdvancedListItem item = new AccountAdvancedListItem(account);
-                    item.setOnAction(e -> {
-                        Accounts.setSelectedAccount(account);
-                        popup.hide();
-                    });
-                    scrollPane.add(item);
-                }
-            }
-
-            popupMenu.getContent().add(scrollPane);
-            popup.show(accountListItem, JFXPopup.PopupVPosition.TOP, JFXPopup.PopupHPosition.LEFT, accountListItem.getWidth(), 0);
-        }
-
-        public void showGameListPopupMenu(AdvancedListItem gameListItem) {
+        public void showGameListPopupMenu(Region gameListItem) {
             GameListPopupMenu.show(gameListItem,
                     JFXPopup.PopupVPosition.TOP,
                     JFXPopup.PopupHPosition.LEFT,

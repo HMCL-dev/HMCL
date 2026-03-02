@@ -2,27 +2,22 @@ package org.jackhuang.hmcl.ui.versions;
 
 import com.jfoenix.controls.JFXButton;
 import com.jfoenix.controls.JFXListView;
-import javafx.beans.binding.Bindings;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
+import javafx.scene.Node;
+import javafx.scene.control.ListCell;
 import javafx.scene.control.Skin;
-import javafx.scene.control.SkinBase;
 import javafx.scene.image.Image;
-import javafx.scene.image.ImageView;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
-import javafx.scene.layout.StackPane;
 import javafx.stage.FileChooser;
 import org.jackhuang.hmcl.mod.LocalModFile;
 import org.jackhuang.hmcl.resourcepack.ResourcepackFile;
 import org.jackhuang.hmcl.setting.Profile;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
-import org.jackhuang.hmcl.ui.Controllers;
-import org.jackhuang.hmcl.ui.FXUtils;
-import org.jackhuang.hmcl.ui.ListPageBase;
-import org.jackhuang.hmcl.ui.SVG;
+import org.jackhuang.hmcl.ui.*;
 import org.jackhuang.hmcl.ui.construct.*;
 import org.jackhuang.hmcl.util.io.FileUtils;
 
@@ -36,7 +31,6 @@ import java.util.List;
 import java.util.Objects;
 import java.util.stream.Stream;
 
-import static org.jackhuang.hmcl.ui.ToolbarListPageSkin.createToolbarButton2;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
@@ -113,8 +107,8 @@ public final class ResourcepackListPage extends ListPageBase<ResourcepackListPag
 
     public void onAddFiles() {
         FileChooser fileChooser = new FileChooser();
-        fileChooser.setTitle(i18n("resourcepack.add"));
-        fileChooser.getExtensionFilters().add(new FileChooser.ExtensionFilter(i18n("resourcepack"), "*.zip"));
+        fileChooser.setTitle(i18n("resourcepack.add.title"));
+        fileChooser.getExtensionFilters().add(new FileChooser.ExtensionFilter(i18n("extension.resourcepack"), "*.zip"));
         List<Path> files = FileUtils.toPaths(fileChooser.showOpenMultipleDialog(Controllers.getStage()));
         if (files != null && !files.isEmpty()) {
             addFiles(files);
@@ -126,43 +120,24 @@ public final class ResourcepackListPage extends ListPageBase<ResourcepackListPag
         Controllers.navigate(Controllers.getDownloadPage());
     }
 
-    private static final class ResourcepackListPageSkin extends SkinBase<ResourcepackListPage> {
-        private final JFXListView<ResourcepackInfoObject> listView;
+    private static final class ResourcepackListPageSkin extends ToolbarListPageSkin<ResourcepackInfoObject, ResourcepackListPage> {
 
-        private ResourcepackListPageSkin(ResourcepackListPage control) {
+        public ResourcepackListPageSkin(ResourcepackListPage control) {
             super(control);
+        }
 
-            StackPane pane = new StackPane();
-            pane.setPadding(new Insets(10));
-            pane.getStyleClass().addAll("notice-pane");
-
-            ComponentList root = new ComponentList();
-            root.getStyleClass().add("no-padding");
-            listView = new JFXListView<>();
-
-            HBox toolbar = new HBox();
-            toolbar.setAlignment(Pos.CENTER_LEFT);
-            toolbar.setPickOnBounds(false);
-            toolbar.getChildren().setAll(
-                    createToolbarButton2(i18n("button.refresh"), SVG.REFRESH, control::refresh),
-                    createToolbarButton2(i18n("resourcepack.add"), SVG.ADD, control::onAddFiles),
-                    createToolbarButton2(i18n("resourcepack.download"), SVG.DOWNLOAD, control::onDownload)
+        @Override
+        protected List<Node> initializeToolbar(ResourcepackListPage skinnable) {
+            return List.of(
+                    createToolbarButton2(i18n("button.refresh"), SVG.REFRESH, skinnable::refresh),
+                    createToolbarButton2(i18n("resourcepack.add"), SVG.ADD, skinnable::onAddFiles),
+                    createToolbarButton2(i18n("resourcepack.download"), SVG.DOWNLOAD, skinnable::onDownload)
             );
-            root.getContent().add(toolbar);
+        }
 
-            SpinnerPane center = new SpinnerPane();
-            ComponentList.setVgrow(center, Priority.ALWAYS);
-            center.getStyleClass().add("large-spinner-pane");
-            center.loadingProperty().bind(control.loadingProperty());
-
-            listView.setCellFactory(x -> new ResourcepackListCell(listView, control));
-            Bindings.bindContent(listView.getItems(), control.getItems());
-
-            center.setContent(listView);
-            root.getContent().add(center);
-
-            pane.getChildren().setAll(root);
-            getChildren().setAll(pane);
+        @Override
+        protected ListCell<ResourcepackInfoObject> createListCell(JFXListView<ResourcepackInfoObject> listView) {
+            return new ResourcepackListCell(listView, getSkinnable());
         }
     }
 
@@ -202,10 +177,10 @@ public final class ResourcepackListPage extends ListPageBase<ResourcepackListPag
     }
 
     private static final class ResourcepackListCell extends MDListCell<ResourcepackInfoObject> {
-        private final ImageView imageView = new ImageView();
+        private final ImageContainer imageView = new ImageContainer(32);
         private final TwoLineListItem content = new TwoLineListItem();
-        private final JFXButton btnReveal = new JFXButton();
-        private final JFXButton btnDelete = new JFXButton();
+        private final JFXButton btnReveal = FXUtils.newToggleButton4(SVG.FOLDER_OPEN);
+        private final JFXButton btnDelete = FXUtils.newToggleButton4(SVG.DELETE_FOREVER);
         private final ResourcepackListPage page;
 
         public ResourcepackListCell(JFXListView<ResourcepackInfoObject> listView, ResourcepackListPage page) {
@@ -219,7 +194,6 @@ public final class ResourcepackListPage extends ListPageBase<ResourcepackListPag
 
             HBox left = new HBox(8);
             left.setAlignment(Pos.CENTER);
-            FXUtils.limitSize(imageView, 32, 32);
             left.getChildren().add(imageView);
             left.setPadding(new Insets(0, 8, 0, 0));
             FXUtils.setLimitWidth(left, 48);
@@ -227,12 +201,6 @@ public final class ResourcepackListPage extends ListPageBase<ResourcepackListPag
 
             HBox.setHgrow(content, Priority.ALWAYS);
             root.setCenter(content);
-
-            btnReveal.getStyleClass().add("toggle-icon4");
-            btnReveal.setGraphic(SVG.FOLDER_OPEN.createIcon());
-
-            btnDelete.getStyleClass().add("toggle-icon4");
-            btnDelete.setGraphic(SVG.DELETE_FOREVER.createIcon());
 
             HBox right = new HBox(8);
             right.setAlignment(Pos.CENTER_RIGHT);
