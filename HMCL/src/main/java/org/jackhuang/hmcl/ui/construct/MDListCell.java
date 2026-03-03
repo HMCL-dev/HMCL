@@ -26,7 +26,7 @@ import javafx.scene.layout.StackPane;
 import org.jackhuang.hmcl.ui.FXUtils;
 
 public abstract class MDListCell<T> extends ListCell<T> {
-    private final PseudoClass SELECTED = PseudoClass.getPseudoClass("selected");
+    private static final PseudoClass SELECTED = PseudoClass.getPseudoClass("selected");
 
     private final StackPane container = new StackPane();
     private final StackPane root = new StackPane();

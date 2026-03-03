@@ -18,7 +18,6 @@
 package org.jackhuang.hmcl.ui.construct;
 
 import javafx.collections.ObservableList;
-import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
 import javafx.scene.control.ScrollPane;
@@ -28,8 +27,8 @@ import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
-import org.jackhuang.hmcl.ui.animation.ContainerAnimations;
-import org.jackhuang.hmcl.ui.animation.TransitionPane;
+import org.jackhuang.hmcl.ui.SVGContainer;
+import org.jackhuang.hmcl.ui.animation.Motion;
 
 import java.util.function.Consumer;
 
@@ -71,10 +70,9 @@ public class AdvancedListBox extends ScrollPane {
     private AdvancedListItem createNavigationDrawerItem(String title, SVG leftGraphic) {
         AdvancedListItem item = new AdvancedListItem();
         item.getStyleClass().add("navigation-drawer-item");
-        item.setActionButtonVisible(false);
         item.setTitle(title);
         if (leftGraphic != null) {
-            item.setLeftGraphic(FXUtils.wrap(leftGraphic));
+            item.setLeftIcon(leftGraphic);
         }
         return item;
     }
@@ -107,18 +105,11 @@ public class AdvancedListBox extends ScrollPane {
         item.activeProperty().bind(tabHeader.getSelectionModel().selectedItemProperty().isEqualTo(tab));
         item.setOnAction(e -> tabHeader.select(tab));
 
-        Node unselectedIcon = unselectedGraphic.createIcon(20);
-        Node selectedIcon = selectedGraphic.createIcon(20);
-
-        TransitionPane leftGraphic = new TransitionPane();
-        leftGraphic.setAlignment(Pos.CENTER);
-        FXUtils.setLimitWidth(leftGraphic, 30);
-        FXUtils.setLimitHeight(leftGraphic, 20);
-        leftGraphic.setPadding(Insets.EMPTY);
-        leftGraphic.setContent(item.isActive() ? selectedIcon : unselectedIcon, ContainerAnimations.NONE);
-        FXUtils.onChange(item.activeProperty(), active ->
-                leftGraphic.setContent(active ? selectedIcon : unselectedIcon, ContainerAnimations.FADE));
-
+        var leftGraphic = new SVGContainer(item.isActive() ? selectedGraphic : unselectedGraphic, AdvancedListItem.LEFT_ICON_SIZE);
+        leftGraphic.setMouseTransparent(true);
+        AdvancedListItem.setAlignment(leftGraphic, Pos.CENTER);
+        AdvancedListItem.setMargin(leftGraphic, AdvancedListItem.LEFT_ICON_MARGIN);
+        FXUtils.onChange(item.activeProperty(), active -> leftGraphic.setIcon(active ? selectedGraphic : unselectedGraphic, Motion.SHORT4));
         item.setLeftGraphic(leftGraphic);
         return add(item);
     }

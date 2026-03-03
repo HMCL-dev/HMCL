@@ -236,7 +236,11 @@ public final class NativePatcher {
             minVersion = "1.6";
         } else if (platform.equals(Platform.LINUX_RISCV64)) {
             minVersion = "1.8";
-            maxVersion = "1.21.5";
+
+            if (gameVersion.compareTo("1.21.5") > 0 && gameVersion.compareTo("26.1-snapshot-8") < 0) {
+                // LWJGL version mismatch
+                return SupportStatus.UNSUPPORTED;
+            }
         } else if (platform.equals(Platform.LINUX_LOONGARCH64)) {
             minVersion = "1.6";
         } else if (platform.equals(Platform.LINUX_LOONGARCH64_OW)) {

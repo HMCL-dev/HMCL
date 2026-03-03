@@ -200,9 +200,6 @@ public final class EntryPoint {
         } catch (SelfDependencyPatcher.PatchException e) {
             LOG.error("Unable to patch JVM", e);
             showErrorAndExit(i18n("fatal.javafx.missing"));
-        } catch (SelfDependencyPatcher.IncompatibleVersionException e) {
-            LOG.error("Unable to patch JVM", e);
-            showErrorAndExit(i18n("fatal.javafx.incompatible"));
         } catch (CancellationException e) {
             LOG.error("User cancels downloading JavaFX", e);
             exit(0);
