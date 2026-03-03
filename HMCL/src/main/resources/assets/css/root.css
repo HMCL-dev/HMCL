@@ -33,11 +33,11 @@
     -fx-arc-height: 0;
 }
 
-.title-label {
+.root .label.title-label {
     -fx-text-fill: -monet-on-surface;
 }
 
-.subtitle-label {
+.root .label.subtitle-label {
     -fx-text-fill: -monet-on-surface-variant;
 }
 
