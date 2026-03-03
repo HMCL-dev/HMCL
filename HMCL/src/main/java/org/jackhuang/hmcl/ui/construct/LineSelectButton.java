@@ -97,7 +97,7 @@ public final class LineSelectButton<T> extends LineButton {
                 }, converterProperty()));
 
                 var itemSubtitleLabel = new Label();
-                itemSubtitleLabel.getStyleClass().add("subtitle-label");
+                itemSubtitleLabel.getStyleClass().setAll("subtitle-label");
                 itemSubtitleLabel.textProperty().bind(Bindings.createStringBinding(() -> {
                     Function<T, String> descriptionConverter = getDescriptionConverter();
                     return descriptionConverter != null ? descriptionConverter.apply(item) : "";

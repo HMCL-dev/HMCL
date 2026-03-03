@@ -1970,15 +1970,6 @@
     -fx-font-size: 13px;
 }
 
-.line-select-button .menu-container .title-label {
-    -fx-text-fill: -monet-on-surface;
-}
-
-.line-select-button .menu-container .subtitle-label {
-    -fx-text-fill: -monet-on-surface-variant;
-}
-
-
 .line-select-button .menu-container:selected .title-label {
     -fx-text-fill: -monet-primary;
 }
