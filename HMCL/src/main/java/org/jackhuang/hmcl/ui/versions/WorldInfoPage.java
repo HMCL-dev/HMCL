@@ -521,6 +521,7 @@ public final class WorldInfoPage extends SpinnerPane implements WorldManagePage.
 
     @Override
     public void refresh() {
+        setFailedReason(null);
         try {
             this.isReadOnly = worldManagePage.isReadOnly();
             this.levelData = world.getLevelData();

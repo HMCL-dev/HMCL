@@ -80,7 +80,7 @@ public final class WorldManagePage extends DecoratorAnimatedPage implements Deco
         try {
             this.world.reloadWorldData();
         } catch (IOException e) {
-            LOG.warning("Can not load world level.dat of world: " + this.world.getFile(), e);
+            LOG.warning("Can not load world data of world: " + this.world.getFile(), e);
             this.addEventHandler(Navigator.NavigationEvent.NAVIGATED, event -> closePageForLoadingFail());
         }
 

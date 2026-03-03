@@ -263,17 +263,16 @@ public final class World {
 
         Path worldGenSettingsDatPath = file.resolve("data/minecraft/world_gen_settings.dat");
         if (data.get("WorldGenSettings") instanceof CompoundTag worldGenSettingsTag) {
-            this.worldGenSettingsDataPath = null;
-            this.worldGenSettingsData = worldGenSettingsTag;
-            this.unifiedWorldGenSettingsData = worldGenSettingsData;
-        } else if (Files.exists(worldGenSettingsDatPath)) {
-            this.worldGenSettingsDataPath = worldGenSettingsDatPath;
-            this.worldGenSettingsData = readTag(worldGenSettingsDatPath);
-            this.unifiedWorldGenSettingsData = worldGenSettingsData.get("data");
+            setWorldGenSettingsDatas(null, worldGenSettingsTag, worldGenSettingsTag);
+        } else if (Files.isRegularFile(worldGenSettingsDatPath)) {
+            CompoundTag raw = readTag(worldGenSettingsDatPath);
+            if (raw.get("data") instanceof CompoundTag compoundTag) {
+                setWorldGenSettingsDatas(worldGenSettingsDatPath, raw, compoundTag);
+            } else {
+                setWorldGenSettingsDatas(null, null, null);
+            }
         } else {
-            this.worldGenSettingsDataPath = null;
-            this.worldGenSettingsData = null;
-            this.unifiedWorldGenSettingsData = null;
+            setWorldGenSettingsDatas(null, null, null);
         }
 
         if (data.get("Player") instanceof CompoundTag playerTag) {
@@ -296,6 +295,12 @@ public final class World {
             this.playerData = null;
             this.playerDataPath = null;
         }
+    }
+
+    private void setWorldGenSettingsDatas(Path worldGenSettingsDataPath, CompoundTag worldGenSettingsData, CompoundTag unifiedWorldGenSettingsData) {
+        this.worldGenSettingsDataPath = worldGenSettingsDataPath;
+        this.worldGenSettingsData = worldGenSettingsData;
+        this.unifiedWorldGenSettingsData = unifiedWorldGenSettingsData;
     }
 
     public void reloadWorldData() throws IOException {
