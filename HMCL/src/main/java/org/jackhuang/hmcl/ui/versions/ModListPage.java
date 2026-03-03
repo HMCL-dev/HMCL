@@ -43,6 +43,7 @@ import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.nio.file.Path;
 import java.util.*;
+import java.util.concurrent.CancellationException;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.locks.ReentrantLock;
 
@@ -244,6 +245,7 @@ public final class ModListPage extends ListPageBase<ModListPageSkin.ModInfoObjec
                             return null;
                         })
                         .whenComplete(Schedulers.javafx(), (result, exception) -> {
+                            if (exception instanceof CancellationException) return;
                             if (exception != null || result == null) {
                                 Controllers.dialog(i18n("mods.check_updates.failed_check"), i18n("message.failed"), MessageDialogPane.MessageType.ERROR);
                             } else if (result.isEmpty()) {
