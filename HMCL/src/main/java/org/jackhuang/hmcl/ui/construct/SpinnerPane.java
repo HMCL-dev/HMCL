@@ -222,7 +222,6 @@ public class SpinnerPane extends Control {
             } else {
                 if (contentPane == null) {
                     contentPane = new StackPane();
-                    contentPane.setClip(null);
                 }
 
                 Node content = control.getContent();
