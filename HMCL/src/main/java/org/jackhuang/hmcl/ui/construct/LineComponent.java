@@ -152,7 +152,6 @@ public abstract class LineComponent extends StackPane implements NoPaddingCompon
                             subtitleLabel.setWrapText(true);
                             subtitleLabel.setMinHeight(Region.USE_PREF_SIZE);
                             subtitleLabel.getStyleClass().add("subtitle-label");
-                            System.out.println(subtitleLabel.getStyleClass());
                         }
                         subtitleLabel.setText(subtitle);
                         if (titleContainer.getChildren().size() == 1)
