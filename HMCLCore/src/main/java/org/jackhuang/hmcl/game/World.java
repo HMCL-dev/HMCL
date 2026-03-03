@@ -49,9 +49,11 @@ public final class World {
 
     private CompoundTag levelData;
     private Path levelDataPath;
-    private CompoundTag worldGenSettingsData;
-    private CompoundTag unifiedWorldGenSettingsData;
+
+    private CompoundTag worldGenSettingsDataBackingTag;
+    private CompoundTag normalizedWorldGenSettingsData;
     private Path worldGenSettingsDataPath;
+
     private CompoundTag playerData;
     private Path playerDataPath;
 
@@ -96,8 +98,8 @@ public final class World {
         return levelData;
     }
 
-    public @Nullable CompoundTag getUnifiedWorldGenSettingsData() {
-        return unifiedWorldGenSettingsData;
+    public @Nullable CompoundTag getNormalizedWorldGenSettingsData() {
+        return normalizedWorldGenSettingsData;
     }
 
     public @Nullable CompoundTag getPlayerData() {
@@ -122,7 +124,7 @@ public final class World {
 
     public @Nullable Long getSeed() {
         // Valid after 1.16(20w20a)
-        if (unifiedWorldGenSettingsData != null && unifiedWorldGenSettingsData.get("seed") instanceof LongTag seedTag) {
+        if (normalizedWorldGenSettingsData != null && normalizedWorldGenSettingsData.get("seed") instanceof LongTag seedTag) {
             return seedTag.getValue();
         }
         // Valid before 1.16(20w20a)
@@ -141,7 +143,7 @@ public final class World {
         }
 
         // Unified handling of logic after version 1.16
-        if (unifiedWorldGenSettingsData != null && unifiedWorldGenSettingsData.get("dimensions") instanceof CompoundTag dims) {
+        if (normalizedWorldGenSettingsData != null && normalizedWorldGenSettingsData.get("dimensions") instanceof CompoundTag dims) {
             if (dims.get("minecraft:overworld") instanceof CompoundTag overworld && overworld.get("generator") instanceof CompoundTag gen) {
                 // Valid between 1.16(20w20a) and 1.18(21w37a)
                 if (gen.get("biome_source") instanceof CompoundTag bs && bs.get("large_biomes") instanceof ByteTag lbTag) {
@@ -299,8 +301,8 @@ public final class World {
 
     private void setWorldGenSettingsDatas(Path worldGenSettingsDataPath, CompoundTag worldGenSettingsData, CompoundTag unifiedWorldGenSettingsData) {
         this.worldGenSettingsDataPath = worldGenSettingsDataPath;
-        this.worldGenSettingsData = worldGenSettingsData;
-        this.unifiedWorldGenSettingsData = unifiedWorldGenSettingsData;
+        this.worldGenSettingsDataBackingTag = worldGenSettingsData;
+        this.normalizedWorldGenSettingsData = unifiedWorldGenSettingsData;
     }
 
     public void reloadWorldData() throws IOException {
@@ -417,8 +419,8 @@ public final class World {
 
         writeLevelData();
 
-        if (worldGenSettingsDataPath != null && worldGenSettingsData != null) {
-            writeTag(worldGenSettingsData, worldGenSettingsDataPath);
+        if (worldGenSettingsDataPath != null && worldGenSettingsDataBackingTag != null) {
+            writeTag(worldGenSettingsDataBackingTag, worldGenSettingsDataPath);
         }
 
         if (playerDataPath != null && playerData != null) {

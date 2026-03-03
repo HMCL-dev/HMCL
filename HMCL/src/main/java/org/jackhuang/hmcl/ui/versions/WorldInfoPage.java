@@ -251,8 +251,8 @@ public final class WorldInfoPage extends SpinnerPane implements WorldManagePage.
                     bindTagAndToggleButton(generateFeaturesTag, generateFeaturesButton);
                 }
                 // Valid after (1.16)20w20a
-                else if (world.getUnifiedWorldGenSettingsData() != null) {
-                    CompoundTag unifiedWorldGenSettingsDataTag = world.getUnifiedWorldGenSettingsData();
+                else if (world.getNormalizedWorldGenSettingsData() != null) {
+                    CompoundTag unifiedWorldGenSettingsDataTag = world.getNormalizedWorldGenSettingsData();
                     Tag tag = unifiedWorldGenSettingsDataTag.get("generate_features"); // Valid before 26.1-snapshot-6
                     if (tag == null)
                         tag = unifiedWorldGenSettingsDataTag.get("generate_structures"); // Valid after 26.1-snapshot-6
