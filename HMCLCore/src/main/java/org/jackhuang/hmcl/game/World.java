@@ -302,14 +302,18 @@ public final class World {
         loadAndCheckWorldData();
     }
 
+    // The rename method is used to rename temporary world object during installation and copying,
+    // so there is no need to modify the `file` field.
     public void rename(String newName) throws IOException {
         if (!Files.isDirectory(file))
             throw new IOException("Not a valid world directory");
 
+        // Change the name recorded in level.dat
         CompoundTag data = levelData.get("Data");
         data.put(new StringTag("LevelName", newName));
         writeLevelData();
 
+        // then change the folder's name
         Files.move(file, file.resolveSibling(newName));
     }
 
@@ -330,6 +334,7 @@ public final class World {
                 Path levelDatPath = fs.getPath("/level.dat");
                 if (Files.isRegularFile(levelDatPath)) {
                     fileName = FileUtils.getName(file);
+
                     new Unzipper(file, worldDir).unzip();
                 } else {
                     try (Stream<Path> stream = Files.list(fs.getPath("/"))) {
@@ -343,6 +348,7 @@ public final class World {
                                 .unzip();
                     }
                 }
+
             }
             new World(worldDir).rename(name);
         } else if (Files.isDirectory(file)) {
@@ -422,7 +428,7 @@ public final class World {
     private CompoundTag readTag(Path path) throws IOException {
         try (InputStream is = new GZIPInputStream(Files.newInputStream(path))) {
             Tag tag = NBTIO.readTag(is);
-            if (tag instanceof CompoundTag ct) return ct;
+            if (tag instanceof CompoundTag compoundTag) return compoundTag;
             throw new IOException("NBT file malformed: " + path);
         }
     }
