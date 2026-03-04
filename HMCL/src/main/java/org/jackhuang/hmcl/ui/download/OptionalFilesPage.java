@@ -32,6 +32,7 @@ import javafx.scene.image.ImageView;
 import javafx.scene.layout.*;
 import org.jackhuang.hmcl.mod.ModpackFile;
 import org.jackhuang.hmcl.mod.RemoteMod;
+import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
@@ -44,6 +45,7 @@ import org.jackhuang.hmcl.ui.construct.TwoLineListItem;
 import org.jackhuang.hmcl.ui.wizard.WizardPage;
 
 import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
 
 import static org.jackhuang.hmcl.ui.FXUtils.onEscPressed;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
@@ -167,10 +169,24 @@ public class OptionalFilesPage extends SpinnerPane implements WizardPage {
     private static class ModInfo extends JFXDialogLayout {
         public ModInfo(RemoteMod mod) {
             HBox container = new HBox(8);
-            ImageView imageView = new ImageView(mod.getIconUrl());
+            SpinnerPane spinnerPane = new SpinnerPane();
+            ImageView imageView = new ImageView();
             imageView.setFitHeight(32);
             imageView.setFitWidth(32);
-            container.getChildren().add(imageView);
+            spinnerPane.setContent(imageView);
+            spinnerPane.setPrefSize(32, 32);
+            spinnerPane.setLoading(true);
+            CompletableFuture.supplyAsync(() -> {
+                try {
+                    return FXUtils.getRemoteImageTask(mod.getIconUrl(), 32, 32, true, true).run();
+                } catch (Exception e) {
+                    throw new RuntimeException(e);
+                }
+            }, Schedulers.io()).thenAcceptAsync((image) -> {
+                imageView.setImage(image);
+                spinnerPane.setLoading(false);
+            }, Schedulers.javafx());
+            container.getChildren().add(spinnerPane);
 
             TwoLineListItem title = new TwoLineListItem();
             title.setTitle(mod.getTitle());
