@@ -202,7 +202,8 @@ public final class WorldInfoPage extends SpinnerPane implements WorldManagePage.
             var worldSpawnPoint = new LineTextPane();
             {
                 worldSpawnPoint.setTitle(i18n("world.info.spawn"));
-                String value = "";
+
+                String value;
                 // Valid after 1.21.9-pre1
                 if (dataTag.get("spawn") instanceof CompoundTag spawnTag && spawnTag.get("pos") instanceof IntArrayTag posTag) {
                     value = (spawnTag.get("dimension") instanceof StringTag dimensionTag)
@@ -214,6 +215,8 @@ public final class WorldInfoPage extends SpinnerPane implements WorldManagePage.
                         && dataTag.get("SpawnY") instanceof IntTag intY
                         && dataTag.get("SpawnZ") instanceof IntTag intZ) {
                     value = Dimension.OVERWORLD.formatPosition(intX.getValue(), intY.getValue(), intZ.getValue());
+                } else {
+                    value = null;
                 }
 
                 worldSpawnPoint.setText(value);

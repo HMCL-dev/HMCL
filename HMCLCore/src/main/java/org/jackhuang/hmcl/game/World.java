@@ -77,10 +77,9 @@ public final class World {
     }
 
     public String getWorldName() {
-        if (levelData.get("Data") instanceof CompoundTag data && data.get("LevelName") instanceof StringTag levelNameTag) {
-            return levelNameTag.getValue();
-        }
-        return "";
+        CompoundTag data = levelData.get("Data");
+        StringTag levelNameTag = data.get("LevelName");
+        return levelNameTag.getValue();
     }
 
     public void setWorldName(String worldName) throws IOException {
@@ -107,10 +106,9 @@ public final class World {
     }
 
     public long getLastPlayed() {
-        if (levelData.get("Data") instanceof CompoundTag data && data.get("LastPlayed") instanceof LongTag lastPlayedTag) {
-            return lastPlayedTag.getValue();
-        }
-        return 0L;
+        CompoundTag data = levelData.get("Data");
+        LongTag lastPlayedTag = data.get("LastPlayed");
+        return lastPlayedTag.getValue();
     }
 
     public @Nullable GameVersionNumber getGameVersion() {
