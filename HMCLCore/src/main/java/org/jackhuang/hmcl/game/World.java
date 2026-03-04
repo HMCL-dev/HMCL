@@ -265,21 +265,20 @@ public final class World {
 
         Path worldGenSettingsDatPath = file.resolve("data/minecraft/world_gen_settings.dat");
         if (data.get("WorldGenSettings") instanceof CompoundTag worldGenSettingsTag) {
-            setWorldGenSettingsDatas(null, worldGenSettingsTag, worldGenSettingsTag);
+            setWorldGenSettingsData(null, worldGenSettingsTag, worldGenSettingsTag);
         } else if (Files.isRegularFile(worldGenSettingsDatPath)) {
             CompoundTag raw = readTag(worldGenSettingsDatPath);
             if (raw.get("data") instanceof CompoundTag compoundTag) {
-                setWorldGenSettingsDatas(worldGenSettingsDatPath, raw, compoundTag);
+                setWorldGenSettingsData(worldGenSettingsDatPath, raw, compoundTag);
             } else {
-                setWorldGenSettingsDatas(null, null, null);
+                setWorldGenSettingsData(null, null, null);
             }
         } else {
-            setWorldGenSettingsDatas(null, null, null);
+            setWorldGenSettingsData(null, null, null);
         }
 
         if (data.get("Player") instanceof CompoundTag playerTag) {
-            this.playerData = playerTag;
-            this.playerDataPath = null;
+            setPlayerData(null, playerTag);
         } else if (data.get("singleplayer_uuid") instanceof IntArrayTag uuidTag && uuidTag.getValue().length == 4) {
             int[] uuidValue = uuidTag.getValue();
             long mostSigBits = ((long) uuidValue[0] << 32) | (uuidValue[1] & 0xFFFFFFFFL);
@@ -287,22 +286,24 @@ public final class World {
             String playerUUID = new UUID(mostSigBits, leastSigBits).toString();
             Path playerDatPath = file.resolve("players/data/" + playerUUID + ".dat");
             if (Files.exists(playerDatPath)) {
-                this.playerData = readTag(playerDatPath);
-                this.playerDataPath = playerDatPath;
+                setPlayerData(playerDatPath, readTag(playerDatPath));
             } else {
-                this.playerData = null;
-                this.playerDataPath = null;
+                setPlayerData(null, null);
             }
         } else {
-            this.playerData = null;
-            this.playerDataPath = null;
+            setPlayerData(null, null);
         }
     }
 
-    private void setWorldGenSettingsDatas(Path worldGenSettingsDataPath, CompoundTag worldGenSettingsData, CompoundTag unifiedWorldGenSettingsData) {
+    private void setWorldGenSettingsData(Path worldGenSettingsDataPath, CompoundTag worldGenSettingsDataBackingTag, CompoundTag unifiedWorldGenSettingsData) {
         this.worldGenSettingsDataPath = worldGenSettingsDataPath;
-        this.worldGenSettingsDataBackingTag = worldGenSettingsData;
+        this.worldGenSettingsDataBackingTag = worldGenSettingsDataBackingTag;
         this.normalizedWorldGenSettingsData = unifiedWorldGenSettingsData;
+    }
+
+    private void setPlayerData(Path playerDataPath, CompoundTag playerData) {
+        this.playerDataPath = playerDataPath;
+        this.playerData = playerData;
     }
 
     public void reloadWorldData() throws IOException {
@@ -440,7 +441,7 @@ public final class World {
         }
     }
 
-    public void writeTag(CompoundTag nbt, Path path) throws IOException {
+    private void writeTag(CompoundTag nbt, Path path) throws IOException {
         if (!Files.isDirectory(file)) throw new IOException("Not a valid world directory");
         FileUtils.saveSafely(path, os -> {
             try (OutputStream gos = new GZIPOutputStream(os)) {
