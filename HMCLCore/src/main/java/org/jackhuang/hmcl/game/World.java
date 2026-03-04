@@ -50,11 +50,11 @@ public final class World {
     private CompoundTag levelData;
     private Path levelDataPath;
 
-    private CompoundTag worldGenSettingsDataBackingTag;
-    private CompoundTag normalizedWorldGenSettingsData;
+    private CompoundTag worldGenSettingsDataBackingTag; // Use for writing back to the file
+    private CompoundTag normalizedWorldGenSettingsData; // Use for reading/modification
     private Path worldGenSettingsDataPath;
 
-    private CompoundTag playerData;
+    private CompoundTag playerData; // Use for both reading/modification and writing back to the file
     private Path playerDataPath;
 
     public World(Path file) throws IOException {

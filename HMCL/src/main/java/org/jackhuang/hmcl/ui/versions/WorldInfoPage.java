@@ -481,7 +481,7 @@ public final class WorldInfoPage extends SpinnerPane implements WorldManagePage.
                     }
                 } catch (Exception e) {
                     jfxTextField.setText(oldValue);
-                    LOG.warning("Exception happened when saving level.dat", e);
+                    LOG.warning("Exception happened when saving world data", e);
                 }
             }
         });
@@ -502,7 +502,7 @@ public final class WorldInfoPage extends SpinnerPane implements WorldManagePage.
                     }
                 } catch (Exception e) {
                     jfxTextField.setText(oldValue);
-                    LOG.warning("Exception happened when saving level.dat", e);
+                    LOG.warning("Exception happened when saving world data", e);
                 }
             }
         });
