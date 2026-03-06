@@ -22,10 +22,13 @@ import javafx.beans.property.ReadOnlyObjectProperty;
 import javafx.beans.property.ReadOnlyObjectWrapper;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
+import javafx.scene.control.Skin;
+import javafx.scene.control.TreeItem;
 import javafx.scene.control.TreeView;
 import javafx.scene.control.skin.TreeViewSkin;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
+import org.glavo.nbt.NBTElement;
 import org.glavo.nbt.tag.Tag;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
@@ -95,11 +98,9 @@ public final class NBTEditorPage extends SpinnerPane implements DecoratorPage {
                         setLoading(false);
 
                         NBTTreeItem root = new NBTTreeItem(result, FileUtils.getName(file));
-                        root.setExpanded(true);
-
                         var view = new TreeView<>(root) {
                             @Override
-                            protected javafx.scene.control.Skin<?> createDefaultSkin() {
+                            protected Skin<?> createDefaultSkin() {
                                 return new TreeViewSkin<Tag>(this) {
                                     {
                                         FXUtils.smoothScrolling(getVirtualFlow());
@@ -108,6 +109,12 @@ public final class NBTEditorPage extends SpinnerPane implements DecoratorPage {
                             }
                         };
                         view.setCellFactory(ignored -> new NBTTreeCell());
+                        view.addEventHandler(TreeItem.<NBTElement>branchExpandedEvent(), event -> {
+                            TreeItem<NBTElement> item = event.getTreeItem();
+                            if (item.getValue() instanceof Tag && item.getChildren().size() == 1)
+                                item.getChildren().get(0).setExpanded(true);
+                        });
+                        root.setExpanded(true);
 
                         BorderPane.setMargin(view, new Insets(10));
                         onEscPressed(view, cancelButton::fire);

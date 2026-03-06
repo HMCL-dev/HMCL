@@ -23,7 +23,6 @@ import org.glavo.nbt.NBTElement;
 import org.glavo.nbt.NBTParent;
 import org.glavo.nbt.chunk.Chunk;
 import org.glavo.nbt.tag.*;
-import org.jackhuang.hmcl.ui.FXUtils;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
@@ -40,11 +39,6 @@ public final class NBTTreeItem extends TreeItem<NBTElement> {
     public NBTTreeItem(NBTElement value, @Nullable String name) {
         super(value);
         this.name = name;
-
-        FXUtils.onChangeAndOperate(expandedProperty(), expanded -> {
-            if (expanded && getChildren().size() == 1)
-                getChildren().get(0).setExpanded(true);
-        });
     }
 
     @Override
