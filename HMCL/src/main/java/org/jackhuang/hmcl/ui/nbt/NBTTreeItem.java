@@ -25,8 +25,6 @@ import org.glavo.nbt.chunk.Chunk;
 import org.glavo.nbt.tag.*;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.List;
-
 /// @author Glavo
 public final class NBTTreeItem extends TreeItem<NBTElement> {
     private final @Nullable String name;
@@ -49,23 +47,19 @@ public final class NBTTreeItem extends TreeItem<NBTElement> {
 
     @Override
     public ObservableList<TreeItem<NBTElement>> getChildren() {
+        ObservableList<TreeItem<NBTElement>> children = super.getChildren();
         if (isFirstTimeChildren) {
             isFirstTimeChildren = false;
 
-            List<NBTTreeItem> children;
             if (getValue() instanceof Chunk chunk) {
-                children = chunk.getRootTag() != null
-                        ? chunk.getRootTag().stream().map(NBTTreeItem::new).toList()
-                        : List.of();
+                if (chunk.getRootTag() != null) {
+                    children.setAll(chunk.getRootTag().stream().map(NBTTreeItem::new).toList());
+                }
             } else if (getValue() instanceof NBTParent<?> parent) {
-                children = parent.stream().map(NBTTreeItem::new).toList();
-            } else {
-                children = List.of();
+                children.setAll(parent.stream().map(NBTTreeItem::new).toList());
             }
-
-            super.getChildren().setAll(children);
         }
-        return super.getChildren();
+        return children;
     }
 
     public String getName() {
