@@ -32,6 +32,9 @@ import org.jackhuang.hmcl.event.RefreshedVersionsEvent;
 import org.jackhuang.hmcl.game.GameRepository;
 import org.jackhuang.hmcl.game.HMCLGameRepository;
 import org.jackhuang.hmcl.setting.Profile;
+import org.jackhuang.hmcl.task.Schedulers;
+import org.jackhuang.hmcl.task.Task;
+import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
 import org.jackhuang.hmcl.ui.WeakListenerHolder;
@@ -39,6 +42,7 @@ import org.jackhuang.hmcl.ui.animation.TransitionPane;
 import org.jackhuang.hmcl.ui.construct.*;
 import org.jackhuang.hmcl.ui.decorator.DecoratorAnimatedPage;
 import org.jackhuang.hmcl.ui.decorator.DecoratorPage;
+import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
 
 import java.util.Optional;
@@ -186,15 +190,27 @@ public class VersionPage extends DecoratorAnimatedPage implements DecoratorPage 
     }
 
     private void clearLibraries() {
-        FileUtils.deleteDirectoryQuietly(getProfile().getRepository().getBaseDirectory().resolve("libraries"));
+        Task.runAsync(Schedulers.io(), () -> {
+            FileUtils.deleteDirectoryQuietly(getProfile().getRepository().getBaseDirectory().resolve("libraries"));
+        }).whenComplete(Schedulers.javafx(), (exception) -> {
+            if (exception != null) {
+                Controllers.dialog(i18n("message.failed") + StringUtils.getStackTrace(exception), i18n("message.error"), MessageDialogPane.MessageType.ERROR);
+            }
+        }).start();
     }
 
     private void clearAssets() {
-        HMCLGameRepository baseDirectory = getProfile().getRepository();
-        FileUtils.deleteDirectoryQuietly(baseDirectory.getBaseDirectory().resolve("assets"));
-        if (version.get() != null) {
-            FileUtils.deleteDirectoryQuietly(baseDirectory.getRunDirectory(version.get().getVersion()).resolve("resources"));
-        }
+        Task.runAsync(Schedulers.io(), () -> {
+            HMCLGameRepository baseDirectory = getProfile().getRepository();
+            FileUtils.deleteDirectoryQuietly(baseDirectory.getBaseDirectory().resolve("assets"));
+            if (version.get() != null) {
+                FileUtils.deleteDirectoryQuietly(baseDirectory.getRunDirectory(version.get().getVersion()).resolve("resources"));
+            }
+        }).whenComplete(Schedulers.javafx(), (exception) -> {
+            if (exception != null) {
+                Controllers.dialog(i18n("message.failed") + StringUtils.getStackTrace(exception), i18n("message.error"), MessageDialogPane.MessageType.ERROR);
+            }
+        }).start();
     }
 
     private void clearJunkFiles() {
