@@ -24,6 +24,9 @@ import javafx.scene.control.skin.TreeViewSkin;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.util.Callback;
+import org.glavo.nbt.NBTElement;
+import org.glavo.nbt.chunk.Chunk;
+import org.glavo.nbt.chunk.ChunkRegion;
 import org.glavo.nbt.tag.*;
 import org.jackhuang.hmcl.ui.FXUtils;
 
@@ -35,7 +38,32 @@ import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 /**
  * @author Glavo
  */
-public final class NBTTreeView extends TreeView<Tag> {
+public final class NBTTreeView extends TreeView<NBTElement> {
+
+    private static final EnumMap<TagType, Image> icons = new EnumMap<>(TagType.class);
+
+    private static Image getIcon(NBTElement element) {
+        if (element instanceof Tag tag) {
+            return icons.computeIfAbsent(tag.getType(), type -> {
+                String tagName;
+
+                int idx = type.name().indexOf('_');
+                if (idx < 0) {
+                    tagName = type.name().charAt(0) + type.name().substring(1).toLowerCase(Locale.ROOT);
+                } else {
+                    tagName = type.name().charAt(0) + type.name().substring(1, idx + 1).toLowerCase(Locale.ROOT)
+                            + type.name().charAt(idx + 1) + type.name().substring(idx + 2).toLowerCase(Locale.ROOT);
+                }
+
+                return FXUtils.newBuiltinImage("/assets/img/nbt/TAG_" + tagName + ".png");
+            });
+        } else if (element instanceof ChunkRegion)
+            return FXUtils.newBuiltinImage("/assets/img/nbt/TAG_List.png");
+        else if (element instanceof Chunk)
+            return FXUtils.newBuiltinImage("/assets/img/nbt/TAG_Compound.png");
+        else
+            return null;
+    }
 
     public NBTTreeView(NBTTreeView.Item tree) {
         this.setRoot(tree);
@@ -52,9 +80,7 @@ public final class NBTTreeView extends TreeView<Tag> {
         };
     }
 
-    private static Callback<TreeView<Tag>, TreeCell<Tag>> cellFactory() {
-        var icons = new EnumMap<TagType, Image>(TagType.class);
-
+    private static Callback<TreeView<NBTElement>, TreeCell<NBTElement>> cellFactory() {
         return view -> new TreeCell<>() {
             private void setTagText(String text) {
                 String name = ((Item) getTreeItem()).getName();
@@ -73,7 +99,7 @@ public final class NBTTreeView extends TreeView<Tag> {
             }
 
             @Override
-            public void updateItem(Tag item, boolean empty) {
+            public void updateItem(NBTElement item, boolean empty) {
                 super.updateItem(item, empty);
 
                 ImageView imageView = (ImageView) this.getGraphic();
@@ -88,45 +114,19 @@ public final class NBTTreeView extends TreeView<Tag> {
                     return;
                 }
 
-                imageView.setImage(icons.computeIfAbsent(item.getType(), type -> {
-                    String tagName;
-
-                    int idx = type.name().indexOf('_');
-                    if (idx < 0) {
-                        tagName = type.name().charAt(0) + type.name().substring(1).toLowerCase(Locale.ROOT);
-                    } else {
-                        tagName = type.name().charAt(0) + type.name().substring(1, idx + 1).toLowerCase(Locale.ROOT)
-                                + type.name().charAt(idx + 1) + type.name().substring(idx + 2).toLowerCase(Locale.ROOT);
-                    }
-
-                    return FXUtils.newBuiltinImage("/assets/img/nbt/TAG_" + tagName + ".png");
-                }));
+                imageView.setImage(getIcon(item));
                 imageView.setFitHeight(16);
                 imageView.setFitWidth(16);
 
                 if (((Item) getTreeItem()).getText() != null) {
                     setText(((Item) getTreeItem()).getText());
                 } else {
-                    if (item instanceof ByteTag byteTag) {
-                        setTagText(Byte.toString(byteTag.get()));
-                    } else if (item instanceof ShortTag shortTag) {
-                        setTagText(Short.toString(shortTag.get()));
-                    } else if (item instanceof IntTag intTag) {
-                        setTagText(Integer.toString(intTag.get()));
-                    } else if (item instanceof LongTag longTag) {
-                        setTagText(Long.toString(longTag.get()));
-                    } else if (item instanceof FloatTag floatTag) {
-                        setTagText(Float.toString(floatTag.get()));
-                    } else if (item instanceof DoubleTag doubleTag) {
-                        setTagText(Double.toString(doubleTag.get()));
-                    } else if (item instanceof StringTag stringTag) {
-                        setTagText(stringTag.get());
-                    } else if (item instanceof ArrayTag arrayTag) {
+                    if (item instanceof ValueTag<?> valueTag) {
+                        setTagText(valueTag.getValue().toString());
+                    } else if (item instanceof ArrayTag<?> arrayTag) {
                         setTagText(arrayTag.size());
-                    } else if (item instanceof CompoundTag<?> compoundTag) {
-                        setTagText(compoundTag.size());
-                    } else if (item instanceof ListTag<?> listTag) {
-                        setTagText(listTag.size());
+                    } else if (item instanceof ParentTag<?> parentTag) {
+                        setTagText(parentTag.size());
                     } else {
                         setTagText(null);
                     }
@@ -135,14 +135,20 @@ public final class NBTTreeView extends TreeView<Tag> {
         };
     }
 
-    public static Item buildTree(Tag tag) {
-        Item item = new Item(tag);
+    public static Item buildTree(NBTElement element) {
+        var item = new Item(element);
 
-        if (tag instanceof CompoundTag<?> compoundTag) {
+        if (element instanceof Chunk chunk) {
+            if (chunk.getRootTag() != null) {
+                for (Tag subTag : chunk.getRootTag()) {
+                    item.getChildren().add(buildTree(subTag));
+                }
+            }
+        } else if (element instanceof CompoundTag compoundTag) {
             for (Tag subTag : compoundTag) {
                 item.getChildren().add(buildTree(subTag));
             }
-        } else if (tag instanceof ListTag<?> listTag) {
+        } else if (element instanceof ListTag<?> listTag) {
             int idx = 0;
             for (Tag subTag : listTag) {
                 Item subTree = buildTree(subTag);
@@ -150,6 +156,7 @@ public final class NBTTreeView extends TreeView<Tag> {
                 item.getChildren().add(subTree);
             }
         }
+
         FXUtils.onChangeAndOperate(item.expandedProperty(), expanded -> {
             if (expanded && item.getChildren().size() == 1) item.getChildren().get(0).setExpanded(true);
         });
@@ -157,19 +164,14 @@ public final class NBTTreeView extends TreeView<Tag> {
         return item;
     }
 
-    public CompoundTag getRootTag() {
-        return ((CompoundTag) getRoot().getValue());
-    }
-
-    public static class Item extends TreeItem<Tag> {
-
+    public static class Item extends TreeItem<NBTElement> {
         private String text;
         private String name;
 
         public Item() {
         }
 
-        public Item(Tag value) {
+        public Item(NBTElement value) {
             super(value);
         }
 
@@ -186,7 +188,10 @@ public final class NBTTreeView extends TreeView<Tag> {
         }
 
         public String getName() {
-            return name == null ? getValue().getName() : name;
+            if (name != null) {
+                return name;
+            }
+            return getValue() instanceof Tag tag ? tag.getName() : "";
         }
     }
 }
