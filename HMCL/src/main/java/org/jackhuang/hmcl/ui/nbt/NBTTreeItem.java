@@ -23,19 +23,21 @@ import org.glavo.nbt.NBTElement;
 import org.glavo.nbt.NBTParent;
 import org.glavo.nbt.chunk.Chunk;
 import org.glavo.nbt.tag.*;
+import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
 
 /// @author Glavo
+@NotNullByDefault
 public final class NBTTreeItem extends TreeItem<NBTElement> {
-    private final @Nullable String name;
+    private final @Nullable String overrideName;
 
     public NBTTreeItem(NBTElement value) {
         this(value, null);
     }
 
-    public NBTTreeItem(NBTElement value, @Nullable String name) {
+    public NBTTreeItem(NBTElement value, @Nullable String overrideName) {
         super(value);
-        this.name = name;
+        this.overrideName = overrideName;
     }
 
     @Override
@@ -62,23 +64,7 @@ public final class NBTTreeItem extends TreeItem<NBTElement> {
         return children;
     }
 
-    public String getName() {
-        if (name != null) {
-            return name;
-        }
-        NBTElement value = getValue();
-
-        if (value instanceof Tag tag) {
-            if (tag.getParent() instanceof ListTag<?>) {
-                return Integer.toString(tag.getIndex());
-            } else {
-                return tag.getName();
-            }
-        } else if (value instanceof Chunk chunk) {
-            return "Chunk (" + chunk.getLocalX() + ", " + chunk.getLocalZ() + ")";
-        } else {
-            return "";
-        }
-
+    public @Nullable String getOverrideName() {
+        return overrideName;
     }
 }

@@ -68,11 +68,25 @@ public final class NBTTreeCell extends TreeCell<NBTElement> {
     }
 
     private void setTagText(String text) {
-        String name = getNBTTreeItem().getName();
-
+        String name = getNBTTreeItem().getOverrideName();
         if (name == null) {
-            setText(text);
-        } else if (text == null) {
+            NBTElement value = getNBTTreeItem().getValue();
+
+            if (value instanceof Tag tag) {
+                if (tag.getParent() instanceof ListTag<?>) {
+                    name = Integer.toString(tag.getIndex());
+                } else {
+                    name = tag.getName();
+                }
+            } else if (value instanceof Chunk chunk) {
+                name = "Chunk (" + chunk.getLocalX() + ", " + chunk.getLocalZ() + ")";
+            } else {
+                name = "";
+            }
+        }
+
+
+        if (text == null) {
             setText(name);
         } else {
             setText(name + ": " + text);
