@@ -27,9 +27,7 @@ import org.jetbrains.annotations.Nullable;
 import java.io.IOException;
 import java.nio.file.Path;
 
-/**
- * @author Glavo
- */
+/// @author Glavo
 public enum NBTFileType {
     COMPRESSED("dat", "dat_old") {
         @Override
@@ -40,7 +38,7 @@ public enum NBTFileType {
     ANVIL("mca") {
         @Override
         public NBTElement read(Path file) throws IOException {
-            return REGION.read(file);
+            return NBTCodec.of().readRegion(file);
         }
     },
     REGION("mcr") {
