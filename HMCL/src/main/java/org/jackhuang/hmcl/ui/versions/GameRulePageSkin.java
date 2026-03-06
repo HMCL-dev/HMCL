@@ -1,0 +1,303 @@
+/*
+ * Hello Minecraft! Launcher
+ * Copyright (C) 2025 huangyuhui <huanghongxun2008@126.com> and contributors
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
+package org.jackhuang.hmcl.ui.versions;
+
+import com.jfoenix.controls.*;
+import javafx.animation.PauseTransition;
+import javafx.beans.property.BooleanProperty;
+import javafx.collections.transformation.FilteredList;
+import javafx.geometry.Insets;
+import javafx.geometry.Pos;
+import javafx.scene.control.Label;
+import javafx.scene.control.ScrollPane;
+import javafx.scene.control.SkinBase;
+import javafx.scene.input.KeyCode;
+import javafx.scene.input.KeyEvent;
+import javafx.scene.layout.*;
+import javafx.stage.Stage;
+import javafx.util.Duration;
+import org.jackhuang.hmcl.ui.Controllers;
+import org.jackhuang.hmcl.ui.FXUtils;
+import org.jackhuang.hmcl.ui.SVG;
+import org.jackhuang.hmcl.ui.construct.*;
+import org.jackhuang.hmcl.util.StringUtils;
+
+import static org.jackhuang.hmcl.ui.ToolbarListPageSkin.createToolbarButton2;
+import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
+
+class GameRulePageSkin extends SkinBase<GameRulePage> {
+
+    private final JFXListView<GameRuleInfo<?>> listView = new JFXListView<>();
+
+    GameRulePageSkin(GameRulePage skinnable) {
+        super(skinnable);
+        ComponentList contentList = new ComponentList();
+        StackPane rootContainer = new StackPane(contentList);
+        {
+            rootContainer.setPadding(new Insets(10));
+            rootContainer.getStyleClass().addAll("notice-pane", "no-padding");
+
+            getChildren().add(rootContainer);
+        }
+
+        HBox toolBar = new HBox();
+        {
+            toolBar.setAlignment(Pos.CENTER);
+            toolBar.setPadding(new Insets(0, 5, 0, 5));
+            toolBar.setSpacing(5);
+
+            var viewFilterComboBox = new JFXComboBox<>(GameRulePage.RuleModifiedType.items);
+            {
+                viewFilterComboBox.setValue(GameRulePage.RuleModifiedType.ALL);
+                // Changes to the modifiedList are only applied at the time a type is manually selected; this is by design.
+                viewFilterComboBox.valueProperty().addListener((observable, oldValue, newValue) -> {
+                    getSkinnable().changeRuleModifiedType(newValue);
+                });
+                viewFilterComboBox.setPrefWidth(100);
+            }
+
+            JFXTextField searchField = new JFXTextField();
+            {
+                searchField.setPromptText(i18n("search"));
+                PauseTransition searchPause = new PauseTransition(Duration.millis(300));
+                searchPause.setOnFinished(event -> getSkinnable().updateSearchPredicate(searchField.getText()));
+                searchField.textProperty().addListener((observable) -> searchPause.playFromStart());
+                HBox.setHgrow(searchField, Priority.ALWAYS);
+            }
+
+            JFXButton resetAllButton = createToolbarButton2(i18n("gamerule.restore_default_values_all"), SVG.RESTORE,
+                    () -> Controllers.dialog(new ResetDefaultValuesLayout(
+                            skinnable::resettingAllGameRule,
+                            getSkinnable().getModifiedItems(),
+                            () -> getSkinnable().applyRuleModifiedType())));
+            resetAllButton.disableProperty().bind(getSkinnable().readOnlyProperty());
+
+            toolBar.getChildren().addAll(searchField, new Label(i18n("gamerule.filter")), viewFilterComboBox, resetAllButton);
+            contentList.getContent().add(toolBar);
+        }
+
+        SpinnerPane center = new SpinnerPane();
+        {
+            ComponentList.setVgrow(center, Priority.ALWAYS);
+            center.loadingProperty().bind(getSkinnable().loadingProperty());
+            center.failedReasonProperty().bind(getSkinnable().failedReasonProperty());
+            center.setContent(listView);
+
+            listView.setItems(getSkinnable().getDisplayedItems());
+            listView.setCellFactory(x -> new GameRuleListCell(listView, getSkinnable().readOnlyProperty()));
+            FXUtils.ignoreEvent(listView, KeyEvent.KEY_PRESSED, e -> e.getCode() == KeyCode.ESCAPE);
+
+            contentList.getContent().add(center);
+        }
+    }
+
+    static class GameRuleListCell extends MDListCell<GameRuleInfo<?>> {
+
+        HBox hBox = new HBox();
+        // Although updateControl should be called when being reused, I don't know why it gets called when clicking the cell, leading to unexpected updates.
+        // Therefore, I determine whether an update is needed by comparing with lastItem.
+        GameRuleInfo<?> lastItem;
+
+        public GameRuleListCell(JFXListView<GameRuleInfo<?>> listView, BooleanProperty readOnly) {
+            super(listView);
+            this.disableProperty().bind(readOnly);
+
+            getContainer().getChildren().setAll(hBox);
+        }
+
+        @Override
+        protected void updateControl(GameRuleInfo<?> item, boolean empty) {
+            if (empty) return;
+
+            if (lastItem == null || lastItem != item) {
+                lastItem = item;
+            } else {
+                return;
+            }
+
+            if (item instanceof GameRuleInfo.IntGameRuleInfo intInfo) {
+                buildNodeForIntGameRule(intInfo, hBox);
+            } else if (item instanceof GameRuleInfo.BooleanGameRuleInfo booleanInfo) {
+                buildNodeForBooleanGameRule(booleanInfo, hBox);
+            }
+        }
+
+        private void buildNodeForIntGameRule(GameRuleInfo.IntGameRuleInfo gameRule, HBox itemWrapper) {
+            LinePane textFieldResetPane = new LinePane();
+            itemWrapper.getChildren().setAll(textFieldResetPane);
+            HBox.setHgrow(itemWrapper, Priority.ALWAYS);
+            {
+                HBox.setHgrow(textFieldResetPane, Priority.ALWAYS);
+                if (StringUtils.isNotBlank(gameRule.getDisplayName())) {
+                    textFieldResetPane.setTitle(gameRule.getDisplayName());
+                    textFieldResetPane.setSubtitle(gameRule.getRuleKey());
+                } else {
+                    textFieldResetPane.setTitle(gameRule.getRuleKey());
+                }
+
+                JFXTextField textField = new JFXTextField();
+                {
+                    textField.textProperty().bindBidirectional(gameRule.currentValueProperty());
+                    FXUtils.setValidateWhileTextChanged(textField, true);
+                    textField.setValidators(
+                            new NumberValidator(i18n("input.integer"), false),
+                            new NumberRangeValidator(i18n("input.number_range", gameRule.getMinValue(), gameRule.getMaxValue()), gameRule.getMinValue(), gameRule.getMaxValue()));
+
+                    textField.setPrefWidth(150);
+                }
+                textFieldResetPane.setRight(new HBox(12, textField, buildResetButton(gameRule)));
+            }
+        }
+
+        private void buildNodeForBooleanGameRule(GameRuleInfo.BooleanGameRuleInfo gameRule, HBox itemWrapper) {
+            LineToggleResetButton toggleResetButton = new LineToggleResetButton();
+            itemWrapper.getChildren().setAll(toggleResetButton);
+            {
+                HBox.setHgrow(toggleResetButton, Priority.ALWAYS);
+                toggleResetButton.selectedProperty().bindBidirectional(gameRule.currentValueProperty());
+
+                if (StringUtils.isNotBlank(gameRule.getDisplayName())) {
+                    toggleResetButton.setTitle(gameRule.getDisplayName());
+                    toggleResetButton.setSubtitle(gameRule.getRuleKey());
+                } else {
+                    toggleResetButton.setTitle(gameRule.getRuleKey());
+                }
+
+                if (gameRule.getDefaultValue() != null) {
+                    toggleResetButton.setDefaultSelect(gameRule.getDefaultValue());
+                    toggleResetButton.setResetButtonTooltipWhenEnable(i18n("gamerule.restore_default_values.tooltip", gameRule.getDefaultValueText()));
+                    toggleResetButton.setResetButtonTooltipWhenDisable(i18n("gamerule.now_is_default_values.tooltip"));
+                } else {
+                    toggleResetButton.setResetButtonTooltipWhenDisable(i18n("gamerule.not_have_default_values.tooltip"));
+                }
+            }
+        }
+
+        private StackPane buildResetButton(GameRuleInfo<?> gameRule) {
+            JFXButton resetButton = new JFXButton();
+            StackPane wrapperPane = new StackPane(resetButton);
+            {
+                wrapperPane.setMaxSize(Region.USE_PREF_SIZE, Region.USE_PREF_SIZE);
+                resetButton.setFocusTraversable(false);
+                resetButton.setGraphic(SVG.RESTORE.createIcon(24));
+                resetButton.getStyleClass().add("toggle-icon4");
+                if (StringUtils.isNotBlank(gameRule.getDefaultValueText())) {
+                    resetButton.setOnAction(event -> gameRule.resetValue());
+                    resetButton.disableProperty().bind(gameRule.modifiedProperty().not());
+                    FXUtils.installFastTooltip(resetButton, i18n("gamerule.restore_default_values.tooltip", gameRule.getDefaultValueText()));
+                    FXUtils.installFastTooltip(wrapperPane, i18n("gamerule.now_is_default_values.tooltip"));
+                } else {
+                    resetButton.setDisable(true);
+                    FXUtils.installFastTooltip(wrapperPane, i18n("gamerule.not_have_default_values.tooltip"));
+                }
+            }
+            return wrapperPane;
+        }
+    }
+
+    static class ResetDefaultValuesLayout extends JFXDialogLayout {
+        public ResetDefaultValuesLayout(Runnable resettingAllGameRule, FilteredList<GameRuleInfo<?>> modifiedItems, Runnable callBack) {
+
+            {
+                Stage stage = Controllers.getStage();
+                maxWidthProperty().bind(stage.widthProperty().multiply(0.7));
+                maxHeightProperty().bind(stage.heightProperty().multiply(0.7));
+            }
+
+            //heading area
+            setHeading(new Label(i18n("gamerule.restore_default_values_all")));
+
+            //body area
+            VBox vBox = new VBox();
+            {
+                vBox.setSpacing(10);
+                setBody(vBox);
+            }
+            {
+                Label warnLabel = modifiedItems.isEmpty() ? new Label(i18n("gamerule.all_is_default")) : new Label(i18n("gamerule.restore_default_values_all.confirm"));
+                vBox.getChildren().add(warnLabel);
+
+                if (!modifiedItems.isEmpty()) {
+                    MenuUpDownButton showDetailButton = new MenuUpDownButton();
+                    {
+                        showDetailButton.setText(i18n("gamerule.show_modified_details.button"));
+                        showDetailButton.setMaxWidth(USE_PREF_SIZE);
+
+                        vBox.getChildren().add(showDetailButton);
+                    }
+
+                    GridPane gridPane = new GridPane();
+                    {
+                        gridPane.addRow(0,
+                                new Label(i18n("gamerule.column.name")),
+                                new Label(i18n("gamerule.column.current")),
+                                new Label("", SVG.ARROW_FORWARD.createIcon(12)),
+                                new Label(i18n("gamerule.column.default")));
+
+                        for (int i = 0; i < modifiedItems.size(); i++) {
+                            GameRuleInfo<?> gameRuleInfo = modifiedItems.get(i);
+                            String displayName = StringUtils.isNotBlank(gameRuleInfo.getDisplayName()) ? gameRuleInfo.getDisplayName() : gameRuleInfo.getRuleKey();
+                            gridPane.addRow(i + 1,
+                                    new Label(displayName),
+                                    new Label(gameRuleInfo.getCurrentValueText()),
+                                    new Label("", SVG.ARROW_FORWARD.createIcon(12)),
+                                    new Label(gameRuleInfo.getDefaultValueText()));
+                        }
+                    }
+
+                    ScrollPane scrollPane = new ScrollPane(gridPane);
+                    {
+                        gridPane.setHgap(10);
+                        gridPane.setVgap(10);
+                        gridPane.setPadding(new Insets(0, 5, 10, 0));
+
+                        scrollPane.visibleProperty().bind(showDetailButton.selectedProperty());
+                        scrollPane.managedProperty().bind(showDetailButton.selectedProperty());
+                        VBox.setMargin(scrollPane, new Insets(5, 8, 5, 8));
+                        FXUtils.smoothScrolling(scrollPane);
+
+                        vBox.getChildren().add(scrollPane);
+                    }
+                }
+            }
+
+            //action area
+            JFXButton accept = new JFXButton(i18n("button.ok"));
+            {
+                accept.getStyleClass().add("dialog-accept");
+                if (!modifiedItems.isEmpty()) {
+                    accept.setOnAction(event -> {
+                        resettingAllGameRule.run();
+                        callBack.run();
+                        fireEvent(new DialogCloseEvent());
+                    });
+                } else {
+                    accept.setOnAction(event -> fireEvent(new DialogCloseEvent()));
+                }
+            }
+            JFXButton reject = new JFXButton(i18n("button.cancel"));
+            {
+                reject.getStyleClass().add("dialog-cancel");
+                reject.setOnAction(event -> fireEvent(new DialogCloseEvent()));
+            }
+            setActions(accept, reject);
+
+            FXUtils.onEscPressed(this, reject::fire);
+        }
+    }
+}

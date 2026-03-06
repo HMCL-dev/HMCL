@@ -20,6 +20,8 @@ package org.jackhuang.hmcl.game;
 import com.github.steveice10.opennbt.NBTIO;
 import com.github.steveice10.opennbt.tag.builtin.*;
 import javafx.scene.image.Image;
+import org.jackhuang.hmcl.task.Schedulers;
+import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.util.io.*;
 import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
 import org.jetbrains.annotations.Nullable;
@@ -76,7 +78,7 @@ public final class World {
     public void setWorldName(String worldName) throws IOException {
         if (levelData.get("Data") instanceof CompoundTag data && data.get("LevelName") instanceof StringTag levelNameTag) {
             levelNameTag.setValue(worldName);
-            writeLevelDat(levelData);
+            writeLevelDat();
         }
     }
 
@@ -249,7 +251,7 @@ public final class World {
         // Change the name recorded in level.dat
         CompoundTag data = levelData.get("Data");
         data.put(new StringTag("LevelName", newName));
-        writeLevelDat(levelData);
+        writeLevelDat();
 
         // then change the folder's name
         Files.move(file, file.resolveSibling(newName));
@@ -345,15 +347,24 @@ public final class World {
         }
     }
 
-    public void writeLevelDat(CompoundTag nbt) throws IOException {
+    public void writeLevelDat() throws IOException {
         if (!Files.isDirectory(file))
             throw new IOException("Not a valid world directory");
 
         FileUtils.saveSafely(getLevelDatFile(), os -> {
             try (OutputStream gos = new GZIPOutputStream(os)) {
-                NBTIO.writeTag(gos, nbt);
+                NBTIO.writeTag(gos, getLevelData());
             }
         });
+    }
+
+    public void writeLevelDatAsync() {
+        Task.runAsync(Schedulers.io(), this::writeLevelDat)
+                .whenComplete(Schedulers.defaultScheduler(), ((result, exception) -> {
+                    if (exception != null) {
+                        LOG.warning("Failed to save level.dat of world " + getWorldName(), exception);
+                    }
+                })).start();
     }
 
     private static CompoundTag parseLevelDat(Path path) throws IOException {
