@@ -75,9 +75,4 @@ public enum NBTFileType {
 
     public abstract NBTElement read(Path file) throws IOException;
 
-    public NBTTreeItem readAsTree(Path file) throws IOException {
-        var root = new NBTTreeItem(read(file));
-        root.setName(file.getFileName().toString());
-        return root;
-    }
 }

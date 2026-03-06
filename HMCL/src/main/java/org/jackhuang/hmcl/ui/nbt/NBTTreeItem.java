@@ -22,19 +22,24 @@ import javafx.scene.control.TreeItem;
 import org.glavo.nbt.NBTElement;
 import org.glavo.nbt.NBTParent;
 import org.glavo.nbt.chunk.Chunk;
-import org.glavo.nbt.chunk.ChunkRegion;
 import org.glavo.nbt.tag.*;
 import org.jackhuang.hmcl.ui.FXUtils;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
 /// @author Glavo
 public final class NBTTreeItem extends TreeItem<NBTElement> {
+    private final String name;
     private String text;
-    private String name;
 
     public NBTTreeItem(NBTElement value) {
+        this(value, null);
+    }
+
+    public NBTTreeItem(NBTElement value, @Nullable String name) {
         super(value);
+        this.name = name;
 
         FXUtils.onChangeAndOperate(expandedProperty(), expanded -> {
             if (expanded && getChildren().size() == 1)
@@ -78,14 +83,23 @@ public final class NBTTreeItem extends TreeItem<NBTElement> {
         this.text = text;
     }
 
-    public void setName(String name) {
-        this.name = name;
-    }
-
     public String getName() {
         if (name != null) {
             return name;
         }
-        return getValue() instanceof Tag tag ? tag.getName() : "";
+        NBTElement value = getValue();
+
+        if (value instanceof Tag tag) {
+            if (tag.getParent() instanceof ListTag<?>) {
+                return Integer.toString(tag.getIndex());
+            } else {
+                return tag.getName();
+            }
+        } else if (value instanceof Chunk chunk) {
+            return "Chunk (" + chunk.getLocalX() + ", " + chunk.getLocalZ() + ")";
+        } else {
+            return "";
+        }
+
     }
 }

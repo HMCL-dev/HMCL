@@ -26,7 +26,6 @@ import javafx.scene.control.TreeView;
 import javafx.scene.control.skin.TreeViewSkin;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
-import org.glavo.nbt.NBTElement;
 import org.glavo.nbt.tag.Tag;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
@@ -37,6 +36,7 @@ import org.jackhuang.hmcl.ui.construct.PageCloseEvent;
 import org.jackhuang.hmcl.ui.construct.SpinnerPane;
 import org.jackhuang.hmcl.ui.decorator.DecoratorPage;
 import org.jackhuang.hmcl.util.StringUtils;
+import org.jackhuang.hmcl.util.io.FileUtils;
 
 import java.io.IOException;
 import java.nio.file.Path;
@@ -89,14 +89,15 @@ public final class NBTEditorPage extends SpinnerPane implements DecoratorPage {
 
         actions.getChildren().setAll(saveButton, cancelButton);
 
-        Task.supplyAsync(() -> type.readAsTree(file))
+        Task.supplyAsync(() -> type.read(file))
                 .whenComplete(Schedulers.javafx(), (result, exception) -> {
                     if (exception == null) {
                         setLoading(false);
 
-                        result.setExpanded(true);
+                        NBTTreeItem root = new NBTTreeItem(result, FileUtils.getName(file));
+                        root.setExpanded(true);
 
-                        var view = new TreeView<>(result) {
+                        var view = new TreeView<>(root) {
                             @Override
                             protected javafx.scene.control.Skin<?> createDefaultSkin() {
                                 return new TreeViewSkin<Tag>(this) {
@@ -110,7 +111,7 @@ public final class NBTEditorPage extends SpinnerPane implements DecoratorPage {
 
                         BorderPane.setMargin(view, new Insets(10));
                         onEscPressed(view, cancelButton::fire);
-                        root.setCenter(view);
+                        this.root.setCenter(view);
                     } else {
                         LOG.warning("Fail to open nbt file", exception);
                         Controllers.dialog(i18n("nbt.open.failed") + "\n\n" + StringUtils.getStackTrace(exception), null, MessageDialogPane.MessageType.WARNING, cancelButton::fire);

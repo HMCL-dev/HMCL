@@ -26,30 +26,26 @@ import org.glavo.nbt.chunk.ChunkRegion;
 import org.glavo.nbt.tag.*;
 import org.jackhuang.hmcl.ui.FXUtils;
 
-import java.util.EnumMap;
-import java.util.Locale;
-
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 public final class NBTTreeCell extends TreeCell<NBTElement> {
 
-    private static final EnumMap<TagType, Image> icons = new EnumMap<>(TagType.class);
-
     private static Image getIcon(NBTElement element) {
         if (element instanceof Tag tag) {
-            return icons.computeIfAbsent(tag.getType(), type -> {
-                String tagName;
-
-                int idx = type.name().indexOf('_');
-                if (idx < 0) {
-                    tagName = type.name().charAt(0) + type.name().substring(1).toLowerCase(Locale.ROOT);
-                } else {
-                    tagName = type.name().charAt(0) + type.name().substring(1, idx + 1).toLowerCase(Locale.ROOT)
-                            + type.name().charAt(idx + 1) + type.name().substring(idx + 2).toLowerCase(Locale.ROOT);
-                }
-
-                return FXUtils.newBuiltinImage("/assets/img/nbt/TAG_" + tagName + ".png");
-            });
+            return switch (tag.getType()) {
+                case BYTE -> FXUtils.newBuiltinImage("/assets/img/nbt/TAG_Byte.png");
+                case SHORT -> FXUtils.newBuiltinImage("/assets/img/nbt/TAG_Short.png");
+                case INT -> FXUtils.newBuiltinImage("/assets/img/nbt/TAG_Int.png");
+                case LONG -> FXUtils.newBuiltinImage("/assets/img/nbt/TAG_Long.png");
+                case FLOAT -> FXUtils.newBuiltinImage("/assets/img/nbt/TAG_Float.png");
+                case DOUBLE -> FXUtils.newBuiltinImage("/assets/img/nbt/TAG_Double.png");
+                case STRING -> FXUtils.newBuiltinImage("/assets/img/nbt/TAG_String.png");
+                case BYTE_ARRAY -> FXUtils.newBuiltinImage("/assets/img/nbt/TAG_Byte_Array.png");
+                case INT_ARRAY -> FXUtils.newBuiltinImage("/assets/img/nbt/TAG_Int_Array.png");
+                case LONG_ARRAY -> FXUtils.newBuiltinImage("/assets/img/nbt/TAG_Long_Array.png");
+                case LIST -> FXUtils.newBuiltinImage("/assets/img/nbt/TAG_List.png");
+                case COMPOUND -> FXUtils.newBuiltinImage("/assets/img/nbt/TAG_Compound.png");
+            };
         } else if (element instanceof ChunkRegion)
             return FXUtils.newBuiltinImage("/assets/img/nbt/TAG_List.png");
         else if (element instanceof Chunk)
@@ -58,8 +54,19 @@ public final class NBTTreeCell extends TreeCell<NBTElement> {
             return null;
     }
 
+    private final ImageView imageView;
+
+    public NBTTreeCell() {
+        this.imageView = new ImageView();
+        this.setGraphic(imageView);
+    }
+
+    private NBTTreeItem getNBTTreeItem() {
+        return (NBTTreeItem) getTreeItem();
+    }
+
     private void setTagText(String text) {
-        String name = ((NBTTreeItem) getTreeItem()).getName();
+        String name = getNBTTreeItem().getName();
 
         if (name == null) {
             setText(text);
@@ -74,19 +81,9 @@ public final class NBTTreeCell extends TreeCell<NBTElement> {
         setTagText(i18n("nbt.entries", nEntries));
     }
 
-    private NBTTreeItem getNBTTreeItem() {
-        return (NBTTreeItem) getTreeItem();
-    }
-
     @Override
     public void updateItem(NBTElement item, boolean empty) {
         super.updateItem(item, empty);
-
-        ImageView imageView = (ImageView) this.getGraphic();
-        if (imageView == null) {
-            imageView = new ImageView();
-            this.setGraphic(imageView);
-        }
 
         if (empty || item == null) {
             imageView.setImage(null);
@@ -101,12 +98,12 @@ public final class NBTTreeCell extends TreeCell<NBTElement> {
         if (getNBTTreeItem().getText() != null) {
             setText(getNBTTreeItem().getText());
         } else {
-            if (item instanceof ValueTag<?> valueTag) {
-                setTagText(valueTag.getValue().toString());
-            } else if (item instanceof ArrayTag<?> arrayTag) {
+            if (item instanceof ArrayTag<?> arrayTag) {
                 setTagText(arrayTag.size());
             } else if (item instanceof ParentTag<?> parentTag) {
                 setTagText(parentTag.size());
+            } else if (item instanceof ValueTag<?> valueTag) {
+                setTagText(valueTag.getAsString());
             } else {
                 setTagText(null);
             }
