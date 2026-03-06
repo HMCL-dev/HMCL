@@ -43,13 +43,13 @@ public final class NBTTreeItem extends TreeItem<NBTElement> {
         return !(getValue() instanceof NBTParent<?> parent) || parent.isEmpty();
     }
 
-    private boolean isFirstTimeChildren = true;
+    private boolean needInitChildren = true;
 
     @Override
     public ObservableList<TreeItem<NBTElement>> getChildren() {
         ObservableList<TreeItem<NBTElement>> children = super.getChildren();
-        if (isFirstTimeChildren) {
-            isFirstTimeChildren = false;
+        if (needInitChildren) {
+            needInitChildren = false;
 
             if (getValue() instanceof Chunk chunk) {
                 if (chunk.getRootTag() != null) {
