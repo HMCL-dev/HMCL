@@ -18,11 +18,8 @@
 package org.jackhuang.hmcl.ui.nbt;
 
 import org.glavo.nbt.NBTElement;
-import org.glavo.nbt.chunk.Chunk;
 import org.glavo.nbt.chunk.ChunkRegion;
 import org.glavo.nbt.io.NBTCodec;
-import org.glavo.nbt.tag.CompoundTag;
-import org.glavo.nbt.tag.IntTag;
 import org.glavo.nbt.tag.Tag;
 import org.jackhuang.hmcl.util.io.FileUtils;
 
@@ -44,38 +41,11 @@ public enum NBTFileType {
         public NBTElement read(Path file) throws IOException {
             return REGION.read(file);
         }
-
-        @Override
-        public NBTTreeView.Item readAsTree(Path file) throws IOException {
-            return REGION.readAsTree(file);
-        }
     },
     REGION("mcr") {
         @Override
         public ChunkRegion read(Path file) throws IOException {
             return NBTCodec.of().readRegion(file);
-        }
-
-        @Override
-        public NBTTreeView.Item readAsTree(Path file) throws IOException {
-            NBTTreeView.Item item = new NBTTreeView.Item(read(file));
-
-            for (Chunk chunk : (ChunkRegion) item.getValue()) {
-                NBTTreeView.Item tree = NBTTreeView.buildTree(chunk);
-                CompoundTag rootTag = chunk.getRootTag();
-
-                if (rootTag != null
-                        && rootTag.get("xPos") instanceof IntTag xPos
-                        && rootTag.get("zPos") instanceof IntTag zPos) {
-                    tree.setText(String.format("Chunk: %d  %d", xPos.get(), zPos.get()));
-                } else {
-                    tree.setText("Chunk: Unknown");
-                }
-
-                item.getChildren().add(tree);
-            }
-
-            return item;
         }
     };
 
@@ -105,8 +75,8 @@ public enum NBTFileType {
 
     public abstract NBTElement read(Path file) throws IOException;
 
-    public NBTTreeView.Item readAsTree(Path file) throws IOException {
-        NBTTreeView.Item root = NBTTreeView.buildTree(read(file));
+    public NBTTreeItem readAsTree(Path file) throws IOException {
+        var root = new NBTTreeItem(read(file));
         root.setName(file.getFileName().toString());
         return root;
     }

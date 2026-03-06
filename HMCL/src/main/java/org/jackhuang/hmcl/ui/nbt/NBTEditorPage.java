@@ -22,8 +22,12 @@ import javafx.beans.property.ReadOnlyObjectProperty;
 import javafx.beans.property.ReadOnlyObjectWrapper;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
+import javafx.scene.control.TreeView;
+import javafx.scene.control.skin.TreeViewSkin;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
+import org.glavo.nbt.NBTElement;
+import org.glavo.nbt.tag.Tag;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.ui.Controllers;
@@ -89,7 +93,21 @@ public final class NBTEditorPage extends SpinnerPane implements DecoratorPage {
                 .whenComplete(Schedulers.javafx(), (result, exception) -> {
                     if (exception == null) {
                         setLoading(false);
-                        NBTTreeView view = new NBTTreeView(result);
+
+                        result.setExpanded(true);
+
+                        var view = new TreeView<>(result) {
+                            @Override
+                            protected javafx.scene.control.Skin<?> createDefaultSkin() {
+                                return new TreeViewSkin<Tag>(this) {
+                                    {
+                                        FXUtils.smoothScrolling(getVirtualFlow());
+                                    }
+                                };
+                            }
+                        };
+                        view.setCellFactory(ignored -> new NBTTreeCell());
+
                         BorderPane.setMargin(view, new Insets(10));
                         onEscPressed(view, cancelButton::fire);
                         root.setCenter(view);
