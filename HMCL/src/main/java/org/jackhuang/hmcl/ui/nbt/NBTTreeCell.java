@@ -57,8 +57,10 @@ public final class NBTTreeCell extends TreeCell<NBTElement> {
     private final ImageView imageView;
 
     public NBTTreeCell() {
-        this.imageView = new ImageView();
-        this.setGraphic(imageView);
+        imageView = new ImageView();
+        imageView.setFitHeight(16);
+        imageView.setFitWidth(16);
+        setGraphic(imageView);
     }
 
     private NBTTreeItem getNBTTreeItem() {
@@ -92,21 +94,15 @@ public final class NBTTreeCell extends TreeCell<NBTElement> {
         }
 
         imageView.setImage(getIcon(item));
-        imageView.setFitHeight(16);
-        imageView.setFitWidth(16);
 
-        if (getNBTTreeItem().getText() != null) {
-            setText(getNBTTreeItem().getText());
+        if (item instanceof ArrayTag<?> arrayTag) {
+            setTagText(arrayTag.size());
+        } else if (item instanceof ParentTag<?> parentTag) {
+            setTagText(parentTag.size());
+        } else if (item instanceof ValueTag<?> valueTag) {
+            setTagText(valueTag.getAsString());
         } else {
-            if (item instanceof ArrayTag<?> arrayTag) {
-                setTagText(arrayTag.size());
-            } else if (item instanceof ParentTag<?> parentTag) {
-                setTagText(parentTag.size());
-            } else if (item instanceof ValueTag<?> valueTag) {
-                setTagText(valueTag.getAsString());
-            } else {
-                setTagText(null);
-            }
+            setTagText(null);
         }
     }
 }

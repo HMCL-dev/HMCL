@@ -29,8 +29,7 @@ import java.util.List;
 
 /// @author Glavo
 public final class NBTTreeItem extends TreeItem<NBTElement> {
-    private final String name;
-    private String text;
+    private final @Nullable String name;
 
     public NBTTreeItem(NBTElement value) {
         this(value, null);
@@ -67,14 +66,6 @@ public final class NBTTreeItem extends TreeItem<NBTElement> {
             super.getChildren().setAll(children);
         }
         return super.getChildren();
-    }
-
-    public String getText() {
-        return text;
-    }
-
-    public void setText(String text) {
-        this.text = text;
     }
 
     public String getName() {
