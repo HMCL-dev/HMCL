@@ -68,7 +68,18 @@ public final class NBTTreeCell extends TreeCell<@Nullable NBTElement> {
         return (NBTTreeItem) getTreeItem();
     }
 
-    private void setTagText(@Nullable String text) {
+    @Override
+    public void updateItem(@Nullable NBTElement item, boolean empty) {
+        super.updateItem(item, empty);
+
+        if (empty || item == null) {
+            imageView.setImage(null);
+            setText(null);
+            return;
+        }
+
+        imageView.setImage(getIcon(item));
+
         String name = getNBTTreeItem().getOverrideName();
         if (name == null) {
             NBTElement value = getNBTTreeItem().getValue();
@@ -86,38 +97,21 @@ public final class NBTTreeCell extends TreeCell<@Nullable NBTElement> {
             }
         }
 
+        String text;
+        if (item instanceof ArrayTag<?> arrayTag) {
+            text = i18n("nbt.entries", arrayTag.size());
+        } else if (item instanceof ParentTag<?> parentTag) {
+            text = i18n("nbt.entries", parentTag.size());
+        } else if (item instanceof ValueTag<?> valueTag) {
+            text = valueTag.getAsString();
+        } else {
+            text = null;
+        }
 
         if (text == null) {
             setText(name);
         } else {
             setText(name + ": " + text);
-        }
-    }
-
-    private void setTagText(int nEntries) {
-        setTagText(i18n("nbt.entries", nEntries));
-    }
-
-    @Override
-    public void updateItem(@Nullable NBTElement item, boolean empty) {
-        super.updateItem(item, empty);
-
-        if (empty || item == null) {
-            imageView.setImage(null);
-            setText(null);
-            return;
-        }
-
-        imageView.setImage(getIcon(item));
-
-        if (item instanceof ArrayTag<?> arrayTag) {
-            setTagText(arrayTag.size());
-        } else if (item instanceof ParentTag<?> parentTag) {
-            setTagText(parentTag.size());
-        } else if (item instanceof ValueTag<?> valueTag) {
-            setTagText(valueTag.getAsString());
-        } else {
-            setTagText(null);
         }
     }
 }
