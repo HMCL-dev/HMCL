@@ -25,12 +25,13 @@ import org.glavo.nbt.chunk.Chunk;
 import org.glavo.nbt.chunk.ChunkRegion;
 import org.glavo.nbt.tag.*;
 import org.jackhuang.hmcl.ui.FXUtils;
+import org.jetbrains.annotations.Nullable;
 
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
-public final class NBTTreeCell extends TreeCell<NBTElement> {
+public final class NBTTreeCell extends TreeCell<@Nullable NBTElement> {
 
-    private static Image getIcon(NBTElement element) {
+    private static @Nullable Image getIcon(NBTElement element) {
         if (element instanceof Tag tag) {
             return switch (tag.getType()) {
                 case BYTE -> FXUtils.newBuiltinImage("/assets/img/nbt/TAG_Byte.png");
@@ -67,7 +68,7 @@ public final class NBTTreeCell extends TreeCell<NBTElement> {
         return (NBTTreeItem) getTreeItem();
     }
 
-    private void setTagText(String text) {
+    private void setTagText(@Nullable String text) {
         String name = getNBTTreeItem().getOverrideName();
         if (name == null) {
             NBTElement value = getNBTTreeItem().getValue();
@@ -98,7 +99,7 @@ public final class NBTTreeCell extends TreeCell<NBTElement> {
     }
 
     @Override
-    public void updateItem(NBTElement item, boolean empty) {
+    public void updateItem(@Nullable NBTElement item, boolean empty) {
         super.updateItem(item, empty);
 
         if (empty || item == null) {

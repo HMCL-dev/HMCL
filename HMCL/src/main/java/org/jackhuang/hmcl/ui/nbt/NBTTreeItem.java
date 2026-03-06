@@ -23,11 +23,9 @@ import org.glavo.nbt.NBTElement;
 import org.glavo.nbt.NBTParent;
 import org.glavo.nbt.chunk.Chunk;
 import org.glavo.nbt.tag.*;
-import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
 
 /// @author Glavo
-@NotNullByDefault
 public final class NBTTreeItem extends TreeItem<NBTElement> {
     private final @Nullable String overrideName;
 

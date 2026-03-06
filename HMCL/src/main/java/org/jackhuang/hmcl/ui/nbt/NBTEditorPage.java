@@ -63,8 +63,9 @@ public final class NBTEditorPage extends SpinnerPane implements DecoratorPage {
 
         this.state = new ReadOnlyObjectWrapper<>(State.fromTitle(i18n("nbt.title", file.toString())));
         this.file = file;
-        this.type = NBTFileType.ofFile(file);
 
+        //noinspection DataFlowIssue
+        this.type = NBTFileType.ofFile(file);
         if (type == null) {
             throw new IOException("Unknown type of file " + file);
         }

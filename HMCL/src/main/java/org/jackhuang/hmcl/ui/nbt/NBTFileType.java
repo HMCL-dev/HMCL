@@ -22,6 +22,7 @@ import org.glavo.nbt.chunk.ChunkRegion;
 import org.glavo.nbt.io.NBTCodec;
 import org.glavo.nbt.tag.Tag;
 import org.jackhuang.hmcl.util.io.FileUtils;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.nio.file.Path;
@@ -55,7 +56,7 @@ public enum NBTFileType {
         return NBTFileType.ofFile(file) != null;
     }
 
-    public static NBTFileType ofFile(Path file) {
+    public static @Nullable NBTFileType ofFile(Path file) {
         String ext = FileUtils.getExtension(file);
         for (NBTFileType type : types) {
             for (String extension : type.extensions) {
