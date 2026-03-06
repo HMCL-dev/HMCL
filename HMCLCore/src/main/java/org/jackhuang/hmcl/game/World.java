@@ -133,22 +133,24 @@ public final class World {
     }
 
     public boolean isLargeBiomes() {
-        if (!(levelData.get("Data") instanceof CompoundTag data)) return false;
+        CompoundTag data = levelData.get("Data");
 
         // Valid before 1.16(20w20a)
         if (data.get("generatorName") instanceof StringTag generatorNameTag) {
             return "largeBiomes".equals(generatorNameTag.getValue());
         }
-
         // Unified handling of logic after version 1.16
-        if (normalizedWorldGenSettingsData != null && normalizedWorldGenSettingsData.get("dimensions") instanceof CompoundTag dims) {
-            if (dims.get("minecraft:overworld") instanceof CompoundTag overworld && overworld.get("generator") instanceof CompoundTag gen) {
+        else if (normalizedWorldGenSettingsData != null
+                && normalizedWorldGenSettingsData.get("dimensions") instanceof CompoundTag dimensionsTag) {
+            if (dimensionsTag.get("minecraft:overworld") instanceof CompoundTag overworldTag
+                    && overworldTag.get("generator") instanceof CompoundTag generatorTag) {
                 // Valid between 1.16(20w20a) and 1.18(21w37a)
-                if (gen.get("biome_source") instanceof CompoundTag bs && bs.get("large_biomes") instanceof ByteTag lbTag) {
-                    return lbTag.getValue() == (byte) 1;
+                if (generatorTag.get("biome_source") instanceof CompoundTag biomeSourceTag
+                        && biomeSourceTag.get("large_biomes") instanceof ByteTag largeBiomesTag) {
+                    return largeBiomesTag.getValue() == (byte) 1;
                 }
                 // Valid after 1.18(21w37a)
-                if (gen.get("settings") instanceof StringTag settingsTag) {
+                else if (generatorTag.get("settings") instanceof StringTag settingsTag) {
                     return "minecraft:large_biomes".equals(settingsTag.getValue());
                 }
             }

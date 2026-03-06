@@ -256,7 +256,7 @@ public final class WorldInfoPage extends SpinnerPane implements WorldManagePage.
                 // Valid after (1.16)20w20a
                 else if (world.getNormalizedWorldGenSettingsData() != null) {
                     CompoundTag unifiedWorldGenSettingsDataTag = world.getNormalizedWorldGenSettingsData();
-                    Tag tag = unifiedWorldGenSettingsDataTag.get("generate_features"); // Valid before 26.1-snapshot-6
+                    Tag tag = unifiedWorldGenSettingsDataTag.get("generate_features"); // Valid between (1.16)20w20a and 26.1-snapshot-6
                     if (tag == null)
                         tag = unifiedWorldGenSettingsDataTag.get("generate_structures"); // Valid after 26.1-snapshot-6
                     bindTagAndToggleButton(tag, generateFeaturesButton);
@@ -268,7 +268,7 @@ public final class WorldInfoPage extends SpinnerPane implements WorldManagePage.
             var difficultyButton = new LineSelectButton<Difficulty>();
             {
                 difficultyButton.setTitle(i18n("world.info.difficulty"));
-                difficultyButton.setDisable(worldManagePage.isReadOnly());
+                difficultyButton.setDisable(isReadOnly);
                 difficultyButton.setItems(Difficulty.items);
 
                 Difficulty difficulty;
@@ -303,12 +303,14 @@ public final class WorldInfoPage extends SpinnerPane implements WorldManagePage.
             {
                 difficultyLockPane.setTitle(i18n("world.info.difficulty_lock"));
                 difficultyLockPane.setDisable(isReadOnly);
-                Tag lockTag = dataTag.get("DifficultyLocked");
-                if (lockTag == null && dataTag.get("difficulty_settings") instanceof CompoundTag ds) {
-                    lockTag = ds.get("locked");
-                }
-                if (lockTag instanceof ByteTag difficultyLockedTag) {
+                // Valid before 26.1-snapshot-6
+                if (dataTag.get("DifficultyLocked") instanceof ByteTag difficultyLockedTag) {
                     bindTagAndToggleButton(difficultyLockedTag, difficultyLockPane);
+                }
+                // Valid after 26.1-snapshot-6
+                else if (dataTag.get("difficulty_settings") instanceof CompoundTag difficultySettingTag
+                        && difficultySettingTag.get("locked") instanceof ByteTag lockedTag) {
+                    bindTagAndToggleButton(lockedTag, difficultyLockPane);
                 } else {
                     difficultyLockPane.setDisable(true);
                 }
@@ -368,13 +370,15 @@ public final class WorldInfoPage extends SpinnerPane implements WorldManagePage.
                 playerGameTypePane.setDisable(worldManagePage.isReadOnly());
                 playerGameTypePane.setItems(GameType.items);
 
-                Tag hardcoreTag = dataTag.get("hardcore");
-                if (hardcoreTag == null && dataTag.get("difficulty_settings") instanceof CompoundTag difficultySettingsTag) {
-                    hardcoreTag = difficultySettingsTag.get("hardcore");
+                // Valid before 26.1-snapshot-6
+                Tag rawHardcoreTag = dataTag.get("hardcore");
+                // Valid after 26.1-snapshot-6
+                if (rawHardcoreTag == null && dataTag.get("difficulty_settings") instanceof CompoundTag difficultySettingsTag) {
+                    rawHardcoreTag = difficultySettingsTag.get("hardcore");
                 }
 
-                if (playerTag.get("playerGameType") instanceof IntTag playerGameTypeTag && hardcoreTag instanceof ByteTag byteTag) {
-                    boolean isHardcore = byteTag.getValue() == 1;
+                if (playerTag.get("playerGameType") instanceof IntTag playerGameTypeTag && rawHardcoreTag instanceof ByteTag hardcoreTag) {
+                    boolean isHardcore = hardcoreTag.getValue() == 1;
                     GameType gameType = GameType.of(playerGameTypeTag.getValue(), isHardcore);
                     if (gameType != null) {
                         playerGameTypePane.setValue(gameType);
@@ -382,10 +386,10 @@ public final class WorldInfoPage extends SpinnerPane implements WorldManagePage.
                             if (newValue != null) {
                                 if (newValue == GameType.HARDCORE) {
                                     playerGameTypeTag.setValue(0); // survival (hardcore worlds are survival+hardcore flag)
-                                    byteTag.setValue((byte) 1);
+                                    hardcoreTag.setValue((byte) 1);
                                 } else {
                                     playerGameTypeTag.setValue(newValue.ordinal());
-                                    byteTag.setValue((byte) 0);
+                                    hardcoreTag.setValue((byte) 0);
                                 }
                                 saveWorldData();
                             }
@@ -514,11 +518,11 @@ public final class WorldInfoPage extends SpinnerPane implements WorldManagePage.
     }
 
     private void saveWorldData() {
-        LOG.info("Saving world info of world " + world.getWorldName());
+        LOG.info("Saving data of world " + world.getWorldName());
         try {
             this.world.writeWorldData();
         } catch (IOException e) {
-            LOG.warning("Failed to save world info", e);
+            LOG.warning("Failed to save world data", e);
         }
     }
 
