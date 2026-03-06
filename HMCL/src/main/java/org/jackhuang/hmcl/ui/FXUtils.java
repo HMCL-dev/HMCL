@@ -65,6 +65,7 @@ import org.jackhuang.hmcl.setting.StyleSheets;
 import org.jackhuang.hmcl.task.CacheFileTask;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
+import org.jackhuang.hmcl.theme.Themes;
 import org.jackhuang.hmcl.ui.animation.AnimationUtils;
 import org.jackhuang.hmcl.ui.construct.IconedMenuItem;
 import org.jackhuang.hmcl.ui.construct.MenuSeparator;
@@ -73,6 +74,7 @@ import org.jackhuang.hmcl.ui.image.ImageLoader;
 import org.jackhuang.hmcl.ui.image.ImageUtils;
 import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.ResourceNotFoundError;
+import org.jackhuang.hmcl.util.TaskbarIconManager;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.io.NetworkUtils;
 import org.jackhuang.hmcl.util.javafx.ExtendedProperties;
@@ -1131,15 +1133,32 @@ public final class FXUtils {
     }
 
     public static void setIcon(Stage stage) {
-        String icon;
-        if (OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS) {
-            icon = "/assets/img/icon.png";
-        } else if (OperatingSystem.CURRENT_OS == OperatingSystem.MACOS) {
-            icon = "/assets/img/icon-mac.png";
-        } else {
-            icon = "/assets/img/icon@4x.png";
+        Runnable updateIcon = () -> {
+            String iconPath = switch (OperatingSystem.CURRENT_OS) {
+                case WINDOWS -> "/assets/img/icon.png";
+                case MACOS -> Themes.darkModeProperty().get()
+                        ? "/assets/img/icon-mac-dark.png"
+                        : "/assets/img/icon-mac.png";
+                default -> "/assets/img/icon@4x.png";
+            };
+
+            Image fxImage = newBuiltinImage(iconPath);
+            if (fxImage != null) {
+                stage.getIcons().setAll(fxImage);
+            }
+
+            if (!OperatingSystem.isInsideMacAppBundle()) {
+                TaskbarIconManager.setIcon(iconPath);
+            }
+        };
+
+        Platform.runLater(updateIcon);
+
+        if (OperatingSystem.CURRENT_OS == OperatingSystem.MACOS) {
+            Themes.darkModeProperty().addListener((obs, oldDark, newDark) ->
+                    Platform.runLater(updateIcon)
+            );
         }
-        stage.getIcons().add(newBuiltinImage(icon));
     }
 
     public static Image loadImage(Path path) throws Exception {

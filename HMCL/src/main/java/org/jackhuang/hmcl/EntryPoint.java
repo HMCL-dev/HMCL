@@ -21,8 +21,7 @@ import org.jackhuang.hmcl.util.FileSaver;
 import org.jackhuang.hmcl.util.SelfDependencyPatcher;
 import org.jackhuang.hmcl.util.SwingUtils;
 import org.jackhuang.hmcl.java.JavaRuntime;
-import org.jackhuang.hmcl.util.io.FileUtils;
-import org.jackhuang.hmcl.util.io.JarUtils;
+import org.jackhuang.hmcl.util.TaskbarIconManager;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
 
 import java.io.IOException;
@@ -30,7 +29,6 @@ import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
 import java.nio.file.Files;
-import java.nio.file.Path;
 import java.util.concurrent.CancellationException;
 
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
@@ -51,11 +49,10 @@ public final class EntryPoint {
 
         setupJavaFXVMOptions();
 
-        if (OperatingSystem.CURRENT_OS == OperatingSystem.MACOS) {
+        if (OperatingSystem.CURRENT_OS == OperatingSystem.MACOS)
             System.getProperties().putIfAbsent("apple.awt.application.appearance", "system");
-            if (!isInsideMacAppBundle())
-                initIcon();
-        }
+        if (!OperatingSystem.isInsideMacAppBundle())
+            TaskbarIconManager.setIcon("/assets/img/icon-mac.png");
 
         checkJavaFX();
         verifyJavaFX();
@@ -161,36 +158,6 @@ public final class EntryPoint {
             } catch (IOException e) {
                 LOG.warning("Failed to create HMCL global directory " + Metadata.HMCL_GLOBAL_DIRECTORY, e);
             }
-        }
-    }
-
-    private static boolean isInsideMacAppBundle() {
-        Path thisJar = JarUtils.thisJarPath();
-        if (thisJar == null)
-            return false;
-
-        for (Path current = thisJar.getParent();
-             current != null && current.getParent() != null;
-             current = current.getParent()
-        ) {
-            if ("Contents".equals(FileUtils.getName(current))
-                    && FileUtils.getName(current.getParent()).endsWith(".app")
-                    && Files.exists(current.resolve("Info.plist"))
-            ) {
-                return true;
-            }
-        }
-        return false;
-    }
-
-    private static void initIcon() {
-        try {
-            if (java.awt.Taskbar.isTaskbarSupported()) {
-                var image = java.awt.Toolkit.getDefaultToolkit().getImage(EntryPoint.class.getResource("/assets/img/icon-mac.png"));
-                java.awt.Taskbar.getTaskbar().setIconImage(image);
-            }
-        } catch (Throwable e) {
-            LOG.warning("Failed to set application icon", e);
         }
     }
 
