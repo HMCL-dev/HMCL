@@ -66,6 +66,10 @@ public final class AccountListItemSkin extends SkinBase<AccountListItem> {
         center.setAlignment(Pos.CENTER_LEFT);
 
         Canvas canvas = new Canvas(32, 32);
+        canvas.setCursor(Cursor.HAND);
+        FXUtils.onClicked(canvas, () -> {
+            Controllers.dialog(new SkinPreviewDialog(skinnable.getAccount()));
+        });
         TexturesLoader.bindAvatar(canvas, skinnable.getAccount());
 
         Label title = new Label();
