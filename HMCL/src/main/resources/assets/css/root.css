@@ -29,8 +29,8 @@
 
 .scroll-bar .thumb {
     -fx-fill: -monet-surface-tint;
-    -fx-arc-width: 0;
-    -fx-arc-height: 0;
+    -fx-arc-width: 8;
+    -fx-arc-height: 8;
 }
 
 .title-label {
