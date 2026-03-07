@@ -164,7 +164,7 @@ public final class JavaRestorePage extends ListPageBase<JavaRestorePage.Disabled
                 if (skinnable.realPath == null) {
                     revealButton.setDisable(true);
 
-                    JFXButton removeButton = FXUtils.newToggleButton4(SVG.DELETE);
+                    JFXButton removeButton = FXUtils.newToggleButton4(SVG.DELETE_FOREVER);
                     removeButton.setOnAction(e -> skinnable.onRemove());
                     FXUtils.installFastTooltip(removeButton, i18n("java.disabled.management.remove"));
 
