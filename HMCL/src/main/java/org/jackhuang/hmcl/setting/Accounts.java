@@ -468,7 +468,9 @@ public final class Accounts {
             }
         } else if (exception instanceof MicrosoftService.XBox400Exception) {
             return i18n("account.methods.microsoft.error.wrong_verify_method");
-        } else if (exception instanceof MicrosoftService.NoMinecraftJavaEditionProfileException) {
+        } else if (exception instanceof MicrosoftService.MinecraftJavaEditionLicenseNotFoundException) {
+            return i18n("account.methods.microsoft.error.no_license");
+        } else if (exception instanceof MicrosoftService.MinecraftJavaEditionProfileNotFoundException) {
             return i18n("account.methods.microsoft.error.no_character");
         } else if (exception instanceof MicrosoftService.NoXuiException) {
             return i18n("account.methods.microsoft.error.add_family");
