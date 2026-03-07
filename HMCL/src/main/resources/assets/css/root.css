@@ -1970,19 +1970,19 @@
     -fx-font-size: 13px;
 }
 
-.root .line-select-button .menu-container .title-label {
+.line-select-button .menu-container .title-label {
     -fx-text-fill: -monet-on-surface;
 }
 
-.root .line-select-button .menu-container .subtitle-label {
+.line-select-button .menu-container .subtitle-label {
     -fx-text-fill: -monet-on-surface-variant;
 }
 
-.root .line-select-button .menu-container:selected .title-label {
+.line-select-button .menu-container:selected .title-label {
     -fx-text-fill: -monet-primary;
 }
 
-.root .line-select-button .menu-container:selected .subtitle-label {
+.line-select-button .menu-container:selected .subtitle-label {
     -fx-text-fill: -monet-primary-container;
 }
 
