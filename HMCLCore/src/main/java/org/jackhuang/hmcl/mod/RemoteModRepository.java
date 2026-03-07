@@ -39,6 +39,10 @@ public interface RemoteModRepository {
 
     Type getType();
 
+    String getApiBaseUrl();
+
+    String getBaseUrl();
+
     enum SortType {
         POPULARITY,
         NAME,
@@ -99,6 +103,10 @@ public interface RemoteModRepository {
     RemoteMod.File getModFile(String modId, String fileId) throws IOException;
 
     Stream<RemoteMod.Version> getRemoteVersionsById(String id) throws IOException;
+
+    String getModChangelog(String modId, String versionId) throws IOException;
+
+    String getVersionPageUrl(RemoteMod.Version version) throws IOException;
 
     Stream<Category> getCategories() throws IOException;
 

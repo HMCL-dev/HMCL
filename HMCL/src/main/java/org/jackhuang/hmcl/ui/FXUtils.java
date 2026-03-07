@@ -68,6 +68,7 @@ import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.ui.animation.AnimationUtils;
 import org.jackhuang.hmcl.ui.construct.IconedMenuItem;
 import org.jackhuang.hmcl.ui.construct.MenuSeparator;
+import org.jackhuang.hmcl.ui.construct.MessageDialogPane;
 import org.jackhuang.hmcl.ui.construct.PopupMenu;
 import org.jackhuang.hmcl.ui.image.ImageLoader;
 import org.jackhuang.hmcl.ui.image.ImageUtils;
@@ -80,6 +81,7 @@ import org.jackhuang.hmcl.util.javafx.SafeStringConverter;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
 import org.jackhuang.hmcl.util.platform.SystemUtils;
 import org.jetbrains.annotations.Nullable;
+import org.jsoup.Jsoup;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
@@ -1659,5 +1661,32 @@ public final class FXUtils {
 
             e.consume();
         });
+    }
+
+    public static TextFlow renderAddonChangelog(String changelogHtml, String baseUri) {
+        HTMLRenderer renderer = HTMLRenderer.openHyperlinkInBrowser();
+        renderer.appendNode(Jsoup.parse(changelogHtml, baseUri));
+        renderer.mergeLineBreaks();
+        var textFlow = renderer.render();
+        textFlow.getStyleClass().add("addon-changelog");
+        return textFlow;
+    }
+
+    public static void openUriInBrowser(URI uri) {
+        if (uri == null) return;
+        openUriInBrowser(uri.toString());
+    }
+
+    public static void openUriInBrowser(String uri) {
+        if (uri == null) return;
+        var dialog = new MessageDialogPane.Builder(
+                i18n("web.open_in_browser", uri),
+                i18n("message.confirm"),
+                MessageDialogPane.MessageType.QUESTION
+        )
+                .addAction(i18n("button.copy"), () -> copyText(uri))
+                .yesOrNo(() -> openLink(uri), null)
+                .build();
+        Controllers.dialog(dialog);
     }
 }
