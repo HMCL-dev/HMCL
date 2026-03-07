@@ -53,8 +53,9 @@ public class ModrinthInstallTask extends Task<Void> {
     private Task<Path> downloadIconTask;
     private final List<Task<?>> dependents = new ArrayList<>(4);
     private final List<Task<?>> dependencies = new ArrayList<>(1);
+    private final Set<? extends ModpackFile> selectedFiles;
 
-    public ModrinthInstallTask(DefaultDependencyManager dependencyManager, Path zipFile, Modpack modpack, ModrinthManifest manifest, String name, String iconUrl) {
+    public ModrinthInstallTask(DefaultDependencyManager dependencyManager, Path zipFile, Modpack modpack, ModrinthManifest manifest, String name, String iconUrl, Set<? extends ModpackFile> selectedFiles) {
         this.dependencyManager = dependencyManager;
         this.zipFile = zipFile;
         this.modpack = modpack;
@@ -63,6 +64,7 @@ public class ModrinthInstallTask extends Task<Void> {
         this.iconUrl = iconUrl;
         this.repository = dependencyManager.getGameRepository();
         this.run = repository.getRunDirectory(name);
+        this.selectedFiles = selectedFiles;
 
         Path json = repository.getModpackConfiguration(name);
         if (repository.hasVersion(name) && Files.notExists(json))
@@ -126,7 +128,7 @@ public class ModrinthInstallTask extends Task<Void> {
                 dependents.add(downloadIconTask = new CacheFileTask(iconUrl));
             }
         }
-        dependencies.add(new ModrinthCompletionTask(dependencyManager, name, manifest));
+        dependencies.add(new ModrinthCompletionTask(dependencyManager, name, manifest, selectedFiles));
     }
 
     @Override

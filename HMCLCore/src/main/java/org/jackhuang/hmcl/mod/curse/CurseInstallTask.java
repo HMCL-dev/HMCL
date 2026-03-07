@@ -29,10 +29,7 @@ import org.jackhuang.hmcl.util.gson.JsonUtils;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
 /**
  * Install a downloaded CurseForge modpack.
@@ -60,7 +57,7 @@ public final class CurseInstallTask extends Task<Void> {
      * @param manifest          The manifest content of given CurseForge modpack.
      * @param name              the new version name
      */
-    public CurseInstallTask(DefaultDependencyManager dependencyManager, Path zipFile, Modpack modpack, CurseManifest manifest, String name) {
+    public CurseInstallTask(DefaultDependencyManager dependencyManager, Path zipFile, Modpack modpack, CurseManifest manifest, String name, Set<? extends ModpackFile> selectedFiles) {
         this.dependencyManager = dependencyManager;
         this.zipFile = zipFile;
         this.modpack = modpack;
@@ -108,7 +105,7 @@ public final class CurseInstallTask extends Task<Void> {
         dependents.add(new ModpackInstallTask<>(zipFile, run, modpack.getEncoding(), Collections.singletonList(manifest.getOverrides()), any -> true, config).withStage("hmcl.modpack"));
         dependents.add(new MinecraftInstanceTask<>(zipFile, modpack.getEncoding(), Collections.singletonList(manifest.getOverrides()), manifest, CurseModpackProvider.INSTANCE, manifest.getName(), manifest.getVersion(), repository.getModpackConfiguration(name)).withStage("hmcl.modpack"));
 
-        dependencies.add(new CurseCompletionTask(dependencyManager, name, manifest));
+        dependencies.add(new CurseCompletionTask(dependencyManager, name, manifest, selectedFiles));
     }
 
     @Override

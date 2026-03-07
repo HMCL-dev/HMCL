@@ -21,18 +21,21 @@ import com.google.gson.JsonParseException;
 import kala.compress.archivers.zip.ZipArchiveEntry;
 import kala.compress.archivers.zip.ZipArchiveReader;
 import org.jackhuang.hmcl.download.DefaultDependencyManager;
-import org.jackhuang.hmcl.mod.MismatchedModpackTypeException;
-import org.jackhuang.hmcl.mod.Modpack;
-import org.jackhuang.hmcl.mod.ModpackProvider;
-import org.jackhuang.hmcl.mod.ModpackUpdateTask;
+import org.jackhuang.hmcl.mod.*;
 import org.jackhuang.hmcl.task.Task;
+import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.io.CompressingUtils;
 import org.jackhuang.hmcl.util.io.IOUtils;
 
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.charset.Charset;
 import java.nio.file.Path;
+import java.util.Set;
+import java.util.stream.Collectors;
+
+import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 public final class CurseModpackProvider implements ModpackProvider {
     public static final CurseModpackProvider INSTANCE = new CurseModpackProvider();
@@ -48,11 +51,11 @@ public final class CurseModpackProvider implements ModpackProvider {
     }
 
     @Override
-    public Task<?> createUpdateTask(DefaultDependencyManager dependencyManager, String name, Path zipFile, Modpack modpack) throws MismatchedModpackTypeException {
+    public Task<?> createUpdateTask(DefaultDependencyManager dependencyManager, String name, Path zipFile, Modpack modpack, Set<? extends ModpackFile> selectedFiles) throws MismatchedModpackTypeException {
         if (!(modpack.getManifest() instanceof CurseManifest curseManifest))
             throw new MismatchedModpackTypeException(getName(), modpack.getManifest().getProvider().getName());
 
-        return new ModpackUpdateTask(dependencyManager.getGameRepository(), name, new CurseInstallTask(dependencyManager, zipFile, modpack, curseManifest, name));
+        return new ModpackUpdateTask(dependencyManager.getGameRepository(), name, new CurseInstallTask(dependencyManager, zipFile, modpack, curseManifest, name, selectedFiles));
     }
 
     @Override
@@ -68,10 +71,36 @@ public final class CurseModpackProvider implements ModpackProvider {
 
         return new Modpack(manifest.getName(), manifest.getAuthor(), manifest.getVersion(), manifest.getMinecraft().getGameVersion(), description, encoding, manifest) {
             @Override
-            public Task<?> getInstallTask(DefaultDependencyManager dependencyManager, Path zipFile, String name, String iconUrl) {
-                return new CurseInstallTask(dependencyManager, zipFile, this, manifest, name);
+            public Task<?> getInstallTask(DefaultDependencyManager dependencyManager, Path zipFile, String name, String iconUrl, Set<? extends ModpackFile> selectedFiles) {
+                return new CurseInstallTask(dependencyManager, zipFile, this, manifest, name, selectedFiles);
             }
         };
     }
 
+    @Override
+    public CurseManifest loadFiles(ModpackManifest manifest1) {
+        if (!(manifest1 instanceof CurseManifest))
+            throw new IllegalArgumentException("manifest1 is not a CurseManifest");
+        CurseManifest manifest = (CurseManifest) manifest1;
+        return manifest.setFiles(
+                manifest.getFiles().parallelStream()
+                        .map(file -> {
+                            if ((StringUtils.isBlank(file.getFileName()) || file.getUrl() == null) && file.isOptional()) {
+                                try {
+                                    RemoteMod mod = CurseForgeRemoteModRepository.MODS.getModById(Integer.toString(file.getProjectID()));
+                                    RemoteMod.File remoteFile = CurseForgeRemoteModRepository.MODS.getModFile(Integer.toString(file.getProjectID()), Integer.toString(file.getFileID()));
+                                    return file.withFileName(remoteFile.getFilename()).withURL(remoteFile.getUrl()).withMod(mod);
+                                } catch (FileNotFoundException fof) {
+                                    LOG.warning("Could not query api.curseforge.com for deleted mods: " + file.getProjectID() + ", " + file.getFileID(), fof);
+                                    return file;
+                                } catch (IOException | JsonParseException e) {
+                                    LOG.warning("Unable to fetch the file name projectID=" + file.getProjectID() + ", fileID=" + file.getFileID(), e);
+                                    return file;
+                                }
+                            } else {
+                                return file;
+                            }
+                        })
+                        .collect(Collectors.toList()));
+    }
 }
