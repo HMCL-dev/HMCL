@@ -189,6 +189,7 @@ public class SpinnerPane extends Control {
 
         Skin(SpinnerPane control) {
             super(control);
+            root.setClip(null);
 
             updateContent();
             this.getChildren().setAll(root);
