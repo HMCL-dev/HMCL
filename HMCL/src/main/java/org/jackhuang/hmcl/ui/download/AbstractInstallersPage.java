@@ -23,10 +23,13 @@ import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.SimpleBooleanProperty;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
+import javafx.scene.Node;
 import javafx.scene.control.*;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.FlowPane;
 import javafx.scene.layout.HBox;
+import javafx.scene.layout.Priority;
+import javafx.scene.layout.Region;
 import org.jackhuang.hmcl.download.DownloadProvider;
 import org.jackhuang.hmcl.download.LibraryAnalyzer;
 import org.jackhuang.hmcl.ui.Controllers;
@@ -97,6 +100,10 @@ public abstract class AbstractInstallersPage extends Control implements WizardPa
 
     protected abstract void reload();
 
+    protected Node createBottomPaneLeadingNode() {
+        return null;
+    }
+
     @Override
     public void onNavigate(SettingsMap settings) {
         reload();
@@ -155,8 +162,20 @@ public abstract class AbstractInstallersPage extends Control implements WizardPa
                 installButton.setPrefWidth(100);
                 installButton.setPrefHeight(40);
                 installButton.setOnAction(e -> control.onInstall());
-                BorderPane.setAlignment(installButton, Pos.CENTER_RIGHT);
-                root.setBottom(installButton);
+
+                HBox bottomPane = new HBox(8);
+                bottomPane.setAlignment(Pos.CENTER_LEFT);
+
+                Node leadingNode = control.createBottomPaneLeadingNode();
+                if (leadingNode != null) {
+                    bottomPane.getChildren().add(leadingNode);
+                }
+
+                Region spacer = new Region();
+                HBox.setHgrow(spacer, Priority.ALWAYS);
+                bottomPane.getChildren().add(spacer);
+                bottomPane.getChildren().add(installButton);
+                root.setBottom(bottomPane);
             }
 
             getChildren().setAll(root);

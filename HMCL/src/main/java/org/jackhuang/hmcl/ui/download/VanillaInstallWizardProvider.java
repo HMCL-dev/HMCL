@@ -22,6 +22,7 @@ import org.jackhuang.hmcl.download.DefaultDependencyManager;
 import org.jackhuang.hmcl.download.DownloadProvider;
 import org.jackhuang.hmcl.download.GameBuilder;
 import org.jackhuang.hmcl.download.RemoteVersion;
+import org.jackhuang.hmcl.game.GameDirectoryType;
 import org.jackhuang.hmcl.setting.DownloadProviders;
 import org.jackhuang.hmcl.setting.Profile;
 import org.jackhuang.hmcl.task.Schedulers;
@@ -52,6 +53,7 @@ public final class VanillaInstallWizardProvider implements WizardProvider {
         GameBuilder builder = dependencyManager.gameBuilder();
 
         String name = (String) settings.get("name");
+        boolean enableVersionIsolation = Boolean.TRUE.equals(settings.get(InstallersPage.ENABLE_VERSION_ISOLATION));
         builder.name(name);
         builder.gameVersion(((RemoteVersion) settings.get("game")).getGameVersion());
 
@@ -60,8 +62,22 @@ public final class VanillaInstallWizardProvider implements WizardProvider {
                 builder.version(remoteVersion);
         });
 
+        if (enableVersionIsolation) {
+            profile.getRepository().setPendingGameDirectoryType(name, GameDirectoryType.VERSION_FOLDER);
+        }
+
         return builder.buildAsync().whenComplete(any -> profile.getRepository().refreshVersions())
-                .thenRunAsync(Schedulers.javafx(), () -> profile.setSelectedVersion(name));
+                .thenRunAsync(Schedulers.javafx(), () -> {
+                    if (enableVersionIsolation) {
+                        var versionSetting = profile.getRepository().specializeVersionSetting(name);
+                        if (versionSetting != null) {
+                            versionSetting.setGameDirType(GameDirectoryType.VERSION_FOLDER);
+                        }
+                    }
+
+                    profile.setSelectedVersion(name);
+                })
+                .whenComplete(any -> profile.getRepository().clearPendingGameDirectoryType(name));
     }
 
     @Override

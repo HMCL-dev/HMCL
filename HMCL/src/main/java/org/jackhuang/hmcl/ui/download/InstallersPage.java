@@ -17,9 +17,12 @@
  */
 package org.jackhuang.hmcl.ui.download;
 
+import com.jfoenix.controls.JFXCheckBox;
+import javafx.scene.Node;
 import org.jackhuang.hmcl.download.DownloadProvider;
 import org.jackhuang.hmcl.download.LibraryAnalyzer;
 import org.jackhuang.hmcl.download.RemoteVersion;
+import org.jackhuang.hmcl.game.GameDirectoryType;
 import org.jackhuang.hmcl.game.HMCLGameRepository;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.InstallerItem;
@@ -34,8 +37,10 @@ import static javafx.beans.binding.Bindings.createBooleanBinding;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 public class InstallersPage extends AbstractInstallersPage {
+    public static final String ENABLE_VERSION_ISOLATION = "enableVersionIsolation";
 
     private boolean isNameModifiedByUser = false;
+    private final JFXCheckBox chkEnableVersionIsolation = new JFXCheckBox(i18n("install.new_game.version_isolation"));
 
     public InstallersPage(WizardController controller, HMCLGameRepository repository, String gameVersion, DownloadProvider downloadProvider) {
         super(controller, gameVersion, downloadProvider);
@@ -47,6 +52,7 @@ public class InstallersPage extends AbstractInstallersPage {
         installable.bind(createBooleanBinding(txtName::validate, txtName.textProperty()));
 
         txtName.textProperty().addListener((obs, oldText, newText) -> isNameModifiedByUser = true);
+        chkEnableVersionIsolation.setSelected(repository.getProfile().getGlobal().getGameDirType() == GameDirectoryType.VERSION_FOLDER);
     }
 
     @Override
@@ -70,6 +76,11 @@ public class InstallersPage extends AbstractInstallersPage {
         if (!isNameModifiedByUser) {
             setTxtNameWithLoaders();
         }
+    }
+
+    @Override
+    protected Node createBottomPaneLeadingNode() {
+        return chkEnableVersionIsolation;
     }
 
     @Override
@@ -100,6 +111,7 @@ public class InstallersPage extends AbstractInstallersPage {
                     MessageDialogPane.MessageType.QUESTION)
                     .yesOrNo(() -> {
                         controller.getSettings().put("name", name);
+                        controller.getSettings().put(ENABLE_VERSION_ISOLATION, chkEnableVersionIsolation.isSelected());
                         controller.onFinish();
                     }, () -> {
                         // The user selects Cancel and does nothing.
@@ -107,6 +119,7 @@ public class InstallersPage extends AbstractInstallersPage {
                     .build());
         } else {
             controller.getSettings().put("name", name);
+            controller.getSettings().put(ENABLE_VERSION_ISOLATION, chkEnableVersionIsolation.isSelected());
             controller.onFinish();
         }
     }

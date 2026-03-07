@@ -23,6 +23,7 @@ import javafx.beans.property.ReadOnlyObjectWrapper;
 import javafx.scene.Node;
 import org.jackhuang.hmcl.download.*;
 import org.jackhuang.hmcl.download.game.GameRemoteVersion;
+import org.jackhuang.hmcl.game.GameDirectoryType;
 import org.jackhuang.hmcl.mod.RemoteMod;
 import org.jackhuang.hmcl.mod.curse.CurseForgeRemoteModRepository;
 import org.jackhuang.hmcl.setting.DownloadProviders;
@@ -282,6 +283,7 @@ public class DownloadPage extends DecoratorAnimatedPage implements DecoratorPage
             GameBuilder builder = dependencyManager.gameBuilder();
 
             String name = (String) settings.get("name");
+            boolean enableVersionIsolation = Boolean.TRUE.equals(settings.get(InstallersPage.ENABLE_VERSION_ISOLATION));
             builder.name(name);
             builder.gameVersion(((RemoteVersion) settings.get(LibraryAnalyzer.LibraryType.MINECRAFT.getPatchId())).getGameVersion());
 
@@ -291,8 +293,22 @@ public class DownloadPage extends DecoratorAnimatedPage implements DecoratorPage
                     builder.version(remoteVersion);
             });
 
+            if (enableVersionIsolation) {
+                profile.getRepository().setPendingGameDirectoryType(name, GameDirectoryType.VERSION_FOLDER);
+            }
+
             return builder.buildAsync().whenComplete(any -> profile.getRepository().refreshVersions())
-                    .thenRunAsync(Schedulers.javafx(), () -> profile.setSelectedVersion(name));
+                    .thenRunAsync(Schedulers.javafx(), () -> {
+                        if (enableVersionIsolation) {
+                            var versionSetting = profile.getRepository().specializeVersionSetting(name);
+                            if (versionSetting != null) {
+                                versionSetting.setGameDirType(GameDirectoryType.VERSION_FOLDER);
+                            }
+                        }
+
+                        profile.setSelectedVersion(name);
+                    })
+                    .whenComplete(any -> profile.getRepository().clearPendingGameDirectoryType(name));
         }
 
         @Override
