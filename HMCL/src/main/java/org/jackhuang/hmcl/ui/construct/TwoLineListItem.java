@@ -17,10 +17,12 @@
  */
 package org.jackhuang.hmcl.ui.construct;
 
+import javafx.application.Platform;
 import javafx.beans.binding.Bindings;
 import javafx.beans.property.StringProperty;
 import javafx.beans.property.StringPropertyBase;
 import javafx.collections.FXCollections;
+import javafx.collections.ListChangeListener;
 import javafx.collections.ObservableList;
 import javafx.css.PseudoClass;
 import javafx.geometry.Pos;
@@ -168,11 +170,15 @@ public class TwoLineListItem extends VBox {
 
             var scrollPane = new ScrollPane(tagsBox);
             HBox.setHgrow(scrollPane, Priority.ALWAYS);
+            lblTitle.setMinWidth(Label.USE_PREF_SIZE);
             scrollPane.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
             scrollPane.setVbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
             FXUtils.onChangeAndOperate(tagsBox.heightProperty(), height -> FXUtils.setLimitHeight(scrollPane, height.doubleValue()));
-            scrollPane.setPrefWidth(50);
             firstLine.getChildren().setAll(lblTitle, scrollPane);
+
+            tags.addListener((ListChangeListener<? super Label>) change -> {
+                Platform.runLater(scrollPane::requestLayout);
+            });
         }
         return tags;
     }
