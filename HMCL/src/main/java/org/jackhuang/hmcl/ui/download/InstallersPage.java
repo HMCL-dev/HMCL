@@ -28,10 +28,7 @@ import org.jackhuang.hmcl.ui.construct.RequiredValidator;
 import org.jackhuang.hmcl.ui.construct.Validator;
 import org.jackhuang.hmcl.ui.wizard.WizardController;
 import org.jackhuang.hmcl.util.SettingsMap;
-import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.i18n.I18n;
-
-import java.util.Locale;
 
 import static javafx.beans.binding.Bindings.createBooleanBinding;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
@@ -127,10 +124,15 @@ public class InstallersPage extends AbstractInstallersPage {
 
             if (libraryType != null) {
                 String loaderName = switch (libraryType) {
-                    case LEGACY_FABRIC -> "LegacyFabric";
+                    case FORGE -> "Forge";
                     case NEO_FORGE -> "NeoForge";
-                    case FABRIC_API, QUILT_API, LEGACY_FABRIC_API -> null;
-                    default -> StringUtils.capitalizeFirst(libraryType.name().toLowerCase(Locale.ROOT));
+                    case CLEANROOM -> "Cleanroom";
+                    case LEGACY_FABRIC -> "Legacy_Fabric";
+                    case FABRIC -> "Fabric";
+                    case LITELOADER -> "LiteLoader";
+                    case QUILT -> "Quilt";
+                    case OPTIFINE -> "OptiFine";
+                    default -> null;
                 };
 
                 if (loaderName != null)
