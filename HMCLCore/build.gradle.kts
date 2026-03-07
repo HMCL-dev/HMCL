@@ -26,6 +26,7 @@ dependencies {
     api(libs.chardet)
     api(libs.jna)
     api(libs.pci.ids)
+    api("com.github.Glavo:HelloNBT:8962c0f731") // TODO: Replace with official release
 
     compileOnlyApi(libs.jetbrains.annotations)
 
