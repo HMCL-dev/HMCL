@@ -38,9 +38,7 @@ import org.jackhuang.hmcl.ui.SVG;
 import org.jackhuang.hmcl.ui.account.AccountAdvancedListItem;
 import org.jackhuang.hmcl.ui.account.AccountListPopupMenu;
 import org.jackhuang.hmcl.ui.animation.AnimationUtils;
-import org.jackhuang.hmcl.ui.construct.AdvancedListBox;
-import org.jackhuang.hmcl.ui.construct.AdvancedListItem;
-import org.jackhuang.hmcl.ui.construct.MessageDialogPane;
+import org.jackhuang.hmcl.ui.construct.*;
 import org.jackhuang.hmcl.ui.decorator.DecoratorAnimatedPage;
 import org.jackhuang.hmcl.ui.decorator.DecoratorPage;
 import org.jackhuang.hmcl.ui.download.ModpackInstallWizardProvider;
@@ -54,6 +52,7 @@ import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.TaskCancellationAction;
 import org.jackhuang.hmcl.util.io.CompressingUtils;
+import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.platform.*;
 import org.jackhuang.hmcl.util.versioning.VersionNumber;
 
@@ -98,7 +97,7 @@ public class RootPage extends DecoratorAnimatedPage implements DecoratorPage {
         if (mainPage == null) {
             MainPage mainPage = new MainPage();
             FXUtils.applyDragListener(mainPage,
-                    file -> ModpackHelper.isFileModpackByExtension(file) || NBTFileType.isNBTFileByExtension(file),
+                    file -> ModpackHelper.isFileModpackByExtension(file) || NBTFileType.isNBTFileByExtension(file) || "json".equalsIgnoreCase(FileUtils.getExtension(file)),
                     modpacks -> {
                         Path file = modpacks.get(0);
                         if (ModpackHelper.isFileModpackByExtension(file)) {
@@ -113,6 +112,28 @@ public class RootPage extends DecoratorAnimatedPage implements DecoratorPage {
                                 Controllers.dialog(i18n("nbt.open.failed") + "\n\n" + StringUtils.getStackTrace(e),
                                         i18n("message.error"), MessageDialogPane.MessageType.ERROR);
                             }
+                        } else if ("json".equalsIgnoreCase(FileUtils.getExtension(file))) {
+                            var profile = Profiles.getSelectedProfile();
+                            Controllers.prompt(
+                                    new PromptDialogPane.Builder(i18n("version.manage.duplicate.prompt"), (res, handler) -> {
+                                        String versionName = ((PromptDialogPane.Builder.StringQuestion) res.get(1)).getValue();
+                                        Task.runAsync(() -> {
+                                                    var dir = profile.getGameDir();
+                                                    FileUtils
+                                                })
+                                                .thenComposeAsync(profile.getRepository().refreshVersionsAsync())
+                                                .whenComplete(Schedulers.javafx(), (result, exception) -> {
+                                                    if (exception == null) {
+                                                        handler.resolve();
+                                                    } else {
+                                                        handler.reject(StringUtils.getStackTrace(exception));
+                                                    }
+                                                }).start();
+                                    })
+                                            .addQuestion(new PromptDialogPane.Builder.StringQuestion(null, FileUtils.getNameWithoutExtension(file),
+                                                    new Validator(i18n("install.new_game.malformed"), HMCLGameRepository::isValidVersionId),
+                                                    new Validator(i18n("install.new_game.already_exists"), newVersionName -> !profile.getRepository().versionIdConflicts(newVersionName))))
+                             );
                         }
                     });
 
