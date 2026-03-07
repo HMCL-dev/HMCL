@@ -58,6 +58,7 @@ public final class BMCLAPIDownloadProvider implements DownloadProvider {
     private final QuiltAPIVersionList quiltApi;
     private final List<Pair<String, String>> replacement;
 
+    @SuppressWarnings("HttpUrlsUsage")
     public BMCLAPIDownloadProvider(String apiRoot) {
         this.apiRoot = apiRoot;
         this.game = new GameVersionList(this);
@@ -91,14 +92,18 @@ public final class BMCLAPIDownloadProvider implements DownloadProvider {
                 pair("https://authlib-injector.yushi.moe", apiRoot + "/mirrors/authlib-injector"),
                 pair("https://repo1.maven.org/maven2", "https://mirrors.cloud.tencent.com/nexus/repository/maven-public"),
                 pair("https://repo.maven.apache.org/maven2", "https://mirrors.cloud.tencent.com/nexus/repository/maven-public"),
-                pair("https://hmcl.glavo.site/metadata/cleanroom", "https://alist.8mi.tech/d/mirror/HMCL-Metadata/Auto/cleanroom"),
                 pair("https://hmcl.glavo.site/metadata/fmllibs", "https://alist.8mi.tech/d/mirror/HMCL-Metadata/Auto/fmllibs"),
                 pair("https://zkitefly.github.io/unlisted-versions-of-minecraft", "https://alist.8mi.tech/d/mirror/unlisted-versions-of-minecraft/Auto"),
                 // https://github.com/mcmod-info-mirror/mcim-rust-api
                 pair("https://api.modrinth.com", "https://mod.mcimirror.top/modrinth"),
                 pair("https://cdn.modrinth.com", "https://mod.mcimirror.top"),
                 pair("https://api.curseforge.com", "https://mod.mcimirror.top/curseforge"),
-                pair("https://edge.forgecdn.net", "https://mod.mcimirror.top")
+                pair("https://edge.forgecdn.net", "https://mod.mcimirror.top"),
+                // Cleanroom
+                pair("https://hmcl.glavo.site/metadata/cleanroom", "https://alist.8mi.tech/d/mirror/HMCL-Metadata/Auto/cleanroom"),
+                pair("https://repo.cleanroommc.com/releases", "https://nexus.jsdu.cn/repository/cleanroommc-releases"),
+                pair("https://maven.arcseekers.com/releases", "https://nexus.jsdu.cn/repository/arcseekers-releases")
+
         );
     }
 
