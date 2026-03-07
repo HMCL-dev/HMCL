@@ -439,14 +439,14 @@ public final class SettingsPage extends ScrollPane {
             } catch (IOException e) {
                 LOG.warning("Failed to export logs", e);
                 Platform.runLater(() -> {
-                    spinnerPane.showSpinner();
+                    spinnerPane.hideSpinner();
                     Controllers.dialog(i18n("settings.launcher.launcher_log.export.failed") + "\n" + StringUtils.getStackTrace(e), null, MessageType.ERROR);
                 });
                 return;
             }
 
             Platform.runLater(() -> {
-                spinnerPane.showSpinner();
+                spinnerPane.hideSpinner();
                 Controllers.dialog(i18n("settings.launcher.launcher_log.export.success", outputFile));
             });
             FXUtils.showFileInExplorer(outputFile);
