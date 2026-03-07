@@ -222,7 +222,11 @@ public final class LauncherHelper {
                     );
                 }).thenComposeAsync(launcher -> { // launcher is prev task's result
                     if (scriptFile == null) {
-                        return Task.supplyAsync(launcher::launch);
+                        Task<ManagedProcess> launch = Task.supplyAsync(launcher::launch);
+                        if (launch == null) {
+                            return Task.completed(null);
+                        }
+                        return launch;
                     } else {
                         return Task.supplyAsync(() -> {
                             launcher.makeLaunchScript(scriptFile);
@@ -231,7 +235,7 @@ public final class LauncherHelper {
                     }
                 }).thenAcceptAsync(process -> { // process is LaunchTask's result
                     if (scriptFile == null) {
-                        PROCESSES.add(new WeakReference<>(process));
+                        PROCESSES.add(new WeakReference<ManagedProcess>(process));
                         if (launcherVisibility == LauncherVisibility.CLOSE)
                             Launcher.stopApplication();
                         else

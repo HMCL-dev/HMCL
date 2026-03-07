@@ -60,6 +60,7 @@ dependencies {
     implementation(libs.twelvemonkeys.imageio.webp)
     implementation(libs.java.info)
     implementation(libs.monet.fx)
+    implementation("org.javatuples:javatuples:1.2")
 
     if (launcherExe.isBlank()) {
         implementation(libs.hmclauncher)

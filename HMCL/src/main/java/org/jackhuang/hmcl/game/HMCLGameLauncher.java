@@ -33,6 +33,7 @@ import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.platform.ManagedProcess;
 import org.jackhuang.hmcl.util.platform.SystemUtils;
 import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
+import org.javatuples.Pair;
 
 import java.io.File;
 import java.io.IOException;
@@ -43,6 +44,7 @@ import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Stream;
 
@@ -54,6 +56,7 @@ import static org.jackhuang.hmcl.util.logging.Logger.LOG;
  * @author huangyuhui
  */
 public final class HMCLGameLauncher extends DefaultLauncher {
+    boolean isntCancelled = true;
 
     public HMCLGameLauncher(
             GameRepository repository, Version version, AuthInfo authInfo, LaunchOptions options) {
@@ -87,8 +90,11 @@ public final class HMCLGameLauncher extends DefaultLauncher {
         return res;
     }
 
-    private void generateOptionsTxt() {
-        if (config().isDisableAutoGameOptions()) return;
+    /**
+     * @return isn't Cancelled
+     */
+    private boolean generateOptionsTxt() {
+        if (config().isDisableAutoGameOptions()) return true;
         Path runDir = repository.getRunDirectory(version.getId());
         HMCLGameRepository repository = (HMCLGameRepository) this.repository;
         if (repository.getGameDirectoryType(version.getId()) == GameDirectoryType.ROOT_FOLDER) {
@@ -98,18 +104,23 @@ public final class HMCLGameLauncher extends DefaultLauncher {
             if (Arrays.stream(subdirs).anyMatch(dir -> Files.exists(versionRoot.resolve(dir)))) {
                 if (Arrays.stream(subdirs)
                         .anyMatch(dir -> Files.exists(versionRoot.resolve(dir)))) {
-                    runDir = switchWorkingDirectory(repository, version);
+                    Pair<Path, Boolean> runDirAndIsntCancelled = switchWorkingDirectory(repository, version);
+                    if (runDirAndIsntCancelled.getValue1()) {
+                        runDir = runDirAndIsntCancelled.getValue0();
+                    } else {
+                        return false;
+                    }
                 }
             }
         }
         Path optionsFile = runDir.resolve("options.txt");
         Path configFolder = runDir.resolve("config");
 
-        if (Files.exists(optionsFile)) return;
+        if (Files.exists(optionsFile)) return true;
 
         if (Files.isDirectory(configFolder)) {
             try (Stream<Path> stream = Files.walk(configFolder, 2, FileVisitOption.FOLLOW_LINKS)) {
-                if (stream.anyMatch(file -> "options.txt".equals(FileUtils.getName(file)))) return;
+                if (stream.anyMatch(file -> "options.txt".equals(FileUtils.getName(file)))) return true;
             } catch (IOException e) {
                 LOG.warning("Failed to visit config folder", e);
             }
@@ -126,10 +137,10 @@ public final class HMCLGameLauncher extends DefaultLauncher {
          */
         GameVersionNumber gameVersion =
                 GameVersionNumber.asGameVersion(this.repository.getGameVersion(version));
-        if (gameVersion.compareTo("1.1") < 0) return;
+        if (gameVersion.compareTo("1.1") < 0) return true;
 
         String lang = normalizedLanguageTag(locale, gameVersion);
-        if (lang.isEmpty()) return;
+        if (lang.isEmpty()) return true;
 
         if (gameVersion.compareTo("1.11") >= 0) lang = lang.toLowerCase(Locale.ROOT);
 
@@ -139,11 +150,11 @@ public final class HMCLGameLauncher extends DefaultLauncher {
         } catch (IOException e) {
             LOG.warning("Unable to generate options.txt", e);
         }
+        return true;
     }
 
-    private Path switchWorkingDirectory(HMCLGameRepository repository, Version version) {
+    private Pair<Path, Boolean> switchWorkingDirectory(HMCLGameRepository repository, Version version) {
         CompletableFuture<Path> future = new CompletableFuture<>();
-
         var dialog =
                 new MessageDialogPane.Builder(
                                 i18n(
@@ -171,12 +182,16 @@ public final class HMCLGameLauncher extends DefaultLauncher {
                                     restoreVersionSetting = true;
                                     future.complete(repository.getVersionRoot(version.getId()));
                                 })
+                        .addCancel(() -> {
+                            isntCancelled = false;
+                            future.complete(null);
+                        })
                         .build();
         dialog.setCancelButton(null);
         FXUtils.runInFX(() -> Controllers.dialog(dialog));
 
         try {
-            return future.get();
+            return Pair.with(future.get(), false);
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
@@ -249,8 +264,11 @@ public final class HMCLGameLauncher extends DefaultLauncher {
 
     @Override
     public ManagedProcess launch() throws IOException, InterruptedException {
-        generateOptionsTxt();
-        return super.launch();
+        if (generateOptionsTxt()) {
+            return super.launch();
+        } else {
+            return null;
+        }
     }
 
     @Override
