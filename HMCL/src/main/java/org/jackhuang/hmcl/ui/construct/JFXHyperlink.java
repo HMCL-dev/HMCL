@@ -17,20 +17,31 @@
  */
 package org.jackhuang.hmcl.ui.construct;
 
-import javafx.scene.control.Hyperlink;
+import com.jfoenix.controls.JFXButton;
+import javafx.event.ActionEvent;
+import javafx.event.EventHandler;
+import javafx.scene.layout.StackPane;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
 
-public final class JFXHyperlink extends Hyperlink {
+public final class JFXHyperlink extends StackPane {
+    private final JFXButton jfxButton = new JFXButton();
 
     public JFXHyperlink(String text) {
-        super(text);
+        getStyleClass().add("jfx-hyperlink");
 
-        setGraphic(SVG.OPEN_IN_NEW.createIcon(16));
+        jfxButton.setText(text);
+        jfxButton.setGraphic(SVG.OPEN_IN_NEW.createIcon(16));
+
+        getChildren().add(jfxButton);
     }
 
     public void setExternalLink(String externalLink) {
-        this.setOnAction(e -> FXUtils.openLink(externalLink));
+        jfxButton.setOnAction(e -> FXUtils.openLink(externalLink));
+    }
+
+    public void setOnAction(EventHandler<ActionEvent> value) {
+        jfxButton.setOnAction(value);
     }
 }
 
