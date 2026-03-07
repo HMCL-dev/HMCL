@@ -99,9 +99,14 @@ public final class Controllers {
         GameListPage gameListPage = new GameListPage();
         gameListPage.selectedProfileProperty().bindBidirectional(Profiles.selectedProfileProperty());
         gameListPage.profilesProperty().bindContent(Profiles.profilesProperty());
-        FXUtils.applyDragListener(gameListPage, ModpackHelper::isFileModpackByExtension, modpacks -> {
-            Path modpack = modpacks.get(0);
-            Controllers.getDecorator().startWizard(new ModpackInstallWizardProvider(Profiles.getSelectedProfile(), modpack), i18n("install.modpack"));
+        FXUtils.applyDragListener(gameListPage, file -> ModpackHelper.isFileModpackByExtension(file) || "json".equalsIgnoreCase(FileUtils.getNameWithoutExtension(file)), files -> {
+            Path file = files.get(0);
+
+            if (ModpackHelper.isFileModpackByExtension(file)) {
+                Controllers.getDecorator().startWizard(new ModpackInstallWizardProvider(Profiles.getSelectedProfile(), file), i18n("install.modpack"));
+            } else if ("json".equalsIgnoreCase(FileUtils.getExtension(file))) {
+                Versions.installFromJson(Profiles.getSelectedProfile(), file);
+            }
         });
         return gameListPage;
     });

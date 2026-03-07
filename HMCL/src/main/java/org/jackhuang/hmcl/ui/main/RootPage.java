@@ -38,7 +38,9 @@ import org.jackhuang.hmcl.ui.SVG;
 import org.jackhuang.hmcl.ui.account.AccountAdvancedListItem;
 import org.jackhuang.hmcl.ui.account.AccountListPopupMenu;
 import org.jackhuang.hmcl.ui.animation.AnimationUtils;
-import org.jackhuang.hmcl.ui.construct.*;
+import org.jackhuang.hmcl.ui.construct.AdvancedListBox;
+import org.jackhuang.hmcl.ui.construct.AdvancedListItem;
+import org.jackhuang.hmcl.ui.construct.MessageDialogPane;
 import org.jackhuang.hmcl.ui.decorator.DecoratorAnimatedPage;
 import org.jackhuang.hmcl.ui.decorator.DecoratorPage;
 import org.jackhuang.hmcl.ui.download.ModpackInstallWizardProvider;
@@ -113,27 +115,7 @@ public class RootPage extends DecoratorAnimatedPage implements DecoratorPage {
                                         i18n("message.error"), MessageDialogPane.MessageType.ERROR);
                             }
                         } else if ("json".equalsIgnoreCase(FileUtils.getExtension(file))) {
-                            var profile = Profiles.getSelectedProfile();
-                            Controllers.prompt(
-                                    new PromptDialogPane.Builder(i18n("version.manage.duplicate.prompt"), (res, handler) -> {
-                                        String versionName = ((PromptDialogPane.Builder.StringQuestion) res.get(1)).getValue();
-                                        Task.runAsync(() -> {
-                                                    var dir = profile.getGameDir();
-                                                    FileUtils
-                                                })
-                                                .thenComposeAsync(profile.getRepository().refreshVersionsAsync())
-                                                .whenComplete(Schedulers.javafx(), (result, exception) -> {
-                                                    if (exception == null) {
-                                                        handler.resolve();
-                                                    } else {
-                                                        handler.reject(StringUtils.getStackTrace(exception));
-                                                    }
-                                                }).start();
-                                    })
-                                            .addQuestion(new PromptDialogPane.Builder.StringQuestion(null, FileUtils.getNameWithoutExtension(file),
-                                                    new Validator(i18n("install.new_game.malformed"), HMCLGameRepository::isValidVersionId),
-                                                    new Validator(i18n("install.new_game.already_exists"), newVersionName -> !profile.getRepository().versionIdConflicts(newVersionName))))
-                             );
+                            Versions.installFromJson(Profiles.getSelectedProfile(), file);
                         }
                     });
 
