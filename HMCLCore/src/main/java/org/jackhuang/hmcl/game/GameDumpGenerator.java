@@ -129,7 +129,14 @@ public final class GameDumpGenerator {
     }
 
     private static void writeDumpBodyTo(VirtualMachine vm, Writer writer) throws IOException {
-        int vmVersion = JavaInfo.parseVersion(vm.getSystemProperties().get("java.version").toString());
+        int vmVersion = -1;
+
+        try {
+            if (vm.getSystemProperties().get("java.version") instanceof String javaVersion)
+                vmVersion = JavaInfo.parseVersion(javaVersion);
+        } catch (Throwable e) {
+            LOG.warning("Failed to get VM system properties", e);
+        }
 
         if (vmVersion >= 11)
             execute(vm, "Thread.print -e -l", writer);
