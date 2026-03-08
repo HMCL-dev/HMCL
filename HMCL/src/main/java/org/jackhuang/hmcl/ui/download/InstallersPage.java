@@ -127,7 +127,7 @@ public class InstallersPage extends AbstractInstallersPage {
                     case FORGE -> "Forge";
                     case NEO_FORGE -> "NeoForge";
                     case CLEANROOM -> "Cleanroom";
-                    case LEGACY_FABRIC -> "Legacy_Fabric";
+                    case LEGACY_FABRIC -> "LegacyFabric";
                     case FABRIC -> "Fabric";
                     case LITELOADER -> "LiteLoader";
                     case QUILT -> "Quilt";
