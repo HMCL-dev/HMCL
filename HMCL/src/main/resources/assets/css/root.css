@@ -918,7 +918,7 @@
 }
 
 .jfx-progress-bar > .bar,
-.jfx-progress-bar:indeterminate > .bar {
+.jfx-progress-bar:indeterminate > .bar{
     -fx-background-color: -monet-primary;
     -fx-padding: 1.5;
 }
