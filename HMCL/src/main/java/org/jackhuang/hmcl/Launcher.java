@@ -17,35 +17,35 @@
  */
 package org.jackhuang.hmcl;
 
+import javafx.animation.KeyFrame;
+import javafx.animation.Timeline;
 import javafx.application.Application;
 import javafx.application.Platform;
 import javafx.beans.value.ObservableBooleanValue;
 import javafx.geometry.Rectangle2D;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Alert.AlertType;
+import javafx.scene.control.Button;
 import javafx.scene.control.ButtonType;
 import javafx.scene.input.Clipboard;
 import javafx.scene.input.DataFormat;
 import javafx.stage.Screen;
 import javafx.stage.Stage;
+import javafx.util.Duration;
 import org.jackhuang.hmcl.setting.ConfigHolder;
 import org.jackhuang.hmcl.setting.SambaException;
-import org.jackhuang.hmcl.ui.FXUtils;
-import org.jackhuang.hmcl.util.FileSaver;
 import org.jackhuang.hmcl.task.AsyncTaskExecutor;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.ui.Controllers;
+import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.upgrade.UpdateChecker;
 import org.jackhuang.hmcl.upgrade.UpdateHandler;
 import org.jackhuang.hmcl.util.CrashReporter;
+import org.jackhuang.hmcl.util.FileSaver;
 import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.io.JarUtils;
-import org.jackhuang.hmcl.util.platform.Architecture;
-import org.jackhuang.hmcl.util.platform.CommandBuilder;
-import org.jackhuang.hmcl.util.platform.NativeUtils;
-import org.jackhuang.hmcl.util.platform.OperatingSystem;
-import org.jackhuang.hmcl.util.platform.SystemInfo;
+import org.jackhuang.hmcl.util.platform.*;
 
 import java.io.File;
 import java.io.IOException;
@@ -65,8 +65,8 @@ import java.util.concurrent.TimeUnit;
 
 import static org.jackhuang.hmcl.ui.FXUtils.runInFX;
 import static org.jackhuang.hmcl.util.DataSizeUnit.MEGABYTES;
-import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
+import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 public final class Launcher extends Application {
     public static final CookieManager COOKIE_MANAGER = new CookieManager();
@@ -111,7 +111,7 @@ public final class Launcher extends Application {
             if (OperatingSystem.CURRENT_OS == OperatingSystem.MACOS
                     && ConfigHolder.isNewlyCreated()
                     && System.getProperty("user.dir").startsWith("/private/var/folders/")) {
-                if (showAlert(AlertType.WARNING, i18n("fatal.mac_app_translocation"), ButtonType.YES, ButtonType.NO) == ButtonType.NO)
+                if (showAlertWithCountdown(AlertType.WARNING, i18n("fatal.mac_app_translocation"), ButtonType.YES, ButtonType.NO) == ButtonType.NO)
                     return;
             } else {
                 checkConfigInTempDir();
@@ -182,6 +182,35 @@ public final class Launcher extends Application {
         return new Alert(alertType, contentText, buttons).showAndWait().orElse(null);
     }
 
+    private static ButtonType showAlertWithCountdown(Alert.AlertType alertType, String contentText, ButtonType... buttons) {
+        Alert alert = new Alert(alertType, contentText, buttons);
+
+        Button okButton = (Button) alert.getDialogPane().lookupButton(ButtonType.YES);
+
+        okButton.setDisable(true);
+
+        int delaySeconds = 10;
+
+        Timeline timeline = new Timeline();
+        for (int i = 0; i <= delaySeconds; i++) {
+            int remaining = delaySeconds - i;
+            KeyFrame keyFrame = new KeyFrame(Duration.seconds(i), event -> {
+                if (remaining > 0) {
+                    okButton.setText(String.format(i18n("button.yes") + " (%d)", remaining));
+                } else {
+                    okButton.setText(i18n("button.yes"));
+                    okButton.setDisable(false);
+                }
+            });
+            timeline.getKeyFrames().add(keyFrame);
+        }
+
+        alert.setOnShown(e -> timeline.play());
+        alert.setOnCloseRequest(e -> timeline.stop());
+
+        return alert.showAndWait().orElse(null);
+    }
+
     private static boolean isConfigInTempDir() {
         String configPath = ConfigHolder.configLocation().toString();
 
@@ -221,7 +250,7 @@ public final class Launcher extends Application {
 
     private static void checkConfigInTempDir() {
         if (ConfigHolder.isNewlyCreated() && isConfigInTempDir()
-                && showAlert(AlertType.WARNING, i18n("fatal.config_in_temp_dir"), ButtonType.YES, ButtonType.NO) == ButtonType.NO) {
+                && showAlertWithCountdown(AlertType.WARNING, i18n("fatal.config_in_temp_dir"), ButtonType.YES, ButtonType.NO) == ButtonType.NO) {
             EntryPoint.exit(0);
         }
     }
