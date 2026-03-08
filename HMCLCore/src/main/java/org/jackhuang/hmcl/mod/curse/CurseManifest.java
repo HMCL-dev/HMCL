@@ -28,8 +28,10 @@ import java.util.List;
 /// @author huangyuhui
 @JsonSerializable
 public record CurseManifest(@SerializedName("manifestType") String manifestType,
-                            @SerializedName("manifestVersion") int manifestVersion, @SerializedName("name") String name,
-                            @SerializedName("version") String version, @SerializedName("author") String author,
+                            @SerializedName("manifestVersion") int manifestVersion,
+                            @SerializedName("name") String name,
+                            @SerializedName("version") String version,
+                            @SerializedName("author") String author,
                             @SerializedName("overrides") String overrides,
                             @SerializedName("minecraft") CurseManifestMinecraft minecraft,
                             @SerializedName("files") @Unmodifiable List<CurseManifestFile> files) implements ModpackManifest {
