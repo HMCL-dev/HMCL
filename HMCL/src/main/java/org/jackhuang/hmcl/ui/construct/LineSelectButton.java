@@ -53,8 +53,6 @@ public final class LineSelectButton<T> extends LineButton {
     public LineSelectButton() {
         this.getStyleClass().add(DEFAULT_STYLE_CLASS);
 
-        this.addEventHandler(KeyEvent.KEY_PRESSED, this::handleKeyEvent);
-
         InvalidationListener updateTrailingText = observable -> {
             T value = getValue();
             if (value != null) {
