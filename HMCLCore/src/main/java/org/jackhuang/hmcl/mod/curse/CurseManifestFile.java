@@ -19,23 +19,19 @@ package org.jackhuang.hmcl.mod.curse;
 
 import com.google.gson.JsonParseException;
 import com.google.gson.annotations.SerializedName;
-import org.jackhuang.hmcl.util.Immutable;
+import org.jackhuang.hmcl.util.gson.JsonSerializable;
 import org.jackhuang.hmcl.util.gson.Validation;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Objects;
 
-/**
- *
- * @author huangyuhui
- */
-@Immutable
-public record CurseManifestFile(@SerializedName("projectID") int projectID, @SerializedName("fileID") int fileID,
-                                @SerializedName("fileName") String fileName, @SerializedName("url") String url,
+/// @author huangyuhui
+@JsonSerializable
+public record CurseManifestFile(@SerializedName("projectID") int projectID,
+                                @SerializedName("fileID") int fileID,
+                                @SerializedName("fileName") String fileName,
+                                @SerializedName("url") String url,
                                 @SerializedName("required") boolean required) implements Validation {
-    public CurseManifestFile() {
-        this(0, 0, null, null, true);
-    }
 
     @Override
     public void validate() throws JsonParseException {
@@ -65,11 +61,9 @@ public record CurseManifestFile(@SerializedName("projectID") int projectID, @Ser
 
     @Override
     public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-        CurseManifestFile that = (CurseManifestFile) o;
-        return projectID == that.projectID &&
-                fileID == that.fileID;
+        return this == o || o instanceof CurseManifestFile that
+                && this.projectID == that.projectID
+                && this.fileID == that.fileID;
     }
 
     @Override
