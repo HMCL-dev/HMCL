@@ -214,7 +214,7 @@ public class JFXSpinnerSkin extends SkinBase<JFXSpinner> {
     @Override
     protected void layoutChildren(double contentX, double contentY, double contentWidth, double contentHeight) {
         final double strokeWidth = arc.getStrokeWidth();
-        final double radius = Math.min(contentWidth, contentHeight) / 2 - strokeWidth / 2;
+        double radius = control.getRadius();
         final double arcSize = snapSizeX(radius * 2 + strokeWidth);
 
         arcPane.resizeRelocate((contentWidth - arcSize) / 2 + 1, (contentHeight - arcSize) / 2 + 1, arcSize, arcSize);

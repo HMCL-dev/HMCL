@@ -241,9 +241,7 @@ public final class JavaManagementPage extends ListPageBase<JavaRuntime> {
             HBox right = new HBox();
             right.setAlignment(Pos.CENTER_RIGHT);
             {
-                JFXButton revealButton = new JFXButton();
-                revealButton.setGraphic(SVG.FOLDER_OPEN.createIcon());
-                revealButton.getStyleClass().add("toggle-icon4");
+                JFXButton revealButton = FXUtils.newToggleButton4(SVG.FOLDER_OPEN);
                 revealButton.setOnAction(e -> {
                     JavaRuntime java = getItem();
                     if (java != null)

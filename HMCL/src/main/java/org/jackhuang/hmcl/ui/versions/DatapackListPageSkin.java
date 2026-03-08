@@ -35,7 +35,6 @@ import javafx.scene.Node;
 import javafx.scene.control.SelectionMode;
 import javafx.scene.control.SkinBase;
 import javafx.scene.image.Image;
-import javafx.scene.image.ImageView;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
 import javafx.scene.input.MouseEvent;
@@ -50,10 +49,7 @@ import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
 import org.jackhuang.hmcl.ui.animation.ContainerAnimations;
 import org.jackhuang.hmcl.ui.animation.TransitionPane;
-import org.jackhuang.hmcl.ui.construct.ComponentList;
-import org.jackhuang.hmcl.ui.construct.MDListCell;
-import org.jackhuang.hmcl.ui.construct.SpinnerPane;
-import org.jackhuang.hmcl.ui.construct.TwoLineListItem;
+import org.jackhuang.hmcl.ui.construct.*;
 import org.jackhuang.hmcl.util.io.CompressingUtils;
 import org.jetbrains.annotations.Nullable;
 
@@ -274,20 +270,20 @@ final class DatapackListPageSkin extends SkinBase<DatapackListPage> {
             }
         }
 
-        public void loadIcon(ImageView imageView, @Nullable WeakReference<ObjectProperty<DatapackInfoObject>> current) {
+        public void loadIcon(ImageContainer imageContainer, @Nullable WeakReference<ObjectProperty<DatapackInfoObject>> current) {
             SoftReference<CompletableFuture<Image>> iconCache = this.iconCache;
             CompletableFuture<Image> imageFuture;
             if (iconCache != null && (imageFuture = iconCache.get()) != null) {
                 Image image = imageFuture.getNow(null);
                 if (image != null) {
-                    imageView.setImage(image);
+                    imageContainer.setImage(image);
                     return;
                 }
             } else {
                 imageFuture = CompletableFuture.supplyAsync(this::loadIcon, Schedulers.io());
                 this.iconCache = new SoftReference<>(imageFuture);
             }
-            imageView.setImage(FXUtils.newBuiltinImage("/assets/img/unknown_pack.png"));
+            imageContainer.setImage(FXUtils.newBuiltinImage("/assets/img/unknown_pack.png"));
             imageFuture.thenAcceptAsync(image -> {
                 if (current != null) {
                     ObjectProperty<DatapackInfoObject> infoObjectProperty = current.get();
@@ -296,7 +292,7 @@ final class DatapackListPageSkin extends SkinBase<DatapackListPage> {
                         return;
                     }
                 }
-                imageView.setImage(image);
+                imageContainer.setImage(image);
             }, Schedulers.javafx());
 
         }
@@ -304,7 +300,7 @@ final class DatapackListPageSkin extends SkinBase<DatapackListPage> {
 
     private final class DatapackInfoListCell extends MDListCell<DatapackInfoObject> {
         final JFXCheckBox checkBox = new JFXCheckBox();
-        ImageView imageView = new ImageView();
+        ImageContainer imageContainer = new ImageContainer(32);
         final TwoLineListItem content = new TwoLineListItem();
         BooleanProperty booleanProperty;
 
@@ -320,13 +316,10 @@ final class DatapackListPageSkin extends SkinBase<DatapackListPage> {
 
             checkBox.disableProperty().bind(isReadOnlyProperty);
 
-            imageView.setFitWidth(32);
-            imageView.setFitHeight(32);
-            imageView.setPreserveRatio(true);
-            imageView.setImage(FXUtils.newBuiltinImage("/assets/img/unknown_pack.png"));
+            imageContainer.setImage(FXUtils.newBuiltinImage("/assets/img/unknown_pack.png"));
 
             StackPane.setMargin(container, new Insets(8));
-            container.getChildren().setAll(checkBox, imageView, content);
+            container.getChildren().setAll(checkBox, imageContainer, content);
             getContainer().getChildren().setAll(container);
 
             getContainer().getParent().addEventHandler(MouseEvent.MOUSE_PRESSED, mouseEvent -> handleSelect(this, mouseEvent));
@@ -341,7 +334,7 @@ final class DatapackListPageSkin extends SkinBase<DatapackListPage> {
                 checkBox.selectedProperty().unbindBidirectional(booleanProperty);
             }
             checkBox.selectedProperty().bindBidirectional(booleanProperty = dataItem.activeProperty);
-            dataItem.loadIcon(imageView, new WeakReference<>(this.itemProperty()));
+            dataItem.loadIcon(imageContainer, new WeakReference<>(this.itemProperty()));
         }
     }
 
