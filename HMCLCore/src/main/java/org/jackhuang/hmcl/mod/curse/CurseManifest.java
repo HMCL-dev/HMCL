@@ -20,25 +20,19 @@ package org.jackhuang.hmcl.mod.curse;
 import com.google.gson.annotations.SerializedName;
 import org.jackhuang.hmcl.mod.ModpackManifest;
 import org.jackhuang.hmcl.mod.ModpackProvider;
-import org.jackhuang.hmcl.util.Immutable;
+import org.jackhuang.hmcl.util.gson.JsonSerializable;
+import org.jetbrains.annotations.Unmodifiable;
 
-import java.util.Collections;
 import java.util.List;
 
-/**
- *
- * @author huangyuhui
- */
-@Immutable
+/// @author huangyuhui
+@JsonSerializable
 public record CurseManifest(@SerializedName("manifestType") String manifestType,
                             @SerializedName("manifestVersion") int manifestVersion, @SerializedName("name") String name,
                             @SerializedName("version") String version, @SerializedName("author") String author,
                             @SerializedName("overrides") String overrides,
                             @SerializedName("minecraft") CurseManifestMinecraft minecraft,
-                            @SerializedName("files") List<CurseManifestFile> files) implements ModpackManifest {
-    public CurseManifest() {
-        this(MINECRAFT_MODPACK, 1, "", "1.0", "", "overrides", new CurseManifestMinecraft(), Collections.emptyList());
-    }
+                            @SerializedName("files") @Unmodifiable List<CurseManifestFile> files) implements ModpackManifest {
 
     public CurseManifest setFiles(List<CurseManifestFile> files) {
         return new CurseManifest(manifestType, manifestVersion, name, version, author, overrides, minecraft, files);
