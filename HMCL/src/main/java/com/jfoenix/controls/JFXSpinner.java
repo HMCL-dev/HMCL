@@ -128,7 +128,7 @@ public class JFXSpinner extends ProgressIndicator {
 
                     @Override
                     public StyleableDoubleProperty getStyleableProperty(JFXSpinner control) {
-                        return control.radius;
+                        return control.radiusProperty();
                     }
                 };
 
@@ -142,7 +142,7 @@ public class JFXSpinner extends ProgressIndicator {
 
                     @Override
                     public StyleableDoubleProperty getStyleableProperty(JFXSpinner control) {
-                        return control.startingAngle;
+                        return control.startingAngleProperty();
                     }
                 };
 

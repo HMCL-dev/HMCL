@@ -30,7 +30,6 @@ import javafx.scene.Node;
 import javafx.scene.control.ListCell;
 import javafx.scene.control.Skin;
 import javafx.scene.control.Tooltip;
-import javafx.scene.image.ImageView;
 import javafx.scene.input.MouseButton;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
@@ -243,7 +242,7 @@ public final class WorldListPage extends ListPageBase<World> implements VersionP
         private final WorldListPage page;
 
         private final RipplerContainer graphic;
-        private final ImageView imageView;
+        private final ImageContainer imageView;
         private final Tooltip leftTooltip;
         private final TwoLineListItem content;
         private final JFXButton btnLaunch;
@@ -262,9 +261,8 @@ public final class WorldListPage extends ListPageBase<World> implements VersionP
                 root.setLeft(left);
                 left.setPadding(new Insets(0, 8, 0, 0));
 
-                this.imageView = new ImageView();
+                this.imageView = new ImageContainer(32);
                 left.getChildren().add(imageView);
-                FXUtils.limitSize(imageView, 32, 32);
             }
 
             {
@@ -278,12 +276,10 @@ public final class WorldListPage extends ListPageBase<World> implements VersionP
                 root.setRight(right);
                 right.setAlignment(Pos.CENTER_RIGHT);
 
-                btnLaunch = new JFXButton();
+                btnLaunch = FXUtils.newToggleButton4(SVG.ROCKET_LAUNCH);
                 btnLaunch.visibleProperty().bind(page.supportQuickPlayProperty());
                 btnLaunch.managedProperty().bind(btnLaunch.visibleProperty());
                 right.getChildren().add(btnLaunch);
-                btnLaunch.getStyleClass().add("toggle-icon4");
-                btnLaunch.setGraphic(SVG.ROCKET_LAUNCH.createIcon());
                 FXUtils.installFastTooltip(btnLaunch, i18n("version.launch"));
                 btnLaunch.setOnAction(event -> {
                     World world = getItem();
@@ -291,10 +287,8 @@ public final class WorldListPage extends ListPageBase<World> implements VersionP
                         page.launch(world);
                 });
 
-                JFXButton btnMore = new JFXButton();
+                JFXButton btnMore = FXUtils.newToggleButton4(SVG.MORE_VERT);
                 right.getChildren().add(btnMore);
-                btnMore.getStyleClass().add("toggle-icon4");
-                btnMore.setGraphic(SVG.MORE_VERT.createIcon());
                 btnMore.setOnAction(event -> {
                     World world = getItem();
                     if (world != null)
