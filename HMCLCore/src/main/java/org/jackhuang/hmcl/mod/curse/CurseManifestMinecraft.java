@@ -19,28 +19,23 @@ package org.jackhuang.hmcl.mod.curse;
 
 import com.google.gson.JsonParseException;
 import com.google.gson.annotations.SerializedName;
-import org.jackhuang.hmcl.util.Immutable;
 import org.jackhuang.hmcl.util.StringUtils;
+import org.jackhuang.hmcl.util.gson.JsonSerializable;
 import org.jackhuang.hmcl.util.gson.Validation;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-/**
- *
- * @author huangyuhui
- */
-@Immutable
+/// @author huangyuhui
+@JsonSerializable
 public record CurseManifestMinecraft(@SerializedName("version") String gameVersion,
-                                     @SerializedName("modLoaders") List<CurseManifestModLoader> modLoaders) implements Validation {
-    public CurseManifestMinecraft() {
-        this("", Collections.emptyList());
-    }
+                                     @SerializedName("modLoaders") @Unmodifiable List<CurseManifestModLoader> modLoaders) implements Validation {
 
     public CurseManifestMinecraft(String gameVersion, List<CurseManifestModLoader> modLoaders) {
         this.gameVersion = gameVersion;
-        this.modLoaders = new ArrayList<>(modLoaders);
+        this.modLoaders = Collections.unmodifiableList(new ArrayList<>(modLoaders)); // TODO: Is the modLoaders nullable?
     }
 
     @Override
