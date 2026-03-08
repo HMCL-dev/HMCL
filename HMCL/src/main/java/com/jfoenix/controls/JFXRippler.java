@@ -629,7 +629,6 @@ public class JFXRippler extends StackPane {
         resetOverLay();
         resetClip();
 
-        // 更新悬停覆盖层的尺寸、位置和剪裁
         if (hoverOverlay != null && control != null) {
             Bounds bounds = control.getBoundsInParent();
             double diffMinX = Math.abs(control.getBoundsInLocal().getMinX() - control.getLayoutBounds().getMinX());
