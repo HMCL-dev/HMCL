@@ -34,8 +34,7 @@ public class ModrinthManifest implements ModpackManifest, Validation {
     private final int formatVersion;
     private final String versionId;
     private final String name;
-    @Nullable
-    private final String summary;
+    private final @Nullable String summary;
     private final List<File> files;
     private final Map<String, String> dependencies;
 
