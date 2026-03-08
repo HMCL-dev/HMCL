@@ -415,7 +415,7 @@ public final class LogWindow extends Stage {
                 if (SystemUtils.supportJVMAttachment()) {
                     exportDumpButton.setOnAction(e -> getSkinnable().onExportDump(exportDumpPane));
                 } else {
-                    exportDumpButton.setTooltip(new Tooltip(i18n("logwindow.export_dump.no_dependency")));
+                    FXUtils.installFastTooltip(exportDumpPane, i18n("logwindow.export_dump.no_dependency"));
                     exportDumpButton.setDisable(true);
                 }
                 exportDumpPane.setContent(exportDumpButton);
