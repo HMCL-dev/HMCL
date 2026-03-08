@@ -135,7 +135,6 @@ public class JFXRippler extends StackPane {
         setCacheHint(CacheHint.SPEED);
         setCacheShape(true);
 
-
         EventHandler<MouseEvent> mouseEventHandler;
         if (AnimationUtils.isAnimationEnabled()) {
             mouseEventHandler = event -> {
