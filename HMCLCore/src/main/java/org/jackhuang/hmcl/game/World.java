@@ -452,15 +452,6 @@ public final class World {
         });
     }
 
-    public void writeLevelDatAsync() {
-        Task.runAsync(Schedulers.io(), this::writeLevelDat)
-                .whenComplete(Schedulers.defaultScheduler(), ((result, exception) -> {
-                    if (exception != null) {
-                        LOG.warning("Failed to save level.dat of world " + getWorldName(), exception);
-                    }
-                })).start();
-    }
-
     private static boolean isLocked(Path sessionLockFile) {
         try (FileChannel fileChannel = FileChannel.open(sessionLockFile, StandardOpenOption.WRITE)) {
             return fileChannel.tryLock() == null;

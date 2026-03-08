@@ -32,6 +32,7 @@ import org.jackhuang.hmcl.ui.ListPageBase;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jetbrains.annotations.NotNull;
 
+import java.io.IOException;
 import java.nio.file.Files;
 import java.util.Arrays;
 import java.util.Locale;
@@ -161,8 +162,12 @@ public class GameRulePage extends ListPageBase<GameRuleInfo<?>> implements World
     }
 
     void saveLevelDat() {
-        LOG.info("Saving level.dat of world " + world.getWorldName());
-        world.writeLevelDatAsync();
+        LOG.info("Saving game rule of world " + world.getWorldName());
+        try {
+            world.writeWorldData();
+        } catch (IOException e) {
+            LOG.warning("Failed to save game rule", e);
+        }
     }
 
     void requestSaveLevelDat() {
