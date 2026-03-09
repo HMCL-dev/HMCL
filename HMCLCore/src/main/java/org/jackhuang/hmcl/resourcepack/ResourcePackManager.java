@@ -90,15 +90,19 @@ public final class ResourcePackManager extends LocalAddonManager<ResourcePackFil
 
     @NotNull
     @Contract(pure = true)
+    public static VersionRange<PackMcMeta.PackVersion> getResourcePackVersionRangeOldest(PackMcMeta.PackInfo packInfo) {
+        if (packInfo == null || packInfo.packFormat() <= 0) return VersionRange.empty();
+        return VersionRange.is(new PackMcMeta.PackVersion(packInfo.packFormat(), 0));
+    }
+
+    @NotNull
+    @Contract(pure = true)
     public static VersionRange<PackMcMeta.PackVersion> getResourcePackVersionRangeOld(PackMcMeta.PackInfo packInfo) {
         if (packInfo == null) {
             return VersionRange.empty();
         }
-        boolean supportedFormatsUnspecified = packInfo.supportedFormats().isUnspecified();
-        if (supportedFormatsUnspecified && packInfo.packFormat() <= 0) {
-            return VersionRange.empty();
-        }
-        if (supportedFormatsUnspecified) {
+        if (packInfo.packFormat() <= 0) return VersionRange.empty();
+        if (packInfo.supportedFormats().isUnspecified()) {
             return VersionRange.is(new PackMcMeta.PackVersion(packInfo.packFormat(), 0));
         }
         return VersionRange.between(packInfo.supportedFormats().getMin(), packInfo.supportedFormats().getMax());
@@ -374,9 +378,15 @@ public final class ResourcePackManager extends LocalAddonManager<ResourcePackFil
     public ResourcePackFile.Compatibility getCompatibility(@NotNull ResourcePackFile resourcePack) {
         if (resourcePack.getMeta() == null || resourcePack.getMeta().pack() == null) return ResourcePackFile.Compatibility.MISSING_PACK_META;
         if (this.requiredVersion.isUnspecified()) return ResourcePackFile.Compatibility.MISSING_GAME_META;
-        var versionRange = requiredVersion.majorVersion() > 64
-                ? getResourcePackVersionRangeNew(resourcePack.getMeta().pack())
-                : getResourcePackVersionRangeOld(resourcePack.getMeta().pack());
+        int requiredMajor = requiredVersion.majorVersion();
+        VersionRange<PackMcMeta.PackVersion> versionRange;
+        if (requiredMajor > 64) {
+            versionRange = getResourcePackVersionRangeNew(resourcePack.getMeta().pack());
+        } else if (requiredMajor > 15) {
+            versionRange = getResourcePackVersionRangeOld(resourcePack.getMeta().pack());
+        } else {
+            versionRange = getResourcePackVersionRangeOldest(resourcePack.getMeta().pack());
+        }
         if (versionRange.isEmpty())
             return ResourcePackFile.Compatibility.INVALID;
         if (versionRange.getMaximum().compareTo(this.requiredVersion) < 0)
