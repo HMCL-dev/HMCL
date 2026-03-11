@@ -57,7 +57,6 @@ import org.jetbrains.annotations.Nullable;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.List;
 import java.util.Locale;
 import java.util.Random;
@@ -194,7 +193,9 @@ public class DecoratorController {
                 String backgroundImage = config().getBackgroundImage();
                 if (backgroundImage != null)
                     try {
-                        image = tryLoadImage(Paths.get(backgroundImage));
+                        Path path = Path.of(backgroundImage);
+                        if (Files.isDirectory(path)) image = randomImageIn(path);
+                        else image = tryLoadImage(path);
                     } catch (Exception e) {
                         LOG.warning("Couldn't load background image", e);
                     }
