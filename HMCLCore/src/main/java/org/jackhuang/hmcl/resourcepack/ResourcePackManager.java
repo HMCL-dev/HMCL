@@ -237,9 +237,6 @@ public final class ResourcePackManager extends LocalAddonManager<ResourcePackFil
 
     private void saveOptions(@NotNull Map<String, String> options) {
         try {
-            if (!Files.isRegularFile(optionsFile)) {
-                Files.createFile(optionsFile);
-            }
             StringBuilder sb = new StringBuilder();
             for (var entry : options.entrySet()) {
                 sb.append(entry.getKey()).append(":").append(entry.getValue()).append(System.lineSeparator());
