@@ -127,8 +127,10 @@ public final class ResourcePackManager extends LocalAddonManager<ResourcePackFil
                 if (max > 64) {
                     return VersionRange.empty();
                 } else {
-                    if (packFormatUnspecified) return VersionRange.empty();
-                    if (isPackFormatInvalid(min, max, packInfo.packFormat())) return VersionRange.empty();
+                    if (packFormatUnspecified)
+                        return VersionRange.empty();
+                    if (isPackFormatInvalid(min, max, packInfo.packFormat()))
+                        return VersionRange.empty();
                 }
 
                 return VersionRange.between(supportedFormats.getMin(), supportedFormats.getMax());
@@ -144,26 +146,23 @@ public final class ResourcePackManager extends LocalAddonManager<ResourcePackFil
                 return VersionRange.empty();
             }
             if (minMajor > 64) {
-                if (!supportedFormatsUnspecified) {
+                if (!supportedFormatsUnspecified)
                     return VersionRange.empty();
-                }
 
-                if (!packFormatUnspecified && isPackFormatInvalid(minMajor, maxMajor, packInfo.packFormat())) {
+                if (!packFormatUnspecified && isPackFormatInvalid(minMajor, maxMajor, packInfo.packFormat()))
                     return VersionRange.empty();
-                }
             } else {
-                if (supportedFormatsUnspecified) {
+                if (supportedFormatsUnspecified)
                     return VersionRange.empty();
-                }
                 PackMcMeta.SupportedFormats supportedFormats = packInfo.supportedFormats();
-                if (supportedFormats.min() != minMajor) {
+                if (supportedFormats.min() != minMajor)
                     return VersionRange.empty();
-                }
-                if (supportedFormats.max() != maxMajor && supportedFormats.max() != 64) {
+                if (supportedFormats.max() != maxMajor && supportedFormats.max() != 64)
                     return VersionRange.empty();
-                }
-                if (packFormatUnspecified) return VersionRange.empty();
-                if (isPackFormatInvalid(minMajor, maxMajor, packInfo.packFormat())) return VersionRange.empty();
+                if (packFormatUnspecified)
+                    return VersionRange.empty();
+                if (isPackFormatInvalid(minMajor, maxMajor, packInfo.packFormat()))
+                    return VersionRange.empty();
             }
 
             return VersionRange.between(packInfo.minPackVersion(), packInfo.maxPackVersion());
