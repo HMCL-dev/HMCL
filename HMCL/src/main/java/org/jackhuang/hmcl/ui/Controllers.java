@@ -63,6 +63,7 @@ import org.jackhuang.hmcl.ui.terracotta.TerracottaPage;
 import org.jackhuang.hmcl.ui.versions.GameListPage;
 import org.jackhuang.hmcl.ui.versions.VersionPage;
 import org.jackhuang.hmcl.ui.versions.Versions;
+import org.jackhuang.hmcl.upgrade.UpdateChecker;
 import org.jackhuang.hmcl.util.*;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.platform.Architecture;
@@ -318,6 +319,7 @@ public final class Controllers {
         stage.setOnCloseRequest(e -> Launcher.stopApplication());
 
         decorator = new DecoratorController(stage, getRootPage());
+        getRootPage().getMainPage().showUpdateProperty().bind(decorator.backableProperty().not().and(UpdateChecker.outdatedProperty()));
 
         if (config().getCommonDirType() == EnumCommonDirectory.CUSTOM &&
                 !FileUtils.canCreateDirectory(config().getCommonDirectory())) {
@@ -501,6 +503,11 @@ public final class Controllers {
                 cancel.run();
         });
         timeline.play();
+    }
+
+    public static void dialogLater(Region content) {
+        if (decorator != null)
+            decorator.showDialogLater(content);
     }
 
     public static CompletableFuture<String> prompt(String title, FutureCallback<String> onResult) {

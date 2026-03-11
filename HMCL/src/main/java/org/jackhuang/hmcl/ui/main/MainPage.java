@@ -278,7 +278,7 @@ public final class MainPage extends StackPane implements DecoratorPage {
         doAnimation(show);
 
         if (show && getLatestVersion() != null && !Objects.equals(config().getPromptedVersion(), getLatestVersion().getVersion())) {
-            Controllers.dialog(new MessageDialogPane.Builder("", i18n("update.bubble.title", getLatestVersion().getVersion()), MessageDialogPane.MessageType.INFO)
+            Controllers.dialogLater(new MessageDialogPane.Builder("", i18n("update.bubble.title", getLatestVersion().getVersion()), MessageDialogPane.MessageType.INFO)
                     .addAction(i18n("button.view"), () -> {
                         config().setPromptedVersion(getLatestVersion().getVersion());
                         onUpgrade();
