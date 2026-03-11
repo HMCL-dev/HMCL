@@ -48,7 +48,6 @@ public final class DialogUtils {
     public static final String PROPERTY_PARENT_DIALOG_REF = DialogUtils.class.getName() + ".dialog.parentDialogRef";
 
     public static final String PROPERTY_DIALOG_SHOW_LATER = DialogUtils.class.getName() + ".dialog.showLater";
-    public static final String PROPERTY_DECORATOR_REF = DialogUtils.class.getName() + ".dialog.decoratorRef";
 
     public static void show(Decorator decorator, Node content) {
         if (decorator.getDrawerWrapper() == null) {
@@ -126,26 +125,28 @@ public final class DialogUtils {
         }
     }
 
-    @SuppressWarnings("unchecked")
     public static void showLater(Decorator decorator, Node content) {
         if (decorator.getDrawerWrapper() == null) {
             Platform.runLater(() -> showLater(decorator, content));
             return;
         }
+        showLater(decorator.getDrawerWrapper(), () -> show(decorator, content));
+    }
+
+    @SuppressWarnings("unchecked")
+    public static void showLater(StackPane container, Runnable showDialogAction) {
         FXUtils.checkFxUserThread();
 
-        StackPane container = decorator.getDrawerWrapper();
         if (container.getProperties().get(PROPERTY_DIALOG_INSTANCE) == null) {
-            show(decorator, content);
+            showDialogAction.run();
             return;
         }
-        Queue<Node> queue = (Queue<Node>) container.getProperties().get(PROPERTY_DIALOG_SHOW_LATER);
+        Queue<Runnable> queue = (Queue<Runnable>) container.getProperties().get(PROPERTY_DIALOG_SHOW_LATER);
         if (queue == null) {
             queue = new LinkedList<>();
             container.getProperties().put(PROPERTY_DIALOG_SHOW_LATER, queue);
         }
-        container.getProperties().put(PROPERTY_DECORATOR_REF, decorator);
-        queue.add(content);
+        queue.add(showDialogAction);
     }
 
     @SuppressWarnings("unchecked")
@@ -158,7 +159,7 @@ public final class DialogUtils {
         JFXDialogPane pane = (JFXDialogPane) content.getProperties().get(PROPERTY_PARENT_PANE_REF);
         JFXDialog dialog = (JFXDialog) content.getProperties().get(PROPERTY_PARENT_DIALOG_REF);
 
-        Runnable later = null;
+        Runnable showNextDialogAction = null;
 
         if (dialog != null && pane != null) {
             if (pane.size() == 1 && pane.peek().orElse(null) == content) {
@@ -172,12 +173,10 @@ public final class DialogUtils {
                     container.getProperties().remove(PROPERTY_PARENT_DIALOG_REF);
                     container.getProperties().remove(PROPERTY_PARENT_PANE_REF);
 
-                    // Only for decorators
-                    Queue<Node> queue = (Queue<Node>) container.getProperties().get(PROPERTY_DIALOG_SHOW_LATER);
+                    Queue<Runnable> queue = (Queue<Runnable>) container.getProperties().get(PROPERTY_DIALOG_SHOW_LATER);
                     if (queue != null && !queue.isEmpty()) {
-                        Decorator decorator = (Decorator) container.getProperties().get(PROPERTY_DECORATOR_REF);
-                        Node next = queue.remove();
-                        if (decorator != null) later = () -> show(decorator, next);
+                        Runnable next = queue.remove();
+                        if (next != null) showNextDialogAction = next;
                     }
                 }
             } else {
@@ -189,6 +188,6 @@ public final class DialogUtils {
             }
         }
 
-        if (later != null) later.run();
+        if (showNextDialogAction != null) showNextDialogAction.run();
     }
 }
