@@ -142,23 +142,26 @@ public final class ResourcePackListPage extends ListPageBase<ResourcePackListPag
         if (resourcePackManager == null) return;
 
         List<Path> failures = new ArrayList<>();
-        for (Path file : files) {
-            try {
-                resourcePackManager.importResourcePack(file);
-            } catch (Exception e) {
-                LOG.warning("Failed to add resource pack", e);
-                failures.add(file);
+        Task.runAsync(() -> {
+            for (Path file : files) {
+                try {
+                    resourcePackManager.importResourcePack(file);
+                } catch (Exception e) {
+                    LOG.warning("Failed to add resource pack", e);
+                    failures.add(file);
+                }
             }
-        }
-        if (!failures.isEmpty()) {
-            StringBuilder failure = new StringBuilder(i18n("resourcepack.add.failed"));
-            for (Path file: failures) {
-                failure.append("\n").append(file.toString());
+        }).withRunAsync(Schedulers.javafx(), () -> {
+            if (!failures.isEmpty()) {
+                StringBuilder failure = new StringBuilder(i18n("resourcepack.add.failed"));
+                for (Path file: failures) {
+                    failure.append("\n").append(file.toString());
+                }
+                Controllers.dialog(failure.toString(), i18n("message.error"), MessageDialogPane.MessageType.ERROR);
             }
-            Controllers.dialog(failure.toString(), i18n("message.error"), MessageDialogPane.MessageType.ERROR);
-        }
+            refresh();
+        }).start();
 
-        refresh();
     }
 
     public void onAddFiles() {

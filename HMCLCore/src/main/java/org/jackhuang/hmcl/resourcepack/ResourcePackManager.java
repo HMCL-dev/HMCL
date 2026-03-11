@@ -244,7 +244,7 @@ public final class ResourcePackManager extends LocalAddonManager<ResourcePackFil
             for (var entry : options.entrySet()) {
                 sb.append(entry.getKey()).append(":").append(entry.getValue()).append(System.lineSeparator());
             }
-            Files.writeString(optionsFile, sb.toString(), StandardCharsets.UTF_8, StandardOpenOption.TRUNCATE_EXISTING);
+            FileUtils.saveSafely(optionsFile, sb.toString());
         } catch (IOException e) {
             LOG.warning("Failed to save instance options file", e);
         }
@@ -370,9 +370,9 @@ public final class ResourcePackManager extends LocalAddonManager<ResourcePackFil
         if (resourcePack.manager != this) return false;
         Map<String, String> options = loadOptions();
         String packId = "file/" + resourcePack.getFileNameWithExtension();
-        List<String> resourcePacks = StringUtils.deserializeStringList(options.get("resourcePacks"));
+        List<String> resourcePacks = deserializePackList(options.get("resourcePacks"));
         if (!resourcePacks.contains(packId)) return false;
-        List<String> incompatibleResourcePacks = StringUtils.deserializeStringList(options.get("incompatibleResourcePacks"));
+        List<String> incompatibleResourcePacks = deserializePackList(options.get("incompatibleResourcePacks"));
         return isIncompatible(resourcePack) == incompatibleResourcePacks.contains(packId);
     }
 
