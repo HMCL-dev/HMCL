@@ -118,10 +118,10 @@ public final class UpdateChecker {
 
                 RemoteVersion finalResult = result;
                 Platform.runLater(() -> {
-                    checkingUpdate.set(false);
                     if (finalResult != null) {
                         latestVersion.set(finalResult);
                     }
+                    checkingUpdate.set(false);
                 });
             }, "Update Checker", true);
         });

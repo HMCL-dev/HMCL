@@ -22,7 +22,7 @@ import com.jfoenix.controls.JFXSnackbarLayout;
 import javafx.animation.Interpolator;
 import javafx.beans.InvalidationListener;
 import javafx.beans.WeakInvalidationListener;
-import javafx.beans.property.ReadOnlyBooleanProperty;
+import javafx.beans.property.BooleanProperty;
 import javafx.geometry.Insets;
 import javafx.scene.Node;
 import javafx.scene.image.Image;
@@ -342,7 +342,7 @@ public class DecoratorController {
         navigator.navigate(node, animationProducer, duration, interpolator);
     }
 
-    public ReadOnlyBooleanProperty backableProperty() {
+    public BooleanProperty backableProperty() {
         return navigator.backableProperty();
     }
 
