@@ -91,17 +91,19 @@ public final class ResourcePackManager extends LocalAddonManager<ResourcePackFil
     @NotNull
     @Contract(pure = true)
     public static VersionRange<PackMcMeta.PackVersion> getResourcePackVersionRangeOldest(PackMcMeta.PackInfo packInfo) {
-        if (packInfo == null || packInfo.packFormat() <= 0) return VersionRange.empty();
-        return VersionRange.is(new PackMcMeta.PackVersion(packInfo.packFormat(), 0));
+        if (packInfo == null || packInfo.packFormat() <= 0)
+            return VersionRange.empty();
+        else
+            return VersionRange.is(new PackMcMeta.PackVersion(packInfo.packFormat(), 0));
     }
 
     @NotNull
     @Contract(pure = true)
     public static VersionRange<PackMcMeta.PackVersion> getResourcePackVersionRangeOld(PackMcMeta.PackInfo packInfo) {
-        if (packInfo == null) {
+        if (packInfo == null)
             return VersionRange.empty();
-        }
-        if (packInfo.packFormat() <= 0) return VersionRange.empty();
+        if (packInfo.packFormat() <= 0)
+            return VersionRange.empty();
         if (packInfo.supportedFormats().isUnspecified()) {
             return VersionRange.is(new PackMcMeta.PackVersion(packInfo.packFormat(), 0));
         }
@@ -111,9 +113,9 @@ public final class ResourcePackManager extends LocalAddonManager<ResourcePackFil
     @NotNull
     @Contract(pure = true)
     public static VersionRange<PackMcMeta.PackVersion> getResourcePackVersionRangeNew(PackMcMeta.PackInfo packInfo) {
-        if (packInfo == null) {
+        if (packInfo == null)
             return VersionRange.empty();
-        }
+
         boolean packFormatUnspecified = packInfo.packFormat() <= 0;
         boolean supportedFormatsUnspecified = packInfo.supportedFormats().isUnspecified();
 
