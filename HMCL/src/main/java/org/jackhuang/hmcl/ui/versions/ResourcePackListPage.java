@@ -406,9 +406,9 @@ public final class ResourcePackListPage extends ListPageBase<ResourcePackListPag
                 // Do we need to search in the background thread?
                 for (ResourcePackInfoObject item : getSkinnable().getItems()) {
                     ResourcePackFile resourcePack = item.getFile();
-                    var description = resourcePack.getDescription();
-                    var descriptionParts = description == null
-                            ? Stream.<String>empty()
+                    LocalModFile.Description description = resourcePack.getDescription();
+                    Stream<String> descriptionParts = description == null
+                            ? Stream.empty()
                             : description.getParts().stream().map(LocalModFile.Description.Part::getText);
                     if (predicate.test(resourcePack.getFileNameWithExtension())
                             || predicate.test(resourcePack.getFileName())
