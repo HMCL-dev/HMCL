@@ -103,5 +103,7 @@ public class MultiMCModpackExportTask extends Task<Void> {
         }
     }
 
-    public static final ModpackExportInfo.Options OPTION = new ModpackExportInfo.Options().requireMinMemory();
+    public static final ModpackExportInfo.Options OPTION = new ModpackExportInfo.Options()
+            .requireAuthor()
+            .requireMinMemory();
 }

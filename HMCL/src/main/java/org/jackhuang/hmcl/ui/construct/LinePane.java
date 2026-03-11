@@ -17,99 +17,47 @@
  */
 package org.jackhuang.hmcl.ui.construct;
 
-import javafx.beans.property.SimpleStringProperty;
-import javafx.beans.property.StringProperty;
-import javafx.beans.property.StringPropertyBase;
-import javafx.geometry.Insets;
-import javafx.geometry.Pos;
-import javafx.scene.control.Label;
-import javafx.scene.layout.BorderPane;
-import javafx.scene.layout.Region;
-import javafx.scene.layout.VBox;
+import javafx.beans.property.ObjectProperty;
+import javafx.beans.property.ObjectPropertyBase;
+import javafx.scene.Node;
 
 /// @author Glavo
-public class LinePane extends BorderPane {
-
-    private static final Insets PADDING = new Insets(8, 8, 8, 16);
-
-    private final Label titleLabel;
+public class LinePane extends LineComponent {
+    private static final String DEFAULT_STYLE_CLASS = "line-pane";
 
     public LinePane() {
-        this.setPadding(PADDING);
-        this.setMinHeight(48);
-
-        this.titleLabel = new Label();
-        this.setCenter(titleLabel);
-        BorderPane.setAlignment(titleLabel, Pos.CENTER_LEFT);
-        titleLabel.textProperty().bind(titleProperty());
-        titleLabel.getStyleClass().add("title");
+        this.getStyleClass().add(DEFAULT_STYLE_CLASS);
     }
 
-    private final StringProperty title = new SimpleStringProperty(this, "title");
+    private ObjectProperty<Node> right;
 
-    public StringProperty titleProperty() {
-        return title;
-    }
-
-    public String getTitle() {
-        return titleProperty().get();
-    }
-
-    public void setTitle(String title) {
-        this.titleProperty().set(title);
-    }
-
-    private StringProperty subtitle;
-
-    public StringProperty subtitleProperty() {
-        if (subtitle == null) {
-            subtitle = new StringPropertyBase() {
-                private VBox left;
-                private Label subtitleLabel;
-
-                @Override
-                public String getName() {
-                    return "subtitle";
-                }
-
+    public ObjectProperty<Node> rightProperty() {
+        if (right == null) {
+            right = new ObjectPropertyBase<>() {
                 @Override
                 public Object getBean() {
                     return LinePane.this;
                 }
 
                 @Override
-                protected void invalidated() {
-                    String subtitle = get();
-                    if (subtitle != null && !subtitle.isEmpty()) {
-                        if (left == null) {
-                            left = new VBox();
-                            left.setMouseTransparent(true);
-                            left.setAlignment(Pos.CENTER_LEFT);
+                public String getName() {
+                    return "right";
+                }
 
-                            subtitleLabel = new Label();
-                            subtitleLabel.setWrapText(true);
-                            subtitleLabel.setMinHeight(Region.USE_PREF_SIZE);
-                            subtitleLabel.getStyleClass().add("subtitle");
-                        }
-                        subtitleLabel.setText(subtitle);
-                        left.getChildren().setAll(titleLabel, subtitleLabel);
-                        LinePane.this.setCenter(left);
-                    } else if (left != null) {
-                        subtitleLabel.setText(null);
-                        LinePane.this.setCenter(titleLabel);
-                    }
+                @Override
+                protected void invalidated() {
+                    setNode(IDX_TRAILING, get());
                 }
             };
         }
-
-        return subtitle;
+        return right;
     }
 
-    public String getSubtitle() {
-        return subtitleProperty().get();
+    public Node getRight() {
+        return rightProperty().get();
     }
 
-    public void setSubtitle(String subtitle) {
-        subtitleProperty().set(subtitle);
+    public void setRight(Node right) {
+        rightProperty().set(right);
     }
 }

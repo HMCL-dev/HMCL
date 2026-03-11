@@ -212,7 +212,7 @@ public abstract class FetchTask<T> extends Task<T> {
                 do {
                     HttpRequest.Builder requestBuilder = HttpRequest.newBuilder(currentURI)
                             .timeout(Duration.ofMillis(NetworkUtils.TIME_OUT))
-                            .header("User-Agent", Holder.USER_AGENT);
+                            .header("User-Agent", NetworkUtils.USER_AGENT);
 
                     headers.forEach(requestBuilder::header);
                     response = Holder.HTTP_CLIENT.send(requestBuilder.build(), BODY_HANDLER);
@@ -296,6 +296,11 @@ public abstract class FetchTask<T> extends Task<T> {
                 exceptions.add(ex);
 
                 LOG.warning("Failed to download " + uri + ", repeat times: " + retryTime + (redirects == null ? "" : ", redirects: " + redirects), ex);
+
+                if (retryTime < retryLimit - 1) {
+                    // Wait for a while before retrying
+                    Thread.sleep(200);
+                }
             }
         }
 
@@ -518,7 +523,6 @@ public abstract class FetchTask<T> extends Task<T> {
     /// Ensure that [#HTTP_CLIENT] is initialized after ProxyManager has been initialized.
     private static final class Holder {
         private static final HttpClient HTTP_CLIENT;
-        private static final String USER_AGENT = System.getProperty("http.agent", "HMCL");
 
         static {
             if (!initialized) {

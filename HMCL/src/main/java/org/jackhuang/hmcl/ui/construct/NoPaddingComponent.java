@@ -1,6 +1,6 @@
 /*
  * Hello Minecraft! Launcher
- * Copyright (C) 2020  huangyuhui <huanghongxun2008@126.com> and contributors
+ * Copyright (C) 2026 huangyuhui <huanghongxun2008@126.com> and contributors
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -15,21 +15,10 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-package org.jackhuang.hmcl.ui.wizard;
+package org.jackhuang.hmcl.ui.construct;
 
-public enum WizardNavigationResult {
-    PROCEED {
-        @Override
-        public boolean getDeferredComputation() {
-            return true;
-        }
-    },
-    DENY {
-        @Override
-        public boolean getDeferredComputation() {
-            return false;
-        }
-    };
-
-    public abstract boolean getDeferredComputation();
+/// Marker interface for no padding in [ComponentList].
+///
+/// @author Glavo
+interface NoPaddingComponent {
 }

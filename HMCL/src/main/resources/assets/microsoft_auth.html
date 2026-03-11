@@ -19,20 +19,135 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 <html lang="%lang%">
 
 <head>
-    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Hello Minecraft! Launcher</title>
+    <style>
+        %style%
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background-color: var(--monet-surface);
+            color: var(--monet-on-surface);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+            user-select: none;
+            cursor: default;
+        }
+
+        .dialog-card {
+            background-color: var(--monet-surface-container-high);
+            padding: 24px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.14), 0 0 0 1px rgba(0, 0, 0, 0.02);
+            max-width: 560px;
+            width: 90%;
+            display: flex;
+            flex-direction: row;
+            gap: 16px;
+        }
+
+        .icon-column {
+            flex-shrink: 0;
+            padding-top: 4px;
+        }
+
+        .icon-column svg {
+            width: 40px;
+            height: 40px;
+            display: block;
+            fill: var(--monet-on-surface);
+        }
+
+        .content-column {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            min-width: 0;
+        }
+
+        .title {
+            font-size: 20px;
+            line-height: 1.4;
+            font-weight: 500;
+            color: var(--monet-on-surface);
+            margin-bottom: 8px;
+        }
+
+        .subtitle {
+            font-size: 14px;
+            line-height: 1.5;
+            color: var(--monet-on-surface-variant);
+            word-wrap: break-word;
+            margin-bottom: 24px;
+        }
+
+        .actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 8px;
+        }
+
+        .btn-confirm {
+            background-color: transparent;
+            color: var(--monet-primary);
+            border: none;
+            padding: 0 16px;
+            height: 40px;
+            font-size: 14px;
+            font-weight: 500;
+            font-family: inherit;
+            cursor: pointer;
+            transition: background-color 0.2s;
+            outline: none;
+            min-width: 64px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .btn-confirm:hover {
+            background-color: rgba(128, 128, 128, 0.08);
+        }
+
+        .btn-confirm:active {
+            background-color: rgba(128, 128, 128, 0.12);
+        }
+    </style>
 </head>
 
 <body>
-    <div>
-        %close-page%
+<div class="dialog-card">
+    <div class="icon-column">
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24">
+            <path d="m10.6 16.6l7.05-7.05l-1.4-1.4l-5.65 5.65l-2.85-2.85l-1.4 1.4zM12 22q-2.075 0-3.9-.788t-3.175-2.137T2.788 15.9T2 12t.788-3.9t2.137-3.175T8.1 2.788T12 2t3.9.788t3.175 2.137T21.213 8.1T22 12t-.788 3.9t-2.137 3.175t-3.175 2.138T12 22m0-2q3.35 0 5.675-2.325T20 12t-2.325-5.675T12 4T6.325 6.325T4 12t2.325 5.675T12 20m0-8"/>
+        </svg>
     </div>
 
-    <script>
-        setTimeout(function() {
-            open("about:blank","_self").close();
-        }, 5000);
-    </script>
-</body>
+    <div class="content-column">
+        <div class="title">%success%</div>
+        <div class="subtitle">%close_page%</div>
 
+        <div class="actions">
+            <button class="btn-confirm" onclick="closeWindow()">%ok%</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    function closeWindow() {
+        window.close();
+        window.open("about:blank", "_self").close();
+    }
+
+    setTimeout(closeWindow, 3000);
+</script>
+</body>
 </html>

@@ -436,6 +436,7 @@ public final class GameVersionNumberTest {
         assertNormalized("1.21.11-pre3", "1.21.11 Pre-Release 3");
         assertNormalized("1.21.11-pre3_unobfuscated", "1.21.11 Pre-Release 3 Unobfuscated");
         assertNormalized("1.21.11-pre3_unobfuscated", "1.21.11-pre3 Unobfuscated");
+        assertNormalized("26.1-pre1", "26.1-pre-1");
         assertNormalized("1.21.11-rc1", "1.21.11 Release Candidate 1");
         assertNormalized("1.21.11-rc1_unobfuscated", "1.21.11 Release Candidate 1 Unobfuscated");
         assertNormalized("1.14_combat-212796", "1.14.3 - Combat Test");
@@ -450,6 +451,7 @@ public final class GameVersionNumberTest {
         assertNormalized("1.16_combat-4", "Combat Test 8");
         assertNormalized("1.16_combat-5", "Combat Test 8b");
         assertNormalized("1.16_combat-6", "Combat Test 8c");
+        assertNormalized("1.16.2-pre1", "1.16.2 Pre-release 1"); // https://github.com/HMCL-dev/HMCL/pull/5476
         assertNormalized("1.18_experimental-snapshot-1", "1.18 Experimental Snapshot 1");
         assertNormalized("1.18_experimental-snapshot-2", "1.18 experimental snapshot 2");
         assertNormalized("1.18_experimental-snapshot-3", "1.18 experimental snapshot 3");

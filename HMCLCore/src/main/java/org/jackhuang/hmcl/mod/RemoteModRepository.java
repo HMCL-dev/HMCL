@@ -92,6 +92,10 @@ public interface RemoteModRepository {
 
     RemoteMod getModById(String id) throws IOException;
 
+    default RemoteMod resolveDependency(String id) throws IOException {
+        return getModById(id);
+    }
+
     RemoteMod.File getModFile(String modId, String fileId) throws IOException;
 
     Stream<RemoteMod.Version> getRemoteVersionsById(String id) throws IOException;

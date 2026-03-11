@@ -20,6 +20,11 @@ package org.jackhuang.hmcl;
 import org.jackhuang.hmcl.util.SwingUtils;
 
 import javax.swing.*;
+import java.net.URISyntaxException;
+import java.nio.file.FileSystemNotFoundException;
+import java.nio.file.Paths;
+import java.security.CodeSource;
+import java.security.ProtectionDomain;
 import java.util.ResourceBundle;
 
 /**
@@ -104,12 +109,35 @@ public final class Main {
 
     private static void checkDirectoryPath() {
         String currentDir = System.getProperty("user.dir", "");
+        String jarPath = getThisJarPath();
         if (currentDir.contains("!")) {
             SwingUtils.initLookAndFeel();
             System.err.println("The current working path contains an exclamation mark: " + currentDir);
             // No Chinese translation because both Swing and JavaFX cannot render Chinese character properly when exclamation mark exists in the path.
-            SwingUtils.showErrorDialog("Exclamation mark(!) is not allowed in the path where HMCL is in.\n" + "The path is " + currentDir);
+            SwingUtils.showErrorDialog("Exclamation mark(!) is not allowed in the working path.\n" + "The path is " + currentDir);
             System.exit(1);
+        } else if (jarPath != null && jarPath.contains("!")) {
+            SwingUtils.initLookAndFeel();
+            System.err.println("The jar path contains an exclamation mark: " + jarPath);
+            // No Chinese translation because both Swing and JavaFX cannot render Chinese character properly when exclamation mark exists in the path.
+            SwingUtils.showErrorDialog("Exclamation mark(!) is not allowed in the path where HMCL is in.\n" + "The path is " + jarPath);
+            System.exit(1);
+        }
+    }
+
+    private static String getThisJarPath() {
+        ProtectionDomain protectionDomain = Main.class.getProtectionDomain();
+        if (protectionDomain == null)
+            return null;
+
+        CodeSource codeSource = protectionDomain.getCodeSource();
+        if (codeSource == null || codeSource.getLocation() == null)
+            return null;
+
+        try {
+            return Paths.get(codeSource.getLocation().toURI()).toAbsolutePath().normalize().toString();
+        } catch (FileSystemNotFoundException | IllegalArgumentException | URISyntaxException e) {
+            return null;
         }
     }
 
