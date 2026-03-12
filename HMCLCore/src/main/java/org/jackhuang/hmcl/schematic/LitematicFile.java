@@ -30,10 +30,8 @@ import java.nio.file.Path;
 import java.time.Instant;
 import java.util.zip.GZIPInputStream;
 
-/**
- * @author Glavo
- * @see <a href="https://litemapy.readthedocs.io/en/v0.9.0b0/litematics.html">The Litematic file format</a>
- */
+/// @author Glavo
+/// @see <a href="https://litemapy.readthedocs.io/en/v0.9.0b0/litematics.html">The Litematic file format</a>
 public final class LitematicFile {
 
     private static int tryGetInt(Tag tag) {
@@ -71,14 +69,13 @@ public final class LitematicFile {
             throw new IOException("Metadata tag is not a compound tag");
 
         int regions = 0;
-        Tag regionsTag = root.get("Regions");
-        if (regionsTag instanceof CompoundTag)
-            regions = ((CompoundTag) regionsTag).size();
+        if (root.get("Regions") instanceof CompoundTag regionsTag)
+            regions = regionsTag.size();
 
         return new LitematicFile(file, (CompoundTag) metadataTag,
                 ((IntTag) versionTag).getValue(),
-                tryGetInt(root.get("SubVersion")),
-                tryGetInt(root.get("MinecraftDataVersion")),
+                root.getIntOrZero("SubVersion"),
+                root.getIntOrZero("MinecraftDataVersion"),
                 regions
         );
     }
@@ -117,15 +114,15 @@ public final class LitematicFile {
         this.description = tryGetString(metadata.get("Description"));
         this.timeCreated = tryGetLongTimestamp(metadata.get("TimeCreated"));
         this.timeModified = tryGetLongTimestamp(metadata.get("TimeModified"));
-        this.totalBlocks = tryGetInt(metadata.get("TotalBlocks"));
-        this.totalVolume = tryGetInt(metadata.get("TotalVolume"));
+        this.totalBlocks = metadata.getIntOrZero("TotalBlocks");
+        this.totalVolume = metadata.getIntOrZero("TotalVolume");
 
 
         Point3D enclosingSize = null;
         if (metadata.get("EnclosingSize") instanceof CompoundTag list) {
-            int x = tryGetInt(list.get("x"));
-            int y = tryGetInt(list.get("y"));
-            int z = tryGetInt(list.get("z"));
+            int x = list.getIntOrZero("x");
+            int y = list.getIntOrZero("y");
+            int z = list.getIntOrZero("z");
 
             if (x >= 0 && y >= 0 && z >= 0)
                 enclosingSize = new Point3D(x, y, z);

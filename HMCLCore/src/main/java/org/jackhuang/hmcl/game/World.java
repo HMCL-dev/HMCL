@@ -425,7 +425,7 @@ public final class World {
         if (!Files.isDirectory(file)) throw new IOException("Not a valid world directory");
         FileUtils.saveSafely(path, os -> {
             try (OutputStream gos = new GZIPOutputStream(os)) {
-                NBTCodec.of().writeTag(nbt, gos);
+                NBTCodec.of().writeTag(gos, nbt);
             }
         });
     }
