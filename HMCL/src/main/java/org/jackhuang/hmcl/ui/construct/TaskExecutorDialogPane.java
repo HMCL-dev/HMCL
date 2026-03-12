@@ -28,9 +28,9 @@ import javafx.scene.layout.VBox;
 import org.jackhuang.hmcl.task.*;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.util.TaskCancellationAction;
+import org.jackhuang.hmcl.util.i18n.I18n;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Optional;
 import java.util.function.Consumer;
 
 import static org.jackhuang.hmcl.ui.FXUtils.onEscPressed;
@@ -49,6 +49,8 @@ public class TaskExecutorDialogPane extends BorderPane {
     private final TaskListPane taskListPane;
 
     public TaskExecutorDialogPane(@NotNull TaskCancellationAction cancel) {
+        this.getStyleClass().add("task-executor-dialog-layout");
+
         FXUtils.setLimitWidth(this, 500);
         FXUtils.setLimitHeight(this, 300);
 
@@ -73,31 +75,22 @@ public class TaskExecutorDialogPane extends BorderPane {
             bottom.setLeft(lblProgress);
 
             btnCancel = new JFXButton(i18n("button.cancel"));
+            btnCancel.getStyleClass().add("dialog-cancel");
             bottom.setRight(btnCancel);
         }
 
         setCancel(cancel);
 
         btnCancel.setOnAction(e -> {
-            Optional.ofNullable(executor).ifPresent(TaskExecutor::cancel);
             if (onCancel.getCancellationAction() != null) {
+                if (executor != null)
+                    executor.cancel();
                 onCancel.getCancellationAction().accept(this);
             }
         });
 
         speedEventHandler = FetchTask.SPEED_EVENT.registerWeak(speedEvent -> {
-            String unit = "B/s";
-            double speed = speedEvent.getSpeed();
-            if (speed > 1024) {
-                speed /= 1024;
-                unit = "KiB/s";
-            }
-            if (speed > 1024) {
-                speed /= 1024;
-                unit = "MiB/s";
-            }
-
-            String message = String.format("%.1f %s", speed, unit);
+            String message = I18n.formatSpeed(speedEvent.getSpeed());
             Platform.runLater(() -> lblProgress.setText(message));
         });
 

@@ -2,15 +2,15 @@ package org.jackhuang.hmcl.mod.modinfo;
 
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParseException;
+import kala.compress.archivers.zip.ZipArchiveEntry;
 import org.jackhuang.hmcl.mod.LocalModFile;
 import org.jackhuang.hmcl.mod.ModLoaderType;
 import org.jackhuang.hmcl.mod.ModManager;
 import org.jackhuang.hmcl.util.Immutable;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
+import org.jackhuang.hmcl.util.tree.ZipFileTree;
 
 import java.io.IOException;
-import java.nio.file.FileSystem;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -53,13 +53,13 @@ public final class QuiltModMetadata {
         this.quilt_loader = quiltLoader;
     }
 
-    public static LocalModFile fromFile(ModManager modManager, Path modFile, FileSystem fs) throws IOException, JsonParseException {
-        Path path = fs.getPath("quilt.mod.json");
-        if (Files.notExists(path)) {
+    public static LocalModFile fromFile(ModManager modManager, Path modFile, ZipFileTree tree) throws IOException, JsonParseException {
+        ZipArchiveEntry path = tree.getEntry("quilt.mod.json");
+        if (path == null) {
             throw new IOException("File " + modFile + " is not a Quilt mod.");
         }
 
-        QuiltModMetadata root = JsonUtils.fromNonNullJson(Files.readString(path), QuiltModMetadata.class);
+        QuiltModMetadata root = JsonUtils.fromNonNullJsonFully(tree.getInputStream(path), QuiltModMetadata.class);
         if (root.schema_version != 1) {
             throw new IOException("File " + modFile + " is not a supported Quilt mod.");
         }

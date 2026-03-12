@@ -1,3 +1,4 @@
+import org.jackhuang.hmcl.gradle.TerracottaConfigUpgradeTask
 import org.jackhuang.hmcl.gradle.ci.GitHubActionUtils
 import org.jackhuang.hmcl.gradle.ci.JenkinsUtils
 import org.jackhuang.hmcl.gradle.l10n.CheckTranslations
@@ -27,7 +28,6 @@ val versionType = System.getenv("VERSION_TYPE") ?: if (isOfficial) "nightly" els
 val versionRoot = System.getenv("VERSION_ROOT") ?: projectConfig.getProperty("versionRoot") ?: "3"
 
 val microsoftAuthId = System.getenv("MICROSOFT_AUTH_ID") ?: ""
-val microsoftAuthSecret = System.getenv("MICROSOFT_AUTH_SECRET") ?: ""
 val curseForgeApiKey = System.getenv("CURSEFORGE_API_KEY") ?: ""
 
 val launcherExe = System.getenv("HMCL_LAUNCHER_EXE") ?: ""
@@ -58,6 +58,8 @@ dependencies {
     implementation("libs:JFoenix")
     implementation(libs.twelvemonkeys.imageio.webp)
     implementation(libs.java.info)
+    implementation(libs.monet.fx)
+    implementation(libs.nayuki.qrcodegen)
 
     if (launcherExe.isBlank()) {
         implementation(libs.hmclauncher)
@@ -117,10 +119,6 @@ tasks.checkstyleMain {
     exclude("**/org/jackhuang/hmcl/ui/image/apng/**")
 }
 
-tasks.compileJava {
-    options.compilerArgs.add("--add-exports=java.base/jdk.internal.loader=ALL-UNNAMED")
-}
-
 val addOpens = listOf(
     "java.base/java.lang",
     "java.base/java.lang.reflect",
@@ -128,14 +126,24 @@ val addOpens = listOf(
     "javafx.base/com.sun.javafx.binding",
     "javafx.base/com.sun.javafx.event",
     "javafx.base/com.sun.javafx.runtime",
+    "javafx.base/javafx.beans.property",
     "javafx.graphics/javafx.css",
+    "javafx.graphics/javafx.stage",
+    "javafx.graphics/javafx.scene",
+    "javafx.graphics/com.sun.glass.ui",
     "javafx.graphics/com.sun.javafx.stage",
+    "javafx.graphics/com.sun.javafx.util",
     "javafx.graphics/com.sun.prism",
     "javafx.controls/com.sun.javafx.scene.control",
     "javafx.controls/com.sun.javafx.scene.control.behavior",
+    "javafx.graphics/com.sun.javafx.tk.quantum",
     "javafx.controls/javafx.scene.control.skin",
     "jdk.attach/sun.tools.attach",
 )
+
+tasks.compileJava {
+    options.compilerArgs.addAll(addOpens.map { "--add-exports=$it=ALL-UNNAMED" })
+}
 
 val hmclProperties = buildList {
     add("hmcl.version" to project.version.toString())
@@ -145,7 +153,6 @@ val hmclProperties = buildList {
     }
     add("hmcl.version.type" to versionType)
     add("hmcl.microsoft.auth.id" to microsoftAuthId)
-    add("hmcl.microsoft.auth.secret" to microsoftAuthSecret)
     add("hmcl.curseforge.apikey" to curseForgeApiKey)
     add("hmcl.authlib-injector.version" to libs.authlib.injector.get().version!!)
 }
@@ -202,7 +209,8 @@ tasks.shadowJar {
         "Main-Class" to "org.jackhuang.hmcl.Main",
         "Multi-Release" to "true",
         "Add-Opens" to addOpens.joinToString(" "),
-        "Enable-Native-Access" to "ALL-UNNAMED"
+        "Enable-Native-Access" to "ALL-UNNAMED",
+        "Enable-Final-Field-Mutation" to "ALL-UNNAMED",
     )
 
     if (launcherExe.isNotBlank()) {
@@ -232,6 +240,11 @@ tasks.processResources {
         from(createLanguageList.map { it.outputFile })
         from(upsideDownTranslate.map { it.outputFile })
         from(createLocaleNamesResourceBundle.map { it.outputDirectory })
+    }
+
+    inputs.property("terracotta_version", libs.versions.terracotta)
+    doLast {
+        upgradeTerracottaConfig.get().checkValid()
     }
 }
 
@@ -335,7 +348,7 @@ tasks.register<JavaExec>("run") {
     classpath = files(jarPath)
     workingDir = rootProject.rootDir
 
-    val vmOptions = parseToolOptions(System.getenv("HMCL_JAVA_OPTS"))
+    val vmOptions = parseToolOptions(System.getenv("HMCL_JAVA_OPTS") ?: "-Xmx1g")
     if (vmOptions.none { it.startsWith("-Dhmcl.offline.auth.restricted=") })
         vmOptions += "-Dhmcl.offline.auth.restricted=false"
 
@@ -353,6 +366,26 @@ tasks.register<JavaExec>("run") {
         logger.quiet("HMCL_JAVA_OPTS: {}", vmOptions)
         logger.quiet("HMCL_JAVA_HOME: {}", hmclJavaHome ?: System.getProperty("java.home"))
     }
+}
+
+// terracotta
+
+val upgradeTerracottaConfig = tasks.register<TerracottaConfigUpgradeTask>("upgradeTerracottaConfig") {
+    val destination = layout.projectDirectory.file("src/main/resources/assets/terracotta.json")
+    val source = layout.projectDirectory.file("terracotta-template.json");
+
+    classifiers.set(listOf(
+        "windows-x86_64", "windows-arm64",
+        "macos-x86_64", "macos-arm64",
+        "linux-x86_64", "linux-arm64", "linux-loongarch64", "linux-riscv64",
+        "freebsd-x86_64"
+    ))
+
+    version.set(libs.versions.terracotta)
+    downloadURL.set($$"https://github.com/burningtnt/Terracotta/releases/download/v${version}/terracotta-${version}-${classifier}-pkg.tar.gz")
+
+    templateFile.set(source)
+    outputFile.set(destination)
 }
 
 // Check Translations

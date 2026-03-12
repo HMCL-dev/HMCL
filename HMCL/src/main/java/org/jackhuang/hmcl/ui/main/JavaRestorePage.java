@@ -32,7 +32,6 @@ import javafx.scene.control.*;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import org.jackhuang.hmcl.java.JavaManager;
-import org.jackhuang.hmcl.setting.Theme;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.ui.*;
 import org.jackhuang.hmcl.ui.construct.MessageDialogPane;
@@ -158,26 +157,20 @@ public final class JavaRestorePage extends ListPageBase<JavaRestorePage.Disabled
             HBox right = new HBox();
             right.setAlignment(Pos.CENTER_RIGHT);
             {
-                JFXButton revealButton = new JFXButton();
-                revealButton.getStyleClass().add("toggle-icon4");
-                revealButton.setGraphic(FXUtils.limitingSize(SVG.FOLDER_OPEN.createIcon(Theme.blackFill(), 24), 24, 24));
+                JFXButton revealButton = FXUtils.newToggleButton4(SVG.FOLDER_OPEN);
                 revealButton.setOnAction(e -> skinnable.onReveal());
                 FXUtils.installFastTooltip(revealButton, i18n("reveal.in_file_manager"));
 
                 if (skinnable.realPath == null) {
                     revealButton.setDisable(true);
 
-                    JFXButton removeButton = new JFXButton();
-                    removeButton.getStyleClass().add("toggle-icon4");
-                    removeButton.setGraphic(FXUtils.limitingSize(SVG.DELETE.createIcon(Theme.blackFill(), 24), 24, 24));
+                    JFXButton removeButton = FXUtils.newToggleButton4(SVG.DELETE);
                     removeButton.setOnAction(e -> skinnable.onRemove());
                     FXUtils.installFastTooltip(removeButton, i18n("java.disabled.management.remove"));
 
                     right.getChildren().setAll(revealButton, removeButton);
                 } else {
-                    JFXButton restoreButton = new JFXButton();
-                    restoreButton.getStyleClass().add("toggle-icon4");
-                    restoreButton.setGraphic(FXUtils.limitingSize(SVG.RESTORE.createIcon(Theme.blackFill(), 24), 24, 24));
+                    JFXButton restoreButton = FXUtils.newToggleButton4(SVG.RESTORE);
                     restoreButton.setOnAction(e -> skinnable.onRestore());
                     FXUtils.installFastTooltip(restoreButton, i18n("java.disabled.management.restore"));
 
@@ -193,7 +186,7 @@ public final class JavaRestorePage extends ListPageBase<JavaRestorePage.Disabled
         }
     }
 
-    private static final class JavaRestorePageSkin extends ToolbarListPageSkin<JavaRestorePage> {
+    private static final class JavaRestorePageSkin extends ToolbarListPageSkin<DisabledJavaItem, JavaRestorePage> {
         JavaRestorePageSkin(JavaRestorePage skinnable) {
             super(skinnable);
         }

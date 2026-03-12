@@ -18,9 +18,9 @@
 package org.jackhuang.hmcl.game;
 
 import org.jackhuang.hmcl.download.LibraryAnalyzer;
+import org.jackhuang.hmcl.java.JavaRuntime;
 import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.platform.Architecture;
-import org.jackhuang.hmcl.java.JavaRuntime;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
 import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
 import org.jackhuang.hmcl.util.versioning.VersionNumber;
@@ -43,7 +43,7 @@ public enum JavaVersionConstraint {
         @Override
         public boolean checkJava(GameVersionNumber gameVersionNumber, Version version, JavaRuntime java) {
             GameJavaVersion minimumJavaVersion = GameJavaVersion.getMinimumJavaVersion(gameVersionNumber);
-            return minimumJavaVersion == null || java.getParsedVersion() >= minimumJavaVersion.getMajorVersion();
+            return minimumJavaVersion == null || java.getParsedVersion() >= minimumJavaVersion.majorVersion();
         }
     },
     // Minecraft with suggested java version recorded in game json is restrictedly constrained.
@@ -59,10 +59,10 @@ public enum JavaVersionConstraint {
         @Override
         public VersionRange<VersionNumber> getJavaVersionRange(Version version) {
             String javaVersion;
-            if (Objects.requireNonNull(version.getJavaVersion()).getMajorVersion() >= 9) {
-                javaVersion = "" + version.getJavaVersion().getMajorVersion();
+            if (Objects.requireNonNull(version.getJavaVersion()).majorVersion() >= 9) {
+                javaVersion = "" + version.getJavaVersion().majorVersion();
             } else {
-                javaVersion = "1." + version.getJavaVersion().getMajorVersion();
+                javaVersion = "1." + version.getJavaVersion().majorVersion();
             }
             return VersionNumber.atLeast(javaVersion);
         }
@@ -247,9 +247,9 @@ public enum JavaVersionConstraint {
             return true;
         }
 
-        String versionNumber = gameJavaVersion.getMajorVersion() >= 9
-                ? String.valueOf(gameJavaVersion.getMajorVersion())
-                : "1." + gameJavaVersion.getMajorVersion();
+        String versionNumber = gameJavaVersion.majorVersion() >= 9
+                ? String.valueOf(gameJavaVersion.majorVersion())
+                : "1." + gameJavaVersion.majorVersion();
 
         VersionRange<VersionNumber> range = getJavaVersionRange(version);
         VersionNumber maximum = range.getMaximum();

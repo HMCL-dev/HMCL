@@ -1,4 +1,4 @@
-# https://gitlab.freedesktop.org/mesa/libdrm/-/blob/7d43d9b6fe5df4b234937fce9e51adb1b327ded1/data/amdgpu.ids
+# https://gitlab.freedesktop.org/mesa/libdrm/-/blob/35a21916c8f621b35a67f3c5994280ae59a4981a/data/amdgpu.ids
 #
 # List of AMDGPU IDs
 #
@@ -559,6 +559,7 @@
 7448,	00,	AMD Radeon Pro W7900
 7449,	00,	AMD Radeon Pro W7800 48GB
 744A,	00,	AMD Radeon Pro W7900 Dual Slot
+744B,	00,	AMD Radeon Pro W7900D
 744C,	C8,	AMD Radeon RX 7900 XTX
 744C,	CC,	AMD Radeon RX 7900 XT
 744C,	CE,	AMD Radeon RX 7900 GRE
@@ -569,6 +570,7 @@
 7470,	00,	AMD Radeon Pro W7700
 747E,	C8,	AMD Radeon RX 7800 XT
 747E,	D8,	AMD Radeon RX 7800M
+747E,	DB,	AMD Radeon RX 7700
 747E,	FF,	AMD Radeon RX 7700 XT
 7480,	00,	AMD Radeon Pro W7600
 7480,	C0,	AMD Radeon RX 7600 XT
@@ -586,6 +588,7 @@
 74A1,	00,	AMD Instinct MI300X
 74A2,	00,	AMD Instinct MI308X
 74A5,	00,	AMD Instinct MI325X
+74A8,	00,	AMD Instinct MI308X HF
 74A9,	00,	AMD Instinct MI300X HF
 74B5,	00,	AMD Instinct MI300X VF
 74B6,	00,	AMD Instinct MI308X
@@ -594,6 +597,12 @@
 7550,	C2,	AMD Radeon RX 9070 GRE
 7550,	C3,	AMD Radeon RX 9070
 7551,	C0,	AMD Radeon AI PRO R9700
+7590,	C0,	AMD Radeon RX 9060 XT
+7590,	C7,	AMD Radeon RX 9060
+75A0,	C0,	AMD Instinct MI350X
+75A3,	C0,	AMD Instinct MI355X
+75B0,	C0,	AMD Instinct MI350X VF
+75B3,	C0,	AMD Instinct MI355X VF
 9830,	00,	AMD Radeon HD 8400 / R3 Series
 9831,	00,	AMD Radeon HD 8400E
 9832,	00,	AMD Radeon HD 8330

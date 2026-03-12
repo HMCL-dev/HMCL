@@ -92,7 +92,10 @@ public final class CleanroomInstallTask extends Task<Version> {
 
     @Override
     public void postExecute() throws Exception {
-        Files.deleteIfExists(installer);
+        if (remote != null) {
+            Files.deleteIfExists(installer);
+        }
+
         setResult(task.getResult());
     }
 

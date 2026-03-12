@@ -280,6 +280,15 @@ public final class Lang {
         }
     }
 
+    public static Float toFloatOrNull(Object string) {
+        try {
+            if (string == null) return null;
+            return Float.parseFloat(string.toString());
+        } catch (NumberFormatException e) {
+            return null;
+        }
+    }
+
     /**
      * Find the first non-null reference in given list.
      *
@@ -408,26 +417,6 @@ public final class Lang {
         Iterator<U> it2 = i2.iterator();
         while (it1.hasNext() && it2.hasNext())
             action.accept(it1.next(), it2.next());
-    }
-
-    private static Timer timer;
-
-    public static synchronized Timer getTimer() {
-        if (timer == null) {
-            timer = new Timer(true);
-        }
-        return timer;
-    }
-
-    public static synchronized TimerTask setTimeout(Runnable runnable, long delayMs) {
-        TimerTask task = new TimerTask() {
-            @Override
-            public void run() {
-                runnable.run();
-            }
-        };
-        getTimer().schedule(task, delayMs);
-        return task;
     }
 
     public static Throwable resolveException(Throwable e) {

@@ -21,7 +21,6 @@ import javafx.scene.Node;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
-import javafx.scene.paint.Color;
 import javafx.scene.shape.Rectangle;
 import javafx.scene.text.Text;
 import org.jackhuang.hmcl.util.Lang;
@@ -44,7 +43,6 @@ public class ClassTitle extends StackPane {
         Rectangle rectangle = new Rectangle();
         rectangle.widthProperty().bind(vbox.widthProperty());
         rectangle.setHeight(1.0);
-        rectangle.setFill(Color.GRAY);
         vbox.getChildren().add(rectangle);
         getChildren().setAll(vbox);
         getStyleClass().add("class-title");

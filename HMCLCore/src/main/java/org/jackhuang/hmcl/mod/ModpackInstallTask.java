@@ -73,22 +73,22 @@ public class ModpackInstallTask<T> extends Task<Void> {
                     .setTerminateIfSubDirectoryNotExists()
                     .setReplaceExistentFile(true)
                     .setEncoding(charset)
-                    .setFilter((destPath, isDirectory, zipEntry, entryPath) -> {
-                        if (isDirectory) return true;
-                        if (!callback.test(entryPath)) return false;
-                        entries.add(entryPath);
+                    .setFilter((zipEntry, destFile, relativePath) -> {
+                        if (zipEntry.isDirectory()) return true;
+                        if (!callback.test(relativePath)) return false;
+                        entries.add(relativePath);
 
-                        if (!files.containsKey(entryPath)) {
+                        if (!files.containsKey(relativePath)) {
                             // If old modpack does not have this entry, add this entry or override the file that user added.
                             return true;
-                        } else if (!Files.exists(destPath)) {
+                        } else if (!Files.exists(destFile)) {
                             // If both old and new modpacks have this entry, but the file is deleted by user, leave it missing.
                             return false;
                         } else {
                             // If both old and new modpacks have this entry, and user has modified this file,
                             // we will not replace it since this modified file is what user expects.
-                            String fileHash = DigestUtils.digestToString("SHA-1", destPath);
-                            String oldHash = files.get(entryPath).getHash();
+                            String fileHash = DigestUtils.digestToString("SHA-1", destFile);
+                            String oldHash = files.get(relativePath).getHash();
                             return Objects.equals(oldHash, fileHash);
                         }
                     }).unzip();

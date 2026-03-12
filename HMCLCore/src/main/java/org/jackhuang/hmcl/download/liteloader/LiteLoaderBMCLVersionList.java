@@ -22,6 +22,7 @@ import org.jackhuang.hmcl.download.RemoteVersion;
 import org.jackhuang.hmcl.download.VersionList;
 import org.jackhuang.hmcl.task.GetTask;
 import org.jackhuang.hmcl.task.Task;
+import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.io.NetworkUtils;
 
 import java.util.Collections;
@@ -60,17 +61,21 @@ public final class LiteLoaderBMCLVersionList extends VersionList<LiteLoaderRemot
 
     @Override
     public Task<?> refreshAsync(String gameVersion) {
-        return new GetTask(NetworkUtils.withQuery(downloadProvider.injectURLWithCandidates("https://bmclapi2.bangbang93.com/liteloader/list"), Map.of("mcversion", gameVersion)))
-                .thenGetJsonAsync(LiteLoaderBMCLVersion.class)
+        return new GetTask(
+                NetworkUtils.withQuery(downloadProvider.getApiRoot() + "/liteloader/list", Map.of(
+                        "mcversion", gameVersion
+                )))
+                .thenApplyAsync(json -> JsonUtils.fromMaybeMalformedJson(json, LiteLoaderBMCLVersion.class))
                 .thenAcceptAsync(v -> {
                     lock.writeLock().lock();
                     try {
                         versions.clear();
-
+                        if (v == null)
+                            return;
                         versions.put(gameVersion, new LiteLoaderRemoteVersion(
                                 gameVersion, v.version, RemoteVersion.Type.UNCATEGORIZED,
                                 Collections.singletonList(NetworkUtils.withQuery(
-                                        downloadProvider.injectURL("https://bmclapi2.bangbang93.com/liteloader/download"),
+                                        downloadProvider.getApiRoot() + "/liteloader/download",
                                         Collections.singletonMap("version", v.version)
                                 )),
                                 v.build.getTweakClass(), v.build.getLibraries()

@@ -112,7 +112,7 @@ public final class UpdateChecker {
                 try {
                     result = checkUpdate(channel, preview);
                     LOG.info("Latest version (" + channel + ", preview=" + preview + ") is " + result);
-                } catch (IOException e) {
+                } catch (Throwable e) {
                     LOG.warning("Failed to check for update", e);
                 }
 

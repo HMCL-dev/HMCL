@@ -22,11 +22,17 @@ import org.jackhuang.hmcl.download.fabric.FabricAPIVersionList;
 import org.jackhuang.hmcl.download.fabric.FabricVersionList;
 import org.jackhuang.hmcl.download.forge.ForgeVersionList;
 import org.jackhuang.hmcl.download.game.GameVersionList;
+import org.jackhuang.hmcl.download.legacyfabric.LegacyFabricAPIVersionList;
+import org.jackhuang.hmcl.download.legacyfabric.LegacyFabricVersionList;
 import org.jackhuang.hmcl.download.liteloader.LiteLoaderVersionList;
 import org.jackhuang.hmcl.download.neoforge.NeoForgeOfficialVersionList;
 import org.jackhuang.hmcl.download.optifine.OptiFineBMCLVersionList;
 import org.jackhuang.hmcl.download.quilt.QuiltAPIVersionList;
 import org.jackhuang.hmcl.download.quilt.QuiltVersionList;
+import org.jackhuang.hmcl.util.io.NetworkUtils;
+
+import java.net.URI;
+import java.util.List;
 
 /**
  * @author huangyuhui
@@ -43,6 +49,8 @@ public class MojangDownloadProvider implements DownloadProvider {
     private final OptiFineBMCLVersionList optifine;
     private final QuiltVersionList quilt;
     private final QuiltAPIVersionList quiltApi;
+    private final LegacyFabricVersionList legacyFabric;
+    private final LegacyFabricAPIVersionList legacyFabricApi;
 
     public MojangDownloadProvider() {
         // If there is no official download channel available, fallback to BMCLAPI.
@@ -58,44 +66,37 @@ public class MojangDownloadProvider implements DownloadProvider {
         this.optifine = new OptiFineBMCLVersionList(apiRoot);
         this.quilt = new QuiltVersionList(this);
         this.quiltApi = new QuiltAPIVersionList(this);
+        this.legacyFabric = new LegacyFabricVersionList(this);
+        this.legacyFabricApi = new LegacyFabricAPIVersionList(this);
     }
 
     @Override
-    public String getVersionListURL() {
-        return "https://piston-meta.mojang.com/mc/game/version_manifest.json";
+    public List<URI> getVersionListURLs() {
+        return List.of(URI.create("https://piston-meta.mojang.com/mc/game/version_manifest.json"));
     }
 
     @Override
-    public String getAssetBaseURL() {
-        return "https://resources.download.minecraft.net/";
+    public List<URI> getAssetObjectCandidates(String assetObjectLocation) {
+        return List.of(NetworkUtils.toURI("https://resources.download.minecraft.net/" + assetObjectLocation));
     }
 
     @Override
     public VersionList<?> getVersionListById(String id) {
-        switch (id) {
-            case "game":
-                return game;
-            case "fabric":
-                return fabric;
-            case "fabric-api":
-                return fabricApi;
-            case "forge":
-                return forge;
-            case "cleanroom":
-                return cleanroom;
-            case "neoforge":
-                return neoforge;
-            case "liteloader":
-                return liteLoader;
-            case "optifine":
-                return optifine;
-            case "quilt":
-                return quilt;
-            case "quilt-api":
-                return quiltApi;
-            default:
-                throw new IllegalArgumentException("Unrecognized version list id: " + id);
-        }
+        return switch (id) {
+            case "game" -> game;
+            case "fabric" -> fabric;
+            case "fabric-api" -> fabricApi;
+            case "forge" -> forge;
+            case "cleanroom" -> cleanroom;
+            case "neoforge" -> neoforge;
+            case "liteloader" -> liteLoader;
+            case "optifine" -> optifine;
+            case "quilt" -> quilt;
+            case "quilt-api" -> quiltApi;
+            case "legacyfabric" -> legacyFabric;
+            case "legacyfabric-api" -> legacyFabricApi;
+            default -> throw new IllegalArgumentException("Unrecognized version list id: " + id);
+        };
     }
 
     @Override

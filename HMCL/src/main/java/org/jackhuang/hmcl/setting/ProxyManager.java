@@ -18,6 +18,7 @@
 package org.jackhuang.hmcl.setting;
 
 import javafx.beans.InvalidationListener;
+import org.jackhuang.hmcl.task.FetchTask;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.io.NetworkUtils;
 import org.jetbrains.annotations.NotNull;
@@ -114,6 +115,8 @@ public final class ProxyManager {
         config().hasProxyAuthProperty().addListener(updateAuthenticator);
         config().proxyUserProperty().addListener(updateAuthenticator);
         config().proxyPassProperty().addListener(updateAuthenticator);
+
+        FetchTask.notifyInitialized();
     }
 
     private static abstract class AbstractProxySelector extends ProxySelector {

@@ -28,6 +28,8 @@ import javafx.scene.layout.Region;
 import javafx.scene.shape.Rectangle;
 import org.jackhuang.hmcl.util.Lang;
 
+// Referenced in root.css
+@SuppressWarnings("unused")
 public class FloatScrollBarSkin implements Skin<ScrollBar> {
     private ScrollBar scrollBar;
     private Region group;
@@ -127,12 +129,12 @@ public class FloatScrollBarSkin implements Skin<ScrollBar> {
                 track.heightProperty().unbind();
 
                 if (scrollBar.getOrientation() == Orientation.HORIZONTAL) {
-                    track.relocate(0, -5);
+                    track.relocate(0, -8);
                     track.widthProperty().bind(scrollBar.widthProperty());
-                    track.setHeight(5);
+                    track.setHeight(8);
                 } else {
-                    track.relocate(-5, 0);
-                    track.setWidth(5);
+                    track.relocate(-8, 0);
+                    track.setWidth(8);
                     track.heightProperty().bind(scrollBar.heightProperty());
                 }
 
@@ -142,13 +144,13 @@ public class FloatScrollBarSkin implements Skin<ScrollBar> {
                 thumb.heightProperty().unbind();
 
                 if (scrollBar.getOrientation() == Orientation.HORIZONTAL) {
-                    thumb.relocate(0, -5);
+                    thumb.relocate(0, -8);
                     thumb.widthProperty().bind(Bindings.max(20, scrollBar.visibleAmountProperty().divide(range).multiply(scrollBar.widthProperty())));
-                    thumb.setHeight(5);
+                    thumb.setHeight(8);
                     thumb.xProperty().bind(Bindings.subtract(scrollBar.widthProperty(), thumb.widthProperty()).multiply(position));
                 } else {
-                    thumb.relocate(-5, 0);
-                    thumb.setWidth(5);
+                    thumb.relocate(-8, 0);
+                    thumb.setWidth(8);
                     thumb.heightProperty().bind(Bindings.max(20, scrollBar.visibleAmountProperty().divide(range).multiply(scrollBar.heightProperty())));
                     thumb.yProperty().bind(Bindings.subtract(scrollBar.heightProperty(), thumb.heightProperty()).multiply(position));
                 }
@@ -160,7 +162,7 @@ public class FloatScrollBarSkin implements Skin<ScrollBar> {
                     return Double.MAX_VALUE;
                 }
 
-                return 5;
+                return 8;
             }
 
             @Override
@@ -169,7 +171,7 @@ public class FloatScrollBarSkin implements Skin<ScrollBar> {
                     return Double.MAX_VALUE;
                 }
 
-                return 5;
+                return 8;
             }
         };
     }

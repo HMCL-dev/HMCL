@@ -21,6 +21,8 @@ import org.jackhuang.hmcl.util.FileSaver;
 import org.jackhuang.hmcl.util.SelfDependencyPatcher;
 import org.jackhuang.hmcl.util.SwingUtils;
 import org.jackhuang.hmcl.java.JavaRuntime;
+import org.jackhuang.hmcl.util.io.FileUtils;
+import org.jackhuang.hmcl.util.io.JarUtils;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
 
 import java.io.IOException;
@@ -28,6 +30,7 @@ import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.concurrent.CancellationException;
 
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
@@ -47,10 +50,12 @@ public final class EntryPoint {
         LOG.start(Metadata.HMCL_CURRENT_DIRECTORY.resolve("logs"));
 
         setupJavaFXVMOptions();
-        checkDirectoryPath();
 
-        if (OperatingSystem.CURRENT_OS == OperatingSystem.MACOS)
-            initIcon();
+        if (OperatingSystem.CURRENT_OS == OperatingSystem.MACOS) {
+            System.getProperties().putIfAbsent("apple.awt.application.appearance", "system");
+            if (!isInsideMacAppBundle())
+                initIcon();
+        }
 
         checkJavaFX();
         verifyJavaFX();
@@ -159,6 +164,25 @@ public final class EntryPoint {
         }
     }
 
+    private static boolean isInsideMacAppBundle() {
+        Path thisJar = JarUtils.thisJarPath();
+        if (thisJar == null)
+            return false;
+
+        for (Path current = thisJar.getParent();
+             current != null && current.getParent() != null;
+             current = current.getParent()
+        ) {
+            if ("Contents".equals(FileUtils.getName(current))
+                    && FileUtils.getName(current.getParent()).endsWith(".app")
+                    && Files.exists(current.resolve("Info.plist"))
+            ) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     private static void initIcon() {
         try {
             if (java.awt.Taskbar.isTaskbarSupported()) {
@@ -170,25 +194,12 @@ public final class EntryPoint {
         }
     }
 
-    private static void checkDirectoryPath() {
-        String currentDir = System.getProperty("user.dir", "");
-        if (currentDir.contains("!")) {
-            LOG.error("The current working path contains an exclamation mark: " + currentDir);
-            // No Chinese translation because both Swing and JavaFX cannot render Chinese character properly when exclamation mark exists in the path.
-            showErrorAndExit("Exclamation mark(!) is not allowed in the path where HMCL is in.\n"
-                    + "The path is " + currentDir);
-        }
-    }
-
     private static void checkJavaFX() {
         try {
             SelfDependencyPatcher.patch();
         } catch (SelfDependencyPatcher.PatchException e) {
             LOG.error("Unable to patch JVM", e);
             showErrorAndExit(i18n("fatal.javafx.missing"));
-        } catch (SelfDependencyPatcher.IncompatibleVersionException e) {
-            LOG.error("Unable to patch JVM", e);
-            showErrorAndExit(i18n("fatal.javafx.incompatible"));
         } catch (CancellationException e) {
             LOG.error("User cancels downloading JavaFX", e);
             exit(0);

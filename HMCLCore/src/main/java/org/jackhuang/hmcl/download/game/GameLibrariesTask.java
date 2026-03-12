@@ -149,7 +149,7 @@ public final class GameLibrariesTask extends Task<Void> {
                         Path file = libDir.resolve(fmlLib.name);
                         if (shouldDownloadFMLLib(fmlLib, file)) {
                             List<URI> uris = dependencyManager.getDownloadProvider()
-                                    .injectURLWithCandidates(fmlLib.getDownloadURI());
+                                    .injectURLWithCandidates(fmlLib.downloadUrl());
                             dependencies.add(new FileDownloadTask(uris, file)
                                     .withCounter("hmcl.install.libraries"));
                         }
@@ -193,9 +193,12 @@ public final class GameLibrariesTask extends Task<Void> {
         if (forgeVersion.startsWith("7.8.1.")) {
             return List.of(
                     new FMLLib("argo-small-3.2.jar", "58912ea2858d168c50781f956fa5b59f0f7c6b51"),
-                    new FMLLib("guava-14.0-rc3.jar", "931ae21fa8014c3ce686aaa621eae565fefb1a6a"),
-                    new FMLLib("asm-all-4.1.jar", "054986e962b88d8660ae4566475658469595ef58"),
-                    new FMLLib("bcprov-jdk15on-148.jar", "960dea7c9181ba0b17e8bab0c06a43f0a5f04e65"),
+                    new FMLLib("guava-14.0-rc3.jar", "931ae21fa8014c3ce686aaa621eae565fefb1a6a",
+                            "https://repo1.maven.org/maven2/com/google/guava/guava/14.0-rc3/guava-14.0-rc3.jar"),
+                    new FMLLib("asm-all-4.1.jar", "054986e962b88d8660ae4566475658469595ef58",
+                            "https://repo1.maven.org/maven2/org/ow2/asm/asm-all/4.1/asm-all-4.1.jar"),
+                    new FMLLib("bcprov-jdk15on-148.jar", "960dea7c9181ba0b17e8bab0c06a43f0a5f04e65",
+                            "https://repo1.maven.org/maven2/org/bouncycastle/bcprov-jdk15on/1.48/bcprov-jdk15on-1.48.jar"),
                     new FMLLib("deobfuscation_data_1.5.2.zip", "446e55cd986582c70fcf12cb27bc00114c5adfd9"),
                     new FMLLib("scala-library.jar", "458d046151ad179c85429ed7420ffb1eaf6ddf85")
             );
@@ -204,9 +207,9 @@ public final class GameLibrariesTask extends Task<Void> {
         return null;
     }
 
-    private record FMLLib(String name, String sha1) {
-        public String getDownloadURI() {
-            return "https://hmcl-dev.github.io/metadata/fmllibs/" + name;
+    private record FMLLib(String name, String sha1, String downloadUrl) {
+        FMLLib(String name, String sha1) {
+            this(name, sha1, "https://hmcl.glavo.site/metadata/fmllibs/" + name);
         }
     }
 }

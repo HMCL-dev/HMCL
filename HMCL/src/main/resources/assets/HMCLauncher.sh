@@ -37,6 +37,8 @@ case "$(uname -m)" in
     _HMCL_ARCH="riscv64";;
   loongarch64)
     _HMCL_ARCH="loongarch64";;
+  mips64)
+    _HMCL_ARCH="mips64el";;
   *)
     _HMCL_ARCH="unknown";;
 esac

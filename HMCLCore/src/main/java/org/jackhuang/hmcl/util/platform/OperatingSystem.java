@@ -19,7 +19,7 @@ package org.jackhuang.hmcl.util.platform;
 
 import org.jackhuang.hmcl.util.KeyValuePairUtils;
 import org.jackhuang.hmcl.util.platform.windows.Kernel32;
-import org.jackhuang.hmcl.util.platform.windows.WinTypes;
+import org.jackhuang.hmcl.util.platform.windows.WinReg;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -150,13 +150,35 @@ public enum OperatingSystem {
             OSVersion.Windows windowsVersion = null;
 
             Kernel32 kernel32 = Kernel32.INSTANCE;
+            WinReg reg = WinReg.INSTANCE;
+
             // Get Windows version number
-            if (kernel32 != null) {
-                WinTypes.OSVERSIONINFOEXW osVersionInfo = new WinTypes.OSVERSIONINFOEXW();
-                if (kernel32.GetVersionExW(osVersionInfo)) {
-                    windowsVersion = new OSVersion.Windows(osVersionInfo.dwMajorVersion, osVersionInfo.dwMinorVersion, osVersionInfo.dwBuildNumber);
-                } else
-                    System.err.println("Failed to obtain OS version number (" + kernel32.GetLastError() + ")");
+            if (reg != null) {
+                var baseVersion = OSVersion.Windows.parse(System.getProperty("os.version"));
+                int majorVersion = baseVersion.major();
+                int minorVersion = baseVersion.minor();
+                int buildNumber = baseVersion.build();
+                int revision = baseVersion.revision();
+
+                Object currentBuild = reg.queryValue(WinReg.HKEY.HKEY_LOCAL_MACHINE,
+                        "SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion", "CurrentBuild");
+                if (currentBuild instanceof String currentBuildStr) {
+                    try {
+                        buildNumber = Integer.parseInt(currentBuildStr);
+                    } catch (NumberFormatException e) {
+                        System.err.println("Invalid Windows build number: " + currentBuildStr);
+                    }
+                }
+
+                if (majorVersion >= 10) {
+                    Object ubr = reg.queryValue(WinReg.HKEY.HKEY_LOCAL_MACHINE,
+                            "SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion", "UBR");
+
+                    if (ubr instanceof Integer ubrValue)
+                        revision = ubrValue;
+                }
+
+                windowsVersion = new OSVersion.Windows(majorVersion, minorVersion, buildNumber, revision);
             }
 
             if (windowsVersion == null) {
@@ -200,6 +222,16 @@ public enum OperatingSystem {
             // Java 17 or earlier recognizes Windows 11 as Windows 10
             if (osName.equals("Windows 10") && windowsVersion.isAtLeast(OSVersion.WINDOWS_11))
                 osName = "Windows 11";
+
+            if (windowsVersion.isAtLeast(OSVersion.WINDOWS_10) && reg != null) {
+                Object displayVersion = reg.queryValue(WinReg.HKEY.HKEY_LOCAL_MACHINE,
+                        "SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion", "DisplayVersion");
+
+                if (displayVersion instanceof String displayVersionStr
+                        && displayVersionStr.matches("\\d{2}H\\d")) {
+                    osName = osName + " " + displayVersionStr;
+                }
+            }
 
             SYSTEM_NAME = osName;
             SYSTEM_VERSION = windowsVersion;

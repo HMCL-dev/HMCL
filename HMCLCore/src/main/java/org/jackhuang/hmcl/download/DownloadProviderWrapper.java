@@ -17,6 +17,8 @@
  */
 package org.jackhuang.hmcl.download;
 
+import org.jackhuang.hmcl.task.Task;
+
 import java.net.URI;
 import java.util.List;
 import java.util.Objects;
@@ -26,7 +28,7 @@ import java.util.Objects;
  */
 public final class DownloadProviderWrapper implements DownloadProvider {
 
-    private DownloadProvider provider;
+    private volatile DownloadProvider provider;
 
     public DownloadProviderWrapper(DownloadProvider provider) {
         this.provider = provider;
@@ -46,13 +48,8 @@ public final class DownloadProviderWrapper implements DownloadProvider {
     }
 
     @Override
-    public String getVersionListURL() {
-        return getProvider().getVersionListURL();
-    }
-
-    @Override
-    public String getAssetBaseURL() {
-        return getProvider().getAssetBaseURL();
+    public List<URI> getVersionListURLs() {
+        return getProvider().getVersionListURLs();
     }
 
     @Override
@@ -72,11 +69,41 @@ public final class DownloadProviderWrapper implements DownloadProvider {
 
     @Override
     public VersionList<?> getVersionListById(String id) {
-        return getProvider().getVersionListById(id);
+
+        return new VersionList<>() {
+            @Override
+            public boolean hasType() {
+                return getProvider().getVersionListById(id).hasType();
+            }
+
+            @Override
+            public Task<?> refreshAsync() {
+                throw new UnsupportedOperationException();
+            }
+
+            @Override
+            public Task<?> refreshAsync(String gameVersion) {
+                return getProvider().getVersionListById(id).refreshAsync(gameVersion)
+                        .thenComposeAsync(() -> {
+                            lock.writeLock().lock();
+                            try {
+                                versions.putAll(gameVersion, getProvider().getVersionListById(id).getVersions(gameVersion));
+                            } finally {
+                                lock.writeLock().unlock();
+                            }
+                            return null;
+                        });
+            }
+        };
     }
 
     @Override
     public int getConcurrency() {
         return getProvider().getConcurrency();
+    }
+
+    @Override
+    public String toString() {
+        return "DownloadProviderWrapper[provider=%s]".formatted(provider);
     }
 }

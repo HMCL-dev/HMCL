@@ -20,7 +20,9 @@ package org.jackhuang.hmcl.util.i18n;
 import org.jackhuang.hmcl.download.RemoteVersion;
 import org.jackhuang.hmcl.download.game.GameRemoteVersion;
 import org.jackhuang.hmcl.util.i18n.translator.Translator;
+import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.PropertyKey;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -44,11 +46,11 @@ public final class I18n {
     }
 
     public static boolean isUpsideDown() {
-        return LocaleUtils.getScript(locale.getLocale()).equals("Qabs");
+        return LocaleUtils.getScript(locale.getDisplayLocale()).equals("Qabs");
     }
 
     public static boolean isUseChinese() {
-        return LocaleUtils.isChinese(locale.getLocale());
+        return LocaleUtils.isChinese(locale.getDisplayLocale());
     }
 
     public static ResourceBundle getResourceBundle() {
@@ -59,11 +61,11 @@ public final class I18n {
         return locale.getTranslator();
     }
 
-    public static String i18n(String key, Object... formatArgs) {
+    public static String i18n(@PropertyKey(resourceBundle = "assets.lang.I18N") String key, Object... formatArgs) {
         return locale.i18n(key, formatArgs);
     }
 
-    public static String i18n(String key) {
+    public static String i18n(@PropertyKey(resourceBundle = "assets.lang.I18N") String key) {
         return locale.i18n(key);
     }
 
@@ -71,7 +73,15 @@ public final class I18n {
         return getTranslator().formatDateTime(time);
     }
 
-    public static String getDisplaySelfVersion(RemoteVersion version) {
+    public static String formatSpeed(long bytes) {
+        return getTranslator().formatSpeed(bytes);
+    }
+
+    public static String getDisplayVersion(RemoteVersion version) {
+        return getTranslator().getDisplayVersion(version);
+    }
+
+    public static String getDisplayVersion(GameVersionNumber version) {
         return getTranslator().getDisplayVersion(version);
     }
 

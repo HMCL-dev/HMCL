@@ -10,6 +10,7 @@ repositories {
 dependencies {
     implementation(libs.gson)
     implementation(libs.jna)
+    implementation(libs.kala.compress.tar)
 }
 
 java {

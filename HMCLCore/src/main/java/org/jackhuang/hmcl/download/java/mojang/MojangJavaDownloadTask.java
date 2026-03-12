@@ -21,7 +21,7 @@ import org.jackhuang.hmcl.download.ArtifactMalformedException;
 import org.jackhuang.hmcl.download.DownloadProvider;
 import org.jackhuang.hmcl.game.DownloadInfo;
 import org.jackhuang.hmcl.game.GameJavaVersion;
-import org.jackhuang.hmcl.java.*;
+import org.jackhuang.hmcl.java.JavaInfo;
 import org.jackhuang.hmcl.task.FileDownloadTask;
 import org.jackhuang.hmcl.task.GetTask;
 import org.jackhuang.hmcl.task.Task;
@@ -59,11 +59,11 @@ public final class MojangJavaDownloadTask extends Task<MojangJavaDownloadTask.Re
             MojangJavaDownloads allDownloads = JsonUtils.fromNonNullJson(javaDownloadsJson, MojangJavaDownloads.class);
 
             Map<String, List<MojangJavaDownloads.JavaDownload>> osDownloads = allDownloads.getDownloads().get(platform);
-            if (osDownloads == null || !osDownloads.containsKey(javaVersion.getComponent()))
+            if (osDownloads == null || !osDownloads.containsKey(javaVersion.component()))
                 throw new UnsupportedPlatformException("Unsupported platform: " + platform);
-            List<MojangJavaDownloads.JavaDownload> candidates = osDownloads.get(javaVersion.getComponent());
+            List<MojangJavaDownloads.JavaDownload> candidates = osDownloads.get(javaVersion.component());
             for (MojangJavaDownloads.JavaDownload download : candidates) {
-                if (JavaInfo.parseVersion(download.getVersion().getName()) >= javaVersion.getMajorVersion()) {
+                if (JavaInfo.parseVersion(download.getVersion().getName()) >= javaVersion.majorVersion()) {
                     this.download = download;
                     return new GetTask(downloadProvider.injectURLWithCandidates(download.getManifest().getUrl()));
                 }

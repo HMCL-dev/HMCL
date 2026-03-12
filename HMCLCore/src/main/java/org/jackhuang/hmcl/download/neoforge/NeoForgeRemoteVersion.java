@@ -19,7 +19,7 @@ public class NeoForgeRemoteVersion extends RemoteVersion {
     }
 
     private static Type getType(String version) {
-        return version.contains("beta") ? Type.SNAPSHOT : Type.RELEASE;
+        return version.contains("beta") || version.contains("alpha") ? Type.SNAPSHOT : Type.RELEASE;
     }
 
     public static String normalize(String version) {

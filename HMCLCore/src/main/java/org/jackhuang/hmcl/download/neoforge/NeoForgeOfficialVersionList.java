@@ -24,7 +24,6 @@ public final class NeoForgeOfficialVersionList extends VersionList<NeoForgeRemot
     }
 
     private static final String OLD_URL = "https://maven.neoforged.net/api/maven/versions/releases/net/neoforged/forge";
-
     private static final String META_URL = "https://maven.neoforged.net/api/maven/versions/releases/net/neoforged/neoforge";
 
     @Override
@@ -38,8 +37,8 @@ public final class NeoForgeOfficialVersionList extends VersionList<NeoForgeRemot
     @Override
     public Task<?> refreshAsync() {
         return Task.allOf(
-                new GetTask(downloadProvider.injectURL(OLD_URL)).thenGetJsonAsync(OfficialAPIResult.class),
-                new GetTask(downloadProvider.injectURL(META_URL)).thenGetJsonAsync(OfficialAPIResult.class)
+                new GetTask(downloadProvider.injectURLWithCandidates(OLD_URL)).thenGetJsonAsync(OfficialAPIResult.class),
+                new GetTask(downloadProvider.injectURLWithCandidates(META_URL)).thenGetJsonAsync(OfficialAPIResult.class)
         ).thenAcceptAsync(results -> {
             lock.writeLock().lock();
 
@@ -64,7 +63,13 @@ public final class NeoForgeOfficialVersionList extends VersionList<NeoForgeRemot
                         if (majorVersion == 0) { // Snapshot version.
                             mcVersion = version.substring(si1 + 1, si2);
                         } else {
-                            mcVersion = "1." + version.substring(0, Integer.parseInt(version.substring(si1 + 1, si2)) == 0 ? si1 : si2);
+                            String ver = version.substring(0, Integer.parseInt(version.substring(si1 + 1, si2)) == 0 ? si1 : si2);
+                            if (majorVersion >= 26) {
+                                int separator = version.indexOf('+');
+                                mcVersion = separator < 0 ? ver : ver + "-" + version.substring(separator + 1);
+                            } else {
+                                mcVersion = "1." + ver;
+                            }
                         }
                     } catch (RuntimeException e) {
                         LOG.warning(String.format("Cannot parse NeoForge version %s for cracking its mc version.", version), e);

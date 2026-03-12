@@ -28,6 +28,7 @@ import org.jackhuang.hmcl.ui.construct.RequiredValidator;
 import org.jackhuang.hmcl.ui.construct.Validator;
 import org.jackhuang.hmcl.ui.wizard.WizardController;
 import org.jackhuang.hmcl.util.SettingsMap;
+import org.jackhuang.hmcl.util.i18n.I18n;
 
 import static javafx.beans.binding.Bindings.createBooleanBinding;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
@@ -50,11 +51,11 @@ public class InstallersPage extends AbstractInstallersPage {
 
     @Override
     public String getTitle() {
-        return group.getGame().versionProperty().get().getVersion();
+        return ((RemoteVersion) controller.getSettings().get("game")).getGameVersion();
     }
 
     private String getVersion(String id) {
-        return ((RemoteVersion) controller.getSettings().get(id)).getSelfVersion();
+        return I18n.getDisplayVersion((RemoteVersion) controller.getSettings().get(id));
     }
 
     protected void reload() {
@@ -111,7 +112,7 @@ public class InstallersPage extends AbstractInstallersPage {
     }
 
     private void setTxtNameWithLoaders() {
-        StringBuilder nameBuilder = new StringBuilder(group.getGame().versionProperty().get().getVersion());
+        StringBuilder nameBuilder = new StringBuilder(getTitle());
 
         for (InstallerItem library : group.getLibraries()) {
             String libraryId = library.getLibraryId().replace(LibraryAnalyzer.LibraryType.MINECRAFT.getPatchId(), "");
@@ -120,35 +121,22 @@ public class InstallersPage extends AbstractInstallersPage {
             }
 
             LibraryAnalyzer.LibraryType libraryType = LibraryAnalyzer.LibraryType.fromPatchId(libraryId);
-            if (libraryType != null) {
-                String loaderName;
-                switch (libraryType) {
-                    case FORGE:
-                        loaderName = i18n("install.installer.forge");
-                        break;
-                    case NEO_FORGE:
-                        loaderName = i18n("install.installer.neoforge");
-                        break;
-                    case CLEANROOM:
-                        loaderName = i18n("install.installer.cleanroom");
-                        break;
-                    case FABRIC:
-                        loaderName = i18n("install.installer.fabric");
-                        break;
-                    case LITELOADER:
-                        loaderName = i18n("install.installer.liteloader");
-                        break;
-                    case QUILT:
-                        loaderName = i18n("install.installer.quilt");
-                        break;
-                    case OPTIFINE:
-                        loaderName = i18n("install.installer.optifine");
-                        break;
-                    default:
-                        continue;
-                }
 
-                nameBuilder.append("-").append(loaderName);
+            if (libraryType != null) {
+                String loaderName = switch (libraryType) {
+                    case FORGE -> "Forge";
+                    case NEO_FORGE -> "NeoForge";
+                    case CLEANROOM -> "Cleanroom";
+                    case LEGACY_FABRIC -> "LegacyFabric";
+                    case FABRIC -> "Fabric";
+                    case LITELOADER -> "LiteLoader";
+                    case QUILT -> "Quilt";
+                    case OPTIFINE -> "OptiFine";
+                    default -> null;
+                };
+
+                if (loaderName != null)
+                    nameBuilder.append('-').append(loaderName);
             }
         }
 

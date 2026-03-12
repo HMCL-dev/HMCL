@@ -23,25 +23,20 @@ import org.jackhuang.hmcl.util.i18n.SupportedLocale;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
-import java.time.ZoneId;
-import java.time.format.DateTimeFormatter;
 import java.time.temporal.TemporalAccessor;
 import java.util.Collections;
 import java.util.LinkedHashMap;
+import java.util.Locale;
 import java.util.Map;
 
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 /// @author Glavo
 public class Translator_en_Qabs extends Translator {
-    private static final DateTimeFormatter BASE_FORMATTER = DateTimeFormatter.ofPattern("MMM d, yyyy, h:mm:ss a")
-            .withZone(ZoneId.systemDefault());
+    private static final Map<Integer, Integer> MAPPER;
 
-    private static final Map<Integer, Integer> MAPPER = loadMap();
-
-    private static Map<Integer, Integer> loadMap() {
+    static {
         var map = new LinkedHashMap<Integer, Integer>();
-
         InputStream inputStream = Translator_en_Qabs.class.getResourceAsStream("/assets/lang/upside_down.txt");
         if (inputStream != null) {
             try (inputStream) {
@@ -62,7 +57,7 @@ public class Translator_en_Qabs extends Translator {
         } else {
             LOG.warning("upside_down.txt not found");
         }
-        return Collections.unmodifiableMap(map);
+        MAPPER = Collections.unmodifiableMap(map);
     }
 
     public static String translate(String str) {
@@ -70,6 +65,8 @@ public class Translator_en_Qabs extends Translator {
         str.codePoints().forEach(ch -> builder.appendCodePoint(MAPPER.getOrDefault(ch, ch)));
         return builder.reverse().toString();
     }
+
+    private final SupportedLocale originalLocale = SupportedLocale.getLocale(Locale.ENGLISH);
 
     public Translator_en_Qabs(SupportedLocale locale) {
         super(locale);
@@ -82,6 +79,11 @@ public class Translator_en_Qabs extends Translator {
 
     @Override
     public String formatDateTime(TemporalAccessor time) {
-        return translate(BASE_FORMATTER.format(time));
+        return translate(originalLocale.getTranslator().formatDateTime(time));
+    }
+
+    @Override
+    public String formatSpeed(long bytes) {
+        return translate(originalLocale.getTranslator().formatSpeed(bytes));
     }
 }

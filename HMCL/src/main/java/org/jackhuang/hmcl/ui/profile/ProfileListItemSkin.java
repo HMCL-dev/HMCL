@@ -19,24 +19,22 @@ package org.jackhuang.hmcl.ui.profile;
 
 import com.jfoenix.controls.JFXButton;
 import javafx.css.PseudoClass;
+import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
 import javafx.scene.control.SkinBase;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
-import org.jackhuang.hmcl.setting.Theme;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
 import org.jackhuang.hmcl.ui.construct.RipplerContainer;
 import org.jackhuang.hmcl.ui.construct.TwoLineListItem;
-import org.jackhuang.hmcl.ui.versions.VersionPage;
 
 public class ProfileListItemSkin extends SkinBase<ProfileListItem> {
-    private final PseudoClass SELECTED = PseudoClass.getPseudoClass("selected");
+    private static final PseudoClass SELECTED = PseudoClass.getPseudoClass("selected");
 
     public ProfileListItemSkin(ProfileListItem skinnable) {
         super(skinnable);
-
 
         BorderPane root = new BorderPane();
         root.setPickOnBounds(false);
@@ -48,7 +46,9 @@ public class ProfileListItemSkin extends SkinBase<ProfileListItem> {
 
         FXUtils.onClicked(getSkinnable(), () -> getSkinnable().setSelected(true));
 
-        Node left = VersionPage.wrap(SVG.FOLDER);
+        Node left = SVG.FOLDER.createIcon(20);
+        left.setMouseTransparent(true);
+        BorderPane.setMargin(left, new Insets(0, 6, 0, 6));
         root.setLeft(left);
         BorderPane.setAlignment(left, Pos.CENTER_LEFT);
 
@@ -60,11 +60,9 @@ public class ProfileListItemSkin extends SkinBase<ProfileListItem> {
         HBox right = new HBox();
         right.setAlignment(Pos.CENTER_RIGHT);
 
-        JFXButton btnRemove = new JFXButton();
+        JFXButton btnRemove = FXUtils.newToggleButton4(SVG.CLOSE, 14);
         btnRemove.setOnAction(e -> skinnable.remove());
-        btnRemove.getStyleClass().add("toggle-icon4");
         BorderPane.setAlignment(btnRemove, Pos.CENTER);
-        btnRemove.setGraphic(SVG.CLOSE.createIcon(Theme.blackFill(), 14));
         right.getChildren().add(btnRemove);
         root.setRight(right);
 

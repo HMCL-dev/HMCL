@@ -1,28 +1,60 @@
-/**
- * Hello Minecraft! Launcher
- * Copyright (C) 2020  huangyuhui <huanghongxun2008@126.com> and contributors
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <https://www.gnu.org/licenses/>.
- */
-.root {
-    -fx-base-color: #5C6BC0;
-    -fx-base-darker-color: derive(-fx-base-color, -10%);
-    -fx-base-check-color: derive(-fx-base-color, 30%);
-    -fx-rippler-color: rgba(92, 107, 192, 0.3);
-    -fx-base-rippler-color: derive(rgba(92, 107, 192, 0.3), 100%);
-    -fx-base-disabled-text-fill: rgba(256, 256, 256, 0.7);
-    -fx-base-text-fill: white;
-
-    -theme-thumb: rgba(92, 107, 192, 0.7);
+* {
+    -monet-primary: #4352A5;
+    -monet-on-primary: #FFFFFF;
+    -monet-primary-container: #5C6BC0;
+    -monet-on-primary-container: #F8F6FF;
+    -monet-primary-fixed: #DEE0FF;
+    -monet-primary-fixed-dim: #BAC3FF;
+    -monet-on-primary-fixed: #00105B;
+    -monet-on-primary-fixed-variant: #2F3F92;
+    -monet-secondary: #575C7F;
+    -monet-on-secondary: #FFFFFF;
+    -monet-secondary-container: #D0D5FD;
+    -monet-on-secondary-container: #565B7D;
+    -monet-secondary-fixed: #DEE0FF;
+    -monet-secondary-fixed-dim: #BFC4EC;
+    -monet-on-secondary-fixed: #141938;
+    -monet-on-secondary-fixed-variant: #3F4566;
+    -monet-tertiary: #775200;
+    -monet-on-tertiary: #FFFFFF;
+    -monet-tertiary-container: #976900;
+    -monet-on-tertiary-container: #FFF6EE;
+    -monet-tertiary-fixed: #FFDEAC;
+    -monet-tertiary-fixed-dim: #F6BD58;
+    -monet-on-tertiary-fixed: #281900;
+    -monet-on-tertiary-fixed-variant: #5F4100;
+    -monet-error: #BA1A1A;
+    -monet-on-error: #FFFFFF;
+    -monet-error-container: #FFDAD6;
+    -monet-on-error-container: #93000A;
+    -monet-surface: #FBF8FF;
+    -monet-on-surface: #1B1B21;
+    -monet-surface-dim: #DBD9E1;
+    -monet-surface-bright: #FBF8FF;
+    -monet-surface-container-lowest: #FFFFFF;
+    -monet-surface-container-low: #F5F2FA;
+    -monet-surface-container: #EFEDF5;
+    -monet-surface-container-high: #E9E7EF;
+    -monet-surface-container-highest: #E3E1E9;
+    -monet-surface-variant: #E2E1EF;
+    -monet-on-surface-variant: #454651;
+    -monet-background: #FBF8FF;
+    -monet-on-background: #1B1B21;
+    -monet-outline: #767683;
+    -monet-outline-variant: #C6C5D3;
+    -monet-shadow: #000000;
+    -monet-scrim: #000000;
+    -monet-inverse-surface: #303036;
+    -monet-inverse-on-surface: #F2EFF7;
+    -monet-inverse-primary: #BAC3FF;
+    -monet-surface-tint: #4858AB;
+    -monet-primary-seed: #5C6BC0;
+    -monet-primary-transparent-50: #4352A580;
+    -monet-secondary-container-transparent-50: #D0D5FD80;
+    -monet-surface-transparent-50: #FBF8FF80;
+    -monet-surface-transparent-80: #FBF8FFCC;
+    -monet-on-surface-variant-transparent-38: #45465161;
+    -monet-surface-container-low-transparent-80: #F5F2FACC;
+    -monet-secondary-container-transparent-80: #D0D5FDCC;
+    -monet-inverse-surface-transparent-80: #303036CC;
 }
