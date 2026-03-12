@@ -747,6 +747,21 @@ public final class Config extends ObservableSetting {
         return configurations;
     }
 
+    @SerializedName("showFrameRate")
+    private final BooleanProperty showFrameRate = new SimpleBooleanProperty(false);
+
+    public BooleanProperty showFrameRateProperty() {
+        return showFrameRate;
+    }
+
+    public boolean isShowFrameRate() {
+        return showFrameRate.get();
+    }
+
+    public void setShowFrameRate(boolean showFrameRate) {
+        this.showFrameRate.set(showFrameRate);
+    }
+
     public static final class Adapter extends ObservableSetting.Adapter<Config> {
         @Override
         protected Config createInstance() {

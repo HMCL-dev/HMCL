@@ -272,11 +272,8 @@ public final class SettingsPage extends ScrollPane {
             }
 
             {
-                BorderPane debugPane = new BorderPane();
-
-                Label left = new Label(i18n("settings.launcher.debug"));
-                BorderPane.setAlignment(left, Pos.CENTER_LEFT);
-                debugPane.setLeft(left);
+                ComponentSublist debugOptions = new ComponentSublist();
+                debugOptions.setTitle(i18n("settings.launcher.debug"));
 
                 JFXButton openLogFolderButton = new JFXButton(i18n("settings.launcher.launcher_log.reveal"));
                 openLogFolderButton.setOnAction(e -> openLogFolder());
@@ -291,9 +288,14 @@ public final class SettingsPage extends ScrollPane {
                 buttonBox.setSpacing(10);
                 buttonBox.getChildren().addAll(openLogFolderButton, logButton);
                 BorderPane.setAlignment(buttonBox, Pos.CENTER_RIGHT);
-                debugPane.setRight(buttonBox);
+                debugOptions.setHeaderRight(buttonBox);
 
-                settingsPane.getContent().add(debugPane);
+                LineToggleButton showFrameRatePane = new LineToggleButton();
+                showFrameRatePane.setTitle(i18n("settings.launcher.debug.show_frame_rate"));
+                showFrameRatePane.selectedProperty().bindBidirectional(config().showFrameRateProperty());
+                debugOptions.getContent().add(showFrameRatePane);
+
+                settingsPane.getContent().add(debugOptions);
             }
 
             rootPane.getChildren().add(settingsPane);

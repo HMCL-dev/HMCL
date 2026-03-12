@@ -18,10 +18,7 @@
 package org.jackhuang.hmcl.ui.decorator;
 
 import com.jfoenix.controls.JFXButton;
-import javafx.animation.Interpolator;
-import javafx.animation.KeyFrame;
-import javafx.animation.KeyValue;
-import javafx.animation.Timeline;
+import javafx.animation.*;
 import javafx.beans.InvalidationListener;
 import javafx.beans.WeakInvalidationListener;
 import javafx.beans.binding.Bindings;
@@ -45,6 +42,7 @@ import javafx.stage.Stage;
 
 import javafx.util.Duration;
 import org.jackhuang.hmcl.Metadata;
+import org.jackhuang.hmcl.setting.ConfigHolder;
 import org.jackhuang.hmcl.theme.Themes;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
@@ -231,6 +229,39 @@ public class DecoratorSkin extends SkinBase<Decorator> {
             buttonsContainer.setAlignment(Pos.TOP_RIGHT);
             buttonsContainer.setMaxHeight(40);
             {
+                Label label = new Label();
+                AnimationTimer frameRateMeter = new AnimationTimer() {
+
+                    private boolean bl = true;
+                    private long old = -1L;
+                    private int frames = 0;
+
+                    @Override
+                    public void handle(long now) {
+                        if (old < 0) {
+                            old = now;
+                            return;
+                        }
+                        frames++;
+                        long nanos = now - old;
+                        if (nanos >= 1_000_000_000 || bl) {
+                            long nanosPerFrame = nanos / frames;
+                            double frameRate = 1_000_000_000.0 / nanosPerFrame;
+                            label.setText(String.format("FPS: %d", Math.round(frameRate)));
+                            old = now;
+                            frames = 0;
+                            if (bl) bl = false;
+                        }
+                    }
+                };
+                label.setMinHeight(40);
+                label.setPadding(new Insets(5));
+                label.setStyle("-fx-font-size: 16;");
+                label.visibleProperty().bind(ConfigHolder.config().showFrameRateProperty());
+                buttonsContainer.getChildren().setAll(label);
+                frameRateMeter.start();
+            }
+            {
                 JFXButton btnHelp = new JFXButton();
                 btnHelp.setFocusTraversable(false);
                 btnHelp.setGraphic(SVG.HELP.createIcon(Themes.titleFillProperty()));
@@ -249,7 +280,7 @@ public class DecoratorSkin extends SkinBase<Decorator> {
                 btnClose.getStyleClass().add("jfx-decorator-button");
                 btnClose.setOnAction(e -> skinnable.close());
 
-                buttonsContainer.getChildren().setAll(btnHelp, btnMin, btnClose);
+                buttonsContainer.getChildren().addAll(btnHelp, btnMin, btnClose);
             }
             AnchorPane layer = new AnchorPane();
             layer.setPickOnBounds(false);
