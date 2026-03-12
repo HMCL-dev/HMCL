@@ -8,7 +8,6 @@ toml4j = "0.7.2"
 xz = "1.11"
 fx-gson = "5.0.0"
 constant-pool-scanner = "1.2"
-opennbt = "1.5"
 hello-nbt = "1e27a8294d"
 nanohttpd = "2.3.1"
 jsoup = "1.21.2"
@@ -40,7 +39,6 @@ toml = { module = "com.moandjiezana.toml:toml4j", version.ref = "toml4j" }
 xz = { module = "org.tukaani:xz", version.ref = "xz" }
 fx-gson = { module = "org.hildan.fxgson:fx-gson", version.ref = "fx-gson" }
 constant-pool-scanner = { module = "org.jenkins-ci:constant-pool-scanner", version.ref = "constant-pool-scanner" }
-opennbt = { module = "com.github.steveice10:opennbt", version.ref = "opennbt" }
 # TODO: Replace with official release
 hello-nbt = { module = "com.github.Glavo:HelloNBT", version.ref = "hello-nbt" }
 nanohttpd = { module = "org.nanohttpd:nanohttpd", version.ref = "nanohttpd" }

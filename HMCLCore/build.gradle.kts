@@ -20,7 +20,6 @@ dependencies {
     api(libs.xz)
     api(libs.fx.gson)
     api(libs.constant.pool.scanner)
-    api(libs.opennbt)
     api(libs.nanohttpd)
     api(libs.jsoup)
     api(libs.chardet)
