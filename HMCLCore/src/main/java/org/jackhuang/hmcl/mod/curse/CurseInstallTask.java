@@ -73,14 +73,14 @@ public final class CurseInstallTask extends Task<Void> {
         if (repository.hasVersion(name) && Files.notExists(json))
             throw new IllegalArgumentException("Version " + name + " already exists.");
 
-        GameBuilder builder = dependencyManager.gameBuilder().name(name).gameVersion(manifest.getMinecraft().getGameVersion());
-        for (CurseManifestModLoader modLoader : manifest.getMinecraft().getModLoaders()) {
-            if (modLoader.getId().startsWith("forge-")) {
-                builder.version("forge", modLoader.getId().substring("forge-".length()));
-            } else if (modLoader.getId().startsWith("fabric-")) {
-                builder.version("fabric", modLoader.getId().substring("fabric-".length()));
-            } else if (modLoader.getId().startsWith("neoforge-")) {
-                builder.version("neoforge", modLoader.getId().substring("neoforge-".length()));
+        GameBuilder builder = dependencyManager.gameBuilder().name(name).gameVersion(manifest.minecraft().gameVersion());
+        for (CurseManifestModLoader modLoader : manifest.minecraft().modLoaders()) {
+            if (modLoader.id().startsWith("forge-")) {
+                builder.version("forge", modLoader.id().substring("forge-".length()));
+            } else if (modLoader.id().startsWith("fabric-")) {
+                builder.version("fabric", modLoader.id().substring("fabric-".length()));
+            } else if (modLoader.id().startsWith("neoforge-")) {
+                builder.version("neoforge", modLoader.id().substring("neoforge-".length()));
             }
         }
         dependents.add(builder.buildAsync());
@@ -105,8 +105,8 @@ public final class CurseInstallTask extends Task<Void> {
         } catch (JsonParseException | IOException ignore) {
         }
         this.config = config;
-        dependents.add(new ModpackInstallTask<>(zipFile, run, modpack.getEncoding(), Collections.singletonList(manifest.getOverrides()), any -> true, config).withStage("hmcl.modpack"));
-        dependents.add(new MinecraftInstanceTask<>(zipFile, modpack.getEncoding(), Collections.singletonList(manifest.getOverrides()), manifest, CurseModpackProvider.INSTANCE, manifest.getName(), manifest.getVersion(), repository.getModpackConfiguration(name)).withStage("hmcl.modpack"));
+        dependents.add(new ModpackInstallTask<>(zipFile, run, modpack.getEncoding(), Collections.singletonList(manifest.overrides()), any -> true, config).withStage("hmcl.modpack"));
+        dependents.add(new MinecraftInstanceTask<>(zipFile, modpack.getEncoding(), Collections.singletonList(manifest.overrides()), manifest, CurseModpackProvider.INSTANCE, manifest.name(), manifest.version(), repository.getModpackConfiguration(name)).withStage("hmcl.modpack"));
 
         dependencies.add(new CurseCompletionTask(dependencyManager, name, manifest));
     }
@@ -125,11 +125,11 @@ public final class CurseInstallTask extends Task<Void> {
     public void execute() throws Exception {
         if (config != null) {
             // For update, remove mods not listed in new manifest
-            for (CurseManifestFile oldCurseManifestFile : config.getManifest().getFiles()) {
-                if (StringUtils.isBlank(oldCurseManifestFile.getFileName())) continue;
-                Path oldFile = run.resolve("mods/" + oldCurseManifestFile.getFileName());
+            for (CurseManifestFile oldCurseManifestFile : config.getManifest().files()) {
+                if (StringUtils.isBlank(oldCurseManifestFile.fileName())) continue;
+                Path oldFile = run.resolve("mods/" + oldCurseManifestFile.fileName());
                 if (Files.notExists(oldFile)) continue;
-                if (manifest.getFiles().stream().noneMatch(oldCurseManifestFile::equals))
+                if (manifest.files().stream().noneMatch(oldCurseManifestFile::equals))
                     Files.deleteIfExists(oldFile);
             }
         }
