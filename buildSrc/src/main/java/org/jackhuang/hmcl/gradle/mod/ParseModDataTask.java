@@ -65,7 +65,9 @@ public abstract class ParseModDataTask extends DefaultTask {
     };
 
     private static String parseName(String name) {
-        return name.replace("&amp;", "&");
+        return name.replace("&amp;", "&")
+                .replace("&lt;", "<")
+                .replace("&gt;", ">");
     }
 
     private static String parseCurseforge(String url) {
