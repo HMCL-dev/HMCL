@@ -17,9 +17,9 @@
  */
 package org.jackhuang.hmcl.schematic;
 
-import com.github.steveice10.opennbt.NBTIO;
-import com.github.steveice10.opennbt.tag.builtin.*;
 import javafx.geometry.Point3D;
+import org.glavo.nbt.io.NBTCodec;
+import org.glavo.nbt.tag.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -37,25 +37,25 @@ import java.util.zip.GZIPInputStream;
 public final class LitematicFile {
 
     private static int tryGetInt(Tag tag) {
-        return tag instanceof IntTag ? ((IntTag) tag).getValue() : 0;
+        return tag instanceof IntTag intTag ? intTag.get() : 0;
     }
 
     private static @Nullable Instant tryGetLongTimestamp(Tag tag) {
-        if (tag instanceof LongTag) {
-            return Instant.ofEpochMilli(((LongTag) tag).getValue());
+        if (tag instanceof LongTag longTag) {
+            return Instant.ofEpochMilli(longTag.getValue());
         }
         return null;
     }
 
     private static @Nullable String tryGetString(Tag tag) {
-        return tag instanceof StringTag ? ((StringTag) tag).getValue() : null;
+        return tag instanceof StringTag stringTag ? stringTag.get() : null;
     }
 
     public static LitematicFile load(Path file) throws IOException {
 
         CompoundTag root;
         try (InputStream in = new GZIPInputStream(Files.newInputStream(file))) {
-            root = (CompoundTag) NBTIO.readTag(in);
+            root = NBTCodec.of().readTag(in, TagType.COMPOUND);
         }
 
         Tag versionTag = root.get("Version");
@@ -108,8 +108,8 @@ public final class LitematicFile {
         this.regionCount = regionCount;
 
         Tag previewImageData = metadata.get("PreviewImageData");
-        this.previewImageData = previewImageData instanceof IntArrayTag
-                ? ((IntArrayTag) previewImageData).getValue()
+        this.previewImageData = previewImageData instanceof IntArrayTag intArrayTag
+                ? intArrayTag.getArray()
                 : null;
 
         this.name = tryGetString(metadata.get("Name"));
@@ -122,9 +122,7 @@ public final class LitematicFile {
 
 
         Point3D enclosingSize = null;
-        Tag enclosingSizeTag = metadata.get("EnclosingSize");
-        if (enclosingSizeTag instanceof CompoundTag) {
-            CompoundTag list = (CompoundTag) enclosingSizeTag;
+        if (metadata.get("EnclosingSize") instanceof CompoundTag list) {
             int x = tryGetInt(list.get("x"));
             int y = tryGetInt(list.get("y"));
             int z = tryGetInt(list.get("z"));
