@@ -33,20 +33,34 @@ public final class NBTTreeCell extends TreeCell<@Nullable NBTElement> {
 
     private static @Nullable Image getIcon(NBTElement element) {
         if (element instanceof Tag tag) {
-            return switch (tag.getType()) {
-                case BYTE -> FXUtils.newBuiltinImage("/assets/img/nbt/TAG_Byte.png");
-                case SHORT -> FXUtils.newBuiltinImage("/assets/img/nbt/TAG_Short.png");
-                case INT -> FXUtils.newBuiltinImage("/assets/img/nbt/TAG_Int.png");
-                case LONG -> FXUtils.newBuiltinImage("/assets/img/nbt/TAG_Long.png");
-                case FLOAT -> FXUtils.newBuiltinImage("/assets/img/nbt/TAG_Float.png");
-                case DOUBLE -> FXUtils.newBuiltinImage("/assets/img/nbt/TAG_Double.png");
-                case STRING -> FXUtils.newBuiltinImage("/assets/img/nbt/TAG_String.png");
-                case BYTE_ARRAY -> FXUtils.newBuiltinImage("/assets/img/nbt/TAG_Byte_Array.png");
-                case INT_ARRAY -> FXUtils.newBuiltinImage("/assets/img/nbt/TAG_Int_Array.png");
-                case LONG_ARRAY -> FXUtils.newBuiltinImage("/assets/img/nbt/TAG_Long_Array.png");
-                case LIST -> FXUtils.newBuiltinImage("/assets/img/nbt/TAG_List.png");
-                case COMPOUND -> FXUtils.newBuiltinImage("/assets/img/nbt/TAG_Compound.png");
-            };
+            TagType<?> type = tag.getType();
+            if (type == TagType.BYTE) {
+                return FXUtils.newBuiltinImage("/assets/img/nbt/TAG_Byte.png");
+            } else if (type == TagType.SHORT) {
+                return FXUtils.newBuiltinImage("/assets/img/nbt/TAG_Short.png");
+            } else if (type == TagType.INT) {
+                return FXUtils.newBuiltinImage("/assets/img/nbt/TAG_Int.png");
+            } else if (type == TagType.LONG) {
+                return FXUtils.newBuiltinImage("/assets/img/nbt/TAG_Long.png");
+            } else if (type == TagType.FLOAT) {
+                return FXUtils.newBuiltinImage("/assets/img/nbt/TAG_Float.png");
+            } else if (type == TagType.DOUBLE) {
+                return FXUtils.newBuiltinImage("/assets/img/nbt/TAG_Double.png");
+            } else if (type == TagType.STRING) {
+                return FXUtils.newBuiltinImage("/assets/img/nbt/TAG_String.png");
+            } else if (type == TagType.BYTE_ARRAY) {
+                return FXUtils.newBuiltinImage("/assets/img/nbt/TAG_Byte_Array.png");
+            } else if (type == TagType.INT_ARRAY) {
+                return FXUtils.newBuiltinImage("/assets/img/nbt/TAG_Int_Array.png");
+            } else if (type == TagType.LONG_ARRAY) {
+                return FXUtils.newBuiltinImage("/assets/img/nbt/TAG_Long_Array.png");
+            } else if (type == TagType.LIST) {
+                return FXUtils.newBuiltinImage("/assets/img/nbt/TAG_List.png");
+            } else if (type == TagType.COMPOUND) {
+                return FXUtils.newBuiltinImage("/assets/img/nbt/TAG_Compound.png");
+            } else {
+                return null;
+            }
         } else if (element instanceof ChunkRegion)
             return FXUtils.newBuiltinImage("/assets/img/nbt/TAG_List.png");
         else if (element instanceof Chunk)
@@ -98,9 +112,7 @@ public final class NBTTreeCell extends TreeCell<@Nullable NBTElement> {
         }
 
         String text;
-        if (item instanceof ArrayTag<?> arrayTag) {
-            text = i18n("nbt.entries", arrayTag.size());
-        } else if (item instanceof ParentTag<?> parentTag) {
+        if (item instanceof ParentTag<?> parentTag) {
             text = i18n("nbt.entries", parentTag.size());
         } else if (item instanceof ValueTag<?> valueTag) {
             text = valueTag.getAsString();
