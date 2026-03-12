@@ -217,6 +217,13 @@ public final class SettingsPage extends ScrollPane {
             }
 
             {
+                LineToggleButton disableStartupUpdateNotificationPane = new LineToggleButton();
+                disableStartupUpdateNotificationPane.setTitle(i18n("update.disable_startup_update_dialog"));
+                disableStartupUpdateNotificationPane.selectedProperty().bindBidirectional(config().disableStartupUpdateDialogProperty());
+                settingsPane.getContent().add(disableStartupUpdateNotificationPane);
+            }
+
+            {
                 MultiFileItem<EnumCommonDirectory> fileCommonLocation = new MultiFileItem<>();
                 fileCommonLocation.loadChildren(Arrays.asList(
                         new MultiFileItem.Option<>(i18n("launcher.cache_directory.default"), EnumCommonDirectory.DEFAULT),
