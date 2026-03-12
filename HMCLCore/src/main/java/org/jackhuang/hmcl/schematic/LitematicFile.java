@@ -34,17 +34,6 @@ import java.util.zip.GZIPInputStream;
 /// @see <a href="https://litemapy.readthedocs.io/en/v0.9.0b0/litematics.html">The Litematic file format</a>
 public final class LitematicFile {
 
-    private static int tryGetInt(Tag tag) {
-        return tag instanceof IntTag intTag ? intTag.get() : 0;
-    }
-
-    private static @Nullable Instant tryGetLongTimestamp(Tag tag) {
-        if (tag instanceof LongTag longTag) {
-            return Instant.ofEpochMilli(longTag.getValue());
-        }
-        return null;
-    }
-
     private static @Nullable String tryGetString(Tag tag) {
         return tag instanceof StringTag stringTag ? stringTag.get() : null;
     }
@@ -112,8 +101,8 @@ public final class LitematicFile {
         this.name = tryGetString(metadata.get("Name"));
         this.author = tryGetString(metadata.get("Author"));
         this.description = tryGetString(metadata.get("Description"));
-        this.timeCreated = tryGetLongTimestamp(metadata.get("TimeCreated"));
-        this.timeModified = tryGetLongTimestamp(metadata.get("TimeModified"));
+        this.timeCreated = metadata.get("TimeCreated") instanceof LongTag time ? Instant.ofEpochMilli(time.getValue()) : null;
+        this.timeModified = metadata.get("TimeModified") instanceof LongTag time ? Instant.ofEpochMilli(time.getValue()) : null;
         this.totalBlocks = metadata.getIntOrZero("TotalBlocks");
         this.totalVolume = metadata.getIntOrZero("TotalVolume");
 
