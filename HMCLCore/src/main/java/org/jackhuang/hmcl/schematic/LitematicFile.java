@@ -117,7 +117,6 @@ public final class LitematicFile {
         this.totalBlocks = metadata.getIntOrZero("TotalBlocks");
         this.totalVolume = metadata.getIntOrZero("TotalVolume");
 
-
         Point3D enclosingSize = null;
         if (metadata.get("EnclosingSize") instanceof CompoundTag list) {
             int x = list.getIntOrZero("x");
