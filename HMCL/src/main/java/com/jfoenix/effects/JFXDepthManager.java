@@ -42,11 +42,11 @@ public final class JFXDepthManager {
 
     private static final DropShadow[] depth = new DropShadow[] {
             new DropShadow(BlurType.GAUSSIAN, Color.TRANSPARENT, 0, 0, 0, 0),
-            new DropShadow(BlurType.GAUSSIAN, Color.rgb(0, 0, 0, 0.12), 4, 0, 0, 1),
-            new DropShadow(BlurType.GAUSSIAN, Color.rgb(0, 0, 0, 0.16), 6, 0, 0, 2),
-            new DropShadow(BlurType.GAUSSIAN, Color.rgb(0, 0, 0, 0.20), 10, 0, 0, 3),
-            new DropShadow(BlurType.GAUSSIAN, Color.rgb(0, 0, 0, 0.24), 14, 0, 0, 4),
-            new DropShadow(BlurType.GAUSSIAN, Color.rgb(0, 0, 0, 0.28), 20, 0, 0, 6)
+            new DropShadow(BlurType.GAUSSIAN, Color.rgb(0, 0, 0, 0.12), 4, 0, 0, 0),
+            new DropShadow(BlurType.GAUSSIAN, Color.rgb(0, 0, 0, 0.16), 8, 0, 0, 4),
+            new DropShadow(BlurType.GAUSSIAN, Color.rgb(0, 0, 0, 0.20), 12, 0, 0, 4),
+            new DropShadow(BlurType.GAUSSIAN, Color.rgb(0, 0, 0, 0.24), 16, 0, 0, 4),
+            new DropShadow(BlurType.GAUSSIAN, Color.rgb(0, 0, 0, 0.28), 20, 0, 0, 8)
     };
 
     /**
