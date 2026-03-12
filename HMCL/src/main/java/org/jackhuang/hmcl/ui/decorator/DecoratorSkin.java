@@ -229,7 +229,7 @@ public class DecoratorSkin extends SkinBase<Decorator> {
             buttonsContainer.setAlignment(Pos.TOP_RIGHT);
             buttonsContainer.setMaxHeight(40);
             {
-                Label label = new Label();
+                Label frameRateLabel = new Label();
                 AnimationTimer frameRateMeter = new AnimationTimer() {
 
                     private boolean bl = true;
@@ -247,21 +247,19 @@ public class DecoratorSkin extends SkinBase<Decorator> {
                         if (nanos >= 1_000_000_000 || bl) {
                             long nanosPerFrame = nanos / frames;
                             double frameRate = 1_000_000_000.0 / nanosPerFrame;
-                            label.setText(String.format("FPS: %d", Math.round(frameRate)));
+                            frameRateLabel.setText(String.format("FPS: %d", Math.round(frameRate)));
                             old = now;
                             frames = 0;
                             if (bl) bl = false;
                         }
                     }
                 };
-                label.setMinHeight(40);
-                label.setPadding(new Insets(5));
-                label.setStyle("-fx-font-size: 16;");
-                label.visibleProperty().bind(ConfigHolder.config().showFrameRateProperty());
-                buttonsContainer.getChildren().setAll(label);
+                frameRateLabel.setMinHeight(40);
+                frameRateLabel.setPadding(new Insets(5));
+                frameRateLabel.setStyle("-fx-font-size: 16;");
+                frameRateLabel.visibleProperty().bind(ConfigHolder.config().showFrameRateProperty());
                 frameRateMeter.start();
-            }
-            {
+
                 JFXButton btnHelp = new JFXButton();
                 btnHelp.setFocusTraversable(false);
                 btnHelp.setGraphic(SVG.HELP.createIcon(Themes.titleFillProperty()));
@@ -280,7 +278,7 @@ public class DecoratorSkin extends SkinBase<Decorator> {
                 btnClose.getStyleClass().add("jfx-decorator-button");
                 btnClose.setOnAction(e -> skinnable.close());
 
-                buttonsContainer.getChildren().addAll(btnHelp, btnMin, btnClose);
+                buttonsContainer.getChildren().setAll(frameRateLabel, btnHelp, btnMin, btnClose);
             }
             AnchorPane layer = new AnchorPane();
             layer.setPickOnBounds(false);
