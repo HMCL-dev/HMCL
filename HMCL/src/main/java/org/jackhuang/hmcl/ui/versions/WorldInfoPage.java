@@ -17,7 +17,6 @@
  */
 package org.jackhuang.hmcl.ui.versions;
 
-import com.github.steveice10.opennbt.tag.builtin.*;
 import com.jfoenix.controls.JFXButton;
 import com.jfoenix.controls.JFXTextField;
 import javafx.beans.property.SimpleBooleanProperty;
@@ -34,6 +33,7 @@ import javafx.scene.layout.HBox;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.stage.FileChooser;
+import org.glavo.nbt.tag.*;
 import org.jackhuang.hmcl.game.World;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.FXUtils;
@@ -76,7 +76,7 @@ public final class WorldInfoPage extends SpinnerPane implements WorldManagePage.
     }
 
     private void updateControls() {
-        CompoundTag dataTag = levelData.get("Data");
+        CompoundTag dataTag = (CompoundTag) levelData.get("Data");
         CompoundTag playerTag = playerData;
 
         ScrollPane scrollPane = new ScrollPane();
@@ -100,7 +100,7 @@ public final class WorldInfoPage extends SpinnerPane implements WorldManagePage.
                 setRightTextField(worldNamePane, worldNameField, 200);
 
                 if (dataTag.get("LevelName") instanceof StringTag worldNameTag) {
-                    var worldName = new SimpleStringProperty(worldNameTag.getValue());
+                    var worldName = new SimpleStringProperty(worldNameTag.get());
                     FXUtils.bindString(worldNameField, worldName);
                     worldNameField.getProperties().put(WorldInfoPage.class.getName() + ".worldNameProperty", worldName);
                     worldName.addListener((observable, oldValue, newValue) -> {
@@ -347,7 +347,7 @@ public final class WorldInfoPage extends SpinnerPane implements WorldManagePage.
                 if (playerTag.get("respawn") instanceof CompoundTag respawnTag
                         && respawnTag.get("dimension") instanceof StringTag dimensionTag
                         && respawnTag.get("pos") instanceof IntArrayTag intArrayTag
-                        && intArrayTag.length() >= 3) { // Valid after 25w07a
+                        && intArrayTag.size() >= 3) { // Valid after 25w07a
                     spawnPane.setText(Dimension.of(dimensionTag).formatPosition(intArrayTag));
                 } else if (playerTag.get("SpawnX") instanceof IntTag intX
                         && playerTag.get("SpawnY") instanceof IntTag intY
@@ -541,7 +541,7 @@ public final class WorldInfoPage extends SpinnerPane implements WorldManagePage.
 
         static Dimension of(Tag tag) {
             if (tag instanceof IntTag intTag) {
-                return switch (intTag.getValue()) {
+                return switch (intTag.get()) {
                     case 0 -> OVERWORLD;
                     case -1 -> THE_NETHER;
                     case 1 -> THE_END;
@@ -561,30 +561,23 @@ public final class WorldInfoPage extends SpinnerPane implements WorldManagePage.
         }
 
         String formatPosition(Tag tag) {
-            if (tag instanceof ListTag listTag && listTag.size() == 3) {
+            if (tag instanceof ListTag<?> listTag && listTag.size() == 3) {
 
-                Tag x = listTag.get(0);
-                Tag y = listTag.get(1);
-                Tag z = listTag.get(2);
-
-                if (x instanceof DoubleTag && y instanceof DoubleTag && z instanceof DoubleTag) {
-                    return this == OVERWORLD
-                            ? String.format("(%.2f, %.2f, %.2f)", x.getValue(), y.getValue(), z.getValue())
-                            : String.format("%s (%.2f, %.2f, %.2f)", name, x.getValue(), y.getValue(), z.getValue());
+                if (listTag.getTag(0) instanceof DoubleTag x
+                        && listTag.getTag(1) instanceof DoubleTag y
+                        && listTag.getTag(2) instanceof DoubleTag z) {
+                    return formatPosition(x.get(), y.get(), z.get());
                 }
 
                 return null;
             }
 
             if (tag instanceof IntArrayTag intArrayTag) {
+                int x = intArrayTag.get(0);
+                int y = intArrayTag.get(1);
+                int z = intArrayTag.get(2);
 
-                int x = intArrayTag.getValue(0);
-                int y = intArrayTag.getValue(1);
-                int z = intArrayTag.getValue(2);
-
-                return this == OVERWORLD
-                        ? String.format("(%d, %d, %d)", x, y, z)
-                        : String.format("%s (%d, %d, %d)", name, x, y, z);
+                return formatPosition(x, y, z);
             }
 
             return null;
@@ -592,14 +585,14 @@ public final class WorldInfoPage extends SpinnerPane implements WorldManagePage.
 
         String formatPosition(int x, int y, int z) {
             return this == OVERWORLD
-                    ? String.format("(%d, %d, %d)", x, y, z)
-                    : String.format("%s (%d, %d, %d)", name, x, y, z);
+                    ? "(%d, %d, %d)".formatted(x, y, z)
+                    : "%s (%d, %d, %d)".formatted(name, x, y, z);
         }
 
         String formatPosition(double x, double y, double z) {
             return this == OVERWORLD
-                    ? String.format("(%.2f, %.2f, %.2f)", x, y, z)
-                    : String.format("%s (%.2f, %.2f, %.2f)", name, x, y, z);
+                    ? "(%.2f, %.2f, %.2f)".formatted(x, y, z)
+                    : "%s (%.2f, %.2f, %.2f)".formatted(name, x, y, z);
         }
     }
 
