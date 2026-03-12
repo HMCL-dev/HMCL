@@ -64,6 +64,10 @@ public abstract class ParseModDataTask extends DefaultTask {
             Pattern.compile("^/legacy/mc-mods/minecraft/(\\d+)-(?<modid>[\\w-]+)"),
     };
 
+    private static String parseName(String name) {
+        return name.replace("&amp;", "&");
+    }
+
     private static String parseCurseforge(String url) {
         URI res = URI.create(url.replace(" ", "%20"));
 
@@ -148,9 +152,9 @@ public abstract class ParseModDataTask extends DefaultTask {
                     "# Copyright (C) 2025. All Rights Reserved.\n" +
                     "#\n");
             for (ModData mod : modDatas) {
-                String chineseName = mod.name.main;
-                String subName = mod.name.sub;
-                String abbr = mod.name.abbr;
+                String chineseName = parseName(mod.name.main);
+                String subName = parseName(mod.name.sub);
+                String abbr = parseName(mod.name.abbr);
 
                 chineseName = chineseName == null ? "" : cleanChineseName(chineseName);
                 if (subName == null)
