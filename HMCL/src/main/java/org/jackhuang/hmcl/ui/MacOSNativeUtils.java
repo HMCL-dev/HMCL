@@ -31,8 +31,6 @@ import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 public final class MacOSNativeUtils {
 
     private static Pointer nsApp;
-    private static Pointer aquaAppearance;
-    private static Pointer darkAquaAppearance;
     private static boolean initialized;
 
     static {
@@ -57,48 +55,10 @@ public final class MacOSNativeUtils {
             Pointer sharedSel = objc.sel_registerName("sharedApplication");
             nsApp = objc.objc_msgSend(NSApplication, sharedSel);
 
-            if (nsApp == null) {
-                initialized = false;
-                return;
-            }
-
-            Pointer NSAppearance = objc.objc_getClass("NSAppearance");
-            if (NSAppearance == null) {
-                initialized = false;
-                return;
-            }
-
-            Pointer namedSel = objc.sel_registerName("appearanceNamed:");
-
-            Pointer aquaName = nsString("NSAppearanceNameAqua");
-            Pointer darkAquaName = nsString("NSAppearanceNameDarkAqua");
-
-            if (aquaName == null || darkAquaName == null) {
-                initialized = false;
-                return;
-            }
-
-            aquaAppearance = objc.objc_msgSend(NSAppearance, namedSel, aquaName);
-            darkAquaAppearance = objc.objc_msgSend(NSAppearance, namedSel, darkAquaName);
-
-            initialized = (aquaAppearance != null && darkAquaAppearance != null);
+            initialized = (nsApp != null);
         } catch (Throwable t) {
             LOG.warning("Failed to initialize macOS appearance support", t);
             initialized = false;
-        }
-    }
-
-    private static Pointer nsString(String value) {
-        if (AppKit.INSTANCE == null) return null;
-
-        try {
-            AppKit objc = AppKit.INSTANCE;
-            Pointer NSString = objc.objc_getClass("NSString");
-            Pointer sel = objc.sel_registerName("stringWithUTF8String:");
-            return objc.objc_msgSend(NSString, sel, value);
-        } catch (Throwable t) {
-            LOG.warning("Failed to create NSString", t);
-            return null;
         }
     }
 
@@ -111,8 +71,24 @@ public final class MacOSNativeUtils {
 
         try {
             AppKit objc = AppKit.INSTANCE;
+
+            Pointer NSAppearance = objc.objc_getClass("NSAppearance");
+            if (NSAppearance == null) return;
+
+            Pointer namedSel = objc.sel_registerName("appearanceNamed:");
+            Pointer NSString = objc.objc_getClass("NSString");
+            if (NSString == null) return;
+
+            Pointer sel = objc.sel_registerName("stringWithUTF8String:");
+            String appearanceName = dark ? "NSAppearanceNameDarkAqua" : "NSAppearanceNameAqua";
+            Pointer appearanceNamePtr = objc.objc_msgSend(NSString, sel, appearanceName);
+            if (appearanceNamePtr == null) return;
+
+            Pointer appearance = objc.objc_msgSend(NSAppearance, namedSel, appearanceNamePtr);
+            if (appearance == null) return;
+
             Pointer setSel = objc.sel_registerName("setAppearance:");
-            objc.objc_msgSend(nsApp, setSel, dark ? darkAquaAppearance : aquaAppearance);
+            objc.objc_msgSend(nsApp, setSel, appearance);
         } catch (Throwable t) {
             LOG.warning("Failed to set macOS appearance", t);
         }
