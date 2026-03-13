@@ -219,6 +219,7 @@ public final class SettingsPage extends ScrollPane {
             {
                 LineToggleButton disableStartupUpdateNotificationPane = new LineToggleButton();
                 disableStartupUpdateNotificationPane.setTitle(i18n("update.disable_startup_update_dialog"));
+                disableStartupUpdateNotificationPane.setSubtitle(i18n("update.disable_startup_update_dialog.subtitle"));
                 disableStartupUpdateNotificationPane.selectedProperty().bindBidirectional(config().disableStartupUpdateDialogProperty());
                 settingsPane.getContent().add(disableStartupUpdateNotificationPane);
             }
