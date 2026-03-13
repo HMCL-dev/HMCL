@@ -52,6 +52,7 @@ import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
 import java.time.Instant;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -65,6 +66,7 @@ public final class HMCLGameRepository extends DefaultGameRepository {
     // local version settings
     private final Map<String, VersionSetting> localVersionSettings = new HashMap<>();
     private final Set<String> beingModpackVersions = new HashSet<>();
+    private final Map<String, GameDirectoryType> pendingGameDirectoryTypes = new ConcurrentHashMap<>();
 
     public final EventManager<Event> onVersionIconChanged = new EventManager<>();
 
@@ -81,8 +83,29 @@ public final class HMCLGameRepository extends DefaultGameRepository {
     public GameDirectoryType getGameDirectoryType(String id) {
         if (beingModpackVersions.contains(id) || isModpack(id)) {
             return GameDirectoryType.VERSION_FOLDER;
+        }
+
+        GameDirectoryType pendingType = pendingGameDirectoryTypes.get(id);
+        if (pendingType != null) {
+            return pendingType;
+        }
+
+        return getVersionSetting(id).getGameDirType();
+    }
+
+    public void setPendingGameDirectoryType(String id, GameDirectoryType gameDirType) {
+        if (StringUtils.isBlank(id)) return;
+
+        if (gameDirType == null) {
+            pendingGameDirectoryTypes.remove(id);
         } else {
-            return getVersionSetting(id).getGameDirType();
+            pendingGameDirectoryTypes.put(id, gameDirType);
+        }
+    }
+
+    public void clearPendingGameDirectoryType(String id) {
+        if (id != null) {
+            pendingGameDirectoryTypes.remove(id);
         }
     }
 
