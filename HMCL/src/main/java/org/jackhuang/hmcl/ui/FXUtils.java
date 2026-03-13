@@ -20,6 +20,7 @@ package org.jackhuang.hmcl.ui;
 import com.jfoenix.controls.*;
 import javafx.animation.Animation;
 import javafx.animation.Interpolator;
+import javafx.animation.PauseTransition;
 import javafx.application.Platform;
 import javafx.beans.InvalidationListener;
 import javafx.beans.Observable;
@@ -37,7 +38,6 @@ import javafx.event.EventDispatcher;
 import javafx.event.EventHandler;
 import javafx.event.EventType;
 import javafx.geometry.Bounds;
-import javafx.geometry.Pos;
 import javafx.geometry.Rectangle2D;
 import javafx.scene.Cursor;
 import javafx.scene.Node;
@@ -51,7 +51,6 @@ import javafx.scene.input.*;
 import javafx.scene.layout.ColumnConstraints;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.Region;
-import javafx.scene.layout.StackPane;
 import javafx.scene.paint.Color;
 import javafx.scene.paint.Paint;
 import javafx.scene.shape.Rectangle;
@@ -68,6 +67,7 @@ import org.jackhuang.hmcl.task.CacheFileTask;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.ui.animation.AnimationUtils;
+import org.jackhuang.hmcl.ui.animation.Motion;
 import org.jackhuang.hmcl.ui.construct.IconedMenuItem;
 import org.jackhuang.hmcl.ui.construct.MenuSeparator;
 import org.jackhuang.hmcl.ui.construct.PopupMenu;
@@ -312,14 +312,6 @@ public final class FXUtils {
         });
     }
 
-    public static Node wrap(Node node) {
-        return limitingSize(node, 30, 20);
-    }
-
-    public static Node wrap(SVG svg) {
-        return wrap(svg.createIcon(20));
-    }
-
     private static class ListenerPair<T> {
         private final ObservableValue<T> value;
         private final ChangeListener<? super T> listener;
@@ -423,14 +415,6 @@ public final class FXUtils {
 
     public static double getLimitHeight(Region region) {
         return region.getMaxHeight();
-    }
-
-    public static Node limitingSize(Node node, double width, double height) {
-        StackPane pane = new StackPane(node);
-        pane.setAlignment(Pos.CENTER);
-        FXUtils.setLimitWidth(pane, width);
-        FXUtils.setLimitHeight(pane, height);
-        return pane;
     }
 
     public static void limitCellWidth(ListView<?> listView, ListCell<?> cell) {
@@ -1297,6 +1281,30 @@ public final class FXUtils {
         button.getStyleClass().add("toggle-icon4");
         button.setGraphic(icon.createIcon());
         return button;
+    }
+
+    public static JFXButton newToggleButton4(SVG icon, int size) {
+        JFXButton button = new JFXButton();
+        button.getStyleClass().add("toggle-icon4");
+        button.setGraphic(icon.createIcon(size));
+        return button;
+    }
+
+    public static void setOnActionWithCooldown(ButtonBase button, Runnable action) {
+        setOnActionWithCooldown(button, action, Motion.SHORT4);
+    }
+
+    public static void setOnActionWithCooldown(ButtonBase button, Runnable action, Duration cooldown) {
+        button.setOnAction(e -> {
+            button.setDisable(true);
+
+            var pause = new PauseTransition(cooldown);
+            pause.setOnFinished(event -> button.setDisable(false));
+            pause.play();
+
+            action.run();
+            e.consume();
+        });
     }
 
     public static Label newSafeTruncatedLabel() {

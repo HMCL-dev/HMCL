@@ -25,7 +25,6 @@ import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Cursor;
 import javafx.scene.control.ListCell;
-import javafx.scene.image.ImageView;
 import javafx.scene.input.MouseButton;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
@@ -42,7 +41,7 @@ public final class GameListCell extends ListCell<GameListItem> {
 
     private final Region graphic;
 
-    private final ImageView imageView;
+    private final ImageContainer imageView;
     private final TwoLineListItem content;
 
     private final JFXRadioButton chkSelected;
@@ -87,8 +86,7 @@ public final class GameListCell extends ListCell<GameListItem> {
             center.setSpacing(8);
             center.setAlignment(Pos.CENTER_LEFT);
 
-            this.imageView = new ImageView();
-            FXUtils.limitSize(imageView, 32, 32);
+            this.imageView = new ImageContainer(32);
 
             this.content = new TwoLineListItem();
             BorderPane.setAlignment(content, Pos.CENTER);
@@ -108,30 +106,26 @@ public final class GameListCell extends ListCell<GameListItem> {
 
             right.setAlignment(Pos.CENTER_RIGHT);
 
-            this.btnUpgrade = new JFXButton();
+            this.btnUpgrade = FXUtils.newToggleButton4(SVG.UPDATE);
             btnUpgrade.setOnAction(e -> {
                 GameListItem item = this.getItem();
                 if (item != null)
                     item.update();
             });
-            btnUpgrade.getStyleClass().add("toggle-icon4");
-            btnUpgrade.setGraphic(FXUtils.limitingSize(SVG.UPDATE.createIcon(24), 24, 24));
             FXUtils.installFastTooltip(btnUpgrade, i18n("version.update"));
             right.getChildren().add(btnUpgrade);
 
-            this.btnLaunch = new JFXButton();
+            this.btnLaunch = FXUtils.newToggleButton4(SVG.ROCKET_LAUNCH);
             btnLaunch.setOnAction(e -> {
                 GameListItem item = this.getItem();
                 if (item != null)
                     item.testGame();
             });
-            btnLaunch.getStyleClass().add("toggle-icon4");
             BorderPane.setAlignment(btnLaunch, Pos.CENTER);
-            btnLaunch.setGraphic(FXUtils.limitingSize(SVG.ROCKET_LAUNCH.createIcon(24), 24, 24));
             FXUtils.installFastTooltip(btnLaunch, i18n("version.launch.test"));
             right.getChildren().add(btnLaunch);
 
-            this.btnManage = new JFXButton();
+            this.btnManage = FXUtils.newToggleButton4(SVG.MORE_VERT);
             btnManage.setOnAction(e -> {
                 GameListItem item = this.getItem();
                 if (item == null)
@@ -141,9 +135,7 @@ public final class GameListCell extends ListCell<GameListItem> {
                 JFXPopup.PopupVPosition vPosition = determineOptimalPopupPosition(root, popup);
                 popup.show(root, vPosition, JFXPopup.PopupHPosition.RIGHT, 0, vPosition == JFXPopup.PopupVPosition.TOP ? root.getHeight() : -root.getHeight());
             });
-            btnManage.getStyleClass().add("toggle-icon4");
             BorderPane.setAlignment(btnManage, Pos.CENTER);
-            btnManage.setGraphic(FXUtils.limitingSize(SVG.MORE_VERT.createIcon(24), 24, 24));
             FXUtils.installFastTooltip(btnManage, i18n("settings.game.management"));
             right.getChildren().add(btnManage);
         }

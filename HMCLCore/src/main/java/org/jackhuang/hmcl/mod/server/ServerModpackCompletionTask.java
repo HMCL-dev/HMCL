@@ -142,10 +142,14 @@ public class ServerModpackCompletionTask extends Task<Void> {
             }
 
             boolean download;
-            if (!files.containsKey(file.getPath()) ||
-                    modsDirectory.equals(actualPath.getParent())
-                            && Files.notExists(actualPath.resolveSibling(fileName + ModManager.DISABLED_EXTENSION))
-                            && Files.notExists(actualPath.resolveSibling(fileName + ModManager.OLD_EXTENSION))) {
+
+            boolean isModDisabled = modsDirectory.equals(actualPath.getParent()) &&
+                    (Files.exists(actualPath.resolveSibling(fileName + ModManager.DISABLED_EXTENSION)) ||
+                            Files.exists(actualPath.resolveSibling(fileName + ModManager.OLD_EXTENSION)));
+
+            if (isModDisabled) {
+                download = false;
+            } else if (!files.containsKey(file.getPath())) {
                 // If old modpack does not have this entry, download it
                 download = true;
             } else if (!Files.exists(actualPath)) {

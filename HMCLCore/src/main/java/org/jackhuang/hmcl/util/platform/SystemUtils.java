@@ -29,6 +29,7 @@ import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.time.Duration;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
@@ -75,12 +76,21 @@ public final class SystemUtils {
         return managedProcess.getProcess().waitFor();
     }
 
+    private static final Duration DEFAULT_MAX_WAIT_TIME = Duration.ofSeconds(15);
+
     public static String run(String... command) throws Exception {
-        return run(Arrays.asList(command),
-                inputStream -> IOUtils.readFullyAsString(inputStream, OperatingSystem.NATIVE_CHARSET));
+        return run(List.of(command), DEFAULT_MAX_WAIT_TIME);
+    }
+
+    public static String run(List<String> command, Duration maxWaitTime) throws Exception {
+        return run(command, inputStream -> IOUtils.readFullyAsString(inputStream, OperatingSystem.NATIVE_CHARSET), maxWaitTime);
     }
 
     public static <T> T run(List<String> command, ExceptionalFunction<InputStream, T, ?> convert) throws Exception {
+        return run(command, convert, DEFAULT_MAX_WAIT_TIME);
+    }
+
+    public static <T> T run(List<String> command, ExceptionalFunction<InputStream, T, ?> convert, Duration maxWaitTime) throws Exception {
         Process process = new ProcessBuilder(command)
                 .redirectError(ProcessBuilder.Redirect.DISCARD)
                 .start();
@@ -90,7 +100,7 @@ public final class SystemUtils {
                     Lang.wrap(() -> convert.apply(inputStream)),
                     Schedulers.io());
 
-            if (!process.waitFor(15, TimeUnit.SECONDS))
+            if (!process.waitFor(maxWaitTime.toMillis(), TimeUnit.MILLISECONDS))
                 throw new TimeoutException();
 
             if (process.exitValue() != 0)

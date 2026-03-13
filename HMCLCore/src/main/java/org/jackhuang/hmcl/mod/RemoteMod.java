@@ -159,7 +159,7 @@ public final class RemoteMod {
                 if (this.type == DependencyType.BROKEN) {
                     this.remoteMod = RemoteMod.BROKEN;
                 } else {
-                    this.remoteMod = this.remoteModRepository.getModById(this.id);
+                    this.remoteMod = this.remoteModRepository.resolveDependency(this.id);
                 }
             }
             return this.remoteMod;
