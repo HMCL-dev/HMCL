@@ -445,6 +445,7 @@
     -fx-max-height: 55px;
     -fx-min-height: 55px;
     -fx-background-color: -monet-primary-container;
+    -fx-opacity: 1; /* Override the opacity of disabled button */
     -fx-cursor: hand;
 }
 
@@ -1174,7 +1175,7 @@
     -fx-background-insets: 0px;
 
     -jfx-toggle-color: -monet-primary;
-    -jfx-toggle-line-color: -monet-primary-container;
+    -jfx-toggle-line-color: -monet-secondary-container;
     -jfx-untoggle-color: -monet-outline;
     -jfx-untoggle-line-color: -monet-surface-container-highest;
     -jfx-size: 10;
