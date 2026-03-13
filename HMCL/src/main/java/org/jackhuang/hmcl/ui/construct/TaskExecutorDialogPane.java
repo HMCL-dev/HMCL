@@ -47,6 +47,11 @@ public class TaskExecutorDialogPane extends BorderPane {
     private final Label lblProgress;
     private final JFXButton btnCancel;
     private final TaskListPane taskListPane;
+    private boolean hidesZeroSpeed = false;
+
+    public void setHidesZeroSpeed(boolean hidesZeroSpeed) {
+        this.hidesZeroSpeed = hidesZeroSpeed;
+    }
 
     public TaskExecutorDialogPane(@NotNull TaskCancellationAction cancel) {
         this.getStyleClass().add("task-executor-dialog-layout");
@@ -90,8 +95,15 @@ public class TaskExecutorDialogPane extends BorderPane {
         });
 
         speedEventHandler = FetchTask.SPEED_EVENT.registerWeak(speedEvent -> {
-            String message = I18n.formatSpeed(speedEvent.getSpeed());
-            Platform.runLater(() -> lblProgress.setText(message));
+            long speed = speedEvent.getSpeed();
+            String message = I18n.formatSpeed(speed);
+            Platform.runLater(() -> {
+                if (speed == 0 && hidesZeroSpeed) {
+                    lblProgress.setText("");
+                } else {
+                    lblProgress.setText(message);
+                }
+            });
         });
 
         onEscPressed(this, btnCancel::fire);
