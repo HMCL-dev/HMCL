@@ -1635,6 +1635,12 @@
     -fx-background-color: -monet-on-surface;
 }
 
+.jfx-color-dialog-actions {
+    -fx-background-color: -monet-surface;
+    -fx-padding: 0.0 10.0 5.0 0.0;
+    -fx-alignment: center-right;
+}
+
 /*******************************************************************************
  *                                                                             *
  * Table View                                                                  *
