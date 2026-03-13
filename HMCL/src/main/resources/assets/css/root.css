@@ -29,8 +29,8 @@
 
 .scroll-bar .thumb {
     -fx-fill: -monet-surface-tint;
-    -fx-arc-width: 0;
-    -fx-arc-height: 0;
+    -fx-arc-width: 8;
+    -fx-arc-height: 8;
 }
 
 .title-label {
@@ -445,6 +445,7 @@
     -fx-max-height: 55px;
     -fx-min-height: 55px;
     -fx-background-color: -monet-primary-container;
+    -fx-opacity: 1; /* Override the opacity of disabled button */
     -fx-cursor: hand;
 }
 
@@ -1170,7 +1171,7 @@
     -fx-background-insets: 0px;
 
     -jfx-toggle-color: -monet-primary;
-    -jfx-toggle-line-color: -monet-primary-container;
+    -jfx-toggle-line-color: -monet-secondary-container;
     -jfx-untoggle-color: -monet-outline;
     -jfx-untoggle-line-color: -monet-surface-container-highest;
     -jfx-size: 10;
@@ -1945,6 +1946,10 @@
     -fx-padding: 10 16 10 16;
 }
 
+.line-component .subtitle-label {
+    -fx-text-fill: -monet-on-surface-variant;
+}
+
 .line-component.no-padding .line-component-container {
     -fx-padding: 0;
 }
@@ -1974,12 +1979,20 @@
     -fx-font-size: 13px;
 }
 
+.line-select-button .menu-container .title-label {
+    -fx-text-fill: -monet-on-surface;
+}
+
+.line-select-button .menu-container .subtitle-label {
+    -fx-text-fill: -monet-on-surface-variant;
+}
+
 .line-select-button .menu-container:selected .title-label {
     -fx-text-fill: -monet-primary;
 }
 
 .line-select-button .menu-container:selected .subtitle-label {
-    -fx-text-fill: -monet-primary;
+    -fx-text-fill: -monet-primary-container;
 }
 
 .line-toggle-button .jfx-toggle-button {

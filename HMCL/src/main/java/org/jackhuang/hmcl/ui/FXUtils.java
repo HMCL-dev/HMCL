@@ -20,6 +20,7 @@ package org.jackhuang.hmcl.ui;
 import com.jfoenix.controls.*;
 import javafx.animation.Animation;
 import javafx.animation.Interpolator;
+import javafx.animation.PauseTransition;
 import javafx.application.Platform;
 import javafx.beans.InvalidationListener;
 import javafx.beans.Observable;
@@ -66,6 +67,7 @@ import org.jackhuang.hmcl.task.CacheFileTask;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.ui.animation.AnimationUtils;
+import org.jackhuang.hmcl.ui.animation.Motion;
 import org.jackhuang.hmcl.ui.construct.IconedMenuItem;
 import org.jackhuang.hmcl.ui.construct.MenuSeparator;
 import org.jackhuang.hmcl.ui.construct.MessageDialogPane;
@@ -1288,6 +1290,23 @@ public final class FXUtils {
         button.getStyleClass().add("toggle-icon4");
         button.setGraphic(icon.createIcon(size));
         return button;
+    }
+
+    public static void setOnActionWithCooldown(ButtonBase button, Runnable action) {
+        setOnActionWithCooldown(button, action, Motion.SHORT4);
+    }
+
+    public static void setOnActionWithCooldown(ButtonBase button, Runnable action, Duration cooldown) {
+        button.setOnAction(e -> {
+            button.setDisable(true);
+
+            var pause = new PauseTransition(cooldown);
+            pause.setOnFinished(event -> button.setDisable(false));
+            pause.play();
+
+            action.run();
+            e.consume();
+        });
     }
 
     public static Label newSafeTruncatedLabel() {
