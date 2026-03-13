@@ -21,7 +21,7 @@ import com.google.gson.JsonParseException;
 import org.jackhuang.hmcl.download.DefaultDependencyManager;
 import org.jackhuang.hmcl.download.GameBuilder;
 import org.jackhuang.hmcl.game.DefaultGameRepository;
-import org.jackhuang.hmcl.mod.ModManager;
+import org.jackhuang.hmcl.mod.LocalAddonManager;
 import org.jackhuang.hmcl.mod.ModpackConfiguration;
 import org.jackhuang.hmcl.task.FileDownloadTask;
 import org.jackhuang.hmcl.task.GetTask;
@@ -144,8 +144,8 @@ public class ServerModpackCompletionTask extends Task<Void> {
             boolean download;
 
             boolean isModDisabled = modsDirectory.equals(actualPath.getParent()) &&
-                    (Files.exists(actualPath.resolveSibling(fileName + ModManager.DISABLED_EXTENSION)) ||
-                            Files.exists(actualPath.resolveSibling(fileName + ModManager.OLD_EXTENSION)));
+                    (Files.exists(actualPath.resolveSibling(fileName + LocalAddonManager.DISABLED_EXTENSION)) ||
+                            Files.exists(actualPath.resolveSibling(fileName + LocalAddonManager.OLD_EXTENSION)));
 
             if (isModDisabled) {
                 download = false;
