@@ -270,7 +270,7 @@ public final class ResourcePackListPage extends ListPageBase<ResourcePackListPag
 
                 // Toolbar Selecting
                 toolbarSelecting.getChildren().setAll(
-                        createToolbarButton2(i18n("button.remove"), SVG.DELETE, () -> {
+                        createToolbarButton2(i18n("button.remove"), SVG.DELETE_FOREVER, () -> {
                             Controllers.confirm(i18n("button.remove.confirm"), i18n("button.remove"), () -> {
                                 control.removeSelected(listView.getSelectionModel().getSelectedItems());
                             }, null);
