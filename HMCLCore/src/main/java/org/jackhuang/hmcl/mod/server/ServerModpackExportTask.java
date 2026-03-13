@@ -77,11 +77,12 @@ public class ServerModpackExportTask extends Task<Void> {
             Path runDirectory = repository.getRunDirectory(versionId);
             List<ModpackConfiguration.FileInformation> files = new ArrayList<>();
             zip.putDirectory(runDirectory, "overrides", path -> {
+                String downloadUrl = null;
                 if (Modpack.acceptFile(path, blackList, exportInfo.getWhitelist())) {
                     Path file = runDirectory.resolve(path);
                     if (Files.isRegularFile(file)) {
-                        String downloadUrl = null;
-                        if (FileUtils.getExtension(file).equals("jar")) {
+                        String ext = FileUtils.getExtension(file);
+                        if (ext.equals("jar") || ext.equals("zip")) {
                             Optional<RemoteMod.Version> modrinthVersion = Optional.empty();
                             try {
                                 modrinthVersion = ModrinthRemoteModRepository.MODS.getRemoteVersionByLocalFile(null, file);
@@ -106,7 +107,8 @@ public class ServerModpackExportTask extends Task<Void> {
                         String relativePath = runDirectory.relativize(file).normalize().toString().replace(File.separatorChar, '/');
                         files.add(new ModpackConfiguration.FileInformation(relativePath, DigestUtils.digestToString("SHA-1", file), downloadUrl));
                     }
-                    return true;
+                    // only include when no downloadUrl
+                    return downloadUrl == null;
                 } else {
                     return false;
                 }
