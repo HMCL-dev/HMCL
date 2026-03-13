@@ -428,10 +428,10 @@ public final class LogWindow extends Stage {
                 clearButton.setOnAction(e -> getSkinnable().onClear());
                 hBox.getChildren().setAll(autoScrollCheckBox, exportLogsButton, terminateButton, exportDumpPane, clearButton);
 
-                control.getGameProcess().getProcess().onExit().thenAccept(process -> {
+                control.getGameProcess().getProcess().onExit().thenAccept(process -> Platform.runLater(() -> {
                     terminateButton.setDisable(true);
                     exportDumpButton.setDisable(true);
-                });
+                }));
 
                 vbox.getChildren().add(bottom);
             }
