@@ -36,8 +36,9 @@ import org.glavo.monetfx.beans.property.ColorSchemeProperty;
 import org.glavo.monetfx.beans.property.ReadOnlyColorSchemeProperty;
 import org.glavo.monetfx.beans.property.SimpleColorSchemeProperty;
 import org.jackhuang.hmcl.ui.FXUtils;
-import org.jackhuang.hmcl.util.io.FileUtils;
+import org.jackhuang.hmcl.ui.MacOSNativeUtils;
 import org.jackhuang.hmcl.ui.WindowsNativeUtils;
+import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.platform.NativeUtils;
 import org.jackhuang.hmcl.util.platform.OSVersion;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
@@ -233,6 +234,14 @@ public final class Themes {
                     }
                 });
             }
+        } else if (OperatingSystem.CURRENT_OS == OperatingSystem.MACOS && MacOSNativeUtils.isSupported()) {
+            MacOSNativeUtils.setAppearance(darkModeProperty().get());
+
+            ChangeListener<Boolean> listener = (observable, oldValue, newValue) -> {
+                MacOSNativeUtils.setAppearance(newValue);
+            };
+            darkModeProperty().addListener(listener);
+            stage.getProperties().put("Themes.applyNativeDarkMode.macOS.listener", listener);
         }
     }
 

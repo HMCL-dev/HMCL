@@ -61,7 +61,11 @@ public final class NativeUtils {
                     if (osVersion == null || osVersion.startsWith("5.") || osVersion.equals("6.0"))
                         return false;
 
-                    // Currently we only need to use JNA on Windows
+                    Native.getDefaultStringEncoding();
+                    return true;
+                }
+
+                if (Platform.isMac()) {
                     Native.getDefaultStringEncoding();
                     return true;
                 }
