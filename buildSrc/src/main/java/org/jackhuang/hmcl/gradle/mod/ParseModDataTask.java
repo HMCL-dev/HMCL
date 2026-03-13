@@ -201,11 +201,13 @@ public abstract class ParseModDataTask extends DefaultTask {
                 List<String> modId = new ArrayList<>();
                 if (mod.modid != null) {
                     for (String id : mod.modid) {
-                        if (id.contains(MOD_SEPARATOR)) {
+                        String cleanId = parseName(id.trim());
+
+                        if (cleanId.contains(MOD_SEPARATOR) || cleanId.contains(S)) {
                             throw new GradleException("Error modid: " + id);
                         }
 
-                        modId.add(id);
+                        modId.add(cleanId);
                     }
                 }
 

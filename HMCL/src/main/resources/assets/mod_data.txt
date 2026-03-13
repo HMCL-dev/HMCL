@@ -12558,7 +12558,7 @@ medieval-buildings;12814;medieval_buildings;Medieval Buildings;;
 ;12817;youthief;You Thief: Remastered Edition;;
 ;12818;hero_proof;Hero Proof;;
 more-slabs-stairs-and-walls;12819;more_slabs_stairs_and_walls;More Slabs Stairs & Walls;;
-caves-canyons;12820;caves_&amp;_canyons,mr_caves__canyons;Caves & Canyons;;
+caves-canyons;12820;caves_&_canyons,mr_caves__canyons;Caves & Canyons;;
 dragon-mounts-legacy-continued;12821;dragonmounts;龙骑士重制版延续;Dragon Mounts Legacy Continued;
 chloride-mod;12822;embeddiumplus,chloride;Chloride (Embeddium++/Sodium++);;
 aggro-indicator;12823;aggroindicator;Aggro Indicator;;
