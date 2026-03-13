@@ -154,7 +154,7 @@ final class ModListPageSkin extends SkinBase<ModListPage> {
 
             // Toolbar Selecting
             toolbarSelecting.getChildren().setAll(
-                    createToolbarButton2(i18n("button.remove"), SVG.DELETE, () -> {
+                    createToolbarButton2(i18n("button.remove"), SVG.DELETE_FOREVER, () -> {
                         Controllers.confirm(i18n("button.remove.confirm"), i18n("button.remove"), () -> {
                             skinnable.removeSelected(listView.getSelectionModel().getSelectedItems());
                         }, null);

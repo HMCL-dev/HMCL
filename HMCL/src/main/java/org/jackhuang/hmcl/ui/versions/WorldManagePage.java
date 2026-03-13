@@ -78,9 +78,9 @@ public final class WorldManagePage extends DecoratorAnimatedPage implements Deco
         updateSessionLockChannel();
 
         try {
-            this.world.reloadLevelDat();
+            this.world.reloadWorldData();
         } catch (IOException e) {
-            LOG.warning("Can not load world level.dat of world: " + this.world.getFile(), e);
+            LOG.warning("Can not load world data of world: " + this.world.getFile(), e);
             this.addEventHandler(Navigator.NavigationEvent.NAVIGATED, event -> closePageForLoadingFail());
         }
 
@@ -106,9 +106,9 @@ public final class WorldManagePage extends DecoratorAnimatedPage implements Deco
     public void refresh() {
         updateSessionLockChannel();
         try {
-            world.reloadLevelDat();
+            world.reloadWorldData();
         } catch (IOException e) {
-            LOG.warning("Can not load world level.dat of world: " + world.getFile(), e);
+            LOG.warning("Can not load world data of world: " + world.getFile(), e);
             closePageForLoadingFail();
             return;
         }
@@ -273,7 +273,7 @@ public final class WorldManagePage extends DecoratorAnimatedPage implements Deco
 
                     managePopupMenu.getContent().addAll(
                             new IconedMenuItem(SVG.OUTPUT, i18n("world.export"), () -> WorldManageUIUtils.export(getSkinnable().world, getSkinnable().sessionLockChannel), managePopup),
-                            new IconedMenuItem(SVG.DELETE, i18n("world.delete"), () -> WorldManageUIUtils.delete(getSkinnable().world, () -> getSkinnable().fireEvent(new PageCloseEvent()), getSkinnable().sessionLockChannel), managePopup),
+                            new IconedMenuItem(SVG.DELETE_FOREVER, i18n("world.delete"), () -> WorldManageUIUtils.delete(getSkinnable().world, () -> getSkinnable().fireEvent(new PageCloseEvent()), getSkinnable().sessionLockChannel), managePopup),
                             new IconedMenuItem(SVG.CONTENT_COPY, i18n("world.duplicate"), () -> WorldManageUIUtils.copyWorld(getSkinnable().world, null), managePopup)
                     );
 
