@@ -57,9 +57,11 @@ import org.jetbrains.annotations.Nullable;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 import java.util.Random;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static org.jackhuang.hmcl.setting.ConfigHolder.config;
@@ -301,12 +303,12 @@ public class DecoratorController {
             return null;
         }
 
-        List<Path> candidates;
+        ArrayList<Path> candidates;
         try (Stream<Path> stream = Files.list(imageDir)) {
             candidates = stream
                     .filter(it -> FXUtils.IMAGE_EXTENSIONS.contains(getExtension(it).toLowerCase(Locale.ROOT)))
                     .filter(Files::isReadable)
-                    .toList();
+                    .collect(Collectors.toCollection(ArrayList::new));
         } catch (IOException e) {
             LOG.warning("Failed to list files in " + imageDir, e);
             return null;
