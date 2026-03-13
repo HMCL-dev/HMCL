@@ -64,6 +64,12 @@ public abstract class ParseModDataTask extends DefaultTask {
             Pattern.compile("^/legacy/mc-mods/minecraft/(\\d+)-(?<modid>[\\w-]+)"),
     };
 
+    private static String parseName(String name) {
+        return name.replace("&amp;", "&")
+                .replace("&lt;", "<")
+                .replace("&gt;", ">");
+    }
+
     private static String parseCurseforge(String url) {
         URI res = URI.create(url.replace(" ", "%20"));
 
@@ -148,9 +154,9 @@ public abstract class ParseModDataTask extends DefaultTask {
                     "# Copyright (C) 2025. All Rights Reserved.\n" +
                     "#\n");
             for (ModData mod : modDatas) {
-                String chineseName = mod.name.main;
-                String subName = mod.name.sub;
-                String abbr = mod.name.abbr;
+                String chineseName = parseName(mod.name.main);
+                String subName = parseName(mod.name.sub);
+                String abbr = parseName(mod.name.abbr);
 
                 chineseName = chineseName == null ? "" : cleanChineseName(chineseName);
                 if (subName == null)
@@ -195,11 +201,13 @@ public abstract class ParseModDataTask extends DefaultTask {
                 List<String> modId = new ArrayList<>();
                 if (mod.modid != null) {
                     for (String id : mod.modid) {
-                        if (id.contains(MOD_SEPARATOR)) {
+                        String cleanId = parseName(id.trim());
+
+                        if (cleanId.contains(MOD_SEPARATOR) || cleanId.contains(S)) {
                             throw new GradleException("Error modid: " + id);
                         }
 
-                        modId.add(id);
+                        modId.add(cleanId);
                     }
                 }
 
