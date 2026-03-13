@@ -525,7 +525,7 @@ public class DownloadListPage extends Control implements DecoratorPage, VersionP
                 listView.setSelectionModel(new NoneMultipleSelectionModel<>());
                 // ListViewBehavior would consume ESC pressed event, preventing us from handling it, so we ignore it here
                 ignoreEvent(listView, KeyEvent.KEY_PRESSED, e -> e.getCode() == KeyCode.ESCAPE);
-
+                listView.setFixedCellSize(60);
                 listView.setCellFactory(x -> new ListCell<>() {
                     private static final Insets PADDING = new Insets(9, 9, 0, 9);
 
