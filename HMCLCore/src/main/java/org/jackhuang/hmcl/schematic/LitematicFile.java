@@ -17,9 +17,9 @@
  */
 package org.jackhuang.hmcl.schematic;
 
-import com.github.steveice10.opennbt.NBTIO;
-import com.github.steveice10.opennbt.tag.builtin.*;
 import javafx.geometry.Point3D;
+import org.glavo.nbt.io.NBTCodec;
+import org.glavo.nbt.tag.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -30,32 +30,19 @@ import java.nio.file.Path;
 import java.time.Instant;
 import java.util.zip.GZIPInputStream;
 
-/**
- * @author Glavo
- * @see <a href="https://litemapy.readthedocs.io/en/v0.9.0b0/litematics.html">The Litematic file format</a>
- */
+/// @author Glavo
+/// @see <a href="https://litemapy.readthedocs.io/en/v0.9.0b0/litematics.html">The Litematic file format</a>
 public final class LitematicFile {
 
-    private static int tryGetInt(Tag tag) {
-        return tag instanceof IntTag ? ((IntTag) tag).getValue() : 0;
-    }
-
-    private static @Nullable Instant tryGetLongTimestamp(Tag tag) {
-        if (tag instanceof LongTag) {
-            return Instant.ofEpochMilli(((LongTag) tag).getValue());
-        }
-        return null;
-    }
-
     private static @Nullable String tryGetString(Tag tag) {
-        return tag instanceof StringTag ? ((StringTag) tag).getValue() : null;
+        return tag instanceof StringTag stringTag ? stringTag.get() : null;
     }
 
     public static LitematicFile load(Path file) throws IOException {
 
         CompoundTag root;
         try (InputStream in = new GZIPInputStream(Files.newInputStream(file))) {
-            root = (CompoundTag) NBTIO.readTag(in);
+            root = NBTCodec.of().readTag(in, TagType.COMPOUND);
         }
 
         Tag versionTag = root.get("Version");
@@ -71,14 +58,13 @@ public final class LitematicFile {
             throw new IOException("Metadata tag is not a compound tag");
 
         int regions = 0;
-        Tag regionsTag = root.get("Regions");
-        if (regionsTag instanceof CompoundTag)
-            regions = ((CompoundTag) regionsTag).size();
+        if (root.get("Regions") instanceof CompoundTag regionsTag)
+            regions = regionsTag.size();
 
         return new LitematicFile(file, (CompoundTag) metadataTag,
                 ((IntTag) versionTag).getValue(),
-                tryGetInt(root.get("SubVersion")),
-                tryGetInt(root.get("MinecraftDataVersion")),
+                root.getIntOrZero("SubVersion"),
+                root.getIntOrZero("MinecraftDataVersion"),
                 regions
         );
     }
@@ -108,26 +94,23 @@ public final class LitematicFile {
         this.regionCount = regionCount;
 
         Tag previewImageData = metadata.get("PreviewImageData");
-        this.previewImageData = previewImageData instanceof IntArrayTag
-                ? ((IntArrayTag) previewImageData).getValue()
+        this.previewImageData = previewImageData instanceof IntArrayTag intArrayTag
+                ? intArrayTag.getArray()
                 : null;
 
         this.name = tryGetString(metadata.get("Name"));
         this.author = tryGetString(metadata.get("Author"));
         this.description = tryGetString(metadata.get("Description"));
-        this.timeCreated = tryGetLongTimestamp(metadata.get("TimeCreated"));
-        this.timeModified = tryGetLongTimestamp(metadata.get("TimeModified"));
-        this.totalBlocks = tryGetInt(metadata.get("TotalBlocks"));
-        this.totalVolume = tryGetInt(metadata.get("TotalVolume"));
-
+        this.timeCreated = metadata.get("TimeCreated") instanceof LongTag time ? Instant.ofEpochMilli(time.getValue()) : null;
+        this.timeModified = metadata.get("TimeModified") instanceof LongTag time ? Instant.ofEpochMilli(time.getValue()) : null;
+        this.totalBlocks = metadata.getIntOrZero("TotalBlocks");
+        this.totalVolume = metadata.getIntOrZero("TotalVolume");
 
         Point3D enclosingSize = null;
-        Tag enclosingSizeTag = metadata.get("EnclosingSize");
-        if (enclosingSizeTag instanceof CompoundTag) {
-            CompoundTag list = (CompoundTag) enclosingSizeTag;
-            int x = tryGetInt(list.get("x"));
-            int y = tryGetInt(list.get("y"));
-            int z = tryGetInt(list.get("z"));
+        if (metadata.get("EnclosingSize") instanceof CompoundTag list) {
+            int x = list.getIntOrZero("x");
+            int y = list.getIntOrZero("y");
+            int z = list.getIntOrZero("z");
 
             if (x >= 0 && y >= 0 && z >= 0)
                 enclosingSize = new Point3D(x, y, z);

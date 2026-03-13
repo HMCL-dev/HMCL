@@ -20,12 +20,12 @@ dependencies {
     api(libs.xz)
     api(libs.fx.gson)
     api(libs.constant.pool.scanner)
-    api(libs.opennbt)
     api(libs.nanohttpd)
     api(libs.jsoup)
     api(libs.chardet)
     api(libs.jna)
     api(libs.pci.ids)
+    api(libs.hello.nbt)
 
     compileOnlyApi(libs.jetbrains.annotations)
 
