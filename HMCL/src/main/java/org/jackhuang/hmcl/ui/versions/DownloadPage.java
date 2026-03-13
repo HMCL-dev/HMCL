@@ -459,7 +459,7 @@ public class DownloadPage extends Control implements DecoratorPage {
             addonItem.setMouseTransparent(true); // Item is displayed for info, clicking shouldn't open the dialog again
             box.getChildren().setAll(addonItem);
 
-            Button changelogButton = new JFXButton(i18n("mods.changelog"));
+            JFXHyperlink changelogButton = new JFXHyperlink(i18n("mods.changelog"));
             changelogButton.getStyleClass().add("dialog-accept");
             loadChangelog(version, selfPage.repository, changelogButton);
 
@@ -567,7 +567,7 @@ public class DownloadPage extends Control implements DecoratorPage {
             }).start();
         }
 
-        private void loadChangelog(RemoteMod.Version version, RemoteModRepository repo, Button changelogButton) {
+        private void loadChangelog(RemoteMod.Version version, RemoteModRepository repo, JFXHyperlink changelogButton) {
             changelogButton.setDisable(true);
             Task.supplyAsync(() -> {
                 if (changelogCache.containsKey(version)) {
