@@ -187,16 +187,22 @@ public final class RemoteMod {
     }
 
     public enum Type {
-        CURSEFORGE(CurseForgeRemoteModRepository.MODS),
-        MODRINTH(ModrinthRemoteModRepository.MODS);
+        CURSEFORGE("mods.curseforge", CurseForgeRemoteModRepository.MODS),
+        MODRINTH("mods.modrinth", ModrinthRemoteModRepository.MODS);
 
+        private final String key;
         private final RemoteModRepository remoteModRepository;
+
+        public String getKey() {
+            return key;
+        }
 
         public RemoteModRepository getRemoteModRepository() {
             return this.remoteModRepository;
         }
 
-        Type(RemoteModRepository remoteModRepository) {
+        Type(String key, RemoteModRepository remoteModRepository) {
+            this.key = key;
             this.remoteModRepository = remoteModRepository;
         }
     }

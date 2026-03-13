@@ -537,6 +537,21 @@ public final class Config extends ObservableSetting {
         this.versionListSource.set(versionListSource);
     }
 
+    @SerializedName("defaultAddonSource")
+    private final StringProperty defaultAddonSource = new SimpleStringProperty("mods.modrinth");
+
+    public StringProperty defaultAddonSourceProperty() {
+        return defaultAddonSource;
+    }
+
+    public String getDefaultAddonSource() {
+        return defaultAddonSource.get();
+    }
+
+    public void setDefaultAddonSource(String defaultAddonSource) {
+        this.defaultAddonSource.set(defaultAddonSource);
+    }
+
     @SerializedName("hasProxy")
     private final BooleanProperty hasProxy = new SimpleBooleanProperty();
 
