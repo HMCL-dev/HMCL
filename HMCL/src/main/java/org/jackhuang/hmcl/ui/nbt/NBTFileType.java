@@ -41,7 +41,7 @@ import java.util.zip.InflaterInputStream;
  * @author Glavo
  */
 public enum NBTFileType {
-    COMPRESSED("dat", "dat_old") {
+    COMPRESSED("dat", "dat_old", "litematic", "nbt", "schematic", "schem") {
         @Override
         public Tag read(Path file) throws IOException {
             try (BufferedInputStream fileInputStream = new BufferedInputStream(Files.newInputStream(file))) {
