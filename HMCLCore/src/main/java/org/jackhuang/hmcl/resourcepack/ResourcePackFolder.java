@@ -2,7 +2,6 @@ package org.jackhuang.hmcl.resourcepack;
 
 import org.jackhuang.hmcl.mod.RemoteMod;
 import org.jackhuang.hmcl.mod.modinfo.PackMcMeta;
-import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jetbrains.annotations.Nullable;
 
@@ -21,7 +20,7 @@ final class ResourcePackFolder extends ResourcePackFile {
 
         PackMcMeta meta = null;
         try {
-            meta = JsonUtils.fromJsonFile(path.resolve("pack.mcmeta"), PackMcMeta.class);
+            meta = PackMcMeta.fromNonNullJsonFile(path.resolve("pack.mcmeta"));
         } catch (Exception e) {
             LOG.warning("Failed to parse resource pack meta", e);
         }

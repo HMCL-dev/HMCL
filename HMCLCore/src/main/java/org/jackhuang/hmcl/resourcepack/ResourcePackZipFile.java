@@ -3,7 +3,6 @@ package org.jackhuang.hmcl.resourcepack;
 import org.jackhuang.hmcl.mod.RemoteMod;
 import org.jackhuang.hmcl.mod.RemoteModRepository;
 import org.jackhuang.hmcl.mod.modinfo.PackMcMeta;
-import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.io.CompressingUtils;
 import org.jetbrains.annotations.Nullable;
 
@@ -28,7 +27,7 @@ final class ResourcePackZipFile extends ResourcePackFile {
 
         try (var zipFileTree = CompressingUtils.openZipTree(path)) {
             try {
-                metaTemp = JsonUtils.fromNonNullJson(zipFileTree.readTextEntry("/pack.mcmeta"), PackMcMeta.class);
+                metaTemp = PackMcMeta.fromNonNullJson(zipFileTree.readTextEntry("/pack.mcmeta"));
             } catch (Exception e) {
                 LOG.warning("Failed to parse resource pack meta", e);
             }
