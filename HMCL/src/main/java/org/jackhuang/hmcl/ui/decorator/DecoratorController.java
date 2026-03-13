@@ -194,8 +194,9 @@ public class DecoratorController {
                 if (backgroundImage != null)
                     try {
                         Path path = Path.of(backgroundImage);
-                        if (Files.isDirectory(path)) image = randomImageIn(path);
-                        else image = tryLoadImage(path);
+                        image = Files.isDirectory(path)
+                                ? randomImageIn(path)
+                                : tryLoadImage(path);
                     } catch (Exception e) {
                         LOG.warning("Couldn't load background image", e);
                     }
