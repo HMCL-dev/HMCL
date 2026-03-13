@@ -42,6 +42,16 @@ public abstract class LocalizedRemoteModRepository implements RemoteModRepositor
     protected abstract SortType getBackedRemoteModRepositorySortOrder();
 
     @Override
+    public String getApiBaseUrl() {
+        return getBackedRemoteModRepository().getApiBaseUrl();
+    }
+
+    @Override
+    public String getBaseUrl() {
+        return getBackedRemoteModRepository().getBaseUrl();
+    }
+
+    @Override
     public SearchResult search(DownloadProvider downloadProvider, String gameVersion, Category category, int pageOffset, int pageSize, String searchFilter, SortType sort, SortOrder sortOrder) throws IOException {
         if (!StringUtils.containsChinese(searchFilter)) {
             return getBackedRemoteModRepository().search(downloadProvider, gameVersion, category, pageOffset, pageSize, searchFilter, sort, sortOrder);
@@ -127,5 +137,15 @@ public abstract class LocalizedRemoteModRepository implements RemoteModRepositor
     @Override
     public Stream<RemoteMod.Version> getRemoteVersionsById(String id) throws IOException {
         return getBackedRemoteModRepository().getRemoteVersionsById(id);
+    }
+
+    @Override
+    public String getModChangelog(String modId, String versionId) throws IOException {
+        return getBackedRemoteModRepository().getModChangelog(modId, versionId);
+    }
+
+    @Override
+    public String getVersionPageUrl(RemoteMod.Version version) throws IOException {
+        return getBackedRemoteModRepository().getVersionPageUrl(version);
     }
 }
