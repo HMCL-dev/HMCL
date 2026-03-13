@@ -111,6 +111,31 @@ public class PersonalizationPage extends StackPane {
             titleTransparentButton.setTitle(i18n("settings.launcher.title_transparent"));
         }
         {
+            BorderPane customizationPane = new BorderPane();
+
+            VBox leftContent = new VBox();
+            Label titleLabel = new Label(i18n("settings.launcher.title_text"));
+            titleLabel.getStyleClass().add("title-label");
+            Label subtitleLabel = new Label(i18n("settings.launcher.title_subtext"));
+            subtitleLabel.getStyleClass().add("subtitle-label");
+            subtitleLabel.setStyle("-fx-font-size: 12px; -fx-text-fill: -monet-on-surface-variant;");
+            leftContent.getChildren().addAll(titleLabel, subtitleLabel);
+            customizationPane.setLeft(leftContent);
+
+            JFXTextField inputField = new JFXTextField();
+            inputField.setPrefWidth(150);
+            inputField.setMaxWidth(150);
+            inputField.setMinWidth(150);
+            inputField.setText(config().getTitleBarText());
+            inputField.textProperty().addListener((observable, oldValue, newValue) -> {
+                config().setTitleBarText(newValue);
+            });
+            BorderPane.setAlignment(inputField, Pos.CENTER_RIGHT);
+            customizationPane.setRight(inputField);
+
+            themeList.getContent().add(customizationPane);
+        }
+        {
             LineToggleButton animationButton = new LineToggleButton();
             themeList.getContent().add(animationButton);
             animationButton.selectedProperty().bindBidirectional(config().animationDisabledProperty());
