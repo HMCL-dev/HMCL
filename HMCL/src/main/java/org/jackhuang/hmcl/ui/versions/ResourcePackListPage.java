@@ -108,7 +108,7 @@ public final class ResourcePackListPage extends ListPageBase<ResourcePackListPag
     }
 
     public void refresh() {
-        if (resourcePackManager == null || !Files.isDirectory(resourcePackDirectory)) return;
+        if (resourcePackManager == null) return;
         setDisable(false);
         if (!ResourcePackManager.isMcVersionSupported(resourcePackManager.getMinecraftVersion())) {
             getItems().clear();
