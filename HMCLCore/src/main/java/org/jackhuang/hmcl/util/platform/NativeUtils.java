@@ -66,6 +66,23 @@ public final class NativeUtils {
                 }
 
                 if (Platform.isMac()) {
+                    String osVersion = System.getProperty("os.version");
+
+                    // Require macOS 10.14 or later
+                    if (osVersion != null) {
+                        String[] parts = osVersion.split("\\.");
+                        if (parts.length >= 2) {
+                            try {
+                                int major = Integer.parseInt(parts[0]);
+                                int minor = Integer.parseInt(parts[1]);
+                                if (major < 10 || (major == 10 && minor < 14)) {
+                                    return false;
+                                }
+                            } catch (NumberFormatException ignored) {
+                            }
+                        }
+                    }
+
                     Native.getDefaultStringEncoding();
                     return true;
                 }
