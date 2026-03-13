@@ -217,11 +217,11 @@ public final class SettingsPage extends ScrollPane {
             }
 
             {
-                LineToggleButton disableStartupUpdateNotificationPane = new LineToggleButton();
-                disableStartupUpdateNotificationPane.setTitle(i18n("update.disable_startup_update_dialog"));
-                disableStartupUpdateNotificationPane.setSubtitle(i18n("update.disable_startup_update_dialog.subtitle"));
-                disableStartupUpdateNotificationPane.selectedProperty().bindBidirectional(config().disableStartupUpdateDialogProperty());
-                settingsPane.getContent().add(disableStartupUpdateNotificationPane);
+                LineToggleButton disableAutoShowUpdateDialogPane = new LineToggleButton();
+                disableAutoShowUpdateDialogPane.setTitle(i18n("update.disable_auto_show_update_dialog"));
+                disableAutoShowUpdateDialogPane.setSubtitle(i18n("update.disable_auto_show_update_dialog.subtitle"));
+                disableAutoShowUpdateDialogPane.selectedProperty().bindBidirectional(config().disableAutoShowUpdateDialogProperty());
+                settingsPane.getContent().add(disableAutoShowUpdateDialogPane);
             }
 
             {

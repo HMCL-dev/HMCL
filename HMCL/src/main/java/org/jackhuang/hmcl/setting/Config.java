@@ -222,19 +222,19 @@ public final class Config extends ObservableSetting {
         this.acceptPreviewUpdate.set(acceptPreviewUpdate);
     }
 
-    @SerializedName("disableStartupUpdateDialog")
-    private final BooleanProperty disableStartupUpdateDialog = new SimpleBooleanProperty(false);
+    @SerializedName("disableAutoShowUpdateDialog")
+    private final BooleanProperty disableAutoShowUpdateDialog = new SimpleBooleanProperty(false);
 
-    public BooleanProperty disableStartupUpdateDialogProperty() {
-        return disableStartupUpdateDialog;
+    public BooleanProperty disableAutoShowUpdateDialogProperty() {
+        return disableAutoShowUpdateDialog;
     }
 
-    public boolean isDisableStartupUpdateDialog() {
-        return disableStartupUpdateDialog.get();
+    public boolean isDisableAutoShowUpdateDialog() {
+        return disableAutoShowUpdateDialog.get();
     }
 
-    public void setDisableStartupUpdateDialog(boolean disableStartupUpdateDialog) {
-        this.disableStartupUpdateDialog.set(disableStartupUpdateDialog);
+    public void setDisableAutoShowUpdateDialog(boolean disableAutoShowUpdateDialog) {
+        this.disableAutoShowUpdateDialog.set(disableAutoShowUpdateDialog);
     }
 
     @SerializedName("shownTips")
