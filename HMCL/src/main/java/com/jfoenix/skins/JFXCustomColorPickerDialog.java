@@ -275,7 +275,7 @@ public class JFXCustomColorPickerDialog extends StackPane {
         acceptButton.getStyleClass().add("jfx-color-dialog-accept");
         acceptButton.textFillProperty().bind(Bindings.createObjectBinding(() -> {
             if (pane.getBackground() != null && !pane.getBackground().getFills().isEmpty()) {
-                return (Color) pane.getBackground().getFills().getFirst().getFill();
+                return (Color) pane.getBackground().getFills().get(0).getFill();
             }
             return Color.BLACK;
         }, pane.backgroundProperty()));
