@@ -1,0 +1,138 @@
+name: Backport PR
+
+on:
+  pull_request:
+    types: [ labeled ]
+  pull_request_target:
+    types: [ labeled ]
+
+jobs:
+  backport:
+    if: |
+      startsWith(github.event.label.name, 'backport/3.') &&
+      github.event.action == 'labeled'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+
+    steps:
+      - name: Extract version from label
+        id: extract
+        run: |
+          LABEL="${{ github.event.label.name }}"
+          if [[ "$LABEL" =~ ^backport/3\.([0-9]+)$ ]]; then
+            VERSION="3.${BASH_REMATCH[1]}"
+            echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+            echo "branch=release/$VERSION" >> "$GITHUB_OUTPUT"
+          else
+            echo "Error: Invalid label format '$LABEL'."
+            exit 1
+          fi
+
+      - name: Get PR info
+        id: pr_info
+        uses: actions/github-script@v8
+        with:
+          script: |
+            const pr = await github.rest.pulls.get({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: ${{ github.event.pull_request.number }}
+            });
+            core.setOutput('title', pr.data.title);
+            core.setOutput('head_sha', pr.data.head.sha);
+            core.setOutput('head_repo', pr.data.head.repo.full_name);
+
+      - name: Checkout target release branch
+        uses: actions/checkout@v5
+        with:
+          ref: ${{ steps.extract.outputs.branch }}
+          fetch-depth: 0
+
+      - name: Fetch PR changes and merge
+        id: apply_changes
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          
+          echo "Fetching changes from origin PR..."
+          git fetch "https://github.com/${{ steps.pr_info.outputs.head_repo }}" "${{ steps.pr_info.outputs.head_sha }}"
+          
+          HEAD_SHA="${{ steps.pr_info.outputs.head_sha }}"
+          
+          git log --pretty=format:"Co-authored-by: %an <%ae>" HEAD..$HEAD_SHA > coauthors.tmp
+          
+          git log --pretty=format:"%(trailers:key=Co-authored-by,valueonly=false,separator=%n)" HEAD..$HEAD_SHA >> coauthors.tmp
+          
+          COAUTHORS=$(cat coauthors.tmp | sort | uniq | grep -v "github-actions\[bot\]" | sed '/^$/d')
+          
+          rm coauthors.tmp
+
+          set +e 
+          
+          git merge --squash "$HEAD_SHA" --no-edit
+          MERGE_EXIT_CODE=$?
+          
+          set -e
+
+          if [ $MERGE_EXIT_CODE -ne 0 ]; then
+            echo "has_conflicts=true" >> "$GITHUB_OUTPUT"
+            COMMIT_PREFIX="[Conflict] "
+          else
+            echo "has_conflicts=false" >> "$GITHUB_OUTPUT"
+            COMMIT_PREFIX=""
+          fi
+
+          git add -A
+          
+          if git diff --cached --quiet; then
+            echo "No changes to commit. Skipping."
+            exit 0
+          fi
+
+          COMMIT_MSG="${COMMIT_PREFIX}[release/${{ steps.extract.outputs.version }}] ${{ steps.pr_info.outputs.title }}"
+          
+          if [ -n "$COAUTHORS" ]; then
+            printf "%s\n\n%s" "$COMMIT_MSG" "$COAUTHORS" > commit_msg.txt
+          else
+            printf "%s" "$COMMIT_MSG" > commit_msg.txt
+          fi
+
+          git commit -F commit_msg.txt
+
+      - name: Push backport branch
+        id: push
+        run: |
+          BACKPORT_BRANCH="pr-backport/${{ steps.extract.outputs.version }}/pr-${{ github.event.pull_request.number }}"
+          git push origin HEAD:"$BACKPORT_BRANCH" --force
+          echo "backport_branch=$BACKPORT_BRANCH" >> "$GITHUB_OUTPUT"
+
+      - name: Create Backport Pull Request
+        uses: actions/github-script@v8
+        with:
+          script: |
+            const { owner, repo } = context.repo;
+            const originalPrNumber = ${{ github.event.pull_request.number }};
+            const version = "${{ steps.extract.outputs.version }}";
+            const hasConflicts = "${{ steps.apply_changes.outputs.has_conflicts }}" === "true";
+            
+            let title = `[release/${version}] ${{ steps.pr_info.outputs.title }}`;
+            if (hasConflicts) {
+              title = `[Conflict] ${title}`;
+            }
+
+            let body = `[Backport] #${originalPrNumber} -> \`${{ steps.extract.outputs.branch }}\`\n\n`;
+            
+            if (hasConflicts) {
+              body += `> Has Merge Conflicts\n\n`;
+            }
+
+            const { data: pr } = await github.rest.pulls.create({
+              owner,
+              repo,
+              title,
+              head: "${{ steps.push.outputs.backport_branch }}",
+              base: "${{ steps.extract.outputs.branch }}",
+              body
+            });
