@@ -22,6 +22,8 @@ import javafx.application.Platform;
 import javafx.stage.FileChooser;
 import org.jackhuang.hmcl.auth.Account;
 import org.jackhuang.hmcl.auth.authlibinjector.AuthlibInjectorAccount;
+import org.jackhuang.hmcl.download.GameBuilder;
+import org.jackhuang.hmcl.download.LibraryAnalyzer;
 import org.jackhuang.hmcl.download.game.GameAssetDownloadTask;
 import org.jackhuang.hmcl.game.*;
 import org.jackhuang.hmcl.mod.RemoteMod;
@@ -198,6 +200,27 @@ public final class Versions {
             profile.getRepository().clean(id);
         } catch (IOException e) {
             LOG.warning("Unable to clean game directory", e);
+        }
+    }
+
+    public static void resetVersion(Profile profile, String id) {
+        try {
+            Version version = profile.getRepository().getVersion(id);
+            LibraryAnalyzer analyzer = LibraryAnalyzer.analyze(version, null);
+            GameBuilder builder = profile.getDependency().gameBuilder().name(id).gameVersion(profile.getRepository().getGameVersion(id).orElseThrow());
+            analyzer.getLibraries().forEach((item) -> {
+                if (item == LibraryAnalyzer.LibraryType.MINECRAFT) return;
+                var itemVersion = analyzer.getVersion(item).orElse(null);
+                if (itemVersion == null) return;
+                builder.version(item.getPatchId(), itemVersion);
+            });
+            TaskExecutor executor = builder.buildAsync().whenComplete(any -> profile.getRepository().refreshVersions())
+                    .thenRunAsync(Schedulers.javafx(), () -> profile.setSelectedVersion(id)).executor();
+            Controllers.taskDialog(executor, i18n("version.manage.reset"), TaskCancellationAction.NO_CANCEL);
+            executor.start();
+        } catch (Exception e) {
+            LOG.warning("Unable to reset instance", e);
+            Controllers.dialog(i18n("message.failed") + "\n" + StringUtils.getStackTrace(e), i18n("message.error"), MessageDialogPane.MessageType.ERROR);
         }
     }
 
