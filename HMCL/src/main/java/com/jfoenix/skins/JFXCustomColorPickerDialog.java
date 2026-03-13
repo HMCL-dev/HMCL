@@ -272,11 +272,17 @@ public class JFXCustomColorPickerDialog extends StackPane {
 
         JFXButton acceptButton = new JFXButton(i18n("button.ok"));
         acceptButton.setOnAction(event -> updateColor());
-        acceptButton.getStyleClass().add("dialog-accept");
+        acceptButton.getStyleClass().add("jfx-color-dialog-accept");
+        acceptButton.textFillProperty().bind(Bindings.createObjectBinding(() -> {
+            if (pane.getBackground() != null && !pane.getBackground().getFills().isEmpty()) {
+                return (Color) pane.getBackground().getFills().getFirst().getFill();
+            }
+            return Color.BLACK;
+        }, pane.backgroundProperty()));
 
         JFXButton cancelButton = new JFXButton(i18n("button.cancel"));
         cancelButton.setOnAction(event -> close());
-        cancelButton.getStyleClass().add("dialog-cancel");
+        cancelButton.getStyleClass().add("jfx-color-dialog-cancel");
 
         actionsHBox.getChildren().addAll(acceptButton, cancelButton);
         container.getChildren().add(actionsHBox);

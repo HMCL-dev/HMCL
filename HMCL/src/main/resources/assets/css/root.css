@@ -1641,6 +1641,15 @@
     -fx-alignment: center-right;
 }
 
+.jfx-color-dialog-accept {
+    -fx-padding: 0.7em 0.8em;
+}
+
+.jfx-color-dialog-cancel {
+    -fx-text-fill: -monet-on-surface-variant;
+    -fx-padding: 0.7em 0.8em;
+}
+
 /*******************************************************************************
  *                                                                             *
  * Table View                                                                  *
