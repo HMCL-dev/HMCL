@@ -237,11 +237,8 @@ public final class Themes {
         } else if (OperatingSystem.CURRENT_OS == OperatingSystem.MACOS && MacOSNativeUtils.isSupported()) {
             MacOSNativeUtils.setAppearance(darkModeProperty().get());
 
-            ChangeListener<Boolean> listener = (observable, oldValue, newValue) -> {
-                MacOSNativeUtils.setAppearance(newValue);
-            };
-            darkModeProperty().addListener(listener);
-            stage.getProperties().put("Themes.applyNativeDarkMode.macOS.listener", listener);
+            ChangeListener<Boolean> listener = FXUtils.onWeakChange(Themes.darkModeProperty(), MacOSNativeUtils::setAppearance);
+            stage.getProperties().put("Themes.applyNativeDarkMode.listener", listener);
         }
     }
 
