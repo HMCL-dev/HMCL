@@ -222,6 +222,21 @@ public final class Config extends ObservableSetting {
         this.acceptPreviewUpdate.set(acceptPreviewUpdate);
     }
 
+    @SerializedName("disableAutoShowUpdateDialog")
+    private final BooleanProperty disableAutoShowUpdateDialog = new SimpleBooleanProperty(false);
+
+    public BooleanProperty disableAutoShowUpdateDialogProperty() {
+        return disableAutoShowUpdateDialog;
+    }
+
+    public boolean isDisableAutoShowUpdateDialog() {
+        return disableAutoShowUpdateDialog.get();
+    }
+
+    public void setDisableAutoShowUpdateDialog(boolean disableAutoShowUpdateDialog) {
+        this.disableAutoShowUpdateDialog.set(disableAutoShowUpdateDialog);
+    }
+
     @SerializedName("shownTips")
     private final ObservableMap<String, Object> shownTips = FXCollections.observableHashMap();
 
