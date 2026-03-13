@@ -18,6 +18,7 @@
 package org.jackhuang.hmcl;
 
 import javafx.animation.KeyFrame;
+import javafx.animation.KeyValue;
 import javafx.animation.Timeline;
 import javafx.application.Application;
 import javafx.application.Platform;
@@ -111,7 +112,7 @@ public final class Launcher extends Application {
             if (OperatingSystem.CURRENT_OS == OperatingSystem.MACOS
                     && ConfigHolder.isNewlyCreated()
                     && System.getProperty("user.dir").startsWith("/private/var/folders/")) {
-                if (showAlertWithCountdown(AlertType.WARNING, i18n("fatal.mac_app_translocation"), ButtonType.YES, ButtonType.NO) == ButtonType.NO)
+                if (showAlertWithCountdown(AlertType.WARNING, i18n("fatal.mac_app_translocation"), 5, ButtonType.YES, ButtonType.NO) == ButtonType.NO)
                     return;
             } else {
                 checkConfigInTempDir();
@@ -182,29 +183,23 @@ public final class Launcher extends Application {
         return new Alert(alertType, contentText, buttons).showAndWait().orElse(null);
     }
 
-    private static ButtonType showAlertWithCountdown(Alert.AlertType alertType, String contentText, ButtonType... buttons) {
+    private static ButtonType showAlertWithCountdown(Alert.AlertType alertType, String contentText, int seconds, ButtonType... buttons) {
         Alert alert = new Alert(alertType, contentText, buttons);
 
         Button okButton = (Button) alert.getDialogPane().lookupButton(ButtonType.YES);
 
         okButton.setDisable(true);
 
-        int delaySeconds = 10;
-
-        Timeline timeline = new Timeline();
-        for (int i = 0; i <= delaySeconds; i++) {
-            int remaining = delaySeconds - i;
-            KeyFrame keyFrame = new KeyFrame(Duration.seconds(i), event -> {
-                if (remaining > 0) {
-                    okButton.setText(String.format(i18n("button.yes") + " (%d)", remaining));
-                } else {
-                    okButton.setText(i18n("button.yes"));
-                    okButton.setDisable(false);
-                }
-            });
-            timeline.getKeyFrames().add(keyFrame);
+        KeyFrame[] keyFrames = new KeyFrame[seconds + 1];
+        for (int i = 0; i < seconds; i++) {
+            keyFrames[i] = new KeyFrame(Duration.seconds(i),
+                    new KeyValue(okButton.textProperty(), i18n("button.ok.countdown", seconds - i)));
         }
+        keyFrames[seconds] = new KeyFrame(Duration.seconds(seconds),
+                new KeyValue(okButton.textProperty(), i18n("button.ok")),
+                new KeyValue(okButton.disableProperty(), false));
 
+        Timeline timeline = new Timeline(keyFrames);
         alert.setOnShown(e -> timeline.play());
         alert.setOnCloseRequest(e -> timeline.stop());
 
@@ -250,7 +245,7 @@ public final class Launcher extends Application {
 
     private static void checkConfigInTempDir() {
         if (ConfigHolder.isNewlyCreated() && isConfigInTempDir()
-                && showAlertWithCountdown(AlertType.WARNING, i18n("fatal.config_in_temp_dir"), ButtonType.YES, ButtonType.NO) == ButtonType.NO) {
+                && showAlertWithCountdown(AlertType.WARNING, i18n("fatal.config_in_temp_dir"), 5, ButtonType.YES, ButtonType.NO) == ButtonType.NO) {
             EntryPoint.exit(0);
         }
     }
