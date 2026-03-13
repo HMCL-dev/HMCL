@@ -112,7 +112,7 @@ public final class Launcher extends Application {
             if (OperatingSystem.CURRENT_OS == OperatingSystem.MACOS
                     && ConfigHolder.isNewlyCreated()
                     && System.getProperty("user.dir").startsWith("/private/var/folders/")) {
-                if (showAlertWithCountdown(AlertType.WARNING, i18n("fatal.mac_app_translocation"), 5, ButtonType.YES, ButtonType.NO) == ButtonType.NO)
+                if (!confirmWithCountdown(AlertType.WARNING, i18n("fatal.mac_app_translocation"), 5))
                     return;
             } else {
                 checkConfigInTempDir();
@@ -183,9 +183,8 @@ public final class Launcher extends Application {
         return new Alert(alertType, contentText, buttons).showAndWait().orElse(null);
     }
 
-    private static ButtonType showAlertWithCountdown(Alert.AlertType alertType, String contentText, int seconds, ButtonType... buttons) {
-        Alert alert = new Alert(alertType, contentText, buttons);
-
+    private static boolean confirmWithCountdown(Alert.AlertType alertType, String contentText, int seconds) {
+        Alert alert = new Alert(alertType, contentText, ButtonType.YES, ButtonType.NO);
         Button okButton = (Button) alert.getDialogPane().lookupButton(ButtonType.YES);
 
         okButton.setDisable(true);
@@ -202,8 +201,7 @@ public final class Launcher extends Application {
         Timeline timeline = new Timeline(keyFrames);
         alert.setOnShown(e -> timeline.play());
         alert.setOnCloseRequest(e -> timeline.stop());
-
-        return alert.showAndWait().orElse(null);
+        return alert.showAndWait().orElse(null) == ButtonType.YES;
     }
 
     private static boolean isConfigInTempDir() {
@@ -245,7 +243,7 @@ public final class Launcher extends Application {
 
     private static void checkConfigInTempDir() {
         if (ConfigHolder.isNewlyCreated() && isConfigInTempDir()
-                && showAlertWithCountdown(AlertType.WARNING, i18n("fatal.config_in_temp_dir"), 5, ButtonType.YES, ButtonType.NO) == ButtonType.NO) {
+                && !confirmWithCountdown(AlertType.WARNING, i18n("fatal.config_in_temp_dir"), 5)) {
             EntryPoint.exit(0);
         }
     }
