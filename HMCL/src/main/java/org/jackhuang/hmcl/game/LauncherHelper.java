@@ -563,6 +563,9 @@ public final class LauncherHelper {
                         case CLEANROOM_JAVA_21:
                             suggestions.add(i18n("launch.advice.cleanroom"));
                             break;
+                        case CLEANROOM_JAVA_25:
+                            suggestions.add(i18n("launch.advice.cleanroom.newer"));
+                            break;
                         case VANILLA_JAVA_8_51:
                             suggestions.add(i18n("launch.advice.java8_51_1_13"));
                             break;

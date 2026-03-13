@@ -112,8 +112,26 @@ public enum JavaVersionConstraint {
         @Override
         protected boolean appliesToVersionImpl(GameVersionNumber gameVersionNumber, @Nullable Version version,
                                                @Nullable JavaRuntime java, @Nullable LibraryAnalyzer analyzer) {
-            return analyzer != null && analyzer.has(LibraryAnalyzer.LibraryType.CLEANROOM)
-                    && super.appliesToVersionImpl(gameVersionNumber, version, java, analyzer);
+            if (analyzer == null || !analyzer.has(LibraryAnalyzer.LibraryType.CLEANROOM)) return false;
+
+            var cleanroomVersion = analyzer.getVersion(LibraryAnalyzer.LibraryType.CLEANROOM).orElse("").replace("-alpha", "");
+
+            if (cleanroomVersion.isEmpty()) return false;
+            if (VersionNumber.compare(cleanroomVersion, "0.5.0") >= 0) return false;
+            return super.appliesToVersionImpl(gameVersionNumber, version, java, analyzer);
+        }
+    },
+    CLEANROOM_JAVA_25(true, GameVersionNumber.between("1.12.2", "1.12.999"), VersionNumber.atLeast("25")) {
+        @Override
+        protected boolean appliesToVersionImpl(GameVersionNumber gameVersionNumber, @Nullable Version version,
+                                               @Nullable JavaRuntime java, @Nullable LibraryAnalyzer analyzer) {
+            if (analyzer == null || !analyzer.has(LibraryAnalyzer.LibraryType.CLEANROOM)) return false;
+
+            var cleanroomVersion = analyzer.getVersion(LibraryAnalyzer.LibraryType.CLEANROOM).orElse("").replace("-alpha", "");
+
+            if (cleanroomVersion.isEmpty()) return false;
+            if (VersionNumber.compare(cleanroomVersion, "0.5.0") < 0) return false;
+            return super.appliesToVersionImpl(gameVersionNumber, version, java, analyzer);
         }
     },
     // LaunchWrapper<=1.12 will crash because LaunchWrapper assumes the system class loader is an instance of URLClassLoader (Java 8)
