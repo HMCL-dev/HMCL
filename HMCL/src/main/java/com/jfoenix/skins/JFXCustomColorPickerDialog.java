@@ -309,6 +309,7 @@ public class JFXCustomColorPickerDialog extends StackPane {
 
     public void setCurrentColor(Color currentColor) {
         this.currentColorProperty.set(currentColor);
+        curvedColorPicker.setColor(currentColor);
     }
 
     Color getCurrentColor() {
