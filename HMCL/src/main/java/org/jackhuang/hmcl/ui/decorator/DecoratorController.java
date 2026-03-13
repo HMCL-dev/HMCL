@@ -62,7 +62,6 @@ import java.util.Locale;
 import java.util.Random;
 import java.util.stream.Stream;
 
-import static java.util.stream.Collectors.toList;
 import static org.jackhuang.hmcl.setting.ConfigHolder.config;
 import static org.jackhuang.hmcl.ui.FXUtils.newBuiltinImage;
 import static org.jackhuang.hmcl.ui.FXUtils.onEscPressed;
@@ -307,9 +306,9 @@ public class DecoratorController {
             candidates = stream
                     .filter(it -> FXUtils.IMAGE_EXTENSIONS.contains(getExtension(it).toLowerCase(Locale.ROOT)))
                     .filter(Files::isReadable)
-                    .collect(toList());
+                    .toList();
         } catch (IOException e) {
-            LOG.warning("Failed to list files in ./bg", e);
+            LOG.warning("Failed to list files in " + imageDir, e);
             return null;
         }
 
