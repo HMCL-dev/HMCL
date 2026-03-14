@@ -155,6 +155,23 @@ public class JFXCustomColorPickerDialog extends StackPane {
             paraTransition.play();
         });
 
+        container.getChildren().add(tabs);
+
+
+        HBox actionsHBox = new HBox();
+        actionsHBox.getStyleClass().add("jfx-color-dialog-actions");
+
+        JFXButton acceptButton = new JFXButton(i18n("button.ok"));
+        acceptButton.setOnAction(event -> updateColor());
+        acceptButton.getStyleClass().add("jfx-color-dialog-accept");
+
+        JFXButton cancelButton = new JFXButton(i18n("button.cancel"));
+        cancelButton.setOnAction(event -> close());
+        cancelButton.getStyleClass().add("jfx-color-dialog-cancel");
+
+        actionsHBox.getChildren().addAll(acceptButton, cancelButton);
+        container.getChildren().add(actionsHBox);
+
         initRun = () -> {
             // change tabs labels font color according to the selected color
             pane.backgroundProperty().addListener((o, oldVal, newVal) -> {
@@ -234,6 +251,9 @@ public class JFXCustomColorPickerDialog extends StackPane {
                 hexField.focusColorProperty().bind(Bindings.createObjectBinding(() -> {
                     return pane.getBackground().getFills().get(0).getFill();
                 }, pane.backgroundProperty()));
+                acceptButton.textFillProperty().bind(Bindings.createObjectBinding(() -> {
+                    return (Color) pane.getBackground().getFills().get(0).getFill();
+                }, pane.backgroundProperty()));
 
 
                 ((Pane) pickerDecorator.lookup(".jfx-decorator-buttons-container")).backgroundProperty()
@@ -263,29 +283,6 @@ public class JFXCustomColorPickerDialog extends StackPane {
                         }, pane.backgroundProperty()));
             });
         };
-
-
-        container.getChildren().add(tabs);
-
-        HBox actionsHBox = new HBox();
-        actionsHBox.getStyleClass().add("jfx-color-dialog-actions");
-
-        JFXButton acceptButton = new JFXButton(i18n("button.ok"));
-        acceptButton.setOnAction(event -> updateColor());
-        acceptButton.getStyleClass().add("jfx-color-dialog-accept");
-        acceptButton.textFillProperty().bind(Bindings.createObjectBinding(() -> {
-            if (pane.getBackground() != null && !pane.getBackground().getFills().isEmpty()) {
-                return (Color) pane.getBackground().getFills().get(0).getFill();
-            }
-            return Color.BLACK;
-        }, pane.backgroundProperty()));
-
-        JFXButton cancelButton = new JFXButton(i18n("button.cancel"));
-        cancelButton.setOnAction(event -> close());
-        cancelButton.getStyleClass().add("jfx-color-dialog-cancel");
-
-        actionsHBox.getChildren().addAll(acceptButton, cancelButton);
-        container.getChildren().add(actionsHBox);
 
         this.getChildren().add(container);
         this.setPadding(new Insets(0));
