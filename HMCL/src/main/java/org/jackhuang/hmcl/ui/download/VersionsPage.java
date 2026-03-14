@@ -17,7 +17,11 @@
  */
 package org.jackhuang.hmcl.ui.download;
 
-import com.jfoenix.controls.*;
+import com.jfoenix.controls.JFXButton;
+import com.jfoenix.controls.JFXListView;
+import com.jfoenix.controls.JFXSpinner;
+import com.jfoenix.controls.JFXTextField;
+import javafx.animation.PauseTransition;
 import javafx.beans.InvalidationListener;
 import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.SimpleObjectProperty;
@@ -25,11 +29,16 @@ import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
+import javafx.scene.Node;
 import javafx.scene.control.*;
 import javafx.scene.image.ImageView;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
-import javafx.scene.layout.*;
+import javafx.scene.layout.BorderPane;
+import javafx.scene.layout.HBox;
+import javafx.scene.layout.Priority;
+import javafx.scene.layout.StackPane;
+import javafx.util.Duration;
 import org.jackhuang.hmcl.download.DownloadProvider;
 import org.jackhuang.hmcl.download.RemoteVersion;
 import org.jackhuang.hmcl.download.VersionList;
@@ -53,8 +62,8 @@ import org.jackhuang.hmcl.ui.SVG;
 import org.jackhuang.hmcl.ui.animation.ContainerAnimations;
 import org.jackhuang.hmcl.ui.animation.TransitionPane;
 import org.jackhuang.hmcl.ui.construct.ComponentList;
+import org.jackhuang.hmcl.ui.construct.LineSelectButton;
 import org.jackhuang.hmcl.ui.construct.RipplerContainer;
-import org.jackhuang.hmcl.ui.construct.SpinnerPane;
 import org.jackhuang.hmcl.ui.construct.TwoLineListItem;
 import org.jackhuang.hmcl.ui.wizard.Navigation;
 import org.jackhuang.hmcl.ui.wizard.Refreshable;
@@ -63,7 +72,6 @@ import org.jackhuang.hmcl.util.NativePatcher;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.i18n.I18n;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
-import org.jackhuang.hmcl.util.platform.Platform;
 import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
 
 import java.util.Locale;
@@ -72,6 +80,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static org.jackhuang.hmcl.ui.FXUtils.*;
+import static org.jackhuang.hmcl.ui.ToolbarListPageSkin.createToolbarButton2;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
@@ -80,7 +89,6 @@ public final class VersionsPage extends Control implements WizardPage, Refreshab
     private final String libraryId;
     private final String title;
     private final Navigation navigation;
-    private final DownloadProvider downloadProvider;
     private final VersionList<?> versionList;
     private final Runnable callback;
 
@@ -96,7 +104,6 @@ public final class VersionsPage extends Control implements WizardPage, Refreshab
         this.gameVersion = gameVersion;
         this.libraryId = libraryId;
         this.navigation = navigation;
-        this.downloadProvider = downloadProvider;
         this.versionList = downloadProvider.getVersionListById(libraryId);
         this.callback = callback;
 
@@ -203,10 +210,10 @@ public final class VersionsPage extends Control implements WizardPage, Refreshab
 
         private void onOpenWiki() {
             RemoteVersion item = getItem();
-            if (!(item instanceof GameRemoteVersion))
+            if (!(item instanceof GameRemoteVersion remoteVersion))
                 return;
 
-            FXUtils.openLink(I18n.getWikiLink((GameRemoteVersion) item));
+            FXUtils.openLink(I18n.getWikiLink(remoteVersion));
         }
 
         @Override
@@ -252,7 +259,7 @@ public final class VersionsPage extends Control implements WizardPage, Refreshab
                     }
                 }
 
-                switch (NativePatcher.checkSupportedStatus(gameVersion, Platform.SYSTEM_PLATFORM, OperatingSystem.SYSTEM_VERSION)) {
+                switch (NativePatcher.checkSupportedStatus(gameVersion, org.jackhuang.hmcl.util.platform.Platform.SYSTEM_PLATFORM, OperatingSystem.SYSTEM_VERSION)) {
                     case UNTESTED -> twoLineListItem.addTagWarning(i18n("version.game.support_status.untested"));
                     case UNSUPPORTED -> twoLineListItem.addTagWarning(i18n("version.game.support_status.unsupported"));
                 }
@@ -294,43 +301,63 @@ public final class VersionsPage extends Control implements WizardPage, Refreshab
         private final TransitionPane transitionPane;
         private final JFXSpinner spinner;
 
-        private final JFXTextField nameField;
-        private final JFXComboBox<VersionTypeFilter> categoryField = new JFXComboBox<>();
+        private final TransitionPane toolbarPane;
+        private final HBox searchBar;
+        private final HBox toolbarNormal;
+
+        private final JFXTextField searchField;
+        private final LineSelectButton<VersionTypeFilter> categoryField = new LineSelectButton<>();
 
         VersionsPageSkin(VersionsPage control) {
             super(control);
 
-            BorderPane root = new BorderPane();
+            StackPane pane = new StackPane();
+            pane.setPadding(new Insets(10));
 
-            GridPane searchPane = new GridPane();
-            root.setTop(searchPane);
-            searchPane.getStyleClass().addAll("card");
-            BorderPane.setMargin(searchPane, new Insets(10, 10, 0, 10));
+            ComponentList root = new ComponentList();
+            root.getStyleClass().add("no-padding");
 
-            ColumnConstraints nameColumn = new ColumnConstraints();
-            nameColumn.setMinWidth(USE_PREF_SIZE);
-            ColumnConstraints column1 = new ColumnConstraints();
-            column1.setHgrow(Priority.ALWAYS);
-            ColumnConstraints column2 = new ColumnConstraints();
-            column2.setMaxWidth(150);
-            ColumnConstraints column3 = new ColumnConstraints();
-
-            if (control.versionList.hasType())
-                searchPane.getColumnConstraints().setAll(nameColumn, column1, nameColumn, column2, column3);
-            else
-                searchPane.getColumnConstraints().setAll(nameColumn, column1, column3);
-
-            searchPane.setHgap(16);
-            searchPane.setVgap(10);
-
+            BorderPane borderPane = new BorderPane();
+            categoryField.getStyleClass().add("no-padding");
+            FXUtils.setLimitHeight(categoryField, 40);
+            FXUtils.setLimitWidth(categoryField, 80);
+            borderPane.setRight(categoryField);
+            BorderPane.setAlignment(categoryField, Pos.CENTER_RIGHT);
             {
-                int rowIndex = 0;
+                toolbarPane = new TransitionPane();
 
-                {
-                    nameField = new JFXTextField();
-                    nameField.setPromptText(i18n("version.search.prompt"));
-                    nameField.textProperty().addListener(o -> updateList());
+                searchBar = new HBox();
+                toolbarNormal = new HBox();
 
+                searchBar.setAlignment(Pos.CENTER);
+                searchBar.setPadding(new Insets(0, 5, 0, 5));
+                searchField = new JFXTextField();
+                searchField.setPromptText(i18n("version.search.prompt"));
+                HBox.setHgrow(searchField, Priority.ALWAYS);
+
+                PauseTransition pause = new PauseTransition(Duration.millis(100));
+                pause.setOnFinished(e -> updateList());
+                searchField.textProperty().addListener((observable, oldValue, newValue) -> {
+                    pause.setRate(1);
+                    pause.playFromStart();
+                });
+
+                JFXButton closeSearchBar = createToolbarButton2(null, SVG.CLOSE, () -> {
+                    changeToolbar(toolbarNormal);
+                    searchField.clear();
+                });
+
+                onEscPressed(searchField, closeSearchBar::fire);
+
+                searchBar.getChildren().setAll(searchField, closeSearchBar);
+
+                JFXButton refreshButton = createToolbarButton2(i18n("button.refresh"), SVG.REFRESH, control::onRefresh);
+                JFXButton searchButton = createToolbarButton2(i18n("search"), SVG.SEARCH, () -> changeToolbar(searchBar));
+
+                toolbarNormal.setAlignment(Pos.CENTER_LEFT);
+
+                categoryField.setItems(FXCollections.observableArrayList());
+                if (control.versionList.hasType()) {
                     if ("game".equals(control.libraryId)) {
                         categoryField.getItems().setAll(
                                 VersionTypeFilter.ALL,
@@ -339,67 +366,44 @@ public final class VersionsPage extends Control implements WizardPage, Refreshab
                                 VersionTypeFilter.APRIL_FOOLS,
                                 VersionTypeFilter.OLD
                         );
-                        categoryField.getSelectionModel().select(VersionTypeFilter.RELEASE);
+                        categoryField.setValue(VersionTypeFilter.RELEASE);
                     } else {
                         categoryField.getItems().setAll(
                                 VersionTypeFilter.ALL,
                                 VersionTypeFilter.RELEASE,
                                 VersionTypeFilter.SNAPSHOTS
                         );
-                        categoryField.getSelectionModel().select(VersionTypeFilter.ALL);
+                        categoryField.setValue(VersionTypeFilter.ALL);
                     }
-                    categoryField.setConverter(stringConverter(type -> i18n("version.game." + type.name().toLowerCase(Locale.ROOT))));
-                    categoryField.getSelectionModel().selectedItemProperty().addListener(o -> updateList());
+                    categoryField.setConverter((type) -> i18n("version.game." + type.name().toLowerCase(Locale.ROOT)));
+                    categoryField.valueProperty().addListener(o -> updateList());
 
-                    JFXButton refreshButton = FXUtils.newRaisedButton(i18n("button.refresh"));
-                    refreshButton.setOnAction(event -> control.onRefresh());
-
-                    if (control.versionList.hasType()) {
-                        searchPane.addRow(rowIndex++,
-                                new Label(i18n("version.search")), nameField,
-                                new Label(i18n("version.game.type")), categoryField,
-                                refreshButton
-                        );
-                    } else {
-                        searchPane.addRow(rowIndex++,
-                                new Label(i18n("version.search")), nameField,
-                                refreshButton
-                        );
-                    }
+                    BorderPane.setMargin(categoryField, new Insets(0, 10, 0, 10));
+                    toolbarNormal.getChildren().setAll(refreshButton, searchButton);
+                } else {
+                    toolbarNormal.getChildren().setAll(refreshButton, searchButton);
                 }
+
+                borderPane.setCenter(toolbarPane);
+                toolbarPane.setContent(toolbarNormal, ContainerAnimations.FADE);
+                root.getContent().add(borderPane);
             }
 
             {
-                SpinnerPane spinnerPane = new SpinnerPane();
-                root.setCenter(spinnerPane);
-
                 transitionPane = new TransitionPane();
+                ComponentList.setVgrow(transitionPane, Priority.ALWAYS);
                 spinner = new JFXSpinner();
 
-                StackPane centerWrapper = new StackPane();
-                centerWrapper.setStyle("-fx-padding: 10;");
-                {
-                    ComponentList centrePane = new ComponentList();
-                    centrePane.getStyleClass().add("no-padding");
-                    {
-                        list = new JFXListView<>();
-                        list.getStyleClass().add("jfx-list-view-float");
-                        VBox.setVgrow(list, Priority.ALWAYS);
+                list = new JFXListView<>();
+                list.getStyleClass().add("jfx-list-view-float");
+                ComponentList.setVgrow(list, Priority.ALWAYS);
 
-                        control.versions.addListener((InvalidationListener) o -> updateList());
+                control.versions.addListener((InvalidationListener) o -> updateList());
 
-                        list.setCellFactory(listView -> new RemoteVersionListCell(control));
+                list.setCellFactory(listView -> new RemoteVersionListCell(control));
 
-                        ComponentList.setVgrow(list, Priority.ALWAYS);
-
-                        // ListViewBehavior would consume ESC pressed event, preventing us from handling it, so we ignore it here
-                        ignoreEvent(list, KeyEvent.KEY_PRESSED, e -> e.getCode() == KeyCode.ESCAPE);
-
-                        centrePane.getContent().setAll(list);
-                    }
-
-                    centerWrapper.getChildren().setAll(centrePane);
-                }
+                // ListViewBehavior would consume ESC pressed event, preventing us from handling it, so we ignore it here
+                ignoreEvent(list, KeyEvent.KEY_PRESSED, e -> e.getCode() == KeyCode.ESCAPE);
 
                 StackPane failedPane = new StackPane();
                 failedPane.getStyleClass().add("notice-pane");
@@ -423,21 +427,32 @@ public final class VersionsPage extends Control implements WizardPage, Refreshab
                     if (status == Status.LOADING)
                         transitionPane.setContent(spinner, ContainerAnimations.FADE);
                     else if (status == Status.SUCCESS)
-                        transitionPane.setContent(centerWrapper, ContainerAnimations.FADE);
+                        transitionPane.setContent(list, ContainerAnimations.FADE);
                     else // if (status == Status.FAILED)
                         transitionPane.setContent(failedPane, ContainerAnimations.FADE);
                 });
 
-                root.setCenter(transitionPane);
+                root.getContent().add(transitionPane);
             }
 
-            this.getChildren().setAll(root);
+            pane.getChildren().setAll(root);
+            this.getChildren().setAll(pane);
+        }
+
+        private void changeToolbar(HBox newToolbar) {
+            Node oldToolbar = toolbarPane.getCurrentNode();
+            if (newToolbar != oldToolbar) {
+                toolbarPane.setContent(newToolbar, ContainerAnimations.FADE);
+                if (newToolbar == searchBar) {
+                    FXUtils.runInFX(searchField::requestFocus);
+                }
+            }
         }
 
         private void updateList() {
             Stream<RemoteVersion> versions = getSkinnable().versions.stream();
 
-            VersionTypeFilter filter = categoryField.getSelectionModel().getSelectedItem();
+            VersionTypeFilter filter = categoryField.getValue();
             if (filter != null)
                 versions = versions.filter(it -> {
                     RemoteVersion.Type versionType = it.getVersionType();
@@ -454,7 +469,7 @@ public final class VersionsPage extends Control implements WizardPage, Refreshab
                     };
                 });
 
-            String nameQuery = nameField.getText();
+            String nameQuery = searchField.getText();
             if (!StringUtils.isBlank(nameQuery)) {
                 if (nameQuery.startsWith("regex:")) {
                     try {
