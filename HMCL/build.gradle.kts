@@ -123,6 +123,7 @@ val addOpens = listOf(
     "java.base/java.lang",
     "java.base/java.lang.reflect",
     "java.base/jdk.internal.loader",
+    "java.base/jdk.internal.misc",
     "javafx.base/com.sun.javafx.binding",
     "javafx.base/com.sun.javafx.event",
     "javafx.base/com.sun.javafx.runtime",
