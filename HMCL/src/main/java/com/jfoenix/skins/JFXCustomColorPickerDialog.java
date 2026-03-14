@@ -46,6 +46,8 @@ import org.jackhuang.hmcl.util.StringUtils;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.regex.Pattern;
 
+import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
+
 /**
  * @author Shadi Shaheen
  */
@@ -78,7 +80,7 @@ public class JFXCustomColorPickerDialog extends StackPane {
 
         // create JFX Decorator
         pickerDecorator = new JFXDecorator(dialog, this, false, false, false);
-        pickerDecorator.setOnCloseButtonAction(this::updateColor);
+        pickerDecorator.setOnCloseButtonAction(this::close);
         pickerDecorator.setPickOnBounds(false);
         customScene = new Scene(pickerDecorator, Color.TRANSPARENT);
         StyleSheets.init(customScene);
@@ -152,6 +154,23 @@ public class JFXCustomColorPickerDialog extends StackPane {
             });
             paraTransition.play();
         });
+
+        container.getChildren().add(tabs);
+
+
+        HBox actionsHBox = new HBox();
+        actionsHBox.getStyleClass().add("jfx-color-dialog-actions");
+
+        JFXButton acceptButton = new JFXButton(i18n("button.ok"));
+        acceptButton.setOnAction(event -> updateColor());
+        acceptButton.getStyleClass().add("jfx-color-dialog-accept");
+
+        JFXButton cancelButton = new JFXButton(i18n("button.cancel"));
+        cancelButton.setOnAction(event -> close());
+        cancelButton.getStyleClass().add("jfx-color-dialog-cancel");
+
+        actionsHBox.getChildren().addAll(acceptButton, cancelButton);
+        container.getChildren().add(actionsHBox);
 
         initRun = () -> {
             // change tabs labels font color according to the selected color
@@ -232,6 +251,9 @@ public class JFXCustomColorPickerDialog extends StackPane {
                 hexField.focusColorProperty().bind(Bindings.createObjectBinding(() -> {
                     return pane.getBackground().getFills().get(0).getFill();
                 }, pane.backgroundProperty()));
+                acceptButton.textFillProperty().bind(Bindings.createObjectBinding(() -> {
+                    return (Color) pane.getBackground().getFills().get(0).getFill();
+                }, pane.backgroundProperty()));
 
 
                 ((Pane) pickerDecorator.lookup(".jfx-decorator-buttons-container")).backgroundProperty()
@@ -261,9 +283,6 @@ public class JFXCustomColorPickerDialog extends StackPane {
                         }, pane.backgroundProperty()));
             });
         };
-
-
-        container.getChildren().add(tabs);
 
         this.getChildren().add(container);
         this.setPadding(new Insets(0));
