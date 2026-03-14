@@ -166,7 +166,7 @@ public final class World {
         return isLocked(getSessionLockFile());
     }
 
-    public boolean supportDatapacks() {
+    public boolean supportDataPacks() {
         return getGameVersion() != null && getGameVersion().isAtLeast("1.13", "17w43a");
     }
 
