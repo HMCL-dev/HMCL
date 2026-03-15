@@ -387,7 +387,16 @@ public final class LauncherHelper {
                 if (setting.getJavaVersionType() == JavaVersionType.VERSION) {
                     try {
                         int targetJavaVersionMajor = Integer.parseInt(setting.getJavaVersion());
-                        GameJavaVersion minimumJavaVersion = GameJavaVersion.getMinimumJavaVersion(gameVersion);
+                        GameJavaVersion minimumJavaVersion = null;
+                        if (gameVersion.compareTo("1.12.2") == 0) {
+                            Optional<String> cleanroomVersion = analyzer.getVersion(LibraryAnalyzer.LibraryType.CLEANROOM);
+                            if (cleanroomVersion.isPresent()) {
+                                minimumJavaVersion = GameJavaVersion.getCleanroomJavaVersion(cleanroomVersion.get());
+                            }
+                        }
+
+                        if (minimumJavaVersion == null)
+                            minimumJavaVersion = GameJavaVersion.getMinimumJavaVersion(gameVersion);
 
                         if (minimumJavaVersion != null && targetJavaVersionMajor < minimumJavaVersion.majorVersion()) {
                             Controllers.dialog(
