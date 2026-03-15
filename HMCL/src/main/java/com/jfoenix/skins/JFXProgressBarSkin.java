@@ -39,7 +39,6 @@ import javafx.util.Duration;
 public class JFXProgressBarSkin extends ProgressIndicatorSkin {
 
     private StackPane track;
-    private StackPane secondaryBar;
     private StackPane bar;
     private double barWidth = 0;
     private double secondaryBarWidth = 0;
@@ -54,11 +53,9 @@ public class JFXProgressBarSkin extends ProgressIndicatorSkin {
 
         bar.widthProperty().addListener(observable -> {
             updateProgress();
-            updateSecondaryProgress();
         });
 
         registerChangeListener(bar.progressProperty(), (obs) -> updateProgress());
-        registerChangeListener(bar.secondaryProgressProperty(), obs -> updateSecondaryProgress());
         registerChangeListener(bar.visibleProperty(), obs -> updateAnimation());
         registerChangeListener(bar.parentProperty(), obs -> updateAnimation());
         registerChangeListener(bar.sceneProperty(), obs -> updateAnimation());
@@ -75,21 +72,17 @@ public class JFXProgressBarSkin extends ProgressIndicatorSkin {
     }
 
     protected void initialize() {
-
         track = new StackPane();
         track.getStyleClass().setAll("track");
 
         bar = new StackPane();
         bar.getStyleClass().setAll("bar");
 
-        secondaryBar = new StackPane();
-        secondaryBar.getStyleClass().setAll("secondary-bar");
-
         clip = new Region();
         clip.setBackground(new Background(new BackgroundFill(Color.BLACK, CornerRadii.EMPTY, Insets.EMPTY)));
         bar.backgroundProperty().addListener(observable -> JFXNodeUtils.updateBackground(bar.getBackground(), clip));
 
-        getChildren().setAll(track, secondaryBar, bar);
+        getChildren().setAll(track, bar);
     }
 
     @Override
@@ -120,7 +113,6 @@ public class JFXProgressBarSkin extends ProgressIndicatorSkin {
     @Override
     protected void layoutChildren(double x, double y, double w, double h) {
         track.resizeRelocate(x, y, w, h);
-        secondaryBar.resizeRelocate(x, y, secondaryBarWidth, h);
         bar.resizeRelocate(x, y, getSkinnable().isIndeterminate() ? w : barWidth, h);
         clip.resizeRelocate(0, 0, w, h);
 
@@ -136,13 +128,6 @@ public class JFXProgressBarSkin extends ProgressIndicatorSkin {
             // remove clip
             bar.setClip(null);
         }
-    }
-
-    protected void updateSecondaryProgress() {
-        final JFXProgressBar control = (JFXProgressBar) getSkinnable();
-        secondaryBarWidth = ((int) (control.getWidth() - snappedLeftInset() - snappedRightInset()) * 2
-                * Math.min(1, Math.max(0, control.getSecondaryProgress()))) / 2.0F;
-        control.requestLayout();
     }
 
     boolean wasIndeterminate = false;
