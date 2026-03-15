@@ -411,8 +411,17 @@ public final class LauncherHelper {
                         targetJavaVersion = GameJavaVersion.get(targetJavaVersionMajor);
                     } catch (NumberFormatException ignored) {
                     }
-                } else
-                    targetJavaVersion = version.getJavaVersion();
+                } else {
+                    if (gameVersion.compareTo("1.12.2") == 0) {
+                        Optional<String> cleanroomVersion = analyzer.getVersion(LibraryAnalyzer.LibraryType.CLEANROOM);
+                        if (cleanroomVersion.isPresent()) {
+                            targetJavaVersion = GameJavaVersion.getCleanroomJavaVersion(cleanroomVersion.get());
+                        }
+                    }
+
+                    if (targetJavaVersion == null)
+                        targetJavaVersion = version.getJavaVersion();
+                }
 
                 if (targetJavaVersion != null && supportedVersions.contains(targetJavaVersion)) {
                     downloadJava(targetJavaVersion, profile)
