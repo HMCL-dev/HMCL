@@ -472,9 +472,9 @@ public final class LauncherHelper {
                             String cleanroomVersion = analyzer.getVersion(LibraryAnalyzer.LibraryType.CLEANROOM)
                                     .orElse("");
 
-                            gameJavaVersion = cleanroomVersion.isEmpty()
-                                    ? GameJavaVersion.JAVA_21
-                                    : GameJavaVersion.getCleanroomJavaVersion(cleanroomVersion);
+                            gameJavaVersion = !cleanroomVersion.isEmpty()
+                                    ? GameJavaVersion.getCleanroomJavaVersion(cleanroomVersion)
+                                    : GameJavaVersion.JAVA_21;
                         } else if (violatedMandatoryConstraints.contains(JavaVersionConstraint.GAME_JSON))
                             gameJavaVersion = version.getJavaVersion();
                         else if (violatedMandatoryConstraints.contains(JavaVersionConstraint.VANILLA))
