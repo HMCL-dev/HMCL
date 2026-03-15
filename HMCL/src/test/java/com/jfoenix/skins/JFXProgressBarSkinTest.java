@@ -47,9 +47,7 @@ class JFXProgressBarSkinTest {
             assertEquals(0.0, visibleTracks.get(0).getLayoutX(), DELTA);
             assertEquals(100.0, visibleTracks.get(0).getWidth(), DELTA);
 
-            assertTrue(probe.stopIndicator().isVisible());
-            assertEquals(96.0, probe.stopIndicator().getLayoutX(), DELTA);
-            assertEquals(4.0, probe.stopIndicator().getWidth(), DELTA);
+            assertFalse(probe.stopIndicator().isVisible());
         });
     }
 

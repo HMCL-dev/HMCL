@@ -156,11 +156,12 @@ public class JFXProgressBarSkin extends ProgressIndicatorSkin {
         layoutRegion(activeIndicator, x, y, activeWidth, height, showActiveIndicator && activeWidth > 0);
 
         boolean showTrack = progress < 1 && trackWidth > 0;
+        boolean showStopIndicator = progress > 0 && showTrack;
         layoutRegion(trailingTrack, trackX, y, trackWidth, height, showTrack);
 
         double stopSize = Math.min(STOP_INDICATOR_SIZE, Math.min(trackWidth, height));
         double stopX = x + width - stopSize;
-        layoutRegion(stopIndicator, stopX, y, stopSize, stopSize, showTrack && stopSize > 0);
+        layoutRegion(stopIndicator, stopX, y, stopSize, stopSize, showStopIndicator && stopSize > 0);
     }
 
     private void layoutIndeterminate(double x, double y, double width, double height) {
