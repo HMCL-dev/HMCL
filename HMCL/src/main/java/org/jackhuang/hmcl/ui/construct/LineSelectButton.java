@@ -17,39 +17,29 @@
  */
 package org.jackhuang.hmcl.ui.construct;
 
-import com.jfoenix.controls.JFXPopup;
 import javafx.beans.InvalidationListener;
-import javafx.beans.binding.Bindings;
-import javafx.beans.property.*;
-import javafx.collections.FXCollections;
+import javafx.beans.property.ListProperty;
+import javafx.beans.property.ObjectProperty;
 import javafx.collections.ObservableList;
-import javafx.css.PseudoClass;
-import javafx.geometry.Pos;
-import javafx.scene.control.Label;
 import javafx.scene.input.MouseButton;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.input.ScrollEvent;
-import javafx.scene.layout.*;
-import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
-import org.jackhuang.hmcl.util.javafx.MappedObservableList;
 
 import java.util.Collection;
-import java.util.Objects;
 import java.util.function.Function;
-
-import static org.jackhuang.hmcl.ui.FXUtils.determineOptimalPopupPosition;
 
 /// @author Glavo
 public final class LineSelectButton<T> extends LineButton {
 
     private static final String DEFAULT_STYLE_CLASS = "line-select-button";
-    private static final PseudoClass SELECTED_PSEUDO_CLASS = PseudoClass.getPseudoClass("selected");
 
-    private JFXPopup popup;
+    private final SelectPopup<T> selectPopup;
 
     public LineSelectButton() {
         this.getStyleClass().add(DEFAULT_STYLE_CLASS);
+
+        this.selectPopup = new SelectPopup<>();
 
         InvalidationListener updateTrailingText = observable -> {
             T value = getValue();
@@ -67,150 +57,83 @@ public final class LineSelectButton<T> extends LineButton {
 
         ripplerContainer.addEventHandler(MouseEvent.MOUSE_CLICKED, event -> {
             if (event.getButton() == MouseButton.SECONDARY) {
-                if (popup != null)
-                    popup.hide();
+                if (selectPopup.isShowing()) {
+                    selectPopup.hide();
+                }
                 event.consume();
             }
         });
+
+        ripplerContainer.addEventFilter(ScrollEvent.ANY, ignored -> selectPopup.hide());
+
+        selectPopup.showingProperty().addListener((observable, oldValue, newValue) ->
+                ripplerContainer.getRippler().setRipplerDisabled(newValue));
     }
 
     @Override
     public void fire() {
         super.fire();
-        if (popup == null) {
-            PopupMenu popupMenu = new PopupMenu();
-            this.popup = new JFXPopup(popupMenu);
-
-            ripplerContainer.addEventFilter(ScrollEvent.ANY, ignored -> popup.hide());
-
-            Bindings.bindContent(popupMenu.getContent(), MappedObservableList.create(itemsProperty(), item -> {
-                VBox vbox = new VBox();
-
-                var itemTitleLabel = new Label();
-                itemTitleLabel.getStyleClass().add("title-label");
-                itemTitleLabel.textProperty().bind(Bindings.createStringBinding(() -> {
-                    if (item == null)
-                        return "";
-
-                    Function<T, String> converter = getConverter();
-                    return converter != null ? converter.apply(item) : Objects.toString(item, "");
-                }, converterProperty()));
-
-                var itemSubtitleLabel = new Label();
-                itemSubtitleLabel.getStyleClass().add("subtitle-label");
-                itemSubtitleLabel.textProperty().bind(Bindings.createStringBinding(() -> {
-                    Function<T, String> descriptionConverter = getDescriptionConverter();
-                    return descriptionConverter != null ? descriptionConverter.apply(item) : "";
-                }, descriptionConverterProperty()));
-
-                FXUtils.onChangeAndOperate(itemSubtitleLabel.textProperty(), text -> {
-                    if (text == null || text.isEmpty()) {
-                        vbox.getChildren().setAll(itemTitleLabel);
-                    } else {
-                        vbox.getChildren().setAll(itemTitleLabel, itemSubtitleLabel);
-                    }
-                });
-
-                var wrapper = new StackPane(vbox);
-                wrapper.setAlignment(Pos.CENTER_LEFT);
-                wrapper.getStyleClass().add("menu-container");
-                wrapper.setMouseTransparent(true);
-                RipplerContainer ripplerContainer = new RipplerContainer(wrapper);
-                FXUtils.onClicked(ripplerContainer, () -> {
-                    setValue(item);
-                    popup.hide();
-                });
-
-                FXUtils.onChangeAndOperate(valueProperty(),
-                        value -> wrapper.pseudoClassStateChanged(SELECTED_PSEUDO_CLASS, Objects.equals(value, item)));
-
-                return ripplerContainer;
-            }));
-
-            popup.showingProperty().addListener((observable, oldValue, newValue) ->
-                    ripplerContainer.getRippler().setRipplerDisabled(newValue));
-        }
-
-        if (popup.isShowing()) {
-            popup.hide();
+        if (selectPopup.isShowing()) {
+            selectPopup.hide();
         } else {
-            JFXPopup.PopupVPosition vPosition = determineOptimalPopupPosition(this, popup);
-            popup.show(this, vPosition, JFXPopup.PopupHPosition.RIGHT,
-                    0,
-                    vPosition == JFXPopup.PopupVPosition.TOP ? this.getHeight() : -this.getHeight(),
-                    true);
+            selectPopup.showRelativeTo(this);
         }
     }
 
-    private final ObjectProperty<T> value = new SimpleObjectProperty<>(this, "value");
-
     public ObjectProperty<T> valueProperty() {
-        return value;
+        return selectPopup.valueProperty();
     }
 
     public T getValue() {
-        return valueProperty().get();
+        return selectPopup.getValue();
     }
 
     public void setValue(T value) {
-        valueProperty().set(value);
+        selectPopup.setValue(value);
     }
 
-    private final ObjectProperty<Function<T, String>> converter = new SimpleObjectProperty<>(this, "converter");
-
     public ObjectProperty<Function<T, String>> converterProperty() {
-        return converter;
+        return selectPopup.converterProperty();
     }
 
     public Function<T, String> getConverter() {
-        return converterProperty().get();
+        return selectPopup.getConverter();
     }
 
     public void setConverter(Function<T, String> value) {
-        converterProperty().set(value);
+        selectPopup.setConverter(value);
     }
 
-    private ObjectProperty<Function<T, String>> descriptionConverter;
-
     public ObjectProperty<Function<T, String>> descriptionConverterProperty() {
-        if (descriptionConverter == null)
-            descriptionConverter = new SimpleObjectProperty<>(this, "descriptionConverter");
-        return descriptionConverter;
+        return selectPopup.descriptionConverterProperty();
     }
 
     public Function<T, String> getDescriptionConverter() {
-        return descriptionConverterProperty().get();
+        return selectPopup.getDescriptionConverter();
     }
 
     public void setDescriptionConverter(Function<T, String> value) {
-        descriptionConverterProperty().set(value);
+        selectPopup.setDescriptionConverter(value);
     }
 
-    private final ListProperty<T> items = new SimpleListProperty<>(this, "items", FXCollections.emptyObservableList());
-
     public ListProperty<T> itemsProperty() {
-        return items;
+        return selectPopup.itemsProperty();
+    }
+
+    public ObservableList<T> getItems() {
+        return selectPopup.getItems();
     }
 
     public void setItems(ObservableList<T> value) {
-        itemsProperty().set(value);
+        selectPopup.setItems(value);
     }
 
     public void setItems(Collection<T> value) {
-        if (value instanceof ObservableList<T> observableList) {
-            this.setItems(observableList);
-        } else {
-            this.setItems(FXCollections.observableArrayList(value));
-        }
+        selectPopup.setItems(value);
     }
 
     @SafeVarargs
     public final void setItems(T... values) {
-        this.setItems(FXCollections.observableArrayList(values));
+        selectPopup.setItems(values);
     }
-
-    public ObservableList<T> getItems() {
-        return items.get();
-    }
-
 }

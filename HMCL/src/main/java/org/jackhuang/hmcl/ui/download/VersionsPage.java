@@ -62,8 +62,8 @@ import org.jackhuang.hmcl.ui.SVG;
 import org.jackhuang.hmcl.ui.animation.ContainerAnimations;
 import org.jackhuang.hmcl.ui.animation.TransitionPane;
 import org.jackhuang.hmcl.ui.construct.ComponentList;
-import org.jackhuang.hmcl.ui.construct.LineSelectButton;
 import org.jackhuang.hmcl.ui.construct.RipplerContainer;
+import org.jackhuang.hmcl.ui.construct.SelectPopup;
 import org.jackhuang.hmcl.ui.construct.TwoLineListItem;
 import org.jackhuang.hmcl.ui.wizard.Navigation;
 import org.jackhuang.hmcl.ui.wizard.Refreshable;
@@ -306,7 +306,7 @@ public final class VersionsPage extends Control implements WizardPage, Refreshab
         private final HBox toolbarNormal;
 
         private final JFXTextField searchField;
-        private final LineSelectButton<VersionTypeFilter> categoryField = new LineSelectButton<>();
+        private final SelectPopup<VersionTypeFilter> categorySelect = new SelectPopup<>();
 
         VersionsPageSkin(VersionsPage control) {
             super(control);
@@ -318,11 +318,22 @@ public final class VersionsPage extends Control implements WizardPage, Refreshab
             root.getStyleClass().add("no-padding");
 
             BorderPane borderPane = new BorderPane();
-            categoryField.getStyleClass().add("no-padding");
-            FXUtils.setLimitHeight(categoryField, 40);
-            FXUtils.setLimitWidth(categoryField, 80);
-            borderPane.setRight(categoryField);
-            BorderPane.setAlignment(categoryField, Pos.CENTER_RIGHT);
+            JFXButton selectButton = createToolbarButton2("", SVG.CATEGORY, null);
+
+            selectButton.setOnAction((event) -> {
+                if (categorySelect.isShowing()) {
+                    categorySelect.hide();
+                } else {
+                    categorySelect.showRelativeTo(selectButton);
+                }
+            });
+
+            InvalidationListener listener = (observable) -> selectButton.setText(i18n("version.game." + categorySelect.getValue().toString().toLowerCase(Locale.ROOT)));
+
+            categorySelect.valueProperty().addListener(listener);
+
+            borderPane.setRight(selectButton);
+            BorderPane.setAlignment(categorySelect, Pos.CENTER_RIGHT);
             {
                 toolbarPane = new TransitionPane();
 
@@ -356,29 +367,29 @@ public final class VersionsPage extends Control implements WizardPage, Refreshab
 
                 toolbarNormal.setAlignment(Pos.CENTER_LEFT);
 
-                categoryField.setItems(FXCollections.observableArrayList());
+                categorySelect.setItems(FXCollections.observableArrayList());
                 if (control.versionList.hasType()) {
                     if ("game".equals(control.libraryId)) {
-                        categoryField.getItems().setAll(
+                        categorySelect.getItems().setAll(
                                 VersionTypeFilter.ALL,
                                 VersionTypeFilter.RELEASE,
                                 VersionTypeFilter.SNAPSHOTS,
                                 VersionTypeFilter.APRIL_FOOLS,
                                 VersionTypeFilter.OLD
                         );
-                        categoryField.setValue(VersionTypeFilter.RELEASE);
+                        categorySelect.setValue(VersionTypeFilter.RELEASE);
                     } else {
-                        categoryField.getItems().setAll(
+                        categorySelect.getItems().setAll(
                                 VersionTypeFilter.ALL,
                                 VersionTypeFilter.RELEASE,
                                 VersionTypeFilter.SNAPSHOTS
                         );
-                        categoryField.setValue(VersionTypeFilter.ALL);
+                        categorySelect.setValue(VersionTypeFilter.ALL);
                     }
-                    categoryField.setConverter((type) -> i18n("version.game." + type.name().toLowerCase(Locale.ROOT)));
-                    categoryField.valueProperty().addListener(o -> updateList());
+                    categorySelect.setConverter((type) -> i18n("version.game." + type.name().toLowerCase(Locale.ROOT)));
+                    categorySelect.valueProperty().addListener(o -> updateList());
 
-                    BorderPane.setMargin(categoryField, new Insets(0, 10, 0, 10));
+                    BorderPane.setMargin(categorySelect, new Insets(0, 10, 0, 10));
                     toolbarNormal.getChildren().setAll(refreshButton, searchButton);
                 } else {
                     toolbarNormal.getChildren().setAll(refreshButton, searchButton);
@@ -452,7 +463,7 @@ public final class VersionsPage extends Control implements WizardPage, Refreshab
         private void updateList() {
             Stream<RemoteVersion> versions = getSkinnable().versions.stream();
 
-            VersionTypeFilter filter = categoryField.getValue();
+            VersionTypeFilter filter = categorySelect.getValue();
             if (filter != null)
                 versions = versions.filter(it -> {
                     RemoteVersion.Type versionType = it.getVersionType();

@@ -1970,15 +1970,15 @@
     -fx-opacity: 0.4;
 }
 
-.line-select-button .menu-container .title-label {
+.select-popup .menu-container .title-label {
     -fx-font-size: 13px;
 }
 
-.line-select-button .menu-container:selected .title-label {
+.select-popup .menu-container:selected .title-label {
     -fx-text-fill: -monet-primary;
 }
 
-.line-select-button .menu-container:selected .subtitle-label {
+.select-popup .menu-container:selected .subtitle-label {
     -fx-text-fill: -monet-primary;
 }
 
