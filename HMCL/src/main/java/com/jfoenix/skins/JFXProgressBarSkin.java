@@ -20,42 +20,55 @@
 package com.jfoenix.skins;
 
 import com.jfoenix.controls.JFXProgressBar;
-import com.jfoenix.utils.JFXNodeUtils;
 import com.jfoenix.utils.TreeShowingProperty;
-import javafx.animation.*;
-import javafx.geometry.Insets;
+import javafx.animation.Interpolator;
+import javafx.animation.KeyFrame;
+import javafx.animation.KeyValue;
+import javafx.animation.Timeline;
+import javafx.beans.property.DoubleProperty;
+import javafx.beans.property.SimpleDoubleProperty;
 import javafx.scene.Node;
-import javafx.scene.control.ProgressIndicator;
 import javafx.scene.control.skin.ProgressIndicatorSkin;
-import javafx.scene.layout.*;
-import javafx.scene.paint.Color;
+import javafx.scene.layout.Region;
 import javafx.util.Duration;
 
-/// # Material Design ProgressBar Skin
+/// # Material Design 3 ProgressBar Skin
 ///
 /// @author Shadi Shaheen
 /// @version 2.0
 /// @since 2017-10-06
 public class JFXProgressBarSkin extends ProgressIndicatorSkin {
 
-    private StackPane track;
-    private StackPane bar;
-    private double barWidth = 0;
-    private double secondaryBarWidth = 0;
-    private Timeline indeterminateTransition;
-    private Region clip;
+    private static final double INDICATOR_HEIGHT = 4;
+    private static final double DETERMINATE_MIN_ACTIVE_WIDTH = 4;
+    private static final double TRACK_GAP = 4;
+    private static final double STOP_INDICATOR_SIZE = 4;
+
+    private static final double INDETERMINATE_INITIAL_OFFSET_FACTOR = 0.0;
+    private static final double INDETERMINATE_INITIAL_WIDTH_FACTOR = 0.22;
+
+    private final Region leadingTrack = new Region();
+    private final Region trailingTrack = new Region();
+    private final Region activeIndicator = new Region();
+    private final Region stopIndicator = new Region();
+    private final DoubleProperty indeterminateOffsetFactor = new SimpleDoubleProperty(INDETERMINATE_INITIAL_OFFSET_FACTOR);
+    private final DoubleProperty indeterminateWidthFactor = new SimpleDoubleProperty(INDETERMINATE_INITIAL_WIDTH_FACTOR);
     private final TreeShowingProperty treeShowingProperty;
+
+    private Timeline indeterminateTransition;
 
     public JFXProgressBarSkin(JFXProgressBar bar) {
         super(bar);
 
         this.treeShowingProperty = new TreeShowingProperty(bar);
 
-        bar.widthProperty().addListener(observable -> {
-            updateProgress();
-        });
+        initializeNodes();
 
-        registerChangeListener(bar.progressProperty(), (obs) -> updateProgress());
+        indeterminateOffsetFactor.addListener(observable -> getSkinnable().requestLayout());
+        indeterminateWidthFactor.addListener(observable -> getSkinnable().requestLayout());
+        bar.widthProperty().addListener(observable -> updateProgress());
+
+        registerChangeListener(bar.progressProperty(), obs -> updateProgress());
         registerChangeListener(bar.visibleProperty(), obs -> updateAnimation());
         registerChangeListener(bar.parentProperty(), obs -> updateAnimation());
         registerChangeListener(bar.sceneProperty(), obs -> updateAnimation());
@@ -63,26 +76,29 @@ public class JFXProgressBarSkin extends ProgressIndicatorSkin {
         unregisterChangeListeners(treeShowingProperty);
         unregisterChangeListeners(bar.indeterminateProperty());
 
-        registerChangeListener(treeShowingProperty, obs -> this.updateAnimation());
+        registerChangeListener(treeShowingProperty, obs -> updateAnimation());
         registerChangeListener(bar.indeterminateProperty(), obs -> initialize());
 
         initialize();
+    }
 
-        getSkinnable().requestLayout();
+    private void initializeNodes() {
+        configureRegion(leadingTrack, "track");
+        configureRegion(trailingTrack, "track");
+        configureRegion(activeIndicator, "active-indicator");
+        configureRegion(stopIndicator, "stop-indicator");
+        getChildren().setAll(leadingTrack, trailingTrack, activeIndicator, stopIndicator);
+    }
+
+    private void configureRegion(Region region, String styleClass) {
+        region.getStyleClass().setAll(styleClass);
+        region.setManaged(false);
     }
 
     protected void initialize() {
-        track = new StackPane();
-        track.getStyleClass().setAll("track");
-
-        bar = new StackPane();
-        bar.getStyleClass().setAll("bar");
-
-        clip = new Region();
-        clip.setBackground(new Background(new BackgroundFill(Color.BLACK, CornerRadii.EMPTY, Insets.EMPTY)));
-        bar.backgroundProperty().addListener(observable -> JFXNodeUtils.updateBackground(bar.getBackground(), clip));
-
-        getChildren().setAll(track, bar);
+        resetIndeterminateGeometry();
+        updateAnimation();
+        updateProgress();
     }
 
     @Override
@@ -92,12 +108,13 @@ public class JFXProgressBarSkin extends ProgressIndicatorSkin {
 
     @Override
     protected double computePrefWidth(double height, double topInset, double rightInset, double bottomInset, double leftInset) {
-        return Math.max(100, leftInset + bar.prefWidth(getSkinnable().getWidth()) + rightInset);
+        double prefWidth = getSkinnable().getPrefWidth();
+        return leftInset + (prefWidth > 0 ? prefWidth : 100) + rightInset;
     }
 
     @Override
     protected double computePrefHeight(double width, double topInset, double rightInset, double bottomInset, double leftInset) {
-        return topInset + bar.prefHeight(width) + bottomInset;
+        return topInset + INDICATOR_HEIGHT + bottomInset;
     }
 
     @Override
@@ -107,103 +124,152 @@ public class JFXProgressBarSkin extends ProgressIndicatorSkin {
 
     @Override
     protected double computeMaxHeight(double width, double topInset, double rightInset, double bottomInset, double leftInset) {
-        return getSkinnable().prefHeight(width);
+        return topInset + INDICATOR_HEIGHT + bottomInset;
     }
 
     @Override
     protected void layoutChildren(double x, double y, double w, double h) {
-        track.resizeRelocate(x, y, w, h);
-        bar.resizeRelocate(x, y, getSkinnable().isIndeterminate() ? w : barWidth, h);
-        clip.resizeRelocate(0, 0, w, h);
+        double width = Math.max(0, w);
+        double height = Math.min(INDICATOR_HEIGHT, Math.max(0, h));
+        double barY = y + Math.max(0, (h - height) / 2);
 
         if (getSkinnable().isIndeterminate()) {
-            createIndeterminateTimeline();
-            if (JFXNodeUtils.isTreeShowing(getSkinnable())) {
-                indeterminateTransition.play();
-            }
-            // apply clip
-            bar.setClip(clip);
-        } else if (indeterminateTransition != null) {
-            clearAnimation();
-            // remove clip
-            bar.setClip(null);
+            layoutIndeterminate(x, barY, width, height);
+        } else {
+            layoutDeterminate(x, barY, width, height);
         }
     }
 
-    boolean wasIndeterminate = false;
+    private void layoutDeterminate(double x, double y, double width, double height) {
+        double progress = clamp(getSkinnable().getProgress(), 0, 1);
+        double activeWidth = progress >= 1
+                ? width
+                : Math.min(width, Math.max(DETERMINATE_MIN_ACTIVE_WIDTH, progress * width));
+        double trackX = x + activeWidth + TRACK_GAP;
+        double trackWidth = Math.max(0, width - activeWidth - TRACK_GAP);
 
-    protected void pauseTimeline(boolean pause) {
-        if (getSkinnable().isIndeterminate()) {
-            if (indeterminateTransition == null) {
-                createIndeterminateTimeline();
-            }
-            if (pause) {
-                indeterminateTransition.pause();
-            } else {
-                indeterminateTransition.play();
-            }
+        layoutRegion(leadingTrack, 0, 0, 0, 0, false);
+        layoutRegion(activeIndicator, x, y, activeWidth, height, activeWidth > 0);
+
+        boolean showTrack = progress < 1 && trackWidth > 0;
+        layoutRegion(trailingTrack, trackX, y, trackWidth, height, showTrack);
+
+        double stopSize = Math.min(STOP_INDICATOR_SIZE, Math.min(trackWidth, height));
+        double stopX = x + width - stopSize;
+        layoutRegion(stopIndicator, stopX, y, stopSize, stopSize, showTrack && stopSize > 0);
+    }
+
+    private void layoutIndeterminate(double x, double y, double width, double height) {
+        double activeStart = indeterminateOffsetFactor.get() * width;
+        double activeWidth = Math.max(DETERMINATE_MIN_ACTIVE_WIDTH, indeterminateWidthFactor.get() * width);
+        double activeEnd = activeStart + activeWidth;
+        double visibleStart = clamp(activeStart, 0, width);
+        double visibleEnd = clamp(activeEnd, 0, width);
+        double visibleWidth = Math.max(0, visibleEnd - visibleStart);
+
+        layoutRegion(stopIndicator, 0, 0, 0, 0, false);
+
+        if (visibleWidth <= 0) {
+            layoutRegion(activeIndicator, 0, 0, 0, 0, false);
+            layoutRegion(leadingTrack, x, y, width, height, width > 0);
+            layoutRegion(trailingTrack, 0, 0, 0, 0, false);
+            return;
         }
+
+        double leftTrackWidth = Math.max(0, visibleStart - TRACK_GAP);
+        double rightTrackX = x + visibleEnd + TRACK_GAP;
+        double rightTrackWidth = Math.max(0, width - visibleEnd - TRACK_GAP);
+
+        layoutRegion(leadingTrack, x, y, leftTrackWidth, height, leftTrackWidth > 0);
+        layoutRegion(activeIndicator, x + visibleStart, y, visibleWidth, height, true);
+        layoutRegion(trailingTrack, rightTrackX, y, rightTrackWidth, height, rightTrackWidth > 0);
+    }
+
+    private void layoutRegion(Region region, double x, double y, double width, double height, boolean visible) {
+        region.setVisible(visible);
+        if (!visible) {
+            return;
+        }
+        region.resizeRelocate(x, y, Math.max(0, width), Math.max(0, height));
     }
 
     private void updateAnimation() {
-        final boolean isTreeShowing = treeShowingProperty.get();
-        if (indeterminateTransition != null) {
-            pauseTimeline(!isTreeShowing);
-        } else if (isTreeShowing) {
+        if (!getSkinnable().isIndeterminate()) {
+            clearAnimation();
+            return;
+        }
+
+        if (indeterminateTransition == null) {
             createIndeterminateTimeline();
+        }
+
+        if (treeShowingProperty.get()) {
+            indeterminateTransition.play();
+        } else {
+            indeterminateTransition.pause();
         }
     }
 
     private void updateProgress() {
-        final ProgressIndicator control = getSkinnable();
-        final boolean isIndeterminate = control.isIndeterminate();
-        if (!(isIndeterminate && wasIndeterminate)) {
-            barWidth = ((int) (control.getWidth() - snappedLeftInset() - snappedRightInset()) * 2
-                    * Math.min(1, Math.max(0, control.getProgress()))) / 2.0F;
-            control.requestLayout();
-        }
-        wasIndeterminate = isIndeterminate;
+        getSkinnable().requestLayout();
+    }
+
+    private void resetIndeterminateGeometry() {
+        indeterminateOffsetFactor.set(INDETERMINATE_INITIAL_OFFSET_FACTOR);
+        indeterminateWidthFactor.set(INDETERMINATE_INITIAL_WIDTH_FACTOR);
     }
 
     private void createIndeterminateTimeline() {
-        if (indeterminateTransition != null) {
-            clearAnimation();
-        }
-        double dur = 1;
-        ProgressIndicator control = getSkinnable();
-        final double w = control.getWidth() - (snappedLeftInset() + snappedRightInset());
-        indeterminateTransition = new Timeline(new KeyFrame(
-                Duration.ZERO,
-                new KeyValue(clip.scaleXProperty(), 0.0, Interpolator.EASE_IN),
-                new KeyValue(clip.translateXProperty(), -w / 2, Interpolator.LINEAR)
-        ),
+        clearAnimation();
+        resetIndeterminateGeometry();
+
+        indeterminateTransition = new Timeline(
                 new KeyFrame(
-                        Duration.seconds(0.5 * dur),
-                        new KeyValue(clip.scaleXProperty(), 0.4, Interpolator.LINEAR)
+                        Duration.ZERO,
+                        new KeyValue(indeterminateOffsetFactor, 0.0, Interpolator.LINEAR),
+                        new KeyValue(indeterminateWidthFactor, 0.22, Interpolator.EASE_BOTH)
                 ),
                 new KeyFrame(
-                        Duration.seconds(0.9 * dur),
-                        new KeyValue(clip.translateXProperty(), w / 2, Interpolator.LINEAR)
+                        Duration.seconds(0.45),
+                        new KeyValue(indeterminateOffsetFactor, 0.18, Interpolator.EASE_BOTH),
+                        new KeyValue(indeterminateWidthFactor, 0.42, Interpolator.EASE_BOTH)
                 ),
                 new KeyFrame(
-                        Duration.seconds(1 * dur),
-                        new KeyValue(clip.scaleXProperty(), 0.0, Interpolator.EASE_OUT)
-                ));
+                        Duration.seconds(1.15),
+                        new KeyValue(indeterminateOffsetFactor, 0.58, Interpolator.EASE_BOTH),
+                        new KeyValue(indeterminateWidthFactor, 0.3, Interpolator.EASE_BOTH)
+                ),
+                new KeyFrame(
+                        Duration.seconds(1.6),
+                        new KeyValue(indeterminateOffsetFactor, 0.92, Interpolator.EASE_IN),
+                        new KeyValue(indeterminateWidthFactor, 0.18, Interpolator.EASE_OUT)
+                ),
+                new KeyFrame(
+                        Duration.seconds(1.8),
+                        new KeyValue(indeterminateOffsetFactor, 1.08, Interpolator.EASE_IN),
+                        new KeyValue(indeterminateWidthFactor, 0.18, Interpolator.EASE_OUT)
+                )
+        );
         indeterminateTransition.setCycleCount(Timeline.INDEFINITE);
     }
 
     private void clearAnimation() {
+        if (indeterminateTransition == null) {
+            return;
+        }
         indeterminateTransition.stop();
         indeterminateTransition.getKeyFrames().clear();
         indeterminateTransition = null;
+    }
+
+    private static double clamp(double value, double min, double max) {
+        return Math.max(min, Math.min(max, value));
     }
 
     @Override
     public void dispose() {
         super.dispose();
         treeShowingProperty.dispose();
-        if (indeterminateTransition != null) {
-            clearAnimation();
-        }
+        clearAnimation();
     }
 }
