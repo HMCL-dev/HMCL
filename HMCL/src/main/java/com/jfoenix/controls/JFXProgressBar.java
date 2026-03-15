@@ -20,8 +20,6 @@
 package com.jfoenix.controls;
 
 import com.jfoenix.skins.JFXProgressBarSkin;
-import javafx.beans.property.DoubleProperty;
-import javafx.beans.property.SimpleDoubleProperty;
 import javafx.scene.control.ProgressBar;
 import javafx.scene.control.Skin;
 
@@ -54,23 +52,5 @@ public class JFXProgressBar extends ProgressBar {
     private void initialize() {
         setPrefWidth(200);
         getStyleClass().add(DEFAULT_STYLE_CLASS);
-    }
-
-
-    private DoubleProperty secondaryProgress;
-
-    public DoubleProperty secondaryProgressProperty() {
-        if (secondaryProgress == null) {
-            secondaryProgress = new SimpleDoubleProperty(this, "secondaryProgress", INDETERMINATE_PROGRESS);
-        }
-        return secondaryProgress;
-    }
-
-    public double getSecondaryProgress() {
-        return secondaryProgress == null ? INDETERMINATE_PROGRESS : secondaryProgress.get();
-    }
-
-    public void setSecondaryProgress(double secondaryProgress) {
-        secondaryProgressProperty().set(secondaryProgress);
     }
 }

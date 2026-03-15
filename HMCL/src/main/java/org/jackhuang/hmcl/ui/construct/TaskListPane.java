@@ -310,6 +310,7 @@ public final class TaskListPane extends StackPane {
             bar.minWidthProperty().bind(barWidth);
             bar.prefWidthProperty().bind(barWidth);
             bar.maxWidthProperty().bind(barWidth);
+            BorderPane.setMargin(bar, new Insets(2, 0, 0, 0));
 
             setGraphic(pane);
         }
