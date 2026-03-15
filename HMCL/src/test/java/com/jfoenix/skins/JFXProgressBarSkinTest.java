@@ -70,12 +70,48 @@ class JFXProgressBarSkinTest {
             LayoutProbe probe = createProbe(ProgressIndicator.INDETERMINATE_PROGRESS);
 
             assertEquals(0.0, probe.activeIndicator().getLayoutX(), DELTA);
-            assertEquals(22.0, probe.activeIndicator().getWidth(), DELTA);
+            assertEquals(18.0, probe.activeIndicator().getWidth(), DELTA);
 
             List<Region> visibleTracks = probe.visibleTracks();
             assertEquals(1, visibleTracks.size());
-            assertEquals(26.0, visibleTracks.get(0).getLayoutX(), DELTA);
-            assertEquals(74.0, visibleTracks.get(0).getWidth(), DELTA);
+            assertEquals(22.0, visibleTracks.get(0).getLayoutX(), DELTA);
+            assertEquals(78.0, visibleTracks.get(0).getWidth(), DELTA);
+
+            assertFalse(probe.stopIndicator().isVisible());
+        });
+    }
+
+    @Test
+    void indeterminateMidFlightShowsTracksOnBothSidesWithFourPixelGap() throws Exception {
+        runOnFxThreadAndWait(() -> {
+            LayoutProbe probe = createIndeterminateProbe(0.24, 0.68);
+
+            assertEquals(24.0, probe.activeIndicator().getLayoutX(), DELTA);
+            assertEquals(44.0, probe.activeIndicator().getWidth(), DELTA);
+
+            List<Region> visibleTracks = probe.visibleTracks();
+            assertEquals(2, visibleTracks.size());
+            assertEquals(0.0, visibleTracks.get(0).getLayoutX(), DELTA);
+            assertEquals(20.0, visibleTracks.get(0).getWidth(), DELTA);
+            assertEquals(72.0, visibleTracks.get(1).getLayoutX(), DELTA);
+            assertEquals(28.0, visibleTracks.get(1).getWidth(), DELTA);
+
+            assertFalse(probe.stopIndicator().isVisible());
+        });
+    }
+
+    @Test
+    void indeterminateNearExitHidesTrailingTrack() throws Exception {
+        runOnFxThreadAndWait(() -> {
+            LayoutProbe probe = createIndeterminateProbe(0.86, 1.02);
+
+            assertEquals(86.0, probe.activeIndicator().getLayoutX(), DELTA);
+            assertEquals(14.0, probe.activeIndicator().getWidth(), DELTA);
+
+            List<Region> visibleTracks = probe.visibleTracks();
+            assertEquals(1, visibleTracks.size());
+            assertEquals(0.0, visibleTracks.get(0).getLayoutX(), DELTA);
+            assertEquals(82.0, visibleTracks.get(0).getWidth(), DELTA);
 
             assertFalse(probe.stopIndicator().isVisible());
         });
@@ -151,6 +187,31 @@ class JFXProgressBarSkinTest {
         if (failure.get() != null) {
             throw new AssertionError(failure.get());
         }
+    }
+
+    private static LayoutProbe createIndeterminateProbe(double startFactor, double endFactor) {
+        JFXProgressBar progressBar = new JFXProgressBar(ProgressIndicator.INDETERMINATE_PROGRESS);
+        progressBar.setMinSize(TEST_WIDTH, TEST_HEIGHT);
+        progressBar.setPrefSize(TEST_WIDTH, TEST_HEIGHT);
+        progressBar.setMaxSize(TEST_WIDTH, TEST_HEIGHT);
+
+        Pane root = new Pane(progressBar);
+        new Scene(root, TEST_WIDTH, 16);
+
+        root.applyCss();
+        progressBar.applyCss();
+        ((JFXProgressBarSkin) progressBar.getSkin()).setIndeterminateSegmentForTesting(startFactor, endFactor);
+        progressBar.resizeRelocate(0, 6, TEST_WIDTH, TEST_HEIGHT);
+        progressBar.layout();
+
+        Region activeIndicator = lookupRegion(progressBar, ".active-indicator");
+        Region stopIndicator = lookupRegion(progressBar, ".stop-indicator");
+        List<Region> tracks = progressBar.lookupAll(".track").stream()
+                .map(Region.class::cast)
+                .sorted(Comparator.comparingDouble(Node::getLayoutX))
+                .toList();
+
+        return new LayoutProbe(activeIndicator, tracks, stopIndicator);
     }
 
     private record LayoutProbe(Region activeIndicator, List<Region> tracks, Region stopIndicator) {

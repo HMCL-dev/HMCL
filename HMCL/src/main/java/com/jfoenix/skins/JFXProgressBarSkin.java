@@ -44,15 +44,15 @@ public class JFXProgressBarSkin extends ProgressIndicatorSkin {
     private static final double TRACK_GAP = 4;
     private static final double STOP_INDICATOR_SIZE = 4;
 
-    private static final double INDETERMINATE_INITIAL_OFFSET_FACTOR = 0.0;
-    private static final double INDETERMINATE_INITIAL_WIDTH_FACTOR = 0.22;
+    private static final double INDETERMINATE_INITIAL_START_FACTOR = 0.0;
+    private static final double INDETERMINATE_INITIAL_END_FACTOR = 0.18;
 
     private final Region leadingTrack = new Region();
     private final Region trailingTrack = new Region();
     private final Region activeIndicator = new Region();
     private final Region stopIndicator = new Region();
-    private final DoubleProperty indeterminateOffsetFactor = new SimpleDoubleProperty(INDETERMINATE_INITIAL_OFFSET_FACTOR);
-    private final DoubleProperty indeterminateWidthFactor = new SimpleDoubleProperty(INDETERMINATE_INITIAL_WIDTH_FACTOR);
+    private final DoubleProperty indeterminateSegmentStartFactor = new SimpleDoubleProperty(INDETERMINATE_INITIAL_START_FACTOR);
+    private final DoubleProperty indeterminateSegmentEndFactor = new SimpleDoubleProperty(INDETERMINATE_INITIAL_END_FACTOR);
     private final TreeShowingProperty treeShowingProperty;
 
     private Timeline indeterminateTransition;
@@ -64,8 +64,8 @@ public class JFXProgressBarSkin extends ProgressIndicatorSkin {
 
         initializeNodes();
 
-        indeterminateOffsetFactor.addListener(observable -> getSkinnable().requestLayout());
-        indeterminateWidthFactor.addListener(observable -> getSkinnable().requestLayout());
+        indeterminateSegmentStartFactor.addListener(observable -> getSkinnable().requestLayout());
+        indeterminateSegmentEndFactor.addListener(observable -> getSkinnable().requestLayout());
         bar.widthProperty().addListener(observable -> updateProgress());
 
         registerChangeListener(bar.progressProperty(), obs -> updateProgress());
@@ -164,9 +164,8 @@ public class JFXProgressBarSkin extends ProgressIndicatorSkin {
     }
 
     private void layoutIndeterminate(double x, double y, double width, double height) {
-        double activeStart = indeterminateOffsetFactor.get() * width;
-        double activeWidth = Math.max(DETERMINATE_MIN_ACTIVE_WIDTH, indeterminateWidthFactor.get() * width);
-        double activeEnd = activeStart + activeWidth;
+        double activeStart = indeterminateSegmentStartFactor.get() * width;
+        double activeEnd = indeterminateSegmentEndFactor.get() * width;
         double visibleStart = clamp(activeStart, 0, width);
         double visibleEnd = clamp(activeEnd, 0, width);
         double visibleWidth = Math.max(0, visibleEnd - visibleStart);
@@ -219,8 +218,13 @@ public class JFXProgressBarSkin extends ProgressIndicatorSkin {
     }
 
     private void resetIndeterminateGeometry() {
-        indeterminateOffsetFactor.set(INDETERMINATE_INITIAL_OFFSET_FACTOR);
-        indeterminateWidthFactor.set(INDETERMINATE_INITIAL_WIDTH_FACTOR);
+        indeterminateSegmentStartFactor.set(INDETERMINATE_INITIAL_START_FACTOR);
+        indeterminateSegmentEndFactor.set(INDETERMINATE_INITIAL_END_FACTOR);
+    }
+
+    void setIndeterminateSegmentForTesting(double startFactor, double endFactor) {
+        indeterminateSegmentStartFactor.set(startFactor);
+        indeterminateSegmentEndFactor.set(Math.max(startFactor, endFactor));
     }
 
     private void createIndeterminateTimeline() {
@@ -230,28 +234,33 @@ public class JFXProgressBarSkin extends ProgressIndicatorSkin {
         indeterminateTransition = new Timeline(
                 new KeyFrame(
                         Duration.ZERO,
-                        new KeyValue(indeterminateOffsetFactor, 0.0, Interpolator.LINEAR),
-                        new KeyValue(indeterminateWidthFactor, 0.22, Interpolator.EASE_BOTH)
+                        new KeyValue(indeterminateSegmentStartFactor, 0.0, Interpolator.LINEAR),
+                        new KeyValue(indeterminateSegmentEndFactor, 0.18, Interpolator.EASE_OUT)
                 ),
                 new KeyFrame(
-                        Duration.seconds(0.45),
-                        new KeyValue(indeterminateOffsetFactor, 0.18, Interpolator.EASE_BOTH),
-                        new KeyValue(indeterminateWidthFactor, 0.42, Interpolator.EASE_BOTH)
+                        Duration.seconds(0.42),
+                        new KeyValue(indeterminateSegmentStartFactor, 0.0, Interpolator.EASE_BOTH),
+                        new KeyValue(indeterminateSegmentEndFactor, 0.46, Interpolator.EASE_BOTH)
                 ),
                 new KeyFrame(
-                        Duration.seconds(1.15),
-                        new KeyValue(indeterminateOffsetFactor, 0.58, Interpolator.EASE_BOTH),
-                        new KeyValue(indeterminateWidthFactor, 0.3, Interpolator.EASE_BOTH)
+                        Duration.seconds(0.95),
+                        new KeyValue(indeterminateSegmentStartFactor, 0.14, Interpolator.EASE_BOTH),
+                        new KeyValue(indeterminateSegmentEndFactor, 0.76, Interpolator.EASE_BOTH)
                 ),
                 new KeyFrame(
-                        Duration.seconds(1.6),
-                        new KeyValue(indeterminateOffsetFactor, 0.92, Interpolator.EASE_IN),
-                        new KeyValue(indeterminateWidthFactor, 0.18, Interpolator.EASE_OUT)
+                        Duration.seconds(1.42),
+                        new KeyValue(indeterminateSegmentStartFactor, 0.44, Interpolator.EASE_BOTH),
+                        new KeyValue(indeterminateSegmentEndFactor, 0.94, Interpolator.EASE_IN)
                 ),
                 new KeyFrame(
-                        Duration.seconds(1.8),
-                        new KeyValue(indeterminateOffsetFactor, 1.08, Interpolator.EASE_IN),
-                        new KeyValue(indeterminateWidthFactor, 0.18, Interpolator.EASE_OUT)
+                        Duration.seconds(1.78),
+                        new KeyValue(indeterminateSegmentStartFactor, 0.82, Interpolator.EASE_IN),
+                        new KeyValue(indeterminateSegmentEndFactor, 1.0, Interpolator.EASE_IN)
+                ),
+                new KeyFrame(
+                        Duration.seconds(2.0),
+                        new KeyValue(indeterminateSegmentStartFactor, 1.02, Interpolator.EASE_IN),
+                        new KeyValue(indeterminateSegmentEndFactor, 1.02, Interpolator.EASE_IN)
                 )
         );
         indeterminateTransition.setCycleCount(Timeline.INDEFINITE);
