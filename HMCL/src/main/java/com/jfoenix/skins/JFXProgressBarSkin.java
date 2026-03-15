@@ -142,14 +142,18 @@ public class JFXProgressBarSkin extends ProgressIndicatorSkin {
 
     private void layoutDeterminate(double x, double y, double width, double height) {
         double progress = clamp(getSkinnable().getProgress(), 0, 1);
-        double activeWidth = progress >= 1
+        boolean showActiveIndicator = progress > 0;
+        double gap = showActiveIndicator ? TRACK_GAP : 0;
+        double activeWidth = !showActiveIndicator
+                ? 0
+                : progress >= 1
                 ? width
                 : Math.min(width, Math.max(DETERMINATE_MIN_ACTIVE_WIDTH, progress * width));
-        double trackX = x + activeWidth + TRACK_GAP;
-        double trackWidth = Math.max(0, width - activeWidth - TRACK_GAP);
+        double trackX = x + activeWidth + gap;
+        double trackWidth = Math.max(0, width - activeWidth - gap);
 
         layoutRegion(leadingTrack, 0, 0, 0, 0, false);
-        layoutRegion(activeIndicator, x, y, activeWidth, height, activeWidth > 0);
+        layoutRegion(activeIndicator, x, y, activeWidth, height, showActiveIndicator && activeWidth > 0);
 
         boolean showTrack = progress < 1 && trackWidth > 0;
         layoutRegion(trailingTrack, trackX, y, trackWidth, height, showTrack);

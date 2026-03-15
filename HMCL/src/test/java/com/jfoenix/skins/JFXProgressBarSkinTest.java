@@ -35,17 +35,17 @@ class JFXProgressBarSkinTest {
     }
 
     @Test
-    void determinateZeroProgressUsesMinimumDotAndTrailingTrack() throws Exception {
+    void determinateZeroProgressHidesActiveIndicatorAndUsesFullTrack() throws Exception {
         runOnFxThreadAndWait(() -> {
             LayoutProbe probe = createProbe(0);
 
-            assertEquals(4.0, probe.activeIndicator().getWidth(), DELTA);
-            assertEquals(0.0, probe.activeIndicator().getLayoutX(), DELTA);
+            assertFalse(probe.activeIndicator().isVisible());
+            assertEquals(0.0, probe.activeIndicator().getWidth(), DELTA);
 
             List<Region> visibleTracks = probe.visibleTracks();
             assertEquals(1, visibleTracks.size());
-            assertEquals(8.0, visibleTracks.get(0).getLayoutX(), DELTA);
-            assertEquals(92.0, visibleTracks.get(0).getWidth(), DELTA);
+            assertEquals(0.0, visibleTracks.get(0).getLayoutX(), DELTA);
+            assertEquals(100.0, visibleTracks.get(0).getWidth(), DELTA);
 
             assertTrue(probe.stopIndicator().isVisible());
             assertEquals(96.0, probe.stopIndicator().getLayoutX(), DELTA);
@@ -78,6 +78,24 @@ class JFXProgressBarSkinTest {
             assertEquals(74.0, visibleTracks.get(0).getWidth(), DELTA);
 
             assertFalse(probe.stopIndicator().isVisible());
+        });
+    }
+
+    @Test
+    void determinatePositiveProgressUsesMinimumVisibleWidth() throws Exception {
+        runOnFxThreadAndWait(() -> {
+            LayoutProbe probe = createProbe(0.01);
+
+            assertTrue(probe.activeIndicator().isVisible());
+            assertEquals(0.0, probe.activeIndicator().getLayoutX(), DELTA);
+            assertEquals(4.0, probe.activeIndicator().getWidth(), DELTA);
+
+            List<Region> visibleTracks = probe.visibleTracks();
+            assertEquals(1, visibleTracks.size());
+            assertEquals(8.0, visibleTracks.get(0).getLayoutX(), DELTA);
+            assertEquals(92.0, visibleTracks.get(0).getWidth(), DELTA);
+
+            assertTrue(probe.stopIndicator().isVisible());
         });
     }
 
@@ -146,4 +164,3 @@ class JFXProgressBarSkinTest {
         void run() throws Exception;
     }
 }
-
