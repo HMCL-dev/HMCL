@@ -41,7 +41,6 @@ public final class AprilFools {
         }
     }
 
-
     public static boolean isStartInAprilFoolsDay() {
         return START_IN_APRIL_FOOLS_DAY;
     }
@@ -49,7 +48,6 @@ public final class AprilFools {
     public static boolean isEnabled() {
         return ENABLED;
     }
-
 
     private AprilFools() {
     }
