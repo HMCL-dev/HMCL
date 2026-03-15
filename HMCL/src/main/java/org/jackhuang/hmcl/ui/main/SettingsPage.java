@@ -45,6 +45,7 @@ import org.jackhuang.hmcl.upgrade.RemoteVersion;
 import org.jackhuang.hmcl.upgrade.UpdateChannel;
 import org.jackhuang.hmcl.upgrade.UpdateChecker;
 import org.jackhuang.hmcl.upgrade.UpdateHandler;
+import org.jackhuang.hmcl.util.AprilFools;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.i18n.I18n;
 import org.jackhuang.hmcl.util.i18n.SupportedLocale;
@@ -222,6 +223,14 @@ public final class SettingsPage extends ScrollPane {
                 disableAutoShowUpdateDialogPane.setSubtitle(i18n("update.disable_auto_show_update_dialog.subtitle"));
                 disableAutoShowUpdateDialogPane.selectedProperty().bindBidirectional(config().disableAutoShowUpdateDialogProperty());
                 settingsPane.getContent().add(disableAutoShowUpdateDialogPane);
+            }
+
+            if (AprilFools.isStartInAprilFoolsDay()) {
+                LineToggleButton disableAprilFools = new LineToggleButton();
+                disableAprilFools.setTitle("不启用愚人节功能");
+                // disableAprilFools.setSubtitle("在愚人节当天，HMCL会自动启动一个特殊的版本，以庆祝愚人节。");
+                disableAprilFools.selectedProperty().bindBidirectional(config().disableAprilFoolsProperty());
+                settingsPane.getContent().add(disableAprilFools);
             }
 
             {
