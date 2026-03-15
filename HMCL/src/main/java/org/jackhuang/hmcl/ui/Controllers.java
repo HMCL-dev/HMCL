@@ -319,7 +319,12 @@ public final class Controllers {
         stage.setOnCloseRequest(e -> Launcher.stopApplication());
 
         decorator = new DecoratorController(stage, getRootPage());
-        getRootPage().getMainPage().showUpdateProperty().bind(decorator.backableProperty().not().and(UpdateChecker.checkingUpdateProperty().not()).and(UpdateChecker.outdatedProperty()));
+        getRootPage().getMainPage().showUpdateProperty().bind(UpdateChecker.checkingUpdateProperty().not().and(UpdateChecker.outdatedProperty()));
+        getRootPage().getMainPage().showUpdateDialogProperty().bind(
+                decorator.backableProperty().not()
+                        .and(getRootPage().getMainPage().showUpdateProperty())
+                        .and(config().disableAutoShowUpdateDialogProperty().not())
+        );
 
         if (config().getCommonDirType() == EnumCommonDirectory.CUSTOM &&
                 !FileUtils.canCreateDirectory(config().getCommonDirectory())) {
