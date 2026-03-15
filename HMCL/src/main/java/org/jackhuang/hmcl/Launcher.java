@@ -31,15 +31,12 @@ import javafx.stage.Stage;
 import org.jackhuang.hmcl.setting.ConfigHolder;
 import org.jackhuang.hmcl.setting.SambaException;
 import org.jackhuang.hmcl.ui.FXUtils;
-import org.jackhuang.hmcl.util.FileSaver;
+import org.jackhuang.hmcl.util.*;
 import org.jackhuang.hmcl.task.AsyncTaskExecutor;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.upgrade.UpdateChecker;
 import org.jackhuang.hmcl.upgrade.UpdateHandler;
-import org.jackhuang.hmcl.util.CrashReporter;
-import org.jackhuang.hmcl.util.Lang;
-import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.io.JarUtils;
 import org.jackhuang.hmcl.util.platform.Architecture;
 import org.jackhuang.hmcl.util.platform.CommandBuilder;
@@ -304,6 +301,7 @@ public final class Launcher extends Application {
             LOG.info("HMCL Current Directory: " + Metadata.HMCL_CURRENT_DIRECTORY);
             LOG.info("HMCL Jar Path: " + Lang.requireNonNullElse(JarUtils.thisJarPath(), "Not Found"));
             LOG.info("HMCL Log File: " + Lang.requireNonNullElse(LOG.getLogFile(), "In Memory"));
+            LOG.info("April Fools: " + AprilFools.ENABLED);
             LOG.info("JVM Max Memory: " + MEGABYTES.formatBytes(Runtime.getRuntime().maxMemory()));
             try {
                 for (MemoryPoolMXBean bean : ManagementFactory.getMemoryPoolMXBeans()) {
