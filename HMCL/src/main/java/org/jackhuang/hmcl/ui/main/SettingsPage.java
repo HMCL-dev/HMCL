@@ -225,6 +225,15 @@ public final class SettingsPage extends ScrollPane {
             }
 
             {
+                LineToggleButton disableAprilFools = new LineToggleButton();
+                disableAprilFools.setTitle("不启用愚人节功能");
+                // disableAprilFools.setSubtitle("在愚人节当天，HMCL会自动启动一个特殊的版本，以庆祝愚人节。");
+                disableAprilFools.selectedProperty().bindBidirectional(config().disableAprilFoolsProperty());
+                settingsPane.getContent().add(disableAprilFools);
+
+            }
+
+            {
                 MultiFileItem<EnumCommonDirectory> fileCommonLocation = new MultiFileItem<>();
                 fileCommonLocation.loadChildren(Arrays.asList(
                         new MultiFileItem.Option<>(i18n("launcher.cache_directory.default"), EnumCommonDirectory.DEFAULT),

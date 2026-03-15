@@ -237,6 +237,21 @@ public final class Config extends ObservableSetting {
         this.disableAutoShowUpdateDialog.set(disableAutoShowUpdateDialog);
     }
 
+    @SerializedName("disableAprilFools")
+    private final BooleanProperty disableAprilFools = new SimpleBooleanProperty(false);
+
+    public BooleanProperty disableAprilFoolsProperty() {
+        return disableAprilFools;
+    }
+
+    public boolean isDisableAprilFools() {
+        return disableAprilFools.get();
+    }
+
+    public void setDisableAprilFools(boolean disableAprilFools) {
+        this.disableAprilFools.set(disableAprilFools);
+    }
+
     @SerializedName("shownTips")
     private final ObservableMap<String, Object> shownTips = FXCollections.observableHashMap();
 

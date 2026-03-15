@@ -301,7 +301,6 @@ public final class Launcher extends Application {
             LOG.info("HMCL Current Directory: " + Metadata.HMCL_CURRENT_DIRECTORY);
             LOG.info("HMCL Jar Path: " + Lang.requireNonNullElse(JarUtils.thisJarPath(), "Not Found"));
             LOG.info("HMCL Log File: " + Lang.requireNonNullElse(LOG.getLogFile(), "In Memory"));
-            LOG.info("April Fools: " + AprilFools.ENABLED);
             LOG.info("JVM Max Memory: " + MEGABYTES.formatBytes(Runtime.getRuntime().maxMemory()));
             try {
                 for (MemoryPoolMXBean bean : ManagementFactory.getMemoryPoolMXBeans()) {

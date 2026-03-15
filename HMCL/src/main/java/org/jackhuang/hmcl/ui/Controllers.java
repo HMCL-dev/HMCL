@@ -225,6 +225,8 @@ public final class Controllers {
     public static void initialize(Stage stage) {
         LOG.info("Start initializing application");
 
+        LOG.info("April Fools: " + AprilFools.ENABLED);
+
         if (System.getProperty("prism.lcdtext") == null) {
             String fontAntiAliasing = globalConfig().getFontAntiAliasing();
             if ("lcd".equalsIgnoreCase(fontAntiAliasing)) {

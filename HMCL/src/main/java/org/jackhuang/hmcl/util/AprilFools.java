@@ -17,6 +17,8 @@
  */
 package org.jackhuang.hmcl.util;
 
+import org.jackhuang.hmcl.setting.ConfigHolder;
+
 import java.time.LocalDate;
 import java.time.Month;
 
@@ -25,10 +27,10 @@ public final class AprilFools {
     public static final boolean ENABLED;
 
     static {
-        String value = System.getProperty("hmcl.april_fools");
+        String value = System.getProperty("hmcl.april_fools", System.getenv("HMCL_APRIL_FOOLS"));
         if ("true".equalsIgnoreCase(value)) {
             ENABLED = true;
-        } else if ("false".equalsIgnoreCase(value)) {
+        } else if ("false".equalsIgnoreCase(value) || ConfigHolder.config().isDisableAprilFools()) {
             ENABLED = false;
         } else {
             var date = LocalDate.now();
