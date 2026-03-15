@@ -24,19 +24,32 @@ import java.time.Month;
 
 public final class AprilFools {
 
-    public static final boolean ENABLED;
+    private static final boolean START_IN_APRIL_FOOLS_DAY;
+    private static final boolean ENABLED;
 
     static {
+        var date = LocalDate.now();
+        START_IN_APRIL_FOOLS_DAY = date.getMonth() == Month.APRIL && date.getDayOfMonth() == 1;
+
         String value = System.getProperty("hmcl.april_fools", System.getenv("HMCL_APRIL_FOOLS"));
         if ("true".equalsIgnoreCase(value)) {
             ENABLED = true;
         } else if ("false".equalsIgnoreCase(value) || ConfigHolder.config().isDisableAprilFools()) {
             ENABLED = false;
         } else {
-            var date = LocalDate.now();
-            ENABLED = date.getMonth() == Month.APRIL && date.getDayOfMonth() == 1;
+            ENABLED = START_IN_APRIL_FOOLS_DAY;
         }
     }
+
+
+    public static boolean isStartInAprilFoolsDay() {
+        return START_IN_APRIL_FOOLS_DAY;
+    }
+
+    public static boolean isEnabled() {
+        return ENABLED;
+    }
+
 
     private AprilFools() {
     }
