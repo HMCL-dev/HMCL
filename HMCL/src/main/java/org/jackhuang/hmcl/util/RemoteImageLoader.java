@@ -19,6 +19,7 @@ package org.jackhuang.hmcl.util;
 
 import javafx.beans.value.WritableValue;
 import javafx.scene.image.Image;
+import org.jackhuang.hmcl.download.DownloadProvider;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.util.io.NetworkUtils;
@@ -26,6 +27,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.lang.ref.WeakReference;
+import java.net.DatagramPacket;
 import java.net.URI;
 import java.util.*;
 
@@ -33,18 +35,20 @@ import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 /// @author Glavo
 public abstract class RemoteImageLoader {
+    private final DownloadProvider downloadProvider;
     private final Map<URI, WeakReference<Image>> cache = new HashMap<>();
     private final Map<URI, List<WeakReference<WritableValue<Image>>>> pendingRequests = new HashMap<>();
     private final WeakHashMap<WritableValue<Image>, URI> reverseLookup = new WeakHashMap<>();
 
-    public RemoteImageLoader() {
+    public RemoteImageLoader(DownloadProvider downloadProvider) {
+        this.downloadProvider = downloadProvider;
     }
 
     protected @Nullable Image getPlaceholder() {
         return null;
     }
 
-    protected abstract @NotNull Task<Image> createLoadTask(@NotNull URI uri);
+    protected abstract @NotNull Task<Image> createLoadTask(@NotNull List<URI> uris);
 
     @FXThread
     public void load(@NotNull WritableValue<Image> writableValue, String url) {
@@ -82,7 +86,7 @@ public abstract class RemoteImageLoader {
             }
         }
 
-        createLoadTask(uri).whenComplete(Schedulers.javafx(), (result, exception) -> {
+        createLoadTask(downloadProvider.injectURLWithCandidates(url)).whenComplete(Schedulers.javafx(), (result, exception) -> {
             Image image;
             if (exception == null) {
                 image = result;

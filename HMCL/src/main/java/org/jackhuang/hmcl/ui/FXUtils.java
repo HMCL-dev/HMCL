@@ -1241,7 +1241,7 @@ public final class FXUtils {
                 .setSignificance(Task.TaskSignificance.MINOR);
     }
 
-    public static Task<Image> getRemoteImageTask(URI uri, int requestedWidth, int requestedHeight, boolean preserveRatio, boolean smooth) {
+    public static Task<Image> getRemoteImageTask(List<URI> uri, int requestedWidth, int requestedHeight, boolean preserveRatio, boolean smooth) {
         return new CacheFileTask(uri)
                 .setSignificance(Task.TaskSignificance.MINOR)
                 .thenApplyAsync(file -> loadImage(file, requestedWidth, requestedHeight, preserveRatio, smooth))
