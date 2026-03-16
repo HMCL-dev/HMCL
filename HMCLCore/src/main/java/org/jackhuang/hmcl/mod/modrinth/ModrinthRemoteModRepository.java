@@ -204,9 +204,29 @@ public final class ModrinthRemoteModRepository implements RemoteModRepository {
         SEMAPHORE.acquireUninterruptibly();
         try {
             id = StringUtils.removePrefix(id, "local-");
-            List<ProjectVersion> versions = HttpRequest.GET(PREFIX + "/v2/project/" + id + "/version?include_changelog=false")
-                    .getJson(listTypeOf(ProjectVersion.class));
-            return versions.stream().map(ProjectVersion::toVersion).flatMap(Lang::toStream);
+
+            List<URI> candidates = downloadProvider.injectURLWithCandidates(PREFIX + "/v2/project/" + id + "/version?include_changelog=false");
+            IOException exception = null;
+
+            for (URI candidate : candidates) {
+                try {
+                    List<ProjectVersion> versions = HttpRequest.GET(candidate.toString())
+                            .getJson(listTypeOf(ProjectVersion.class));
+                    return versions.stream().map(ProjectVersion::toVersion).flatMap(Lang::toStream);
+                } catch (IOException e) {
+                    IOException wrapper = new IOException("Failed to get remote versions: " + candidate, e);
+                    if (candidates.size() == 1) {
+                        exception = wrapper;
+                    } else {
+                        if (exception == null) {
+                            exception = new IOException("Failed to get remote versions");
+                        }
+                        exception.addSuppressed(wrapper);
+                    }
+                }
+            }
+
+            throw exception != null ? exception : new IOException("No candidates found");
         } finally {
             SEMAPHORE.release();
         }
