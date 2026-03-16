@@ -126,13 +126,15 @@ public final class ModrinthRemoteModRepository implements RemoteModRepository {
                     return new SearchResult(response.getHits().stream().map(ProjectSearchResult::toMod), (int) Math.ceil((double) response.totalHits / pageSize));
                 } catch (IOException e) {
                     LOG.warning("Failed to search addons: " + candidate, e);
+
+                    IOException wrapper = new IOException("Failed to search addons: " + candidate, e);
                     if (candidates.size() == 1) {
-                        exception = e;
+                        exception = wrapper;
                     } else {
                         if (exception == null) {
                             exception = new IOException("Failed to search addons");
                         }
-                        exception.addSuppressed(e);
+                        exception.addSuppressed(wrapper);
                     }
                 }
             }
