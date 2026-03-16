@@ -42,7 +42,7 @@ public class LegacyFabricAPIVersionList extends VersionList<LegacyFabricAPIRemot
     @Override
     public Task<?> refreshAsync() {
         return Task.runAsync(() -> {
-            for (RemoteMod.Version modVersion : Lang.toIterable(ModrinthRemoteModRepository.MODS.getRemoteVersionsById("legacy-fabric-api"))) {
+            for (RemoteMod.Version modVersion : Lang.toIterable(ModrinthRemoteModRepository.MODS.getRemoteVersionsById(downloadProvider, "legacy-fabric-api"))) {
                 for (String gameVersion : modVersion.getGameVersions()) {
                     versions.put(gameVersion, new LegacyFabricAPIRemoteVersion(gameVersion, modVersion.getVersion(), modVersion.getName(), modVersion.getDatePublished(), modVersion,
                             Collections.singletonList(modVersion.getFile().getUrl())));

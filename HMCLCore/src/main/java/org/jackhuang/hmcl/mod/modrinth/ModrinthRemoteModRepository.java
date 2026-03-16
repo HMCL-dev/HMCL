@@ -200,7 +200,7 @@ public final class ModrinthRemoteModRepository implements RemoteModRepository {
     }
 
     @Override
-    public Stream<RemoteMod.Version> getRemoteVersionsById(String id) throws IOException {
+    public Stream<RemoteMod.Version> getRemoteVersionsById(DownloadProvider downloadProvider, String id) throws IOException {
         SEMAPHORE.acquireUninterruptibly();
         try {
             id = StringUtils.removePrefix(id, "local-");
@@ -364,8 +364,8 @@ public final class ModrinthRemoteModRepository implements RemoteModRepository {
         }
 
         @Override
-        public List<RemoteMod> loadDependencies(RemoteModRepository modRepository) throws IOException {
-            Set<RemoteMod.Dependency> dependencies = modRepository.getRemoteVersionsById(getId())
+        public List<RemoteMod> loadDependencies(RemoteModRepository modRepository, DownloadProvider downloadProvider) throws IOException {
+            Set<RemoteMod.Dependency> dependencies = modRepository.getRemoteVersionsById(downloadProvider, getId())
                     .flatMap(version -> version.getDependencies().stream())
                     .collect(Collectors.toSet());
             List<RemoteMod> mods = new ArrayList<>();
@@ -376,8 +376,8 @@ public final class ModrinthRemoteModRepository implements RemoteModRepository {
         }
 
         @Override
-        public Stream<RemoteMod.Version> loadVersions(RemoteModRepository modRepository) throws IOException {
-            return modRepository.getRemoteVersionsById(getId());
+        public Stream<RemoteMod.Version> loadVersions(RemoteModRepository modRepository, DownloadProvider downloadProvider) throws IOException {
+            return modRepository.getRemoteVersionsById(downloadProvider, getId());
         }
 
         public RemoteMod toMod() {
@@ -751,8 +751,8 @@ public final class ModrinthRemoteModRepository implements RemoteModRepository {
         }
 
         @Override
-        public List<RemoteMod> loadDependencies(RemoteModRepository modRepository) throws IOException {
-            Set<RemoteMod.Dependency> dependencies = modRepository.getRemoteVersionsById(getProjectId())
+        public List<RemoteMod> loadDependencies(RemoteModRepository modRepository, DownloadProvider downloadProvider) throws IOException {
+            Set<RemoteMod.Dependency> dependencies = modRepository.getRemoteVersionsById(downloadProvider, getProjectId())
                     .flatMap(version -> version.getDependencies().stream())
                     .collect(Collectors.toSet());
             List<RemoteMod> mods = new ArrayList<>();
@@ -763,8 +763,8 @@ public final class ModrinthRemoteModRepository implements RemoteModRepository {
         }
 
         @Override
-        public Stream<RemoteMod.Version> loadVersions(RemoteModRepository modRepository) throws IOException {
-            return modRepository.getRemoteVersionsById(getProjectId());
+        public Stream<RemoteMod.Version> loadVersions(RemoteModRepository modRepository, DownloadProvider downloadProvider) throws IOException {
+            return modRepository.getRemoteVersionsById(downloadProvider, getProjectId());
         }
 
         public RemoteMod toMod() {

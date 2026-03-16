@@ -113,7 +113,7 @@ public class DownloadPage extends Control implements DecoratorPage {
         setFailed(false);
 
         Task.supplyAsync(() -> {
-            Stream<RemoteMod.Version> versions = addon.getData().loadVersions(repository);
+            Stream<RemoteMod.Version> versions = addon.getData().loadVersions(repository, page.getDownloadProvider());
             return sortVersions(versions);
         }).whenComplete(Schedulers.javafx(), (result, exception) -> {
             if (exception == null) {

@@ -98,7 +98,7 @@ public interface RemoteModRepository {
 
     RemoteMod.File getModFile(String modId, String fileId) throws IOException;
 
-    Stream<RemoteMod.Version> getRemoteVersionsById(String id) throws IOException;
+    Stream<RemoteMod.Version> getRemoteVersionsById(DownloadProvider downloadProvider, String id) throws IOException;
 
     Stream<Category> getCategories() throws IOException;
 
