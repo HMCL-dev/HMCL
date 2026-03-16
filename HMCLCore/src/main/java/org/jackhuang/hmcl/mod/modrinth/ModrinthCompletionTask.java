@@ -123,7 +123,7 @@ public class ModrinthCompletionTask extends Task<Void> {
                 continue;
 
             var task = new FileDownloadTask(
-                    file.getDownloads().stream().map(NetworkUtils::toURI).collect(Collectors.toList()),
+                    dependency.getDownloadProvider().injectURLsWithCandidates(file.getDownloads()),
                     filePath);
             task.setCacheRepository(dependency.getCacheRepository());
             task.setCaching(true);
