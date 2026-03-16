@@ -76,7 +76,7 @@ public class JFXProgressBarSkin extends ProgressIndicatorSkin {
         bar.getStyleClass().setAll("bar");
 
         clip = new Region();
-        clip.setBackground(new Background(new BackgroundFill(Color.BLACK, CornerRadii.EMPTY, Insets.EMPTY)));
+        clip.setBackground(new Background(new BackgroundFill(Color.BLACK, new CornerRadii(2), Insets.EMPTY)));
         bar.backgroundProperty().addListener(observable -> JFXNodeUtils.updateBackground(bar.getBackground(), clip));
 
         getChildren().setAll(track, bar);

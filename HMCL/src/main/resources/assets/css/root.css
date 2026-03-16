@@ -925,7 +925,7 @@
 
 .jfx-progress-bar > .track,
 .jfx-progress-bar > .bar {
-    -fx-background-radius: 0;
+    -fx-background-radius: 2;
     -fx-background-insets: 0;
 }
 
