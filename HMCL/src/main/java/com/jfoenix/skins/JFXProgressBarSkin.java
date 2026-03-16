@@ -52,8 +52,6 @@ public class JFXProgressBarSkin extends SkinBase<JFXProgressBar> {
 
         control.widthProperty().addListener(observable -> updateProgress());
         registerChangeListener(control.progressProperty(), (obs) -> updateProgress());
-
-        unregisterChangeListeners(treeShowingProperty);
         registerChangeListener(treeShowingProperty, obs -> this.updateAnimation());
 
         track = new StackPane();
