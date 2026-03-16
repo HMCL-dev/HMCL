@@ -19,6 +19,7 @@ import org.jackhuang.hmcl.ui.construct.*;
 import org.jackhuang.hmcl.util.i18n.I18n;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -28,6 +29,7 @@ import java.time.Instant;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
+import java.util.concurrent.CompletableFuture;
 import java.util.stream.Stream;
 
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
@@ -68,46 +70,110 @@ public class ScreenshotsPage extends ListPageBase<ScreenshotsPage.Screenshot> im
 
     private void delete(Screenshot screenshot) {
         try {
-            Files.deleteIfExists(screenshot.path());
+            Files.deleteIfExists(screenshot.getPath());
             refresh();
         } catch (IOException e) {
-            LOG.warning("Failed to delete screenshot: " + screenshot.path(), e);
+            LOG.warning("Failed to delete screenshot: " + screenshot.getPath(), e);
         }
     }
 
-    public record Screenshot(Path path, String fileName, Instant creationTime, Image thumbnail) implements Comparable<Screenshot> {
+    public static final class Screenshot implements Comparable<Screenshot> {
+        private final Path path;
+        private final String fileName;
+        private final Instant creationTime;
+        private Image thumbnail, fullImage;
 
         public static Screenshot fromFile(Path path) {
             if (!Files.isRegularFile(path) || !path.toString().endsWith(".png")) return null;
-            Image thumbnail = null;
             Instant creationTime = null;
-            try {
-                thumbnail = FXUtils.loadImage(path, 72, 72, true, false);
-            } catch (Exception e) {
-                LOG.warning("Failed to load screenshot thumbnail at: " + path, e);
-            }
             try {
                 creationTime = Files.readAttributes(path, BasicFileAttributes.class).creationTime().toInstant();
             } catch (IOException e) {
                 LOG.warning("Failed to read screenshot creation time at: " + path, e);
             }
-            return new Screenshot(path, FileUtils.getName(path), creationTime, thumbnail);
+            return new Screenshot(path, FileUtils.getName(path), creationTime);
         }
 
-        public Image loadFullImage() {
-            Image image = null;
-            try {
-                image = FXUtils.loadImage(path);
-            } catch (Exception e) {
-                LOG.warning("Failed to load screenshot content at: " + path, e);
-            }
-            return image;
+        public Screenshot(Path path, String fileName, Instant creationTime) {
+            this.path = path;
+            this.fileName = fileName;
+            this.creationTime = creationTime;
         }
 
         @Override
         public int compareTo(@NotNull ScreenshotsPage.Screenshot o) {
-            return this.fileName().compareTo(o.fileName());
+            return this.getFileName().compareTo(o.getFileName());
         }
+
+        public Path getPath() {
+            return path;
+        }
+
+        public String getFileName() {
+            return fileName;
+        }
+
+        public Instant getCreationTime() {
+            return creationTime;
+        }
+
+        public boolean isThumbnailLoaded() {
+            return thumbnail != null;
+        }
+
+        public boolean isFullImageLoaded() {
+            return fullImage != null;
+        }
+
+        @Nullable
+        public Image getThumbnail() {
+            if (thumbnail == null) {
+                try {
+                    thumbnail = FXUtils.loadImage(path, 72, 72, true, false);
+                } catch (Exception e) {
+                    LOG.warning("Failed to load screenshot thumbnail at: " + path, e);
+                }
+            }
+            return thumbnail;
+        }
+
+        @Nullable
+        public Image getFullImage() {
+            if (fullImage == null) {
+                try {
+                    fullImage = FXUtils.loadImage(path);
+                } catch (Exception e) {
+                    LOG.warning("Failed to load screenshot content at: " + path, e);
+                }
+            }
+            return fullImage;
+        }
+
+        @Override
+        public boolean equals(Object obj) {
+            if (obj == this) return true;
+            if (obj == null || obj.getClass() != this.getClass()) return false;
+            var that = (Screenshot) obj;
+            return Objects.equals(this.path, that.path) &&
+                    Objects.equals(this.fileName, that.fileName) &&
+                    Objects.equals(this.creationTime, that.creationTime) &&
+                    Objects.equals(this.thumbnail, that.thumbnail);
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(path, fileName, creationTime, thumbnail);
+        }
+
+        @Override
+        public String toString() {
+            return "Screenshot[" +
+                    "path=" + path + ", " +
+                    "fileName=" + fileName + ", " +
+                    "creationTime=" + creationTime + ", " +
+                    "thumbnail=" + thumbnail + ']';
+        }
+
     }
 
     public static final class ScreenshotCell extends ListCell<Screenshot> {
@@ -156,23 +222,19 @@ public class ScreenshotsPage extends ListPageBase<ScreenshotsPage.Screenshot> im
                 return;
             }
 
-            var image = item.thumbnail();
-            if (image != null) {
-                double width = 36;
-                double height = width / image.getWidth() * image.getHeight();
-                if (height > 36) {
-                    height = 36;
-                    width = height / image.getHeight() * image.getWidth();
-                }
-                ImageContainer imageContainer = new ImageContainer(width, height);
-                imageContainer.setImage(image);
-                imagePane.getChildren().setAll(imageContainer);
+            if (item.isThumbnailLoaded()) {
+                imagePane.getChildren().setAll(new ImageContainer(item.getThumbnail(), 36, 36));
             } else {
                 imagePane.getChildren().setAll(SVG.SCREENSHOT_MONITOR.createIcon(36));
+                CompletableFuture
+                        .supplyAsync(item::getThumbnail, Schedulers.io())
+                        .whenCompleteAsync((image, t) -> {
+                            if (image != null) imagePane.getChildren().setAll(new ImageContainer(image, 36, 36));
+                        }, Schedulers.javafx());
             }
 
-            content.setTitle(item.fileName());
-            content.setSubtitle(I18n.formatDateTime(item.creationTime()));
+            content.setTitle(item.getFileName());
+            content.setSubtitle(I18n.formatDateTime(item.getCreationTime()));
 
             setGraphic(graphics);
         }
@@ -182,25 +244,15 @@ public class ScreenshotsPage extends ListPageBase<ScreenshotsPage.Screenshot> im
 
         public ScreenshotDialog(Screenshot screenshot) {
             TwoLineListItem head = new TwoLineListItem();
-            head.setTitle(screenshot.fileName());
-            head.setSubtitle(I18n.formatDateTime(screenshot.creationTime()));
+            head.setTitle(screenshot.getFileName());
+            head.setSubtitle(I18n.formatDateTime(screenshot.getCreationTime()));
             setHeading(head);
 
-            var image = screenshot.loadFullImage();
-            if (image != null) {
-                double maxHeight = Controllers.getScene().getHeight() * 0.5;
-                double width = Math.min(Controllers.getScene().getWidth() * 0.8, image.getWidth());
-                double height = width / image.getWidth() * image.getHeight();
-                if (height > maxHeight) {
-                    height = maxHeight;
-                    width = height / image.getHeight() * image.getWidth();
-                }
-                ImageContainer imageContainer = new ImageContainer(width, height);
-                imageContainer.setImage(image);
-                setBody(imageContainer);
-            } else {
-                setBody(SVG.SCREENSHOT_MONITOR.createIcon(360));
-            }
+            var image = screenshot.getFullImage();
+            setBody(image != null
+                    ? new ImageContainer(image, Math.min(Controllers.getScene().getWidth() * 0.8, image.getWidth()), Controllers.getScene().getHeight() * 0.5)
+                    : SVG.SCREENSHOT_MONITOR.createIcon(360)
+            );
 
             JFXButton okButton = new JFXButton();
             okButton.getStyleClass().add("dialog-accept");
