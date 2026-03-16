@@ -37,6 +37,8 @@ import org.jackhuang.hmcl.util.Lang;
 /// @since 2017-10-06
 public class JFXProgressBarSkin extends SkinBase<JFXProgressBar> {
 
+    private static final double ARC_HEIGHT = 4;
+
     private final StackPane track;
     private final StackPane bar;
     private Timeline indeterminateTransition;
@@ -59,8 +61,8 @@ public class JFXProgressBarSkin extends SkinBase<JFXProgressBar> {
 
         clip = new Rectangle();
         clip.setManaged(false);
-        clip.setArcWidth(4);
-        clip.setArcHeight(4);
+        clip.setArcWidth(ARC_HEIGHT);
+        clip.setArcHeight(ARC_HEIGHT);
         bar.setClip(clip);
 
         getChildren().setAll(track, bar);
@@ -116,7 +118,7 @@ public class JFXProgressBarSkin extends SkinBase<JFXProgressBar> {
             double progress = Lang.clamp(0.0, getSkinnable().getProgress(), 1.0);
             double barWidth = ((int) w * 2 * progress) / 2.0;
             if (progress > 0) {
-                barWidth = Math.max(barWidth, 4);
+                barWidth = Math.max(barWidth, ARC_HEIGHT);
             }
 
             clip.setWidth(barWidth);
