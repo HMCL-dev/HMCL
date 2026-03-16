@@ -101,6 +101,10 @@ public class DownloadListPage extends Control implements DecoratorPage, VersionP
         this.downloadProvider = DownloadProviders.getDownloadProvider();
     }
 
+    public DownloadProvider getDownloadProvider() {
+        return downloadProvider;
+    }
+
     public ObservableList<Node> getActions() {
         return actions;
     }
