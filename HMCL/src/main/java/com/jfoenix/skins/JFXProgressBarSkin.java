@@ -68,7 +68,6 @@ public class JFXProgressBarSkin extends ProgressIndicatorSkin {
     }
 
     protected void initialize() {
-
         track = new StackPane();
         track.getStyleClass().setAll("track");
 
