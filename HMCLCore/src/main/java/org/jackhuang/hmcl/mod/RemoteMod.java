@@ -155,12 +155,12 @@ public final class RemoteMod {
             return this.id;
         }
 
-        public RemoteMod load() throws IOException {
+        public RemoteMod load(DownloadProvider downloadProvider) throws IOException {
             if (this.remoteMod == null) {
                 if (this.type == DependencyType.BROKEN) {
                     this.remoteMod = RemoteMod.BROKEN;
                 } else {
-                    this.remoteMod = this.remoteModRepository.resolveDependency(this.id);
+                    this.remoteMod = this.remoteModRepository.resolveDependency(downloadProvider, this.id);
                 }
             }
             return this.remoteMod;

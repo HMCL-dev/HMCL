@@ -227,7 +227,7 @@ public final class CurseForgeRemoteModRepository implements RemoteModRepository 
     }
 
     @Override
-    public RemoteMod getModById(String id) throws IOException {
+    public RemoteMod getModById(DownloadProvider downloadProvider, String id) throws IOException {
         SEMAPHORE.acquireUninterruptibly();
         try {
             Response<CurseAddon> response = withApiKey(HttpRequest.GET(PREFIX + "/v1/mods/" + id))

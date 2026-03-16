@@ -90,10 +90,10 @@ public interface RemoteModRepository {
 
     Optional<RemoteMod.Version> getRemoteVersionByLocalFile(LocalModFile localModFile, Path file) throws IOException;
 
-    RemoteMod getModById(String id) throws IOException;
+    RemoteMod getModById(DownloadProvider downloadProvider, String id) throws IOException;
 
-    default RemoteMod resolveDependency(String id) throws IOException {
-        return getModById(id);
+    default RemoteMod resolveDependency(DownloadProvider downloadProvider, String id) throws IOException {
+        return getModById(downloadProvider, id);
     }
 
     RemoteMod.File getModFile(String modId, String fileId) throws IOException;

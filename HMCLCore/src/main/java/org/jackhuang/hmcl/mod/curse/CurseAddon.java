@@ -200,7 +200,7 @@ public class CurseAddon implements RemoteMod.IMod {
                 .collect(Collectors.toSet());
         List<RemoteMod> mods = new ArrayList<>();
         for (int dependencyId : dependencies) {
-            mods.add(modRepository.getModById(Integer.toString(dependencyId)));
+            mods.add(modRepository.getModById(downloadProvider, Integer.toString(dependencyId)));
         }
         return mods;
     }

@@ -549,7 +549,7 @@ public class DownloadPage extends Control implements DecoratorPage {
                         dependencies.put(dependency.getType(), list);
                     }
 
-                    queue.add(Task.supplyAsync(Schedulers.io(), dependency::load)
+                    queue.add(Task.supplyAsync(Schedulers.io(), () -> dependency.load(selfPage.page.getDownloadProvider()))
                             .setSignificance(Task.TaskSignificance.MINOR)
                             .thenAcceptAsync(Schedulers.javafx(), dep -> {
                                 if (dep == RemoteMod.BROKEN) {
