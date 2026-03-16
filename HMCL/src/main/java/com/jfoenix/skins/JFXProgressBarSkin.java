@@ -45,19 +45,19 @@ public class JFXProgressBarSkin extends ProgressIndicatorSkin {
     private Region clip;
     private final TreeShowingProperty treeShowingProperty;
 
-    public JFXProgressBarSkin(JFXProgressBar bar) {
-        super(bar);
+    public JFXProgressBarSkin(JFXProgressBar control) {
+        super(control);
 
-        this.treeShowingProperty = new TreeShowingProperty(bar);
+        this.treeShowingProperty = new TreeShowingProperty(control);
 
-        bar.widthProperty().addListener(observable -> updateProgress());
-        registerChangeListener(bar.progressProperty(), (obs) -> updateProgress());
+        control.widthProperty().addListener(observable -> updateProgress());
+        registerChangeListener(control.progressProperty(), (obs) -> updateProgress());
 
         unregisterChangeListeners(treeShowingProperty);
-        unregisterChangeListeners(bar.indeterminateProperty());
+        unregisterChangeListeners(control.indeterminateProperty());
 
         registerChangeListener(treeShowingProperty, obs -> this.updateAnimation());
-        registerChangeListener(bar.indeterminateProperty(), obs -> initialize());
+        registerChangeListener(control.indeterminateProperty(), obs -> initialize());
 
         initialize();
 
