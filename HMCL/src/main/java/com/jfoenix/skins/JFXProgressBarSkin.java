@@ -48,9 +48,8 @@ public class JFXProgressBarSkin extends SkinBase<JFXProgressBar> {
 
         this.treeShowingProperty = new TreeShowingProperty(control);
 
-        control.widthProperty().addListener(observable -> updateProgress());
-        registerChangeListener(control.progressProperty(), (obs) -> updateProgress());
-        registerChangeListener(treeShowingProperty, obs -> this.updateAnimation());
+        registerChangeListener(treeShowingProperty, obs -> updateAnimation());
+        registerChangeListener(control.progressProperty(), obs -> updateProgress());
 
         track = new StackPane();
         track.getStyleClass().setAll("track");
@@ -101,6 +100,8 @@ public class JFXProgressBarSkin extends SkinBase<JFXProgressBar> {
         track.resizeRelocate(x, y, w, h);
         bar.resizeRelocate(x, y, w, h);
         clip.relocate(0, 0);
+        clip.setTranslateX(0);
+        clip.setHeight(h);
 
         if (indeterminate) {
             if (treeShowingProperty.get()) {
@@ -118,9 +119,7 @@ public class JFXProgressBarSkin extends SkinBase<JFXProgressBar> {
                 barWidth = Math.max(barWidth, 4);
             }
 
-            clip.setTranslateX(0);
             clip.setWidth(barWidth);
-            clip.setHeight(h);
         }
     }
 
@@ -128,12 +127,14 @@ public class JFXProgressBarSkin extends SkinBase<JFXProgressBar> {
 
     protected void pauseTimeline(boolean pause) {
         if (getSkinnable().isIndeterminate()) {
-            if (indeterminateTransition == null) {
-                createIndeterminateTimeline();
-            }
             if (pause) {
-                indeterminateTransition.pause();
+                if (indeterminateTransition != null) {
+                    indeterminateTransition.pause();
+                }
             } else {
+                if (indeterminateTransition == null) {
+                    createIndeterminateTimeline();
+                }
                 indeterminateTransition.play();
             }
         }
@@ -143,8 +144,6 @@ public class JFXProgressBarSkin extends SkinBase<JFXProgressBar> {
         final boolean isTreeShowing = treeShowingProperty.get();
         if (indeterminateTransition != null) {
             pauseTimeline(!isTreeShowing);
-        } else if (isTreeShowing) {
-            createIndeterminateTimeline();
         }
     }
 
