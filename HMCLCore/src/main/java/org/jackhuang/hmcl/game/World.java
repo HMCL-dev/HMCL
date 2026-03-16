@@ -306,7 +306,7 @@ public final class World {
             throw new IOException("Not a valid world directory");
 
         // Change the name recorded in level.dat
-        dataTag.putString("LevelName", newName);
+        dataTag.setString("LevelName", newName);
         writeLevelData();
 
         // then change the folder's name
