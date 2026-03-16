@@ -279,6 +279,7 @@ public final class TaskListPane extends StackPane {
 
     private final class Cell extends ListCell<Node> {
         private static final double STATUS_ICON_SIZE = 14;
+        private static final Insets PROGRESS_BAR_MARGIN = new Insets(2, 0, 0, 0);
 
         private final BorderPane pane = new BorderPane();
         private final StackPane left = new StackPane();
@@ -310,6 +311,7 @@ public final class TaskListPane extends StackPane {
             bar.minWidthProperty().bind(barWidth);
             bar.prefWidthProperty().bind(barWidth);
             bar.maxWidthProperty().bind(barWidth);
+            BorderPane.setMargin(bar, PROGRESS_BAR_MARGIN);
 
             setGraphic(pane);
         }
