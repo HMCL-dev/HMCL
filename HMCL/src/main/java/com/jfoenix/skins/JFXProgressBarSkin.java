@@ -52,9 +52,6 @@ public class JFXProgressBarSkin extends ProgressIndicatorSkin {
 
         bar.widthProperty().addListener(observable -> updateProgress());
         registerChangeListener(bar.progressProperty(), (obs) -> updateProgress());
-        registerChangeListener(bar.visibleProperty(), obs -> updateAnimation());
-        registerChangeListener(bar.parentProperty(), obs -> updateAnimation());
-        registerChangeListener(bar.sceneProperty(), obs -> updateAnimation());
 
         unregisterChangeListeners(treeShowingProperty);
         unregisterChangeListeners(bar.indeterminateProperty());
