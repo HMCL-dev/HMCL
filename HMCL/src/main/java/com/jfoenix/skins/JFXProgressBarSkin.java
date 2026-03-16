@@ -162,11 +162,12 @@ public class JFXProgressBarSkin extends ProgressIndicatorSkin {
         wasIndeterminate = isIndeterminate;
     }
 
+    private static final Duration DURATION = Duration.seconds(1);
+
     private void createIndeterminateTimeline() {
         if (indeterminateTransition != null) {
             clearAnimation();
         }
-        double dur = 1;
         ProgressIndicator control = getSkinnable();
         final double w = control.getWidth() - (snappedLeftInset() + snappedRightInset());
         indeterminateTransition = new Timeline(
@@ -176,15 +177,15 @@ public class JFXProgressBarSkin extends ProgressIndicatorSkin {
                         new KeyValue(clip.translateXProperty(), -w / 2, Interpolator.LINEAR)
                 ),
                 new KeyFrame(
-                        Duration.seconds(0.5 * dur),
+                        DURATION.multiply(0.5),
                         new KeyValue(clip.scaleXProperty(), 0.4, Interpolator.LINEAR)
                 ),
                 new KeyFrame(
-                        Duration.seconds(0.9 * dur),
+                        DURATION.multiply(0.9),
                         new KeyValue(clip.translateXProperty(), w / 2, Interpolator.LINEAR)
                 ),
                 new KeyFrame(
-                        Duration.seconds(1 * dur),
+                        DURATION,
                         new KeyValue(clip.scaleXProperty(), 0.0, Interpolator.EASE_OUT)
                 ));
         indeterminateTransition.setCycleCount(Timeline.INDEFINITE);
