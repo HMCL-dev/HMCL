@@ -116,7 +116,7 @@ public class JFXProgressBarSkin extends ProgressIndicatorSkin {
 
         if (indeterminate) {
             createIndeterminateTimeline();
-            if (JFXNodeUtils.isTreeShowing(getSkinnable())) {
+            if (treeShowingProperty.get()) {
                 indeterminateTransition.play();
             }
             // apply clip
