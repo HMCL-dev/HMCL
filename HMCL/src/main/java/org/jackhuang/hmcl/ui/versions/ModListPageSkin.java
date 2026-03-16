@@ -493,7 +493,7 @@ final class ModListPageSkin extends SkinBase<ModListPage> {
                                             repository instanceof CurseForgeRemoteModRepository ? HMCLLocalizedDownloadListPage.ofCurseForgeMod(null, false) : HMCLLocalizedDownloadListPage.ofModrinthMod(null, false),
                                             remoteMod,
                                             new Profile.ProfileVersion(ModListPageSkin.this.getSkinnable().getProfile(), ModListPageSkin.this.getSkinnable().getInstanceId()),
-                                            (profile, version, mod, file) -> org.jackhuang.hmcl.ui.download.DownloadPage.download(profile, version, file, "mods")
+                                            (downloadProvider, profile, version, mod, file) -> org.jackhuang.hmcl.ui.download.DownloadPage.download(downloadProvider, profile, version, file, "mods")
                                     ));
                                 });
                                 button.setDisable(false);
