@@ -167,7 +167,6 @@ public final class MacOSHardwareDetector extends HardwareDetector {
             long pagesFree;
             long pagesInactive;
             long pagesSpeculative;
-            long pagesPurgeable;
 
             if (statistics != null) {
                 Matcher matcher = PAGE_SIZE_PATTERN.matcher(statistics);
@@ -201,14 +200,7 @@ public final class MacOSHardwareDetector extends HardwareDetector {
                 break vmStat;
             }
 
-            String pagesPurgeableStr = stats.get("Pages purgeable");
-            if (pagesPurgeableStr != null && pagesPurgeableStr.endsWith(".")) {
-                pagesPurgeable = Long.parseUnsignedLong(pagesPurgeableStr, 0, pagesPurgeableStr.length() - 1, 10);
-            } else {
-                break vmStat;
-            }
-
-            long available = (pagesFree + pagesSpeculative + pagesInactive + pagesPurgeable) * pageSize;
+            long available = (pagesFree + pagesSpeculative + pagesInactive) * pageSize;
             if (available > 0) {
                 return available;
             }
