@@ -169,11 +169,12 @@ public class JFXProgressBarSkin extends ProgressIndicatorSkin {
         double dur = 1;
         ProgressIndicator control = getSkinnable();
         final double w = control.getWidth() - (snappedLeftInset() + snappedRightInset());
-        indeterminateTransition = new Timeline(new KeyFrame(
-                Duration.ZERO,
-                new KeyValue(clip.scaleXProperty(), 0.0, Interpolator.EASE_IN),
-                new KeyValue(clip.translateXProperty(), -w / 2, Interpolator.LINEAR)
-        ),
+        indeterminateTransition = new Timeline(
+                new KeyFrame(
+                        Duration.ZERO,
+                        new KeyValue(clip.scaleXProperty(), 0.0, Interpolator.EASE_IN),
+                        new KeyValue(clip.translateXProperty(), -w / 2, Interpolator.LINEAR)
+                ),
                 new KeyFrame(
                         Duration.seconds(0.5 * dur),
                         new KeyValue(clip.scaleXProperty(), 0.4, Interpolator.LINEAR)
