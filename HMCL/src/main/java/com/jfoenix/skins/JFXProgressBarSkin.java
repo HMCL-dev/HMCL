@@ -26,7 +26,7 @@ import javafx.animation.*;
 import javafx.geometry.Insets;
 import javafx.scene.Node;
 import javafx.scene.control.ProgressIndicator;
-import javafx.scene.control.skin.ProgressIndicatorSkin;
+import javafx.scene.control.SkinBase;
 import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
 import javafx.util.Duration;
@@ -36,13 +36,13 @@ import javafx.util.Duration;
 /// @author Shadi Shaheen
 /// @version 2.0
 /// @since 2017-10-06
-public class JFXProgressBarSkin extends ProgressIndicatorSkin {
+public class JFXProgressBarSkin extends SkinBase<JFXProgressBar> {
 
-    private StackPane track;
-    private StackPane bar;
+    private final StackPane track;
+    private final StackPane bar;
     private double barWidth = 0;
     private Timeline indeterminateTransition;
-    private Region clip;
+    private final Region clip;
     private final TreeShowingProperty treeShowingProperty;
 
     public JFXProgressBarSkin(JFXProgressBar control) {
@@ -54,17 +54,8 @@ public class JFXProgressBarSkin extends ProgressIndicatorSkin {
         registerChangeListener(control.progressProperty(), (obs) -> updateProgress());
 
         unregisterChangeListeners(treeShowingProperty);
-        unregisterChangeListeners(control.indeterminateProperty());
-
         registerChangeListener(treeShowingProperty, obs -> this.updateAnimation());
-        registerChangeListener(control.indeterminateProperty(), obs -> initialize());
 
-        initialize();
-
-        getSkinnable().requestLayout();
-    }
-
-    protected void initialize() {
         track = new StackPane();
         track.getStyleClass().setAll("track");
 
@@ -76,6 +67,8 @@ public class JFXProgressBarSkin extends ProgressIndicatorSkin {
         bar.backgroundProperty().addListener(observable -> JFXNodeUtils.updateBackground(bar.getBackground(), clip));
 
         getChildren().setAll(track, bar);
+
+        getSkinnable().requestLayout();
     }
 
     @Override
