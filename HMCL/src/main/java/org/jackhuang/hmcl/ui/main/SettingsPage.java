@@ -217,6 +217,14 @@ public final class SettingsPage extends ScrollPane {
             }
 
             {
+                LineToggleButton disableAutoShowUpdateDialogPane = new LineToggleButton();
+                disableAutoShowUpdateDialogPane.setTitle(i18n("update.disable_auto_show_update_dialog"));
+                disableAutoShowUpdateDialogPane.setSubtitle(i18n("update.disable_auto_show_update_dialog.subtitle"));
+                disableAutoShowUpdateDialogPane.selectedProperty().bindBidirectional(config().disableAutoShowUpdateDialogProperty());
+                settingsPane.getContent().add(disableAutoShowUpdateDialogPane);
+            }
+
+            {
                 MultiFileItem<EnumCommonDirectory> fileCommonLocation = new MultiFileItem<>();
                 fileCommonLocation.loadChildren(Arrays.asList(
                         new MultiFileItem.Option<>(i18n("launcher.cache_directory.default"), EnumCommonDirectory.DEFAULT),
