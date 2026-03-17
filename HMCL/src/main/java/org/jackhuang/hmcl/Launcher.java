@@ -31,7 +31,6 @@ import javafx.stage.Stage;
 import org.jackhuang.hmcl.setting.ConfigHolder;
 import org.jackhuang.hmcl.setting.SambaException;
 import org.jackhuang.hmcl.ui.FXUtils;
-import org.jackhuang.hmcl.upgrade.UpdateHandler;
 import org.jackhuang.hmcl.util.FileSaver;
 import org.jackhuang.hmcl.task.AsyncTaskExecutor;
 import org.jackhuang.hmcl.task.Schedulers;
@@ -269,11 +268,6 @@ public final class Launcher extends Application {
     }
 
     public static void main(String[] args) {
-        if (UpdateHandler.processArguments(args)) {
-            LOG.shutdown();
-            return;
-        }
-
         Thread.setDefaultUncaughtExceptionHandler(CRASH_REPORTER);
         AsyncTaskExecutor.setUncaughtExceptionHandler(new CrashReporter(false));
 

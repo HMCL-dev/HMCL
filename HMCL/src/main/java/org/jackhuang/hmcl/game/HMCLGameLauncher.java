@@ -56,7 +56,7 @@ import static org.jackhuang.hmcl.util.logging.Logger.LOG;
  * @author huangyuhui
  */
 public final class HMCLGameLauncher extends DefaultLauncher {
-    boolean isntCancelled = true;
+    boolean restoreVersionSetting = false;
 
     public HMCLGameLauncher(
             GameRepository repository, Version version, AuthInfo authInfo, LaunchOptions options) {
@@ -105,7 +105,7 @@ public final class HMCLGameLauncher extends DefaultLauncher {
                 if (Arrays.stream(subdirs)
                         .anyMatch(dir -> Files.exists(versionRoot.resolve(dir)))) {
                     Pair<Path, Boolean> runDirAndIsntCancelled = switchWorkingDirectory(repository, version);
-                    if (runDirAndIsntCancelled.getValue1()) {
+                    if (runDirAndIsntCancelled.getValue1() /* Isn't Cancelled? */) {
                         runDir = runDirAndIsntCancelled.getValue0();
                     } else {
                         return false;
@@ -154,7 +154,11 @@ public final class HMCLGameLauncher extends DefaultLauncher {
     }
 
     private Pair<Path, Boolean> switchWorkingDirectory(HMCLGameRepository repository, Version version) {
-        CompletableFuture<Path> future = new CompletableFuture<>();
+        if (javafx.application.Platform.isFxApplicationThread()) {
+            LOG.warning("switchWorkingDirectory called from FX thread, this may cause UI freeze");
+        }
+        
+        CompletableFuture<Pair<Path, Boolean>> future = new CompletableFuture<>();
         var dialog =
                 new MessageDialogPane.Builder(
                                 i18n(
@@ -168,10 +172,10 @@ public final class HMCLGameLauncher extends DefaultLauncher {
                                     repository
                                             .getVersionSetting(version.getId())
                                             .setGameDirType(GameDirectoryType.VERSION_FOLDER);
-                                    future.complete(repository.getVersionRoot(version.getId()));
+                                    future.complete(Pair.with(repository.getVersionRoot(version.getId()), true));
                                 },
                                 () -> {
-                                    future.complete(repository.getBaseDirectory());
+                                    future.complete(Pair.with(repository.getBaseDirectory(), true));
                                 })
                         .addAction(
                                 i18n("Dialog.this_launch_only.button"),
@@ -180,18 +184,17 @@ public final class HMCLGameLauncher extends DefaultLauncher {
                                             .getVersionSetting(version.getId())
                                             .setGameDirType(GameDirectoryType.VERSION_FOLDER);
                                     restoreVersionSetting = true;
-                                    future.complete(repository.getVersionRoot(version.getId()));
+                                    future.complete(Pair.with(repository.getVersionRoot(version.getId()), true));
                                 })
                         .addCancel(() -> {
-                            isntCancelled = false;
-                            future.complete(null);
+                            future.complete(Pair.with(null, false));
                         })
                         .build();
-        dialog.setCancelButton(null);
+        // dialog.setCancelButton(null);
         FXUtils.runInFX(() -> Controllers.dialog(dialog));
 
         try {
-            return Pair.with(future.get(), false);
+            return future.get();
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
