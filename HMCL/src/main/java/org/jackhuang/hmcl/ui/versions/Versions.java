@@ -206,17 +206,20 @@ public final class Versions {
 
     public static void resetVersion(Profile profile, String id) {
         try {
-            Version version = profile.getRepository().getVersion(id);
-            LibraryAnalyzer analyzer = LibraryAnalyzer.analyze(version, null);
-            GameBuilder builder = profile.getDependency().gameBuilder().name(id).gameVersion(profile.getRepository().getGameVersion(id).orElseThrow());
+            HMCLGameRepository repository = profile.getRepository();
+            Version resolved = repository.getResolvedPreservingPatchesVersion(id);
+            LibraryAnalyzer analyzer = LibraryAnalyzer.analyze(resolved, null);
+            GameBuilder builder = profile.getDependency().gameBuilder().name(id).gameVersion(repository.getGameVersion(id).orElseThrow());
             analyzer.getLibraries().forEach((item) -> {
                 if (item == LibraryAnalyzer.LibraryType.MINECRAFT) return;
                 var itemVersion = analyzer.getVersion(item).orElse(null);
                 if (itemVersion == null) return;
                 builder.version(item.getPatchId(), itemVersion);
             });
-            TaskExecutor executor = builder.buildAsync().whenComplete(any -> profile.getRepository().refreshVersions())
-                    .thenRunAsync(Schedulers.javafx(), () -> profile.setSelectedVersion(id)).executor();
+            TaskExecutor executor = builder.buildAsync().whenComplete(any -> repository.refreshVersions())
+                    .thenRunAsync(Schedulers.javafx(), () -> profile.setSelectedVersion(id))
+                    .thenRunAsync(Schedulers.javafx(), () -> Controllers.getVersionPage().loadVersion(resolved.getId(),profile))
+                    .executor();
             Controllers.taskDialog(executor, i18n("version.manage.reset"), TaskCancellationAction.NO_CANCEL);
             executor.start();
         } catch (Exception e) {
