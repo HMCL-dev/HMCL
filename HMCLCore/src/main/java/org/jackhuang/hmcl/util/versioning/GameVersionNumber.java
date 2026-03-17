@@ -341,6 +341,10 @@ public abstract sealed class GameVersionNumber implements Comparable<GameVersion
                 needNormalize = true;
                 releaseType = ReleaseType.SNAPSHOT;
                 eaVersion = VersionNumber.asVersion(suffix.substring(" Snapshot ".length()));
+            } else if (suffix.startsWith("-pre-")) {
+                needNormalize = true;
+                releaseType = ReleaseType.PRE_RELEASE;
+                eaVersion = VersionNumber.asVersion(suffix.substring("-pre-".length()));
             } else if (suffix.startsWith("-pre")) {
                 releaseType = ReleaseType.PRE_RELEASE;
                 eaVersion = VersionNumber.asVersion(suffix.substring("-pre".length()));
@@ -348,6 +352,11 @@ public abstract sealed class GameVersionNumber implements Comparable<GameVersion
                 needNormalize = true;
                 releaseType = ReleaseType.PRE_RELEASE;
                 eaVersion = VersionNumber.asVersion(suffix.substring(" Pre-Release ".length()));
+            } else if (suffix.startsWith(" Pre-release ")) {
+                // https://github.com/HMCL-dev/HMCL/issues/5476
+                needNormalize = true;
+                releaseType = ReleaseType.PRE_RELEASE;
+                eaVersion = VersionNumber.asVersion(suffix.substring(" Pre-release ".length()));
             } else if (suffix.startsWith("-rc")) {
                 releaseType = ReleaseType.RELEASE_CANDIDATE;
                 eaVersion = VersionNumber.asVersion(suffix.substring("-rc".length()));
@@ -385,7 +394,7 @@ public abstract sealed class GameVersionNumber implements Comparable<GameVersion
             if (majorLength == 0 || value.length() < majorLength + 2 || value.charAt(majorLength) != '.')
                 throw new IllegalArgumentException(value);
 
-            int major = Integer.parseInt(value.substring(0, majorLength));
+            int major = Integer.parseInt(value, 0, majorLength, 10);
             if (major != 1 && major < MINIMUM_YEAR_MAJOR_VERSION)
                 throw new IllegalArgumentException(value);
 
@@ -396,7 +405,7 @@ public abstract sealed class GameVersionNumber implements Comparable<GameVersion
                 throw new IllegalArgumentException(value);
 
             try {
-                int minor = Integer.parseInt(value.substring(minorOffset, minorOffset + minorLength));
+                int minor = Integer.parseInt(value, minorOffset, minorOffset + minorLength, 10);
                 int patch = 0;
 
                 if (minorOffset + minorLength < value.length()) {
@@ -405,7 +414,7 @@ public abstract sealed class GameVersionNumber implements Comparable<GameVersion
                     if (patchOffset >= value.length() || value.charAt(patchOffset - 1) != '.')
                         throw new IllegalArgumentException(value);
 
-                    patch = Integer.parseInt(value.substring(patchOffset));
+                    patch = Integer.parseInt(value, patchOffset, value.length(), 10);
                 }
 
                 return new Release(value, value, major, minor, patch, ReleaseType.UNKNOWN, VersionNumber.ZERO, Additional.NONE);
@@ -588,8 +597,8 @@ public abstract sealed class GameVersionNumber implements Comparable<GameVersion
             int year;
             int week;
             try {
-                year = Integer.parseInt(value.substring(0, 2));
-                week = Integer.parseInt(value.substring(3, 5));
+                year = Integer.parseInt(value, 0, 2, 10);
+                week = Integer.parseInt(value, 3, 5, 10);
             } catch (NumberFormatException e) {
                 throw new IllegalArgumentException(value);
             }

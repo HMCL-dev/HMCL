@@ -35,10 +35,7 @@ import javafx.scene.layout.VBox;
 import org.jackhuang.hmcl.setting.Profile;
 import org.jackhuang.hmcl.setting.Profiles;
 import org.jackhuang.hmcl.ui.FXUtils;
-import org.jackhuang.hmcl.ui.construct.ComponentList;
-import org.jackhuang.hmcl.ui.construct.FileItem;
-import org.jackhuang.hmcl.ui.construct.LineToggleButton;
-import org.jackhuang.hmcl.ui.construct.PageCloseEvent;
+import org.jackhuang.hmcl.ui.construct.*;
 import org.jackhuang.hmcl.ui.decorator.DecoratorPage;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
@@ -54,7 +51,7 @@ public final class ProfilePage extends BorderPane implements DecoratorPage {
     private final StringProperty location;
     private final Profile profile;
     private final JFXTextField txtProfileName;
-    private final FileItem gameDir;
+    private final LineFileChooserButton gameDir;
     private final LineToggleButton toggleUseRelativePath;
 
     /**
@@ -107,10 +104,11 @@ public final class ProfilePage extends BorderPane implements DecoratorPage {
                         });
                     }
 
-                    gameDir = new FileItem();
-                    gameDir.setName(i18n("profile.instance_directory"));
-                    gameDir.setTitle(i18n("profile.instance_directory.choose"));
-                    gameDir.pathProperty().bindBidirectional(location);
+                    gameDir = new LineFileChooserButton();
+                    gameDir.setTitle(i18n("profile.instance_directory"));
+                    gameDir.setFileChooserTitle(i18n("profile.instance_directory.choose"));
+                    gameDir.setType(LineFileChooserButton.Type.OPEN_DIRECTORY);
+                    gameDir.locationProperty().bindBidirectional(location);
 
                     toggleUseRelativePath = new LineToggleButton();
                     toggleUseRelativePath.setTitle(i18n("profile.use_relative_path"));
@@ -188,7 +186,7 @@ public final class ProfilePage extends BorderPane implements DecoratorPage {
             }
         } else {
             if (StringUtils.isBlank(getLocation())) {
-                gameDir.onExplore();
+                gameDir.fire();
             }
             Profile newProfile = new Profile(txtProfileName.getText(), Path.of(getLocation()));
             newProfile.setUseRelativePath(toggleUseRelativePath.isSelected());

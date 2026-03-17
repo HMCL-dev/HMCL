@@ -19,6 +19,7 @@ package org.jackhuang.hmcl.ui.main;
 
 import com.jfoenix.controls.JFXPopup;
 import javafx.beans.property.ReadOnlyObjectProperty;
+import javafx.scene.layout.Region;
 import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.event.EventBus;
 import org.jackhuang.hmcl.event.RefreshedVersionsEvent;
@@ -65,7 +66,6 @@ import java.util.Locale;
 import java.util.stream.Collectors;
 
 import static org.jackhuang.hmcl.ui.FXUtils.runInFX;
-import static org.jackhuang.hmcl.ui.FXUtils.wrap;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
@@ -171,16 +171,14 @@ public class RootPage extends DecoratorAnimatedPage implements DecoratorPage {
 
             // third item in left sidebar
             AdvancedListItem gameItem = new AdvancedListItem();
-            gameItem.setLeftGraphic(wrap(SVG.FORMAT_LIST_BULLETED));
-            gameItem.setActionButtonVisible(false);
+            gameItem.setLeftIcon(SVG.FORMAT_LIST_BULLETED);
             gameItem.setTitle(i18n("version.manage"));
             gameItem.setOnAction(e -> Controllers.navigate(Controllers.getGameListPage()));
             FXUtils.onSecondaryButtonClicked(gameItem, () -> showGameListPopupMenu(gameItem));
 
             // forth item in left sidebar
             AdvancedListItem downloadItem = new AdvancedListItem();
-            downloadItem.setLeftGraphic(wrap(SVG.DOWNLOAD));
-            downloadItem.setActionButtonVisible(false);
+            downloadItem.setLeftIcon(SVG.DOWNLOAD);
             downloadItem.setTitle(i18n("download"));
             downloadItem.setOnAction(e -> {
                 Controllers.getDownloadPage().showGameDownloads();
@@ -193,8 +191,7 @@ public class RootPage extends DecoratorAnimatedPage implements DecoratorPage {
 
             // fifth item in left sidebar
             AdvancedListItem launcherSettingsItem = new AdvancedListItem();
-            launcherSettingsItem.setLeftGraphic(wrap(SVG.SETTINGS));
-            launcherSettingsItem.setActionButtonVisible(false);
+            launcherSettingsItem.setLeftIcon(SVG.SETTINGS);
             launcherSettingsItem.setTitle(i18n("settings"));
             launcherSettingsItem.setOnAction(e -> {
                 Controllers.getSettingsPage().showGameSettings(Profiles.getSelectedProfile());
@@ -206,8 +203,7 @@ public class RootPage extends DecoratorAnimatedPage implements DecoratorPage {
 
             // sixth item in left sidebar
             AdvancedListItem terracottaItem = new AdvancedListItem();
-            terracottaItem.setLeftGraphic(wrap(SVG.GRAPH2));
-            terracottaItem.setActionButtonVisible(false);
+            terracottaItem.setLeftIcon(SVG.GRAPH2);
             terracottaItem.setTitle(i18n("terracotta"));
             terracottaItem.setOnAction(e -> {
                 if (TerracottaMetadata.PROVIDER != null) {
@@ -249,7 +245,7 @@ public class RootPage extends DecoratorAnimatedPage implements DecoratorPage {
             setCenter(getSkinnable().getMainPage());
         }
 
-        public void showGameListPopupMenu(AdvancedListItem gameListItem) {
+        public void showGameListPopupMenu(Region gameListItem) {
             GameListPopupMenu.show(gameListItem,
                     JFXPopup.PopupVPosition.TOP,
                     JFXPopup.PopupHPosition.LEFT,

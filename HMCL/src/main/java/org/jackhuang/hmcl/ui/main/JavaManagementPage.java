@@ -30,6 +30,7 @@ import javafx.scene.control.Skin;
 import javafx.scene.control.Tooltip;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
+import javafx.scene.layout.Priority;
 import javafx.scene.layout.StackPane;
 import javafx.stage.FileChooser;
 import org.jackhuang.hmcl.java.JavaInfo;
@@ -189,7 +190,6 @@ public final class JavaManagementPage extends ListPageBase<JavaRuntime> {
 
         JavaPageSkin(JavaManagementPage skinnable) {
             super(skinnable);
-            this.listView.getStyleClass().add("no-horizontal-scrollbar");
         }
 
         @Override
@@ -232,6 +232,7 @@ public final class JavaManagementPage extends ListPageBase<JavaRuntime> {
             center.setAlignment(Pos.CENTER_LEFT);
 
             this.content = new TwoLineListItem();
+            HBox.setHgrow(content, Priority.ALWAYS);
 
             BorderPane.setAlignment(content, Pos.CENTER);
             center.getChildren().setAll(content);
@@ -240,9 +241,7 @@ public final class JavaManagementPage extends ListPageBase<JavaRuntime> {
             HBox right = new HBox();
             right.setAlignment(Pos.CENTER_RIGHT);
             {
-                JFXButton revealButton = new JFXButton();
-                revealButton.setGraphic(FXUtils.limitingSize(SVG.FOLDER_OPEN.createIcon(24), 24, 24));
-                revealButton.getStyleClass().add("toggle-icon4");
+                JFXButton revealButton = FXUtils.newToggleButton4(SVG.FOLDER_OPEN);
                 revealButton.setOnAction(e -> {
                     JavaRuntime java = getItem();
                     if (java != null)

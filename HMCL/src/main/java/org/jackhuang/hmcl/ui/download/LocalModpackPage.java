@@ -107,7 +107,7 @@ public final class LocalModpackPage extends ModpackPage {
                 .whenComplete(Schedulers.javafx(), (manifest, exception) -> {
                     if (exception instanceof ManuallyCreatedModpackException) {
                         hideSpinner();
-                        lblName.setText(FileUtils.getName(selectedFile));
+                        nameProperty.set(FileUtils.getName(selectedFile));
                         installAsVersion.set(false);
 
                         if (name == null) {
@@ -127,9 +127,9 @@ public final class LocalModpackPage extends ModpackPage {
                     } else {
                         hideSpinner();
                         controller.getSettings().put(MODPACK_MANIFEST, manifest);
-                        lblName.setText(manifest.getName());
-                        lblVersion.setText(manifest.getVersion());
-                        lblAuthor.setText(manifest.getAuthor());
+                        nameProperty.set(manifest.getName());
+                        versionProperty.set(manifest.getVersion());
+                        authorProperty.set(manifest.getAuthor());
 
                         if (name == null) {
                             // trim: https://github.com/HMCL-dev/HMCL/issues/962
