@@ -152,6 +152,7 @@ public final class BMCLAPIDownloadProvider implements DownloadProvider {
         return injectURL(replacement, baseURL);
     }
 
+    @Override
     public List<URI> injectURLWithCandidates(String baseURL) {
         String injected = injectURL(replacement, baseURL);
         if (injected.equals(baseURL)) {
