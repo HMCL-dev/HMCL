@@ -83,8 +83,8 @@ import static org.jackhuang.hmcl.util.Lang.tryCast;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 public final class TaskListPane extends StackPane {
-    private static final Insets DEFAULT_PROGRESS_NODE_PADDING = new Insets(0, 0, 8, 0);
-    private static final Insets STAGED_PROGRESS_NODE_PADDING = new Insets(0, 0, 8, 26);
+    private static final Insets DEFAULT_PROGRESS_NODE_PADDING = new Insets(0, 0, 4, 0);
+    private static final Insets STAGED_PROGRESS_NODE_PADDING = new Insets(0, 0, 4, 26);
 
     private TaskExecutor executor;
     private final JFXListView<Node> listView = new JFXListView<>();
@@ -279,6 +279,7 @@ public final class TaskListPane extends StackPane {
 
     private final class Cell extends ListCell<Node> {
         private static final double STATUS_ICON_SIZE = 14;
+        private static final Insets PROGRESS_BAR_MARGIN = new Insets(2, 0, 0, 0);
 
         private final BorderPane pane = new BorderPane();
         private final StackPane left = new StackPane();
@@ -310,6 +311,7 @@ public final class TaskListPane extends StackPane {
             bar.minWidthProperty().bind(barWidth);
             bar.prefWidthProperty().bind(barWidth);
             bar.maxWidthProperty().bind(barWidth);
+            BorderPane.setMargin(bar, PROGRESS_BAR_MARGIN);
 
             setGraphic(pane);
         }
