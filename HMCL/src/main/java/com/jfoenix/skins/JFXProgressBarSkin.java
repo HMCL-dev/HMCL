@@ -20,61 +20,38 @@
 package com.jfoenix.skins;
 
 import com.jfoenix.controls.JFXProgressBar;
-import com.jfoenix.utils.JFXNodeUtils;
 import com.jfoenix.utils.TreeShowingProperty;
 import javafx.animation.*;
-import javafx.geometry.Insets;
 import javafx.scene.Node;
 import javafx.scene.control.ProgressIndicator;
-import javafx.scene.control.skin.ProgressIndicatorSkin;
+import javafx.scene.control.SkinBase;
 import javafx.scene.layout.*;
-import javafx.scene.paint.Color;
+import javafx.scene.shape.Rectangle;
 import javafx.util.Duration;
+import org.jackhuang.hmcl.util.Lang;
 
 /// # Material Design ProgressBar Skin
 ///
 /// @author Shadi Shaheen
 /// @version 2.0
 /// @since 2017-10-06
-public class JFXProgressBarSkin extends ProgressIndicatorSkin {
+public class JFXProgressBarSkin extends SkinBase<JFXProgressBar> {
 
-    private StackPane track;
-    private StackPane secondaryBar;
-    private StackPane bar;
-    private double barWidth = 0;
-    private double secondaryBarWidth = 0;
+    private static final double ARC_HEIGHT = 4;
+
+    private final StackPane track;
+    private final StackPane bar;
     private Timeline indeterminateTransition;
-    private Region clip;
+    private final Rectangle clip;
     private final TreeShowingProperty treeShowingProperty;
 
-    public JFXProgressBarSkin(JFXProgressBar bar) {
-        super(bar);
+    public JFXProgressBarSkin(JFXProgressBar control) {
+        super(control);
 
-        this.treeShowingProperty = new TreeShowingProperty(bar);
+        this.treeShowingProperty = new TreeShowingProperty(control);
 
-        bar.widthProperty().addListener(observable -> {
-            updateProgress();
-            updateSecondaryProgress();
-        });
-
-        registerChangeListener(bar.progressProperty(), (obs) -> updateProgress());
-        registerChangeListener(bar.secondaryProgressProperty(), obs -> updateSecondaryProgress());
-        registerChangeListener(bar.visibleProperty(), obs -> updateAnimation());
-        registerChangeListener(bar.parentProperty(), obs -> updateAnimation());
-        registerChangeListener(bar.sceneProperty(), obs -> updateAnimation());
-
-        unregisterChangeListeners(treeShowingProperty);
-        unregisterChangeListeners(bar.indeterminateProperty());
-
-        registerChangeListener(treeShowingProperty, obs -> this.updateAnimation());
-        registerChangeListener(bar.indeterminateProperty(), obs -> initialize());
-
-        initialize();
-
-        getSkinnable().requestLayout();
-    }
-
-    protected void initialize() {
+        registerChangeListener(treeShowingProperty, obs -> updateAnimation());
+        registerChangeListener(control.progressProperty(), obs -> updateProgress());
 
         track = new StackPane();
         track.getStyleClass().setAll("track");
@@ -82,14 +59,15 @@ public class JFXProgressBarSkin extends ProgressIndicatorSkin {
         bar = new StackPane();
         bar.getStyleClass().setAll("bar");
 
-        secondaryBar = new StackPane();
-        secondaryBar.getStyleClass().setAll("secondary-bar");
+        clip = new Rectangle();
+        clip.setManaged(false);
+        clip.setArcWidth(ARC_HEIGHT);
+        clip.setArcHeight(ARC_HEIGHT);
+        bar.setClip(clip);
 
-        clip = new Region();
-        clip.setBackground(new Background(new BackgroundFill(Color.BLACK, CornerRadii.EMPTY, Insets.EMPTY)));
-        bar.backgroundProperty().addListener(observable -> JFXNodeUtils.updateBackground(bar.getBackground(), clip));
+        getChildren().setAll(track, bar);
 
-        getChildren().setAll(track, secondaryBar, bar);
+        getSkinnable().requestLayout();
     }
 
     @Override
@@ -119,42 +97,46 @@ public class JFXProgressBarSkin extends ProgressIndicatorSkin {
 
     @Override
     protected void layoutChildren(double x, double y, double w, double h) {
+        boolean indeterminate = getSkinnable().isIndeterminate();
+
         track.resizeRelocate(x, y, w, h);
-        secondaryBar.resizeRelocate(x, y, secondaryBarWidth, h);
-        bar.resizeRelocate(x, y, getSkinnable().isIndeterminate() ? w : barWidth, h);
-        clip.resizeRelocate(0, 0, w, h);
+        bar.resizeRelocate(x, y, w, h);
+        clip.relocate(0, 0);
+        clip.setTranslateX(0);
+        clip.setHeight(h);
 
-        if (getSkinnable().isIndeterminate()) {
-            createIndeterminateTimeline();
-            if (JFXNodeUtils.isTreeShowing(getSkinnable())) {
+        if (indeterminate) {
+            if (treeShowingProperty.get()) {
+                createIndeterminateTimeline();
                 indeterminateTransition.play();
+            } else {
+                clearAnimation();
             }
-            // apply clip
-            bar.setClip(clip);
-        } else if (indeterminateTransition != null) {
+        } else {
             clearAnimation();
-            // remove clip
-            bar.setClip(null);
-        }
-    }
 
-    protected void updateSecondaryProgress() {
-        final JFXProgressBar control = (JFXProgressBar) getSkinnable();
-        secondaryBarWidth = ((int) (control.getWidth() - snappedLeftInset() - snappedRightInset()) * 2
-                * Math.min(1, Math.max(0, control.getSecondaryProgress()))) / 2.0F;
-        control.requestLayout();
+            double progress = Lang.clamp(0.0, getSkinnable().getProgress(), 1.0);
+            double barWidth = ((int) w * 2 * progress) / 2.0;
+            if (progress > 0) {
+                barWidth = Math.max(barWidth, ARC_HEIGHT);
+            }
+
+            clip.setWidth(barWidth);
+        }
     }
 
     boolean wasIndeterminate = false;
 
     protected void pauseTimeline(boolean pause) {
         if (getSkinnable().isIndeterminate()) {
-            if (indeterminateTransition == null) {
-                createIndeterminateTimeline();
-            }
             if (pause) {
-                indeterminateTransition.pause();
+                if (indeterminateTransition != null) {
+                    indeterminateTransition.pause();
+                }
             } else {
+                if (indeterminateTransition == null) {
+                    createIndeterminateTimeline();
+                }
                 indeterminateTransition.play();
             }
         }
@@ -164,8 +146,6 @@ public class JFXProgressBarSkin extends ProgressIndicatorSkin {
         final boolean isTreeShowing = treeShowingProperty.get();
         if (indeterminateTransition != null) {
             pauseTimeline(!isTreeShowing);
-        } else if (isTreeShowing) {
-            createIndeterminateTimeline();
         }
     }
 
@@ -173,52 +153,49 @@ public class JFXProgressBarSkin extends ProgressIndicatorSkin {
         final ProgressIndicator control = getSkinnable();
         final boolean isIndeterminate = control.isIndeterminate();
         if (!(isIndeterminate && wasIndeterminate)) {
-            barWidth = ((int) (control.getWidth() - snappedLeftInset() - snappedRightInset()) * 2
-                    * Math.min(1, Math.max(0, control.getProgress()))) / 2.0F;
             control.requestLayout();
         }
         wasIndeterminate = isIndeterminate;
     }
 
+    private static final Duration DURATION = Duration.seconds(1);
+
     private void createIndeterminateTimeline() {
-        if (indeterminateTransition != null) {
-            clearAnimation();
-        }
-        double dur = 1;
+        clearAnimation();
         ProgressIndicator control = getSkinnable();
-        final double w = control.getWidth() - (snappedLeftInset() + snappedRightInset());
-        indeterminateTransition = new Timeline(new KeyFrame(
-                Duration.ZERO,
-                new KeyValue(clip.scaleXProperty(), 0.0, Interpolator.EASE_IN),
-                new KeyValue(clip.translateXProperty(), -w / 2, Interpolator.LINEAR)
-        ),
+        final double w = control.getWidth() - snappedLeftInset() - snappedRightInset();
+        indeterminateTransition = new Timeline(
                 new KeyFrame(
-                        Duration.seconds(0.5 * dur),
-                        new KeyValue(clip.scaleXProperty(), 0.4, Interpolator.LINEAR)
+                        Duration.ZERO,
+                        new KeyValue(clip.widthProperty(), 0.0, Interpolator.EASE_IN),
+                        new KeyValue(clip.translateXProperty(), 0, Interpolator.LINEAR)
                 ),
                 new KeyFrame(
-                        Duration.seconds(0.9 * dur),
-                        new KeyValue(clip.translateXProperty(), w / 2, Interpolator.LINEAR)
+                        DURATION.multiply(0.5),
+                        new KeyValue(clip.widthProperty(), w * 0.4, Interpolator.LINEAR)
                 ),
                 new KeyFrame(
-                        Duration.seconds(1 * dur),
-                        new KeyValue(clip.scaleXProperty(), 0.0, Interpolator.EASE_OUT)
+                        DURATION.multiply(0.9),
+                        new KeyValue(clip.translateXProperty(), w, Interpolator.LINEAR)
+                ),
+                new KeyFrame(
+                        DURATION,
+                        new KeyValue(clip.widthProperty(), 0.0, Interpolator.EASE_OUT)
                 ));
         indeterminateTransition.setCycleCount(Timeline.INDEFINITE);
     }
 
     private void clearAnimation() {
-        indeterminateTransition.stop();
-        indeterminateTransition.getKeyFrames().clear();
-        indeterminateTransition = null;
+        if (indeterminateTransition != null) {
+            indeterminateTransition.stop();
+            indeterminateTransition = null;
+        }
     }
 
     @Override
     public void dispose() {
         super.dispose();
         treeShowingProperty.dispose();
-        if (indeterminateTransition != null) {
-            clearAnimation();
-        }
+        clearAnimation();
     }
 }
