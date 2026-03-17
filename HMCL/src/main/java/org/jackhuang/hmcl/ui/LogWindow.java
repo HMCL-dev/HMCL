@@ -411,6 +411,7 @@ public final class LogWindow extends Stage {
                 terminateButton.setOnAction(e -> getSkinnable().onTerminateGame());
 
                 SpinnerPane exportDumpPane = new SpinnerPane();
+                exportDumpPane.getStyleClass().add("small-spinner-pane");
                 JFXButton exportDumpButton = new JFXButton(i18n("logwindow.export_dump"));
                 if (SystemUtils.supportJVMAttachment()) {
                     exportDumpButton.setOnAction(e -> getSkinnable().onExportDump(exportDumpPane));
