@@ -157,7 +157,6 @@ public class JFXCustomColorPickerDialog extends StackPane {
 
         container.getChildren().add(tabs);
 
-
         HBox actionsHBox = new HBox();
         actionsHBox.getStyleClass().add("jfx-color-dialog-actions");
 
@@ -254,7 +253,6 @@ public class JFXCustomColorPickerDialog extends StackPane {
                 acceptButton.textFillProperty().bind(Bindings.createObjectBinding(() -> {
                     return (Color) pane.getBackground().getFills().get(0).getFill();
                 }, pane.backgroundProperty()));
-
 
                 ((Pane) pickerDecorator.lookup(".jfx-decorator-buttons-container")).backgroundProperty()
                         .bind(Bindings.createObjectBinding(() -> {
