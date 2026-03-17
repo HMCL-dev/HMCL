@@ -36,33 +36,15 @@ jobs:
         name: HMCL-${{ env.SHORT_SHA }}-jar
         path: HMCL/build/libs/HMCL-*.jar
         archive: false
-    - name: Upload JAR SHA-256
-      uses: actions/upload-artifact@v7
-      with:
-        name: HMCL-${{ env.SHORT_SHA }}-jar
-        path: HMCL/build/libs/HMCL-*.jar.sha256
-        archive: false
     - name: Upload EXE
       uses: actions/upload-artifact@v7
       with:
         name: HMCL-${{ env.SHORT_SHA }}-exe
         path: HMCL/build/libs/HMCL-*.exe
         archive: false
-    - name: Upload EXE SHA-256
-      uses: actions/upload-artifact@v7
-      with:
-        name: HMCL-${{ env.SHORT_SHA }}-exe
-        path: HMCL/build/libs/HMCL-*.exe.sha256
-        archive: false
     - name: Upload SH
       uses: actions/upload-artifact@v7
       with:
         name: HMCL-${{ env.SHORT_SHA }}-sh
         path: HMCL/build/libs/HMCL-*.sh
-        archive: false
-    - name: Upload SH SHA-256
-      uses: actions/upload-artifact@v7
-      with:
-        name: HMCL-${{ env.SHORT_SHA }}-sh
-        path: HMCL/build/libs/HMCL-*.sh.sha256
         archive: false
