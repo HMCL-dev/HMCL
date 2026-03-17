@@ -197,7 +197,7 @@ public final class RemoteMod {
         CURSEFORGE(
                 CurseForgeRemoteModRepository.MODS,
                 CurseForgeRemoteModRepository.RESOURCE_PACKS,
-                null,
+                CurseForgeRemoteModRepository.SHADERS,
                 CurseForgeRemoteModRepository.WORLDS,
                 CurseForgeRemoteModRepository.MODPACKS,
                 CurseForgeRemoteModRepository.CUSTOMIZATIONS
