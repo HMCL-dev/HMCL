@@ -17,7 +17,6 @@
  */
 package org.jackhuang.hmcl.ui.construct;
 
-import javafx.application.Platform;
 import javafx.beans.binding.Bindings;
 import javafx.beans.property.StringProperty;
 import javafx.beans.property.StringPropertyBase;
@@ -176,9 +175,7 @@ public class TwoLineListItem extends VBox {
             FXUtils.onChangeAndOperate(tagsBox.heightProperty(), height -> FXUtils.setLimitHeight(scrollPane, height.doubleValue()));
             firstLine.getChildren().setAll(lblTitle, scrollPane);
 
-            tags.addListener((ListChangeListener<? super Label>) change -> {
-                Platform.runLater(scrollPane::requestLayout);
-            });
+            tags.addListener((ListChangeListener<? super Label>) change -> scrollPane.requestLayout());
         }
         return tags;
     }
