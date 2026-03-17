@@ -728,7 +728,7 @@ public final class LauncherHelper {
     /**
      * The managed process listener.
      * Guarantee that one [JavaProcess], one [HMCLProcessListener].
-     * Because every time we launched a game, we generates a new [HMCLProcessListener]
+     * Because every time we launched a game, we generate a new [HMCLProcessListener]
      */
     private final class HMCLProcessListener implements ProcessListener {
 

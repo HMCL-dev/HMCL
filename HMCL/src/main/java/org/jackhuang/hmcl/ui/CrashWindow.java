@@ -28,7 +28,6 @@ import javafx.scene.layout.StackPane;
 import javafx.stage.Stage;
 import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.countly.CrashReport;
-import org.jackhuang.hmcl.upgrade.UpdateChecker;
 
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
@@ -41,8 +40,6 @@ public class CrashWindow extends Stage {
         Label lblCrash = new Label();
         if (report.getThrowable() instanceof InternalError)
             lblCrash.setText(i18n("launcher.crash.java_internal_error"));
-        else if (UpdateChecker.isOutdated())
-            lblCrash.setText(i18n("launcher.crash.hmcl_out_dated"));
         else
             lblCrash.setText(i18n("launcher.crash"));
         lblCrash.setWrapText(true);

@@ -19,19 +19,10 @@ package org.jackhuang.hmcl.upgrade;
 
 import com.google.gson.Gson;
 import com.google.gson.JsonParseException;
-import javafx.application.Platform;
-
-import org.jackhuang.hmcl.EntryPoint;
 import org.jackhuang.hmcl.Main;
 import org.jackhuang.hmcl.Metadata;
-import org.jackhuang.hmcl.task.Task;
-import org.jackhuang.hmcl.task.TaskExecutor;
-import org.jackhuang.hmcl.ui.Controllers;
-import org.jackhuang.hmcl.ui.UpgradeDialog;
-import org.jackhuang.hmcl.ui.construct.MessageDialogPane.MessageType;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.SwingUtils;
-import org.jackhuang.hmcl.util.TaskCancellationAction;
 import org.jackhuang.hmcl.util.io.JarUtils;
 import org.jackhuang.hmcl.java.JavaRuntime;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
@@ -41,12 +32,9 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
-import java.util.concurrent.CancellationException;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import static org.jackhuang.hmcl.ui.FXUtils.checkFxUserThread;
-import static org.jackhuang.hmcl.util.Lang.thread;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
@@ -94,63 +82,10 @@ public final class UpdateHandler {
         return false;
     }
 
-    public static void updateFrom(RemoteVersion version) {
-        checkFxUserThread();
-
-        if (OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS && !OperatingSystem.isWindows7OrLater()) {
-            Controllers.dialog(i18n("fatal.apply_update_need_win7", Metadata.PUBLISH_URL), i18n("message.error"), MessageType.ERROR);
-            return;
-        }
-
-        Controllers.dialog(new UpgradeDialog(version, () -> {
-            Path downloaded;
-            try {
-                downloaded = Files.createTempFile("hmcl-update-", ".jar");
-            } catch (IOException e) {
-                LOG.warning("Failed to create temp file", e);
-                return;
-            }
-
-            Task<?> task = new HMCLDownloadTask(version, downloaded);
-
-            TaskExecutor executor = task.executor();
-            Controllers.taskDialog(executor, i18n("message.downloading"), TaskCancellationAction.NORMAL);
-            thread(() -> {
-                boolean success = executor.test();
-
-                if (success) {
-                    try {
-                        if (!IntegrityChecker.isSelfVerified() && !IntegrityChecker.DISABLE_SELF_INTEGRITY_CHECK) {
-                            throw new IOException("Current JAR is not verified");
-                        }
-
-                        requestUpdate(downloaded, getCurrentLocation());
-                        EntryPoint.exit(0);
-                    } catch (IOException e) {
-                        LOG.warning("Failed to update to " + version, e);
-                        Platform.runLater(() -> Controllers.dialog(StringUtils.getStackTrace(e), i18n("update.failed"), MessageType.ERROR));
-                    }
-
-                } else {
-                    Exception e = executor.getException();
-                    LOG.warning("Failed to update to " + version, e);
-                    if (e instanceof CancellationException) {
-                        Platform.runLater(() -> Controllers.showToast(i18n("message.cancelled")));
-                    } else {
-                        Platform.runLater(() -> Controllers.dialog(e.toString(), i18n("update.failed"), MessageType.ERROR));
-                    }
-                }
-            });
-        }));
-    }
-
     private static void applyUpdate(Path target) throws IOException {
         LOG.info("Applying update to " + target);
 
         Path self = getCurrentLocation();
-        if (!IntegrityChecker.DISABLE_SELF_INTEGRITY_CHECK && !IntegrityChecker.isSelfVerified()) {
-            throw new IOException("Self verification failed");
-        }
         ExecutableHeaderHelper.copyWithHeader(self, target);
 
         Optional<Path> newFilename = tryRename(target, Metadata.VERSION);
@@ -168,9 +103,6 @@ public final class UpdateHandler {
     }
 
     private static void requestUpdate(Path updateTo, Path self) throws IOException {
-        if (!IntegrityChecker.DISABLE_SELF_INTEGRITY_CHECK) {
-            IntegrityChecker.verifyJar(updateTo);
-        }
         startJava(updateTo, "--apply-to", self.toString());
     }
 

@@ -31,7 +31,6 @@ import org.jackhuang.hmcl.theme.Themes;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.WeakListenerHolder;
 import org.jackhuang.hmcl.ui.construct.*;
-import org.jackhuang.hmcl.upgrade.IntegrityChecker;
 import org.jackhuang.hmcl.util.Lang;
 
 import java.util.concurrent.CancellationException;
@@ -130,14 +129,6 @@ public class MicrosoftAccountLoginPane extends JFXDialogLayout implements Dialog
         }
 
         rootContainer.getChildren().add(hintPane);
-
-        if (!IntegrityChecker.isOfficial()) {
-            unofficialHintPane = new HintPane(MessageDialogPane.MessageType.WARNING);
-            unofficialHintPane.managedProperty().bind(unofficialHintPane.visibleProperty());
-            unofficialHintPane.setSegment(i18n("unofficial.hint"));
-            rootContainer.getChildren().add(unofficialHintPane);
-        }
-
         initAuthMethodsBox();
         rootContainer.getChildren().add(authMethodsContentBox);
 
