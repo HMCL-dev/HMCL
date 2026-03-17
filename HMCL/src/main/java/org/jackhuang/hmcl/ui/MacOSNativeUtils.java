@@ -18,13 +18,7 @@
 package org.jackhuang.hmcl.ui;
 
 import com.sun.jna.Pointer;
-import javafx.stage.Stage;
 import org.jackhuang.hmcl.util.platform.macos.AppKit;
-
-import java.lang.invoke.MethodHandle;
-import java.lang.invoke.MethodHandles;
-import java.lang.invoke.MethodType;
-import java.util.OptionalLong;
 
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
@@ -91,31 +85,6 @@ public final class MacOSNativeUtils {
             objc.objc_msgSend(nsApp, setSel, appearance);
         } catch (Throwable t) {
             LOG.warning("Failed to set macOS appearance", t);
-        }
-    }
-
-    public static OptionalLong getWindowHandle(Stage stage) {
-        try {
-            Class<?> windowStageClass = Class.forName("com.sun.javafx.tk.quantum.WindowStage");
-            Class<?> glassWindowClass = Class.forName("com.sun.glass.ui.Window");
-            Class<?> tkStageClass = Class.forName("com.sun.javafx.tk.TKStage");
-
-            Object tkStage = MethodHandles.privateLookupIn(javafx.stage.Window.class, MethodHandles.lookup())
-                    .findVirtual(javafx.stage.Window.class, "getPeer", MethodType.methodType(tkStageClass))
-                    .invoke(stage);
-
-            MethodHandles.Lookup windowStageLookup = MethodHandles.privateLookupIn(windowStageClass, MethodHandles.lookup());
-            MethodHandle getPlatformWindow = windowStageLookup.findVirtual(windowStageClass, "getPlatformWindow", MethodType.methodType(glassWindowClass));
-            Object platformWindow = getPlatformWindow.invoke(tkStage);
-
-            long handle = (long) MethodHandles.privateLookupIn(glassWindowClass, MethodHandles.lookup())
-                    .findVirtual(glassWindowClass, "getNativeWindow", MethodType.methodType(long.class))
-                    .invoke(platformWindow);
-
-            return OptionalLong.of(handle);
-        } catch (Throwable ex) {
-            LOG.warning("Failed to get window handle", ex);
-            return OptionalLong.empty();
         }
     }
 
