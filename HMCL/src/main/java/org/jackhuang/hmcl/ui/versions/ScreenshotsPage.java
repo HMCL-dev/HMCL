@@ -32,6 +32,7 @@ import java.nio.file.attribute.BasicFileAttributes;
 import java.time.Instant;
 import java.util.Collection;
 import java.util.Comparator;
+import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Stream;
@@ -71,6 +72,10 @@ public class ScreenshotsPage extends ListPageBase<ScreenshotsPage.Screenshot> im
             }
             setLoading(false);
         }).start();
+    }
+
+    private void revealFolder() {
+        FXUtils.openFolder(screenshotsDir);
     }
 
     private void deleteAt(Path path) {
@@ -219,6 +224,22 @@ public class ScreenshotsPage extends ListPageBase<ScreenshotsPage.Screenshot> im
             content.setMouseTransparent(true);
             HBox.setHgrow(content, Priority.ALWAYS);
 
+            JFXButton copyButton = FXUtils.newToggleButton4(SVG.CONTENT_COPY);
+            copyButton.setOnAction(e -> {
+                Screenshot screenshot = getItem();
+                if (screenshot != null) {
+                    FXUtils.copyFiles(List.of(screenshot.getPath()));
+                }
+            });
+
+            JFXButton revealButton = FXUtils.newToggleButton4(SVG.FOLDER);
+            revealButton.setOnAction(e -> {
+                Screenshot screenshot = getItem();
+                if (screenshot != null) {
+                    FXUtils.showFileInExplorer(screenshot.getPath());
+                }
+            });
+
             JFXButton infoButton = FXUtils.newToggleButton4(SVG.INFO);
             infoButton.setOnAction(e -> {
                 Screenshot screenshot = getItem();
@@ -236,7 +257,7 @@ public class ScreenshotsPage extends ListPageBase<ScreenshotsPage.Screenshot> im
                 }
             });
 
-            container.getChildren().setAll(imagePane, content, infoButton, deleteButton);
+            container.getChildren().setAll(imagePane, content, copyButton, revealButton, infoButton, deleteButton);
 
             StackPane.setMargin(container, new Insets(8));
             getContainer().getChildren().setAll(container);
@@ -314,15 +335,17 @@ public class ScreenshotsPage extends ListPageBase<ScreenshotsPage.Screenshot> im
                 // Toolbar Normal
                 toolbarNormal.getChildren().setAll(
                         createToolbarButton2(i18n("button.refresh"), SVG.REFRESH, skinnable::refresh),
+                        createToolbarButton2(i18n("button.reveal_dir"), SVG.FOLDER_OPEN, skinnable::revealFolder),
                         createToolbarButton2(i18n("button.clear"), SVG.DELETE_FOREVER, () -> {
-                            if (!listView.getItems().isEmpty()) {
-                                Controllers.confirm(i18n("button.remove.confirm"), i18n("button.remove"), skinnable::clear, null);
-                            }
+                            Controllers.confirm(i18n("screenshots.clear.confirm"), i18n("button.clear"), skinnable::clear, null);
                         })
                 );
 
                 // Toolbar Selecting
                 toolbarSelecting.getChildren().setAll(
+                        createToolbarButton2(i18n("menu.copy"), SVG.FOLDER_COPY, () -> {
+                            FXUtils.copyFiles(listView.getSelectionModel().getSelectedItems().stream().map(Screenshot::getPath).toList());
+                        }),
                         createToolbarButton2(i18n("button.remove"), SVG.DELETE_FOREVER, () -> {
                             Controllers.confirm(i18n("button.remove.confirm"), i18n("button.remove"), () ->
                                     skinnable.delete(listView.getSelectionModel().getSelectedItems()), null);

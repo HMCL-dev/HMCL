@@ -1514,6 +1514,20 @@ public final class FXUtils {
         }
     }
 
+    public static void copyFiles(List<Path> paths) {
+        copyFiles(paths.stream().map(Path::toFile).toList(), i18n("message.copied"));
+    }
+
+    public static void copyFiles(List<File> files, @Nullable String toastMessage) {
+        ClipboardContent content = new ClipboardContent();
+        content.putFiles(files);
+        Clipboard.getSystemClipboard().setContent(content);
+
+        if (toastMessage != null && !Controllers.isStopped()) {
+            Controllers.showToast(toastMessage);
+        }
+    }
+
     public static List<Node> parseSegment(String segment, Consumer<String> hyperlinkAction) {
         if (segment.indexOf('<') < 0)
             return Collections.singletonList(new Text(segment));
