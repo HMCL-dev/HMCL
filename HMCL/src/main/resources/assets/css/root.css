@@ -915,17 +915,13 @@
 
 .jfx-progress-bar > .track {
     -fx-background-color: -monet-secondary-container;
+    -fx-background-radius: 2;
+    -fx-background-insets: 0;
 }
 
 .jfx-progress-bar > .bar {
     -fx-fill: -monet-primary;
 }
-
-.jfx-progress-bar > .track {
-    -fx-background-radius: 2;
-    -fx-background-insets: 0;
-}
-
 
 /*******************************************************************************
 *                                                                              *
