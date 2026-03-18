@@ -47,6 +47,8 @@ import javafx.util.Duration;
 /// @since 2017-09-25
 public class JFXSpinnerSkin extends SkinBase<JFXSpinner> {
 
+    private static final double DEFAULT_STROKE_WIDTH = 4;
+
     private static final Color GREEN_COLOR = Color.valueOf("#0F9D58");
     private static final Color RED_COLOR = Color.valueOf("#db4437");
     private static final Color YELLOW_COLOR = Color.valueOf("#f4b400");
@@ -76,14 +78,14 @@ public class JFXSpinnerSkin extends SkinBase<JFXSpinner> {
         arc.setLength(180);
         arc.getStyleClass().setAll("arc");
         arc.setFill(Color.TRANSPARENT);
-        arc.setStrokeWidth(3);
+        arc.setStrokeWidth(DEFAULT_STROKE_WIDTH);
         arc.setStrokeLineCap(StrokeLineCap.ROUND);
 
         track = new Arc();
         track.setManaged(false);
         track.setStartAngle(0);
         track.setLength(360);
-        track.setStrokeWidth(3);
+        track.setStrokeWidth(DEFAULT_STROKE_WIDTH);
         track.getStyleClass().setAll("track");
         track.setFill(Color.TRANSPARENT);
 
