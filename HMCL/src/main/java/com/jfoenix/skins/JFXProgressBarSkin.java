@@ -133,7 +133,9 @@ public class JFXProgressBarSkin extends SkinBase<JFXProgressBar> {
             }
         } else { // determinate
             clearAnimation();
-            if (isTreeShowing && playProgressAnimation && AnimationUtils.isAnimationEnabled()) {
+            if (isTreeShowing && playProgressAnimation
+                    && getSkinnable().isSmoothProgress()
+                    && AnimationUtils.isAnimationEnabled()) {
                 transition = createDeterminateTransition(progress);
                 transition.playFromStart();
             } else {
