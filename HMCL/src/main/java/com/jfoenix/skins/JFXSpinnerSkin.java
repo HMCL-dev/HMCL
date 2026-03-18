@@ -99,7 +99,6 @@ public class JFXSpinnerSkin extends SkinBase<JFXSpinner> {
         double progress = Double.min(getSkinnable().getProgress(), 1.0);
         if (progress < 0) {
             // indeterminate
-
             boolean treeShowing = treeShowingProperty.get();
             if (treeShowing) {
                 if (timeline == null) {
