@@ -1452,10 +1452,6 @@
     -fx-stroke: -monet-primary-container;
 }
 
-.jfx-spinner:determinate .percentage {
-    -fx-fill: -monet-on-surface-variant;
-}
-
 .small-spinner {
     -jfx-radius: 9;
 }
