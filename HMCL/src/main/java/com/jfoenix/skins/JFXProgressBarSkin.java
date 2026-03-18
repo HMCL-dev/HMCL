@@ -36,10 +36,11 @@ import org.jackhuang.hmcl.ui.animation.AnimationUtils;
 /// @since 2017-10-06
 public class JFXProgressBarSkin extends SkinBase<JFXProgressBar> {
 
-    private static final double HEIGHT = 4;
+    private static final double DEFAULT_HEIGHT = 4;
 
     private final StackPane track;
-    private final Rectangle bar;
+    private final StackPane bar;
+    private final Rectangle clip;
     private Animation transition;
     private final TreeShowingProperty treeShowingProperty;
     private double fullWidth;
@@ -55,13 +56,13 @@ public class JFXProgressBarSkin extends SkinBase<JFXProgressBar> {
         track = new StackPane();
         track.getStyleClass().setAll("track");
 
-        bar = new Rectangle();
-        bar.setManaged(false);
+        bar = new StackPane();
         bar.getStyleClass().setAll("bar");
-        bar.setHeight(HEIGHT);
-        bar.setWidth(0);
-        bar.setArcWidth(HEIGHT);
-        bar.setArcHeight(HEIGHT);
+
+        clip = new Rectangle();
+        clip.setArcWidth(DEFAULT_HEIGHT);
+        clip.setArcHeight(DEFAULT_HEIGHT);
+        bar.setClip(clip);
 
         getChildren().setAll(track, bar);
 
@@ -80,7 +81,7 @@ public class JFXProgressBarSkin extends SkinBase<JFXProgressBar> {
 
     @Override
     protected double computePrefHeight(double width, double topInset, double rightInset, double bottomInset, double leftInset) {
-        return topInset + HEIGHT + bottomInset;
+        return topInset + DEFAULT_HEIGHT + bottomInset;
     }
 
     @Override
@@ -96,10 +97,12 @@ public class JFXProgressBarSkin extends SkinBase<JFXProgressBar> {
     @Override
     protected void layoutChildren(double x, double y, double w, double h) {
         track.resizeRelocate(x, y, w, h);
-        bar.relocate(x, y);
-        bar.setTranslateX(0);
-        bar.setHeight(h);
-        bar.setWidth(0);
+        bar.resizeRelocate(x, y, w, h);
+
+        clip.relocate(0, 0);
+        clip.setWidth(0);
+        clip.setHeight(h);
+        clip.setTranslateX(0);
 
         fullWidth = w;
 
@@ -117,7 +120,7 @@ public class JFXProgressBarSkin extends SkinBase<JFXProgressBar> {
         if (isIndeterminate != wasIndeterminate) {
             wasIndeterminate = isIndeterminate;
             clearAnimation();
-            bar.setTranslateX(0);
+            clip.setTranslateX(0);
         }
 
         if (isIndeterminate) { // indeterminate
@@ -139,7 +142,7 @@ public class JFXProgressBarSkin extends SkinBase<JFXProgressBar> {
                 transition = createDeterminateTransition(progress);
                 transition.playFromStart();
             } else {
-                bar.setWidth(computeBarWidth(progress));
+                clip.setWidth(computeBarWidth(progress));
             }
         }
     }
@@ -150,20 +153,20 @@ public class JFXProgressBarSkin extends SkinBase<JFXProgressBar> {
         Timeline indeterminateTransition = new Timeline(
                 new KeyFrame(
                         Duration.ZERO,
-                        new KeyValue(bar.widthProperty(), 0.0, Interpolator.EASE_IN),
-                        new KeyValue(bar.translateXProperty(), 0, Interpolator.LINEAR)
+                        new KeyValue(clip.widthProperty(), 0.0, Interpolator.EASE_IN),
+                        new KeyValue(clip.translateXProperty(), 0, Interpolator.LINEAR)
                 ),
                 new KeyFrame(
                         INDETERMINATE_DURATION.multiply(0.5),
-                        new KeyValue(bar.widthProperty(), fullWidth * 0.4, Interpolator.LINEAR)
+                        new KeyValue(clip.widthProperty(), fullWidth * 0.4, Interpolator.LINEAR)
                 ),
                 new KeyFrame(
                         INDETERMINATE_DURATION.multiply(0.9),
-                        new KeyValue(bar.translateXProperty(), fullWidth, Interpolator.LINEAR)
+                        new KeyValue(clip.translateXProperty(), fullWidth, Interpolator.LINEAR)
                 ),
                 new KeyFrame(
                         INDETERMINATE_DURATION,
-                        new KeyValue(bar.widthProperty(), 0.0, Interpolator.EASE_OUT)
+                        new KeyValue(clip.widthProperty(), 0.0, Interpolator.EASE_OUT)
                 ));
         indeterminateTransition.setCycleCount(Timeline.INDEFINITE);
         return indeterminateTransition;
@@ -174,9 +177,9 @@ public class JFXProgressBarSkin extends SkinBase<JFXProgressBar> {
     private Timeline createDeterminateTransition(double targetProgress) {
         Timeline timeline = new Timeline(
                 new KeyFrame(Duration.ZERO,
-                        new KeyValue(bar.widthProperty(), bar.getWidth())),
+                        new KeyValue(clip.widthProperty(), clip.getWidth())),
                 new KeyFrame(DETERMINATE_DURATION,
-                        new KeyValue(bar.widthProperty(), computeBarWidth(targetProgress)))
+                        new KeyValue(clip.widthProperty(), computeBarWidth(targetProgress)))
         );
         timeline.setOnFinished(e -> {
             if (transition == timeline) {
@@ -203,6 +206,6 @@ public class JFXProgressBarSkin extends SkinBase<JFXProgressBar> {
     private double computeBarWidth(double progress) {
         assert progress >= 0 && progress <= 1;
         double barWidth = ((int) fullWidth * 2 * progress) / 2.0;
-        return progress > 0 ? Math.max(barWidth, HEIGHT) : barWidth;
+        return progress > 0 ? Math.max(barWidth, DEFAULT_HEIGHT) : barWidth;
     }
 }
