@@ -112,6 +112,7 @@ public final class VersionsPage extends Control implements WizardPage, Refreshab
     public void refresh() {
         status.set(Status.LOADING);
         Task<?> task = versionList.refreshAsync(gameVersion)
+                .thenRunAsync(() -> Thread.sleep(5000)) // For testing
                 .thenSupplyAsync(() -> versionList.getVersions(gameVersion).stream().sorted().collect(Collectors.toList()))
                 .whenComplete(Schedulers.javafx(), (items, exception) -> {
                     if (exception == null) {
