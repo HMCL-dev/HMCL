@@ -31,7 +31,7 @@ import javafx.scene.control.Skin;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.concurrent.ThreadLocalRandom;
+import java.util.random.RandomGenerator;
 
 /// JFXSpinner is the material design implementation of a loading spinner.
 ///
@@ -39,6 +39,8 @@ import java.util.concurrent.ThreadLocalRandom;
 /// @version 1.0
 /// @since 2016-03-09
 public class JFXSpinner extends ProgressIndicator {
+
+    private static final RandomGenerator RANDOM = RandomGenerator.getDefault();
 
     public static final double INDETERMINATE_PROGRESS = ProgressIndicator.INDETERMINATE_PROGRESS;
 
@@ -98,7 +100,7 @@ public class JFXSpinner extends ProgressIndicator {
     }
 
     public double getStartingAngle() {
-        return 360 - ThreadLocalRandom.current().nextDouble() * 720;
+        return 360 - RANDOM.nextDouble() * 720;
     }
 
     private static final class StyleableProperties {
