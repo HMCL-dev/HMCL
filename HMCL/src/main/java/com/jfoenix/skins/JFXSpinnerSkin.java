@@ -109,6 +109,7 @@ public class JFXSpinnerSkin extends SkinBase<JFXSpinner> {
             }
         } else { // determinate
             clearAnimation();
+            arc.setStartAngle(90);
             arc.setLength(-360 * progress);
         }
     }
