@@ -20,7 +20,6 @@
 package com.jfoenix.skins;
 
 import com.jfoenix.controls.JFXSpinner;
-import com.jfoenix.utils.JFXNodeUtils;
 import com.jfoenix.utils.TreeShowingProperty;
 import javafx.animation.Interpolator;
 import javafx.animation.KeyFrame;
@@ -36,8 +35,6 @@ import javafx.scene.paint.Paint;
 import javafx.scene.shape.Arc;
 import javafx.scene.shape.Rectangle;
 import javafx.scene.shape.StrokeLineCap;
-import javafx.scene.text.Font;
-import javafx.scene.text.Text;
 import javafx.util.Duration;
 
 /// JFXSpinner material design skin
@@ -46,6 +43,8 @@ import javafx.util.Duration;
 /// @version 1.0
 /// @since 2017-09-25
 public class JFXSpinnerSkin extends SkinBase<JFXSpinner> {
+
+    private static final double DEFAULT_STROKE_WIDTH = 4;
 
     private static final Color GREEN_COLOR = Color.valueOf("#0F9D58");
     private static final Color RED_COLOR = Color.valueOf("#db4437");
@@ -62,13 +61,15 @@ public class JFXSpinnerSkin extends SkinBase<JFXSpinner> {
     private final StackPane arcPane;
     private final Rectangle fillRect;
     private double arcLength = -1;
-    private final Text text;
+
+    private final double startingAngle;
 
     public JFXSpinnerSkin(JFXSpinner control) {
         super(control);
 
         this.control = control;
         this.treeShowingProperty = new TreeShowingProperty(control);
+        this.startingAngle = control.getStartingAngle();
 
         arc = new Arc();
         arc.setManaged(false);
@@ -76,23 +77,20 @@ public class JFXSpinnerSkin extends SkinBase<JFXSpinner> {
         arc.setLength(180);
         arc.getStyleClass().setAll("arc");
         arc.setFill(Color.TRANSPARENT);
-        arc.setStrokeWidth(3);
+        arc.setStrokeWidth(DEFAULT_STROKE_WIDTH);
         arc.setStrokeLineCap(StrokeLineCap.ROUND);
 
         track = new Arc();
         track.setManaged(false);
         track.setStartAngle(0);
         track.setLength(360);
-        track.setStrokeWidth(3);
+        track.setStrokeWidth(DEFAULT_STROKE_WIDTH);
         track.getStyleClass().setAll("track");
         track.setFill(Color.TRANSPARENT);
 
         fillRect = new Rectangle();
         fillRect.setFill(Color.TRANSPARENT);
-        text = new Text();
-        text.setStyle("-fx-font-size:null");
-        text.getStyleClass().setAll("text", "percentage");
-        final Group group = new Group(fillRect, track, arc, text);
+        final Group group = new Group(fillRect, track, arc);
         group.setManaged(false);
         arcPane = new StackPane(group);
         arcPane.setPrefSize(50, 50);
@@ -109,7 +107,7 @@ public class JFXSpinnerSkin extends SkinBase<JFXSpinner> {
         if (getSkinnable().isIndeterminate()) {
             if (timeline == null) {
                 createTransition();
-                if (JFXNodeUtils.isTreeShowing(getSkinnable())) {
+                if (treeShowingProperty.get()) {
                     timeline.play();
                 }
             }
@@ -125,22 +123,22 @@ public class JFXSpinnerSkin extends SkinBase<JFXSpinner> {
         frames[0] = new KeyFrame(Duration.seconds(duration),
                 new KeyValue(arc.lengthProperty(), 5, Interpolator.LINEAR),
                 new KeyValue(arc.startAngleProperty(),
-                        angle + 45 + control.getStartingAngle(),
+                        angle + 45 + startingAngle,
                         Interpolator.LINEAR));
         frames[1] = new KeyFrame(Duration.seconds(duration + 0.4),
                 new KeyValue(arc.lengthProperty(), 250, Interpolator.LINEAR),
                 new KeyValue(arc.startAngleProperty(),
-                        angle + 90 + control.getStartingAngle(),
+                        angle + 90 + startingAngle,
                         Interpolator.LINEAR));
         frames[2] = new KeyFrame(Duration.seconds(duration + 0.7),
                 new KeyValue(arc.lengthProperty(), 250, Interpolator.LINEAR),
                 new KeyValue(arc.startAngleProperty(),
-                        angle + 135 + control.getStartingAngle(),
+                        angle + 135 + startingAngle,
                         Interpolator.LINEAR));
         frames[3] = new KeyFrame(Duration.seconds(duration + 1.1),
                 new KeyValue(arc.lengthProperty(), 5, Interpolator.LINEAR),
                 new KeyValue(arc.startAngleProperty(),
-                        angle + 435 + control.getStartingAngle(),
+                        angle + 435 + startingAngle,
                         Interpolator.LINEAR),
                 new KeyValue(arc.strokeProperty(), color, Interpolator.EASE_BOTH));
         return frames;
@@ -230,14 +228,6 @@ public class JFXSpinnerSkin extends SkinBase<JFXSpinner> {
 
         if (!getSkinnable().isIndeterminate()) {
             arc.setLength(arcLength);
-            if (text.isVisible()) {
-                final double progress = control.getProgress();
-                int intProgress = (int) Math.round(progress * 100.0);
-                Font font = text.getFont();
-                text.setFont(Font.font(font.getFamily(), radius / 1.7));
-                text.setText((progress > 1 ? 100 : intProgress) + "%");
-                text.relocate((arcSize - text.getLayoutBounds().getWidth()) / 2, (arcSize - text.getLayoutBounds().getHeight()) / 2);
-            }
         }
     }
 
@@ -281,7 +271,7 @@ public class JFXSpinnerSkin extends SkinBase<JFXSpinner> {
         KeyFrame endingFrame = new KeyFrame(Duration.seconds(5.6),
                 new KeyValue(arc.lengthProperty(), 5, Interpolator.LINEAR),
                 new KeyValue(arc.startAngleProperty(),
-                        1845 + control.getStartingAngle(),
+                        1845 + startingAngle,
                         Interpolator.LINEAR));
 
         if (timeline != null) {
