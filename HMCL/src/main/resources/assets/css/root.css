@@ -913,12 +913,12 @@
 *                                                                              *
 *******************************************************************************/
 
+
 .jfx-progress-bar > .track {
     -fx-background-color: -monet-secondary-container;
 }
 
-.jfx-progress-bar > .bar,
-.jfx-progress-bar:indeterminate > .bar {
+.jfx-progress-bar > .bar {
     -fx-background-color: -monet-primary;
     -fx-padding: 2;
 }
@@ -928,7 +928,6 @@
     -fx-background-radius: 2;
     -fx-background-insets: 0;
 }
-
 
 /*******************************************************************************
 *                                                                              *
