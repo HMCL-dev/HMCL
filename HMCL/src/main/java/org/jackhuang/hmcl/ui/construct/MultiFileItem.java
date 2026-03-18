@@ -271,6 +271,11 @@ public final class MultiFileItem<T> extends VBox {
             return this;
         }
 
+        public FileOption<T> setSelectionMode(FileSelector.SelectionMode selectionMode) {
+            selector.setSelectionMode(selectionMode);
+            return this;
+        }
+
         public FileOption<T> bindBidirectional(Property<String> property) {
             selector.valueProperty().bindBidirectional(property);
             return this;
