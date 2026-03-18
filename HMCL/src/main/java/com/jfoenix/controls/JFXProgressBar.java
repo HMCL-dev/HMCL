@@ -49,6 +49,16 @@ public class JFXProgressBar extends ProgressBar {
         return new JFXProgressBarSkin(this);
     }
 
+    private boolean smoothProgress = true;
+
+    public boolean isSmoothProgress() {
+        return smoothProgress;
+    }
+
+    public void setSmoothProgress(boolean smoothProgress) {
+        this.smoothProgress = smoothProgress;
+    }
+
     private void initialize() {
         setPrefWidth(200);
         getStyleClass().add(DEFAULT_STYLE_CLASS);

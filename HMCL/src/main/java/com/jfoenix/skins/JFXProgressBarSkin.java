@@ -23,12 +23,11 @@ import com.jfoenix.controls.JFXProgressBar;
 import com.jfoenix.utils.TreeShowingProperty;
 import javafx.animation.*;
 import javafx.scene.Node;
-import javafx.scene.control.ProgressIndicator;
 import javafx.scene.control.SkinBase;
 import javafx.scene.layout.*;
 import javafx.scene.shape.Rectangle;
 import javafx.util.Duration;
-import org.jackhuang.hmcl.util.Lang;
+import org.jackhuang.hmcl.ui.animation.AnimationUtils;
 
 /// # Material Design ProgressBar Skin
 ///
@@ -37,21 +36,22 @@ import org.jackhuang.hmcl.util.Lang;
 /// @since 2017-10-06
 public class JFXProgressBarSkin extends SkinBase<JFXProgressBar> {
 
-    private static final double ARC_HEIGHT = 4;
+    private static final double DEFAULT_HEIGHT = 4;
 
     private final StackPane track;
     private final StackPane bar;
-    private Timeline indeterminateTransition;
     private final Rectangle clip;
+    private Animation transition;
     private final TreeShowingProperty treeShowingProperty;
+    private double fullWidth;
 
     public JFXProgressBarSkin(JFXProgressBar control) {
         super(control);
 
         this.treeShowingProperty = new TreeShowingProperty(control);
 
-        registerChangeListener(treeShowingProperty, obs -> updateAnimation());
-        registerChangeListener(control.progressProperty(), obs -> updateProgress());
+        registerChangeListener(treeShowingProperty, obs -> updateProgress(false));
+        registerChangeListener(control.progressProperty(), obs -> updateProgress(true));
 
         track = new StackPane();
         track.getStyleClass().setAll("track");
@@ -60,9 +60,8 @@ public class JFXProgressBarSkin extends SkinBase<JFXProgressBar> {
         bar.getStyleClass().setAll("bar");
 
         clip = new Rectangle();
-        clip.setManaged(false);
-        clip.setArcWidth(ARC_HEIGHT);
-        clip.setArcHeight(ARC_HEIGHT);
+        clip.setArcWidth(DEFAULT_HEIGHT);
+        clip.setArcHeight(DEFAULT_HEIGHT);
         bar.setClip(clip);
 
         getChildren().setAll(track, bar);
@@ -82,7 +81,7 @@ public class JFXProgressBarSkin extends SkinBase<JFXProgressBar> {
 
     @Override
     protected double computePrefHeight(double width, double topInset, double rightInset, double bottomInset, double leftInset) {
-        return topInset + bar.prefHeight(width) + bottomInset;
+        return topInset + DEFAULT_HEIGHT + bottomInset;
     }
 
     @Override
@@ -97,98 +96,117 @@ public class JFXProgressBarSkin extends SkinBase<JFXProgressBar> {
 
     @Override
     protected void layoutChildren(double x, double y, double w, double h) {
-        boolean indeterminate = getSkinnable().isIndeterminate();
-
         track.resizeRelocate(x, y, w, h);
         bar.resizeRelocate(x, y, w, h);
+
         clip.relocate(0, 0);
-        clip.setTranslateX(0);
+        clip.setWidth(0);
         clip.setHeight(h);
+        clip.setTranslateX(0);
 
-        if (indeterminate) {
-            if (treeShowingProperty.get()) {
-                createIndeterminateTimeline();
-                indeterminateTransition.play();
-            } else {
-                clearAnimation();
-            }
-        } else {
-            clearAnimation();
+        fullWidth = w;
 
-            double progress = Lang.clamp(0.0, getSkinnable().getProgress(), 1.0);
-            double barWidth = ((int) w * 2 * progress) / 2.0;
-            if (progress > 0) {
-                barWidth = Math.max(barWidth, ARC_HEIGHT);
-            }
-
-            clip.setWidth(barWidth);
-        }
-    }
-
-    boolean wasIndeterminate = false;
-
-    protected void pauseTimeline(boolean pause) {
-        if (getSkinnable().isIndeterminate()) {
-            if (pause) {
-                if (indeterminateTransition != null) {
-                    indeterminateTransition.pause();
-                }
-            } else {
-                if (indeterminateTransition == null) {
-                    createIndeterminateTimeline();
-                }
-                indeterminateTransition.play();
-            }
-        }
-    }
-
-    private void updateAnimation() {
-        final boolean isTreeShowing = treeShowingProperty.get();
-        if (indeterminateTransition != null) {
-            pauseTimeline(!isTreeShowing);
-        }
-    }
-
-    private void updateProgress() {
-        final ProgressIndicator control = getSkinnable();
-        final boolean isIndeterminate = control.isIndeterminate();
-        if (!(isIndeterminate && wasIndeterminate)) {
-            control.requestLayout();
-        }
-        wasIndeterminate = isIndeterminate;
-    }
-
-    private static final Duration DURATION = Duration.seconds(1);
-
-    private void createIndeterminateTimeline() {
         clearAnimation();
-        ProgressIndicator control = getSkinnable();
-        final double w = control.getWidth() - snappedLeftInset() - snappedRightInset();
-        indeterminateTransition = new Timeline(
-                new KeyFrame(
-                        Duration.ZERO,
-                        new KeyValue(clip.widthProperty(), 0.0, Interpolator.EASE_IN),
-                        new KeyValue(clip.translateXProperty(), 0, Interpolator.LINEAR)
-                ),
-                new KeyFrame(
-                        DURATION.multiply(0.5),
-                        new KeyValue(clip.widthProperty(), w * 0.4, Interpolator.LINEAR)
-                ),
-                new KeyFrame(
-                        DURATION.multiply(0.9),
-                        new KeyValue(clip.translateXProperty(), w, Interpolator.LINEAR)
-                ),
-                new KeyFrame(
-                        DURATION,
-                        new KeyValue(clip.widthProperty(), 0.0, Interpolator.EASE_OUT)
-                ));
-        indeterminateTransition.setCycleCount(Timeline.INDEFINITE);
+        updateProgress(false);
+    }
+
+    private boolean wasIndeterminate = false;
+
+    private void updateProgress(boolean playProgressAnimation) {
+        double progress = Math.min(getSkinnable().getProgress(), 1.0);
+        boolean isIndeterminate = progress < 0.0;
+        boolean isTreeShowing = treeShowingProperty.get();
+
+        if (isIndeterminate != wasIndeterminate) {
+            wasIndeterminate = isIndeterminate;
+            clearAnimation();
+            clip.setTranslateX(0);
+        }
+
+        if (isIndeterminate) { // indeterminate
+            if (isTreeShowing) {
+                if (transition == null) {
+                    transition = createIndeterminateTransition();
+                    transition.playFromStart();
+                } else {
+                    transition.play();
+                }
+            } else if (transition != null) {
+                transition.pause();
+            }
+        } else { // determinate
+            clearAnimation();
+            if (isTreeShowing && playProgressAnimation
+                    && AnimationUtils.isAnimationEnabled()
+                    && getSkinnable().isSmoothProgress()) {
+                transition = createDeterminateTransition(progress);
+                transition.playFromStart();
+            } else {
+                clip.setWidth(computeBarWidth(progress));
+            }
+        }
+    }
+
+    private static final Duration INDETERMINATE_DURATION = Duration.seconds(1);
+
+    private Transition createIndeterminateTransition() {
+        double minWidth = 0;
+        double maxWidth = fullWidth * 0.4;
+        Transition transition = new Transition() {
+            {
+                setInterpolator(Interpolator.LINEAR);
+                setCycleDuration(INDETERMINATE_DURATION);
+            }
+
+            @Override
+            protected void interpolate(double frac) {
+                double currentWidth;
+
+                if (frac <= 0.5) {
+                    currentWidth = Interpolator.EASE_IN.interpolate(minWidth, maxWidth, frac / 0.5);
+                } else {
+                    currentWidth = Interpolator.EASE_OUT.interpolate(maxWidth, minWidth, (frac - 0.5) / 0.5);
+                }
+
+                double targetCenter;
+                if (frac <= 0.1) {
+                    targetCenter = 0.0;
+                } else if (frac >= 0.9) {
+                    targetCenter = fullWidth;
+                } else {
+                    targetCenter = ((frac - 0.1) / 0.8) * fullWidth;
+                }
+
+                clip.setWidth(currentWidth);
+                clip.setTranslateX(targetCenter - currentWidth / 2.0);
+            }
+        };
+
+        transition.setCycleCount(Timeline.INDEFINITE);
+        return transition;
+    }
+
+    private static final Duration DETERMINATE_DURATION = Duration.seconds(0.2);
+
+    private Timeline createDeterminateTransition(double targetProgress) {
+        Timeline timeline = new Timeline(
+                new KeyFrame(Duration.ZERO,
+                        new KeyValue(clip.widthProperty(), clip.getWidth(), Interpolator.EASE_OUT)),
+                new KeyFrame(DETERMINATE_DURATION,
+                        new KeyValue(clip.widthProperty(), computeBarWidth(targetProgress), Interpolator.EASE_OUT))
+        );
+        timeline.setOnFinished(e -> {
+            if (transition == timeline) {
+                transition = null;
+            }
+        });
+        return timeline;
     }
 
     private void clearAnimation() {
-        if (indeterminateTransition != null) {
-            indeterminateTransition.stop();
-            indeterminateTransition = null;
+        if (transition != null) {
+            transition.stop();
+            transition = null;
         }
     }
 
@@ -197,5 +215,11 @@ public class JFXProgressBarSkin extends SkinBase<JFXProgressBar> {
         super.dispose();
         treeShowingProperty.dispose();
         clearAnimation();
+    }
+
+    private double computeBarWidth(double progress) {
+        assert progress >= 0 && progress <= 1;
+        double barWidth = ((int) fullWidth * 2 * progress) / 2.0;
+        return progress > 0 ? Math.max(barWidth, DEFAULT_HEIGHT) : barWidth;
     }
 }
