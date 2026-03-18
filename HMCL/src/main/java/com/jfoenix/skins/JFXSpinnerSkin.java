@@ -97,8 +97,7 @@ public class JFXSpinnerSkin extends SkinBase<JFXSpinner> {
 
     private void updateProgress() {
         double progress = Double.min(getSkinnable().getProgress(), 1.0);
-        if (progress < 0) {
-            // indeterminate
+        if (progress < 0) { // indeterminate
             boolean treeShowing = treeShowingProperty.get();
             if (treeShowing) {
                 if (timeline == null) {
@@ -108,8 +107,7 @@ public class JFXSpinnerSkin extends SkinBase<JFXSpinner> {
             } else if (timeline != null) {
                 timeline.pause();
             }
-        } else {
-            // determinate
+        } else { // determinate
             clearAnimation();
             arc.setLength(-360 * progress);
         }
