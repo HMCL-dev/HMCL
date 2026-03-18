@@ -20,7 +20,6 @@
 package com.jfoenix.skins;
 
 import com.jfoenix.controls.JFXSpinner;
-import com.jfoenix.utils.JFXNodeUtils;
 import com.jfoenix.utils.TreeShowingProperty;
 import javafx.animation.Interpolator;
 import javafx.animation.KeyFrame;
@@ -36,8 +35,6 @@ import javafx.scene.paint.Paint;
 import javafx.scene.shape.Arc;
 import javafx.scene.shape.Rectangle;
 import javafx.scene.shape.StrokeLineCap;
-import javafx.scene.text.Font;
-import javafx.scene.text.Text;
 import javafx.util.Duration;
 
 /// JFXSpinner material design skin
