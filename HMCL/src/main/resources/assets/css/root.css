@@ -1456,14 +1456,6 @@
     -fx-fill: -monet-on-surface-variant;
 }
 
-.first-spinner {
-    -jfx-radius: 20;
-}
-
-.first-spinner .arc {
-    -fx-stroke-width: 5.0;
-}
-
 .small-spinner {
     -jfx-radius: 9;
 }
@@ -1474,54 +1466,6 @@
 
 .small-spinner-pane .jfx-spinner {
     -jfx-radius: 9;
-}
-
-.second-spinner {
-    -jfx-radius: 30;
-}
-
-.second-spinner .arc {
-    -fx-stroke-width: 5.0;
-}
-
-.third-spinner {
-    -jfx-radius: 40;
-}
-
-.third-spinner .arc {
-    -fx-stroke-width: 5.0;
-}
-
-.fourth-spinner {
-    -jfx-radius: 50;
-}
-
-.fourth-spinner .arc {
-    -fx-stroke-width: 5.0;
-}
-
-.fifth-spinner {
-    -jfx-radius: 60;
-}
-
-.fifth-spinner .arc {
-    -fx-stroke-width: 5.0;
-}
-
-.sixth-spinner {
-    -jfx-radius: 70;
-}
-
-.sixth-spinner .arc {
-    -fx-stroke-width: 5.0;
-}
-
-.seventh-spinner {
-    -jfx-radius: 80;
-}
-
-.seventh-spinner .arc {
-    -fx-stroke-width: 5.0;
 }
 
 /*******************************************************************************
