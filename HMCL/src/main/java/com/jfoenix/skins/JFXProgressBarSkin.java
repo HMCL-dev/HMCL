@@ -133,7 +133,7 @@ public class JFXProgressBarSkin extends SkinBase<JFXProgressBar> {
             }
         } else { // determinate
             clearAnimation();
-            if (isTreeShowing && playProgressAnimation && !AnimationUtils.isAnimationEnabled()) {
+            if (isTreeShowing && playProgressAnimation && AnimationUtils.isAnimationEnabled()) {
                 transition = createDeterminateTransition(progress);
                 transition.playFromStart();
             } else {
@@ -167,10 +167,12 @@ public class JFXProgressBarSkin extends SkinBase<JFXProgressBar> {
         return indeterminateTransition;
     }
 
+    private static final Duration DETERMINATE_DURATION = Duration.seconds(0.2);
+
     private Timeline createDeterminateTransition(double targetProgress) {
         Timeline timeline = new Timeline(
                 new KeyFrame(Duration.ZERO, new KeyValue(bar.widthProperty(), bar.getWidth())),
-                new KeyFrame(Duration.seconds(0.5), new KeyValue(bar.widthProperty(), computeBarWidth(targetProgress)))
+                new KeyFrame(DETERMINATE_DURATION, new KeyValue(bar.widthProperty(), computeBarWidth(targetProgress)))
         );
         timeline.setOnFinished(e -> {
             if (transition == timeline) {
