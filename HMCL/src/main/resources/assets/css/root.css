@@ -1465,7 +1465,7 @@
 }
 
 .small-spinner {
-    -jfx-radius: 10;
+    -jfx-radius: 9;
 }
 
 .small-spinner .arc {
@@ -1473,7 +1473,7 @@
 }
 
 .small-spinner-pane .jfx-spinner {
-    -jfx-radius: 10;
+    -jfx-radius: 9;
 }
 
 .second-spinner {
