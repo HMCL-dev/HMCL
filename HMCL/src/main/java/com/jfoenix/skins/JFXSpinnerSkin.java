@@ -36,6 +36,7 @@ import javafx.scene.shape.Arc;
 import javafx.scene.shape.Rectangle;
 import javafx.scene.shape.StrokeLineCap;
 import javafx.util.Duration;
+import org.jackhuang.hmcl.ui.animation.AnimationUtils;
 
 /// JFXSpinner material design skin
 ///
@@ -113,32 +114,6 @@ public class JFXSpinnerSkin extends SkinBase<JFXSpinner> {
             arc.setStartAngle(90);
             updateProgress();
         }
-    }
-
-    private KeyFrame[] getKeyFrames(double angle, double duration, Paint color) {
-        KeyFrame[] frames = new KeyFrame[4];
-        frames[0] = new KeyFrame(Duration.seconds(duration),
-                new KeyValue(arc.lengthProperty(), 5, Interpolator.LINEAR),
-                new KeyValue(arc.startAngleProperty(),
-                        angle + 45 + startingAngle,
-                        Interpolator.LINEAR));
-        frames[1] = new KeyFrame(Duration.seconds(duration + 0.4),
-                new KeyValue(arc.lengthProperty(), 250, Interpolator.LINEAR),
-                new KeyValue(arc.startAngleProperty(),
-                        angle + 90 + startingAngle,
-                        Interpolator.LINEAR));
-        frames[2] = new KeyFrame(Duration.seconds(duration + 0.7),
-                new KeyValue(arc.lengthProperty(), 250, Interpolator.LINEAR),
-                new KeyValue(arc.startAngleProperty(),
-                        angle + 135 + startingAngle,
-                        Interpolator.LINEAR));
-        frames[3] = new KeyFrame(Duration.seconds(duration + 1.1),
-                new KeyValue(arc.lengthProperty(), 5, Interpolator.LINEAR),
-                new KeyValue(arc.startAngleProperty(),
-                        angle + 435 + startingAngle,
-                        Interpolator.LINEAR),
-                new KeyValue(arc.strokeProperty(), color, Interpolator.EASE_BOTH));
-        return frames;
     }
 
     private void pauseTimeline(boolean pause) {
@@ -253,6 +228,32 @@ public class JFXSpinnerSkin extends SkinBase<JFXSpinner> {
         wasIndeterminate = isIndeterminate;
     }
 
+    private KeyFrame[] getKeyFrames(double angle, double duration, Paint color) {
+        KeyFrame[] frames = new KeyFrame[4];
+        frames[0] = new KeyFrame(Duration.seconds(duration),
+                new KeyValue(arc.lengthProperty(), 5, Interpolator.LINEAR),
+                new KeyValue(arc.startAngleProperty(),
+                        angle + 45 + startingAngle,
+                        Interpolator.LINEAR));
+        frames[1] = new KeyFrame(Duration.seconds(duration + 0.4),
+                new KeyValue(arc.lengthProperty(), 250, Interpolator.LINEAR),
+                new KeyValue(arc.startAngleProperty(),
+                        angle + 90 + startingAngle,
+                        Interpolator.LINEAR));
+        frames[2] = new KeyFrame(Duration.seconds(duration + 0.7),
+                new KeyValue(arc.lengthProperty(), 250, Interpolator.LINEAR),
+                new KeyValue(arc.startAngleProperty(),
+                        angle + 135 + startingAngle,
+                        Interpolator.LINEAR));
+        frames[3] = new KeyFrame(Duration.seconds(duration + 1.1),
+                new KeyValue(arc.lengthProperty(), 5, Interpolator.LINEAR),
+                new KeyValue(arc.startAngleProperty(),
+                        angle + 435 + startingAngle,
+                        Interpolator.LINEAR),
+                new KeyValue(arc.strokeProperty(), color, Interpolator.EASE_BOTH));
+        return frames;
+    }
+
     private void createTransition() {
         if (!getSkinnable().isIndeterminate()) return;
         Paint initialColor = arc.getStroke();
@@ -260,38 +261,47 @@ public class JFXSpinnerSkin extends SkinBase<JFXSpinner> {
             arc.setStroke(initialColor = BLUE_COLOR);
         }
 
-        KeyFrame[] blueFrame = getKeyFrames(0, 0, initialColor);
-        KeyFrame[] redFrame = getKeyFrames(450, 1.4, initialColor);
-        KeyFrame[] yellowFrame = getKeyFrames(900, 2.8, initialColor );
-        KeyFrame[] greenFrame = getKeyFrames(1350, 4.2, initialColor);
+        clearAnimation();
 
-        KeyFrame endingFrame = new KeyFrame(Duration.seconds(5.6),
-                new KeyValue(arc.lengthProperty(), 5, Interpolator.LINEAR),
-                new KeyValue(arc.startAngleProperty(),
-                        1845 + startingAngle,
-                        Interpolator.LINEAR));
+        if (AnimationUtils.isAnimationEnabled()) {
+            KeyFrame[] blueFrame = getKeyFrames(0, 0, initialColor);
+            KeyFrame[] redFrame = getKeyFrames(450, 1.4, initialColor);
+            KeyFrame[] yellowFrame = getKeyFrames(900, 2.8, initialColor);
+            KeyFrame[] greenFrame = getKeyFrames(1350, 4.2, initialColor);
 
-        if (timeline != null) {
-            timeline.stop();
-            timeline.getKeyFrames().clear();
+            KeyFrame endingFrame = new KeyFrame(Duration.seconds(5.6),
+                    new KeyValue(arc.lengthProperty(), 5, Interpolator.LINEAR),
+                    new KeyValue(arc.startAngleProperty(),
+                            1845 + startingAngle,
+                            Interpolator.LINEAR));
+
+            timeline = new Timeline(blueFrame[0],
+                    blueFrame[1],
+                    blueFrame[2],
+                    blueFrame[3],
+                    redFrame[0],
+                    redFrame[1],
+                    redFrame[2],
+                    redFrame[3],
+                    yellowFrame[0],
+                    yellowFrame[1],
+                    yellowFrame[2],
+                    yellowFrame[3],
+                    greenFrame[0],
+                    greenFrame[1],
+                    greenFrame[2],
+                    greenFrame[3],
+                    endingFrame);
+        } else {
+            arc.setLength(90);
+            timeline = new Timeline(
+                    new KeyFrame(Duration.ZERO,
+                            new KeyValue(arc.startAngleProperty(), startingAngle)),
+                    new KeyFrame(Duration.seconds(2),
+                            new KeyValue(arc.startAngleProperty(), 360 + startingAngle))
+            );
         }
-        timeline = new Timeline(blueFrame[0],
-                blueFrame[1],
-                blueFrame[2],
-                blueFrame[3],
-                redFrame[0],
-                redFrame[1],
-                redFrame[2],
-                redFrame[3],
-                yellowFrame[0],
-                yellowFrame[1],
-                yellowFrame[2],
-                yellowFrame[3],
-                greenFrame[0],
-                greenFrame[1],
-                greenFrame[2],
-                greenFrame[3],
-                endingFrame);
+
         timeline.setCycleCount(Timeline.INDEFINITE);
         timeline.setDelay(Duration.ZERO);
         timeline.playFromStart();
