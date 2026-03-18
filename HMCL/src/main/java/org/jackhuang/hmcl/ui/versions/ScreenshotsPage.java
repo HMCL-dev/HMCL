@@ -30,6 +30,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.time.Instant;
+import java.time.ZoneId;
 import java.util.Collection;
 import java.util.Comparator;
 import java.util.List;
@@ -102,6 +103,25 @@ public class ScreenshotsPage extends ListPageBase<ScreenshotsPage.Screenshot> im
         } catch (IOException e) {
             LOG.warning("Failed to clear screenshots at: " + screenshotsDir, e);
         }
+    }
+
+    private void selectDate(JFXListView<Screenshot> listView) {
+        FXUtils.chooseDateRange(pair -> {
+            Instant from = pair.key().atStartOfDay().atZone(ZoneId.systemDefault()).toInstant();
+            Instant to = pair.value().plusDays(1).atStartOfDay().atZone(ZoneId.systemDefault()).toInstant();
+            if (from.compareTo(to) >= 0) return;
+            List<Screenshot> items = listView.getItems();
+            int start = -1, end = -1;
+            for (int i = 0; i < items.size(); i++) {
+                // Reversed order
+                if (items.get(i).getCreationTime().compareTo(from) < 0 && end < 0) end = i;
+                if (items.get(i).getCreationTime().compareTo(to) < 0 && start < 0) start = i;
+            }
+            if (start < 0) return;
+            if (end < 0) end = items.size();
+            listView.getSelectionModel().selectRange(start, end);
+            listView.scrollTo(start);
+        });
     }
 
     public static final class Screenshot implements Comparable<Screenshot> {
@@ -338,7 +358,8 @@ public class ScreenshotsPage extends ListPageBase<ScreenshotsPage.Screenshot> im
                         createToolbarButton2(i18n("button.reveal_dir"), SVG.FOLDER_OPEN, skinnable::revealFolder),
                         createToolbarButton2(i18n("button.clear"), SVG.DELETE_FOREVER, () -> {
                             Controllers.confirm(i18n("screenshots.clear.confirm"), i18n("button.clear"), skinnable::clear, null);
-                        })
+                        }),
+                        createToolbarButton2(i18n("button.select_date"), SVG.DATE_RANGE, () -> skinnable.selectDate(listView))
                 );
 
                 // Toolbar Selecting
