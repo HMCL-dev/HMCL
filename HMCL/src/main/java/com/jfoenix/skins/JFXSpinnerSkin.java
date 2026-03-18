@@ -26,16 +26,18 @@ import javafx.animation.KeyFrame;
 import javafx.animation.KeyValue;
 import javafx.animation.Timeline;
 import javafx.scene.Group;
-import javafx.scene.control.ProgressIndicator;
 import javafx.scene.control.SkinBase;
 import javafx.scene.layout.Region;
 import javafx.scene.layout.StackPane;
 import javafx.scene.paint.Color;
-import javafx.scene.paint.Paint;
 import javafx.scene.shape.Arc;
 import javafx.scene.shape.Rectangle;
 import javafx.scene.shape.StrokeLineCap;
 import javafx.util.Duration;
+import org.jackhuang.hmcl.ui.animation.AnimationUtils;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /// JFXSpinner material design skin
 ///
@@ -46,11 +48,6 @@ public class JFXSpinnerSkin extends SkinBase<JFXSpinner> {
 
     private static final double DEFAULT_STROKE_WIDTH = 4;
 
-    private static final Color GREEN_COLOR = Color.valueOf("#0F9D58");
-    private static final Color RED_COLOR = Color.valueOf("#db4437");
-    private static final Color YELLOW_COLOR = Color.valueOf("#f4b400");
-    private static final Color BLUE_COLOR = Color.valueOf("#4285f4");
-
     private JFXSpinner control;
     private final TreeShowingProperty treeShowingProperty;
     private boolean isValid = false;
@@ -60,7 +57,6 @@ public class JFXSpinnerSkin extends SkinBase<JFXSpinner> {
     private Arc track;
     private final StackPane arcPane;
     private final Rectangle fillRect;
-    private double arcLength = -1;
 
     private final double startingAngle;
 
@@ -73,7 +69,6 @@ public class JFXSpinnerSkin extends SkinBase<JFXSpinner> {
 
         arc = new Arc();
         arc.setManaged(false);
-        arc.setStartAngle(0);
         arc.setLength(180);
         arc.getStyleClass().setAll("arc");
         arc.setFill(Color.TRANSPARENT);
@@ -82,7 +77,6 @@ public class JFXSpinnerSkin extends SkinBase<JFXSpinner> {
 
         track = new Arc();
         track.setManaged(false);
-        track.setStartAngle(0);
         track.setLength(360);
         track.setStrokeWidth(DEFAULT_STROKE_WIDTH);
         track.getStyleClass().setAll("track");
@@ -97,72 +91,28 @@ public class JFXSpinnerSkin extends SkinBase<JFXSpinner> {
         getChildren().setAll(arcPane);
 
         // register listeners
-        registerChangeListener(control.indeterminateProperty(), obs -> initialize());
         registerChangeListener(control.progressProperty(), obs -> updateProgress());
-        registerChangeListener(treeShowingProperty, obs -> updateAnimation());
-        registerChangeListener(control.sceneProperty(), obs -> updateAnimation());
+        registerChangeListener(treeShowingProperty, obs -> updateProgress());
     }
 
-    private void initialize() {
-        if (getSkinnable().isIndeterminate()) {
-            if (timeline == null) {
-                createTransition();
-                if (treeShowingProperty.get()) {
+    private void updateProgress() {
+        double progress = Double.min(getSkinnable().getProgress(), 1.0);
+        if (progress < 0) { // indeterminate
+            boolean treeShowing = treeShowingProperty.get();
+            if (treeShowing) {
+                if (timeline == null) {
+                    timeline = createTransition();
+                    timeline.playFromStart();
+                } else {
                     timeline.play();
                 }
+            } else if (timeline != null) {
+                timeline.pause();
             }
-        } else {
+        } else { // determinate
             clearAnimation();
             arc.setStartAngle(90);
-            updateProgress();
-        }
-    }
-
-    private KeyFrame[] getKeyFrames(double angle, double duration, Paint color) {
-        KeyFrame[] frames = new KeyFrame[4];
-        frames[0] = new KeyFrame(Duration.seconds(duration),
-                new KeyValue(arc.lengthProperty(), 5, Interpolator.LINEAR),
-                new KeyValue(arc.startAngleProperty(),
-                        angle + 45 + startingAngle,
-                        Interpolator.LINEAR));
-        frames[1] = new KeyFrame(Duration.seconds(duration + 0.4),
-                new KeyValue(arc.lengthProperty(), 250, Interpolator.LINEAR),
-                new KeyValue(arc.startAngleProperty(),
-                        angle + 90 + startingAngle,
-                        Interpolator.LINEAR));
-        frames[2] = new KeyFrame(Duration.seconds(duration + 0.7),
-                new KeyValue(arc.lengthProperty(), 250, Interpolator.LINEAR),
-                new KeyValue(arc.startAngleProperty(),
-                        angle + 135 + startingAngle,
-                        Interpolator.LINEAR));
-        frames[3] = new KeyFrame(Duration.seconds(duration + 1.1),
-                new KeyValue(arc.lengthProperty(), 5, Interpolator.LINEAR),
-                new KeyValue(arc.startAngleProperty(),
-                        angle + 435 + startingAngle,
-                        Interpolator.LINEAR),
-                new KeyValue(arc.strokeProperty(), color, Interpolator.EASE_BOTH));
-        return frames;
-    }
-
-    private void pauseTimeline(boolean pause) {
-        if (getSkinnable().isIndeterminate()) {
-            if (timeline == null) {
-                createTransition();
-            }
-            if (pause) {
-                timeline.pause();
-            } else {
-                timeline.play();
-            }
-        }
-    }
-
-    private void updateAnimation() {
-        final boolean isTreeShowing = treeShowingProperty.get();
-        if (timeline != null) {
-            pauseTimeline(!isTreeShowing);
-        } else if (isTreeShowing) {
-            createTransition();
+            arc.setLength(-360 * progress);
         }
     }
 
@@ -222,12 +172,8 @@ public class JFXSpinnerSkin extends SkinBase<JFXSpinner> {
         fillRect.setHeight(arcSize);
 
         if (!isValid) {
-            initialize();
+            updateProgress();
             isValid = true;
-        }
-
-        if (!getSkinnable().isIndeterminate()) {
-            arc.setLength(arcLength);
         }
     }
 
@@ -244,66 +190,64 @@ public class JFXSpinnerSkin extends SkinBase<JFXSpinner> {
         track.setStrokeWidth(arc.getStrokeWidth());
     }
 
-    boolean wasIndeterminate = false;
-
-    protected void updateProgress() {
-        final ProgressIndicator control = getSkinnable();
-        final boolean isIndeterminate = control.isIndeterminate();
-        if (!(isIndeterminate && wasIndeterminate)) {
-            arcLength = -360 * control.getProgress();
-            control.requestLayout();
-        }
-        wasIndeterminate = isIndeterminate;
-    }
-
-    private void createTransition() {
-        if (!getSkinnable().isIndeterminate()) return;
-        final Paint initialColor = arc.getStroke();
-        if (initialColor == null) {
-            arc.setStroke(BLUE_COLOR);
-        }
-
-        KeyFrame[] blueFrame = getKeyFrames(0, 0, initialColor == null ? BLUE_COLOR : initialColor);
-        KeyFrame[] redFrame = getKeyFrames(450, 1.4, initialColor == null ? RED_COLOR : initialColor);
-        KeyFrame[] yellowFrame = getKeyFrames(900, 2.8, initialColor == null ? YELLOW_COLOR : initialColor);
-        KeyFrame[] greenFrame = getKeyFrames(1350, 4.2, initialColor == null ? GREEN_COLOR : initialColor);
-
-        KeyFrame endingFrame = new KeyFrame(Duration.seconds(5.6),
+    private void addKeyFrames(List<KeyFrame> frames, double angle, double duration) {
+        frames.add(new KeyFrame(Duration.seconds(duration),
                 new KeyValue(arc.lengthProperty(), 5, Interpolator.LINEAR),
                 new KeyValue(arc.startAngleProperty(),
-                        1845 + startingAngle,
-                        Interpolator.LINEAR));
+                        angle + 45 + startingAngle,
+                        Interpolator.LINEAR)));
+        frames.add(new KeyFrame(Duration.seconds(duration + 0.4),
+                new KeyValue(arc.lengthProperty(), 250, Interpolator.LINEAR),
+                new KeyValue(arc.startAngleProperty(),
+                        angle + 90 + startingAngle,
+                        Interpolator.LINEAR)));
+        frames.add(new KeyFrame(Duration.seconds(duration + 0.7),
+                new KeyValue(arc.lengthProperty(), 250, Interpolator.LINEAR),
+                new KeyValue(arc.startAngleProperty(),
+                        angle + 135 + startingAngle,
+                        Interpolator.LINEAR)));
+        frames.add(new KeyFrame(Duration.seconds(duration + 1.1),
+                new KeyValue(arc.lengthProperty(), 5, Interpolator.LINEAR),
+                new KeyValue(arc.startAngleProperty(),
+                        angle + 435 + startingAngle,
+                        Interpolator.LINEAR)));
+    }
 
-        if (timeline != null) {
-            timeline.stop();
-            timeline.getKeyFrames().clear();
+    private Timeline createTransition() {
+        Timeline timeline;
+        if (AnimationUtils.isAnimationEnabled()) {
+            var keyFrames = new ArrayList<KeyFrame>(17);
+            addKeyFrames(keyFrames, 0, 0);
+            addKeyFrames(keyFrames, 450, 1.4);
+            addKeyFrames(keyFrames, 900, 2.8);
+            addKeyFrames(keyFrames, 1350, 4.2);
+            keyFrames.add(new KeyFrame(Duration.seconds(5.6),
+                    new KeyValue(arc.lengthProperty(), 5, Interpolator.LINEAR),
+                    new KeyValue(arc.startAngleProperty(),
+                            1845 + startingAngle,
+                            Interpolator.LINEAR)));
+
+            timeline = new Timeline();
+            timeline.getKeyFrames().setAll(keyFrames);
+        } else {
+            final double arcLength = 250;
+            timeline = new Timeline(
+                    new KeyFrame(Duration.ZERO,
+                            new KeyValue(arc.startAngleProperty(), 45 + startingAngle, Interpolator.LINEAR),
+                            new KeyValue(arc.lengthProperty(), arcLength, Interpolator.DISCRETE)),
+                    new KeyFrame(Duration.seconds(1.2),
+                            new KeyValue(arc.startAngleProperty(), 45 + 360 + startingAngle, Interpolator.LINEAR),
+                            new KeyValue(arc.lengthProperty(), arcLength, Interpolator.DISCRETE))
+            );
         }
-        timeline = new Timeline(blueFrame[0],
-                blueFrame[1],
-                blueFrame[2],
-                blueFrame[3],
-                redFrame[0],
-                redFrame[1],
-                redFrame[2],
-                redFrame[3],
-                yellowFrame[0],
-                yellowFrame[1],
-                yellowFrame[2],
-                yellowFrame[3],
-                greenFrame[0],
-                greenFrame[1],
-                greenFrame[2],
-                greenFrame[3],
-                endingFrame);
+
         timeline.setCycleCount(Timeline.INDEFINITE);
-        timeline.setDelay(Duration.ZERO);
-        timeline.playFromStart();
+        return timeline;
     }
 
     private void clearAnimation() {
         if (timeline != null) {
             timeline.stop();
-            timeline.getKeyFrames().clear();
             timeline = null;
         }
     }
