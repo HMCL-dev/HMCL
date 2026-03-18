@@ -64,7 +64,6 @@ public class JFXSpinnerSkin extends SkinBase<JFXSpinner> {
     private final StackPane arcPane;
     private final Rectangle fillRect;
     private double arcLength = -1;
-    private final Text text;
 
     public JFXSpinnerSkin(JFXSpinner control) {
         super(control);
@@ -91,10 +90,7 @@ public class JFXSpinnerSkin extends SkinBase<JFXSpinner> {
 
         fillRect = new Rectangle();
         fillRect.setFill(Color.TRANSPARENT);
-        text = new Text();
-        text.setStyle("-fx-font-size:null");
-        text.getStyleClass().setAll("text", "percentage");
-        final Group group = new Group(fillRect, track, arc, text);
+        final Group group = new Group(fillRect, track, arc);
         group.setManaged(false);
         arcPane = new StackPane(group);
         arcPane.setPrefSize(50, 50);
@@ -111,7 +107,7 @@ public class JFXSpinnerSkin extends SkinBase<JFXSpinner> {
         if (getSkinnable().isIndeterminate()) {
             if (timeline == null) {
                 createTransition();
-                if (JFXNodeUtils.isTreeShowing(getSkinnable())) {
+                if (treeShowingProperty.get()) {
                     timeline.play();
                 }
             }
@@ -232,14 +228,6 @@ public class JFXSpinnerSkin extends SkinBase<JFXSpinner> {
 
         if (!getSkinnable().isIndeterminate()) {
             arc.setLength(arcLength);
-            if (text.isVisible()) {
-                final double progress = control.getProgress();
-                int intProgress = (int) Math.round(progress * 100.0);
-                Font font = text.getFont();
-                text.setFont(Font.font(font.getFamily(), radius / 1.7));
-                text.setText((progress > 1 ? 100 : intProgress) + "%");
-                text.relocate((arcSize - text.getLayoutBounds().getWidth()) / 2, (arcSize - text.getLayoutBounds().getHeight()) / 2);
-            }
         }
     }
 
