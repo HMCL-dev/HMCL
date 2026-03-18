@@ -220,7 +220,7 @@ public class JFXSpinnerSkin extends SkinBase<JFXSpinner> {
         wasIndeterminate = isIndeterminate;
     }
 
-    private void getKeyFrames(List<KeyFrame> frames, double angle, double duration) {
+    private void addKeyFrames(List<KeyFrame> frames, double angle, double duration) {
         frames.add(new KeyFrame(Duration.seconds(duration),
                 new KeyValue(arc.lengthProperty(), 5, Interpolator.LINEAR),
                 new KeyValue(arc.startAngleProperty(),
@@ -249,10 +249,10 @@ public class JFXSpinnerSkin extends SkinBase<JFXSpinner> {
 
         if (AnimationUtils.isAnimationEnabled()) {
             var keyFrames = new ArrayList<KeyFrame>(17);
-            getKeyFrames(keyFrames, 0, 0);
-            getKeyFrames(keyFrames, 450, 1.4);
-            getKeyFrames(keyFrames, 900, 2.8);
-            getKeyFrames(keyFrames, 1350, 4.2);
+            addKeyFrames(keyFrames, 0, 0);
+            addKeyFrames(keyFrames, 450, 1.4);
+            addKeyFrames(keyFrames, 900, 2.8);
+            addKeyFrames(keyFrames, 1350, 4.2);
             keyFrames.add(new KeyFrame(Duration.seconds(5.6),
                     new KeyValue(arc.lengthProperty(), 5, Interpolator.LINEAR),
                     new KeyValue(arc.startAngleProperty(),
