@@ -71,10 +71,10 @@ public class JFXSpinner extends ProgressIndicator {
     /// this control.
     private static final String DEFAULT_STYLE_CLASS = "jfx-spinner";
 
-    private static final double DEFAULT_RADIUS = 12.0;
+    private static final double DEFAULT_RADIUS = 16.0;
 
     /**
-     * specifies the radius of the spinner node, by default it's set to `12.0`
+     * specifies the radius of the spinner node, by default it's set to `16.0`
      */
     private StyleableDoubleProperty radius;
 
