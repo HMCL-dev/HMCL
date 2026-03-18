@@ -74,7 +74,7 @@ public class JFXSpinnerSkin extends SkinBase<JFXSpinner> {
         arc.setStartAngle(0);
         arc.setLength(180);
         arc.getStyleClass().setAll("arc");
-        arc.setFill(Color.BLUE);
+        arc.setFill(Color.TRANSPARENT);
         arc.setStrokeWidth(DEFAULT_STROKE_WIDTH);
         arc.setStrokeLineCap(StrokeLineCap.ROUND);
 
@@ -266,6 +266,9 @@ public class JFXSpinnerSkin extends SkinBase<JFXSpinner> {
                     new KeyValue(arc.startAngleProperty(),
                             1845 + startingAngle,
                             Interpolator.LINEAR)));
+
+            timeline = new Timeline();
+            timeline.getKeyFrames().setAll(keyFrames);
         } else {
             arc.setLength(90);
             timeline = new Timeline(
