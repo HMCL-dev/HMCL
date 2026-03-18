@@ -110,7 +110,7 @@ public class JFXProgressBarSkin extends SkinBase<JFXProgressBar> {
     private boolean wasIndeterminate = false;
 
     private void updateProgress(boolean playProgressAnimation) {
-        double progress = Math.max(getSkinnable().getProgress(), 1.0);
+        double progress = Math.min(getSkinnable().getProgress(), 1.0);
         boolean isIndeterminate = progress < 0.0;
         boolean isTreeShowing = treeShowingProperty.get();
 
@@ -170,7 +170,7 @@ public class JFXProgressBarSkin extends SkinBase<JFXProgressBar> {
     private Timeline createDeterminateTransition(double targetProgress) {
         Timeline timeline = new Timeline(
                 new KeyFrame(Duration.ZERO, new KeyValue(bar.widthProperty(), bar.getWidth())),
-                new KeyFrame(Duration.seconds(0.2), new KeyValue(bar.widthProperty(), computeBarWidth(targetProgress)))
+                new KeyFrame(Duration.seconds(0.5), new KeyValue(bar.widthProperty(), computeBarWidth(targetProgress)))
         );
         timeline.setOnFinished(e -> {
             if (transition == timeline) {
