@@ -917,14 +917,11 @@
     -fx-background-color: -monet-secondary-container;
 }
 
-.jfx-progress-bar > .bar,
-.jfx-progress-bar:indeterminate > .bar {
-    -fx-background-color: -monet-primary;
-    -fx-padding: 2;
+.jfx-progress-bar > .bar {
+    -fx-fill: -monet-primary;
 }
 
-.jfx-progress-bar > .track,
-.jfx-progress-bar > .bar {
+.jfx-progress-bar > .track {
     -fx-background-radius: 2;
     -fx-background-insets: 0;
 }
