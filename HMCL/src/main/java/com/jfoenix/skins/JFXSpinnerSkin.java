@@ -26,7 +26,6 @@ import javafx.animation.KeyFrame;
 import javafx.animation.KeyValue;
 import javafx.animation.Timeline;
 import javafx.scene.Group;
-import javafx.scene.control.ProgressIndicator;
 import javafx.scene.control.SkinBase;
 import javafx.scene.layout.Region;
 import javafx.scene.layout.StackPane;
@@ -58,7 +57,6 @@ public class JFXSpinnerSkin extends SkinBase<JFXSpinner> {
     private Arc track;
     private final StackPane arcPane;
     private final Rectangle fillRect;
-    private double arcLength = -1;
 
     private final double startingAngle;
 
@@ -93,38 +91,28 @@ public class JFXSpinnerSkin extends SkinBase<JFXSpinner> {
         getChildren().setAll(arcPane);
 
         // register listeners
-        registerChangeListener(control.indeterminateProperty(), obs -> initialize());
         registerChangeListener(control.progressProperty(), obs -> updateProgress());
-        registerChangeListener(treeShowingProperty, obs -> updateAnimation());
+        registerChangeListener(treeShowingProperty, obs -> updateProgress());
     }
 
-    private void initialize() {
-        if (getSkinnable().isIndeterminate()) {
-            if (timeline == null) {
-                createTransition();
-                if (treeShowingProperty.get()) {
-                    timeline.play();
+    private void updateProgress() {
+        double progress = Double.min(getSkinnable().getProgress(), 1.0);
+        if (progress < 0) {
+            // indeterminate
+
+            boolean treeShowing = treeShowingProperty.get();
+            if (treeShowing) {
+                if (timeline == null) {
+                    timeline = createTransition();
                 }
-            }
-        } else {
-            clearAnimation();
-            arc.setStartAngle(90);
-            updateProgress();
-        }
-    }
-
-    private void updateAnimation() {
-        if (getSkinnable().isIndeterminate()) {
-            if (timeline == null) {
-                createTransition();
-            }
-            if (treeShowingProperty.get()) {
                 timeline.play();
-            } else {
+            } else if (timeline != null) {
                 timeline.pause();
             }
         } else {
+            // determinate
             clearAnimation();
+            arc.setLength(-360 * progress);
         }
     }
 
@@ -184,12 +172,8 @@ public class JFXSpinnerSkin extends SkinBase<JFXSpinner> {
         fillRect.setHeight(arcSize);
 
         if (!isValid) {
-            initialize();
+            updateProgress();
             isValid = true;
-        }
-
-        if (!getSkinnable().isIndeterminate()) {
-            arc.setLength(arcLength);
         }
     }
 
@@ -204,18 +188,6 @@ public class JFXSpinnerSkin extends SkinBase<JFXSpinner> {
         track.setCenterX(arcSize / 2);
         track.setCenterY(arcSize / 2);
         track.setStrokeWidth(arc.getStrokeWidth());
-    }
-
-    boolean wasIndeterminate = false;
-
-    protected void updateProgress() {
-        final ProgressIndicator control = getSkinnable();
-        final boolean isIndeterminate = control.isIndeterminate();
-        if (!(isIndeterminate && wasIndeterminate)) {
-            arcLength = -360 * control.getProgress();
-            control.requestLayout();
-        }
-        wasIndeterminate = isIndeterminate;
     }
 
     private void addKeyFrames(List<KeyFrame> frames, double angle, double duration) {
@@ -241,10 +213,7 @@ public class JFXSpinnerSkin extends SkinBase<JFXSpinner> {
                         Interpolator.LINEAR)));
     }
 
-    private void createTransition() {
-        if (!getSkinnable().isIndeterminate()) return;
-        clearAnimation();
-
+    private Timeline createTransition() {
         if (AnimationUtils.isAnimationEnabled()) {
             var keyFrames = new ArrayList<KeyFrame>(17);
             addKeyFrames(keyFrames, 0, 0);
@@ -270,6 +239,7 @@ public class JFXSpinnerSkin extends SkinBase<JFXSpinner> {
         }
 
         timeline.setCycleCount(Timeline.INDEFINITE);
+        return timeline;
     }
 
     private void clearAnimation() {
