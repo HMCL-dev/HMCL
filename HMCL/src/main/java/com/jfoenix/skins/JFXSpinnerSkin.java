@@ -71,7 +71,6 @@ public class JFXSpinnerSkin extends SkinBase<JFXSpinner> {
 
         arc = new Arc();
         arc.setManaged(false);
-        arc.setStartAngle(0);
         arc.setLength(180);
         arc.getStyleClass().setAll("arc");
         arc.setFill(Color.TRANSPARENT);
@@ -80,7 +79,6 @@ public class JFXSpinnerSkin extends SkinBase<JFXSpinner> {
 
         track = new Arc();
         track.setManaged(false);
-        track.setStartAngle(0);
         track.setLength(360);
         track.setStrokeWidth(DEFAULT_STROKE_WIDTH);
         track.getStyleClass().setAll("track");
@@ -272,13 +270,11 @@ public class JFXSpinnerSkin extends SkinBase<JFXSpinner> {
         }
 
         timeline.setCycleCount(Timeline.INDEFINITE);
-        timeline.playFromStart();
     }
 
     private void clearAnimation() {
         if (timeline != null) {
             timeline.stop();
-            timeline.getKeyFrames().clear();
             timeline = null;
         }
     }
