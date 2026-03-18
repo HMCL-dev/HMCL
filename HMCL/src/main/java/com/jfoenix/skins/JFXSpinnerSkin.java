@@ -228,30 +228,28 @@ public class JFXSpinnerSkin extends SkinBase<JFXSpinner> {
         wasIndeterminate = isIndeterminate;
     }
 
-    private KeyFrame[] getKeyFrames(double angle, double duration, Paint color) {
-        KeyFrame[] frames = new KeyFrame[4];
-        frames[0] = new KeyFrame(Duration.seconds(duration),
+    private void getKeyFrames(KeyFrame[] keyFrames, int i, double angle, double duration, Paint color) {
+        keyFrames[i + 0] = new KeyFrame(Duration.seconds(duration),
                 new KeyValue(arc.lengthProperty(), 5, Interpolator.LINEAR),
                 new KeyValue(arc.startAngleProperty(),
                         angle + 45 + startingAngle,
                         Interpolator.LINEAR));
-        frames[1] = new KeyFrame(Duration.seconds(duration + 0.4),
+        keyFrames[i + 1] = new KeyFrame(Duration.seconds(duration + 0.4),
                 new KeyValue(arc.lengthProperty(), 250, Interpolator.LINEAR),
                 new KeyValue(arc.startAngleProperty(),
                         angle + 90 + startingAngle,
                         Interpolator.LINEAR));
-        frames[2] = new KeyFrame(Duration.seconds(duration + 0.7),
+        keyFrames[i + 2] = new KeyFrame(Duration.seconds(duration + 0.7),
                 new KeyValue(arc.lengthProperty(), 250, Interpolator.LINEAR),
                 new KeyValue(arc.startAngleProperty(),
                         angle + 135 + startingAngle,
                         Interpolator.LINEAR));
-        frames[3] = new KeyFrame(Duration.seconds(duration + 1.1),
+        keyFrames[i + 3] = new KeyFrame(Duration.seconds(duration + 1.1),
                 new KeyValue(arc.lengthProperty(), 5, Interpolator.LINEAR),
                 new KeyValue(arc.startAngleProperty(),
                         angle + 435 + startingAngle,
                         Interpolator.LINEAR),
                 new KeyValue(arc.strokeProperty(), color, Interpolator.EASE_BOTH));
-        return frames;
     }
 
     private void createTransition() {
@@ -264,34 +262,19 @@ public class JFXSpinnerSkin extends SkinBase<JFXSpinner> {
         clearAnimation();
 
         if (AnimationUtils.isAnimationEnabled()) {
-            KeyFrame[] blueFrame = getKeyFrames(0, 0, initialColor);
-            KeyFrame[] redFrame = getKeyFrames(450, 1.4, initialColor);
-            KeyFrame[] yellowFrame = getKeyFrames(900, 2.8, initialColor);
-            KeyFrame[] greenFrame = getKeyFrames(1350, 4.2, initialColor);
+            KeyFrame[] keyFrames = new KeyFrame[17];
 
-            KeyFrame endingFrame = new KeyFrame(Duration.seconds(5.6),
+            getKeyFrames(keyFrames, 0, 0, 0, initialColor);
+            getKeyFrames(keyFrames, 4, 450, 1.4, initialColor);
+            getKeyFrames(keyFrames, 8, 900, 2.8, initialColor);
+            getKeyFrames(keyFrames, 12, 1350, 4.2, initialColor);
+            keyFrames[16] = new KeyFrame(Duration.seconds(5.6),
                     new KeyValue(arc.lengthProperty(), 5, Interpolator.LINEAR),
                     new KeyValue(arc.startAngleProperty(),
                             1845 + startingAngle,
                             Interpolator.LINEAR));
 
-            timeline = new Timeline(blueFrame[0],
-                    blueFrame[1],
-                    blueFrame[2],
-                    blueFrame[3],
-                    redFrame[0],
-                    redFrame[1],
-                    redFrame[2],
-                    redFrame[3],
-                    yellowFrame[0],
-                    yellowFrame[1],
-                    yellowFrame[2],
-                    yellowFrame[3],
-                    greenFrame[0],
-                    greenFrame[1],
-                    greenFrame[2],
-                    greenFrame[3],
-                    endingFrame);
+            timeline = new Timeline(keyFrames);
         } else {
             arc.setLength(90);
             timeline = new Timeline(
