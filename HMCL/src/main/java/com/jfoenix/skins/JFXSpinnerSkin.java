@@ -46,9 +46,6 @@ public class JFXSpinnerSkin extends SkinBase<JFXSpinner> {
 
     private static final double DEFAULT_STROKE_WIDTH = 4;
 
-    private static final Color GREEN_COLOR = Color.valueOf("#0F9D58");
-    private static final Color RED_COLOR = Color.valueOf("#db4437");
-    private static final Color YELLOW_COLOR = Color.valueOf("#f4b400");
     private static final Color BLUE_COLOR = Color.valueOf("#4285f4");
 
     private JFXSpinner control;
@@ -258,15 +255,15 @@ public class JFXSpinnerSkin extends SkinBase<JFXSpinner> {
 
     private void createTransition() {
         if (!getSkinnable().isIndeterminate()) return;
-        final Paint initialColor = arc.getStroke();
+        Paint initialColor = arc.getStroke();
         if (initialColor == null) {
-            arc.setStroke(BLUE_COLOR);
+            arc.setStroke(initialColor = BLUE_COLOR);
         }
 
-        KeyFrame[] blueFrame = getKeyFrames(0, 0, initialColor == null ? BLUE_COLOR : initialColor);
-        KeyFrame[] redFrame = getKeyFrames(450, 1.4, initialColor == null ? RED_COLOR : initialColor);
-        KeyFrame[] yellowFrame = getKeyFrames(900, 2.8, initialColor == null ? YELLOW_COLOR : initialColor);
-        KeyFrame[] greenFrame = getKeyFrames(1350, 4.2, initialColor == null ? GREEN_COLOR : initialColor);
+        KeyFrame[] blueFrame = getKeyFrames(0, 0, initialColor);
+        KeyFrame[] redFrame = getKeyFrames(450, 1.4, initialColor);
+        KeyFrame[] yellowFrame = getKeyFrames(900, 2.8, initialColor );
+        KeyFrame[] greenFrame = getKeyFrames(1350, 4.2, initialColor);
 
         KeyFrame endingFrame = new KeyFrame(Duration.seconds(5.6),
                 new KeyValue(arc.lengthProperty(), 5, Interpolator.LINEAR),
