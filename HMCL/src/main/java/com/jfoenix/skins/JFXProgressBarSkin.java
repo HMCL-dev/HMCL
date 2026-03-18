@@ -191,9 +191,9 @@ public class JFXProgressBarSkin extends SkinBase<JFXProgressBar> {
     private Timeline createDeterminateTransition(double targetProgress) {
         Timeline timeline = new Timeline(
                 new KeyFrame(Duration.ZERO,
-                        new KeyValue(clip.widthProperty(), clip.getWidth())),
+                        new KeyValue(clip.widthProperty(), clip.getWidth(), Interpolator.EASE_OUT)),
                 new KeyFrame(DETERMINATE_DURATION,
-                        new KeyValue(clip.widthProperty(), computeBarWidth(targetProgress)))
+                        new KeyValue(clip.widthProperty(), computeBarWidth(targetProgress), Interpolator.EASE_OUT))
         );
         timeline.setOnFinished(e -> {
             if (transition == timeline) {
