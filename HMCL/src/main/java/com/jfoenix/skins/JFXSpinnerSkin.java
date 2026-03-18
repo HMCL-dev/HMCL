@@ -332,9 +332,9 @@ public class JFXSpinnerSkin extends SkinBase<JFXSpinner> {
             arc.setLength(90);
             timeline = new Timeline(
                     new KeyFrame(Duration.ZERO,
-                            new KeyValue(arc.startAngleProperty(), startingAngle, Interpolator.LINEAR)),
+                            new KeyValue(arc.startAngleProperty(), 45 + startingAngle, Interpolator.LINEAR)),
                     new KeyFrame(Duration.seconds(2),
-                            new KeyValue(arc.startAngleProperty(), 360 + startingAngle, Interpolator.LINEAR))
+                            new KeyValue(arc.startAngleProperty(), 405 + startingAngle, Interpolator.LINEAR))
             );
         }
 
