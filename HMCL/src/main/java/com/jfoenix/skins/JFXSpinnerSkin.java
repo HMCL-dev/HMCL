@@ -102,8 +102,10 @@ public class JFXSpinnerSkin extends SkinBase<JFXSpinner> {
             if (treeShowing) {
                 if (timeline == null) {
                     timeline = createTransition();
+                    timeline.playFromStart();
+                } else {
+                    timeline.play();
                 }
-                timeline.play();
             } else if (timeline != null) {
                 timeline.pause();
             }
@@ -227,10 +229,10 @@ public class JFXSpinnerSkin extends SkinBase<JFXSpinner> {
             timeline = new Timeline();
             timeline.getKeyFrames().setAll(keyFrames);
         } else {
-            arc.setLength(120);
             timeline = new Timeline(
                     new KeyFrame(Duration.ZERO,
-                            new KeyValue(arc.startAngleProperty(), 45 + startingAngle, Interpolator.LINEAR)),
+                            new KeyValue(arc.startAngleProperty(), 45 + startingAngle, Interpolator.LINEAR),
+                            new KeyValue(arc.lengthProperty(), 120, Interpolator.LINEAR)),
                     new KeyFrame(Duration.seconds(1.2),
                             new KeyValue(arc.startAngleProperty(), 45 + 360 + startingAngle, Interpolator.LINEAR))
             );
