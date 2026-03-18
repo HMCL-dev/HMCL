@@ -149,27 +149,41 @@ public class JFXProgressBarSkin extends SkinBase<JFXProgressBar> {
 
     private static final Duration INDETERMINATE_DURATION = Duration.seconds(1);
 
-    private Timeline createIndeterminateTransition() {
-        Timeline indeterminateTransition = new Timeline(
-                new KeyFrame(
-                        Duration.ZERO,
-                        new KeyValue(clip.widthProperty(), 0.0, Interpolator.EASE_IN),
-                        new KeyValue(clip.translateXProperty(), 0, Interpolator.LINEAR)
-                ),
-                new KeyFrame(
-                        INDETERMINATE_DURATION.multiply(0.5),
-                        new KeyValue(clip.widthProperty(), fullWidth * 0.4, Interpolator.LINEAR)
-                ),
-                new KeyFrame(
-                        INDETERMINATE_DURATION.multiply(0.9),
-                        new KeyValue(clip.translateXProperty(), fullWidth, Interpolator.LINEAR)
-                ),
-                new KeyFrame(
-                        INDETERMINATE_DURATION,
-                        new KeyValue(clip.widthProperty(), 0.0, Interpolator.EASE_OUT)
-                ));
-        indeterminateTransition.setCycleCount(Timeline.INDEFINITE);
-        return indeterminateTransition;
+    private Transition createIndeterminateTransition() {
+        double minWidth = 0;
+        double maxWidth = fullWidth * 0.4;
+        Transition transition = new Transition() {
+            {
+                setInterpolator(Interpolator.LINEAR);
+                setCycleDuration(INDETERMINATE_DURATION);
+            }
+
+            @Override
+            protected void interpolate(double frac) {
+                double currentWidth;
+
+                if (frac <= 0.5) {
+                    currentWidth = Interpolator.EASE_IN.interpolate(minWidth, maxWidth, frac / 0.5);
+                } else {
+                    currentWidth = Interpolator.EASE_OUT.interpolate(maxWidth, minWidth, (frac - 0.5) / 0.5);
+                }
+
+                double targetCenter;
+                if (frac <= 0.1) {
+                    targetCenter = 0.0;
+                } else if (frac >= 0.9) {
+                    targetCenter = fullWidth;
+                } else {
+                    targetCenter = ((frac - 0.1) / 0.8) * fullWidth;
+                }
+
+                clip.setWidth(currentWidth);
+                clip.setTranslateX(targetCenter - currentWidth / 2.0);
+            }
+        };
+
+        transition.setCycleCount(Timeline.INDEFINITE);
+        return transition;
     }
 
     private static final Duration DETERMINATE_DURATION = Duration.seconds(0.2);
