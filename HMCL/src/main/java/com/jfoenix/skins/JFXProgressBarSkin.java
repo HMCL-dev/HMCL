@@ -28,6 +28,7 @@ import javafx.scene.layout.*;
 import javafx.scene.shape.Rectangle;
 import javafx.util.Duration;
 import org.jackhuang.hmcl.ui.animation.AnimationUtils;
+import org.jackhuang.hmcl.ui.animation.Motion;
 
 /// # Material Design ProgressBar Skin
 ///
@@ -173,8 +174,10 @@ public class JFXProgressBarSkin extends SkinBase<JFXProgressBar> {
 
     private Timeline createDeterminateTransition(double targetProgress) {
         Timeline timeline = new Timeline(
-                new KeyFrame(Duration.ZERO, new KeyValue(bar.widthProperty(), bar.getWidth())),
-                new KeyFrame(DETERMINATE_DURATION, new KeyValue(bar.widthProperty(), computeBarWidth(targetProgress)))
+                new KeyFrame(Duration.ZERO,
+                        new KeyValue(bar.widthProperty(), bar.getWidth())),
+                new KeyFrame(DETERMINATE_DURATION,
+                        new KeyValue(bar.widthProperty(), computeBarWidth(targetProgress)))
         );
         timeline.setOnFinished(e -> {
             if (transition == timeline) {
