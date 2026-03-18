@@ -272,7 +272,6 @@ public class JFXSpinnerSkin extends SkinBase<JFXSpinner> {
         }
 
         timeline.setCycleCount(Timeline.INDEFINITE);
-        timeline.setDelay(Duration.ZERO);
         timeline.playFromStart();
     }
 
