@@ -31,12 +31,14 @@ import javafx.scene.control.SkinBase;
 import javafx.scene.layout.Region;
 import javafx.scene.layout.StackPane;
 import javafx.scene.paint.Color;
-import javafx.scene.paint.Paint;
 import javafx.scene.shape.Arc;
 import javafx.scene.shape.Rectangle;
 import javafx.scene.shape.StrokeLineCap;
 import javafx.util.Duration;
 import org.jackhuang.hmcl.ui.animation.AnimationUtils;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /// JFXSpinner material design skin
 ///
@@ -46,8 +48,6 @@ import org.jackhuang.hmcl.ui.animation.AnimationUtils;
 public class JFXSpinnerSkin extends SkinBase<JFXSpinner> {
 
     private static final double DEFAULT_STROKE_WIDTH = 4;
-
-    private static final Color BLUE_COLOR = Color.valueOf("#4285f4");
 
     private JFXSpinner control;
     private final TreeShowingProperty treeShowingProperty;
@@ -74,7 +74,7 @@ public class JFXSpinnerSkin extends SkinBase<JFXSpinner> {
         arc.setStartAngle(0);
         arc.setLength(180);
         arc.getStyleClass().setAll("arc");
-        arc.setFill(Color.TRANSPARENT);
+        arc.setFill(Color.BLUE);
         arc.setStrokeWidth(DEFAULT_STROKE_WIDTH);
         arc.setStrokeLineCap(StrokeLineCap.ROUND);
 
@@ -228,113 +228,51 @@ public class JFXSpinnerSkin extends SkinBase<JFXSpinner> {
         wasIndeterminate = isIndeterminate;
     }
 
+    private void getKeyFrames(List<KeyFrame> frames, double angle, double duration) {
+        frames.add(new KeyFrame(Duration.seconds(duration),
+                new KeyValue(arc.lengthProperty(), 5, Interpolator.LINEAR),
+                new KeyValue(arc.startAngleProperty(),
+                        angle + 45 + startingAngle,
+                        Interpolator.LINEAR)));
+        frames.add(new KeyFrame(Duration.seconds(duration + 0.4),
+                new KeyValue(arc.lengthProperty(), 250, Interpolator.LINEAR),
+                new KeyValue(arc.startAngleProperty(),
+                        angle + 90 + startingAngle,
+                        Interpolator.LINEAR)));
+        frames.add(new KeyFrame(Duration.seconds(duration + 0.7),
+                new KeyValue(arc.lengthProperty(), 250, Interpolator.LINEAR),
+                new KeyValue(arc.startAngleProperty(),
+                        angle + 135 + startingAngle,
+                        Interpolator.LINEAR)));
+        frames.add(new KeyFrame(Duration.seconds(duration + 1.1),
+                new KeyValue(arc.lengthProperty(), 5, Interpolator.LINEAR),
+                new KeyValue(arc.startAngleProperty(),
+                        angle + 435 + startingAngle,
+                        Interpolator.LINEAR)));
+    }
+
     private void createTransition() {
         if (!getSkinnable().isIndeterminate()) return;
-        Paint initialColor = arc.getStroke();
-        if (initialColor == null) {
-            arc.setStroke(initialColor = BLUE_COLOR);
-        }
-
         clearAnimation();
 
         if (AnimationUtils.isAnimationEnabled()) {
-            timeline = new Timeline(
-                    new KeyFrame(Duration.seconds(0),
-                            new KeyValue(arc.lengthProperty(), 5, Interpolator.LINEAR),
-                            new KeyValue(arc.startAngleProperty(),
-                                    45 + startingAngle,
-                                    Interpolator.LINEAR)),
-                    new KeyFrame(Duration.seconds(0.4),
-                            new KeyValue(arc.lengthProperty(), 250, Interpolator.LINEAR),
-                            new KeyValue(arc.startAngleProperty(),
-                                    90 + startingAngle,
-                                    Interpolator.LINEAR)),
-                    new KeyFrame(Duration.seconds(0.7),
-                            new KeyValue(arc.lengthProperty(), 250, Interpolator.LINEAR),
-                            new KeyValue(arc.startAngleProperty(),
-                                    135 + startingAngle,
-                                    Interpolator.LINEAR)),
-                    new KeyFrame(Duration.seconds(1.1),
-                            new KeyValue(arc.lengthProperty(), 5, Interpolator.LINEAR),
-                            new KeyValue(arc.startAngleProperty(),
-                                    435 + startingAngle,
-                                    Interpolator.LINEAR),
-                            new KeyValue(arc.strokeProperty(), initialColor, Interpolator.EASE_BOTH)),
-                    new KeyFrame(Duration.seconds(1.4),
-                            new KeyValue(arc.lengthProperty(), 5, Interpolator.LINEAR),
-                            new KeyValue(arc.startAngleProperty(),
-                                    495 + startingAngle,
-                                    Interpolator.LINEAR)),
-                    new KeyFrame(Duration.seconds(1.8),
-                            new KeyValue(arc.lengthProperty(), 250, Interpolator.LINEAR),
-                            new KeyValue(arc.startAngleProperty(),
-                                    540 + startingAngle,
-                                    Interpolator.LINEAR)),
-                    new KeyFrame(Duration.seconds(2.1),
-                            new KeyValue(arc.lengthProperty(), 250, Interpolator.LINEAR),
-                            new KeyValue(arc.startAngleProperty(),
-                                    585 + startingAngle,
-                                    Interpolator.LINEAR)),
-                    new KeyFrame(Duration.seconds(2.5),
-                            new KeyValue(arc.lengthProperty(), 5, Interpolator.LINEAR),
-                            new KeyValue(arc.startAngleProperty(),
-                                    885 + startingAngle,
-                                    Interpolator.LINEAR),
-                            new KeyValue(arc.strokeProperty(), initialColor, Interpolator.EASE_BOTH)),
-                    new KeyFrame(Duration.seconds(2.8),
-                            new KeyValue(arc.lengthProperty(), 5, Interpolator.LINEAR),
-                            new KeyValue(arc.startAngleProperty(),
-                                    945 + startingAngle,
-                                    Interpolator.LINEAR)),
-                    new KeyFrame(Duration.seconds(3.2),
-                            new KeyValue(arc.lengthProperty(), 250, Interpolator.LINEAR),
-                            new KeyValue(arc.startAngleProperty(),
-                                    990 + startingAngle,
-                                    Interpolator.LINEAR)),
-                    new KeyFrame(Duration.seconds(3.5),
-                            new KeyValue(arc.lengthProperty(), 250, Interpolator.LINEAR),
-                            new KeyValue(arc.startAngleProperty(),
-                                    1035 + startingAngle,
-                                    Interpolator.LINEAR)),
-                    new KeyFrame(Duration.seconds(3.9),
-                            new KeyValue(arc.lengthProperty(), 5, Interpolator.LINEAR),
-                            new KeyValue(arc.startAngleProperty(),
-                                    1335 + startingAngle,
-                                    Interpolator.LINEAR),
-                            new KeyValue(arc.strokeProperty(), initialColor, Interpolator.EASE_BOTH)),
-                    new KeyFrame(Duration.seconds(4.2),
-                            new KeyValue(arc.lengthProperty(), 5, Interpolator.LINEAR),
-                            new KeyValue(arc.startAngleProperty(),
-                                    1395 + startingAngle,
-                                    Interpolator.LINEAR)),
-                    new KeyFrame(Duration.seconds(4.6),
-                            new KeyValue(arc.lengthProperty(), 250, Interpolator.LINEAR),
-                            new KeyValue(arc.startAngleProperty(),
-                                    1440 + startingAngle,
-                                    Interpolator.LINEAR)),
-                    new KeyFrame(Duration.seconds(4.9),
-                            new KeyValue(arc.lengthProperty(), 250, Interpolator.LINEAR),
-                            new KeyValue(arc.startAngleProperty(),
-                                    1485 + startingAngle,
-                                    Interpolator.LINEAR)),
-                    new KeyFrame(Duration.seconds(4.2 + 1.1),
-                            new KeyValue(arc.lengthProperty(), 5, Interpolator.LINEAR),
-                            new KeyValue(arc.startAngleProperty(),
-                                    1785 + startingAngle,
-                                    Interpolator.LINEAR),
-                            new KeyValue(arc.strokeProperty(), initialColor, Interpolator.EASE_BOTH)),
-                    new KeyFrame(Duration.seconds(5.6),
-                            new KeyValue(arc.lengthProperty(), 5, Interpolator.LINEAR),
-                            new KeyValue(arc.startAngleProperty(),
-                                    1845 + startingAngle,
-                                    Interpolator.LINEAR)));
+            var keyFrames = new ArrayList<KeyFrame>(17);
+            getKeyFrames(keyFrames, 0, 0);
+            getKeyFrames(keyFrames, 450, 1.4);
+            getKeyFrames(keyFrames, 900, 2.8);
+            getKeyFrames(keyFrames, 1350, 4.2);
+            keyFrames.add(new KeyFrame(Duration.seconds(5.6),
+                    new KeyValue(arc.lengthProperty(), 5, Interpolator.LINEAR),
+                    new KeyValue(arc.startAngleProperty(),
+                            1845 + startingAngle,
+                            Interpolator.LINEAR)));
         } else {
             arc.setLength(90);
             timeline = new Timeline(
                     new KeyFrame(Duration.ZERO,
                             new KeyValue(arc.startAngleProperty(), 45 + startingAngle, Interpolator.LINEAR)),
                     new KeyFrame(Duration.seconds(2),
-                            new KeyValue(arc.startAngleProperty(), 405 + startingAngle, Interpolator.LINEAR))
+                            new KeyValue(arc.startAngleProperty(), 45 + 360 + startingAngle, Interpolator.LINEAR))
             );
         }
 
