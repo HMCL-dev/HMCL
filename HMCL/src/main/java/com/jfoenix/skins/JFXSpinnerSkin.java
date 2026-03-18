@@ -214,6 +214,7 @@ public class JFXSpinnerSkin extends SkinBase<JFXSpinner> {
     }
 
     private Timeline createTransition() {
+        Timeline timeline;
         if (AnimationUtils.isAnimationEnabled()) {
             var keyFrames = new ArrayList<KeyFrame>(17);
             addKeyFrames(keyFrames, 0, 0);
