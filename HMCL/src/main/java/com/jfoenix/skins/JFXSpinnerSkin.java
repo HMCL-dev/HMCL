@@ -62,11 +62,14 @@ public class JFXSpinnerSkin extends SkinBase<JFXSpinner> {
     private final Rectangle fillRect;
     private double arcLength = -1;
 
+    private final double startingAngle;
+
     public JFXSpinnerSkin(JFXSpinner control) {
         super(control);
 
         this.control = control;
         this.treeShowingProperty = new TreeShowingProperty(control);
+        this.startingAngle = control.getStartingAngle();
 
         arc = new Arc();
         arc.setManaged(false);
@@ -120,22 +123,22 @@ public class JFXSpinnerSkin extends SkinBase<JFXSpinner> {
         frames[0] = new KeyFrame(Duration.seconds(duration),
                 new KeyValue(arc.lengthProperty(), 5, Interpolator.LINEAR),
                 new KeyValue(arc.startAngleProperty(),
-                        angle + 45 + control.getStartingAngle(),
+                        angle + 45 + startingAngle,
                         Interpolator.LINEAR));
         frames[1] = new KeyFrame(Duration.seconds(duration + 0.4),
                 new KeyValue(arc.lengthProperty(), 250, Interpolator.LINEAR),
                 new KeyValue(arc.startAngleProperty(),
-                        angle + 90 + control.getStartingAngle(),
+                        angle + 90 + startingAngle,
                         Interpolator.LINEAR));
         frames[2] = new KeyFrame(Duration.seconds(duration + 0.7),
                 new KeyValue(arc.lengthProperty(), 250, Interpolator.LINEAR),
                 new KeyValue(arc.startAngleProperty(),
-                        angle + 135 + control.getStartingAngle(),
+                        angle + 135 + startingAngle,
                         Interpolator.LINEAR));
         frames[3] = new KeyFrame(Duration.seconds(duration + 1.1),
                 new KeyValue(arc.lengthProperty(), 5, Interpolator.LINEAR),
                 new KeyValue(arc.startAngleProperty(),
-                        angle + 435 + control.getStartingAngle(),
+                        angle + 435 + startingAngle,
                         Interpolator.LINEAR),
                 new KeyValue(arc.strokeProperty(), color, Interpolator.EASE_BOTH));
         return frames;
@@ -268,7 +271,7 @@ public class JFXSpinnerSkin extends SkinBase<JFXSpinner> {
         KeyFrame endingFrame = new KeyFrame(Duration.seconds(5.6),
                 new KeyValue(arc.lengthProperty(), 5, Interpolator.LINEAR),
                 new KeyValue(arc.startAngleProperty(),
-                        1845 + control.getStartingAngle(),
+                        1845 + startingAngle,
                         Interpolator.LINEAR));
 
         if (timeline != null) {

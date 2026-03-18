@@ -31,6 +31,7 @@ import javafx.scene.control.Skin;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.ThreadLocalRandom;
 
 /// JFXSpinner is the material design implementation of a loading spinner.
 ///
@@ -96,25 +97,8 @@ public class JFXSpinner extends ProgressIndicator {
         this.radiusProperty().set(radius);
     }
 
-    /// specifies from which angle the spinner should start spinning
-    private StyleableDoubleProperty startingAngle;
-
-    public final StyleableDoubleProperty startingAngleProperty() {
-        if (this.startingAngle == null) {
-            startingAngle = new SimpleStyleableDoubleProperty(StyleableProperties.STARTING_ANGLE,
-                    JFXSpinner.this,
-                    "startingAngle",
-                    0.0);
-        }
-        return this.startingAngle;
-    }
-
-    public final double getStartingAngle() {
-        return startingAngle != null ? startingAngle.get() : 0.0;
-    }
-
-    public final void setStartingAngle(final double startingAngle) {
-        this.startingAngleProperty().set(startingAngle);
+    public double getStartingAngle() {
+        return 360 - ThreadLocalRandom.current().nextDouble() * 720;
     }
 
     private static final class StyleableProperties {
@@ -132,26 +116,12 @@ public class JFXSpinner extends ProgressIndicator {
                     }
                 };
 
-        private static final CssMetaData<JFXSpinner, Number> STARTING_ANGLE =
-                new CssMetaData<>("-jfx-starting-angle",
-                        SizeConverter.getInstance(), 0.0) {
-                    @Override
-                    public boolean isSettable(JFXSpinner control) {
-                        return control.startingAngle == null || !control.startingAngle.isBound();
-                    }
-
-                    @Override
-                    public StyleableDoubleProperty getStyleableProperty(JFXSpinner control) {
-                        return control.startingAngleProperty();
-                    }
-                };
-
         private static final List<CssMetaData<? extends Styleable, ?>> CHILD_STYLEABLES;
 
         static {
             final List<CssMetaData<? extends Styleable, ?>> styleables =
                     new ArrayList<>(ProgressIndicator.getClassCssMetaData());
-            Collections.addAll(styleables, RADIUS, STARTING_ANGLE);
+            Collections.addAll(styleables, RADIUS);
             CHILD_STYLEABLES = List.copyOf(styleables);
         }
     }
