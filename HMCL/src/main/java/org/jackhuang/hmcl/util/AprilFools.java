@@ -45,7 +45,7 @@ public final class AprilFools {
         // We will investigate more countries/regions in the future to expand this list.
         boolean supportedRegion = List.of(
                 "CN", "TW", "HK", "MO", "JP", "KR", "VN", "SG", "MY",
-                "US", "FR", "DE", "GB"
+                "ES", "DE", "FR", "GB", "RU", "UA", "US"
         ).contains(LocaleUtils.SYSTEM_DEFAULT.getCountry());
 
         boolean aprilFoolsMode;
