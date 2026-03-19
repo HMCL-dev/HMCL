@@ -34,9 +34,7 @@ import static org.jackhuang.hmcl.util.logging.Logger.LOG;
  */
 public final class FileSaver extends Thread {
 
-    private static final Pair<Path, String> SHUTDOWN = Pair.pair(null, null);
-
-    private static final BlockingQueue<Pair<Path, String>> queue = new LinkedBlockingQueue<>();
+    private static final BlockingQueue<Action> queue = new LinkedBlockingQueue<>();
     private static final AtomicBoolean running = new AtomicBoolean(false);
     private static final ReentrantLock runningLock = new ReentrantLock();
     private static volatile boolean shutdown = false;
@@ -53,7 +51,7 @@ public final class FileSaver extends Thread {
 
         ShutdownHook.ensureInstalled();
 
-        queue.add(Pair.pair(file, content));
+        queue.add(new DoSave(file, content));
         if (running.compareAndSet(false, true)) {
             new FileSaver().start();
         }
@@ -70,7 +68,7 @@ public final class FileSaver extends Thread {
 
     public static void shutdown() {
         shutdown = true;
-        queue.add(SHUTDOWN);
+        queue.add(Shutdown.INSTANCE);
     }
 
     /// Wait for all saves to complete.
@@ -107,28 +105,30 @@ public final class FileSaver extends Thread {
         runningLock.lock();
         try {
             HashMap<Path, String> map = new HashMap<>();
-            ArrayList<Pair<Path, String>> buffer = new ArrayList<>();
+            ArrayList<Action> buffer = new ArrayList<>();
 
             while (!stopped) {
                 if (shutdown) {
                     stopCurrentSaver();
                 } else {
-                    Pair<Path, String> head = queue.poll(30, TimeUnit.SECONDS);
-                    if (head == null || head == SHUTDOWN) {
-                        stopCurrentSaver();
-                    } else {
-                        map.put(head.getKey(), head.getValue());
+                    Action head = queue.poll(30, TimeUnit.SECONDS);
+                    if (head instanceof DoSave save) {
+                        map.put(save.file(), save.content());
                         //noinspection BusyWait
                         Thread.sleep(200); // Waiting for more changes
+                    } else if (head == null || head instanceof Shutdown) {
+                        // Shutdown or timeout
+                        stopCurrentSaver();
                     }
                 }
 
                 while (queue.drainTo(buffer) > 0) {
-                    for (Pair<Path, String> pair : buffer) {
-                        if (pair == SHUTDOWN)
+                    for (Action action : buffer) {
+                        if (action instanceof DoSave save) {
+                            map.put(save.file(), save.content());
+                        } else if (action instanceof Shutdown) {
                             stopCurrentSaver();
-                        else
-                            map.put(pair.getKey(), pair.getValue());
+                        }
                     }
                     buffer.clear();
                 }
@@ -141,6 +141,16 @@ public final class FileSaver extends Thread {
         } finally {
             runningLock.unlock();
         }
+    }
+
+    private sealed interface Action {
+    }
+
+    private record DoSave(Path file, String content) implements Action {
+    }
+
+    private enum Shutdown implements Action {
+        INSTANCE
     }
 
     private static final class ShutdownHook extends Thread {
@@ -159,9 +169,10 @@ public final class FileSaver extends Thread {
             runningLock.lock();
             try {
                 HashMap<Path, String> map = new HashMap<>();
-                for (Pair<Path, String> pair : queue) {
-                    if (pair != SHUTDOWN)
-                        map.put(pair.getKey(), pair.getValue());
+                for (Action action : queue) {
+                    if (action instanceof DoSave save) {
+                        map.put(save.file(), save.content());
+                    }
                 }
                 doSave(map);
             } finally {
