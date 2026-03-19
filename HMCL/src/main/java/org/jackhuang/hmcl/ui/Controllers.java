@@ -454,20 +454,17 @@ public final class Controllers {
                     .filter(locale -> "lzh".equals(locale.getName()))
                     .findFirst().orElse(null);
 
-            if (lzh == null)
+            if (lzh == null) {
+                LOG.warning("No supported locale found for lzh");
                 break aprilFools;
-
-            var test = "HMCL 启动器现已支持文言文，是否要切换至文言文模式？\n" +
-                    "你可以在“置設 → 貫用 → 語言”中切换回简体中文。";
-
-            var test2 = "确认切换至文言文模式？\n" +
-                    "点击“确定”按钮后 HMCL 将自动退出，重新启动后 HMCL 将切换至文言文；点击“取消”按钮将保留当前语言并继续使用 HMCL。";
+            }
 
             Runnable updateShowTips = () -> config().getShownTips().put(APRIL_FOOLS, currentYear);
 
-            Controllers.confirmWithCountdown(test, null, 10,
+            Controllers.confirmWithCountdown(i18n("launcher.april_fools.switch_lzh"), null, 10,
                     MessageType.QUESTION, () -> {
-                        Controllers.confirmWithCountdown(test2, null, 3, MessageType.QUESTION,
+                        Controllers.confirmWithCountdown(i18n("launcher.april_fools.switch_lzh.confirm"), null,
+                                3, MessageType.QUESTION,
                                 () -> {
                                     updateShowTips.run();
                                     config().setLocalization(lzh);
