@@ -463,28 +463,26 @@ public final class Controllers {
 
             Controllers.confirmWithCountdown(i18n("launcher.april_fools.switch_lzh"), null, 10,
                     MessageType.QUESTION, () -> {
-                        Controllers.confirmWithCountdown(i18n("launcher.april_fools.switch_lzh.confirm"), null,
-                                3, MessageType.QUESTION,
-                                () -> {
-                                    updateShowTips.run();
-                                    config().setLocalization(lzh);
+                        Controllers.confirm(i18n("launcher.april_fools.switch_lzh.confirm"), null, MessageType.QUESTION, () -> {
+                            updateShowTips.run();
+                            config().setLocalization(lzh);
 
-                                    Controllers.onApplicationStop();
+                            Controllers.onApplicationStop();
 
-                                    try {
-                                        FileSaver.waitForAllSaves();
-                                    } catch (InterruptedException ignored) {
-                                        // Ignore
-                                    }
+                            try {
+                                FileSaver.waitForAllSaves();
+                            } catch (InterruptedException ignored) {
+                                // Ignore
+                            }
 
-                                    try {
-                                        Restarter.restartSelf();
-                                    } catch (IOException e) {
-                                        LOG.warning("Failed to restart self", e);
-                                    }
+                            try {
+                                Restarter.restartSelf();
+                            } catch (IOException e) {
+                                LOG.warning("Failed to restart self", e);
+                            }
 
-                                    Platform.exit();
-                                }, updateShowTips);
+                            Platform.exit();
+                        }, updateShowTips);
                     }, updateShowTips);
         }
     }
