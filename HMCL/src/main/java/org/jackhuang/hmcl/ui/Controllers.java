@@ -467,6 +467,15 @@ public final class Controllers {
                                 () -> {
                                     updateShowTips.run();
                                     config().setLocalization(lzh);
+
+                                    Controllers.onApplicationStop();
+
+                                    try {
+                                        FileSaver.waitForAllSaves();
+                                    } catch (InterruptedException ignored) {
+                                        // Ignore
+                                    }
+
                                     Platform.exit();
                                 }, updateShowTips);
                     }, updateShowTips);
