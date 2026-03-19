@@ -25,11 +25,13 @@ import java.time.Month;
 public final class AprilFools {
 
     private static final boolean START_IN_APRIL_FOOLS_DAY;
+    private static final boolean START_IN_NEAR_APRIL_FOOLS_DAY;
     private static final boolean ENABLED;
 
     static {
         var date = LocalDate.now();
         START_IN_APRIL_FOOLS_DAY = date.getMonth() == Month.APRIL && date.getDayOfMonth() == 1;
+        START_IN_NEAR_APRIL_FOOLS_DAY = START_IN_APRIL_FOOLS_DAY || date.getMonth() == Month.MARCH && date.getDayOfMonth() > 30;
 
         String value = System.getProperty("hmcl.april_fools", System.getenv("HMCL_APRIL_FOOLS"));
         if ("true".equalsIgnoreCase(value)) {
@@ -41,8 +43,19 @@ public final class AprilFools {
         }
     }
 
+    /// Whether it is April Fools' Day.
+    ///
+    /// This method returns true if it is April Fools' Day.
     public static boolean isStartInAprilFoolsDay() {
         return START_IN_APRIL_FOOLS_DAY;
+    }
+
+    /// Whether it is near April Fools' Day.
+    ///
+    /// This method returns true if it is April Fools' Day or the day before or after April Fools' Day.
+    /// It is useful for displaying special features or messages related to April Fools' Day.
+    public static boolean isStartInNearAprilFoolsDay() {
+        return START_IN_NEAR_APRIL_FOOLS_DAY;
     }
 
     public static boolean isEnabled() {

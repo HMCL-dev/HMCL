@@ -225,7 +225,7 @@ public final class SettingsPage extends ScrollPane {
                 settingsPane.getContent().add(disableAutoShowUpdateDialogPane);
             }
 
-            if (AprilFools.isStartInAprilFoolsDay()) {
+            if (AprilFools.isStartInNearAprilFoolsDay()) {
                 LineToggleButton disableAprilFools = new LineToggleButton();
                 disableAprilFools.setTitle("不启用愚人节功能");
                 // disableAprilFools.setSubtitle("在愚人节当天，HMCL会自动启动一个特殊的版本，以庆祝愚人节。");
