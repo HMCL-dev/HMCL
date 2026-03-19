@@ -40,9 +40,11 @@ public final class AprilFools {
         START_IN_NEAR_APRIL_FOOLS_DAY = START_IN_APRIL_FOOLS_DAY || date.getMonth() == Month.MARCH && date.getDayOfMonth() > 30;
 
         String value = System.getProperty("hmcl.april_fools", System.getenv("HMCL_APRIL_FOOLS"));
-        if ("true".equalsIgnoreCase(value)) {
+        if (ConfigHolder.config().isDisableAprilFools()) {
+            ENABLED = false;
+        } else if ("true".equalsIgnoreCase(value)) {
             ENABLED = true;
-        } else if ("false".equalsIgnoreCase(value) || ConfigHolder.config().isDisableAprilFools()) {
+        } else if ("false".equalsIgnoreCase(value)) {
             ENABLED = false;
         } else {
             ENABLED = START_IN_APRIL_FOOLS_DAY;
