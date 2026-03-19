@@ -72,6 +72,7 @@ import org.jackhuang.hmcl.util.platform.Architecture;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.IOException;
 import java.nio.file.Path;
 import java.time.LocalDate;
 import java.util.List;
@@ -474,6 +475,12 @@ public final class Controllers {
                                         FileSaver.waitForAllSaves();
                                     } catch (InterruptedException ignored) {
                                         // Ignore
+                                    }
+
+                                    try {
+                                        Restarter.restartSelf();
+                                    } catch (IOException e) {
+                                        LOG.warning("Failed to restart self", e);
                                     }
 
                                     Platform.exit();
