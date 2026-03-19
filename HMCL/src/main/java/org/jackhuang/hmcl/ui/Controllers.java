@@ -75,7 +75,6 @@ import org.jetbrains.annotations.Nullable;
 import java.nio.file.Path;
 import java.time.LocalDate;
 import java.util.List;
-import java.util.Locale;
 import java.util.concurrent.CompletableFuture;
 
 import static org.jackhuang.hmcl.setting.ConfigHolder.config;
