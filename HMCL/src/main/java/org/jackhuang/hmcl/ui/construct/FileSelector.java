@@ -109,7 +109,7 @@ public class FileSelector extends HBox {
 
                     selectPopupMenu.getContent().addAll(
                             new IconedMenuItem(SVG.FILE_OPEN, i18n("selector.choose_file"), () -> openFileChooser(customField), selectModePopup),
-                            new IconedMenuItem(SVG.FOLDER_OPEN, i18n("selector.choose_folder"), () -> openDirectoryChooser(customField), selectModePopup)
+                            new IconedMenuItem(SVG.FOLDER_OPEN, i18n("selector.choose_directory"), () -> openDirectoryChooser(customField), selectModePopup)
                     );
 
                     selectModePopup.show(selectButton, JFXPopup.PopupVPosition.TOP, JFXPopup.PopupHPosition.LEFT, selectButton.getWidth(), 0);
@@ -136,7 +136,7 @@ public class FileSelector extends HBox {
 
     private void openDirectoryChooser(JFXTextField customField) {
         DirectoryChooser chooser = new DirectoryChooser();
-        chooser.setTitle(StringUtils.isBlank(chooserTitle) ? i18n("selector.choose_folder") : chooserTitle);
+        chooser.setTitle(StringUtils.isBlank(chooserTitle) ? i18n("selector.choose_directory") : chooserTitle);
         Path dir = FileUtils.toPath(chooser.showDialog(Controllers.getStage()));
         if (dir != null) {
             String path = FileUtils.getAbsolutePath(dir);
