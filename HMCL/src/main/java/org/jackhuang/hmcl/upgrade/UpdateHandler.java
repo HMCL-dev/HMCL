@@ -185,7 +185,7 @@ public final class UpdateHandler {
                     commandline.add(inputArgument);
                 }
             }
-        } catch (Exception ignored) {
+        } catch (Throwable ignored) {
             // ManagementFactory not available
             for (Map.Entry<Object, Object> entry : System.getProperties().entrySet()) {
                 if (entry.getKey() instanceof String key && key.startsWith("hmcl.")) {
