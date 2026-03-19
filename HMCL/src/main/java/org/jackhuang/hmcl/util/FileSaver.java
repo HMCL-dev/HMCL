@@ -22,6 +22,7 @@ import org.jackhuang.hmcl.util.io.FileUtils;
 import java.nio.file.Path;
 import java.util.*;
 import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -39,6 +40,13 @@ public final class FileSaver extends Thread {
     private static final ReentrantLock runningLock = new ReentrantLock();
     private static volatile boolean shutdown = false;
 
+    private static void addAction(Action action) {
+        queue.add(action);
+        if (running.compareAndSet(false, true)) {
+            new FileSaver().start();
+        }
+    }
+
     private static void doSave(Map<Path, String> map) {
         for (Map.Entry<Path, String> entry : map.entrySet()) {
             saveSync(entry.getKey(), entry.getValue());
@@ -51,10 +59,7 @@ public final class FileSaver extends Thread {
 
         ShutdownHook.ensureInstalled();
 
-        queue.add(new DoSave(file, content));
-        if (running.compareAndSet(false, true)) {
-            new FileSaver().start();
-        }
+        addAction(new DoSave(file, content));
     }
 
     public static void saveSync(Path file, String content) {
@@ -75,15 +80,10 @@ public final class FileSaver extends Thread {
     ///
     /// This method is not ensure all saves after [#shutdown] has been completed.
     public static void waitForAllSaves() throws InterruptedException {
-        while (!queue.isEmpty()) {
-            if (shutdown && !running.get()) {
-                // The remaining saves will be handled by the shutdown hook.
-                return;
-            }
-
-            //noinspection BusyWait
-            Thread.sleep(200);
-        }
+        assert !shutdown;
+        Wait wait = new Wait();
+        addAction(wait);
+        wait.await();
     }
 
     private FileSaver() {
@@ -106,6 +106,7 @@ public final class FileSaver extends Thread {
         try {
             HashMap<Path, String> map = new HashMap<>();
             ArrayList<Action> buffer = new ArrayList<>();
+            ArrayList<Wait> waits = new ArrayList<>();
 
             while (!stopped) {
                 if (shutdown) {
@@ -116,6 +117,8 @@ public final class FileSaver extends Thread {
                         map.put(save.file(), save.content());
                         //noinspection BusyWait
                         Thread.sleep(200); // Waiting for more changes
+                    } else if (head instanceof Wait wait) {
+                        waits.add(wait);
                     } else if (head == null || head instanceof Shutdown) {
                         // Shutdown or timeout
                         stopCurrentSaver();
@@ -126,6 +129,8 @@ public final class FileSaver extends Thread {
                     for (Action action : buffer) {
                         if (action instanceof DoSave save) {
                             map.put(save.file(), save.content());
+                        } else if (action instanceof Wait wait) {
+                            waits.add(wait);
                         } else if (action instanceof Shutdown) {
                             stopCurrentSaver();
                         }
@@ -135,6 +140,11 @@ public final class FileSaver extends Thread {
 
                 doSave(map);
                 map.clear();
+
+                for (Wait wait : waits) {
+                    wait.countDown();
+                }
+                waits.clear();
             }
         } catch (InterruptedException e) {
             throw new AssertionError("This thread cannot be interrupted", e);
@@ -147,6 +157,18 @@ public final class FileSaver extends Thread {
     }
 
     private record DoSave(Path file, String content) implements Action {
+    }
+
+    private static final class Wait implements Action {
+        private final CountDownLatch latch = new CountDownLatch(1);
+
+        public void await() throws InterruptedException {
+            latch.await();
+        }
+
+        public void countDown() {
+            latch.countDown();
+        }
     }
 
     private enum Shutdown implements Action {

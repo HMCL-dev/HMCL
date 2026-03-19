@@ -464,6 +464,8 @@ public final class Controllers {
             Controllers.confirmWithCountdown(i18n("launcher.april_fools.switch_lzh"), null, 10,
                     MessageType.QUESTION, () -> {
                         Controllers.confirm(i18n("launcher.april_fools.switch_lzh.confirm"), null, MessageType.QUESTION, () -> {
+                            LOG.info("Switching locale to " + lzh);
+
                             updateShowTips.run();
                             config().setLocalization(lzh);
 
