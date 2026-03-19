@@ -17,8 +17,12 @@
  */
 package org.jackhuang.hmcl.util;
 
+import org.jackhuang.hmcl.util.i18n.LocaleUtils;
+
 import java.time.LocalDate;
 import java.time.Month;
+import java.util.List;
+import java.util.Set;
 
 import static org.jackhuang.hmcl.setting.ConfigHolder.config;
 
@@ -36,17 +40,26 @@ public final class AprilFools {
     static {
         var date = LocalDate.now();
 
+        // Some countries/regions may oppose April Fools' Day for various reasons.
+        // Therefore, we use a regional whitelist to avoid risks.
+        // Currently, we have only listed a limited set of countries/regions for testing.
+        // We will investigate more countries/regions in the future to expand this list.
+        boolean supportedRegion = List.of(
+                "CN", "TW", "HK", "MO", "JP", "KR", "VN", "SG", "MY",
+                "US", "FR", "DE", "GB"
+        ).contains(LocaleUtils.SYSTEM_DEFAULT.getCountry());
+
         boolean aprilFoolsMode;
         String value = System.getProperty("hmcl.april_fools", System.getenv("HMCL_APRIL_FOOLS"));
         if ("true".equalsIgnoreCase(value))
             aprilFoolsMode = true;
-        else if ("false".equalsIgnoreCase(value))
+        else if ("false".equalsIgnoreCase(value) || !supportedRegion)
             aprilFoolsMode = false;
         else
             aprilFoolsMode = date.getMonth() == Month.APRIL && date.getDayOfMonth() == 1;
 
         ENABLED = aprilFoolsMode && !config().isDisableAprilFools();
-        SHOW_APRIL_FOOLS_SETTINGS = aprilFoolsMode || date.getMonth() == Month.MARCH && date.getDayOfMonth() > 30;
+        SHOW_APRIL_FOOLS_SETTINGS = aprilFoolsMode || supportedRegion && date.getMonth() == Month.MARCH && date.getDayOfMonth() > 30;
     }
 
     /// Whether April Fools settings should be shown.
