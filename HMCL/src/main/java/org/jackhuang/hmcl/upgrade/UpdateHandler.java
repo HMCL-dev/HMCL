@@ -37,6 +37,7 @@ import org.jackhuang.hmcl.java.JavaRuntime;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
 
 import java.io.IOException;
+import java.lang.management.ManagementFactory;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -177,12 +178,22 @@ public final class UpdateHandler {
     private static void startJava(Path jar, String... appArgs) throws IOException {
         List<String> commandline = new ArrayList<>();
         commandline.add(JavaRuntime.getDefault().getBinary().toString());
-        for (Map.Entry<Object, Object> entry : System.getProperties().entrySet()) {
-            Object key = entry.getKey();
-            if (key instanceof String && ((String) key).startsWith("hmcl.")) {
-                commandline.add("-D" + key + "=" + entry.getValue());
+
+        try {
+            for (String inputArgument : ManagementFactory.getRuntimeMXBean().getInputArguments()) {
+                if (inputArgument.startsWith("-D")) {
+                    commandline.add(inputArgument);
+                }
+            }
+        } catch (Exception ignored) {
+            // ManagementFactory not available
+            for (Map.Entry<Object, Object> entry : System.getProperties().entrySet()) {
+                if (entry.getKey() instanceof String key && key.startsWith("hmcl.")) {
+                    commandline.add("-D" + key + "=" + entry.getValue());
+                }
             }
         }
+
         commandline.add("-jar");
         commandline.add(jar.toAbsolutePath().toString());
         commandline.addAll(Arrays.asList(appArgs));
