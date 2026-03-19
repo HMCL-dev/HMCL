@@ -28,6 +28,8 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.StringJoiner;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.jar.Attributes;
 import java.util.jar.Manifest;
 
@@ -191,7 +193,9 @@ public final class ForgeNewModMetadata {
         ZipArchiveEntry modToml = tree.getEntry(tomlPath);
         if (modToml == null)
             throw new IOException("File " + modFile + " is not a Forge 1.13+ or NeoForge mod.");
-        Toml toml = new Toml().read(tree.readTextEntry(modToml));
+        String tomlContent = tree.readTextEntry(modToml);
+        tomlContent = preprocessToml(tomlContent);
+        Toml toml = new Toml().read(tomlContent);
         ForgeNewModMetadata metadata = toml.to(ForgeNewModMetadata.class);
         if (metadata == null || metadata.getMods().isEmpty())
             throw new IOException("Mod " + modFile + " `mods.toml` is malformed..");
@@ -213,6 +217,78 @@ public final class ForgeNewModMetadata {
                 mod.getAuthors(), jarVersion == null ? mod.getVersion() : mod.getVersion().replace("${file.jarVersion}", jarVersion), "",
                 mod.getDisplayURL(),
                 metadata.getLogoFile());
+    }
+
+    /**
+     * Matches a TOML table / array-of-tables header line only (not inline arrays like {@code loaders=["neoforge"]}).
+     * Group 1: leading whitespace; 2: full header {@code [[...]]} or {@code [...]}; 3: trailing comment/whitespace.
+     */
+    private static final Pattern TOML_TABLE_HEADER_LINE = Pattern.compile(
+            "^(\\s*)(\\[\\[[^\\]]+\\]\\]|\\[[^\\]]+\\])(\\s*(#.*)?)?$");
+
+    /**
+     * Preprocess TOML content to normalize quoted segments in <b>table header</b> keys only.
+     * Some mods use inconsistent quoting like {@code [[dependencies.neoecoae]]} with
+     * {@code [dependencies."neoecoae".mc-publish]}, which can break Moandjiezana's parser.
+     * <p>
+     * Must not touch {@code [ ... ]} inside key-value lines (e.g. {@code loaders=["neoforge"]}), or the file becomes invalid.
+     */
+    private static String preprocessToml(String content) {
+        String[] lines = content.split("\\R", -1);
+        StringJoiner out = new StringJoiner("\n");
+        for (String line : lines) {
+            Matcher m = TOML_TABLE_HEADER_LINE.matcher(line);
+            if (m.matches()) {
+                String ws = m.group(1);
+                String header = m.group(2);
+                String tail = m.group(3) != null ? m.group(3) : "";
+                if (header.startsWith("[[")) {
+                    String inner = header.substring(2, header.length() - 2);
+                    out.add(ws + "[[" + normalizeTableKey(inner) + "]]" + tail);
+                } else {
+                    String inner = header.substring(1, header.length() - 1);
+                    out.add(ws + "[" + normalizeTableKey(inner) + "]" + tail);
+                }
+            } else {
+                out.add(line);
+            }
+        }
+        return out.toString();
+    }
+
+    /**
+     * Normalize a TOML table key by removing quotes from quoted identifiers.
+     * E.g., "dependencies.\"neoecoae\".mc-publish" -> "dependencies.neoecoae.mc-publish"
+     */
+    private static String normalizeTableKey(String tableKey) {
+        StringBuilder result = new StringBuilder(tableKey.length());
+        int i = 0;
+        while (i < tableKey.length()) {
+            char c = tableKey.charAt(i);
+            if (c == '"') {
+                int end = tableKey.indexOf('"', i + 1);
+                if (end == -1) {
+                    result.append(c);
+                    i++;
+                    continue;
+                }
+                result.append(tableKey, i + 1, end);
+                i = end + 1;
+            } else if (c == '\'') {
+                int end = tableKey.indexOf('\'', i + 1);
+                if (end == -1) {
+                    result.append(c);
+                    i++;
+                    continue;
+                }
+                result.append(tableKey, i + 1, end);
+                i = end + 1;
+            } else {
+                result.append(c);
+                i++;
+            }
+        }
+        return result.toString();
     }
 
     private static LocalModFile fromEmbeddedMod(ModManager modManager, Path modFile, ZipFileTree tree, ModLoaderType modLoaderType) throws IOException {
