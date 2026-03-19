@@ -109,6 +109,10 @@ public final class World {
         return playerData;
     }
 
+    public @Nullable CompoundTag getNormalizedGameRuleData() {
+        return normalizedGameRuleData;
+    }
+
     public long getLastPlayed() {
         CompoundTag data = levelData.get("Data");
         LongTag lastPlayedTag = data.get("LastPlayed");

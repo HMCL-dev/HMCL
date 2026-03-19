@@ -90,14 +90,10 @@ public class GameRulePage extends ListPageBase<GameRuleInfo<?>> implements World
     }
 
     public void updateList() {
-        CompoundTag dataTag = levelDat.get("Data");
-        CompoundTag gameRuleCompoundTag = dataTag.get("game_rules");
-        if (gameRuleCompoundTag == null) {
-            gameRuleCompoundTag = dataTag.get("GameRules");
-        }
+        CompoundTag gameRuleCompoundTag = world.getNormalizedGameRuleData();
 
         if (gameRuleCompoundTag == null) {
-            LOG.warning("Neither 'game_rules' nor 'GameRules' tag found in level.dat");
+            LOG.warning("Cannot load game rule data");
             setFailedReason(i18n("world.info.failed"));
             return;
         }
