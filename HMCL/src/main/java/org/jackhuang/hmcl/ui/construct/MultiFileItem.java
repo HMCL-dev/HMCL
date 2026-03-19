@@ -266,11 +266,6 @@ public final class MultiFileItem<T> extends VBox {
             selector.setValue(value);
         }
 
-        public FileOption<T> setDirectory(boolean directory) {
-            selector.setDirectory(directory);
-            return this;
-        }
-
         public FileOption<T> setSelectionMode(FileSelector.SelectionMode selectionMode) {
             selector.setSelectionMode(selectionMode);
             return this;

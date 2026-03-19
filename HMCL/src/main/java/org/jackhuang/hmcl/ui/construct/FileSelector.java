@@ -82,15 +82,6 @@ public class FileSelector extends HBox {
         return this;
     }
 
-    public boolean isDirectory() {
-        return selectionMode == SelectionMode.DIRECTORY;
-    }
-
-    public FileSelector setDirectory(boolean directory) {
-        setSelectionMode(directory ? SelectionMode.DIRECTORY : SelectionMode.FILE);
-        return this;
-    }
-
     public ObservableList<FileChooser.ExtensionFilter> getExtensionFilters() {
         return extensionFilters;
     }

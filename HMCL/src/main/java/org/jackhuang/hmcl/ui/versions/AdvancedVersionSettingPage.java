@@ -159,7 +159,7 @@ public final class AdvancedVersionSettingPage extends StackPane implements Decor
             nativesDirSublist.setHasSubtitle(true);
             nativesDirCustomOption = new MultiFileItem.FileOption<>(i18n("settings.advanced.natives_directory.custom"), NativesDirectoryType.CUSTOM)
                     .setChooserTitle(i18n("settings.advanced.natives_directory.choose"))
-                    .setDirectory(true);
+                    .setSelectionMode(FileSelector.SelectionMode.DIRECTORY);
             nativesDirItem.loadChildren(Arrays.asList(
                     new MultiFileItem.Option<>(i18n("settings.advanced.natives_directory.default"), NativesDirectoryType.VERSION_FOLDER),
                     nativesDirCustomOption
