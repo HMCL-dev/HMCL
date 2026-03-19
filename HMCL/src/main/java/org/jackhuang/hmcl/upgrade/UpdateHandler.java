@@ -181,7 +181,7 @@ public final class UpdateHandler {
 
         try {
             for (String inputArgument : ManagementFactory.getRuntimeMXBean().getInputArguments()) {
-                if (inputArgument.startsWith("-D")) {
+                if (inputArgument.startsWith("-D") || inputArgument.startsWith("-X")) {
                     commandline.add(inputArgument);
                 }
             }
