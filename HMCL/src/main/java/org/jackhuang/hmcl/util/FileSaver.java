@@ -76,7 +76,7 @@ public final class FileSaver extends Thread {
 
     /// Wait for all saves to complete.
     ///
-    /// This method is not ensure all saves after [#shutdown] has been completed.
+    /// This method should be called before the [#shutdown()] method.
     public static void waitForAllSaves() throws InterruptedException {
         assert !shutdown;
         Wait wait = new Wait();
