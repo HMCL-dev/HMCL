@@ -23,6 +23,7 @@ import com.jfoenix.validation.base.ValidatorBase;
 import javafx.animation.KeyFrame;
 import javafx.animation.KeyValue;
 import javafx.animation.Timeline;
+import javafx.application.Platform;
 import javafx.beans.InvalidationListener;
 import javafx.beans.WeakInvalidationListener;
 import javafx.beans.property.DoubleProperty;
@@ -64,13 +65,17 @@ import org.jackhuang.hmcl.ui.versions.GameListPage;
 import org.jackhuang.hmcl.ui.versions.VersionPage;
 import org.jackhuang.hmcl.ui.versions.Versions;
 import org.jackhuang.hmcl.util.*;
+import org.jackhuang.hmcl.util.i18n.I18n;
+import org.jackhuang.hmcl.util.i18n.SupportedLocale;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.platform.Architecture;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
 import org.jetbrains.annotations.Nullable;
 
 import java.nio.file.Path;
+import java.time.LocalDate;
 import java.util.List;
+import java.util.Locale;
 import java.util.concurrent.CompletableFuture;
 
 import static org.jackhuang.hmcl.setting.ConfigHolder.config;
@@ -82,6 +87,7 @@ public final class Controllers {
     public static final String JAVA_VERSION_TIP = "javaVersion";
     public static final String JAVA_INTERPRETED_MODE_TIP = "javaInterpretedMode";
     public static final String SOFTWARE_RENDERING = "softwareRendering";
+    public static final String APRIL_FOOLS = "aprilFools";
 
     public static final int MIN_WIDTH = 800 + 2 + 16; // bg width + border width*2 + shadow width*2
     public static final int MIN_HEIGHT = 450 + 2 + 40 + 16; // bg height + border width*2 + toolbar height + shadow width*2
@@ -433,6 +439,41 @@ public final class Controllers {
             noButton.setOnAction(e -> javafx.application.Platform.exit());
             agreementPane.setActions(agreementLink, yesButton, noButton);
             Controllers.dialog(agreementPane);
+        }
+
+        aprilFools:
+        if (AprilFools.isEnabled()) {
+            int currentYear = LocalDate.now().getYear();
+            if (config().getShownTips().get(APRIL_FOOLS) instanceof Number year && year.intValue() >= currentYear)
+                break aprilFools;
+
+            if (!I18n.getLocale().getLocale().getLanguage().equals("zh"))
+                break aprilFools;
+
+            SupportedLocale lzh = SupportedLocale.getSupportedLocales().stream()
+                    .filter(locale -> "lzh".equals(locale.getName()))
+                    .findFirst().orElse(null);
+
+            if (lzh == null)
+                break aprilFools;
+
+            var test = "HMCL 启动器现已支持文言文，是否要切换至文言文模式？\n" +
+                    "你可以在“置設 → 貫用 → 語言”中切换回简体中文。";
+
+            var test2 = "确认切换至文言文模式？\n" +
+                    "点击“确定”按钮后 HMCL 将自动退出，重新启动后 HMCL 将切换至文言文；点击“取消”按钮将保留当前语言并继续使用 HMCL。";
+
+            Runnable updateShowTips = () -> config().getShownTips().put(APRIL_FOOLS, currentYear);
+
+            Controllers.confirmWithCountdown(test, null, 10,
+                    MessageType.QUESTION, () -> {
+                        Controllers.confirmWithCountdown(test2, null, 3, MessageType.QUESTION,
+                                () -> {
+                                    updateShowTips.run();
+                                    config().setLocalization(lzh);
+                                    Platform.exit();
+                                }, updateShowTips);
+                    }, updateShowTips);
         }
     }
 
