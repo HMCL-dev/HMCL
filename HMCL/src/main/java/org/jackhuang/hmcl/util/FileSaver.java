@@ -30,9 +30,7 @@ import java.util.concurrent.locks.ReentrantLock;
 
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
-/**
- * @author Glavo
- */
+/// @author Glavo
 public final class FileSaver extends Thread {
 
     private static final BlockingQueue<Action> queue = new LinkedBlockingQueue<>();
