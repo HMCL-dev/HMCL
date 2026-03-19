@@ -17,10 +17,10 @@
  */
 package org.jackhuang.hmcl.util;
 
-import org.jackhuang.hmcl.setting.ConfigHolder;
-
 import java.time.LocalDate;
 import java.time.Month;
+
+import static org.jackhuang.hmcl.setting.ConfigHolder.config;
 
 /// April Fools' Day utilities.
 ///
@@ -30,40 +30,30 @@ import java.time.Month;
 /// @author Glavo
 public final class AprilFools {
 
-    private static final boolean START_IN_APRIL_FOOLS_DAY;
-    private static final boolean START_IN_NEAR_APRIL_FOOLS_DAY;
     private static final boolean ENABLED;
+    private static final boolean SHOW_APRIL_FOOLS_SETTINGS;
 
     static {
         var date = LocalDate.now();
-        START_IN_APRIL_FOOLS_DAY = date.getMonth() == Month.APRIL && date.getDayOfMonth() == 1;
-        START_IN_NEAR_APRIL_FOOLS_DAY = START_IN_APRIL_FOOLS_DAY || date.getMonth() == Month.MARCH && date.getDayOfMonth() > 30;
 
+        boolean aprilMode;
         String value = System.getProperty("hmcl.april_fools", System.getenv("HMCL_APRIL_FOOLS"));
-        if (ConfigHolder.config().isDisableAprilFools()) {
-            ENABLED = false;
-        } else if ("true".equalsIgnoreCase(value)) {
-            ENABLED = true;
-        } else if ("false".equalsIgnoreCase(value)) {
-            ENABLED = false;
-        } else {
-            ENABLED = START_IN_APRIL_FOOLS_DAY;
-        }
+        if ("true".equalsIgnoreCase(value))
+            aprilMode = true;
+        else if ("false".equalsIgnoreCase(value))
+            aprilMode = false;
+        else
+            aprilMode = date.getMonth() == Month.APRIL && date.getDayOfMonth() == 1;
+
+        ENABLED = aprilMode && !config().isDisableAprilFools();
+        SHOW_APRIL_FOOLS_SETTINGS = aprilMode || date.getMonth() == Month.MARCH && date.getDayOfMonth() > 30;
     }
 
-    /// Whether it is April Fools' Day.
+    /// Whether April Fools settings should be shown.
     ///
-    /// This method returns true if it is April Fools' Day.
-    public static boolean isStartInAprilFoolsDay() {
-        return START_IN_APRIL_FOOLS_DAY;
-    }
-
-    /// Whether it is near April Fools' Day.
-    ///
-    /// This method returns true if it is April Fools' Day or the day before or after April Fools' Day.
-    /// It is useful for displaying special features or messages related to April Fools' Day.
-    public static boolean isStartInNearAprilFoolsDay() {
-        return START_IN_NEAR_APRIL_FOOLS_DAY;
+    /// This method returns true if April Fools settings should be shown.
+    public static boolean isShowAprilFoolsSettings() {
+        return SHOW_APRIL_FOOLS_SETTINGS;
     }
 
     /// Whether April Fools is enabled.

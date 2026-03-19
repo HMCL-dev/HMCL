@@ -225,9 +225,10 @@ public final class SettingsPage extends ScrollPane {
                 settingsPane.getContent().add(disableAutoShowUpdateDialogPane);
             }
 
-            if (AprilFools.isStartInNearAprilFoolsDay()) {
+            if (AprilFools.isShowAprilFoolsSettings()) {
                 LineToggleButton disableAprilFools = new LineToggleButton();
                 disableAprilFools.setTitle(i18n("settings.launcher.disable_april_fools"));
+                disableAprilFools.setSubtitle(i18n("settings.take_effect_after_restart"));
                 disableAprilFools.selectedProperty().bindBidirectional(config().disableAprilFoolsProperty());
                 settingsPane.getContent().add(disableAprilFools);
             }
