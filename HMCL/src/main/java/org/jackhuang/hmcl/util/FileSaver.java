@@ -79,7 +79,7 @@ public final class FileSaver extends Thread {
     public static void waitForAllSaves() throws InterruptedException {
         while (!queue.isEmpty()) {
             if (shutdown && !running.get()) {
-                // Shutdown has been requested, so we don't need to wait for more saves.
+                // The remaining saves will be handled by the shutdown hook.
                 return;
             }
 
