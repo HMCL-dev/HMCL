@@ -22,7 +22,6 @@ import org.jackhuang.hmcl.util.i18n.LocaleUtils;
 import java.time.LocalDate;
 import java.time.Month;
 import java.util.List;
-import java.util.Set;
 
 import static org.jackhuang.hmcl.setting.ConfigHolder.config;
 
