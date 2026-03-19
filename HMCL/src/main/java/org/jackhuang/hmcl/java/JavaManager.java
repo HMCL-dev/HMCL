@@ -304,7 +304,7 @@ public final class JavaManager {
 
             for (JavaVersionConstraint constraint : JavaVersionConstraint.ALL) {
                 if (constraint.appliesToVersion(gameVersion, version, java, analyzer)) {
-                    if (!constraint.checkJava(gameVersion, version, java)) {
+                    if (!constraint.checkJava(gameVersion, version, java, analyzer)) {
                         if (constraint.isMandatory()) {
                             violationMandatory = true;
                         } else {
