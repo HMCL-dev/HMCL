@@ -227,8 +227,7 @@ public final class SettingsPage extends ScrollPane {
 
             if (AprilFools.isStartInNearAprilFoolsDay()) {
                 LineToggleButton disableAprilFools = new LineToggleButton();
-                disableAprilFools.setTitle("不启用愚人节功能");
-                // disableAprilFools.setSubtitle("在愚人节当天，HMCL会自动启动一个特殊的版本，以庆祝愚人节。");
+                disableAprilFools.setTitle(i18n("settings.launcher.disable_april_fools"));
                 disableAprilFools.selectedProperty().bindBidirectional(config().disableAprilFoolsProperty());
                 settingsPane.getContent().add(disableAprilFools);
             }

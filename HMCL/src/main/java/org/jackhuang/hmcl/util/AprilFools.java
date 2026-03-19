@@ -22,6 +22,12 @@ import org.jackhuang.hmcl.setting.ConfigHolder;
 import java.time.LocalDate;
 import java.time.Month;
 
+/// April Fools' Day utilities.
+///
+/// This class provides methods to check if it is April Fools' Day or near April Fools' Day.
+/// It also provides a method to check if April Fools is enabled.
+///
+/// @author Glavo
 public final class AprilFools {
 
     private static final boolean START_IN_APRIL_FOOLS_DAY;
@@ -58,6 +64,9 @@ public final class AprilFools {
         return START_IN_NEAR_APRIL_FOOLS_DAY;
     }
 
+    /// Whether April Fools is enabled.
+    ///
+    /// This method returns true if April Fools is enabled.
     public static boolean isEnabled() {
         return ENABLED;
     }
