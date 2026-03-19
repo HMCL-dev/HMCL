@@ -36,17 +36,17 @@ public final class AprilFools {
     static {
         var date = LocalDate.now();
 
-        boolean aprilMode;
+        boolean aprilFoolsMode;
         String value = System.getProperty("hmcl.april_fools", System.getenv("HMCL_APRIL_FOOLS"));
         if ("true".equalsIgnoreCase(value))
-            aprilMode = true;
+            aprilFoolsMode = true;
         else if ("false".equalsIgnoreCase(value))
-            aprilMode = false;
+            aprilFoolsMode = false;
         else
-            aprilMode = date.getMonth() == Month.APRIL && date.getDayOfMonth() == 1;
+            aprilFoolsMode = date.getMonth() == Month.APRIL && date.getDayOfMonth() == 1;
 
-        ENABLED = aprilMode && !config().isDisableAprilFools();
-        SHOW_APRIL_FOOLS_SETTINGS = aprilMode || date.getMonth() == Month.MARCH && date.getDayOfMonth() > 30;
+        ENABLED = aprilFoolsMode && !config().isDisableAprilFools();
+        SHOW_APRIL_FOOLS_SETTINGS = aprilFoolsMode || date.getMonth() == Month.MARCH && date.getDayOfMonth() > 30;
     }
 
     /// Whether April Fools settings should be shown.
