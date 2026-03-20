@@ -439,6 +439,7 @@ public final class GameVersionNumberTest {
         assertNormalized("26.1-pre1", "26.1-pre-1");
         assertNormalized("1.21.11-rc1", "1.21.11 Release Candidate 1");
         assertNormalized("1.21.11-rc1_unobfuscated", "1.21.11 Release Candidate 1 Unobfuscated");
+        assertNormalized("26.1-rc1", "26.1-rc-1");
         assertNormalized("1.14_combat-212796", "1.14.3 - Combat Test");
         assertNormalized("1.14_combat-0", "Combat Test 2");
         assertNormalized("1.14_combat-3", "Combat Test 3");
