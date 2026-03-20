@@ -195,9 +195,11 @@ public final class AdvancedVersionSettingPage extends StackPane implements Decor
 
             useNativeGLFWPane = new LineToggleButton();
             useNativeGLFWPane.setTitle(i18n("settings.advanced.use_native_glfw"));
+            useNativeGLFWPane.setSubtitle(i18n("settings.advanced.linux_freebsd_only"));
 
             useNativeOpenALPane = new LineToggleButton();
             useNativeOpenALPane.setTitle(i18n("settings.advanced.use_native_openal"));
+            useNativeOpenALPane.setSubtitle(i18n("settings.advanced.linux_freebsd_only"));
 
             workaroundPane.getContent().setAll(
                     nativesDirSublist, rendererPane, noJVMArgsPane, noOptimizingJVMArgsPane, noGameCheckPane,
