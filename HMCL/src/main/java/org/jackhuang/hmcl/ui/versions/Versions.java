@@ -18,7 +18,9 @@
 package org.jackhuang.hmcl.ui.versions;
 
 import com.jfoenix.controls.JFXButton;
+import com.jfoenix.controls.JFXSpinner;
 import javafx.application.Platform;
+import javafx.scene.layout.StackPane;
 import javafx.stage.FileChooser;
 import org.jackhuang.hmcl.auth.Account;
 import org.jackhuang.hmcl.auth.authlibinjector.AuthlibInjectorAccount;
@@ -42,6 +44,7 @@ import org.jackhuang.hmcl.ui.download.ModpackInstallWizardProvider;
 import org.jackhuang.hmcl.ui.export.ExportWizardProvider;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.TaskCancellationAction;
+import org.jackhuang.hmcl.util.i18n.I18n;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
 
@@ -49,10 +52,14 @@ import java.io.IOException;
 import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Consumer;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
@@ -131,23 +138,23 @@ public final class Versions {
 
     public static CompletableFuture<String> renameVersion(Profile profile, String version) {
         return Controllers.prompt(i18n("version.manage.rename.message"), (newName, handler) -> {
-            if (newName.equals(version)) {
-                handler.resolve();
-                return;
-            }
-            if (profile.getRepository().renameVersion(version, newName)) {
-                handler.resolve();
-                profile.getRepository().refreshVersionsAsync()
-                        .thenRunAsync(Schedulers.javafx(), () -> {
-                            if (profile.getRepository().hasVersion(newName)) {
-                                profile.setSelectedVersion(newName);
-                            }
-                        }).start();
-            } else {
-                handler.reject(i18n("version.manage.rename.fail"));
-            }
-        }, version, new Validator(i18n("install.new_game.malformed"), HMCLGameRepository::isValidVersionId),
-            new Validator(i18n("install.new_game.already_exists"), newVersionName -> !profile.getRepository().versionIdConflicts(newVersionName) || newVersionName.equals(version)));
+                    if (newName.equals(version)) {
+                        handler.resolve();
+                        return;
+                    }
+                    if (profile.getRepository().renameVersion(version, newName)) {
+                        handler.resolve();
+                        profile.getRepository().refreshVersionsAsync()
+                                .thenRunAsync(Schedulers.javafx(), () -> {
+                                    if (profile.getRepository().hasVersion(newName)) {
+                                        profile.setSelectedVersion(newName);
+                                    }
+                                }).start();
+                    } else {
+                        handler.reject(i18n("version.manage.rename.fail"));
+                    }
+                }, version, new Validator(i18n("install.new_game.malformed"), HMCLGameRepository::isValidVersionId),
+                new Validator(i18n("install.new_game.already_exists"), newVersionName -> !profile.getRepository().versionIdConflicts(newVersionName) || newVersionName.equals(version)));
     }
 
     public static void exportVersion(Profile profile, String version) {
@@ -192,6 +199,116 @@ public final class Versions {
                 .executor();
         Controllers.taskDialog(executor, i18n("version.manage.redownload_assets_index"), TaskCancellationAction.NO_CANCEL);
         executor.start();
+    }
+
+    public static void cleanGameFiles(Profile profile) {
+        var dialogBuilder = new MessageDialogPane.Builder(i18n("game.clean.content", "..."), i18n("message.question"), MessageDialogPane.MessageType.QUESTION);
+        var spinner = new JFXSpinner();
+        spinner.getStyleClass().add("small-spinner");
+
+        StackPane buttonPane = new StackPane();
+
+        JFXButton okButton = new JFXButton(i18n("button.yes"));
+        okButton.getStyleClass().add("dialog-accept");
+
+        dialogBuilder.addAction(buttonPane);
+        dialogBuilder.addCancel(null);
+
+        var dialog = dialogBuilder.build();
+
+        Task.supplyAsync(() -> {
+            var repository = profile.getRepository();
+            var versions = repository.getVersions();
+
+            Set<String> activeAssets = versions.parallelStream()
+                    .flatMap(version -> {
+                        try {
+                            var index = repository.getAssetIndex(version.getId(), version.getAssetIndex().getId());
+                            return index.getObjects().values().stream().map(AssetObject::getLocation);
+                        } catch (IOException ignored) {
+                            return Stream.empty();
+                        }
+                    })
+                    .collect(Collectors.toSet());
+
+            Set<String> activeLibraries = versions.parallelStream()
+                    .flatMap(version -> version.getLibraries().stream())
+                    .map(Library::getPath)
+                    .collect(Collectors.toSet());
+            List<Path> junkFiles = new ArrayList<>();
+
+            Path assetsDir = repository.getBaseDirectory().resolve("assets").resolve("objects");
+
+            junkFiles.addAll(findUnlistedFiles(assetsDir, activeAssets));
+
+            Path libsDir = repository.getBaseDirectory().resolve("libraries");
+            junkFiles.addAll(findUnlistedFiles(libsDir, activeLibraries));
+
+            List<Path> logsAndCrashes = new ArrayList<>();
+            logsAndCrashes.add(repository.getBaseDirectory().resolve("logs"));
+            logsAndCrashes.add(repository.getBaseDirectory().resolve("crash-reports"));
+            versions.forEach(v -> {
+                logsAndCrashes.add(repository.getVersionRoot(v.getId()).resolve("logs"));
+                logsAndCrashes.add(repository.getVersionRoot(v.getId()).resolve("crash-reports"));
+            });
+
+            for (Path dir : logsAndCrashes) {
+                if (Files.exists(dir)) {
+                    try (var s = Files.walk(dir)) {
+                        s.filter(Files::isRegularFile).forEach(junkFiles::add);
+                    } catch (IOException ignored) {
+                    }
+                }
+            }
+
+            return junkFiles;
+        }).thenApplyAsync((list) -> {
+            long totalSize = list.stream()
+                    .mapToLong(path -> {
+                        try {
+                            return Files.size(path);
+                        } catch (IOException e) {
+                            return 0L;
+                        }
+                    })
+                    .sum();
+
+            FXUtils.runInFX(() -> {
+                dialog.setText(i18n("game.clean.content", I18n.formatSize(totalSize)));
+                buttonPane.getChildren().setAll(okButton);
+                okButton.setOnAction(event -> {
+                    buttonPane.getChildren().setAll(spinner);
+                    Task.runAsync(() -> list.forEach(path -> {
+                        try {
+                            Files.deleteIfExists(path);
+                        } catch (IOException ignored) {
+                        }
+                    })).thenRunAsync(Schedulers.javafx(), () -> {
+                        dialog.fireEvent(new DialogCloseEvent());
+                    }).start();
+                });
+            });
+            return null;
+        }).start();
+
+        buttonPane.getChildren().setAll(spinner);
+
+        Controllers.dialog(dialog);
+    }
+
+    private static List<Path> findUnlistedFiles(Path root, Set<String> activePaths) {
+        if (!Files.exists(root)) return List.of();
+        try (var stream = Files.walk(root)) {
+            return stream
+                    .filter(Files::isRegularFile)
+                    .filter(path -> {
+                        String relative = root.relativize(path).toString();
+                        return !activePaths.contains(relative);
+                    })
+                    .toList();
+        } catch (IOException e) {
+            return List.of();
+        }
     }
 
     public static void cleanVersion(Profile profile, String id) {
