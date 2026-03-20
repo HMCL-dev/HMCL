@@ -175,7 +175,7 @@ public final class UpdateHandler {
         startJava(updateTo, "--apply-to", self.toString());
     }
 
-    private static void startJava(Path jar, String... appArgs) throws IOException {
+    public static void startJava(Path jar, String... appArgs) throws IOException {
         List<String> commandline = new ArrayList<>();
         commandline.add(JavaRuntime.getDefault().getBinary().toString());
 
