@@ -111,6 +111,12 @@ public class PersonalizationPage extends StackPane {
             titleTransparentButton.setTitle(i18n("settings.launcher.title_transparent"));
         }
         {
+            LineToggleButton showHelpButtonButton = new LineToggleButton();
+            themeList.getContent().add(showHelpButtonButton);
+            showHelpButtonButton.selectedProperty().bindBidirectional(config().showHelpButtonProperty());
+            showHelpButtonButton.setTitle(i18n("settings.launcher.show_help_button"));
+        }
+        {
             LineToggleButton animationButton = new LineToggleButton();
             themeList.getContent().add(animationButton);
             animationButton.selectedProperty().bindBidirectional(config().animationDisabledProperty());

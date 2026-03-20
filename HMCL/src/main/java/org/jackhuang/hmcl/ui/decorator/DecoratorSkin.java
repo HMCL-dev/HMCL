@@ -45,6 +45,7 @@ import javafx.stage.Stage;
 
 import javafx.util.Duration;
 import org.jackhuang.hmcl.Metadata;
+import org.jackhuang.hmcl.setting.ConfigHolder;
 import org.jackhuang.hmcl.theme.Themes;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
@@ -236,6 +237,7 @@ public class DecoratorSkin extends SkinBase<Decorator> {
                 btnHelp.setGraphic(SVG.HELP.createIcon(Themes.titleFillProperty()));
                 btnHelp.getStyleClass().add("jfx-decorator-button");
                 btnHelp.setOnAction(e -> FXUtils.openLink(Metadata.CONTACT_URL));
+                btnHelp.visibleProperty().bind(ConfigHolder.config().showHelpButtonProperty());
 
                 JFXButton btnMin = new JFXButton();
                 btnMin.setFocusTraversable(false);

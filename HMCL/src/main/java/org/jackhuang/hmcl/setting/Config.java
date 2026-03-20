@@ -415,6 +415,21 @@ public final class Config extends ObservableSetting {
         this.titleTransparent.set(titleTransparent);
     }
 
+    @SerializedName("showHelpButton")
+    private final BooleanProperty showHelpButton = new SimpleBooleanProperty(true);
+
+    public BooleanProperty showHelpButtonProperty() {
+        return showHelpButton;
+    }
+
+    public boolean isShowHelpButton() {
+        return showHelpButton.get();
+    }
+
+    public void setShowHelpButton(boolean showHelpButton) {
+        this.showHelpButton.set(showHelpButton);
+    }
+
     @SerializedName("backgroundType")
     private final ObjectProperty<EnumBackgroundImage> backgroundImageType = new RawPreservingObjectProperty<>(EnumBackgroundImage.DEFAULT);
 
