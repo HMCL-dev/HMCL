@@ -24,7 +24,6 @@ import org.jackhuang.hmcl.java.JavaRuntime;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.io.JarUtils;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
-import org.jackhuang.hmcl.util.platform.WineDetector;
 
 import javax.swing.*;
 import java.io.IOException;
@@ -48,11 +47,11 @@ public final class EntryPoint {
         System.getProperties().putIfAbsent("javafx.autoproxy.disable", "true");
         System.getProperties().putIfAbsent("http.agent", "HMCL/" + Metadata.VERSION);
 
+        createHMCLDirectories();
         LOG.start(Metadata.HMCL_CURRENT_DIRECTORY.resolve("logs"));
 
         checkWine();
 
-        createHMCLDirectories();
         setupJavaFXVMOptions();
 
         if (OperatingSystem.CURRENT_OS == OperatingSystem.MACOS) {
@@ -228,14 +227,14 @@ public final class EntryPoint {
     }
 
     private static void checkWine() {
-        if (WineDetector.IN_WINE) {
+        if (OperatingSystem.isRunningUnderWine()) {
             SwingUtils.initLookAndFeel();
             LOG.warning("HMCL is running under Wine or its distributions!");
 
             int result = JOptionPane.showOptionDialog(null, i18n("fatal.wine_warning"), i18n("message.warning"), JOptionPane.OK_CANCEL_OPTION,
                     JOptionPane.WARNING_MESSAGE, null, null, null);
 
-            if (result == JOptionPane.CANCEL_OPTION) {
+            if (result == JOptionPane.CANCEL_OPTION || result == JOptionPane.CLOSED_OPTION) {
                 exit(1);
             }
         }
