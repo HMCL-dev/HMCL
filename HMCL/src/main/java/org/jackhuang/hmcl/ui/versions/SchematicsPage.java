@@ -23,7 +23,9 @@ import com.jfoenix.controls.JFXListView;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
-import javafx.scene.control.*;
+import javafx.scene.control.Label;
+import javafx.scene.control.ListCell;
+import javafx.scene.control.Skin;
 import javafx.scene.image.Image;
 import javafx.scene.image.PixelWriter;
 import javafx.scene.image.WritableImage;
@@ -548,7 +550,7 @@ public final class SchematicsPage extends ListPageBase<SchematicsPage.Item> impl
         private final ImageContainer iconImageView;
         private final SVGContainer iconSVGView;
 
-        private final Tooltip tooltip = new Tooltip();
+        private final JFXTooltip tooltip = new JFXTooltip();
 
         public Cell() {
             this.root = new BorderPane();
@@ -631,7 +633,7 @@ public final class SchematicsPage extends ListPageBase<SchematicsPage.Item> impl
                     FXUtils.installSlowTooltip(left, tooltip);
                 } else {
                     tooltip.setText("");
-                    Tooltip.uninstall(left, tooltip);
+                    tooltip.uninstall();
                 }
 
                 root.setRight(item instanceof BackItem ? null : right);

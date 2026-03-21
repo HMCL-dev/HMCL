@@ -69,6 +69,7 @@ import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.ui.animation.AnimationUtils;
 import org.jackhuang.hmcl.ui.animation.Motion;
 import org.jackhuang.hmcl.ui.construct.IconedMenuItem;
+import org.jackhuang.hmcl.ui.construct.JFXTooltip;
 import org.jackhuang.hmcl.ui.construct.MenuSeparator;
 import org.jackhuang.hmcl.ui.construct.PopupMenu;
 import org.jackhuang.hmcl.ui.image.ImageLoader;
@@ -475,27 +476,26 @@ public final class FXUtils {
     private static final Duration TOOLTIP_SLOW_SHOW_DELAY = Duration.millis(500);
     private static final Duration TOOLTIP_SHOW_DURATION = Duration.millis(5000);
 
-    public static void installTooltip(Node node, Duration showDelay, Duration showDuration, Duration hideDelay, Tooltip tooltip) {
+    public static void installTooltip(Node node, Duration showDelay, Duration showDuration, JFXTooltip tooltip) {
         tooltip.setShowDelay(showDelay);
         tooltip.setShowDuration(showDuration);
-        tooltip.setHideDelay(hideDelay);
-        Tooltip.install(node, tooltip);
+        tooltip.install(node);
     }
 
-    public static void installFastTooltip(Node node, Tooltip tooltip) {
-        runInFX(() -> installTooltip(node, TOOLTIP_FAST_SHOW_DELAY, TOOLTIP_SHOW_DURATION, Duration.ZERO, tooltip));
+    public static void installFastTooltip(Node node, JFXTooltip tooltip) {
+        runInFX(() -> installTooltip(node, TOOLTIP_FAST_SHOW_DELAY, TOOLTIP_SHOW_DURATION, tooltip));
     }
 
-    public static void installFastTooltip(Node node, String tooltip) {
-        installFastTooltip(node, new Tooltip(tooltip));
+    public static void installFastTooltip(Node node, String tooltipText) {
+        installFastTooltip(node, new JFXTooltip(tooltipText));
     }
 
-    public static void installSlowTooltip(Node node, Tooltip tooltip) {
-        runInFX(() -> installTooltip(node, TOOLTIP_SLOW_SHOW_DELAY, TOOLTIP_SHOW_DURATION, Duration.ZERO, tooltip));
+    public static void installSlowTooltip(Node node, JFXTooltip tooltip) {
+        runInFX(() -> installTooltip(node, TOOLTIP_SLOW_SHOW_DELAY, TOOLTIP_SHOW_DURATION, tooltip));
     }
 
-    public static void installSlowTooltip(Node node, String tooltip) {
-        installSlowTooltip(node, new Tooltip(tooltip));
+    public static void installSlowTooltip(Node node, String tooltipText) {
+        installSlowTooltip(node, new JFXTooltip(tooltipText));
     }
 
     public static void playAnimation(Node node, String animationKey, Animation animation) {
@@ -1321,18 +1321,18 @@ public final class FXUtils {
         if (textTruncatedProperty != null) {
             ChangeListener<Boolean> listener = (observable, oldValue, newValue) -> {
                 var label = (Labeled) ((ReadOnlyProperty<?>) observable).getBean();
-                var tooltip = (Tooltip) label.getProperties().get(LABEL_FULL_TEXT_PROP_KEY);
+                var tooltip = (JFXTooltip) label.getProperties().get(LABEL_FULL_TEXT_PROP_KEY);
 
                 if (newValue) {
                     if (tooltip == null) {
-                        tooltip = new Tooltip();
+                        tooltip = new JFXTooltip();
                         tooltip.textProperty().bind(label.textProperty());
                         label.getProperties().put(LABEL_FULL_TEXT_PROP_KEY, tooltip);
                     }
 
                     FXUtils.installFastTooltip(label, tooltip);
                 } else if (tooltip != null) {
-                    Tooltip.uninstall(label, tooltip);
+                    tooltip.uninstall();
                 }
             };
             listener.changed(textTruncatedProperty, false, textTruncatedProperty.get());

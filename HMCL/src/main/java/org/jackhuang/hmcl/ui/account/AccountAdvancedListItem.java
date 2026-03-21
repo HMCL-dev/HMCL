@@ -23,7 +23,6 @@ import javafx.beans.property.SimpleObjectProperty;
 import javafx.beans.value.ObservableValue;
 import javafx.geometry.Pos;
 import javafx.scene.canvas.Canvas;
-import javafx.scene.control.Tooltip;
 import org.jackhuang.hmcl.auth.Account;
 import org.jackhuang.hmcl.auth.authlibinjector.AuthlibInjectorAccount;
 import org.jackhuang.hmcl.auth.authlibinjector.AuthlibInjectorServer;
@@ -32,6 +31,7 @@ import org.jackhuang.hmcl.game.TexturesLoader;
 import org.jackhuang.hmcl.setting.Accounts;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.construct.AdvancedListItem;
+import org.jackhuang.hmcl.ui.construct.JFXTooltip;
 import org.jackhuang.hmcl.util.javafx.BindingMapping;
 
 import static javafx.beans.binding.Bindings.createStringBinding;
@@ -40,7 +40,7 @@ import static org.jackhuang.hmcl.setting.Accounts.getLocalizedLoginTypeName;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 public class AccountAdvancedListItem extends AdvancedListItem {
-    private final Tooltip tooltip;
+    private final JFXTooltip tooltip;
     private final Canvas canvas;
 
     private final ObjectProperty<Account> account = new SimpleObjectProperty<Account>() {
@@ -73,7 +73,7 @@ public class AccountAdvancedListItem extends AdvancedListItem {
     }
 
     public AccountAdvancedListItem(Account account) {
-        tooltip = new Tooltip();
+        tooltip = new JFXTooltip();
         FXUtils.installFastTooltip(this, tooltip);
 
         canvas = new Canvas(32, 32);

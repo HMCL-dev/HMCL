@@ -29,7 +29,6 @@ import javafx.event.EventHandler;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.control.Label;
-import javafx.scene.control.Tooltip;
 import javafx.scene.image.ImageView;
 import javafx.scene.input.MouseButton;
 import javafx.scene.input.MouseEvent;
@@ -56,6 +55,7 @@ import org.jackhuang.hmcl.ui.SVG;
 import org.jackhuang.hmcl.ui.animation.AnimationUtils;
 import org.jackhuang.hmcl.ui.animation.ContainerAnimations;
 import org.jackhuang.hmcl.ui.animation.TransitionPane;
+import org.jackhuang.hmcl.ui.construct.JFXTooltip;
 import org.jackhuang.hmcl.ui.construct.MessageDialogPane;
 import org.jackhuang.hmcl.ui.construct.TwoLineListItem;
 import org.jackhuang.hmcl.ui.decorator.DecoratorPage;
@@ -219,7 +219,7 @@ public final class MainPage extends StackPane implements DecoratorPage {
                 currentLabel.setStyle("-fx-font-size: 12px;");
 
                 FXUtils.onChangeAndOperate(currentGameProperty(), new Consumer<>() {
-                    private Tooltip tooltip;
+                    private JFXTooltip tooltip;
 
                     @Override
                     public void accept(String currentGame) {
@@ -229,7 +229,7 @@ public final class MainPage extends StackPane implements DecoratorPage {
                             graphic.getChildren().setAll(launchLabel);
                             FXUtils.setOnActionWithCooldown(launchButton, MainPage.this::launchNoGame);
                             if (tooltip == null)
-                                tooltip = new Tooltip(i18n("version.launch.empty.tooltip"));
+                                tooltip = new JFXTooltip(i18n("version.launch.empty.tooltip"));
                             FXUtils.installFastTooltip(launchButton, tooltip);
                         } else {
                             launchLabel.setText(i18n("version.launch"));
@@ -237,7 +237,7 @@ public final class MainPage extends StackPane implements DecoratorPage {
                             graphic.getChildren().setAll(launchLabel, currentLabel);
                             FXUtils.setOnActionWithCooldown(launchButton, MainPage.this::launch);
                             if (tooltip != null)
-                                Tooltip.uninstall(launchButton, tooltip);
+                                tooltip.uninstall();
                         }
                     }
                 });

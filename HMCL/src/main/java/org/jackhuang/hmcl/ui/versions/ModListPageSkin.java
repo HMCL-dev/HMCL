@@ -28,7 +28,10 @@ import javafx.css.PseudoClass;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
-import javafx.scene.control.*;
+import javafx.scene.control.Label;
+import javafx.scene.control.ScrollPane;
+import javafx.scene.control.SelectionMode;
+import javafx.scene.control.SkinBase;
 import javafx.scene.image.Image;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
@@ -54,7 +57,10 @@ import org.jackhuang.hmcl.ui.SVG;
 import org.jackhuang.hmcl.ui.animation.ContainerAnimations;
 import org.jackhuang.hmcl.ui.animation.TransitionPane;
 import org.jackhuang.hmcl.ui.construct.*;
-import org.jackhuang.hmcl.util.*;
+import org.jackhuang.hmcl.util.FXThread;
+import org.jackhuang.hmcl.util.Lazy;
+import org.jackhuang.hmcl.util.Pair;
+import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.i18n.I18n;
 import org.jackhuang.hmcl.util.io.CompressingUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
@@ -560,7 +566,7 @@ final class ModListPageSkin extends SkinBase<ModListPage> {
         JFXButton revealButton = FXUtils.newToggleButton4(SVG.FOLDER);
         BooleanProperty booleanProperty;
 
-        Tooltip warningTooltip;
+        JFXTooltip warningTooltip;
 
         ModInfoListCell(JFXListView<ModInfoObject> listView) {
             super(listView);
@@ -588,7 +594,7 @@ final class ModListPageSkin extends SkinBase<ModListPage> {
         protected void updateControl(ModInfoObject dataItem, boolean empty) {
             pseudoClassStateChanged(WARNING, false);
             if (warningTooltip != null) {
-                Tooltip.uninstall(this, warningTooltip);
+                warningTooltip.uninstall();
                 warningTooltip = null;
             }
 
@@ -678,8 +684,8 @@ final class ModListPageSkin extends SkinBase<ModListPage> {
 
                 //noinspection ConstantValue
                 this.warningTooltip = warning.size() == 1
-                        ? new Tooltip(warning.get(0))
-                        : new Tooltip(String.join("\n", warning));
+                        ? new JFXTooltip(warning.get(0))
+                        : new JFXTooltip(String.join("\n", warning));
                 FXUtils.installFastTooltip(this, warningTooltip);
             }
         }

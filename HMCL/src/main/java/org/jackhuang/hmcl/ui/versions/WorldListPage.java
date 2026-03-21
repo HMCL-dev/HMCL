@@ -29,7 +29,6 @@ import javafx.geometry.Pos;
 import javafx.scene.Node;
 import javafx.scene.control.ListCell;
 import javafx.scene.control.Skin;
-import javafx.scene.control.Tooltip;
 import javafx.scene.input.MouseButton;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
@@ -243,7 +242,7 @@ public final class WorldListPage extends ListPageBase<World> implements VersionP
 
         private final RipplerContainer graphic;
         private final ImageContainer imageView;
-        private final Tooltip leftTooltip;
+        private final JFXTooltip leftTooltip;
         private final TwoLineListItem content;
         private final JFXButton btnLaunch;
 
@@ -256,7 +255,7 @@ public final class WorldListPage extends ListPageBase<World> implements VersionP
 
             {
                 StackPane left = new StackPane();
-                this.leftTooltip = new Tooltip();
+                this.leftTooltip = new JFXTooltip();
                 FXUtils.installSlowTooltip(left, leftTooltip);
                 root.setLeft(left);
                 left.setPadding(new Insets(0, 8, 0, 0));
