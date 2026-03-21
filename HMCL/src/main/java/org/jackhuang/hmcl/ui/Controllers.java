@@ -49,6 +49,7 @@ import org.jackhuang.hmcl.setting.*;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.task.TaskExecutor;
 import org.jackhuang.hmcl.ui.account.AccountListPage;
+import org.jackhuang.hmcl.ui.account.SkinManagePage;
 import org.jackhuang.hmcl.ui.animation.AnimationUtils;
 import org.jackhuang.hmcl.ui.animation.ContainerAnimations;
 import org.jackhuang.hmcl.ui.animation.Motion;
@@ -117,6 +118,7 @@ public final class Controllers {
     });
     private static LauncherSettingsPage settingsPage;
     private static Lazy<TerracottaPage> terracottaPage = new Lazy<>(TerracottaPage::new);
+    private static Lazy<SkinManagePage> skinManagePage = new Lazy<>(SkinManagePage::new);
 
     private Controllers() {
     }
@@ -195,6 +197,11 @@ public final class Controllers {
     // FXThread
     public static Node getTerracottaPage() {
         return terracottaPage.get();
+    }
+
+    // FXThread
+    public static SkinManagePage getSkinManagePage() {
+        return skinManagePage.get();
     }
 
     // FXThread
@@ -575,6 +582,7 @@ public final class Controllers {
         accountListPage = null;
         settingsPage = null;
         terracottaPage = null;
+        skinManagePage = null;
         decorator = null;
         stage = null;
         scene = null;
