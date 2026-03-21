@@ -123,7 +123,8 @@ public class ModrinthInstallTask extends Task<Void> {
             String ext = FileUtils.getExtension(StringUtils.substringAfter(iconUri.getPath(), '/')).toLowerCase(Locale.ROOT);
             if (SUPPORTED_ICON_EXTS.contains(ext)) {
                 iconExt = ext;
-                dependents.add(downloadIconTask = new CacheFileTask(iconUrl));
+
+                dependents.add(downloadIconTask = new CacheFileTask(dependencyManager.getDownloadProvider().injectURLWithCandidates(iconUrl)));
             }
         }
         dependencies.add(new ModrinthCompletionTask(dependencyManager, name, manifest));

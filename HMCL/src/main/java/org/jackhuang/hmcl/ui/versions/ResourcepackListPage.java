@@ -1,3 +1,20 @@
+/*
+ * Hello Minecraft! Launcher
+ * Copyright (C) 2026 huangyuhui <huanghongxun2008@126.com> and contributors
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
 package org.jackhuang.hmcl.ui.versions;
 
 import com.jfoenix.controls.JFXButton;
@@ -8,7 +25,6 @@ import javafx.scene.Node;
 import javafx.scene.control.ListCell;
 import javafx.scene.control.Skin;
 import javafx.scene.image.Image;
-import javafx.scene.image.ImageView;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
@@ -19,10 +35,7 @@ import org.jackhuang.hmcl.setting.Profile;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.ui.*;
-import org.jackhuang.hmcl.ui.construct.MDListCell;
-import org.jackhuang.hmcl.ui.construct.MessageDialogPane;
-import org.jackhuang.hmcl.ui.construct.RipplerContainer;
-import org.jackhuang.hmcl.ui.construct.TwoLineListItem;
+import org.jackhuang.hmcl.ui.construct.*;
 import org.jackhuang.hmcl.util.io.FileUtils;
 
 import java.io.ByteArrayInputStream;
@@ -181,10 +194,10 @@ public final class ResourcepackListPage extends ListPageBase<ResourcepackListPag
     }
 
     private static final class ResourcepackListCell extends MDListCell<ResourcepackInfoObject> {
-        private final ImageView imageView = new ImageView();
+        private final ImageContainer imageView = new ImageContainer(32);
         private final TwoLineListItem content = new TwoLineListItem();
-        private final JFXButton btnReveal = new JFXButton();
-        private final JFXButton btnDelete = new JFXButton();
+        private final JFXButton btnReveal = FXUtils.newToggleButton4(SVG.FOLDER_OPEN);
+        private final JFXButton btnDelete = FXUtils.newToggleButton4(SVG.DELETE_FOREVER);
         private final ResourcepackListPage page;
 
         public ResourcepackListCell(JFXListView<ResourcepackInfoObject> listView, ResourcepackListPage page) {
@@ -198,7 +211,6 @@ public final class ResourcepackListPage extends ListPageBase<ResourcepackListPag
 
             HBox left = new HBox(8);
             left.setAlignment(Pos.CENTER);
-            FXUtils.limitSize(imageView, 32, 32);
             left.getChildren().add(imageView);
             left.setPadding(new Insets(0, 8, 0, 0));
             FXUtils.setLimitWidth(left, 48);
@@ -206,12 +218,6 @@ public final class ResourcepackListPage extends ListPageBase<ResourcepackListPag
 
             HBox.setHgrow(content, Priority.ALWAYS);
             root.setCenter(content);
-
-            btnReveal.getStyleClass().add("toggle-icon4");
-            btnReveal.setGraphic(SVG.FOLDER_OPEN.createIcon());
-
-            btnDelete.getStyleClass().add("toggle-icon4");
-            btnDelete.setGraphic(SVG.DELETE_FOREVER.createIcon());
 
             HBox right = new HBox(8);
             right.setAlignment(Pos.CENTER_RIGHT);

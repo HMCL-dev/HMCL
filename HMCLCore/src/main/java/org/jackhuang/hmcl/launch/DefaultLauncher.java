@@ -650,8 +650,10 @@ public class DefaultLauncher extends Launcher {
         final String command = usePowerShell ? null : commandLine.commandLine.toString();
         Map<String, String> envVars = getEnvVars();
 
-        if (!usePowerShell && isWindows) {
-            if (command.length() > 8192) { // maximum length of the command in cmd
+        if (isWindows && !usePowerShell) {
+            // https://stackoverflow.com/a/28452546
+            // https://learn.microsoft.com/troubleshoot/windows-client/shell-experience/command-line-string-limitation
+            if (command.length() > 32767) {
                 throw new CommandTooLongException();
             }
         }
