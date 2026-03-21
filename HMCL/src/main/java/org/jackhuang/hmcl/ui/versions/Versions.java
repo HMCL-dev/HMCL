@@ -138,23 +138,23 @@ public final class Versions {
 
     public static CompletableFuture<String> renameVersion(Profile profile, String version) {
         return Controllers.prompt(i18n("version.manage.rename.message"), (newName, handler) -> {
-            if (newName.equals(version)) {
-                handler.resolve();
-                return;
-            }
-            if (profile.getRepository().renameVersion(version, newName)) {
-                handler.resolve();
-                profile.getRepository().refreshVersionsAsync()
-                        .thenRunAsync(Schedulers.javafx(), () -> {
-                            if (profile.getRepository().hasVersion(newName)) {
-                                profile.setSelectedVersion(newName);
-                            }
-                        }).start();
-            } else {
-                handler.reject(i18n("version.manage.rename.fail"));
-            }
-        }, version, new Validator(i18n("install.new_game.malformed"), HMCLGameRepository::isValidVersionId),
-            new Validator(i18n("install.new_game.already_exists"), newVersionName -> !profile.getRepository().versionIdConflicts(newVersionName) || newVersionName.equals(version)));
+                    if (newName.equals(version)) {
+                        handler.resolve();
+                        return;
+                    }
+                    if (profile.getRepository().renameVersion(version, newName)) {
+                        handler.resolve();
+                        profile.getRepository().refreshVersionsAsync()
+                                .thenRunAsync(Schedulers.javafx(), () -> {
+                                    if (profile.getRepository().hasVersion(newName)) {
+                                        profile.setSelectedVersion(newName);
+                                    }
+                                }).start();
+                    } else {
+                        handler.reject(i18n("version.manage.rename.fail"));
+                    }
+                }, version, new Validator(i18n("install.new_game.malformed"), HMCLGameRepository::isValidVersionId),
+                new Validator(i18n("install.new_game.already_exists"), newVersionName -> !profile.getRepository().versionIdConflicts(newVersionName) || newVersionName.equals(version)));
     }
 
     public static void exportVersion(Profile profile, String version) {
@@ -241,15 +241,29 @@ public final class Versions {
             unusedFiles.addAll(findUnlistedFiles(repository.getBaseDirectory().resolve("assets").resolve("objects"), activeAssets));
             unusedFiles.addAll(findUnlistedFiles(repository.getBaseDirectory().resolve("libraries"), activeLibraries));
 
-            List<Path> unusedLogs = new ArrayList<>();
-            unusedLogs.add(repository.getBaseDirectory().resolve("logs"));
-            unusedLogs.add(repository.getBaseDirectory().resolve("crash-reports"));
+            List<Path> unusedFolders = new ArrayList<>();
+
+            for (String path : List.of("logs", "crash-reports", "modernfix", "mods/.connector")) {
+                unusedFolders.add(repository.getBaseDirectory().resolve(path));
+                versions.forEach(v -> {
+                    unusedFolders.add(repository.getVersionRoot(v.getId()).resolve(path));
+                });
+            }
+
             versions.forEach(v -> {
-                unusedLogs.add(repository.getVersionRoot(v.getId()).resolve("logs"));
-                unusedLogs.add(repository.getVersionRoot(v.getId()).resolve("crash-reports"));
+                try (var walker = Files.walk(repository.getVersionRoot(v.getId()), 1)) {
+                    unusedFolders.addAll(walker
+                            .filter(it -> {
+                                var name = it.getFileName().toString();
+                                System.out.println(name);
+                                System.out.println(Files.isDirectory(it) && (name.startsWith("natives-")) || name.endsWith("-natives"));
+                                return Files.isDirectory(it) && (name.startsWith("natives-")) || name.endsWith("-natives");
+                            }).toList());
+                } catch (IOException ignored) {
+                }
             });
 
-            for (Path dir : unusedLogs) {
+            for (Path dir : unusedFolders) {
                 if (Files.exists(dir)) {
                     try (var s = Files.walk(dir)) {
                         s.filter(Files::isRegularFile).forEach(unusedFiles::add);
@@ -299,7 +313,7 @@ public final class Versions {
             return stream
                     .filter(Files::isRegularFile)
                     .filter(path -> {
-                        String relative = root.relativize(path).toString();
+                        String relative = root.relativize(path).toString().replace("\\", "/");
                         return !activePaths.contains(relative);
                     })
                     .toList();
