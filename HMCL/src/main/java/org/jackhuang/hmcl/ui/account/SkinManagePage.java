@@ -28,7 +28,6 @@ import javafx.beans.property.ReadOnlyObjectWrapper;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
-import javafx.geometry.VPos;
 import javafx.scene.canvas.Canvas;
 import javafx.scene.control.Label;
 import javafx.scene.control.ScrollPane;
@@ -39,6 +38,7 @@ import javafx.scene.input.TransferMode;
 import javafx.scene.layout.*;
 import javafx.stage.FileChooser;
 import org.jackhuang.hmcl.auth.Account;
+import org.jackhuang.hmcl.auth.AuthenticationException;
 import org.jackhuang.hmcl.auth.authlibinjector.AuthlibInjectorAccount;
 import org.jackhuang.hmcl.auth.authlibinjector.AuthlibInjectorServer;
 import org.jackhuang.hmcl.auth.offline.OfflineAccount;
@@ -518,7 +518,7 @@ public class SkinManagePage extends DecoratorAnimatedPage implements DecoratorPa
             }).whenComplete(Schedulers.javafx(), e -> {
                 spinnerPane.hideSpinner();
                 if (e != null) {
-                    Controllers.dialog(Accounts.localizeErrorMessage(e), i18n("account.skin.upload.failed"), MessageDialogPane.MessageType.ERROR);
+                    Controllers.dialog(localizeSkinUploadError(e), i18n("account.skin.upload.failed"), MessageDialogPane.MessageType.ERROR);
                 } else {
                     Controllers.showToast(i18n("account.skin.upload.success"));
                     // Refresh skin preview
@@ -530,6 +530,51 @@ public class SkinManagePage extends DecoratorAnimatedPage implements DecoratorPa
                     });
                 }
             }).start();
+        }
+
+        private static String localizeSkinUploadError(Exception e) {
+            if (e instanceof InvalidSkinException) {
+                return i18n("account.skin.invalid_skin");
+            }
+
+            Throwable cause = e;
+            // Unwrap AuthenticationException to find the root cause
+            if (e instanceof AuthenticationException && e.getCause() != null) {
+                cause = e.getCause();
+            }
+
+            if (cause instanceof java.net.ConnectException || cause instanceof java.net.UnknownHostException) {
+                return i18n("account.skin.upload.failed.network");
+            }
+            if (cause instanceof java.net.SocketTimeoutException) {
+                return i18n("account.skin.upload.failed.timeout");
+            }
+            if (cause instanceof org.jackhuang.hmcl.util.io.ResponseCodeException) {
+                int code = ((org.jackhuang.hmcl.util.io.ResponseCodeException) cause).getResponseCode();
+                if (code == 401 || code == 403) {
+                    return i18n("account.skin.upload.failed.auth_expired");
+                }
+                return i18n("account.skin.upload.failed.server_error", code);
+            }
+
+            // AuthenticationException with raw message from API
+            if (e instanceof AuthenticationException) {
+                String msg = e.getMessage();
+                if (msg != null && msg.contains("response code:")) {
+                    // Extract response code from "Failed to upload skin, response code: 403, response: ..."
+                    try {
+                        String codeStr = msg.replaceAll(".*response code:\\s*(\\d+).*", "$1");
+                        int code = Integer.parseInt(codeStr);
+                        if (code == 401 || code == 403) {
+                            return i18n("account.skin.upload.failed.auth_expired");
+                        }
+                        return i18n("account.skin.upload.failed.server_error", code);
+                    } catch (NumberFormatException ignored) {
+                    }
+                }
+            }
+
+            return Accounts.localizeErrorMessage(e);
         }
     }
 }
