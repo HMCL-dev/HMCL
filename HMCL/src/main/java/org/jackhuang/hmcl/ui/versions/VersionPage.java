@@ -344,8 +344,14 @@ public class VersionPage extends DecoratorAnimatedPage implements DecoratorPage 
                 jijListItem.setManaged(false);
                 sideBar.add(jijListItem);
 
+                final Timeline[] currentAnimation = {null};
                 FXUtils.onChange(isExpanded, expanded -> {
                     if (AnimationUtils.isAnimationEnabled()) {
+                        // Stop any in-progress animation to prevent race conditions
+                        if (currentAnimation[0] != null) {
+                            currentAnimation[0].stop();
+                            currentAnimation[0] = null;
+                        }
                         if (expanded) {
                             jijListItem.setManaged(true);
                         }
@@ -359,8 +365,14 @@ public class VersionPage extends DecoratorAnimatedPage implements DecoratorPage 
                                             new KeyValue(jijClip.heightProperty(), h, interpolator))
                             );
                             if (!expanded) {
-                                timeline.setOnFinished(e -> jijListItem.setManaged(false));
+                                timeline.setOnFinished(e -> {
+                                    jijListItem.setManaged(false);
+                                    currentAnimation[0] = null;
+                                });
+                            } else {
+                                timeline.setOnFinished(e -> currentAnimation[0] = null);
                             }
+                            currentAnimation[0] = timeline;
                             timeline.play();
                         });
                     } else {
