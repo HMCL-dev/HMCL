@@ -198,7 +198,7 @@ public class RootPage extends DecoratorAnimatedPage implements DecoratorPage {
             taskManagerItem.setOnAction(e -> {
                 Controllers.navigate(new TaskCenterPage());
             });
-
+            FXUtils.installFastTooltip(taskManagerItem, i18n("task.manage.hint"));
 
             // fifth item in left sidebar
             AdvancedListItem launcherSettingsItem = new AdvancedListItem();

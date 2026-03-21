@@ -33,6 +33,7 @@ import org.jackhuang.hmcl.util.TaskCancellationAction;
 import java.util.Queue;
 import java.util.concurrent.CancellationException;
 
+import static org.jackhuang.hmcl.setting.ConfigHolder.config;
 import static org.jackhuang.hmcl.ui.FXUtils.runInFX;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
@@ -61,10 +62,16 @@ public abstract class TaskExecutorDialogWizardDisplayer extends AbstractWizardDi
         runInFX(() -> {
             boolean backgroundable = Boolean.TRUE.equals(settings.get("backgroundable"));
 
+            // Track whether this task has been moved to background
+            final boolean[] movedToBackground = {false};
+
             TaskExecutor executor = task.executor(new TaskListener() {
                 @Override
                 public void onStop(boolean success, TaskExecutor executor) {
                     runInFX(() -> {
+                        // If task was moved to background, TaskCenter handles notifications
+                        if (movedToBackground[0]) return;
+
                         if (success) {
                             if (settings.get("success_message") instanceof String successMessage)
                                 Controllers.dialog(successMessage, null, MessageType.SUCCESS, () -> onEnd());
@@ -91,6 +98,51 @@ public abstract class TaskExecutorDialogWizardDisplayer extends AbstractWizardDi
                 }
             });
 
+            if (backgroundable) {
+                Object detailObj = settings.get("task_detail");
+                String detail = detailObj != null ? detailObj.toString() : pane.getTitle();
+
+                TaskCenter.TaskKind kind = (TaskCenter.TaskKind) settings.get("task_kind");
+                String taskName = (String) settings.get("task_name");
+
+                if (config().isAutoBackgroundTask()) {
+                    // Auto-background: enqueue directly without showing dialog
+                    movedToBackground[0] = true;
+                    TaskCenter.getInstance().enqueue(executor, pane.getTitle(), detail, kind, taskName);
+                    Controllers.showToast(i18n("task.auto_background.enqueued", detail != null ? detail : pane.getTitle()));
+                    onEnd();
+                    return;
+                }
+
+                Runnable moveToBackground = () -> {
+                    movedToBackground[0] = true;
+                    TaskCenter.getInstance().enqueue(executor, pane.getTitle(), detail, kind, taskName);
+
+                    boolean returnToDownloadList = Boolean.TRUE.equals(settings.get("return_to_download_list"));
+                    onEnd();
+                    if (returnToDownloadList) {
+                        Controllers.getDownloadPage().showGameDownloads();
+                        Controllers.navigate(Controllers.getDownloadPage());
+                    }
+
+                    pane.fireEvent(new DialogCloseEvent());
+                };
+
+                // Manual mode: check if background tasks are running, wait if so
+                if (!TaskCenter.getInstance().getEntries().isEmpty()) {
+                    pane.setWaitingForBackground(true);
+                    TaskCenter.getInstance().getEntries().addListener(
+                            (javafx.collections.ListChangeListener<TaskCenter.Entry>) change -> {
+                                if (TaskCenter.getInstance().getEntries().isEmpty()) {
+                                    pane.setWaitingForBackground(false);
+                                    executor.start();
+                                    pane.refreshTaskList();
+                                }
+                            });
+                }
+                pane.setBackgroundAction(moveToBackground);
+            }
+
             pane.setExecutor(executor);
 
             pane.addEventHandler(DialogCloseEvent.CLOSE, event -> {
@@ -102,31 +154,12 @@ public abstract class TaskExecutorDialogWizardDisplayer extends AbstractWizardDi
                 }
             });
 
-            if (backgroundable) {
-                Object detailObj = settings.get("task_detail");
-                String detail = detailObj != null ? detailObj.toString() : pane.getTitle();
-
-                TaskCenter.TaskKind kind = (TaskCenter.TaskKind) settings.get("task_kind");
-                String taskName = (String) settings.get("task_name");
-
-                pane.setBackgroundAction(() -> {
-                    TaskCenter.getInstance().enqueue(executor, pane.getTitle(), detail, kind, taskName);
-
-                    boolean returnToDownloadList = Boolean.TRUE.equals(settings.get("return_to_download_list"));
-                    onEnd();
-                    if (returnToDownloadList) {
-                        Controllers.getDownloadPage().showGameDownloads();
-                        Controllers.navigate(Controllers.getDownloadPage());
-                    }
-
-                    pane.fireEvent(new DialogCloseEvent());
-                });
-            }
-
             Controllers.dialog(pane);
 
-            executor.start();
-            pane.refreshTaskList();
+            if (!backgroundable || TaskCenter.getInstance().getEntries().isEmpty()) {
+                executor.start();
+                pane.refreshTaskList();
+            }
         });
     }
 }

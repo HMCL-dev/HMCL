@@ -592,15 +592,7 @@ public final class Controllers {
 
     public static TaskExecutorDialogPane downloadTaskDialog(Task<?> task, String title, TaskCancellationAction onCancel, String detail) {
         TaskExecutor executor = task.executor();
-        TaskExecutorDialogPane pane = taskDialog(executor, title, onCancel);
-
-        pane.setBackgroundAction(() -> {
-            TaskCenter.getInstance().enqueue(executor, title, detail);
-            pane.fireEvent(new DialogCloseEvent());
-        });
-
-        executor.start();
-        return pane;
+        return downloadTaskDialog(executor, title, onCancel, detail);
     }
 
     public static TaskExecutorDialogPane downloadTaskDialog(TaskExecutor executor, String title, TaskCancellationAction onCancel, String detail) {
@@ -642,6 +634,12 @@ public final class Controllers {
         } else {
             FXUtils.openLink(href);
         }
+    }
+
+    public static boolean isDialogShowing() {
+        if (decorator == null) return false;
+        return decorator.getDecorator().getDrawerWrapper() != null
+                && decorator.getDecorator().getDrawerWrapper().getProperties().get(DialogUtils.PROPERTY_DIALOG_INSTANCE) != null;
     }
 
     public static boolean isStopped() {

@@ -289,6 +289,15 @@ public final class SettingsPage extends ScrollPane {
             }
 
             {
+                LineToggleButton autoBackgroundTaskPane = new LineToggleButton();
+                autoBackgroundTaskPane.setTitle(i18n("settings.launcher.auto_background_task"));
+                autoBackgroundTaskPane.setSubtitle(i18n("settings.launcher.auto_background_task.subtitle"));
+                autoBackgroundTaskPane.selectedProperty().bindBidirectional(config().autoBackgroundTaskProperty());
+
+                settingsPane.getContent().add(autoBackgroundTaskPane);
+            }
+
+            {
                 BorderPane debugPane = new BorderPane();
 
                 Label left = new Label(i18n("settings.launcher.debug"));

@@ -212,4 +212,30 @@ public class TaskExecutorDialogPane extends BorderPane {
     public void setCancelText(String text) {
         btnCancel.setText(text);
     }
+
+    private Label lblWaiting;
+
+    public void setWaitingForBackground(boolean waiting) {
+        if (waiting) {
+            if (lblWaiting == null) {
+                lblWaiting = new Label(i18n("task.waiting_for_background"));
+                lblWaiting.setStyle("-fx-text-fill: -fx-secondary-text-color; -fx-font-size: 13px;");
+                lblWaiting.setWrapText(true);
+            }
+            taskListPane.setVisible(false);
+            taskListPane.setManaged(false);
+            lblProgress.setVisible(false);
+            lblProgress.setManaged(false);
+            ((VBox) getCenter()).getChildren().add(lblWaiting);
+        } else {
+            taskListPane.setVisible(true);
+            taskListPane.setManaged(true);
+            lblProgress.setVisible(true);
+            lblProgress.setManaged(true);
+            lblProgress.setText("");
+            if (lblWaiting != null) {
+                ((VBox) getCenter()).getChildren().remove(lblWaiting);
+            }
+        }
+    }
 }

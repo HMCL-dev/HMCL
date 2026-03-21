@@ -124,11 +124,17 @@ public final class TaskCenterPage extends DecoratorAnimatedPage implements Decor
         HBox toolbar = new HBox();
         toolbar.setAlignment(Pos.CENTER_LEFT);
         toolbar.setPickOnBounds(false);
+        toolbar.setMinHeight(24);
+        toolbar.setMaxHeight(24);
+        toolbar.setPrefHeight(24);
         toolbar.setStyle("-fx-border-color: -monet-outline-variant; -fx-border-width: 0 0 1 0;");
-        toolbar.setPadding(new Insets(0, 0, 4, 0));
-        toolbar.getChildren().setAll(
-                createToolbarButton2(i18n("task.clear"), SVG.DELETE, onClear)
-        );
+
+        JFXButton btn = createToolbarButton2(i18n("task.clear"), SVG.DELETE, onClear);
+        btn.setMinHeight(24);
+        btn.setMaxHeight(24);
+        btn.setPrefHeight(24);
+
+        toolbar.getChildren().setAll(btn);
         return toolbar;
     }
 

@@ -689,6 +689,21 @@ public final class Config extends ObservableSetting {
         this.disableAutoGameOptions.set(disableAutoGameOptions);
     }
 
+    @SerializedName("autoBackgroundTask")
+    private final BooleanProperty autoBackgroundTask = new SimpleBooleanProperty(false);
+
+    public BooleanProperty autoBackgroundTaskProperty() {
+        return autoBackgroundTask;
+    }
+
+    public boolean isAutoBackgroundTask() {
+        return autoBackgroundTask.get();
+    }
+
+    public void setAutoBackgroundTask(boolean autoBackgroundTask) {
+        this.autoBackgroundTask.set(autoBackgroundTask);
+    }
+
     // Accounts
 
     @SerializedName("authlibInjectorServers")

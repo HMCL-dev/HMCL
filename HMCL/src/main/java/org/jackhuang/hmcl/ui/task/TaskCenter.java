@@ -129,6 +129,22 @@ public final class TaskCenter {
             return;
         }
 
+        // Deduplicate by kind+name (e.g. same game/modpack install)
+        if (kind != null && name != null && hasQueuedInstallName(kind, name)) {
+            return;
+        }
+
+        // Deduplicate by detail (or title if detail is null) to prevent repeated downloads
+        String deduplicationKey = detail != null ? detail : title;
+        if (deduplicationKey != null) {
+            for (Entry existing : entries) {
+                String existingKey = existing.getDetail() != null ? existing.getDetail() : existing.getTitle();
+                if (deduplicationKey.equals(existingKey)) {
+                    return;
+                }
+            }
+        }
+
         Entry entry = new Entry(executor, title, detail, kind, name);
         entryIndex.put(executor, entry);
         entries.add(entry);
@@ -180,13 +196,14 @@ public final class TaskCenter {
                 failedEntries.add(stoppedEntry);
             }
 
-            // Show toast notification for background tasks
+            // Show notification for background tasks
             String detail = stoppedEntry.getDetail() != null ? stoppedEntry.getDetail() : stoppedEntry.getTitle();
             if (success) {
                 Controllers.showToast(i18n("task.toast.success", detail));
             } else {
                 Controllers.showToast(i18n("task.toast.failed", detail));
-                if (!(stoppedEntry.getExecutor().getException() instanceof CancellationException)) {
+                if (!(stoppedEntry.getExecutor().getException() instanceof CancellationException)
+                        && !Controllers.isDialogShowing()) {
                     TaskCenterPage.showFailedTaskDialog(stoppedEntry);
                 }
             }
