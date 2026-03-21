@@ -34,12 +34,14 @@ import org.jackhuang.hmcl.ui.construct.*;
 import org.jackhuang.hmcl.ui.decorator.DecoratorAnimatedPage;
 import org.jackhuang.hmcl.ui.decorator.DecoratorPage;
 import org.jackhuang.hmcl.ui.animation.TransitionPane;
+import org.jackhuang.hmcl.ui.main.SettingsPage;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.TaskCancellationAction;
 
 import java.util.Locale;
 import java.util.concurrent.CancellationException;
 
+import static org.jackhuang.hmcl.ui.ToolbarListPageSkin.createToolbarButton2;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 public final class TaskCenterPage extends DecoratorAnimatedPage implements DecoratorPage {
@@ -53,8 +55,8 @@ public final class TaskCenterPage extends DecoratorAnimatedPage implements Decor
     private final TabHeader.Tab<ScrollPane> failedTab = new TabHeader.Tab<>("taskFailedTab");
 
     private final VBox runningContainer = new VBox(10);
-    private final VBox completedContainer = new VBox(2);
-    private final VBox failedContainer = new VBox(2);
+    private final VBox completedContainer = new VBox(8);
+    private final VBox failedContainer = new VBox(8);
 
     private final Label runningEmpty = new Label(i18n("task.empty.running"));
     private final Label completedEmpty = new Label(i18n("task.empty.completed"));
@@ -100,32 +102,49 @@ public final class TaskCenterPage extends DecoratorAnimatedPage implements Decor
 
     private static void styleEmptyLabel(Label label) {
         label.setStyle("-fx-text-fill: -fx-secondary-text-color; -fx-font-size: 13px;");
-        label.setPadding(new Insets(24));
+    }
+
+    private static StackPane createCenteredEmpty(Label label) {
+        StackPane pane = new StackPane(label);
+        pane.setAlignment(Pos.CENTER);
+        VBox.setVgrow(pane, Priority.ALWAYS);
+        return pane;
     }
 
     private ScrollPane createRunningPane() {
         ScrollPane scrollPane = new ScrollPane(runningContainer);
         scrollPane.setFitToWidth(true);
+        scrollPane.setFitToHeight(true);
         runningContainer.setPadding(new Insets(12));
         rebuildRunning();
         return scrollPane;
+    }
+
+    private static HBox createClearToolbar(Runnable onClear) {
+        HBox toolbar = new HBox();
+        toolbar.setAlignment(Pos.CENTER_LEFT);
+        toolbar.setPickOnBounds(false);
+        toolbar.setStyle("-fx-border-color: -monet-outline-variant; -fx-border-width: 0 0 1 0;");
+        toolbar.setPadding(new Insets(0, 0, 4, 0));
+        toolbar.getChildren().setAll(
+                createToolbarButton2(i18n("task.clear"), SVG.DELETE, onClear)
+        );
+        return toolbar;
     }
 
     private ScrollPane createCompletedPane() {
         VBox wrapper = new VBox(8);
         wrapper.setPadding(new Insets(12));
 
-        JFXButton clearButton = new JFXButton(i18n("task.clear"));
-        clearButton.getStyleClass().add("dialog-cancel");
-        clearButton.setOnAction(e -> TaskCenter.getInstance().getCompletedEntries().clear());
-
-        HBox toolbar = new HBox(clearButton);
-        toolbar.setAlignment(Pos.CENTER_RIGHT);
+        HBox toolbar = createClearToolbar(() ->
+                TaskCenter.getInstance().getCompletedEntries().clear());
 
         wrapper.getChildren().addAll(toolbar, completedContainer);
+        VBox.setVgrow(completedContainer, Priority.ALWAYS);
 
         ScrollPane scrollPane = new ScrollPane(wrapper);
         scrollPane.setFitToWidth(true);
+        scrollPane.setFitToHeight(true);
         rebuildCompleted();
         return scrollPane;
     }
@@ -134,17 +153,15 @@ public final class TaskCenterPage extends DecoratorAnimatedPage implements Decor
         VBox wrapper = new VBox(8);
         wrapper.setPadding(new Insets(12));
 
-        JFXButton clearButton = new JFXButton(i18n("task.clear"));
-        clearButton.getStyleClass().add("dialog-cancel");
-        clearButton.setOnAction(e -> TaskCenter.getInstance().getFailedEntries().clear());
-
-        HBox toolbar = new HBox(clearButton);
-        toolbar.setAlignment(Pos.CENTER_RIGHT);
+        HBox toolbar = createClearToolbar(() ->
+                TaskCenter.getInstance().getFailedEntries().clear());
 
         wrapper.getChildren().addAll(toolbar, failedContainer);
+        VBox.setVgrow(failedContainer, Priority.ALWAYS);
 
         ScrollPane scrollPane = new ScrollPane(wrapper);
         scrollPane.setFitToWidth(true);
+        scrollPane.setFitToHeight(true);
         rebuildFailed();
         return scrollPane;
     }
@@ -154,7 +171,7 @@ public final class TaskCenterPage extends DecoratorAnimatedPage implements Decor
     private void rebuildRunning() {
         runningContainer.getChildren().clear();
         if (TaskCenter.getInstance().getEntries().isEmpty()) {
-            runningContainer.getChildren().add(runningEmpty);
+            runningContainer.getChildren().add(createCenteredEmpty(runningEmpty));
             return;
         }
         for (TaskCenter.Entry entry : TaskCenter.getInstance().getEntries()) {
@@ -165,7 +182,7 @@ public final class TaskCenterPage extends DecoratorAnimatedPage implements Decor
     private void rebuildCompleted() {
         completedContainer.getChildren().clear();
         if (TaskCenter.getInstance().getCompletedEntries().isEmpty()) {
-            completedContainer.getChildren().add(completedEmpty);
+            completedContainer.getChildren().add(createCenteredEmpty(completedEmpty));
             return;
         }
         for (TaskCenter.Entry entry : TaskCenter.getInstance().getCompletedEntries()) {
@@ -176,7 +193,7 @@ public final class TaskCenterPage extends DecoratorAnimatedPage implements Decor
     private void rebuildFailed() {
         failedContainer.getChildren().clear();
         if (TaskCenter.getInstance().getFailedEntries().isEmpty()) {
-            failedContainer.getChildren().add(failedEmpty);
+            failedContainer.getChildren().add(createCenteredEmpty(failedEmpty));
             return;
         }
         for (TaskCenter.Entry entry : TaskCenter.getInstance().getFailedEntries()) {
@@ -188,8 +205,8 @@ public final class TaskCenterPage extends DecoratorAnimatedPage implements Decor
 
     private Node createRunningCard(TaskCenter.Entry entry) {
         VBox card = new VBox(6);
-        card.getStyleClass().add("card-non-transparent");
         card.setPadding(new Insets(10, 14, 10, 14));
+        card.setStyle("-fx-border-color: -monet-outline-variant; -fx-border-width: 0 0 1 0;");
 
         HBox header = new HBox(8);
         header.setAlignment(Pos.CENTER_LEFT);
@@ -198,15 +215,13 @@ public final class TaskCenterPage extends DecoratorAnimatedPage implements Decor
 
         String titleText = entry.getDetail() != null ? entry.getDetail() : entry.getTitle();
         Label titleLabel = new Label(titleText);
-        titleLabel.setStyle("-fx-font-size: 13px; -fx-font-weight: bold;");
+        titleLabel.getStyleClass().add("title-label");
         HBox.setHgrow(titleLabel, Priority.ALWAYS);
         titleLabel.setMaxWidth(Double.MAX_VALUE);
 
         boolean isRunning = TaskCenter.getInstance().getRunningEntry() == entry;
         Label statusLabel = new Label(isRunning ? i18n("task.status.running") : i18n("task.waiting"));
-        statusLabel.setStyle(isRunning
-                ? "-fx-text-fill: #2196F3; -fx-font-size: 11px;"
-                : "-fx-text-fill: -fx-secondary-text-color; -fx-font-size: 11px;");
+        statusLabel.getStyleClass().add("subtitle-label");
 
         JFXButton cancelButton = new JFXButton(i18n("button.cancel"));
         cancelButton.getStyleClass().add("dialog-cancel");
@@ -253,6 +268,7 @@ public final class TaskCenterPage extends DecoratorAnimatedPage implements Decor
         HBox row = new HBox(8);
         row.setPadding(new Insets(8, 12, 8, 12));
         row.setAlignment(Pos.CENTER_LEFT);
+        row.getStyleClass().add("md-list-cell");
 
         Node icon = success
                 ? SVG.CHECK.createIcon(14)
@@ -262,7 +278,7 @@ public final class TaskCenterPage extends DecoratorAnimatedPage implements Decor
 
         String text = entry.getDetail() != null ? entry.getDetail() : entry.getTitle();
         Label label = new Label(text);
-        label.setStyle("-fx-font-size: 12px;");
+        label.getStyleClass().add("subtitle-label");
         HBox.setHgrow(label, Priority.ALWAYS);
         label.setMaxWidth(Double.MAX_VALUE);
 
@@ -270,19 +286,27 @@ public final class TaskCenterPage extends DecoratorAnimatedPage implements Decor
 
         if (!success) {
             row.setStyle("-fx-cursor: hand;");
-            row.setOnMouseClicked(e -> {
-                Throwable ex = entry.getExecutor().getException();
-                if (ex instanceof CancellationException) {
-                    Controllers.dialog(i18n("task.cancelled"), entry.getTitle(), MessageDialogPane.MessageType.ERROR);
-                } else if (ex != null) {
-                    Controllers.dialog(StringUtils.getStackTrace(ex), entry.getTitle(), MessageDialogPane.MessageType.ERROR);
-                } else {
-                    Controllers.dialog(i18n("task.failed.no_exception"), entry.getTitle(), MessageDialogPane.MessageType.ERROR);
-                }
-            });
+            row.setOnMouseClicked(e -> showFailedTaskDialog(entry));
         }
 
         return row;
+    }
+
+    // ── failed task dialog ─────────────────────────────────────────────
+
+    static void showFailedTaskDialog(TaskCenter.Entry entry) {
+        Throwable ex = entry.getExecutor().getException();
+        if (ex instanceof CancellationException) {
+            Controllers.dialog(i18n("task.cancelled"), entry.getTitle(), MessageDialogPane.MessageType.ERROR);
+        } else {
+            String message = ex != null
+                    ? StringUtils.getStackTrace(ex)
+                    : i18n("task.failed.no_exception");
+            Controllers.dialog(new MessageDialogPane.Builder(message, entry.getTitle(), MessageDialogPane.MessageType.ERROR)
+                    .addAction(i18n("settings.launcher.launcher_log.export"), SettingsPage::exportLogs)
+                    .ok(null)
+                    .build());
+        }
     }
 
     // ── kind tag ─────────────────────────────────────────────────────
@@ -296,8 +320,7 @@ public final class TaskCenterPage extends DecoratorAnimatedPage implements Decor
             case OTHER -> i18n("task.kind.other");
         };
         Label tag = new Label(text);
-        tag.setStyle("-fx-background-color: -fx-base-color; -fx-background-radius: 3; "
-                + "-fx-padding: 1 6 1 6; -fx-font-size: 10px; -fx-text-fill: white;");
+        tag.getStyleClass().add("tag");
         return tag;
     }
 

@@ -302,7 +302,7 @@ public final class SettingsPage extends ScrollPane {
                     openLogFolderButton.setDisable(true);
 
                 JFXButton logButton = FXUtils.newBorderButton(i18n("settings.launcher.launcher_log.export"));
-                logButton.setOnAction(e -> onExportLogs());
+                logButton.setOnAction(e -> exportLogs());
 
                 HBox buttonBox = new HBox();
                 buttonBox.setSpacing(10);
@@ -329,7 +329,7 @@ public final class SettingsPage extends ScrollPane {
         UpdateHandler.updateFrom(target);
     }
 
-    private static String getEntryName(Set<String> entryNames, String name) {
+    public static String getEntryName(Set<String> entryNames, String name) {
         if (entryNames.add(name)) {
             return name;
         }
@@ -347,7 +347,7 @@ public final class SettingsPage extends ScrollPane {
     /// If no exception occurs, this method returns `true`;
     /// If an exception occurs while reading from `input`, this method returns `false`;
     /// If an exception occurs while writing to `output`, this method will throw it as is.
-    private static boolean exportLogFile(ZipOutputStream output,
+    public static boolean exportLogFile(ZipOutputStream output,
                                          Path file, // For logging
                                          String entryName,
                                          InputStream input,
@@ -378,7 +378,7 @@ public final class SettingsPage extends ScrollPane {
         }
     }
 
-    private void onExportLogs() {
+    public static void exportLogs() {
         thread(() -> {
             String nameBase = "hmcl-exported-logs-" + LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH-mm-ss"));
             List<Path> recentLogFiles = LOG.findRecentLogFiles(5);

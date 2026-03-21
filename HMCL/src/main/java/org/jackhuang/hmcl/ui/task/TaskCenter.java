@@ -21,6 +21,7 @@ import java.util.ArrayDeque;
 import java.util.Deque;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.CancellationException;
 import javafx.application.Platform;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
@@ -185,6 +186,9 @@ public final class TaskCenter {
                 Controllers.showToast(i18n("task.toast.success", detail));
             } else {
                 Controllers.showToast(i18n("task.toast.failed", detail));
+                if (!(stoppedEntry.getExecutor().getException() instanceof CancellationException)) {
+                    TaskCenterPage.showFailedTaskDialog(stoppedEntry);
+                }
             }
         }
 
