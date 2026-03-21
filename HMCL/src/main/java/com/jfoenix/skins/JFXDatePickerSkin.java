@@ -142,6 +142,10 @@ public class JFXDatePickerSkin extends DatePickerSkin {
 
     }
 
+    JFXDialog getDialog() {
+        return this.dialog;
+    }
+
     public Node getDisplayNode() {
         if (this.displayNode == null) {
             this.displayNode = this.getEditableInputNode2();
