@@ -26,7 +26,10 @@ import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import org.jackhuang.hmcl.task.TaskExecutor;
 import org.jackhuang.hmcl.task.TaskListener;
+import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
+
+import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 public final class TaskCenter {
     private static final TaskCenter INSTANCE = new TaskCenter();
@@ -38,6 +41,8 @@ public final class TaskCenter {
     public enum TaskKind {
         GAME_INSTALL,
         MODPACK_INSTALL,
+        JAVA_DOWNLOAD,
+        MOD_UPDATE,
         OTHER
     }
 
@@ -102,28 +107,21 @@ public final class TaskCenter {
         return failedEntries;
     }
 
-    public synchronized void enqueue(TaskExecutor executor, String title, String detail) {
-        if (!Platform.isFxApplicationThread()) {
-            Platform.runLater(() -> enqueue(executor, title, detail));
-            return;
-        }
-
-        if (entryIndex.containsKey(executor)) {
-            return;
-        }
-
-        Entry entry = new Entry(executor, title, detail,TaskKind.OTHER, null);
-        entryIndex.put(executor, entry);
-        entries.add(entry);
-        queue.add(entry);
-        tryStartNext();
+    private void assertFxThread() {
+        assert Platform.isFxApplicationThread() : "TaskCenter must be accessed from FX Application Thread";
     }
 
-    public synchronized void enqueue(TaskExecutor executor, String title, String detail, TaskKind kind, String name) {
+    public void enqueue(TaskExecutor executor, String title, String detail) {
+        enqueue(executor, title, detail, TaskKind.OTHER, null);
+    }
+
+    public void enqueue(TaskExecutor executor, String title, String detail, TaskKind kind, String name) {
         if (!Platform.isFxApplicationThread()) {
             Platform.runLater(() -> enqueue(executor, title, detail, kind, name));
             return;
         }
+
+        assertFxThread();
 
         if (entryIndex.containsKey(executor)) {
             return;
@@ -136,54 +134,76 @@ public final class TaskCenter {
         tryStartNext();
     }
 
-    private synchronized void tryStartNext() {
-        if (running != null) return;
-        Entry next = queue.poll();
-        if (next == null) return;
+    private void tryStartNext() {
+        assertFxThread();
 
-        TaskExecutor executor = next.getExecutor();
-        if (Boolean.TRUE.equals(started.get(executor))) {
-            tryStartNext();
+        while (running == null) {
+            Entry next = queue.poll();
+            if (next == null) return;
+
+            TaskExecutor executor = next.getExecutor();
+            if (Boolean.TRUE.equals(started.get(executor))) {
+                continue;
+            }
+
+            started.put(executor, true);
+            running = next;
+
+            executor.addTaskListener(new TaskListener() {
+                @Override
+                public void onStop(boolean success, TaskExecutor executor) {
+                    Platform.runLater(() -> onTaskStopped(executor, success));
+                }
+            });
+
+            executor.start();
             return;
         }
-
-        started.put(executor, true);
-        running = next;
-
-        executor.addTaskListener(new TaskListener() {
-            @Override
-            public void onStop(boolean success, TaskExecutor executor) {
-                Platform.runLater(() -> {
-                    if (running != null) {
-                        entries.remove(running);
-                        entryIndex.remove(executor);
-                        started.remove(executor);
-
-                        if (success) {
-                            completedEntries.add(running);
-                        } else {
-                            failedEntries.add(running);
-                        }
-                    }
-
-                    running = null;
-                    tryStartNext();
-                });
-            }
-        });
-
-        executor.start();
     }
 
-    public synchronized boolean contains(TaskExecutor executor) {
+    private void onTaskStopped(TaskExecutor executor, boolean success) {
+        assertFxThread();
+
+        Entry stoppedEntry = entryIndex.remove(executor);
+        started.remove(executor);
+
+        if (stoppedEntry != null) {
+            entries.remove(stoppedEntry);
+            if (success) {
+                completedEntries.add(stoppedEntry);
+            } else {
+                failedEntries.add(stoppedEntry);
+            }
+
+            // Show toast notification for background tasks
+            String detail = stoppedEntry.getDetail() != null ? stoppedEntry.getDetail() : stoppedEntry.getTitle();
+            if (success) {
+                Controllers.showToast(i18n("task.toast.success", detail));
+            } else {
+                Controllers.showToast(i18n("task.toast.failed", detail));
+            }
+        }
+
+        if (running != null && running.getExecutor() == executor) {
+            running = null;
+        }
+
+        tryStartNext();
+    }
+
+    public boolean contains(TaskExecutor executor) {
+        assertFxThread();
         return entryIndex.containsKey(executor);
     }
 
-    public synchronized boolean isStarted(TaskExecutor executor) {
+    public boolean isStarted(TaskExecutor executor) {
+        assertFxThread();
         return Boolean.TRUE.equals(started.get(executor));
     }
 
-    public synchronized boolean hasQueuedInstallName(TaskKind kind, String name) {
+    public boolean hasQueuedInstallName(TaskKind kind, String name) {
+        assertFxThread();
+
         if (name == null || kind == null) {
             return false;
         }
@@ -200,20 +220,30 @@ public final class TaskCenter {
         return false;
     }
 
-    public synchronized boolean cancelQueued(TaskExecutor executor) {
+    public boolean cancelQueued(TaskExecutor executor) {
+        assertFxThread();
+
         Entry entry = entryIndex.get(executor);
         if (entry == null) {
             return false;
         }
 
         if (Boolean.TRUE.equals(started.get(executor))) {
+            // Task is already running — cancel it properly
+            executor.cancel();
         }
 
         queue.remove(entry);
         entries.remove(entry);
         entryIndex.remove(executor);
         started.remove(executor);
+
+        if (running != null && running.getExecutor() == executor) {
+            running = null;
+        }
+
         failedEntries.add(entry);
+        tryStartNext();
         return true;
     }
 

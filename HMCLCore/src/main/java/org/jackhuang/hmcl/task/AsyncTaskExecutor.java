@@ -33,7 +33,7 @@ import static org.jackhuang.hmcl.util.logging.Logger.LOG;
  */
 public final class AsyncTaskExecutor extends TaskExecutor {
 
-    private CompletableFuture<Boolean> future;
+    private volatile CompletableFuture<Boolean> future;
 
     public AsyncTaskExecutor(Task<?> task) {
         super(task);

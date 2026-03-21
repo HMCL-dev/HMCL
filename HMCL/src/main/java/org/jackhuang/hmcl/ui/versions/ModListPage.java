@@ -237,7 +237,7 @@ public final class ModListPage extends ListPageBase<ModListPageSkin.ModInfoObjec
 
     public void checkUpdates(Collection<LocalModFile> mods) {
         Objects.requireNonNull(mods);
-        Runnable action = () -> Controllers.taskDialog(Task
+        Runnable action = () -> Controllers.downloadTaskDialog(Task
                         .composeAsync(() -> {
                             Optional<String> gameVersion = profile.getRepository().getGameVersion(instanceId);
                             if (gameVersion.isPresent()) {
@@ -256,7 +256,8 @@ public final class ModListPage extends ListPageBase<ModListPageSkin.ModInfoObjec
                             }
                         })
                         .withStagesHints("update.checking"),
-                i18n("mods.check_updates"), TaskCancellationAction.NORMAL);
+                i18n("mods.check_updates"), TaskCancellationAction.NORMAL,
+                i18n("task.detail.mod_check_updates"));
 
         if (profile.getRepository().isModpack(instanceId)) {
             Controllers.confirm(

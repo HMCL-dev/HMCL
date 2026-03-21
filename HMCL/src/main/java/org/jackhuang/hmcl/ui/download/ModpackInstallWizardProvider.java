@@ -149,6 +149,7 @@ public final class ModpackInstallWizardProvider implements WizardProvider {
         if (taskName != null) {
             settings.put("task_detail", "安装整合包-[" + taskName + "]");//TODO: i18n
         }
+        settings.put("backgroundable", true);
         settings.put("task_kind", TaskCenter.TaskKind.MODPACK_INSTALL);
         settings.put("task_name", taskName);
 

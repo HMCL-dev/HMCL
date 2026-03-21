@@ -595,23 +595,23 @@ public final class Controllers {
         TaskExecutorDialogPane pane = taskDialog(executor, title, onCancel);
 
         pane.setBackgroundAction(() -> {
-            pane.fireEvent(new DialogCloseEvent());
             TaskCenter.getInstance().enqueue(executor, title, detail);
+            pane.fireEvent(new DialogCloseEvent());
         });
 
-        TaskCenter.getInstance().enqueue(executor, title, detail);
+        executor.start();
         return pane;
     }
 
-    public static TaskExecutorDialogPane downloadTaskDialog(TaskExecutor executor, String title, TaskCancellationAction onCancel,String detail) {
+    public static TaskExecutorDialogPane downloadTaskDialog(TaskExecutor executor, String title, TaskCancellationAction onCancel, String detail) {
         TaskExecutorDialogPane pane = taskDialog(executor, title, onCancel);
 
         pane.setBackgroundAction(() -> {
+            TaskCenter.getInstance().enqueue(executor, title, detail);
             pane.fireEvent(new DialogCloseEvent());
-            TaskCenter.getInstance().enqueue(executor, title,detail);
         });
 
-        TaskCenter.getInstance().enqueue(executor, title, detail);
+        executor.start();
         return pane;
     }
 

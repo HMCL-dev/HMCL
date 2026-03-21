@@ -157,7 +157,7 @@ public class DownloadPage extends DecoratorAnimatedPage implements DecoratorPage
         Controllers.prompt(i18n("archive.file.name"), (result, handler) -> {
             Path dest = runDirectory.resolve(subdirectoryName).resolve(result);
 
-            Controllers.taskDialog(Task.composeAsync(() -> {
+            Controllers.downloadTaskDialog(Task.composeAsync(() -> {
                 var task = new FileDownloadTask(downloadProvider.injectURLWithCandidates(file.getFile().getUrl()), dest);
                 task.setName(file.getName());
                 return task;

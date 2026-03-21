@@ -165,7 +165,7 @@ public class TaskExecutorDialogPane extends BorderPane {
 
     private void applyQueuedStateIfNeeded() {
         if (isQueuedNotStarted()) {
-            setCancelText("关闭"); // TODO: i18n
+            setCancelText(i18n("button.close"));
         } else {
             setCancelText(i18n("button.cancel"));
         }

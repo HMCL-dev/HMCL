@@ -28,6 +28,8 @@ import org.jackhuang.hmcl.util.i18n.I18n;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
+import org.jackhuang.hmcl.util.SettingsMap;
+
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 public class WorldExportPage extends WizardSinglePage {
@@ -71,6 +73,12 @@ public class WorldExportPage extends WizardSinglePage {
     @Override
     public String getTitle() {
         return i18n("world.export.wizard", world.getFileName());
+    }
+
+    @Override
+    protected void onFinishSettings(SettingsMap settings) {
+        settings.put("backgroundable", true);
+        settings.put("task_detail", i18n("task.detail.world_export", worldName.get()));
     }
 
     @Override

@@ -144,7 +144,7 @@ public final class ModpackSelectionPage extends VBox implements WizardPage {
                     // otherwise we still consider the file as modpack zip file
                     // since casually the url may not ends with ".zip"
                     Path modpack = Files.createTempFile("modpack", ".zip");
-                    Controllers.taskDialog(
+                    Controllers.downloadTaskDialog(
                             new FileDownloadTask(url, modpack)
                                     .whenComplete(Schedulers.javafx(), e -> {
                                         if (e == null) {

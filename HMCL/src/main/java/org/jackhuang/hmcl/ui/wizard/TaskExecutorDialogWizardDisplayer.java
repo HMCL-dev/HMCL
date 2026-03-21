@@ -111,7 +111,6 @@ public abstract class TaskExecutorDialogWizardDisplayer extends AbstractWizardDi
 
                 pane.setBackgroundAction(() -> {
                     TaskCenter.getInstance().enqueue(executor, pane.getTitle(), detail, kind, taskName);
-                    pane.refreshTaskList();
 
                     boolean returnToDownloadList = Boolean.TRUE.equals(settings.get("return_to_download_list"));
                     onEnd();
@@ -122,17 +121,12 @@ public abstract class TaskExecutorDialogWizardDisplayer extends AbstractWizardDi
 
                     pane.fireEvent(new DialogCloseEvent());
                 });
-
-                TaskCenter.getInstance().enqueue(executor, pane.getTitle(), detail, kind, taskName);
-                pane.refreshTaskList();
             }
 
             Controllers.dialog(pane);
 
-            if (!backgroundable) {
-                executor.start();
-                pane.refreshTaskList();
-            }
+            executor.start();
+            pane.refreshTaskList();
         });
     }
 }

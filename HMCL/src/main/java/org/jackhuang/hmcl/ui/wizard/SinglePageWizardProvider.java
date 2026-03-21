@@ -37,6 +37,7 @@ public class SinglePageWizardProvider implements WizardProvider {
 
     @Override
     public Object finish(SettingsMap settings) {
+        page.onFinishSettings(settings);
         return page.finish();
     }
 

@@ -200,7 +200,8 @@ public final class JavaDownloadDialog extends StackPane {
                         }
                     });
 
-            Controllers.taskDialog(task, i18n("download.java.process"), TaskCancellationAction.NORMAL);
+            Controllers.downloadTaskDialog(task, i18n("download.java.process"), TaskCancellationAction.NORMAL,
+                    i18n("task.detail.java_download"));
         }
     }
 
@@ -363,7 +364,7 @@ public final class JavaDownloadDialog extends StackPane {
             if (version == null)
                 return;
 
-            Controllers.taskDialog(new GetTask(downloadProvider.injectURLWithCandidates(version.getLinks().getPkgInfoUri()))
+            Controllers.downloadTaskDialog(new GetTask(downloadProvider.injectURLWithCandidates(version.getLinks().getPkgInfoUri()))
                     .setExecutor(Schedulers.io())
                     .thenComposeAsync(json -> {
                         DiscoResult<DiscoRemoteFileInfo> result = JsonUtils.fromNonNullJson(json, DiscoResult.typeOf(DiscoRemoteFileInfo.class));
@@ -425,7 +426,8 @@ public final class JavaDownloadDialog extends StackPane {
                                 Controllers.dialog(DownloadProviders.localizeErrorMessage(resolvedException), i18n("install.failed"));
                             }
                         }
-                    })), i18n("java.download"), TaskCancellationAction.NORMAL);
+                    })), i18n("java.download"), TaskCancellationAction.NORMAL,
+                    i18n("task.detail.java_download"));
 
         }
 

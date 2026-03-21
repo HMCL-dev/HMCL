@@ -46,6 +46,8 @@ import org.jackhuang.hmcl.ui.decorator.DecoratorPage;
 import org.jackhuang.hmcl.ui.download.ModpackInstallWizardProvider;
 import org.jackhuang.hmcl.ui.nbt.NBTEditorPage;
 import org.jackhuang.hmcl.ui.nbt.NBTFileType;
+import org.jackhuang.hmcl.task.TaskExecutor;
+import org.jackhuang.hmcl.ui.task.TaskCenter;
 import org.jackhuang.hmcl.ui.task.TaskCenterPage;
 import org.jackhuang.hmcl.ui.versions.GameAdvancedListItem;
 import org.jackhuang.hmcl.ui.versions.GameListPopupMenu;
@@ -289,12 +291,17 @@ public class RootPage extends DecoratorAnimatedPage implements DecoratorPage {
                     if (modpackFile != null) {
                         Task.supplyAsync(() -> CompressingUtils.findSuitableEncoding(modpackFile))
                                 .thenApplyAsync(encoding -> ModpackHelper.readModpackManifest(modpackFile, encoding))
-                                .thenApplyAsync(modpack -> ModpackHelper
-                                        .getInstallTask(repository.getProfile(), modpackFile, modpack.getName(), modpack, null)
-                                        .executor())
-                                .thenAcceptAsync(Schedulers.javafx(), executor -> {
-                                    Controllers.taskDialog(executor, i18n("modpack.installing"), TaskCancellationAction.NO_CANCEL);
-                                    executor.start();
+                                .thenAcceptAsync(Schedulers.javafx(), modpack -> {
+                                    String modpackName = modpack.getName();
+                                    if (TaskCenter.getInstance().hasQueuedInstallName(TaskCenter.TaskKind.MODPACK_INSTALL, modpackName)) {
+                                        Controllers.dialog(i18n("install.new_game.already_exists"), i18n("message.warning"), MessageDialogPane.MessageType.WARNING);
+                                        return;
+                                    }
+                                    TaskExecutor executor = ModpackHelper
+                                            .getInstallTask(repository.getProfile(), modpackFile, modpackName, modpack, null)
+                                            .executor();
+                                    Controllers.downloadTaskDialog(executor, i18n("modpack.installing"), TaskCancellationAction.NO_CANCEL,
+                                            i18n("task.detail.modpack_install"));
                                 }).start();
                     }
                 }

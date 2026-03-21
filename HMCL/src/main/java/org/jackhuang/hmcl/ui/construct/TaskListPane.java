@@ -531,7 +531,7 @@ public final class TaskListPane extends StackPane {
         Platform.runLater(() -> {
             stageNodes.clear();
             listView.getItems().clear();
-            addStages(executor.getStages());
+            addStagesHints(executor.getHints());
             updateProgressNodePadding();
         });
     }

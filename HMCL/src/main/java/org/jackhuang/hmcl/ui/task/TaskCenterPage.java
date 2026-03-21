@@ -26,7 +26,6 @@ import javafx.geometry.Pos;
 import javafx.scene.Node;
 import javafx.scene.control.Label;
 import javafx.scene.control.ScrollPane;
-import javafx.scene.control.Separator;
 import javafx.scene.layout.*;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.FXUtils;
@@ -48,32 +47,32 @@ public final class TaskCenterPage extends DecoratorAnimatedPage implements Decor
             new ReadOnlyObjectWrapper<>(State.fromTitle(i18n("task.manage")));
 
     private final TransitionPane transitionPane = new TransitionPane();
-    private final TabHeader tabHeader;
 
     private final TabHeader.Tab<ScrollPane> runningTab = new TabHeader.Tab<>("taskRunningTab");
     private final TabHeader.Tab<ScrollPane> completedTab = new TabHeader.Tab<>("taskCompletedTab");
     private final TabHeader.Tab<ScrollPane> failedTab = new TabHeader.Tab<>("taskFailedTab");
-    private final TabHeader.Tab<ScrollPane> settingsTab = new TabHeader.Tab<>("taskSettingsTab");
 
-    private final VBox runningContainer = new VBox(8);
-    private final VBox completedContainer = new VBox(8);
-    private final VBox failedContainer = new VBox(8);
+    private final VBox runningContainer = new VBox(10);
+    private final VBox completedContainer = new VBox(2);
+    private final VBox failedContainer = new VBox(2);
+
+    private final Label runningEmpty = new Label(i18n("task.empty.running"));
+    private final Label completedEmpty = new Label(i18n("task.empty.completed"));
+    private final Label failedEmpty = new Label(i18n("task.empty.failed"));
 
     public TaskCenterPage() {
         runningTab.setNodeSupplier(this::createRunningPane);
         completedTab.setNodeSupplier(this::createCompletedPane);
         failedTab.setNodeSupplier(this::createFailedPane);
-        settingsTab.setNodeSupplier(() -> createPlaceholderPane(i18n("task.settings")));
 
-        tabHeader = new TabHeader(transitionPane, runningTab, completedTab, failedTab, settingsTab);
+        TabHeader tabHeader = new TabHeader(transitionPane, runningTab, completedTab, failedTab);
         tabHeader.select(runningTab);
 
         AdvancedListBox sideBar = new AdvancedListBox()
                 .startCategory(i18n("task.manage").toUpperCase(Locale.ROOT))
                 .addNavigationDrawerTab(tabHeader, runningTab, i18n("task.running"), SVG.ARROW_FORWARD)
                 .addNavigationDrawerTab(tabHeader, completedTab, i18n("task.completed"), SVG.CHECK)
-                .addNavigationDrawerTab(tabHeader, failedTab, i18n("task.failed"), SVG.CLOSE)
-                .addNavigationDrawerTab(tabHeader, settingsTab, i18n("task.settings"), SVG.SETTINGS);
+                .addNavigationDrawerTab(tabHeader, failedTab, i18n("task.failed"), SVG.CLOSE);
 
         FXUtils.setLimitWidth(sideBar, 200);
         setLeft(sideBar);
@@ -86,144 +85,220 @@ public final class TaskCenterPage extends DecoratorAnimatedPage implements Decor
         StackPane centerPane = new StackPane(contentWrapper);
         centerPane.setPadding(new Insets(12));
         setCenter(centerPane);
+
+        styleEmptyLabel(runningEmpty);
+        styleEmptyLabel(completedEmpty);
+        styleEmptyLabel(failedEmpty);
+
+        TaskCenter.getInstance().getEntries().addListener(
+                (ListChangeListener<TaskCenter.Entry>) change -> rebuildRunning());
+        TaskCenter.getInstance().getCompletedEntries().addListener(
+                (ListChangeListener<TaskCenter.Entry>) change -> rebuildCompleted());
+        TaskCenter.getInstance().getFailedEntries().addListener(
+                (ListChangeListener<TaskCenter.Entry>) change -> rebuildFailed());
+    }
+
+    private static void styleEmptyLabel(Label label) {
+        label.setStyle("-fx-text-fill: -fx-secondary-text-color; -fx-font-size: 13px;");
+        label.setPadding(new Insets(24));
     }
 
     private ScrollPane createRunningPane() {
         ScrollPane scrollPane = new ScrollPane(runningContainer);
         scrollPane.setFitToWidth(true);
         runningContainer.setPadding(new Insets(12));
-
-        TaskCenter.getInstance().getEntries().addListener((ListChangeListener<? super TaskCenter.Entry>) change -> rebuildRunning());
         rebuildRunning();
-
         return scrollPane;
     }
 
     private ScrollPane createCompletedPane() {
-        ScrollPane scrollPane = new ScrollPane(completedContainer);
+        VBox wrapper = new VBox(8);
+        wrapper.setPadding(new Insets(12));
+
+        JFXButton clearButton = new JFXButton(i18n("task.clear"));
+        clearButton.getStyleClass().add("dialog-cancel");
+        clearButton.setOnAction(e -> TaskCenter.getInstance().getCompletedEntries().clear());
+
+        HBox toolbar = new HBox(clearButton);
+        toolbar.setAlignment(Pos.CENTER_RIGHT);
+
+        wrapper.getChildren().addAll(toolbar, completedContainer);
+
+        ScrollPane scrollPane = new ScrollPane(wrapper);
         scrollPane.setFitToWidth(true);
-        completedContainer.setPadding(new Insets(12));
-
-        TaskCenter.getInstance().getCompletedEntries()
-                .addListener((ListChangeListener<? super TaskCenter.Entry>) change -> rebuildCompleted());
         rebuildCompleted();
-
         return scrollPane;
     }
 
     private ScrollPane createFailedPane() {
-        ScrollPane scrollPane = new ScrollPane(failedContainer);
+        VBox wrapper = new VBox(8);
+        wrapper.setPadding(new Insets(12));
+
+        JFXButton clearButton = new JFXButton(i18n("task.clear"));
+        clearButton.getStyleClass().add("dialog-cancel");
+        clearButton.setOnAction(e -> TaskCenter.getInstance().getFailedEntries().clear());
+
+        HBox toolbar = new HBox(clearButton);
+        toolbar.setAlignment(Pos.CENTER_RIGHT);
+
+        wrapper.getChildren().addAll(toolbar, failedContainer);
+
+        ScrollPane scrollPane = new ScrollPane(wrapper);
         scrollPane.setFitToWidth(true);
-        failedContainer.setPadding(new Insets(12));
-
-        TaskCenter.getInstance().getFailedEntries()
-                .addListener((ListChangeListener<? super TaskCenter.Entry>) change -> rebuildFailed());
         rebuildFailed();
-
         return scrollPane;
     }
+
+    // ── rebuild ──────────────────────────────────────────────────────
 
     private void rebuildRunning() {
         runningContainer.getChildren().clear();
-        for (TaskCenter.Entry entry : TaskCenter.getInstance().getEntries()) {
-            runningContainer.getChildren().add(createRunningItem(entry));
+        if (TaskCenter.getInstance().getEntries().isEmpty()) {
+            runningContainer.getChildren().add(runningEmpty);
+            return;
         }
-    }
-
-    private ScrollPane createPlaceholderPane(String text) {
-        VBox box = new VBox();
-        box.setPadding(new Insets(12));
-        box.getChildren().add(new Label(text));
-        ScrollPane scrollPane = new ScrollPane(box);
-        scrollPane.setFitToWidth(true);
-        return scrollPane;
+        for (TaskCenter.Entry entry : TaskCenter.getInstance().getEntries()) {
+            runningContainer.getChildren().add(createRunningCard(entry));
+        }
     }
 
     private void rebuildCompleted() {
         completedContainer.getChildren().clear();
+        if (TaskCenter.getInstance().getCompletedEntries().isEmpty()) {
+            completedContainer.getChildren().add(completedEmpty);
+            return;
+        }
         for (TaskCenter.Entry entry : TaskCenter.getInstance().getCompletedEntries()) {
-            String text = entry.getDetail() != null ? entry.getDetail() : entry.getTitle();
-            completedContainer.getChildren().add(createLineItem(text, null));
+            completedContainer.getChildren().add(createHistoryItem(entry, true));
         }
     }
 
     private void rebuildFailed() {
         failedContainer.getChildren().clear();
+        if (TaskCenter.getInstance().getFailedEntries().isEmpty()) {
+            failedContainer.getChildren().add(failedEmpty);
+            return;
+        }
         for (TaskCenter.Entry entry : TaskCenter.getInstance().getFailedEntries()) {
-            String text = entry.getDetail() != null ? entry.getDetail() : entry.getTitle();
-            failedContainer.getChildren().add(createLineItem(text, () -> {
-                Throwable ex = entry.getExecutor().getException();
-                if (ex instanceof CancellationException) {
-                    Controllers.dialog("任务由用户取消", entry.getTitle(), MessageDialogPane.MessageType.ERROR);//TODO: i18n
-                } else if (ex != null) {
-                    Controllers.dialog(StringUtils.getStackTrace(ex), entry.getTitle(), MessageDialogPane.MessageType.ERROR);
-                } else {
-                    Controllers.dialog("任务失败（无异常信息）", entry.getTitle(), MessageDialogPane.MessageType.ERROR);//TODO: i18n
-                }
-            }));
+            failedContainer.getChildren().add(createHistoryItem(entry, false));
         }
     }
 
-    private Node createRunningItem(TaskCenter.Entry entry) {
-        HBox row = new HBox(12);
-        row.getStyleClass().add("md-list-cell");
-        row.setPadding(new Insets(8, 12, 8, 12));
-        row.setAlignment(Pos.CENTER_LEFT);
+    // ── running card ─────────────────────────────────────────────────
 
-        String text = entry.getDetail() != null ? entry.getDetail() : entry.getTitle();
-        Label label = new Label(text);
-        HBox.setHgrow(label, Priority.ALWAYS);
-        label.setMaxWidth(Double.MAX_VALUE);
+    private Node createRunningCard(TaskCenter.Entry entry) {
+        VBox card = new VBox(6);
+        card.getStyleClass().add("card-non-transparent");
+        card.setPadding(new Insets(10, 14, 10, 14));
+
+        HBox header = new HBox(8);
+        header.setAlignment(Pos.CENTER_LEFT);
+
+        Label kindTag = createKindTag(entry.getKind());
+
+        String titleText = entry.getDetail() != null ? entry.getDetail() : entry.getTitle();
+        Label titleLabel = new Label(titleText);
+        titleLabel.setStyle("-fx-font-size: 13px; -fx-font-weight: bold;");
+        HBox.setHgrow(titleLabel, Priority.ALWAYS);
+        titleLabel.setMaxWidth(Double.MAX_VALUE);
+
+        boolean isRunning = TaskCenter.getInstance().getRunningEntry() == entry;
+        Label statusLabel = new Label(isRunning ? i18n("task.status.running") : i18n("task.waiting"));
+        statusLabel.setStyle(isRunning
+                ? "-fx-text-fill: #2196F3; -fx-font-size: 11px;"
+                : "-fx-text-fill: -fx-secondary-text-color; -fx-font-size: 11px;");
 
         JFXButton cancelButton = new JFXButton(i18n("button.cancel"));
         cancelButton.getStyleClass().add("dialog-cancel");
-
         cancelButton.setOnAction(e -> {
-            TaskCenter taskCenter = TaskCenter.getInstance();
-            if (taskCenter.isStarted(entry.getExecutor())) {
+            TaskCenter tc = TaskCenter.getInstance();
+            if (tc.isStarted(entry.getExecutor())) {
                 entry.getExecutor().cancel();
             } else {
-                taskCenter.cancelQueued(entry.getExecutor());
+                tc.cancelQueued(entry.getExecutor());
             }
             e.consume();
         });
-
         cancelButton.setOnMouseClicked(e -> e.consume());
 
-        row.getChildren().addAll(label, cancelButton);
+        header.getChildren().addAll(kindTag, titleLabel, statusLabel, cancelButton);
+        card.getChildren().add(header);
 
-        row.setOnMouseClicked(e -> {
+        if (isRunning) {
+            TaskListPane taskListPane = new TaskListPane();
+            taskListPane.setExecutor(entry.getExecutor());
+            taskListPane.setMaxHeight(120);
+            taskListPane.setPrefHeight(120);
+            card.getChildren().add(taskListPane);
+        }
+
+        card.setOnMouseClicked(e -> {
             if (entry != TaskCenter.getInstance().getRunningEntry()) {
-                Controllers.dialog("任务等待中", entry.getTitle(), MessageDialogPane.MessageType.INFO);//TODO: i18n
+                Controllers.dialog(i18n("task.waiting"), entry.getTitle(), MessageDialogPane.MessageType.INFO);
                 return;
             }
-
             TaskExecutorDialogPane pane = Controllers.taskDialog(entry.getExecutor(), entry.getTitle(), TaskCancellationAction.NORMAL);
             pane.setEscAction(() -> pane.fireEvent(new DialogCloseEvent()));
-            pane.setCancelText("关闭");//TODO: i18n
+            pane.setCancelText(i18n("button.close"));
             pane.setCancelAction(() -> pane.fireEvent(new DialogCloseEvent()));
             pane.refreshTaskList();
         });
 
+        return card;
+    }
+
+    // ── history item (completed / failed) ────────────────────────────
+
+    private Node createHistoryItem(TaskCenter.Entry entry, boolean success) {
+        HBox row = new HBox(8);
+        row.setPadding(new Insets(8, 12, 8, 12));
+        row.setAlignment(Pos.CENTER_LEFT);
+
+        Node icon = success
+                ? SVG.CHECK.createIcon(14)
+                : SVG.CLOSE.createIcon(14);
+
+        Label kindTag = createKindTag(entry.getKind());
+
+        String text = entry.getDetail() != null ? entry.getDetail() : entry.getTitle();
+        Label label = new Label(text);
+        label.setStyle("-fx-font-size: 12px;");
+        HBox.setHgrow(label, Priority.ALWAYS);
+        label.setMaxWidth(Double.MAX_VALUE);
+
+        row.getChildren().addAll(icon, kindTag, label);
+
+        if (!success) {
+            row.setStyle("-fx-cursor: hand;");
+            row.setOnMouseClicked(e -> {
+                Throwable ex = entry.getExecutor().getException();
+                if (ex instanceof CancellationException) {
+                    Controllers.dialog(i18n("task.cancelled"), entry.getTitle(), MessageDialogPane.MessageType.ERROR);
+                } else if (ex != null) {
+                    Controllers.dialog(StringUtils.getStackTrace(ex), entry.getTitle(), MessageDialogPane.MessageType.ERROR);
+                } else {
+                    Controllers.dialog(i18n("task.failed.no_exception"), entry.getTitle(), MessageDialogPane.MessageType.ERROR);
+                }
+            });
+        }
+
         return row;
     }
 
-    private Node createLineItem(String text, Runnable onClick) {
-        Label label = new Label(text);
-        label.setPadding(new Insets(10, 12, 10, 12));
-        label.setMaxWidth(Double.MAX_VALUE);
-        label.setPrefWidth(Double.MAX_VALUE);
+    // ── kind tag ─────────────────────────────────────────────────────
 
-        Separator separator = new Separator();
-        separator.setMaxWidth(Double.MAX_VALUE);
-        separator.setPrefWidth(Double.MAX_VALUE);
-
-        VBox box = new VBox(label, separator);
-        box.setFillWidth(true);
-        if (onClick != null) {
-            box.setOnMouseClicked(e -> onClick.run());
-        }
-        return box;
+    private static Label createKindTag(TaskCenter.TaskKind kind) {
+        String text = switch (kind) {
+            case GAME_INSTALL -> i18n("task.kind.game_install");
+            case MODPACK_INSTALL -> i18n("task.kind.modpack_install");
+            case JAVA_DOWNLOAD -> i18n("task.kind.java_download");
+            case MOD_UPDATE -> i18n("task.kind.mod_update");
+            case OTHER -> i18n("task.kind.other");
+        };
+        Label tag = new Label(text);
+        tag.setStyle("-fx-background-color: -fx-base-color; -fx-background-radius: 3; "
+                + "-fx-padding: 1 6 1 6; -fx-font-size: 10px; -fx-text-fill: white;");
+        return tag;
     }
 
     @Override
