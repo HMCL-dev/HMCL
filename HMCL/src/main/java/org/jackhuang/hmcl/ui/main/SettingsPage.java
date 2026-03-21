@@ -35,6 +35,7 @@ import javafx.scene.text.TextAlignment;
 import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.setting.EnumCommonDirectory;
 import org.jackhuang.hmcl.setting.Settings;
+import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
@@ -320,7 +321,7 @@ public final class SettingsPage extends ScrollPane {
                                     MessageType.ERROR
                             );
                         }
-                    });
+                    }, Schedulers.javafx());
                 });
 
                 HBox buttonBox = new HBox();
