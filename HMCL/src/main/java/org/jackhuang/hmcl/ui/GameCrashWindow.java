@@ -274,7 +274,7 @@ public class GameCrashWindow extends Stage {
         logWindow.show();
     }
 
-    private CompletableFuture<?> exportGameCrashInfo() {
+    private CompletableFuture<Path> exportGameCrashInfo() {
         Path logFile = Paths.get("minecraft-exported-crash-info-" + LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH-mm-ss")) + ".zip").toAbsolutePath();
 
         return CompletableFuture.supplyAsync(() ->
@@ -302,19 +302,7 @@ public class GameCrashWindow extends Stage {
                                     return false;
                                 }
                             });
-                })
-                .handleAsync((result, exception) -> {
-                    if (exception == null) {
-                        FXUtils.showFileInExplorer(logFile);
-                        var dialog = new MessageDialogPane.Builder(i18n("settings.launcher.launcher_log.export.success", logFile), i18n("message.success"), MessageDialogPane.MessageType.SUCCESS).ok(null).build();
-                        DialogUtils.show(stackPane, dialog);
-                    } else {
-                        LOG.warning("Failed to export game crash info", exception);
-                        var dialog = new MessageDialogPane.Builder(i18n("settings.launcher.launcher_log.export.failed") + "\n" + StringUtils.getStackTrace(exception), i18n("message.error"), MessageDialogPane.MessageType.ERROR).ok(null).build();
-                        DialogUtils.show(stackPane, dialog);
-                    }
-                    return null;
-                }, Schedulers.javafx());
+                }).thenApply(ignored -> logFile);
     }
 
     private final class View extends VBox {
@@ -453,6 +441,24 @@ public class GameCrashWindow extends Stage {
                     exportButtonPane.showSpinner();
                     exportGameCrashInfo().whenCompleteAsync((result, exception) -> {
                         exportButtonPane.hideSpinner();
+
+                        if (exception == null) {
+                            FXUtils.showFileInExplorer(result);
+                            var dialog = new MessageDialogPane.Builder(
+                                    i18n("settings.launcher.launcher_log.export.success", result),
+                                    i18n("message.success"),
+                                    MessageDialogPane.MessageType.SUCCESS
+                            ).ok(null).build();
+                            DialogUtils.show(stackPane, dialog);
+                        } else {
+                            LOG.warning("Failed to export game crash info", exception);
+                            var dialog = new MessageDialogPane.Builder(
+                                    i18n("settings.launcher.launcher_log.export.failed") + "\n" + StringUtils.getStackTrace(exception),
+                                    i18n("message.error"),
+                                    MessageDialogPane.MessageType.ERROR
+                            ).ok(null).build();
+                            DialogUtils.show(stackPane, dialog);
+                        }
                     }, Schedulers.javafx());
                 });
 
