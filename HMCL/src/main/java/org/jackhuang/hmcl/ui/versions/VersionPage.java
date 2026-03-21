@@ -18,7 +18,7 @@
 package org.jackhuang.hmcl.ui.versions;
 
 import com.jfoenix.controls.JFXPopup;
-import javafx.animation.RotateTransition;
+import javafx.animation.*;
 import javafx.application.Platform;
 import javafx.beans.binding.Bindings;
 import javafx.beans.property.*;
@@ -41,7 +41,9 @@ import org.jackhuang.hmcl.setting.Profile;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
 import org.jackhuang.hmcl.ui.WeakListenerHolder;
+import org.jackhuang.hmcl.ui.animation.AnimationUtils;
 import org.jackhuang.hmcl.ui.animation.ContainerAnimations;
+import org.jackhuang.hmcl.ui.animation.Motion;
 import org.jackhuang.hmcl.ui.animation.TransitionPane;
 import org.jackhuang.hmcl.ui.construct.*;
 import org.jackhuang.hmcl.ui.decorator.DecoratorAnimatedPage;
@@ -333,9 +335,42 @@ public class VersionPage extends DecoratorAnimatedPage implements DecoratorPage 
                 jijListItem.activeProperty().bind(control.tab.getSelectionModel().selectedItemProperty().isEqualTo(control.builtInModListTab));
                 jijListItem.setOnAction(e -> control.tab.select(control.builtInModListTab));
 
-                jijListItem.visibleProperty().bind(isExpanded);
-                jijListItem.managedProperty().bind(isExpanded);
+                javafx.scene.shape.Rectangle jijClip = new javafx.scene.shape.Rectangle();
+                jijClip.widthProperty().bind(jijListItem.widthProperty());
+                jijClip.setHeight(0);
+                jijListItem.setClip(jijClip);
+                jijListItem.setMinHeight(0);
+                jijListItem.setMaxHeight(0);
+                jijListItem.setManaged(false);
                 sideBar.add(jijListItem);
+
+                FXUtils.onChange(isExpanded, expanded -> {
+                    if (AnimationUtils.isAnimationEnabled()) {
+                        if (expanded) {
+                            jijListItem.setManaged(true);
+                        }
+                        Platform.runLater(() -> {
+                            double h = expanded ? jijListItem.prefHeight(-1) : 0;
+                            Interpolator interpolator = Motion.EASE_IN_OUT_CUBIC_EMPHASIZED;
+                            Timeline timeline = new Timeline(
+                                    new KeyFrame(Motion.LONG2,
+                                            new KeyValue(jijListItem.minHeightProperty(), h, interpolator),
+                                            new KeyValue(jijListItem.maxHeightProperty(), h, interpolator),
+                                            new KeyValue(jijClip.heightProperty(), h, interpolator))
+                            );
+                            if (!expanded) {
+                                timeline.setOnFinished(e -> jijListItem.setManaged(false));
+                            }
+                            timeline.play();
+                        });
+                    } else {
+                        double h = expanded ? jijListItem.prefHeight(-1) : 0;
+                        jijListItem.setMinHeight(h);
+                        jijListItem.setMaxHeight(h);
+                        jijClip.setHeight(h);
+                        jijListItem.setManaged(expanded);
+                    }
+                });
 
                 FXUtils.onChange(control.tab.getSelectionModel().selectedItemProperty(), tab -> {
                     if (tab == control.builtInModListTab) {
