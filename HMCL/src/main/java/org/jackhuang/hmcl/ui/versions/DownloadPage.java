@@ -32,14 +32,13 @@ import javafx.scene.control.Label;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.control.Skin;
 import javafx.scene.control.SkinBase;
-import javafx.scene.image.ImageView;
-import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.Region;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.stage.FileChooser;
+import org.jackhuang.hmcl.download.DownloadProvider;
 import org.jackhuang.hmcl.download.LibraryAnalyzer;
 import org.jackhuang.hmcl.game.HMCLGameRepository;
 import org.jackhuang.hmcl.game.Version;
@@ -114,7 +113,7 @@ public class DownloadPage extends Control implements DecoratorPage {
         setFailed(false);
 
         Task.supplyAsync(() -> {
-            Stream<RemoteMod.Version> versions = addon.getData().loadVersions(repository);
+            Stream<RemoteMod.Version> versions = addon.getData().loadVersions(repository, page.getDownloadProvider());
             return sortVersions(versions);
         }).whenComplete(Schedulers.javafx(), (result, exception) -> {
             if (exception == null) {
@@ -181,7 +180,7 @@ public class DownloadPage extends Control implements DecoratorPage {
         if (this.callback == null) {
             saveAs(mod, file);
         } else {
-            this.callback.download(version.getProfile(), version.getVersion(), mod, file);
+            this.callback.download(page.getDownloadProvider(), version.getProfile(), version.getVersion(), mod, file);
         }
     }
 
@@ -225,25 +224,18 @@ public class DownloadPage extends Control implements DecoratorPage {
             VBox pane = new VBox(8);
             pane.getStyleClass().add("gray-background");
             pane.setPadding(new Insets(10));
-            ScrollPane scrollPane = new ScrollPane(pane);
-            FXUtils.smoothScrolling(scrollPane);
-            scrollPane.setFitToWidth(true);
-            scrollPane.setFitToHeight(true);
 
             HBox descriptionPane = new HBox(8);
             descriptionPane.setMinHeight(Region.USE_PREF_SIZE);
             descriptionPane.setAlignment(Pos.CENTER);
             pane.getChildren().add(descriptionPane);
             descriptionPane.getStyleClass().add("card-non-transparent");
-            BorderPane.setMargin(descriptionPane, new Insets(11, 11, 0, 11));
             {
-                ImageView imageView = new ImageView();
-                imageView.setFitWidth(40);
-                imageView.setFitHeight(40);
+                var imageContainer = new ImageContainer(40);
                 if (StringUtils.isNotBlank(getSkinnable().addon.getIconUrl())) {
-                    imageView.imageProperty().bind(FXUtils.newRemoteImage(getSkinnable().addon.getIconUrl(), 80, 80, true, true));
+                    imageContainer.imageProperty().bind(FXUtils.newRemoteImage(getSkinnable().addon.getIconUrl(), 80, 80, true, true));
                 }
-                descriptionPane.getChildren().add(FXUtils.limitingSize(imageView, 40, 40));
+                descriptionPane.getChildren().add(imageContainer);
 
                 TwoLineListItem content = new TwoLineListItem();
                 HBox.setHgrow(content, Priority.ALWAYS);
@@ -261,14 +253,12 @@ public class DownloadPage extends Control implements DecoratorPage {
                     openMcmodButton.setExternalLink(getSkinnable().translations.getMcmodUrl(getSkinnable().mod));
                     descriptionPane.getChildren().add(openMcmodButton);
                     openMcmodButton.setMinWidth(Region.USE_PREF_SIZE);
-                    FXUtils.installFastTooltip(openMcmodButton, i18n("mods.mcmod"));
                 }
 
                 JFXHyperlink openUrlButton = new JFXHyperlink(control.page.getLocalizedOfficialPage());
                 openUrlButton.setExternalLink(getSkinnable().addon.getPageUrl());
                 descriptionPane.getChildren().add(openUrlButton);
                 openUrlButton.setMinWidth(Region.USE_PREF_SIZE);
-                FXUtils.installFastTooltip(openUrlButton, control.page.getLocalizedOfficialPage());
             }
 
             SpinnerPane spinnerPane = new SpinnerPane();
@@ -286,8 +276,13 @@ public class DownloadPage extends Control implements DecoratorPage {
                 spinnerPane.setOnFailedAction(e -> getSkinnable().loadModVersions());
 
                 ComponentList list = new ComponentList();
-                StackPane.setAlignment(list, Pos.TOP_CENTER);
-                spinnerPane.setContent(list);
+                ScrollPane scrollPane = new ScrollPane(list);
+                FXUtils.smoothScrolling(scrollPane);
+                scrollPane.setFitToWidth(true);
+                scrollPane.setFitToHeight(true);
+                FXUtils.setOverflowHidden(scrollPane, 8);
+                StackPane.setAlignment(scrollPane, Pos.TOP_CENTER);
+                spinnerPane.setContent(scrollPane);
 
                 FXUtils.onChangeAndOperate(control.loaded, loaded -> {
                     if (control.versions == null) return;
@@ -341,7 +336,7 @@ public class DownloadPage extends Control implements DecoratorPage {
                 });
             }
 
-            getChildren().setAll(scrollPane);
+            getChildren().setAll(pane);
         }
     }
 
@@ -362,10 +357,8 @@ public class DownloadPage extends Control implements DecoratorPage {
             pane.setAlignment(Pos.CENTER_LEFT);
             TwoLineListItem content = new TwoLineListItem();
             HBox.setHgrow(content, Priority.ALWAYS);
-            ImageView imageView = new ImageView();
-            imageView.setFitWidth(40);
-            imageView.setFitHeight(40);
-            pane.getChildren().setAll(FXUtils.limitingSize(imageView, 40, 40), content);
+            var imageView = new ImageContainer(40);
+            pane.getChildren().setAll(imageView, content);
 
             RipplerContainer container = new RipplerContainer(pane);
             FXUtils.onClicked(container, () -> {
@@ -493,6 +486,7 @@ public class DownloadPage extends Control implements DecoratorPage {
             scrollPane.setFitToWidth(true);
             scrollPane.setFitToHeight(true);
             FXUtils.smoothScrolling(scrollPane);
+            FXUtils.setOverflowHidden(scrollPane, 8);
             spinnerPane.setContent(scrollPane);
             box.getChildren().add(spinnerPane);
             VBox.setVgrow(spinnerPane, Priority.SOMETIMES);
@@ -555,7 +549,7 @@ public class DownloadPage extends Control implements DecoratorPage {
                         dependencies.put(dependency.getType(), list);
                     }
 
-                    queue.add(Task.supplyAsync(Schedulers.io(), dependency::load)
+                    queue.add(Task.supplyAsync(Schedulers.io(), () -> dependency.load(selfPage.page.getDownloadProvider()))
                             .setSignificance(Task.TaskSignificance.MINOR)
                             .thenAcceptAsync(Schedulers.javafx(), dep -> {
                                 if (dep == RemoteMod.BROKEN) {
@@ -583,7 +577,8 @@ public class DownloadPage extends Control implements DecoratorPage {
         }
     }
 
+    @FunctionalInterface
     public interface DownloadCallback {
-        void download(Profile profile, @Nullable String version, RemoteMod mod, RemoteMod.Version file);
+        void download(DownloadProvider downloadProvider, Profile profile, @Nullable String version, RemoteMod mod, RemoteMod.Version file);
     }
 }

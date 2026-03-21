@@ -24,12 +24,16 @@ import org.jackhuang.hmcl.util.io.HttpRequest;
 import org.jackhuang.hmcl.util.io.NetworkUtils;
 
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
+import java.util.Base64;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 
 import static org.jackhuang.hmcl.util.Lang.mapOf;
 import static org.jackhuang.hmcl.util.Pair.pair;
+import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 public class OAuth {
     public static final OAuth MICROSOFT = new OAuth(
@@ -77,17 +81,31 @@ public class OAuth {
 
     private Result authenticateAuthorizationCode(Options options) throws IOException, InterruptedException, JsonParseException, ExecutionException, AuthenticationException {
         Session session = options.callback.startServer();
+
+        String codeVerifier = session.getCodeVerifier();
+        String state = session.getState();
+        String codeChallenge = generateCodeChallenge(codeVerifier);
+
         options.callback.openBrowser(GrantFlow.AUTHORIZATION_CODE, NetworkUtils.withQuery(authorizationURL,
-                mapOf(pair("client_id", options.callback.getClientId()), pair("response_type", "code"),
-                        pair("redirect_uri", session.getRedirectURI()), pair("scope", options.scope),
-                        pair("prompt", "select_account"))));
+                mapOf(pair("client_id", options.callback.getClientId()),
+                        pair("response_type", "code"),
+                        pair("redirect_uri", session.getRedirectURI()),
+                        pair("scope", options.scope),
+                        pair("prompt", "select_account"),
+                        pair("code_challenge", codeChallenge),
+                        pair("state", state),
+                        pair("code_challenge_method", "S256")
+                )));
         String code = session.waitFor();
 
         // Authorization Code -> Token
         AuthorizationResponse response = HttpRequest.POST(accessTokenURL)
-                .form(pair("client_id", options.callback.getClientId()), pair("code", code),
-                        pair("grant_type", "authorization_code"), pair("client_secret", options.callback.getClientSecret()),
-                        pair("redirect_uri", session.getRedirectURI()), pair("scope", options.scope))
+                .form(pair("client_id", options.callback.getClientId()),
+                        pair("code", code),
+                        pair("grant_type", "authorization_code"),
+                        pair("code_verifier", codeVerifier),
+                        pair("redirect_uri", session.getRedirectURI()),
+                        pair("scope", options.scope))
                 .ignoreHttpCode()
                 .retry(5)
                 .getJson(AuthorizationResponse.class);
@@ -153,10 +171,6 @@ public class OAuth {
                     pair("grant_type", "refresh_token")
             );
 
-            if (!options.callback.isPublicClient()) {
-                query.put("client_secret", options.callback.getClientSecret());
-            }
-
             RefreshResponse response = HttpRequest.POST(tokenURL)
                     .form(query)
                     .accept("application/json")
@@ -171,6 +185,20 @@ public class OAuth {
             throw new ServerDisconnectException(e);
         } catch (JsonParseException e) {
             throw new ServerResponseMalformedException(e);
+        }
+    }
+
+    private static String generateCodeChallenge(String codeVerifier) {
+        // https://datatracker.ietf.org/doc/html/rfc7636#section-4.2
+        try {
+            byte[] bytes = codeVerifier.getBytes(StandardCharsets.US_ASCII);
+            MessageDigest messageDigest = MessageDigest.getInstance("SHA-256");
+            messageDigest.update(bytes, 0, bytes.length);
+            byte[] digest = messageDigest.digest();
+            return Base64.getUrlEncoder().withoutPadding().encodeToString(digest);
+        } catch (Exception e) {
+            LOG.warning("Failed to generate code challenge", e);
+            throw new RuntimeException(e);
         }
     }
 
@@ -207,6 +235,9 @@ public class OAuth {
     }
 
     public interface Session {
+        String getState();
+
+        String getCodeVerifier();
 
         String getRedirectURI();
 
@@ -243,10 +274,6 @@ public class OAuth {
         void openBrowser(GrantFlow grantFlow, String url) throws IOException;
 
         String getClientId();
-
-        String getClientSecret();
-
-        boolean isPublicClient();
     }
 
     public enum GrantFlow {

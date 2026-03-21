@@ -15,6 +15,7 @@ hs_err_pid*
 NVIDIA
 minecraft-exported-crash-info*
 hmcl-exported-logs-*
+terracotta-log-*
 /.java/
 /.local/
 /.cache/

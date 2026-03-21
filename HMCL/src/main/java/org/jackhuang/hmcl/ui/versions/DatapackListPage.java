@@ -21,6 +21,7 @@ import javafx.beans.property.BooleanProperty;
 import javafx.collections.ObservableList;
 import javafx.scene.control.Skin;
 import javafx.stage.FileChooser;
+import org.jackhuang.hmcl.game.World;
 import org.jackhuang.hmcl.mod.Datapack;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
@@ -44,13 +45,13 @@ import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 public final class DatapackListPage extends ListPageBase<DatapackListPageSkin.DatapackInfoObject> implements WorldManagePage.WorldRefreshable {
-    private final Path worldDir;
+    private final World world;
     private final Datapack datapack;
     final BooleanProperty readOnly;
 
     public DatapackListPage(WorldManagePage worldManagePage) {
-        this.worldDir = worldManagePage.getWorld().getFile();
-        datapack = new Datapack(worldDir.resolve("datapacks"));
+        world = worldManagePage.getWorld();
+        datapack = new Datapack(world.getFile().resolve("datapacks"));
         setItems(MappedObservableList.create(datapack.getPacks(), DatapackListPageSkin.DatapackInfoObject::new));
         readOnly = worldManagePage.readOnlyProperty();
         FXUtils.applyDragListener(this, it -> Objects.equals("zip", FileUtils.getExtension(it)),
@@ -68,7 +69,7 @@ public final class DatapackListPage extends ListPageBase<DatapackListPageSkin.Da
 
     private void installSingleDatapack(Path datapack) {
         try {
-            this.datapack.installPack(datapack);
+            this.datapack.installPack(datapack, world.getGameVersion());
         } catch (IOException | IllegalArgumentException e) {
             LOG.warning("Unable to parse datapack file " + datapack, e);
         }

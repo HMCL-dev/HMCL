@@ -85,8 +85,8 @@ public class DownloadPage extends DecoratorAnimatedPage implements DecoratorPage
         newGameTab.setNodeSupplier(loadVersionFor(() -> new VersionsPage(versionPageNavigator, i18n("install.installer.choose", i18n("install.installer.game")), "", DownloadProviders.getDownloadProvider(),
                 "game", versionPageNavigator::onGameSelected)));
         modpackTab.setNodeSupplier(loadVersionFor(() -> {
-            DownloadListPage page = HMCLLocalizedDownloadListPage.ofModPack((profile, __, mod, file) -> {
-                Versions.downloadModpackImpl(profile, uploadVersion, mod, file);
+            DownloadListPage page = HMCLLocalizedDownloadListPage.ofModPack((downloadProvider, profile, __, mod, file) -> {
+                Versions.downloadModpackImpl(downloadProvider, profile, uploadVersion, mod, file);
             }, false);
 
             JFXButton installLocalModpackButton = FXUtils.newRaisedButton(i18n("install.modpack"));
@@ -95,9 +95,9 @@ public class DownloadPage extends DecoratorAnimatedPage implements DecoratorPage
             page.getActions().add(installLocalModpackButton);
             return page;
         }));
-        modTab.setNodeSupplier(loadVersionFor(() -> HMCLLocalizedDownloadListPage.ofMod((profile, version, mod, file) -> download(profile, version, file, "mods"), true)));
-        resourcePackTab.setNodeSupplier(loadVersionFor(() -> HMCLLocalizedDownloadListPage.ofResourcePack((profile, version, mod, file) -> download(profile, version, file, "resourcepacks"), true)));
-        shaderTab.setNodeSupplier(loadVersionFor(() -> HMCLLocalizedDownloadListPage.ofShaderPack((profile, version, mod, file) -> download(profile, version, file, "shaderpacks"), true)));
+        modTab.setNodeSupplier(loadVersionFor(() -> HMCLLocalizedDownloadListPage.ofMod((downloadProvider, profile, version, mod, file) -> download(downloadProvider, profile, version, file, "mods"), true)));
+        resourcePackTab.setNodeSupplier(loadVersionFor(() -> HMCLLocalizedDownloadListPage.ofResourcePack((downloadProvider, profile, version, mod, file) -> download(downloadProvider, profile, version, file, "resourcepacks"), true)));
+        shaderTab.setNodeSupplier(loadVersionFor(() -> HMCLLocalizedDownloadListPage.ofShaderPack((downloadProvider, profile, version, mod, file) -> download(downloadProvider, profile, version, file, "shaderpacks"), true)));
         worldTab.setNodeSupplier(loadVersionFor(() -> new DownloadListPage(CurseForgeRemoteModRepository.WORLDS)));
         tab = new TabHeader(transitionPane, newGameTab, modpackTab, modTab, resourcePackTab, shaderTab, worldTab);
 
@@ -130,7 +130,7 @@ public class DownloadPage extends DecoratorAnimatedPage implements DecoratorPage
         };
     }
 
-    public static void download(Profile profile, @Nullable String version, RemoteMod.Version file, String subdirectoryName) {
+    public static void download(DownloadProvider downloadProvider, Profile profile, @Nullable String version, RemoteMod.Version file, String subdirectoryName) {
         if (version == null) version = profile.getSelectedVersion();
 
         Path runDirectory = profile.getRepository().hasVersion(version) ? profile.getRepository().getRunDirectory(version) : profile.getRepository().getBaseDirectory();
@@ -157,8 +157,8 @@ public class DownloadPage extends DecoratorAnimatedPage implements DecoratorPage
         Controllers.prompt(i18n("archive.file.name"), (result, handler) -> {
             Path dest = runDirectory.resolve(subdirectoryName).resolve(result);
 
-            Controllers.downloadTaskDialog(Task.composeAsync(() -> {
-                var task = new FileDownloadTask(file.getFile().getUrl(), dest);
+            Controllers.taskDialog(Task.composeAsync(() -> {
+                var task = new FileDownloadTask(downloadProvider.injectURLWithCandidates(file.getFile().getUrl()), dest);
                 task.setName(file.getName());
                 return task;
             }).whenComplete(Schedulers.javafx(), exception -> {

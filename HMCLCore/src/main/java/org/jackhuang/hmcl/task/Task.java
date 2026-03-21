@@ -22,6 +22,7 @@ import javafx.beans.property.DoubleProperty;
 import javafx.beans.property.ReadOnlyDoubleProperty;
 import javafx.beans.property.SimpleDoubleProperty;
 import org.jackhuang.hmcl.event.EventManager;
+import org.jackhuang.hmcl.util.Result;
 import org.jackhuang.hmcl.util.function.ExceptionalConsumer;
 import org.jackhuang.hmcl.util.function.ExceptionalFunction;
 import org.jackhuang.hmcl.util.function.ExceptionalRunnable;
@@ -345,12 +346,7 @@ public abstract class Task<T> {
         if (count < 0 || total < 0)
             throw new IllegalArgumentException("Invalid count or total: count=" + count + ", total=" + total);
 
-        double progress;
-        if (total >= count)
-            progress = 1.0;
-        else
-            progress = (double) count / total;
-        updateProgress(progress);
+        updateProgress(count < total ? (double) count / total : 1.0);
     }
 
     protected void updateProgress(double progress) {
@@ -784,6 +780,37 @@ public abstract class Task<T> {
         return whenComplete(executor, (exception -> action.execute(getResult(), exception)));
     }
 
+    public Task<Result<T>> wrapResult() {
+        return new Task<Result<T>>() {
+            {
+                setSignificance(TaskSignificance.MODERATE);
+            }
+
+            @Override
+            public void execute() throws Exception {
+                if (isDependentsSucceeded() != (Task.this.getException() == null))
+                    throw new AssertionError("When whenComplete succeeded, Task.exception must be null.", Task.this.getException());
+
+                if (isDependentsSucceeded()) {
+                    setResult(Result.success(Task.this.getResult()));
+                } else {
+                    setSignificance(TaskSignificance.MINOR);
+                    setResult(Result.failure(Task.this.getException()));
+                }
+            }
+
+            @Override
+            public Collection<Task<?>> getDependents() {
+                return Collections.singleton(Task.this);
+            }
+
+            @Override
+            public boolean isRelyingOnDependents() {
+                return false;
+            }
+        }.setExecutor(executor).setName(getCaller()).setSignificance(TaskSignificance.MODERATE);
+    }
+
     /**
      * Returns a new Task with the same exception as this task, that executes
      * the given actions when this task completes.
@@ -844,15 +871,29 @@ public abstract class Task<T> {
         return new FakeProgressTask(done, k).setExecutor(Schedulers.defaultScheduler()).setName(name).setSignificance(TaskSignificance.MAJOR);
     }
 
-    public Task<T> withStagesHint(List<String> stages) {
-        return new StagesHintTask(stages);
+    public record StagesHint(String stage, List<String> aliases) {
+        public StagesHint(String stage) {
+            this(stage, List.of());
+        }
+    }
+
+    public Task<T> withStagesHints(String... hints) {
+        return withStagesHints(Arrays.stream(hints).map(StagesHint::new).toList());
+    }
+
+    public Task<T> withStagesHints(StagesHint... hints) {
+        return new StagesHintTask(List.of(hints));
+    }
+
+    public Task<T> withStagesHints(List<StagesHint> hints) {
+        return new StagesHintTask(hints);
     }
 
     public class StagesHintTask extends Task<T> {
-        private final List<String> stages;
+        private final List<StagesHint> hints;
 
-        public StagesHintTask(List<String> stages) {
-            this.stages = stages;
+        public StagesHintTask(List<StagesHint> hints) {
+            this.hints = hints;
         }
 
         @Override
@@ -865,8 +906,8 @@ public abstract class Task<T> {
             setResult(Task.this.getResult());
         }
 
-        public List<String> getStages() {
-            return stages;
+        public List<StagesHint> getHints() {
+            return hints;
         }
     }
 
