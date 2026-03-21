@@ -117,4 +117,9 @@
             <property name="message" value="Should not use String#toUpperCase(), use String#toUpperCase(Locale.ROOT) instead."/>
         </module>
     </module>
+
+    <module name="RegexpHeader">
+        <property name="headerFile" value="${licenseHeaderFile}"/>
+        <property name="charset" value="UTF-8"/>
+    </module>
 </module>
