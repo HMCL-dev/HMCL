@@ -17,33 +17,29 @@
  */
 package org.jackhuang.hmcl.util;
 
-import org.junit.jupiter.api.Test;
+import org.jackhuang.hmcl.upgrade.UpdateHandler;
+import org.jackhuang.hmcl.util.io.JarUtils;
 
-import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.StringReader;
-import java.util.Map;
+import java.nio.file.Path;
 
-import static org.jackhuang.hmcl.util.Pair.pair;
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
-/**
- * @author Glavo
- */
-public final class KeyValuePairUtilsTest {
-    @Test
-    public void test() throws IOException {
-        String content = "#test: key0=value0\n \n" +
-                "key1=value1\n" +
-                "key2=\"value2\"\n" +
-                "key3=\"\\\" \\n\"\n";
+/// @author Glavo
+public final class Restarter {
 
-        Map<String, String> properties = KeyValuePairUtils.loadProperties(new BufferedReader(new StringReader(content)));
+    /// Restart the current application.
+    public static void restartSelf() throws IOException {
+        LOG.info("Restarting HMCL");
 
-        assertEquals(Lang.mapOf(
-                pair("key1", "value1"),
-                pair("key2", "value2"),
-                pair("key3", "\" \n")
-        ), properties);
+        Path thisJar = JarUtils.thisJarPath();
+        if (thisJar == null) {
+            throw new IOException("Failed to find current HMCL location");
+        }
+
+        UpdateHandler.startJava(thisJar);
+    }
+
+    private Restarter() {
     }
 }

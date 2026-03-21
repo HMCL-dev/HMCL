@@ -38,6 +38,7 @@ import javafx.scene.layout.Region;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.stage.FileChooser;
+import org.jackhuang.hmcl.download.DownloadProvider;
 import org.jackhuang.hmcl.download.LibraryAnalyzer;
 import org.jackhuang.hmcl.game.HMCLGameRepository;
 import org.jackhuang.hmcl.game.Version;
@@ -112,7 +113,7 @@ public class DownloadPage extends Control implements DecoratorPage {
         setFailed(false);
 
         Task.supplyAsync(() -> {
-            Stream<RemoteMod.Version> versions = addon.getData().loadVersions(repository);
+            Stream<RemoteMod.Version> versions = addon.getData().loadVersions(repository, page.getDownloadProvider());
             return sortVersions(versions);
         }).whenComplete(Schedulers.javafx(), (result, exception) -> {
             if (exception == null) {
@@ -179,7 +180,7 @@ public class DownloadPage extends Control implements DecoratorPage {
         if (this.callback == null) {
             saveAs(mod, file);
         } else {
-            this.callback.download(version.getProfile(), version.getVersion(), mod, file);
+            this.callback.download(page.getDownloadProvider(), version.getProfile(), version.getVersion(), mod, file);
         }
     }
 
@@ -252,14 +253,12 @@ public class DownloadPage extends Control implements DecoratorPage {
                     openMcmodButton.setExternalLink(getSkinnable().translations.getMcmodUrl(getSkinnable().mod));
                     descriptionPane.getChildren().add(openMcmodButton);
                     openMcmodButton.setMinWidth(Region.USE_PREF_SIZE);
-                    FXUtils.installFastTooltip(openMcmodButton, i18n("mods.mcmod"));
                 }
 
                 JFXHyperlink openUrlButton = new JFXHyperlink(control.page.getLocalizedOfficialPage());
                 openUrlButton.setExternalLink(getSkinnable().addon.getPageUrl());
                 descriptionPane.getChildren().add(openUrlButton);
                 openUrlButton.setMinWidth(Region.USE_PREF_SIZE);
-                FXUtils.installFastTooltip(openUrlButton, control.page.getLocalizedOfficialPage());
             }
 
             SpinnerPane spinnerPane = new SpinnerPane();
@@ -550,7 +549,7 @@ public class DownloadPage extends Control implements DecoratorPage {
                         dependencies.put(dependency.getType(), list);
                     }
 
-                    queue.add(Task.supplyAsync(Schedulers.io(), dependency::load)
+                    queue.add(Task.supplyAsync(Schedulers.io(), () -> dependency.load(selfPage.page.getDownloadProvider()))
                             .setSignificance(Task.TaskSignificance.MINOR)
                             .thenAcceptAsync(Schedulers.javafx(), dep -> {
                                 if (dep == RemoteMod.BROKEN) {
@@ -578,7 +577,8 @@ public class DownloadPage extends Control implements DecoratorPage {
         }
     }
 
+    @FunctionalInterface
     public interface DownloadCallback {
-        void download(Profile profile, @Nullable String version, RemoteMod mod, RemoteMod.Version file);
+        void download(DownloadProvider downloadProvider, Profile profile, @Nullable String version, RemoteMod mod, RemoteMod.Version file);
     }
 }

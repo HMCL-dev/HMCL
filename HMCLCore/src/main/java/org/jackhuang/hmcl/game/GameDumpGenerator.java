@@ -15,11 +15,11 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-
 package org.jackhuang.hmcl.game;
 
 import com.sun.tools.attach.AttachNotSupportedException;
 import com.sun.tools.attach.VirtualMachine;
+import org.jackhuang.hmcl.java.JavaInfo;
 import org.jackhuang.hmcl.util.logging.Logger;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
@@ -128,7 +128,20 @@ public final class GameDumpGenerator {
     }
 
     private static void writeDumpBodyTo(VirtualMachine vm, Writer writer) throws IOException {
-        execute(vm, "Thread.print -e -l", writer);
+        int vmVersion = -1;
+
+        try {
+            if (vm.getSystemProperties().get("java.version") instanceof String javaVersion)
+                vmVersion = JavaInfo.parseVersion(javaVersion);
+        } catch (Throwable e) {
+            LOG.warning("Failed to get VM system properties", e);
+        }
+
+        if (vmVersion >= 11)
+            execute(vm, "Thread.print -e -l", writer);
+        else
+            execute(vm, "Thread.print -l", writer);
+
     }
 
     private static VirtualMachine attachVM(String lvmid, Writer writer) throws IOException, InterruptedException {
