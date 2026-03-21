@@ -66,6 +66,7 @@ public final class WorldManagePage extends DecoratorAnimatedPage implements Deco
     private final TransitionPane transitionPane = new TransitionPane();
     private final TabHeader header = new TabHeader(transitionPane);
     private final TabHeader.Tab<WorldInfoPage> worldInfoTab = new TabHeader.Tab<>("worldInfoPage");
+    private final TabHeader.Tab<GameRulePage> gameRuleTab = new TabHeader.Tab<>("gameRulePage");
     private final TabHeader.Tab<WorldBackupsPage> worldBackupsTab = new TabHeader.Tab<>("worldBackupsPage");
     private final TabHeader.Tab<DatapackListPage> datapackTab = new TabHeader.Tab<>("datapackListPage");
 
@@ -85,6 +86,7 @@ public final class WorldManagePage extends DecoratorAnimatedPage implements Deco
         }
 
         worldInfoTab.setNodeSupplier(() -> new WorldInfoPage(this));
+        gameRuleTab.setNodeSupplier(() -> new GameRulePage(this));
         worldBackupsTab.setNodeSupplier(() -> new WorldBackupsPage(this));
         datapackTab.setNodeSupplier(() -> new DatapackListPage(this));
 
@@ -212,10 +214,11 @@ public final class WorldManagePage extends DecoratorAnimatedPage implements Deco
         private AdvancedListBox getTabBar() {
             AdvancedListBox tabBar = new AdvancedListBox();
             {
-                getSkinnable().header.getTabs().addAll(getSkinnable().worldInfoTab, getSkinnable().worldBackupsTab);
+                getSkinnable().header.getTabs().addAll(getSkinnable().worldInfoTab, getSkinnable().gameRuleTab, getSkinnable().worldBackupsTab);
                 getSkinnable().header.select(getSkinnable().worldInfoTab);
 
                 tabBar.addNavigationDrawerTab(getSkinnable().header, getSkinnable().worldInfoTab, i18n("world.info"), SVG.INFO, SVG.INFO_FILL)
+                        .addNavigationDrawerTab(getSkinnable().header, getSkinnable().gameRuleTab, i18n("gamerule"), SVG.RULE)
                         .addNavigationDrawerTab(getSkinnable().header, getSkinnable().worldBackupsTab, i18n("world.backup"), SVG.ARCHIVE, SVG.ARCHIVE_FILL);
 
                 if (getSkinnable().world.supportDatapacks()) {

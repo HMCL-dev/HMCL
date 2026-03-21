@@ -54,6 +54,10 @@ public final class World {
     private CompoundTag normalizedWorldGenSettingsData; // Use for reading/modification
     private Path worldGenSettingsDataPath;
 
+    private CompoundTag gameRuleDataBackingTag;
+    private CompoundTag normalizedGameRuleData;
+    private Path gameRuleDataPath;
+
     private CompoundTag playerData; // Use for both reading/modification and writing back to the file
     private Path playerDataPath;
 
@@ -103,6 +107,10 @@ public final class World {
 
     public @Nullable CompoundTag getPlayerData() {
         return playerData;
+    }
+
+    public @Nullable CompoundTag getNormalizedGameRuleData() {
+        return normalizedGameRuleData;
     }
 
     public long getLastPlayed() {
@@ -293,12 +301,39 @@ public final class World {
         } else {
             setPlayerData(null, null);
         }
+
+        Path gameRulesDatPath = file.resolve("data/minecraft/game_rules.dat");
+        if (data.get("GameRules") instanceof CompoundTag gameRulesTag) {
+            setGameRuleData(null, null, gameRulesTag);
+            System.out.println("!!!!!!!old" + ", world: " + this.getWorldName());
+        } else if (data.get("game_rules") instanceof CompoundTag gameRulesTag) {
+            setGameRuleData(null, null, gameRulesTag);
+            System.out.println("!!!!!!!middle" + ", world: " + this.getWorldName());
+        } else if (Files.isRegularFile(gameRulesDatPath)) {
+            CompoundTag raw = readTag(gameRulesDatPath);
+            if (raw.get("data") instanceof CompoundTag compoundTag) {
+                setGameRuleData(gameRuleDataPath, raw, compoundTag);
+                System.out.println("!!!!!!!new" + ", world: " + this.getWorldName());
+            } else {
+                setGameRuleData(null, null, null);
+                System.out.println("!!!!!!!new but error" + ", world: " + this.getWorldName());
+            }
+        } else {
+            setGameRuleData(null, null, null);
+            System.out.println("!!!!!!!error" + ", world: " + this.getWorldName());
+        }
     }
 
     private void setWorldGenSettingsData(Path worldGenSettingsDataPath, CompoundTag worldGenSettingsDataBackingTag, CompoundTag unifiedWorldGenSettingsData) {
         this.worldGenSettingsDataPath = worldGenSettingsDataPath;
         this.worldGenSettingsDataBackingTag = worldGenSettingsDataBackingTag;
         this.normalizedWorldGenSettingsData = unifiedWorldGenSettingsData;
+    }
+
+    private void setGameRuleData(Path gameRuleDataPath, CompoundTag gameRuleDataBackingTag, CompoundTag normalizedGameRuleData) {
+        this.gameRuleDataPath = gameRuleDataPath;
+        this.gameRuleDataBackingTag = gameRuleDataBackingTag;
+        this.normalizedGameRuleData = normalizedGameRuleData;
     }
 
     private void setPlayerData(Path playerDataPath, CompoundTag playerData) {
@@ -424,6 +459,10 @@ public final class World {
             writeTag(worldGenSettingsDataBackingTag, worldGenSettingsDataPath);
         }
 
+        if (gameRuleDataPath != null && gameRuleDataBackingTag != null) {
+            writeTag(gameRuleDataBackingTag, gameRuleDataPath);
+        }
+
         if (playerDataPath != null && playerData != null) {
             writeTag(playerData, playerDataPath);
         }
@@ -445,7 +484,7 @@ public final class World {
         if (!Files.isDirectory(file)) throw new IOException("Not a valid world directory");
         FileUtils.saveSafely(path, os -> {
             try (OutputStream gos = new GZIPOutputStream(os)) {
-                NBTIO.writeTag(gos, nbt);
+                NBTIO.writeTag(gos, getLevelData());
             }
         });
     }
