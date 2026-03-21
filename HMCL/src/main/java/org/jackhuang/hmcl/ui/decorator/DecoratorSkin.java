@@ -46,13 +46,18 @@ import javafx.stage.Stage;
 import javafx.util.Duration;
 import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.theme.Themes;
+import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
 import org.jackhuang.hmcl.ui.animation.ContainerAnimations;
 import org.jackhuang.hmcl.ui.animation.Motion;
 import org.jackhuang.hmcl.ui.animation.TransitionPane;
+import org.jackhuang.hmcl.ui.task.TaskCenter;
+import org.jackhuang.hmcl.ui.task.TaskCenterPage;
 import org.jackhuang.hmcl.ui.wizard.Navigation;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
+
+import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 public class DecoratorSkin extends SkinBase<Decorator> {
     private final StackPane root, parent;
@@ -231,6 +236,35 @@ public class DecoratorSkin extends SkinBase<Decorator> {
             buttonsContainer.setAlignment(Pos.TOP_RIGHT);
             buttonsContainer.setMaxHeight(40);
             {
+                // Background task indicator
+                JFXButton btnTask = new JFXButton();
+                btnTask.setFocusTraversable(false);
+                btnTask.getStyleClass().add("jfx-decorator-button");
+                btnTask.setOnAction(e -> Controllers.navigate(new TaskCenterPage()));
+                FXUtils.installFastTooltip(btnTask, i18n("task.manage"));
+
+                Label taskBadge = new Label();
+                taskBadge.setStyle("-fx-font-size: 10px; -fx-text-fill: white; -fx-background-color: #F44336; " +
+                        "-fx-background-radius: 8; -fx-min-width: 16; -fx-min-height: 16; " +
+                        "-fx-alignment: center; -fx-padding: 0 3 0 3;");
+
+                StackPane taskIconPane = new StackPane();
+                taskIconPane.getChildren().add(SVG.CHECKLIST.createIcon(Themes.titleFillProperty()));
+                taskIconPane.getChildren().add(taskBadge);
+                StackPane.setAlignment(taskBadge, Pos.TOP_RIGHT);
+                StackPane.setMargin(taskBadge, new Insets(-4, -6, 0, 0));
+                btnTask.setGraphic(taskIconPane);
+
+                Runnable updateTaskIndicator = () -> {
+                    int count = TaskCenter.getInstance().getEntries().size();
+                    btnTask.setVisible(count > 0);
+                    btnTask.setManaged(count > 0);
+                    taskBadge.setText(String.valueOf(count));
+                };
+                updateTaskIndicator.run();
+                TaskCenter.getInstance().getEntries().addListener(
+                        (ListChangeListener<TaskCenter.Entry>) change -> updateTaskIndicator.run());
+
                 JFXButton btnHelp = new JFXButton();
                 btnHelp.setFocusTraversable(false);
                 btnHelp.setGraphic(SVG.HELP.createIcon(Themes.titleFillProperty()));
@@ -249,7 +283,7 @@ public class DecoratorSkin extends SkinBase<Decorator> {
                 btnClose.getStyleClass().add("jfx-decorator-button");
                 btnClose.setOnAction(e -> skinnable.close());
 
-                buttonsContainer.getChildren().setAll(btnHelp, btnMin, btnClose);
+                buttonsContainer.getChildren().setAll(btnTask, btnHelp, btnMin, btnClose);
             }
             AnchorPane layer = new AnchorPane();
             layer.setPickOnBounds(false);

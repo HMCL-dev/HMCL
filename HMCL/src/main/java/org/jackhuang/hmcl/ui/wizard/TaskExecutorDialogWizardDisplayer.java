@@ -110,6 +110,9 @@ public abstract class TaskExecutorDialogWizardDisplayer extends AbstractWizardDi
                     movedToBackground[0] = true;
                     TaskCenter.getInstance().enqueue(executor, pane.getTitle(), detail, kind, taskName);
                     Controllers.showToast(i18n("task.auto_background.enqueued", detail != null ? detail : pane.getTitle()));
+                    // onEnd() cleans up wizard state and navigates back to the parent page
+                    // (e.g. game install list, modpack list, mod page, etc.)
+                    // movedToBackground prevents onStop from navigating again on task completion
                     onEnd();
                     return;
                 }

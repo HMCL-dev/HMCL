@@ -276,9 +276,15 @@ public final class TaskCenterPage extends DecoratorAnimatedPage implements Decor
         row.setAlignment(Pos.CENTER_LEFT);
         row.getStyleClass().add("md-list-cell");
 
-        Node icon = success
-                ? SVG.CHECK.createIcon(14)
-                : SVG.CLOSE.createIcon(14);
+        boolean cancelled = !success && entry.getExecutor().getException() instanceof CancellationException;
+        Node icon;
+        if (success) {
+            icon = SVG.CHECK.createIcon(14);
+        } else if (cancelled) {
+            icon = SVG.CANCEL.createIcon(14);
+        } else {
+            icon = SVG.CLOSE.createIcon(14);
+        }
 
         Label kindTag = createKindTag(entry.getKind());
 
@@ -290,7 +296,7 @@ public final class TaskCenterPage extends DecoratorAnimatedPage implements Decor
 
         row.getChildren().addAll(icon, kindTag, label);
 
-        if (!success) {
+        if (!success && !cancelled) {
             row.setStyle("-fx-cursor: hand;");
             row.setOnMouseClicked(e -> showFailedTaskDialog(entry));
         }

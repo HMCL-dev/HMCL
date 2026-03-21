@@ -200,10 +200,11 @@ public final class TaskCenter {
             String detail = stoppedEntry.getDetail() != null ? stoppedEntry.getDetail() : stoppedEntry.getTitle();
             if (success) {
                 Controllers.showToast(i18n("task.toast.success", detail));
+            } else if (stoppedEntry.getExecutor().getException() instanceof CancellationException) {
+                Controllers.showToast(i18n("task.toast.cancelled", detail));
             } else {
                 Controllers.showToast(i18n("task.toast.failed", detail));
-                if (!(stoppedEntry.getExecutor().getException() instanceof CancellationException)
-                        && !Controllers.isDialogShowing()) {
+                if (!Controllers.isDialogShowing()) {
                     TaskCenterPage.showFailedTaskDialog(stoppedEntry);
                 }
             }
