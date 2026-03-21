@@ -117,9 +117,13 @@ public final class SettingsPage extends ScrollPane {
 
             ObjectProperty<UpdateChannel> updateChannel;
             {
-                final JFXButton btnUpdate = FXUtils.newToggleButton4(SVG.UPDATE, 20);
-                btnUpdate.setOnAction(e -> onUpdate());
+
+                var btn = FXUtils.newToggleButton4(SVG.UPDATE, 20);
+                btn.setOnAction(e -> onUpdate());
+                final StackPane btnUpdate = new StackPane(btn);
                 FXUtils.installFastTooltip(btnUpdate, i18n("update.tooltip"));
+
+                btnUpdate.setManaged(false);
 
                 var updatePane = new LineSelectButton<UpdateChannel>();
                 updateChannel = updatePane.valueProperty();
@@ -134,8 +138,6 @@ public final class SettingsPage extends ScrollPane {
                 final StringProperty lblUpdateSub = updatePane.subtitleProperty();
 
                 {
-
-
                     updateListener = any -> {
                         btnUpdate.setVisible(UpdateChecker.isOutdated());
 
@@ -155,6 +157,18 @@ public final class SettingsPage extends ScrollPane {
                     UpdateChecker.checkingUpdateProperty().addListener(new WeakInvalidationListener(updateListener));
                     updateListener.invalidated(null);
                 }
+
+                updatePane.getChildren().add(btnUpdate);
+                btnUpdate.layoutXProperty().bind(
+                        updatePane.widthProperty()
+                                .subtract(btnUpdate.widthProperty())
+                                .subtract(100)
+                );
+                btnUpdate.layoutYProperty().bind(
+                        updatePane.heightProperty()
+                                .subtract(btnUpdate.heightProperty())
+                                .divide(2)
+                );
 
                 settingsPane.getContent().add(updatePane);
             }
