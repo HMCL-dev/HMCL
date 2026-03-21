@@ -88,7 +88,6 @@ public class GameCrashWindow extends Stage {
     private final LaunchOptions launchOptions;
     private final View view;
     private final StackPane stackPane;
-    private final SpinnerPane spinnerPane = new SpinnerPane();
 
     private final List<Log> logs;
 
@@ -115,8 +114,6 @@ public class GameCrashWindow extends Stage {
 
         this.stackPane = new StackPane(view);
         this.feedbackTextFlow.getChildren().addAll(FXUtils.parseSegment(i18n("game.crash.feedback"), Controllers::onHyperlinkAction));
-
-        spinnerPane.getStyleClass().add("small-spinner-pane");
 
         setScene(new Scene(stackPane, 800, 480));
         StyleSheets.init(getScene());
@@ -277,10 +274,10 @@ public class GameCrashWindow extends Stage {
         logWindow.show();
     }
 
-    private void exportGameCrashInfo() {
+    private CompletableFuture<?> exportGameCrashInfo() {
         Path logFile = Paths.get("minecraft-exported-crash-info-" + LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH-mm-ss")) + ".zip").toAbsolutePath();
 
-        CompletableFuture.supplyAsync(() ->
+        return CompletableFuture.supplyAsync(() ->
                         logs.stream().map(Log::getLog).collect(Collectors.joining("\n")))
                 .thenComposeAsync(logs -> {
                     long processStartTime = managedProcess.getProcess().info()
@@ -316,7 +313,6 @@ public class GameCrashWindow extends Stage {
                         var dialog = new MessageDialogPane.Builder(i18n("settings.launcher.launcher_log.export.failed") + "\n" + StringUtils.getStackTrace(exception), i18n("message.error"), MessageDialogPane.MessageType.ERROR).ok(null).build();
                         DialogUtils.show(stackPane, dialog);
                     }
-                    spinnerPane.hideSpinner();
                     return null;
                 }, Schedulers.javafx());
     }
@@ -448,11 +444,16 @@ public class GameCrashWindow extends Stage {
             HBox toolBar = new HBox();
             VBox.setMargin(toolBar, new Insets(0, 0, 4, 0));
             {
+                SpinnerPane exportButtonPane = new SpinnerPane();
+                exportButtonPane.getStyleClass().add("small-spinner-pane");
+
                 JFXButton exportButton = FXUtils.newRaisedButton(i18n("logwindow.export_game_crash_logs"));
-                spinnerPane.setContent(exportButton);
+                exportButtonPane.setContent(exportButton);
                 exportButton.setOnAction(e -> {
-                    spinnerPane.showSpinner();
-                    exportGameCrashInfo();
+                    exportButtonPane.showSpinner();
+                    exportGameCrashInfo().whenCompleteAsync((result, exception) -> {
+                        exportButtonPane.hideSpinner();
+                    }, Schedulers.javafx());
                 });
 
                 JFXButton logButton = FXUtils.newRaisedButton(i18n("logwindow.title"));
@@ -465,7 +466,7 @@ public class GameCrashWindow extends Stage {
                 toolBar.setPadding(new Insets(8));
                 toolBar.setSpacing(8);
                 toolBar.getStyleClass().add("jfx-tool-bar");
-                toolBar.getChildren().setAll(spinnerPane, logButton, helpButton);
+                toolBar.getChildren().setAll(exportButtonPane, logButton, helpButton);
             }
 
             getChildren().setAll(titlePane, infoPane, moddedPane, gameDirPane, toolBar);
