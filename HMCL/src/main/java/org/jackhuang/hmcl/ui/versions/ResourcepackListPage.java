@@ -179,8 +179,8 @@ public final class ResourcepackListPage extends ListPageBase<ResourcepackListPag
     private static final class ResourcepackListCell extends MDListCell<ResourcepackInfoObject> {
         private final ImageContainer imageView = new ImageContainer(32);
         private final TwoLineListItem content = new TwoLineListItem();
-        private final JFXButton btnReveal = new JFXButton();
-        private final JFXButton btnDelete = new JFXButton();
+        private final JFXButton btnReveal = FXUtils.newToggleButton4(SVG.FOLDER_OPEN);
+        private final JFXButton btnDelete = FXUtils.newToggleButton4(SVG.DELETE_FOREVER);
         private final ResourcepackListPage page;
 
         public ResourcepackListCell(JFXListView<ResourcepackInfoObject> listView, ResourcepackListPage page) {
@@ -201,12 +201,6 @@ public final class ResourcepackListPage extends ListPageBase<ResourcepackListPag
 
             HBox.setHgrow(content, Priority.ALWAYS);
             root.setCenter(content);
-
-            btnReveal.getStyleClass().add("toggle-icon4");
-            btnReveal.setGraphic(SVG.FOLDER_OPEN.createIcon());
-
-            btnDelete.getStyleClass().add("toggle-icon4");
-            btnDelete.setGraphic(SVG.DELETE_FOREVER.createIcon());
 
             HBox right = new HBox(8);
             right.setAlignment(Pos.CENTER_RIGHT);
