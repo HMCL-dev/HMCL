@@ -79,8 +79,10 @@ public class Translator {
             return supportedLocale.i18n("download.size.byte", bytes);
         } else if (bytes < 1024 * 1024) {
             return supportedLocale.i18n("download.size.kibibyte", (double) bytes / 1024);
-        } else {
+        } else if (bytes < 1024 * 1024 * 1024){
             return supportedLocale.i18n("download.size.megabyte", (double) bytes / (1024 * 1024));
+        } else {
+            return supportedLocale.i18n("download.size.gibabyte", (double) bytes / (1024 * 1024 * 1024));
         }
     }
 }

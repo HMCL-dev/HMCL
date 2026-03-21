@@ -202,7 +202,7 @@ public final class Versions {
     }
 
     public static void cleanGameFiles(Profile profile) {
-        var dialogBuilder = new MessageDialogPane.Builder(i18n("game.clean.content", "..."), i18n("message.question"), MessageDialogPane.MessageType.QUESTION);
+        var dialogBuilder = new MessageDialogPane.Builder(i18n("game.clean.content", i18n("game.clean.loading")), i18n("message.question"), MessageDialogPane.MessageType.QUESTION);
         var spinner = new JFXSpinner();
         spinner.getStyleClass().add("small-spinner");
 
@@ -235,33 +235,30 @@ public final class Versions {
                     .flatMap(version -> version.getLibraries().stream())
                     .map(Library::getPath)
                     .collect(Collectors.toSet());
-            List<Path> junkFiles = new ArrayList<>();
 
-            Path assetsDir = repository.getBaseDirectory().resolve("assets").resolve("objects");
+            List<Path> unusedFiles = new ArrayList<>();
 
-            junkFiles.addAll(findUnlistedFiles(assetsDir, activeAssets));
+            unusedFiles.addAll(findUnlistedFiles(repository.getBaseDirectory().resolve("assets").resolve("objects"), activeAssets));
+            unusedFiles.addAll(findUnlistedFiles(repository.getBaseDirectory().resolve("libraries"), activeLibraries));
 
-            Path libsDir = repository.getBaseDirectory().resolve("libraries");
-            junkFiles.addAll(findUnlistedFiles(libsDir, activeLibraries));
-
-            List<Path> logsAndCrashes = new ArrayList<>();
-            logsAndCrashes.add(repository.getBaseDirectory().resolve("logs"));
-            logsAndCrashes.add(repository.getBaseDirectory().resolve("crash-reports"));
+            List<Path> unusedLogs = new ArrayList<>();
+            unusedLogs.add(repository.getBaseDirectory().resolve("logs"));
+            unusedLogs.add(repository.getBaseDirectory().resolve("crash-reports"));
             versions.forEach(v -> {
-                logsAndCrashes.add(repository.getVersionRoot(v.getId()).resolve("logs"));
-                logsAndCrashes.add(repository.getVersionRoot(v.getId()).resolve("crash-reports"));
+                unusedLogs.add(repository.getVersionRoot(v.getId()).resolve("logs"));
+                unusedLogs.add(repository.getVersionRoot(v.getId()).resolve("crash-reports"));
             });
 
-            for (Path dir : logsAndCrashes) {
+            for (Path dir : unusedLogs) {
                 if (Files.exists(dir)) {
                     try (var s = Files.walk(dir)) {
-                        s.filter(Files::isRegularFile).forEach(junkFiles::add);
+                        s.filter(Files::isRegularFile).forEach(unusedFiles::add);
                     } catch (IOException ignored) {
                     }
                 }
             }
 
-            return junkFiles;
+            return unusedFiles;
         }).thenApplyAsync((list) -> {
             long totalSize = list.stream()
                     .mapToLong(path -> {
