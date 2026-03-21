@@ -243,7 +243,7 @@ public final class Versions {
 
             List<Path> unusedFolders = new ArrayList<>();
 
-            for (String path : List.of("logs", "crash-reports", "modernfix", "mods/.connector")) {
+            for (String path : List.of("logs", "crash-reports", "modernfix", "mods/.connector", "CustomSkinLoader/caches", ".fabric")) {
                 unusedFolders.add(repository.getBaseDirectory().resolve(path));
                 versions.forEach(v -> {
                     unusedFolders.add(repository.getVersionRoot(v.getId()).resolve(path));
@@ -255,7 +255,7 @@ public final class Versions {
                     unusedFolders.addAll(walker
                             .filter(it -> {
                                 var name = it.getFileName().toString();
-                                return Files.isDirectory(it) && (name.startsWith("natives-")) || name.endsWith("-natives");
+                                return Files.isDirectory(it) && (name.startsWith("natives-") || name.endsWith("-natives"));
                             }).toList());
                 } catch (IOException ignored) {
                 }
