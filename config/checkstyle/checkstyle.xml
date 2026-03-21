@@ -118,6 +118,21 @@
         </module>
     </module>
 
+    <module name="SuppressionSingleFilter">
+        <property name="checks" value="RegexpHeader"/>
+        <property name="files" value="^(?!.*[\\/]org[\\/]jackhuang[\\/]hmcl[\\/]).*$"/>
+    </module>
+
+    <module name="SuppressionSingleFilter">
+        <property name="checks" value="RegexpHeader"/>
+        <property name="files" value=".*[\\/]org[\\/]jackhuang[\\/]hmcl[\\/]ui[\\/]skin[\\/].*"/>
+    </module>
+
+    <module name="SuppressionSingleFilter">
+        <property name="checks" value="RegexpHeader"/>
+        <property name="files" value=".*[\\/](SwingFXUtils|ScrollUtils|TypeUtils).java"/>
+    </module>
+
     <module name="RegexpHeader">
         <property name="headerFile" value="${licenseHeaderFile}"/>
         <property name="charset" value="UTF-8"/>
