@@ -43,6 +43,7 @@ import org.jackhuang.hmcl.mod.RemoteMod;
 import org.jackhuang.hmcl.mod.RemoteModRepository;
 import org.jackhuang.hmcl.mod.curse.CurseForgeRemoteModRepository;
 import org.jackhuang.hmcl.mod.modrinth.ModrinthRemoteModRepository;
+import org.jackhuang.hmcl.setting.DownloadProviders;
 import org.jackhuang.hmcl.setting.Profile;
 import org.jackhuang.hmcl.setting.VersionIconType;
 import org.jackhuang.hmcl.task.Schedulers;
@@ -154,7 +155,7 @@ final class ModListPageSkin extends SkinBase<ModListPage> {
 
             // Toolbar Selecting
             toolbarSelecting.getChildren().setAll(
-                    createToolbarButton2(i18n("button.remove"), SVG.DELETE, () -> {
+                    createToolbarButton2(i18n("button.remove"), SVG.DELETE_FOREVER, () -> {
                         Controllers.confirm(i18n("button.remove.confirm"), i18n("button.remove"), () -> {
                             skinnable.removeSelected(listView.getSelectionModel().getSelectedItems());
                         }, null);
@@ -465,7 +466,7 @@ final class ModListPageSkin extends SkinBase<ModListPage> {
                     Task.runAsync(() -> {
                         Optional<RemoteMod.Version> versionOptional = repository.getRemoteVersionByLocalFile(modInfo.getModInfo(), modInfo.getModInfo().getFile());
                         if (versionOptional.isPresent()) {
-                            RemoteMod remoteMod = repository.getModById(versionOptional.get().getModid());
+                            RemoteMod remoteMod = repository.getModById(DownloadProviders.getDownloadProvider(), versionOptional.get().getModid());
                             FXUtils.runInFX(() -> {
                                 for (ModLoaderType modLoaderType : versionOptional.get().getLoaders()) {
                                     String loaderName = switch (modLoaderType) {
@@ -493,7 +494,7 @@ final class ModListPageSkin extends SkinBase<ModListPage> {
                                             repository instanceof CurseForgeRemoteModRepository ? HMCLLocalizedDownloadListPage.ofCurseForgeMod(null, false) : HMCLLocalizedDownloadListPage.ofModrinthMod(null, false),
                                             remoteMod,
                                             new Profile.ProfileVersion(ModListPageSkin.this.getSkinnable().getProfile(), ModListPageSkin.this.getSkinnable().getInstanceId()),
-                                            (profile, version, mod, file) -> org.jackhuang.hmcl.ui.download.DownloadPage.download(profile, version, file, "mods")
+                                            (downloadProvider, profile, version, mod, file) -> org.jackhuang.hmcl.ui.download.DownloadPage.download(downloadProvider, profile, version, file, "mods")
                                     ));
                                 });
                                 button.setDisable(false);
@@ -554,9 +555,9 @@ final class ModListPageSkin extends SkinBase<ModListPage> {
         JFXCheckBox checkBox = new JFXCheckBox();
         ImageContainer imageContainer = new ImageContainer(24);
         TwoLineListItem content = new TwoLineListItem();
-        JFXButton restoreButton = new JFXButton();
-        JFXButton infoButton = new JFXButton();
-        JFXButton revealButton = new JFXButton();
+        JFXButton restoreButton = FXUtils.newToggleButton4(SVG.RESTORE);
+        JFXButton infoButton = FXUtils.newToggleButton4(SVG.INFO);
+        JFXButton revealButton = FXUtils.newToggleButton4(SVG.FOLDER);
         BooleanProperty booleanProperty;
 
         Tooltip warningTooltip;
@@ -575,16 +576,7 @@ final class ModListPageSkin extends SkinBase<ModListPage> {
 
             imageContainer.setImage(VersionIconType.COMMAND.getIcon());
 
-            restoreButton.getStyleClass().add("toggle-icon4");
-            restoreButton.setGraphic(SVG.RESTORE.createIcon());
-
             FXUtils.installFastTooltip(restoreButton, i18n("mods.restore"));
-
-            revealButton.getStyleClass().add("toggle-icon4");
-            revealButton.setGraphic(SVG.FOLDER.createIcon());
-
-            infoButton.getStyleClass().add("toggle-icon4");
-            infoButton.setGraphic(SVG.INFO.createIcon());
 
             container.getChildren().setAll(checkBox, imageContainer, content, restoreButton, revealButton, infoButton);
 
