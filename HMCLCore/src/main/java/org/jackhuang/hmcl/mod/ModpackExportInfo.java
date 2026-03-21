@@ -227,6 +227,7 @@ public class ModpackExportInfo {
     }
 
     public static class Options {
+        private boolean requireAuthor;
         private boolean requireUrl;
         private boolean requireForceUpdate;
         private boolean requireFileApi;
@@ -240,6 +241,10 @@ public class ModpackExportInfo {
         private boolean requireSkipCurseForgeRemoteFiles;
 
         public Options() {
+        }
+
+        public boolean isRequireAuthor() {
+            return requireAuthor;
         }
 
         public boolean isRequireUrl() {
@@ -284,6 +289,11 @@ public class ModpackExportInfo {
 
         public boolean isRequireSkipCurseForgeRemoteFiles() {
             return requireSkipCurseForgeRemoteFiles;
+        }
+
+        public Options requireAuthor() {
+            requireAuthor = true;
+            return this;
         }
 
         public Options requireUrl() {
