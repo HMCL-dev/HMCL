@@ -135,24 +135,13 @@ public class DownloadPage extends DecoratorAnimatedPage implements DecoratorPage
 
         Path runDirectory = profile.getRepository().hasVersion(version) ? profile.getRepository().getRunDirectory(version) : profile.getRepository().getBaseDirectory();
 
-        String detailPrefix;
-        switch (subdirectoryName) {
-            case "mods":
-                detailPrefix = "安装模组";//TODO i18n
-                break;
-            case "resourcepacks":
-                detailPrefix = "安装资源包";//TODO i18n
-                break;
-            case "shaderpacks":
-                detailPrefix = "安装光影";//TODO i18n
-                break;
-            case "saves":
-                detailPrefix = "安装世界";//TODO i18n
-                break;
-            default:
-                detailPrefix = "下载";//TODO i18n
-                break;
-        }
+        String detailKey = switch (subdirectoryName) {
+            case "mods" -> "task.detail.install_mod";
+            case "resourcepacks" -> "task.detail.install_resourcepack";
+            case "shaderpacks" -> "task.detail.install_shaderpack";
+            case "saves" -> "task.detail.install_world";
+            default -> "task.detail.download";
+        };
 
         Controllers.prompt(i18n("archive.file.name"), (result, handler) -> {
             Path dest = runDirectory.resolve(subdirectoryName).resolve(result);
@@ -173,7 +162,7 @@ public class DownloadPage extends DecoratorAnimatedPage implements DecoratorPage
                     Controllers.showToast(i18n("install.success"));
                 }
             }), i18n("message.downloading"), TaskCancellationAction.NORMAL,
-                detailPrefix + "-[" + file.getName() + "]");
+                i18n(detailKey, file.getName()));
             handler.resolve();
         }, file.getFile().getFilename(), new Validator(i18n("install.new_game.malformed"), FileUtils::isNameValid));
 
@@ -323,7 +312,7 @@ public class DownloadPage extends DecoratorAnimatedPage implements DecoratorPage
             settings.put("success_message", i18n("install.success"));
             settings.put(FailureCallback.KEY, (settings1, exception, next) -> UpdateInstallerWizardProvider.alertFailureMessage(exception, next));
 
-            settings.put("task_detail", "安装游戏-[" + settings.get("name") + "]");//TODO i18n
+            settings.put("task_detail", i18n("task.detail.install_game", (String) settings.get("name")));
             settings.put("backgroundable", true);
             settings.put("return_to_download_list", true);
             settings.put("task_kind", TaskCenter.TaskKind.GAME_INSTALL);

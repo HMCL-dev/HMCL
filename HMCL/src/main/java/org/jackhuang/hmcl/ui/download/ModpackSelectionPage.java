@@ -157,7 +157,7 @@ public final class ModpackSelectionPage extends VBox implements WizardPage {
                                     }),
                             i18n("message.downloading"),
                             TaskCancellationAction.NORMAL,
-                            "安装整合包-[" + modpack.getFileName() + "]"//TODO: i18n
+                            i18n("task.detail.install_modpack", modpack.getFileName().toString())
                     );
                 }
             } catch (IOException e) {

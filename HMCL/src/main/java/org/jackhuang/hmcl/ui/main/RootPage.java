@@ -193,7 +193,7 @@ public class RootPage extends DecoratorAnimatedPage implements DecoratorPage {
             }
 
             AdvancedListItem taskManagerItem = new AdvancedListItem();
-            taskManagerItem.setLeftIcon(SVG.LIST); //TODO SVG待更换
+            taskManagerItem.setLeftIcon(SVG.CHECKLIST);
             taskManagerItem.setTitle(i18n("task.manage"));
             taskManagerItem.setOnAction(e -> {
                 Controllers.navigate(new TaskCenterPage());

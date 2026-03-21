@@ -77,12 +77,12 @@ public final class UpdateInstallerWizardProvider implements WizardProvider {
         String detail = null;
         for (Object value : settings.asStringMap().values()) {
             if (value instanceof RemoteVersion remoteVersion) {
-                detail = "安装" + remoteVersion.getLibraryId() + "-[" + remoteVersion.getSelfVersion() + "]";//TODO i18n
+                detail = i18n("task.detail.install_library", remoteVersion.getLibraryId(), remoteVersion.getSelfVersion());
                 break;
             }
         }
         if (detail == null) {
-            detail = "安装" + libraryId;//TODO i18n
+            detail = i18n("task.detail.install_library.fallback", libraryId);
         }
         settings.put("task_detail", detail);
         settings.put("backgroundable", true);

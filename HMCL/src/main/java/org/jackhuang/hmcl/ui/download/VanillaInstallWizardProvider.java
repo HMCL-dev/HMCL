@@ -72,7 +72,7 @@ public final class VanillaInstallWizardProvider implements WizardProvider {
         settings.put(FailureCallback.KEY, (settings1, exception, next) -> UpdateInstallerWizardProvider.alertFailureMessage(exception, next));
 
         String name = (String) settings.get("name");
-        settings.put("task_detail", "安装游戏-[" + name + "]");//TODO i18n
+        settings.put("task_detail", i18n("task.detail.install_game", name));
         settings.put("backgroundable", true);
         settings.put("task_kind", TaskCenter.TaskKind.GAME_INSTALL);
         settings.put("task_name", name);
