@@ -445,6 +445,7 @@
     -fx-max-height: 55px;
     -fx-min-height: 55px;
     -fx-background-color: -monet-primary-container;
+    -fx-opacity: 1; /* Override the opacity of disabled button */
     -fx-cursor: hand;
 }
 
@@ -912,27 +913,21 @@
 *                                                                              *
 *******************************************************************************/
 
+
 .jfx-progress-bar > .track {
     -fx-background-color: -monet-secondary-container;
 }
 
-.jfx-progress-bar > .bar,
-.jfx-progress-bar:indeterminate > .bar{
+.jfx-progress-bar > .bar {
     -fx-background-color: -monet-primary;
-    -fx-padding: 1.5;
-}
-
-.jfx-progress-bar > .secondary-bar,
-.jfx-progress-bar:indeterminate > .secondary-bar {
-    -fx-background-color: -monet-secondary;
+    -fx-padding: 2;
 }
 
 .jfx-progress-bar > .track,
 .jfx-progress-bar > .bar {
-    -fx-background-radius: 0;
+    -fx-background-radius: 2;
     -fx-background-insets: 0;
 }
-
 
 /*******************************************************************************
 *                                                                              *
@@ -1170,7 +1165,7 @@
     -fx-background-insets: 0px;
 
     -jfx-toggle-color: -monet-primary;
-    -jfx-toggle-line-color: -monet-primary-container;
+    -jfx-toggle-line-color: -monet-secondary-container;
     -jfx-untoggle-color: -monet-outline;
     -jfx-untoggle-line-color: -monet-surface-container-highest;
     -jfx-size: 10;
@@ -1456,20 +1451,8 @@
     -fx-stroke: -monet-primary-container;
 }
 
-.jfx-spinner:determinate .percentage {
-    -fx-fill: -monet-on-surface-variant;
-}
-
-.first-spinner {
-    -jfx-radius: 20;
-}
-
-.first-spinner .arc {
-    -fx-stroke-width: 5.0;
-}
-
 .small-spinner {
-    -jfx-radius: 10;
+    -jfx-radius: 9;
 }
 
 .small-spinner .arc {
@@ -1477,59 +1460,7 @@
 }
 
 .small-spinner-pane .jfx-spinner {
-    -jfx-radius: 10;
-}
-
-.small-spinner-pane .jfx-spinner .arc {
-    -fx-stroke-width: 3.0;
-}
-
-.second-spinner {
-    -jfx-radius: 30;
-}
-
-.second-spinner .arc {
-    -fx-stroke-width: 5.0;
-}
-
-.third-spinner {
-    -jfx-radius: 40;
-}
-
-.third-spinner .arc {
-    -fx-stroke-width: 5.0;
-}
-
-.fourth-spinner {
-    -jfx-radius: 50;
-}
-
-.fourth-spinner .arc {
-    -fx-stroke-width: 5.0;
-}
-
-.fifth-spinner {
-    -jfx-radius: 60;
-}
-
-.fifth-spinner .arc {
-    -fx-stroke-width: 5.0;
-}
-
-.sixth-spinner {
-    -jfx-radius: 70;
-}
-
-.sixth-spinner .arc {
-    -fx-stroke-width: 5.0;
-}
-
-.seventh-spinner {
-    -jfx-radius: 80;
-}
-
-.seventh-spinner .arc {
-    -fx-stroke-width: 5.0;
+    -jfx-radius: 9;
 }
 
 /*******************************************************************************
