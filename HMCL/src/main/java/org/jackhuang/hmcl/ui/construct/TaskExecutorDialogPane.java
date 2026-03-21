@@ -35,7 +35,6 @@ import org.jackhuang.hmcl.ui.SVG;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.Optional;
 import java.util.function.Consumer;
 
 import static org.jackhuang.hmcl.ui.FXUtils.onEscPressed;
@@ -55,6 +54,7 @@ public class TaskExecutorDialogPane extends BorderPane {
     private final JFXButton btnBackground;
     private Runnable onBackground;
     private Runnable escAction;
+    private Runnable cancelAction;
 
     public void setEscAction(Runnable action) {
         this.escAction = action;
@@ -62,7 +62,6 @@ public class TaskExecutorDialogPane extends BorderPane {
 
     public TaskExecutorDialogPane(@NotNull TaskCancellationAction cancel) {
         this.getStyleClass().add("task-executor-dialog-layout");
-        cancelAction = null;
 
         FXUtils.setLimitWidth(this, 500);
         FXUtils.setLimitHeight(this, 300);
@@ -116,6 +115,10 @@ public class TaskExecutorDialogPane extends BorderPane {
         setCancel(cancel);
 
         btnCancel.setOnAction(e -> {
+            if (cancelAction != null) {
+                cancelAction.run();
+                return;
+            }
             if (onCancel.getCancellationAction() != null) {
                 if (executor != null)
                     executor.cancel();
@@ -136,41 +139,6 @@ public class TaskExecutorDialogPane extends BorderPane {
         });
     }
 
-    private boolean isQueuedNotStarted() {
-        if (executor == null) {
-            return false;
-        }
-        if (executor instanceof AsyncTaskExecutor asyncExecutor) {
-            return !asyncExecutor.isStarted();
-        }
-        return false;
-    }
-
-    private void handleCancelOrClose() {
-        if (isQueuedNotStarted()) {
-            fireEvent(new DialogCloseEvent());
-            return;
-        }
-
-        if (cancelAction != null) {
-            cancelAction.run();
-            return;
-        }
-
-        Optional.ofNullable(executor).ifPresent(TaskExecutor::cancel);
-        if (onCancel.getCancellationAction() != null) {
-            onCancel.getCancellationAction().accept(this);
-        }
-    }
-
-    private void applyQueuedStateIfNeeded() {
-        if (isQueuedNotStarted()) {
-            setCancelText(i18n("button.close"));
-        } else {
-            setCancelText(i18n("button.cancel"));
-        }
-    }
-
     public void setExecutor(TaskExecutor executor) {
         setExecutor(executor, true);
     }
@@ -189,7 +157,6 @@ public class TaskExecutorDialogPane extends BorderPane {
                     }
                 });
         }
-        applyQueuedStateIfNeeded();
     }
 
     public StringProperty titleProperty() {
@@ -236,10 +203,7 @@ public class TaskExecutorDialogPane extends BorderPane {
 
     public void refreshTaskList() {
         taskListPane.refresh();
-        applyQueuedStateIfNeeded();
     }
-
-    private Runnable cancelAction;
 
     public void setCancelAction(Runnable action) {
         this.cancelAction = action;

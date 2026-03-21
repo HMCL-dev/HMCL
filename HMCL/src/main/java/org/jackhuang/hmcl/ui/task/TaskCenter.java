@@ -24,6 +24,7 @@ import java.util.Map;
 import javafx.application.Platform;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
+import org.jackhuang.hmcl.task.AsyncTaskExecutor;
 import org.jackhuang.hmcl.task.TaskExecutor;
 import org.jackhuang.hmcl.task.TaskListener;
 import org.jackhuang.hmcl.ui.Controllers;
@@ -156,7 +157,10 @@ public final class TaskCenter {
                 }
             });
 
-            executor.start();
+            // Only start if not already running externally (e.g. started by downloadTaskDialog before enqueue)
+            if (!(executor instanceof AsyncTaskExecutor ate && ate.isStarted())) {
+                executor.start();
+            }
             return;
         }
     }
