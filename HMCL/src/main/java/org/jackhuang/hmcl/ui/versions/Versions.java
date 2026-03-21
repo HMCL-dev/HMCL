@@ -255,8 +255,6 @@ public final class Versions {
                     unusedFolders.addAll(walker
                             .filter(it -> {
                                 var name = it.getFileName().toString();
-                                System.out.println(name);
-                                System.out.println(Files.isDirectory(it) && (name.startsWith("natives-")) || name.endsWith("-natives"));
                                 return Files.isDirectory(it) && (name.startsWith("natives-")) || name.endsWith("-natives");
                             }).toList());
                 } catch (IOException ignored) {
