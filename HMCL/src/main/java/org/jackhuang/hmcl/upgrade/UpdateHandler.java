@@ -125,7 +125,7 @@ public final class UpdateHandler {
                             throw new IOException("Current JAR is not verified");
                         }
 
-                        Controllers.onApplicationStop();
+                        Platform.runLater(Controllers::onApplicationStop);
 
                         try {
                             FileSaver.waitForAllSaves();
