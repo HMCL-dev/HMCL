@@ -17,11 +17,11 @@
  */
 package org.jackhuang.hmcl.ui.construct;
 
+import javafx.beans.InvalidationListener;
 import javafx.beans.binding.Bindings;
 import javafx.beans.property.StringProperty;
 import javafx.beans.property.StringPropertyBase;
 import javafx.collections.FXCollections;
-import javafx.collections.ListChangeListener;
 import javafx.collections.ObservableList;
 import javafx.css.PseudoClass;
 import javafx.geometry.Pos;
@@ -175,7 +175,7 @@ public class TwoLineListItem extends VBox {
             FXUtils.onChangeAndOperate(tagsBox.heightProperty(), height -> FXUtils.setLimitHeight(scrollPane, height.doubleValue()));
             firstLine.getChildren().setAll(lblTitle, scrollPane);
 
-            tags.addListener((ListChangeListener<? super Label>) change -> scrollPane.requestLayout());
+            tags.addListener((InvalidationListener) ignored -> scrollPane.requestLayout());
         }
         return tags;
     }
