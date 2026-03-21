@@ -472,7 +472,7 @@ public final class FXUtils {
         }
     }
 
-    private static final Duration TOOLTIP_FAST_SHOW_DELAY = Duration.millis(50);
+    private static final Duration TOOLTIP_FAST_SHOW_DELAY = Duration.millis(250);
     private static final Duration TOOLTIP_SLOW_SHOW_DELAY = Duration.millis(500);
     private static final Duration TOOLTIP_SHOW_DURATION = Duration.millis(5000);
 
