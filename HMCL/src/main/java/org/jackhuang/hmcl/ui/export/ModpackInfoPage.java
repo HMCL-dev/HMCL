@@ -221,9 +221,14 @@ public final class ModpackInfoPage extends Control implements WizardPage {
 
                     list.getContent().addAll(
                             createTextFieldLinePane(i18n("modpack.name"), skinnable.name, new RequiredValidator()),
-                            createTextFieldLinePane(i18n("archive.author"), skinnable.author, new RequiredValidator()),
                             createTextFieldLinePane(i18n("archive.version"), skinnable.version, new RequiredValidator())
                     );
+
+                    if (skinnable.options.isRequireAuthor()) {
+                        list.getContent().add(
+                                createTextFieldLinePane(i18n("archive.author"), skinnable.author, new RequiredValidator())
+                        );
+                    }
 
                     if (skinnable.options.isRequireFileApi()) {
                         list.getContent().add(createTextFieldLinePane(

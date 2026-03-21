@@ -1,3 +1,20 @@
+/*
+ * Hello Minecraft! Launcher
+ * Copyright (C) 2026 huangyuhui <huanghongxun2008@126.com> and contributors
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
 package org.jackhuang.hmcl.ui.versions;
 
 import com.jfoenix.controls.JFXButton;
@@ -179,8 +196,8 @@ public final class ResourcepackListPage extends ListPageBase<ResourcepackListPag
     private static final class ResourcepackListCell extends MDListCell<ResourcepackInfoObject> {
         private final ImageContainer imageView = new ImageContainer(32);
         private final TwoLineListItem content = new TwoLineListItem();
-        private final JFXButton btnReveal = new JFXButton();
-        private final JFXButton btnDelete = new JFXButton();
+        private final JFXButton btnReveal = FXUtils.newToggleButton4(SVG.FOLDER_OPEN);
+        private final JFXButton btnDelete = FXUtils.newToggleButton4(SVG.DELETE_FOREVER);
         private final ResourcepackListPage page;
 
         public ResourcepackListCell(JFXListView<ResourcepackInfoObject> listView, ResourcepackListPage page) {
@@ -201,12 +218,6 @@ public final class ResourcepackListPage extends ListPageBase<ResourcepackListPag
 
             HBox.setHgrow(content, Priority.ALWAYS);
             root.setCenter(content);
-
-            btnReveal.getStyleClass().add("toggle-icon4");
-            btnReveal.setGraphic(SVG.FOLDER_OPEN.createIcon());
-
-            btnDelete.getStyleClass().add("toggle-icon4");
-            btnDelete.setGraphic(SVG.DELETE_FOREVER.createIcon());
 
             HBox right = new HBox(8);
             right.setAlignment(Pos.CENTER_RIGHT);
