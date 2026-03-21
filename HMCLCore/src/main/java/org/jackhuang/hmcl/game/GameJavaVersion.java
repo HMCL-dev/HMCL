@@ -17,11 +17,13 @@
  */
 package org.jackhuang.hmcl.game;
 
+import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.gson.JsonSerializable;
 import org.jackhuang.hmcl.util.platform.Architecture;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
 import org.jackhuang.hmcl.util.platform.Platform;
 import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
+import org.jackhuang.hmcl.util.versioning.VersionNumber;
 
 import java.util.Arrays;
 import java.util.Collections;
@@ -49,6 +51,14 @@ public record GameJavaVersion(String component, int majorVersion) {
         if (gameVersion.compareTo("1.13") >= 0)
             return JAVA_8;
         return null;
+    }
+
+    public static GameJavaVersion getCleanroomJavaVersion(String cleanroomVersion) {
+        VersionNumber versionNumber = VersionNumber.asVersion(StringUtils.removeSuffix(cleanroomVersion, "-alpha"));
+        if (versionNumber.compareTo("0.5.0") >= 0)
+            return JAVA_25;
+        else
+            return JAVA_21;
     }
 
     public static GameJavaVersion get(int major) {
