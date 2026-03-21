@@ -102,7 +102,7 @@ public final class NBTEditorPage extends SpinnerPane implements DecoratorPage {
                         var view = new TreeView<>(root) {
                             @Override
                             protected Skin<?> createDefaultSkin() {
-                                return new TreeViewSkin<Tag>(this) {
+                                return new TreeViewSkin<>(this) {
                                     {
                                         FXUtils.smoothScrolling(getVirtualFlow());
                                     }
