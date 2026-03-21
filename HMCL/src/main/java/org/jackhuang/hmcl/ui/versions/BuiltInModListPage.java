@@ -24,6 +24,7 @@ import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.ui.ListPageBase;
 import org.jackhuang.hmcl.ui.construct.PageAware;
 
+import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
@@ -42,47 +43,40 @@ public class BuiltInModListPage extends ListPageBase<ModListPageSkin.ModInfoObje
     public void loadVersion(Profile profile, String id) {
         getItems().clear();
         this.modManager = profile.getRepository().getModManager(id);
-        refresh();
+        loadMods(false);
     }
 
+    /**
+     * Called by the refresh button in the skin — forces a full rescan of the mods directory.
+     */
     public void refresh() {
-        if (modManager == null) return;
-        try {
-            if (modManager.getModsDirectory() != null) {
-                LOG.info("Refreshing built-in mod list for folder: " + modManager.getModsDirectory().toAbsolutePath());
-            }
-        } catch (Exception e) {
-            LOG.warning("Failed to log mods directory", e);
-        }
+        loadMods(true);
+    }
 
-        LOG.info("Refreshing built-in mod list page...");
+    private void loadMods(boolean forceRefresh) {
+        if (modManager == null) return;
 
         getItems().clear();
         setLoading(true);
 
         CompletableFuture.supplyAsync(() -> {
             try {
-                modManager.refreshMods();
+                if (forceRefresh) {
+                    modManager.refreshMods();
+                }
                 return modManager.getMods().stream()
-                        .filter(mod -> {
-                            try {
-                                return mod != null && mod.hasBundledMods();
-                            } catch (Exception e) {
-                                return false;
-                            }
-                        })
+                        .filter(mod -> mod != null && mod.hasBundledMods())
                         .map(ModListPageSkin.ModInfoObject::new)
                         .collect(Collectors.toList());
             } catch (Exception e) {
-                LOG.warning("Failed to refresh built-in mods", e);
-                return null;
+                LOG.warning("Failed to load built-in mods", e);
+                return List.<ModListPageSkin.ModInfoObject>of();
             }
         }, Schedulers.io()).whenCompleteAsync((list, ex) -> {
             if (ex != null) {
                 LOG.warning("Async task failed in BuiltInModListPage", ex);
-            } else if (list != null) {
+            } else {
                 getItems().setAll(list);
-                LOG.info("Built-in mod list refreshed, found " + list.size() + " mods with JIJ.");
             }
             setLoading(false);
         }, Schedulers.javafx());

@@ -77,16 +77,26 @@ public final class QuiltModMetadata {
                 root.quilt_loader.jars.stream().map(jar -> jar.file).toList() :
                 Collections.emptyList();
 
+        String authors = root.quilt_loader.metadata.contributors != null
+                ? root.quilt_loader.metadata.contributors.entrySet().stream()
+                    .map(entry -> String.format("%s (%s)", entry.getKey(), entry.getValue().getAsJsonPrimitive().getAsString()))
+                    .collect(Collectors.joining(", "))
+                : "";
+        String homepage = root.quilt_loader.metadata.contact != null
+                ? Optional.ofNullable(root.quilt_loader.metadata.contact.get("homepage"))
+                    .map(jsonElement -> jsonElement.getAsJsonPrimitive().getAsString()).orElse("")
+                : "";
+
         return new LocalModFile(
                 modManager,
                 modManager.getLocalMod(root.quilt_loader.id, ModLoaderType.QUILT),
                 modFile,
                 root.quilt_loader.metadata.name,
                 new LocalModFile.Description(root.quilt_loader.metadata.description),
-                root.quilt_loader.metadata.contributors.entrySet().stream().map(entry -> String.format("%s (%s)", entry.getKey(), entry.getValue().getAsJsonPrimitive().getAsString())).collect(Collectors.joining(", ")),
+                authors,
                 root.quilt_loader.version,
                 "",
-                Optional.ofNullable(root.quilt_loader.metadata.contact.get("homepage")).map(jsonElement -> jsonElement.getAsJsonPrimitive().getAsString()).orElse(""),
+                homepage,
                 root.quilt_loader.metadata.icon,
                 bundledMods);
     }

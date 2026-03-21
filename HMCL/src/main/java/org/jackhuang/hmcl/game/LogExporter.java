@@ -108,7 +108,7 @@ public final class LogExporter {
                     infoBuilder.append("----------------------------").append(System.lineSeparator());
                     infoBuilder.append(System.lineSeparator());
 
-                    infoBuilder.append("=== JIJ Info List ===").append(System.lineSeparator());
+                    infoBuilder.append("=== JIJ Info List (active mods only) ===").append(System.lineSeparator());
 
                     boolean hasJij = false;
                     for (LocalModFile mod : modManager.getMods()) {
