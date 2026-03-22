@@ -19,8 +19,10 @@ package org.jackhuang.hmcl.ui;
 
 import javafx.application.Platform;
 import javafx.beans.property.*;
+import javafx.scene.Node;
 import javafx.scene.control.Control;
 import javafx.scene.control.SkinBase;
+import javafx.scene.paint.Color;
 import javafx.scene.shape.Rectangle;
 import org.jackhuang.hmcl.util.FXThread;
 import org.jackhuang.hmcl.util.MathUtils;
@@ -83,6 +85,7 @@ public final class MemoryStatusBar extends Control {
             memoryTotal.setArcWidth(HEIGHT);
             memoryTotal.setArcHeight(HEIGHT);
             memoryTotal.getStyleClass().add("memory-total");
+            memoryTotal.setFill(Color.RED);
 
             memoryUsed = new Rectangle();
             memoryUsed.setArcWidth(HEIGHT);
@@ -141,8 +144,28 @@ public final class MemoryStatusBar extends Control {
         }
 
         @Override
+        public double computeBaselineOffset(double topInset, double rightInset, double bottomInset, double leftInset) {
+            return Node.BASELINE_OFFSET_SAME_AS_HEIGHT;
+        }
+
+        @Override
+        protected double computePrefWidth(double height, double topInset, double rightInset, double bottomInset, double leftInset) {
+            return topInset + 100 + bottomInset;
+        }
+
+        @Override
         protected double computePrefHeight(double width, double topInset, double rightInset, double bottomInset, double leftInset) {
             return topInset + HEIGHT + bottomInset;
+        }
+
+        @Override
+        protected double computeMaxWidth(double height, double topInset, double rightInset, double bottomInset, double leftInset) {
+            return getSkinnable().prefWidth(height);
+        }
+
+        @Override
+        protected double computeMaxHeight(double width, double topInset, double rightInset, double bottomInset, double leftInset) {
+            return getSkinnable().prefHeight(width);
         }
     }
 
