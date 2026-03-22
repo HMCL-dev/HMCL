@@ -313,7 +313,7 @@ public final class VersionSettingsPage extends StackPane implements DecoratorPag
                         return i18n("settings.memory.used_per_total",
                                 GIGABYTES.convertFromBytes(memoryStatus.getUsed()),
                                 GIGABYTES.convertFromBytes(memoryStatus.getTotal()));
-                    }));
+                    }, memoryStatusBar.memoryStatusProperty()));
 
                     Label lblAllocateMemory = new Label();
                     lblAllocateMemory.textProperty().bind(Bindings.createStringBinding(() -> {
