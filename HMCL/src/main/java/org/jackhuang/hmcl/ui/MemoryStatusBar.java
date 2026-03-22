@@ -24,7 +24,6 @@ import javafx.scene.Node;
 import javafx.scene.control.Control;
 import javafx.scene.control.SkinBase;
 import javafx.scene.layout.StackPane;
-import javafx.scene.paint.Color;
 import javafx.scene.shape.Rectangle;
 import org.jackhuang.hmcl.util.FXThread;
 import org.jackhuang.hmcl.util.MathUtils;
@@ -76,8 +75,7 @@ public final class MemoryStatusBar extends Control {
     private static final class Skin extends SkinBase<MemoryStatusBar> {
         private static final int HEIGHT = 4;
 
-        private final StackPane bar;
-        private final Rectangle memoryTotal;
+        private final StackPane track;
         private final Rectangle memoryUsed;
         private final Rectangle memoryAllocate;
 
@@ -86,15 +84,9 @@ public final class MemoryStatusBar extends Control {
         Skin(MemoryStatusBar control) {
             super(control);
 
-            bar = new StackPane();
-            bar.setPadding(new Insets(HEIGHT, 0, 0, 0));
-
-            memoryTotal = new Rectangle();
-            memoryTotal.setManaged(false);
-            memoryTotal.setArcWidth(HEIGHT);
-            memoryTotal.setArcHeight(HEIGHT);
-            memoryTotal.getStyleClass().add("memory-total");
-            memoryTotal.setFill(Color.RED);
+            track = new StackPane();
+            track.getStyleClass().add("track");
+            track.setPadding(new Insets(HEIGHT, 0, 0, 0));
 
             memoryUsed = new Rectangle();
             memoryUsed.setManaged(false);
@@ -108,7 +100,7 @@ public final class MemoryStatusBar extends Control {
             memoryAllocate.setArcHeight(HEIGHT);
             memoryAllocate.getStyleClass().add("memory-allocate");
 
-            this.getChildren().setAll(bar, memoryTotal, memoryAllocate, memoryUsed);
+            this.getChildren().setAll(track, memoryAllocate, memoryUsed);
 
             registerInvalidationListener(control.memoryStatusProperty(), it -> updateBar());
             registerInvalidationListener(control.memoryAllocatedProperty(), it -> updateBar());
@@ -140,15 +132,12 @@ public final class MemoryStatusBar extends Control {
 
         @Override
         protected void layoutChildren(double contentX, double contentY, double contentWidth, double contentHeight) {
-            bar.resizeRelocate(contentX, contentY, contentWidth, contentHeight);
-            memoryTotal.relocate(contentX, contentY);
+            track.resizeRelocate(contentX, contentY, contentWidth, contentHeight);
             memoryUsed.relocate(contentX, contentY);
             memoryAllocate.relocate(contentX, contentY);
 
             this.contentWidth = contentWidth;
 
-            memoryTotal.setWidth(contentWidth);
-            memoryTotal.setHeight(contentHeight);
             memoryUsed.setHeight(contentHeight);
             memoryAllocate.setHeight(contentHeight);
 
@@ -162,7 +151,7 @@ public final class MemoryStatusBar extends Control {
 
         @Override
         protected double computePrefWidth(double height, double topInset, double rightInset, double bottomInset, double leftInset) {
-            return leftInset + bar.prefWidth(height) + rightInset;
+            return leftInset + track.prefWidth(height) + rightInset;
         }
 
         @Override
@@ -178,7 +167,7 @@ public final class MemoryStatusBar extends Control {
 
     private static final class UpdateMemoryStatus extends Thread {
 
-        private static final int UPDATE_INTERVAL = 5000;
+        private static final int UPDATE_INTERVAL = 3000;
 
         @FXThread
         private static WeakReference<ObjectProperty<PhysicalMemoryStatus>> memoryStatusPropertyCache;

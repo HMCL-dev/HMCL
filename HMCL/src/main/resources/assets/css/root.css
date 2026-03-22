@@ -121,16 +121,18 @@
     -fx-opacity: 0.4;
 }
 
+.memory-status-bar .track {
+    -fx-background-color: -monet-secondary-container;
+    -fx-background-radius: 2;
+    -fx-background-insets: 0;
+}
+
 .memory-status-bar .memory-used {
     -fx-fill: -monet-primary;
 }
 
 .memory-status-bar .memory-allocate {
     -fx-fill: -monet-primary-transparent-50;
-}
-
-.memory-status-bar .memory-total {
-    -fx-fill: -monet-surface-container;
 }
 
 .update-label {
