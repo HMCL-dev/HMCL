@@ -24,7 +24,7 @@ import javafx.scene.shape.SVGPath;
 /// All vector icons used in the launcher.
 ///
 /// Unless otherwise stated,
-/// these icons are from <a href="https://fonts.google.com/icons?icon.size=24&icon.color=%235f6368&icon.query=list&icon.set=Material+Symbols">Material Symbols</a>,
+/// these icons are from <a href="https://fonts.google.com/icons?icon.size=24&icon.color=%235f6368&icon.set=Material+Symbols">Material Symbols</a>,
 /// with a style of outlined, a weight of 400, a grade of 0, and an optical size of 24 px.
 /// The view boxes of all icons are normalized to `0 0 24 24`.
 public enum SVG {

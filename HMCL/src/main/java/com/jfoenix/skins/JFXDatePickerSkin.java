@@ -19,6 +19,7 @@ import javafx.scene.control.TextField;
 import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
 import org.jackhuang.hmcl.ui.SVG;
+import org.jackhuang.hmcl.ui.construct.RipplerContainer;
 
 import java.time.LocalDate;
 import java.time.YearMonth;
@@ -56,7 +57,7 @@ public class JFXDatePickerSkin extends DatePickerSkin {
             }
 
         });
-        var arrowBox = new HBox(SVG.EDIT_CALENDAR.createIcon(20));
+        var arrowBox = new HBox(new RipplerContainer(SVG.EDIT_CALENDAR.createIcon(30)));
         arrowBox.setAlignment(Pos.CENTER);
         this.setArrow(arrowBox);
         this.getArrowButton().getChildren().setAll(arrowBox);
@@ -92,17 +93,11 @@ public class JFXDatePickerSkin extends DatePickerSkin {
         });
         this.registerChangeListener2(datePicker.valueProperty(), "VALUE", () -> {
             this.updateDisplayNode2();
-            if (this.content != null) {
-                LocalDate date = this.jfxDatePicker.getValue();
-                this.content.displayedYearMonthProperty().set(date != null ? YearMonth.from(date) : YearMonth.now());
-                this.content.updateValues();
-            }
-
             this.jfxDatePicker.fireEvent(new ActionEvent());
         });
     }
 
-    public Node getPopupContent() {
+    public JFXDatePickerContent getPopupContent() {
         if (this.content == null) {
             this.content = new JFXDatePickerContent(this.jfxDatePicker);
         }
@@ -126,7 +121,7 @@ public class JFXDatePickerSkin extends DatePickerSkin {
                 dialogParent = (StackPane) this.getSkinnable().getScene().getRoot();
             }
 
-            this.dialog = new JFXDialog(dialogParent, (Region) this.getPopupContent(), DialogTransition.CENTER, true);
+            this.dialog = new JFXDialog(dialogParent, this.getPopupContent(), DialogTransition.CENTER, true);
             getArrowButton().setOnMouseClicked((click) -> {
                 if (((JFXDatePicker) this.getSkinnable()).isOverLay()) {
                     StackPane parent = this.jfxDatePicker.getDialogParent();
@@ -134,6 +129,7 @@ public class JFXDatePickerSkin extends DatePickerSkin {
                         parent = (StackPane) this.getSkinnable().getScene().getRoot();
                     }
 
+                    this.getPopupContent().valueProperty.set(this.getSkinnable().getValue());
                     this.dialog.show(parent);
                 }
 
