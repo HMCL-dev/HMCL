@@ -97,7 +97,7 @@ public final class MemoryStatusBar extends Control {
             memoryAllocate.setArcHeight(HEIGHT);
             memoryAllocate.getStyleClass().add("memory-allocate");
 
-            this.getChildren().setAll(memoryTotal, memoryUsed, memoryAllocate);
+            this.getChildren().setAll(memoryTotal, memoryAllocate, memoryUsed);
 
             registerInvalidationListener(control.memoryStatusProperty(), it -> updateBar());
             registerInvalidationListener(control.memoryAllocatedProperty(), it -> updateBar());
