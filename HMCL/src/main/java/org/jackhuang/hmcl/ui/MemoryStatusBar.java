@@ -19,9 +19,11 @@ package org.jackhuang.hmcl.ui;
 
 import javafx.application.Platform;
 import javafx.beans.property.*;
+import javafx.geometry.Insets;
 import javafx.scene.Node;
 import javafx.scene.control.Control;
 import javafx.scene.control.SkinBase;
+import javafx.scene.layout.StackPane;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Rectangle;
 import org.jackhuang.hmcl.util.FXThread;
@@ -38,6 +40,8 @@ public final class MemoryStatusBar extends Control {
 
     public MemoryStatusBar() {
         this.getStyleClass().add(DEFAULT_STYLE_CLASS);
+
+        this.setWidth(USE_COMPUTED_SIZE);
     }
 
     private final ReadOnlyObjectProperty<PhysicalMemoryStatus> memoryStatus = UpdateMemoryStatus.memoryStatusProperty();
@@ -72,6 +76,7 @@ public final class MemoryStatusBar extends Control {
     private static final class Skin extends SkinBase<MemoryStatusBar> {
         private static final int HEIGHT = 4;
 
+        private final StackPane bar;
         private final Rectangle memoryTotal;
         private final Rectangle memoryUsed;
         private final Rectangle memoryAllocate;
@@ -81,23 +86,29 @@ public final class MemoryStatusBar extends Control {
         Skin(MemoryStatusBar control) {
             super(control);
 
+            bar = new StackPane();
+            bar.setPadding(new Insets(HEIGHT, 0, 0, 0));
+
             memoryTotal = new Rectangle();
+            memoryTotal.setManaged(false);
             memoryTotal.setArcWidth(HEIGHT);
             memoryTotal.setArcHeight(HEIGHT);
             memoryTotal.getStyleClass().add("memory-total");
             memoryTotal.setFill(Color.RED);
 
             memoryUsed = new Rectangle();
+            memoryUsed.setManaged(false);
             memoryUsed.setArcWidth(HEIGHT);
             memoryUsed.setArcHeight(HEIGHT);
             memoryUsed.getStyleClass().add("memory-used");
 
             memoryAllocate = new Rectangle();
+            memoryAllocate.setManaged(false);
             memoryAllocate.setArcWidth(HEIGHT);
             memoryAllocate.setArcHeight(HEIGHT);
             memoryAllocate.getStyleClass().add("memory-allocate");
 
-            this.getChildren().setAll(memoryTotal, memoryAllocate, memoryUsed);
+            this.getChildren().setAll(bar, memoryTotal, memoryAllocate, memoryUsed);
 
             registerInvalidationListener(control.memoryStatusProperty(), it -> updateBar());
             registerInvalidationListener(control.memoryAllocatedProperty(), it -> updateBar());
@@ -129,6 +140,7 @@ public final class MemoryStatusBar extends Control {
 
         @Override
         protected void layoutChildren(double contentX, double contentY, double contentWidth, double contentHeight) {
+            bar.resizeRelocate(contentX, contentY, contentWidth, contentHeight);
             memoryTotal.relocate(contentX, contentY);
             memoryUsed.relocate(contentX, contentY);
             memoryAllocate.relocate(contentX, contentY);
@@ -150,12 +162,17 @@ public final class MemoryStatusBar extends Control {
 
         @Override
         protected double computePrefWidth(double height, double topInset, double rightInset, double bottomInset, double leftInset) {
-            return topInset + 100 + bottomInset;
+            return leftInset + bar.prefWidth(height) + rightInset;
         }
 
         @Override
         protected double computePrefHeight(double width, double topInset, double rightInset, double bottomInset, double leftInset) {
             return topInset + HEIGHT + bottomInset;
+        }
+
+        @Override
+        protected double computeMaxHeight(double width, double topInset, double rightInset, double bottomInset, double leftInset) {
+            return computePrefHeight(width, topInset, rightInset, bottomInset, leftInset);
         }
     }
 
