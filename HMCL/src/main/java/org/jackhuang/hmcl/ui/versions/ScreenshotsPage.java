@@ -30,6 +30,8 @@ import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.StackPane;
+import org.jackhuang.hmcl.setting.ConfigHolder;
+import org.jackhuang.hmcl.setting.EnumBackgroundImage;
 import org.jackhuang.hmcl.setting.Profile;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
@@ -333,12 +335,18 @@ public final class ScreenshotsPage extends ListPageBase<ScreenshotsPage.Screensh
                 );
             }
 
-            JFXButton okButton = new JFXButton();
+            JFXButton setAsBgButton = new JFXButton(i18n("screenshots.set_as_bg"));
+            setAsBgButton.getStyleClass().add("dialog-accept");
+            setAsBgButton.setOnAction(e -> {
+                ConfigHolder.config().setBackgroundImage(screenshot.getPath().toString());
+                ConfigHolder.config().setBackgroundImageType(EnumBackgroundImage.CUSTOM);
+            });
+
+            JFXButton okButton = new JFXButton(i18n("button.ok"));
             okButton.getStyleClass().add("dialog-accept");
-            okButton.setText(i18n("button.ok"));
             okButton.setOnAction(e -> fireEvent(new DialogCloseEvent()));
             FXUtils.onEscPressed(this, okButton::fire);
-            setActions(okButton);
+            setActions(setAsBgButton, okButton);
         }
     }
 
