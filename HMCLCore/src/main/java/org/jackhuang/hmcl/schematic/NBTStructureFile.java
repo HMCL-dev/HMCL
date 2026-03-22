@@ -43,9 +43,9 @@ public final class NBTStructureFile extends Schematic {
         Tag sizeTag = root.get("size");
         if (sizeTag == null)
             throw new IOException("size tag not found");
-        else if (!(sizeTag instanceof ListTag))
+        else if (!(sizeTag instanceof ListTag<?>))
             throw new IOException("size tag is not a list");
-        ListTag<Tag> size = (ListTag<Tag>) sizeTag;
+        ListTag<?> size = (ListTag<?>) sizeTag;
         if (size.size() != 3)
             throw new IOException("size tag does not have 3 elements");
         Tag xTag = size.getTag(0);
