@@ -23,6 +23,7 @@ import javafx.scene.control.Control;
 import javafx.scene.control.SkinBase;
 import javafx.scene.shape.Rectangle;
 import org.jackhuang.hmcl.util.FXThread;
+import org.jackhuang.hmcl.util.MathUtils;
 import org.jackhuang.hmcl.util.platform.SystemInfo;
 import org.jackhuang.hmcl.util.platform.hardware.PhysicalMemoryStatus;
 
@@ -79,12 +80,18 @@ public final class MemoryStatusBar extends Control {
             super(control);
 
             memoryTotal = new Rectangle();
+            memoryTotal.setArcWidth(HEIGHT);
+            memoryTotal.setArcHeight(HEIGHT);
             memoryTotal.getStyleClass().add("memory-total");
 
             memoryUsed = new Rectangle();
+            memoryUsed.setArcWidth(HEIGHT);
+            memoryUsed.setArcHeight(HEIGHT);
             memoryUsed.getStyleClass().add("memory-used");
 
             memoryAllocate = new Rectangle();
+            memoryAllocate.setArcWidth(HEIGHT);
+            memoryAllocate.setArcHeight(HEIGHT);
             memoryAllocate.getStyleClass().add("memory-allocate");
 
             this.getChildren().setAll(memoryTotal, memoryUsed, memoryAllocate);
@@ -94,7 +101,7 @@ public final class MemoryStatusBar extends Control {
         }
 
         private void updateBar() {
-            if (contentWidth < 0) {
+            if (contentWidth <= 0) {
                 // not yet layout
                 return;
             }
@@ -110,7 +117,11 @@ public final class MemoryStatusBar extends Control {
                 return;
             }
 
-            // TODO
+            double usedWidth = MathUtils.clamp(contentWidth * (used / total), 0, contentWidth);
+            double allocatedWidth = MathUtils.clamp(contentWidth * (allocated / total) + usedWidth, 0, contentWidth);
+
+            memoryUsed.setWidth(usedWidth);
+            memoryAllocate.setWidth(allocatedWidth);
         }
 
         @Override
@@ -127,6 +138,11 @@ public final class MemoryStatusBar extends Control {
             memoryAllocate.setHeight(contentHeight);
 
             updateBar();
+        }
+
+        @Override
+        protected double computePrefHeight(double width, double topInset, double rightInset, double bottomInset, double leftInset) {
+            return topInset + HEIGHT + bottomInset;
         }
     }
 
