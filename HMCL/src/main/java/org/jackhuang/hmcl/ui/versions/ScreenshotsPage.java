@@ -43,7 +43,7 @@ import static org.jackhuang.hmcl.ui.ToolbarListPageSkin.createToolbarButton2;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
-public class ScreenshotsPage extends ListPageBase<ScreenshotsPage.Screenshot> implements VersionPage.VersionLoadable, PageAware {
+public final class ScreenshotsPage extends ListPageBase<ScreenshotsPage.Screenshot> implements VersionPage.VersionLoadable, PageAware {
 
     private Path screenshotsDir;
 
@@ -220,7 +220,7 @@ public class ScreenshotsPage extends ListPageBase<ScreenshotsPage.Screenshot> im
 
     }
 
-    public static final class ScreenshotCell extends MDListCell<Screenshot> {
+    private static final class ScreenshotCell extends MDListCell<Screenshot> {
 
         private final StackPane imagePane = new StackPane();
         private final TwoLineListItem content = new TwoLineListItem();
@@ -297,7 +297,7 @@ public class ScreenshotsPage extends ListPageBase<ScreenshotsPage.Screenshot> im
         }
     }
 
-    public static final class ScreenshotDialog extends JFXDialogLayout {
+    private static final class ScreenshotDialog extends JFXDialogLayout {
 
         public ScreenshotDialog(Screenshot screenshot) {
             TwoLineListItem head = new TwoLineListItem();
@@ -325,7 +325,7 @@ public class ScreenshotsPage extends ListPageBase<ScreenshotsPage.Screenshot> im
         }
     }
 
-    public static final class ScreenshotsPageSkin extends SkinBase<ScreenshotsPage> {
+    private static final class ScreenshotsPageSkin extends SkinBase<ScreenshotsPage> {
 
         private final TransitionPane toolbarPane;
         private final HBox toolbarNormal;
