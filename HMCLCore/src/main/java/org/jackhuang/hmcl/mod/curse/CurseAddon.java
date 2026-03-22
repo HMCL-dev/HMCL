@@ -17,6 +17,7 @@
  */
 package org.jackhuang.hmcl.mod.curse;
 
+import org.jackhuang.hmcl.download.DownloadProvider;
 import org.jackhuang.hmcl.mod.ModLoaderType;
 import org.jackhuang.hmcl.mod.RemoteMod;
 import org.jackhuang.hmcl.mod.RemoteModRepository;
@@ -191,7 +192,7 @@ public class CurseAddon implements RemoteMod.IMod {
     }
 
     @Override
-    public List<RemoteMod> loadDependencies(RemoteModRepository modRepository) throws IOException {
+    public List<RemoteMod> loadDependencies(RemoteModRepository modRepository, DownloadProvider downloadProvider) throws IOException {
         Set<Integer> dependencies = latestFiles.stream()
                 .flatMap(latestFile -> latestFile.getDependencies().stream())
                 .filter(dep -> dep.getRelationType() == 3)
@@ -199,14 +200,14 @@ public class CurseAddon implements RemoteMod.IMod {
                 .collect(Collectors.toSet());
         List<RemoteMod> mods = new ArrayList<>();
         for (int dependencyId : dependencies) {
-            mods.add(modRepository.getModById(Integer.toString(dependencyId)));
+            mods.add(modRepository.getModById(downloadProvider, Integer.toString(dependencyId)));
         }
         return mods;
     }
 
     @Override
-    public Stream<RemoteMod.Version> loadVersions(RemoteModRepository modRepository) throws IOException {
-        return modRepository.getRemoteVersionsById(Integer.toString(id));
+    public Stream<RemoteMod.Version> loadVersions(RemoteModRepository modRepository, DownloadProvider downloadProvider) throws IOException {
+        return modRepository.getRemoteVersionsById(downloadProvider, Integer.toString(id));
     }
 
     public RemoteMod toMod(RemoteModRepository.Type type) {

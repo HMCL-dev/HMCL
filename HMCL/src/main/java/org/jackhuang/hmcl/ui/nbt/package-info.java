@@ -15,21 +15,8 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-package org.jackhuang.hmcl.launch;
 
-public final class ExecutionPolicyLimitException extends RuntimeException {
-    public ExecutionPolicyLimitException() {
-    }
+@NotNullByDefault
+package org.jackhuang.hmcl.ui.nbt;
 
-    public ExecutionPolicyLimitException(String message) {
-        super(message);
-    }
-
-    public ExecutionPolicyLimitException(String message, Throwable cause) {
-        super(message, cause);
-    }
-
-    public ExecutionPolicyLimitException(Throwable cause) {
-        super(cause);
-    }
-}
+import org.jetbrains.annotations.NotNullByDefault;

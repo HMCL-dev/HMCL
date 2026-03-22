@@ -17,6 +17,7 @@
  */
 package org.jackhuang.hmcl.ui.versions;
 
+import org.jackhuang.hmcl.download.DownloadProvider;
 import org.jackhuang.hmcl.mod.LocalAddonFile;
 import org.jackhuang.hmcl.mod.RemoteMod;
 import org.jackhuang.hmcl.task.Schedulers;
@@ -30,16 +31,18 @@ import java.util.Objects;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 public class AddonCheckUpdatesTask<T extends LocalAddonFile> extends Task<List<LocalAddonFile.AddonUpdate>> {
+    private final DownloadProvider downloadProvider;
     private final List<Task<LocalAddonFile.AddonUpdate>> dependents;
 
-    public AddonCheckUpdatesTask(String gameVersion, Collection<T> addons) {
+    public AddonCheckUpdatesTask(DownloadProvider downloadProvider, String gameVersion, Collection<T> addons) {
+        this.downloadProvider = downloadProvider;
         dependents = addons.stream().map(addon ->
                 Task.supplyAsync(Schedulers.io(), () -> {
                     LocalAddonFile.AddonUpdate candidate = null;
                     for (RemoteMod.Type type : RemoteMod.Type.values()) {
                         LocalAddonFile.AddonUpdate update = null;
                         try {
-                            update = addon.checkUpdates(gameVersion, type);
+                            update = addon.checkUpdates(downloadProvider, gameVersion, type);
                         } catch (IOException e) {
                             LOG.warning(String.format("Cannot check update for addon %s.", addon.getFileName()), e);
                         }
