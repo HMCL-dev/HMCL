@@ -76,6 +76,7 @@ public class FloatScrollBarSkin implements Skin<ScrollBar> {
                     if (getSkinnable().getMax() > getSkinnable().getMin()) {
                         dragStart = thumb.localToParent(me.getX(), me.getY());
                         double clampedValue = MathUtils.clamp(getSkinnable().getValue(), getSkinnable().getMin(), getSkinnable().getMax());
+                        preDragThumbPos = (clampedValue - getSkinnable().getMin()) / (getSkinnable().getMax() - getSkinnable().getMin());
                         me.consume();
                     }
                 });
