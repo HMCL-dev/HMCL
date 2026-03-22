@@ -157,16 +157,6 @@ public final class MemoryStatusBar extends Control {
         protected double computePrefHeight(double width, double topInset, double rightInset, double bottomInset, double leftInset) {
             return topInset + HEIGHT + bottomInset;
         }
-
-        @Override
-        protected double computeMaxWidth(double height, double topInset, double rightInset, double bottomInset, double leftInset) {
-            return getSkinnable().prefWidth(height);
-        }
-
-        @Override
-        protected double computeMaxHeight(double width, double topInset, double rightInset, double bottomInset, double leftInset) {
-            return getSkinnable().prefHeight(width);
-        }
     }
 
     private static final class UpdateMemoryStatus extends Thread {
