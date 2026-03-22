@@ -50,7 +50,9 @@ public final class HMCLLocalizedDownloadListPage extends DownloadListPage {
     }
 
     public static DownloadListPage ofShaderPack(DownloadPage.DownloadCallback callback, boolean versionSelection) {
-        return new HMCLLocalizedDownloadListPage(callback, versionSelection, RemoteModRepository.Type.SHADER_PACK, null, ModrinthRemoteModRepository.SHADER_PACKS);
+        var page = new HMCLLocalizedDownloadListPage(callback, versionSelection, RemoteModRepository.Type.SHADER_PACK, CurseForgeRemoteModRepository.SHADERS, ModrinthRemoteModRepository.SHADER_PACKS);
+        page.supportChinese.set(false);
+        return page;
     }
 
     private HMCLLocalizedDownloadListPage(DownloadPage.DownloadCallback callback, boolean versionSelection, RemoteModRepository.Type type, CurseForgeRemoteModRepository curseForge, ModrinthRemoteModRepository modrinth) {
@@ -59,7 +61,12 @@ public final class HMCLLocalizedDownloadListPage extends DownloadListPage {
         repository = new Repository(type, curseForge, modrinth);
 
         supportChinese.set(true);
-        downloadSources.get().setAll("mods.modrinth", "mods.curseforge");
+
+        downloadSources.setAll("mods.modrinth");
+        if (CurseForgeRemoteModRepository.isAvailable()) {
+            downloadSources.add("mods.curseforge");
+        }
+
         if (modrinth != null) {
             downloadSource.set("mods.modrinth");
         } else if (curseForge != null) {

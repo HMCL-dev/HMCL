@@ -249,11 +249,11 @@ public final class LauncherHelper {
                         i18n("message.doing"),
                         () -> launchingLatch.getCount() == 0, 6.95
                 ).withStage("launch.state.waiting_launching"))
-                .withStagesHint(Lang.immutableListOf(
-                        "launch.state.java",
-                        "launch.state.dependencies",
-                        "launch.state.logging_in",
-                        "launch.state.waiting_launching"))
+                .withStagesHints(
+                        new Task.StagesHint("launch.state.java"),
+                        new Task.StagesHint("launch.state.dependencies", List.of("hmcl.install.assets", "hmcl.install.libraries", "hmcl.modpack.download")),
+                        new Task.StagesHint("launch.state.logging_in"),
+                        new Task.StagesHint("launch.state.waiting_launching"))
                 .executor();
         launchingStepsPane.setExecutor(executor, false);
         executor.addTaskListener(new TaskListener() {
@@ -387,7 +387,16 @@ public final class LauncherHelper {
                 if (setting.getJavaVersionType() == JavaVersionType.VERSION) {
                     try {
                         int targetJavaVersionMajor = Integer.parseInt(setting.getJavaVersion());
-                        GameJavaVersion minimumJavaVersion = GameJavaVersion.getMinimumJavaVersion(gameVersion);
+                        GameJavaVersion minimumJavaVersion = null;
+                        if (gameVersion.compareTo("1.12.2") == 0) {
+                            Optional<String> cleanroomVersion = analyzer.getVersion(LibraryAnalyzer.LibraryType.CLEANROOM);
+                            if (cleanroomVersion.isPresent()) {
+                                minimumJavaVersion = GameJavaVersion.getCleanroomJavaVersion(cleanroomVersion.get());
+                            }
+                        }
+
+                        if (minimumJavaVersion == null)
+                            minimumJavaVersion = GameJavaVersion.getMinimumJavaVersion(gameVersion);
 
                         if (minimumJavaVersion != null && targetJavaVersionMajor < minimumJavaVersion.majorVersion()) {
                             Controllers.dialog(
@@ -402,8 +411,17 @@ public final class LauncherHelper {
                         targetJavaVersion = GameJavaVersion.get(targetJavaVersionMajor);
                     } catch (NumberFormatException ignored) {
                     }
-                } else
-                    targetJavaVersion = version.getJavaVersion();
+                } else {
+                    if (gameVersion.compareTo("1.12.2") == 0) {
+                        Optional<String> cleanroomVersion = analyzer.getVersion(LibraryAnalyzer.LibraryType.CLEANROOM);
+                        if (cleanroomVersion.isPresent()) {
+                            targetJavaVersion = GameJavaVersion.getCleanroomJavaVersion(cleanroomVersion.get());
+                        }
+                    }
+
+                    if (targetJavaVersion == null)
+                        targetJavaVersion = version.getJavaVersion();
+                }
 
                 if (targetJavaVersion != null && supportedVersions.contains(targetJavaVersion)) {
                     downloadJava(targetJavaVersion, profile)
@@ -433,7 +451,7 @@ public final class LauncherHelper {
                 if (java != null) {
                     for (JavaVersionConstraint constraint : JavaVersionConstraint.ALL) {
                         if (constraint.appliesToVersion(gameVersion, version, java, analyzer)) {
-                            if (!constraint.checkJava(gameVersion, version, java)) {
+                            if (!constraint.checkJava(gameVersion, version, java, analyzer)) {
                                 if (constraint.isMandatory()) {
                                     violatedMandatoryConstraints.add(constraint);
                                 } else {
@@ -468,9 +486,14 @@ public final class LauncherHelper {
                         return result;
                     } else {
                         GameJavaVersion gameJavaVersion;
-                        if (violatedMandatoryConstraints.contains(JavaVersionConstraint.CLEANROOM_JAVA_21))
-                            gameJavaVersion = GameJavaVersion.JAVA_21;
-                        else if (violatedMandatoryConstraints.contains(JavaVersionConstraint.GAME_JSON))
+                        if (violatedMandatoryConstraints.contains(JavaVersionConstraint.CLEANROOM)) {
+                            String cleanroomVersion = analyzer.getVersion(LibraryAnalyzer.LibraryType.CLEANROOM)
+                                    .orElse("");
+
+                            gameJavaVersion = !cleanroomVersion.isEmpty()
+                                    ? GameJavaVersion.getCleanroomJavaVersion(cleanroomVersion)
+                                    : GameJavaVersion.JAVA_21;
+                        } else if (violatedMandatoryConstraints.contains(JavaVersionConstraint.GAME_JSON))
                             gameJavaVersion = version.getJavaVersion();
                         else if (violatedMandatoryConstraints.contains(JavaVersionConstraint.VANILLA))
                             gameJavaVersion = GameJavaVersion.getMinimumJavaVersion(gameVersion);
@@ -560,9 +583,14 @@ public final class LauncherHelper {
                         case MODDED_JAVA_21:
                             suggestions.add(i18n("launch.advice.modded_java", 21, gameVersion));
                             break;
-                        case CLEANROOM_JAVA_21:
-                            suggestions.add(i18n("launch.advice.cleanroom"));
+                        case CLEANROOM: {
+                            String cleanroomVersion = analyzer.getVersion(LibraryAnalyzer.LibraryType.CLEANROOM).orElse("");
+                            if (!cleanroomVersion.isEmpty())
+                                suggestions.add(i18n("launch.advice.cleanroom", GameJavaVersion.getCleanroomJavaVersion(cleanroomVersion).majorVersion(), cleanroomVersion));
+                            else
+                                suggestions.add(i18n("launch.advice.cleanroom", 21, ""));
                             break;
+                        }
                         case VANILLA_JAVA_8_51:
                             suggestions.add(i18n("launch.advice.java8_51_1_13"));
                             break;

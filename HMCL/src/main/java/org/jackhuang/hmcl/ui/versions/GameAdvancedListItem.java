@@ -17,8 +17,7 @@
  */
 package org.jackhuang.hmcl.ui.versions;
 
-import javafx.scene.Node;
-import javafx.scene.image.ImageView;
+import javafx.geometry.Pos;
 import org.jackhuang.hmcl.event.Event;
 import org.jackhuang.hmcl.setting.Profile;
 import org.jackhuang.hmcl.setting.Profiles;
@@ -26,27 +25,26 @@ import org.jackhuang.hmcl.setting.VersionIconType;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.WeakListenerHolder;
 import org.jackhuang.hmcl.ui.construct.AdvancedListItem;
-import org.jackhuang.hmcl.util.Pair;
+import org.jackhuang.hmcl.ui.construct.ImageContainer;
 
 import java.util.function.Consumer;
 
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 public class GameAdvancedListItem extends AdvancedListItem {
-    private final ImageView imageView;
+    private final ImageContainer imageContainer;
     private final WeakListenerHolder holder = new WeakListenerHolder();
     private Profile profile;
     @SuppressWarnings("unused")
     private Consumer<Event> onVersionIconChangedListener;
 
     public GameAdvancedListItem() {
-        Pair<Node, ImageView> view = createImageView(null);
-        setLeftGraphic(view.getKey());
-        imageView = view.getValue();
+        this.imageContainer = new ImageContainer(LEFT_GRAPHIC_SIZE);
+        imageContainer.setMouseTransparent(true);
+        AdvancedListItem.setAlignment(imageContainer, Pos.CENTER);
+        setLeftGraphic(imageContainer);
 
         holder.add(FXUtils.onWeakChangeAndOperate(Profiles.selectedVersionProperty(), this::loadVersion));
-
-        setActionButtonVisible(false);
     }
 
     private void loadVersion(String version) {
@@ -62,11 +60,11 @@ public class GameAdvancedListItem extends AdvancedListItem {
                 Profiles.getSelectedProfile().getRepository().hasVersion(version)) {
             setTitle(i18n("version.manage.manage"));
             setSubtitle(version);
-            imageView.setImage(Profiles.getSelectedProfile().getRepository().getVersionIconImage(version));
+            imageContainer.setImage(Profiles.getSelectedProfile().getRepository().getVersionIconImage(version));
         } else {
             setTitle(i18n("version.empty"));
             setSubtitle(i18n("version.empty.add"));
-            imageView.setImage(VersionIconType.DEFAULT.getIcon());
+            imageContainer.setImage(VersionIconType.DEFAULT.getIcon());
         }
     }
 }
