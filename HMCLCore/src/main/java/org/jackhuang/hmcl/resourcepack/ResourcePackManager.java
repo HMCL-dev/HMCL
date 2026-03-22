@@ -40,7 +40,7 @@ import java.util.*;
 
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
-public final class ResourcePackManager extends LocalAddonManager<ResourcepackFile> {
+public final class ResourcePackManager extends LocalAddonManager<ResourcePackFile> {
 
     private static final List<String> RESOURCE_PACK_VERSION_OLD = List.of(
             "13w24a", // 1
@@ -257,7 +257,7 @@ public final class ResourcePackManager extends LocalAddonManager<ResourcepackFil
     }
 
     private void addResourcePackInfo(Path file) throws IOException {
-        ResourcepackFile resourcePack = ResourcepackFile.parse(this, file);
+        ResourcePackFile resourcePack = ResourcePackFile.parse(this, file);
         if (resourcePack != null) localFiles.add(resourcePack);
     }
 
@@ -280,19 +280,19 @@ public final class ResourcePackManager extends LocalAddonManager<ResourcepackFil
     }
 
     @Override
-    public Comparator<ResourcepackFile> getComparator() {
-        return ResourcepackFile::compareTo;
+    public Comparator<ResourcePackFile> getComparator() {
+        return ResourcePackFile::compareTo;
     }
 
     @Override
-    public @Unmodifiable List<ResourcepackFile> getLocalFiles() throws IOException {
+    public @Unmodifiable List<ResourcePackFile> getLocalFiles() throws IOException {
         if (!loaded)
             refresh();
         return super.getLocalFiles();
     }
 
     public void importResourcePack(Path file) throws IOException, IllegalArgumentException {
-        if (ResourcepackFile.isFileResourcePack(file)) {
+        if (ResourcePackFile.isFileResourcePack(file)) {
             if (!loaded)
                 refresh();
             Files.createDirectories(resourcePackDirectory);
@@ -311,9 +311,9 @@ public final class ResourcePackManager extends LocalAddonManager<ResourcepackFil
 
     }
 
-    public boolean removeResourcePacks(Iterable<ResourcepackFile> resourcePacks) throws IOException {
+    public boolean removeResourcePacks(Iterable<ResourcePackFile> resourcePacks) throws IOException {
         boolean modified = false;
-        for (ResourcepackFile resourcePack : resourcePacks) {
+        for (ResourcePackFile resourcePack : resourcePacks) {
             if (resourcePack != null && resourcePack.manager == this) {
                 resourcePack.delete();
                 localFiles.remove(resourcePack);
@@ -323,7 +323,7 @@ public final class ResourcePackManager extends LocalAddonManager<ResourcepackFil
         return modified;
     }
 
-    public void enableResourcePack(ResourcepackFile resourcePack) {
+    public void enableResourcePack(ResourcePackFile resourcePack) {
         if (resourcePack.manager != this) return;
         Map<String, String> options = loadOptions();
         String packId = "file/" + resourcePack.getFileNameWithExtension();
@@ -343,7 +343,7 @@ public final class ResourcePackManager extends LocalAddonManager<ResourcepackFil
         if (modified) saveOptions(options);
     }
 
-    public void disableResourcePack(ResourcepackFile resourcePack) {
+    public void disableResourcePack(ResourcePackFile resourcePack) {
         if (resourcePack.manager != this) return;
         Map<String, String> options = loadOptions();
         String packId = "file/" + resourcePack.getFileNameWithExtension();
@@ -363,7 +363,7 @@ public final class ResourcePackManager extends LocalAddonManager<ResourcepackFil
         if (modified) saveOptions(options);
     }
 
-    public boolean isEnabled(ResourcepackFile resourcePack) {
+    public boolean isEnabled(ResourcePackFile resourcePack) {
         if (resourcePack.manager != this) return false;
         Map<String, String> options = loadOptions();
         String packId = "file/" + resourcePack.getFileNameWithExtension();
@@ -373,11 +373,11 @@ public final class ResourcePackManager extends LocalAddonManager<ResourcepackFil
         return isIncompatible(resourcePack) == incompatibleResourcePacks.contains(packId);
     }
 
-    public ResourcepackFile.Compatibility getCompatibility(@NotNull ResourcepackFile resourcePack) {
+    public ResourcePackFile.Compatibility getCompatibility(@NotNull ResourcePackFile resourcePack) {
         if (resourcePack.getMeta() == null || resourcePack.getMeta().pack() == null)
-            return ResourcepackFile.Compatibility.MISSING_PACK_META;
+            return ResourcePackFile.Compatibility.MISSING_PACK_META;
         if (this.requiredVersion.isUnspecified())
-            return ResourcepackFile.Compatibility.MISSING_GAME_META;
+            return ResourcePackFile.Compatibility.MISSING_GAME_META;
         int requiredMajor = requiredVersion.majorVersion();
         VersionRange<PackMcMeta.PackVersion> versionRange;
         if (requiredMajor > 64)
@@ -387,16 +387,16 @@ public final class ResourcePackManager extends LocalAddonManager<ResourcepackFil
         else
             versionRange = getResourcePackVersionRangeOldest(resourcePack.getMeta().pack());
         if (versionRange.isEmpty())
-            return ResourcepackFile.Compatibility.INVALID;
+            return ResourcePackFile.Compatibility.INVALID;
         if (versionRange.getMaximum().compareTo(this.requiredVersion) < 0)
-            return ResourcepackFile.Compatibility.TOO_OLD;
+            return ResourcePackFile.Compatibility.TOO_OLD;
         if (versionRange.getMinimum().compareTo(this.requiredVersion) > 0)
-            return ResourcepackFile.Compatibility.TOO_NEW;
-        return ResourcepackFile.Compatibility.COMPATIBLE;
+            return ResourcePackFile.Compatibility.TOO_NEW;
+        return ResourcePackFile.Compatibility.COMPATIBLE;
     }
 
-    public boolean isIncompatible(@NotNull ResourcepackFile resourcePack) {
-        return getCompatibility(resourcePack) != ResourcepackFile.Compatibility.COMPATIBLE;
+    public boolean isIncompatible(@NotNull ResourcePackFile resourcePack) {
+        return getCompatibility(resourcePack) != ResourcePackFile.Compatibility.COMPATIBLE;
     }
 
     @JsonSerializable

@@ -17,6 +17,7 @@
  */
 package org.jackhuang.hmcl.resourcepack;
 
+import org.jackhuang.hmcl.download.DownloadProvider;
 import org.jackhuang.hmcl.mod.RemoteMod;
 import org.jackhuang.hmcl.mod.RemoteModRepository;
 import org.jackhuang.hmcl.mod.modinfo.PackMcMeta;
@@ -32,11 +33,11 @@ import java.util.Optional;
 
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
-final class ResourcepackZipFile extends ResourcepackFile {
+final class ResourcePackZipFile extends ResourcePackFile {
     private final PackMcMeta meta;
     private final byte @Nullable [] icon;
 
-    public ResourcepackZipFile(ResourcePackManager manager, Path path) throws IOException {
+    public ResourcePackZipFile(ResourcePackManager manager, Path path) throws IOException {
         super(manager, path);
 
         PackMcMeta metaTemp = null;
@@ -78,12 +79,12 @@ final class ResourcepackZipFile extends ResourcepackFile {
     }
 
     @Override
-    public AddonUpdate checkUpdates(String gameVersion, RemoteMod.Type type) throws IOException {
+    public AddonUpdate checkUpdates(DownloadProvider downloadProvider, String gameVersion, RemoteMod.Type type) throws IOException {
         RemoteModRepository repository = type.getRepoForType(RemoteModRepository.Type.RESOURCE_PACK);
         if (repository == null) return null;
         Optional<RemoteMod.Version> currentVersion = repository.getRemoteVersionByLocalFile(file);
         if (currentVersion.isEmpty()) return null;
-        List<RemoteMod.Version> remoteVersions = repository.getRemoteVersionsById(currentVersion.get().getModid())
+        List<RemoteMod.Version> remoteVersions = repository.getRemoteVersionsById(downloadProvider, currentVersion.get().getModid())
                 .filter(version -> version.getGameVersions().contains(gameVersion))
                 .filter(version -> version.getDatePublished().compareTo(currentVersion.get().getDatePublished()) > 0)
                 .sorted(Comparator.comparing(RemoteMod.Version::getDatePublished).reversed())

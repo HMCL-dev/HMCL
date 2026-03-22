@@ -40,9 +40,10 @@ import javafx.util.Duration;
 import org.jackhuang.hmcl.mod.*;
 import org.jackhuang.hmcl.mod.curse.CurseForgeRemoteModRepository;
 import org.jackhuang.hmcl.mod.modrinth.ModrinthRemoteModRepository;
-import org.jackhuang.hmcl.resourcepack.ResourcepackFile;
+import org.jackhuang.hmcl.resourcepack.ResourcePackFile;
 import org.jackhuang.hmcl.resourcepack.ResourcePackManager;
 import org.jackhuang.hmcl.setting.ConfigHolder;
+import org.jackhuang.hmcl.setting.DownloadProviders;
 import org.jackhuang.hmcl.setting.Profile;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
@@ -76,10 +77,10 @@ import static org.jackhuang.hmcl.util.Pair.pair;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
-public final class ResourcepackListPage extends ListPageBase<ResourcepackListPage.ResourcePackInfoObject> implements VersionPage.VersionLoadable {
+public final class ResourcePackListPage extends ListPageBase<ResourcePackListPage.ResourcePackInfoObject> implements VersionPage.VersionLoadable {
 
     private static final String TIP_KEY = "resourcePackWarning";
-    private static @Nullable String getWarning(ResourcepackFile.Compatibility compatibility) {
+    private static @Nullable String getWarning(ResourcePackFile.Compatibility compatibility) {
         return switch (compatibility) {
             case TOO_NEW -> i18n("resourcepack.warning.too_new");
             case TOO_OLD -> i18n("resourcepack.warning.too_old");
@@ -98,8 +99,8 @@ public final class ResourcepackListPage extends ListPageBase<ResourcepackListPag
 
     private final ReentrantLock lock = new ReentrantLock();
 
-    public ResourcepackListPage() {
-        FXUtils.applyDragListener(this, ResourcepackFile::isFileResourcePack, this::addFiles);
+    public ResourcePackListPage() {
+        FXUtils.applyDragListener(this, ResourcePackFile::isFileResourcePack, this::addFiles);
     }
 
     @Override
@@ -203,7 +204,7 @@ public final class ResourcepackListPage extends ListPageBase<ResourcepackListPag
     }
 
     private void setSelectedEnabled(List<ResourcePackInfoObject> selectedItems, boolean enabled) {
-        if (!ConfigHolder.config().getShownTips().containsKey(TIP_KEY) && enabled && !selectedItems.stream().map(ResourcePackInfoObject::getFile).allMatch(ResourcepackFile::isCompatible)) {
+        if (!ConfigHolder.config().getShownTips().containsKey(TIP_KEY) && enabled && !selectedItems.stream().map(ResourcePackInfoObject::getFile).allMatch(ResourcePackFile::isCompatible)) {
             Controllers.confirm(
                     i18n("resourcepack.warning.manipulate"),
                     i18n("message.warning"),
@@ -232,11 +233,11 @@ public final class ResourcepackListPage extends ListPageBase<ResourcepackListPag
         }
     }
 
-    public void checkUpdates(Collection<ResourcepackFile> resourcePacks) {
+    public void checkUpdates(Collection<ResourcePackFile> resourcePacks) {
         Runnable action = () -> Controllers.taskDialog(Task
                         .composeAsync(() -> {
                             Optional<String> gameVersion = profile.getRepository().getGameVersion(instanceId);
-                            return gameVersion.map(g -> new AddonCheckUpdatesTask<>(g, resourcePacks)).orElse(null);
+                            return gameVersion.map(g -> new AddonCheckUpdatesTask<>(DownloadProviders.getDownloadProvider(), g, resourcePacks)).orElse(null);
                         })
                         .whenComplete(Schedulers.javafx(), (result, exception) -> {
                             if (exception != null || result == null) {
@@ -260,7 +261,7 @@ public final class ResourcepackListPage extends ListPageBase<ResourcepackListPag
         }
     }
 
-    private static final class ResourcePackListPageSkin extends SkinBase<ResourcepackListPage> {
+    private static final class ResourcePackListPageSkin extends SkinBase<ResourcePackListPage> {
         private final JFXListView<ResourcePackInfoObject> listView;
         private final JFXTextField searchField = new JFXTextField();
 
@@ -271,7 +272,7 @@ public final class ResourcepackListPage extends ListPageBase<ResourcepackListPag
 
         private boolean isSearching;
 
-        private ResourcePackListPageSkin(ResourcepackListPage control) {
+        private ResourcePackListPageSkin(ResourcePackListPage control) {
             super(control);
 
             StackPane pane = new StackPane();
@@ -425,7 +426,7 @@ public final class ResourcepackListPage extends ListPageBase<ResourcepackListPag
 
                 // Do we need to search in the background thread?
                 for (ResourcePackInfoObject item : getSkinnable().getItems()) {
-                    ResourcepackFile resourcePack = item.getFile();
+                    ResourcePackFile resourcePack = item.getFile();
                     LocalModFile.Description description = resourcePack.getDescription();
                     Stream<String> descriptionParts = description == null
                             ? Stream.empty()
@@ -441,17 +442,17 @@ public final class ResourcepackListPage extends ListPageBase<ResourcepackListPag
     }
 
     public static class ResourcePackInfoObject {
-        private final ResourcepackFile file;
+        private final ResourcePackFile file;
         private final BooleanProperty enabled;
         private WeakReference<Image> iconCache;
 
-        public ResourcePackInfoObject(ResourcepackFile file) {
+        public ResourcePackInfoObject(ResourcePackFile file) {
             this.file = file;
             this.enabled = new SimpleBooleanProperty(this, "enabled", file.isEnabled());
             FXUtils.onChange(this.enabled, file::setEnabled);
         }
 
-        public ResourcepackFile getFile() {
+        public ResourcePackFile getFile() {
             return file;
         }
 
@@ -485,7 +486,7 @@ public final class ResourcepackListPage extends ListPageBase<ResourcepackListPag
     private static final class ResourcePackListCell extends MDListCell<ResourcePackInfoObject> {
         private static final PseudoClass WARNING = PseudoClass.getPseudoClass("warning");
 
-        private final ResourcepackListPage page;
+        private final ResourcePackListPage page;
 
         private final JFXCheckBox checkBox;
         private final ImageContainer imageContainer = new ImageContainer(24);
@@ -497,7 +498,7 @@ public final class ResourcepackListPage extends ListPageBase<ResourcepackListPag
 
         private BooleanProperty booleanProperty = null;
 
-        public ResourcePackListCell(JFXListView<ResourcePackInfoObject> listView, ResourcepackListPage page) {
+        public ResourcePackListCell(JFXListView<ResourcePackInfoObject> listView, ResourcePackListPage page) {
             super(listView);
             this.page = page;
 
@@ -543,7 +544,7 @@ public final class ResourcepackListPage extends ListPageBase<ResourcepackListPag
             if (empty || item == null) return;
 
             this.object = item;
-            ResourcepackFile file = item.getFile();
+            ResourcePackFile file = item.getFile();
             imageContainer.setImage(item.getIcon());
 
             content.getTags().clear();
@@ -562,7 +563,7 @@ public final class ResourcepackListPage extends ListPageBase<ResourcepackListPag
 
             {
                 var compatibility = file.getCompatibility();
-                if (compatibility == ResourcepackFile.Compatibility.COMPATIBLE) {
+                if (compatibility == ResourcePackFile.Compatibility.COMPATIBLE) {
                     content.addTag(i18n("resourcepack.compatible"));
                 } else {
                     pseudoClassStateChanged(WARNING, true);
@@ -574,8 +575,8 @@ public final class ResourcepackListPage extends ListPageBase<ResourcepackListPag
 
     private static final class ResourcePackInfoDialog extends JFXDialogLayout {
 
-        ResourcePackInfoDialog(ResourcepackListPage page, ResourcePackInfoObject packInfoObject) {
-            ResourcepackFile pack = packInfoObject.getFile();
+        ResourcePackInfoDialog(ResourcePackListPage page, ResourcePackInfoObject packInfoObject) {
+            ResourcePackFile pack = packInfoObject.getFile();
 
             HBox titleContainer = new HBox();
             titleContainer.setSpacing(8);
@@ -590,7 +591,7 @@ public final class ResourcepackListPage extends ListPageBase<ResourcepackListPag
             title.setTitle(pack.getFileName());
             title.setSubtitle(pack.getFileNameWithExtension());
             var compatibility = pack.getCompatibility();
-            if (compatibility == ResourcepackFile.Compatibility.COMPATIBLE) {
+            if (compatibility == ResourcePackFile.Compatibility.COMPATIBLE) {
                 title.addTag(i18n("resourcepack.compatible"));
             } else {
                 title.addTagWarning(getWarning(compatibility));
@@ -625,7 +626,7 @@ public final class ResourcepackListPage extends ListPageBase<ResourcepackListPag
                 Task.runAsync(() -> {
                     Optional<RemoteMod.Version> versionOptional = repository.getRemoteVersionByLocalFile(packInfoObject.getFile().getFile());
                     if (versionOptional.isPresent()) {
-                        RemoteMod remoteMod = repository.getModById(versionOptional.get().getModid());
+                        RemoteMod remoteMod = repository.getModById(DownloadProviders.getDownloadProvider(), versionOptional.get().getModid());
                         FXUtils.runInFX(() -> {
                             button.setOnAction(e -> {
                                 fireEvent(new DialogCloseEvent());

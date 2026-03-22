@@ -31,10 +31,10 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Locale;
 
-public sealed abstract class ResourcepackFile extends LocalAddonFile implements Comparable<ResourcepackFile> permits ResourcepackFolder, ResourcepackZipFile {
-    static ResourcepackFile parse(ResourcePackManager manager, Path path) throws IOException {
+public sealed abstract class ResourcePackFile extends LocalAddonFile implements Comparable<ResourcePackFile> permits ResourcePackFolder, ResourcePackZipFile {
+    static ResourcePackFile parse(ResourcePackManager manager, Path path) throws IOException {
         if (isFileResourcePack(path)) {
-            return Files.isRegularFile(path) ? new ResourcepackZipFile(manager, path) : new ResourcepackFolder(manager, path);
+            return Files.isRegularFile(path) ? new ResourcePackZipFile(manager, path) : new ResourcePackFolder(manager, path);
         }
         return null;
     }
@@ -52,7 +52,7 @@ public sealed abstract class ResourcepackFile extends LocalAddonFile implements 
 
     private Compatibility compatibility = null;
 
-    protected ResourcepackFile(ResourcePackManager manager, Path file) {
+    protected ResourcePackFile(ResourcePackManager manager, Path file) {
         super();
         this.manager = manager;
         this.file = file;
@@ -124,7 +124,7 @@ public sealed abstract class ResourcepackFile extends LocalAddonFile implements 
     public abstract byte @Nullable [] getIcon();
 
     @Override
-    public int compareTo(@NotNull ResourcepackFile other) {
+    public int compareTo(@NotNull ResourcePackFile other) {
         return this.fileNameWithExtension.compareTo(other.fileNameWithExtension);
     }
 

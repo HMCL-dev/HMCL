@@ -17,6 +17,7 @@
  */
 package org.jackhuang.hmcl.resourcepack;
 
+import org.jackhuang.hmcl.download.DownloadProvider;
 import org.jackhuang.hmcl.mod.RemoteMod;
 import org.jackhuang.hmcl.mod.modinfo.PackMcMeta;
 import org.jackhuang.hmcl.util.io.FileUtils;
@@ -28,11 +29,11 @@ import java.nio.file.Path;
 
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
-final class ResourcepackFolder extends ResourcepackFile {
+final class ResourcePackFolder extends ResourcePackFile {
     private final PackMcMeta meta;
     private final byte @Nullable [] icon;
 
-    public ResourcepackFolder(ResourcePackManager manager, Path path) {
+    public ResourcePackFolder(ResourcePackManager manager, Path path) {
         super(manager, path);
 
         PackMcMeta meta = null;
@@ -69,7 +70,7 @@ final class ResourcepackFolder extends ResourcepackFile {
     }
 
     @Override
-    public AddonUpdate checkUpdates(String gameVersion, RemoteMod.Type type) {
+    public AddonUpdate checkUpdates(DownloadProvider downloadProvider, String gameVersion, RemoteMod.Type type) {
         return null;
     }
 }
