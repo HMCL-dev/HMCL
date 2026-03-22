@@ -136,5 +136,7 @@
     <module name="RegexpHeader">
         <property name="headerFile" value="${licenseHeaderFile}"/>
         <property name="charset" value="UTF-8"/>
+        <message key="header.mismatch"
+                value="Line does not match expected header line of ''{0}''. Please add the missing copyright header."/>
     </module>
 </module>
