@@ -300,7 +300,7 @@ public final class VersionSettingsPage extends StackPane implements DecoratorPag
                                         maxMemory.get() * 1024L * 1024L,
                                         memoryStatusBar.getMemoryStatus().getAvailable(),
                                         chkAutoAllocate.isSelected()),
-                        maxMemory, chkAutoAllocate.selectedProperty()));
+                        memoryStatusBar.memoryStatusProperty(), maxMemory, chkAutoAllocate.selectedProperty()));
 
                 BorderPane digitalPane = new BorderPane();
                 VBox.setMargin(digitalPane, new Insets(0, 0, 0, 16));
