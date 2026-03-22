@@ -40,7 +40,7 @@ import javafx.util.Duration;
 import org.jackhuang.hmcl.mod.*;
 import org.jackhuang.hmcl.mod.curse.CurseForgeRemoteModRepository;
 import org.jackhuang.hmcl.mod.modrinth.ModrinthRemoteModRepository;
-import org.jackhuang.hmcl.resourcepack.ResourcePackFile;
+import org.jackhuang.hmcl.resourcepack.ResourcepackFile;
 import org.jackhuang.hmcl.resourcepack.ResourcePackManager;
 import org.jackhuang.hmcl.setting.ConfigHolder;
 import org.jackhuang.hmcl.setting.Profile;
@@ -76,10 +76,10 @@ import static org.jackhuang.hmcl.util.Pair.pair;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
-public final class ResourcePackListPage extends ListPageBase<ResourcePackListPage.ResourcePackInfoObject> implements VersionPage.VersionLoadable {
+public final class ResourcepackListPage extends ListPageBase<ResourcepackListPage.ResourcePackInfoObject> implements VersionPage.VersionLoadable {
 
     private static final String TIP_KEY = "resourcePackWarning";
-    private static @Nullable String getWarning(ResourcePackFile.Compatibility compatibility) {
+    private static @Nullable String getWarning(ResourcepackFile.Compatibility compatibility) {
         return switch (compatibility) {
             case TOO_NEW -> i18n("resourcepack.warning.too_new");
             case TOO_OLD -> i18n("resourcepack.warning.too_old");
@@ -98,8 +98,8 @@ public final class ResourcePackListPage extends ListPageBase<ResourcePackListPag
 
     private final ReentrantLock lock = new ReentrantLock();
 
-    public ResourcePackListPage() {
-        FXUtils.applyDragListener(this, ResourcePackFile::isFileResourcePack, this::addFiles);
+    public ResourcepackListPage() {
+        FXUtils.applyDragListener(this, ResourcepackFile::isFileResourcePack, this::addFiles);
     }
 
     @Override
@@ -203,7 +203,7 @@ public final class ResourcePackListPage extends ListPageBase<ResourcePackListPag
     }
 
     private void setSelectedEnabled(List<ResourcePackInfoObject> selectedItems, boolean enabled) {
-        if (!ConfigHolder.config().getShownTips().containsKey(TIP_KEY) && enabled && !selectedItems.stream().map(ResourcePackInfoObject::getFile).allMatch(ResourcePackFile::isCompatible)) {
+        if (!ConfigHolder.config().getShownTips().containsKey(TIP_KEY) && enabled && !selectedItems.stream().map(ResourcePackInfoObject::getFile).allMatch(ResourcepackFile::isCompatible)) {
             Controllers.confirm(
                     i18n("resourcepack.warning.manipulate"),
                     i18n("message.warning"),
@@ -232,7 +232,7 @@ public final class ResourcePackListPage extends ListPageBase<ResourcePackListPag
         }
     }
 
-    public void checkUpdates(Collection<ResourcePackFile> resourcePacks) {
+    public void checkUpdates(Collection<ResourcepackFile> resourcePacks) {
         Runnable action = () -> Controllers.taskDialog(Task
                         .composeAsync(() -> {
                             Optional<String> gameVersion = profile.getRepository().getGameVersion(instanceId);
@@ -260,7 +260,7 @@ public final class ResourcePackListPage extends ListPageBase<ResourcePackListPag
         }
     }
 
-    private static final class ResourcePackListPageSkin extends SkinBase<ResourcePackListPage> {
+    private static final class ResourcePackListPageSkin extends SkinBase<ResourcepackListPage> {
         private final JFXListView<ResourcePackInfoObject> listView;
         private final JFXTextField searchField = new JFXTextField();
 
@@ -271,7 +271,7 @@ public final class ResourcePackListPage extends ListPageBase<ResourcePackListPag
 
         private boolean isSearching;
 
-        private ResourcePackListPageSkin(ResourcePackListPage control) {
+        private ResourcePackListPageSkin(ResourcepackListPage control) {
             super(control);
 
             StackPane pane = new StackPane();
@@ -425,7 +425,7 @@ public final class ResourcePackListPage extends ListPageBase<ResourcePackListPag
 
                 // Do we need to search in the background thread?
                 for (ResourcePackInfoObject item : getSkinnable().getItems()) {
-                    ResourcePackFile resourcePack = item.getFile();
+                    ResourcepackFile resourcePack = item.getFile();
                     LocalModFile.Description description = resourcePack.getDescription();
                     Stream<String> descriptionParts = description == null
                             ? Stream.empty()
@@ -441,17 +441,17 @@ public final class ResourcePackListPage extends ListPageBase<ResourcePackListPag
     }
 
     public static class ResourcePackInfoObject {
-        private final ResourcePackFile file;
+        private final ResourcepackFile file;
         private final BooleanProperty enabled;
         private WeakReference<Image> iconCache;
 
-        public ResourcePackInfoObject(ResourcePackFile file) {
+        public ResourcePackInfoObject(ResourcepackFile file) {
             this.file = file;
             this.enabled = new SimpleBooleanProperty(this, "enabled", file.isEnabled());
             FXUtils.onChange(this.enabled, file::setEnabled);
         }
 
-        public ResourcePackFile getFile() {
+        public ResourcepackFile getFile() {
             return file;
         }
 
@@ -485,7 +485,7 @@ public final class ResourcePackListPage extends ListPageBase<ResourcePackListPag
     private static final class ResourcePackListCell extends MDListCell<ResourcePackInfoObject> {
         private static final PseudoClass WARNING = PseudoClass.getPseudoClass("warning");
 
-        private final ResourcePackListPage page;
+        private final ResourcepackListPage page;
 
         private final JFXCheckBox checkBox;
         private final ImageContainer imageContainer = new ImageContainer(24);
@@ -497,7 +497,7 @@ public final class ResourcePackListPage extends ListPageBase<ResourcePackListPag
 
         private BooleanProperty booleanProperty = null;
 
-        public ResourcePackListCell(JFXListView<ResourcePackInfoObject> listView, ResourcePackListPage page) {
+        public ResourcePackListCell(JFXListView<ResourcePackInfoObject> listView, ResourcepackListPage page) {
             super(listView);
             this.page = page;
 
@@ -543,7 +543,7 @@ public final class ResourcePackListPage extends ListPageBase<ResourcePackListPag
             if (empty || item == null) return;
 
             this.object = item;
-            ResourcePackFile file = item.getFile();
+            ResourcepackFile file = item.getFile();
             imageContainer.setImage(item.getIcon());
 
             content.getTags().clear();
@@ -562,7 +562,7 @@ public final class ResourcePackListPage extends ListPageBase<ResourcePackListPag
 
             {
                 var compatibility = file.getCompatibility();
-                if (compatibility == ResourcePackFile.Compatibility.COMPATIBLE) {
+                if (compatibility == ResourcepackFile.Compatibility.COMPATIBLE) {
                     content.addTag(i18n("resourcepack.compatible"));
                 } else {
                     pseudoClassStateChanged(WARNING, true);
@@ -574,8 +574,8 @@ public final class ResourcePackListPage extends ListPageBase<ResourcePackListPag
 
     private static final class ResourcePackInfoDialog extends JFXDialogLayout {
 
-        ResourcePackInfoDialog(ResourcePackListPage page, ResourcePackInfoObject packInfoObject) {
-            ResourcePackFile pack = packInfoObject.getFile();
+        ResourcePackInfoDialog(ResourcepackListPage page, ResourcePackInfoObject packInfoObject) {
+            ResourcepackFile pack = packInfoObject.getFile();
 
             HBox titleContainer = new HBox();
             titleContainer.setSpacing(8);
@@ -590,7 +590,7 @@ public final class ResourcePackListPage extends ListPageBase<ResourcePackListPag
             title.setTitle(pack.getFileName());
             title.setSubtitle(pack.getFileNameWithExtension());
             var compatibility = pack.getCompatibility();
-            if (compatibility == ResourcePackFile.Compatibility.COMPATIBLE) {
+            if (compatibility == ResourcepackFile.Compatibility.COMPATIBLE) {
                 title.addTag(i18n("resourcepack.compatible"));
             } else {
                 title.addTagWarning(getWarning(compatibility));
