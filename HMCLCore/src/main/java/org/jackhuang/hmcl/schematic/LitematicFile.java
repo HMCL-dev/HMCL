@@ -17,10 +17,13 @@
  */
 package org.jackhuang.hmcl.schematic;
 
-import com.github.steveice10.opennbt.tag.builtin.*;
+import org.glavo.nbt.tag.CompoundTag;
+import org.glavo.nbt.tag.IntArrayTag;
+import org.glavo.nbt.tag.IntTag;
+import org.glavo.nbt.tag.Tag;
 import org.jackhuang.hmcl.util.Lang;
-import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.Point3I;
+import org.jackhuang.hmcl.util.StringUtils;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
@@ -51,9 +54,8 @@ public final class LitematicFile extends Schematic {
             throw new IOException("Metadata tag is not a compound tag");
 
         int regions = 0;
-        Tag regionsTag = root.get("Regions");
-        if (regionsTag instanceof CompoundTag)
-            regions = ((CompoundTag) regionsTag).size();
+        if (root.get("Regions") instanceof CompoundTag regionsTag)
+            regions = regionsTag.size();
 
         Point3I enclosingSize = null;
         Tag enclosingSizeTag = ((CompoundTag) metadataTag).get("EnclosingSize");
@@ -96,8 +98,8 @@ public final class LitematicFile extends Schematic {
         this.regionCount = regionCount;
 
         Tag previewImageData = metadata.get("PreviewImageData");
-        this.previewImageData = previewImageData instanceof IntArrayTag
-                ? ((IntArrayTag) previewImageData).getValue()
+        this.previewImageData = previewImageData instanceof IntArrayTag intArrayTag
+                ? intArrayTag.getArray()
                 : null;
 
         this.name = tryGetString(metadata.get("Name"));

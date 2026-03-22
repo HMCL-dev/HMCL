@@ -28,6 +28,7 @@ import org.jackhuang.hmcl.game.Version;
 import org.jackhuang.hmcl.mod.LocalModFile;
 import org.jackhuang.hmcl.mod.ModLoaderType;
 import org.jackhuang.hmcl.mod.ModManager;
+import org.jackhuang.hmcl.setting.DownloadProviders;
 import org.jackhuang.hmcl.setting.Profile;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
@@ -195,7 +196,7 @@ public final class ModListPage extends ListPageBase<ModListPageSkin.ModInfoObjec
                         .composeAsync(() -> {
                             Optional<String> gameVersion = profile.getRepository().getGameVersion(instanceId);
                             if (gameVersion.isPresent()) {
-                                return new ModCheckUpdatesTask(gameVersion.get(), mods);
+                                return new ModCheckUpdatesTask(DownloadProviders.getDownloadProvider(), gameVersion.get(), mods);
                             }
                             return null;
                         })

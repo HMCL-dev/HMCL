@@ -17,10 +17,10 @@
  */
 package org.jackhuang.hmcl.schematic;
 
-import com.github.steveice10.opennbt.tag.builtin.CompoundTag;
-import com.github.steveice10.opennbt.tag.builtin.IntTag;
-import com.github.steveice10.opennbt.tag.builtin.StringTag;
-import com.github.steveice10.opennbt.tag.builtin.Tag;
+import org.glavo.nbt.tag.CompoundTag;
+import org.glavo.nbt.tag.IntTag;
+import org.glavo.nbt.tag.StringTag;
+import org.glavo.nbt.tag.Tag;
 import org.jackhuang.hmcl.util.Point3I;
 import org.jetbrains.annotations.Nullable;
 
@@ -40,8 +40,8 @@ public final class SchemFile extends Schematic {
 
         CompoundTag root = readRoot(file);
 
-        if (root.contains("Materials")) return loadLegacy(file, root);
-        else if (root.contains("Version")) return loadSponge(file, root);
+        if (root.get("Materials") != null) return loadLegacy(file, root);
+        else if (root.get("Version") != null) return loadSponge(file, root);
         throw new IOException("No Materials tag or Version tag found");
     }
 

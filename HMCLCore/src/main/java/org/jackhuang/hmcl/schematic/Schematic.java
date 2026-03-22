@@ -17,8 +17,8 @@
  */
 package org.jackhuang.hmcl.schematic;
 
-import com.github.steveice10.opennbt.NBTIO;
-import com.github.steveice10.opennbt.tag.builtin.*;
+import org.glavo.nbt.io.NBTCodec;
+import org.glavo.nbt.tag.*;
 import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.Point3I;
 import org.jackhuang.hmcl.util.io.FileUtils;
@@ -53,7 +53,7 @@ public sealed abstract class Schematic permits LitematicFile, SchemFile, NBTStru
     public static CompoundTag readRoot(Path file) throws IOException {
         CompoundTag root;
         try (InputStream in = new GZIPInputStream(Files.newInputStream(file))) {
-            root = (CompoundTag) NBTIO.readTag(in);
+            root = NBTCodec.of().readTag(in, TagType.COMPOUND);
         }
         return root;
     }

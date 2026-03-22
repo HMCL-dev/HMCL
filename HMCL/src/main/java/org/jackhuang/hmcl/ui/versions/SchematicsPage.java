@@ -46,6 +46,7 @@ import org.jackhuang.hmcl.mod.modrinth.ModrinthRemoteModRepository;
 import org.jackhuang.hmcl.schematic.LitematicFile;
 import org.jackhuang.hmcl.schematic.Schematic;
 import org.jackhuang.hmcl.schematic.SchematicType;
+import org.jackhuang.hmcl.setting.DownloadProviders;
 import org.jackhuang.hmcl.setting.Profile;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
@@ -162,12 +163,12 @@ public final class SchematicsPage extends ListPageBase<SchematicsPage.Item> impl
                             && GameVersionNumber.asGameVersion(Optional.ofNullable(modManager.getGameVersion())).isAtLeast("1.16.4", "20w45a");
                     if (litematica == null && !shouldUseForgematica) {
                         try {
-                            litematica = ModrinthRemoteModRepository.MODS.getModById("litematica");
+                            litematica = ModrinthRemoteModRepository.MODS.getModById(DownloadProviders.getDownloadProvider(), "litematica");
                         } catch (IOException ignored) {
                         }
                     } else if (forgematica == null && shouldUseForgematica) {
                         try {
-                            forgematica = ModrinthRemoteModRepository.MODS.getModById("forgematica");
+                            forgematica = ModrinthRemoteModRepository.MODS.getModById(DownloadProviders.getDownloadProvider(), "forgematica");
                         } catch (IOException ignored) {
                         }
                     }

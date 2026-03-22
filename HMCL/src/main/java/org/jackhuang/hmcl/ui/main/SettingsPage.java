@@ -45,6 +45,7 @@ import org.jackhuang.hmcl.upgrade.RemoteVersion;
 import org.jackhuang.hmcl.upgrade.UpdateChannel;
 import org.jackhuang.hmcl.upgrade.UpdateChecker;
 import org.jackhuang.hmcl.upgrade.UpdateHandler;
+import org.jackhuang.hmcl.util.AprilFools;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.i18n.I18n;
 import org.jackhuang.hmcl.util.i18n.SupportedLocale;
@@ -222,6 +223,14 @@ public final class SettingsPage extends ScrollPane {
                 disableAutoShowUpdateDialogPane.setSubtitle(i18n("update.disable_auto_show_update_dialog.subtitle"));
                 disableAutoShowUpdateDialogPane.selectedProperty().bindBidirectional(config().disableAutoShowUpdateDialogProperty());
                 settingsPane.getContent().add(disableAutoShowUpdateDialogPane);
+            }
+
+            if (AprilFools.isShowAprilFoolsSettings()) {
+                LineToggleButton disableAprilFools = new LineToggleButton();
+                disableAprilFools.setTitle(i18n("settings.launcher.disable_april_fools"));
+                disableAprilFools.setSubtitle(i18n("settings.take_effect_after_restart"));
+                disableAprilFools.selectedProperty().bindBidirectional(config().disableAprilFoolsProperty());
+                settingsPane.getContent().add(disableAprilFools);
             }
 
             {
