@@ -68,7 +68,7 @@ public final class MemoryStatusBar extends Control {
     }
 
     private static final class Skin extends SkinBase<MemoryStatusBar> {
-        private static final int HEIGHT = 24;
+        private static final int HEIGHT = 4;
 
         private final Rectangle memoryTotal;
         private final Rectangle memoryUsed;
