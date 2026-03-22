@@ -21,12 +21,15 @@ import org.glavo.nbt.tag.CompoundTag;
 import org.glavo.nbt.tag.IntTag;
 import org.glavo.nbt.tag.StringTag;
 import org.glavo.nbt.tag.Tag;
+import org.jackhuang.hmcl.util.NBTUtils;
 import org.jackhuang.hmcl.util.Point3I;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.OptionalInt;
+
+import static org.jackhuang.hmcl.util.NBTUtils.tryGetShort;
 
 /// @author Calboot
 /// @see <a href="https://minecraft.wiki/w/Schematic_file_format">Schematic File Format Wiki</a>
@@ -38,7 +41,7 @@ public final class SchemFile extends Schematic {
 
     public static SchemFile load(Path file) throws IOException {
 
-        CompoundTag root = readRoot(file);
+        CompoundTag root = NBTUtils.readCompressed(file);
 
         if (root.get("Materials") != null) return loadLegacy(file, root);
         else if (root.get("Version") != null) return loadSponge(file, root);
@@ -72,7 +75,8 @@ public final class SchemFile extends Schematic {
             throw new IOException("Version tag is not an integer");
 
         Tag dataVersionTag = root.get("DataVersion");
-        int dataVersion = dataVersionTag == null ? DATA_VERSION_MC_1_13_2 : tryGetInt(dataVersionTag).orElse(0);
+        int dataVersion;
+        dataVersion = dataVersionTag == null ? DATA_VERSION_MC_1_13_2 : NBTUtils.tryGetInt(dataVersionTag).orElse(0);
 
         Tag widthTag = root.get("Width");
         Tag heightTag = root.get("Height");

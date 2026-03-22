@@ -17,8 +17,6 @@
  */
 package org.jackhuang.hmcl.schematic;
 
-import org.glavo.nbt.io.NBTCodec;
-import org.glavo.nbt.tag.*;
 import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.Point3I;
 import org.jackhuang.hmcl.util.io.FileUtils;
@@ -26,12 +24,9 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
-import java.io.InputStream;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Instant;
 import java.util.OptionalInt;
-import java.util.zip.GZIPInputStream;
 
 public sealed abstract class Schematic permits LitematicFile, SchemFile, NBTStructureFile {
 
@@ -48,33 +43,6 @@ public sealed abstract class Schematic permits LitematicFile, SchemFile, NBTStru
             case SCHEM -> SchemFile.load(file);
             case NBT_STRUCTURE -> NBTStructureFile.load(file);
         };
-    }
-
-    public static CompoundTag readRoot(Path file) throws IOException {
-        CompoundTag root;
-        try (InputStream in = new GZIPInputStream(Files.newInputStream(file))) {
-            root = NBTCodec.of().readTag(in, TagType.COMPOUND);
-        }
-        return root;
-    }
-
-    public static OptionalInt tryGetInt(Tag tag) {
-        return tag instanceof IntTag ? OptionalInt.of(((IntTag) tag).getValue()) : OptionalInt.empty();
-    }
-
-    public static short tryGetShort(Tag tag) {
-        return tag instanceof ShortTag ? ((ShortTag) tag).getValue() : 0;
-    }
-
-    public static @Nullable Instant tryGetLongTimestamp(Tag tag) {
-        if (tag instanceof LongTag) {
-            return Instant.ofEpochMilli(((LongTag) tag).getValue());
-        }
-        return null;
-    }
-
-    public static @Nullable String tryGetString(Tag tag) {
-        return tag instanceof StringTag ? ((StringTag) tag).getValue() : null;
     }
 
     private final Path file;

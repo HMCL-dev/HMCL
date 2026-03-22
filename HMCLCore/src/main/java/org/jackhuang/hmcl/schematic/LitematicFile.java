@@ -31,6 +31,8 @@ import java.nio.file.Path;
 import java.time.Instant;
 import java.util.OptionalInt;
 
+import static org.jackhuang.hmcl.util.NBTUtils.*;
+
 /**
  * @author Glavo
  * @see <a href="https://litemapy.readthedocs.io/en/v0.9.0b0/litematics.html">The Litematic file format</a>
@@ -39,7 +41,7 @@ public final class LitematicFile extends Schematic {
 
     public static LitematicFile load(Path file) throws IOException {
 
-        CompoundTag root = readRoot(file);
+        CompoundTag root = readCompressed(file);
 
         Tag versionTag = root.get("Version");
         if (versionTag == null)

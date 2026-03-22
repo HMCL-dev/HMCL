@@ -21,10 +21,13 @@ import org.glavo.nbt.tag.CompoundTag;
 import org.glavo.nbt.tag.IntTag;
 import org.glavo.nbt.tag.ListTag;
 import org.glavo.nbt.tag.Tag;
+import org.jackhuang.hmcl.util.NBTUtils;
 import org.jackhuang.hmcl.util.Point3I;
 
 import java.io.IOException;
 import java.nio.file.Path;
+
+import static org.jackhuang.hmcl.util.NBTUtils.tryGetInt;
 
 /// @author Calboot
 /// @see <a href="https://minecraft.wiki/w/Structure_file">Structure File</a>
@@ -32,7 +35,7 @@ public final class NBTStructureFile extends Schematic {
 
     public static NBTStructureFile load(Path file) throws IOException {
 
-        CompoundTag root = Schematic.readRoot(file);
+        CompoundTag root = NBTUtils.readCompressed(file);
 
         Tag dataVersionTag = root.get("DataVersion");
         if (dataVersionTag == null)
@@ -59,7 +62,7 @@ public final class NBTStructureFile extends Schematic {
             enclosingSize = new Point3I(width, height, length);
         }
 
-        return new NBTStructureFile(file, ((IntTag) dataVersionTag).getValue(), tryGetString(root.get("author")), enclosingSize);
+        return new NBTStructureFile(file, ((IntTag) dataVersionTag).getValue(), NBTUtils.tryGetString(root.get("author")), enclosingSize);
     }
 
     private final String author;
