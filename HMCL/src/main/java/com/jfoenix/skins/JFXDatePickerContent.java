@@ -34,6 +34,7 @@ import org.jackhuang.hmcl.setting.ConfigHolder;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
 import org.jackhuang.hmcl.ui.SVGContainer;
+import org.jackhuang.hmcl.ui.construct.DialogCloseEvent;
 import org.jackhuang.hmcl.ui.construct.RipplerContainer;
 import org.jackhuang.hmcl.util.i18n.I18n;
 import org.jackhuang.hmcl.util.i18n.LocaleUtils;
@@ -221,10 +222,8 @@ public class JFXDatePickerContent extends VBox {
                     event.consume();
                 }
                 case ESCAPE -> {
-                    datePicker.hide();
+                    fireEvent(new DialogCloseEvent());
                     event.consume();
-                }
-                case F4, F10, UP, DOWN, LEFT, RIGHT, TAB -> {
                 }
                 default -> event.consume();
             }
@@ -378,13 +377,13 @@ public class JFXDatePickerContent extends VBox {
     protected HBox createActions() {
         JFXButton cancelButton = new JFXButton(I18n.i18n("button.cancel"));
         cancelButton.getStyleClass().add("dialog-cancel");
-        FXUtils.onClicked(cancelButton, () -> ((JFXDatePickerSkin) datePicker.getSkin()).getDialog().close());
+        FXUtils.onClicked(cancelButton, () -> fireEvent(new DialogCloseEvent()));
 
         JFXButton acceptButton = new JFXButton(I18n.i18n("button.ok"));
         acceptButton.getStyleClass().add("dialog-accept");
         FXUtils.onClicked(acceptButton, () -> {
             datePicker.setValue(valueProperty.get());
-            ((JFXDatePickerSkin) datePicker.getSkin()).getDialog().close();
+            fireEvent(new DialogCloseEvent());
         });
 
         HBox hBox = new HBox(cancelButton, acceptButton);
@@ -616,7 +615,6 @@ public class JFXDatePickerContent extends VBox {
 
     private void selectDayCell(DateCell dateCell) {
         this.valueProperty.set(this.dayCellDate(dateCell));
-        this.datePicker.hide();
     }
 
     private DateCell findDayCellOfDate(LocalDate date) {

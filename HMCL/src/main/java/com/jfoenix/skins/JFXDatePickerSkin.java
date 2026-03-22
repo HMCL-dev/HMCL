@@ -19,14 +19,18 @@ import javafx.scene.control.TextField;
 import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
 import org.jackhuang.hmcl.ui.SVG;
+import org.jackhuang.hmcl.ui.construct.DialogCloseEvent;
 import org.jackhuang.hmcl.ui.construct.RipplerContainer;
 
 import java.time.LocalDate;
 import java.time.YearMonth;
+import java.util.Stack;
 
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 public class JFXDatePickerSkin extends DatePickerSkin {
+    public static final String PROPERTY_DATE_PICKER_CONTENTS = JFXDatePicker.class.getName() + ".dialog.contents";
+
     private final JFXDatePicker jfxDatePicker;
     private TextField displayNode;
     private JFXDatePickerContent content;
@@ -121,18 +125,29 @@ public class JFXDatePickerSkin extends DatePickerSkin {
                 dialogParent = (StackPane) this.getSkinnable().getScene().getRoot();
             }
 
-            this.dialog = new JFXDialog(dialogParent, this.getPopupContent(), DialogTransition.CENTER, true);
+            this.dialog = new JFXDialog(dialogParent, this.getPopupContent(), DialogTransition.CENTER, true) {
+                @Override
+                public void close() {
+                    super.close();
+                    Object o = getDialogContainer().getProperties().get(PROPERTY_DATE_PICKER_CONTENTS);
+                    if (o instanceof Stack<?> stack) {
+                        stack.pop();
+                    }
+                }
+            };
+            this.getPopupContent().addEventHandler(DialogCloseEvent.CLOSE, e -> this.dialog.close());
             getArrowButton().setOnMouseClicked((click) -> {
                 if (((JFXDatePicker) this.getSkinnable()).isOverLay()) {
                     StackPane parent = this.jfxDatePicker.getDialogParent();
                     if (parent == null) {
                         parent = (StackPane) this.getSkinnable().getScene().getRoot();
                     }
+                    Stack<JFXDatePickerContent> contentStack = (Stack<JFXDatePickerContent>) parent.getProperties().computeIfAbsent(PROPERTY_DATE_PICKER_CONTENTS, k -> new Stack<>());
+                    contentStack.push(this.getPopupContent());
 
                     this.getPopupContent().valueProperty.set(this.getSkinnable().getValue());
                     this.dialog.show(parent);
                 }
-
             });
         }
 

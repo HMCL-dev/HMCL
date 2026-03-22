@@ -1452,6 +1452,15 @@ public final class FXUtils {
         });
     }
 
+    public static void onDoubleClicked(Node node, Runnable action) {
+        node.addEventHandler(MouseEvent.MOUSE_CLICKED, e -> {
+            if (e.getButton() == MouseButton.PRIMARY && e.getClickCount() == 2) {
+                action.run();
+                e.consume();
+            }
+        });
+    }
+
     public static <N extends Parent> N prepareNode(N node) {
         Scene dummyScene = new Scene(node);
         StyleSheets.init(dummyScene);
@@ -1745,6 +1754,7 @@ public final class FXUtils {
             });
 
             setActions(cancelButton, okButton);
+            onEscPressed(this, cancelButton::fire);
         }
 
     }

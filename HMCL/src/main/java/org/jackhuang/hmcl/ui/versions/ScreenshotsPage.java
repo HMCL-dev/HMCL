@@ -127,7 +127,7 @@ public class ScreenshotsPage extends ListPageBase<ScreenshotsPage.Screenshot> im
     public static final class Screenshot implements Comparable<Screenshot> {
         private final Path path;
         private final String fileName;
-        private final Instant creationTime;
+        private final BasicFileAttributes attributes;
         private Image thumbnail, fullImage;
 
         public static boolean isFileScreenshot(Path path) {
@@ -136,24 +136,19 @@ public class ScreenshotsPage extends ListPageBase<ScreenshotsPage.Screenshot> im
 
         public static Screenshot fromFile(Path path) {
             if (!isFileScreenshot(path)) return null;
-            Instant creationTime = null;
+            BasicFileAttributes attr = null;
             try {
-                creationTime = Files.readAttributes(path, BasicFileAttributes.class).creationTime().toInstant();
+                attr = Files.readAttributes(path, BasicFileAttributes.class);
             } catch (IOException e) {
                 LOG.warning("Failed to read screenshot creation time at: " + path, e);
             }
-            return new Screenshot(path, FileUtils.getName(path), creationTime);
+            return new Screenshot(path, FileUtils.getName(path), attr);
         }
 
-        public Screenshot(Path path, String fileName, Instant creationTime) {
+        public Screenshot(Path path, String fileName, BasicFileAttributes attributes) {
             this.path = path;
             this.fileName = fileName;
-            this.creationTime = creationTime;
-        }
-
-        @Override
-        public int compareTo(@NotNull ScreenshotsPage.Screenshot o) {
-            return this.getFileName().compareTo(o.getFileName());
+            this.attributes = attributes;
         }
 
         public Path getPath() {
@@ -164,8 +159,16 @@ public class ScreenshotsPage extends ListPageBase<ScreenshotsPage.Screenshot> im
             return fileName;
         }
 
+        public BasicFileAttributes getAttributes() {
+            return attributes;
+        }
+
         public Instant getCreationTime() {
-            return creationTime;
+            return attributes.creationTime().toInstant();
+        }
+
+        public long getFileSize() {
+            return attributes.size();
         }
 
         public boolean isThumbnailLoaded() {
@@ -202,27 +205,17 @@ public class ScreenshotsPage extends ListPageBase<ScreenshotsPage.Screenshot> im
 
         @Override
         public boolean equals(Object obj) {
-            if (obj == this) return true;
-            if (obj == null || obj.getClass() != this.getClass()) return false;
-            var that = (Screenshot) obj;
-            return Objects.equals(this.path, that.path) &&
-                    Objects.equals(this.fileName, that.fileName) &&
-                    Objects.equals(this.creationTime, that.creationTime) &&
-                    Objects.equals(this.thumbnail, that.thumbnail);
+            return obj instanceof Screenshot that && Objects.equals(this.path, that.path);
         }
 
         @Override
         public int hashCode() {
-            return Objects.hash(path, fileName, creationTime, thumbnail);
+            return Objects.hashCode(path);
         }
 
         @Override
-        public String toString() {
-            return "Screenshot[" +
-                    "path=" + path + ", " +
-                    "fileName=" + fileName + ", " +
-                    "creationTime=" + creationTime + ", " +
-                    "thumbnail=" + thumbnail + ']';
+        public int compareTo(@NotNull ScreenshotsPage.Screenshot o) {
+            return this.path.compareTo(o.path);
         }
 
     }
@@ -267,6 +260,7 @@ public class ScreenshotsPage extends ListPageBase<ScreenshotsPage.Screenshot> im
                     Controllers.dialog(new ScreenshotDialog(screenshot));
                 }
             });
+            FXUtils.onDoubleClicked(this, infoButton::fire);
 
             JFXButton deleteButton = FXUtils.newToggleButton4(SVG.DELETE_FOREVER);
             deleteButton.setOnAction(e -> {
@@ -308,14 +302,19 @@ public class ScreenshotsPage extends ListPageBase<ScreenshotsPage.Screenshot> im
         public ScreenshotDialog(Screenshot screenshot) {
             TwoLineListItem head = new TwoLineListItem();
             head.setTitle(screenshot.getFileName());
-            head.setSubtitle(I18n.formatDateTime(screenshot.getCreationTime()));
             setHeading(head);
 
             var image = screenshot.getFullImage();
-            setBody(image != null
-                    ? new ImageContainer(image, Math.min(Controllers.getScene().getWidth() * 0.8, image.getWidth()), Controllers.getScene().getHeight() * 0.5)
-                    : SVG.SCREENSHOT_MONITOR.createIcon(360)
-            );
+            if (image == null) {
+                setBody(SVG.SCREENSHOT_MONITOR.createIcon(360));
+                head.setSubtitle(I18n.formatDateTime(screenshot.getCreationTime()) + "    " + FileUtils.parseFileSize(screenshot.getFileSize()));
+            } else {
+                setBody(new ImageContainer(image, Math.min(Controllers.getScene().getWidth() * 0.8, image.getWidth()), Controllers.getScene().getHeight() * 0.57));
+                head.setSubtitle(I18n.formatDateTime(screenshot.getCreationTime())
+                        + "    " + FileUtils.parseFileSize(screenshot.getFileSize())
+                        + "    " + (int) image.getWidth() + " * " + (int) image.getHeight()
+                );
+            }
 
             JFXButton okButton = new JFXButton();
             okButton.getStyleClass().add("dialog-accept");
