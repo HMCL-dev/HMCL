@@ -470,7 +470,7 @@ public final class SettingsPage extends ScrollPane {
             }
 
             return outputFile;
-        }));
+        }), Schedulers.io());
     }
 
     private void onSponsor() {
