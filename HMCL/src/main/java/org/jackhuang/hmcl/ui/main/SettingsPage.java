@@ -239,7 +239,7 @@ public final class SettingsPage extends ScrollPane {
                         new MultiFileItem.Option<>(i18n("launcher.cache_directory.default"), EnumCommonDirectory.DEFAULT),
                         new MultiFileItem.FileOption<>(i18n("settings.custom"), EnumCommonDirectory.CUSTOM)
                                 .setChooserTitle(i18n("launcher.cache_directory.choose"))
-                                .setDirectory(true)
+                                .setSelectionMode(FileSelector.SelectionMode.DIRECTORY)
                                 .bindBidirectional(config().commonDirectoryProperty())
                 ));
                 fileCommonLocation.selectedDataProperty().bindBidirectional(config().commonDirTypeProperty());
