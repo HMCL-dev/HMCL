@@ -3,6 +3,26 @@ description: File a bug report for HMCL.
 title: "[Bug] "
 labels: bug
 body:
+  - type: dropdown
+    id: operating-system
+    attributes:
+      label: Operating System
+      description: Please provide the operating system you are using.
+      options:
+        - macOS
+        - Windows
+        - Linux
+        - Other
+  - type: input
+    id: operating-system-version
+    attributes:
+      label: Operating System Version
+      description: Please provide the version of the operating system you are using.
+  - type: input
+    id: version
+    attributes:
+      description: Client Version
+      label: Please provide the version of the client you are using.
   - type: markdown
     attributes:
       value: |-

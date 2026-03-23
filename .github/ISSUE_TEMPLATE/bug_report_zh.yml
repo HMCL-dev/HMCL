@@ -3,6 +3,26 @@ description: 反馈一个 HMCL 错误。
 title: "[Bug] "
 labels: bug
 body:
+  - type: dropdown
+    id: operating-system
+    attributes:
+      label: 操作系统
+      description: 请提供你所使用的操作系统。
+      options:
+        - macOS
+        - Windows
+        - Linux
+        - 其他
+  - type: input
+    id: operating-system-version
+    attributes:
+      label: 操作系统版本
+      description: 请提供你所使用的操作系统版本。
+  - type: input
+    id: version
+    attributes:
+      description: 客户端版本
+      label: 请提供你所使用的客户端版本。
   - type: markdown
     attributes:
       value: |-
