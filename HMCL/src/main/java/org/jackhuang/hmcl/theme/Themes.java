@@ -57,7 +57,7 @@ import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 /// @author Glavo
 public final class Themes {
 
-    private static final ObjectExpression<Theme> theme = new ObjectBinding<>() {
+    private static final ObjectExpression<ColorTheme> theme = new ObjectBinding<>() {
         {
             List<Observable> observables = new ArrayList<>();
 
@@ -89,10 +89,10 @@ public final class Themes {
         }
 
         @Override
-        protected Theme computeValue() {
+        protected ColorTheme computeValue() {
             ThemeColor themeColor = Objects.requireNonNullElse(config().getThemeColor(), ThemeColor.DEFAULT);
 
-            return new Theme(themeColor, getBrightness(), Theme.DEFAULT.colorStyle(), Contrast.DEFAULT);
+            return new ColorTheme(themeColor, getBrightness(), ColorTheme.DEFAULT.colorStyle(), Contrast.DEFAULT);
         }
     };
     private static final ColorSchemeProperty colorScheme = new SimpleColorSchemeProperty();
@@ -102,9 +102,9 @@ public final class Themes {
     );
 
     static {
-        ChangeListener<Theme> listener = (observable, oldValue, newValue) -> {
+        ChangeListener<ColorTheme> listener = (observable, oldValue, newValue) -> {
             if (!Objects.equals(oldValue, newValue)) {
-                colorScheme.set(newValue != null ? newValue.toColorScheme() : Theme.DEFAULT.toColorScheme());
+                colorScheme.set(newValue != null ? newValue.toColorScheme() : ColorTheme.DEFAULT.toColorScheme());
             }
         };
         listener.changed(theme, null, theme.get());
@@ -171,11 +171,11 @@ public final class Themes {
         return defaultBrightness = brightness;
     }
 
-    public static ObjectExpression<Theme> themeProperty() {
+    public static ObjectExpression<ColorTheme> themeProperty() {
         return theme;
     }
 
-    public static Theme getTheme() {
+    public static ColorTheme getTheme() {
         return themeProperty().get();
     }
 
