@@ -524,10 +524,6 @@
     -fx-font-size: 14.0px;
 }
 
-.jfx-dialog > .content-holder {
-    -fx-background-color: transparent;
-}
-
 .jfx-dialog-layout {
     -fx-background-radius: 4px;
     -fx-padding: 24px 24px 16px 24px;
