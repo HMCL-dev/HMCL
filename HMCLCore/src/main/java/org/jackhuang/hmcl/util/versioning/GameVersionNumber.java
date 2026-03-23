@@ -268,7 +268,7 @@ public abstract sealed class GameVersionNumber implements Comparable<GameVersion
     }
 
     public static final class Release extends GameVersionNumber {
-        private static final int MINIMUM_YEAR_MAJOR_VERSION = 25;
+        private static final int MINIMUM_YEAR_MAJOR_VERSION = 26;
 
         public enum ReleaseType {
             UNKNOWN(""),
@@ -317,6 +317,8 @@ public abstract sealed class GameVersionNumber implements Comparable<GameVersion
 
             String suffix = matcher.group("suffix");
 
+            boolean isLegacyRelease = major == 1;
+
             ReleaseType releaseType;
             VersionNumber eaVersion;
             Additional additional = Additional.NONE;
@@ -342,10 +344,15 @@ public abstract sealed class GameVersionNumber implements Comparable<GameVersion
                 releaseType = ReleaseType.SNAPSHOT;
                 eaVersion = VersionNumber.asVersion(suffix.substring(" Snapshot ".length()));
             } else if (suffix.startsWith("-pre-")) {
-                needNormalize = true;
+                if (isLegacyRelease) {
+                    needNormalize = true;
+                }
                 releaseType = ReleaseType.PRE_RELEASE;
                 eaVersion = VersionNumber.asVersion(suffix.substring("-pre-".length()));
             } else if (suffix.startsWith("-pre")) {
+                if (!isLegacyRelease) {
+                    needNormalize = true;
+                }
                 releaseType = ReleaseType.PRE_RELEASE;
                 eaVersion = VersionNumber.asVersion(suffix.substring("-pre".length()));
             } else if (suffix.startsWith(" Pre-Release ")) {
@@ -358,10 +365,15 @@ public abstract sealed class GameVersionNumber implements Comparable<GameVersion
                 releaseType = ReleaseType.PRE_RELEASE;
                 eaVersion = VersionNumber.asVersion(suffix.substring(" Pre-release ".length()));
             } else if (suffix.startsWith("-rc-")) {
-                needNormalize = true;
+                if (isLegacyRelease) {
+                    needNormalize = true;
+                }
                 releaseType = ReleaseType.RELEASE_CANDIDATE;
                 eaVersion = VersionNumber.asVersion(suffix.substring("-rc-".length()));
             } else if (suffix.startsWith("-rc")) {
+                if (!isLegacyRelease) {
+                    needNormalize = true;
+                }
                 releaseType = ReleaseType.RELEASE_CANDIDATE;
                 eaVersion = VersionNumber.asVersion(suffix.substring("-rc".length()));
             } else if (suffix.startsWith(" Release Candidate ")) {
