@@ -100,13 +100,13 @@ public class VersionIconDialog extends DialogPane {
         if (selectedFile != null) {
             try {
                 Path dest;
-                if (selectedFile.getParent().equals(GAME_ICONS_DIR)) {
+                if (GAME_ICONS_DIR.equals(selectedFile.getParent())) {
                     dest = selectedFile;
                 } else {
                     dest = GAME_ICONS_DIR.resolve(selectedFile.getFileName());
                     int i = 1;
                     String name = FileUtils.getNameWithoutExtension(selectedFile);
-                    String ext = FileUtils.getExtension(selectedFile).toLowerCase(Locale.ROOT);
+                    String ext = FileUtils.getExtension(selectedFile);
                     while (Files.exists(dest)) {
                         dest = GAME_ICONS_DIR.resolve(name + " " + i + "." + ext);
                         i++;
