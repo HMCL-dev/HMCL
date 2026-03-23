@@ -30,6 +30,7 @@ import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.StackPane;
+import javafx.scene.text.TextFlow;
 import org.jackhuang.hmcl.ui.construct.ComponentList;
 import org.jackhuang.hmcl.ui.construct.SpinnerPane;
 
@@ -97,6 +98,12 @@ public abstract class ToolbarListPageSkin<E, P extends ListPageBase<E>> extends 
         FXUtils.installFastTooltip(ret, tooltip);
         ret.setOnAction(e -> onClick.run());
         return ret;
+    }
+
+    public static TextFlow createTip() {
+        TextFlow textFlow = new TextFlow();
+        textFlow.getStyleClass().add("list-tip");
+        return textFlow;
     }
 
     protected abstract List<Node> initializeToolbar(P skinnable);
