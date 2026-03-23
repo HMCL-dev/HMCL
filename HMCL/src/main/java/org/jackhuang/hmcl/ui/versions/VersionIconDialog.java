@@ -39,7 +39,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Locale;
 import java.util.Objects;
-import java.util.Optional;
 
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
@@ -91,10 +90,6 @@ public class VersionIconDialog extends DialogPane {
             } catch (Exception e) {
                 LOG.warning("Failed to load custom game icons", e);
             }
-        }
-        if (vs != null && vs.getVersionIcon() == VersionIconType.DEFAULT) {
-            Optional<Path> current = profile.getRepository().getVersionIconFile(versionId);
-            current.ifPresent(path -> pane.getChildren().add(1, createIcon(path)));
         }
     }
 
