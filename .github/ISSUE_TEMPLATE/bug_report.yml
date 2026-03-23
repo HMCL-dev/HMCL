@@ -3,6 +3,15 @@ description: File a bug report for HMCL.
 title: "[Bug] "
 labels: bug
 body:
+  - type: markdown
+    attributes:
+      value: |-
+        Before submitting, please confirm:
+
+        * The issue is indeed **a bug of HMCL**, not **Minecraft abnormal exit**. If your Minecraft exits abnormally, please go to the [QQ group](https://docs.hmcl.net/groups.html) or [Discord server](https://discord.gg/jVvC7HfM6U) for help.
+        * Your launcher is the **latest nightly build**. You can download the latest nightly build from [GitHub Actions](https://github.com/HMCL-dev/HMCL/actions/workflows/gradle.yml?query=branch%3Amain+event%3Apush) or [nightly.link](https://nightly.link/HMCL-dev/HMCL/workflows/gradle/main).
+
+        If your issue does not fall into the above two categories, you can choose another type of issue or directly go to the [QQ group](https://docs.hmcl.net/groups.html) or [Discord server](https://discord.gg/jVvC7HfM6U) for help.
   - type: dropdown
     id: operating-system
     attributes:
@@ -23,15 +32,6 @@ body:
     attributes:
       label: Client Version
       description: Please provide the version of the client you are using.
-  - type: markdown
-    attributes:
-      value: |-
-        Before submitting, please confirm:
-
-        * The issue is indeed **a bug of HMCL**, not **Minecraft abnormal exit**. If your Minecraft exits abnormally, please go to the [QQ group](https://docs.hmcl.net/groups.html) or [Discord server](https://discord.gg/jVvC7HfM6U) for help.
-        * Your launcher is the **latest nightly build**. You can download the latest nightly build from [GitHub Actions](https://github.com/HMCL-dev/HMCL/actions/workflows/gradle.yml?query=branch%3Amain+event%3Apush) or [nightly.link](https://nightly.link/HMCL-dev/HMCL/workflows/gradle/main).
-
-        If your issue does not fall into the above two categories, you can choose another type of issue or directly go to the [QQ group](https://docs.hmcl.net/groups.html) or [Discord server](https://discord.gg/jVvC7HfM6U) for help.
   - type: textarea
     id: bug-report
     attributes:

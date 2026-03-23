@@ -3,6 +3,15 @@ description: 反馈一个 HMCL 错误。
 title: "[Bug] "
 labels: bug
 body:
+  - type: markdown
+    attributes:
+      value: |-
+        提交前请确认：
+
+        * 该问题确实是 **HMCL 的错误**，而**不是 Minecraft 非正常退出**。如果你的 Minecraft 非正常退出，请前往 [QQ 群](https://docs.hmcl.net/groups.html)/[Discord 服务器](https://discord.gg/jVvC7HfM6U) 获取帮助。
+        * 你的启动器版本是**最新的预览版本**。你可以从 [GitHub Actions](https://github.com/HMCL-dev/HMCL/actions/workflows/gradle.yml?query=branch%3Amain+event%3Apush) 或 [nightly.link](https://nightly.link/HMCL-dev/HMCL/workflows/gradle/main) 下载最新预览版本。
+
+        如果你的问题并不属于上述两类，你可以选取另一种 Issue 类型，或者直接前往 [QQ 群](https://docs.hmcl.net/groups.html)/[Discord 服务器](https://discord.gg/jVvC7HfM6U) 获取帮助。
   - type: dropdown
     id: operating-system
     attributes:
@@ -23,15 +32,6 @@ body:
     attributes:
       label: 客户端版本
       description: 请提供你所使用的客户端版本。
-  - type: markdown
-    attributes:
-      value: |-
-        提交前请确认：
-
-        * 该问题确实是 **HMCL 的错误**，而**不是 Minecraft 非正常退出**。如果你的 Minecraft 非正常退出，请前往 [QQ 群](https://docs.hmcl.net/groups.html)/[Discord 服务器](https://discord.gg/jVvC7HfM6U) 获取帮助。
-        * 你的启动器版本是**最新的预览版本**。你可以从 [GitHub Actions](https://github.com/HMCL-dev/HMCL/actions/workflows/gradle.yml?query=branch%3Amain+event%3Apush) 或 [nightly.link](https://nightly.link/HMCL-dev/HMCL/workflows/gradle/main) 下载最新预览版本。
-
-        如果你的问题并不属于上述两类，你可以选取另一种 Issue 类型，或者直接前往 [QQ 群](https://docs.hmcl.net/groups.html)/[Discord 服务器](https://discord.gg/jVvC7HfM6U) 获取帮助。
   - type: textarea
     id: bug-report
     attributes:
