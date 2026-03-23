@@ -155,6 +155,7 @@ public class JFXDialog extends StackPane {
         });
 
         contentHolder = new StackPane();
+        contentHolder.getStyleClass().add("content-holder");
         contentHolder.setBackground(new Background(new BackgroundFill(Color.WHITE, new CornerRadii(2), null)));
         JFXDepthManager.setDepth(contentHolder, 4);
         contentHolder.setPickOnBounds(false);
