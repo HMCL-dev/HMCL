@@ -22,6 +22,7 @@ import com.jfoenix.controls.JFXSnackbarLayout;
 import javafx.animation.Interpolator;
 import javafx.beans.InvalidationListener;
 import javafx.beans.WeakInvalidationListener;
+import javafx.beans.property.BooleanProperty;
 import javafx.geometry.Insets;
 import javafx.scene.Node;
 import javafx.scene.image.Image;
@@ -343,6 +344,10 @@ public class DecoratorController {
         navigator.navigate(node, animationProducer, duration, interpolator);
     }
 
+    public BooleanProperty backableProperty() {
+        return navigator.backableProperty();
+    }
+
     private void close() {
         if (navigator.getCurrentPage() instanceof DecoratorPage) {
             DecoratorPage page = (DecoratorPage) navigator.getCurrentPage();
@@ -425,6 +430,10 @@ public class DecoratorController {
 
     private void closeDialog(Node node) {
         DialogUtils.close(node);
+    }
+
+    public void showDialogLater(Node node) {
+        DialogUtils.showLater(decorator, node);
     }
 
     // ==== Toast ====
