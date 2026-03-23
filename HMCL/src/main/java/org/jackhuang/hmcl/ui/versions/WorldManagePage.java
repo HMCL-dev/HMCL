@@ -51,15 +51,14 @@ import static org.jackhuang.hmcl.util.logging.Logger.LOG;
  */
 public final class WorldManagePage extends DecoratorAnimatedPage implements DecoratorPage {
 
-    private final World world;
-    private final Path backupsDir;
-    private final Profile profile;
-    private final String instanceId;
-    private final boolean supportQuickPlay;
+    private World world;
+    private Path backupsDir;
+    private Profile profile;
+    private String instanceId;
+    private boolean supportQuickPlay;
     private FileChannel sessionLockChannel;
 
-    private final ObjectProperty<State> state;
-    private boolean isFirstNavigation = true;
+    private final ObjectProperty<State> state = new SimpleObjectProperty<>();
     private final BooleanProperty refreshable = new SimpleBooleanProperty(true);
     private final BooleanProperty readOnly = new SimpleBooleanProperty(false);
 
@@ -69,7 +68,21 @@ public final class WorldManagePage extends DecoratorAnimatedPage implements Deco
     private final TabHeader.Tab<WorldBackupsPage> worldBackupsTab = new TabHeader.Tab<>("worldBackupsPage");
     private final TabHeader.Tab<DatapackListPage> datapackTab = new TabHeader.Tab<>("datapackListPage");
 
-    public WorldManagePage(World world, Profile profile, String instanceId) {
+    public WorldManagePage() {
+        worldInfoTab.setNodeSupplier(() -> new WorldInfoPage(this));
+        worldBackupsTab.setNodeSupplier(() -> new WorldBackupsPage(this));
+        datapackTab.setNodeSupplier(() -> new DatapackListPage(this));
+
+        this.addEventHandler(Navigator.NavigationEvent.EXITED, this::onExited);
+        this.addEventHandler(Navigator.NavigationEvent.NAVIGATED, this::onNavigated);
+    }
+
+    @Override
+    protected @NotNull Skin createDefaultSkin() {
+        return new Skin(this);
+    }
+
+    public WorldManagePage setWorld(World world, Profile profile, String instanceId) {
         this.world = world;
         this.backupsDir = profile.getRepository().getBackupsDirectory(instanceId);
         this.profile = profile;
@@ -84,26 +97,20 @@ public final class WorldManagePage extends DecoratorAnimatedPage implements Deco
             this.addEventHandler(Navigator.NavigationEvent.NAVIGATED, event -> closePageForLoadingFail());
         }
 
-        worldInfoTab.setNodeSupplier(() -> new WorldInfoPage(this));
-        worldBackupsTab.setNodeSupplier(() -> new WorldBackupsPage(this));
-        datapackTab.setNodeSupplier(() -> new DatapackListPage(this));
-
-        this.state = new SimpleObjectProperty<>(new State(i18n("world.manage.title", StringUtils.parseColorEscapes(world.getWorldName())), null, true, true, true));
+        this.state.set(new State(i18n("world.manage.title", StringUtils.parseColorEscapes(world.getWorldName())), null, true, true, true));
 
         Optional<String> gameVersion = profile.getRepository().getGameVersion(instanceId);
         supportQuickPlay = World.supportQuickPlay(GameVersionNumber.asGameVersion(gameVersion));
-
-        this.addEventHandler(Navigator.NavigationEvent.EXITED, this::onExited);
-        this.addEventHandler(Navigator.NavigationEvent.NAVIGATED, this::onNavigated);
-    }
-
-    @Override
-    protected @NotNull Skin createDefaultSkin() {
-        return new Skin(this);
+        return this;
     }
 
     @Override
     public void refresh() {
+
+        if (world == null) {
+            throw new IllegalStateException("World is not initialized");
+        }
+
         updateSessionLockChannel();
         try {
             world.reloadWorldData();
@@ -135,10 +142,7 @@ public final class WorldManagePage extends DecoratorAnimatedPage implements Deco
     }
 
     private void onNavigated(Navigator.NavigationEvent event) {
-        if (isFirstNavigation)
-            isFirstNavigation = false;
-        else
-            refresh();
+        refresh();
     }
 
     public void onExited(Navigator.NavigationEvent event) {

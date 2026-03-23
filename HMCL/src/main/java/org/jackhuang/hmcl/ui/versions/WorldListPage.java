@@ -177,7 +177,8 @@ public final class WorldListPage extends ListPageBase<World> implements VersionP
     }
 
     private void showManagePage(World world) {
-        Controllers.navigate(new WorldManagePage(world, profile, instanceId));
+        //Controllers.navigate(new WorldManagePage(world, profile, instanceId));
+        Controllers.navigate(Controllers.getWorldManagePage().setWorld(world, profile, instanceId));
     }
 
     public void export(World world) {

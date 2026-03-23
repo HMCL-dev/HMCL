@@ -95,7 +95,7 @@ final class DatapackListPageSkin extends SkinBase<DatapackListPage> {
         ComponentList root = new ComponentList();
         root.getStyleClass().add("no-padding");
         listView = new JFXListView<>();
-        filteredList = new FilteredList<>(skinnable.getItems());
+        filteredList = new FilteredList<>(skinnable.itemsProperty());
 
         {
             toolbarPane = new TransitionPane();

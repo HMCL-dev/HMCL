@@ -45,15 +45,13 @@ import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 public final class DatapackListPage extends ListPageBase<DatapackListPageSkin.DatapackInfoObject> implements WorldManagePage.WorldRefreshable {
-    private final World world;
-    private final Datapack datapack;
-    final BooleanProperty readOnly;
+    private final WorldManagePage worldManagePage;
+    private World world;
+    private Datapack datapack;
+    BooleanProperty readOnly;
 
     public DatapackListPage(WorldManagePage worldManagePage) {
-        world = worldManagePage.getWorld();
-        datapack = new Datapack(world.getFile().resolve("datapacks"));
-        setItems(MappedObservableList.create(datapack.getPacks(), DatapackListPageSkin.DatapackInfoObject::new));
-        readOnly = worldManagePage.readOnlyProperty();
+        this.worldManagePage = worldManagePage;
         FXUtils.applyDragListener(this, it -> Objects.equals("zip", FileUtils.getExtension(it)),
                 this::installMultiDatapack, this::refresh);
 
@@ -80,8 +78,13 @@ public final class DatapackListPage extends ListPageBase<DatapackListPageSkin.Da
         return new DatapackListPageSkin(this);
     }
 
+    @Override
     public void refresh() {
         setLoading(true);
+        world = worldManagePage.getWorld();
+        datapack = new Datapack(world.getFile().resolve("datapacks"));
+        readOnly = worldManagePage.readOnlyProperty();
+        setItems(MappedObservableList.create(datapack.getPacks(), DatapackListPageSkin.DatapackInfoObject::new));
         Task.runAsync(datapack::loadFromDir)
                 .withRunAsync(Schedulers.javafx(), () -> setLoading(false))
                 .start();

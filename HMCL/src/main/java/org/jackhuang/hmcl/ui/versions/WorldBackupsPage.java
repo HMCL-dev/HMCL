@@ -65,22 +65,25 @@ import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 public final class WorldBackupsPage extends ListPageBase<WorldBackupsPage.BackupInfo> implements WorldManagePage.WorldRefreshable {
     static final DateTimeFormatter TIME_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd_HH-mm-ss");
 
-    private final World world;
-    private final Path backupsDir;
+    private final WorldManagePage worldManagePage;
+    private World world;
+    private Path backupsDir;
     private final BooleanProperty readOnly;
-    private final Pattern backupFileNamePattern;
+    private Pattern backupFileNamePattern;
 
     public WorldBackupsPage(WorldManagePage worldManagePage) {
-        this.world = worldManagePage.getWorld();
-        this.backupsDir = worldManagePage.getBackupsDir();
+        this.worldManagePage = worldManagePage;
         this.readOnly = worldManagePage.readOnlyProperty();
-        this.backupFileNamePattern = Pattern.compile("(?<datetime>[0-9]{4}-[0-9]{2}-[0-9]{2}_[0-9]{2}-[0-9]{2}-[0-9]{2})_" + Pattern.quote(world.getFileName()) + "( (?<count>[0-9]+))?\\.zip");
 
         refresh();
     }
 
+    @Override
     public void refresh() {
         setLoading(true);
+        this.world = worldManagePage.getWorld();
+        this.backupsDir = worldManagePage.getBackupsDir();
+        this.backupFileNamePattern = Pattern.compile("(?<datetime>[0-9]{4}-[0-9]{2}-[0-9]{2}_[0-9]{2}-[0-9]{2}-[0-9]{2})_" + Pattern.quote(world.getFileName()) + "( (?<count>[0-9]+))?\\.zip");
         Task.supplyAsync(() -> {
             if (Files.isDirectory(backupsDir)) {
                 try (Stream<Path> paths = Files.list(backupsDir)) {

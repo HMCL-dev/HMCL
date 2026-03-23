@@ -63,7 +63,7 @@ import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 public final class WorldInfoPage extends SpinnerPane implements WorldManagePage.WorldRefreshable {
     private final WorldManagePage worldManagePage;
     private boolean isReadOnly;
-    private final World world;
+    private World world;
     private CompoundTag levelData;
     private CompoundTag playerData;
 
@@ -71,7 +71,6 @@ public final class WorldInfoPage extends SpinnerPane implements WorldManagePage.
 
     public WorldInfoPage(WorldManagePage worldManagePage) {
         this.worldManagePage = worldManagePage;
-        this.world = worldManagePage.getWorld();
         refresh();
     }
 
@@ -522,6 +521,7 @@ public final class WorldInfoPage extends SpinnerPane implements WorldManagePage.
 
     @Override
     public void refresh() {
+        this.world = worldManagePage.getWorld();
         setFailedReason(null);
         try {
             this.isReadOnly = worldManagePage.isReadOnly();
