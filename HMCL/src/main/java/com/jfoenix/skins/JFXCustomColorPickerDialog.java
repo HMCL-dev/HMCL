@@ -295,8 +295,10 @@ public class JFXCustomColorPickerDialog extends StackPane {
             userChange = true;
             try {
                 Color color = Color.valueOf(colorWebString);
-                // ignore opacity
-                curvedColorPicker.setColor(Color.color(color.getRed(), color.getGreen(), color.getBlue()));
+                if (color.getOpacity() != 1.0) {
+                    color = Color.color(color.getRed(), color.getGreen(), color.getBlue());
+                }
+                curvedColorPicker.setColor(color);
             } catch (IllegalArgumentException ignored) {
                 // if color is not valid then do nothing
             }
