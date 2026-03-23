@@ -222,15 +222,15 @@ public final class World {
         return isLocked(getSessionLockFile());
     }
 
-    public boolean supportDatapacks() {
+    public boolean supportsDatapacks() {
         return getGameVersion() != null && getGameVersion().isAtLeast("1.13", "17w43a");
     }
 
-    public boolean supportQuickPlay() {
+    public boolean supportsQuickPlay() {
         return getGameVersion() != null && getGameVersion().isAtLeast("1.20", "23w14a");
     }
 
-    public static boolean supportQuickPlay(GameVersionNumber gameVersionNumber) {
+    public static boolean supportsQuickPlay(GameVersionNumber gameVersionNumber) {
         return gameVersionNumber != null && gameVersionNumber.isAtLeast("1.20", "23w14a");
     }
 

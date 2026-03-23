@@ -100,7 +100,7 @@ public final class WorldManagePage extends DecoratorAnimatedPage implements Deco
         this.state.set(new State(i18n("world.manage.title", StringUtils.parseColorEscapes(world.getWorldName())), null, true, true, true));
 
         Optional<String> gameVersion = profile.getRepository().getGameVersion(instanceId);
-        supportQuickPlay = World.supportQuickPlay(GameVersionNumber.asGameVersion(gameVersion));
+        supportQuickPlay = World.supportsQuickPlay(GameVersionNumber.asGameVersion(gameVersion));
         return this;
     }
 
@@ -222,7 +222,7 @@ public final class WorldManagePage extends DecoratorAnimatedPage implements Deco
                 tabBar.addNavigationDrawerTab(getSkinnable().header, getSkinnable().worldInfoTab, i18n("world.info"), SVG.INFO, SVG.INFO_FILL)
                         .addNavigationDrawerTab(getSkinnable().header, getSkinnable().worldBackupsTab, i18n("world.backup"), SVG.ARCHIVE, SVG.ARCHIVE_FILL);
 
-                if (getSkinnable().world.supportDatapacks()) {
+                if (getSkinnable().world.supportsDatapacks()) {
                     getSkinnable().header.getTabs().add(getSkinnable().datapackTab);
                     tabBar.addNavigationDrawerTab(getSkinnable().header, getSkinnable().datapackTab, i18n("world.datapack"), SVG.EXTENSION, SVG.EXTENSION_FILL);
                 }

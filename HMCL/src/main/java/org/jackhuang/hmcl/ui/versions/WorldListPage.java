@@ -124,7 +124,7 @@ public final class WorldListPage extends ListPageBase<World> implements VersionP
             }
 
             Optional<String> gameVersion = profile.getRepository().getGameVersion(instanceId);
-            supportQuickPlay.set(World.supportQuickPlay(GameVersionNumber.asGameVersion(gameVersion)));
+            supportQuickPlay.set(World.supportsQuickPlay(GameVersionNumber.asGameVersion(gameVersion)));
 
             worlds = result;
             updateWorldList();
