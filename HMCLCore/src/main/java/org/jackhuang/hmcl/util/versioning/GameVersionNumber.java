@@ -273,13 +273,21 @@ public abstract sealed class GameVersionNumber implements Comparable<GameVersion
         public enum ReleaseType {
             UNKNOWN(""),
             SNAPSHOT("-snapshot-"),
-            PRE_RELEASE("-pre"),
-            RELEASE_CANDIDATE("-rc"),
+            PRE_RELEASE("-pre", "-pre-"),
+            RELEASE_CANDIDATE("-rc", "-rc-"),
             GA("");
-            private final String infix;
+
+            private final String legacyInfix;
+            private final String newInfix;
 
             ReleaseType(String infix) {
-                this.infix = infix;
+                this.legacyInfix = infix;
+                this.newInfix = infix;
+            }
+
+            ReleaseType(String legacyInfix, String newInfix) {
+                this.legacyInfix = legacyInfix;
+                this.newInfix = newInfix;
             }
         }
 
@@ -389,7 +397,7 @@ public abstract sealed class GameVersionNumber implements Comparable<GameVersion
                 StringBuilder builder = new StringBuilder(value.length());
                 builder.append(matcher.group("prefix"));
                 if (releaseType != ReleaseType.GA) {
-                    builder.append(releaseType.infix);
+                    builder.append(isLegacyRelease ? releaseType.legacyInfix : releaseType.newInfix);
                     builder.append(eaVersion);
                 }
                 builder.append(additional.suffix);
