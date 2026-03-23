@@ -18,7 +18,9 @@
 package org.jackhuang.hmcl.ui.versions;
 
 import com.jfoenix.controls.JFXButton;
+import com.jfoenix.controls.JFXSpinner;
 import javafx.application.Platform;
+import javafx.scene.layout.StackPane;
 import javafx.stage.FileChooser;
 import org.jackhuang.hmcl.auth.Account;
 import org.jackhuang.hmcl.auth.authlibinjector.AuthlibInjectorAccount;
@@ -42,6 +44,7 @@ import org.jackhuang.hmcl.ui.download.ModpackInstallWizardProvider;
 import org.jackhuang.hmcl.ui.export.ExportWizardProvider;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.TaskCancellationAction;
+import org.jackhuang.hmcl.util.i18n.I18n;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
 
@@ -49,10 +52,14 @@ import java.io.IOException;
 import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Consumer;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
@@ -192,6 +199,125 @@ public final class Versions {
                 .executor();
         Controllers.taskDialog(executor, i18n("version.manage.redownload_assets_index"), TaskCancellationAction.NO_CANCEL);
         executor.start();
+    }
+
+    public static void cleanGameFiles(Profile profile) {
+        var dialogBuilder = new MessageDialogPane.Builder(i18n("game.clean.content", i18n("game.clean.loading")), i18n("message.question"), MessageDialogPane.MessageType.QUESTION);
+        var spinner = new JFXSpinner();
+        spinner.getStyleClass().add("small-spinner");
+
+        StackPane buttonPane = new StackPane();
+
+        JFXButton okButton = new JFXButton(i18n("button.yes"));
+        okButton.getStyleClass().add("dialog-accept");
+
+        dialogBuilder.addAction(buttonPane);
+        dialogBuilder.addCancel(null);
+
+        var dialog = dialogBuilder.build();
+
+        Task.supplyAsync(() -> {
+            var repository = profile.getRepository();
+            var versions = repository.getVersions();
+
+            Set<String> activeAssets = versions.parallelStream()
+                    .flatMap(version -> {
+                        try {
+                            var index = repository.getAssetIndex(version.getId(), version.getAssetIndex().getId());
+                            return index.getObjects().values().stream().map(AssetObject::getLocation);
+                        } catch (IOException ignored) {
+                            return Stream.empty();
+                        }
+                    })
+                    .collect(Collectors.toSet());
+
+            Set<String> activeLibraries = versions.parallelStream()
+                    .flatMap(version -> version.getLibraries().stream())
+                    .map(Library::getPath)
+                    .collect(Collectors.toSet());
+
+            List<Path> unusedFiles = new ArrayList<>();
+
+            unusedFiles.addAll(findUnlistedFiles(repository.getBaseDirectory().resolve("assets").resolve("objects"), activeAssets));
+            unusedFiles.addAll(findUnlistedFiles(repository.getBaseDirectory().resolve("libraries"), activeLibraries));
+
+            List<Path> unusedFolders = new ArrayList<>();
+
+            for (String path : List.of("logs", "crash-reports", "modernfix", "mods/.connector", "CustomSkinLoader/caches", ".fabric")) {
+                unusedFolders.add(repository.getBaseDirectory().resolve(path));
+                versions.forEach(v -> {
+                    unusedFolders.add(repository.getVersionRoot(v.getId()).resolve(path));
+                });
+            }
+
+            versions.forEach(v -> {
+                try (var walker = Files.walk(repository.getVersionRoot(v.getId()), 1)) {
+                    unusedFolders.addAll(walker
+                            .filter(it -> {
+                                var name = it.getFileName().toString();
+                                return Files.isDirectory(it) && (name.startsWith("natives-") || name.endsWith("-natives"));
+                            }).toList());
+                } catch (IOException ignored) {
+                }
+            });
+
+            for (Path dir : unusedFolders) {
+                if (Files.exists(dir)) {
+                    try (var s = Files.walk(dir)) {
+                        s.filter(Files::isRegularFile).forEach(unusedFiles::add);
+                    } catch (IOException ignored) {
+                    }
+                }
+            }
+
+            return unusedFiles;
+        }).thenApplyAsync((list) -> {
+            long totalSize = list.stream()
+                    .mapToLong(path -> {
+                        try {
+                            return Files.size(path);
+                        } catch (IOException e) {
+                            return 0L;
+                        }
+                    })
+                    .sum();
+
+            FXUtils.runInFX(() -> {
+                dialog.setText(i18n("game.clean.content", I18n.formatSize(totalSize)));
+                buttonPane.getChildren().setAll(okButton);
+                okButton.setOnAction(event -> {
+                    buttonPane.getChildren().setAll(spinner);
+                    Task.runAsync(() -> list.forEach(path -> {
+                        try {
+                            Files.deleteIfExists(path);
+                        } catch (IOException ignored) {
+                        }
+                    })).thenRunAsync(Schedulers.javafx(), () -> {
+                        dialog.fireEvent(new DialogCloseEvent());
+                    }).start();
+                });
+            });
+            return null;
+        }).start();
+
+        buttonPane.getChildren().setAll(spinner);
+
+        Controllers.dialog(dialog);
+    }
+
+    private static List<Path> findUnlistedFiles(Path root, Set<String> activePaths) {
+        if (!Files.exists(root)) return List.of();
+        try (var stream = Files.walk(root)) {
+            return stream
+                    .filter(Files::isRegularFile)
+                    .filter(path -> {
+                        String relative = root.relativize(path).toString().replace("\\", "/");
+                        return !activePaths.contains(relative);
+                    })
+                    .toList();
+        } catch (IOException e) {
+            return List.of();
+        }
     }
 
     public static void cleanVersion(Profile profile, String id) {
