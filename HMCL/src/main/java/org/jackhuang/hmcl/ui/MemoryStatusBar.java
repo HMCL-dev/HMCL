@@ -40,7 +40,7 @@ public final class MemoryStatusBar extends Control {
     public MemoryStatusBar() {
         this.getStyleClass().add(DEFAULT_STYLE_CLASS);
 
-        this.setWidth(USE_COMPUTED_SIZE);
+        setPrefWidth(200);
     }
 
     private final ReadOnlyObjectProperty<PhysicalMemoryStatus> memoryStatus = UpdateMemoryStatus.memoryStatusProperty();
