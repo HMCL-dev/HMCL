@@ -21,6 +21,7 @@ body:
         - macOS
         - Windows
         - Linux
+        - FreeBSD
         - 其他
   - type: input
     id: operating-system-version
