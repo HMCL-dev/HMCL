@@ -526,8 +526,13 @@
     -fx-font-size: 14.0px;
 }
 
+.jfx-dialog > StackPane {
+    -fx-background-color: transparent;
+}
+
 .jfx-dialog-layout {
-    -fx-padding: 24.0px 24.0px 16.0px 24.0px;
+    -fx-background-radius: 4px;
+    -fx-padding: 24px 24px 16px 24px;
     -fx-background-color: -monet-surface-container-high;
     -fx-text-fill: -monet-on-surface;
 }
