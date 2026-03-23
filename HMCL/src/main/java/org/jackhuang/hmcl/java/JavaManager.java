@@ -17,6 +17,8 @@
  */
 package org.jackhuang.hmcl.java;
 
+import com.google.gson.*;
+import com.google.gson.stream.JsonWriter;
 import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.SimpleObjectProperty;
 import org.jackhuang.hmcl.Metadata;
@@ -30,7 +32,9 @@ import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.util.CacheRepository;
+import org.jackhuang.hmcl.util.DigestUtils;
 import org.jackhuang.hmcl.util.Lang;
+import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.platform.*;
 import org.jackhuang.hmcl.util.platform.windows.WinReg;
@@ -40,9 +44,14 @@ import org.jetbrains.annotations.Nullable;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
+import java.io.OutputStreamWriter;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.*;
+import java.nio.file.attribute.BasicFileAttributes;
 import java.util.*;
 import java.util.concurrent.CountDownLatch;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
@@ -54,6 +63,16 @@ public final class JavaManager {
 
     private JavaManager() {
     }
+
+    private static final String[] KNOWN_VENDOR_DIRECTORIES = {
+            "Java",
+            "BellSoft",
+            "AdoptOpenJDK",
+            "Zulu",
+            "Microsoft",
+            "Eclipse Foundation",
+            "Semeru"
+    };
 
     public static final HMCLJavaRepository REPOSITORY = new HMCLJavaRepository(Metadata.HMCL_GLOBAL_DIRECTORY.resolve("java"));
     public static final HMCLJavaRepository LOCAL_REPOSITORY = new HMCLJavaRepository(Metadata.HMCL_CURRENT_DIRECTORY.resolve("java"));
@@ -160,12 +179,12 @@ public final class JavaManager {
             return javaRuntime;
         }
 
-        JavaInfo info = JavaInfoUtils.fromExecutable(executable, true);
+        JavaInfo info = JavaInfoUtils.fromExecutable(executable);
         return JavaRuntime.of(executable, info, false);
     }
 
     public static void refresh() {
-        Task.supplyAsync(JavaManager::searchPotentialJavaExecutables).whenComplete(Schedulers.javafx(), (result, exception) -> {
+        Task.supplyAsync(() -> searchPotentialJavaExecutables(false)).whenComplete(Schedulers.javafx(), (result, exception) -> {
             if (result != null) {
                 LATCH.await();
                 allJava = result;
@@ -326,7 +345,7 @@ public final class JavaManager {
     }
 
     public static void initialize() {
-        Map<Path, JavaRuntime> allJava = searchPotentialJavaExecutables();
+        Map<Path, JavaRuntime> allJava = searchPotentialJavaExecutables(true);
         JavaManager.allJava = allJava;
         LATCH.countDown();
         FXUtils.runInFX(() -> updateAllJavaProperty(allJava));
@@ -334,56 +353,56 @@ public final class JavaManager {
 
     // search java
 
-    private static Map<Path, JavaRuntime> searchPotentialJavaExecutables() {
-        Map<Path, JavaRuntime> javaRuntimes = new HashMap<>();
-        searchAllJavaInRepository(javaRuntimes, Platform.SYSTEM_PLATFORM);
+    private static Map<Path, JavaRuntime> searchPotentialJavaExecutables(boolean useCache) {
+        Searcher searcher = new Searcher(Metadata.HMCL_GLOBAL_DIRECTORY.resolve("javaCache.json"));
+        if (useCache)
+            searcher.loadCache();
+
+        searcher.searchAllJavaInRepository(Platform.SYSTEM_PLATFORM);
         switch (OperatingSystem.CURRENT_OS) {
             case WINDOWS:
                 if (Architecture.SYSTEM_ARCH == Architecture.X86_64)
-                    searchAllJavaInRepository(javaRuntimes, Platform.WINDOWS_X86);
+                    searcher.searchAllJavaInRepository(Platform.WINDOWS_X86);
                 if (Architecture.SYSTEM_ARCH == Architecture.ARM64) {
                     if (OperatingSystem.SYSTEM_BUILD_NUMBER >= 21277)
-                        searchAllJavaInRepository(javaRuntimes, Platform.WINDOWS_X86_64);
-                    searchAllJavaInRepository(javaRuntimes, Platform.WINDOWS_X86);
+                        searcher.searchAllJavaInRepository(Platform.WINDOWS_X86_64);
+                    searcher.searchAllJavaInRepository(Platform.WINDOWS_X86);
                 }
                 break;
             case MACOS:
                 if (Architecture.SYSTEM_ARCH == Architecture.ARM64)
-                    searchAllJavaInRepository(javaRuntimes, Platform.MACOS_X86_64);
+                    searcher.searchAllJavaInRepository(Platform.MACOS_X86_64);
                 break;
         }
 
         switch (OperatingSystem.CURRENT_OS) {
             case WINDOWS:
-                queryJavaInRegistryKey(javaRuntimes, WinReg.HKEY.HKEY_LOCAL_MACHINE, "SOFTWARE\\JavaSoft\\Java Runtime Environment");
-                queryJavaInRegistryKey(javaRuntimes, WinReg.HKEY.HKEY_LOCAL_MACHINE, "SOFTWARE\\JavaSoft\\Java Development Kit");
-                queryJavaInRegistryKey(javaRuntimes, WinReg.HKEY.HKEY_LOCAL_MACHINE, "SOFTWARE\\JavaSoft\\JRE");
-                queryJavaInRegistryKey(javaRuntimes, WinReg.HKEY.HKEY_LOCAL_MACHINE, "SOFTWARE\\JavaSoft\\JDK");
+                searcher.queryJavaInRegistryKey(WinReg.HKEY.HKEY_LOCAL_MACHINE, "SOFTWARE\\JavaSoft\\Java Runtime Environment");
+                searcher.queryJavaInRegistryKey(WinReg.HKEY.HKEY_LOCAL_MACHINE, "SOFTWARE\\JavaSoft\\Java Development Kit");
+                searcher.queryJavaInRegistryKey(WinReg.HKEY.HKEY_LOCAL_MACHINE, "SOFTWARE\\JavaSoft\\JRE");
+                searcher.queryJavaInRegistryKey(WinReg.HKEY.HKEY_LOCAL_MACHINE, "SOFTWARE\\JavaSoft\\JDK");
 
-                searchJavaInProgramFiles(javaRuntimes, "ProgramFiles", "C:\\Program Files");
-                searchJavaInProgramFiles(javaRuntimes, "ProgramFiles(x86)", "C:\\Program Files (x86)");
-                if (Architecture.SYSTEM_ARCH == Architecture.ARM64) {
-                    searchJavaInProgramFiles(javaRuntimes, "ProgramFiles(ARM)", "C:\\Program Files (ARM)");
-                }
+                searcher.searchJavaInProgramFiles("ProgramFiles", "C:\\Program Files");
+                searcher.searchJavaInProgramFiles("ProgramFiles(x86)", "C:\\Program Files (x86)");
                 break;
             case LINUX:
-                searchAllJavaInDirectory(javaRuntimes, Paths.get("/usr/java"));      // Oracle RPMs
-                searchAllJavaInDirectory(javaRuntimes, Paths.get("/usr/lib/jvm"));   // General locations
-                searchAllJavaInDirectory(javaRuntimes, Paths.get("/usr/lib32/jvm")); // General locations
-                searchAllJavaInDirectory(javaRuntimes, Paths.get("/usr/lib64/jvm")); // General locations
-                searchAllJavaInDirectory(javaRuntimes, Paths.get(System.getProperty("user.home"), "/.sdkman/candidates/java")); // SDKMAN!
+                searcher.searchAllJavaInDirectory(Path.of("/usr/java"));      // Oracle RPMs
+                searcher.searchAllJavaInDirectory(Path.of("/usr/lib/jvm"));   // General locations
+                searcher.searchAllJavaInDirectory(Path.of("/usr/lib32/jvm")); // General locations
+                searcher.searchAllJavaInDirectory(Path.of("/usr/lib64/jvm")); // General locations
+                searcher.searchAllJavaInDirectory(Path.of(System.getProperty("user.home"), "/.sdkman/candidates/java")); // SDKMAN!
                 break;
             case MACOS:
-                searchJavaInMacJavaVirtualMachines(javaRuntimes, Paths.get("/Library/Java/JavaVirtualMachines"));
-                searchJavaInMacJavaVirtualMachines(javaRuntimes, Paths.get(System.getProperty("user.home"), "/Library/Java/JavaVirtualMachines"));
-                tryAddJavaExecutable(javaRuntimes, Paths.get("/Library/Internet Plug-Ins/JavaAppletPlugin.plugin/Contents/Home/bin/java"));
-                tryAddJavaExecutable(javaRuntimes, Paths.get("/Applications/Xcode.app/Contents/Applications/Application Loader.app/Contents/MacOS/itms/java/bin/java"));
+                searcher.searchJavaInMacJavaVirtualMachines(Path.of("/Library/Java/JavaVirtualMachines"));
+                searcher.searchJavaInMacJavaVirtualMachines(Path.of(System.getProperty("user.home"), "/Library/Java/JavaVirtualMachines"));
+                searcher.tryAddJavaExecutable(Path.of("/Library/Internet Plug-Ins/JavaAppletPlugin.plugin/Contents/Home/bin/java"));
+                searcher.tryAddJavaExecutable(Path.of("/Applications/Xcode.app/Contents/Applications/Application Loader.app/Contents/MacOS/itms/java/bin/java"));
                 // Homebrew
-                tryAddJavaExecutable(javaRuntimes, Paths.get("/opt/homebrew/opt/java/bin/java"));
-                searchAllJavaInDirectory(javaRuntimes, Paths.get("/opt/homebrew/Cellar/openjdk"));
-                try (DirectoryStream<Path> dirs = Files.newDirectoryStream(Paths.get("/opt/homebrew/Cellar"), "openjdk@*")) {
+                searcher.tryAddJavaExecutable(Path.of("/opt/homebrew/opt/java/bin/java"));
+                searcher.searchAllJavaInDirectory(Path.of("/opt/homebrew/Cellar/openjdk"));
+                try (DirectoryStream<Path> dirs = Files.newDirectoryStream(Path.of("/opt/homebrew/Cellar"), "openjdk@*")) {
                     for (Path dir : dirs) {
-                        searchAllJavaInDirectory(javaRuntimes, dir);
+                        searcher.searchAllJavaInDirectory(dir);
                     }
                 } catch (IOException e) {
                     LOG.warning("Failed to get subdirectories of /opt/homebrew/Cellar");
@@ -397,16 +416,16 @@ public final class JavaManager {
         // Search Minecraft bundled runtimes
         if (OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS && Architecture.SYSTEM_ARCH.isX86()) {
             FileUtils.tryGetPath(System.getenv("localappdata"), "Packages\\Microsoft.4297127D64EC6_8wekyb3d8bbwe\\LocalCache\\Local\\runtime")
-                    .ifPresent(it -> searchAllOfficialJava(javaRuntimes, it, false));
+                    .ifPresent(it -> searcher.searchAllOfficialJava(it, false));
 
             FileUtils.tryGetPath(Lang.requireNonNullElse(System.getenv("ProgramFiles(x86)"), "C:\\Program Files (x86)"), "Minecraft Launcher\\runtime")
-                    .ifPresent(it -> searchAllOfficialJava(javaRuntimes, it, false));
+                    .ifPresent(it -> searcher.searchAllOfficialJava(it, false));
         } else if (OperatingSystem.CURRENT_OS == OperatingSystem.LINUX && Architecture.SYSTEM_ARCH == Architecture.X86_64) {
-            searchAllOfficialJava(javaRuntimes, Paths.get(System.getProperty("user.home"), ".minecraft/runtime"), false);
+            searcher.searchAllOfficialJava(Path.of(System.getProperty("user.home"), ".minecraft/runtime"), false);
         } else if (OperatingSystem.CURRENT_OS == OperatingSystem.MACOS) {
-            searchAllOfficialJava(javaRuntimes, Paths.get(System.getProperty("user.home"), "Library/Application Support/minecraft/runtime"), false);
+            searcher.searchAllOfficialJava(Path.of(System.getProperty("user.home"), "Library/Application Support/minecraft/runtime"), false);
         }
-        searchAllOfficialJava(javaRuntimes, CacheRepository.getInstance().getCacheDirectory().resolve("java"), true);
+        searcher.searchAllOfficialJava(CacheRepository.getInstance().getCacheDirectory().resolve("java"), true);
 
         // Search in PATH.
         if (System.getenv("PATH") != null) {
@@ -420,7 +439,7 @@ public final class JavaManager {
                 }
 
                 try {
-                    tryAddJavaExecutable(javaRuntimes, Path.of(path, OperatingSystem.CURRENT_OS.getJavaExecutable()));
+                    searcher.tryAddJavaExecutable(Path.of(path, OperatingSystem.CURRENT_OS.getJavaExecutable()));
                 } catch (InvalidPathException ignored) {
                 }
             }
@@ -430,16 +449,17 @@ public final class JavaManager {
             String[] paths = System.getenv("HMCL_JRES").split(File.pathSeparator);
             for (String path : paths) {
                 try {
-                    tryAddJavaHome(javaRuntimes, Paths.get(path));
+                    searcher.tryAddJavaHome(Path.of(path));
                 } catch (InvalidPathException ignored) {
                 }
             }
         }
-        searchAllJavaInDirectory(javaRuntimes, Paths.get(System.getProperty("user.home"), ".jdks"));
+
+        searcher.searchAllJavaInDirectory(Path.of(System.getProperty("user.home"), ".jdks"));
 
         for (String javaPath : ConfigHolder.globalConfig().getUserJava()) {
             try {
-                tryAddJavaExecutable(javaRuntimes, Paths.get(javaPath));
+                searcher.tryAddJavaExecutable(Path.of(javaPath));
             } catch (InvalidPathException e) {
                 LOG.warning("Invalid Java path: " + javaPath);
             }
@@ -447,233 +467,404 @@ public final class JavaManager {
 
         JavaRuntime currentJava = JavaRuntime.CURRENT_JAVA;
         if (currentJava != null
-                && !javaRuntimes.containsKey(currentJava.getBinary())
+                && !searcher.javaRuntimes.containsKey(currentJava.getBinary())
                 && !ConfigHolder.globalConfig().getDisabledJava().contains(currentJava.getBinary().toString())) {
-            javaRuntimes.put(currentJava.getBinary(), currentJava);
+            searcher.addResult(currentJava.getBinary(), currentJava);
         }
 
-        LOG.trace(javaRuntimes.values().stream().sorted()
+        searcher.saveCache();
+
+        LOG.trace(searcher.javaRuntimes.values().stream().sorted()
                 .map(it -> String.format(" - %s %s (%s, %s): %s",
                         it.isJDK() ? "JDK" : "JRE",
                         it.getVersion(),
                         it.getPlatform().getArchitecture().getDisplayName(),
                         Lang.requireNonNullElse(it.getVendor(), "Unknown"),
                         it.getBinary()))
-                .collect(Collectors.joining("\n", "Finished Java lookup, found " + javaRuntimes.size() + "\n", "")));
-
-        return javaRuntimes;
+                .collect(Collectors.joining("\n", "Finished Java lookup, found " + searcher.javaRuntimes.size() + "\n", "")));
+        return searcher.javaRuntimes;
     }
 
-    private static void tryAddJavaHome(Map<Path, JavaRuntime> javaRuntimes, Path javaHome) {
-        Path executable = getExecutable(javaHome);
-        if (!Files.isRegularFile(executable)) {
-            return;
+    private static final class Searcher {
+        private final Path cacheFile;
+        final Map<Path, JavaRuntime> javaRuntimes = new HashMap<>();
+        private final LinkedHashMap<Path, JavaInfoCache> caches = new LinkedHashMap<>();
+        private final Set<Path> failed = new HashSet<>();
+        private boolean needRefreshCache = false;
+
+        Searcher(Path cacheFile) {
+            this.cacheFile = cacheFile;
         }
 
-        try {
-            executable = executable.toRealPath();
-        } catch (IOException e) {
-            LOG.warning("Failed to resolve path " + executable, e);
-            return;
+        private static final Pattern CACHE_VERSION_PATTERN = Pattern.compile("(?<major>\\d+)(?:\\.(?<minor>\\d+))?");
+        private static final int CACHE_MAJOR_VERSION = 0;
+        private static final int CACHE_MINOR_VERSION = 0;
+
+        private record JavaInfoCache(String key, JavaInfo info) {
         }
 
-        if (javaRuntimes.containsKey(executable) || ConfigHolder.globalConfig().getDisabledJava().contains(executable.toString())) {
-            return;
-        }
+        void loadCache() {
+            if (Files.notExists(cacheFile))
+                return;
 
-        JavaInfo info = null;
-
-        Path releaseFile = javaHome.resolve("release");
-        if (Files.exists(releaseFile)) {
             try {
-                info = JavaInfo.fromReleaseFile(releaseFile);
-            } catch (IOException e) {
-                LOG.warning("Failed to read release file " + releaseFile, e);
+                JsonObject jsonFile = JsonUtils.fromJsonFile(cacheFile, JsonObject.class);
+                JsonElement fileVersion = jsonFile.get("version");
+
+                Matcher matcher;
+                if (jsonFile.get("version") instanceof JsonPrimitive version
+                        && (matcher = CACHE_VERSION_PATTERN.matcher(version.getAsString())).matches()) {
+                    int major = Integer.parseInt(matcher.group("major"));
+
+                    String minorString = matcher.group("minor");
+                    int minor = minorString != null ? Integer.parseInt(minorString) : 0;
+
+                    if (major != CACHE_MAJOR_VERSION || minor < CACHE_MINOR_VERSION)
+                        throw new IOException("Unsupported cache file, version: %s".formatted(version.getAsString()));
+                } else
+                    throw new IOException("Invalid version JSON: " + fileVersion);
+
+                JsonArray cachesArray = jsonFile.getAsJsonArray("caches");
+
+                for (JsonElement element : cachesArray) {
+                    try {
+                        var obj = (JsonObject) element;
+
+                        Path realPath = Path.of(obj.getAsJsonPrimitive("path").getAsString()).toRealPath();
+                        String key = obj.getAsJsonPrimitive("key").getAsString();
+
+                        OperatingSystem osName = OperatingSystem.parseOSName(obj.getAsJsonPrimitive("os.name").getAsString());
+                        Architecture osArch = Architecture.parseArchName(obj.getAsJsonPrimitive("os.arch").getAsString());
+                        String javaVersion = obj.getAsJsonPrimitive("java.version").getAsString();
+
+                        JavaInfo.Builder infoBuilder = JavaInfo.newBuilder(Platform.getPlatform(osName, osArch), javaVersion);
+
+                        if (obj.get("java.vendor") instanceof JsonPrimitive vendor)
+                            infoBuilder.setVendor(vendor.getAsString());
+
+                        caches.put(realPath, new JavaInfoCache(key, infoBuilder.build()));
+                    } catch (Exception e) {
+                        LOG.warning("Invalid cache: " + element);
+                        needRefreshCache = true;
+                    }
+                }
+            } catch (Exception ex) {
+                LOG.warning("Failed to load cache file: " + cacheFile);
+                needRefreshCache = true;
             }
         }
 
-        if (info == null) {
+        void saveCache() {
+            if (!needRefreshCache)
+                return;
+
+            needRefreshCache = false;
             try {
-                info = JavaInfoUtils.fromExecutable(executable, false);
+                FileUtils.saveSafely(cacheFile, output -> {
+                    try (var writer = new JsonWriter(new OutputStreamWriter(output, StandardCharsets.UTF_8))) {
+                        writer.beginObject();
+
+                        writer.name("version").value("%d.%d".formatted(CACHE_MAJOR_VERSION, CACHE_MINOR_VERSION));
+
+                        writer.name("caches");
+                        writer.beginArray();
+                        for (Map.Entry<Path, JavaInfoCache> entry : caches.entrySet()) {
+                            Path path = entry.getKey();
+                            JavaInfoCache cache = entry.getValue();
+                            JavaInfo info = cache.info();
+
+                            writer.beginObject();
+
+                            writer.name("path").value(path.toString());
+                            writer.name("key").value(cache.key());
+
+                            writer.name("os.name").value(info.getPlatform().os().getCheckedName());
+                            writer.name("os.arch").value(info.getPlatform().arch().getCheckedName());
+                            writer.name("java.version").value(info.getVersion());
+                            if (info.getVendor() != null)
+                                writer.name("java.vendor").value(info.getVendor());
+
+                            writer.endObject();
+                        }
+                        writer.endArray();
+
+                        writer.endObject();
+                    }
+                });
+            } catch (Exception e) {
+                LOG.warning("Failed to save cache file: " + cacheFile);
+            }
+        }
+
+        private static @Nullable String createCacheKey(Path realPath) {
+            Path binDir = realPath.getParent();
+            if (binDir == null || !FileUtils.getName(binDir).equals("bin"))
+                return null;
+
+            if (Files.isRegularFile(realPath.resolveSibling("ikvm.properties")))
+                return null;
+
+            Path javaHome = binDir.getParent();
+            if (javaHome == null)
+                return null;
+
+            Path libDir = javaHome.resolve("lib");
+            if (!Files.isDirectory(libDir))
+                return null;
+
+            BasicFileAttributes launcherAttributes;
+            String releaseHash = null;
+            BasicFileAttributes coreLibsAttributes = null;
+
+            try {
+                launcherAttributes = Files.readAttributes(realPath, BasicFileAttributes.class);
+
+                Path releaseFile = javaHome.resolve("release");
+                if (Files.exists(releaseFile)) {
+                    releaseHash = DigestUtils.digestToString("SHA-1", releaseFile);
+                } else {
+                    Path coreLibsFile = libDir.resolve("rt.jar");
+                    if (!Files.isRegularFile(coreLibsFile)) {
+                        coreLibsFile = javaHome.resolve("jre/lib/rt.jar");
+                        if (!Files.isRegularFile(coreLibsFile))
+                            return null;
+
+                        coreLibsAttributes = Files.readAttributes(coreLibsFile, BasicFileAttributes.class);
+                    }
+                }
+            } catch (Exception e) {
+                LOG.warning("Failed to create cache key for " + realPath, e);
+                return null;
+            }
+
+            StringJoiner joiner = new StringJoiner(",");
+
+            joiner.add("sz:" + launcherAttributes.size());
+            joiner.add("lm:" + launcherAttributes.lastModifiedTime().toMillis());
+
+            if (releaseHash != null)
+                joiner.add(releaseHash);
+
+            if (coreLibsAttributes != null) {
+                joiner.add("rsz:" + coreLibsAttributes.size());
+                joiner.add("rlm:" + coreLibsAttributes.lastModifiedTime().toMillis());
+            }
+
+            return joiner.toString();
+        }
+
+        void addResult(Path realPath, JavaRuntime javaRuntime) {
+            javaRuntimes.put(realPath, javaRuntime);
+        }
+
+        void tryAddJavaHome(Path javaHome) {
+            tryAddJavaExecutable(getExecutable(javaHome));
+        }
+
+        void tryAddJavaExecutable(Path executable) {
+            tryAddJavaExecutable(executable, false);
+        }
+
+        void tryAddJavaExecutable(Path executable, boolean isManaged) {
+            try {
+                executable = executable.toRealPath();
+            } catch (IOException e) {
+                return;
+            }
+
+            if (javaRuntimes.containsKey(executable)
+                    || failed.contains(executable)
+                    || ConfigHolder.globalConfig().getDisabledJava().contains(executable.toString())) {
+                return;
+            }
+
+            String cacheKey = createCacheKey(executable);
+            if (cacheKey != null) {
+                JavaInfoCache cache = caches.get(executable);
+                if (cache != null) {
+                    if (isCompatible(cache.info().getPlatform()) && cacheKey.equals(cache.key())) {
+                        javaRuntimes.put(executable, JavaRuntime.of(executable, cache.info(), isManaged));
+                        return;
+                    } else {
+                        caches.remove(executable);
+                        needRefreshCache = true;
+                    }
+                }
+            } else if (caches.remove(executable) != null) {
+                needRefreshCache = true;
+            }
+
+            JavaInfo info;
+            try {
+                info = JavaInfoUtils.fromExecutable(executable);
             } catch (IOException e) {
                 LOG.warning("Failed to lookup Java executable at " + executable, e);
+                failed.add(executable);
+                return;
+            }
+
+            if (cacheKey != null) {
+                caches.put(executable, new JavaInfoCache(cacheKey, info));
+                needRefreshCache = true;
+            }
+
+            javaRuntimes.put(executable, JavaRuntime.of(executable, info, isManaged));
+        }
+
+        void tryAddJavaInComponentDir(String platform, Path component, boolean verify) {
+            Path sha1File = component.resolve(platform).resolve(component.getFileName() + ".sha1");
+            if (!Files.isRegularFile(sha1File))
+                return;
+
+            Path dir = component.resolve(platform).resolve(component.getFileName());
+
+            if (verify) {
+                try (BufferedReader reader = Files.newBufferedReader(sha1File)) {
+                    String line;
+                    while ((line = reader.readLine()) != null) {
+                        if (line.isEmpty()) continue;
+
+                        int idx = line.indexOf(" /#//");
+                        if (idx <= 0)
+                            throw new IOException("Illegal line: " + line);
+
+                        Path file = dir.resolve(line.substring(0, idx));
+
+                        // Should we check the sha1 of files? This will take a lot of time.
+                        if (Files.notExists(file))
+                            throw new NoSuchFileException(file.toAbsolutePath().toString());
+                    }
+                } catch (IOException e) {
+                    LOG.warning("Failed to verify Java in " + component, e);
+                    return;
+                }
+            }
+
+            if (OperatingSystem.CURRENT_OS == OperatingSystem.MACOS) {
+                Path macPath = dir.resolve("jre.bundle/Contents/Home");
+                if (Files.exists(macPath)) {
+                    tryAddJavaHome(macPath);
+                    return;
+                } else
+                    LOG.warning("The Java is not in 'jre.bundle/Contents/Home'");
+            }
+
+            tryAddJavaHome(dir);
+        }
+
+        void searchAllJavaInRepository(Platform platform) {
+            for (Path java : REPOSITORY.getAllJava(platform)) {
+                tryAddJavaExecutable(java, true);
+            }
+
+            for (Path java : LOCAL_REPOSITORY.getAllJava(platform)) {
+                tryAddJavaExecutable(java, true);
+            }
+
+            if (platform.os() == OperatingSystem.MACOS) {
+                // In the past, we used 'osx' as the checked name for macOS
+                Path platformRoot = REPOSITORY.getPlatformRoot(platform).resolveSibling("osx-" + platform.getArchitecture().getCheckedName());
+                searchAllJavaInDirectory(platformRoot);
             }
         }
 
-        if (info != null && isCompatible(info.getPlatform()))
-            javaRuntimes.put(executable, JavaRuntime.of(executable, info, false));
-    }
+        void searchAllOfficialJava(Path directory, boolean verify) {
+            if (!Files.isDirectory(directory))
+                return;
+            // Examples:
+            // $HOME/Library/Application Support/minecraft/runtime/java-runtime-beta/mac-os/java-runtime-beta/jre.bundle/Contents/Home
+            // $HOME/.minecraft/runtime/java-runtime-beta/linux/java-runtime-beta
 
-    private static void tryAddJavaExecutable(Map<Path, JavaRuntime> javaRuntimes, Path executable) {
-        try {
-            executable = executable.toRealPath();
-        } catch (IOException e) {
-            return;
+            String javaPlatform = getMojangJavaPlatform(Platform.SYSTEM_PLATFORM);
+            if (javaPlatform != null) {
+                searchAllOfficialJava(directory, javaPlatform, verify);
+            }
+
+            if (OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS) {
+                if (Architecture.SYSTEM_ARCH == Architecture.X86_64) {
+                    searchAllOfficialJava(directory, getMojangJavaPlatform(Platform.WINDOWS_X86), verify);
+                } else if (Architecture.SYSTEM_ARCH == Architecture.ARM64) {
+                    if (OperatingSystem.SYSTEM_BUILD_NUMBER >= 21277) {
+                        searchAllOfficialJava(directory, getMojangJavaPlatform(Platform.WINDOWS_X86_64), verify);
+                    }
+                    searchAllOfficialJava(directory, getMojangJavaPlatform(Platform.WINDOWS_X86), verify);
+                }
+            } else if (OperatingSystem.CURRENT_OS == OperatingSystem.MACOS && Architecture.CURRENT_ARCH == Architecture.ARM64) {
+                searchAllOfficialJava(directory, getMojangJavaPlatform(Platform.MACOS_X86_64), verify);
+            }
         }
 
-        if (javaRuntimes.containsKey(executable) || ConfigHolder.globalConfig().getDisabledJava().contains(executable.toString())) {
-            return;
-        }
-
-        JavaInfo info = null;
-        try {
-            info = JavaInfoUtils.fromExecutable(executable, true);
-        } catch (IOException e) {
-            LOG.warning("Failed to lookup Java executable at " + executable, e);
-        }
-
-        if (info != null && isCompatible(info.getPlatform())) {
-            javaRuntimes.put(executable, JavaRuntime.of(executable, info, false));
-        }
-    }
-
-    private static void tryAddJavaInComponentDir(Map<Path, JavaRuntime> javaRuntimes, String platform, Path component, boolean verify) {
-        Path sha1File = component.resolve(platform).resolve(component.getFileName() + ".sha1");
-        if (!Files.isRegularFile(sha1File))
-            return;
-
-        Path dir = component.resolve(platform).resolve(component.getFileName());
-
-        if (verify) {
-            try (BufferedReader reader = Files.newBufferedReader(sha1File)) {
-                String line;
-                while ((line = reader.readLine()) != null) {
-                    if (line.isEmpty()) continue;
-
-                    int idx = line.indexOf(" /#//");
-                    if (idx <= 0)
-                        throw new IOException("Illegal line: " + line);
-
-                    Path file = dir.resolve(line.substring(0, idx));
-
-                    // Should we check the sha1 of files? This will take a lot of time.
-                    if (Files.notExists(file))
-                        throw new NoSuchFileException(file.toAbsolutePath().toString());
+        void searchAllOfficialJava(Path directory, String platform, boolean verify) {
+            try (DirectoryStream<Path> dir = Files.newDirectoryStream(directory)) {
+                // component can be jre-legacy, java-runtime-alpha, java-runtime-beta, java-runtime-gamma or any other being added in the future.
+                for (Path component : dir) {
+                    tryAddJavaInComponentDir(platform, component, verify);
                 }
             } catch (IOException e) {
-                LOG.warning("Failed to verify Java in " + component, e);
-                return;
+                LOG.warning("Failed to list java-runtime directory " + directory, e);
             }
         }
 
-        if (OperatingSystem.CURRENT_OS == OperatingSystem.MACOS) {
-            Path macPath = dir.resolve("jre.bundle/Contents/Home");
-            if (Files.exists(macPath)) {
-                tryAddJavaHome(javaRuntimes, macPath);
+        void searchAllJavaInDirectory(Path directory) {
+            if (!Files.isDirectory(directory)) {
                 return;
-            } else
-                LOG.warning("The Java is not in 'jre.bundle/Contents/Home'");
-        }
+            }
 
-        tryAddJavaHome(javaRuntimes, dir);
-    }
-
-    private static void searchAllJavaInRepository(Map<Path, JavaRuntime> javaRuntimes, Platform platform) {
-        for (JavaRuntime java : REPOSITORY.getAllJava(platform)) {
-            javaRuntimes.put(java.getBinary(), java);
-        }
-
-        for (JavaRuntime java : LOCAL_REPOSITORY.getAllJava(platform)) {
-            javaRuntimes.put(java.getBinary(), java);
-        }
-    }
-
-    private static void searchAllOfficialJava(Map<Path, JavaRuntime> javaRuntimes, Path directory, boolean verify) {
-        if (!Files.isDirectory(directory))
-            return;
-        // Examples:
-        // $HOME/Library/Application Support/minecraft/runtime/java-runtime-beta/mac-os/java-runtime-beta/jre.bundle/Contents/Home
-        // $HOME/.minecraft/runtime/java-runtime-beta/linux/java-runtime-beta
-
-        String javaPlatform = getMojangJavaPlatform(Platform.SYSTEM_PLATFORM);
-        if (javaPlatform != null) {
-            searchAllOfficialJava(javaRuntimes, directory, javaPlatform, verify);
-        }
-
-        if (OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS) {
-            if (Architecture.SYSTEM_ARCH == Architecture.X86_64) {
-                searchAllOfficialJava(javaRuntimes, directory, getMojangJavaPlatform(Platform.WINDOWS_X86), verify);
-            } else if (Architecture.SYSTEM_ARCH == Architecture.ARM64) {
-                if (OperatingSystem.SYSTEM_BUILD_NUMBER >= 21277) {
-                    searchAllOfficialJava(javaRuntimes, directory, getMojangJavaPlatform(Platform.WINDOWS_X86_64), verify);
+            try (DirectoryStream<Path> stream = Files.newDirectoryStream(directory)) {
+                for (Path subDir : stream) {
+                    tryAddJavaHome(subDir);
                 }
-                searchAllOfficialJava(javaRuntimes, directory, getMojangJavaPlatform(Platform.WINDOWS_X86), verify);
+            } catch (IOException e) {
+                LOG.warning("Failed to find Java in " + directory, e);
             }
-        } else if (OperatingSystem.CURRENT_OS == OperatingSystem.MACOS && Architecture.CURRENT_ARCH == Architecture.ARM64) {
-            searchAllOfficialJava(javaRuntimes, directory, getMojangJavaPlatform(Platform.MACOS_X86_64), verify);
         }
-    }
 
-    private static void searchAllOfficialJava(Map<Path, JavaRuntime> javaRuntimes, Path directory, String platform, boolean verify) {
-        try (DirectoryStream<Path> dir = Files.newDirectoryStream(directory)) {
-            // component can be jre-legacy, java-runtime-alpha, java-runtime-beta, java-runtime-gamma or any other being added in the future.
-            for (Path component : dir) {
-                tryAddJavaInComponentDir(javaRuntimes, platform, component, verify);
+        void searchJavaInProgramFiles(String env, String defaultValue) {
+            String programFiles = Lang.requireNonNullElse(System.getenv(env), defaultValue);
+            Path path;
+            try {
+                path = Path.of(programFiles);
+            } catch (InvalidPathException ignored) {
+                return;
             }
-        } catch (IOException e) {
-            LOG.warning("Failed to list java-runtime directory " + directory, e);
-        }
-    }
 
-    private static void searchAllJavaInDirectory(Map<Path, JavaRuntime> javaRuntimes, Path directory) {
-        if (!Files.isDirectory(directory)) {
-            return;
-        }
-
-        try (DirectoryStream<Path> stream = Files.newDirectoryStream(directory)) {
-            for (Path subDir : stream) {
-                tryAddJavaHome(javaRuntimes, subDir);
+            for (String vendor : KNOWN_VENDOR_DIRECTORIES) {
+                searchAllJavaInDirectory(path.resolve(vendor));
             }
-        } catch (IOException e) {
-            LOG.warning("Failed to find Java in " + directory, e);
-        }
-    }
-
-    private static void searchJavaInProgramFiles(Map<Path, JavaRuntime> javaRuntimes, String env, String defaultValue) {
-        String programFiles = Lang.requireNonNullElse(System.getenv(env), defaultValue);
-        Path path;
-        try {
-            path = Paths.get(programFiles);
-        } catch (InvalidPathException ignored) {
-            return;
         }
 
-        for (String vendor : new String[]{"Java", "BellSoft", "AdoptOpenJDK", "Zulu", "Microsoft", "Eclipse Foundation", "Semeru"}) {
-            searchAllJavaInDirectory(javaRuntimes, path.resolve(vendor));
-        }
-    }
-
-    private static void searchJavaInMacJavaVirtualMachines(Map<Path, JavaRuntime> javaRuntimes, Path directory) {
-        if (!Files.isDirectory(directory)) {
-            return;
-        }
-
-        try (DirectoryStream<Path> stream = Files.newDirectoryStream(directory)) {
-            for (Path subDir : stream) {
-                tryAddJavaHome(javaRuntimes, subDir.resolve("Contents/Home"));
+        void searchJavaInMacJavaVirtualMachines(Path directory) {
+            if (!Files.isDirectory(directory)) {
+                return;
             }
-        } catch (IOException e) {
-            LOG.warning("Failed to find Java in " + directory, e);
+
+            try (DirectoryStream<Path> stream = Files.newDirectoryStream(directory)) {
+                for (Path subDir : stream) {
+                    tryAddJavaHome(subDir.resolve("Contents/Home"));
+                }
+            } catch (IOException e) {
+                LOG.warning("Failed to find Java in " + directory, e);
+            }
         }
-    }
 
-    // ==== Windows Registry Support ====
-    private static void queryJavaInRegistryKey(Map<Path, JavaRuntime> javaRuntimes, WinReg.HKEY hkey, String location) {
-        WinReg reg = WinReg.INSTANCE;
-        if (reg == null)
-            return;
+        // ==== Windows Registry Support ====
+        void queryJavaInRegistryKey(WinReg.HKEY hkey, String location) {
+            WinReg reg = WinReg.INSTANCE;
+            if (reg == null)
+                return;
 
-        for (String java : reg.querySubKeys(hkey, location)) {
-            if (!reg.querySubKeys(hkey, java).contains(java + "\\MSI"))
-                continue;
-            Object home = reg.queryValue(hkey, java, "JavaHome");
-            if (home instanceof String) {
-                try {
-                    tryAddJavaHome(javaRuntimes, Paths.get((String) home));
-                } catch (InvalidPathException e) {
-                    LOG.warning("Invalid Java path in system registry: " + home);
+            for (String java : reg.querySubKeys(hkey, location)) {
+                if (!reg.querySubKeys(hkey, java).contains(java + "\\MSI"))
+                    continue;
+                if (reg.queryValue(hkey, java, "JavaHome") instanceof String home) {
+                    try {
+                        tryAddJavaHome(Path.of(home));
+                    } catch (InvalidPathException e) {
+                        LOG.warning("Invalid Java path in system registry: " + home);
+                    }
                 }
             }
         }
+
     }
 }
