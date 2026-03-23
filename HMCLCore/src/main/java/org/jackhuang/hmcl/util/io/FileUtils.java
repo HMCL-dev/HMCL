@@ -99,7 +99,11 @@ public final class FileUtils {
     }
 
     public static String getNameWithoutExtension(Path file) {
-        return StringUtils.substringBeforeLast(getName(file), '.');
+        String name = getName(file);
+        if (Files.isDirectory(file)) {
+            return name;
+        }
+        return StringUtils.substringBeforeLast(name, '.');
     }
 
     public static String getExtension(String fileName) {

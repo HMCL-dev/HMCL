@@ -1,6 +1,6 @@
 /*
  * Hello Minecraft! Launcher
- * Copyright (C) 2026 huangyuhui <huanghongxun2008@126.com> and contributors
+ * Copyright (C) 2025 huangyuhui <huanghongxun2008@126.com> and contributors
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -17,9 +17,10 @@
  */
 package org.jackhuang.hmcl.resourcepack;
 
-import org.jackhuang.hmcl.mod.LocalModFile;
+import org.jackhuang.hmcl.download.DownloadProvider;
+import org.jackhuang.hmcl.mod.RemoteMod;
 import org.jackhuang.hmcl.mod.modinfo.PackMcMeta;
-import org.jackhuang.hmcl.util.gson.JsonUtils;
+import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
@@ -28,50 +29,48 @@ import java.nio.file.Path;
 
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
-public final class ResourcepackFolder implements ResourcepackFile {
-    private final Path path;
-    private final LocalModFile.Description description;
+final class ResourcePackFolder extends ResourcePackFile {
+    private final PackMcMeta meta;
     private final byte @Nullable [] icon;
 
-    public ResourcepackFolder(Path path) {
-        this.path = path;
+    public ResourcePackFolder(ResourcePackManager manager, Path path) {
+        super(manager, path);
 
-        LocalModFile.Description description = null;
+        PackMcMeta meta = null;
         try {
-            description = JsonUtils.fromJsonFile(path.resolve("pack.mcmeta"), PackMcMeta.class).pack().description();
+            meta = PackMcMeta.fromNonNullJsonFile(path.resolve("pack.mcmeta"));
         } catch (Exception e) {
-            LOG.warning("Failed to parse resourcepack meta", e);
+            LOG.warning("Failed to parse resource pack meta", e);
         }
+        this.meta = meta;
 
         byte[] icon;
         try {
             icon = Files.readAllBytes(path.resolve("pack.png"));
         } catch (IOException e) {
             icon = null;
-            LOG.warning("Failed to read resourcepack icon", e);
+            LOG.warning("Failed to read resource pack icon", e);
         }
         this.icon = icon;
-
-        this.description = description;
     }
 
     @Override
-    public String getName() {
-        return path.getFileName().toString();
-    }
-
-    @Override
-    public Path getPath() {
-        return path;
-    }
-
-    @Override
-    public LocalModFile.Description getDescription() {
-        return description;
+    public PackMcMeta getMeta() {
+        return meta;
     }
 
     @Override
     public byte @Nullable [] getIcon() {
         return icon;
+    }
+
+    @Override
+    public void delete() throws IOException {
+        FileUtils.deleteDirectory(file);
+    }
+
+    @Override
+    public AddonUpdate checkUpdates(DownloadProvider downloadProvider, String gameVersion, RemoteMod.Type type) {
+        return null;
     }
 }
