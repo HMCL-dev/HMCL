@@ -17,6 +17,7 @@
  */
 package org.jackhuang.hmcl.ui.versions;
 
+import org.jackhuang.hmcl.download.DownloadProvider;
 import org.jackhuang.hmcl.mod.LocalModFile;
 import org.jackhuang.hmcl.mod.RemoteMod;
 import org.jackhuang.hmcl.task.Schedulers;
@@ -30,16 +31,18 @@ import java.util.Objects;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 public class ModCheckUpdatesTask extends Task<List<LocalModFile.ModUpdate>> {
+    private final DownloadProvider downloadProvider;
     private final List<Task<LocalModFile.ModUpdate>> dependents;
 
-    public ModCheckUpdatesTask(String gameVersion, Collection<LocalModFile> mods) {
+    public ModCheckUpdatesTask(DownloadProvider downloadProvider, String gameVersion, Collection<LocalModFile> mods) {
+        this.downloadProvider = downloadProvider;
         dependents = mods.stream().map(mod ->
                 Task.supplyAsync(Schedulers.io(), () -> {
                     LocalModFile.ModUpdate candidate = null;
                     for (RemoteMod.Type type : RemoteMod.Type.values()) {
                         LocalModFile.ModUpdate update = null;
                         try {
-                            update = mod.checkUpdates(gameVersion, type.getRemoteModRepository());
+                            update = mod.checkUpdates(downloadProvider, gameVersion, type.getRemoteModRepository());
                         } catch (IOException e) {
                             LOG.warning(String.format("Cannot check update for mod %s.", mod.getFileName()), e);
                         }

@@ -35,6 +35,7 @@ import javafx.scene.text.TextAlignment;
 import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.setting.EnumCommonDirectory;
 import org.jackhuang.hmcl.setting.Settings;
+import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
@@ -44,6 +45,8 @@ import org.jackhuang.hmcl.upgrade.RemoteVersion;
 import org.jackhuang.hmcl.upgrade.UpdateChannel;
 import org.jackhuang.hmcl.upgrade.UpdateChecker;
 import org.jackhuang.hmcl.upgrade.UpdateHandler;
+import org.jackhuang.hmcl.util.AprilFools;
+import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.i18n.I18n;
 import org.jackhuang.hmcl.util.i18n.SupportedLocale;
@@ -59,12 +62,12 @@ import java.nio.file.Path;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
+import java.util.concurrent.CompletableFuture;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
 import static org.jackhuang.hmcl.setting.ConfigHolder.config;
-import static org.jackhuang.hmcl.util.Lang.thread;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
@@ -189,6 +192,22 @@ public final class SettingsPage extends ScrollPane {
             }
 
             {
+                LineToggleButton disableAutoShowUpdateDialogPane = new LineToggleButton();
+                disableAutoShowUpdateDialogPane.setTitle(i18n("update.disable_auto_show_update_dialog"));
+                disableAutoShowUpdateDialogPane.setSubtitle(i18n("update.disable_auto_show_update_dialog.subtitle"));
+                disableAutoShowUpdateDialogPane.selectedProperty().bindBidirectional(config().disableAutoShowUpdateDialogProperty());
+                settingsPane.getContent().add(disableAutoShowUpdateDialogPane);
+            }
+
+            if (AprilFools.isShowAprilFoolsSettings()) {
+                LineToggleButton disableAprilFools = new LineToggleButton();
+                disableAprilFools.setTitle(i18n("settings.launcher.disable_april_fools"));
+                disableAprilFools.setSubtitle(i18n("settings.take_effect_after_restart"));
+                disableAprilFools.selectedProperty().bindBidirectional(config().disableAprilFoolsProperty());
+                settingsPane.getContent().add(disableAprilFools);
+            }
+
+            {
                 MultiFileItem<EnumCommonDirectory> fileCommonLocation = new MultiFileItem<>();
                 fileCommonLocation.loadChildren(Arrays.asList(
                         new MultiFileItem.Option<>(i18n("launcher.cache_directory.default"), EnumCommonDirectory.DEFAULT),
@@ -256,12 +275,31 @@ public final class SettingsPage extends ScrollPane {
                 if (LOG.getLogFile() == null)
                     openLogFolderButton.setDisable(true);
 
+                SpinnerPane exportLogPane = new SpinnerPane();
+
                 JFXButton logButton = FXUtils.newBorderButton(i18n("settings.launcher.launcher_log.export"));
-                logButton.setOnAction(e -> onExportLogs());
+                exportLogPane.setContent(logButton);
+                logButton.setOnAction(e -> {
+                    exportLogPane.showSpinner();
+                    onExportLogs().whenCompleteAsync((result, exception) -> {
+                        exportLogPane.hideSpinner();
+                        if (exception == null) {
+                            Controllers.dialog(i18n("settings.launcher.launcher_log.export.success", result));
+                            FXUtils.showFileInExplorer(result);
+                        } else {
+                            LOG.warning("Failed to export logs", exception);
+                            Controllers.dialog(
+                                    i18n("settings.launcher.launcher_log.export.failed") + "\n" + StringUtils.getStackTrace(exception),
+                                    null,
+                                    MessageType.ERROR
+                            );
+                        }
+                    }, Schedulers.javafx());
+                });
 
                 HBox buttonBox = new HBox();
                 buttonBox.setSpacing(10);
-                buttonBox.getChildren().addAll(openLogFolderButton, logButton);
+                buttonBox.getChildren().addAll(openLogFolderButton, exportLogPane);
                 BorderPane.setAlignment(buttonBox, Pos.CENTER_RIGHT);
                 debugPane.setRight(buttonBox);
 
@@ -333,86 +371,79 @@ public final class SettingsPage extends ScrollPane {
         }
     }
 
-    private void onExportLogs() {
-        thread(() -> {
+    private CompletableFuture<Path> onExportLogs() {
+        return CompletableFuture.supplyAsync(Lang.wrap(() -> {
             String nameBase = "hmcl-exported-logs-" + LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH-mm-ss"));
             List<Path> recentLogFiles = LOG.findRecentLogFiles(5);
 
             Path outputFile;
-            try {
-                if (recentLogFiles.isEmpty()) {
-                    outputFile = Metadata.CURRENT_DIRECTORY.resolve(nameBase + ".log");
+            if (recentLogFiles.isEmpty()) {
+                outputFile = Metadata.CURRENT_DIRECTORY.resolve(nameBase + ".log");
 
-                    LOG.info("Exporting latest logs to " + outputFile);
-                    try (OutputStream output = Files.newOutputStream(outputFile)) {
-                        LOG.exportLogs(output);
-                    }
-                } else {
-                    outputFile = Metadata.CURRENT_DIRECTORY.resolve(nameBase + ".zip");
+                LOG.info("Exporting latest logs to " + outputFile);
+                try (OutputStream output = Files.newOutputStream(outputFile)) {
+                    LOG.exportLogs(output);
+                }
+            } else {
+                outputFile = Metadata.CURRENT_DIRECTORY.resolve(nameBase + ".zip");
 
-                    LOG.info("Exporting latest logs to " + outputFile);
+                LOG.info("Exporting latest logs to " + outputFile);
 
-                    byte[] buffer = new byte[IOUtils.DEFAULT_BUFFER_SIZE];
-                    try (var os = Files.newOutputStream(outputFile);
-                         var zos = new ZipOutputStream(os)) {
+                byte[] buffer = new byte[IOUtils.DEFAULT_BUFFER_SIZE];
+                try (var os = Files.newOutputStream(outputFile);
+                     var zos = new ZipOutputStream(os)) {
 
-                        Set<String> entryNames = new HashSet<>();
+                    Set<String> entryNames = new HashSet<>();
 
-                        for (Path path : recentLogFiles) {
-                            String fileName = FileUtils.getName(path);
-                            String extension = StringUtils.substringAfterLast(fileName, '.');
+                    for (Path path : recentLogFiles) {
+                        String fileName = FileUtils.getName(path);
+                        String extension = StringUtils.substringAfterLast(fileName, '.');
 
-                            if ("gz".equals(extension) || "xz".equals(extension)) {
-                                // If an exception occurs while decompressing the input file, we should
-                                // ensure the input file and the current zip entry are closed,
-                                // then copy the compressed file content as-is into a new entry in the zip file.
-
-                                InputStream input = null;
-                                try {
-                                    input = Files.newInputStream(path);
-                                    input = "gz".equals(extension)
-                                            ? new GZIPInputStream(input)
-                                            : new XZInputStream(input);
-                                } catch (Throwable ex) {
-                                    LOG.warning("Failed to open log file " + path, ex);
-                                    IOUtils.closeQuietly(input, ex);
-                                    input = null;
-                                }
-
-                                String entryName = getEntryName(entryNames, StringUtils.substringBeforeLast(fileName, "."));
-                                if (input != null && exportLogFile(zos, path, entryName, input, buffer))
-                                    continue;
-                            }
-
-                            // Copy the log file content as-is into a new entry in the zip file.
+                        if ("gz".equals(extension) || "xz".equals(extension)) {
                             // If an exception occurs while decompressing the input file, we should
-                            // ensure the input file and the current zip entry are closed.
+                            // ensure the input file and the current zip entry are closed,
+                            // then copy the compressed file content as-is into a new entry in the zip file.
 
-                            InputStream input;
+                            InputStream input = null;
                             try {
                                 input = Files.newInputStream(path);
+                                input = "gz".equals(extension)
+                                        ? new GZIPInputStream(input)
+                                        : new XZInputStream(input);
                             } catch (Throwable ex) {
                                 LOG.warning("Failed to open log file " + path, ex);
-                                continue;
+                                IOUtils.closeQuietly(input, ex);
+                                input = null;
                             }
 
-                            exportLogFile(zos, path, getEntryName(entryNames, fileName), input, buffer);
+                            String entryName = getEntryName(entryNames, StringUtils.substringBeforeLast(fileName, "."));
+                            if (input != null && exportLogFile(zos, path, entryName, input, buffer))
+                                continue;
                         }
 
-                        zos.putNextEntry(new ZipEntry(getEntryName(entryNames, "hmcl-latest.log")));
-                        LOG.exportLogs(zos);
-                        zos.closeEntry();
+                        // Copy the log file content as-is into a new entry in the zip file.
+                        // If an exception occurs while decompressing the input file, we should
+                        // ensure the input file and the current zip entry are closed.
+
+                        InputStream input;
+                        try {
+                            input = Files.newInputStream(path);
+                        } catch (Throwable ex) {
+                            LOG.warning("Failed to open log file " + path, ex);
+                            continue;
+                        }
+
+                        exportLogFile(zos, path, getEntryName(entryNames, fileName), input, buffer);
                     }
+
+                    zos.putNextEntry(new ZipEntry(getEntryName(entryNames, "hmcl-latest.log")));
+                    LOG.exportLogs(zos);
+                    zos.closeEntry();
                 }
-            } catch (IOException e) {
-                LOG.warning("Failed to export logs", e);
-                Platform.runLater(() -> Controllers.dialog(i18n("settings.launcher.launcher_log.export.failed") + "\n" + StringUtils.getStackTrace(e), null, MessageType.ERROR));
-                return;
             }
 
-            Platform.runLater(() -> Controllers.dialog(i18n("settings.launcher.launcher_log.export.success", outputFile)));
-            FXUtils.showFileInExplorer(outputFile);
-        });
+            return outputFile;
+        }), Schedulers.io());
     }
 
     private void onSponsor() {
