@@ -104,13 +104,18 @@ public class VersionIconDialog extends DialogPane {
         Path selectedFile = FileUtils.toPath(chooser.showOpenDialog(Controllers.getStage()));
         if (selectedFile != null) {
             try {
-                Path dest = GAME_ICONS_DIR.resolve(selectedFile.getFileName());
-                int i = 1;
-                while (Files.exists(dest)) {
-                    dest = GAME_ICONS_DIR.resolve(selectedFile.getFileName() + " " + i);
-                    i++;
+                Path dest;
+                if (selectedFile.getParent().equals(GAME_ICONS_DIR)) {
+                    dest = selectedFile;
+                } else {
+                    dest = GAME_ICONS_DIR.resolve(selectedFile.getFileName());
+                    int i = 1;
+                    while (Files.exists(dest)) {
+                        dest = GAME_ICONS_DIR.resolve(selectedFile.getFileName() + " " + i);
+                        i++;
+                    }
+                    FileUtils.copyFile(selectedFile, dest);
                 }
-                FileUtils.copyFile(selectedFile, dest);
                 profile.getRepository().setVersionIconFile(versionId, dest);
 
                 if (vs != null) {
