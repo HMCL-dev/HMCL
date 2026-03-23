@@ -45,6 +45,11 @@ public final class MemoryStatusBar extends Control {
 
     private final ReadOnlyObjectProperty<PhysicalMemoryStatus> memoryStatus = UpdateMemoryStatus.memoryStatusProperty();
 
+    /// The memory status of the system.
+    ///
+    /// The property will be automatically updated.
+    ///
+    /// The property has no bean, because it may share between multiple MemoryStatusBar instances.
     public ReadOnlyObjectProperty<PhysicalMemoryStatus> memoryStatusProperty() {
         return memoryStatus;
     }
