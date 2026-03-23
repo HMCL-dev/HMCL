@@ -46,6 +46,11 @@ import static org.jackhuang.hmcl.util.logging.Logger.LOG;
  */
 public final class FileUtils {
 
+    public static final long KB = 1024;
+    public static final long MB = KB * KB;
+    public static final long GB = KB * MB;
+    public static final long TB = KB * GB;
+
     private FileUtils() {
     }
 
@@ -219,6 +224,18 @@ public final class FileUtils {
             LOG.warning("Failed to get file size of " + file, e);
             return 0L;
         }
+    }
+
+    public static String parseFileSize(long sizeInBytes) {
+        if (sizeInBytes >= TB)
+            return String.format(Locale.ROOT, "%.2f TB", (float) sizeInBytes / TB);
+        if (sizeInBytes >= GB)
+            return String.format(Locale.ROOT, "%.2f GB", (float) sizeInBytes / GB);
+        if (sizeInBytes >= MB)
+            return String.format(Locale.ROOT, "%.2f MB", (float) sizeInBytes / MB);
+        if (sizeInBytes >= KB)
+            return String.format(Locale.ROOT, "%.2f KB", (float) sizeInBytes / KB);
+        return String.format(Locale.ROOT, "%d B", sizeInBytes);
     }
 
     public static String readTextMaybeNativeEncoding(Path file) throws IOException {
