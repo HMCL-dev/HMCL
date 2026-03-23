@@ -56,7 +56,6 @@ public class DownloadSettingsPage extends StackPane {
 
         {
             var downloadSource = new ComponentList();
-            downloadSource.getStyleClass().add("card-non-transparent");
             {
 
                 var autoChooseDownloadSource = new LineToggleButton();
