@@ -134,22 +134,19 @@ public final class SettingsPage extends ScrollPane {
                 updatePane.setItems(List.of(UpdateChannel.STABLE, UpdateChannel.DEVELOPMENT));
                 updatePane.setDescriptionConverter(channel -> i18n("update.note." + channel.channelName));
 
-                final StringProperty lblUpdate = updatePane.titleProperty();
-                final StringProperty lblUpdateSub = updatePane.subtitleProperty();
+                final StringProperty lblUpdateSubProperty = updatePane.subtitleProperty();
 
                 {
                     updateListener = any -> {
                         btnUpdate.setVisible(UpdateChecker.isOutdated());
 
                         if (UpdateChecker.isOutdated()) {
-                            lblUpdateSub.set(i18n("update.newest_version", UpdateChecker.getLatestVersion().getVersion()));
-                            lblUpdate.set(i18n("update.found"));
+                            lblUpdateSubProperty.set(i18n("update.newest_version", UpdateChecker.getLatestVersion().getVersion()));
+                            updatePane.getStyleClass().add("update-active");
                         } else if (UpdateChecker.isCheckingUpdate()) {
-                            lblUpdateSub.set(i18n("update.checking"));
-                            lblUpdate.set(i18n("update"));
+                            lblUpdateSubProperty.set(i18n("update.checking"));
                         } else {
-                            lblUpdateSub.set(i18n("update.latest"));
-                            lblUpdate.set(i18n("update"));
+                            lblUpdateSubProperty.set(i18n("update.latest"));
                         }
                     };
                     UpdateChecker.latestVersionProperty().addListener(new WeakInvalidationListener(updateListener));
