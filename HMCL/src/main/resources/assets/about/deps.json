@@ -83,5 +83,10 @@
     "title": "MonetFX",
     "subtitle": "Copyright © 2025 Glavo.\nLicensed under the Apache 2.0 License.",
     "externalLink": "https://github.com/Glavo/MonetFX"
+  },
+  {
+    "title": "CommonMark",
+    "subtitle": "Copyright (c) 2015 Robin Stocker.\nAll rights reserved.",
+    "externalLink": "https://github.com/commonmark/commonmark-java"
   }
 ]
