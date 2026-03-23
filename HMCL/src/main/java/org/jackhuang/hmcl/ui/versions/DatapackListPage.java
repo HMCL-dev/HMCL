@@ -48,7 +48,6 @@ public final class DatapackListPage extends ListPageBase<DatapackListPageSkin.Da
     private final WorldManagePage worldManagePage;
     private World world;
     private Datapack datapack;
-    BooleanProperty readOnly;
 
     public DatapackListPage(WorldManagePage worldManagePage) {
         this.worldManagePage = worldManagePage;
@@ -60,7 +59,7 @@ public final class DatapackListPage extends ListPageBase<DatapackListPageSkin.Da
 
     private void installMultiDatapack(List<Path> datapackPath) {
         datapackPath.forEach(this::installSingleDatapack);
-        if (readOnly.get()) {
+        if (readOnlyProperty().get()) {
             Controllers.showToast(i18n("datapack.reload.toast"));
         }
     }
@@ -83,11 +82,14 @@ public final class DatapackListPage extends ListPageBase<DatapackListPageSkin.Da
         setLoading(true);
         world = worldManagePage.getWorld();
         datapack = new Datapack(world.getFile().resolve("datapacks"));
-        readOnly = worldManagePage.readOnlyProperty();
         setItems(MappedObservableList.create(datapack.getPacks(), DatapackListPageSkin.DatapackInfoObject::new));
         Task.runAsync(datapack::loadFromDir)
                 .withRunAsync(Schedulers.javafx(), () -> setLoading(false))
                 .start();
+    }
+
+    public BooleanProperty readOnlyProperty() {
+        return worldManagePage.readOnlyProperty();
     }
 
     public void add() {
