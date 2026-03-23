@@ -21,8 +21,8 @@ body:
   - type: input
     id: version
     attributes:
-      description: 客户端版本
-      label: 请提供你所使用的客户端版本。
+      label: 客户端版本
+      description: 请提供你所使用的客户端版本。
   - type: markdown
     attributes:
       value: |-

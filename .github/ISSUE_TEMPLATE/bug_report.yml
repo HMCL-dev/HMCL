@@ -21,8 +21,8 @@ body:
   - type: input
     id: version
     attributes:
-      description: Client Version
-      label: Please provide the version of the client you are using.
+      label: Client Version
+      description: Please provide the version of the client you are using.
   - type: markdown
     attributes:
       value: |-
