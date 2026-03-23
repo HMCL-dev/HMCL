@@ -184,7 +184,7 @@ public class RootPage extends DecoratorAnimatedPage implements DecoratorPage {
                 Controllers.getDownloadPage().showGameDownloads();
                 Controllers.navigate(Controllers.getDownloadPage());
             });
-            FXUtils.installFastTooltip(downloadItem, i18n("download.hint"));
+            FXUtils.installSlowTooltip(downloadItem, i18n("download.hint"));
             if (AnimationUtils.isAnimationEnabled()) {
                 FXUtils.prepareOnMouseEnter(downloadItem, Controllers::prepareDownloadPage);
             }

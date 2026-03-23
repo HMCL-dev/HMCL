@@ -1851,12 +1851,18 @@
  *                                                                             *
  ******************************************************************************/
 
-.tooltip {
+.jfx-tooltip {
     -fx-text-fill: -monet-inverse-on-surface;
     -fx-background-color: -monet-inverse-surface;
+    -fx-background-insets: 0;
+    -fx-effect: dropshadow( three-pass-box , rgba(0,0,0,0.5) , 10, 0.0 , 0 , 3 );
+    -fx-font-size: 12px;
+    -fx-background-radius: 4px;
+    -fx-padding: 8px;
+    -fx-min-height: 24px;
 }
 
-.tooltip .text {
+.jfx-tooltip .text {
     -fx-fill: -monet-inverse-on-surface;
 }
 
