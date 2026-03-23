@@ -105,8 +105,10 @@ public class VersionIconDialog extends DialogPane {
                 } else {
                     dest = GAME_ICONS_DIR.resolve(selectedFile.getFileName());
                     int i = 1;
+                    String name = FileUtils.getNameWithoutExtension(selectedFile);
+                    String ext = FileUtils.getExtension(selectedFile).toLowerCase(Locale.ROOT);
                     while (Files.exists(dest)) {
-                        dest = GAME_ICONS_DIR.resolve(selectedFile.getFileName() + " " + i);
+                        dest = GAME_ICONS_DIR.resolve(name + " " + i + "." + ext);
                         i++;
                     }
                     FileUtils.copyFile(selectedFile, dest);
