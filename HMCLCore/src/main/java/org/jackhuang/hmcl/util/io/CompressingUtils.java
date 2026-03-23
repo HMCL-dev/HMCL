@@ -144,7 +144,7 @@ public final class CompressingUtils {
         if (possibleEncoding == null)
             possibleEncoding = StandardCharsets.UTF_8;
 
-        ZipArchiveReader zipReader = new ZipArchiveReader(Files.newByteChannel(zipFile));
+        ZipArchiveReader zipReader = new ZipArchiveReader(new BufferedSeekableByteChannel(Files.newByteChannel(zipFile)));
 
         Charset suitableEncoding;
         try {
@@ -161,7 +161,7 @@ public final class CompressingUtils {
         }
 
         zipReader.close();
-        return new ZipArchiveReader(Files.newByteChannel(zipFile), suitableEncoding);
+        return new ZipArchiveReader(new BufferedSeekableByteChannel(Files.newByteChannel(zipFile)), suitableEncoding);
     }
 
     public static final class Builder {
