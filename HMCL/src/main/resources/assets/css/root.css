@@ -526,7 +526,7 @@
     -fx-font-size: 14.0px;
 }
 
-.jfx-dialog > StackPane {
+.jfx-dialog > .content-holder {
     -fx-background-color: transparent;
 }
 
