@@ -65,7 +65,7 @@ public class JFXCheckBoxSkin extends CheckBoxSkin {
         SVGPath shape = new SVGPath();
         shape.setContent("M384 690l452-452 60 60-512 512-238-238 60-60z");
         this.mark.setShape(shape);
-        this.mark.setMaxSize(15.0, 12.0);
+        this.mark.setMaxSize(13.0, 10.0);
         this.mark.setStyle("-fx-background-color:-monet-on-primary; -fx-border-color:-monet-on-primary; -fx-border-width:2px;");
         this.mark.setVisible(false);
         this.mark.setScaleX(0.0);
