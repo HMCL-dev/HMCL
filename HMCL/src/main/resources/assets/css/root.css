@@ -575,6 +575,7 @@
 }
 
 .task-executor-dialog-layout {
+    -fx-background-radius: 4px;
     -fx-background-color: -monet-surface-container-high;
     -fx-text-fill: -monet-on-surface;
 }
