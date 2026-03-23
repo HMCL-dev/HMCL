@@ -29,6 +29,8 @@ import org.jackhuang.hmcl.util.tree.ZipFileTree;
 
 import java.io.IOException;
 import java.nio.file.Path;
+import java.util.Collections;
+import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
@@ -51,14 +53,21 @@ public final class QuiltModMetadata {
             }
         }
 
+        private static final class NestedJar {
+            private final String file;
+            public NestedJar(String file) { this.file = file; }
+        }
+
         private final String id;
         private final String version;
         private final Metadata metadata;
+        private List<NestedJar> jars = List.of();
 
-        public QuiltLoader(String id, String version, Metadata metadata) {
+        public QuiltLoader(String id, String version, Metadata metadata, List<NestedJar> jars) {
             this.id = id;
             this.version = version;
             this.metadata = metadata;
+            this.jars = jars;
         }
     }
 
@@ -81,17 +90,31 @@ public final class QuiltModMetadata {
             throw new IOException("File " + modFile + " is not a supported Quilt mod.");
         }
 
+        List<String> bundledMods = root.quilt_loader.jars != null ?
+                root.quilt_loader.jars.stream().map(jar -> jar.file).toList() :
+                Collections.emptyList();
+
+        String authors = root.quilt_loader.metadata.contributors != null
+                ? root.quilt_loader.metadata.contributors.entrySet().stream()
+                    .map(entry -> String.format("%s (%s)", entry.getKey(), entry.getValue().getAsJsonPrimitive().getAsString()))
+                    .collect(Collectors.joining(", "))
+                : "";
+        String homepage = root.quilt_loader.metadata.contact != null
+                ? Optional.ofNullable(root.quilt_loader.metadata.contact.get("homepage"))
+                    .map(jsonElement -> jsonElement.getAsJsonPrimitive().getAsString()).orElse("")
+                : "";
+
         return new LocalModFile(
                 modManager,
                 modManager.getLocalMod(root.quilt_loader.id, ModLoaderType.QUILT),
                 modFile,
                 root.quilt_loader.metadata.name,
                 new LocalModFile.Description(root.quilt_loader.metadata.description),
-                root.quilt_loader.metadata.contributors.entrySet().stream().map(entry -> String.format("%s (%s)", entry.getKey(), entry.getValue().getAsJsonPrimitive().getAsString())).collect(Collectors.joining(", ")),
+                authors,
                 root.quilt_loader.version,
                 "",
-                Optional.ofNullable(root.quilt_loader.metadata.contact.get("homepage")).map(jsonElement -> jsonElement.getAsJsonPrimitive().getAsString()).orElse(""),
-                root.quilt_loader.metadata.icon
-        );
+                homepage,
+                root.quilt_loader.metadata.icon,
+                bundledMods);
     }
 }
