@@ -18,9 +18,11 @@
 package org.jackhuang.hmcl.ui.versions;
 
 import javafx.scene.Node;
+import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.FlowPane;
 import javafx.stage.FileChooser;
+import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.event.Event;
 import org.jackhuang.hmcl.setting.Profile;
 import org.jackhuang.hmcl.setting.VersionIconType;
@@ -33,12 +35,18 @@ import org.jackhuang.hmcl.ui.construct.RipplerContainer;
 import org.jackhuang.hmcl.util.io.FileUtils;
 
 import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Locale;
+import java.util.Objects;
+import java.util.Optional;
 
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 public class VersionIconDialog extends DialogPane {
+    public static final Path GAME_ICONS_DIR = Metadata.HMCL_CURRENT_DIRECTORY.resolve("game_icons");
+
     private final Profile profile;
     private final String versionId;
     private final Runnable onFinish;
@@ -71,6 +79,23 @@ public class VersionIconDialog extends DialogPane {
                 createIcon(VersionIconType.FURNACE),
                 createIcon(VersionIconType.QUILT)
         );
+
+        if (Files.isDirectory(GAME_ICONS_DIR)) {
+            try (var stream = Files.list(GAME_ICONS_DIR)) {
+                pane.getChildren().addAll(
+                        stream.filter(p -> Files.isRegularFile(p) && FXUtils.IMAGE_EXTENSIONS.contains(FileUtils.getExtension(p).toLowerCase(Locale.ROOT)))
+                                .map(this::createIcon)
+                                .filter(Objects::nonNull)
+                                .toList()
+                );
+            } catch (Exception e) {
+                LOG.warning("Failed to load custom game icons", e);
+            }
+        }
+        if (vs != null && vs.getVersionIcon() == VersionIconType.DEFAULT) {
+            Optional<Path> current = profile.getRepository().getVersionIconFile(versionId);
+            current.ifPresent(path -> pane.getChildren().add(1, createIcon(path)));
+        }
     }
 
     private void exploreIcon() {
@@ -79,7 +104,14 @@ public class VersionIconDialog extends DialogPane {
         Path selectedFile = FileUtils.toPath(chooser.showOpenDialog(Controllers.getStage()));
         if (selectedFile != null) {
             try {
-                profile.getRepository().setVersionIconFile(versionId, selectedFile);
+                Path dest = GAME_ICONS_DIR.resolve(selectedFile.getFileName());
+                int i = 1;
+                while (Files.exists(dest)) {
+                    dest = GAME_ICONS_DIR.resolve(selectedFile.getFileName() + " " + i);
+                    i++;
+                }
+                FileUtils.copyFile(selectedFile, dest);
+                profile.getRepository().setVersionIconFile(versionId, dest);
 
                 if (vs != null) {
                     vs.setVersionIcon(VersionIconType.DEFAULT);
@@ -111,6 +143,28 @@ public class VersionIconDialog extends DialogPane {
         FXUtils.onClicked(container, () -> {
             if (vs != null) {
                 vs.setVersionIcon(type);
+                onAccept();
+            }
+        });
+        return container;
+    }
+
+    private Node createIcon(Path path) {
+        ImageView imageView;
+        try {
+            imageView = new ImageView(new Image(Files.newInputStream(path), 72, 72, true, false));
+        } catch (IOException e) {
+            LOG.warning("Failed to load custom game icon: " + path, e);
+            return null;
+        }
+        imageView.setMouseTransparent(true);
+        FXUtils.limitSize(imageView, 36, 36);
+        RipplerContainer container = new RipplerContainer(imageView);
+        FXUtils.setLimitWidth(container, 36);
+        FXUtils.setLimitHeight(container, 36);
+        FXUtils.onClicked(container, () -> {
+            if (vs != null) {
+                vs.setVersionIcon(VersionIconType.DEFAULT);
                 onAccept();
             }
         });
