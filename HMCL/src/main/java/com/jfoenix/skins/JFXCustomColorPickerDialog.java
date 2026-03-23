@@ -179,7 +179,7 @@ public class JFXCustomColorPickerDialog extends StackPane {
                             (int) (newColor.getRed() * 255),
                             (int) (newColor.getGreen() * 255),
                             (int) (newColor.getBlue() * 255));
-                    String rgb = String.format("rgba(%d, %d, %d, 1)",
+                    String rgb = String.format("rgb(%d, %d, %d)",
                             (int) (newColor.getRed() * 255),
                             (int) (newColor.getGreen() * 255),
                             (int) (newColor.getBlue() * 255));
@@ -294,7 +294,9 @@ public class JFXCustomColorPickerDialog extends StackPane {
         if (!systemChange) {
             userChange = true;
             try {
-                curvedColorPicker.setColor(Color.valueOf(colorWebString));
+                Color color = Color.valueOf(colorWebString);
+                // ignore opacity
+                curvedColorPicker.setColor(Color.color(color.getRed(), color.getGreen(), color.getBlue()));
             } catch (IllegalArgumentException ignored) {
                 // if color is not valid then do nothing
             }
