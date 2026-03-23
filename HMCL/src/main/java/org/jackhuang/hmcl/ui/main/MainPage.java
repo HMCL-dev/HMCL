@@ -93,6 +93,7 @@ public final class MainPage extends StackPane implements DecoratorPage {
     private final ObjectProperty<RemoteVersion> latestVersion = new SimpleObjectProperty<>(this, "latestVersion");
     private final ObservableList<Version> versions = FXCollections.observableArrayList();
     private Profile profile;
+    private Label titleLabel;
 
     private TransitionPane announcementPane;
     private final StackPane updatePane;
@@ -104,14 +105,24 @@ public final class MainPage extends StackPane implements DecoratorPage {
         titleNode.setAlignment(Pos.CENTER_LEFT);
 
         ImageView titleIcon = new ImageView(FXUtils.newBuiltinImage("/assets/img/icon-title.png"));
-        Label titleLabel = new Label(Metadata.FULL_TITLE);
+        Label versionLabel = new Label(Metadata.VERSION);
         if (I18n.isUpsideDown()) {
             titleIcon.setRotate(180);
+            versionLabel.setRotate(180);
             titleLabel.setRotate(180);
         }
+        versionLabel.getStyleClass().add("jfx-main-version-label");
+
+        titleLabel = new Label(Metadata.FULL_NAME);
         titleLabel.getStyleClass().add("jfx-decorator-title");
         titleLabel.textFillProperty().bind(Themes.titleFillProperty());
-        titleNode.getChildren().setAll(titleIcon, titleLabel);
+        titleNode.getChildren().setAll(titleIcon, titleLabel, versionLabel);
+
+        config().titleBarTextProperty().addListener((observable, oldValue, newValue) -> {
+            updateTitle();
+        });
+
+        updateTitle();
 
         state.setValue(new State(null, titleNode, false, false, true));
 
@@ -272,6 +283,15 @@ public final class MainPage extends StackPane implements DecoratorPage {
 
         getChildren().addAll(updatePane, launchPane);
 
+    }
+
+    private void updateTitle() {
+        String titleText = config().getTitleBarText();
+        if (titleText != null && !titleText.trim().isEmpty()) {
+            titleLabel.setText(titleText.trim());
+        } else {
+            titleLabel.setText(Metadata.FULL_NAME);
+        }
     }
 
     private void showUpdate(boolean show) {
