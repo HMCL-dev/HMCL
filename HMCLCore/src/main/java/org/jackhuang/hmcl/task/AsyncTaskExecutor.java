@@ -33,7 +33,7 @@ import static org.jackhuang.hmcl.util.logging.Logger.LOG;
  */
 public final class AsyncTaskExecutor extends TaskExecutor {
 
-    private CompletableFuture<Boolean> future;
+    private volatile CompletableFuture<Boolean> future;
 
     public AsyncTaskExecutor(Task<?> task) {
         super(task);
@@ -333,5 +333,9 @@ public final class AsyncTaskExecutor extends TaskExecutor {
 
     public static void setUncaughtExceptionHandler(Thread.UncaughtExceptionHandler uncaughtExceptionHandler) {
         AsyncTaskExecutor.uncaughtExceptionHandler = uncaughtExceptionHandler;
+    }
+
+    public boolean isStarted() {
+        return future != null;
     }
 }

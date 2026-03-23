@@ -30,6 +30,7 @@ import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.construct.MessageDialogPane.MessageType;
+import org.jackhuang.hmcl.ui.task.TaskCenter;
 import org.jackhuang.hmcl.ui.wizard.WizardController;
 import org.jackhuang.hmcl.ui.wizard.WizardProvider;
 import org.jackhuang.hmcl.util.SettingsMap;
@@ -143,6 +144,14 @@ public final class ModpackInstallWizardProvider implements WizardProvider {
                 UpdateInstallerWizardProvider.alertFailureMessage(exception, next);
             }
         });
+
+        String taskName = settings.get(LocalModpackPage.MODPACK_NAME);
+        if (taskName != null) {
+            settings.put("task_detail", i18n("task.detail.install_modpack", taskName));
+        }
+        settings.put("backgroundable", true);
+        settings.put("task_kind", TaskCenter.TaskKind.MODPACK_INSTALL);
+        settings.put("task_name", taskName);
 
         return finishModpackInstallingAsync(settings);
     }

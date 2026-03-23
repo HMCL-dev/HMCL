@@ -74,6 +74,19 @@ public final class UpdateInstallerWizardProvider implements WizardProvider {
         settings.put("success_message", i18n("install.success"));
         settings.put(FailureCallback.KEY, (settings1, exception, next) -> alertFailureMessage(exception, next));
 
+        String detail = null;
+        for (Object value : settings.asStringMap().values()) {
+            if (value instanceof RemoteVersion remoteVersion) {
+                detail = i18n("task.detail.install_library", remoteVersion.getLibraryId(), remoteVersion.getSelfVersion());
+                break;
+            }
+        }
+        if (detail == null) {
+            detail = i18n("task.detail.install_library.fallback", libraryId);
+        }
+        settings.put("task_detail", detail);
+        settings.put("backgroundable", true);
+
         // We remove library but not save it,
         // so if installation failed will not break down current version.
         Task<Version> ret = Task.supplyAsync(() -> version);

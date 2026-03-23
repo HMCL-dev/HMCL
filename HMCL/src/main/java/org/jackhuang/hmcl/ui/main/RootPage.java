@@ -46,6 +46,9 @@ import org.jackhuang.hmcl.ui.decorator.DecoratorPage;
 import org.jackhuang.hmcl.ui.download.ModpackInstallWizardProvider;
 import org.jackhuang.hmcl.ui.nbt.NBTEditorPage;
 import org.jackhuang.hmcl.ui.nbt.NBTFileType;
+import org.jackhuang.hmcl.task.TaskExecutor;
+import org.jackhuang.hmcl.ui.task.TaskCenter;
+import org.jackhuang.hmcl.ui.task.TaskCenterPage;
 import org.jackhuang.hmcl.ui.versions.GameAdvancedListItem;
 import org.jackhuang.hmcl.ui.versions.GameListPopupMenu;
 import org.jackhuang.hmcl.ui.versions.Versions;
@@ -189,6 +192,14 @@ public class RootPage extends DecoratorAnimatedPage implements DecoratorPage {
                 FXUtils.prepareOnMouseEnter(downloadItem, Controllers::prepareDownloadPage);
             }
 
+            AdvancedListItem taskManagerItem = new AdvancedListItem();
+            taskManagerItem.setLeftIcon(SVG.CHECKLIST);
+            taskManagerItem.setTitle(i18n("task.manage"));
+            taskManagerItem.setOnAction(e -> {
+                Controllers.navigate(new TaskCenterPage());
+            });
+            FXUtils.installFastTooltip(taskManagerItem, i18n("task.manage.hint"));
+
             // fifth item in left sidebar
             AdvancedListItem launcherSettingsItem = new AdvancedListItem();
             launcherSettingsItem.setLeftIcon(SVG.SETTINGS);
@@ -232,6 +243,7 @@ public class RootPage extends DecoratorAnimatedPage implements DecoratorPage {
                     .add(gameListItem)
                     .add(gameItem)
                     .add(downloadItem)
+                    .add(taskManagerItem)
                     .startCategory(i18n("settings.launcher.general").toUpperCase(Locale.ROOT))
                     .add(launcherSettingsItem)
                     .add(terracottaItem)
@@ -279,12 +291,17 @@ public class RootPage extends DecoratorAnimatedPage implements DecoratorPage {
                     if (modpackFile != null) {
                         Task.supplyAsync(() -> CompressingUtils.findSuitableEncoding(modpackFile))
                                 .thenApplyAsync(encoding -> ModpackHelper.readModpackManifest(modpackFile, encoding))
-                                .thenApplyAsync(modpack -> ModpackHelper
-                                        .getInstallTask(repository.getProfile(), modpackFile, modpack.getName(), modpack, null)
-                                        .executor())
-                                .thenAcceptAsync(Schedulers.javafx(), executor -> {
-                                    Controllers.taskDialog(executor, i18n("modpack.installing"), TaskCancellationAction.NO_CANCEL);
-                                    executor.start();
+                                .thenAcceptAsync(Schedulers.javafx(), modpack -> {
+                                    String modpackName = modpack.getName();
+                                    if (TaskCenter.getInstance().hasQueuedInstallName(TaskCenter.TaskKind.MODPACK_INSTALL, modpackName)) {
+                                        Controllers.dialog(i18n("install.new_game.already_exists"), i18n("message.warning"), MessageDialogPane.MessageType.WARNING);
+                                        return;
+                                    }
+                                    TaskExecutor executor = ModpackHelper
+                                            .getInstallTask(repository.getProfile(), modpackFile, modpackName, modpack, null)
+                                            .executor();
+                                    Controllers.downloadTaskDialog(executor, i18n("modpack.installing"), TaskCancellationAction.NO_CANCEL,
+                                            i18n("task.detail.modpack_install"));
                                 }).start();
                     }
                 }

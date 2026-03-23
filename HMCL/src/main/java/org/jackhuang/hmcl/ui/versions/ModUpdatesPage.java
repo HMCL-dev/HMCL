@@ -136,7 +136,7 @@ public class ModUpdatesPage extends BorderPane implements DecoratorPage {
                         .filter(o -> o.enabled.get())
                         .map(object -> pair(object.data.getLocalMod(), object.data.getCandidate()))
                         .collect(Collectors.toList()));
-        Controllers.taskDialog(
+        Controllers.downloadTaskDialog(
                 task.whenComplete(Schedulers.javafx(), exception -> {
                     fireEvent(new PageCloseEvent());
                     if (!task.getFailedMods().isEmpty()) {
@@ -151,7 +151,8 @@ public class ModUpdatesPage extends BorderPane implements DecoratorPage {
                     }
                 }),
                 i18n("mods.check_updates"),
-                TaskCancellationAction.NORMAL);
+                TaskCancellationAction.NORMAL,
+                i18n("task.detail.mod_update"));
     }
 
     private void exportList() {

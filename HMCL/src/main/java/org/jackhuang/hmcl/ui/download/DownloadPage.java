@@ -42,6 +42,7 @@ import org.jackhuang.hmcl.ui.construct.TabHeader;
 import org.jackhuang.hmcl.ui.construct.Validator;
 import org.jackhuang.hmcl.ui.decorator.DecoratorAnimatedPage;
 import org.jackhuang.hmcl.ui.decorator.DecoratorPage;
+import org.jackhuang.hmcl.ui.task.TaskCenter;
 import org.jackhuang.hmcl.ui.versions.DownloadListPage;
 import org.jackhuang.hmcl.ui.versions.HMCLLocalizedDownloadListPage;
 import org.jackhuang.hmcl.ui.versions.VersionPage;
@@ -134,10 +135,18 @@ public class DownloadPage extends DecoratorAnimatedPage implements DecoratorPage
 
         Path runDirectory = profile.getRepository().hasVersion(version) ? profile.getRepository().getRunDirectory(version) : profile.getRepository().getBaseDirectory();
 
+        String detailKey = switch (subdirectoryName) {
+            case "mods" -> "task.detail.install_mod";
+            case "resourcepacks" -> "task.detail.install_resourcepack";
+            case "shaderpacks" -> "task.detail.install_shaderpack";
+            case "saves" -> "task.detail.install_world";
+            default -> "task.detail.download";
+        };
+
         Controllers.prompt(i18n("archive.file.name"), (result, handler) -> {
             Path dest = runDirectory.resolve(subdirectoryName).resolve(result);
 
-            Controllers.taskDialog(Task.composeAsync(() -> {
+            Controllers.downloadTaskDialog(Task.composeAsync(() -> {
                 var task = new FileDownloadTask(downloadProvider.injectURLWithCandidates(file.getFile().getUrl()), dest);
                 task.setName(file.getName());
                 return task;
@@ -148,10 +157,12 @@ public class DownloadPage extends DecoratorAnimatedPage implements DecoratorPage
                     } else {
                         Controllers.dialog(DownloadProviders.localizeErrorMessage(exception), i18n("install.failed.downloading"), MessageDialogPane.MessageType.ERROR);
                     }
-                } else {
+                }
+                else {
                     Controllers.showToast(i18n("install.success"));
                 }
-            }), i18n("message.downloading"), TaskCancellationAction.NORMAL);
+            }), i18n("message.downloading"), TaskCancellationAction.NORMAL,
+                i18n(detailKey, file.getName()));
             handler.resolve();
         }, file.getFile().getFilename(), new Validator(i18n("install.new_game.malformed"), FileUtils::isNameValid));
 
@@ -300,6 +311,12 @@ public class DownloadPage extends DecoratorAnimatedPage implements DecoratorPage
             settings.put("title", i18n("install.new_game.installation"));
             settings.put("success_message", i18n("install.success"));
             settings.put(FailureCallback.KEY, (settings1, exception, next) -> UpdateInstallerWizardProvider.alertFailureMessage(exception, next));
+
+            settings.put("task_detail", i18n("task.detail.install_game", (String) settings.get("name")));
+            settings.put("backgroundable", true);
+            settings.put("return_to_download_list", true);
+            settings.put("task_kind", TaskCenter.TaskKind.GAME_INSTALL);
+            settings.put("task_name", settings.get("name"));
 
             return finishVersionDownloadingAsync(settings);
         }

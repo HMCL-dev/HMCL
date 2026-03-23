@@ -29,6 +29,13 @@ public abstract class WizardSinglePage extends Control implements WizardPage {
 
     protected abstract Object finish();
 
+    /**
+     * Called before {@link #finish()} to allow subclasses to inject settings
+     * (e.g. backgroundable, task_detail) into the wizard settings map.
+     */
+    protected void onFinishSettings(SettingsMap settings) {
+    }
+
     @Override
     public void cleanup(SettingsMap settings) {
     }

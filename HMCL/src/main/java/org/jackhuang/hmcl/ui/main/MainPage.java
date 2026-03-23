@@ -52,6 +52,7 @@ import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.theme.Themes;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.FXUtils;
+import org.jackhuang.hmcl.ui.task.TaskCenter;
 import org.jackhuang.hmcl.ui.SVG;
 import org.jackhuang.hmcl.ui.animation.AnimationUtils;
 import org.jackhuang.hmcl.ui.animation.ContainerAnimations;
@@ -326,6 +327,13 @@ public final class MainPage extends StackPane implements DecoratorPage {
                         .sorted()
                         .findFirst()
                         .orElseThrow(() -> new IOException("No versions found")))
+                .thenComposeAsync(Schedulers.javafx(), version -> {
+                    String gameVersion = version.getGameVersion();
+                    if (TaskCenter.getInstance().hasQueuedInstallName(TaskCenter.TaskKind.GAME_INSTALL, gameVersion)) {
+                        throw new CancellationException(i18n("install.new_game.already_exists"));
+                    }
+                    return Task.completed(version);
+                })
                 .thenComposeAsync(version -> {
                     Profile profile = Profiles.getSelectedProfile();
                     DefaultDependencyManager dependency = profile.getDependency();
@@ -350,7 +358,8 @@ public final class MainPage extends StackPane implements DecoratorPage {
                                 MessageDialogPane.MessageType.WARNING);
                     }
                 });
-        Controllers.taskDialog(task, i18n("version.launch.empty.installing"), TaskCancellationAction.NORMAL);
+        Controllers.downloadTaskDialog(task, i18n("version.launch.empty.installing"), TaskCancellationAction.NORMAL,
+                i18n("task.detail.game_install"));
     }
 
     private void onUpgrade() {

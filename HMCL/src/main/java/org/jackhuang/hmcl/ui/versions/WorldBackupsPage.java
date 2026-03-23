@@ -128,7 +128,7 @@ public final class WorldBackupsPage extends ListPageBase<WorldBackupsPage.Backup
     }
 
     void createBackup() {
-        Controllers.taskDialog(new WorldBackupTask(world, backupsDir, false).setName(i18n("world.backup.processing")).thenApplyAsync(path -> {
+        Controllers.downloadTaskDialog(new WorldBackupTask(world, backupsDir, false).setName(i18n("world.backup.processing")).thenApplyAsync(path -> {
             Matcher matcher = backupFileNamePattern.matcher(path.getFileName().toString());
             if (!matcher.matches()) {
                 throw new AssertionError("Wrong backup file name" + path);
@@ -153,7 +153,8 @@ public final class WorldBackupsPage extends ListPageBase<WorldBackupsPage.Backup
                 LOG.warning("Failed to create backup", exception);
                 Controllers.dialog(i18n("world.backup.create.failed", StringUtils.getStackTrace(exception)), null, MessageDialogPane.MessageType.WARNING);
             }
-        }), i18n("world.backup"), null);
+        }), i18n("world.backup"), null,
+                i18n("task.detail.world_backup", world.getWorldName()));
     }
 
     private final class WorldBackupsPageSkin extends ToolbarListPageSkin<BackupInfo, WorldBackupsPage> {

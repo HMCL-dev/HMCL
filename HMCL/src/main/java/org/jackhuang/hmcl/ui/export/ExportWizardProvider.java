@@ -46,6 +46,7 @@ import java.util.Collections;
 import java.util.List;
 
 import static org.jackhuang.hmcl.setting.ConfigHolder.config;
+import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 public final class ExportWizardProvider implements WizardProvider {
     private final Profile profile;
@@ -67,6 +68,9 @@ public final class ExportWizardProvider implements WizardProvider {
         ModpackExportInfo exportInfo = settings.get(ModpackInfoPage.MODPACK_INFO);
         exportInfo.setWhitelist(whitelist);
         String modpackType = settings.get(ModpackTypeSelectionPage.MODPACK_TYPE);
+
+        settings.put("backgroundable", true);
+        settings.put("task_detail", i18n("task.detail.modpack_export", exportInfo.getName()));
 
         return exportWithLauncher(modpackType, exportInfo, modpackFile);
     }

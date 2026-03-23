@@ -21,16 +21,20 @@ import com.jfoenix.controls.JFXButton;
 import javafx.application.Platform;
 import javafx.beans.property.StringProperty;
 import javafx.geometry.Insets;
+import javafx.geometry.Pos;
 import javafx.scene.control.Label;
 import javafx.scene.layout.BorderPane;
+import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
 import org.jackhuang.hmcl.task.*;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.util.TaskCancellationAction;
 import org.jackhuang.hmcl.util.i18n.I18n;
+import org.jackhuang.hmcl.ui.SVG;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
 
 import static org.jackhuang.hmcl.ui.FXUtils.onEscPressed;
@@ -47,6 +51,14 @@ public class TaskExecutorDialogPane extends BorderPane {
     private final Label lblProgress;
     private final JFXButton btnCancel;
     private final TaskListPane taskListPane;
+    private final JFXButton btnBackground;
+    private Runnable onBackground;
+    private Runnable escAction;
+    private Runnable cancelAction;
+
+    public void setEscAction(Runnable action) {
+        this.escAction = action;
+    }
 
     public TaskExecutorDialogPane(@NotNull TaskCancellationAction cancel) {
         this.getStyleClass().add("task-executor-dialog-layout");
@@ -58,13 +70,34 @@ public class TaskExecutorDialogPane extends BorderPane {
         this.setCenter(center);
         center.setPadding(new Insets(16));
         {
+            HBox titleBar = new HBox();
+            titleBar.setAlignment(Pos.CENTER_LEFT);
+            titleBar.setSpacing(8);
+
             lblTitle = new Label();
             lblTitle.setStyle("-fx-font-size: 14px; -fx-font-weight: BOLD;");
+
+            btnBackground = new JFXButton();
+            btnBackground.setGraphic(SVG.DOWNLOAD.createIcon(16)); // TODO: 可替换为更合适的后台图标
+            btnBackground.getStyleClass().add("toggle-icon4");
+            FXUtils.installFastTooltip(btnBackground, i18n("task.move_to_background"));
+            btnBackground.setOnAction(e -> {
+                if (onBackground != null) {
+                    onBackground.run();
+                }
+            });
+            btnBackground.setVisible(false);
+            btnBackground.setManaged(false);
+
+            HBox spacer = new HBox();
+            HBox.setHgrow(spacer, Priority.ALWAYS);
+
+            titleBar.getChildren().setAll(lblTitle, spacer, btnBackground);
 
             taskListPane = new TaskListPane();
             VBox.setVgrow(taskListPane, Priority.ALWAYS);
 
-            center.getChildren().setAll(lblTitle, taskListPane);
+            center.getChildren().setAll(titleBar, taskListPane);
         }
 
         BorderPane bottom = new BorderPane();
@@ -82,6 +115,10 @@ public class TaskExecutorDialogPane extends BorderPane {
         setCancel(cancel);
 
         btnCancel.setOnAction(e -> {
+            if (cancelAction != null) {
+                cancelAction.run();
+                return;
+            }
             if (onCancel.getCancellationAction() != null) {
                 if (executor != null)
                     executor.cancel();
@@ -94,7 +131,12 @@ public class TaskExecutorDialogPane extends BorderPane {
             Platform.runLater(() -> lblProgress.setText(message));
         });
 
-        onEscPressed(this, btnCancel::fire);
+        escAction = btnCancel::fire;
+        onEscPressed(this, () -> {
+            if (escAction != null) {
+                escAction.run();
+            }
+        });
     }
 
     public void setExecutor(TaskExecutor executor) {
@@ -133,5 +175,67 @@ public class TaskExecutorDialogPane extends BorderPane {
         this.onCancel = onCancel;
 
         runInFX(() -> btnCancel.setDisable(onCancel == null));
+    }
+
+    private final AtomicBoolean background = new AtomicBoolean(false);
+
+    public void setBackgroundAction(Runnable action) {
+        this.onBackground = action;
+        background.set(false);
+
+        btnBackground.setVisible(action != null);
+        btnBackground.setManaged(action != null);
+
+        if (action != null) {
+            btnBackground.setDisable(false);
+            btnBackground.setOnAction(e -> {
+                if (!background.compareAndSet(false, true)) {
+                    return;
+                }
+                btnBackground.setDisable(true);
+                onBackground.run();
+            });
+        } else {
+            btnBackground.setDisable(false);
+            btnBackground.setOnAction(null);
+        }
+    }
+
+    public void refreshTaskList() {
+        taskListPane.refresh();
+    }
+
+    public void setCancelAction(Runnable action) {
+        this.cancelAction = action;
+    }
+
+    public void setCancelText(String text) {
+        btnCancel.setText(text);
+    }
+
+    private Label lblWaiting;
+
+    public void setWaitingForBackground(boolean waiting) {
+        if (waiting) {
+            if (lblWaiting == null) {
+                lblWaiting = new Label(i18n("task.waiting_for_background"));
+                lblWaiting.setStyle("-fx-text-fill: -fx-secondary-text-color; -fx-font-size: 13px;");
+                lblWaiting.setWrapText(true);
+            }
+            taskListPane.setVisible(false);
+            taskListPane.setManaged(false);
+            lblProgress.setVisible(false);
+            lblProgress.setManaged(false);
+            ((VBox) getCenter()).getChildren().add(lblWaiting);
+        } else {
+            taskListPane.setVisible(true);
+            taskListPane.setManaged(true);
+            lblProgress.setVisible(true);
+            lblProgress.setManaged(true);
+            lblProgress.setText("");
+            if (lblWaiting != null) {
+                ((VBox) getCenter()).getChildren().remove(lblWaiting);
+            }
+        }
     }
 }

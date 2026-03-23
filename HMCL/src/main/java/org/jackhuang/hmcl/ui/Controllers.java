@@ -60,6 +60,7 @@ import org.jackhuang.hmcl.ui.download.DownloadPage;
 import org.jackhuang.hmcl.ui.download.ModpackInstallWizardProvider;
 import org.jackhuang.hmcl.ui.main.LauncherSettingsPage;
 import org.jackhuang.hmcl.ui.main.RootPage;
+import org.jackhuang.hmcl.ui.task.TaskCenter;
 import org.jackhuang.hmcl.ui.terracotta.TerracottaPage;
 import org.jackhuang.hmcl.ui.versions.GameListPage;
 import org.jackhuang.hmcl.ui.versions.VersionPage;
@@ -589,6 +590,23 @@ public final class Controllers {
         return pane;
     }
 
+    public static TaskExecutorDialogPane downloadTaskDialog(Task<?> task, String title, TaskCancellationAction onCancel, String detail) {
+        TaskExecutor executor = task.executor();
+        return downloadTaskDialog(executor, title, onCancel, detail);
+    }
+
+    public static TaskExecutorDialogPane downloadTaskDialog(TaskExecutor executor, String title, TaskCancellationAction onCancel, String detail) {
+        TaskExecutorDialogPane pane = taskDialog(executor, title, onCancel);
+
+        pane.setBackgroundAction(() -> {
+            TaskCenter.getInstance().enqueue(executor, title, detail);
+            pane.fireEvent(new DialogCloseEvent());
+        });
+
+        executor.start();
+        return pane;
+    }
+
     public static void navigate(Node node) {
         decorator.navigate(node, ContainerAnimations.NAVIGATION, Motion.SHORT4, Motion.EASE);
     }
@@ -616,6 +634,12 @@ public final class Controllers {
         } else {
             FXUtils.openLink(href);
         }
+    }
+
+    public static boolean isDialogShowing() {
+        if (decorator == null) return false;
+        return decorator.getDecorator().getDrawerWrapper() != null
+                && decorator.getDecorator().getDrawerWrapper().getProperties().get(DialogUtils.PROPERTY_DIALOG_INSTANCE) != null;
     }
 
     public static boolean isStopped() {
