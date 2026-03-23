@@ -113,28 +113,26 @@
 .memory-label {
 }
 
-.memory-used {
-    -fx-background-color: -monet-primary;
+.memory-status-bar {
+    -fx-opacity: 1;
 }
 
-.memory-used:disabled {
+.memory-status-bar:disabled {
     -fx-opacity: 0.4;
 }
 
-.memory-allocate {
-    -fx-background-color: -monet-primary-transparent-50;
+.memory-status-bar .track {
+    -fx-background-color: -monet-secondary-container;
+    -fx-background-radius: 2;
+    -fx-background-insets: 0;
 }
 
-.memory-allocate:disabled {
-    -fx-opacity: 0.4;
+.memory-status-bar .memory-used {
+    -fx-fill: -monet-primary;
 }
 
-.memory-total {
-    -fx-background-color: -monet-surface-container;
-}
-
-.memory-total:disabled {
-    -fx-opacity: 0.4;
+.memory-status-bar .memory-allocate {
+    -fx-fill: -monet-primary-transparent-50;
 }
 
 .update-label {
