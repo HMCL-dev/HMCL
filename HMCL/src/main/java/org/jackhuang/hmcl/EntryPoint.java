@@ -25,6 +25,7 @@ import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.io.JarUtils;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
 
+import javax.swing.*;
 import java.io.IOException;
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
@@ -48,6 +49,8 @@ public final class EntryPoint {
 
         createHMCLDirectories();
         LOG.start(Metadata.HMCL_CURRENT_DIRECTORY.resolve("logs"));
+
+        checkWine();
 
         setupJavaFXVMOptions();
 
@@ -217,6 +220,20 @@ public final class EntryPoint {
         } catch (Exception e) {
             LOG.warning("JavaFX is incomplete or not found", e);
             showErrorAndExit(i18n("fatal.javafx.incomplete"));
+        }
+    }
+
+    private static void checkWine() {
+        if (OperatingSystem.isRunningUnderWine()) {
+            SwingUtils.initLookAndFeel();
+            LOG.warning("HMCL is running under Wine or its distributions!");
+
+            int result = JOptionPane.showOptionDialog(null, i18n("fatal.wine_warning"), i18n("message.warning"), JOptionPane.OK_CANCEL_OPTION,
+                    JOptionPane.WARNING_MESSAGE, null, null, null);
+
+            if (result == JOptionPane.CANCEL_OPTION || result == JOptionPane.CLOSED_OPTION) {
+                exit(1);
+            }
         }
     }
 
