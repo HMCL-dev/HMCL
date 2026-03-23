@@ -199,9 +199,24 @@ public final class AccountListPage extends DecoratorAnimatedPage implements Deco
                     VBox.setMargin(addAuthServerItem, new Insets(0, 0, 12, 0));
                 }
 
+                AdvancedListItem skinManageItem = new AdvancedListItem();
+                {
+                    skinManageItem.getStyleClass().add("navigation-drawer-item");
+                    skinManageItem.setTitle(i18n("account.skin.manage"));
+                    skinManageItem.setLeftIcon(SVG.CHECKROOM);
+                    skinManageItem.setOnAction(e -> {
+                        Account selected = skinnable.selectedAccount.get();
+                        if (selected != null) {
+                            Controllers.getSkinManagePage().loadAccount(selected);
+                            Controllers.navigate(Controllers.getSkinManagePage());
+                        }
+                    });
+                    skinManageItem.disableProperty().bind(Bindings.isNull(skinnable.selectedAccount));
+                }
+
                 ScrollPane scrollPane = new ScrollPane(boxMethods);
                 VBox.setVgrow(scrollPane, Priority.ALWAYS);
-                setLeft(scrollPane, addAuthServerItem);
+                setLeft(scrollPane, skinManageItem, addAuthServerItem);
             }
 
             ScrollPane scrollPane = new ScrollPane();
