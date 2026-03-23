@@ -87,7 +87,7 @@ public final class WorldManageUIUtils {
         Controllers.getDecorator().startWizard(new SinglePageWizardProvider(controller -> new WorldExportPage(world, file, controller::onFinish)));
     }
 
-    public static void copyWorld(World world, Runnable runnable) {
+    public static void copyWorld(World world, boolean lockedByHmcl, Runnable runnable) {
         Path worldPath = world.getFile();
         Controllers.dialog(new InputDialogPane(
                 i18n("world.duplicate.prompt"),
@@ -109,7 +109,7 @@ public final class WorldManageUIUtils {
                         return;
                     }
 
-                    Task.runAsync(Schedulers.io(), () -> world.copy(result))
+                    Task.runAsync(Schedulers.io(), () -> world.copy(result, lockedByHmcl))
                             .thenAcceptAsync(Schedulers.javafx(), (Void) -> Controllers.showToast(i18n("world.duplicate.success.toast")))
                             .thenAcceptAsync(Schedulers.javafx(), (Void) -> {
                                         if (runnable != null) {
