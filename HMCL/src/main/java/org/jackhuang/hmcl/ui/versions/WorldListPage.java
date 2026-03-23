@@ -189,7 +189,7 @@ public final class WorldListPage extends ListPageBase<World> implements VersionP
     }
 
     public void copy(World world) {
-        WorldManageUIUtils.copyWorld(world, this::refresh);
+        WorldManageUIUtils.copyWorld(world, false, this::refresh);
     }
 
     public void reveal(World world) {

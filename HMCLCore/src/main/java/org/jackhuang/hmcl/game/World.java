@@ -368,12 +368,12 @@ public final class World {
         FileUtils.forceDelete(file);
     }
 
-    public void copy(String newName) throws IOException {
+    public void copy(String newName, boolean lockedByHmcl) throws IOException {
         if (!Files.isDirectory(file)) {
             throw new IOException("Not a valid world directory");
         }
 
-        if (isLocked()) {
+        if (!lockedByHmcl && isLocked()) {
             throw new WorldLockedException("The world " + getFile() + " has been locked");
         }
 
