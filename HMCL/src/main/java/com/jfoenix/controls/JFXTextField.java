@@ -88,6 +88,13 @@ public class JFXTextField extends TextField {
         useJFXContextMenu(this);
     }
 
+    // TODO: https://github.com/HMCL-dev/HMCL/issues/5822
+    @Override
+    protected void layoutChildren() {
+        super.layoutChildren();
+        this.setNeedsLayout(false);
+    }
+
     /***************************************************************************
      *                                                                         *
      * Properties                                                              *
