@@ -19,6 +19,7 @@ package org.jackhuang.hmcl.mod.curse;
 
 import com.google.gson.JsonParseException;
 import org.jackhuang.hmcl.download.DefaultDependencyManager;
+import org.jackhuang.hmcl.download.DownloadProvider;
 import org.jackhuang.hmcl.game.DefaultGameRepository;
 import org.jackhuang.hmcl.mod.ModManager;
 import org.jackhuang.hmcl.mod.ModpackCompletionException;
@@ -147,7 +148,7 @@ public final class CurseCompletionTask extends Task<Void> {
                 .filter(f -> f.fileName() != null)
                 .flatMap(f -> {
                     try {
-                        Path path = guessFilePath(f, resourcePacksRoot, shaderPacksRoot);
+                        Path path = guessFilePath(f, dependency.getDownloadProvider(), resourcePacksRoot, shaderPacksRoot);
                         if (path == null) {
                             return Stream.empty();
                         }
@@ -175,13 +176,14 @@ public final class CurseCompletionTask extends Task<Void> {
      * Guess where to store the file.
      *
      * @param file              The file.
+     * @param downloadProvider
      * @param resourcePacksRoot ./resourcepacks.
      * @param shaderPacksRoot   ./shaderpacks.
      * @return ./resourcepacks/$filename or ./shaderpacks/$filename or ./mods/$filename if the file doesn't exist. null if the file existed.
      * @throws IOException If IOException was encountered during getting data from CurseForge.
      */
-    private Path guessFilePath(CurseManifestFile file, Path resourcePacksRoot, Path shaderPacksRoot) throws IOException {
-        RemoteMod mod = CurseForgeRemoteModRepository.MODS.getModById(Integer.toString(file.projectID()));
+    private Path guessFilePath(CurseManifestFile file, DownloadProvider downloadProvider, Path resourcePacksRoot, Path shaderPacksRoot) throws IOException {
+        RemoteMod mod = CurseForgeRemoteModRepository.MODS.getModById(downloadProvider, Integer.toString(file.projectID()));
         int classID = ((CurseAddon) mod.getData()).getClassId();
         String fileName = file.fileName();
         return switch (classID) {
