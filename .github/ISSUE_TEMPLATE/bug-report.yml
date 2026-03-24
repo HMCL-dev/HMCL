@@ -24,18 +24,23 @@ body:
     id: operating-system
     attributes:
       label: 操作系统 | Operating System
-      description: 请提供你所使用的操作系统。| Please provide the operating system you are using.
+      description: |
+        请提供你所使用的操作系统，如果没有与你系统相匹配的选项请选择 `universal` 并在操作系统完整名称中填写详细信息。
+        Please provide the operating system you are using. If no matching option is available, select `universal` and specify your operating system in detail in the "Operating System Full Name" field.
       options:
-        - macOS
-        - Windows
-        - Linux
-        - FreeBSD
-        - 其他 | Other
+        - windows
+        - linux
+        - macos
+        - freebsd
+        - universal
   - type: input
-    id: operating-system-version
+    id: operating-system-full-name
     attributes:
-      label: 操作系统版本 | Operating System Version
-      description: 请提供你所使用的操作系统版本。| Please provide the version of the operating system you are using.
+      label: 操作系统完整名称 | Operating System Full Name
+      description: |
+        请提供你所使用的操作系统完整名称。
+        Please provide the version of the operating system full name you are using.
+      placeholder: Windows11 25H2 / 10.0.26200.8039
   - type: input
     id: version
     attributes:
