@@ -88,6 +88,11 @@ public final class WorldManagePage extends DecoratorAnimatedPage implements Deco
         this.profile = profile;
         this.instanceId = instanceId;
 
+        try {
+            closeSessionLockChannel();
+        } catch (IOException e) {
+            LOG.warning("Can not close session lock channel of world: " + this.world.getFile(), e);
+        }
         updateSessionLockChannel();
 
         try {
@@ -139,6 +144,10 @@ public final class WorldManagePage extends DecoratorAnimatedPage implements Deco
             sessionLockChannel = WorldManageUIUtils.getSessionLockChannel(world);
             readOnly.set(sessionLockChannel == null);
         }
+    }
+
+    private void closeSessionLockChannel() throws IOException {
+        WorldManageUIUtils.closeSessionLockChannel(world, sessionLockChannel);
     }
 
     private void onNavigated(Navigator.NavigationEvent event) {
