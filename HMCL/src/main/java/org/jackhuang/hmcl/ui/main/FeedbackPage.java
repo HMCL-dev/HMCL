@@ -85,12 +85,9 @@ public class FeedbackPage extends SpinnerPane {
             githubIssue.setSubtitle(i18n("contact.feedback.github.issue.statement"));
 
             holder.add(FXUtils.onWeakChangeAndOperate(Themes.darkModeProperty(), darkMode -> {
-                githubBugReport.setLeading(darkMode
-                        ? FXUtils.newBuiltinImage("/assets/img/github-white.png")
-                        : FXUtils.newBuiltinImage("/assets/img/github.png"));
-                githubIssue.setLeading(darkMode
-                        ? FXUtils.newBuiltinImage("/assets/img/github-white.png")
-                        : FXUtils.newBuiltinImage("/assets/img/github.png"));
+                var githubIcon = FXUtils.newBuiltinImage(darkMode ? "/assets/img/github-white.png" : "/assets/img/github.png");
+                githubBugReport.setLeading(githubIcon);
+                githubIssue.setLeading(githubIcon);
             }));
 
             feedback.getContent().setAll(githubBugReport, githubIssue);
