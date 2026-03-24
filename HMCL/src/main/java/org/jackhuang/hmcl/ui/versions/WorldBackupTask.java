@@ -44,47 +44,44 @@ public final class WorldBackupTask extends Task<Path> {
 
     @Override
     public void execute() throws Exception {
-        boolean hasLocked = world.getWorldLock().getLockState() == World.WorldLock.LockState.LOCKED_BY_SELF;
-        world.getWorldLock().lock();
+        try (World.WorldLock.Guard guard = world.getWorldLock().guard()) {
+            Files.createDirectories(backupsDir);
+            String time = LocalDateTime.now().format(WorldBackupsPage.TIME_FORMATTER);
+            String baseName = time + "_" + world.getFileName();
+            Path backupFile = null;
+            OutputStream outputStream = null;
 
-        Files.createDirectories(backupsDir);
-        String time = LocalDateTime.now().format(WorldBackupsPage.TIME_FORMATTER);
-        String baseName = time + "_" + world.getFileName();
-        Path backupFile = null;
-        OutputStream outputStream = null;
-
-        int count;
-        for (count = 0; count < 256; count++) {
-            try {
-                backupFile = backupsDir.resolve(baseName + (count == 0 ? "" : " " + count) + ".zip").toAbsolutePath();
-                outputStream = Files.newOutputStream(backupFile, StandardOpenOption.WRITE, StandardOpenOption.CREATE_NEW);
-                break;
-            } catch (FileAlreadyExistsException ignored) {
+            int count;
+            for (count = 0; count < 256; count++) {
+                try {
+                    backupFile = backupsDir.resolve(baseName + (count == 0 ? "" : " " + count) + ".zip").toAbsolutePath();
+                    outputStream = Files.newOutputStream(backupFile, StandardOpenOption.WRITE, StandardOpenOption.CREATE_NEW);
+                    break;
+                } catch (FileAlreadyExistsException ignored) {
+                }
             }
-        }
 
-        if (outputStream == null)
-            throw new IOException("Too many attempts");
+            if (outputStream == null)
+                throw new IOException("Too many attempts");
 
-        try (ZipOutputStream zipOutputStream = new ZipOutputStream(new BufferedOutputStream(outputStream))) {
-            String rootName = world.getFileName();
-            Path rootDir = this.world.getFile();
-            Files.walkFileTree(this.world.getFile(), new SimpleFileVisitor<Path>() {
-                @Override
-                public FileVisitResult visitFile(Path path, BasicFileAttributes attrs) throws IOException {
-                    if (path.endsWith("session.lock")) {
+            try (ZipOutputStream zipOutputStream = new ZipOutputStream(new BufferedOutputStream(outputStream))) {
+                String rootName = world.getFileName();
+                Path rootDir = this.world.getFile();
+                Files.walkFileTree(this.world.getFile(), new SimpleFileVisitor<Path>() {
+                    @Override
+                    public FileVisitResult visitFile(Path path, BasicFileAttributes attrs) throws IOException {
+                        if (path.endsWith("session.lock")) {
+                            return FileVisitResult.CONTINUE;
+                        }
+                        zipOutputStream.putNextEntry(new ZipEntry(rootName + "/" + rootDir.relativize(path).toString().replace('\\', '/')));
+                        Files.copy(path, zipOutputStream);
+                        zipOutputStream.closeEntry();
                         return FileVisitResult.CONTINUE;
                     }
-                    zipOutputStream.putNextEntry(new ZipEntry(rootName + "/" + rootDir.relativize(path).toString().replace('\\', '/')));
-                    Files.copy(path, zipOutputStream);
-                    zipOutputStream.closeEntry();
-                    return FileVisitResult.CONTINUE;
-                }
-            });
+                });
+            }
+
+            setResult(backupFile);
         }
-
-        setResult(backupFile);
-
-        world.getWorldLock().releaseLock(hasLocked);
     }
 }

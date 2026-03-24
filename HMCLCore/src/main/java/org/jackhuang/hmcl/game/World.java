@@ -305,13 +305,9 @@ public final class World {
     public Path rename(String newName) throws IOException {
         if (!Files.isDirectory(file))
             throw new IOException("Not a valid world directory");
-        boolean hasLocked = false;
-        WorldLock.LockState lockState = getWorldLock().getLockState();
-        if (lockState == WorldLock.LockState.LOCKED_BY_OTHER) {
+
+        if (getWorldLock().getLockState() == WorldLock.LockState.LOCKED_BY_OTHER) {
             throw new IOException("World is locked by other process");
-        } else if (lockState == WorldLock.LockState.LOCKED_BY_SELF) {
-            hasLocked = true;
-            getWorldLock().releaseLock();
         }
 
         // Change the name recorded in level.dat
@@ -320,16 +316,17 @@ public final class World {
 
         // Then change the folder's name
         String safeName = FileUtils.getSafeWorldFolderName(newName);
-        Path newPath = null;
+        Path newPath;
         for (int count = 0; count < 256; count++) {
             newPath = file.resolveSibling(count == 0 ? safeName : safeName + " (" + count + ")");
             if (!Files.exists(newPath)) {
-                Files.move(file, newPath);
-                break;
+                try (WorldLock.Suspension ignored = getWorldLock().suspend()) {
+                    Files.move(file, newPath);
+                    return newPath;
+                }
             }
         }
-        getWorldLock().lock(hasLocked);
-        return newPath;
+        throw new IOException("Too many attempts");
     }
 
     public void install(Path savesDir, String name) throws IOException {
@@ -378,14 +375,11 @@ public final class World {
             throw new WorldLockedException("The world " + getFile() + " has been locked");
         }
 
-        boolean hasLocked = getWorldLock().getLockState() == WorldLock.LockState.LOCKED_BY_SELF;
-        getWorldLock().releaseLock();
-
-        try (Zipper zipper = new Zipper(zip)) {
-            zipper.putDirectory(file, worldName);
+        try (WorldLock.Suspension ignored = getWorldLock().suspend()) {
+            try (Zipper zipper = new Zipper(zip)) {
+                zipper.putDirectory(file, worldName);
+            }
         }
-
-        getWorldLock().lock(hasLocked);
     }
 
     public void delete() throws IOException {
@@ -467,9 +461,9 @@ public final class World {
         return List.of();
     }
 
-    public class WorldLock {
+    public class WorldLock implements AutoCloseable {
         private FileChannel sessionLockChannel;
-        private final Path lockFile;
+        private final Path sessionLockFile;
 
         public enum LockState {
             LOCKED_BY_OTHER,
@@ -478,42 +472,35 @@ public final class World {
         }
 
         public WorldLock() {
-            this.lockFile = file.resolve("session.lock");
+            this.sessionLockFile = file.resolve("session.lock");
             this.sessionLockChannel = null;
         }
 
-        public LockState getLockState() {
+        public synchronized LockState getLockState() {
             if (sessionLockChannel != null && sessionLockChannel.isOpen()) {
                 return LockState.LOCKED_BY_SELF;
-            } else if (isLocked(lockFile)) {
+            } else if (isLockedExternally()) {
                 return LockState.LOCKED_BY_OTHER;
             } else {
                 return LockState.UNLOCKED;
             }
         }
 
-        public boolean lock() {
+        public synchronized boolean lock() {
             LockState lockState = getLockState();
-            if (lockState == LockState.LOCKED_BY_OTHER) {
-                return false;
-            } else if (lockState == LockState.LOCKED_BY_SELF) {
-                return true;
-            } else {
-                try {
-                    sessionLockChannel = getLock();
-                } catch (WorldLockedException e) {
-                    return false;
+            return switch (lockState) {
+                case LOCKED_BY_OTHER -> false;
+                case LOCKED_BY_SELF -> true;
+                case UNLOCKED -> {
+                    try {
+                        acquireInternal();
+                    } catch (WorldLockedException e) {
+                        LOG.warning("Failed to acquire world lock for " + file, e);
+                        yield false;
+                    }
+                    yield true;
                 }
-                return true;
-            }
-        }
-
-        public boolean lock(boolean lock) {
-            if (lock) {
-                return lock();
-            } else {
-                return getLockState() == LockState.LOCKED_BY_SELF;
-            }
+            };
         }
 
         public void lockStrict() throws WorldLockedException {
@@ -522,15 +509,15 @@ public final class World {
             }
         }
 
-        public FileChannel getLock() throws WorldLockedException {
+        public void acquireInternal() throws WorldLockedException {
             FileChannel channel = null;
             try {
-                channel = FileChannel.open(lockFile, StandardOpenOption.CREATE, StandardOpenOption.WRITE);
+                channel = FileChannel.open(sessionLockFile, StandardOpenOption.CREATE, StandardOpenOption.WRITE);
                 channel.write(ByteBuffer.wrap("\u2603".getBytes(StandardCharsets.UTF_8)));
                 channel.force(true);
                 FileLock fileLock = channel.tryLock();
                 if (fileLock != null) {
-                    return channel;
+                    this.sessionLockChannel = channel;
                 } else {
                     IOUtils.closeQuietly(channel);
                     throw new WorldLockedException("The world " + getFile() + " has been locked");
@@ -541,11 +528,7 @@ public final class World {
             }
         }
 
-        public boolean isLocked() {
-            return isLocked(lockFile);
-        }
-
-        private static boolean isLocked(Path sessionLockFile) {
+        private boolean isLockedExternally() {
             try (FileChannel fileChannel = FileChannel.open(sessionLockFile, StandardOpenOption.WRITE)) {
                 return fileChannel.tryLock() == null;
             } catch (AccessDeniedException | OverlappingFileLockException accessDeniedException) {
@@ -558,13 +541,75 @@ public final class World {
             }
         }
 
-        public void releaseLock() throws IOException {
-            sessionLockChannel.close();
+        public synchronized void releaseLock() throws IOException {
+            if (sessionLockChannel != null) {
+                sessionLockChannel.close();
+                sessionLockChannel = null;
+            }
         }
 
-        public void releaseLock(boolean lock) throws IOException {
-            if (!lock) {
-                sessionLockChannel.close();
+        @Override
+        public void close() throws IOException {
+            releaseLock();
+        }
+
+        public Guard guard() throws WorldLockedException {
+            return new Guard();
+        }
+
+        public Suspension suspend() throws IOException {
+            return new Suspension();
+        }
+
+        public class Guard implements AutoCloseable {
+            private final boolean wasAlreadyLocked;
+
+            private Guard() throws WorldLockedException {
+                synchronized (WorldLock.this) {
+                    this.wasAlreadyLocked = (getLockState() == LockState.LOCKED_BY_SELF);
+                    if (!wasAlreadyLocked) {
+                        lockStrict();
+                    }
+                }
+            }
+
+            @Override
+            public void close() {
+                synchronized (WorldLock.this) {
+                    if (!wasAlreadyLocked) {
+                        try {
+                            releaseLock();
+                        } catch (IOException e) {
+                            LOG.warning("Failed to release temporary lock", e);
+                        }
+                    }
+                }
+            }
+        }
+
+        public class Suspension implements AutoCloseable {
+            private final boolean hadLock;
+
+            private Suspension() throws IOException {
+                synchronized (WorldLock.this) {
+                    this.hadLock = (getLockState() == LockState.LOCKED_BY_SELF);
+                    if (hadLock) {
+                        releaseLock();
+                    }
+                }
+            }
+
+            @Override
+            public void close() {
+                synchronized (WorldLock.this) {
+                    if (hadLock) {
+                        try {
+                            lock();
+                        } catch (Exception e) {
+                            LOG.warning("Failed to resume lock after suspension", e);
+                        }
+                    }
+                }
             }
         }
     }

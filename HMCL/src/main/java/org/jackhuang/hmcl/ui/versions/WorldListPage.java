@@ -336,7 +336,7 @@ public final class WorldListPage extends ListPageBase<World> implements VersionP
 
                 if (world.getGameVersion() != null)
                     content.addTag(I18n.getDisplayVersion(world.getGameVersion()));
-                if (world.getWorldLock().isLocked()) {
+                if (world.getWorldLock().getLockState() == World.WorldLock.LockState.LOCKED_BY_OTHER) {
                     content.addTag(i18n("world.locked"));
                     btnLaunch.setDisable(true);
                 } else {
@@ -352,7 +352,7 @@ public final class WorldListPage extends ListPageBase<World> implements VersionP
         // Popup Menu
 
         public void showPopupMenu(World world, boolean supportQuickPlay, JFXPopup.PopupHPosition hPosition, double initOffsetX, double initOffsetY) {
-            boolean worldLocked = world.getWorldLock().isLocked();
+            boolean worldLocked = world.getWorldLock().getLockState() == World.WorldLock.LockState.LOCKED_BY_OTHER;
 
             PopupMenu popupMenu = new PopupMenu();
             JFXPopup popup = new JFXPopup(popupMenu);
