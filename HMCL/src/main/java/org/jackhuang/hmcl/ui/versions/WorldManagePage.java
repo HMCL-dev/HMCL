@@ -160,7 +160,8 @@ public final class WorldManagePage extends DecoratorAnimatedPage implements Deco
     }
 
     public void launch() {
-        fireEvent(new PageCloseEvent());
+        closeSessionLockChannel();
+        readOnly.set(true);
         Versions.launchAndEnterWorld(profile, instanceId, world.getFileName());
     }
 

@@ -19,6 +19,7 @@ package org.jackhuang.hmcl.ui.versions;
 
 import com.jfoenix.controls.JFXButton;
 import com.jfoenix.controls.JFXTextField;
+import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.SimpleBooleanProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
@@ -61,7 +62,6 @@ import static org.jackhuang.hmcl.util.logging.Logger.LOG;
  */
 public final class WorldInfoPage extends SpinnerPane implements WorldManagePage.WorldRefreshable {
     private final WorldManagePage worldManagePage;
-    private boolean isReadOnly;
     private World world;
     private CompoundTag levelData;
     private CompoundTag playerData;
@@ -71,6 +71,10 @@ public final class WorldInfoPage extends SpinnerPane implements WorldManagePage.
     public WorldInfoPage(WorldManagePage worldManagePage) {
         this.worldManagePage = worldManagePage;
         refresh();
+    }
+
+    private BooleanProperty readOnlyProperty() {
+        return worldManagePage.readOnlyProperty();
     }
 
     private void updateControls() {
@@ -105,6 +109,7 @@ public final class WorldInfoPage extends SpinnerPane implements WorldManagePage.
 
                 if (dataTag.get("LevelName") instanceof StringTag worldNameTag) {
                     worldNameLabel.setText(worldNameTag.get());
+                    editIconButton.disableProperty().bind(readOnlyProperty());
                     editIconButton.setOnAction(event -> {
                         WorldManageUIUtils.renameWorld(world,
                                 newWorldName -> {
@@ -143,7 +148,7 @@ public final class WorldInfoPage extends SpinnerPane implements WorldManagePage.
                 JFXButton editIconButton = FXUtils.newToggleButton4(SVG.EDIT, 20);
                 JFXButton resetIconButton = FXUtils.newToggleButton4(SVG.RESTORE, 20);
                 {
-                    editIconButton.setDisable(isReadOnly);
+                    editIconButton.disableProperty().bind(readOnlyProperty());
                     editIconButton.setOnAction(event -> Controllers.confirm(
                             I18n.i18n("world.icon.change.tip"),
                             I18n.i18n("world.icon.change"),
@@ -153,7 +158,7 @@ public final class WorldInfoPage extends SpinnerPane implements WorldManagePage.
                     ));
                     FXUtils.installFastTooltip(editIconButton, i18n("button.edit"));
 
-                    resetIconButton.setDisable(isReadOnly);
+                    resetIconButton.disableProperty().bind(readOnlyProperty());
                     resetIconButton.setOnAction(event -> this.clearWorldIcon());
                     FXUtils.installFastTooltip(resetIconButton, i18n("button.reset"));
                 }
@@ -242,7 +247,7 @@ public final class WorldInfoPage extends SpinnerPane implements WorldManagePage.
             var allowCheatsButton = new LineToggleButton();
             {
                 allowCheatsButton.setTitle(i18n("world.info.allow_cheats"));
-                allowCheatsButton.setDisable(isReadOnly);
+                allowCheatsButton.disableProperty().bind(readOnlyProperty());
 
                 bindTagAndToggleButton(dataTag.get("allowCommands"), allowCheatsButton);
             }
@@ -250,7 +255,7 @@ public final class WorldInfoPage extends SpinnerPane implements WorldManagePage.
             var generateFeaturesButton = new LineToggleButton();
             {
                 generateFeaturesButton.setTitle(i18n("world.info.generate_features"));
-                generateFeaturesButton.setDisable(isReadOnly);
+                generateFeaturesButton.disableProperty().bind(readOnlyProperty());
                 // Valid before (1.16)20w20a
                 if (dataTag.get("MapFeatures") instanceof ByteTag generateFeaturesTag) {
                     bindTagAndToggleButton(generateFeaturesTag, generateFeaturesButton);
@@ -270,7 +275,7 @@ public final class WorldInfoPage extends SpinnerPane implements WorldManagePage.
             var difficultyButton = new LineSelectButton<Difficulty>();
             {
                 difficultyButton.setTitle(i18n("world.info.difficulty"));
-                difficultyButton.setDisable(isReadOnly);
+                difficultyButton.disableProperty().bind(readOnlyProperty());
                 difficultyButton.setItems(Difficulty.items);
 
                 Difficulty difficulty;
@@ -304,7 +309,7 @@ public final class WorldInfoPage extends SpinnerPane implements WorldManagePage.
             var difficultyLockPane = new LineToggleButton();
             {
                 difficultyLockPane.setTitle(i18n("world.info.difficulty_lock"));
-                difficultyLockPane.setDisable(isReadOnly);
+                difficultyLockPane.disableProperty().bind(readOnlyProperty());
                 // Valid before 26.1-snapshot-6
                 if (dataTag.get("DifficultyLocked") instanceof ByteTag difficultyLockedTag) {
                     bindTagAndToggleButton(difficultyLockedTag, difficultyLockPane);
@@ -369,7 +374,7 @@ public final class WorldInfoPage extends SpinnerPane implements WorldManagePage.
             var playerGameTypePane = new LineSelectButton<GameType>();
             {
                 playerGameTypePane.setTitle(i18n("world.info.player.game_type"));
-                playerGameTypePane.setDisable(worldManagePage.isReadOnly());
+                playerGameTypePane.disableProperty().bind(readOnlyProperty());
                 playerGameTypePane.setItems(GameType.items);
 
                 // Valid before 26.1-snapshot-6
@@ -450,7 +455,7 @@ public final class WorldInfoPage extends SpinnerPane implements WorldManagePage.
     }
 
     private void setRightTextField(LinePane linePane, JFXTextField textField, int perfWidth) {
-        textField.setDisable(isReadOnly);
+        textField.disableProperty().bind(readOnlyProperty());
         textField.setPrefWidth(perfWidth);
         linePane.setRight(textField);
     }
@@ -533,7 +538,6 @@ public final class WorldInfoPage extends SpinnerPane implements WorldManagePage.
         this.world = worldManagePage.getWorld();
         setFailedReason(null);
         try {
-            this.isReadOnly = worldManagePage.isReadOnly();
             this.levelData = world.getLevelData();
             this.playerData = world.getPlayerData();
             updateControls();
