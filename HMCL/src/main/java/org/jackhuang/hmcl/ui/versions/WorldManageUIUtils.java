@@ -31,7 +31,6 @@ import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
 
 import java.io.IOException;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.function.Consumer;
 
@@ -68,24 +67,7 @@ public final class WorldManageUIUtils {
     }
 
     public static void copyWorld(World world, Runnable runnable) {
-        Path worldPath = world.getFile();
         Controllers.dialog(new InputDialogPane(i18n("world.duplicate.prompt"), "", (result, handler) -> {
-            if (StringUtils.isBlank(result)) {
-                handler.reject(i18n("world.duplicate.failed.empty_name"));
-                return;
-            }
-
-            if (result.contains("/") || result.contains("\\") || !FileUtils.isNameValid(result)) {
-                handler.reject(i18n("world.duplicate.failed.invalid_name"));
-                return;
-            }
-
-            Path targetDir = worldPath.resolveSibling(result);
-            if (Files.exists(targetDir)) {
-                handler.reject(i18n("world.duplicate.failed.already_exists"));
-                return;
-            }
-
             Task.runAsync(Schedulers.io(), () -> world.copy(result)).thenAcceptAsync(Schedulers.javafx(), (Void) -> Controllers.showToast(i18n("world.duplicate.success.toast"))).thenAcceptAsync(Schedulers.javafx(), (Void) -> {
                 if (runnable != null) {
                     runnable.run();
@@ -116,7 +98,7 @@ public final class WorldManageUIUtils {
                 try {
                     if (renameFolder) {
                         if (renameFolderConsumer != null) {
-                            renameFolderConsumer.accept(world.renameWorld(newWorldName));
+                            renameFolderConsumer.accept(world.rename(newWorldName));
                         }
                     } else {
                         world.setWorldName(newWorldName);

@@ -81,11 +81,7 @@ public final class WorldManagePage extends DecoratorAnimatedPage implements Deco
     }
 
     public WorldManagePage setWorld(World world, Profile profile, String instanceId) {
-        try {
-            closeSessionLockChannel();
-        } catch (IOException e) {
-            LOG.warning("Can not close session lock channel of world: " + this.world.getFile(), e);
-        }
+        closeSessionLockChannel();
 
         this.world = world;
         this.backupsDir = profile.getRepository().getBackupsDirectory(instanceId);
@@ -145,9 +141,13 @@ public final class WorldManagePage extends DecoratorAnimatedPage implements Deco
         }
     }
 
-    private void closeSessionLockChannel() throws IOException {
+    private void closeSessionLockChannel() {
         if (world != null) {
-            world.getWorldLock().releaseLock();
+            try {
+                world.getWorldLock().releaseLock();
+            } catch (IOException e) {
+                LOG.warning("Can not close session lock channel of world: " + this.world.getFile(), e);
+            }
         }
     }
 
@@ -156,10 +156,7 @@ public final class WorldManagePage extends DecoratorAnimatedPage implements Deco
     }
 
     public void onExited(Navigator.NavigationEvent event) {
-        try {
-            closeSessionLockChannel();
-        } catch (IOException ignored) {
-        }
+        closeSessionLockChannel();
     }
 
     public void launch() {

@@ -302,7 +302,7 @@ public final class World {
 
     // The renameWorld method do not modify the `file` field.
     // A new World object needs to be created to obtain the renamed world.
-    public Path renameWorld(String newName) throws IOException {
+    public Path rename(String newName) throws IOException {
         if (!Files.isDirectory(file))
             throw new IOException("Not a valid world directory");
         boolean hasLocked = false;
@@ -365,7 +365,7 @@ public final class World {
                 }
 
             }
-            new World(worldDir).renameWorld(name);
+            new World(worldDir).rename(name);
         } else if (Files.isDirectory(file)) {
             FileUtils.copyDirectory(file, worldDir);
         }
@@ -406,10 +406,17 @@ public final class World {
             throw new WorldLockedException("The world " + getFile() + " has been locked");
         }
 
-        Path newPath = file.resolveSibling(newName);
-        FileUtils.copyDirectory(file, newPath, path -> !path.contains("session.lock"));
-        World newWorld = new World(newPath);
-        newWorld.renameWorld(newName);
+        String safeName = FileUtils.getSafeWorldFolderName(newName);
+        Path newPath;
+        for (int count = 0; count < 256; count++) {
+            newPath = file.resolveSibling(count == 0 ? safeName : safeName + " (" + count + ")");
+            if (!Files.exists(newPath)) {
+                FileUtils.copyDirectory(file, newPath, path -> !path.contains("session.lock"));
+                World newWorld = new World(newPath);
+                newWorld.setWorldName(newName);
+                break;
+            }
+        }
     }
 
     public void writeWorldData() throws IOException {
