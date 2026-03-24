@@ -818,10 +818,28 @@ public final class SettingsPage extends ScrollPane {
         VBox.setVgrow(spacer, Priority.ALWAYS);
         systemInfoContainer.getChildren().add(spacer);
 
+        SpinnerPane exportInfoPane = new SpinnerPane();
         JFXButton exportButton = FXUtils.newBorderButton(i18n("settings.launcher.export_system_info.button"));
-        exportButton.setOnAction(e -> exportSystemInfo());
+        exportInfoPane.setContent(exportButton);
+        exportButton.setOnAction(e -> {
+            exportInfoPane.showSpinner();
+            exportSystemInfo().whenCompleteAsync((result, exception) -> {
+                exportInfoPane.hideSpinner();
+                if (exception == null) {
+                    Controllers.dialog(i18n("settings.launcher.export_system_info.success", result));
+                    FXUtils.showFileInExplorer(result);
+                } else {
+                    LOG.warning("Failed to export system info", exception);
+                    Controllers.dialog(
+                            i18n("settings.launcher.export_system_info.failed") + "\n" + StringUtils.getStackTrace(exception),
+                            null,
+                            MessageType.ERROR
+                    );
+                }
+            }, Schedulers.javafx());
+        });
 
-        HBox buttonContainer = new HBox(exportButton);
+        HBox buttonContainer = new HBox(exportInfoPane);
         buttonContainer.setAlignment(Pos.CENTER_RIGHT);
         buttonContainer.setPadding(new Insets(20, 0, 10, 0));
         systemInfoContainer.getChildren().add(buttonContainer);
@@ -862,55 +880,45 @@ public final class SettingsPage extends ScrollPane {
         }
     }
 
-    private void exportSystemInfo() {
-        if (systemInfoContainer == null) return;
+    private CompletableFuture<Path> exportSystemInfo() {
+        return CompletableFuture.supplyAsync(Lang.wrap(() -> {
+            StringBuilder sb = new StringBuilder();
+            sb.append("Hello Minecraft! Launcher - System Information Export\n");
+            sb.append("=".repeat(50)).append("\n");
+            sb.append("Export Time: ").append(java.time.LocalDateTime.now().format(
+                    java.time.format.DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH-mm-ss"))).append("\n");
+            sb.append("=".repeat(50)).append("\n\n");
 
-        StringBuilder sb = new StringBuilder();
-        sb.append("Hello Minecraft! Launcher - System Information Export\n");
-        sb.append("=".repeat(50)).append("\n");
-        sb.append("Export Time: ").append(java.time.LocalDateTime.now().format(
-                java.time.format.DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH-mm-ss"))).append("\n");
-        sb.append("=".repeat(50)).append("\n\n");
-
-        for (int i = 1; i < systemInfoContainer.getChildren().size(); i++) {
-            Node node = systemInfoContainer.getChildren().get(i);
-            if (node instanceof HBox row) {
-                String label = "";
-                String value = "";
-                for (Node child : row.getChildren()) {
-                    if (child instanceof Label l) {
-                        String text = l.getText();
-                        if (text != null) {
-                            if (text.endsWith(":")) {
-                                label = text.substring(0, text.length() - 1);
-                            } else {
-                                value = text;
+            for (int i = 1; i < systemInfoContainer.getChildren().size(); i++) {
+                Node node = systemInfoContainer.getChildren().get(i);
+                if (node instanceof HBox row) {
+                    String label = "";
+                    String value = "";
+                    for (Node child : row.getChildren()) {
+                        if (child instanceof Label l) {
+                            String text = l.getText();
+                            if (text != null) {
+                                if (text.endsWith(":")) {
+                                    label = text.substring(0, text.length() - 1);
+                                } else {
+                                    value = text;
+                                }
                             }
                         }
                     }
-                }
-                if (!label.isEmpty() && !value.isEmpty()) {
-                    sb.append(label).append(": ").append(value.replace("\n", "\n  ")).append("\n");
+                    if (!label.isEmpty() && !value.isEmpty()) {
+                        sb.append(label).append(": ").append(value.replace("\n", "\n  ")).append("\n");
+                    }
                 }
             }
-        }
 
-        if (sb.length() > 0) {
-            try {
-                String fileName = "hmcl-exported-systeminfo-" +
-                        java.time.LocalDateTime.now().format(java.time.format.DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH-mm-ss")) +
-                        ".log";
-                java.nio.file.Path exportPath = java.nio.file.Paths.get(
-                        org.jackhuang.hmcl.util.platform.OperatingSystem.getWorkingDirectory(".").toString(), fileName);
-                java.nio.file.Files.writeString(exportPath, sb.toString());
-                org.jackhuang.hmcl.ui.Controllers.dialog(
-                        i18n("settings.launcher.export_system_info.success", exportPath.toString()));
-            } catch (Exception e) {
-                org.jackhuang.hmcl.util.logging.Logger.LOG.warning("Failed to export system info", e);
-                org.jackhuang.hmcl.ui.Controllers.dialog(
-                        i18n("settings.launcher.export_system_info.failed"));
-            }
-        }
+            String fileName = "hmcl-exported-systeminfo-" +
+                    java.time.LocalDateTime.now().format(java.time.format.DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH-mm-ss")) +
+                    ".log";
+            Path exportPath = Metadata.CURRENT_DIRECTORY.resolve(fileName);
+            java.nio.file.Files.writeString(exportPath, sb.toString());
+            return exportPath;
+        }));
     }
 
     private void addSystemInfoRow(VBox container, String label, String value) {
