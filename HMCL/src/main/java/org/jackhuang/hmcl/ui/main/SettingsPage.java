@@ -705,16 +705,14 @@ public final class SettingsPage extends ScrollPane {
                 String fileSystem = drive.getFileSystem();
 
                 double usedPercent = total > 0 ? (double) used / total * 100 : 0;
-                double availablePercent = total > 0 ? (double) available / total * 100 : 0;
 
                 String fsInfo = fileSystem != null && !fileSystem.isEmpty() ? " - " + fileSystem : "";
 
-                storageInfo.append(String.format("%s %.2f / %.2f GiB (%.2f%% / %.2f%%)%s",
+                storageInfo.append(String.format("%s %.2f / %.2f GiB (%.2f%%)%s",
                         displayName,
                         used / (1024.0 * 1024 * 1024),
                         total / (1024.0 * 1024 * 1024),
                         usedPercent,
-                        availablePercent,
                         fsInfo));
             }
             addSystemInfoRow(systemInfoContainer, i18n("settings.launcher.system_info.storage"), storageInfo.toString());
