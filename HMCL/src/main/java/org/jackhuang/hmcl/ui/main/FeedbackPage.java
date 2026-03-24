@@ -30,11 +30,10 @@ import org.jackhuang.hmcl.ui.construct.SpinnerPane;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 import org.jackhuang.hmcl.Metadata;
+import org.jackhuang.hmcl.util.io.NetworkUtils;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
 
-import java.net.URLEncoder;
-import java.nio.charset.Charset;
-import java.nio.charset.StandardCharsets;
+import java.util.Map;
 
 public class FeedbackPage extends SpinnerPane {
 
@@ -69,13 +68,11 @@ public class FeedbackPage extends SpinnerPane {
 
         ComponentList feedback = new ComponentList();
         {
-            Charset charset = StandardCharsets.UTF_8;
-            String githubBugReportUrl = "https://github.com/HMCL-dev/HMCL/issues/new?template=bug-report.yml&operating-system=" +
-                    URLEncoder.encode(OperatingSystem.CURRENT_OS.getCheckedName(), charset) +
-                    "&operating-system-full-name=" +
-                    URLEncoder.encode(OperatingSystem.SYSTEM_NAME, charset) +
-                    URLEncoder.encode(" / ", charset) +
-                    URLEncoder.encode(OperatingSystem.SYSTEM_VERSION.getVersion(), charset);
+            String githubBugReportUrl = NetworkUtils.withQuery("https://github.com/HMCL-dev/HMCL/issues/new", Map.of(
+                    "template", "bug-report.yml",
+                    "operating-system", OperatingSystem.CURRENT_OS.getCheckedName(),
+                    "operating-system-full-name", OperatingSystem.SYSTEM_NAME + " / " + OperatingSystem.SYSTEM_VERSION.getVersion()
+            ));
             var githubBugReport = LineButton.createExternalLinkButton(githubBugReportUrl);
             githubBugReport.setLargeTitle(true);
             githubBugReport.setTitle(i18n("contact.feedback.github.bug_report"));
