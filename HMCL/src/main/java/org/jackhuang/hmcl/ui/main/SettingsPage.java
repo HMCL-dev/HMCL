@@ -564,17 +564,33 @@ public final class SettingsPage extends ScrollPane {
         // GPU 信息
         List<GraphicsCard> gpus = SystemInfo.getGraphicsCards();
         String gpuInfo;
+        String renderPipeline = FXUtils.GRAPHICS_PIPELINE;
+        
         if (gpus != null && !gpus.isEmpty()) {
             StringBuilder sb = new StringBuilder();
             for (int i = 0; i < gpus.size(); i++) {
                 if (i > 0) sb.append("\n");
-                sb.append(gpus.get(i).getName());
+                // 使用 toString() 方法，它已包含 GPU 类型信息 [Integrated] 或 [Discrete]
+                sb.append(gpus.get(i).toString());
             }
             gpuInfo = sb.toString();
         } else {
             gpuInfo = i18n("settings.launcher.system_info.unknown");
         }
         addSystemInfoRow(container, i18n("settings.launcher.system_info.gpu"), gpuInfo);
+
+        // 渲染管线信息
+        if (renderPipeline != null && !renderPipeline.isEmpty()) {
+            String pipelineDisplay = renderPipeline;
+            if (renderPipeline.contains(".SWPipeline")) {
+                pipelineDisplay = renderPipeline + " (" + i18n("settings.launcher.system_info.gpu.software") + ")";
+            } else if (renderPipeline.contains(".D3D")) {
+                pipelineDisplay = "Direct3D";
+            } else if (renderPipeline.contains(".GL")) {
+                pipelineDisplay = "OpenGL";
+            }
+            addSystemInfoRow(container, i18n("settings.launcher.system_info.render_pipeline"), pipelineDisplay);
+        }
 
         // 内存信息
         PhysicalMemoryStatus memStatus = SystemInfo.getPhysicalMemoryStatus();
