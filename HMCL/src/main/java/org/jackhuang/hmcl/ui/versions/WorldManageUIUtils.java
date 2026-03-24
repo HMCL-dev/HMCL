@@ -68,10 +68,6 @@ public final class WorldManageUIUtils {
 
     public static void copyWorld(World world, Runnable runnable) {
         Controllers.dialog(new InputDialogPane(i18n("world.duplicate.prompt"), world.getWorldName(), (result, handler) -> {
-            if (result.equals(world.getWorldName())) {
-                handler.resolve();
-                return;
-            }
             Task.runAsync(Schedulers.io(), () -> world.copy(result)).thenAcceptAsync(Schedulers.javafx(), (Void) -> Controllers.showToast(i18n("world.duplicate.success.toast"))).thenAcceptAsync(Schedulers.javafx(), (Void) -> {
                 if (runnable != null) {
                     runnable.run();
