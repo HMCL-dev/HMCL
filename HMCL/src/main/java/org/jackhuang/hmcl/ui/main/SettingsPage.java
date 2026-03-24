@@ -822,7 +822,7 @@ public final class SettingsPage extends ScrollPane {
         exportButton.setOnAction(e -> exportSystemInfo());
 
         HBox buttonContainer = new HBox(exportButton);
-        buttonContainer.setAlignment(Pos.CENTER);
+        buttonContainer.setAlignment(Pos.CENTER_RIGHT);
         buttonContainer.setPadding(new Insets(20, 0, 10, 0));
         systemInfoContainer.getChildren().add(buttonContainer);
     }
