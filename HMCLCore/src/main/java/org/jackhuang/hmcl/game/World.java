@@ -301,6 +301,7 @@ public final class World {
     }
 
     // The renameWorld method do not modify the `file` field.
+    // A new World object needs to be created to obtain the renamed world.
     public Path renameWorld(String newName) throws IOException {
         if (!Files.isDirectory(file))
             throw new IOException("Not a valid world directory");
@@ -317,10 +318,18 @@ public final class World {
         dataTag.setString("LevelName", newName);
         writeLevelData();
 
-        // then change the folder's name
-        Files.move(file, file.resolveSibling(newName));
+        // Then change the folder's name
+        String safeName = FileUtils.getSafeWorldFolderName(newName);
+        Path newPath = null;
+        for (int count = 0; count < 256; count++) {
+            newPath = file.resolveSibling(count == 0 ? safeName : safeName + " (" + count + ")");
+            if (!Files.exists(newPath)) {
+                Files.move(file, newPath);
+                break;
+            }
+        }
         getWorldLock().lock(hasLocked);
-        return file.resolveSibling(newName);
+        return newPath;
     }
 
     public void install(Path savesDir, String name) throws IOException {

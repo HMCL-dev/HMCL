@@ -108,7 +108,7 @@ public final class WorldManageUIUtils {
     }
 
     public static void renameWorld(World world, Consumer<String> notRenameFolderConsumer, Consumer<Path> renameFolderConsumer) {
-        Controllers.prompt(new PromptDialogPane.Builder(i18n("version.manage.duplicate.prompt"), (res, handler) -> {
+        Controllers.prompt(new PromptDialogPane.Builder(i18n("world.rename.prompt"), (res, handler) -> {
             String newWorldName = ((PromptDialogPane.Builder.StringQuestion) res.get(0)).getValue();
             boolean renameFolder = ((PromptDialogPane.Builder.BooleanQuestion) res.get(1)).getValue();
             if (StringUtils.isNotBlank(newWorldName)) {
@@ -132,6 +132,8 @@ public final class WorldManageUIUtils {
             } else {
                 handler.reject(i18n("world.duplicate.failed"));
             }
-        }).addQuestion(new PromptDialogPane.Builder.StringQuestion(null, "")).addQuestion(new PromptDialogPane.Builder.BooleanQuestion("重命名世界文件夹", false)));
+        })
+                .addQuestion(new PromptDialogPane.Builder.StringQuestion(null, ""))
+                .addQuestion(new PromptDialogPane.Builder.BooleanQuestion("重命名世界文件夹", false)));
     }
 }

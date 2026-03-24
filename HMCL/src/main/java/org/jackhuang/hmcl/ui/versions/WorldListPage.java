@@ -393,7 +393,7 @@ public final class WorldListPage extends ListPageBase<World> implements VersionP
             IconedMenuItem duplicateMenuItem = new IconedMenuItem(SVG.CONTENT_COPY, i18n("world.duplicate"), () -> page.copy(world), popup);
             duplicateMenuItem.setDisable(worldLocked);
 
-            IconedMenuItem renameMenuItem = new IconedMenuItem(null, "rename", () -> page.rename(world), popup);
+            IconedMenuItem renameMenuItem = new IconedMenuItem(SVG.EDIT, i18n("world.rename"), () -> page.rename(world), popup);
             renameMenuItem.setDisable(worldLocked);
 
             popupMenu.getContent().addAll(
