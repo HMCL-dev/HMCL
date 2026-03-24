@@ -737,6 +737,12 @@ public final class SettingsPage extends ScrollPane {
         } catch (Exception ignored) {
         }
 
+        // 时区
+        String timezone = java.util.TimeZone.getDefault().getDisplayName(false, java.util.TimeZone.LONG);
+        String timezoneOffset = String.format("UTC%+d", java.util.TimeZone.getDefault().getRawOffset() / (60 * 60 * 1000));
+        String timezoneInfo = timezone + " (" + timezoneOffset + ")";
+        addSystemInfoRow(systemInfoContainer, i18n("settings.launcher.system_info.timezone"), timezoneInfo);
+
         // 程序语言
         String locale = I18n.getLocale().getLocale().toLanguageTag();
         addSystemInfoRow(systemInfoContainer, i18n("settings.launcher.system_info.language"), locale);
