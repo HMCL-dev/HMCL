@@ -90,35 +90,16 @@ public final class SettingsPage extends ScrollPane {
         ComponentList settingsPane = new ComponentList();
         {
             {
-                StackPane sponsorPane = new StackPane();
-                sponsorPane.setCursor(Cursor.HAND);
-                FXUtils.onClicked(sponsorPane, this::onSponsor);
-                sponsorPane.setPadding(new Insets(8, 0, 8, 0));
+                ComponentSublist sponsorPane = new ComponentSublist(() -> {
+                    ComponentList content = new ComponentList();
 
-                GridPane gridPane = new GridPane();
+                    JFXButton githubButton = FXUtils.newBorderButton(i18n("settings.launcher.github_repository"));
+                    githubButton.setOnAction(e -> onSponsor());
+                    content.getContent().add(githubButton);
 
-                ColumnConstraints col = new ColumnConstraints();
-                col.setHgrow(Priority.SOMETIMES);
-                col.setMaxWidth(Double.POSITIVE_INFINITY);
-
-                gridPane.getColumnConstraints().setAll(col);
-
-                RowConstraints row = new RowConstraints();
-                row.setMinHeight(Double.NEGATIVE_INFINITY);
-                row.setValignment(VPos.TOP);
-                row.setVgrow(Priority.SOMETIMES);
-                gridPane.getRowConstraints().setAll(row);
-
-                {
-                    Label label = new Label(i18n("sponsor.hmcl"));
-                    label.setWrapText(true);
-                    label.setTextAlignment(TextAlignment.JUSTIFY);
-                    GridPane.setRowIndex(label, 0);
-                    GridPane.setColumnIndex(label, 0);
-                    gridPane.getChildren().add(label);
-                }
-
-                sponsorPane.getChildren().setAll(gridPane);
+                    return content.getContent();
+                });
+                sponsorPane.setTitle(i18n("sponsor.hmcl"));
                 settingsPane.getContent().add(sponsorPane);
             }
 
