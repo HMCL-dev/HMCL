@@ -539,7 +539,26 @@ public final class SettingsPage extends ScrollPane {
 
         // 用户名
         String username = System.getProperty("user.name");
-        addSystemInfoRow(systemInfoContainer, i18n("settings.launcher.system_info.username"), username);
+        // 检测是否以管理员/超级用户运行
+        boolean isAdmin = false;
+        if (OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS) {
+            try {
+                Process process = Runtime.getRuntime().exec(new String[]{"net", "session"});
+                process.getOutputStream().close();
+                int exitCode = process.waitFor();
+                isAdmin = (exitCode == 0);
+            } catch (Exception ignored) {
+                isAdmin = false;
+            }
+        } else {
+            // Linux/MacOS: 检查是否以root用户运行
+            isAdmin = (System.getProperty("user.name").equals("root"));
+        }
+        String usernameDisplay = username;
+        if (isAdmin) {
+            usernameDisplay = username + " (" + i18n("settings.launcher.system_info.admin") + ")";
+        }
+        addSystemInfoRow(systemInfoContainer, i18n("settings.launcher.system_info.username"), usernameDisplay);
 
         // 操作系统
         String osName = OperatingSystem.SYSTEM_NAME;
