@@ -46,6 +46,7 @@ body:
     attributes:
       label: 客户端版本 | Client Version
       description: 请提供你所使用的客户端版本。| Please provide the version of the client you are using.
+      placeholder: 3.13.0.334
   - type: textarea
     id: bug-report
     attributes:
