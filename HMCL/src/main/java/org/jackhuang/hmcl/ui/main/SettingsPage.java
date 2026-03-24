@@ -38,6 +38,7 @@ import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
 import org.jackhuang.hmcl.ui.construct.*;
+import org.jackhuang.hmcl.theme.Themes;
 import org.jackhuang.hmcl.ui.construct.MessageDialogPane.MessageType;
 import org.jackhuang.hmcl.upgrade.RemoteVersion;
 import org.jackhuang.hmcl.upgrade.UpdateChannel;
@@ -102,7 +103,10 @@ public final class SettingsPage extends ScrollPane {
 
                     var githubButton = LineButton.createExternalLinkButton("https://github.com/HMCL-dev/HMCL");
                     githubButton.setTitle(i18n("settings.launcher.github_repository"));
-                    githubButton.setLeading(FXUtils.newBuiltinImage("/assets/img/github.png"));
+                    FXUtils.onWeakChangeAndOperate(Themes.darkModeProperty(), darkMode ->
+                            githubButton.setLeading(darkMode
+                                    ? FXUtils.newBuiltinImage("/assets/img/github-white.png")
+                                    : FXUtils.newBuiltinImage("/assets/img/github.png")));
 
                     content.getContent().add(githubButton);
 
