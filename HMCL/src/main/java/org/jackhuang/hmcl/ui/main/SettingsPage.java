@@ -669,9 +669,9 @@ public final class SettingsPage extends ScrollPane {
         if (memStatus != PhysicalMemoryStatus.INVALID) {
             long total = memStatus.getTotal();
             long used = memStatus.getUsed();
-            String memInfo = String.format("%d / %d GB (%.1f%%)",
-                    used / (1024 * 1024 * 1024),
-                    total / (1024 * 1024 * 1024),
+            String memInfo = String.format("%.2f / %.2f GiB (%.2f%%)",
+                    used / (1024.0 * 1024 * 1024),
+                    total / (1024.0 * 1024 * 1024),
                     total > 0 ? (double) used / total * 100 : 0);
             addSystemInfoRow(systemInfoContainer, i18n("settings.launcher.system_info.memory"), memInfo);
         }
