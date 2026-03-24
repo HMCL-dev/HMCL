@@ -491,9 +491,18 @@ public final class SettingsPage extends ScrollPane {
         VBox container = new VBox(4);
         container.setPadding(new Insets(8, 0, 0, 0));
 
-        // 主机名
-        String hostname = System.getProperty("user.name");
-        addSystemInfoRow(container, i18n("settings.launcher.system_info.hostname"), hostname);
+        // 电脑名（主机名）
+        String computerName;
+        try {
+            computerName = java.net.InetAddress.getLocalHost().getHostName();
+        } catch (Exception ignored) {
+            computerName = i18n("settings.launcher.system_info.unknown");
+        }
+        addSystemInfoRow(container, i18n("settings.launcher.system_info.computer_name"), computerName);
+
+        // 用户名
+        String username = System.getProperty("user.name");
+        addSystemInfoRow(container, i18n("settings.launcher.system_info.username"), username);
 
         // 操作系统
         String osName = OperatingSystem.SYSTEM_NAME;
