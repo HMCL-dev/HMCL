@@ -93,8 +93,10 @@ public final class SettingsPage extends ScrollPane {
                 ComponentSublist sponsorPane = new ComponentSublist(() -> {
                     ComponentList content = new ComponentList();
 
-                    JFXButton githubButton = FXUtils.newBorderButton(i18n("settings.launcher.github_repository"));
-                    githubButton.setOnAction(e -> onSponsor());
+                    var githubButton = LineButton.createExternalLinkButton("https://github.com/HMCL-dev/HMCL");
+                    githubButton.setTitle(i18n("settings.launcher.github_repository"));
+                    githubButton.setLeading(FXUtils.newBuiltinImage("/assets/img/github.png"));
+
                     content.getContent().add(githubButton);
 
                     return content.getContent();
