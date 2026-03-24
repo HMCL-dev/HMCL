@@ -100,7 +100,7 @@ public class VersionIconDialog extends DialogPane {
             if (saveOption == EnumAskable.ASK && !GAME_ICONS_DIR.equals(selectedFile.getParent())) {
                 Controllers.ask(
                         i18n("settings.icon.save_custom"),
-                        i18n("settings.launcher.save_custom_game_icons"),
+                        i18n("message.question"),
                         (res, doNotAsk) -> {
                             if (doNotAsk) ConfigHolder.config().setSaveCustomGameIcons(res ? EnumAskable.TRUE : EnumAskable.FALSE);
                             setCustomIcon(selectedFile, res);
