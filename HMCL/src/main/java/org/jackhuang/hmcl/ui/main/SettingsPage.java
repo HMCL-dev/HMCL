@@ -589,16 +589,81 @@ public final class SettingsPage extends ScrollPane {
         }
 
         // 网卡信息
-        String networkInfo = i18n("settings.launcher.system_info.unknown");
         try {
-            java.net.NetworkInterface networkInterface = java.net.NetworkInterface.getNetworkInterfaces().nextElement();
-            if (networkInterface != null) {
-                java.net.InetAddress addr = java.net.InetAddress.getLocalHost();
-                networkInfo = addr.getHostAddress();
+            java.util.Enumeration<java.net.NetworkInterface> networkInterfaces = java.net.NetworkInterface.getNetworkInterfaces();
+            StringBuilder ipv4Info = new StringBuilder();
+            StringBuilder ipv6Info = new StringBuilder();
+
+            while (networkInterfaces.hasMoreElements()) {
+                java.net.NetworkInterface ni = networkInterfaces.nextElement();
+                if (ni.isLoopback() || !ni.isUp()) continue;
+
+                java.util.Enumeration<java.net.InetAddress> addresses = ni.getInetAddresses();
+                while (addresses.hasMoreElements()) {
+                    java.net.InetAddress addr = addresses.nextElement();
+                    if (addr instanceof java.net.Inet4Address) {
+                        // IPv4
+                        String ip = addr.getHostAddress();
+                        // 获取子网掩码位数
+                        try {
+                            java.net.NetworkInterface parent = ni;
+                            java.net.InterfaceAddress interfaceAddr = null;
+                            for (java.net.InterfaceAddress ia : parent.getInterfaceAddresses()) {
+                                if (ia.getAddress().equals(addr)) {
+                                    interfaceAddr = ia;
+                                    break;
+                                }
+                            }
+                            if (interfaceAddr != null) {
+                                int prefixLength = interfaceAddr.getNetworkPrefixLength();
+                                ip = ip + "/" + prefixLength;
+                            }
+                        } catch (Exception ignored) {
+                        }
+                        if (ipv4Info.length() > 0) ipv4Info.append("\n");
+                        ipv4Info.append(ip);
+                    } else if (addr instanceof java.net.Inet6Address) {
+                        java.net.Inet6Address addr6 = (java.net.Inet6Address) addr;
+                        // 排除链路本地地址和临时地址
+                        if (addr6.isLinkLocalAddress() || addr6.isSiteLocalAddress()) {
+                            String ip = addr.getHostAddress();
+                            // 找到 IPv6 地址的 prefix length
+                            try {
+                                java.net.NetworkInterface parent = ni;
+                                java.net.InterfaceAddress interfaceAddr = null;
+                                for (java.net.InterfaceAddress ia : parent.getInterfaceAddresses()) {
+                                    if (ia.getAddress().equals(addr)) {
+                                        interfaceAddr = ia;
+                                        break;
+                                    }
+                                }
+                                if (interfaceAddr != null) {
+                                    int prefixLength = interfaceAddr.getNetworkPrefixLength();
+                                    // IPv6 地址格式: ip/prefixLength
+                                    // 移除末尾的 %interface 部分
+                                    int percentIndex = ip.indexOf('%');
+                                    if (percentIndex > 0) {
+                                        ip = ip.substring(0, percentIndex);
+                                    }
+                                    ip = ip + "/" + prefixLength;
+                                }
+                            } catch (Exception ignored) {
+                            }
+                            if (ipv6Info.length() > 0) ipv6Info.append("\n");
+                            ipv6Info.append(ip);
+                        }
+                    }
+                }
+            }
+
+            if (ipv4Info.length() > 0) {
+                addSystemInfoRow(container, i18n("settings.launcher.system_info.ipv4"), ipv4Info.toString());
+            }
+            if (ipv6Info.length() > 0) {
+                addSystemInfoRow(container, i18n("settings.launcher.system_info.ipv6"), ipv6Info.toString());
             }
         } catch (Exception ignored) {
         }
-        addSystemInfoRow(container, i18n("settings.launcher.system_info.network"), networkInfo);
 
         // 程序语言
         String locale = I18n.getLocale().getLocale().toLanguageTag();
