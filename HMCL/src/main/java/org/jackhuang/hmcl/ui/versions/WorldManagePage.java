@@ -39,7 +39,6 @@ import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
-import java.nio.channels.FileChannel;
 import java.nio.file.Path;
 import java.util.Optional;
 
@@ -56,7 +55,6 @@ public final class WorldManagePage extends DecoratorAnimatedPage implements Deco
     private Profile profile;
     private String instanceId;
     private boolean supportQuickPlay;
-    private FileChannel sessionLockChannel;
 
     private final ObjectProperty<State> state = new SimpleObjectProperty<>();
     private final BooleanProperty refreshable = new SimpleBooleanProperty(true);
@@ -83,16 +81,17 @@ public final class WorldManagePage extends DecoratorAnimatedPage implements Deco
     }
 
     public WorldManagePage setWorld(World world, Profile profile, String instanceId) {
-        this.world = world;
-        this.backupsDir = profile.getRepository().getBackupsDirectory(instanceId);
-        this.profile = profile;
-        this.instanceId = instanceId;
-
         try {
             closeSessionLockChannel();
         } catch (IOException e) {
             LOG.warning("Can not close session lock channel of world: " + this.world.getFile(), e);
         }
+
+        this.world = world;
+        this.backupsDir = profile.getRepository().getBackupsDirectory(instanceId);
+        this.profile = profile;
+        this.instanceId = instanceId;
+
         updateSessionLockChannel();
 
         try {
@@ -140,14 +139,16 @@ public final class WorldManagePage extends DecoratorAnimatedPage implements Deco
     }
 
     private void updateSessionLockChannel() {
-        if (sessionLockChannel == null || !sessionLockChannel.isOpen()) {
-            sessionLockChannel = WorldManageUIUtils.getSessionLockChannel(world);
-            readOnly.set(sessionLockChannel == null);
+        if (world != null) {
+            world.getWorldLock().lock();
+            readOnly.set(world.getWorldLock().getLockState() != World.WorldLock.LockState.LOCKED_BY_SELF);
         }
     }
 
     private void closeSessionLockChannel() throws IOException {
-        WorldManageUIUtils.closeSessionLockChannel(world, sessionLockChannel);
+        if (world != null) {
+            world.getWorldLock().releaseLock();
+        }
     }
 
     private void onNavigated(Navigator.NavigationEvent event) {
@@ -156,7 +157,7 @@ public final class WorldManagePage extends DecoratorAnimatedPage implements Deco
 
     public void onExited(Navigator.NavigationEvent event) {
         try {
-            WorldManageUIUtils.closeSessionLockChannel(world, sessionLockChannel);
+            closeSessionLockChannel();
         } catch (IOException ignored) {
         }
     }
@@ -293,8 +294,8 @@ public final class WorldManagePage extends DecoratorAnimatedPage implements Deco
                     }
 
                     managePopupMenu.getContent().addAll(
-                            new IconedMenuItem(SVG.OUTPUT, i18n("world.export"), () -> WorldManageUIUtils.export(getSkinnable().world, getSkinnable().sessionLockChannel), managePopup),
-                            new IconedMenuItem(SVG.DELETE_FOREVER, i18n("world.delete"), () -> WorldManageUIUtils.delete(getSkinnable().world, () -> getSkinnable().fireEvent(new PageCloseEvent()), getSkinnable().sessionLockChannel), managePopup),
+                            new IconedMenuItem(SVG.OUTPUT, i18n("world.export"), () -> WorldManageUIUtils.export(getSkinnable().world), managePopup),
+                            new IconedMenuItem(SVG.DELETE_FOREVER, i18n("world.delete"), () -> WorldManageUIUtils.delete(getSkinnable().world, () -> getSkinnable().fireEvent(new PageCloseEvent())), managePopup),
                             new IconedMenuItem(SVG.CONTENT_COPY, i18n("world.duplicate"), () -> WorldManageUIUtils.copyWorld(getSkinnable().world, null), managePopup)
                     );
 

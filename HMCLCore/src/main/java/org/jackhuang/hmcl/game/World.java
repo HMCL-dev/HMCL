@@ -56,6 +56,8 @@ public final class World {
     private CompoundTag playerData; // Use for both reading/modification and writing back to the file
     private Path playerDataPath;
 
+    private WorldLock lock;
+
     public World(Path file) throws IOException {
         this.file = file;
 
@@ -121,6 +123,13 @@ public final class World {
             throw new IOException("Path " + file + " cannot be recognized as a Minecraft world");
     }
 
+    public WorldLock getWorldLock() {
+        if (lock == null) {
+            lock = new WorldLock();
+        }
+        return lock;
+    }
+
     public Path getFile() {
         return file;
     }
@@ -142,10 +151,6 @@ public final class World {
             levelNameTag.setValue(worldName);
             writeLevelData();
         }
-    }
-
-    public Path getSessionLockFile() {
-        return file.resolve("session.lock");
     }
 
     public CompoundTag getLevelData() {
@@ -216,10 +221,6 @@ public final class World {
 
     public Image getIcon() {
         return icon;
-    }
-
-    public boolean isLocked() {
-        return isLocked(getSessionLockFile());
     }
 
     public boolean supportsDatapacks() {
@@ -299,10 +300,18 @@ public final class World {
         loadAndCheckWorldData();
     }
 
-    // The moveTo method do not modify the `file` field.
-    public Path renameFolder(String newName) throws IOException {
+    // The renameWorld method do not modify the `file` field.
+    public Path renameWorld(String newName) throws IOException {
         if (!Files.isDirectory(file))
             throw new IOException("Not a valid world directory");
+        boolean hasLocked = false;
+        WorldLock.LockState lockState = getWorldLock().getLockState();
+        if (lockState == WorldLock.LockState.LOCKED_BY_OTHER) {
+            throw new IOException("World is locked by other process");
+        } else if (lockState == WorldLock.LockState.LOCKED_BY_SELF) {
+            hasLocked = true;
+            getWorldLock().releaseLock();
+        }
 
         // Change the name recorded in level.dat
         dataTag.setString("LevelName", newName);
@@ -310,6 +319,7 @@ public final class World {
 
         // then change the folder's name
         Files.move(file, file.resolveSibling(newName));
+        getWorldLock().lock(hasLocked);
         return file.resolveSibling(newName);
     }
 
@@ -346,7 +356,7 @@ public final class World {
                 }
 
             }
-            new World(worldDir).renameFolder(name);
+            new World(worldDir).renameWorld(name);
         } else if (Files.isDirectory(file)) {
             FileUtils.copyDirectory(file, worldDir);
         }
@@ -355,15 +365,25 @@ public final class World {
     public void export(Path zip, String worldName) throws IOException {
         if (!Files.isDirectory(file))
             throw new IOException();
+        if (getWorldLock().getLockState() == WorldLock.LockState.LOCKED_BY_OTHER) {
+            throw new WorldLockedException("The world " + getFile() + " has been locked");
+        }
+
+        boolean hasLocked = getWorldLock().getLockState() == WorldLock.LockState.LOCKED_BY_SELF;
+        getWorldLock().releaseLock();
 
         try (Zipper zipper = new Zipper(zip)) {
             zipper.putDirectory(file, worldName);
         }
+
+        getWorldLock().lock(hasLocked);
     }
 
     public void delete() throws IOException {
-        if (isLocked()) {
+        if (getWorldLock().getLockState() == WorldLock.LockState.LOCKED_BY_OTHER) {
             throw new WorldLockedException("The world " + getFile() + " has been locked");
+        } else if (getWorldLock().getLockState() == WorldLock.LockState.LOCKED_BY_SELF) {
+            getWorldLock().releaseLock();
         }
         FileUtils.forceDelete(file);
     }
@@ -373,34 +393,14 @@ public final class World {
             throw new IOException("Not a valid world directory");
         }
 
-        if (isLocked()) {
+        if (getWorldLock().getLockState() == WorldLock.LockState.LOCKED_BY_OTHER) {
             throw new WorldLockedException("The world " + getFile() + " has been locked");
         }
 
         Path newPath = file.resolveSibling(newName);
         FileUtils.copyDirectory(file, newPath, path -> !path.contains("session.lock"));
         World newWorld = new World(newPath);
-        newWorld.renameFolder(newName);
-    }
-
-    public FileChannel lock() throws WorldLockedException {
-        Path lockFile = getSessionLockFile();
-        FileChannel channel = null;
-        try {
-            channel = FileChannel.open(lockFile, StandardOpenOption.CREATE, StandardOpenOption.WRITE);
-            channel.write(ByteBuffer.wrap("\u2603".getBytes(StandardCharsets.UTF_8)));
-            channel.force(true);
-            FileLock fileLock = channel.tryLock();
-            if (fileLock != null) {
-                return channel;
-            } else {
-                IOUtils.closeQuietly(channel);
-                throw new WorldLockedException("The world " + getFile() + " has been locked");
-            }
-        } catch (IOException e) {
-            IOUtils.closeQuietly(channel);
-            throw new WorldLockedException(e);
-        }
+        newWorld.renameWorld(newName);
     }
 
     public void writeWorldData() throws IOException {
@@ -430,19 +430,6 @@ public final class World {
         });
     }
 
-    private static boolean isLocked(Path sessionLockFile) {
-        try (FileChannel fileChannel = FileChannel.open(sessionLockFile, StandardOpenOption.WRITE)) {
-            return fileChannel.tryLock() == null;
-        } catch (AccessDeniedException | OverlappingFileLockException accessDeniedException) {
-            return true;
-        } catch (NoSuchFileException noSuchFileException) {
-            return false;
-        } catch (IOException e) {
-            LOG.warning("Failed to open the lock file " + sessionLockFile, e);
-            return false;
-        }
-    }
-
     public static List<World> getWorlds(Path savesDir) {
         if (Files.exists(savesDir)) {
             try (Stream<Path> stream = Files.list(savesDir)) {
@@ -462,5 +449,107 @@ public final class World {
             }
         }
         return List.of();
+    }
+
+    public class WorldLock {
+        private FileChannel sessionLockChannel;
+        private final Path lockFile;
+
+        public enum LockState {
+            LOCKED_BY_OTHER,
+            LOCKED_BY_SELF,
+            UNLOCKED;
+        }
+
+        public WorldLock() {
+            this.lockFile = file.resolve("session.lock");
+            this.sessionLockChannel = null;
+        }
+
+        public LockState getLockState() {
+            if (sessionLockChannel != null && sessionLockChannel.isOpen()) {
+                return LockState.LOCKED_BY_SELF;
+            } else if (isLocked(lockFile)) {
+                return LockState.LOCKED_BY_OTHER;
+            } else {
+                return LockState.UNLOCKED;
+            }
+        }
+
+        public boolean lock() {
+            LockState lockState = getLockState();
+            if (lockState == LockState.LOCKED_BY_OTHER) {
+                return false;
+            } else if (lockState == LockState.LOCKED_BY_SELF) {
+                return true;
+            } else {
+                try {
+                    sessionLockChannel = getLock();
+                } catch (WorldLockedException e) {
+                    return false;
+                }
+                return true;
+            }
+        }
+
+        public boolean lock(boolean lock) {
+            if (lock) {
+                return lock();
+            } else {
+                return getLockState() == LockState.LOCKED_BY_SELF;
+            }
+        }
+
+        public void lockStrict() throws WorldLockedException {
+            if (!lock()) {
+                throw new WorldLockedException("Failed to lock world " + World.this.getFile());
+            }
+        }
+
+        public FileChannel getLock() throws WorldLockedException {
+            FileChannel channel = null;
+            try {
+                channel = FileChannel.open(lockFile, StandardOpenOption.CREATE, StandardOpenOption.WRITE);
+                channel.write(ByteBuffer.wrap("\u2603".getBytes(StandardCharsets.UTF_8)));
+                channel.force(true);
+                FileLock fileLock = channel.tryLock();
+                if (fileLock != null) {
+                    return channel;
+                } else {
+                    IOUtils.closeQuietly(channel);
+                    throw new WorldLockedException("The world " + getFile() + " has been locked");
+                }
+            } catch (IOException e) {
+                IOUtils.closeQuietly(channel);
+                throw new WorldLockedException(e);
+            }
+        }
+
+        public boolean isLocked() {
+            return isLocked(lockFile);
+        }
+
+        private static boolean isLocked(Path sessionLockFile) {
+            try (FileChannel fileChannel = FileChannel.open(sessionLockFile, StandardOpenOption.WRITE)) {
+                return fileChannel.tryLock() == null;
+            } catch (AccessDeniedException | OverlappingFileLockException accessDeniedException) {
+                return true;
+            } catch (NoSuchFileException noSuchFileException) {
+                return false;
+            } catch (IOException e) {
+                LOG.warning("Failed to open the lock file " + sessionLockFile, e);
+                return false;
+            }
+        }
+
+        public void releaseLock() throws IOException {
+            sessionLockChannel.close();
+        }
+
+        public void releaseLock(boolean lock) throws IOException {
+            if (!lock) {
+                sessionLockChannel.close();
+            }
+        }
     }
 }

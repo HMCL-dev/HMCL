@@ -31,7 +31,6 @@ import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
 
 import java.io.IOException;
-import java.nio.channels.FileChannel;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.function.Consumer;
@@ -44,11 +43,7 @@ public final class WorldManageUIUtils {
     }
 
     public static void delete(World world, Runnable runnable) {
-        delete(world, runnable, null);
-    }
-
-    public static void delete(World world, Runnable runnable, FileChannel sessionLockChannel) {
-        Controllers.confirm(i18n("button.remove.confirm"), i18n("world.delete"), () -> Task.runAsync(() -> closeSessionLockChannel(world, sessionLockChannel)).thenRunAsync(world::delete).whenComplete(Schedulers.javafx(), (result, exception) -> {
+        Controllers.confirm(i18n("button.remove.confirm"), i18n("world.delete"), () -> Task.runAsync(world::delete).whenComplete(Schedulers.javafx(), (result, exception) -> {
             if (exception == null) {
                 runnable.run();
             } else if (exception instanceof WorldLockedException) {
@@ -60,22 +55,12 @@ public final class WorldManageUIUtils {
     }
 
     public static void export(World world) {
-        export(world, null);
-    }
-
-    public static void export(World world, FileChannel sessionLockChannel) {
         FileChooser fileChooser = new FileChooser();
         fileChooser.setTitle(i18n("world.export.title"));
         fileChooser.getExtensionFilters().add(new FileChooser.ExtensionFilter(i18n("world"), "*.zip"));
         fileChooser.setInitialFileName(world.getWorldName() + ".zip");
         Path file = FileUtils.toPath(fileChooser.showSaveDialog(Controllers.getStage()));
         if (file == null) {
-            return;
-        }
-
-        try {
-            closeSessionLockChannel(world, sessionLockChannel);
-        } catch (IOException e) {
             return;
         }
 
@@ -131,7 +116,7 @@ public final class WorldManageUIUtils {
                 try {
                     if (renameFolder) {
                         if (renameFolderConsumer != null) {
-                            renameFolderConsumer.accept(world.renameFolder(newWorldName));
+                            renameFolderConsumer.accept(world.renameWorld(newWorldName));
                         }
                     } else {
                         world.setWorldName(newWorldName);
@@ -149,26 +134,4 @@ public final class WorldManageUIUtils {
             }
         }).addQuestion(new PromptDialogPane.Builder.StringQuestion(null, "")).addQuestion(new PromptDialogPane.Builder.BooleanQuestion("重命名世界文件夹", false)));
     }
-
-    public static void closeSessionLockChannel(World world, FileChannel sessionLockChannel) throws IOException {
-        if (sessionLockChannel != null) {
-            try {
-                sessionLockChannel.close();
-                LOG.info("Closed session lock channel of the world " + world.getFileName());
-            } catch (IOException e) {
-                throw new IOException("Failed to close session lock channel of the world " + world.getFile(), e);
-            }
-        }
-    }
-
-    public static FileChannel getSessionLockChannel(World world) {
-        try {
-            FileChannel lock = world.lock();
-            LOG.info("Acquired lock on world " + world.getFileName());
-            return lock;
-        } catch (WorldLockedException ignored) {
-            return null;
-        }
-    }
-
 }
