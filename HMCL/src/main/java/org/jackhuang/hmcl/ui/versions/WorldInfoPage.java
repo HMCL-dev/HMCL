@@ -40,7 +40,6 @@ import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
 import org.jackhuang.hmcl.ui.construct.*;
 import org.jackhuang.hmcl.util.Lang;
-import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.i18n.I18n;
 import org.jackhuang.hmcl.util.io.FileUtils;
 
@@ -63,7 +62,7 @@ import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 public final class WorldInfoPage extends SpinnerPane implements WorldManagePage.WorldRefreshable {
     private final WorldManagePage worldManagePage;
     private World world;
-    private CompoundTag levelData;
+    private CompoundTag dataTag;
     private CompoundTag playerData;
 
     private final ImageContainer iconImageView = new ImageContainer(32);
@@ -77,8 +76,21 @@ public final class WorldInfoPage extends SpinnerPane implements WorldManagePage.
         return worldManagePage.readOnlyProperty();
     }
 
+    @Override
+    public void refresh() {
+        this.world = worldManagePage.getWorld();
+        setFailedReason(null);
+        try {
+            this.dataTag = world.getDataTag();
+            this.playerData = world.getPlayerData();
+            updateControls();
+        } catch (Exception e) {
+            LOG.warning("Failed to refresh world info", e);
+            setFailedReason(i18n("world.info.failed"));
+        }
+    }
+
     private void updateControls() {
-        CompoundTag dataTag = (CompoundTag) levelData.get("Data");
         CompoundTag playerTag = playerData;
 
         ScrollPane scrollPane = new ScrollPane();
@@ -530,20 +542,6 @@ public final class WorldInfoPage extends SpinnerPane implements WorldManagePage.
             this.world.writeWorldData();
         } catch (IOException e) {
             LOG.warning("Failed to save world data", e);
-        }
-    }
-
-    @Override
-    public void refresh() {
-        this.world = worldManagePage.getWorld();
-        setFailedReason(null);
-        try {
-            this.levelData = world.getLevelData();
-            this.playerData = world.getPlayerData();
-            updateControls();
-        } catch (Exception e) {
-            LOG.warning("Failed to refresh world info", e);
-            setFailedReason(i18n("world.info.failed"));
         }
     }
 

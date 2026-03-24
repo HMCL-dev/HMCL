@@ -157,6 +157,10 @@ public final class World {
         return levelData;
     }
 
+    public CompoundTag getDataTag() {
+        return dataTag;
+    }
+
     public @Nullable CompoundTag getNormalizedWorldGenSettingsData() {
         return normalizedWorldGenSettingsData;
     }

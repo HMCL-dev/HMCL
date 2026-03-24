@@ -54,7 +54,9 @@ public final class WorldManagePage extends DecoratorAnimatedPage implements Deco
     private Path backupsDir;
     private Profile profile;
     private String instanceId;
-    private boolean supportQuickPlay;
+
+    private final BooleanProperty currentWorldSupportQuickPlay = new SimpleBooleanProperty(false);
+    private final BooleanProperty currentWorldSupportDataPack = new SimpleBooleanProperty(false);
 
     private final ObjectProperty<State> state = new SimpleObjectProperty<>();
     private final BooleanProperty refreshable = new SimpleBooleanProperty(true);
@@ -90,15 +92,9 @@ public final class WorldManagePage extends DecoratorAnimatedPage implements Deco
 
         updateSessionLockChannel();
 
-        try {
-            this.world.reloadWorldData();
-        } catch (IOException e) {
-            LOG.warning("Can not load world data of world: " + this.world.getFile(), e);
-            this.addEventHandler(Navigator.NavigationEvent.NAVIGATED, event -> closePageForLoadingFail());
-        }
-
         Optional<String> gameVersion = profile.getRepository().getGameVersion(instanceId);
-        supportQuickPlay = World.supportsQuickPlay(GameVersionNumber.asGameVersion(gameVersion));
+        currentWorldSupportQuickPlay.set(World.supportsQuickPlay(GameVersionNumber.asGameVersion(gameVersion)));
+        currentWorldSupportDataPack.set(world.supportsDatapacks());
         return this;
     }
 
@@ -238,10 +234,8 @@ public final class WorldManagePage extends DecoratorAnimatedPage implements Deco
                 tabBar.addNavigationDrawerTab(getSkinnable().header, getSkinnable().worldInfoTab, i18n("world.info"), SVG.INFO, SVG.INFO_FILL)
                         .addNavigationDrawerTab(getSkinnable().header, getSkinnable().worldBackupsTab, i18n("world.backup"), SVG.ARCHIVE, SVG.ARCHIVE_FILL);
 
-                if (getSkinnable().world.supportsDatapacks()) {
-                    getSkinnable().header.getTabs().add(getSkinnable().datapackTab);
-                    tabBar.addNavigationDrawerTab(getSkinnable().header, getSkinnable().datapackTab, i18n("world.datapack"), SVG.EXTENSION, SVG.EXTENSION_FILL);
-                }
+                getSkinnable().header.getTabs().add(getSkinnable().datapackTab);
+                tabBar.addNavigationDrawerTab(getSkinnable().header, getSkinnable().datapackTab, i18n("world.datapack"), SVG.EXTENSION, SVG.EXTENSION_FILL);
             }
 
             return tabBar;
@@ -251,9 +245,10 @@ public final class WorldManagePage extends DecoratorAnimatedPage implements Deco
             AdvancedListBox toolbar = new AdvancedListBox();
             BorderPane.setMargin(toolbar, new Insets(0, 0, 12, 0));
             {
-                if (getSkinnable().supportQuickPlay) {
-                    toolbar.addNavigationDrawerItem(i18n("version.launch"), SVG.ROCKET_LAUNCH, () -> getSkinnable().launch(), advancedListItem -> advancedListItem.disableProperty().bind(getSkinnable().readOnlyProperty()));
-                }
+                toolbar.addNavigationDrawerItem(i18n("version.launch"), SVG.ROCKET_LAUNCH, () -> getSkinnable().launch(), advancedListItem -> {
+                    advancedListItem.disableProperty().bind(getSkinnable().readOnlyProperty());
+                    advancedListItem.visibleProperty().bind(getSkinnable().currentWorldSupportQuickPlay);
+                });
 
                 if (ChunkBaseApp.isSupported(getSkinnable().world)) {
                     PopupMenu chunkBasePopupMenu = new PopupMenu();
@@ -283,13 +278,20 @@ public final class WorldManagePage extends DecoratorAnimatedPage implements Deco
                     PopupMenu managePopupMenu = new PopupMenu();
                     JFXPopup managePopup = new JFXPopup(managePopupMenu);
 
-                    if (getSkinnable().supportQuickPlay) {
-                        managePopupMenu.getContent().addAll(
-                                new IconedMenuItem(SVG.ROCKET_LAUNCH, i18n("version.launch"), () -> getSkinnable().launch(), managePopup),
-                                new IconedMenuItem(SVG.SCRIPT, i18n("version.launch_script"), () -> getSkinnable().generateLaunchScript(), managePopup),
-                                new MenuSeparator()
-                        );
-                    }
+                    IconedMenuItem launchItem = new IconedMenuItem(SVG.ROCKET_LAUNCH, i18n("version.launch"), () -> getSkinnable().launch(), managePopup);
+                    launchItem.visibleProperty().bind(getSkinnable().currentWorldSupportQuickPlay);
+                    launchItem.managedProperty().bind(getSkinnable().currentWorldSupportQuickPlay);
+
+                    IconedMenuItem launchScriptItem = new IconedMenuItem(SVG.SCRIPT, i18n("version.launch_script"), () -> getSkinnable().generateLaunchScript(), managePopup);
+                    launchScriptItem.visibleProperty().bind(getSkinnable().currentWorldSupportQuickPlay);
+                    launchScriptItem.managedProperty().bind(getSkinnable().currentWorldSupportQuickPlay);
+
+                    MenuSeparator menuSeparator = new MenuSeparator();
+                    menuSeparator.visibleProperty().bind(getSkinnable().currentWorldSupportQuickPlay);
+                    menuSeparator.managedProperty().bind(getSkinnable().currentWorldSupportQuickPlay);
+
+                    managePopupMenu.getContent().addAll(launchItem, launchScriptItem, menuSeparator);
+
 
                     managePopupMenu.getContent().addAll(
                             new IconedMenuItem(SVG.OUTPUT, i18n("world.export"), () -> WorldManageUIUtils.export(getSkinnable().world), managePopup),

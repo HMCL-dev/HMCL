@@ -80,7 +80,13 @@ public final class DatapackListPage extends ListPageBase<DatapackListPageSkin.Da
     @Override
     public void refresh() {
         setLoading(true);
+        setFailedReason(null);
         world = worldManagePage.getWorld();
+        if (!world.supportsDatapacks()) {
+            setFailedReason("此版本不支持数据包");
+            setLoading(false);
+            return;
+        }
         datapack = new Datapack(world.getFile().resolve("datapacks"));
         setItems(MappedObservableList.create(datapack.getPacks(), DatapackListPageSkin.DatapackInfoObject::new));
         Task.runAsync(datapack::loadFromDir)

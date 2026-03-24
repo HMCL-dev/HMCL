@@ -163,6 +163,7 @@ final class DatapackListPageSkin extends SkinBase<DatapackListPage> {
 
             FXUtils.onChangeAndOperate(listView.getSelectionModel().selectedItemProperty(),
                     selectedItem -> isSelecting.set(selectedItem != null));
+            toolbarPane.disableProperty().bind(skinnable.loadingProperty().or(skinnable.failedReasonProperty().isNotNull()));
             root.getContent().add(toolbarPane);
 
             updateBarByStateWeakListener = FXUtils.observeWeak(() -> {
@@ -180,6 +181,7 @@ final class DatapackListPageSkin extends SkinBase<DatapackListPage> {
             SpinnerPane center = new SpinnerPane();
             ComponentList.setVgrow(center, Priority.ALWAYS);
             center.loadingProperty().bind(skinnable.loadingProperty());
+            center.failedReasonProperty().bind(skinnable.failedReasonProperty());
 
             listView.setCellFactory(x -> new DatapackInfoListCell(listView, getSkinnable().readOnlyProperty()));
             listView.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
