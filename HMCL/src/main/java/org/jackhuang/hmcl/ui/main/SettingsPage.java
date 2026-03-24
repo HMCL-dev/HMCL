@@ -87,6 +87,8 @@ public final class SettingsPage extends ScrollPane {
     @SuppressWarnings("FieldCanBeLocal")
     private final InvalidationListener updateListener;
 
+    private VBox systemInfoContainer;
+
     public SettingsPage() {
         this.setFitToWidth(true);
 
@@ -490,6 +492,41 @@ public final class SettingsPage extends ScrollPane {
     private Node createSystemInfoSection() {
         VBox container = new VBox(4);
         container.setPadding(new Insets(8, 0, 0, 0));
+        systemInfoContainer = container;
+
+        // 设备信息标题行
+        HBox titleRow = new HBox();
+        titleRow.setSpacing(8);
+        titleRow.setAlignment(Pos.CENTER_LEFT);
+
+        Label titleLabel = new Label(i18n("settings.launcher.system_info.title"));
+        titleLabel.setStyle("-fx-font-size: 14px; -fx-font-weight: bold;");
+
+        JFXButton refreshButton = new JFXButton();
+        refreshButton.setGraphic(SVG.REFRESH.createIcon(16));
+        refreshButton.setText(i18n("button.refresh"));
+        refreshButton.getStyleClass().add("jfx-tool-bar-button");
+        refreshButton.setOnAction(e -> refreshSystemInfo());
+
+        Region spacer = new Region();
+        HBox.setHgrow(spacer, Priority.ALWAYS);
+
+        titleRow.getChildren().addAll(titleLabel, spacer, refreshButton);
+        container.getChildren().add(titleRow);
+
+        // 刷新系统信息
+        refreshSystemInfo();
+
+        return container;
+    }
+
+    private void refreshSystemInfo() {
+        if (systemInfoContainer == null) return;
+
+        // 保留标题行，移除其他内容（索引从1开始，因为索引0是标题行）
+        while (systemInfoContainer.getChildren().size() > 1) {
+            systemInfoContainer.getChildren().remove(1);
+        }
 
         // 电脑名（主机名）
         String computerName;
@@ -498,11 +535,11 @@ public final class SettingsPage extends ScrollPane {
         } catch (Exception ignored) {
             computerName = i18n("settings.launcher.system_info.unknown");
         }
-        addSystemInfoRow(container, i18n("settings.launcher.system_info.computer_name"), computerName);
+        addSystemInfoRow(systemInfoContainer, i18n("settings.launcher.system_info.computer_name"), computerName);
 
         // 用户名
         String username = System.getProperty("user.name");
-        addSystemInfoRow(container, i18n("settings.launcher.system_info.username"), username);
+        addSystemInfoRow(systemInfoContainer, i18n("settings.launcher.system_info.username"), username);
 
         // 操作系统
         String osName = OperatingSystem.SYSTEM_NAME;
@@ -514,7 +551,7 @@ public final class SettingsPage extends ScrollPane {
                 osInfo = prettyName + " (" + osVersion + ")";
             }
         }
-        addSystemInfoRow(container, i18n("settings.launcher.system_info.os"), osInfo);
+        addSystemInfoRow(systemInfoContainer, i18n("settings.launcher.system_info.os"), osInfo);
 
         // 主板型号 (Windows only)
         String motherboard = i18n("settings.launcher.system_info.unknown");
@@ -534,14 +571,14 @@ public final class SettingsPage extends ScrollPane {
             } catch (Exception ignored) {
             }
         }
-        addSystemInfoRow(container, i18n("settings.launcher.system_info.motherboard"), motherboard);
+        addSystemInfoRow(systemInfoContainer, i18n("settings.launcher.system_info.motherboard"), motherboard);
 
         // 系统内核
         String kernel = System.getProperty("os.name") + " " + System.getProperty("os.version");
         if (OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS) {
             kernel = "NT " + osVersion;
         }
-        addSystemInfoRow(container, i18n("settings.launcher.system_info.kernel"), kernel);
+        addSystemInfoRow(systemInfoContainer, i18n("settings.launcher.system_info.kernel"), kernel);
 
         // 主程序窗口大小
         String windowSize = "";
@@ -555,17 +592,17 @@ public final class SettingsPage extends ScrollPane {
         if (windowSize.isEmpty()) {
             windowSize = i18n("settings.launcher.system_info.unknown");
         }
-        addSystemInfoRow(container, i18n("settings.launcher.system_info.window_size"), windowSize);
+        addSystemInfoRow(systemInfoContainer, i18n("settings.launcher.system_info.window_size"), windowSize);
 
         // Java 版本
         String javaVendor = System.getProperty("java.vendor", "");
         String javaVersion = System.getProperty("java.version", "");
         String javaInfo = javaVersion + " (" + javaVendor + ")";
-        addSystemInfoRow(container, i18n("settings.launcher.system_info.java"), javaInfo);
+        addSystemInfoRow(systemInfoContainer, i18n("settings.launcher.system_info.java"), javaInfo);
 
         // JavaFX 版本
         String jfxVersion = System.getProperty("javafx.version", i18n("settings.launcher.system_info.unknown"));
-        addSystemInfoRow(container, i18n("settings.launcher.system_info.javafx"), jfxVersion);
+        addSystemInfoRow(systemInfoContainer, i18n("settings.launcher.system_info.javafx"), jfxVersion);
 
         // CPU 信息
         CentralProcessor cpu = SystemInfo.getCentralProcessor();
@@ -575,9 +612,9 @@ public final class SettingsPage extends ScrollPane {
             if (cores != null) {
                 cpuCores = "\n    " + i18n("settings.launcher.system_info.cpu.cores", cores.physical, cores.logical);
             }
-            addSystemInfoRow(container, i18n("settings.launcher.system_info.cpu"), cpu.getName() + cpuCores);
+            addSystemInfoRow(systemInfoContainer, i18n("settings.launcher.system_info.cpu"), cpu.getName() + cpuCores);
         } else {
-            addSystemInfoRow(container, i18n("settings.launcher.system_info.cpu"), i18n("settings.launcher.system_info.unknown"));
+            addSystemInfoRow(systemInfoContainer, i18n("settings.launcher.system_info.cpu"), i18n("settings.launcher.system_info.unknown"));
         }
 
         // GPU 信息
@@ -596,7 +633,7 @@ public final class SettingsPage extends ScrollPane {
         } else {
             gpuInfo = i18n("settings.launcher.system_info.unknown");
         }
-        addSystemInfoRow(container, i18n("settings.launcher.system_info.gpu"), gpuInfo);
+        addSystemInfoRow(systemInfoContainer, i18n("settings.launcher.system_info.gpu"), gpuInfo);
 
         // 渲染管线信息
         if (renderPipeline != null && !renderPipeline.isEmpty()) {
@@ -608,7 +645,7 @@ public final class SettingsPage extends ScrollPane {
             } else if (renderPipeline.contains(".GL")) {
                 pipelineDisplay = "OpenGL";
             }
-            addSystemInfoRow(container, i18n("settings.launcher.system_info.render_pipeline"), pipelineDisplay);
+            addSystemInfoRow(systemInfoContainer, i18n("settings.launcher.system_info.render_pipeline"), pipelineDisplay);
         }
 
         // 内存信息
@@ -620,7 +657,7 @@ public final class SettingsPage extends ScrollPane {
                     used / (1024 * 1024 * 1024),
                     total / (1024 * 1024 * 1024),
                     total > 0 ? (double) used / total * 100 : 0);
-            addSystemInfoRow(container, i18n("settings.launcher.system_info.memory"), memInfo);
+            addSystemInfoRow(systemInfoContainer, i18n("settings.launcher.system_info.memory"), memInfo);
         }
 
         // 网卡信息
@@ -692,19 +729,17 @@ public final class SettingsPage extends ScrollPane {
             }
 
             if (ipv4Info.length() > 0) {
-                addSystemInfoRow(container, i18n("settings.launcher.system_info.ipv4"), ipv4Info.toString());
+                addSystemInfoRow(systemInfoContainer, i18n("settings.launcher.system_info.ipv4"), ipv4Info.toString());
             }
             if (ipv6Info.length() > 0) {
-                addSystemInfoRow(container, i18n("settings.launcher.system_info.ipv6"), ipv6Info.toString());
+                addSystemInfoRow(systemInfoContainer, i18n("settings.launcher.system_info.ipv6"), ipv6Info.toString());
             }
         } catch (Exception ignored) {
         }
 
         // 程序语言
         String locale = I18n.getLocale().getLocale().toLanguageTag();
-        addSystemInfoRow(container, i18n("settings.launcher.system_info.language"), locale);
-
-        return container;
+        addSystemInfoRow(systemInfoContainer, i18n("settings.launcher.system_info.language"), locale);
     }
 
     private void addSystemInfoRow(VBox container, String label, String value) {
