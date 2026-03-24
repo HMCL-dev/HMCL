@@ -561,7 +561,7 @@ public final class World {
             return new Suspension();
         }
 
-        public class Guard implements AutoCloseable {
+        public final class Guard implements AutoCloseable {
             private final boolean wasAlreadyLocked;
 
             private Guard() throws WorldLockedException {
@@ -587,7 +587,7 @@ public final class World {
             }
         }
 
-        public class Suspension implements AutoCloseable {
+        public final class Suspension implements AutoCloseable {
             private final boolean hadLock;
 
             private Suspension() throws IOException {

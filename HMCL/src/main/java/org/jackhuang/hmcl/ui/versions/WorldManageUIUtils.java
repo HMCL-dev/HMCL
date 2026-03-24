@@ -67,7 +67,11 @@ public final class WorldManageUIUtils {
     }
 
     public static void copyWorld(World world, Runnable runnable) {
-        Controllers.dialog(new InputDialogPane(i18n("world.duplicate.prompt"), "", (result, handler) -> {
+        Controllers.dialog(new InputDialogPane(i18n("world.duplicate.prompt"), world.getWorldName(), (result, handler) -> {
+            if (result.equals(world.getWorldName())) {
+                handler.resolve();
+                return;
+            }
             Task.runAsync(Schedulers.io(), () -> world.copy(result)).thenAcceptAsync(Schedulers.javafx(), (Void) -> Controllers.showToast(i18n("world.duplicate.success.toast"))).thenAcceptAsync(Schedulers.javafx(), (Void) -> {
                 if (runnable != null) {
                     runnable.run();
@@ -94,6 +98,10 @@ public final class WorldManageUIUtils {
             String newWorldName = ((PromptDialogPane.Builder.StringQuestion) res.get(0)).getValue();
             boolean renameFolder = ((PromptDialogPane.Builder.BooleanQuestion) res.get(1)).getValue();
             if (StringUtils.isNotBlank(newWorldName)) {
+                if (newWorldName.equals(world.getWorldName())) {
+                    handler.resolve();
+                    return;
+                }
 
                 try {
                     if (renameFolder) {
@@ -115,7 +123,7 @@ public final class WorldManageUIUtils {
                 handler.reject(i18n("world.duplicate.failed"));
             }
         })
-                .addQuestion(new PromptDialogPane.Builder.StringQuestion(null, ""))
+                .addQuestion(new PromptDialogPane.Builder.StringQuestion(null, world.getWorldName()))
                 .addQuestion(new PromptDialogPane.Builder.BooleanQuestion("重命名世界文件夹", false)));
     }
 }
