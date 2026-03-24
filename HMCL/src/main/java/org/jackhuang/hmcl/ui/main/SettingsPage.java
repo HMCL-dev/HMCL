@@ -56,6 +56,7 @@ import org.jackhuang.hmcl.util.platform.SystemInfo;
 import org.jackhuang.hmcl.util.platform.hardware.CentralProcessor;
 import org.jackhuang.hmcl.util.platform.hardware.GraphicsCard;
 import org.jackhuang.hmcl.util.platform.hardware.PhysicalMemoryStatus;
+import org.jackhuang.hmcl.util.platform.hardware.StorageStatus;
 import org.tukaani.xz.XZInputStream;
 
 import java.io.BufferedReader;
@@ -678,6 +679,37 @@ public final class SettingsPage extends ScrollPane {
                     total / (1024.0 * 1024 * 1024),
                     total > 0 ? (double) used / total * 100 : 0);
             addSystemInfoRow(systemInfoContainer, i18n("settings.launcher.system_info.memory"), memInfo);
+        }
+
+        // 存储信息
+        StorageStatus storageStatus = SystemInfo.getStorageStatus();
+        if (storageStatus != null && storageStatus.isValid()) {
+            StringBuilder storageInfo = new StringBuilder();
+            for (StorageStatus.DriveInfo drive : storageStatus.getDrives()) {
+                if (storageInfo.length() > 0) {
+                    storageInfo.append("\n");
+                }
+
+                String mountPoint = drive.getMountPoint();
+                long total = drive.getTotal();
+                long used = drive.getUsed();
+                long available = drive.getAvailable();
+                String fileSystem = drive.getFileSystem();
+
+                double usedPercent = total > 0 ? (double) used / total * 100 : 0;
+                double availablePercent = total > 0 ? (double) available / total * 100 : 0;
+
+                String fsInfo = fileSystem != null && !fileSystem.isEmpty() ? " - " + fileSystem : "";
+
+                storageInfo.append(String.format("%s %.2f / %.2f GiB (%.2f%% / %.2f%%)%s",
+                        mountPoint,
+                        used / (1024.0 * 1024 * 1024),
+                        total / (1024.0 * 1024 * 1024),
+                        usedPercent,
+                        availablePercent,
+                        fsInfo));
+            }
+            addSystemInfoRow(systemInfoContainer, i18n("settings.launcher.system_info.storage"), storageInfo.toString());
         }
 
         // 网卡信息

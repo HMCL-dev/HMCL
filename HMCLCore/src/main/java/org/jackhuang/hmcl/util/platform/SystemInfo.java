@@ -22,6 +22,7 @@ import org.jackhuang.hmcl.util.platform.hardware.CentralProcessor;
 import org.jackhuang.hmcl.util.platform.hardware.GraphicsCard;
 import org.jackhuang.hmcl.util.platform.hardware.HardwareDetector;
 import org.jackhuang.hmcl.util.platform.hardware.PhysicalMemoryStatus;
+import org.jackhuang.hmcl.util.platform.hardware.StorageStatus;
 import org.jackhuang.hmcl.util.platform.linux.LinuxHardwareDetector;
 import org.jackhuang.hmcl.util.platform.macos.MacOSHardwareDetector;
 import org.jackhuang.hmcl.util.platform.windows.*;
@@ -97,6 +98,10 @@ public final class SystemInfo {
         return totalMemorySize > 0 && freeMemorySize >= 0
                 ? new PhysicalMemoryStatus(totalMemorySize, freeMemorySize)
                 : PhysicalMemoryStatus.INVALID;
+    }
+
+    public static StorageStatus getStorageStatus() {
+        return Holder.DETECTOR.getStorageStatus();
     }
 
     public static long getTotalMemorySize() {
