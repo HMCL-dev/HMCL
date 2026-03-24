@@ -37,6 +37,7 @@ import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
+import org.jackhuang.hmcl.ui.WeakListenerHolder;
 import org.jackhuang.hmcl.ui.construct.*;
 import org.jackhuang.hmcl.theme.Themes;
 import org.jackhuang.hmcl.ui.construct.MessageDialogPane.MessageType;
@@ -85,6 +86,7 @@ public final class SettingsPage extends ScrollPane {
     private final ToggleGroup updateChannelGroup;
     @SuppressWarnings("FieldCanBeLocal")
     private final InvalidationListener updateListener;
+    private final WeakListenerHolder holder = new WeakListenerHolder();
 
     private VBox systemInfoContainer;
 
@@ -104,10 +106,10 @@ public final class SettingsPage extends ScrollPane {
 
                     var githubButton = LineButton.createExternalLinkButton("https://github.com/HMCL-dev/HMCL");
                     githubButton.setTitle(i18n("settings.launcher.github_repository"));
-                    FXUtils.onWeakChangeAndOperate(Themes.darkModeProperty(), darkMode ->
+                    holder.add(FXUtils.onWeakChangeAndOperate(Themes.darkModeProperty(), darkMode ->
                             githubButton.setLeading(darkMode
                                     ? FXUtils.newBuiltinImage("/assets/img/github-white.png")
-                                    : FXUtils.newBuiltinImage("/assets/img/github.png")));
+                                    : FXUtils.newBuiltinImage("/assets/img/github.png"))));
 
                     content.getContent().add(githubButton);
 
