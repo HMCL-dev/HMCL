@@ -691,6 +691,14 @@ public final class SettingsPage extends ScrollPane {
                 }
 
                 String mountPoint = drive.getMountPoint();
+                // 格式化显示：分区(C:\) 或 /home
+                String displayName;
+                if (OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS) {
+                    displayName = i18n("settings.launcher.system_info.storage.partition", mountPoint);
+                } else {
+                    displayName = mountPoint;
+                }
+
                 long total = drive.getTotal();
                 long used = drive.getUsed();
                 long available = drive.getAvailable();
@@ -702,7 +710,7 @@ public final class SettingsPage extends ScrollPane {
                 String fsInfo = fileSystem != null && !fileSystem.isEmpty() ? " - " + fileSystem : "";
 
                 storageInfo.append(String.format("%s %.2f / %.2f GiB (%.2f%% / %.2f%%)%s",
-                        mountPoint,
+                        displayName,
                         used / (1024.0 * 1024 * 1024),
                         total / (1024.0 * 1024 * 1024),
                         usedPercent,
