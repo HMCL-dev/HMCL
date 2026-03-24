@@ -20,7 +20,6 @@ package org.jackhuang.hmcl.ui.versions;
 import com.jfoenix.controls.JFXButton;
 import com.jfoenix.controls.JFXTextField;
 import javafx.beans.property.SimpleBooleanProperty;
-import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.geometry.Pos;
@@ -95,25 +94,35 @@ public final class WorldInfoPage extends SpinnerPane implements WorldManagePage.
             var worldNamePane = new LinePane();
             {
                 worldNamePane.setTitle(i18n("world.name"));
-                JFXTextField worldNameField = new JFXTextField();
-                setRightTextField(worldNamePane, worldNameField, 200);
+                // JFXTextField worldNameField = new JFXTextField();
+                Label worldNameLabel = new Label();
+                JFXButton editIconButton = FXUtils.newToggleButton4(SVG.EDIT, 20);
+
+                HBox hBox = new HBox(8);
+                hBox.setAlignment(Pos.CENTER_LEFT);
+                hBox.getChildren().addAll(worldNameLabel, editIconButton);
+                worldNamePane.setRight(hBox);
 
                 if (dataTag.get("LevelName") instanceof StringTag worldNameTag) {
-                    var worldName = new SimpleStringProperty(worldNameTag.get());
-                    FXUtils.bindString(worldNameField, worldName);
-                    worldNameField.getProperties().put(WorldInfoPage.class.getName() + ".worldNameProperty", worldName);
-                    worldName.addListener((observable, oldValue, newValue) -> {
-                        if (StringUtils.isNotBlank(newValue)) {
-                            try {
-                                world.setWorldName(newValue);
-                                worldManagePage.setTitle(i18n("world.manage.title", StringUtils.parseColorEscapes(world.getWorldName())));
-                            } catch (Exception e) {
-                                LOG.warning("Failed to set world name", e);
-                            }
-                        }
+                    worldNameLabel.setText(worldNameTag.get());
+                    editIconButton.setOnAction(event -> {
+                        WorldManageUIUtils.renameWorld(world,
+                                newWorldName -> {
+                                    worldNameLabel.setText(newWorldName);
+                                    worldManagePage.setTitle(i18n("world.manage.title", StringUtils.parseColorEscapes(newWorldName)));
+                                },
+                                newWorldPath -> {
+                                    try {
+                                        Controllers.getWorldManagePage().setWorld(new World(newWorldPath), worldManagePage.getProfile(), worldManagePage.getInstanceId());
+                                    } catch (IOException e) {
+                                        worldManagePage.closePageForLoadingFail();
+                                    }
+                                    worldManagePage.refresh();
+                                }
+                        );
                     });
                 } else {
-                    worldNameField.setDisable(true);
+                    editIconButton.setDisable(true);
                 }
             }
 

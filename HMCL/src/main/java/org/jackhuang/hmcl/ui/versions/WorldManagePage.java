@@ -127,7 +127,7 @@ public final class WorldManagePage extends DecoratorAnimatedPage implements Deco
         }
     }
 
-    private void closePageForLoadingFail() {
+    public void closePageForLoadingFail() {
         Platform.runLater(() -> {
             fireEvent(new PageCloseEvent());
             Controllers.dialog(i18n("world.load.fail"), null, MessageDialogPane.MessageType.ERROR);
@@ -176,6 +176,14 @@ public final class WorldManagePage extends DecoratorAnimatedPage implements Deco
 
     public Path getBackupsDir() {
         return backupsDir;
+    }
+
+    public Profile getProfile() {
+        return profile;
+    }
+
+    public String getInstanceId() {
+        return instanceId;
     }
 
     public boolean isReadOnly() {

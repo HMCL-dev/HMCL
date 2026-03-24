@@ -193,6 +193,10 @@ public final class WorldListPage extends ListPageBase<World> implements VersionP
         WorldManageUIUtils.copyWorld(world, this::refresh);
     }
 
+    public void rename(World world) {
+        WorldManageUIUtils.renameWorld(world, this::refresh);
+    }
+
     public void reveal(World world) {
         FXUtils.openFolder(world.getFile());
     }
@@ -389,10 +393,14 @@ public final class WorldListPage extends ListPageBase<World> implements VersionP
             IconedMenuItem duplicateMenuItem = new IconedMenuItem(SVG.CONTENT_COPY, i18n("world.duplicate"), () -> page.copy(world), popup);
             duplicateMenuItem.setDisable(worldLocked);
 
+            IconedMenuItem renameMenuItem = new IconedMenuItem(null, "rename", () -> page.rename(world), popup);
+            renameMenuItem.setDisable(worldLocked);
+
             popupMenu.getContent().addAll(
                     new MenuSeparator(),
                     exportMenuItem,
                     deleteMenuItem,
+                    renameMenuItem,
                     duplicateMenuItem
             );
 

@@ -299,9 +299,8 @@ public final class World {
         loadAndCheckWorldData();
     }
 
-    // The rename method is used to rename temporary world object during installation and copying,
-    // so there is no need to modify the `file` field.
-    public void rename(String newName) throws IOException {
+    // The moveTo method do not modify the `file` field.
+    public Path renameFolder(String newName) throws IOException {
         if (!Files.isDirectory(file))
             throw new IOException("Not a valid world directory");
 
@@ -311,6 +310,7 @@ public final class World {
 
         // then change the folder's name
         Files.move(file, file.resolveSibling(newName));
+        return file.resolveSibling(newName);
     }
 
     public void install(Path savesDir, String name) throws IOException {
@@ -346,7 +346,7 @@ public final class World {
                 }
 
             }
-            new World(worldDir).rename(name);
+            new World(worldDir).renameFolder(name);
         } else if (Files.isDirectory(file)) {
             FileUtils.copyDirectory(file, worldDir);
         }
@@ -380,7 +380,7 @@ public final class World {
         Path newPath = file.resolveSibling(newName);
         FileUtils.copyDirectory(file, newPath, path -> !path.contains("session.lock"));
         World newWorld = new World(newPath);
-        newWorld.rename(newName);
+        newWorld.renameFolder(newName);
     }
 
     public FileChannel lock() throws WorldLockedException {

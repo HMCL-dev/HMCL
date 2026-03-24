@@ -25,6 +25,7 @@ import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.construct.InputDialogPane;
 import org.jackhuang.hmcl.ui.construct.MessageDialogPane;
+import org.jackhuang.hmcl.ui.construct.PromptDialogPane;
 import org.jackhuang.hmcl.ui.wizard.SinglePageWizardProvider;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
@@ -33,6 +34,7 @@ import java.io.IOException;
 import java.nio.channels.FileChannel;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.function.Consumer;
 
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
@@ -46,22 +48,15 @@ public final class WorldManageUIUtils {
     }
 
     public static void delete(World world, Runnable runnable, FileChannel sessionLockChannel) {
-        Controllers.confirm(
-                i18n("button.remove.confirm"),
-                i18n("world.delete"),
-                () -> Task.runAsync(() -> closeSessionLockChannel(world, sessionLockChannel))
-                        .thenRunAsync(world::delete)
-                        .whenComplete(Schedulers.javafx(), (result, exception) -> {
-                            if (exception == null) {
-                                runnable.run();
-                            } else if (exception instanceof WorldLockedException) {
-                                Controllers.dialog(i18n("world.locked.failed"), null, MessageDialogPane.MessageType.WARNING);
-                            } else {
-                                Controllers.dialog(i18n("world.delete.failed", StringUtils.getStackTrace(exception)), null, MessageDialogPane.MessageType.WARNING);
-                            }
-                        }).start(),
-                null
-        );
+        Controllers.confirm(i18n("button.remove.confirm"), i18n("world.delete"), () -> Task.runAsync(() -> closeSessionLockChannel(world, sessionLockChannel)).thenRunAsync(world::delete).whenComplete(Schedulers.javafx(), (result, exception) -> {
+            if (exception == null) {
+                runnable.run();
+            } else if (exception instanceof WorldLockedException) {
+                Controllers.dialog(i18n("world.locked.failed"), null, MessageDialogPane.MessageType.WARNING);
+            } else {
+                Controllers.dialog(i18n("world.delete.failed", StringUtils.getStackTrace(exception)), null, MessageDialogPane.MessageType.WARNING);
+            }
+        }).start(), null);
     }
 
     public static void export(World world) {
@@ -89,43 +84,70 @@ public final class WorldManageUIUtils {
 
     public static void copyWorld(World world, Runnable runnable) {
         Path worldPath = world.getFile();
-        Controllers.dialog(new InputDialogPane(
-                i18n("world.duplicate.prompt"),
-                "",
-                (result, handler) -> {
-                    if (StringUtils.isBlank(result)) {
-                        handler.reject(i18n("world.duplicate.failed.empty_name"));
-                        return;
-                    }
+        Controllers.dialog(new InputDialogPane(i18n("world.duplicate.prompt"), "", (result, handler) -> {
+            if (StringUtils.isBlank(result)) {
+                handler.reject(i18n("world.duplicate.failed.empty_name"));
+                return;
+            }
 
-                    if (result.contains("/") || result.contains("\\") || !FileUtils.isNameValid(result)) {
-                        handler.reject(i18n("world.duplicate.failed.invalid_name"));
-                        return;
-                    }
+            if (result.contains("/") || result.contains("\\") || !FileUtils.isNameValid(result)) {
+                handler.reject(i18n("world.duplicate.failed.invalid_name"));
+                return;
+            }
 
-                    Path targetDir = worldPath.resolveSibling(result);
-                    if (Files.exists(targetDir)) {
-                        handler.reject(i18n("world.duplicate.failed.already_exists"));
-                        return;
-                    }
+            Path targetDir = worldPath.resolveSibling(result);
+            if (Files.exists(targetDir)) {
+                handler.reject(i18n("world.duplicate.failed.already_exists"));
+                return;
+            }
 
-                    Task.runAsync(Schedulers.io(), () -> world.copy(result))
-                            .thenAcceptAsync(Schedulers.javafx(), (Void) -> Controllers.showToast(i18n("world.duplicate.success.toast")))
-                            .thenAcceptAsync(Schedulers.javafx(), (Void) -> {
-                                        if (runnable != null) {
-                                            runnable.run();
-                                        }
-                                    }
-                            ).whenComplete(Schedulers.javafx(), (throwable) -> {
-                                if (throwable == null) {
-                                    handler.resolve();
-                                } else {
-                                    handler.reject(i18n("world.duplicate.failed"));
-                                    LOG.warning("Failed to duplicate world " + world.getFile(), throwable);
-                                }
-                            })
-                            .start();
-                }));
+            Task.runAsync(Schedulers.io(), () -> world.copy(result)).thenAcceptAsync(Schedulers.javafx(), (Void) -> Controllers.showToast(i18n("world.duplicate.success.toast"))).thenAcceptAsync(Schedulers.javafx(), (Void) -> {
+                if (runnable != null) {
+                    runnable.run();
+                }
+            }).whenComplete(Schedulers.javafx(), (throwable) -> {
+                if (throwable == null) {
+                    handler.resolve();
+                } else {
+                    handler.reject(i18n("world.duplicate.failed"));
+                    LOG.warning("Failed to duplicate world " + world.getFile(), throwable);
+                }
+            }).start();
+        }));
+    }
+
+    public static void renameWorld(World world, Runnable runnable) {
+        Consumer<String> notRenameFolderConsumer = newWorldName -> runnable.run();
+        Consumer<Path> renameFolderConsumer = newWorldPath -> runnable.run();
+        renameWorld(world, notRenameFolderConsumer, renameFolderConsumer);
+    }
+
+    public static void renameWorld(World world, Consumer<String> notRenameFolderConsumer, Consumer<Path> renameFolderConsumer) {
+        Controllers.prompt(new PromptDialogPane.Builder(i18n("version.manage.duplicate.prompt"), (res, handler) -> {
+            String newWorldName = ((PromptDialogPane.Builder.StringQuestion) res.get(0)).getValue();
+            boolean renameFolder = ((PromptDialogPane.Builder.BooleanQuestion) res.get(1)).getValue();
+            if (StringUtils.isNotBlank(newWorldName)) {
+
+                try {
+                    if (renameFolder) {
+                        if (renameFolderConsumer != null) {
+                            renameFolderConsumer.accept(world.renameFolder(newWorldName));
+                        }
+                    } else {
+                        world.setWorldName(newWorldName);
+                        if (notRenameFolderConsumer != null) {
+                            notRenameFolderConsumer.accept(newWorldName);
+                        }
+                    }
+                    handler.resolve();
+                } catch (IOException e) {
+                    LOG.warning("Failed to set world name", e);
+                    handler.reject(i18n("world.duplicate.failed"));
+                }
+            } else {
+                handler.reject(i18n("world.duplicate.failed"));
+            }
+        }).addQuestion(new PromptDialogPane.Builder.StringQuestion(null, "")).addQuestion(new PromptDialogPane.Builder.BooleanQuestion("重命名世界文件夹", false)));
     }
 
     public static void closeSessionLockChannel(World world, FileChannel sessionLockChannel) throws IOException {
