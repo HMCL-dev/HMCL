@@ -506,6 +506,12 @@ public final class SettingsPage extends ScrollPane {
         Label titleLabel = new Label(i18n("settings.launcher.system_info.title"));
         titleLabel.setStyle("-fx-font-size: 14px; -fx-font-weight: bold;");
 
+        JFXButton copyButton = new JFXButton();
+        copyButton.setGraphic(SVG.CONTENT_COPY.createIcon(16));
+        copyButton.setText(i18n("button.copy"));
+        copyButton.getStyleClass().add("jfx-tool-bar-button");
+        copyButton.setOnAction(e -> copySystemInfo());
+
         JFXButton refreshButton = new JFXButton();
         refreshButton.setGraphic(SVG.REFRESH.createIcon(16));
         refreshButton.setText(i18n("button.refresh"));
@@ -515,7 +521,7 @@ public final class SettingsPage extends ScrollPane {
         Region spacer = new Region();
         HBox.setHgrow(spacer, Priority.ALWAYS);
 
-        titleRow.getChildren().addAll(titleLabel, spacer, refreshButton);
+        titleRow.getChildren().addAll(titleLabel, spacer, copyButton, refreshButton);
         container.getChildren().add(titleRow);
 
         // 刷新系统信息
@@ -806,6 +812,41 @@ public final class SettingsPage extends ScrollPane {
         // 程序语言
         String locale = I18n.getLocale().getLocale().toLanguageTag();
         addSystemInfoRow(systemInfoContainer, i18n("settings.launcher.system_info.language"), locale);
+    }
+
+    private void copySystemInfo() {
+        if (systemInfoContainer == null) return;
+
+        StringBuilder sb = new StringBuilder();
+        // 从第1个开始（跳过标题行）
+        for (int i = 1; i < systemInfoContainer.getChildren().size(); i++) {
+            Node node = systemInfoContainer.getChildren().get(i);
+            if (node instanceof HBox row) {
+                String label = "";
+                String value = "";
+                for (Node child : row.getChildren()) {
+                    if (child instanceof Label l) {
+                        String text = l.getText();
+                        if (text != null) {
+                            if (text.endsWith(":")) {
+                                label = text.substring(0, text.length() - 1);
+                            } else {
+                                value = text;
+                            }
+                        }
+                    }
+                }
+                if (!label.isEmpty() && !value.isEmpty()) {
+                    sb.append(label).append(": ").append(value.replace("\n", "\n  ")).append("\n");
+                }
+            }
+        }
+
+        if (sb.length() > 0) {
+            javafx.scene.input.ClipboardContent content = new javafx.scene.input.ClipboardContent();
+            content.putString(sb.toString());
+            javafx.scene.input.Clipboard.getSystemClipboard().setContent(content);
+        }
     }
 
     private void addSystemInfoRow(VBox container, String label, String value) {
