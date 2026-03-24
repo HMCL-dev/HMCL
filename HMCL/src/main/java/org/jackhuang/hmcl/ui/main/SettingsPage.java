@@ -27,6 +27,7 @@ import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.geometry.VPos;
 import javafx.scene.Cursor;
+import javafx.scene.Node;
 import javafx.scene.control.Label;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.control.ToggleGroup;
@@ -52,10 +53,17 @@ import org.jackhuang.hmcl.util.i18n.I18n;
 import org.jackhuang.hmcl.util.i18n.SupportedLocale;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.io.IOUtils;
+import org.jackhuang.hmcl.util.platform.OperatingSystem;
+import org.jackhuang.hmcl.util.platform.SystemInfo;
+import org.jackhuang.hmcl.util.platform.hardware.CentralProcessor;
+import org.jackhuang.hmcl.util.platform.hardware.GraphicsCard;
+import org.jackhuang.hmcl.util.platform.hardware.PhysicalMemoryStatus;
 import org.tukaani.xz.XZInputStream;
 
+import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -98,6 +106,8 @@ public final class SettingsPage extends ScrollPane {
                     githubButton.setLeading(FXUtils.newBuiltinImage("/assets/img/github.png"));
 
                     content.getContent().add(githubButton);
+
+                    content.getContent().add(createSystemInfoSection());
 
                     return content.getContent();
                 });
@@ -465,5 +475,150 @@ public final class SettingsPage extends ScrollPane {
         if (commonDirectory != null) {
             FileUtils.cleanDirectoryQuietly(Path.of(commonDirectory, "cache"));
         }
+    }
+
+    private Node createSystemInfoSection() {
+        VBox container = new VBox(4);
+        container.setPadding(new Insets(8, 0, 0, 0));
+
+        // 主机名
+        String hostname = System.getProperty("user.name");
+        addSystemInfoRow(container, i18n("settings.launcher.system_info.hostname"), hostname);
+
+        // 操作系统
+        String osName = OperatingSystem.SYSTEM_NAME;
+        String osVersion = OperatingSystem.SYSTEM_VERSION.toString();
+        String osInfo = osName + " " + osVersion;
+        if (OperatingSystem.CURRENT_OS == OperatingSystem.LINUX) {
+            String prettyName = OperatingSystem.OS_RELEASE_PRETTY_NAME;
+            if (prettyName != null && !prettyName.isEmpty()) {
+                osInfo = prettyName + " (" + osVersion + ")";
+            }
+        }
+        addSystemInfoRow(container, i18n("settings.launcher.system_info.os"), osInfo);
+
+        // 主板型号 (Windows only)
+        String motherboard = i18n("settings.launcher.system_info.unknown");
+        if (OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS) {
+            try {
+                Process process = Runtime.getRuntime().exec(new String[]{"wmic", "baseboard", "get", "product"});
+                BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
+                String line;
+                while ((line = reader.readLine()) != null) {
+                    line = line.trim();
+                    if (!line.isEmpty() && !line.equalsIgnoreCase("Product")) {
+                        motherboard = line;
+                        break;
+                    }
+                }
+                process.destroy();
+            } catch (Exception ignored) {
+            }
+        }
+        addSystemInfoRow(container, i18n("settings.launcher.system_info.motherboard"), motherboard);
+
+        // 系统内核
+        String kernel = System.getProperty("os.name") + " " + System.getProperty("os.version");
+        if (OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS) {
+            kernel = "NT " + osVersion;
+        }
+        addSystemInfoRow(container, i18n("settings.launcher.system_info.kernel"), kernel);
+
+        // 主程序窗口大小
+        String windowSize = "";
+        try {
+            javafx.stage.Stage stage = Controllers.getStage();
+            if (stage != null) {
+                windowSize = (int) stage.getWidth() + " x " + (int) stage.getHeight() + " px";
+            }
+        } catch (Exception ignored) {
+        }
+        if (windowSize.isEmpty()) {
+            windowSize = i18n("settings.launcher.system_info.unknown");
+        }
+        addSystemInfoRow(container, i18n("settings.launcher.system_info.window_size"), windowSize);
+
+        // Java 版本
+        String javaVendor = System.getProperty("java.vendor", "");
+        String javaVersion = System.getProperty("java.version", "");
+        String javaInfo = javaVersion + " (" + javaVendor + ")";
+        addSystemInfoRow(container, i18n("settings.launcher.system_info.java"), javaInfo);
+
+        // JavaFX 版本
+        String jfxVersion = System.getProperty("javafx.version", i18n("settings.launcher.system_info.unknown"));
+        addSystemInfoRow(container, i18n("settings.launcher.system_info.javafx"), jfxVersion);
+
+        // CPU 信息
+        CentralProcessor cpu = SystemInfo.getCentralProcessor();
+        if (cpu != null) {
+            String cpuCores = "";
+            var cores = cpu.getCores();
+            if (cores != null) {
+                cpuCores = "\n    " + i18n("settings.launcher.system_info.cpu.cores", cores.physical, cores.logical);
+            }
+            addSystemInfoRow(container, i18n("settings.launcher.system_info.cpu"), cpu.getName() + cpuCores);
+        } else {
+            addSystemInfoRow(container, i18n("settings.launcher.system_info.cpu"), i18n("settings.launcher.system_info.unknown"));
+        }
+
+        // GPU 信息
+        List<GraphicsCard> gpus = SystemInfo.getGraphicsCards();
+        String gpuInfo;
+        if (gpus != null && !gpus.isEmpty()) {
+            StringBuilder sb = new StringBuilder();
+            for (int i = 0; i < gpus.size(); i++) {
+                if (i > 0) sb.append("\n");
+                sb.append(gpus.get(i).getName());
+            }
+            gpuInfo = sb.toString();
+        } else {
+            gpuInfo = i18n("settings.launcher.system_info.unknown");
+        }
+        addSystemInfoRow(container, i18n("settings.launcher.system_info.gpu"), gpuInfo);
+
+        // 内存信息
+        PhysicalMemoryStatus memStatus = SystemInfo.getPhysicalMemoryStatus();
+        if (memStatus != PhysicalMemoryStatus.INVALID) {
+            long total = memStatus.getTotal();
+            long used = memStatus.getUsed();
+            String memInfo = String.format("%d / %d GB (%.1f%%)",
+                    used / (1024 * 1024 * 1024),
+                    total / (1024 * 1024 * 1024),
+                    total > 0 ? (double) used / total * 100 : 0);
+            addSystemInfoRow(container, i18n("settings.launcher.system_info.memory"), memInfo);
+        }
+
+        // 网卡信息
+        String networkInfo = i18n("settings.launcher.system_info.unknown");
+        try {
+            java.net.NetworkInterface networkInterface = java.net.NetworkInterface.getNetworkInterfaces().nextElement();
+            if (networkInterface != null) {
+                java.net.InetAddress addr = java.net.InetAddress.getLocalHost();
+                networkInfo = addr.getHostAddress();
+            }
+        } catch (Exception ignored) {
+        }
+        addSystemInfoRow(container, i18n("settings.launcher.system_info.network"), networkInfo);
+
+        // 程序语言
+        String locale = I18n.getLocale().getLocale().toLanguageTag();
+        addSystemInfoRow(container, i18n("settings.launcher.system_info.language"), locale);
+
+        return container;
+    }
+
+    private void addSystemInfoRow(VBox container, String label, String value) {
+        HBox row = new HBox();
+        row.setSpacing(8);
+
+        Label labelNode = new Label(label + ":");
+        labelNode.setMinWidth(120);
+        labelNode.setStyle("-fx-font-weight: bold;");
+
+        Label valueNode = new Label(value != null ? value : i18n("settings.launcher.system_info.unknown"));
+        valueNode.setWrapText(true);
+
+        row.getChildren().addAll(labelNode, valueNode);
+        container.getChildren().add(row);
     }
 }
