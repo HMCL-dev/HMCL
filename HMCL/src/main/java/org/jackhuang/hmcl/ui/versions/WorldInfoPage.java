@@ -114,7 +114,7 @@ public final class WorldInfoPage extends SpinnerPane implements WorldManagePage.
                         WorldManageUIUtils.renameWorld(world,
                                 newWorldName -> {
                                     worldNameLabel.setText(newWorldName);
-                                    worldManagePage.setTitle(i18n("world.manage.title", StringUtils.parseColorEscapes(newWorldName)));
+                                    worldManagePage.setTitle(newWorldName);
                                 },
                                 newWorldPath -> {
                                     try {

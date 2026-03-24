@@ -84,9 +84,7 @@ public final class WorldManageUIUtils {
     }
 
     public static void renameWorld(World world, Runnable runnable) {
-        Consumer<String> notRenameFolderConsumer = newWorldName -> runnable.run();
-        Consumer<Path> renameFolderConsumer = newWorldPath -> runnable.run();
-        renameWorld(world, notRenameFolderConsumer, renameFolderConsumer);
+        renameWorld(world, newWorldName -> runnable.run(), newWorldPath -> runnable.run());
     }
 
     public static void renameWorld(World world, Consumer<String> notRenameFolderConsumer, Consumer<Path> renameFolderConsumer) {

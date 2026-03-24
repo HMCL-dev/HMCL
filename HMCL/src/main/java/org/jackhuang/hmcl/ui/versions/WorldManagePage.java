@@ -97,8 +97,6 @@ public final class WorldManagePage extends DecoratorAnimatedPage implements Deco
             this.addEventHandler(Navigator.NavigationEvent.NAVIGATED, event -> closePageForLoadingFail());
         }
 
-        this.state.set(new State(i18n("world.manage.title", StringUtils.parseColorEscapes(world.getWorldName())), null, true, true, true));
-
         Optional<String> gameVersion = profile.getRepository().getGameVersion(instanceId);
         supportQuickPlay = World.supportsQuickPlay(GameVersionNumber.asGameVersion(gameVersion));
         return this;
@@ -119,6 +117,8 @@ public final class WorldManagePage extends DecoratorAnimatedPage implements Deco
             closePageForLoadingFail();
             return;
         }
+
+        setTitle(world.getWorldName());
 
         for (var tab : header.getTabs()) {
             if (tab.getNode() instanceof WorldRefreshable r) {
@@ -174,8 +174,8 @@ public final class WorldManagePage extends DecoratorAnimatedPage implements Deco
         return state;
     }
 
-    public void setTitle(String title) {
-        this.state.set(new DecoratorPage.State(title, null, true, true, true));
+    public void setTitle(String worldName) {
+        this.state.set(new DecoratorPage.State(i18n("world.manage.title", StringUtils.parseColorEscapes(worldName)), null, true, true, true));
     }
 
     public World getWorld() {
