@@ -71,7 +71,8 @@ public class FeedbackPage extends SpinnerPane {
             String githubBugReportUrl = NetworkUtils.withQuery("https://github.com/HMCL-dev/HMCL/issues/new", Map.of(
                     "template", "bug-report.yml",
                     "operating-system", OperatingSystem.CURRENT_OS.getCheckedName(),
-                    "operating-system-full-name", OperatingSystem.SYSTEM_NAME + " / " + OperatingSystem.SYSTEM_VERSION.getVersion()
+                    "operating-system-full-name", OperatingSystem.SYSTEM_NAME + " / " + OperatingSystem.SYSTEM_VERSION.getVersion(),
+                    "version", Metadata.VERSION
             ));
             var githubBugReport = LineButton.createExternalLinkButton(githubBugReportUrl);
             githubBugReport.setLargeTitle(true);
