@@ -30,6 +30,11 @@ import org.jackhuang.hmcl.ui.construct.SpinnerPane;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 import org.jackhuang.hmcl.Metadata;
+import org.jackhuang.hmcl.util.platform.OperatingSystem;
+
+import java.net.URLEncoder;
+import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 
 public class FeedbackPage extends SpinnerPane {
 
@@ -64,18 +69,33 @@ public class FeedbackPage extends SpinnerPane {
 
         ComponentList feedback = new ComponentList();
         {
-            var github = LineButton.createExternalLinkButton("https://github.com/HMCL-dev/HMCL/issues/new/choose");
-            github.setLargeTitle(true);
-            github.setTitle(i18n("contact.feedback.github"));
-            github.setSubtitle(i18n("contact.feedback.github.statement"));
+            Charset charset = StandardCharsets.UTF_8;
+            String githubBugReportUrl = "https://github.com/HMCL-dev/HMCL/issues/new?template=bug-report.yml&operating-system=" +
+                    URLEncoder.encode(OperatingSystem.CURRENT_OS.getCheckedName(), charset) +
+                    "&operating-system-full-name=" +
+                    URLEncoder.encode(OperatingSystem.SYSTEM_NAME, charset) +
+                    URLEncoder.encode(" / ", charset) +
+                    URLEncoder.encode(OperatingSystem.SYSTEM_VERSION.getVersion(), charset);
+            var githubBugReport = LineButton.createExternalLinkButton(githubBugReportUrl);
+            githubBugReport.setLargeTitle(true);
+            githubBugReport.setTitle(i18n("contact.feedback.github.bug_report"));
+            githubBugReport.setSubtitle(i18n("contact.feedback.github.bug_report.statement"));
+
+            var githubIssue = LineButton.createExternalLinkButton("https://github.com/HMCL-dev/HMCL/issues/new/choose");
+            githubIssue.setLargeTitle(true);
+            githubIssue.setTitle(i18n("contact.feedback.github.issue"));
+            githubIssue.setSubtitle(i18n("contact.feedback.github.issue.statement"));
 
             holder.add(FXUtils.onWeakChangeAndOperate(Themes.darkModeProperty(), darkMode -> {
-                github.setLeading(darkMode
+                githubBugReport.setLeading(darkMode
+                        ? FXUtils.newBuiltinImage("/assets/img/github-white.png")
+                        : FXUtils.newBuiltinImage("/assets/img/github.png"));
+                githubIssue.setLeading(darkMode
                         ? FXUtils.newBuiltinImage("/assets/img/github-white.png")
                         : FXUtils.newBuiltinImage("/assets/img/github.png"));
             }));
 
-            feedback.getContent().setAll(github);
+            feedback.getContent().setAll(githubBugReport, githubIssue);
         }
 
         content.getChildren().addAll(
