@@ -18,6 +18,7 @@
 package org.jackhuang.hmcl.ui;
 
 import com.jfoenix.controls.JFXButton;
+import com.jfoenix.controls.JFXCheckBox;
 import com.jfoenix.controls.JFXDialogLayout;
 import com.jfoenix.validation.base.ValidatorBase;
 import javafx.animation.KeyFrame;
@@ -77,6 +78,7 @@ import java.nio.file.Path;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
+import java.util.function.BiConsumer;
 
 import static org.jackhuang.hmcl.setting.ConfigHolder.config;
 import static org.jackhuang.hmcl.setting.ConfigHolder.globalConfig;
@@ -556,6 +558,21 @@ public final class Controllers {
                 cancel.run();
         });
         timeline.play();
+    }
+
+    ///  @param consumer Consumer for the result, with the first boolean for yes or no and the second for whether no more asking is needed
+    /// @see EnumAskable
+    public static void ask(String text, String title, BiConsumer<Boolean, Boolean> consumer) {
+        var check = new JFXCheckBox(i18n("message.do_not_ask_again"));
+        var dialog = new MessageDialogPane.Builder(
+                text,
+                title,
+                MessageDialogPane.MessageType.QUESTION
+        )
+                .addActionNoClosing(check)
+                .yesOrNo(() -> consumer.accept(true, check.isSelected()), () -> consumer.accept(false, check.isSelected()))
+                .build();
+        dialog(dialog);
     }
 
     public static CompletableFuture<String> prompt(String title, FutureCallback<String> onResult) {

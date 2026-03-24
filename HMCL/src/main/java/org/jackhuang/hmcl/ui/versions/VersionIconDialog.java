@@ -24,9 +24,7 @@ import javafx.scene.layout.FlowPane;
 import javafx.stage.FileChooser;
 import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.event.Event;
-import org.jackhuang.hmcl.setting.Profile;
-import org.jackhuang.hmcl.setting.VersionIconType;
-import org.jackhuang.hmcl.setting.VersionSetting;
+import org.jackhuang.hmcl.setting.*;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
@@ -98,31 +96,47 @@ public class VersionIconDialog extends DialogPane {
         chooser.getExtensionFilters().add(FXUtils.getImageExtensionFilter());
         Path selectedFile = FileUtils.toPath(chooser.showOpenDialog(Controllers.getStage()));
         if (selectedFile != null) {
-            try {
-                Path dest;
-                if (GAME_ICONS_DIR.equals(selectedFile.getParent())) {
-                    dest = selectedFile;
-                } else {
-                    dest = GAME_ICONS_DIR.resolve(selectedFile.getFileName());
-                    int i = 1;
-                    String name = FileUtils.getNameWithoutExtension(selectedFile);
-                    String ext = FileUtils.getExtension(selectedFile);
-                    while (Files.exists(dest)) {
-                        dest = GAME_ICONS_DIR.resolve(name + " " + i + "." + ext);
-                        i++;
-                    }
-                    FileUtils.copyFile(selectedFile, dest);
-                }
-                profile.getRepository().setVersionIconFile(versionId, dest);
-
-                if (vs != null) {
-                    vs.setVersionIcon(VersionIconType.DEFAULT);
-                }
-
-                onAccept();
-            } catch (IOException | IllegalArgumentException e) {
-                LOG.error("Failed to set icon file: " + selectedFile, e);
+            EnumAskable saveOption = ConfigHolder.config().getSaveCustomGameIcons();
+            if (saveOption == EnumAskable.ASK && !GAME_ICONS_DIR.equals(selectedFile.getParent())) {
+                Controllers.ask(
+                        i18n("settings.icon.save_custom"),
+                        i18n("settings.launcher.save_custom_game_icons"),
+                        (res, doNotAsk) -> {
+                            if (doNotAsk) ConfigHolder.config().setSaveCustomGameIcons(res ? EnumAskable.TRUE : EnumAskable.FALSE);
+                            setCustomIcon(selectedFile, res);
+                        }
+                );
+            } else {
+                setCustomIcon(selectedFile, saveOption == EnumAskable.TRUE);
             }
+        }
+    }
+
+    private void setCustomIcon(Path selectedFile, boolean save) {
+        try {
+            Path dest;
+            if (GAME_ICONS_DIR.equals(selectedFile.getParent()) || !save) {
+                dest = selectedFile;
+            } else {
+                dest = GAME_ICONS_DIR.resolve(selectedFile.getFileName());
+                int i = 1;
+                String name = FileUtils.getNameWithoutExtension(selectedFile);
+                String ext = FileUtils.getExtension(selectedFile);
+                while (Files.exists(dest)) {
+                    dest = GAME_ICONS_DIR.resolve(name + " " + i + "." + ext);
+                    i++;
+                }
+                FileUtils.copyFile(selectedFile, dest);
+            }
+            profile.getRepository().setVersionIconFile(versionId, dest);
+
+            if (vs != null) {
+                vs.setVersionIcon(VersionIconType.DEFAULT);
+            }
+
+            onAccept();
+        } catch (IOException | IllegalArgumentException e) {
+            LOG.error("Failed to set icon file: " + selectedFile, e);
         }
     }
 
@@ -165,6 +179,11 @@ public class VersionIconDialog extends DialogPane {
         FXUtils.setLimitWidth(container, 36);
         FXUtils.setLimitHeight(container, 36);
         FXUtils.onClicked(container, () -> {
+            try {
+                profile.getRepository().setVersionIconFile(versionId, path);
+            } catch (IOException e) {
+                LOG.error("Failed to set icon file: " + path, e);
+            }
             if (vs != null) {
                 vs.setVersionIcon(VersionIconType.DEFAULT);
                 onAccept();
