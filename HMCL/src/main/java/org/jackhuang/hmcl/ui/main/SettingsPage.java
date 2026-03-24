@@ -674,7 +674,7 @@ public final class SettingsPage extends ScrollPane {
         if (memStatus != PhysicalMemoryStatus.INVALID) {
             long total = memStatus.getTotal();
             long used = memStatus.getUsed();
-            String memInfo = String.format("%.2f / %.2f GiB (%.2f%%)",
+            String memInfo = String.format("%.2f GiB / %.2f GiB (%.2f%%)",
                     used / (1024.0 * 1024 * 1024),
                     total / (1024.0 * 1024 * 1024),
                     total > 0 ? (double) used / total * 100 : 0);
@@ -696,7 +696,7 @@ public final class SettingsPage extends ScrollPane {
                 if (OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS) {
                     displayName = i18n("settings.launcher.system_info.storage.partition", mountPoint);
                 } else {
-                    displayName = mountPoint;
+                    displayName = i18n("settings.launcher.system_info.storage.mount_point", mountPoint);
                 }
 
                 long total = drive.getTotal();
@@ -708,7 +708,7 @@ public final class SettingsPage extends ScrollPane {
 
                 String fsInfo = fileSystem != null && !fileSystem.isEmpty() ? " - " + fileSystem : "";
 
-                storageInfo.append(String.format("%s %.2f / %.2f GiB (%.2f%%)%s",
+                storageInfo.append(String.format("%s %.2f GiB / %.2f GiB (%.2f%%)%s",
                         displayName,
                         used / (1024.0 * 1024 * 1024),
                         total / (1024.0 * 1024 * 1024),

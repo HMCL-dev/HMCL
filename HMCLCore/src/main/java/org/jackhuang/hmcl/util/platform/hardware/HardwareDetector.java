@@ -133,6 +133,49 @@ public class HardwareDetector {
                             continue;
                         }
 
+                        // Only show user-relevant mount points
+                        // Include: root (/), home, media, mnt, run, tmp, var, opt, srv, and user-specific paths
+                        // Exclude: /snap, /boot, /boot/efi, /usr (only include if user home is there)
+                        String userHome = System.getProperty("user.home");
+
+                        // Skip system directories that users typically don't interact with
+                        if (mountPoint.startsWith("/snap") ||
+                            mountPoint.startsWith("/boot") ||
+                            mountPoint.startsWith("/sys") ||
+                            mountPoint.startsWith("/proc") ||
+                            mountPoint.startsWith("/dev") ||
+                            mountPoint.startsWith("/run") && !mountPoint.equals("/run")) {
+                            continue;
+                        }
+
+                        // Only include specific user-relevant paths
+                        if (!mountPoint.equals("/") &&
+                            !mountPoint.startsWith("/home") &&
+                            !mountPoint.startsWith("/media") &&
+                            !mountPoint.startsWith("/mnt") &&
+                            !mountPoint.startsWith("/tmp") &&
+                            !mountPoint.startsWith("/var") &&
+                            !mountPoint.startsWith("/opt") &&
+                            !mountPoint.startsWith("/srv") &&
+                            !mountPoint.startsWith(userHome)) {
+                            // Also include /usr if it's directly mounted
+                            if (!mountPoint.equals("/usr") && !mountPoint.startsWith("/usr/")) {
+                                continue;
+                            }
+                        }
+
+                        // Skip if it's a subdirectory of already-added mount point
+                        boolean isSubDir = false;
+                        for (StorageStatus.DriveInfo existing : drives) {
+                            if (mountPoint.startsWith(existing.getMountPoint() + "/")) {
+                                isSubDir = true;
+                                break;
+                            }
+                        }
+                        if (isSubDir) {
+                            continue;
+                        }
+
                         try {
                             File mountFile = new File(mountPoint);
                             if (mountFile.exists()) {
