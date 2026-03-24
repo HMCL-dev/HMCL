@@ -111,7 +111,17 @@ public final class SettingsPage extends ScrollPane {
 
                     return content.getContent();
                 });
-                sponsorPane.setTitle(i18n("sponsor.hmcl"));
+
+                String sponsorText = i18n("sponsor.hmcl");
+                int bracketStart = sponsorText.indexOf('[');
+                int bracketEnd = sponsorText.lastIndexOf(']');
+                if (bracketStart >= 0 && bracketEnd > bracketStart) {
+                    sponsorPane.setTitle(sponsorText.substring(0, bracketStart).trim());
+                    sponsorPane.setSubtitle(sponsorText.substring(bracketStart + 1, bracketEnd).trim());
+                    sponsorPane.setHasSubtitle(true);
+                } else {
+                    sponsorPane.setTitle(sponsorText);
+                }
                 settingsPane.getContent().add(sponsorPane);
             }
 
