@@ -812,6 +812,19 @@ public final class SettingsPage extends ScrollPane {
         // 程序语言
         String locale = I18n.getLocale().getLocale().toLanguageTag();
         addSystemInfoRow(systemInfoContainer, i18n("settings.launcher.system_info.language"), locale);
+
+        // 导出设备信息按钮
+        Region spacer = new Region();
+        VBox.setVgrow(spacer, Priority.ALWAYS);
+        systemInfoContainer.getChildren().add(spacer);
+
+        JFXButton exportButton = FXUtils.newBorderButton(i18n("settings.launcher.export_system_info.button"));
+        exportButton.setOnAction(e -> exportSystemInfo());
+
+        HBox buttonContainer = new HBox(exportButton);
+        buttonContainer.setAlignment(Pos.CENTER);
+        buttonContainer.setPadding(new Insets(20, 0, 10, 0));
+        systemInfoContainer.getChildren().add(buttonContainer);
     }
 
     private void copySystemInfo() {
@@ -846,6 +859,57 @@ public final class SettingsPage extends ScrollPane {
             javafx.scene.input.ClipboardContent content = new javafx.scene.input.ClipboardContent();
             content.putString(sb.toString());
             javafx.scene.input.Clipboard.getSystemClipboard().setContent(content);
+        }
+    }
+
+    private void exportSystemInfo() {
+        if (systemInfoContainer == null) return;
+
+        StringBuilder sb = new StringBuilder();
+        sb.append("Hello Minecraft! Launcher - System Information Export\n");
+        sb.append("=".repeat(50)).append("\n");
+        sb.append("Export Time: ").append(java.time.LocalDateTime.now().format(
+                java.time.format.DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH-mm-ss"))).append("\n");
+        sb.append("=".repeat(50)).append("\n\n");
+
+        for (int i = 1; i < systemInfoContainer.getChildren().size(); i++) {
+            Node node = systemInfoContainer.getChildren().get(i);
+            if (node instanceof HBox row) {
+                String label = "";
+                String value = "";
+                for (Node child : row.getChildren()) {
+                    if (child instanceof Label l) {
+                        String text = l.getText();
+                        if (text != null) {
+                            if (text.endsWith(":")) {
+                                label = text.substring(0, text.length() - 1);
+                            } else {
+                                value = text;
+                            }
+                        }
+                    }
+                }
+                if (!label.isEmpty() && !value.isEmpty()) {
+                    sb.append(label).append(": ").append(value.replace("\n", "\n  ")).append("\n");
+                }
+            }
+        }
+
+        if (sb.length() > 0) {
+            try {
+                String fileName = "hmcl-exported-systeminfo-" +
+                        java.time.LocalDateTime.now().format(java.time.format.DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH-mm-ss")) +
+                        ".log";
+                java.nio.file.Path exportPath = java.nio.file.Paths.get(
+                        org.jackhuang.hmcl.util.platform.OperatingSystem.getWorkingDirectory(".").toString(), fileName);
+                java.nio.file.Files.writeString(exportPath, sb.toString());
+                org.jackhuang.hmcl.ui.Controllers.dialog(
+                        i18n("settings.launcher.export_system_info.success", exportPath.toString()));
+            } catch (Exception e) {
+                org.jackhuang.hmcl.util.logging.Logger.LOG.warning("Failed to export system info", e);
+                org.jackhuang.hmcl.ui.Controllers.dialog(
+                        i18n("settings.launcher.export_system_info.failed"));
+            }
         }
     }
 
