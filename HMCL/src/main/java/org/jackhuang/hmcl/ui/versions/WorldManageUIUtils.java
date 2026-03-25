@@ -67,8 +67,12 @@ public final class WorldManageUIUtils {
     }
 
     public static void copyWorld(World world, Runnable runnable) {
-        Controllers.dialog(new InputDialogPane(i18n("world.duplicate.prompt"), world.getWorldName(), (result, handler) -> {
-            Task.runAsync(Schedulers.io(), () -> world.copy(result)).thenAcceptAsync(Schedulers.javafx(), (Void) -> Controllers.showToast(i18n("world.duplicate.success.toast"))).thenAcceptAsync(Schedulers.javafx(), (Void) -> {
+        Controllers.dialog(new InputDialogPane(i18n("world.duplicate.prompt"), world.getWorldName(), (newWorldName, handler) -> {
+            if (StringUtils.isBlank(newWorldName)) {
+                newWorldName = i18n("world.name.default");
+            }
+            String finalNewWorldName = newWorldName;
+            Task.runAsync(Schedulers.io(), () -> world.copy(finalNewWorldName)).thenAcceptAsync(Schedulers.javafx(), (Void) -> Controllers.showToast(i18n("world.duplicate.success.toast"))).thenAcceptAsync(Schedulers.javafx(), (Void) -> {
                 if (runnable != null) {
                     runnable.run();
                 }
@@ -91,30 +95,30 @@ public final class WorldManageUIUtils {
         Controllers.prompt(new PromptDialogPane.Builder(i18n("world.rename.prompt"), (res, handler) -> {
             String newWorldName = ((PromptDialogPane.Builder.StringQuestion) res.get(0)).getValue();
             boolean renameFolder = ((PromptDialogPane.Builder.BooleanQuestion) res.get(1)).getValue();
-            if (StringUtils.isNotBlank(newWorldName)) {
-                if (newWorldName.equals(world.getWorldName())) {
-                    handler.resolve();
-                    return;
-                }
 
-                try {
-                    if (renameFolder) {
-                        if (renameFolderConsumer != null) {
-                            renameFolderConsumer.accept(world.rename(newWorldName));
-                        }
-                    } else {
-                        world.setWorldName(newWorldName);
-                        if (notRenameFolderConsumer != null) {
-                            notRenameFolderConsumer.accept(newWorldName);
-                        }
+            if (StringUtils.isBlank(newWorldName)) {
+                newWorldName = i18n("world.name.default");
+            }
+            if (newWorldName.equals(world.getWorldName())) {
+                handler.resolve();
+                return;
+            }
+
+            try {
+                if (renameFolder) {
+                    if (renameFolderConsumer != null) {
+                        renameFolderConsumer.accept(world.rename(newWorldName));
                     }
-                    handler.resolve();
-                } catch (IOException e) {
-                    LOG.warning("Failed to set world name", e);
-                    handler.reject(i18n("world.duplicate.failed"));
+                } else {
+                    world.setWorldName(newWorldName);
+                    if (notRenameFolderConsumer != null) {
+                        notRenameFolderConsumer.accept(newWorldName);
+                    }
                 }
-            } else {
-                handler.reject(i18n("world.duplicate.failed"));
+                handler.resolve();
+            } catch (IOException e) {
+                LOG.warning("Failed to set world name", e);
+                handler.reject(i18n("world.rename.failed"));
             }
         })
                 .addQuestion(new PromptDialogPane.Builder.StringQuestion(null, world.getWorldName()))
