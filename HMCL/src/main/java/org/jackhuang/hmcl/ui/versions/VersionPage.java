@@ -166,8 +166,9 @@ public class VersionPage extends DecoratorAnimatedPage implements DecoratorPage 
     }
 
     private void clearLibraries() {
+        var libraries = getProfile().getRepository().getBaseDirectory().resolve("libraries");
         Task.runAsync(Schedulers.io(), () -> {
-            FileUtils.deleteDirectoryQuietly(getProfile().getRepository().getBaseDirectory().resolve("libraries"));
+            FileUtils.deleteDirectoryQuietly(libraries);
         }).whenComplete(Schedulers.javafx(), (exception) -> {
             if (exception != null) {
                 Controllers.dialog(i18n("message.failed") + StringUtils.getStackTrace(exception), i18n("message.error"), MessageDialogPane.MessageType.ERROR);
@@ -176,15 +177,15 @@ public class VersionPage extends DecoratorAnimatedPage implements DecoratorPage 
     }
 
     private void clearAssets() {
+        HMCLGameRepository baseDirectory = getProfile().getRepository();
         Task.runAsync(Schedulers.io(), () -> {
-            HMCLGameRepository baseDirectory = getProfile().getRepository();
             FileUtils.deleteDirectoryQuietly(baseDirectory.getBaseDirectory().resolve("assets"));
             if (version.get() != null) {
                 FileUtils.deleteDirectoryQuietly(baseDirectory.getRunDirectory(version.get().getVersion()).resolve("resources"));
             }
         }).whenComplete(Schedulers.javafx(), (exception) -> {
             if (exception != null) {
-                Controllers.dialog(i18n("message.failed") + StringUtils.getStackTrace(exception), i18n("message.error"), MessageDialogPane.MessageType.ERROR);
+                Controllers.dialog(i18n("message.failed") + "\n" + StringUtils.getStackTrace(exception), i18n("message.error"), MessageDialogPane.MessageType.ERROR);
             }
         }).start();
     }
