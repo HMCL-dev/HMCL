@@ -44,12 +44,12 @@ import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 public final class World {
 
     private final Path file;
-    private String fileName;
+    private final String fileName;
     private Image icon;
 
     private CompoundTag levelData;
     private CompoundTag dataTag;
-    private Path levelDataPath;
+    private final Path levelDataPath;
 
     private CompoundTag worldGenSettingsDataBackingTag; // Use for writing back to the file
     private CompoundTag normalizedWorldGenSettingsData; // Use for reading/modification
@@ -295,15 +295,14 @@ public final class World {
         throw new IOException("Too many attempts");
     }
 
-    public void export(Path zip, String worldName) throws IOException {
+    public void export(Path zipPath, String worldName) throws IOException {
         if (getWorldLock().getLockState() == WorldLock.LockState.LOCKED_BY_OTHER) {
             throw new WorldLockedException("The world " + getFile() + " has been locked");
         }
 
-        try (WorldLock.Suspension ignored = getWorldLock().suspend()) {
-            try (Zipper zipper = new Zipper(zip)) {
-                zipper.putDirectory(file, worldName);
-            }
+        try (WorldLock.Suspension ignored = getWorldLock().suspend();
+             Zipper zipper = new Zipper(zipPath)) {
+            zipper.putDirectory(file, worldName);
         }
     }
 
