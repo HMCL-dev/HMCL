@@ -21,6 +21,7 @@ import com.google.gson.JsonParseException;
 import org.jackhuang.hmcl.download.LibraryAnalyzer;
 import org.jackhuang.hmcl.game.GameRepository;
 import org.jackhuang.hmcl.mod.modinfo.*;
+import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.util.Pair;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.io.CompressingUtils;
@@ -31,6 +32,9 @@ import org.jetbrains.annotations.Unmodifiable;
 import java.io.IOException;
 import java.nio.file.*;
 import java.util.*;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.Semaphore;
 
 import static org.jackhuang.hmcl.util.Pair.pair;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
@@ -63,8 +67,8 @@ public final class ModManager {
 
     private final GameRepository repository;
     private final String id;
-    private final TreeSet<LocalModFile> localModFiles = new TreeSet<>();
-    private final HashMap<Pair<String, ModLoaderType>, LocalMod> localMods = new HashMap<>();
+    private final Set<LocalModFile> localModFiles = Collections.synchronizedSet(new TreeSet<>());
+    private final Map<Pair<String, ModLoaderType>, LocalMod> localMods = new ConcurrentHashMap<>();
     private LibraryAnalyzer analyzer;
 
     private boolean loaded = false;
@@ -180,19 +184,43 @@ public final class ModManager {
                 || analyzer.has(LibraryAnalyzer.LibraryType.QUILT);
 
         if (Files.isDirectory(getModsDirectory())) {
+            // collect mod files
+            var modFiles = new ArrayList<Path>();
             try (DirectoryStream<Path> modsDirectoryStream = Files.newDirectoryStream(getModsDirectory())) {
                 for (Path subitem : modsDirectoryStream) {
                     if (supportSubfolders && Files.isDirectory(subitem) && !".connector".equalsIgnoreCase(subitem.getFileName().toString())) {
                         try (DirectoryStream<Path> subitemDirectoryStream = Files.newDirectoryStream(subitem)) {
                             for (Path subsubitem : subitemDirectoryStream) {
-                                addModInfo(subsubitem);
+                                modFiles.add(subsubitem);
                             }
                         }
                     } else {
-                        addModInfo(subitem);
+                        modFiles.add(subitem);
                     }
                 }
             }
+
+            // load mods
+            var futures = new ArrayList<CompletableFuture<Void>>(modFiles.size());
+            var submissionLimit = new Semaphore(10);
+            for (var modFile : modFiles) {
+                try {
+                    submissionLimit.acquire();
+                } catch (InterruptedException e) {
+                    throw new RuntimeException("Main thread interrupted, should be impossible", e);
+                }
+                var future = CompletableFuture.runAsync(() -> {
+                    try {
+                        addModInfo(modFile);
+                    } finally {
+                        submissionLimit.release();
+                    }
+                }, Schedulers.io());
+                futures.add(future);
+            }
+
+            // ensure complete
+            CompletableFuture.allOf(futures.toArray(CompletableFuture[]::new)).join();
         }
         loaded = true;
     }
