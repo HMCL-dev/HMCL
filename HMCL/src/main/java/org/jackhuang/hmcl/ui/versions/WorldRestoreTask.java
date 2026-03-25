@@ -41,16 +41,16 @@ public class WorldRestoreTask extends Task<Path> {
         Path worldPath = world.getFile();
         Path tempPath = FileUtils.tmpSaveFile(worldPath);
 
-        // Used to check if the world format is correct and get the path name
+        // Use to check if the world format is correct and get the path name
         World oldWorld = new World(backupZipPath);
-        Path oldWorldPath = oldWorld.getFile();
-
+        Path oldWorldPath = worldPath.resolveSibling(worldPath.getFileName());
         try {
             new Unzipper(backupZipPath, tempPath).setSubDirectory(oldWorld.getFileName()).unzip();
         } catch (IOException e) {
-            FileUtils.deleteDirectory(tempPath);
+            FileUtils.deleteDirectoryQuietly(tempPath);
             throw e;
         }
+        world.getWorldLock().releaseLock();
         FileUtils.deleteDirectory(worldPath);
         Files.move(tempPath, oldWorldPath, StandardCopyOption.ATOMIC_MOVE);
 
