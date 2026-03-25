@@ -203,7 +203,7 @@ public final class ModManager {
             // load mods
             var futures = new ArrayList<CompletableFuture<Void>>(modFiles.size());
             var submissionLimit = new Semaphore(10);
-            for (var modFile : modFiles) {
+            for (Path modFile : modFiles) {
                 try {
                     submissionLimit.acquire();
                 } catch (InterruptedException e) {
