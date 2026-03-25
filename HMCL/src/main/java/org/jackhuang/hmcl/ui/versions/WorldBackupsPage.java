@@ -214,6 +214,25 @@ public final class WorldBackupsPage extends ListPageBase<WorldBackupsPage.Backup
             Task.runAsync(() -> Files.delete(file)).start();
         }
 
+        void onRestore() {
+            Controllers.confirm(i18n("world.restore.confirm"), i18n("world.restore"), () -> {
+                Controllers.taskDialog(
+                        new WorldRestoreTask(file, world).setName(i18n("world.restore.processing"))
+                                .whenComplete(Schedulers.javafx(), (result, exception) -> {
+                                    if (exception == null) {
+                                        Controllers.getWorldManagePage().setWorldAndRefresh(new World(result), worldManagePage.getProfile(), worldManagePage.getInstanceId());
+                                        Controllers.dialog(i18n("world.restore.success"), null, MessageDialogPane.MessageType.INFO);
+                                    } else if (exception instanceof WorldLockedException) {
+                                        Controllers.dialog(i18n("world.locked.failed"), null, MessageDialogPane.MessageType.WARNING);
+                                    } else {
+                                        LOG.warning("Failed to restore backup", exception);
+                                        Controllers.dialog(i18n("world.restore.failed", StringUtils.getStackTrace(exception)), null, MessageDialogPane.MessageType.WARNING);
+                                    }
+                                }),
+                        i18n("world.restore"), null);
+            }, null);
+        }
+
         @Override
         public int compareTo(@NotNull WorldBackupsPage.BackupInfo that) {
             int c = this.backupTime.compareTo(that.backupTime);
@@ -246,8 +265,8 @@ public final class WorldBackupsPage extends ListPageBase<WorldBackupsPage.Backup
                 TwoLineListItem item = new TwoLineListItem();
                 root.setCenter(item);
 
-                if (skinnable.getBackupWorld().getWorldName() != null)
-                    item.setTitle(parseColorEscapes(skinnable.getBackupWorld().getWorldName()));
+                skinnable.getBackupWorld().getWorldName();
+                item.setTitle(parseColorEscapes(skinnable.getBackupWorld().getWorldName()));
                 item.setSubtitle(formatDateTime(skinnable.getBackupTime()) + (skinnable.count == 0 ? "" : " (" + skinnable.count + ")"));
 
                 if (world.getGameVersion() != null)
@@ -263,6 +282,11 @@ public final class WorldBackupsPage extends ListPageBase<WorldBackupsPage.Backup
                 right.getChildren().add(btnReveal);
                 FXUtils.installFastTooltip(btnReveal, i18n("reveal.in_file_manager"));
                 btnReveal.setOnAction(event -> skinnable.onReveal());
+
+                JFXButton btnRestore = FXUtils.newToggleButton4(SVG.UPDATE);
+                right.getChildren().add(btnRestore);
+                FXUtils.installFastTooltip(btnRestore, i18n("world.restore.tooltip"));
+                btnRestore.setOnAction(event -> skinnable.onRestore());
 
                 JFXButton btnDelete = FXUtils.newToggleButton4(SVG.DELETE_FOREVER);
                 right.getChildren().add(btnDelete);

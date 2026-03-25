@@ -98,6 +98,12 @@ public final class WorldManagePage extends DecoratorAnimatedPage implements Deco
         return this;
     }
 
+    public WorldManagePage setWorldAndRefresh(World world, Profile profile, String instanceId) {
+        setWorld(world, profile, instanceId);
+        refresh();
+        return this;
+    }
+
     @Override
     public void refresh() {
 

@@ -130,11 +130,10 @@ public final class WorldInfoPage extends SpinnerPane implements WorldManagePage.
                                 },
                                 newWorldPath -> {
                                     try {
-                                        Controllers.getWorldManagePage().setWorld(new World(newWorldPath), worldManagePage.getProfile(), worldManagePage.getInstanceId());
+                                        Controllers.getWorldManagePage().setWorldAndRefresh(new World(newWorldPath), worldManagePage.getProfile(), worldManagePage.getInstanceId());
                                     } catch (IOException e) {
                                         worldManagePage.closePageForLoadingFail();
                                     }
-                                    worldManagePage.refresh();
                                 }
                         );
                     });
