@@ -329,7 +329,7 @@ public final class World {
             if (!Files.exists(newPath)) {
                 FileUtils.copyDirectory(file, newPath, path -> !path.contains("session.lock"));
                 new World(newPath).setWorldName(newName);
-                break;
+                return;
             }
         }
         throw new IOException("Too many attempts");
