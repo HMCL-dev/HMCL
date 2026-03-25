@@ -25,7 +25,7 @@ import java.util.Map;
 
 /// A wrapper for `Map<String, Object>`, supporting type-safe reading and writing of values.
 ///
-/// @author Glavo
+///  @author Glavo
 public final class SettingsMap {
     public record Key<T>(String key) {
     }
