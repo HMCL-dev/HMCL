@@ -214,19 +214,19 @@ public final class FileUtils {
             return "New Name";
         }
 
-        // 1. Replace invalid characters with underscores
+        // Replace invalid characters with underscores
         // Note: The handling of `.` here is to align with Minecraft's processing logic.
         String sanitized = name.replaceAll("[\\x00-\\x1f\\\\/:*?\"<>|.]", "_");
 
-        // 2. Handle Windows reserved keywords
+        // Ensure the name does not start or end with a space
+        sanitized = sanitized.strip();
+
+        // Handle Windows reserved keywords
         if (INVALID_WINDOWS_RESOURCE_BASE_NAMES.contains(sanitized.toLowerCase(Locale.ROOT))) {
             sanitized = "_" + sanitized + "_";
         }
 
-        // 3. Ensure the name does not start or end with a space
-        sanitized = sanitized.strip();
-
-        // 4. Provide a default value if the sanitized string is empty
+        // Provide a default value if the sanitized string is empty
         if (sanitized.isEmpty()) {
             return "New Name";
         }

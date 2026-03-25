@@ -58,10 +58,11 @@ public final class World {
     private CompoundTag playerData; // Use for both reading/modification and writing back to the file
     private Path playerDataPath;
 
-    private WorldLock lock;
+    private final WorldLock lock;
 
     public World(Path file) throws IOException {
         this.file = file;
+        this.lock = new WorldLock();
 
         if (Files.isDirectory(file)) {
             fileName = FileUtils.getName(this.file);
@@ -91,9 +92,6 @@ public final class World {
     }
 
     public WorldLock getWorldLock() {
-        if (lock == null) {
-            lock = new WorldLock();
-        }
         return lock;
     }
 
