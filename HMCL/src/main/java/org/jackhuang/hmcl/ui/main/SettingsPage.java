@@ -293,10 +293,10 @@ public final class SettingsPage extends ScrollPane {
                 LineSelectButton<EnumAskable> saveCustomGameIconsPane = new LineSelectButton<>();
                 saveCustomGameIconsPane.setTitle(i18n("settings.launcher.save_custom_game_icons"));
                 saveCustomGameIconsPane.setConverter(a -> switch (a) {
-                    case ASK -> i18n("message.ask");
-                    case TRUE -> i18n("button.yes");
-                    case FALSE -> i18n("button.no");
-                });
+                        case ASK -> i18n("message.ask");
+                        case TRUE -> i18n("button.yes");
+                        case FALSE -> i18n("button.no");
+                    });
                 saveCustomGameIconsPane.setItems(EnumAskable.values());
                 saveCustomGameIconsPane.valueProperty().bindBidirectional(config().saveCustomGameIconsProperty());
 
