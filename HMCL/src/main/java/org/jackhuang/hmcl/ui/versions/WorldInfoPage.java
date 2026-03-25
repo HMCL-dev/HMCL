@@ -461,6 +461,7 @@ public final class WorldInfoPage extends SpinnerPane implements WorldManagePage.
         } else if (tag instanceof FloatTag floatTag) {
             bindTagAndTextField(floatTag, textField);
         } else {
+            textField.disableProperty().unbind();
             textField.setDisable(true);
         }
     }
