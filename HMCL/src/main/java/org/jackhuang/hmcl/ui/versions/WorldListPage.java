@@ -54,6 +54,7 @@ import java.time.Instant;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 import static org.jackhuang.hmcl.ui.FXUtils.determineOptimalPopupPosition;
 import static org.jackhuang.hmcl.util.StringUtils.parseColorEscapes;
@@ -154,7 +155,7 @@ public final class WorldListPage extends ListPageBase<World> implements VersionP
     private void installWorld(Path zipFile) {
         // Only accept one world file because user is required to confirm the new world name
         // Or too many input dialogs are popped.
-        Task.supplyAsync(() -> new World(zipFile))
+        Task.supplyAsync(() -> new ArchiveWorld(zipFile))
                 .whenComplete(Schedulers.javafx(), world -> {
                     Controllers.prompt(i18n("world.name.enter"), (name, handler) -> {
                         Task.runAsync(() -> world.install(savesDir, name))

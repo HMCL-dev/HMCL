@@ -20,7 +20,9 @@ package org.jackhuang.hmcl.game;
 import javafx.scene.image.Image;
 import org.glavo.nbt.io.NBTCodec;
 import org.glavo.nbt.tag.*;
-import org.jackhuang.hmcl.util.io.*;
+import org.jackhuang.hmcl.util.io.FileUtils;
+import org.jackhuang.hmcl.util.io.IOUtils;
+import org.jackhuang.hmcl.util.io.Zipper;
 import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
 import org.jetbrains.annotations.Nullable;
 
@@ -83,44 +85,9 @@ public final class World {
                     LOG.warning("Failed to load world icon", e);
                 }
             }
-        } else if (Files.isRegularFile(file))
-            try (FileSystem fs = CompressingUtils.readonly(this.file).setAutoDetectEncoding(true).build()) {
-                Path root;
-                if (Files.isRegularFile(fs.getPath("/level.dat"))) {
-                    root = fs.getPath("/");
-                    fileName = FileUtils.getName(this.file);
-                } else {
-                    List<Path> files = Files.list(fs.getPath("/")).toList();
-                    if (files.size() != 1 || !Files.isDirectory(files.get(0))) {
-                        throw new IOException("Not a valid world zip file");
-                    }
-
-                    root = files.get(0);
-                    fileName = FileUtils.getName(root);
-                }
-
-                Path levelDat = root.resolve("level.dat");
-                if (!Files.exists(levelDat)) { //version 20w14infinite
-                    levelDat = root.resolve("special_level.dat");
-                }
-                if (!Files.exists(levelDat)) {
-                    throw new IOException("Not a valid world zip file since level.dat or special_level.dat cannot be found.");
-                }
-                loadAndCheckLevelData(levelDat);
-
-                Path iconFile = root.resolve("icon.png");
-                if (Files.isRegularFile(iconFile)) {
-                    try (InputStream inputStream = Files.newInputStream(iconFile)) {
-                        icon = new Image(inputStream, 64, 64, true, false);
-                        if (icon.isError())
-                            throw icon.getException();
-                    } catch (Exception e) {
-                        LOG.warning("Failed to load world icon", e);
-                    }
-                }
-            }
-        else
+        } else {
             throw new IOException("Path " + file + " cannot be recognized as a Minecraft world");
+        }
     }
 
     public WorldLock getWorldLock() {
@@ -307,9 +274,6 @@ public final class World {
     // The renameWorld method do not modify the `file` field.
     // A new World object needs to be created to obtain the renamed world.
     public Path rename(String newName) throws IOException {
-        if (!Files.isDirectory(file))
-            throw new IOException("Not a valid world directory");
-
         if (getWorldLock().getLockState() == WorldLock.LockState.LOCKED_BY_OTHER) {
             throw new IOException("The world " + getFile() + " has been locked");
         }
@@ -333,48 +297,7 @@ public final class World {
         throw new IOException("Too many attempts");
     }
 
-    public void install(Path savesDir, String name) throws IOException {
-        Path worldDir;
-        try {
-            worldDir = savesDir.resolve(name);
-        } catch (InvalidPathException e) {
-            throw new IOException(e);
-        }
-
-        if (Files.isDirectory(worldDir)) {
-            throw new FileAlreadyExistsException("World already exists");
-        }
-
-        if (Files.isRegularFile(file)) {
-            try (FileSystem fs = CompressingUtils.readonly(file).setAutoDetectEncoding(true).build()) {
-                Path levelDatPath = fs.getPath("/level.dat");
-                if (Files.isRegularFile(levelDatPath)) {
-                    fileName = FileUtils.getName(file);
-
-                    new Unzipper(file, worldDir).unzip();
-                } else {
-                    try (Stream<Path> stream = Files.list(fs.getPath("/"))) {
-                        List<Path> subDirs = stream.toList();
-                        if (subDirs.size() != 1) {
-                            throw new IOException("World zip malformed");
-                        }
-                        String subDirectoryName = FileUtils.getName(subDirs.get(0));
-                        new Unzipper(file, worldDir)
-                                .setSubDirectory("/" + subDirectoryName + "/")
-                                .unzip();
-                    }
-                }
-
-            }
-            new World(worldDir).rename(name);
-        } else if (Files.isDirectory(file)) {
-            FileUtils.copyDirectory(file, worldDir);
-        }
-    }
-
     public void export(Path zip, String worldName) throws IOException {
-        if (!Files.isDirectory(file))
-            throw new IOException();
         if (getWorldLock().getLockState() == WorldLock.LockState.LOCKED_BY_OTHER) {
             throw new WorldLockedException("The world " + getFile() + " has been locked");
         }
@@ -391,14 +314,10 @@ public final class World {
             case LOCKED_BY_OTHER -> throw new WorldLockedException("The world " + getFile() + " has been locked");
             case LOCKED_BY_SELF -> getWorldLock().releaseLock();
         }
-        FileUtils.forceDelete(file);
+        FileUtils.deleteDirectory(file);
     }
 
     public void copy(String newName) throws IOException {
-        if (!Files.isDirectory(file)) {
-            throw new IOException("Not a valid world directory");
-        }
-
         if (getWorldLock().getLockState() == WorldLock.LockState.LOCKED_BY_OTHER) {
             throw new WorldLockedException("The world " + getFile() + " has been locked");
         }

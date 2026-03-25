@@ -42,7 +42,7 @@ public class WorldRestoreTask extends Task<Path> {
         Path tempPath = FileUtils.tmpSaveFile(worldPath);
 
         // Check if the world format is correct
-        new World(backupZipPath);
+        new ArchiveWorld(backupZipPath);
         try {
             new Unzipper(backupZipPath, tempPath).setSubDirectory(world.getFileName()).unzip();
             world.delete();
