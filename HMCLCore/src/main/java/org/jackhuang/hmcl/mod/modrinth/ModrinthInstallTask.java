@@ -38,7 +38,6 @@ import java.util.*;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 public class ModrinthInstallTask extends Task<Void> {
-    private static final Set<String> SUPPORTED_ICON_EXTS = Set.of("png", "jpg", "jpeg", "bmp", "gif", "webp", "apng");
 
     private final DefaultDependencyManager dependencyManager;
     private final DefaultGameRepository repository;
@@ -121,7 +120,7 @@ public class ModrinthInstallTask extends Task<Void> {
         URI iconUri = NetworkUtils.toURIOrNull(iconUrl);
         if (iconUri != null) {
             String ext = FileUtils.getExtension(StringUtils.substringAfter(iconUri.getPath(), '/')).toLowerCase(Locale.ROOT);
-            if (SUPPORTED_ICON_EXTS.contains(ext)) {
+            if (Modpack.SUPPORTED_ICON_EXTS.contains(ext)) {
                 iconExt = ext;
 
                 dependents.add(downloadIconTask = new CacheFileTask(dependencyManager.getDownloadProvider().injectURLWithCandidates(iconUrl)));
@@ -157,7 +156,7 @@ public class ModrinthInstallTask extends Task<Void> {
         Files.createDirectories(root);
         JsonUtils.writeToJsonFile(root.resolve("modrinth.index.json"), manifest);
 
-        if (iconExt != null) {
+        if (iconExt != null && Modpack.SUPPORTED_ICON_NAMES.stream().map(root::resolve).allMatch(Files::notExists)) {
             try {
                 Files.copy(downloadIconTask.getResult(), root.resolve("icon." + iconExt));
             } catch (Exception e) {

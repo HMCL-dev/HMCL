@@ -61,7 +61,12 @@ public final class HMCLLocalizedDownloadListPage extends DownloadListPage {
         repository = new Repository(type, curseForge, modrinth);
 
         supportChinese.set(true);
-        downloadSources.get().setAll("mods.modrinth", "mods.curseforge");
+
+        downloadSources.setAll("mods.modrinth");
+        if (CurseForgeRemoteModRepository.isAvailable()) {
+            downloadSources.add("mods.curseforge");
+        }
+
         if (modrinth != null) {
             downloadSource.set("mods.modrinth");
         } else if (curseForge != null) {

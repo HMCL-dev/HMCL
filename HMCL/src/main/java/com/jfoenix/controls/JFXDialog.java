@@ -49,7 +49,6 @@ import javafx.scene.image.WritableImage;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.Background;
 import javafx.scene.layout.BackgroundFill;
-import javafx.scene.layout.CornerRadii;
 import javafx.scene.layout.Region;
 import javafx.scene.layout.StackPane;
 import javafx.scene.paint.Color;
@@ -155,7 +154,6 @@ public class JFXDialog extends StackPane {
         });
 
         contentHolder = new StackPane();
-        contentHolder.setBackground(new Background(new BackgroundFill(Color.WHITE, new CornerRadii(2), null)));
         JFXDepthManager.setDepth(contentHolder, 4);
         contentHolder.setPickOnBounds(false);
         // ensure stackpane is never resized beyond it's preferred size
