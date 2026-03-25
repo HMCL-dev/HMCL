@@ -39,18 +39,41 @@ public class WorldRestoreTask extends Task<Path> {
     @Override
     public void execute() throws Exception {
         Path worldPath = world.getFile();
-        Path tempPath = FileUtils.tmpSaveFile(worldPath);
+        Path tempPath = worldPath.toAbsolutePath().resolveSibling("." + worldPath.getFileName().toString() + ".tmp");
+        Path tempPath2 = worldPath.toAbsolutePath().resolveSibling("." + worldPath.getFileName().toString() + ".tmp2");
 
         // Check if the world format is correct
         new ArchiveWorld(backupZipPath);
         try {
             new Unzipper(backupZipPath, tempPath).setSubDirectory(world.getFileName()).unzip();
-            world.delete();
-            Files.move(tempPath, worldPath, StandardCopyOption.ATOMIC_MOVE);
         } catch (IOException e) {
             FileUtils.deleteDirectoryQuietly(tempPath);
             throw e;
         }
+
+        try {
+            world.getWorldLock().releaseLock();
+        } catch (IOException e) {
+            FileUtils.deleteDirectoryQuietly(tempPath);
+            world.getWorldLock().acquireLock();
+            throw e;
+        }
+
+        try {
+            Files.move(worldPath, tempPath2, StandardCopyOption.ATOMIC_MOVE);
+        } catch (IOException e) {
+            FileUtils.deleteDirectoryQuietly(tempPath);
+            throw e;
+        }
+
+        try {
+            Files.move(tempPath, worldPath, StandardCopyOption.ATOMIC_MOVE);
+        } catch (IOException e) {
+            Files.move(tempPath2, worldPath, StandardCopyOption.ATOMIC_MOVE, StandardCopyOption.REPLACE_EXISTING);
+            throw e;
+        }
+
+        FileUtils.deleteDirectoryQuietly(tempPath2);
 
         setResult(worldPath);
     }
