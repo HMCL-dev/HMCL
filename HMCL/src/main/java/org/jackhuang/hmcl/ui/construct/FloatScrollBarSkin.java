@@ -26,7 +26,7 @@ import javafx.scene.control.ScrollBar;
 import javafx.scene.control.Skin;
 import javafx.scene.layout.Region;
 import javafx.scene.shape.Rectangle;
-import org.jackhuang.hmcl.util.Lang;
+import org.jackhuang.hmcl.util.MathUtils;
 
 // Referenced in root.css
 @SuppressWarnings("unused")
@@ -75,7 +75,7 @@ public class FloatScrollBarSkin implements Skin<ScrollBar> {
                      */
                     if (getSkinnable().getMax() > getSkinnable().getMin()) {
                         dragStart = thumb.localToParent(me.getX(), me.getY());
-                        double clampedValue = Lang.clamp(getSkinnable().getMin(), getSkinnable().getValue(), getSkinnable().getMax());
+                        double clampedValue = MathUtils.clamp(getSkinnable().getValue(), getSkinnable().getMin(), getSkinnable().getMax());
                         preDragThumbPos = (clampedValue - getSkinnable().getMin()) / (getSkinnable().getMax() - getSkinnable().getMin());
                         me.consume();
                     }
@@ -107,7 +107,7 @@ public class FloatScrollBarSkin implements Skin<ScrollBar> {
                                 getSkinnable().requestFocus();
                             double newValue = (position * (getSkinnable().getMax() - getSkinnable().getMin())) + getSkinnable().getMin();
                             if (!Double.isNaN(newValue)) {
-                                getSkinnable().setValue(Lang.clamp(getSkinnable().getMin(), newValue, getSkinnable().getMax()));
+                                getSkinnable().setValue(MathUtils.clamp(newValue, getSkinnable().getMin(), getSkinnable().getMax()));
                             }
                         }
 
