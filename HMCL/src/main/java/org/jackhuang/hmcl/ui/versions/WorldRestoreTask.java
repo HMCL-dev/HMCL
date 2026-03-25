@@ -43,7 +43,7 @@ public class WorldRestoreTask extends Task<Path> {
 
         // Use to check if the world format is correct and get the path name
         World oldWorld = new World(backupZipPath);
-        Path oldWorldPath = worldPath.resolveSibling(worldPath.getFileName());
+        Path oldWorldPath = worldPath.resolveSibling(oldWorld.getFileName());
         try {
             new Unzipper(backupZipPath, tempPath).setSubDirectory(oldWorld.getFileName()).unzip();
         } catch (IOException e) {
