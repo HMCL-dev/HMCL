@@ -122,6 +122,6 @@ public final class WorldManageUIUtils {
             }
         })
                 .addQuestion(new PromptDialogPane.Builder.StringQuestion(null, world.getWorldName()))
-                .addQuestion(new PromptDialogPane.Builder.BooleanQuestion("重命名世界文件夹", false)));
+                .addQuestion(new PromptDialogPane.Builder.BooleanQuestion(i18n("world.rename.rename_folder"), false)));
     }
 }

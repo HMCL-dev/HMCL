@@ -273,7 +273,7 @@ public final class World {
     // A new World object needs to be created to obtain the renamed world.
     public Path rename(String newName) throws IOException {
         if (getWorldLock().getLockState() == WorldLock.LockState.LOCKED_BY_OTHER) {
-            throw new IOException("The world " + getFile() + " has been locked");
+            throw new WorldLockedException("The world " + getFile() + " has been locked");
         }
 
         // Change the name recorded in level.dat
