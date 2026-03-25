@@ -107,7 +107,7 @@ public final class WorldBackupsPage extends ListPageBase<WorldBackupsPage.Backup
                         }
                     });
 
-                    result.sort(Comparator.naturalOrder());
+                    result.sort(Comparator.reverseOrder());
                     return result;
                 }
             } else {
@@ -150,7 +150,7 @@ public final class WorldBackupsPage extends ListPageBase<WorldBackupsPage.Backup
         }).whenComplete(Schedulers.javafx(), (result, exception) -> {
             if (exception == null) {
                 WorldBackupsPage.this.getItems().add(result.getValue());
-                WorldBackupsPage.this.getItems().sort(Comparator.naturalOrder());
+                WorldBackupsPage.this.getItems().sort(Comparator.reverseOrder());
                 Controllers.dialog(i18n("world.backup.create.success", result.getKey()), null, MessageDialogPane.MessageType.INFO);
             } else if (exception instanceof WorldLockedException) {
                 Controllers.dialog(i18n("world.locked.failed"), null, MessageDialogPane.MessageType.WARNING);
@@ -215,22 +215,20 @@ public final class WorldBackupsPage extends ListPageBase<WorldBackupsPage.Backup
         }
 
         void onRestore() {
-            Controllers.confirm(i18n("world.restore.confirm"), i18n("world.restore"), () -> {
-                Controllers.taskDialog(
-                        new WorldRestoreTask(file, world).setName(i18n("world.restore.processing"))
-                                .whenComplete(Schedulers.javafx(), (result, exception) -> {
-                                    if (exception == null) {
-                                        Controllers.getWorldManagePage().setWorldAndRefresh(new World(result), worldManagePage.getProfile(), worldManagePage.getInstanceId());
-                                        Controllers.dialog(i18n("world.restore.success"), null, MessageDialogPane.MessageType.INFO);
-                                    } else if (exception instanceof WorldLockedException) {
-                                        Controllers.dialog(i18n("world.locked.failed"), null, MessageDialogPane.MessageType.WARNING);
-                                    } else {
-                                        LOG.warning("Failed to restore backup", exception);
-                                        Controllers.dialog(i18n("world.restore.failed", StringUtils.getStackTrace(exception)), null, MessageDialogPane.MessageType.WARNING);
-                                    }
-                                }),
-                        i18n("world.restore"), null);
-            }, null);
+            Controllers.taskDialog(
+                    new WorldRestoreTask(file, world).setName(i18n("world.restore.processing"))
+                            .whenComplete(Schedulers.javafx(), (result, exception) -> {
+                                if (exception == null) {
+                                    Controllers.getWorldManagePage().setWorldAndRefresh(new World(result), worldManagePage.getProfile(), worldManagePage.getInstanceId());
+                                    Controllers.dialog(i18n("world.restore.success"), null, MessageDialogPane.MessageType.INFO);
+                                } else if (exception instanceof WorldLockedException) {
+                                    Controllers.dialog(i18n("world.locked.failed"), null, MessageDialogPane.MessageType.WARNING);
+                                } else {
+                                    LOG.warning("Failed to restore backup", exception);
+                                    Controllers.dialog(i18n("world.restore.failed", StringUtils.getStackTrace(exception)), null, MessageDialogPane.MessageType.WARNING);
+                                }
+                            }),
+                    i18n("world.restore"), null);
         }
 
         @Override
@@ -286,7 +284,7 @@ public final class WorldBackupsPage extends ListPageBase<WorldBackupsPage.Backup
                 JFXButton btnRestore = FXUtils.newToggleButton4(SVG.UPDATE);
                 right.getChildren().add(btnRestore);
                 FXUtils.installFastTooltip(btnRestore, i18n("world.restore.tooltip"));
-                btnRestore.setOnAction(event -> skinnable.onRestore());
+                btnRestore.setOnAction(event -> Controllers.confirm(i18n("world.restore.confirm"), i18n("world.restore"), skinnable::onRestore, null));
 
                 JFXButton btnDelete = FXUtils.newToggleButton4(SVG.DELETE_FOREVER);
                 right.getChildren().add(btnDelete);
