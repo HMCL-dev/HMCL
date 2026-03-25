@@ -180,15 +180,19 @@ public final class ModManager {
         }
     }
 
-    public void refreshMods() throws IOException {
-        localModFiles.clear();
-        localMods.clear();
-
+    public void analyze() {
         var resolved = getRepository().getResolvedPreservingPatchesVersion(id);
         gameVersion = repository.getGameVersion(resolved).orElse(null);
         analyzer = LibraryAnalyzer.analyze(resolved, gameVersion);
 
         updateSupportedLoaders();
+    }
+
+    public void refreshMods() throws IOException {
+        localModFiles.clear();
+        localMods.clear();
+
+        analyze();
 
         boolean supportSubfolders = analyzer.has(LibraryAnalyzer.LibraryType.FORGE)
                 || analyzer.has(LibraryAnalyzer.LibraryType.QUILT);

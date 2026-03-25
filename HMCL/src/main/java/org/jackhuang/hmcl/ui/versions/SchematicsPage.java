@@ -21,6 +21,7 @@ import com.jfoenix.controls.JFXButton;
 import com.jfoenix.controls.JFXDialogLayout;
 import com.jfoenix.controls.JFXListView;
 import javafx.beans.binding.Bindings;
+import javafx.beans.binding.ObjectBinding;
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.SimpleBooleanProperty;
@@ -79,9 +80,6 @@ import static org.jackhuang.hmcl.util.logging.Logger.LOG;
  */
 public final class SchematicsPage extends ListPageBase<SchematicsPage.Item> implements VersionPage.VersionLoadable {
 
-    private static volatile RemoteMod litematica;
-    private static volatile RemoteMod forgematica;
-
     private static String translateAuthorName(String author) {
         if (I18n.isUseChinese() && "hsds".equals(author)) {
             return "黑山大叔";
@@ -90,16 +88,36 @@ public final class SchematicsPage extends ListPageBase<SchematicsPage.Item> impl
     }
 
     private static String translateType(SchematicType type) {
-        return i18n("schematics.info.type." + type.name().toLowerCase(Locale.ROOT));
+        return switch (type) {
+            case SCHEM -> i18n("schematics.info.type.schem");
+            case NBT_STRUCTURE -> i18n("schematics.info.type.nbt_structure");
+            case LITEMATIC -> i18n("schematics.info.type.litematic");
+        };
     }
 
     private Profile profile;
     private String instanceId;
     private Path schematicsDirectory;
-    private final ObjectProperty<DirItem> currentDirectory = new SimpleObjectProperty<>(this, "currentDirectory", null);
-    private final ObjectProperty<WarningTip> warningTip = new SimpleObjectProperty<>(this, "tip", null);
 
+    private final ObjectProperty<DirItem> currentDirectory = new SimpleObjectProperty<>(this, "currentDirectory", null);
     private final BooleanProperty isRootProperty = new SimpleBooleanProperty(this, "isRoot", true);
+    private final ObjectProperty<LitematicaFetchResult> fetchResult = new SimpleObjectProperty<>(this, "fetchResult", null);
+    private final ObjectBinding<RemoteMod> downloadTarget = Bindings.createObjectBinding(
+            () -> {
+                var result = fetchResult.get();
+                if (result == null) return null;
+                boolean useForgematica = result.forgematica() != null && result.useForge();
+                boolean useLitematica = result.litematica() != null && !result.useForge();
+                if (useForgematica) {
+                    return result.forgematica();
+                } else if (useLitematica) {
+                    return result.litematica();
+                } else {
+                    return null;
+                }
+            },
+            fetchResult
+    );
 
     public SchematicsPage() {
         FXUtils.applyDragListener(this,
@@ -136,46 +154,24 @@ public final class SchematicsPage extends ListPageBase<SchematicsPage.Item> impl
         if (d.parent != null) navigateTo(d.parent);
     }
 
+    public void downloadLitematica() {
+        if (downloadTarget.get() != null) {
+            var modDownloads = Controllers.getDownloadPage().showModDownloads();
+            modDownloads.selectVersion(instanceId);
+            Controllers.navigate(new DownloadPage(
+                    modDownloads,
+                    downloadTarget.get(),
+                    modDownloads.getProfileVersion(),
+                    modDownloads.getCallback())
+            );
+        }
+    }
+
     public void refresh() {
         if (schematicsDirectory == null) return;
 
         setLoading(true);
         Task.supplyAsync(Schedulers.io(), () -> {
-            var litematicaState = LitematicaState.NOT_INSTALLED;
-            var modManager = profile.getRepository().getModManager(instanceId);
-            boolean shouldUseForgematica = false;
-            try {
-                modManager.refreshMods();
-                var mods = modManager.getMods();
-                for (var localModFile : mods) {
-                    if ("litematica".equals(localModFile.getId()) || "forgematica".equals(localModFile.getId())) {
-                        if (localModFile.isActive()) {
-                            litematicaState = LitematicaState.OK;
-                            break;
-                        } else {
-                            litematicaState = LitematicaState.DISABLED;
-                        }
-                    }
-                }
-                if (litematicaState == LitematicaState.NOT_INSTALLED && modManager.getLibraryAnalyzer() != null) {
-                    var modLoaders = modManager.getLibraryAnalyzer().getModLoaders();
-                    shouldUseForgematica = (modLoaders.contains(ModLoaderType.FORGE) || modLoaders.contains(ModLoaderType.NEO_FORGED))
-                            && GameVersionNumber.asGameVersion(Optional.ofNullable(modManager.getGameVersion())).isAtLeast("1.16.4", "20w45a");
-                    if (litematica == null && !shouldUseForgematica) {
-                        try {
-                            litematica = ModrinthRemoteModRepository.MODS.getModById(DownloadProviders.getDownloadProvider(), "litematica");
-                        } catch (IOException ignored) {
-                        }
-                    } else if (forgematica == null && shouldUseForgematica) {
-                        try {
-                            forgematica = ModrinthRemoteModRepository.MODS.getModById(DownloadProviders.getDownloadProvider(), "forgematica");
-                        } catch (IOException ignored) {
-                        }
-                    }
-                }
-            } catch (IOException e) {
-                LOG.warning("Failed to load mods, unable to check litematica", e);
-            }
             DirItem target = loadRoot(schematicsDirectory);
             if (currentDirectoryProperty().get() != null) {
                 loop:
@@ -190,36 +186,46 @@ public final class SchematicsPage extends ListPageBase<SchematicsPage.Item> impl
                     break;
                 }
             }
-            return new LoadResult(litematicaState, shouldUseForgematica, target);
+            return target;
         }).whenComplete(Schedulers.javafx(), (result, exception) -> {
             if (exception == null) {
-                switch (result.state()) {
-                    case NOT_INSTALLED -> {
-                        boolean useForgematica = forgematica != null && result.shouldUseForgematica();
-                        boolean useLitematica = litematica != null && !result.shouldUseForgematica();
-                        if (useForgematica || useLitematica) {
-                            warningTip.set(new WarningTip(i18n("schematics.warning.no_litematica_install"), () -> {
-                                var modDownloads = Controllers.getDownloadPage().showModDownloads();
-                                modDownloads.selectVersion(instanceId);
-                                Controllers.navigate(new DownloadPage(
-                                        modDownloads,
-                                        useForgematica ? forgematica : litematica,
-                                        modDownloads.getProfileVersion(),
-                                        modDownloads.getCallback())
-                                );
-                            }));
-                        } else {
-                            warningTip.set(new WarningTip(i18n("schematics.warning.no_litematica"), null));
-                        }
-                    }
-                    case DISABLED -> warningTip.set(new WarningTip(i18n("schematics.warning.litematica_disabled"), null));
-                    default -> warningTip.set(new WarningTip(null, null));
-                }
-                navigateTo(result.targetDir());
+                navigateTo(result);
             } else {
                 LOG.warning("Failed to load schematics", exception);
             }
             setLoading(false);
+        }).start();
+
+        Task.supplyAsync(Schedulers.io(), () -> {
+            var modManager = profile.getRepository().getModManager(instanceId);
+            modManager.analyze();
+            var modLoaders = modManager.getLibraryAnalyzer().getModLoaders();
+            boolean shouldUseForgematica = (modLoaders.contains(ModLoaderType.FORGE) || modLoaders.contains(ModLoaderType.NEO_FORGED))
+                    && GameVersionNumber.asGameVersion(Optional.ofNullable(modManager.getGameVersion())).isAtLeast("1.16.4", "20w45a");
+            var res = Objects.requireNonNullElse(fetchResult.get(), new LitematicaFetchResult(null, null, false));
+            RemoteMod litematica = res.litematica(), forgematica = res.forgematica();
+            if (litematica == null) {
+                try {
+                    litematica = ModrinthRemoteModRepository.MODS.getModById(DownloadProviders.getDownloadProvider(), "litematica");
+                } catch (IOException e) {
+                    LOG.warning("Failed to fetch litematica", e);
+                }
+            }
+            if (forgematica == null) {
+                try {
+                    forgematica = ModrinthRemoteModRepository.MODS.getModById(DownloadProviders.getDownloadProvider(), "forgematica");
+                } catch (IOException e) {
+                    LOG.warning("Failed to fetch forgematica", e);
+                }
+            }
+            return new LitematicaFetchResult(litematica, forgematica, shouldUseForgematica);
+        }).whenComplete(Schedulers.javafx(), (result, exception) -> {
+            if (exception == null) {
+                fetchResult.set(result);
+            } else {
+                fetchResult.set(null);
+                LOG.warning("Failed to fetch litematica", exception);
+            }
         }).start();
     }
 
@@ -781,30 +787,17 @@ public final class SchematicsPage extends ListPageBase<SchematicsPage.Item> impl
                 var toolbar = new HBox();
                 JFXButton btnGoBack = createToolbarButton2("", SVG.ARROW_BACK, skinnable::navigateBack);
                 btnGoBack.disableProperty().bind(skinnable.isRootProperty());
+                JFXButton btnDownload = createToolbarButton2(i18n("schematics.install_mod"), SVG.DOWNLOAD, skinnable::downloadLitematica);
+                FXUtils.onChangeAndOperate(skinnable.downloadTarget, (t) -> btnDownload.setDisable(t == null));
                 toolbar.getChildren().setAll(
                         btnGoBack,
                         createToolbarButton2(i18n("button.refresh"), SVG.REFRESH, skinnable::refresh),
                         createToolbarButton2(i18n("schematics.add"), SVG.ADD, skinnable::onAddFiles),
                         createToolbarButton2(i18n("schematics.create_directory"), SVG.CREATE_NEW_FOLDER, skinnable::onCreateDirectory),
-                        createToolbarButton2(i18n("button.reveal_dir"), SVG.FOLDER_OPEN, skinnable::onRevealSchematicsFolder)
+                        createToolbarButton2(i18n("button.reveal_dir"), SVG.FOLDER_OPEN, skinnable::onRevealSchematicsFolder),
+                        btnDownload
                 );
                 root.getContent().add(toolbar);
-            }
-
-            {
-                var tip = createTip();
-                HBox.setMargin(tip, new Insets(5));
-                var tipPane = new HBox(tip);
-                tipPane.setAlignment(Pos.CENTER_LEFT);
-                FXUtils.onChangeAndOperate(skinnable.warningTip, pair -> {
-                    root.getContent().remove(tipPane);
-                    if (pair != null && !StringUtils.isBlank(pair.message())) {
-                        var txt = new Text(pair.message());
-                        if (pair.action() != null) FXUtils.onClicked(txt, pair.action());
-                        tip.getChildren().setAll(txt);
-                        root.getContent().add(1, tipPane);
-                    }
-                });
             }
 
             {
@@ -851,16 +844,7 @@ public final class SchematicsPage extends ListPageBase<SchematicsPage.Item> impl
         }
     }
 
-    private enum LitematicaState {
-        DISABLED,
-        NOT_INSTALLED,
-        OK
-    }
-
-    private record LoadResult(LitematicaState state, boolean shouldUseForgematica, DirItem targetDir) {
-    }
-
-    private record WarningTip(String message, Runnable action) {
+    private record LitematicaFetchResult(@Nullable RemoteMod litematica, @Nullable RemoteMod forgematica, boolean useForge) {
     }
 
 }
