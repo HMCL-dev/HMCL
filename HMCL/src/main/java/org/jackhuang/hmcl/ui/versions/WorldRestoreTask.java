@@ -45,13 +45,12 @@ public class WorldRestoreTask extends Task<Path> {
         new World(backupZipPath);
         try {
             new Unzipper(backupZipPath, tempPath).setSubDirectory(world.getFileName()).unzip();
+            world.delete();
+            Files.move(tempPath, worldPath, StandardCopyOption.ATOMIC_MOVE);
         } catch (IOException e) {
             FileUtils.deleteDirectoryQuietly(tempPath);
             throw e;
         }
-        world.getWorldLock().releaseLock();
-        FileUtils.deleteDirectory(worldPath);
-        Files.move(tempPath, worldPath, StandardCopyOption.ATOMIC_MOVE);
 
         setResult(worldPath);
     }

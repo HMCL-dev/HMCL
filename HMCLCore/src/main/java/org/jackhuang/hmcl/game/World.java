@@ -311,7 +311,7 @@ public final class World {
             throw new IOException("Not a valid world directory");
 
         if (getWorldLock().getLockState() == WorldLock.LockState.LOCKED_BY_OTHER) {
-            throw new IOException("World is locked by other process");
+            throw new IOException("The world " + getFile() + " has been locked");
         }
 
         // Change the name recorded in level.dat
@@ -387,10 +387,9 @@ public final class World {
     }
 
     public void delete() throws IOException {
-        if (getWorldLock().getLockState() == WorldLock.LockState.LOCKED_BY_OTHER) {
-            throw new WorldLockedException("The world " + getFile() + " has been locked");
-        } else if (getWorldLock().getLockState() == WorldLock.LockState.LOCKED_BY_SELF) {
-            getWorldLock().releaseLock();
+        switch (getWorldLock().getLockState()) {
+            case LOCKED_BY_OTHER -> throw new WorldLockedException("The world " + getFile() + " has been locked");
+            case LOCKED_BY_SELF -> getWorldLock().releaseLock();
         }
         FileUtils.forceDelete(file);
     }
@@ -410,11 +409,11 @@ public final class World {
             newPath = file.resolveSibling(count == 0 ? safeName : safeName + " (" + count + ")");
             if (!Files.exists(newPath)) {
                 FileUtils.copyDirectory(file, newPath, path -> !path.contains("session.lock"));
-                World newWorld = new World(newPath);
-                newWorld.setWorldName(newName);
+                new World(newPath).setWorldName(newName);
                 break;
             }
         }
+        throw new IOException("Too many attempts");
     }
 
     public void writeWorldData() throws IOException {
@@ -497,12 +496,12 @@ public final class World {
                 case LOCKED_BY_SELF -> true;
                 case UNLOCKED -> {
                     try {
-                        acquireInternal();
+                        acquireLock();
+                        yield true;
                     } catch (WorldLockedException e) {
                         LOG.warning("Failed to acquire world lock for " + file, e);
                         yield false;
                     }
-                    yield true;
                 }
             };
         }
@@ -513,10 +512,11 @@ public final class World {
             }
         }
 
-        public void acquireInternal() throws WorldLockedException {
+        public void acquireLock() throws WorldLockedException {
             FileChannel channel = null;
             try {
                 channel = FileChannel.open(sessionLockFile, StandardOpenOption.CREATE, StandardOpenOption.WRITE);
+                //noinspection ResultOfMethodCallIgnored
                 channel.write(ByteBuffer.wrap("\u2603".getBytes(StandardCharsets.UTF_8)));
                 channel.force(true);
                 FileLock fileLock = channel.tryLock();
@@ -535,9 +535,9 @@ public final class World {
         private boolean isLockedExternally() {
             try (FileChannel fileChannel = FileChannel.open(sessionLockFile, StandardOpenOption.WRITE)) {
                 return fileChannel.tryLock() == null;
-            } catch (AccessDeniedException | OverlappingFileLockException accessDeniedException) {
+            } catch (AccessDeniedException accessDeniedException) {
                 return true;
-            } catch (NoSuchFileException noSuchFileException) {
+            } catch (OverlappingFileLockException | NoSuchFileException overlappingFileLockException) {
                 return false;
             } catch (IOException e) {
                 LOG.warning("Failed to open the lock file " + sessionLockFile, e);
