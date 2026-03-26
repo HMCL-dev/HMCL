@@ -178,6 +178,7 @@ public final class MojangJavaDownloadTask extends Task<MojangJavaDownloadTask.Re
             Files.move(tempDir, target, StandardCopyOption.REPLACE_EXISTING);
         } else {
             FileUtils.copyDirectory(tempDir, target);
+            FileUtils.deleteDirectory(tempDir);
         }
 
         setResult(new Result(download, javaDownloadsTask.getResult()));
