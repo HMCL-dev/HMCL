@@ -46,8 +46,7 @@ import org.jackhuang.hmcl.util.i18n.I18n;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
 
-import java.io.IOException;
-import java.nio.file.FileAlreadyExistsException;
+import java.nio.file.Files;
 import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
 import java.time.Instant;
@@ -73,8 +72,8 @@ public final class WorldListPage extends ListPageBase<World> implements VersionP
     private int refreshCount = 0;
 
     public WorldListPage() {
-        FXUtils.applyDragListener(this, it -> "zip".equals(FileUtils.getExtension(it)), modpacks -> {
-            installWorld(modpacks.get(0));
+        FXUtils.applyDragListener(this, it -> "zip".equals(FileUtils.getExtension(it)) || Files.isDirectory(it), worlds -> {
+            installWorld(worlds.get(0));
         });
 
         showAll.addListener(e -> updateWorldList());
@@ -151,10 +150,10 @@ public final class WorldListPage extends ListPageBase<World> implements VersionP
         Controllers.navigate(Controllers.getDownloadPage());
     }
 
-    private void installWorld(Path zipFile) {
+    private void installWorld(Path worldPath) {
         // Only accept one world file because user is required to confirm the new world name
         // Or too many input dialogs are popped.
-        Task.supplyAsync(() -> new ArchiveWorld(zipFile))
+        Task.supplyAsync(() -> new ImportableWorld(worldPath))
                 .whenComplete(Schedulers.javafx(), world -> {
                     Controllers.prompt(i18n("world.name.enter"), (name, handler) -> {
                         Task.runAsync(() -> world.install(savesDir, name))
@@ -162,16 +161,14 @@ public final class WorldListPage extends ListPageBase<World> implements VersionP
                                     handler.resolve();
                                     refresh();
                                 }, e -> {
-                                    if (e instanceof FileAlreadyExistsException)
-                                        handler.reject(i18n("world.add.failed", i18n("world.add.already_exists")));
-                                    else if (e instanceof IOException && e.getCause() instanceof InvalidPathException)
+                                    if (e instanceof InvalidPathException)
                                         handler.reject(i18n("world.add.failed", i18n("install.new_game.malformed")));
                                     else
                                         handler.reject(i18n("world.add.failed", e.getClass().getName() + ": " + e.getLocalizedMessage()));
                                 }).start();
                     }, world.getWorldName(), new Validator(i18n("install.new_game.malformed"), FileUtils::isNameValid));
                 }, e -> {
-                    LOG.warning("Unable to parse world file " + zipFile, e);
+                    LOG.warning("Unable to parse world file " + worldPath, e);
                     Controllers.dialog(i18n("world.add.invalid"));
                 }).start();
     }

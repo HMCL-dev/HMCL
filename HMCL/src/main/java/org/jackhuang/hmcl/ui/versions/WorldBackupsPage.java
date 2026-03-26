@@ -100,7 +100,7 @@ public final class WorldBackupsPage extends ListPageBase<WorldBackupsPage.Backup
                                         count = Integer.parseInt(matcher.group("count"));
                                     }
 
-                                    result.add(new BackupInfo(path, new ArchiveWorld(path), time, count));
+                                    result.add(new BackupInfo(path, new ImportableWorld(path), time, count));
                                 }
                             } catch (Throwable e) {
                                 LOG.warning("Failed to load backup file " + path, e);
@@ -147,7 +147,7 @@ public final class WorldBackupsPage extends ListPageBase<WorldBackupsPage.Backup
                 count = Integer.parseInt(matcher.group("count"));
             }
 
-            return Pair.pair(path, new BackupInfo(path, new ArchiveWorld(path), time, count));
+            return Pair.pair(path, new BackupInfo(path, new ImportableWorld(path), time, count));
         }).whenComplete(Schedulers.javafx(), (result, exception) -> {
             if (exception == null) {
                 WorldBackupsPage.this.getItems().add(result.getValue());
@@ -182,18 +182,18 @@ public final class WorldBackupsPage extends ListPageBase<WorldBackupsPage.Backup
 
     public final class BackupInfo extends Control implements Comparable<BackupInfo> {
         private final Path file;
-        private final ArchiveWorld backupWorld;
+        private final ImportableWorld backupWorld;
         private final LocalDateTime backupTime;
         private final int count;
 
-        public BackupInfo(Path file, ArchiveWorld backupWorld, LocalDateTime backupTime, int count) {
+        public BackupInfo(Path file, ImportableWorld backupWorld, LocalDateTime backupTime, int count) {
             this.file = file;
             this.backupWorld = backupWorld;
             this.backupTime = backupTime;
             this.count = count;
         }
 
-        public ArchiveWorld getBackupWorld() {
+        public ImportableWorld getBackupWorld() {
             return backupWorld;
         }
 
@@ -244,7 +244,7 @@ public final class WorldBackupsPage extends ListPageBase<WorldBackupsPage.Backup
         BackupInfoSkin(BackupInfo skinnable) {
             super(skinnable);
 
-            ArchiveWorld backupWorld = skinnable.getBackupWorld();
+            ImportableWorld backupWorld = skinnable.getBackupWorld();
 
             BorderPane root = new BorderPane();
             root.getStyleClass().add("md-list-cell");

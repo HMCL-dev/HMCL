@@ -38,24 +38,26 @@ import java.util.List;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 /// @author mineDiamond
-public final class ArchiveWorld {
-    private final Path file;
+public final class ImportableWorld {
+    private final Path sourcePath;
     private final String fileName;
-    private final boolean hasSubDir;
+    private final boolean isArchive;
+    private final boolean hasTopLevelDirectory;
     private String worldName;
     private @Nullable GameVersionNumber gameVersion;
     private @Nullable Image icon;
 
-    public ArchiveWorld(Path file) throws IOException {
-        if (Files.isRegularFile(file)) {
-            this.file = file;
+    public ImportableWorld(Path sourcePath) throws IOException {
+        if (Files.isRegularFile(sourcePath)) {
+            this.sourcePath = sourcePath;
+            this.isArchive = true;
 
-            try (FileSystem fs = CompressingUtils.readonly(this.file).setAutoDetectEncoding(true).build()) {
+            try (FileSystem fs = CompressingUtils.readonly(this.sourcePath).setAutoDetectEncoding(true).build()) {
                 Path root;
                 if (Files.isRegularFile(fs.getPath("/level.dat"))) {
                     root = fs.getPath("/");
-                    hasSubDir = false;
-                    fileName = FileUtils.getName(this.file);
+                    hasTopLevelDirectory = false;
+                    fileName = FileUtils.getName(this.sourcePath);
                 } else {
                     List<Path> files = Files.list(fs.getPath("/")).toList();
                     if (files.size() != 1 || !Files.isDirectory(files.get(0))) {
@@ -63,7 +65,7 @@ public final class ArchiveWorld {
                     }
 
                     root = files.get(0);
-                    hasSubDir = true;
+                    hasTopLevelDirectory = true;
                     fileName = FileUtils.getName(root);
                 }
 
@@ -87,8 +89,22 @@ public final class ArchiveWorld {
                     }
                 }
             }
+        } else if (Files.isDirectory(sourcePath)) {
+            this.sourcePath = sourcePath;
+            fileName = FileUtils.getName(this.sourcePath);
+            this.isArchive = false;
+            this.hasTopLevelDirectory = false;
+
+            Path levelDatPath = this.sourcePath.resolve("level.dat");
+            if (!Files.exists(levelDatPath)) { // version 20w14infinite
+                levelDatPath = this.sourcePath.resolve("special_level.dat");
+            }
+            if (!Files.exists(levelDatPath)) {
+                throw new IOException("Not a valid world directory since level.dat or special_level.dat cannot be found.");
+            }
+            checkAndLoadLevelData(levelDatPath);
         } else {
-            throw new IOException("Path " + file + " cannot be recognized as a archive Minecraft world");
+            throw new IOException("Path " + sourcePath + " cannot be recognized as a archive Minecraft world");
         }
     }
 
@@ -112,8 +128,8 @@ public final class ArchiveWorld {
             throw new IOException("level.dat missing LastPlayed");
     }
 
-    public Path getFile() {
-        return file;
+    public Path getSourcePath() {
+        return sourcePath;
     }
 
     public String getFileName() {
@@ -121,7 +137,7 @@ public final class ArchiveWorld {
     }
 
     public boolean hasSubDir() {
-        return hasSubDir;
+        return hasTopLevelDirectory;
     }
 
     public String getWorldName() {
@@ -137,22 +153,25 @@ public final class ArchiveWorld {
     }
 
     public void install(Path savesDir, String name) throws IOException {
+        String safeName = FileUtils.getSafeWorldFolderName(name);
+
         Path worldDir;
-        try {
-            worldDir = savesDir.resolve(name);
-        } catch (InvalidPathException e) {
-            throw new IOException(e);
+        for (int count = 0; count < 256; count++) {
+            worldDir = savesDir.resolve(count == 0 ? safeName : safeName + " (" + count + ")");
+            if (!Files.exists(worldDir)) {
+                if (isArchive) {
+                    if (hasTopLevelDirectory) {
+                        new Unzipper(sourcePath, worldDir).setSubDirectory("/" + fileName + "/").unzip();
+                    } else {
+                        new Unzipper(sourcePath, worldDir).unzip();
+                    }
+                } else {
+                    FileUtils.copyDirectory(sourcePath, worldDir, path -> !path.contains("session.lock"));
+                }
+                new World(worldDir).setWorldName(name);
+                return;
+            }
         }
-
-        if (Files.isDirectory(worldDir)) {
-            throw new FileAlreadyExistsException("World already exists");
-        }
-
-        if (hasSubDir) {
-            new Unzipper(file, worldDir).setSubDirectory("/" + fileName + "/").unzip();
-        } else {
-            new Unzipper(file, worldDir).unzip();
-        }
-        new World(worldDir).rename(name);
+        throw new IOException("Too many attempts");
     }
 }
