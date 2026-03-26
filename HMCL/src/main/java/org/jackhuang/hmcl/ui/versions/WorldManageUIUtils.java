@@ -30,7 +30,6 @@ import org.jackhuang.hmcl.ui.wizard.SinglePageWizardProvider;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
 
-import java.io.IOException;
 import java.nio.file.Path;
 import java.util.function.Consumer;
 
@@ -94,32 +93,34 @@ public final class WorldManageUIUtils {
     public static void renameWorld(World world, Consumer<String> notRenameFolderConsumer, Consumer<Path> renameFolderConsumer) {
         Controllers.prompt(new PromptDialogPane.Builder(i18n("world.rename.prompt"), (res, handler) -> {
             String newWorldName = ((PromptDialogPane.Builder.StringQuestion) res.get(0)).getValue();
+            String finalNewWorldName = StringUtils.isBlank(newWorldName) ? i18n("world.name.default") : newWorldName;
             boolean renameFolder = ((PromptDialogPane.Builder.BooleanQuestion) res.get(1)).getValue();
 
-            if (StringUtils.isBlank(newWorldName)) {
-                newWorldName = i18n("world.name.default");
-            }
-            if (newWorldName.equals(world.getWorldName())) {
+            if (finalNewWorldName.equals(world.getWorldName())) {
                 handler.resolve();
                 return;
             }
 
-            try {
+            Task.supplyAsync(Schedulers.io(), () -> {
                 if (renameFolder) {
-                    if (renameFolderConsumer != null) {
-                        renameFolderConsumer.accept(world.rename(newWorldName));
-                    }
+                    return world.rename(finalNewWorldName);
                 } else {
-                    world.setWorldName(newWorldName);
-                    if (notRenameFolderConsumer != null) {
-                        notRenameFolderConsumer.accept(newWorldName);
-                    }
+                    world.setWorldName(finalNewWorldName);
+                    return null;
                 }
-                handler.resolve();
-            } catch (IOException e) {
-                LOG.warning("Failed to set world name", e);
-                handler.reject(i18n("world.rename.failed"));
-            }
+            }).whenComplete(Schedulers.javafx(), (result, exception) -> {
+                if (exception != null) {
+                    LOG.warning("Failed to set world name", exception);
+                    handler.reject(i18n("world.rename.failed"));
+                } else {
+                    if (renameFolder && renameFolderConsumer != null) {
+                        renameFolderConsumer.accept(result);
+                    } else if (!renameFolder && notRenameFolderConsumer != null) {
+                        notRenameFolderConsumer.accept(finalNewWorldName);
+                    }
+                    handler.resolve();
+                }
+            }).start();
         })
                 .addQuestion(new PromptDialogPane.Builder.StringQuestion(null, world.getWorldName()))
                 .addQuestion(new PromptDialogPane.Builder.BooleanQuestion(i18n("world.rename.rename_folder"), false)));
