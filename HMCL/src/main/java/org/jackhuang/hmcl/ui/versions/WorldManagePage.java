@@ -95,6 +95,8 @@ public final class WorldManagePage extends DecoratorAnimatedPage implements Deco
         Optional<String> gameVersion = profile.getRepository().getGameVersion(instanceId);
         currentWorldSupportQuickPlay.set(World.supportsQuickPlay(GameVersionNumber.asGameVersion(gameVersion)));
         currentWorldSupportDataPack.set(world.supportsDataPacks());
+
+        header.select(worldInfoTab);
         return this;
     }
 
@@ -234,14 +236,12 @@ public final class WorldManagePage extends DecoratorAnimatedPage implements Deco
         private AdvancedListBox getTabBar() {
             AdvancedListBox tabBar = new AdvancedListBox();
             {
-                getSkinnable().header.getTabs().addAll(getSkinnable().worldInfoTab, getSkinnable().worldBackupsTab);
+                getSkinnable().header.getTabs().addAll(getSkinnable().worldInfoTab, getSkinnable().worldBackupsTab, getSkinnable().dataPackTab);
                 getSkinnable().header.select(getSkinnable().worldInfoTab);
 
                 tabBar.addNavigationDrawerTab(getSkinnable().header, getSkinnable().worldInfoTab, i18n("world.info"), SVG.INFO, SVG.INFO_FILL)
-                        .addNavigationDrawerTab(getSkinnable().header, getSkinnable().worldBackupsTab, i18n("world.backup"), SVG.ARCHIVE, SVG.ARCHIVE_FILL);
-
-                getSkinnable().header.getTabs().add(getSkinnable().dataPackTab);
-                tabBar.addNavigationDrawerTab(getSkinnable().header, getSkinnable().dataPackTab, i18n("world.datapack"), SVG.EXTENSION, SVG.EXTENSION_FILL);
+                        .addNavigationDrawerTab(getSkinnable().header, getSkinnable().worldBackupsTab, i18n("world.backup"), SVG.ARCHIVE, SVG.ARCHIVE_FILL)
+                        .addNavigationDrawerTab(getSkinnable().header, getSkinnable().dataPackTab, i18n("world.datapack"), SVG.EXTENSION, SVG.EXTENSION_FILL);
             }
 
             return tabBar;
