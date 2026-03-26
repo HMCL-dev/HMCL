@@ -70,7 +70,6 @@ import java.util.*;
 import java.util.stream.Stream;
 
 import static org.jackhuang.hmcl.ui.FXUtils.*;
-import static org.jackhuang.hmcl.ui.ToolbarListPageSkin.createTip;
 import static org.jackhuang.hmcl.ui.ToolbarListPageSkin.createToolbarButton2;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
@@ -820,22 +819,31 @@ public final class SchematicsPage extends ListPageBase<SchematicsPage.Item> impl
             }
 
             {
-                var relPath = createTip();
-                HBox.setMargin(relPath, new Insets(5));
+                var relPath = new HBox();
+                relPath.getStyleClass().add("jfx-tool-bar-tip");
+                relPath.setAlignment(Pos.CENTER_LEFT);
                 FXUtils.onChangeAndOperate(skinnable.currentDirectoryProperty(), currentDir -> {
                     relPath.getChildren().clear();
                     var d = currentDir;
                     while (d != null) {
-                        relPath.getChildren().add(0, new Text("/"));
+                        if (d != currentDir) {
+                            var box = new HBox(new Text(">"));
+                            box.setPadding(new Insets(3));
+                            relPath.getChildren().add(0, box);
+                        }
                         var txt = new Text(d.getName());
+                        var box = new HBox(txt);
+                        box.setPadding(new Insets(3));
+                        box.setMouseTransparent(true);
+                        var rippler = new RipplerContainer(box);
                         var finalD = d;
-                        FXUtils.onClicked(txt, () -> skinnable.navigateTo(finalD));
-                        relPath.getChildren().add(0, txt);
+                        FXUtils.onClicked(rippler, () -> skinnable.navigateTo(finalD));
+                        relPath.getChildren().add(0, rippler);
                         d = d.parent;
                     }
                 });
                 var relPathPane = new HBox(relPath);
-                relPathPane.setAlignment(Pos.CENTER_LEFT);
+                relPathPane.setPadding(new Insets(2));
                 root.getContent().add(relPathPane);
             }
 

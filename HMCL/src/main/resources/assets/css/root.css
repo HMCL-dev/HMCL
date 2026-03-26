@@ -710,6 +710,10 @@
     -fx-text-fill: BLACK;
 }
 
+.jfx-tool-bar Text {
+
+}
+
 .jfx-tool-bar .jfx-options-burger {
     -fx-padding: 22px;
 }
@@ -755,6 +759,11 @@
 .jfx-tool-bar-button .icon {
     -fx-fill: rgb(204.0, 204.0, 51.0);
     -fx-padding: 10.0;
+}
+
+.jfx-tool-bar-tip Text {
+    -fx-font-size: 13;
+    -fx-fill: -monet-on-surface;
 }
 
 .jfx-decorator-button {
@@ -1923,9 +1932,4 @@
 
 .line-toggle-button .jfx-toggle-button {
     -fx-padding: 0;
-}
-
-.list-tip Text {
-    -fx-font-size: 13;
-    -fx-fill: -monet-on-surface;
 }
