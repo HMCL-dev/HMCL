@@ -158,13 +158,6 @@ public final class MojangJavaDownloadTask extends Task<MojangJavaDownloadTask.Re
         setResult(new Result(download, javaDownloadsTask.getResult()));
     }
 
-    public static final class Result {
-        public final MojangJavaDownloads.JavaDownload download;
-        public final MojangJavaRemoteFiles remoteFiles;
-
-        public Result(MojangJavaDownloads.JavaDownload download, MojangJavaRemoteFiles remoteFiles) {
-            this.download = download;
-            this.remoteFiles = remoteFiles;
-        }
+    public record Result(MojangJavaDownloads.JavaDownload download, MojangJavaRemoteFiles remoteFiles) {
     }
 }

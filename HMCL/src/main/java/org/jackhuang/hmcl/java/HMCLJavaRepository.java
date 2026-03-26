@@ -167,14 +167,14 @@ public final class HMCLJavaRepository implements JavaRepository {
             if (JavaManager.isCompatible(platform))
                 info = JavaInfoUtils.fromExecutable(executable, false);
             else
-                info = new JavaInfo(platform, result.download.version().name(), null);
+                info = new JavaInfo(platform, result.download().version().name(), null);
 
             Map<String, Object> update = new LinkedHashMap<>();
             update.put("provider", "mojang");
             update.put("component", gameJavaVersion.component());
 
             Map<String, JavaLocalFiles.Local> files = new LinkedHashMap<>();
-            result.remoteFiles.getFiles().forEach((path, file) -> {
+            result.remoteFiles().getFiles().forEach((path, file) -> {
                 if (file instanceof MojangJavaRemoteFiles.RemoteFile) {
                     DownloadInfo downloadInfo = ((MojangJavaRemoteFiles.RemoteFile) file).getDownloads().get("raw");
                     if (downloadInfo != null) {
