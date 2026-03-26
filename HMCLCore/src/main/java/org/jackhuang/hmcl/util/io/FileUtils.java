@@ -209,6 +209,37 @@ public final class FileUtils {
         return true;
     }
 
+    public static Path getNonConflictingDirectory(@NotNull Path parent, @NotNull String name) throws IOException {
+        for (int count = 0; count < 256; count++) {
+            String suffix = (count == 0) ? "" : " (" + count + ")";
+            Path targetPath = parent.resolve(name + suffix);
+
+            if (!Files.exists(targetPath)) {
+                return targetPath;
+            }
+        }
+        throw new IOException("Too many directory name collisions in " + parent);
+    }
+
+    public static Path getNonConflictingFilePath(@NotNull Path path, @NotNull String name) throws IOException {
+        String baseName = getNameWithoutExtension(name);
+        String extension = getExtension(name);
+        String suffix = extension.isEmpty() ? "" : "." + extension;
+
+        for (int count = 0; count < 256; count++) {
+            String fileName = (count == 0)
+                    ? name
+                    : String.format("%s (%d)%s", baseName, count, suffix);
+
+            Path targetPath = path.resolve(fileName);
+
+            if (!Files.exists(targetPath)) {
+                return targetPath;
+            }
+        }
+        throw new IOException("Too many file name collisions in " + path);
+    }
+
     public static String getSafeWorldFolderName(String name) {
         if (StringUtils.isBlank(name)) {
             return "New World";

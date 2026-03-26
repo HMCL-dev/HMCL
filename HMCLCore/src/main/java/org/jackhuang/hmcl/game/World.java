@@ -281,18 +281,11 @@ public final class World {
         writeLevelData();
 
         // Then change the folder's name
-        String safeName = FileUtils.getSafeWorldFolderName(newName);
-        Path newPath;
-        for (int count = 0; count < 256; count++) {
-            newPath = file.resolveSibling(count == 0 ? safeName : safeName + " (" + count + ")");
-            if (!Files.exists(newPath)) {
-                try (WorldLock.Suspension ignored = getWorldLock().suspend()) {
-                    Files.move(file, newPath);
-                    return newPath;
-                }
-            }
+        Path targetPath = FileUtils.getNonConflictingDirectory(file.getParent(), FileUtils.getSafeWorldFolderName(newName));
+        try (WorldLock.Suspension ignored = getWorldLock().suspend()) {
+            Files.move(file, targetPath);
+            return targetPath;
         }
-        throw new IOException("Too many attempts");
     }
 
     public void export(Path zipPath, String worldName) throws IOException {
@@ -319,17 +312,9 @@ public final class World {
             throw new WorldLockedException("The world " + getFile() + " has been locked");
         }
 
-        String safeName = FileUtils.getSafeWorldFolderName(newName);
-        Path newPath;
-        for (int count = 0; count < 256; count++) {
-            newPath = file.resolveSibling(count == 0 ? safeName : safeName + " (" + count + ")");
-            if (!Files.exists(newPath)) {
-                FileUtils.copyDirectory(file, newPath, path -> !path.contains("session.lock"));
-                new World(newPath).setWorldName(newName);
-                return;
-            }
-        }
-        throw new IOException("Too many attempts");
+        Path targetPath = FileUtils.getNonConflictingDirectory(file.getParent(), FileUtils.getSafeWorldFolderName(newName));
+        FileUtils.copyDirectory(file, targetPath, path -> !path.contains("session.lock"));
+        new World(targetPath).setWorldName(newName);
     }
 
     public void writeWorldData() throws IOException {

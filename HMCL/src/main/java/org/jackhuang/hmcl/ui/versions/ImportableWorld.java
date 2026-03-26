@@ -32,7 +32,9 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.nio.file.*;
+import java.nio.file.FileSystem;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.List;
 
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
@@ -136,7 +138,7 @@ public final class ImportableWorld {
         return fileName;
     }
 
-    public boolean hasSubDir() {
+    public boolean hasTopLevelDirectory() {
         return hasTopLevelDirectory;
     }
 
@@ -153,25 +155,17 @@ public final class ImportableWorld {
     }
 
     public void install(Path savesDir, String name) throws IOException {
-        String safeName = FileUtils.getSafeWorldFolderName(name);
+        Path targetPath = FileUtils.getNonConflictingDirectory(savesDir, FileUtils.getSafeWorldFolderName(name));
 
-        Path worldDir;
-        for (int count = 0; count < 256; count++) {
-            worldDir = savesDir.resolve(count == 0 ? safeName : safeName + " (" + count + ")");
-            if (!Files.exists(worldDir)) {
-                if (isArchive) {
-                    if (hasTopLevelDirectory) {
-                        new Unzipper(sourcePath, worldDir).setSubDirectory("/" + fileName + "/").unzip();
-                    } else {
-                        new Unzipper(sourcePath, worldDir).unzip();
-                    }
-                } else {
-                    FileUtils.copyDirectory(sourcePath, worldDir, path -> !path.contains("session.lock"));
-                }
-                new World(worldDir).setWorldName(name);
-                return;
+        if (isArchive) {
+            if (hasTopLevelDirectory) {
+                new Unzipper(sourcePath, targetPath).setSubDirectory("/" + fileName + "/").unzip();
+            } else {
+                new Unzipper(sourcePath, targetPath).unzip();
             }
+        } else {
+            FileUtils.copyDirectory(sourcePath, targetPath, path -> !path.contains("session.lock"));
         }
-        throw new IOException("Too many attempts");
+        new World(targetPath).setWorldName(name);
     }
 }
