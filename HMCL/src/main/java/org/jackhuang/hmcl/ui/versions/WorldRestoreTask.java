@@ -53,23 +53,20 @@ public class WorldRestoreTask extends Task<Path> {
 
         try {
             world.getWorldLock().releaseLock();
+            Files.move(worldPath, tempPath2, StandardCopyOption.REPLACE_EXISTING);
         } catch (IOException e) {
             FileUtils.deleteDirectoryQuietly(tempPath);
+            FileUtils.deleteDirectoryQuietly(tempPath2);
             world.getWorldLock().acquireLock();
             throw e;
         }
 
         try {
-            Files.move(worldPath, tempPath2, StandardCopyOption.ATOMIC_MOVE);
+            Files.move(tempPath, worldPath, StandardCopyOption.REPLACE_EXISTING);
         } catch (IOException e) {
+            Files.move(tempPath2, worldPath, StandardCopyOption.REPLACE_EXISTING);
             FileUtils.deleteDirectoryQuietly(tempPath);
-            throw e;
-        }
-
-        try {
-            Files.move(tempPath, worldPath, StandardCopyOption.ATOMIC_MOVE);
-        } catch (IOException e) {
-            Files.move(tempPath2, worldPath, StandardCopyOption.ATOMIC_MOVE, StandardCopyOption.REPLACE_EXISTING);
+            world.getWorldLock().acquireLock();
             throw e;
         }
 
