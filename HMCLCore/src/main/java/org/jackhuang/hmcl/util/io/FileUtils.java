@@ -211,7 +211,7 @@ public final class FileUtils {
 
     public static String getSafeWorldFolderName(String name) {
         if (StringUtils.isBlank(name)) {
-            return "New Name";
+            return "New World";
         }
 
         // Replace invalid characters with underscores
@@ -228,7 +228,7 @@ public final class FileUtils {
 
         // Provide a default value if the sanitized string is empty
         if (sanitized.isEmpty()) {
-            return "New Name";
+            return "New World";
         }
 
         return sanitized;

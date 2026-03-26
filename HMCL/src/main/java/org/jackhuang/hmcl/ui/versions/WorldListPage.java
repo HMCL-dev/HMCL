@@ -42,6 +42,7 @@ import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.ui.*;
 import org.jackhuang.hmcl.ui.construct.*;
 import org.jackhuang.hmcl.util.ChunkBaseApp;
+import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.i18n.I18n;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
@@ -156,7 +157,8 @@ public final class WorldListPage extends ListPageBase<World> implements VersionP
         Task.supplyAsync(() -> new ImportableWorld(worldPath))
                 .whenComplete(Schedulers.javafx(), world -> {
                     Controllers.prompt(i18n("world.name.enter"), (name, handler) -> {
-                        Task.runAsync(() -> world.install(savesDir, name))
+                        String finalName = StringUtils.isBlank(name) ? i18n("world.name.default") : name;
+                        Task.runAsync(() -> world.install(savesDir, finalName))
                                 .whenComplete(Schedulers.javafx(), () -> {
                                     handler.resolve();
                                     refresh();
@@ -166,7 +168,7 @@ public final class WorldListPage extends ListPageBase<World> implements VersionP
                                     else
                                         handler.reject(i18n("world.add.failed", e.getClass().getName() + ": " + e.getLocalizedMessage()));
                                 }).start();
-                    }, world.getWorldName(), new Validator(i18n("install.new_game.malformed"), FileUtils::isNameValid));
+                    }, world.getWorldName());
                 }, e -> {
                     LOG.warning("Unable to parse world file " + worldPath, e);
                     Controllers.dialog(i18n("world.add.invalid"));
