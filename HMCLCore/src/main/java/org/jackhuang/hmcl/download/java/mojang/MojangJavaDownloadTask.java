@@ -82,9 +82,7 @@ public final class MojangJavaDownloadTask extends Task<MojangJavaDownloadTask.Re
     public void execute() throws Exception {
         for (Map.Entry<String, MojangJavaRemoteFiles.Remote> entry : javaDownloadsTask.getResult().getFiles().entrySet()) {
             Path dest = target.resolve(entry.getKey());
-            if (entry.getValue() instanceof MojangJavaRemoteFiles.RemoteFile) {
-                MojangJavaRemoteFiles.RemoteFile file = ((MojangJavaRemoteFiles.RemoteFile) entry.getValue());
-
+            if (entry.getValue() instanceof MojangJavaRemoteFiles.RemoteFile file) {
                 // Use local file if it already exists
                 try {
                     BasicFileAttributes localFileAttributes = Files.readAttributes(dest, BasicFileAttributes.class);
@@ -137,8 +135,7 @@ public final class MojangJavaDownloadTask extends Task<MojangJavaDownloadTask.Re
                 }
             } else if (entry.getValue() instanceof MojangJavaRemoteFiles.RemoteDirectory) {
                 Files.createDirectories(dest);
-            } else if (entry.getValue() instanceof MojangJavaRemoteFiles.RemoteLink) {
-                MojangJavaRemoteFiles.RemoteLink link = ((MojangJavaRemoteFiles.RemoteLink) entry.getValue());
+            } else if (entry.getValue() instanceof MojangJavaRemoteFiles.RemoteLink link) {
                 Files.deleteIfExists(dest);
                 Files.createSymbolicLink(dest, Paths.get(link.getTarget()));
             }
