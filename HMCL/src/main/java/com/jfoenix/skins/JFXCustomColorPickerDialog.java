@@ -40,7 +40,9 @@ import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
 import javafx.stage.*;
 import javafx.util.Duration;
+import org.glavo.monetfx.ColorScheme;
 import org.jackhuang.hmcl.setting.StyleSheets;
+import org.jackhuang.hmcl.theme.Themes;
 import org.jackhuang.hmcl.util.StringUtils;
 
 import java.util.concurrent.atomic.AtomicInteger;
@@ -251,7 +253,11 @@ public class JFXCustomColorPickerDialog extends StackPane {
                     return pane.getBackground().getFills().get(0).getFill();
                 }, pane.backgroundProperty()));
                 acceptButton.textFillProperty().bind(Bindings.createObjectBinding(() -> {
-                    return (Color) pane.getBackground().getFills().get(0).getFill();
+                    Color fill = (Color) pane.getBackground().getFills().get(0).getFill();
+                    return ColorScheme.newBuilder(Themes.getColorScheme())
+                            .setPrimaryColorSeed(fill)
+                            .build()
+                            .getPrimary();
                 }, pane.backgroundProperty()));
 
                 ((Pane) pickerDecorator.lookup(".jfx-decorator-buttons-container")).backgroundProperty()
