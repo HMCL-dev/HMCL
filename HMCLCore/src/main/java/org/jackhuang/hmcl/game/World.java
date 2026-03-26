@@ -380,7 +380,7 @@ public final class World {
         return List.of();
     }
 
-    public class WorldLock implements AutoCloseable {
+    public class WorldLock {
         private FileChannel sessionLockChannel;
         private final Path sessionLockFile;
 
@@ -396,7 +396,7 @@ public final class World {
         }
 
         public synchronized LockState getLockState() {
-            if (sessionLockChannel != null && sessionLockChannel.isOpen()) {
+            if (isLockedInternally()) {
                 return LockState.LOCKED_BY_SELF;
             } else if (isLockedExternally()) {
                 return LockState.LOCKED_BY_OTHER;
@@ -406,25 +406,20 @@ public final class World {
         }
 
         public synchronized boolean lock() {
-            LockState lockState = getLockState();
-            return switch (lockState) {
-                case LOCKED_BY_OTHER -> false;
-                case LOCKED_BY_SELF -> true;
-                case UNLOCKED -> {
-                    try {
-                        acquireLock();
-                        yield true;
-                    } catch (WorldLockedException e) {
-                        LOG.warning("Failed to acquire world lock for " + file, e);
-                        yield false;
-                    }
-                }
-            };
+            try {
+                lockStrict();
+                return true;
+            } catch (WorldLockedException e) {
+                return false;
+            }
         }
 
         public void lockStrict() throws WorldLockedException {
-            if (!lock()) {
-                throw new WorldLockedException("Failed to lock world " + World.this.getFile());
+            switch (getLockState()) {
+                case LOCKED_BY_SELF -> {
+                }
+                case LOCKED_BY_OTHER -> throw new WorldLockedException("World is locked by others");
+                case UNLOCKED -> acquireLock();
             }
         }
 
@@ -448,6 +443,10 @@ public final class World {
             }
         }
 
+        private boolean isLockedInternally() {
+            return sessionLockChannel != null && sessionLockChannel.isOpen();
+        }
+
         private boolean isLockedExternally() {
             try (FileChannel fileChannel = FileChannel.open(sessionLockFile, StandardOpenOption.WRITE)) {
                 return fileChannel.tryLock() == null;
@@ -456,7 +455,7 @@ public final class World {
             } catch (OverlappingFileLockException | NoSuchFileException overlappingFileLockException) {
                 return false;
             } catch (IOException e) {
-                LOG.warning("Failed to open the lock file " + sessionLockFile, e);
+                LOG.warning("Unexpected I/O error checking world lock: " + sessionLockFile, e);
                 return false;
             }
         }
@@ -466,11 +465,6 @@ public final class World {
                 sessionLockChannel.close();
                 sessionLockChannel = null;
             }
-        }
-
-        @Override
-        public void close() throws IOException {
-            releaseLock();
         }
 
         public Guard guard() throws WorldLockedException {
@@ -486,7 +480,7 @@ public final class World {
 
             private Guard() throws WorldLockedException {
                 synchronized (WorldLock.this) {
-                    this.wasAlreadyLocked = (getLockState() == LockState.LOCKED_BY_SELF);
+                    this.wasAlreadyLocked = isLockedInternally();
                     if (!wasAlreadyLocked) {
                         lockStrict();
                     }
@@ -512,7 +506,7 @@ public final class World {
 
             private Suspension() throws IOException {
                 synchronized (WorldLock.this) {
-                    this.hadLock = (getLockState() == LockState.LOCKED_BY_SELF);
+                    this.hadLock = isLockedInternally();
                     if (hadLock) {
                         releaseLock();
                     }
@@ -524,8 +518,8 @@ public final class World {
                 synchronized (WorldLock.this) {
                     if (hadLock) {
                         try {
-                            lock();
-                        } catch (Exception e) {
+                            lockStrict();
+                        } catch (WorldLockedException e) {
                             LOG.warning("Failed to resume lock after suspension", e);
                         }
                     }
