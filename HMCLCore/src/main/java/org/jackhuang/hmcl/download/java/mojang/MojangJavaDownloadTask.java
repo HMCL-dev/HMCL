@@ -43,6 +43,8 @@ import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 public final class MojangJavaDownloadTask extends Task<MojangJavaDownloadTask.Result> {
 
+    private static final String JAVA_LIST_URL = "https://piston-meta.mojang.com/v1/products/java-runtime/2ec0cc96c44e5a76b9c8b7c39df7210883d12871/all.json";
+
     private final DownloadProvider downloadProvider;
     private final Path target;
     private final Task<MojangJavaRemoteFiles> javaDownloadsTask;
@@ -53,24 +55,23 @@ public final class MojangJavaDownloadTask extends Task<MojangJavaDownloadTask.Re
     public MojangJavaDownloadTask(DownloadProvider downloadProvider, Path target, GameJavaVersion javaVersion, String platform) {
         this.target = target;
         this.downloadProvider = downloadProvider;
-        this.javaDownloadsTask = new GetTask(downloadProvider.injectURLWithCandidates(
-                "https://piston-meta.mojang.com/v1/products/java-runtime/2ec0cc96c44e5a76b9c8b7c39df7210883d12871/all.json"))
-        .thenComposeAsync(javaDownloadsJson -> {
-            MojangJavaDownloads allDownloads = JsonUtils.fromNonNullJson(javaDownloadsJson, MojangJavaDownloads.class);
+        this.javaDownloadsTask = new GetTask(downloadProvider.injectURLWithCandidates(JAVA_LIST_URL))
+                .thenComposeAsync(javaDownloadsJson -> {
+                    MojangJavaDownloads allDownloads = JsonUtils.fromNonNullJson(javaDownloadsJson, MojangJavaDownloads.class);
 
-            Map<String, List<MojangJavaDownloads.JavaDownload>> osDownloads = allDownloads.downloads().get(platform);
-            if (osDownloads == null || !osDownloads.containsKey(javaVersion.component()))
-                throw new UnsupportedPlatformException("Unsupported platform: " + platform);
-            List<MojangJavaDownloads.JavaDownload> candidates = osDownloads.get(javaVersion.component());
-            for (MojangJavaDownloads.JavaDownload download : candidates) {
-                if (JavaInfo.parseVersion(download.version().name()) >= javaVersion.majorVersion()) {
-                    this.download = download;
-                    return new GetTask(downloadProvider.injectURLWithCandidates(download.manifest().getUrl()));
-                }
-            }
-            throw new UnsupportedPlatformException("Candidates: " + JsonUtils.GSON.toJson(candidates));
-        })
-        .thenApplyAsync(javaDownloadJson -> JsonUtils.fromNonNullJson(javaDownloadJson, MojangJavaRemoteFiles.class));
+                    Map<String, List<MojangJavaDownloads.JavaDownload>> osDownloads = allDownloads.downloads().get(platform);
+                    if (osDownloads == null || !osDownloads.containsKey(javaVersion.component()))
+                        throw new UnsupportedPlatformException("Unsupported platform: " + platform);
+                    List<MojangJavaDownloads.JavaDownload> candidates = osDownloads.get(javaVersion.component());
+                    for (MojangJavaDownloads.JavaDownload download : candidates) {
+                        if (JavaInfo.parseVersion(download.version().name()) >= javaVersion.majorVersion()) {
+                            this.download = download;
+                            return new GetTask(downloadProvider.injectURLWithCandidates(download.manifest().getUrl()));
+                        }
+                    }
+                    throw new UnsupportedPlatformException("Candidates: " + JsonUtils.GSON.toJson(candidates));
+                })
+                .thenApplyAsync(javaDownloadJson -> JsonUtils.fromNonNullJson(javaDownloadJson, MojangJavaRemoteFiles.class));
     }
 
     @Override
