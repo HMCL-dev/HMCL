@@ -58,14 +58,14 @@ public final class MojangJavaDownloadTask extends Task<MojangJavaDownloadTask.Re
         .thenComposeAsync(javaDownloadsJson -> {
             MojangJavaDownloads allDownloads = JsonUtils.fromNonNullJson(javaDownloadsJson, MojangJavaDownloads.class);
 
-            Map<String, List<MojangJavaDownloads.JavaDownload>> osDownloads = allDownloads.getDownloads().get(platform);
+            Map<String, List<MojangJavaDownloads.JavaDownload>> osDownloads = allDownloads.downloads().get(platform);
             if (osDownloads == null || !osDownloads.containsKey(javaVersion.component()))
                 throw new UnsupportedPlatformException("Unsupported platform: " + platform);
             List<MojangJavaDownloads.JavaDownload> candidates = osDownloads.get(javaVersion.component());
             for (MojangJavaDownloads.JavaDownload download : candidates) {
-                if (JavaInfo.parseVersion(download.getVersion().getName()) >= javaVersion.majorVersion()) {
+                if (JavaInfo.parseVersion(download.version().name()) >= javaVersion.majorVersion()) {
                     this.download = download;
-                    return new GetTask(downloadProvider.injectURLWithCandidates(download.getManifest().getUrl()));
+                    return new GetTask(downloadProvider.injectURLWithCandidates(download.manifest().getUrl()));
                 }
             }
             throw new UnsupportedPlatformException("Candidates: " + JsonUtils.GSON.toJson(candidates));

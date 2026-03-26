@@ -167,7 +167,7 @@ public final class HMCLJavaRepository implements JavaRepository {
             if (JavaManager.isCompatible(platform))
                 info = JavaInfoUtils.fromExecutable(executable, false);
             else
-                info = new JavaInfo(platform, result.download.getVersion().getName(), null);
+                info = new JavaInfo(platform, result.download.version().name(), null);
 
             Map<String, Object> update = new LinkedHashMap<>();
             update.put("provider", "mojang");
