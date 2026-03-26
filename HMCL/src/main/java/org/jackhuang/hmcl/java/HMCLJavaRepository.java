@@ -151,8 +151,9 @@ public final class HMCLJavaRepository implements JavaRepository {
     @Override
     public Task<JavaRuntime> getDownloadJavaTask(DownloadProvider downloadProvider, Platform platform, GameJavaVersion gameJavaVersion) {
         Path javaDir = getJavaDir(platform, gameJavaVersion);
+        Path tempDir = getPlatformRoot(platform).resolve(".tmp").resolve(javaDir.getFileName());
 
-        return new MojangJavaDownloadTask(downloadProvider, javaDir, gameJavaVersion, JavaManager.getMojangJavaPlatform(platform)).thenApplyAsync(result -> {
+        return new MojangJavaDownloadTask(downloadProvider, javaDir, tempDir, gameJavaVersion, JavaManager.getMojangJavaPlatform(platform)).thenApplyAsync(result -> {
             Path executable;
             try {
                 executable = JavaManager.getExecutable(javaDir).toRealPath();

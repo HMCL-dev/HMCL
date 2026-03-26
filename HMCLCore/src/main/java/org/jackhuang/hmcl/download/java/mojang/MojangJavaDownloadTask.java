@@ -25,6 +25,7 @@ import org.jackhuang.hmcl.java.JavaInfo;
 import org.jackhuang.hmcl.task.FileDownloadTask;
 import org.jackhuang.hmcl.task.GetTask;
 import org.jackhuang.hmcl.task.Task;
+import org.jackhuang.hmcl.util.DigestUtils;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.io.ChecksumMismatchException;
 import org.jackhuang.hmcl.util.io.FileUtils;
@@ -47,13 +48,15 @@ public final class MojangJavaDownloadTask extends Task<MojangJavaDownloadTask.Re
 
     private final DownloadProvider downloadProvider;
     private final Path target;
+    private final Path tempDir;
     private final Task<MojangJavaRemoteFiles> javaDownloadsTask;
     private final List<Task<?>> dependencies = new ArrayList<>();
 
     private volatile MojangJavaDownloads.JavaDownload download;
 
-    public MojangJavaDownloadTask(DownloadProvider downloadProvider, Path target, GameJavaVersion javaVersion, String platform) {
+    public MojangJavaDownloadTask(DownloadProvider downloadProvider, Path target, Path tempDir, GameJavaVersion javaVersion, String platform) {
         this.target = target;
+        this.tempDir = tempDir;
         this.downloadProvider = downloadProvider;
         this.javaDownloadsTask = new GetTask(downloadProvider.injectURLWithCandidates(JAVA_LIST_URL))
                 .thenComposeAsync(javaDownloadsJson -> {
@@ -82,7 +85,7 @@ public final class MojangJavaDownloadTask extends Task<MojangJavaDownloadTask.Re
     @Override
     public void execute() throws Exception {
         for (Map.Entry<String, MojangJavaRemoteFiles.Remote> entry : javaDownloadsTask.getResult().getFiles().entrySet()) {
-            Path dest = target.resolve(entry.getKey());
+            Path dest = tempDir.resolve(entry.getKey());
             if (entry.getValue() instanceof MojangJavaRemoteFiles.RemoteFile file) {
                 // Use local file if it already exists
                 try {
@@ -100,11 +103,11 @@ public final class MojangJavaDownloadTask extends Task<MojangJavaDownloadTask.Re
 
                 if (file.getDownloads().containsKey("lzma")) {
                     DownloadInfo download = file.getDownloads().get("lzma");
-                    Path tempFile = target.resolve(entry.getKey() + ".lzma");
+                    Path tempFile = tempDir.resolve(entry.getKey() + ".lzma");
                     var task = new FileDownloadTask(downloadProvider.injectURLWithCandidates(download.getUrl()), tempFile, new FileDownloadTask.IntegrityCheck("SHA-1", download.getSha1()));
                     task.setName(entry.getKey());
                     dependencies.add(task.thenRunAsync(() -> {
-                        Path decompressed = target.resolve(entry.getKey() + ".tmp");
+                        Path decompressed = tempDir.resolve(entry.getKey());
                         try (LZMAInputStream input = new LZMAInputStream(Files.newInputStream(tempFile))) {
                             Files.copy(input, decompressed, StandardCopyOption.REPLACE_EXISTING);
                         } catch (IOException e) {
@@ -155,6 +158,28 @@ public final class MojangJavaDownloadTask extends Task<MojangJavaDownloadTask.Re
 
     @Override
     public void postExecute() throws Exception {
+        for (var entry : javaDownloadsTask.getResult().getFiles().entrySet()) {
+            if (entry.getValue() instanceof MojangJavaRemoteFiles.RemoteFile remoteFile) {
+                DownloadInfo raw = remoteFile.getDownloads().get("raw");
+                if (raw != null && raw.getSha1() != null) {
+                    Path dest = tempDir.resolve(entry.getKey());
+                    String actual = DigestUtils.digestToString("SHA-1", dest);
+
+                    if (!raw.getSha1().equalsIgnoreCase(actual)) {
+                        throw new ArtifactMalformedException("Malformed file " + dest + ": expected SHA-1 " + raw.getSha1() + ", but got " + actual);
+                    }
+                }
+            }
+        }
+
+        FileUtils.cleanDirectory(target);
+
+        if (Files.getFileStore(target).equals(Files.getFileStore(tempDir))) {
+            Files.move(tempDir, target, StandardCopyOption.REPLACE_EXISTING);
+        } else {
+            FileUtils.copyDirectory(tempDir, target);
+        }
+
         setResult(new Result(download, javaDownloadsTask.getResult()));
     }
 
