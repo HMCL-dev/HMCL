@@ -47,16 +47,9 @@ public final class World {
     private final String fileName;
     private Image icon;
 
-    private CompoundTag levelData;
-    private CompoundTag dataTag;
-    private final Path levelDataPath;
-
-    private CompoundTag worldGenSettingsDataBackingTag; // Use for writing back to the file
-    private CompoundTag normalizedWorldGenSettingsData; // Use for reading/modification
-    private Path worldGenSettingsDataPath;
-
-    private CompoundTag playerData; // Use for both reading/modification and writing back to the file
-    private Path playerDataPath;
+    private WorldDataSection levelDataTag;
+    private WorldDataSection worldGenSettingsTag;
+    private WorldDataSection playerTag;
 
     private final WorldLock lock;
 
@@ -73,8 +66,7 @@ public final class World {
             if (!Files.exists(levelDatPath)) {
                 throw new IOException("Not a valid world directory since level.dat or special_level.dat cannot be found.");
             }
-            this.levelDataPath = levelDatPath;
-            loadAndCheckWorldData();
+            loadAndCheckWorldData(levelDatPath);
 
             Path iconFile = this.file.resolve("icon.png");
             if (Files.isRegularFile(iconFile)) {
@@ -104,38 +96,37 @@ public final class World {
     }
 
     public String getWorldName() {
-        if (levelData.get("Data") instanceof CompoundTag data
-                && data.get("LevelName") instanceof StringTag levelNameTag)
+        if (getDataTag().get("LevelName") instanceof StringTag levelNameTag)
             return levelNameTag.get();
         else
             return "";
     }
 
     public void setWorldName(String worldName) throws IOException {
-        if (levelData.get("Data") instanceof CompoundTag data && data.get("LevelName") instanceof StringTag levelNameTag) {
+        if (getDataTag().get("LevelName") instanceof StringTag levelNameTag) {
             levelNameTag.setValue(worldName);
-            writeLevelData();
+            levelDataTag.write();
         }
     }
 
     public CompoundTag getLevelData() {
-        return levelData;
+        return levelDataTag.nbtBackingTag();
     }
 
     public CompoundTag getDataTag() {
-        return dataTag;
+        return levelDataTag.normalizedNbtTag;
     }
 
     public @Nullable CompoundTag getNormalizedWorldGenSettingsData() {
-        return normalizedWorldGenSettingsData;
+        return worldGenSettingsTag.normalizedNbtTag;
     }
 
     public @Nullable CompoundTag getPlayerData() {
-        return playerData;
+        return playerTag.normalizedNbtTag;
     }
 
     public long getLastPlayed() {
-        if (dataTag.get("LastPlayed") instanceof LongTag lastPlayedTag) {
+        if (getDataTag().get("LastPlayed") instanceof LongTag lastPlayedTag) {
             return lastPlayedTag.get();
         } else {
             return 0L;
@@ -143,8 +134,7 @@ public final class World {
     }
 
     public @Nullable GameVersionNumber getGameVersion() {
-        if (levelData.get("Data") instanceof CompoundTag data &&
-                data.get("Version") instanceof CompoundTag versionTag &&
+        if (getDataTag().get("Version") instanceof CompoundTag versionTag &&
                 versionTag.get("Name") instanceof StringTag nameTag) {
             return GameVersionNumber.asGameVersion(nameTag.getValue());
         }
@@ -153,12 +143,12 @@ public final class World {
 
     public @Nullable Long getSeed() {
         // Valid after 1.16(20w20a)
-        if (normalizedWorldGenSettingsData != null
-                && normalizedWorldGenSettingsData.get("seed") instanceof LongTag seedTag) {
+        if (getNormalizedWorldGenSettingsData() != null
+                && getNormalizedWorldGenSettingsData().get("seed") instanceof LongTag seedTag) {
             return seedTag.getValue();
         }
         // Valid before 1.16(20w20a)
-        if (dataTag.get("RandomSeed") instanceof LongTag seedTag) {
+        if (getDataTag().get("RandomSeed") instanceof LongTag seedTag) {
             return seedTag.getValue();
         }
         return null;
@@ -166,12 +156,12 @@ public final class World {
 
     public boolean isLargeBiomes() {
         // Valid before 1.16(20w20a)
-        if (dataTag.get("generatorName") instanceof StringTag generatorNameTag) {
+        if (getDataTag().get("generatorName") instanceof StringTag generatorNameTag) {
             return "largeBiomes".equals(generatorNameTag.getValue());
         }
         // Unified handling of logic after version 1.16
-        else if (normalizedWorldGenSettingsData != null
-                && normalizedWorldGenSettingsData.get("dimensions") instanceof CompoundTag dimensionsTag) {
+        else if (getNormalizedWorldGenSettingsData() != null
+                && getNormalizedWorldGenSettingsData().get("dimensions") instanceof CompoundTag dimensionsTag) {
             if (dimensionsTag.get("minecraft:overworld") instanceof CompoundTag overworldTag
                     && overworldTag.get("generator") instanceof CompoundTag generatorTag) {
                 // Valid between 1.16(20w20a) and 1.18(21w37a)
@@ -204,13 +194,13 @@ public final class World {
         return gameVersionNumber != null && gameVersionNumber.isAtLeast("1.20", "23w14a");
     }
 
-    private void loadAndCheckWorldData() throws IOException {
+    private void loadAndCheckWorldData(Path levelDataPath) throws IOException {
         loadAndCheckLevelData(levelDataPath);
         loadOtherData();
     }
 
-    private void loadAndCheckLevelData(Path levelDat) throws IOException {
-        this.levelData = NBTCodec.of().readTag(levelDat, TagType.COMPOUND);
+    private void loadAndCheckLevelData(Path levelDatPath) throws IOException {
+        CompoundTag levelData = NBTCodec.of().readTag(levelDatPath, TagType.COMPOUND);
         if (!(levelData.get("Data") instanceof CompoundTag data))
             throw new IOException("level.dat missing Data");
 
@@ -219,54 +209,43 @@ public final class World {
 
         if (!(data.get("LastPlayed") instanceof LongTag))
             throw new IOException("level.dat missing LastPlayed");
-        this.dataTag = data;
+        this.levelDataTag = new WorldDataSection(levelDatPath, levelData, data);
     }
 
     private void loadOtherData() throws IOException {
-        if (!(levelData.get("Data") instanceof CompoundTag data)) return;
 
         Path worldGenSettingsDatPath = file.resolve("data/minecraft/world_gen_settings.dat");
-        if (data.get("WorldGenSettings") instanceof CompoundTag worldGenSettingsTag) {
-            setWorldGenSettingsData(null, worldGenSettingsTag, worldGenSettingsTag);
+        if (getDataTag().get("WorldGenSettings") instanceof CompoundTag worldGenSettingsTag) {
+            this.worldGenSettingsTag = new WorldDataSection(null, worldGenSettingsTag, worldGenSettingsTag);
         } else if (Files.isRegularFile(worldGenSettingsDatPath)) {
             CompoundTag raw = NBTCodec.of().readTag(worldGenSettingsDatPath, TagType.COMPOUND);
             if (raw.get("data") instanceof CompoundTag compoundTag) {
-                setWorldGenSettingsData(worldGenSettingsDatPath, raw, compoundTag);
+                this.worldGenSettingsTag = new WorldDataSection(worldGenSettingsDatPath, raw, compoundTag);
             } else {
-                setWorldGenSettingsData(null, null, null);
+                this.worldGenSettingsTag = new WorldDataSection(null, null, null);
             }
         } else {
-            setWorldGenSettingsData(null, null, null);
+            this.worldGenSettingsTag = new WorldDataSection(null, null, null);
         }
 
-        if (data.get("Player") instanceof CompoundTag playerTag) {
-            setPlayerData(null, playerTag);
-        } else if (data.get("singleplayer_uuid") instanceof IntArrayTag uuidTag && uuidTag.isUUID()) {
+        if (getDataTag().get("Player") instanceof CompoundTag playerTag) {
+            this.playerTag = new WorldDataSection(null, playerTag, playerTag);
+        } else if (getDataTag().get("singleplayer_uuid") instanceof IntArrayTag uuidTag && uuidTag.isUUID()) {
             String playerUUID = uuidTag.getUUID().toString();
             Path playerDatPath = file.resolve("players/data/" + playerUUID + ".dat");
             if (Files.exists(playerDatPath)) {
-                setPlayerData(playerDatPath, NBTCodec.of().readTag(playerDatPath, TagType.COMPOUND));
+                CompoundTag playerTag = NBTCodec.of().readTag(playerDatPath, TagType.COMPOUND);
+                this.playerTag = new WorldDataSection(playerDatPath, playerTag, playerTag);
             } else {
-                setPlayerData(null, null);
+                this.playerTag = new WorldDataSection(null, null, null);
             }
         } else {
-            setPlayerData(null, null);
+            this.playerTag = new WorldDataSection(null, null, null);
         }
     }
 
-    private void setWorldGenSettingsData(Path worldGenSettingsDataPath, CompoundTag worldGenSettingsDataBackingTag, CompoundTag unifiedWorldGenSettingsData) {
-        this.worldGenSettingsDataPath = worldGenSettingsDataPath;
-        this.worldGenSettingsDataBackingTag = worldGenSettingsDataBackingTag;
-        this.normalizedWorldGenSettingsData = unifiedWorldGenSettingsData;
-    }
-
-    private void setPlayerData(Path playerDataPath, CompoundTag playerData) {
-        this.playerDataPath = playerDataPath;
-        this.playerData = playerData;
-    }
-
     public void reloadWorldData() throws IOException {
-        loadAndCheckWorldData();
+        loadAndCheckWorldData(levelDataTag.nbtPath());
     }
 
     // The renameWorld method do not modify the `file` field.
@@ -277,8 +256,8 @@ public final class World {
         }
 
         // Change the name recorded in level.dat
-        dataTag.setString("LevelName", newName);
-        writeLevelData();
+        getDataTag().setString("LevelName", newName);
+        levelDataTag.write();
 
         // Then change the folder's name
         Path targetPath = FileUtils.getNonConflictingDirectory(file.getParent(), FileUtils.getSafeWorldFolderName(newName));
@@ -318,34 +297,13 @@ public final class World {
     }
 
     public void writeWorldData() throws IOException {
-        if (!Files.isDirectory(file)) throw new IOException("Not a valid world directory");
-
-        writeLevelData();
-
-        if (worldGenSettingsDataPath != null && worldGenSettingsDataBackingTag != null) {
-            writeTag(worldGenSettingsDataBackingTag, worldGenSettingsDataPath);
-        }
-
-        if (playerDataPath != null && playerData != null) {
-            writeTag(playerData, playerDataPath);
-        }
-    }
-
-    public void writeLevelData() throws IOException {
-        writeTag(levelData, levelDataPath);
-    }
-
-    private void writeTag(CompoundTag nbt, Path path) throws IOException {
-        if (!Files.isDirectory(file)) throw new IOException("Not a valid world directory");
-        FileUtils.saveSafely(path, os -> {
-            try (OutputStream gos = new GZIPOutputStream(os)) {
-                NBTCodec.of().writeTag(gos, nbt);
-            }
-        });
+        levelDataTag.write();
+        worldGenSettingsTag.write();
+        playerTag.write();
     }
 
     public static List<World> getWorlds(Path savesDir) {
-        if (Files.exists(savesDir)) {
+        if (Files.isDirectory(savesDir)) {
             try (Stream<Path> stream = Files.list(savesDir)) {
                 return stream
                         .filter(Files::isDirectory)
@@ -509,6 +467,21 @@ public final class World {
                         }
                     }
                 }
+            }
+        }
+    }
+
+    record WorldDataSection(Path nbtPath,
+                            CompoundTag nbtBackingTag, // Use for writing back to the file
+                            CompoundTag normalizedNbtTag // Use for reading/modification
+    ) {
+        public void write() throws IOException {
+            if (nbtPath != null) {
+                FileUtils.saveSafely(nbtPath, os -> {
+                    try (OutputStream gos = new GZIPOutputStream(os)) {
+                        NBTCodec.of().writeTag(gos, nbtBackingTag);
+                    }
+                });
             }
         }
     }
