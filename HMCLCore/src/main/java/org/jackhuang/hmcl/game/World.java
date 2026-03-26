@@ -182,7 +182,7 @@ public final class World {
         return icon;
     }
 
-    public boolean supportsDatapacks() {
+    public boolean supportsDataPacks() {
         return getGameVersion() != null && getGameVersion().isAtLeast("1.13", "17w43a");
     }
 

@@ -66,12 +66,12 @@ public final class WorldManagePage extends DecoratorAnimatedPage implements Deco
     private final TabHeader header = new TabHeader(transitionPane);
     private final TabHeader.Tab<WorldInfoPage> worldInfoTab = new TabHeader.Tab<>("worldInfoPage");
     private final TabHeader.Tab<WorldBackupsPage> worldBackupsTab = new TabHeader.Tab<>("worldBackupsPage");
-    private final TabHeader.Tab<DatapackListPage> datapackTab = new TabHeader.Tab<>("datapackListPage");
+    private final TabHeader.Tab<DataPackListPage> dataPackTab = new TabHeader.Tab<>("dataPackListPage");
 
     public WorldManagePage() {
         worldInfoTab.setNodeSupplier(() -> new WorldInfoPage(this));
         worldBackupsTab.setNodeSupplier(() -> new WorldBackupsPage(this));
-        datapackTab.setNodeSupplier(() -> new DatapackListPage(this));
+        dataPackTab.setNodeSupplier(() -> new DataPackListPage(this));
 
         this.addEventHandler(Navigator.NavigationEvent.EXITED, this::onExited);
         this.addEventHandler(Navigator.NavigationEvent.NAVIGATED, this::onNavigated);
@@ -94,7 +94,7 @@ public final class WorldManagePage extends DecoratorAnimatedPage implements Deco
 
         Optional<String> gameVersion = profile.getRepository().getGameVersion(instanceId);
         currentWorldSupportQuickPlay.set(World.supportsQuickPlay(GameVersionNumber.asGameVersion(gameVersion)));
-        currentWorldSupportDataPack.set(world.supportsDatapacks());
+        currentWorldSupportDataPack.set(world.supportsDataPacks());
         return this;
     }
 
@@ -240,8 +240,8 @@ public final class WorldManagePage extends DecoratorAnimatedPage implements Deco
                 tabBar.addNavigationDrawerTab(getSkinnable().header, getSkinnable().worldInfoTab, i18n("world.info"), SVG.INFO, SVG.INFO_FILL)
                         .addNavigationDrawerTab(getSkinnable().header, getSkinnable().worldBackupsTab, i18n("world.backup"), SVG.ARCHIVE, SVG.ARCHIVE_FILL);
 
-                getSkinnable().header.getTabs().add(getSkinnable().datapackTab);
-                tabBar.addNavigationDrawerTab(getSkinnable().header, getSkinnable().datapackTab, i18n("world.datapack"), SVG.EXTENSION, SVG.EXTENSION_FILL);
+                getSkinnable().header.getTabs().add(getSkinnable().dataPackTab);
+                tabBar.addNavigationDrawerTab(getSkinnable().header, getSkinnable().dataPackTab, i18n("world.datapack"), SVG.EXTENSION, SVG.EXTENSION_FILL);
             }
 
             return tabBar;
