@@ -107,7 +107,7 @@ public final class MojangJavaDownloadTask extends Task<MojangJavaDownloadTask.Re
                     var task = new FileDownloadTask(downloadProvider.injectURLWithCandidates(download.getUrl()), tempFile, new FileDownloadTask.IntegrityCheck("SHA-1", download.getSha1()));
                     task.setName(entry.getKey());
                     dependencies.add(task.thenRunAsync(() -> {
-                        Path decompressed = tempDir.resolve(entry.getKey());
+                        Path decompressed = tempDir.resolve(entry.getKey() + ".tmp");
                         try (LZMAInputStream input = new LZMAInputStream(Files.newInputStream(tempFile))) {
                             Files.copy(input, decompressed, StandardCopyOption.REPLACE_EXISTING);
                         } catch (IOException e) {
