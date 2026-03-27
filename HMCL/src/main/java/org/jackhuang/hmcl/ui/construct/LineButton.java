@@ -47,7 +47,7 @@ public class LineButton extends LineButtonBase {
 
     public LineButton() {
         getStyleClass().add(DEFAULT_STYLE_CLASS);
-        container.setMouseTransparent(true);
+        container.setPickOnBounds(true);
     }
 
     protected int getTrailingTextIndex() {

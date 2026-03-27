@@ -120,9 +120,12 @@ public final class SettingsPage extends ScrollPane {
             ObjectProperty<UpdateChannel> updateChannel;
             {
 
-                var btn = FXUtils.newToggleButton4(SVG.UPDATE, 20);
-                btn.setOnAction(e -> onUpdate());
-                final StackPane btnUpdate = new StackPane(btn);
+                JFXButton updateButton = new JFXButton();
+                updateButton.setGraphic(SVG.UPDATE.createIcon(20));
+                updateButton.setOnAction(e -> onUpdate());
+                updateButton.setPadding(Insets.EMPTY);
+
+                final StackPane btnUpdate = new StackPane(updateButton);
                 FXUtils.installFastTooltip(btnUpdate, i18n("update.tooltip"));
 
                 var updatePane = new LineSelectButton<UpdateChannel>() {
