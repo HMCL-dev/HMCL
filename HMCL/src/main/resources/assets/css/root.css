@@ -1924,3 +1924,7 @@
 .line-toggle-button .jfx-toggle-button {
     -fx-padding: 0;
 }
+
+.update-pane:active .subtitle-label {
+    -fx-text-fill: -monet-tertiary;
+}
