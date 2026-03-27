@@ -239,13 +239,10 @@ public final class WorldManagePage extends DecoratorAnimatedPage implements Deco
         }
 
         private AdvancedListBox getTabBar() {
-            AdvancedListBox tabBar = new AdvancedListBox();
-
-            tabBar.addNavigationDrawerTab(getSkinnable().header, getSkinnable().worldInfoTab, i18n("world.info"), SVG.INFO, SVG.INFO_FILL)
+            return new AdvancedListBox()
+                    .addNavigationDrawerTab(getSkinnable().header, getSkinnable().worldInfoTab, i18n("world.info"), SVG.INFO, SVG.INFO_FILL)
                     .addNavigationDrawerTab(getSkinnable().header, getSkinnable().worldBackupsTab, i18n("world.backup"), SVG.ARCHIVE, SVG.ARCHIVE_FILL)
                     .addNavigationDrawerTab(getSkinnable().header, getSkinnable().dataPackTab, i18n("world.datapack"), SVG.EXTENSION, SVG.EXTENSION_FILL);
-
-            return tabBar;
         }
 
         private AdvancedListBox getToolBar() {
@@ -273,7 +270,8 @@ public final class WorldManagePage extends DecoratorAnimatedPage implements Deco
                     );
 
                     toolbar.addNavigationDrawerItem(i18n("world.chunkbase"), SVG.EXPLORE, null, chunkBaseMenuItem -> {
-                        chunkBaseMenuItem.setOnAction(e -> chunkBasePopup.show(chunkBaseMenuItem, JFXPopup.PopupVPosition.BOTTOM, JFXPopup.PopupHPosition.LEFT, chunkBaseMenuItem.getWidth(), 0));
+                        chunkBaseMenuItem.setOnAction(e ->
+                                chunkBasePopup.show(chunkBaseMenuItem, JFXPopup.PopupVPosition.BOTTOM, JFXPopup.PopupHPosition.LEFT, chunkBaseMenuItem.getWidth(), 0));
                         chunkBaseMenuItem.visibleProperty().bind(getSkinnable().currentWorldSupportChunkBase);
                         chunkBaseMenuItem.managedProperty().bind(getSkinnable().currentWorldSupportChunkBase);
                     });
@@ -306,12 +304,10 @@ public final class WorldManagePage extends DecoratorAnimatedPage implements Deco
                             new IconedMenuItem(SVG.CONTENT_COPY, i18n("world.duplicate"), () -> WorldManageUIUtils.copyWorld(getSkinnable().world, null), managePopup)
                     );
 
-                    toolbar.addNavigationDrawerItem(i18n("settings.game.management"), SVG.MENU, null, managePopupMenuItem ->
-                    {
+                    toolbar.addNavigationDrawerItem(i18n("settings.game.management"), SVG.MENU, null, managePopupMenuItem -> {
                         managePopupMenuItem.setOnAction(e ->
                                 managePopup.show(managePopupMenuItem,
-                                        JFXPopup.PopupVPosition.BOTTOM, JFXPopup.PopupHPosition.LEFT,
-                                        managePopupMenuItem.getWidth(), 0));
+                                        JFXPopup.PopupVPosition.BOTTOM, JFXPopup.PopupHPosition.LEFT, managePopupMenuItem.getWidth(), 0));
                         managePopupMenuItem.disableProperty().bind(getSkinnable().readOnlyProperty());
                     });
                 }
