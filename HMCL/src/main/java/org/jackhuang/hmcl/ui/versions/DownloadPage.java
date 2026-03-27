@@ -311,7 +311,6 @@ public class DownloadPage extends Control implements DecoratorPage {
 
                             sublist.setTitle(title);
                             sublist.getStyleClass().add("no-padding");
-                            sublist.setTitle(title);
 
                             return sublist;
                         }
