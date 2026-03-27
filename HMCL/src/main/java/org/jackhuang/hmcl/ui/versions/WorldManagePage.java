@@ -57,6 +57,8 @@ public final class WorldManagePage extends DecoratorAnimatedPage implements Deco
 
     private final BooleanProperty currentWorldSupportQuickPlay = new SimpleBooleanProperty(false);
     private final BooleanProperty currentWorldSupportDataPack = new SimpleBooleanProperty(false);
+    private final BooleanProperty currentWorldSupportChunkBase = new SimpleBooleanProperty(false);
+    private final BooleanProperty currentWorldSupportEndCity = new SimpleBooleanProperty(false);
 
     private final ObjectProperty<State> state = new SimpleObjectProperty<>();
     private final BooleanProperty refreshable = new SimpleBooleanProperty(true);
@@ -72,6 +74,8 @@ public final class WorldManagePage extends DecoratorAnimatedPage implements Deco
         worldInfoTab.setNodeSupplier(() -> new WorldInfoPage(this));
         worldBackupsTab.setNodeSupplier(() -> new WorldBackupsPage(this));
         dataPackTab.setNodeSupplier(() -> new DataPackListPage(this));
+
+        header.getTabs().addAll(worldInfoTab, worldBackupsTab, dataPackTab);
 
         this.addEventHandler(Navigator.NavigationEvent.EXITED, this::onExited);
         this.addEventHandler(Navigator.NavigationEvent.NAVIGATED, this::onNavigated);
@@ -95,8 +99,10 @@ public final class WorldManagePage extends DecoratorAnimatedPage implements Deco
         Optional<String> gameVersion = profile.getRepository().getGameVersion(instanceId);
         currentWorldSupportQuickPlay.set(World.supportsQuickPlay(GameVersionNumber.asGameVersion(gameVersion)));
         currentWorldSupportDataPack.set(world.supportsDataPacks());
+        currentWorldSupportChunkBase.set(ChunkBaseApp.isSupported(world));
+        currentWorldSupportEndCity.set(ChunkBaseApp.supportEndCity(world));
 
-        header.select(worldInfoTab);
+        header.select(worldInfoTab, false);
         return this;
     }
 
@@ -222,10 +228,9 @@ public final class WorldManagePage extends DecoratorAnimatedPage implements Deco
 
         private BorderPane getSidebar() {
             BorderPane sidebar = new BorderPane();
-            {
-                FXUtils.setLimitWidth(sidebar, 200);
-                VBox.setVgrow(sidebar, Priority.ALWAYS);
-            }
+
+            FXUtils.setLimitWidth(sidebar, 200);
+            VBox.setVgrow(sidebar, Priority.ALWAYS);
 
             sidebar.setTop(getTabBar());
             sidebar.setBottom(getToolBar());
@@ -235,14 +240,10 @@ public final class WorldManagePage extends DecoratorAnimatedPage implements Deco
 
         private AdvancedListBox getTabBar() {
             AdvancedListBox tabBar = new AdvancedListBox();
-            {
-                getSkinnable().header.getTabs().addAll(getSkinnable().worldInfoTab, getSkinnable().worldBackupsTab, getSkinnable().dataPackTab);
-                getSkinnable().header.select(getSkinnable().worldInfoTab);
 
-                tabBar.addNavigationDrawerTab(getSkinnable().header, getSkinnable().worldInfoTab, i18n("world.info"), SVG.INFO, SVG.INFO_FILL)
-                        .addNavigationDrawerTab(getSkinnable().header, getSkinnable().worldBackupsTab, i18n("world.backup"), SVG.ARCHIVE, SVG.ARCHIVE_FILL)
-                        .addNavigationDrawerTab(getSkinnable().header, getSkinnable().dataPackTab, i18n("world.datapack"), SVG.EXTENSION, SVG.EXTENSION_FILL);
-            }
+            tabBar.addNavigationDrawerTab(getSkinnable().header, getSkinnable().worldInfoTab, i18n("world.info"), SVG.INFO, SVG.INFO_FILL)
+                    .addNavigationDrawerTab(getSkinnable().header, getSkinnable().worldBackupsTab, i18n("world.backup"), SVG.ARCHIVE, SVG.ARCHIVE_FILL)
+                    .addNavigationDrawerTab(getSkinnable().header, getSkinnable().dataPackTab, i18n("world.datapack"), SVG.EXTENSION, SVG.EXTENSION_FILL);
 
             return tabBar;
         }
@@ -256,26 +257,26 @@ public final class WorldManagePage extends DecoratorAnimatedPage implements Deco
                     advancedListItem.visibleProperty().bind(getSkinnable().currentWorldSupportQuickPlay);
                 });
 
-                if (ChunkBaseApp.isSupported(getSkinnable().world)) {
+                {
                     PopupMenu chunkBasePopupMenu = new PopupMenu();
                     JFXPopup chunkBasePopup = new JFXPopup(chunkBasePopupMenu);
+
+                    IconedMenuItem endCityItem = new IconedMenuItem(SVG.LOCATION_CITY, i18n("world.chunkbase.end_city"), () -> ChunkBaseApp.openEndCityFinder(getSkinnable().world), chunkBasePopup);
+                    endCityItem.visibleProperty().bind(getSkinnable().currentWorldSupportEndCity);
+                    endCityItem.managedProperty().bind(getSkinnable().currentWorldSupportEndCity);
 
                     chunkBasePopupMenu.getContent().addAll(
                             new IconedMenuItem(SVG.EXPLORE, i18n("world.chunkbase.seed_map"), () -> ChunkBaseApp.openSeedMap(getSkinnable().world), chunkBasePopup),
                             new IconedMenuItem(SVG.VISIBILITY, i18n("world.chunkbase.stronghold"), () -> ChunkBaseApp.openStrongholdFinder(getSkinnable().world), chunkBasePopup),
-                            new IconedMenuItem(SVG.FORT, i18n("world.chunkbase.nether_fortress"), () -> ChunkBaseApp.openNetherFortressFinder(getSkinnable().world), chunkBasePopup)
+                            new IconedMenuItem(SVG.FORT, i18n("world.chunkbase.nether_fortress"), () -> ChunkBaseApp.openNetherFortressFinder(getSkinnable().world), chunkBasePopup),
+                            endCityItem
                     );
 
-                    if (ChunkBaseApp.supportEndCity(getSkinnable().world)) {
-                        chunkBasePopupMenu.getContent().add(
-                                new IconedMenuItem(SVG.LOCATION_CITY, i18n("world.chunkbase.end_city"), () -> ChunkBaseApp.openEndCityFinder(getSkinnable().world), chunkBasePopup));
-                    }
-
-                    toolbar.addNavigationDrawerItem(i18n("world.chunkbase"), SVG.EXPLORE, null, chunkBaseMenuItem ->
-                            chunkBaseMenuItem.setOnAction(e ->
-                                    chunkBasePopup.show(chunkBaseMenuItem,
-                                            JFXPopup.PopupVPosition.BOTTOM, JFXPopup.PopupHPosition.LEFT,
-                                            chunkBaseMenuItem.getWidth(), 0)));
+                    toolbar.addNavigationDrawerItem(i18n("world.chunkbase"), SVG.EXPLORE, null, chunkBaseMenuItem -> {
+                        chunkBaseMenuItem.setOnAction(e -> chunkBasePopup.show(chunkBaseMenuItem, JFXPopup.PopupVPosition.BOTTOM, JFXPopup.PopupHPosition.LEFT, chunkBaseMenuItem.getWidth(), 0));
+                        chunkBaseMenuItem.visibleProperty().bind(getSkinnable().currentWorldSupportChunkBase);
+                        chunkBaseMenuItem.managedProperty().bind(getSkinnable().currentWorldSupportChunkBase);
+                    });
                 }
 
                 toolbar.addNavigationDrawerItem(i18n("settings.game.exploration"), SVG.FOLDER_OPEN, () -> FXUtils.openFolder(getSkinnable().world.getFile()));
