@@ -75,7 +75,6 @@ public abstract class LineComponent extends StackPane implements NoPaddingCompon
         titleContainer.setMouseTransparent(true);
         titleContainer.setAlignment(Pos.CENTER_LEFT);
         titleContainer.minWidthProperty().bind(titleLabel.prefWidthProperty());
-        titleContainer.setMouseTransparent(true);
         HBox.setHgrow(titleContainer, Priority.ALWAYS);
 
         this.setNode(IDX_TITLE, titleContainer);
