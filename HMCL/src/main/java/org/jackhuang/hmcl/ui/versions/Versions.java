@@ -22,6 +22,7 @@ import javafx.application.Platform;
 import javafx.stage.FileChooser;
 import org.jackhuang.hmcl.auth.Account;
 import org.jackhuang.hmcl.auth.authlibinjector.AuthlibInjectorAccount;
+import org.jackhuang.hmcl.download.DownloadProvider;
 import org.jackhuang.hmcl.download.game.GameAssetDownloadTask;
 import org.jackhuang.hmcl.game.*;
 import org.jackhuang.hmcl.mod.RemoteMod;
@@ -42,13 +43,13 @@ import org.jackhuang.hmcl.ui.export.ExportWizardProvider;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.TaskCancellationAction;
 import org.jackhuang.hmcl.util.io.FileUtils;
-import org.jackhuang.hmcl.util.io.NetworkUtils;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
 
 import java.io.IOException;
 import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.List;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Consumer;
@@ -72,11 +73,11 @@ public final class Versions {
         }
     }
 
-    public static void downloadModpackImpl(Profile profile, String version, RemoteMod mod, RemoteMod.Version file) {
+    public static void downloadModpackImpl(DownloadProvider downloadProvider, Profile profile, String version, RemoteMod mod, RemoteMod.Version file) {
         Path modpack;
-        URI downloadURL;
+        List<URI> downloadURLs;
         try {
-            downloadURL = NetworkUtils.toURI(file.getFile().getUrl());
+            downloadURLs = downloadProvider.injectURLWithCandidates(file.getFile().getUrl());
             modpack = Files.createTempFile("modpack", ".zip");
         } catch (IOException | IllegalArgumentException e) {
             Controllers.dialog(
@@ -85,7 +86,7 @@ public final class Versions {
             return;
         }
         Controllers.taskDialog(
-                new FileDownloadTask(downloadURL, modpack)
+                new FileDownloadTask(downloadURLs, modpack)
                         .whenComplete(Schedulers.javafx(), e -> {
                             if (e == null) {
                                 ModpackInstallWizardProvider installWizardProvider;

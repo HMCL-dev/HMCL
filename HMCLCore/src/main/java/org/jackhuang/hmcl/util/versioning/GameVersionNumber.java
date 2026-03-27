@@ -301,18 +301,26 @@ public abstract sealed class GameVersionNumber implements Comparable<GameVersion
     }
 
     public static final class Release extends GameVersionNumber {
-        private static final int MINIMUM_YEAR_MAJOR_VERSION = 25;
+        private static final int MINIMUM_YEAR_MAJOR_VERSION = 26;
 
         public enum ReleaseType {
             UNKNOWN(""),
             SNAPSHOT("-snapshot-"),
-            PRE_RELEASE("-pre"),
-            RELEASE_CANDIDATE("-rc"),
+            PRE_RELEASE("-pre", "-pre-"),
+            RELEASE_CANDIDATE("-rc", "-rc-"),
             GA("");
-            private final String infix;
+
+            private final String legacyInfix;
+            private final String newInfix;
 
             ReleaseType(String infix) {
-                this.infix = infix;
+                this.legacyInfix = infix;
+                this.newInfix = infix;
+            }
+
+            ReleaseType(String legacyInfix, String newInfix) {
+                this.legacyInfix = legacyInfix;
+                this.newInfix = newInfix;
             }
         }
 
@@ -350,6 +358,8 @@ public abstract sealed class GameVersionNumber implements Comparable<GameVersion
 
             String suffix = matcher.group("suffix");
 
+            boolean isLegacyRelease = major == 1;
+
             ReleaseType releaseType;
             VersionNumber eaVersion;
             Additional additional = Additional.NONE;
@@ -375,10 +385,15 @@ public abstract sealed class GameVersionNumber implements Comparable<GameVersion
                 releaseType = ReleaseType.SNAPSHOT;
                 eaVersion = VersionNumber.asVersion(suffix.substring(" Snapshot ".length()));
             } else if (suffix.startsWith("-pre-")) {
-                needNormalize = true;
+                if (isLegacyRelease) {
+                    needNormalize = true;
+                }
                 releaseType = ReleaseType.PRE_RELEASE;
                 eaVersion = VersionNumber.asVersion(suffix.substring("-pre-".length()));
             } else if (suffix.startsWith("-pre")) {
+                if (!isLegacyRelease) {
+                    needNormalize = true;
+                }
                 releaseType = ReleaseType.PRE_RELEASE;
                 eaVersion = VersionNumber.asVersion(suffix.substring("-pre".length()));
             } else if (suffix.startsWith(" Pre-Release ")) {
@@ -390,7 +405,16 @@ public abstract sealed class GameVersionNumber implements Comparable<GameVersion
                 needNormalize = true;
                 releaseType = ReleaseType.PRE_RELEASE;
                 eaVersion = VersionNumber.asVersion(suffix.substring(" Pre-release ".length()));
+            } else if (suffix.startsWith("-rc-")) {
+                if (isLegacyRelease) {
+                    needNormalize = true;
+                }
+                releaseType = ReleaseType.RELEASE_CANDIDATE;
+                eaVersion = VersionNumber.asVersion(suffix.substring("-rc-".length()));
             } else if (suffix.startsWith("-rc")) {
+                if (!isLegacyRelease) {
+                    needNormalize = true;
+                }
                 releaseType = ReleaseType.RELEASE_CANDIDATE;
                 eaVersion = VersionNumber.asVersion(suffix.substring("-rc".length()));
             } else if (suffix.startsWith(" Release Candidate ")) {
@@ -406,7 +430,7 @@ public abstract sealed class GameVersionNumber implements Comparable<GameVersion
                 StringBuilder builder = new StringBuilder(value.length());
                 builder.append(matcher.group("prefix"));
                 if (releaseType != ReleaseType.GA) {
-                    builder.append(releaseType.infix);
+                    builder.append(isLegacyRelease ? releaseType.legacyInfix : releaseType.newInfix);
                     builder.append(eaVersion);
                 }
                 builder.append(additional.suffix);
