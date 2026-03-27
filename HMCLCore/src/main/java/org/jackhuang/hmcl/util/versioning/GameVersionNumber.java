@@ -19,6 +19,7 @@ package org.jackhuang.hmcl.util.versioning;
 
 import org.jackhuang.hmcl.util.ToStringBuilder;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -189,14 +190,14 @@ public abstract sealed class GameVersionNumber implements Comparable<GameVersion
         return buildDebugString().toString();
     }
 
-    public static String getReleaseOfSnapshot(String version) {
+    public static @Nullable String getReleaseOfSnapshot(String version) {
         if (version == null || version.isEmpty()) {
             return null;
         }
 
-        GameVersionNumber gvn = asGameVersion(version);
+        GameVersionNumber gameVersion = asGameVersion(version);
 
-        if (gvn instanceof Release release) {
+        if (gameVersion instanceof Release release) {
             if (release.getEaType() == Release.ReleaseType.GA) {
                 return null;
             }
@@ -207,14 +208,13 @@ public abstract sealed class GameVersionNumber implements Comparable<GameVersion
             }
         }
 
-        if (gvn instanceof LegacySnapshot snapshot) {
+        if (gameVersion instanceof LegacySnapshot snapshot) {
             String[] defaultVersions = Versions.DEFAULT_GAME_VERSIONS;
             for (int i = defaultVersions.length - 1; i >= 0; i--) {
-                String gaStr = defaultVersions[i];
-                Release gaRel = Release.parseSimple(gaStr);
+                Release gaRelease = Release.parseSimple(defaultVersions[i]);
 
-                if (gaRel.compareToSnapshot(snapshot) > 0) {
-                    return gaStr;
+                if (gaRelease.compareToSnapshot(snapshot) > 0) {
+                    return gaRelease.toString();
                 }
             }
         }
