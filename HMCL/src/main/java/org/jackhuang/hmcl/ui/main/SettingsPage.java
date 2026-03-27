@@ -125,9 +125,17 @@ public final class SettingsPage extends ScrollPane {
                 final StackPane btnUpdate = new StackPane(btn);
                 FXUtils.installFastTooltip(btnUpdate, i18n("update.tooltip"));
 
-                btnUpdate.setManaged(false);
+                var updatePane = new LineSelectButton<UpdateChannel>() {
 
-                var updatePane = new LineSelectButton<UpdateChannel>();
+                    {
+                        setNode(IDX_TRAILING, btnUpdate);
+                    }
+
+                    @Override
+                    protected int getTrailingTextIndex() {
+                        return LineComponent.IDX_TRAILING + 1;
+                    }
+                };
                 updateChannel = updatePane.valueProperty();
                 updatePane.setTitle(i18n("update"));
                 updatePane.setValue(UpdateChannel.getChannel());
@@ -156,18 +164,6 @@ public final class SettingsPage extends ScrollPane {
                     UpdateChecker.checkingUpdateProperty().addListener(new WeakInvalidationListener(updateListener));
                     updateListener.invalidated(null);
                 }
-
-                updatePane.getChildren().add(btnUpdate);
-                btnUpdate.layoutXProperty().bind(
-                        updatePane.widthProperty()
-                                .subtract(btnUpdate.widthProperty())
-                                .subtract(100)
-                );
-                btnUpdate.layoutYProperty().bind(
-                        updatePane.heightProperty()
-                                .subtract(btnUpdate.heightProperty())
-                                .divide(2)
-                );
 
                 settingsPane.getContent().add(updatePane);
             }
