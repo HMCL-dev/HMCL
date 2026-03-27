@@ -124,14 +124,12 @@ public final class SettingsPage extends ScrollPane {
                 updateButton.setGraphic(SVG.UPDATE.createIcon(20));
                 updateButton.setOnAction(e -> onUpdate());
                 updateButton.setPadding(Insets.EMPTY);
-
-                final StackPane btnUpdate = new StackPane(updateButton);
-                FXUtils.installFastTooltip(btnUpdate, i18n("update.tooltip"));
+                FXUtils.installFastTooltip(updateButton, i18n("update.tooltip"));
 
                 var updatePane = new LineSelectButton<UpdateChannel>() {
 
                     {
-                        setNode(IDX_TRAILING, btnUpdate);
+                        setNode(IDX_TRAILING, updateButton);
                     }
 
                     @Override
@@ -151,7 +149,7 @@ public final class SettingsPage extends ScrollPane {
 
                 {
                     updateListener = any -> {
-                        btnUpdate.setVisible(UpdateChecker.isOutdated());
+                        updateButton.setVisible(UpdateChecker.isOutdated());
 
                         if (UpdateChecker.isOutdated()) {
                             lblUpdateSubProperty.set(i18n("update.newest_version", UpdateChecker.getLatestVersion().getVersion()));
