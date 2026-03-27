@@ -133,23 +133,23 @@ public final class Versions {
 
     public static CompletableFuture<String> renameVersion(Profile profile, String version) {
         return Controllers.prompt(i18n("version.manage.rename.message"), (newName, handler) -> {
-            if (newName.equals(version)) {
-                handler.resolve();
-                return;
-            }
-            if (profile.getRepository().renameVersion(version, newName)) {
-                handler.resolve();
-                profile.getRepository().refreshVersionsAsync()
-                        .thenRunAsync(Schedulers.javafx(), () -> {
-                            if (profile.getRepository().hasVersion(newName)) {
-                                profile.setSelectedVersion(newName);
-                            }
-                        }).start();
-            } else {
-                handler.reject(i18n("version.manage.rename.fail"));
-            }
-        }, version, new Validator(i18n("install.new_game.malformed"), HMCLGameRepository::isValidVersionId),
-            new Validator(i18n("install.new_game.already_exists"), newVersionName -> !profile.getRepository().versionIdConflicts(newVersionName) || newVersionName.equals(version)));
+                    if (newName.equals(version)) {
+                        handler.resolve();
+                        return;
+                    }
+                    if (profile.getRepository().renameVersion(version, newName)) {
+                        handler.resolve();
+                        profile.getRepository().refreshVersionsAsync()
+                                .thenRunAsync(Schedulers.javafx(), () -> {
+                                    if (profile.getRepository().hasVersion(newName)) {
+                                        profile.setSelectedVersion(newName);
+                                    }
+                                }).start();
+                    } else {
+                        handler.reject(i18n("version.manage.rename.fail"));
+                    }
+                }, version, new Validator(i18n("install.new_game.malformed"), HMCLGameRepository::isValidVersionId),
+                new Validator(i18n("install.new_game.already_exists"), newVersionName -> !profile.getRepository().versionIdConflicts(newVersionName) || newVersionName.equals(version)));
     }
 
     public static void exportVersion(Profile profile, String version) {
@@ -210,18 +210,18 @@ public final class Versions {
             Version resolved = repository.getResolvedPreservingPatchesVersion(id);
             LibraryAnalyzer analyzer = LibraryAnalyzer.analyze(resolved, null);
             GameBuilder builder = profile.getDependency().gameBuilder().name(id).gameVersion(repository.getGameVersion(id).orElseThrow());
-            analyzer.getLibraries().forEach((item) -> {
-                if (item == LibraryAnalyzer.LibraryType.MINECRAFT) return;
-                var itemVersion = analyzer.getVersion(item).orElse(null);
-                if (itemVersion == null) return;
-                builder.version(item.getPatchId(), itemVersion);
-            });
-            TaskExecutor executor = builder.buildAsync().whenComplete(any -> repository.refreshVersions())
-                    .thenRunAsync(Schedulers.javafx(), () -> profile.setSelectedVersion(id))
-                    .thenRunAsync(Schedulers.javafx(), () -> Controllers.getVersionPage().loadVersion(resolved.getId(),profile))
-                    .executor();
-            Controllers.taskDialog(executor, i18n("version.manage.reset"), TaskCancellationAction.NO_CANCEL);
-            executor.start();
+            for (LibraryAnalyzer.LibraryType item : analyzer.getLibraries()) {
+                if (item != LibraryAnalyzer.LibraryType.MINECRAFT) {
+                    analyzer.getVersion(item).ifPresent(itemVersion ->
+                            builder.version(item.getPatchId(), itemVersion));
+                }
+            }
+            Controllers.taskDialog(builder.buildAsync()
+                    .thenRunAsync(repository::refreshVersions)
+                    .whenComplete(Schedulers.javafx(), (ignored, exception) -> {
+                        profile.setSelectedVersion(id);
+                        Controllers.getVersionPage().loadVersion(id, profile);
+                    }), i18n("version.manage.reset"), TaskCancellationAction.NO_CANCEL);
         } catch (Exception e) {
             LOG.warning("Unable to reset instance", e);
             Controllers.dialog(i18n("message.failed") + "\n" + StringUtils.getStackTrace(e), i18n("message.error"), MessageDialogPane.MessageType.ERROR);
