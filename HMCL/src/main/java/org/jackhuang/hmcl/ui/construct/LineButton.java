@@ -47,7 +47,6 @@ public class LineButton extends LineButtonBase {
 
     public LineButton() {
         getStyleClass().add(DEFAULT_STYLE_CLASS);
-        container.setPickOnBounds(true);
     }
 
     protected int getTrailingTextIndex() {
@@ -115,6 +114,7 @@ public class LineButton extends LineButtonBase {
                             trailingTextLabel = new Label();
                             trailingTextLabel.getStyleClass().add("trailing-label");
                             trailingTextLabel.setTextOverrun(OverrunStyle.CENTER_ELLIPSIS);
+                            trailingTextLabel.setMouseTransparent(true);
                         }
                         trailingTextLabel.setText(message);
                         setNode(getTrailingTextIndex(), trailingTextLabel);
@@ -176,6 +176,7 @@ public class LineButton extends LineButtonBase {
     public void setTrailingIcon(SVG rightIcon, double size) {
         Node rightIconNode = rightIcon.createIcon(size);
         rightIconNode.getStyleClass().add("trailing-icon");
+        rightIconNode.setMouseTransparent(true);
         setTrailingIcon(rightIconNode);
     }
 }
