@@ -190,31 +190,25 @@ public abstract sealed class GameVersionNumber implements Comparable<GameVersion
         return buildDebugString().toString();
     }
 
-    public static @Nullable String getReleaseOfSnapshot(String version) {
-        if (version == null || version.isEmpty()) {
-            return null;
-        }
-
-        GameVersionNumber gameVersion = asGameVersion(version);
-
+    public static @Nullable GameVersionNumber getReleaseOfSnapshot(GameVersionNumber gameVersion) {
         if (gameVersion instanceof Release release) {
             if (release.getEaType() == Release.ReleaseType.GA) {
                 return null;
             }
             if (release.getPatch() > 0) {
-                return release.getMajor() + "." + release.getMinor() + "." + release.getPatch();
+                return asGameVersion(release.getMajor() + "." + release.getMinor() + "." + release.getPatch());
             } else {
-                return release.getMajor() + "." + release.getMinor();
+                return asGameVersion(release.getMajor() + "." + release.getMinor());
             }
         }
 
         if (gameVersion instanceof LegacySnapshot snapshot) {
             String[] defaultVersions = Versions.DEFAULT_GAME_VERSIONS;
             for (int i = defaultVersions.length - 1; i >= 0; i--) {
-                Release gaRelease = Release.parseSimple(defaultVersions[i]);
+                Release gaRelease = (Release) asGameVersion(defaultVersions[i]);
 
                 if (gaRelease.compareToSnapshot(snapshot) > 0) {
-                    return gaRelease.toString();
+                    return gaRelease;
                 }
             }
         }

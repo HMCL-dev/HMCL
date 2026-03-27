@@ -28,7 +28,6 @@ import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
 import javafx.scene.control.*;
-import javafx.scene.image.*;
 import javafx.scene.layout.*;
 import javafx.stage.FileChooser;
 import org.jackhuang.hmcl.download.DownloadProvider;
@@ -295,30 +294,8 @@ public class DownloadPage extends Control implements DecoratorPage {
                         }
                     }
 
-                    List<String> versionList = control.versions.keys().stream()
-                            .map(gv -> Objects.requireNonNullElse(GameVersionNumber.getReleaseOfSnapshot(gv), gv))
-                            .distinct()
-                            .sorted(Collections.reverseOrder(GameVersionNumber::compare))
-                            .toList();
-
-                    for (String release : versionList) {
-                        List<String> releases = new ArrayList<>();
-                        List<String> snapshots = new ArrayList<>();
-
-                        for (String gv : control.versions.keys()) {
-                            if (release.equals(Objects.requireNonNullElse(GameVersionNumber.getReleaseOfSnapshot(gv), gv))) {
-                                (gv.equals(release) ? releases : snapshots).add(gv);
-                            }
-                        }
-
-                        for (int i = 0; i <= 1; i++) {
-                            // i = 0 -> releases, i = 1 -> snapshots
-                            List<String> target = (i == 0) ? releases : snapshots;
-                            if (target.isEmpty()) continue;
-
-                            String title = (i == 0) ? "Minecraft " + release
-                                    : String.format("Minecraft %s - %s", release, i18n("version.game.snapshot"));
-
+                    final class Versions {
+                        static ComponentSublist createSublist(DownloadPage control, String title, List<String> target) {
                             var sublist = new ComponentSublist(() -> {
                                 ArrayList<ModItem> items = new ArrayList<>();
                                 for (String gv : target) {
@@ -332,10 +309,41 @@ public class DownloadPage extends Control implements DecoratorPage {
                                 return items;
                             });
 
+                            sublist.setTitle(title);
                             sublist.getStyleClass().add("no-padding");
                             sublist.setTitle(title);
-                            list.getContent().add(sublist);
+
+                            return sublist;
                         }
+
+                        final List<String> releases = new ArrayList<>();
+                        final List<String> snapshots = new ArrayList<>();
+                    }
+
+                    TreeMap<GameVersionNumber, Versions> map = new TreeMap<>(Collections.reverseOrder());
+                    for (String version : control.versions.keys()) {
+                        GameVersionNumber gameVersion = GameVersionNumber.asGameVersion(version);
+                        GameVersionNumber releaseOfSnapshot = GameVersionNumber.getReleaseOfSnapshot(gameVersion);
+                        GameVersionNumber releaseVersion = Objects.requireNonNullElse(releaseOfSnapshot, gameVersion);
+
+                        Versions lists = map.computeIfAbsent(releaseVersion, v -> new Versions());
+
+                        if (releaseOfSnapshot == null) {
+                            lists.releases.add(version);
+                        } else {
+                            lists.snapshots.add(version);
+                        }
+                    }
+
+                    for (Map.Entry<GameVersionNumber, Versions> entry : map.entrySet()) {
+                        GameVersionNumber gameVersion = entry.getKey();
+                        Versions versions = entry.getValue();
+
+                        if (!versions.releases.isEmpty())
+                            list.getContent().add(Versions.createSublist(control, i18n("addon.download.title.release", gameVersion), versions.releases));
+
+                        if (!versions.snapshots.isEmpty())
+                            list.getContent().add(Versions.createSublist(control, i18n("addon.download.title.snapshot", gameVersion), versions.snapshots));
                     }
                 });
             }

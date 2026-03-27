@@ -511,11 +511,11 @@ public final class GameVersionNumberTest {
 
     @Test
     public void testGetReleaseOfSnapshot() {
-        assertEquals("1.21.11", getReleaseOfSnapshot("25w45a"));
-        assertEquals("1.21.11", getReleaseOfSnapshot("25w45a_unobfuscated"));
-        assertEquals("1.21.11", getReleaseOfSnapshot("1.21.11-pre3"));
-        assertEquals("26.1", getReleaseOfSnapshot("26.1-snapshot-9"));
-        assertNull(getReleaseOfSnapshot("26.1"));
-        assertNull(getReleaseOfSnapshot("20w14infinite"));
+        assertEquals(asGameVersion("1.21.11"), getReleaseOfSnapshot(asGameVersion("25w45a")));
+        assertEquals(asGameVersion("1.21.11"), getReleaseOfSnapshot(asGameVersion("25w45a_unobfuscated")));
+        assertEquals(asGameVersion("1.21.11"), getReleaseOfSnapshot(asGameVersion("1.21.11-pre3")));
+        assertEquals(asGameVersion("26.1"), getReleaseOfSnapshot(asGameVersion("26.1-snapshot-9")));
+        assertNull(getReleaseOfSnapshot(asGameVersion("26.1")));
+        assertNull(getReleaseOfSnapshot(asGameVersion("20w14infinite")));
     }
 }
