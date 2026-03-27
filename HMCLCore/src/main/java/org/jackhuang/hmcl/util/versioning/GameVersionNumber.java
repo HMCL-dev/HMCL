@@ -19,6 +19,7 @@ package org.jackhuang.hmcl.util.versioning;
 
 import org.jackhuang.hmcl.util.ToStringBuilder;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -187,6 +188,32 @@ public abstract sealed class GameVersionNumber implements Comparable<GameVersion
 
     public final String toDebugString() {
         return buildDebugString().toString();
+    }
+
+    public static @Nullable GameVersionNumber getReleaseOfSnapshot(GameVersionNumber gameVersion) {
+        if (gameVersion instanceof Release release) {
+            if (release.getEaType() == Release.ReleaseType.GA) {
+                return null;
+            }
+            if (release.getPatch() > 0) {
+                return asGameVersion(release.getMajor() + "." + release.getMinor() + "." + release.getPatch());
+            } else {
+                return asGameVersion(release.getMajor() + "." + release.getMinor());
+            }
+        }
+
+        if (gameVersion instanceof LegacySnapshot snapshot) {
+            String[] defaultVersions = Versions.DEFAULT_GAME_VERSIONS;
+            for (int i = defaultVersions.length - 1; i >= 0; i--) {
+                Release gaRelease = (Release) asGameVersion(defaultVersions[i]);
+
+                if (gaRelease.compareToSnapshot(snapshot) > 0) {
+                    return gaRelease;
+                }
+            }
+        }
+
+        return null;
     }
 
     public static final class Old extends GameVersionNumber {
