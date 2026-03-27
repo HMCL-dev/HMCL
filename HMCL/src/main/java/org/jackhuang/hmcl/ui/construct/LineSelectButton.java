@@ -43,7 +43,7 @@ import java.util.function.Function;
 import static org.jackhuang.hmcl.ui.FXUtils.determineOptimalPopupPosition;
 
 /// @author Glavo
-public final class LineSelectButton<T> extends LineButton {
+public class LineSelectButton<T> extends LineButton {
 
     private static final String DEFAULT_STYLE_CLASS = "line-select-button";
     private static final PseudoClass SELECTED_PSEUDO_CLASS = PseudoClass.getPseudoClass("selected");
