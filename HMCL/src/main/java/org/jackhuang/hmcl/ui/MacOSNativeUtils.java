@@ -61,6 +61,10 @@ public final class MacOSNativeUtils {
     }
 
     public static void setAppearance(boolean dark) {
+        setAppearance(dark, false);
+    }
+
+    public static void setAppearance(boolean dark, boolean highContrast) {
         if (!initialized || nsApp == null) return;
 
         try {
@@ -74,7 +78,14 @@ public final class MacOSNativeUtils {
             if (NSString == null) return;
 
             Pointer sel = objc.sel_registerName("stringWithUTF8String:");
-            String appearanceName = dark ? "NSAppearanceNameDarkAqua" : "NSAppearanceNameAqua";
+
+            String appearanceName;
+            if (highContrast) {
+                appearanceName = dark ? "NSAppearanceNameAccessibilityHighContrastDarkAqua" : "NSAppearanceNameAccessibilityHighContrastAqua";
+            } else {
+                appearanceName = dark ? "NSAppearanceNameDarkAqua" : "NSAppearanceNameAqua";
+            }
+
             Pointer appearanceNamePtr = objc.objc_msgSend(NSString, sel, appearanceName);
             if (appearanceNamePtr == null) return;
 
