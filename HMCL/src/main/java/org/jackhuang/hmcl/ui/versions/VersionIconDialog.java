@@ -18,7 +18,6 @@
 package org.jackhuang.hmcl.ui.versions;
 
 import javafx.scene.Node;
-import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.FlowPane;
 import javafx.stage.FileChooser;
@@ -168,8 +167,8 @@ public class VersionIconDialog extends DialogPane {
     private Node createIcon(Path path) {
         ImageView imageView;
         try {
-            imageView = new ImageView(new Image(Files.newInputStream(path), 72, 72, true, false));
-        } catch (IOException e) {
+            imageView = new ImageView(FXUtils.loadImage(path, 72, 72, true, false));
+        } catch (Exception e) {
             LOG.warning("Failed to load custom game icon: " + path, e);
             return null;
         }
