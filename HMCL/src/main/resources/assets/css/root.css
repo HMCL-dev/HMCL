@@ -1877,7 +1877,7 @@
 }
 
 .update-active .subtitle-label {
-    -fx-text-fill: -monet-error;
+    -fx-text-fill: -monet-tertiary;
 }
 
 .line-component.no-padding .line-component-container {
