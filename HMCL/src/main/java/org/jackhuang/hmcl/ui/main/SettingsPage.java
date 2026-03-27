@@ -23,6 +23,7 @@ import javafx.beans.WeakInvalidationListener;
 import javafx.beans.binding.Bindings;
 import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.StringProperty;
+import javafx.css.PseudoClass;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.geometry.VPos;
@@ -129,6 +130,7 @@ public final class SettingsPage extends ScrollPane {
                 var updatePane = new LineSelectButton<UpdateChannel>() {
 
                     {
+                        getStyleClass().add("update-pane");
                         setNode(IDX_TRAILING, updateButton);
                     }
 
@@ -149,11 +151,14 @@ public final class SettingsPage extends ScrollPane {
 
                 {
                     updateListener = any -> {
-                        updateButton.setVisible(UpdateChecker.isOutdated());
+                        boolean outdated = UpdateChecker.isOutdated();
+
+                        updateButton.setVisible(outdated);
+                        updateButton.setManaged(outdated);
+                        updatePane.pseudoClassStateChanged(PseudoClass.getPseudoClass("active"), outdated);
 
                         if (UpdateChecker.isOutdated()) {
                             lblUpdateSubProperty.set(i18n("update.newest_version", UpdateChecker.getLatestVersion().getVersion()));
-                            updatePane.getStyleClass().add("update-active");
                         } else if (UpdateChecker.isCheckingUpdate()) {
                             lblUpdateSubProperty.set(i18n("update.checking"));
                         } else {

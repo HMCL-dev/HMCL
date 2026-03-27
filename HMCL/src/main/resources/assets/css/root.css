@@ -1876,10 +1876,6 @@
     -fx-text-fill: -monet-on-surface-variant;
 }
 
-.update-active .subtitle-label {
-    -fx-text-fill: -monet-tertiary;
-}
-
 .line-component.no-padding .line-component-container {
     -fx-padding: 0;
 }
@@ -1927,4 +1923,8 @@
 
 .line-toggle-button .jfx-toggle-button {
     -fx-padding: 0;
+}
+
+.update-pane:active .subtitle-label {
+    -fx-text-fill: -monet-tertiary;
 }
