@@ -207,8 +207,7 @@ public final class Versions {
     public static void resetVersion(Profile profile, String id) {
         try {
             HMCLGameRepository repository = profile.getRepository();
-            Version resolved = repository.getResolvedPreservingPatchesVersion(id);
-            LibraryAnalyzer analyzer = LibraryAnalyzer.analyze(resolved, null);
+            LibraryAnalyzer analyzer = LibraryAnalyzer.analyze(repository.getResolvedPreservingPatchesVersion(id), null);
             GameBuilder builder = profile.getDependency().gameBuilder().name(id).gameVersion(repository.getGameVersion(id).orElseThrow());
             for (LibraryAnalyzer.LibraryType item : analyzer.getLibraries()) {
                 if (item != LibraryAnalyzer.LibraryType.MINECRAFT) {
