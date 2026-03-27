@@ -143,6 +143,7 @@ public class McbbsModpackExportTask extends Task<Void> {
             .requireAuthlibInjectorServer()
             .requireJavaArguments()
             .requireLaunchArguments()
-            .requireOrigins();
+            .requireOrigins()
+            .requireAuthor();
 
 }

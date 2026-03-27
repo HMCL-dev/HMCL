@@ -1,3 +1,20 @@
+/*
+ * Hello Minecraft! Launcher
+ * Copyright (C) 2026  huangyuhui <huanghongxun2008@126.com> and contributors
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
 package org.jackhuang.hmcl.ui.account;
 
 import com.jfoenix.controls.JFXButton;
@@ -175,16 +192,20 @@ public class MicrosoftAccountLoginPane extends JFXDialogLayout implements Dialog
         } else if (currentStep instanceof Step.WaitForScanQrCode wait) {
             loginButtonSpinner.setLoading(true);
 
+            String scanUri = "https://www.microsoft.com/link".equals(wait.verificationUri())
+                    ? "https://www.microsoft.com/link?otc=" + wait.userCode()
+                    : wait.verificationUri();
+
             var deviceHint = new HintPane(MessageDialogPane.MessageType.INFO);
             deviceHint.setSegment(i18n("account.methods.microsoft.methods.device.hint",
-                    StringUtils.escapeXmlAttribute(wait.verificationUri()),
+                    StringUtils.escapeXmlAttribute(scanUri),
                     wait.verificationUri(),
                     wait.userCode()
             ));
 
             var qrCode = new SVGPath();
             qrCode.fillProperty().bind(Themes.colorSchemeProperty().getPrimary());
-            qrCode.setContent(QrCodeUtils.toSVGPath(QrCode.encodeText(wait.verificationUri() + "?otc=" + wait.userCode(), QrCode.Ecc.MEDIUM)));
+            qrCode.setContent(QrCodeUtils.toSVGPath(QrCode.encodeText(scanUri, QrCode.Ecc.MEDIUM)));
             qrCode.setScaleX(3);
             qrCode.setScaleY(3);
 
