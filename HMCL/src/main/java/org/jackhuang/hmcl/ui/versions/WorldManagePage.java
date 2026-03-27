@@ -40,6 +40,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 import java.nio.file.Path;
+import java.util.Objects;
 import java.util.Optional;
 
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
@@ -114,10 +115,7 @@ public final class WorldManagePage extends DecoratorAnimatedPage implements Deco
 
     @Override
     public void refresh() {
-
-        if (world == null) {
-            throw new IllegalStateException("World is not initialized");
-        }
+        Objects.requireNonNull(world, "World is not initialized");
 
         updateSessionLockChannel();
         try {
