@@ -69,9 +69,9 @@ public class MicrosoftService {
         return profileRepository;
     }
 
-    public MicrosoftSession authenticate() throws AuthenticationException {
+    public MicrosoftSession authenticate(OAuth.GrantFlow flow) throws AuthenticationException {
         try {
-            OAuth.Result result = OAuth.MICROSOFT.authenticate(OAuth.GrantFlow.DEVICE, new OAuth.Options(SCOPE, callback));
+            OAuth.Result result = OAuth.MICROSOFT.authenticate(flow, new OAuth.Options(SCOPE, callback));
             return authenticateViaLiveAccessToken(result.getAccessToken(), result.getRefreshToken());
         } catch (IOException e) {
             throw new ServerDisconnectException(e);

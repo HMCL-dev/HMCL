@@ -23,12 +23,17 @@ import org.jackhuang.hmcl.task.Task;
 import java.nio.charset.Charset;
 import java.nio.file.Path;
 import java.util.List;
+import java.util.Set;
 
 /**
  *
  * @author huangyuhui
  */
 public abstract class Modpack {
+
+    public static final Set<String> SUPPORTED_ICON_EXTS = Set.of("png", "jpg", "jpeg", "bmp", "gif", "webp", "apng");
+    public static final Set<String> SUPPORTED_ICON_NAMES = Set.of("icon.png", "icon.jpg", "icon.jpeg", "icon.bmp", "icon.gif", "icon.webp", "icon.apng");
+
     private String name;
     private String author;
     private String version;

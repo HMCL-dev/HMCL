@@ -29,6 +29,7 @@ import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.io.CompressingUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.io.Unzipper;
+import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
 
 import java.io.IOException;
 import java.nio.file.*;
@@ -38,14 +39,14 @@ import java.util.stream.Stream;
 
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
-public class Datapack {
+public class DataPack {
     private static final String DISABLED_EXT = "disabled";
     private static final String ZIP_EXT = "zip";
 
     private final Path path;
     private final ObservableList<Pack> packs = FXCollections.observableArrayList();
 
-    public Datapack(Path path) {
+    public DataPack(Path path) {
         this.path = path;
     }
 
@@ -57,14 +58,14 @@ public class Datapack {
         return packs;
     }
 
-    public static void installPack(Path sourceDatapackPath, Path targetDatapackDirectory) throws IOException {
+    public static void installPack(Path sourceDataPackPath, Path targetDataPackDirectory, GameVersionNumber gameVersionNumber) throws IOException {
         boolean containsMultiplePacks;
         Set<String> packs = new HashSet<>();
-        try (FileSystem fs = CompressingUtils.readonly(sourceDatapackPath).setAutoDetectEncoding(true).build()) {
-            Path datapacks = fs.getPath("datapacks");
+        try (FileSystem fs = CompressingUtils.readonly(sourceDataPackPath).setAutoDetectEncoding(true).build()) {
+            Path dataPacks = fs.getPath("datapacks");
             Path mcmeta = fs.getPath("pack.mcmeta");
 
-            if (Files.exists(datapacks)) {
+            if (Files.exists(dataPacks)) {
                 containsMultiplePacks = true;
             } else if (Files.exists(mcmeta)) {
                 containsMultiplePacks = false;
@@ -73,14 +74,14 @@ public class Datapack {
             }
 
             if (containsMultiplePacks) {
-                try (Stream<Path> s = Files.list(datapacks)) {
+                try (Stream<Path> s = Files.list(dataPacks)) {
                     packs = s.map(FileUtils::getNameWithoutExtension).collect(Collectors.toSet());
                 }
             } else {
-                packs.add(FileUtils.getNameWithoutExtension(sourceDatapackPath));
+                packs.add(FileUtils.getNameWithoutExtension(sourceDataPackPath));
             }
 
-            try (DirectoryStream<Path> stream = Files.newDirectoryStream(targetDatapackDirectory)) {
+            try (DirectoryStream<Path> stream = Files.newDirectoryStream(targetDataPackDirectory)) {
                 for (Path dir : stream) {
                     String packName = FileUtils.getName(dir);
                     if (FileUtils.getExtension(dir).equals(DISABLED_EXT)) {
@@ -99,15 +100,27 @@ public class Datapack {
         }
 
         if (!containsMultiplePacks) {
-            FileUtils.copyFile(sourceDatapackPath, targetDatapackDirectory.resolve(FileUtils.getName(sourceDatapackPath)));
+            FileUtils.copyFile(sourceDataPackPath, targetDataPackDirectory.resolve(FileUtils.getName(sourceDataPackPath)));
         } else {
-            new Unzipper(sourceDatapackPath, targetDatapackDirectory)
+            new Unzipper(sourceDataPackPath, targetDataPackDirectory)
                     .setReplaceExistentFile(true)
                     .setSubDirectory("/datapacks/")
                     .unzip();
 
-            try (FileSystem outputResourcesZipFS = CompressingUtils.createWritableZipFileSystem(targetDatapackDirectory.getParent().resolve("resources.zip"));
-                 FileSystem inputPackZipFS = CompressingUtils.createReadOnlyZipFileSystem(sourceDatapackPath)) {
+            Path targetResourceZipPath;
+            // When the version cannot be obtained, the old version logic is used by default.
+            boolean useNewResourcePath = gameVersionNumber != null
+                    && gameVersionNumber.compareTo("26.1-snapshot-6") >= 0;
+
+            if (useNewResourcePath) {
+                Files.createDirectories(targetDataPackDirectory.getParent().resolve("resourcepacks"));
+                targetResourceZipPath = targetDataPackDirectory.getParent().resolve("resourcepacks/resources.zip");
+            } else {
+                targetResourceZipPath = targetDataPackDirectory.getParent().resolve("resources.zip");
+            }
+
+            try (FileSystem outputResourcesZipFS = CompressingUtils.createWritableZipFileSystem(targetResourceZipPath);
+                 FileSystem inputPackZipFS = CompressingUtils.createReadOnlyZipFileSystem(sourceDataPackPath)) {
                 Path resourcesZip = inputPackZipFS.getPath("resources.zip");
                 if (Files.isRegularFile(resourcesZip)) {
                     Path tempResourcesFile = Files.createTempFile("hmcl", ".zip");
@@ -138,8 +151,8 @@ public class Datapack {
         }
     }
 
-    public void installPack(Path sourcePackPath) throws IOException {
-        installPack(sourcePackPath, path);
+    public void installPack(Path sourcePackPath, GameVersionNumber gameVersionNumber) throws IOException {
+        installPack(sourcePackPath, path, gameVersionNumber);
         loadFromDir();
     }
 
@@ -216,14 +229,14 @@ public class Datapack {
         }
     }
 
-    private Optional<Pack> parsePack(Path datapackPath, boolean isDirectory, String name, Path mcmetaPath) {
+    private Optional<Pack> parsePack(Path dataPackPath, boolean isDirectory, String name, Path mcmetaPath) {
         try {
             PackMcMeta mcMeta = JsonUtils.fromNonNullJson(Files.readString(mcmetaPath), PackMcMeta.class);
-            return Optional.of(new Pack(datapackPath, isDirectory, name, mcMeta.pack().description(), this));
+            return Optional.of(new Pack(dataPackPath, isDirectory, name, mcMeta.pack().description(), this));
         } catch (JsonParseException e) {
-            LOG.warning("Invalid pack.mcmeta format in " + datapackPath, e);
+            LOG.warning("Invalid pack.mcmeta format in " + dataPackPath, e);
         } catch (IOException e) {
-            LOG.warning("IO error reading " + datapackPath, e);
+            LOG.warning("IO error reading " + dataPackPath, e);
         }
         return Optional.empty();
     }
@@ -235,14 +248,14 @@ public class Datapack {
         private final BooleanProperty activeProperty;
         private final String id;
         private final LocalModFile.Description description;
-        private final Datapack parentDatapack;
+        private final DataPack parentDataPack;
 
-        public Pack(Path path, boolean isDirectory, String id, LocalModFile.Description description, Datapack parentDatapack) {
+        public Pack(Path path, boolean isDirectory, String id, LocalModFile.Description description, DataPack parentDataPack) {
             this.path = path;
             this.isDirectory = isDirectory;
             this.id = id;
             this.description = description;
-            this.parentDatapack = parentDatapack;
+            this.parentDataPack = parentDataPack;
 
             this.statusFile = initializeStatusFile(path, isDirectory);
             this.activeProperty = initializeActiveProperty();
@@ -300,8 +313,8 @@ public class Datapack {
             return description;
         }
 
-        public Datapack getParentDatapack() {
-            return parentDatapack;
+        public DataPack getParentDataPack() {
+            return parentDataPack;
         }
 
         public BooleanProperty activeProperty() {

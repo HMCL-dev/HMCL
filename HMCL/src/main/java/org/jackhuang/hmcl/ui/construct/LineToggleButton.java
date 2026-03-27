@@ -20,25 +20,27 @@ package org.jackhuang.hmcl.ui.construct;
 import com.jfoenix.controls.JFXToggleButton;
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.SimpleBooleanProperty;
-import javafx.geometry.Pos;
-import javafx.scene.layout.BorderPane;
 import org.jackhuang.hmcl.ui.FXUtils;
 
 public final class LineToggleButton extends LineButtonBase {
     private static final String DEFAULT_STYLE_CLASS = "line-toggle-button";
 
+    private final JFXToggleButton toggleButton;
+
     public LineToggleButton() {
         this.getStyleClass().add(DEFAULT_STYLE_CLASS);
 
-        JFXToggleButton toggleButton = new JFXToggleButton();
+        this.toggleButton = new JFXToggleButton();
         toggleButton.selectedProperty().bindBidirectional(selectedProperty());
         toggleButton.setSize(8);
         FXUtils.setLimitHeight(toggleButton, 30);
+        setNode(IDX_TRAILING, toggleButton);
+    }
 
-        BorderPane.setAlignment(toggleButton, Pos.CENTER);
-        root.setRight(toggleButton);
-
-        FXUtils.onClicked(container, toggleButton::fire);
+    @Override
+    public void fire() {
+        toggleButton.fire();
+        super.fire();
     }
 
     private final BooleanProperty selected = new SimpleBooleanProperty(this, "selected");
