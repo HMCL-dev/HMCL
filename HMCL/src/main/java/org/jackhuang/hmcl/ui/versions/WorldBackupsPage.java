@@ -19,6 +19,8 @@ package org.jackhuang.hmcl.ui.versions;
 
 import com.jfoenix.controls.JFXButton;
 import javafx.beans.property.BooleanProperty;
+import javafx.beans.property.ReadOnlyBooleanProperty;
+import javafx.beans.property.ReadOnlyBooleanWrapper;
 import javafx.collections.FXCollections;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
@@ -100,7 +102,7 @@ public final class WorldBackupsPage extends ListPageBase<WorldBackupsPage.Backup
                                         count = Integer.parseInt(matcher.group("count"));
                                     }
 
-                                    result.add(new BackupInfo(path, new ImportableWorld(path), time, count));
+                                    result.add(new BackupInfo(path, new ImportableWorld(path), time, count, readOnlyProperty()));
                                 }
                             } catch (Throwable e) {
                                 LOG.warning("Failed to load backup file " + path, e);
@@ -124,7 +126,7 @@ public final class WorldBackupsPage extends ListPageBase<WorldBackupsPage.Backup
         }).start();
     }
 
-    public BooleanProperty readOnlyProperty() {
+    public ReadOnlyBooleanProperty readOnlyProperty() {
         return worldManagePage.readOnlyProperty();
     }
 
@@ -147,7 +149,7 @@ public final class WorldBackupsPage extends ListPageBase<WorldBackupsPage.Backup
                 count = Integer.parseInt(matcher.group("count"));
             }
 
-            return Pair.pair(path, new BackupInfo(path, new ImportableWorld(path), time, count));
+            return Pair.pair(path, new BackupInfo(path, new ImportableWorld(path), time, count, readOnlyProperty()));
         }).whenComplete(Schedulers.javafx(), (result, exception) -> {
             if (exception == null) {
                 WorldBackupsPage.this.getItems().add(result.getValue());
@@ -185,12 +187,14 @@ public final class WorldBackupsPage extends ListPageBase<WorldBackupsPage.Backup
         private final ImportableWorld backupWorld;
         private final LocalDateTime backupTime;
         private final int count;
+        private final ReadOnlyBooleanProperty readOnly;
 
-        public BackupInfo(Path file, ImportableWorld backupWorld, LocalDateTime backupTime, int count) {
+        public BackupInfo(Path file, ImportableWorld backupWorld, LocalDateTime backupTime, int count, ReadOnlyBooleanProperty readOnly) {
             this.file = file;
             this.backupWorld = backupWorld;
             this.backupTime = backupTime;
             this.count = count;
+            this.readOnly = readOnly;
         }
 
         public ImportableWorld getBackupWorld() {
@@ -284,6 +288,7 @@ public final class WorldBackupsPage extends ListPageBase<WorldBackupsPage.Backup
                 JFXButton btnRestore = FXUtils.newToggleButton4(SVG.UPDATE);
                 right.getChildren().add(btnRestore);
                 FXUtils.installFastTooltip(btnRestore, i18n("world.restore.tooltip"));
+                btnRestore.disableProperty().bind(getSkinnable().readOnly);
                 btnRestore.setOnAction(event -> Controllers.confirm(i18n("world.restore.confirm"), i18n("world.restore"), skinnable::onRestore, null));
 
                 JFXButton btnDelete = FXUtils.newToggleButton4(SVG.DELETE_FOREVER);

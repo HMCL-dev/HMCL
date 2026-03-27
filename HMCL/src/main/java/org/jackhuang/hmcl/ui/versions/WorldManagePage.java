@@ -206,7 +206,7 @@ public final class WorldManagePage extends DecoratorAnimatedPage implements Deco
         return readOnly.get();
     }
 
-    public BooleanProperty readOnlyProperty() {
+    public ReadOnlyBooleanProperty readOnlyProperty() {
         return readOnly;
     }
 

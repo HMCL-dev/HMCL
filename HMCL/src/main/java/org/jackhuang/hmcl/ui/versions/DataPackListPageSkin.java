@@ -27,6 +27,7 @@ import javafx.application.Platform;
 import javafx.beans.InvalidationListener;
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.ObjectProperty;
+import javafx.beans.property.ReadOnlyBooleanProperty;
 import javafx.beans.property.SimpleBooleanProperty;
 import javafx.collections.transformation.FilteredList;
 import javafx.geometry.Insets;
@@ -306,7 +307,7 @@ final class DataPackListPageSkin extends SkinBase<DataPackListPage> {
         final TwoLineListItem content = new TwoLineListItem();
         BooleanProperty booleanProperty;
 
-        DataPackInfoListCell(JFXListView<DataPackInfoObject> listView, BooleanProperty isReadOnlyProperty) {
+        DataPackInfoListCell(JFXListView<DataPackInfoObject> listView, ReadOnlyBooleanProperty isReadOnlyProperty) {
             super(listView);
 
             HBox container = new HBox(8);

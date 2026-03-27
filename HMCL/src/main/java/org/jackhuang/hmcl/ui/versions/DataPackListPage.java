@@ -17,7 +17,7 @@
  */
 package org.jackhuang.hmcl.ui.versions;
 
-import javafx.beans.property.BooleanProperty;
+import javafx.beans.property.ReadOnlyBooleanProperty;
 import javafx.collections.ObservableList;
 import javafx.scene.control.Skin;
 import javafx.stage.FileChooser;
@@ -94,7 +94,7 @@ public final class DataPackListPage extends ListPageBase<DataPackListPageSkin.Da
                 .start();
     }
 
-    public BooleanProperty readOnlyProperty() {
+    public ReadOnlyBooleanProperty readOnlyProperty() {
         return worldManagePage.readOnlyProperty();
     }
 

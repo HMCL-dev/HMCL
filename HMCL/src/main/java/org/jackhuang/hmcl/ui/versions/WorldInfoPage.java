@@ -19,7 +19,7 @@ package org.jackhuang.hmcl.ui.versions;
 
 import com.jfoenix.controls.JFXButton;
 import com.jfoenix.controls.JFXTextField;
-import javafx.beans.property.BooleanProperty;
+import javafx.beans.property.ReadOnlyBooleanProperty;
 import javafx.beans.property.SimpleBooleanProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
@@ -72,7 +72,7 @@ public final class WorldInfoPage extends SpinnerPane implements WorldManagePage.
         refresh();
     }
 
-    private BooleanProperty readOnlyProperty() {
+    private ReadOnlyBooleanProperty readOnlyProperty() {
         return worldManagePage.readOnlyProperty();
     }
 
