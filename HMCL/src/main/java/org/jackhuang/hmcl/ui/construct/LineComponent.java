@@ -64,6 +64,7 @@ public abstract class LineComponent extends StackPane implements NoPaddingCompon
         this.container = new HBox(SPACING);
         container.getStyleClass().add("line-component-container");
         container.setAlignment(Pos.CENTER_LEFT);
+        container.setPickOnBounds(true);
 
         this.titleLabel = new Label();
         titleLabel.getStyleClass().add("title-label");

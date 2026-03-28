@@ -30,9 +30,6 @@ import org.jackhuang.hmcl.ui.SVG;
 public class LineButton extends LineButtonBase {
     private static final String DEFAULT_STYLE_CLASS = "line-button";
 
-    private static final int IDX_TRAILING_TEXT = IDX_TRAILING;
-    private static final int IDX_TRAILING_ICON = IDX_TRAILING + 1;
-
     public static LineButton createNavigationButton() {
         var button = new LineButton();
         button.setTrailingIcon(SVG.ARROW_FORWARD);
@@ -50,7 +47,14 @@ public class LineButton extends LineButtonBase {
 
     public LineButton() {
         getStyleClass().add(DEFAULT_STYLE_CLASS);
-        container.setMouseTransparent(true);
+    }
+
+    protected int getTrailingTextIndex() {
+        return IDX_TRAILING;
+    }
+
+    protected int getTrailingIconIndex() {
+        return getTrailingTextIndex() + 1;
     }
 
     private ObjectProperty<EventHandler<ActionEvent>> onAction;
@@ -110,12 +114,13 @@ public class LineButton extends LineButtonBase {
                             trailingTextLabel = new Label();
                             trailingTextLabel.getStyleClass().add("trailing-label");
                             trailingTextLabel.setTextOverrun(OverrunStyle.CENTER_ELLIPSIS);
+                            trailingTextLabel.setMouseTransparent(true);
                         }
                         trailingTextLabel.setText(message);
-                        setNode(IDX_TRAILING_TEXT, trailingTextLabel);
+                        setNode(getTrailingTextIndex(), trailingTextLabel);
                     } else if (trailingTextLabel != null) {
                         trailingTextLabel.setText("");
-                        setNode(IDX_TRAILING_TEXT, null);
+                        setNode(getTrailingTextIndex(), null);
                     }
                 }
             };
@@ -149,7 +154,7 @@ public class LineButton extends LineButtonBase {
 
                 @Override
                 protected void invalidated() {
-                    setNode(IDX_TRAILING_ICON, get());
+                    setNode(getTrailingIconIndex(), get());
                 }
             };
 
@@ -171,6 +176,7 @@ public class LineButton extends LineButtonBase {
     public void setTrailingIcon(SVG rightIcon, double size) {
         Node rightIconNode = rightIcon.createIcon(size);
         rightIconNode.getStyleClass().add("trailing-icon");
+        rightIconNode.setMouseTransparent(true);
         setTrailingIcon(rightIconNode);
     }
 }
