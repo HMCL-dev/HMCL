@@ -52,7 +52,7 @@ import org.jackhuang.hmcl.ui.construct.JFXDialogPane;
 import org.jackhuang.hmcl.ui.construct.Navigator;
 import org.jackhuang.hmcl.ui.wizard.Refreshable;
 import org.jackhuang.hmcl.ui.wizard.WizardProvider;
-import org.jackhuang.hmcl.util.Lang;
+import org.jackhuang.hmcl.util.MathUtils;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
 import org.jetbrains.annotations.Nullable;
 
@@ -231,7 +231,7 @@ public class DecoratorController {
                 return new Background(new BackgroundFill(new Color(1, 1, 1, 0.5), CornerRadii.EMPTY, Insets.EMPTY));
             case PAINT:
                 Paint paint = config().getBackgroundPaint();
-                double opacity = Lang.clamp(0, config().getBackgroundImageOpacity(), 100) / 100.;
+                double opacity = MathUtils.clamp(config().getBackgroundImageOpacity(), 0, 100) / 100.;
                 if (paint instanceof Color || paint == null) {
                     Color color = (Color) paint;
                     if (color == null)
