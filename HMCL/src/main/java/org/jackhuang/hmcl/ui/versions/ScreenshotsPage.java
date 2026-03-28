@@ -260,7 +260,8 @@ public final class ScreenshotsPage extends ListPageBase<ScreenshotsPage.Screensh
             copyButton.setOnAction(e -> {
                 Screenshot screenshot = getItem();
                 if (screenshot != null) {
-                    FXUtils.copyFiles(List.of(screenshot.getPath()));
+                    var image = screenshot.getFullImage();
+                    if (image != null) FXUtils.copyImage(image);
                 }
             });
 

@@ -1539,6 +1539,20 @@ public final class FXUtils {
         }
     }
 
+    public static void copyImage(Image image) {
+        copyImage(image, i18n("message.copied"));
+    }
+
+    public static void copyImage(Image image, @Nullable String toastMessage) {
+        ClipboardContent content = new ClipboardContent();
+        content.putImage(image);
+        Clipboard.getSystemClipboard().setContent(content);
+
+        if (toastMessage != null && !Controllers.isStopped()) {
+            Controllers.showToast(toastMessage);
+        }
+    }
+
     public static List<Node> parseSegment(String segment, Consumer<String> hyperlinkAction) {
         if (segment.indexOf('<') < 0)
             return Collections.singletonList(new Text(segment));
