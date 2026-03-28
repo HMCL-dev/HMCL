@@ -296,25 +296,55 @@ public class DownloadPage extends Control implements DecoratorPage {
                         }
                     }
 
-                    for (String gameVersion : control.versions.keys().stream()
-                            .sorted(Collections.reverseOrder(GameVersionNumber::compare))
-                            .toList()) {
-                        List<RemoteMod.Version> versions = control.versions.get(gameVersion);
-                        if (versions == null || versions.isEmpty()) {
-                            continue;
+                    final class Versions {
+                        static ComponentSublist createSublist(DownloadPage control, String title, List<String> target) {
+                            var sublist = new ComponentSublist(() -> {
+                                ArrayList<AddonItem> items = new ArrayList<>();
+                                for (String gv : target) {
+                                    List<RemoteMod.Version> versions = control.versions.get(gv);
+                                    if (versions != null) {
+                                        for (RemoteMod.Version v : versions) {
+                                            items.add(new AddonItem(control.addon, v, control));
+                                        }
+                                    }
+                                }
+                                return items;
+                            });
+
+                            sublist.setTitle(title);
+                            sublist.getStyleClass().add("no-padding");
+
+                            return sublist;
                         }
 
-                        var sublist = new ComponentSublist(() -> {
-                            ArrayList<AddonItem> items = new ArrayList<>(versions.size());
-                            for (RemoteMod.Version v : versions) {
-                                items.add(new AddonItem(control.addon, v, control));
-                            }
-                            return items;
-                        });
-                        sublist.getStyleClass().add("no-padding");
-                        sublist.setTitle("Minecraft " + gameVersion);
+                        final List<String> releases = new ArrayList<>();
+                        final List<String> snapshots = new ArrayList<>();
+                    }
 
-                        list.getContent().add(sublist);
+                    TreeMap<GameVersionNumber, Versions> map = new TreeMap<>(Collections.reverseOrder());
+                    for (String version : control.versions.keys()) {
+                        GameVersionNumber gameVersion = GameVersionNumber.asGameVersion(version);
+                        GameVersionNumber releaseOfSnapshot = GameVersionNumber.getReleaseOfSnapshot(gameVersion);
+                        GameVersionNumber releaseVersion = Objects.requireNonNullElse(releaseOfSnapshot, gameVersion);
+
+                        Versions lists = map.computeIfAbsent(releaseVersion, v -> new Versions());
+
+                        if (releaseOfSnapshot == null) {
+                            lists.releases.add(version);
+                        } else {
+                            lists.snapshots.add(version);
+                        }
+                    }
+
+                    for (Map.Entry<GameVersionNumber, Versions> entry : map.entrySet()) {
+                        GameVersionNumber gameVersion = entry.getKey();
+                        Versions versions = entry.getValue();
+
+                        if (!versions.releases.isEmpty())
+                            list.getContent().add(Versions.createSublist(control, i18n("addon.download.title.release", gameVersion), versions.releases));
+
+                        if (!versions.snapshots.isEmpty())
+                            list.getContent().add(Versions.createSublist(control, i18n("addon.download.title.snapshot", gameVersion), versions.snapshots));
                     }
                 });
             }
