@@ -38,7 +38,6 @@ import javafx.event.EventDispatcher;
 import javafx.event.EventHandler;
 import javafx.event.EventType;
 import javafx.geometry.Bounds;
-import javafx.geometry.Pos;
 import javafx.geometry.Rectangle2D;
 import javafx.scene.Cursor;
 import javafx.scene.Node;
@@ -1719,26 +1718,22 @@ public final class FXUtils {
 
             setHeading(new Label(i18n("button.select_date")));
 
-            VBox body = new VBox(8);
+            GridPane body = new GridPane(4, 8);
             {
-                HBox fromBox = new HBox(4);
-                fromBox.setAlignment(Pos.CENTER_LEFT);
                 Label fromLabel = new Label(i18n("button.select_date.from"));
                 this.fromPicker = new JFXDatePicker(LocalDate.now(Clock.systemDefaultZone()));
                 fromPicker.setOverLay(true);
                 fromPicker.setDialogParent(Controllers.getDecorator().getDecorator().getDrawerWrapper());
-                fromBox.getChildren().setAll(fromLabel, fromPicker);
-                body.getChildren().add(fromBox);
+                body.add(fromLabel, 0, 0);
+                body.add(fromPicker, 1, 0);
             }
             {
-                HBox toBox = new HBox(4);
-                toBox.setAlignment(Pos.CENTER_LEFT);
                 Label toLabel = new Label(i18n("button.select_date.to"));
                 this.toPicker = new JFXDatePicker(LocalDate.now(Clock.systemDefaultZone()));
                 toPicker.setOverLay(true);
                 toPicker.setDialogParent(Controllers.getDecorator().getDecorator().getDrawerWrapper());
-                toBox.getChildren().setAll(toLabel, toPicker);
-                body.getChildren().add(toBox);
+                body.add(toLabel, 0, 1);
+                body.add(toPicker, 1, 1);
             }
             setBody(body);
 
