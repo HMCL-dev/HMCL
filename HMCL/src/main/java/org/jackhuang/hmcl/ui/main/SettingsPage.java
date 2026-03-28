@@ -261,12 +261,12 @@ public final class SettingsPage extends ScrollPane {
             }
 
             {
-                LineToggleButton allowPatchGamePane = new LineToggleButton();
-                allowPatchGamePane.setTitle(i18n("settings.launcher.allow_patch_game"));
-                allowPatchGamePane.setSubtitle(i18n("settings.launcher.allow_patch_game.subtitle"));
-                allowPatchGamePane.selectedProperty().bindBidirectional(config().allowPatchGameProperty());
+                LineToggleButton allowAutoAgentPane = new LineToggleButton();
+                allowAutoAgentPane.setTitle(i18n("settings.launcher.allow_auto_agent"));
+                allowAutoAgentPane.setSubtitle(i18n("settings.launcher.allow_auto_agent.subtitle"));
+                allowAutoAgentPane.selectedProperty().bindBidirectional(config().allowAutoAgentProperty());
 
-                settingsPane.getContent().add(allowPatchGamePane);
+                settingsPane.getContent().add(allowAutoAgentPane);
             }
 
             {

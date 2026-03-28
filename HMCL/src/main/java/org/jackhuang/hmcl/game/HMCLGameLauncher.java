@@ -21,6 +21,7 @@ import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.auth.AuthInfo;
 import org.jackhuang.hmcl.launch.DefaultLauncher;
 import org.jackhuang.hmcl.launch.ProcessListener;
+import org.jackhuang.hmcl.util.NativePatcher;
 import org.jackhuang.hmcl.util.i18n.LocaleUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.io.JarUtils;
@@ -158,22 +159,12 @@ public final class HMCLGameLauncher extends DefaultLauncher {
     protected void appendJvmArgs(CommandBuilder result) {
         super.appendJvmArgs(result);
 
-        int javaVersion = options.getJava().getParsedVersion();
-
-        if (config().isAllowPatchGame() && javaVersion >= 25 && javaVersion <= 26) {
-            boolean needPatch = version.getLibraries().stream().anyMatch(library -> library.getGroupId().equals("org.lwjgl")
-                    && library.getArtifactId().equals("lwjgl")
-                    && library.getVersion().equals("3.4.1")
-                    && library.getClassifier() == null
-            );
-
-            if (needPatch) {
-                LOG.info("Attempting to patch game with lwjgl-unsafe-agent");
-                try {
-                    result.add("-javaagent:" + extractLwjglUnsafeAgent());
-                } catch (Exception e) {
-                    LOG.warning("Failed to extract lwjgl-unsafe-agent", e);
-                }
+        if (config().getAllowAutoAgent() && NativePatcher.needPatchMemoryUtil(version, options.getJava().getParsedVersion())) {
+            LOG.info("Attempting to patch game with lwjgl-unsafe-agent");
+            try {
+                result.add("-javaagent:" + extractLwjglUnsafeAgent());
+            } catch (Exception e) {
+                LOG.warning("Failed to extract lwjgl-unsafe-agent", e);
             }
         }
     }
