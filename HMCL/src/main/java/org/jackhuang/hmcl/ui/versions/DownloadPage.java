@@ -351,7 +351,7 @@ public class DownloadPage extends Control implements DecoratorPage {
         }
     }
 
-    private static final class DependencyModItem extends StackPane {
+    private static final class DependencyModItem extends LineButton {
         public static final EnumMap<RemoteMod.DependencyType, String> I18N_KEY = new EnumMap<>(Lang.mapOf(
                 Pair.pair(RemoteMod.DependencyType.EMBEDDED, "mods.dependency.embedded"),
                 Pair.pair(RemoteMod.DependencyType.OPTIONAL, "mods.dependency.optional"),
@@ -367,16 +367,16 @@ public class DownloadPage extends Control implements DecoratorPage {
             pane.setPadding(new Insets(0, 8, 0, 8));
             pane.setAlignment(Pos.CENTER_LEFT);
             TwoLineListItem content = new TwoLineListItem();
+            pane.setMouseTransparent(true);
             HBox.setHgrow(content, Priority.ALWAYS);
             var imageView = new ImageContainer(40);
             pane.getChildren().setAll(imageView, content);
 
-            RipplerContainer container = new RipplerContainer(pane);
-            FXUtils.onClicked(container, () -> {
+            FXUtils.onClicked(pane, () -> {
                 fireEvent(new DialogCloseEvent());
                 Controllers.navigate(new DownloadPage(page, addon, version, callback));
             });
-            getChildren().setAll(container);
+            setNode(IDX_LEADING, pane);
 
             if (addon != RemoteMod.BROKEN) {
                 ModTranslations.Mod mod = ModTranslations.getTranslationsByRepositoryType(page.repository.getType()).getModByCurseForgeId(addon.getSlug());
