@@ -201,7 +201,9 @@ public final class LauncherHelper {
                 }).withStage("launch.state.dependencies")
                 .thenComposeAsync(() -> gameVersion.map(s -> new GameVerificationFixTask(dependencyManager, s, version.get())).orElse(null))
                 .thenComposeAsync(() -> {
-                    if ((config().getAllowAutoAgent() && !setting.isNoJVMArgs() && !setting.isNoOptimizingJVMArgs())
+                    if (config().getAllowAutoAgent()
+                            || setting.isNoJVMArgs()
+                            || setting.isNoOptimizingJVMArgs()
                             || Boolean.TRUE.equals(config().getShownTips().get(LWJGL_3_4_1_TIP))
                             || !NativePatcher.needPatchMemoryUtil(version.get(), javaVersionRef.get().getParsedVersion())) {
                         return Task.completed(null);
