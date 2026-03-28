@@ -362,7 +362,7 @@ public final class World {
             }
         }
 
-        public void acquireLock() throws WorldLockedException {
+        private void acquireLock() throws WorldLockedException {
             FileChannel channel = null;
             try {
                 channel = FileChannel.open(sessionLockFile, StandardOpenOption.CREATE, StandardOpenOption.WRITE);

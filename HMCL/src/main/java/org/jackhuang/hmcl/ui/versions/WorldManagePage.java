@@ -103,6 +103,7 @@ public final class WorldManagePage extends DecoratorAnimatedPage implements Deco
         currentWorldSupportChunkBase.set(ChunkBaseApp.isSupported(world));
         currentWorldSupportEndCity.set(ChunkBaseApp.supportEndCity(world));
 
+        setTitle(world.getWorldName());
         header.select(worldInfoTab, false);
         return this;
     }

@@ -57,7 +57,7 @@ public class WorldRestoreTask extends Task<Path> {
         } catch (IOException e) {
             FileUtils.deleteDirectoryQuietly(tempPath);
             FileUtils.deleteDirectoryQuietly(tempPath2);
-            world.getWorldLock().acquireLock();
+            world.getWorldLock().lock();
             throw e;
         }
 
@@ -66,7 +66,7 @@ public class WorldRestoreTask extends Task<Path> {
         } catch (IOException e) {
             Files.move(tempPath2, worldPath, StandardCopyOption.REPLACE_EXISTING);
             FileUtils.deleteDirectoryQuietly(tempPath);
-            world.getWorldLock().acquireLock();
+            world.getWorldLock().lock();
             throw e;
         }
 

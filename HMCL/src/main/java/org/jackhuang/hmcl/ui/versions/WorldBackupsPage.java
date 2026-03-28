@@ -34,15 +34,13 @@ import org.jackhuang.hmcl.game.WorldLockedException;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.ui.*;
-import org.jackhuang.hmcl.ui.construct.ImageContainer;
-import org.jackhuang.hmcl.ui.construct.MessageDialogPane;
-import org.jackhuang.hmcl.ui.construct.RipplerContainer;
-import org.jackhuang.hmcl.ui.construct.TwoLineListItem;
+import org.jackhuang.hmcl.ui.construct.*;
 import org.jackhuang.hmcl.util.Pair;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.i18n.I18n;
 import org.jetbrains.annotations.NotNull;
 
+import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.LocalDateTime;
@@ -222,8 +220,14 @@ public final class WorldBackupsPage extends ListPageBase<WorldBackupsPage.Backup
                     new WorldRestoreTask(file, world).setName(i18n("world.restore.processing"))
                             .whenComplete(Schedulers.javafx(), (result, exception) -> {
                                 if (exception == null) {
-                                    Controllers.getWorldManagePage().setWorldAndRefresh(new World(result), worldManagePage.getProfile(), worldManagePage.getInstanceId());
-                                    Controllers.dialog(i18n("world.restore.success"), null, MessageDialogPane.MessageType.INFO);
+                                    try {
+                                        Controllers.getWorldManagePage().setWorldAndRefresh(new World(result), worldManagePage.getProfile(), worldManagePage.getInstanceId());
+                                        Controllers.dialog(i18n("world.restore.success"), null, MessageDialogPane.MessageType.INFO);
+                                    } catch (IOException e) {
+                                        // Under normal circumstances, this should not happen.
+                                        fireEvent(new PageCloseEvent());
+                                        Controllers.dialog(i18n("world.restore.failed", StringUtils.getStackTrace(e)), null, MessageDialogPane.MessageType.WARNING);
+                                    }
                                 } else if (exception instanceof WorldLockedException) {
                                     Controllers.dialog(i18n("world.locked.failed"), null, MessageDialogPane.MessageType.WARNING);
                                 } else {
