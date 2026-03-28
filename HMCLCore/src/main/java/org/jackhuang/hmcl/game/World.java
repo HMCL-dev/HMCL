@@ -103,10 +103,8 @@ public final class World {
     }
 
     public void setWorldName(String worldName) throws IOException {
-        if (getDataTag().get("LevelName") instanceof StringTag levelNameTag) {
-            levelNameTag.setValue(worldName);
-            levelDataTag.write();
-        }
+        getDataTag().setString("LevelName", worldName);
+        levelDataTag.write();
     }
 
     public CompoundTag getLevelData() {
@@ -251,20 +249,18 @@ public final class World {
     // The renameWorld method do not modify the `file` field.
     // A new World object needs to be created to obtain the renamed world.
     public Path rename(String newName) throws IOException {
-        if (getWorldLock().getLockState() == WorldLock.LockState.LOCKED_BY_OTHER) {
-            throw new WorldLockedException("The world " + getFile() + " has been locked");
+        switch (getWorldLock().getLockState()) {
+            case LOCKED_BY_OTHER -> throw new WorldLockedException("The world " + getFile() + " has been locked");
+            case LOCKED_BY_SELF -> getWorldLock().releaseLock();
         }
 
         // Change the name recorded in level.dat
-        getDataTag().setString("LevelName", newName);
-        levelDataTag.write();
+        setWorldName(newName);
 
         // Then change the folder's name
         Path targetPath = FileUtils.getNonConflictingDirectory(file.getParent(), FileUtils.getSafeWorldFolderName(newName));
-        try (WorldLock.Suspension ignored = getWorldLock().suspend()) {
-            Files.move(file, targetPath);
-            return targetPath;
-        }
+        Files.move(file, targetPath);
+        return targetPath;
     }
 
     public void export(Path zipPath, String worldName) throws IOException {
