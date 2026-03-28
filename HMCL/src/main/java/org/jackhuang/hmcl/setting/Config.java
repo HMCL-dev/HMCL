@@ -689,6 +689,21 @@ public final class Config extends ObservableSetting {
         this.disableAutoGameOptions.set(disableAutoGameOptions);
     }
 
+    @SerializedName("allowAutoAgent")
+    private final BooleanProperty allowAutoAgent = new SimpleBooleanProperty(false);
+
+    public BooleanProperty allowAutoAgentProperty() {
+        return allowAutoAgent;
+    }
+
+    public boolean getAllowAutoAgent() {
+        return allowAutoAgent.get();
+    }
+
+    public void setAllowAutoAgent(boolean allowAutoAgent) {
+        this.allowAutoAgent.set(allowAutoAgent);
+    }
+
     // Accounts
 
     @SerializedName("authlibInjectorServers")
