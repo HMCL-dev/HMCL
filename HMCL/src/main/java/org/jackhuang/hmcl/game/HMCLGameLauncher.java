@@ -183,15 +183,28 @@ public final class HMCLGameLauncher extends DefaultLauncher {
         }
 
         String agentName = library.getArtifactId() + "-" + library.getVersion();
-        if (Files.notExists(agentPath)) {
-            Files.createDirectories(agentPath.getParent());
-            try (InputStream input = DefaultLauncher.class.getResourceAsStream("/assets/" + agentName + ".jar")) {
-                if (input == null) {
-                    throw new IOException("/assets/" + agentName + ".jar not found");
+
+        byte[] bytes;
+        try (InputStream input = DefaultLauncher.class.getResourceAsStream("/assets/" + agentName + ".jar")) {
+            if (input == null) {
+                throw new IOException("/assets/" + agentName + ".jar not found");
+            }
+
+            bytes = input.readAllBytes();
+        }
+
+        if (Files.isRegularFile(agentPath)) {
+            try {
+                if (Files.size(agentPath) == bytes.length) {
+                    return agentPath;
                 }
-                Files.copy(input, agentPath, StandardCopyOption.REPLACE_EXISTING);
+            } catch (IOException e) {
+                LOG.warning("Failed to check size of " + agentPath, e);
             }
         }
+
+        Files.createDirectories(agentPath.getParent());
+        FileUtils.saveSafely(agentPath, output -> output.write(bytes));
         return agentPath;
     }
 
