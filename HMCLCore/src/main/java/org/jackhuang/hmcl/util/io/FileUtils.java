@@ -228,13 +228,13 @@ public final class FileUtils {
 
     public static String parseFileSize(long sizeInBytes) {
         if (sizeInBytes >= TB)
-            return String.format(Locale.ROOT, "%.2f TB", (float) sizeInBytes / TB);
+            return String.format(Locale.ROOT, "%.2f TiB", (float) sizeInBytes / TB);
         if (sizeInBytes >= GB)
-            return String.format(Locale.ROOT, "%.2f GB", (float) sizeInBytes / GB);
+            return String.format(Locale.ROOT, "%.2f GiB", (float) sizeInBytes / GB);
         if (sizeInBytes >= MB)
-            return String.format(Locale.ROOT, "%.2f MB", (float) sizeInBytes / MB);
+            return String.format(Locale.ROOT, "%.2f MiB", (float) sizeInBytes / MB);
         if (sizeInBytes >= KB)
-            return String.format(Locale.ROOT, "%.2f KB", (float) sizeInBytes / KB);
+            return String.format(Locale.ROOT, "%.2f KiB", (float) sizeInBytes / KB);
         return String.format(Locale.ROOT, "%d B", sizeInBytes);
     }
 
