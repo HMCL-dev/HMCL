@@ -23,10 +23,13 @@ import org.jackhuang.hmcl.launch.DefaultLauncher;
 import org.jackhuang.hmcl.launch.ProcessListener;
 import org.jackhuang.hmcl.util.i18n.LocaleUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
+import org.jackhuang.hmcl.util.io.JarUtils;
+import org.jackhuang.hmcl.util.platform.CommandBuilder;
 import org.jackhuang.hmcl.util.platform.ManagedProcess;
 import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.nio.file.*;
 import java.util.*;
 import java.util.stream.Stream;
@@ -150,4 +153,55 @@ public final class HMCLGameLauncher extends DefaultLauncher {
         generateOptionsTxt();
         super.makeLaunchScript(scriptFile);
     }
+
+    @Override
+    protected void appendJvmArgs(CommandBuilder result) {
+        super.appendJvmArgs(result);
+
+        int javaVersion = options.getJava().getParsedVersion();
+
+        if (config().isAllowPatchGame() && javaVersion >= 25 && javaVersion <= 26) {
+            boolean needPatch = version.getLibraries().stream().anyMatch(library -> library.getGroupId().equals("org.lwjgl")
+                    && library.getArtifactId().equals("lwjgl")
+                    && library.getVersion().equals("3.4.1")
+                    && library.getClassifier() == null
+            );
+
+            if (needPatch) {
+                LOG.info("Attempting to patch game with lwjgl-unsafe-agent");
+                try {
+                    result.add("-javaagent:" + extractLwjglUnsafeAgent());
+                } catch (Exception e) {
+                    LOG.warning("Failed to extract lwjgl-unsafe-agent", e);
+                }
+            }
+        }
+    }
+
+    public Path extractLwjglUnsafeAgent() throws IOException {
+        String agentVersion = JarUtils.getAttribute("hmcl.lwjgl-unsafe-agent.version", null);
+        if (agentVersion == null) {
+            throw new IOException("Missing hmcl.lwjgl-unsafe-agent.version attribute");
+        }
+
+        Library library = new Library(new Artifact("org.glavo", "lwjgl-unsafe-agent", agentVersion));
+
+        Path agentPath = repository.getLibraryFile(version, library).toAbsolutePath().normalize();
+        if (agentPath.toString().contains("=")) {
+            throw new IOException("Invalid library path: " + agentPath);
+        }
+
+        String agentName = library.getArtifactId() + "-" + library.getVersion();
+        if (Files.notExists(agentPath)) {
+            Files.createDirectories(agentPath.getParent());
+            try (InputStream input = DefaultLauncher.class.getResourceAsStream("/assets/" + agentName + ".jar")) {
+                if (input == null) {
+                    throw new IOException("/assets/" + agentName + ".jar not found");
+                }
+                Files.copy(input, agentPath, StandardCopyOption.REPLACE_EXISTING);
+            }
+        }
+        return agentPath;
+    }
+
 }

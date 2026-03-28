@@ -689,6 +689,21 @@ public final class Config extends ObservableSetting {
         this.disableAutoGameOptions.set(disableAutoGameOptions);
     }
 
+    @SerializedName("allowPatchGame")
+    private final BooleanProperty allowPatchGame = new SimpleBooleanProperty(false);
+
+    public BooleanProperty allowPatchGameProperty() {
+        return allowPatchGame;
+    }
+
+    public boolean isAllowPatchGame() {
+        return allowPatchGame.get();
+    }
+
+    public void setAllowPatchGame(boolean allowPatchGame) {
+        this.allowPatchGame.set(allowPatchGame);
+    }
+
     // Accounts
 
     @SerializedName("authlibInjectorServers")
