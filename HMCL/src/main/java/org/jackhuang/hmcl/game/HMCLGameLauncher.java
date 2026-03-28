@@ -172,25 +172,24 @@ public final class HMCLGameLauncher extends DefaultLauncher {
         }
     }
 
-    public Path extractLwjglUnsafeAgent() throws IOException {
+    private Path extractLwjglUnsafeAgent() throws IOException {
         String agentVersion = JarUtils.getAttribute("hmcl.lwjgl-unsafe-agent.version", null);
         if (agentVersion == null) {
             throw new IOException("Missing hmcl.lwjgl-unsafe-agent.version attribute");
         }
 
         Library library = new Library(new Artifact("org.glavo", "lwjgl-unsafe-agent", agentVersion));
+        String fileName = library.getArtifact().getFileName();
 
         Path agentPath = repository.getLibraryFile(version, library).toAbsolutePath().normalize();
         if (agentPath.toString().contains("=")) {
             throw new IOException("Invalid library path: " + agentPath);
         }
 
-        String agentName = library.getArtifactId() + "-" + library.getVersion();
-
         byte[] bytes;
-        try (InputStream input = DefaultLauncher.class.getResourceAsStream("/assets/" + agentName + ".jar")) {
+        try (InputStream input = DefaultLauncher.class.getResourceAsStream("/assets/" + fileName)) {
             if (input == null) {
-                throw new IOException("/assets/" + agentName + ".jar not found");
+                throw new IOException("/assets/" + fileName + " not found");
             }
 
             bytes = input.readAllBytes();
