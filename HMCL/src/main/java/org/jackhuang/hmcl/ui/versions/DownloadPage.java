@@ -66,17 +66,17 @@ public class DownloadPage extends Control implements DecoratorPage {
     private final BooleanProperty loaded = new SimpleBooleanProperty(false);
     private final BooleanProperty loading = new SimpleBooleanProperty(false);
     private final BooleanProperty failed = new SimpleBooleanProperty(false);
-    private final RemoteModRepository repository;
-    private final ModTranslations translations;
-    private final RemoteMod addon;
-    private final ModTranslations.Mod mod;
-    private final Profile.ProfileVersion version;
-    private final DownloadCallback callback;
-    private final DownloadListPage page;
+    private RemoteModRepository repository;
+    private ModTranslations translations;
+    private RemoteMod addon;
+    private ModTranslations.Mod mod;
+    private Profile.ProfileVersion version;
+    private DownloadCallback callback;
+    private DownloadListPage page;
 
     private SimpleMultimap<String, RemoteMod.Version, List<RemoteMod.Version>> versions;
 
-    public DownloadPage(DownloadListPage page, RemoteMod addon, Profile.ProfileVersion version, @Nullable DownloadCallback callback) {
+    public void loadMod(DownloadListPage page, RemoteMod addon, Profile.ProfileVersion version, @Nullable DownloadCallback callback) {
         this.page = page;
         this.repository = page.repository;
         this.addon = addon;
@@ -91,7 +91,10 @@ public class DownloadPage extends Control implements DecoratorPage {
 
     private void loadModVersions() {
         setLoading(true);
+        loaded.set(false);
         setFailed(false);
+
+        versions = null;
 
         Task.supplyAsync(() -> {
             Stream<RemoteMod.Version> versions = addon.getData().loadVersions(repository, page.getDownloadProvider());
@@ -211,7 +214,10 @@ public class DownloadPage extends Control implements DecoratorPage {
             descriptionPane.setAlignment(Pos.CENTER);
             pane.getChildren().add(descriptionPane);
             descriptionPane.getStyleClass().add("card-non-transparent");
-            {
+
+            Runnable updateDescriptionPane = () -> {
+                descriptionPane.getChildren().clear();
+
                 var imageContainer = new ImageContainer(40);
                 if (StringUtils.isNotBlank(getSkinnable().addon.getIconUrl())) {
                     imageContainer.imageProperty().bind(FXUtils.newRemoteImage(getSkinnable().addon.getIconUrl(), 80, 80, true, true));
@@ -240,7 +246,10 @@ public class DownloadPage extends Control implements DecoratorPage {
                 openUrlButton.setExternalLink(getSkinnable().addon.getPageUrl());
                 descriptionPane.getChildren().add(openUrlButton);
                 openUrlButton.setMinWidth(Region.USE_PREF_SIZE);
-            }
+            };
+
+            FXUtils.onChangeAndOperate(control.loadingProperty(), loading -> updateDescriptionPane.run());
+
 
             SpinnerPane spinnerPane = new SpinnerPane();
             VBox.setVgrow(spinnerPane, Priority.ALWAYS);
@@ -266,8 +275,8 @@ public class DownloadPage extends Control implements DecoratorPage {
                 spinnerPane.setContent(scrollPane);
 
                 FXUtils.onChangeAndOperate(control.loaded, loaded -> {
-                    if (control.versions == null) return;
-
+                    if (control.versions == null || !loaded) return;
+                    list.getContent().clear();
                     if (control.version.getProfile() != null && control.version.getVersion() != null) {
                         HMCLGameRepository repository = control.version.getProfile().getRepository();
                         Version game = repository.getResolvedPreservingPatchesVersion(control.version.getVersion());
@@ -374,7 +383,9 @@ public class DownloadPage extends Control implements DecoratorPage {
             RipplerContainer container = new RipplerContainer(pane);
             FXUtils.onClicked(container, () -> {
                 fireEvent(new DialogCloseEvent());
-                Controllers.navigate(new DownloadPage(page, addon, version, callback));
+                var downloadPage = new DownloadPage();
+                downloadPage.loadMod(page, addon, version, callback);
+                Controllers.navigate(downloadPage);
             });
             getChildren().setAll(container);
 

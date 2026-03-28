@@ -560,8 +560,11 @@ public class DownloadListPage extends Control implements DecoratorPage, VersionP
 
                         FXUtils.onClicked(wrapper, () -> {
                             RemoteMod item = getItem();
-                            if (item != null)
-                                Controllers.navigate(new DownloadPage(getSkinnable(), item, getSkinnable().getProfileVersion(), getSkinnable().callback));
+                            if (item != null) {
+                                var page = Controllers.getDownloadVersionListPage();
+                                page.loadMod(getSkinnable(), item, getSkinnable().getProfileVersion(), getSkinnable().callback);
+                                Controllers.navigate(page);
+                            }
                         });
 
                         setPrefWidth(0);

@@ -112,6 +112,7 @@ public final class Controllers {
         return gameListPage;
     });
     private static Lazy<RootPage> rootPage = new Lazy<>(RootPage::new);
+    private static Lazy<org.jackhuang.hmcl.ui.versions.DownloadPage> downloadVersionListPage = new Lazy<>(org.jackhuang.hmcl.ui.versions.DownloadPage::new);
     private static DecoratorController decorator;
     private static DownloadPage downloadPage;
     private static Lazy<AccountListPage> accountListPage = new Lazy<>(() -> {
@@ -135,7 +136,7 @@ public final class Controllers {
         return stage;
     }
 
-    // FXThread
+    @FXThread
     public static VersionPage getVersionPage() {
         if (versionPage == null) {
             versionPage = new VersionPage();
@@ -151,17 +152,17 @@ public final class Controllers {
         }
     }
 
-    // FXThread
+    @FXThread
     public static GameListPage getGameListPage() {
         return gameListPage.get();
     }
 
-    // FXThread
+    @FXThread
     public static RootPage getRootPage() {
         return rootPage.get();
     }
 
-    // FXThread
+    @FXThread
     public static LauncherSettingsPage getSettingsPage() {
         if (settingsPage == null) {
             settingsPage = new LauncherSettingsPage();
@@ -177,12 +178,17 @@ public final class Controllers {
         }
     }
 
-    // FXThread
+    @FXThread
     public static AccountListPage getAccountListPage() {
         return accountListPage.get();
     }
 
-    // FXThread
+    @FXThread
+    public static org.jackhuang.hmcl.ui.versions.DownloadPage getDownloadVersionListPage() {
+        return downloadVersionListPage.get();
+    }
+
+    @FXThread
     public static DownloadPage getDownloadPage() {
         if (downloadPage == null) {
             downloadPage = new DownloadPage();
@@ -198,12 +204,12 @@ public final class Controllers {
         }
     }
 
-    // FXThread
+    @FXThread
     public static Node getTerracottaPage() {
         return terracottaPage.get();
     }
 
-    // FXThread
+    @FXThread
     public static DecoratorController getDecorator() {
         return decorator;
     }

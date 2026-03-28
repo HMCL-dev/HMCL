@@ -54,7 +54,10 @@ import org.jackhuang.hmcl.ui.SVG;
 import org.jackhuang.hmcl.ui.animation.ContainerAnimations;
 import org.jackhuang.hmcl.ui.animation.TransitionPane;
 import org.jackhuang.hmcl.ui.construct.*;
-import org.jackhuang.hmcl.util.*;
+import org.jackhuang.hmcl.util.FXThread;
+import org.jackhuang.hmcl.util.Lazy;
+import org.jackhuang.hmcl.util.Pair;
+import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.i18n.I18n;
 import org.jackhuang.hmcl.util.io.CompressingUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
@@ -490,12 +493,12 @@ final class ModListPageSkin extends SkinBase<ModListPage> {
 
                                 button.setOnAction(e -> {
                                     fireEvent(new DialogCloseEvent());
-                                    Controllers.navigate(new DownloadPage(
-                                            repository instanceof CurseForgeRemoteModRepository ? HMCLLocalizedDownloadListPage.ofCurseForgeMod(null, false) : HMCLLocalizedDownloadListPage.ofModrinthMod(null, false),
+                                    var page = Controllers.getDownloadVersionListPage();
+                                    page.loadMod(repository instanceof CurseForgeRemoteModRepository ? HMCLLocalizedDownloadListPage.ofCurseForgeMod(null, false) : HMCLLocalizedDownloadListPage.ofModrinthMod(null, false),
                                             remoteMod,
                                             new Profile.ProfileVersion(ModListPageSkin.this.getSkinnable().getProfile(), ModListPageSkin.this.getSkinnable().getInstanceId()),
-                                            (downloadProvider, profile, version, mod, file) -> org.jackhuang.hmcl.ui.download.DownloadPage.download(downloadProvider, profile, version, file, "mods")
-                                    ));
+                                            (downloadProvider, profile, version, mod, file) -> org.jackhuang.hmcl.ui.download.DownloadPage.download(downloadProvider, profile, version, file, "mods"));
+                                    Controllers.navigate(page);
                                 });
                                 button.setDisable(false);
                             });
