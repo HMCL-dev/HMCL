@@ -159,7 +159,10 @@ public final class HMCLGameLauncher extends DefaultLauncher {
     protected void appendJvmArgs(CommandBuilder result) {
         super.appendJvmArgs(result);
 
-        if (config().getAllowAutoAgent() && NativePatcher.needPatchMemoryUtil(version, options.getJava().getParsedVersion())) {
+        if (config().getAllowAutoAgent()
+                && !options.isNoGeneratedJVMArgs()
+                && !options.isNoGeneratedOptimizingJVMArgs()
+                && NativePatcher.needPatchMemoryUtil(version, options.getJava().getParsedVersion())) {
             LOG.info("Attempting to patch game with lwjgl-unsafe-agent");
             try {
                 result.add("-javaagent:" + extractLwjglUnsafeAgent());
