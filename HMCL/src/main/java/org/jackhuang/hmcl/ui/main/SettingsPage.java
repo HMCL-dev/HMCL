@@ -261,6 +261,15 @@ public final class SettingsPage extends ScrollPane {
             }
 
             {
+                LineToggleButton allowPatchGamePane = new LineToggleButton();
+                allowPatchGamePane.setTitle(i18n("settings.launcher.allow_patch_game"));
+                allowPatchGamePane.setSubtitle(i18n("settings.launcher.allow_patch_game.subtitle"));
+                allowPatchGamePane.selectedProperty().bindBidirectional(config().allowPatchGameProperty());
+
+                settingsPane.getContent().add(allowPatchGamePane);
+            }
+
+            {
                 BorderPane debugPane = new BorderPane();
 
                 Label left = new Label(i18n("settings.launcher.debug"));
