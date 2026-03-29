@@ -563,7 +563,7 @@ public final class Controllers {
     ///  @param consumer Consumer for the result, with the first boolean for yes or no and the second for whether no more asking is needed
     /// @see EnumAskable
     public static void ask(String text, String title, BiConsumer<Boolean, Boolean> consumer) {
-        var check = new JFXCheckBox(i18n("message.do_not_ask_again"));
+        var check = new JFXCheckBox(i18n("button.do_not_show_again"));
         var dialog = new MessageDialogPane.Builder(
                 text,
                 title,
