@@ -1,4 +1,4 @@
-# https://gitlab.freedesktop.org/mesa/libdrm/-/blob/369990d9660a387f618d0eedc341eb285016243b/data/amdgpu.ids
+# https://gitlab.freedesktop.org/mesa/libdrm/-/blob/15cdcfe9e1c4b00f2a819bc1f4b3efa1326ac6bc/data/amdgpu.ids
 #
 # List of AMDGPU IDs
 #
@@ -10,6 +10,19 @@
 1114,	C3,	AMD Radeon 840M Graphics
 1114,	D2,	AMD Radeon 860M Graphics
 1114,	D3,	AMD Radeon 840M Graphics
+1114,	E2,	AMD Radeon 860M Graphics
+1114,	E4,	AMD Radeon 860M Graphics
+1114,	E5,	AMD Radeon 840M Graphics
+1114,	E9,	AMD Radeon 860M Graphics
+1114,	EA,	AMD Radeon 840M Graphics
+1114,	ED,	AMD Radeon 860M Graphics
+1114,	EE,	AMD Radeon 840M Graphics
+1114,	F2,	AMD Radeon 860M Graphics
+1114,	F3,	AMD Radeon 840M Graphics
+1114,	F9,	AMD Radeon 860M Graphics
+1114,	FA,	AMD Radeon 840M Graphics
+1114,	FC,	AMD Radeon 860M Graphics
+1114,	FD,	AMD Radeon 840M Graphics
 1309,	00,	AMD Radeon R7 Graphics
 130A,	00,	AMD Radeon R6 Graphics
 130B,	00,	AMD Radeon R4 Graphics
@@ -44,20 +57,32 @@
 150E,	C4,	AMD Radeon 880M Graphics
 150E,	C5,	AMD Radeon 890M Graphics
 150E,	C6,	AMD Radeon 890M Graphics
+150E,	C7,	AMD Radeon 890M Graphics
 150E,	D1,	AMD Radeon 890M Graphics
 150E,	D2,	AMD Radeon 880M Graphics
 150E,	D3,	AMD Radeon 890M Graphics
-1586,	C1,	Radeon 8060S Graphics
-1586,	C2,	Radeon 8050S Graphics
-1586,	C4,	Radeon 8050S Graphics
-1586,	D1,	Radeon 8060S Graphics
-1586,	D2,	Radeon 8050S Graphics
-1586,	D4,	Radeon 8050S Graphics
-1586,	D5,	Radeon 8040S Graphics
+150E,	E1,	AMD Radeon 890M Graphics
+150E,	E3,	AMD Radeon 890M Graphics
+150E,	E4,	AMD Radeon 890M Graphics
+150E,	F1,	AMD Radeon 890M Graphics
+150E,	F3,	AMD Radeon 890M Graphics
+1586,	C1,	AMD Radeon 8060S Graphics
+1586,	C2,	AMD Radeon 8050S Graphics
+1586,	C3,	AMD Radeon 8060S Graphics
+1586,	C4,	AMD Radeon 8050S Graphics
+1586,	C6,	AMD Radeon 8060S Graphics
+1586,	D1,	AMD Radeon 8060S Graphics
+1586,	D2,	AMD Radeon 8050S Graphics
+1586,	D4,	AMD Radeon 8050S Graphics
+1586,	D5,	AMD Radeon 8040S Graphics
 15BF,	00,	AMD Radeon 780M Graphics
 15BF,	01,	AMD Radeon 760M Graphics
 15BF,	02,	AMD Radeon 780M Graphics
 15BF,	03,	AMD Radeon 760M Graphics
+15BF,	05,	AMD Radeon 760M Graphics
+15BF,	06,	AMD Radeon 780M Graphics
+15BF,	07,	AMD Radeon 740M Graphics
+15BF,	08,	AMD Radeon 740M Graphics
 15BF,	C1,	AMD Radeon 780M Graphics
 15BF,	C2,	AMD Radeon 780M Graphics
 15BF,	C3,	AMD Radeon 760M Graphics
@@ -71,6 +96,7 @@
 15BF,	CB,	AMD Radeon 760M Graphics
 15BF,	CC,	AMD Radeon 740M Graphics
 15BF,	CD,	AMD Radeon 760M Graphics
+15BF,	CE,	AMD Radeon 740M Graphics
 15BF,	CF,	AMD Radeon 780M Graphics
 15BF,	D0,	AMD Radeon 780M Graphics
 15BF,	D1,	AMD Radeon 780M Graphics
@@ -93,10 +119,18 @@
 15C8,	C2,	AMD Radeon 740M Graphics
 15C8,	C3,	AMD Radeon 740M Graphics
 15C8,	C4,	AMD Radeon 740M Graphics
+15C8,	C5,	AMD Radeon 740M Graphics
+15C8,	C6,	AMD Radeon 740M Graphics
+15C8,	C7,	AMD Radeon 740M Graphics
+15C8,	C8,	AMD Radeon 740M Graphics
 15C8,	D1,	AMD Radeon 740M Graphics
 15C8,	D2,	AMD Radeon 740M Graphics
 15C8,	D3,	AMD Radeon 740M Graphics
 15C8,	D4,	AMD Radeon 740M Graphics
+15C8,	D5,	AMD Radeon 740M Graphics
+15C8,	D6,	AMD Radeon 740M Graphics
+15C8,	D7,	AMD Radeon 740M Graphics
+15C8,	D8,	AMD Radeon 740M Graphics
 15D8,	00,	AMD Radeon RX Vega 8 Graphics WS
 15D8,	91,	AMD Radeon Vega 3 Graphics
 15D8,	91,	AMD Ryzen Embedded R1606G with Radeon Vega Gfx
@@ -252,6 +286,19 @@
 1901,	D6,	AMD Radeon 740M Graphics
 1901,	D7,	AMD Radeon 740M Graphics
 1901,	D8,	AMD Radeon 740M Graphics
+1902,	C0,	AMD Radeon 840M Graphics
+1902,	C1,	AMD Radeon 840M Graphics
+1902,	C2,	AMD Radeon 820M Graphics
+1902,	C3,	AMD Radeon 840M Graphics
+1902,	C6,	AMD Radeon 820M Graphics
+1902,	C7,	AMD Radeon 840M Graphics
+1902,	C8,	AMD Radeon 840M Graphics
+1902,	C9,	AMD Radeon 820M Graphics
+1902,	CA,	AMD Radeon 840M Graphics
+1902,	D1,	AMD Radeon 840M Graphics
+1902,	D3,	AMD Radeon 840M Graphics
+1902,	D7,	AMD Radeon 840M Graphics
+1902,	D8,	AMD Radeon 840M Graphics
 6600,	00,	AMD Radeon HD 8600 / 8700M
 6600,	81,	AMD Radeon R7 M370
 6601,	00,	AMD Radeon HD 8500M / 8700M
@@ -579,7 +626,7 @@
 7480,	C3,	AMD Radeon RX 7600S
 7480,	C7,	AMD Radeon RX 7600M XT
 7480,	CF,	AMD Radeon RX 7600
-7481,   C7, AMD Steam Machine
+7481,	C7,	AMD Steam Machine
 7483,	CF,	AMD Radeon RX 7600M
 7489,	00,	AMD Radeon Pro W7500
 7499,	00,	AMD Radeon Pro W7400
@@ -598,12 +645,14 @@
 7550,	C2,	AMD Radeon RX 9070 GRE
 7550,	C3,	AMD Radeon RX 9070
 7551,	C0,	AMD Radeon AI PRO R9700
+7551,	C8,	AMD Radeon AI PRO R9600D
 7590,	C0,	AMD Radeon RX 9060 XT
+7590,	C1,	AMD Radeon RX 9060 XT LP
 7590,	C7,	AMD Radeon RX 9060
-75A0,	C0,	AMD Instinct MI350X
-75A3,	C0,	AMD Instinct MI355X
-75B0,	C0,	AMD Instinct MI350X VF
-75B3,	C0,	AMD Instinct MI355X VF
+75A0,	00,	AMD Instinct MI350X
+75A3,	00,	AMD Instinct MI355X
+75B0,	00,	AMD Instinct MI350X VF
+75B3,	00,	AMD Instinct MI355X VF
 9830,	00,	AMD Radeon HD 8400 / R3 Series
 9831,	00,	AMD Radeon HD 8400E
 9832,	00,	AMD Radeon HD 8330
