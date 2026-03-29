@@ -80,7 +80,7 @@ public final class LegacyFabricInstallTask extends Task<Version> {
     }
 
     private Version getPatch(FabricInstallTask.FabricInfo legacyFabricInfo, String gameVersion, String loaderVersion) {
-        JsonObject launcherMeta = legacyFabricInfo.getLauncherMeta();
+        JsonObject launcherMeta = legacyFabricInfo.launcherMeta();
         Arguments arguments = new Arguments();
 
         String mainClass;
@@ -107,8 +107,8 @@ public final class LegacyFabricInstallTask extends Task<Version> {
         }
 
         // libraries.add(new Library(Artifact.fromDescriptor(legacyFabricInfo.hashed.maven), getMavenRepositoryByGroup(legacyFabricInfo.hashed.maven), null));
-        libraries.add(new Library(Artifact.fromDescriptor(legacyFabricInfo.getIntermediary().getMaven()), getMavenRepositoryByGroup(legacyFabricInfo.getIntermediary().getMaven()), null));
-        libraries.add(new Library(Artifact.fromDescriptor(legacyFabricInfo.getLoader().getMaven()), getMavenRepositoryByGroup(legacyFabricInfo.getLoader().getMaven()), null));
+        libraries.add(new Library(Artifact.fromDescriptor(legacyFabricInfo.intermediary().getMaven()), getMavenRepositoryByGroup(legacyFabricInfo.intermediary().getMaven()), null));
+        libraries.add(new Library(Artifact.fromDescriptor(legacyFabricInfo.loader().getMaven()), getMavenRepositoryByGroup(legacyFabricInfo.loader().getMaven()), null));
 
         return new Version(LibraryAnalyzer.LibraryType.LEGACY_FABRIC.getPatchId(), loaderVersion, Version.PRIORITY_LOADER, arguments, mainClass, libraries);
     }
