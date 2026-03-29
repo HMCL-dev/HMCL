@@ -38,6 +38,8 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.nio.file.attribute.BasicFileAttributes;
+import java.security.DigestInputStream;
+import java.security.MessageDigest;
 import java.util.*;
 
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
@@ -103,15 +105,32 @@ public final class MojangJavaDownloadTask extends Task<MojangJavaDownloadTask.Re
 
                 if (file.getDownloads().containsKey("lzma")) {
                     DownloadInfo download = file.getDownloads().get("lzma");
+                    DownloadInfo raw = file.getDownloads().get("raw");
+
+                    String rawSha1;
+                    if (raw != null && raw.getSha1() != null) {
+                        rawSha1 = raw.getSha1();
+                    } else {
+                        rawSha1 = null;
+                    }
+
                     Path tempFile = tempDir.resolve(entry.getKey() + ".lzma");
-                    var task = new FileDownloadTask(downloadProvider.injectURLWithCandidates(download.getUrl()), tempFile, new FileDownloadTask.IntegrityCheck("SHA-1", download.getSha1()));
+                    var task = new FileDownloadTask(downloadProvider.injectURLWithCandidates(download.getUrl()), tempFile,
+                            new FileDownloadTask.IntegrityCheck("SHA-1", download.getSha1()));
                     task.setName(entry.getKey());
                     dependencies.add(task.thenRunAsync(() -> {
                         Path decompressed = tempDir.resolve(entry.getKey() + ".tmp");
-                        try (LZMAInputStream input = new LZMAInputStream(Files.newInputStream(tempFile))) {
+                        var digest = MessageDigest.getInstance("SHA-1");
+                        try (var input = new DigestInputStream(new LZMAInputStream(Files.newInputStream(tempFile)), digest)) {
                             Files.copy(input, decompressed, StandardCopyOption.REPLACE_EXISTING);
                         } catch (IOException e) {
                             throw new ArtifactMalformedException("File " + entry.getKey() + " is malformed", e);
+                        }
+
+                        String actualSha1 = HexFormat.of().formatHex(digest.digest());
+
+                        if (rawSha1 != null && !actualSha1.equals(rawSha1)) {
+                            throw new ArtifactMalformedException("File " + entry.getKey() + " has incorrect SHA-1 hash: expected " + rawSha1 + ", got " + actualSha1);
                         }
 
                         try {
@@ -158,30 +177,17 @@ public final class MojangJavaDownloadTask extends Task<MojangJavaDownloadTask.Re
 
     @Override
     public void postExecute() throws Exception {
-        for (var entry : javaDownloadsTask.getResult().getFiles().entrySet()) {
-            if (entry.getValue() instanceof MojangJavaRemoteFiles.RemoteFile remoteFile) {
-                DownloadInfo raw = remoteFile.getDownloads().get("raw");
-                if (raw != null && raw.getSha1() != null) {
-                    Path dest = tempDir.resolve(entry.getKey());
-                    String actual = DigestUtils.digestToString("SHA-1", dest);
+        if (isDependenciesSucceeded()) {
+            FileUtils.cleanDirectory(target);
 
-                    if (!raw.getSha1().equalsIgnoreCase(actual)) {
-                        throw new ArtifactMalformedException("Malformed file " + dest + ": expected SHA-1 " + raw.getSha1() + ", but got " + actual);
-                    }
-                }
+            if (Files.getFileStore(target).equals(Files.getFileStore(tempDir))) {
+                Files.move(tempDir, target, StandardCopyOption.REPLACE_EXISTING);
+            } else {
+                FileUtils.copyDirectory(tempDir, target);
+                FileUtils.deleteDirectory(tempDir);
             }
+            setResult(new Result(download, javaDownloadsTask.getResult()));
         }
-
-        FileUtils.cleanDirectory(target);
-
-        if (Files.getFileStore(target).equals(Files.getFileStore(tempDir))) {
-            Files.move(tempDir, target, StandardCopyOption.REPLACE_EXISTING);
-        } else {
-            FileUtils.copyDirectory(tempDir, target);
-            FileUtils.deleteDirectory(tempDir);
-        }
-
-        setResult(new Result(download, javaDownloadsTask.getResult()));
     }
 
     public record Result(MojangJavaDownloads.JavaDownload download, MojangJavaRemoteFiles remoteFiles) {
