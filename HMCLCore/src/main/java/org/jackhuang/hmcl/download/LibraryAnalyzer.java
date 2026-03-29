@@ -54,6 +54,12 @@ public final class LibraryAnalyzer implements Iterable<LibraryAnalyzer.LibraryMa
         return Optional.ofNullable(libraries.get(type.getPatchId())).map(Pair::getKey);
     }
 
+    public Set<LibraryType> getLibraries() {
+        return Arrays.stream(LibraryType.values())
+                .filter(this::has)
+                .collect(Collectors.toSet());
+    }
+
     /**
      * If a library is provided in $.patches, it's structure is so clear that we can do any operation.
      * Otherwise, we must guess how are these libraries mixed.

@@ -27,6 +27,7 @@ import javafx.scene.control.ScrollPane;
 import javafx.scene.layout.*;
 import org.jackhuang.hmcl.game.NativesDirectoryType;
 import org.jackhuang.hmcl.game.Renderer;
+import org.jackhuang.hmcl.mod.ModLoaderType;
 import org.jackhuang.hmcl.setting.Profile;
 import org.jackhuang.hmcl.setting.VersionSetting;
 import org.jackhuang.hmcl.ui.FXUtils;
@@ -122,7 +123,14 @@ public final class AdvancedVersionSettingPage extends StackPane implements Decor
             pane.addRow(3, new Label(i18n("settings.advanced.post_exit_command")), txtPostExitCommand);
 
             HintPane hintPane = new HintPane();
-            hintPane.setText(i18n("settings.advanced.custom_commands.hint"));
+            StringBuilder sb = new StringBuilder(i18n("settings.advanced.custom_commands.hint"));
+            for (ModLoaderType type : ModLoaderType.values()) {
+                if (type.getId() != null) {
+                    sb.append("\n");
+                    sb.append(i18n("settings.advanced.custon_commands.env",type.getId(),i18n("install.installer." + type.getId().toLowerCase(Locale.ROOT))));
+                }
+            }
+            hintPane.setText(sb.toString());
             GridPane.setColumnSpan(hintPane, 2);
             pane.addRow(4, hintPane);
 
