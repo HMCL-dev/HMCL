@@ -374,8 +374,6 @@ public class JFXDialog extends StackPane {
 
         @Override
         protected void starting() {
-            super.starting();
-            contentHolder.setCache(false);
         }
     }
 
