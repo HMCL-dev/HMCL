@@ -31,13 +31,11 @@ import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
-import java.io.InputStream;
 import java.nio.file.FileSystem;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
-
-import static org.jackhuang.hmcl.util.logging.Logger.LOG;
+import java.util.stream.Stream;
 
 /// @author mineDiamond
 public final class ImportableWorld {
@@ -61,35 +59,20 @@ public final class ImportableWorld {
                     hasTopLevelDirectory = false;
                     fileName = FileUtils.getName(this.sourcePath);
                 } else {
-                    List<Path> files = Files.list(fs.getPath("/")).toList();
-                    if (files.size() != 1 || !Files.isDirectory(files.get(0))) {
-                        throw new IOException("Not a valid world zip file");
-                    }
+                    try (Stream<Path> stream = Files.list(fs.getPath("/"))) {
+                        List<Path> files = stream.toList();
+                        if (files.size() != 1 || !Files.isDirectory(files.get(0))) {
+                            throw new IOException("Not a valid world zip file");
+                        }
 
-                    root = files.get(0);
-                    hasTopLevelDirectory = true;
-                    fileName = FileUtils.getName(root);
-                }
-
-                Path levelDat = root.resolve("level.dat");
-                if (!Files.exists(levelDat)) { //version 20w14infinite
-                    levelDat = root.resolve("special_level.dat");
-                }
-                if (!Files.exists(levelDat)) {
-                    throw new IOException("Not a valid world zip file since level.dat or special_level.dat cannot be found.");
-                }
-                checkAndLoadLevelData(levelDat);
-
-                Path iconFile = root.resolve("icon.png");
-                if (Files.isRegularFile(iconFile)) {
-                    try (InputStream inputStream = Files.newInputStream(iconFile)) {
-                        icon = new Image(inputStream, 64, 64, true, false);
-                        if (icon.isError())
-                            throw icon.getException();
-                    } catch (Exception e) {
-                        LOG.warning("Failed to load world icon", e);
+                        root = files.get(0);
+                        hasTopLevelDirectory = true;
+                        fileName = FileUtils.getName(root);
                     }
                 }
+
+                checkAndLoadLevelData(World.findLevelDatPath(root));
+                this.icon = World.loadIcon(root);
             }
         } else if (Files.isDirectory(sourcePath)) {
             this.sourcePath = sourcePath;
@@ -97,14 +80,7 @@ public final class ImportableWorld {
             this.isArchive = false;
             this.hasTopLevelDirectory = false;
 
-            Path levelDatPath = this.sourcePath.resolve("level.dat");
-            if (!Files.exists(levelDatPath)) { // version 20w14infinite
-                levelDatPath = this.sourcePath.resolve("special_level.dat");
-            }
-            if (!Files.exists(levelDatPath)) {
-                throw new IOException("Not a valid world directory since level.dat or special_level.dat cannot be found.");
-            }
-            checkAndLoadLevelData(levelDatPath);
+            checkAndLoadLevelData(World.findLevelDatPath(this.sourcePath));
         } else {
             throw new IOException("Path " + sourcePath + " cannot be recognized as a archive Minecraft world");
         }

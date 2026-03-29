@@ -45,7 +45,7 @@ public final class World {
 
     private final Path file;
     private final String fileName;
-    private Image icon;
+    private final Image icon;
 
     private WorldDataSection levelDataTag;
     private WorldDataSection worldGenSettingsTag;
@@ -59,28 +59,37 @@ public final class World {
 
         if (Files.isDirectory(file)) {
             fileName = FileUtils.getName(this.file);
-            Path levelDatPath = this.file.resolve("level.dat");
-            if (!Files.exists(levelDatPath)) { // version 20w14infinite
-                levelDatPath = this.file.resolve("special_level.dat");
-            }
-            if (!Files.exists(levelDatPath)) {
-                throw new IOException("Not a valid world directory since level.dat or special_level.dat cannot be found.");
-            }
-            loadAndCheckWorldData(levelDatPath);
-
-            Path iconFile = this.file.resolve("icon.png");
-            if (Files.isRegularFile(iconFile)) {
-                try (InputStream inputStream = Files.newInputStream(iconFile)) {
-                    icon = new Image(inputStream, 64, 64, true, false);
-                    if (icon.isError())
-                        throw icon.getException();
-                } catch (Exception e) {
-                    LOG.warning("Failed to load world icon", e);
-                }
-            }
+            loadAndCheckWorldData(findLevelDatPath(this.file));
+            icon = loadIcon(this.file);
         } else {
             throw new IOException("Path " + file + " cannot be recognized as a Minecraft world");
         }
+    }
+
+    public static Path findLevelDatPath(Path root) throws IOException {
+        Path levelDat = root.resolve("level.dat");
+        if (!Files.exists(levelDat)) { //version 20w14infinite
+            levelDat = root.resolve("special_level.dat");
+        }
+        if (!Files.exists(levelDat)) {
+            throw new IOException("Not a valid world zip file since level.dat or special_level.dat cannot be found.");
+        }
+        return levelDat;
+    }
+
+    public static Image loadIcon(Path root) {
+        Path iconFile = root.resolve("icon.png");
+        if (Files.isRegularFile(iconFile)) {
+            try (InputStream inputStream = Files.newInputStream(iconFile)) {
+                Image icon = new Image(inputStream, 64, 64, true, false);
+                if (icon.isError())
+                    throw icon.getException();
+                return icon;
+            } catch (Exception e) {
+                LOG.warning("Failed to load world icon", e);
+            }
+        }
+        return null;
     }
 
     public WorldLock getWorldLock() {
