@@ -15,7 +15,7 @@
 
 ˙˥ƆWH ɥƃnoɹɥʇ sɯɹoɟʇɐld ʇuǝɹǝɟɟᴉp ssoɹɔɐ ʇɟɐɹɔǝuᴉW ʎoɾuǝ ʎlᴉsɐǝ uɐɔ no⅄ ˙ɥɔɹ∀ƃuoo˥ puɐ 'SԀIW 'Λ-ƆSIɹ 'Wɹ∀ '98x sɐ ɥɔns sǝɹnʇɔǝʇᴉɥɔɹɐ ∩ԀƆ snoᴉɹɐʌ sʇɹoddns oslɐ ʇᴉ ʇnq 'pSqǝǝɹℲ puɐ 'SOɔɐɯ 'xnuᴉ˥ 'sʍopuᴉM ǝʞᴉl sɯǝʇsʎs ƃuᴉʇɐɹǝdo ʇuǝɹǝɟɟᴉp uo unɹ ʇᴉ sǝop ʎluo ʇoN ˙sǝᴉʇᴉlᴉqɐdɐɔ ɯɹoɟʇɐld-ssoɹɔ ƃuᴉzɐɯɐ sɐɥ ˥ƆWH
 
-˙ǝɹoɯ puɐ 'uoᴉʇɐzᴉɯoʇsnƆ I∩ 'ƃuᴉʇɐǝɹƆ ʞɔɐdpoW '(ǝuᴉℲᴉʇdO puɐ 'ɹǝpɐo˥ǝʇᴉ˥ 'ʇlᴉnQ 'ɔᴉɹqɐℲ 'ɯooɹuɐǝlƆ 'ǝƃɹoℲoǝN 'ǝƃɹoℲ) ƃuᴉllɐʇsuI ɹǝpɐo˥poW 'ƃuᴉzᴉɯoʇsnƆ ǝɯɐפ 'ʇuǝɯǝƃɐuɐW poW sʇɹoddns ʇɐɥʇ ɹǝɥɔunɐl ʇɟɐɹɔǝuᴉW ɯɹoɟʇɐld-ssoɹɔ 'ǝɔɹnos-uǝdo uɐ sᴉ ˥ƆWH
+˙ǝɹoɯ puɐ 'uoᴉʇɐzᴉɯoʇsnƆ I∩ 'ƃuᴉʇɐǝɹƆ ʞɔɐdpoW '(ǝuᴉℲᴉʇdO puɐ 'ɹǝpɐo˥ǝʇᴉ˥ 'ʇlᴉnQ 'ɔᴉɹqɐℲ ʎɔɐᵷǝꞀ 'ɔᴉɹqɐℲ 'ɯooɹuɐǝlƆ 'ǝƃɹoℲoǝN 'ǝƃɹoℲ) ƃuᴉllɐʇsuI ɹǝpɐo˥poW 'ƃuᴉzᴉɯoʇsnƆ ǝɯɐפ 'ʇuǝɯǝƃɐuɐW poW sʇɹoddns ʇɐɥʇ ɹǝɥɔunɐl ʇɟɐɹɔǝuᴉW ɯɹoɟʇɐld-ssoɹɔ 'ǝɔɹnos-uǝdo uɐ sᴉ ˥ƆWH
 
 ## pɐoluʍoᗡ
 

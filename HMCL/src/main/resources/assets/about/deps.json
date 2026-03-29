@@ -31,7 +31,7 @@
   },
   {
     "title" : "jsoup",
-    "subtitle" : "Copyright © 2009 - 2024 Jonathan Hedley (https://jsoup.org/)\nLicensed under the MIT License.",
+    "subtitle" : "Copyright © 2009 - 2025 Jonathan Hedley (https://jsoup.org/)\nLicensed under the MIT License.",
     "externalLink" : "https://jsoup.org/"
   },
   {
@@ -45,9 +45,9 @@
     "externalLink" : "https://github.com/jenkinsci/constant-pool-scanner"
   },
   {
-    "title" : "OpenNBT",
-    "subtitle" : "Copyright © 2013-2021 Steveice10.\nLicensed under the MIT License.",
-    "externalLink" : "https://github.com/GeyserMC/OpenNBT"
+    "title" : "HelloNBT",
+    "subtitle" : "Copyright © 2026 Glavo.\nLicensed under the Apache 2.0 License.",
+    "externalLink" : "https://github.com/Glavo/HelloNBT"
   },
   {
     "title" : "minecraft-jfx-skin",
@@ -66,17 +66,22 @@
   },
   {
     "title" : "Java Animated PNG",
-    "subtitle" : "Copyright (C) 2015 Andrew Ellerton.\nLicensed under the Apache 2.0 License.",
+    "subtitle" : "Copyright © 2015 Andrew Ellerton.\nLicensed under the Apache 2.0 License.",
     "externalLink" : "https://github.com/aellerton/japng"
   },
   {
+    "title" : "fxsvgimage",
+    "subtitle" : "Copyright (c) 2021, 2022, 2025 Hervé Girod.\nLicensed under the BSD 3-clause License.",
+    "externalLink" : "https://github.com/hervegirod/fxsvgimage"
+  },
+  {
     "title": "Terracotta",
-    "subtitle": "Copyright (C) 2025 Burning_TNT.\nAll rights reserved.",
+    "subtitle": "Copyright © 2025 Burning_TNT.\nLicensed under the AGPL 3.0 License.",
     "externalLink": "https://github.com/burningtnt/Terracotta"
   },
   {
     "title": "EasyTier",
-    "subtitle": "Copyright 2024-present Easytier Programme within The Commons Conservancy",
+    "subtitle": "Copyright © 2024-present Easytier Programme within The Commons Conservancy.\nLicensed under the LGPL 3.0 License.",
     "externalLink": "https://github.com/EasyTier/EasyTier"
   },
   {

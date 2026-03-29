@@ -17,6 +17,7 @@
  */
 package org.jackhuang.hmcl.mod;
 
+import org.jackhuang.hmcl.download.DownloadProvider;
 import org.jackhuang.hmcl.mod.curse.CurseForgeRemoteModRepository;
 import org.jackhuang.hmcl.mod.modrinth.ModrinthRemoteModRepository;
 import org.jackhuang.hmcl.task.FileDownloadTask;
@@ -32,12 +33,12 @@ public final class RemoteMod {
 
     public static final RemoteMod BROKEN = new RemoteMod("", "", "RemoteMod.BROKEN", "", Collections.emptyList(), "", "", new RemoteMod.IMod() {
         @Override
-        public List<RemoteMod> loadDependencies(RemoteModRepository modRepository) throws IOException {
+        public List<RemoteMod> loadDependencies(RemoteModRepository modRepository, DownloadProvider downloadProvider) throws IOException {
             throw new IOException();
         }
 
         @Override
-        public Stream<RemoteMod.Version> loadVersions(RemoteModRepository modRepository) throws IOException {
+        public Stream<RemoteMod.Version> loadVersions(RemoteModRepository modRepository, DownloadProvider downloadProvider) throws IOException {
             throw new IOException();
         }
     });
@@ -154,12 +155,12 @@ public final class RemoteMod {
             return this.id;
         }
 
-        public RemoteMod load() throws IOException {
+        public RemoteMod load(DownloadProvider downloadProvider) throws IOException {
             if (this.remoteMod == null) {
                 if (this.type == DependencyType.BROKEN) {
                     this.remoteMod = RemoteMod.BROKEN;
                 } else {
-                    this.remoteMod = this.remoteModRepository.getModById(this.id);
+                    this.remoteMod = this.remoteModRepository.resolveDependency(downloadProvider, this.id);
                 }
             }
             return this.remoteMod;
@@ -202,9 +203,9 @@ public final class RemoteMod {
     }
 
     public interface IMod {
-        List<RemoteMod> loadDependencies(RemoteModRepository modRepository) throws IOException;
+        List<RemoteMod> loadDependencies(RemoteModRepository modRepository, DownloadProvider downloadProvider) throws IOException;
 
-        Stream<Version> loadVersions(RemoteModRepository modRepository) throws IOException;
+        Stream<Version> loadVersions(RemoteModRepository modRepository, DownloadProvider downloadProvider) throws IOException;
     }
 
     public interface IVersion {

@@ -33,6 +33,7 @@ import org.jetbrains.annotations.Nullable;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
@@ -42,6 +43,7 @@ import java.util.stream.Stream;
 import static org.jackhuang.hmcl.util.Lang.mapOf;
 import static org.jackhuang.hmcl.util.Pair.pair;
 import static org.jackhuang.hmcl.util.gson.JsonUtils.listTypeOf;
+import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 public final class CurseForgeRemoteModRepository implements RemoteModRepository {
 
@@ -131,10 +133,34 @@ public final class CurseForgeRemoteModRepository implements RemoteModRepository 
             query.put("index", Integer.toString(pageOffset * pageSize));
             query.put("pageSize", Integer.toString(pageSize));
 
-            Response<List<CurseAddon>> response = withApiKey(HttpRequest.GET(downloadProvider.injectURL(NetworkUtils.withQuery(PREFIX + "/v1/mods/search", query))))
-                    .getJson(Response.typeOf(listTypeOf(CurseAddon.class)));
-            if (searchFilter.isEmpty()) {
-                return new SearchResult(response.getData().stream().map(CurseAddon::toMod), calculateTotalPages(response, pageSize));
+            Response<List<CurseAddon>> response = null;
+
+            IOException exception = null;
+            List<URI> candidates = downloadProvider.injectURLWithCandidates(NetworkUtils.withQuery(PREFIX + "/v1/mods/search", query));
+            for (URI candidate : candidates) {
+                LOG.info("Fetching " + candidate);
+                try {
+                    response = withApiKey(HttpRequest.GET(candidate.toString()))
+                            .getJson(Response.typeOf(listTypeOf(CurseAddon.class)));
+                    if (searchFilter.isEmpty()) {
+                        return new SearchResult(response.getData().stream().map(CurseAddon::toMod), calculateTotalPages(response, pageSize));
+                    }
+                    break;
+                } catch (IOException e) {
+                    LOG.warning("Failed to search addons: " + candidate, e);
+                    if (candidates.size() == 1) {
+                        exception = e;
+                    } else {
+                        if (exception == null) {
+                            exception = new IOException("Failed to search addons");
+                        }
+                        exception.addSuppressed(e);
+                    }
+                }
+            }
+
+            if (response == null) {
+                throw exception != null ? exception : new IOException("No candidates found");
             }
 
             // https://github.com/HMCL-dev/HMCL/issues/1549
@@ -201,7 +227,7 @@ public final class CurseForgeRemoteModRepository implements RemoteModRepository 
     }
 
     @Override
-    public RemoteMod getModById(String id) throws IOException {
+    public RemoteMod getModById(DownloadProvider downloadProvider, String id) throws IOException {
         SEMAPHORE.acquireUninterruptibly();
         try {
             Response<CurseAddon> response = withApiKey(HttpRequest.GET(PREFIX + "/v1/mods/" + id))
@@ -225,7 +251,7 @@ public final class CurseForgeRemoteModRepository implements RemoteModRepository 
     }
 
     @Override
-    public Stream<RemoteMod.Version> getRemoteVersionsById(String id) throws IOException {
+    public Stream<RemoteMod.Version> getRemoteVersionsById(DownloadProvider downloadProvider, String id) throws IOException {
         SEMAPHORE.acquireUninterruptibly();
         try {
             Response<List<CurseAddon.LatestFile>> response = withApiKey(HttpRequest.GET(PREFIX + "/v1/mods/" + id + "/files",
@@ -276,6 +302,7 @@ public final class CurseForgeRemoteModRepository implements RemoteModRepository 
     public static final int SECTION_RESOURCE_PACK = 12;
     public static final int SECTION_WORLD = 17;
     public static final int SECTION_MODPACK = 4471;
+    public static final int SECTION_SHADER = 6552;
     public static final int SECTION_CUSTOMIZATION = 4546;
     public static final int SECTION_ADDONS = 4559; // For Pocket Edition
     public static final int SECTION_UNKNOWN1 = 4944;
@@ -287,6 +314,7 @@ public final class CurseForgeRemoteModRepository implements RemoteModRepository 
     public static final CurseForgeRemoteModRepository RESOURCE_PACKS = new CurseForgeRemoteModRepository(RemoteModRepository.Type.RESOURCE_PACK, SECTION_RESOURCE_PACK);
     public static final CurseForgeRemoteModRepository WORLDS = new CurseForgeRemoteModRepository(RemoteModRepository.Type.WORLD, SECTION_WORLD);
     public static final CurseForgeRemoteModRepository CUSTOMIZATIONS = new CurseForgeRemoteModRepository(RemoteModRepository.Type.CUSTOMIZATION, SECTION_CUSTOMIZATION);
+    public static final CurseForgeRemoteModRepository SHADERS = new CurseForgeRemoteModRepository(RemoteModRepository.Type.SHADER_PACK, SECTION_SHADER);
 
     public static class Pagination {
         private final int index;

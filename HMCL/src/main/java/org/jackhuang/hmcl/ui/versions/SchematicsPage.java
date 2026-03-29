@@ -22,17 +22,14 @@ import com.jfoenix.controls.JFXDialogLayout;
 import com.jfoenix.controls.JFXListView;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
-import javafx.scene.Group;
 import javafx.scene.Node;
 import javafx.scene.control.*;
 import javafx.scene.image.Image;
-import javafx.scene.image.ImageView;
 import javafx.scene.image.PixelWriter;
 import javafx.scene.image.WritableImage;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.StackPane;
-import javafx.scene.shape.SVGPath;
 import javafx.stage.FileChooser;
 import org.jackhuang.hmcl.schematic.LitematicFile;
 import org.jackhuang.hmcl.setting.Profile;
@@ -146,9 +143,9 @@ public final class SchematicsPage extends ListPageBase<SchematicsPage.Item> impl
 
     public void onAddFiles() {
         FileChooser fileChooser = new FileChooser();
-        fileChooser.setTitle(i18n("schematics.add"));
+        fileChooser.setTitle(i18n("schematics.add.title"));
         fileChooser.getExtensionFilters().add(new FileChooser.ExtensionFilter(
-                i18n("schematics"), "*.litematic"));
+                i18n("extension.schematic"), "*.litematic"));
         List<Path> files = FileUtils.toPaths(fileChooser.showOpenMultipleDialog(Controllers.getStage()));
         if (files != null && !files.isEmpty()) {
             addFiles(files);
@@ -444,9 +441,7 @@ public final class SchematicsPage extends ListPageBase<SchematicsPage.Item> impl
             if (image == null) {
                 return super.getIcon(size);
             } else {
-                ImageView imageView = new ImageView();
-                imageView.setFitHeight(size);
-                imageView.setFitWidth(size);
+                var imageView = new ImageContainer(size);
                 imageView.setImage(image);
                 return imageView;
             }
@@ -550,9 +545,8 @@ public final class SchematicsPage extends ListPageBase<SchematicsPage.Item> impl
         private final TwoLineListItem center;
         private final HBox right;
 
-        private final ImageView iconImageView;
-        private final SVGPath iconSVG;
-        private final StackPane iconSVGWrapper;
+        private final ImageContainer iconImageView;
+        private final SVGContainer iconSVGView;
 
         private final Tooltip tooltip = new Tooltip();
 
@@ -565,18 +559,8 @@ public final class SchematicsPage extends ListPageBase<SchematicsPage.Item> impl
                 this.left = new StackPane();
                 left.setPadding(new Insets(0, 8, 0, 0));
 
-                this.iconImageView = new ImageView();
-                FXUtils.limitSize(iconImageView, 32, 32);
-
-                this.iconSVG = new SVGPath();
-                iconSVG.getStyleClass().add("svg");
-                iconSVG.setScaleX(32.0 / SVG.DEFAULT_SIZE);
-                iconSVG.setScaleY(32.0 / SVG.DEFAULT_SIZE);
-
-                this.iconSVGWrapper = new StackPane(new Group(iconSVG));
-                iconSVGWrapper.setAlignment(Pos.CENTER);
-                FXUtils.setLimitWidth(iconSVGWrapper, 32);
-                FXUtils.setLimitHeight(iconSVGWrapper, 32);
+                this.iconImageView = new ImageContainer(32);
+                this.iconSVGView = new SVGContainer(32);
 
                 BorderPane.setAlignment(left, Pos.CENTER);
                 root.setLeft(left);
@@ -591,19 +575,15 @@ public final class SchematicsPage extends ListPageBase<SchematicsPage.Item> impl
                 this.right = new HBox(8);
                 right.setAlignment(Pos.CENTER_RIGHT);
 
-                JFXButton btnReveal = new JFXButton();
+                JFXButton btnReveal = FXUtils.newToggleButton4(SVG.FOLDER_OPEN);
                 FXUtils.installFastTooltip(btnReveal, i18n("reveal.in_file_manager"));
-                btnReveal.getStyleClass().add("toggle-icon4");
-                btnReveal.setGraphic(SVG.FOLDER_OPEN.createIcon());
                 btnReveal.setOnAction(event -> {
                     Item item = getItem();
                     if (item != null && !(item instanceof BackItem))
                         item.onReveal();
                 });
 
-                JFXButton btnDelete = new JFXButton();
-                btnDelete.getStyleClass().add("toggle-icon4");
-                btnDelete.setGraphic(SVG.DELETE_FOREVER.createIcon());
+                JFXButton btnDelete = FXUtils.newToggleButton4(SVG.DELETE_FOREVER);
                 btnDelete.setOnAction(event -> {
                     Item item = getItem();
                     if (item != null && !(item instanceof BackItem)) {
@@ -638,8 +618,8 @@ public final class SchematicsPage extends ListPageBase<SchematicsPage.Item> impl
                     iconImageView.setImage(fileItem.getImage());
                     left.getChildren().setAll(iconImageView);
                 } else {
-                    iconSVG.setContent(item.getIcon().getPath());
-                    left.getChildren().setAll(iconSVGWrapper);
+                    iconSVGView.setIcon(item.getIcon());
+                    left.getChildren().setAll(iconSVGView);
                 }
 
                 center.setTitle(item.getName());

@@ -30,7 +30,6 @@ import javafx.scene.Node;
 import javafx.scene.control.Label;
 import javafx.scene.control.ListCell;
 import javafx.scene.control.ListView;
-import javafx.scene.image.ImageView;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Region;
@@ -38,6 +37,7 @@ import javafx.scene.layout.StackPane;
 import org.jackhuang.hmcl.game.Version;
 import org.jackhuang.hmcl.setting.Profile;
 import org.jackhuang.hmcl.ui.FXUtils;
+import org.jackhuang.hmcl.ui.construct.ImageContainer;
 import org.jackhuang.hmcl.ui.construct.RipplerContainer;
 import org.jackhuang.hmcl.ui.construct.TwoLineListItem;
 import org.jackhuang.hmcl.util.StringUtils;
@@ -87,7 +87,7 @@ public final class GameListPopupMenu extends StackPane {
 
         private final Region graphic;
 
-        private final ImageView imageView;
+        private final ImageContainer imageView;
         private final TwoLineListItem content;
 
         private final StringProperty tag = new SimpleStringProperty();
@@ -103,8 +103,7 @@ public final class GameListPopupMenu extends StackPane {
             FXUtils.setLimitWidth(imageViewContainer, 32);
             FXUtils.setLimitHeight(imageViewContainer, 32);
 
-            this.imageView = new ImageView();
-            FXUtils.limitSize(imageView, 32, 32);
+            this.imageView = new ImageContainer(32);
             imageViewContainer.getChildren().setAll(imageView);
 
             this.content = new TwoLineListItem();

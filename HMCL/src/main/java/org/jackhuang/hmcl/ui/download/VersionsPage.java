@@ -60,7 +60,6 @@ import org.jackhuang.hmcl.ui.wizard.Navigation;
 import org.jackhuang.hmcl.ui.wizard.Refreshable;
 import org.jackhuang.hmcl.ui.wizard.WizardPage;
 import org.jackhuang.hmcl.util.NativePatcher;
-import org.jackhuang.hmcl.util.SettingsMap;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.i18n.I18n;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
@@ -131,11 +130,6 @@ public final class VersionsPage extends Control implements WizardPage, Refreshab
         return title;
     }
 
-    @Override
-    public void cleanup(SettingsMap settings) {
-        settings.remove(libraryId);
-    }
-
     private void onRefresh() {
         refresh();
     }
@@ -167,6 +161,8 @@ public final class VersionsPage extends Control implements WizardPage, Refreshab
 
         RemoteVersionListCell(VersionsPage control) {
             this.control = control;
+
+            imageView.setMouseTransparent(true);
 
             HBox hbox = new HBox(16);
             HBox.setHgrow(twoLineListItem, Priority.ALWAYS);
@@ -282,10 +278,12 @@ public final class VersionsPage extends Control implements WizardPage, Refreshab
                     iconType = VersionIconType.COMMAND;
 
                 imageView.setImage(iconType.getIcon());
+                String displayGameVersion = I18n.getDisplayVersion(GameVersionNumber.asGameVersion(remoteVersion.getGameVersion()));
+
                 if (twoLineListItem.getSubtitle() == null)
-                    twoLineListItem.setSubtitle(remoteVersion.getGameVersion());
+                    twoLineListItem.setSubtitle(displayGameVersion);
                 else
-                    twoLineListItem.addTag(remoteVersion.getGameVersion());
+                    twoLineListItem.addTag(displayGameVersion);
             }
         }
     }

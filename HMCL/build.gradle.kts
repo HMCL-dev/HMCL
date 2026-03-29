@@ -28,7 +28,6 @@ val versionType = System.getenv("VERSION_TYPE") ?: if (isOfficial) "nightly" els
 val versionRoot = System.getenv("VERSION_ROOT") ?: projectConfig.getProperty("versionRoot") ?: "3"
 
 val microsoftAuthId = System.getenv("MICROSOFT_AUTH_ID") ?: ""
-val microsoftAuthSecret = System.getenv("MICROSOFT_AUTH_SECRET") ?: ""
 val curseForgeApiKey = System.getenv("CURSEFORGE_API_KEY") ?: ""
 
 val launcherExe = System.getenv("HMCL_LAUNCHER_EXE") ?: ""
@@ -58,14 +57,17 @@ dependencies {
     implementation(project(":HMCLBoot"))
     implementation("libs:JFoenix")
     implementation(libs.twelvemonkeys.imageio.webp)
+    implementation(libs.fxsvgimage)
     implementation(libs.java.info)
     implementation(libs.monet.fx)
+    implementation(libs.nayuki.qrcodegen)
 
     if (launcherExe.isBlank()) {
         implementation(libs.hmclauncher)
     }
 
     embedResources(libs.authlib.injector)
+    embedResources(libs.lwjgl.unsafe.agent)
 }
 
 fun digest(algorithm: String, bytes: ByteArray): ByteArray = MessageDigest.getInstance(algorithm).digest(bytes)
@@ -129,6 +131,7 @@ val addOpens = listOf(
     "javafx.base/javafx.beans.property",
     "javafx.graphics/javafx.css",
     "javafx.graphics/javafx.stage",
+    "javafx.graphics/javafx.scene",
     "javafx.graphics/com.sun.glass.ui",
     "javafx.graphics/com.sun.javafx.stage",
     "javafx.graphics/com.sun.javafx.util",
@@ -152,9 +155,9 @@ val hmclProperties = buildList {
     }
     add("hmcl.version.type" to versionType)
     add("hmcl.microsoft.auth.id" to microsoftAuthId)
-    add("hmcl.microsoft.auth.secret" to microsoftAuthSecret)
     add("hmcl.curseforge.apikey" to curseForgeApiKey)
     add("hmcl.authlib-injector.version" to libs.authlib.injector.get().version!!)
+    add("hmcl.lwjgl-unsafe-agent.version" to libs.lwjgl.unsafe.agent.get().version!!)
 }
 
 val hmclPropertiesFile = layout.buildDirectory.file("hmcl.properties")

@@ -222,6 +222,36 @@ public final class Config extends ObservableSetting {
         this.acceptPreviewUpdate.set(acceptPreviewUpdate);
     }
 
+    @SerializedName("disableAutoShowUpdateDialog")
+    private final BooleanProperty disableAutoShowUpdateDialog = new SimpleBooleanProperty(false);
+
+    public BooleanProperty disableAutoShowUpdateDialogProperty() {
+        return disableAutoShowUpdateDialog;
+    }
+
+    public boolean isDisableAutoShowUpdateDialog() {
+        return disableAutoShowUpdateDialog.get();
+    }
+
+    public void setDisableAutoShowUpdateDialog(boolean disableAutoShowUpdateDialog) {
+        this.disableAutoShowUpdateDialog.set(disableAutoShowUpdateDialog);
+    }
+
+    @SerializedName("disableAprilFools")
+    private final BooleanProperty disableAprilFools = new SimpleBooleanProperty(false);
+
+    public BooleanProperty disableAprilFoolsProperty() {
+        return disableAprilFools;
+    }
+
+    public boolean isDisableAprilFools() {
+        return disableAprilFools.get();
+    }
+
+    public void setDisableAprilFools(boolean disableAprilFools) {
+        this.disableAprilFools.set(disableAprilFools);
+    }
+
     @SerializedName("shownTips")
     private final ObservableMap<String, Object> shownTips = FXCollections.observableHashMap();
 
@@ -657,6 +687,21 @@ public final class Config extends ObservableSetting {
 
     public void setDisableAutoGameOptions(boolean disableAutoGameOptions) {
         this.disableAutoGameOptions.set(disableAutoGameOptions);
+    }
+
+    @SerializedName("allowAutoAgent")
+    private final BooleanProperty allowAutoAgent = new SimpleBooleanProperty(false);
+
+    public BooleanProperty allowAutoAgentProperty() {
+        return allowAutoAgent;
+    }
+
+    public boolean getAllowAutoAgent() {
+        return allowAutoAgent.get();
+    }
+
+    public void setAllowAutoAgent(boolean allowAutoAgent) {
+        this.allowAutoAgent.set(allowAutoAgent);
     }
 
     // Accounts
