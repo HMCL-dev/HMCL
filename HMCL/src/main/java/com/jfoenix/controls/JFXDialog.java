@@ -375,6 +375,10 @@ public class JFXDialog extends StackPane {
         @Override
         protected void starting() {
         }
+
+        @Override
+        protected void stopping() {
+        }
     }
 
     /***************************************************************************
