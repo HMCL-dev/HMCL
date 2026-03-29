@@ -477,6 +477,7 @@ final class ModListPageSkin extends SkinBase<ModListPage> {
                                         case FABRIC -> i18n("install.installer.fabric");
                                         case LITE_LOADER -> i18n("install.installer.liteloader");
                                         case QUILT -> i18n("install.installer.quilt");
+                                        case ORNITHE -> i18n("install.installer.ornithe");
                                         default -> null;
                                     };
                                     if (loaderName == null)
@@ -647,6 +648,7 @@ final class ModListPageSkin extends SkinBase<ModListPage> {
                     case FABRIC -> content.addTagWarning(i18n("install.installer.fabric"));
                     case LITE_LOADER -> content.addTagWarning(i18n("install.installer.liteloader"));
                     case QUILT -> content.addTagWarning(i18n("install.installer.quilt"));
+                    case ORNITHE -> content.addTagWarning(i18n("install.installer.ornithe"));
                 }
             }
 
