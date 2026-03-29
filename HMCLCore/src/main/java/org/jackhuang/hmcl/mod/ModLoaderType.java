@@ -31,7 +31,7 @@ public enum ModLoaderType {
 
     private final String id;
 
-    ModLoaderType(String id){
+    ModLoaderType(String id) {
         this.id = id;
     }
 
