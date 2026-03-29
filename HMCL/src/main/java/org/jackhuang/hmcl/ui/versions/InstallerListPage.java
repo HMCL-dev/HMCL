@@ -85,6 +85,11 @@ public class InstallerListPage extends ListPageBase<InstallerItem> implements Ve
                     continue;
                 }
 
+                // Skip ornithe osl
+                if (libraryId.equals(LibraryAnalyzer.LibraryType.ORNITHE_OSL.getPatchId())) {
+                    continue;
+                }
+
                 String libraryVersion = analyzer.getVersion(libraryId).orElse(null);
 
                 if (libraryVersion != null) {
