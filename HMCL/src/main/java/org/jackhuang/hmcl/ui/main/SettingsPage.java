@@ -262,6 +262,15 @@ public final class SettingsPage extends ScrollPane {
             }
 
             {
+                LineToggleButton allowAutoAgentPane = new LineToggleButton();
+                allowAutoAgentPane.setTitle(i18n("settings.launcher.allow_auto_agent"));
+                allowAutoAgentPane.setSubtitle(i18n("settings.launcher.allow_auto_agent.subtitle"));
+                allowAutoAgentPane.selectedProperty().bindBidirectional(config().allowAutoAgentProperty());
+
+                settingsPane.getContent().add(allowAutoAgentPane);
+            }
+
+            {
                 LineSelectButton<EnumAskable> saveCustomGameIconsPane = new LineSelectButton<>();
                 saveCustomGameIconsPane.setTitle(i18n("settings.launcher.save_custom_game_icons"));
                 saveCustomGameIconsPane.setConverter(a -> switch (a) {
