@@ -22,19 +22,20 @@ import com.google.gson.JsonObject;
 import org.jackhuang.hmcl.download.DefaultDependencyManager;
 import org.jackhuang.hmcl.download.LibraryAnalyzer;
 import org.jackhuang.hmcl.download.UnsupportedInstallationException;
+import org.jackhuang.hmcl.download.fabric.FabricInstallTask;
 import org.jackhuang.hmcl.game.Arguments;
 import org.jackhuang.hmcl.game.Artifact;
 import org.jackhuang.hmcl.game.Library;
 import org.jackhuang.hmcl.game.Version;
 import org.jackhuang.hmcl.task.GetTask;
 import org.jackhuang.hmcl.task.Task;
+import org.jackhuang.hmcl.util.gson.JsonSerializable;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 
 import java.io.IOException;
 import java.util.*;
 
 import static org.jackhuang.hmcl.download.UnsupportedInstallationException.FABRIC_NOT_COMPATIBLE_WITH_FORGE;
-import static org.jackhuang.hmcl.download.fabric.FabricInstallTask.FabricInfo;
 
 /**
  * <b>Note</b>: Fabric should be installed first.
@@ -86,17 +87,17 @@ public final class OrnitheInstallTask extends Task<Version> {
 
     @Override
     public void execute() throws IOException {
-        FabricInfo fabricInfo = JsonUtils.GSON.fromJson(launchMetaTask.getResult(), FabricInfo.class);
-        if (fabricInfo == null)
+        OrnitheInfo ornitheInfo = JsonUtils.GSON.fromJson(launchMetaTask.getResult(), OrnitheInfo.class);
+        if (ornitheInfo == null)
             throw new IOException("Fabric metadata is invalid");
 
-        setResult(getPatch(fabricInfo, remote.getGameVersion(), remote.getSelfVersion()));
+        setResult(getPatch(ornitheInfo, remote.getGameVersion(), remote.getSelfVersion()));
 
         dependencies.add(dependencyManager.checkLibraryCompletionAsync(getResult(), true));
     }
 
-    private Version getPatch(FabricInfo fabricInfo, String gameVersion, String loaderVersion) {
-        JsonObject launcherMeta = fabricInfo.launcherMeta();
+    private Version getPatch(OrnitheInfo ornitheInfo, String gameVersion, String loaderVersion) {
+        JsonObject launcherMeta = ornitheInfo.launcherMeta();
         Arguments arguments = new Arguments();
 
         String mainClass;
@@ -122,9 +123,13 @@ public final class OrnitheInstallTask extends Task<Version> {
             }
         }
 
-        libraries.add(new Library(Artifact.fromDescriptor(fabricInfo.intermediary().getMaven()), "https://maven.fabricmc.net/", null));
-        libraries.add(new Library(Artifact.fromDescriptor(fabricInfo.intermediary().getMaven()), "https://maven.fabricmc.net/", null));
+        libraries.add(new Library(Artifact.fromDescriptor(ornitheInfo.calamus().getMaven()), "https://maven.ornithemc.net/releases/", null));
+        libraries.add(new Library(Artifact.fromDescriptor(ornitheInfo.loader().getMaven()), "https://maven.ornithemc.net/releases/", null));
 
-        return new Version(LibraryAnalyzer.LibraryType.FABRIC.getPatchId(), loaderVersion, Version.PRIORITY_LOADER, arguments, mainClass, libraries);
+        return new Version(LibraryAnalyzer.LibraryType.ORNITHE.getPatchId(), loaderVersion, Version.PRIORITY_LOADER, arguments, mainClass, libraries);
+    }
+
+    @JsonSerializable
+    public record OrnitheInfo(FabricInstallTask.LoaderInfo loader, FabricInstallTask.IntermediaryInfo calamus, JsonObject launcherMeta) {
     }
 }

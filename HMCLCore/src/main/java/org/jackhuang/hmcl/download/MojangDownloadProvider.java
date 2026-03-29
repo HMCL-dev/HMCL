@@ -27,6 +27,8 @@ import org.jackhuang.hmcl.download.legacyfabric.LegacyFabricVersionList;
 import org.jackhuang.hmcl.download.liteloader.LiteLoaderVersionList;
 import org.jackhuang.hmcl.download.neoforge.NeoForgeOfficialVersionList;
 import org.jackhuang.hmcl.download.optifine.OptiFineBMCLVersionList;
+import org.jackhuang.hmcl.download.ornithe.OrnitheOSLVersionList;
+import org.jackhuang.hmcl.download.ornithe.OrnitheVersionList;
 import org.jackhuang.hmcl.download.quilt.QuiltAPIVersionList;
 import org.jackhuang.hmcl.download.quilt.QuiltVersionList;
 import org.jackhuang.hmcl.util.io.NetworkUtils;
@@ -51,6 +53,8 @@ public class MojangDownloadProvider implements DownloadProvider {
     private final QuiltAPIVersionList quiltApi;
     private final LegacyFabricVersionList legacyFabric;
     private final LegacyFabricAPIVersionList legacyFabricApi;
+    private final OrnitheVersionList ornithe;
+    private final OrnitheOSLVersionList ornitheOSL;
 
     public MojangDownloadProvider() {
         // If there is no official download channel available, fallback to BMCLAPI.
@@ -68,6 +72,8 @@ public class MojangDownloadProvider implements DownloadProvider {
         this.quiltApi = new QuiltAPIVersionList(this);
         this.legacyFabric = new LegacyFabricVersionList(this);
         this.legacyFabricApi = new LegacyFabricAPIVersionList(this);
+        this.ornithe = new OrnitheVersionList(this);
+        this.ornitheOSL = new OrnitheOSLVersionList(this);
     }
 
     @Override
@@ -95,6 +101,8 @@ public class MojangDownloadProvider implements DownloadProvider {
             case "quilt-api" -> quiltApi;
             case "legacyfabric" -> legacyFabric;
             case "legacyfabric-api" -> legacyFabricApi;
+            case "ornithe" -> ornithe;
+            case "ornithe-osl" -> ornitheOSL;
             default -> throw new IllegalArgumentException("Unrecognized version list id: " + id);
         };
     }

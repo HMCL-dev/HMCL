@@ -172,7 +172,8 @@ public final class LibraryAnalyzer implements Iterable<LibraryAnalyzer.LibraryMa
         return mainClass != null && (LAUNCH_WRAPPER_MAIN.equals(mainClass)
                 || mainClass.startsWith("net.minecraftforge")
                 || mainClass.startsWith("net.neoforged")
-                || mainClass.startsWith("top.outlands") //Cleanroom
+                || mainClass.startsWith("top.outlands") // Cleanroom
+                || mainClass.startsWith("net.ornithemc")
                 || mainClass.startsWith("net.fabricmc")
                 || mainClass.startsWith("org.quiltmc")
                 || mainClass.startsWith("cpw.mods"));

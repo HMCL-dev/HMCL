@@ -42,7 +42,7 @@ public class OrnitheOSLVersionList extends VersionList<OrnitheOSLRemoteVersion> 
     @Override
     public Task<?> refreshAsync() {
         return Task.runAsync(() -> {
-            for (RemoteMod.Version modVersion : Lang.toIterable(ModrinthRemoteModRepository.MODS.getRemoteVersionsById(downloadProvider, "P7dR8mSH"))) {
+            for (RemoteMod.Version modVersion : Lang.toIterable(ModrinthRemoteModRepository.MODS.getRemoteVersionsById(downloadProvider, "EHGtwpJv"))) {
                 for (String gameVersion : modVersion.getGameVersions()) {
                     versions.put(gameVersion, new OrnitheOSLRemoteVersion(gameVersion, modVersion.getVersion(), modVersion.getName(), modVersion.getDatePublished(), modVersion,
                             Collections.singletonList(modVersion.getFile().getUrl())));
