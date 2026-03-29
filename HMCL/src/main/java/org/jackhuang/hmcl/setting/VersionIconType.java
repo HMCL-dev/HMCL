@@ -37,7 +37,8 @@ public enum VersionIconType {
     QUILT("/assets/img/quilt.png"),
     APRIL_FOOLS("/assets/img/april_fools.png"),
     CLEANROOM("/assets/img/cleanroom.png"),
-    LEGACY_FABRIC("/assets/img/legacyfabric.png")
+    LEGACY_FABRIC("/assets/img/legacyfabric.png"),
+    ORNITHE("/assets/img/ornithe.png")
     ;
 
     // Please append new items at last

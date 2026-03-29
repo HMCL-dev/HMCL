@@ -23,6 +23,7 @@ public enum ModLoaderType {
     CLEANROOM,
     NEO_FORGED,
     FABRIC,
+    ORNITHE,
     QUILT,
     LITE_LOADER,
     LEGACY_FABRIC,
