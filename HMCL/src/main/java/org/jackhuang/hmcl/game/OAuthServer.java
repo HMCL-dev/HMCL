@@ -30,7 +30,10 @@ import org.jackhuang.hmcl.util.io.NetworkUtils;
 
 import java.io.IOException;
 import java.security.SecureRandom;
-import java.util.*;
+import java.util.Base64;
+import java.util.HashMap;
+import java.util.Locale;
+import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 
@@ -167,6 +170,7 @@ public final class OAuthServer extends NanoHTTPD implements OAuth.Session {
         public final EventManager<GrantDeviceCodeEvent> onGrantDeviceCode = new EventManager<>();
         public final EventManager<OpenBrowserEvent> onOpenBrowserAuthorizationCode = new EventManager<>();
         public final EventManager<OpenBrowserEvent> onOpenBrowserDevice = new EventManager<>();
+        private OAuthServer server;
 
         @Override
         public OAuth.Session startServer() throws IOException, AuthenticationException {
@@ -177,7 +181,7 @@ public final class OAuthServer extends NanoHTTPD implements OAuth.Session {
             IOException exception = null;
             for (int port : new int[]{29111, 29112, 29113, 29114, 29115}) {
                 try {
-                    OAuthServer server = new OAuthServer(port);
+                    server = new OAuthServer(port);
                     server.start(NanoHTTPD.SOCKET_READ_TIMEOUT, true);
                     return server;
                 } catch (IOException e) {
@@ -206,6 +210,10 @@ public final class OAuthServer extends NanoHTTPD implements OAuth.Session {
         public String getClientId() {
             return System.getProperty("hmcl.microsoft.auth.id",
                     JarUtils.getAttribute("hmcl.microsoft.auth.id", ""));
+        }
+
+        public void stop() {
+            if (server != null) server.stop();
         }
     }
 

@@ -261,6 +261,7 @@ public class MicrosoftAccountLoginPane extends JFXDialogLayout implements Dialog
     }
 
     private void onCancel() {
+        Accounts.OAUTH_CALLBACK.stop();
         cancelAllTasks();
         if (cancelCallback != null) cancelCallback.run();
         fireEvent(new DialogCloseEvent());
