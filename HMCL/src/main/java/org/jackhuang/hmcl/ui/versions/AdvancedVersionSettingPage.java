@@ -1,3 +1,20 @@
+/*
+ * Hello Minecraft! Launcher
+ * Copyright (C) 2026 huangyuhui <huanghongxun2008@126.com> and contributors
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
 package org.jackhuang.hmcl.ui.versions;
 
 import com.jfoenix.controls.JFXTextField;
@@ -15,6 +32,7 @@ import org.jackhuang.hmcl.setting.VersionSetting;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.construct.*;
 import org.jackhuang.hmcl.ui.decorator.DecoratorPage;
+import org.jackhuang.hmcl.util.i18n.I18n;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
 import org.jackhuang.hmcl.util.platform.Platform;
@@ -170,6 +188,10 @@ public final class AdvancedVersionSettingPage extends StackPane implements Decor
             rendererPane = new LineSelectButton<>();
             rendererPane.setTitle(i18n("settings.advanced.renderer"));
             rendererPane.setConverter(e -> i18n("settings.advanced.renderer." + e.name().toLowerCase(Locale.ROOT)));
+            rendererPane.setDescriptionConverter(e -> {
+                String bundleKey = "settings.advanced.renderer." + e.name().toLowerCase(Locale.ROOT) + ".desc";
+                return I18n.hasKey(bundleKey) ? i18n(bundleKey) : null;
+            });
             rendererPane.setItems(Renderer.values());
 
             noJVMArgsPane = new LineToggleButton();
@@ -190,9 +212,11 @@ public final class AdvancedVersionSettingPage extends StackPane implements Decor
 
             useNativeGLFWPane = new LineToggleButton();
             useNativeGLFWPane.setTitle(i18n("settings.advanced.use_native_glfw"));
+            useNativeGLFWPane.setSubtitle(i18n("settings.advanced.linux_freebsd_only"));
 
             useNativeOpenALPane = new LineToggleButton();
             useNativeOpenALPane.setTitle(i18n("settings.advanced.use_native_openal"));
+            useNativeOpenALPane.setSubtitle(i18n("settings.advanced.linux_freebsd_only"));
 
             workaroundPane.getContent().setAll(
                     nativesDirSublist, rendererPane, noJVMArgsPane, noOptimizingJVMArgsPane, noGameCheckPane,

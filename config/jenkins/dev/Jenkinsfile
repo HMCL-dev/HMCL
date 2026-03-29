@@ -6,7 +6,6 @@ pipeline {
 
         VERSION_TYPE = 'dev'
         MICROSOFT_AUTH_ID = credentials('microsoft_auth_id')
-        MICROSOFT_AUTH_SECRET = credentials('microsoft_auth_secret')
         CURSEFORGE_API_KEY = credentials('curseforge_api_key')
         HMCL_SIGNATURE_KEY = credentials('hmcl_signature_key')
     }

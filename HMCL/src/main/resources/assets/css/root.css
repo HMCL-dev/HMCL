@@ -29,8 +29,8 @@
 
 .scroll-bar .thumb {
     -fx-fill: -monet-surface-tint;
-    -fx-arc-width: 0;
-    -fx-arc-height: 0;
+    -fx-arc-width: 8;
+    -fx-arc-height: 8;
 }
 
 .title-label {
@@ -113,28 +113,26 @@
 .memory-label {
 }
 
-.memory-used {
-    -fx-background-color: -monet-primary;
+.memory-status-bar {
+    -fx-opacity: 1;
 }
 
-.memory-used:disabled {
+.memory-status-bar:disabled {
     -fx-opacity: 0.4;
 }
 
-.memory-allocate {
-    -fx-background-color: -monet-primary-transparent-50;
+.memory-status-bar .track {
+    -fx-background-color: -monet-secondary-container;
+    -fx-background-radius: 2;
+    -fx-background-insets: 0;
 }
 
-.memory-allocate:disabled {
-    -fx-opacity: 0.4;
+.memory-status-bar .memory-used {
+    -fx-fill: -monet-primary;
 }
 
-.memory-total {
-    -fx-background-color: -monet-surface-container;
-}
-
-.memory-total:disabled {
-    -fx-opacity: 0.4;
+.memory-status-bar .memory-allocate {
+    -fx-fill: -monet-primary-transparent-50;
 }
 
 .update-label {
@@ -445,6 +443,7 @@
     -fx-max-height: 55px;
     -fx-min-height: 55px;
     -fx-background-color: -monet-primary-container;
+    -fx-opacity: 1; /* Override the opacity of disabled button */
     -fx-cursor: hand;
 }
 
@@ -526,12 +525,14 @@
 }
 
 .jfx-dialog-layout {
-    -fx-padding: 24.0px 24.0px 16.0px 24.0px;
+    -fx-background-radius: 4px;
+    -fx-padding: 24px 24px 16px 24px;
     -fx-background-color: -monet-surface-container-high;
     -fx-text-fill: -monet-on-surface;
 }
 
 .jfx-layout-heading {
+    -fx-font-weight: BOLD;
     -fx-font-size: 20.0px;
     -fx-alignment: center-left;
     -fx-padding: 5.0 0.0 5.0 0.0;
@@ -568,6 +569,7 @@
 }
 
 .task-executor-dialog-layout {
+    -fx-background-radius: 4px;
     -fx-background-color: -monet-surface-container-high;
     -fx-text-fill: -monet-on-surface;
 }
@@ -577,6 +579,10 @@
  * Microsoft Login Dialog                                                      *
  *                                                                             *
  ******************************************************************************/
+
+.microsoft-login-dialog:bodyonly {
+    -fx-padding: 0px 0px 0px 0px;
+}
 
 .method-title {
     -fx-text-fill: -monet-on-surface;
@@ -594,6 +600,7 @@
 .code-box {
     -fx-background-color: -monet-surface-variant;
     -fx-background-radius: 6;
+    -fx-padding: 0 10 0 10;
     -fx-alignment: center;
 }
 
@@ -785,31 +792,39 @@
  *                                                                             *
  ******************************************************************************/
 
-.svg-slider .thumb {
-    -fx-stroke: -monet-on-surface;
-    -fx-fill: -monet-on-surface;
+.jfx-slider .track,
+.jfx-slider:vertical .track {
+    -fx-background-color: -monet-secondary-container;
+    -fx-background-radius: 5;
+    -fx-background-insets: 0;
+    -fx-pref-width: 2px;
+    -fx-pref-height: 2px;
 }
 
-.jfx-slider:disabled {
-    -fx-opacity: 0.4;
-}
-
-/*******************************************************
-*                           						   *
-* For the main demo sliders 						   *
-*                          							   *
-*******************************************************/
-
-.jfx-slider {
-    -jfx-indicator-position: right;
-}
-
-.jfx-slider .track {
-    -fx-background-color: -monet-on-surface-variant-transparent-38;
-}
-
-.jfx-slider .thumb {
+.jfx-slider .thumb,
+.jfx-slider:focused .thumb {
     -fx-background-color: -monet-primary;
+    -fx-background-radius: 20;
+    -fx-background-insets: 0;
+}
+
+.jfx-slider .colored-track {
+    -fx-background-color: -monet-primary;
+    -fx-background-radius: 5 0 0 5;
+    -fx-background-insets: 0;
+}
+
+.jfx-slider .slider-value {
+    -fx-stroke: -monet-inverse-on-surface;
+    -fx-font-size: 10;
+}
+
+.jfx-slider .animated-thumb {
+    -fx-pref-width: 30px;
+    -fx-pref-height: 30px;
+    -fx-background-color: -monet-inverse-surface;
+    -fx-background-radius: 50% 50% 50% 0%;
+    -fx-background-insets: 0;
 }
 
 /*******************************************************************************
@@ -898,14 +913,6 @@
 *                                                                              *
 *******************************************************************************/
 
-.jfx-progress-bar {
-    -fx-pref-width: 500.0;
-}
-
-.jfx-progress-bar > .track, .jfx-progress-bar > .bar {
-    -fx-background-radius: 0;
-    -fx-background-insets: 0;
-}
 
 .jfx-progress-bar > .track {
     -fx-background-color: -monet-secondary-container;
@@ -913,6 +920,13 @@
 
 .jfx-progress-bar > .bar {
     -fx-background-color: -monet-primary;
+    -fx-padding: 2;
+}
+
+.jfx-progress-bar > .track,
+.jfx-progress-bar > .bar {
+    -fx-background-radius: 2;
+    -fx-background-insets: 0;
 }
 
 /*******************************************************************************
@@ -1046,6 +1060,13 @@
     -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.26), 10, 0.12, -1, 2);
 }
 
+.card-no-padding {
+    -fx-background-color: -monet-surface-container-low-transparent-80;
+    -fx-background-radius: 4;
+
+    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.26), 10, 0.12, -1, 2);
+}
+
 .card-non-transparent {
     -fx-background-color: -monet-surface-container-low;
     -fx-background-radius: 4;
@@ -1144,7 +1165,7 @@
     -fx-background-insets: 0px;
 
     -jfx-toggle-color: -monet-primary;
-    -jfx-toggle-line-color: -monet-primary-container;
+    -jfx-toggle-line-color: -monet-secondary-container;
     -jfx-untoggle-color: -monet-outline;
     -jfx-untoggle-line-color: -monet-surface-container-highest;
     -jfx-size: 10;
@@ -1426,86 +1447,20 @@
 *                                                                              *
 *******************************************************************************/
 
-.jfx-spinner > .arc {
-    -fx-stroke-width: 3.0;
-    -fx-fill: transparent;
+.jfx-spinner .arc {
     -fx-stroke: -monet-primary-container;
 }
 
-.jfx-spinner .arc {
-    -fx-stroke-line-cap: round;
-}
-
-.first-spinner {
-    -jfx-radius: 20;
-}
-
-.first-spinner > .arc {
-    -fx-stroke-width: 5.0;
-}
-
 .small-spinner {
-    -jfx-radius: 10;
+    -jfx-radius: 9;
 }
 
-.small-spinner > .arc {
+.small-spinner .arc {
     -fx-stroke-width: 3.0;
 }
 
 .small-spinner-pane .jfx-spinner {
-    -jfx-radius: 10;
-}
-
-.small-spinner-pane .jfx-spinner > .arc {
-    -fx-stroke-width: 3.0;
-}
-
-.second-spinner {
-    -jfx-radius: 30;
-}
-
-.second-spinner > .arc {
-    -fx-stroke-width: 5.0;
-}
-
-.third-spinner {
-    -jfx-radius: 40;
-}
-
-.third-spinner > .arc {
-    -fx-stroke-width: 5.0;
-}
-
-.fourth-spinner {
-    -jfx-radius: 50;
-}
-
-.fourth-spinner > .arc {
-    -fx-stroke-width: 5.0;
-}
-
-.fifth-spinner {
-    -jfx-radius: 60;
-}
-
-.fifth-spinner > .arc {
-    -fx-stroke-width: 5.0;
-}
-
-.sixth-spinner {
-    -jfx-radius: 70;
-}
-
-.sixth-spinner > .arc {
-    -fx-stroke-width: 5.0;
-}
-
-.seventh-spinner {
-    -jfx-radius: 80;
-}
-
-.seventh-spinner > .arc {
-    -fx-stroke-width: 5.0;
+    -jfx-radius: 9;
 }
 
 /*******************************************************************************
@@ -1608,6 +1563,21 @@
 
 .custom-color-dialog .tab-selected-line {
     -fx-background-color: -monet-on-surface;
+}
+
+.custom-color-dialog .jfx-color-dialog-actions {
+    -fx-background-color: -monet-surface;
+    -fx-padding: 0.0 10.0 5.0 0.0;
+    -fx-alignment: center-right;
+}
+
+.custom-color-dialog .jfx-color-dialog-accept {
+    -fx-padding: 0.7em 0.8em;
+}
+
+.custom-color-dialog .jfx-color-dialog-cancel {
+    -fx-text-fill: -monet-on-surface-variant;
+    -fx-padding: 0.7em 0.8em;
 }
 
 /*******************************************************************************
@@ -1917,6 +1887,10 @@
     -fx-padding: 10 16 10 16;
 }
 
+.line-component .subtitle-label {
+    -fx-text-fill: -monet-on-surface-variant;
+}
+
 .line-component.no-padding .line-component-container {
     -fx-padding: 0;
 }
@@ -1946,14 +1920,26 @@
     -fx-font-size: 13px;
 }
 
+.line-select-button .menu-container .title-label {
+    -fx-text-fill: -monet-on-surface;
+}
+
+.line-select-button .menu-container .subtitle-label {
+    -fx-text-fill: -monet-on-surface-variant;
+}
+
 .line-select-button .menu-container:selected .title-label {
     -fx-text-fill: -monet-primary;
 }
 
 .line-select-button .menu-container:selected .subtitle-label {
-    -fx-text-fill: -monet-primary;
+    -fx-text-fill: -monet-primary-container;
 }
 
 .line-toggle-button .jfx-toggle-button {
     -fx-padding: 0;
+}
+
+.update-pane:active .subtitle-label {
+    -fx-text-fill: -monet-tertiary;
 }

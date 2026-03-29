@@ -28,6 +28,7 @@ import java.util.*;
 import java.util.function.Supplier;
 
 import static org.jackhuang.hmcl.util.versioning.GameVersionNumber.asGameVersion;
+import static org.jackhuang.hmcl.util.versioning.GameVersionNumber.getReleaseOfSnapshot;
 import static org.junit.jupiter.api.Assertions.*;
 
 /**
@@ -432,10 +433,11 @@ public final class GameVersionNumberTest {
             assertNormalized(version, version);
         }
 
-        assertNormalized("26.1-snapshot-1", "26.1 Snapshot 1");
+        assertNormalized("1.21.11-pre3", "1.21.11-pre-3");
         assertNormalized("1.21.11-pre3", "1.21.11 Pre-Release 3");
         assertNormalized("1.21.11-pre3_unobfuscated", "1.21.11 Pre-Release 3 Unobfuscated");
         assertNormalized("1.21.11-pre3_unobfuscated", "1.21.11-pre3 Unobfuscated");
+        assertNormalized("1.21.11-rc1", "1.21.11-rc-1");
         assertNormalized("1.21.11-rc1", "1.21.11 Release Candidate 1");
         assertNormalized("1.21.11-rc1_unobfuscated", "1.21.11 Release Candidate 1 Unobfuscated");
         assertNormalized("1.14_combat-212796", "1.14.3 - Combat Test");
@@ -461,6 +463,9 @@ public final class GameVersionNumberTest {
         assertNormalized("1.19_deep_dark_experimental_snapshot-1", "Deep Dark Experimental Snapshot 1");
         assertNormalized("20w14infinite", "20w14~");
         assertNormalized("22w13oneBlockAtATime", "22w13oneblockatatime");
+        assertNormalized("26.1-snapshot-1", "26.1 Snapshot 1");
+        assertNormalized("26.1-rc-1", "26.1-rc1");
+        assertNormalized("26.1-pre-1", "26.1-pre1");
     }
 
     @Test
@@ -502,5 +507,15 @@ public final class GameVersionNumberTest {
         assertThrows(IllegalArgumentException.class, () -> asGameVersion("17w43a").isAtLeast("1.13", "1.13", false));
         assertThrows(IllegalArgumentException.class, () -> asGameVersion("17w43a").isAtLeast("1.13", "22w13oneblockatatime", true));
         assertThrows(IllegalArgumentException.class, () -> asGameVersion("17w43a").isAtLeast("1.13", "22w13oneblockatatime", false));
+    }
+
+    @Test
+    public void testGetReleaseOfSnapshot() {
+        assertEquals(asGameVersion("1.21.11"), getReleaseOfSnapshot(asGameVersion("25w45a")));
+        assertEquals(asGameVersion("1.21.11"), getReleaseOfSnapshot(asGameVersion("25w45a_unobfuscated")));
+        assertEquals(asGameVersion("1.21.11"), getReleaseOfSnapshot(asGameVersion("1.21.11-pre3")));
+        assertEquals(asGameVersion("26.1"), getReleaseOfSnapshot(asGameVersion("26.1-snapshot-9")));
+        assertNull(getReleaseOfSnapshot(asGameVersion("26.1")));
+        assertNull(getReleaseOfSnapshot(asGameVersion("20w14infinite")));
     }
 }
