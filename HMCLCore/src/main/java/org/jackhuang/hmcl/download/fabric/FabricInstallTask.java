@@ -129,28 +129,7 @@ public final class FabricInstallTask extends Task<Version> {
     }
 
     @JsonSerializable
-    public static class FabricInfo {
-        private final LoaderInfo loader;
-        private final IntermediaryInfo intermediary;
-        private final JsonObject launcherMeta;
-
-        public FabricInfo(LoaderInfo loader, IntermediaryInfo intermediary, JsonObject launcherMeta) {
-            this.loader = loader;
-            this.intermediary = intermediary;
-            this.launcherMeta = launcherMeta;
-        }
-
-        public LoaderInfo getLoader() {
-            return loader;
-        }
-
-        public IntermediaryInfo getIntermediary() {
-            return intermediary;
-        }
-
-        public JsonObject getLauncherMeta() {
-            return launcherMeta;
-        }
+    public record FabricInfo(LoaderInfo loader, IntermediaryInfo intermediary, JsonObject launcherMeta) {
     }
 
     @JsonSerializable
