@@ -219,6 +219,21 @@ public final class LibraryAnalyzer implements Iterable<LibraryAnalyzer.LibraryMa
             }
         },
         FABRIC_API(true, "fabric-api", "net\\.fabricmc", "fabric-api", null),
+        ORNITHE(true, "ornithe", "net\\.fabricmc", "fabric-loader", ModLoaderType.ORNITHE) {
+            @Override
+            protected boolean matchLibrary(Library library, List<Library> libraries) {
+                if (!super.matchLibrary(library, libraries)) {
+                    return false;
+                }
+                for (Library l : libraries) {
+                    if ("net.ornithemc".equals(l.getGroupId())) {
+                        return false;
+                    }
+                }
+                return true;
+            }
+        },
+        ORNITHE_OSL(true, "ornithe-osl", "net\\.ornithemc", "ornithe-api", null),
         FORGE(true, "forge", "net\\.minecraftforge", "(forge|fmlloader)", ModLoaderType.FORGE) {
             private final Pattern FORGE_VERSION_MATCHER = Pattern.compile("^([0-9.]+)-(?<forge>[0-9.]+)(-([0-9.]+))?$");
 
