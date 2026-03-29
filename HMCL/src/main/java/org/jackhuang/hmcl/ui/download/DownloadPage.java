@@ -54,6 +54,7 @@ import org.jackhuang.hmcl.util.TaskCancellationAction;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jetbrains.annotations.Nullable;
 
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Locale;
 import java.util.concurrent.CancellationException;
@@ -153,7 +154,7 @@ public class DownloadPage extends DecoratorAnimatedPage implements DecoratorPage
                 }
             }), i18n("message.downloading"), TaskCancellationAction.NORMAL);
             handler.resolve();
-        }, file.getFile().getFilename(), new Validator(i18n("install.new_game.malformed"), FileUtils::isNameValid));
+        }, file.getFile().getFilename(), new Validator(i18n("install.new_game.malformed"), FileUtils::isNameValid), new Validator(i18n("profile.already_exists"), (it) -> !Files.exists(runDirectory.resolve(subdirectoryName).resolve(it))));
 
     }
 
