@@ -563,9 +563,7 @@ public final class ResourcePackListPage extends ListPageBase<ResourcePackListPag
 
             {
                 var compatibility = file.getCompatibility();
-                if (compatibility == ResourcePackFile.Compatibility.COMPATIBLE) {
-                    content.addTag(i18n("resourcepack.compatible"));
-                } else {
+                if (compatibility != ResourcePackFile.Compatibility.COMPATIBLE) {
                     pseudoClassStateChanged(WARNING, true);
                     content.addTagWarning(getWarning(compatibility));
                 }
