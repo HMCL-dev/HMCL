@@ -568,7 +568,7 @@ public final class Config extends ObservableSetting {
     }
 
     @SerializedName("defaultAddonSource")
-    private final StringProperty defaultAddonSource = new SimpleStringProperty("mods.modrinth");
+    private final StringProperty defaultAddonSource = new SimpleStringProperty("modrinth");
 
     public StringProperty defaultAddonSourceProperty() {
         return defaultAddonSource;

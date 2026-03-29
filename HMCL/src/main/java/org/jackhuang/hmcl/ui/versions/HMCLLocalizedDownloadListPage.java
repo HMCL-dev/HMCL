@@ -21,11 +21,11 @@ import org.jackhuang.hmcl.game.LocalizedRemoteModRepository;
 import org.jackhuang.hmcl.mod.RemoteModRepository;
 import org.jackhuang.hmcl.mod.curse.CurseForgeRemoteModRepository;
 import org.jackhuang.hmcl.mod.modrinth.ModrinthRemoteModRepository;
-import org.jackhuang.hmcl.setting.ConfigHolder;
 import org.jackhuang.hmcl.util.i18n.I18n;
 
 import java.util.MissingResourceException;
 
+import static org.jackhuang.hmcl.setting.ConfigHolder.config;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
@@ -63,13 +63,15 @@ public final class HMCLLocalizedDownloadListPage extends DownloadListPage {
 
         supportChinese.set(true);
 
+        boolean supportedCurseForge = CurseForgeRemoteModRepository.isAvailable() && curseForge != null;
+
         downloadSources.setAll("mods.modrinth");
-        if (CurseForgeRemoteModRepository.isAvailable()) {
+        if (supportedCurseForge) {
             downloadSources.add("mods.curseforge");
         }
 
-        if ("mods.curseforge".equals(ConfigHolder.config().getDefaultAddonSource())) {
-            if (curseForge != null) {
+        if ("curseforge".equalsIgnoreCase(config().getDefaultAddonSource())) {
+            if (supportedCurseForge) {
                 downloadSource.set("mods.curseforge");
             } else if (modrinth != null) {
                 downloadSource.set("mods.modrinth");
@@ -79,7 +81,7 @@ public final class HMCLLocalizedDownloadListPage extends DownloadListPage {
         } else {
             if (modrinth != null) {
                 downloadSource.set("mods.modrinth");
-            } else if (curseForge != null) {
+            } else if (supportedCurseForge) {
                 downloadSource.set("mods.curseforge");
             } else {
                 throw new AssertionError("Should not be here.");
