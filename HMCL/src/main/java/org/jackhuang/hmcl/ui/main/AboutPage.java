@@ -43,7 +43,7 @@ public final class AboutPage extends SpinnerPane {
 
     public AboutPage() {
         VBox content = new VBox();
-        content.getStyleClass().add("content");
+        content.getStyleClass().add("spinner-pane-content");
         ScrollPane scrollPane = new ScrollPane(content);
         scrollPane.setFitToWidth(true);
         FXUtils.smoothScrolling(scrollPane);
