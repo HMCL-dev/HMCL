@@ -63,6 +63,16 @@ public final class NativePatcher {
         });
     }
 
+    // https://github.com/LWJGL/lwjgl3/issues/1111
+    public static boolean needPatchMemoryUtil(Version version, int javaVersion) {
+        return javaVersion >= 25 && javaVersion <= 26 && version.getLibraries().stream().anyMatch(library ->
+                "org.lwjgl".equals(library.getGroupId())
+                        && "lwjgl".equals(library.getArtifactId())
+                        && "3.4.1".equals(library.getVersion())
+                        && library.getClassifier() == null
+        );
+    }
+
     public static Version patchNative(DefaultGameRepository repository,
                                       Version version, String gameVersion,
                                       JavaRuntime javaVersion,

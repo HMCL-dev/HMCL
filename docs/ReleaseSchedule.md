@@ -17,7 +17,7 @@ while the minor version is incremented regularly according to the release schedu
 
 ### Version Types
 
-HMCL has two types of versions: **Stable** and **Development**.
+HMCL has two types of versions: **Stable** and **Beta**.
 
 #### Stable Version
 
@@ -27,19 +27,19 @@ New features are merged into the stable version only after thorough testing.
 The stable version number follows the naming rule `<version branch>.<build number>` (e.g., `3.7.1`).
 The build number is calculated independently for each version branch.
 
-#### Development Version
+#### Beta Version
 
-The HMCL development version is suitable for users who want to experience new features first.
-The development version includes the latest features and bug fixes,
+The HMCL beta version is suitable for users who want to experience new features first.
+The beta version includes the latest features and bug fixes,
 but may also have more issues due to insufficient testing.
 
-The development version follows the naming rule `<version branch>.0.<build number>` (e.g., `3.7.0.300`).
+The beta version follows the naming rule `<version branch>.0.<build number>` (e.g., `3.7.0.300`).
 The build number is shared globally across all version branches.
 
 ## Release Channels
 
-HMCL has two main release channels: **Stable Channel** and **Development Channel**.
-They are used to release the HMCL stable and development versions, respectively.
+HMCL has two main release channels: **Stable Channel** and **Beta Channel**.
+They are used to release the HMCL stable and beta versions, respectively.
 
 To test HMCL versions before official release, we will push updates to some users in advance.
 Users can enable the "Preview HMCL releases early" option on the "Settings > General" page to receive preview updates from the corresponding channel.
@@ -50,17 +50,17 @@ Users can enable the "Preview HMCL releases early" option on the "Settings > Gen
 gantt
     title HMCL Version Lifecycle (Example)
     section 3.9
-        Development Phase: a1, 2025-11-15, 30d
+        Beta Phase: a1, 2025-11-15, 30d
         Preview Phase: a2, after a1, 16d
         Stable Release: milestone, after a2, 0d
         Maintenance Phase: a3, after a2, 31d
     section 3.10
-        Development Phase: b1, after a1, 31d
+        Beta Phase: b1, after a1, 31d
         Preview Phase: b2, after b1, 16d
         Stable Release: milestone, after b2, 0d
         Maintenance Phase: b3, after b2, 31d
     section 3.11
-        Development Phase: c1, after b1, 31d
+        Beta Phase: c1, after b1, 31d
         Preview Phase: c2, after c1, 16d
         Stable Release: milestone, after c2, 0d
         Maintenance Phase: c3, after c2, 30d
@@ -71,11 +71,11 @@ and each version branch `x.y` has a lifecycle of two and a half months.
 
 The lifecycle of each version branch is divided into the following stages:
 
-1. **Development Phase** (Mid-month M ~ Mid-month M+1)
+1. **Beta Phase** (Mid-month M ~ Mid-month M+1)
 
    During this phase, the version is developed in the Git branch `main`.
 
-   Typically, we release a development version `x.y.0.<build number>` based on this branch every week,
+   Typically, we release a beta version `x.y.0.<build number>` based on this branch every week,
    which includes all features and bug fixes merged during the week.
 
 2. **Preview Phase** (Mid-month M+1 ~ End of month M+1)
@@ -84,7 +84,7 @@ The lifecycle of each version branch is divided into the following stages:
    which corresponds to the fixed version branch `x.y`.
 
    At the same time, the version branch corresponding to the `main` branch is incremented to `x.y♯`,
-   entering the development phase of the next version branch.
+   entering the beta phase of the next version branch.
 
    After the fork, no new features will be added to this version branch;
    only bug fixes and data updates will be made.
