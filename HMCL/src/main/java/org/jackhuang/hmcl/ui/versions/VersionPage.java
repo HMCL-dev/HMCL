@@ -195,7 +195,7 @@ public class VersionPage extends DecoratorAnimatedPage implements DecoratorPage 
             FileUtils.deleteDirectoryQuietly(libraries);
         }).whenComplete(Schedulers.javafx(), (exception) -> {
             if (exception != null) {
-                Controllers.dialog(i18n("message.failed") + StringUtils.getStackTrace(exception), i18n("message.error"), MessageDialogPane.MessageType.ERROR);
+                Controllers.dialog(i18n("message.failed") + "\n" + StringUtils.getStackTrace(exception), i18n("message.error"), MessageDialogPane.MessageType.ERROR);
             }
         }).start();
     }
