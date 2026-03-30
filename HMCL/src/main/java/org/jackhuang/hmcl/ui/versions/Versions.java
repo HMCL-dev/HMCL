@@ -133,23 +133,23 @@ public final class Versions {
 
     public static CompletableFuture<String> renameVersion(Profile profile, String version) {
         return Controllers.prompt(i18n("version.manage.rename.message"), (newName, handler) -> {
-            if (newName.equals(version)) {
-                handler.resolve();
-                return;
-            }
-            if (profile.getRepository().renameVersion(version, newName)) {
-                handler.resolve();
-                profile.getRepository().refreshVersionsAsync()
-                        .thenRunAsync(Schedulers.javafx(), () -> {
-                            if (profile.getRepository().hasVersion(newName)) {
-                                profile.setSelectedVersion(newName);
-                            }
-                        }).start();
-            } else {
-                handler.reject(i18n("version.manage.rename.fail"));
-            }
-        }, version, new Validator(i18n("install.new_game.malformed"), HMCLGameRepository::isValidVersionId),
-            new Validator(i18n("install.new_game.already_exists"), newVersionName -> !profile.getRepository().versionIdConflicts(newVersionName) || newVersionName.equals(version)));
+                    if (newName.equals(version)) {
+                        handler.resolve();
+                        return;
+                    }
+                    if (profile.getRepository().renameVersion(version, newName)) {
+                        handler.resolve();
+                        profile.getRepository().refreshVersionsAsync()
+                                .thenRunAsync(Schedulers.javafx(), () -> {
+                                    if (profile.getRepository().hasVersion(newName)) {
+                                        profile.setSelectedVersion(newName);
+                                    }
+                                }).start();
+                    } else {
+                        handler.reject(i18n("version.manage.rename.fail"));
+                    }
+                }, version, new Validator(i18n("install.new_game.malformed"), HMCLGameRepository::isValidVersionId),
+                new Validator(i18n("install.new_game.already_exists"), newVersionName -> !profile.getRepository().versionIdConflicts(newVersionName) || newVersionName.equals(version)));
     }
 
     public static void exportVersion(Profile profile, String version) {
@@ -170,28 +170,27 @@ public final class Versions {
         }
 
         Controllers.prompt(i18n("version.manage.duplicate.prompt"), (result, handler) -> {
-            var unnamedVersion = version.setId(result).setJar(result);
-            var gameDownloadTask = new GameDownloadTask(profile.getDependency(), null, unnamedVersion).whenComplete(Schedulers.javafx(), (exception) -> {
-                if (exception != null) {
-                    handler.reject(StringUtils.getStackTrace(exception));
-                } else {
-                    profile.getRepository().refreshVersions();
-                    profile.setSelectedVersion(result);
-                    handler.resolve();
-                }
-            });
-            Task.runAsync(() -> {
-                var dir = profile.getGameDir().resolve("versions");
-                var versionDir = Files.createDirectory(dir.resolve(result));
-                var jsonPath = versionDir.resolve(result + ".json");
+            handler.resolve();
 
-                JsonUtils.writeToJsonFile(jsonPath, unnamedVersion);
-            }).thenRunAsync(() -> profile.getRepository().refreshVersions()).whenComplete(Schedulers.javafx(), (exception) -> {
-                if (exception != null) {
-                    handler.reject(StringUtils.getStackTrace(exception));
-                } else
-                    Controllers.taskDialog(gameDownloadTask, i18n("install.new_game"), TaskCancellationAction.NORMAL);
-            }).start();
+            HMCLGameRepository repository = profile.getRepository();
+            Path versionJson = repository.getVersionJson(result);
+            Version unnamedVersion = version.setId(result).setJar(result);
+
+            Controllers.taskDialog(Task.composeAsync(Schedulers.io(), () -> {
+                        Files.createDirectory(versionJson.getParent());
+                        JsonUtils.writeToJsonFile(versionJson, unnamedVersion);
+
+                        return new GameDownloadTask(profile.getDependency(), null, unnamedVersion);
+                    })
+                    .thenRunAsync(repository::refreshVersions)
+                    .whenComplete(Schedulers.javafx(), (exception) -> {
+                        if (exception == null) {
+                            profile.setSelectedVersion(result);
+                        } else {
+                            Controllers.dialog(
+                                    DownloadProviders.localizeErrorMessage(exception), i18n("install.failed"), MessageDialogPane.MessageType.ERROR);
+                        }
+                    }), i18n("install.new_game"), TaskCancellationAction.NORMAL);
         }, FileUtils.getNameWithoutExtension(file), new Validator(i18n("install.new_game.malformed"), HMCLGameRepository::isValidVersionId), new Validator(i18n("install.new_game.already_exists"), newVersionName -> !profile.getRepository().versionIdConflicts(newVersionName)));
     }
 
