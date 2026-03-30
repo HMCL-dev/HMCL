@@ -128,7 +128,7 @@ public final class MojangJavaDownloadTask extends Task<MojangJavaDownloadTask.Re
 
                         String actualSha1 = HexFormat.of().formatHex(digest.digest());
 
-                        if (rawSha1 != null && !actualSha1.equals(rawSha1)) {
+                        if (rawSha1 != null && !actualSha1.equalsIgnoreCase(rawSha1)) {
                             throw new ArtifactMalformedException("File " + entry.getKey() + " has incorrect SHA-1 hash: expected " + rawSha1 + ", got " + actualSha1);
                         }
 
