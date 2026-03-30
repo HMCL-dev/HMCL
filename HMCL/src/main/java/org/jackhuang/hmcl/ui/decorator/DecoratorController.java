@@ -18,10 +18,8 @@
 package org.jackhuang.hmcl.ui.decorator;
 
 import com.jfoenix.controls.JFXSnackbar;
+import com.jfoenix.controls.JFXSnackbarLayout;
 import javafx.animation.Interpolator;
-import javafx.animation.KeyFrame;
-import javafx.animation.KeyValue;
-import javafx.animation.Timeline;
 import javafx.beans.InvalidationListener;
 import javafx.beans.WeakInvalidationListener;
 import javafx.geometry.Insets;
@@ -36,7 +34,6 @@ import javafx.scene.paint.Color;
 import javafx.scene.paint.Paint;
 import javafx.stage.Stage;
 import javafx.util.Duration;
-import org.jackhuang.hmcl.Launcher;
 import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.auth.authlibinjector.AuthlibInjectorDnD;
 import org.jackhuang.hmcl.setting.EnumBackgroundImage;
@@ -46,7 +43,6 @@ import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.DialogUtils;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.account.AddAuthlibInjectorServerPane;
-import org.jackhuang.hmcl.ui.animation.AnimationUtils;
 import org.jackhuang.hmcl.ui.animation.ContainerAnimations;
 import org.jackhuang.hmcl.ui.animation.Motion;
 import org.jackhuang.hmcl.ui.animation.TransitionPane.AnimationProducer;
@@ -54,20 +50,19 @@ import org.jackhuang.hmcl.ui.construct.JFXDialogPane;
 import org.jackhuang.hmcl.ui.construct.Navigator;
 import org.jackhuang.hmcl.ui.wizard.Refreshable;
 import org.jackhuang.hmcl.ui.wizard.WizardProvider;
-import org.jackhuang.hmcl.util.Lang;
+import org.jackhuang.hmcl.util.MathUtils;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.util.List;
+import java.util.ArrayList;
 import java.util.Locale;
 import java.util.Random;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import static java.util.stream.Collectors.toList;
 import static org.jackhuang.hmcl.setting.ConfigHolder.config;
 import static org.jackhuang.hmcl.ui.FXUtils.newBuiltinImage;
 import static org.jackhuang.hmcl.ui.FXUtils.onEscPressed;
@@ -80,28 +75,6 @@ public class DecoratorController {
 
     public DecoratorController(Stage stage, Node mainPage) {
         decorator = new Decorator(stage);
-        decorator.setOnCloseButtonAction(() -> {
-            if (AnimationUtils.playWindowAnimation()) {
-                Timeline timeline = new Timeline(
-                        new KeyFrame(Duration.millis(0),
-                                new KeyValue(decorator.opacityProperty(), 1, Motion.EASE),
-                                new KeyValue(decorator.scaleXProperty(), 1, Motion.EASE),
-                                new KeyValue(decorator.scaleYProperty(), 1, Motion.EASE),
-                                new KeyValue(decorator.scaleZProperty(), 0.3, Motion.EASE)
-                        ),
-                        new KeyFrame(Duration.millis(200),
-                                new KeyValue(decorator.opacityProperty(), 0, Motion.EASE),
-                                new KeyValue(decorator.scaleXProperty(), 0.8, Motion.EASE),
-                                new KeyValue(decorator.scaleYProperty(), 0.8, Motion.EASE),
-                                new KeyValue(decorator.scaleZProperty(), 0.8, Motion.EASE)
-                        )
-                );
-                timeline.setOnFinished(event -> Launcher.stopApplication());
-                timeline.play();
-            } else {
-                Launcher.stopApplication();
-            }
-        });
         decorator.titleTransparentProperty().bind(config().titleTransparentProperty());
 
         navigator = new Navigator();
@@ -220,7 +193,10 @@ public class DecoratorController {
                 String backgroundImage = config().getBackgroundImage();
                 if (backgroundImage != null)
                     try {
-                        image = tryLoadImage(Paths.get(backgroundImage));
+                        Path path = Path.of(backgroundImage);
+                        image = Files.isDirectory(path)
+                                ? randomImageIn(path)
+                                : tryLoadImage(path);
                     } catch (Exception e) {
                         LOG.warning("Couldn't load background image", e);
                     }
@@ -242,7 +218,7 @@ public class DecoratorController {
                 return new Background(new BackgroundFill(new Color(1, 1, 1, 0.5), CornerRadii.EMPTY, Insets.EMPTY));
             case PAINT:
                 Paint paint = config().getBackgroundPaint();
-                double opacity = Lang.clamp(0, config().getBackgroundImageOpacity(), 100) / 100.;
+                double opacity = MathUtils.clamp(config().getBackgroundImageOpacity(), 0, 100) / 100.;
                 if (paint instanceof Color || paint == null) {
                     Color color = (Color) paint;
                     if (color == null)
@@ -326,14 +302,14 @@ public class DecoratorController {
             return null;
         }
 
-        List<Path> candidates;
+        ArrayList<Path> candidates;
         try (Stream<Path> stream = Files.list(imageDir)) {
             candidates = stream
                     .filter(it -> FXUtils.IMAGE_EXTENSIONS.contains(getExtension(it).toLowerCase(Locale.ROOT)))
                     .filter(Files::isReadable)
-                    .collect(toList());
+                    .collect(Collectors.toCollection(ArrayList::new));
         } catch (IOException e) {
-            LOG.warning("Failed to list files in ./bg", e);
+            LOG.warning("Failed to list files in " + imageDir, e);
             return null;
         }
 
@@ -454,7 +430,7 @@ public class DecoratorController {
     // ==== Toast ====
 
     public void showToast(String content) {
-        decorator.getSnackbar().fireEvent(new JFXSnackbar.SnackbarEvent(content, null, 2000L, false, null));
+        decorator.getSnackbar().fireEvent(new JFXSnackbar.SnackbarEvent(new JFXSnackbarLayout(content)));
     }
 
     // ==== Wizard ====

@@ -72,7 +72,7 @@ public final class WorldManageUIUtils {
         FileChooser fileChooser = new FileChooser();
         fileChooser.setTitle(i18n("world.export.title"));
         fileChooser.getExtensionFilters().add(new FileChooser.ExtensionFilter(i18n("world"), "*.zip"));
-        fileChooser.setInitialFileName(world.getWorldName());
+        fileChooser.setInitialFileName(world.getWorldName() + ".zip");
         Path file = FileUtils.toPath(fileChooser.showSaveDialog(Controllers.getStage()));
         if (file == null) {
             return;
@@ -144,7 +144,7 @@ public final class WorldManageUIUtils {
             FileChannel lock = world.lock();
             LOG.info("Acquired lock on world " + world.getFileName());
             return lock;
-        } catch (IOException ignored) {
+        } catch (WorldLockedException ignored) {
             return null;
         }
     }

@@ -37,6 +37,7 @@ import org.jackhuang.hmcl.java.JavaRuntime;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
 
 import java.io.IOException;
+import java.lang.management.ManagementFactory;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -66,7 +67,7 @@ public final class UpdateHandler {
                 performMigration();
             } catch (IOException e) {
                 LOG.warning("Failed to perform migration", e);
-                SwingUtils.showErrorDialog(i18n("fatal.apply_update_failure", Metadata.PUBLISH_URL) + "\n" + StringUtils.getStackTrace(e));
+                SwingUtils.showErrorDialog(i18n("fatal.apply_update_failure", Metadata.MANUAL_UPDATE_URL) + "\n" + StringUtils.getStackTrace(e));
             }
             return true;
         }
@@ -81,7 +82,7 @@ public final class UpdateHandler {
                 applyUpdate(Paths.get(args[1]));
             } catch (IOException e) {
                 LOG.warning("Failed to apply update", e);
-                SwingUtils.showErrorDialog(i18n("fatal.apply_update_failure", Metadata.PUBLISH_URL) + "\n" + StringUtils.getStackTrace(e));
+                SwingUtils.showErrorDialog(i18n("fatal.apply_update_failure", Metadata.MANUAL_UPDATE_URL) + "\n" + StringUtils.getStackTrace(e));
             }
             return true;
         }
@@ -174,15 +175,25 @@ public final class UpdateHandler {
         startJava(updateTo, "--apply-to", self.toString());
     }
 
-    private static void startJava(Path jar, String... appArgs) throws IOException {
+    public static void startJava(Path jar, String... appArgs) throws IOException {
         List<String> commandline = new ArrayList<>();
         commandline.add(JavaRuntime.getDefault().getBinary().toString());
-        for (Map.Entry<Object, Object> entry : System.getProperties().entrySet()) {
-            Object key = entry.getKey();
-            if (key instanceof String && ((String) key).startsWith("hmcl.")) {
-                commandline.add("-D" + key + "=" + entry.getValue());
+
+        try {
+            for (String inputArgument : ManagementFactory.getRuntimeMXBean().getInputArguments()) {
+                if (inputArgument.startsWith("-D") || inputArgument.startsWith("-X")) {
+                    commandline.add(inputArgument);
+                }
+            }
+        } catch (Throwable ignored) {
+            // ManagementFactory not available
+            for (Map.Entry<Object, Object> entry : System.getProperties().entrySet()) {
+                if (entry.getKey() instanceof String key && key.startsWith("hmcl.")) {
+                    commandline.add("-D" + key + "=" + entry.getValue());
+                }
             }
         }
+
         commandline.add("-jar");
         commandline.add(jar.toAbsolutePath().toString());
         commandline.addAll(Arrays.asList(appArgs));

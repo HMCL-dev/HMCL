@@ -35,7 +35,6 @@ import javafx.scene.Node;
 import javafx.scene.control.SelectionMode;
 import javafx.scene.control.SkinBase;
 import javafx.scene.image.Image;
-import javafx.scene.image.ImageView;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
 import javafx.scene.input.MouseEvent;
@@ -43,17 +42,14 @@ import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.StackPane;
 import javafx.util.Duration;
-import org.jackhuang.hmcl.mod.Datapack;
+import org.jackhuang.hmcl.mod.DataPack;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
 import org.jackhuang.hmcl.ui.animation.ContainerAnimations;
 import org.jackhuang.hmcl.ui.animation.TransitionPane;
-import org.jackhuang.hmcl.ui.construct.ComponentList;
-import org.jackhuang.hmcl.ui.construct.MDListCell;
-import org.jackhuang.hmcl.ui.construct.SpinnerPane;
-import org.jackhuang.hmcl.ui.construct.TwoLineListItem;
+import org.jackhuang.hmcl.ui.construct.*;
 import org.jackhuang.hmcl.util.io.CompressingUtils;
 import org.jetbrains.annotations.Nullable;
 
@@ -71,7 +67,7 @@ import static org.jackhuang.hmcl.ui.ToolbarListPageSkin.createToolbarButton2;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
-final class DatapackListPageSkin extends SkinBase<DatapackListPage> {
+final class DataPackListPageSkin extends SkinBase<DataPackListPage> {
 
     private final TransitionPane toolbarPane;
     private final HBox searchBar;
@@ -79,8 +75,8 @@ final class DatapackListPageSkin extends SkinBase<DatapackListPage> {
     private final HBox selectingToolbar;
     InvalidationListener updateBarByStateWeakListener;
 
-    private final JFXListView<DatapackInfoObject> listView;
-    private final FilteredList<DatapackInfoObject> filteredList;
+    private final JFXListView<DataPackInfoObject> listView;
+    private final FilteredList<DataPackInfoObject> filteredList;
 
     private final BooleanProperty isSearching = new SimpleBooleanProperty(false);
     private final BooleanProperty isSelecting = new SimpleBooleanProperty(false);
@@ -89,7 +85,7 @@ final class DatapackListPageSkin extends SkinBase<DatapackListPage> {
     private static final AtomicInteger lastShiftClickIndex = new AtomicInteger(-1);
     final Consumer<Integer> toggleSelect;
 
-    DatapackListPageSkin(DatapackListPage skinnable) {
+    DataPackListPageSkin(DataPackListPage skinnable) {
         super(skinnable);
 
         StackPane pane = new StackPane();
@@ -114,16 +110,23 @@ final class DatapackListPageSkin extends SkinBase<DatapackListPage> {
                     createToolbarButton2(i18n("search"), SVG.SEARCH, () -> isSearching.set(true))
             );
 
+            JFXButton removeButton = createToolbarButton2(i18n("button.remove"), SVG.DELETE_FOREVER, () -> {
+                Controllers.confirm(i18n("button.remove.confirm"), i18n("button.remove"), () -> {
+                    skinnable.removeSelected(listView.getSelectionModel().getSelectedItems());
+                }, null);
+            });
+            JFXButton enableButton = createToolbarButton2(i18n("mods.enable"), SVG.CHECK, () ->
+                    skinnable.enableSelected(listView.getSelectionModel().getSelectedItems()));
+            JFXButton disableButton = createToolbarButton2(i18n("mods.disable"), SVG.CLOSE, () ->
+                    skinnable.disableSelected(listView.getSelectionModel().getSelectedItems()));
+            removeButton.disableProperty().bind(getSkinnable().readOnly);
+            enableButton.disableProperty().bind(getSkinnable().readOnly);
+            disableButton.disableProperty().bind(getSkinnable().readOnly);
+
             selectingToolbar.getChildren().addAll(
-                    createToolbarButton2(i18n("button.remove"), SVG.DELETE, () -> {
-                        Controllers.confirm(i18n("button.remove.confirm"), i18n("button.remove"), () -> {
-                            skinnable.removeSelected(listView.getSelectionModel().getSelectedItems());
-                        }, null);
-                    }),
-                    createToolbarButton2(i18n("mods.enable"), SVG.CHECK, () ->
-                            skinnable.enableSelected(listView.getSelectionModel().getSelectedItems())),
-                    createToolbarButton2(i18n("mods.disable"), SVG.CLOSE, () ->
-                            skinnable.disableSelected(listView.getSelectionModel().getSelectedItems())),
+                    removeButton,
+                    enableButton,
+                    disableButton,
                     createToolbarButton2(i18n("button.select_all"), SVG.SELECT_ALL, () ->
                             listView.getSelectionModel().selectRange(0, listView.getItems().size())),//reason for not using selectAll() is that selectAll() first clears all selected then selects all, causing the toolbar to flicker
                     createToolbarButton2(i18n("button.cancel"), SVG.CANCEL, () ->
@@ -176,10 +179,9 @@ final class DatapackListPageSkin extends SkinBase<DatapackListPage> {
         {
             SpinnerPane center = new SpinnerPane();
             ComponentList.setVgrow(center, Priority.ALWAYS);
-            center.getStyleClass().add("large-spinner-pane");
             center.loadingProperty().bind(skinnable.loadingProperty());
 
-            listView.setCellFactory(x -> new DatapackInfoListCell(listView));
+            listView.setCellFactory(x -> new DataPackInfoListCell(listView, getSkinnable().readOnly));
             listView.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
             this.listView.setItems(filteredList);
 
@@ -214,13 +216,13 @@ final class DatapackListPageSkin extends SkinBase<DatapackListPage> {
         }
     }
 
-    static class DatapackInfoObject extends RecursiveTreeObject<DatapackInfoObject> {
+    static class DataPackInfoObject extends RecursiveTreeObject<DataPackInfoObject> {
         private final BooleanProperty activeProperty;
-        private final Datapack.Pack packInfo;
+        private final DataPack.Pack packInfo;
 
         private SoftReference<CompletableFuture<Image>> iconCache;
 
-        DatapackInfoObject(Datapack.Pack packInfo) {
+        DataPackInfoObject(DataPack.Pack packInfo) {
             this.packInfo = packInfo;
             this.activeProperty = packInfo.activeProperty();
         }
@@ -233,7 +235,7 @@ final class DatapackListPageSkin extends SkinBase<DatapackListPage> {
             return packInfo.getDescription().toString();
         }
 
-        Datapack.Pack getPackInfo() {
+        DataPack.Pack getPackInfo() {
             return packInfo;
         }
 
@@ -268,41 +270,41 @@ final class DatapackListPageSkin extends SkinBase<DatapackListPage> {
             }
         }
 
-        public void loadIcon(ImageView imageView, @Nullable WeakReference<ObjectProperty<DatapackInfoObject>> current) {
+        public void loadIcon(ImageContainer imageContainer, @Nullable WeakReference<ObjectProperty<DataPackInfoObject>> current) {
             SoftReference<CompletableFuture<Image>> iconCache = this.iconCache;
             CompletableFuture<Image> imageFuture;
             if (iconCache != null && (imageFuture = iconCache.get()) != null) {
                 Image image = imageFuture.getNow(null);
                 if (image != null) {
-                    imageView.setImage(image);
+                    imageContainer.setImage(image);
                     return;
                 }
             } else {
                 imageFuture = CompletableFuture.supplyAsync(this::loadIcon, Schedulers.io());
                 this.iconCache = new SoftReference<>(imageFuture);
             }
-            imageView.setImage(FXUtils.newBuiltinImage("/assets/img/unknown_pack.png"));
+            imageContainer.setImage(FXUtils.newBuiltinImage("/assets/img/unknown_pack.png"));
             imageFuture.thenAcceptAsync(image -> {
                 if (current != null) {
-                    ObjectProperty<DatapackInfoObject> infoObjectProperty = current.get();
+                    ObjectProperty<DataPackInfoObject> infoObjectProperty = current.get();
                     if (infoObjectProperty == null || infoObjectProperty.get() != this) {
                         // The current ListCell has already switched to another object
                         return;
                     }
                 }
-                imageView.setImage(image);
+                imageContainer.setImage(image);
             }, Schedulers.javafx());
 
         }
     }
 
-    private final class DatapackInfoListCell extends MDListCell<DatapackInfoObject> {
+    private final class DataPackInfoListCell extends MDListCell<DataPackInfoObject> {
         final JFXCheckBox checkBox = new JFXCheckBox();
-        ImageView imageView = new ImageView();
+        ImageContainer imageContainer = new ImageContainer(32);
         final TwoLineListItem content = new TwoLineListItem();
         BooleanProperty booleanProperty;
 
-        DatapackInfoListCell(JFXListView<DatapackInfoObject> listView) {
+        DataPackInfoListCell(JFXListView<DataPackInfoObject> listView, BooleanProperty isReadOnlyProperty) {
             super(listView);
 
             HBox container = new HBox(8);
@@ -312,20 +314,19 @@ final class DatapackListPageSkin extends SkinBase<DatapackListPage> {
             content.setMouseTransparent(true);
             setSelectable();
 
-            imageView.setFitWidth(32);
-            imageView.setFitHeight(32);
-            imageView.setPreserveRatio(true);
-            imageView.setImage(FXUtils.newBuiltinImage("/assets/img/unknown_pack.png"));
+            checkBox.disableProperty().bind(isReadOnlyProperty);
+
+            imageContainer.setImage(FXUtils.newBuiltinImage("/assets/img/unknown_pack.png"));
 
             StackPane.setMargin(container, new Insets(8));
-            container.getChildren().setAll(checkBox, imageView, content);
+            container.getChildren().setAll(checkBox, imageContainer, content);
             getContainer().getChildren().setAll(container);
 
             getContainer().getParent().addEventHandler(MouseEvent.MOUSE_PRESSED, mouseEvent -> handleSelect(this, mouseEvent));
         }
 
         @Override
-        protected void updateControl(DatapackInfoObject dataItem, boolean empty) {
+        protected void updateControl(DataPackInfoObject dataItem, boolean empty) {
             if (empty) return;
             content.setTitle(dataItem.getTitle());
             content.setSubtitle(dataItem.getSubtitle());
@@ -333,11 +334,11 @@ final class DatapackListPageSkin extends SkinBase<DatapackListPage> {
                 checkBox.selectedProperty().unbindBidirectional(booleanProperty);
             }
             checkBox.selectedProperty().bindBidirectional(booleanProperty = dataItem.activeProperty);
-            dataItem.loadIcon(imageView, new WeakReference<>(this.itemProperty()));
+            dataItem.loadIcon(imageContainer, new WeakReference<>(this.itemProperty()));
         }
     }
 
-    public void handleSelect(DatapackInfoListCell cell, MouseEvent mouseEvent) {
+    public void handleSelect(DataPackInfoListCell cell, MouseEvent mouseEvent) {
         if (cell.isEmpty()) {
             mouseEvent.consume();
             return;
