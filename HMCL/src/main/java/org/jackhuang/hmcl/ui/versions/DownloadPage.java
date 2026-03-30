@@ -371,7 +371,7 @@ public class DownloadPage extends Control implements DecoratorPage {
             HBox.setHgrow(content, Priority.ALWAYS);
             var imageView = new ImageContainer(40);
             pane.getChildren().setAll(imageView, content);
-            FXUtils.setLimitHeight(this, 55);
+            FXUtils.setLimitHeight(this, 60);
             FXUtils.onClicked(pane, () -> {
                 fireEvent(new DialogCloseEvent());
                 Controllers.navigate(new DownloadPage(page, addon, version, callback));
@@ -493,6 +493,7 @@ public class DownloadPage extends Control implements DecoratorPage {
             loadDependencies(version, selfPage, spinnerPane, dependenciesList);
             spinnerPane.setOnFailedAction(e -> loadDependencies(version, selfPage, spinnerPane, dependenciesList));
 
+            scrollPane.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
             scrollPane.setContent(dependenciesList);
             scrollPane.setFitToWidth(true);
             scrollPane.setFitToHeight(true);
