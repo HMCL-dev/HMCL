@@ -30,7 +30,6 @@ import org.jackhuang.hmcl.event.EventBus;
 import org.jackhuang.hmcl.event.EventPriority;
 import org.jackhuang.hmcl.event.RefreshedVersionsEvent;
 import org.jackhuang.hmcl.game.GameRepository;
-import org.jackhuang.hmcl.game.HMCLGameRepository;
 import org.jackhuang.hmcl.setting.Profile;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
@@ -45,6 +44,7 @@ import org.jackhuang.hmcl.ui.decorator.DecoratorPage;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
 
+import java.nio.file.Path;
 import java.util.Optional;
 import java.util.function.Supplier;
 
@@ -201,11 +201,17 @@ public class VersionPage extends DecoratorAnimatedPage implements DecoratorPage 
     }
 
     private void clearAssets() {
-        HMCLGameRepository baseDirectory = getProfile().getRepository();
+        Path assetsDir = getProfile().getRepository().getBaseDirectory().resolve("assets");
+
+        Profile.ProfileVersion currentVersion = version.get();
+        Path resourcesDir = currentVersion != null
+                ? getProfile().getRepository().getRunDirectory(currentVersion.getVersion()).resolve("resources")
+                : null;
+
         Task.runAsync(Schedulers.io(), () -> {
-            FileUtils.deleteDirectoryQuietly(baseDirectory.getBaseDirectory().resolve("assets"));
-            if (version.get() != null) {
-                FileUtils.deleteDirectoryQuietly(baseDirectory.getRunDirectory(version.get().getVersion()).resolve("resources"));
+            FileUtils.deleteDirectoryQuietly(assetsDir);
+            if (resourcesDir != null) {
+                FileUtils.deleteDirectoryQuietly(resourcesDir);
             }
         }).whenComplete(Schedulers.javafx(), (exception) -> {
             if (exception != null) {
