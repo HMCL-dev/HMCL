@@ -491,7 +491,7 @@ public class DownloadPage extends Control implements DecoratorPage {
             box.getChildren().setAll(addonItem);
 
             JFXHyperlink changelogButton = new JFXHyperlink(i18n("mods.changelog"));
-            changelogButton.getStyleClass().add("dialog-accept");
+            changelogButton.setDisable(true);
             loadChangelog(version, selfPage.repository, changelogButton);
 
             SpinnerPane spinnerPane = new SpinnerPane();
@@ -599,7 +599,6 @@ public class DownloadPage extends Control implements DecoratorPage {
         }
 
         private void loadChangelog(RemoteMod.Version version, RemoteModRepository repo, JFXHyperlink changelogButton) {
-            changelogButton.setDisable(true);
             Task.supplyAsync(() -> {
                 if (changelogCache.containsKey(version)) {
                     return Optional.ofNullable(changelogCache.get(version));
