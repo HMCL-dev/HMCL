@@ -1463,6 +1463,11 @@
     -jfx-radius: 9;
 }
 
+.spinner-pane .spinner-pane-content {
+    -fx-padding: 10px;
+    -fx-spacing: 10px;
+}
+
 /*******************************************************************************
 *                                                                              *
 * JFX Combo Box                                                                *
