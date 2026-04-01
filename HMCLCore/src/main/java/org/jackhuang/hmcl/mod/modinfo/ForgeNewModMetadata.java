@@ -181,13 +181,13 @@ public final class ForgeNewModMetadata {
 
         if (modLoaderType == ModLoaderType.NEO_FORGED) {
             try {
-                return fromFile0("META-INF/neoforge.mods.toml", ModLoaderType.NEO_FORGED, modManager, modFile, tree);
+                return fromFile0("META-INF/neoforge.mods.toml", modLoaderType, modManager, modFile, tree);
             } catch (Exception ignored) {
             }
         }
 
         try {
-            return fromFile0("META-INF/mods.toml", ModLoaderType.FORGE, modManager, modFile, tree);
+            return fromFile0("META-INF/mods.toml", modLoaderType, modManager, modFile, tree);
         } catch (Exception ignored) {
         }
 
