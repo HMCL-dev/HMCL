@@ -45,7 +45,6 @@ import org.jackhuang.hmcl.ui.download.ModpackInstallWizardProvider;
 import org.jackhuang.hmcl.ui.export.ExportWizardProvider;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.TaskCancellationAction;
-import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
 
@@ -135,23 +134,24 @@ public final class Versions {
 
     public static CompletableFuture<String> renameVersion(Profile profile, String version) {
         return Controllers.prompt(i18n("version.manage.rename.message"), (newName, handler) -> {
-                    if (newName.equals(version)) {
-                        handler.resolve();
-                        return;
-                    }
-                    if (profile.getRepository().renameVersion(version, newName)) {
-                        handler.resolve();
-                        profile.getRepository().refreshVersionsAsync()
-                                .thenRunAsync(Schedulers.javafx(), () -> {
-                                    if (profile.getRepository().hasVersion(newName)) {
-                                        profile.setSelectedVersion(newName);
-                                    }
-                                }).start();
-                    } else {
-                        handler.reject(i18n("version.manage.rename.fail"));
-                    }
-                }, version, new Validator(i18n("install.new_game.malformed"), HMCLGameRepository::isValidVersionId),
-                new Validator(i18n("install.new_game.already_exists"), newVersionName -> !profile.getRepository().versionIdConflicts(newVersionName) || newVersionName.equals(version)));
+            if (newName.equals(version)) {
+                handler.resolve();
+                return;
+            }
+            if (profile.getRepository().renameVersion(version, newName)) {
+                handler.resolve();
+                profile.getRepository().refreshVersionsAsync()
+                        .thenRunAsync(Schedulers.javafx(), () -> {
+                            if (profile.getRepository().hasVersion(newName)) {
+                                profile.setSelectedVersion(newName);
+                            }
+                        }).start();
+            } else {
+                handler.reject(i18n("version.manage.rename.fail"));
+            }
+        }, version,
+            new Validator(i18n("install.new_game.malformed"), HMCLGameRepository::isValidVersionId),
+            new Validator(i18n("install.new_game.already_exists"), newVersionName -> !profile.getRepository().versionIdConflicts(newVersionName) || newVersionName.equals(version)));
     }
 
     public static void exportVersion(Profile profile, String version) {
