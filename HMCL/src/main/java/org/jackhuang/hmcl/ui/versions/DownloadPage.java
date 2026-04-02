@@ -273,7 +273,7 @@ public class DownloadPage extends Control implements DecoratorPage {
                         Version game = repository.getResolvedPreservingPatchesVersion(control.version.getVersion());
                         String gameVersion = repository.getGameVersion(game).orElse(null);
 
-                        if (gameVersion != null) {
+                        if (gameVersion != null && control.versions.containsKey(gameVersion)) {
                             List<RemoteMod.Version> modVersions = control.versions.get(gameVersion);
                             if (modVersions != null && !modVersions.isEmpty()) {
                                 Set<ModLoaderType> targetLoaders = LibraryAnalyzer.analyze(game, gameVersion).getModLoaders();
