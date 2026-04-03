@@ -1467,6 +1467,11 @@
     -jfx-radius: 9;
 }
 
+.spinner-pane .spinner-pane-content {
+    -fx-padding: 10px;
+    -fx-spacing: 10px;
+}
+
 /*******************************************************************************
 *                                                                              *
 * JFX Combo Box                                                                *
@@ -1567,6 +1572,21 @@
 
 .custom-color-dialog .tab-selected-line {
     -fx-background-color: -monet-on-surface;
+}
+
+.custom-color-dialog .jfx-color-dialog-actions {
+    -fx-background-color: -monet-surface;
+    -fx-padding: 0.0 10.0 5.0 0.0;
+    -fx-alignment: center-right;
+}
+
+.custom-color-dialog .jfx-color-dialog-accept {
+    -fx-padding: 0.7em 0.8em;
+}
+
+.custom-color-dialog .jfx-color-dialog-cancel {
+    -fx-text-fill: -monet-on-surface-variant;
+    -fx-padding: 0.7em 0.8em;
 }
 
 /*******************************************************************************
