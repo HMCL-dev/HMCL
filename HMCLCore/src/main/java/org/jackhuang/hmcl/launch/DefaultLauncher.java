@@ -305,6 +305,10 @@ public class DefaultLauncher extends Launcher {
             res.add("-javaagent:" + javaAgent);
         }
 
+        if (version.getMainClass() == null) {
+            throw new IllegalStateException("Main class is null for instance " + version.getId());
+        }
+
         res.add(version.getMainClass());
 
         res.addAll(Arguments.parseStringArguments(version.getMinecraftArguments().map(StringUtils::tokenize).orElseGet(ArrayList::new), configuration));
