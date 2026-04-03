@@ -101,6 +101,10 @@ public class DownloadListPage extends Control implements DecoratorPage, VersionP
         this.downloadProvider = DownloadProviders.getDownloadProvider();
     }
 
+    public DownloadProvider getDownloadProvider() {
+        return downloadProvider;
+    }
+
     public ObservableList<Node> getActions() {
         return actions;
     }
@@ -233,17 +237,19 @@ public class DownloadListPage extends Control implements DecoratorPage, VersionP
 
     private static class ModDownloadListPageSkin extends SkinBase<DownloadListPage> {
         private final JFXListView<RemoteMod> listView = new JFXListView<>();
-        private final RemoteImageLoader iconLoader = new RemoteImageLoader() {
-            @Override
-            protected @NotNull Task<Image> createLoadTask(@NotNull URI uri) {
-                return FXUtils.getRemoteImageTask(uri, 80, 80, true, true);
-            }
-        };
+        private final RemoteImageLoader iconLoader;
 
         protected ModDownloadListPageSkin(DownloadListPage control) {
             super(control);
 
             listView.getStyleClass().add("no-horizontal-scrollbar");
+
+            iconLoader = new RemoteImageLoader(control.downloadProvider) {
+                @Override
+                protected @NotNull Task<Image> createLoadTask(@NotNull List<URI> uris) {
+                    return FXUtils.getRemoteImageTask(uris, 80, 80, true, true);
+                }
+            };
 
             BorderPane pane = new BorderPane();
 

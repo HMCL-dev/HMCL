@@ -54,6 +54,7 @@ import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.TaskCancellationAction;
 import org.jackhuang.hmcl.util.io.CompressingUtils;
+import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.platform.*;
 import org.jackhuang.hmcl.util.versioning.VersionNumber;
 
@@ -98,7 +99,7 @@ public class RootPage extends DecoratorAnimatedPage implements DecoratorPage {
         if (mainPage == null) {
             MainPage mainPage = new MainPage();
             FXUtils.applyDragListener(mainPage,
-                    file -> ModpackHelper.isFileModpackByExtension(file) || NBTFileType.isNBTFileByExtension(file),
+                    file -> ModpackHelper.isFileModpackByExtension(file) || NBTFileType.isNBTFileByExtension(file) || "json".equalsIgnoreCase(FileUtils.getExtension(file)),
                     modpacks -> {
                         Path file = modpacks.get(0);
                         if (ModpackHelper.isFileModpackByExtension(file)) {
@@ -113,6 +114,8 @@ public class RootPage extends DecoratorAnimatedPage implements DecoratorPage {
                                 Controllers.dialog(i18n("nbt.open.failed") + "\n\n" + StringUtils.getStackTrace(e),
                                         i18n("message.error"), MessageDialogPane.MessageType.ERROR);
                             }
+                        } else if ("json".equalsIgnoreCase(FileUtils.getExtension(file))) {
+                            Versions.installFromJson(Profiles.getSelectedProfile(), file);
                         }
                     });
 

@@ -151,8 +151,9 @@ public final class HMCLJavaRepository implements JavaRepository {
     @Override
     public Task<JavaRuntime> getDownloadJavaTask(DownloadProvider downloadProvider, Platform platform, GameJavaVersion gameJavaVersion) {
         Path javaDir = getJavaDir(platform, gameJavaVersion);
+        Path tempDir = getPlatformRoot(platform).resolve(".tmp").resolve(javaDir.getFileName());
 
-        return new MojangJavaDownloadTask(downloadProvider, javaDir, gameJavaVersion, JavaManager.getMojangJavaPlatform(platform)).thenApplyAsync(result -> {
+        return new MojangJavaDownloadTask(downloadProvider, javaDir, tempDir, gameJavaVersion, JavaManager.getMojangJavaPlatform(platform)).thenApplyAsync(result -> {
             Path executable;
             try {
                 executable = JavaManager.getExecutable(javaDir).toRealPath();
@@ -167,14 +168,14 @@ public final class HMCLJavaRepository implements JavaRepository {
             if (JavaManager.isCompatible(platform))
                 info = JavaInfoUtils.fromExecutable(executable, false);
             else
-                info = new JavaInfo(platform, result.download.getVersion().getName(), null);
+                info = new JavaInfo(platform, result.download().version().name(), null);
 
             Map<String, Object> update = new LinkedHashMap<>();
             update.put("provider", "mojang");
             update.put("component", gameJavaVersion.component());
 
             Map<String, JavaLocalFiles.Local> files = new LinkedHashMap<>();
-            result.remoteFiles.getFiles().forEach((path, file) -> {
+            result.remoteFiles().getFiles().forEach((path, file) -> {
                 if (file instanceof MojangJavaRemoteFiles.RemoteFile) {
                     DownloadInfo downloadInfo = ((MojangJavaRemoteFiles.RemoteFile) file).getDownloads().get("raw");
                     if (downloadInfo != null) {

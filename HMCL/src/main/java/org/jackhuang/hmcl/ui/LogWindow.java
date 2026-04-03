@@ -36,6 +36,7 @@ import javafx.stage.Stage;
 import org.jackhuang.hmcl.game.GameDumpGenerator;
 import org.jackhuang.hmcl.game.Log;
 import org.jackhuang.hmcl.setting.StyleSheets;
+import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.theme.Themes;
 import org.jackhuang.hmcl.ui.construct.MessageDialogPane;
 import org.jackhuang.hmcl.ui.construct.NoneMultipleSelectionModel;
@@ -241,6 +242,10 @@ public final class LogWindow extends Stage {
             });
         }
 
+        private ManagedProcess getGameProcess() {
+            return gameProcess;
+        }
+
         @Override
         protected Skin<?> createDefaultSkin() {
             return new LogWindowSkin(this);
@@ -424,6 +429,13 @@ public final class LogWindow extends Stage {
                 JFXButton clearButton = new JFXButton(i18n("button.clear"));
                 clearButton.setOnAction(e -> getSkinnable().onClear());
                 hBox.getChildren().setAll(autoScrollCheckBox, exportLogsButton, terminateButton, exportDumpPane, clearButton);
+
+                control.getGameProcess().getProcess()
+                        .onExit()
+                        .thenRunAsync(() -> {
+                            terminateButton.setDisable(true);
+                            exportDumpButton.setDisable(true);
+                        }, Schedulers.javafx());
 
                 vbox.getChildren().add(bottom);
             }
