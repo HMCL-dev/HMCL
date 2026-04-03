@@ -365,8 +365,8 @@ public final class MainPage extends StackPane implements DecoratorPage {
     }
 
     private void closeUpdateBubble() {
-        showUpdateDialog.unbind();
-        showUpdateDialog.set(false);
+        showUpdate.unbind();
+        showUpdate.set(false);
     }
 
     @Override
