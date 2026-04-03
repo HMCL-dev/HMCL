@@ -108,7 +108,7 @@ public class ModUpdatesPage extends BorderPane implements DecoratorPage {
                 cell.getStyleClass().add("addon-changelog-table-cell");
                 cell.setOnMouseClicked(event -> {
                     List<ModUpdateObject> items = cell.getTableColumn().getTableView().getItems();
-                    if (cell.getIndex() >= items.size()) {
+                    if (cell.getIndex() >= items.size() || cell.getIndex() < 0) {
                         return;
                     }
                     ModUpdateObject object = items.get(cell.getIndex());

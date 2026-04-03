@@ -62,7 +62,7 @@ import static org.jackhuang.hmcl.ui.FXUtils.onEscPressed;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 public class DownloadPage extends Control implements DecoratorPage {
-    private static final WeakHashMap<RemoteMod.Version, String> changelogCache = new WeakHashMap<>();
+    private static final Map<RemoteMod.Version, String> changelogCache = Collections.synchronizedMap(new WeakHashMap<>());
 
     private final ReadOnlyObjectWrapper<State> state = new ReadOnlyObjectWrapper<>();
     private final BooleanProperty loaded = new SimpleBooleanProperty(false);
