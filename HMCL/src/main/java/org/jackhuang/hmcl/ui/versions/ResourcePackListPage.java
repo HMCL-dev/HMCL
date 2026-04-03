@@ -589,9 +589,7 @@ public final class ResourcePackListPage extends ListPageBase<ResourcePackListPag
             title.setTitle(pack.getFileName());
             title.setSubtitle(pack.getFileNameWithExtension());
             var compatibility = pack.getCompatibility();
-            if (compatibility == ResourcePackFile.Compatibility.COMPATIBLE) {
-                title.addTag(i18n("resourcepack.compatible"));
-            } else {
+            if (compatibility != ResourcePackFile.Compatibility.COMPATIBLE) {
                 title.addTagWarning(getWarning(compatibility));
             }
 
