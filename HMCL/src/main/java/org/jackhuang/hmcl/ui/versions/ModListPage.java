@@ -64,7 +64,7 @@ public final class ModListPage extends ListPageBase<ModListPageSkin.ModInfoObjec
     final EnumSet<ModLoaderType> supportedLoaders = EnumSet.noneOf(ModLoaderType.class);
 
     public ModListPage() {
-        FXUtils.applyDragListener(this, it -> Arrays.asList("jar", "zip", "litemod").contains(FileUtils.getExtension(it)), mods -> {
+        FXUtils.applyDragListener(this, it -> ModManager.MOD_EXTENSIONS.contains(FileUtils.getExtension(it).toLowerCase(Locale.ROOT)), mods -> {
             mods.forEach(it -> {
                 try {
                     modManager.addMod(it);

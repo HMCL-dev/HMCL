@@ -36,6 +36,8 @@ import static org.jackhuang.hmcl.util.Pair.pair;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 public final class ModManager extends LocalAddonManager<LocalModFile> {
+    public static final List<String> MOD_EXTENSIONS = List.of("jar", "litemod");
+
     @FunctionalInterface
     private interface ModMetadataReader {
         LocalModFile fromFile(ModManager modManager, Path modFile, ZipFileTree tree) throws IOException, JsonParseException;
@@ -282,7 +284,7 @@ public final class ModManager extends LocalAddonManager<LocalModFile> {
 
     public static boolean isFileNameMod(Path file) {
         String name = getLocalAddonName(file);
-        return name.endsWith(".jar") || name.endsWith(".litemod");
+        return MOD_EXTENSIONS.contains(FileUtils.getExtension(name).toLowerCase(Locale.ROOT));
     }
 
     public static boolean isFileMod(Path modFile) {

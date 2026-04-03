@@ -627,7 +627,9 @@ public final class ResourcePackListPage extends ListPageBase<ResourcePackListPag
                             button.setOnAction(e -> {
                                 fireEvent(new DialogCloseEvent());
                                 Controllers.navigate(new DownloadPage(
-                                        repository instanceof CurseForgeRemoteModRepository ? HMCLLocalizedDownloadListPage.ofCurseForgeMod(null, false) : HMCLLocalizedDownloadListPage.ofModrinthMod(null, false),
+                                        repository instanceof CurseForgeRemoteModRepository
+                                                ? HMCLLocalizedDownloadListPage.ofCurseForgeResourcePack(null, false)
+                                                : HMCLLocalizedDownloadListPage.ofModrinthResourcePack(null, false),
                                         remoteMod,
                                         new Profile.ProfileVersion(page.profile, page.instanceId),
                                         org.jackhuang.hmcl.ui.download.DownloadPage.FOR_RESOURCE_PACK
