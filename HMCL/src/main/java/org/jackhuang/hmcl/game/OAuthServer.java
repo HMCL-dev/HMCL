@@ -165,6 +165,8 @@ public final class OAuthServer extends NanoHTTPD implements OAuth.Session {
 
     @Override
     public void close() {
+        if (!future.isDone())
+            future.completeExceptionally(new AuthenticationException("OAuth server is closing"));
         stop();
     }
 
