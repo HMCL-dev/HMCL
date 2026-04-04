@@ -265,10 +265,6 @@ public final class Versions {
             Path file = FileUtils.toPath(chooser.showSaveDialog(Controllers.getStage()));
             if (file != null) {
                 try {
-                    if (file.getFileName().toString().contains("DEBUG_FORCE_EXT_DIALOG")) {
-                        throw new IllegalArgumentException("The extension of " + file + " is not recognized");
-                    }
-
                     LauncherHelper launcherHelper = new LauncherHelper(profile, account, id);
                     for (Consumer<LauncherHelper> injecter : injecters) {
                         injecter.accept(launcherHelper);
