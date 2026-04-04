@@ -512,7 +512,7 @@ public final class JavaManager {
                 JsonElement fileVersion = jsonFile.get("version");
 
                 Matcher matcher;
-                if (jsonFile.get("version") instanceof JsonPrimitive version
+                if (fileVersion instanceof JsonPrimitive version
                         && (matcher = CACHE_VERSION_PATTERN.matcher(version.getAsString())).matches()) {
                     int major = Integer.parseInt(matcher.group("major"));
 
