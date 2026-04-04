@@ -20,12 +20,10 @@ package org.jackhuang.hmcl.ui;
 import javafx.beans.InvalidationListener;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.FXCollections;
-import javafx.geometry.Pos;
 import javafx.scene.Cursor;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
 import javafx.scene.image.ImageView;
-import javafx.scene.layout.VBox;
 import javafx.scene.text.Text;
 import javafx.scene.text.TextFlow;
 import org.jackhuang.hmcl.task.Schedulers;
@@ -209,10 +207,9 @@ public final class HTMLRenderer {
         Text textNode = new Text(text);
         applyStyle(textNode);
         if (code) {
-            var block = new VBox(textNode);
-            block.setAlignment(Pos.CENTER);
-            block.getStyleClass().add("html-code-block");
-            children.add(block);
+            var codeFlow = new TextFlow(textNode);
+            codeFlow.getStyleClass().add("html-code-block");
+            children.add(codeFlow);
         } else {
             children.add(textNode);
         }
@@ -505,12 +502,14 @@ public final class HTMLRenderer {
         textFlow.getChildren().setAll(children);
         for (javafx.scene.Node node : children) {
             if (node instanceof ImageView img) {
-                InvalidationListener i = __ ->
+                InvalidationListener listener = __ ->
                         img.setFitWidth(Math.min(textFlow.getWidth() - 20D, img.getImage() == null ? 0D : img.getImage().getWidth()));
-                textFlow.widthProperty().addListener(i);
-                img.imageProperty().addListener(i);
+                textFlow.widthProperty().addListener(listener);
+                img.imageProperty().addListener(listener);
             } else if (node instanceof TableView<?> table) {
                 table.prefWidthProperty().bind(textFlow.widthProperty().add(-20D));
+            } else if (node instanceof TextFlow codeFlow) {
+                codeFlow.maxWidthProperty().bind(textFlow.widthProperty().add(-20D));
             }
         }
         return textFlow;

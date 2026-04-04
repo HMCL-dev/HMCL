@@ -314,6 +314,7 @@ public class ModUpdatesPage extends BorderPane implements DecoratorPage {
             SpinnerPane spinnerPane = new SpinnerPane();
             ScrollPane scrollPane = new ScrollPane();
             scrollPane.setFitToWidth(true);
+            scrollPane.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
             FXUtils.setOverflowHidden(scrollPane, 8);
 
             loadChangelog(object, spinnerPane, scrollPane);
