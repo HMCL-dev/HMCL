@@ -51,10 +51,21 @@ public final class CommandBuilder {
     /**
      * Parsing will ignore your manual escaping
      *
+     * @param arg command
+     * @return this
+     */
+    public CommandBuilder add(String arg) {
+        raw.add(new Item(arg, true));
+        return this;
+    }
+
+    /**
+     * Parsing will ignore your manual escaping
+     *
      * @param args commands
      * @return this
      */
-    public CommandBuilder add(String... args) {
+    public CommandBuilder addAll(String... args) {
         for (String s : args)
             raw.add(new Item(s, true));
         return this;

@@ -155,7 +155,32 @@ public class Translator_lzh extends Translator {
                 case "23w13a_or_b" -> "二三週一三暨";
                 case "24w14potato" -> "二四週一四芋";
                 case "25w14craftmine" -> "二五週一四礦";
-                default -> version;
+                default -> {
+                    if (version.length() >= 6 && version.charAt(2) == 'w') {
+                        Matcher matcher = Pattern.compile("(?<year>[0-9]{2})w(?<week>[0-9]{2})(?<suffix>.+)").matcher(version);
+                        if (matcher.matches()) {
+                            int year = Integer.parseInt(matcher.group("year"));
+                            int week = Integer.parseInt(matcher.group("week"));
+                            String suffix = matcher.group("suffix");
+                            char suffixFirstChar = suffix.charAt(0);
+
+                            StringBuilder builder = new StringBuilder();
+                            appendDigitByDigit(builder, String.valueOf(year));
+                            builder.append('週');
+                            appendDigitByDigit(builder, String.valueOf(week));
+
+                            if (suffix.length() == 1
+                                    && suffixFirstChar >= 'a' && (suffixFirstChar - 'a') < TIAN_GAN.length)
+                                builder.append(TIAN_GAN[suffixFirstChar - 'a']);
+                            else
+                                builder.append(suffix);
+
+                            yield builder.toString();
+                        }
+                    }
+
+                    yield version;
+                }
             };
         } else {
             return gameVersion.toString();

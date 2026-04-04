@@ -23,7 +23,6 @@ import javafx.application.Platform;
 import javafx.beans.binding.Bindings;
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.ObjectProperty;
-import javafx.beans.value.ChangeListener;
 import javafx.collections.ListChangeListener;
 import javafx.css.PseudoClass;
 import javafx.geometry.Insets;
@@ -31,7 +30,6 @@ import javafx.geometry.Pos;
 import javafx.scene.Node;
 import javafx.scene.control.*;
 import javafx.scene.image.Image;
-import javafx.scene.image.ImageView;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.HBox;
@@ -45,6 +43,7 @@ import org.jackhuang.hmcl.mod.RemoteMod;
 import org.jackhuang.hmcl.mod.RemoteModRepository;
 import org.jackhuang.hmcl.mod.curse.CurseForgeRemoteModRepository;
 import org.jackhuang.hmcl.mod.modrinth.ModrinthRemoteModRepository;
+import org.jackhuang.hmcl.setting.DownloadProviders;
 import org.jackhuang.hmcl.setting.Profile;
 import org.jackhuang.hmcl.setting.VersionIconType;
 import org.jackhuang.hmcl.task.Schedulers;
@@ -93,9 +92,6 @@ final class ModListPageSkin extends SkinBase<ModListPage> {
     // FXThread
     private boolean isSearching = false;
 
-    @SuppressWarnings({"FieldCanBeLocal", "unused"})
-    private final ChangeListener<Boolean> holder;
-
     ModListPageSkin(ModListPage skinnable) {
         super(skinnable);
 
@@ -106,12 +102,7 @@ final class ModListPageSkin extends SkinBase<ModListPage> {
         ComponentList root = new ComponentList();
         root.getStyleClass().add("no-padding");
         listView = new JFXListView<>();
-
-        this.holder = FXUtils.onWeakChange(skinnable.loadingProperty(), loading -> {
-            if (!loading) {
-                listView.scrollTo(0);
-            }
-        });
+        listView.getStyleClass().add("no-horizontal-scrollbar");
 
         {
             toolbarPane = new TransitionPane();
@@ -151,14 +142,20 @@ final class ModListPageSkin extends SkinBase<ModListPage> {
                     createToolbarButton2(i18n("button.refresh"), SVG.REFRESH, skinnable::refresh),
                     createToolbarButton2(i18n("mods.add"), SVG.ADD, skinnable::add),
                     createToolbarButton2(i18n("button.reveal_dir"), SVG.FOLDER_OPEN, skinnable::openModFolder),
-                    createToolbarButton2(i18n("mods.check_updates.button"), SVG.UPDATE, skinnable::checkUpdates),
+                    createToolbarButton2(i18n("mods.check_updates.button"), SVG.UPDATE, () ->
+                            skinnable.checkUpdates(
+                                    listView.getItems().stream()
+                                            .map(ModInfoObject::getModInfo)
+                                            .toList()
+                            )
+                    ),
                     createToolbarButton2(i18n("download"), SVG.DOWNLOAD, skinnable::download),
                     createToolbarButton2(i18n("search"), SVG.SEARCH, () -> changeToolbar(searchBar))
             );
 
             // Toolbar Selecting
             toolbarSelecting.getChildren().setAll(
-                    createToolbarButton2(i18n("button.remove"), SVG.DELETE, () -> {
+                    createToolbarButton2(i18n("button.remove"), SVG.DELETE_FOREVER, () -> {
                         Controllers.confirm(i18n("button.remove.confirm"), i18n("button.remove"), () -> {
                             skinnable.removeSelected(listView.getSelectionModel().getSelectedItems());
                         }, null);
@@ -167,6 +164,13 @@ final class ModListPageSkin extends SkinBase<ModListPage> {
                             skinnable.enableSelected(listView.getSelectionModel().getSelectedItems())),
                     createToolbarButton2(i18n("mods.disable"), SVG.CLOSE, () ->
                             skinnable.disableSelected(listView.getSelectionModel().getSelectedItems())),
+                    createToolbarButton2(i18n("mods.check_updates.button"), SVG.UPDATE, () ->
+                            skinnable.checkUpdates(
+                                    listView.getSelectionModel().getSelectedItems().stream()
+                                            .map(ModInfoObject::getModInfo)
+                                            .toList()
+                            )
+                    ),
                     createToolbarButton2(i18n("button.select_all"), SVG.SELECT_ALL, () ->
                             listView.getSelectionModel().selectAll()),
                     createToolbarButton2(i18n("button.cancel"), SVG.CANCEL, () ->
@@ -196,11 +200,9 @@ final class ModListPageSkin extends SkinBase<ModListPage> {
         {
             SpinnerPane center = new SpinnerPane();
             ComponentList.setVgrow(center, Priority.ALWAYS);
-            center.getStyleClass().add("large-spinner-pane");
             center.loadingProperty().bind(skinnable.loadingProperty());
 
-            Holder<Object> lastCell = new Holder<>();
-            listView.setCellFactory(x -> new ModInfoListCell(listView, lastCell));
+            listView.setCellFactory(x -> new ModInfoListCell(listView));
             listView.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
             Bindings.bindContent(listView.getItems(), skinnable.getItems());
             skinnable.getItems().addListener((ListChangeListener<? super ModInfoObject>) c -> {
@@ -375,20 +377,20 @@ final class ModListPageSkin extends SkinBase<ModListPage> {
             return VersionIconType.getIconType(this.localModFile.getModLoaderType()).getIcon();
         }
 
-        public void loadIcon(ImageView imageView, @Nullable WeakReference<ObjectProperty<ModInfoObject>> current) {
+        public void loadIcon(ImageContainer imageContainer, @Nullable WeakReference<ObjectProperty<ModInfoObject>> current) {
             SoftReference<CompletableFuture<Image>> iconCache = this.iconCache;
             CompletableFuture<Image> imageFuture;
             if (iconCache != null && (imageFuture = iconCache.get()) != null) {
                 Image image = imageFuture.getNow(null);
                 if (image != null) {
-                    imageView.setImage(image);
+                    imageContainer.setImage(image);
                     return;
                 }
             } else {
                 imageFuture = CompletableFuture.supplyAsync(this::loadIcon, Schedulers.io());
                 this.iconCache = new SoftReference<>(imageFuture);
             }
-            imageView.setImage(VersionIconType.getIconType(localModFile.getModLoaderType()).getIcon());
+            imageContainer.setImage(VersionIconType.getIconType(localModFile.getModLoaderType()).getIcon());
             imageFuture.thenAcceptAsync(image -> {
                 if (current != null) {
                     ObjectProperty<ModInfoObject> infoObjectProperty = current.get();
@@ -398,7 +400,7 @@ final class ModListPageSkin extends SkinBase<ModListPage> {
                     }
                 }
 
-                imageView.setImage(image);
+                imageContainer.setImage(image);
             }, Schedulers.javafx());
         }
     }
@@ -412,9 +414,8 @@ final class ModListPageSkin extends SkinBase<ModListPage> {
             Stage stage = Controllers.getStage();
             maxWidthProperty().bind(stage.widthProperty().multiply(0.7));
 
-            ImageView imageView = new ImageView();
-            FXUtils.limitSize(imageView, 40, 40);
-            modInfo.loadIcon(imageView, null);
+            var imageContainer = new ImageContainer(40);
+            modInfo.loadIcon(imageContainer, null);
 
             TwoLineListItem title = new TwoLineListItem();
             if (modInfo.getModTranslations() != null && I18n.isUseChinese())
@@ -435,7 +436,7 @@ final class ModListPageSkin extends SkinBase<ModListPage> {
             }
             title.setSubtitle(subtitle.toString());
 
-            titleContainer.getChildren().setAll(FXUtils.limitingSize(imageView, 40, 40), title);
+            titleContainer.getChildren().setAll(imageContainer, title);
             setHeading(titleContainer);
 
             Label description = new Label(modInfo.getModInfo().getDescription().toString());
@@ -465,32 +466,21 @@ final class ModListPageSkin extends SkinBase<ModListPage> {
                     Task.runAsync(() -> {
                         Optional<RemoteMod.Version> versionOptional = repository.getRemoteVersionByLocalFile(modInfo.getModInfo(), modInfo.getModInfo().getFile());
                         if (versionOptional.isPresent()) {
-                            RemoteMod remoteMod = repository.getModById(versionOptional.get().getModid());
+                            RemoteMod remoteMod = repository.getModById(DownloadProviders.getDownloadProvider(), versionOptional.get().getModid());
                             FXUtils.runInFX(() -> {
                                 for (ModLoaderType modLoaderType : versionOptional.get().getLoaders()) {
-                                    String loaderName;
-                                    switch (modLoaderType) {
-                                        case FORGE:
-                                            loaderName = i18n("install.installer.forge");
-                                            break;
-                                        case CLEANROOM:
-                                            loaderName = i18n("install.installer.cleanroom");
-                                            break;
-                                        case NEO_FORGED:
-                                            loaderName = i18n("install.installer.neoforge");
-                                            break;
-                                        case FABRIC:
-                                            loaderName = i18n("install.installer.fabric");
-                                            break;
-                                        case LITE_LOADER:
-                                            loaderName = i18n("install.installer.liteloader");
-                                            break;
-                                        case QUILT:
-                                            loaderName = i18n("install.installer.quilt");
-                                            break;
-                                        default:
-                                            continue;
-                                    }
+                                    String loaderName = switch (modLoaderType) {
+                                        case FORGE -> i18n("install.installer.forge");
+                                        case CLEANROOM -> i18n("install.installer.cleanroom");
+                                        case LEGACY_FABRIC -> i18n("install.installer.legacyfabric");
+                                        case NEO_FORGED -> i18n("install.installer.neoforge");
+                                        case FABRIC -> i18n("install.installer.fabric");
+                                        case LITE_LOADER -> i18n("install.installer.liteloader");
+                                        case QUILT -> i18n("install.installer.quilt");
+                                        default -> null;
+                                    };
+                                    if (loaderName == null)
+                                        continue;
                                     if (title.getTags()
                                             .stream()
                                             .noneMatch(it -> it.getText().equals(loaderName))) {
@@ -504,7 +494,7 @@ final class ModListPageSkin extends SkinBase<ModListPage> {
                                             repository instanceof CurseForgeRemoteModRepository ? HMCLLocalizedDownloadListPage.ofCurseForgeMod(null, false) : HMCLLocalizedDownloadListPage.ofModrinthMod(null, false),
                                             remoteMod,
                                             new Profile.ProfileVersion(ModListPageSkin.this.getSkinnable().getProfile(), ModListPageSkin.this.getSkinnable().getInstanceId()),
-                                            (profile, version, file) -> org.jackhuang.hmcl.ui.download.DownloadPage.download(profile, version, file, "mods")
+                                            (downloadProvider, profile, version, mod, file) -> org.jackhuang.hmcl.ui.download.DownloadPage.download(downloadProvider, profile, version, file, "mods")
                                     ));
                                 });
                                 button.setDisable(false);
@@ -563,17 +553,17 @@ final class ModListPageSkin extends SkinBase<ModListPage> {
         private static final PseudoClass WARNING = PseudoClass.getPseudoClass("warning");
 
         JFXCheckBox checkBox = new JFXCheckBox();
-        ImageView imageView = new ImageView();
+        ImageContainer imageContainer = new ImageContainer(24);
         TwoLineListItem content = new TwoLineListItem();
-        JFXButton restoreButton = new JFXButton();
-        JFXButton infoButton = new JFXButton();
-        JFXButton revealButton = new JFXButton();
+        JFXButton restoreButton = FXUtils.newToggleButton4(SVG.RESTORE);
+        JFXButton infoButton = FXUtils.newToggleButton4(SVG.INFO);
+        JFXButton revealButton = FXUtils.newToggleButton4(SVG.FOLDER);
         BooleanProperty booleanProperty;
 
         Tooltip warningTooltip;
 
-        ModInfoListCell(JFXListView<ModInfoObject> listView, Holder<Object> lastCell) {
-            super(listView, lastCell);
+        ModInfoListCell(JFXListView<ModInfoObject> listView) {
+            super(listView);
 
             this.getStyleClass().add("mod-info-list-cell");
 
@@ -584,23 +574,11 @@ final class ModListPageSkin extends SkinBase<ModListPage> {
             content.setMouseTransparent(true);
             setSelectable();
 
-            imageView.setFitWidth(24);
-            imageView.setFitHeight(24);
-            imageView.setPreserveRatio(true);
-            imageView.setImage(VersionIconType.COMMAND.getIcon());
-
-            restoreButton.getStyleClass().add("toggle-icon4");
-            restoreButton.setGraphic(FXUtils.limitingSize(SVG.RESTORE.createIcon(24), 24, 24));
+            imageContainer.setImage(VersionIconType.COMMAND.getIcon());
 
             FXUtils.installFastTooltip(restoreButton, i18n("mods.restore"));
 
-            revealButton.getStyleClass().add("toggle-icon4");
-            revealButton.setGraphic(FXUtils.limitingSize(SVG.FOLDER.createIcon(24), 24, 24));
-
-            infoButton.getStyleClass().add("toggle-icon4");
-            infoButton.setGraphic(FXUtils.limitingSize(SVG.INFO.createIcon(24), 24, 24));
-
-            container.getChildren().setAll(checkBox, imageView, content, restoreButton, revealButton, infoButton);
+            container.getChildren().setAll(checkBox, imageContainer, content, restoreButton, revealButton, infoButton);
 
             StackPane.setMargin(container, new Insets(8));
             getContainer().getChildren().setAll(container);
@@ -625,7 +603,7 @@ final class ModListPageSkin extends SkinBase<ModListPage> {
 
             ModLoaderType modLoaderType = modInfo.getModLoaderType();
 
-            dataItem.loadIcon(imageView, new WeakReference<>(this.itemProperty()));
+            dataItem.loadIcon(imageContainer, new WeakReference<>(this.itemProperty()));
 
             String displayName = modInfo.getName();
             if (modTranslations != null && I18n.isUseChinese()) {
@@ -662,24 +640,13 @@ final class ModListPageSkin extends SkinBase<ModListPage> {
             } else if (!ModListPageSkin.this.getSkinnable().supportedLoaders.contains(modLoaderType)) {
                 warning.add(i18n("mods.warning.loader_mismatch"));
                 switch (dataItem.getModInfo().getModLoaderType()) {
-                    case FORGE:
-                        content.addTagWarning(i18n("install.installer.forge"));
-                        break;
-                    case CLEANROOM:
-                        content.addTagWarning(i18n("install.installer.cleanroom"));
-                        break;
-                    case NEO_FORGED:
-                        content.addTagWarning(i18n("install.installer.neoforge"));
-                        break;
-                    case FABRIC:
-                        content.addTagWarning(i18n("install.installer.fabric"));
-                        break;
-                    case LITE_LOADER:
-                        content.addTagWarning(i18n("install.installer.liteloader"));
-                        break;
-                    case QUILT:
-                        content.addTagWarning(i18n("install.installer.quilt"));
-                        break;
+                    case FORGE -> content.addTagWarning(i18n("install.installer.forge"));
+                    case LEGACY_FABRIC -> content.addTagWarning(i18n("install.installer.legacyfabric"));
+                    case CLEANROOM -> content.addTagWarning(i18n("install.installer.cleanroom"));
+                    case NEO_FORGED -> content.addTagWarning(i18n("install.installer.neoforge"));
+                    case FABRIC -> content.addTagWarning(i18n("install.installer.fabric"));
+                    case LITE_LOADER -> content.addTagWarning(i18n("install.installer.liteloader"));
+                    case QUILT -> content.addTagWarning(i18n("install.installer.quilt"));
                 }
             }
 

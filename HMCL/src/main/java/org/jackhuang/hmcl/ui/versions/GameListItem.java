@@ -18,83 +18,58 @@
 package org.jackhuang.hmcl.ui.versions;
 
 import javafx.beans.property.BooleanProperty;
+import javafx.beans.property.ReadOnlyBooleanProperty;
 import javafx.beans.property.SimpleBooleanProperty;
-import javafx.scene.control.Control;
-import javafx.scene.control.Skin;
-import javafx.scene.control.ToggleGroup;
 import org.jackhuang.hmcl.setting.Profile;
 
-public class GameListItem extends Control {
-    private final Profile profile;
-    private final String version;
+public class GameListItem extends GameItem {
     private final boolean isModpack;
-    private final ToggleGroup toggleGroup;
-    private final BooleanProperty selected = new SimpleBooleanProperty();
+    private final BooleanProperty selected = new SimpleBooleanProperty(this, "selected");
 
-    public GameListItem(ToggleGroup toggleGroup, Profile profile, String id) {
-        this.profile = profile;
-        this.version = id;
-        this.toggleGroup = toggleGroup;
+    public GameListItem(Profile profile, String id) {
+        super(profile, id);
         this.isModpack = profile.getRepository().isModpack(id);
-
-        selected.set(id.equals(profile.getSelectedVersion()));
+        selected.bind(profile.selectedVersionProperty().isEqualTo(id));
     }
 
-    @Override
-    protected Skin<?> createDefaultSkin() {
-        return new GameListItemSkin(this);
-    }
-
-    public ToggleGroup getToggleGroup() {
-        return toggleGroup;
-    }
-
-    public Profile getProfile() {
-        return profile;
-    }
-
-    public String getVersion() {
-        return version;
-    }
-
-    public BooleanProperty selectedProperty() {
+    public ReadOnlyBooleanProperty selectedProperty() {
         return selected;
     }
 
-    public void checkSelection() {
-        selected.set(version.equals(profile.getSelectedVersion()));
-    }
-
     public void rename() {
-        Versions.renameVersion(profile, version);
+        Versions.renameVersion(profile, id);
     }
 
     public void duplicate() {
-        Versions.duplicateVersion(profile, version);
+        Versions.duplicateVersion(profile, id);
     }
 
     public void remove() {
-        Versions.deleteVersion(profile, version);
+        Versions.deleteVersion(profile, id);
     }
 
     public void export() {
-        Versions.exportVersion(profile, version);
+        Versions.exportVersion(profile, id);
     }
 
     public void browse() {
-        Versions.openFolder(profile, version);
+        Versions.openFolder(profile, id);
+    }
+
+    public void testGame() {
+        Versions.testGame(profile, id);
     }
 
     public void launch() {
-        Versions.testGame(profile, version);
+        Versions.launch(profile, id);
     }
 
     public void modifyGameSettings() {
-        Versions.modifyGameSettings(profile, version);
+        Versions.modifyGameSettings(profile, id);
     }
 
     public void generateLaunchScript() {
-        Versions.generateLaunchScript(profile, version);
+        Versions.generateLaunchScript(profile, id);
     }
 
     public boolean canUpdate() {
@@ -102,6 +77,6 @@ public class GameListItem extends Control {
     }
 
     public void update() {
-        Versions.updateVersion(profile, version);
+        Versions.updateVersion(profile, id);
     }
 }

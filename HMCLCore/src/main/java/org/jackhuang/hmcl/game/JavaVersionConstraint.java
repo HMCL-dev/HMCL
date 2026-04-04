@@ -18,9 +18,9 @@
 package org.jackhuang.hmcl.game;
 
 import org.jackhuang.hmcl.download.LibraryAnalyzer;
+import org.jackhuang.hmcl.java.JavaRuntime;
 import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.platform.Architecture;
-import org.jackhuang.hmcl.java.JavaRuntime;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
 import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
 import org.jackhuang.hmcl.util.versioning.VersionNumber;
@@ -41,9 +41,9 @@ public enum JavaVersionConstraint {
         }
 
         @Override
-        public boolean checkJava(GameVersionNumber gameVersionNumber, Version version, JavaRuntime java) {
+        public boolean checkJava(GameVersionNumber gameVersionNumber, Version version, JavaRuntime java, LibraryAnalyzer analyzer) {
             GameJavaVersion minimumJavaVersion = GameJavaVersion.getMinimumJavaVersion(gameVersionNumber);
-            return minimumJavaVersion == null || java.getParsedVersion() >= minimumJavaVersion.getMajorVersion();
+            return minimumJavaVersion == null || java.getParsedVersion() >= minimumJavaVersion.majorVersion();
         }
     },
     // Minecraft with suggested java version recorded in game json is restrictedly constrained.
@@ -57,12 +57,12 @@ public enum JavaVersionConstraint {
         }
 
         @Override
-        public VersionRange<VersionNumber> getJavaVersionRange(Version version) {
+        public VersionRange<VersionNumber> getJavaVersionRange(Version version, LibraryAnalyzer analyzer) {
             String javaVersion;
-            if (Objects.requireNonNull(version.getJavaVersion()).getMajorVersion() >= 9) {
-                javaVersion = "" + version.getJavaVersion().getMajorVersion();
+            if (Objects.requireNonNull(version.getJavaVersion()).majorVersion() >= 9) {
+                javaVersion = "" + version.getJavaVersion().majorVersion();
             } else {
-                javaVersion = "1." + version.getJavaVersion().getMajorVersion();
+                javaVersion = "1." + version.getJavaVersion().majorVersion();
             }
             return VersionNumber.atLeast(javaVersion);
         }
@@ -108,12 +108,25 @@ public enum JavaVersionConstraint {
                     && super.appliesToVersionImpl(gameVersionNumber, version, java, analyzer);
         }
     },
-    CLEANROOM_JAVA_21(true, GameVersionNumber.between("1.12.2", "1.12.999"), VersionNumber.atLeast("21")) {
+    CLEANROOM(true, GameVersionNumber.between("1.12.2", "1.12.999"), VersionRange.all()) {
         @Override
-        protected boolean appliesToVersionImpl(GameVersionNumber gameVersionNumber, @Nullable Version version,
-                                               @Nullable JavaRuntime java, @Nullable LibraryAnalyzer analyzer) {
+        protected boolean appliesToVersionImpl(GameVersionNumber gameVersionNumber, @Nullable Version version, @Nullable JavaRuntime java, @Nullable LibraryAnalyzer analyzer) {
             return analyzer != null && analyzer.has(LibraryAnalyzer.LibraryType.CLEANROOM)
                     && super.appliesToVersionImpl(gameVersionNumber, version, java, analyzer);
+        }
+
+        @Override
+        public VersionRange<VersionNumber> getJavaVersionRange(Version version, LibraryAnalyzer analyzer) {
+            if (analyzer == null || !analyzer.has(LibraryAnalyzer.LibraryType.CLEANROOM))
+                return VersionRange.all();
+
+            String cleanroomVersion = analyzer.getVersion(LibraryAnalyzer.LibraryType.CLEANROOM).orElse("");
+            if (cleanroomVersion.isEmpty())
+                return VersionRange.all();
+            else
+                return VersionNumber.atLeast(
+                        String.valueOf(GameJavaVersion.getCleanroomJavaVersion(cleanroomVersion).majorVersion())
+                );
         }
     },
     // LaunchWrapper<=1.12 will crash because LaunchWrapper assumes the system class loader is an instance of URLClassLoader (Java 8)
@@ -143,8 +156,8 @@ public enum JavaVersionConstraint {
         }
 
         @Override
-        public boolean checkJava(GameVersionNumber gameVersionNumber, Version version, JavaRuntime java) {
-            return java.getArchitecture() != Architecture.X86_64 || super.checkJava(gameVersionNumber, version, java);
+        public boolean checkJava(GameVersionNumber gameVersionNumber, Version version, JavaRuntime java, LibraryAnalyzer analyzer) {
+            return java.getArchitecture() != Architecture.X86_64 || super.checkJava(gameVersionNumber, version, java, analyzer);
         }
     },
     // Minecraft currently does not provide official support for architectures other than x86 and x86-64.
@@ -162,7 +175,7 @@ public enum JavaVersionConstraint {
         }
 
         @Override
-        public boolean checkJava(GameVersionNumber gameVersionNumber, Version version, JavaRuntime java) {
+        public boolean checkJava(GameVersionNumber gameVersionNumber, Version version, JavaRuntime java, LibraryAnalyzer analyzer) {
             return java.getArchitecture().isX86();
         }
     },
@@ -194,7 +207,7 @@ public enum JavaVersionConstraint {
         }
 
         @Override
-        public boolean checkJava(GameVersionNumber gameVersionNumber, Version version, JavaRuntime java) {
+        public boolean checkJava(GameVersionNumber gameVersionNumber, Version version, JavaRuntime java, LibraryAnalyzer analyzer) {
             int parsedJavaVersion = java.getParsedVersion();
             if (parsedJavaVersion > 17) {
                 return false;
@@ -230,7 +243,7 @@ public enum JavaVersionConstraint {
         return gameVersionRange;
     }
 
-    public VersionRange<VersionNumber> getJavaVersionRange(Version version) {
+    public VersionRange<VersionNumber> getJavaVersionRange(Version version, LibraryAnalyzer analyzer) {
         return javaVersionRange;
     }
 
@@ -247,19 +260,19 @@ public enum JavaVersionConstraint {
             return true;
         }
 
-        String versionNumber = gameJavaVersion.getMajorVersion() >= 9
-                ? String.valueOf(gameJavaVersion.getMajorVersion())
-                : "1." + gameJavaVersion.getMajorVersion();
+        String versionNumber = gameJavaVersion.majorVersion() >= 9
+                ? String.valueOf(gameJavaVersion.majorVersion())
+                : "1." + gameJavaVersion.majorVersion();
 
-        VersionRange<VersionNumber> range = getJavaVersionRange(version);
+        VersionRange<VersionNumber> range = getJavaVersionRange(version, analyzer);
         VersionNumber maximum = range.getMaximum();
 
         return maximum == null || maximum.compareTo(versionNumber) >= 0;
     }
 
     @SuppressWarnings("BooleanMethodIsAlwaysInverted")
-    public boolean checkJava(GameVersionNumber gameVersionNumber, Version version, JavaRuntime java) {
-        return getJavaVersionRange(version).contains(java.getVersionNumber());
+    public boolean checkJava(GameVersionNumber gameVersionNumber, Version version, JavaRuntime java, LibraryAnalyzer analyzer) {
+        return getJavaVersionRange(version, analyzer).contains(java.getVersionNumber());
     }
 
     public static final List<JavaVersionConstraint> ALL = Lang.immutableListOf(values());

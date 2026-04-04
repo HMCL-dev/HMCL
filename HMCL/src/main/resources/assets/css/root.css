@@ -29,8 +29,8 @@
 
 .scroll-bar .thumb {
     -fx-fill: -monet-surface-tint;
-    -fx-arc-width: 0;
-    -fx-arc-height: 0;
+    -fx-arc-width: 8;
+    -fx-arc-height: 8;
 }
 
 .title-label {
@@ -113,28 +113,26 @@
 .memory-label {
 }
 
-.memory-used {
-    -fx-background-color: -monet-primary;
+.memory-status-bar {
+    -fx-opacity: 1;
 }
 
-.memory-used:disabled {
+.memory-status-bar:disabled {
     -fx-opacity: 0.4;
 }
 
-.memory-allocate {
-    -fx-background-color: -monet-primary-transparent-50;
+.memory-status-bar .track {
+    -fx-background-color: -monet-secondary-container;
+    -fx-background-radius: 2;
+    -fx-background-insets: 0;
 }
 
-.memory-allocate:disabled {
-    -fx-opacity: 0.4;
+.memory-status-bar .memory-used {
+    -fx-fill: -monet-primary;
 }
 
-.memory-total {
-    -fx-background-color: -monet-surface-container;
-}
-
-.memory-total:disabled {
-    -fx-opacity: 0.4;
+.memory-status-bar .memory-allocate {
+    -fx-fill: -monet-primary-transparent-50;
 }
 
 .update-label {
@@ -265,6 +263,10 @@
     -fx-spacing: 0;
 }
 
+.no-padding .advanced-list-box-content {
+    -fx-padding: 0 0 0 0;
+}
+
 .iconed-item {
     -jfx-rippler-fill: -monet-secondary-container;
 }
@@ -295,6 +297,11 @@
     -fx-fill: -monet-surface-tint;
 }
 
+.popup-menu .scroll-pane > .scroll-bar:vertical,
+.popup-menu .scroll-pane > .scroll-bar:horizontal {
+    -fx-opacity: 0;
+}
+
 .popup-menu-content {
     -fx-padding: 4 0 4 0;
 }
@@ -315,20 +322,25 @@
     -fx-fill: -monet-on-surface-variant;
 }
 
-.two-line-list-item > .first-line > .tag {
+.two-line-list-item > .first-line .scroll-bar {
+    -fx-opacity: 0;
+    -fx-max-height: 0;
+    -fx-min-height: 0;
+    -fx-pref-height: 0;
+}
+
+.two-line-list-item > .first-line .tag {
     -fx-text-fill: -monet-on-secondary-container;
     -fx-background-color: -monet-secondary-container;
+    -fx-background-radius: 2;
     -fx-padding: 2;
     -fx-font-weight: normal;
     -fx-font-size: 12px;
 }
 
-.two-line-list-item > .first-line > .tag-warning {
+.two-line-list-item > .first-line .tag:warning {
     -fx-text-fill: -monet-on-error-container;
     -fx-background-color: -fixed-warning-tag-background;
-    -fx-padding: 2;
-    -fx-font-weight: normal;
-    -fx-font-size: 12px;
 }
 
 .two-line-item-second-large {
@@ -346,7 +358,7 @@
     -fx-font-size: 15px;
 }
 
-.terracotta-license Text {
+.terracotta-hint Text {
     -fx-fill: -monet-on-surface;
 }
 
@@ -384,31 +396,33 @@
     -fx-cursor: hand;
 }
 
-.installer-item {
-    -fx-padding: 8px;
+.installer-item-wrapper {
+    -fx-background-color: -monet-surface;
+    -fx-background-radius: 4;
+    -fx-pref-width: 180px;
 }
 
-.installer-item:list-item {
+.installer-item-wrapper:card {
+    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.26), 10, 0.12, -1, 2);
+}
+
+.installer-item-wrapper .installer-item:list-item {
+    -fx-padding: 8px;
     -fx-border-color: -monet-outline-variant;
     -fx-border-width: 0 0 1 0;
     -fx-alignment: center-left;
 }
 
-.installer-item:list-item > .installer-item-name {
+.installer-item-wrapper .installer-item:list-item > .installer-item-name {
     -fx-pref-width: 80px;
 }
 
-.installer-item:list-item > .installer-item-status {
+.installer-item-wrapper .installer-item:list-item > .installer-item-status {
     -fx-max-width: infinity;
 }
 
-.installer-item:card {
-    -fx-background-color: -monet-surface;
-    -fx-background-radius: 4;
+.installer-item-wrapper .installer-item:card {
     -fx-alignment: center;
-    -fx-pref-width: 180px;
-
-    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.26), 10, 0.12, -1, 2);
 }
 
 /*******************************************************************************
@@ -417,15 +431,41 @@
  *                                                                             *
  ******************************************************************************/
 
+.launch-pane {
+    -fx-max-height: 57px;
+    -fx-min-height: 57px;
+    -fx-max-width: 230px;
+    -fx-min-width: 230px;
+}
+
 .launch-pane > .jfx-button {
+    -fx-translate-y: 1px;
+    -fx-max-height: 55px;
+    -fx-min-height: 55px;
     -fx-background-color: -monet-primary-container;
+    -fx-opacity: 1; /* Override the opacity of disabled button */
     -fx-cursor: hand;
+}
+
+.launch-pane > .jfx-button.launch-button {
+    -fx-max-width: 207px;
+    -fx-min-width: 207px;
+    -fx-border-width: 0 3px 0 0;
+    -fx-border-color: -monet-on-surface-variant;
+    -fx-background-radius: 4px 0 0 4px;
+}
+
+.launch-pane > .jfx-button.menu-button {
+    -fx-max-width: 20px;
+    -fx-min-width: 20px;
+    -fx-font-size: 15px;
+    -fx-background-radius: 0 4px 4px 0;
 }
 
 .launch-pane > .jfx-button > StackPane > .jfx-rippler {
     -jfx-rippler-fill: -monet-on-primary-container;
     -jfx-mask-type: CIRCLE;
-    -fx-padding: 0.0;
+    -fx-padding: 0;
 }
 
 .launch-pane > .jfx-button, .jfx-button * {
@@ -435,10 +475,6 @@
 
 .launch-pane .svg {
     -fx-fill: -monet-on-primary-container;
-}
-
-.launch-pane > Rectangle {
-    -fx-fill: -monet-primary-container;
 }
 
 /*******************************************************************************
@@ -489,12 +525,14 @@
 }
 
 .jfx-dialog-layout {
-    -fx-padding: 24.0px 24.0px 16.0px 24.0px;
+    -fx-background-radius: 4px;
+    -fx-padding: 24px 24px 16px 24px;
     -fx-background-color: -monet-surface-container-high;
     -fx-text-fill: -monet-on-surface;
 }
 
 .jfx-layout-heading {
+    -fx-font-weight: BOLD;
     -fx-font-size: 20.0px;
     -fx-alignment: center-left;
     -fx-padding: 5.0 0.0 5.0 0.0;
@@ -531,10 +569,46 @@
 }
 
 .task-executor-dialog-layout {
+    -fx-background-radius: 4px;
     -fx-background-color: -monet-surface-container-high;
     -fx-text-fill: -monet-on-surface;
 }
 
+/*******************************************************************************
+ *                                                                             *
+ * Microsoft Login Dialog                                                      *
+ *                                                                             *
+ ******************************************************************************/
+
+.microsoft-login-dialog:bodyonly {
+    -fx-padding: 0px 0px 0px 0px;
+}
+
+.method-title {
+    -fx-text-fill: -monet-on-surface;
+    -fx-font-weight: bold;
+}
+
+.method-desc {
+    -fx-text-fill: -monet-outline;
+    -fx-font-size: 0.9em;
+    -fx-line-spacing: 2;
+    -fx-wrap-text: true;
+    -fx-text-alignment: center;
+}
+
+.code-box {
+    -fx-background-color: -monet-surface-variant;
+    -fx-background-radius: 6;
+    -fx-padding: 0 10 0 10;
+    -fx-alignment: center;
+}
+
+.code-box .code-label {
+    -fx-font-size: 22px;
+    -fx-font-weight: bold;
+    -fx-text-fill: -monet-primary;
+}
 
 /*******************************************************************************
  *                                                                             *
@@ -555,8 +629,16 @@
     -fx-pref-width: 150.0px;
 }
 
+/*******************************************************************************
+ *                                                                             *
+ * JFX Snack Bar                                                               *
+ *                                                                             *
+ ******************************************************************************/
+
 .jfx-snackbar-content {
     -fx-background-color: -monet-inverse-surface;
+    -fx-padding: 5;
+    -fx-spacing: 5;
 }
 
 .jfx-snackbar-toast {
@@ -710,31 +792,39 @@
  *                                                                             *
  ******************************************************************************/
 
-.svg-slider .thumb {
-    -fx-stroke: -monet-on-surface;
-    -fx-fill: -monet-on-surface;
+.jfx-slider .track,
+.jfx-slider:vertical .track {
+    -fx-background-color: -monet-secondary-container;
+    -fx-background-radius: 5;
+    -fx-background-insets: 0;
+    -fx-pref-width: 2px;
+    -fx-pref-height: 2px;
 }
 
-.jfx-slider:disabled {
-    -fx-opacity: 0.4;
-}
-
-/*******************************************************
-*                           						   *
-* For the main demo sliders 						   *
-*                          							   *
-*******************************************************/
-
-.jfx-slider {
-    -jfx-indicator-position: right;
-}
-
-.jfx-slider .track {
-    -fx-background-color: -monet-on-surface-variant-transparent-38;
-}
-
-.jfx-slider .thumb {
+.jfx-slider .thumb,
+.jfx-slider:focused .thumb {
     -fx-background-color: -monet-primary;
+    -fx-background-radius: 20;
+    -fx-background-insets: 0;
+}
+
+.jfx-slider .colored-track {
+    -fx-background-color: -monet-primary;
+    -fx-background-radius: 5 0 0 5;
+    -fx-background-insets: 0;
+}
+
+.jfx-slider .slider-value {
+    -fx-stroke: -monet-inverse-on-surface;
+    -fx-font-size: 10;
+}
+
+.jfx-slider .animated-thumb {
+    -fx-pref-width: 30px;
+    -fx-pref-height: 30px;
+    -fx-background-color: -monet-inverse-surface;
+    -fx-background-radius: 50% 50% 50% 0%;
+    -fx-background-insets: 0;
 }
 
 /*******************************************************************************
@@ -823,14 +913,6 @@
 *                                                                              *
 *******************************************************************************/
 
-.jfx-progress-bar {
-    -fx-pref-width: 500.0;
-}
-
-.jfx-progress-bar > .track, .jfx-progress-bar > .bar {
-    -fx-background-radius: 0;
-    -fx-background-insets: 0;
-}
 
 .jfx-progress-bar > .track {
     -fx-background-color: -monet-secondary-container;
@@ -838,6 +920,13 @@
 
 .jfx-progress-bar > .bar {
     -fx-background-color: -monet-primary;
+    -fx-padding: 2;
+}
+
+.jfx-progress-bar > .track,
+.jfx-progress-bar > .bar {
+    -fx-background-radius: 2;
+    -fx-background-insets: 0;
 }
 
 /*******************************************************************************
@@ -857,6 +946,16 @@
     -jfx-focus-color: -monet-primary;
     -fx-padding: 8;
     -jfx-unfocus-color: transparent;
+}
+
+.jfx-text-field .context-menu {
+    -fx-background-color: -monet-surface-container;
+    -fx-text-fill: -monet-on-surface;
+}
+
+.jfx-text-field .context-menu .menu-item:focused {
+    -fx-background-color: -monet-secondary-container;
+    -fx-text-fill: -monet-on-secondary-container;
 }
 
 /*******************************************************************************
@@ -913,6 +1012,13 @@
     -fx-background-color: transparent;
 }
 
+.no-horizontal-scrollbar .scroll-bar:horizontal {
+    -fx-opacity: 0;
+    -fx-max-height: 0;
+    -fx-min-height: 0;
+    -fx-pref-height: 0;
+}
+
 .options-list {
     -fx-background-color: transparent;
     -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.26), 5, 0.06, -0.5, 1);
@@ -954,16 +1060,19 @@
     -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.26), 10, 0.12, -1, 2);
 }
 
+.card-no-padding {
+    -fx-background-color: -monet-surface-container-low-transparent-80;
+    -fx-background-radius: 4;
+
+    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.26), 10, 0.12, -1, 2);
+}
+
 .card-non-transparent {
     -fx-background-color: -monet-surface-container-low;
     -fx-background-radius: 4;
     -fx-padding: 8px;
 
     -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.26), 5, 0.06, -0.5, 1);
-}
-
-.card:selected {
-    -fx-background-color: -monet-secondary-container-transparent-80;
 }
 
 .card-list {
@@ -1005,6 +1114,10 @@
     -fx-text-fill: -monet-on-surface;
 }
 
+.options-list-item .label.subtitle {
+    -fx-text-fill: -monet-on-surface-variant;
+}
+
 .options-list-item.no-padding {
     -fx-padding: 0;
 }
@@ -1027,6 +1140,14 @@
     -fx-border-width: 0;
 }
 
+.options-sublist-wrapper .expand-icon .svg {
+    -fx-fill: -monet-on-surface-variant;
+}
+
+.options-sublist-wrapper .expand-icon .svg:disabled {
+    -fx-opacity: 0.4;
+}
+
 /*******************************************************************************
 *                                                                              *
 * JFX Toggle Button                                                            *
@@ -1044,7 +1165,7 @@
     -fx-background-insets: 0px;
 
     -jfx-toggle-color: -monet-primary;
-    -jfx-toggle-line-color: -monet-primary-container;
+    -jfx-toggle-line-color: -monet-secondary-container;
     -jfx-untoggle-color: -monet-outline;
     -jfx-untoggle-line-color: -monet-surface-container-highest;
     -jfx-size: 10;
@@ -1054,15 +1175,16 @@
 .jfx-toggle-button Line {
     -fx-stroke: -jfx-untoggle-line-color;
 }
-.jfx-toggle-button:selected Line{
+
+.jfx-toggle-button:selected Line {
     -fx-stroke: -jfx-toggle-line-color;
 }
 
-.jfx-toggle-button Circle{
+.jfx-toggle-button Circle {
     -fx-fill: -jfx-untoggle-color;
 }
 
-.jfx-toggle-button:selected Circle{
+.jfx-toggle-button:selected Circle {
     -fx-fill: -jfx-toggle-color;
 }
 
@@ -1219,6 +1341,7 @@
 
 .log-toggle {
     -fx-border: 1px;
+    -fx-background-insets: 0;
     -fx-border-color: -fixed-log-toggle-unselected;
     -fx-text-fill: -fixed-log-toggle-unselected;
 }
@@ -1299,6 +1422,10 @@
     -fx-background-color: -fixed-log-info;
 }
 
+.log-window-list-cell {
+    -fx-background-color: -fixed-log-info;
+}
+
 .log-window-list-cell:debug {
     -fx-text-fill: -fixed-log-text-fill;
     -fx-background-color: -fixed-log-debug;
@@ -1320,90 +1447,25 @@
 *                                                                              *
 *******************************************************************************/
 
-.jfx-spinner > .arc {
-    -fx-stroke-width: 3.0;
-    -fx-fill: transparent;
+.jfx-spinner .arc {
     -fx-stroke: -monet-primary-container;
 }
 
-.first-spinner {
-    -jfx-radius: 20;
-}
-
-.first-spinner > .arc {
-    -fx-stroke-width: 5.0;
-}
-
 .small-spinner {
-    -jfx-radius: 10;
+    -jfx-radius: 9;
 }
 
-.small-spinner > .arc {
+.small-spinner .arc {
     -fx-stroke-width: 3.0;
 }
 
 .small-spinner-pane .jfx-spinner {
-    -jfx-radius: 10;
+    -jfx-radius: 9;
 }
 
-.small-spinner-pane .jfx-spinner > .arc {
-    -fx-stroke-width: 3.0;
-}
-
-.large-spinner-pane .jfx-spinner {
-    -jfx-radius: 20;
-}
-
-.large-spinner-pane .jfx-spinner {
-    -fx-stroke-width: 5.0;
-}
-
-.second-spinner {
-    -jfx-radius: 30;
-}
-
-.second-spinner > .arc {
-    -fx-stroke-width: 5.0;
-}
-
-.third-spinner {
-    -jfx-radius: 40;
-}
-
-.third-spinner > .arc {
-    -fx-stroke-width: 5.0;
-}
-
-.fourth-spinner {
-    -jfx-radius: 50;
-}
-
-.fourth-spinner > .arc {
-    -fx-stroke-width: 5.0;
-}
-
-.fifth-spinner {
-    -jfx-radius: 60;
-}
-
-.fifth-spinner > .arc {
-    -fx-stroke-width: 5.0;
-}
-
-.sixth-spinner {
-    -jfx-radius: 70;
-}
-
-.sixth-spinner > .arc {
-    -fx-stroke-width: 5.0;
-}
-
-.seventh-spinner {
-    -jfx-radius: 80;
-}
-
-.seventh-spinner > .arc {
-    -fx-stroke-width: 5.0;
+.spinner-pane .spinner-pane-content {
+    -fx-padding: 10px;
+    -fx-spacing: 10px;
 }
 
 /*******************************************************************************
@@ -1435,6 +1497,7 @@
 .combo-box-popup .list-view .jfx-list-cell {
     -fx-background-color: -monet-surface-container;
     -fx-text-fill: -monet-on-surface;
+    -fx-cursor: hand;
     -fx-background-insets: 0.0;
 }
 
@@ -1442,6 +1505,10 @@
 .combo-box-popup .list-view .list-cell:even:selected > .jfx-rippler > StackPane {
     -fx-background-color: -monet-secondary-container;
     -fx-text-fill: -monet-on-secondary-container;
+}
+
+.combo-box-popup .list-view .list-cell:hover > .jfx-rippler > StackPane {
+    -fx-background-color: -monet-secondary-container-transparent-50;
 }
 
 .jfx-combo-box-warning {
@@ -1508,6 +1575,21 @@
     -fx-background-color: -monet-on-surface;
 }
 
+.custom-color-dialog .jfx-color-dialog-actions {
+    -fx-background-color: -monet-surface;
+    -fx-padding: 0.0 10.0 5.0 0.0;
+    -fx-alignment: center-right;
+}
+
+.custom-color-dialog .jfx-color-dialog-accept {
+    -fx-padding: 0.7em 0.8em;
+}
+
+.custom-color-dialog .jfx-color-dialog-cancel {
+    -fx-text-fill: -monet-on-surface-variant;
+    -fx-padding: 0.7em 0.8em;
+}
+
 /*******************************************************************************
  *                                                                             *
  * Table View                                                                  *
@@ -1562,6 +1644,47 @@
 }
 
 .table-view > .virtual-flow > .scroll-bar .track {
+    -fx-fill: transparent;
+}
+
+/*******************************************************************************
+ *                                                                             *
+ * JFX Tree View                                                               *
+ *                                                                             *
+ ******************************************************************************/
+
+.tree-view {
+    -fx-padding: 5;
+    -fx-background-radius: 6;
+    -fx-background-color: -monet-surface-container-low;
+    -fx-border-radius: 6;
+}
+
+.tree-cell {
+    -fx-padding: 5;
+    -fx-background-radius: 6;
+    -fx-background-color: transparent;
+    -fx-text-fill: -monet-on-surface;
+    -fx-border-radius: 6;
+}
+
+.tree-cell:focused {
+    -fx-background-color: -monet-secondary-container;
+}
+
+.tree-cell .arrow {
+    -fx-background-color: -monet-on-surface;
+}
+
+.tree-cell .jfx-rippler {
+    -jfx-rippler-disabled: true;
+}
+
+.tree-view > .virtual-flow > .scroll-bar {
+    -fx-skin: "org.jackhuang.hmcl.ui.construct.FloatScrollBarSkin";
+}
+
+.tree-view > .virtual-flow > .scroll-bar .track {
     -fx-fill: transparent;
 }
 
@@ -1762,4 +1885,71 @@
 
 .tooltip .text {
     -fx-fill: -monet-inverse-on-surface;
+}
+
+/*******************************************************************************
+ *                                                                             *
+ * Line Component                                                              *
+ *                                                                             *
+ ******************************************************************************/
+
+.line-component .line-component-container {
+    -fx-padding: 10 16 10 16;
+}
+
+.line-component .subtitle-label {
+    -fx-text-fill: -monet-on-surface-variant;
+}
+
+.line-component.no-padding .line-component-container {
+    -fx-padding: 0;
+}
+
+.line-component:large-title .title-label {
+    -fx-font-size: 15px;
+}
+
+.line-button .svg:disabled {
+    -fx-opacity: 0.4;
+}
+
+.line-button .trailing-label {
+    -fx-text-fill: -monet-on-surface-variant;
+}
+
+.line-button .trailing-icon .svg {
+    -fx-fill: -monet-on-surface-variant;
+    -fx-opacity: 1;
+}
+
+.line-button .trailing-icon .svg:disabled {
+    -fx-opacity: 0.4;
+}
+
+.line-select-button .menu-container .title-label {
+    -fx-font-size: 13px;
+}
+
+.line-select-button .menu-container .title-label {
+    -fx-text-fill: -monet-on-surface;
+}
+
+.line-select-button .menu-container .subtitle-label {
+    -fx-text-fill: -monet-on-surface-variant;
+}
+
+.line-select-button .menu-container:selected .title-label {
+    -fx-text-fill: -monet-primary;
+}
+
+.line-select-button .menu-container:selected .subtitle-label {
+    -fx-text-fill: -monet-primary-container;
+}
+
+.line-toggle-button .jfx-toggle-button {
+    -fx-padding: 0;
+}
+
+.update-pane:active .subtitle-label {
+    -fx-text-fill: -monet-tertiary;
 }

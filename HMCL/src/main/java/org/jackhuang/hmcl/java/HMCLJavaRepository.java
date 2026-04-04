@@ -30,7 +30,9 @@ import org.jackhuang.hmcl.util.platform.Platform;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
-import java.nio.file.*;
+import java.nio.file.DirectoryStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.*;
 
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
@@ -57,7 +59,7 @@ public final class HMCLJavaRepository implements JavaRepository {
     }
 
     public Path getJavaDir(Platform platform, GameJavaVersion gameJavaVersion) {
-        return getJavaDir(platform, MOJANG_JAVA_PREFIX + gameJavaVersion.getComponent());
+        return getJavaDir(platform, MOJANG_JAVA_PREFIX + gameJavaVersion.component());
     }
 
     @Override
@@ -66,7 +68,7 @@ public final class HMCLJavaRepository implements JavaRepository {
     }
 
     public Path getManifestFile(Platform platform, GameJavaVersion gameJavaVersion) {
-        return getManifestFile(platform, MOJANG_JAVA_PREFIX + gameJavaVersion.getComponent());
+        return getManifestFile(platform, MOJANG_JAVA_PREFIX + gameJavaVersion.component());
     }
 
     public boolean isInstalled(Platform platform, String name) {
@@ -74,7 +76,7 @@ public final class HMCLJavaRepository implements JavaRepository {
     }
 
     public boolean isInstalled(Platform platform, GameJavaVersion gameJavaVersion) {
-        return isInstalled(platform, MOJANG_JAVA_PREFIX + gameJavaVersion.getComponent());
+        return isInstalled(platform, MOJANG_JAVA_PREFIX + gameJavaVersion.component());
     }
 
     public @Nullable Path getJavaExecutable(Platform platform, String name) {
@@ -94,7 +96,7 @@ public final class HMCLJavaRepository implements JavaRepository {
     }
 
     public @Nullable Path getJavaExecutable(Platform platform, GameJavaVersion gameJavaVersion) {
-        return getJavaExecutable(platform, MOJANG_JAVA_PREFIX + gameJavaVersion.getComponent());
+        return getJavaExecutable(platform, MOJANG_JAVA_PREFIX + gameJavaVersion.component());
     }
 
     private static void getAllJava(List<Path> list, Platform platform, Path platformRoot) {
@@ -142,8 +144,9 @@ public final class HMCLJavaRepository implements JavaRepository {
     @Override
     public Task<JavaRuntime> getDownloadJavaTask(DownloadProvider downloadProvider, Platform platform, GameJavaVersion gameJavaVersion) {
         Path javaDir = getJavaDir(platform, gameJavaVersion);
+        Path tempDir = getPlatformRoot(platform).resolve(".tmp").resolve(javaDir.getFileName());
 
-        return new MojangJavaDownloadTask(downloadProvider, javaDir, gameJavaVersion, JavaManager.getMojangJavaPlatform(platform)).thenApplyAsync(result -> {
+        return new MojangJavaDownloadTask(downloadProvider, javaDir, tempDir, gameJavaVersion, JavaManager.getMojangJavaPlatform(platform)).thenApplyAsync(result -> {
             Path executable;
             try {
                 executable = JavaManager.getExecutable(javaDir).toRealPath();
@@ -158,14 +161,14 @@ public final class HMCLJavaRepository implements JavaRepository {
             if (JavaManager.isCompatible(platform))
                 info = JavaInfoUtils.fromExecutable(executable);
             else
-                info = new JavaInfo(platform, result.download.getVersion().getName(), null);
+                info = new JavaInfo(platform, result.download().version().name(), null);
 
             Map<String, Object> update = new LinkedHashMap<>();
             update.put("provider", "mojang");
-            update.put("component", gameJavaVersion.getComponent());
+            update.put("component", gameJavaVersion.component());
 
             Map<String, JavaLocalFiles.Local> files = new LinkedHashMap<>();
-            result.remoteFiles.getFiles().forEach((path, file) -> {
+            result.remoteFiles().getFiles().forEach((path, file) -> {
                 if (file instanceof MojangJavaRemoteFiles.RemoteFile) {
                     DownloadInfo downloadInfo = ((MojangJavaRemoteFiles.RemoteFile) file).getDownloads().get("raw");
                     if (downloadInfo != null) {

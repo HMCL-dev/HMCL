@@ -19,9 +19,11 @@ package org.jackhuang.hmcl.ui;
 
 import com.jfoenix.controls.JFXButton;
 import com.jfoenix.controls.JFXDialogLayout;
+import com.jfoenix.validation.base.ValidatorBase;
 import javafx.animation.KeyFrame;
 import javafx.animation.KeyValue;
 import javafx.animation.Timeline;
+import javafx.application.Platform;
 import javafx.beans.InvalidationListener;
 import javafx.beans.WeakInvalidationListener;
 import javafx.beans.property.DoubleProperty;
@@ -63,23 +65,29 @@ import org.jackhuang.hmcl.ui.versions.GameListPage;
 import org.jackhuang.hmcl.ui.versions.VersionPage;
 import org.jackhuang.hmcl.ui.versions.Versions;
 import org.jackhuang.hmcl.util.*;
+import org.jackhuang.hmcl.util.i18n.I18n;
+import org.jackhuang.hmcl.util.i18n.SupportedLocale;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.platform.Architecture;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.IOException;
 import java.nio.file.Path;
+import java.time.LocalDate;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
-import static org.jackhuang.hmcl.setting.ConfigHolder.*;
-import static org.jackhuang.hmcl.util.logging.Logger.LOG;
+import static org.jackhuang.hmcl.setting.ConfigHolder.config;
+import static org.jackhuang.hmcl.setting.ConfigHolder.globalConfig;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
+import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 public final class Controllers {
     public static final String JAVA_VERSION_TIP = "javaVersion";
     public static final String JAVA_INTERPRETED_MODE_TIP = "javaInterpretedMode";
     public static final String SOFTWARE_RENDERING = "softwareRendering";
+    public static final String APRIL_FOOLS = "aprilFools";
 
     public static final int MIN_WIDTH = 800 + 2 + 16; // bg width + border width*2 + shadow width*2
     public static final int MIN_HEIGHT = 450 + 2 + 40 + 16; // bg height + border width*2 + toolbar height + shadow width*2
@@ -97,9 +105,14 @@ public final class Controllers {
         GameListPage gameListPage = new GameListPage();
         gameListPage.selectedProfileProperty().bindBidirectional(Profiles.selectedProfileProperty());
         gameListPage.profilesProperty().bindContent(Profiles.profilesProperty());
-        FXUtils.applyDragListener(gameListPage, ModpackHelper::isFileModpackByExtension, modpacks -> {
-            Path modpack = modpacks.get(0);
-            Controllers.getDecorator().startWizard(new ModpackInstallWizardProvider(Profiles.getSelectedProfile(), modpack), i18n("install.modpack"));
+        FXUtils.applyDragListener(gameListPage, file -> ModpackHelper.isFileModpackByExtension(file) || "json".equalsIgnoreCase(FileUtils.getNameWithoutExtension(file)), files -> {
+            Path file = files.get(0);
+
+            if (ModpackHelper.isFileModpackByExtension(file)) {
+                Controllers.getDecorator().startWizard(new ModpackInstallWizardProvider(Profiles.getSelectedProfile(), file), i18n("install.modpack"));
+            } else if ("json".equalsIgnoreCase(FileUtils.getExtension(file))) {
+                Versions.installFromJson(Profiles.getSelectedProfile(), file);
+            }
         });
         return gameListPage;
     });
@@ -222,6 +235,8 @@ public final class Controllers {
 
     public static void initialize(Stage stage) {
         LOG.info("Start initializing application");
+
+        LOG.info("April Fools: " + AprilFools.isEnabled());
 
         if (System.getProperty("prism.lcdtext") == null) {
             String fontAntiAliasing = globalConfig().getFontAntiAliasing();
@@ -430,6 +445,53 @@ public final class Controllers {
             agreementPane.setActions(agreementLink, yesButton, noButton);
             Controllers.dialog(agreementPane);
         }
+
+        aprilFools:
+        if (AprilFools.isEnabled()) {
+            int currentYear = LocalDate.now().getYear();
+            if (config().getShownTips().get(APRIL_FOOLS) instanceof Number year && year.intValue() >= currentYear)
+                break aprilFools;
+
+            if (!I18n.getLocale().getLocale().getLanguage().equals("zh"))
+                break aprilFools;
+
+            SupportedLocale lzh = SupportedLocale.getSupportedLocales().stream()
+                    .filter(locale -> "lzh".equals(locale.getName()))
+                    .findFirst().orElse(null);
+
+            if (lzh == null) {
+                LOG.warning("No supported locale found for lzh");
+                break aprilFools;
+            }
+
+            Runnable updateShowTips = () -> config().getShownTips().put(APRIL_FOOLS, currentYear);
+
+            Controllers.confirmWithCountdown(i18n("launcher.april_fools.switch_lzh"), null, 10,
+                    MessageType.QUESTION, () -> {
+                        Controllers.confirm(i18n("launcher.april_fools.switch_lzh.confirm"), null, MessageType.QUESTION, () -> {
+                            LOG.info("Switching locale to " + lzh);
+
+                            updateShowTips.run();
+                            config().setLocalization(lzh);
+
+                            Controllers.onApplicationStop();
+
+                            try {
+                                FileSaver.waitForAllSaves();
+                            } catch (InterruptedException ignored) {
+                                // Ignore
+                            }
+
+                            try {
+                                Restarter.restartSelf();
+                            } catch (IOException e) {
+                                LOG.warning("Failed to restart self", e);
+                            }
+
+                            Platform.exit();
+                        }, updateShowTips);
+                    }, updateShowTips);
+        }
     }
 
     public static void dialog(Region content) {
@@ -505,8 +567,8 @@ public final class Controllers {
         return prompt(title, onResult, "");
     }
 
-    public static CompletableFuture<String> prompt(String title, FutureCallback<String> onResult, String initialValue) {
-        InputDialogPane pane = new InputDialogPane(title, initialValue, onResult);
+    public static CompletableFuture<String> prompt(String title, FutureCallback<String> onResult, String initialValue, ValidatorBase... validators) {
+        InputDialogPane pane = new InputDialogPane(title, initialValue, onResult, validators);
         dialog(pane);
         return pane.getCompletableFuture();
     }

@@ -181,6 +181,7 @@ public final class MultiFileItem<T> extends VBox {
                 center.setWrapText(true);
                 center.getStyleClass().add("subtitle-label");
                 center.setStyle("-fx-font-size: 10;");
+                center.setPadding(new Insets(0, 0, 0, 15));
                 pane.setCenter(center);
             }
 

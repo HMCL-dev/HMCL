@@ -90,11 +90,11 @@ public final class StyleSheets {
         final String defaultCss = "/assets/css/font.css";
         final FontManager.FontReference font = FontManager.getFont();
 
-        if (font == null || "System".equals(font.getFamily()))
+        if (font == null || "System".equals(font.family()))
             return defaultCss;
 
-        String fontFamily = font.getFamily();
-        String style = font.getStyle();
+        String fontFamily = font.family();
+        String style = font.style();
         String weight = null;
         String posture = null;
 

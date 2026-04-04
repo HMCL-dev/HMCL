@@ -21,7 +21,6 @@ import org.jackhuang.hmcl.java.JavaRuntime;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.Serializable;
-import java.net.Proxy;
 import java.nio.file.Path;
 import java.util.*;
 
@@ -47,13 +46,9 @@ public class LaunchOptions implements Serializable {
     private Integer width;
     private Integer height;
     private boolean fullscreen;
-    private String serverIp;
+    private QuickPlayOption quickPlayOption;
     private String wrapper;
-    private Proxy.Type proxyType;
-    private String proxyHost;
-    private int proxyPort;
-    private String proxyUser;
-    private String proxyPass;
+    private ProxyOption proxyOption;
     private boolean noGeneratedJVMArgs;
     private boolean noGeneratedOptimizingJVMArgs;
     private String preLaunchCommand;
@@ -181,11 +176,11 @@ public class LaunchOptions implements Serializable {
         return fullscreen;
     }
 
-    /**
-     * The server ip that will connect to when enter game main menu.
-     */
-    public String getServerIp() {
-        return serverIp;
+    /// The quick play option.
+    ///
+    /// @see <a href="https://minecraft.wiki/w/Quick_Play">Quick Play - Minecraft Wiki</a>
+    public QuickPlayOption getQuickPlayOption() {
+        return quickPlayOption;
     }
 
     /**
@@ -195,30 +190,8 @@ public class LaunchOptions implements Serializable {
         return wrapper;
     }
 
-    public Proxy.Type getProxyType() {
-        return proxyType;
-    }
-
-    public String getProxyHost() {
-        return proxyHost;
-    }
-
-    public int getProxyPort() {
-        return proxyPort;
-    }
-
-    /**
-     * The user name of the proxy, optional.
-     */
-    public String getProxyUser() {
-        return proxyUser;
-    }
-
-    /**
-     * The password of the proxy, optional
-     */
-    public String getProxyPass() {
-        return proxyPass;
+    public ProxyOption getProxyOption() {
+        return proxyOption;
     }
 
     /**
@@ -412,8 +385,8 @@ public class LaunchOptions implements Serializable {
             return this;
         }
 
-        public Builder setServerIp(String serverIp) {
-            options.serverIp = serverIp;
+        public Builder setQuickPlayOption(QuickPlayOption quickPlayOption) {
+            options.quickPlayOption = quickPlayOption;
             return this;
         }
 
@@ -422,28 +395,8 @@ public class LaunchOptions implements Serializable {
             return this;
         }
 
-        public Builder setProxyType(Proxy.Type proxyType) {
-            options.proxyType = proxyType;
-            return this;
-        }
-
-        public Builder setProxyHost(String proxyHost) {
-            options.proxyHost = proxyHost;
-            return this;
-        }
-
-        public Builder setProxyPort(int proxyPort) {
-            options.proxyPort = proxyPort;
-            return this;
-        }
-
-        public Builder setProxyUser(String proxyUser) {
-            options.proxyUser = proxyUser;
-            return this;
-        }
-
-        public Builder setProxyPass(String proxyPass) {
-            options.proxyPass = proxyPass;
+        public Builder setProxyOption(ProxyOption proxyOption) {
+            options.proxyOption = proxyOption;
             return this;
         }
 

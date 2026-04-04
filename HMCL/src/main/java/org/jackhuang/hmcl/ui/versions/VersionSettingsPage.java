@@ -18,7 +18,6 @@
 package org.jackhuang.hmcl.ui.versions;
 
 import com.jfoenix.controls.*;
-import javafx.application.Platform;
 import javafx.beans.InvalidationListener;
 import javafx.beans.binding.Bindings;
 import javafx.beans.property.*;
@@ -34,23 +33,25 @@ import javafx.scene.layout.*;
 import javafx.scene.text.Text;
 import javafx.stage.FileChooser;
 import javafx.stage.Screen;
-import org.jackhuang.hmcl.game.*;
+import org.jackhuang.hmcl.game.GameDirectoryType;
+import org.jackhuang.hmcl.game.HMCLGameRepository;
+import org.jackhuang.hmcl.game.ProcessPriority;
+import org.jackhuang.hmcl.game.Version;
 import org.jackhuang.hmcl.java.JavaManager;
+import org.jackhuang.hmcl.java.JavaRuntime;
 import org.jackhuang.hmcl.setting.*;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.FXUtils;
+import org.jackhuang.hmcl.ui.MemoryStatusBar;
 import org.jackhuang.hmcl.ui.WeakListenerHolder;
 import org.jackhuang.hmcl.ui.construct.*;
 import org.jackhuang.hmcl.ui.decorator.DecoratorPage;
-import org.jackhuang.hmcl.util.Lang;
-import org.jackhuang.hmcl.util.Pair;
-import org.jackhuang.hmcl.util.ServerAddress;
-import org.jackhuang.hmcl.util.StringUtils;
+import org.jackhuang.hmcl.util.*;
+import org.jackhuang.hmcl.util.i18n.I18n;
 import org.jackhuang.hmcl.util.javafx.BindingMapping;
 import org.jackhuang.hmcl.util.javafx.PropertyUtils;
 import org.jackhuang.hmcl.util.javafx.SafeStringConverter;
 import org.jackhuang.hmcl.util.platform.Architecture;
-import org.jackhuang.hmcl.java.JavaRuntime;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
 import org.jackhuang.hmcl.util.platform.SystemInfo;
 import org.jackhuang.hmcl.util.platform.hardware.PhysicalMemoryStatus;
@@ -59,30 +60,12 @@ import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-import static org.jackhuang.hmcl.ui.FXUtils.stringConverter;
 import static org.jackhuang.hmcl.util.DataSizeUnit.GIGABYTES;
 import static org.jackhuang.hmcl.util.DataSizeUnit.MEGABYTES;
-import static org.jackhuang.hmcl.util.Lang.getTimer;
 import static org.jackhuang.hmcl.util.Pair.pair;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 public final class VersionSettingsPage extends StackPane implements DecoratorPage, VersionPage.VersionLoadable, PageAware {
-
-    private static final ObjectProperty<PhysicalMemoryStatus> memoryStatus = new SimpleObjectProperty<>(PhysicalMemoryStatus.INVALID);
-    private static TimerTask memoryStatusUpdateTask;
-
-    private static void initMemoryStatusUpdateTask() {
-        FXUtils.checkFxUserThread();
-        if (memoryStatusUpdateTask != null)
-            return;
-        memoryStatusUpdateTask = new TimerTask() {
-            @Override
-            public void run() {
-                Platform.runLater(() -> memoryStatus.set(SystemInfo.getPhysicalMemoryStatus()));
-            }
-        };
-        getTimer().scheduleAtFixedRate(memoryStatusUpdateTask, 0, 1000);
-    }
 
     private final ReadOnlyObjectWrapper<State> state = new ReadOnlyObjectWrapper<>(new State("", null, false, false, false));
 
@@ -97,7 +80,7 @@ public final class VersionSettingsPage extends StackPane implements DecoratorPag
     private final JFXComboBox<String> cboWindowsSize;
     private final JFXTextField txtServerIP;
     private final ComponentList componentList;
-    private final JFXComboBox<LauncherVisibility> cboLauncherVisibility;
+    private final LineSelectButton<LauncherVisibility> launcherVisibilityPane;
     private final JFXCheckBox chkAutoAllocate;
     private final JFXCheckBox chkFullscreen;
     private final ComponentSublist javaSublist;
@@ -109,15 +92,19 @@ public final class VersionSettingsPage extends StackPane implements DecoratorPag
     private final ComponentSublist gameDirSublist;
     private final MultiFileItem<GameDirectoryType> gameDirItem;
     private final MultiFileItem.FileOption<GameDirectoryType> gameDirCustomOption;
-    private final JFXComboBox<ProcessPriority> cboProcessPriority;
-    private final OptionToggleButton showLogsPane;
-    private final OptionToggleButton enableDebugLogOutputPane;
+    private final LineSelectButton<ProcessPriority> processPriorityPane;
+    private final LineToggleButton showLogsPane;
+    private final LineToggleButton enableDebugLogOutputPane;
     private final ImagePickerItem iconPickerItem;
 
     private final ChangeListener<Collection<JavaRuntime>> javaListChangeListener;
     private final InvalidationListener usesGlobalListener;
     private final ChangeListener<Boolean> specificSettingsListener;
     private final InvalidationListener javaListener = any -> initJavaSubtitle();
+
+    private final ChangeListener<GameDirectoryType> gameDirTypeListener = (ob, o, n) -> fireWorkingDirChanged();
+    private final ChangeListener<String> gameDirListener = (ob, o, n) -> fireWorkingDirChanged();
+
     private boolean updatingJavaSetting = false;
     private boolean updatingSelectedJava = false;
 
@@ -131,7 +118,7 @@ public final class VersionSettingsPage extends StackPane implements DecoratorPag
         ScrollPane scrollPane = new ScrollPane();
         scrollPane.setFitToHeight(true);
         scrollPane.setFitToWidth(true);
-        scrollPane.setVbarPolicy(ScrollPane.ScrollBarPolicy.ALWAYS);
+        scrollPane.setVbarPolicy(ScrollPane.ScrollBarPolicy.AS_NEEDED);
         getChildren().setAll(scrollPane);
 
         rootPane = new VBox();
@@ -190,30 +177,21 @@ public final class VersionSettingsPage extends StackPane implements DecoratorPag
 
         {
             componentList = new ComponentList();
-            componentList.setDepth(1);
 
             if (!globalSetting) {
-                BorderPane copyGlobalPane = new BorderPane();
-                {
-                    Label label = new Label(i18n("settings.game.copy_global"));
-                    copyGlobalPane.setLeft(label);
-                    BorderPane.setAlignment(label, Pos.CENTER_LEFT);
+                var copyGlobalButton = LineButton.createNavigationButton();
+                copyGlobalButton.setTitle(i18n("settings.game.copy_global"));
+                copyGlobalButton.setOnAction(event ->
+                        Controllers.confirm(i18n("settings.game.copy_global.copy_all.confirm"), null, () -> {
+                            Set<String> ignored = new HashSet<>(Arrays.asList(
+                                    "usesGlobal",
+                                    "versionIcon"
+                            ));
 
-                    JFXButton copyAll = FXUtils.newBorderButton(i18n("settings.game.copy_global.copy_all"));
-                    copyAll.disableProperty().bind(modpack);
-                    copyGlobalPane.setRight(copyAll);
-                    copyAll.setOnAction(e -> Controllers.confirm(i18n("settings.game.copy_global.copy_all.confirm"), null, () -> {
-                        Set<String> ignored = new HashSet<>(Arrays.asList(
-                                "usesGlobal",
-                                "versionIcon"
-                        ));
+                            PropertyUtils.copyProperties(profile.getGlobal(), lastVersionSetting, name -> !ignored.contains(name));
+                        }, null));
 
-                        PropertyUtils.copyProperties(profile.getGlobal(), lastVersionSetting, name -> !ignored.contains(name));
-                    }, null));
-                    BorderPane.setAlignment(copyAll, Pos.CENTER_RIGHT);
-                }
-
-                componentList.getContent().add(copyGlobalPane);
+                componentList.getContent().add(copyGlobalButton);
             }
 
             javaItem = new MultiFileItem<>();
@@ -315,30 +293,14 @@ public final class VersionSettingsPage extends StackPane implements DecoratorPag
                     lowerBoundPane.getChildren().setAll(label, slider, txtMaxMemory, new Label(i18n("settings.memory.unit.mib")));
                 }
 
-                StackPane progressBarPane = new StackPane();
-                progressBarPane.setAlignment(Pos.CENTER_LEFT);
-                VBox.setMargin(progressBarPane, new Insets(8, 0, 0, 16));
-                {
-                    progressBarPane.setMinHeight(4);
-                    progressBarPane.getStyleClass().add("memory-total");
-
-                    StackPane usedMemory = new StackPane();
-                    usedMemory.getStyleClass().add("memory-used");
-                    usedMemory.maxWidthProperty().bind(Bindings.createDoubleBinding(() ->
-                                    progressBarPane.getWidth() *
-                                            (memoryStatus.get().getUsed() * 1.0 / memoryStatus.get().getTotal()), progressBarPane.widthProperty(),
-                            memoryStatus));
-                    StackPane allocateMemory = new StackPane();
-                    allocateMemory.getStyleClass().add("memory-allocate");
-                    allocateMemory.maxWidthProperty().bind(Bindings.createDoubleBinding(() ->
-                                    progressBarPane.getWidth() *
-                                            Math.min(1.0,
-                                                    (double) (HMCLGameRepository.getAllocatedMemory(maxMemory.get() * 1024L * 1024L, memoryStatus.get().getAvailable(), chkAutoAllocate.isSelected())
-                                                            + memoryStatus.get().getUsed()) / memoryStatus.get().getTotal()), progressBarPane.widthProperty(),
-                            maxMemory, memoryStatus, chkAutoAllocate.selectedProperty()));
-
-                    progressBarPane.getChildren().setAll(allocateMemory, usedMemory);
-                }
+                MemoryStatusBar memoryStatusBar = new MemoryStatusBar();
+                VBox.setMargin(memoryStatusBar, new Insets(8, 0, 0, 16));
+                memoryStatusBar.memoryAllocatedProperty().bind(Bindings.createDoubleBinding(() ->
+                                (double) HMCLGameRepository.getAllocatedMemory(
+                                        maxMemory.get() * 1024L * 1024L,
+                                        memoryStatusBar.getMemoryStatus().getAvailable(),
+                                        chkAutoAllocate.isSelected()),
+                        memoryStatusBar.memoryStatusProperty(), maxMemory, chkAutoAllocate.selectedProperty()));
 
                 BorderPane digitalPane = new BorderPane();
                 VBox.setMargin(digitalPane, new Insets(0, 0, 0, 16));
@@ -346,39 +308,35 @@ public final class VersionSettingsPage extends StackPane implements DecoratorPag
                     Label lblPhysicalMemory = new Label();
                     lblPhysicalMemory.getStyleClass().add("memory-label");
                     digitalPane.setLeft(lblPhysicalMemory);
-                    lblPhysicalMemory.textProperty().bind(Bindings.createStringBinding(() ->
-                            i18n("settings.memory.used_per_total",
-                                    GIGABYTES.convertFromBytes(memoryStatus.get().getUsed()),
-                                    GIGABYTES.convertFromBytes(memoryStatus.get().getTotal())), memoryStatus));
+                    lblPhysicalMemory.textProperty().bind(Bindings.createStringBinding(() -> {
+                        PhysicalMemoryStatus memoryStatus = memoryStatusBar.getMemoryStatus();
+                        return i18n("settings.memory.used_per_total",
+                                GIGABYTES.convertFromBytes(memoryStatus.getUsed()),
+                                GIGABYTES.convertFromBytes(memoryStatus.getTotal()));
+                    }, memoryStatusBar.memoryStatusProperty()));
 
                     Label lblAllocateMemory = new Label();
                     lblAllocateMemory.textProperty().bind(Bindings.createStringBinding(() -> {
+                        PhysicalMemoryStatus memoryStatus = memoryStatusBar.getMemoryStatus();
                         long maxMemory = Lang.parseInt(this.maxMemory.get(), 0) * 1024L * 1024L;
-                        return i18n(memoryStatus.get().hasAvailable() && maxMemory > memoryStatus.get().getAvailable()
+                        return i18n(memoryStatus.hasAvailable() && maxMemory > memoryStatus.getAvailable()
                                         ? (chkAutoAllocate.isSelected() ? "settings.memory.allocate.auto.exceeded" : "settings.memory.allocate.manual.exceeded")
                                         : (chkAutoAllocate.isSelected() ? "settings.memory.allocate.auto" : "settings.memory.allocate.manual"),
                                 GIGABYTES.convertFromBytes(maxMemory),
-                                GIGABYTES.convertFromBytes(HMCLGameRepository.getAllocatedMemory(maxMemory, memoryStatus.get().getAvailable(), chkAutoAllocate.isSelected())),
-                                GIGABYTES.convertFromBytes(memoryStatus.get().getAvailable()));
-                    }, memoryStatus, maxMemory, chkAutoAllocate.selectedProperty()));
+                                GIGABYTES.convertFromBytes(HMCLGameRepository.getAllocatedMemory(maxMemory, memoryStatus.getAvailable(), chkAutoAllocate.isSelected())),
+                                GIGABYTES.convertFromBytes(memoryStatus.getAvailable()));
+                    }, memoryStatusBar.memoryStatusProperty(), maxMemory, chkAutoAllocate.selectedProperty()));
                     lblAllocateMemory.getStyleClass().add("memory-label");
                     digitalPane.setRight(lblAllocateMemory);
                 }
 
-                maxMemoryPane.getChildren().setAll(title, chkAutoAllocate, lowerBoundPane, progressBarPane, digitalPane);
+                maxMemoryPane.getChildren().setAll(title, chkAutoAllocate, lowerBoundPane, memoryStatusBar, digitalPane);
             }
 
-            BorderPane launcherVisibilityPane = new BorderPane();
-            {
-                Label label = new Label(i18n("settings.advanced.launcher_visible"));
-                launcherVisibilityPane.setLeft(label);
-                BorderPane.setAlignment(label, Pos.CENTER_LEFT);
-
-                cboLauncherVisibility = new JFXComboBox<>();
-                launcherVisibilityPane.setRight(cboLauncherVisibility);
-                BorderPane.setAlignment(cboLauncherVisibility, Pos.CENTER_RIGHT);
-                FXUtils.setLimitWidth(cboLauncherVisibility, 300);
-            }
+            launcherVisibilityPane = new LineSelectButton<>();
+            launcherVisibilityPane.setTitle(i18n("settings.advanced.launcher_visible"));
+            launcherVisibilityPane.setItems(LauncherVisibility.values());
+            launcherVisibilityPane.setConverter(e -> i18n("settings.advanced.launcher_visibility." + e.name().toLowerCase(Locale.ROOT)));
 
             BorderPane dimensionPane = new BorderPane();
             {
@@ -408,23 +366,19 @@ public final class VersionSettingsPage extends StackPane implements DecoratorPag
                 }
             }
 
-            showLogsPane = new OptionToggleButton();
+            showLogsPane = new LineToggleButton();
             showLogsPane.setTitle(i18n("settings.show_log"));
 
-            enableDebugLogOutputPane = new OptionToggleButton();
+            enableDebugLogOutputPane = new LineToggleButton();
             enableDebugLogOutputPane.setTitle(i18n("settings.enable_debug_log_output"));
-
-            BorderPane processPriorityPane = new BorderPane();
-            {
-                Label label = new Label(i18n("settings.advanced.process_priority"));
-                processPriorityPane.setLeft(label);
-                BorderPane.setAlignment(label, Pos.CENTER_LEFT);
-
-                cboProcessPriority = new JFXComboBox<>();
-                processPriorityPane.setRight(cboProcessPriority);
-                BorderPane.setAlignment(cboProcessPriority, Pos.CENTER_RIGHT);
-                FXUtils.setLimitWidth(cboProcessPriority, 300);
-            }
+            processPriorityPane = new LineSelectButton<>();
+            processPriorityPane.setTitle(i18n("settings.advanced.process_priority"));
+            processPriorityPane.setConverter(e -> i18n("settings.advanced.process_priority." + e.name().toLowerCase(Locale.ROOT)));
+            processPriorityPane.setDescriptionConverter(e -> {
+                String bundleKey = "settings.advanced.process_priority." + e.name().toLowerCase(Locale.ROOT) + ".desc";
+                return I18n.hasKey(bundleKey) ? i18n(bundleKey) : null;
+            });
+            processPriorityPane.setItems(ProcessPriority.values());
 
             GridPane serverPane = new GridPane();
             {
@@ -453,23 +407,16 @@ public final class VersionSettingsPage extends StackPane implements DecoratorPag
                 serverPane.addRow(0, new Label(i18n("settings.advanced.server_ip")), txtServerIP);
             }
 
-            BorderPane showAdvancedSettingPane = new BorderPane();
-            {
-                Label label = new Label(i18n("settings.advanced"));
-                showAdvancedSettingPane.setLeft(label);
-                BorderPane.setAlignment(label, Pos.CENTER_LEFT);
+            var showAdvancedSettingPane = LineButton.createNavigationButton();
+            showAdvancedSettingPane.setTitle(i18n("settings.advanced"));
+            showAdvancedSettingPane.setOnAction(event -> {
+                if (lastVersionSetting != null) {
+                    if (advancedVersionSettingPage == null)
+                        advancedVersionSettingPage = new AdvancedVersionSettingPage(profile, versionId, lastVersionSetting);
 
-                JFXButton button = FXUtils.newBorderButton(i18n("settings.advanced.modify"));
-                button.setOnAction(e -> {
-                    if (lastVersionSetting != null) {
-                        if (advancedVersionSettingPage == null)
-                            advancedVersionSettingPage = new AdvancedVersionSettingPage(profile, versionId, lastVersionSetting);
-
-                        Controllers.navigateForward(advancedVersionSettingPage);
-                    }
-                });
-                showAdvancedSettingPane.setRight(button);
-            }
+                    Controllers.navigateForward(advancedVersionSettingPage);
+                }
+            });
 
             componentList.getContent().addAll(
                     javaSublist,
@@ -499,21 +446,19 @@ public final class VersionSettingsPage extends StackPane implements DecoratorPag
             else
                 profile.getRepository().globalizeVersionSetting(versionId);
 
-            Platform.runLater(() -> loadVersion(profile, versionId));
+            FXUtils.runInFX(() -> {
+                loadVersion(profile, versionId);
+                fireWorkingDirChanged();
+            });
         };
 
         addEventHandler(Navigator.NavigationEvent.NAVIGATED, this::onDecoratorPageNavigating);
 
-        cboLauncherVisibility.getItems().setAll(LauncherVisibility.values());
-        cboLauncherVisibility.setConverter(stringConverter(e -> i18n("settings.advanced.launcher_visibility." + e.name().toLowerCase(Locale.ROOT))));
-
-        cboProcessPriority.getItems().setAll(ProcessPriority.values());
-        cboProcessPriority.setConverter(stringConverter(e -> i18n("settings.advanced.process_priority." + e.name().toLowerCase(Locale.ROOT))));
-
-        memoryStatus.set(SystemInfo.getPhysicalMemoryStatus());
         componentList.disableProperty().bind(enableSpecificSettings.not());
+    }
 
-        initMemoryStatusUpdateTask();
+    private void fireWorkingDirChanged() {
+        FXUtils.runInFX(() -> fireEvent(new VersionPage.WorkingDirChangedEvent()));
     }
 
     @Override
@@ -557,14 +502,17 @@ public final class VersionSettingsPage extends StackPane implements DecoratorPag
             chkFullscreen.selectedProperty().unbindBidirectional(lastVersionSetting.fullscreenProperty());
             showLogsPane.selectedProperty().unbindBidirectional(lastVersionSetting.showLogsProperty());
             enableDebugLogOutputPane.selectedProperty().unbindBidirectional(lastVersionSetting.enableDebugLogOutputProperty());
-            FXUtils.unbindEnum(cboLauncherVisibility, lastVersionSetting.launcherVisibilityProperty());
-            FXUtils.unbindEnum(cboProcessPriority, lastVersionSetting.processPriorityProperty());
+            launcherVisibilityPane.valueProperty().unbindBidirectional(lastVersionSetting.launcherVisibilityProperty());
+            processPriorityPane.valueProperty().unbindBidirectional(lastVersionSetting.processPriorityProperty());
 
             lastVersionSetting.usesGlobalProperty().removeListener(usesGlobalListener);
             lastVersionSetting.javaVersionTypeProperty().removeListener(javaListener);
             lastVersionSetting.javaDirProperty().removeListener(javaListener);
             lastVersionSetting.defaultJavaPathPropertyProperty().removeListener(javaListener);
             lastVersionSetting.javaVersionProperty().removeListener(javaListener);
+
+            lastVersionSetting.gameDirTypeProperty().removeListener(gameDirTypeListener);
+            lastVersionSetting.gameDirProperty().removeListener(gameDirListener);
 
             gameDirItem.selectedDataProperty().unbindBidirectional(lastVersionSetting.gameDirTypeProperty());
             gameDirSublist.subtitleProperty().unbind();
@@ -592,8 +540,8 @@ public final class VersionSettingsPage extends StackPane implements DecoratorPag
         chkFullscreen.selectedProperty().bindBidirectional(versionSetting.fullscreenProperty());
         showLogsPane.selectedProperty().bindBidirectional(versionSetting.showLogsProperty());
         enableDebugLogOutputPane.selectedProperty().bindBidirectional(versionSetting.enableDebugLogOutputProperty());
-        FXUtils.bindEnum(cboLauncherVisibility, versionSetting.launcherVisibilityProperty());
-        FXUtils.bindEnum(cboProcessPriority, versionSetting.processPriorityProperty());
+        launcherVisibilityPane.valueProperty().bindBidirectional(versionSetting.launcherVisibilityProperty());
+        processPriorityPane.valueProperty().bindBidirectional(versionSetting.processPriorityProperty());
 
         if (versionId != null)
             enableSpecificSettings.set(!versionSetting.isUsesGlobal());
@@ -641,6 +589,9 @@ public final class VersionSettingsPage extends StackPane implements DecoratorPag
         gameDirItem.selectedDataProperty().bindBidirectional(versionSetting.gameDirTypeProperty());
         gameDirSublist.subtitleProperty().bind(Bindings.createStringBinding(() -> profile.getRepository().getRunDirectory(versionId).toAbsolutePath().normalize().toString(),
                 versionSetting.gameDirProperty(), versionSetting.gameDirTypeProperty()));
+
+        versionSetting.gameDirTypeProperty().addListener(gameDirTypeListener);
+        versionSetting.gameDirProperty().addListener(gameDirListener);
 
         lastVersionSetting = versionSetting;
 
@@ -780,7 +731,6 @@ public final class VersionSettingsPage extends StackPane implements DecoratorPag
         }
 
         iconPickerItem.setImage(profile.getRepository().getVersionIconImage(versionId));
-        FXUtils.limitSize(iconPickerItem.getImageView(), 32, 32);
     }
 
     private static List<String> getSupportedResolutions() {
@@ -809,4 +759,5 @@ public final class VersionSettingsPage extends StackPane implements DecoratorPag
     public ReadOnlyObjectProperty<State> stateProperty() {
         return state.getReadOnlyProperty();
     }
+
 }

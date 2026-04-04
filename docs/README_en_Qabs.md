@@ -1,6 +1,8 @@
-# ɹǝɥɔunɐ˥ ¡ʇɟɐɹɔǝuᴉW ollǝH
+<div align="center">
+    <img src="/HMCL/src/main/resources/assets/img/icon@8x.png" alt="HMCL Logo" width="64" style="transform: rotate(180deg);"/>
+</div>
 
-[![pɐoꞁuʍoᗡ](https://img.shields.io/github/downloads/HMCL-dev/HMCL/total?label=p%C9%90o%EA%9E%81u%CA%8Do%E1%97%A1&style=flat)](https://github.com/HMCL-dev/HMCL/releases)
+<h1 align="center">ɹǝɥɔunɐ˥ ¡ʇɟɐɹɔǝuᴉW ollǝH</h1>
 
 <!-- #BEGIN BLOCK -->
 <!-- #PROPERTY PROCESS_LINK=false -->
@@ -13,7 +15,7 @@
 
 ˙˥ƆWH ɥƃnoɹɥʇ sɯɹoɟʇɐld ʇuǝɹǝɟɟᴉp ssoɹɔɐ ʇɟɐɹɔǝuᴉW ʎoɾuǝ ʎlᴉsɐǝ uɐɔ no⅄ ˙ɥɔɹ∀ƃuoo˥ puɐ 'SԀIW 'Λ-ƆSIɹ 'Wɹ∀ '98x sɐ ɥɔns sǝɹnʇɔǝʇᴉɥɔɹɐ ∩ԀƆ snoᴉɹɐʌ sʇɹoddns oslɐ ʇᴉ ʇnq 'pSqǝǝɹℲ puɐ 'SOɔɐɯ 'xnuᴉ˥ 'sʍopuᴉM ǝʞᴉl sɯǝʇsʎs ƃuᴉʇɐɹǝdo ʇuǝɹǝɟɟᴉp uo unɹ ʇᴉ sǝop ʎluo ʇoN ˙sǝᴉʇᴉlᴉqɐdɐɔ ɯɹoɟʇɐld-ssoɹɔ ƃuᴉzɐɯɐ sɐɥ ˥ƆWH
 
-˙ǝɹoɯ puɐ 'uoᴉʇɐzᴉɯoʇsnƆ I∩ 'ƃuᴉʇɐǝɹƆ ʞɔɐdpoW '(ǝuᴉℲᴉʇdO puɐ 'ɹǝpɐo˥ǝʇᴉ˥ 'ʇlᴉnQ 'ɔᴉɹqɐℲ 'ɯooɹuɐǝlƆ 'ǝƃɹoℲoǝN 'ǝƃɹoℲ) ƃuᴉllɐʇsuI ɹǝpɐo˥poW 'ƃuᴉzᴉɯoʇsnƆ ǝɯɐפ 'ʇuǝɯǝƃɐuɐW poW sʇɹoddns ʇɐɥʇ ɹǝɥɔunɐl ʇɟɐɹɔǝuᴉW ɯɹoɟʇɐld-ssoɹɔ 'ǝɔɹnos-uǝdo uɐ sᴉ ˥ƆWH
+˙ǝɹoɯ puɐ 'uoᴉʇɐzᴉɯoʇsnƆ I∩ 'ƃuᴉʇɐǝɹƆ ʞɔɐdpoW '(ǝuᴉℲᴉʇdO puɐ 'ɹǝpɐo˥ǝʇᴉ˥ 'ʇlᴉnQ 'ɔᴉɹqɐℲ ʎɔɐᵷǝꞀ 'ɔᴉɹqɐℲ 'ɯooɹuɐǝlƆ 'ǝƃɹoℲoǝN 'ǝƃɹoℲ) ƃuᴉllɐʇsuI ɹǝpɐo˥poW 'ƃuᴉzᴉɯoʇsnƆ ǝɯɐפ 'ʇuǝɯǝƃɐuɐW poW sʇɹoddns ʇɐɥʇ ɹǝɥɔunɐl ʇɟɐɹɔǝuᴉW ɯɹoɟʇɐld-ssoɹɔ 'ǝɔɹnos-uǝdo uɐ sᴉ ˥ƆWH
 
 ## pɐoluʍoᗡ
 

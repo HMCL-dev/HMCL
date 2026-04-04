@@ -103,10 +103,14 @@ public class OfflineAccount extends Account {
         return skin != null && skin.getType() != Skin.Type.DEFAULT;
     }
 
+    public AuthInfo logInWithoutSkin() throws AuthenticationException {
+        // Using "legacy" user type here because "mojang" user type may cause "invalid session token" or "disconnected" when connecting to a game server.
+        return new AuthInfo(username, uuid, UUIDTypeAdapter.fromUUID(UUID.randomUUID()), AuthInfo.USER_TYPE_MSA, "{}");
+    }
+
     @Override
     public AuthInfo logIn() throws AuthenticationException {
-        // Using "legacy" user type here because "mojang" user type may cause "invalid session token" or "disconnected" when connecting to a game server.
-        AuthInfo authInfo = new AuthInfo(username, uuid, UUIDTypeAdapter.fromUUID(UUID.randomUUID()), AuthInfo.USER_TYPE_MSA, "{}");
+        AuthInfo authInfo = logInWithoutSkin();
 
         if (loadAuthlibInjector(skin)) {
             CompletableFuture<AuthlibInjectorArtifactInfo> artifactTask = CompletableFuture.supplyAsync(() -> {
