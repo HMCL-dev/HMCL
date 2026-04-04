@@ -39,9 +39,15 @@ public class ScriptFormatDialog extends DialogPane {
     private final LineToggleButton appendSuffixToggle;
 
     public ScriptFormatDialog(String unsupportedExtension) {
-        setTitle(i18n("version.launch_script.unsupported.title"));
+        String title = unsupportedExtension.isEmpty()
+                ? i18n("version.launch_script.unsupported.title.no_ext")
+                : i18n("version.launch_script.unsupported.title");
+        setTitle(title);
 
-        Label messageLabel = new Label(i18n("version.launch_script.unsupported.message", unsupportedExtension));
+        String message = unsupportedExtension.isEmpty()
+                ? i18n("version.launch_script.unsupported.message.no_ext")
+                : i18n("version.launch_script.unsupported.message", unsupportedExtension);
+        Label messageLabel = new Label(message);
         messageLabel.setWrapText(true);
         messageLabel.setPadding(new Insets(0, 0, 10, 0));
 
