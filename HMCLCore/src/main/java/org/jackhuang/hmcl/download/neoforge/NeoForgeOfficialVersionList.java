@@ -75,17 +75,17 @@ public final class NeoForgeOfficialVersionList extends VersionList<NeoForgeRemot
                     String mcVersion;
 
                     try {
-                        int si1 = version.indexOf('.'), si2 = version.indexOf('.', version.indexOf('.') + 1);
+                        int si1 = version.indexOf('.'), si2 = version.indexOf('.', si1 + 1);
                         int majorVersion = Integer.parseInt(version.substring(0, si1));
                         if (majorVersion == 0) { // Snapshot version.
                             mcVersion = version.substring(si1 + 1, si2);
                         } else {
-                            String ver = version.substring(0, Integer.parseInt(version.substring(si1 + 1, si2)) == 0 ? si1 : si2);
                             if (majorVersion >= 26) {
-                                int separator = version.indexOf('+');
+                                int si3 = version.indexOf('.', si2 + 1), separator = version.indexOf('+');
+                                String ver = version.substring(0, Integer.parseInt(version.substring(si2 + 1, si3)) == 0 ? si2 : si3);
                                 mcVersion = separator < 0 ? ver : ver + "-" + version.substring(separator + 1);
                             } else {
-                                mcVersion = "1." + ver;
+                                mcVersion = "1." + version.substring(0, Integer.parseInt(version.substring(si1 + 1, si2)) == 0 ? si1 : si2);
                             }
                         }
                     } catch (RuntimeException e) {
