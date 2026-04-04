@@ -627,6 +627,10 @@ public abstract sealed class GameVersionNumber implements Comparable<GameVersion
                 throw new IllegalArgumentException(value);
             }
 
+            if (year >= Release.MINIMUM_YEAR_MAJOR_VERSION) {
+                throw new IllegalArgumentException(value);
+            }
+
             char suffix = value.charAt(5);
             if (suffix < 'a' || suffix > 'z')
                 throw new IllegalArgumentException(value);
