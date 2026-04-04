@@ -333,7 +333,8 @@ public final class ForgeNewModMetadata {
         }
 
         if (result != null) {
-            if (result != loader) LOG.warning("Loader mismatch for mod " + modID + ", found " + result + ", expecting " + loader);
+            if (result != loader)
+                LOG.warning("Loader mismatch for mod " + modID + ", found " + result + ", expecting " + loader);
             return result;
         } else {
             LOG.warning("Cannot determine the mod loader for mod " + modID + ", expected " + loader);
