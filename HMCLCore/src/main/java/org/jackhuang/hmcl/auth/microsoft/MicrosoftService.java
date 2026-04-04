@@ -438,16 +438,18 @@ public class MicrosoftService {
 
     }
 
+    @JsonSerializable
     public record MinecraftLicense(
-            List<MinecraftLicenseItem> items,
-            String signature,
-            String keyId
+            @SerializedName("items") List<MinecraftLicenseItem> items,
+            @SerializedName("signature") String signature,
+            @SerializedName("keyId") String keyId
     ) {
     }
 
+    @JsonSerializable
     public record MinecraftLicenseItem(
-            String name,
-            String signature
+            @SerializedName("name") String name,
+            @SerializedName("signature") String signature
     ) {
     }
 
