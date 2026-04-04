@@ -1968,6 +1968,10 @@
     -fx-line-spacing: 2;
 }
 
+.addon-changelog .html {
+    -fx-font-size: 12;
+}
+
 .addon-changelog .html-h1 {
     -fx-font-size: 16.5;
 }

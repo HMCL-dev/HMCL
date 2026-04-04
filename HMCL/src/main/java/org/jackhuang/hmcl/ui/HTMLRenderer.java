@@ -18,12 +18,14 @@
 package org.jackhuang.hmcl.ui;
 
 import javafx.beans.InvalidationListener;
-import javafx.beans.property.SimpleStringProperty;
+import javafx.beans.property.SimpleObjectProperty;
 import javafx.collections.FXCollections;
+import javafx.geometry.Pos;
 import javafx.scene.Cursor;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
 import javafx.scene.image.ImageView;
+import javafx.scene.layout.VBox;
 import javafx.scene.text.Text;
 import javafx.scene.text.TextFlow;
 import org.jackhuang.hmcl.task.Schedulers;
@@ -284,9 +286,9 @@ public final class HTMLRenderer {
         var childElements = ((Element) table).children();
         List<Element> captions = new ArrayList<>();
 
-        List<String> head = new ArrayList<>();
-        List<List<String>> body = new ArrayList<>();
-        List<String> foot = new ArrayList<>();
+        List<Element> head = new ArrayList<>();
+        List<List<Element>> body = new ArrayList<>();
+        List<Element> foot = new ArrayList<>();
 
         boolean hasHead = false;
         boolean hasBody = false;
@@ -304,13 +306,12 @@ public final class HTMLRenderer {
                             head.addAll(
                                     e.children().stream()
                                             .filter(n -> n.nameIs("th") || n.nameIs("td"))
-                                            .map(Element::text)
                                             .toList()
                             );
                             break;
                         }
                         if (e.nameIs("th") || e.nameIs("td")) {
-                            head.add(e.text());
+                            head.add(e);
                         }
                     }
                     columnCount = Math.max(columnCount, head.size());
@@ -321,9 +322,8 @@ public final class HTMLRenderer {
                     body.clear();
                     for (Element e : child.children()) {
                         if (e.nameIs("tr")) {
-                            List<String> row = e.children().stream()
+                            List<Element> row = e.children().stream()
                                     .filter(n -> n.nameIs("th") || n.nameIs("td"))
-                                    .map(Element::text)
                                     .toList();
                             columnCount = Math.max(columnCount, row.size());
                             if (!row.isEmpty()) body.add(row);
@@ -339,22 +339,20 @@ public final class HTMLRenderer {
                             foot.addAll(
                                     e.children().stream()
                                             .filter(n -> n.nameIs("th") || n.nameIs("td"))
-                                            .map(Element::text)
                                             .toList()
                             );
                             break;
                         }
                         if (e.nameIs("th") || e.nameIs("td")) {
-                            foot.add(e.text());
+                            foot.add(e);
                         }
                     }
                     columnCount = Math.max(columnCount, foot.size());
                 }
                 case "tr" -> {
                     if (hasBody) continue;
-                    List<String> row = child.children().stream()
+                    List<Element> row = child.children().stream()
                             .filter(n -> n.nameIs("th") || n.nameIs("td"))
-                            .map(Element::text)
                             .toList();
                     columnCount = Math.max(columnCount, row.size());
                     if (!row.isEmpty()) body.add(row);
@@ -362,19 +360,31 @@ public final class HTMLRenderer {
             }
         }
 
-        List<List<String>> rows = new ArrayList<>(hasFoot ? body.size() + 1 : body.size());
-        for (List<String> row : body)
-            rows.add(Lang.copyWithSize(row, columnCount, ""));
-        if (hasFoot)
-            rows.add(Lang.copyWithSize(foot, columnCount, ""));
+        head = Lang.copyWithSize(head, columnCount, null);
 
-        TableView<List<String>> tableView = new TableView<>(FXCollections.observableList(rows));
+        List<List<Element>> rows = new ArrayList<>(hasFoot ? body.size() + 1 : body.size());
+        for (List<Element> row : body)
+            rows.add(Lang.copyWithSize(row, columnCount, null));
+        if (hasFoot)
+            rows.add(Lang.copyWithSize(foot, columnCount, null));
+
+        TableView<List<Element>> tableView = new TableView<>(FXCollections.observableList(rows));
         tableView.setFixedCellSize(25);
         tableView.setPrefHeight(25 * (rows.size() + 1) + 5);
         for (int i = 0; i < columnCount; i++) {
             int finalI = i;
-            TableColumn<List<String>, String> c = new TableColumn<>(head.size() > i ? head.get(i) : "");
-            c.setCellValueFactory(param -> new SimpleStringProperty(param.getValue().get(finalI)));
+            TableColumn<List<Element>, javafx.scene.Node> c = new TableColumn<>();
+            Element e = head.get(i);
+            if (e != null) {
+                var box = new VBox(HTMLRenderer.openHyperlinkInBrowser().appendNode(e).render());
+                box.setAlignment(Pos.CENTER_LEFT);
+                c.setGraphic(box);
+            }
+            c.setCellValueFactory(param -> {
+                Element el = param.getValue().get(finalI);
+                if (el == null) return new SimpleObjectProperty<>();
+                return new SimpleObjectProperty<>(HTMLRenderer.openHyperlinkInBrowser().appendNode(el).render());
+            });
             tableView.getColumns().add(c);
         }
 
@@ -417,7 +427,7 @@ public final class HTMLRenderer {
         }
     }
 
-    public void appendNode(Node node) {
+    public HTMLRenderer appendNode(Node node) {
         if (node instanceof TextNode n) {
             appendText(preformatted ? n.getWholeText() : normaliseWhitespace(n.getWholeText()));
         }
@@ -453,6 +463,8 @@ public final class HTMLRenderer {
                     appendAutoLineBreak("\n");
             }
         }
+
+        return this;
     }
 
     private static boolean isSpacing(String text) {
