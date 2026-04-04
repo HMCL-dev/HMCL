@@ -25,6 +25,7 @@ import org.commonmark.parser.Parser;
 import org.commonmark.renderer.html.HtmlRenderer;
 import org.jetbrains.annotations.Contract;
 import org.jsoup.Jsoup;
+import org.jsoup.nodes.Node;
 import org.jsoup.safety.Safelist;
 
 import java.io.PrintWriter;
@@ -604,17 +605,7 @@ public final class StringUtils {
     private static final Safelist all = Safelist.relaxed()
             .addAttributes("a", "rel", "target");
 
-    public static boolean isHtml(String str) {
-        if (isBlank(str)) return false;
-        if (str.startsWith("<!DOCTYPE html>") || str.startsWith("<html>") || str.startsWith("<body>")) return true;
-        if (!Jsoup.isValid(str, all)) {
-            return false;
-        }
-        var body = Jsoup.parse(str).body();
-        if (body.childNodes().size() > 1) return true;
-        if (body.childNodes().isEmpty()) return false;
-        return !body.childNodes().get(0).nameIs("#text");
-    }
+    private static final Set<String> mdParsableTags = Set.of("#text", "img");
 
     private static final HtmlRenderer HTML_RENDERER = HtmlRenderer.builder().extensions(List.of(
             InsExtension.create(), StrikethroughExtension.create(), TablesExtension.create()
@@ -626,7 +617,10 @@ public final class StringUtils {
 
     public static String convertToHtml(String md) {
         if (md == null) return null;
-        if (isHtml(md)) return md;
+        if (isBlank(md)) return "";
+        if (md.startsWith("<!DOCTYPE html>") || md.startsWith("<html>") || md.startsWith("<body>")
+                || (Jsoup.isValid(md, all) && !Jsoup.parse(md).body().childNodes().stream().map(Node::normalName).allMatch(mdParsableTags::contains)))
+            return md;
         return HTML_RENDERER.render(MD_PARSER.parse(md));
     }
 
