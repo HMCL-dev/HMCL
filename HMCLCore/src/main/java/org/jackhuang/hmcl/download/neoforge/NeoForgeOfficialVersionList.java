@@ -96,8 +96,8 @@ public final class NeoForgeOfficialVersionList extends VersionList<NeoForgeRemot
                                 }
 
                                 String ver = Integer.parseInt(version.substring(si2 + 1, si3)) == 0
-                                        ? version.substring(0, si1)
-                                        : version.substring(0, si2);
+                                        ? version.substring(0, si2)
+                                        : version.substring(0, si3);
 
                                 int separator = version.indexOf('+');
                                 if (separator < 0)
