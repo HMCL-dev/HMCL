@@ -163,6 +163,11 @@ public final class OAuthServer extends NanoHTTPD implements OAuth.Session {
         return newFixedLengthResponse(Response.Status.OK, "text/html; charset=UTF-8", html);
     }
 
+    @Override
+    public void close() {
+        stop();
+    }
+
     public static class Factory implements OAuth.Callback {
         public final EventManager<GrantDeviceCodeEvent> onGrantDeviceCode = new EventManager<>();
         public final EventManager<OpenBrowserEvent> onOpenBrowserAuthorizationCode = new EventManager<>();
