@@ -54,14 +54,18 @@ import org.jackhuang.hmcl.util.TaskCancellationAction;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Locale;
+import java.util.Set;
 import java.util.concurrent.CancellationException;
 import java.util.function.Supplier;
+import java.util.stream.Collectors;
 
 import static org.jackhuang.hmcl.ui.FXUtils.runInFX;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
+import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 public class DownloadPage extends DecoratorAnimatedPage implements DecoratorPage {
     private final ReadOnlyObjectWrapper<DecoratorPage.State> state = new ReadOnlyObjectWrapper<>(DecoratorPage.State.fromTitle(i18n("download"), -1));
@@ -135,6 +139,19 @@ public class DownloadPage extends DecoratorAnimatedPage implements DecoratorPage
 
         Path runDirectory = profile.getRepository().hasVersion(version) ? profile.getRepository().getRunDirectory(version) : profile.getRepository().getBaseDirectory();
 
+        Set<String> existingFiles;
+
+        try (var list = Files.list(runDirectory.resolve(subdirectoryName))) {
+            existingFiles = list.map(Path::getFileName)
+                    .map(Path::toString)
+                    .collect(Collectors.toSet());
+        } catch (IOException e) {
+            LOG.warning("Failed to list files in " + runDirectory.resolve(subdirectoryName), e);
+            existingFiles = Set.of();
+        }
+
+        Set<String> finalExistingFiles = existingFiles;
+
         Controllers.prompt(i18n("archive.file.name"), (result, handler) -> {
             Path dest = runDirectory.resolve(subdirectoryName).resolve(result);
 
@@ -154,7 +171,7 @@ public class DownloadPage extends DecoratorAnimatedPage implements DecoratorPage
                 }
             }), i18n("message.downloading"), TaskCancellationAction.NORMAL);
             handler.resolve();
-        }, file.getFile().getFilename(), new Validator(i18n("install.new_game.malformed"), FileUtils::isNameValid), new Validator(i18n("profile.already_exists"), (it) -> !Files.exists(runDirectory.resolve(subdirectoryName).resolve(it))));
+        }, file.getFile().getFilename(), new Validator(i18n("install.new_game.malformed"), FileUtils::isNameValid), new Validator(i18n("profile.already_exists"), (it) -> !finalExistingFiles.contains(it)));
 
     }
 
