@@ -646,9 +646,47 @@ public class DefaultLauncher extends Launcher {
         if (!usePowerShell) {
             if (isWindows && !scriptExtension.equals("bat"))
                 throw new IllegalArgumentException("The extension of " + scriptFile + " is not 'bat' or 'ps1' in Windows");
-            else if (!isWindows && !(scriptExtension.equals("sh") || scriptExtension.equals("command")))
-                throw new IllegalArgumentException("The extension of " + scriptFile + " is not 'sh', 'ps1' or 'command' in macOS/Linux");
+            else if (!isWindows && !(scriptExtension.equals("sh") || scriptExtension.equals("command") || scriptExtension.equals("bash")))
+                throw new IllegalArgumentException("The extension of " + scriptFile + " is not 'sh', 'bash', 'ps1' or 'command' in macOS/Linux");
         }
+
+        generateScriptFile(scriptFile, usePowerShell, nativeFolder, isWindows);
+    }
+
+    @Override
+    public void makeLaunchScript(Path scriptFile, String forceFormat) throws IOException {
+        boolean isWindows = OperatingSystem.WINDOWS == OperatingSystem.CURRENT_OS;
+
+        Path nativeFolder;
+        if (options.getNativesDirType() == NativesDirectoryType.VERSION_FOLDER) {
+            nativeFolder = repository.getNativeDirectory(version.getId(), options.getJava().getPlatform());
+        } else {
+            nativeFolder = Path.of(options.getNativesDir());
+        }
+
+        if (options.getNativesDirType() == NativesDirectoryType.VERSION_FOLDER) {
+            decompressNatives(nativeFolder);
+        }
+
+        if (isUsingLog4j())
+            extractLog4jConfigurationFile();
+
+        boolean usePowerShell = "ps1".equalsIgnoreCase(forceFormat);
+
+        if (!usePowerShell) {
+            if (isWindows) {
+                if (forceFormat != null && !forceFormat.equals("bat"))
+                    throw new IllegalArgumentException("The forced format " + forceFormat + " is not valid in Windows, use 'bat'");
+            } else {
+                if (forceFormat != null && !forceFormat.equals("bash") && !forceFormat.equals("sh") && !forceFormat.equals("command"))
+                    throw new IllegalArgumentException("The forced format " + forceFormat + " is not valid in Linux/macOS, use 'bash', 'sh', or 'command'");
+            }
+        }
+
+        generateScriptFile(scriptFile, usePowerShell, nativeFolder, isWindows);
+    }
+
+    private void generateScriptFile(Path scriptFile, boolean usePowerShell, Path nativeFolder, boolean isWindows) throws IOException {
 
         final Command commandLine = generateCommandLine(nativeFolder);
         final String command = usePowerShell ? null : commandLine.commandLine.toString();

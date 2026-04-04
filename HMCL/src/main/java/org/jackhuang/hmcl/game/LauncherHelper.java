@@ -82,6 +82,7 @@ public final class LauncherHelper {
     private Account account;
     private final String selectedVersion;
     private Path scriptFile;
+    private String forceFormat;
     private final VersionSetting setting;
     private LauncherVisibility launcherVisibility;
     private boolean showLogs;
@@ -136,6 +137,13 @@ public final class LauncherHelper {
 
     public void makeLaunchScript(Path scriptFile) {
         this.scriptFile = Objects.requireNonNull(scriptFile);
+        this.forceFormat = null;
+        launch();
+    }
+
+    public void makeLaunchScript(Path scriptFile, String forceFormat) {
+        this.scriptFile = Objects.requireNonNull(scriptFile);
+        this.forceFormat = forceFormat;
         launch();
     }
 
@@ -250,7 +258,11 @@ public final class LauncherHelper {
                         return Task.supplyAsync(launcher::launch);
                     } else {
                         return Task.supplyAsync(() -> {
-                            launcher.makeLaunchScript(scriptFile);
+                            if (forceFormat != null) {
+                                launcher.makeLaunchScript(scriptFile, forceFormat);
+                            } else {
+                                launcher.makeLaunchScript(scriptFile);
+                            }
                             return null;
                         });
                     }

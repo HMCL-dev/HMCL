@@ -61,6 +61,14 @@ public abstract class Launcher {
      */
     public abstract void makeLaunchScript(Path file) throws IOException;
 
+    /**
+     * @param file the file path.
+     * @param forceFormat force the script format - "bat", "ps1", or "bash". If null, uses file extension.
+     */
+    public void makeLaunchScript(Path file, String forceFormat) throws IOException {
+        makeLaunchScript(file);
+    }
+
     public abstract ManagedProcess launch() throws IOException, InterruptedException;
 
 }

@@ -264,11 +264,36 @@ public final class Versions {
             chooser.getExtensionFilters().add(new FileChooser.ExtensionFilter(i18n("extension.ps1"), "*.ps1"));
             Path file = FileUtils.toPath(chooser.showSaveDialog(Controllers.getStage()));
             if (file != null) {
-                LauncherHelper launcherHelper = new LauncherHelper(profile, account, id);
-                for (Consumer<LauncherHelper> injecter : injecters) {
-                    injecter.accept(launcherHelper);
+                try {
+                    if (file.getFileName().toString().contains("DEBUG_FORCE_EXT_DIALOG")) {
+                        throw new IllegalArgumentException("The extension of " + file + " is not recognized");
+                    }
+
+                    LauncherHelper launcherHelper = new LauncherHelper(profile, account, id);
+                    for (Consumer<LauncherHelper> injecter : injecters) {
+                        injecter.accept(launcherHelper);
+                    }
+                    launcherHelper.makeLaunchScript(file);
+                } catch (IllegalArgumentException e) {
+                    String unsupportedExtension = FileUtils.getExtension(file);
+                    ScriptFormatDialog dialog = new ScriptFormatDialog(unsupportedExtension);
+                    Controllers.dialog(dialog);
+                    dialog.getCompletableFuture().whenComplete((result, ex) -> {
+                        if (result != null && (ex == null || !(ex instanceof java.util.concurrent.CancellationException))) {
+                            String forceFormat = getForceFormatFromSelection(result.format());
+                            Path targetFile = file;
+                            if (result.appendSuffix()) {
+                                String extension = getExtensionFromForceFormat(forceFormat);
+                                targetFile = file.resolveSibling(file.getFileName().toString() + "." + extension);
+                            }
+                            LauncherHelper launcherHelper = new LauncherHelper(profile, account, id);
+                            for (Consumer<LauncherHelper> injecter : injecters) {
+                                injecter.accept(launcherHelper);
+                            }
+                            launcherHelper.makeLaunchScript(targetFile, forceFormat);
+                        }
+                    });
                 }
-                launcherHelper.makeLaunchScript(file);
             }
         });
     }
@@ -356,5 +381,21 @@ public final class Versions {
         Controllers.getVersionPage().showInstanceSettings();
         // VersionPage.loadVersion will be invoked after navigation
         Controllers.navigate(Controllers.getVersionPage());
+    }
+
+    private static String getForceFormatFromSelection(String format) {
+        if (format == null) return null;
+        if (format.equals(i18n("extension.ps1"))) return "ps1";
+        if (format.equals(i18n("extension.bat"))) return "bat";
+        if (format.equals(i18n("extension.sh"))) return "bash";
+        return null;
+    }
+
+    private static String getExtensionFromForceFormat(String forceFormat) {
+        return switch (forceFormat) {
+            case "ps1" -> "ps1";
+            case "bat" -> "bat";
+            default -> "sh";
+        };
     }
 }
