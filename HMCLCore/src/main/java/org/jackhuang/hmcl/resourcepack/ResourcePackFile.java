@@ -33,7 +33,7 @@ import java.util.List;
 import java.util.Locale;
 
 public sealed abstract class ResourcePackFile extends LocalAddonFile implements Comparable<ResourcePackFile> permits ResourcePackFolder, ResourcePackZipFile {
-    static ResourcePackFile parse(ResourcePackManager manager, Path path) throws IOException {
+    static ResourcePackFile fromFile(ResourcePackManager manager, Path path) throws IOException {
         if (isFileResourcePack(path)) {
             return Files.isRegularFile(path) ? new ResourcePackZipFile(manager, path) : new ResourcePackFolder(manager, path);
         }

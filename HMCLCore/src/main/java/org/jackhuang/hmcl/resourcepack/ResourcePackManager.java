@@ -264,7 +264,7 @@ public final class ResourcePackManager extends LocalAddonManager<ResourcePackFil
     }
 
     private void addResourcePackInfo(Path file) throws IOException {
-        ResourcePackFile resourcePack = ResourcePackFile.parse(this, file);
+        ResourcePackFile resourcePack = ResourcePackFile.fromFile(this, file);
         if (resourcePack != null) localFiles.add(resourcePack);
     }
 

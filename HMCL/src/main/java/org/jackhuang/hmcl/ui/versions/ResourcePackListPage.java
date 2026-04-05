@@ -63,7 +63,6 @@ import org.jetbrains.annotations.Nullable;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.lang.ref.WeakReference;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
 import java.util.concurrent.locks.ReentrantLock;
@@ -115,13 +114,6 @@ public final class ResourcePackListPage extends ListPageBase<ResourcePackListPag
         this.resourcePackManager = new ResourcePackManager(profile.getRepository(), version);
         this.resourcePackDirectory = this.resourcePackManager.getDirectory();
 
-        try {
-            if (!Files.exists(resourcePackDirectory)) {
-                Files.createDirectories(resourcePackDirectory);
-            }
-        } catch (IOException e) {
-            LOG.warning("Failed to create resource pack directory: " + resourcePackDirectory, e);
-        }
         refresh();
     }
 
