@@ -23,8 +23,7 @@ lwjgl-unsafe-agent = "2.0"
 monet-fx = "0.4.0"
 terracotta = "0.4.2"
 nayuki-qrcodegen = "1.8.0"
-commonmark = "0.28.0"
-ph-css = "8.1.1"
+commonmark = "0.27.1"
 
 # testing
 junit = "6.0.1"
@@ -64,7 +63,6 @@ commonmark-autolink = { module = "org.commonmark:commonmark-ext-autolink", versi
 commonmark-underline = { module = "org.commonmark:commonmark-ext-ins", version.ref = "commonmark" }
 commonmark-strikethrough = { module = "org.commonmark:commonmark-ext-gfm-strikethrough", version.ref = "commonmark" }
 commonmark-table = { module = "org.commonmark:commonmark-ext-gfm-tables", version.ref = "commonmark" }
-ph-css = { module = "com.helger:ph-css", version.ref = "ph-css" }
 
 # testing
 junit-jupiter = { module = "org.junit.jupiter:junit-jupiter", version.ref = "junit" }

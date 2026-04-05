@@ -32,7 +32,6 @@ dependencies {
     api(libs.commonmark.underline)
     api(libs.commonmark.strikethrough)
     api(libs.commonmark.table)
-    api(libs.ph.css)
 
     compileOnlyApi(libs.jetbrains.annotations)
 

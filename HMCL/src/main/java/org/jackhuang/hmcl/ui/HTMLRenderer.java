@@ -17,9 +17,6 @@
  */
 package org.jackhuang.hmcl.ui;
 
-import com.helger.css.decl.CSSDeclaration;
-import com.helger.css.decl.CSSDeclarationList;
-import com.helger.css.reader.CSSReaderDeclarationList;
 import javafx.beans.InvalidationListener;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.collections.FXCollections;
@@ -41,7 +38,6 @@ import org.jsoup.nodes.TextNode;
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import java.util.function.Consumer;
 
 import static org.jackhuang.hmcl.setting.ConfigHolder.config;
@@ -51,11 +47,6 @@ import static org.jackhuang.hmcl.util.logging.Logger.LOG;
  * @author Glavo
  */
 public final class HTMLRenderer {
-
-    private static final Map<String, String> cssPropertyMapping = Map.of(
-            "color", "-fx-fill",
-            "font-size", "-fx-font-size" // And more
-    );
 
     private static URI resolveLink(Node linkNode) {
         String href = linkNode.absUrl("href");
@@ -157,16 +148,12 @@ public final class HTMLRenderer {
 
             String style = node.attr("style");
             if (StringUtils.isNotBlank(style)) {
-                var sBuilder = fxStyle != null ? new StringBuilder(fxStyle) : new StringBuilder();
-                CSSDeclarationList cssDeclarations = CSSReaderDeclarationList.readFromString(style);
-                if (cssDeclarations != null) {
-                    List<CSSDeclaration> declarations = cssDeclarations.getAllDeclarations();
-                    declarations.forEach(d -> {
-                        d.setProperty(cssPropertyMapping.getOrDefault(d.getProperty(), d.getProperty()));
-                        sBuilder.append(d.getAsCSSString()).append(";");
-                    });
-                }
-                fxStyle = sBuilder.toString();
+                fxStyle = StringUtils.addSuffix(
+                        style
+                                .replace("color:", "-fx-fill:")
+                                .replace("font-size:", "-fx-font-size:"), // And more
+                        ";"
+                );
             }
         }
     }
