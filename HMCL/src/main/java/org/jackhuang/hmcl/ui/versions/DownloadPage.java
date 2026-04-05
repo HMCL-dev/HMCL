@@ -372,7 +372,7 @@ public class DownloadPage extends Control implements DecoratorPage {
             var imageView = new ImageContainer(40);
             pane.getChildren().setAll(imageView, content);
             FXUtils.setLimitHeight(this, 60);
-            FXUtils.onClicked(pane, () -> {
+            setOnAction((e) -> {
                 fireEvent(new DialogCloseEvent());
                 Controllers.navigate(new DownloadPage(page, addon, version, callback));
             });
