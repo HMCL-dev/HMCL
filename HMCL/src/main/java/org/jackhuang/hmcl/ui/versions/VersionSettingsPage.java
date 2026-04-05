@@ -18,7 +18,6 @@
 package org.jackhuang.hmcl.ui.versions;
 
 import com.jfoenix.controls.*;
-import javafx.application.Platform;
 import javafx.beans.InvalidationListener;
 import javafx.beans.binding.Bindings;
 import javafx.beans.property.*;
@@ -43,6 +42,7 @@ import org.jackhuang.hmcl.java.JavaRuntime;
 import org.jackhuang.hmcl.setting.*;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.FXUtils;
+import org.jackhuang.hmcl.ui.MemoryStatusBar;
 import org.jackhuang.hmcl.ui.WeakListenerHolder;
 import org.jackhuang.hmcl.ui.construct.*;
 import org.jackhuang.hmcl.ui.decorator.DecoratorPage;
@@ -57,7 +57,6 @@ import org.jackhuang.hmcl.util.platform.SystemInfo;
 import org.jackhuang.hmcl.util.platform.hardware.PhysicalMemoryStatus;
 import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
 
-import java.lang.ref.WeakReference;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -114,8 +113,6 @@ public final class VersionSettingsPage extends StackPane implements DecoratorPag
     private final BooleanProperty enableSpecificSettings = new SimpleBooleanProperty(false);
     private final IntegerProperty maxMemory = new SimpleIntegerProperty();
     private final BooleanProperty modpack = new SimpleBooleanProperty();
-
-    private final ReadOnlyObjectProperty<PhysicalMemoryStatus> memoryStatus = UpdateMemoryStatus.memoryStatusProperty();
 
     public VersionSettingsPage(boolean globalSetting) {
         ScrollPane scrollPane = new ScrollPane();
@@ -296,30 +293,14 @@ public final class VersionSettingsPage extends StackPane implements DecoratorPag
                     lowerBoundPane.getChildren().setAll(label, slider, txtMaxMemory, new Label(i18n("settings.memory.unit.mib")));
                 }
 
-                StackPane progressBarPane = new StackPane();
-                progressBarPane.setAlignment(Pos.CENTER_LEFT);
-                VBox.setMargin(progressBarPane, new Insets(8, 0, 0, 16));
-                {
-                    progressBarPane.setMinHeight(4);
-                    progressBarPane.getStyleClass().add("memory-total");
-
-                    StackPane usedMemory = new StackPane();
-                    usedMemory.getStyleClass().add("memory-used");
-                    usedMemory.maxWidthProperty().bind(Bindings.createDoubleBinding(() ->
-                                    progressBarPane.getWidth() *
-                                            (memoryStatus.get().getUsed() * 1.0 / memoryStatus.get().getTotal()), progressBarPane.widthProperty(),
-                            memoryStatus));
-                    StackPane allocateMemory = new StackPane();
-                    allocateMemory.getStyleClass().add("memory-allocate");
-                    allocateMemory.maxWidthProperty().bind(Bindings.createDoubleBinding(() ->
-                                    progressBarPane.getWidth() *
-                                            Math.min(1.0,
-                                                    (double) (HMCLGameRepository.getAllocatedMemory(maxMemory.get() * 1024L * 1024L, memoryStatus.get().getAvailable(), chkAutoAllocate.isSelected())
-                                                            + memoryStatus.get().getUsed()) / memoryStatus.get().getTotal()), progressBarPane.widthProperty(),
-                            maxMemory, memoryStatus, chkAutoAllocate.selectedProperty()));
-
-                    progressBarPane.getChildren().setAll(allocateMemory, usedMemory);
-                }
+                MemoryStatusBar memoryStatusBar = new MemoryStatusBar();
+                VBox.setMargin(memoryStatusBar, new Insets(8, 0, 0, 16));
+                memoryStatusBar.memoryAllocatedProperty().bind(Bindings.createDoubleBinding(() ->
+                                (double) HMCLGameRepository.getAllocatedMemory(
+                                        maxMemory.get() * 1024L * 1024L,
+                                        memoryStatusBar.getMemoryStatus().getAvailable(),
+                                        chkAutoAllocate.isSelected()),
+                        memoryStatusBar.memoryStatusProperty(), maxMemory, chkAutoAllocate.selectedProperty()));
 
                 BorderPane digitalPane = new BorderPane();
                 VBox.setMargin(digitalPane, new Insets(0, 0, 0, 16));
@@ -327,26 +308,29 @@ public final class VersionSettingsPage extends StackPane implements DecoratorPag
                     Label lblPhysicalMemory = new Label();
                     lblPhysicalMemory.getStyleClass().add("memory-label");
                     digitalPane.setLeft(lblPhysicalMemory);
-                    lblPhysicalMemory.textProperty().bind(Bindings.createStringBinding(() ->
-                            i18n("settings.memory.used_per_total",
-                                    GIGABYTES.convertFromBytes(memoryStatus.get().getUsed()),
-                                    GIGABYTES.convertFromBytes(memoryStatus.get().getTotal())), memoryStatus));
+                    lblPhysicalMemory.textProperty().bind(Bindings.createStringBinding(() -> {
+                        PhysicalMemoryStatus memoryStatus = memoryStatusBar.getMemoryStatus();
+                        return i18n("settings.memory.used_per_total",
+                                GIGABYTES.convertFromBytes(memoryStatus.getUsed()),
+                                GIGABYTES.convertFromBytes(memoryStatus.getTotal()));
+                    }, memoryStatusBar.memoryStatusProperty()));
 
                     Label lblAllocateMemory = new Label();
                     lblAllocateMemory.textProperty().bind(Bindings.createStringBinding(() -> {
+                        PhysicalMemoryStatus memoryStatus = memoryStatusBar.getMemoryStatus();
                         long maxMemory = Lang.parseInt(this.maxMemory.get(), 0) * 1024L * 1024L;
-                        return i18n(memoryStatus.get().hasAvailable() && maxMemory > memoryStatus.get().getAvailable()
+                        return i18n(memoryStatus.hasAvailable() && maxMemory > memoryStatus.getAvailable()
                                         ? (chkAutoAllocate.isSelected() ? "settings.memory.allocate.auto.exceeded" : "settings.memory.allocate.manual.exceeded")
                                         : (chkAutoAllocate.isSelected() ? "settings.memory.allocate.auto" : "settings.memory.allocate.manual"),
                                 GIGABYTES.convertFromBytes(maxMemory),
-                                GIGABYTES.convertFromBytes(HMCLGameRepository.getAllocatedMemory(maxMemory, memoryStatus.get().getAvailable(), chkAutoAllocate.isSelected())),
-                                GIGABYTES.convertFromBytes(memoryStatus.get().getAvailable()));
-                    }, memoryStatus, maxMemory, chkAutoAllocate.selectedProperty()));
+                                GIGABYTES.convertFromBytes(HMCLGameRepository.getAllocatedMemory(maxMemory, memoryStatus.getAvailable(), chkAutoAllocate.isSelected())),
+                                GIGABYTES.convertFromBytes(memoryStatus.getAvailable()));
+                    }, memoryStatusBar.memoryStatusProperty(), maxMemory, chkAutoAllocate.selectedProperty()));
                     lblAllocateMemory.getStyleClass().add("memory-label");
                     digitalPane.setRight(lblAllocateMemory);
                 }
 
-                maxMemoryPane.getChildren().setAll(title, chkAutoAllocate, lowerBoundPane, progressBarPane, digitalPane);
+                maxMemoryPane.getChildren().setAll(title, chkAutoAllocate, lowerBoundPane, memoryStatusBar, digitalPane);
             }
 
             launcherVisibilityPane = new LineSelectButton<>();
@@ -472,7 +456,7 @@ public final class VersionSettingsPage extends StackPane implements DecoratorPag
 
         componentList.disableProperty().bind(enableSpecificSettings.not());
     }
-    
+
     private void fireWorkingDirChanged() {
         FXUtils.runInFX(() -> fireEvent(new VersionPage.WorkingDirChangedEvent()));
     }
@@ -776,57 +760,4 @@ public final class VersionSettingsPage extends StackPane implements DecoratorPag
         return state.getReadOnlyProperty();
     }
 
-    private static final class UpdateMemoryStatus extends Thread {
-
-        @FXThread
-        private static WeakReference<ObjectProperty<PhysicalMemoryStatus>> memoryStatusPropertyCache;
-
-        @FXThread
-        static ReadOnlyObjectProperty<PhysicalMemoryStatus> memoryStatusProperty() {
-            if (memoryStatusPropertyCache != null) {
-                var property = memoryStatusPropertyCache.get();
-                if (property != null) {
-                    return property;
-                }
-            }
-
-            ObjectProperty<PhysicalMemoryStatus> property = new SimpleObjectProperty<>(PhysicalMemoryStatus.INVALID);
-            memoryStatusPropertyCache = new WeakReference<>(property);
-            new UpdateMemoryStatus(memoryStatusPropertyCache).start();
-            return property;
-        }
-
-        private final WeakReference<ObjectProperty<PhysicalMemoryStatus>> memoryStatusPropertyRef;
-
-        UpdateMemoryStatus(WeakReference<ObjectProperty<PhysicalMemoryStatus>> memoryStatusPropertyRef) {
-            this.memoryStatusPropertyRef = memoryStatusPropertyRef;
-
-            setName("UpdateMemoryStatus");
-            setDaemon(true);
-            setPriority(Thread.MIN_PRIORITY);
-        }
-
-        @Override
-        public void run() {
-            while (true) {
-                PhysicalMemoryStatus status = SystemInfo.getPhysicalMemoryStatus();
-
-                var memoryStatusProperty = memoryStatusPropertyRef.get();
-                if (memoryStatusProperty == null)
-                    return;
-
-                if (Controllers.isStopped())
-                    return;
-
-                Platform.runLater(() -> memoryStatusProperty.set(status));
-
-                try {
-                    //noinspection BusyWait
-                    Thread.sleep(1000);
-                } catch (InterruptedException e) {
-                    return;
-                }
-            }
-        }
-    }
 }
