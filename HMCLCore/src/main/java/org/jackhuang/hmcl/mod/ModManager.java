@@ -372,7 +372,9 @@ public final class ModManager {
      */
     public boolean hasSimpleMod(String fileName) {
         return Files.exists(getModsDirectory().resolve(StringUtils.removeSuffix(fileName, DISABLED_EXTENSION)))
-                || Files.exists(getModsDirectory().resolve(StringUtils.addSuffix(fileName, DISABLED_EXTENSION)));
+                || Files.exists(getModsDirectory().resolve(StringUtils.addSuffix(fileName, DISABLED_EXTENSION)))
+                || Files.exists(getModsDirectory().resolve(StringUtils.removeSuffix(fileName, OLD_EXTENSION)))
+                || Files.exists(getModsDirectory().resolve(StringUtils.addSuffix(fileName, OLD_EXTENSION)));
     }
 
     public Path getSimpleModPath(String fileName) {
