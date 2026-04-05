@@ -58,9 +58,9 @@ public final class HTMLRenderer {
     private boolean underline;
     private boolean strike;
     private boolean highlight;
+    private int indentLevel;
     private String headerLevel;
     private Node hyperlink;
-    private int indentLevel;
 
     private final Consumer<URI> onClickHyperlink;
 
@@ -113,20 +113,12 @@ public final class HTMLRenderer {
     }
 
     private void pushNode(Node node) {
-        String nodeName = node.nodeName();
-        if ("li".equals(nodeName)) {
-            indentLevel++;
-        }
         stack.add(node);
         updateStyle();
     }
 
     private void popNode() {
-        Node node = stack.remove(stack.size() - 1);
-        String nodeName = node.nodeName();
-        if (indentLevel > 0 && "li".equals(nodeName)) {
-            indentLevel--;
-        }
+        stack.remove(stack.size() - 1);
         updateStyle();
     }
 
@@ -247,11 +239,14 @@ public final class HTMLRenderer {
         }
 
         if (node.childNodeSize() > 0) {
+            boolean isLiNode = "li".equals(name);
+            if (isLiNode) indentLevel++;
             pushNode(node);
             for (Node childNode : node.childNodes()) {
                 appendNode(childNode);
             }
             popNode();
+            if (isLiNode) indentLevel--;
         }
 
         switch (name) {
