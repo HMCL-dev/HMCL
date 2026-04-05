@@ -97,8 +97,7 @@ public final class ModpackSelectionPage extends VBox implements WizardPage {
         graphic.setMouseTransparent(true);
         graphic.setLeft(new TwoLineListItem(i18n("modpack.choose." + type), i18n("modpack.choose." + type + ".detail")));
 
-        SVGPath arrow = new SVGPath();
-        arrow.setContent(SVG.ARROW_FORWARD.getPath());
+        SVGPath arrow = SVG.ARROW_FORWARD.createIcon();
         BorderPane.setAlignment(arrow, Pos.CENTER);
         graphic.setRight(arrow);
 
