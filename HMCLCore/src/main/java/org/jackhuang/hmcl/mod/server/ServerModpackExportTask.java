@@ -82,7 +82,7 @@ public class ServerModpackExportTask extends Task<Void> {
                     Path file = runDirectory.resolve(path);
                     if (Files.isRegularFile(file)) {
                         String ext = FileUtils.getExtension(file);
-                        if (ext.equals("jar") || ext.equals("zip")) {
+                        if (ext.equalsIgnoreCase("jar") || ext.equalsIgnoreCase("zip")) {
                             Optional<RemoteMod.Version> modrinthVersion = Optional.empty();
                             try {
                                 modrinthVersion = ModrinthRemoteModRepository.MODS.getRemoteVersionByLocalFile(null, file);
