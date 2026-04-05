@@ -29,6 +29,7 @@ import org.jetbrains.annotations.Nullable;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.List;
 import java.util.Locale;
 
 public sealed abstract class ResourcePackFile extends LocalAddonFile implements Comparable<ResourcePackFile> permits ResourcePackFolder, ResourcePackZipFile {
@@ -91,9 +92,9 @@ public sealed abstract class ResourcePackFile extends LocalAddonFile implements 
 
     public void setEnabled(boolean enabled) {
         if (enabled) {
-            manager.enableResourcePack(this);
+            manager.enableResourcePacks(List.of(this));
         } else {
-            manager.disableResourcePack(this);
+            manager.disableResourcePacks(List.of(this));
         }
     }
 

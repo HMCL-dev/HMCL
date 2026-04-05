@@ -58,6 +58,7 @@ import java.util.stream.Collectors;
 
 import static org.jackhuang.hmcl.ui.FXUtils.onEscPressed;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
+import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 public class AddonUpdatesPage<F extends LocalAddonFile> extends BorderPane implements DecoratorPage {
     private final ReadOnlyObjectWrapper<State> state = new ReadOnlyObjectWrapper<>(DecoratorPage.State.fromTitle(i18n("mods.check_updates")));
@@ -320,7 +321,7 @@ public class AddonUpdatesPage<F extends LocalAddonFile> extends BorderPane imple
                                 try {
                                     local.delete();
                                 } catch (IOException e) {
-                                    // ignore
+                                    LOG.warning("Failed to delete outdated addon: " + local.getFile(), e);
                                 }
                             }
                         })

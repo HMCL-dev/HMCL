@@ -31,6 +31,7 @@ import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
 import org.jackhuang.hmcl.util.versioning.VersionRange;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Unmodifiable;
 
 import java.io.IOException;
@@ -199,21 +200,19 @@ public final class ResourcePackManager extends LocalAddonManager<ResourcePackFil
         }
     }
 
-    private final GameVersionNumber minecraftVersion;
 
     private final Path resourcePackDirectory;
-
     private final Path optionsFile;
-    private final @NotNull PackMcMeta.PackVersion requiredVersion;
+
+    private @Nullable GameVersionNumber minecraftVersion;
+    private @Nullable PackMcMeta.PackVersion requiredVersion;
 
     private boolean loaded = false;
 
     public ResourcePackManager(GameRepository repository, String id) {
         super(repository, id);
-        this.minecraftVersion = GameVersionNumber.asGameVersion(repository.getGameVersion(id));
         this.resourcePackDirectory = this.repository.getResourcePackDirectory(this.id);
         this.optionsFile = repository.getRunDirectory(id).resolve("options.txt");
-        this.requiredVersion = getPackVersion(minecraftVersion, repository.getVersionJar(id));
     }
 
     @NotNull
@@ -247,8 +246,16 @@ public final class ResourcePackManager extends LocalAddonManager<ResourcePackFil
         }
     }
 
+    @NotNull
     public GameVersionNumber getMinecraftVersion() {
+        if (minecraftVersion == null) minecraftVersion = GameVersionNumber.asGameVersion(repository.getGameVersion(id));
         return minecraftVersion;
+    }
+
+    @NotNull
+    public PackMcMeta.PackVersion getRequiredVersion() {
+        if (requiredVersion == null) requiredVersion = getPackVersion(getMinecraftVersion(), repository.getVersionJar(id));
+        return requiredVersion;
     }
 
     @Override
@@ -323,44 +330,64 @@ public final class ResourcePackManager extends LocalAddonManager<ResourcePackFil
         return modified;
     }
 
-    public void enableResourcePack(ResourcePackFile resourcePack) {
-        if (resourcePack.manager != this) return;
-        Map<String, String> options = loadOptions();
-        String packId = "file/" + resourcePack.getFileNameWithExtension();
+    public void enableResourcePacks(List<ResourcePackFile> resourcePackFiles) {
         boolean modified = false;
+        Map<String, String> options = loadOptions();
         List<String> resourcePacks = new ArrayList<>(deserializePackList(options.get("resourcePacks")));
-        if (!resourcePacks.contains(packId)) {
-            resourcePacks.add(packId);
-            options.put("resourcePacks", serializePackList(resourcePacks));
-            modified = true;
-        }
         List<String> incompatibleResourcePacks = new ArrayList<>(deserializePackList(options.get("incompatibleResourcePacks")));
-        if (!incompatibleResourcePacks.contains(packId) && isIncompatible(resourcePack)) {
-            incompatibleResourcePacks.add(packId);
-            options.put("incompatibleResourcePacks", serializePackList(incompatibleResourcePacks));
-            modified = true;
+        for (var pack : resourcePackFiles) {
+            if (enableResourcePack(pack, resourcePacks, incompatibleResourcePacks)) modified = true;
         }
-        if (modified) saveOptions(options);
+        if (modified) {
+            options.put("resourcePacks", serializePackList(resourcePacks));
+            options.put("incompatibleResourcePacks", serializePackList(incompatibleResourcePacks));
+            saveOptions(options);
+        }
     }
 
-    public void disableResourcePack(ResourcePackFile resourcePack) {
-        if (resourcePack.manager != this) return;
-        Map<String, String> options = loadOptions();
+    private boolean enableResourcePack(ResourcePackFile resourcePack, List<String> resourcePacks, List<String> incompatibleResourcePacks) {
+        if (resourcePack.manager != this) return false;
         String packId = "file/" + resourcePack.getFileNameWithExtension();
         boolean modified = false;
+        if (!resourcePacks.contains(packId)) {
+            resourcePacks.add(packId);
+            modified = true;
+        }
+        if (!incompatibleResourcePacks.contains(packId) && isIncompatible(resourcePack)) {
+            incompatibleResourcePacks.add(packId);
+            modified = true;
+        }
+        return modified;
+    }
+
+    public void disableResourcePacks(List<ResourcePackFile> resourcePackFiles) {
+        boolean modified = false;
+        Map<String, String> options = loadOptions();
         List<String> resourcePacks = new ArrayList<>(deserializePackList(options.get("resourcePacks")));
+        List<String> incompatibleResourcePacks = new ArrayList<>(deserializePackList(options.get("incompatibleResourcePacks")));
+        for (var pack : resourcePackFiles) {
+            if (disableResourcePack(pack, resourcePacks, incompatibleResourcePacks)) modified = true;
+        }
+        if (modified) {
+            options.put("resourcePacks", serializePackList(resourcePacks));
+            options.put("incompatibleResourcePacks", serializePackList(incompatibleResourcePacks));
+            saveOptions(options);
+        }
+    }
+
+    private boolean disableResourcePack(ResourcePackFile resourcePack, List<String> resourcePacks, List<String> incompatibleResourcePacks) {
+        if (resourcePack.manager != this) return false;
+        String packId = "file/" + resourcePack.getFileNameWithExtension();
+        boolean modified = false;
         if (resourcePacks.contains(packId)) {
             resourcePacks.remove(packId);
-            options.put("resourcePacks", serializePackList(resourcePacks));
             modified = true;
         }
-        List<String> incompatibleResourcePacks = new ArrayList<>(deserializePackList(options.get("incompatibleResourcePacks")));
         if (incompatibleResourcePacks.contains(packId)) {
             incompatibleResourcePacks.remove(packId);
-            options.put("incompatibleResourcePacks", serializePackList(incompatibleResourcePacks));
             modified = true;
         }
-        if (modified) saveOptions(options);
+        return modified;
     }
 
     public boolean isEnabled(ResourcePackFile resourcePack) {
@@ -376,9 +403,9 @@ public final class ResourcePackManager extends LocalAddonManager<ResourcePackFil
     public ResourcePackFile.Compatibility getCompatibility(@NotNull ResourcePackFile resourcePack) {
         if (resourcePack.getMeta() == null || resourcePack.getMeta().pack() == null)
             return ResourcePackFile.Compatibility.MISSING_PACK_META;
-        if (this.requiredVersion.isUnspecified())
+        if (this.getRequiredVersion().isUnspecified())
             return ResourcePackFile.Compatibility.MISSING_GAME_META;
-        int requiredMajor = requiredVersion.majorVersion();
+        int requiredMajor = getRequiredVersion().majorVersion();
         VersionRange<PackMcMeta.PackVersion> versionRange;
         if (requiredMajor > 64)
             versionRange = getResourcePackVersionRangeNew(resourcePack.getMeta().pack());
@@ -388,9 +415,9 @@ public final class ResourcePackManager extends LocalAddonManager<ResourcePackFil
             versionRange = getResourcePackVersionRangeOldest(resourcePack.getMeta().pack());
         if (versionRange.isEmpty())
             return ResourcePackFile.Compatibility.INVALID;
-        if (versionRange.getMaximum().compareTo(this.requiredVersion) < 0)
+        if (versionRange.getMaximum().compareTo(this.getRequiredVersion()) < 0)
             return ResourcePackFile.Compatibility.TOO_OLD;
-        if (versionRange.getMinimum().compareTo(this.requiredVersion) > 0)
+        if (versionRange.getMinimum().compareTo(this.getRequiredVersion()) > 0)
             return ResourcePackFile.Compatibility.TOO_NEW;
         return ResourcePackFile.Compatibility.COMPATIBLE;
     }

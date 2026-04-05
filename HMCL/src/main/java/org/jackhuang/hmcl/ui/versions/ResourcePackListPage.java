@@ -128,15 +128,11 @@ public final class ResourcePackListPage extends ListPageBase<ResourcePackListPag
     public void refresh() {
         if (resourcePackManager == null) return;
         setDisable(false);
-        if (!ResourcePackManager.isMcVersionSupported(resourcePackManager.getMinecraftVersion())) {
-            getItems().clear();
-            setDisable(true);
-            return;
-        }
         setLoading(true);
         Task.supplyAsync(Schedulers.io(), () -> {
             lock.lock();
             try {
+                if (!ResourcePackManager.isMcVersionSupported(resourcePackManager.getMinecraftVersion())) return null;
                 resourcePackManager.refresh();
                 return resourcePackManager.getLocalFiles()
                         .stream()
@@ -147,7 +143,12 @@ public final class ResourcePackListPage extends ListPageBase<ResourcePackListPag
             }
         }).whenComplete(Schedulers.javafx(), (result, exception) -> {
             if (exception == null) {
-                getItems().setAll(result);
+                if (result != null) {
+                    getItems().setAll(result);
+                } else { // Unsupported mc version
+                    getItems().clear();
+                    setDisable(true);
+                }
             } else {
                 LOG.warning("Failed to load resource packs", exception);
                 getItems().clear();
@@ -204,16 +205,22 @@ public final class ResourcePackListPage extends ListPageBase<ResourcePackListPag
     }
 
     private void setSelectedEnabled(List<ResourcePackInfoObject> selectedItems, boolean enabled) {
-        if (!ConfigHolder.config().getShownTips().containsKey(TIP_KEY) && enabled && !selectedItems.stream().map(ResourcePackInfoObject::getFile).allMatch(ResourcePackFile::isCompatible)) {
+        if (!Boolean.TRUE.equals(ConfigHolder.config().getShownTips().get(TIP_KEY)) && enabled && !selectedItems.stream().map(ResourcePackInfoObject::getFile).allMatch(ResourcePackFile::isCompatible)) {
             Controllers.confirm(
                     i18n("resourcepack.warning.manipulate"),
                     i18n("message.warning"),
                     MessageDialogPane.MessageType.WARNING,
                     () -> {
-                        ConfigHolder.config().getShownTips().put(TIP_KEY, 0);
+                        ConfigHolder.config().getShownTips().put(TIP_KEY, true);
                         setSelectedEnabled(selectedItems, true);
                     }, null);
         } else {
+            if (resourcePackManager == null) return;
+            if (enabled) {
+                resourcePackManager.enableResourcePacks(selectedItems.stream().map(ResourcePackInfoObject::getFile).toList());
+            } else {
+                resourcePackManager.disableResourcePacks(selectedItems.stream().map(ResourcePackInfoObject::getFile).toList());
+            }
             for (ResourcePackInfoObject item : selectedItems) {
                 item.enabledProperty().set(enabled);
             }
@@ -449,7 +456,6 @@ public final class ResourcePackListPage extends ListPageBase<ResourcePackListPag
         public ResourcePackInfoObject(ResourcePackFile file) {
             this.file = file;
             this.enabled = new SimpleBooleanProperty(this, "enabled", file.isEnabled());
-            FXUtils.onChange(this.enabled, file::setEnabled);
         }
 
         public ResourcePackFile getFile() {
@@ -511,20 +517,23 @@ public final class ResourcePackListPage extends ListPageBase<ResourcePackListPag
             checkBox = new JFXCheckBox() {
                 @Override
                 public void fire() {
-                    if (!ConfigHolder.config().getShownTips().containsKey(TIP_KEY) && !isSelected() && object != null && !object.getFile().isCompatible()) {
+                    if (!Boolean.TRUE.equals(ConfigHolder.config().getShownTips().get(TIP_KEY)) && !isSelected() && object != null && !object.getFile().isCompatible()) {
                         Controllers.confirm(
                                 i18n("resourcepack.warning.manipulate"),
                                 i18n("message.info"),
                                 MessageDialogPane.MessageType.INFO,
                                 () -> {
                                     super.fire();
-                                    ConfigHolder.config().getShownTips().put(TIP_KEY, 0);
+                                    ConfigHolder.config().getShownTips().put(TIP_KEY, true);
                                 }, null);
                     } else {
                         super.fire();
                     }
                 }
             };
+            checkBox.setOnAction(e -> {
+                if (object != null) object.file.setEnabled(checkBox.isSelected());
+            });
 
             HBox.setHgrow(content, Priority.ALWAYS);
             content.setMouseTransparent(true);
