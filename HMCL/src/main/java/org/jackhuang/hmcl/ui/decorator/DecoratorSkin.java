@@ -301,6 +301,8 @@ public class DecoratorSkin extends SkinBase<Decorator> {
                 navBar.setLeft(navLeft);
             }
 
+            skinnable.forbidDraggingWindow(navLeft);
+
             BorderPane center = new BorderPane();
             if (title != null) {
                 Label titleLabel = new Label();
