@@ -127,12 +127,14 @@ final class DataPackListPageSkin extends SkinBase<DataPackListPage> {
             // reason for not using selectAll() is that selectAll() first clears all selected then selects all, causing the toolbar to flicker
             var selectAllButton = createToolbarButton2(i18n("button.select_all"), SVG.SELECT_ALL, () -> listView.getSelectionModel().selectRange(0, listView.getItems().size()));
 
-            listView.getSelectionModel().getSelectedItems().addListener(
-                    (ListChangeListener<Object>) change -> {
-                        selectAllButton.setDisable(!listView.getItems().isEmpty()
-                                && listView.getSelectionModel().getSelectedItems().size() == listView.getItems().size());
-                    }
-            );
+            ListChangeListener<Object> listener = change -> {
+                selectAllButton.setDisable(!listView.getItems().isEmpty()
+                        && listView.getSelectionModel().getSelectedItems().size() == listView.getItems().size());
+            };
+
+            listView.getSelectionModel().getSelectedItems().addListener(listener);
+            listView.getItems().addListener(listener);
+
             selectingToolbar.getChildren().addAll(
                     removeButton,
                     enableButton,

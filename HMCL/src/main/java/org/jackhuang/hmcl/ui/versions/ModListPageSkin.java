@@ -161,12 +161,13 @@ final class ModListPageSkin extends SkinBase<ModListPage> {
             // reason for not using selectAll() is that selectAll() first clears all selected then selects all, causing the toolbar to flicker
             var selectAll = createToolbarButton2(i18n("button.select_all"), SVG.SELECT_ALL, () -> listView.getSelectionModel().selectRange(0, listView.getItems().size()));
 
-            listView.getSelectionModel().getSelectedItems().addListener(
-                    (ListChangeListener<Object>) change -> {
-                        selectAll.setDisable(!listView.getItems().isEmpty()
-                                && listView.getSelectionModel().getSelectedItems().size() == listView.getItems().size());
-                    }
-            );
+            ListChangeListener<Object> listener = change -> {
+                selectAll.setDisable(!listView.getItems().isEmpty()
+                        && listView.getSelectionModel().getSelectedItems().size() == listView.getItems().size());
+            };
+
+            listView.getSelectionModel().getSelectedItems().addListener(listener);
+            listView.getItems().addListener(listener);
 
             toolbarSelecting.getChildren().setAll(
                     createToolbarButton2(i18n("button.remove"), SVG.DELETE_FOREVER, () -> {
