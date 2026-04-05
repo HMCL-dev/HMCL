@@ -279,7 +279,7 @@ public final class MainPage extends StackPane implements DecoratorPage {
     }
 
     private void showUpdateDialog(boolean show) {
-        if (show && getLatestVersion() != null && getLatestVersion() != lastShownVersion
+        if (show && getLatestVersion() != null && !Objects.equals(getLatestVersion(), lastShownVersion)
                 && !Objects.equals(config().getPromptedVersion(), getLatestVersion().getVersion())
         ) {
             lastShownVersion = getLatestVersion();
