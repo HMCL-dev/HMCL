@@ -1482,6 +1482,11 @@
     -fx-max-width: 1000000000;
 }
 
+.jfx-combo-box .arrow {
+    -fx-background-color: -monet-on-surface;
+    -fx-shape: "M12 15 7 10H17L12 15Z";
+}
+
 .jfx-combo-box .text {
     -fx-fill: -monet-on-surface;
 }
