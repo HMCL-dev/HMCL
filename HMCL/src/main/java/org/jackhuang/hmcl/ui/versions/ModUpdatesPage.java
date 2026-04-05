@@ -55,7 +55,6 @@ import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
-import java.util.Optional;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -346,16 +345,13 @@ public class ModUpdatesPage extends BorderPane implements DecoratorPage {
             spinnerPane.setLoading(true);
             Task.supplyAsync(() -> {
                 if (object.changelog != null) {
-                    return Optional.of(object.changelog);
+                    return object.changelog;
                 }
                 RemoteMod.Version version = object.data.getCandidate();
-                if (version.getChangelog() != null) {
-                    return StringUtils.nullIfBlank(version.getChangelog()).map(StringUtils::convertToHtml);
-                }
-                return StringUtils.nullIfBlank(repository.getModChangelog(version.getModid(), version.getVersionId())).map(StringUtils::convertToHtml);
+                return StringUtils.convertToHtml(repository.getModChangelog(version.getModid(), version.getVersionId()));
             }).whenComplete(Schedulers.javafx(), (result, exception) -> {
                 if (exception == null) {
-                    object.changelog = result.orElse(i18n("mods.changelog.empty"));
+                    object.changelog = StringUtils.isNotBlank(result) ? result : i18n("mods.changelog.empty");
                     scrollPane.setContent(FXUtils.renderAddonChangelog(object.changelog, object.data.getRepository().getBaseUrl()));
                     FXUtils.smoothScrolling(scrollPane);
                     spinnerPane.setFailedReason(null);

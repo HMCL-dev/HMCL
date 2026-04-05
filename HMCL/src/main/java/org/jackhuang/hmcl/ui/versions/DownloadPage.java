@@ -62,7 +62,6 @@ import static org.jackhuang.hmcl.ui.FXUtils.onEscPressed;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 public class DownloadPage extends Control implements DecoratorPage {
-    private static final Map<RemoteMod.Version, String> changelogCache = Collections.synchronizedMap(new WeakHashMap<>());
 
     private final ReadOnlyObjectWrapper<State> state = new ReadOnlyObjectWrapper<>();
     private final BooleanProperty loaded = new SimpleBooleanProperty(false);
@@ -599,23 +598,14 @@ public class DownloadPage extends Control implements DecoratorPage {
         }
 
         private void loadChangelog(RemoteMod.Version version, RemoteModRepository repo, JFXHyperlink changelogButton) {
-            Task.supplyAsync(() -> {
-                if (changelogCache.containsKey(version)) {
-                    return Optional.ofNullable(changelogCache.get(version));
-                } else if (version.getChangelog() != null) {
-                    return StringUtils.nullIfBlank(version.getChangelog()).map(StringUtils::convertToHtml);
-                } else {
-                    return StringUtils.nullIfBlank(repo.getModChangelog(version.getModid(), version.getVersionId())).map(StringUtils::convertToHtml);
-                }
-            }).whenComplete(Schedulers.javafx(), (result, exception) -> {
+            Task.supplyAsync(() ->
+                    StringUtils.convertToHtml(repo.getModChangelog(version.getModid(), version.getVersionId()))
+            ).whenComplete(Schedulers.javafx(), (result, exception) -> {
                 if (exception == null) {
-                    if (result.isPresent()) {
-                        String s = result.get();
-                        changelogCache.put(version, s);
+                    if (StringUtils.isNotBlank(result)) {
                         changelogButton.setDisable(false);
-                        changelogButton.setOnAction(e -> Controllers.dialog(new AddonChangelog(version, s, repo)));
+                        changelogButton.setOnAction(e -> Controllers.dialog(new AddonChangelog(version, result, repo)));
                     } else {
-                        changelogCache.put(version, null);
                         changelogButton.setOnAction(null);
                     }
                 } else {

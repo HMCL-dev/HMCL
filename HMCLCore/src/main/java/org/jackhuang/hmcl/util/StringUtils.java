@@ -23,7 +23,6 @@ import org.commonmark.ext.gfm.tables.TablesExtension;
 import org.commonmark.ext.ins.InsExtension;
 import org.commonmark.parser.Parser;
 import org.commonmark.renderer.html.HtmlRenderer;
-import org.jetbrains.annotations.Contract;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Node;
 import org.jsoup.safety.Safelist;
@@ -595,11 +594,6 @@ public final class StringUtils {
                 return false;
         }
         return true;
-    }
-
-    @Contract(pure = true)
-    public static Optional<String> nullIfBlank(String str) {
-        return Optional.ofNullable(str).filter(s -> !s.isBlank());
     }
 
     private static final Safelist all = Safelist.relaxed()

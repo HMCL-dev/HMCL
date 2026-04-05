@@ -630,7 +630,6 @@ public final class ModrinthRemoteModRepository implements RemoteModRepository {
                     projectId,
                     name,
                     versionNumber,
-                    changelog,
                     datePublished,
                     type,
                     files.get(0).toFile(),

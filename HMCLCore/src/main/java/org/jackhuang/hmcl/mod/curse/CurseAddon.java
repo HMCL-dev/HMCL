@@ -576,7 +576,6 @@ public class CurseAddon implements RemoteMod.IMod {
                     Integer.toString(modId),
                     getDisplayName(),
                     getFileName(),
-                    null,
                     getFileDate(),
                     versionType,
                     new RemoteMod.File(Collections.emptyMap(), getDownloadUrl(), getFileName()),
