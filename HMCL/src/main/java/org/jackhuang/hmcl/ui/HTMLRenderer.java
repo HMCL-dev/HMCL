@@ -131,6 +131,7 @@ public final class HTMLRenderer {
         hyperlink = null;
         fxStyle = null;
 
+        var styleBuilder = new StringBuilder();
         for (Node node : stack) {
             String nodeName = node.nodeName();
             switch (nodeName) {
@@ -148,14 +149,15 @@ public final class HTMLRenderer {
 
             String style = node.attr("style");
             if (StringUtils.isNotBlank(style)) {
-                fxStyle = StringUtils.addSuffix(
+                styleBuilder.append(StringUtils.addSuffix(
                         style
                                 .replace("color:", "-fx-fill:")
                                 .replace("font-size:", "-fx-font-size:"), // And more
                         ";"
-                );
+                ));
             }
         }
+        fxStyle = styleBuilder.toString();
     }
 
     private void pushNode(Node node) {
