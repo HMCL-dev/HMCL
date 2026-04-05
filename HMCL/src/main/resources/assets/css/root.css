@@ -1483,7 +1483,7 @@
 }
 
 .jfx-combo-box .arrow {
-    -fx-background-color: -monet-on-surface;
+    -fx-background-color: -monet-on-surface-variant;
     -fx-shape: "M12 15 7 10H17L12 15Z";
 }
 
