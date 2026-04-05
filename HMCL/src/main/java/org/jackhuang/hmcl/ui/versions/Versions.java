@@ -280,9 +280,9 @@ public final class Versions {
 
     private static boolean isValidScriptExtension(String ext) {
         if (OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS) {
-            return ext.equals("bat") || ext.equals("ps1");
+            return ext.equalsIgnoreCase("bat") || ext.equalsIgnoreCase("ps1");
         }
-        return ext.equals("sh") || ext.equals("bash") || ext.equals("command") || ext.equals("ps1");
+        return ext.equalsIgnoreCase("sh") || ext.equalsIgnoreCase("bash") || ext.equalsIgnoreCase("command") || ext.equalsIgnoreCase("ps1");
     }
 
     private static String getDefaultScriptExtension() {
