@@ -25,6 +25,7 @@ import org.jackhuang.hmcl.util.i18n.I18n;
 
 import java.util.MissingResourceException;
 
+import static org.jackhuang.hmcl.setting.ConfigHolder.config;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
@@ -50,7 +51,7 @@ public final class HMCLLocalizedDownloadListPage extends DownloadListPage {
     }
 
     public static DownloadListPage ofShaderPack(DownloadPage.DownloadCallback callback, boolean versionSelection) {
-        var page = new HMCLLocalizedDownloadListPage(callback, versionSelection, RemoteModRepository.Type.SHADER_PACK, null, ModrinthRemoteModRepository.SHADER_PACKS);
+        var page = new HMCLLocalizedDownloadListPage(callback, versionSelection, RemoteModRepository.Type.SHADER_PACK, CurseForgeRemoteModRepository.SHADERS, ModrinthRemoteModRepository.SHADER_PACKS);
         page.supportChinese.set(false);
         return page;
     }
@@ -61,13 +62,30 @@ public final class HMCLLocalizedDownloadListPage extends DownloadListPage {
         repository = new Repository(type, curseForge, modrinth);
 
         supportChinese.set(true);
-        downloadSources.get().setAll("mods.modrinth", "mods.curseforge");
-        if (modrinth != null) {
-            downloadSource.set("mods.modrinth");
-        } else if (curseForge != null) {
-            downloadSource.set("mods.curseforge");
+
+        boolean supportedCurseForge = CurseForgeRemoteModRepository.isAvailable() && curseForge != null;
+
+        downloadSources.setAll("mods.modrinth");
+        if (supportedCurseForge) {
+            downloadSources.add("mods.curseforge");
+        }
+
+        if ("curseforge".equalsIgnoreCase(config().getDefaultAddonSource())) {
+            if (supportedCurseForge) {
+                downloadSource.set("mods.curseforge");
+            } else if (modrinth != null) {
+                downloadSource.set("mods.modrinth");
+            } else {
+                throw new AssertionError("Should not be here.");
+            }
         } else {
-            throw new AssertionError("Should not be here.");
+            if (modrinth != null) {
+                downloadSource.set("mods.modrinth");
+            } else if (supportedCurseForge) {
+                downloadSource.set("mods.curseforge");
+            } else {
+                throw new AssertionError("Should not be here.");
+            }
         }
     }
 

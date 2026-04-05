@@ -113,28 +113,26 @@
 .memory-label {
 }
 
-.memory-used {
-    -fx-background-color: -monet-primary;
+.memory-status-bar {
+    -fx-opacity: 1;
 }
 
-.memory-used:disabled {
+.memory-status-bar:disabled {
     -fx-opacity: 0.4;
 }
 
-.memory-allocate {
-    -fx-background-color: -monet-primary-transparent-50;
+.memory-status-bar .track {
+    -fx-background-color: -monet-secondary-container;
+    -fx-background-radius: 2;
+    -fx-background-insets: 0;
 }
 
-.memory-allocate:disabled {
-    -fx-opacity: 0.4;
+.memory-status-bar .memory-used {
+    -fx-fill: -monet-primary;
 }
 
-.memory-total {
-    -fx-background-color: -monet-surface-container;
-}
-
-.memory-total:disabled {
-    -fx-opacity: 0.4;
+.memory-status-bar .memory-allocate {
+    -fx-fill: -monet-primary-transparent-50;
 }
 
 .update-label {
@@ -527,7 +525,8 @@
 }
 
 .jfx-dialog-layout {
-    -fx-padding: 24.0px 24.0px 16.0px 24.0px;
+    -fx-background-radius: 4px;
+    -fx-padding: 24px 24px 16px 24px;
     -fx-background-color: -monet-surface-container-high;
     -fx-text-fill: -monet-on-surface;
 }
@@ -570,6 +569,7 @@
 }
 
 .task-executor-dialog-layout {
+    -fx-background-radius: 4px;
     -fx-background-color: -monet-surface-container-high;
     -fx-text-fill: -monet-on-surface;
 }
@@ -913,27 +913,21 @@
 *                                                                              *
 *******************************************************************************/
 
+
 .jfx-progress-bar > .track {
     -fx-background-color: -monet-secondary-container;
 }
 
-.jfx-progress-bar > .bar,
-.jfx-progress-bar:indeterminate > .bar{
+.jfx-progress-bar > .bar {
     -fx-background-color: -monet-primary;
-    -fx-padding: 1.5;
-}
-
-.jfx-progress-bar > .secondary-bar,
-.jfx-progress-bar:indeterminate > .secondary-bar {
-    -fx-background-color: -monet-secondary;
+    -fx-padding: 2;
 }
 
 .jfx-progress-bar > .track,
 .jfx-progress-bar > .bar {
-    -fx-background-radius: 0;
+    -fx-background-radius: 2;
     -fx-background-insets: 0;
 }
-
 
 /*******************************************************************************
 *                                                                              *
@@ -1457,20 +1451,8 @@
     -fx-stroke: -monet-primary-container;
 }
 
-.jfx-spinner:determinate .percentage {
-    -fx-fill: -monet-on-surface-variant;
-}
-
-.first-spinner {
-    -jfx-radius: 20;
-}
-
-.first-spinner .arc {
-    -fx-stroke-width: 5.0;
-}
-
 .small-spinner {
-    -jfx-radius: 10;
+    -jfx-radius: 9;
 }
 
 .small-spinner .arc {
@@ -1478,59 +1460,12 @@
 }
 
 .small-spinner-pane .jfx-spinner {
-    -jfx-radius: 10;
+    -jfx-radius: 9;
 }
 
-.small-spinner-pane .jfx-spinner .arc {
-    -fx-stroke-width: 3.0;
-}
-
-.second-spinner {
-    -jfx-radius: 30;
-}
-
-.second-spinner .arc {
-    -fx-stroke-width: 5.0;
-}
-
-.third-spinner {
-    -jfx-radius: 40;
-}
-
-.third-spinner .arc {
-    -fx-stroke-width: 5.0;
-}
-
-.fourth-spinner {
-    -jfx-radius: 50;
-}
-
-.fourth-spinner .arc {
-    -fx-stroke-width: 5.0;
-}
-
-.fifth-spinner {
-    -jfx-radius: 60;
-}
-
-.fifth-spinner .arc {
-    -fx-stroke-width: 5.0;
-}
-
-.sixth-spinner {
-    -jfx-radius: 70;
-}
-
-.sixth-spinner .arc {
-    -fx-stroke-width: 5.0;
-}
-
-.seventh-spinner {
-    -jfx-radius: 80;
-}
-
-.seventh-spinner .arc {
-    -fx-stroke-width: 5.0;
+.spinner-pane .spinner-pane-content {
+    -fx-padding: 10px;
+    -fx-spacing: 10px;
 }
 
 /*******************************************************************************
@@ -1562,6 +1497,7 @@
 .combo-box-popup .list-view .jfx-list-cell {
     -fx-background-color: -monet-surface-container;
     -fx-text-fill: -monet-on-surface;
+    -fx-cursor: hand;
     -fx-background-insets: 0.0;
 }
 
@@ -1569,6 +1505,10 @@
 .combo-box-popup .list-view .list-cell:even:selected > .jfx-rippler > StackPane {
     -fx-background-color: -monet-secondary-container;
     -fx-text-fill: -monet-on-secondary-container;
+}
+
+.combo-box-popup .list-view .list-cell:hover > .jfx-rippler > StackPane {
+    -fx-background-color: -monet-secondary-container-transparent-50;
 }
 
 .jfx-combo-box-warning {
@@ -1633,6 +1573,21 @@
 
 .custom-color-dialog .tab-selected-line {
     -fx-background-color: -monet-on-surface;
+}
+
+.custom-color-dialog .jfx-color-dialog-actions {
+    -fx-background-color: -monet-surface;
+    -fx-padding: 0.0 10.0 5.0 0.0;
+    -fx-alignment: center-right;
+}
+
+.custom-color-dialog .jfx-color-dialog-accept {
+    -fx-padding: 0.7em 0.8em;
+}
+
+.custom-color-dialog .jfx-color-dialog-cancel {
+    -fx-text-fill: -monet-on-surface-variant;
+    -fx-padding: 0.7em 0.8em;
 }
 
 /*******************************************************************************
@@ -1993,4 +1948,8 @@
 
 .line-toggle-button .jfx-toggle-button {
     -fx-padding: 0;
+}
+
+.update-pane:active .subtitle-label {
+    -fx-text-fill: -monet-tertiary;
 }
