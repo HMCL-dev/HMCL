@@ -65,3 +65,6 @@ language-subtag-registry
 /hmcl.json
 /.hmcl.json
 /.hmcl/
+
+# gemini
+/.gemini/
