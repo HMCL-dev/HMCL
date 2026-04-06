@@ -47,23 +47,26 @@ Users can enable the "Preview HMCL releases early" option on the "Settings > Gen
 ## Release Model
 
 ```mermaid
+---
+displayMode: compact
+---
 gantt
     title HMCL Version Lifecycle (Example)
-    section 3.9
-        Beta Phase: a1, 2025-11-15, 30d
-        Preview Phase: a2, after a1, 16d
-        Stable Release: milestone, after a2, 0d
-        Maintenance Phase: a3, after a2, 31d
-    section 3.10
-        Beta Phase: b1, after a1, 31d
-        Preview Phase: b2, after b1, 16d
-        Stable Release: milestone, after b2, 0d
-        Maintenance Phase: b3, after b2, 31d
     section 3.11
-        Beta Phase: c1, after b1, 31d
-        Preview Phase: c2, after c1, 16d
-        Stable Release: milestone, after c2, 0d
+        Beta Phase: done, c1, after b1, 31d
+        Preview Phase: active, c2, after c1, 16d
         Maintenance Phase: c3, after c2, 30d
+        Stable Release: milestone, after c2, 0d
+    section 3.10
+        Beta Phase: done, b1, after a1, 31d
+        Preview Phase: done, b2, after b1, 16d
+        Maintenance Phase: active, b3, after b2, 31d
+        Stable Release: milestone, after b2, 0d
+    section 3.9
+        Beta Phase: done, a1, 2025-11-15, 30d
+        Preview Phase: done, a2, after a1, 16d
+        Maintenance Phase: done, a3, after a2, 31d
+        Stable Release: milestone, after a2, 0d
 ```
 
 In general, we release a new version branch every month,
