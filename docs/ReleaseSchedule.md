@@ -53,6 +53,7 @@ displayMode: compact
 gantt
     title HMCL Version Lifecycle (Example)
     section 3.11
+        today: vert, 2026-02-20, 0d
         Beta Phase: done, c1, after b1, 31d
         Preview Phase: active, c2, after c1, 16d
         Maintenance Phase: c3, after c2, 30d
