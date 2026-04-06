@@ -37,40 +37,45 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.nio.file.attribute.BasicFileAttributes;
+import java.security.DigestInputStream;
+import java.security.MessageDigest;
 import java.util.*;
 
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 public final class MojangJavaDownloadTask extends Task<MojangJavaDownloadTask.Result> {
 
+    private static final String JAVA_LIST_URL = "https://piston-meta.mojang.com/v1/products/java-runtime/2ec0cc96c44e5a76b9c8b7c39df7210883d12871/all.json";
+
     private final DownloadProvider downloadProvider;
     private final Path target;
+    private final Path tempDir;
     private final Task<MojangJavaRemoteFiles> javaDownloadsTask;
     private final List<Task<?>> dependencies = new ArrayList<>();
 
     private volatile MojangJavaDownloads.JavaDownload download;
 
-    public MojangJavaDownloadTask(DownloadProvider downloadProvider, Path target, GameJavaVersion javaVersion, String platform) {
+    public MojangJavaDownloadTask(DownloadProvider downloadProvider, Path target, Path tempDir, GameJavaVersion javaVersion, String platform) {
         this.target = target;
+        this.tempDir = tempDir;
         this.downloadProvider = downloadProvider;
-        this.javaDownloadsTask = new GetTask(downloadProvider.injectURLWithCandidates(
-                "https://piston-meta.mojang.com/v1/products/java-runtime/2ec0cc96c44e5a76b9c8b7c39df7210883d12871/all.json"))
-        .thenComposeAsync(javaDownloadsJson -> {
-            MojangJavaDownloads allDownloads = JsonUtils.fromNonNullJson(javaDownloadsJson, MojangJavaDownloads.class);
+        this.javaDownloadsTask = new GetTask(downloadProvider.injectURLWithCandidates(JAVA_LIST_URL))
+                .thenComposeAsync(javaDownloadsJson -> {
+                    MojangJavaDownloads allDownloads = JsonUtils.fromNonNullJson(javaDownloadsJson, MojangJavaDownloads.class);
 
-            Map<String, List<MojangJavaDownloads.JavaDownload>> osDownloads = allDownloads.getDownloads().get(platform);
-            if (osDownloads == null || !osDownloads.containsKey(javaVersion.component()))
-                throw new UnsupportedPlatformException("Unsupported platform: " + platform);
-            List<MojangJavaDownloads.JavaDownload> candidates = osDownloads.get(javaVersion.component());
-            for (MojangJavaDownloads.JavaDownload download : candidates) {
-                if (JavaInfo.parseVersion(download.getVersion().getName()) >= javaVersion.majorVersion()) {
-                    this.download = download;
-                    return new GetTask(downloadProvider.injectURLWithCandidates(download.getManifest().getUrl()));
-                }
-            }
-            throw new UnsupportedPlatformException("Candidates: " + JsonUtils.GSON.toJson(candidates));
-        })
-        .thenApplyAsync(javaDownloadJson -> JsonUtils.fromNonNullJson(javaDownloadJson, MojangJavaRemoteFiles.class));
+                    Map<String, List<MojangJavaDownloads.JavaDownload>> osDownloads = allDownloads.downloads().get(platform);
+                    if (osDownloads == null || !osDownloads.containsKey(javaVersion.component()))
+                        throw new UnsupportedPlatformException("Unsupported platform: " + platform);
+                    List<MojangJavaDownloads.JavaDownload> candidates = osDownloads.get(javaVersion.component());
+                    for (MojangJavaDownloads.JavaDownload download : candidates) {
+                        if (JavaInfo.parseVersion(download.version().name()) >= javaVersion.majorVersion()) {
+                            this.download = download;
+                            return new GetTask(downloadProvider.injectURLWithCandidates(download.manifest().getUrl()));
+                        }
+                    }
+                    throw new UnsupportedPlatformException("Candidates: " + JsonUtils.GSON.toJson(candidates));
+                })
+                .thenApplyAsync(javaDownloadJson -> JsonUtils.fromNonNullJson(javaDownloadJson, MojangJavaRemoteFiles.class));
     }
 
     @Override
@@ -81,10 +86,8 @@ public final class MojangJavaDownloadTask extends Task<MojangJavaDownloadTask.Re
     @Override
     public void execute() throws Exception {
         for (Map.Entry<String, MojangJavaRemoteFiles.Remote> entry : javaDownloadsTask.getResult().getFiles().entrySet()) {
-            Path dest = target.resolve(entry.getKey());
-            if (entry.getValue() instanceof MojangJavaRemoteFiles.RemoteFile) {
-                MojangJavaRemoteFiles.RemoteFile file = ((MojangJavaRemoteFiles.RemoteFile) entry.getValue());
-
+            Path dest = tempDir.resolve(entry.getKey());
+            if (entry.getValue() instanceof MojangJavaRemoteFiles.RemoteFile file) {
                 // Use local file if it already exists
                 try {
                     BasicFileAttributes localFileAttributes = Files.readAttributes(dest, BasicFileAttributes.class);
@@ -101,15 +104,32 @@ public final class MojangJavaDownloadTask extends Task<MojangJavaDownloadTask.Re
 
                 if (file.getDownloads().containsKey("lzma")) {
                     DownloadInfo download = file.getDownloads().get("lzma");
-                    Path tempFile = target.resolve(entry.getKey() + ".lzma");
-                    var task = new FileDownloadTask(downloadProvider.injectURLWithCandidates(download.getUrl()), tempFile, new FileDownloadTask.IntegrityCheck("SHA-1", download.getSha1()));
+                    DownloadInfo raw = file.getDownloads().get("raw");
+
+                    String rawSha1;
+                    if (raw != null && raw.getSha1() != null) {
+                        rawSha1 = raw.getSha1();
+                    } else {
+                        rawSha1 = null;
+                    }
+
+                    Path tempFile = tempDir.resolve(entry.getKey() + ".lzma");
+                    var task = new FileDownloadTask(downloadProvider.injectURLWithCandidates(download.getUrl()), tempFile,
+                            new FileDownloadTask.IntegrityCheck("SHA-1", download.getSha1()));
                     task.setName(entry.getKey());
                     dependencies.add(task.thenRunAsync(() -> {
-                        Path decompressed = target.resolve(entry.getKey() + ".tmp");
-                        try (LZMAInputStream input = new LZMAInputStream(Files.newInputStream(tempFile))) {
+                        Path decompressed = tempDir.resolve(entry.getKey() + ".tmp");
+                        var digest = MessageDigest.getInstance("SHA-1");
+                        try (var input = new DigestInputStream(new LZMAInputStream(Files.newInputStream(tempFile)), digest)) {
                             Files.copy(input, decompressed, StandardCopyOption.REPLACE_EXISTING);
                         } catch (IOException e) {
                             throw new ArtifactMalformedException("File " + entry.getKey() + " is malformed", e);
+                        }
+
+                        String actualSha1 = HexFormat.of().formatHex(digest.digest());
+
+                        if (rawSha1 != null && !actualSha1.equalsIgnoreCase(rawSha1)) {
+                            throw new ArtifactMalformedException("File " + entry.getKey() + " has incorrect SHA-1 hash: expected " + rawSha1 + ", got " + actualSha1);
                         }
 
                         try {
@@ -137,8 +157,7 @@ public final class MojangJavaDownloadTask extends Task<MojangJavaDownloadTask.Re
                 }
             } else if (entry.getValue() instanceof MojangJavaRemoteFiles.RemoteDirectory) {
                 Files.createDirectories(dest);
-            } else if (entry.getValue() instanceof MojangJavaRemoteFiles.RemoteLink) {
-                MojangJavaRemoteFiles.RemoteLink link = ((MojangJavaRemoteFiles.RemoteLink) entry.getValue());
+            } else if (entry.getValue() instanceof MojangJavaRemoteFiles.RemoteLink link) {
                 Files.deleteIfExists(dest);
                 Files.createSymbolicLink(dest, Paths.get(link.getTarget()));
             }
@@ -157,16 +176,19 @@ public final class MojangJavaDownloadTask extends Task<MojangJavaDownloadTask.Re
 
     @Override
     public void postExecute() throws Exception {
-        setResult(new Result(download, javaDownloadsTask.getResult()));
+        if (isDependenciesSucceeded()) {
+            FileUtils.cleanDirectory(target);
+
+            if (Files.getFileStore(target).equals(Files.getFileStore(tempDir))) {
+                Files.move(tempDir, target, StandardCopyOption.REPLACE_EXISTING);
+            } else {
+                FileUtils.copyDirectory(tempDir, target);
+                FileUtils.deleteDirectory(tempDir);
+            }
+            setResult(new Result(download, javaDownloadsTask.getResult()));
+        }
     }
 
-    public static final class Result {
-        public final MojangJavaDownloads.JavaDownload download;
-        public final MojangJavaRemoteFiles remoteFiles;
-
-        public Result(MojangJavaDownloads.JavaDownload download, MojangJavaRemoteFiles remoteFiles) {
-            this.download = download;
-            this.remoteFiles = remoteFiles;
-        }
+    public record Result(MojangJavaDownloads.JavaDownload download, MojangJavaRemoteFiles remoteFiles) {
     }
 }

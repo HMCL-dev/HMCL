@@ -67,7 +67,7 @@ public final class WorldManagePage extends DecoratorAnimatedPage implements Deco
     private final TabHeader header = new TabHeader(transitionPane);
     private final TabHeader.Tab<WorldInfoPage> worldInfoTab = new TabHeader.Tab<>("worldInfoPage");
     private final TabHeader.Tab<WorldBackupsPage> worldBackupsTab = new TabHeader.Tab<>("worldBackupsPage");
-    private final TabHeader.Tab<DatapackListPage> datapackTab = new TabHeader.Tab<>("datapackListPage");
+    private final TabHeader.Tab<DataPackListPage> dataPackTab = new TabHeader.Tab<>("dataPackListPage");
 
     public WorldManagePage(World world, Profile profile, String instanceId) {
         this.world = world;
@@ -78,15 +78,15 @@ public final class WorldManagePage extends DecoratorAnimatedPage implements Deco
         updateSessionLockChannel();
 
         try {
-            this.world.reloadLevelDat();
+            this.world.reloadWorldData();
         } catch (IOException e) {
-            LOG.warning("Can not load world level.dat of world: " + this.world.getFile(), e);
+            LOG.warning("Can not load world data of world: " + this.world.getFile(), e);
             this.addEventHandler(Navigator.NavigationEvent.NAVIGATED, event -> closePageForLoadingFail());
         }
 
         worldInfoTab.setNodeSupplier(() -> new WorldInfoPage(this));
         worldBackupsTab.setNodeSupplier(() -> new WorldBackupsPage(this));
-        datapackTab.setNodeSupplier(() -> new DatapackListPage(this));
+        dataPackTab.setNodeSupplier(() -> new DataPackListPage(this));
 
         this.state = new SimpleObjectProperty<>(new State(i18n("world.manage.title", StringUtils.parseColorEscapes(world.getWorldName())), null, true, true, true));
 
@@ -106,9 +106,9 @@ public final class WorldManagePage extends DecoratorAnimatedPage implements Deco
     public void refresh() {
         updateSessionLockChannel();
         try {
-            world.reloadLevelDat();
+            world.reloadWorldData();
         } catch (IOException e) {
-            LOG.warning("Can not load world level.dat of world: " + world.getFile(), e);
+            LOG.warning("Can not load world data of world: " + world.getFile(), e);
             closePageForLoadingFail();
             return;
         }
@@ -218,9 +218,9 @@ public final class WorldManagePage extends DecoratorAnimatedPage implements Deco
                 tabBar.addNavigationDrawerTab(getSkinnable().header, getSkinnable().worldInfoTab, i18n("world.info"), SVG.INFO, SVG.INFO_FILL)
                         .addNavigationDrawerTab(getSkinnable().header, getSkinnable().worldBackupsTab, i18n("world.backup"), SVG.ARCHIVE, SVG.ARCHIVE_FILL);
 
-                if (getSkinnable().world.supportDatapacks()) {
-                    getSkinnable().header.getTabs().add(getSkinnable().datapackTab);
-                    tabBar.addNavigationDrawerTab(getSkinnable().header, getSkinnable().datapackTab, i18n("world.datapack"), SVG.EXTENSION, SVG.EXTENSION_FILL);
+                if (getSkinnable().world.supportDataPacks()) {
+                    getSkinnable().header.getTabs().add(getSkinnable().dataPackTab);
+                    tabBar.addNavigationDrawerTab(getSkinnable().header, getSkinnable().dataPackTab, i18n("world.datapack"), SVG.EXTENSION, SVG.EXTENSION_FILL);
                 }
             }
 
@@ -273,7 +273,7 @@ public final class WorldManagePage extends DecoratorAnimatedPage implements Deco
 
                     managePopupMenu.getContent().addAll(
                             new IconedMenuItem(SVG.OUTPUT, i18n("world.export"), () -> WorldManageUIUtils.export(getSkinnable().world, getSkinnable().sessionLockChannel), managePopup),
-                            new IconedMenuItem(SVG.DELETE, i18n("world.delete"), () -> WorldManageUIUtils.delete(getSkinnable().world, () -> getSkinnable().fireEvent(new PageCloseEvent()), getSkinnable().sessionLockChannel), managePopup),
+                            new IconedMenuItem(SVG.DELETE_FOREVER, i18n("world.delete"), () -> WorldManageUIUtils.delete(getSkinnable().world, () -> getSkinnable().fireEvent(new PageCloseEvent()), getSkinnable().sessionLockChannel), managePopup),
                             new IconedMenuItem(SVG.CONTENT_COPY, i18n("world.duplicate"), () -> WorldManageUIUtils.copyWorld(getSkinnable().world, null), managePopup)
                     );
 

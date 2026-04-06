@@ -276,12 +276,10 @@ public final class WorldListPage extends ListPageBase<World> implements VersionP
                 root.setRight(right);
                 right.setAlignment(Pos.CENTER_RIGHT);
 
-                btnLaunch = new JFXButton();
+                btnLaunch = FXUtils.newToggleButton4(SVG.ROCKET_LAUNCH);
                 btnLaunch.visibleProperty().bind(page.supportQuickPlayProperty());
                 btnLaunch.managedProperty().bind(btnLaunch.visibleProperty());
                 right.getChildren().add(btnLaunch);
-                btnLaunch.getStyleClass().add("toggle-icon4");
-                btnLaunch.setGraphic(SVG.ROCKET_LAUNCH.createIcon());
                 FXUtils.installFastTooltip(btnLaunch, i18n("version.launch"));
                 btnLaunch.setOnAction(event -> {
                     World world = getItem();
@@ -289,10 +287,8 @@ public final class WorldListPage extends ListPageBase<World> implements VersionP
                         page.launch(world);
                 });
 
-                JFXButton btnMore = new JFXButton();
+                JFXButton btnMore = FXUtils.newToggleButton4(SVG.MORE_VERT);
                 right.getChildren().add(btnMore);
-                btnMore.getStyleClass().add("toggle-icon4");
-                btnMore.setGraphic(SVG.MORE_VERT.createIcon());
                 btnMore.setOnAction(event -> {
                     World world = getItem();
                     if (world != null)
@@ -386,7 +382,7 @@ public final class WorldListPage extends ListPageBase<World> implements VersionP
             IconedMenuItem exportMenuItem = new IconedMenuItem(SVG.OUTPUT, i18n("world.export"), () -> page.export(world), popup);
             exportMenuItem.setDisable(worldLocked);
 
-            IconedMenuItem deleteMenuItem = new IconedMenuItem(SVG.DELETE, i18n("world.delete"), () -> page.delete(world), popup);
+            IconedMenuItem deleteMenuItem = new IconedMenuItem(SVG.DELETE_FOREVER, i18n("world.delete"), () -> page.delete(world), popup);
             deleteMenuItem.setDisable(worldLocked);
 
             IconedMenuItem duplicateMenuItem = new IconedMenuItem(SVG.CONTENT_COPY, i18n("world.duplicate"), () -> page.copy(world), popup);

@@ -305,6 +305,10 @@ public class DefaultLauncher extends Launcher {
             res.add("-javaagent:" + javaAgent);
         }
 
+        if (version.getMainClass() == null) {
+            throw new IllegalStateException("Main class is null for instance " + version.getId());
+        }
+
         res.add(version.getMainClass());
 
         res.addAll(Arguments.parseStringArguments(version.getMinecraftArguments().map(StringUtils::tokenize).orElseGet(ArrayList::new), configuration));
@@ -650,8 +654,10 @@ public class DefaultLauncher extends Launcher {
         final String command = usePowerShell ? null : commandLine.commandLine.toString();
         Map<String, String> envVars = getEnvVars();
 
-        if (!usePowerShell && isWindows) {
-            if (command.length() > 8192) { // maximum length of the command in cmd
+        if (isWindows && !usePowerShell) {
+            // https://stackoverflow.com/a/28452546
+            // https://learn.microsoft.com/troubleshoot/windows-client/shell-experience/command-line-string-limitation
+            if (command.length() > 32767) {
                 throw new CommandTooLongException();
             }
         }

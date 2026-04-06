@@ -57,6 +57,7 @@ dependencies {
     implementation(project(":HMCLBoot"))
     implementation("libs:JFoenix")
     implementation(libs.twelvemonkeys.imageio.webp)
+    implementation(libs.fxsvgimage)
     implementation(libs.java.info)
     implementation(libs.monet.fx)
     implementation(libs.nayuki.qrcodegen)
@@ -66,6 +67,7 @@ dependencies {
     }
 
     embedResources(libs.authlib.injector)
+    embedResources(libs.lwjgl.unsafe.agent)
 }
 
 fun digest(algorithm: String, bytes: ByteArray): ByteArray = MessageDigest.getInstance(algorithm).digest(bytes)
@@ -155,6 +157,7 @@ val hmclProperties = buildList {
     add("hmcl.microsoft.auth.id" to microsoftAuthId)
     add("hmcl.curseforge.apikey" to curseForgeApiKey)
     add("hmcl.authlib-injector.version" to libs.authlib.injector.get().version!!)
+    add("hmcl.lwjgl-unsafe-agent.version" to libs.lwjgl.unsafe.agent.get().version!!)
 }
 
 val hmclPropertiesFile = layout.buildDirectory.file("hmcl.properties")
