@@ -1482,6 +1482,11 @@
     -fx-max-width: 1000000000;
 }
 
+.jfx-combo-box .arrow {
+    -fx-background-color: -monet-on-surface-variant;
+    -fx-shape: "M12 15 7 10H17L12 15Z";
+}
+
 .jfx-combo-box .text {
     -fx-fill: -monet-on-surface;
 }
@@ -1497,6 +1502,7 @@
 .combo-box-popup .list-view .jfx-list-cell {
     -fx-background-color: -monet-surface-container;
     -fx-text-fill: -monet-on-surface;
+    -fx-cursor: hand;
     -fx-background-insets: 0.0;
 }
 
@@ -1504,6 +1510,10 @@
 .combo-box-popup .list-view .list-cell:even:selected > .jfx-rippler > StackPane {
     -fx-background-color: -monet-secondary-container;
     -fx-text-fill: -monet-on-secondary-container;
+}
+
+.combo-box-popup .list-view .list-cell:hover > .jfx-rippler > StackPane {
+    -fx-background-color: -monet-secondary-container-transparent-50;
 }
 
 .jfx-combo-box-warning {

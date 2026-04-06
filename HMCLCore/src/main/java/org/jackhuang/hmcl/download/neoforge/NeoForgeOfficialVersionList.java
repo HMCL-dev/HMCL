@@ -21,6 +21,7 @@ import org.jackhuang.hmcl.download.DownloadProvider;
 import org.jackhuang.hmcl.download.VersionList;
 import org.jackhuang.hmcl.task.GetTask;
 import org.jackhuang.hmcl.task.Task;
+import org.jackhuang.hmcl.util.gson.JsonSerializable;
 
 import java.util.Collections;
 import java.util.List;
@@ -75,16 +76,38 @@ public final class NeoForgeOfficialVersionList extends VersionList<NeoForgeRemot
                     String mcVersion;
 
                     try {
-                        int si1 = version.indexOf('.'), si2 = version.indexOf('.', version.indexOf('.') + 1);
+                        int si1 = version.indexOf('.');
+                        int si2 = version.indexOf('.', si1 + 1);
+                        if (si1 < 0 || si2 < 0) {
+                            LOG.warning("Unsupported NeoForge version: " + version);
+                            continue;
+                        }
+
                         int majorVersion = Integer.parseInt(version.substring(0, si1));
                         if (majorVersion == 0) { // Snapshot version.
                             mcVersion = version.substring(si1 + 1, si2);
                         } else {
-                            String ver = version.substring(0, Integer.parseInt(version.substring(si1 + 1, si2)) == 0 ? si1 : si2);
                             if (majorVersion >= 26) {
+                                int si3 = version.indexOf('.', si2 + 1);
+
+                                if (si3 < 0) {
+                                    LOG.warning("Unsupported NeoForge version: " + version);
+                                    continue;
+                                }
+
+                                String ver = Integer.parseInt(version.substring(si2 + 1, si3)) == 0
+                                        ? version.substring(0, si2)
+                                        : version.substring(0, si3);
+
                                 int separator = version.indexOf('+');
-                                mcVersion = separator < 0 ? ver : ver + "-" + version.substring(separator + 1);
+                                if (separator < 0)
+                                    mcVersion = ver;
+                                else
+                                    mcVersion = ver + "-" + version.substring(separator + 1);
                             } else {
+                                String ver = Integer.parseInt(version.substring(si1 + 1, si2)) == 0
+                                        ? version.substring(0, si1)
+                                        : version.substring(0, si2);
                                 mcVersion = "1." + ver;
                             }
                         }
@@ -106,14 +129,7 @@ public final class NeoForgeOfficialVersionList extends VersionList<NeoForgeRemot
         });
     }
 
-    private static final class OfficialAPIResult {
-        private final boolean isSnapshot;
-
-        private final List<String> versions;
-
-        public OfficialAPIResult(boolean isSnapshot, List<String> versions) {
-            this.isSnapshot = isSnapshot;
-            this.versions = versions;
-        }
+    @JsonSerializable
+    private record OfficialAPIResult(boolean isSnapshot, List<String> versions) {
     }
 }
