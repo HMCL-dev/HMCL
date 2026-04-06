@@ -489,10 +489,6 @@ public class DownloadPage extends Control implements DecoratorPage {
             addonItem.setMouseTransparent(true); // Item is displayed for info, clicking shouldn't open the dialog again
             box.getChildren().setAll(addonItem);
 
-            JFXHyperlink changelogButton = new JFXHyperlink(i18n("mods.changelog"));
-            changelogButton.setDisable(true);
-            loadChangelog(version, selfPage.repository, changelogButton);
-
             SpinnerPane spinnerPane = new SpinnerPane();
             ScrollPane scrollPane = new ScrollPane();
             ComponentList dependenciesList = new ComponentList();
@@ -509,6 +505,9 @@ public class DownloadPage extends Control implements DecoratorPage {
             VBox.setVgrow(spinnerPane, Priority.SOMETIMES);
 
             this.setBody(box);
+
+            JFXHyperlink changelogButton = new JFXHyperlink(i18n("mods.changelog"));
+            changelogButton.setOnAction(__ -> Controllers.dialog(new AddonChangelog(version, selfPage.repository)));
 
             JFXHyperlink versionPageBtn = new JFXHyperlink(i18n("mods.url"));
             versionPageBtn.setDisable(true);
@@ -597,23 +596,6 @@ public class DownloadPage extends Control implements DecoratorPage {
             }).start();
         }
 
-        private void loadChangelog(RemoteMod.Version version, RemoteModRepository repo, JFXHyperlink changelogButton) {
-            Task.supplyAsync(() ->
-                    StringUtils.convertToHtml(repo.getModChangelog(version.getModid(), version.getVersionId()))
-            ).whenComplete(Schedulers.javafx(), (result, exception) -> {
-                if (exception == null) {
-                    if (StringUtils.isNotBlank(result)) {
-                        changelogButton.setDisable(false);
-                        changelogButton.setOnAction(e -> Controllers.dialog(new AddonChangelog(version, result, repo)));
-                    } else {
-                        changelogButton.setOnAction(null);
-                    }
-                } else {
-                    changelogButton.setOnAction(null);
-                }
-            }).start();
-        }
-
         private void loadVersionPageUrl(RemoteMod.Version version, RemoteModRepository repo, JFXHyperlink button) {
             Task.supplyAsync(() -> repo.getVersionPageUrl(version))
                     .whenComplete(Schedulers.javafx(), (result, exception) -> {
@@ -628,20 +610,24 @@ public class DownloadPage extends Control implements DecoratorPage {
 
     private static final class AddonChangelog extends JFXDialogLayout {
 
-        public AddonChangelog(RemoteMod.Version version, String changelog, RemoteModRepository repo) {
+        public AddonChangelog(RemoteMod.Version version, RemoteModRepository repo) {
             setHeading(new HBox(new Label(i18n("mods.changelog") + " - " + version.getName())));
 
             VBox box = new VBox(8);
             box.setPadding(new Insets(8));
 
-            ScrollPane scrollPane = new ScrollPane(FXUtils.renderAddonChangelog(changelog, repo.getBaseUrl()));
+            SpinnerPane spinnerPane = new SpinnerPane();
+            ScrollPane scrollPane = new ScrollPane();
             scrollPane.setFitToWidth(true);
             scrollPane.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
             FXUtils.setOverflowHidden(scrollPane, 8);
-            FXUtils.smoothScrolling(scrollPane);
 
-            VBox.setVgrow(scrollPane, Priority.SOMETIMES);
-            box.getChildren().add(scrollPane);
+            loadChangelog(version, repo, spinnerPane, scrollPane);
+            spinnerPane.setOnFailedAction(e -> loadChangelog(version, repo, spinnerPane, scrollPane));
+
+            spinnerPane.setContent(scrollPane);
+            VBox.setVgrow(spinnerPane, Priority.SOMETIMES);
+            box.getChildren().add(spinnerPane);
 
             this.setBody(box);
 
@@ -655,6 +641,23 @@ public class DownloadPage extends Control implements DecoratorPage {
             this.prefHeightProperty().bind(Controllers.getStage().heightProperty().multiply(0.7));
 
             onEscPressed(this, closeButton::fire);
+        }
+
+        private void loadChangelog(RemoteMod.Version version, RemoteModRepository repo, SpinnerPane spinnerPane, ScrollPane scrollPane) {
+            spinnerPane.setLoading(true);
+            Task.supplyAsync(() ->
+                    StringUtils.convertToHtml(repo.getModChangelog(version.getModid(), version.getVersionId()))
+            ).whenComplete(Schedulers.javafx(), (result, exception) -> {
+                if (exception == null) {
+                    String changelog = StringUtils.isNotBlank(result) ? result : i18n("mods.changelog.empty");
+                    scrollPane.setContent(FXUtils.renderAddonChangelog(changelog, repo.getBaseUrl()));
+                    FXUtils.smoothScrolling(scrollPane);
+                    spinnerPane.setFailedReason(null);
+                } else {
+                    spinnerPane.setFailedReason(i18n("download.failed.refresh"));
+                }
+                spinnerPane.setLoading(false);
+            }).start();
         }
     }
 

@@ -34,7 +34,6 @@ import javafx.scene.layout.VBox;
 import org.jackhuang.hmcl.mod.LocalModFile;
 import org.jackhuang.hmcl.mod.ModManager;
 import org.jackhuang.hmcl.mod.RemoteMod;
-import org.jackhuang.hmcl.mod.RemoteModRepository;
 import org.jackhuang.hmcl.task.FileDownloadTask;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
@@ -299,10 +298,7 @@ public class ModUpdatesPage extends BorderPane implements DecoratorPage {
 
     private static final class ModChangelog extends JFXDialogLayout {
 
-        private final RemoteModRepository repository;
-
         public ModChangelog(ModUpdateObject object) {
-            this.repository = object.data.getRepository();
             RemoteMod.Version targetVersion = object.data.getCandidate();
 
             this.setHeading(new HBox(new Label(i18n("mods.changelog") + " - " + targetVersion.getName())));
@@ -348,7 +344,7 @@ public class ModUpdatesPage extends BorderPane implements DecoratorPage {
                     return object.changelog;
                 }
                 RemoteMod.Version version = object.data.getCandidate();
-                return StringUtils.convertToHtml(repository.getModChangelog(version.getModid(), version.getVersionId()));
+                return StringUtils.convertToHtml(object.data.getRepository().getModChangelog(version.getModid(), version.getVersionId()));
             }).whenComplete(Schedulers.javafx(), (result, exception) -> {
                 if (exception == null) {
                     object.changelog = StringUtils.isNotBlank(result) ? result : i18n("mods.changelog.empty");
@@ -363,7 +359,7 @@ public class ModUpdatesPage extends BorderPane implements DecoratorPage {
         }
 
         private void loadVersionPageUrl(ModUpdateObject object, JFXHyperlink button) {
-            Task.supplyAsync(() -> repository.getVersionPageUrl(object.data.getCandidate()))
+            Task.supplyAsync(() -> object.data.getRepository().getVersionPageUrl(object.data.getCandidate()))
                     .whenComplete(Schedulers.javafx(), (result, exception) -> {
                         if (exception == null && StringUtils.isNotBlank(result)) {
                             button.setOnAction(__ -> Controllers.openUriInBrowser(result));
