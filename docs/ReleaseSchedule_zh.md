@@ -51,17 +51,29 @@ gantt
         开发阶段: done, c1, after b1, 31d
         预览阶段: active, c2, after c1, 16d
         维护阶段: c3, after c2, 30d
-        稳定版发布: milestone, after c2, 0d
+        3.11.0.118: milestone, after b1, 0d
+        3.11.0.119: milestone, 2026-02-01, 0d
+        3.11.1: milestone, after c1, 0d
     section 3.10
         开发阶段: done, b1, after a1, 31d
         预览阶段: done, b2, after b1, 16d
         维护阶段: active, b3, after b2, 31d
-        稳定版发布: milestone, after b2, 0d
+        3.10.0.116: milestone, after a1, 0d
+        3.10.0.117: milestone, 2025-12-30, 0d
+        3.10.1: milestone, after b1, 0d
+        3.10.2: milestone, 2026-01-23, 0d
+        3.10.3: milestone, after b2, 0d
+        3.10.4: milestone, 2026-02-11, 0d
     section 3.9
         开发阶段: done, a1, 2025-11-15, 30d
         预览阶段: done, a2, after a1, 16d
         维护阶段: done, a3, after a2, 31d
-        稳定版发布: milestone, after a2, 0d
+        3.9.0.114: milestone, 2025-11-15, 0d
+        3.9.0.115: milestone, 2025-11-30, 0d
+        3.9.1: milestone, after a1, 0d
+        3.9.2: milestone, 2025-12-23, 0d
+        3.9.3: milestone, after a2, 0d
+        3.9.4: milestone, 2026-01-11, 0d
 ```
 
 通常情况下，我们每个月发布一个版本分支，每个版本分支 `x.y` 生命周期为两个半月。
