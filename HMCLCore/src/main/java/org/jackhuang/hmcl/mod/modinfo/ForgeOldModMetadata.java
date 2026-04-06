@@ -22,6 +22,7 @@ import com.google.gson.annotations.SerializedName;
 import com.google.gson.stream.JsonReader;
 import com.google.gson.stream.JsonToken;
 import kala.compress.archivers.zip.ZipArchiveEntry;
+import org.jackhuang.hmcl.mod.LocalAddonFile;
 import org.jackhuang.hmcl.mod.LocalModFile;
 import org.jackhuang.hmcl.mod.ModLoaderType;
 import org.jackhuang.hmcl.mod.ModManager;
@@ -156,7 +157,7 @@ public final class ForgeOldModMetadata {
             authors = String.join(", ", metadata.getAuthorList());
         if (StringUtils.isBlank(authors))
             authors = metadata.getCredits();
-        return new LocalModFile(modManager, modManager.getLocalMod(metadata.getModId(), ModLoaderType.FORGE), modFile, metadata.getName(), new LocalModFile.Description(metadata.getDescription()),
+        return new LocalModFile(modManager, modManager.getLocalMod(metadata.getModId(), ModLoaderType.FORGE), modFile, metadata.getName(), new LocalAddonFile.Description(metadata.getDescription()),
                 authors, metadata.getVersion(), metadata.getGameVersion(),
                 StringUtils.isBlank(metadata.getUrl()) ? metadata.getUpdateUrl() : metadata.url,
                 metadata.getLogoFile());

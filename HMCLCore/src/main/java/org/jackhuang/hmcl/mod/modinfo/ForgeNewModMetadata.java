@@ -26,6 +26,7 @@ import com.google.gson.JsonPrimitive;
 import com.google.gson.annotations.JsonAdapter;
 import com.moandjiezana.toml.Toml;
 import kala.compress.archivers.zip.ZipArchiveEntry;
+import org.jackhuang.hmcl.mod.LocalAddonFile;
 import org.jackhuang.hmcl.mod.LocalModFile;
 import org.jackhuang.hmcl.mod.ModLoaderType;
 import org.jackhuang.hmcl.mod.ModManager;
@@ -226,7 +227,7 @@ public final class ForgeNewModMetadata {
 
         ModLoaderType type = analyzeLoader(toml, mod.getModId(), modLoaderType);
 
-        return new LocalModFile(modManager, modManager.getLocalMod(mod.getModId(), type), modFile, mod.getDisplayName(), new LocalModFile.Description(mod.getDescription()),
+        return new LocalModFile(modManager, modManager.getLocalMod(mod.getModId(), type), modFile, mod.getDisplayName(), new LocalAddonFile.Description(mod.getDescription()),
                 mod.getAuthors(), jarVersion == null ? mod.getVersion() : mod.getVersion().replace("${file.jarVersion}", jarVersion), "",
                 mod.getDisplayURL(),
                 metadata.getLogoFile());

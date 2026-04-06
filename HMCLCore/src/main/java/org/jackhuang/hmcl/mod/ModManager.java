@@ -150,7 +150,7 @@ public final class ModManager extends LocalAddonManager<LocalModFile> {
                     getLocalMod(fileNameWithoutExtension, ModLoaderType.UNKNOWN),
                     file,
                     fileNameWithoutExtension,
-                    new LocalModFile.Description("litemod".equals(extension) ? "LiteLoader Mod" : "")
+                    new LocalAddonFile.Description("litemod".equals(extension) ? "LiteLoader Mod" : "")
             );
         }
 

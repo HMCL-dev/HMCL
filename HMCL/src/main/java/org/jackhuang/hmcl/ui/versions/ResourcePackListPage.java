@@ -426,10 +426,10 @@ public final class ResourcePackListPage extends ListPageBase<ResourcePackListPag
                 // Do we need to search in the background thread?
                 for (ResourcePackInfoObject item : getSkinnable().getItems()) {
                     ResourcePackFile resourcePack = item.getFile();
-                    LocalModFile.Description description = resourcePack.getDescription();
+                    LocalAddonFile.Description description = resourcePack.getDescription();
                     Stream<String> descriptionParts = description == null
                             ? Stream.empty()
-                            : description.getParts().stream().map(LocalModFile.Description.Part::getText);
+                            : description.getParts().stream().map(LocalAddonFile.Description.Part::getText);
                     if (predicate.test(resourcePack.getFileNameWithExtension())
                             || predicate.test(resourcePack.getFileName())
                             || descriptionParts.anyMatch(predicate)) {
@@ -550,7 +550,10 @@ public final class ResourcePackListPage extends ListPageBase<ResourcePackListPag
 
             content.getTags().clear();
             content.setTitle(file.getFileName());
-            content.setSubtitle(file.getFileNameWithExtension());
+            {
+                var description = file.getDescription();
+                content.setSubtitle(description != null ? description.toStringSingleLine() : "");
+            }
 
             FXUtils.installFastTooltip(btnReveal, i18n("reveal.in_file_manager"));
             btnReveal.setOnAction(event -> FXUtils.showFileInExplorer(file.getFile()));

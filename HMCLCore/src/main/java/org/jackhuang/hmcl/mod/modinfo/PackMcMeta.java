@@ -20,7 +20,7 @@ package org.jackhuang.hmcl.mod.modinfo;
 import com.google.gson.*;
 import com.google.gson.annotations.JsonAdapter;
 import com.google.gson.annotations.SerializedName;
-import org.jackhuang.hmcl.mod.LocalModFile;
+import org.jackhuang.hmcl.mod.LocalAddonFile;
 import org.jackhuang.hmcl.util.Pair;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.gson.JsonSerializable;
@@ -69,7 +69,7 @@ public record PackMcMeta(@SerializedName("pack") PackInfo pack) implements Valid
                            @SerializedName("supported_formats") SupportedFormats supportedFormats,
                            @SerializedName("min_format") PackVersion minPackVersion,
                            @SerializedName("max_format") PackVersion maxPackVersion,
-                           @SerializedName("description") LocalModFile.Description description) {
+                           @SerializedName("description") LocalAddonFile.Description description) {
         public PackVersion getEffectiveMinVersion() {
             return !minPackVersion.isUnspecified() ? minPackVersion : new PackVersion(packFormat, 0);
         }
@@ -178,15 +178,15 @@ public record PackMcMeta(@SerializedName("pack") PackInfo pack) implements Valid
 
     public static final class PackInfoDeserializer implements JsonDeserializer<PackInfo> {
 
-        private List<LocalModFile.Description.Part> pairToPart(List<Pair<String, String>> lists, String color) {
-            List<LocalModFile.Description.Part> parts = new ArrayList<>();
+        private List<LocalAddonFile.Description.Part> pairToPart(List<Pair<String, String>> lists, String color) {
+            List<LocalAddonFile.Description.Part> parts = new ArrayList<>();
             for (Pair<String, String> list : lists) {
-                parts.add(new LocalModFile.Description.Part(list.getKey(), list.getValue().isEmpty() ? color : list.getValue()));
+                parts.add(new LocalAddonFile.Description.Part(list.getKey(), list.getValue().isEmpty() ? color : list.getValue()));
             }
             return parts;
         }
 
-        private void parseComponent(JsonElement element, List<LocalModFile.Description.Part> parts, String parentColor) throws JsonParseException {
+        private void parseComponent(JsonElement element, List<LocalAddonFile.Description.Part> parts, String parentColor) throws JsonParseException {
             if (parentColor == null) {
                 parentColor = "";
             }
@@ -216,8 +216,8 @@ public record PackMcMeta(@SerializedName("pack") PackInfo pack) implements Valid
             }
         }
 
-        private List<LocalModFile.Description.Part> parseDescription(JsonElement json) throws JsonParseException {
-            List<LocalModFile.Description.Part> parts = new ArrayList<>();
+        private List<LocalAddonFile.Description.Part> parseDescription(JsonElement json) throws JsonParseException {
+            List<LocalAddonFile.Description.Part> parts = new ArrayList<>();
 
             if (json == null || json.isJsonNull()) {
                 return parts;
@@ -246,8 +246,8 @@ public record PackMcMeta(@SerializedName("pack") PackInfo pack) implements Valid
             PackVersion minVersion = PackVersion.fromJson(packInfo.get("min_format"));
             PackVersion maxVersion = PackVersion.fromJson(packInfo.get("max_format"));
 
-            List<LocalModFile.Description.Part> parts = parseDescription(packInfo.get("description"));
-            return new PackInfo(packFormat, supportedFormats, minVersion, maxVersion, new LocalModFile.Description(parts));
+            List<LocalAddonFile.Description.Part> parts = parseDescription(packInfo.get("description"));
+            return new PackInfo(packFormat, supportedFormats, minVersion, maxVersion, new LocalAddonFile.Description(parts));
         }
     }
 
