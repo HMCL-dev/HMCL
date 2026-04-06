@@ -626,8 +626,8 @@ public class DownloadPage extends Control implements DecoratorPage {
             spinnerPane.setOnFailedAction(e -> loadChangelog(version, repo, spinnerPane, scrollPane));
 
             spinnerPane.setContent(scrollPane);
-            VBox.setVgrow(spinnerPane, Priority.SOMETIMES);
             box.getChildren().add(spinnerPane);
+            VBox.setVgrow(spinnerPane, Priority.SOMETIMES);
 
             this.setBody(box);
 
