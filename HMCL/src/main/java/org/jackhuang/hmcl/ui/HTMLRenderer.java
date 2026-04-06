@@ -36,8 +36,7 @@ import org.jsoup.nodes.Node;
 import org.jsoup.nodes.TextNode;
 
 import java.net.URI;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 import java.util.function.Consumer;
 
 import static org.jackhuang.hmcl.setting.ConfigHolder.config;
@@ -47,6 +46,11 @@ import static org.jackhuang.hmcl.util.logging.Logger.LOG;
  * @author Glavo
  */
 public final class HTMLRenderer {
+
+    private static final Map<String, String> cssPropertyMapping = Map.of(
+            "color", "-fx-fill",
+            "font-size", "-fx-font-size"
+    );
 
     private static URI resolveLink(Node linkNode) {
         String href = linkNode.absUrl("href");
@@ -127,7 +131,7 @@ public final class HTMLRenderer {
         hyperlink = null;
         fxStyle = null;
 
-        var styleBuilder = new StringBuilder();
+        var declarations = new SimpleCssDeclarations(cssPropertyMapping);
         for (Node node : stack) {
             String nodeName = node.nodeName();
             switch (nodeName) {
@@ -143,17 +147,9 @@ public final class HTMLRenderer {
                 case "li" -> listDepth++;
             }
 
-            String style = node.attr("style");
-            if (StringUtils.isNotBlank(style)) {
-                styleBuilder.append(StringUtils.addSuffix(
-                        style
-                                .replace("color:", "-fx-fill:")
-                                .replace("font-size:", "-fx-font-size:"), // And more
-                        ";"
-                ));
-            }
+            declarations.add(node.attr("style"));
         }
-        fxStyle = styleBuilder.toString();
+        fxStyle = declarations.asString();
     }
 
     private void pushNode(Node node) {
@@ -530,5 +526,33 @@ public final class HTMLRenderer {
         public AutoLineBreak(String text) {
             super(text);
         }
+    }
+
+    private static final class SimpleCssDeclarations {
+
+        private final Map<String, String> declarations = new HashMap<>();
+        private final Map<String, String> mapping;
+
+        public SimpleCssDeclarations(Map<String, String> mapping) {
+            this.mapping = Map.copyOf(mapping);
+        }
+
+        public void add(String inlineCss) {
+            if (StringUtils.isBlank(inlineCss)) return;
+            Arrays.stream(inlineCss.split(";")).filter(StringUtils::isNotBlank).forEach(s -> {
+                String[] declaration = s.split(":", 2);
+                if (declaration.length != 2) return;
+                declaration[0] = declaration[0].trim();
+                declaration[1] = declaration[1].trim();
+                declarations.put(mapping.getOrDefault(declaration[0], declaration[0]), declaration[1]);
+            });
+        }
+
+        public String asString() {
+            StringBuilder sb = new StringBuilder();
+            declarations.forEach((property, value) -> sb.append(property).append(": ").append(value).append(";"));
+            return sb.toString();
+        }
+
     }
 }
