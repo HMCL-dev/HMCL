@@ -73,6 +73,7 @@ import org.jackhuang.hmcl.util.platform.OperatingSystem;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
+import java.net.URI;
 import java.nio.file.Path;
 import java.time.LocalDate;
 import java.util.List;
@@ -621,6 +622,24 @@ public final class Controllers {
         } else {
             FXUtils.openLink(href);
         }
+    }
+
+    public static void openUriInBrowser(URI uri) {
+        if (uri == null) return;
+        openUriInBrowser(uri.toString());
+    }
+
+    public static void openUriInBrowser(String uri) {
+        if (uri == null) return;
+        var dialog = new MessageDialogPane.Builder(
+                i18n("web.open_in_browser", uri),
+                i18n("message.confirm"),
+                MessageDialogPane.MessageType.QUESTION
+        )
+                .addAction(i18n("button.copy"), () -> FXUtils.copyText(uri))
+                .yesOrNo(() -> FXUtils.openLink(uri), null)
+                .build();
+        dialog(dialog);
     }
 
     public static boolean isStopped() {

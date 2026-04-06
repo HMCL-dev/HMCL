@@ -47,7 +47,7 @@ public final class WebPage extends SpinnerPane implements DecoratorPage {
 
         Task.supplyAsync(() -> {
             Document document = Jsoup.parseBodyFragment(content);
-            HTMLRenderer renderer = HTMLRenderer.openHyperlinkInBrowser();
+            HTMLRenderer renderer = new HTMLRenderer(Controllers::openUriInBrowser);
             renderer.appendNode(document);
             renderer.mergeLineBreaks();
             return renderer.render();

@@ -618,7 +618,7 @@ public class DownloadPage extends Control implements DecoratorPage {
             Task.supplyAsync(() -> repo.getVersionPageUrl(version))
                     .whenComplete(Schedulers.javafx(), (result, exception) -> {
                         if (exception == null && StringUtils.isNotBlank(result)) {
-                            button.setOnAction(__ -> FXUtils.openUriInBrowser(result));
+                            button.setOnAction(__ -> Controllers.openUriInBrowser(result));
                             button.setDisable(false);
                         }
                     })

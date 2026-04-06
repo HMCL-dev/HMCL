@@ -60,10 +60,6 @@ public final class HTMLRenderer {
         }
     }
 
-    public static HTMLRenderer openHyperlinkInBrowser() {
-        return new HTMLRenderer(FXUtils::openUriInBrowser);
-    }
-
     /// @see org.jsoup.internal.StringUtil#isWhitespace(int)
     public static boolean isWhitespace(int c) {
         return c == ' ' || c == '\t' || c == '\n' || c == '\f' || c == '\r';
@@ -378,14 +374,14 @@ public final class HTMLRenderer {
             TableColumn<List<Element>, javafx.scene.Node> c = new TableColumn<>();
             Element e = head.get(i);
             if (e != null) {
-                var box = new VBox(HTMLRenderer.openHyperlinkInBrowser().appendNode(e).render());
+                var box = new VBox(new HTMLRenderer(Controllers::openUriInBrowser).appendNode(e).render());
                 box.setAlignment(Pos.CENTER_LEFT);
                 c.setGraphic(box);
             }
             c.setCellValueFactory(param -> {
                 Element el = param.getValue().get(finalI);
                 if (el == null) return new SimpleObjectProperty<>();
-                return new SimpleObjectProperty<>(HTMLRenderer.openHyperlinkInBrowser().appendNode(el).render());
+                return new SimpleObjectProperty<>(new HTMLRenderer(Controllers::openUriInBrowser).appendNode(el).render());
             });
             tableView.getColumns().add(c);
         }
@@ -481,7 +477,7 @@ public final class HTMLRenderer {
         return true;
     }
 
-    public void mergeLineBreaks() {
+    public HTMLRenderer mergeLineBreaks() {
         for (int i = 0; i < this.children.size(); i++) {
             javafx.scene.Node child = this.children.get(i);
             if (child instanceof AutoLineBreak) {
@@ -508,6 +504,7 @@ public final class HTMLRenderer {
                 }
             }
         }
+        return this;
     }
 
     public TextFlow render() {

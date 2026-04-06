@@ -366,7 +366,7 @@ public class ModUpdatesPage extends BorderPane implements DecoratorPage {
             Task.supplyAsync(() -> repository.getVersionPageUrl(object.data.getCandidate()))
                     .whenComplete(Schedulers.javafx(), (result, exception) -> {
                         if (exception == null && StringUtils.isNotBlank(result)) {
-                            button.setOnAction(__ -> FXUtils.openUriInBrowser(result));
+                            button.setOnAction(__ -> Controllers.openUriInBrowser(result));
                             button.setDisable(false);
                         }
                     })
