@@ -107,5 +107,6 @@ public class ServerModpackExportTask extends Task<Void> {
     }
 
     public static final ModpackExportInfo.Options OPTION = new ModpackExportInfo.Options()
+            .requireAuthor()
             .requireFileApi(false);
 }
