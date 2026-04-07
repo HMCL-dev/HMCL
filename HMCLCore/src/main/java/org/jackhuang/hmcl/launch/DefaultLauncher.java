@@ -28,6 +28,7 @@ import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.io.Unzipper;
 import org.jackhuang.hmcl.util.platform.*;
 import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.*;
 import java.nio.charset.Charset;
@@ -296,7 +297,36 @@ public class DefaultLauncher extends Launcher {
         }
         configuration.put("${natives_directory}", nativeFolderPath);
 
-        res.addAll(Arguments.parseArguments(version.getArguments().map(Arguments::getJvm).orElseGet(this::getDefaultJVMArguments), configuration));
+        Path javaNativeFolder = FileUtils.toAbsolute(nativeFolder);
+        @Nullable List<Argument> jvmArguments = version.getArguments().map(Arguments::getJvm).orElse(null);
+
+        if (jvmArguments != null) {
+            for (Argument jvmArgument : jvmArguments) {
+                if (jvmArgument instanceof StringArgument stringArgument
+                        && stringArgument.getArgument().startsWith("-Djava.library.path=")) {
+
+                    // We conservatively handle parameters like "-Djava.library.path=${natives_directory}/java"
+                    // to avoid extracting native libraries to unexpected locations.
+
+                    String prefix = "-Djava.library.path=${natives_directory}/";
+                    if (stringArgument.getArgument().startsWith(prefix)) {
+                        try {
+                            String subDir = stringArgument.getArgument().substring(prefix.length());
+                            Path actualNativeFolder = FileUtils.toAbsolute(javaNativeFolder.resolve(subDir));
+
+                            if (actualNativeFolder.startsWith(javaNativeFolder)) {
+                                javaNativeFolder = actualNativeFolder;
+                            }
+                        } catch (IllegalArgumentException ignored) {
+                        }
+                    }
+
+                    break;
+                }
+            }
+        }
+
+        res.addAll(Arguments.parseArguments(Objects.requireNonNullElseGet(jvmArguments, this::getDefaultJVMArguments), configuration));
         Arguments argumentsFromAuthInfo = authInfo.getLaunchArguments(options);
         if (argumentsFromAuthInfo != null && argumentsFromAuthInfo.getJvm() != null && !argumentsFromAuthInfo.getJvm().isEmpty())
             res.addAll(Arguments.parseArguments(argumentsFromAuthInfo.getJvm(), configuration));
@@ -368,7 +398,7 @@ public class DefaultLauncher extends Launcher {
         res.addAllWithoutParsing(Arguments.parseStringArguments(options.getGameArguments(), configuration));
 
         res.removeIf(it -> getForbiddens().containsKey(it) && getForbiddens().get(it).get());
-        return new Command(res, tempNativeFolder, encoding);
+        return new Command(res, tempNativeFolder, javaNativeFolder, encoding);
     }
 
     public Map<String, Boolean> getFeatures() {
@@ -405,6 +435,8 @@ public class DefaultLauncher extends Launcher {
     }
 
     public void decompressNatives(Path destination) throws NotDecompressingNativesException {
+        LOG.info("Decompress native libraries to " + destination);
+
         try {
             FileUtils.cleanDirectoryQuietly(destination);
             for (Library library : version.getLibraries())
@@ -523,7 +555,7 @@ public class DefaultLauncher extends Launcher {
         }
 
         if (options.getNativesDirType() == NativesDirectoryType.VERSION_FOLDER) {
-            decompressNatives(nativeFolder);
+            decompressNatives(command.javaNativeFolder);
         }
 
         if (isUsingLog4j())
@@ -633,13 +665,6 @@ public class DefaultLauncher extends Launcher {
             nativeFolder = Path.of(options.getNativesDir());
         }
 
-        if (options.getNativesDirType() == NativesDirectoryType.VERSION_FOLDER) {
-            decompressNatives(nativeFolder);
-        }
-
-        if (isUsingLog4j())
-            extractLog4jConfigurationFile();
-
         String scriptExtension = FileUtils.getExtension(scriptFile);
         boolean usePowerShell = "ps1".equals(scriptExtension);
 
@@ -661,6 +686,12 @@ public class DefaultLauncher extends Launcher {
                 throw new CommandTooLongException();
             }
         }
+
+        if (isUsingLog4j())
+            extractLog4jConfigurationFile();
+
+        if (options.getNativesDirType() == NativesDirectoryType.VERSION_FOLDER)
+            decompressNatives(commandLine.javaNativeFolder);
 
         Files.createDirectories(scriptFile.getParent());
 
@@ -816,15 +847,10 @@ public class DefaultLauncher extends Launcher {
         }), "exit-waiter", isDaemon));
     }
 
-    private static final class Command {
-        final CommandBuilder commandLine;
-        final Path tempNativeFolder;
-        final Charset encoding;
-
-        Command(CommandBuilder commandBuilder, Path tempNativeFolder, Charset encoding) {
-            this.commandLine = commandBuilder;
-            this.tempNativeFolder = tempNativeFolder;
-            this.encoding = encoding;
-        }
+    private record Command(
+            CommandBuilder commandLine,
+            @Nullable Path tempNativeFolder,
+            Path javaNativeFolder,
+            Charset encoding) {
     }
 }
