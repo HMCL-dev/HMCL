@@ -289,29 +289,38 @@ public class DefaultLauncher extends Launcher {
         // Here is a workaround for this issue: https://github.com/HMCL-dev/HMCL/issues/1141.
         String nativeFolderPath = FileUtils.getAbsolutePath(nativeFolder);
         Path tempNativeFolder = null;
-        Path javaNativeFolder = nativeFolder;
         if ((OperatingSystem.CURRENT_OS == OperatingSystem.LINUX || OperatingSystem.CURRENT_OS == OperatingSystem.MACOS)
                 && !StringUtils.isASCII(nativeFolderPath)
                 && gameVersion.isPresent() && GameVersionNumber.compare(gameVersion.get(), "1.19") < 0) {
             tempNativeFolder = Paths.get("/", "tmp", "hmcl-natives-" + UUID.randomUUID());
             nativeFolderPath = tempNativeFolder + File.pathSeparator + nativeFolderPath;
-            javaNativeFolder = tempNativeFolder;
         }
         configuration.put("${natives_directory}", nativeFolderPath);
 
-        List<String> parsedArguments = Arguments.parseArguments(version.getArguments().map(Arguments::getJvm).orElseGet(this::getDefaultJVMArguments), configuration);
+        Path javaNativeFolder = FileUtils.toAbsolute(nativeFolder);
+        @Nullable List<Argument> jvmArguments = version.getArguments().map(Arguments::getJvm).orElse(null);
 
-        String libraryPathPrefix = "-Djava.library.path=";
-        Optional<String> javaLibraryPathArgument = parsedArguments.stream().filter(it -> it.startsWith(libraryPathPrefix)).findFirst();
-        if (javaLibraryPathArgument.isPresent()) {
-            // Since Minecraft 26.2-snapshot-1, the java.library.path will be located in a subfolder of ${natives_directory}.
-            try {
-                javaNativeFolder = Path.of(javaLibraryPathArgument.get().substring(libraryPathPrefix.length()));
-            } catch (IllegalArgumentException ignored) {
+        if (jvmArguments != null) {
+            for (Argument jvmArgument : jvmArguments) {
+                if (jvmArgument instanceof StringArgument stringArgument
+                        && stringArgument.getArgument().startsWith("-Djava.library.path=")) {
+
+                    String prefix = "-Djava.library.path=${natives_directory}/";
+                    if (stringArgument.getArgument().startsWith(prefix)) {
+                        String subDir = stringArgument.getArgument().substring(prefix.length());
+                        Path actualNativeFolder = FileUtils.toAbsolute(javaNativeFolder.resolve(subDir));
+
+                        if (actualNativeFolder.startsWith(javaNativeFolder)) {
+                            javaNativeFolder = actualNativeFolder;
+                        }
+                    }
+
+                    break;
+                }
             }
         }
 
-        res.addAll(parsedArguments);
+        res.addAll(Arguments.parseArguments(Objects.requireNonNullElseGet(jvmArguments, this::getDefaultJVMArguments), configuration));
         Arguments argumentsFromAuthInfo = authInfo.getLaunchArguments(options);
         if (argumentsFromAuthInfo != null && argumentsFromAuthInfo.getJvm() != null && !argumentsFromAuthInfo.getJvm().isEmpty())
             res.addAll(Arguments.parseArguments(argumentsFromAuthInfo.getJvm(), configuration));
@@ -648,13 +657,6 @@ public class DefaultLauncher extends Launcher {
             nativeFolder = Path.of(options.getNativesDir());
         }
 
-        if (options.getNativesDirType() == NativesDirectoryType.VERSION_FOLDER) {
-            decompressNatives(nativeFolder);
-        }
-
-        if (isUsingLog4j())
-            extractLog4jConfigurationFile();
-
         String scriptExtension = FileUtils.getExtension(scriptFile);
         boolean usePowerShell = "ps1".equals(scriptExtension);
 
@@ -676,6 +678,12 @@ public class DefaultLauncher extends Launcher {
                 throw new CommandTooLongException();
             }
         }
+
+        if (isUsingLog4j())
+            extractLog4jConfigurationFile();
+
+        if (options.getNativesDirType() == NativesDirectoryType.VERSION_FOLDER)
+            decompressNatives(commandLine.javaNativeFolder);
 
         Files.createDirectories(scriptFile.getParent());
 
