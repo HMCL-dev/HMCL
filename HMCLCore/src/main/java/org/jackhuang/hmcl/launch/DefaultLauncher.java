@@ -310,11 +310,14 @@ public class DefaultLauncher extends Launcher {
 
                     String prefix = "-Djava.library.path=${natives_directory}/";
                     if (stringArgument.getArgument().startsWith(prefix)) {
-                        String subDir = stringArgument.getArgument().substring(prefix.length());
-                        Path actualNativeFolder = FileUtils.toAbsolute(javaNativeFolder.resolve(subDir));
+                        try {
+                            String subDir = stringArgument.getArgument().substring(prefix.length());
+                            Path actualNativeFolder = FileUtils.toAbsolute(javaNativeFolder.resolve(subDir));
 
-                        if (actualNativeFolder.startsWith(javaNativeFolder)) {
-                            javaNativeFolder = actualNativeFolder;
+                            if (actualNativeFolder.startsWith(javaNativeFolder)) {
+                                javaNativeFolder = actualNativeFolder;
+                            }
+                        } catch (IllegalArgumentException ignored) {
                         }
                     }
 
@@ -432,6 +435,8 @@ public class DefaultLauncher extends Launcher {
     }
 
     public void decompressNatives(Path destination) throws NotDecompressingNativesException {
+        LOG.info("Decompress native libraries to " + destination);
+
         try {
             FileUtils.cleanDirectoryQuietly(destination);
             for (Library library : version.getLibraries())
