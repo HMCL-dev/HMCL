@@ -306,10 +306,7 @@ public class DefaultLauncher extends Launcher {
         if (javaLibraryPathArgument.isPresent()) {
             // Since Minecraft 26.2-snapshot-1, the java.library.path will be located in a subfolder of ${natives_directory}.
             try {
-                Path targetPath = Path.of(javaLibraryPathArgument.get().substring(libraryPathPrefix.length()));
-                if (targetPath.startsWith(javaNativeFolder)) {
-                    javaNativeFolder = targetPath;
-                }
+                javaNativeFolder = Path.of(javaLibraryPathArgument.get().substring(libraryPathPrefix.length()));
             } catch (IllegalArgumentException ignored) {
             }
         }
