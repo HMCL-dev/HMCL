@@ -28,6 +28,7 @@ import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.io.Unzipper;
 import org.jackhuang.hmcl.util.platform.*;
 import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.*;
 import java.nio.charset.Charset;
@@ -288,15 +289,32 @@ public class DefaultLauncher extends Launcher {
         // Here is a workaround for this issue: https://github.com/HMCL-dev/HMCL/issues/1141.
         String nativeFolderPath = FileUtils.getAbsolutePath(nativeFolder);
         Path tempNativeFolder = null;
+        Path javaNativeFolder = nativeFolder;
         if ((OperatingSystem.CURRENT_OS == OperatingSystem.LINUX || OperatingSystem.CURRENT_OS == OperatingSystem.MACOS)
                 && !StringUtils.isASCII(nativeFolderPath)
                 && gameVersion.isPresent() && GameVersionNumber.compare(gameVersion.get(), "1.19") < 0) {
             tempNativeFolder = Paths.get("/", "tmp", "hmcl-natives-" + UUID.randomUUID());
             nativeFolderPath = tempNativeFolder + File.pathSeparator + nativeFolderPath;
+            javaNativeFolder = tempNativeFolder;
         }
         configuration.put("${natives_directory}", nativeFolderPath);
 
-        res.addAll(Arguments.parseArguments(version.getArguments().map(Arguments::getJvm).orElseGet(this::getDefaultJVMArguments), configuration));
+        List<String> parsedArguments = Arguments.parseArguments(version.getArguments().map(Arguments::getJvm).orElseGet(this::getDefaultJVMArguments), configuration);
+
+        String libraryPathPrefix = "-Djava.library.path=";
+        Optional<String> javaLibraryPathArgument = parsedArguments.stream().filter(it -> it.startsWith(libraryPathPrefix)).findFirst();
+        if (javaLibraryPathArgument.isPresent()) {
+            // Since Minecraft 26.2-snapshot-1, the java.library.path will be located in a subfolder of ${natives_directory}.
+            try {
+                Path targetPath = Path.of(javaLibraryPathArgument.get().substring(libraryPathPrefix.length()));
+                if (targetPath.startsWith(javaNativeFolder)) {
+                    javaNativeFolder = targetPath;
+                }
+            } catch (IllegalArgumentException ignored) {
+            }
+        }
+
+        res.addAll(parsedArguments);
         Arguments argumentsFromAuthInfo = authInfo.getLaunchArguments(options);
         if (argumentsFromAuthInfo != null && argumentsFromAuthInfo.getJvm() != null && !argumentsFromAuthInfo.getJvm().isEmpty())
             res.addAll(Arguments.parseArguments(argumentsFromAuthInfo.getJvm(), configuration));
@@ -368,7 +386,7 @@ public class DefaultLauncher extends Launcher {
         res.addAllWithoutParsing(Arguments.parseStringArguments(options.getGameArguments(), configuration));
 
         res.removeIf(it -> getForbiddens().containsKey(it) && getForbiddens().get(it).get());
-        return new Command(res, tempNativeFolder, encoding);
+        return new Command(res, tempNativeFolder, javaNativeFolder, encoding);
     }
 
     public Map<String, Boolean> getFeatures() {
@@ -523,7 +541,7 @@ public class DefaultLauncher extends Launcher {
         }
 
         if (options.getNativesDirType() == NativesDirectoryType.VERSION_FOLDER) {
-            decompressNatives(nativeFolder);
+            decompressNatives(command.javaNativeFolder);
         }
 
         if (isUsingLog4j())
@@ -816,15 +834,10 @@ public class DefaultLauncher extends Launcher {
         }), "exit-waiter", isDaemon));
     }
 
-    private static final class Command {
-        final CommandBuilder commandLine;
-        final Path tempNativeFolder;
-        final Charset encoding;
-
-        Command(CommandBuilder commandBuilder, Path tempNativeFolder, Charset encoding) {
-            this.commandLine = commandBuilder;
-            this.tempNativeFolder = tempNativeFolder;
-            this.encoding = encoding;
-        }
+    private record Command(
+            CommandBuilder commandLine,
+            @Nullable Path tempNativeFolder,
+            Path javaNativeFolder,
+            Charset encoding) {
     }
 }
