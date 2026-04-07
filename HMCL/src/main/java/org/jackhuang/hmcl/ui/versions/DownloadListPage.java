@@ -579,7 +579,7 @@ public class DownloadListPage extends Control implements DecoratorPage, VersionP
                             content.setTitle(mod != null && I18n.isUseChinese() ? mod.getDisplayName() : item.getTitle());
                             String description = item.getDescription();
                             if (description != null) {
-                                description = description.replace("\n", " ");
+                                description = description.replaceAll("\\R", " ");
                             }
                             content.setSubtitle(description);
                             content.getTags().clear();
