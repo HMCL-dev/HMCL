@@ -305,6 +305,9 @@ public class DefaultLauncher extends Launcher {
                 if (jvmArgument instanceof StringArgument stringArgument
                         && stringArgument.getArgument().startsWith("-Djava.library.path=")) {
 
+                    // We conservatively handle parameters like "-Djava.library.path=${natives_directory}/java"
+                    // to avoid extracting native libraries to unexpected locations.
+
                     String prefix = "-Djava.library.path=${natives_directory}/";
                     if (stringArgument.getArgument().startsWith(prefix)) {
                         String subDir = stringArgument.getArgument().substring(prefix.length());
