@@ -27,6 +27,7 @@ import javafx.scene.control.ScrollPane;
 import javafx.scene.layout.*;
 import org.jackhuang.hmcl.game.NativesDirectoryType;
 import org.jackhuang.hmcl.game.Renderer;
+import org.jackhuang.hmcl.game.Version;
 import org.jackhuang.hmcl.setting.Profile;
 import org.jackhuang.hmcl.setting.VersionSetting;
 import org.jackhuang.hmcl.ui.FXUtils;
@@ -36,6 +37,7 @@ import org.jackhuang.hmcl.util.i18n.I18n;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
 import org.jackhuang.hmcl.util.platform.Platform;
+import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
 import org.jetbrains.annotations.Nullable;
 
 import java.nio.file.FileSystems;
@@ -78,6 +80,8 @@ public final class AdvancedVersionSettingPage extends StackPane implements Decor
         this.stateProperty = new SimpleObjectProperty<>(State.fromTitle(
                 versionId == null ? i18n("settings.advanced") : i18n("settings.advanced.title", versionId)
         ));
+
+        GameVersionNumber gameVersionNumber = GameVersionNumber.asGameVersion(profile.getRepository().getGameVersion(versionId));
 
         this.getStyleClass().add("gray-background");
 
@@ -192,7 +196,11 @@ public final class AdvancedVersionSettingPage extends StackPane implements Decor
                 String bundleKey = "settings.advanced.renderer." + e.name().toLowerCase(Locale.ROOT) + ".desc";
                 return I18n.hasKey(bundleKey) ? i18n(bundleKey) : null;
             });
-            rendererPane.setItems(Renderer.values());
+            if (gameVersionNumber.compareTo("26.2-snapshot-1") >= 0) {
+                rendererPane.setItems(Renderer.ALL);
+            } else {
+                rendererPane.setItems(Renderer.OPENGL_BASED);
+            }
 
             noJVMArgsPane = new LineToggleButton();
             noJVMArgsPane.setTitle(i18n("settings.advanced.no_jvm_args"));

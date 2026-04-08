@@ -17,17 +17,46 @@
  */
 package org.jackhuang.hmcl.game;
 
+import org.jetbrains.annotations.NotNullByDefault;
+import org.jetbrains.annotations.Nullable;
+
+import java.util.List;
+import java.util.stream.Stream;
+import java.util.stream.StreamSupport;
+
 /// @author Glavo
+@NotNullByDefault
 public enum Renderer {
-    DEFAULT,
+    DEFAULT(null),
+    ZINK(API.OPENGL),
+    LLVMPIPE(API.OPENGL),
+    D3D12(API.OPENGL),
+    LAVAPIPE(API.VULKAN);
 
-    // OpenGL
+    /// All renderers.
+    public static final List<Renderer> ALL = List.of(values());
 
-    ZINK,
-    LLVMPIPE,
-    D3D12,
+    /// All renderers that are based on OpenGL.
+    public static final List<Renderer> OPENGL_BASED = Stream.of(values())
+            .filter(it -> it.getApi() == null || it.getApi() == API.OPENGL)
+            .toList();
 
-    // Vulkan
+    private final @Nullable Renderer.API api;
 
-    LAVAPIPE,
+    Renderer(@Nullable Renderer.API api) {
+        this.api = api;
+    }
+
+    /// Get the Graphics API used by this renderer.
+    ///
+    /// @return the API used by this renderer, or `null` if the renderer does not target a specific graphics API.
+    public @Nullable API getApi() {
+        return api;
+    }
+
+    /// The Graphics API.
+    public enum API {
+        OPENGL,
+        VULKAN,
+    }
 }
