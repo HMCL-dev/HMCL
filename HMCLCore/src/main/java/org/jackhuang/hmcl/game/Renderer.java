@@ -17,9 +17,17 @@
  */
 package org.jackhuang.hmcl.game;
 
+/// @author Glavo
 public enum Renderer {
     DEFAULT,
+
+    // OpenGL
+
     ZINK,
     LLVMPIPE,
-    D3D12
+    D3D12,
+
+    // Vulkan
+
+    LAVAPIPE,
 }
