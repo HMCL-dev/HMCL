@@ -40,6 +40,11 @@ public enum Renderer {
             .filter(it -> it.getApi() == null || it.getApi() == API.OPENGL)
             .toList();
 
+    /// All renderers that are based on Vulkan.
+    public static final List<Renderer> VULKAN_BASED = Stream.of(values())
+            .filter(it -> it.getApi() == null || it.getApi() == API.VULKAN)
+            .toList();
+
     private final @Nullable Renderer.API api;
 
     Renderer(@Nullable Renderer.API api) {
