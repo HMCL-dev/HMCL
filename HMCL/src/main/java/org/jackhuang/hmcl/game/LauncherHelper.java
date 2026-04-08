@@ -174,7 +174,11 @@ public final class LauncherHelper {
                             }),
                             Task.composeAsync(() -> {
                                 Renderer renderer = setting.getRenderer();
-                                if (renderer != Renderer.DEFAULT && OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS) {
+                                if (renderer == Renderer.DEFAULT || OperatingSystem.CURRENT_OS != OperatingSystem.WINDOWS) {
+                                    return null;
+                                }
+
+                                if (renderer.getApi() == Renderer.API.OPENGL) {
                                     Library lib = NativePatcher.getWindowsMesaLoader(java, renderer, OperatingSystem.SYSTEM_VERSION);
                                     if (lib == null)
                                         return null;
@@ -193,9 +197,11 @@ public final class LauncherHelper {
                                         javaAgents.add(agent);
                                         return null;
                                     }
-                                } else {
-                                    return null;
+                                } else if (renderer.getApi() == Renderer.API.VULKAN) {
+                                    // TODO
                                 }
+
+                                return null;
                             })
                     );
                 }).withStage("launch.state.dependencies")
