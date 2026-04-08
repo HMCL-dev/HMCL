@@ -591,6 +591,28 @@ public class DefaultLauncher extends Launcher {
         return p;
     }
 
+    private @Nullable Path findVulkanDescriptorFile(List<Path> dirs, String driverNameBase) {
+        String archName = switch (options.getJava().getArchitecture()) {
+            case X86 -> "i686";
+            case X86_64 -> "x86_64";
+            default -> options.getJava().getArchitecture().getCheckedName();
+        };
+
+        for (Path dir : dirs) {
+            if (Files.isDirectory(dir)) {
+                Path file = dir.resolve(driverNameBase + "." + archName + ".json");
+                if (Files.isRegularFile(file))
+                    return file;
+
+                file = dir.resolve(driverNameBase + ".json");
+                if (Files.isRegularFile(file))
+                    return file;
+            }
+        }
+
+        return null;
+    }
+
     private Map<String, String> getEnvVars() {
         String versionName = Optional.ofNullable(options.getVersionName()).orElse(version.getId());
         JavaRuntime java = options.getJava();
@@ -627,34 +649,12 @@ public class DefaultLauncher extends Launcher {
                         break;
                     }
                     case LAVAPIPE: {
-                        String archName = switch (java.getArchitecture()) {
-                            case X86 -> "i686";
-                            case X86_64 -> "x86_64";
-                            default -> java.getArchitecture().getCheckedName();
-                        };
-
-                        var fileNames = List.of(
-                                "lvp_icd" + archName + ".json",
-                                "lvp_icd.json"
+                        Path lvp = findVulkanDescriptorFile(
+                                List.of(Path.of("/usr/share/vulkan/icd.d", "/etc/vulkan/icd.d")),
+                                "lvp_icd"
                         );
-
-                        loop:
-                        for (String dirPath : List.of(
-                                "/usr/share/vulkan/icd.d",
-                                "/etc/vulkan/icd.d"
-                        )) {
-                            Path dir = Path.of(dirPath);
-                            if (Files.isDirectory(dir)) {
-
-                                for (String fileName : fileNames) {
-                                    Path file = dir.resolve(fileName);
-                                    if (Files.isRegularFile(file)) {
-                                        env.put("VK_ICD_FILENAMES", file.toString());
-                                        break loop;
-                                    }
-                                }
-                                break;
-                            }
+                        if (lvp != null) {
+                            env.put("VK_ICD_FILENAMES", FileUtils.getAbsolutePath(lvp));
                         }
 
                         break;
