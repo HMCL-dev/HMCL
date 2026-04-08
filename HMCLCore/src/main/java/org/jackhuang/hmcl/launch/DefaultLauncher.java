@@ -605,12 +605,14 @@ public class DefaultLauncher extends Launcher {
                 if (renderer != Renderer.LLVMPIPE)
                     env.put("GALLIUM_DRIVER", renderer.name().toLowerCase(Locale.ROOT));
             } else if (OperatingSystem.CURRENT_OS == OperatingSystem.LINUX) {
-                env.put("__GLX_VENDOR_LIBRARY_NAME", "mesa");
                 switch (renderer) {
-                    case LLVMPIPE:
+                    case LLVMPIPE: {
+                        env.put("__GLX_VENDOR_LIBRARY_NAME", "mesa");
                         env.put("LIBGL_ALWAYS_SOFTWARE", "1");
                         break;
-                    case ZINK:
+                    }
+                    case ZINK: {
+                        env.put("__GLX_VENDOR_LIBRARY_NAME", "mesa");
                         env.put("MESA_LOADER_DRIVER_OVERRIDE", "zink");
                         /*
                          * The amdgpu DDX is missing support for modifiers, causing Zink to fail.
@@ -620,6 +622,41 @@ public class DefaultLauncher extends Launcher {
                          */
                         env.put("LIBGL_KOPPER_DRI2", "1");
                         break;
+                    }
+                    case LAVAPIPE: {
+                        // FIXME: Use Java architecture.
+                        String archName = switch (Architecture.SYSTEM_ARCH) {
+                            case X86 -> "i686";
+                            case X86_64 -> "x86_64";
+                            default -> Architecture.SYSTEM_ARCH.getCheckedName();
+                        };
+
+                        var fileNames = List.of(
+                                "lvp_icd" + archName + ".json",
+                                "lvp_icd.json"
+                        );
+
+                        loop:
+                        for (String dirPath : List.of(
+                                "/usr/share/vulkan/icd.d",
+                                "/etc/vulkan/icd.d"
+                        )) {
+                            Path dir = Path.of(dirPath);
+                            if (Files.isDirectory(dir)) {
+
+                                for (String fileName : fileNames) {
+                                    Path file = dir.resolve(fileName);
+                                    if (Files.isRegularFile(file)) {
+                                        env.put("VK_ICD_FILENAMES", file.toString());
+                                        break loop;
+                                    }
+                                }
+                                break;
+                            }
+                        }
+
+                        break;
+                    }
                 }
             }
         }
