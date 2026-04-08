@@ -20,6 +20,7 @@ package org.jackhuang.hmcl.launch;
 import org.jackhuang.hmcl.auth.AuthInfo;
 import org.jackhuang.hmcl.download.LibraryAnalyzer;
 import org.jackhuang.hmcl.game.*;
+import org.jackhuang.hmcl.java.JavaRuntime;
 import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.ServerAddress;
 import org.jackhuang.hmcl.util.StringUtils;
@@ -592,6 +593,8 @@ public class DefaultLauncher extends Launcher {
 
     private Map<String, String> getEnvVars() {
         String versionName = Optional.ofNullable(options.getVersionName()).orElse(version.getId());
+        JavaRuntime java = options.getJava();
+
         Map<String, String> env = new LinkedHashMap<>();
         env.put("INST_NAME", versionName);
         env.put("INST_ID", versionName);
@@ -624,11 +627,10 @@ public class DefaultLauncher extends Launcher {
                         break;
                     }
                     case LAVAPIPE: {
-                        // FIXME: Use Java architecture.
-                        String archName = switch (Architecture.SYSTEM_ARCH) {
+                        String archName = switch (java.getArchitecture()) {
                             case X86 -> "i686";
                             case X86_64 -> "x86_64";
-                            default -> Architecture.SYSTEM_ARCH.getCheckedName();
+                            default -> java.getArchitecture().getCheckedName();
                         };
 
                         var fileNames = List.of(
