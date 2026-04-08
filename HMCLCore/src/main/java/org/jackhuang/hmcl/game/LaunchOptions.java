@@ -19,6 +19,7 @@ package org.jackhuang.hmcl.game;
 
 import org.jackhuang.hmcl.java.JavaRuntime;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.io.Serializable;
 import java.nio.file.Path;
@@ -352,6 +353,16 @@ public class LaunchOptions implements Serializable {
         public Builder setEnvironmentVariables(Map<String, String> env) {
             options.environmentVariables.clear();
             options.environmentVariables.putAll(env);
+            return this;
+        }
+
+        public Builder addEnvironmentVariable(String key, String value) {
+            options.environmentVariables.put(key, value);
+            return this;
+        }
+
+        public Builder addEnvironmentVariableIfAbsent(String key, String value) {
+            options.environmentVariables.putIfAbsent(key, value);
             return this;
         }
 

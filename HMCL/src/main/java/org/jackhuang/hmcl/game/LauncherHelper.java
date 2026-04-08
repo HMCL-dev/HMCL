@@ -232,6 +232,7 @@ public final class LauncherHelper {
                     if (quickPlayOption != null) {
                         launchOptionsBuilder.setQuickPlayOption(quickPlayOption);
                     }
+
                     LaunchOptions launchOptions = launchOptionsBuilder.create();
 
                     LOG.info("Here's the structure of game mod directory:\n" + FileUtils.printFileStructure(repository.getModsDirectory(selectedVersion), 10));
