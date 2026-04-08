@@ -655,6 +655,7 @@ public class DefaultLauncher extends Launcher {
                         );
                         if (lvp != null) {
                             env.put("VK_ICD_FILENAMES", FileUtils.getAbsolutePath(lvp));
+                            env.put("VK_DRIVER_FILES", FileUtils.getAbsolutePath(lvp));
                         }
 
                         break;

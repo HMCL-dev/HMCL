@@ -179,7 +179,7 @@ public final class LauncherHelper {
                                 }
 
                                 if (renderer.getApi() == Renderer.API.OPENGL) {
-                                    Library lib = NativePatcher.getWindowsMesaLoader(java, renderer, OperatingSystem.SYSTEM_VERSION);
+                                    Library lib = NativePatcher.getWindowsMesaOpenGLLoader(java, renderer, OperatingSystem.SYSTEM_VERSION);
                                     if (lib == null)
                                         return null;
                                     Path file = dependencyManager.getGameRepository().getLibraryFile(version.get(), lib);
