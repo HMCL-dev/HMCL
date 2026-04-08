@@ -81,7 +81,9 @@ public final class AdvancedVersionSettingPage extends StackPane implements Decor
                 versionId == null ? i18n("settings.advanced") : i18n("settings.advanced.title", versionId)
         ));
 
-        GameVersionNumber gameVersionNumber = GameVersionNumber.asGameVersion(profile.getRepository().getGameVersion(versionId));
+        @Nullable GameVersionNumber gameVersion = versionId != null
+                ? GameVersionNumber.asGameVersion(profile.getRepository().getGameVersion(versionId))
+                : null;
 
         this.getStyleClass().add("gray-background");
 
@@ -196,7 +198,7 @@ public final class AdvancedVersionSettingPage extends StackPane implements Decor
                 String bundleKey = "settings.advanced.renderer." + e.name().toLowerCase(Locale.ROOT) + ".desc";
                 return I18n.hasKey(bundleKey) ? i18n(bundleKey) : null;
             });
-            if (gameVersionNumber.compareTo("26.2-snapshot-1") >= 0) {
+            if (gameVersion == null || gameVersion.compareTo("26.2-snapshot-1") >= 0) {
                 rendererPane.setItems(Renderer.ALL);
             } else {
                 rendererPane.setItems(Renderer.OPENGL_BASED);
