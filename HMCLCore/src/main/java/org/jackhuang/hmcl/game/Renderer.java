@@ -27,10 +27,13 @@ import java.util.stream.Stream;
 @NotNullByDefault
 public enum Renderer {
     DEFAULT(null),
+
     ZINK(API.OPENGL),
     LLVMPIPE(API.OPENGL),
     D3D12(API.OPENGL),
-    LAVAPIPE(API.VULKAN);
+
+    LAVAPIPE(API.VULKAN),
+    DOZEN(API.VULKAN);
 
     /// All renderers.
     public static final List<Renderer> ALL = List.of(values());
