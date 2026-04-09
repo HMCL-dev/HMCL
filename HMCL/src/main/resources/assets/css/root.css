@@ -1463,6 +1463,11 @@
     -jfx-radius: 9;
 }
 
+.spinner-pane .spinner-pane-content {
+    -fx-padding: 10px;
+    -fx-spacing: 10px;
+}
+
 /*******************************************************************************
 *                                                                              *
 * JFX Combo Box                                                                *
@@ -1475,6 +1480,11 @@
     -fx-background-color: -monet-surface-container-highest;
     -fx-padding: 4;
     -fx-max-width: 1000000000;
+}
+
+.jfx-combo-box .arrow {
+    -fx-background-color: -monet-on-surface-variant;
+    -fx-shape: "M12 15 7 10H17L12 15Z";
 }
 
 .jfx-combo-box .text {
@@ -1492,6 +1502,7 @@
 .combo-box-popup .list-view .jfx-list-cell {
     -fx-background-color: -monet-surface-container;
     -fx-text-fill: -monet-on-surface;
+    -fx-cursor: hand;
     -fx-background-insets: 0.0;
 }
 
@@ -1499,6 +1510,10 @@
 .combo-box-popup .list-view .list-cell:even:selected > .jfx-rippler > StackPane {
     -fx-background-color: -monet-secondary-container;
     -fx-text-fill: -monet-on-secondary-container;
+}
+
+.combo-box-popup .list-view .list-cell:hover > .jfx-rippler > StackPane {
+    -fx-background-color: -monet-secondary-container-transparent-50;
 }
 
 .jfx-combo-box-warning {
@@ -1563,6 +1578,21 @@
 
 .custom-color-dialog .tab-selected-line {
     -fx-background-color: -monet-on-surface;
+}
+
+.custom-color-dialog .jfx-color-dialog-actions {
+    -fx-background-color: -monet-surface;
+    -fx-padding: 0.0 10.0 5.0 0.0;
+    -fx-alignment: center-right;
+}
+
+.custom-color-dialog .jfx-color-dialog-accept {
+    -fx-padding: 0.7em 0.8em;
+}
+
+.custom-color-dialog .jfx-color-dialog-cancel {
+    -fx-text-fill: -monet-on-surface-variant;
+    -fx-padding: 0.7em 0.8em;
 }
 
 /*******************************************************************************
@@ -1923,4 +1953,8 @@
 
 .line-toggle-button .jfx-toggle-button {
     -fx-padding: 0;
+}
+
+.update-pane:active .subtitle-label {
+    -fx-text-fill: -monet-tertiary;
 }

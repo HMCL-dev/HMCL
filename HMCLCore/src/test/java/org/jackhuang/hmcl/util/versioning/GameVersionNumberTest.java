@@ -28,6 +28,7 @@ import java.util.*;
 import java.util.function.Supplier;
 
 import static org.jackhuang.hmcl.util.versioning.GameVersionNumber.asGameVersion;
+import static org.jackhuang.hmcl.util.versioning.GameVersionNumber.getReleaseOfSnapshot;
 import static org.junit.jupiter.api.Assertions.*;
 
 /**
@@ -376,10 +377,11 @@ public final class GameVersionNumberTest {
                 "1.21.11-pre1_unobfuscated",
                 "1.21.11-pre2",
                 "1.21.11-pre2_unobfuscated",
-                "99w99a",
                 "26.1-snapshot-1",
                 "26.1-snapshot-2",
                 "26.1",
+                "26.1.1",
+                "26w14a",
                 "26.2-snapshot-1",
                 "26.2-snapshot-2",
                 "26.2",
@@ -506,5 +508,15 @@ public final class GameVersionNumberTest {
         assertThrows(IllegalArgumentException.class, () -> asGameVersion("17w43a").isAtLeast("1.13", "1.13", false));
         assertThrows(IllegalArgumentException.class, () -> asGameVersion("17w43a").isAtLeast("1.13", "22w13oneblockatatime", true));
         assertThrows(IllegalArgumentException.class, () -> asGameVersion("17w43a").isAtLeast("1.13", "22w13oneblockatatime", false));
+    }
+
+    @Test
+    public void testGetReleaseOfSnapshot() {
+        assertEquals(asGameVersion("1.21.11"), getReleaseOfSnapshot(asGameVersion("25w45a")));
+        assertEquals(asGameVersion("1.21.11"), getReleaseOfSnapshot(asGameVersion("25w45a_unobfuscated")));
+        assertEquals(asGameVersion("1.21.11"), getReleaseOfSnapshot(asGameVersion("1.21.11-pre3")));
+        assertEquals(asGameVersion("26.1"), getReleaseOfSnapshot(asGameVersion("26.1-snapshot-9")));
+        assertNull(getReleaseOfSnapshot(asGameVersion("26.1")));
+        assertNull(getReleaseOfSnapshot(asGameVersion("20w14infinite")));
     }
 }

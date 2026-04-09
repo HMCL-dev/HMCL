@@ -49,6 +49,7 @@ public final class Metadata {
     public static final String ABOUT_URL = PUBLISH_URL + "/about";
     public static final String DOWNLOAD_URL = PUBLISH_URL + "/download";
     public static final String HMCL_UPDATE_URL = System.getProperty("hmcl.update_source.override", PUBLISH_URL + "/api/update_link");
+    public static final String MANUAL_UPDATE_URL = "https://github.com/HMCL-dev/HMCL/releases";
 
     public static final String DOCS_URL = "https://docs.hmcl.net";
     public static final String CONTACT_URL = DOCS_URL + "/help.html";
