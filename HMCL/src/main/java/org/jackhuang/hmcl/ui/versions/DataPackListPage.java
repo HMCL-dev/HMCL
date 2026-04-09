@@ -82,7 +82,7 @@ public final class DataPackListPage extends ListPageBase<DataPackListPageSkin.Da
         setLoading(true);
         setFailedReason(null);
         world = worldManagePage.getWorld();
-        if (!world.supportsDataPacks()) {
+        if (!worldManagePage.currentWorldSupportDataPack.get()) {
             setFailedReason(i18n("datapack.not_support.info"));
             setLoading(false);
             return;

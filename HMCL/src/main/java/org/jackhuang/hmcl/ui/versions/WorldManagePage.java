@@ -57,7 +57,7 @@ public final class WorldManagePage extends DecoratorAnimatedPage implements Deco
     private String instanceId;
 
     private final BooleanProperty currentWorldSupportQuickPlay = new SimpleBooleanProperty(false);
-    private final BooleanProperty currentWorldSupportDataPack = new SimpleBooleanProperty(false);
+    public final BooleanProperty currentWorldSupportDataPack = new SimpleBooleanProperty(false);
     private final BooleanProperty currentWorldSupportChunkBase = new SimpleBooleanProperty(false);
     private final BooleanProperty currentWorldSupportEndCity = new SimpleBooleanProperty(false);
 
@@ -99,7 +99,7 @@ public final class WorldManagePage extends DecoratorAnimatedPage implements Deco
 
         Optional<String> gameVersion = profile.getRepository().getGameVersion(instanceId);
         currentWorldSupportQuickPlay.set(World.supportsQuickPlay(GameVersionNumber.asGameVersion(gameVersion)));
-        currentWorldSupportDataPack.set(world.supportsDataPacks());
+        currentWorldSupportDataPack.set(World.supportsDataPacks(GameVersionNumber.asGameVersion(gameVersion)));
         currentWorldSupportChunkBase.set(ChunkBaseApp.isSupported(world));
         currentWorldSupportEndCity.set(ChunkBaseApp.supportEndCity(world));
 
