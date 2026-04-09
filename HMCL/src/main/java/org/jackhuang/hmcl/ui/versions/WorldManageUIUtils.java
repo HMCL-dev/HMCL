@@ -96,7 +96,7 @@ public final class WorldManageUIUtils {
             String finalNewWorldName = StringUtils.isBlank(newWorldName) ? i18n("world.name.default") : newWorldName;
             boolean renameFolder = ((PromptDialogPane.Builder.BooleanQuestion) res.get(1)).getValue();
 
-            if (finalNewWorldName.equals(world.getWorldName())) {
+            if (finalNewWorldName.equals(world.getWorldName()) && !renameFolder) {
                 handler.resolve();
                 return;
             }
