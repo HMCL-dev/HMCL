@@ -251,6 +251,7 @@ public final class WorldManagePage extends DecoratorAnimatedPage implements Deco
                 toolbar.addNavigationDrawerItem(i18n("version.launch"), SVG.ROCKET_LAUNCH, () -> getSkinnable().launch(), advancedListItem -> {
                     advancedListItem.disableProperty().bind(getSkinnable().readOnlyProperty());
                     advancedListItem.visibleProperty().bind(getSkinnable().currentWorldSupportQuickPlay);
+                    advancedListItem.managedProperty().bind(getSkinnable().currentWorldSupportQuickPlay);
                 });
 
                 {

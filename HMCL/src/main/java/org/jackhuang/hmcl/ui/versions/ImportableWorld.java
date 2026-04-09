@@ -82,7 +82,7 @@ public final class ImportableWorld {
 
             checkAndLoadLevelData(World.findLevelDatPath(this.sourcePath));
         } else {
-            throw new IOException("Path " + sourcePath + " cannot be recognized as a archive Minecraft world");
+            throw new IOException("Path " + sourcePath + " cannot be recognized as an archive Minecraft world");
         }
     }
 
