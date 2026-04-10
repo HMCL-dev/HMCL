@@ -401,10 +401,10 @@ public class DefaultLauncher extends Launcher {
             }
         }
 
-        if (options.getRenderer().getApi() != GraphicsAPI.DEFAULT
+        if (options.getGraphicsBackend() != GraphicsAPI.DEFAULT
                 && gameVersion.isPresent() && GameVersionNumber.compare(gameVersion.get(), "26.2-snapshot-2") >= 0) {
             res.add("--graphicsBackend");
-            res.add(options.getRenderer().getApi().getMinecraftArg());
+            res.add(options.getGraphicsBackend().getMinecraftArg());
         }
 
         res.addAllWithoutParsing(Arguments.parseStringArguments(options.getGameArguments(), configuration));

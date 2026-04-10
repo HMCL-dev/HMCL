@@ -834,6 +834,7 @@ public final class VersionSetting implements Cloneable, Observable {
             }
             obj.addProperty("java", java);
 
+            obj.addProperty("graphicsBackend", src.getGraphicsBackend().name());
             obj.addProperty("renderer", src.getRenderer().name());
             if (src.getRenderer() == Renderer.LLVMPIPE)
                 obj.addProperty("useSoftwareRenderer", true);
