@@ -174,7 +174,7 @@ public final class LauncherHelper {
                             }),
                             Task.composeAsync(() -> {
                                 Renderer renderer = setting.getRenderer();
-                                if (renderer == null || renderer.getMesaLoaderName() == null
+                                if (renderer == null || renderer.getMesaDriverName() == null
                                         || OperatingSystem.CURRENT_OS != OperatingSystem.WINDOWS) {
                                     return null;
                                 }
@@ -188,7 +188,7 @@ public final class LauncherHelper {
                                     return null;
                                 }
 
-                                String agent = FileUtils.getAbsolutePath(file) + "=" + renderer.getMesaLoaderName();
+                                String agent = FileUtils.getAbsolutePath(file) + "=" + renderer.getMesaDriverName();
 
                                 if (GameLibrariesTask.shouldDownloadLibrary(repository, version.get(), lib, integrityCheck)) {
                                     return new LibraryDownloadTask(dependencyManager, file, lib)

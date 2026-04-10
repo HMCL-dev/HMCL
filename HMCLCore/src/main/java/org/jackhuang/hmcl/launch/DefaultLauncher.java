@@ -267,7 +267,7 @@ public class DefaultLauncher extends Launcher {
 
         if (OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS
                 && options.getRenderer() != null
-                && options.getRenderer().getMesaLoaderName() != null) {
+                && options.getRenderer().getMesaDriverName() != null) {
             res.addDefault("-Dorg.glavo.mesa.loader.nativeDir=", FileUtils.getAbsolutePath(nativeFolder.resolve("mesa-loader")));
         }
 
@@ -637,9 +637,9 @@ public class DefaultLauncher extends Launcher {
         Renderer renderer = options.getRenderer();
         if (renderer != Renderer.DEFAULT) {
             if (OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS) {
-                if (renderer.getMesaLoaderName() != null) {
-                    if (renderer != Renderer.LLVMPIPE)
-                        env.put("GALLIUM_DRIVER", renderer.name().toLowerCase(Locale.ROOT));
+                if (renderer.getMesaDriverName() != null) {
+                    if (renderer.getApi() == Renderer.API.OPENGL && renderer != Renderer.LLVMPIPE)
+                        env.put("GALLIUM_DRIVER", renderer.getMesaDriverName());
 
                     if (renderer.getApi() == Renderer.API.VULKAN) {
                         String icdFile = FileUtils.getAbsolutePath(nativeFolder.resolve("mesa-loader/" + renderer.getIcdFileName()));

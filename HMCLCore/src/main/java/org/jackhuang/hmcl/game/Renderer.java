@@ -74,7 +74,7 @@ public enum Renderer {
         return api;
     }
 
-    public @Nullable String getMesaLoaderName() {
+    public @Nullable String getMesaDriverName() {
         return loaderName;
     }
 
