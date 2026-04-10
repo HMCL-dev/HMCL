@@ -66,8 +66,6 @@ public enum Renderer {
     }
 
     /// Get the Graphics API used by this renderer.
-    ///
-    /// @return the API used by this renderer, or `null` if the renderer does not target a specific graphics API.
     public GraphicsAPI getApi() {
         return api;
     }
