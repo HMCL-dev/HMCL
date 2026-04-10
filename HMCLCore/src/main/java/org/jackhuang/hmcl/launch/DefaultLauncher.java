@@ -266,7 +266,7 @@ public class DefaultLauncher extends Launcher {
         }
 
         if (OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS && options.getRenderer() != null) {
-            res.addDefault("org.glavo.mesa.loader.nativeDir", FileUtils.getAbsolutePath(nativeFolder.resolve("mesa-loader")));
+            res.addDefault("-Dorg.glavo.mesa.loader.nativeDir=", FileUtils.getAbsolutePath(nativeFolder.resolve("mesa-loader")));
         }
 
         Set<String> classpath = repository.getClasspath(version);
