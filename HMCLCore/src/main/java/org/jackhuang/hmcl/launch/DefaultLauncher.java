@@ -265,6 +265,10 @@ public class DefaultLauncher extends Launcher {
             res.addDefault("-Dfml.ignorePatchDiscrepancies=", "true");
         }
 
+        if (OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS && options.getRenderer() != null) {
+            res.addDefault("org.glavo.mesa.loader.nativeDir", FileUtils.getAbsolutePath(nativeFolder.resolve("mesa-loader")));
+        }
+
         Set<String> classpath = repository.getClasspath(version);
 
         if (analyzer.has(LibraryAnalyzer.LibraryType.CLEANROOM)) {
