@@ -402,7 +402,7 @@ public class DefaultLauncher extends Launcher {
         }
 
         if (options.getRenderer().getApi() != null
-                && gameVersion.isPresent() && gameVersion.get().compareTo("26.2-snapshot-2") >= 0) {
+                && gameVersion.isPresent() && GameVersionNumber.compare(gameVersion.get(), "26.2-snapshot-2") >= 0) {
             res.add("--graphicsBackend");
             res.add(options.getRenderer().getApi().getMinecraftArg());
         }
