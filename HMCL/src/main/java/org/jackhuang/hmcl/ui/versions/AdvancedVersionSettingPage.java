@@ -27,7 +27,6 @@ import javafx.scene.control.ScrollPane;
 import javafx.scene.layout.*;
 import org.jackhuang.hmcl.game.NativesDirectoryType;
 import org.jackhuang.hmcl.game.Renderer;
-import org.jackhuang.hmcl.game.Version;
 import org.jackhuang.hmcl.setting.Profile;
 import org.jackhuang.hmcl.setting.VersionSetting;
 import org.jackhuang.hmcl.ui.FXUtils;
