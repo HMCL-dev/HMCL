@@ -47,12 +47,12 @@ public enum Renderer {
 
     /// All renderers that are based on OpenGL.
     public static final List<Renderer> OPENGL_BASED = Stream.of(values())
-            .filter(it -> it.getApi() == null || it.getApi() == API.OPENGL)
+            .filter(it -> it.getApi() == null || (it.getApi() == API.OPENGL && it != OPENGL))
             .toList();
 
     /// All renderers that are based on Vulkan.
     public static final List<Renderer> VULKAN_BASED = Stream.of(values())
-            .filter(it -> it.getApi() == null || it.getApi() == API.VULKAN)
+            .filter(it -> it.getApi() == null || (it.getApi() == API.VULKAN && it != VULKAN))
             .toList();
 
     private final @Nullable Renderer.API api;
