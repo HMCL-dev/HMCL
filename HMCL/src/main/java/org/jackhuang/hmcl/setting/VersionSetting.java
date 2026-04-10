@@ -919,6 +919,15 @@ public final class VersionSetting implements Cloneable, Observable {
                         return useSoftwareRenderer ? Renderer.LLVMPIPE : Renderer.DEFAULT;
                     }));
 
+            vs.setGraphicsBackend(Optional.ofNullable(obj.get("graphicsBackend")).map(JsonElement::getAsString)
+                    .flatMap(name -> {
+                        try {
+                            return Optional.of(GraphicsAPI.valueOf(name.toUpperCase(Locale.ROOT)));
+                        } catch (IllegalArgumentException ignored) {
+                            return Optional.empty();
+                        }
+                    }).orElseGet(() -> vs.getRenderer().getApi()));
+
             return vs;
         }
 
