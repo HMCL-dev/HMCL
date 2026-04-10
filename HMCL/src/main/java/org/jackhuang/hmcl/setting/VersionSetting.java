@@ -603,6 +603,20 @@ public final class VersionSetting implements Cloneable, Observable {
         processPriorityProperty.set(processPriority);
     }
 
+    private final ObjectProperty<GraphicsAPI> graphicsBackend = new SimpleObjectProperty<>(this, "graphicsBackend", GraphicsAPI.DEFAULT);
+
+    public ObjectProperty<GraphicsAPI> graphicsBackendProperty() {
+        return graphicsBackend;
+    }
+
+    public GraphicsAPI getGraphicsBackend() {
+        return graphicsBackendProperty().get();
+    }
+
+    public void setGraphicsBackend(GraphicsAPI api) {
+        graphicsBackendProperty().set(api);
+    }
+
     private final ObjectProperty<Renderer> rendererProperty = new SimpleObjectProperty<>(this, "renderer", Renderer.DEFAULT);
 
     public Renderer getRenderer() {

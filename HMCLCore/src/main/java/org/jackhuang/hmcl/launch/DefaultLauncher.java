@@ -401,7 +401,7 @@ public class DefaultLauncher extends Launcher {
             }
         }
 
-        if (options.getRenderer().getApi() != null
+        if (options.getRenderer().getApi() != GraphicsAPI.DEFAULT
                 && gameVersion.isPresent() && GameVersionNumber.compare(gameVersion.get(), "26.2-snapshot-2") >= 0) {
             res.add("--graphicsBackend");
             res.add(options.getRenderer().getApi().getMinecraftArg());
@@ -638,10 +638,10 @@ public class DefaultLauncher extends Launcher {
         if (renderer != Renderer.DEFAULT) {
             if (OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS) {
                 if (renderer.getMesaDriverName() != null) {
-                    if (renderer.getApi() == Renderer.API.OPENGL && renderer != Renderer.LLVMPIPE)
+                    if (renderer.getApi() == GraphicsAPI.OPENGL && renderer != Renderer.LLVMPIPE)
                         env.put("GALLIUM_DRIVER", renderer.getMesaDriverName());
 
-                    if (renderer.getApi() == Renderer.API.VULKAN) {
+                    if (renderer.getApi() == GraphicsAPI.VULKAN) {
                         String icdFile = FileUtils.getAbsolutePath(nativeFolder.resolve("mesa-loader/" + renderer.getIcdFileName()));
 
                         env.put("VK_ICD_FILENAMES", icdFile);
