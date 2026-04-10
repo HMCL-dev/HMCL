@@ -105,7 +105,7 @@ public class DefaultLauncher extends Launcher {
 
         // Executable
         if (StringUtils.isNotBlank(options.getWrapper()))
-            res.addAllWithoutParsing(StringUtils.tokenize(options.getWrapper(), getEnvVars()));
+            res.addAllWithoutParsing(StringUtils.tokenize(options.getWrapper(), getEnvVars(nativeFolder)));
 
         res.add(options.getJava().getBinary().toString());
 
@@ -565,8 +565,8 @@ public class DefaultLauncher extends Launcher {
         Path runDirectory = repository.getRunDirectory(version.getId());
 
         if (StringUtils.isNotBlank(options.getPreLaunchCommand())) {
-            ProcessBuilder builder = new ProcessBuilder(StringUtils.tokenize(options.getPreLaunchCommand(), getEnvVars())).directory(runDirectory.toFile());
-            builder.environment().putAll(getEnvVars());
+            ProcessBuilder builder = new ProcessBuilder(StringUtils.tokenize(options.getPreLaunchCommand(), getEnvVars(nativeFolder))).directory(runDirectory.toFile());
+            builder.environment().putAll(getEnvVars(nativeFolder));
             SystemUtils.callExternalProcess(builder);
         }
 
@@ -579,7 +579,7 @@ public class DefaultLauncher extends Launcher {
             Path appdata = options.getGameDir().toAbsolutePath().getParent();
             if (appdata != null) builder.environment().put("APPDATA", appdata.toString());
 
-            builder.environment().putAll(getEnvVars());
+            builder.environment().putAll(getEnvVars(nativeFolder));
             process = builder.start();
         } catch (IOException e) {
             throw new ProcessCreationException(e);
@@ -587,7 +587,7 @@ public class DefaultLauncher extends Launcher {
 
         ManagedProcess p = new ManagedProcess(process, rawCommandLine);
         if (listener != null)
-            startMonitors(p, listener, command.encoding, daemon);
+            startMonitors(p, nativeFolder, listener, command.encoding, daemon);
         return p;
     }
 
@@ -613,9 +613,8 @@ public class DefaultLauncher extends Launcher {
         return null;
     }
 
-    private Map<String, String> getEnvVars() {
+    private Map<String, String> getEnvVars(Path nativeFolder) {
         String versionName = Optional.ofNullable(options.getVersionName()).orElse(version.getId());
-        JavaRuntime java = options.getJava();
 
         Map<String, String> env = new LinkedHashMap<>();
         env.put("INST_NAME", versionName);
@@ -629,6 +628,13 @@ public class DefaultLauncher extends Launcher {
             if (OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS) {
                 if (renderer != Renderer.LLVMPIPE)
                     env.put("GALLIUM_DRIVER", renderer.name().toLowerCase(Locale.ROOT));
+
+                if (renderer.getApi() == Renderer.API.VULKAN) {
+                    String icdFile = FileUtils.getAbsolutePath(nativeFolder.resolve("mesa-loader/" + renderer.getIcdFileName()));
+
+                    env.put("VK_ICD_FILENAMES", icdFile);
+                    env.put("VK_DRIVER_FILES", icdFile);
+                }
             } else if (OperatingSystem.CURRENT_OS == OperatingSystem.LINUX) {
                 switch (renderer) {
                     case LLVMPIPE: {
@@ -717,7 +723,7 @@ public class DefaultLauncher extends Launcher {
 
         final Command commandLine = generateCommandLine(nativeFolder);
         final String command = usePowerShell ? null : commandLine.commandLine.toString();
-        Map<String, String> envVars = getEnvVars();
+        Map<String, String> envVars = getEnvVars(nativeFolder);
 
         if (isWindows && !usePowerShell) {
             // https://stackoverflow.com/a/28452546
@@ -860,7 +866,7 @@ public class DefaultLauncher extends Launcher {
             throw new ExecutionPolicyLimitException();
     }
 
-    private void startMonitors(ManagedProcess managedProcess, ProcessListener processListener, Charset encoding, boolean isDaemon) {
+    private void startMonitors(ManagedProcess managedProcess, Path nativeFolder, ProcessListener processListener, Charset encoding, boolean isDaemon) {
         processListener.setProcess(managedProcess);
         Thread stdout = Lang.thread(new StreamPump(managedProcess.getProcess().getInputStream(), it -> {
             processListener.onLog(it, false);
@@ -877,8 +883,8 @@ public class DefaultLauncher extends Launcher {
 
             if (StringUtils.isNotBlank(options.getPostExitCommand())) {
                 try {
-                    ProcessBuilder builder = new ProcessBuilder(StringUtils.tokenize(options.getPostExitCommand(), getEnvVars())).directory(options.getGameDir().toFile());
-                    builder.environment().putAll(getEnvVars());
+                    ProcessBuilder builder = new ProcessBuilder(StringUtils.tokenize(options.getPostExitCommand(), getEnvVars(nativeFolder))).directory(options.getGameDir().toFile());
+                    builder.environment().putAll(getEnvVars(nativeFolder));
                     SystemUtils.callExternalProcess(builder);
                 } catch (Throwable e) {
                     LOG.warning("An Exception happened while running exit command.", e);

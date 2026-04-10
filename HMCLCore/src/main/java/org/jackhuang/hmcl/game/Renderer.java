@@ -75,6 +75,10 @@ public enum Renderer {
         return icdName;
     }
 
+    public @Nullable String getIcdFileName() {
+        return icdName != null ? icdName + "_icd.json" : null;
+    }
+
     /// The Graphics API.
     public enum API {
         OPENGL,
