@@ -28,12 +28,13 @@ import java.util.stream.Stream;
 public enum Renderer {
     DEFAULT(null, null, null),
 
+    LAVAPIPE(API.VULKAN, "lavapipe", "lvp"),
+    DOZEN(API.VULKAN, "dzn", "dzn"),
+
     ZINK(API.OPENGL, "zink", null),
     LLVMPIPE(API.OPENGL, "llvmpipe", null),
     D3D12(API.OPENGL, "d3d12", null),
-
-    LAVAPIPE(API.VULKAN, "lavapipe", "lvp"),
-    DOZEN(API.VULKAN, "dzn", "dzn");
+    ;
 
     /// All renderers.
     public static final List<Renderer> ALL = List.of(values());
