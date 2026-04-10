@@ -194,11 +194,20 @@ public final class AdvancedVersionSettingPage extends StackPane implements Decor
 
             graphicsBackendPane = new LineSelectButton<>();
             graphicsBackendPane.setTitle(i18n("settings.advanced.graphics_backend"));
-            graphicsBackendPane.setConverter(e -> i18n("settings.advanced.graphics_backend." + e.name().toLowerCase(Locale.ROOT)));
-            graphicsBackendPane.setDescriptionConverter(e -> {
-                String bundleKey = "settings.advanced.graphics_backend." + e.name().toLowerCase(Locale.ROOT) + ".desc";
-                return I18n.hasKey(bundleKey) ? i18n(bundleKey) : null;
-            });
+            graphicsBackendPane.setConverter(backend -> i18n("settings.advanced.graphics_backend." + backend.name().toLowerCase(Locale.ROOT)));
+            graphicsBackendPane.setDescriptionConverter(backend -> switch (backend) {
+                    case DEFAULT -> i18n("settings.advanced.graphics_backend.default.desc");
+                    case OPENGL -> i18n("settings.advanced.graphics_backend.opengl.desc");
+                    case VULKAN -> {
+                        if (gameVersion == null)
+                            yield i18n("settings.advanced.graphics_backend.vulkan.desc.global");
+                        else if (gameVersion.compareTo("26.2-snapshot-2") < 0)
+                            yield i18n("settings.advanced.graphics_backend.vulkan.desc.unsupported");
+                        else
+                            yield i18n("settings.advanced.graphics_backend.vulkan.desc");
+                    }
+                    default -> null;
+                });
             graphicsBackendPane.setValue(GraphicsAPI.DEFAULT);
             graphicsBackendPane.setItems(GraphicsAPI.values());
 
