@@ -36,7 +36,6 @@ import org.jackhuang.hmcl.util.i18n.I18n;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
 import org.jackhuang.hmcl.util.platform.Platform;
-import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
 import org.jetbrains.annotations.Nullable;
 
 import java.nio.file.FileSystems;
@@ -79,10 +78,6 @@ public final class AdvancedVersionSettingPage extends StackPane implements Decor
         this.stateProperty = new SimpleObjectProperty<>(State.fromTitle(
                 versionId == null ? i18n("settings.advanced") : i18n("settings.advanced.title", versionId)
         ));
-
-        @Nullable GameVersionNumber gameVersion = versionId != null
-                ? GameVersionNumber.asGameVersion(profile.getRepository().getGameVersion(versionId))
-                : null;
 
         this.getStyleClass().add("gray-background");
 
@@ -197,11 +192,7 @@ public final class AdvancedVersionSettingPage extends StackPane implements Decor
                 String bundleKey = "settings.advanced.renderer." + e.name().toLowerCase(Locale.ROOT) + ".desc";
                 return I18n.hasKey(bundleKey) ? i18n(bundleKey) : null;
             });
-            if (gameVersion == null || gameVersion.compareTo("26.2-snapshot-1") >= 0) {
-                rendererPane.setItems(Renderer.ALL);
-            } else {
-                rendererPane.setItems(Renderer.OPENGL_BASED);
-            }
+            rendererPane.setItems(Renderer.ALL);
 
             noJVMArgsPane = new LineToggleButton();
             noJVMArgsPane.setTitle(i18n("settings.advanced.no_jvm_args"));
