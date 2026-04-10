@@ -29,7 +29,10 @@ public enum Renderer {
     DEFAULT(null, null, null),
 
     LAVAPIPE(API.VULKAN, "lavapipe", "lvp"),
-    DOZEN(API.VULKAN, "dzn", "dzn"),
+
+    // Currently, Dozen does not support the VK_KHR_push_descriptor feature, so it cannot launch Minecraft 26.2
+    // Using Dozen can run Minecraft 1.21.11 + VulkanMod, but it will cause the game to crash after playing for a while
+    // DOZEN(API.VULKAN, "dzn", "dzn"),
 
     ZINK(API.OPENGL, "zink", null),
     LLVMPIPE(API.OPENGL, "llvmpipe", null),
