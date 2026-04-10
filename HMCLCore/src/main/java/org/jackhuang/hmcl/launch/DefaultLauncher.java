@@ -669,7 +669,7 @@ public class DefaultLauncher extends Launcher {
                     }
                     case LAVAPIPE: {
                         Path lvp = findVulkanDescriptorFile(
-                                List.of(Path.of("/usr/share/vulkan/icd.d", "/etc/vulkan/icd.d")),
+                                List.of(Path.of("/usr/share/vulkan/icd.d"), Path.of("/etc/vulkan/icd.d")),
                                 "lvp_icd"
                         );
                         if (lvp != null) {
