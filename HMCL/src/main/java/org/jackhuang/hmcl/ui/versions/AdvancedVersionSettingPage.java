@@ -25,6 +25,7 @@ import javafx.beans.property.SimpleObjectProperty;
 import javafx.scene.control.Label;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.layout.*;
+import org.jackhuang.hmcl.game.GraphicsAPI;
 import org.jackhuang.hmcl.game.NativesDirectoryType;
 import org.jackhuang.hmcl.game.Renderer;
 import org.jackhuang.hmcl.setting.Profile;
@@ -36,6 +37,7 @@ import org.jackhuang.hmcl.util.i18n.I18n;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
 import org.jackhuang.hmcl.util.platform.Platform;
+import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
 import org.jetbrains.annotations.Nullable;
 
 import java.nio.file.FileSystems;
@@ -69,6 +71,7 @@ public final class AdvancedVersionSettingPage extends StackPane implements Decor
     private final ComponentSublist nativesDirSublist;
     private final MultiFileItem<NativesDirectoryType> nativesDirItem;
     private final MultiFileItem.FileOption<NativesDirectoryType> nativesDirCustomOption;
+    private final LineSelectButton<GraphicsAPI> graphicsBackendPane;
     private final LineSelectButton<Renderer> rendererPane;
 
     public AdvancedVersionSettingPage(Profile profile, @Nullable String versionId, VersionSetting versionSetting) {
@@ -78,6 +81,10 @@ public final class AdvancedVersionSettingPage extends StackPane implements Decor
         this.stateProperty = new SimpleObjectProperty<>(State.fromTitle(
                 versionId == null ? i18n("settings.advanced") : i18n("settings.advanced.title", versionId)
         ));
+
+        @Nullable GameVersionNumber gameVersion = versionId != null
+                ? GameVersionNumber.asGameVersion(profile.getRepository().getGameVersion(versionId))
+                : null;
 
         this.getStyleClass().add("gray-background");
 
@@ -185,6 +192,25 @@ public final class AdvancedVersionSettingPage extends StackPane implements Decor
             nativesDirHint.setText(i18n("settings.advanced.natives_directory.hint"));
             nativesDirItem.getChildren().add(nativesDirHint);
 
+            graphicsBackendPane = new LineSelectButton<>();
+            graphicsBackendPane.setTitle(i18n("settings.advanced.graphics_backend"));
+            graphicsBackendPane.setConverter(backend -> i18n("settings.advanced.graphics_backend." + backend.name().toLowerCase(Locale.ROOT)));
+            graphicsBackendPane.setDescriptionConverter(backend -> switch (backend) {
+                    case DEFAULT -> i18n("settings.advanced.graphics_backend.default.desc");
+                    case OPENGL -> i18n("settings.advanced.graphics_backend.opengl.desc");
+                    case VULKAN -> {
+                        if (gameVersion == null)
+                            yield i18n("settings.advanced.graphics_backend.vulkan.desc.global");
+                        else if (gameVersion.compareTo("26.2-snapshot-2") < 0)
+                            yield i18n("settings.advanced.graphics_backend.vulkan.desc.unsupported");
+                        else
+                            yield i18n("settings.advanced.graphics_backend.vulkan.desc");
+                    }
+                    default -> null;
+                });
+            graphicsBackendPane.setValue(GraphicsAPI.DEFAULT);
+            graphicsBackendPane.setItems(GraphicsAPI.values());
+
             rendererPane = new LineSelectButton<>();
             rendererPane.setTitle(i18n("settings.advanced.renderer"));
             rendererPane.setConverter(e -> i18n("settings.advanced.renderer." + e.name().toLowerCase(Locale.ROOT)));
@@ -192,7 +218,25 @@ public final class AdvancedVersionSettingPage extends StackPane implements Decor
                 String bundleKey = "settings.advanced.renderer." + e.name().toLowerCase(Locale.ROOT) + ".desc";
                 return I18n.hasKey(bundleKey) ? i18n(bundleKey) : null;
             });
-            rendererPane.setItems(Renderer.values());
+            rendererPane.setValue(Renderer.DEFAULT);
+            rendererPane.setItems(Renderer.DEFAULT);
+
+            FXUtils.onChangeAndOperate(graphicsBackendPane.valueProperty(), backend -> {
+                if (backend == null) { // unbind
+                    return;
+                }
+
+                rendererPane.setItems(Renderer.SUPPORTED.get(backend));
+                if (backend == GraphicsAPI.DEFAULT) {
+                    rendererPane.setDisable(true);
+                    rendererPane.setValue(Renderer.DEFAULT);
+                } else {
+                    rendererPane.setDisable(false);
+                    if (rendererPane.getValue() == null || !rendererPane.getValue().isSupported(backend)) {
+                        rendererPane.setValue(Renderer.DEFAULT);
+                    }
+                }
+            });
 
             noJVMArgsPane = new LineToggleButton();
             noJVMArgsPane.setTitle(i18n("settings.advanced.no_jvm_args"));
@@ -219,7 +263,7 @@ public final class AdvancedVersionSettingPage extends StackPane implements Decor
             useNativeOpenALPane.setSubtitle(i18n("settings.advanced.linux_freebsd_only"));
 
             workaroundPane.getContent().setAll(
-                    nativesDirSublist, rendererPane, noJVMArgsPane, noOptimizingJVMArgsPane, noGameCheckPane,
+                    nativesDirSublist, graphicsBackendPane, rendererPane, noJVMArgsPane, noOptimizingJVMArgsPane, noGameCheckPane,
                     noJVMCheckPane, noNativesPatchPane
             );
 
@@ -252,6 +296,7 @@ public final class AdvancedVersionSettingPage extends StackPane implements Decor
         FXUtils.bindString(txtPreLaunchCommand, versionSetting.preLaunchCommandProperty());
         FXUtils.bindString(txtPostExitCommand, versionSetting.postExitCommandProperty());
         rendererPane.valueProperty().bindBidirectional(versionSetting.rendererProperty());
+        graphicsBackendPane.valueProperty().bindBidirectional(versionSetting.graphicsBackendProperty());
         noGameCheckPane.selectedProperty().bindBidirectional(versionSetting.notCheckGameProperty());
         noJVMCheckPane.selectedProperty().bindBidirectional(versionSetting.notCheckJVMProperty());
         noJVMArgsPane.selectedProperty().bindBidirectional(versionSetting.noJVMArgsProperty());
@@ -294,6 +339,7 @@ public final class AdvancedVersionSettingPage extends StackPane implements Decor
         FXUtils.unbind(txtPreLaunchCommand, versionSetting.preLaunchCommandProperty());
         FXUtils.unbind(txtPostExitCommand, versionSetting.postExitCommandProperty());
         rendererPane.valueProperty().unbindBidirectional(versionSetting.rendererProperty());
+        graphicsBackendPane.valueProperty().unbindBidirectional(versionSetting.graphicsBackendProperty());
         noGameCheckPane.selectedProperty().unbindBidirectional(versionSetting.notCheckGameProperty());
         noJVMCheckPane.selectedProperty().unbindBidirectional(versionSetting.notCheckJVMProperty());
         noJVMArgsPane.selectedProperty().unbindBidirectional(versionSetting.noJVMArgsProperty());
