@@ -210,7 +210,7 @@ public final class AdvancedVersionSettingPage extends StackPane implements Decor
                 return I18n.hasKey(bundleKey) ? i18n(bundleKey) : null;
             });
             rendererPane.setValue(Renderer.DEFAULT);
-            rendererPane.setItems(Renderer.values());
+            rendererPane.setItems(Renderer.DEFAULT);
 
             FXUtils.onChangeAndOperate(graphicsBackendPane.valueProperty(), backend -> {
                 if (backend == null) { // unbind
