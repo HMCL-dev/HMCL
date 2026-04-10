@@ -37,8 +37,8 @@ public enum Renderer {
     // DOZEN(API.VULKAN, "dzn", "dzn"),
 
     OPENGL(API.OPENGL, null, null),
-    ZINK(API.OPENGL, "zink", null),
     LLVMPIPE(API.OPENGL, "llvmpipe", null),
+    ZINK(API.OPENGL, "zink", null),
     D3D12(API.OPENGL, "d3d12", null),
     ;
 
