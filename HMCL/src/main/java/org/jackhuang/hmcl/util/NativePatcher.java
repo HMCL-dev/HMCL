@@ -190,7 +190,7 @@ public final class NativePatcher {
     }
 
     /// @see <a href="https://github.com/HMCL-dev/mesa-loader-windows">Java Mesa Loader for Windows</a>
-    public static @Nullable Library getWindowsMesaOpenGLLoader(@NotNull JavaRuntime java, @NotNull Renderer renderer, @NotNull OSVersion windowsVersion) {
+    public static @Nullable Library getWindowsMesaLoader(@NotNull JavaRuntime java, @NotNull Renderer renderer, @NotNull OSVersion windowsVersion) {
         if (renderer == Renderer.DEFAULT)
             return null;
 
@@ -204,13 +204,6 @@ public final class NativePatcher {
         } else {
             return null;
         }
-    }
-
-    public static @Nullable Library getWindowsMesaVulkanDriver(@NotNull Renderer renderer, @NotNull OSVersion windowsVersion) {
-        if (renderer == Renderer.DEFAULT)
-            return null;
-
-        return null;
     }
 
     public static SupportStatus checkSupportedStatus(GameVersionNumber gameVersion, Platform platform,

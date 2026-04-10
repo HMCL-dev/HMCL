@@ -26,14 +26,14 @@ import java.util.stream.Stream;
 /// @author Glavo
 @NotNullByDefault
 public enum Renderer {
-    DEFAULT(null),
+    DEFAULT(null, null, null),
 
-    ZINK(API.OPENGL),
-    LLVMPIPE(API.OPENGL),
-    D3D12(API.OPENGL),
+    ZINK(API.OPENGL, "zink", null),
+    LLVMPIPE(API.OPENGL, "llvmpipe", null),
+    D3D12(API.OPENGL, "d3d12", null),
 
-    LAVAPIPE(API.VULKAN),
-    DOZEN(API.VULKAN);
+    LAVAPIPE(API.VULKAN, "lavapipe", "lvp"),
+    DOZEN(API.VULKAN, "dzn", "dzn");
 
     /// All renderers.
     public static final List<Renderer> ALL = List.of(values());
@@ -50,8 +50,13 @@ public enum Renderer {
 
     private final @Nullable Renderer.API api;
 
-    Renderer(@Nullable Renderer.API api) {
+    private final @Nullable String loaderName;
+    private final @Nullable String icdName;
+
+    Renderer(@Nullable Renderer.API api, @Nullable String loaderName, @Nullable String icdName) {
         this.api = api;
+        this.loaderName = loaderName;
+        this.icdName = icdName;
     }
 
     /// Get the Graphics API used by this renderer.
@@ -59,6 +64,14 @@ public enum Renderer {
     /// @return the API used by this renderer, or `null` if the renderer does not target a specific graphics API.
     public @Nullable API getApi() {
         return api;
+    }
+
+    public @Nullable String getLoaderName() {
+        return loaderName;
+    }
+
+    public @Nullable String getIcdName() {
+        return icdName;
     }
 
     /// The Graphics API.

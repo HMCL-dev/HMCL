@@ -178,30 +178,24 @@ public final class LauncherHelper {
                                     return null;
                                 }
 
-                                if (renderer.getApi() == Renderer.API.OPENGL) {
-                                    Library lib = NativePatcher.getWindowsMesaOpenGLLoader(java, renderer, OperatingSystem.SYSTEM_VERSION);
-                                    if (lib == null)
-                                        return null;
-                                    Path file = dependencyManager.getGameRepository().getLibraryFile(version.get(), lib);
-                                    if (file.toAbsolutePath().toString().indexOf('=') >= 0) {
-                                        LOG.warning("Invalid character '=' in the libraries directory path, unable to attach software renderer loader");
-                                        return null;
-                                    }
-
-                                    String agent = FileUtils.getAbsolutePath(file) + "=" + renderer.name().toLowerCase(Locale.ROOT);
-
-                                    if (GameLibrariesTask.shouldDownloadLibrary(repository, version.get(), lib, integrityCheck)) {
-                                        return new LibraryDownloadTask(dependencyManager, file, lib)
-                                                .thenRunAsync(() -> javaAgents.add(agent));
-                                    } else {
-                                        javaAgents.add(agent);
-                                        return null;
-                                    }
-                                } else if (renderer.getApi() == Renderer.API.VULKAN) {
-                                    // TODO
+                                Library lib = NativePatcher.getWindowsMesaLoader(java, renderer, OperatingSystem.SYSTEM_VERSION);
+                                if (lib == null)
+                                    return null;
+                                Path file = dependencyManager.getGameRepository().getLibraryFile(version.get(), lib);
+                                if (file.toAbsolutePath().toString().indexOf('=') >= 0) {
+                                    LOG.warning("Invalid character '=' in the libraries directory path, unable to attach software renderer loader");
+                                    return null;
                                 }
 
-                                return null;
+                                String agent = FileUtils.getAbsolutePath(file) + "=" + renderer.getLoaderName();
+
+                                if (GameLibrariesTask.shouldDownloadLibrary(repository, version.get(), lib, integrityCheck)) {
+                                    return new LibraryDownloadTask(dependencyManager, file, lib)
+                                            .thenRunAsync(() -> javaAgents.add(agent));
+                                } else {
+                                    javaAgents.add(agent);
+                                    return null;
+                                }
                             })
                     );
                 }).withStage("launch.state.dependencies")
