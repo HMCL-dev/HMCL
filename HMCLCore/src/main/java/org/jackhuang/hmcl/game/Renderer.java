@@ -20,7 +20,9 @@ package org.jackhuang.hmcl.game;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.EnumMap;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Stream;
 
 /// @author Glavo
@@ -39,18 +41,18 @@ public enum Renderer {
     D3D12(GraphicsAPI.OPENGL, "d3d12", null),
     ;
 
-    /// All renderers.
-    public static final List<Renderer> ALL = List.of(values());
+    /// Map the graphics API to supported renderers.
+    public static final Map<GraphicsAPI, List<Renderer>> SUPPORTED;
 
-    /// All renderers that are based on OpenGL.
-    public static final List<Renderer> OPENGL_BASED = Stream.of(values())
-            .filter(it -> it.getApi() == GraphicsAPI.OPENGL)
-            .toList();
+    static {
+        var map = new EnumMap<GraphicsAPI, List<Renderer>>(GraphicsAPI.class);
 
-    /// All renderers that are based on Vulkan.
-    public static final List<Renderer> VULKAN_BASED = Stream.of(values())
-            .filter(it -> it.getApi() == GraphicsAPI.VULKAN)
-            .toList();
+        for (var api : GraphicsAPI.values()) {
+            map.put(api, Stream.of(values()).filter(it -> it.isSupported(api)).toList());
+        }
+
+        SUPPORTED = map;
+    }
 
     private final GraphicsAPI api;
 
@@ -68,6 +70,10 @@ public enum Renderer {
     /// @return the API used by this renderer, or `null` if the renderer does not target a specific graphics API.
     public GraphicsAPI getApi() {
         return api;
+    }
+
+    public boolean isSupported(GraphicsAPI api) {
+        return this.api == api || this.api == GraphicsAPI.DEFAULT;
     }
 
     public @Nullable String getMesaDriverName() {
