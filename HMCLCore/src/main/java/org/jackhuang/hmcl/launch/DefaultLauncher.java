@@ -265,7 +265,9 @@ public class DefaultLauncher extends Launcher {
             res.addDefault("-Dfml.ignorePatchDiscrepancies=", "true");
         }
 
-        if (OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS && options.getRenderer() != null) {
+        if (OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS
+                && options.getRenderer() != null
+                && options.getRenderer().getMesaLoaderName() != null) {
             res.addDefault("-Dorg.glavo.mesa.loader.nativeDir=", FileUtils.getAbsolutePath(nativeFolder.resolve("mesa-loader")));
         }
 
@@ -397,6 +399,12 @@ public class DefaultLauncher extends Launcher {
                 res.add("--proxyPass");
                 res.add(Objects.requireNonNullElse(socksProxy.password(), ""));
             }
+        }
+
+        if (options.getRenderer().getApi() != null
+                && gameVersion.isPresent() && gameVersion.get().compareTo("26.2-snapshot-2") >= 0) {
+            res.add("--graphicsBackend");
+            res.add(options.getRenderer().getApi().getMinecraftArg());
         }
 
         res.addAllWithoutParsing(Arguments.parseStringArguments(options.getGameArguments(), configuration));
@@ -629,14 +637,16 @@ public class DefaultLauncher extends Launcher {
         Renderer renderer = options.getRenderer();
         if (renderer != Renderer.DEFAULT) {
             if (OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS) {
-                if (renderer != Renderer.LLVMPIPE)
-                    env.put("GALLIUM_DRIVER", renderer.name().toLowerCase(Locale.ROOT));
+                if (renderer.getMesaLoaderName() != null) {
+                    if (renderer != Renderer.LLVMPIPE)
+                        env.put("GALLIUM_DRIVER", renderer.name().toLowerCase(Locale.ROOT));
 
-                if (renderer.getApi() == Renderer.API.VULKAN) {
-                    String icdFile = FileUtils.getAbsolutePath(nativeFolder.resolve("mesa-loader/" + renderer.getIcdFileName()));
+                    if (renderer.getApi() == Renderer.API.VULKAN) {
+                        String icdFile = FileUtils.getAbsolutePath(nativeFolder.resolve("mesa-loader/" + renderer.getIcdFileName()));
 
-                    env.put("VK_ICD_FILENAMES", icdFile);
-                    env.put("VK_DRIVER_FILES", icdFile);
+                        env.put("VK_ICD_FILENAMES", icdFile);
+                        env.put("VK_DRIVER_FILES", icdFile);
+                    }
                 }
             } else if (OperatingSystem.CURRENT_OS == OperatingSystem.LINUX) {
                 switch (renderer) {

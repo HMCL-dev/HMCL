@@ -21,6 +21,7 @@ import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
+import java.util.Locale;
 import java.util.stream.Stream;
 
 /// @author Glavo
@@ -28,12 +29,14 @@ import java.util.stream.Stream;
 public enum Renderer {
     DEFAULT(null, null, null),
 
+    VULKAN(API.VULKAN, null, null),
     LAVAPIPE(API.VULKAN, "lavapipe", "lvp"),
 
     // Currently, Dozen does not support the VK_KHR_push_descriptor feature, so it cannot launch Minecraft 26.2
     // Using Dozen can run Minecraft 1.21.11 + VulkanMod, but it will cause the game to crash after playing for a while
     // DOZEN(API.VULKAN, "dzn", "dzn"),
 
+    OPENGL(API.OPENGL, null, null),
     ZINK(API.OPENGL, "zink", null),
     LLVMPIPE(API.OPENGL, "llvmpipe", null),
     D3D12(API.OPENGL, "d3d12", null),
@@ -70,7 +73,7 @@ public enum Renderer {
         return api;
     }
 
-    public @Nullable String getLoaderName() {
+    public @Nullable String getMesaLoaderName() {
         return loaderName;
     }
 
@@ -85,6 +88,12 @@ public enum Renderer {
     /// The Graphics API.
     public enum API {
         OPENGL,
-        VULKAN,
+        VULKAN;
+
+        private final String minecraftArg = name().toLowerCase(Locale.ROOT);
+
+        public String getMinecraftArg() {
+            return minecraftArg;
+        }
     }
 }
