@@ -25,8 +25,6 @@ import javafx.beans.property.StringProperty;
 import javafx.beans.value.ObservableBooleanValue;
 import javafx.scene.control.RadioButton;
 import javafx.scene.control.Skin;
-import javafx.scene.image.Image;
-import javafx.stage.FileChooser;
 import org.jackhuang.hmcl.auth.Account;
 import org.jackhuang.hmcl.auth.AuthenticationException;
 import org.jackhuang.hmcl.auth.CredentialExpiredException;
@@ -36,19 +34,10 @@ import org.jackhuang.hmcl.auth.offline.OfflineAccount;
 import org.jackhuang.hmcl.auth.yggdrasil.CompleteGameProfile;
 import org.jackhuang.hmcl.auth.yggdrasil.TextureType;
 import org.jackhuang.hmcl.setting.Accounts;
-import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.DialogController;
-import org.jackhuang.hmcl.ui.construct.MessageDialogPane.MessageType;
-import org.jackhuang.hmcl.util.io.FileUtils;
-import org.jackhuang.hmcl.util.skin.InvalidSkinException;
-import org.jackhuang.hmcl.util.skin.NormalizedSkin;
-import org.jetbrains.annotations.Nullable;
 
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.CancellationException;
@@ -132,49 +121,9 @@ public class AccountListItem extends RadioButton {
         }
     }
 
-    /**
-     * @return the skin upload task, null if no file is selected
-     */
-    @Nullable
-    public Task<?> uploadSkin() {
-        if (account instanceof OfflineAccount) {
-            Controllers.dialog(new OfflineAccountSkinPane((OfflineAccount) account));
-            return null;
-        }
-        if (!account.canUploadSkin()) {
-            return null;
-        }
-
-        FileChooser chooser = new FileChooser();
-        chooser.setTitle(i18n("account.skin.upload"));
-        chooser.getExtensionFilters().add(new FileChooser.ExtensionFilter(i18n("account.skin.file"), "*.png"));
-        Path selectedFile = FileUtils.toPath(chooser.showOpenDialog(Controllers.getStage()));
-        if (selectedFile == null) {
-            return null;
-        }
-
-        return refreshAsync()
-                .thenRunAsync(() -> {
-                    Image skinImg;
-                    try (var input = Files.newInputStream(selectedFile)) {
-                        skinImg = new Image(input);
-                    } catch (IOException e) {
-                        throw new InvalidSkinException("Failed to read skin image", e);
-                    }
-                    if (skinImg.isError()) {
-                        throw new InvalidSkinException("Failed to read skin image", skinImg.getException());
-                    }
-                    NormalizedSkin skin = new NormalizedSkin(skinImg);
-                    String model = skin.isSlim() ? "slim" : "";
-                    LOG.info("Uploading skin [" + selectedFile + "], model [" + model + "]");
-                    account.uploadSkin(skin.isSlim(), selectedFile);
-                })
-                .thenComposeAsync(refreshAsync())
-                .whenComplete(Schedulers.javafx(), e -> {
-                    if (e != null) {
-                        Controllers.dialog(Accounts.localizeErrorMessage(e), i18n("account.skin.upload.failed"), MessageType.ERROR);
-                    }
-                });
+    public void navigateToSkinPage() {
+        Controllers.getSkinManagePage().loadAccount(account);
+        Controllers.navigate(Controllers.getSkinManagePage());
     }
 
     public void remove() {
