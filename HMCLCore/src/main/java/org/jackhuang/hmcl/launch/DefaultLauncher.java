@@ -602,28 +602,6 @@ public class DefaultLauncher extends Launcher {
         return p;
     }
 
-    private @Nullable Path findVulkanDescriptorFile(List<Path> dirs, String driverNameBase) {
-        String archName = switch (options.getJava().getArchitecture()) {
-            case X86 -> "i686";
-            case X86_64 -> "x86_64";
-            default -> options.getJava().getArchitecture().getCheckedName();
-        };
-
-        for (Path dir : dirs) {
-            if (Files.isDirectory(dir)) {
-                Path file = dir.resolve(driverNameBase + "." + archName + ".json");
-                if (Files.isRegularFile(file))
-                    return file;
-
-                file = dir.resolve(driverNameBase + ".json");
-                if (Files.isRegularFile(file))
-                    return file;
-            }
-        }
-
-        return null;
-    }
-
     private Map<String, String> getEnvVars(Path nativeFolder) {
         String versionName = Optional.ofNullable(options.getVersionName()).orElse(version.getId());
 
