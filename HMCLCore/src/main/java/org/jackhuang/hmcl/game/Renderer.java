@@ -36,6 +36,11 @@ public enum Renderer {
     // Using Dozen can run Minecraft 1.21.11 + VulkanMod, but it will cause the game to crash after playing for a while
     DOZEN(GraphicsAPI.VULKAN, "dzn", "dzn"),
 
+    ASAHI(GraphicsAPI.VULKAN, null, "asahi"),
+    NVIDIA(GraphicsAPI.VULKAN, null, "nvidia"),
+    NOUVEAU(GraphicsAPI.VULKAN, null, "nouveau"),
+
+
     LLVMPIPE(GraphicsAPI.OPENGL, "llvmpipe", null),
     ZINK(GraphicsAPI.OPENGL, "zink", null),
     D3D12(GraphicsAPI.OPENGL, "d3d12", null),
@@ -56,12 +61,12 @@ public enum Renderer {
 
     private final GraphicsAPI api;
 
-    private final @Nullable String loaderName;
+    private final @Nullable String mesaDriverName;
     private final @Nullable String icdName;
 
-    Renderer(GraphicsAPI api, @Nullable String loaderName, @Nullable String icdName) {
+    Renderer(GraphicsAPI api, @Nullable String mesaDriverName, @Nullable String icdName) {
         this.api = api;
-        this.loaderName = loaderName;
+        this.mesaDriverName = mesaDriverName;
         this.icdName = icdName;
     }
 
@@ -75,7 +80,7 @@ public enum Renderer {
     }
 
     public @Nullable String getMesaDriverName() {
-        return loaderName;
+        return mesaDriverName;
     }
 
     public @Nullable String getIcdName() {
