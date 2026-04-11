@@ -101,6 +101,10 @@ public sealed interface Renderer permits Renderer.Default, Renderer.Driver, Rend
     }
 
     enum Vulkan implements Driver {
+        /// Mesa Lavapipe driver.
+        ///
+        /// It is a software rasterizer.
+        ///
         /// @see <a href="https://docs.mesa3d.org/drivers/llvmpipe.html">LLVMpipe - The Mesa 3D Graphics Library</a>
         LAVAPIPE("lvp") {
             @Override
@@ -109,6 +113,10 @@ public sealed interface Renderer permits Renderer.Default, Renderer.Driver, Rend
             }
         },
 
+        /// Mesa Dozen driver.
+        ///
+        /// It is a Vulkan driver based on DirectX 12.
+        ///
         /// ## Note
         /// Currently, Dozen does not support the VK_KHR_push_descriptor feature, so it cannot launch Minecraft 26.2
         /// Using Dozen can run Minecraft 1.21.11 + VulkanMod, but it will cause the game to crash after playing for a while
@@ -124,14 +132,22 @@ public sealed interface Renderer permits Renderer.Default, Renderer.Driver, Rend
             }
         },
 
+        /// NVIDIA Vulkan driver.
+        ///
+        /// It is a Vulkan driver for NVIDIA GPUs.
+        ///
         /// @see <a href="https://developer.nvidia.com/vulkan">Vulkan Open Standard Modern GPU API | NVIDIA Developer</a>
-        NVIDIA("nvidia") {
+        NVIDIA_VULKAN("nvidia") {
             @Override
             public boolean isSupported(Platform platform, @Nullable List<GraphicsCard> cards) {
                 return Vulkan.hasCard(cards, HardwareVendor.NVIDIA);
             }
         },
 
+        /// Mesa NVK driver.
+        ///
+        /// It is a Vulkan driver for NVIDIA GPUs.
+        ///
         /// @see <a href="https://docs.mesa3d.org/drivers/nvk.html">NVK - The Mesa 3D Graphics Library</a>
         NVIDIA_NVK("nouveau") {
             @Override
@@ -140,6 +156,10 @@ public sealed interface Renderer permits Renderer.Default, Renderer.Driver, Rend
             }
         },
 
+        /// AMD Open Source Driver for Vulkan
+        ///
+        /// It is a Vulkan driver for AMD GPUs.
+        ///
         /// @see <a href="https://github.com/GPUOpen-Drivers/AMDVLK">GPUOpen-Drivers/AMDVLK - GitHub</a>
         AMDVLK("amd") {
             @Override
@@ -148,6 +168,10 @@ public sealed interface Renderer permits Renderer.Default, Renderer.Driver, Rend
             }
         },
 
+        /// Mesa RADV driver.
+        ///
+        /// It is a Vulkan driver for AMD GCN/RDNA GPUs.
+        ///
         /// @see <a href="https://docs.mesa3d.org/drivers/radv.html">RADV - The Mesa 3D Graphics Library</a>
         AMD_RADV("radeon") {
             @Override
@@ -156,6 +180,10 @@ public sealed interface Renderer permits Renderer.Default, Renderer.Driver, Rend
             }
         },
 
+        /// Mesa ANV driver.
+        ///
+        /// It is a Vulkan driver for Intel GPUs.
+        ///
         /// @see <a href="https://docs.mesa3d.org/drivers/anv.html">ANV - The Mesa 3D Graphics Library</a>
         INTEL_ANV("intel") {
             @Override
@@ -165,6 +193,10 @@ public sealed interface Renderer permits Renderer.Default, Renderer.Driver, Rend
         },
 
         /// Intel HasVK driver.
+        ///
+        /// It is a Vulkan driver for Intel Gen7 (Ivy Bridge / Haswell) and Gen8 (Broadwell) graphics.
+        ///
+        /// @see <a href="https://gitlab.freedesktop.org/mesa/mesa/-/merge_requests/18208">intel: split vulkan driver between gfx7/8 and above</a>
         INTEL_HASVK("intel_hasvk") {
             @Override
             public boolean isSupported(Platform platform, @Nullable List<GraphicsCard> cards) {
@@ -172,6 +204,10 @@ public sealed interface Renderer permits Renderer.Default, Renderer.Driver, Rend
             }
         },
 
+        /// MoltenVK driver.
+        ///
+        /// It is a Vulkan driver for macOS, iOS, tvOS, and visionOS.
+        ///
         /// @see <a href="https://github.com/KhronosGroup/MoltenVK">MoltenVK - The Mesa 3D Graphics Library</a>
         MOLTENVK("MoltenVK") {
             @Override
@@ -180,6 +216,10 @@ public sealed interface Renderer permits Renderer.Default, Renderer.Driver, Rend
             }
         },
 
+        /// Mesa KosmicKrisp driver.
+        ///
+        /// It is a Vulkan driver for Apple Silicon hardware.
+        ///
         /// @see <a href="https://docs.mesa3d.org/drivers/kosmickrisp.html">KosmicKrisp - The Mesa 3D Graphics Library</a>
         KOSMICKRISP("kosmickrisp_mesa") {
             @Override
@@ -188,13 +228,24 @@ public sealed interface Renderer permits Renderer.Default, Renderer.Driver, Rend
             }
         },
 
+        /// Mesa PowerVR driver.
+        ///
+        /// It is a Vulkan driver for Imagination Technologies PowerVR GPUs.
+        ///
         /// @see <a href="https://docs.mesa3d.org/drivers/powervr.html">PowerVR - The Mesa 3D Graphics Library</a>
         POWERVR("powervr") {
             @Override
             public boolean isSupported(Platform platform, @Nullable List<GraphicsCard> cards) {
                 return platform.os() == OperatingSystem.LINUX && Vulkan.hasCard(cards, HardwareVendor.IMG);
             }
-        };
+        },
+
+        /// Mesa PanVK driver.
+        ///
+        /// It is a Vulkan driver for ARM Mali GPUs.
+        ///
+        /// @see <a href="https://docs.mesa3d.org/drivers/panfrost.html">Panfrost - The Mesa 3D Graphics Library</a>
+        PANVK("panfrost");
 
         private static final class Holder {
             static final List<Renderer> SUPPORTED;
