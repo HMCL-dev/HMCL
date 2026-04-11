@@ -174,7 +174,7 @@ public final class LauncherHelper {
                             }),
                             Task.composeAsync(() -> {
                                 if (OperatingSystem.CURRENT_OS != OperatingSystem.WINDOWS
-                                        || !(setting.getRenderer() instanceof Renderer.Known renderer)
+                                        || !(setting.getRenderer() instanceof Renderer.Driver renderer)
                                         || renderer.mesaDriverName() == null)
                                     return null;
 

@@ -227,7 +227,7 @@ public final class AdvancedVersionSettingPage extends StackPane implements Decor
                 }
 
                 @SuppressWarnings("unchecked")
-                var renderers = (List<Renderer>) (List<? extends Renderer>) Renderer.Known.SUPPORTED.get(backend);
+                var renderers = (List<Renderer>) (List<? extends Renderer>) Renderer.Driver.SUPPORTED.get(backend);
                 rendererPane.setItems(renderers);
                 if (backend == GraphicsAPI.DEFAULT) {
                     rendererPane.setDisable(true);

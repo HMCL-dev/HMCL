@@ -20,34 +20,42 @@ package org.jackhuang.hmcl.game;
 import org.jackhuang.hmcl.util.platform.Architecture;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
 import org.jackhuang.hmcl.util.platform.Platform;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.EnumMap;
-import java.util.List;
-import java.util.Map;
-import java.util.stream.Stream;
+import java.util.Locale;
 
 @NotNullByDefault
-public sealed interface Renderer {
+public sealed interface Renderer permits Renderer.Default, Renderer.Driver, Renderer.Unknown {
 
     Default DEFAULT = new Default();
 
-    GraphicsAPI api();
+    /// Parse a renderer from a string.
+    static Renderer of(String name) {
+        if ("DEFAULT".equalsIgnoreCase(name) || name.isBlank())
+            return DEFAULT;
+
+        String upper = name.toUpperCase(Locale.ROOT).trim();
+
+        try {
+            return OpenGL.valueOf(upper);
+        } catch (
+                IllegalArgumentException ignored2) {/// If this driver can be loaded via [mesa-loader-windows](https://github.com/HMCL-dev/mesa-loader-windows), return the driver name, otherwise return `null`.
+        }
+
+        try {
+            return Vulkan.valueOf(upper);
+        } catch (IllegalArgumentException ignored) {
+        }
+
+        return new Unknown(name);
+    }
 
     String name();
 
-    default boolean isSupported(GraphicsAPI api) {
-        return this.api() == api || this.api() == GraphicsAPI.DEFAULT;
-    }
-
     final class Default implements Renderer {
         private Default() {
-        }
-
-        @Override
-        public GraphicsAPI api() {
-            return GraphicsAPI.DEFAULT;
         }
 
         @Override
@@ -56,11 +64,22 @@ public sealed interface Renderer {
         }
     }
 
-    enum Known implements Renderer {
-        // Vulkan
+    sealed interface Driver extends Renderer permits Vulkan, OpenGL {
 
+        /// The graphics API that this driver belongs to.
+        GraphicsAPI api();
+
+        /// If this driver can be loaded via [mesa-loader-windows](https://github.com/HMCL-dev/mesa-loader-windows),
+        /// return the driver name, otherwise return `null`.
+        @Contract(pure = true)
+        default @Nullable String mesaDriverName() {
+            return null;
+        }
+    }
+
+    enum Vulkan implements Driver {
         /// @see <a href="https://docs.mesa3d.org/drivers/llvmpipe.html">LLVMpipe - The Mesa 3D Graphics Library</a>
-        LAVAPIPE(GraphicsAPI.VULKAN, "lvp") {
+        LAVAPIPE("lvp") {
             @Override
             public String mesaDriverName() {
                 return "lavapipe";
@@ -70,7 +89,7 @@ public sealed interface Renderer {
         /// ## Note
         /// Currently, Dozen does not support the VK_KHR_push_descriptor feature, so it cannot launch Minecraft 26.2
         /// Using Dozen can run Minecraft 1.21.11 + VulkanMod, but it will cause the game to crash after playing for a while
-        DOZEN(GraphicsAPI.VULKAN, "dzn") {
+        DOZEN("dzn") {
             @Override
             public boolean isSupportedOn(Platform platform) {
                 return platform.os() == OperatingSystem.WINDOWS;
@@ -83,10 +102,18 @@ public sealed interface Renderer {
         },
 
         /// @see <a href="https://developer.nvidia.com/vulkan">Vulkan Open Standard Modern GPU API | NVIDIA Developer</a>
-        NVIDIA(GraphicsAPI.VULKAN, "nvidia"),
+        NVIDIA("nvidia"),
 
         /// @see <a href="https://docs.mesa3d.org/drivers/nvk.html">NVK - The Mesa 3D Graphics Library</a>
-        NVIDIA_NVK(GraphicsAPI.VULKAN, "nouveau") {
+        NVIDIA_NVK("nouveau") {
+            @Override
+            public boolean isSupportedOn(Platform platform) {
+                return platform.os() == OperatingSystem.LINUX;
+            }
+        },
+
+        /// @see <a href="https://github.com/GPUOpen-Drivers/AMDVLK">GPUOpen-Drivers/AMDVLK - GitHub</a>
+        AMDVLK("amd") {
             @Override
             public boolean isSupportedOn(Platform platform) {
                 return platform.os() == OperatingSystem.LINUX;
@@ -94,15 +121,15 @@ public sealed interface Renderer {
         },
 
         /// @see <a href="https://docs.mesa3d.org/drivers/radv.html">RADV - The Mesa 3D Graphics Library</a>
-        AMD_RADV(GraphicsAPI.VULKAN, "radeon"),
+        AMD_RADV("radeon"),
 
         /// @see <a href="https://docs.mesa3d.org/drivers/anv.html">ANV - The Mesa 3D Graphics Library</a>
-        INTEL_ANV(GraphicsAPI.VULKAN, "intel"),
+        INTEL_ANV("intel"),
 
         /// Intel HasVK driver.
-        INTEL_HASVK(GraphicsAPI.VULKAN, "intel_hasvk"),
+        INTEL_HASVK("intel_hasvk"),
 
-        MOLTENVK(GraphicsAPI.VULKAN, "MoltenVK") {
+        MOLTENVK("MoltenVK") {
             @Override
             public boolean isSupportedOn(Platform platform) {
                 return platform.os() == OperatingSystem.MACOS;
@@ -110,29 +137,52 @@ public sealed interface Renderer {
         },
 
         /// @see <a href="https://docs.mesa3d.org/drivers/kosmickrisp.html">KosmicKrisp - The Mesa 3D Graphics Library</a>
-        KOSMICKRISP(GraphicsAPI.VULKAN, "kosmickrisp_mesa") {
+        KOSMICKRISP("kosmickrisp_mesa") {
             @Override
             public boolean isSupportedOn(Platform platform) {
                 return platform.os() == OperatingSystem.MACOS && platform.arch() == Architecture.ARM64;
             }
         },
 
-        // OpenGL
+        /// @see <a href="https://docs.mesa3d.org/drivers/powervr.html">PowerVR - The Mesa 3D Graphics Library</a>
+        POWERVR("powervr") {
+            @Override
+            public boolean isSupportedOn(Platform platform) {
+                return platform.os() == OperatingSystem.LINUX;
+            }
+        };
 
+        private final String icdName;
+
+        Vulkan(String icdName) {
+            this.icdName = icdName;
+        }
+
+        @Override
+        public GraphicsAPI api() {
+            return GraphicsAPI.VULKAN;
+        }
+
+        public String icdName() {
+            return icdName;
+        }
+    }
+
+    enum OpenGL implements Driver {
         /// @see <a href="https://docs.mesa3d.org/drivers/llvmpipe.html">LLVMpipe - The Mesa 3D Graphics Library</a>
-        LLVMPIPE(GraphicsAPI.OPENGL, "") {
+        LLVMPIPE {
             @Override
             public String mesaDriverName() {
                 return "llvmpipe";
             }
         },
-        ZINK(GraphicsAPI.OPENGL, "") {
+        ZINK {
             @Override
             public String mesaDriverName() {
                 return "zink";
             }
         },
-        D3D12(GraphicsAPI.OPENGL, "") {
+        D3D12 {
             @Override
             public boolean isSupportedOn(Platform platform) {
                 return platform.os() == OperatingSystem.WINDOWS;
@@ -142,49 +192,16 @@ public sealed interface Renderer {
             public String mesaDriverName() {
                 return "d3d12";
             }
-        },
-        ;
+        };
 
-        /// Map the graphics API to supported renderers.
-        public static final Map<GraphicsAPI, List<Known>> SUPPORTED;
-
-        static {
-            var map = new EnumMap<GraphicsAPI, List<Known>>(GraphicsAPI.class);
-
-            for (var api : GraphicsAPI.values()) {
-                map.put(api, Stream.of(values())
-                        .filter(it -> it.isSupported(api) && it.isSupportedOn(Platform.SYSTEM_PLATFORM))
-                        .toList());
-            }
-
-            SUPPORTED = map;
-        }
-
-        private final GraphicsAPI api;
-
-        private final String icdName;
-
-        Known(GraphicsAPI api, String icdName) {
-            this.api = api;
-            this.icdName = icdName;
-        }
-
-        /// Get the Graphics API used by this renderer.
         @Override
         public GraphicsAPI api() {
-            return api;
-        }
-
-        public @Nullable String mesaDriverName() {
-            return null;
-        }
-
-        public String icdName() {
-            return icdName;
+            return GraphicsAPI.VULKAN;
         }
     }
 
-    record Unknown(GraphicsAPI api, String name) implements Renderer {
+    /// Unknown renderer.
+    record Unknown(String name) implements Renderer {
     }
 
     default boolean isSupportedOn(Platform platform) {

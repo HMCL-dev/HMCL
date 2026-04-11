@@ -266,8 +266,8 @@ public class DefaultLauncher extends Launcher {
         }
 
         if (OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS
-                && options.getRenderer() instanceof Renderer.Known knownRenderer
-                && knownRenderer.mesaDriverName() != null) {
+                && options.getRenderer() instanceof Renderer.Driver renderer
+                && renderer.mesaDriverName() != null) {
             res.addDefault("-Dorg.glavo.mesa.loader.nativeDir=", FileUtils.getAbsolutePath(nativeFolder.resolve("mesa-loader")));
         }
 
@@ -634,24 +634,23 @@ public class DefaultLauncher extends Launcher {
         env.put("INST_MC_DIR", FileUtils.getAbsolutePath(repository.getRunDirectory(version.getId())));
         env.put("INST_JAVA", options.getJava().getBinary().toString());
 
-        if (options.getRenderer() instanceof Renderer.Known renderer) {
+        if (options.getRenderer() instanceof Renderer.Driver renderer) {
             if (OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS) {
                 if (renderer.mesaDriverName() != null) {
-                    if (renderer.api() == GraphicsAPI.OPENGL && renderer != Renderer.Known.LLVMPIPE)
+                    if (renderer instanceof Renderer.OpenGL && renderer != Renderer.OpenGL.LLVMPIPE)
                         env.put("GALLIUM_DRIVER", renderer.mesaDriverName());
-
-                    if (renderer.api() == GraphicsAPI.VULKAN) {
-                        String icdFile = FileUtils.getAbsolutePath(nativeFolder.resolve("mesa-loader/" + renderer.icdName() + "_icd.json"));
+                    else if (renderer instanceof Renderer.Vulkan vulkanDriver) {
+                        String icdFile = FileUtils.getAbsolutePath(nativeFolder.resolve("mesa-loader/" + vulkanDriver.icdName() + "_icd.json"));
 
                         env.put("VK_ICD_FILENAMES", icdFile);
                         env.put("VK_DRIVER_FILES", icdFile);
                     }
                 }
             } else if (OperatingSystem.CURRENT_OS == OperatingSystem.LINUX) {
-                if (renderer == Renderer.Known.LLVMPIPE) {
+                if (renderer == Renderer.OpenGL.LLVMPIPE) {
                     env.put("__GLX_VENDOR_LIBRARY_NAME", "mesa");
                     env.put("LIBGL_ALWAYS_SOFTWARE", "1");
-                } else if (renderer == Renderer.Known.ZINK) {
+                } else if (renderer == Renderer.OpenGL.ZINK) {
                     env.put("__GLX_VENDOR_LIBRARY_NAME", "mesa");
                     env.put("MESA_LOADER_DRIVER_OVERRIDE", "zink");
                     /*
@@ -661,10 +660,10 @@ public class DefaultLauncher extends Launcher {
                      * Link: https://gitlab.freedesktop.org/mesa/mesa/-/issues/10093
                      */
                     env.put("LIBGL_KOPPER_DRI2", "1");
-                } else if (renderer.api() == GraphicsAPI.VULKAN) {
+                } else if (renderer instanceof Renderer.Vulkan vulkanDriver) {
                     Path lvp = findVulkanDescriptorFile(
                             List.of(Path.of("/usr/share/vulkan/icd.d"), Path.of("/etc/vulkan/icd.d")),
-                            renderer.icdName()
+                            vulkanDriver.icdName()
                     );
                     if (lvp != null) {
                         env.put("VK_ICD_FILENAMES", FileUtils.getAbsolutePath(lvp));
