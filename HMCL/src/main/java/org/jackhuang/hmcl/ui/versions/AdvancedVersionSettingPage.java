@@ -42,7 +42,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.nio.file.FileSystems;
 import java.util.Arrays;
-import java.util.List;
 import java.util.Locale;
 
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
@@ -226,17 +225,14 @@ public final class AdvancedVersionSettingPage extends StackPane implements Decor
                     return;
                 }
 
-                @SuppressWarnings("unchecked")
-                var renderers = (List<Renderer>) (List<? extends Renderer>) Renderer.Driver.SUPPORTED.get(backend);
-                rendererPane.setItems(renderers);
+                rendererPane.setItems(Renderer.getSupported(backend));
                 if (backend == GraphicsAPI.DEFAULT) {
                     rendererPane.setDisable(true);
                     rendererPane.setValue(Renderer.DEFAULT);
                 } else {
                     rendererPane.setDisable(false);
-                    if (rendererPane.getValue() == null || !rendererPane.getValue().isSupported(backend)) {
+                    if (!(rendererPane.getValue() instanceof Renderer.Driver driver) || driver.api() != backend)
                         rendererPane.setValue(Renderer.DEFAULT);
-                    }
                 }
             });
 

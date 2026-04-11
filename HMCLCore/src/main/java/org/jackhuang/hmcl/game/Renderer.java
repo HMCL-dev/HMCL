@@ -23,8 +23,12 @@ import org.jackhuang.hmcl.util.platform.Platform;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Locale;
+import java.util.stream.Stream;
 
 @NotNullByDefault
 public sealed interface Renderer permits Renderer.Default, Renderer.Driver, Renderer.Unknown {
@@ -49,6 +53,17 @@ public sealed interface Renderer permits Renderer.Default, Renderer.Driver, Rend
         }
 
         return new Unknown(name);
+    }
+
+    /// Get all supported renderers for a given graphics API.
+    static @Unmodifiable List<Renderer> getSupported(GraphicsAPI api) {
+        var result = new ArrayList<Renderer>();
+        result.add(DEFAULT);
+        switch (api) {
+            case VULKAN -> result.addAll(Vulkan.SUPPORTED);
+            case OPENGL -> result.addAll(OpenGL.SUPPORTED);
+        }
+        return result;
     }
 
     String name();
@@ -151,6 +166,8 @@ public sealed interface Renderer permits Renderer.Default, Renderer.Driver, Rend
             }
         };
 
+        static final List<Vulkan> SUPPORTED = Stream.of(Vulkan.values()).filter(it -> it.isSupportedOn(Platform.CURRENT_PLATFORM)).toList();
+
         private final String icdName;
 
         Vulkan(String icdName) {
@@ -192,6 +209,8 @@ public sealed interface Renderer permits Renderer.Default, Renderer.Driver, Rend
                 return "d3d12";
             }
         };
+
+        static final List<OpenGL> SUPPORTED = Stream.of(OpenGL.values()).filter(it -> it.isSupportedOn(Platform.CURRENT_PLATFORM)).toList();
 
         @Override
         public GraphicsAPI api() {
