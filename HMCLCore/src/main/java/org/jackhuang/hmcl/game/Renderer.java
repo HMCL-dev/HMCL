@@ -250,11 +250,24 @@ public sealed interface Renderer permits Renderer.Default, Renderer.Driver, Rend
         PANVK("panfrost") {
             @Override
             public boolean isSupported(Platform platform, @Nullable List<GraphicsCard> cards) {
-                return platform.os() == OperatingSystem.LINUX
-                        && (platform.arch() == Architecture.ARM32 || platform.arch() == Architecture.ARM64)
-                        && Vulkan.hasCard(cards, HardwareVendor.ARM);
+                return platform.os() == OperatingSystem.LINUX && platform.arch().isArm()
+                        && Vulkan.hasCard(cards, HardwareVendor.BROADCOM);
             }
-        };
+        },
+
+        /// Mesa V3DV driver.
+        ///
+        /// It is a Vulkan driver for the Raspberry Pi 4 and Raspberry Pi 5.
+        ///
+        /// @see <a href="https://docs.mesa3d.org/drivers/v3dv.html">V3DV - The Mesa 3D Graphics Library</a>
+        V3DV("broadcom") {
+            @Override
+            public boolean isSupported(Platform platform, @Nullable List<GraphicsCard> cards) {
+                return platform.os() == OperatingSystem.LINUX && platform.arch().isArm()
+                        && Vulkan.hasCard(cards, HardwareVendor.BROADCOM);
+            }
+        }
+        ;
 
         private static final class Holder {
             static final List<Renderer> SUPPORTED;

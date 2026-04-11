@@ -646,7 +646,7 @@ public class DefaultLauncher extends Launcher {
                         env.put("VK_DRIVER_FILES", icdFile);
                     }
                 }
-            } else if (OperatingSystem.CURRENT_OS == OperatingSystem.LINUX) {
+            } else if (OperatingSystem.CURRENT_OS.isLinuxOrBSD()) {
                 if (renderer instanceof Renderer.OpenGL driver) {
                     if (driver == Renderer.OpenGL.LLVMPIPE) {
                         env.put("__GLX_VENDOR_LIBRARY_NAME", "mesa");
