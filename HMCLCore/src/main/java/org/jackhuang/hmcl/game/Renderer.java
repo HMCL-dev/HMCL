@@ -285,6 +285,7 @@ public sealed interface Renderer permits Renderer.Default, Renderer.Driver, Rend
                     String archName = switch (Architecture.SYSTEM_ARCH) {
                         case X86 -> "i686";
                         case X86_64 -> "x86_64";
+                        case ARM64 -> "aarch64";
                         default -> Architecture.SYSTEM_ARCH.getCheckedName();
                     };
 
