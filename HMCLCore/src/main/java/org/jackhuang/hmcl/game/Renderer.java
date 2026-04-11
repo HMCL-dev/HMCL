@@ -347,64 +347,62 @@ public sealed interface Renderer permits Renderer.Default, Renderer.Driver, Rend
                         supported.addAll(foundSupported);
                     }
 
-                } else {
-                    if (OperatingSystem.CURRENT_OS == OperatingSystem.MACOS) {
-                        // LWJGL integrates MoltenVK, so it is always available
-                        supported.add(MOLTENVK);
+                } else if (OperatingSystem.CURRENT_OS == OperatingSystem.MACOS) {
+                    // LWJGL integrates MoltenVK, so it is always available
+                    supported.add(MOLTENVK);
 
-                        // We need libvulkan.1.dylib to load custom Vulkan drivers
-                        if (Files.isRegularFile(HomebrewUtils.HOMEBREW_PREFIX)) {
-                            Path lvpIcd = HomebrewUtils.HOMEBREW_PREFIX.resolve("share/vulkan/icd.d/lvp_icd." + archName + ".json");
-                            if (Files.isRegularFile(lvpIcd)) {
-                                driverToIcdFile.put(LAVAPIPE, lvpIcd);
-                                supported.add(LAVAPIPE);
-                            }
-
-                            Path kosmickrispIcd = HomebrewUtils.HOMEBREW_PREFIX.resolve("share/vulkan/icd.d/kosmickrisp_mesa_icd." + archName + ".json");
-                            if (Files.isRegularFile(kosmickrispIcd)) {
-                                driverToIcdFile.put(KOSMICKRISP, kosmickrispIcd);
-                                supported.add(KOSMICKRISP);
-                            }
+                    // We need libvulkan.1.dylib to load custom Vulkan drivers
+                    if (Files.isRegularFile(HomebrewUtils.HOMEBREW_PREFIX)) {
+                        Path lvpIcd = HomebrewUtils.HOMEBREW_PREFIX.resolve("share/vulkan/icd.d/lvp_icd." + archName + ".json");
+                        if (Files.isRegularFile(lvpIcd)) {
+                            driverToIcdFile.put(LAVAPIPE, lvpIcd);
+                            supported.add(LAVAPIPE);
                         }
-                    } else {
-                        List<Path> icdDirs = switch (OperatingSystem.CURRENT_OS) {
-                            case LINUX -> List.of(
-                                    Path.of("/usr/share/vulkan/icd.d"),
-                                    Path.of("/etc/vulkan/icd.d")
-                            );
-                            case FREEBSD -> List.of(Path.of("/usr/local/share/vulkan/icd.d"));
-                            default -> List.of();
-                        };
 
-                        EnumSet<Vulkan> foundSupported = EnumSet.noneOf(Vulkan.class);
-                        for (Path icdDir : icdDirs) {
-                            if (!Files.isDirectory(icdDir))
-                                continue;
-                            try (Stream<Path> stream = Files.list(icdDir)) {
-                                for (Path icdFile : Lang.toIterable(stream)) {
-                                    String fileName = icdFile.getFileName().toString();
+                        Path kosmickrispIcd = HomebrewUtils.HOMEBREW_PREFIX.resolve("share/vulkan/icd.d/kosmickrisp_mesa_icd." + archName + ".json");
+                        if (Files.isRegularFile(kosmickrispIcd)) {
+                            driverToIcdFile.put(KOSMICKRISP, kosmickrispIcd);
+                            supported.add(KOSMICKRISP);
+                        }
+                    }
+                } else {
+                    List<Path> icdDirs = switch (OperatingSystem.CURRENT_OS) {
+                        case LINUX -> List.of(
+                                Path.of("/usr/share/vulkan/icd.d"),
+                                Path.of("/etc/vulkan/icd.d")
+                        );
+                        case FREEBSD -> List.of(Path.of("/usr/local/share/vulkan/icd.d"));
+                        default -> List.of();
+                    };
 
-                                    Matcher matcher = icdFileNamePattern.matcher(fileName);
-                                    if (matcher.matches()) {
-                                        String icdName = matcher.group("name");
+                    EnumSet<Vulkan> foundSupported = EnumSet.noneOf(Vulkan.class);
+                    for (Path icdDir : icdDirs) {
+                        if (!Files.isDirectory(icdDir))
+                            continue;
+                        try (Stream<Path> stream = Files.list(icdDir)) {
+                            for (Path icdFile : Lang.toIterable(stream)) {
+                                String fileName = icdFile.getFileName().toString();
 
-                                        Vulkan driver = icdNameToDriver.get(icdName);
-                                        if (driver != null) {
-                                            driverToIcdFile.put(driver, icdFile);
+                                Matcher matcher = icdFileNamePattern.matcher(fileName);
+                                if (matcher.matches()) {
+                                    String icdName = matcher.group("name");
 
-                                            if (driver.isSupported(Platform.CURRENT_PLATFORM, SystemInfo.getGraphicsCards())) {
-                                                foundSupported.add(driver);
-                                            }
+                                    Vulkan driver = icdNameToDriver.get(icdName);
+                                    if (driver != null) {
+                                        driverToIcdFile.put(driver, icdFile);
+
+                                        if (driver.isSupported(Platform.CURRENT_PLATFORM, SystemInfo.getGraphicsCards())) {
+                                            foundSupported.add(driver);
                                         }
                                     }
                                 }
-                            } catch (IOException e) {
-                                LOG.warning("Failed to read Vulkan ICD files in " + icdDir, e);
                             }
+                        } catch (IOException e) {
+                            LOG.warning("Failed to read Vulkan ICD files in " + icdDir, e);
                         }
-
-                        supported.addAll(foundSupported);
                     }
+
+                    supported.addAll(foundSupported);
                 }
 
                 SUPPORTED = List.copyOf(supported);
