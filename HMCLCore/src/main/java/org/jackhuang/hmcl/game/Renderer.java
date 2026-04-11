@@ -18,19 +18,23 @@
 package org.jackhuang.hmcl.game;
 
 import org.jackhuang.hmcl.util.Lang;
+import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.platform.Architecture;
+import org.jackhuang.hmcl.util.platform.Bits;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
 import org.jackhuang.hmcl.util.platform.Platform;
 import org.jackhuang.hmcl.util.platform.SystemInfo;
 import org.jackhuang.hmcl.util.platform.hardware.GraphicsCard;
 import org.jackhuang.hmcl.util.platform.hardware.HardwareVendor;
 import org.jackhuang.hmcl.util.platform.macos.HomebrewUtils;
+import org.jackhuang.hmcl.util.platform.windows.WinReg;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Unmodifiable;
 
 import java.io.IOException;
+import java.nio.file.InvalidPathException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
@@ -183,6 +187,16 @@ public sealed interface Renderer permits Renderer.Default, Renderer.Driver, Rend
             }
         },
 
+        /// Intel Vulkan driver.
+        ///
+        /// It is a Vulkan driver for Intel GPUs.
+        INTEL_VULKAN("ig") {
+            @Override
+            public boolean isSupported(Platform platform, @Nullable List<GraphicsCard> cards) {
+                return platform.os() == OperatingSystem.WINDOWS && Vulkan.hasCard(cards, HardwareVendor.INTEL);
+            }
+        },
+
         /// Mesa ANV driver.
         ///
         /// It is a Vulkan driver for Intel GPUs.
@@ -191,7 +205,7 @@ public sealed interface Renderer permits Renderer.Default, Renderer.Driver, Rend
         INTEL_ANV("intel") {
             @Override
             public boolean isSupported(Platform platform, @Nullable List<GraphicsCard> cards) {
-                return Vulkan.hasCard(cards, HardwareVendor.INTEL);
+                return platform.os() != OperatingSystem.WINDOWS && Vulkan.hasCard(cards, HardwareVendor.INTEL);
             }
         },
 
@@ -203,7 +217,7 @@ public sealed interface Renderer permits Renderer.Default, Renderer.Driver, Rend
 //        INTEL_HASVK("intel_hasvk") {
 //            @Override
 //            public boolean isSupported(Platform platform, @Nullable List<GraphicsCard> cards) {
-//                return Vulkan.hasCard(cards, HardwareVendor.INTEL);
+//                return platform.os() != OperatingSystem.WINDOWS && Vulkan.hasCard(cards, HardwareVendor.INTEL);
 //            }
 //        },
 
@@ -267,8 +281,7 @@ public sealed interface Renderer permits Renderer.Default, Renderer.Driver, Rend
                 return platform.os() == OperatingSystem.LINUX && platform.arch().isArm()
                         && Vulkan.hasCard(cards, HardwareVendor.BROADCOM);
             }
-        }
-        ;
+        };
 
         private static final class Holder {
             static final List<Renderer> SUPPORTED;
@@ -277,18 +290,64 @@ public sealed interface Renderer permits Renderer.Default, Renderer.Driver, Rend
             static {
                 var driverToIcdFile = new EnumMap<Vulkan, Path>(Vulkan.class);
                 var supported = new LinkedHashSet<Renderer>();
+
+
+                // Helper
+                String archName = switch (Architecture.SYSTEM_ARCH) {
+                    case X86 -> "i686";
+                    case X86_64 -> "x86_64";
+                    case ARM64 -> "aarch64";
+                    default -> Architecture.SYSTEM_ARCH.getCheckedName();
+                };
+
+                String archNamePattern = Platform.SYSTEM_PLATFORM.equals(Platform.WINDOWS_ARM64)
+                        ? "aarch64|arm64x"
+                        : Pattern.quote(archName);
+
+                var icdFileNamePattern = Pattern.compile("(?<name>[a-zA-Z0-9_-]+)_icd(?:\\." + archNamePattern + ")?\\.json");
+                Map<String, Vulkan> icdNameToDriver = Stream.of(values()).collect(Collectors.toMap(Vulkan::icdName, Function.identity()));
+
                 supported.add(DEFAULT);
 
                 if (OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS) {
-                    supported.addAll(List.of(LAVAPIPE, DOZEN)); // TODO: More Vulkan drivers for Windows
-                } else {
-                    String archName = switch (Architecture.SYSTEM_ARCH) {
-                        case X86 -> "i686";
-                        case X86_64 -> "x86_64";
-                        case ARM64 -> "aarch64";
-                        default -> Architecture.SYSTEM_ARCH.getCheckedName();
-                    };
+                    supported.addAll(List.of(LAVAPIPE, DOZEN));
 
+                    List<GraphicsCard> graphicsCards = SystemInfo.getGraphicsCards();
+                    if (graphicsCards != null) {
+                        EnumSet<Vulkan> foundSupported = EnumSet.noneOf(Vulkan.class);
+                        for (GraphicsCard card : graphicsCards) {
+                            if (!card.getVulkanDriverFiles().isEmpty()) {
+                                for (Path icdFile : card.getVulkanDriverFiles()) {
+                                    String fileName = FileUtils.getName(icdFile);
+                                    if (!fileName.endsWith(".json"))
+                                        continue;
+
+                                    Vulkan driver;
+
+                                    Matcher matcher = icdFileNamePattern.matcher(fileName);
+                                    if (matcher.matches()) {
+                                        String icdName = matcher.group("name");
+                                        driver = icdNameToDriver.get(icdName);
+                                    } else {
+                                        switch (fileName.substring(0, fileName.length() - ".json".length())) {
+                                            case "igvk64", "igvk32" -> driver = INTEL_VULKAN;
+                                            case "nv-vk64", "nv-vk32" -> driver = NVIDIA_VULKAN;
+                                            case "amd-vulkan64", "amd-vulkan32" -> driver = AMDVLK;
+                                            default -> {
+                                                continue;
+                                            }
+                                        }
+                                    }
+
+                                    driverToIcdFile.putIfAbsent(driver, icdFile);
+                                    foundSupported.add(driver);
+                                }
+                            }
+                        }
+                        supported.addAll(foundSupported);
+                    }
+
+                } else {
                     if (OperatingSystem.CURRENT_OS == OperatingSystem.MACOS) {
                         // LWJGL integrates MoltenVK, so it is always available
                         supported.add(MOLTENVK);
@@ -317,10 +376,6 @@ public sealed interface Renderer permits Renderer.Default, Renderer.Driver, Rend
                             default -> List.of();
                         };
 
-                        Map<String, Vulkan> icdNameToDriver = Stream.of(values()).collect(Collectors.toMap(Vulkan::icdName, Function.identity()));
-
-                        var pattern = Pattern.compile("(?<name>[a-zA-Z0-9_-]+)_icd(?:\\." + Pattern.quote(archName) + ")?\\.json");
-
                         EnumSet<Vulkan> foundSupported = EnumSet.noneOf(Vulkan.class);
                         for (Path icdDir : icdDirs) {
                             if (!Files.isDirectory(icdDir))
@@ -329,7 +384,7 @@ public sealed interface Renderer permits Renderer.Default, Renderer.Driver, Rend
                                 for (Path icdFile : Lang.toIterable(stream)) {
                                     String fileName = icdFile.getFileName().toString();
 
-                                    Matcher matcher = pattern.matcher(fileName);
+                                    Matcher matcher = icdFileNamePattern.matcher(fileName);
                                     if (matcher.matches()) {
                                         String icdName = matcher.group("name");
 
