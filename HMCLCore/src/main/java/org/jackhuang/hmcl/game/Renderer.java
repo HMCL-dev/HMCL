@@ -40,8 +40,7 @@ public sealed interface Renderer permits Renderer.Default, Renderer.Driver, Rend
 
         try {
             return OpenGL.valueOf(upper);
-        } catch (
-                IllegalArgumentException ignored2) {/// If this driver can be loaded via [mesa-loader-windows](https://github.com/HMCL-dev/mesa-loader-windows), return the driver name, otherwise return `null`.
+        } catch (IllegalArgumentException ignored) {
         }
 
         try {
