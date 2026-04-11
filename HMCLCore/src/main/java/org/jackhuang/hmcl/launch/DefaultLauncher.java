@@ -276,8 +276,8 @@ public class DefaultLauncher extends Launcher {
                 && options.getJava().getArchitecture() == Architecture.SYSTEM_ARCH
                 && options.getRenderer() instanceof Renderer.Vulkan vulkanDriver
                 && vulkanDriver.icdFile() != null) {
-            if (Files.isRegularFile(HomebrewUtils.HOMEBREW_PREFIX)) {
-                res.addDefault("-Dorg.lwjgl.vulkan.libname=", FileUtils.getAbsolutePath(HomebrewUtils.HOMEBREW_PREFIX));
+            if (Files.isRegularFile(HomebrewUtils.LIB_VULKAN)) {
+                res.addDefault("-Dorg.lwjgl.vulkan.libname=", FileUtils.getAbsolutePath(HomebrewUtils.LIB_VULKAN));
             }
         }
 
