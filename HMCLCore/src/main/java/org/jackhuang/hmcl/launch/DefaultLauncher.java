@@ -633,6 +633,13 @@ public class DefaultLauncher extends Launcher {
                         env.put("VK_ICD_FILENAMES", icdFile);
                         env.put("VK_DRIVER_FILES", icdFile);
                     }
+                } else if (driver instanceof Renderer.Vulkan vulkanDriver
+                        && vulkanDriver.icdFile() != null
+                        && options.getJava().getArchitecture() == Architecture.SYSTEM_ARCH) {
+                    String icdFile = FileUtils.getAbsolutePath(vulkanDriver.icdFile());
+
+                    env.put("VK_ICD_FILENAMES", icdFile);
+                    env.put("VK_DRIVER_FILES", icdFile);
                 }
             } else if (OperatingSystem.CURRENT_OS.isLinuxOrBSD()) {
                 if (driver instanceof Renderer.OpenGL oglDriver) {
