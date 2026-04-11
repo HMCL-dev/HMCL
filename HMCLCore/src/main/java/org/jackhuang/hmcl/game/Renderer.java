@@ -24,6 +24,7 @@ import org.jackhuang.hmcl.util.platform.Platform;
 import org.jackhuang.hmcl.util.platform.SystemInfo;
 import org.jackhuang.hmcl.util.platform.hardware.GraphicsCard;
 import org.jackhuang.hmcl.util.platform.hardware.HardwareVendor;
+import org.jackhuang.hmcl.util.platform.macos.HomebrewUtils;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
@@ -291,18 +292,14 @@ public sealed interface Renderer permits Renderer.Default, Renderer.Driver, Rend
                         // LWJGL integrates MoltenVK, so it is always available
                         supported.add(MOLTENVK);
 
-                        var prefix = Architecture.SYSTEM_ARCH == Architecture.X86_64
-                                ? Path.of("/usr/local")
-                                : Path.of("/opt/homebrew");
-
                         // We need libvulkan.1.dylib to load custom Vulkan drivers
-                        if (Files.isRegularFile(prefix.resolve("lib/libvulkan.1.dylib"))) {
-                            if (Files.isRegularFile(prefix.resolve("share/vulkan/icd.d/lvp_icd." + archName + ".json"))) {
+                        if (Files.isRegularFile(HomebrewUtils.HOMEBREW_PREFIX.resolve("lib/libvulkan.1.dylib"))) {
+                            if (Files.isRegularFile(HomebrewUtils.HOMEBREW_PREFIX.resolve("share/vulkan/icd.d/lvp_icd." + archName + ".json"))) {
                                 supported.add(LAVAPIPE);
                             }
 
                             if (Architecture.SYSTEM_ARCH == Architecture.ARM64
-                                    && Files.isRegularFile(prefix.resolve("share/vulkan/icd.d/kosmickrisp_mesa_icd." + archName + ".json"))) {
+                                    && Files.isRegularFile(HomebrewUtils.HOMEBREW_PREFIX.resolve("share/vulkan/icd.d/kosmickrisp_mesa_icd." + archName + ".json"))) {
                                 supported.add(KOSMICKRISP);
                             }
                         }

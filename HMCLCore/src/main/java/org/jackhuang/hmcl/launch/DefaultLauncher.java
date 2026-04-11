@@ -27,6 +27,7 @@ import org.jackhuang.hmcl.util.gson.UUIDTypeAdapter;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.io.Unzipper;
 import org.jackhuang.hmcl.util.platform.*;
+import org.jackhuang.hmcl.util.platform.macos.HomebrewUtils;
 import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
 import org.jetbrains.annotations.Nullable;
 
@@ -269,6 +270,15 @@ public class DefaultLauncher extends Launcher {
                 && options.getRenderer() instanceof Renderer.Driver renderer
                 && renderer.mesaDriverName() != null) {
             res.addDefault("-Dorg.glavo.mesa.loader.nativeDir=", FileUtils.getAbsolutePath(nativeFolder.resolve("mesa-loader")));
+        }
+
+        if (OperatingSystem.CURRENT_OS == OperatingSystem.MACOS
+                && options.getRenderer() instanceof Renderer.Vulkan vulkanDriver
+                && vulkanDriver.icdFile() != null) {
+            Path vulkanLibrary = HomebrewUtils.HOMEBREW_PREFIX.resolve("lib/libvulkan.1.dylib");
+            if (Files.isRegularFile(vulkanLibrary)) {
+                res.addDefault("-Dorg.lwjgl.vulkan.libname=", FileUtils.getAbsolutePath(vulkanLibrary));
+            }
         }
 
         Set<String> classpath = repository.getClasspath(version);
@@ -646,6 +656,14 @@ public class DefaultLauncher extends Launcher {
                         env.put("VK_ICD_FILENAMES", absolutePath);
                         env.put("VK_DRIVER_FILES", absolutePath);
                     }
+                }
+            } else if (OperatingSystem.CURRENT_OS == OperatingSystem.MACOS) {
+                if (driver instanceof Renderer.Vulkan vulkanDriver
+                        && vulkanDriver != Renderer.Vulkan.MOLTENVK
+                        && vulkanDriver.icdFile() != null) {
+                    String absolutePath = FileUtils.getAbsolutePath(vulkanDriver.icdFile());
+                    env.put("VK_ICD_FILENAMES", absolutePath);
+                    env.put("VK_DRIVER_FILES", absolutePath);
                 }
             }
         }
