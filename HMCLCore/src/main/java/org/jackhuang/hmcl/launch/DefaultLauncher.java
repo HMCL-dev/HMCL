@@ -273,6 +273,7 @@ public class DefaultLauncher extends Launcher {
         }
 
         if (OperatingSystem.CURRENT_OS == OperatingSystem.MACOS
+                && options.getJava().getArchitecture() == Architecture.SYSTEM_ARCH
                 && options.getRenderer() instanceof Renderer.Vulkan vulkanDriver
                 && vulkanDriver.icdFile() != null) {
             if (Files.isRegularFile(HomebrewUtils.HOMEBREW_PREFIX)) {
@@ -649,14 +650,16 @@ public class DefaultLauncher extends Launcher {
                          */
                         env.put("LIBGL_KOPPER_DRI2", "1");
                     }
-                } else if (driver instanceof Renderer.Vulkan vulkanDriver) {
+                } else if (driver instanceof Renderer.Vulkan vulkanDriver
+                        && options.getJava().getArchitecture() == Architecture.SYSTEM_ARCH) {
                     if (vulkanDriver.icdFile() != null) {
                         String absolutePath = FileUtils.getAbsolutePath(vulkanDriver.icdFile());
                         env.put("VK_ICD_FILENAMES", absolutePath);
                         env.put("VK_DRIVER_FILES", absolutePath);
                     }
                 }
-            } else if (OperatingSystem.CURRENT_OS == OperatingSystem.MACOS) {
+            } else if (OperatingSystem.CURRENT_OS == OperatingSystem.MACOS
+                    && options.getJava().getArchitecture() == Architecture.SYSTEM_ARCH) {
                 if (driver instanceof Renderer.Vulkan vulkanDriver
                         && vulkanDriver != Renderer.Vulkan.MOLTENVK
                         && vulkanDriver.icdFile() != null) {
