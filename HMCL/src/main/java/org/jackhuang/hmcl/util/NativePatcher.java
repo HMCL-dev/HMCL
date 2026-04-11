@@ -191,7 +191,7 @@ public final class NativePatcher {
 
     /// @see <a href="https://github.com/HMCL-dev/mesa-loader-windows">Java Mesa Loader for Windows</a>
     public static @Nullable Library getWindowsMesaLoader(@NotNull JavaRuntime java, @NotNull Renderer renderer, @NotNull OSVersion windowsVersion) {
-        if (renderer == Renderer.Known.DEFAULT)
+        if (renderer == Renderer.DEFAULT)
             return null;
 
         if (windowsVersion.isAtLeast(OSVersion.WINDOWS_10)) {

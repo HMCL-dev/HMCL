@@ -31,6 +31,8 @@ import java.util.stream.Stream;
 @NotNullByDefault
 public sealed interface Renderer {
 
+    Default DEFAULT = new Default();
+
     GraphicsAPI api();
 
     String name();
@@ -39,9 +41,22 @@ public sealed interface Renderer {
         return this.api() == api || this.api() == GraphicsAPI.DEFAULT;
     }
 
-    enum Known implements Renderer {
-        DEFAULT(GraphicsAPI.DEFAULT, ""),
+    final class Default implements Renderer {
+        private Default() {
+        }
 
+        @Override
+        public GraphicsAPI api() {
+            return GraphicsAPI.DEFAULT;
+        }
+
+        @Override
+        public String name() {
+            return "DEFAULT";
+        }
+    }
+
+    enum Known implements Renderer {
         // Vulkan
 
         /// @see <a href="https://docs.mesa3d.org/drivers/llvmpipe.html">LLVMpipe - The Mesa 3D Graphics Library</a>

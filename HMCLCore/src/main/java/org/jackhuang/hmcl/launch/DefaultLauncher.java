@@ -635,10 +635,7 @@ public class DefaultLauncher extends Launcher {
         env.put("INST_JAVA", options.getJava().getBinary().toString());
 
         if (options.getRenderer() instanceof Renderer.Known renderer) {
-            //noinspection StatementWithEmptyBody
-            if (renderer == Renderer.Known.DEFAULT) {
-                // Do nothing
-            } else if (OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS) {
+            if (OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS) {
                 if (renderer.mesaDriverName() != null) {
                     if (renderer.api() == GraphicsAPI.OPENGL && renderer != Renderer.Known.LLVMPIPE)
                         env.put("GALLIUM_DRIVER", renderer.mesaDriverName());

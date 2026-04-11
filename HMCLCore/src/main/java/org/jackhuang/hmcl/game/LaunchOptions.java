@@ -57,7 +57,7 @@ public class LaunchOptions implements Serializable {
     private String nativesDir;
     private ProcessPriority processPriority = ProcessPriority.NORMAL;
     private GraphicsAPI graphicsBackend = GraphicsAPI.DEFAULT;
-    private Renderer renderer = Renderer.Known.DEFAULT;
+    private Renderer renderer = Renderer.DEFAULT;
     private boolean useNativeGLFW;
     private boolean useNativeOpenAL;
     private boolean enableDebugLogOutput;
@@ -446,7 +446,7 @@ public class LaunchOptions implements Serializable {
         }
 
         public Builder setRenderer(Renderer renderer) {
-            options.renderer = Objects.requireNonNullElse(renderer, Renderer.Known.DEFAULT);
+            options.renderer = Objects.requireNonNullElse(renderer, Renderer.DEFAULT);
             return this;
         }
 

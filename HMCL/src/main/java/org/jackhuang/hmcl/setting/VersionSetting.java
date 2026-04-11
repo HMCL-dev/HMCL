@@ -617,7 +617,7 @@ public final class VersionSetting implements Cloneable, Observable {
         graphicsBackendProperty().set(api);
     }
 
-    private final ObjectProperty<Renderer> rendererProperty = new SimpleObjectProperty<>(this, "renderer", Renderer.Known.DEFAULT);
+    private final ObjectProperty<Renderer> rendererProperty = new SimpleObjectProperty<>(this, "renderer", Renderer.DEFAULT);
 
     public Renderer getRenderer() {
         return rendererProperty.get();
@@ -911,13 +911,13 @@ public final class VersionSetting implements Cloneable, Observable {
             vs.setRenderer(Optional.ofNullable(obj.get("renderer")).map(JsonElement::getAsString)
                     .flatMap(name -> {
                         try {
-                            return Optional.of(Renderer.Known.valueOf(name.toUpperCase(Locale.ROOT)));
+                            return Optional.<Renderer>of(Renderer.Known.valueOf(name.toUpperCase(Locale.ROOT)));
                         } catch (IllegalArgumentException ignored) {
                             return Optional.empty();
                         }
                     }).orElseGet(() -> {
                         boolean useSoftwareRenderer = Optional.ofNullable(obj.get("useSoftwareRenderer")).map(JsonElement::getAsBoolean).orElse(false);
-                        return useSoftwareRenderer ? Renderer.Known.LLVMPIPE : Renderer.Known.DEFAULT;
+                        return useSoftwareRenderer ? Renderer.Known.LLVMPIPE : Renderer.DEFAULT;
                     }));
 
             vs.setGraphicsBackend(Optional.ofNullable(obj.get("graphicsBackend")).map(JsonElement::getAsString)
