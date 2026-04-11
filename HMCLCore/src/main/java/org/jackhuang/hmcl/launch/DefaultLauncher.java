@@ -647,27 +647,26 @@ public class DefaultLauncher extends Launcher {
                     }
                 }
             } else if (OperatingSystem.CURRENT_OS == OperatingSystem.LINUX) {
-                if (renderer == Renderer.OpenGL.LLVMPIPE) {
-                    env.put("__GLX_VENDOR_LIBRARY_NAME", "mesa");
-                    env.put("LIBGL_ALWAYS_SOFTWARE", "1");
-                } else if (renderer == Renderer.OpenGL.ZINK) {
-                    env.put("__GLX_VENDOR_LIBRARY_NAME", "mesa");
-                    env.put("MESA_LOADER_DRIVER_OVERRIDE", "zink");
-                    /*
-                     * The amdgpu DDX is missing support for modifiers, causing Zink to fail.
-                     * Disable DRI3 to workaround this issue.
-                     *
-                     * Link: https://gitlab.freedesktop.org/mesa/mesa/-/issues/10093
-                     */
-                    env.put("LIBGL_KOPPER_DRI2", "1");
-                } else if (renderer instanceof Renderer.Vulkan vulkanDriver) {
-                    Path lvp = findVulkanDescriptorFile(
-                            List.of(Path.of("/usr/share/vulkan/icd.d"), Path.of("/etc/vulkan/icd.d")),
-                            vulkanDriver.icdName()
-                    );
-                    if (lvp != null) {
-                        env.put("VK_ICD_FILENAMES", FileUtils.getAbsolutePath(lvp));
-                        env.put("VK_DRIVER_FILES", FileUtils.getAbsolutePath(lvp));
+                if (renderer instanceof Renderer.OpenGL driver) {
+                    if (driver == Renderer.OpenGL.LLVMPIPE) {
+                        env.put("__GLX_VENDOR_LIBRARY_NAME", "mesa");
+                        env.put("LIBGL_ALWAYS_SOFTWARE", "1");
+                    } else if (driver == Renderer.OpenGL.ZINK) {
+                        env.put("__GLX_VENDOR_LIBRARY_NAME", "mesa");
+                        env.put("MESA_LOADER_DRIVER_OVERRIDE", "zink");
+                        /*
+                         * The amdgpu DDX is missing support for modifiers, causing Zink to fail.
+                         * Disable DRI3 to workaround this issue.
+                         *
+                         * Link: https://gitlab.freedesktop.org/mesa/mesa/-/issues/10093
+                         */
+                        env.put("LIBGL_KOPPER_DRI2", "1");
+                    }
+                } else if (renderer instanceof Renderer.Vulkan driver) {
+                    if (driver.icdFile() != null) {
+                        String absolutePath = FileUtils.getAbsolutePath(driver.icdFile());
+                        env.put("VK_ICD_FILENAMES", absolutePath);
+                        env.put("VK_DRIVER_FILES", absolutePath);
                     }
                 }
             }

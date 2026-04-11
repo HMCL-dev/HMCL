@@ -17,6 +17,8 @@
  */
 package org.jackhuang.hmcl.game;
 
+import javafx.css.Match;
+import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.platform.Architecture;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
 import org.jackhuang.hmcl.util.platform.Platform;
@@ -25,10 +27,17 @@ import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Unmodifiable;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Locale;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.*;
+import java.util.function.Function;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
+
+import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 @NotNullByDefault
 public sealed interface Renderer permits Renderer.Default, Renderer.Driver, Renderer.Unknown {
@@ -57,13 +66,11 @@ public sealed interface Renderer permits Renderer.Default, Renderer.Driver, Rend
 
     /// Get all supported renderers for a given graphics API.
     static @Unmodifiable List<Renderer> getSupported(GraphicsAPI api) {
-        var result = new ArrayList<Renderer>();
-        result.add(DEFAULT);
-        switch (api) {
-            case VULKAN -> result.addAll(Vulkan.SUPPORTED);
-            case OPENGL -> result.addAll(OpenGL.SUPPORTED);
-        }
-        return result;
+        return switch (api) {
+            case DEFAULT -> List.of(DEFAULT);
+            case VULKAN -> Vulkan.Holder.SUPPORTED;
+            case OPENGL -> OpenGL.SUPPORTED;
+        };
     }
 
     String name();
@@ -143,6 +150,7 @@ public sealed interface Renderer permits Renderer.Default, Renderer.Driver, Rend
         /// Intel HasVK driver.
         INTEL_HASVK("intel_hasvk"),
 
+        /// @see <a href="https://github.com/KhronosGroup/MoltenVK">MoltenVK - The Mesa 3D Graphics Library</a>
         MOLTENVK("MoltenVK") {
             @Override
             public boolean isSupportedOn(Platform platform) {
@@ -166,7 +174,86 @@ public sealed interface Renderer permits Renderer.Default, Renderer.Driver, Rend
             }
         };
 
-        static final List<Vulkan> SUPPORTED = Stream.of(Vulkan.values()).filter(it -> it.isSupportedOn(Platform.CURRENT_PLATFORM)).toList();
+        private static final class Holder {
+            static final List<Renderer> SUPPORTED;
+            static final Map<Vulkan, Path> DRIVER_TO_ICD_FILE;
+
+            static {
+                var driverToIcdFile = new EnumMap<Vulkan, Path>(Vulkan.class);
+                var supported = new LinkedHashSet<Renderer>();
+                supported.add(DEFAULT);
+
+                if (OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS) {
+                    supported.addAll(List.of(LAVAPIPE, DOZEN)); // TODO: More Vulkan drivers for Windows
+                } else {
+                    String archName = switch (Architecture.SYSTEM_ARCH) {
+                        case X86 -> "i686";
+                        case X86_64 -> "x86_64";
+                        default -> Architecture.SYSTEM_ARCH.getCheckedName();
+                    };
+
+                    if (OperatingSystem.CURRENT_OS == OperatingSystem.MACOS) {
+                        // LWJGL integrates MoltenVK, so it is always available
+                        supported.add(MOLTENVK);
+
+                        var prefix = Architecture.SYSTEM_ARCH == Architecture.X86_64
+                                ? Path.of("/usr/local")
+                                : Path.of("/opt/homebrew");
+
+                        // We need libvulkan.1.dylib to load custom Vulkan drivers
+                        if (Files.isRegularFile(prefix.resolve("lib/libvulkan.1.dylib"))) {
+                            if (Files.isRegularFile(prefix.resolve("share/vulkan/icd.d/lvp_icd." + archName + ".json"))) {
+                                supported.add(LAVAPIPE);
+                            }
+
+                            if (Architecture.SYSTEM_ARCH == Architecture.ARM64
+                                    && Files.isRegularFile(prefix.resolve("share/vulkan/icd.d/kosmickrisp_mesa_icd." + archName + ".json"))) {
+                                supported.add(KOSMICKRISP);
+                            }
+                        }
+                    } else {
+                        List<Path> icdDirs = switch (OperatingSystem.CURRENT_OS) {
+                            case LINUX -> List.of(
+                                    Path.of("/usr/share/vulkan/icd.d"),
+                                    Path.of("/etc/vulkan/icd.d")
+                            );
+                            case FREEBSD -> List.of(Path.of("/usr/local/share/vulkan/icd.d"));
+                            default -> List.of();
+                        };
+
+                        Map<String, Vulkan> icdNameToDriver = Stream.of(values()).collect(Collectors.toMap(Vulkan::icdName, Function.identity()));
+
+                        var pattern = Pattern.compile("(?<name>[a-zA-Z0-9_-]+)_icd(?:\\." + Pattern.quote(archName) + ")?\\.json");
+
+                        for (Path icdDir : icdDirs) {
+                            if (!Files.isDirectory(icdDir))
+                                continue;
+                            try (Stream<Path> stream = Files.list(icdDir)) {
+                                for (Path icdFile : Lang.toIterable(stream)) {
+                                    String fileName = icdFile.getFileName().toString();
+
+                                    Matcher matcher = pattern.matcher(fileName);
+                                    if (matcher.matches()) {
+                                        String icdName = matcher.group("name");
+
+                                        Vulkan driver = icdNameToDriver.get(icdName);
+                                        if (driver != null) {
+                                            driverToIcdFile.put(driver, icdFile);
+                                            supported.add(driver);
+                                        }
+                                    }
+                                }
+                            } catch (IOException e) {
+                                LOG.warning("Failed to read Vulkan ICD files in " + icdDir, e);
+                            }
+                        }
+                    }
+                }
+
+                SUPPORTED = List.copyOf(supported);
+                DRIVER_TO_ICD_FILE = Collections.unmodifiableMap(driverToIcdFile);
+            }
+        }
 
         private final String icdName;
 
@@ -179,8 +266,17 @@ public sealed interface Renderer permits Renderer.Default, Renderer.Driver, Rend
             return GraphicsAPI.VULKAN;
         }
 
+        @Contract(pure = true)
         public String icdName() {
             return icdName;
+        }
+
+        /// Get the path to the ICD file for this driver.
+        ///
+        /// If the ICD file does not exist, return `null`.
+        @Contract(pure = true)
+        public @Nullable Path icdFile() {
+            return Holder.DRIVER_TO_ICD_FILE.get(this);
         }
     }
 
@@ -210,7 +306,11 @@ public sealed interface Renderer permits Renderer.Default, Renderer.Driver, Rend
             }
         };
 
-        static final List<OpenGL> SUPPORTED = Stream.of(OpenGL.values()).filter(it -> it.isSupportedOn(Platform.CURRENT_PLATFORM)).toList();
+        static final List<Renderer> SUPPORTED =
+                Stream.concat(
+                        Stream.of(DEFAULT),
+                        Stream.of(OpenGL.values()).filter(it -> it.isSupportedOn(Platform.CURRENT_PLATFORM))
+                ).toList();
 
         @Override
         public GraphicsAPI api() {
