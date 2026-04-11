@@ -320,6 +320,7 @@ public sealed interface Renderer permits Renderer.Default, Renderer.Driver, Rend
 
                         var pattern = Pattern.compile("(?<name>[a-zA-Z0-9_-]+)_icd(?:\\." + Pattern.quote(archName) + ")?\\.json");
 
+                        EnumSet<Vulkan> foundSupported = EnumSet.noneOf(Vulkan.class);
                         for (Path icdDir : icdDirs) {
                             if (!Files.isDirectory(icdDir))
                                 continue;
@@ -336,7 +337,7 @@ public sealed interface Renderer permits Renderer.Default, Renderer.Driver, Rend
                                             driverToIcdFile.put(driver, icdFile);
 
                                             if (driver.isSupported(Platform.CURRENT_PLATFORM, SystemInfo.getGraphicsCards())) {
-                                                supported.add(driver);
+                                                foundSupported.add(driver);
                                             }
                                         }
                                     }
@@ -345,6 +346,8 @@ public sealed interface Renderer permits Renderer.Default, Renderer.Driver, Rend
                                 LOG.warning("Failed to read Vulkan ICD files in " + icdDir, e);
                             }
                         }
+
+                        supported.addAll(foundSupported);
                     }
                 }
 
