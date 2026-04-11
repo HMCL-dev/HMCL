@@ -41,9 +41,11 @@ import java.util.stream.Stream;
 
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
+/// @author Glavo
 @NotNullByDefault
 public sealed interface Renderer permits Renderer.Default, Renderer.Driver, Renderer.Unknown {
 
+    /// Default renderer.
     Default DEFAULT = new Default();
 
     /// Parse a renderer from a string.
@@ -245,7 +247,14 @@ public sealed interface Renderer permits Renderer.Default, Renderer.Driver, Rend
         /// It is a Vulkan driver for ARM Mali GPUs.
         ///
         /// @see <a href="https://docs.mesa3d.org/drivers/panfrost.html">Panfrost - The Mesa 3D Graphics Library</a>
-        PANVK("panfrost");
+        PANVK("panfrost") {
+            @Override
+            public boolean isSupported(Platform platform, @Nullable List<GraphicsCard> cards) {
+                return platform.os() == OperatingSystem.LINUX
+                        && (platform.arch() == Architecture.ARM32 || platform.arch() == Architecture.ARM64)
+                        && Vulkan.hasCard(cards, HardwareVendor.ARM);
+            }
+        };
 
         private static final class Holder {
             static final List<Renderer> SUPPORTED;
