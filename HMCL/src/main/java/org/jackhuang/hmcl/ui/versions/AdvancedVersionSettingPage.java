@@ -42,6 +42,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.nio.file.FileSystems;
 import java.util.Arrays;
+import java.util.List;
 import java.util.Locale;
 
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
@@ -196,18 +197,18 @@ public final class AdvancedVersionSettingPage extends StackPane implements Decor
             graphicsBackendPane.setTitle(i18n("settings.advanced.graphics_backend"));
             graphicsBackendPane.setConverter(backend -> i18n("settings.advanced.graphics_backend." + backend.name().toLowerCase(Locale.ROOT)));
             graphicsBackendPane.setDescriptionConverter(backend -> switch (backend) {
-                    case DEFAULT -> i18n("settings.advanced.graphics_backend.default.desc");
-                    case OPENGL -> i18n("settings.advanced.graphics_backend.opengl.desc");
-                    case VULKAN -> {
-                        if (gameVersion == null)
-                            yield i18n("settings.advanced.graphics_backend.vulkan.desc.global");
-                        else if (gameVersion.compareTo("26.2-snapshot-2") < 0)
-                            yield i18n("settings.advanced.graphics_backend.vulkan.desc.unsupported");
-                        else
-                            yield i18n("settings.advanced.graphics_backend.vulkan.desc");
-                    }
-                    default -> null;
-                });
+                case DEFAULT -> i18n("settings.advanced.graphics_backend.default.desc");
+                case OPENGL -> i18n("settings.advanced.graphics_backend.opengl.desc");
+                case VULKAN -> {
+                    if (gameVersion == null)
+                        yield i18n("settings.advanced.graphics_backend.vulkan.desc.global");
+                    else if (gameVersion.compareTo("26.2-snapshot-2") < 0)
+                        yield i18n("settings.advanced.graphics_backend.vulkan.desc.unsupported");
+                    else
+                        yield i18n("settings.advanced.graphics_backend.vulkan.desc");
+                }
+                default -> null;
+            });
             graphicsBackendPane.setValue(GraphicsAPI.DEFAULT);
             graphicsBackendPane.setItems(GraphicsAPI.values());
 
@@ -218,22 +219,23 @@ public final class AdvancedVersionSettingPage extends StackPane implements Decor
                 String bundleKey = "settings.advanced.renderer." + e.name().toLowerCase(Locale.ROOT) + ".desc";
                 return I18n.hasKey(bundleKey) ? i18n(bundleKey) : null;
             });
-            rendererPane.setValue(Renderer.DEFAULT);
-            rendererPane.setItems(Renderer.DEFAULT);
+            rendererPane.setValue(Renderer.Known.DEFAULT);
 
             FXUtils.onChangeAndOperate(graphicsBackendPane.valueProperty(), backend -> {
                 if (backend == null) { // unbind
                     return;
                 }
 
-                rendererPane.setItems(Renderer.SUPPORTED.get(backend));
+                @SuppressWarnings("unchecked")
+                var renderers = (List<Renderer>) (List<? extends Renderer>) Renderer.Known.SUPPORTED.get(backend);
+                rendererPane.setItems(renderers);
                 if (backend == GraphicsAPI.DEFAULT) {
                     rendererPane.setDisable(true);
-                    rendererPane.setValue(Renderer.DEFAULT);
+                    rendererPane.setValue(Renderer.Known.DEFAULT);
                 } else {
                     rendererPane.setDisable(false);
                     if (rendererPane.getValue() == null || !rendererPane.getValue().isSupported(backend)) {
-                        rendererPane.setValue(Renderer.DEFAULT);
+                        rendererPane.setValue(Renderer.Known.DEFAULT);
                     }
                 }
             });

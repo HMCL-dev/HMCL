@@ -17,6 +17,9 @@
  */
 package org.jackhuang.hmcl.game;
 
+import org.jackhuang.hmcl.util.platform.Architecture;
+import org.jackhuang.hmcl.util.platform.OperatingSystem;
+import org.jackhuang.hmcl.util.platform.Platform;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
 
@@ -25,70 +28,151 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Stream;
 
-/// @author Glavo
 @NotNullByDefault
-public enum Renderer {
-    DEFAULT(GraphicsAPI.DEFAULT, null, null),
+public sealed interface Renderer {
 
-    LAVAPIPE(GraphicsAPI.VULKAN, "lavapipe", "lvp"),
+    GraphicsAPI api();
 
-    // Currently, Dozen does not support the VK_KHR_push_descriptor feature, so it cannot launch Minecraft 26.2
-    // Using Dozen can run Minecraft 1.21.11 + VulkanMod, but it will cause the game to crash after playing for a while
-    DOZEN(GraphicsAPI.VULKAN, "dzn", "dzn"),
+    String name();
 
-    ASAHI(GraphicsAPI.VULKAN, null, "asahi"),
-    NVIDIA(GraphicsAPI.VULKAN, null, "nvidia"),
-    NOUVEAU(GraphicsAPI.VULKAN, null, "nouveau"),
+    default boolean isSupported(GraphicsAPI api) {
+        return this.api() == api || this.api() == GraphicsAPI.DEFAULT;
+    }
 
+    enum Known implements Renderer {
+        DEFAULT(GraphicsAPI.DEFAULT, ""),
 
-    LLVMPIPE(GraphicsAPI.OPENGL, "llvmpipe", null),
-    ZINK(GraphicsAPI.OPENGL, "zink", null),
-    D3D12(GraphicsAPI.OPENGL, "d3d12", null),
-    ;
+        // Vulkan
 
-    /// Map the graphics API to supported renderers.
-    public static final Map<GraphicsAPI, List<Renderer>> SUPPORTED;
+        /// @see <a href="https://docs.mesa3d.org/drivers/llvmpipe.html">LLVMpipe - The Mesa 3D Graphics Library</a>
+        LAVAPIPE(GraphicsAPI.VULKAN, "lvp") {
+            @Override
+            public String mesaDriverName() {
+                return "lavapipe";
+            }
+        },
 
-    static {
-        var map = new EnumMap<GraphicsAPI, List<Renderer>>(GraphicsAPI.class);
+        /// ## Note
+        /// Currently, Dozen does not support the VK_KHR_push_descriptor feature, so it cannot launch Minecraft 26.2
+        /// Using Dozen can run Minecraft 1.21.11 + VulkanMod, but it will cause the game to crash after playing for a while
+        DOZEN(GraphicsAPI.VULKAN, "dzn") {
+            @Override
+            public boolean isSupportedOn(Platform platform) {
+                return platform.os() == OperatingSystem.WINDOWS;
+            }
 
-        for (var api : GraphicsAPI.values()) {
-            map.put(api, Stream.of(values()).filter(it -> it.isSupported(api)).toList());
+            @Override
+            public String mesaDriverName() {
+                return "dzn";
+            }
+        },
+
+        /// @see <a href="https://developer.nvidia.com/vulkan">Vulkan Open Standard Modern GPU API | NVIDIA Developer</a>
+        NVIDIA(GraphicsAPI.VULKAN, "nvidia"),
+
+        /// @see <a href="https://docs.mesa3d.org/drivers/nvk.html">NVK - The Mesa 3D Graphics Library</a>
+        NVIDIA_NVK(GraphicsAPI.VULKAN, "nouveau") {
+            @Override
+            public boolean isSupportedOn(Platform platform) {
+                return platform.os() == OperatingSystem.LINUX;
+            }
+        },
+
+        /// @see <a href="https://docs.mesa3d.org/drivers/radv.html">RADV - The Mesa 3D Graphics Library</a>
+        AMD_RADV(GraphicsAPI.VULKAN, "radeon"),
+
+        /// @see <a href="https://docs.mesa3d.org/drivers/anv.html">ANV - The Mesa 3D Graphics Library</a>
+        INTEL_ANV(GraphicsAPI.VULKAN, "intel"),
+
+        /// Intel HasVK driver.
+        INTEL_HASVK(GraphicsAPI.VULKAN, "intel_hasvk"),
+
+        MOLTENVK(GraphicsAPI.VULKAN, "MoltenVK") {
+            @Override
+            public boolean isSupportedOn(Platform platform) {
+                return platform.os() == OperatingSystem.MACOS;
+            }
+        },
+
+        /// @see <a href="https://docs.mesa3d.org/drivers/kosmickrisp.html">KosmicKrisp - The Mesa 3D Graphics Library</a>
+        KOSMICKRISP(GraphicsAPI.VULKAN, "kosmickrisp_mesa") {
+            @Override
+            public boolean isSupportedOn(Platform platform) {
+                return platform.os() == OperatingSystem.MACOS && platform.arch() == Architecture.ARM64;
+            }
+        },
+
+        // OpenGL
+
+        /// @see <a href="https://docs.mesa3d.org/drivers/llvmpipe.html">LLVMpipe - The Mesa 3D Graphics Library</a>
+        LLVMPIPE(GraphicsAPI.OPENGL, "") {
+            @Override
+            public String mesaDriverName() {
+                return "llvmpipe";
+            }
+        },
+        ZINK(GraphicsAPI.OPENGL, "") {
+            @Override
+            public String mesaDriverName() {
+                return "zink";
+            }
+        },
+        D3D12(GraphicsAPI.OPENGL, "") {
+            @Override
+            public boolean isSupportedOn(Platform platform) {
+                return platform.os() == OperatingSystem.WINDOWS;
+            }
+
+            @Override
+            public String mesaDriverName() {
+                return "d3d12";
+            }
+        },
+        ;
+
+        /// Map the graphics API to supported renderers.
+        public static final Map<GraphicsAPI, List<Known>> SUPPORTED;
+
+        static {
+            var map = new EnumMap<GraphicsAPI, List<Known>>(GraphicsAPI.class);
+
+            for (var api : GraphicsAPI.values()) {
+                map.put(api, Stream.of(values())
+                        .filter(it -> it.isSupported(api) && it.isSupportedOn(Platform.SYSTEM_PLATFORM))
+                        .toList());
+            }
+
+            SUPPORTED = map;
         }
 
-        SUPPORTED = map;
+        private final GraphicsAPI api;
+
+        private final String icdName;
+
+        Known(GraphicsAPI api, String icdName) {
+            this.api = api;
+            this.icdName = icdName;
+        }
+
+        /// Get the Graphics API used by this renderer.
+        @Override
+        public GraphicsAPI api() {
+            return api;
+        }
+
+        public @Nullable String mesaDriverName() {
+            return null;
+        }
+
+        public String icdName() {
+            return icdName;
+        }
     }
 
-    private final GraphicsAPI api;
-
-    private final @Nullable String mesaDriverName;
-    private final @Nullable String icdName;
-
-    Renderer(GraphicsAPI api, @Nullable String mesaDriverName, @Nullable String icdName) {
-        this.api = api;
-        this.mesaDriverName = mesaDriverName;
-        this.icdName = icdName;
+    record Unknown(GraphicsAPI api, String name) implements Renderer {
     }
 
-    /// Get the Graphics API used by this renderer.
-    public GraphicsAPI getApi() {
-        return api;
+    default boolean isSupportedOn(Platform platform) {
+        return true;
     }
-
-    public boolean isSupported(GraphicsAPI api) {
-        return this.api == api || this.api == GraphicsAPI.DEFAULT;
-    }
-
-    public @Nullable String getMesaDriverName() {
-        return mesaDriverName;
-    }
-
-    public @Nullable String getIcdName() {
-        return icdName;
-    }
-
-    public @Nullable String getIcdFileName() {
-        return icdName != null ? icdName + "_icd.json" : null;
-    }
-
 }

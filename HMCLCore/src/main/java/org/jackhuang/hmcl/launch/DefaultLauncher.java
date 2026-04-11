@@ -266,8 +266,8 @@ public class DefaultLauncher extends Launcher {
         }
 
         if (OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS
-                && options.getRenderer() != null
-                && options.getRenderer().getMesaDriverName() != null) {
+                && options.getRenderer() instanceof Renderer.Known knownRenderer
+                && knownRenderer.mesaDriverName() != null) {
             res.addDefault("-Dorg.glavo.mesa.loader.nativeDir=", FileUtils.getAbsolutePath(nativeFolder.resolve("mesa-loader")));
         }
 
@@ -634,50 +634,44 @@ public class DefaultLauncher extends Launcher {
         env.put("INST_MC_DIR", FileUtils.getAbsolutePath(repository.getRunDirectory(version.getId())));
         env.put("INST_JAVA", options.getJava().getBinary().toString());
 
-        Renderer renderer = options.getRenderer();
-        if (renderer != Renderer.DEFAULT) {
-            if (OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS) {
-                if (renderer.getMesaDriverName() != null) {
-                    if (renderer.getApi() == GraphicsAPI.OPENGL && renderer != Renderer.LLVMPIPE)
-                        env.put("GALLIUM_DRIVER", renderer.getMesaDriverName());
+        if (options.getRenderer() instanceof Renderer.Known renderer) {
+            //noinspection StatementWithEmptyBody
+            if (renderer == Renderer.Known.DEFAULT) {
+                // Do nothing
+            } else if (OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS) {
+                if (renderer.mesaDriverName() != null) {
+                    if (renderer.api() == GraphicsAPI.OPENGL && renderer != Renderer.Known.LLVMPIPE)
+                        env.put("GALLIUM_DRIVER", renderer.mesaDriverName());
 
-                    if (renderer.getApi() == GraphicsAPI.VULKAN) {
-                        String icdFile = FileUtils.getAbsolutePath(nativeFolder.resolve("mesa-loader/" + renderer.getIcdFileName()));
+                    if (renderer.api() == GraphicsAPI.VULKAN) {
+                        String icdFile = FileUtils.getAbsolutePath(nativeFolder.resolve("mesa-loader/" + renderer.icdName() + "_icd.json"));
 
                         env.put("VK_ICD_FILENAMES", icdFile);
                         env.put("VK_DRIVER_FILES", icdFile);
                     }
                 }
             } else if (OperatingSystem.CURRENT_OS == OperatingSystem.LINUX) {
-                switch (renderer) {
-                    case LLVMPIPE: {
-                        env.put("__GLX_VENDOR_LIBRARY_NAME", "mesa");
-                        env.put("LIBGL_ALWAYS_SOFTWARE", "1");
-                        break;
-                    }
-                    case ZINK: {
-                        env.put("__GLX_VENDOR_LIBRARY_NAME", "mesa");
-                        env.put("MESA_LOADER_DRIVER_OVERRIDE", "zink");
-                        /*
-                         * The amdgpu DDX is missing support for modifiers, causing Zink to fail.
-                         * Disable DRI3 to workaround this issue.
-                         *
-                         * Link: https://gitlab.freedesktop.org/mesa/mesa/-/issues/10093
-                         */
-                        env.put("LIBGL_KOPPER_DRI2", "1");
-                        break;
-                    }
-                    case LAVAPIPE: {
-                        Path lvp = findVulkanDescriptorFile(
-                                List.of(Path.of("/usr/share/vulkan/icd.d"), Path.of("/etc/vulkan/icd.d")),
-                                "lvp_icd"
-                        );
-                        if (lvp != null) {
-                            env.put("VK_ICD_FILENAMES", FileUtils.getAbsolutePath(lvp));
-                            env.put("VK_DRIVER_FILES", FileUtils.getAbsolutePath(lvp));
-                        }
-
-                        break;
+                if (renderer == Renderer.Known.LLVMPIPE) {
+                    env.put("__GLX_VENDOR_LIBRARY_NAME", "mesa");
+                    env.put("LIBGL_ALWAYS_SOFTWARE", "1");
+                } else if (renderer == Renderer.Known.ZINK) {
+                    env.put("__GLX_VENDOR_LIBRARY_NAME", "mesa");
+                    env.put("MESA_LOADER_DRIVER_OVERRIDE", "zink");
+                    /*
+                     * The amdgpu DDX is missing support for modifiers, causing Zink to fail.
+                     * Disable DRI3 to workaround this issue.
+                     *
+                     * Link: https://gitlab.freedesktop.org/mesa/mesa/-/issues/10093
+                     */
+                    env.put("LIBGL_KOPPER_DRI2", "1");
+                } else if (renderer.api() == GraphicsAPI.VULKAN) {
+                    Path lvp = findVulkanDescriptorFile(
+                            List.of(Path.of("/usr/share/vulkan/icd.d"), Path.of("/etc/vulkan/icd.d")),
+                            renderer.icdName()
+                    );
+                    if (lvp != null) {
+                        env.put("VK_ICD_FILENAMES", FileUtils.getAbsolutePath(lvp));
+                        env.put("VK_DRIVER_FILES", FileUtils.getAbsolutePath(lvp));
                     }
                 }
             }
