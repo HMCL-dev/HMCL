@@ -294,7 +294,7 @@ public sealed interface Renderer permits Renderer.Default, Renderer.Driver, Rend
                         supported.add(MOLTENVK);
 
                         // We need libvulkan.1.dylib to load custom Vulkan drivers
-                        if (Files.isRegularFile(HomebrewUtils.HOMEBREW_PREFIX.resolve("lib/libvulkan.1.dylib"))) {
+                        if (Files.isRegularFile(HomebrewUtils.HOMEBREW_PREFIX)) {
                             Path lvpIcd = HomebrewUtils.HOMEBREW_PREFIX.resolve("share/vulkan/icd.d/lvp_icd." + archName + ".json");
                             if (Files.isRegularFile(lvpIcd)) {
                                 driverToIcdFile.put(LAVAPIPE, lvpIcd);

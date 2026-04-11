@@ -275,9 +275,8 @@ public class DefaultLauncher extends Launcher {
         if (OperatingSystem.CURRENT_OS == OperatingSystem.MACOS
                 && options.getRenderer() instanceof Renderer.Vulkan vulkanDriver
                 && vulkanDriver.icdFile() != null) {
-            Path vulkanLibrary = HomebrewUtils.HOMEBREW_PREFIX.resolve("lib/libvulkan.1.dylib");
-            if (Files.isRegularFile(vulkanLibrary)) {
-                res.addDefault("-Dorg.lwjgl.vulkan.libname=", FileUtils.getAbsolutePath(vulkanLibrary));
+            if (Files.isRegularFile(HomebrewUtils.HOMEBREW_PREFIX)) {
+                res.addDefault("-Dorg.lwjgl.vulkan.libname=", FileUtils.getAbsolutePath(HomebrewUtils.HOMEBREW_PREFIX));
             }
         }
 

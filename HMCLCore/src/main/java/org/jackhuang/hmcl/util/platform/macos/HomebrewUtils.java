@@ -34,15 +34,24 @@ public final class HomebrewUtils {
     /// - For other operating systems, it is undefined.
     public static final Path HOMEBREW_PREFIX;
 
+    /// The path to `libvulkan.1.dylib`.
+    ///
+    /// For non-macOS operating systems, it is undefined.
+    public static final Path LIB_VULKAN;
+
     static {
-        HOMEBREW_PREFIX = switch (OperatingSystem.CURRENT_OS) {
+        if (OperatingSystem.CURRENT_OS == OperatingSystem.MACOS) {
             // TODO: custom Homebrew prefix for macOS
-            case MACOS -> Architecture.SYSTEM_ARCH.isX86()
+            HOMEBREW_PREFIX = Architecture.SYSTEM_ARCH.isX86()
                     ? Path.of("/usr/local")
                     : Path.of("/opt/homebrew");
+
+            LIB_VULKAN = HOMEBREW_PREFIX.resolve("lib/libvulkan.1.dylib");
+        } else {
             // For other operating systems, we don't need Homebrew.
-            default -> Path.of("");
-        };
+            HOMEBREW_PREFIX = Path.of("");
+            LIB_VULKAN = Path.of("");
+        }
     }
 
     private HomebrewUtils() {
