@@ -19,10 +19,7 @@ package org.jackhuang.hmcl.game;
 
 import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.io.FileUtils;
-import org.jackhuang.hmcl.util.platform.Architecture;
-import org.jackhuang.hmcl.util.platform.OperatingSystem;
-import org.jackhuang.hmcl.util.platform.Platform;
-import org.jackhuang.hmcl.util.platform.SystemInfo;
+import org.jackhuang.hmcl.util.platform.*;
 import org.jackhuang.hmcl.util.platform.hardware.GraphicsCard;
 import org.jackhuang.hmcl.util.platform.hardware.HardwareVendor;
 import org.jackhuang.hmcl.util.platform.macos.HomebrewUtils;
@@ -346,10 +343,48 @@ public sealed interface Renderer permits Renderer.Default, Renderer.Driver, Rend
                                         driver = icdNameToDriver.get(icdName);
                                     } else {
                                         switch (fileName.substring(0, fileName.length() - ".json".length())) {
-                                            case "igvk64", "igvk32" -> driver = INTEL_VULKAN;
-                                            case "nv-vk64", "nv-vk32" -> driver = NVIDIA_VULKAN;
-                                            case "amd-vulkan64", "amd-vulkan32" -> driver = AMDVLK;
-                                            case "qcvk_icd_arm64x" -> driver = QUALCOMM;
+                                            case "igvk64" -> {
+                                                if (Architecture.SYSTEM_ARCH.getBits() == Bits.BIT_64)
+                                                    driver = INTEL_VULKAN;
+                                                else
+                                                    continue;
+                                            }
+                                            case "igvk32" -> {
+                                                if (Architecture.SYSTEM_ARCH.getBits() == Bits.BIT_32)
+                                                    driver = INTEL_VULKAN;
+                                                else
+                                                    continue;
+                                            }
+                                            case "nv-vk64" -> {
+                                                if (Architecture.SYSTEM_ARCH.getBits() == Bits.BIT_64)
+                                                    driver = NVIDIA_VULKAN;
+                                                else
+                                                    continue;
+                                            }
+                                            case "nv-vk32" -> {
+                                                if (Architecture.SYSTEM_ARCH.getBits() == Bits.BIT_32)
+                                                    driver = NVIDIA_VULKAN;
+                                                else
+                                                    continue;
+                                            }
+                                            case "amd-vulkan64" -> {
+                                                if (Architecture.SYSTEM_ARCH.getBits() == Bits.BIT_64)
+                                                    driver = AMDVLK;
+                                                else
+                                                    continue;
+                                            }
+                                            case "amd-vulkan32" -> {
+                                                if (Architecture.SYSTEM_ARCH.getBits() == Bits.BIT_32)
+                                                    driver = AMDVLK;
+                                                else
+                                                    continue;
+                                            }
+                                            case "qcvk_icd_arm64x" -> {
+                                                if (Architecture.SYSTEM_ARCH == Architecture.ARM64)
+                                                    driver = QUALCOMM;
+                                                else
+                                                    continue;
+                                            }
                                             default -> {
                                                 continue;
                                             }
