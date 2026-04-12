@@ -414,7 +414,7 @@
 }
 
 .installer-item-wrapper .installer-item:list-item > .installer-item-name {
-    -fx-pref-width: 80px;
+    -fx-pref-width: 100px;
 }
 
 .installer-item-wrapper .installer-item:list-item > .installer-item-status {
