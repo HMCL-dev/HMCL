@@ -17,6 +17,7 @@
  */
 package org.jackhuang.hmcl.ui.construct;
 
+import javafx.beans.binding.Bindings;
 import javafx.geometry.Insets;
 import javafx.scene.layout.StackPane;
 import javafx.scene.shape.Rectangle;
@@ -28,7 +29,7 @@ public class MenuSeparator extends StackPane {
         Rectangle rect = new Rectangle();
         rect.widthProperty().bind(widthProperty().add(-14));
         rect.setHeight(1);
-        rect.setFill(Themes.getColorScheme().getOutlineVariant());
+        rect.fillProperty().bind(Bindings.createObjectBinding(() -> Themes.getColorScheme().getOutlineVariant(), Themes.colorSchemeProperty()));
         maxHeightProperty().set(10);
         setPadding(new Insets(3));
         getChildren().setAll(rect);
