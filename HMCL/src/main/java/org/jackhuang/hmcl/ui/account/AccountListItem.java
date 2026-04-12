@@ -137,8 +137,8 @@ public class AccountListItem extends RadioButton {
      */
     @Nullable
     public Task<?> uploadSkin() {
-        if (account instanceof OfflineAccount offlineAccount) {
-            Controllers.dialog(new OfflineAccountSkinPane(offlineAccount));
+        if (account instanceof OfflineAccount) {
+            Controllers.dialog(new OfflineAccountSkinPane((OfflineAccount) account));
             return null;
         }
         if (!account.canUploadSkin()) {
