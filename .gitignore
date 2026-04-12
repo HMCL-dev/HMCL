@@ -66,5 +66,6 @@ language-subtag-registry
 /.hmcl.json
 /.hmcl/
 
-# gemini
+# AI
 /.gemini/
+!/.gemini/config.yaml
