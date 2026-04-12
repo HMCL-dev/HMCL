@@ -350,6 +350,7 @@ public sealed interface Renderer permits Renderer.Default, Renderer.Driver, Rend
                                             case "igvk64", "igvk32" -> driver = INTEL_VULKAN;
                                             case "nv-vk64", "nv-vk32" -> driver = NVIDIA_VULKAN;
                                             case "amd-vulkan64", "amd-vulkan32" -> driver = AMDVLK;
+                                            case "qcvk_icd_arm64x" -> driver = QUALCOMM;
                                             default -> {
                                                 continue;
                                             }
