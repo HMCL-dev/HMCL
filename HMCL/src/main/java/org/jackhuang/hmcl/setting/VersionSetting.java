@@ -836,7 +836,7 @@ public final class VersionSetting implements Cloneable, Observable {
 
             obj.addProperty("graphicsBackend", src.getGraphicsBackend().name());
             obj.addProperty("renderer", src.getRenderer().name());
-            if (src.getRenderer() == Renderer.LLVMPIPE)
+            if (src.getRenderer() == Renderer.OpenGL.LLVMPIPE)
                 obj.addProperty("useSoftwareRenderer", true);
 
             return obj;
@@ -909,15 +909,9 @@ public final class VersionSetting implements Cloneable, Observable {
             }
 
             vs.setRenderer(Optional.ofNullable(obj.get("renderer")).map(JsonElement::getAsString)
-                    .flatMap(name -> {
-                        try {
-                            return Optional.of(Renderer.valueOf(name.toUpperCase(Locale.ROOT)));
-                        } catch (IllegalArgumentException ignored) {
-                            return Optional.empty();
-                        }
-                    }).orElseGet(() -> {
+                    .map(Renderer::of).orElseGet(() -> {
                         boolean useSoftwareRenderer = Optional.ofNullable(obj.get("useSoftwareRenderer")).map(JsonElement::getAsBoolean).orElse(false);
-                        return useSoftwareRenderer ? Renderer.LLVMPIPE : Renderer.DEFAULT;
+                        return useSoftwareRenderer ? Renderer.OpenGL.LLVMPIPE : Renderer.DEFAULT;
                     }));
 
             vs.setGraphicsBackend(Optional.ofNullable(obj.get("graphicsBackend")).map(JsonElement::getAsString)
@@ -927,7 +921,7 @@ public final class VersionSetting implements Cloneable, Observable {
                         } catch (IllegalArgumentException ignored) {
                             return Optional.empty();
                         }
-                    }).orElseGet(() -> vs.getRenderer().getApi()));
+                    }).orElseGet(() -> vs.getRenderer() instanceof Renderer.Driver renderer ? renderer.api() : GraphicsAPI.DEFAULT));
 
             return vs;
         }

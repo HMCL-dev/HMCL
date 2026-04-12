@@ -219,22 +219,20 @@ public final class AdvancedVersionSettingPage extends StackPane implements Decor
                 return I18n.hasKey(bundleKey) ? i18n(bundleKey) : null;
             });
             rendererPane.setValue(Renderer.DEFAULT);
-            rendererPane.setItems(Renderer.DEFAULT);
 
             FXUtils.onChangeAndOperate(graphicsBackendPane.valueProperty(), backend -> {
                 if (backend == null) { // unbind
                     return;
                 }
 
-                rendererPane.setItems(Renderer.SUPPORTED.get(backend));
+                rendererPane.setItems(Renderer.getSupported(backend));
                 if (backend == GraphicsAPI.DEFAULT) {
                     rendererPane.setDisable(true);
                     rendererPane.setValue(Renderer.DEFAULT);
                 } else {
                     rendererPane.setDisable(false);
-                    if (rendererPane.getValue() == null || !rendererPane.getValue().isSupported(backend)) {
+                    if (!(rendererPane.getValue() instanceof Renderer.Driver driver) || driver.api() != backend)
                         rendererPane.setValue(Renderer.DEFAULT);
-                    }
                 }
             });
 

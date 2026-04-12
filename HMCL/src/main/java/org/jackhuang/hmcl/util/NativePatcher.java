@@ -197,7 +197,7 @@ public final class NativePatcher {
         if (windowsVersion.isAtLeast(OSVersion.WINDOWS_10)) {
             return getNatives(java.getPlatform()).get("mesa-loader");
         } else if (windowsVersion.isAtLeast(OSVersion.WINDOWS_7)) {
-            if (renderer == Renderer.LLVMPIPE)
+            if (renderer == Renderer.OpenGL.LLVMPIPE)
                 return getNatives(java.getPlatform()).get("software-renderer-loader");
             else
                 return null;
