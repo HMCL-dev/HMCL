@@ -26,10 +26,12 @@ import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
+import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.control.*;
 import javafx.scene.layout.*;
 import org.jackhuang.hmcl.setting.Profile;
+import org.jackhuang.hmcl.task.FetchTask;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.task.TaskExecutor;
 import org.jackhuang.hmcl.task.TaskListener;
@@ -37,6 +39,7 @@ import org.jackhuang.hmcl.ui.download.DifferentDownloadTask2OneTask;
 import org.jackhuang.hmcl.ui.construct.PageAware;
 import org.jackhuang.hmcl.ui.download.DownloadEntry;
 
+import static org.jackhuang.hmcl.util.i18n.I18n.formatSpeed;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 public class DownloadTaskList extends DownloadListPage implements PageAware{
@@ -53,7 +56,7 @@ public class DownloadTaskList extends DownloadListPage implements PageAware{
         listView.setCellFactory(lv -> new DownloadEntryCell());
     }
 
-    private void cleanupFinishedTasks() {
+    public void cleanupFinishedTasks() {
         Platform.runLater(() -> {
             entries.removeIf(entry -> {
                 String status = entry.getStatus();
@@ -69,7 +72,8 @@ public class DownloadTaskList extends DownloadListPage implements PageAware{
 
     @Override
     public void onPageHidden() {
-        cleanupFinishedTasks();
+        //打开页面时运行
+//        cleanupFinishedTasks();
         // DifferentDownloadTask2OneTask.setActiveDownloadTaskList(null);
     }
 
@@ -91,6 +95,60 @@ public class DownloadTaskList extends DownloadListPage implements PageAware{
             super(control);
             BorderPane pane = new BorderPane();
             pane.setCenter(control.listView);
+
+            HBox bottomBar = new HBox(10);
+            HBox labelBar = new HBox(10);
+
+            Insets insets = new Insets(10);
+
+            bottomBar.setAlignment(Pos.CENTER_RIGHT);
+            bottomBar.setPadding(insets);
+
+            labelBar.setAlignment(Pos.CENTER_LEFT);
+            labelBar.setPadding(new Insets(5, 10, 5, 10));
+
+            Label globalSpeedLabel = new Label();
+            globalSpeedLabel.setAlignment(Pos.CENTER_LEFT);
+            globalSpeedLabel.setStyle("-fx-text-fill: black; -fx-font-size: 1em;");
+
+            Button clearBtn = new JFXButton(i18n("download.task.button.clear_uesless"));
+            clearBtn.getStyleClass().add("small-button");
+            clearBtn.setOnAction(e -> control.cleanupFinishedTasks());
+
+            Button pauseAllBtn = new JFXButton(i18n("download.task.button.pause_all"));
+            pauseAllBtn.setOnAction(e -> control.getEntries().stream()
+                    .filter(entry -> DownloadEntry.STATUS_RUNNING.equals(entry.getStatus()))
+                    .forEach(entry -> entry.getExecutor().cancel()
+                    ));
+
+            pauseAllBtn.disableProperty().bind(
+                    Bindings.createBooleanBinding(
+                            () -> control.getEntries().stream().noneMatch(e -> DownloadEntry.STATUS_RUNNING.equals(e.getStatus())),
+                            control.getEntries()
+                    )
+            );
+
+            Button retryFailedBtn = new JFXButton(i18n("download.task.button.retry_all"));
+            retryFailedBtn.setOnAction(e -> control.getEntries().stream()
+                    .filter(entry -> entry.getStatus().startsWith(DownloadEntry.STATUS_FAILED))
+                    .forEach(entry -> {
+                        entry.getExecutor().start();
+                        entry.statusProperty().set(DownloadEntry.STATUS_WAITING);
+                    }));
+
+
+            FetchTask.SPEED_EVENT.register(event -> {
+                long bytesPerSec = event.getSpeed();
+                Platform.runLater(() -> globalSpeedLabel.setText(formatSpeed(bytesPerSec)));
+            });
+
+            bottomBar.getChildren().addAll(pauseAllBtn, retryFailedBtn, clearBtn);
+            labelBar.getChildren().addAll(globalSpeedLabel);
+
+            VBox bottomContainer = new VBox(5);
+            bottomContainer.getChildren().addAll(labelBar, bottomBar);
+            pane.setBottom(bottomContainer);
+
             getChildren().add(pane);
         }
     }
@@ -132,14 +190,11 @@ public class DownloadTaskList extends DownloadListPage implements PageAware{
             actionButton.setMinWidth(60);
             actionButton.setVisible(false);
 
-            titleBox.getChildren().add(actionButton);
             titleBox.getChildren().setAll(nameLabel, spacer, statusLabel, actionButton);
             titleBox.setAlignment(Pos.CENTER_LEFT);
 
             getStyleClass().add("download-task-cell");
-
         }
-
         @Override
         protected void updateItem(DownloadEntry entry, boolean empty) {
             super.updateItem(entry, empty);
