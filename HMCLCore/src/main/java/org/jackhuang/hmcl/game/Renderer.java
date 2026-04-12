@@ -494,7 +494,7 @@ public sealed interface Renderer permits Renderer.Default, Renderer.Driver, Rend
 
         @Override
         public GraphicsAPI api() {
-            return GraphicsAPI.VULKAN;
+            return GraphicsAPI.OPENGL;
         }
     }
 
