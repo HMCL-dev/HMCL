@@ -209,17 +209,19 @@ public sealed interface Renderer permits Renderer.Default, Renderer.Driver, Rend
             }
         },
 
-//        /// Intel HasVK driver.
-//        ///
-//        /// It is a Vulkan driver for Intel Gen7 (Ivy Bridge / Haswell) and Gen8 (Broadwell) graphics.
-//        ///
-//        /// @see <a href="https://gitlab.freedesktop.org/mesa/mesa/-/merge_requests/18208">intel: split vulkan driver between gfx7/8 and above</a>
-//        INTEL_HASVK("intel_hasvk") {
-//            @Override
-//            public boolean isSupported(Platform platform, @Nullable List<GraphicsCard> cards) {
-//                return platform.os() != OperatingSystem.WINDOWS && Vulkan.hasCard(cards, HardwareVendor.INTEL);
-//            }
-//        },
+        /// Intel HASVK driver.
+        ///
+        /// It is a Vulkan driver for Intel Gen7 (Ivy Bridge / Haswell) and Gen8 (Broadwell) graphics.
+        ///
+        /// @see <a href="https://gitlab.freedesktop.org/mesa/mesa/-/merge_requests/18208">intel: split vulkan driver between gfx7/8 and above</a>
+        INTEL_HASVK("intel_hasvk") {
+            @Override
+            public boolean isSupported(Platform platform, @Nullable List<GraphicsCard> cards) {
+                return platform.os() != OperatingSystem.WINDOWS
+                        && cards != null
+                        && cards.stream().anyMatch(card -> card.getVendor() == HardwareVendor.INTEL && card.getName().startsWith("Intel HD Graphics "));
+            }
+        },
 
         /// MoltenVK driver.
         ///
