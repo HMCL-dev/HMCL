@@ -262,6 +262,7 @@ public final class WorldListPage extends ListPageBase<World> implements VersionP
                 left.setPadding(new Insets(0, 8, 0, 0));
 
                 this.imageView = new ImageContainer(32);
+                left.setMouseTransparent(true);
                 left.getChildren().add(imageView);
             }
 

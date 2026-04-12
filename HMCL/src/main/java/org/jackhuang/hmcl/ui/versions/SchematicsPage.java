@@ -584,6 +584,7 @@ public final class SchematicsPage extends ListPageBase<SchematicsPage.Item> impl
                     }
                 });
 
+                left.setMouseTransparent(true);
                 right.getChildren().setAll(btnReveal, btnDelete);
             }
 

@@ -213,6 +213,7 @@ public final class ResourcepackListPage extends ListPageBase<ResourcepackListPag
             left.setAlignment(Pos.CENTER);
             left.getChildren().add(imageView);
             left.setPadding(new Insets(0, 8, 0, 0));
+            left.setMouseTransparent(true);
             FXUtils.setLimitWidth(left, 48);
             root.setLeft(left);
 
