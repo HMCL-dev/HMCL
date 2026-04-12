@@ -286,8 +286,7 @@ public sealed interface Renderer permits Renderer.Default, Renderer.Driver, Rend
         PANVK("panfrost") {
             @Override
             public boolean isSupported(Platform platform, @Nullable List<GraphicsCard> cards) {
-                return platform.os() == OperatingSystem.LINUX && platform.arch().isArm()
-                        && Vulkan.hasCard(cards, HardwareVendor.BROADCOM);
+                return platform.os() == OperatingSystem.LINUX && platform.arch().isArm();
             }
         },
 
