@@ -33,6 +33,7 @@ import org.jackhuang.hmcl.auth.CredentialExpiredException;
 import org.jackhuang.hmcl.auth.authlibinjector.AuthlibInjectorAccount;
 import org.jackhuang.hmcl.auth.authlibinjector.AuthlibInjectorServer;
 import org.jackhuang.hmcl.auth.offline.OfflineAccount;
+import org.jackhuang.hmcl.auth.demo.DemoAccount;
 import org.jackhuang.hmcl.auth.yggdrasil.CompleteGameProfile;
 import org.jackhuang.hmcl.auth.yggdrasil.TextureType;
 import org.jackhuang.hmcl.setting.Accounts;
@@ -81,7 +82,7 @@ public class AccountListItem extends RadioButton {
         }
 
         StringBinding characterName = Bindings.createStringBinding(account::getCharacter, account);
-        if (account instanceof OfflineAccount) {
+        if ((account instanceof OfflineAccount) || (account instanceof DemoAccount)) {
             title.bind(characterName);
         } else {
             title.bind(

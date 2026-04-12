@@ -44,6 +44,7 @@ import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.task.TaskExecutor;
 import org.jackhuang.hmcl.theme.Themes;
+import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.WeakListenerHolder;
 import org.jackhuang.hmcl.ui.construct.*;
@@ -112,7 +113,14 @@ public class MicrosoftAccountLoginPane extends JFXDialogLayout implements Dialog
         btnCancel.getStyleClass().add("dialog-cancel");
         btnCancel.setOnAction(e -> onCancel());
 
-        setActions(loginButtonSpinner, btnCancel);
+        JFXButton btnDemo = new JFXButton(i18n("account.demo"));
+        btnDemo.getStyleClass().add("dialog-accept");
+        btnDemo.setOnAction(e -> {
+            onCancel();
+            Controllers.dialog(new CreateAccountPane(Accounts.FACTORY_DEMO));
+        });
+
+        setActions(btnDemo, loginButtonSpinner, btnCancel);
 
         holder.registerWeak(Accounts.OAUTH_CALLBACK.onOpenBrowserAuthorizationCode, event -> Platform.runLater(() -> {
             if (step.get() instanceof Step.StartAuthorizationCodeLogin)

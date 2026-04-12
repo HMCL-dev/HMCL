@@ -41,6 +41,7 @@ import org.jackhuang.hmcl.auth.authlibinjector.AuthlibInjectorServer;
 import org.jackhuang.hmcl.auth.authlibinjector.BoundAuthlibInjectorAccountFactory;
 import org.jackhuang.hmcl.auth.microsoft.MicrosoftAccountFactory;
 import org.jackhuang.hmcl.auth.offline.OfflineAccountFactory;
+import org.jackhuang.hmcl.auth.demo.DemoAccountFactory;
 import org.jackhuang.hmcl.auth.yggdrasil.GameProfile;
 import org.jackhuang.hmcl.auth.yggdrasil.YggdrasilService;
 import org.jackhuang.hmcl.game.TexturesLoader;
@@ -337,7 +338,7 @@ public class CreateAccountPane extends JFXDialogLayout implements DialogAware {
 
             int rowIndex = 0;
 
-            if (!IntegrityChecker.isOfficial() && !(factory instanceof OfflineAccountFactory)) {
+            if (!IntegrityChecker.isOfficial() && !(factory instanceof OfflineAccountFactory) && !(factory instanceof DemoAccountFactory)) {
                 HintPane hintPane = new HintPane(MessageDialogPane.MessageType.WARNING);
                 hintPane.setSegment(i18n("unofficial.hint"));
                 GridPane.setColumnSpan(hintPane, 2);
@@ -487,6 +488,15 @@ public class CreateAccountPane extends JFXDialogLayout implements DialogAware {
                 hintPane.managedProperty().bind(advancedButton.selectedProperty());
                 hintPane.visibleProperty().bind(advancedButton.selectedProperty());
                 hintPane.setText(i18n("account.methods.offline.uuid.hint"));
+                GridPane.setColumnSpan(hintPane, 2);
+                add(hintPane, 0, rowIndex);
+
+                rowIndex++;
+            }
+
+            if (factory instanceof DemoAccountFactory) {
+                HintPane hintPane = new HintPane(MessageDialogPane.MessageType.INFO);
+                hintPane.setSegment(i18n("account.methods.demo.hint"));
                 GridPane.setColumnSpan(hintPane, 2);
                 add(hintPane, 0, rowIndex);
 
