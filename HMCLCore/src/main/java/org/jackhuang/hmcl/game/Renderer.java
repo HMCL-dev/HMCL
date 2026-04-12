@@ -20,21 +20,18 @@ package org.jackhuang.hmcl.game;
 import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.platform.Architecture;
-import org.jackhuang.hmcl.util.platform.Bits;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
 import org.jackhuang.hmcl.util.platform.Platform;
 import org.jackhuang.hmcl.util.platform.SystemInfo;
 import org.jackhuang.hmcl.util.platform.hardware.GraphicsCard;
 import org.jackhuang.hmcl.util.platform.hardware.HardwareVendor;
 import org.jackhuang.hmcl.util.platform.macos.HomebrewUtils;
-import org.jackhuang.hmcl.util.platform.windows.WinReg;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Unmodifiable;
 
 import java.io.IOException;
-import java.nio.file.InvalidPathException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
@@ -220,6 +217,28 @@ public sealed interface Renderer permits Renderer.Default, Renderer.Driver, Rend
                 return platform.os() != OperatingSystem.WINDOWS
                         && cards != null
                         && cards.stream().anyMatch(card -> card.getVendor() == HardwareVendor.INTEL && card.getName().startsWith("Intel HD Graphics "));
+            }
+        },
+
+        /// Qualcomm Vulkan driver.
+        ///
+        /// It is a Vulkan driver for Qualcomm Adreno GPUs.
+        QUALCOMM("qc") {
+            @Override
+            public boolean isSupported(Platform platform, @Nullable List<GraphicsCard> cards) {
+                return platform.equals(Platform.WINDOWS_ARM64);
+            }
+        },
+
+        /// Mesa Turnip driver.
+        ///
+        /// It is a Vulkan driver for Qualcomm Adreno GPUs.
+        ///
+        /// @see <a href="https://docs.mesa3d.org/drivers/freedreno.html">Freedreno - The Mesa 3D Graphics Library</a>
+        TURNIP("freedreno") {
+            @Override
+            public boolean isSupported(Platform platform, @Nullable List<GraphicsCard> cards) {
+                return platform.os() != OperatingSystem.WINDOWS && platform.arch().isArm();
             }
         },
 
