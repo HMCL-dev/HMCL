@@ -243,7 +243,7 @@ public sealed interface Renderer permits Renderer.Default, Renderer.Driver, Rend
         ///
         /// It is a Vulkan driver for macOS, iOS, tvOS, and visionOS.
         ///
-        /// @see <a href="https://github.com/KhronosGroup/MoltenVK">MoltenVK - The Mesa 3D Graphics Library</a>
+        /// @see <a href="https://github.com/KhronosGroup/MoltenVK">KhronosGroup/MoltenVK - GitHub</a>
         MOLTENVK("MoltenVK") {
             @Override
             public boolean isSupported(Platform platform, @Nullable List<GraphicsCard> cards) {
