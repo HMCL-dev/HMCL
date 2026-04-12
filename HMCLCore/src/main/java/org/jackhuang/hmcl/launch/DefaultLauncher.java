@@ -27,6 +27,7 @@ import org.jackhuang.hmcl.util.gson.UUIDTypeAdapter;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.io.Unzipper;
 import org.jackhuang.hmcl.util.platform.*;
+import org.jackhuang.hmcl.util.platform.macos.HomebrewUtils;
 import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
 import org.jetbrains.annotations.Nullable;
 
@@ -266,9 +267,18 @@ public class DefaultLauncher extends Launcher {
         }
 
         if (OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS
-                && options.getRenderer() != null
-                && options.getRenderer().getMesaDriverName() != null) {
+                && options.getRenderer() instanceof Renderer.Driver renderer
+                && renderer.mesaDriverName() != null) {
             res.addDefault("-Dorg.glavo.mesa.loader.nativeDir=", FileUtils.getAbsolutePath(nativeFolder.resolve("mesa-loader")));
+        }
+
+        if (OperatingSystem.CURRENT_OS == OperatingSystem.MACOS
+                && options.getJava().getArchitecture() == Architecture.SYSTEM_ARCH
+                && options.getRenderer() instanceof Renderer.Vulkan vulkanDriver
+                && vulkanDriver.icdFile() != null) {
+            if (Files.isRegularFile(HomebrewUtils.LIB_VULKAN)) {
+                res.addDefault("-Dorg.lwjgl.vulkan.libname=", FileUtils.getAbsolutePath(HomebrewUtils.LIB_VULKAN));
+            }
         }
 
         Set<String> classpath = repository.getClasspath(version);
@@ -602,28 +612,6 @@ public class DefaultLauncher extends Launcher {
         return p;
     }
 
-    private @Nullable Path findVulkanDescriptorFile(List<Path> dirs, String driverNameBase) {
-        String archName = switch (options.getJava().getArchitecture()) {
-            case X86 -> "i686";
-            case X86_64 -> "x86_64";
-            default -> options.getJava().getArchitecture().getCheckedName();
-        };
-
-        for (Path dir : dirs) {
-            if (Files.isDirectory(dir)) {
-                Path file = dir.resolve(driverNameBase + "." + archName + ".json");
-                if (Files.isRegularFile(file))
-                    return file;
-
-                file = dir.resolve(driverNameBase + ".json");
-                if (Files.isRegularFile(file))
-                    return file;
-            }
-        }
-
-        return null;
-    }
-
     private Map<String, String> getEnvVars(Path nativeFolder) {
         String versionName = Optional.ofNullable(options.getVersionName()).orElse(version.getId());
 
@@ -634,28 +622,31 @@ public class DefaultLauncher extends Launcher {
         env.put("INST_MC_DIR", FileUtils.getAbsolutePath(repository.getRunDirectory(version.getId())));
         env.put("INST_JAVA", options.getJava().getBinary().toString());
 
-        Renderer renderer = options.getRenderer();
-        if (renderer != Renderer.DEFAULT) {
+        if (options.getRenderer() instanceof Renderer.Driver driver) {
             if (OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS) {
-                if (renderer.getMesaDriverName() != null) {
-                    if (renderer.getApi() == GraphicsAPI.OPENGL && renderer != Renderer.LLVMPIPE)
-                        env.put("GALLIUM_DRIVER", renderer.getMesaDriverName());
-
-                    if (renderer.getApi() == GraphicsAPI.VULKAN) {
-                        String icdFile = FileUtils.getAbsolutePath(nativeFolder.resolve("mesa-loader/" + renderer.getIcdFileName()));
+                if (driver.mesaDriverName() != null) {
+                    if (driver instanceof Renderer.OpenGL && driver != Renderer.OpenGL.LLVMPIPE)
+                        env.put("GALLIUM_DRIVER", driver.mesaDriverName());
+                    else if (driver instanceof Renderer.Vulkan vulkanDriver) {
+                        String icdFile = FileUtils.getAbsolutePath(nativeFolder.resolve("mesa-loader/" + vulkanDriver.icdName() + "_icd.json"));
 
                         env.put("VK_ICD_FILENAMES", icdFile);
                         env.put("VK_DRIVER_FILES", icdFile);
                     }
+                } else if (driver instanceof Renderer.Vulkan vulkanDriver
+                        && vulkanDriver.icdFile() != null
+                        && options.getJava().getArchitecture() == Architecture.SYSTEM_ARCH) {
+                    String icdFile = FileUtils.getAbsolutePath(vulkanDriver.icdFile());
+
+                    env.put("VK_ICD_FILENAMES", icdFile);
+                    env.put("VK_DRIVER_FILES", icdFile);
                 }
-            } else if (OperatingSystem.CURRENT_OS == OperatingSystem.LINUX) {
-                switch (renderer) {
-                    case LLVMPIPE: {
+            } else if (OperatingSystem.CURRENT_OS.isLinuxOrBSD()) {
+                if (driver instanceof Renderer.OpenGL oglDriver) {
+                    if (oglDriver == Renderer.OpenGL.LLVMPIPE) {
                         env.put("__GLX_VENDOR_LIBRARY_NAME", "mesa");
                         env.put("LIBGL_ALWAYS_SOFTWARE", "1");
-                        break;
-                    }
-                    case ZINK: {
+                    } else if (oglDriver == Renderer.OpenGL.ZINK) {
                         env.put("__GLX_VENDOR_LIBRARY_NAME", "mesa");
                         env.put("MESA_LOADER_DRIVER_OVERRIDE", "zink");
                         /*
@@ -665,20 +656,23 @@ public class DefaultLauncher extends Launcher {
                          * Link: https://gitlab.freedesktop.org/mesa/mesa/-/issues/10093
                          */
                         env.put("LIBGL_KOPPER_DRI2", "1");
-                        break;
                     }
-                    case LAVAPIPE: {
-                        Path lvp = findVulkanDescriptorFile(
-                                List.of(Path.of("/usr/share/vulkan/icd.d"), Path.of("/etc/vulkan/icd.d")),
-                                "lvp_icd"
-                        );
-                        if (lvp != null) {
-                            env.put("VK_ICD_FILENAMES", FileUtils.getAbsolutePath(lvp));
-                            env.put("VK_DRIVER_FILES", FileUtils.getAbsolutePath(lvp));
-                        }
-
-                        break;
+                } else if (driver instanceof Renderer.Vulkan vulkanDriver
+                        && options.getJava().getArchitecture() == Architecture.SYSTEM_ARCH) {
+                    if (vulkanDriver.icdFile() != null) {
+                        String absolutePath = FileUtils.getAbsolutePath(vulkanDriver.icdFile());
+                        env.put("VK_ICD_FILENAMES", absolutePath);
+                        env.put("VK_DRIVER_FILES", absolutePath);
                     }
+                }
+            } else if (OperatingSystem.CURRENT_OS == OperatingSystem.MACOS
+                    && options.getJava().getArchitecture() == Architecture.SYSTEM_ARCH) {
+                if (driver instanceof Renderer.Vulkan vulkanDriver
+                        && vulkanDriver != Renderer.Vulkan.MOLTENVK
+                        && vulkanDriver.icdFile() != null) {
+                    String absolutePath = FileUtils.getAbsolutePath(vulkanDriver.icdFile());
+                    env.put("VK_ICD_FILENAMES", absolutePath);
+                    env.put("VK_DRIVER_FILES", absolutePath);
                 }
             }
         }
