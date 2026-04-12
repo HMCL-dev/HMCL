@@ -227,6 +227,7 @@ public class DownloadPage extends Control implements DecoratorPage {
                 getSkinnable().addon.getCategories().stream()
                         .map(category -> getSkinnable().page.getLocalizedCategory(category))
                         .forEach(content::addTag);
+                content.getTitleLabel().setMinWidth(0);
                 descriptionPane.getChildren().add(content);
 
                 if (getSkinnable().mod != null) {
