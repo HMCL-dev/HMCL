@@ -31,6 +31,7 @@ import org.jackhuang.hmcl.setting.Profiles;
 import org.jackhuang.hmcl.task.FileDownloadTask;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
+import org.jackhuang.hmcl.task.TaskExecutor;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
@@ -42,10 +43,7 @@ import org.jackhuang.hmcl.ui.construct.TabHeader;
 import org.jackhuang.hmcl.ui.construct.Validator;
 import org.jackhuang.hmcl.ui.decorator.DecoratorAnimatedPage;
 import org.jackhuang.hmcl.ui.decorator.DecoratorPage;
-import org.jackhuang.hmcl.ui.versions.DownloadListPage;
-import org.jackhuang.hmcl.ui.versions.HMCLLocalizedDownloadListPage;
-import org.jackhuang.hmcl.ui.versions.VersionPage;
-import org.jackhuang.hmcl.ui.versions.Versions;
+import org.jackhuang.hmcl.ui.versions.*;
 import org.jackhuang.hmcl.ui.wizard.Navigation;
 import org.jackhuang.hmcl.ui.wizard.WizardController;
 import org.jackhuang.hmcl.ui.wizard.WizardProvider;
@@ -76,8 +74,10 @@ public class DownloadPage extends DecoratorAnimatedPage implements DecoratorPage
     private final TabHeader.Tab<DownloadListPage> resourcePackTab = new TabHeader.Tab<>("resourcePackTab");
     private final TabHeader.Tab<DownloadListPage> shaderTab = new TabHeader.Tab<>("shaderTab");
     private final TabHeader.Tab<DownloadListPage> worldTab = new TabHeader.Tab<>("worldTab");
+    private final TabHeader.Tab<DownloadListPage> downloadListTab = new TabHeader.Tab<>("downloadListTab");
     private final TransitionPane transitionPane = new TransitionPane();
     private final DownloadNavigator versionPageNavigator = new DownloadNavigator();
+    private final DownloadTaskList downloadTaskList;
 
     private WeakListenerHolder listenerHolder;
 
@@ -86,6 +86,9 @@ public class DownloadPage extends DecoratorAnimatedPage implements DecoratorPage
     }
 
     public DownloadPage(String uploadVersion) {
+        this.downloadTaskList = new DownloadTaskList();
+        DifferentDownloadTask2OneTask.setActiveDownloadTaskList(downloadTaskList);
+
         newGameTab.setNodeSupplier(loadVersionFor(() -> new VersionsPage(versionPageNavigator, i18n("install.installer.choose", i18n("install.installer.game")), "", DownloadProviders.getDownloadProvider(),
                 "game", versionPageNavigator::onGameSelected)));
         modpackTab.setNodeSupplier(loadVersionFor(() -> {
@@ -99,29 +102,50 @@ public class DownloadPage extends DecoratorAnimatedPage implements DecoratorPage
             page.getActions().add(installLocalModpackButton);
             return page;
         }));
+
+        //下面是设置搜索界面的
         modTab.setNodeSupplier(loadVersionFor(() -> HMCLLocalizedDownloadListPage.ofMod((downloadProvider, profile, version, mod, file) -> download(downloadProvider, profile, version, file, "mods"), true)));
         resourcePackTab.setNodeSupplier(loadVersionFor(() -> HMCLLocalizedDownloadListPage.ofResourcePack((downloadProvider, profile, version, mod, file) -> download(downloadProvider, profile, version, file, "resourcepacks"), true)));
         shaderTab.setNodeSupplier(loadVersionFor(() -> HMCLLocalizedDownloadListPage.ofShaderPack((downloadProvider, profile, version, mod, file) -> download(downloadProvider, profile, version, file, "shaderpacks"), true)));
         worldTab.setNodeSupplier(loadVersionFor(() -> new DownloadListPage(CurseForgeRemoteModRepository.WORLDS)));
         tab = new TabHeader(transitionPane, newGameTab, modpackTab, modTab, resourcePackTab, shaderTab, worldTab);
+        downloadListTab.setNodeSupplier(() -> downloadTaskList);
 
         Profiles.registerVersionsListener(this::loadVersions);
 
         tab.select(newGameTab);
 
+        //这一堆规划了侧边栏的哪个按钮在哪个栏目
         AdvancedListBox sideBar = new AdvancedListBox()
                 .startCategory(i18n("download.game").toUpperCase(Locale.ROOT))
                 .addNavigationDrawerTab(tab, newGameTab, i18n("game"), SVG.STADIA_CONTROLLER, SVG.STADIA_CONTROLLER_FILL)
                 .addNavigationDrawerTab(tab, modpackTab, i18n("modpack"), SVG.PACKAGE2, SVG.PACKAGE2_FILL)
+
                 .startCategory(i18n("download.content").toUpperCase(Locale.ROOT))
                 .addNavigationDrawerTab(tab, modTab, i18n("mods"), SVG.EXTENSION, SVG.EXTENSION_FILL)
                 .addNavigationDrawerTab(tab, resourcePackTab, i18n("resourcepack"), SVG.TEXTURE)
                 .addNavigationDrawerTab(tab, shaderTab, i18n("download.shader"), SVG.WB_SUNNY, SVG.WB_SUNNY_FILL)
-                .addNavigationDrawerTab(tab, worldTab, i18n("world"), SVG.PUBLIC);
+                .addNavigationDrawerTab(tab, worldTab, i18n("world"), SVG.PUBLIC)
+
+                .startCategory(i18n("download.others").toUpperCase(Locale.ROOT))
+                .addNavigationDrawerTab(tab, downloadListTab, i18n("download.task"), SVG.DOWNLOAD);
+
         FXUtils.setLimitWidth(sideBar, 200);
         setLeft(sideBar);
 
         setCenter(transitionPane);
+    }
+
+    public DownloadTaskList getDownloadTaskList() {
+        return downloadTaskList;
+    }
+
+    public void addDownloadTask(TaskExecutor executor, String name) {
+        downloadTaskList.addDownloadEntry(executor, name);
+    }
+
+    public void addDownloadTask(Task<?> task) {
+        addDownloadTask(task.executor(), task.getName());
     }
 
     private static <T extends Node> Supplier<T> loadVersionFor(Supplier<T> nodeSupplier) {

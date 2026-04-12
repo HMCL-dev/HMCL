@@ -21,7 +21,6 @@ import javafx.scene.control.Label;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.task.TaskExecutor;
-import org.jackhuang.hmcl.ui.construct.TaskListPane;
 import org.jackhuang.hmcl.util.SettingsMap;
 
 import java.util.Queue;
@@ -35,12 +34,12 @@ public abstract class AbstractWizardDisplayer implements WizardDisplayer {
 
     @Override
     public void handleTask(SettingsMap settings, Task<?> task) {
-        TaskExecutor executor = task.withRunAsync(Schedulers.javafx(), this::navigateToSuccess).executor();
-        TaskListPane pane = new TaskListPane();
-        pane.setExecutor(executor);
-        navigateTo(pane, Navigation.NavigationDirection.FINISH);
-        cancelQueue.add(executor);
-        executor.start();
+//        TaskExecutor executor = task.withRunAsync(Schedulers.javafx(), this::navigateToSuccess).executor();
+//        TaskListPane pane = new TaskListPane();
+//        pane.setExecutor(executor);
+//        navigateTo(pane, Navigation.NavigationDirection.FINISH);
+//        cancelQueue.add(executor);
+//        executor.start();
     }
 
     @Override

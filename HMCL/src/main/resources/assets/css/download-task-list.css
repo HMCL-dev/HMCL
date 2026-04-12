@@ -1,0 +1,38 @@
+/* 下载任务列表单元格 */
+.download-task-cell {
+    -fx-background-color: transparent;
+}
+
+.download-task-cell .accordion {
+    -fx-background-color: transparent;
+    -fx-box-border: transparent;
+}
+
+.download-task-cell .titled-pane {
+    -fx-background-color: transparent;
+    -fx-border-color: transparent;
+    -fx-text-fill: -fx-text-base-color;
+}
+
+.download-task-cell .titled-pane > .title {
+    -fx-background-color: transparent;
+}
+
+.download-task-cell .titled-pane > .content {
+    -fx-background-color: transparent;
+    -fx-border-color: transparent;
+}
+
+.download-task-cell .progress-bar {
+    -fx-background-color: transparent;
+}
+
+.download-task-cell .progress-bar > .track {
+    -fx-background-color: rgba(0, 0, 0, 0.1);
+}
+
+.small-button {
+    -fx-padding: 2 8 2 8;
+    -fx-background-radius: 4;
+    -fx-font-size: 0.9em;
+}

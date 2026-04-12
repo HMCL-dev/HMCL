@@ -56,6 +56,7 @@ import org.jackhuang.hmcl.ui.animation.Motion;
 import org.jackhuang.hmcl.ui.construct.*;
 import org.jackhuang.hmcl.ui.construct.MessageDialogPane.MessageType;
 import org.jackhuang.hmcl.ui.decorator.DecoratorController;
+import org.jackhuang.hmcl.ui.download.DifferentDownloadTask2OneTask;
 import org.jackhuang.hmcl.ui.download.DownloadPage;
 import org.jackhuang.hmcl.ui.download.ModpackInstallWizardProvider;
 import org.jackhuang.hmcl.ui.main.LauncherSettingsPage;
@@ -580,18 +581,20 @@ public final class Controllers {
     }
 
     public static TaskExecutorDialogPane taskDialog(TaskExecutor executor, String title, TaskCancellationAction onCancel) {
-        TaskExecutorDialogPane pane = new TaskExecutorDialogPane(onCancel);
-        pane.setTitle(title);
-        pane.setExecutor(executor);
-        dialog(pane);
-        return pane;
+//        TaskExecutorDialogPane pane = new TaskExecutorDialogPane(onCancel);
+//        pane.setExecutor(executor);
+//        dialog(pane);
+//        pane.setTitle(title);
+        return null;
     }
 
     public static TaskExecutorDialogPane taskDialog(Task<?> task, String title, TaskCancellationAction onCancel) {
         TaskExecutor executor = task.executor();
-        TaskExecutorDialogPane pane = taskDialog(executor, title, onCancel);
-        executor.start();
-        return pane;
+        String name = task.getName();
+//        TaskExecutorDialogPane pane = taskDialog(executor, title, onCancel);
+//        TaskExecutorDialogPane pane = new TaskExecutorDialogPane(onCancel);
+        new DifferentDownloadTask2OneTask().ExecutorTask2OneTask(executor, name);
+        return null;
     }
 
     public static void navigate(Node node) {

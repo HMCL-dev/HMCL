@@ -19,6 +19,7 @@ package org.jackhuang.hmcl.ui.wizard;
 
 import javafx.scene.Node;
 import org.jackhuang.hmcl.task.Task;
+import org.jackhuang.hmcl.ui.download.DifferentDownloadTask2OneTask;
 import org.jackhuang.hmcl.util.SettingsMap;
 
 import java.util.*;
@@ -31,6 +32,7 @@ public class WizardController implements Navigation {
     private final SettingsMap settings = new SettingsMap();
     private final Stack<Node> pages = new Stack<>();
     private boolean stopped = false;
+    DifferentDownloadTask2OneTask differentDownloadTask2OneTask = new DifferentDownloadTask2OneTask();
 
     public WizardController(WizardDisplayer displayer) {
         this.displayer = displayer;
@@ -136,7 +138,12 @@ public class WizardController implements Navigation {
     public void onFinish() {
         Object result = provider.finish(settings);
         if (result instanceof Summary) displayer.navigateTo(((Summary) result).getComponent(), NavigationDirection.NEXT);
-        else if (result instanceof Task<?>) displayer.handleTask(settings, ((Task<?>) result));
+        else if (result instanceof Task<?>) {
+            Task<?> task = (Task<?>) result;
+            differentDownloadTask2OneTask.WizardTask2OneTask(task);
+            displayer.onEnd();
+//         displayer.handleTask(settings, ((Task<?>) result));
+        }
         else if (result != null) throw new IllegalStateException("Unrecognized wizard result: " + result);
     }
 
