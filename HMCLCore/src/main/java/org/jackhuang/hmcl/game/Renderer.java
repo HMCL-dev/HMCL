@@ -300,11 +300,7 @@ public sealed interface Renderer permits Renderer.Default, Renderer.Driver, Rend
                     default -> Architecture.SYSTEM_ARCH.getCheckedName();
                 };
 
-                String archNamePattern = Platform.SYSTEM_PLATFORM.equals(Platform.WINDOWS_ARM64)
-                        ? "aarch64|arm64x"
-                        : Pattern.quote(archName);
-
-                var icdFileNamePattern = Pattern.compile("(?<name>[a-zA-Z0-9_-]+)_icd(?:\\." + archNamePattern + ")?\\.json");
+                var icdFileNamePattern = Pattern.compile("(?<name>[a-zA-Z0-9_-]+)_icd(?:\\." + Pattern.quote(archName) + ")?\\.json");
                 Map<String, Vulkan> icdNameToDriver = Stream.of(values()).collect(Collectors.toMap(Vulkan::icdName, Function.identity()));
 
                 supported.add(DEFAULT);
