@@ -353,16 +353,16 @@ public sealed interface Renderer permits Renderer.Default, Renderer.Driver, Rend
 
                     // We need libvulkan.1.dylib to load custom Vulkan drivers
                     if (Files.isRegularFile(HomebrewUtils.LIB_VULKAN)) {
-                        Path lvpIcd = HomebrewUtils.HOMEBREW_PREFIX.resolve("share/vulkan/icd.d/lvp_icd." + archName + ".json");
-                        if (Files.isRegularFile(lvpIcd)) {
-                            driverToIcdFile.put(LAVAPIPE, lvpIcd);
-                            supported.add(LAVAPIPE);
-                        }
-
                         Path kosmickrispIcd = HomebrewUtils.HOMEBREW_PREFIX.resolve("share/vulkan/icd.d/kosmickrisp_mesa_icd." + archName + ".json");
                         if (Files.isRegularFile(kosmickrispIcd)) {
                             driverToIcdFile.put(KOSMICKRISP, kosmickrispIcd);
                             supported.add(KOSMICKRISP);
+                        }
+
+                        Path lvpIcd = HomebrewUtils.HOMEBREW_PREFIX.resolve("share/vulkan/icd.d/lvp_icd." + archName + ".json");
+                        if (Files.isRegularFile(lvpIcd)) {
+                            driverToIcdFile.put(LAVAPIPE, lvpIcd);
+                            supported.add(LAVAPIPE);
                         }
                     }
                 } else {
