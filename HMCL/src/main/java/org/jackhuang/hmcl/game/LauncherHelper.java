@@ -174,26 +174,27 @@ public final class LauncherHelper {
                             }),
                             Task.composeAsync(() -> {
                                 Renderer renderer = setting.getRenderer();
-                                if (renderer != Renderer.DEFAULT && OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS) {
-                                    Library lib = NativePatcher.getWindowsMesaLoader(java, renderer, OperatingSystem.SYSTEM_VERSION);
-                                    if (lib == null)
-                                        return null;
-                                    Path file = dependencyManager.getGameRepository().getLibraryFile(version.get(), lib);
-                                    if (file.toAbsolutePath().toString().indexOf('=') >= 0) {
-                                        LOG.warning("Invalid character '=' in the libraries directory path, unable to attach software renderer loader");
-                                        return null;
-                                    }
+                                if (renderer == null || renderer.getMesaDriverName() == null
+                                        || OperatingSystem.CURRENT_OS != OperatingSystem.WINDOWS) {
+                                    return null;
+                                }
 
-                                    String agent = FileUtils.getAbsolutePath(file) + "=" + renderer.name().toLowerCase(Locale.ROOT);
+                                Library lib = NativePatcher.getWindowsMesaLoader(java, renderer, OperatingSystem.SYSTEM_VERSION);
+                                if (lib == null)
+                                    return null;
+                                Path file = dependencyManager.getGameRepository().getLibraryFile(version.get(), lib);
+                                if (file.toAbsolutePath().toString().indexOf('=') >= 0) {
+                                    LOG.warning("Invalid character '=' in the libraries directory path, unable to attach software renderer loader");
+                                    return null;
+                                }
 
-                                    if (GameLibrariesTask.shouldDownloadLibrary(repository, version.get(), lib, integrityCheck)) {
-                                        return new LibraryDownloadTask(dependencyManager, file, lib)
-                                                .thenRunAsync(() -> javaAgents.add(agent));
-                                    } else {
-                                        javaAgents.add(agent);
-                                        return null;
-                                    }
+                                String agent = FileUtils.getAbsolutePath(file) + "=" + renderer.getMesaDriverName();
+
+                                if (GameLibrariesTask.shouldDownloadLibrary(repository, version.get(), lib, integrityCheck)) {
+                                    return new LibraryDownloadTask(dependencyManager, file, lib)
+                                            .thenRunAsync(() -> javaAgents.add(agent));
                                 } else {
+                                    javaAgents.add(agent);
                                     return null;
                                 }
                             })
@@ -232,6 +233,7 @@ public final class LauncherHelper {
                     if (quickPlayOption != null) {
                         launchOptionsBuilder.setQuickPlayOption(quickPlayOption);
                     }
+
                     LaunchOptions launchOptions = launchOptionsBuilder.create();
 
                     LOG.info("Here's the structure of game mod directory:\n" + FileUtils.printFileStructure(repository.getModsDirectory(selectedVersion), 10));

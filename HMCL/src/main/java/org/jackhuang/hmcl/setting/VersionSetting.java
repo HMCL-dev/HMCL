@@ -603,6 +603,20 @@ public final class VersionSetting implements Cloneable, Observable {
         processPriorityProperty.set(processPriority);
     }
 
+    private final ObjectProperty<GraphicsAPI> graphicsBackend = new SimpleObjectProperty<>(this, "graphicsBackend", GraphicsAPI.DEFAULT);
+
+    public ObjectProperty<GraphicsAPI> graphicsBackendProperty() {
+        return graphicsBackend;
+    }
+
+    public GraphicsAPI getGraphicsBackend() {
+        return graphicsBackendProperty().get();
+    }
+
+    public void setGraphicsBackend(GraphicsAPI api) {
+        graphicsBackendProperty().set(api);
+    }
+
     private final ObjectProperty<Renderer> rendererProperty = new SimpleObjectProperty<>(this, "renderer", Renderer.DEFAULT);
 
     public Renderer getRenderer() {
@@ -820,6 +834,7 @@ public final class VersionSetting implements Cloneable, Observable {
             }
             obj.addProperty("java", java);
 
+            obj.addProperty("graphicsBackend", src.getGraphicsBackend().name());
             obj.addProperty("renderer", src.getRenderer().name());
             if (src.getRenderer() == Renderer.LLVMPIPE)
                 obj.addProperty("useSoftwareRenderer", true);
@@ -904,6 +919,15 @@ public final class VersionSetting implements Cloneable, Observable {
                         boolean useSoftwareRenderer = Optional.ofNullable(obj.get("useSoftwareRenderer")).map(JsonElement::getAsBoolean).orElse(false);
                         return useSoftwareRenderer ? Renderer.LLVMPIPE : Renderer.DEFAULT;
                     }));
+
+            vs.setGraphicsBackend(Optional.ofNullable(obj.get("graphicsBackend")).map(JsonElement::getAsString)
+                    .flatMap(name -> {
+                        try {
+                            return Optional.of(GraphicsAPI.valueOf(name.toUpperCase(Locale.ROOT)));
+                        } catch (IllegalArgumentException ignored) {
+                            return Optional.empty();
+                        }
+                    }).orElseGet(() -> vs.getRenderer().getApi()));
 
             return vs;
         }

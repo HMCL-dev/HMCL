@@ -4403,13 +4403,13 @@
   },
   "windows-x86_64": {
     "mesa-loader": {
-      "name": "org.glavo:mesa-loader-windows:25.0.3:x64",
+      "name": "org.glavo:mesa-loader-windows:26.0.4:x64",
       "downloads": {
         "artifact": {
-          "path": "org/glavo/mesa-loader-windows/25.0.3/mesa-loader-windows-25.0.3-x64.jar",
-          "url": "https://repo1.maven.org/maven2/org/glavo/mesa-loader-windows/25.0.3/mesa-loader-windows-25.0.3-x64.jar",
-          "sha1": "b2552fcc8c98e95b4559c39f2ff87cdb3aaaa513",
-          "size": 27971214
+          "path": "org/glavo/mesa-loader-windows/26.0.4/mesa-loader-windows-26.0.4-x64.jar",
+          "url": "https://repo1.maven.org/maven2/org/glavo/mesa-loader-windows/26.0.4/mesa-loader-windows-26.0.4-x64.jar",
+          "sha1": "f8da709c59ef61f531c91434ca0e3b4f39202981",
+          "size": 49873846
         }
       }
     },
@@ -4427,13 +4427,13 @@
   },
   "windows-x86": {
     "mesa-loader": {
-      "name": "org.glavo:mesa-loader-windows:25.0.3:x86",
+      "name": "org.glavo:mesa-loader-windows:26.0.4:x86",
       "downloads": {
         "artifact": {
-          "path": "org/glavo/mesa-loader-windows/25.0.3/mesa-loader-windows-25.0.3-x86.jar",
-          "url": "https://repo1.maven.org/maven2/org/glavo/mesa-loader-windows/25.0.3/mesa-loader-windows-25.0.3-x86.jar",
-          "sha1": "6fd0fd7da88ca6636f735e1e0f6feb7f62f59715",
-          "size": 23311299
+          "path": "org/glavo/mesa-loader-windows/26.0.4/mesa-loader-windows-26.0.4-x86.jar",
+          "url": "https://repo1.maven.org/maven2/org/glavo/mesa-loader-windows/26.0.4/mesa-loader-windows-26.0.4-x86.jar",
+          "sha1": "ac6afaa8baa7c17468267c09e77e1296ee92d5ed",
+          "size": 41742113
         }
       }
     }
@@ -4816,13 +4816,13 @@
     "com.mojang:text2speech:1.12.4:natives": null,
     "com.mojang:text2speech:1.13.9:natives-windows": null,
     "mesa-loader": {
-      "name": "org.glavo:mesa-loader-windows:25.0.3:arm64",
+      "name": "org.glavo:mesa-loader-windows:26.0.4:arm64",
       "downloads": {
         "artifact": {
-          "path": "org/glavo/mesa-loader-windows/25.0.3/mesa-loader-windows-25.0.3-arm64.jar",
-          "url": "https://repo1.maven.org/maven2/org/glavo/mesa-loader-windows/25.0.3/mesa-loader-windows-25.0.3-arm64.jar",
-          "sha1": "40ca5de3351bf48b7b9efa5d2598d5b6b4d1ab8e",
-          "size": 24905270
+          "path": "org/glavo/mesa-loader-windows/26.0.4/mesa-loader-windows-26.0.4-arm64.jar",
+          "url": "https://repo1.maven.org/maven2/org/glavo/mesa-loader-windows/26.0.4/mesa-loader-windows-26.0.4-arm64.jar",
+          "sha1": "5c761a344700a07eaded51c5cf0cde36ee614706",
+          "size": 43504189
         }
       }
     }
