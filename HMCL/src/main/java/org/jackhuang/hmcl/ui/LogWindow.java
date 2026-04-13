@@ -347,6 +347,9 @@ public final class LogWindow extends Stage {
 
                 listView.setOnKeyPressed(event -> {
                     if (event.isControlDown() && event.getCode() == KeyCode.C) {
+                        if (listView.getSelectionModel().isEmpty())
+                            return;
+
                         StringBuilder stringBuilder = new StringBuilder();
 
                         for (Log item : listView.getSelectionModel().getSelectedItems()) {
