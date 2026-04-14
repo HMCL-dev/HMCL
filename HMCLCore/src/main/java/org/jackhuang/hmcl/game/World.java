@@ -45,7 +45,7 @@ public final class World {
 
     private final Path file;
     private final String fileName;
-    private final Image icon;
+    private Image icon;
 
     private WorldDataSection levelDataTag;
     private WorldDataSection worldGenSettingsTag;
@@ -105,22 +105,18 @@ public final class World {
     }
 
     public String getWorldName() {
-        if (getDataTag().get("LevelName") instanceof StringTag levelNameTag)
+        if (getLevelDataTag().get("LevelName") instanceof StringTag levelNameTag)
             return levelNameTag.get();
         else
             return "";
     }
 
     public void setWorldName(String worldName) throws IOException {
-        getDataTag().setString("LevelName", worldName);
+        getLevelDataTag().setString("LevelName", worldName);
         levelDataTag.write();
     }
 
-    public CompoundTag getLevelData() {
-        return levelDataTag.nbtBackingTag();
-    }
-
-    public CompoundTag getDataTag() {
+    public CompoundTag getLevelDataTag() {
         return levelDataTag.normalizedNbtTag;
     }
 
@@ -133,7 +129,7 @@ public final class World {
     }
 
     public long getLastPlayed() {
-        if (getDataTag().get("LastPlayed") instanceof LongTag lastPlayedTag) {
+        if (getLevelDataTag().get("LastPlayed") instanceof LongTag lastPlayedTag) {
             return lastPlayedTag.get();
         } else {
             return 0L;
@@ -141,7 +137,7 @@ public final class World {
     }
 
     public @Nullable GameVersionNumber getGameVersion() {
-        if (getDataTag().get("Version") instanceof CompoundTag versionTag &&
+        if (getLevelDataTag().get("Version") instanceof CompoundTag versionTag &&
                 versionTag.get("Name") instanceof StringTag nameTag) {
             return GameVersionNumber.asGameVersion(nameTag.getValue());
         }
@@ -155,7 +151,7 @@ public final class World {
             return seedTag.getValue();
         }
         // Valid before 1.16(20w20a)
-        if (getDataTag().get("RandomSeed") instanceof LongTag seedTag) {
+        if (getLevelDataTag().get("RandomSeed") instanceof LongTag seedTag) {
             return seedTag.getValue();
         }
         return null;
@@ -163,7 +159,7 @@ public final class World {
 
     public boolean isLargeBiomes() {
         // Valid before 1.16(20w20a)
-        if (getDataTag().get("generatorName") instanceof StringTag generatorNameTag) {
+        if (getLevelDataTag().get("generatorName") instanceof StringTag generatorNameTag) {
             return "largeBiomes".equals(generatorNameTag.getValue());
         }
         // Unified handling of logic after version 1.16
@@ -187,6 +183,17 @@ public final class World {
 
     public Image getIcon() {
         return icon;
+    }
+
+    public void changeWorldIcon(Path sourcePath, Path targetPath) throws IOException {
+        FileUtils.copyFile(sourcePath, targetPath);
+        icon = loadIcon(file);
+    }
+
+    public void clearWorldIcon() throws IOException {
+        Path output = file.resolve("icon.png");
+        Files.deleteIfExists(output);
+        icon = null;
     }
 
     public boolean supportsDataPacks() {
@@ -226,7 +233,7 @@ public final class World {
     private void loadOtherData() throws IOException {
 
         Path worldGenSettingsDatPath = file.resolve("data/minecraft/world_gen_settings.dat");
-        if (getDataTag().get("WorldGenSettings") instanceof CompoundTag worldGenSettingsTag) {
+        if (getLevelDataTag().get("WorldGenSettings") instanceof CompoundTag worldGenSettingsTag) {
             this.worldGenSettingsTag = new WorldDataSection(null, worldGenSettingsTag, worldGenSettingsTag);
         } else if (Files.isRegularFile(worldGenSettingsDatPath)) {
             CompoundTag raw = NBTCodec.of().readTag(worldGenSettingsDatPath, TagType.COMPOUND);
@@ -239,9 +246,9 @@ public final class World {
             this.worldGenSettingsTag = new WorldDataSection(null, null, null);
         }
 
-        if (getDataTag().get("Player") instanceof CompoundTag playerTag) {
+        if (getLevelDataTag().get("Player") instanceof CompoundTag playerTag) {
             this.playerTag = new WorldDataSection(null, playerTag, playerTag);
-        } else if (getDataTag().get("singleplayer_uuid") instanceof IntArrayTag uuidTag && uuidTag.isUUID()) {
+        } else if (getLevelDataTag().get("singleplayer_uuid") instanceof IntArrayTag uuidTag && uuidTag.isUUID()) {
             String playerUUID = uuidTag.getUUID().toString();
             Path playerDatPath = file.resolve("players/data/" + playerUUID + ".dat");
             if (Files.exists(playerDatPath)) {

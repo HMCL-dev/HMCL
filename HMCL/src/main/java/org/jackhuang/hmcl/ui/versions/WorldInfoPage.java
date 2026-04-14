@@ -44,7 +44,6 @@ import org.jackhuang.hmcl.util.i18n.I18n;
 import org.jackhuang.hmcl.util.io.FileUtils;
 
 import java.io.IOException;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.text.DecimalFormat;
 import java.time.Duration;
@@ -81,7 +80,7 @@ public final class WorldInfoPage extends SpinnerPane implements WorldManagePage.
         this.world = worldManagePage.getWorld();
         setFailedReason(null);
         try {
-            this.dataTag = world.getDataTag();
+            this.dataTag = world.getLevelDataTag();
             this.playerData = world.getPlayerData();
             updateControls();
         } catch (Exception e) {
@@ -675,7 +674,7 @@ public final class WorldInfoPage extends SpinnerPane implements WorldManagePage.
     private void saveWorldIcon(Path sourcePath, Image image, Path targetPath) {
         Image oldImage = iconImageView.getImage();
         try {
-            FileUtils.copyFile(sourcePath, targetPath);
+            world.changeWorldIcon(sourcePath, targetPath);
             iconImageView.setImage(image);
             Controllers.showToast(i18n("world.icon.change.succeed.toast"));
         } catch (IOException e) {
@@ -685,9 +684,8 @@ public final class WorldInfoPage extends SpinnerPane implements WorldManagePage.
     }
 
     private void clearWorldIcon() {
-        Path output = world.getFile().resolve("icon.png");
         try {
-            Files.deleteIfExists(output);
+            world.clearWorldIcon();
             iconImageView.setImage(FXUtils.newBuiltinImage("/assets/img/unknown_server.png"));
         } catch (IOException e) {
             LOG.warning("Failed to delete world icon ", e);
