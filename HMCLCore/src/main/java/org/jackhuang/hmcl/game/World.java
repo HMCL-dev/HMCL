@@ -196,16 +196,8 @@ public final class World {
         icon = null;
     }
 
-    public boolean supportsDataPacks() {
-        return getGameVersion() != null && getGameVersion().isAtLeast("1.13", "17w43a");
-    }
-
     public static boolean supportsDataPacks(GameVersionNumber gameVersionNumber) {
         return gameVersionNumber != null && gameVersionNumber.isAtLeast("1.13", "17w43a");
-    }
-
-    public boolean supportsQuickPlay() {
-        return getGameVersion() != null && getGameVersion().isAtLeast("1.20", "23w14a");
     }
 
     public static boolean supportsQuickPlay(GameVersionNumber gameVersionNumber) {
