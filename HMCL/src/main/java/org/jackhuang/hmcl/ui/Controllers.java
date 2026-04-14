@@ -26,9 +26,9 @@ import javafx.animation.Timeline;
 import javafx.application.Platform;
 import javafx.beans.InvalidationListener;
 import javafx.beans.WeakInvalidationListener;
-import javafx.beans.property.DoubleProperty;
-import javafx.beans.property.ReadOnlyDoubleProperty;
-import javafx.beans.property.SimpleDoubleProperty;
+import javafx.beans.property.*;
+import javafx.beans.value.ChangeListener;
+import javafx.beans.value.WeakChangeListener;
 import javafx.geometry.Rectangle2D;
 import javafx.scene.Node;
 import javafx.scene.Scene;
@@ -64,6 +64,10 @@ import org.jackhuang.hmcl.ui.terracotta.TerracottaPage;
 import org.jackhuang.hmcl.ui.versions.GameListPage;
 import org.jackhuang.hmcl.ui.versions.VersionPage;
 import org.jackhuang.hmcl.ui.versions.Versions;
+import org.jackhuang.hmcl.upgrade.RemoteVersion;
+import org.jackhuang.hmcl.upgrade.UpdateChannel;
+import org.jackhuang.hmcl.upgrade.UpdateChecker;
+import org.jackhuang.hmcl.upgrade.UpdateHandler;
 import org.jackhuang.hmcl.util.*;
 import org.jackhuang.hmcl.util.i18n.I18n;
 import org.jackhuang.hmcl.util.i18n.SupportedLocale;
@@ -609,14 +613,27 @@ public final class Controllers {
     public static void onHyperlinkAction(String href) {
         if (href.startsWith("hmcl://")) {
             switch (href) {
-                case "hmcl://settings/feedback":
+                case "hmcl://settings/feedback" -> {
                     Controllers.getSettingsPage().showFeedback();
                     Controllers.navigate(Controllers.getSettingsPage());
-                    break;
-                case "hmcl://game/launch":
+                }
+                case "hmcl://game/launch" -> {
                     Profile profile = Profiles.getSelectedProfile();
                     Versions.launch(profile, profile.getSelectedVersion(), LauncherHelper::setKeep);
-                    break;
+                }
+                case "hmcl://update/switch-channel/stable" -> Controllers.confirm(i18n("update.switch_to_stable.confirm"), i18n("update.switch_to_stable.title"), () -> {
+                    UpdateChecker.requestCheckUpdate(UpdateChannel.STABLE, config().acceptPreviewUpdateProperty().get());
+                    ChangeListener<Boolean> switchStableListener = (observable, old, now) -> {
+                        if (!now) {
+                            RemoteVersion target = UpdateChecker.getLatestVersion();
+                            if (target == null) {
+                                return;
+                            }
+                            UpdateHandler.updateFrom(target);
+                        }
+                    };
+                    Platform.runLater(() -> UpdateChecker.checkingUpdateProperty().addListener(new WeakChangeListener<>(switchStableListener)));
+                }, null);
             }
         } else {
             FXUtils.openLink(href);
