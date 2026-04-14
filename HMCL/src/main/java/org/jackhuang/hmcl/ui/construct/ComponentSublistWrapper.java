@@ -119,7 +119,7 @@ final class ComponentSublistWrapper extends VBox implements NoPaddingComponent {
 
             Platform.runLater(() -> {
                 // FIXME: ComponentSubList without padding must have a 4 pixel padding for displaying a border radius.
-                double contentHeight = expanded ? (sublist.prefHeight(sublist.getWidth()) + (noPadding ? 4 : 8 + 10)) : 0;
+                double contentHeight = expanded ? (sublist.prefHeight(sublist.getWidth()) + (noPadding ? 4 : 8)) : 0;
                 double targetRotate = expanded ? -180 : 0;
 
                 if (AnimationUtils.isAnimationEnabled()) {
