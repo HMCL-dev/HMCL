@@ -241,6 +241,10 @@ public final class FileUtils {
     }
 
     public static String getSafeWorldFolderName(String name) {
+        return getSafeWorldFolderName(OperatingSystem.CURRENT_OS, name);
+    }
+
+    public static String getSafeWorldFolderName(OperatingSystem os, String name) {
         if (StringUtils.isBlank(name)) {
             return "New World";
         }
@@ -253,8 +257,10 @@ public final class FileUtils {
         sanitized = sanitized.strip();
 
         // Handle Windows reserved keywords
-        if (INVALID_WINDOWS_RESOURCE_BASE_NAMES.contains(sanitized.toLowerCase(Locale.ROOT))) {
-            sanitized = "_" + sanitized + "_";
+        if (os == OperatingSystem.WINDOWS) { // Windows only
+            if (INVALID_WINDOWS_RESOURCE_BASE_NAMES.contains(sanitized.toLowerCase(Locale.ROOT))) {
+                sanitized = "_" + sanitized + "_";
+            }
         }
 
         // Provide a default value if the sanitized string is empty
