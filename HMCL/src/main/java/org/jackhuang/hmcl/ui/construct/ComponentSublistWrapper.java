@@ -104,10 +104,8 @@ final class ComponentSublistWrapper extends VBox implements NoPaddingComponent {
 
                 if (container == null) {
                     this.container = new VBox();
-
-                    if (!noPadding) {
-                        container.setPadding(new Insets(8, 16, 10, 16));
-                    }
+                    this.container.getStyleClass().add("container");
+                    container.setPadding(new Insets(8, 0, 8, 0));
                     FXUtils.setLimitHeight(container, 0);
                     FXUtils.setOverflowHidden(container);
                     container.getChildren().setAll(sublist);
