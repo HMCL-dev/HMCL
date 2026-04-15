@@ -98,7 +98,7 @@ public final class WorldBackupsPage extends ListPageBase<WorldBackupsPage.Backup
                                         count = Integer.parseInt(matcher.group("count"));
                                     }
 
-                                    result.add(new BackupInfo(path, new ImportableWorld(path), time, count, readOnlyProperty()));
+                                    result.add(new BackupInfo(path, ImportableWorld.fromPath(path), time, count, readOnlyProperty()));
                                 }
                             } catch (Throwable e) {
                                 LOG.warning("Failed to load backup file " + path, e);
@@ -145,7 +145,7 @@ public final class WorldBackupsPage extends ListPageBase<WorldBackupsPage.Backup
                 count = Integer.parseInt(matcher.group("count"));
             }
 
-            return Pair.pair(path, new BackupInfo(path, new ImportableWorld(path), time, count, readOnlyProperty()));
+            return Pair.pair(path, new BackupInfo(path, ImportableWorld.fromPath(path), time, count, readOnlyProperty()));
         }).whenComplete(Schedulers.javafx(), (result, exception) -> {
             if (exception == null) {
                 WorldBackupsPage.this.getItems().add(result.getValue());
@@ -263,18 +263,18 @@ public final class WorldBackupsPage extends ListPageBase<WorldBackupsPage.Backup
 
                 var imageView = new ImageContainer(32);
                 left.getChildren().add(imageView);
-                imageView.setImage(backupWorld.getIcon() == null ? FXUtils.newBuiltinImage("/assets/img/unknown_server.png") : backupWorld.getIcon());
+                imageView.setImage(backupWorld.icon() == null ? FXUtils.newBuiltinImage("/assets/img/unknown_server.png") : backupWorld.icon());
             }
 
             {
                 TwoLineListItem item = new TwoLineListItem();
                 root.setCenter(item);
 
-                item.setTitle(parseColorEscapes(skinnable.getBackupWorld().getWorldName()));
+                item.setTitle(parseColorEscapes(skinnable.getBackupWorld().worldName()));
                 item.setSubtitle(formatDateTime(skinnable.getBackupTime()) + (skinnable.count == 0 ? "" : " (" + skinnable.count + ")"));
 
-                if (backupWorld.getGameVersion() != null)
-                    item.addTag(I18n.getDisplayVersion(backupWorld.getGameVersion()));
+                if (backupWorld.gameVersion() != null)
+                    item.addTag(I18n.getDisplayVersion(backupWorld.gameVersion()));
             }
 
             {

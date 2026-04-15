@@ -154,7 +154,7 @@ public final class WorldListPage extends ListPageBase<World> implements VersionP
     private void installWorld(Path worldPath) {
         // Only accept one world file because user is required to confirm the new world name
         // Or too many input dialogs are popped.
-        Task.supplyAsync(() -> new ImportableWorld(worldPath))
+        Task.supplyAsync(() -> ImportableWorld.fromPath(worldPath))
                 .whenComplete(Schedulers.javafx(), world -> {
                     Controllers.prompt(i18n("world.name.enter"), (name, handler) -> {
                         String finalName = StringUtils.isBlank(name) ? i18n("world.name.default") : name;
@@ -168,7 +168,7 @@ public final class WorldListPage extends ListPageBase<World> implements VersionP
                                     else
                                         handler.reject(i18n("world.add.failed", e.getClass().getName() + ": " + e.getLocalizedMessage()));
                                 }).start();
-                    }, world.getWorldName());
+                    }, world.worldName());
                 }, e -> {
                     LOG.warning("Unable to parse world file " + worldPath, e);
                     Controllers.dialog(i18n("world.add.invalid"));

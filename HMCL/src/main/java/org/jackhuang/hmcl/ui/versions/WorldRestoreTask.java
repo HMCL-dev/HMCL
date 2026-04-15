@@ -43,9 +43,9 @@ public class WorldRestoreTask extends Task<Path> {
         Path tempPath2 = worldPath.toAbsolutePath().resolveSibling("." + worldPath.getFileName().toString() + ".tmp2");
 
         // Check if the world format is correct
-        ImportableWorld importableWorld = new ImportableWorld(backupZipPath);
+        ImportableWorld importableWorld = ImportableWorld.fromPath(backupZipPath);
         try {
-            new Unzipper(backupZipPath, tempPath).setSubDirectory(importableWorld.getFileName()).unzip();
+            new Unzipper(backupZipPath, tempPath).setSubDirectory(importableWorld.fileName()).unzip();
         } catch (IOException e) {
             FileUtils.deleteDirectoryQuietly(tempPath);
             throw e;

@@ -38,26 +38,25 @@ import java.util.List;
 import java.util.stream.Stream;
 
 /// @author mineDiamond
-public final class ImportableWorld {
-    private final Path sourcePath;
-    private final String fileName;
-    private final boolean isArchive;
-    private final boolean hasTopLevelDirectory;
-    private String worldName;
-    private @Nullable GameVersionNumber gameVersion;
-    private @Nullable Image icon;
+record ImportableWorld(Path sourcePath, String fileName, boolean isArchive, boolean hasTopLevelDirectory, String worldName, @Nullable GameVersionNumber gameVersion, @Nullable Image icon) {
 
-    public ImportableWorld(Path sourcePath) throws IOException {
+    public static ImportableWorld fromPath(Path sourcePath) throws IOException {
+
+        String fileName;
+        boolean isArchive;
+        boolean hasTopLevelDirectory;
+        String worldName;
+        GameVersionNumber gameVersion;
+        Image icon = null;
+
         if (Files.isRegularFile(sourcePath)) {
-            this.sourcePath = sourcePath;
-            this.isArchive = true;
-
-            try (FileSystem fs = CompressingUtils.readonly(this.sourcePath).setAutoDetectEncoding(true).build()) {
+            isArchive = true;
+            try (FileSystem fs = CompressingUtils.readonly(sourcePath).setAutoDetectEncoding(true).build()) {
                 Path root;
                 if (Files.isRegularFile(fs.getPath("/level.dat"))) {
                     root = fs.getPath("/");
                     hasTopLevelDirectory = false;
-                    fileName = FileUtils.getName(this.sourcePath);
+                    fileName = FileUtils.getName(sourcePath);
                 } else {
                     try (Stream<Path> stream = Files.list(fs.getPath("/"))) {
                         List<Path> files = stream.toList();
@@ -71,63 +70,46 @@ public final class ImportableWorld {
                     }
                 }
 
-                checkAndLoadLevelData(World.findLevelDatPath(root));
-                this.icon = World.loadIcon(root);
+                CompoundTag dataTag = loadLevelData(World.findLevelDatPath(root));
+                worldName = getLevelName(dataTag);
+                gameVersion = getGameVersion(dataTag);
+                icon = World.loadIcon(root);
             }
-        } else if (Files.isDirectory(sourcePath)) {
-            this.sourcePath = sourcePath;
-            fileName = FileUtils.getName(this.sourcePath);
-            this.isArchive = false;
-            this.hasTopLevelDirectory = false;
-
-            checkAndLoadLevelData(World.findLevelDatPath(this.sourcePath));
         } else {
-            throw new IOException("Path " + sourcePath + " cannot be recognized as an archive Minecraft world");
+            fileName = FileUtils.getName(sourcePath);
+            isArchive = false;
+            hasTopLevelDirectory = false;
+            CompoundTag dataTag = loadLevelData(World.findLevelDatPath(sourcePath));
+            worldName = getLevelName(dataTag);
+            gameVersion = getGameVersion(dataTag);
         }
+        return new ImportableWorld(sourcePath, fileName, isArchive, hasTopLevelDirectory, worldName, gameVersion, icon);
     }
 
-    private void checkAndLoadLevelData(Path levelDatPath) throws IOException {
+    private static CompoundTag loadLevelData(Path levelDatPath) throws IOException {
         CompoundTag levelData = NBTCodec.of().readTag(levelDatPath, TagType.COMPOUND);
         if (!(levelData.get("Data") instanceof CompoundTag data))
             throw new IOException("level.dat missing Data");
 
-        if (data.get("LevelName") instanceof StringTag levelNameTag) {
-            this.worldName = levelNameTag.getValue();
-        } else {
-            throw new IOException("level.dat missing LevelName");
-        }
-
-        if (data.get("Version") instanceof CompoundTag versionTag &&
-                versionTag.get("Name") instanceof StringTag nameTag) {
-            this.gameVersion = GameVersionNumber.asGameVersion(nameTag.getValue());
-        }
-
         if (!(data.get("LastPlayed") instanceof LongTag))
             throw new IOException("level.dat missing LastPlayed");
+
+        return data;
     }
 
-    public Path getSourcePath() {
-        return sourcePath;
+    private static String getLevelName(CompoundTag data) throws IOException {
+        if (data.get("LevelName") instanceof StringTag levelNameTag) {
+            return levelNameTag.getValue();
+        }
+        throw new IOException("level.dat missing LevelName");
     }
 
-    public String getFileName() {
-        return fileName;
-    }
-
-    public boolean hasTopLevelDirectory() {
-        return hasTopLevelDirectory;
-    }
-
-    public String getWorldName() {
-        return worldName;
-    }
-
-    public @Nullable GameVersionNumber getGameVersion() {
-        return gameVersion;
-    }
-
-    public @Nullable Image getIcon() {
-        return icon;
+    private static GameVersionNumber getGameVersion(CompoundTag data) throws IOException {
+        if (data.get("Version") instanceof CompoundTag versionTag &&
+                versionTag.get("Name") instanceof StringTag nameTag) {
+            return GameVersionNumber.asGameVersion(nameTag.getValue());
+        }
+        return null;
     }
 
     public void install(Path savesDir, String name) throws IOException {
