@@ -123,6 +123,7 @@ public final class WorldManageUIUtils {
             }).start();
         })
                 .addQuestion(new PromptDialogPane.Builder.StringQuestion(null, world.getWorldName()))
-                .addQuestion(new PromptDialogPane.Builder.BooleanQuestion(i18n("world.rename.rename_folder"), false)));
+                .addQuestion(new PromptDialogPane.Builder.BooleanQuestion(i18n("world.rename.rename_folder"), false))
+                .addQuestion(new PromptDialogPane.Builder.HintQuestion(i18n("world.rename.rename_folder.hint"))));
     }
 }
