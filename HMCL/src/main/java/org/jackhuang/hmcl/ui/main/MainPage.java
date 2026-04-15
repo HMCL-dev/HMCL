@@ -374,12 +374,11 @@ public final class MainPage extends StackPane implements DecoratorPage {
             Holder<ChangeListener<Boolean>> holder = new Holder<>();
             holder.value = (observable, old, now) -> {
                 if (!now) {
-                    RemoteVersion target = UpdateChecker.getLatestVersion();
-                    if (target == null) {
-                        return;
-                    }
-                    UpdateHandler.updateFrom(target);
                     UpdateChecker.checkingUpdateProperty().removeListener(holder.value);
+                    RemoteVersion target = UpdateChecker.getLatestVersion();
+                    if (target != null) {
+                        UpdateHandler.updateFrom(target);
+                    }
                 }
             };
             UpdateChecker.checkingUpdateProperty().addListener(holder.value);
