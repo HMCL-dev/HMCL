@@ -17,7 +17,35 @@
  */
 package org.jackhuang.hmcl.theme;
 
+import java.nio.file.Path;
+import java.time.Duration;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Locale;
+import java.util.Objects;
+
+import org.glavo.monetfx.Brightness;
+import org.glavo.monetfx.ColorScheme;
+import org.glavo.monetfx.Contrast;
+import org.glavo.monetfx.beans.property.ColorSchemeProperty;
+import org.glavo.monetfx.beans.property.ReadOnlyColorSchemeProperty;
+import org.glavo.monetfx.beans.property.SimpleColorSchemeProperty;
+import static org.jackhuang.hmcl.setting.ConfigHolder.config;
+import org.jackhuang.hmcl.ui.FXUtils;
+import org.jackhuang.hmcl.ui.WindowsNativeUtils;
+import org.jackhuang.hmcl.util.io.FileUtils;
+import static org.jackhuang.hmcl.util.logging.Logger.LOG;
+import org.jackhuang.hmcl.util.platform.NativeUtils;
+import org.jackhuang.hmcl.util.platform.OSVersion;
+import org.jackhuang.hmcl.util.platform.OperatingSystem;
+import org.jackhuang.hmcl.util.platform.SystemUtils;
+import org.jackhuang.hmcl.util.platform.windows.Dwmapi;
+import org.jackhuang.hmcl.util.platform.windows.WinConstants;
+import org.jackhuang.hmcl.util.platform.windows.WinReg;
+import org.jackhuang.hmcl.util.platform.windows.WinTypes;
+
 import com.sun.jna.Pointer;
+
 import javafx.beans.Observable;
 import javafx.beans.binding.Bindings;
 import javafx.beans.binding.BooleanBinding;
@@ -29,30 +57,6 @@ import javafx.event.EventHandler;
 import javafx.scene.paint.Color;
 import javafx.stage.Stage;
 import javafx.stage.WindowEvent;
-import org.glavo.monetfx.Brightness;
-import org.glavo.monetfx.ColorScheme;
-import org.glavo.monetfx.Contrast;
-import org.glavo.monetfx.beans.property.ColorSchemeProperty;
-import org.glavo.monetfx.beans.property.ReadOnlyColorSchemeProperty;
-import org.glavo.monetfx.beans.property.SimpleColorSchemeProperty;
-import org.jackhuang.hmcl.ui.FXUtils;
-import org.jackhuang.hmcl.util.io.FileUtils;
-import org.jackhuang.hmcl.ui.WindowsNativeUtils;
-import org.jackhuang.hmcl.util.platform.NativeUtils;
-import org.jackhuang.hmcl.util.platform.OSVersion;
-import org.jackhuang.hmcl.util.platform.OperatingSystem;
-import org.jackhuang.hmcl.util.platform.SystemUtils;
-import org.jackhuang.hmcl.util.platform.windows.Dwmapi;
-import org.jackhuang.hmcl.util.platform.windows.WinConstants;
-import org.jackhuang.hmcl.util.platform.windows.WinReg;
-import org.jackhuang.hmcl.util.platform.windows.WinTypes;
-
-import java.nio.file.Path;
-import java.time.Duration;
-import java.util.*;
-
-import static org.jackhuang.hmcl.setting.ConfigHolder.config;
-import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 /// @author Glavo
 public final class Themes {
@@ -71,8 +75,9 @@ public final class Themes {
 
         private Brightness getBrightness() {
             String themeBrightness = config().getThemeBrightness();
-            if (themeBrightness == null)
+            if (themeBrightness == null) {
                 return Brightness.DEFAULT;
+            }
 
             return switch (themeBrightness.toLowerCase(Locale.ROOT).trim()) {
                 case "auto" -> {
@@ -82,9 +87,12 @@ public final class Themes {
                         yield getDefaultBrightness();
                     }
                 }
-                case "dark" -> Brightness.DARK;
-                case "light" -> Brightness.LIGHT;
-                default -> Brightness.DEFAULT;
+                case "dark" ->
+                    Brightness.DARK;
+                case "light" ->
+                    Brightness.LIGHT;
+                default ->
+                    Brightness.DEFAULT;
             };
         }
 
@@ -114,55 +122,64 @@ public final class Themes {
     private static Brightness defaultBrightness;
 
     private static Brightness getDefaultBrightness() {
-        if (defaultBrightness != null)
+        if (defaultBrightness != null) {
             return defaultBrightness;
+        }
 
         LOG.info("Detecting system theme brightness");
         Brightness brightness = Brightness.DEFAULT;
-        if (OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS) {
-            WinReg reg = WinReg.INSTANCE;
-            if (reg != null) {
-                Object appsUseLightTheme = reg.queryValue(WinReg.HKEY.HKEY_CURRENT_USER, "Software\\Microsoft\\Windows\\CurrentVersion\\Themes\\Personalize", "AppsUseLightTheme");
-                if (appsUseLightTheme instanceof Integer value) {
-                    brightness = value == 0 ? Brightness.DARK : Brightness.LIGHT;
-                }
-            }
-        } else if (OperatingSystem.CURRENT_OS == OperatingSystem.MACOS) {
-            try {
-                String result = SystemUtils.run("/usr/bin/defaults", "read", "-g", "AppleInterfaceStyle").trim();
-                brightness = "Dark".equalsIgnoreCase(result) ? Brightness.DARK : Brightness.LIGHT;
-            } catch (Exception e) {
-                // If the key does not exist, it means Light mode is used
-                brightness = Brightness.LIGHT;
-            }
-        } else if (OperatingSystem.CURRENT_OS == OperatingSystem.LINUX) {
-            Path dbusSend = SystemUtils.which("dbus-send");
-            if (dbusSend != null) {
-                try {
-                    String[] result = SystemUtils.run(List.of(
-                            FileUtils.getAbsolutePath(dbusSend),
-                            "--session",
-                            "--print-reply=literal",
-                            "--reply-timeout=1000",
-                            "--dest=org.freedesktop.portal.Desktop",
-                            "/org/freedesktop/portal/desktop",
-                            "org.freedesktop.portal.Settings.Read",
-                            "string:org.freedesktop.appearance",
-                            "string:color-scheme"
-                    ), Duration.ofSeconds(2)).trim().split(" ");
-
-                    if (result.length > 0) {
-                        String value = result[result.length - 1];
-                        // 1: prefer dark
-                        // 2: prefer light
-                        if ("1".equals(value)) {
-                            brightness = Brightness.DARK;
-                        } else if ("2".equals(value)) {
-                            brightness = Brightness.LIGHT;
+        if (null != OperatingSystem.CURRENT_OS) {
+            switch (OperatingSystem.CURRENT_OS) {
+                case WINDOWS -> {
+                    WinReg reg = WinReg.INSTANCE;
+                    if (reg != null) {
+                        Object appsUseLightTheme = reg.queryValue(WinReg.HKEY.HKEY_CURRENT_USER, "Software\\Microsoft\\Windows\\CurrentVersion\\Themes\\Personalize", "AppsUseLightTheme");
+                        if (appsUseLightTheme instanceof Integer value) {
+                            brightness = value == 0 ? Brightness.DARK : Brightness.LIGHT;
                         }
                     }
-                } catch (Exception e) {
-                    LOG.warning("Failed to get system theme from D-Bus", e);
+                }
+                case MACOS -> {
+                    try {
+                        String result = SystemUtils.run("/usr/bin/defaults", "read", "-g", "AppleInterfaceStyle").trim();
+                        brightness = "Dark".equalsIgnoreCase(result) ? Brightness.DARK : Brightness.LIGHT;
+                    } catch (Exception e) {
+                        // If the key does not exist, it means Light mode is used
+                        brightness = Brightness.LIGHT;
+                    }
+                }
+                case LINUX -> {
+                    Path dbusSend = SystemUtils.which("dbus-send");
+                    if (dbusSend != null) {
+                        try {
+                            String[] result = SystemUtils.run(List.of(
+                                    FileUtils.getAbsolutePath(dbusSend),
+                                    "--session",
+                                    "--print-reply=literal",
+                                    "--reply-timeout=1000",
+                                    "--dest=org.freedesktop.portal.Desktop",
+                                    "/org/freedesktop/portal/desktop",
+                                    "org.freedesktop.portal.Settings.Read",
+                                    "string:org.freedesktop.appearance",
+                                    "string:color-scheme"
+                            ), Duration.ofSeconds(2)).trim().split(" ");
+
+                            if (result.length > 0) {
+                                String value = result[result.length - 1];
+                                // 1: prefer dark
+                                // 2: prefer light
+                                if ("1".equals(value)) {
+                                    brightness = Brightness.DARK;
+                                } else if ("2".equals(value)) {
+                                    brightness = Brightness.LIGHT;
+                                }
+                            }
+                        } catch (Exception e) {
+                            LOG.warning("Failed to get system theme from D-Bus", e);
+                        }
+                    }
+                }
+                default -> {
                 }
             }
         }
@@ -189,8 +206,8 @@ public final class Themes {
 
     private static final ObjectBinding<Color> titleFill = Bindings.createObjectBinding(
             () -> config().isTitleTransparent()
-                    ? getColorScheme().getOnSurface()
-                    : getColorScheme().getOnPrimaryContainer(),
+            ? getColorScheme().getOnSurface()
+            : getColorScheme().getOnPrimaryContainer(),
             colorSchemeProperty(),
             config().titleTransparentProperty()
     );
@@ -208,8 +225,9 @@ public final class Themes {
             ChangeListener<Boolean> listener = FXUtils.onWeakChange(Themes.darkModeProperty(), darkMode -> {
                 if (stage.isShowing()) {
                     WindowsNativeUtils.getWindowHandle(stage).ifPresent(handle -> {
-                        if (handle == WinTypes.HANDLE.INVALID_VALUE)
+                        if (handle == WinTypes.HANDLE.INVALID_VALUE) {
                             return;
+                        }
 
                         Dwmapi.INSTANCE.DwmSetWindowAttribute(
                                 new WinTypes.HANDLE(Pointer.createConstant(handle)),
