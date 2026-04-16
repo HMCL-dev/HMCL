@@ -43,8 +43,6 @@ final class ComponentSublistWrapper extends VBox implements NoPaddingComponent {
     private boolean expanded = false;
 
     ComponentSublistWrapper(ComponentSublist sublist) {
-        boolean noPadding = !sublist.hasComponentPadding();
-
         this.getStyleClass().add("options-sublist-wrapper");
 
         Node expandIcon = SVG.KEYBOARD_ARROW_DOWN.createIcon(20);
@@ -105,7 +103,7 @@ final class ComponentSublistWrapper extends VBox implements NoPaddingComponent {
                 if (container == null) {
                     this.container = new VBox();
                     this.container.getStyleClass().add("container");
-                    container.setPadding(new Insets(8, 0, 8, 0));
+                    // container.setPadding(new Insets(8, 0, 8, 0));
                     FXUtils.setLimitHeight(container, 0);
                     FXUtils.setOverflowHidden(container);
                     container.getChildren().setAll(sublist);
@@ -118,8 +116,7 @@ final class ComponentSublistWrapper extends VBox implements NoPaddingComponent {
             }
 
             Platform.runLater(() -> {
-                // FIXME: ComponentSubList without padding must have a 4 pixel padding for displaying a border radius.
-                double contentHeight = expanded ? (sublist.prefHeight(sublist.getWidth()) + (noPadding ? 4 : 8)) : 0;
+                double contentHeight = expanded ? sublist.prefHeight(sublist.getWidth()) : 0;
                 double targetRotate = expanded ? -180 : 0;
 
                 if (AnimationUtils.isAnimationEnabled()) {
