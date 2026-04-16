@@ -1093,6 +1093,10 @@
     -fx-background-color: -monet-error-container;
 }
 
+.multi-file-item {
+    -fx-padding: 10 0 10 0;
+}
+
 .options-sublist {
     -fx-background-color: -monet-surface-container;
 }
@@ -1107,6 +1111,10 @@
 
 .options-sublist .options-list-item {
     -fx-background-color: -monet-surface-container;
+}
+
+.options-sublist .multi-file-item {
+    -fx-padding: 0 10 10 10;
 }
 
 .options-list-item .svg {
