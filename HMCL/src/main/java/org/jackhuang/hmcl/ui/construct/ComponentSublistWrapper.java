@@ -19,6 +19,7 @@ package org.jackhuang.hmcl.ui.construct;
 
 import javafx.animation.*;
 import javafx.application.Platform;
+import javafx.beans.InvalidationListener;
 import javafx.beans.Observable;
 import javafx.css.PseudoClass;
 import javafx.geometry.Insets;
@@ -113,7 +114,7 @@ final class ComponentSublistWrapper extends VBox implements NoPaddingComponent {
 
                     var last = PseudoClass.getPseudoClass("last");
 
-                    ComponentSublistWrapper.this.getPseudoClassStates().addListener((Observable o) -> {
+                    InvalidationListener updateArc = o -> {
                         if (ComponentSublistWrapper.this.getPseudoClassStates().contains(last)) {
                             rectangle.setArcHeight(4);
                             rectangle.setArcWidth(4);
@@ -121,7 +122,9 @@ final class ComponentSublistWrapper extends VBox implements NoPaddingComponent {
                             rectangle.setArcHeight(0);
                             rectangle.setArcWidth(0);
                         }
-                    });
+                    };
+                    updateArc.invalidated(null);
+                    ComponentSublistWrapper.this.getPseudoClassStates().addListener(updateArc);
 
                     container.getChildren().setAll(sublist);
                     ComponentSublistWrapper.this.getChildren().add(container);
