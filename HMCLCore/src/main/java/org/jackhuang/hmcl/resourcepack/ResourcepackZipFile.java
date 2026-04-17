@@ -18,8 +18,6 @@
 package org.jackhuang.hmcl.resourcepack;
 
 import org.jackhuang.hmcl.mod.LocalModFile;
-import org.jackhuang.hmcl.mod.modinfo.PackMcMeta;
-import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.io.CompressingUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.tree.ZipFileTree;
@@ -28,6 +26,7 @@ import org.jetbrains.annotations.Nullable;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Path;
+import java.util.Locale;
 
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
@@ -37,7 +36,7 @@ public final class ResourcepackZipFile implements ResourcepackFile {
     private final String name;
     private final LocalModFile.Description description;
 
-    public ResourcepackZipFile(Path path) throws IOException {
+    public ResourcepackZipFile(Path path, Locale locale) throws IOException {
         this.path = path;
         LocalModFile.Description description = null;
 
@@ -45,7 +44,7 @@ public final class ResourcepackZipFile implements ResourcepackFile {
 
         try (var zipFileTree = new ZipFileTree(CompressingUtils.openZipFile(path))) {
             try {
-                description = JsonUtils.fromNonNullJson(zipFileTree.readTextEntry("/pack.mcmeta"), PackMcMeta.class).pack().description();
+                description = ResourcepackDescriptionResolver.resolveFromZip(zipFileTree, locale);
             } catch (Exception e) {
                 LOG.warning("Failed to parse resourcepack meta", e);
             }

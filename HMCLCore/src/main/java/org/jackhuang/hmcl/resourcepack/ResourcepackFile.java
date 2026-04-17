@@ -35,12 +35,12 @@ public interface ResourcepackFile {
 
     byte @Nullable [] getIcon();
 
-    static ResourcepackFile parse(Path path) throws IOException {
+    static ResourcepackFile parse(Path path, Locale locale) throws IOException {
         String fileName = path.getFileName().toString();
         if (Files.isRegularFile(path) && fileName.toLowerCase(Locale.ROOT).endsWith(".zip")) {
-            return new ResourcepackZipFile(path);
+            return new ResourcepackZipFile(path, locale);
         } else if (Files.isDirectory(path) && Files.exists(path.resolve("pack.mcmeta"))) {
-            return new ResourcepackFolder(path);
+            return new ResourcepackFolder(path, locale);
         }
         return null;
     }

@@ -36,6 +36,7 @@ import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.ui.*;
 import org.jackhuang.hmcl.ui.construct.*;
+import org.jackhuang.hmcl.util.i18n.I18n;
 import org.jackhuang.hmcl.util.io.FileUtils;
 
 import java.io.ByteArrayInputStream;
@@ -45,6 +46,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Locale;
 import java.util.Objects;
 import java.util.stream.Stream;
 
@@ -80,12 +82,13 @@ public final class ResourcepackListPage extends ListPageBase<ResourcepackListPag
     public void refresh() {
         if (resourcepackDirectory == null || !Files.isDirectory(resourcepackDirectory)) return;
         setLoading(true);
+        Locale locale = I18n.getLocale().getLocale();
         Task.supplyAsync(Schedulers.io(), () -> {
             try (Stream<Path> stream = Files.list(resourcepackDirectory)) {
                 return stream.sorted(Comparator.comparing(FileUtils::getName))
                         .flatMap(item -> {
                             try {
-                                return Stream.of(ResourcepackFile.parse(item)).filter(Objects::nonNull).map(ResourcepackInfoObject::new);
+                                return Stream.of(ResourcepackFile.parse(item, locale)).filter(Objects::nonNull).map(ResourcepackInfoObject::new);
                             } catch (IOException e) {
                                 LOG.warning("Failed to load resourcepack " + item, e);
                                 return Stream.empty();

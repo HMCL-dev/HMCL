@@ -42,6 +42,65 @@ import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 @JsonSerializable
 public record PackMcMeta(@SerializedName("pack") PackInfo pack) implements Validation {
+    private static List<LocalModFile.Description.Part> pairToPart(List<Pair<String, String>> lists, String color) {
+        List<LocalModFile.Description.Part> parts = new ArrayList<>();
+        for (Pair<String, String> list : lists) {
+            parts.add(new LocalModFile.Description.Part(list.getKey(), list.getValue().isEmpty() ? color : list.getValue()));
+        }
+        return parts;
+    }
+
+    private static void parseComponent(JsonElement element, List<LocalModFile.Description.Part> parts, String parentColor) throws JsonParseException {
+        if (parentColor == null) {
+            parentColor = "";
+        }
+        String color = parentColor;
+        if (element instanceof JsonPrimitive primitive) {
+            parts.addAll(pairToPart(StringUtils.parseMinecraftColorCodes(primitive.getAsString()), color));
+        } else if (element instanceof JsonObject jsonObj) {
+            if (jsonObj.get("color") instanceof JsonPrimitive primitive) {
+                color = primitive.getAsString();
+            }
+            if (jsonObj.get("text") instanceof JsonPrimitive primitive) {
+                parts.addAll(pairToPart(StringUtils.parseMinecraftColorCodes(primitive.getAsString()), color));
+            }
+            if (jsonObj.get("extra") instanceof JsonArray jsonArray) {
+                parseComponent(jsonArray, parts, color);
+            }
+        } else if (element instanceof JsonArray jsonArray) {
+            if (!jsonArray.isEmpty() && jsonArray.get(0) instanceof JsonObject jsonObj && jsonObj.get("color") instanceof JsonPrimitive primitive) {
+                color = primitive.getAsString();
+            }
+
+            for (JsonElement childElement : jsonArray) {
+                parseComponent(childElement, parts, color);
+            }
+        } else {
+            LOG.warning("Skipping unsupported element in description. Expected a string, object, or array, but got type " + element.getClass().getSimpleName() + ". Value: " + element);
+        }
+    }
+
+    public static LocalModFile.Description parseDescription(JsonElement json) throws JsonParseException {
+        List<LocalModFile.Description.Part> parts = new ArrayList<>();
+
+        if (json == null || json.isJsonNull()) {
+            return new LocalModFile.Description(parts);
+        }
+
+        try {
+            parseComponent(json, parts, "");
+        } catch (JsonParseException | IllegalStateException e) {
+            parts.clear();
+            LOG.warning("An unexpected error occurred while parsing a description component. The description may be incomplete.", e);
+        }
+
+        return new LocalModFile.Description(parts);
+    }
+
+    public static LocalModFile.Description parseDescription(String text) {
+        return parseDescription(new JsonPrimitive(text));
+    }
+
     @Override
     public void validate() throws JsonParseException {
         if (pack == null)
@@ -110,62 +169,6 @@ public record PackMcMeta(@SerializedName("pack") PackInfo pack) implements Valid
     }
 
     public static final class PackInfoDeserializer implements JsonDeserializer<PackInfo> {
-
-        private List<LocalModFile.Description.Part> pairToPart(List<Pair<String, String>> lists, String color) {
-            List<LocalModFile.Description.Part> parts = new ArrayList<>();
-            for (Pair<String, String> list : lists) {
-                parts.add(new LocalModFile.Description.Part(list.getKey(), list.getValue().isEmpty() ? color : list.getValue()));
-            }
-            return parts;
-        }
-
-        private void parseComponent(JsonElement element, List<LocalModFile.Description.Part> parts, String parentColor) throws JsonParseException {
-            if (parentColor == null) {
-                parentColor = "";
-            }
-            String color = parentColor;
-            if (element instanceof JsonPrimitive primitive) {
-                parts.addAll(pairToPart(StringUtils.parseMinecraftColorCodes(primitive.getAsString()), color));
-            } else if (element instanceof JsonObject jsonObj) {
-                if (jsonObj.get("color") instanceof JsonPrimitive primitive) {
-                    color = primitive.getAsString();
-                }
-                if (jsonObj.get("text") instanceof JsonPrimitive primitive) {
-                    parts.addAll(pairToPart(StringUtils.parseMinecraftColorCodes(primitive.getAsString()), color));
-                }
-                if (jsonObj.get("extra") instanceof JsonArray jsonArray) {
-                    parseComponent(jsonArray, parts, color);
-                }
-            } else if (element instanceof JsonArray jsonArray) {
-                if (!jsonArray.isEmpty() && jsonArray.get(0) instanceof JsonObject jsonObj && jsonObj.get("color") instanceof JsonPrimitive primitive) {
-                    color = primitive.getAsString();
-                }
-
-                for (JsonElement childElement : jsonArray) {
-                    parseComponent(childElement, parts, color);
-                }
-            } else {
-                LOG.warning("Skipping unsupported element in description. Expected a string, object, or array, but got type " + element.getClass().getSimpleName() + ". Value: " + element);
-            }
-        }
-
-        private List<LocalModFile.Description.Part> parseDescription(JsonElement json) throws JsonParseException {
-            List<LocalModFile.Description.Part> parts = new ArrayList<>();
-
-            if (json == null || json.isJsonNull()) {
-                return parts;
-            }
-
-            try {
-                parseComponent(json, parts, "");
-            } catch (JsonParseException | IllegalStateException e) {
-                parts.clear();
-                LOG.warning("An unexpected error occurred while parsing a description component. The description may be incomplete.", e);
-            }
-
-            return parts;
-        }
-
         @Override
         public PackInfo deserialize(JsonElement json, Type typeOfT, JsonDeserializationContext context) throws JsonParseException {
             JsonObject packInfo = json.getAsJsonObject();
@@ -178,8 +181,7 @@ public record PackMcMeta(@SerializedName("pack") PackInfo pack) implements Valid
             PackVersion minVersion = PackVersion.fromJson(packInfo.get("min_format"));
             PackVersion maxVersion = PackVersion.fromJson(packInfo.get("max_format"));
 
-            List<LocalModFile.Description.Part> parts = parseDescription(packInfo.get("description"));
-            return new PackInfo(packFormat, minVersion, maxVersion, new LocalModFile.Description(parts));
+            return new PackInfo(packFormat, minVersion, maxVersion, PackMcMeta.parseDescription(packInfo.get("description")));
         }
     }
 

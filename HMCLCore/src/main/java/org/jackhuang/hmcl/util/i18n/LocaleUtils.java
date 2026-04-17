@@ -304,6 +304,60 @@ public final class LocaleUtils {
         return null;
     }
 
+    public static @Nullable String getMinecraftLanguageTag(Locale locale) {
+        return switch (getRootLanguage(locale)) {
+            case "ar" -> "ar_SA";
+            case "es" -> "es_ES";
+            case "ja" -> "ja_JP";
+            case "ru" -> "ru_RU";
+            case "uk" -> "uk_UA";
+            case "zh" -> getMinecraftChineseLanguageTag(locale);
+            case "en" -> "en_US";
+            default -> null;
+        };
+    }
+
+    public static @NotNull List<String> getMinecraftLanguageFileNames(Locale locale) {
+        LinkedHashSet<String> candidates = new LinkedHashSet<>();
+
+        String minecraftLanguageTag = getMinecraftLanguageTag(locale);
+        if (minecraftLanguageTag != null) {
+            candidates.add(minecraftLanguageTag.toLowerCase(Locale.ROOT) + ".json");
+        }
+
+        for (Locale candidate : getCandidateLocales(locale)) {
+            String fileName = toMinecraftLanguageFileName(candidate);
+            if (fileName != null) {
+                candidates.add(fileName);
+            }
+        }
+
+        return List.copyOf(candidates);
+    }
+
+    private static @Nullable String toMinecraftLanguageFileName(Locale locale) {
+        String language = locale.getLanguage();
+        if (language.isEmpty()) {
+            return null;
+        }
+
+        String normalizedLanguage = getRootLanguage(locale).toLowerCase(Locale.ROOT);
+        String region = locale.getCountry().toLowerCase(Locale.ROOT);
+        return (!region.isEmpty() ? normalizedLanguage + "_" + region : normalizedLanguage) + ".json";
+    }
+
+    private static @NotNull String getMinecraftChineseLanguageTag(Locale locale) {
+        if ("lzh".equals(locale.getLanguage())) {
+            return "lzh";
+        }
+
+        String region = locale.getCountry();
+        return switch (getScript(locale)) {
+            case "Hant" -> ("HK".equals(region) || "MO".equals(region)) ? "zh_HK" : "zh_TW";
+            default -> "zh_CN";
+        };
+    }
+
     /// Find all localized files in the given directory with the given base name and extension.
     /// The file name should be in the format of `baseName[_languageTag].ext`.
     ///
