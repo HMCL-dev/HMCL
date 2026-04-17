@@ -130,8 +130,11 @@ public final class UpdateHandler {
                         CompletableFuture<Void> future = new CompletableFuture<>();
 
                         Platform.runLater(() -> {
-                            Controllers.onApplicationStop();
-                            future.complete(null);
+                            try {
+                                Controllers.onApplicationStop();
+                            } finally {
+                                future.complete(null);
+                            }
                         });
 
                         try {
