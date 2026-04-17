@@ -39,7 +39,7 @@ public class OrnitheOSLRemoteVersion extends RemoteVersion {
      * @param urls        the installer or universal jar original URL.
      */
     OrnitheOSLRemoteVersion(String gameVersion, String selfVersion, String fullVersion, Instant datePublished, RemoteMod.Version version, List<String> urls) {
-        super(LibraryAnalyzer.LibraryType.FABRIC_API.getPatchId(), gameVersion, selfVersion, datePublished, urls);
+        super(LibraryAnalyzer.LibraryType.ORNITHE_OSL.getPatchId(), gameVersion, selfVersion, datePublished, urls);
 
         this.fullVersion = fullVersion;
         this.version = version;
