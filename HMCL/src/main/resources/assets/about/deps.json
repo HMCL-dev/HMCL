@@ -93,5 +93,10 @@
     "title": "LWJGL Unsafe Agent",
     "subtitle": "Copyright © 2026 Glavo.\nLicensed under the Apache 2.0 License.",
     "externalLink": "https://github.com/HMCL-dev/lwjgl-unsafe-agent"
+  },
+  {
+    "title": "CommonMark",
+    "subtitle": "Copyright (c) 2015 Robin Stocker.\nAll rights reserved.",
+    "externalLink": "https://github.com/commonmark/commonmark-java"
   }
 ]

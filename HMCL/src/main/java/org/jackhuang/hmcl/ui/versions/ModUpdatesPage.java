@@ -19,16 +19,18 @@ package org.jackhuang.hmcl.ui.versions;
 
 import com.jfoenix.controls.JFXButton;
 import com.jfoenix.controls.JFXCheckBox;
+import com.jfoenix.controls.JFXDialogLayout;
 import javafx.beans.property.*;
 import javafx.beans.value.ObservableValue;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
-import javafx.scene.control.TableColumn;
-import javafx.scene.control.TableView;
+import javafx.scene.control.*;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
+import javafx.scene.layout.Priority;
+import javafx.scene.layout.VBox;
 import org.jackhuang.hmcl.mod.LocalModFile;
 import org.jackhuang.hmcl.mod.ModManager;
 import org.jackhuang.hmcl.mod.RemoteMod;
@@ -37,13 +39,13 @@ import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.FXUtils;
-import org.jackhuang.hmcl.ui.construct.JFXCheckBoxTableCell;
-import org.jackhuang.hmcl.ui.construct.MessageDialogPane;
-import org.jackhuang.hmcl.ui.construct.PageCloseEvent;
+import org.jackhuang.hmcl.ui.construct.*;
 import org.jackhuang.hmcl.ui.decorator.DecoratorPage;
 import org.jackhuang.hmcl.util.Pair;
+import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.TaskCancellationAction;
 import org.jackhuang.hmcl.util.io.CSVTable;
+import org.jackhuang.hmcl.util.javafx.BindingMapping;
 
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -82,26 +84,45 @@ public class ModUpdatesPage extends BorderPane implements DecoratorPage {
         enabledColumn.setMinWidth(40);
 
         TableColumn<ModUpdateObject, String> fileNameColumn = new TableColumn<>(i18n("mods.check_updates.file"));
-        fileNameColumn.setPrefWidth(200);
+        fileNameColumn.setPrefWidth(180);
         setupCellValueFactory(fileNameColumn, ModUpdateObject::fileNameProperty);
 
         TableColumn<ModUpdateObject, String> currentVersionColumn = new TableColumn<>(i18n("mods.check_updates.current_version"));
-        currentVersionColumn.setPrefWidth(200);
+        currentVersionColumn.setPrefWidth(180);
         setupCellValueFactory(currentVersionColumn, ModUpdateObject::currentVersionProperty);
 
         TableColumn<ModUpdateObject, String> targetVersionColumn = new TableColumn<>(i18n("mods.check_updates.target_version"));
-        targetVersionColumn.setPrefWidth(200);
+        targetVersionColumn.setPrefWidth(180);
         setupCellValueFactory(targetVersionColumn, ModUpdateObject::targetVersionProperty);
 
         TableColumn<ModUpdateObject, String> sourceColumn = new TableColumn<>(i18n("mods.check_updates.source"));
         setupCellValueFactory(sourceColumn, ModUpdateObject::sourceProperty);
+
+        TableColumn<ModUpdateObject, String> changelogColumn = new TableColumn<>(i18n("mods.changelog"));
+        {
+            var oldCellFactory = changelogColumn.getCellFactory();
+            changelogColumn.setCellFactory(param -> {
+                TableCell<ModUpdateObject, String> cell = oldCellFactory.call(param);
+                cell.getStyleClass().add("addon-changelog-table-cell");
+                cell.setOnMouseClicked(event -> {
+                    List<ModUpdateObject> items = cell.getTableColumn().getTableView().getItems();
+                    if (cell.getIndex() >= items.size() || cell.getIndex() < 0) {
+                        return;
+                    }
+                    ModUpdateObject object = items.get(cell.getIndex());
+                    Controllers.dialog(new ModChangelog(object));
+                });
+                return cell;
+            });
+            changelogColumn.setCellValueFactory(__ -> new SimpleStringProperty(i18n("button.view")));
+        }
 
         objects = FXCollections.observableList(updates.stream().map(ModUpdateObject::new).collect(Collectors.toList()));
         FXUtils.bindAllEnabled(allEnabledBox.selectedProperty(), objects.stream().map(o -> o.enabled).toArray(BooleanProperty[]::new));
 
         TableView<ModUpdateObject> table = new TableView<>(objects);
         table.setEditable(true);
-        table.getColumns().setAll(enabledColumn, fileNameColumn, currentVersionColumn, targetVersionColumn, sourceColumn);
+        table.getColumns().setAll(enabledColumn, fileNameColumn, currentVersionColumn, targetVersionColumn, sourceColumn, changelogColumn);
         setMargin(table, new Insets(10, 10, 5, 10));
 
         setCenter(table);
@@ -196,6 +217,7 @@ public class ModUpdatesPage extends BorderPane implements DecoratorPage {
         final StringProperty currentVersion = new SimpleStringProperty();
         final StringProperty targetVersion = new SimpleStringProperty();
         final StringProperty source = new SimpleStringProperty();
+        String changelog = null;
 
         public ModUpdateObject(LocalModFile.ModUpdate data) {
             this.data = data;
@@ -271,6 +293,80 @@ public class ModUpdatesPage extends BorderPane implements DecoratorPage {
 
         public void setSource(String source) {
             this.source.set(source);
+        }
+    }
+
+    private static final class ModChangelog extends JFXDialogLayout {
+
+        public ModChangelog(ModUpdateObject object) {
+            RemoteMod.Version targetVersion = object.data.getCandidate();
+
+            this.setHeading(new HBox(new Label(i18n("mods.changelog") + " - " + targetVersion.getName())));
+
+            VBox box = new VBox(8);
+            box.setPadding(new Insets(8));
+
+            SpinnerPane spinnerPane = new SpinnerPane();
+            ScrollPane scrollPane = new ScrollPane();
+            scrollPane.setFitToWidth(true);
+            scrollPane.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
+            FXUtils.setOverflowHidden(scrollPane, 8);
+
+            loadChangelog(object, spinnerPane, scrollPane);
+            spinnerPane.setOnFailedAction(e -> loadChangelog(object, spinnerPane, scrollPane));
+
+            spinnerPane.setContent(scrollPane);
+            box.getChildren().add(spinnerPane);
+            VBox.setVgrow(spinnerPane, Priority.SOMETIMES);
+
+            this.setBody(box);
+
+            JFXHyperlink versionPageBtn = new JFXHyperlink(i18n("mods.url"));
+            versionPageBtn.setDisable(true);
+            loadVersionPageUrl(object, versionPageBtn);
+
+            JFXButton closeButton = new JFXButton(i18n("button.ok"));
+            closeButton.getStyleClass().add("dialog-accept");
+            closeButton.setOnAction(e -> fireEvent(new DialogCloseEvent()));
+
+            setActions(versionPageBtn, closeButton);
+
+            this.prefWidthProperty().bind(BindingMapping.of(Controllers.getStage().widthProperty()).map(w -> w.doubleValue() * 0.7));
+            this.prefHeightProperty().bind(BindingMapping.of(Controllers.getStage().heightProperty()).map(w -> w.doubleValue() * 0.7));
+
+            onEscPressed(this, closeButton::fire);
+        }
+
+        private void loadChangelog(ModUpdateObject object, SpinnerPane spinnerPane, ScrollPane scrollPane) {
+            spinnerPane.setLoading(true);
+            Task.supplyAsync(() -> {
+                if (object.changelog != null) {
+                    return object.changelog;
+                }
+                RemoteMod.Version version = object.data.getCandidate();
+                return StringUtils.convertToHtml(object.data.getRepository().getModChangelog(version.getModid(), version.getVersionId()));
+            }).whenComplete(Schedulers.javafx(), (result, exception) -> {
+                if (exception == null) {
+                    object.changelog = StringUtils.isNotBlank(result) ? result : i18n("mods.changelog.empty");
+                    scrollPane.setContent(FXUtils.renderAddonChangelog(object.changelog, object.data.getRepository().getBaseUrl()));
+                    FXUtils.smoothScrolling(scrollPane);
+                    spinnerPane.setFailedReason(null);
+                } else {
+                    spinnerPane.setFailedReason(i18n("download.failed.refresh"));
+                }
+                spinnerPane.setLoading(false);
+            }).start();
+        }
+
+        private void loadVersionPageUrl(ModUpdateObject object, JFXHyperlink button) {
+            Task.supplyAsync(() -> object.data.getRepository().getVersionPageUrl(object.data.getCandidate()))
+                    .whenComplete(Schedulers.javafx(), (result, exception) -> {
+                        if (exception == null && StringUtils.isNotBlank(result)) {
+                            button.setOnAction(__ -> Controllers.openUriInBrowser(result));
+                            button.setDisable(false);
+                        }
+                    })
+                    .start();
         }
     }
 
