@@ -20,7 +20,6 @@ package org.jackhuang.hmcl.ui.construct;
 import javafx.animation.*;
 import javafx.application.Platform;
 import javafx.beans.InvalidationListener;
-import javafx.beans.Observable;
 import javafx.css.PseudoClass;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
