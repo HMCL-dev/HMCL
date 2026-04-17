@@ -350,7 +350,7 @@ public final class LocaleUtils {
     private static void moveBefore(List<String> candidates, String fileName, String beforeFileName) {
         int fileIndex = candidates.indexOf(fileName);
         int beforeIndex = candidates.indexOf(beforeFileName);
-        if (fileIndex >= 0 && beforeIndex >= 0 && fileIndex > beforeIndex) {
+        if (beforeIndex >= 0 && fileIndex > beforeIndex) {
             candidates.remove(fileIndex);
             candidates.add(beforeIndex, fileName);
         }
