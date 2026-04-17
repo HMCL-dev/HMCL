@@ -23,7 +23,9 @@ import org.jackhuang.hmcl.util.platform.NativeUtils;
 
 public interface AppKit extends Library {
 
-    AppKit INSTANCE = NativeUtils.load("objc", AppKit.class);
+    AppKit INSTANCE = NativeUtils.USE_JNA && com.sun.jna.Platform.isMac()
+            ? NativeUtils.load("objc", AppKit.class)
+            : null;
 
     Pointer objc_getClass(String name);
 
