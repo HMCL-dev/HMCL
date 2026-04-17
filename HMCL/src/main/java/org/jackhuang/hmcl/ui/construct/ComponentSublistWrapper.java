@@ -19,6 +19,8 @@ package org.jackhuang.hmcl.ui.construct;
 
 import javafx.animation.*;
 import javafx.application.Platform;
+import javafx.beans.Observable;
+import javafx.css.PseudoClass;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
@@ -28,6 +30,7 @@ import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
+import javafx.scene.shape.Rectangle;
 import javafx.util.Duration;
 import org.jackhuang.hmcl.theme.Themes;
 import org.jackhuang.hmcl.ui.FXUtils;
@@ -104,7 +107,22 @@ final class ComponentSublistWrapper extends VBox implements NoPaddingComponent {
                     this.container = new VBox();
                     this.container.getStyleClass().add("container");
                     FXUtils.setLimitHeight(container, 0);
-                    FXUtils.setOverflowHidden(container);
+
+                    Rectangle rectangle = FXUtils.setOverflowHidden(container);
+                    rectangle.getStyleClass().add("overflow-hidden");
+
+                    var last = PseudoClass.getPseudoClass("last");
+
+                    ComponentSublistWrapper.this.getPseudoClassStates().addListener((Observable o) -> {
+                        if (ComponentSublistWrapper.this.getPseudoClassStates().contains(last)) {
+                            rectangle.setArcHeight(4);
+                            rectangle.setArcWidth(4);
+                        } else {
+                            rectangle.setArcHeight(0);
+                            rectangle.setArcWidth(0);
+                        }
+                    });
+
                     container.getChildren().setAll(sublist);
                     ComponentSublistWrapper.this.getChildren().add(container);
 
