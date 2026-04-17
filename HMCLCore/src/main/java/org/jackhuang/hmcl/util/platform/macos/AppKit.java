@@ -21,19 +21,26 @@ import com.sun.jna.Library;
 import com.sun.jna.Pointer;
 import org.jackhuang.hmcl.util.platform.NativeUtils;
 
+/// @see <a href="https://developer.apple.com/documentation/appkit">AppKit</a>
 public interface AppKit extends Library {
 
+    /// The AppKit library instance.
     AppKit INSTANCE = NativeUtils.USE_JNA && com.sun.jna.Platform.isMac()
             ? NativeUtils.load("objc", AppKit.class)
             : null;
 
+    /// @see <a href="https://developer.apple.com/documentation/objectivec/objc_getclass(_:)">objc_getClass function</a>
     Pointer objc_getClass(String name);
 
+    /// @see <a href="https://developer.apple.com/documentation/objectivec/sel_registername(_:)">sel_registerName function</a>
     Pointer sel_registerName(String name);
 
+    /// @see <a href="https://developer.apple.com/documentation/ObjectiveC/objc_msgSend">objc_msgSend function</a>
     Pointer objc_msgSend(Pointer receiver, Pointer selector);
 
+    /// @see <a href="https://developer.apple.com/documentation/ObjectiveC/objc_msgSend">objc_msgSend function</a>
     Pointer objc_msgSend(Pointer receiver, Pointer selector, Pointer arg);
 
+    /// @see <a href="https://developer.apple.com/documentation/ObjectiveC/objc_msgSend">objc_msgSend function</a>
     Pointer objc_msgSend(Pointer receiver, Pointer selector, String arg);
 }
