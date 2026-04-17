@@ -28,6 +28,7 @@ import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.css.PseudoClass;
 import javafx.geometry.Pos;
+import javafx.scene.Node;
 import javafx.scene.control.Label;
 import javafx.scene.input.*;
 import javafx.scene.layout.StackPane;
@@ -49,6 +50,8 @@ public class LineSelectButton<T> extends LineButton {
     private static final PseudoClass SELECTED_PSEUDO_CLASS = PseudoClass.getPseudoClass("selected");
 
     private JFXPopup popup;
+    @SuppressWarnings({"FieldCanBeLocal", "unused"})
+    private ObservableList<Node> popupItems; // keep a reference
 
     public LineSelectButton() {
         this.getStyleClass().add(DEFAULT_STYLE_CLASS);
@@ -87,7 +90,7 @@ public class LineSelectButton<T> extends LineButton {
 
             ripplerContainer.addEventFilter(ScrollEvent.ANY, ignored -> popup.hide());
 
-            Bindings.bindContent(popupMenu.getContent(), MappedObservableList.create(itemsProperty(), item -> {
+            Bindings.bindContent(popupMenu.getContent(), popupItems = MappedObservableList.create(itemsProperty(), item -> {
                 VBox vbox = new VBox();
 
                 var itemTitleLabel = new Label();

@@ -430,6 +430,7 @@ public final class HMCLGameRepository extends DefaultGameRepository {
                 .setNativesDirType(vs.getNativesDirType())
                 .setNativesDir(vs.getNativesDir())
                 .setProcessPriority(vs.getProcessPriority())
+                .setGraphicsBackend(vs.getGraphicsBackend())
                 .setRenderer(vs.getRenderer())
                 .setEnableDebugLogOutput(vs.isEnableDebugLogOutput())
                 .setUseNativeGLFW(vs.isUseNativeGLFW())
