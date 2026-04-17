@@ -21,12 +21,12 @@ import com.sun.jna.Library;
 import com.sun.jna.Pointer;
 import org.jackhuang.hmcl.util.platform.NativeUtils;
 
-/// @see <a href="https://developer.apple.com/documentation/appkit">AppKit</a>
-public interface AppKit extends Library {
+/// @see <a href="https://developer.apple.com/documentation/objectivec/objective-c-runtime">Objective-C Runtime</a>
+public interface ObjectiveCRuntime extends Library {
 
-    /// The AppKit library instance.
-    AppKit INSTANCE = NativeUtils.USE_JNA && com.sun.jna.Platform.isMac()
-            ? NativeUtils.load("objc", AppKit.class)
+    /// The Objective-C runtime library instance.
+    ObjectiveCRuntime INSTANCE = NativeUtils.USE_JNA && com.sun.jna.Platform.isMac()
+            ? NativeUtils.load("objc", ObjectiveCRuntime.class)
             : null;
 
     /// @see <a href="https://developer.apple.com/documentation/objectivec/objc_getclass(_:)">objc_getClass function</a>

@@ -18,7 +18,7 @@
 package org.jackhuang.hmcl.ui;
 
 import com.sun.jna.Pointer;
-import org.jackhuang.hmcl.util.platform.macos.AppKit;
+import org.jackhuang.hmcl.util.platform.macos.ObjectiveCRuntime;
 
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
@@ -32,13 +32,13 @@ public final class MacOSNativeUtils {
     }
 
     private static void init() {
-        if (AppKit.INSTANCE == null) {
+        if (ObjectiveCRuntime.INSTANCE == null) {
             initialized = false;
             return;
         }
 
         try {
-            AppKit objc = AppKit.INSTANCE;
+            ObjectiveCRuntime objc = ObjectiveCRuntime.INSTANCE;
 
             Pointer NSApplication = objc.objc_getClass("NSApplication");
             if (NSApplication == null) {
@@ -68,7 +68,7 @@ public final class MacOSNativeUtils {
         if (!initialized || nsApp == null) return;
 
         try {
-            AppKit objc = AppKit.INSTANCE;
+            ObjectiveCRuntime objc = ObjectiveCRuntime.INSTANCE;
 
             Pointer NSAppearance = objc.objc_getClass("NSAppearance");
             if (NSAppearance == null) return;
