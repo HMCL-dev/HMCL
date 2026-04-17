@@ -42,7 +42,9 @@ import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -62,6 +64,44 @@ public final class ModrinthRemoteModRepository implements RemoteModRepository {
     public static final ModrinthRemoteModRepository MODPACKS = new ModrinthRemoteModRepository("modpack");
     public static final ModrinthRemoteModRepository RESOURCE_PACKS = new ModrinthRemoteModRepository("resourcepack");
     public static final ModrinthRemoteModRepository SHADER_PACKS = new ModrinthRemoteModRepository("shader");
+
+    private static final List<String> LOADER_TAG_ORDER = List.of(
+            "babric",
+            "bta-babric",
+            "bukkit",
+            "bungeecord",
+            "canvas",
+            "datapack",
+            "fabric",
+            "folia",
+            "forge",
+            "geyser",
+            "iris",
+            "java-agent",
+            "legacy-fabric",
+            "liteloader",
+            "minecraft",
+            "modloader",
+            "mrpack",
+            "neoforge",
+            "nilloader",
+            "optifine",
+            "ornith",
+            "paper",
+            "purpur",
+            "quilt",
+            "rift",
+            "spigot",
+            "sponge",
+            "vanilla",
+            "velocity",
+            "waterfall"
+    );
+
+    private static final Map<String, Integer> LOADER_TAG_PRIORITIES = createLoaderTagPriorities();
+    private static final Comparator<String> DISPLAY_CATEGORY_COMPARATOR = Comparator
+            .comparingInt(ModrinthRemoteModRepository::getLoaderTagPriority)
+            .reversed();
 
     private static final Semaphore SEMAPHORE = new Semaphore(16);
 
@@ -93,6 +133,29 @@ public final class ModrinthRemoteModRepository implements RemoteModRepository {
             default:
                 throw new IllegalArgumentException("Unsupported sort type " + sortType);
         }
+    }
+
+    private static Map<String, Integer> createLoaderTagPriorities() {
+        Map<String, Integer> priorities = new HashMap<>();
+        for (int i = 0; i < LOADER_TAG_ORDER.size(); i++) {
+            priorities.put(LOADER_TAG_ORDER.get(i), i);
+        }
+        return priorities;
+    }
+
+    private static int getLoaderTagPriority(String category) {
+        return LOADER_TAG_PRIORITIES.getOrDefault(category, Integer.MAX_VALUE);
+    }
+
+    static List<String> sortDisplayCategories(List<String> displayCategories) {
+        if (displayCategories.isEmpty()) {
+            return displayCategories;
+        }
+
+        List<String> sortedDisplayCategories = new ArrayList<>(displayCategories);
+        
+        sortedDisplayCategories.sort(DISPLAY_CATEGORY_COMPARATOR);
+        return sortedDisplayCategories;
     }
 
     @Override
@@ -811,7 +874,7 @@ public final class ModrinthRemoteModRepository implements RemoteModRepository {
                     author,
                     title,
                     description,
-                    displayCategories,
+                    sortDisplayCategories(displayCategories),
                     String.format("https://modrinth.com/%s/%s", projectType, projectId),
                     iconUrl,
                     this
