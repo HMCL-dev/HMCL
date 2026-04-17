@@ -246,8 +246,22 @@ public final class Versions {
     }
 
     public static void resetVersion(Profile profile, String id) {
+        HMCLGameRepository repository = profile.getRepository();
+
+        Path jsonPath = repository.getVersionJson(id);
+
+        String originalJson;
         try {
-            HMCLGameRepository repository = profile.getRepository();
+            originalJson = Files.readString(jsonPath);
+        } catch (Exception e) {
+            LOG.warning("Unable to reset instance", e);
+            Controllers.dialog(i18n("message.failed") + "\n" + StringUtils.getStackTrace(e), i18n("message.error"), MessageDialogPane.MessageType.ERROR);
+            return;
+        }
+
+        final String finalJson = originalJson;
+
+        try {
             LibraryAnalyzer analyzer = LibraryAnalyzer.analyze(repository.getResolvedPreservingPatchesVersion(id), null);
             GameBuilder builder = profile.getDependency().gameBuilder().name(id).gameVersion(repository.getGameVersion(id).orElseThrow());
             for (LibraryAnalyzer.LibraryType item : analyzer.getLibraries()) {
@@ -259,10 +273,22 @@ public final class Versions {
             Controllers.taskDialog(builder.buildAsync()
                     .thenRunAsync(repository::refreshVersions)
                     .whenComplete(Schedulers.javafx(), (ignored, exception) -> {
+                        if (exception != null) {
+                            Files.writeString(jsonPath, finalJson);
+                            LOG.warning("Unable to reset instance", exception);
+                            Controllers.dialog(i18n("message.failed") + "\n" + StringUtils.getStackTrace(exception), i18n("message.error"), MessageDialogPane.MessageType.ERROR);
+                            return;
+                        }
                         profile.setSelectedVersion(id);
                         Controllers.getVersionPage().loadVersion(id, profile);
                     }), i18n("version.manage.reset"), TaskCancellationAction.NO_CANCEL);
         } catch (Exception e) {
+            try {
+                Files.writeString(jsonPath, finalJson);
+            } catch (IOException ex) {
+                LOG.warning("Unable to write json", e);
+            }
+
             LOG.warning("Unable to reset instance", e);
             Controllers.dialog(i18n("message.failed") + "\n" + StringUtils.getStackTrace(e), i18n("message.error"), MessageDialogPane.MessageType.ERROR);
         }
