@@ -225,8 +225,10 @@ public class DownloadPage extends Control implements DecoratorPage {
                 content.setSubtitle(getSkinnable().addon.getDescription());
                 content.getSubtitleLabel().setWrapText(true);
                 getSkinnable().addon.getCategories().stream()
+                        .filter(category -> getSkinnable().page.shouldDisplayCategory(category))
                         .map(category -> getSkinnable().page.getLocalizedCategory(category))
                         .forEach(content::addTag);
+                content.getFirstLine().setMinWidth(0);
                 descriptionPane.getChildren().add(content);
 
                 if (getSkinnable().mod != null) {
@@ -273,7 +275,7 @@ public class DownloadPage extends Control implements DecoratorPage {
                         Version game = repository.getResolvedPreservingPatchesVersion(control.version.getVersion());
                         String gameVersion = repository.getGameVersion(game).orElse(null);
 
-                        if (gameVersion != null) {
+                        if (gameVersion != null && control.versions.containsKey(gameVersion)) {
                             List<RemoteMod.Version> modVersions = control.versions.get(gameVersion);
                             if (modVersions != null && !modVersions.isEmpty()) {
                                 Set<ModLoaderType> targetLoaders = LibraryAnalyzer.analyze(game, gameVersion).getModLoaders();
@@ -351,7 +353,7 @@ public class DownloadPage extends Control implements DecoratorPage {
         }
     }
 
-    private static final class DependencyModItem extends StackPane {
+    private static final class DependencyModItem extends LineButton {
         public static final EnumMap<RemoteMod.DependencyType, String> I18N_KEY = new EnumMap<>(Lang.mapOf(
                 Pair.pair(RemoteMod.DependencyType.EMBEDDED, "mods.dependency.embedded"),
                 Pair.pair(RemoteMod.DependencyType.OPTIONAL, "mods.dependency.optional"),
@@ -367,16 +369,16 @@ public class DownloadPage extends Control implements DecoratorPage {
             pane.setPadding(new Insets(0, 8, 0, 8));
             pane.setAlignment(Pos.CENTER_LEFT);
             TwoLineListItem content = new TwoLineListItem();
+            pane.setMouseTransparent(true);
             HBox.setHgrow(content, Priority.ALWAYS);
             var imageView = new ImageContainer(40);
             pane.getChildren().setAll(imageView, content);
-
-            RipplerContainer container = new RipplerContainer(pane);
-            FXUtils.onClicked(container, () -> {
+            FXUtils.setLimitHeight(this, 60);
+            setOnAction((e) -> {
                 fireEvent(new DialogCloseEvent());
                 Controllers.navigate(new DownloadPage(page, addon, version, callback));
             });
-            getChildren().setAll(container);
+            setNode(IDX_LEADING, pane);
 
             if (addon != RemoteMod.BROKEN) {
                 ModTranslations.Mod mod = ModTranslations.getTranslationsByRepositoryType(page.repository.getType()).getModByCurseForgeId(addon.getSlug());
@@ -493,6 +495,7 @@ public class DownloadPage extends Control implements DecoratorPage {
             loadDependencies(version, selfPage, spinnerPane, dependenciesList);
             spinnerPane.setOnFailedAction(e -> loadDependencies(version, selfPage, spinnerPane, dependenciesList));
 
+            scrollPane.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
             scrollPane.setContent(dependenciesList);
             scrollPane.setFitToWidth(true);
             scrollPane.setFitToHeight(true);

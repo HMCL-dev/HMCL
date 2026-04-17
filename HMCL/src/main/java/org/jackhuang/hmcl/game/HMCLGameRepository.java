@@ -310,7 +310,7 @@ public final class HMCLGameRepository extends DefaultGameRepository {
             Optional<Path> iconFile = getVersionIconFile(id);
             if (iconFile.isPresent()) {
                 try {
-                    return FXUtils.loadImage(iconFile.get());
+                    return FXUtils.loadImage(iconFile.get(), 64, 64, true, true);
                 } catch (Exception e) {
                     LOG.warning("Failed to load version icon of " + id, e);
                 }
@@ -432,6 +432,7 @@ public final class HMCLGameRepository extends DefaultGameRepository {
                 .setNativesDirType(vs.getNativesDirType())
                 .setNativesDir(vs.getNativesDir())
                 .setProcessPriority(vs.getProcessPriority())
+                .setGraphicsBackend(vs.getGraphicsBackend())
                 .setRenderer(vs.getRenderer())
                 .setEnableDebugLogOutput(vs.isEnableDebugLogOutput())
                 .setUseNativeGLFW(vs.isUseNativeGLFW())

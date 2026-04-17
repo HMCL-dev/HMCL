@@ -28,8 +28,11 @@ import org.jetbrains.annotations.Nullable;
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.InvalidPathException;
+import java.nio.file.Path;
 import java.util.*;
 import java.util.regex.Pattern;
+import java.util.stream.Stream;
 
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
@@ -46,6 +49,25 @@ final class WindowsGPUDetector {
         } else {
             return GraphicsCard.Type.Discrete;
         }
+    }
+
+    private static @Nullable List<Path> parseVulkanDriverFiles(Object vulkanDriverFiles) {
+        if (vulkanDriverFiles instanceof String file) {
+            try {
+                return List.of(Path.of(file));
+            } catch (InvalidPathException e) {
+                LOG.warning("Failed to parse Vulkan ICD file path: " + file, e);
+                return null;
+            }
+        } else if (vulkanDriverFiles instanceof String[] files) {
+            try {
+                return Stream.of(files).map(Path::of).toList();
+            } catch (InvalidPathException e) {
+                LOG.warning("Failed to parse Vulkan ICD file paths: " + Arrays.toString(files), e);
+                return null;
+            }
+        } else
+            return null;
     }
 
     private static List<GraphicsCard> detectByCim() {
@@ -116,6 +138,7 @@ final class WindowsGPUDetector {
             String vendor = regValueToString(reg.queryValue(hkey, subkey, "ProviderName"));
             String driverVersion = regValueToString(reg.queryValue(hkey, subkey, "DriverVersion"));
             String dacType = regValueToString(reg.queryValue(hkey, subkey, "HardwareInformation.DacType"));
+            Object vulkanDriverName = reg.queryValue(hkey, subkey, "VulkanDriverName");
 
             GraphicsCard.Builder builder = GraphicsCard.builder();
             if (name != null)
@@ -126,6 +149,8 @@ final class WindowsGPUDetector {
                 builder.setDriverVersion(driverVersion);
             if (dacType != null)
                 builder.setType(fromDacType(dacType));
+            if (vulkanDriverName != null)
+                builder.setVulkanDriverFiles(parseVulkanDriverFiles(vulkanDriverName));
             result.add(builder.build());
         }
         return result;
