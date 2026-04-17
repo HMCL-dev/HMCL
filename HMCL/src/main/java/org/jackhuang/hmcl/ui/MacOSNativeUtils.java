@@ -19,45 +19,41 @@ package org.jackhuang.hmcl.ui;
 
 import com.sun.jna.Pointer;
 import org.jackhuang.hmcl.util.platform.macos.ObjectiveCRuntime;
+import org.jetbrains.annotations.Nullable;
 
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 public final class MacOSNativeUtils {
 
-    private static Pointer nsApp;
-    private static boolean initialized;
+    private static final Pointer nsApp = init();
 
-    static {
-        init();
-    }
-
-    private static void init() {
+    private static @Nullable Pointer init() {
         if (ObjectiveCRuntime.INSTANCE == null) {
-            initialized = false;
-            return;
+            return null;
         }
 
         try {
-            ObjectiveCRuntime objc = ObjectiveCRuntime.INSTANCE;
+            var objc = ObjectiveCRuntime.INSTANCE;
 
-            Pointer NSApplication = objc.objc_getClass("NSApplication");
-            if (NSApplication == null) {
-                initialized = false;
-                return;
+            Pointer nsApplication = objc.objc_getClass("NSApplication");
+            if (!isNull(nsApplication)) {
+                Pointer sharedSel = objc.sel_registerName("sharedApplication");
+                if (!isNull(sharedSel))
+                    return objc.objc_msgSend(nsApplication, sharedSel);
             }
-
-            Pointer sharedSel = objc.sel_registerName("sharedApplication");
-            nsApp = objc.objc_msgSend(NSApplication, sharedSel);
-
-            initialized = (nsApp != null);
-        } catch (Throwable t) {
-            LOG.warning("Failed to initialize macOS appearance support", t);
-            initialized = false;
+        } catch (Throwable e) {
+            LOG.warning("Failed to initialize macOS appearance support", e);
         }
+
+        return null;
     }
 
     public static boolean isSupported() {
-        return initialized;
+        return nsApp != null;
+    }
+
+    private static boolean isNull(Pointer pointer) {
+        return pointer == null || Pointer.nativeValue(pointer) == 0;
     }
 
     public static void setAppearance(boolean dark) {
@@ -65,17 +61,18 @@ public final class MacOSNativeUtils {
     }
 
     public static void setAppearance(boolean dark, boolean highContrast) {
-        if (!initialized || nsApp == null) return;
+        if (nsApp == null) return;
 
         try {
-            ObjectiveCRuntime objc = ObjectiveCRuntime.INSTANCE;
+            var objc = ObjectiveCRuntime.INSTANCE;
 
-            Pointer NSAppearance = objc.objc_getClass("NSAppearance");
-            if (NSAppearance == null) return;
+            Pointer nsAppearance = objc.objc_getClass("NSAppearance");
+            if (isNull(nsAppearance))
+                return;
 
             Pointer namedSel = objc.sel_registerName("appearanceNamed:");
-            Pointer NSString = objc.objc_getClass("NSString");
-            if (NSString == null) return;
+            Pointer nsString = objc.objc_getClass("NSString");
+            if (isNull(nsString)) return;
 
             Pointer sel = objc.sel_registerName("stringWithUTF8String:");
 
@@ -86,11 +83,11 @@ public final class MacOSNativeUtils {
                 appearanceName = dark ? "NSAppearanceNameDarkAqua" : "NSAppearanceNameAqua";
             }
 
-            Pointer appearanceNamePtr = objc.objc_msgSend(NSString, sel, appearanceName);
-            if (appearanceNamePtr == null) return;
+            Pointer appearanceNamePtr = objc.objc_msgSend(nsString, sel, appearanceName);
+            if (isNull(appearanceNamePtr)) return;
 
-            Pointer appearance = objc.objc_msgSend(NSAppearance, namedSel, appearanceNamePtr);
-            if (appearance == null) return;
+            Pointer appearance = objc.objc_msgSend(nsAppearance, namedSel, appearanceNamePtr);
+            if (isNull(appearance)) return;
 
             Pointer setSel = objc.sel_registerName("setAppearance:");
             objc.objc_msgSend(nsApp, setSel, appearance);
