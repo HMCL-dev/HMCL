@@ -318,21 +318,42 @@ public final class LocaleUtils {
     }
 
     public static @NotNull List<String> getMinecraftLanguageFileNames(Locale locale) {
-        LinkedHashSet<String> candidates = new LinkedHashSet<>();
-
-        String minecraftLanguageTag = getMinecraftLanguageTag(locale);
-        if (minecraftLanguageTag != null) {
-            candidates.add(minecraftLanguageTag.toLowerCase(Locale.ROOT) + ".json");
-        }
-
+        ArrayList<String> candidates = new ArrayList<>();
         for (Locale candidate : getCandidateLocales(locale)) {
             String fileName = toMinecraftLanguageFileName(candidate);
-            if (fileName != null) {
+            if (fileName != null && !candidates.contains(fileName)) {
                 candidates.add(fileName);
             }
         }
 
+        String minecraftLanguageTag = getMinecraftLanguageTag(locale);
+        if (minecraftLanguageTag != null) {
+            String minecraftFileName = minecraftLanguageTag.toLowerCase(Locale.ROOT) + ".json";
+            if (!candidates.contains(minecraftFileName)) {
+                String genericFileName = getRootLanguage(locale).toLowerCase(Locale.ROOT) + ".json";
+                int genericIndex = candidates.indexOf(genericFileName);
+                if (genericIndex >= 0) {
+                    candidates.add(genericIndex, minecraftFileName);
+                } else {
+                    candidates.add(minecraftFileName);
+                }
+            }
+        }
+
+        if ("zh".equals(getRootLanguage(locale)) && "Hant".equals(getScript(locale))) {
+            moveBefore(candidates, "zh_tw.json", "zh.json");
+        }
+
         return List.copyOf(candidates);
+    }
+
+    private static void moveBefore(List<String> candidates, String fileName, String beforeFileName) {
+        int fileIndex = candidates.indexOf(fileName);
+        int beforeIndex = candidates.indexOf(beforeFileName);
+        if (fileIndex >= 0 && beforeIndex >= 0 && fileIndex > beforeIndex) {
+            candidates.remove(fileIndex);
+            candidates.add(beforeIndex, fileName);
+        }
     }
 
     private static @Nullable String toMinecraftLanguageFileName(Locale locale) {

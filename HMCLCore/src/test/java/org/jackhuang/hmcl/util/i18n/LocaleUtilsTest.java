@@ -268,6 +268,7 @@ public final class LocaleUtilsTest {
     @Test
     public void testGetMinecraftLanguageFileNames() {
         assertEquals(List.of("en_us.json", "en.json"), LocaleUtils.getMinecraftLanguageFileNames(Locale.ENGLISH));
+        assertEquals(List.of("en_gb.json", "en_us.json", "en.json"), LocaleUtils.getMinecraftLanguageFileNames(Locale.UK));
         assertEquals(List.of("zh_cn.json", "zh.json"), LocaleUtils.getMinecraftLanguageFileNames(Locale.SIMPLIFIED_CHINESE));
         assertEquals(List.of("zh_hk.json", "zh_tw.json", "zh.json", "zh_cn.json"), LocaleUtils.getMinecraftLanguageFileNames(Locale.forLanguageTag("zh-HK")));
     }
