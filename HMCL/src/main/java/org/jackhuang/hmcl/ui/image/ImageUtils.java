@@ -19,9 +19,17 @@ package org.jackhuang.hmcl.ui.image;
 
 import com.twelvemonkeys.imageio.plugins.webp.WebPImageReaderSpi;
 import javafx.animation.Timeline;
+import javafx.application.Platform;
+import javafx.scene.SnapshotParameters;
 import javafx.scene.image.Image;
 import javafx.scene.image.PixelFormat;
 import javafx.scene.image.WritableImage;
+import javafx.scene.paint.Color;
+import org.girod.javafx.svgimage.LoaderParameters;
+import org.girod.javafx.svgimage.SVGImage;
+import org.girod.javafx.svgimage.SVGLoader;
+import org.girod.javafx.svgimage.ScaleQuality;
+import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.ui.image.apng.Png;
 import org.jackhuang.hmcl.ui.image.apng.argb8888.Argb8888Bitmap;
 import org.jackhuang.hmcl.ui.image.apng.argb8888.Argb8888BitmapSequence;
@@ -39,7 +47,9 @@ import javax.imageio.stream.ImageInputStream;
 import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.nio.charset.StandardCharsets;
 import java.util.*;
+import java.util.concurrent.CompletableFuture;
 import java.util.regex.Pattern;
 
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
@@ -71,6 +81,46 @@ public final class ImageUtils {
             reader.dispose();
         }
         return SwingFXUtils.toFXImage(bufferedImage, requestedWidth, requestedHeight, preserveRatio, smooth);
+    };
+
+    public static final ImageLoader SVG = (input, requestedWidth, requestedHeight, preserveRatio, smooth) -> {
+        String content = new String(input.readAllBytes(), StandardCharsets.UTF_8);
+
+        LoaderParameters parameters = new LoaderParameters();
+        parameters.autoStartAnimations = false;
+
+        SVGImage image;
+
+        if (Platform.isFxApplicationThread()) {
+            image = SVGLoader.load(content, parameters);
+        } else {
+            // TODO: Currently, SVGLoader.load(...) requires the javafx.swing module if it operates on a non-JavaFX thread.
+            image = CompletableFuture.supplyAsync(
+                    () -> SVGLoader.load(content, parameters),
+                    Schedulers.javafx()
+            ).get();
+        }
+
+        if (image == null)
+            throw new IOException("Failed to load SVG image");
+
+        var snapshotParameters = new SnapshotParameters();
+        snapshotParameters.setFill(Color.TRANSPARENT);
+
+        if (requestedWidth <= 0. || requestedHeight <= 0.) {
+            return image.toImage(snapshotParameters);
+        }
+
+        double scaleX = requestedWidth / image.getScaledWidth();
+        double scaleY = requestedHeight / image.getScaledHeight();
+
+        if (preserveRatio || scaleX == scaleY) {
+            double scale = Math.min(scaleX, scaleY);
+            return image.scale(scale).toImage(snapshotParameters);
+        } else {
+            // FIXME: Use DEFAULT_SVG_SNAPSHOT_PARAMS
+            return image.toImageScaled(ScaleQuality.RENDER_QUALITY, scaleX, scaleY);
+        }
     };
 
     public static final ImageLoader APNG = (input, requestedWidth, requestedHeight, preserveRatio, smooth) -> {
@@ -136,11 +186,13 @@ public final class ImageUtils {
 
     public static final Map<String, ImageLoader> EXT_TO_LOADER = Map.of(
             "webp", WEBP,
+            "svg", SVG,
             "apng", APNG
     );
 
     public static final Map<String, ImageLoader> CONTENT_TYPE_TO_LOADER = Map.of(
             "image/webp", WEBP,
+            "image/svg+xml", SVG,
             "image/apng", APNG
     );
 
@@ -163,6 +215,14 @@ public final class ImageUtils {
         return headerBuffer.length > 12
                 && Arrays.equals(headerBuffer, 0, 4, RIFF_HEADER, 0, 4)
                 && Arrays.equals(headerBuffer, 8, 12, WEBP_HEADER, 0, 4);
+    }
+
+    private static final byte[] SVG_HEADER = "<svg".getBytes(StandardCharsets.US_ASCII);
+
+    // This is currently a simple check, more complex checks can be considered in the future
+    public static boolean isSVG(byte[] headerBuffer) {
+        return headerBuffer.length > SVG_HEADER.length
+                && Arrays.equals(headerBuffer, 0, SVG_HEADER.length, SVG_HEADER, 0, SVG_HEADER.length);
     }
 
     private static final byte[] PNG_HEADER = {
@@ -232,6 +292,8 @@ public final class ImageUtils {
             return WEBP;
         if (isApng(headerBuffer))
             return APNG;
+        if (isSVG(headerBuffer))
+            return SVG;
         return null;
     }
 

@@ -22,10 +22,13 @@ import javafx.application.Platform;
 import javafx.stage.FileChooser;
 import org.jackhuang.hmcl.auth.Account;
 import org.jackhuang.hmcl.auth.authlibinjector.AuthlibInjectorAccount;
+import org.jackhuang.hmcl.download.DefaultDependencyManager;
 import org.jackhuang.hmcl.download.DownloadProvider;
 import org.jackhuang.hmcl.download.GameBuilder;
 import org.jackhuang.hmcl.download.LibraryAnalyzer;
 import org.jackhuang.hmcl.download.game.GameAssetDownloadTask;
+import org.jackhuang.hmcl.download.game.GameDownloadTask;
+import org.jackhuang.hmcl.download.game.GameLibrariesTask;
 import org.jackhuang.hmcl.game.*;
 import org.jackhuang.hmcl.mod.RemoteMod;
 import org.jackhuang.hmcl.setting.*;
@@ -148,7 +151,8 @@ public final class Versions {
             } else {
                 handler.reject(i18n("version.manage.rename.fail"));
             }
-        }, version, new Validator(i18n("install.new_game.malformed"), HMCLGameRepository::isValidVersionId),
+        }, version,
+            new Validator(i18n("install.new_game.malformed"), HMCLGameRepository::isValidVersionId),
             new Validator(i18n("install.new_game.already_exists"), newVersionName -> !profile.getRepository().versionIdConflicts(newVersionName) || newVersionName.equals(version)));
     }
 
@@ -158,6 +162,43 @@ public final class Versions {
 
     public static void openFolder(Profile profile, String version) {
         FXUtils.openFolder(profile.getRepository().getRunDirectory(version));
+    }
+
+    public static void installFromJson(Profile profile, Path file) {
+        Version version;
+        try {
+            version = profile.getRepository().readVersionJson(file);
+        } catch (Exception e) {
+            Controllers.dialog(i18n("install.new_game.malformed_json"), i18n("message.error"), MessageDialogPane.MessageType.ERROR);
+            return;
+        }
+
+        Controllers.prompt(i18n("version.manage.duplicate.prompt"), (result, handler) -> {
+            handler.resolve();
+
+            DefaultDependencyManager dependencyManager = profile.getDependency();
+            HMCLGameRepository repository = profile.getRepository();
+            Version newVersion = version.setId(result).setJar(result);
+
+            Controllers.taskDialog(
+                    Task.allOf(new GameDownloadTask(dependencyManager, null, newVersion),
+                                    Task.allOf(
+                                            new GameAssetDownloadTask(dependencyManager, newVersion, GameAssetDownloadTask.DOWNLOAD_INDEX_FORCIBLY, true),
+                                            new GameLibrariesTask(dependencyManager, newVersion, true)
+                                    ).withRunAsync(() -> {
+                                        // ignore failure
+                                    }))
+                            .thenComposeAsync(repository.saveAsync(newVersion))
+                            .thenRunAsync(repository::refreshVersions)
+                            .whenComplete(Schedulers.javafx(), (exception) -> {
+                                if (exception == null) {
+                                    profile.setSelectedVersion(result);
+                                } else {
+                                    Controllers.dialog(
+                                            DownloadProviders.localizeErrorMessage(exception), i18n("install.failed"), MessageDialogPane.MessageType.ERROR);
+                                }
+                            }), i18n("install.new_game"), TaskCancellationAction.NORMAL);
+        }, FileUtils.getNameWithoutExtension(file), new Validator(i18n("install.new_game.malformed"), HMCLGameRepository::isValidVersionId), new Validator(i18n("install.new_game.already_exists"), newVersionName -> !profile.getRepository().versionIdConflicts(newVersionName)));
     }
 
     public static void duplicateVersion(Profile profile, String version) {

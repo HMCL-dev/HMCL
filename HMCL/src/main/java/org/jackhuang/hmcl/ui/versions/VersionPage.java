@@ -30,8 +30,9 @@ import org.jackhuang.hmcl.event.EventBus;
 import org.jackhuang.hmcl.event.EventPriority;
 import org.jackhuang.hmcl.event.RefreshedVersionsEvent;
 import org.jackhuang.hmcl.game.GameRepository;
-import org.jackhuang.hmcl.game.HMCLGameRepository;
 import org.jackhuang.hmcl.setting.Profile;
+import org.jackhuang.hmcl.task.Schedulers;
+import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
@@ -40,8 +41,10 @@ import org.jackhuang.hmcl.ui.animation.TransitionPane;
 import org.jackhuang.hmcl.ui.construct.*;
 import org.jackhuang.hmcl.ui.decorator.DecoratorAnimatedPage;
 import org.jackhuang.hmcl.ui.decorator.DecoratorPage;
+import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
 
+import java.nio.file.Path;
 import java.util.Optional;
 import java.util.function.Supplier;
 
@@ -187,15 +190,34 @@ public class VersionPage extends DecoratorAnimatedPage implements DecoratorPage 
     }
 
     private void clearLibraries() {
-        FileUtils.deleteDirectoryQuietly(getProfile().getRepository().getBaseDirectory().resolve("libraries"));
+        var libraries = getProfile().getRepository().getBaseDirectory().resolve("libraries");
+        Task.runAsync(Schedulers.io(), () -> {
+            FileUtils.deleteDirectoryQuietly(libraries);
+        }).whenComplete(Schedulers.javafx(), (exception) -> {
+            if (exception != null) {
+                Controllers.dialog(i18n("message.failed") + "\n" + StringUtils.getStackTrace(exception), i18n("message.error"), MessageDialogPane.MessageType.ERROR);
+            }
+        }).start();
     }
 
     private void clearAssets() {
-        HMCLGameRepository baseDirectory = getProfile().getRepository();
-        FileUtils.deleteDirectoryQuietly(baseDirectory.getBaseDirectory().resolve("assets"));
-        if (version.get() != null) {
-            FileUtils.deleteDirectoryQuietly(baseDirectory.getRunDirectory(version.get().getVersion()).resolve("resources"));
-        }
+        Path assetsDir = getProfile().getRepository().getBaseDirectory().resolve("assets");
+
+        Profile.ProfileVersion currentVersion = version.get();
+        Path resourcesDir = currentVersion != null
+                ? getProfile().getRepository().getRunDirectory(currentVersion.getVersion()).resolve("resources")
+                : null;
+
+        Task.runAsync(Schedulers.io(), () -> {
+            FileUtils.deleteDirectoryQuietly(assetsDir);
+            if (resourcesDir != null) {
+                FileUtils.deleteDirectoryQuietly(resourcesDir);
+            }
+        }).whenComplete(Schedulers.javafx(), (exception) -> {
+            if (exception != null) {
+                Controllers.dialog(i18n("message.failed") + "\n" + StringUtils.getStackTrace(exception), i18n("message.error"), MessageDialogPane.MessageType.ERROR);
+            }
+        }).start();
     }
 
     private void resetInstance() {
