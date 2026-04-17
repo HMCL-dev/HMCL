@@ -112,12 +112,29 @@ public final class HMCLGameLauncher extends DefaultLauncher {
     }
 
     private static String normalizedLanguageTag(Locale locale, GameVersionNumber gameVersion) {
+        String region = locale.getCountry();
+
         if ("en".equals(LocaleUtils.getRootLanguage(locale))) {
             if ("Qabs".equals(LocaleUtils.getScript(locale)) && gameVersion.compareTo("1.16") >= 0) {
                 return "en_UD";
             }
 
             return "";
+        }
+
+        if ("zh".equals(LocaleUtils.getRootLanguage(locale))) {
+            if ("lzh".equals(locale.getLanguage())) {
+                return gameVersion.compareTo("1.16") >= 0 ? "lzh" : "zh_TW";
+            }
+
+            if ("Hant".equals(LocaleUtils.getScript(locale))) {
+                if (region.equals("HK") || region.equals("MO")) {
+                    return gameVersion.compareTo("1.16") >= 0 ? "zh_HK" : "zh_TW";
+                }
+                return "zh_TW";
+            }
+
+            return "zh_CN";
         }
 
         String languageTag = LocaleUtils.getMinecraftLanguageTag(locale);
