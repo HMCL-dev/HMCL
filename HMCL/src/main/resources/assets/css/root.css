@@ -1093,8 +1093,12 @@
     -fx-background-color: -monet-error-container;
 }
 
+.multi-file-item {
+    -fx-padding: 10 0 10 0;
+}
+
 .options-sublist {
-    -fx-background-color: -monet-surface;
+    -fx-background-color: -monet-surface-container;
 }
 
 .options-list-item {
@@ -1103,6 +1107,14 @@
     -fx-border-width: 1 0 0 0;
     -fx-padding: 10 16 10 16;
     -fx-font-size: 12;
+}
+
+.options-sublist .options-list-item {
+    -fx-background-color: -monet-surface-container;
+}
+
+.options-sublist .multi-file-item {
+    -fx-padding: 10 10 10 10;
 }
 
 .options-list-item .svg {
@@ -1138,6 +1150,10 @@
 .options-list-item:first:last {
     -fx-background-radius: 4 4 4 4;
     -fx-border-width: 0;
+}
+
+.options-sublist-wrapper > .container {
+    -fx-background-color: -monet-surface-container;
 }
 
 .options-sublist-wrapper .expand-icon .svg {

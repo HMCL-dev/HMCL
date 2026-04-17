@@ -188,9 +188,6 @@ public final class AdvancedVersionSettingPage extends StackPane implements Decor
                     new MultiFileItem.Option<>(i18n("settings.advanced.natives_directory.default"), NativesDirectoryType.VERSION_FOLDER),
                     nativesDirCustomOption
             ));
-            HintPane nativesDirHint = new HintPane(MessageDialogPane.MessageType.WARNING);
-            nativesDirHint.setText(i18n("settings.advanced.natives_directory.hint"));
-            nativesDirItem.getChildren().add(nativesDirHint);
 
             graphicsBackendPane = new LineSelectButton<>();
             graphicsBackendPane.setTitle(i18n("settings.advanced.graphics_backend"));

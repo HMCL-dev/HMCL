@@ -55,7 +55,8 @@ public final class MultiFileItem<T> extends VBox {
 
     @SuppressWarnings("unchecked")
     public MultiFileItem() {
-        setPadding(new Insets(0, 0, 10, 0));
+        this.getStyleClass().add("multi-file-item");
+
         setSpacing(8);
 
         group.selectedToggleProperty().addListener((a, b, newValue) -> {
