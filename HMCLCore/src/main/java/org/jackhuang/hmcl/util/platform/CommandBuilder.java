@@ -130,7 +130,6 @@ public final class CommandBuilder {
     }
 
     private void addAllDefault(Collection<String> args, boolean parse) {
-        loop:
         for (String arg : args) {
             if (arg.startsWith("-D")) {
                 int idx = arg.indexOf('=');
