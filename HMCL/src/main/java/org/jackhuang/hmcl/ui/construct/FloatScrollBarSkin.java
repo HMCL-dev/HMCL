@@ -132,13 +132,13 @@ public class FloatScrollBarSkin implements Skin<ScrollBar> {
 
                 if (scrollBar.getOrientation() == Orientation.HORIZONTAL) {
                     track.relocate(offset, -6.0);
-                    NumberBinding trackWidth = Bindings.subtract(scrollBar.widthProperty(), offset * 2);
+                    NumberBinding trackWidth = Bindings.max(0, Bindings.subtract(scrollBar.widthProperty(), offset * 2));
                     track.widthProperty().bind(trackWidth);
                     track.setHeight(6.0);
                 } else {
                     track.relocate(-6.0, offset);
                     track.setWidth(6.0);
-                    NumberBinding trackHeight = Bindings.subtract(scrollBar.heightProperty(), offset * 2);
+                    NumberBinding trackHeight = Bindings.max(0, Bindings.subtract(scrollBar.heightProperty(), offset * 2));
                     track.heightProperty().bind(trackHeight);
                 }
 
@@ -151,21 +151,33 @@ public class FloatScrollBarSkin implements Skin<ScrollBar> {
                     thumb.relocate(0, -6.0);
                     thumb.setHeight(6.0);
 
-                    NumberBinding trackWidth = Bindings.subtract(scrollBar.widthProperty(), offset * 2);
-                    thumb.widthProperty().bind(Bindings.max(20, scrollBar.visibleAmountProperty().divide(range).multiply(trackWidth)));
+                    NumberBinding trackWidth = Bindings.max(0, Bindings.subtract(scrollBar.widthProperty(), offset * 2));
+                    
+                    thumb.widthProperty().bind(Bindings.min(trackWidth,
+                            Bindings.max(20, scrollBar.visibleAmountProperty().divide(range).multiply(trackWidth))));
+                    
                     thumb.xProperty().bind(
                             Bindings.add(offset,
-                                    Bindings.subtract(trackWidth, thumb.widthProperty()).multiply(position))
+                                    Bindings.multiply(
+                                            Bindings.max(0, Bindings.subtract(trackWidth, thumb.widthProperty())),
+                                            position)
+                            )
                     );
                 } else {
                     thumb.relocate(-6.0, 0);
                     thumb.setWidth(6.0);
 
-                    NumberBinding trackHeight = Bindings.subtract(scrollBar.heightProperty(), offset * 2);
-                    thumb.heightProperty().bind(Bindings.max(20, scrollBar.visibleAmountProperty().divide(range).multiply(trackHeight)));
+                    NumberBinding trackHeight = Bindings.max(0, Bindings.subtract(scrollBar.heightProperty(), offset * 2));
+                    
+                    thumb.heightProperty().bind(Bindings.min(trackHeight,
+                            Bindings.max(20, scrollBar.visibleAmountProperty().divide(range).multiply(trackHeight))));
+                    
                     thumb.yProperty().bind(
                             Bindings.add(offset,
-                                    Bindings.subtract(trackHeight, thumb.heightProperty()).multiply(position))
+                                    Bindings.multiply(
+                                            Bindings.max(0, Bindings.subtract(trackHeight, thumb.heightProperty())),
+                                            position)
+                            )
                     );
                 }
             }
