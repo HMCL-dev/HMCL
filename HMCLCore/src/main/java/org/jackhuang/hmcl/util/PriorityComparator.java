@@ -18,7 +18,6 @@
 package org.jackhuang.hmcl.util;
 
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.*;
 
