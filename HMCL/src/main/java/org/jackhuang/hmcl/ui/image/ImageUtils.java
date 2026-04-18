@@ -42,13 +42,8 @@ import org.jackhuang.hmcl.ui.image.apng.chunks.PngFrameControl;
 import org.jackhuang.hmcl.ui.image.apng.error.PngException;
 import org.jackhuang.hmcl.ui.image.apng.error.PngIntegrityException;
 import org.jackhuang.hmcl.ui.image.internal.AnimationImageImpl;
-import org.jackhuang.hmcl.util.SwingFXUtils;
 import org.jetbrains.annotations.Nullable;
 
-import javax.imageio.ImageIO;
-import javax.imageio.ImageReader;
-import javax.imageio.stream.ImageInputStream;
-import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
