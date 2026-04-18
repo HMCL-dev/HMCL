@@ -24,11 +24,7 @@ import org.jackhuang.hmcl.mod.LocalModFile;
 import org.jackhuang.hmcl.mod.ModLoaderType;
 import org.jackhuang.hmcl.mod.RemoteMod;
 import org.jackhuang.hmcl.mod.RemoteModRepository;
-import org.jackhuang.hmcl.util.DigestUtils;
-import org.jackhuang.hmcl.util.Immutable;
-import org.jackhuang.hmcl.util.Lang;
-import org.jackhuang.hmcl.util.Pair;
-import org.jackhuang.hmcl.util.StringUtils;
+import org.jackhuang.hmcl.util.*;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.io.HttpRequest;
 import org.jackhuang.hmcl.util.io.NetworkUtils;
@@ -44,7 +40,6 @@ import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -65,43 +60,40 @@ public final class ModrinthRemoteModRepository implements RemoteModRepository {
     public static final ModrinthRemoteModRepository RESOURCE_PACKS = new ModrinthRemoteModRepository("resourcepack");
     public static final ModrinthRemoteModRepository SHADER_PACKS = new ModrinthRemoteModRepository("shader");
 
-    private static final List<String> LOADER_TAG_ORDER = List.of(
-            "babric",
-            "bta-babric",
-            "bukkit",
-            "bungeecord",
-            "canvas",
-            "datapack",
-            "fabric",
-            "folia",
-            "forge",
-            "geyser",
-            "iris",
-            "java-agent",
-            "legacy-fabric",
-            "liteloader",
-            "minecraft",
-            "modloader",
-            "mrpack",
-            "neoforge",
-            "nilloader",
-            "optifine",
-            "ornith",
-            "paper",
-            "purpur",
-            "quilt",
-            "rift",
-            "spigot",
-            "sponge",
-            "vanilla",
-            "velocity",
-            "waterfall"
+    private static final Comparator<String> TAG_COMPARATOR = PriorityComparator.of(
+            List.of("babric",
+                    "bta-babric",
+                    "bukkit",
+                    "bungeecord",
+                    "canvas",
+                    "datapack",
+                    "fabric",
+                    "folia",
+                    "forge",
+                    "geyser",
+                    "iris",
+                    "java-agent",
+                    "legacy-fabric",
+                    "liteloader",
+                    "minecraft",
+                    "modloader",
+                    "mrpack",
+                    "neoforge",
+                    "nilloader",
+                    "optifine",
+                    "ornith",
+                    "paper",
+                    "purpur",
+                    "quilt",
+                    "rift",
+                    "spigot",
+                    "sponge",
+                    "vanilla",
+                    "velocity",
+                    "waterfall"),
+            Comparator.naturalOrder(),
+            false
     );
-
-    private static final Map<String, Integer> LOADER_TAG_PRIORITIES = createLoaderTagPriorities();
-    private static final Comparator<String> DISPLAY_CATEGORY_COMPARATOR = Comparator
-            .comparingInt(ModrinthRemoteModRepository::getLoaderTagPriority)
-            .reversed();
 
     private static final Semaphore SEMAPHORE = new Semaphore(16);
 
@@ -135,27 +127,10 @@ public final class ModrinthRemoteModRepository implements RemoteModRepository {
         }
     }
 
-    private static Map<String, Integer> createLoaderTagPriorities() {
-        Map<String, Integer> priorities = new HashMap<>();
-        for (int i = 0; i < LOADER_TAG_ORDER.size(); i++) {
-            priorities.put(LOADER_TAG_ORDER.get(i), i);
-        }
-        return priorities;
-    }
-
-    private static int getLoaderTagPriority(String category) {
-        return LOADER_TAG_PRIORITIES.getOrDefault(category, Integer.MAX_VALUE);
-    }
-
     static List<String> sortDisplayCategories(List<String> displayCategories) {
-        if (displayCategories.isEmpty()) {
-            return displayCategories;
-        }
-
-        List<String> sortedDisplayCategories = new ArrayList<>(displayCategories);
-        
-        sortedDisplayCategories.sort(DISPLAY_CATEGORY_COMPARATOR);
-        return sortedDisplayCategories;
+        return displayCategories != null && !displayCategories.isEmpty()
+                ? displayCategories.stream().sorted(TAG_COMPARATOR).toList()
+                : List.of();
     }
 
     @Override
