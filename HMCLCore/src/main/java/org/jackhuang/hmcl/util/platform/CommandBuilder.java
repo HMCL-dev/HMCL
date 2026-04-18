@@ -37,7 +37,8 @@ public final class CommandBuilder {
 
     /// Java 9+ supports passing JVM options stored in external files using the `@<options-file>` option.
     ///
-    /// This method will record these options to avoid being overwritten by methods like addDefault.
+    /// This list stores options loaded from those external option files when they are encountered,
+    /// so they can be treated as existing arguments and not overwritten by methods like addDefault.
     private final List<String> external = new ArrayList<>();
 
     public CommandBuilder() {
