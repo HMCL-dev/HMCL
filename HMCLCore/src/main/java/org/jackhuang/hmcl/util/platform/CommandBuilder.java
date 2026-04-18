@@ -138,7 +138,9 @@ public final class CommandBuilder {
                 } else {
                     String opt = arg + "=";
 
-                    Optional<String> first = allExistingArgs().filter(it -> it.startsWith(opt)).findFirst();
+                    Optional<String> first = allExistingArgs()
+                            .filter(it -> it.startsWith(opt) || it.equals(arg))
+                            .findFirst();
                     if (first.isPresent()) {
                         String overrideArg = first.get();
                         if (!overrideArg.equals(arg)) {
