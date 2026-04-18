@@ -17,7 +17,6 @@
  */
 package org.jackhuang.hmcl.ui.image;
 
-import com.twelvemonkeys.imageio.plugins.webp.WebPImageReaderSpi;
 import javafx.animation.Timeline;
 import javafx.application.Platform;
 import javafx.scene.SnapshotParameters;
@@ -29,6 +28,11 @@ import org.girod.javafx.svgimage.LoaderParameters;
 import org.girod.javafx.svgimage.SVGImage;
 import org.girod.javafx.svgimage.SVGLoader;
 import org.girod.javafx.svgimage.ScaleQuality;
+import org.glavo.javafx.webp.LoopCount;
+import org.glavo.javafx.webp.WebPDecoder;
+import org.glavo.javafx.webp.WebPFrame;
+import org.glavo.javafx.webp.WebPImage;
+import org.glavo.javafx.webp.WebPImageLoadOptions;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.ui.image.apng.Png;
 import org.jackhuang.hmcl.ui.image.apng.argb8888.Argb8888Bitmap;
@@ -71,17 +75,38 @@ public final class ImageUtils {
     };
 
     public static final ImageLoader WEBP = (input, requestedWidth, requestedHeight, preserveRatio, smooth) -> {
-        WebPImageReaderSpi spi = new WebPImageReaderSpi();
-        ImageReader reader = spi.createReaderInstance(null);
-        BufferedImage bufferedImage;
-        try (ImageInputStream imageInput = ImageIO.createImageInputStream(input)) {
-            reader.setInput(imageInput, true, true);
-            bufferedImage = reader.read(0, reader.getDefaultReadParam());
-        } finally {
-            reader.dispose();
+
+        WebPImage image = WebPDecoder.decodeAll(input, WebPImageLoadOptions.builder()
+                .requestedWidth(requestedWidth)
+                .requestedHeight(requestedHeight)
+                .preserveRatio(preserveRatio)
+                .smooth(smooth)
+                .build());
+
+        if (image.isAnimated()) {
+
+            List<WebPFrame> frames = image.getFrames();
+
+            int[][] framePixels = new int[frames.size()][];
+            int[] durations = new int[framePixels.length];
+
+            for (int frameIndex = 0; frameIndex < frames.size(); frameIndex++) {
+                WebPFrame frame = frames.get(frameIndex);
+                framePixels[frameIndex] = rgbaToArgb(frame.getPixels());
+                durations[frameIndex] = frame.getDurationMillis();
+            }
+
+            LoopCount loopCount = image.getLoopCount();
+            int cycleCount = loopCount.isForever() ? Timeline.INDEFINITE : loopCount.getRepetitions();
+
+            return new AnimationImageImpl(image.getWidth(), image.getHeight(),
+                    framePixels, durations, cycleCount);
+        } else {
+            return image.getFirstFrame().orElseThrow().toWritableImage();
         }
-        return SwingFXUtils.toFXImage(bufferedImage, requestedWidth, requestedHeight, preserveRatio, smooth);
     };
+
+
 
     public static final ImageLoader SVG = (input, requestedWidth, requestedHeight, preserveRatio, smooth) -> {
         String content = new String(input.readAllBytes(), StandardCharsets.UTF_8);
@@ -466,6 +491,19 @@ public final class ImageUtils {
             return new AnimationImageImpl(targetWidth, targetHeight, framePixels, durations, cycleCount);
         else
             return new AnimationImageImpl(width, height, framePixels, durations, cycleCount);
+    }
+
+    private static int[] rgbaToArgb(ByteBuffer rgba) {
+        int pixelCount = rgba.remaining() / 4;
+        int[] argb = new int[pixelCount];
+        for (int i = 0; i < pixelCount; i++) {
+            int r = rgba.get() & 0xFF;
+            int g = rgba.get() & 0xFF;
+            int b = rgba.get() & 0xFF;
+            int a = rgba.get() & 0xFF;
+            argb[i] = (a << 24) | (r << 16) | (g << 8) | b;
+        }
+        return argb;
     }
 
     private ImageUtils() {
