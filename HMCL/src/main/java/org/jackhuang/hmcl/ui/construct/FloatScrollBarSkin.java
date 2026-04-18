@@ -131,13 +131,13 @@ public class FloatScrollBarSkin implements Skin<ScrollBar> {
                 double offset = 4;
 
                 if (scrollBar.getOrientation() == Orientation.HORIZONTAL) {
-                    track.relocate(offset, -5.0);
+                    track.relocate(offset, -6.0);
                     NumberBinding trackWidth = Bindings.subtract(scrollBar.widthProperty(), offset * 2);
                     track.widthProperty().bind(trackWidth);
-                    track.setHeight(5.0);
+                    track.setHeight(6.0);
                 } else {
-                    track.relocate(-5.0, offset);
-                    track.setWidth(5.0);
+                    track.relocate(-6.0, offset);
+                    track.setWidth(6.0);
                     NumberBinding trackHeight = Bindings.subtract(scrollBar.heightProperty(), offset * 2);
                     track.heightProperty().bind(trackHeight);
                 }
@@ -148,8 +148,8 @@ public class FloatScrollBarSkin implements Skin<ScrollBar> {
                 thumb.heightProperty().unbind();
 
                 if (scrollBar.getOrientation() == Orientation.HORIZONTAL) {
-                    thumb.relocate(0, -5.0);
-                    thumb.setHeight(5.0);
+                    thumb.relocate(0, -6.0);
+                    thumb.setHeight(6.0);
 
                     NumberBinding trackWidth = Bindings.subtract(scrollBar.widthProperty(), offset * 2);
                     thumb.widthProperty().bind(Bindings.max(20, scrollBar.visibleAmountProperty().divide(range).multiply(trackWidth)));
@@ -158,8 +158,8 @@ public class FloatScrollBarSkin implements Skin<ScrollBar> {
                                     Bindings.subtract(trackWidth, thumb.widthProperty()).multiply(position))
                     );
                 } else {
-                    thumb.relocate(-5.0, 0);
-                    thumb.setWidth(5.0);
+                    thumb.relocate(-6.0, 0);
+                    thumb.setWidth(6.0);
 
                     NumberBinding trackHeight = Bindings.subtract(scrollBar.heightProperty(), offset * 2);
                     thumb.heightProperty().bind(Bindings.max(20, scrollBar.visibleAmountProperty().divide(range).multiply(trackHeight)));
@@ -176,7 +176,7 @@ public class FloatScrollBarSkin implements Skin<ScrollBar> {
                     return Double.MAX_VALUE;
                 }
 
-                return 5.0;
+                return 6.0;
             }
 
             @Override
@@ -185,7 +185,7 @@ public class FloatScrollBarSkin implements Skin<ScrollBar> {
                     return Double.MAX_VALUE;
                 }
 
-                return 5.0;
+                return 6.0;
             }
         };
     }
