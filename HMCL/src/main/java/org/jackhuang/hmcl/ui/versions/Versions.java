@@ -265,7 +265,7 @@ public final class Versions {
             LibraryAnalyzer analyzer = LibraryAnalyzer.analyze(repository.getResolvedPreservingPatchesVersion(id), null);
             GameBuilder builder = profile.getDependency().gameBuilder().name(id).gameVersion(repository.getGameVersion(id).orElseThrow());
             for (LibraryAnalyzer.LibraryType item : analyzer.getLibraries()) {
-                if (item != LibraryAnalyzer.LibraryType.MINECRAFT) {
+                if (item != LibraryAnalyzer.LibraryType.MINECRAFT && item != LibraryAnalyzer.LibraryType.BOOTSTRAP_LAUNCHER) {
                     analyzer.getVersion(item).ifPresent(itemVersion ->
                             builder.version(item.getPatchId(), itemVersion));
                 }
