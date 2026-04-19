@@ -17,8 +17,36 @@
  */
 package org.jackhuang.hmcl.ui.main;
 
-import com.jfoenix.controls.*;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Locale;
+import java.util.Optional;
+
+import static org.jackhuang.hmcl.setting.ConfigHolder.config;
+import static org.jackhuang.hmcl.setting.ConfigHolder.globalConfig;
+import org.jackhuang.hmcl.setting.EnumBackgroundImage;
+import org.jackhuang.hmcl.setting.FontManager;
+import org.jackhuang.hmcl.theme.ThemeColor;
+import org.jackhuang.hmcl.ui.FXUtils;
+import org.jackhuang.hmcl.ui.SVG;
+import org.jackhuang.hmcl.ui.construct.ComponentList;
+import org.jackhuang.hmcl.ui.construct.ComponentSublist;
+import org.jackhuang.hmcl.ui.construct.FontComboBox;
+import org.jackhuang.hmcl.ui.construct.LineSelectButton;
+import org.jackhuang.hmcl.ui.construct.LineToggleButton;
+import org.jackhuang.hmcl.ui.construct.MultiFileItem;
+import org.jackhuang.hmcl.ui.construct.URLValidator;
+import org.jackhuang.hmcl.ui.construct.Validator;
+import org.jackhuang.hmcl.util.Lang;
+import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
+import org.jackhuang.hmcl.util.javafx.SafeStringConverter;
+
+import com.jfoenix.controls.JFXButton;
+import com.jfoenix.controls.JFXColorPicker;
+import com.jfoenix.controls.JFXSlider;
+import com.jfoenix.controls.JFXTextField;
 import com.jfoenix.effects.JFXDepthManager;
+
 import javafx.application.Platform;
 import javafx.beans.binding.Bindings;
 import javafx.beans.binding.StringBinding;
@@ -30,25 +58,13 @@ import javafx.geometry.Pos;
 import javafx.scene.control.ColorPicker;
 import javafx.scene.control.Label;
 import javafx.scene.control.ScrollPane;
-import javafx.scene.layout.*;
+import javafx.scene.layout.BorderPane;
+import javafx.scene.layout.HBox;
+import javafx.scene.layout.Priority;
+import javafx.scene.layout.StackPane;
+import javafx.scene.layout.VBox;
 import javafx.scene.text.Font;
 import javafx.scene.text.FontSmoothingType;
-import org.jackhuang.hmcl.setting.EnumBackgroundImage;
-import org.jackhuang.hmcl.setting.FontManager;
-import org.jackhuang.hmcl.theme.ThemeColor;
-import org.jackhuang.hmcl.ui.FXUtils;
-import org.jackhuang.hmcl.ui.SVG;
-import org.jackhuang.hmcl.ui.construct.*;
-import org.jackhuang.hmcl.util.Lang;
-import org.jackhuang.hmcl.util.javafx.SafeStringConverter;
-
-import java.util.Arrays;
-import java.util.Locale;
-import java.util.Optional;
-
-import static org.jackhuang.hmcl.setting.ConfigHolder.config;
-import static org.jackhuang.hmcl.setting.ConfigHolder.globalConfig;
-import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 public class PersonalizationPage extends StackPane {
 
@@ -104,6 +120,30 @@ public class PersonalizationPage extends StackPane {
             themeColorPickerContainer.getChildren().setAll(picker);
             Platform.runLater(() -> JFXDepthManager.setDepth(picker, 0));
         }
+
+        {
+            var contrastPane = new LineSelectButton<String>();
+            contrastPane.setTitle(i18n("settings.launcher.contrast"));
+            contrastPane.setSubtitle(i18n("settings.take_effect_after_restart"));
+
+            contrastPane.setItems(List.of("default", "high"));
+            contrastPane.setConverter(s -> {
+                if (s == null) {
+                    return i18n("settings.launcher.contrast.default");
+                }
+                return switch (s.toLowerCase(Locale.ROOT).trim()) {
+                    case "high", "high-contrast", "hc" ->
+                        i18n("settings.launcher.contrast.high");
+                    default ->
+                        i18n("settings.launcher.contrast.default");
+                };
+            });
+
+            contrastPane.valueProperty().bindBidirectional(config().themeContrastProperty());
+
+            themeList.getContent().add(contrastPane);
+        }
+
         {
             LineToggleButton titleTransparentButton = new LineToggleButton();
             themeList.getContent().add(titleTransparentButton);
@@ -156,7 +196,7 @@ public class PersonalizationPage extends StackPane {
 
                 JFXSlider slider = new JFXSlider(0, 100,
                         config().getBackgroundImageType() != EnumBackgroundImage.TRANSLUCENT
-                                ? config().getBackgroundImageOpacity() : 50);
+                        ? config().getBackgroundImageOpacity() : 50);
                 slider.setShowTickMarks(true);
                 slider.setMajorTickUnit(10);
                 slider.setMinorTickCount(1);
@@ -186,8 +226,8 @@ public class PersonalizationPage extends StackPane {
                 textOpacity.textProperty().bind(valueBinding);
                 slider.setValueFactory(s -> valueBinding);
 
-                slider.valueProperty().addListener((observable, oldValue, newValue) ->
-                        config().setBackgroundImageOpacity(snapOpacity(newValue.doubleValue())));
+                slider.valueProperty().addListener((observable, oldValue, newValue)
+                        -> config().setBackgroundImageOpacity(snapOpacity(newValue.doubleValue())));
 
                 opacityItem.getChildren().setAll(label, slider, textOpacity);
             }
@@ -294,10 +334,10 @@ public class PersonalizationPage extends StackPane {
                 var fontAntiAliasingPane = new LineSelectButton<Optional<FontSmoothingType>>();
                 fontAntiAliasingPane.setTitle(i18n("settings.launcher.font.anti_aliasing"));
                 fontAntiAliasingPane.setSubtitle(i18n("settings.take_effect_after_restart"));
-                fontAntiAliasingPane.setConverter(value ->
-                        value.isPresent()
-                                ? i18n("settings.launcher.font.anti_aliasing." + value.get().name().toLowerCase(Locale.ROOT))
-                                : i18n("settings.launcher.font.anti_aliasing.auto")
+                fontAntiAliasingPane.setConverter(value
+                        -> value.isPresent()
+                        ? i18n("settings.launcher.font.anti_aliasing." + value.get().name().toLowerCase(Locale.ROOT))
+                        : i18n("settings.launcher.font.anti_aliasing.auto")
                 );
                 fontAntiAliasingPane.setItems(
                         Optional.empty(),
@@ -314,8 +354,8 @@ public class PersonalizationPage extends StackPane {
                     fontAntiAliasingPane.setValue(Optional.empty());
                 }
 
-                FXUtils.onChange(fontAntiAliasingPane.valueProperty(), value ->
-                        globalConfig().setFontAntiAliasing(value.map(it -> it.name().toLowerCase(Locale.ROOT))
+                FXUtils.onChange(fontAntiAliasingPane.valueProperty(), value
+                        -> globalConfig().setFontAntiAliasing(value.map(it -> it.name().toLowerCase(Locale.ROOT))
                                 .orElse(null)));
 
                 fontPane.getContent().add(fontAntiAliasingPane);

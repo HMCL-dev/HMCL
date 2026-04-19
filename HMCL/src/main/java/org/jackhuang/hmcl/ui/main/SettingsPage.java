@@ -17,7 +17,57 @@
  */
 package org.jackhuang.hmcl.ui.main;
 
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Optional;
+import java.util.Set;
+import java.util.concurrent.CompletableFuture;
+import java.util.zip.GZIPInputStream;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipOutputStream;
+
+import org.jackhuang.hmcl.Metadata;
+import static org.jackhuang.hmcl.setting.ConfigHolder.config;
+import org.jackhuang.hmcl.setting.EnumCommonDirectory;
+import org.jackhuang.hmcl.setting.Settings;
+import org.jackhuang.hmcl.task.Schedulers;
+import org.jackhuang.hmcl.ui.Controllers;
+import org.jackhuang.hmcl.ui.FXUtils;
+import org.jackhuang.hmcl.ui.SVG;
+import org.jackhuang.hmcl.ui.construct.ComponentList;
+import org.jackhuang.hmcl.ui.construct.ComponentSublist;
+import org.jackhuang.hmcl.ui.construct.LineComponent;
+import org.jackhuang.hmcl.ui.construct.LineSelectButton;
+import org.jackhuang.hmcl.ui.construct.LineToggleButton;
+import org.jackhuang.hmcl.ui.construct.MessageDialogPane.MessageType;
+import org.jackhuang.hmcl.ui.construct.MultiFileItem;
+import org.jackhuang.hmcl.ui.construct.SpinnerPane;
+import org.jackhuang.hmcl.upgrade.RemoteVersion;
+import org.jackhuang.hmcl.upgrade.UpdateChannel;
+import org.jackhuang.hmcl.upgrade.UpdateChecker;
+import org.jackhuang.hmcl.upgrade.UpdateHandler;
+import org.jackhuang.hmcl.util.AprilFools;
+import org.jackhuang.hmcl.util.Lang;
+import org.jackhuang.hmcl.util.StringUtils;
+import org.jackhuang.hmcl.util.i18n.I18n;
+import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
+import org.jackhuang.hmcl.util.i18n.SupportedLocale;
+import org.jackhuang.hmcl.util.io.FileUtils;
+import org.jackhuang.hmcl.util.io.IOUtils;
+import static org.jackhuang.hmcl.util.logging.Logger.LOG;
+import org.tukaani.xz.XZInputStream;
+
 import com.jfoenix.controls.JFXButton;
+
+import javafx.application.Platform;
 import javafx.beans.InvalidationListener;
 import javafx.beans.WeakInvalidationListener;
 import javafx.beans.binding.Bindings;
@@ -30,48 +80,18 @@ import javafx.geometry.VPos;
 import javafx.scene.Cursor;
 import javafx.scene.control.Label;
 import javafx.scene.control.ScrollPane;
-import javafx.scene.layout.*;
+import javafx.scene.layout.BorderPane;
+import javafx.scene.layout.ColumnConstraints;
+import javafx.scene.layout.GridPane;
+import javafx.scene.layout.HBox;
+import javafx.scene.layout.Priority;
+import javafx.scene.layout.RowConstraints;
+import javafx.scene.layout.StackPane;
+import javafx.scene.layout.VBox;
 import javafx.scene.text.TextAlignment;
-import org.jackhuang.hmcl.Metadata;
-import org.jackhuang.hmcl.setting.EnumCommonDirectory;
-import org.jackhuang.hmcl.setting.Settings;
-import org.jackhuang.hmcl.task.Schedulers;
-import org.jackhuang.hmcl.ui.Controllers;
-import org.jackhuang.hmcl.ui.FXUtils;
-import org.jackhuang.hmcl.ui.SVG;
-import org.jackhuang.hmcl.ui.construct.*;
-import org.jackhuang.hmcl.ui.construct.MessageDialogPane.MessageType;
-import org.jackhuang.hmcl.upgrade.RemoteVersion;
-import org.jackhuang.hmcl.upgrade.UpdateChannel;
-import org.jackhuang.hmcl.upgrade.UpdateChecker;
-import org.jackhuang.hmcl.upgrade.UpdateHandler;
-import org.jackhuang.hmcl.util.AprilFools;
-import org.jackhuang.hmcl.util.Lang;
-import org.jackhuang.hmcl.util.StringUtils;
-import org.jackhuang.hmcl.util.i18n.I18n;
-import org.jackhuang.hmcl.util.i18n.SupportedLocale;
-import org.jackhuang.hmcl.util.io.FileUtils;
-import org.jackhuang.hmcl.util.io.IOUtils;
-import org.tukaani.xz.XZInputStream;
-
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
-import java.util.*;
-import java.util.concurrent.CompletableFuture;
-import java.util.zip.GZIPInputStream;
-import java.util.zip.ZipEntry;
-import java.util.zip.ZipOutputStream;
-
-import static org.jackhuang.hmcl.setting.ConfigHolder.config;
-import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
-import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 public final class SettingsPage extends ScrollPane {
+
     @SuppressWarnings("FieldCanBeLocal")
     private final InvalidationListener updateListener;
 
@@ -81,7 +101,6 @@ public final class SettingsPage extends ScrollPane {
         VBox rootPane = new VBox();
         rootPane.setPadding(new Insets(10));
         this.setContent(rootPane);
-        FXUtils.smoothScrolling(this);
 
         ComponentList settingsPane = new ComponentList();
         {
@@ -222,7 +241,7 @@ public final class SettingsPage extends ScrollPane {
                 fileCommonLocationSublist.setHasSubtitle(true);
                 fileCommonLocationSublist.subtitleProperty().bind(
                         Bindings.createObjectBinding(() -> Optional.ofNullable(Settings.instance().getCommonDirectory())
-                                        .orElse(i18n("launcher.cache_directory.disabled")),
+                        .orElse(i18n("launcher.cache_directory.disabled")),
                                 config().commonDirectoryProperty(), config().commonDirTypeProperty()));
 
                 JFXButton cleanButton = FXUtils.newBorderButton(i18n("launcher.cache_directory.clean"));
@@ -239,12 +258,13 @@ public final class SettingsPage extends ScrollPane {
 
                 SupportedLocale currentLocale = I18n.getLocale();
                 chooseLanguagePane.setConverter(locale -> {
-                    if (locale.isDefault())
+                    if (locale.isDefault()) {
                         return locale.getDisplayName(currentLocale);
-                    else if (locale.isSameLanguage(currentLocale))
+                    } else if (locale.isSameLanguage(currentLocale)) {
                         return locale.getDisplayName(locale);
-                    else
+                    } else {
                         return locale.getDisplayName(currentLocale) + " - " + locale.getDisplayName(locale);
+                    }
                 });
                 chooseLanguagePane.setItems(SupportedLocale.getSupportedLocales());
                 chooseLanguagePane.valueProperty().bindBidirectional(config().localizationProperty());
@@ -279,8 +299,9 @@ public final class SettingsPage extends ScrollPane {
                 JFXButton openLogFolderButton = new JFXButton(i18n("settings.launcher.launcher_log.reveal"));
                 openLogFolderButton.setOnAction(e -> openLogFolder());
                 openLogFolderButton.getStyleClass().add("jfx-button-border");
-                if (LOG.getLogFile() == null)
+                if (LOG.getLogFile() == null) {
                     openLogFolderButton.setDisable(true);
+                }
 
                 SpinnerPane exportLogPane = new SpinnerPane();
 
@@ -315,6 +336,8 @@ public final class SettingsPage extends ScrollPane {
 
             rootPane.getChildren().add(settingsPane);
         }
+
+        Platform.runLater(() -> FXUtils.smoothScrolling(this));
     }
 
     private void openLogFolder() {
@@ -334,7 +357,7 @@ public final class SettingsPage extends ScrollPane {
             return name;
         }
 
-        for (long i = 1; ; i++) {
+        for (long i = 1;; i++) {
             String newName = name + "." + i;
             if (entryNames.add(newName)) {
                 return newName;
@@ -348,10 +371,10 @@ public final class SettingsPage extends ScrollPane {
     /// If an exception occurs while reading from `input`, this method returns `false`;
     /// If an exception occurs while writing to `output`, this method will throw it as is.
     private static boolean exportLogFile(ZipOutputStream output,
-                                         Path file, // For logging
-                                         String entryName,
-                                         InputStream input,
-                                         byte[] buffer) throws IOException {
+            Path file, // For logging
+            String entryName,
+            InputStream input,
+            byte[] buffer) throws IOException {
         //noinspection TryFinallyCanBeTryWithResources
         try {
             output.putNextEntry(new ZipEntry(entryName));
@@ -359,9 +382,10 @@ public final class SettingsPage extends ScrollPane {
             while (true) {
                 try {
                     read = input.read(buffer);
-                    if (read <= 0)
+                    if (read <= 0) {
                         return true;
-                } catch (Throwable ex) {
+                    }
+                } catch (IOException ex) {
                     LOG.warning("Failed to decompress log file " + file, ex);
                     return false;
                 }
@@ -371,7 +395,7 @@ public final class SettingsPage extends ScrollPane {
         } finally {
             try {
                 input.close();
-            } catch (Throwable ex) {
+            } catch (IOException ex) {
                 LOG.warning("Failed to close log file " + file, ex);
             }
             output.closeEntry();
@@ -397,8 +421,7 @@ public final class SettingsPage extends ScrollPane {
                 LOG.info("Exporting latest logs to " + outputFile);
 
                 byte[] buffer = new byte[IOUtils.DEFAULT_BUFFER_SIZE];
-                try (var os = Files.newOutputStream(outputFile);
-                     var zos = new ZipOutputStream(os)) {
+                try (var os = Files.newOutputStream(outputFile); var zos = new ZipOutputStream(os)) {
 
                     Set<String> entryNames = new HashSet<>();
 
@@ -417,25 +440,25 @@ public final class SettingsPage extends ScrollPane {
                                 input = "gz".equals(extension)
                                         ? new GZIPInputStream(input)
                                         : new XZInputStream(input);
-                            } catch (Throwable ex) {
+                            } catch (IOException ex) {
                                 LOG.warning("Failed to open log file " + path, ex);
                                 IOUtils.closeQuietly(input, ex);
                                 input = null;
                             }
 
                             String entryName = getEntryName(entryNames, StringUtils.substringBeforeLast(fileName, "."));
-                            if (input != null && exportLogFile(zos, path, entryName, input, buffer))
+                            if (input != null && exportLogFile(zos, path, entryName, input, buffer)) {
                                 continue;
+                            }
                         }
 
                         // Copy the log file content as-is into a new entry in the zip file.
                         // If an exception occurs while decompressing the input file, we should
                         // ensure the input file and the current zip entry are closed.
-
                         InputStream input;
                         try {
                             input = Files.newInputStream(path);
-                        } catch (Throwable ex) {
+                        } catch (IOException ex) {
                             LOG.warning("Failed to open log file " + path, ex);
                             continue;
                         }

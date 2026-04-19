@@ -23,6 +23,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 import java.util.Objects;
+import java.util.Optional;
 
 import org.glavo.monetfx.Brightness;
 import org.glavo.monetfx.ColorScheme;
@@ -67,10 +68,11 @@ public final class Themes {
 
             observables.add(config().themeBrightnessProperty());
             observables.add(config().themeColorProperty());
+            observables.add(config().themeContrastProperty());
             if (FXUtils.DARK_MODE != null) {
                 observables.add(FXUtils.DARK_MODE);
             }
-            bind(observables.toArray(new Observable[0]));
+            bind(observables.toArray(Observable[]::new));
         }
 
         private Brightness getBrightness() {
@@ -81,8 +83,9 @@ public final class Themes {
 
             return switch (themeBrightness.toLowerCase(Locale.ROOT).trim()) {
                 case "auto" -> {
+                    boolean systemDark = Optional.ofNullable(FXUtils.DARK_MODE).map(ob -> ob.get()).orElse(false);
                     if (FXUtils.DARK_MODE != null) {
-                        yield FXUtils.DARK_MODE.get() ? Brightness.DARK : Brightness.LIGHT;
+                        yield systemDark ? Brightness.DARK : Brightness.LIGHT;
                     } else {
                         yield getDefaultBrightness();
                     }
@@ -100,7 +103,41 @@ public final class Themes {
         protected Theme computeValue() {
             ThemeColor themeColor = Objects.requireNonNullElse(config().getThemeColor(), ThemeColor.DEFAULT);
 
-            return new Theme(themeColor, getBrightness(), Theme.DEFAULT.colorStyle(), Contrast.DEFAULT);
+            return new Theme(themeColor, getBrightness(), Theme.DEFAULT.colorStyle(), getContrast());
+        }
+
+        private Contrast getContrast() {
+            String themeContrast = config().getThemeContrast();
+            if (themeContrast == null) {
+                return Contrast.DEFAULT;
+            }
+
+            switch (themeContrast.toLowerCase(Locale.ROOT).trim()) {
+                case "default", "normal" -> {
+                    return Contrast.DEFAULT;
+                }
+                case "high", "high-contrast", "hc" -> {
+                    return getContrastByName("HIGH");
+                }
+                default -> {
+                    String normalized = themeContrast.toUpperCase(Locale.ROOT).trim().replace('-', '_').replace(' ', '_');
+                    return getContrastByName(normalized);
+                }
+            }
+        }
+
+        private Contrast getContrastByName(String name) {
+            try {
+                var field = Contrast.class.getField(name);
+                Object val = field.get(null);
+                if (val instanceof Contrast c) {
+                    return c;
+                }
+            } catch (NoSuchFieldException | IllegalAccessException ignored) {
+            }
+
+            // fallback to DEFAULT
+            return Contrast.DEFAULT;
         }
     };
     private static final ColorSchemeProperty colorScheme = new SimpleColorSchemeProperty();
@@ -222,7 +259,7 @@ public final class Themes {
 
     public static void applyNativeDarkMode(Stage stage) {
         if (OperatingSystem.SYSTEM_VERSION.isAtLeast(OSVersion.WINDOWS_11) && NativeUtils.USE_JNA && Dwmapi.INSTANCE != null) {
-            ChangeListener<Boolean> listener = FXUtils.onWeakChange(Themes.darkModeProperty(), darkMode -> {
+            ChangeListener<Boolean> listener = FXUtils.onWeakChange(Themes.darkModeProperty(), isDark -> {
                 if (stage.isShowing()) {
                     WindowsNativeUtils.getWindowHandle(stage).ifPresent(handle -> {
                         if (handle == WinTypes.HANDLE.INVALID_VALUE) {
@@ -232,7 +269,7 @@ public final class Themes {
                         Dwmapi.INSTANCE.DwmSetWindowAttribute(
                                 new WinTypes.HANDLE(Pointer.createConstant(handle)),
                                 WinConstants.DWMWA_USE_IMMERSIVE_DARK_MODE,
-                                new WinTypes.BOOLByReference(new WinTypes.BOOL(darkMode)),
+                                new WinTypes.BOOLByReference(new WinTypes.BOOL(isDark)),
                                 WinTypes.BOOL.SIZE
                         );
                     });

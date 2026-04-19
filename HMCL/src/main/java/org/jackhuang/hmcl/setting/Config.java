@@ -17,16 +17,11 @@
  */
 package org.jackhuang.hmcl.setting;
 
-import com.google.gson.*;
-import com.google.gson.annotations.JsonAdapter;
-import com.google.gson.annotations.SerializedName;
-import javafx.beans.Observable;
-import javafx.beans.property.*;
-import javafx.collections.FXCollections;
-import javafx.collections.ObservableList;
-import javafx.collections.ObservableMap;
-import javafx.collections.ObservableSet;
-import javafx.scene.paint.Paint;
+import java.net.Proxy;
+import java.nio.file.Path;
+import java.util.Map;
+import java.util.TreeMap;
+
 import org.hildan.fxgson.creators.ObservableListCreator;
 import org.hildan.fxgson.creators.ObservableMapCreator;
 import org.hildan.fxgson.creators.ObservableSetCreator;
@@ -36,13 +31,39 @@ import org.jackhuang.hmcl.auth.authlibinjector.AuthlibInjectorServer;
 import org.jackhuang.hmcl.java.JavaRuntime;
 import org.jackhuang.hmcl.theme.ThemeColor;
 import org.jackhuang.hmcl.ui.FXUtils;
-import org.jackhuang.hmcl.util.gson.*;
+import org.jackhuang.hmcl.util.gson.EnumOrdinalDeserializer;
+import org.jackhuang.hmcl.util.gson.ObservableSetting;
+import org.jackhuang.hmcl.util.gson.PaintAdapter;
+import org.jackhuang.hmcl.util.gson.PathTypeAdapter;
+import org.jackhuang.hmcl.util.gson.RawPreservingObjectProperty;
 import org.jackhuang.hmcl.util.i18n.SupportedLocale;
 import org.jetbrains.annotations.Nullable;
 
-import java.net.Proxy;
-import java.nio.file.Path;
-import java.util.*;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import com.google.gson.JsonParseException;
+import com.google.gson.ToNumberPolicy;
+import com.google.gson.annotations.JsonAdapter;
+import com.google.gson.annotations.SerializedName;
+
+import javafx.beans.Observable;
+import javafx.beans.property.BooleanProperty;
+import javafx.beans.property.DoubleProperty;
+import javafx.beans.property.IntegerProperty;
+import javafx.beans.property.MapProperty;
+import javafx.beans.property.ObjectProperty;
+import javafx.beans.property.SimpleBooleanProperty;
+import javafx.beans.property.SimpleDoubleProperty;
+import javafx.beans.property.SimpleIntegerProperty;
+import javafx.beans.property.SimpleMapProperty;
+import javafx.beans.property.SimpleObjectProperty;
+import javafx.beans.property.SimpleStringProperty;
+import javafx.beans.property.StringProperty;
+import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
+import javafx.collections.ObservableMap;
+import javafx.collections.ObservableSet;
+import javafx.scene.paint.Paint;
 
 @JsonAdapter(value = Config.Adapter.class)
 public final class Config extends ObservableSetting {
@@ -79,7 +100,6 @@ public final class Config extends ObservableSetting {
     }
 
     // Properties
-
     @SerializedName("_version")
     private final IntegerProperty configVersion = new SimpleIntegerProperty(CURRENT_VERSION);
 
@@ -96,11 +116,13 @@ public final class Config extends ObservableSetting {
     }
 
     /**
-     * The version of UI that the user have last used.
-     * If there is a major change in UI, {@link Config#CURRENT_UI_VERSION} should be increased.
-     * When {@link #CURRENT_UI_VERSION} is higher than the property, the user guide should be shown,
-     * then this property is set to the same value as {@link #CURRENT_UI_VERSION}.
-     * In particular, the property is default to 0, so that whoever open the application for the first time will see the guide.
+     * The version of UI that the user have last used. If there is a major
+     * change in UI, {@link Config#CURRENT_UI_VERSION} should be increased. When
+     * {@link #CURRENT_UI_VERSION} is higher than the property, the user guide
+     * should be shown, then this property is set to the same value as
+     * {@link #CURRENT_UI_VERSION}. In particular, the property is default to 0,
+     * so that whoever open the application for the first time will see the
+     * guide.
      */
     @SerializedName("uiVersion")
     private final IntegerProperty uiVersion = new SimpleIntegerProperty(CURRENT_UI_VERSION);
@@ -305,7 +327,6 @@ public final class Config extends ObservableSetting {
     }
 
     // UI
-
     @SerializedName("themeBrightness")
     private final StringProperty themeBrightness = new SimpleStringProperty("light");
 
@@ -319,6 +340,21 @@ public final class Config extends ObservableSetting {
 
     public void setThemeBrightness(String themeBrightness) {
         this.themeBrightness.set(themeBrightness);
+    }
+
+    @SerializedName("themeContrast")
+    private final StringProperty themeContrast = new SimpleStringProperty("default");
+
+    public StringProperty themeContrastProperty() {
+        return themeContrast;
+    }
+
+    public String getThemeContrast() {
+        return themeContrast.get();
+    }
+
+    public void setThemeContrast(String themeContrast) {
+        this.themeContrast.set(themeContrast);
     }
 
     @SerializedName("theme")
@@ -383,9 +419,9 @@ public final class Config extends ObservableSetting {
 
     @SerializedName("animationDisabled")
     private final BooleanProperty animationDisabled = new SimpleBooleanProperty(
-            FXUtils.REDUCED_MOTION == Boolean.TRUE
-                    || !JavaRuntime.CURRENT_JIT_ENABLED
-                    || !FXUtils.GPU_ACCELERATION_ENABLED
+            Boolean.TRUE.equals(FXUtils.REDUCED_MOTION)
+            || !JavaRuntime.CURRENT_JIT_ENABLED
+            || !FXUtils.GPU_ACCELERATION_ENABLED
     );
 
     public BooleanProperty animationDisabledProperty() {
@@ -491,7 +527,6 @@ public final class Config extends ObservableSetting {
     }
 
     // Networks
-
     @SerializedName("autoDownloadThreads")
     private final BooleanProperty autoDownloadThreads = new SimpleBooleanProperty(true);
 
@@ -688,7 +723,6 @@ public final class Config extends ObservableSetting {
     }
 
     // Game
-
     @SerializedName("disableAutoGameOptions")
     private final BooleanProperty disableAutoGameOptions = new SimpleBooleanProperty(false);
 
@@ -720,7 +754,6 @@ public final class Config extends ObservableSetting {
     }
 
     // Accounts
-
     @SerializedName("authlibInjectorServers")
     private final ObservableList<AuthlibInjectorServer> authlibInjectorServers = FXCollections.observableArrayList(server -> new Observable[]{server});
 
@@ -784,7 +817,6 @@ public final class Config extends ObservableSetting {
     }
 
     // Configurations
-
     @SerializedName("last")
     private final StringProperty selectedProfile = new SimpleStringProperty("");
 
@@ -808,6 +840,7 @@ public final class Config extends ObservableSetting {
     }
 
     public static final class Adapter extends ObservableSetting.Adapter<Config> {
+
         @Override
         protected Config createInstance() {
             return new Config();
