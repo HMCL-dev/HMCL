@@ -28,7 +28,7 @@ import org.girod.javafx.svgimage.LoaderParameters;
 import org.girod.javafx.svgimage.SVGImage;
 import org.girod.javafx.svgimage.SVGLoader;
 import org.girod.javafx.svgimage.ScaleQuality;
-import org.glavo.webp.WebPDecoder;
+import org.glavo.webp.WebPImage;
 import org.glavo.webp.WebPImageLoadOptions;
 import org.glavo.webp.javafx.WebPFXImage;
 import org.jackhuang.hmcl.task.Schedulers;
@@ -69,7 +69,7 @@ public final class ImageUtils {
 
     public static final ImageLoader WEBP = (input, requestedWidth, requestedHeight, preserveRatio, smooth) -> {
         var options = new WebPImageLoadOptions(requestedWidth, requestedHeight, preserveRatio, smooth);
-        return new WebPFXImage(WebPDecoder.decodeAll(input, options));
+        return new WebPFXImage(WebPImage.read(input, options));
     };
 
     public static final ImageLoader SVG = (input, requestedWidth, requestedHeight, preserveRatio, smooth) -> {

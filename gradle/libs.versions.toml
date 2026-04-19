@@ -22,7 +22,7 @@ lwjgl-unsafe-agent = "2.0"
 monet-fx = "0.4.0"
 terracotta = "0.4.2"
 nayuki-qrcodegen = "1.8.0"
-jwebp = "245f340ca1"
+jwebp = "999cb5ff9d"
 
 # testing
 junit = "6.0.1"
