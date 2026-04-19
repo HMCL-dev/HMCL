@@ -56,7 +56,7 @@ dependencies {
     implementation(project(":HMCLCore"))
     implementation(project(":HMCLBoot"))
     implementation("libs:JFoenix")
-    implementation(libs.javafx.webp)
+    implementation(libs.jwebp)
     implementation(libs.fxsvgimage)
     implementation(libs.java.info)
     implementation(libs.monet.fx)

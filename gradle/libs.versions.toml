@@ -22,7 +22,7 @@ lwjgl-unsafe-agent = "2.0"
 monet-fx = "0.4.0"
 terracotta = "0.4.2"
 nayuki-qrcodegen = "1.8.0"
-jwebp = "999cb5ff9d"
+jwebp = "0.2.0"
 
 # testing
 junit = "6.0.1"
@@ -56,7 +56,7 @@ authlib-injector = { module = "org.glavo.hmcl:authlib-injector", version.ref = "
 lwjgl-unsafe-agent = { module = "org.glavo:lwjgl-unsafe-agent", version.ref = "lwjgl-unsafe-agent" }
 monet-fx = { module = "org.glavo:MonetFX", version.ref = "monet-fx" }
 nayuki-qrcodegen = { module = "io.nayuki:qrcodegen", version.ref = "nayuki-qrcodegen" }
-javafx-webp = { module = "com.github.Glavo:jwebp", version.ref = "jwebp" }
+jwebp = { module = "org.glavo:webp", version.ref = "jwebp" }
 
 # testing
 junit-jupiter = { module = "org.junit.jupiter:junit-jupiter", version.ref = "junit" }
