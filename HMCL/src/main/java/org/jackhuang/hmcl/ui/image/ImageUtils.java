@@ -28,11 +28,9 @@ import org.girod.javafx.svgimage.LoaderParameters;
 import org.girod.javafx.svgimage.SVGImage;
 import org.girod.javafx.svgimage.SVGLoader;
 import org.girod.javafx.svgimage.ScaleQuality;
-import org.glavo.javafx.webp.LoopCount;
-import org.glavo.javafx.webp.WebPDecoder;
-import org.glavo.javafx.webp.WebPFrame;
-import org.glavo.javafx.webp.WebPImage;
-import org.glavo.javafx.webp.WebPImageLoadOptions;
+import org.glavo.webp.WebPDecoder;
+import org.glavo.webp.WebPImageLoadOptions;
+import org.glavo.webp.javafx.WebPFXImage;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.ui.image.apng.Png;
 import org.jackhuang.hmcl.ui.image.apng.argb8888.Argb8888Bitmap;
@@ -70,38 +68,9 @@ public final class ImageUtils {
     };
 
     public static final ImageLoader WEBP = (input, requestedWidth, requestedHeight, preserveRatio, smooth) -> {
-
-        WebPImage image = WebPDecoder.decodeAll(input, WebPImageLoadOptions.builder()
-                .requestedWidth(requestedWidth)
-                .requestedHeight(requestedHeight)
-                .preserveRatio(preserveRatio)
-                .smooth(smooth)
-                .build());
-
-        if (image.isAnimated()) {
-
-            List<WebPFrame> frames = image.getFrames();
-
-            int[][] framePixels = new int[frames.size()][];
-            int[] durations = new int[framePixels.length];
-
-            for (int frameIndex = 0; frameIndex < frames.size(); frameIndex++) {
-                WebPFrame frame = frames.get(frameIndex);
-                framePixels[frameIndex] = rgbaToArgb(frame.getPixels());
-                durations[frameIndex] = frame.getDurationMillis();
-            }
-
-            LoopCount loopCount = image.getLoopCount();
-            int cycleCount = loopCount.isForever() ? Timeline.INDEFINITE : loopCount.getRepetitions();
-
-            return new AnimationImageImpl(image.getWidth(), image.getHeight(),
-                    framePixels, durations, cycleCount);
-        } else {
-            return image.getFirstFrame().orElseThrow().toWritableImage();
-        }
+        var options = new WebPImageLoadOptions(requestedWidth, requestedHeight, preserveRatio, smooth);
+        return new WebPFXImage(WebPDecoder.decodeAll(input, options));
     };
-
-
 
     public static final ImageLoader SVG = (input, requestedWidth, requestedHeight, preserveRatio, smooth) -> {
         String content = new String(input.readAllBytes(), StandardCharsets.UTF_8);
