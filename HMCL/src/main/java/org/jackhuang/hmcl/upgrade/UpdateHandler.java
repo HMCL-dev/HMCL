@@ -131,7 +131,7 @@ public final class UpdateHandler {
 
                         Platform.runLater(() -> {
                             try {
-                                Controllers.onApplicationStop();
+                                Controllers.saveWindowStates();
                             } finally {
                                 future.complete(null);
                             }
