@@ -209,7 +209,7 @@ public final class FileUtils {
         return true;
     }
 
-    public static boolean isValidForJar(String name){
+    public static boolean isValidForJar(String name) {
         if (name.contains("!"))
             return false;
         else
