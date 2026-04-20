@@ -6,6 +6,8 @@ import org.jackhuang.hmcl.gradle.l10n.CreateLanguageList
 import org.jackhuang.hmcl.gradle.l10n.CreateLocaleNamesResourceBundle
 import org.jackhuang.hmcl.gradle.l10n.UpsideDownTranslate
 import org.jackhuang.hmcl.gradle.mod.ParseModDataTask
+import org.jackhuang.hmcl.gradle.pack.CreateDeb
+import org.jackhuang.hmcl.gradle.pack.UpdateChannel
 import org.jackhuang.hmcl.gradle.utils.PropertiesUtils
 import java.net.URI
 import java.nio.file.FileSystems
@@ -277,6 +279,22 @@ val makeExecutables by tasks.registering {
             }
         }
     }
+}
+
+tasks.register<CreateDeb>("createDeb") {
+    dependsOn(makeExecutables)
+
+    val debChannel = when (versionType) {
+        "stable" -> UpdateChannel.STABLE
+        "nightly" -> UpdateChannel.NIGHTLY
+        else -> UpdateChannel.DEVELOPMENT
+    }
+
+    version.set(project.version.toString())
+    channel.set(debChannel)
+    appShFile.set(layout.file(provider { jarPath.resolveSibling("${jarPath.nameWithoutExtension}.sh") }))
+    iconFile.set(layout.projectDirectory.file("image/hmcl.png"))
+    outputFile.set(layout.buildDirectory.file("libs/${debChannel.packageName}_${project.version}_all.deb"))
 }
 
 tasks.build {

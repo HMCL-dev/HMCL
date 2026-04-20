@@ -36,6 +36,7 @@ hmclauncher = { module = "org.glavo.hmcl:HMCLauncher", version.ref = "hmclaunche
 jetbrains-annotations = { module = "org.jetbrains:annotations", version.ref = "jetbrains-annotations" }
 kala-compress-zip = { module = "org.glavo.kala:kala-compress-archivers-zip", version.ref = "kala-compress" }
 kala-compress-tar = { module = "org.glavo.kala:kala-compress-archivers-tar", version.ref = "kala-compress" }
+kala-compress-ar = { module = "org.glavo.kala:kala-compress-archivers-ar", version.ref = "kala-compress" }
 simple-png-javafx = { module = "org.glavo:simple-png-javafx", version.ref = "simple-png-javafx" }
 gson = { module = "com.google.code.gson:gson", version.ref = "gson" }
 toml = { module = "com.moandjiezana.toml:toml4j", version.ref = "toml4j" }
