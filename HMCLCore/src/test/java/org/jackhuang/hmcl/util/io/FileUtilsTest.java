@@ -53,6 +53,7 @@ public class FileUtilsTest {
         assertFalse(FileUtils.isNameValid(os, "a\uDE00b"));
         assertFalse(FileUtils.isNameValid(os, "a\uDE00\uD83Db"));
         assertFalse(FileUtils.isNameValid(os, "f:oo"));
+        assertFalse(FileUtils.isNameValid(os, "f!oo"));
 
         // Platform-specific tests
         boolean isWindows = os == OperatingSystem.WINDOWS;
