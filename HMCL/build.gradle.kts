@@ -286,8 +286,8 @@ tasks.register<CreateDeb>("createDeb") {
 
     val debChannel = when (versionType) {
         "stable" -> UpdateChannel.STABLE
-        "nightly" -> UpdateChannel.NIGHTLY
-        else -> UpdateChannel.DEVELOPMENT
+        "dev" -> UpdateChannel.DEVELOPMENT
+        else -> UpdateChannel.NIGHTLY
     }
 
     version.set(project.version.toString())
