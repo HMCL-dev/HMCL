@@ -222,10 +222,8 @@ public abstract class CreateDeb extends DefaultTask {
                 Priority: optional
                 Architecture: all
                 Installed-Size: %d
-                Maintainer: huangyuhui <huanghongxun2008@126.com>
+                Maintainer: Glavo <zjx001202@gmail.com>
                 Description: Hello Minecraft! Launcher
-                 HMCL is a Minecraft launcher that supports game download,
-                 mod management, and multiple login providers.
                 Homepage: https://github.com/HMCL-dev/HMCL
                 """.formatted(getCurrentChannel().getPackageName(), getVersion().get(), Math.max(installedSize, 1)) + "\n";
     }
