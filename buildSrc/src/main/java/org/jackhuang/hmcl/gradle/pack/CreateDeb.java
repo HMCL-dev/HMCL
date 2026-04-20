@@ -29,7 +29,6 @@ import org.gradle.api.provider.Property;
 import org.gradle.api.tasks.Input;
 import org.gradle.api.tasks.InputFile;
 import org.gradle.api.tasks.OutputFile;
-import org.gradle.api.tasks.TaskAction;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -67,15 +66,14 @@ public abstract class CreateDeb extends DefaultTask {
     private static final int DIRECTORY_MODE = 0755;
     private static final int EXECUTABLE_MODE = 0755;
     private static final int REGULAR_FILE_MODE = 0644;
-    private static final String COMMON_LAUNCHER_NAME = "hmcl";
 
     /// Debian version written into the `control` file and output filename.
     @Input
     public abstract Property<String> getVersion();
 
-    /// Channel metadata that controls package name, launcher name, and alias priority.
+    /// Release type metadata that controls package name, launcher name, and alias priority.
     @Input
-    public abstract Property<UpdateChannel> getChannel();
+    public abstract Property<ReleaseType> getReleaseType();
 
     /// Executable `.sh` artifact produced by `makeExecutables`.
     @InputFile
@@ -89,12 +87,8 @@ public abstract class CreateDeb extends DefaultTask {
     @OutputFile
     public abstract RegularFileProperty getOutputFile();
 
-    private UpdateChannel getCurrentChannel() {
-        return getChannel().get();
-    }
-
-    private String getCommonLauncherPath() {
-        return "/usr/bin/" + COMMON_LAUNCHER_NAME;
+    private ReleaseType getCurrentChannel() {
+        return getReleaseType().get();
     }
 
     private String getLauncherPath() {
@@ -236,6 +230,8 @@ public abstract class CreateDeb extends DefaultTask {
                 """.formatted(getCurrentChannel().getPackageName(), getVersion().get(), Math.max(installedSize, 1)) + "\n";
     }
 
+    private static final String COMMON_LAUNCHER_PATH = "/usr/bin/hmcl";
+
     /// Registers the channel command into the shared `hmcl` alternatives group.
     private String getPostinst() {
         return """
@@ -243,9 +239,9 @@ public abstract class CreateDeb extends DefaultTask {
                 set -e
                 
                 if [ "$1" = configure ]; then
-                    update-alternatives --install %s %s %s %d
+                    update-alternatives --install %s hmcl %s %d
                 fi
-                """.formatted(getCommonLauncherPath(), COMMON_LAUNCHER_NAME, getLauncherPath(), getCurrentChannel().getAlternativesPriority());
+                """.formatted(COMMON_LAUNCHER_PATH, getLauncherPath(), getCurrentChannel().getAlternativesPriority());
     }
 
     /// Removes the channel command from the shared `hmcl` alternatives group.
@@ -257,7 +253,7 @@ public abstract class CreateDeb extends DefaultTask {
                 if [ "$1" = remove ] || [ "$1" = deconfigure ]; then
                     update-alternatives --remove %s %s
                 fi
-                """.formatted(COMMON_LAUNCHER_NAME, getLauncherPath());
+                """.formatted(COMMON_LAUNCHER_PATH, getLauncherPath());
     }
 
     /// Creates a tiny wrapper that launches the bundled shell script from the user's home directory.

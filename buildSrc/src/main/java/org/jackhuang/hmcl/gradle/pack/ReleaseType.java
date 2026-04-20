@@ -17,12 +17,12 @@
  */
 package org.jackhuang.hmcl.gradle.pack;
 
-/// Debian packaging metadata for one HMCL update channel.
+/// Debian packaging metadata for one HMCL release type.
 ///
 /// The package name, installed command, desktop file, and alternatives
 /// priority are intentionally centralized here so `CreateDeb` can stay focused
 /// on archive layout instead of duplicating channel-specific branching.
-public enum UpdateChannel {
+public enum ReleaseType {
     STABLE("stable", "hmcl", 300),
     DEVELOPMENT("dev", "hmcl-dev", 200),
     NIGHTLY("nightly", "hmcl-nightly", 100);
@@ -33,7 +33,7 @@ public enum UpdateChannel {
     private final String desktopFileName;
     private final int alternativesPriority;
 
-    UpdateChannel(String channelName, String packageName, int alternativesPriority) {
+    ReleaseType(String channelName, String packageName, int alternativesPriority) {
         this.channelName = channelName;
         this.packageName = packageName;
         this.launcherCommandName = "hmcl-" + channelName;

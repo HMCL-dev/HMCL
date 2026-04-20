@@ -291,7 +291,7 @@ tasks.register<CreateDeb>("createDeb") {
     }
 
     version.set(project.version.toString())
-    channel.set(debChannel)
+    releaseType.set(debChannel)
     appShFile.set(layout.file(provider { jarPath.resolveSibling("${jarPath.nameWithoutExtension}.sh") }))
     iconFile.set(layout.projectDirectory.file("image/hmcl.png"))
     outputFile.set(layout.buildDirectory.file("libs/${debChannel.packageName}_${project.version}_all.deb"))
