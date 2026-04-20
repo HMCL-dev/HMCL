@@ -17,6 +17,7 @@
  */
 package org.jackhuang.hmcl.util.platform;
 
+import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
 import java.util.Arrays;
@@ -26,8 +27,9 @@ import static org.junit.jupiter.api.Assertions.*;
 
 public final class CommandBuilderTest {
 
-    static final class ParseArgumentFileTest {
-        private static List<String> parse(String... lines) {
+    @Nested
+    final class ParseArgumentFileTest {
+        private List<String> parse(String... lines) {
             return CommandBuilder.parseArgumentFile(Arrays.stream(lines));
         }
 
