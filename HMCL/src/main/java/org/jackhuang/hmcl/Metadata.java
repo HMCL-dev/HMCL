@@ -87,7 +87,12 @@ public final class Metadata {
         HMCL_CURRENT_DIRECTORY = hmclCurrentDir != null
                 ? Paths.get(hmclCurrentDir).toAbsolutePath().normalize()
                 : CURRENT_DIRECTORY.resolve(".hmcl");
-        DEPENDENCIES_DIRECTORY = HMCL_CURRENT_DIRECTORY.resolve("dependencies");
+
+        String hmclDependencies = System.getProperty("hmcl.dependencies");
+
+        DEPENDENCIES_DIRECTORY = StringUtils.isNotBlank(hmclDependencies)
+                ? Path.of(hmclDependencies).toAbsolutePath().normalize()
+                : HMCL_CURRENT_DIRECTORY.resolve("dependencies");
     }
 
     public static boolean isStable() {
