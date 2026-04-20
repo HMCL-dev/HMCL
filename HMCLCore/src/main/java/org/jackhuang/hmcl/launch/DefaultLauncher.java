@@ -109,7 +109,7 @@ public class DefaultLauncher extends Launcher {
 
         res.add(options.getJava().getBinary().toString());
 
-        res.addAllWithoutParsing(options.getOverrideJavaArguments());
+        res.addAllWithoutParsingAndReadExternal(options.getOverrideJavaArguments());
 
         if (options.getMaxMemory() != null && options.getMaxMemory() > 0)
             res.addDefault("-Xmx", options.getMaxMemory() + "m");
