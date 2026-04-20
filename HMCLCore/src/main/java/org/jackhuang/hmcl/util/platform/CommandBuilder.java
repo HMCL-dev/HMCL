@@ -433,9 +433,6 @@ public final class CommandBuilder {
                         // Unclosed quote, continue on next line
                         break;
                     }
-                } else if (ch == '\\' && i + 1 < len) {
-                    pending.append(unescapeChar(line.charAt(++i)));
-                    i++;
                 } else {
                     pending.append(ch);
                     i++;

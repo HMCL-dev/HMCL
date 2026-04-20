@@ -103,17 +103,17 @@ public final class CommandBuilderTest {
             assertEquals(List.of("a\\b"), parse("\"a\\\\b\""));
         }
 
-        // Escape outside quotes
+        // Backslash outside quotes is treated literally
         @Test
-        public void testEscapeOutsideQuotes() {
-            assertEquals(List.of("a b"), parse("a\\ b"));
+        public void testBackslashOutsideQuotesBeforeWhitespace() {
+            assertEquals(List.of("a\\", "b"), parse("a\\ b"));
         }
 
         // Partial quote: concatenation of quoted and unquoted parts
         @Test
         public void testPartialQuote() {
             // c:\Program" "Files -> c:\Program Files
-            assertEquals(List.of("c:\\Program Files"), parse("c:\\\\Program\" \"Files"));
+            assertEquals(List.of("c:\\Program Files"), parse("c:\\Program\" \"Files"));
         }
 
         // Multi-line quoted string
@@ -181,10 +181,10 @@ public final class CommandBuilderTest {
             assertEquals(List.of("a\nb"), parse("'a\\nb'"));
         }
 
-        // Backslash escape of regular character outside quotes
+        // Backslash outside quotes does not escape regular characters
         @Test
         public void testEscapeRegularCharOutsideQuotes() {
-            assertEquals(List.of("abc"), parse("a\\bc"));
+            assertEquals(List.of("a\\bc"), parse("a\\bc"));
         }
 
         // Multiple tokens with various separators
@@ -240,4 +240,3 @@ public final class CommandBuilderTest {
         }
     }
 }
-
