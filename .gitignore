@@ -69,3 +69,5 @@ language-subtag-registry
 # AI
 /.gemini/
 !/.gemini/config.yaml
+.codex
+/.gradle-*/
