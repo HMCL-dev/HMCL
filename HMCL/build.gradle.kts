@@ -7,7 +7,7 @@ import org.jackhuang.hmcl.gradle.l10n.CreateLocaleNamesResourceBundle
 import org.jackhuang.hmcl.gradle.l10n.UpsideDownTranslate
 import org.jackhuang.hmcl.gradle.mod.ParseModDataTask
 import org.jackhuang.hmcl.gradle.pack.CreateDeb
-import org.jackhuang.hmcl.gradle.pack.UpdateChannel
+import org.jackhuang.hmcl.gradle.pack.ReleaseType
 import org.jackhuang.hmcl.gradle.utils.PropertiesUtils
 import java.net.URI
 import java.nio.file.FileSystems
@@ -285,9 +285,9 @@ tasks.register<CreateDeb>("createDeb") {
     dependsOn(makeExecutables)
 
     val debChannel = when (versionType) {
-        "stable" -> UpdateChannel.STABLE
-        "dev" -> UpdateChannel.DEVELOPMENT
-        else -> UpdateChannel.NIGHTLY
+        "stable" -> ReleaseType.STABLE
+        "dev" -> ReleaseType.DEVELOPMENT
+        else -> ReleaseType.NIGHTLY
     }
 
     version.set(project.version.toString())
