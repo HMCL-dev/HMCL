@@ -18,7 +18,7 @@
 package org.jackhuang.hmcl.ui.versions;
 
 import com.jfoenix.controls.JFXButton;
-import javafx.beans.property.BooleanProperty;
+import javafx.beans.property.ReadOnlyBooleanProperty;
 import javafx.collections.FXCollections;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
@@ -34,16 +34,15 @@ import org.jackhuang.hmcl.game.WorldLockedException;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.ui.*;
-import org.jackhuang.hmcl.ui.construct.ImageContainer;
-import org.jackhuang.hmcl.ui.construct.MessageDialogPane;
-import org.jackhuang.hmcl.ui.construct.RipplerContainer;
-import org.jackhuang.hmcl.ui.construct.TwoLineListItem;
+import org.jackhuang.hmcl.ui.construct.*;
 import org.jackhuang.hmcl.util.Pair;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.i18n.I18n;
 import org.jetbrains.annotations.NotNull;
 
-import java.nio.file.*;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
@@ -65,22 +64,23 @@ import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 public final class WorldBackupsPage extends ListPageBase<WorldBackupsPage.BackupInfo> implements WorldManagePage.WorldRefreshable {
     static final DateTimeFormatter TIME_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd_HH-mm-ss");
 
-    private final World world;
-    private final Path backupsDir;
-    private final BooleanProperty readOnly;
-    private final Pattern backupFileNamePattern;
+    private final WorldManagePage worldManagePage;
+    private World world;
+    private Path backupsDir;
+    private Pattern backupFileNamePattern;
 
     public WorldBackupsPage(WorldManagePage worldManagePage) {
-        this.world = worldManagePage.getWorld();
-        this.backupsDir = worldManagePage.getBackupsDir();
-        this.readOnly = worldManagePage.readOnlyProperty();
-        this.backupFileNamePattern = Pattern.compile("(?<datetime>[0-9]{4}-[0-9]{2}-[0-9]{2}_[0-9]{2}-[0-9]{2}-[0-9]{2})_" + Pattern.quote(world.getFileName()) + "( (?<count>[0-9]+))?\\.zip");
+        this.worldManagePage = worldManagePage;
 
         refresh();
     }
 
+    @Override
     public void refresh() {
         setLoading(true);
+        this.world = worldManagePage.getWorld();
+        this.backupsDir = worldManagePage.getBackupsDir();
+        this.backupFileNamePattern = Pattern.compile("(?<datetime>[0-9]{4}-[0-9]{2}-[0-9]{2}_[0-9]{2}-[0-9]{2}-[0-9]{2})_" + Pattern.quote(world.getFileName()) + "( (?<count>[0-9]+))?\\.zip");
         Task.supplyAsync(() -> {
             if (Files.isDirectory(backupsDir)) {
                 try (Stream<Path> paths = Files.list(backupsDir)) {
@@ -98,7 +98,7 @@ public final class WorldBackupsPage extends ListPageBase<WorldBackupsPage.Backup
                                         count = Integer.parseInt(matcher.group("count"));
                                     }
 
-                                    result.add(new BackupInfo(path, new World(path), time, count));
+                                    result.add(new BackupInfo(path, ImportableWorld.fromPath(path), time, count, readOnlyProperty()));
                                 }
                             } catch (Throwable e) {
                                 LOG.warning("Failed to load backup file " + path, e);
@@ -106,7 +106,7 @@ public final class WorldBackupsPage extends ListPageBase<WorldBackupsPage.Backup
                         }
                     });
 
-                    result.sort(Comparator.naturalOrder());
+                    result.sort(Comparator.reverseOrder());
                     return result;
                 }
             } else {
@@ -122,13 +122,17 @@ public final class WorldBackupsPage extends ListPageBase<WorldBackupsPage.Backup
         }).start();
     }
 
+    public ReadOnlyBooleanProperty readOnlyProperty() {
+        return worldManagePage.readOnlyProperty();
+    }
+
     @Override
     protected Skin<?> createDefaultSkin() {
         return new WorldBackupsPageSkin();
     }
 
     void createBackup() {
-        Controllers.taskDialog(new WorldBackupTask(world, backupsDir, false).setName(i18n("world.backup.processing")).thenApplyAsync(path -> {
+        Controllers.taskDialog(new WorldBackupTask(world, backupsDir).setName(i18n("world.backup.processing")).thenApplyAsync(path -> {
             Matcher matcher = backupFileNamePattern.matcher(path.getFileName().toString());
             if (!matcher.matches()) {
                 throw new AssertionError("Wrong backup file name" + path);
@@ -141,11 +145,11 @@ public final class WorldBackupsPage extends ListPageBase<WorldBackupsPage.Backup
                 count = Integer.parseInt(matcher.group("count"));
             }
 
-            return Pair.pair(path, new BackupInfo(path, new World(path), time, count));
+            return Pair.pair(path, new BackupInfo(path, ImportableWorld.fromPath(path), time, count, readOnlyProperty()));
         }).whenComplete(Schedulers.javafx(), (result, exception) -> {
             if (exception == null) {
                 WorldBackupsPage.this.getItems().add(result.getValue());
-                WorldBackupsPage.this.getItems().sort(Comparator.naturalOrder());
+                WorldBackupsPage.this.getItems().sort(Comparator.reverseOrder());
                 Controllers.dialog(i18n("world.backup.create.success", result.getKey()), null, MessageDialogPane.MessageType.INFO);
             } else if (exception instanceof WorldLockedException) {
                 Controllers.dialog(i18n("world.locked.failed"), null, MessageDialogPane.MessageType.WARNING);
@@ -165,7 +169,7 @@ public final class WorldBackupsPage extends ListPageBase<WorldBackupsPage.Backup
         @Override
         protected List<Node> initializeToolbar(WorldBackupsPage skinnable) {
             JFXButton createBackup = createToolbarButton2(i18n("world.backup.create.new_one"), SVG.ARCHIVE, skinnable::createBackup);
-            createBackup.disableProperty().bind(getSkinnable().readOnly);
+            createBackup.disableProperty().bind(getSkinnable().readOnlyProperty());
 
             return Arrays.asList(
                     createToolbarButton2(i18n("button.refresh"), SVG.REFRESH, skinnable::refresh),
@@ -176,18 +180,20 @@ public final class WorldBackupsPage extends ListPageBase<WorldBackupsPage.Backup
 
     public final class BackupInfo extends Control implements Comparable<BackupInfo> {
         private final Path file;
-        private final World backupWorld;
+        private final ImportableWorld backupWorld;
         private final LocalDateTime backupTime;
         private final int count;
+        private final ReadOnlyBooleanProperty readOnly;
 
-        public BackupInfo(Path file, World backupWorld, LocalDateTime backupTime, int count) {
+        public BackupInfo(Path file, ImportableWorld backupWorld, LocalDateTime backupTime, int count, ReadOnlyBooleanProperty readOnly) {
             this.file = file;
             this.backupWorld = backupWorld;
             this.backupTime = backupTime;
             this.count = count;
+            this.readOnly = readOnly;
         }
 
-        public World getBackupWorld() {
+        public ImportableWorld getBackupWorld() {
             return backupWorld;
         }
 
@@ -209,6 +215,29 @@ public final class WorldBackupsPage extends ListPageBase<WorldBackupsPage.Backup
             Task.runAsync(() -> Files.delete(file)).start();
         }
 
+        void onRestore() {
+            Controllers.taskDialog(
+                    new WorldRestoreTask(file, world).setName(i18n("world.restore.processing"))
+                            .whenComplete(Schedulers.javafx(), (result, exception) -> {
+                                if (exception == null) {
+                                    try {
+                                        Controllers.getWorldManagePage().setWorldAndRefresh(new World(result), worldManagePage.getProfile(), worldManagePage.getInstanceId());
+                                        Controllers.dialog(i18n("world.restore.success"), null, MessageDialogPane.MessageType.INFO);
+                                    } catch (IOException e) {
+                                        // Under normal circumstances, this should not happen.
+                                        fireEvent(new PageCloseEvent());
+                                        Controllers.dialog(i18n("world.restore.failed", StringUtils.getStackTrace(e)), null, MessageDialogPane.MessageType.WARNING);
+                                    }
+                                } else if (exception instanceof WorldLockedException) {
+                                    Controllers.dialog(i18n("world.locked.failed"), null, MessageDialogPane.MessageType.WARNING);
+                                } else {
+                                    LOG.warning("Failed to restore backup", exception);
+                                    Controllers.dialog(i18n("world.restore.failed", StringUtils.getStackTrace(exception)), null, MessageDialogPane.MessageType.WARNING);
+                                }
+                            }),
+                    i18n("world.restore"), null);
+        }
+
         @Override
         public int compareTo(@NotNull WorldBackupsPage.BackupInfo that) {
             int c = this.backupTime.compareTo(that.backupTime);
@@ -221,7 +250,7 @@ public final class WorldBackupsPage extends ListPageBase<WorldBackupsPage.Backup
         BackupInfoSkin(BackupInfo skinnable) {
             super(skinnable);
 
-            World world = skinnable.getBackupWorld();
+            ImportableWorld backupWorld = skinnable.getBackupWorld();
 
             BorderPane root = new BorderPane();
             root.getStyleClass().add("md-list-cell");
@@ -234,19 +263,18 @@ public final class WorldBackupsPage extends ListPageBase<WorldBackupsPage.Backup
 
                 var imageView = new ImageContainer(32);
                 left.getChildren().add(imageView);
-                imageView.setImage(world.getIcon() == null ? FXUtils.newBuiltinImage("/assets/img/unknown_server.png") : world.getIcon());
+                imageView.setImage(backupWorld.icon() == null ? FXUtils.newBuiltinImage("/assets/img/unknown_server.png") : backupWorld.icon());
             }
 
             {
                 TwoLineListItem item = new TwoLineListItem();
                 root.setCenter(item);
 
-                if (skinnable.getBackupWorld().getWorldName() != null)
-                    item.setTitle(parseColorEscapes(skinnable.getBackupWorld().getWorldName()));
+                item.setTitle(parseColorEscapes(skinnable.getBackupWorld().worldName()));
                 item.setSubtitle(formatDateTime(skinnable.getBackupTime()) + (skinnable.count == 0 ? "" : " (" + skinnable.count + ")"));
 
-                if (world.getGameVersion() != null)
-                    item.addTag(I18n.getDisplayVersion(world.getGameVersion()));
+                if (backupWorld.gameVersion() != null)
+                    item.addTag(I18n.getDisplayVersion(backupWorld.gameVersion()));
             }
 
             {
@@ -258,6 +286,12 @@ public final class WorldBackupsPage extends ListPageBase<WorldBackupsPage.Backup
                 right.getChildren().add(btnReveal);
                 FXUtils.installFastTooltip(btnReveal, i18n("reveal.in_file_manager"));
                 btnReveal.setOnAction(event -> skinnable.onReveal());
+
+                JFXButton btnRestore = FXUtils.newToggleButton4(SVG.UPDATE);
+                right.getChildren().add(btnRestore);
+                FXUtils.installFastTooltip(btnRestore, i18n("world.restore.tooltip"));
+                btnRestore.disableProperty().bind(getSkinnable().readOnly);
+                btnRestore.setOnAction(event -> Controllers.confirm(i18n("world.restore.confirm"), i18n("world.restore"), skinnable::onRestore, null));
 
                 JFXButton btnDelete = FXUtils.newToggleButton4(SVG.DELETE_FOREVER);
                 right.getChildren().add(btnDelete);

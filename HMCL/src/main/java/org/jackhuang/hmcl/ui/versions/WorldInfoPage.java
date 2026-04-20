@@ -19,8 +19,8 @@ package org.jackhuang.hmcl.ui.versions;
 
 import com.jfoenix.controls.JFXButton;
 import com.jfoenix.controls.JFXTextField;
+import javafx.beans.property.ReadOnlyBooleanProperty;
 import javafx.beans.property.SimpleBooleanProperty;
-import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.geometry.Pos;
@@ -40,12 +40,10 @@ import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
 import org.jackhuang.hmcl.ui.construct.*;
 import org.jackhuang.hmcl.util.Lang;
-import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.i18n.I18n;
 import org.jackhuang.hmcl.util.io.FileUtils;
 
 import java.io.IOException;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.text.DecimalFormat;
 import java.time.Duration;
@@ -62,21 +60,36 @@ import static org.jackhuang.hmcl.util.logging.Logger.LOG;
  */
 public final class WorldInfoPage extends SpinnerPane implements WorldManagePage.WorldRefreshable {
     private final WorldManagePage worldManagePage;
-    private boolean isReadOnly;
-    private final World world;
-    private CompoundTag levelData;
+    private World world;
+    private CompoundTag dataTag;
     private CompoundTag playerData;
 
     private final ImageContainer iconImageView = new ImageContainer(32);
 
     public WorldInfoPage(WorldManagePage worldManagePage) {
         this.worldManagePage = worldManagePage;
-        this.world = worldManagePage.getWorld();
         refresh();
     }
 
+    private ReadOnlyBooleanProperty readOnlyProperty() {
+        return worldManagePage.readOnlyProperty();
+    }
+
+    @Override
+    public void refresh() {
+        this.world = worldManagePage.getWorld();
+        setFailedReason(null);
+        try {
+            this.dataTag = world.getLevelDataTag();
+            this.playerData = world.getPlayerData();
+            updateControls();
+        } catch (Exception e) {
+            LOG.warning("Failed to refresh world info", e);
+            setFailedReason(i18n("world.info.failed"));
+        }
+    }
+
     private void updateControls() {
-        CompoundTag dataTag = (CompoundTag) levelData.get("Data");
         CompoundTag playerTag = playerData;
 
         ScrollPane scrollPane = new ScrollPane();
@@ -96,25 +109,35 @@ public final class WorldInfoPage extends SpinnerPane implements WorldManagePage.
             var worldNamePane = new LinePane();
             {
                 worldNamePane.setTitle(i18n("world.name"));
-                JFXTextField worldNameField = new JFXTextField();
-                setRightTextField(worldNamePane, worldNameField, 200);
+                // JFXTextField worldNameField = new JFXTextField();
+                Label worldNameLabel = new Label();
+                JFXButton editIconButton = FXUtils.newToggleButton4(SVG.EDIT, 20);
+
+                HBox hBox = new HBox(8);
+                hBox.setAlignment(Pos.CENTER_LEFT);
+                hBox.getChildren().addAll(worldNameLabel, editIconButton);
+                worldNamePane.setRight(hBox);
 
                 if (dataTag.get("LevelName") instanceof StringTag worldNameTag) {
-                    var worldName = new SimpleStringProperty(worldNameTag.get());
-                    FXUtils.bindString(worldNameField, worldName);
-                    worldNameField.getProperties().put(WorldInfoPage.class.getName() + ".worldNameProperty", worldName);
-                    worldName.addListener((observable, oldValue, newValue) -> {
-                        if (StringUtils.isNotBlank(newValue)) {
-                            try {
-                                world.setWorldName(newValue);
-                                worldManagePage.setTitle(i18n("world.manage.title", StringUtils.parseColorEscapes(world.getWorldName())));
-                            } catch (Exception e) {
-                                LOG.warning("Failed to set world name", e);
-                            }
-                        }
+                    worldNameLabel.setText(worldNameTag.get());
+                    editIconButton.disableProperty().bind(readOnlyProperty());
+                    editIconButton.setOnAction(event -> {
+                        WorldManageUIUtils.renameWorld(world,
+                                newWorldName -> {
+                                    worldNameLabel.setText(newWorldName);
+                                    worldManagePage.setTitle(newWorldName);
+                                },
+                                newWorldPath -> {
+                                    try {
+                                        Controllers.getWorldManagePage().setWorldAndRefresh(new World(newWorldPath), worldManagePage.getProfile(), worldManagePage.getInstanceId());
+                                    } catch (IOException e) {
+                                        worldManagePage.closePageForLoadingFail();
+                                    }
+                                }
+                        );
                     });
                 } else {
-                    worldNameField.setDisable(true);
+                    editIconButton.setDisable(true);
                 }
             }
 
@@ -135,7 +158,7 @@ public final class WorldInfoPage extends SpinnerPane implements WorldManagePage.
                 JFXButton editIconButton = FXUtils.newToggleButton4(SVG.EDIT, 20);
                 JFXButton resetIconButton = FXUtils.newToggleButton4(SVG.RESTORE, 20);
                 {
-                    editIconButton.setDisable(isReadOnly);
+                    editIconButton.disableProperty().bind(readOnlyProperty());
                     editIconButton.setOnAction(event -> Controllers.confirm(
                             I18n.i18n("world.icon.change.tip"),
                             I18n.i18n("world.icon.change"),
@@ -145,7 +168,7 @@ public final class WorldInfoPage extends SpinnerPane implements WorldManagePage.
                     ));
                     FXUtils.installFastTooltip(editIconButton, i18n("button.edit"));
 
-                    resetIconButton.setDisable(isReadOnly);
+                    resetIconButton.disableProperty().bind(readOnlyProperty());
                     resetIconButton.setOnAction(event -> this.clearWorldIcon());
                     FXUtils.installFastTooltip(resetIconButton, i18n("button.reset"));
                 }
@@ -234,7 +257,7 @@ public final class WorldInfoPage extends SpinnerPane implements WorldManagePage.
             var allowCheatsButton = new LineToggleButton();
             {
                 allowCheatsButton.setTitle(i18n("world.info.allow_cheats"));
-                allowCheatsButton.setDisable(isReadOnly);
+                allowCheatsButton.disableProperty().bind(readOnlyProperty());
 
                 bindTagAndToggleButton(dataTag.get("allowCommands"), allowCheatsButton);
             }
@@ -242,7 +265,7 @@ public final class WorldInfoPage extends SpinnerPane implements WorldManagePage.
             var generateFeaturesButton = new LineToggleButton();
             {
                 generateFeaturesButton.setTitle(i18n("world.info.generate_features"));
-                generateFeaturesButton.setDisable(isReadOnly);
+                generateFeaturesButton.disableProperty().bind(readOnlyProperty());
                 // Valid before (1.16)20w20a
                 if (dataTag.get("MapFeatures") instanceof ByteTag generateFeaturesTag) {
                     bindTagAndToggleButton(generateFeaturesTag, generateFeaturesButton);
@@ -262,7 +285,7 @@ public final class WorldInfoPage extends SpinnerPane implements WorldManagePage.
             var difficultyButton = new LineSelectButton<Difficulty>();
             {
                 difficultyButton.setTitle(i18n("world.info.difficulty"));
-                difficultyButton.setDisable(isReadOnly);
+                difficultyButton.disableProperty().bind(readOnlyProperty());
                 difficultyButton.setItems(Difficulty.items);
 
                 Difficulty difficulty;
@@ -296,7 +319,7 @@ public final class WorldInfoPage extends SpinnerPane implements WorldManagePage.
             var difficultyLockPane = new LineToggleButton();
             {
                 difficultyLockPane.setTitle(i18n("world.info.difficulty_lock"));
-                difficultyLockPane.setDisable(isReadOnly);
+                difficultyLockPane.disableProperty().bind(readOnlyProperty());
                 // Valid before 26.1-snapshot-6
                 if (dataTag.get("DifficultyLocked") instanceof ByteTag difficultyLockedTag) {
                     bindTagAndToggleButton(difficultyLockedTag, difficultyLockPane);
@@ -361,7 +384,7 @@ public final class WorldInfoPage extends SpinnerPane implements WorldManagePage.
             var playerGameTypePane = new LineSelectButton<GameType>();
             {
                 playerGameTypePane.setTitle(i18n("world.info.player.game_type"));
-                playerGameTypePane.setDisable(worldManagePage.isReadOnly());
+                playerGameTypePane.disableProperty().bind(readOnlyProperty());
                 playerGameTypePane.setItems(GameType.items);
 
                 // Valid before 26.1-snapshot-6
@@ -437,12 +460,13 @@ public final class WorldInfoPage extends SpinnerPane implements WorldManagePage.
         } else if (tag instanceof FloatTag floatTag) {
             bindTagAndTextField(floatTag, textField);
         } else {
+            textField.disableProperty().unbind();
             textField.setDisable(true);
         }
     }
 
     private void setRightTextField(LinePane linePane, JFXTextField textField, int perfWidth) {
-        textField.setDisable(isReadOnly);
+        textField.disableProperty().bind(readOnlyProperty());
         textField.setPrefWidth(perfWidth);
         linePane.setRight(textField);
     }
@@ -517,20 +541,6 @@ public final class WorldInfoPage extends SpinnerPane implements WorldManagePage.
             this.world.writeWorldData();
         } catch (IOException e) {
             LOG.warning("Failed to save world data", e);
-        }
-    }
-
-    @Override
-    public void refresh() {
-        setFailedReason(null);
-        try {
-            this.isReadOnly = worldManagePage.isReadOnly();
-            this.levelData = world.getLevelData();
-            this.playerData = world.getPlayerData();
-            updateControls();
-        } catch (Exception e) {
-            LOG.warning("Failed to refresh world info", e);
-            setFailedReason(i18n("world.info.failed"));
         }
     }
 
@@ -664,7 +674,7 @@ public final class WorldInfoPage extends SpinnerPane implements WorldManagePage.
     private void saveWorldIcon(Path sourcePath, Image image, Path targetPath) {
         Image oldImage = iconImageView.getImage();
         try {
-            FileUtils.copyFile(sourcePath, targetPath);
+            world.changeWorldIcon(sourcePath, targetPath);
             iconImageView.setImage(image);
             Controllers.showToast(i18n("world.icon.change.succeed.toast"));
         } catch (IOException e) {
@@ -674,9 +684,8 @@ public final class WorldInfoPage extends SpinnerPane implements WorldManagePage.
     }
 
     private void clearWorldIcon() {
-        Path output = world.getFile().resolve("icon.png");
         try {
-            Files.deleteIfExists(output);
+            world.clearWorldIcon();
             iconImageView.setImage(FXUtils.newBuiltinImage("/assets/img/unknown_server.png"));
         } catch (IOException e) {
             LOG.warning("Failed to delete world icon ", e);

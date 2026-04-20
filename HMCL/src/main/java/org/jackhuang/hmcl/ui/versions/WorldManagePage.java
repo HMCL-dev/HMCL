@@ -39,8 +39,8 @@ import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
-import java.nio.channels.FileChannel;
 import java.nio.file.Path;
+import java.util.Objects;
 import java.util.Optional;
 
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
@@ -51,15 +51,17 @@ import static org.jackhuang.hmcl.util.logging.Logger.LOG;
  */
 public final class WorldManagePage extends DecoratorAnimatedPage implements DecoratorPage {
 
-    private final World world;
-    private final Path backupsDir;
-    private final Profile profile;
-    private final String instanceId;
-    private final boolean supportQuickPlay;
-    private FileChannel sessionLockChannel;
+    private World world;
+    private Path backupsDir;
+    private Profile profile;
+    private String instanceId;
 
-    private final ObjectProperty<State> state;
-    private boolean isFirstNavigation = true;
+    private final BooleanProperty currentWorldSupportQuickPlay = new SimpleBooleanProperty(false);
+    public final BooleanProperty currentWorldSupportDataPack = new SimpleBooleanProperty(false);
+    private final BooleanProperty currentWorldSupportChunkBase = new SimpleBooleanProperty(false);
+    private final BooleanProperty currentWorldSupportEndCity = new SimpleBooleanProperty(false);
+
+    private final ObjectProperty<State> state = new SimpleObjectProperty<>();
     private final BooleanProperty refreshable = new SimpleBooleanProperty(true);
     private final BooleanProperty readOnly = new SimpleBooleanProperty(false);
 
@@ -69,29 +71,12 @@ public final class WorldManagePage extends DecoratorAnimatedPage implements Deco
     private final TabHeader.Tab<WorldBackupsPage> worldBackupsTab = new TabHeader.Tab<>("worldBackupsPage");
     private final TabHeader.Tab<DataPackListPage> dataPackTab = new TabHeader.Tab<>("dataPackListPage");
 
-    public WorldManagePage(World world, Profile profile, String instanceId) {
-        this.world = world;
-        this.backupsDir = profile.getRepository().getBackupsDirectory(instanceId);
-        this.profile = profile;
-        this.instanceId = instanceId;
-
-        updateSessionLockChannel();
-
-        try {
-            this.world.reloadWorldData();
-        } catch (IOException e) {
-            LOG.warning("Can not load world data of world: " + this.world.getFile(), e);
-            this.addEventHandler(Navigator.NavigationEvent.NAVIGATED, event -> closePageForLoadingFail());
-        }
-
+    public WorldManagePage() {
         worldInfoTab.setNodeSupplier(() -> new WorldInfoPage(this));
         worldBackupsTab.setNodeSupplier(() -> new WorldBackupsPage(this));
         dataPackTab.setNodeSupplier(() -> new DataPackListPage(this));
 
-        this.state = new SimpleObjectProperty<>(new State(i18n("world.manage.title", StringUtils.parseColorEscapes(world.getWorldName())), null, true, true, true));
-
-        Optional<String> gameVersion = profile.getRepository().getGameVersion(instanceId);
-        supportQuickPlay = World.supportQuickPlay(GameVersionNumber.asGameVersion(gameVersion));
+        header.getTabs().addAll(worldInfoTab, worldBackupsTab, dataPackTab);
 
         this.addEventHandler(Navigator.NavigationEvent.EXITED, this::onExited);
         this.addEventHandler(Navigator.NavigationEvent.NAVIGATED, this::onNavigated);
@@ -102,8 +87,37 @@ public final class WorldManagePage extends DecoratorAnimatedPage implements Deco
         return new Skin(this);
     }
 
+    public WorldManagePage setWorld(World world, Profile profile, String instanceId) {
+        closeSessionLockChannel();
+
+        this.world = world;
+        this.backupsDir = profile.getRepository().getBackupsDirectory(instanceId);
+        this.profile = profile;
+        this.instanceId = instanceId;
+
+        updateSessionLockChannel();
+
+        Optional<String> gameVersion = profile.getRepository().getGameVersion(instanceId);
+        currentWorldSupportQuickPlay.set(World.supportsQuickPlay(GameVersionNumber.asGameVersion(gameVersion)));
+        currentWorldSupportDataPack.set(World.supportsDataPacks(GameVersionNumber.asGameVersion(gameVersion)));
+        currentWorldSupportChunkBase.set(ChunkBaseApp.isSupported(world));
+        currentWorldSupportEndCity.set(ChunkBaseApp.supportEndCity(world));
+
+        setTitle(world.getWorldName());
+        header.select(worldInfoTab, false);
+        return this;
+    }
+
+    public WorldManagePage setWorldAndRefresh(World world, Profile profile, String instanceId) {
+        setWorld(world, profile, instanceId);
+        refresh();
+        return this;
+    }
+
     @Override
     public void refresh() {
+        Objects.requireNonNull(world, "World is not initialized");
+
         updateSessionLockChannel();
         try {
             world.reloadWorldData();
@@ -113,6 +127,8 @@ public final class WorldManagePage extends DecoratorAnimatedPage implements Deco
             return;
         }
 
+        setTitle(world.getWorldName());
+
         for (var tab : header.getTabs()) {
             if (tab.getNode() instanceof WorldRefreshable r) {
                 r.refresh();
@@ -120,7 +136,7 @@ public final class WorldManagePage extends DecoratorAnimatedPage implements Deco
         }
     }
 
-    private void closePageForLoadingFail() {
+    public void closePageForLoadingFail() {
         Platform.runLater(() -> {
             fireEvent(new PageCloseEvent());
             Controllers.dialog(i18n("world.load.fail"), null, MessageDialogPane.MessageType.ERROR);
@@ -128,28 +144,33 @@ public final class WorldManagePage extends DecoratorAnimatedPage implements Deco
     }
 
     private void updateSessionLockChannel() {
-        if (sessionLockChannel == null || !sessionLockChannel.isOpen()) {
-            sessionLockChannel = WorldManageUIUtils.getSessionLockChannel(world);
-            readOnly.set(sessionLockChannel == null);
+        if (world != null) {
+            world.getWorldLock().lock();
+            readOnly.set(world.getWorldLock().getLockState() != World.WorldLock.LockState.LOCKED_BY_SELF);
+        }
+    }
+
+    private void closeSessionLockChannel() {
+        if (world != null) {
+            try {
+                world.getWorldLock().releaseLock();
+            } catch (IOException e) {
+                LOG.warning("Can not close session lock channel of world: " + this.world.getFile(), e);
+            }
         }
     }
 
     private void onNavigated(Navigator.NavigationEvent event) {
-        if (isFirstNavigation)
-            isFirstNavigation = false;
-        else
-            refresh();
+        refresh();
     }
 
     public void onExited(Navigator.NavigationEvent event) {
-        try {
-            WorldManageUIUtils.closeSessionLockChannel(world, sessionLockChannel);
-        } catch (IOException ignored) {
-        }
+        closeSessionLockChannel();
     }
 
     public void launch() {
-        fireEvent(new PageCloseEvent());
+        closeSessionLockChannel();
+        readOnly.set(true);
         Versions.launchAndEnterWorld(profile, instanceId, world.getFileName());
     }
 
@@ -162,8 +183,8 @@ public final class WorldManagePage extends DecoratorAnimatedPage implements Deco
         return state;
     }
 
-    public void setTitle(String title) {
-        this.state.set(new DecoratorPage.State(title, null, true, true, true));
+    public void setTitle(String worldName) {
+        this.state.set(new DecoratorPage.State(i18n("world.manage.title", StringUtils.parseColorEscapes(worldName)), null, true, true, true));
     }
 
     public World getWorld() {
@@ -174,11 +195,19 @@ public final class WorldManagePage extends DecoratorAnimatedPage implements Deco
         return backupsDir;
     }
 
+    public Profile getProfile() {
+        return profile;
+    }
+
+    public String getInstanceId() {
+        return instanceId;
+    }
+
     public boolean isReadOnly() {
         return readOnly.get();
     }
 
-    public BooleanProperty readOnlyProperty() {
+    public ReadOnlyBooleanProperty readOnlyProperty() {
         return readOnly;
     }
 
@@ -198,10 +227,9 @@ public final class WorldManagePage extends DecoratorAnimatedPage implements Deco
 
         private BorderPane getSidebar() {
             BorderPane sidebar = new BorderPane();
-            {
-                FXUtils.setLimitWidth(sidebar, 200);
-                VBox.setVgrow(sidebar, Priority.ALWAYS);
-            }
+
+            FXUtils.setLimitWidth(sidebar, 200);
+            VBox.setVgrow(sidebar, Priority.ALWAYS);
 
             sidebar.setTop(getTabBar());
             sidebar.setBottom(getToolBar());
@@ -210,51 +238,43 @@ public final class WorldManagePage extends DecoratorAnimatedPage implements Deco
         }
 
         private AdvancedListBox getTabBar() {
-            AdvancedListBox tabBar = new AdvancedListBox();
-            {
-                getSkinnable().header.getTabs().addAll(getSkinnable().worldInfoTab, getSkinnable().worldBackupsTab);
-                getSkinnable().header.select(getSkinnable().worldInfoTab);
-
-                tabBar.addNavigationDrawerTab(getSkinnable().header, getSkinnable().worldInfoTab, i18n("world.info"), SVG.INFO, SVG.INFO_FILL)
-                        .addNavigationDrawerTab(getSkinnable().header, getSkinnable().worldBackupsTab, i18n("world.backup"), SVG.ARCHIVE, SVG.ARCHIVE_FILL);
-
-                if (getSkinnable().world.supportDataPacks()) {
-                    getSkinnable().header.getTabs().add(getSkinnable().dataPackTab);
-                    tabBar.addNavigationDrawerTab(getSkinnable().header, getSkinnable().dataPackTab, i18n("world.datapack"), SVG.EXTENSION, SVG.EXTENSION_FILL);
-                }
-            }
-
-            return tabBar;
+            return new AdvancedListBox()
+                    .addNavigationDrawerTab(getSkinnable().header, getSkinnable().worldInfoTab, i18n("world.info"), SVG.INFO, SVG.INFO_FILL)
+                    .addNavigationDrawerTab(getSkinnable().header, getSkinnable().worldBackupsTab, i18n("world.backup"), SVG.ARCHIVE, SVG.ARCHIVE_FILL)
+                    .addNavigationDrawerTab(getSkinnable().header, getSkinnable().dataPackTab, i18n("world.datapack"), SVG.EXTENSION, SVG.EXTENSION_FILL);
         }
 
         private AdvancedListBox getToolBar() {
             AdvancedListBox toolbar = new AdvancedListBox();
             BorderPane.setMargin(toolbar, new Insets(0, 0, 12, 0));
             {
-                if (getSkinnable().supportQuickPlay) {
-                    toolbar.addNavigationDrawerItem(i18n("version.launch"), SVG.ROCKET_LAUNCH, () -> getSkinnable().launch(), advancedListItem -> advancedListItem.disableProperty().bind(getSkinnable().readOnlyProperty()));
-                }
+                toolbar.addNavigationDrawerItem(i18n("version.launch"), SVG.ROCKET_LAUNCH, () -> getSkinnable().launch(), advancedListItem -> {
+                    advancedListItem.disableProperty().bind(getSkinnable().readOnlyProperty());
+                    advancedListItem.visibleProperty().bind(getSkinnable().currentWorldSupportQuickPlay);
+                    advancedListItem.managedProperty().bind(getSkinnable().currentWorldSupportQuickPlay);
+                });
 
-                if (ChunkBaseApp.isSupported(getSkinnable().world)) {
+                {
                     PopupMenu chunkBasePopupMenu = new PopupMenu();
                     JFXPopup chunkBasePopup = new JFXPopup(chunkBasePopupMenu);
+
+                    IconedMenuItem endCityItem = new IconedMenuItem(SVG.LOCATION_CITY, i18n("world.chunkbase.end_city"), () -> ChunkBaseApp.openEndCityFinder(getSkinnable().world), chunkBasePopup);
+                    endCityItem.visibleProperty().bind(getSkinnable().currentWorldSupportEndCity);
+                    endCityItem.managedProperty().bind(getSkinnable().currentWorldSupportEndCity);
 
                     chunkBasePopupMenu.getContent().addAll(
                             new IconedMenuItem(SVG.EXPLORE, i18n("world.chunkbase.seed_map"), () -> ChunkBaseApp.openSeedMap(getSkinnable().world), chunkBasePopup),
                             new IconedMenuItem(SVG.VISIBILITY, i18n("world.chunkbase.stronghold"), () -> ChunkBaseApp.openStrongholdFinder(getSkinnable().world), chunkBasePopup),
-                            new IconedMenuItem(SVG.FORT, i18n("world.chunkbase.nether_fortress"), () -> ChunkBaseApp.openNetherFortressFinder(getSkinnable().world), chunkBasePopup)
+                            new IconedMenuItem(SVG.FORT, i18n("world.chunkbase.nether_fortress"), () -> ChunkBaseApp.openNetherFortressFinder(getSkinnable().world), chunkBasePopup),
+                            endCityItem
                     );
 
-                    if (ChunkBaseApp.supportEndCity(getSkinnable().world)) {
-                        chunkBasePopupMenu.getContent().add(
-                                new IconedMenuItem(SVG.LOCATION_CITY, i18n("world.chunkbase.end_city"), () -> ChunkBaseApp.openEndCityFinder(getSkinnable().world), chunkBasePopup));
-                    }
-
-                    toolbar.addNavigationDrawerItem(i18n("world.chunkbase"), SVG.EXPLORE, null, chunkBaseMenuItem ->
-                            chunkBaseMenuItem.setOnAction(e ->
-                                    chunkBasePopup.show(chunkBaseMenuItem,
-                                            JFXPopup.PopupVPosition.BOTTOM, JFXPopup.PopupHPosition.LEFT,
-                                            chunkBaseMenuItem.getWidth(), 0)));
+                    toolbar.addNavigationDrawerItem(i18n("world.chunkbase"), SVG.EXPLORE, null, chunkBaseMenuItem -> {
+                        chunkBaseMenuItem.setOnAction(e ->
+                                chunkBasePopup.show(chunkBaseMenuItem, JFXPopup.PopupVPosition.BOTTOM, JFXPopup.PopupHPosition.LEFT, chunkBaseMenuItem.getWidth(), 0));
+                        chunkBaseMenuItem.visibleProperty().bind(getSkinnable().currentWorldSupportChunkBase);
+                        chunkBaseMenuItem.managedProperty().bind(getSkinnable().currentWorldSupportChunkBase);
+                    });
                 }
 
                 toolbar.addNavigationDrawerItem(i18n("settings.game.exploration"), SVG.FOLDER_OPEN, () -> FXUtils.openFolder(getSkinnable().world.getFile()));
@@ -263,26 +283,31 @@ public final class WorldManagePage extends DecoratorAnimatedPage implements Deco
                     PopupMenu managePopupMenu = new PopupMenu();
                     JFXPopup managePopup = new JFXPopup(managePopupMenu);
 
-                    if (getSkinnable().supportQuickPlay) {
-                        managePopupMenu.getContent().addAll(
-                                new IconedMenuItem(SVG.ROCKET_LAUNCH, i18n("version.launch"), () -> getSkinnable().launch(), managePopup),
-                                new IconedMenuItem(SVG.SCRIPT, i18n("version.launch_script"), () -> getSkinnable().generateLaunchScript(), managePopup),
-                                new MenuSeparator()
-                        );
-                    }
+                    IconedMenuItem launchItem = new IconedMenuItem(SVG.ROCKET_LAUNCH, i18n("version.launch"), () -> getSkinnable().launch(), managePopup);
+                    launchItem.visibleProperty().bind(getSkinnable().currentWorldSupportQuickPlay);
+                    launchItem.managedProperty().bind(getSkinnable().currentWorldSupportQuickPlay);
+
+                    IconedMenuItem launchScriptItem = new IconedMenuItem(SVG.SCRIPT, i18n("version.launch_script"), () -> getSkinnable().generateLaunchScript(), managePopup);
+                    launchScriptItem.visibleProperty().bind(getSkinnable().currentWorldSupportQuickPlay);
+                    launchScriptItem.managedProperty().bind(getSkinnable().currentWorldSupportQuickPlay);
+
+                    MenuSeparator menuSeparator = new MenuSeparator();
+                    menuSeparator.visibleProperty().bind(getSkinnable().currentWorldSupportQuickPlay);
+                    menuSeparator.managedProperty().bind(getSkinnable().currentWorldSupportQuickPlay);
+
+                    managePopupMenu.getContent().addAll(launchItem, launchScriptItem, menuSeparator);
+
 
                     managePopupMenu.getContent().addAll(
-                            new IconedMenuItem(SVG.OUTPUT, i18n("world.export"), () -> WorldManageUIUtils.export(getSkinnable().world, getSkinnable().sessionLockChannel), managePopup),
-                            new IconedMenuItem(SVG.DELETE_FOREVER, i18n("world.delete"), () -> WorldManageUIUtils.delete(getSkinnable().world, () -> getSkinnable().fireEvent(new PageCloseEvent()), getSkinnable().sessionLockChannel), managePopup),
+                            new IconedMenuItem(SVG.OUTPUT, i18n("world.export"), () -> WorldManageUIUtils.export(getSkinnable().world), managePopup),
+                            new IconedMenuItem(SVG.DELETE_FOREVER, i18n("world.delete"), () -> WorldManageUIUtils.delete(getSkinnable().world, () -> getSkinnable().fireEvent(new PageCloseEvent())), managePopup),
                             new IconedMenuItem(SVG.CONTENT_COPY, i18n("world.duplicate"), () -> WorldManageUIUtils.copyWorld(getSkinnable().world, null), managePopup)
                     );
 
-                    toolbar.addNavigationDrawerItem(i18n("settings.game.management"), SVG.MENU, null, managePopupMenuItem ->
-                    {
+                    toolbar.addNavigationDrawerItem(i18n("settings.game.management"), SVG.MENU, null, managePopupMenuItem -> {
                         managePopupMenuItem.setOnAction(e ->
                                 managePopup.show(managePopupMenuItem,
-                                        JFXPopup.PopupVPosition.BOTTOM, JFXPopup.PopupHPosition.LEFT,
-                                        managePopupMenuItem.getWidth(), 0));
+                                        JFXPopup.PopupVPosition.BOTTOM, JFXPopup.PopupHPosition.LEFT, managePopupMenuItem.getWidth(), 0));
                         managePopupMenuItem.disableProperty().bind(getSkinnable().readOnlyProperty());
                     });
                 }

@@ -20,7 +20,9 @@ package org.jackhuang.hmcl.game;
 import javafx.scene.image.Image;
 import org.glavo.nbt.io.NBTCodec;
 import org.glavo.nbt.tag.*;
-import org.jackhuang.hmcl.util.io.*;
+import org.jackhuang.hmcl.util.io.FileUtils;
+import org.jackhuang.hmcl.util.io.IOUtils;
+import org.jackhuang.hmcl.util.io.Zipper;
 import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
 import org.jetbrains.annotations.Nullable;
 
@@ -42,83 +44,56 @@ import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 public final class World {
 
     private final Path file;
-    private String fileName;
+    private final String fileName;
     private Image icon;
 
-    private CompoundTag levelData;
-    private CompoundTag dataTag;
-    private Path levelDataPath;
+    private WorldDataSection levelDataTag;
+    private WorldDataSection worldGenSettingsTag;
+    private WorldDataSection playerTag;
 
-    private CompoundTag worldGenSettingsDataBackingTag; // Use for writing back to the file
-    private CompoundTag normalizedWorldGenSettingsData; // Use for reading/modification
-    private Path worldGenSettingsDataPath;
-
-    private CompoundTag playerData; // Use for both reading/modification and writing back to the file
-    private Path playerDataPath;
+    private final WorldLock lock;
 
     public World(Path file) throws IOException {
         this.file = file;
+        this.lock = new WorldLock();
 
         if (Files.isDirectory(file)) {
             fileName = FileUtils.getName(this.file);
-            Path levelDatPath = this.file.resolve("level.dat");
-            if (!Files.exists(levelDatPath)) { // version 20w14infinite
-                levelDatPath = this.file.resolve("special_level.dat");
-            }
-            if (!Files.exists(levelDatPath)) {
-                throw new IOException("Not a valid world directory since level.dat or special_level.dat cannot be found.");
-            }
-            this.levelDataPath = levelDatPath;
-            loadAndCheckWorldData();
-
-            Path iconFile = this.file.resolve("icon.png");
-            if (Files.isRegularFile(iconFile)) {
-                try (InputStream inputStream = Files.newInputStream(iconFile)) {
-                    icon = new Image(inputStream, 64, 64, true, false);
-                    if (icon.isError())
-                        throw icon.getException();
-                } catch (Exception e) {
-                    LOG.warning("Failed to load world icon", e);
-                }
-            }
-        } else if (Files.isRegularFile(file))
-            try (FileSystem fs = CompressingUtils.readonly(this.file).setAutoDetectEncoding(true).build()) {
-                Path root;
-                if (Files.isRegularFile(fs.getPath("/level.dat"))) {
-                    root = fs.getPath("/");
-                    fileName = FileUtils.getName(this.file);
-                } else {
-                    List<Path> files = Files.list(fs.getPath("/")).toList();
-                    if (files.size() != 1 || !Files.isDirectory(files.get(0))) {
-                        throw new IOException("Not a valid world zip file");
-                    }
-
-                    root = files.get(0);
-                    fileName = FileUtils.getName(root);
-                }
-
-                Path levelDat = root.resolve("level.dat");
-                if (!Files.exists(levelDat)) { //version 20w14infinite
-                    levelDat = root.resolve("special_level.dat");
-                }
-                if (!Files.exists(levelDat)) {
-                    throw new IOException("Not a valid world zip file since level.dat or special_level.dat cannot be found.");
-                }
-                loadAndCheckLevelData(levelDat);
-
-                Path iconFile = root.resolve("icon.png");
-                if (Files.isRegularFile(iconFile)) {
-                    try (InputStream inputStream = Files.newInputStream(iconFile)) {
-                        icon = new Image(inputStream, 64, 64, true, false);
-                        if (icon.isError())
-                            throw icon.getException();
-                    } catch (Exception e) {
-                        LOG.warning("Failed to load world icon", e);
-                    }
-                }
-            }
-        else
+            loadAndCheckWorldData(findLevelDatPath(this.file));
+            icon = loadIcon(this.file);
+        } else {
             throw new IOException("Path " + file + " cannot be recognized as a Minecraft world");
+        }
+    }
+
+    public static Path findLevelDatPath(Path root) throws IOException {
+        Path levelDat = root.resolve("level.dat");
+        if (!Files.exists(levelDat)) { //version 20w14infinite
+            levelDat = root.resolve("special_level.dat");
+        }
+        if (!Files.exists(levelDat)) {
+            throw new IOException("Not a valid world zip file since level.dat or special_level.dat cannot be found.");
+        }
+        return levelDat;
+    }
+
+    public static Image loadIcon(Path root) {
+        Path iconFile = root.resolve("icon.png");
+        if (Files.isRegularFile(iconFile)) {
+            try (InputStream inputStream = Files.newInputStream(iconFile)) {
+                Image icon = new Image(inputStream, 64, 64, true, false);
+                if (icon.isError())
+                    throw icon.getException();
+                return icon;
+            } catch (Exception e) {
+                LOG.warning("Failed to load world icon", e);
+            }
+        }
+        return null;
+    }
+
+    public WorldLock getWorldLock() {
+        return lock;
     }
 
     public Path getFile() {
@@ -130,38 +105,31 @@ public final class World {
     }
 
     public String getWorldName() {
-        if (levelData.get("Data") instanceof CompoundTag data
-                && data.get("LevelName") instanceof StringTag levelNameTag)
+        if (getLevelDataTag().get("LevelName") instanceof StringTag levelNameTag)
             return levelNameTag.get();
         else
             return "";
     }
 
     public void setWorldName(String worldName) throws IOException {
-        if (levelData.get("Data") instanceof CompoundTag data && data.get("LevelName") instanceof StringTag levelNameTag) {
-            levelNameTag.setValue(worldName);
-            writeLevelData();
-        }
+        getLevelDataTag().setString("LevelName", worldName);
+        levelDataTag.write();
     }
 
-    public Path getSessionLockFile() {
-        return file.resolve("session.lock");
-    }
-
-    public CompoundTag getLevelData() {
-        return levelData;
+    public CompoundTag getLevelDataTag() {
+        return levelDataTag.normalizedNbtTag;
     }
 
     public @Nullable CompoundTag getNormalizedWorldGenSettingsData() {
-        return normalizedWorldGenSettingsData;
+        return worldGenSettingsTag.normalizedNbtTag;
     }
 
     public @Nullable CompoundTag getPlayerData() {
-        return playerData;
+        return playerTag.normalizedNbtTag;
     }
 
     public long getLastPlayed() {
-        if (dataTag.get("LastPlayed") instanceof LongTag lastPlayedTag) {
+        if (getLevelDataTag().get("LastPlayed") instanceof LongTag lastPlayedTag) {
             return lastPlayedTag.get();
         } else {
             return 0L;
@@ -169,8 +137,7 @@ public final class World {
     }
 
     public @Nullable GameVersionNumber getGameVersion() {
-        if (levelData.get("Data") instanceof CompoundTag data &&
-                data.get("Version") instanceof CompoundTag versionTag &&
+        if (getLevelDataTag().get("Version") instanceof CompoundTag versionTag &&
                 versionTag.get("Name") instanceof StringTag nameTag) {
             return GameVersionNumber.asGameVersion(nameTag.getValue());
         }
@@ -179,12 +146,12 @@ public final class World {
 
     public @Nullable Long getSeed() {
         // Valid after 1.16(20w20a)
-        if (normalizedWorldGenSettingsData != null
-                && normalizedWorldGenSettingsData.get("seed") instanceof LongTag seedTag) {
+        if (getNormalizedWorldGenSettingsData() != null
+                && getNormalizedWorldGenSettingsData().get("seed") instanceof LongTag seedTag) {
             return seedTag.getValue();
         }
         // Valid before 1.16(20w20a)
-        if (dataTag.get("RandomSeed") instanceof LongTag seedTag) {
+        if (getLevelDataTag().get("RandomSeed") instanceof LongTag seedTag) {
             return seedTag.getValue();
         }
         return null;
@@ -192,12 +159,12 @@ public final class World {
 
     public boolean isLargeBiomes() {
         // Valid before 1.16(20w20a)
-        if (dataTag.get("generatorName") instanceof StringTag generatorNameTag) {
+        if (getLevelDataTag().get("generatorName") instanceof StringTag generatorNameTag) {
             return "largeBiomes".equals(generatorNameTag.getValue());
         }
         // Unified handling of logic after version 1.16
-        else if (normalizedWorldGenSettingsData != null
-                && normalizedWorldGenSettingsData.get("dimensions") instanceof CompoundTag dimensionsTag) {
+        else if (getNormalizedWorldGenSettingsData() != null
+                && getNormalizedWorldGenSettingsData().get("dimensions") instanceof CompoundTag dimensionsTag) {
             if (dimensionsTag.get("minecraft:overworld") instanceof CompoundTag overworldTag
                     && overworldTag.get("generator") instanceof CompoundTag generatorTag) {
                 // Valid between 1.16(20w20a) and 1.18(21w37a)
@@ -218,29 +185,32 @@ public final class World {
         return icon;
     }
 
-    public boolean isLocked() {
-        return isLocked(getSessionLockFile());
+    public void changeWorldIcon(Path sourcePath, Path targetPath) throws IOException {
+        FileUtils.copyFile(sourcePath, targetPath);
+        icon = loadIcon(file);
     }
 
-    public boolean supportDataPacks() {
-        return getGameVersion() != null && getGameVersion().isAtLeast("1.13", "17w43a");
+    public void clearWorldIcon() throws IOException {
+        Path output = file.resolve("icon.png");
+        Files.deleteIfExists(output);
+        icon = null;
     }
 
-    public boolean supportQuickPlay() {
-        return getGameVersion() != null && getGameVersion().isAtLeast("1.20", "23w14a");
+    public static boolean supportsDataPacks(GameVersionNumber gameVersionNumber) {
+        return gameVersionNumber != null && gameVersionNumber.isAtLeast("1.13", "17w43a");
     }
 
-    public static boolean supportQuickPlay(GameVersionNumber gameVersionNumber) {
+    public static boolean supportsQuickPlay(GameVersionNumber gameVersionNumber) {
         return gameVersionNumber != null && gameVersionNumber.isAtLeast("1.20", "23w14a");
     }
 
-    private void loadAndCheckWorldData() throws IOException {
+    private void loadAndCheckWorldData(Path levelDataPath) throws IOException {
         loadAndCheckLevelData(levelDataPath);
         loadOtherData();
     }
 
-    private void loadAndCheckLevelData(Path levelDat) throws IOException {
-        this.levelData = NBTCodec.of().readTag(levelDat, TagType.COMPOUND);
+    private void loadAndCheckLevelData(Path levelDatPath) throws IOException {
+        CompoundTag levelData = NBTCodec.of().readTag(levelDatPath, TagType.COMPOUND);
         if (!(levelData.get("Data") instanceof CompoundTag data))
             throw new IOException("level.dat missing Data");
 
@@ -249,202 +219,99 @@ public final class World {
 
         if (!(data.get("LastPlayed") instanceof LongTag))
             throw new IOException("level.dat missing LastPlayed");
-        this.dataTag = data;
+        this.levelDataTag = new WorldDataSection(levelDatPath, levelData, data);
     }
 
     private void loadOtherData() throws IOException {
-        if (!(levelData.get("Data") instanceof CompoundTag data)) return;
 
         Path worldGenSettingsDatPath = file.resolve("data/minecraft/world_gen_settings.dat");
-        if (data.get("WorldGenSettings") instanceof CompoundTag worldGenSettingsTag) {
-            setWorldGenSettingsData(null, worldGenSettingsTag, worldGenSettingsTag);
+        if (getLevelDataTag().get("WorldGenSettings") instanceof CompoundTag worldGenSettingsTag) {
+            this.worldGenSettingsTag = new WorldDataSection(null, worldGenSettingsTag, worldGenSettingsTag);
         } else if (Files.isRegularFile(worldGenSettingsDatPath)) {
             CompoundTag raw = NBTCodec.of().readTag(worldGenSettingsDatPath, TagType.COMPOUND);
             if (raw.get("data") instanceof CompoundTag compoundTag) {
-                setWorldGenSettingsData(worldGenSettingsDatPath, raw, compoundTag);
+                this.worldGenSettingsTag = new WorldDataSection(worldGenSettingsDatPath, raw, compoundTag);
             } else {
-                setWorldGenSettingsData(null, null, null);
+                this.worldGenSettingsTag = new WorldDataSection(null, null, null);
             }
         } else {
-            setWorldGenSettingsData(null, null, null);
+            this.worldGenSettingsTag = new WorldDataSection(null, null, null);
         }
 
-        if (data.get("Player") instanceof CompoundTag playerTag) {
-            setPlayerData(null, playerTag);
-        } else if (data.get("singleplayer_uuid") instanceof IntArrayTag uuidTag && uuidTag.isUUID()) {
+        if (getLevelDataTag().get("Player") instanceof CompoundTag playerTag) {
+            this.playerTag = new WorldDataSection(null, playerTag, playerTag);
+        } else if (getLevelDataTag().get("singleplayer_uuid") instanceof IntArrayTag uuidTag && uuidTag.isUUID()) {
             String playerUUID = uuidTag.getUUID().toString();
             Path playerDatPath = file.resolve("players/data/" + playerUUID + ".dat");
             if (Files.exists(playerDatPath)) {
-                setPlayerData(playerDatPath, NBTCodec.of().readTag(playerDatPath, TagType.COMPOUND));
+                CompoundTag playerTag = NBTCodec.of().readTag(playerDatPath, TagType.COMPOUND);
+                this.playerTag = new WorldDataSection(playerDatPath, playerTag, playerTag);
             } else {
-                setPlayerData(null, null);
+                this.playerTag = new WorldDataSection(null, null, null);
             }
         } else {
-            setPlayerData(null, null);
+            this.playerTag = new WorldDataSection(null, null, null);
         }
-    }
-
-    private void setWorldGenSettingsData(Path worldGenSettingsDataPath, CompoundTag worldGenSettingsDataBackingTag, CompoundTag unifiedWorldGenSettingsData) {
-        this.worldGenSettingsDataPath = worldGenSettingsDataPath;
-        this.worldGenSettingsDataBackingTag = worldGenSettingsDataBackingTag;
-        this.normalizedWorldGenSettingsData = unifiedWorldGenSettingsData;
-    }
-
-    private void setPlayerData(Path playerDataPath, CompoundTag playerData) {
-        this.playerDataPath = playerDataPath;
-        this.playerData = playerData;
     }
 
     public void reloadWorldData() throws IOException {
-        loadAndCheckWorldData();
+        loadAndCheckWorldData(levelDataTag.nbtPath());
     }
 
-    // The rename method is used to rename temporary world object during installation and copying,
-    // so there is no need to modify the `file` field.
-    public void rename(String newName) throws IOException {
-        if (!Files.isDirectory(file))
-            throw new IOException("Not a valid world directory");
+    // The renameWorld method do not modify the `file` field.
+    // A new World object needs to be created to obtain the renamed world.
+    public Path rename(String newName) throws IOException {
+        switch (getWorldLock().getLockState()) {
+            case LOCKED_BY_OTHER -> throw new WorldLockedException("The world " + getFile() + " has been locked");
+            case LOCKED_BY_SELF -> getWorldLock().releaseLock();
+        }
 
         // Change the name recorded in level.dat
-        dataTag.setString("LevelName", newName);
-        writeLevelData();
+        setWorldName(newName);
 
-        // then change the folder's name
-        Files.move(file, file.resolveSibling(newName));
+        // Then change the folder's name
+        Path targetPath = FileUtils.getNonConflictingDirectory(file.getParent(), FileUtils.getSafeWorldFolderName(newName));
+        Files.move(file, targetPath);
+        return targetPath;
     }
 
-    public void install(Path savesDir, String name) throws IOException {
-        Path worldDir;
-        try {
-            worldDir = savesDir.resolve(name);
-        } catch (InvalidPathException e) {
-            throw new IOException(e);
+    public void export(Path zipPath, String worldName) throws IOException {
+        if (getWorldLock().getLockState() == WorldLock.LockState.LOCKED_BY_OTHER) {
+            throw new WorldLockedException("The world " + getFile() + " has been locked");
         }
 
-        if (Files.isDirectory(worldDir)) {
-            throw new FileAlreadyExistsException("World already exists");
-        }
-
-        if (Files.isRegularFile(file)) {
-            try (FileSystem fs = CompressingUtils.readonly(file).setAutoDetectEncoding(true).build()) {
-                Path levelDatPath = fs.getPath("/level.dat");
-                if (Files.isRegularFile(levelDatPath)) {
-                    fileName = FileUtils.getName(file);
-
-                    new Unzipper(file, worldDir).unzip();
-                } else {
-                    try (Stream<Path> stream = Files.list(fs.getPath("/"))) {
-                        List<Path> subDirs = stream.toList();
-                        if (subDirs.size() != 1) {
-                            throw new IOException("World zip malformed");
-                        }
-                        String subDirectoryName = FileUtils.getName(subDirs.get(0));
-                        new Unzipper(file, worldDir)
-                                .setSubDirectory("/" + subDirectoryName + "/")
-                                .unzip();
-                    }
-                }
-
-            }
-            new World(worldDir).rename(name);
-        } else if (Files.isDirectory(file)) {
-            FileUtils.copyDirectory(file, worldDir);
-        }
-    }
-
-    public void export(Path zip, String worldName) throws IOException {
-        if (!Files.isDirectory(file))
-            throw new IOException();
-
-        try (Zipper zipper = new Zipper(zip)) {
+        try (WorldLock.Suspension ignored = getWorldLock().suspend();
+             Zipper zipper = new Zipper(zipPath)) {
             zipper.putDirectory(file, worldName);
         }
     }
 
     public void delete() throws IOException {
-        if (isLocked()) {
-            throw new WorldLockedException("The world " + getFile() + " has been locked");
+        switch (getWorldLock().getLockState()) {
+            case LOCKED_BY_OTHER -> throw new WorldLockedException("The world " + getFile() + " has been locked");
+            case LOCKED_BY_SELF -> getWorldLock().releaseLock();
         }
-        FileUtils.forceDelete(file);
+        FileUtils.deleteDirectory(file);
     }
 
     public void copy(String newName) throws IOException {
-        if (!Files.isDirectory(file)) {
-            throw new IOException("Not a valid world directory");
-        }
-
-        if (isLocked()) {
+        if (getWorldLock().getLockState() == WorldLock.LockState.LOCKED_BY_OTHER) {
             throw new WorldLockedException("The world " + getFile() + " has been locked");
         }
 
-        Path newPath = file.resolveSibling(newName);
-        FileUtils.copyDirectory(file, newPath, path -> !path.contains("session.lock"));
-        World newWorld = new World(newPath);
-        newWorld.rename(newName);
-    }
-
-    public FileChannel lock() throws WorldLockedException {
-        Path lockFile = getSessionLockFile();
-        FileChannel channel = null;
-        try {
-            channel = FileChannel.open(lockFile, StandardOpenOption.CREATE, StandardOpenOption.WRITE);
-            channel.write(ByteBuffer.wrap("\u2603".getBytes(StandardCharsets.UTF_8)));
-            channel.force(true);
-            FileLock fileLock = channel.tryLock();
-            if (fileLock != null) {
-                return channel;
-            } else {
-                IOUtils.closeQuietly(channel);
-                throw new WorldLockedException("The world " + getFile() + " has been locked");
-            }
-        } catch (IOException e) {
-            IOUtils.closeQuietly(channel);
-            throw new WorldLockedException(e);
-        }
+        Path targetPath = FileUtils.getNonConflictingDirectory(file.getParent(), FileUtils.getSafeWorldFolderName(newName));
+        FileUtils.copyDirectory(file, targetPath, path -> !path.contains("session.lock"));
+        new World(targetPath).setWorldName(newName);
     }
 
     public void writeWorldData() throws IOException {
-        if (!Files.isDirectory(file)) throw new IOException("Not a valid world directory");
-
-        writeLevelData();
-
-        if (worldGenSettingsDataPath != null && worldGenSettingsDataBackingTag != null) {
-            writeTag(worldGenSettingsDataBackingTag, worldGenSettingsDataPath);
-        }
-
-        if (playerDataPath != null && playerData != null) {
-            writeTag(playerData, playerDataPath);
-        }
-    }
-
-    public void writeLevelData() throws IOException {
-        writeTag(levelData, levelDataPath);
-    }
-
-    private void writeTag(CompoundTag nbt, Path path) throws IOException {
-        if (!Files.isDirectory(file)) throw new IOException("Not a valid world directory");
-        FileUtils.saveSafely(path, os -> {
-            try (OutputStream gos = new GZIPOutputStream(os)) {
-                NBTCodec.of().writeTag(gos, nbt);
-            }
-        });
-    }
-
-    private static boolean isLocked(Path sessionLockFile) {
-        try (FileChannel fileChannel = FileChannel.open(sessionLockFile, StandardOpenOption.WRITE)) {
-            return fileChannel.tryLock() == null;
-        } catch (AccessDeniedException | OverlappingFileLockException accessDeniedException) {
-            return true;
-        } catch (NoSuchFileException noSuchFileException) {
-            return false;
-        } catch (IOException e) {
-            LOG.warning("Failed to open the lock file " + sessionLockFile, e);
-            return false;
-        }
+        levelDataTag.write();
+        worldGenSettingsTag.write();
+        playerTag.write();
     }
 
     public static List<World> getWorlds(Path savesDir) {
-        if (Files.exists(savesDir)) {
+        if (Files.isDirectory(savesDir)) {
             try (Stream<Path> stream = Files.list(savesDir)) {
                 return stream
                         .filter(Files::isDirectory)
@@ -462,5 +329,168 @@ public final class World {
             }
         }
         return List.of();
+    }
+
+    public class WorldLock {
+        private FileChannel sessionLockChannel;
+        private final Path sessionLockFile;
+
+        public enum LockState {
+            LOCKED_BY_OTHER,
+            LOCKED_BY_SELF,
+            UNLOCKED;
+        }
+
+        public WorldLock() {
+            this.sessionLockFile = file.resolve("session.lock");
+            this.sessionLockChannel = null;
+        }
+
+        public synchronized LockState getLockState() {
+            if (isLockedInternally()) {
+                return LockState.LOCKED_BY_SELF;
+            } else if (isLockedExternally()) {
+                return LockState.LOCKED_BY_OTHER;
+            } else {
+                return LockState.UNLOCKED;
+            }
+        }
+
+        public synchronized boolean lock() {
+            try {
+                lockStrict();
+                return true;
+            } catch (WorldLockedException e) {
+                return false;
+            }
+        }
+
+        public void lockStrict() throws WorldLockedException {
+            switch (getLockState()) {
+                case LOCKED_BY_SELF -> {
+                }
+                case LOCKED_BY_OTHER -> throw new WorldLockedException("World is locked by others");
+                case UNLOCKED -> acquireLock();
+            }
+        }
+
+        private void acquireLock() throws WorldLockedException {
+            FileChannel channel = null;
+            try {
+                channel = FileChannel.open(sessionLockFile, StandardOpenOption.CREATE, StandardOpenOption.WRITE);
+                //noinspection ResultOfMethodCallIgnored
+                channel.write(ByteBuffer.wrap("\u2603".getBytes(StandardCharsets.UTF_8)));
+                channel.force(true);
+                FileLock fileLock = channel.tryLock();
+                if (fileLock != null) {
+                    this.sessionLockChannel = channel;
+                } else {
+                    IOUtils.closeQuietly(channel);
+                    throw new WorldLockedException("The world " + getFile() + " has been locked");
+                }
+            } catch (IOException e) {
+                IOUtils.closeQuietly(channel);
+                throw new WorldLockedException(e);
+            }
+        }
+
+        private boolean isLockedInternally() {
+            return sessionLockChannel != null && sessionLockChannel.isOpen();
+        }
+
+        private boolean isLockedExternally() {
+            try (FileChannel fileChannel = FileChannel.open(sessionLockFile, StandardOpenOption.WRITE)) {
+                return fileChannel.tryLock() == null;
+            } catch (AccessDeniedException accessDeniedException) {
+                return true;
+            } catch (OverlappingFileLockException | NoSuchFileException overlappingFileLockException) {
+                return false;
+            } catch (IOException e) {
+                LOG.warning("Unexpected I/O error checking world lock: " + sessionLockFile, e);
+                return false;
+            }
+        }
+
+        public synchronized void releaseLock() throws IOException {
+            if (sessionLockChannel != null) {
+                sessionLockChannel.close();
+                sessionLockChannel = null;
+            }
+        }
+
+        public Guard guard() throws WorldLockedException {
+            return new Guard();
+        }
+
+        public Suspension suspend() throws IOException {
+            return new Suspension();
+        }
+
+        public final class Guard implements AutoCloseable {
+            private final boolean wasAlreadyLocked;
+
+            private Guard() throws WorldLockedException {
+                synchronized (WorldLock.this) {
+                    this.wasAlreadyLocked = isLockedInternally();
+                    if (!wasAlreadyLocked) {
+                        lockStrict();
+                    }
+                }
+            }
+
+            @Override
+            public void close() {
+                synchronized (WorldLock.this) {
+                    if (!wasAlreadyLocked) {
+                        try {
+                            releaseLock();
+                        } catch (IOException e) {
+                            LOG.warning("Failed to release temporary lock", e);
+                        }
+                    }
+                }
+            }
+        }
+
+        public final class Suspension implements AutoCloseable {
+            private final boolean hadLock;
+
+            private Suspension() throws IOException {
+                synchronized (WorldLock.this) {
+                    this.hadLock = isLockedInternally();
+                    if (hadLock) {
+                        releaseLock();
+                    }
+                }
+            }
+
+            @Override
+            public void close() {
+                synchronized (WorldLock.this) {
+                    if (hadLock) {
+                        try {
+                            lockStrict();
+                        } catch (WorldLockedException e) {
+                            LOG.warning("Failed to resume lock after suspension", e);
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    record WorldDataSection(Path nbtPath,
+                            CompoundTag nbtBackingTag, // Use for writing back to the file
+                            CompoundTag normalizedNbtTag // Use for reading/modification
+    ) {
+        public void write() throws IOException {
+            if (nbtPath != null) {
+                FileUtils.saveSafely(nbtPath, os -> {
+                    try (OutputStream gos = new GZIPOutputStream(os)) {
+                        NBTCodec.of().writeTag(gos, nbtBackingTag);
+                    }
+                });
+            }
+        }
     }
 }

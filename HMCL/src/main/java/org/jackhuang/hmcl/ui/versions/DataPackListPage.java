@@ -17,7 +17,7 @@
  */
 package org.jackhuang.hmcl.ui.versions;
 
-import javafx.beans.property.BooleanProperty;
+import javafx.beans.property.ReadOnlyBooleanProperty;
 import javafx.collections.ObservableList;
 import javafx.scene.control.Skin;
 import javafx.stage.FileChooser;
@@ -45,15 +45,12 @@ import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 public final class DataPackListPage extends ListPageBase<DataPackListPageSkin.DataPackInfoObject> implements WorldManagePage.WorldRefreshable {
-    private final World world;
-    private final DataPack dataPack;
-    final BooleanProperty readOnly;
+    private final WorldManagePage worldManagePage;
+    private World world;
+    private DataPack dataPack;
 
     public DataPackListPage(WorldManagePage worldManagePage) {
-        world = worldManagePage.getWorld();
-        dataPack = new DataPack(world.getFile().resolve("datapacks"));
-        setItems(MappedObservableList.create(dataPack.getPacks(), DataPackListPageSkin.DataPackInfoObject::new));
-        readOnly = worldManagePage.readOnlyProperty();
+        this.worldManagePage = worldManagePage;
         FXUtils.applyDragListener(this, it -> Objects.equals("zip", FileUtils.getExtension(it)),
                 this::installMultiDataPack, this::refresh);
 
@@ -62,7 +59,7 @@ public final class DataPackListPage extends ListPageBase<DataPackListPageSkin.Da
 
     private void installMultiDataPack(List<Path> dataPackPath) {
         dataPackPath.forEach(this::installSingleDataPack);
-        if (readOnly.get()) {
+        if (readOnlyProperty().get()) {
             Controllers.showToast(i18n("datapack.reload.toast"));
         }
     }
@@ -80,11 +77,25 @@ public final class DataPackListPage extends ListPageBase<DataPackListPageSkin.Da
         return new DataPackListPageSkin(this);
     }
 
+    @Override
     public void refresh() {
         setLoading(true);
+        setFailedReason(null);
+        world = worldManagePage.getWorld();
+        if (!worldManagePage.currentWorldSupportDataPack.get()) {
+            setFailedReason(i18n("datapack.not_support.info"));
+            setLoading(false);
+            return;
+        }
+        dataPack = new DataPack(world.getFile().resolve("datapacks"));
+        setItems(MappedObservableList.create(dataPack.getPacks(), DataPackListPageSkin.DataPackInfoObject::new));
         Task.runAsync(dataPack::loadFromDir)
                 .withRunAsync(Schedulers.javafx(), () -> setLoading(false))
                 .start();
+    }
+
+    public ReadOnlyBooleanProperty readOnlyProperty() {
+        return worldManagePage.readOnlyProperty();
     }
 
     public void add() {

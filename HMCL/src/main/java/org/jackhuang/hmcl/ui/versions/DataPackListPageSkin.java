@@ -27,6 +27,7 @@ import javafx.application.Platform;
 import javafx.beans.InvalidationListener;
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.ObjectProperty;
+import javafx.beans.property.ReadOnlyBooleanProperty;
 import javafx.beans.property.SimpleBooleanProperty;
 import javafx.collections.transformation.FilteredList;
 import javafx.geometry.Insets;
@@ -95,7 +96,7 @@ final class DataPackListPageSkin extends SkinBase<DataPackListPage> {
         ComponentList root = new ComponentList();
         root.getStyleClass().add("no-padding");
         listView = new JFXListView<>();
-        filteredList = new FilteredList<>(skinnable.getItems());
+        filteredList = new FilteredList<>(skinnable.itemsProperty());
 
         {
             toolbarPane = new TransitionPane();
@@ -119,9 +120,9 @@ final class DataPackListPageSkin extends SkinBase<DataPackListPage> {
                     skinnable.enableSelected(listView.getSelectionModel().getSelectedItems()));
             JFXButton disableButton = createToolbarButton2(i18n("mods.disable"), SVG.CLOSE, () ->
                     skinnable.disableSelected(listView.getSelectionModel().getSelectedItems()));
-            removeButton.disableProperty().bind(getSkinnable().readOnly);
-            enableButton.disableProperty().bind(getSkinnable().readOnly);
-            disableButton.disableProperty().bind(getSkinnable().readOnly);
+            removeButton.disableProperty().bind(getSkinnable().readOnlyProperty());
+            enableButton.disableProperty().bind(getSkinnable().readOnlyProperty());
+            disableButton.disableProperty().bind(getSkinnable().readOnlyProperty());
 
             selectingToolbar.getChildren().addAll(
                     removeButton,
@@ -163,6 +164,7 @@ final class DataPackListPageSkin extends SkinBase<DataPackListPage> {
 
             FXUtils.onChangeAndOperate(listView.getSelectionModel().selectedItemProperty(),
                     selectedItem -> isSelecting.set(selectedItem != null));
+            toolbarPane.disableProperty().bind(skinnable.loadingProperty().or(skinnable.failedReasonProperty().isNotNull()));
             root.getContent().add(toolbarPane);
 
             updateBarByStateWeakListener = FXUtils.observeWeak(() -> {
@@ -180,8 +182,9 @@ final class DataPackListPageSkin extends SkinBase<DataPackListPage> {
             SpinnerPane center = new SpinnerPane();
             ComponentList.setVgrow(center, Priority.ALWAYS);
             center.loadingProperty().bind(skinnable.loadingProperty());
+            center.failedReasonProperty().bind(skinnable.failedReasonProperty());
 
-            listView.setCellFactory(x -> new DataPackInfoListCell(listView, getSkinnable().readOnly));
+            listView.setCellFactory(x -> new DataPackInfoListCell(listView, getSkinnable().readOnlyProperty()));
             listView.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
             this.listView.setItems(filteredList);
 
@@ -304,7 +307,7 @@ final class DataPackListPageSkin extends SkinBase<DataPackListPage> {
         final TwoLineListItem content = new TwoLineListItem();
         BooleanProperty booleanProperty;
 
-        DataPackInfoListCell(JFXListView<DataPackInfoObject> listView, BooleanProperty isReadOnlyProperty) {
+        DataPackInfoListCell(JFXListView<DataPackInfoObject> listView, ReadOnlyBooleanProperty isReadOnlyProperty) {
             super(listView);
 
             HBox container = new HBox(8);

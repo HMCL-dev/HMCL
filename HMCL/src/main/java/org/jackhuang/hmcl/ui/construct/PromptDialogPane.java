@@ -59,12 +59,11 @@ public class PromptDialogPane extends DialogPane {
         List<BooleanBinding> bindings = new ArrayList<>();
         int rowIndex = 0;
         for (Builder.Question<?> question : builder.questions) {
-            if (question instanceof Builder.StringQuestion) {
-                Builder.StringQuestion stringQuestion = (Builder.StringQuestion) question;
+            if (question instanceof Builder.StringQuestion stringQuestion) {
                 JFXTextField textField = new JFXTextField();
                 textField.textProperty().addListener((a, b, newValue) -> stringQuestion.value = textField.getText());
                 textField.setText(stringQuestion.value);
-                textField.setValidators(((Builder.StringQuestion) question).validators.toArray(new ValidatorBase[0]));
+                textField.setValidators(stringQuestion.validators.toArray(new ValidatorBase[0]));
                 if (stringQuestion.promptText != null) {
                     textField.setPromptText(stringQuestion.promptText);
                 }
@@ -73,35 +72,35 @@ public class PromptDialogPane extends DialogPane {
                 if (StringUtils.isNotBlank(question.question.get())) {
                     body.addRow(rowIndex++, new Label(question.question.get()), textField);
                 } else {
-                    GridPane.setColumnSpan(textField, 1);
+                    GridPane.setColumnSpan(textField, 2);
                     body.addRow(rowIndex++, textField);
                 }
                 GridPane.setMargin(textField, new Insets(0, 0, 20, 0));
-            } else if (question instanceof Builder.BooleanQuestion) {
+            } else if (question instanceof Builder.BooleanQuestion booleanQuestion) {
                 HBox hBox = new HBox();
-                GridPane.setColumnSpan(hBox, 1);
+                GridPane.setColumnSpan(hBox, 2);
                 JFXCheckBox checkBox = new JFXCheckBox();
                 hBox.getChildren().setAll(checkBox);
                 HBox.setMargin(checkBox, new Insets(0, 0, 0, -10));
-                checkBox.setSelected(((Builder.BooleanQuestion) question).value);
+                checkBox.setSelected(booleanQuestion.value);
                 checkBox.selectedProperty().addListener((a, b, newValue) -> ((Builder.BooleanQuestion) question).value = newValue);
                 checkBox.setText(question.question.get());
                 body.addRow(rowIndex++, hBox);
-            } else if (question instanceof Builder.CandidatesQuestion) {
+            } else if (question instanceof Builder.CandidatesQuestion candidatesQuestion) {
                 JFXComboBox<String> comboBox = new JFXComboBox<>();
-                comboBox.getItems().setAll(((Builder.CandidatesQuestion) question).candidates);
+                comboBox.getItems().setAll(candidatesQuestion.candidates);
                 comboBox.getSelectionModel().selectedIndexProperty().addListener((a, b, newValue) ->
-                        ((Builder.CandidatesQuestion) question).value = newValue.intValue());
+                        candidatesQuestion.value = newValue.intValue());
                 comboBox.getSelectionModel().select(0);
                 if (StringUtils.isNotBlank(question.question.get())) {
                     body.addRow(rowIndex++, new Label(question.question.get()), comboBox);
                 } else {
-                    GridPane.setColumnSpan(comboBox, 1);
+                    GridPane.setColumnSpan(comboBox, 2);
                     body.addRow(rowIndex++, comboBox);
                 }
             } else if (question instanceof Builder.HintQuestion) {
                 HintPane pane = new HintPane();
-                GridPane.setColumnSpan(pane, 1);
+                GridPane.setColumnSpan(pane, 2);
                 pane.textProperty().bind(question.question);
                 body.addRow(rowIndex++, pane);
             }
