@@ -53,6 +53,7 @@ import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.CancellationException;
@@ -221,27 +222,25 @@ public final class Versions {
             var versions = repository.getVersions();
 
             Set<String> activeAssets = versions.parallelStream()
-                    .flatMap(version -> {
+                    .map(Version::getAssetIndex)
+                    .distinct()
+                    .flatMap(idx -> {
                         try {
-                            var index = repository.getAssetIndex(version.getId(), version.getAssetIndex().getId());
+                            AssetIndex index = repository.getAssetIndex(null, idx.getId());
                             return index.getObjects().values().stream().map(AssetObject::getLocation);
-                        } catch (IOException ignored) {
+                        } catch (IOException e) {
+                            LOG.warning("Failed to get asset index", e);
                             return Stream.empty();
                         }
-                    })
-                    .collect(Collectors.toSet());
 
-            Set<String> activeLibraries = versions.parallelStream()
-                    .flatMap(version -> version.getLibraries().stream())
-                    .map(Library::getPath)
+                    })
                     .collect(Collectors.toSet());
 
             List<Path> unusedFiles = new ArrayList<>();
 
             unusedFiles.addAll(findUnlistedFiles(repository.getBaseDirectory().resolve("assets").resolve("objects"), activeAssets));
-            unusedFiles.addAll(findUnlistedFiles(repository.getBaseDirectory().resolve("libraries"), activeLibraries));
 
-            List<Path> unusedFolders = new ArrayList<>();
+            Set<Path> unusedFolders = new HashSet<>();
 
             for (String path : List.of("logs", "crash-reports", "modernfix", "mods/.connector", "CustomSkinLoader/caches", ".fabric")) {
                 unusedFolders.add(repository.getBaseDirectory().resolve(path));
