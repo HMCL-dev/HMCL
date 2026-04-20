@@ -301,7 +301,7 @@ public final class ForgeNewModMetadata {
         throw new IOException();
     }
 
-    private static ModLoaderType analyzeLoader(TomlParseResult toml, String modID, ModLoaderType loader) throws IOException {
+    private static ModLoaderType analyzeLoader(TomlParseResult toml, String modID, ModLoaderType loader) {
         List<Map<String, Object>> dependencies = null;
         try {
             TomlArray tomlArray = toml.getArray("dependencies." + modID);
@@ -349,11 +349,11 @@ public final class ForgeNewModMetadata {
             }
         }
 
-        if (result == loader)
+        if (result != null) {
+            if (result != loader)
+                LOG.warning("Loader mismatch for mod " + modID + ", found " + result + ", expecting " + loader);
             return result;
-        else if (result != null)
-            throw new IOException("Loader mismatch");
-        else {
+        } else {
             LOG.warning("Cannot determine the mod loader for mod " + modID + ", expected " + loader);
             return loader;
         }

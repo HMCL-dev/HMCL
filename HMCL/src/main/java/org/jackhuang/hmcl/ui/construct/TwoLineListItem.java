@@ -147,6 +147,10 @@ public class TwoLineListItem extends VBox {
         subtitleProperty().set(subtitle);
     }
 
+    public HBox getFirstLine() {
+        return firstLine;
+    }
+
     public Label getTitleLabel() {
         return lblTitle;
     }
@@ -168,6 +172,7 @@ public class TwoLineListItem extends VBox {
             Bindings.bindContent(tagsBox.getChildren(), tags);
 
             var scrollPane = new ScrollPane(tagsBox);
+            scrollPane.setMinSize(0, 0);
             HBox.setHgrow(scrollPane, Priority.ALWAYS);
             lblTitle.setMinWidth(Label.USE_PREF_SIZE);
             scrollPane.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);

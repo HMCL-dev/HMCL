@@ -29,8 +29,8 @@
 
 .scroll-bar .thumb {
     -fx-fill: -monet-surface-tint;
-    -fx-arc-width: 8;
-    -fx-arc-height: 8;
+    -fx-arc-width: 6;
+    -fx-arc-height: 6;
 }
 
 .title-label {
@@ -414,7 +414,7 @@
 }
 
 .installer-item-wrapper .installer-item:list-item > .installer-item-name {
-    -fx-pref-width: 80px;
+    -fx-pref-width: 100px;
 }
 
 .installer-item-wrapper .installer-item:list-item > .installer-item-status {
@@ -1093,8 +1093,12 @@
     -fx-background-color: -monet-error-container;
 }
 
+.multi-file-item {
+    -fx-padding: 10 0 10 0;
+}
+
 .options-sublist {
-    -fx-background-color: -monet-surface;
+    -fx-background-color: -monet-surface-container;
 }
 
 .options-list-item {
@@ -1103,6 +1107,14 @@
     -fx-border-width: 1 0 0 0;
     -fx-padding: 10 16 10 16;
     -fx-font-size: 12;
+}
+
+.options-sublist .options-list-item {
+    -fx-background-color: -monet-surface-container;
+}
+
+.options-sublist .multi-file-item {
+    -fx-padding: 10 10 10 10;
 }
 
 .options-list-item .svg {
@@ -1138,6 +1150,10 @@
 .options-list-item:first:last {
     -fx-background-radius: 4 4 4 4;
     -fx-border-width: 0;
+}
+
+.options-sublist-wrapper > .container {
+    -fx-background-color: -monet-surface-container;
 }
 
 .options-sublist-wrapper .expand-icon .svg {
@@ -1463,6 +1479,11 @@
     -jfx-radius: 9;
 }
 
+.spinner-pane .spinner-pane-content {
+    -fx-padding: 10px;
+    -fx-spacing: 10px;
+}
+
 /*******************************************************************************
 *                                                                              *
 * JFX Combo Box                                                                *
@@ -1475,6 +1496,11 @@
     -fx-background-color: -monet-surface-container-highest;
     -fx-padding: 4;
     -fx-max-width: 1000000000;
+}
+
+.jfx-combo-box .arrow {
+    -fx-background-color: -monet-on-surface-variant;
+    -fx-shape: "M12 15 7 10H17L12 15Z";
 }
 
 .jfx-combo-box .text {
@@ -1492,6 +1518,7 @@
 .combo-box-popup .list-view .jfx-list-cell {
     -fx-background-color: -monet-surface-container;
     -fx-text-fill: -monet-on-surface;
+    -fx-cursor: hand;
     -fx-background-insets: 0.0;
 }
 
@@ -1499,6 +1526,10 @@
 .combo-box-popup .list-view .list-cell:even:selected > .jfx-rippler > StackPane {
     -fx-background-color: -monet-secondary-container;
     -fx-text-fill: -monet-on-secondary-container;
+}
+
+.combo-box-popup .list-view .list-cell:hover > .jfx-rippler > StackPane {
+    -fx-background-color: -monet-secondary-container-transparent-50;
 }
 
 .jfx-combo-box-warning {
@@ -1563,6 +1594,21 @@
 
 .custom-color-dialog .tab-selected-line {
     -fx-background-color: -monet-on-surface;
+}
+
+.custom-color-dialog .jfx-color-dialog-actions {
+    -fx-background-color: -monet-surface;
+    -fx-padding: 0.0 10.0 5.0 0.0;
+    -fx-alignment: center-right;
+}
+
+.custom-color-dialog .jfx-color-dialog-accept {
+    -fx-padding: 0.7em 0.8em;
+}
+
+.custom-color-dialog .jfx-color-dialog-cancel {
+    -fx-text-fill: -monet-on-surface-variant;
+    -fx-padding: 0.7em 0.8em;
 }
 
 /*******************************************************************************
@@ -1923,4 +1969,8 @@
 
 .line-toggle-button .jfx-toggle-button {
     -fx-padding: 0;
+}
+
+.update-pane:active .subtitle-label {
+    -fx-text-fill: -monet-tertiary;
 }

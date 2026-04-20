@@ -67,7 +67,7 @@ public final class UpdateHandler {
                 performMigration();
             } catch (IOException e) {
                 LOG.warning("Failed to perform migration", e);
-                SwingUtils.showErrorDialog(i18n("fatal.apply_update_failure", Metadata.PUBLISH_URL) + "\n" + StringUtils.getStackTrace(e));
+                SwingUtils.showErrorDialog(i18n("fatal.apply_update_failure", Metadata.MANUAL_UPDATE_URL) + "\n" + StringUtils.getStackTrace(e));
             }
             return true;
         }
@@ -82,7 +82,7 @@ public final class UpdateHandler {
                 applyUpdate(Paths.get(args[1]));
             } catch (IOException e) {
                 LOG.warning("Failed to apply update", e);
-                SwingUtils.showErrorDialog(i18n("fatal.apply_update_failure", Metadata.PUBLISH_URL) + "\n" + StringUtils.getStackTrace(e));
+                SwingUtils.showErrorDialog(i18n("fatal.apply_update_failure", Metadata.MANUAL_UPDATE_URL) + "\n" + StringUtils.getStackTrace(e));
             }
             return true;
         }

@@ -1,6 +1,6 @@
 /*
  * Hello Minecraft! Launcher
- * Copyright (C) 2020  huangyuhui <huanghongxun2008@126.com> and contributors
+ * Copyright (C) 2026 huangyuhui <huanghongxun2008@126.com> and contributors
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -15,22 +15,19 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-package org.jackhuang.hmcl.ui.construct;
+package org.jackhuang.hmcl.game;
 
-import javafx.geometry.Insets;
-import javafx.scene.layout.StackPane;
-import javafx.scene.shape.Rectangle;
-import org.jackhuang.hmcl.theme.Themes;
+import java.util.Locale;
 
-public class MenuSeparator extends StackPane {
+/// The Graphics API.
+public enum GraphicsAPI {
+    DEFAULT,
+    OPENGL,
+    VULKAN;
 
-    public MenuSeparator() {
-        Rectangle rect = new Rectangle();
-        rect.widthProperty().bind(widthProperty().add(-14));
-        rect.setHeight(1);
-        rect.fillProperty().bind(Themes.colorSchemeProperty().getOutlineVariant());
-        maxHeightProperty().set(10);
-        setPadding(new Insets(3));
-        getChildren().setAll(rect);
+    private final String minecraftArg = name().toLowerCase(Locale.ROOT);
+
+    public String getMinecraftArg() {
+        return minecraftArg;
     }
 }

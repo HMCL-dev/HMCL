@@ -128,14 +128,18 @@ public class FloatScrollBarSkin implements Skin<ScrollBar> {
                 track.widthProperty().unbind();
                 track.heightProperty().unbind();
 
+                double offset = 4;
+
                 if (scrollBar.getOrientation() == Orientation.HORIZONTAL) {
-                    track.relocate(0, -8);
-                    track.widthProperty().bind(scrollBar.widthProperty());
-                    track.setHeight(8);
+                    track.relocate(offset, -6.0);
+                    NumberBinding trackWidth = Bindings.max(0, Bindings.subtract(scrollBar.widthProperty(), offset * 2));
+                    track.widthProperty().bind(trackWidth);
+                    track.setHeight(6.0);
                 } else {
-                    track.relocate(-8, 0);
-                    track.setWidth(8);
-                    track.heightProperty().bind(scrollBar.heightProperty());
+                    track.relocate(-6.0, offset);
+                    track.setWidth(6.0);
+                    NumberBinding trackHeight = Bindings.max(0, Bindings.subtract(scrollBar.heightProperty(), offset * 2));
+                    track.heightProperty().bind(trackHeight);
                 }
 
                 thumb.xProperty().unbind();
@@ -144,15 +148,37 @@ public class FloatScrollBarSkin implements Skin<ScrollBar> {
                 thumb.heightProperty().unbind();
 
                 if (scrollBar.getOrientation() == Orientation.HORIZONTAL) {
-                    thumb.relocate(0, -8);
-                    thumb.widthProperty().bind(Bindings.max(20, scrollBar.visibleAmountProperty().divide(range).multiply(scrollBar.widthProperty())));
-                    thumb.setHeight(8);
-                    thumb.xProperty().bind(Bindings.subtract(scrollBar.widthProperty(), thumb.widthProperty()).multiply(position));
+                    thumb.relocate(0, -6.0);
+                    thumb.setHeight(6.0);
+
+                    NumberBinding trackWidth = Bindings.max(0, Bindings.subtract(scrollBar.widthProperty(), offset * 2));
+                    
+                    thumb.widthProperty().bind(Bindings.min(trackWidth,
+                            Bindings.max(20, scrollBar.visibleAmountProperty().divide(range).multiply(trackWidth))));
+                    
+                    thumb.xProperty().bind(
+                            Bindings.add(offset,
+                                    Bindings.multiply(
+                                            Bindings.max(0, Bindings.subtract(trackWidth, thumb.widthProperty())),
+                                            position)
+                            )
+                    );
                 } else {
-                    thumb.relocate(-8, 0);
-                    thumb.setWidth(8);
-                    thumb.heightProperty().bind(Bindings.max(20, scrollBar.visibleAmountProperty().divide(range).multiply(scrollBar.heightProperty())));
-                    thumb.yProperty().bind(Bindings.subtract(scrollBar.heightProperty(), thumb.heightProperty()).multiply(position));
+                    thumb.relocate(-6.0, 0);
+                    thumb.setWidth(6.0);
+
+                    NumberBinding trackHeight = Bindings.max(0, Bindings.subtract(scrollBar.heightProperty(), offset * 2));
+                    
+                    thumb.heightProperty().bind(Bindings.min(trackHeight,
+                            Bindings.max(20, scrollBar.visibleAmountProperty().divide(range).multiply(trackHeight))));
+                    
+                    thumb.yProperty().bind(
+                            Bindings.add(offset,
+                                    Bindings.multiply(
+                                            Bindings.max(0, Bindings.subtract(trackHeight, thumb.heightProperty())),
+                                            position)
+                            )
+                    );
                 }
             }
 
@@ -162,7 +188,7 @@ public class FloatScrollBarSkin implements Skin<ScrollBar> {
                     return Double.MAX_VALUE;
                 }
 
-                return 8;
+                return 6.0;
             }
 
             @Override
@@ -171,7 +197,7 @@ public class FloatScrollBarSkin implements Skin<ScrollBar> {
                     return Double.MAX_VALUE;
                 }
 
-                return 8;
+                return 6.0;
             }
         };
     }

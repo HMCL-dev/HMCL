@@ -365,14 +365,16 @@ public final class ModManager {
     }
 
     /**
-     * Check if "mods" directory has mod file named "fileName" no matter the mod is disabled or not
+     * Check if "mods" directory has mod file named "fileName" no matter the mod is disabled,upgraded or not
      *
      * @param fileName name of the file whose existence is being checked
      * @return true if the file exists
      */
     public boolean hasSimpleMod(String fileName) {
         return Files.exists(getModsDirectory().resolve(StringUtils.removeSuffix(fileName, DISABLED_EXTENSION)))
-                || Files.exists(getModsDirectory().resolve(StringUtils.addSuffix(fileName, DISABLED_EXTENSION)));
+                || Files.exists(getModsDirectory().resolve(StringUtils.addSuffix(fileName, DISABLED_EXTENSION)))
+                || Files.exists(getModsDirectory().resolve(StringUtils.removeSuffix(fileName, OLD_EXTENSION)))
+                || Files.exists(getModsDirectory().resolve(StringUtils.addSuffix(fileName, OLD_EXTENSION)));
     }
 
     public Path getSimpleModPath(String fileName) {
