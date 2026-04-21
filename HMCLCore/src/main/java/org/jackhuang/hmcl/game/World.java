@@ -88,13 +88,15 @@ public final class World {
                     root = fs.getPath("/");
                     fileName = FileUtils.getName(this.file);
                 } else {
-                    List<Path> files = Files.list(fs.getPath("/")).toList();
-                    if (files.size() != 1 || !Files.isDirectory(files.get(0))) {
-                        throw new IOException("Not a valid world zip file");
-                    }
+                    try (Stream<Path> filesStream = Files.list(fs.getPath("/"))) {
+                        List<Path> files = filesStream.toList();
+                        if (files.size() != 1 || !Files.isDirectory(files.get(0))) {
+                            throw new IOException("Not a valid world zip file");
+                        }
 
-                    root = files.get(0);
-                    fileName = FileUtils.getName(root);
+                        root = files.get(0);
+                        fileName = FileUtils.getName(root);
+                    }
                 }
 
                 Path levelDat = root.resolve("level.dat");
