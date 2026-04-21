@@ -67,8 +67,8 @@ public final class Metadata {
     public static final Path DEPENDENCIES_DIRECTORY;
 
     static {
-        String hmclHome = System.getProperty("hmcl.home");
-        if (hmclHome == null) {
+        String hmclHome = System.getProperty("hmcl.home", System.getenv("HMCL_HOME"));
+        if (StringUtils.isBlank(hmclHome)) {
             if (OperatingSystem.CURRENT_OS.isLinuxOrBSD()) {
                 String xdgData = System.getenv("XDG_DATA_HOME");
                 if (StringUtils.isNotBlank(xdgData)) {
@@ -83,13 +83,12 @@ public final class Metadata {
             HMCL_GLOBAL_DIRECTORY = Paths.get(hmclHome).toAbsolutePath().normalize();
         }
 
-        String hmclCurrentDir = System.getProperty("hmcl.dir");
-        HMCL_CURRENT_DIRECTORY = hmclCurrentDir != null
+        String hmclCurrentDir = System.getProperty("hmcl.dir", System.getenv("HMCL_DATA_DIR"));
+        HMCL_CURRENT_DIRECTORY = StringUtils.isNotBlank(hmclCurrentDir)
                 ? Paths.get(hmclCurrentDir).toAbsolutePath().normalize()
                 : CURRENT_DIRECTORY.resolve(".hmcl");
 
-        String hmclDependencies = System.getProperty("hmcl.dependencies");
-
+        String hmclDependencies = System.getProperty("hmcl.dependencies.dir", System.getenv("HMCL_DEPENDENCIES_DIR"));
         DEPENDENCIES_DIRECTORY = StringUtils.isNotBlank(hmclDependencies)
                 ? Path.of(hmclDependencies).toAbsolutePath().normalize()
                 : HMCL_CURRENT_DIRECTORY.resolve("dependencies");
