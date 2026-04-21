@@ -91,8 +91,12 @@ public abstract class CreateDeb extends DefaultTask {
         return getReleaseType().get();
     }
 
+    private String getCurrentTypeName() {
+        return getCurrentType().getName();
+    }
+
     private String getLauncherPath() {
-        return "/usr/bin/" + getCurrentType().getLauncherCommandName();
+        return "/usr/bin/hmcl-" + getCurrentTypeName();
     }
 
     private String getTargetPath() {
@@ -100,11 +104,11 @@ public abstract class CreateDeb extends DefaultTask {
     }
 
     private String getDesktopFilePath() {
-        return "/usr/share/applications/" + getCurrentType().getDesktopFileName();
+        return "/usr/share/applications/hmcl-%s.desktop".formatted(getCurrentTypeName());
     }
 
     private String getIconTargetPath() {
-        return "/usr/share/icons/hicolor/256x256/apps/hmcl.png";
+        return "/usr/share/icons/hicolor/256x256/apps/hmcl-%s.png".formatted(getCurrentTypeName());
     }
 
     /// Ensures parent directories exist in the tar stream before child entries are written.

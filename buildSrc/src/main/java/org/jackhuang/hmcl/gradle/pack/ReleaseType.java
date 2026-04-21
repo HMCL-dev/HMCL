@@ -27,33 +27,24 @@ public enum ReleaseType {
     DEVELOPMENT("dev", "hmcl-dev", 200),
     NIGHTLY("nightly", "hmcl-nightly", 100);
 
-    public final String channelName;
+    public final String name;
     private final String packageName;
-    private final String launcherCommandName;
-    private final String desktopFileName;
     private final int alternativesPriority;
 
-    ReleaseType(String channelName, String packageName, int alternativesPriority) {
-        this.channelName = channelName;
+    ReleaseType(String name, String packageName, int alternativesPriority) {
+        this.name = name;
         this.packageName = packageName;
-        this.launcherCommandName = "hmcl-" + channelName;
-        this.desktopFileName = "hmcl-" + channelName + ".desktop";
         this.alternativesPriority = alternativesPriority;
+    }
+
+    ///
+    public String getName() {
+        return name;
     }
 
     /// Debian package name written into `control` and used in the output filename.
     public String getPackageName() {
         return packageName;
-    }
-
-    /// Actual executable installed under `/usr/bin/`.
-    public String getLauncherCommandName() {
-        return launcherCommandName;
-    }
-
-    /// Desktop entry filename installed under `/usr/share/applications/`.
-    public String getDesktopFileName() {
-        return desktopFileName;
     }
 
     /// Priority used when registering the generic `hmcl` alias.
