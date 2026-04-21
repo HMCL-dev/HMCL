@@ -211,7 +211,7 @@ public final class FileUtils {
 
     /// @see #isNameValidForJar(OperatingSystem, String)
     public static boolean isNameValidForJar(String name) {
-        return !name.contains("!") && isNameValid(name);
+        return isNameValidForJar(OperatingSystem.CURRENT_OS, name);
     }
 
     /// Returns true if the given name is a valid jar file name on the given operating system,
