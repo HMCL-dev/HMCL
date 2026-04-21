@@ -272,7 +272,7 @@ public abstract class CreateDeb extends DefaultTask {
                 Type=Application
                 Name=HMCL
                 Comment=Hello Minecraft! Launcher
-                Exec=/usr/bin/%s
+                Exec=%s
                 Icon=hmcl
                 Terminal=false
                 StartupNotify=false
