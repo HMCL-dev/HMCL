@@ -209,8 +209,15 @@ public final class FileUtils {
         return true;
     }
 
+    /// @see #isNameValidForJar(OperatingSystem, String)
     public static boolean isNameValidForJar(String name) {
         return !name.contains("!") && isNameValid(name);
+    }
+
+    /// Returns true if the given name is a valid jar file name on the given operating system,
+    /// and `false` otherwise.
+    public static boolean isNameValidForJar(OperatingSystem os, String name) {
+        return !name.contains("!") && isNameValid(os, name);
     }
 
     /// Safely get the file size. Returns `0` if the file does not exist or the size cannot be obtained.
