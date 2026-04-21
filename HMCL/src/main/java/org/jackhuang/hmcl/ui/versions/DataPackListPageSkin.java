@@ -98,6 +98,14 @@ final class DataPackListPageSkin extends SkinBase<DataPackListPage> {
         listView = new JFXListView<>();
         filteredList = new FilteredList<>(skinnable.getItems());
 
+        // reason for not using selectAll() is that selectAll() first clears all selected then selects all, causing the toolbar to flicker
+        var selectAllButton = createToolbarButton2(i18n("button.select_all"), SVG.SELECT_ALL, () -> listView.getSelectionModel().selectRange(0, listView.getItems().size()));
+
+        ListChangeListener<Object> listener = change -> {
+            selectAllButton.setDisable(!listView.getItems().isEmpty()
+                    && listView.getSelectionModel().getSelectedItems().size() == listView.getItems().size());
+        };
+
         {
             toolbarPane = new TransitionPane();
             searchBar = new HBox();
@@ -124,16 +132,7 @@ final class DataPackListPageSkin extends SkinBase<DataPackListPage> {
             enableButton.disableProperty().bind(getSkinnable().readOnly);
             disableButton.disableProperty().bind(getSkinnable().readOnly);
 
-            // reason for not using selectAll() is that selectAll() first clears all selected then selects all, causing the toolbar to flicker
-            var selectAllButton = createToolbarButton2(i18n("button.select_all"), SVG.SELECT_ALL, () -> listView.getSelectionModel().selectRange(0, listView.getItems().size()));
-
-            ListChangeListener<Object> listener = change -> {
-                selectAllButton.setDisable(!listView.getItems().isEmpty()
-                        && listView.getSelectionModel().getSelectedItems().size() == listView.getItems().size());
-            };
-
             listView.getSelectionModel().getSelectedItems().addListener(listener);
-            listView.getItems().addListener(listener);
 
             selectingToolbar.getChildren().addAll(
                     removeButton,
@@ -195,6 +194,7 @@ final class DataPackListPageSkin extends SkinBase<DataPackListPage> {
             listView.setCellFactory(x -> new DataPackInfoListCell(listView, getSkinnable().readOnly));
             listView.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
             this.listView.setItems(filteredList);
+            listView.getItems().addListener(listener);
 
             // ListViewBehavior would consume ESC pressed event, preventing us from handling it, so we ignore it here
             FXUtils.ignoreEvent(listView, KeyEvent.KEY_PRESSED, e -> e.getCode() == KeyCode.ESCAPE);
