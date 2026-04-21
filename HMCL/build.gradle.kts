@@ -56,7 +56,7 @@ dependencies {
     implementation(project(":HMCLCore"))
     implementation(project(":HMCLBoot"))
     implementation("libs:JFoenix")
-    implementation(libs.twelvemonkeys.imageio.webp)
+    implementation(libs.jwebp)
     implementation(libs.fxsvgimage)
     implementation(libs.java.info)
     implementation(libs.monet.fx)
@@ -195,7 +195,7 @@ tasks.shadowJar {
     exclude("META-INF/services/javax.imageio.spi.ImageInputStreamSpi")
 
     listOf(
-        "aix-*", "sunos-*", "openbsd-*", "dragonflybsd-*", "freebsd-*", "linux-*", "darwin-*",
+        "aix-*", "sunos-*", "openbsd-*", "dragonflybsd-*", "freebsd-*", "linux-*",
         "*-ppc", "*-ppc64le", "*-s390x", "*-armel",
     ).forEach { exclude("com/sun/jna/$it/**") }
 
