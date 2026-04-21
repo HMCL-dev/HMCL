@@ -260,9 +260,11 @@ public final class LocaleUtilsTest {
         assertEquals("en_US", LocaleUtils.getMinecraftLanguageTag(Locale.ENGLISH));
         assertEquals("zh_CN", LocaleUtils.getMinecraftLanguageTag(Locale.SIMPLIFIED_CHINESE));
         assertEquals("zh_TW", LocaleUtils.getMinecraftLanguageTag(Locale.TRADITIONAL_CHINESE));
+        assertEquals("ja", LocaleUtils.getMinecraftLanguageTag(Locale.JAPANESE));
+        assertEquals("de_DE", LocaleUtils.getMinecraftLanguageTag(Locale.GERMANY));
         assertEquals("zh_HK", LocaleUtils.getMinecraftLanguageTag(Locale.forLanguageTag("zh-HK")));
         assertEquals("lzh", LocaleUtils.getMinecraftLanguageTag(Locale.forLanguageTag("lzh")));
-        assertNull(LocaleUtils.getMinecraftLanguageTag(Locale.forLanguageTag("de")));
+        assertEquals("de", LocaleUtils.getMinecraftLanguageTag(Locale.forLanguageTag("de")));
     }
 
     @Test

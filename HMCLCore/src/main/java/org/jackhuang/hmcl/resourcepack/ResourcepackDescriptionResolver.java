@@ -19,6 +19,7 @@ package org.jackhuang.hmcl.resourcepack;
 
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
+import com.google.gson.JsonParseException;
 import com.google.gson.JsonPrimitive;
 import kala.compress.archivers.zip.ZipArchiveEntry;
 import org.jackhuang.hmcl.mod.LocalModFile;
@@ -82,6 +83,8 @@ final class ResourcepackDescriptionResolver {
                 }
             } catch (IOException e) {
                 LOG.warning("Failed to resolve translated resourcepack description", e);
+            } catch (JsonParseException e) {
+                LOG.warning("Failed to parse resourcepack language file", e);
             }
         }
 
@@ -102,7 +105,7 @@ final class ResourcepackDescriptionResolver {
     interface TranslationLookup {
         List<String> listNamespaces() throws IOException;
 
-        @Nullable String findTranslation(String namespace, String languageFileName, String key) throws IOException;
+        @Nullable String findTranslation(String namespace, String languageFileName, String key) throws IOException, JsonParseException;
     }
 
     private static final class FolderTranslationLookup implements TranslationLookup {

@@ -305,16 +305,24 @@ public final class LocaleUtils {
     }
 
     public static @Nullable String getMinecraftLanguageTag(Locale locale) {
-        return switch (getRootLanguage(locale)) {
-            case "ar" -> "ar_SA";
-            case "es" -> "es_ES";
-            case "ja" -> "ja_JP";
-            case "ru" -> "ru_RU";
-            case "uk" -> "uk_UA";
-            case "zh" -> getMinecraftChineseLanguageTag(locale);
-            case "en" -> "en_US";
-            default -> null;
-        };
+        if (locale == null) return null;
+
+        String root = getRootLanguage(locale);
+        String script = getScript(locale);
+
+        if ("en".equals(root)) {
+            if ("Qabs".equals(script)) return "en_UD";
+            return "en_US";
+        }
+
+        if ("zh".equals(root)) {
+            return getMinecraftChineseLanguageTag(locale);
+        }
+
+        String tag = locale.stripExtensions().toLanguageTag()
+                .replace('-', '_');
+
+        return tag.isEmpty() ? null : tag;
     }
 
     public static @NotNull List<String> getMinecraftLanguageFileNames(Locale locale) {
@@ -373,10 +381,13 @@ public final class LocaleUtils {
         }
 
         String region = locale.getCountry();
-        return switch (getScript(locale)) {
-            case "Hant" -> ("HK".equals(region) || "MO".equals(region)) ? "zh_HK" : "zh_TW";
-            default -> "zh_CN";
-        };
+        String script = getScript(locale);
+
+        if ("Hant".equals(script)) {
+            return ("HK".equals(region) || "MO".equals(region)) ? "zh_HK" : "zh_TW";
+        } else {
+            return "zh_CN";
+        }
     }
 
     /// Find all localized files in the given directory with the given base name and extension.
