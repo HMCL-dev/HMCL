@@ -259,6 +259,8 @@ public abstract class CreateDeb extends DefaultTask {
         return """
                 #!/bin/sh
                 cd "$HOME"
+                export HMCL_HOME="$HOME/.hmcl"
+                export HMCL_DATA_DIR="$HOME/.hmcl"
                 exec %s "$@"
                 """.formatted(getTargetPath());
     }
@@ -270,12 +272,12 @@ public abstract class CreateDeb extends DefaultTask {
                 Type=Application
                 Name=HMCL
                 Comment=Hello Minecraft! Launcher
-                Exec=%s
+                Exec=/usr/bin/%s
                 Icon=hmcl
                 Terminal=false
                 StartupNotify=false
                 Categories=Game;
                 Keywords=mc;minecraft;
-                """.formatted(getCurrentChannel().getLauncherCommandName());
+                """.formatted(getLauncherPath());
     }
 }
