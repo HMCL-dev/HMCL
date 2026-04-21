@@ -209,11 +209,8 @@ public final class FileUtils {
         return true;
     }
 
-    public static boolean isValidForJar(String name) {
-        if (name.contains("!"))
-            return false;
-        else
-            return isNameValid(name);
+    public static boolean isNameValidForJar(String name) {
+        return !name.contains("!") && isNameValid(name);
     }
 
     /// Safely get the file size. Returns `0` if the file does not exist or the size cannot be obtained.
