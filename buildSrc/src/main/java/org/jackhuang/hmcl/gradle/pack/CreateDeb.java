@@ -87,12 +87,12 @@ public abstract class CreateDeb extends DefaultTask {
     @OutputFile
     public abstract RegularFileProperty getOutputFile();
 
-    private ReleaseType getCurrentChannel() {
+    private ReleaseType getCurrentType() {
         return getReleaseType().get();
     }
 
     private String getLauncherPath() {
-        return "/usr/bin/" + getCurrentChannel().getLauncherCommandName();
+        return "/usr/bin/" + getCurrentType().getLauncherCommandName();
     }
 
     private String getTargetPath() {
@@ -100,7 +100,7 @@ public abstract class CreateDeb extends DefaultTask {
     }
 
     private String getDesktopFilePath() {
-        return "/usr/share/applications/" + getCurrentChannel().getDesktopFileName();
+        return "/usr/share/applications/" + getCurrentType().getDesktopFileName();
     }
 
     private String getIconTargetPath() {
@@ -225,7 +225,7 @@ public abstract class CreateDeb extends DefaultTask {
                 Maintainer: Glavo <zjx001202@gmail.com>
                 Description: Hello Minecraft! Launcher
                 Homepage: https://github.com/HMCL-dev/HMCL
-                """.formatted(getCurrentChannel().getPackageName(), getVersion().get(), Math.max(installedSize, 1)) + "\n";
+                """.formatted(getCurrentType().getPackageName(), getVersion().get(), Math.max(installedSize, 1)) + "\n";
     }
 
     private static final String COMMON_LAUNCHER_PATH = "/usr/bin/hmcl";
@@ -239,7 +239,7 @@ public abstract class CreateDeb extends DefaultTask {
                 if [ "$1" = configure ]; then
                     update-alternatives --install %s hmcl %s %d
                 fi
-                """.formatted(COMMON_LAUNCHER_PATH, getLauncherPath(), getCurrentChannel().getAlternativesPriority());
+                """.formatted(COMMON_LAUNCHER_PATH, getLauncherPath(), getCurrentType().getAlternativesPriority());
     }
 
     /// Removes the channel command from the shared `hmcl` alternatives group.
