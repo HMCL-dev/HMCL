@@ -255,9 +255,9 @@ public abstract class CreateDeb extends DefaultTask {
                 set -e
                 
                 if [ "$1" = remove ] || [ "$1" = deconfigure ]; then
-                    update-alternatives --remove %s %s
+                    update-alternatives --remove hmcl %s
                 fi
-                """.formatted(COMMON_LAUNCHER_PATH, getLauncherPath());
+                """.formatted(getLauncherPath());
     }
 
     /// Creates a tiny wrapper that launches the bundled shell script from the user's home directory.
@@ -286,11 +286,11 @@ public abstract class CreateDeb extends DefaultTask {
                 Name=HMCL
                 Comment=Hello Minecraft! Launcher
                 Exec=%s
-                Icon=hmcl
+                Icon=%s
                 Terminal=false
                 StartupNotify=false
                 Categories=Game;
                 Keywords=mc;minecraft;
-                """.formatted(getLauncherPath());
+                """.formatted(getLauncherPath(), getIconTargetPath());
     }
 }
