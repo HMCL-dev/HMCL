@@ -261,12 +261,19 @@ public abstract class CreateDeb extends DefaultTask {
     /// Creates a tiny wrapper that launches the bundled shell script from the user's home directory.
     private String getLauncherScript() {
         return """
-                #!/bin/sh
+                #!/usr/bin/env bash
                 cd "$HOME"
-                export HMCL_HOME="$HOME/.hmcl"
-                export HMCL_DATA_DIR="$HOME/.hmcl"
+                if [ -z "${HMCL_USER_HOME+x}" ]; then
+                    export HMCL_USER_HOME="$HOME/.local/share/hmcl"
+                fi
+                if [ -z "${HMCL_LOCAL_HOME+x}" ]; then
+                    export HMCL_LOCAL_HOME="$HMCL_USER_HOME/local-%s"
+                fi
+                if [ -z "${HMCL_DEPENDENCIES_DIR+x}" ]; then
+                    export HMCL_DEPENDENCIES_DIR="$HMCL_USER_HOME/dependencies"
+                fi
                 exec %s "$@"
-                """.formatted(getTargetPath());
+                """.formatted(getCurrentTypeName(), getTargetPath());
     }
 
     /// Generates the desktop entry that points to the channel-specific launcher command.
