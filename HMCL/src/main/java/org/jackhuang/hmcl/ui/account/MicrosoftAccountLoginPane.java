@@ -113,14 +113,7 @@ public class MicrosoftAccountLoginPane extends JFXDialogLayout implements Dialog
         btnCancel.getStyleClass().add("dialog-cancel");
         btnCancel.setOnAction(e -> onCancel());
 
-        JFXButton btnDemo = new JFXButton(i18n("account.demo"));
-        btnDemo.getStyleClass().add("dialog-accept");
-        btnDemo.setOnAction(e -> {
-            onCancel();
-            Controllers.dialog(new CreateAccountPane(Accounts.FACTORY_DEMO));
-        });
-
-        setActions(btnDemo, loginButtonSpinner, btnCancel);
+        setActions(loginButtonSpinner, btnCancel);
 
         holder.registerWeak(Accounts.OAUTH_CALLBACK.onOpenBrowserAuthorizationCode, event -> Platform.runLater(() -> {
             if (step.get() instanceof Step.StartAuthorizationCodeLogin)

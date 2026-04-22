@@ -77,7 +77,7 @@ public final class Accounts {
     public static final DemoAccountFactory FACTORY_DEMO = new DemoAccountFactory();
     public static final AuthlibInjectorAccountFactory FACTORY_AUTHLIB_INJECTOR = new AuthlibInjectorAccountFactory(AUTHLIB_INJECTOR_DOWNLOADER, Accounts::getOrCreateAuthlibInjectorServer);
     public static final MicrosoftAccountFactory FACTORY_MICROSOFT = new MicrosoftAccountFactory(new MicrosoftService(OAUTH_CALLBACK));
-    public static final List<AccountFactory<?>> FACTORIES = immutableListOf(FACTORY_OFFLINE, FACTORY_MICROSOFT, FACTORY_AUTHLIB_INJECTOR);
+    public static final List<AccountFactory<?>> FACTORIES = immutableListOf(FACTORY_OFFLINE, FACTORY_MICROSOFT, FACTORY_AUTHLIB_INJECTOR, FACTORY_DEMO);
 
     // ==== login type / account factory mapping ====
     private static final Map<String, AccountFactory<?>> type2factory = new HashMap<>();
