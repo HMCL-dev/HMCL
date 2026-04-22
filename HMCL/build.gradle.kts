@@ -281,7 +281,7 @@ val makeExecutables by tasks.registering {
     }
 }
 
-tasks.register<CreateDeb>("createDeb") {
+val createDeb by tasks.registering(CreateDeb::class) {
     dependsOn(makeExecutables)
 
     val debChannel = when (versionType) {
@@ -299,6 +299,7 @@ tasks.register<CreateDeb>("createDeb") {
 
 tasks.build {
     dependsOn(makeExecutables)
+    dependsOn(createDeb)
 }
 
 fun parseToolOptions(options: String?): MutableList<String> {

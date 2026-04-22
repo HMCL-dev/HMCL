@@ -14,7 +14,7 @@ pipeline {
         stage('Build') {
             steps {
                 sh 'bash ./config/jenkins/config-jenkins.sh'
-                sh './gradlew clean makeExecutables --stacktrace --no-daemon'
+                sh './gradlew clean makeExecutables createDeb --stacktrace --no-daemon'
                 archiveArtifacts artifacts: 'HMCL/build/libs/*'
             }
         }
