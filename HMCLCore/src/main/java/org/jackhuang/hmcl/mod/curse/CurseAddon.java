@@ -24,6 +24,7 @@ import org.jackhuang.hmcl.mod.RemoteModRepository;
 import org.jackhuang.hmcl.util.Immutable;
 import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.Pair;
+import org.jackhuang.hmcl.util.StringUtils;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
@@ -211,7 +212,13 @@ public class CurseAddon implements RemoteMod.IMod {
     }
 
     public RemoteMod toMod() {
-        String iconUrl = Optional.ofNullable(logo).map(Logo::getThumbnailUrl).orElse("");
+        String iconUrl = "";
+        if (logo != null) {
+            if (StringUtils.isNotBlank(logo.getThumbnailUrl()))
+                iconUrl = logo.getThumbnailUrl();
+            else if (StringUtils.isNotBlank(logo.getUrl()))
+                iconUrl = logo.getUrl();
+        }
 
         return new RemoteMod(
                 slug,

@@ -213,6 +213,21 @@ public final class Controllers {
         return decorator;
     }
 
+    public static void saveWindowStates() {
+        if (stageX != null) {
+            config().setX(stageX.get() / SCREEN.getBounds().getWidth());
+        }
+        if (stageY != null) {
+            config().setY(stageY.get() / SCREEN.getBounds().getHeight());
+        }
+        if (stageHeight != null) {
+            config().setHeight(stageHeight.get());
+        }
+        if (stageWidth != null) {
+            config().setWidth(stageWidth.get());
+        }
+    }
+
     public static void onApplicationStop() {
         stageSizeChangeListener = null;
         if (stageX != null) {
