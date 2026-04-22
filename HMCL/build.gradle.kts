@@ -253,20 +253,22 @@ tasks.processResources {
     }
 }
 
+fun artifactFile(ext: String) = jarPath.resolveSibling(jarPath.nameWithoutExtension + '.' + ext)
+
 val makeExecutables by tasks.registering {
     val extensions = listOf("exe", "sh")
 
     dependsOn(tasks.jar)
 
     inputs.file(jarPath)
-    outputs.files(extensions.map { File(jarPath.parentFile, jarPath.nameWithoutExtension + '.' + it) })
+    outputs.files(extensions.map { artifactFile(it) })
 
     doLast {
         val jarContent = jarPath.readBytes()
 
         ZipFile(jarPath).use { zipFile ->
             for (extension in extensions) {
-                val output = File(jarPath.parentFile, jarPath.nameWithoutExtension + '.' + extension)
+                val output = artifactFile(extension)
                 val entry = zipFile.getEntry("assets/HMCLauncher.$extension")
                     ?: throw GradleException("HMCLauncher.$extension not found")
 
@@ -281,7 +283,7 @@ val makeExecutables by tasks.registering {
     }
 }
 
-val createDeb by tasks.registering(CreateDeb::class) {
+val makeDeb by tasks.registering(CreateDeb::class) {
     dependsOn(makeExecutables)
 
     val debChannel = when (versionType) {
@@ -292,14 +294,14 @@ val createDeb by tasks.registering(CreateDeb::class) {
 
     version.set(project.version.toString())
     releaseType.set(debChannel)
-    appShFile.set(layout.file(provider { jarPath.resolveSibling("${jarPath.nameWithoutExtension}.sh") }))
+    appShFile.set(layout.file(provider { artifactFile("sh") }))
     iconFile.set(layout.projectDirectory.file("image/hmcl.png"))
-    outputFile.set(layout.buildDirectory.file("libs/${debChannel.packageName}_${project.version}_all.deb"))
+    outputFile.set(layout.file(provider { artifactFile("deb") }))
 }
 
 tasks.build {
     dependsOn(makeExecutables)
-    dependsOn(createDeb)
+    dependsOn(makeDeb)
 }
 
 fun parseToolOptions(options: String?): MutableList<String> {

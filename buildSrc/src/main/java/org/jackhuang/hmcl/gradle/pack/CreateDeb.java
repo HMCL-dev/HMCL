@@ -29,6 +29,7 @@ import org.gradle.api.provider.Property;
 import org.gradle.api.tasks.Input;
 import org.gradle.api.tasks.InputFile;
 import org.gradle.api.tasks.OutputFile;
+import org.gradle.api.tasks.TaskAction;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -149,6 +150,7 @@ public abstract class CreateDeb extends DefaultTask {
     }
 
     /// Builds a valid `.deb` archive with `debian-binary`, `control.tar.gz`, and `data.tar.gz`.
+    @TaskAction
     public void run() throws IOException {
         Path appShFile = getAppShFile().getAsFile().get().toPath();
         if (!Files.isRegularFile(appShFile))
