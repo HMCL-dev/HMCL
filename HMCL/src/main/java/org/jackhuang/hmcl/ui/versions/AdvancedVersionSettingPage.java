@@ -134,7 +134,7 @@ public final class AdvancedVersionSettingPage extends StackPane implements Decor
             for (ModLoaderType type : ModLoaderType.values()) {
                 if (type.getId() != null) {
                     sb.append("\n");
-                    sb.append(i18n("settings.advanced.custon_commands.env",type.getId(),i18n("install.installer." + type.getId().toLowerCase(Locale.ROOT))));
+                    sb.append(i18n("settings.advanced.custom_commands.env",type.getId(),i18n("install.installer." + type.getId().toLowerCase(Locale.ROOT))));
                 }
             }
             hintPane.setText(sb.toString());
