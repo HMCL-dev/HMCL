@@ -150,25 +150,22 @@ public final class NativePatcher {
 
             if (library.isNative()) {
                 String nativeKey = library.getName() + ":natives";
+                String matchedKey = nativeKey;
                 Library replacement = replacements.getOrDefault(nativeKey, NONEXISTENT_LIBRARY);
                 if (replacement == NONEXISTENT_LIBRARY) {
                     String classifier = library.getClassifier();
                     if (classifier != null) {
                         String classifierKey = library.getName() + ":" + classifier;
                         replacement = replacements.getOrDefault(classifierKey, NONEXISTENT_LIBRARY);
-                        if (replacement != NONEXISTENT_LIBRARY) {
-                            LOG.info("Replace " + classifierKey + " with " + replacement.getName());
-                        }
+                        matchedKey = classifierKey;
                     }
-                } else if (replacement != null) {
-                    LOG.info("Replace " + nativeKey + " with " + replacement.getName());
                 }
 
                 if (replacement == NONEXISTENT_LIBRARY) {
                     LOG.warning("No alternative native library " + library.getName() + ":natives provided for platform " + javaVersion.getPlatform());
                     newLibraries.add(library);
                 } else if (replacement != null) {
-                    LOG.info("Replace " + library.getName() + ":natives with " + replacement.getName());
+                    LOG.info("Replace " + matchedKey + " with " + replacement.getName());
                     newLibraries.add(replacement);
                 }
             } else {
