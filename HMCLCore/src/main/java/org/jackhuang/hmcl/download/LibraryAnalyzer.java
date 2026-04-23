@@ -234,10 +234,10 @@ public final class LibraryAnalyzer implements Iterable<LibraryAnalyzer.LibraryMa
                 }
                 for (Library l : libraries) {
                     if ("net.ornithemc".equals(l.getGroupId())) {
-                        return false;
+                        return true;
                     }
                 }
-                return true;
+                return false;
             }
         },
         ORNITHE_OSL(true, "ornithe-osl", "net\\.ornithemc", "ornithe-api", null),
