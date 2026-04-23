@@ -138,7 +138,18 @@ public final class HMCLGameLauncher extends DefaultLauncher {
         }
 
         String languageTag = LocaleUtils.getMinecraftLanguageTag(locale);
-        return languageTag != null ? languageTag : "";
+        if (languageTag != null && languageTag.contains("_")) {
+            return languageTag;
+        }
+
+        return switch (LocaleUtils.getRootLanguage(locale)) {
+            case "ar" -> "ar_SA";
+            case "es" -> "es_ES";
+            case "ja" -> "ja_JP";
+            case "ru" -> "ru_RU";
+            case "uk" -> "uk_UA";
+            default -> "";
+        };
     }
 
     @Override
