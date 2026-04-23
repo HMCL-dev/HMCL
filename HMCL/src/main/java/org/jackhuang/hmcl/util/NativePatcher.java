@@ -151,13 +151,13 @@ public final class NativePatcher {
             if (library.isNative()) {
                 String nativeKey = library.getName() + ":natives";
                 Library replacement = replacements.getOrDefault(nativeKey, NONEXISTENT_LIBRARY);
-                if (replacement == NONEXISTENT_LIBRARY){
+                if (replacement == NONEXISTENT_LIBRARY) {
                     String classifier = library.getClassifier();
                     if (classifier != null) {
                         String classifierKey = library.getName() + ":" + classifier;
                         replacement = replacements.getOrDefault(classifierKey, NONEXISTENT_LIBRARY);
                         if (replacement != NONEXISTENT_LIBRARY) {
-                        LOG.info("Replace " + classifierKey + " with " + replacement.getName());
+                            LOG.info("Replace " + classifierKey + " with " + replacement.getName());
                         }
                     }
                 } else if (replacement != null) {
@@ -296,25 +296,25 @@ public final class NativePatcher {
     }
 
     private static boolean hasLegacyLwjglNatives(Version version) {
-    for (Library lib : version.getLibraries()) {
-        if (!lib.appliesToCurrentEnvironment()) continue;
-        if (!"org.lwjgl".equals(lib.getGroupId())) continue;
-        if (!lib.isNative()) continue;
+        for (Library lib : version.getLibraries()) {
+            if (!lib.appliesToCurrentEnvironment()) continue;
+            if (!"org.lwjgl".equals(lib.getGroupId())) continue;
+            if (!lib.isNative()) continue;
 
-        String classifier = lib.getClassifier();
-        if (classifier == null) {
-            return true;
-        }
+            String classifier = lib.getClassifier();
+            if (classifier == null) {
+                return true;
+            }
 
-        String c = classifier.toLowerCase(Locale.ROOT);
-        boolean arm64Like = c.contains("arm64") || c.contains("aarch64");
-        if (!arm64Like) {
-            // e.g. natives-macos / natives-windows
-            return true;
+            String c = classifier.toLowerCase(Locale.ROOT);
+            boolean arm64Like = c.contains("arm64") || c.contains("aarch64");
+            if (!arm64Like) {
+                // e.g. natives-macos / natives-windows
+                return true;
+            }
         }
+        return false;
     }
-    return false;
-}
 
     public enum SupportStatus {
         OFFICIAL_SUPPORTED,
