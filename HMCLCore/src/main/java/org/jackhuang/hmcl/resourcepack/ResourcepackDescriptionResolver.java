@@ -73,8 +73,9 @@ final class ResourcepackDescriptionResolver {
         String translate = getJsonString(descriptionObject, "translate");
         if (StringUtils.isNotBlank(translate)) {
             try {
+                List<String> langFileNames = LocaleUtils.getMinecraftLanguageFileNames(locale);
                 for (String namespace : translationLookup.listNamespaces()) {
-                    for (String langFileName : LocaleUtils.getMinecraftLanguageFileNames(locale)) {
+                    for (String langFileName : langFileNames) {
                         String translated = translationLookup.findTranslation(namespace, langFileName, translate);
                         if (translated != null) {
                             return PackMcMeta.parseDescription(translated);
