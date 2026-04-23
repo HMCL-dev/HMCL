@@ -47,6 +47,7 @@ import org.jackhuang.hmcl.ui.download.ModpackInstallWizardProvider;
 import org.jackhuang.hmcl.ui.export.ExportWizardProvider;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.TaskCancellationAction;
+import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
 
@@ -248,22 +249,16 @@ public final class Versions {
     public static void resetVersion(Profile profile, String id) {
         HMCLGameRepository repository = profile.getRepository();
 
-        Path jsonPath = repository.getVersionJson(id);
-
-        String originalJson;
-        try {
-            originalJson = Files.readString(jsonPath);
-        } catch (Exception e) {
-            LOG.warning("Unable to reset instance", e);
-            Controllers.dialog(i18n("message.failed") + "\n" + StringUtils.getStackTrace(e), i18n("message.error"), MessageDialogPane.MessageType.ERROR);
-            return;
-        }
-
-        final String finalJson = originalJson;
+        Path originalJsonPath = repository.getVersionJson(id);
+        String tempId = id + "_temp";
 
         try {
             LibraryAnalyzer analyzer = LibraryAnalyzer.analyze(repository.getResolvedPreservingPatchesVersion(id), null);
-            GameBuilder builder = profile.getDependency().gameBuilder().name(id).gameVersion(repository.getGameVersion(id).orElseThrow());
+
+            GameBuilder builder = profile.getDependency().gameBuilder()
+                    .name(tempId)
+                    .gameVersion(repository.getGameVersion(id).orElseThrow());
+
             for (LibraryAnalyzer.LibraryType item : analyzer.getLibraries()) {
                 if (item != LibraryAnalyzer.LibraryType.MINECRAFT && item != LibraryAnalyzer.LibraryType.BOOTSTRAP_LAUNCHER) {
                     analyzer.getVersion(item).ifPresent(itemVersion ->
@@ -271,10 +266,24 @@ public final class Versions {
                 }
             }
             Controllers.taskDialog(builder.buildAsync()
-                    .thenRunAsync(repository::refreshVersions)
+                    .thenRunAsync(() -> {
+                        try {
+                            Path tempJsonPath = repository.getVersionJson(tempId);
+                            Version tempVersion = repository.readVersionJson(tempJsonPath);
+                            if (tempId.equals(tempVersion.getJar())) {
+                                tempVersion = tempVersion.setJar(null);
+                            }
+                            JsonUtils.writeToJsonFile(originalJsonPath, tempVersion.setId(id));
+                        } finally {
+                            repository.removeVersionFromDisk(tempId);
+
+                            repository.refreshVersions();
+                        }
+                    })
                     .whenComplete(Schedulers.javafx(), (ignored, exception) -> {
                         if (exception != null) {
-                            Files.writeString(jsonPath, finalJson);
+                            repository.removeVersionFromDisk(tempId);
+
                             LOG.warning("Unable to reset instance", exception);
                             Controllers.dialog(i18n("message.failed") + "\n" + StringUtils.getStackTrace(exception), i18n("message.error"), MessageDialogPane.MessageType.ERROR);
                             return;
@@ -282,12 +291,9 @@ public final class Versions {
                         profile.setSelectedVersion(id);
                         Controllers.getVersionPage().loadVersion(id, profile);
                     }), i18n("version.manage.reset"), TaskCancellationAction.NO_CANCEL);
+
         } catch (Exception e) {
-            try {
-                Files.writeString(jsonPath, finalJson);
-            } catch (IOException ex) {
-                LOG.warning("Unable to write json", ex);
-            }
+            repository.removeVersionFromDisk(tempId);
 
             LOG.warning("Unable to reset instance", e);
             Controllers.dialog(i18n("message.failed") + "\n" + StringUtils.getStackTrace(e), i18n("message.error"), MessageDialogPane.MessageType.ERROR);
