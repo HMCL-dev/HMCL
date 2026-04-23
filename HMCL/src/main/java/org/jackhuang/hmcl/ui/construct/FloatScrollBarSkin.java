@@ -17,7 +17,11 @@
  */
 package org.jackhuang.hmcl.ui.construct;
 
-import javafx.beans.InvalidationListener;
+import com.jfoenix.utils.JFXNodeUtils;
+import javafx.animation.Animation;
+import javafx.animation.KeyFrame;
+import javafx.animation.KeyValue;
+import javafx.animation.Timeline;
 import javafx.beans.binding.Bindings;
 import javafx.beans.binding.NumberBinding;
 import javafx.beans.value.ChangeListener;
@@ -28,7 +32,10 @@ import javafx.scene.control.ScrollBar;
 import javafx.scene.control.Skin;
 import javafx.scene.layout.Region;
 import javafx.scene.shape.Rectangle;
+import javafx.util.Duration;
 import org.jackhuang.hmcl.ui.FXUtils;
+import org.jackhuang.hmcl.ui.animation.AnimationUtils;
+import org.jackhuang.hmcl.ui.animation.Motion;
 import org.jackhuang.hmcl.util.MathUtils;
 
 // Referenced in root.css
@@ -40,6 +47,7 @@ public class FloatScrollBarSkin implements Skin<ScrollBar> {
     private Rectangle thumb = new Rectangle();
 
     private final ChangeListener<Boolean> thumbHoverListener;
+    private Animation thumbHoverAnimation;
 
     public FloatScrollBarSkin(final ScrollBar scrollBar) {
         this.scrollBar = scrollBar;
@@ -50,8 +58,8 @@ public class FloatScrollBarSkin implements Skin<ScrollBar> {
             Point2D dragStart;
             double preDragThumbPos;
 
-            NumberBinding range = Bindings.subtract(scrollBar.maxProperty(), scrollBar.minProperty());
-            NumberBinding position = Bindings.divide(Bindings.subtract(scrollBar.valueProperty(), scrollBar.minProperty()), range);
+            final NumberBinding range = Bindings.subtract(scrollBar.maxProperty(), scrollBar.minProperty());
+            final NumberBinding position = Bindings.divide(Bindings.subtract(scrollBar.valueProperty(), scrollBar.minProperty()), range);
 
             {
                 // Children are added unmanaged because for some reason the height of the bar keeps changing
@@ -206,8 +214,31 @@ public class FloatScrollBarSkin implements Skin<ScrollBar> {
         };
 
         this.thumbHoverListener = FXUtils.onWeakChangeAndOperate(thumb.hoverProperty(), newValue -> {
+            if (thumbHoverAnimation != null) {
+                thumbHoverAnimation.stop();
+                thumbHoverAnimation = null;
+            }
+
             double targetOpacity = newValue ? 1.0 : 0.5;
-            thumb.setOpacity(targetOpacity);
+            double currentOpacity = thumb.getOpacity();
+
+            double opacityAdjustment = targetOpacity - currentOpacity;
+            if (Math.abs(opacityAdjustment) < 0.001) {
+                if (opacityAdjustment != 0)
+                    thumb.setOpacity(targetOpacity);
+
+                return;
+            }
+
+            if (AnimationUtils.isAnimationEnabled() && JFXNodeUtils.isTreeVisible(thumb)) {
+                thumbHoverAnimation = new Timeline(
+                        new KeyFrame(Duration.ZERO, new KeyValue(thumb.opacityProperty(), currentOpacity)),
+                        new KeyFrame(Motion.SHORT2, new KeyValue(thumb.opacityProperty(), targetOpacity))
+                );
+                thumbHoverAnimation.play();
+            } else {
+                thumb.setOpacity(targetOpacity);
+            }
         });
     }
 
