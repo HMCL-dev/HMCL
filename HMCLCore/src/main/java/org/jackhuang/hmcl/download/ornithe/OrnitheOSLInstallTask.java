@@ -27,11 +27,6 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
-/**
- * <b>Note</b>: Fabric should be installed first.
- *
- * @author huangyuhui
- */
 public final class OrnitheOSLInstallTask extends Task<Version> {
 
     private final DefaultDependencyManager dependencyManager;
