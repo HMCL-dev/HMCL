@@ -17,8 +17,10 @@
  */
 package org.jackhuang.hmcl.ui.construct;
 
+import javafx.beans.InvalidationListener;
 import javafx.beans.binding.Bindings;
 import javafx.beans.binding.NumberBinding;
+import javafx.beans.value.ChangeListener;
 import javafx.geometry.Orientation;
 import javafx.geometry.Point2D;
 import javafx.scene.Node;
@@ -26,6 +28,7 @@ import javafx.scene.control.ScrollBar;
 import javafx.scene.control.Skin;
 import javafx.scene.layout.Region;
 import javafx.scene.shape.Rectangle;
+import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.util.MathUtils;
 
 // Referenced in root.css
@@ -35,6 +38,8 @@ public class FloatScrollBarSkin implements Skin<ScrollBar> {
     private Region group;
     private Rectangle track = new Rectangle();
     private Rectangle thumb = new Rectangle();
+
+    private final ChangeListener<Boolean> thumbHoverListener;
 
     public FloatScrollBarSkin(final ScrollBar scrollBar) {
         this.scrollBar = scrollBar;
@@ -62,7 +67,6 @@ public class FloatScrollBarSkin implements Skin<ScrollBar> {
                 scrollBar.orientationProperty().addListener(obs -> setup());
 
                 setup();
-
 
                 thumb.setOnMousePressed(me -> {
                     if (me.isSynthesized()) {
@@ -152,10 +156,10 @@ public class FloatScrollBarSkin implements Skin<ScrollBar> {
                     thumb.setHeight(6.0);
 
                     NumberBinding trackWidth = Bindings.max(0, Bindings.subtract(scrollBar.widthProperty(), offset * 2));
-                    
+
                     thumb.widthProperty().bind(Bindings.min(trackWidth,
                             Bindings.max(20, scrollBar.visibleAmountProperty().divide(range).multiply(trackWidth))));
-                    
+
                     thumb.xProperty().bind(
                             Bindings.add(offset,
                                     Bindings.multiply(
@@ -168,10 +172,10 @@ public class FloatScrollBarSkin implements Skin<ScrollBar> {
                     thumb.setWidth(6.0);
 
                     NumberBinding trackHeight = Bindings.max(0, Bindings.subtract(scrollBar.heightProperty(), offset * 2));
-                    
+
                     thumb.heightProperty().bind(Bindings.min(trackHeight,
                             Bindings.max(20, scrollBar.visibleAmountProperty().divide(range).multiply(trackHeight))));
-                    
+
                     thumb.yProperty().bind(
                             Bindings.add(offset,
                                     Bindings.multiply(
@@ -200,6 +204,11 @@ public class FloatScrollBarSkin implements Skin<ScrollBar> {
                 return 6.0;
             }
         };
+
+        this.thumbHoverListener = FXUtils.onWeakChangeAndOperate(thumb.hoverProperty(), newValue -> {
+            double targetOpacity = newValue ? 1.0 : 0.5;
+            thumb.setOpacity(targetOpacity);
+        });
     }
 
     @Override

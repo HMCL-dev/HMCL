@@ -182,7 +182,6 @@ public final class StyleSheets {
         addColor(builder, scheme, ColorRole.SURFACE_CONTAINER_LOW, 0.8);
         addColor(builder, scheme, ColorRole.SECONDARY_CONTAINER, 0.8);
         addColor(builder, scheme, ColorRole.INVERSE_SURFACE, 0.8);
-        addColor(builder, scheme, ColorRole.SURFACE_TINT, 0.6);
 
         builder.append("}\n");
         return toStyleSheetUri(builder.toString(), blueCss);
