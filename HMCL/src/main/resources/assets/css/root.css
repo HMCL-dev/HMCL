@@ -33,7 +33,7 @@
     -fx-arc-height: 6;
 }
 
-.scroll-bar:hover .thumb {
+.scroll-bar .thumb:hover {
     -fx-fill: -monet-surface-tint;
 }
 
