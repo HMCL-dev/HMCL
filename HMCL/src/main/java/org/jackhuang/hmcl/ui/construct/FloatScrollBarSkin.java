@@ -46,7 +46,8 @@ public class FloatScrollBarSkin implements Skin<ScrollBar> {
     private Rectangle track = new Rectangle();
     private Rectangle thumb = new Rectangle();
 
-    private final ChangeListener<Boolean> thumbHoverListener;
+    @SuppressWarnings({"FieldCanBeLocal", "FieldMayBeFinal"})
+    private ChangeListener<Boolean> thumbHoverListener;
     private Animation thumbHoverAnimation;
 
     public FloatScrollBarSkin(final ScrollBar scrollBar) {
@@ -244,6 +245,11 @@ public class FloatScrollBarSkin implements Skin<ScrollBar> {
 
     @Override
     public void dispose() {
+        if (thumbHoverAnimation != null) {
+            thumbHoverAnimation.stop();
+            thumbHoverAnimation = null;
+        }
+        thumbHoverListener = null;
         scrollBar = null;
         group = null;
     }
