@@ -28,9 +28,13 @@
 }
 
 .scroll-bar .thumb {
-    -fx-fill: -monet-surface-tint;
+    -fx-fill: -monet-surface-tint-transparent-60;
     -fx-arc-width: 6;
     -fx-arc-height: 6;
+}
+
+.scroll-bar:hover .thumb {
+    -fx-fill: -monet-surface-tint;
 }
 
 .title-label {
