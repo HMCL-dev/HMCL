@@ -47,23 +47,39 @@ Users can enable the "Preview HMCL releases early" option on the "Settings > Gen
 ## Release Model
 
 ```mermaid
+---
+displayMode: compact
+---
 gantt
     title HMCL Version Lifecycle (Example)
-    section 3.9
-        Beta Phase: a1, 2025-11-15, 30d
-        Preview Phase: a2, after a1, 16d
-        Stable Release: milestone, after a2, 0d
-        Maintenance Phase: a3, after a2, 31d
-    section 3.10
-        Beta Phase: b1, after a1, 31d
-        Preview Phase: b2, after b1, 16d
-        Stable Release: milestone, after b2, 0d
-        Maintenance Phase: b3, after b2, 31d
     section 3.11
-        Beta Phase: c1, after b1, 31d
-        Preview Phase: c2, after c1, 16d
-        Stable Release: milestone, after c2, 0d
+        today: vert, 2026-02-20, 0d
+        Beta Phase: done, c1, after b1, 31d
+        Preview Phase: active, c2, after c1, 16d
         Maintenance Phase: c3, after c2, 30d
+        3.11.0.118: milestone, after b1, 0d
+        3.11.0.119: milestone, 2026-02-01, 0d
+        3.11.1: milestone, after c1, 0d
+    section 3.10
+        Beta Phase: done, b1, after a1, 31d
+        Preview Phase: done, b2, after b1, 16d
+        Maintenance Phase: active, b3, after b2, 31d
+        3.10.0.116: milestone, after a1, 0d
+        3.10.0.117: milestone, 2025-12-30, 0d
+        3.10.1: milestone, after b1, 0d
+        3.10.2: milestone, 2026-01-23, 0d
+        3.10.3: milestone, after b2, 0d
+        3.10.4: milestone, 2026-02-11, 0d
+    section 3.9
+        Beta Phase: done, a1, 2025-11-15, 30d
+        Preview Phase: done, a2, after a1, 16d
+        Maintenance Phase: done, a3, after a2, 31d
+        3.9.0.114: milestone, 2025-11-15, 0d
+        3.9.0.115: milestone, 2025-11-30, 0d
+        3.9.1: milestone, after a1, 0d
+        3.9.2: milestone, 2025-12-23, 0d
+        3.9.3: milestone, after a2, 0d
+        3.9.4: milestone, 2026-01-11, 0d
 ```
 
 In general, we release a new version branch every month,
