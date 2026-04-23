@@ -255,6 +255,8 @@ public class MicrosoftService {
                     .anyMatch(item -> "game_minecraft".equals(item.name()));
             if (!hasMinecraftLicense) {
                 throw new MinecraftJavaEditionLicenseNotFoundException();
+            } else {
+                throw new MinecraftJavaEditionProfileNotFoundException();
             }
         } else if (responseCode != 200) {
             throw new ResponseCodeException("https://api.minecraftservices.com/minecraft/profile", responseCode);
