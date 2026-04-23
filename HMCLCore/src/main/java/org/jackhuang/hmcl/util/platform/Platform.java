@@ -56,8 +56,11 @@ public record Platform(OperatingSystem os, Architecture arch) {
         }
     }
 
-    public static boolean isCompatibleWithX86Java() {
-        return Architecture.SYSTEM_ARCH.isX86() || SYSTEM_PLATFORM.equals(MACOS_ARM64) || SYSTEM_PLATFORM.equals(WINDOWS_ARM64);
+    /// Returns `true` if the current platform architecture is not x86-64,
+    /// but can support executing x86-64 applications through translation;
+    /// otherwise, returns `false`.
+    public static boolean isSupportedTranslationX86_64() {
+        return SUPPORTED_TRANSLATION_X86_64;
     }
 
     public static Platform getPlatform(OperatingSystem os, Architecture arch) {

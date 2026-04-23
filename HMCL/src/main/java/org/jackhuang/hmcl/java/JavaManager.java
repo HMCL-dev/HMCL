@@ -124,7 +124,7 @@ public final class JavaManager {
                 if (Architecture.SYSTEM_ARCH == Architecture.X86_64)
                     return architecture == Architecture.X86;
                 if (Architecture.SYSTEM_ARCH == Architecture.ARM64)
-                    return OperatingSystem.SYSTEM_BUILD_NUMBER >= 21277 && architecture == Architecture.X86_64 || architecture == Architecture.X86;
+                    return Platform.isSupportedTranslationX86_64() && architecture == Architecture.X86_64 || architecture == Architecture.X86;
                 break;
             case LINUX:
                 if (Architecture.SYSTEM_ARCH == Architecture.X86_64)
@@ -364,13 +364,13 @@ public final class JavaManager {
                 if (Architecture.SYSTEM_ARCH == Architecture.X86_64)
                     searcher.searchAllJavaInRepository(Platform.WINDOWS_X86);
                 if (Architecture.SYSTEM_ARCH == Architecture.ARM64) {
-                    if (OperatingSystem.SYSTEM_BUILD_NUMBER >= 21277)
+                    if (Platform.isSupportedTranslationX86_64())
                         searcher.searchAllJavaInRepository(Platform.WINDOWS_X86_64);
                     searcher.searchAllJavaInRepository(Platform.WINDOWS_X86);
                 }
                 break;
             case MACOS:
-                if (Architecture.SYSTEM_ARCH == Architecture.ARM64)
+                if (Architecture.SYSTEM_ARCH == Architecture.ARM64 && Platform.isSupportedTranslationX86_64())
                     searcher.searchAllJavaInRepository(Platform.MACOS_X86_64);
                 break;
         }
@@ -784,13 +784,15 @@ public final class JavaManager {
                 if (Architecture.SYSTEM_ARCH == Architecture.X86_64) {
                     searchAllOfficialJava(directory, getMojangJavaPlatform(Platform.WINDOWS_X86), verify);
                 } else if (Architecture.SYSTEM_ARCH == Architecture.ARM64) {
-                    if (OperatingSystem.SYSTEM_BUILD_NUMBER >= 21277) {
+                    if (Platform.isSupportedTranslationX86_64()) {
                         searchAllOfficialJava(directory, getMojangJavaPlatform(Platform.WINDOWS_X86_64), verify);
                     }
                     searchAllOfficialJava(directory, getMojangJavaPlatform(Platform.WINDOWS_X86), verify);
                 }
-            } else if (OperatingSystem.CURRENT_OS == OperatingSystem.MACOS && Architecture.CURRENT_ARCH == Architecture.ARM64) {
-                searchAllOfficialJava(directory, getMojangJavaPlatform(Platform.MACOS_X86_64), verify);
+            } else if (OperatingSystem.CURRENT_OS == OperatingSystem.MACOS) {
+                if (Architecture.CURRENT_ARCH == Architecture.ARM64 && Platform.isSupportedTranslationX86_64()) {
+                    searchAllOfficialJava(directory, getMojangJavaPlatform(Platform.MACOS_X86_64), verify);
+                }
             }
         }
 
