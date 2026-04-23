@@ -319,10 +319,8 @@ public final class LocaleUtils {
             return getMinecraftChineseLanguageTag(locale);
         }
 
-        String tag = locale.stripExtensions().toLanguageTag()
-                .replace('-', '_');
-
-        return tag.isEmpty() ? null : tag;
+        String region = locale.getCountry();
+        return region.isEmpty() ? root : root + "_" + region;
     }
 
     public static @NotNull List<String> getMinecraftLanguageFileNames(Locale locale) {

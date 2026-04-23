@@ -262,6 +262,7 @@ public final class LocaleUtilsTest {
         assertEquals("zh_TW", LocaleUtils.getMinecraftLanguageTag(Locale.TRADITIONAL_CHINESE));
         assertEquals("ja", LocaleUtils.getMinecraftLanguageTag(Locale.JAPANESE));
         assertEquals("de_DE", LocaleUtils.getMinecraftLanguageTag(Locale.GERMANY));
+        assertEquals("he_IL", LocaleUtils.getMinecraftLanguageTag(Locale.forLanguageTag("iw-IL")));
         assertEquals("zh_HK", LocaleUtils.getMinecraftLanguageTag(Locale.forLanguageTag("zh-HK")));
         assertEquals("lzh", LocaleUtils.getMinecraftLanguageTag(Locale.forLanguageTag("lzh")));
         assertEquals("de", LocaleUtils.getMinecraftLanguageTag(Locale.forLanguageTag("de")));
