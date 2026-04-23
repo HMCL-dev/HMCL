@@ -286,7 +286,7 @@ public final class Versions {
             try {
                 Files.writeString(jsonPath, finalJson);
             } catch (IOException ex) {
-                LOG.warning("Unable to write json", e);
+                LOG.warning("Unable to write json", ex);
             }
 
             LOG.warning("Unable to reset instance", e);
