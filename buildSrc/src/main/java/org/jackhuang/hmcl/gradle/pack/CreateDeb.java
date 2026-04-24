@@ -55,7 +55,7 @@ import java.util.zip.GZIPOutputStream;
 /// ## Channel commands and aliases
 ///
 /// Every package installs a channel-specific executable such as `hmcl-stable`
-/// or `hmcl-dev`. The generic `hmcl` command is intentionally not shipped as a
+/// or `hmcl-beta`. The generic `hmcl` command is intentionally not shipped as a
 /// plain file. Instead, maintainer scripts register the channel command into
 /// the shared `hmcl` alternatives group so multiple channel packages can
 /// coexist without file conflicts.
