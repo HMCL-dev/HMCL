@@ -95,7 +95,6 @@ public abstract sealed class GameVersionNumber implements Comparable<GameVersion
         return VersionRange.atMost(asGameVersion(maximum));
     }
 
-
     /// Determines whether the given version string corresponds to a known Minecraft version.
     ///
     /// If the version string cannot be parsed as any known version type (release, snapshot, pre-release, etc.)
