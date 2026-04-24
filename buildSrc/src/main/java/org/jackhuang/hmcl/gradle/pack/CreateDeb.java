@@ -287,7 +287,7 @@ public abstract class CreateDeb extends DefaultTask {
         return """
                 [Desktop Entry]
                 Type=Application
-                Name=HMCL
+                Name=%s
                 Comment=Hello Minecraft! Launcher
                 Exec=%s
                 Icon=%s
@@ -295,6 +295,6 @@ public abstract class CreateDeb extends DefaultTask {
                 StartupNotify=false
                 Categories=Game;
                 Keywords=mc;minecraft;
-                """.formatted(getLauncherPath(), getIconTargetPath());
+                """.formatted(getCurrentType().getDisplayName(), getLauncherPath(), getIconTargetPath());
     }
 }

@@ -23,17 +23,19 @@ package org.jackhuang.hmcl.gradle.pack;
 /// priority are intentionally centralized here so `CreateDeb` can stay focused
 /// on archive layout instead of duplicating channel-specific branching.
 public enum ReleaseType {
-    STABLE("stable", "hmcl", 300),
-    DEVELOPMENT("dev", "hmcl-dev", 200),
-    NIGHTLY("nightly", "hmcl-nightly", 100);
+    STABLE("stable", "hmcl", "HMCL", 100),
+    DEVELOPMENT("dev", "hmcl-dev", "HMCL (Beta)", 200),
+    NIGHTLY("nightly", "hmcl-nightly", "HMCL (Nightly)", 300);
 
-    public final String name;
+    private final String name;
     private final String packageName;
+    private final String displayName;
     private final int alternativesPriority;
 
-    ReleaseType(String name, String packageName, int alternativesPriority) {
+    ReleaseType(String name, String packageName, String displayName, int alternativesPriority) {
         this.name = name;
         this.packageName = packageName;
+        this.displayName = displayName;
         this.alternativesPriority = alternativesPriority;
     }
 
@@ -45,6 +47,10 @@ public enum ReleaseType {
     /// Debian package name written into `control` and used in the output filename.
     public String getPackageName() {
         return packageName;
+    }
+
+    public String getDisplayName() {
+        return displayName;
     }
 
     /// Priority used when registering the generic `hmcl` alias.
