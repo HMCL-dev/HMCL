@@ -24,7 +24,7 @@ package org.jackhuang.hmcl.gradle.pack;
 /// on archive layout instead of duplicating channel-specific branching.
 public enum ReleaseType {
     STABLE("stable", "hmcl", "HMCL", 100),
-    DEVELOPMENT("dev", "hmcl-dev", "HMCL (Beta)", 200),
+    DEVELOPMENT("beta", "hmcl-beta", "HMCL (Beta)", 200),
     NIGHTLY("nightly", "hmcl-nightly", "HMCL (Nightly)", 300);
 
     private final String name;
