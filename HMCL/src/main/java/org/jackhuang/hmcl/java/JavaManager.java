@@ -122,16 +122,27 @@ public final class JavaManager {
         switch (OperatingSystem.CURRENT_OS) {
             case WINDOWS:
                 if (Architecture.SYSTEM_ARCH == Architecture.X86_64)
+                    // Windows x86-64 platform is compatible with x86 programs
                     return architecture == Architecture.X86;
-                if (Architecture.SYSTEM_ARCH == Architecture.ARM64)
-                    return Platform.isSupportedTranslationX86_64() && architecture == Architecture.X86_64 || architecture == Architecture.X86;
+                if (Architecture.SYSTEM_ARCH == Architecture.ARM64) {
+
+                    // Since Windows 10 Build 21277, Windows Arm64 has been compatible with x86-64 programs via translation
+                    if (architecture == Architecture.X86_64 && Platform.isSupportedTranslationX86_64())
+                        return true;
+
+                    // Windows Arm64 is compatible with x86 programs via translation
+                    if (architecture == Architecture.X86)
+                        return true;
+                    return false;
+                }
                 break;
             case LINUX:
                 if (Architecture.SYSTEM_ARCH == Architecture.X86_64)
                     return architecture == Architecture.X86;
                 break;
             case MACOS:
-                if (Architecture.SYSTEM_ARCH == Architecture.ARM64)
+                // macOS Arm64 compatible with x86-64 programs via Rosetta 2.
+                if (Architecture.SYSTEM_ARCH == Architecture.ARM64 && Platform.isSupportedTranslationX86_64())
                     return architecture == Architecture.X86_64;
                 break;
         }
