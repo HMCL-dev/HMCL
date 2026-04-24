@@ -60,13 +60,16 @@ final class ResourcepackDescriptionResolver {
         }
 
         JsonObject pack = getJsonObject(json, "pack");
-        JsonObject descriptionObject = pack != null ? getJsonObject(pack, "description") : null;
-        if (descriptionObject != null && descriptionObject.has("translate")) {
+        if (pack == null) {
+            return null;
+        }
+
+        JsonElement description = pack.get("description");
+        if (description instanceof JsonObject descriptionObject && descriptionObject.has("translate")) {
             return resolveTranslatedDescription(descriptionObject, locale, translationLookup);
         }
 
-        PackMcMeta packMcMeta = JsonUtils.fromMaybeMalformedJson(mcmetaText, PackMcMeta.class);
-        return packMcMeta != null ? packMcMeta.pack().description() : null;
+        return PackMcMeta.parseDescription(description);
     }
 
     private static @Nullable LocalModFile.Description resolveTranslatedDescription(JsonObject descriptionObject, Locale locale, TranslationLookup translationLookup) {
