@@ -265,13 +265,17 @@ public abstract class CreateDeb extends DefaultTask {
         return """
                 #!/usr/bin/env bash
                 cd "$HOME"
-                if [ -z "${HMCL_USER_HOME+x}" ]; then
-                    export HMCL_USER_HOME="$HOME/.local/share/hmcl"
+                if [ -z "${HMCL_USER_HOME:-}" ]; then
+                    if [ -z "${XDG_DATA_HOME:-}" ]; then
+                        export HMCL_USER_HOME="$HOME/.local/share/hmcl"
+                    else
+                        export HMCL_USER_HOME="$XDG_DATA_HOME/hmcl"
+                    fi
                 fi
-                if [ -z "${HMCL_LOCAL_HOME+x}" ]; then
+                if [ -z "${HMCL_LOCAL_HOME:-}" ]; then
                     export HMCL_LOCAL_HOME="$HMCL_USER_HOME/local-%s"
                 fi
-                if [ -z "${HMCL_DEPENDENCIES_DIR+x}" ]; then
+                if [ -z "${HMCL_DEPENDENCIES_DIR:-}" ]; then
                     export HMCL_DEPENDENCIES_DIR="$HMCL_USER_HOME/dependencies"
                 fi
                 exec %s "$@"
