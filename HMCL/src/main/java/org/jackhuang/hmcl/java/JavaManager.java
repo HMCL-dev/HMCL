@@ -790,7 +790,7 @@ public final class JavaManager {
                     searchAllOfficialJava(directory, getMojangJavaPlatform(Platform.WINDOWS_X86), verify);
                 }
             } else if (OperatingSystem.CURRENT_OS == OperatingSystem.MACOS) {
-                if (Architecture.CURRENT_ARCH == Architecture.ARM64 && Platform.isSupportedTranslationX86_64()) {
+                if (Architecture.SYSTEM_ARCH == Architecture.ARM64 && Platform.isSupportedTranslationX86_64()) {
                     searchAllOfficialJava(directory, getMojangJavaPlatform(Platform.MACOS_X86_64), verify);
                 }
             }
