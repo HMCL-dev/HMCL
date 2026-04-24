@@ -286,6 +286,8 @@ val makeExecutables by tasks.registering {
 val makeDeb by tasks.registering(CreateDeb::class) {
     dependsOn(makeExecutables)
 
+    val debFile = layout.file(provider { artifactFile("deb") })
+
     val debChannel = when (versionType) {
         "stable" -> ReleaseType.STABLE
         "dev" -> ReleaseType.DEVELOPMENT
@@ -296,7 +298,11 @@ val makeDeb by tasks.registering(CreateDeb::class) {
     releaseType.set(debChannel)
     appShFile.set(layout.file(provider { artifactFile("sh") }))
     iconFile.set(layout.projectDirectory.file("image/hmcl.png"))
-    outputFile.set(layout.file(provider { artifactFile("deb") }))
+    outputFile.set(debFile)
+
+    doLast {
+        createChecksum(debFile.get().asFile)
+    }
 }
 
 tasks.build {
@@ -398,12 +404,14 @@ val upgradeTerracottaConfig = tasks.register<TerracottaConfigUpgradeTask>("upgra
     val destination = layout.projectDirectory.file("src/main/resources/assets/terracotta.json")
     val source = layout.projectDirectory.file("terracotta-template.json");
 
-    classifiers.set(listOf(
-        "windows-x86_64", "windows-arm64",
-        "macos-x86_64", "macos-arm64",
-        "linux-x86_64", "linux-arm64", "linux-loongarch64", "linux-riscv64",
-        "freebsd-x86_64"
-    ))
+    classifiers.set(
+        listOf(
+            "windows-x86_64", "windows-arm64",
+            "macos-x86_64", "macos-arm64",
+            "linux-x86_64", "linux-arm64", "linux-loongarch64", "linux-riscv64",
+            "freebsd-x86_64"
+        )
+    )
 
     version.set(libs.versions.terracotta)
     downloadURL.set($$"https://github.com/burningtnt/Terracotta/releases/download/v${version}/terracotta-${version}-${classifier}-pkg.tar.gz")
