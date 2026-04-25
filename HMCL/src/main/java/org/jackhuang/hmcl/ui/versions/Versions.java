@@ -140,23 +140,23 @@ public final class Versions {
 
     public static CompletableFuture<String> renameVersion(Profile profile, String version) {
         return Controllers.prompt(i18n("version.manage.rename.message"), (newName, handler) -> {
-            if (newName.equals(version)) {
-                handler.resolve();
-                return;
-            }
-            if (profile.getRepository().renameVersion(version, newName)) {
-                handler.resolve();
-                profile.getRepository().refreshVersionsAsync()
-                        .thenRunAsync(Schedulers.javafx(), () -> {
-                            if (profile.getRepository().hasVersion(newName)) {
-                                profile.setSelectedVersion(newName);
-                            }
-                        }).start();
-            } else {
-                handler.reject(i18n("version.manage.rename.fail"));
-            }
-        }, version, new Validator(i18n("install.new_game.malformed"), HMCLGameRepository::isValidVersionId),
-            new Validator(i18n("install.new_game.already_exists"), newVersionName -> !profile.getRepository().versionIdConflicts(newVersionName) || newVersionName.equals(version)));
+                    if (newName.equals(version)) {
+                        handler.resolve();
+                        return;
+                    }
+                    if (profile.getRepository().renameVersion(version, newName)) {
+                        handler.resolve();
+                        profile.getRepository().refreshVersionsAsync()
+                                .thenRunAsync(Schedulers.javafx(), () -> {
+                                    if (profile.getRepository().hasVersion(newName)) {
+                                        profile.setSelectedVersion(newName);
+                                    }
+                                }).start();
+                    } else {
+                        handler.reject(i18n("version.manage.rename.fail"));
+                    }
+                }, version, new Validator(i18n("install.new_game.malformed"), HMCLGameRepository::isValidVersionId),
+                new Validator(i18n("install.new_game.already_exists"), newVersionName -> !profile.getRepository().versionIdConflicts(newVersionName) || newVersionName.equals(version)));
     }
 
     public static void exportVersion(Profile profile, String version) {
@@ -271,6 +271,7 @@ public final class Versions {
             return unusedFiles;
         }).thenApplyAsync((list) -> {
             long totalSize = list.stream()
+                    .parallel()
                     .mapToLong(path -> {
                         try {
                             return Files.size(path);
@@ -283,17 +284,20 @@ public final class Versions {
             FXUtils.runInFX(() -> {
                 dialog.setText(i18n("game.clean.content", I18n.formatSize(totalSize)));
                 buttonPane.getChildren().setAll(okButton);
+                okButton.setDisable(totalSize == 0);
+
                 okButton.setOnAction(event -> {
-                    onEscPressed(dialog, null);
+                    onEscPressed(dialog, () -> {
+                    });
+                    dialog.getCancelButton().setDisable(true);
                     buttonPane.getChildren().setAll(spinner);
                     Task.runAsync(() -> list.forEach(path -> {
                         try {
                             Files.deleteIfExists(path);
-                        } catch (IOException ignored) {
+                        } catch (IOException e) {
+                            LOG.warning("Failed to delete file " + path, e);
                         }
-                    })).thenRunAsync(Schedulers.javafx(), () -> {
-                        dialog.fireEvent(new DialogCloseEvent());
-                    }).start();
+                    })).thenRunAsync(Schedulers.javafx(), () -> dialog.fireEvent(new DialogCloseEvent())).start();
                 });
             });
             return null;
