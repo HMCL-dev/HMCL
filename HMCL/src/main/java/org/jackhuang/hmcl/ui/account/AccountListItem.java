@@ -164,6 +164,9 @@ public class AccountListItem extends RadioButton {
                     if (skinImg.isError()) {
                         throw new InvalidSkinException("Failed to read skin image", skinImg.getException());
                     }
+                    if (skinImg.getWidth() != 64 || (skinImg.getHeight() != 32 && skinImg.getHeight() != 64)) {
+                        throw new InvalidSkinException("Invalid skin size");
+                    }
                     NormalizedSkin skin = new NormalizedSkin(skinImg);
                     String model = skin.isSlim() ? "slim" : "";
                     LOG.info("Uploading skin [" + selectedFile + "], model [" + model + "]");

@@ -188,9 +188,13 @@ public final class CurseCompletionTask extends Task<Void> {
         String fileName = file.fileName();
         return switch (classID) {
             case 12,       // Resource pack
-                 6552 -> { // Shader pack
-                Path res = (classID == 12 ? resourcePacksRoot : shaderPacksRoot).resolve(fileName);
-                yield Files.exists(res) ? null : res;
+                 6945 -> { // Data pack
+                Path path = resourcePacksRoot.resolve(fileName);
+                yield Files.exists(path) ? null : path;
+            }
+            case 6552 -> { // Shader pack
+                Path path = shaderPacksRoot.resolve(fileName);
+                yield Files.exists(path) ? null : path;
             }
             default -> {
                 if (modManager.hasSimpleMod(fileName)) {

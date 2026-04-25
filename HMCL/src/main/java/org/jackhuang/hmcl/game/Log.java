@@ -31,7 +31,6 @@ public final class Log {
 
     private final String log;
     private Log4jLevel level;
-    private boolean selected = false;
 
     public Log(String log) {
         this.log = log;
@@ -55,14 +54,6 @@ public final class Log {
             this.level = level;
         }
         return level;
-    }
-
-    public boolean isSelected() {
-        return selected;
-    }
-
-    public void setSelected(boolean selected) {
-        this.selected = selected;
     }
 
     @Override

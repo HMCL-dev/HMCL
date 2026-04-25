@@ -24,11 +24,7 @@ import org.jackhuang.hmcl.mod.LocalModFile;
 import org.jackhuang.hmcl.mod.ModLoaderType;
 import org.jackhuang.hmcl.mod.RemoteMod;
 import org.jackhuang.hmcl.mod.RemoteModRepository;
-import org.jackhuang.hmcl.util.DigestUtils;
-import org.jackhuang.hmcl.util.Immutable;
-import org.jackhuang.hmcl.util.Lang;
-import org.jackhuang.hmcl.util.Pair;
-import org.jackhuang.hmcl.util.StringUtils;
+import org.jackhuang.hmcl.util.*;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.io.HttpRequest;
 import org.jackhuang.hmcl.util.io.NetworkUtils;
@@ -42,6 +38,7 @@ import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -62,6 +59,41 @@ public final class ModrinthRemoteModRepository implements RemoteModRepository {
     public static final ModrinthRemoteModRepository MODPACKS = new ModrinthRemoteModRepository("modpack");
     public static final ModrinthRemoteModRepository RESOURCE_PACKS = new ModrinthRemoteModRepository("resourcepack");
     public static final ModrinthRemoteModRepository SHADER_PACKS = new ModrinthRemoteModRepository("shader");
+
+    private static final Comparator<String> TAG_COMPARATOR = PriorityComparator.of(
+            List.of("babric",
+                    "bta-babric",
+                    "bukkit",
+                    "bungeecord",
+                    "canvas",
+                    "datapack",
+                    "fabric",
+                    "folia",
+                    "forge",
+                    "geyser",
+                    "iris",
+                    "java-agent",
+                    "legacy-fabric",
+                    "liteloader",
+                    "minecraft",
+                    "modloader",
+                    "mrpack",
+                    "neoforge",
+                    "nilloader",
+                    "optifine",
+                    "ornith",
+                    "paper",
+                    "purpur",
+                    "quilt",
+                    "rift",
+                    "spigot",
+                    "sponge",
+                    "vanilla",
+                    "velocity",
+                    "waterfall"),
+            Comparator.naturalOrder(),
+            false
+    );
 
     private static final Semaphore SEMAPHORE = new Semaphore(16);
 
@@ -93,6 +125,12 @@ public final class ModrinthRemoteModRepository implements RemoteModRepository {
             default:
                 throw new IllegalArgumentException("Unsupported sort type " + sortType);
         }
+    }
+
+    static List<String> sortDisplayCategories(List<String> displayCategories) {
+        return displayCategories != null && !displayCategories.isEmpty()
+                ? displayCategories.stream().sorted(TAG_COMPARATOR).toList()
+                : List.of();
     }
 
     @Override
@@ -811,7 +849,7 @@ public final class ModrinthRemoteModRepository implements RemoteModRepository {
                     author,
                     title,
                     description,
-                    displayCategories,
+                    sortDisplayCategories(displayCategories),
                     String.format("https://modrinth.com/%s/%s", projectType, projectId),
                     iconUrl,
                     this
