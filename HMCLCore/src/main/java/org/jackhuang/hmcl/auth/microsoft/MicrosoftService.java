@@ -251,7 +251,7 @@ public class MicrosoftService {
             MinecraftLicense license = HttpRequest.GET("https://api.minecraftservices.com/entitlements/license")
                     .authorization(tokenType, accessToken)
                     .getJson(MinecraftLicense.class);
-            boolean hasMinecraftLicense = license.items().stream()
+            boolean hasMinecraftLicense = license != null && license.items() != null && license.items().stream()
                     .anyMatch(item -> "game_minecraft".equals(item.name()));
             if (!hasMinecraftLicense) {
                 throw new MinecraftJavaEditionLicenseNotFoundException();
