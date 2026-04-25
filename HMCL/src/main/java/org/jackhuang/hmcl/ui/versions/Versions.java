@@ -282,9 +282,9 @@ public final class Versions {
 
             Set<Path> unusedFolders = new HashSet<>();
 
-            for (String path : List.of("logs", "crash-reports", "modernfix", "mods/.connector", "CustomSkinLoader/caches", ".fabric")) {
+            var uselessFolderNames = Set.of("logs", "crash-reports", "modernfix", "mods/.connector", "CustomSkinLoader/caches", ".fabric");
+            for (String path : uselessFolderNames) {
                 unusedFolders.add(repository.getBaseDirectory().resolve(path));
-                versions.forEach(v -> unusedFolders.add(repository.getRunDirectory(v.getId()).resolve(path)));
             }
 
             versions.stream().map(v -> repository.getRunDirectory(v.getId())).distinct().forEach(runDir -> {
@@ -292,7 +292,7 @@ public final class Versions {
                     unusedFolders.addAll(walker
                             .filter(it -> {
                                 var name = it.getFileName().toString();
-                                return Files.isDirectory(it) && (name.startsWith("natives-") || name.endsWith("-natives"));
+                                return (name.startsWith("natives-") || name.endsWith("-natives") || uselessFolderNames.contains(name)) && Files.isDirectory(it);
                             }).toList());
                 } catch (IOException ignored) {
                 }
