@@ -103,7 +103,7 @@ public class FileSelector extends HBox {
                             new IconedMenuItem(SVG.FOLDER_OPEN, i18n("selector.choose_directory"), () -> openDirectoryChooser(customField), selectModePopup)
                     );
 
-                    selectModePopup.show(selectButton, JFXPopup.PopupVPosition.TOP, JFXPopup.PopupHPosition.LEFT, selectButton.getWidth(), 0);
+                    selectModePopup.show(selectButton, JFXPopup.PopupVPosition.TOP, JFXPopup.PopupHPosition.RIGHT, -selectButton.getWidth(), 0);
                 }
             }
         });
