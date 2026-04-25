@@ -89,7 +89,7 @@ public final class OrnitheInstallTask extends Task<Version> {
     public void execute() throws IOException {
         OrnitheInfo ornitheInfo = JsonUtils.GSON.fromJson(launchMetaTask.getResult(), OrnitheInfo.class);
         if (ornitheInfo == null)
-            throw new IOException("Fabric metadata is invalid");
+            throw new IOException("Ornithe metadata is invalid");
 
         setResult(getPatch(ornitheInfo, remote.getGameVersion(), remote.getSelfVersion()));
 
