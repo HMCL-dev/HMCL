@@ -717,7 +717,8 @@ public final class Config extends ObservableSetting {
 
     public void setWindowsHighPerformance(boolean windowsHighPerformance) {
         this.windowsHighPerformance.set(windowsHighPerformance);
-    
+    }
+
     @SerializedName("allowAutoAgent")
     private final BooleanProperty allowAutoAgent = new SimpleBooleanProperty(false);
 
