@@ -329,6 +329,47 @@ public final class GameSettingPage<S extends GameSetting> extends StackPane
             quickSublist.setHasSubtitle(true);
         }
 
+        var jvmSettings = new ComponentList();
+        rootPane.getChildren().addAll(
+                ComponentList.createComponentListTitle("JVM 选项"),
+                jvmSettings
+        );
+        {
+            var noJVMArgsPane = new LineToggleButton();
+            jvmSettings.getContent().add(noJVMArgsPane);
+            noJVMArgsPane.setTitle(i18n("settings.advanced.no_jvm_args"));
+
+            var noOptimizingJVMArgsPane = new LineToggleButton();
+            jvmSettings.getContent().add(noOptimizingJVMArgsPane);
+            noOptimizingJVMArgsPane.setTitle(i18n("settings.advanced.no_optimizing_jvm_args"));
+            noOptimizingJVMArgsPane.disableProperty().bind(noJVMArgsPane.selectedProperty());
+
+            if (!isGlobalSetting) {
+                var noInheritJVMArgsPane = new LineToggleButton();
+                jvmSettings.getContent().add(noInheritJVMArgsPane);
+                noInheritJVMArgsPane.setTitle("覆盖全局 JVM 参数");
+            }
+
+            var jvmArgsPane = new LinePane();
+            jvmSettings.getContent().add(jvmArgsPane);
+            jvmArgsPane.setTitle(i18n("settings.advanced.jvm_args"));
+            {
+                var txtJVMArgs = new JFXTextField();
+                // txtJVMArgs.setPromptText(i18n("settings.advanced.jvm_args.prompt"));
+                txtJVMArgs.setPrefWidth(400);
+                jvmArgsPane.setRight(txtJVMArgs);
+            }
+
+            var metaSpacePane = new LinePane();
+            jvmSettings.getContent().add(metaSpacePane);
+            metaSpacePane.setTitle(i18n("settings.advanced.java_permanent_generation_space"));
+            {
+                var txtMetaspace = new JFXTextField();
+                txtMetaspace.setPromptText(i18n("settings.advanced.java_permanent_generation_space.prompt"));
+                txtMetaspace.setPrefWidth(400);
+                metaSpacePane.setRight(txtMetaspace);
+            }
+        }
 
         var advancedSettings = new ComponentList();
         rootPane.getChildren().addAll(
@@ -372,40 +413,6 @@ public final class GameSettingPage<S extends GameSetting> extends StackPane
         customCommandSettings.setTip(i18n("settings.advanced.custom_commands.hint"));
         customCommandSettings.setHeaderRight(createHeaderRight());
 
-        var noJVMArgsPane = new LineToggleButton();
-        advancedSettings.getContent().add(noJVMArgsPane);
-        noJVMArgsPane.setTitle(i18n("settings.advanced.no_jvm_args"));
-
-        var noOptimizingJVMArgsPane = new LineToggleButton();
-        advancedSettings.getContent().add(noOptimizingJVMArgsPane);
-        noOptimizingJVMArgsPane.setTitle(i18n("settings.advanced.no_optimizing_jvm_args"));
-        noOptimizingJVMArgsPane.disableProperty().bind(noJVMArgsPane.selectedProperty());
-
-        if (!isGlobalSetting) {
-            var noInheritJVMArgsPane = new LineToggleButton();
-            advancedSettings.getContent().add(noInheritJVMArgsPane);
-            noInheritJVMArgsPane.setTitle("不继承全局 JVM 参数");
-        }
-
-        var jvmArgsPane = new LinePane();
-        advancedSettings.getContent().add(jvmArgsPane);
-        jvmArgsPane.setTitle(i18n("settings.advanced.jvm_args"));
-        {
-            var txtJVMArgs = new JFXTextField();
-            // txtJVMArgs.setPromptText(i18n("settings.advanced.jvm_args.prompt"));
-            txtJVMArgs.setPrefWidth(400);
-            jvmArgsPane.setRight(txtJVMArgs);
-        }
-
-        var metaSpacePane = new LinePane();
-        advancedSettings.getContent().add(metaSpacePane);
-        metaSpacePane.setTitle(i18n("settings.advanced.java_permanent_generation_space"));
-        {
-            var txtMetaspace = new JFXTextField();
-            txtMetaspace.setPromptText(i18n("settings.advanced.java_permanent_generation_space.prompt"));
-            txtMetaspace.setPrefWidth(400);
-            metaSpacePane.setRight(txtMetaspace);
-        }
 
         var noAutoNatives = new LineToggleButton();
         advancedSettings.getContent().add(noAutoNatives);
