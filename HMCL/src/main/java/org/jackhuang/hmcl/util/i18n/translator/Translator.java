@@ -82,7 +82,7 @@ public class Translator {
         } else if (bytes < 1024 * 1024 * 1024) {
             return supportedLocale.i18n("download.size.megabyte", (double) bytes / (1024 * 1024));
         } else {
-            return supportedLocale.i18n("download.size.gibabyte", (double) bytes / (1024 * 1024 * 1024));
+            return supportedLocale.i18n("download.size.gigabyte", (double) bytes / (1024 * 1024 * 1024));
         }
     }
 }

@@ -55,10 +55,7 @@ import java.io.IOException;
 import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Consumer;
@@ -264,6 +261,7 @@ public final class Versions {
             var versions = repository.getVersions();
 
             Set<String> activeAssets = versions.parallelStream()
+                    .filter(Objects::nonNull)
                     .map(Version::getAssetIndex)
                     .distinct()
                     .flatMap(idx -> {
@@ -289,8 +287,8 @@ public final class Versions {
                 versions.forEach(v -> unusedFolders.add(repository.getRunDirectory(v.getId()).resolve(path)));
             }
 
-            versions.forEach(v -> {
-                try (var walker = Files.walk(repository.getRunDirectory(v.getId()), 1)) {
+            versions.stream().map(v -> repository.getRunDirectory(v.getId())).distinct().forEach(runDir -> {
+                try (var walker = Files.walk(runDir, 1)) {
                     unusedFolders.addAll(walker
                             .filter(it -> {
                                 var name = it.getFileName().toString();
