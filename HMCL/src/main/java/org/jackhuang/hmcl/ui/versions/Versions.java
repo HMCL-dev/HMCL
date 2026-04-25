@@ -62,6 +62,7 @@ import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import static org.jackhuang.hmcl.ui.FXUtils.onEscPressed;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
@@ -283,6 +284,7 @@ public final class Versions {
                 dialog.setText(i18n("game.clean.content", I18n.formatSize(totalSize)));
                 buttonPane.getChildren().setAll(okButton);
                 okButton.setOnAction(event -> {
+                    onEscPressed(dialog, null);
                     buttonPane.getChildren().setAll(spinner);
                     Task.runAsync(() -> list.forEach(path -> {
                         try {
