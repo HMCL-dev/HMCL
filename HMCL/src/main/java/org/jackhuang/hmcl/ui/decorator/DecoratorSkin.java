@@ -274,6 +274,7 @@ public class DecoratorSkin extends SkinBase<Decorator> {
 
             if (canBack) {
                 JFXButton backNavButton = new JFXButton();
+                skinnable.forbidDraggingWindow(backNavButton);
                 backNavButton.setFocusTraversable(false);
                 backNavButton.setGraphic(SVG.ARROW_BACK.createIcon(Themes.titleFillProperty()));
                 backNavButton.getStyleClass().add("jfx-decorator-button");
@@ -285,6 +286,7 @@ public class DecoratorSkin extends SkinBase<Decorator> {
 
             if (canClose) {
                 JFXButton closeNavButton = new JFXButton();
+                skinnable.forbidDraggingWindow(closeNavButton);
                 closeNavButton.setFocusTraversable(false);
                 closeNavButton.setGraphic(SVG.CLOSE.createIcon(Themes.titleFillProperty()));
                 closeNavButton.getStyleClass().add("jfx-decorator-button");
@@ -349,13 +351,9 @@ public class DecoratorSkin extends SkinBase<Decorator> {
                 refreshNavButton.setGraphic(SVG.REFRESH.createIcon(Themes.titleFillProperty()));
                 refreshNavButton.getStyleClass().add("jfx-decorator-button");
                 refreshNavButton.onActionProperty().bind(skinnable.onRefreshNavButtonActionProperty());
+                skinnable.forbidDraggingWindow(refreshNavButton);
 
-                Rectangle separator = new Rectangle();
-                separator.visibleProperty().bind(refreshNavButton.visibleProperty());
-                separator.heightProperty().bind(navBar.heightProperty());
-                separator.setFill(Color.GRAY);
-
-                navRight.getChildren().setAll(refreshNavButton, separator);
+                navRight.getChildren().setAll(refreshNavButton);
                 navBar.setRight(navRight);
             }
         }

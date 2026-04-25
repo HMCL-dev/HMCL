@@ -1,3 +1,20 @@
+/*
+ * Hello Minecraft! Launcher
+ * Copyright (C) 2026 huangyuhui <huanghongxun2008@126.com> and contributors
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
 package org.jackhuang.hmcl.mod.modinfo;
 
 import com.google.gson.JsonArray;
@@ -7,7 +24,6 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonParseException;
 import com.google.gson.JsonPrimitive;
 import com.google.gson.annotations.JsonAdapter;
-import com.moandjiezana.toml.Toml;
 import kala.compress.archivers.zip.ZipArchiveEntry;
 import org.jackhuang.hmcl.mod.LocalModFile;
 import org.jackhuang.hmcl.mod.ModLoaderType;
@@ -18,6 +34,10 @@ import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.gson.Validation;
 import org.jackhuang.hmcl.util.io.CompressingUtils;
 import org.jackhuang.hmcl.util.tree.ZipFileTree;
+import org.tomlj.Toml;
+import org.tomlj.TomlArray;
+import org.tomlj.TomlParseResult;
+import org.tomlj.TomlTable;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -25,8 +45,8 @@ import java.lang.reflect.Type;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.StringJoiner;
 import java.util.jar.Attributes;
 import java.util.jar.Manifest;
@@ -191,10 +211,15 @@ public final class ForgeNewModMetadata {
         ZipArchiveEntry modToml = tree.getEntry(tomlPath);
         if (modToml == null)
             throw new IOException("File " + modFile + " is not a Forge 1.13+ or NeoForge mod.");
-        Toml toml = new Toml().read(tree.readTextEntry(modToml));
-        ForgeNewModMetadata metadata = toml.to(ForgeNewModMetadata.class);
+        TomlParseResult tomlParseResult = Toml.parse(tree.readTextEntry(modToml));
+        if (tomlParseResult.hasErrors()) {
+            var ioException = new IOException("Mod " + modFile + " `%s` is malformed..".formatted(modToml.getName()));
+            tomlParseResult.errors().forEach(ioException::addSuppressed);
+            throw ioException;
+        }
+        ForgeNewModMetadata metadata = JsonUtils.GSON.fromJson(tomlParseResult.toJson(), ForgeNewModMetadata.class);
         if (metadata == null || metadata.getMods().isEmpty())
-            throw new IOException("Mod " + modFile + " `mods.toml` is malformed..");
+            throw new IOException("Mod " + modFile + " `%s` is malformed..".formatted(modToml.getName()));
         Mod mod = metadata.getMods().get(0);
         ZipArchiveEntry manifestMF = tree.getEntry("META-INF/MANIFEST.MF");
         String jarVersion = "";
@@ -207,7 +232,7 @@ public final class ForgeNewModMetadata {
             }
         }
 
-        ModLoaderType type = analyzeLoader(toml, mod.getModId(), modLoaderType);
+        ModLoaderType type = analyzeLoader(tomlParseResult, mod.getModId(), modLoaderType);
 
         return new LocalModFile(modManager, modManager.getLocalMod(mod.getModId(), type), modFile, mod.getDisplayName(), new LocalModFile.Description(mod.getDescription()),
                 mod.getAuthors(), jarVersion == null ? mod.getVersion() : mod.getVersion().replace("${file.jarVersion}", jarVersion), "",
@@ -276,23 +301,32 @@ public final class ForgeNewModMetadata {
         throw new IOException();
     }
 
-    private static ModLoaderType analyzeLoader(Toml toml, String modID, ModLoaderType loader) throws IOException {
-        List<HashMap<String, Object>> dependencies = null;
+    private static ModLoaderType analyzeLoader(TomlParseResult toml, String modID, ModLoaderType loader) {
+        List<Map<String, Object>> dependencies = null;
         try {
-            dependencies = toml.getList("dependencies." + modID);
+            TomlArray tomlArray = toml.getArray("dependencies." + modID);
+            if (tomlArray != null) {
+                dependencies = tomlArray.toList().stream().map( o -> ((TomlTable) o).toMap()).toList();
+            }
         } catch (ClassCastException ignored) { // https://github.com/HMCL-dev/HMCL/issues/5068
         }
 
         if (dependencies == null) {
             try {
-                dependencies = toml.getList("dependencies"); // ??? I have no idea why some of the Forge mods use [[dependencies]]
+                TomlArray tomlArray = toml.getArray("dependencies"); // ??? I have no idea why some of the Forge mods use [[dependencies]]
+                if (tomlArray != null) {
+                    dependencies = tomlArray.toList().stream().map( o -> ((TomlTable) o).toMap()).toList();
+                }
             } catch (ClassCastException e) {
                 try {
-                    Toml table = toml.getTable("dependencies");
+                    TomlTable table = toml.getTable("dependencies");
                     if (table == null)
                         return loader;
 
-                    dependencies = table.getList(modID);
+                    TomlArray tomlArray = table.getArray(modID);
+                    if (tomlArray != null) {
+                        dependencies = tomlArray.toList().stream().map( o -> ((TomlTable) o).toMap()).toList();
+                    }
                 } catch (Throwable ignored) {
                 }
             }
@@ -304,7 +338,7 @@ public final class ForgeNewModMetadata {
 
         ModLoaderType result = null;
         loop:
-        for (HashMap<String, Object> dependency : dependencies) {
+        for (Map<String, Object> dependency : dependencies) {
             switch ((String) dependency.get("modId")) {
                 case "forge":
                     result = ModLoaderType.FORGE;
@@ -315,11 +349,11 @@ public final class ForgeNewModMetadata {
             }
         }
 
-        if (result == loader)
+        if (result != null) {
+            if (result != loader)
+                LOG.warning("Loader mismatch for mod " + modID + ", found " + result + ", expecting " + loader);
             return result;
-        else if (result != null)
-            throw new IOException("Loader mismatch");
-        else {
+        } else {
             LOG.warning("Cannot determine the mod loader for mod " + modID + ", expected " + loader);
             return loader;
         }

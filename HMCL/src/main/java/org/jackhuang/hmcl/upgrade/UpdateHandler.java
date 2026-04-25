@@ -20,20 +20,20 @@ package org.jackhuang.hmcl.upgrade;
 import com.google.gson.Gson;
 import com.google.gson.JsonParseException;
 import javafx.application.Platform;
-
 import org.jackhuang.hmcl.EntryPoint;
 import org.jackhuang.hmcl.Main;
 import org.jackhuang.hmcl.Metadata;
+import org.jackhuang.hmcl.java.JavaRuntime;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.task.TaskExecutor;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.UpgradeDialog;
 import org.jackhuang.hmcl.ui.construct.MessageDialogPane.MessageType;
+import org.jackhuang.hmcl.util.FileSaver;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.SwingUtils;
 import org.jackhuang.hmcl.util.TaskCancellationAction;
 import org.jackhuang.hmcl.util.io.JarUtils;
-import org.jackhuang.hmcl.java.JavaRuntime;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
 
 import java.io.IOException;
@@ -43,13 +43,15 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
 import java.util.concurrent.CancellationException;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import static org.jackhuang.hmcl.ui.FXUtils.checkFxUserThread;
 import static org.jackhuang.hmcl.util.Lang.thread;
-import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
+import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 public final class UpdateHandler {
     private UpdateHandler() {
@@ -67,7 +69,7 @@ public final class UpdateHandler {
                 performMigration();
             } catch (IOException e) {
                 LOG.warning("Failed to perform migration", e);
-                SwingUtils.showErrorDialog(i18n("fatal.apply_update_failure", Metadata.PUBLISH_URL) + "\n" + StringUtils.getStackTrace(e));
+                SwingUtils.showErrorDialog(i18n("fatal.apply_update_failure", Metadata.MANUAL_UPDATE_URL) + "\n" + StringUtils.getStackTrace(e));
             }
             return true;
         }
@@ -82,7 +84,7 @@ public final class UpdateHandler {
                 applyUpdate(Paths.get(args[1]));
             } catch (IOException e) {
                 LOG.warning("Failed to apply update", e);
-                SwingUtils.showErrorDialog(i18n("fatal.apply_update_failure", Metadata.PUBLISH_URL) + "\n" + StringUtils.getStackTrace(e));
+                SwingUtils.showErrorDialog(i18n("fatal.apply_update_failure", Metadata.MANUAL_UPDATE_URL) + "\n" + StringUtils.getStackTrace(e));
             }
             return true;
         }
@@ -123,6 +125,29 @@ public final class UpdateHandler {
                     try {
                         if (!IntegrityChecker.isSelfVerified() && !IntegrityChecker.DISABLE_SELF_INTEGRITY_CHECK) {
                             throw new IOException("Current JAR is not verified");
+                        }
+
+                        CompletableFuture<Void> future = new CompletableFuture<>();
+
+                        Platform.runLater(() -> {
+                            try {
+                                Controllers.saveWindowStates();
+                            } finally {
+                                future.complete(null);
+                            }
+                        });
+
+                        try {
+                            future.get();
+                        } catch (ExecutionException | InterruptedException ignored) {
+                            // Ignore
+                        }
+
+
+                        try {
+                            FileSaver.waitForAllSaves();
+                        } catch (InterruptedException ignored) {
+                            // Ignore
                         }
 
                         requestUpdate(downloaded, getCurrentLocation());
@@ -175,7 +200,7 @@ public final class UpdateHandler {
         startJava(updateTo, "--apply-to", self.toString());
     }
 
-    private static void startJava(Path jar, String... appArgs) throws IOException {
+    public static void startJava(Path jar, String... appArgs) throws IOException {
         List<String> commandline = new ArrayList<>();
         commandline.add(JavaRuntime.getDefault().getBinary().toString());
 
