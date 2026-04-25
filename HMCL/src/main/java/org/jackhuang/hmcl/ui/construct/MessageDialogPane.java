@@ -180,7 +180,6 @@ public final class MessageDialogPane extends HBox {
             return this;
         }
 
-
         public Builder addAction(String text, @Nullable Runnable action) {
             JFXButton btnAction = new JFXButton(text);
             btnAction.getStyleClass().add("dialog-accept");
