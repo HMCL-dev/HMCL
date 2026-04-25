@@ -80,7 +80,7 @@ public class JFXRippler extends StackPane {
     protected RippleGenerator rippler;
     protected Pane ripplerPane;
     protected Node control;
-    private Transition coverAnimation;
+    private Animation coverAnimation;
     private Rectangle hoverOverlay;
 
     protected static final double RIPPLE_MAX_RADIUS = 300;
@@ -140,35 +140,14 @@ public class JFXRippler extends StackPane {
             mouseEventHandler = event -> {
                 if (coverAnimation != null) {
                     coverAnimation.stop();
-                    coverAnimation = null;
                 }
 
-                if (event.getEventType() == MouseEvent.MOUSE_ENTERED) {
-                    coverAnimation = new Transition() {
-                        {
-                            setCycleDuration(Motion.SHORT4);
-                            setInterpolator(Motion.EASE_IN);
-                        }
+                boolean isEntered = event.getEventType() == MouseEvent.MOUSE_ENTERED;
+                Color onSurface = Themes.getColorScheme().getOnSurface();
+                hoverOverlay.setFill(Color.color(onSurface.getRed(), onSurface.getGreen(), onSurface.getBlue(), 0.04));
 
-                        @Override
-                        protected void interpolate(double frac) {
-                            interpolateBackground(frac);
-                        }
-                    };
-                } else {
-                    coverAnimation = new Transition() {
-                        {
-                            setCycleDuration(Motion.SHORT4);
-                            setInterpolator(Motion.EASE_OUT);
-                        }
-
-                        @Override
-                        protected void interpolate(double frac) {
-                            interpolateBackground(1 - frac);
-                        }
-                    };
-                }
-
+                coverAnimation = new Timeline(new KeyFrame(Motion.SHORT4,
+                        new KeyValue(hoverOverlay.opacityProperty(), isEntered ? 1 : 0, isEntered ? Motion.EASE_IN : Motion.EASE_OUT)));
                 coverAnimation.play();
             };
         } else {
@@ -182,14 +161,9 @@ public class JFXRippler extends StackPane {
 
     private void interpolateBackground(double frac) {
         if (hoverOverlay == null) return;
-        if (frac < 0.01) {
-            hoverOverlay.setOpacity(0);
-            return;
-        }
         Color onSurface = Themes.getColorScheme().getOnSurface();
-        Color fillColor = Color.color(onSurface.getRed(), onSurface.getGreen(), onSurface.getBlue(), frac * 0.04);
-        hoverOverlay.setFill(fillColor);
-        hoverOverlay.setOpacity(1);
+        hoverOverlay.setFill(Color.color(onSurface.getRed(), onSurface.getGreen(), onSurface.getBlue(), 0.04));
+        hoverOverlay.setOpacity(frac);
     }
 
     protected final void createRippleUI() {
