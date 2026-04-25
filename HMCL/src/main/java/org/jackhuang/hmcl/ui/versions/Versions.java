@@ -212,7 +212,7 @@ public final class Versions {
         JFXButton okButton = new JFXButton(i18n("button.yes"));
         okButton.getStyleClass().add("dialog-accept");
 
-        dialogBuilder.addAction(buttonPane);
+        dialogBuilder.addActionNoClose(buttonPane);
         dialogBuilder.addCancel(null);
 
         var dialog = dialogBuilder.build();
@@ -244,13 +244,11 @@ public final class Versions {
 
             for (String path : List.of("logs", "crash-reports", "modernfix", "mods/.connector", "CustomSkinLoader/caches", ".fabric")) {
                 unusedFolders.add(repository.getBaseDirectory().resolve(path));
-                versions.forEach(v -> {
-                    unusedFolders.add(repository.getVersionRoot(v.getId()).resolve(path));
-                });
+                versions.forEach(v -> unusedFolders.add(repository.getRunDirectory(v.getId()).resolve(path)));
             }
 
             versions.forEach(v -> {
-                try (var walker = Files.walk(repository.getVersionRoot(v.getId()), 1)) {
+                try (var walker = Files.walk(repository.getRunDirectory(v.getId()), 1)) {
                     unusedFolders.addAll(walker
                             .filter(it -> {
                                 var name = it.getFileName().toString();

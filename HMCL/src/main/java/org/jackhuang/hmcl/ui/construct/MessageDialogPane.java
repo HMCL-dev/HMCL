@@ -125,6 +125,10 @@ public final class MessageDialogPane extends HBox {
         actions.getChildren().add(btn);
     }
 
+    public void addButtonNoClose(Node btn) {
+        actions.getChildren().add(btn);
+    }
+
     public void setCancelButton(@Nullable ButtonBase btn) {
         cancelButton = btn;
     }
@@ -169,6 +173,13 @@ public final class MessageDialogPane extends HBox {
             actionNode.getStyleClass().add("dialog-accept");
             return this;
         }
+
+        public Builder addActionNoClose(Node actionNode) {
+            dialog.addButtonNoClose(actionNode);
+            actionNode.getStyleClass().add("dialog-accept");
+            return this;
+        }
+
 
         public Builder addAction(String text, @Nullable Runnable action) {
             JFXButton btnAction = new JFXButton(text);
