@@ -54,9 +54,6 @@ public enum ReleaseType {
     }
 
     /// Priority used when registering the generic `hmcl` alias.
-    ///
-    /// Higher values win, which keeps `stable` as the default alias target when
-    /// multiple channel packages are installed together.
     public int getAlternativesPriority() {
         return alternativesPriority;
     }
