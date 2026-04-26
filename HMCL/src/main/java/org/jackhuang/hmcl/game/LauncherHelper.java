@@ -72,7 +72,6 @@ import static org.jackhuang.hmcl.util.Lang.resolveException;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 import static org.jackhuang.hmcl.util.platform.Platform.SYSTEM_PLATFORM;
-import static org.jackhuang.hmcl.util.platform.Platform.isCompatibleWithX86Java;
 
 public final class LauncherHelper {
 
@@ -625,7 +624,7 @@ public final class LauncherHelper {
                             break;
                         case VANILLA_X86:
                             if (setting.getNativesDirType() == NativesDirectoryType.VERSION_FOLDER
-                                    && isCompatibleWithX86Java()) {
+                                    && Platform.isSupportedTranslationX86_64()) {
                                 suggestions.add(i18n("launch.advice.vanilla_x86.translation"));
                             }
                             break;
