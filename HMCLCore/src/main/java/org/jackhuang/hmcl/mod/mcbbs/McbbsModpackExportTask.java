@@ -96,7 +96,7 @@ public class McbbsModpackExportTask extends Task<Void> {
             List<McbbsModpackManifest.Addon> addons = new ArrayList<>();
             addons.add(new McbbsModpackManifest.Addon(MINECRAFT.getPatchId(), gameVersion));
             for (LibraryAnalyzer.LibraryType type : analyzer.getLibraries()) {
-                if (type == OPTIFINE || type == BOOTSTRAP_LAUNCHER || type == MINECRAFT) continue;
+                if (type == BOOTSTRAP_LAUNCHER || type == MINECRAFT) continue;
                 else addons.add(new McbbsModpackManifest.Addon(type.getPatchId(), analyzer.getVersion(type).orElseThrow()));
             }
 
