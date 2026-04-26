@@ -78,242 +78,194 @@ public final class SettingsPage extends ScrollPane {
     public SettingsPage() {
         this.setFitToWidth(true);
 
-        VBox rootPane = new VBox();
+        VBox rootPane = new VBox(10);
         rootPane.setPadding(new Insets(10));
         this.setContent(rootPane);
         FXUtils.smoothScrolling(this);
 
-        ComponentList settingsPane = new ComponentList();
         {
+            ComponentList updatePaneList = new ComponentList();
             {
-                StackPane sponsorPane = new StackPane();
-                sponsorPane.setCursor(Cursor.HAND);
-                FXUtils.onClicked(sponsorPane, this::onSponsor);
-                sponsorPane.setPadding(new Insets(8, 0, 8, 0));
-
-                GridPane gridPane = new GridPane();
-
-                ColumnConstraints col = new ColumnConstraints();
-                col.setHgrow(Priority.SOMETIMES);
-                col.setMaxWidth(Double.POSITIVE_INFINITY);
-
-                gridPane.getColumnConstraints().setAll(col);
-
-                RowConstraints row = new RowConstraints();
-                row.setMinHeight(Double.NEGATIVE_INFINITY);
-                row.setValignment(VPos.TOP);
-                row.setVgrow(Priority.SOMETIMES);
-                gridPane.getRowConstraints().setAll(row);
-
+                ObjectProperty<UpdateChannel> updateChannel;
                 {
-                    Label label = new Label(i18n("sponsor.hmcl"));
-                    label.setWrapText(true);
-                    label.setTextAlignment(TextAlignment.JUSTIFY);
-                    GridPane.setRowIndex(label, 0);
-                    GridPane.setColumnIndex(label, 0);
-                    gridPane.getChildren().add(label);
-                }
 
-                sponsorPane.getChildren().setAll(gridPane);
-                settingsPane.getContent().add(sponsorPane);
-            }
+                    JFXButton updateButton = new JFXButton();
+                    updateButton.setGraphic(SVG.UPDATE.createIcon(20));
+                    updateButton.setOnAction(e -> onUpdate());
+                    updateButton.setPadding(Insets.EMPTY);
+                    FXUtils.installFastTooltip(updateButton, i18n("update.tooltip"));
 
-            ObjectProperty<UpdateChannel> updateChannel;
-            {
+                    var updatePane = new LineSelectButton<UpdateChannel>() {
 
-                JFXButton updateButton = new JFXButton();
-                updateButton.setGraphic(SVG.UPDATE.createIcon(20));
-                updateButton.setOnAction(e -> onUpdate());
-                updateButton.setPadding(Insets.EMPTY);
-                FXUtils.installFastTooltip(updateButton, i18n("update.tooltip"));
+                        {
+                            getStyleClass().add("update-pane");
+                            setNode(IDX_TRAILING, updateButton);
+                        }
 
-                var updatePane = new LineSelectButton<UpdateChannel>() {
-
-                    {
-                        getStyleClass().add("update-pane");
-                        setNode(IDX_TRAILING, updateButton);
-                    }
-
-                    @Override
-                    protected int getTrailingTextIndex() {
-                        return LineComponent.IDX_TRAILING + 1;
-                    }
-                };
-                updateChannel = updatePane.valueProperty();
-                updatePane.setTitle(i18n("update"));
-                updatePane.setValue(UpdateChannel.getChannel());
-
-                updatePane.setConverter(channel -> i18n("update.channel." + channel.channelName));
-                updatePane.setItems(List.of(UpdateChannel.STABLE, UpdateChannel.DEVELOPMENT));
-                updatePane.setDescriptionConverter(channel -> i18n("update.note." + channel.channelName));
-
-                final StringProperty lblUpdateSubProperty = updatePane.subtitleProperty();
-
-                {
-                    updateListener = any -> {
-                        boolean outdated = UpdateChecker.isOutdated();
-
-                        updateButton.setVisible(outdated);
-                        updateButton.setManaged(outdated);
-                        updatePane.pseudoClassStateChanged(PseudoClass.getPseudoClass("active"), outdated);
-
-                        if (UpdateChecker.isOutdated()) {
-                            lblUpdateSubProperty.set(i18n("update.newest_version", UpdateChecker.getLatestVersion().getVersion()));
-                        } else if (UpdateChecker.isCheckingUpdate()) {
-                            lblUpdateSubProperty.set(i18n("update.checking"));
-                        } else {
-                            lblUpdateSubProperty.set(i18n("update.latest"));
+                        @Override
+                        protected int getTrailingTextIndex() {
+                            return LineComponent.IDX_TRAILING + 1;
                         }
                     };
-                    UpdateChecker.latestVersionProperty().addListener(new WeakInvalidationListener(updateListener));
-                    UpdateChecker.outdatedProperty().addListener(new WeakInvalidationListener(updateListener));
-                    UpdateChecker.checkingUpdateProperty().addListener(new WeakInvalidationListener(updateListener));
-                    updateListener.invalidated(null);
+                    updateChannel = updatePane.valueProperty();
+                    updatePane.setTitle(i18n("update"));
+                    updatePane.setValue(UpdateChannel.getChannel());
+
+                    updatePane.setConverter(channel -> i18n("update.channel." + channel.channelName));
+                    updatePane.setItems(List.of(UpdateChannel.STABLE, UpdateChannel.DEVELOPMENT));
+                    updatePane.setDescriptionConverter(channel -> i18n("update.note." + channel.channelName));
+
+                    final StringProperty lblUpdateSubProperty = updatePane.subtitleProperty();
+
+                    {
+                        updateListener = any -> {
+                            boolean outdated = UpdateChecker.isOutdated();
+
+                            updateButton.setVisible(outdated);
+                            updateButton.setManaged(outdated);
+                            updatePane.pseudoClassStateChanged(PseudoClass.getPseudoClass("active"), outdated);
+
+                            if (UpdateChecker.isOutdated()) {
+                                lblUpdateSubProperty.set(i18n("update.newest_version", UpdateChecker.getLatestVersion().getVersion()));
+                            } else if (UpdateChecker.isCheckingUpdate()) {
+                                lblUpdateSubProperty.set(i18n("update.checking"));
+                            } else {
+                                lblUpdateSubProperty.set(i18n("update.latest"));
+                            }
+                        };
+                        UpdateChecker.latestVersionProperty().addListener(new WeakInvalidationListener(updateListener));
+                        UpdateChecker.outdatedProperty().addListener(new WeakInvalidationListener(updateListener));
+                        UpdateChecker.checkingUpdateProperty().addListener(new WeakInvalidationListener(updateListener));
+                        updateListener.invalidated(null);
+                    }
+
+                    updatePaneList.getContent().add(updatePane);
                 }
 
-                settingsPane.getContent().add(updatePane);
+                {
+                    LineToggleButton previewPane = new LineToggleButton();
+                    previewPane.setTitle(i18n("update.preview"));
+                    previewPane.setSubtitle(i18n("update.preview.subtitle"));
+                    previewPane.selectedProperty().bindBidirectional(config().acceptPreviewUpdateProperty());
+
+                    InvalidationListener checkUpdateListener = e -> {
+                        UpdateChecker.requestCheckUpdate(updateChannel.get(), previewPane.isSelected());
+                    };
+                    updateChannel.addListener(checkUpdateListener);
+                    previewPane.selectedProperty().addListener(checkUpdateListener);
+
+                    updatePaneList.getContent().add(previewPane);
+                }
+
+                {
+                    LineToggleButton disableAutoShowUpdateDialogPane = new LineToggleButton();
+                    disableAutoShowUpdateDialogPane.setTitle(i18n("update.disable_auto_show_update_dialog"));
+                    disableAutoShowUpdateDialogPane.setSubtitle(i18n("update.disable_auto_show_update_dialog.subtitle"));
+                    disableAutoShowUpdateDialogPane.selectedProperty().bindBidirectional(config().disableAutoShowUpdateDialogProperty());
+                    updatePaneList.getContent().add(disableAutoShowUpdateDialogPane);
+                }
+
+                rootPane.getChildren().addAll(ComponentList.createComponentListTitle(i18n("update")), updatePaneList);
             }
 
             {
-                LineToggleButton previewPane = new LineToggleButton();
-                previewPane.setTitle(i18n("update.preview"));
-                previewPane.setSubtitle(i18n("update.preview.subtitle"));
-                previewPane.selectedProperty().bindBidirectional(config().acceptPreviewUpdateProperty());
+                ComponentList languagePaneList = new ComponentList();
 
-                InvalidationListener checkUpdateListener = e -> {
-                    UpdateChecker.requestCheckUpdate(updateChannel.get(), previewPane.isSelected());
-                };
-                updateChannel.addListener(checkUpdateListener);
-                previewPane.selectedProperty().addListener(checkUpdateListener);
+                {
+                    var chooseLanguagePane = new LineSelectButton<SupportedLocale>();
+                    chooseLanguagePane.setTitle(i18n("settings.launcher.language"));
+                    chooseLanguagePane.setSubtitle(i18n("settings.take_effect_after_restart"));
 
-                settingsPane.getContent().add(previewPane);
+                    SupportedLocale currentLocale = I18n.getLocale();
+                    chooseLanguagePane.setConverter(locale -> {
+                        if (locale.isDefault())
+                            return locale.getDisplayName(currentLocale);
+                        else if (locale.isSameLanguage(currentLocale))
+                            return locale.getDisplayName(locale);
+                        else
+                            return locale.getDisplayName(currentLocale) + " - " + locale.getDisplayName(locale);
+                    });
+                    chooseLanguagePane.setItems(SupportedLocale.getSupportedLocales());
+                    chooseLanguagePane.valueProperty().bindBidirectional(config().localizationProperty());
+
+                    languagePaneList.getContent().add(chooseLanguagePane);
+
+                    LineToggleButton disableAutoGameOptionsPane = new LineToggleButton();
+                    disableAutoGameOptionsPane.setTitle(i18n("settings.launcher.disable_auto_game_options"));
+                    disableAutoGameOptionsPane.selectedProperty().bindBidirectional(config().disableAutoGameOptionsProperty());
+
+                    languagePaneList.getContent().add(disableAutoGameOptionsPane);
+                }
+
+                rootPane.getChildren().addAll(ComponentList.createComponentListTitle(i18n("settings.launcher.language")), languagePaneList);
             }
 
             {
-                LineToggleButton disableAutoShowUpdateDialogPane = new LineToggleButton();
-                disableAutoShowUpdateDialogPane.setTitle(i18n("update.disable_auto_show_update_dialog"));
-                disableAutoShowUpdateDialogPane.setSubtitle(i18n("update.disable_auto_show_update_dialog.subtitle"));
-                disableAutoShowUpdateDialogPane.selectedProperty().bindBidirectional(config().disableAutoShowUpdateDialogProperty());
-                settingsPane.getContent().add(disableAutoShowUpdateDialogPane);
+                ComponentList miscPaneList = new ComponentList();
+
+                if (AprilFools.isShowAprilFoolsSettings()) {
+                    LineToggleButton disableAprilFools = new LineToggleButton();
+                    disableAprilFools.setTitle(i18n("settings.launcher.disable_april_fools"));
+                    disableAprilFools.setSubtitle(i18n("settings.take_effect_after_restart"));
+                    disableAprilFools.selectedProperty().bindBidirectional(config().disableAprilFoolsProperty());
+                    miscPaneList.getContent().add(disableAprilFools);
+                }
+
+                {
+                    LineToggleButton allowAutoAgentPane = new LineToggleButton();
+                    allowAutoAgentPane.setTitle(i18n("settings.launcher.allow_auto_agent"));
+                    allowAutoAgentPane.setSubtitle(i18n("settings.launcher.allow_auto_agent.subtitle"));
+                    allowAutoAgentPane.selectedProperty().bindBidirectional(config().allowAutoAgentProperty());
+
+                    miscPaneList.getContent().add(allowAutoAgentPane);
+                }
+
+                {
+                    BorderPane debugPane = new BorderPane();
+
+                    Label left = new Label(i18n("settings.launcher.debug"));
+                    BorderPane.setAlignment(left, Pos.CENTER_LEFT);
+                    debugPane.setLeft(left);
+
+                    JFXButton openLogFolderButton = new JFXButton(i18n("settings.launcher.launcher_log.reveal"));
+                    openLogFolderButton.setOnAction(e -> openLogFolder());
+                    openLogFolderButton.getStyleClass().add("jfx-button-border");
+                    if (LOG.getLogFile() == null)
+                        openLogFolderButton.setDisable(true);
+
+                    SpinnerPane exportLogPane = new SpinnerPane();
+
+                    JFXButton logButton = FXUtils.newBorderButton(i18n("settings.launcher.launcher_log.export"));
+                    exportLogPane.setContent(logButton);
+                    logButton.setOnAction(e -> {
+                        exportLogPane.showSpinner();
+                        onExportLogs().whenCompleteAsync((result, exception) -> {
+                            exportLogPane.hideSpinner();
+                            if (exception == null) {
+                                Controllers.dialog(i18n("settings.launcher.launcher_log.export.success", result));
+                                FXUtils.showFileInExplorer(result);
+                            } else {
+                                LOG.warning("Failed to export logs", exception);
+                                Controllers.dialog(
+                                        i18n("settings.launcher.launcher_log.export.failed") + "\n" + StringUtils.getStackTrace(exception),
+                                        null,
+                                        MessageType.ERROR
+                                );
+                            }
+                        }, Schedulers.javafx());
+                    });
+
+                    HBox buttonBox = new HBox();
+                    buttonBox.setSpacing(10);
+                    buttonBox.getChildren().addAll(openLogFolderButton, exportLogPane);
+                    BorderPane.setAlignment(buttonBox, Pos.CENTER_RIGHT);
+                    debugPane.setRight(buttonBox);
+
+                    miscPaneList.getContent().add(debugPane);
+                }
+
+                rootPane.getChildren().addAll(ComponentList.createComponentListTitle("杂项"), miscPaneList);
             }
-
-            if (AprilFools.isShowAprilFoolsSettings()) {
-                LineToggleButton disableAprilFools = new LineToggleButton();
-                disableAprilFools.setTitle(i18n("settings.launcher.disable_april_fools"));
-                disableAprilFools.setSubtitle(i18n("settings.take_effect_after_restart"));
-                disableAprilFools.selectedProperty().bindBidirectional(config().disableAprilFoolsProperty());
-                settingsPane.getContent().add(disableAprilFools);
-            }
-
-            {
-                MultiFileItem<EnumCommonDirectory> fileCommonLocation = new MultiFileItem<>();
-                fileCommonLocation.loadChildren(Arrays.asList(
-                        new MultiFileItem.Option<>(i18n("launcher.cache_directory.default"), EnumCommonDirectory.DEFAULT),
-                        new MultiFileItem.FileOption<>(i18n("settings.custom"), EnumCommonDirectory.CUSTOM)
-                                .setChooserTitle(i18n("launcher.cache_directory.choose"))
-                                .setDirectory(true)
-                                .bindBidirectional(config().commonDirectoryProperty())
-                ));
-                fileCommonLocation.selectedDataProperty().bindBidirectional(config().commonDirTypeProperty());
-
-                ComponentSublist fileCommonLocationSublist = new ComponentSublist();
-                fileCommonLocationSublist.getContent().add(fileCommonLocation);
-                fileCommonLocationSublist.setTitle(i18n("launcher.cache_directory"));
-                fileCommonLocationSublist.setHasSubtitle(true);
-                fileCommonLocationSublist.subtitleProperty().bind(
-                        Bindings.createObjectBinding(() -> Optional.ofNullable(Settings.instance().getCommonDirectory())
-                                        .orElse(i18n("launcher.cache_directory.disabled")),
-                                config().commonDirectoryProperty(), config().commonDirTypeProperty()));
-
-                JFXButton cleanButton = FXUtils.newBorderButton(i18n("launcher.cache_directory.clean"));
-                cleanButton.setOnAction(e -> clearCacheDirectory());
-                fileCommonLocationSublist.setHeaderRight(cleanButton);
-
-                settingsPane.getContent().add(fileCommonLocationSublist);
-            }
-
-            {
-                var chooseLanguagePane = new LineSelectButton<SupportedLocale>();
-                chooseLanguagePane.setTitle(i18n("settings.launcher.language"));
-                chooseLanguagePane.setSubtitle(i18n("settings.take_effect_after_restart"));
-
-                SupportedLocale currentLocale = I18n.getLocale();
-                chooseLanguagePane.setConverter(locale -> {
-                    if (locale.isDefault())
-                        return locale.getDisplayName(currentLocale);
-                    else if (locale.isSameLanguage(currentLocale))
-                        return locale.getDisplayName(locale);
-                    else
-                        return locale.getDisplayName(currentLocale) + " - " + locale.getDisplayName(locale);
-                });
-                chooseLanguagePane.setItems(SupportedLocale.getSupportedLocales());
-                chooseLanguagePane.valueProperty().bindBidirectional(config().localizationProperty());
-
-                settingsPane.getContent().add(chooseLanguagePane);
-            }
-
-            {
-                LineToggleButton disableAutoGameOptionsPane = new LineToggleButton();
-                disableAutoGameOptionsPane.setTitle(i18n("settings.launcher.disable_auto_game_options"));
-                disableAutoGameOptionsPane.selectedProperty().bindBidirectional(config().disableAutoGameOptionsProperty());
-
-                settingsPane.getContent().add(disableAutoGameOptionsPane);
-            }
-
-            {
-                LineToggleButton allowAutoAgentPane = new LineToggleButton();
-                allowAutoAgentPane.setTitle(i18n("settings.launcher.allow_auto_agent"));
-                allowAutoAgentPane.setSubtitle(i18n("settings.launcher.allow_auto_agent.subtitle"));
-                allowAutoAgentPane.selectedProperty().bindBidirectional(config().allowAutoAgentProperty());
-
-                settingsPane.getContent().add(allowAutoAgentPane);
-            }
-
-            {
-                BorderPane debugPane = new BorderPane();
-
-                Label left = new Label(i18n("settings.launcher.debug"));
-                BorderPane.setAlignment(left, Pos.CENTER_LEFT);
-                debugPane.setLeft(left);
-
-                JFXButton openLogFolderButton = new JFXButton(i18n("settings.launcher.launcher_log.reveal"));
-                openLogFolderButton.setOnAction(e -> openLogFolder());
-                openLogFolderButton.getStyleClass().add("jfx-button-border");
-                if (LOG.getLogFile() == null)
-                    openLogFolderButton.setDisable(true);
-
-                SpinnerPane exportLogPane = new SpinnerPane();
-
-                JFXButton logButton = FXUtils.newBorderButton(i18n("settings.launcher.launcher_log.export"));
-                exportLogPane.setContent(logButton);
-                logButton.setOnAction(e -> {
-                    exportLogPane.showSpinner();
-                    onExportLogs().whenCompleteAsync((result, exception) -> {
-                        exportLogPane.hideSpinner();
-                        if (exception == null) {
-                            Controllers.dialog(i18n("settings.launcher.launcher_log.export.success", result));
-                            FXUtils.showFileInExplorer(result);
-                        } else {
-                            LOG.warning("Failed to export logs", exception);
-                            Controllers.dialog(
-                                    i18n("settings.launcher.launcher_log.export.failed") + "\n" + StringUtils.getStackTrace(exception),
-                                    null,
-                                    MessageType.ERROR
-                            );
-                        }
-                    }, Schedulers.javafx());
-                });
-
-                HBox buttonBox = new HBox();
-                buttonBox.setSpacing(10);
-                buttonBox.getChildren().addAll(openLogFolderButton, exportLogPane);
-                BorderPane.setAlignment(buttonBox, Pos.CENTER_RIGHT);
-                debugPane.setRight(buttonBox);
-
-                settingsPane.getContent().add(debugPane);
-            }
-
-            rootPane.getChildren().add(settingsPane);
         }
     }
 
@@ -451,16 +403,5 @@ public final class SettingsPage extends ScrollPane {
 
             return outputFile;
         }), Schedulers.io());
-    }
-
-    private void onSponsor() {
-        FXUtils.openLink("https://github.com/HMCL-dev/HMCL");
-    }
-
-    private void clearCacheDirectory() {
-        String commonDirectory = Settings.instance().getCommonDirectory();
-        if (commonDirectory != null) {
-            FileUtils.cleanDirectoryQuietly(Path.of(commonDirectory, "cache"));
-        }
     }
 }

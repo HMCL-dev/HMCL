@@ -27,14 +27,20 @@ import javafx.scene.control.ScrollPane;
 import javafx.scene.control.ToggleGroup;
 import javafx.scene.layout.*;
 import org.jackhuang.hmcl.setting.DownloadProviders;
+import org.jackhuang.hmcl.setting.EnumCommonDirectory;
+import org.jackhuang.hmcl.setting.Settings;
 import org.jackhuang.hmcl.task.FetchTask;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.WeakListenerHolder;
 import org.jackhuang.hmcl.ui.construct.*;
 import org.jackhuang.hmcl.util.i18n.I18n;
+import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.javafx.SafeStringConverter;
 
 import java.net.Proxy;
+import java.nio.file.Path;
+import java.util.Arrays;
+import java.util.Optional;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Function;
 
@@ -98,9 +104,37 @@ public class DownloadSettingsPage extends StackPane {
         }
 
         {
+            var downloadList = new ComponentList();
+
             VBox downloadThreads = new VBox(16);
-            downloadThreads.getStyleClass().add("card-non-transparent");
+
+            ComponentSublist fileCommonLocationSublist = new ComponentSublist();
+
             {
+                {
+                    MultiFileItem<EnumCommonDirectory> fileCommonLocation = new MultiFileItem<>();
+                    fileCommonLocation.loadChildren(Arrays.asList(
+                            new MultiFileItem.Option<>(i18n("launcher.cache_directory.default"), EnumCommonDirectory.DEFAULT),
+                            new MultiFileItem.FileOption<>(i18n("settings.custom"), EnumCommonDirectory.CUSTOM)
+                                    .setChooserTitle(i18n("launcher.cache_directory.choose"))
+                                    .setDirectory(true)
+                                    .bindBidirectional(config().commonDirectoryProperty())
+                    ));
+                    fileCommonLocation.selectedDataProperty().bindBidirectional(config().commonDirTypeProperty());
+
+                    fileCommonLocationSublist.getContent().add(fileCommonLocation);
+                    fileCommonLocationSublist.setTitle(i18n("launcher.cache_directory"));
+                    fileCommonLocationSublist.setHasSubtitle(true);
+                    fileCommonLocationSublist.subtitleProperty().bind(
+                            Bindings.createObjectBinding(() -> Optional.ofNullable(Settings.instance().getCommonDirectory())
+                                            .orElse(i18n("launcher.cache_directory.disabled")),
+                                    config().commonDirectoryProperty(), config().commonDirTypeProperty()));
+
+                    JFXButton cleanButton = FXUtils.newBorderButton(i18n("launcher.cache_directory.clean"));
+                    cleanButton.setOnAction(e -> clearCacheDirectory());
+                    fileCommonLocationSublist.setHeaderRight(cleanButton);
+                }
+
                 {
                     JFXCheckBox chkAutoDownloadThreads = new JFXCheckBox(i18n("settings.launcher.download.threads.auto"));
                     VBox.setMargin(chkAutoDownloadThreads, new Insets(8, 0, 0, 0));
@@ -153,7 +187,8 @@ public class DownloadSettingsPage extends StackPane {
                 }
             }
 
-            content.getChildren().addAll(ComponentList.createComponentListTitle(i18n("download")), downloadThreads);
+            downloadList.getContent().addAll(fileCommonLocationSublist, downloadThreads);
+            content.getChildren().addAll(ComponentList.createComponentListTitle(i18n("download")), downloadList);
         }
 
         {
@@ -329,5 +364,12 @@ public class DownloadSettingsPage extends StackPane {
             content.getChildren().addAll(ComponentList.createComponentListTitle(i18n("settings.launcher.proxy")), proxyList);
         }
 
+    }
+
+    private void clearCacheDirectory() {
+        String commonDirectory = Settings.instance().getCommonDirectory();
+        if (commonDirectory != null) {
+            FileUtils.cleanDirectoryQuietly(Path.of(commonDirectory, "cache"));
+        }
     }
 }
