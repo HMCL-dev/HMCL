@@ -441,7 +441,7 @@ public class DownloadPage extends Control implements DecoratorPage {
                             case CLEANROOM:
                                 content.addTag(i18n("install.installer.cleanroom"));
                                 break;
-                            case NEO_FORGED:
+                            case NEO_FORGE:
                                 content.addTag(i18n("install.installer.neoforge"));
                                 break;
                             case FABRIC:

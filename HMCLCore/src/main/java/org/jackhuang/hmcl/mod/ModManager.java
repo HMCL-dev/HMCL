@@ -47,7 +47,7 @@ public final class ModManager {
         var map = new HashMap<String, List<Pair<ModMetadataReader, ModLoaderType>>>();
         var zipReaders = List.<Pair<ModMetadataReader, ModLoaderType>>of(
                 pair(ForgeNewModMetadata::fromForgeFile, ModLoaderType.FORGE),
-                pair(ForgeNewModMetadata::fromNeoForgeFile, ModLoaderType.NEO_FORGED),
+                pair(ForgeNewModMetadata::fromNeoForgeFile, ModLoaderType.NEO_FORGE),
                 pair(ForgeOldModMetadata::fromFile, ModLoaderType.FORGE),
                 pair(FabricModMetadata::fromFile, ModLoaderType.FABRIC),
                 pair(QuiltModMetadata::fromFile, ModLoaderType.QUILT),
