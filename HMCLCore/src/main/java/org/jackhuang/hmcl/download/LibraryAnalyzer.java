@@ -264,7 +264,7 @@ public final class LibraryAnalyzer implements Iterable<LibraryAnalyzer.LibraryMa
             }
         },
         CLEANROOM(true, "cleanroom", "com\\.cleanroommc", "cleanroom", ModLoaderType.CLEANROOM),
-        NEO_FORGE(true, "neoforge", "net\\.neoforged\\.fancymodloader", "(core|loader)", ModLoaderType.NEO_FORGED) {
+        NEO_FORGE(true, "neoforge", "net\\.neoforged\\.fancymodloader", "(core|loader)", ModLoaderType.NEO_FORGE) {
             private final Pattern NEO_FORGE_VERSION_MATCHER = Pattern.compile("^([0-9.]+)-(?<forge>[0-9.]+)(-([0-9.]+))?$");
 
             @Override
@@ -412,7 +412,7 @@ public final class LibraryAnalyzer implements Iterable<LibraryAnalyzer.LibraryMa
     public static final String MOD_LAUNCHER_MAIN = "cpw.mods.modlauncher.Launcher";
     public static final String BOOTSTRAP_LAUNCHER_MAIN = "cpw.mods.bootstraplauncher.BootstrapLauncher";
     public static final String FORGE_BOOTSTRAP_MAIN = "net.minecraftforge.bootstrap.ForgeBootstrap";
-    public static final String NEO_FORGED_BOOTSTRAP_MAIN = "net.neoforged.fml.startup.Client";
+    public static final String NEO_FORGE_BOOTSTRAP_MAIN = "net.neoforged.fml.startup.Client";
 
     public static final Set<String> FORGE_OPTIFINE_MAIN = Set.of(
             LibraryAnalyzer.VANILLA_MAIN,
@@ -420,7 +420,7 @@ public final class LibraryAnalyzer implements Iterable<LibraryAnalyzer.LibraryMa
             LibraryAnalyzer.MOD_LAUNCHER_MAIN,
             LibraryAnalyzer.BOOTSTRAP_LAUNCHER_MAIN,
             LibraryAnalyzer.FORGE_BOOTSTRAP_MAIN,
-            LibraryAnalyzer.NEO_FORGED_BOOTSTRAP_MAIN
+            LibraryAnalyzer.NEO_FORGE_BOOTSTRAP_MAIN
     );
 
     public static final VersionRange<VersionNumber> FORGE_OPTIFINE_BROKEN_RANGE = VersionNumber.between("48.0.0", "49.0.50");

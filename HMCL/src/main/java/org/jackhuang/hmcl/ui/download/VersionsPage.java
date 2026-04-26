@@ -427,7 +427,11 @@ public final class VersionsPage extends Control implements WizardPage, Refreshab
                     if (status == Status.LOADING)
                         transitionPane.setContent(spinner, ContainerAnimations.FADE);
                     else if (status == Status.SUCCESS)
-                        transitionPane.setContent(centerWrapper, ContainerAnimations.FADE);
+                        if (control.versions.isEmpty()) {
+                            transitionPane.setContent(emptyPane, ContainerAnimations.FADE);
+                        } else {
+                            transitionPane.setContent(centerWrapper, ContainerAnimations.FADE);
+                        }
                     else // if (status == Status.FAILED)
                         transitionPane.setContent(failedPane, ContainerAnimations.FADE);
                 });
