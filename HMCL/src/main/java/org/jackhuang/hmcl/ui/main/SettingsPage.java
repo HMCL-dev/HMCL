@@ -264,7 +264,7 @@ public final class SettingsPage extends ScrollPane {
                     miscPaneList.getContent().add(debugPane);
                 }
 
-                rootPane.getChildren().addAll(ComponentList.createComponentListTitle("杂项"), miscPaneList);
+                rootPane.getChildren().addAll(ComponentList.createComponentListTitle(i18n("settings.launcher.misc")), miscPaneList);
             }
         }
     }
