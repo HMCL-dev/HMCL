@@ -403,6 +403,9 @@
 }
 
 .installer-item-wrapper:card {
+    -fx-border-color: -monet-outline-variant;
+    -fx-border-width: 1;
+    -fx-border-radius: 4;
 }
 
 .installer-item-wrapper .installer-item:list-item {
