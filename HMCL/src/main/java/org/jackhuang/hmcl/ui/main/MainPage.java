@@ -189,7 +189,7 @@ public final class MainPage extends StackPane implements DecoratorPage {
             }
 
             JFXButton closeUpdateButton = new JFXButton();
-            closeUpdateButton.setGraphic(SVG.CLOSE.createIcon(10));
+            closeUpdateButton.setGraphic(SVG.CLOSE.createIcon(20));
             StackPane.setAlignment(closeUpdateButton, Pos.TOP_RIGHT);
             closeUpdateButton.getStyleClass().add("toggle-icon-tiny");
             StackPane.setMargin(closeUpdateButton, new Insets(5));
