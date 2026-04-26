@@ -28,6 +28,7 @@ import javafx.collections.ObservableList;
 import javafx.event.EventHandler;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
+import javafx.scene.Cursor;
 import javafx.scene.control.Label;
 import javafx.scene.control.Tooltip;
 import javafx.scene.image.ImageView;
@@ -170,6 +171,7 @@ public final class MainPage extends StackPane implements DecoratorPage {
         FXUtils.setLimitHeight(updatePane, 55);
         StackPane.setAlignment(updatePane, Pos.TOP_RIGHT);
         FXUtils.onClicked(updatePane, this::onUpgrade);
+        updatePane.setCursor(Cursor.HAND);
         FXUtils.onChange(showUpdateProperty(), this::showUpdate);
 
         {
