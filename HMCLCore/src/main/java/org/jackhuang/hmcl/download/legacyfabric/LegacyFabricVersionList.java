@@ -68,7 +68,19 @@ public final class LegacyFabricVersionList extends VersionList<LegacyFabricRemot
     private List<String> getGameVersions(String metaUrl) throws IOException {
         String json = NetworkUtils.doGet(downloadProvider.injectURLWithCandidates(metaUrl));
         return JsonUtils.GSON.fromJson(json, listTypeOf(GameVersion.class))
-                .stream().map(GameVersion::getVersion).collect(Collectors.toList());
+                .stream()
+                .map(GameVersion::getVersion)
+                .map(LegacyFabricVersionList::normalizeGameVersion)
+                .collect(Collectors.toList());
+    }
+
+
+    private static String normalizeGameVersion(String gameVersion) {
+        if (gameVersion.startsWith("2point0_")) {
+            return "2.0_" + gameVersion.substring("2point0_".length());
+        }
+
+        return gameVersion;
     }
 
     private static String getLaunchMetaUrl(String gameVersion, String loaderVersion) {
