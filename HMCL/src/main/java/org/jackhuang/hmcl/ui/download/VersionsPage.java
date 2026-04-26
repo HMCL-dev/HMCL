@@ -278,10 +278,12 @@ public final class VersionsPage extends Control implements WizardPage, Refreshab
                     iconType = VersionIconType.COMMAND;
 
                 imageView.setImage(iconType.getIcon());
+                String displayGameVersion = I18n.getDisplayVersion(GameVersionNumber.asGameVersion(remoteVersion.getGameVersion()));
+
                 if (twoLineListItem.getSubtitle() == null)
-                    twoLineListItem.setSubtitle(remoteVersion.getGameVersion());
+                    twoLineListItem.setSubtitle(displayGameVersion);
                 else
-                    twoLineListItem.addTag(remoteVersion.getGameVersion());
+                    twoLineListItem.addTag(displayGameVersion);
             }
         }
     }
@@ -421,7 +423,11 @@ public final class VersionsPage extends Control implements WizardPage, Refreshab
                     if (status == Status.LOADING)
                         transitionPane.setContent(spinner, ContainerAnimations.FADE);
                     else if (status == Status.SUCCESS)
-                        transitionPane.setContent(centerWrapper, ContainerAnimations.FADE);
+                        if (control.versions.isEmpty()) {
+                            transitionPane.setContent(emptyPane, ContainerAnimations.FADE);
+                        } else {
+                            transitionPane.setContent(centerWrapper, ContainerAnimations.FADE);
+                        }
                     else // if (status == Status.FAILED)
                         transitionPane.setContent(failedPane, ContainerAnimations.FADE);
                 });

@@ -37,6 +37,7 @@ import static org.jackhuang.hmcl.util.logging.Logger.LOG;
  * @author Glavo
  */
 public final class HTMLRenderer {
+    private static final String INDENT = "  ";
     private static URI resolveLink(Node linkNode) {
         String href = linkNode.absUrl("href");
         if (href.isEmpty())
@@ -57,6 +58,7 @@ public final class HTMLRenderer {
     private boolean underline;
     private boolean strike;
     private boolean highlight;
+    private int indentLevel;
     private String headerLevel;
     private Node hyperlink;
 
@@ -218,7 +220,7 @@ public final class HTMLRenderer {
                 appendImage(node);
                 break;
             case "li":
-                appendText("\n \u2022 ");
+                appendText("\n" + INDENT.repeat(indentLevel) + " \u2022 ");
                 break;
             case "dt":
                 appendText(" ");
@@ -237,11 +239,14 @@ public final class HTMLRenderer {
         }
 
         if (node.childNodeSize() > 0) {
+            boolean isLiNode = "li".equals(name);
+            if (isLiNode) indentLevel++;
             pushNode(node);
             for (Node childNode : node.childNodes()) {
                 appendNode(childNode);
             }
             popNode();
+            if (isLiNode) indentLevel--;
         }
 
         switch (name) {

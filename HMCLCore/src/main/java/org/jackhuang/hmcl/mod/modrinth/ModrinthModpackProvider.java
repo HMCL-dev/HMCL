@@ -20,6 +20,7 @@ package org.jackhuang.hmcl.mod.modrinth;
 import com.google.gson.JsonParseException;
 import kala.compress.archivers.zip.ZipArchiveReader;
 import org.jackhuang.hmcl.download.DefaultDependencyManager;
+import org.jackhuang.hmcl.download.DownloadProvider;
 import org.jackhuang.hmcl.mod.*;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
@@ -68,7 +69,7 @@ public final class ModrinthModpackProvider implements ModpackProvider {
     }
 
     @Override
-    public ModpackManifest loadFiles(ModpackManifest manifest1) {
+    public ModpackManifest loadFiles(DownloadProvider downloadProvider, ModpackManifest manifest1) {
         if (!(manifest1 instanceof ModrinthManifest))
             throw new IllegalArgumentException("Manifest is not a ModrinthManifest");
         ModrinthManifest manifest = (ModrinthManifest) manifest1;
@@ -79,7 +80,7 @@ public final class ModrinthModpackProvider implements ModpackProvider {
                     if (version == null) {
                         return file.withMod(Optional.empty());
                     }
-                    RemoteMod mod = ModrinthRemoteModRepository.MODS.getModById(version.getModid());
+                    RemoteMod mod = ModrinthRemoteModRepository.MODS.getModById(downloadProvider, version.getModid());
                     return file.withMod(Optional.ofNullable(mod));
                 } catch (FileNotFoundException fof) {
                     LOG.warning("Could not query modrinth for deleted mods: " + file.getFileName(), fof);

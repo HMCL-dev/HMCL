@@ -97,8 +97,7 @@ public final class ModpackSelectionPage extends VBox implements WizardPage {
         graphic.setMouseTransparent(true);
         graphic.setLeft(new TwoLineListItem(i18n("modpack.choose." + type), i18n("modpack.choose." + type + ".detail")));
 
-        SVGPath arrow = new SVGPath();
-        arrow.setContent(SVG.ARROW_FORWARD.getPath());
+        SVGPath arrow = SVG.ARROW_FORWARD.createIcon();
         BorderPane.setAlignment(arrow, Pos.CENTER);
         graphic.setRight(arrow);
 
@@ -144,8 +143,6 @@ public final class ModpackSelectionPage extends VBox implements WizardPage {
                     // otherwise we still consider the file as modpack zip file
                     // since casually the url may not ends with ".zip"
                     Path modpack = Files.createTempFile("modpack", ".zip");
-                    handler.resolve();
-
                     Controllers.taskDialog(
                             new FileDownloadTask(url, modpack)
                                     .whenComplete(Schedulers.javafx(), e -> {

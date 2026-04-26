@@ -23,7 +23,10 @@ import com.jfoenix.controls.JFXListView;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
-import javafx.scene.control.*;
+import javafx.scene.control.Label;
+import javafx.scene.control.ListCell;
+import javafx.scene.control.Skin;
+import javafx.scene.control.Tooltip;
 import javafx.scene.image.Image;
 import javafx.scene.image.PixelWriter;
 import javafx.scene.image.WritableImage;
@@ -157,20 +160,9 @@ public final class SchematicsPage extends ListPageBase<SchematicsPage.Item> impl
             return;
 
         Path parent = currentDirectory.path;
-        Controllers.dialog(new InputDialogPane(
+        Controllers.prompt(
                 i18n("schematics.create_directory.prompt"),
-                "",
                 (result, handler) -> {
-                    if (StringUtils.isBlank(result)) {
-                        handler.reject(i18n("schematics.create_directory.failed.empty_name"));
-                        return;
-                    }
-
-                    if (result.contains("/") || result.contains("\\") || !FileUtils.isNameValid(result)) {
-                        handler.reject(i18n("schematics.create_directory.failed.invalid_name"));
-                        return;
-                    }
-
                     Path targetDir = parent.resolve(result);
                     if (Files.exists(targetDir)) {
                         handler.reject(i18n("schematics.create_directory.failed.already_exists"));
@@ -185,7 +177,7 @@ public final class SchematicsPage extends ListPageBase<SchematicsPage.Item> impl
                         LOG.warning("Failed to create directory: " + targetDir, e);
                         handler.reject(i18n("schematics.create_directory.failed", targetDir));
                     }
-                }));
+                }, "", new RequiredValidator(), new Validator(i18n("schematics.create_directory.failed.invalid_name"), FileUtils::isNameValid));
     }
 
     private DirItem loadAll(Path dir, @Nullable DirItem parent) {
@@ -575,19 +567,15 @@ public final class SchematicsPage extends ListPageBase<SchematicsPage.Item> impl
                 this.right = new HBox(8);
                 right.setAlignment(Pos.CENTER_RIGHT);
 
-                JFXButton btnReveal = new JFXButton();
+                JFXButton btnReveal = FXUtils.newToggleButton4(SVG.FOLDER_OPEN);
                 FXUtils.installFastTooltip(btnReveal, i18n("reveal.in_file_manager"));
-                btnReveal.getStyleClass().add("toggle-icon4");
-                btnReveal.setGraphic(SVG.FOLDER_OPEN.createIcon());
                 btnReveal.setOnAction(event -> {
                     Item item = getItem();
                     if (item != null && !(item instanceof BackItem))
                         item.onReveal();
                 });
 
-                JFXButton btnDelete = new JFXButton();
-                btnDelete.getStyleClass().add("toggle-icon4");
-                btnDelete.setGraphic(SVG.DELETE_FOREVER.createIcon());
+                JFXButton btnDelete = FXUtils.newToggleButton4(SVG.DELETE_FOREVER);
                 btnDelete.setOnAction(event -> {
                     Item item = getItem();
                     if (item != null && !(item instanceof BackItem)) {

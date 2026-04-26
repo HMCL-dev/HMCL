@@ -20,6 +20,7 @@ package org.jackhuang.hmcl.mod;
 import com.google.gson.JsonParseException;
 import kala.compress.archivers.zip.ZipArchiveReader;
 import org.jackhuang.hmcl.download.DefaultDependencyManager;
+import org.jackhuang.hmcl.download.DownloadProvider;
 import org.jackhuang.hmcl.game.LaunchOptions;
 import org.jackhuang.hmcl.task.Task;
 
@@ -50,7 +51,7 @@ public interface ModpackProvider {
     }
 
     // Complete the manifest with additional information
-    default ModpackManifest loadFiles(ModpackManifest manifest) {
+    default ModpackManifest loadFiles(DownloadProvider downloadProvider, ModpackManifest manifest) {
         return manifest;
     }
 }

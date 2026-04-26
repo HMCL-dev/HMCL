@@ -21,6 +21,8 @@ import com.google.gson.annotations.SerializedName;
 import org.jackhuang.hmcl.mod.ModpackManifest;
 import org.jackhuang.hmcl.mod.ModpackProvider;
 import org.jackhuang.hmcl.util.Immutable;
+import org.jackhuang.hmcl.util.gson.JsonSerializable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.Collections;
 import java.util.List;
@@ -30,6 +32,7 @@ import java.util.List;
  * @author huangyuhui
  */
 @Immutable
+@JsonSerializable
 public final class CurseManifest implements ModpackManifest, ModpackManifest.SupportOptional {
 
     @SerializedName("manifestType")
@@ -54,10 +57,11 @@ public final class CurseManifest implements ModpackManifest, ModpackManifest.Sup
     private final CurseManifestMinecraft minecraft;
 
     @SerializedName("files")
+    @Unmodifiable
     private final List<CurseManifestFile> files;
 
     public CurseManifest() {
-        this(MINECRAFT_MODPACK, 1, "", "1.0", "", "overrides", new CurseManifestMinecraft(), Collections.emptyList());
+        this(MINECRAFT_MODPACK, 1, "", "1.0", "", "overrides", new CurseManifestMinecraft("", Collections.emptyList()), Collections.emptyList());
     }
 
     public CurseManifest(String manifestType, int manifestVersion, String name, String version, String author, String overrides, CurseManifestMinecraft minecraft, List<CurseManifestFile> files) {
@@ -100,6 +104,38 @@ public final class CurseManifest implements ModpackManifest, ModpackManifest.Sup
     }
 
     public List<CurseManifestFile> getFiles() {
+        return files;
+    }
+
+    public String manifestType() {
+        return manifestType;
+    }
+
+    public int manifestVersion() {
+        return manifestVersion;
+    }
+
+    public String name() {
+        return name;
+    }
+
+    public String version() {
+        return version;
+    }
+
+    public String author() {
+        return author;
+    }
+
+    public String overrides() {
+        return overrides;
+    }
+
+    public CurseManifestMinecraft minecraft() {
+        return minecraft;
+    }
+
+    public List<CurseManifestFile> files() {
         return files;
     }
 

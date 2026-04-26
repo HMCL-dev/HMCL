@@ -37,8 +37,7 @@ public class ModrinthManifest implements ModpackManifest, ModpackManifest.Suppor
     private final int formatVersion;
     private final String versionId;
     private final String name;
-    @Nullable
-    private final String summary;
+    private final @Nullable String summary;
     private final List<File> files;
     private final Map<String, String> dependencies;
 
@@ -103,7 +102,6 @@ public class ModrinthManifest implements ModpackManifest, ModpackManifest.Suppor
     public static class File implements ModpackFile {
         private final String path;
         private final Map<String, String> hashes;
-
         @Nullable
         private final Map<String, String> env;
         private final List<String> downloads;
@@ -153,7 +151,7 @@ public class ModrinthManifest implements ModpackManifest, ModpackManifest.Suppor
             if (this == o) return true;
             if (o == null || getClass() != o.getClass()) return false;
             File file = (File) o;
-            return fileSize == file.fileSize && path.equals(file.path) && hashes.equals(file.hashes) && Objects.equals(env, file.env) && downloads.equals(file.downloads);
+            return fileSize == file.fileSize && path.equals(file.path) && hashes.equals(file.hashes) && Objects.equals(this.env, file.env) && downloads.equals(file.downloads);
         }
 
         @Override

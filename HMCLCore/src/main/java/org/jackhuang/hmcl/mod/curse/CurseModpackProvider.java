@@ -21,6 +21,7 @@ import com.google.gson.JsonParseException;
 import kala.compress.archivers.zip.ZipArchiveEntry;
 import kala.compress.archivers.zip.ZipArchiveReader;
 import org.jackhuang.hmcl.download.DefaultDependencyManager;
+import org.jackhuang.hmcl.download.DownloadProvider;
 import org.jackhuang.hmcl.mod.*;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.util.StringUtils;
@@ -55,7 +56,7 @@ public final class CurseModpackProvider implements ModpackProvider {
         if (!(modpack.getManifest() instanceof CurseManifest curseManifest))
             throw new MismatchedModpackTypeException(getName(), modpack.getManifest().getProvider().getName());
 
-        return new ModpackUpdateTask(dependencyManager.getGameRepository(), name, new CurseInstallTask(dependencyManager, zipFile, modpack, curseManifest, name, selectedFiles));
+        return new ModpackUpdateTask(dependencyManager.getGameRepository(), name, new CurseInstallTask(dependencyManager, zipFile, modpack, curseManifest, name, null, selectedFiles));
     }
 
     @Override
@@ -69,16 +70,16 @@ public final class CurseModpackProvider implements ModpackProvider {
         } catch (Throwable ignored) {
         }
 
-        return new Modpack(manifest.getName(), manifest.getAuthor(), manifest.getVersion(), manifest.getMinecraft().getGameVersion(), description, encoding, manifest) {
+        return new Modpack(manifest.name(), manifest.author(), manifest.version(), manifest.minecraft().gameVersion(), description, encoding, manifest) {
             @Override
             public Task<?> getInstallTask(DefaultDependencyManager dependencyManager, Path zipFile, String name, String iconUrl, Set<? extends ModpackFile> selectedFiles) {
-                return new CurseInstallTask(dependencyManager, zipFile, this, manifest, name, selectedFiles);
+                return new CurseInstallTask(dependencyManager, zipFile, this, manifest, name, iconUrl, selectedFiles);
             }
         };
     }
 
     @Override
-    public CurseManifest loadFiles(ModpackManifest manifest1) {
+    public CurseManifest loadFiles(DownloadProvider downloadProvider, ModpackManifest manifest1) {
         if (!(manifest1 instanceof CurseManifest))
             throw new IllegalArgumentException("manifest1 is not a CurseManifest");
         CurseManifest manifest = (CurseManifest) manifest1;
@@ -87,7 +88,7 @@ public final class CurseModpackProvider implements ModpackProvider {
                         .map(file -> {
                             if ((StringUtils.isBlank(file.getFileName()) || file.getUrl() == null) && file.isOptional()) {
                                 try {
-                                    RemoteMod mod = CurseForgeRemoteModRepository.MODS.getModById(Integer.toString(file.getProjectID()));
+                                    RemoteMod mod = CurseForgeRemoteModRepository.MODS.getModById(downloadProvider, Integer.toString(file.getProjectID()));
                                     RemoteMod.File remoteFile = CurseForgeRemoteModRepository.MODS.getModFile(Integer.toString(file.getProjectID()), Integer.toString(file.getFileID()));
                                     return file.withFileName(remoteFile.getFilename()).withURL(remoteFile.getUrl()).withMod(mod);
                                 } catch (FileNotFoundException fof) {

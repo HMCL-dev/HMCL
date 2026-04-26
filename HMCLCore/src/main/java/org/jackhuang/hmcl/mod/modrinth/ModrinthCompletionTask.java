@@ -26,7 +26,6 @@ import org.jackhuang.hmcl.task.FileDownloadTask;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
-import org.jackhuang.hmcl.util.io.NetworkUtils;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -142,7 +141,7 @@ public class ModrinthCompletionTask extends Task<Void> {
                 continue;
 
             var task = new FileDownloadTask(
-                    file.getDownloads().stream().map(NetworkUtils::toURI).collect(Collectors.toList()),
+                    dependency.getDownloadProvider().injectURLsWithCandidates(file.getDownloads()),
                     filePath);
             task.setCacheRepository(dependency.getCacheRepository());
             task.setCaching(true);

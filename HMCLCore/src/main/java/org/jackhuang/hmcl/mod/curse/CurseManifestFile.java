@@ -22,6 +22,7 @@ import com.google.gson.annotations.SerializedName;
 import org.jackhuang.hmcl.mod.ModpackFile;
 import org.jackhuang.hmcl.mod.RemoteMod;
 import org.jackhuang.hmcl.util.Immutable;
+import org.jackhuang.hmcl.util.gson.JsonSerializable;
 import org.jackhuang.hmcl.util.gson.Validation;
 import org.jetbrains.annotations.Nullable;
 
@@ -33,25 +34,26 @@ import java.util.Optional;
  * @author huangyuhui
  */
 @Immutable
+@JsonSerializable
 public final class CurseManifestFile implements Validation, ModpackFile {
 
     @SerializedName("projectID")
     private final int projectID;
-    
+
     @SerializedName("fileID")
     private final int fileID;
-    
+
     @SerializedName("fileName")
     private final String fileName;
 
     @SerializedName("url")
     private final String url;
-    
+
     @SerializedName("required")
     private final boolean required;
 
     @Nullable
-    private final RemoteMod mod;
+    private transient final RemoteMod mod;
 
     public CurseManifestFile() {
         this(0, 0, null, null, true, null);
@@ -78,6 +80,7 @@ public final class CurseManifestFile implements Validation, ModpackFile {
         return fileID;
     }
 
+    @Override
     public String getFileName() {
         return fileName;
     }
@@ -96,6 +99,22 @@ public final class CurseManifestFile implements Validation, ModpackFile {
         return required;
     }
 
+    public int projectID() {
+        return projectID;
+    }
+
+    public int fileID() {
+        return fileID;
+    }
+
+    public String fileName() {
+        return fileName;
+    }
+
+    public boolean required() {
+        return required;
+    }
+
     @Override
     public void validate() throws JsonParseException {
         if (projectID == 0 || fileID == 0)
@@ -103,7 +122,7 @@ public final class CurseManifestFile implements Validation, ModpackFile {
     }
 
     @Nullable
-    public String getUrl() {
+    public String url() {
         if (url == null) {
             return fileName != null
                     ? String.format("https://edge.forgecdn.net/files/%d/%d/%s", fileID / 1000, fileID % 1000, fileName)
@@ -113,7 +132,13 @@ public final class CurseManifestFile implements Validation, ModpackFile {
         }
     }
 
+    @Nullable
+    public String getUrl() {
+        return url();
+    }
+
     @SuppressWarnings("OptionalAssignedToNull")
+    @Override
     public @Nullable Optional<RemoteMod> getMod() {
         return mod == null ? null : Optional.of(mod);
     }
@@ -126,17 +151,15 @@ public final class CurseManifestFile implements Validation, ModpackFile {
         return new CurseManifestFile(projectID, fileID, fileName, url, required, mod);
     }
 
-    public CurseManifestFile withMod(RemoteMod mod) {
+    public CurseManifestFile withMod(@Nullable RemoteMod mod) {
         return new CurseManifestFile(projectID, fileID, fileName, url, required, mod);
     }
 
     @Override
     public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-        CurseManifestFile that = (CurseManifestFile) o;
-        return projectID == that.projectID &&
-                fileID == that.fileID;
+        return this == o || o instanceof CurseManifestFile that
+                && this.projectID == that.projectID
+                && this.fileID == that.fileID;
     }
 
     @Override

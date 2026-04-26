@@ -31,6 +31,7 @@ import org.jackhuang.hmcl.game.ModpackHelper;
 import org.jackhuang.hmcl.mod.Modpack;
 import org.jackhuang.hmcl.mod.ModpackFile;
 import org.jackhuang.hmcl.mod.ModpackManifest;
+import org.jackhuang.hmcl.setting.DownloadProviders;
 import org.jackhuang.hmcl.setting.Profile;
 import org.jackhuang.hmcl.setting.Profiles;
 import org.jackhuang.hmcl.task.Schedulers;
@@ -180,7 +181,7 @@ public final class LocalModpackPage extends ModpackPage {
         Objects.requireNonNull(manifest);
         loadingOptionalFiles.set(true);
         loadedOptionalFiles.set(false);
-        Task.supplyAsync(() -> manifest.getManifest().getProvider().loadFiles(manifest.getManifest()))
+        Task.supplyAsync(() -> manifest.getManifest().getProvider().loadFiles(DownloadProviders.getDownloadProvider(), manifest.getManifest()))
                 .whenComplete(Schedulers.javafx(), (manifest1, exception) -> {
                     List<? extends ModpackFile> files = ((ModpackManifest.SupportOptional) manifest
                             .setManifest(manifest1).getManifest()).getFiles();

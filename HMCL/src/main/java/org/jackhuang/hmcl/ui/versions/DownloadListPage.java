@@ -101,6 +101,10 @@ public class DownloadListPage extends Control implements DecoratorPage, VersionP
         this.downloadProvider = DownloadProviders.getDownloadProvider();
     }
 
+    public DownloadProvider getDownloadProvider() {
+        return downloadProvider;
+    }
+
     public ObservableList<Node> getActions() {
         return actions;
     }
@@ -233,17 +237,19 @@ public class DownloadListPage extends Control implements DecoratorPage, VersionP
 
     private static class ModDownloadListPageSkin extends SkinBase<DownloadListPage> {
         private final JFXListView<RemoteMod> listView = new JFXListView<>();
-        private final RemoteImageLoader iconLoader = new RemoteImageLoader() {
-            @Override
-            protected @NotNull Task<Image> createLoadTask(@NotNull URI uri) {
-                return FXUtils.getRemoteImageTask(uri, 80, 80, true, true);
-            }
-        };
+        private final RemoteImageLoader iconLoader;
 
         protected ModDownloadListPageSkin(DownloadListPage control) {
             super(control);
 
             listView.getStyleClass().add("no-horizontal-scrollbar");
+
+            iconLoader = new RemoteImageLoader(control.downloadProvider) {
+                @Override
+                protected @NotNull Task<Image> createLoadTask(@NotNull List<URI> uris) {
+                    return FXUtils.getRemoteImageTask(uris, 80, 80, true, true);
+                }
+            };
 
             BorderPane pane = new BorderPane();
 
@@ -525,7 +531,6 @@ public class DownloadListPage extends Control implements DecoratorPage, VersionP
                 listView.setSelectionModel(new NoneMultipleSelectionModel<>());
                 // ListViewBehavior would consume ESC pressed event, preventing us from handling it, so we ignore it here
                 ignoreEvent(listView, KeyEvent.KEY_PRESSED, e -> e.getCode() == KeyCode.ESCAPE);
-
                 listView.setCellFactory(x -> new ListCell<>() {
                     private static final Insets PADDING = new Insets(9, 9, 0, 9);
 
@@ -572,7 +577,11 @@ public class DownloadListPage extends Control implements DecoratorPage, VersionP
                         } else {
                             ModTranslations.Mod mod = ModTranslations.getTranslationsByRepositoryType(getSkinnable().repository.getType()).getModByCurseForgeId(item.getSlug());
                             content.setTitle(mod != null && I18n.isUseChinese() ? mod.getDisplayName() : item.getTitle());
-                            content.setSubtitle(item.getDescription());
+                            String description = item.getDescription();
+                            if (description != null) {
+                                description = description.replaceAll("\\R", " ");
+                            }
+                            content.setSubtitle(description);
                             content.getTags().clear();
                             for (String category : item.getCategories()) {
                                 if (getSkinnable().shouldDisplayCategory(category))
