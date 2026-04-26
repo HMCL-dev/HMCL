@@ -213,6 +213,21 @@ public final class Controllers {
         return decorator;
     }
 
+    public static void saveWindowStates() {
+        if (stageX != null) {
+            config().setX(stageX.get() / SCREEN.getBounds().getWidth());
+        }
+        if (stageY != null) {
+            config().setY(stageY.get() / SCREEN.getBounds().getHeight());
+        }
+        if (stageHeight != null) {
+            config().setHeight(stageHeight.get());
+        }
+        if (stageWidth != null) {
+            config().setWidth(stageWidth.get());
+        }
+    }
+
     public static void onApplicationStop() {
         stageSizeChangeListener = null;
         if (stageX != null) {
@@ -375,7 +390,7 @@ public final class Controllers {
             Runnable continueAction = () -> globalConfig().setPlatformPromptVersion(1);
 
             if (OperatingSystem.CURRENT_OS == OperatingSystem.MACOS && Architecture.SYSTEM_ARCH == Architecture.ARM64) {
-                Controllers.dialog(i18n("fatal.unsupported_platform.macos_arm64"), null, MessageType.INFO, continueAction);
+                continueAction.run();
             } else if (OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS && Architecture.SYSTEM_ARCH == Architecture.ARM64) {
                 Controllers.dialog(i18n("fatal.unsupported_platform.windows_arm64"), null, MessageType.INFO, continueAction);
             } else if (OperatingSystem.CURRENT_OS == OperatingSystem.LINUX &&

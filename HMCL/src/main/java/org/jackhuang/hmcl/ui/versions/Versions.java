@@ -264,6 +264,11 @@ public final class Versions {
             chooser.getExtensionFilters().add(new FileChooser.ExtensionFilter(i18n("extension.ps1"), "*.ps1"));
             Path file = FileUtils.toPath(chooser.showSaveDialog(Controllers.getStage()));
             if (file != null) {
+                if (!isValidScriptExtension(FileUtils.getExtension(file))) {
+                    String defaultExt = getDefaultScriptExtension();
+                    file = file.resolveSibling(file.getFileName().toString() + "." + defaultExt);
+                }
+
                 LauncherHelper launcherHelper = new LauncherHelper(profile, account, id);
                 for (Consumer<LauncherHelper> injecter : injecters) {
                     injecter.accept(launcherHelper);
@@ -271,6 +276,21 @@ public final class Versions {
                 launcherHelper.makeLaunchScript(file);
             }
         });
+    }
+
+    private static boolean isValidScriptExtension(String ext) {
+        if (OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS) {
+            return ext.equalsIgnoreCase("bat") || ext.equalsIgnoreCase("ps1");
+        }
+        return ext.equalsIgnoreCase("sh") || ext.equalsIgnoreCase("bash") || ext.equalsIgnoreCase("command") || ext.equalsIgnoreCase("ps1");
+    }
+
+    private static String getDefaultScriptExtension() {
+        return switch (OperatingSystem.CURRENT_OS) {
+            case WINDOWS -> "bat";
+            case MACOS -> "command";
+            default -> "sh";
+        };
     }
 
     @SafeVarargs

@@ -56,6 +56,7 @@ public class LaunchOptions implements Serializable {
     private NativesDirectoryType nativesDirType;
     private String nativesDir;
     private ProcessPriority processPriority = ProcessPriority.NORMAL;
+    private GraphicsAPI graphicsBackend = GraphicsAPI.DEFAULT;
     private Renderer renderer = Renderer.DEFAULT;
     private boolean useNativeGLFW;
     private boolean useNativeOpenAL;
@@ -244,7 +245,11 @@ public class LaunchOptions implements Serializable {
         return processPriority;
     }
 
-    public Renderer getRenderer() {
+    public @NotNull GraphicsAPI getGraphicsBackend() {
+        return graphicsBackend;
+    }
+
+    public @NotNull Renderer getRenderer() {
         return renderer;
     }
 
@@ -435,8 +440,13 @@ public class LaunchOptions implements Serializable {
             return this;
         }
 
-        public Builder setRenderer(@NotNull Renderer renderer) {
-            options.renderer = renderer;
+        public Builder setGraphicsBackend(GraphicsAPI backend) {
+            options.graphicsBackend = Objects.requireNonNullElse(backend, GraphicsAPI.DEFAULT);
+            return this;
+        }
+
+        public Builder setRenderer(Renderer renderer) {
+            options.renderer = Objects.requireNonNullElse(renderer, Renderer.DEFAULT);
             return this;
         }
 

@@ -54,7 +54,10 @@ import org.jackhuang.hmcl.ui.SVG;
 import org.jackhuang.hmcl.ui.animation.ContainerAnimations;
 import org.jackhuang.hmcl.ui.animation.TransitionPane;
 import org.jackhuang.hmcl.ui.construct.*;
-import org.jackhuang.hmcl.util.*;
+import org.jackhuang.hmcl.util.FXThread;
+import org.jackhuang.hmcl.util.Lazy;
+import org.jackhuang.hmcl.util.Pair;
+import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.i18n.I18n;
 import org.jackhuang.hmcl.util.io.CompressingUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
@@ -153,6 +156,18 @@ final class ModListPageSkin extends SkinBase<ModListPage> {
             );
 
             // Toolbar Selecting
+
+            // reason for not using selectAll() is that selectAll() first clears all selected then selects all, causing the toolbar to flicker
+            var selectAll = createToolbarButton2(i18n("button.select_all"), SVG.SELECT_ALL, () -> listView.getSelectionModel().selectRange(0, listView.getItems().size()));
+
+            ListChangeListener<Object> listener = change -> {
+                selectAll.setDisable(!listView.getItems().isEmpty()
+                        && listView.getSelectionModel().getSelectedItems().size() == listView.getItems().size());
+            };
+
+            listView.getSelectionModel().getSelectedItems().addListener(listener);
+            listView.getItems().addListener(listener);
+
             toolbarSelecting.getChildren().setAll(
                     createToolbarButton2(i18n("button.remove"), SVG.DELETE_FOREVER, () -> {
                         Controllers.confirm(i18n("button.remove.confirm"), i18n("button.remove"), () -> {
@@ -170,8 +185,7 @@ final class ModListPageSkin extends SkinBase<ModListPage> {
                                             .toList()
                             )
                     ),
-                    createToolbarButton2(i18n("button.select_all"), SVG.SELECT_ALL, () ->
-                            listView.getSelectionModel().selectAll()),
+                    selectAll,
                     createToolbarButton2(i18n("button.cancel"), SVG.CANCEL, () ->
                             listView.getSelectionModel().clearSelection())
             );
@@ -466,7 +480,7 @@ final class ModListPageSkin extends SkinBase<ModListPage> {
                                         case FORGE -> i18n("install.installer.forge");
                                         case CLEANROOM -> i18n("install.installer.cleanroom");
                                         case LEGACY_FABRIC -> i18n("install.installer.legacyfabric");
-                                        case NEO_FORGED -> i18n("install.installer.neoforge");
+                                        case NEO_FORGE -> i18n("install.installer.neoforge");
                                         case FABRIC -> i18n("install.installer.fabric");
                                         case LITE_LOADER -> i18n("install.installer.liteloader");
                                         case QUILT -> i18n("install.installer.quilt");
@@ -636,7 +650,7 @@ final class ModListPageSkin extends SkinBase<ModListPage> {
                     case FORGE -> content.addTagWarning(i18n("install.installer.forge"));
                     case LEGACY_FABRIC -> content.addTagWarning(i18n("install.installer.legacyfabric"));
                     case CLEANROOM -> content.addTagWarning(i18n("install.installer.cleanroom"));
-                    case NEO_FORGED -> content.addTagWarning(i18n("install.installer.neoforge"));
+                    case NEO_FORGE -> content.addTagWarning(i18n("install.installer.neoforge"));
                     case FABRIC -> content.addTagWarning(i18n("install.installer.fabric"));
                     case LITE_LOADER -> content.addTagWarning(i18n("install.installer.liteloader"));
                     case QUILT -> content.addTagWarning(i18n("install.installer.quilt"));

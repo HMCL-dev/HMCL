@@ -49,7 +49,7 @@ public final class ModManager extends LocalAddonManager<LocalModFile> {
         var map = new HashMap<String, List<Pair<ModMetadataReader, ModLoaderType>>>();
         var zipReaders = List.<Pair<ModMetadataReader, ModLoaderType>>of(
                 pair(ForgeNewModMetadata::fromForgeFile, ModLoaderType.FORGE),
-                pair(ForgeNewModMetadata::fromNeoForgeFile, ModLoaderType.NEO_FORGED),
+                pair(ForgeNewModMetadata::fromNeoForgeFile, ModLoaderType.NEO_FORGE),
                 pair(ForgeOldModMetadata::fromFile, ModLoaderType.FORGE),
                 pair(FabricModMetadata::fromFile, ModLoaderType.FABRIC),
                 pair(QuiltModMetadata::fromFile, ModLoaderType.QUILT)
@@ -316,14 +316,16 @@ public final class ModManager extends LocalAddonManager<LocalModFile> {
     }
 
     /**
-     * Check if "mods" directory has mod file named "fileName" no matter the mod is disabled or not
+     * Check if "mods" directory has mod file named "fileName" no matter the mod is disabled,upgraded or not
      *
      * @param fileName name of the file whose existence is being checked
      * @return true if the file exists
      */
     public boolean hasSimpleMod(String fileName) {
         return Files.exists(getDirectory().resolve(StringUtils.removeSuffix(fileName, DISABLED_EXTENSION)))
-                || Files.exists(getDirectory().resolve(StringUtils.addSuffix(fileName, DISABLED_EXTENSION)));
+                || Files.exists(getDirectory().resolve(StringUtils.addSuffix(fileName, DISABLED_EXTENSION)))
+                || Files.exists(getDirectory().resolve(StringUtils.removeSuffix(fileName, OLD_EXTENSION)))
+                || Files.exists(getDirectory().resolve(StringUtils.addSuffix(fileName, OLD_EXTENSION)));
     }
 
     public Path getSimpleModPath(String fileName) {

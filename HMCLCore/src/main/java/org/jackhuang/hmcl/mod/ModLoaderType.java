@@ -21,7 +21,7 @@ public enum ModLoaderType {
     UNKNOWN,
     FORGE,
     CLEANROOM,
-    NEO_FORGED,
+    NEO_FORGE,
     FABRIC,
     QUILT,
     LITE_LOADER,
