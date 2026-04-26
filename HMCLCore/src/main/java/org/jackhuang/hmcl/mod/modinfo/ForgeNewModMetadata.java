@@ -174,15 +174,15 @@ public final class ForgeNewModMetadata {
     }
 
     public static LocalModFile fromNeoForgeFile(ModManager modManager, Path modFile, ZipFileTree tree) throws IOException {
-        return fromFile(modManager, modFile, tree, ModLoaderType.NEO_FORGED);
+        return fromFile(modManager, modFile, tree, ModLoaderType.NEO_FORGE);
     }
 
     private static LocalModFile fromFile(ModManager modManager, Path modFile, ZipFileTree tree, ModLoaderType modLoaderType) throws IOException {
-        if (modLoaderType != ModLoaderType.FORGE && modLoaderType != ModLoaderType.NEO_FORGED) {
+        if (modLoaderType != ModLoaderType.FORGE && modLoaderType != ModLoaderType.NEO_FORGE) {
             throw new IOException("Invalid mod loader: " + modLoaderType);
         }
 
-        if (modLoaderType == ModLoaderType.NEO_FORGED) {
+        if (modLoaderType == ModLoaderType.NEO_FORGE) {
             try {
                 return fromFile0("META-INF/neoforge.mods.toml", modLoaderType, modManager, modFile, tree);
             } catch (Exception ignored) {
@@ -344,7 +344,7 @@ public final class ForgeNewModMetadata {
                     result = ModLoaderType.FORGE;
                     break loop;
                 case "neoforge":
-                    result = ModLoaderType.NEO_FORGED;
+                    result = ModLoaderType.NEO_FORGE;
                     break loop;
             }
         }
