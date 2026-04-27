@@ -23,6 +23,7 @@ import javafx.animation.KeyFrame;
 import javafx.animation.KeyValue;
 import javafx.animation.Timeline;
 import javafx.beans.property.*;
+import javafx.beans.value.ChangeListener;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.event.EventHandler;
@@ -63,6 +64,7 @@ import org.jackhuang.hmcl.ui.decorator.DecoratorPage;
 import org.jackhuang.hmcl.ui.versions.GameListPopupMenu;
 import org.jackhuang.hmcl.ui.versions.Versions;
 import org.jackhuang.hmcl.upgrade.RemoteVersion;
+import org.jackhuang.hmcl.upgrade.UpdateChannel;
 import org.jackhuang.hmcl.upgrade.UpdateChecker;
 import org.jackhuang.hmcl.upgrade.UpdateHandler;
 import org.jackhuang.hmcl.util.*;
@@ -366,6 +368,23 @@ public final class MainPage extends StackPane implements DecoratorPage {
     private void closeUpdateBubble() {
         showUpdate.unbind();
         showUpdate.set(false);
+    }
+
+    public void onSwitchToStableChannel() {
+        Controllers.confirm(i18n("update.switch_to_stable.confirm"), i18n("update.switch_to_stable.title"), () -> {
+            UpdateChecker.requestCheckUpdate(UpdateChannel.STABLE, config().acceptPreviewUpdateProperty().get());
+            Holder<ChangeListener<Boolean>> holder = new Holder<>();
+            holder.value = (observable, old, now) -> {
+                if (!now) {
+                    UpdateChecker.checkingUpdateProperty().removeListener(holder.value);
+                    RemoteVersion target = UpdateChecker.getLatestVersion();
+                    if (target != null) {
+                        UpdateHandler.updateFrom(target);
+                    }
+                }
+            };
+            UpdateChecker.checkingUpdateProperty().addListener(holder.value);
+        }, null);
     }
 
     @Override

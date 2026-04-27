@@ -624,14 +624,15 @@ public final class Controllers {
     public static void onHyperlinkAction(String href) {
         if (href.startsWith("hmcl://")) {
             switch (href) {
-                case "hmcl://settings/feedback":
+                case "hmcl://settings/feedback" -> {
                     Controllers.getSettingsPage().showFeedback();
                     Controllers.navigate(Controllers.getSettingsPage());
-                    break;
-                case "hmcl://game/launch":
+                }
+                case "hmcl://game/launch" -> {
                     Profile profile = Profiles.getSelectedProfile();
                     Versions.launch(profile, profile.getSelectedVersion(), LauncherHelper::setKeep);
-                    break;
+                }
+                case "hmcl://update/switch-channel/stable" -> getRootPage().getMainPage().onSwitchToStableChannel();
             }
         } else {
             FXUtils.openLink(href);
