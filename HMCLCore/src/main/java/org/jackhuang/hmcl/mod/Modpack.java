@@ -119,7 +119,7 @@ public abstract class Modpack {
         return this;
     }
 
-    public abstract Task<?> getInstallTask(DefaultDependencyManager dependencyManager, Path zipFile, String name, String iconUrl);
+    public abstract Task<?> getInstallTask(DefaultDependencyManager dependencyManager, Path zipFile, String name, String iconUrl, Set<? extends ModpackFile> selectedFiles);
 
     public static boolean acceptFile(String path, List<String> blackList, List<String> whiteList) {
         if (path.isEmpty())
