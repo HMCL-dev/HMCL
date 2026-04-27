@@ -251,4 +251,39 @@ public record Theme(
                 List.of()
         );
     }
+
+    /// Serializes this theme to a [JsonObject].
+    ///
+    /// Only the base scalar fields are written; [rules] and [overrides] are not
+    /// included because [fromJson(JsonObject)] does not parse them.
+    /// Fields whose value is `null` are omitted from the output.
+    ///
+    /// @return a [JsonObject] representing this theme's fields
+    public JsonObject toJson() {
+        JsonObject jsonObject = new JsonObject();
+
+        if (version != null)
+            jsonObject.addProperty("version", version);
+
+        if (brightness != null)
+            jsonObject.addProperty("brightness", brightness == Brightness.LIGHT ? "light" : "dark");
+
+        if (color != null)
+            jsonObject.addProperty("color", color.name());
+
+        if (colorStyle != null)
+            jsonObject.addProperty("colorStyle", colorStyle.name().toLowerCase(Locale.ROOT));
+
+        if (background != null) {
+            jsonObject.add("background", background.toJson());
+        }
+
+        if (backgroundOpacity != null)
+            jsonObject.addProperty("backgroundOpacity", backgroundOpacity);
+
+        if (contrast != null)
+            jsonObject.addProperty("contrast", contrast == Contrast.HIGH ? "high" : "low");
+
+        return jsonObject;
+    }
 }
