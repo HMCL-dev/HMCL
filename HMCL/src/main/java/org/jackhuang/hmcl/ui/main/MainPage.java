@@ -170,6 +170,7 @@ public final class MainPage extends StackPane implements DecoratorPage {
         FXUtils.setLimitWidth(updatePane, 230);
         FXUtils.setLimitHeight(updatePane, 55);
         StackPane.setAlignment(updatePane, Pos.TOP_RIGHT);
+        StackPane.setMargin(updatePane, new Insets(25, 0, 0, 0));
         FXUtils.onClicked(updatePane, this::onUpgrade);
         updatePane.setCursor(Cursor.HAND);
         FXUtils.onChange(showUpdateProperty(), this::showUpdate);
@@ -191,7 +192,7 @@ public final class MainPage extends StackPane implements DecoratorPage {
             }
 
             JFXButton closeUpdateButton = new JFXButton();
-            closeUpdateButton.setGraphic(SVG.CLOSE.createIcon(10));
+            closeUpdateButton.setGraphic(SVG.CLOSE.createIcon(20));
             StackPane.setAlignment(closeUpdateButton, Pos.TOP_RIGHT);
             closeUpdateButton.getStyleClass().add("toggle-icon-tiny");
             StackPane.setMargin(closeUpdateButton, new Insets(5));
