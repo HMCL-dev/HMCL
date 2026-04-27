@@ -260,6 +260,15 @@ public final class SettingsPage extends ScrollPane {
             }
 
             {
+                LineToggleButton windowsHighPerformance = new LineToggleButton();
+                windowsHighPerformance.setTitle(i18n("settings.launcher.gpu_preferences"));
+                windowsHighPerformance.setSubtitle(i18n("settings.advanced.windows_only"));
+                windowsHighPerformance.selectedProperty().bindBidirectional(config().windowsHighPerformanceProperty());
+
+                settingsPane.getContent().add(windowsHighPerformance);
+            }
+          
+            {
                 LineToggleButton allowAutoAgentPane = new LineToggleButton();
                 allowAutoAgentPane.setTitle(i18n("settings.launcher.allow_auto_agent"));
                 allowAutoAgentPane.setSubtitle(i18n("settings.launcher.allow_auto_agent.subtitle"));
