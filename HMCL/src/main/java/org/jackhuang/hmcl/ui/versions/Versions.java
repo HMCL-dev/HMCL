@@ -24,6 +24,8 @@ import org.jackhuang.hmcl.auth.Account;
 import org.jackhuang.hmcl.auth.authlibinjector.AuthlibInjectorAccount;
 import org.jackhuang.hmcl.download.DefaultDependencyManager;
 import org.jackhuang.hmcl.download.DownloadProvider;
+import org.jackhuang.hmcl.download.GameBuilder;
+import org.jackhuang.hmcl.download.LibraryAnalyzer;
 import org.jackhuang.hmcl.download.game.GameAssetDownloadTask;
 import org.jackhuang.hmcl.download.game.GameDownloadTask;
 import org.jackhuang.hmcl.download.game.GameLibrariesTask;
@@ -45,6 +47,7 @@ import org.jackhuang.hmcl.ui.download.ModpackInstallWizardProvider;
 import org.jackhuang.hmcl.ui.export.ExportWizardProvider;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.TaskCancellationAction;
+import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
 
@@ -240,6 +243,60 @@ public final class Versions {
             profile.getRepository().clean(id);
         } catch (IOException e) {
             LOG.warning("Unable to clean game directory", e);
+        }
+    }
+
+    public static void resetVersion(Profile profile, String id) {
+        HMCLGameRepository repository = profile.getRepository();
+
+        Path originalJsonPath = repository.getVersionJson(id);
+        String tempId = id + "_temp";
+
+        try {
+            LibraryAnalyzer analyzer = LibraryAnalyzer.analyze(repository.getResolvedPreservingPatchesVersion(id), null);
+
+            GameBuilder builder = profile.getDependency().gameBuilder()
+                    .name(tempId)
+                    .gameVersion(repository.getGameVersion(id).orElseThrow());
+
+            for (LibraryAnalyzer.LibraryType item : analyzer.getLibraries()) {
+                if (item != LibraryAnalyzer.LibraryType.MINECRAFT && item != LibraryAnalyzer.LibraryType.BOOTSTRAP_LAUNCHER) {
+                    analyzer.getVersion(item).ifPresent(itemVersion ->
+                            builder.version(item.getPatchId(), itemVersion));
+                }
+            }
+            Controllers.taskDialog(builder.buildAsync()
+                    .thenRunAsync(() -> {
+                        try {
+                            Path tempJsonPath = repository.getVersionJson(tempId);
+                            Version tempVersion = repository.readVersionJson(tempJsonPath);
+                            if (tempId.equals(tempVersion.getJar())) {
+                                tempVersion = tempVersion.setJar(null);
+                            }
+                            JsonUtils.writeToJsonFile(originalJsonPath, tempVersion.setId(id));
+                        } finally {
+                            repository.removeVersionFromDisk(tempId);
+
+                            repository.refreshVersions();
+                        }
+                    })
+                    .whenComplete(Schedulers.javafx(), (ignored, exception) -> {
+                        if (exception != null) {
+                            repository.removeVersionFromDisk(tempId);
+
+                            LOG.warning("Unable to reset instance", exception);
+                            Controllers.dialog(i18n("message.failed") + "\n" + StringUtils.getStackTrace(exception), i18n("message.error"), MessageDialogPane.MessageType.ERROR);
+                            return;
+                        }
+                        profile.setSelectedVersion(id);
+                        Controllers.getVersionPage().loadVersion(id, profile);
+                    }), i18n("version.manage.reset"), TaskCancellationAction.NO_CANCEL);
+
+        } catch (Exception e) {
+            repository.removeVersionFromDisk(tempId);
+
+            LOG.warning("Unable to reset instance", e);
+            Controllers.dialog(i18n("message.failed") + "\n" + StringUtils.getStackTrace(e), i18n("message.error"), MessageDialogPane.MessageType.ERROR);
         }
     }
 
