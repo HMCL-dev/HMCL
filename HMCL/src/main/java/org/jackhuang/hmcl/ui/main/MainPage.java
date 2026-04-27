@@ -169,6 +169,7 @@ public final class MainPage extends StackPane implements DecoratorPage {
         FXUtils.setLimitWidth(updatePane, 230);
         FXUtils.setLimitHeight(updatePane, 55);
         StackPane.setAlignment(updatePane, Pos.TOP_RIGHT);
+        StackPane.setMargin(updatePane, new Insets(25, 0, 0, 0));
         FXUtils.onClicked(updatePane, this::onUpgrade);
         FXUtils.onChange(showUpdateProperty(), this::showUpdate);
 
