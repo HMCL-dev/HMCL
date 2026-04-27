@@ -27,12 +27,15 @@ import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
+import javafx.scene.Scene;
 import javafx.scene.control.ColorPicker;
 import javafx.scene.control.Label;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.layout.*;
 import javafx.scene.text.Font;
 import javafx.scene.text.FontSmoothingType;
+import javafx.stage.Modality;
+import javafx.stage.Stage;
 import org.jackhuang.hmcl.setting.EnumBackgroundImage;
 import org.jackhuang.hmcl.setting.FontManager;
 import org.jackhuang.hmcl.theme.ThemeColor;
@@ -85,25 +88,6 @@ public class PersonalizationPage extends StackPane {
 
             themeList.getContent().add(brightnessPane);
         }
-
-        {
-            BorderPane themePane = new BorderPane();
-            themeList.getContent().add(themePane);
-
-            Label left = new Label(i18n("settings.launcher.theme"));
-            BorderPane.setAlignment(left, Pos.CENTER_LEFT);
-            themePane.setLeft(left);
-
-            StackPane themeColorPickerContainer = new StackPane();
-            themeColorPickerContainer.setMinHeight(30);
-            themePane.setRight(themeColorPickerContainer);
-
-            ColorPicker picker = new JFXColorPicker();
-            picker.getCustomColors().setAll(ThemeColor.STANDARD_COLORS.stream().map(ThemeColor::color).toList());
-            ThemeColor.bindBidirectional(picker, config().themeColorProperty());
-            themeColorPickerContainer.getChildren().setAll(picker);
-            Platform.runLater(() -> JFXDepthManager.setDepth(picker, 0));
-        }
         {
             LineToggleButton titleTransparentButton = new LineToggleButton();
             themeList.getContent().add(titleTransparentButton);
@@ -117,85 +101,16 @@ public class PersonalizationPage extends StackPane {
             animationButton.setTitle(i18n("settings.launcher.turn_off_animations"));
             animationButton.setSubtitle(i18n("settings.take_effect_after_restart"));
         }
-        content.getChildren().addAll(ComponentList.createComponentListTitle(i18n("settings.launcher.appearance")), themeList);
-
         {
-            ComponentList componentList = new ComponentList();
-
-            MultiFileItem<EnumBackgroundImage> backgroundItem = new MultiFileItem<>();
-            ComponentSublist backgroundSublist = new ComponentSublist();
-            backgroundSublist.getContent().add(backgroundItem);
-            backgroundSublist.setTitle(i18n("launcher.background"));
-            backgroundSublist.setHasSubtitle(true);
-
-            backgroundItem.loadChildren(Arrays.asList(
-                    new MultiFileItem.Option<>(i18n("launcher.background.default"), EnumBackgroundImage.DEFAULT)
-                            .setTooltip(i18n("launcher.background.default.tooltip")),
-                    new MultiFileItem.Option<>(i18n("launcher.background.classic"), EnumBackgroundImage.CLASSIC),
-                    new MultiFileItem.FileOption<>(i18n("settings.custom"), EnumBackgroundImage.CUSTOM)
-                            .setChooserTitle(i18n("launcher.background.choose"))
-                            .addExtensionFilter(FXUtils.getImageExtensionFilter())
-                            .setSelectionMode(FileSelector.SelectionMode.FILE_OR_DIRECTORY)
-                            .bindBidirectional(config().backgroundImageProperty()),
-                    new MultiFileItem.StringOption<>(i18n("launcher.background.network"), EnumBackgroundImage.NETWORK)
-                            .setValidators(new URLValidator(true))
-                            .bindBidirectional(config().backgroundImageUrlProperty()),
-                    new MultiFileItem.PaintOption<>(i18n("launcher.background.paint"), EnumBackgroundImage.PAINT)
-                            .bindBidirectional(config().backgroundPaintProperty())
-            ));
-            backgroundItem.selectedDataProperty().bindBidirectional(config().backgroundImageTypeProperty());
-            backgroundSublist.subtitleProperty().bind(
-                    new When(backgroundItem.selectedDataProperty().isEqualTo(EnumBackgroundImage.DEFAULT))
-                            .then(i18n("launcher.background.default"))
-                            .otherwise(config().backgroundImageProperty()));
-
-            HBox opacityItem = new HBox(8);
-            {
-                opacityItem.setAlignment(Pos.CENTER);
-
-                Label label = new Label(i18n("settings.launcher.background.settings.opacity"));
-
-                JFXSlider slider = new JFXSlider(0, 100,
-                        config().getBackgroundImageType() != EnumBackgroundImage.TRANSLUCENT
-                                ? config().getBackgroundImageOpacity() : 50);
-                slider.setShowTickMarks(true);
-                slider.setMajorTickUnit(10);
-                slider.setMinorTickCount(1);
-                slider.setBlockIncrement(5);
-                slider.setSnapToTicks(true);
-                slider.setPadding(new Insets(9, 0, 0, 0));
-                HBox.setHgrow(slider, Priority.ALWAYS);
-
-                if (config().getBackgroundImageType() == EnumBackgroundImage.TRANSLUCENT) {
-                    slider.setDisable(true);
-                    config().backgroundImageTypeProperty().addListener(new ChangeListener<>() {
-                        @Override
-                        public void changed(ObservableValue<? extends EnumBackgroundImage> observable, EnumBackgroundImage oldValue, EnumBackgroundImage newValue) {
-                            if (newValue != EnumBackgroundImage.TRANSLUCENT) {
-                                config().backgroundImageTypeProperty().removeListener(this);
-                                slider.setDisable(false);
-                                slider.setValue(100);
-                            }
-                        }
-                    });
-                }
-
-                Label textOpacity = new Label();
-                FXUtils.setLimitWidth(textOpacity, 50);
-
-                StringBinding valueBinding = Bindings.createStringBinding(() -> ((int) slider.getValue()) + "%", slider.valueProperty());
-                textOpacity.textProperty().bind(valueBinding);
-                slider.setValueFactory(s -> valueBinding);
-
-                slider.valueProperty().addListener((observable, oldValue, newValue) ->
-                        config().setBackgroundImageOpacity(snapOpacity(newValue.doubleValue())));
-
-                opacityItem.getChildren().setAll(label, slider, textOpacity);
-            }
-
-            componentList.getContent().setAll(backgroundItem, opacityItem);
-            content.getChildren().addAll(ComponentList.createComponentListTitle(i18n("launcher.background")), componentList);
+            var themeButton = LineButton.createNavigationButton();
+            themeList.getContent().add(themeButton);
+            themeButton.setTitle("主题"); // TODO: i18n
+            themeButton.setOnAction(event -> {
+                // TODO
+            });
         }
+
+        content.getChildren().addAll(ComponentList.createComponentListTitle(i18n("settings.launcher.appearance")), themeList);
 
         {
             ComponentList logPane = new ComponentList();
