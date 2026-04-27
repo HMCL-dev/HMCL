@@ -95,6 +95,7 @@ public class InstallerItem extends Control {
             case "game" -> VersionIconType.GRASS;
             case "fabric", "fabric-api" -> VersionIconType.FABRIC;
             case "legacyfabric", "legacyfabric-api" -> VersionIconType.LEGACY_FABRIC;
+            case "ornithe", "ornithe-osl" -> VersionIconType.ORNITHE;
             case "forge" -> VersionIconType.FORGE;
             case "cleanroom" -> VersionIconType.CLEANROOM;
             case "liteloader" -> VersionIconType.CHICKEN;
@@ -183,6 +184,8 @@ public class InstallerItem extends Control {
             InstallerItem cleanroom = new InstallerItem(CLEANROOM, style);
             InstallerItem legacyfabric = new InstallerItem(LEGACY_FABRIC, style);
             InstallerItem legacyfabricApi = new InstallerItem(LEGACY_FABRIC_API, style);
+            InstallerItem ornithe = new InstallerItem(ORNITHE, style);
+            InstallerItem ornitheOSL = new InstallerItem(ORNITHE_OSL, style);
             InstallerItem neoForge = new InstallerItem(NEO_FORGE, style);
             InstallerItem liteLoader = new InstallerItem(LITELOADER, style);
             InstallerItem optiFine = new InstallerItem(OPTIFINE, style);
@@ -190,12 +193,13 @@ public class InstallerItem extends Control {
             InstallerItem quiltApi = new InstallerItem(QUILT_API, style);
 
             Map<InstallerItem, Set<InstallerItem>> incompatibleMap = new HashMap<>();
-            mutualIncompatible(incompatibleMap, forge, fabric, quilt, neoForge, cleanroom, legacyfabric);
-            addIncompatibles(incompatibleMap, liteLoader, fabric, quilt, neoForge, cleanroom, legacyfabric);
-            addIncompatibles(incompatibleMap, optiFine, fabric, quilt, neoForge, cleanroom, liteLoader, legacyfabric);
-            addIncompatibles(incompatibleMap, fabricApi, forge, quiltApi, neoForge, liteLoader, optiFine, cleanroom, legacyfabric, legacyfabricApi);
-            addIncompatibles(incompatibleMap, quiltApi, forge, fabric, fabricApi, neoForge, liteLoader, optiFine, cleanroom, legacyfabric, legacyfabricApi);
-            addIncompatibles(incompatibleMap, legacyfabricApi, forge, fabric, fabricApi, neoForge, liteLoader, optiFine, cleanroom, quilt, quiltApi);
+            mutualIncompatible(incompatibleMap, forge, fabric, quilt, neoForge, cleanroom, legacyfabric, ornithe);
+            addIncompatibles(incompatibleMap, liteLoader, fabric, quilt, neoForge, cleanroom, legacyfabric, ornithe);
+            addIncompatibles(incompatibleMap, optiFine, fabric, quilt, neoForge, cleanroom, liteLoader, legacyfabric, ornithe);
+            addIncompatibles(incompatibleMap, fabricApi, forge, quiltApi, neoForge, liteLoader, optiFine, cleanroom, legacyfabric, legacyfabricApi, ornithe, ornitheOSL);
+            addIncompatibles(incompatibleMap, quiltApi, forge, fabric, fabricApi, neoForge, liteLoader, optiFine, cleanroom, legacyfabric, legacyfabricApi, ornithe, ornitheOSL);
+            addIncompatibles(incompatibleMap, legacyfabricApi, forge, fabric, fabricApi, neoForge, liteLoader, optiFine, cleanroom, quilt, quiltApi, ornitheOSL, ornithe);
+            addIncompatibles(incompatibleMap, ornitheOSL, forge, fabric, fabricApi, neoForge, liteLoader, optiFine, cleanroom, quilt, quiltApi, legacyfabric, legacyfabricApi);
 
             for (Map.Entry<InstallerItem, Set<InstallerItem>> entry : incompatibleMap.entrySet()) {
                 InstallerItem item = entry.getKey();
@@ -229,7 +233,7 @@ public class InstallerItem extends Control {
                 game.versionProperty.set(new InstalledState(gameVersion, false, false));
             }
 
-            InstallerItem[] all = {game, forge, neoForge, liteLoader, optiFine, fabric, fabricApi, quilt, quiltApi, legacyfabric, legacyfabricApi, cleanroom};
+            InstallerItem[] all = {game, forge, neoForge, liteLoader, optiFine, fabric, fabricApi, quilt, quiltApi, legacyfabric, legacyfabricApi, ornithe, ornitheOSL, cleanroom};
 
             for (InstallerItem item : all) {
                 if (!item.resolvedStateProperty.isBound()) {
@@ -246,9 +250,11 @@ public class InstallerItem extends Control {
             if (gameVersion == null) {
                 this.libraries = all;
             } else if (gameVersion.equals("1.12.2")) {
-                this.libraries = new InstallerItem[]{game, forge, cleanroom, liteLoader, legacyfabric, legacyfabricApi, optiFine};
+                this.libraries = new InstallerItem[]{game, forge, cleanroom, liteLoader, legacyfabric, legacyfabricApi, ornithe, ornitheOSL, optiFine};
+            } else if (GameVersionNumber.compare(gameVersion, "1.14.4") <= 0 && GameVersionNumber.compare(gameVersion, "1.13.2") >= 0) {
+                this.libraries = new InstallerItem[]{game, forge, liteLoader, optiFine, fabric, fabricApi, ornithe, ornitheOSL};
             } else if (GameVersionNumber.compare(gameVersion, "1.13.2") <= 0) {
-                this.libraries = new InstallerItem[]{game, forge, liteLoader, optiFine, legacyfabric, legacyfabricApi};
+                this.libraries = new InstallerItem[]{game, forge, liteLoader, optiFine, legacyfabric, legacyfabricApi, ornithe, ornitheOSL};
             } else {
                 this.libraries = new InstallerItem[]{game, forge, neoForge, optiFine, fabric, fabricApi, quilt, quiltApi};
             }

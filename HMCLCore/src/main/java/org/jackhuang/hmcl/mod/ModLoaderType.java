@@ -18,13 +18,24 @@
 package org.jackhuang.hmcl.mod;
 
 public enum ModLoaderType {
-    UNKNOWN,
-    FORGE,
-    CLEANROOM,
-    NEO_FORGE,
-    FABRIC,
-    QUILT,
-    LITE_LOADER,
-    LEGACY_FABRIC,
-    PACK
+    UNKNOWN(null),
+    FORGE("FORGE"),
+    CLEANROOM("CLEANROOM"),
+    NEO_FORGE("NEOFORGE"),
+    FABRIC("FABRIC"),
+    ORNITHE("ORNITHE"),
+    QUILT("QUILT"),
+    LITE_LOADER("LITELOADER"),
+    LEGACY_FABRIC("LEGACYFABRIC"),
+    PACK(null);
+
+    private final String id;
+
+    ModLoaderType(String id) {
+        this.id = id;
+    }
+
+    public String getId() {
+        return id;
+    }
 }

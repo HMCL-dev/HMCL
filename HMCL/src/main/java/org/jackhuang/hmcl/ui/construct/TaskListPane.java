@@ -46,6 +46,8 @@ import org.jackhuang.hmcl.download.liteloader.LiteLoaderInstallTask;
 import org.jackhuang.hmcl.download.neoforge.NeoForgeInstallTask;
 import org.jackhuang.hmcl.download.neoforge.NeoForgeOldInstallTask;
 import org.jackhuang.hmcl.download.optifine.OptiFineInstallTask;
+import org.jackhuang.hmcl.download.ornithe.OrnitheInstallTask;
+import org.jackhuang.hmcl.download.ornithe.OrnitheOSLInstallTask;
 import org.jackhuang.hmcl.download.quilt.QuiltAPIInstallTask;
 import org.jackhuang.hmcl.download.quilt.QuiltInstallTask;
 import org.jackhuang.hmcl.game.HMCLModpackInstallTask;
@@ -184,6 +186,10 @@ public final class TaskListPane extends StackPane {
                     task.setName(i18n("install.installer.install", i18n("install.installer.fabric")));
                 } else if (task instanceof FabricAPIInstallTask) {
                     task.setName(i18n("install.installer.install", i18n("install.installer.fabric-api")));
+                } else if (task instanceof OrnitheInstallTask) {
+                    task.setName(i18n("install.installer.install", i18n("install.installer.ornithe")));
+                } else if (task instanceof OrnitheOSLInstallTask) {
+                    task.setName(i18n("install.installer.install", i18n("install.installer.ornithe-osl")));
                 } else if (task instanceof QuiltInstallTask) {
                     task.setName(i18n("install.installer.install", i18n("install.installer.quilt")));
                 } else if (task instanceof QuiltAPIInstallTask) {
@@ -455,6 +461,8 @@ public final class TaskListPane extends StackPane {
                 case "hmcl.install.fabric-api" ->       i18n("install.installer.install", i18n("install.installer.fabric-api") + " " + stageValue);
                 case "hmcl.install.legacyfabric" ->     i18n("install.installer.install", i18n("install.installer.legacyfabric") + " " + stageValue);
                 case "hmcl.install.legacyfabric-api" -> i18n("install.installer.install", i18n("install.installer.legacyfabric-api") + " " + stageValue);
+                case "hmcl.install.ornithe" ->          i18n("install.installer.install", i18n("install.installer.ornithe") + " " + stageValue);
+                case "hmcl.install.ornithe-osl" ->      i18n("install.installer.install", i18n("install.installer.ornithe-osl") + " " + stageValue);
                 case "hmcl.install.quilt" ->            i18n("install.installer.install", i18n("install.installer.quilt") + " " + stageValue);
                 case "hmcl.install.quilt-api" ->        i18n("install.installer.install", i18n("install.installer.quilt-api") + " " + stageValue);
                 default -> i18n(stageKey);

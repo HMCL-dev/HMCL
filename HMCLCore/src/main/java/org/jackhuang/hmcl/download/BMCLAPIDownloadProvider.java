@@ -27,6 +27,8 @@ import org.jackhuang.hmcl.download.legacyfabric.LegacyFabricVersionList;
 import org.jackhuang.hmcl.download.liteloader.LiteLoaderBMCLVersionList;
 import org.jackhuang.hmcl.download.neoforge.NeoForgeBMCLVersionList;
 import org.jackhuang.hmcl.download.optifine.OptiFineBMCLVersionList;
+import org.jackhuang.hmcl.download.ornithe.OrnitheOSLVersionList;
+import org.jackhuang.hmcl.download.ornithe.OrnitheVersionList;
 import org.jackhuang.hmcl.download.quilt.QuiltAPIVersionList;
 import org.jackhuang.hmcl.download.quilt.QuiltVersionList;
 import org.jackhuang.hmcl.util.Pair;
@@ -55,6 +57,8 @@ public final class BMCLAPIDownloadProvider implements DownloadProvider {
     private final OptiFineBMCLVersionList optifine;
     private final QuiltVersionList quilt;
     private final QuiltAPIVersionList quiltApi;
+    private final OrnitheVersionList ornithe;
+    private final OrnitheOSLVersionList ornitheOSL;
     private final List<Pair<String, String>> replacement;
     private final List<Pair<String, String>> fallbackReplacement;
 
@@ -72,6 +76,8 @@ public final class BMCLAPIDownloadProvider implements DownloadProvider {
         this.quiltApi = new QuiltAPIVersionList(this);
         this.legacyFabric = new LegacyFabricVersionList(this);
         this.legacyFabricApi = new LegacyFabricAPIVersionList(this);
+        this.ornithe = new OrnitheVersionList(this);
+        this.ornitheOSL = new OrnitheOSLVersionList(this);
 
         this.replacement = List.of(
                 pair("https://bmclapi2.bangbang93.com", apiRoot),
@@ -134,6 +140,8 @@ public final class BMCLAPIDownloadProvider implements DownloadProvider {
             case "quilt-api" -> quiltApi;
             case "legacyfabric" -> legacyFabric;
             case "legacyfabric-api" -> legacyFabricApi;
+            case "ornithe" -> ornithe;
+            case "ornithe-osl" -> ornitheOSL;
             default -> throw new IllegalArgumentException("Unrecognized version list id: " + id);
         };
     }

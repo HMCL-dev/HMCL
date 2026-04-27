@@ -43,6 +43,8 @@ import org.jackhuang.hmcl.download.legacyfabric.LegacyFabricRemoteVersion;
 import org.jackhuang.hmcl.download.liteloader.LiteLoaderRemoteVersion;
 import org.jackhuang.hmcl.download.neoforge.NeoForgeRemoteVersion;
 import org.jackhuang.hmcl.download.optifine.OptiFineRemoteVersion;
+import org.jackhuang.hmcl.download.ornithe.OrnitheOSLRemoteVersion;
+import org.jackhuang.hmcl.download.ornithe.OrnitheRemoteVersion;
 import org.jackhuang.hmcl.download.quilt.QuiltAPIRemoteVersion;
 import org.jackhuang.hmcl.download.quilt.QuiltRemoteVersion;
 import org.jackhuang.hmcl.setting.VersionIconType;
@@ -268,6 +270,8 @@ public final class VersionsPage extends Control implements WizardPage, Refreshab
                     iconType = VersionIconType.CLEANROOM;
                 else if (remoteVersion instanceof NeoForgeRemoteVersion)
                     iconType = VersionIconType.NEO_FORGE;
+                else if (remoteVersion instanceof OrnitheRemoteVersion || remoteVersion instanceof OrnitheOSLRemoteVersion)
+                    iconType = VersionIconType.ORNITHE;
                 else if (remoteVersion instanceof LegacyFabricRemoteVersion || remoteVersion instanceof LegacyFabricAPIRemoteVersion)
                     iconType = VersionIconType.LEGACY_FABRIC;
                 else if (remoteVersion instanceof FabricRemoteVersion || remoteVersion instanceof FabricAPIRemoteVersion)

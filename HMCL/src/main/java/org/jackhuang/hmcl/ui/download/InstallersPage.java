@@ -132,6 +132,7 @@ public class InstallersPage extends AbstractInstallersPage {
                     case LITELOADER -> "LiteLoader";
                     case QUILT -> "Quilt";
                     case OPTIFINE -> "OptiFine";
+                    case ORNITHE -> "Ornithe";
                     default -> null;
                 };
 

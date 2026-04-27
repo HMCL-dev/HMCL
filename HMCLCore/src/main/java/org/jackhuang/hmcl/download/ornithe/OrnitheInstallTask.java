@@ -15,13 +15,14 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-package org.jackhuang.hmcl.download.fabric;
+package org.jackhuang.hmcl.download.ornithe;
 
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import org.jackhuang.hmcl.download.DefaultDependencyManager;
 import org.jackhuang.hmcl.download.LibraryAnalyzer;
 import org.jackhuang.hmcl.download.UnsupportedInstallationException;
+import org.jackhuang.hmcl.download.fabric.FabricInstallTask;
 import org.jackhuang.hmcl.game.Arguments;
 import org.jackhuang.hmcl.game.Artifact;
 import org.jackhuang.hmcl.game.Library;
@@ -41,15 +42,15 @@ import static org.jackhuang.hmcl.download.UnsupportedInstallationException.FABRI
  *
  * @author huangyuhui
  */
-public final class FabricInstallTask extends Task<Version> {
+public final class OrnitheInstallTask extends Task<Version> {
 
     private final DefaultDependencyManager dependencyManager;
     private final Version version;
-    private final FabricRemoteVersion remote;
+    private final OrnitheRemoteVersion remote;
     private final GetTask launchMetaTask;
     private final List<Task<?>> dependencies = new ArrayList<>(1);
 
-    public FabricInstallTask(DefaultDependencyManager dependencyManager, Version version, FabricRemoteVersion remoteVersion) {
+    public OrnitheInstallTask(DefaultDependencyManager dependencyManager, Version version, OrnitheRemoteVersion remoteVersion) {
         this.dependencyManager = dependencyManager;
         this.version = version;
         this.remote = remoteVersion;
@@ -86,17 +87,17 @@ public final class FabricInstallTask extends Task<Version> {
 
     @Override
     public void execute() throws IOException {
-        FabricInfo fabricInfo = JsonUtils.GSON.fromJson(launchMetaTask.getResult(), FabricInfo.class);
-        if (fabricInfo == null)
-            throw new IOException("Fabric metadata is invalid");
+        OrnitheInfo ornitheInfo = JsonUtils.GSON.fromJson(launchMetaTask.getResult(), OrnitheInfo.class);
+        if (ornitheInfo == null)
+            throw new IOException("Ornithe metadata is invalid");
 
-        setResult(getPatch(fabricInfo, remote.getGameVersion(), remote.getSelfVersion()));
+        setResult(getPatch(ornitheInfo, remote.getGameVersion(), remote.getSelfVersion()));
 
         dependencies.add(dependencyManager.checkLibraryCompletionAsync(getResult(), true));
     }
 
-    private Version getPatch(FabricInfo fabricInfo, String gameVersion, String loaderVersion) {
-        JsonObject launcherMeta = fabricInfo.launcherMeta;
+    private Version getPatch(OrnitheInfo ornitheInfo, String gameVersion, String loaderVersion) {
+        JsonObject launcherMeta = ornitheInfo.launcherMeta();
         Arguments arguments = new Arguments();
 
         String mainClass;
@@ -122,75 +123,13 @@ public final class FabricInstallTask extends Task<Version> {
             }
         }
 
-        libraries.add(new Library(Artifact.fromDescriptor(fabricInfo.intermediary.maven), "https://maven.fabricmc.net/", null));
-        libraries.add(new Library(Artifact.fromDescriptor(fabricInfo.loader.maven), "https://maven.fabricmc.net/", null));
+        libraries.add(new Library(Artifact.fromDescriptor(ornitheInfo.calamus().getMaven()), "https://maven.ornithemc.net/releases/", null));
+        libraries.add(new Library(Artifact.fromDescriptor(ornitheInfo.loader().getMaven()), "https://maven.ornithemc.net/releases/", null));
 
-        return new Version(LibraryAnalyzer.LibraryType.FABRIC.getPatchId(), loaderVersion, Version.PRIORITY_LOADER, arguments, mainClass, libraries);
+        return new Version(LibraryAnalyzer.LibraryType.ORNITHE.getPatchId(), loaderVersion, Version.PRIORITY_LOADER, arguments, mainClass, libraries);
     }
 
     @JsonSerializable
-    public record FabricInfo(LoaderInfo loader, IntermediaryInfo intermediary, JsonObject launcherMeta) {
-    }
-
-    @JsonSerializable
-    public static class LoaderInfo {
-        private final String separator;
-        private final int build;
-        private final String maven;
-        private final String version;
-        private final boolean stable;
-
-        public LoaderInfo(String separator, int build, String maven, String version, boolean stable) {
-            this.separator = separator;
-            this.build = build;
-            this.maven = maven;
-            this.version = version;
-            this.stable = stable;
-        }
-
-        public String getSeparator() {
-            return separator;
-        }
-
-        public int getBuild() {
-            return build;
-        }
-
-        public String getMaven() {
-            return maven;
-        }
-
-        public String getVersion() {
-            return version;
-        }
-
-        public boolean isStable() {
-            return stable;
-        }
-    }
-
-    @JsonSerializable
-    public static class IntermediaryInfo {
-        private final String maven;
-        private final String version;
-        private final boolean stable;
-
-        public IntermediaryInfo(String maven, String version, boolean stable) {
-            this.maven = maven;
-            this.version = version;
-            this.stable = stable;
-        }
-
-        public String getMaven() {
-            return maven;
-        }
-
-        public String getVersion() {
-            return version;
-        }
-
-        public boolean isStable() {
-            return stable;
-        }
+    public record OrnitheInfo(FabricInstallTask.LoaderInfo loader, FabricInstallTask.IntermediaryInfo calamus, JsonObject launcherMeta) {
     }
 }
