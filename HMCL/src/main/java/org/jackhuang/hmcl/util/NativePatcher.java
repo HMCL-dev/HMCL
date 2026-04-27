@@ -132,7 +132,8 @@ public final class NativePatcher {
 
         if (arch == Architecture.ARM64 && (os == OperatingSystem.MACOS || os == OperatingSystem.WINDOWS)
                 && gameVersionNumber != null
-                && gameVersionNumber.compareTo("1.19") >= 0)
+                && gameVersionNumber.compareTo("1.19") >= 0
+                && !hasLegacyLwjglNatives(version))
             return version;
 
         Map<String, Library> replacements = getNatives(javaVersion.getPlatform());
@@ -148,12 +149,23 @@ public final class NativePatcher {
                 continue;
 
             if (library.isNative()) {
-                Library replacement = replacements.getOrDefault(library.getName() + ":natives", NONEXISTENT_LIBRARY);
+                String nativeKey = library.getName() + ":natives";
+                String matchedKey = nativeKey;
+                Library replacement = replacements.getOrDefault(nativeKey, NONEXISTENT_LIBRARY);
+                if (replacement == NONEXISTENT_LIBRARY) {
+                    String classifier = library.getClassifier();
+                    if (classifier != null) {
+                        String classifierKey = library.getName() + ":" + classifier;
+                        replacement = replacements.getOrDefault(classifierKey, NONEXISTENT_LIBRARY);
+                        matchedKey = classifierKey;
+                    }
+                }
+
                 if (replacement == NONEXISTENT_LIBRARY) {
                     LOG.warning("No alternative native library " + library.getName() + ":natives provided for platform " + javaVersion.getPlatform());
                     newLibraries.add(library);
                 } else if (replacement != null) {
-                    LOG.info("Replace " + library.getName() + ":natives with " + replacement.getName());
+                    LOG.info("Replace " + matchedKey + " with " + replacement.getName());
                     newLibraries.add(replacement);
                 }
             } else {
@@ -278,6 +290,27 @@ public final class NativePatcher {
         }
 
         return SupportStatus.UNTESTED;
+    }
+
+    private static boolean hasLegacyLwjglNatives(Version version) {
+        for (Library lib : version.getLibraries()) {
+            if (!lib.appliesToCurrentEnvironment()) continue;
+            if (!"org.lwjgl".equals(lib.getGroupId())) continue;
+            if (!lib.isNative()) continue;
+
+            String classifier = lib.getClassifier();
+            if (classifier == null) {
+                return true;
+            }
+
+            String c = classifier.toLowerCase(Locale.ROOT);
+            boolean arm64Like = c.contains("arm64") || c.contains("aarch64");
+            if (!arm64Like) {
+                // e.g. natives-macos / natives-windows
+                return true;
+            }
+        }
+        return false;
     }
 
     public enum SupportStatus {
