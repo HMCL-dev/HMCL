@@ -33,6 +33,7 @@ import javafx.scene.control.ScrollPane;
 import javafx.scene.layout.*;
 import javafx.scene.text.TextAlignment;
 import org.jackhuang.hmcl.Metadata;
+import org.jackhuang.hmcl.setting.EnumAskable;
 import org.jackhuang.hmcl.setting.EnumCommonDirectory;
 import org.jackhuang.hmcl.setting.Settings;
 import org.jackhuang.hmcl.task.Schedulers;
@@ -266,6 +267,20 @@ public final class SettingsPage extends ScrollPane {
                 allowAutoAgentPane.selectedProperty().bindBidirectional(config().allowAutoAgentProperty());
 
                 settingsPane.getContent().add(allowAutoAgentPane);
+            }
+
+            {
+                LineSelectButton<EnumAskable> saveCustomGameIconsPane = new LineSelectButton<>();
+                saveCustomGameIconsPane.setTitle(i18n("settings.launcher.save_custom_game_icons"));
+                saveCustomGameIconsPane.setConverter(a -> switch (a) {
+                        case ASK -> i18n("message.ask");
+                        case TRUE -> i18n("button.yes");
+                        case FALSE -> i18n("button.no");
+                    });
+                saveCustomGameIconsPane.setItems(EnumAskable.values());
+                saveCustomGameIconsPane.valueProperty().bindBidirectional(config().saveCustomGameIconsProperty());
+
+                settingsPane.getContent().add(saveCustomGameIconsPane);
             }
 
             {

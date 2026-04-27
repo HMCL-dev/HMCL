@@ -807,6 +807,21 @@ public final class Config extends ObservableSetting {
         return configurations;
     }
 
+    @SerializedName("saveCustomGameIcons")
+    private final ObjectProperty<EnumAskable> saveCustomGameIcons = new SimpleObjectProperty<>(EnumAskable.ASK);
+
+    public ObjectProperty<EnumAskable> saveCustomGameIconsProperty() {
+        return saveCustomGameIcons;
+    }
+
+    public EnumAskable getSaveCustomGameIcons() {
+        return saveCustomGameIcons.get();
+    }
+
+    public void setSaveCustomGameIcons(EnumAskable saveCustomGameIcons) {
+        this.saveCustomGameIcons.set(saveCustomGameIcons);
+    }
+
     public static final class Adapter extends ObservableSetting.Adapter<Config> {
         @Override
         protected Config createInstance() {

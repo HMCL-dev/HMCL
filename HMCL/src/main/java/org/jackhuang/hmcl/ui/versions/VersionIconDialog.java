@@ -21,10 +21,9 @@ import javafx.scene.Node;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.FlowPane;
 import javafx.stage.FileChooser;
+import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.event.Event;
-import org.jackhuang.hmcl.setting.Profile;
-import org.jackhuang.hmcl.setting.VersionIconType;
-import org.jackhuang.hmcl.setting.VersionSetting;
+import org.jackhuang.hmcl.setting.*;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
@@ -33,12 +32,17 @@ import org.jackhuang.hmcl.ui.construct.RipplerContainer;
 import org.jackhuang.hmcl.util.io.FileUtils;
 
 import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Locale;
+import java.util.Objects;
 
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 public class VersionIconDialog extends DialogPane {
+    public static final Path GAME_ICONS_DIR = Metadata.HMCL_CURRENT_DIRECTORY.resolve("game_icons");
+
     private final Profile profile;
     private final String versionId;
     private final Runnable onFinish;
@@ -71,6 +75,19 @@ public class VersionIconDialog extends DialogPane {
                 createIcon(VersionIconType.FURNACE),
                 createIcon(VersionIconType.QUILT)
         );
+
+        if (Files.isDirectory(GAME_ICONS_DIR)) {
+            try (var stream = Files.list(GAME_ICONS_DIR)) {
+                pane.getChildren().addAll(
+                        stream.filter(p -> Files.isRegularFile(p) && FXUtils.IMAGE_EXTENSIONS.contains(FileUtils.getExtension(p).toLowerCase(Locale.ROOT)))
+                                .map(this::createIcon)
+                                .filter(Objects::nonNull)
+                                .toList()
+                );
+            } catch (Exception e) {
+                LOG.warning("Failed to load custom game icons", e);
+            }
+        }
     }
 
     private void exploreIcon() {
@@ -78,17 +95,47 @@ public class VersionIconDialog extends DialogPane {
         chooser.getExtensionFilters().add(FXUtils.getImageExtensionFilter());
         Path selectedFile = FileUtils.toPath(chooser.showOpenDialog(Controllers.getStage()));
         if (selectedFile != null) {
-            try {
-                profile.getRepository().setVersionIconFile(versionId, selectedFile);
-
-                if (vs != null) {
-                    vs.setVersionIcon(VersionIconType.DEFAULT);
-                }
-
-                onAccept();
-            } catch (IOException | IllegalArgumentException e) {
-                LOG.error("Failed to set icon file: " + selectedFile, e);
+            EnumAskable saveOption = ConfigHolder.config().getSaveCustomGameIcons();
+            if (saveOption == EnumAskable.ASK && !GAME_ICONS_DIR.equals(selectedFile.getParent())) {
+                Controllers.ask(
+                        i18n("settings.icon.save_custom"),
+                        i18n("message.question"),
+                        (res, doNotAsk) -> {
+                            if (doNotAsk) ConfigHolder.config().setSaveCustomGameIcons(res ? EnumAskable.TRUE : EnumAskable.FALSE);
+                            setCustomIcon(selectedFile, res);
+                        }
+                );
+            } else {
+                setCustomIcon(selectedFile, saveOption == EnumAskable.TRUE);
             }
+        }
+    }
+
+    private void setCustomIcon(Path selectedFile, boolean save) {
+        try {
+            Path dest;
+            if (GAME_ICONS_DIR.equals(selectedFile.getParent()) || !save) {
+                dest = selectedFile;
+            } else {
+                dest = GAME_ICONS_DIR.resolve(selectedFile.getFileName());
+                int i = 1;
+                String name = FileUtils.getNameWithoutExtension(selectedFile);
+                String ext = FileUtils.getExtension(selectedFile);
+                while (Files.exists(dest)) {
+                    dest = GAME_ICONS_DIR.resolve(name + " " + i + "." + ext);
+                    i++;
+                }
+                FileUtils.copyFile(selectedFile, dest);
+            }
+            profile.getRepository().setVersionIconFile(versionId, dest);
+
+            if (vs != null) {
+                vs.setVersionIcon(VersionIconType.DEFAULT);
+            }
+
+            onAccept();
+        } catch (IOException | IllegalArgumentException e) {
+            LOG.error("Failed to set icon file: " + selectedFile, e);
         }
     }
 
@@ -111,6 +158,33 @@ public class VersionIconDialog extends DialogPane {
         FXUtils.onClicked(container, () -> {
             if (vs != null) {
                 vs.setVersionIcon(type);
+                onAccept();
+            }
+        });
+        return container;
+    }
+
+    private Node createIcon(Path path) {
+        ImageView imageView;
+        try {
+            imageView = new ImageView(FXUtils.loadImage(path, 72, 72, true, false));
+        } catch (Exception e) {
+            LOG.warning("Failed to load custom game icon: " + path, e);
+            return null;
+        }
+        imageView.setMouseTransparent(true);
+        FXUtils.limitSize(imageView, 36, 36);
+        RipplerContainer container = new RipplerContainer(imageView);
+        FXUtils.setLimitWidth(container, 36);
+        FXUtils.setLimitHeight(container, 36);
+        FXUtils.onClicked(container, () -> {
+            try {
+                profile.getRepository().setVersionIconFile(versionId, path);
+            } catch (IOException e) {
+                LOG.error("Failed to set icon file: " + path, e);
+            }
+            if (vs != null) {
+                vs.setVersionIcon(VersionIconType.DEFAULT);
                 onAccept();
             }
         });
