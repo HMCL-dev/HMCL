@@ -20,7 +20,11 @@ package org.jackhuang.hmcl.theme;
 import org.glavo.monetfx.*;
 
 /// @author Glavo
-public record ColorTheme(ThemeColor primaryColorSeed, Brightness brightness, ColorStyle colorStyle, Contrast contrast) {
+public record ColorTheme(
+        ThemeColor primaryColorSeed,
+        Brightness brightness,
+        ColorStyle colorStyle,
+        Contrast contrast) {
 
     public static final ColorTheme DEFAULT = new ColorTheme(ThemeColor.DEFAULT, Brightness.DEFAULT, ColorStyle.FIDELITY, Contrast.DEFAULT);
 

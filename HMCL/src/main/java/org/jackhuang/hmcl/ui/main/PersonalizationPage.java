@@ -39,6 +39,7 @@ import javafx.stage.Stage;
 import org.jackhuang.hmcl.setting.EnumBackgroundImage;
 import org.jackhuang.hmcl.setting.FontManager;
 import org.jackhuang.hmcl.theme.ThemeColor;
+import org.jackhuang.hmcl.theme2.Theme;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
 import org.jackhuang.hmcl.ui.construct.*;
@@ -46,6 +47,7 @@ import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.javafx.SafeStringConverter;
 
 import java.util.Arrays;
+import java.util.List;
 import java.util.Locale;
 import java.util.Optional;
 
@@ -102,12 +104,7 @@ public class PersonalizationPage extends StackPane {
             animationButton.setSubtitle(i18n("settings.take_effect_after_restart"));
         }
         {
-            var themeButton = LineButton.createNavigationButton();
-            themeList.getContent().add(themeButton);
-            themeButton.setTitle("主题"); // TODO: i18n
-            themeButton.setOnAction(event -> {
-                // TODO
-            });
+            var themeSublist = new LineSelectButton<Theme>();
         }
 
         content.getChildren().addAll(ComponentList.createComponentListTitle(i18n("settings.launcher.appearance")), themeList);
