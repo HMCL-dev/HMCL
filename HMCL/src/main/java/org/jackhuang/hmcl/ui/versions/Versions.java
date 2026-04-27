@@ -260,7 +260,7 @@ public final class Versions {
             var repository = profile.getRepository();
             var versions = repository.getVersions();
 
-            Set<String> activeAssets = versions.parallelStream()
+            Set<String> activeAssets = versions.stream()
                     .filter(Objects::nonNull)
                     .map(Version::getAssetIndex)
                     .distinct()
@@ -310,7 +310,6 @@ public final class Versions {
             return unusedFiles;
         }).thenApplyAsync((list) -> {
             long totalSize = list.stream()
-                    .parallel()
                     .mapToLong(path -> {
                         try {
                             return Files.size(path);
