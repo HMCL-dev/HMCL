@@ -35,26 +35,58 @@ import java.util.Map;
 
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
+/// Represents a resolved or unresolved theme configuration for HMCL.
+///
+/// A theme describes visual settings such as brightness, accent color, color style,
+/// background image and opacity, and contrast level. It may also carry a list of
+/// conditional [overrides] that are merged on top of the base values when
+/// [resolve(Map)] is called.
+///
+/// Themes are typically loaded from a JSON object via [fromJson(JsonObject)].
+/// After loading, call [resolve(Map)] with the current feature map to obtain
+/// a fully resolved [Theme] whose [overrides] list is empty.
+///
+/// @param version           The schema version string declared in the JSON source, or `null` if absent.
+/// @param brightness        The preferred brightness (light or dark), or `null` to use the system default.
+/// @param color             The accent color of the theme, or `null` to use the default color.
+/// @param colorStyle        The color generation style, or `null` to use the default style.
+/// @param background        The background configuration, or `null` if no custom background is set.
+/// @param backgroundOpacity The opacity of the background image in the range `[0.0, 1.0]`, or `null` if not specified.
+/// @param contrast          The contrast level preference, or `null` to use the system default.
+/// @param rules             The compatibility rules that guard this theme entry. An empty list means the theme always applies.
+/// @param overrides         The overrides that are merged on top of the base values when [resolve(Map)] is called.
 /// @author Glavo
 public record Theme(
         @Nullable String version,
-
         @Nullable Brightness brightness,
         @Nullable ThemeColor2 color,
         @Nullable ColorStyle colorStyle,
         @Nullable ThemeBackground background,
         @Nullable Double backgroundOpacity,
         @Nullable Contrast contrast,
-
         @NotNull List<CompatibilityRule> rules,
         @NotNull List<Theme> overrides
 ) {
+    /// The current default (and maximum supported) theme schema version.
     public static final String DEFAULT_VERSION = "1";
 
+    /// Returns `true` if this theme has no pending overrides and does not need
+    /// to be resolved further.
     public boolean isResolved() {
         return overrides.isEmpty();
     }
 
+    /// Resolves this theme against the given feature map by iterating over
+    /// [overrides] in order and merging each override whose compatibility rules
+    /// are satisfied by `features` into the base values.
+    ///
+    /// If this theme [isResolved()] already, `this` is returned unchanged.
+    /// If no override ends up being applicable, `this` is also returned unchanged.
+    /// Otherwise a new [Theme] record is returned containing the merged field values
+    /// while keeping the original [rules] and [overrides] references.
+    ///
+    /// @param features a map of named feature flags used to evaluate [CompatibilityRule]s
+    /// @return a [Theme] with all applicable overrides merged in
     public Theme resolve(Map<String, Boolean> features) {
         if (isResolved())
             return this;
@@ -104,6 +136,17 @@ public record Theme(
         ) : this;
     }
 
+    /// Parses a [Theme] from the given JSON object.
+    ///
+    /// Unrecognised or malformed field values are silently ignored (a warning is
+    /// logged) and the corresponding record component is set to `null`.
+    /// The returned theme always has empty [rules] and [overrides] lists; callers
+    /// that need conditional overrides must assemble the full theme graph themselves.
+    ///
+    /// @param json the JSON object to parse
+    /// @return the parsed [Theme]
+    /// @throws JsonParseException if the declared schema version is newer than
+    ///                            [DEFAULT_VERSION]
     public static Theme fromJson(JsonObject json) throws JsonParseException {
         if (json.get("version") instanceof JsonPrimitive version) {
             if (VersionNumber.compare(version.getAsString(), DEFAULT_VERSION) >= 0)

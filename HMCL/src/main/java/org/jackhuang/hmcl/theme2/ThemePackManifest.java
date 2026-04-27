@@ -17,6 +17,7 @@
  */
 package org.jackhuang.hmcl.theme2;
 
+import org.jackhuang.hmcl.util.gson.JsonSerializable;
 import org.jackhuang.hmcl.util.i18n.LocalizedText;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -25,12 +26,12 @@ import java.nio.file.Path;
 import java.util.List;
 
 /// @author Glavo
-public record ThemePack(
+@JsonSerializable
+public record ThemePackManifest(
         @NotNull LocalizedText name,
         @Nullable LocalizedText author,
         @Nullable LocalizedText description,
         @NotNull List<Theme> themes,
         @NotNull Path file
 ) {
-
 }
