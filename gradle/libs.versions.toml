@@ -1,25 +1,28 @@
 [versions]
 hmclauncher = "3.7.0.1"
-jetbrains-annotations = "26.0.1"
-kala-compress = "1.27.1-1"
+jetbrains-annotations = "26.1.0"
+kala-compress = "1.27.1-3"
 simple-png-javafx = "0.3.0"
 gson = "2.13.2"
-toml4j = "0.7.2"
-xz = "1.11"
+tomlj = "1.1.1"
+xz = "1.12"
+lz4 = "1.10.4.1"
 fx-gson = "5.0.0"
 constant-pool-scanner = "1.2"
-opennbt = "1.5"
+hello-nbt = "0.3.0"
 nanohttpd = "2.3.1"
 jsoup = "1.21.2"
 chardet = "2.5.0"
-twelvemonkeys = "3.13.0"
+fxsvgimage = "1.3"
 jna = "5.18.1"
 pci-ids = "0.4.0"
 java-info = "1.0"
 authlib-injector = "1.2.7"
+lwjgl-unsafe-agent = "2.0"
 monet-fx = "0.4.0"
 terracotta = "0.4.2"
 nayuki-qrcodegen = "1.8.0"
+jwebp = "0.2.0"
 
 # testing
 junit = "6.0.1"
@@ -33,24 +36,28 @@ hmclauncher = { module = "org.glavo.hmcl:HMCLauncher", version.ref = "hmclaunche
 jetbrains-annotations = { module = "org.jetbrains:annotations", version.ref = "jetbrains-annotations" }
 kala-compress-zip = { module = "org.glavo.kala:kala-compress-archivers-zip", version.ref = "kala-compress" }
 kala-compress-tar = { module = "org.glavo.kala:kala-compress-archivers-tar", version.ref = "kala-compress" }
+kala-compress-ar = { module = "org.glavo.kala:kala-compress-archivers-ar", version.ref = "kala-compress" }
 simple-png-javafx = { module = "org.glavo:simple-png-javafx", version.ref = "simple-png-javafx" }
 gson = { module = "com.google.code.gson:gson", version.ref = "gson" }
-toml = { module = "com.moandjiezana.toml:toml4j", version.ref = "toml4j" }
+tomlj = { module = "org.tomlj:tomlj", version.ref = "tomlj" }
 xz = { module = "org.tukaani:xz", version.ref = "xz" }
+lz4 = { module = "org.glavo:lz4-java", version.ref = "lz4" }
 fx-gson = { module = "org.hildan.fxgson:fx-gson", version.ref = "fx-gson" }
 constant-pool-scanner = { module = "org.jenkins-ci:constant-pool-scanner", version.ref = "constant-pool-scanner" }
-opennbt = { module = "com.github.steveice10:opennbt", version.ref = "opennbt" }
+hello-nbt = { module = "org.glavo:HelloNBT", version.ref = "hello-nbt" }
 nanohttpd = { module = "org.nanohttpd:nanohttpd", version.ref = "nanohttpd" }
 jsoup = { module = "org.jsoup:jsoup", version.ref = "jsoup" }
 chardet = { module = "org.glavo:chardet", version.ref = "chardet" }
-twelvemonkeys-imageio-webp = { module = "com.twelvemonkeys.imageio:imageio-webp", version.ref = "twelvemonkeys" }
+fxsvgimage = { module = "com.github.hervegirod:fxsvgimage", version.ref = "fxsvgimage" }
 jna = { module = "net.java.dev.jna:jna", version.ref = "jna" }
 jna-platform = { module = "net.java.dev.jna:jna-platform", version.ref = "jna" }
 pci-ids = { module = "org.glavo:pci-ids", version.ref = "pci-ids" }
 java-info = { module = "org.glavo:java-info", version.ref = "java-info" }
 authlib-injector = { module = "org.glavo.hmcl:authlib-injector", version.ref = "authlib-injector" }
+lwjgl-unsafe-agent = { module = "org.glavo:lwjgl-unsafe-agent", version.ref = "lwjgl-unsafe-agent" }
 monet-fx = { module = "org.glavo:MonetFX", version.ref = "monet-fx" }
 nayuki-qrcodegen = { module = "io.nayuki:qrcodegen", version.ref = "nayuki-qrcodegen" }
+jwebp = { module = "org.glavo:webp", version.ref = "jwebp" }
 
 # testing
 junit-jupiter = { module = "org.junit.jupiter:junit-jupiter", version.ref = "junit" }

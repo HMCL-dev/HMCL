@@ -51,7 +51,10 @@ import java.nio.file.FileSystem;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.*;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
 import java.util.stream.Stream;
 
 import static org.jackhuang.hmcl.util.Lang.mapOf;
@@ -167,7 +170,7 @@ public final class ModpackHelper {
 
         return new ServerModpackRemoteInstallTask(profile.getDependency(), manifest, name)
                 .whenComplete(Schedulers.defaultScheduler(), success, failure)
-                .withStagesHint(Arrays.asList("hmcl.modpack", "hmcl.modpack.download"));
+                .withStagesHints(new Task.StagesHint("hmcl.modpack"), new Task.StagesHint("hmcl.modpack.download", List.of("hmcl.install.assets", "hmcl.install.libraries")));
     }
 
     public static boolean isExternalGameNameConflicts(String name) {
@@ -211,16 +214,16 @@ public final class ModpackHelper {
             return modpack.getInstallTask(profile.getDependency(), zipFile, name, iconUrl)
                     .whenComplete(Schedulers.defaultScheduler(), success, failure)
                     .thenComposeAsync(createMultiMCPostInstallTask(profile, (MultiMCInstanceConfiguration) modpack.getManifest(), name))
-                    .withStagesHint(List.of("hmcl.modpack", "hmcl.modpack.download"));
+                    .withStagesHints(new Task.StagesHint("hmcl.modpack"), new Task.StagesHint("hmcl.modpack.download", List.of("hmcl.install.assets", "hmcl.install.libraries")));
         else if (modpack.getManifest() instanceof McbbsModpackManifest)
             return modpack.getInstallTask(profile.getDependency(), zipFile, name, iconUrl)
                     .whenComplete(Schedulers.defaultScheduler(), success, failure)
                     .thenComposeAsync(createMcbbsPostInstallTask(profile, (McbbsModpackManifest) modpack.getManifest(), name))
-                    .withStagesHint(List.of("hmcl.modpack", "hmcl.modpack.download"));
+                    .withStagesHints(new Task.StagesHint("hmcl.modpack"), new Task.StagesHint("hmcl.modpack.download", List.of("hmcl.install.assets", "hmcl.install.libraries")));
         else
             return modpack.getInstallTask(profile.getDependency(), zipFile, name, iconUrl)
                     .whenComplete(Schedulers.javafx(), success, failure)
-                    .withStagesHint(List.of("hmcl.modpack", "hmcl.modpack.download"));
+                    .withStagesHints(new Task.StagesHint("hmcl.modpack"), new Task.StagesHint("hmcl.modpack.download", List.of("hmcl.install.assets", "hmcl.install.libraries")));
     }
 
     public static Task<Void> getUpdateTask(Profile profile, ServerModpackManifest manifest, Charset charset, String name, ModpackConfiguration<?> configuration) throws UnsupportedModpackException {
@@ -228,7 +231,7 @@ public final class ModpackHelper {
             case ServerModpackRemoteInstallTask.MODPACK_TYPE:
                 return new ModpackUpdateTask(profile.getRepository(), name, new ServerModpackRemoteInstallTask(profile.getDependency(), manifest, name))
                         .thenComposeAsync(profile.getRepository().refreshVersionsAsync())
-                        .withStagesHint(Arrays.asList("hmcl.modpack", "hmcl.modpack.download"));
+                        .withStagesHints(new Task.StagesHint("hmcl.modpack"), new Task.StagesHint("hmcl.modpack.download", List.of("hmcl.install.assets", "hmcl.install.libraries")));
             default:
                 throw new UnsupportedModpackException();
         }

@@ -63,6 +63,16 @@ public final class NativePatcher {
         });
     }
 
+    // https://github.com/LWJGL/lwjgl3/issues/1111
+    public static boolean needPatchMemoryUtil(Version version, int javaVersion) {
+        return javaVersion >= 25 && javaVersion <= 26 && version.getLibraries().stream().anyMatch(library ->
+                "org.lwjgl".equals(library.getGroupId())
+                        && "lwjgl".equals(library.getArtifactId())
+                        && "3.4.1".equals(library.getVersion())
+                        && library.getClassifier() == null
+        );
+    }
+
     public static Version patchNative(DefaultGameRepository repository,
                                       Version version, String gameVersion,
                                       JavaRuntime javaVersion,
@@ -179,15 +189,16 @@ public final class NativePatcher {
         return version.setLibraries(newLibraries);
     }
 
-    public static @Nullable Library getWindowsMesaLoader(@NotNull JavaRuntime javaVersion, @NotNull Renderer renderer, @NotNull OSVersion windowsVersion) {
+    /// @see <a href="https://github.com/HMCL-dev/mesa-loader-windows">Java Mesa Loader for Windows</a>
+    public static @Nullable Library getWindowsMesaLoader(@NotNull JavaRuntime java, @NotNull Renderer renderer, @NotNull OSVersion windowsVersion) {
         if (renderer == Renderer.DEFAULT)
             return null;
 
         if (windowsVersion.isAtLeast(OSVersion.WINDOWS_10)) {
-            return getNatives(javaVersion.getPlatform()).get("mesa-loader");
+            return getNatives(java.getPlatform()).get("mesa-loader");
         } else if (windowsVersion.isAtLeast(OSVersion.WINDOWS_7)) {
-            if (renderer == Renderer.LLVMPIPE)
-                return getNatives(javaVersion.getPlatform()).get("software-renderer-loader");
+            if (renderer == Renderer.OpenGL.LLVMPIPE)
+                return getNatives(java.getPlatform()).get("software-renderer-loader");
             else
                 return null;
         } else {
@@ -236,7 +247,11 @@ public final class NativePatcher {
             minVersion = "1.6";
         } else if (platform.equals(Platform.LINUX_RISCV64)) {
             minVersion = "1.8";
-            maxVersion = "1.21.5";
+
+            if (gameVersion.compareTo("1.21.5") > 0 && gameVersion.compareTo("26.1-snapshot-8") < 0) {
+                // LWJGL version mismatch
+                return SupportStatus.UNSUPPORTED;
+            }
         } else if (platform.equals(Platform.LINUX_LOONGARCH64)) {
             minVersion = "1.6";
         } else if (platform.equals(Platform.LINUX_LOONGARCH64_OW)) {

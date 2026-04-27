@@ -20,16 +20,19 @@ package org.jackhuang.hmcl.ui.construct;
 import com.jfoenix.controls.JFXPopup;
 import javafx.beans.InvalidationListener;
 import javafx.beans.binding.Bindings;
-import javafx.beans.property.*;
+import javafx.beans.property.ListProperty;
+import javafx.beans.property.ObjectProperty;
+import javafx.beans.property.SimpleListProperty;
+import javafx.beans.property.SimpleObjectProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.css.PseudoClass;
 import javafx.geometry.Pos;
+import javafx.scene.Node;
 import javafx.scene.control.Label;
-import javafx.scene.input.MouseButton;
-import javafx.scene.input.MouseEvent;
-import javafx.scene.input.ScrollEvent;
-import javafx.scene.layout.*;
+import javafx.scene.input.*;
+import javafx.scene.layout.StackPane;
+import javafx.scene.layout.VBox;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
 import org.jackhuang.hmcl.util.javafx.MappedObservableList;
@@ -41,12 +44,14 @@ import java.util.function.Function;
 import static org.jackhuang.hmcl.ui.FXUtils.determineOptimalPopupPosition;
 
 /// @author Glavo
-public final class LineSelectButton<T> extends LineButton {
+public class LineSelectButton<T> extends LineButton {
 
     private static final String DEFAULT_STYLE_CLASS = "line-select-button";
     private static final PseudoClass SELECTED_PSEUDO_CLASS = PseudoClass.getPseudoClass("selected");
 
     private JFXPopup popup;
+    @SuppressWarnings({"FieldCanBeLocal", "unused"})
+    private ObservableList<Node> popupItems; // keep a reference
 
     public LineSelectButton() {
         this.getStyleClass().add(DEFAULT_STYLE_CLASS);
@@ -81,9 +86,11 @@ public final class LineSelectButton<T> extends LineButton {
             PopupMenu popupMenu = new PopupMenu();
             this.popup = new JFXPopup(popupMenu);
 
+            popupMenu.addEventHandler(KeyEvent.KEY_PRESSED, this::handleKeyEvent);
+
             ripplerContainer.addEventFilter(ScrollEvent.ANY, ignored -> popup.hide());
 
-            Bindings.bindContent(popupMenu.getContent(), MappedObservableList.create(itemsProperty(), item -> {
+            Bindings.bindContent(popupMenu.getContent(), popupItems = MappedObservableList.create(itemsProperty(), item -> {
                 VBox vbox = new VBox();
 
                 var itemTitleLabel = new Label();
@@ -213,4 +220,32 @@ public final class LineSelectButton<T> extends LineButton {
         return items.get();
     }
 
+    private void handleKeyEvent(KeyEvent event) {
+        ObservableList<T> list = getItems();
+        if (list == null || list.isEmpty()) return;
+        int index = list.indexOf(getValue());
+
+        var code = event.getCode();
+
+        if (code == KeyCode.UP) {
+            if (index > 0) {
+                setValue(list.get(index - 1));
+            } else {
+                setValue(list.get(list.size() - 1));
+            }
+            event.consume();
+        } else if (code == KeyCode.DOWN) {
+            if (index < list.size() - 1) {
+                setValue(list.get(index + 1));
+            } else {
+                setValue(list.get(0));
+            }
+            event.consume();
+        } else if (code == KeyCode.ENTER || code == KeyCode.ESCAPE) {
+            if (popup != null && popup.isShowing()) {
+                popup.hide();
+                event.consume();
+            }
+        }
+    }
 }

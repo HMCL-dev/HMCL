@@ -135,6 +135,7 @@ public class PersonalizationPage extends StackPane {
                     new MultiFileItem.FileOption<>(i18n("settings.custom"), EnumBackgroundImage.CUSTOM)
                             .setChooserTitle(i18n("launcher.background.choose"))
                             .addExtensionFilter(FXUtils.getImageExtensionFilter())
+                            .setSelectionMode(FileSelector.SelectionMode.FILE_OR_DIRECTORY)
                             .bindBidirectional(config().backgroundImageProperty()),
                     new MultiFileItem.StringOption<>(i18n("launcher.background.network"), EnumBackgroundImage.NETWORK)
                             .setValidators(new URLValidator(true))
@@ -226,9 +227,7 @@ public class PersonalizationPage extends StackPane {
                                 .fallbackTo(12.0)
                                 .asPredicate(Validator.addTo(txtLogFontSize)));
 
-                        JFXButton clearButton = new JFXButton();
-                        clearButton.getStyleClass().add("toggle-icon4");
-                        clearButton.setGraphic(SVG.RESTORE.createIcon());
+                        JFXButton clearButton = FXUtils.newToggleButton4(SVG.RESTORE);
                         clearButton.setOnAction(e -> cboLogFont.setValue(null));
 
                         FXUtils.installFastTooltip(clearButton, i18n("button.reset"));
@@ -276,9 +275,7 @@ public class PersonalizationPage extends StackPane {
                         cboFont.setValue(config().getLauncherFontFamily());
                         FXUtils.onChange(cboFont.valueProperty(), FontManager::setFontFamily);
 
-                        JFXButton clearButton = new JFXButton();
-                        clearButton.getStyleClass().add("toggle-icon4");
-                        clearButton.setGraphic(SVG.RESTORE.createIcon());
+                        JFXButton clearButton = FXUtils.newToggleButton4(SVG.RESTORE);
                         clearButton.setOnAction(e -> cboFont.setValue(null));
 
                         FXUtils.installFastTooltip(clearButton, i18n("button.reset"));

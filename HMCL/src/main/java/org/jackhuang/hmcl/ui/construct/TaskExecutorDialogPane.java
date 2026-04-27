@@ -31,7 +31,6 @@ import org.jackhuang.hmcl.util.TaskCancellationAction;
 import org.jackhuang.hmcl.util.i18n.I18n;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Optional;
 import java.util.function.Consumer;
 
 import static org.jackhuang.hmcl.ui.FXUtils.onEscPressed;
@@ -82,11 +81,11 @@ public class TaskExecutorDialogPane extends BorderPane {
 
         setCancel(cancel);
 
+        btnCancel.setDisable(onCancel.getCancellationAction() == null);
         btnCancel.setOnAction(e -> {
-            Optional.ofNullable(executor).ifPresent(TaskExecutor::cancel);
-            if (onCancel.getCancellationAction() != null) {
-                onCancel.getCancellationAction().accept(this);
-            }
+            if (executor != null)
+                executor.cancel();
+            onCancel.getCancellationAction().accept(this);
         });
 
         speedEventHandler = FetchTask.SPEED_EVENT.registerWeak(speedEvent -> {

@@ -17,8 +17,14 @@
  */
 package org.jackhuang.hmcl.ui.construct;
 
+import com.jfoenix.utils.JFXNodeUtils;
+import javafx.animation.Animation;
+import javafx.animation.KeyFrame;
+import javafx.animation.KeyValue;
+import javafx.animation.Timeline;
 import javafx.beans.binding.Bindings;
 import javafx.beans.binding.NumberBinding;
+import javafx.beans.value.ChangeListener;
 import javafx.geometry.Orientation;
 import javafx.geometry.Point2D;
 import javafx.scene.Node;
@@ -26,7 +32,11 @@ import javafx.scene.control.ScrollBar;
 import javafx.scene.control.Skin;
 import javafx.scene.layout.Region;
 import javafx.scene.shape.Rectangle;
-import org.jackhuang.hmcl.util.Lang;
+import javafx.util.Duration;
+import org.jackhuang.hmcl.ui.FXUtils;
+import org.jackhuang.hmcl.ui.animation.AnimationUtils;
+import org.jackhuang.hmcl.ui.animation.Motion;
+import org.jackhuang.hmcl.util.MathUtils;
 
 // Referenced in root.css
 @SuppressWarnings("unused")
@@ -35,6 +45,10 @@ public class FloatScrollBarSkin implements Skin<ScrollBar> {
     private Region group;
     private Rectangle track = new Rectangle();
     private Rectangle thumb = new Rectangle();
+
+    @SuppressWarnings({"FieldCanBeLocal", "FieldMayBeFinal"})
+    private ChangeListener<Boolean> thumbHoverListener;
+    private Animation thumbHoverAnimation;
 
     public FloatScrollBarSkin(final ScrollBar scrollBar) {
         this.scrollBar = scrollBar;
@@ -45,8 +59,8 @@ public class FloatScrollBarSkin implements Skin<ScrollBar> {
             Point2D dragStart;
             double preDragThumbPos;
 
-            NumberBinding range = Bindings.subtract(scrollBar.maxProperty(), scrollBar.minProperty());
-            NumberBinding position = Bindings.divide(Bindings.subtract(scrollBar.valueProperty(), scrollBar.minProperty()), range);
+            final NumberBinding range = Bindings.subtract(scrollBar.maxProperty(), scrollBar.minProperty());
+            final NumberBinding position = Bindings.divide(Bindings.subtract(scrollBar.valueProperty(), scrollBar.minProperty()), range);
 
             {
                 // Children are added unmanaged because for some reason the height of the bar keeps changing
@@ -63,7 +77,6 @@ public class FloatScrollBarSkin implements Skin<ScrollBar> {
 
                 setup();
 
-
                 thumb.setOnMousePressed(me -> {
                     if (me.isSynthesized()) {
                         // touch-screen events handled by Scroll handler
@@ -75,7 +88,7 @@ public class FloatScrollBarSkin implements Skin<ScrollBar> {
                      */
                     if (getSkinnable().getMax() > getSkinnable().getMin()) {
                         dragStart = thumb.localToParent(me.getX(), me.getY());
-                        double clampedValue = Lang.clamp(getSkinnable().getMin(), getSkinnable().getValue(), getSkinnable().getMax());
+                        double clampedValue = MathUtils.clamp(getSkinnable().getValue(), getSkinnable().getMin(), getSkinnable().getMax());
                         preDragThumbPos = (clampedValue - getSkinnable().getMin()) / (getSkinnable().getMax() - getSkinnable().getMin());
                         me.consume();
                     }
@@ -107,7 +120,7 @@ public class FloatScrollBarSkin implements Skin<ScrollBar> {
                                 getSkinnable().requestFocus();
                             double newValue = (position * (getSkinnable().getMax() - getSkinnable().getMin())) + getSkinnable().getMin();
                             if (!Double.isNaN(newValue)) {
-                                getSkinnable().setValue(Lang.clamp(getSkinnable().getMin(), newValue, getSkinnable().getMax()));
+                                getSkinnable().setValue(MathUtils.clamp(newValue, getSkinnable().getMin(), getSkinnable().getMax()));
                             }
                         }
 
@@ -128,14 +141,18 @@ public class FloatScrollBarSkin implements Skin<ScrollBar> {
                 track.widthProperty().unbind();
                 track.heightProperty().unbind();
 
+                double offset = 4;
+
                 if (scrollBar.getOrientation() == Orientation.HORIZONTAL) {
-                    track.relocate(0, -5);
-                    track.widthProperty().bind(scrollBar.widthProperty());
-                    track.setHeight(5);
+                    track.relocate(offset, -6.0);
+                    NumberBinding trackWidth = Bindings.max(0, Bindings.subtract(scrollBar.widthProperty(), offset * 2));
+                    track.widthProperty().bind(trackWidth);
+                    track.setHeight(6.0);
                 } else {
-                    track.relocate(-5, 0);
-                    track.setWidth(5);
-                    track.heightProperty().bind(scrollBar.heightProperty());
+                    track.relocate(-6.0, offset);
+                    track.setWidth(6.0);
+                    NumberBinding trackHeight = Bindings.max(0, Bindings.subtract(scrollBar.heightProperty(), offset * 2));
+                    track.heightProperty().bind(trackHeight);
                 }
 
                 thumb.xProperty().unbind();
@@ -144,15 +161,37 @@ public class FloatScrollBarSkin implements Skin<ScrollBar> {
                 thumb.heightProperty().unbind();
 
                 if (scrollBar.getOrientation() == Orientation.HORIZONTAL) {
-                    thumb.relocate(0, -5);
-                    thumb.widthProperty().bind(Bindings.max(20, scrollBar.visibleAmountProperty().divide(range).multiply(scrollBar.widthProperty())));
-                    thumb.setHeight(5);
-                    thumb.xProperty().bind(Bindings.subtract(scrollBar.widthProperty(), thumb.widthProperty()).multiply(position));
+                    thumb.relocate(0, -6.0);
+                    thumb.setHeight(6.0);
+
+                    NumberBinding trackWidth = Bindings.max(0, Bindings.subtract(scrollBar.widthProperty(), offset * 2));
+
+                    thumb.widthProperty().bind(Bindings.min(trackWidth,
+                            Bindings.max(20, scrollBar.visibleAmountProperty().divide(range).multiply(trackWidth))));
+
+                    thumb.xProperty().bind(
+                            Bindings.add(offset,
+                                    Bindings.multiply(
+                                            Bindings.max(0, Bindings.subtract(trackWidth, thumb.widthProperty())),
+                                            position)
+                            )
+                    );
                 } else {
-                    thumb.relocate(-5, 0);
-                    thumb.setWidth(5);
-                    thumb.heightProperty().bind(Bindings.max(20, scrollBar.visibleAmountProperty().divide(range).multiply(scrollBar.heightProperty())));
-                    thumb.yProperty().bind(Bindings.subtract(scrollBar.heightProperty(), thumb.heightProperty()).multiply(position));
+                    thumb.relocate(-6.0, 0);
+                    thumb.setWidth(6.0);
+
+                    NumberBinding trackHeight = Bindings.max(0, Bindings.subtract(scrollBar.heightProperty(), offset * 2));
+
+                    thumb.heightProperty().bind(Bindings.min(trackHeight,
+                            Bindings.max(20, scrollBar.visibleAmountProperty().divide(range).multiply(trackHeight))));
+
+                    thumb.yProperty().bind(
+                            Bindings.add(offset,
+                                    Bindings.multiply(
+                                            Bindings.max(0, Bindings.subtract(trackHeight, thumb.heightProperty())),
+                                            position)
+                            )
+                    );
                 }
             }
 
@@ -162,7 +201,7 @@ public class FloatScrollBarSkin implements Skin<ScrollBar> {
                     return Double.MAX_VALUE;
                 }
 
-                return 5;
+                return 6.0;
             }
 
             @Override
@@ -171,13 +210,46 @@ public class FloatScrollBarSkin implements Skin<ScrollBar> {
                     return Double.MAX_VALUE;
                 }
 
-                return 5;
+                return 6.0;
             }
         };
+
+        this.thumbHoverListener = FXUtils.onWeakChangeAndOperate(thumb.hoverProperty(), newValue -> {
+            if (thumbHoverAnimation != null) {
+                thumbHoverAnimation.stop();
+                thumbHoverAnimation = null;
+            }
+
+            double targetOpacity = newValue ? 1.0 : 0.5;
+            double currentOpacity = thumb.getOpacity();
+
+            double opacityAdjustment = targetOpacity - currentOpacity;
+            if (Math.abs(opacityAdjustment) < 0.001) {
+                if (opacityAdjustment != 0)
+                    thumb.setOpacity(targetOpacity);
+
+                return;
+            }
+
+            if (AnimationUtils.isAnimationEnabled() && JFXNodeUtils.isTreeVisible(thumb)) {
+                thumbHoverAnimation = new Timeline(
+                        new KeyFrame(Duration.ZERO, new KeyValue(thumb.opacityProperty(), currentOpacity)),
+                        new KeyFrame(Motion.SHORT2, new KeyValue(thumb.opacityProperty(), targetOpacity))
+                );
+                thumbHoverAnimation.play();
+            } else {
+                thumb.setOpacity(targetOpacity);
+            }
+        });
     }
 
     @Override
     public void dispose() {
+        if (thumbHoverAnimation != null) {
+            thumbHoverAnimation.stop();
+            thumbHoverAnimation = null;
+        }
+        thumbHoverListener = null;
         scrollBar = null;
         group = null;
     }

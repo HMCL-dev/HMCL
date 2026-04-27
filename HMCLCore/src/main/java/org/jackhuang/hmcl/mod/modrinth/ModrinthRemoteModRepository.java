@@ -24,11 +24,7 @@ import org.jackhuang.hmcl.mod.LocalModFile;
 import org.jackhuang.hmcl.mod.ModLoaderType;
 import org.jackhuang.hmcl.mod.RemoteMod;
 import org.jackhuang.hmcl.mod.RemoteModRepository;
-import org.jackhuang.hmcl.util.DigestUtils;
-import org.jackhuang.hmcl.util.Immutable;
-import org.jackhuang.hmcl.util.Lang;
-import org.jackhuang.hmcl.util.Pair;
-import org.jackhuang.hmcl.util.StringUtils;
+import org.jackhuang.hmcl.util.*;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.io.HttpRequest;
 import org.jackhuang.hmcl.util.io.NetworkUtils;
@@ -37,10 +33,12 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.net.URI;
 import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -54,12 +52,48 @@ import java.util.stream.Stream;
 import static org.jackhuang.hmcl.util.Lang.mapOf;
 import static org.jackhuang.hmcl.util.Pair.pair;
 import static org.jackhuang.hmcl.util.gson.JsonUtils.listTypeOf;
+import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 public final class ModrinthRemoteModRepository implements RemoteModRepository {
     public static final ModrinthRemoteModRepository MODS = new ModrinthRemoteModRepository("mod");
     public static final ModrinthRemoteModRepository MODPACKS = new ModrinthRemoteModRepository("modpack");
     public static final ModrinthRemoteModRepository RESOURCE_PACKS = new ModrinthRemoteModRepository("resourcepack");
     public static final ModrinthRemoteModRepository SHADER_PACKS = new ModrinthRemoteModRepository("shader");
+
+    private static final Comparator<String> TAG_COMPARATOR = PriorityComparator.of(
+            List.of("babric",
+                    "bta-babric",
+                    "bukkit",
+                    "bungeecord",
+                    "canvas",
+                    "datapack",
+                    "fabric",
+                    "folia",
+                    "forge",
+                    "geyser",
+                    "iris",
+                    "java-agent",
+                    "legacy-fabric",
+                    "liteloader",
+                    "minecraft",
+                    "modloader",
+                    "mrpack",
+                    "neoforge",
+                    "nilloader",
+                    "optifine",
+                    "ornith",
+                    "paper",
+                    "purpur",
+                    "quilt",
+                    "rift",
+                    "spigot",
+                    "sponge",
+                    "vanilla",
+                    "velocity",
+                    "waterfall"),
+            Comparator.naturalOrder(),
+            false
+    );
 
     private static final Semaphore SEMAPHORE = new Semaphore(16);
 
@@ -93,6 +127,12 @@ public final class ModrinthRemoteModRepository implements RemoteModRepository {
         }
     }
 
+    static List<String> sortDisplayCategories(List<String> displayCategories) {
+        return displayCategories != null && !displayCategories.isEmpty()
+                ? displayCategories.stream().sorted(TAG_COMPARATOR).toList()
+                : List.of();
+    }
+
     @Override
     public SearchResult search(DownloadProvider downloadProvider, String gameVersion, @Nullable RemoteModRepository.Category category, int pageOffset, int pageSize, String searchFilter, SortType sort, SortOrder sortOrder) throws IOException {
         SEMAPHORE.acquireUninterruptibly();
@@ -112,9 +152,31 @@ public final class ModrinthRemoteModRepository implements RemoteModRepository {
                     pair("limit", Integer.toString(pageSize)),
                     pair("index", convertSortType(sort))
             );
-            Response<ProjectSearchResult> response = HttpRequest.GET(downloadProvider.injectURL(NetworkUtils.withQuery(PREFIX + "/v2/search", query)))
-                    .getJson(Response.typeOf(ProjectSearchResult.class));
-            return new SearchResult(response.getHits().stream().map(ProjectSearchResult::toMod), (int) Math.ceil((double) response.totalHits / pageSize));
+
+            List<URI> candidates = downloadProvider.injectURLWithCandidates(NetworkUtils.withQuery(PREFIX + "/v2/search", query));
+            IOException exception = null;
+            for (URI candidate : candidates) {
+                try {
+                    LOG.info("Fetching " + candidate);
+                    Response<ProjectSearchResult> response = HttpRequest.GET(candidate.toString())
+                            .getJson(Response.typeOf(ProjectSearchResult.class));
+                    return new SearchResult(response.getHits().stream().map(ProjectSearchResult::toMod), (int) Math.ceil((double) response.totalHits / pageSize));
+                } catch (IOException e) {
+                    LOG.warning("Failed to search addons: " + candidate, e);
+
+                    IOException wrapper = new IOException("Failed to search addons: " + candidate, e);
+                    if (candidates.size() == 1) {
+                        exception = wrapper;
+                    } else {
+                        if (exception == null) {
+                            exception = new IOException("Failed to search addons");
+                        }
+                        exception.addSuppressed(wrapper);
+                    }
+                }
+            }
+
+            throw exception != null ? exception : new IOException("No candidates found");
         } finally {
             SEMAPHORE.release();
         }
@@ -144,21 +206,40 @@ public final class ModrinthRemoteModRepository implements RemoteModRepository {
     }
 
     @Override
-    public RemoteMod getModById(String id) throws IOException {
+    public RemoteMod getModById(DownloadProvider downloadProvider, String id) throws IOException {
         SEMAPHORE.acquireUninterruptibly();
         try {
             id = StringUtils.removePrefix(id, "local-");
-            Project project = HttpRequest.GET(PREFIX + "/v2/project/" + id).getJson(Project.class);
-            return project.toMod();
+            List<URI> candidates = downloadProvider.injectURLWithCandidates(PREFIX + "/v2/project/" + id);
+            IOException exception = null;
+
+            for (URI candidate : candidates) {
+                try {
+                    Project project = HttpRequest.GET(candidate.toString()).getJson(Project.class);
+                    return project.toMod();
+                } catch (IOException e) {
+                    IOException wrapper = new IOException("Failed to get mod: " + candidate, e);
+                    if (candidates.size() == 1) {
+                        exception = wrapper;
+                    } else {
+                        if (exception == null) {
+                            exception = new IOException("Failed to get mod");
+                        }
+                        exception.addSuppressed(wrapper);
+                    }
+                }
+            }
+
+            throw exception != null ? exception : new IOException("No candidates found");
         } finally {
             SEMAPHORE.release();
         }
     }
 
     @Override
-    public RemoteMod resolveDependency(String id) throws IOException {
+    public RemoteMod resolveDependency(DownloadProvider downloadProvider, String id) throws IOException {
         try {
-            return getModById(id);
+            return getModById(downloadProvider, id);
         } catch (ResponseCodeException e) {
             if (e.getResponseCode() == 502 || e.getResponseCode() == 404) {
                 return RemoteMod.BROKEN;
@@ -175,13 +256,33 @@ public final class ModrinthRemoteModRepository implements RemoteModRepository {
     }
 
     @Override
-    public Stream<RemoteMod.Version> getRemoteVersionsById(String id) throws IOException {
+    public Stream<RemoteMod.Version> getRemoteVersionsById(DownloadProvider downloadProvider, String id) throws IOException {
         SEMAPHORE.acquireUninterruptibly();
         try {
             id = StringUtils.removePrefix(id, "local-");
-            List<ProjectVersion> versions = HttpRequest.GET(PREFIX + "/v2/project/" + id + "/version?include_changelog=false")
-                    .getJson(listTypeOf(ProjectVersion.class));
-            return versions.stream().map(ProjectVersion::toVersion).flatMap(Lang::toStream);
+
+            List<URI> candidates = downloadProvider.injectURLWithCandidates(PREFIX + "/v2/project/" + id + "/version?include_changelog=false");
+            IOException exception = null;
+
+            for (URI candidate : candidates) {
+                try {
+                    List<ProjectVersion> versions = HttpRequest.GET(candidate.toString())
+                            .getJson(listTypeOf(ProjectVersion.class));
+                    return versions.stream().map(ProjectVersion::toVersion).flatMap(Lang::toStream);
+                } catch (IOException e) {
+                    IOException wrapper = new IOException("Failed to get remote versions: " + candidate, e);
+                    if (candidates.size() == 1) {
+                        exception = wrapper;
+                    } else {
+                        if (exception == null) {
+                            exception = new IOException("Failed to get remote versions");
+                        }
+                        exception.addSuppressed(wrapper);
+                    }
+                }
+            }
+
+            throw exception != null ? exception : new IOException("No candidates found");
         } finally {
             SEMAPHORE.release();
         }
@@ -339,20 +440,20 @@ public final class ModrinthRemoteModRepository implements RemoteModRepository {
         }
 
         @Override
-        public List<RemoteMod> loadDependencies(RemoteModRepository modRepository) throws IOException {
-            Set<RemoteMod.Dependency> dependencies = modRepository.getRemoteVersionsById(getId())
+        public List<RemoteMod> loadDependencies(RemoteModRepository modRepository, DownloadProvider downloadProvider) throws IOException {
+            Set<RemoteMod.Dependency> dependencies = modRepository.getRemoteVersionsById(downloadProvider, getId())
                     .flatMap(version -> version.getDependencies().stream())
                     .collect(Collectors.toSet());
             List<RemoteMod> mods = new ArrayList<>();
             for (RemoteMod.Dependency dependency : dependencies) {
-                mods.add(dependency.load());
+                mods.add(dependency.load(downloadProvider));
             }
             return mods;
         }
 
         @Override
-        public Stream<RemoteMod.Version> loadVersions(RemoteModRepository modRepository) throws IOException {
-            return modRepository.getRemoteVersionsById(getId());
+        public Stream<RemoteMod.Version> loadVersions(RemoteModRepository modRepository, DownloadProvider downloadProvider) throws IOException {
+            return modRepository.getRemoteVersionsById(downloadProvider, getId());
         }
 
         public RemoteMod toMod() {
@@ -567,7 +668,7 @@ public final class ModrinthRemoteModRepository implements RemoteModRepository {
                     loaders.stream().flatMap(loader -> {
                         if ("fabric".equalsIgnoreCase(loader)) return Stream.of(ModLoaderType.FABRIC);
                         else if ("forge".equalsIgnoreCase(loader)) return Stream.of(ModLoaderType.FORGE);
-                        else if ("neoforge".equalsIgnoreCase(loader)) return Stream.of(ModLoaderType.NEO_FORGED);
+                        else if ("neoforge".equalsIgnoreCase(loader)) return Stream.of(ModLoaderType.NEO_FORGE);
                         else if ("quilt".equalsIgnoreCase(loader)) return Stream.of(ModLoaderType.QUILT);
                         else if ("liteloader".equalsIgnoreCase(loader)) return Stream.of(ModLoaderType.LITE_LOADER);
                         else return Stream.empty();
@@ -726,20 +827,20 @@ public final class ModrinthRemoteModRepository implements RemoteModRepository {
         }
 
         @Override
-        public List<RemoteMod> loadDependencies(RemoteModRepository modRepository) throws IOException {
-            Set<RemoteMod.Dependency> dependencies = modRepository.getRemoteVersionsById(getProjectId())
+        public List<RemoteMod> loadDependencies(RemoteModRepository modRepository, DownloadProvider downloadProvider) throws IOException {
+            Set<RemoteMod.Dependency> dependencies = modRepository.getRemoteVersionsById(downloadProvider, getProjectId())
                     .flatMap(version -> version.getDependencies().stream())
                     .collect(Collectors.toSet());
             List<RemoteMod> mods = new ArrayList<>();
             for (RemoteMod.Dependency dependency : dependencies) {
-                mods.add(dependency.load());
+                mods.add(dependency.load(downloadProvider));
             }
             return mods;
         }
 
         @Override
-        public Stream<RemoteMod.Version> loadVersions(RemoteModRepository modRepository) throws IOException {
-            return modRepository.getRemoteVersionsById(getProjectId());
+        public Stream<RemoteMod.Version> loadVersions(RemoteModRepository modRepository, DownloadProvider downloadProvider) throws IOException {
+            return modRepository.getRemoteVersionsById(downloadProvider, getProjectId());
         }
 
         public RemoteMod toMod() {
@@ -748,7 +849,7 @@ public final class ModrinthRemoteModRepository implements RemoteModRepository {
                     author,
                     title,
                     description,
-                    displayCategories,
+                    sortDisplayCategories(displayCategories),
                     String.format("https://modrinth.com/%s/%s", projectType, projectId),
                     iconUrl,
                     this

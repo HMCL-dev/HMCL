@@ -17,6 +17,7 @@
  */
 package org.jackhuang.hmcl.ui.construct;
 
+import javafx.beans.InvalidationListener;
 import javafx.beans.binding.Bindings;
 import javafx.beans.property.StringProperty;
 import javafx.beans.property.StringPropertyBase;
@@ -146,6 +147,10 @@ public class TwoLineListItem extends VBox {
         subtitleProperty().set(subtitle);
     }
 
+    public HBox getFirstLine() {
+        return firstLine;
+    }
+
     public Label getTitleLabel() {
         return lblTitle;
     }
@@ -167,12 +172,15 @@ public class TwoLineListItem extends VBox {
             Bindings.bindContent(tagsBox.getChildren(), tags);
 
             var scrollPane = new ScrollPane(tagsBox);
+            scrollPane.setMinSize(0, 0);
             HBox.setHgrow(scrollPane, Priority.ALWAYS);
+            lblTitle.setMinWidth(Label.USE_PREF_SIZE);
             scrollPane.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
             scrollPane.setVbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
             FXUtils.onChangeAndOperate(tagsBox.heightProperty(), height -> FXUtils.setLimitHeight(scrollPane, height.doubleValue()));
-            scrollPane.setPrefWidth(50);
             firstLine.getChildren().setAll(lblTitle, scrollPane);
+
+            tags.addListener((InvalidationListener) ignored -> scrollPane.requestLayout());
         }
         return tags;
     }

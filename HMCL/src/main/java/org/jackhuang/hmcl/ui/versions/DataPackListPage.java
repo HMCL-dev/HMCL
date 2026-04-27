@@ -21,7 +21,8 @@ import javafx.beans.property.BooleanProperty;
 import javafx.collections.ObservableList;
 import javafx.scene.control.Skin;
 import javafx.stage.FileChooser;
-import org.jackhuang.hmcl.mod.Datapack;
+import org.jackhuang.hmcl.game.World;
+import org.jackhuang.hmcl.mod.DataPack;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.ui.Controllers;
@@ -43,45 +44,45 @@ import java.util.regex.Pattern;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
-public final class DatapackListPage extends ListPageBase<DatapackListPageSkin.DatapackInfoObject> implements WorldManagePage.WorldRefreshable {
-    private final Path worldDir;
-    private final Datapack datapack;
+public final class DataPackListPage extends ListPageBase<DataPackListPageSkin.DataPackInfoObject> implements WorldManagePage.WorldRefreshable {
+    private final World world;
+    private final DataPack dataPack;
     final BooleanProperty readOnly;
 
-    public DatapackListPage(WorldManagePage worldManagePage) {
-        this.worldDir = worldManagePage.getWorld().getFile();
-        datapack = new Datapack(worldDir.resolve("datapacks"));
-        setItems(MappedObservableList.create(datapack.getPacks(), DatapackListPageSkin.DatapackInfoObject::new));
+    public DataPackListPage(WorldManagePage worldManagePage) {
+        world = worldManagePage.getWorld();
+        dataPack = new DataPack(world.getFile().resolve("datapacks"));
+        setItems(MappedObservableList.create(dataPack.getPacks(), DataPackListPageSkin.DataPackInfoObject::new));
         readOnly = worldManagePage.readOnlyProperty();
         FXUtils.applyDragListener(this, it -> Objects.equals("zip", FileUtils.getExtension(it)),
-                this::installMultiDatapack, this::refresh);
+                this::installMultiDataPack, this::refresh);
 
         refresh();
     }
 
-    private void installMultiDatapack(List<Path> datapackPath) {
-        datapackPath.forEach(this::installSingleDatapack);
+    private void installMultiDataPack(List<Path> dataPackPath) {
+        dataPackPath.forEach(this::installSingleDataPack);
         if (readOnly.get()) {
             Controllers.showToast(i18n("datapack.reload.toast"));
         }
     }
 
-    private void installSingleDatapack(Path datapack) {
+    private void installSingleDataPack(Path dataPack) {
         try {
-            this.datapack.installPack(datapack);
+            this.dataPack.installPack(dataPack, world.getGameVersion());
         } catch (IOException | IllegalArgumentException e) {
-            LOG.warning("Unable to parse datapack file " + datapack, e);
+            LOG.warning("Unable to parse datapack file " + dataPack, e);
         }
     }
 
     @Override
     protected Skin<?> createDefaultSkin() {
-        return new DatapackListPageSkin(this);
+        return new DataPackListPageSkin(this);
     }
 
     public void refresh() {
         setLoading(true);
-        Task.runAsync(datapack::loadFromDir)
+        Task.runAsync(dataPack::loadFromDir)
                 .withRunAsync(Schedulers.javafx(), () -> setLoading(false))
                 .start();
     }
@@ -93,18 +94,18 @@ public final class DatapackListPage extends ListPageBase<DatapackListPageSkin.Da
         List<Path> res = FileUtils.toPaths(chooser.showOpenMultipleDialog(Controllers.getStage()));
 
         if (res != null) {
-            installMultiDatapack(res);
+            installMultiDataPack(res);
         }
 
-        datapack.loadFromDir();
+        dataPack.loadFromDir();
     }
 
-    void removeSelected(ObservableList<DatapackListPageSkin.DatapackInfoObject> selectedItems) {
+    void removeSelected(ObservableList<DataPackListPageSkin.DataPackInfoObject> selectedItems) {
         selectedItems.stream()
-                .map(DatapackListPageSkin.DatapackInfoObject::getPackInfo)
+                .map(DataPackListPageSkin.DataPackInfoObject::getPackInfo)
                 .forEach(pack -> {
                     try {
-                        datapack.deletePack(pack);
+                        dataPack.deletePack(pack);
                     } catch (IOException e) {
                         // Fail to remove mods if the game is running or the datapack is absent.
                         LOG.warning("Failed to delete datapack \"" + pack.getId() + "\"", e);
@@ -112,23 +113,23 @@ public final class DatapackListPage extends ListPageBase<DatapackListPageSkin.Da
                 });
     }
 
-    void enableSelected(ObservableList<DatapackListPageSkin.DatapackInfoObject> selectedItems) {
+    void enableSelected(ObservableList<DataPackListPageSkin.DataPackInfoObject> selectedItems) {
         selectedItems.stream()
-                .map(DatapackListPageSkin.DatapackInfoObject::getPackInfo)
+                .map(DataPackListPageSkin.DataPackInfoObject::getPackInfo)
                 .forEach(pack -> pack.setActive(true));
     }
 
-    void disableSelected(ObservableList<DatapackListPageSkin.DatapackInfoObject> selectedItems) {
+    void disableSelected(ObservableList<DataPackListPageSkin.DataPackInfoObject> selectedItems) {
         selectedItems.stream()
-                .map(DatapackListPageSkin.DatapackInfoObject::getPackInfo)
+                .map(DataPackListPageSkin.DataPackInfoObject::getPackInfo)
                 .forEach(pack -> pack.setActive(false));
     }
 
     void openDataPackFolder() {
-        FXUtils.openFolder(datapack.getPath());
+        FXUtils.openFolder(dataPack.getPath());
     }
 
-    @NotNull Predicate<DatapackListPageSkin.DatapackInfoObject> updateSearchPredicate(String queryString) {
+    @NotNull Predicate<DataPackListPageSkin.DataPackInfoObject> updateSearchPredicate(String queryString) {
         if (queryString.isBlank()) {
             return dataPack -> true;
         }
