@@ -612,6 +612,7 @@ public class JFXRippler extends StackPane {
             hoverOverlay.setY(bounds.getMinY() + diffMinY - snappedTopInset());
             hoverOverlay.setWidth(control.getLayoutBounds().getWidth());
             hoverOverlay.setHeight(control.getLayoutBounds().getHeight());
+            hoverOverlay.setClip(getMask());
         }
     }
 
