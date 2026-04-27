@@ -17,6 +17,9 @@
  */
 package org.jackhuang.hmcl.theme2;
 
+import com.google.gson.JsonElement;
+import com.google.gson.JsonParseException;
+import com.google.gson.JsonPrimitive;
 import javafx.scene.paint.Color;
 import org.jackhuang.hmcl.util.Lang;
 import org.jetbrains.annotations.Nullable;
@@ -60,6 +63,14 @@ public sealed interface ThemeColor2 {
         } catch (IllegalArgumentException e) {
             return null;
         }
+    }
+
+    static ThemeColor2 fromJson(JsonElement json) throws JsonParseException {
+        if (json instanceof JsonPrimitive primitive) {
+            return ThemeColor2.of(primitive.getAsString());
+        }
+
+        throw new JsonParseException("Invalid JSON element for ThemeColor: " + json);
     }
 
     String name();
