@@ -18,7 +18,9 @@
 package org.jackhuang.hmcl.ui.versions;
 
 import com.jfoenix.controls.JFXButton;
+import com.jfoenix.controls.JFXSpinner;
 import javafx.application.Platform;
+import javafx.scene.layout.StackPane;
 import javafx.stage.FileChooser;
 import org.jackhuang.hmcl.auth.Account;
 import org.jackhuang.hmcl.auth.authlibinjector.AuthlibInjectorAccount;
@@ -45,6 +47,7 @@ import org.jackhuang.hmcl.ui.download.ModpackInstallWizardProvider;
 import org.jackhuang.hmcl.ui.export.ExportWizardProvider;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.TaskCancellationAction;
+import org.jackhuang.hmcl.util.i18n.I18n;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
 
@@ -52,11 +55,14 @@ import java.io.IOException;
 import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.List;
+import java.util.*;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Consumer;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
+import static org.jackhuang.hmcl.ui.FXUtils.onEscPressed;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
@@ -233,6 +239,126 @@ public final class Versions {
                 .executor();
         Controllers.taskDialog(executor, i18n("version.manage.redownload_assets_index"), TaskCancellationAction.NO_CANCEL);
         executor.start();
+    }
+
+    public static void cleanGameFiles(Profile profile) {
+        var dialogBuilder = new MessageDialogPane.Builder(i18n("game.clean.content", i18n("game.clean.loading")), i18n("message.question"), MessageDialogPane.MessageType.QUESTION);
+        var spinner = new JFXSpinner();
+        spinner.getStyleClass().add("small-spinner");
+
+        StackPane buttonPane = new StackPane();
+
+        JFXButton okButton = new JFXButton(i18n("button.yes"));
+        okButton.getStyleClass().add("dialog-accept");
+
+        dialogBuilder.addActionNoClose(buttonPane);
+        dialogBuilder.addCancel(null);
+
+        var dialog = dialogBuilder.build();
+
+        Task.supplyAsync(() -> {
+            var repository = profile.getRepository();
+            var versions = repository.getVersions();
+
+            Set<String> activeAssets = versions.stream()
+                    .filter(Objects::nonNull)
+                    .map(Version::getAssetIndex)
+                    .distinct()
+                    .flatMap(idx -> {
+                        try {
+                            AssetIndex index = repository.getAssetIndex(null, idx.getId());
+                            return index.getObjects().values().stream().map(AssetObject::getLocation);
+                        } catch (IOException e) {
+                            LOG.warning("Failed to get asset index", e);
+                            return Stream.empty();
+                        }
+
+                    })
+                    .collect(Collectors.toSet());
+
+            List<Path> unusedFiles = new ArrayList<>();
+
+            unusedFiles.addAll(findUnlistedFiles(repository.getBaseDirectory().resolve("assets").resolve("objects"), activeAssets));
+
+            Set<Path> unusedFolders = new HashSet<>();
+
+            var uselessFolderNames = Set.of("logs", "crash-reports", "modernfix", "mods/.connector", "CustomSkinLoader/caches", ".fabric");
+            for (String path : uselessFolderNames) {
+                unusedFolders.add(repository.getBaseDirectory().resolve(path));
+            }
+
+            versions.stream().map(v -> repository.getRunDirectory(v.getId())).distinct().forEach(runDir -> {
+                try (var walker = Files.walk(runDir, 1)) {
+                    unusedFolders.addAll(walker
+                            .filter(it -> {
+                                var name = it.getFileName().toString();
+                                return (name.startsWith("natives-") || name.endsWith("-natives") || uselessFolderNames.contains(name)) && Files.isDirectory(it);
+                            }).toList());
+                } catch (IOException ignored) {
+                }
+            });
+
+            for (Path dir : unusedFolders) {
+                if (Files.exists(dir)) {
+                    try (var s = Files.walk(dir)) {
+                        s.filter(Files::isRegularFile).forEach(unusedFiles::add);
+                    } catch (IOException ignored) {
+                    }
+                }
+            }
+
+            return unusedFiles;
+        }).thenApplyAsync((list) -> {
+            long totalSize = list.stream()
+                    .mapToLong(path -> {
+                        try {
+                            return Files.size(path);
+                        } catch (IOException e) {
+                            return 0L;
+                        }
+                    })
+                    .sum();
+
+            FXUtils.runInFX(() -> {
+                dialog.setText(i18n("game.clean.content", I18n.formatSize(totalSize)));
+                buttonPane.getChildren().setAll(okButton);
+                okButton.setDisable(totalSize == 0);
+
+                okButton.setOnAction(event -> {
+                    onEscPressed(dialog, () -> {
+                    });
+                    dialog.getCancelButton().setDisable(true);
+                    buttonPane.getChildren().setAll(spinner);
+                    Task.runAsync(() -> list.forEach(path -> {
+                        try {
+                            Files.deleteIfExists(path);
+                        } catch (IOException e) {
+                            LOG.warning("Failed to delete file " + path, e);
+                        }
+                    })).thenRunAsync(Schedulers.javafx(), () -> dialog.fireEvent(new DialogCloseEvent())).start();
+                });
+            });
+            return null;
+        }).start();
+
+        buttonPane.getChildren().setAll(spinner);
+
+        Controllers.dialog(dialog);
+    }
+
+    private static List<Path> findUnlistedFiles(Path root, Set<String> activePaths) {
+        if (!Files.exists(root)) return List.of();
+        try (var stream = Files.walk(root)) {
+            return stream
+                    .filter(Files::isRegularFile)
+                    .filter(path -> {
+                        String relative = root.relativize(path).toString().replace("\\", "/");
+                        return !activePaths.contains(relative);
+                    })
+                    .toList();
+        } catch (IOException e) {
+            return List.of();
+        }
     }
 
     public static void cleanVersion(Profile profile, String id) {

@@ -34,7 +34,10 @@ import javafx.scene.control.Skin;
 import javafx.scene.control.SkinBase;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
-import javafx.scene.layout.*;
+import javafx.scene.layout.HBox;
+import javafx.scene.layout.Priority;
+import javafx.scene.layout.StackPane;
+import javafx.scene.layout.VBox;
 import javafx.util.Duration;
 import org.jackhuang.hmcl.setting.Profile;
 import org.jackhuang.hmcl.setting.Profiles;
@@ -187,6 +190,10 @@ public class GameListPage extends DecoratorAnimatedPage implements DecoratorPage
             Profiles.getSelectedProfile().getRepository().refreshVersionsAsync().start();
         }
 
+        public void clean() {
+            Versions.cleanGameFiles(Profiles.getSelectedProfile());
+        }
+
         @Override
         protected Skin<?> createDefaultSkin() {
             return new GameListSkin(this);
@@ -237,7 +244,7 @@ public class GameListPage extends DecoratorAnimatedPage implements DecoratorPage
 
                     searchBar.getChildren().setAll(searchField, closeSearchBar);
 
-                    toolbarNormal.getChildren().setAll(createToolbarButton2(i18n("button.refresh"), SVG.REFRESH, skinnable::refreshList), createToolbarButton2(i18n("search"), SVG.SEARCH, () -> changeToolbar(searchBar)));
+                    toolbarNormal.getChildren().setAll(createToolbarButton2(i18n("button.refresh"), SVG.REFRESH, skinnable::refreshList), createToolbarButton2(i18n("search"), SVG.SEARCH, () -> changeToolbar(searchBar)), createToolbarButton2(i18n("game.clean"), SVG.CLEAN, skinnable::clean));
 
                     toolbarPane.setContent(toolbarNormal, ContainerAnimations.FADE);
 
