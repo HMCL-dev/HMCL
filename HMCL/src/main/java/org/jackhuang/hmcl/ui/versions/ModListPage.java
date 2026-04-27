@@ -48,8 +48,8 @@ import java.util.concurrent.CancellationException;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.locks.ReentrantLock;
 
-import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
+import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 public final class ModListPage extends ListPageBase<ModListPageSkin.ModInfoObject> implements VersionPage.VersionLoadable, PageAware {
     private final BooleanProperty modded = new SimpleBooleanProperty(this, "modded", false);
@@ -64,7 +64,7 @@ public final class ModListPage extends ListPageBase<ModListPageSkin.ModInfoObjec
     final EnumSet<ModLoaderType> supportedLoaders = EnumSet.noneOf(ModLoaderType.class);
 
     public ModListPage() {
-        FXUtils.applyDragListener(this, it -> Arrays.asList("jar", "zip", "litemod").contains(FileUtils.getExtension(it)), mods -> {
+        FXUtils.applyDragListener(this, it -> ModManager.MOD_EXTENSIONS.contains(FileUtils.getExtension(it).toLowerCase(Locale.ROOT)), mods -> {
             mods.forEach(it -> {
                 try {
                     modManager.addMod(it);
@@ -105,8 +105,8 @@ public final class ModListPage extends ListPageBase<ModListPageSkin.ModInfoObjec
         CompletableFuture.supplyAsync(() -> {
             lock.lock();
             try {
-                modManager.refreshMods();
-                return modManager.getMods().stream().map(ModListPageSkin.ModInfoObject::new).toList();
+                modManager.refresh();
+                return modManager.getLocalFiles().stream().map(ModListPageSkin.ModInfoObject::new).toList();
             } catch (IOException e) {
                 throw new UncheckedIOException(e);
             } finally {
@@ -173,7 +173,7 @@ public final class ModListPage extends ListPageBase<ModListPageSkin.ModInfoObjec
     public void add() {
         FileChooser chooser = new FileChooser();
         chooser.setTitle(i18n("mods.add.title"));
-        chooser.getExtensionFilters().setAll(new FileChooser.ExtensionFilter(i18n("extension.mod"), "*.jar", "*.zip", "*.litemod"));
+        chooser.getExtensionFilters().setAll(new FileChooser.ExtensionFilter(i18n("extension.mod"), "*.jar", "*.litemod"));
         List<Path> res = FileUtils.toPaths(chooser.showOpenMultipleDialog(Controllers.getStage()));
 
         if (res == null) return;
@@ -240,10 +240,7 @@ public final class ModListPage extends ListPageBase<ModListPageSkin.ModInfoObjec
         Runnable action = () -> Controllers.taskDialog(Task
                         .composeAsync(() -> {
                             Optional<String> gameVersion = profile.getRepository().getGameVersion(instanceId);
-                            if (gameVersion.isPresent()) {
-                                return new ModCheckUpdatesTask(DownloadProviders.getDownloadProvider(), gameVersion.get(), mods);
-                            }
-                            return null;
+                            return gameVersion.map(g -> new AddonCheckUpdatesTask<>(DownloadProviders.getDownloadProvider(), g, mods)).orElse(null);
                         })
                         .whenComplete(Schedulers.javafx(), (result, exception) -> {
                             if (exception instanceof CancellationException) return;
@@ -252,7 +249,7 @@ public final class ModListPage extends ListPageBase<ModListPageSkin.ModInfoObjec
                             } else if (result.isEmpty()) {
                                 Controllers.dialog(i18n("mods.check_updates.empty"));
                             } else {
-                                Controllers.navigateForward(new ModUpdatesPage(modManager, result));
+                                Controllers.navigateForward(new AddonUpdatesPage<>(modManager, result));
                             }
                         })
                         .withStagesHints("update.checking"),

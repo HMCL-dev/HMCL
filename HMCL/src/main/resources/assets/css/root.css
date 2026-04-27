@@ -1097,6 +1097,10 @@
     -fx-padding: 10 0 10 0;
 }
 
+.resource-pack-list-cell:warning {
+    -fx-background-color: -monet-error-container;
+}
+
 .options-sublist {
     -fx-background-color: -monet-surface-container;
 }

@@ -50,6 +50,14 @@ public final class HMCLLocalizedDownloadListPage extends DownloadListPage {
         return new HMCLLocalizedDownloadListPage(callback, versionSelection, RemoteModRepository.Type.RESOURCE_PACK, CurseForgeRemoteModRepository.RESOURCE_PACKS, ModrinthRemoteModRepository.RESOURCE_PACKS);
     }
 
+    public static DownloadListPage ofCurseForgeResourcePack(DownloadPage.DownloadCallback callback, boolean versionSelection) {
+        return new HMCLLocalizedDownloadListPage(callback, versionSelection, RemoteModRepository.Type.RESOURCE_PACK, CurseForgeRemoteModRepository.RESOURCE_PACKS, null);
+    }
+
+    public static DownloadListPage ofModrinthResourcePack(DownloadPage.DownloadCallback callback, boolean versionSelection) {
+        return new HMCLLocalizedDownloadListPage(callback, versionSelection, RemoteModRepository.Type.RESOURCE_PACK, null, ModrinthRemoteModRepository.RESOURCE_PACKS);
+    }
+
     public static DownloadListPage ofShaderPack(DownloadPage.DownloadCallback callback, boolean versionSelection) {
         var page = new HMCLLocalizedDownloadListPage(callback, versionSelection, RemoteModRepository.Type.SHADER_PACK, CurseForgeRemoteModRepository.SHADERS, ModrinthRemoteModRepository.SHADER_PACKS);
         page.supportChinese.set(false);

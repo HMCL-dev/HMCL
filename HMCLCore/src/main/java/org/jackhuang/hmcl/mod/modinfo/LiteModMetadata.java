@@ -19,6 +19,7 @@ package org.jackhuang.hmcl.mod.modinfo;
 
 import com.google.gson.JsonParseException;
 import kala.compress.archivers.zip.ZipArchiveEntry;
+import org.jackhuang.hmcl.mod.LocalAddonFile;
 import org.jackhuang.hmcl.mod.LocalModFile;
 import org.jackhuang.hmcl.mod.ModLoaderType;
 import org.jackhuang.hmcl.mod.ModManager;
@@ -116,7 +117,7 @@ public final class LiteModMetadata {
         LiteModMetadata metadata = JsonUtils.fromJsonFully(tree.getInputStream(entry), LiteModMetadata.class);
         if (metadata == null)
             throw new IOException("Mod " + modFile + " `litemod.json` is malformed.");
-        return new LocalModFile(modManager, modManager.getLocalMod(metadata.getName(), ModLoaderType.LITE_LOADER), modFile, metadata.getName(), new LocalModFile.Description(metadata.getDescription()), metadata.getAuthor(),
+        return new LocalModFile(modManager, modManager.getLocalMod(metadata.getName(), ModLoaderType.LITE_LOADER), modFile, metadata.getName(), new LocalAddonFile.Description(metadata.getDescription()), metadata.getAuthor(),
                 metadata.getVersion(), metadata.getGameVersion(), metadata.getUpdateURI(), "");
     }
 
