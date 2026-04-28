@@ -52,6 +52,41 @@ public final class ModrinthRemoteModRepository implements RemoteModRepository {
     public static final ModrinthRemoteModRepository RESOURCE_PACKS = new ModrinthRemoteModRepository("resourcepack");
     public static final ModrinthRemoteModRepository SHADER_PACKS = new ModrinthRemoteModRepository("shader");
 
+    private static final Comparator<String> TAG_COMPARATOR = PriorityComparator.of(
+            List.of("babric",
+                    "bta-babric",
+                    "bukkit",
+                    "bungeecord",
+                    "canvas",
+                    "datapack",
+                    "fabric",
+                    "folia",
+                    "forge",
+                    "geyser",
+                    "iris",
+                    "java-agent",
+                    "legacy-fabric",
+                    "liteloader",
+                    "minecraft",
+                    "modloader",
+                    "mrpack",
+                    "neoforge",
+                    "nilloader",
+                    "optifine",
+                    "ornith",
+                    "paper",
+                    "purpur",
+                    "quilt",
+                    "rift",
+                    "spigot",
+                    "sponge",
+                    "vanilla",
+                    "velocity",
+                    "waterfall"),
+            Comparator.naturalOrder(),
+            false
+    );
+
     private static final Semaphore SEMAPHORE = new Semaphore(16);
 
     private static final String PREFIX = "https://api.modrinth.com";
@@ -90,6 +125,12 @@ public final class ModrinthRemoteModRepository implements RemoteModRepository {
             default:
                 throw new IllegalArgumentException("Unsupported sort type " + sortType);
         }
+    }
+
+    static List<String> sortDisplayCategories(List<String> displayCategories) {
+        return displayCategories != null && !displayCategories.isEmpty()
+                ? displayCategories.stream().sorted(TAG_COMPARATOR).toList()
+                : List.of();
     }
 
     @Override
@@ -634,7 +675,7 @@ public final class ModrinthRemoteModRepository implements RemoteModRepository {
                     loaders.stream().flatMap(loader -> {
                         if ("fabric".equalsIgnoreCase(loader)) return Stream.of(ModLoaderType.FABRIC);
                         else if ("forge".equalsIgnoreCase(loader)) return Stream.of(ModLoaderType.FORGE);
-                        else if ("neoforge".equalsIgnoreCase(loader)) return Stream.of(ModLoaderType.NEO_FORGED);
+                        else if ("neoforge".equalsIgnoreCase(loader)) return Stream.of(ModLoaderType.NEO_FORGE);
                         else if ("quilt".equalsIgnoreCase(loader)) return Stream.of(ModLoaderType.QUILT);
                         else if ("liteloader".equalsIgnoreCase(loader)) return Stream.of(ModLoaderType.LITE_LOADER);
                         else return Stream.empty();
@@ -821,7 +862,7 @@ public final class ModrinthRemoteModRepository implements RemoteModRepository {
                     author,
                     title,
                     description,
-                    displayCategories,
+                    sortDisplayCategories(displayCategories),
                     String.format("https://modrinth.com/%s/%s", projectType, projectId),
                     iconUrl,
                     this,

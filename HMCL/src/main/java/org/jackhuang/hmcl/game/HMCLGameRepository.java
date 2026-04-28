@@ -430,6 +430,7 @@ public final class HMCLGameRepository extends DefaultGameRepository {
                 .setNativesDirType(vs.getNativesDirType())
                 .setNativesDir(vs.getNativesDir())
                 .setProcessPriority(vs.getProcessPriority())
+                .setGraphicsBackend(vs.getGraphicsBackend())
                 .setRenderer(vs.getRenderer())
                 .setEnableDebugLogOutput(vs.isEnableDebugLogOutput())
                 .setUseNativeGLFW(vs.isUseNativeGLFW())
@@ -514,7 +515,7 @@ public final class HMCLGameRepository extends DefaultGameRepository {
                 FORBIDDEN_VERSION_IDS.contains(id.toLowerCase(Locale.ROOT)))
             return false;
 
-        return FileUtils.isNameValid(id);
+        return FileUtils.isNameValidForJar(id);
     }
 
     /**

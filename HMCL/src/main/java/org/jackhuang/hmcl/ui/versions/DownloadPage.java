@@ -227,8 +227,10 @@ public class DownloadPage extends Control implements DecoratorPage {
                 content.setSubtitle(getSkinnable().addon.getDescription());
                 content.getSubtitleLabel().setWrapText(true);
                 getSkinnable().addon.getCategories().stream()
+                        .filter(category -> getSkinnable().page.shouldDisplayCategory(category))
                         .map(category -> getSkinnable().page.getLocalizedCategory(category))
                         .forEach(content::addTag);
+                content.getFirstLine().setMinWidth(0);
                 descriptionPane.getChildren().add(content);
 
                 if (getSkinnable().mod != null) {
@@ -457,7 +459,7 @@ public class DownloadPage extends Control implements DecoratorPage {
                             case CLEANROOM:
                                 content.addTag(i18n("install.installer.cleanroom"));
                                 break;
-                            case NEO_FORGED:
+                            case NEO_FORGE:
                                 content.addTag(i18n("install.installer.neoforge"));
                                 break;
                             case FABRIC:

@@ -353,12 +353,7 @@ public class DecoratorSkin extends SkinBase<Decorator> {
                 refreshNavButton.onActionProperty().bind(skinnable.onRefreshNavButtonActionProperty());
                 skinnable.forbidDraggingWindow(refreshNavButton);
 
-                Rectangle separator = new Rectangle();
-                separator.visibleProperty().bind(refreshNavButton.visibleProperty());
-                separator.heightProperty().bind(navBar.heightProperty());
-                separator.setFill(Color.GRAY);
-
-                navRight.getChildren().setAll(refreshNavButton, separator);
+                navRight.getChildren().setAll(refreshNavButton);
                 navBar.setRight(navRight);
             }
         }

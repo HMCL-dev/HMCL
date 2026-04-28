@@ -135,6 +135,7 @@ public class PersonalizationPage extends StackPane {
                     new MultiFileItem.FileOption<>(i18n("settings.custom"), EnumBackgroundImage.CUSTOM)
                             .setChooserTitle(i18n("launcher.background.choose"))
                             .addExtensionFilter(FXUtils.getImageExtensionFilter())
+                            .setSelectionMode(FileSelector.SelectionMode.FILE_OR_DIRECTORY)
                             .bindBidirectional(config().backgroundImageProperty()),
                     new MultiFileItem.StringOption<>(i18n("launcher.background.network"), EnumBackgroundImage.NETWORK)
                             .setValidators(new URLValidator(true))
