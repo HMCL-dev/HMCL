@@ -48,9 +48,7 @@ import javafx.scene.control.skin.VirtualFlow;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.input.*;
-import javafx.scene.layout.ColumnConstraints;
-import javafx.scene.layout.Priority;
-import javafx.scene.layout.Region;
+import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
 import javafx.scene.paint.Paint;
 import javafx.scene.shape.Rectangle;
@@ -68,12 +66,14 @@ import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.ui.animation.AnimationUtils;
 import org.jackhuang.hmcl.ui.animation.Motion;
+import org.jackhuang.hmcl.ui.construct.DialogCloseEvent;
 import org.jackhuang.hmcl.ui.construct.IconedMenuItem;
 import org.jackhuang.hmcl.ui.construct.MenuSeparator;
 import org.jackhuang.hmcl.ui.construct.PopupMenu;
 import org.jackhuang.hmcl.ui.image.ImageLoader;
 import org.jackhuang.hmcl.ui.image.ImageUtils;
 import org.jackhuang.hmcl.util.Lang;
+import org.jackhuang.hmcl.util.Pair;
 import org.jackhuang.hmcl.util.ResourceNotFoundError;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.io.NetworkUtils;
@@ -107,6 +107,8 @@ import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.PathMatcher;
+import java.time.Clock;
+import java.time.LocalDate;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.*;
@@ -1449,6 +1451,15 @@ public final class FXUtils {
         });
     }
 
+    public static void onDoubleClicked(Node node, Runnable action) {
+        node.addEventHandler(MouseEvent.MOUSE_CLICKED, e -> {
+            if (e.getButton() == MouseButton.PRIMARY && e.getClickCount() == 2) {
+                action.run();
+                e.consume();
+            }
+        });
+    }
+
     public static <N extends Parent> N prepareNode(N node) {
         Scene dummyScene = new Scene(node);
         StyleSheets.init(dummyScene);
@@ -1507,6 +1518,34 @@ public final class FXUtils {
     public static void copyText(String text, @Nullable String toastMessage) {
         ClipboardContent content = new ClipboardContent();
         content.putString(text);
+        Clipboard.getSystemClipboard().setContent(content);
+
+        if (toastMessage != null && !Controllers.isStopped()) {
+            Controllers.showToast(toastMessage);
+        }
+    }
+
+    public static void copyFiles(List<Path> paths) {
+        copyFiles(paths.stream().map(Path::toFile).toList(), i18n("message.copied"));
+    }
+
+    public static void copyFiles(List<File> files, @Nullable String toastMessage) {
+        ClipboardContent content = new ClipboardContent();
+        content.putFiles(files);
+        Clipboard.getSystemClipboard().setContent(content);
+
+        if (toastMessage != null && !Controllers.isStopped()) {
+            Controllers.showToast(toastMessage);
+        }
+    }
+
+    public static void copyImage(Image image) {
+        copyImage(image, i18n("message.copied"));
+    }
+
+    public static void copyImage(Image image, @Nullable String toastMessage) {
+        ClipboardContent content = new ClipboardContent();
+        content.putImage(image);
         Clipboard.getSystemClipboard().setContent(content);
 
         if (toastMessage != null && !Controllers.isStopped()) {
@@ -1678,5 +1717,54 @@ public final class FXUtils {
 
             e.consume();
         });
+    }
+
+    public static void chooseDateRange(Consumer<Pair<LocalDate, LocalDate>> onConfirm) {
+        Controllers.dialog(new DateRangeDialog(onConfirm));
+    }
+
+    private static class DateRangeDialog extends JFXDialogLayout {
+
+        private final JFXDatePicker fromPicker, toPicker;
+
+        public DateRangeDialog(Consumer<Pair<LocalDate, LocalDate>> onConfirm) {
+            super();
+
+            setHeading(new Label(i18n("button.select_date")));
+
+            GridPane body = new GridPane(4, 8);
+            {
+                Label fromLabel = new Label(i18n("button.select_date.from"));
+                this.fromPicker = new JFXDatePicker(LocalDate.now(Clock.systemDefaultZone()));
+                fromPicker.setOverLay(true);
+                fromPicker.setDialogParent(Controllers.getDecorator().getDecorator().getDrawerWrapper());
+                body.add(fromLabel, 0, 0);
+                body.add(fromPicker, 1, 0);
+            }
+            {
+                Label toLabel = new Label(i18n("button.select_date.to"));
+                this.toPicker = new JFXDatePicker(LocalDate.now(Clock.systemDefaultZone()));
+                toPicker.setOverLay(true);
+                toPicker.setDialogParent(Controllers.getDecorator().getDecorator().getDrawerWrapper());
+                body.add(toLabel, 0, 1);
+                body.add(toPicker, 1, 1);
+            }
+            setBody(body);
+
+            JFXButton cancelButton = new JFXButton(i18n("button.cancel"));
+            cancelButton.getStyleClass().add("dialog-cancel");
+            cancelButton.setOnAction(e -> fireEvent(new DialogCloseEvent()));
+
+            JFXButton okButton = new JFXButton(i18n("button.ok"));
+            okButton.getStyleClass().add("dialog-accept");
+            okButton.setOnAction(e -> {
+                if (onConfirm != null) onConfirm.accept(Pair.pair(fromPicker.getValue(), toPicker.getValue()));
+                fireEvent(new DialogCloseEvent());
+            });
+
+            setActions(cancelButton, okButton);
+            onEscPressed(this, cancelButton::fire);
+        }
+
     }
 }
