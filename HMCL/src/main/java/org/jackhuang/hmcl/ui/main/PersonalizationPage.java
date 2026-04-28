@@ -28,6 +28,7 @@ import javafx.scene.text.Font;
 import javafx.scene.text.FontSmoothingType;
 import org.jackhuang.hmcl.setting.FontManager;
 import org.jackhuang.hmcl.theme.Theme;
+import org.jackhuang.hmcl.theme.Themes;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
 import org.jackhuang.hmcl.ui.construct.*;
@@ -75,6 +76,28 @@ public class PersonalizationPage extends StackPane {
             brightnessPane.valueProperty().bindBidirectional(config().themeBrightnessProperty());
 
             themeList.getContent().add(brightnessPane);
+            var lightThemeButton = new LineSelectButton<Theme>();
+            lightThemeButton.setTitle("浅色主题");
+            lightThemeButton.managedProperty().bindBidirectional(lightThemeButton.visibleProperty());
+            themeList.getContent().add(lightThemeButton);
+
+            var editLightThemeButton = LineButton.createNavigationButton();
+            editLightThemeButton.setTitle("修改浅色主题");
+            editLightThemeButton.managedProperty().bindBidirectional(editLightThemeButton.visibleProperty());
+
+            themeList.getContent().add(editLightThemeButton);
+
+            var darkThemeButton = new LineSelectButton<Theme>();
+            darkThemeButton.setTitle("深色主题");
+            darkThemeButton.managedProperty().bindBidirectional(darkThemeButton.visibleProperty());
+
+            themeList.getContent().add(darkThemeButton);
+
+            var editDarkThemeButton = LineButton.createNavigationButton();
+            editDarkThemeButton.setTitle("修改深色主题");
+            editDarkThemeButton.managedProperty().bindBidirectional(editDarkThemeButton.visibleProperty());
+
+            themeList.getContent().add(editDarkThemeButton);
         }
         {
             LineToggleButton titleTransparentButton = new LineToggleButton();
@@ -88,9 +111,6 @@ public class PersonalizationPage extends StackPane {
             animationButton.selectedProperty().bindBidirectional(config().animationDisabledProperty());
             animationButton.setTitle(i18n("settings.launcher.turn_off_animations"));
             animationButton.setSubtitle(i18n("settings.take_effect_after_restart"));
-        }
-        {
-            var themeSublist = new LineSelectButton<Theme>();
         }
 
         content.getChildren().addAll(ComponentList.createComponentListTitle(i18n("settings.launcher.appearance")), themeList);
