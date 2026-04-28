@@ -199,6 +199,9 @@ public record PackMcMeta(@SerializedName("pack") PackInfo pack) implements Valid
                 }
                 if (jsonObj.get("text") instanceof JsonPrimitive primitive) {
                     parts.addAll(pairToPart(StringUtils.parseMinecraftColorCodes(primitive.getAsString()), color));
+                } else if (jsonObj.get("translate") instanceof JsonPrimitive && jsonObj.get("fallback") instanceof JsonPrimitive primitive) {
+                    // Hard for us to load the translation, so we use fallback only
+                    parts.addAll(pairToPart(StringUtils.parseMinecraftColorCodes(primitive.getAsString()), color));
                 }
                 if (jsonObj.get("extra") instanceof JsonArray jsonArray) {
                     parseComponent(jsonArray, parts, color);
