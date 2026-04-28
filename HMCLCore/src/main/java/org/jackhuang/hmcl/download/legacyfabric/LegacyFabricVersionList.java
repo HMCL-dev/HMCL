@@ -52,10 +52,13 @@ public final class LegacyFabricVersionList extends VersionList<LegacyFabricRemot
             lock.writeLock().lock();
 
             try {
-                for (String gameVersion : gameVersions)
-                    for (String loaderVersion : loaderVersions)
+                for (String metaGameVersion : gameVersions) {
+                    String gameVersion = normalizeVersion(metaGameVersion);
+                    for (String loaderVersion : loaderVersions) {
                         versions.put(gameVersion, new LegacyFabricRemoteVersion(gameVersion, loaderVersion,
-                                Collections.singletonList(getLaunchMetaUrl(gameVersion, loaderVersion))));
+                                Collections.singletonList(getLaunchMetaUrl(metaGameVersion, loaderVersion))));
+                    }
+                }
             } finally {
                 lock.writeLock().unlock();
             }
@@ -69,6 +72,12 @@ public final class LegacyFabricVersionList extends VersionList<LegacyFabricRemot
         String json = NetworkUtils.doGet(downloadProvider.injectURLWithCandidates(metaUrl));
         return JsonUtils.GSON.fromJson(json, listTypeOf(GameVersion.class))
                 .stream().map(GameVersion::getVersion).collect(Collectors.toList());
+    }
+
+    private static String normalizeVersion(String version) {
+        return version.startsWith("2point0_")
+                ? "2.0_" + version.substring("2point0_".length())
+                : version;
     }
 
     private static String getLaunchMetaUrl(String gameVersion, String loaderVersion) {

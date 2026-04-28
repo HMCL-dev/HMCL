@@ -25,6 +25,7 @@ import org.jackhuang.hmcl.util.Immutable;
 import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.Pair;
 import org.jackhuang.hmcl.util.StringUtils;
+import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
@@ -592,12 +593,12 @@ public class CurseAddon implements RemoteMod.IMod {
                         }
                         return RemoteMod.Dependency.ofGeneral(RELATION_TYPE.get(dependency.getRelationType()), CurseForgeRemoteModRepository.MODS, Integer.toString(dependency.getModId()));
                     }).distinct().filter(Objects::nonNull).collect(Collectors.toList()),
-                    gameVersions.stream().filter(ver -> ver.startsWith("1.") || ver.contains("w")).collect(Collectors.toList()),
+                    gameVersions.stream().filter(GameVersionNumber::isKnown).toList(),
                     gameVersions.stream().flatMap(version -> {
                         if ("fabric".equalsIgnoreCase(version)) return Stream.of(ModLoaderType.FABRIC);
                         else if ("forge".equalsIgnoreCase(version)) return Stream.of(ModLoaderType.FORGE);
                         else if ("quilt".equalsIgnoreCase(version)) return Stream.of(ModLoaderType.QUILT);
-                        else if ("neoforge".equalsIgnoreCase(version)) return Stream.of(ModLoaderType.NEO_FORGED);
+                        else if ("neoforge".equalsIgnoreCase(version)) return Stream.of(ModLoaderType.NEO_FORGE);
                         else return Stream.empty();
                     }).collect(Collectors.toList())
             );

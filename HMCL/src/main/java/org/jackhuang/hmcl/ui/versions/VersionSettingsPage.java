@@ -239,7 +239,7 @@ public final class VersionSettingsPage extends StackPane implements DecoratorPag
             gameDirItem.disableProperty().bind(modpack);
             gameDirCustomOption = new MultiFileItem.FileOption<>(i18n("settings.custom"), GameDirectoryType.CUSTOM)
                     .setChooserTitle(i18n("settings.game.working_directory.choose"))
-                    .setDirectory(true);
+                    .setSelectionMode(FileSelector.SelectionMode.DIRECTORY);
 
             gameDirItem.loadChildren(Arrays.asList(
                     new MultiFileItem.Option<>(i18n("settings.advanced.game_dir.default"), GameDirectoryType.ROOT_FOLDER),
