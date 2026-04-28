@@ -30,6 +30,8 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
@@ -65,8 +67,12 @@ public record Theme(
         @NotNull List<CompatibilityRule> rules,
         @NotNull List<Theme> overrides
 ) {
+
+    public static final int CURRENT_VERSION_MAJOR = 1;
+    public static final int CURRENT_VERSION_MINOR = 0;
+
     /// The current default (and maximum supported) theme schema version.
-    public static final String DEFAULT_VERSION = "1";
+    public static final String DEFAULT_VERSION = CURRENT_VERSION_MAJOR + "." + CURRENT_VERSION_MINOR;
 
     /// Returns `true` if this theme has no pending overrides and does not need
     /// to be resolved further.
@@ -146,9 +152,34 @@ public record Theme(
     /// @throws JsonParseException if the declared schema version is newer than
     ///                            [DEFAULT_VERSION]
     public static Theme fromJson(JsonObject json) throws JsonParseException {
+        String versionString;
         if (json.get("version") instanceof JsonPrimitive version) {
-            if (VersionNumber.compare(version.getAsString(), DEFAULT_VERSION) >= 0)
+            versionString = version.getAsString();
+            Pattern versionPattern = Pattern.compile("(?<major>[0-9]+)\\.(?<minor>[0-9]+)");
+
+            Matcher matcher = versionPattern.matcher(versionString);
+            if (!matcher.matches()) {
+                throw new JsonParseException("Invalid theme version format: " + versionString);
+            }
+
+            int major;
+            int minor;
+            try {
+                major = Integer.parseInt(matcher.group("major"));
+                minor = Integer.parseInt(matcher.group("minor"));
+            } catch (NumberFormatException e) {
+                throw new JsonParseException("Invalid theme version format: " + versionString, e);
+            }
+
+            if (major > CURRENT_VERSION_MAJOR)
                 throw new JsonParseException("Unsupported theme version: " + version.getAsString());
+
+            if (major == CURRENT_VERSION_MAJOR && minor > CURRENT_VERSION_MINOR)
+                LOG.warning("Unsupported theme version: " + versionString);
+
+
+        } else {
+            versionString = null;
         }
 
         Brightness brightness;
@@ -248,7 +279,7 @@ public record Theme(
         }
 
         return new Theme(
-                json.get("version") instanceof JsonPrimitive version ? version.getAsString() : null,
+                versionString,
                 brightness,
                 color,
                 colorStyle,
@@ -291,6 +322,14 @@ public record Theme(
 
         if (contrast != null)
             jsonObject.addProperty("contrast", contrast == Contrast.HIGH ? "high" : "low");
+
+        if (!overrides.isEmpty()) {
+            JsonArray overridesArray = new JsonArray();
+            for (Theme override : overrides) {
+                overridesArray.add(override.toJson());
+            }
+            jsonObject.add("overrides", overridesArray);
+        }
 
         return jsonObject;
     }
