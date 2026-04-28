@@ -27,7 +27,7 @@ import javafx.scene.layout.*;
 import javafx.scene.text.Font;
 import javafx.scene.text.FontSmoothingType;
 import org.jackhuang.hmcl.setting.FontManager;
-import org.jackhuang.hmcl.theme2.Theme;
+import org.jackhuang.hmcl.theme.Theme;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
 import org.jackhuang.hmcl.ui.construct.*;

@@ -19,7 +19,6 @@ package org.jackhuang.hmcl.theme;
 
 import javafx.scene.paint.Color;
 import org.glavo.monetfx.*;
-import org.jackhuang.hmcl.theme2.ThemeColor;
 
 /// @author Glavo
 public record ColorTheme(
