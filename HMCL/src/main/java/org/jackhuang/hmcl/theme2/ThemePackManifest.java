@@ -22,7 +22,6 @@ import org.jackhuang.hmcl.util.i18n.LocalizedText;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.nio.file.Path;
 import java.util.List;
 
 /// @author Glavo
@@ -31,7 +30,6 @@ public record ThemePackManifest(
         @NotNull LocalizedText name,
         @Nullable LocalizedText author,
         @Nullable LocalizedText description,
-        @NotNull List<Theme> themes,
-        @NotNull Path file
+        @NotNull List<Theme> themes
 ) {
 }

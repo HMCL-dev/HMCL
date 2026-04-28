@@ -17,20 +17,22 @@
  */
 package org.jackhuang.hmcl.theme;
 
+import javafx.scene.paint.Color;
 import org.glavo.monetfx.*;
+import org.jackhuang.hmcl.theme2.ThemeColor2;
 
 /// @author Glavo
 public record ColorTheme(
-        ThemeColor primaryColorSeed,
+        Color primaryColorSeed,
         Brightness brightness,
         ColorStyle colorStyle,
         Contrast contrast) {
 
-    public static final ColorTheme DEFAULT = new ColorTheme(ThemeColor.DEFAULT, Brightness.DEFAULT, ColorStyle.FIDELITY, Contrast.DEFAULT);
+    public static final ColorTheme DEFAULT = new ColorTheme(ThemeColor2.DEFAULT.color(), Brightness.DEFAULT, ColorStyle.FIDELITY, Contrast.DEFAULT);
 
     public ColorScheme toColorScheme() {
         return ColorScheme.newBuilder()
-                .setPrimaryColorSeed(primaryColorSeed.color())
+                .setPrimaryColorSeed(primaryColorSeed)
                 .setColorStyle(colorStyle)
                 .setBrightness(brightness)
                 .setSpecVersion(ColorSpecVersion.SPEC_2025)
