@@ -25,6 +25,8 @@ import javafx.beans.binding.ObjectBinding;
 import javafx.beans.binding.ObjectExpression;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
+import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
 import javafx.event.EventHandler;
 import javafx.scene.paint.Color;
 import javafx.stage.Stage;
@@ -52,6 +54,7 @@ import java.nio.file.Path;
 import java.time.Duration;
 import java.util.*;
 
+import static javafx.collections.FXCollections.*;
 import static org.jackhuang.hmcl.setting.ConfigHolder.config;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
@@ -120,6 +123,8 @@ public final class Themes {
             colorScheme
     );
 
+    private static final ObservableList<Theme> themes = observableArrayList();
+
     static {
         ChangeListener<ColorTheme> listener = (observable, oldValue, newValue) -> {
             if (!Objects.equals(oldValue, newValue)) {
@@ -128,6 +133,10 @@ public final class Themes {
         };
         listener.changed(colorTheme, null, colorTheme.get());
         colorTheme.addListener(listener);
+    }
+
+    public static ObservableList<Theme> getThemes() {
+        return themes;
     }
 
     private static Brightness defaultBrightness;
