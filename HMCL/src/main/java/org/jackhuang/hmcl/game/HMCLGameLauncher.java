@@ -114,31 +114,40 @@ public final class HMCLGameLauncher extends DefaultLauncher {
     private static String normalizedLanguageTag(Locale locale, GameVersionNumber gameVersion) {
         String region = locale.getCountry();
 
+        if ("en".equals(LocaleUtils.getRootLanguage(locale))) {
+            if ("Qabs".equals(LocaleUtils.getScript(locale)) && gameVersion.compareTo("1.16") >= 0) {
+                return "en_UD";
+            }
+
+            return "";
+        }
+
+        if ("zh".equals(LocaleUtils.getRootLanguage(locale))) {
+            if ("lzh".equals(locale.getLanguage())) {
+                return gameVersion.compareTo("1.16") >= 0 ? "lzh" : "zh_TW";
+            }
+
+            if ("Hant".equals(LocaleUtils.getScript(locale))) {
+                if (region.equals("HK") || region.equals("MO")) {
+                    return gameVersion.compareTo("1.16") >= 0 ? "zh_HK" : "zh_TW";
+                }
+                return "zh_TW";
+            }
+
+            return "zh_CN";
+        }
+
+        String languageTag = LocaleUtils.getMinecraftLanguageTag(locale);
+        if (languageTag != null && languageTag.contains("_")) {
+            return languageTag;
+        }
+
         return switch (LocaleUtils.getRootLanguage(locale)) {
             case "ar" -> "ar_SA";
             case "es" -> "es_ES";
             case "ja" -> "ja_JP";
             case "ru" -> "ru_RU";
             case "uk" -> "uk_UA";
-            case "zh" -> {
-                if ("lzh".equals(locale.getLanguage()) && gameVersion.compareTo("1.16") >= 0)
-                    yield "lzh";
-
-                String script = LocaleUtils.getScript(locale);
-                if ("Hant".equals(script)) {
-                    if ((region.equals("HK") || region.equals("MO") && gameVersion.compareTo("1.16") >= 0))
-                        yield "zh_HK";
-                    yield "zh_TW";
-                }
-                yield "zh_CN";
-            }
-            case "en" -> {
-                if ("Qabs".equals(LocaleUtils.getScript(locale)) && gameVersion.compareTo("1.16") >= 0) {
-                    yield "en_UD";
-                }
-
-                yield "";
-            }
             default -> "";
         };
     }
