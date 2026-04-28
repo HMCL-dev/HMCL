@@ -17,14 +17,12 @@
  */
 package org.jackhuang.hmcl.theme2;
 
-import com.google.gson.JsonElement;
-import com.google.gson.JsonObject;
-import com.google.gson.JsonParseException;
-import com.google.gson.JsonPrimitive;
+import com.google.gson.*;
 import org.glavo.monetfx.Brightness;
 import org.glavo.monetfx.ColorStyle;
 import org.glavo.monetfx.Contrast;
 import org.jackhuang.hmcl.game.CompatibilityRule;
+import org.jackhuang.hmcl.util.MathUtils;
 import org.jackhuang.hmcl.util.versioning.VersionNumber;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -174,9 +172,12 @@ public record Theme(
         ThemeColor2 color;
         JsonElement colorJson = json.get("color");
         if (colorJson != null) {
-            color = ThemeColor2.of(colorJson.getAsString());
-            if (color == null)
-                LOG.warning("Invalid color: " + colorJson);
+            try {
+                color = ThemeColor2.fromJson(colorJson);
+            } catch (Exception e) {
+                LOG.warning("Invalid color JSON format: " + colorJson);
+                color = null;
+            }
         } else {
             color = null;
         }
@@ -225,11 +226,18 @@ public record Theme(
         JsonElement contrastJson = json.get("contrast");
         if (contrastJson != null) {
             if (contrastJson instanceof JsonPrimitive primitive)
-                contrast = switch (primitive.getAsString().toLowerCase(Locale.ROOT)) {
-                    case "high" -> Contrast.HIGH;
-                    case "low" -> Contrast.LOW;
-                    default -> null;
-                };
+                if (primitive.isNumber()) {
+                    double contrastValue = primitive.getAsDouble();
+                    contrast = Double.isNaN(contrastValue)
+                            ? null
+                            : Contrast.of(MathUtils.clamp(contrastValue, -1.0, 1.0));
+                } else {
+                    contrast = switch (primitive.getAsString().toLowerCase(Locale.ROOT)) {
+                        case "high" -> Contrast.HIGH;
+                        case "low" -> Contrast.LOW;
+                        default -> null;
+                    };
+                }
             else
                 contrast = null;
 
