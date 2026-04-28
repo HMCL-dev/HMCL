@@ -23,7 +23,6 @@ import org.glavo.monetfx.ColorStyle;
 import org.glavo.monetfx.Contrast;
 import org.jackhuang.hmcl.game.CompatibilityRule;
 import org.jackhuang.hmcl.util.MathUtils;
-import org.jackhuang.hmcl.util.versioning.VersionNumber;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -59,7 +58,7 @@ import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 public record Theme(
         @Nullable String version,
         @Nullable Brightness brightness,
-        @Nullable ThemeColor2 color,
+        @Nullable ThemeColor color,
         @Nullable ColorStyle colorStyle,
         @Nullable ThemeBackground background,
         @Nullable Double backgroundOpacity,
@@ -97,7 +96,7 @@ public record Theme(
 
         String version = this.version;
         Brightness brightness = this.brightness;
-        ThemeColor2 color = this.color;
+        ThemeColor color = this.color;
         ColorStyle colorStyle = this.colorStyle;
         ThemeBackground background = this.background;
         Double backgroundOpacity = this.backgroundOpacity;
@@ -200,11 +199,11 @@ public record Theme(
             brightness = null;
         }
 
-        ThemeColor2 color;
+        ThemeColor color;
         JsonElement colorJson = json.get("color");
         if (colorJson != null) {
             try {
-                color = ThemeColor2.fromJson(colorJson);
+                color = ThemeColor.fromJson(colorJson);
             } catch (Exception e) {
                 LOG.warning("Invalid color JSON format: " + colorJson);
                 color = null;

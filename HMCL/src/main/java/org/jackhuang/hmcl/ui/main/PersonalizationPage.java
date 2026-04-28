@@ -18,27 +18,15 @@
 package org.jackhuang.hmcl.ui.main;
 
 import com.jfoenix.controls.*;
-import com.jfoenix.effects.JFXDepthManager;
-import javafx.application.Platform;
 import javafx.beans.binding.Bindings;
-import javafx.beans.binding.StringBinding;
-import javafx.beans.binding.When;
-import javafx.beans.value.ChangeListener;
-import javafx.beans.value.ObservableValue;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
-import javafx.scene.Scene;
-import javafx.scene.control.ColorPicker;
 import javafx.scene.control.Label;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.layout.*;
 import javafx.scene.text.Font;
 import javafx.scene.text.FontSmoothingType;
-import javafx.stage.Modality;
-import javafx.stage.Stage;
-import org.jackhuang.hmcl.setting.EnumBackgroundImage;
 import org.jackhuang.hmcl.setting.FontManager;
-import org.jackhuang.hmcl.theme.ThemeColor;
 import org.jackhuang.hmcl.theme2.Theme;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
@@ -46,8 +34,6 @@ import org.jackhuang.hmcl.ui.construct.*;
 import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.javafx.SafeStringConverter;
 
-import java.util.Arrays;
-import java.util.List;
 import java.util.Locale;
 import java.util.Optional;
 

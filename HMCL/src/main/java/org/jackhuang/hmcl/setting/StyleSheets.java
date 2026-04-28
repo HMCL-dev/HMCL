@@ -26,7 +26,6 @@ import org.glavo.monetfx.Brightness;
 import org.glavo.monetfx.ColorRole;
 import org.glavo.monetfx.ColorScheme;
 import org.jackhuang.hmcl.theme.ColorTheme;
-import org.jackhuang.hmcl.theme.ThemeColor;
 import org.jackhuang.hmcl.theme.Themes;
 import org.jackhuang.hmcl.ui.FXUtils;
 
@@ -144,17 +143,18 @@ public final class StyleSheets {
 
     private static void addColor(StringBuilder builder, String name, Color color) {
         builder.append("  ").append(name)
-                .append(": ").append(ThemeColor.getColorDisplayName(color)).append(";\n");
+                .append(": ").append(FXUtils.getColorDisplayName(color)).append(";\n");
     }
 
     private static void addColor(StringBuilder builder, String name, Color color, double opacity) {
         builder.append("  ").append(name)
-                .append(": ").append(ThemeColor.getColorDisplayNameWithOpacity(color, opacity)).append(";\n");
+                .append(": ").append(FXUtils.getColorDisplayNameWithOpacity(color, opacity)).append(";\n");
     }
 
     private static void addColor(StringBuilder builder, ColorScheme scheme, ColorRole role, double opacity) {
+        Color c = scheme.getColor(role);
         builder.append("  ").append(role.getVariableName()).append("-transparent-%02d".formatted((int) (100 * opacity)))
-                .append(": ").append(ThemeColor.getColorDisplayNameWithOpacity(scheme.getColor(role), opacity))
+                .append(": ").append(FXUtils.getColorDisplayNameWithOpacity(c, opacity))
                 .append(";\n");
     }
 

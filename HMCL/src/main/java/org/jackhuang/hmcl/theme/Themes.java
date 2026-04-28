@@ -35,7 +35,7 @@ import org.glavo.monetfx.Contrast;
 import org.glavo.monetfx.beans.property.ColorSchemeProperty;
 import org.glavo.monetfx.beans.property.ReadOnlyColorSchemeProperty;
 import org.glavo.monetfx.beans.property.SimpleColorSchemeProperty;
-import org.jackhuang.hmcl.theme2.ThemeColor2;
+import org.jackhuang.hmcl.theme2.ThemeColor;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.MacOSNativeUtils;
 import org.jackhuang.hmcl.ui.WindowsNativeUtils;
@@ -92,20 +92,20 @@ public final class Themes {
 
         @Override
         protected ColorTheme computeValue() {
-            ThemeColor2 themeColor = Objects.requireNonNullElse(config().getThemeColor(), ThemeColor2.DEFAULT);
+            ThemeColor themeColor = Objects.requireNonNullElse(config().getThemeColor(), ThemeColor.DEFAULT);
 
             Color primaryColorSeed;
-            if (themeColor instanceof ThemeColor2.Preset preset) {
+            if (themeColor instanceof ThemeColor.Preset preset) {
                 primaryColorSeed = preset.color();
-            } else if (themeColor instanceof ThemeColor2.Custom custom) {
+            } else if (themeColor instanceof ThemeColor.Custom custom) {
                 primaryColorSeed = custom.color();
-            } else if (themeColor instanceof ThemeColor2.FollowSystem) {
+            } else if (themeColor instanceof ThemeColor.FollowSystem) {
                 primaryColorSeed = Color.RED; // TODO
-            } else if (themeColor instanceof ThemeColor2.FollowBackground) {
+            } else if (themeColor instanceof ThemeColor.FollowBackground) {
                 primaryColorSeed = Color.RED; // TODO
             } else {
                 LOG.warning("Unknown theme color type: " + themeColor.getClass().getName());
-                primaryColorSeed = ThemeColor2.DEFAULT.color();
+                primaryColorSeed = ThemeColor.DEFAULT.color();
             }
 
             return new ColorTheme(

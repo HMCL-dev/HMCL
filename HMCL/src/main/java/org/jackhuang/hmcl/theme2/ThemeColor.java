@@ -21,15 +21,14 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonParseException;
 import com.google.gson.JsonPrimitive;
 import javafx.scene.paint.Color;
+import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.util.Lang;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-import static org.jackhuang.hmcl.theme.ThemeColor.getColorDisplayName;
-
 /// @author Glavo
-public sealed interface ThemeColor2 {
+public sealed interface ThemeColor {
 
     Preset DEFAULT = new Preset("default", Color.web("#5C6BC0"));
 
@@ -43,16 +42,16 @@ public sealed interface ThemeColor2 {
             new Preset("red", Color.web("#B71C1C"))
     );
 
-    List<ThemeColor2> BUILTIN = Lang.merge(PRESETS, List.of(
+    List<ThemeColor> BUILTIN = Lang.merge(PRESETS, List.of(
             FollowSystem.INSTANCE,
             FollowBackground.INSTANCE
     ));
 
-    static @Nullable ThemeColor2 of(String name) {
+    static @Nullable ThemeColor of(String name) {
         if (name == null)
             return null;
         if (!name.startsWith("#")) {
-            for (ThemeColor2 builtin : BUILTIN) {
+            for (ThemeColor builtin : BUILTIN) {
                 if (name.equalsIgnoreCase(builtin.name()))
                     return builtin;
             }
@@ -65,9 +64,9 @@ public sealed interface ThemeColor2 {
         }
     }
 
-    static ThemeColor2 fromJson(JsonElement json) throws JsonParseException {
+    static ThemeColor fromJson(JsonElement json) throws JsonParseException {
         if (json instanceof JsonPrimitive primitive) {
-            return ThemeColor2.of(primitive.getAsString());
+            return ThemeColor.of(primitive.getAsString());
         }
 
         throw new JsonParseException("Invalid JSON element for ThemeColor: " + json);
@@ -75,10 +74,10 @@ public sealed interface ThemeColor2 {
 
     String name();
 
-    record Preset(String name, Color color) implements ThemeColor2 {
+    record Preset(String name, Color color) implements ThemeColor {
     }
 
-    final class FollowSystem implements ThemeColor2 {
+    final class FollowSystem implements ThemeColor {
         public static FollowSystem INSTANCE = new FollowSystem();
 
         private FollowSystem() {
@@ -90,7 +89,7 @@ public sealed interface ThemeColor2 {
         }
     }
 
-    final class FollowBackground implements ThemeColor2 {
+    final class FollowBackground implements ThemeColor {
         public static FollowBackground INSTANCE = new FollowBackground();
 
         private FollowBackground() {
@@ -102,10 +101,10 @@ public sealed interface ThemeColor2 {
         }
     }
 
-    record Custom(Color color) implements ThemeColor2 {
+    record Custom(Color color) implements ThemeColor {
         @Override
         public String name() {
-            return getColorDisplayName(color);
+            return FXUtils.getColorDisplayName(color);
         }
     }
 
