@@ -23,11 +23,13 @@ import com.google.gson.JsonPrimitive;
 import javafx.scene.paint.Color;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.util.Lang;
+import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
 /// @author Glavo
+@NotNullByDefault
 public sealed interface ThemeColor {
 
     Preset DEFAULT = new Preset("default", Color.web("#5C6BC0"));
@@ -47,7 +49,7 @@ public sealed interface ThemeColor {
             FollowBackground.INSTANCE
     ));
 
-    static @Nullable ThemeColor of(String name) {
+    static @Nullable ThemeColor of(@Nullable String name) {
         if (name == null)
             return null;
         if (!name.startsWith("#")) {
@@ -66,6 +68,7 @@ public sealed interface ThemeColor {
 
     static ThemeColor fromJson(JsonElement json) throws JsonParseException {
         if (json instanceof JsonPrimitive primitive) {
+            //noinspection DataFlowIssue
             return ThemeColor.of(primitive.getAsString());
         }
 
