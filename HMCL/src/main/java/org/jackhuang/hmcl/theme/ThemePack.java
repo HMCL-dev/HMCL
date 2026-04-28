@@ -19,17 +19,21 @@ package org.jackhuang.hmcl.theme;
 
 import org.jackhuang.hmcl.util.gson.JsonSerializable;
 import org.jackhuang.hmcl.util.i18n.LocalizedText;
-import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
+import java.nio.file.Path;
 import java.util.List;
 
 /// @author Glavo
 @JsonSerializable
-public record ThemePackManifest(
-        @NotNull LocalizedText name,
+@NotNullByDefault
+public record ThemePack(
+        LocalizedText name,
         @Nullable LocalizedText author,
         @Nullable LocalizedText description,
-        @NotNull List<Theme> themes
+        @Unmodifiable List<Theme> themes,
+        Path packFile
 ) {
 }

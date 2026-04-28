@@ -161,7 +161,7 @@ public final class StyleSheets {
     private static String getThemeStyleSheet() {
         final String blueCss = "/assets/css/blue.css";
 
-        if (ColorTheme.DEFAULT.equals(Themes.getTheme()))
+        if (ColorTheme.DEFAULT.equals(Themes.getColorTheme()))
             return blueCss;
 
         ColorScheme scheme = Themes.getColorScheme();
