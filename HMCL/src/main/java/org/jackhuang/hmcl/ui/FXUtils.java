@@ -1132,6 +1132,23 @@ public final class FXUtils {
         }
     }
 
+    public static String getColorDisplayName(Color c) {
+        return c != null ? String.format("#%02X%02X%02X",
+                Math.round(c.getRed() * 255.0D),
+                Math.round(c.getGreen() * 255.0D),
+                Math.round(c.getBlue() * 255.0D))
+                : null;
+    }
+
+    public static String getColorDisplayNameWithOpacity(Color c, double opacity) {
+        return c != null ? String.format("#%02X%02X%02X%02X",
+                Math.round(c.getRed() * 255.0D),
+                Math.round(c.getGreen() * 255.0D),
+                Math.round(c.getBlue() * 255.0D),
+                Math.round(opacity * 255.0))
+                : null;
+    }
+
     public static void setIcon(Stage stage) {
         String icon;
         if (OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS) {

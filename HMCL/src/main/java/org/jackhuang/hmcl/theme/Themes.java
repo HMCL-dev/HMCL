@@ -25,6 +25,8 @@ import javafx.beans.binding.ObjectBinding;
 import javafx.beans.binding.ObjectExpression;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
+import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
 import javafx.event.EventHandler;
 import javafx.scene.paint.Color;
 import javafx.stage.Stage;
@@ -52,13 +54,14 @@ import java.nio.file.Path;
 import java.time.Duration;
 import java.util.*;
 
+import static javafx.collections.FXCollections.*;
 import static org.jackhuang.hmcl.setting.ConfigHolder.config;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 /// @author Glavo
 public final class Themes {
 
-    private static final ObjectExpression<Theme> theme = new ObjectBinding<>() {
+    private static final ObjectExpression<ColorTheme> colorTheme = new ObjectBinding<>() {
         {
             List<Observable> observables = new ArrayList<>();
 
@@ -90,10 +93,28 @@ public final class Themes {
         }
 
         @Override
-        protected Theme computeValue() {
+        protected ColorTheme computeValue() {
             ThemeColor themeColor = Objects.requireNonNullElse(config().getThemeColor(), ThemeColor.DEFAULT);
 
-            return new Theme(themeColor, getBrightness(), Theme.DEFAULT.colorStyle(), Contrast.DEFAULT);
+            Color primaryColorSeed;
+            if (themeColor instanceof ThemeColor.Preset preset) {
+                primaryColorSeed = preset.color();
+            } else if (themeColor instanceof ThemeColor.Custom custom) {
+                primaryColorSeed = custom.color();
+            } else if (themeColor instanceof ThemeColor.FollowSystem) {
+                primaryColorSeed = Color.RED; // TODO
+            } else if (themeColor instanceof ThemeColor.FollowBackground) {
+                primaryColorSeed = Color.RED; // TODO
+            } else {
+                LOG.warning("Unknown theme color type: " + themeColor.getClass().getName());
+                primaryColorSeed = ThemeColor.DEFAULT.color();
+            }
+
+            return new ColorTheme(
+                    primaryColorSeed,
+                    getBrightness(),
+                    ColorTheme.DEFAULT.colorStyle(),
+                    Contrast.DEFAULT);
         }
     };
     private static final ColorSchemeProperty colorScheme = new SimpleColorSchemeProperty();
@@ -102,14 +123,20 @@ public final class Themes {
             colorScheme
     );
 
+    private static final ObservableList<Theme> themes = observableArrayList();
+
     static {
-        ChangeListener<Theme> listener = (observable, oldValue, newValue) -> {
+        ChangeListener<ColorTheme> listener = (observable, oldValue, newValue) -> {
             if (!Objects.equals(oldValue, newValue)) {
-                colorScheme.set(newValue != null ? newValue.toColorScheme() : Theme.DEFAULT.toColorScheme());
+                colorScheme.set(newValue != null ? newValue.toColorScheme() : ColorTheme.DEFAULT.toColorScheme());
             }
         };
-        listener.changed(theme, null, theme.get());
-        theme.addListener(listener);
+        listener.changed(colorTheme, null, colorTheme.get());
+        colorTheme.addListener(listener);
+    }
+
+    public static ObservableList<Theme> getThemes() {
+        return themes;
     }
 
     private static Brightness defaultBrightness;
@@ -172,12 +199,12 @@ public final class Themes {
         return defaultBrightness = brightness;
     }
 
-    public static ObjectExpression<Theme> themeProperty() {
-        return theme;
+    public static ObjectExpression<ColorTheme> colorThemeProperty() {
+        return colorTheme;
     }
 
-    public static Theme getTheme() {
-        return themeProperty().get();
+    public static ColorTheme getColorTheme() {
+        return colorThemeProperty().get();
     }
 
     public static ReadOnlyColorSchemeProperty colorSchemeProperty() {

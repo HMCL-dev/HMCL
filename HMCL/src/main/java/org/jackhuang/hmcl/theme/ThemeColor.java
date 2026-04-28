@@ -1,6 +1,6 @@
 /*
  * Hello Minecraft! Launcher
- * Copyright (C) 2025 huangyuhui <huanghongxun2008@126.com> and contributors
+ * Copyright (C) 2026 huangyuhui <huanghongxun2008@126.com> and contributors
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -17,177 +17,98 @@
  */
 package org.jackhuang.hmcl.theme;
 
-import com.google.gson.annotations.JsonAdapter;
-import com.google.gson.stream.JsonReader;
-import com.google.gson.stream.JsonWriter;
-import javafx.beans.InvalidationListener;
-import javafx.beans.Observable;
-import javafx.beans.WeakListener;
-import javafx.beans.property.Property;
-import javafx.scene.control.ColorPicker;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonParseException;
+import com.google.gson.JsonPrimitive;
 import javafx.scene.paint.Color;
-import org.jackhuang.hmcl.util.gson.JsonSerializable;
-import org.jetbrains.annotations.Contract;
-import org.jetbrains.annotations.NotNull;
+import org.jackhuang.hmcl.ui.FXUtils;
+import org.jackhuang.hmcl.util.Lang;
+import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.IOException;
-import java.lang.ref.WeakReference;
 import java.util.List;
-import java.util.Objects;
 
 /// @author Glavo
-@JsonAdapter(ThemeColor.TypeAdapter.class)
-@JsonSerializable
-public record ThemeColor(@NotNull String name, @NotNull Color color) {
+@NotNullByDefault
+public sealed interface ThemeColor {
 
-    public static final ThemeColor DEFAULT = new ThemeColor("blue", Color.web("#5C6BC0"));
+    Preset DEFAULT = new Preset("default", Color.web("#5C6BC0"));
 
-    public static final List<ThemeColor> STANDARD_COLORS = List.of(
+    List<Preset> PRESETS = List.of(
             DEFAULT,
-            new ThemeColor("darker_blue", Color.web("#283593")),
-            new ThemeColor("green", Color.web("#43A047")),
-            new ThemeColor("orange", Color.web("#E67E22")),
-            new ThemeColor("purple", Color.web("#9C27B0")),
-            new ThemeColor("red", Color.web("#B71C1C"))
+            new Preset("blue", Color.web("#5C6BC0")),
+            new Preset("darker_blue", Color.web("#283593")),
+            new Preset("green", Color.web("#43A047")),
+            new Preset("orange", Color.web("#E67E22")),
+            new Preset("purple", Color.web("#9C27B0")),
+            new Preset("red", Color.web("#B71C1C"))
     );
 
-    public static String getColorDisplayName(Color c) {
-        return c != null ? String.format("#%02X%02X%02X",
-                Math.round(c.getRed() * 255.0D),
-                Math.round(c.getGreen() * 255.0D),
-                Math.round(c.getBlue() * 255.0D))
-                : null;
-    }
+    List<ThemeColor> BUILTIN = Lang.merge(PRESETS, List.of(
+            FollowSystem.INSTANCE,
+            FollowBackground.INSTANCE
+    ));
 
-    public static String getColorDisplayNameWithOpacity(Color c, double opacity) {
-        return c != null ? String.format("#%02X%02X%02X%02X",
-                Math.round(c.getRed() * 255.0D),
-                Math.round(c.getGreen() * 255.0D),
-                Math.round(c.getBlue() * 255.0D),
-                Math.round(opacity * 255.0))
-                : null;
-    }
-
-    public static @Nullable ThemeColor of(String name) {
+    static @Nullable ThemeColor of(@Nullable String name) {
         if (name == null)
             return null;
-
         if (!name.startsWith("#")) {
-            for (ThemeColor color : STANDARD_COLORS) {
-                if (name.equalsIgnoreCase(color.name()))
-                    return color;
+            for (ThemeColor builtin : BUILTIN) {
+                if (name.equalsIgnoreCase(builtin.name()))
+                    return builtin;
             }
         }
 
         try {
-            return new ThemeColor(name, Color.web(name));
+            return new Custom(Color.web(name));
         } catch (IllegalArgumentException e) {
             return null;
         }
     }
 
-    @Contract("null -> null; !null -> !null")
-    public static ThemeColor of(Color color) {
-        return color != null ? new ThemeColor(getColorDisplayName(color), color) : null;
+    static ThemeColor fromJson(JsonElement json) throws JsonParseException {
+        if (json instanceof JsonPrimitive primitive) {
+            //noinspection DataFlowIssue
+            return ThemeColor.of(primitive.getAsString());
+        }
+
+        throw new JsonParseException("Invalid JSON element for ThemeColor: " + json);
     }
 
-    private static final class BidirectionalBinding implements InvalidationListener, WeakListener {
-        private final WeakReference<ColorPicker> colorPickerRef;
-        private final WeakReference<Property<ThemeColor>> propertyRef;
-        private final int hashCode;
+    String name();
 
-        private boolean updating = false;
+    record Preset(String name, Color color) implements ThemeColor {
+    }
 
-        private BidirectionalBinding(ColorPicker colorPicker, Property<ThemeColor> property) {
-            this.colorPickerRef = new WeakReference<>(colorPicker);
-            this.propertyRef = new WeakReference<>(property);
-            this.hashCode = System.identityHashCode(colorPicker) ^ System.identityHashCode(property);
+    final class FollowSystem implements ThemeColor {
+        public static FollowSystem INSTANCE = new FollowSystem();
+
+        private FollowSystem() {
         }
 
         @Override
-        public void invalidated(Observable sourceProperty) {
-            if (!updating) {
-                final ColorPicker colorPicker = colorPickerRef.get();
-                final Property<ThemeColor> property = propertyRef.get();
-
-                if (colorPicker == null || property == null) {
-                    if (colorPicker != null) {
-                        colorPicker.valueProperty().removeListener(this);
-                    }
-
-                    if (property != null) {
-                        property.removeListener(this);
-                    }
-                } else {
-                    updating = true;
-                    try {
-                        if (property == sourceProperty) {
-                            ThemeColor newValue = property.getValue();
-                            colorPicker.setValue(newValue != null ? newValue.color() : null);
-                        } else {
-                            Color newValue = colorPicker.getValue();
-                            property.setValue(newValue != null ? ThemeColor.of(newValue) : null);
-                        }
-                    } finally {
-                        updating = false;
-                    }
-                }
-            }
-        }
-
-        @Override
-        public boolean wasGarbageCollected() {
-            return colorPickerRef.get() == null || propertyRef.get() == null;
-        }
-
-        @Override
-        public int hashCode() {
-            return hashCode;
-        }
-
-        @Override
-        public boolean equals(Object o) {
-            if (this == o)
-                return true;
-            if (!(o instanceof BidirectionalBinding that))
-                return false;
-
-            final ColorPicker colorPicker = this.colorPickerRef.get();
-            final Property<ThemeColor> property = this.propertyRef.get();
-
-            final ColorPicker thatColorPicker = that.colorPickerRef.get();
-            final Property<?> thatProperty = that.propertyRef.get();
-
-            if (colorPicker == null || property == null || thatColorPicker == null || thatProperty == null)
-                return false;
-
-            return colorPicker == thatColorPicker && property == thatProperty;
+        public String name() {
+            return "follow_system";
         }
     }
 
-    public static void bindBidirectional(ColorPicker colorPicker, Property<ThemeColor> property) {
-        var binding = new BidirectionalBinding(colorPicker, property);
+    final class FollowBackground implements ThemeColor {
+        public static FollowBackground INSTANCE = new FollowBackground();
 
-        colorPicker.valueProperty().removeListener(binding);
-        property.removeListener(binding);
-
-        ThemeColor themeColor = property.getValue();
-        colorPicker.setValue(themeColor != null ? themeColor.color() : null);
-
-        colorPicker.valueProperty().addListener(binding);
-        property.addListener(binding);
-    }
-
-    static final class TypeAdapter extends com.google.gson.TypeAdapter<ThemeColor> {
-        @Override
-        public void write(JsonWriter out, ThemeColor value) throws IOException {
-            out.value(value.name());
+        private FollowBackground() {
         }
 
         @Override
-        public ThemeColor read(JsonReader in) throws IOException {
-            return Objects.requireNonNullElse(of(in.nextString()), ThemeColor.DEFAULT);
+        public String name() {
+            return "follow_background";
         }
     }
+
+    record Custom(Color color) implements ThemeColor {
+        @Override
+        public String name() {
+            return FXUtils.getColorDisplayName(color);
+        }
+    }
+
 }
