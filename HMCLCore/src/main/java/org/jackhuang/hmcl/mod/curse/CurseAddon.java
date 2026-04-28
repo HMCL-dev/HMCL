@@ -212,7 +212,7 @@ public class CurseAddon implements RemoteMod.IMod {
         return modRepository.getRemoteVersionsById(downloadProvider, Integer.toString(id));
     }
 
-    public RemoteMod toMod() {
+    public RemoteMod toMod(RemoteModRepository.Type type) {
         String iconUrl = "";
         if (logo != null) {
             if (StringUtils.isNotBlank(logo.getThumbnailUrl()))
@@ -229,7 +229,8 @@ public class CurseAddon implements RemoteMod.IMod {
                 categories.stream().map(category -> Integer.toString(category.getId())).collect(Collectors.toList()),
                 links.websiteUrl,
                 iconUrl,
-                this
+                this,
+                type
         );
     }
 

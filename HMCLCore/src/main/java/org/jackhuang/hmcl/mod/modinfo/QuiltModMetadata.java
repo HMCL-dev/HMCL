@@ -20,6 +20,7 @@ package org.jackhuang.hmcl.mod.modinfo;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParseException;
 import kala.compress.archivers.zip.ZipArchiveEntry;
+import org.jackhuang.hmcl.mod.LocalAddonFile;
 import org.jackhuang.hmcl.mod.LocalModFile;
 import org.jackhuang.hmcl.mod.ModLoaderType;
 import org.jackhuang.hmcl.mod.ModManager;
@@ -86,7 +87,7 @@ public final class QuiltModMetadata {
                 modManager.getLocalMod(root.quilt_loader.id, ModLoaderType.QUILT),
                 modFile,
                 root.quilt_loader.metadata.name,
-                new LocalModFile.Description(root.quilt_loader.metadata.description),
+                new LocalAddonFile.Description(root.quilt_loader.metadata.description),
                 root.quilt_loader.metadata.contributors.entrySet().stream().map(entry -> String.format("%s (%s)", entry.getKey(), entry.getValue().getAsJsonPrimitive().getAsString())).collect(Collectors.joining(", ")),
                 root.quilt_loader.version,
                 "",
