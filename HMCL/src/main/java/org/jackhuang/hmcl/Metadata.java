@@ -24,7 +24,6 @@ import org.jackhuang.hmcl.util.platform.OperatingSystem;
 import org.jetbrains.annotations.Nullable;
 
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.EnumSet;
 
 /**
@@ -49,6 +48,7 @@ public final class Metadata {
     public static final String ABOUT_URL = PUBLISH_URL + "/about";
     public static final String DOWNLOAD_URL = PUBLISH_URL + "/download";
     public static final String HMCL_UPDATE_URL = System.getProperty("hmcl.update_source.override", PUBLISH_URL + "/api/update_link");
+    public static final String MANUAL_UPDATE_URL = "https://github.com/HMCL-dev/HMCL/releases";
 
     public static final String DOCS_URL = "https://docs.hmcl.net";
     public static final String CONTACT_URL = DOCS_URL + "/help.html";
@@ -59,34 +59,38 @@ public final class Metadata {
     public static final String BUILD_CHANNEL = JarUtils.getAttribute("hmcl.version.type", "nightly");
     public static final String GITHUB_SHA = JarUtils.getAttribute("hmcl.version.hash", null);
 
-    public static final Path CURRENT_DIRECTORY = Paths.get(System.getProperty("user.dir")).toAbsolutePath().normalize();
+    public static final Path CURRENT_DIRECTORY = Path.of(System.getProperty("user.dir")).toAbsolutePath().normalize();
     public static final Path MINECRAFT_DIRECTORY = OperatingSystem.getWorkingDirectory("minecraft");
     public static final Path HMCL_GLOBAL_DIRECTORY;
     public static final Path HMCL_CURRENT_DIRECTORY;
     public static final Path DEPENDENCIES_DIRECTORY;
 
     static {
-        String hmclHome = System.getProperty("hmcl.home");
-        if (hmclHome == null) {
+        String hmclHome = System.getProperty("hmcl.home", System.getenv("HMCL_USER_HOME"));
+        if (StringUtils.isBlank(hmclHome)) {
             if (OperatingSystem.CURRENT_OS.isLinuxOrBSD()) {
                 String xdgData = System.getenv("XDG_DATA_HOME");
                 if (StringUtils.isNotBlank(xdgData)) {
-                    HMCL_GLOBAL_DIRECTORY = Paths.get(xdgData, "hmcl").toAbsolutePath().normalize();
+                    HMCL_GLOBAL_DIRECTORY = Path.of(xdgData, "hmcl").toAbsolutePath().normalize();
                 } else {
-                    HMCL_GLOBAL_DIRECTORY = Paths.get(System.getProperty("user.home"), ".local", "share", "hmcl").toAbsolutePath().normalize();
+                    HMCL_GLOBAL_DIRECTORY = Path.of(System.getProperty("user.home"), ".local", "share", "hmcl").toAbsolutePath().normalize();
                 }
             } else {
                 HMCL_GLOBAL_DIRECTORY = OperatingSystem.getWorkingDirectory("hmcl");
             }
         } else {
-            HMCL_GLOBAL_DIRECTORY = Paths.get(hmclHome).toAbsolutePath().normalize();
+            HMCL_GLOBAL_DIRECTORY = Path.of(hmclHome).toAbsolutePath().normalize();
         }
 
-        String hmclCurrentDir = System.getProperty("hmcl.dir");
-        HMCL_CURRENT_DIRECTORY = hmclCurrentDir != null
-                ? Paths.get(hmclCurrentDir).toAbsolutePath().normalize()
+        String hmclCurrentDir = System.getProperty("hmcl.dir", System.getenv("HMCL_LOCAL_HOME"));
+        HMCL_CURRENT_DIRECTORY = StringUtils.isNotBlank(hmclCurrentDir)
+                ? Path.of(hmclCurrentDir).toAbsolutePath().normalize()
                 : CURRENT_DIRECTORY.resolve(".hmcl");
-        DEPENDENCIES_DIRECTORY = HMCL_CURRENT_DIRECTORY.resolve("dependencies");
+
+        String hmclDependencies = System.getProperty("hmcl.dependencies.dir", System.getenv("HMCL_DEPENDENCIES_DIR"));
+        DEPENDENCIES_DIRECTORY = StringUtils.isNotBlank(hmclDependencies)
+                ? Path.of(hmclDependencies).toAbsolutePath().normalize()
+                : HMCL_CURRENT_DIRECTORY.resolve("dependencies");
     }
 
     public static boolean isStable() {

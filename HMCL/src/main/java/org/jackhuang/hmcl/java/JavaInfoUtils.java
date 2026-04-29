@@ -18,6 +18,7 @@
 package org.jackhuang.hmcl.java;
 
 import com.google.gson.annotations.SerializedName;
+import org.jackhuang.hmcl.util.gson.JsonSerializable;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.io.JarUtils;
 import org.jackhuang.hmcl.util.platform.Architecture;
@@ -27,7 +28,6 @@ import org.jackhuang.hmcl.util.platform.SystemUtils;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
-import java.nio.file.Files;
 import java.nio.file.Path;
 
 /**
@@ -39,35 +39,10 @@ public final class JavaInfoUtils {
     private JavaInfoUtils() {
     }
 
-    private static Path tryFindReleaseFile(Path executable) {
-        Path parent = executable.getParent();
-        if (parent != null && parent.getFileName() != null && parent.getFileName().toString().equals("bin")) {
-            Path javaHome = parent.getParent();
-            if (javaHome != null && javaHome.getFileName() != null) {
-                Path releaseFile = javaHome.resolve("release");
-                String javaHomeName = javaHome.getFileName().toString();
-                if ((javaHomeName.contains("jre") || javaHomeName.contains("jdk") || javaHomeName.contains("openj9"))
-                        && Files.isRegularFile(releaseFile)) {
-                    return releaseFile;
-                }
-            }
-        }
-        return null;
-    }
-
-    public static @NotNull JavaInfo fromExecutable(Path executable, boolean tryFindReleaseFile) throws IOException {
+    public static @NotNull JavaInfo fromExecutable(Path executable) throws IOException {
         assert executable.isAbsolute();
 
-        Path releaseFile;
-        if (tryFindReleaseFile && (releaseFile = tryFindReleaseFile(executable)) != null) {
-            try {
-                return JavaInfo.fromReleaseFile(releaseFile);
-            } catch (IOException ignored) {
-            }
-        }
-
         Path thisPath = JarUtils.thisJarPath();
-
         if (thisPath == null) {
             throw new IOException("Failed to find current HMCL location");
         }
@@ -94,7 +69,6 @@ public final class JavaInfoUtils {
                             ? architecture
                             : Architecture.SYSTEM_ARCH);
 
-
             return new JavaInfo(platform, result.javaVersion, result.javaVendor);
         } catch (IOException e) {
             throw e;
@@ -103,14 +77,9 @@ public final class JavaInfoUtils {
         }
     }
 
-    private static final class Result {
-        @SerializedName("os.name")
-        public String osName;
-        @SerializedName("os.arch")
-        public String osArch;
-        @SerializedName("java.version")
-        public String javaVersion;
-        @SerializedName("java.vendor")
-        public String javaVendor;
+    @JsonSerializable
+    private record Result(@SerializedName("os.name") String osName, @SerializedName("os.arch") String osArch,
+                          @SerializedName("java.version") String javaVersion,
+                          @SerializedName("java.vendor") String javaVendor) {
     }
 }

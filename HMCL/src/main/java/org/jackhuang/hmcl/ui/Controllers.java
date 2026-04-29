@@ -105,9 +105,14 @@ public final class Controllers {
         GameListPage gameListPage = new GameListPage();
         gameListPage.selectedProfileProperty().bindBidirectional(Profiles.selectedProfileProperty());
         gameListPage.profilesProperty().bindContent(Profiles.profilesProperty());
-        FXUtils.applyDragListener(gameListPage, ModpackHelper::isFileModpackByExtension, modpacks -> {
-            Path modpack = modpacks.get(0);
-            Controllers.getDecorator().startWizard(new ModpackInstallWizardProvider(Profiles.getSelectedProfile(), modpack), i18n("install.modpack"));
+        FXUtils.applyDragListener(gameListPage, file -> ModpackHelper.isFileModpackByExtension(file) || "json".equalsIgnoreCase(FileUtils.getNameWithoutExtension(file)), files -> {
+            Path file = files.get(0);
+
+            if (ModpackHelper.isFileModpackByExtension(file)) {
+                Controllers.getDecorator().startWizard(new ModpackInstallWizardProvider(Profiles.getSelectedProfile(), file), i18n("install.modpack"));
+            } else if ("json".equalsIgnoreCase(FileUtils.getExtension(file))) {
+                Versions.installFromJson(Profiles.getSelectedProfile(), file);
+            }
         });
         return gameListPage;
     });
@@ -206,6 +211,21 @@ public final class Controllers {
     // FXThread
     public static DecoratorController getDecorator() {
         return decorator;
+    }
+
+    public static void saveWindowStates() {
+        if (stageX != null) {
+            config().setX(stageX.get() / SCREEN.getBounds().getWidth());
+        }
+        if (stageY != null) {
+            config().setY(stageY.get() / SCREEN.getBounds().getHeight());
+        }
+        if (stageHeight != null) {
+            config().setHeight(stageHeight.get());
+        }
+        if (stageWidth != null) {
+            config().setWidth(stageWidth.get());
+        }
     }
 
     public static void onApplicationStop() {
@@ -370,7 +390,7 @@ public final class Controllers {
             Runnable continueAction = () -> globalConfig().setPlatformPromptVersion(1);
 
             if (OperatingSystem.CURRENT_OS == OperatingSystem.MACOS && Architecture.SYSTEM_ARCH == Architecture.ARM64) {
-                Controllers.dialog(i18n("fatal.unsupported_platform.macos_arm64"), null, MessageType.INFO, continueAction);
+                continueAction.run();
             } else if (OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS && Architecture.SYSTEM_ARCH == Architecture.ARM64) {
                 Controllers.dialog(i18n("fatal.unsupported_platform.windows_arm64"), null, MessageType.INFO, continueAction);
             } else if (OperatingSystem.CURRENT_OS == OperatingSystem.LINUX &&

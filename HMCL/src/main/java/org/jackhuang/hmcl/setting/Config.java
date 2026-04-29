@@ -567,6 +567,21 @@ public final class Config extends ObservableSetting {
         this.versionListSource.set(versionListSource);
     }
 
+    @SerializedName("defaultAddonSource")
+    private final StringProperty defaultAddonSource = new SimpleStringProperty("modrinth");
+
+    public StringProperty defaultAddonSourceProperty() {
+        return defaultAddonSource;
+    }
+
+    public String getDefaultAddonSource() {
+        return defaultAddonSource.get();
+    }
+
+    public void setDefaultAddonSource(String defaultAddonSource) {
+        this.defaultAddonSource.set(defaultAddonSource);
+    }
+
     @SerializedName("hasProxy")
     private final BooleanProperty hasProxy = new SimpleBooleanProperty();
 
@@ -687,6 +702,21 @@ public final class Config extends ObservableSetting {
 
     public void setDisableAutoGameOptions(boolean disableAutoGameOptions) {
         this.disableAutoGameOptions.set(disableAutoGameOptions);
+    }
+
+    @SerializedName("allowAutoAgent")
+    private final BooleanProperty allowAutoAgent = new SimpleBooleanProperty(false);
+
+    public BooleanProperty allowAutoAgentProperty() {
+        return allowAutoAgent;
+    }
+
+    public boolean getAllowAutoAgent() {
+        return allowAutoAgent.get();
+    }
+
+    public void setAllowAutoAgent(boolean allowAutoAgent) {
+        this.allowAutoAgent.set(allowAutoAgent);
     }
 
     // Accounts

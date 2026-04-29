@@ -18,7 +18,6 @@
 package org.jackhuang.hmcl.ui.main;
 
 import com.google.gson.annotations.SerializedName;
-import javafx.geometry.Insets;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.layout.VBox;
 import org.jackhuang.hmcl.Metadata;
@@ -42,9 +41,7 @@ public class HelpPage extends SpinnerPane {
 
     public HelpPage() {
         content = new VBox();
-        content.setPadding(new Insets(10));
-        content.setSpacing(10);
-        content.setFillWidth(true);
+        content.getStyleClass().add("spinner-pane-content");
         ScrollPane scrollPane = new ScrollPane(content);
         scrollPane.setFitToWidth(true);
         FXUtils.smoothScrolling(scrollPane);
