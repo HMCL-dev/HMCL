@@ -96,6 +96,10 @@ public class Translator_lzh extends Translator {
                 case GA -> {
                     // do nothing
                 }
+                case SNAPSHOT -> {
+                    builder.append("之快照");
+                    appendDigitByDigit(builder, release.getEaVersion().toString());
+                }
                 case PRE_RELEASE -> {
                     builder.append("之預");
                     appendDigitByDigit(builder, release.getEaVersion().toString());

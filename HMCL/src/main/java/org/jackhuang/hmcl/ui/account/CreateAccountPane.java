@@ -303,7 +303,7 @@ public class CreateAccountPane extends JFXDialogLayout implements DialogAware {
             for (String key : ALLOWED_LINKS) {
                 String value = links.get(key);
                 if (value != null) {
-                    Hyperlink link = new Hyperlink(i18n("account.injector.link." + key));
+                    JFXHyperlink link = new JFXHyperlink(i18n("account.injector.link." + key));
                     FXUtils.installSlowTooltip(link, value);
                     link.setOnAction(e -> FXUtils.openLink(value));
                     result.add(link);

@@ -33,7 +33,7 @@ public class SkinCube extends MeshView {
         public static float[] createTexCoords(float width, float height, float depth, float scaleX, float scaleY,
                 float startX, float startY, boolean isSlim) {
             float x = (width + depth) * 2, y = height + depth, half_width = width / x * scaleX, half_depth = depth / x * scaleX,
-                    top_x = depth / x * scaleX + startX, top_y = startY, arm4 = isSlim ? half_depth : half_width,
+                    top_x = depth / x * scaleX + startX, top_y = startY, arm4 = half_width,
                     bottom_x = startX, middle_y = depth / y * scaleY + top_y, bottom_y = scaleY + top_y;
             return new float[]{
                     top_x, top_y,                                    // T0  ---
