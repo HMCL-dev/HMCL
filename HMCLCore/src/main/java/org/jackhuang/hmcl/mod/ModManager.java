@@ -272,11 +272,11 @@ public final class ModManager {
 
         if (this.analyzer.has(LibraryAnalyzer.LibraryType.FABRIC) && hasMod("kilt", ModLoaderType.FABRIC)) {
             supportedLoaders.add(ModLoaderType.FORGE);
-            supportedLoaders.add(ModLoaderType.NEO_FORGED);
+            supportedLoaders.add(ModLoaderType.NEO_FORGE);
         }
 
         // Sinytra Connector
-        if (this.analyzer.has(LibraryAnalyzer.LibraryType.NEO_FORGE) && hasMod("connectormod", ModLoaderType.NEO_FORGED)
+        if (this.analyzer.has(LibraryAnalyzer.LibraryType.NEO_FORGE) && hasMod("connectormod", ModLoaderType.NEO_FORGE)
                 || "1.20.1".equals(gameVersion) && this.analyzer.has(LibraryAnalyzer.LibraryType.FORGE) && hasMod("connectormod", ModLoaderType.FORGE)) {
             supportedLoaders.add(ModLoaderType.FABRIC);
         }

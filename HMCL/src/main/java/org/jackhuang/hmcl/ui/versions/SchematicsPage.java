@@ -29,9 +29,7 @@ import javafx.beans.property.SimpleObjectProperty;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
-import javafx.scene.control.Label;
-import javafx.scene.control.Skin;
-import javafx.scene.control.Tooltip;
+import javafx.scene.control.*;
 import javafx.scene.image.Image;
 import javafx.scene.image.PixelWriter;
 import javafx.scene.image.WritableImage;
@@ -45,6 +43,7 @@ import javafx.stage.FileChooser;
 import javafx.scene.text.Text;
 import org.jackhuang.hmcl.mod.ModLoaderType;
 import org.jackhuang.hmcl.mod.RemoteMod;
+import org.jackhuang.hmcl.mod.modrinth.ModrinthRemoteModRepository;
 import org.jackhuang.hmcl.schematic.LitematicFile;
 import org.jackhuang.hmcl.schematic.Schematic;
 import org.jackhuang.hmcl.schematic.SchematicType;
@@ -200,7 +199,7 @@ public final class SchematicsPage extends ListPageBase<SchematicsPage.Item> impl
             var modManager = profile.getRepository().getModManager(instanceId);
             modManager.analyze();
             var modLoaders = modManager.getLibraryAnalyzer().getModLoaders();
-            boolean shouldUseForgematica = (modLoaders.contains(ModLoaderType.FORGE) || modLoaders.contains(ModLoaderType.NEO_FORGED))
+            boolean shouldUseForgematica = (modLoaders.contains(ModLoaderType.FORGE) || modLoaders.contains(ModLoaderType.NEO_FORGE))
                     && GameVersionNumber.asGameVersion(Optional.ofNullable(modManager.getGameVersion())).isAtLeast("1.16.4", "20w45a");
             var res = Objects.requireNonNullElse(fetchResult.get(), new LitematicaFetchResult(null, null, false));
             RemoteMod litematica = res.litematica(), forgematica = res.forgematica();
