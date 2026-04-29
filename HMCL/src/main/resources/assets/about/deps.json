@@ -95,6 +95,11 @@
     "externalLink": "https://github.com/HMCL-dev/lwjgl-unsafe-agent"
   },
   {
+    "title": "TomlJ",
+    "subtitle": "Licensed under the Apache 2.0 License.",
+    "externalLink": "https://github.com/tomlj/tomlj"
+  },
+  {
     "title": "CommonMark",
     "subtitle": "Copyright (c) 2015 Robin Stocker.\nAll rights reserved.",
     "externalLink": "https://github.com/commonmark/commonmark-java"

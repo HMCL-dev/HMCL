@@ -23,8 +23,9 @@ import org.jackhuang.hmcl.game.WorldLockedException;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.ui.Controllers;
-import org.jackhuang.hmcl.ui.construct.InputDialogPane;
 import org.jackhuang.hmcl.ui.construct.MessageDialogPane;
+import org.jackhuang.hmcl.ui.construct.RequiredValidator;
+import org.jackhuang.hmcl.ui.construct.Validator;
 import org.jackhuang.hmcl.ui.wizard.SinglePageWizardProvider;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
@@ -89,20 +90,9 @@ public final class WorldManageUIUtils {
 
     public static void copyWorld(World world, Runnable runnable) {
         Path worldPath = world.getFile();
-        Controllers.dialog(new InputDialogPane(
+        Controllers.prompt(
                 i18n("world.duplicate.prompt"),
-                "",
                 (result, handler) -> {
-                    if (StringUtils.isBlank(result)) {
-                        handler.reject(i18n("world.duplicate.failed.empty_name"));
-                        return;
-                    }
-
-                    if (result.contains("/") || result.contains("\\") || !FileUtils.isNameValid(result)) {
-                        handler.reject(i18n("world.duplicate.failed.invalid_name"));
-                        return;
-                    }
-
                     Path targetDir = worldPath.resolveSibling(result);
                     if (Files.exists(targetDir)) {
                         handler.reject(i18n("world.duplicate.failed.already_exists"));
@@ -125,7 +115,7 @@ public final class WorldManageUIUtils {
                                 }
                             })
                             .start();
-                }));
+                }, "", new RequiredValidator(), new Validator(i18n("world.duplicate.failed.invalid_name"), FileUtils::isNameValid));
     }
 
     public static void closeSessionLockChannel(World world, FileChannel sessionLockChannel) throws IOException {
