@@ -329,8 +329,8 @@ public final class ResourcePackManager extends LocalAddonManager<ResourcePackFil
 
     }
 
-    public boolean removeResourcePacks(Iterable<ResourcePackFile> resourcePacks) throws IOException {
-        boolean modified = false;
+    public boolean removeResourcePacks(List<ResourcePackFile> resourcePacks) throws IOException {
+        boolean modified = disableResourcePacks(resourcePacks);
         for (ResourcePackFile resourcePack : resourcePacks) {
             if (resourcePack != null && resourcePack.manager == this) {
                 resourcePack.delete();
@@ -341,7 +341,13 @@ public final class ResourcePackManager extends LocalAddonManager<ResourcePackFil
         return modified;
     }
 
-    public void enableResourcePacks(List<ResourcePackFile> resourcePackFiles) {
+    private boolean containsResourcePack(List<String> resourcePacks, String packIdOld) {
+        String packId = "file/" + packIdOld;
+        if (supportsNewOptionsFormat) return resourcePacks.contains(packIdOld) || resourcePacks.contains(packId);
+        return resourcePacks.contains(packIdOld);
+    }
+
+    public boolean enableResourcePacks(List<ResourcePackFile> resourcePackFiles) {
         boolean modified = false;
         Map<String, String> options = loadOptions();
         List<String> resourcePacks = new ArrayList<>(deserializePackList(options.get("resourcePacks")));
@@ -354,6 +360,7 @@ public final class ResourcePackManager extends LocalAddonManager<ResourcePackFil
             options.put("incompatibleResourcePacks", serializePackList(incompatibleResourcePacks));
             saveOptions(options);
         }
+        return modified;
     }
 
     private boolean enableResourcePack(ResourcePackFile resourcePack, List<String> resourcePacks, List<String> incompatibleResourcePacks) {
@@ -361,18 +368,18 @@ public final class ResourcePackManager extends LocalAddonManager<ResourcePackFil
         String packId = "file/" + resourcePack.getFileNameWithExtension();
         String packIdOld = resourcePack.getFileNameWithExtension();
         boolean modified = false;
-        if (!resourcePacks.contains(packIdOld) && (supportsNewOptionsFormat || !resourcePacks.contains(packId))) {
+        if (!containsResourcePack(resourcePacks, packIdOld)) {
             resourcePacks.add(supportsNewOptionsFormat ? packId : packIdOld);
             modified = true;
         }
-        if (!incompatibleResourcePacks.contains(packIdOld) && (supportsNewOptionsFormat || !incompatibleResourcePacks.contains(packId)) && isIncompatible(resourcePack)) {
-            incompatibleResourcePacks.add(packId);
+        if (!containsResourcePack(incompatibleResourcePacks, packIdOld) && isIncompatible(resourcePack)) {
+            incompatibleResourcePacks.add(supportsNewOptionsFormat ? packId : packIdOld);
             modified = true;
         }
         return modified;
     }
 
-    public void disableResourcePacks(List<ResourcePackFile> resourcePackFiles) {
+    public boolean disableResourcePacks(List<ResourcePackFile> resourcePackFiles) {
         boolean modified = false;
         Map<String, String> options = loadOptions();
         List<String> resourcePacks = new ArrayList<>(deserializePackList(options.get("resourcePacks")));
@@ -385,6 +392,7 @@ public final class ResourcePackManager extends LocalAddonManager<ResourcePackFil
             options.put("incompatibleResourcePacks", serializePackList(incompatibleResourcePacks));
             saveOptions(options);
         }
+        return modified;
     }
 
     private boolean disableResourcePack(ResourcePackFile resourcePack, List<String> resourcePacks, List<String> incompatibleResourcePacks) {
@@ -393,19 +401,19 @@ public final class ResourcePackManager extends LocalAddonManager<ResourcePackFil
         String packIdOld = resourcePack.getFileNameWithExtension();
         boolean modified = false;
         if (resourcePacks.contains(packId)) {
-            resourcePacks.remove(packId);
+            resourcePacks.removeAll(List.of(packId));
             modified = true;
         }
         if (resourcePacks.contains(packIdOld)) {
-            resourcePacks.remove(packIdOld);
+            resourcePacks.removeAll(List.of(packIdOld));
             modified = true;
         }
         if (incompatibleResourcePacks.contains(packId)) {
-            incompatibleResourcePacks.remove(packId);
+            incompatibleResourcePacks.removeAll(List.of(packId));
             modified = true;
         }
         if (incompatibleResourcePacks.contains(packIdOld)) {
-            incompatibleResourcePacks.remove(packIdOld);
+            incompatibleResourcePacks.removeAll(List.of(packIdOld));
             modified = true;
         }
         return modified;
@@ -414,12 +422,11 @@ public final class ResourcePackManager extends LocalAddonManager<ResourcePackFil
     public boolean isEnabled(ResourcePackFile resourcePack) {
         if (resourcePack.manager != this) return false;
         Map<String, String> options = loadOptions();
-        String packId = "file/" + resourcePack.getFileNameWithExtension();
         String packIdOld = resourcePack.getFileNameWithExtension();
         List<String> resourcePacks = deserializePackList(options.get("resourcePacks"));
-        if (!resourcePacks.contains(packIdOld) && (!supportsNewOptionsFormat || !resourcePacks.contains(packId))) return false;
+        if (!containsResourcePack(resourcePacks, packIdOld)) return false;
         List<String> incompatibleResourcePacks = deserializePackList(options.get("incompatibleResourcePacks"));
-        return isIncompatible(resourcePack) == (incompatibleResourcePacks.contains(packIdOld) || (supportsNewOptionsFormat && incompatibleResourcePacks.contains(packId)));
+        return isIncompatible(resourcePack) == containsResourcePack(incompatibleResourcePacks, packIdOld);
     }
 
     public ResourcePackFile.Compatibility getCompatibility(@NotNull ResourcePackFile resourcePack) {
