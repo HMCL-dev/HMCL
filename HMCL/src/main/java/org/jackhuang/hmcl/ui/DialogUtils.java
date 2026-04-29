@@ -135,6 +135,7 @@ public final class DialogUtils {
 
     @SuppressWarnings("unchecked")
     public static void showLater(StackPane container, Runnable showDialogAction) {
+        if (showDialogAction == null) return;
         FXUtils.checkFxUserThread();
 
         if (container.getProperties().get(PROPERTY_DIALOG_INSTANCE) == null) {
