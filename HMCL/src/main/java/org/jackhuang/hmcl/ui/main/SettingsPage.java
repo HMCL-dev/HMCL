@@ -157,7 +157,7 @@ public final class SettingsPage extends ScrollPane {
                         updatePane.pseudoClassStateChanged(PseudoClass.getPseudoClass("active"), outdated);
 
                         if (UpdateChecker.isOutdated()) {
-                            lblUpdateSubProperty.set(i18n("update.newest_version", UpdateChecker.getLatestVersion().getVersion()));
+                            lblUpdateSubProperty.set(i18n("update.newest_version", UpdateChecker.getLatestVersion().version()));
                         } else if (UpdateChecker.isCheckingUpdate()) {
                             lblUpdateSubProperty.set(i18n("update.checking"));
                         } else {
