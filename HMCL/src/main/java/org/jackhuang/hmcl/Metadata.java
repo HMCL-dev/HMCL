@@ -45,7 +45,6 @@ public final class Metadata {
     public static final int RECOMMENDED_JAVA_VERSION = 21;
 
     public static final String PUBLISH_URL = "https://hmcl.huangyuhui.net";
-    public static final String ABOUT_URL = PUBLISH_URL + "/about";
     public static final String DOWNLOAD_URL = PUBLISH_URL + "/download";
     public static final String HMCL_UPDATE_URL = System.getProperty("hmcl.update_source.override", PUBLISH_URL + "/api/update_link");
     public static final String MANUAL_UPDATE_URL = "https://github.com/HMCL-dev/HMCL/releases";
