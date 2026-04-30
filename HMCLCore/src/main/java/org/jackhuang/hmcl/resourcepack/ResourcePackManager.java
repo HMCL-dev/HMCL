@@ -372,8 +372,14 @@ public final class ResourcePackManager extends LocalAddonManager<ResourcePackFil
             resourcePacks.add(supportsNewOptionsFormat ? packId : packIdOld);
             modified = true;
         }
-        if (!containsResourcePack(incompatibleResourcePacks, packIdOld) && isIncompatible(resourcePack)) {
+        boolean incompatibleContains = containsResourcePack(incompatibleResourcePacks, packIdOld);
+        boolean incompatible = isIncompatible(resourcePack);
+        if (!incompatibleContains && incompatible) {
             incompatibleResourcePacks.add(supportsNewOptionsFormat ? packId : packIdOld);
+            modified = true;
+        } else if (incompatibleContains && !incompatible) {
+            incompatibleResourcePacks.removeAll(List.of(packId));
+            incompatibleResourcePacks.removeAll(List.of(packIdOld));
             modified = true;
         }
         return modified;
