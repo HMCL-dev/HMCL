@@ -175,9 +175,14 @@ public final class DialogUtils {
                     container.getProperties().remove(PROPERTY_PARENT_PANE_REF);
 
                     Queue<Runnable> queue = (Queue<Runnable>) container.getProperties().get(PROPERTY_DIALOG_SHOW_LATER);
-                    if (queue != null && !queue.isEmpty()) {
-                        Runnable next = queue.remove();
-                        if (next != null) showNextDialogAction = next;
+                    if (queue != null) {
+                        if (!queue.isEmpty()) {
+                            Runnable next = queue.remove();
+                            if (next != null) showNextDialogAction = next;
+                        }
+                        if (queue.isEmpty()) {
+                            container.getProperties().remove(PROPERTY_DIALOG_SHOW_LATER);
+                        }
                     }
                 }
             } else {
