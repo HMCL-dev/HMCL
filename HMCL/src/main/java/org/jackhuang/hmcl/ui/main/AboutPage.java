@@ -72,7 +72,7 @@ public final class AboutPage extends SpinnerPane {
 
         ComponentList legal = new ComponentList();
         {
-            var copyright = LineButton.createExternalLinkButton(Metadata.ABOUT_URL);
+            var copyright = new LineButton();
             copyright.setLargeTitle(true);
             copyright.setTitle(i18n("about.copyright"));
             copyright.setSubtitle(i18n("about.copyright.statement"));
