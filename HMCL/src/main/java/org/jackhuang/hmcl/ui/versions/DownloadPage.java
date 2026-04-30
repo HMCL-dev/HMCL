@@ -491,6 +491,16 @@ public class DownloadPage extends Control implements DecoratorPage {
             addonItem.setMouseTransparent(true); // Item is displayed for info, clicking shouldn't open the dialog again
             box.getChildren().setAll(addonItem);
 
+            JFXHyperlink changelogButton = new JFXHyperlink(i18n("mods.changelog"));
+            changelogButton.setOnAction(__ -> Controllers.dialog(new AddonChangelog(version, selfPage.repository)));
+
+            JFXHyperlink versionPageBtn = new JFXHyperlink(i18n("mods.url"));
+            versionPageBtn.setDisable(true);
+            loadVersionPageUrl(version, selfPage.repository, versionPageBtn);
+
+            HBox additionalBox = new HBox(changelogButton, versionPageBtn);
+            box.getChildren().add(additionalBox);
+
             SpinnerPane spinnerPane = new SpinnerPane();
             ScrollPane scrollPane = new ScrollPane();
             ComponentList dependenciesList = new ComponentList();
@@ -508,13 +518,6 @@ public class DownloadPage extends Control implements DecoratorPage {
             VBox.setVgrow(spinnerPane, Priority.SOMETIMES);
 
             this.setBody(box);
-
-            JFXHyperlink changelogButton = new JFXHyperlink(i18n("mods.changelog"));
-            changelogButton.setOnAction(__ -> Controllers.dialog(new AddonChangelog(version, selfPage.repository)));
-
-            JFXHyperlink versionPageBtn = new JFXHyperlink(i18n("mods.url"));
-            versionPageBtn.setDisable(true);
-            loadVersionPageUrl(version, selfPage.repository, versionPageBtn);
 
             JFXButton downloadButton = null;
             if (selfPage.callback != null) {
@@ -542,13 +545,13 @@ public class DownloadPage extends Control implements DecoratorPage {
             cancelButton.setOnAction(e -> fireEvent(new DialogCloseEvent()));
 
             if (downloadButton == null) {
-                this.setActions(versionPageBtn, changelogButton, saveAsButton, cancelButton);
+                this.setActions(saveAsButton, cancelButton);
             } else {
-                this.setActions(versionPageBtn, changelogButton, downloadButton, saveAsButton, cancelButton);
+                this.setActions(downloadButton, saveAsButton, cancelButton);
             }
 
             this.prefWidthProperty().bind(BindingMapping.of(Controllers.getStage().widthProperty()).map(w -> w.doubleValue() * 0.7));
-            this.prefHeightProperty().bind(BindingMapping.of(Controllers.getStage().heightProperty()).map(w -> w.doubleValue() * 0.7));
+            this.prefHeightProperty().bind(BindingMapping.of(Controllers.getStage().heightProperty()).map(w -> w.doubleValue() * 0.8));
 
             onEscPressed(this, cancelButton::fire);
         }
