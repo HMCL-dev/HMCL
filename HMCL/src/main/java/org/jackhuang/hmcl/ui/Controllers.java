@@ -71,6 +71,7 @@ import org.jackhuang.hmcl.util.i18n.SupportedLocale;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.platform.Architecture;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
@@ -606,7 +607,7 @@ public final class Controllers {
         return pane.getCompletableFuture();
     }
 
-    public static TaskExecutorDialogPane taskDialog(TaskExecutor executor, String title, TaskCancellationAction onCancel) {
+    public static TaskExecutorDialogPane taskDialog(TaskExecutor executor, String title, @NotNull TaskCancellationAction onCancel) {
         TaskExecutorDialogPane pane = new TaskExecutorDialogPane(onCancel);
         pane.setTitle(title);
         pane.setExecutor(executor);
@@ -614,7 +615,7 @@ public final class Controllers {
         return pane;
     }
 
-    public static TaskExecutorDialogPane taskDialog(Task<?> task, String title, TaskCancellationAction onCancel) {
+    public static TaskExecutorDialogPane taskDialog(Task<?> task, String title, @NotNull TaskCancellationAction onCancel) {
         TaskExecutor executor = task.executor();
         TaskExecutorDialogPane pane = taskDialog(executor, title, onCancel);
         executor.start();
