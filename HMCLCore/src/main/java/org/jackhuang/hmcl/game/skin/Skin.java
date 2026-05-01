@@ -19,5 +19,5 @@ package org.jackhuang.hmcl.game.skin;
 
 import javafx.scene.image.Image;
 
-public record LoadedSkin(TextureModel model, Image skin, Image cape) {
+public record Skin(TextureModel model, Image skin, Image cape) {
 }
