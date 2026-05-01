@@ -36,7 +36,6 @@ import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.construct.DialogCloseEvent;
 import org.jackhuang.hmcl.ui.construct.FileSelector;
-import org.jackhuang.hmcl.ui.construct.JFXHyperlink;
 import org.jackhuang.hmcl.ui.construct.MultiFileItem;
 import org.jackhuang.hmcl.ui.skin.SkinCanvas;
 import org.jackhuang.hmcl.ui.skin.animation.SkinAniRunning;
@@ -184,14 +183,12 @@ public class OfflineAccountSkinPane extends StackPane {
             fireEvent(new DialogCloseEvent());
         });
 
-        JFXHyperlink littleSkinLink = new JFXHyperlink(i18n("account.skin.type.little_skin"));
-        littleSkinLink.setOnAction(e -> FXUtils.openLink("https://littleskin.cn/"));
         JFXButton cancelButton = new JFXButton(i18n("button.cancel"));
         cancelButton.getStyleClass().add("dialog-cancel");
         cancelButton.setOnAction(e -> fireEvent(new DialogCloseEvent()));
         onEscPressed(this, cancelButton::fire);
 
-        layout.setActions(littleSkinLink, acceptButton, cancelButton);
+        layout.setActions(acceptButton, cancelButton);
     }
 
     private OfflineSkinConfig getSkin() {
