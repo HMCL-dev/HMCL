@@ -24,11 +24,7 @@ import org.jackhuang.hmcl.util.io.FileUtils;
 
 import java.io.IOException;
 import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.List;
-import java.util.Objects;
-import java.util.Optional;
+import java.util.*;
 
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
@@ -181,11 +177,11 @@ public final class LocalModFile implements Comparable<LocalModFile> {
     public ModUpdate checkUpdates(DownloadProvider downloadProvider, String gameVersion, RemoteModRepository repository) throws IOException {
         Optional<RemoteMod.Version> currentVersion = repository.getRemoteVersionByLocalFile(this, file);
         if (!currentVersion.isPresent()) return null;
-        List<RemoteMod.Version> remoteVersions = repository.getRemoteVersionsById(downloadProvider, currentVersion.get().getModid())
-                .filter(version -> version.getGameVersions().contains(gameVersion))
-                .filter(version -> version.getLoaders().contains(getModLoaderType()))
-                .filter(version -> version.getDatePublished().compareTo(currentVersion.get().getDatePublished()) > 0)
-                .sorted(Comparator.comparing(RemoteMod.Version::getDatePublished).reversed())
+        List<RemoteMod.Version> remoteVersions = repository.getRemoteVersionsById(downloadProvider, currentVersion.get().modid())
+                .filter(version -> version.gameVersions().contains(gameVersion))
+                .filter(version -> version.loaders().contains(getModLoaderType()))
+                .filter(version -> version.datePublished().compareTo(currentVersion.get().datePublished()) > 0)
+                .sorted(Comparator.comparing(RemoteMod.Version::datePublished).reversed())
                 .toList();
         if (remoteVersions.isEmpty()) return null;
         return new ModUpdate(this, currentVersion.get(), remoteVersions.get(0));

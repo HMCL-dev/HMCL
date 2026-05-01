@@ -480,9 +480,9 @@ final class ModListPageSkin extends SkinBase<ModListPage> {
                     Task.runAsync(() -> {
                         Optional<RemoteMod.Version> versionOptional = repository.getRemoteVersionByLocalFile(modInfo.getModInfo(), modInfo.getModInfo().getFile());
                         if (versionOptional.isPresent()) {
-                            RemoteMod remoteMod = repository.getModById(DownloadProviders.getDownloadProvider(), versionOptional.get().getModid());
+                            RemoteMod remoteMod = repository.getModById(DownloadProviders.getDownloadProvider(), versionOptional.get().modid());
                             FXUtils.runInFX(() -> {
-                                for (ModLoaderType modLoaderType : versionOptional.get().getLoaders()) {
+                                for (ModLoaderType modLoaderType : versionOptional.get().loaders()) {
                                     String loaderName = switch (modLoaderType) {
                                         case FORGE -> i18n("install.installer.forge");
                                         case CLEANROOM -> i18n("install.installer.cleanroom");

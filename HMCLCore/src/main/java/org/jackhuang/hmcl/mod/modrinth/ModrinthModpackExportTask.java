@@ -17,25 +17,21 @@
  */
 package org.jackhuang.hmcl.mod.modrinth;
 
+import org.jackhuang.hmcl.download.LibraryAnalyzer;
+import org.jackhuang.hmcl.game.DefaultGameRepository;
+import org.jackhuang.hmcl.mod.*;
+import org.jackhuang.hmcl.mod.curse.CurseForgeRemoteModRepository;
+import org.jackhuang.hmcl.task.Task;
+import org.jackhuang.hmcl.util.DigestUtils;
+import org.jackhuang.hmcl.util.gson.JsonUtils;
+import org.jackhuang.hmcl.util.io.Zipper;
+
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
-
-import org.jackhuang.hmcl.download.LibraryAnalyzer;
-import org.jackhuang.hmcl.game.DefaultGameRepository;
-import org.jackhuang.hmcl.mod.ModAdviser;
-import org.jackhuang.hmcl.mod.Modpack;
-import org.jackhuang.hmcl.mod.ModpackExportInfo;
-import org.jackhuang.hmcl.task.Task;
-import org.jackhuang.hmcl.util.DigestUtils;
-import org.jackhuang.hmcl.util.gson.JsonUtils;
-import org.jackhuang.hmcl.util.io.Zipper;
-import org.jackhuang.hmcl.mod.LocalModFile;
-import org.jackhuang.hmcl.mod.RemoteMod;
-import org.jackhuang.hmcl.mod.curse.CurseForgeRemoteModRepository;
 
 import static org.jackhuang.hmcl.download.LibraryAnalyzer.LibraryType.*;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
@@ -107,9 +103,9 @@ public class ModrinthModpackExportTask extends Task<Void> {
 
         List<String> downloads = new ArrayList<>();
         if (modrinthVersion.isPresent())
-            downloads.add(modrinthVersion.get().getFile().getUrl());
+            downloads.add(modrinthVersion.get().file().url());
         if (curseForgeVersion.isPresent())
-            downloads.add(curseForgeVersion.get().getFile().getUrl());
+            downloads.add(curseForgeVersion.get().file().url());
 
         long fileSize = Files.size(file);
         if (fileSize > Integer.MAX_VALUE) {

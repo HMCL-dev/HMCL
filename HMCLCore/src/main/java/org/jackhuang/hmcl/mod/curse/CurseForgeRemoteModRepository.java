@@ -173,7 +173,7 @@ public final class CurseForgeRemoteModRepository implements RemoteModRepository 
             StringUtils.LevCalculator levCalculator = new StringUtils.LevCalculator();
 
             return new SearchResult(response.getData().stream().map(CurseAddon::toMod).map(remoteMod -> {
-                String lowerCaseResult = remoteMod.getTitle().toLowerCase(Locale.ROOT);
+                String lowerCaseResult = remoteMod.title().toLowerCase(Locale.ROOT);
                 int diff = levCalculator.calc(lowerCaseSearchFilter, lowerCaseResult);
 
                 for (String s : StringUtils.tokenize(lowerCaseResult)) {
@@ -244,7 +244,7 @@ public final class CurseForgeRemoteModRepository implements RemoteModRepository 
         try {
             Response<CurseAddon.LatestFile> response = withApiKey(HttpRequest.GET(String.format("%s/v1/mods/%s/files/%s", PREFIX, modId, fileId)))
                     .getJson(Response.typeOf(CurseAddon.LatestFile.class));
-            return response.getData().toVersion().getFile();
+            return response.getData().toVersion().file();
         } finally {
             SEMAPHORE.release();
         }

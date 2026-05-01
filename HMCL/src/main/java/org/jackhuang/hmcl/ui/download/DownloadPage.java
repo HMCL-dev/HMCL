@@ -156,8 +156,8 @@ public class DownloadPage extends DecoratorAnimatedPage implements DecoratorPage
             Path dest = runDirectory.resolve(subdirectoryName).resolve(result);
 
             Controllers.taskDialog(Task.composeAsync(() -> {
-                var task = new FileDownloadTask(downloadProvider.injectURLWithCandidates(file.getFile().getUrl()), dest);
-                task.setName(file.getName());
+                var task = new FileDownloadTask(downloadProvider.injectURLWithCandidates(file.file().url()), dest);
+                task.setName(file.name());
                 return task;
             }).whenComplete(Schedulers.javafx(), exception -> {
                 if (exception != null) {
@@ -171,7 +171,7 @@ public class DownloadPage extends DecoratorAnimatedPage implements DecoratorPage
                 }
             }), i18n("message.downloading"), TaskCancellationAction.NORMAL);
             handler.resolve();
-        }, file.getFile().getFilename(), new Validator(i18n("install.new_game.malformed"), FileUtils::isNameValidForJar), new Validator(i18n("profile.already_exists"), (it) -> !finalExistingFiles.contains(it)));
+        }, file.file().filename(), new Validator(i18n("install.new_game.malformed"), FileUtils::isNameValidForJar), new Validator(i18n("profile.already_exists"), (it) -> !finalExistingFiles.contains(it)));
 
     }
 

@@ -202,9 +202,9 @@ public class ModUpdatesPage extends BorderPane implements DecoratorPage {
 
             enabled.set(!data.getLocalMod().getModManager().isDisabled(data.getLocalMod().getFile()));
             fileName.set(data.getLocalMod().getFileName());
-            currentVersion.set(data.getCurrentVersion().getVersion());
-            targetVersion.set(data.getCandidate().getVersion());
-            switch (data.getCurrentVersion().getSelf().getType()) {
+            currentVersion.set(data.getCurrentVersion().version());
+            targetVersion.set(data.getCandidate().version());
+            switch (data.getCurrentVersion().self().getType()) {
                 case CURSEFORGE:
                     source.set(i18n("mods.curseforge"));
                     break;
@@ -291,15 +291,15 @@ public class ModUpdatesPage extends BorderPane implements DecoratorPage {
                 dependents.add(Task
                         .runAsync(Schedulers.javafx(), () -> local.setOld(true))
                         .thenComposeAsync(() -> {
-                            String fileName = remote.getFile().getFilename();
+                            String fileName = remote.file().filename();
                             if (isDisabled)
                                 fileName += ModManager.DISABLED_EXTENSION;
 
                             var task = new FileDownloadTask(
-                                    remote.getFile().getUrl(),
+                                    remote.file().url(),
                                     modManager.getModsDirectory().resolve(fileName));
 
-                            task.setName(remote.getName());
+                            task.setName(remote.name());
                             return task;
                         })
                         .whenComplete(Schedulers.javafx(), exception -> {

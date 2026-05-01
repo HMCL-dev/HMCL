@@ -29,71 +29,19 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Stream;
 
-public final class RemoteMod {
-
-    public static final RemoteMod BROKEN = new RemoteMod("", "", "RemoteMod.BROKEN", "", Collections.emptyList(), "", "", new RemoteMod.IMod() {
+public record RemoteMod(String slug, String author, String title, String description, List<String> categories,
+                        String pageUrl, String iconUrl, IMod data) {
+    public static final RemoteMod BROKEN = new RemoteMod("", "", "RemoteMod.BROKEN", "", Collections.emptyList(), "", "", new IMod() {
         @Override
         public List<RemoteMod> loadDependencies(RemoteModRepository modRepository, DownloadProvider downloadProvider) throws IOException {
             throw new IOException();
         }
 
         @Override
-        public Stream<RemoteMod.Version> loadVersions(RemoteModRepository modRepository, DownloadProvider downloadProvider) throws IOException {
+        public Stream<Version> loadVersions(RemoteModRepository modRepository, DownloadProvider downloadProvider) throws IOException {
             throw new IOException();
         }
     });
-
-    private final String slug;
-    private final String author;
-    private final String title;
-    private final String description;
-    private final List<String> categories;
-    private final String pageUrl;
-    private final String iconUrl;
-    private final IMod data;
-
-    public RemoteMod(String slug, String author, String title, String description, List<String> categories, String pageUrl, String iconUrl, IMod data) {
-        this.slug = slug;
-        this.author = author;
-        this.title = title;
-        this.description = description;
-        this.categories = categories;
-        this.pageUrl = pageUrl;
-        this.iconUrl = iconUrl;
-        this.data = data;
-    }
-
-    public String getSlug() {
-        return slug;
-    }
-
-    public String getAuthor() {
-        return author;
-    }
-
-    public String getTitle() {
-        return title;
-    }
-
-    public String getDescription() {
-        return description;
-    }
-
-    public List<String> getCategories() {
-        return categories;
-    }
-
-    public String getPageUrl() {
-        return pageUrl;
-    }
-
-    public String getIconUrl() {
-        return iconUrl;
-    }
-
-    public IMod getData() {
-        return data;
-    }
 
     public enum VersionType {
         Release,
@@ -212,113 +160,24 @@ public final class RemoteMod {
         Type getType();
     }
 
-    public static class Version {
-        private final IVersion self;
-        private final String modid;
-        private final String name;
-        private final String version;
-        private final String changelog;
-        private final Instant datePublished;
-        private final VersionType versionType;
-        private final File file;
-        private final List<Dependency> dependencies;
-        private final List<String> gameVersions;
-        private final List<ModLoaderType> loaders;
-
-        public Version(IVersion self, String modid, String name, String version, String changelog, Instant datePublished, VersionType versionType, File file, List<Dependency> dependencies, List<String> gameVersions, List<ModLoaderType> loaders) {
-            this.self = self;
-            this.modid = modid;
-            this.name = name;
-            this.version = version;
-            this.changelog = changelog;
-            this.datePublished = datePublished;
-            this.versionType = versionType;
-            this.file = file;
-            this.dependencies = dependencies;
-            this.gameVersions = gameVersions;
-            this.loaders = loaders;
-        }
-
-        public IVersion getSelf() {
-            return self;
-        }
-
-        public String getModid() {
-            return modid;
-        }
-
-        public String getName() {
-            return name;
-        }
-
-        public String getVersion() {
-            return version;
-        }
-
-        public String getChangelog() {
-            return changelog;
-        }
-
-        public Instant getDatePublished() {
-            return datePublished;
-        }
-
-        public VersionType getVersionType() {
-            return versionType;
-        }
-
-        public File getFile() {
-            return file;
-        }
-
-        public List<Dependency> getDependencies() {
-            return dependencies;
-        }
-
-        public List<String> getGameVersions() {
-            return gameVersions;
-        }
-
-        public List<ModLoaderType> getLoaders() {
-            return loaders;
-        }
+    public record Version(IVersion self, String modid, String name, String version, String changelog,
+                          Instant datePublished, VersionType versionType, File file, List<Dependency> dependencies,
+                          List<String> gameVersions, List<ModLoaderType> loaders) {
     }
 
-    public static class File {
-        private final Map<String, String> hashes;
-        private final String url;
-        private final String filename;
-
-        public File(Map<String, String> hashes, String url, String filename) {
-            this.hashes = hashes;
-            this.url = url;
-            this.filename = filename;
-        }
-
-        public Map<String, String> getHashes() {
-            return hashes;
-        }
-
+    public record File(Map<String, String> hashes, String url, String filename) {
         public FileDownloadTask.IntegrityCheck getIntegrityCheck() {
-            if (hashes.containsKey("md5")) {
-                return new FileDownloadTask.IntegrityCheck("MD5", hashes.get("md5"));
-            } else if (hashes.containsKey("sha1")) {
-                return new FileDownloadTask.IntegrityCheck("SHA-1", hashes.get("sha1"));
-            } else if (hashes.containsKey("sha256")) {
-                return new FileDownloadTask.IntegrityCheck("SHA-256", hashes.get("sha256"));
-            } else if (hashes.containsKey("sha512")) {
-                return new FileDownloadTask.IntegrityCheck("SHA-512", hashes.get("sha512"));
-            } else {
-                return null;
+                if (hashes.containsKey("md5")) {
+                    return new FileDownloadTask.IntegrityCheck("MD5", hashes.get("md5"));
+                } else if (hashes.containsKey("sha1")) {
+                    return new FileDownloadTask.IntegrityCheck("SHA-1", hashes.get("sha1"));
+                } else if (hashes.containsKey("sha256")) {
+                    return new FileDownloadTask.IntegrityCheck("SHA-256", hashes.get("sha256"));
+                } else if (hashes.containsKey("sha512")) {
+                    return new FileDownloadTask.IntegrityCheck("SHA-512", hashes.get("sha512"));
+                } else {
+                    return null;
+                }
             }
         }
-
-        public String getUrl() {
-            return url;
-        }
-
-        public String getFilename() {
-            return filename;
-        }
-    }
 }

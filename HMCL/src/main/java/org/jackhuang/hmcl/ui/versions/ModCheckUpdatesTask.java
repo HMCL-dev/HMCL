@@ -50,7 +50,7 @@ public class ModCheckUpdatesTask extends Task<List<LocalModFile.ModUpdate>> {
                             continue;
                         }
 
-                        if (candidate == null || candidate.getCandidate().getDatePublished().isBefore(update.getCandidate().getDatePublished())) {
+                        if (candidate == null || candidate.getCandidate().datePublished().isBefore(update.getCandidate().datePublished())) {
                             candidate = update;
                         }
                     }

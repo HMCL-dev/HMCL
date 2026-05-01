@@ -37,14 +37,7 @@ import java.net.URI;
 import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.time.Instant;
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.Semaphore;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -442,7 +435,7 @@ public final class ModrinthRemoteModRepository implements RemoteModRepository {
         @Override
         public List<RemoteMod> loadDependencies(RemoteModRepository modRepository, DownloadProvider downloadProvider) throws IOException {
             Set<RemoteMod.Dependency> dependencies = modRepository.getRemoteVersionsById(downloadProvider, getId())
-                    .flatMap(version -> version.getDependencies().stream())
+                    .flatMap(version -> version.dependencies().stream())
                     .collect(Collectors.toSet());
             List<RemoteMod> mods = new ArrayList<>();
             for (RemoteMod.Dependency dependency : dependencies) {
@@ -829,7 +822,7 @@ public final class ModrinthRemoteModRepository implements RemoteModRepository {
         @Override
         public List<RemoteMod> loadDependencies(RemoteModRepository modRepository, DownloadProvider downloadProvider) throws IOException {
             Set<RemoteMod.Dependency> dependencies = modRepository.getRemoteVersionsById(downloadProvider, getProjectId())
-                    .flatMap(version -> version.getDependencies().stream())
+                    .flatMap(version -> version.dependencies().stream())
                     .collect(Collectors.toSet());
             List<RemoteMod> mods = new ArrayList<>();
             for (RemoteMod.Dependency dependency : dependencies) {

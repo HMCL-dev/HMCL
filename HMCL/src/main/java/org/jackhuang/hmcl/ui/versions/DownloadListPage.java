@@ -575,19 +575,19 @@ public class DownloadListPage extends Control implements DecoratorPage, VersionP
                         if (empty || item == null) {
                             setGraphic(null);
                         } else {
-                            ModTranslations.Mod mod = ModTranslations.getTranslationsByRepositoryType(getSkinnable().repository.getType()).getModByCurseForgeId(item.getSlug());
-                            content.setTitle(mod != null && I18n.isUseChinese() ? mod.getDisplayName() : item.getTitle());
-                            String description = item.getDescription();
+                            ModTranslations.Mod mod = ModTranslations.getTranslationsByRepositoryType(getSkinnable().repository.getType()).getModByCurseForgeId(item.slug());
+                            content.setTitle(mod != null && I18n.isUseChinese() ? mod.getDisplayName() : item.title());
+                            String description = item.description();
                             if (description != null) {
                                 description = description.replaceAll("\\R", " ");
                             }
                             content.setSubtitle(description);
                             content.getTags().clear();
-                            for (String category : item.getCategories()) {
+                            for (String category : item.categories()) {
                                 if (getSkinnable().shouldDisplayCategory(category))
                                     content.addTag(getSkinnable().getLocalizedCategory(category));
                             }
-                            iconLoader.load(imageContainer.imageProperty(), item.getIconUrl());
+                            iconLoader.load(imageContainer.imageProperty(), item.iconUrl());
                             setGraphic(wrapper);
                         }
                     }
