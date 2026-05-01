@@ -167,17 +167,17 @@ public record RemoteMod(String slug, String author, String title, String descrip
 
     public record File(Map<String, String> hashes, String url, String filename) {
         public FileDownloadTask.IntegrityCheck getIntegrityCheck() {
-                if (hashes.containsKey("md5")) {
-                    return new FileDownloadTask.IntegrityCheck("MD5", hashes.get("md5"));
-                } else if (hashes.containsKey("sha1")) {
-                    return new FileDownloadTask.IntegrityCheck("SHA-1", hashes.get("sha1"));
-                } else if (hashes.containsKey("sha256")) {
-                    return new FileDownloadTask.IntegrityCheck("SHA-256", hashes.get("sha256"));
-                } else if (hashes.containsKey("sha512")) {
-                    return new FileDownloadTask.IntegrityCheck("SHA-512", hashes.get("sha512"));
-                } else {
-                    return null;
-                }
+            if (hashes.containsKey("md5")) {
+                return new FileDownloadTask.IntegrityCheck("MD5", hashes.get("md5"));
+            } else if (hashes.containsKey("sha1")) {
+                return new FileDownloadTask.IntegrityCheck("SHA-1", hashes.get("sha1"));
+            } else if (hashes.containsKey("sha256")) {
+                return new FileDownloadTask.IntegrityCheck("SHA-256", hashes.get("sha256"));
+            } else if (hashes.containsKey("sha512")) {
+                return new FileDownloadTask.IntegrityCheck("SHA-512", hashes.get("sha512"));
+            } else {
+                return null;
             }
         }
+    }
 }
