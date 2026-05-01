@@ -18,13 +18,16 @@
 package org.jackhuang.hmcl.ui.account.skin;
 
 import com.jfoenix.controls.JFXPopup;
+import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.ReadOnlyObjectProperty;
 import javafx.beans.property.ReadOnlyObjectWrapper;
+import javafx.beans.property.SimpleBooleanProperty;
 import javafx.geometry.Insets;
 import javafx.scene.layout.*;
 import org.jackhuang.hmcl.auth.Account;
 import org.jackhuang.hmcl.game.TexturesLoader;
 import org.jackhuang.hmcl.game.skin.Skin;
+import org.jackhuang.hmcl.game.skin.TextureModel;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
@@ -39,21 +42,25 @@ import org.jetbrains.annotations.Nullable;
 
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
-public abstract class SkinPageBase extends DecoratorAnimatedPage implements DecoratorPage, PageAware {
-    protected final Account account;
+public abstract class SkinPageBase<T extends Account> extends DecoratorAnimatedPage implements DecoratorPage, PageAware {
+    protected final T account;
     @Nullable
     private final String url;
     private final ReadOnlyObjectWrapper<State> state = new ReadOnlyObjectWrapper<>();
+    private final BooleanProperty loadingProperty = new SimpleBooleanProperty(true);
     private final TabHeader tab;
-    private final TabHeader.Tab<Right> manageTab = new TabHeader.Tab<>("manageTab");
+    private final TabHeader.Tab<SkinManage> manageTab = new TabHeader.Tab<>("manageTab");
     private final TransitionPane transitionPane = new TransitionPane();
 
-    public SkinPageBase(Account account, @Nullable String url) {
+    protected final SkinManage skinManage;
+
+    protected SkinPageBase(T account, @Nullable String url) {
         this.url = url;
         this.account = account;
 
         tab = new TabHeader(transitionPane, manageTab);
-        manageTab.setNodeSupplier(Right::new);
+        skinManage = new SkinManage();
+        manageTab.setNodeSupplier(() -> skinManage);
         tab.select(manageTab);
 
         BorderPane left = new BorderPane();
@@ -67,7 +74,6 @@ public abstract class SkinPageBase extends DecoratorAnimatedPage implements Deco
         PopupMenu saveList = new PopupMenu();
         JFXPopup savePopup = new JFXPopup(saveList);
         saveList.getContent().setAll(new IconedMenuItem(SVG.APPAREL, i18n("account.skin.manage.save.skin"), () -> {
-
         }, savePopup), new IconedMenuItem(SVG.CROP_9_16, i18n("account.skin.manage.save.cape"), () -> {
         }, savePopup));
 
@@ -91,20 +97,27 @@ public abstract class SkinPageBase extends DecoratorAnimatedPage implements Deco
 
     protected abstract Task<Void> setSkin(Skin skin);
 
-    private final class Right extends HBox {
-        private Right() {
+    protected final class SkinManage extends HBox {
+        protected StackPane leftRegion = new StackPane();
+        private BorderPane rightRegion = new BorderPane();
+
+        private SkinManage() {
             setSpacing(10);
             setPadding(new Insets(10, 10, 10, 10));
 
-            FlowPane leftRegion = new FlowPane();
             leftRegion.getStyleClass().add("card-non-transparent");
             HBox.setHgrow(leftRegion, Priority.ALWAYS);
 
-            BorderPane rightRegion = new BorderPane();
             rightRegion.getStyleClass().add("card-non-transparent");
             FXUtils.setLimitWidth(rightRegion, 250);
 
-            SkinCanvas canvas = new SkinCanvas(TexturesLoader.getDefaultSkinImage(), 250, 300, true);
+
+            var uuid = account.getUUID();
+            var skin = TexturesLoader.getDefaultSkin(uuid).image();
+            var slim = TexturesLoader.getDefaultModel(uuid) == TextureModel.SLIM;
+
+            SkinCanvas canvas = new SkinCanvas(skin, 250, 300, true);
+            canvas.updateSkin(skin, slim, null);
             skinObjectProperty().addListener((obs, oldSkin, newSkin) -> {
                 canvas.updateSkin(newSkin.skin().image(), newSkin.model().isSlim(), newSkin.cape() != null ? newSkin.cape().image() : null);
             });
@@ -114,7 +127,7 @@ public abstract class SkinPageBase extends DecoratorAnimatedPage implements Deco
             canvas.getAnimationPlayer().addSkinAnimation(new SkinAniWavingArms(100, 2000, 7.5, canvas), new SkinAniRunning(100, 100, 30, canvas));
             canvas.enableRotation(.5);
 
-            getChildren().addAll(leftRegion, rightRegion);
+            getChildren().setAll(leftRegion, rightRegion);
         }
     }
 }
