@@ -18,7 +18,7 @@
 package org.jackhuang.hmcl.auth.offline;
 
 import javafx.scene.image.Image;
-import org.jackhuang.hmcl.auth.yggdrasil.TextureModel;
+import org.jackhuang.hmcl.game.skin.TextureModel;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.util.io.FileUtils;
 

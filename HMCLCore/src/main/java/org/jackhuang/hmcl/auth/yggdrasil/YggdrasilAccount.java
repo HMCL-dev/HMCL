@@ -19,11 +19,16 @@ package org.jackhuang.hmcl.auth.yggdrasil;
 
 import javafx.beans.binding.ObjectBinding;
 import org.jackhuang.hmcl.auth.*;
+import org.jackhuang.hmcl.game.skin.Texture;
+import org.jackhuang.hmcl.game.skin.TextureType;
 import org.jackhuang.hmcl.util.gson.UUIDTypeAdapter;
 import org.jackhuang.hmcl.util.javafx.BindingMapping;
 
 import java.nio.file.Path;
-import java.util.*;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Optional;
+import java.util.UUID;
 
 import static java.util.Objects.requireNonNull;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;

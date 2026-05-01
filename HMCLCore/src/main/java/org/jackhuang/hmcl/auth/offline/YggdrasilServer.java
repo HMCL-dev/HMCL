@@ -19,7 +19,7 @@ package org.jackhuang.hmcl.auth.offline;
 
 import org.glavo.png.javafx.PNGJavaFXUtils;
 import org.jackhuang.hmcl.auth.yggdrasil.GameProfile;
-import org.jackhuang.hmcl.auth.yggdrasil.TextureModel;
+import org.jackhuang.hmcl.game.skin.TextureModel;
 import org.jackhuang.hmcl.util.KeyUtils;
 import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.Pair;

@@ -1,6 +1,6 @@
 /*
  * Hello Minecraft! Launcher
- * Copyright (C) 2020  huangyuhui <huanghongxun2008@126.com> and contributors
+ * Copyright (C) 2026 huangyuhui <huanghongxun2008@126.com> and contributors
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -15,14 +15,16 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-package org.jackhuang.hmcl.auth.yggdrasil;
+package org.jackhuang.hmcl.game.skin;
 
-public enum TextureModel {
-    WIDE("default"), SLIM("slim");
+import org.jackhuang.hmcl.util.Immutable;
+import org.jetbrains.annotations.Nullable;
 
-    public final String modelName;
+import java.util.Map;
 
-    TextureModel(String modelName) {
-        this.modelName = modelName;
+@Immutable
+public record Texture(@Nullable String url, @Nullable Map<String, String> metadata) {
+    public Texture() {
+        this(null, null);
     }
 }
