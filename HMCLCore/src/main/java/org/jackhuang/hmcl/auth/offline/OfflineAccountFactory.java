@@ -52,7 +52,7 @@ public final class OfflineAccountFactory extends AccountFactory<OfflineAccount> 
     public OfflineAccount create(CharacterSelector selector, String username, String password, ProgressCallback progressCallback, Object additionalData) {
         AdditionalData data;
         UUID uuid;
-        Skin skin;
+        OfflineSkinConfig skin;
         if (additionalData != null) {
             data = (AdditionalData) additionalData;
             uuid = data.uuid == null ? getUUIDFromUserName(username) : data.uuid;
@@ -71,7 +71,7 @@ public final class OfflineAccountFactory extends AccountFactory<OfflineAccount> 
         UUID uuid = tryCast(storage.get("uuid"), String.class)
                 .map(UUIDTypeAdapter::fromString)
                 .orElse(getUUIDFromUserName(username));
-        Skin skin = Skin.fromStorage(tryCast(storage.get("skin"), Map.class).orElse(null));
+        OfflineSkinConfig skin = OfflineSkinConfig.fromStorage(tryCast(storage.get("skin"), Map.class).orElse(null));
 
         return new OfflineAccount(downloader, username, uuid, skin);
     }
@@ -82,9 +82,9 @@ public final class OfflineAccountFactory extends AccountFactory<OfflineAccount> 
 
     public static class AdditionalData {
         private final UUID uuid;
-        private final Skin skin;
+        private final OfflineSkinConfig skin;
 
-        public AdditionalData(UUID uuid, Skin skin) {
+        public AdditionalData(UUID uuid, OfflineSkinConfig skin) {
             this.uuid = uuid;
             this.skin = skin;
         }

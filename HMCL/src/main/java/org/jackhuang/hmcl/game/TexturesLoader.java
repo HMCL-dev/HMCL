@@ -31,7 +31,7 @@ import org.jackhuang.hmcl.auth.Account;
 import org.jackhuang.hmcl.auth.ServerResponseMalformedException;
 import org.jackhuang.hmcl.auth.microsoft.MicrosoftAccount;
 import org.jackhuang.hmcl.auth.offline.OfflineAccount;
-import org.jackhuang.hmcl.auth.offline.Skin;
+import org.jackhuang.hmcl.auth.offline.OfflineSkinConfig;
 import org.jackhuang.hmcl.auth.yggdrasil.*;
 import org.jackhuang.hmcl.task.FileDownloadTask;
 import org.jackhuang.hmcl.task.Schedulers;
@@ -192,8 +192,7 @@ public final class TexturesLoader {
 
             SimpleObjectProperty<LoadedTexture> binding = new SimpleObjectProperty<>();
             InvalidationListener listener = o -> {
-                Skin skin = offlineAccount.getSkin();
-                String username = offlineAccount.getUsername();
+                OfflineSkinConfig skin = offlineAccount.getSkin();
 
                 binding.set(uuidFallback);
                 if (skin != null) {

@@ -53,9 +53,9 @@ public class OfflineAccount extends Account {
     private final AuthlibInjectorArtifactProvider downloader;
     private final String username;
     private final UUID uuid;
-    private Skin skin;
+    private OfflineSkinConfig skin;
 
-    protected OfflineAccount(AuthlibInjectorArtifactProvider downloader, String username, UUID uuid, Skin skin) {
+    protected OfflineAccount(AuthlibInjectorArtifactProvider downloader, String username, UUID uuid, OfflineSkinConfig skin) {
         this.downloader = requireNonNull(downloader);
         this.username = requireNonNull(username);
         this.uuid = requireNonNull(uuid);
@@ -90,17 +90,17 @@ public class OfflineAccount extends Account {
         return username + ":" + username;
     }
 
-    public Skin getSkin() {
+    public OfflineSkinConfig getSkin() {
         return skin;
     }
 
-    public void setSkin(Skin skin) {
+    public void setSkin(OfflineSkinConfig skin) {
         this.skin = skin;
         invalidate();
     }
 
-    protected boolean loadAuthlibInjector(Skin skin) {
-        return skin != null && skin.type() != Skin.Type.DEFAULT;
+    protected boolean loadAuthlibInjector(OfflineSkinConfig skin) {
+        return skin != null && skin.type() != OfflineSkinConfig.Type.DEFAULT;
     }
 
     public AuthInfo logInWithoutSkin() throws AuthenticationException {

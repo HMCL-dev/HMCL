@@ -32,7 +32,7 @@ import static org.jackhuang.hmcl.util.Lang.mapOf;
 import static org.jackhuang.hmcl.util.Lang.tryCast;
 import static org.jackhuang.hmcl.util.Pair.pair;
 
-public record Skin(Type type, TextureModel textureModel, String localSkinPath, String localCapePath) {
+public record OfflineSkinConfig(Type type, TextureModel textureModel, String localSkinPath, String localCapePath) {
 
     public enum Type {
         DEFAULT,
@@ -114,7 +114,7 @@ public record Skin(Type type, TextureModel textureModel, String localSkinPath, S
         );
     }
 
-    public static Skin fromStorage(Map<?, ?> storage) {
+    public static OfflineSkinConfig fromStorage(Map<?, ?> storage) {
         if (storage == null) return null;
 
         Type type = tryCast(storage.get("type"), String.class).flatMap(t -> Optional.ofNullable(Type.fromStorage(t)))
@@ -123,7 +123,7 @@ public record Skin(Type type, TextureModel textureModel, String localSkinPath, S
         String localSkinPath = tryCast(storage.get("localSkinPath"), String.class).orElse(null);
         String localCapePath = tryCast(storage.get("localCapePath"), String.class).orElse(null);
 
-        return new Skin(type, "slim".equals(textureModel) ? TextureModel.SLIM : TextureModel.WIDE, localSkinPath, localCapePath);
+        return new OfflineSkinConfig(type, "slim".equals(textureModel) ? TextureModel.SLIM : TextureModel.WIDE, localSkinPath, localCapePath);
     }
 
     public record LoadedSkin(TextureModel model, Texture skin, Texture cape) {

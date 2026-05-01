@@ -28,7 +28,7 @@ import javafx.scene.input.DragEvent;
 import javafx.scene.input.TransferMode;
 import javafx.scene.layout.*;
 import org.jackhuang.hmcl.auth.offline.OfflineAccount;
-import org.jackhuang.hmcl.auth.offline.Skin;
+import org.jackhuang.hmcl.auth.offline.OfflineSkinConfig;
 import org.jackhuang.hmcl.auth.yggdrasil.TextureModel;
 import org.jackhuang.hmcl.game.TexturesLoader;
 import org.jackhuang.hmcl.task.Schedulers;
@@ -55,7 +55,7 @@ import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 public class OfflineAccountSkinPane extends StackPane {
     private final OfflineAccount account;
 
-    private final MultiFileItem<Skin.Type> skinItem = new MultiFileItem<>();
+    private final MultiFileItem<OfflineSkinConfig.Type> skinItem = new MultiFileItem<>();
     private final JFXComboBox<TextureModel> modelCombobox = new JFXComboBox<>();
     private final FileSelector skinSelector = new FileSelector();
     private final FileSelector capeSelector = new FileSelector();
@@ -93,7 +93,7 @@ public class OfflineAccountSkinPane extends StackPane {
                 Path skin = e.getDragboard().getFiles().get(0).toPath();
                 Platform.runLater(() -> {
                     skinSelector.setValue(FileUtils.getAbsolutePath(skin));
-                    skinItem.setSelectedData(Skin.Type.LOCAL_FILE);
+                    skinItem.setSelectedData(OfflineSkinConfig.Type.LOCAL_FILE);
                 });
             }
         });
@@ -109,17 +109,17 @@ public class OfflineAccountSkinPane extends StackPane {
         layout.setBody(pane);
 
         skinItem.loadChildren(Arrays.asList(
-                new MultiFileItem.Option<>(i18n("message.default"), Skin.Type.DEFAULT),
-                new MultiFileItem.Option<>(i18n("account.skin.type.steve"), Skin.Type.STEVE),
-                new MultiFileItem.Option<>(i18n("account.skin.type.alex"), Skin.Type.ALEX),
-                new MultiFileItem.Option<>(i18n("account.skin.type.local_file"), Skin.Type.LOCAL_FILE)
+                new MultiFileItem.Option<>(i18n("message.default"), OfflineSkinConfig.Type.DEFAULT),
+                new MultiFileItem.Option<>(i18n("account.skin.type.steve"), OfflineSkinConfig.Type.STEVE),
+                new MultiFileItem.Option<>(i18n("account.skin.type.alex"), OfflineSkinConfig.Type.ALEX),
+                new MultiFileItem.Option<>(i18n("account.skin.type.local_file"), OfflineSkinConfig.Type.LOCAL_FILE)
         ));
 
         modelCombobox.setConverter(stringConverter(model -> i18n("account.skin.model." + model.modelName)));
         modelCombobox.getItems().setAll(TextureModel.WIDE, TextureModel.SLIM);
 
         if (account.getSkin() == null) {
-            skinItem.setSelectedData(Skin.Type.DEFAULT);
+            skinItem.setSelectedData(OfflineSkinConfig.Type.DEFAULT);
             modelCombobox.setValue(TextureModel.WIDE);
         } else {
             skinItem.setSelectedData(account.getSkin().type());
@@ -194,12 +194,12 @@ public class OfflineAccountSkinPane extends StackPane {
         layout.setActions(littleSkinLink, acceptButton, cancelButton);
     }
 
-    private Skin getSkin() {
-        Skin.Type type = skinItem.getSelectedData();
-        if (type == Skin.Type.LOCAL_FILE) {
-            return new Skin(type, modelCombobox.getValue(), skinSelector.getValue(), capeSelector.getValue());
+    private OfflineSkinConfig getSkin() {
+        OfflineSkinConfig.Type type = skinItem.getSelectedData();
+        if (type == OfflineSkinConfig.Type.LOCAL_FILE) {
+            return new OfflineSkinConfig(type, modelCombobox.getValue(), skinSelector.getValue(), capeSelector.getValue());
         } else {
-            return new Skin(type, null, null, null);
+            return new OfflineSkinConfig(type, null, null, null);
         }
     }
 }

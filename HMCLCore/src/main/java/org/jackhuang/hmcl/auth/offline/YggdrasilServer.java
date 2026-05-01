@@ -155,9 +155,9 @@ public class YggdrasilServer extends HttpServer {
     public static class Character {
         private final UUID uuid;
         private final String name;
-        private final Skin.LoadedSkin skin;
+        private final OfflineSkinConfig.LoadedSkin skin;
 
-        public Character(UUID uuid, String name, Skin.LoadedSkin skin) {
+        public Character(UUID uuid, String name, OfflineSkinConfig.LoadedSkin skin) {
             this.uuid = uuid;
             this.name = name;
             this.skin = skin;
