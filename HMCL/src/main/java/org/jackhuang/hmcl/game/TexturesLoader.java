@@ -45,7 +45,10 @@ import java.io.InputStream;
 import java.lang.ref.WeakReference;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.*;
+import java.util.Map;
+import java.util.Optional;
+import java.util.UUID;
+import java.util.WeakHashMap;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
@@ -209,15 +212,15 @@ public final class TexturesLoader {
                     skin.load(username).setExecutor(POOL).whenComplete(Schedulers.javafx(), (result, exception) -> {
                         if (exception != null) {
                             LOG.warning("Failed to load texture", exception);
-                        } else if (result != null && result.getSkin() != null && result.getSkin().getImage() != null) {
+                        } else if (result != null && result.skin() != null && result.skin().getImage() != null) {
                             Map<String, String> metadata;
-                            if (result.getModel() != null) {
-                                metadata = singletonMap("model", result.getModel().modelName);
+                            if (result.model() != null) {
+                                metadata = singletonMap("model", result.model().modelName);
                             } else {
                                 metadata = emptyMap();
                             }
 
-                            binding.set(new LoadedTexture(result.getSkin().getImage(), metadata));
+                            binding.set(new LoadedTexture(result.skin().getImage(), metadata));
                         }
                     }).start();
                 }

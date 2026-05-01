@@ -20,11 +20,9 @@ package org.jackhuang.hmcl.ui.account;
 import com.jfoenix.controls.JFXButton;
 import com.jfoenix.controls.JFXComboBox;
 import com.jfoenix.controls.JFXDialogLayout;
-import com.jfoenix.controls.JFXTextField;
 import javafx.application.Platform;
 import javafx.beans.InvalidationListener;
 import javafx.geometry.Insets;
-import javafx.geometry.VPos;
 import javafx.scene.control.Label;
 import javafx.scene.input.DragEvent;
 import javafx.scene.input.TransferMode;
@@ -36,7 +34,10 @@ import org.jackhuang.hmcl.game.TexturesLoader;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.FXUtils;
-import org.jackhuang.hmcl.ui.construct.*;
+import org.jackhuang.hmcl.ui.construct.DialogCloseEvent;
+import org.jackhuang.hmcl.ui.construct.FileSelector;
+import org.jackhuang.hmcl.ui.construct.JFXHyperlink;
+import org.jackhuang.hmcl.ui.construct.MultiFileItem;
 import org.jackhuang.hmcl.ui.skin.SkinCanvas;
 import org.jackhuang.hmcl.ui.skin.animation.SkinAniRunning;
 import org.jackhuang.hmcl.ui.skin.animation.SkinAniWavingArms;
@@ -55,7 +56,6 @@ public class OfflineAccountSkinPane extends StackPane {
     private final OfflineAccount account;
 
     private final MultiFileItem<Skin.Type> skinItem = new MultiFileItem<>();
-    private final JFXTextField cslApiField = new JFXTextField();
     private final JFXComboBox<TextureModel> modelCombobox = new JFXComboBox<>();
     private final FileSelector skinSelector = new FileSelector();
     private final FileSelector capeSelector = new FileSelector();
@@ -108,17 +108,11 @@ public class OfflineAccountSkinPane extends StackPane {
 
         layout.setBody(pane);
 
-        cslApiField.setPromptText(i18n("account.skin.type.csl_api.location.hint"));
-        cslApiField.setValidators(new URLValidator());
-        FXUtils.setValidateWhileTextChanged(cslApiField, true);
-
         skinItem.loadChildren(Arrays.asList(
                 new MultiFileItem.Option<>(i18n("message.default"), Skin.Type.DEFAULT),
                 new MultiFileItem.Option<>(i18n("account.skin.type.steve"), Skin.Type.STEVE),
                 new MultiFileItem.Option<>(i18n("account.skin.type.alex"), Skin.Type.ALEX),
-                new MultiFileItem.Option<>(i18n("account.skin.type.local_file"), Skin.Type.LOCAL_FILE),
-                new MultiFileItem.Option<>(i18n("account.skin.type.little_skin"), Skin.Type.LITTLE_SKIN),
-                new MultiFileItem.Option<>(i18n("account.skin.type.csl_api"), Skin.Type.CUSTOM_SKIN_LOADER_API)
+                new MultiFileItem.Option<>(i18n("account.skin.type.local_file"), Skin.Type.LOCAL_FILE)
         ));
 
         modelCombobox.setConverter(stringConverter(model -> i18n("account.skin.model." + model.modelName)));
@@ -129,7 +123,6 @@ public class OfflineAccountSkinPane extends StackPane {
             modelCombobox.setValue(TextureModel.WIDE);
         } else {
             skinItem.setSelectedData(account.getSkin().getType());
-            cslApiField.setText(account.getSkin().getCslApi());
             modelCombobox.setValue(account.getSkin().getTextureModel());
             skinSelector.setValue(account.getSkin().getLocalSkinPath());
             capeSelector.setValue(account.getSkin().getLocalCapePath());
@@ -143,7 +136,7 @@ public class OfflineAccountSkinPane extends StackPane {
                             Controllers.showToast(i18n("message.failed"));
                         } else {
                             UUID uuid = this.account.getUUID();
-                            if (result == null || result.getSkin() == null && result.getCape() == null) {
+                            if (result == null || result.skin() == null && result.cape() == null) {
                                 canvas.updateSkin(
                                         TexturesLoader.getDefaultSkin(uuid).getImage(),
                                         TexturesLoader.getDefaultModel(uuid) == TextureModel.SLIM,
@@ -152,12 +145,12 @@ public class OfflineAccountSkinPane extends StackPane {
                                 return;
                             }
                             canvas.updateSkin(
-                                    result.getSkin() != null ? result.getSkin().getImage() : TexturesLoader.getDefaultSkin(uuid).getImage(),
-                                    result.getModel() == TextureModel.SLIM,
-                                    result.getCape() != null ? result.getCape().getImage() : null);
+                                    result.skin() != null ? result.skin().getImage() : TexturesLoader.getDefaultSkin(uuid).getImage(),
+                                    result.model() == TextureModel.SLIM,
+                                    result.cape() != null ? result.cape().getImage() : null);
                         }
                     }).start();
-        }, skinItem.selectedDataProperty(), cslApiField.textProperty(), modelCombobox.valueProperty(), skinSelector.valueProperty(), capeSelector.valueProperty());
+        }, skinItem.selectedDataProperty(), modelCombobox.valueProperty(), skinSelector.valueProperty(), capeSelector.valueProperty());
 
         FXUtils.onChangeAndOperate(skinItem.selectedDataProperty(), selectedData -> {
             GridPane gridPane = new GridPane();
@@ -173,32 +166,11 @@ public class OfflineAccountSkinPane extends StackPane {
                 case STEVE:
                 case ALEX:
                     break;
-                case LITTLE_SKIN:
-                    HintPane hint = new HintPane(MessageDialogPane.MessageType.INFO);
-                    hint.setText(i18n("account.skin.type.little_skin.hint"));
-
-                    // Spanning two columns and expanding horizontally
-                    GridPane.setColumnSpan(hint, 2);
-                    GridPane.setHgrow(hint, Priority.ALWAYS);
-                    hint.setMaxWidth(Double.MAX_VALUE);
-
-                    // Force top alignment within cells (to avoid vertical offset caused by the baseline)
-                    GridPane.setValignment(hint, VPos.TOP);
-
-                    // Set a fixed height as the preferred height to prevent the GridPane from stretching or leaving empty space.
-                    hint.setMaxHeight(Region.USE_PREF_SIZE);
-                    hint.setMinHeight(Region.USE_PREF_SIZE);
-
-                    gridPane.addRow(0, hint);
-                    break;
                 case LOCAL_FILE:
                     gridPane.setPadding(new Insets(0, 0, 0, 10));
                     gridPane.addRow(0, new Label(i18n("account.skin.model")), modelCombobox);
                     gridPane.addRow(1, new Label(i18n("account.skin")), skinSelector);
                     gridPane.addRow(2, new Label(i18n("account.cape")), capeSelector);
-                    break;
-                case CUSTOM_SKIN_LOADER_API:
-                    gridPane.addRow(0, new Label(i18n("account.skin.type.csl_api.location")), cslApiField);
                     break;
             }
 
@@ -219,20 +191,15 @@ public class OfflineAccountSkinPane extends StackPane {
         cancelButton.setOnAction(e -> fireEvent(new DialogCloseEvent()));
         onEscPressed(this, cancelButton::fire);
 
-        acceptButton.disableProperty().bind(
-                skinItem.selectedDataProperty().isEqualTo(Skin.Type.CUSTOM_SKIN_LOADER_API)
-                        .and(cslApiField.activeValidatorProperty().isNotNull()));
-
         layout.setActions(littleSkinLink, acceptButton, cancelButton);
     }
 
     private Skin getSkin() {
         Skin.Type type = skinItem.getSelectedData();
         if (type == Skin.Type.LOCAL_FILE) {
-            return new Skin(type, cslApiField.getText(), modelCombobox.getValue(), skinSelector.getValue(), capeSelector.getValue());
+            return new Skin(type, modelCombobox.getValue(), skinSelector.getValue(), capeSelector.getValue());
         } else {
-            String cslApi = type == Skin.Type.CUSTOM_SKIN_LOADER_API ? cslApiField.getText() : null;
-            return new Skin(type, cslApi, null, null, null);
+            return new Skin(type, null, null, null);
         }
     }
 }
