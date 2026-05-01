@@ -61,11 +61,14 @@ import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 public class AccountListItem extends RadioButton {
 
     private final Account account;
+    private final AccountListPage page;
+
     private final StringProperty title = new SimpleStringProperty();
     private final StringProperty subtitle = new SimpleStringProperty();
 
-    public AccountListItem(Account account) {
+    public AccountListItem(Account account, AccountListPage page) {
         this.account = account;
+        this.page = page;
         getStyleClass().clear();
         setUserData(account);
 
@@ -186,6 +189,10 @@ public class AccountListItem extends RadioButton {
 
     public Account getAccount() {
         return account;
+    }
+
+    public AccountListPage getPage() {
+        return page;
     }
 
     public String getTitle() {

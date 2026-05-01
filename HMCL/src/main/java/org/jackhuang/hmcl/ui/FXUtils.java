@@ -39,14 +39,12 @@ import javafx.event.EventHandler;
 import javafx.event.EventType;
 import javafx.geometry.Bounds;
 import javafx.geometry.Rectangle2D;
-import javafx.scene.Cursor;
-import javafx.scene.Node;
-import javafx.scene.Parent;
-import javafx.scene.Scene;
+import javafx.scene.*;
 import javafx.scene.control.*;
 import javafx.scene.control.skin.VirtualFlow;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
+import javafx.scene.image.WritableImage;
 import javafx.scene.input.*;
 import javafx.scene.layout.ColumnConstraints;
 import javafx.scene.layout.Priority;
@@ -1678,5 +1676,11 @@ public final class FXUtils {
 
             e.consume();
         });
+    }
+
+    public static WritableImage takeSnapshot(Region node) {
+        SnapshotParameters snapShotParams = new SnapshotParameters();
+        snapShotParams.setFill(Color.TRANSPARENT);
+        return node.snapshot(snapShotParams, new WritableImage((int) node.getWidth() + 10, (int) node.getHeight() + 10));
     }
 }

@@ -17,14 +17,14 @@
  */
 package org.jackhuang.hmcl.ui.account;
 
+import com.jfoenix.controls.JFXButton;
+import com.jfoenix.controls.JFXTextField;
+import com.jfoenix.effects.JFXDepthManager;
+import javafx.animation.PauseTransition;
+import javafx.beans.InvalidationListener;
 import javafx.beans.binding.Bindings;
-import javafx.beans.property.BooleanProperty;
-import javafx.beans.property.ListProperty;
-import javafx.beans.property.ObjectProperty;
-import javafx.beans.property.ReadOnlyObjectProperty;
-import javafx.beans.property.ReadOnlyObjectWrapper;
-import javafx.beans.property.SimpleBooleanProperty;
-import javafx.beans.property.SimpleListProperty;
+import javafx.beans.binding.BooleanBinding;
+import javafx.beans.property.*;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
 import javafx.collections.FXCollections;
@@ -33,10 +33,17 @@ import javafx.geometry.Insets;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.control.Skin;
 import javafx.scene.control.Tooltip;
+import javafx.scene.input.Dragboard;
+import javafx.scene.input.TransferMode;
+import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
+import javafx.util.Duration;
 import org.jackhuang.hmcl.auth.Account;
+import org.jackhuang.hmcl.auth.authlibinjector.AuthlibInjectorAccount;
 import org.jackhuang.hmcl.auth.authlibinjector.AuthlibInjectorServer;
+import org.jackhuang.hmcl.auth.microsoft.MicrosoftAccount;
+import org.jackhuang.hmcl.auth.offline.OfflineAccount;
 import org.jackhuang.hmcl.setting.Accounts;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.FXUtils;
@@ -45,6 +52,7 @@ import org.jackhuang.hmcl.ui.construct.AdvancedListItem;
 import org.jackhuang.hmcl.ui.construct.ClassTitle;
 import org.jackhuang.hmcl.ui.decorator.DecoratorAnimatedPage;
 import org.jackhuang.hmcl.ui.decorator.DecoratorPage;
+import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.i18n.LocaleUtils;
 import org.jackhuang.hmcl.util.io.NetworkUtils;
 import org.jackhuang.hmcl.util.javafx.BindingMapping;
@@ -53,6 +61,8 @@ import org.jackhuang.hmcl.util.javafx.MappedObservableList;
 import java.util.Locale;
 
 import static org.jackhuang.hmcl.setting.ConfigHolder.globalConfig;
+import static org.jackhuang.hmcl.ui.FXUtils.onEscPressed;
+import static org.jackhuang.hmcl.ui.ToolbarListPageSkin.createToolbarButton2;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 import static org.jackhuang.hmcl.util.javafx.ExtendedProperties.createSelectedItemPropertyFor;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
@@ -68,7 +78,7 @@ public final class AccountListPage extends DecoratorAnimatedPage implements Deco
                 || globalConfig().isEnableOfflineAccount())
             RESTRICTED.set(false);
         else
-            globalConfig().enableOfflineAccountProperty().addListener(new ChangeListener<Boolean>() {
+            globalConfig().enableOfflineAccountProperty().addListener(new ChangeListener<>() {
                 @Override
                 public void changed(ObservableValue<? extends Boolean> o, Boolean oldValue, Boolean newValue) {
                     if (newValue) {
@@ -80,14 +90,42 @@ public final class AccountListPage extends DecoratorAnimatedPage implements Deco
     }
 
     private final ObservableList<AccountListItem> items;
+    private final ObservableList<AccountListItem> displayedItems;
     private final ReadOnlyObjectWrapper<State> state = new ReadOnlyObjectWrapper<>(State.fromTitle(i18n("account.manage")));
     private final ListProperty<Account> accounts = new SimpleListProperty<>(this, "accounts", FXCollections.observableArrayList());
     private final ListProperty<AuthlibInjectorServer> authServers = new SimpleListProperty<>(this, "authServers", FXCollections.observableArrayList());
     private final ObjectProperty<Account> selectedAccount;
 
+    private final StringProperty searchingText = new SimpleStringProperty(this, "searchingText", "");
+    private final BooleanBinding isSearching = Bindings.createBooleanBinding(() -> StringUtils.isNotBlank(searchingText.get()), searchingText);
+
     public AccountListPage() {
-        items = MappedObservableList.create(accounts, AccountListItem::new);
+        items = MappedObservableList.create(accounts, (account) -> new AccountListItem(account, this));
+        displayedItems = FXCollections.observableArrayList(items);
         selectedAccount = createSelectedItemPropertyFor(items, Account.class);
+
+        InvalidationListener listener = (observable) -> {
+            String text = searchingText.get().toLowerCase(Locale.ROOT);
+            if (StringUtils.isBlank(text)) {
+                displayedItems.setAll(items);
+                return;
+            }
+            displayedItems.setAll(
+                    items.stream().filter(item -> {
+                        Account account = item.getAccount();
+                        String type = "";
+                        if (account instanceof MicrosoftAccount) type = "microsoft";
+                        else if (account instanceof OfflineAccount) type = "offline";
+                        else if (account instanceof AuthlibInjectorAccount) type = ((AuthlibInjectorAccount) account).getServer().getUrl().toLowerCase(Locale.ROOT);
+                        return account.getCharacter().toLowerCase(Locale.ROOT).contains(text)
+                                || account.getUsername().toLowerCase(Locale.ROOT).contains(text)
+                                || account.getUUID().toString().contains(text)
+                                || type.contains(text);
+                    }).toList()
+            );
+        };
+        items.addListener(listener);
+        searchingText.addListener(listener);
     }
 
     public ObjectProperty<Account> selectedAccountProperty() {
@@ -105,6 +143,10 @@ public final class AccountListPage extends DecoratorAnimatedPage implements Deco
 
     public ListProperty<AuthlibInjectorServer> authServersProperty() {
         return authServers;
+    }
+
+    public BooleanBinding isSearching() {
+        return isSearching;
     }
 
     @Override
@@ -204,6 +246,27 @@ public final class AccountListPage extends DecoratorAnimatedPage implements Deco
                 setLeft(scrollPane, addAuthServerItem);
             }
 
+            HBox searchBar = new HBox();
+            {
+                JFXTextField searchField = new JFXTextField();
+                searchField.setPromptText(i18n("search"));
+                HBox.setHgrow(searchField, Priority.ALWAYS);
+                PauseTransition pause = new PauseTransition(Duration.millis(100));
+                pause.setOnFinished(e -> skinnable.searchingText.set(searchField.getText()));
+                searchField.textProperty().addListener((observable, oldValue, newValue) -> {
+                    pause.setRate(1);
+                    pause.playFromStart();
+                });
+                JFXButton btnClearSearch = createToolbarButton2(null, SVG.CLOSE, searchField::clear);
+                onEscPressed(searchField, btnClearSearch::fire);
+
+                searchBar.getChildren().setAll(searchField, btnClearSearch);
+                searchBar.getStyleClass().add("card");
+                searchBar.setSpacing(1);
+                VBox.setMargin(searchBar, new Insets(10, 10, 5, 10));
+                JFXDepthManager.setDepth(searchBar, 1);
+            }
+
             ScrollPane scrollPane = new ScrollPane();
             VBox list = new VBox();
             {
@@ -213,13 +276,69 @@ public final class AccountListPage extends DecoratorAnimatedPage implements Deco
                 list.setSpacing(10);
                 list.getStyleClass().add("card-list");
 
-                Bindings.bindContent(list.getChildren(), skinnable.items);
+                list.setOnDragOver((event) -> {
+                    if (event.getGestureSource() != list && event.getDragboard().hasString()) {
+                        event.acceptTransferModes(TransferMode.MOVE);
+                    }
+                    event.consume();
+                });
+
+                list.setOnDragDropped((event) -> {
+                    Dragboard db = event.getDragboard();
+                    boolean success = false;
+                    if (db.hasString()) {
+                        String accountId = db.getString();
+                        int targetIndex = getTargetIndex(list, event.getY());
+
+                        // Find the account in the original list
+                        Account draggedAccount = null;
+                        int sourceIndex = -1;
+                        for (int i = 0; i < Accounts.getAccounts().size(); i++) {
+                            if (Accounts.getAccounts().get(i).getIdentifier().equals(accountId)) {
+                                draggedAccount = Accounts.getAccounts().get(i);
+                                sourceIndex = i;
+                                break;
+                            }
+                        }
+
+                        boolean selected = skinnable.selectedAccountProperty().get() == draggedAccount;
+                        if (draggedAccount != null && sourceIndex != targetIndex) {
+                            // Remove from old position
+                            Accounts.skipSelectionCheckFlag = true;
+                            Accounts.getAccounts().remove(sourceIndex);
+                            // Insert at new position
+                            int newIndex = targetIndex > sourceIndex ? targetIndex - 1 : targetIndex;
+                            if (newIndex < 0) newIndex = 0;
+                            if (newIndex > Accounts.getAccounts().size()) newIndex = Accounts.getAccounts().size();
+                            Accounts.getAccounts().add(newIndex, draggedAccount);
+                            if (selected) skinnable.selectedAccountProperty().set(draggedAccount);
+                            Accounts.skipSelectionCheckFlag = false;
+                            success = true;
+                        }
+                    }
+                    event.setDropCompleted(success);
+                    event.consume();
+                });
+
+                Bindings.bindContent(list.getChildren(), skinnable.displayedItems);
 
                 scrollPane.setContent(list);
                 FXUtils.smoothScrolling(scrollPane);
-
-                setCenter(scrollPane);
             }
+
+            setCenter(new VBox(searchBar, scrollPane));
+        }
+
+        private int getTargetIndex(VBox list, double y) {
+            int index = 0;
+            for (int i = 0; i < list.getChildren().size(); i++) {
+                javafx.scene.Node child = list.getChildren().get(i);
+                if (child.getLayoutY() + child.getBoundsInParent().getHeight() / 2 > y) {
+                    return i;
+                }
+                index = i + 1;
+            }
+            return index;
         }
     }
 }

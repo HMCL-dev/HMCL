@@ -76,6 +76,9 @@ public final class Accounts {
     public static final MicrosoftAccountFactory FACTORY_MICROSOFT = new MicrosoftAccountFactory(new MicrosoftService(OAUTH_CALLBACK));
     public static final List<AccountFactory<?>> FACTORIES = immutableListOf(FACTORY_OFFLINE, FACTORY_MICROSOFT, FACTORY_AUTHLIB_INJECTOR);
 
+    // FX-Thread
+    public static boolean skipSelectionCheckFlag = false;
+
     // ==== login type / account factory mapping ====
     private static final Map<String, AccountFactory<?>> type2factory = new HashMap<>();
     private static final Map<AccountFactory<?>, String> factory2type = new HashMap<>();
@@ -262,7 +265,7 @@ public final class Accounts {
             }
 
         if (!globalConfig().isEnableOfflineAccount())
-            accounts.addListener(new ListChangeListener<Account>() {
+            accounts.addListener(new ListChangeListener<>() {
                 @Override
                 public void onChanged(Change<? extends Account> change) {
                     while (change.next()) {
@@ -280,6 +283,7 @@ public final class Accounts {
         selectedAccount.set(selected);
 
         InvalidationListener listener = o -> {
+            if (skipSelectionCheckFlag) return;
             // this method first checks whether the current selection is valid
             // if it's valid, the underlying storage will be updated
             // otherwise, the first account will be selected as an alternative(or null if accounts is empty)
