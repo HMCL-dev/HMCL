@@ -113,7 +113,9 @@ public abstract class SkinPageBase<T extends Account> extends DecoratorAnimatedP
             var skin = TexturesLoader.getDefaultSkin(uuid).image();
             var slim = TexturesLoader.getDefaultModel(uuid) == TextureModel.SLIM;
 
-            SkinCanvas canvas = new SkinCanvas(skin, 250, 300, true);
+            SkinCanvas canvas = new SkinCanvas(skin, 250, 400, true);
+            canvas.getScale().setX(1.25);
+            canvas.getScale().setY(1.25);
             canvas.updateSkin(skin, slim, null);
             skinObjectProperty().addListener((obs, oldSkin, newSkin) -> {
                 canvas.updateSkin(newSkin.skin().image(), newSkin.model().isSlim(), newSkin.cape() != null ? newSkin.cape().image() : null);
