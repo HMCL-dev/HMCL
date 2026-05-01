@@ -18,6 +18,7 @@
 package org.jackhuang.hmcl.auth.offline;
 
 import javafx.scene.image.Image;
+import org.jackhuang.hmcl.game.skin.LoadedSkin;
 import org.jackhuang.hmcl.game.skin.TextureModel;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.util.io.FileUtils;
@@ -126,6 +127,4 @@ public record OfflineSkinConfig(Type type, TextureModel textureModel, String loc
         return new OfflineSkinConfig(type, "slim".equals(textureModel) ? TextureModel.SLIM : TextureModel.WIDE, localSkinPath, localCapePath);
     }
 
-    public record LoadedSkin(TextureModel model, Texture skin, Texture cape) {
-    }
 }

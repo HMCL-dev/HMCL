@@ -19,6 +19,7 @@ package org.jackhuang.hmcl.auth.offline;
 
 import org.glavo.png.javafx.PNGJavaFXUtils;
 import org.jackhuang.hmcl.auth.yggdrasil.GameProfile;
+import org.jackhuang.hmcl.game.skin.LoadedSkin;
 import org.jackhuang.hmcl.game.skin.TextureModel;
 import org.jackhuang.hmcl.util.KeyUtils;
 import org.jackhuang.hmcl.util.Lang;
@@ -155,9 +156,9 @@ public class YggdrasilServer extends HttpServer {
     public static class Character {
         private final UUID uuid;
         private final String name;
-        private final OfflineSkinConfig.LoadedSkin skin;
+        private final LoadedSkin skin;
 
-        public Character(UUID uuid, String name, OfflineSkinConfig.LoadedSkin skin) {
+        public Character(UUID uuid, String name, LoadedSkin skin) {
             this.uuid = uuid;
             this.name = name;
             this.skin = skin;
