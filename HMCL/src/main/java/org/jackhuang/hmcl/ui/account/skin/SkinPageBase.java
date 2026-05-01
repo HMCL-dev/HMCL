@@ -28,7 +28,6 @@ import org.jackhuang.hmcl.auth.Account;
 import org.jackhuang.hmcl.game.TexturesLoader;
 import org.jackhuang.hmcl.game.skin.Skin;
 import org.jackhuang.hmcl.game.skin.TextureModel;
-import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
 import org.jackhuang.hmcl.ui.animation.TransitionPane;
@@ -94,8 +93,6 @@ public abstract class SkinPageBase<T extends Account> extends DecoratorAnimatedP
     }
 
     protected abstract ReadOnlyObjectProperty<Skin> skinObjectProperty();
-
-    protected abstract Task<Void> setSkin(Skin skin);
 
     protected final class SkinManage extends HBox {
         protected StackPane leftRegion = new StackPane();
