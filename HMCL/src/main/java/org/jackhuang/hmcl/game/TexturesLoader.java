@@ -68,21 +68,10 @@ public final class TexturesLoader {
     }
 
     // ==== Texture Loading ====
-    public static class LoadedTexture {
-        private final Image image;
-        private final Map<String, String> metadata;
-
+    public record LoadedTexture(Image image, Map<String, String> metadata) {
         public LoadedTexture(Image image, Map<String, String> metadata) {
             this.image = requireNonNull(image);
             this.metadata = requireNonNull(metadata);
-        }
-
-        public Image getImage() {
-            return image;
-        }
-
-        public Map<String, String> getMetadata() {
-            return metadata;
         }
     }
 
@@ -161,7 +150,7 @@ public final class TexturesLoader {
     }
 
     public static TextureModel getDefaultModel(UUID uuid) {
-        return TextureModel.WIDE.modelName.equals(getDefaultSkin(uuid).getMetadata().get("model"))
+        return TextureModel.WIDE.modelName.equals(getDefaultSkin(uuid).metadata().get("model"))
                 ? TextureModel.WIDE
                 : TextureModel.SLIM;
     }
@@ -199,8 +188,7 @@ public final class TexturesLoader {
 
     public static ObservableValue<LoadedTexture> skinBinding(Account account) {
         LoadedTexture uuidFallback = getDefaultSkin(account.getUUID());
-        if (account instanceof OfflineAccount) {
-            OfflineAccount offlineAccount = (OfflineAccount) account;
+        if (account instanceof OfflineAccount offlineAccount) {
 
             SimpleObjectProperty<LoadedTexture> binding = new SimpleObjectProperty<>();
             InvalidationListener listener = o -> {
@@ -209,7 +197,7 @@ public final class TexturesLoader {
 
                 binding.set(uuidFallback);
                 if (skin != null) {
-                    skin.load(username).setExecutor(POOL).whenComplete(Schedulers.javafx(), (result, exception) -> {
+                    skin.load().setExecutor(POOL).whenComplete(Schedulers.javafx(), (result, exception) -> {
                         if (exception != null) {
                             LOG.warning("Failed to load texture", exception);
                         } else if (result != null && result.skin() != null && result.skin().getImage() != null) {
@@ -278,15 +266,12 @@ public final class TexturesLoader {
                 0, 0, size, size);
     }
 
-    private static final class SkinBindingChangeListener implements ChangeListener<LoadedTexture> {
+    private record SkinBindingChangeListener(WeakReference<Canvas> canvasRef,
+                                             ObservableValue<LoadedTexture> binding) implements ChangeListener<LoadedTexture> {
         static final WeakHashMap<Canvas, SkinBindingChangeListener> hole = new WeakHashMap<>();
 
-        final WeakReference<Canvas> canvasRef;
-        final ObservableValue<LoadedTexture> binding;
-
-        SkinBindingChangeListener(Canvas canvas, ObservableValue<LoadedTexture> binding) {
-            this.canvasRef = new WeakReference<>(canvas);
-            this.binding = binding;
+        private SkinBindingChangeListener(Canvas canvasRef, ObservableValue<LoadedTexture> binding) {
+            this(new WeakReference<>(canvasRef), binding);
         }
 
         @Override

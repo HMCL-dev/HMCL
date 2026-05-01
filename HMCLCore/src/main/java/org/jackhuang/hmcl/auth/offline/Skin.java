@@ -32,7 +32,7 @@ import static org.jackhuang.hmcl.util.Lang.mapOf;
 import static org.jackhuang.hmcl.util.Lang.tryCast;
 import static org.jackhuang.hmcl.util.Pair.pair;
 
-public class Skin {
+public record Skin(Type type, TextureModel textureModel, String localSkinPath, String localCapePath) {
 
     public enum Type {
         DEFAULT,
@@ -65,35 +65,12 @@ public class Skin {
         }
     }
 
-    private final Type type;
-    private final TextureModel textureModel;
-    private final String localSkinPath;
-    private final String localCapePath;
-
-    public Skin(Type type, TextureModel textureModel, String localSkinPath, String localCapePath) {
-        this.type = type;
-        this.textureModel = textureModel;
-        this.localSkinPath = localSkinPath;
-        this.localCapePath = localCapePath;
-    }
-
-    public Type getType() {
-        return type;
-    }
-
-    public TextureModel getTextureModel() {
+    @Override
+    public TextureModel textureModel() {
         return textureModel == null ? TextureModel.WIDE : textureModel;
     }
 
-    public String getLocalSkinPath() {
-        return localSkinPath;
-    }
-
-    public String getLocalCapePath() {
-        return localCapePath;
-    }
-
-    public Task<LoadedSkin> load(String username) {
+    public Task<LoadedSkin> load() {
         switch (type) {
             case DEFAULT:
                 return Task.supplyAsync(() -> null);
@@ -121,7 +98,7 @@ public class Skin {
                     Optional<Path> capePath = FileUtils.tryGetPath(localCapePath);
                     if (skinPath.isPresent()) skin = Texture.loadTexture(Files.newInputStream(skinPath.get()));
                     if (capePath.isPresent()) cape = Texture.loadTexture(Files.newInputStream(capePath.get()));
-                    return new LoadedSkin(getTextureModel(), skin, cape);
+                    return new LoadedSkin(textureModel(), skin, cape);
                 });
             default:
                 throw new UnsupportedOperationException();
@@ -131,7 +108,7 @@ public class Skin {
     public Map<?, ?> toStorage() {
         return mapOf(
                 pair("type", type.name().toLowerCase(Locale.ROOT)),
-                pair("textureModel", getTextureModel().modelName),
+                pair("textureModel", textureModel().modelName),
                 pair("localSkinPath", localSkinPath),
                 pair("localCapePath", localCapePath)
         );

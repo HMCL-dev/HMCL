@@ -178,14 +178,15 @@ public class YggdrasilServer extends HttpServer {
         public Object toCompleteResponse(String rootUrl) {
             Map<String, Object> realTextures = new HashMap<>();
             if (skin != null && skin.skin() != null) {
+                String url = rootUrl + "/textures/" + skin.skin().getHash();
                 if (skin.model() == TextureModel.SLIM) {
                     realTextures.put("SKIN", mapOf(
-                            pair("url", rootUrl + "/textures/" + skin.skin().getHash()),
+                            pair("url", url),
                             pair("metadata", mapOf(
                                     pair("model", "slim")
                             ))));
                 } else {
-                    realTextures.put("SKIN", mapOf(pair("url", rootUrl + "/textures/" + skin.skin().getHash())));
+                    realTextures.put("SKIN", mapOf(pair("url", url)));
                 }
             }
             if (skin != null && skin.cape() != null) {

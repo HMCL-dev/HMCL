@@ -122,14 +122,14 @@ public class OfflineAccountSkinPane extends StackPane {
             skinItem.setSelectedData(Skin.Type.DEFAULT);
             modelCombobox.setValue(TextureModel.WIDE);
         } else {
-            skinItem.setSelectedData(account.getSkin().getType());
-            modelCombobox.setValue(account.getSkin().getTextureModel());
-            skinSelector.setValue(account.getSkin().getLocalSkinPath());
-            capeSelector.setValue(account.getSkin().getLocalCapePath());
+            skinItem.setSelectedData(account.getSkin().type());
+            modelCombobox.setValue(account.getSkin().textureModel());
+            skinSelector.setValue(account.getSkin().localSkinPath());
+            capeSelector.setValue(account.getSkin().localCapePath());
         }
 
         skinBinding = FXUtils.observeWeak(() -> {
-            getSkin().load(account.getUsername())
+            getSkin().load()
                     .whenComplete(Schedulers.javafx(), (result, exception) -> {
                         if (exception != null) {
                             LOG.warning("Failed to load skin", exception);
@@ -138,14 +138,14 @@ public class OfflineAccountSkinPane extends StackPane {
                             UUID uuid = this.account.getUUID();
                             if (result == null || result.skin() == null && result.cape() == null) {
                                 canvas.updateSkin(
-                                        TexturesLoader.getDefaultSkin(uuid).getImage(),
+                                        TexturesLoader.getDefaultSkin(uuid).image(),
                                         TexturesLoader.getDefaultModel(uuid) == TextureModel.SLIM,
                                         null
                                 );
                                 return;
                             }
                             canvas.updateSkin(
-                                    result.skin() != null ? result.skin().getImage() : TexturesLoader.getDefaultSkin(uuid).getImage(),
+                                    result.skin() != null ? result.skin().getImage() : TexturesLoader.getDefaultSkin(uuid).image(),
                                     result.model() == TextureModel.SLIM,
                                     result.cape() != null ? result.cape().getImage() : null);
                         }

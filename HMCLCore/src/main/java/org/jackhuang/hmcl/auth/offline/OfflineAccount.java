@@ -100,7 +100,7 @@ public class OfflineAccount extends Account {
     }
 
     protected boolean loadAuthlibInjector(Skin skin) {
-        return skin != null && skin.getType() != Skin.Type.DEFAULT;
+        return skin != null && skin.type() != Skin.Type.DEFAULT;
     }
 
     public AuthInfo logInWithoutSkin() throws AuthenticationException {
@@ -164,7 +164,7 @@ public class OfflineAccount extends Account {
 
             try {
                 server.addCharacter(new YggdrasilServer.Character(uuid, username,
-                        skin != null ? skin.load(username).run() : null));
+                        skin != null ? skin.load().run() : null));
             } catch (IOException e) {
                 // ignore
             } catch (Exception e) {
@@ -220,9 +220,8 @@ public class OfflineAccount extends Account {
 
     @Override
     public boolean equals(Object obj) {
-        if (!(obj instanceof OfflineAccount))
+        if (!(obj instanceof OfflineAccount another))
             return false;
-        OfflineAccount another = (OfflineAccount) obj;
         return isPortable() == another.isPortable() && username.equals(another.username);
     }
 }
