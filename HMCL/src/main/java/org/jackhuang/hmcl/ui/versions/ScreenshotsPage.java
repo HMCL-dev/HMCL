@@ -343,11 +343,18 @@ public final class ScreenshotsPage extends ListPageBase<ScreenshotsPage.Screensh
                 ConfigHolder.config().setBackgroundImageType(EnumBackgroundImage.CUSTOM);
             });
 
+            JFXButton copyButton = new JFXButton(i18n("menu.copy"));
+            copyButton.getStyleClass().add("dialog-accept");
+            copyButton.setDisable(image == null);
+            copyButton.setOnAction(e -> {
+                if (image != null) FXUtils.copyImage(image);
+            });
+
             JFXButton okButton = new JFXButton(i18n("button.ok"));
             okButton.getStyleClass().add("dialog-accept");
             okButton.setOnAction(e -> fireEvent(new DialogCloseEvent()));
             FXUtils.onEscPressed(this, okButton::fire);
-            setActions(setAsBgButton, okButton);
+            setActions(setAsBgButton, copyButton, okButton);
         }
     }
 
