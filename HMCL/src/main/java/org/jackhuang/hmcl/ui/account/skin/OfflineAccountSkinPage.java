@@ -15,18 +15,25 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-package org.jackhuang.hmcl.game.skin;
+package org.jackhuang.hmcl.ui.account.skin;
 
-public enum TextureModel {
-    WIDE("default"), SLIM("slim");
+import javafx.beans.property.ReadOnlyObjectProperty;
+import org.jackhuang.hmcl.auth.offline.OfflineAccount;
+import org.jackhuang.hmcl.game.skin.Skin;
+import org.jackhuang.hmcl.task.Task;
 
-    public final String modelName;
-
-    TextureModel(String modelName) {
-        this.modelName = modelName;
+public class OfflineAccountSkinPage extends SkinPageBase {
+    public OfflineAccountSkinPage(OfflineAccount account) {
+        super(account, null);
     }
 
-    public boolean isSlim() {
-        return modelName.equals("slim");
+    @Override
+    protected ReadOnlyObjectProperty<Skin> skinObjectProperty() {
+        return null;
+    }
+
+    @Override
+    protected Task<Void> uploadSkin(Skin skin) {
+        return null;
     }
 }
