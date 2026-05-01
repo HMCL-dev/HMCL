@@ -89,7 +89,7 @@ public abstract class SkinPageBase extends DecoratorAnimatedPage implements Deco
 
     protected abstract ReadOnlyObjectProperty<Skin> skinObjectProperty();
 
-    protected abstract Task<Void> uploadSkin(Skin skin);
+    protected abstract Task<Void> setSkin(Skin skin);
 
     private final class Right extends HBox {
         private Right() {

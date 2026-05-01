@@ -33,7 +33,7 @@ public class OfflineAccountSkinPage extends SkinPageBase {
     }
 
     @Override
-    protected Task<Void> uploadSkin(Skin skin) {
+    protected Task<Void> setSkin(Skin skin) {
         return null;
     }
 }
