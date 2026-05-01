@@ -15,7 +15,7 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-package org.jackhuang.hmcl.game.skin;
+package org.jackhuang.hmcl.auth.yggdrasil;
 
 import org.jackhuang.hmcl.util.Immutable;
 import org.jetbrains.annotations.Nullable;

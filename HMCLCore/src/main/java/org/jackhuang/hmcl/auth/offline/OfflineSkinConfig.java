@@ -18,7 +18,6 @@
 package org.jackhuang.hmcl.auth.offline;
 
 import javafx.scene.image.Image;
-import org.jackhuang.hmcl.game.skin.LoadedSkin;
 import org.jackhuang.hmcl.game.skin.TextureModel;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.util.io.FileUtils;
@@ -89,16 +88,16 @@ public record OfflineSkinConfig(Type type, TextureModel textureModel, String loc
 
                 return Task.supplyAsync(() -> new LoadedSkin(
                         model,
-                        Texture.loadTexture(new Image(resource)),
+                        HashedTexture.loadTexture(new Image(resource)),
                         null
                 ));
             case LOCAL_FILE:
                 return Task.supplyAsync(() -> {
-                    Texture skin = null, cape = null;
+                    HashedTexture skin = null, cape = null;
                     Optional<Path> skinPath = FileUtils.tryGetPath(localSkinPath);
                     Optional<Path> capePath = FileUtils.tryGetPath(localCapePath);
-                    if (skinPath.isPresent()) skin = Texture.loadTexture(Files.newInputStream(skinPath.get()));
-                    if (capePath.isPresent()) cape = Texture.loadTexture(Files.newInputStream(capePath.get()));
+                    if (skinPath.isPresent()) skin = HashedTexture.loadTexture(Files.newInputStream(skinPath.get()));
+                    if (capePath.isPresent()) cape = HashedTexture.loadTexture(Files.newInputStream(capePath.get()));
                     return new LoadedSkin(textureModel(), skin, cape);
                 });
             default:

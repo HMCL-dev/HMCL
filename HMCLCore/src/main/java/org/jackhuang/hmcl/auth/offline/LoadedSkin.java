@@ -15,9 +15,9 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-package org.jackhuang.hmcl.game.skin;
+package org.jackhuang.hmcl.auth.offline;
 
-import org.jackhuang.hmcl.auth.offline.Texture;
+import org.jackhuang.hmcl.game.skin.TextureModel;
 
-public record LoadedSkin(TextureModel model, org.jackhuang.hmcl.auth.offline.Texture skin, Texture cape) {
+public record LoadedSkin(TextureModel model, HashedTexture skin, HashedTexture cape) {
 }

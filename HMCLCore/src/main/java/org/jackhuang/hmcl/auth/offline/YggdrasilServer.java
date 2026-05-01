@@ -19,7 +19,6 @@ package org.jackhuang.hmcl.auth.offline;
 
 import org.glavo.png.javafx.PNGJavaFXUtils;
 import org.jackhuang.hmcl.auth.yggdrasil.GameProfile;
-import org.jackhuang.hmcl.game.skin.LoadedSkin;
 import org.jackhuang.hmcl.game.skin.TextureModel;
 import org.jackhuang.hmcl.util.KeyUtils;
 import org.jackhuang.hmcl.util.Lang;
@@ -128,9 +127,9 @@ public class YggdrasilServer extends HttpServer {
     private Response texture(Request request) {
         String hash = request.getPathVariables().group("hash");
 
-        if (Texture.hasTexture(hash)) {
-            Texture texture = Texture.getTexture(hash);
-            byte[] data = PNGJavaFXUtils.writeImageToArray(texture.getImage());
+        if (HashedTexture.hasTexture(hash)) {
+            HashedTexture texture = HashedTexture.getTexture(hash);
+            byte[] data = PNGJavaFXUtils.writeImageToArray(texture.image());
             Response response = newFixedLengthResponse(Response.Status.OK, "image/png", new ByteArrayInputStream(data), data.length);
             response.addHeader("Etag", String.format("\"%s\"", hash));
             response.addHeader("Cache-Control", "max-age=2592000, public");
@@ -179,7 +178,7 @@ public class YggdrasilServer extends HttpServer {
         public Object toCompleteResponse(String rootUrl) {
             Map<String, Object> realTextures = new HashMap<>();
             if (skin != null && skin.skin() != null) {
-                String url = rootUrl + "/textures/" + skin.skin().getHash();
+                String url = rootUrl + "/textures/" + skin.skin().hash();
                 if (skin.model() == TextureModel.SLIM) {
                     realTextures.put("SKIN", mapOf(
                             pair("url", url),
@@ -191,7 +190,7 @@ public class YggdrasilServer extends HttpServer {
                 }
             }
             if (skin != null && skin.cape() != null) {
-                realTextures.put("CAPE", mapOf(pair("url", rootUrl + "/textures/" + skin.cape().getHash())));
+                realTextures.put("CAPE", mapOf(pair("url", rootUrl + "/textures/" + skin.cape().hash())));
             }
 
             Map<String, Object> textureResponse = mapOf(

@@ -25,7 +25,7 @@ import javafx.beans.binding.Bindings;
 import javafx.beans.binding.ObjectBinding;
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.SimpleBooleanProperty;
-import org.jackhuang.hmcl.game.skin.Texture;
+import org.jackhuang.hmcl.auth.yggdrasil.Texture;
 import org.jackhuang.hmcl.game.skin.TextureType;
 import org.jackhuang.hmcl.util.ToStringBuilder;
 import org.jackhuang.hmcl.util.javafx.ObservableHelper;

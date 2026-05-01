@@ -32,9 +32,9 @@ import org.jackhuang.hmcl.auth.ServerResponseMalformedException;
 import org.jackhuang.hmcl.auth.microsoft.MicrosoftAccount;
 import org.jackhuang.hmcl.auth.offline.OfflineAccount;
 import org.jackhuang.hmcl.auth.offline.OfflineSkinConfig;
+import org.jackhuang.hmcl.auth.yggdrasil.Texture;
 import org.jackhuang.hmcl.auth.yggdrasil.YggdrasilAccount;
 import org.jackhuang.hmcl.auth.yggdrasil.YggdrasilService;
-import org.jackhuang.hmcl.game.skin.Texture;
 import org.jackhuang.hmcl.game.skin.TextureModel;
 import org.jackhuang.hmcl.game.skin.TextureType;
 import org.jackhuang.hmcl.task.FileDownloadTask;
@@ -203,7 +203,7 @@ public final class TexturesLoader {
                     skin.load().setExecutor(POOL).whenComplete(Schedulers.javafx(), (result, exception) -> {
                         if (exception != null) {
                             LOG.warning("Failed to load texture", exception);
-                        } else if (result != null && result.skin() != null && result.skin().getImage() != null) {
+                        } else if (result != null && result.skin() != null && result.skin().image() != null) {
                             Map<String, String> metadata;
                             if (result.model() != null) {
                                 metadata = singletonMap("model", result.model().modelName);
@@ -211,7 +211,7 @@ public final class TexturesLoader {
                                 metadata = emptyMap();
                             }
 
-                            binding.set(new LoadedTexture(result.skin().getImage(), metadata));
+                            binding.set(new LoadedTexture(result.skin().image(), metadata));
                         }
                     }).start();
                 }

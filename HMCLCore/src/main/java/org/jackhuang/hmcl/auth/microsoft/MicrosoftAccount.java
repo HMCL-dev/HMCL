@@ -19,8 +19,8 @@ package org.jackhuang.hmcl.auth.microsoft;
 
 import javafx.beans.binding.ObjectBinding;
 import org.jackhuang.hmcl.auth.*;
+import org.jackhuang.hmcl.auth.yggdrasil.Texture;
 import org.jackhuang.hmcl.auth.yggdrasil.YggdrasilService;
-import org.jackhuang.hmcl.game.skin.Texture;
 import org.jackhuang.hmcl.game.skin.TextureType;
 import org.jackhuang.hmcl.util.javafx.BindingMapping;
 
