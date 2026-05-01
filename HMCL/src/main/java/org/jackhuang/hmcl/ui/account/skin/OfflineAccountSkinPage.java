@@ -73,7 +73,7 @@ public class OfflineAccountSkinPage extends SkinPageBase<OfflineAccount> {
 
         FXUtils.observeWeak(() -> {
             loadSkinPreview();
-            this.setSkin(skinProperty.get()).start();
+            account.setSkin(getConfig());
         }, skinItem.selectedDataProperty(), modelCombobox.valueProperty(), skinSelector.valueProperty(), capeSelector.valueProperty());
 
         loadSkinPreview();
