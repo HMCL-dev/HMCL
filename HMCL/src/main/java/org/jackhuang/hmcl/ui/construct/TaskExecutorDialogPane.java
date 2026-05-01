@@ -81,12 +81,11 @@ public class TaskExecutorDialogPane extends BorderPane {
 
         setCancel(cancel);
 
+        btnCancel.setDisable(onCancel.getCancellationAction() == null);
         btnCancel.setOnAction(e -> {
-            if (onCancel.getCancellationAction() != null) {
-                if (executor != null)
-                    executor.cancel();
-                onCancel.getCancellationAction().accept(this);
-            }
+            if (executor != null)
+                executor.cancel();
+            onCancel.getCancellationAction().accept(this);
         });
 
         speedEventHandler = FetchTask.SPEED_EVENT.registerWeak(speedEvent -> {

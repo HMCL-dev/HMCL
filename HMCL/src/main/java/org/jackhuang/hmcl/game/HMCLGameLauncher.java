@@ -21,12 +21,16 @@ import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.auth.AuthInfo;
 import org.jackhuang.hmcl.launch.DefaultLauncher;
 import org.jackhuang.hmcl.launch.ProcessListener;
+import org.jackhuang.hmcl.util.NativePatcher;
 import org.jackhuang.hmcl.util.i18n.LocaleUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
+import org.jackhuang.hmcl.util.io.JarUtils;
+import org.jackhuang.hmcl.util.platform.CommandBuilder;
 import org.jackhuang.hmcl.util.platform.ManagedProcess;
 import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.nio.file.*;
 import java.util.*;
 import java.util.stream.Stream;
@@ -150,4 +154,60 @@ public final class HMCLGameLauncher extends DefaultLauncher {
         generateOptionsTxt();
         super.makeLaunchScript(scriptFile);
     }
+
+    @Override
+    protected void appendJvmArgs(CommandBuilder result) {
+        super.appendJvmArgs(result);
+
+        if (config().getAllowAutoAgent()
+                && !options.isNoGeneratedJVMArgs()
+                && !options.isNoGeneratedOptimizingJVMArgs()
+                && NativePatcher.needPatchMemoryUtil(version, options.getJava().getParsedVersion())) {
+            LOG.info("Attempting to patch game with lwjgl-unsafe-agent");
+            try {
+                result.add("-javaagent:" + extractLwjglUnsafeAgent());
+            } catch (Exception e) {
+                LOG.warning("Failed to extract lwjgl-unsafe-agent", e);
+            }
+        }
+    }
+
+    private Path extractLwjglUnsafeAgent() throws IOException {
+        String agentVersion = JarUtils.getAttribute("hmcl.lwjgl-unsafe-agent.version", null);
+        if (agentVersion == null) {
+            throw new IOException("Missing hmcl.lwjgl-unsafe-agent.version attribute");
+        }
+
+        Library library = new Library(new Artifact("org.glavo", "lwjgl-unsafe-agent", agentVersion));
+        String fileName = library.getArtifact().getFileName();
+
+        Path agentPath = repository.getLibraryFile(version, library).toAbsolutePath().normalize();
+        if (agentPath.toString().contains("=")) {
+            throw new IOException("Invalid library path: " + agentPath);
+        }
+
+        byte[] bytes;
+        try (InputStream input = DefaultLauncher.class.getResourceAsStream("/assets/" + fileName)) {
+            if (input == null) {
+                throw new IOException("/assets/" + fileName + " not found");
+            }
+
+            bytes = input.readAllBytes();
+        }
+
+        if (Files.isRegularFile(agentPath)) {
+            try {
+                if (Files.size(agentPath) == bytes.length) {
+                    return agentPath;
+                }
+            } catch (IOException e) {
+                LOG.warning("Failed to check size of " + agentPath, e);
+            }
+        }
+
+        Files.createDirectories(agentPath.getParent());
+        FileUtils.saveSafely(agentPath, output -> output.write(bytes));
+        return agentPath;
+    }
+
 }

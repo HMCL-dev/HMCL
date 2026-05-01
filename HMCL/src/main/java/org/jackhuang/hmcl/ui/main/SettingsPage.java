@@ -121,8 +121,7 @@ public final class SettingsPage extends ScrollPane {
             ObjectProperty<UpdateChannel> updateChannel;
             {
 
-                JFXButton updateButton = new JFXButton();
-                updateButton.setGraphic(SVG.UPDATE.createIcon(20));
+                JFXButton updateButton = FXUtils.newToggleButton4(SVG.UPDATE, 20);
                 updateButton.setOnAction(e -> onUpdate());
                 updateButton.setPadding(Insets.EMPTY);
                 FXUtils.installFastTooltip(updateButton, i18n("update.tooltip"));
@@ -158,7 +157,7 @@ public final class SettingsPage extends ScrollPane {
                         updatePane.pseudoClassStateChanged(PseudoClass.getPseudoClass("active"), outdated);
 
                         if (UpdateChecker.isOutdated()) {
-                            lblUpdateSubProperty.set(i18n("update.newest_version", UpdateChecker.getLatestVersion().getVersion()));
+                            lblUpdateSubProperty.set(i18n("update.newest_version", UpdateChecker.getLatestVersion().version()));
                         } else if (UpdateChecker.isCheckingUpdate()) {
                             lblUpdateSubProperty.set(i18n("update.checking"));
                         } else {
@@ -211,7 +210,7 @@ public final class SettingsPage extends ScrollPane {
                         new MultiFileItem.Option<>(i18n("launcher.cache_directory.default"), EnumCommonDirectory.DEFAULT),
                         new MultiFileItem.FileOption<>(i18n("settings.custom"), EnumCommonDirectory.CUSTOM)
                                 .setChooserTitle(i18n("launcher.cache_directory.choose"))
-                                .setDirectory(true)
+                                .setSelectionMode(FileSelector.SelectionMode.DIRECTORY)
                                 .bindBidirectional(config().commonDirectoryProperty())
                 ));
                 fileCommonLocation.selectedDataProperty().bindBidirectional(config().commonDirTypeProperty());
@@ -258,6 +257,15 @@ public final class SettingsPage extends ScrollPane {
                 disableAutoGameOptionsPane.selectedProperty().bindBidirectional(config().disableAutoGameOptionsProperty());
 
                 settingsPane.getContent().add(disableAutoGameOptionsPane);
+            }
+
+            {
+                LineToggleButton allowAutoAgentPane = new LineToggleButton();
+                allowAutoAgentPane.setTitle(i18n("settings.launcher.allow_auto_agent"));
+                allowAutoAgentPane.setSubtitle(i18n("settings.launcher.allow_auto_agent.subtitle"));
+                allowAutoAgentPane.selectedProperty().bindBidirectional(config().allowAutoAgentProperty());
+
+                settingsPane.getContent().add(allowAutoAgentPane);
             }
 
             {

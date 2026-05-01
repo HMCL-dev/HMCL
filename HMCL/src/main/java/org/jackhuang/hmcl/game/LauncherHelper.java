@@ -65,15 +65,17 @@ import java.util.stream.Collectors;
 
 import static javafx.application.Platform.runLater;
 import static javafx.application.Platform.setImplicitExit;
+import static org.jackhuang.hmcl.setting.ConfigHolder.config;
 import static org.jackhuang.hmcl.ui.FXUtils.runInFX;
 import static org.jackhuang.hmcl.util.DataSizeUnit.MEGABYTES;
 import static org.jackhuang.hmcl.util.Lang.resolveException;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 import static org.jackhuang.hmcl.util.platform.Platform.SYSTEM_PLATFORM;
-import static org.jackhuang.hmcl.util.platform.Platform.isCompatibleWithX86Java;
 
 public final class LauncherHelper {
+
+    private static final String LWJGL_3_4_1_TIP = "lwjgl3.4.1-ffm";
 
     private final Profile profile;
     private Account account;
@@ -170,33 +172,55 @@ public final class LauncherHelper {
                                 }
                             }),
                             Task.composeAsync(() -> {
-                                Renderer renderer = setting.getRenderer();
-                                if (renderer != Renderer.DEFAULT && OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS) {
-                                    Library lib = NativePatcher.getWindowsMesaLoader(java, renderer, OperatingSystem.SYSTEM_VERSION);
-                                    if (lib == null)
-                                        return null;
-                                    Path file = dependencyManager.getGameRepository().getLibraryFile(version.get(), lib);
-                                    if (file.toAbsolutePath().toString().indexOf('=') >= 0) {
-                                        LOG.warning("Invalid character '=' in the libraries directory path, unable to attach software renderer loader");
-                                        return null;
-                                    }
+                                if (OperatingSystem.CURRENT_OS != OperatingSystem.WINDOWS
+                                        || !(setting.getRenderer() instanceof Renderer.Driver renderer)
+                                        || renderer.mesaDriverName() == null)
+                                    return null;
 
-                                    String agent = FileUtils.getAbsolutePath(file) + "=" + renderer.name().toLowerCase(Locale.ROOT);
+                                Library lib = NativePatcher.getWindowsMesaLoader(java, renderer, OperatingSystem.SYSTEM_VERSION);
+                                if (lib == null)
+                                    return null;
+                                Path file = dependencyManager.getGameRepository().getLibraryFile(version.get(), lib);
+                                if (file.toAbsolutePath().toString().indexOf('=') >= 0) {
+                                    LOG.warning("Invalid character '=' in the libraries directory path, unable to attach software renderer loader");
+                                    return null;
+                                }
 
-                                    if (GameLibrariesTask.shouldDownloadLibrary(repository, version.get(), lib, integrityCheck)) {
-                                        return new LibraryDownloadTask(dependencyManager, file, lib)
-                                                .thenRunAsync(() -> javaAgents.add(agent));
-                                    } else {
-                                        javaAgents.add(agent);
-                                        return null;
-                                    }
+                                String agent = FileUtils.getAbsolutePath(file) + "=" + renderer.mesaDriverName();
+
+                                if (GameLibrariesTask.shouldDownloadLibrary(repository, version.get(), lib, integrityCheck)) {
+                                    return new LibraryDownloadTask(dependencyManager, file, lib)
+                                            .thenRunAsync(() -> javaAgents.add(agent));
                                 } else {
+                                    javaAgents.add(agent);
                                     return null;
                                 }
                             })
                     );
                 }).withStage("launch.state.dependencies")
                 .thenComposeAsync(() -> gameVersion.map(s -> new GameVerificationFixTask(dependencyManager, s, version.get())).orElse(null))
+                .thenComposeAsync(() -> {
+                    if (config().getAllowAutoAgent()
+                            || setting.isNoJVMArgs()
+                            || setting.isNoOptimizingJVMArgs()
+                            || Boolean.TRUE.equals(config().getShownTips().get(LWJGL_3_4_1_TIP))
+                            || !NativePatcher.needPatchMemoryUtil(version.get(), javaVersionRef.get().getParsedVersion())) {
+                        return Task.completed(null);
+                    } else {
+                        CompletableFuture<Void> future = new CompletableFuture<>();
+                        runInFX(() -> {
+                            Controllers.confirm(i18n("launch.advice.lwjgl_3_4_1"), i18n("launch.advice.lwjgl_3_4_1.title"), MessageType.QUESTION, () -> {
+                                config().getShownTips().put(LWJGL_3_4_1_TIP, true);
+                                config().setAllowAutoAgent(true);
+                                future.complete(null);
+                            }, () -> {
+                                config().getShownTips().put(LWJGL_3_4_1_TIP, true);
+                                future.complete(null);
+                            });
+                        });
+                        return Task.fromCompletableFuture(future);
+                    }
+                })
                 .thenComposeAsync(() -> logIn(account).withStage("launch.state.logging_in"))
                 .thenComposeAsync(authInfo -> Task.supplyAsync(() -> {
                     LaunchOptions.Builder launchOptionsBuilder = repository.getLaunchOptions(
@@ -207,6 +231,7 @@ public final class LauncherHelper {
                     if (quickPlayOption != null) {
                         launchOptionsBuilder.setQuickPlayOption(quickPlayOption);
                     }
+
                     LaunchOptions launchOptions = launchOptionsBuilder.create();
 
                     LOG.info("Here's the structure of game mod directory:\n" + FileUtils.printFileStructure(repository.getModsDirectory(selectedVersion), 10));
@@ -599,7 +624,7 @@ public final class LauncherHelper {
                             break;
                         case VANILLA_X86:
                             if (setting.getNativesDirType() == NativesDirectoryType.VERSION_FOLDER
-                                    && isCompatibleWithX86Java()) {
+                                    && Platform.isSupportedTranslationX86_64()) {
                                 suggestions.add(i18n("launch.advice.vanilla_x86.translation"));
                             }
                             break;

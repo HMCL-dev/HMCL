@@ -28,6 +28,7 @@ import javafx.collections.ObservableList;
 import javafx.event.EventHandler;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
+import javafx.scene.Cursor;
 import javafx.scene.control.Label;
 import javafx.scene.control.Tooltip;
 import javafx.scene.image.ImageView;
@@ -170,6 +171,7 @@ public final class MainPage extends StackPane implements DecoratorPage {
         FXUtils.setLimitHeight(updatePane, 55);
         StackPane.setAlignment(updatePane, Pos.TOP_RIGHT);
         FXUtils.onClicked(updatePane, this::onUpgrade);
+        updatePane.setCursor(Cursor.HAND);
         FXUtils.onChange(showUpdateProperty(), this::showUpdate);
 
         {
@@ -183,7 +185,7 @@ public final class MainPage extends StackPane implements DecoratorPage {
                 prompt.setSubtitle(i18n("update.bubble.subtitle"));
                 prompt.setPickOnBounds(false);
                 prompt.titleProperty().bind(BindingMapping.of(latestVersionProperty()).map(latestVersion ->
-                        latestVersion == null ? "" : i18n("update.bubble.title", latestVersion.getVersion())));
+                        latestVersion == null ? "" : i18n("update.bubble.title", latestVersion.version())));
 
                 hBox.getChildren().setAll(SVG.UPDATE.createIcon(20), prompt);
             }
@@ -279,10 +281,10 @@ public final class MainPage extends StackPane implements DecoratorPage {
 
         if (show && !config().isDisableAutoShowUpdateDialog()
                 && getLatestVersion() != null
-                && !Objects.equals(config().getPromptedVersion(), getLatestVersion().getVersion())) {
-            Controllers.dialog(new MessageDialogPane.Builder("", i18n("update.bubble.title", getLatestVersion().getVersion()), MessageDialogPane.MessageType.INFO)
+                && !Objects.equals(config().getPromptedVersion(), getLatestVersion().version())) {
+            Controllers.dialog(new MessageDialogPane.Builder("", i18n("update.bubble.title", getLatestVersion().version()), MessageDialogPane.MessageType.INFO)
                     .addAction(i18n("button.view"), () -> {
-                        config().setPromptedVersion(getLatestVersion().getVersion());
+                        config().setPromptedVersion(getLatestVersion().version());
                         onUpgrade();
                     })
                     .addCancel(null)

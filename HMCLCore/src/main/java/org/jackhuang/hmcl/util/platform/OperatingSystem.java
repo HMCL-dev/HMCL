@@ -282,6 +282,25 @@ public enum OperatingSystem {
         return SYSTEM_VERSION.isAtLeast(OSVersion.WINDOWS_7);
     }
 
+    public static boolean isRunningUnderWine() {
+        if (OperatingSystem.CURRENT_OS != OperatingSystem.WINDOWS) {
+            return false;
+        }
+
+        String[] wineEnvVars = {
+                "WINEPREFIX",
+                "WINELOADER",
+                "WINEDLLPATH"
+        };
+
+        for (String var : wineEnvVars) {
+            if (System.getenv(var) != null) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     public static Path getWorkingDirectory(String folder) {
         String home = System.getProperty("user.home", ".");
         switch (OperatingSystem.CURRENT_OS) {
