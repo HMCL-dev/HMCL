@@ -19,5 +19,5 @@ package org.jackhuang.hmcl.auth.offline;
 
 import org.jackhuang.hmcl.game.skin.TextureModel;
 
-public record LoadedSkin(TextureModel model, HashedTexture skin, HashedTexture cape) {
+public record LoadedOfflineSkin(TextureModel model, HashedTexture skin, HashedTexture cape) {
 }

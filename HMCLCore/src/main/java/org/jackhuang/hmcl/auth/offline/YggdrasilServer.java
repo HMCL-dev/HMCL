@@ -148,29 +148,11 @@ public class YggdrasilServer extends HttpServer {
     }
 
     public void addCharacter(Character character) {
-        charactersByUuid.put(character.getUUID(), character);
-        charactersByName.put(character.getName(), character);
+        charactersByUuid.put(character.uuid(), character);
+        charactersByName.put(character.name(), character);
     }
 
-    public static class Character {
-        private final UUID uuid;
-        private final String name;
-        private final LoadedSkin skin;
-
-        public Character(UUID uuid, String name, LoadedSkin skin) {
-            this.uuid = uuid;
-            this.name = name;
-            this.skin = skin;
-        }
-
-        public UUID getUUID() {
-            return uuid;
-        }
-
-        public String getName() {
-            return name;
-        }
-
+    public record Character(UUID uuid, String name, LoadedOfflineSkin skin) {
         public GameProfile toSimpleResponse() {
             return new GameProfile(uuid, name);
         }

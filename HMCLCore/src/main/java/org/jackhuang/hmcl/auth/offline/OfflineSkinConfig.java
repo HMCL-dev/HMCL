@@ -70,7 +70,7 @@ public record OfflineSkinConfig(Type type, TextureModel textureModel, String loc
         return textureModel == null ? TextureModel.WIDE : textureModel;
     }
 
-    public Task<LoadedSkin> load() {
+    public Task<LoadedOfflineSkin> load() {
         switch (type) {
             case DEFAULT:
                 return Task.supplyAsync(() -> null);
@@ -86,7 +86,7 @@ public record OfflineSkinConfig(Type type, TextureModel textureModel, String loc
                 TextureModel model = this.textureModel != null ? this.textureModel : type == Type.ALEX ? TextureModel.SLIM : TextureModel.WIDE;
                 String resource = (model == TextureModel.SLIM ? "/assets/img/skin/slim/" : "/assets/img/skin/wide/") + type.name().toLowerCase(Locale.ROOT) + ".png";
 
-                return Task.supplyAsync(() -> new LoadedSkin(
+                return Task.supplyAsync(() -> new LoadedOfflineSkin(
                         model,
                         HashedTexture.loadTexture(new Image(resource)),
                         null
@@ -98,7 +98,7 @@ public record OfflineSkinConfig(Type type, TextureModel textureModel, String loc
                     Optional<Path> capePath = FileUtils.tryGetPath(localCapePath);
                     if (skinPath.isPresent()) skin = HashedTexture.loadTexture(Files.newInputStream(skinPath.get()));
                     if (capePath.isPresent()) cape = HashedTexture.loadTexture(Files.newInputStream(capePath.get()));
-                    return new LoadedSkin(textureModel(), skin, cape);
+                    return new LoadedOfflineSkin(textureModel(), skin, cape);
                 });
             default:
                 throw new UnsupportedOperationException();
