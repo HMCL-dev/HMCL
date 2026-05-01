@@ -96,7 +96,7 @@ public abstract class SkinPageBase<T extends Account> extends DecoratorAnimatedP
 
     protected final class SkinManage extends HBox {
         protected StackPane leftRegion = new StackPane();
-        private BorderPane rightRegion = new BorderPane();
+        private final BorderPane rightRegion = new BorderPane();
 
         private SkinManage() {
             setSpacing(10);
