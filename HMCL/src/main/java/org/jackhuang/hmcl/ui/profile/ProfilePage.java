@@ -53,6 +53,8 @@ public final class ProfilePage extends BorderPane implements DecoratorPage {
     private final JFXTextField txtProfileName;
     private final LineFileChooserButton gameDir;
     private final LineToggleButton toggleUseRelativePath;
+    private ChangeListener<String> locationChangeListener;
+    private ChangeListener<String> txtProfileNameChangeListener;
 
     /**
      * @param profile null if creating a new profile.
@@ -99,7 +101,9 @@ public final class ProfilePage extends BorderPane implements DecoratorPage {
                             @Override
                             protected void eval() {
                                 JFXTextField control = (JFXTextField) this.getSrcControl();
-                                hasErrors.set(Profiles.getProfiles().stream().anyMatch(profile -> profile.getName().equals(control.getText())));
+                                hasErrors.set(Profiles.getProfiles().stream()
+                                        .filter(p -> p != profile)
+                                        .anyMatch(p -> p.getName().equals(control.getText())));
                             }
                         });
                     }
@@ -144,7 +148,7 @@ public final class ProfilePage extends BorderPane implements DecoratorPage {
                     txtProfileName.textProperty(), location));
         }
 
-        ChangeListener<String> locationChangeListener = (observable, oldValue, newValue) -> {
+        locationChangeListener = (observable, oldValue, newValue) -> {
             Path newPath;
             try {
                 newPath = FileUtils.toAbsolute(Path.of(newValue));
@@ -166,7 +170,7 @@ public final class ProfilePage extends BorderPane implements DecoratorPage {
         };
         locationProperty().addListener(locationChangeListener);
 
-        txtProfileName.textProperty().addListener(new ChangeListener<>() {
+        txtProfileNameChangeListener = new ChangeListener<>() {
             @Override
             public void changed(ObservableValue<? extends String> observable, String oldValue, String newValue) {
                 if (txtProfileName.isFocused()) {
@@ -174,10 +178,14 @@ public final class ProfilePage extends BorderPane implements DecoratorPage {
                     locationProperty().removeListener(locationChangeListener);
                 }
             }
-        });
+        };
+        txtProfileName.textProperty().addListener(txtProfileNameChangeListener);
     }
 
     private void onSave() {
+        locationProperty().removeListener(locationChangeListener);
+        txtProfileName.textProperty().removeListener(txtProfileNameChangeListener);
+
         if (profile != null) {
             profile.setName(txtProfileName.getText());
             profile.setUseRelativePath(toggleUseRelativePath.isSelected());

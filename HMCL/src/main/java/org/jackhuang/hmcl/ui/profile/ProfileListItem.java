@@ -21,22 +21,28 @@ import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.property.StringProperty;
 import javafx.scene.control.RadioButton;
 import javafx.scene.control.Skin;
-
 import org.jackhuang.hmcl.setting.Profile;
 import org.jackhuang.hmcl.setting.Profiles;
+import org.jackhuang.hmcl.ui.FXUtils;
+import org.jetbrains.annotations.NotNull;
 
 public class ProfileListItem extends RadioButton {
     private final Profile profile;
     private final StringProperty title = new SimpleStringProperty();
     private final StringProperty subtitle = new SimpleStringProperty();
 
-    public ProfileListItem(Profile profile) {
+    public ProfileListItem(@NotNull Profile profile) {
         this.profile = profile;
         getStyleClass().setAll("profile-list-item", "navigation-drawer-item");
         setUserData(profile);
 
         title.set(Profiles.getProfileDisplayName(profile));
         subtitle.set(profile.getGameDir().toString());
+
+        profile.nameProperty().addListener((obs, oldVal, newVal) -> title.set(Profiles.getProfileDisplayName(profile)));
+        profile.gameDirProperty().addListener((obs, oldVal, newVal) -> subtitle.set(profile.getGameDir().toString()));
+
+        FXUtils.onSecondaryButtonClicked(this, () -> ProfileListPopupMenu.show(this, profile));
     }
 
     @Override
@@ -44,6 +50,7 @@ public class ProfileListItem extends RadioButton {
         return new ProfileListItemSkin(this);
     }
 
+    /// Removes this profile from the list.
     public void remove() {
         Profiles.getProfiles().remove(profile);
     }
