@@ -17,7 +17,6 @@
  */
 package org.jackhuang.hmcl.ui.main;
 
-import javafx.geometry.Insets;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.layout.VBox;
 import org.jackhuang.hmcl.theme.Themes;
@@ -37,9 +36,7 @@ public class FeedbackPage extends SpinnerPane {
 
     public FeedbackPage() {
         VBox content = new VBox();
-        content.setPadding(new Insets(10));
-        content.setSpacing(10);
-        content.setFillWidth(true);
+        content.getStyleClass().add("spinner-pane-content");
         ScrollPane scrollPane = new ScrollPane(content);
         scrollPane.setFitToWidth(true);
         FXUtils.smoothScrolling(scrollPane);
@@ -84,8 +81,5 @@ public class FeedbackPage extends SpinnerPane {
                 ComponentList.createComponentListTitle(i18n("contact.feedback")),
                 feedback
         );
-
-        this.setContent(content);
     }
-
 }

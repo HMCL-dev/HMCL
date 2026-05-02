@@ -43,13 +43,13 @@ public final class UpdateChecker {
                 RemoteVersion latest = latestVersion.get();
                 if (latest == null || isDevelopmentVersion(Metadata.VERSION)) {
                     return false;
-                } else if (latest.isForce()
+                } else if (latest.force()
                         || Metadata.isNightly()
-                        || latest.getChannel() == UpdateChannel.NIGHTLY
-                        || latest.getChannel() != UpdateChannel.getChannel()) {
-                    return !latest.getVersion().equals(Metadata.VERSION);
+                        || latest.channel() == UpdateChannel.NIGHTLY
+                        || latest.channel() != UpdateChannel.getChannel()) {
+                    return !latest.version().equals(Metadata.VERSION);
                 } else {
-                    return VersionNumber.compare(Metadata.VERSION, latest.getVersion()) < 0;
+                    return VersionNumber.compare(Metadata.VERSION, latest.version()) < 0;
                 }
             },
             latestVersion);

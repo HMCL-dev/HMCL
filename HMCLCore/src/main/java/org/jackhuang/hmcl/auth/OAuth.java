@@ -80,37 +80,37 @@ public class OAuth {
     }
 
     private Result authenticateAuthorizationCode(Options options) throws IOException, InterruptedException, JsonParseException, ExecutionException, AuthenticationException {
-        Session session = options.callback.startServer();
+        try (Session session = options.callback.startServer()) {
+            String codeVerifier = session.getCodeVerifier();
+            String state = session.getState();
+            String codeChallenge = generateCodeChallenge(codeVerifier);
 
-        String codeVerifier = session.getCodeVerifier();
-        String state = session.getState();
-        String codeChallenge = generateCodeChallenge(codeVerifier);
+            options.callback.openBrowser(GrantFlow.AUTHORIZATION_CODE, NetworkUtils.withQuery(authorizationURL,
+                    mapOf(pair("client_id", options.callback.getClientId()),
+                            pair("response_type", "code"),
+                            pair("redirect_uri", session.getRedirectURI()),
+                            pair("scope", options.scope),
+                            pair("prompt", "select_account"),
+                            pair("code_challenge", codeChallenge),
+                            pair("state", state),
+                            pair("code_challenge_method", "S256")
+                    )));
+            String code = session.waitFor();
 
-        options.callback.openBrowser(GrantFlow.AUTHORIZATION_CODE, NetworkUtils.withQuery(authorizationURL,
-                mapOf(pair("client_id", options.callback.getClientId()),
-                        pair("response_type", "code"),
-                        pair("redirect_uri", session.getRedirectURI()),
-                        pair("scope", options.scope),
-                        pair("prompt", "select_account"),
-                        pair("code_challenge", codeChallenge),
-                        pair("state", state),
-                        pair("code_challenge_method", "S256")
-                )));
-        String code = session.waitFor();
-
-        // Authorization Code -> Token
-        AuthorizationResponse response = HttpRequest.POST(accessTokenURL)
-                .form(pair("client_id", options.callback.getClientId()),
-                        pair("code", code),
-                        pair("grant_type", "authorization_code"),
-                        pair("code_verifier", codeVerifier),
-                        pair("redirect_uri", session.getRedirectURI()),
-                        pair("scope", options.scope))
-                .ignoreHttpCode()
-                .retry(5)
-                .getJson(AuthorizationResponse.class);
-        handleErrorResponse(response);
-        return new Result(response.accessToken, response.refreshToken);
+            // Authorization Code -> Token
+            AuthorizationResponse response = HttpRequest.POST(accessTokenURL)
+                    .form(pair("client_id", options.callback.getClientId()),
+                            pair("code", code),
+                            pair("grant_type", "authorization_code"),
+                            pair("code_verifier", codeVerifier),
+                            pair("redirect_uri", session.getRedirectURI()),
+                            pair("scope", options.scope))
+                    .ignoreHttpCode()
+                    .retry(5)
+                    .getJson(AuthorizationResponse.class);
+            handleErrorResponse(response);
+            return new Result(response.accessToken, response.refreshToken);
+        }
     }
 
     private Result authenticateDevice(Options options) throws IOException, InterruptedException, JsonParseException, AuthenticationException {
@@ -234,7 +234,7 @@ public class OAuth {
         }
     }
 
-    public interface Session {
+    public interface Session extends AutoCloseable {
         String getState();
 
         String getCodeVerifier();
@@ -253,6 +253,9 @@ public class OAuth {
         default String getIdToken() {
             return null;
         }
+
+        @Override
+        void close();
     }
 
     public interface Callback {

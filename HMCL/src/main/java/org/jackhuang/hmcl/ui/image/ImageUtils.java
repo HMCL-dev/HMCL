@@ -17,7 +17,6 @@
  */
 package org.jackhuang.hmcl.ui.image;
 
-import com.twelvemonkeys.imageio.plugins.webp.WebPImageReaderSpi;
 import javafx.animation.Timeline;
 import javafx.application.Platform;
 import javafx.scene.SnapshotParameters;
@@ -29,6 +28,9 @@ import org.girod.javafx.svgimage.LoaderParameters;
 import org.girod.javafx.svgimage.SVGImage;
 import org.girod.javafx.svgimage.SVGLoader;
 import org.girod.javafx.svgimage.ScaleQuality;
+import org.glavo.webp.WebPImage;
+import org.glavo.webp.WebPImageLoadOptions;
+import org.glavo.webp.javafx.WebPFXImage;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.ui.image.apng.Png;
 import org.jackhuang.hmcl.ui.image.apng.argb8888.Argb8888Bitmap;
@@ -38,13 +40,8 @@ import org.jackhuang.hmcl.ui.image.apng.chunks.PngFrameControl;
 import org.jackhuang.hmcl.ui.image.apng.error.PngException;
 import org.jackhuang.hmcl.ui.image.apng.error.PngIntegrityException;
 import org.jackhuang.hmcl.ui.image.internal.AnimationImageImpl;
-import org.jackhuang.hmcl.util.SwingFXUtils;
 import org.jetbrains.annotations.Nullable;
 
-import javax.imageio.ImageIO;
-import javax.imageio.ImageReader;
-import javax.imageio.stream.ImageInputStream;
-import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
@@ -71,16 +68,8 @@ public final class ImageUtils {
     };
 
     public static final ImageLoader WEBP = (input, requestedWidth, requestedHeight, preserveRatio, smooth) -> {
-        WebPImageReaderSpi spi = new WebPImageReaderSpi();
-        ImageReader reader = spi.createReaderInstance(null);
-        BufferedImage bufferedImage;
-        try (ImageInputStream imageInput = ImageIO.createImageInputStream(input)) {
-            reader.setInput(imageInput, true, true);
-            bufferedImage = reader.read(0, reader.getDefaultReadParam());
-        } finally {
-            reader.dispose();
-        }
-        return SwingFXUtils.toFXImage(bufferedImage, requestedWidth, requestedHeight, preserveRatio, smooth);
+        var options = new WebPImageLoadOptions(requestedWidth, requestedHeight, preserveRatio, smooth);
+        return new WebPFXImage(WebPImage.read(input, options));
     };
 
     public static final ImageLoader SVG = (input, requestedWidth, requestedHeight, preserveRatio, smooth) -> {
@@ -466,6 +455,19 @@ public final class ImageUtils {
             return new AnimationImageImpl(targetWidth, targetHeight, framePixels, durations, cycleCount);
         else
             return new AnimationImageImpl(width, height, framePixels, durations, cycleCount);
+    }
+
+    private static int[] rgbaToArgb(ByteBuffer rgba) {
+        int pixelCount = rgba.remaining() / 4;
+        int[] argb = new int[pixelCount];
+        for (int i = 0; i < pixelCount; i++) {
+            int r = rgba.get() & 0xFF;
+            int g = rgba.get() & 0xFF;
+            int b = rgba.get() & 0xFF;
+            int a = rgba.get() & 0xFF;
+            argb[i] = (a << 24) | (r << 16) | (g << 8) | b;
+        }
+        return argb;
     }
 
     private ImageUtils() {
