@@ -21,18 +21,19 @@ import com.jfoenix.controls.JFXPopup;
 import javafx.application.Platform;
 import javafx.beans.binding.Bindings;
 import javafx.beans.property.*;
-import javafx.geometry.Insets;
-import javafx.geometry.Pos;
+import javafx.event.Event;
+import javafx.event.EventType;
 import javafx.scene.Node;
 import javafx.scene.layout.Priority;
-import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import org.jackhuang.hmcl.event.EventBus;
 import org.jackhuang.hmcl.event.EventPriority;
 import org.jackhuang.hmcl.event.RefreshedVersionsEvent;
 import org.jackhuang.hmcl.game.GameRepository;
-import org.jackhuang.hmcl.game.HMCLGameRepository;
 import org.jackhuang.hmcl.setting.Profile;
+import org.jackhuang.hmcl.task.Schedulers;
+import org.jackhuang.hmcl.task.Task;
+import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
 import org.jackhuang.hmcl.ui.WeakListenerHolder;
@@ -40,8 +41,10 @@ import org.jackhuang.hmcl.ui.animation.TransitionPane;
 import org.jackhuang.hmcl.ui.construct.*;
 import org.jackhuang.hmcl.ui.decorator.DecoratorAnimatedPage;
 import org.jackhuang.hmcl.ui.decorator.DecoratorPage;
+import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
 
+import java.nio.file.Path;
 import java.util.Optional;
 import java.util.function.Supplier;
 
@@ -64,6 +67,13 @@ public class VersionPage extends DecoratorAnimatedPage implements DecoratorPage 
 
     private String preferredVersionName = null;
 
+    public static class WorkingDirChangedEvent extends Event {
+        public static final EventType<WorkingDirChangedEvent> EVENT_TYPE = new EventType<>(Event.ANY, "WORKING_DIR_CHANGED");
+        public WorkingDirChangedEvent() {
+            super(EVENT_TYPE);
+        }
+    }
+
     public VersionPage() {
         versionSettingsTab.setNodeSupplier(loadVersionFor(() -> new VersionSettingsPage(false)));
         installerListTab.setNodeSupplier(loadVersionFor(InstallerListPage::new));
@@ -77,6 +87,21 @@ public class VersionPage extends DecoratorAnimatedPage implements DecoratorPage 
 
         addEventHandler(Navigator.NavigationEvent.NAVIGATED, this::onNavigated);
 
+        addEventHandler(WorkingDirChangedEvent.EVENT_TYPE, event -> {
+            if (this.version.get() != null) {
+                if (installerListTab.isInitialized())
+                    installerListTab.getNode().loadVersion(getProfile(), getVersion());
+                if (modListTab.isInitialized())
+                    modListTab.getNode().loadVersion(getProfile(), getVersion());
+                if (resourcePackTab.isInitialized())
+                    resourcePackTab.getNode().loadVersion(getProfile(), getVersion());
+                if (worldListTab.isInitialized())
+                    worldListTab.getNode().loadVersion(getProfile(), getVersion());
+                if (schematicsTab.isInitialized())
+                    schematicsTab.getNode().loadVersion(getProfile(), getVersion());
+            }
+        });
+        
         listenerHolder.add(EventBus.EVENT_BUS.channel(RefreshedVersionsEvent.class).registerWeak(event -> checkSelectedVersion(), EventPriority.HIGHEST));
     }
 
@@ -165,15 +190,34 @@ public class VersionPage extends DecoratorAnimatedPage implements DecoratorPage 
     }
 
     private void clearLibraries() {
-        FileUtils.deleteDirectoryQuietly(getProfile().getRepository().getBaseDirectory().resolve("libraries"));
+        var libraries = getProfile().getRepository().getBaseDirectory().resolve("libraries");
+        Task.runAsync(Schedulers.io(), () -> {
+            FileUtils.deleteDirectoryQuietly(libraries);
+        }).whenComplete(Schedulers.javafx(), (exception) -> {
+            if (exception != null) {
+                Controllers.dialog(i18n("message.failed") + "\n" + StringUtils.getStackTrace(exception), i18n("message.error"), MessageDialogPane.MessageType.ERROR);
+            }
+        }).start();
     }
 
     private void clearAssets() {
-        HMCLGameRepository baseDirectory = getProfile().getRepository();
-        FileUtils.deleteDirectoryQuietly(baseDirectory.getBaseDirectory().resolve("assets"));
-        if (version.get() != null) {
-            FileUtils.deleteDirectoryQuietly(baseDirectory.getRunDirectory(version.get().getVersion()).resolve("resources"));
-        }
+        Path assetsDir = getProfile().getRepository().getBaseDirectory().resolve("assets");
+
+        Profile.ProfileVersion currentVersion = version.get();
+        Path resourcesDir = currentVersion != null
+                ? getProfile().getRepository().getRunDirectory(currentVersion.getVersion()).resolve("resources")
+                : null;
+
+        Task.runAsync(Schedulers.io(), () -> {
+            FileUtils.deleteDirectoryQuietly(assetsDir);
+            if (resourcesDir != null) {
+                FileUtils.deleteDirectoryQuietly(resourcesDir);
+            }
+        }).whenComplete(Schedulers.javafx(), (exception) -> {
+            if (exception != null) {
+                Controllers.dialog(i18n("message.failed") + "\n" + StringUtils.getStackTrace(exception), i18n("message.error"), MessageDialogPane.MessageType.ERROR);
+            }
+        }).start();
     }
 
     private void clearJunkFiles() {
@@ -252,12 +296,12 @@ public class VersionPage extends DecoratorAnimatedPage implements DecoratorPage 
                 browseList.getContent().setAll(
                         new IconedMenuItem(SVG.STADIA_CONTROLLER, i18n("folder.game"), () -> control.onBrowse(""), browsePopup),
                         new IconedMenuItem(SVG.EXTENSION, i18n("folder.mod"), () -> control.onBrowse("mods"), browsePopup),
-                        new IconedMenuItem(SVG.SETTINGS, i18n("folder.config"), () -> control.onBrowse("config"), browsePopup),
                         new IconedMenuItem(SVG.TEXTURE, i18n("folder.resourcepacks"), () -> control.onBrowse("resourcepacks"), browsePopup),
-                        new IconedMenuItem(SVG.WB_SUNNY, i18n("folder.shaderpacks"), () -> control.onBrowse("shaderpacks"), browsePopup),
-                        new IconedMenuItem(SVG.SCHEMA, i18n("folder.schematics"), () -> control.onBrowse("schematics"), browsePopup),
-                        new IconedMenuItem(SVG.SCREENSHOT_MONITOR, i18n("folder.screenshots"), () -> control.onBrowse("screenshots"), browsePopup),
                         new IconedMenuItem(SVG.PUBLIC, i18n("folder.saves"), () -> control.onBrowse("saves"), browsePopup),
+                        new IconedMenuItem(SVG.SCHEMA, i18n("folder.schematics"), () -> control.onBrowse("schematics"), browsePopup),
+                        new IconedMenuItem(SVG.WB_SUNNY, i18n("folder.shaderpacks"), () -> control.onBrowse("shaderpacks"), browsePopup),
+                        new IconedMenuItem(SVG.SCREENSHOT_MONITOR, i18n("folder.screenshots"), () -> control.onBrowse("screenshots"), browsePopup),
+                        new IconedMenuItem(SVG.SETTINGS, i18n("folder.config"), () -> control.onBrowse("config"), browsePopup),
                         new IconedMenuItem(SVG.SCRIPT, i18n("folder.logs"), () -> control.onBrowse("logs"), browsePopup)
                 );
 
@@ -303,20 +347,6 @@ public class VersionPage extends DecoratorAnimatedPage implements DecoratorPage 
             //FXUtils.setOverflowHidden(control.transitionPane, 8);
             setCenter(control.transitionPane);
         }
-    }
-
-    public static Node wrap(Node node) {
-        StackPane stackPane = new StackPane();
-        stackPane.setAlignment(Pos.CENTER);
-        FXUtils.setLimitWidth(stackPane, 30);
-        FXUtils.setLimitHeight(stackPane, 20);
-        stackPane.setPadding(new Insets(0, 0, 0, 0));
-        stackPane.getChildren().setAll(node);
-        return stackPane;
-    }
-
-    public static Node wrap(SVG svg) {
-        return wrap(svg.createIcon(20));
     }
 
     public interface VersionLoadable {

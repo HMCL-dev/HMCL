@@ -134,7 +134,10 @@ public final class DownloadProviders {
                 return i18n("install.failed.downloading.detail", uri) + "\n" + i18n("exception.access_denied", ((AccessDeniedException) exception.getCause()).getFile());
             } else if (exception.getCause() instanceof ArtifactMalformedException) {
                 return i18n("install.failed.downloading.detail", uri) + "\n" + i18n("exception.artifact_malformed");
-            } else if (exception.getCause() instanceof SSLHandshakeException) {
+            } else if (exception.getCause() instanceof SSLHandshakeException && !(exception.getCause().getMessage() != null && exception.getCause().getMessage().contains("Remote host terminated"))) {
+                if (exception.getCause().getMessage() != null && (exception.getCause().getMessage().contains("No name matching") || exception.getCause().getMessage().contains("No subject alternative DNS name matching"))) {
+                    return i18n("install.failed.downloading.detail", uri) + "\n" + i18n("exception.dns.pollution");
+                }
                 return i18n("install.failed.downloading.detail", uri) + "\n" + i18n("exception.ssl_handshake");
             } else {
                 return i18n("install.failed.downloading.detail", uri) + "\n" + StringUtils.getStackTrace(exception.getCause());

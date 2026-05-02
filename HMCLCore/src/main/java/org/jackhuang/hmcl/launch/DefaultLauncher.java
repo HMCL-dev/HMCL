@@ -27,10 +27,11 @@ import org.jackhuang.hmcl.util.gson.UUIDTypeAdapter;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.io.Unzipper;
 import org.jackhuang.hmcl.util.platform.*;
+import org.jackhuang.hmcl.util.platform.macos.HomebrewUtils;
 import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.*;
-import java.net.Proxy;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -73,14 +74,14 @@ public class DefaultLauncher extends Launcher {
                 if (OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS) {
                     // res.add("cmd", "/C", "start", "unused title", "/B", "/high");
                 } else if (OperatingSystem.CURRENT_OS.isLinuxOrBSD() || OperatingSystem.CURRENT_OS == OperatingSystem.MACOS) {
-                    res.add("nice", "-n", "-5");
+                    res.addAll("nice", "-n", "-5");
                 }
                 break;
             case ABOVE_NORMAL:
                 if (OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS) {
                     // res.add("cmd", "/C", "start", "unused title", "/B", "/abovenormal");
                 } else if (OperatingSystem.CURRENT_OS.isLinuxOrBSD() || OperatingSystem.CURRENT_OS == OperatingSystem.MACOS) {
-                    res.add("nice", "-n", "-1");
+                    res.addAll("nice", "-n", "-1");
                 }
                 break;
             case NORMAL:
@@ -90,25 +91,25 @@ public class DefaultLauncher extends Launcher {
                 if (OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS) {
                     // res.add("cmd", "/C", "start", "unused title", "/B", "/belownormal");
                 } else if (OperatingSystem.CURRENT_OS.isLinuxOrBSD() || OperatingSystem.CURRENT_OS == OperatingSystem.MACOS) {
-                    res.add("nice", "-n", "1");
+                    res.addAll("nice", "-n", "1");
                 }
                 break;
             case LOW:
                 if (OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS) {
                     // res.add("cmd", "/C", "start", "unused title", "/B", "/low");
                 } else if (OperatingSystem.CURRENT_OS.isLinuxOrBSD() || OperatingSystem.CURRENT_OS == OperatingSystem.MACOS) {
-                    res.add("nice", "-n", "5");
+                    res.addAll("nice", "-n", "5");
                 }
                 break;
         }
 
         // Executable
         if (StringUtils.isNotBlank(options.getWrapper()))
-            res.addAllWithoutParsing(StringUtils.tokenize(options.getWrapper(), getEnvVars()));
+            res.addAllWithoutParsing(StringUtils.tokenize(options.getWrapper(), getEnvVars(nativeFolder)));
 
         res.add(options.getJava().getBinary().toString());
 
-        res.addAllWithoutParsing(options.getOverrideJavaArguments());
+        res.addAllWithoutParsingAndReadExternal(options.getOverrideJavaArguments());
 
         if (options.getMaxMemory() != null && options.getMaxMemory() > 0)
             res.addDefault("-Xmx", options.getMaxMemory() + "m");
@@ -170,22 +171,36 @@ public class DefaultLauncher extends Launcher {
             if (OperatingSystem.CURRENT_OS != OperatingSystem.WINDOWS)
                 res.addDefault("-Duser.home=", options.getGameDir().toAbsolutePath().getParent().toString());
 
-            Proxy.Type proxyType = options.getProxyType();
-            if (proxyType == null) {
-                res.addDefault("-Djava.net.useSystemProxies", "true");
-            } else {
-                String proxyHost = options.getProxyHost();
-                int proxyPort = options.getProxyPort();
+            boolean addProxyOptions = res.noneMatch(arg ->
+                    arg.startsWith("-Djava.net.useSystemProxies=")
+                            || arg.startsWith("-Dhttp.proxy")
+                            || arg.startsWith("-Dhttps.proxy")
+                            || arg.startsWith("-DsocksProxy")
+                            || arg.startsWith("-Djava.net.socks.")
+            );
 
-                if (StringUtils.isNotBlank(proxyHost) && proxyPort >= 0 && proxyPort <= 0xFFFF) {
-                    if (proxyType == Proxy.Type.HTTP) {
-                        res.addDefault("-Dhttp.proxyHost=", proxyHost);
-                        res.addDefault("-Dhttp.proxyPort=", String.valueOf(proxyPort));
-                        res.addDefault("-Dhttps.proxyHost=", proxyHost);
-                        res.addDefault("-Dhttps.proxyPort=", String.valueOf(proxyPort));
-                    } else if (proxyType == Proxy.Type.SOCKS) {
-                        res.addDefault("-DsocksProxyHost=", proxyHost);
-                        res.addDefault("-DsocksProxyPort=", String.valueOf(proxyPort));
+            if (addProxyOptions) {
+                if (options.getProxyOption() == null || options.getProxyOption() == ProxyOption.Default.INSTANCE) {
+                    res.add("-Djava.net.useSystemProxies=true");
+                } else if (options.getProxyOption() instanceof ProxyOption.Http httpProxy) {
+                    res.add("-Dhttp.proxyHost=" + httpProxy.host());
+                    res.add("-Dhttp.proxyPort=" + httpProxy.port());
+                    res.add("-Dhttps.proxyHost=" + httpProxy.host());
+                    res.add("-Dhttps.proxyPort=" + httpProxy.port());
+
+                    if (StringUtils.isNotBlank(httpProxy.username())) {
+                        res.add("-Dhttp.proxyUser=" + httpProxy.username());
+                        res.add("-Dhttp.proxyPassword=" + Objects.requireNonNullElse(httpProxy.password(), ""));
+                        res.add("-Dhttps.proxyUser=" + httpProxy.username());
+                        res.add("-Dhttps.proxyPassword=" + Objects.requireNonNullElse(httpProxy.password(), ""));
+                    }
+                } else if (options.getProxyOption() instanceof ProxyOption.Socks socksProxy) {
+                    res.add("-DsocksProxyHost=" + socksProxy.host());
+                    res.add("-DsocksProxyPort=" + socksProxy.port());
+
+                    if (StringUtils.isNotBlank(socksProxy.username())) {
+                        res.add("-Djava.net.socks.username=" + socksProxy.username());
+                        res.add("-Djava.net.socks.password=" + Objects.requireNonNullElse(socksProxy.password(), ""));
                     }
                 }
             }
@@ -230,7 +245,7 @@ public class DefaultLauncher extends Launcher {
                     }
                 }
 
-                if (is64bit && javaVersion == 25) {
+                if (is64bit && (javaVersion >= 25 && javaVersion <= 26)) {
                     res.addUnstableDefault("UseCompactObjectHeaders", true);
                 }
 
@@ -249,6 +264,21 @@ public class DefaultLauncher extends Launcher {
 
             res.addDefault("-Dfml.ignoreInvalidMinecraftCertificates=", "true");
             res.addDefault("-Dfml.ignorePatchDiscrepancies=", "true");
+        }
+
+        if (OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS
+                && options.getRenderer() instanceof Renderer.Driver renderer
+                && renderer.mesaDriverName() != null) {
+            res.addDefault("-Dorg.glavo.mesa.loader.nativeDir=", FileUtils.getAbsolutePath(nativeFolder.resolve("mesa-loader")));
+        }
+
+        if (OperatingSystem.CURRENT_OS == OperatingSystem.MACOS
+                && options.getJava().getArchitecture() == Architecture.SYSTEM_ARCH
+                && options.getRenderer() instanceof Renderer.Vulkan vulkanDriver
+                && vulkanDriver.icdFile() != null) {
+            if (Files.isRegularFile(HomebrewUtils.LIB_VULKAN)) {
+                res.addDefault("-Dorg.lwjgl.vulkan.libname=", FileUtils.getAbsolutePath(HomebrewUtils.LIB_VULKAN));
+            }
         }
 
         Set<String> classpath = repository.getClasspath(version);
@@ -283,13 +313,46 @@ public class DefaultLauncher extends Launcher {
         }
         configuration.put("${natives_directory}", nativeFolderPath);
 
-        res.addAll(Arguments.parseArguments(version.getArguments().map(Arguments::getJvm).orElseGet(this::getDefaultJVMArguments), configuration));
+        Path javaNativeFolder = FileUtils.toAbsolute(nativeFolder);
+        @Nullable List<Argument> jvmArguments = version.getArguments().map(Arguments::getJvm).orElse(null);
+
+        if (jvmArguments != null) {
+            for (Argument jvmArgument : jvmArguments) {
+                if (jvmArgument instanceof StringArgument stringArgument
+                        && stringArgument.getArgument().startsWith("-Djava.library.path=")) {
+
+                    // We conservatively handle parameters like "-Djava.library.path=${natives_directory}/java"
+                    // to avoid extracting native libraries to unexpected locations.
+
+                    String prefix = "-Djava.library.path=${natives_directory}/";
+                    if (stringArgument.getArgument().startsWith(prefix)) {
+                        try {
+                            String subDir = stringArgument.getArgument().substring(prefix.length());
+                            Path actualNativeFolder = FileUtils.toAbsolute(javaNativeFolder.resolve(subDir));
+
+                            if (actualNativeFolder.startsWith(javaNativeFolder)) {
+                                javaNativeFolder = actualNativeFolder;
+                            }
+                        } catch (IllegalArgumentException ignored) {
+                        }
+                    }
+
+                    break;
+                }
+            }
+        }
+
+        res.addAll(Arguments.parseArguments(Objects.requireNonNullElseGet(jvmArguments, this::getDefaultJVMArguments), configuration));
         Arguments argumentsFromAuthInfo = authInfo.getLaunchArguments(options);
         if (argumentsFromAuthInfo != null && argumentsFromAuthInfo.getJvm() != null && !argumentsFromAuthInfo.getJvm().isEmpty())
             res.addAll(Arguments.parseArguments(argumentsFromAuthInfo.getJvm(), configuration));
 
         for (String javaAgent : options.getJavaAgents()) {
             res.add("-javaagent:" + javaAgent);
+        }
+
+        if (version.getMainClass() == null) {
+            throw new IllegalStateException("Main class is null for instance " + version.getId());
         }
 
         res.add(version.getMainClass());
@@ -304,50 +367,60 @@ public class DefaultLauncher extends Launcher {
         if (argumentsFromAuthInfo != null && argumentsFromAuthInfo.getGame() != null && !argumentsFromAuthInfo.getGame().isEmpty())
             res.addAll(Arguments.parseArguments(argumentsFromAuthInfo.getGame(), configuration, features));
 
-        if (StringUtils.isNotBlank(options.getServerIp())) {
-            String address = options.getServerIp();
+        if (options.getQuickPlayOption() instanceof QuickPlayOption.MultiPlayer multiPlayer) {
+            String address = multiPlayer.serverIP();
 
             try {
                 ServerAddress parsed = ServerAddress.parse(address);
-                if (GameVersionNumber.asGameVersion(gameVersion).compareTo("1.20") < 0) {
+                if (World.supportQuickPlay(GameVersionNumber.asGameVersion(gameVersion))) {
+                    res.add("--quickPlayMultiplayer");
+                    res.add(parsed.getPort() >= 0 ? address : parsed.getHost() + ":25565");
+                } else {
                     res.add("--server");
                     res.add(parsed.getHost());
                     res.add("--port");
                     res.add(parsed.getPort() >= 0 ? String.valueOf(parsed.getPort()) : "25565");
-                } else {
-                    res.add("--quickPlayMultiplayer");
-                    res.add(parsed.getPort() < 0 ? address + ":25565" : address);
                 }
             } catch (IllegalArgumentException e) {
                 LOG.warning("Invalid server address: " + address, e);
             }
+        } else if (options.getQuickPlayOption() instanceof QuickPlayOption.SinglePlayer singlePlayer
+                && World.supportQuickPlay(GameVersionNumber.asGameVersion(gameVersion))) {
+            res.add("--quickPlaySingleplayer");
+            res.add(singlePlayer.worldFolderName());
+        } else if (options.getQuickPlayOption() instanceof QuickPlayOption.Realm realm
+                && World.supportQuickPlay(GameVersionNumber.asGameVersion(gameVersion))) {
+            res.add("--quickPlayRealms");
+            res.add(realm.realmID());
         }
 
         if (options.isFullscreen())
             res.add("--fullscreen");
 
-        if (options.getProxyType() == Proxy.Type.SOCKS) {
-            String proxyHost = options.getProxyHost();
-            int proxyPort = options.getProxyPort();
-
-            if (StringUtils.isNotBlank(proxyHost) && proxyPort >= 0 && proxyPort <= 0xFFFF) {
-                res.add("--proxyHost");
-                res.add(proxyHost);
-                res.add("--proxyPort");
-                res.add(String.valueOf(proxyPort));
-                if (StringUtils.isNotBlank(options.getProxyUser()) && StringUtils.isNotBlank(options.getProxyPass())) {
-                    res.add("--proxyUser");
-                    res.add(options.getProxyUser());
-                    res.add("--proxyPass");
-                    res.add(options.getProxyPass());
-                }
+        // https://github.com/HMCL-dev/HMCL/issues/774
+        if (options.getProxyOption() instanceof ProxyOption.Socks socksProxy) {
+            res.add("--proxyHost");
+            res.add(socksProxy.host());
+            res.add("--proxyPort");
+            res.add(String.valueOf(socksProxy.port()));
+            if (StringUtils.isNotBlank(socksProxy.username())) {
+                res.add("--proxyUser");
+                res.add(socksProxy.username());
+                res.add("--proxyPass");
+                res.add(Objects.requireNonNullElse(socksProxy.password(), ""));
             }
+        }
+
+        if (options.getGraphicsBackend() != GraphicsAPI.DEFAULT
+                && gameVersion.isPresent() && GameVersionNumber.compare(gameVersion.get(), "26.2-snapshot-2") >= 0) {
+            res.add("--graphicsBackend");
+            res.add(options.getGraphicsBackend().getMinecraftArg());
         }
 
         res.addAllWithoutParsing(Arguments.parseStringArguments(options.getGameArguments(), configuration));
 
         res.removeIf(it -> getForbiddens().containsKey(it) && getForbiddens().get(it).get());
-        return new Command(res, tempNativeFolder, encoding);
+        return new Command(res, tempNativeFolder, javaNativeFolder, encoding);
     }
 
     public Map<String, Boolean> getFeatures() {
@@ -384,14 +457,19 @@ public class DefaultLauncher extends Launcher {
     }
 
     public void decompressNatives(Path destination) throws NotDecompressingNativesException {
+        LOG.info("Decompress native libraries to " + destination);
+
         try {
             FileUtils.cleanDirectoryQuietly(destination);
             for (Library library : version.getLibraries())
                 if (library.isNative())
                     new Unzipper(repository.getLibraryFile(version, library), destination)
-                            .setFilter((zipEntry, isDirectory, destFile, path) -> {
-                                if (!isDirectory && Files.isRegularFile(destFile) && Files.size(destFile) == Files.size(zipEntry))
+                            .setFilter((zipEntry, destFile, relativePath) -> {
+                                if (!zipEntry.isDirectory() && !zipEntry.isUnixSymlink()
+                                        && Files.isRegularFile(destFile)
+                                        && zipEntry.getSize() == Files.size(destFile)) {
                                     return false;
+                                }
                                 String ext = FileUtils.getExtension(destFile);
                                 if (ext.equals("sha1") || ext.equals("git"))
                                     return false;
@@ -403,7 +481,7 @@ public class DefaultLauncher extends Launcher {
                                     return false;
                                 }
 
-                                return library.getExtract().shouldExtract(path);
+                                return library.getExtract().shouldExtract(relativePath);
                             })
                             .setReplaceExistentFile(false).unzip();
         } catch (IOException e) {
@@ -499,7 +577,7 @@ public class DefaultLauncher extends Launcher {
         }
 
         if (options.getNativesDirType() == NativesDirectoryType.VERSION_FOLDER) {
-            decompressNatives(nativeFolder);
+            decompressNatives(command.javaNativeFolder);
         }
 
         if (isUsingLog4j())
@@ -508,8 +586,8 @@ public class DefaultLauncher extends Launcher {
         Path runDirectory = repository.getRunDirectory(version.getId());
 
         if (StringUtils.isNotBlank(options.getPreLaunchCommand())) {
-            ProcessBuilder builder = new ProcessBuilder(StringUtils.tokenize(options.getPreLaunchCommand(), getEnvVars())).directory(runDirectory.toFile());
-            builder.environment().putAll(getEnvVars());
+            ProcessBuilder builder = new ProcessBuilder(StringUtils.tokenize(options.getPreLaunchCommand(), getEnvVars(nativeFolder))).directory(runDirectory.toFile());
+            builder.environment().putAll(getEnvVars(nativeFolder));
             SystemUtils.callExternalProcess(builder);
         }
 
@@ -522,7 +600,7 @@ public class DefaultLauncher extends Launcher {
             Path appdata = options.getGameDir().toAbsolutePath().getParent();
             if (appdata != null) builder.environment().put("APPDATA", appdata.toString());
 
-            builder.environment().putAll(getEnvVars());
+            builder.environment().putAll(getEnvVars(nativeFolder));
             process = builder.start();
         } catch (IOException e) {
             throw new ProcessCreationException(e);
@@ -530,12 +608,13 @@ public class DefaultLauncher extends Launcher {
 
         ManagedProcess p = new ManagedProcess(process, rawCommandLine);
         if (listener != null)
-            startMonitors(p, listener, command.encoding, daemon);
+            startMonitors(p, nativeFolder, listener, command.encoding, daemon);
         return p;
     }
 
-    private Map<String, String> getEnvVars() {
+    private Map<String, String> getEnvVars(Path nativeFolder) {
         String versionName = Optional.ofNullable(options.getVersionName()).orElse(version.getId());
+
         Map<String, String> env = new LinkedHashMap<>();
         env.put("INST_NAME", versionName);
         env.put("INST_ID", versionName);
@@ -543,18 +622,32 @@ public class DefaultLauncher extends Launcher {
         env.put("INST_MC_DIR", FileUtils.getAbsolutePath(repository.getRunDirectory(version.getId())));
         env.put("INST_JAVA", options.getJava().getBinary().toString());
 
-        Renderer renderer = options.getRenderer();
-        if (renderer != Renderer.DEFAULT) {
+        if (options.getRenderer() instanceof Renderer.Driver driver) {
             if (OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS) {
-                if (renderer != Renderer.LLVMPIPE)
-                    env.put("GALLIUM_DRIVER", renderer.name().toLowerCase(Locale.ROOT));
-            } else if (OperatingSystem.CURRENT_OS == OperatingSystem.LINUX) {
-                env.put("__GLX_VENDOR_LIBRARY_NAME", "mesa");
-                switch (renderer) {
-                    case LLVMPIPE:
+                if (driver.mesaDriverName() != null) {
+                    if (driver instanceof Renderer.OpenGL && driver != Renderer.OpenGL.LLVMPIPE)
+                        env.put("GALLIUM_DRIVER", driver.mesaDriverName());
+                    else if (driver instanceof Renderer.Vulkan vulkanDriver) {
+                        String icdFile = FileUtils.getAbsolutePath(nativeFolder.resolve("mesa-loader/" + vulkanDriver.icdName() + "_icd.json"));
+
+                        env.put("VK_ICD_FILENAMES", icdFile);
+                        env.put("VK_DRIVER_FILES", icdFile);
+                    }
+                } else if (driver instanceof Renderer.Vulkan vulkanDriver
+                        && vulkanDriver.icdFile() != null
+                        && options.getJava().getArchitecture() == Architecture.SYSTEM_ARCH) {
+                    String icdFile = FileUtils.getAbsolutePath(vulkanDriver.icdFile());
+
+                    env.put("VK_ICD_FILENAMES", icdFile);
+                    env.put("VK_DRIVER_FILES", icdFile);
+                }
+            } else if (OperatingSystem.CURRENT_OS.isLinuxOrBSD()) {
+                if (driver instanceof Renderer.OpenGL oglDriver) {
+                    if (oglDriver == Renderer.OpenGL.LLVMPIPE) {
+                        env.put("__GLX_VENDOR_LIBRARY_NAME", "mesa");
                         env.put("LIBGL_ALWAYS_SOFTWARE", "1");
-                        break;
-                    case ZINK:
+                    } else if (oglDriver == Renderer.OpenGL.ZINK) {
+                        env.put("__GLX_VENDOR_LIBRARY_NAME", "mesa");
                         env.put("MESA_LOADER_DRIVER_OVERRIDE", "zink");
                         /*
                          * The amdgpu DDX is missing support for modifiers, causing Zink to fail.
@@ -563,7 +656,23 @@ public class DefaultLauncher extends Launcher {
                          * Link: https://gitlab.freedesktop.org/mesa/mesa/-/issues/10093
                          */
                         env.put("LIBGL_KOPPER_DRI2", "1");
-                        break;
+                    }
+                } else if (driver instanceof Renderer.Vulkan vulkanDriver
+                        && options.getJava().getArchitecture() == Architecture.SYSTEM_ARCH) {
+                    if (vulkanDriver.icdFile() != null) {
+                        String absolutePath = FileUtils.getAbsolutePath(vulkanDriver.icdFile());
+                        env.put("VK_ICD_FILENAMES", absolutePath);
+                        env.put("VK_DRIVER_FILES", absolutePath);
+                    }
+                }
+            } else if (OperatingSystem.CURRENT_OS == OperatingSystem.MACOS
+                    && options.getJava().getArchitecture() == Architecture.SYSTEM_ARCH) {
+                if (driver instanceof Renderer.Vulkan vulkanDriver
+                        && vulkanDriver != Renderer.Vulkan.MOLTENVK
+                        && vulkanDriver.icdFile() != null) {
+                    String absolutePath = FileUtils.getAbsolutePath(vulkanDriver.icdFile());
+                    env.put("VK_ICD_FILENAMES", absolutePath);
+                    env.put("VK_DRIVER_FILES", absolutePath);
                 }
             }
         }
@@ -589,6 +698,9 @@ public class DefaultLauncher extends Launcher {
         if (analyzer.has(LibraryAnalyzer.LibraryType.QUILT)) {
             env.put("INST_QUILT", "1");
         }
+        if (analyzer.has(LibraryAnalyzer.LibraryType.LEGACY_FABRIC)) {
+            env.put("INST_LEGACYFABRIC", "1");
+        }
 
         env.putAll(options.getEnvironmentVariables());
 
@@ -606,32 +718,33 @@ public class DefaultLauncher extends Launcher {
             nativeFolder = Path.of(options.getNativesDir());
         }
 
-        if (options.getNativesDirType() == NativesDirectoryType.VERSION_FOLDER) {
-            decompressNatives(nativeFolder);
+        String scriptExtension = FileUtils.getExtension(scriptFile);
+        boolean usePowerShell = "ps1".equals(scriptExtension);
+
+        if (!usePowerShell) {
+            if (isWindows && !scriptExtension.equalsIgnoreCase("bat"))
+                throw new IllegalArgumentException("The extension of " + scriptFile + " is not 'bat' or 'ps1' in Windows");
+            else if (!isWindows && !(scriptExtension.equalsIgnoreCase("sh") || scriptExtension.equalsIgnoreCase("command") || scriptExtension.equalsIgnoreCase("bash")))
+                throw new IllegalArgumentException("The extension of " + scriptFile + " is not 'sh', 'bash', 'ps1' or 'command' in macOS/Linux");
+        }
+
+        final Command commandLine = generateCommandLine(nativeFolder);
+        final String command = usePowerShell ? null : commandLine.commandLine.toString();
+        Map<String, String> envVars = getEnvVars(nativeFolder);
+
+        if (isWindows && !usePowerShell) {
+            // https://stackoverflow.com/a/28452546
+            // https://learn.microsoft.com/troubleshoot/windows-client/shell-experience/command-line-string-limitation
+            if (command.length() > 32767) {
+                throw new CommandTooLongException();
+            }
         }
 
         if (isUsingLog4j())
             extractLog4jConfigurationFile();
 
-        String scriptExtension = FileUtils.getExtension(scriptFile);
-        boolean usePowerShell = "ps1".equals(scriptExtension);
-
-        if (!usePowerShell) {
-            if (isWindows && !scriptExtension.equals("bat"))
-                throw new IllegalArgumentException("The extension of " + scriptFile + " is not 'bat' or 'ps1' in Windows");
-            else if (!isWindows && !scriptExtension.equals("sh"))
-                throw new IllegalArgumentException("The extension of " + scriptFile + " is not 'sh' or 'ps1' in macOS/Linux");
-        }
-
-        final Command commandLine = generateCommandLine(nativeFolder);
-        final String command = usePowerShell ? null : commandLine.commandLine.toString();
-        Map<String, String> envVars = getEnvVars();
-
-        if (!usePowerShell && isWindows) {
-            if (command.length() > 8192) { // maximum length of the command in cmd
-                throw new CommandTooLongException();
-            }
-        }
+        if (options.getNativesDirType() == NativesDirectoryType.VERSION_FOLDER)
+            decompressNatives(commandLine.javaNativeFolder);
 
         Files.createDirectories(scriptFile.getParent());
 
@@ -669,7 +782,7 @@ public class DefaultLauncher extends Launcher {
                         writer.write(CommandBuilder.pwshString(entry.getValue()));
                         writer.newLine();
                     }
-                    writer.write("Set-Location -Path ");
+                    writer.write("Set-Location -LiteralPath ");
                     writer.write(CommandBuilder.pwshString(FileUtils.getAbsolutePath(repository.getRunDirectory(version.getId()))));
                     writer.newLine();
 
@@ -714,7 +827,7 @@ public class DefaultLauncher extends Launcher {
                             writer.newLine();
                         }
                         writer.newLine();
-                        writer.write(new CommandBuilder().add("cd", "/D", FileUtils.getAbsolutePath(repository.getRunDirectory(version.getId()))).toString());
+                        writer.write(new CommandBuilder().addAll("cd", "/D", FileUtils.getAbsolutePath(repository.getRunDirectory(version.getId()))).toString());
                     } else {
                         writer.write("#!/usr/bin/env bash");
                         writer.newLine();
@@ -723,10 +836,10 @@ public class DefaultLauncher extends Launcher {
                             writer.newLine();
                         }
                         if (commandLine.tempNativeFolder != null) {
-                            writer.write(new CommandBuilder().add("ln", "-s", FileUtils.getAbsolutePath(nativeFolder), commandLine.tempNativeFolder.toString()).toString());
+                            writer.write(new CommandBuilder().addAll("ln", "-s", FileUtils.getAbsolutePath(nativeFolder), commandLine.tempNativeFolder.toString()).toString());
                             writer.newLine();
                         }
-                        writer.write(new CommandBuilder().add("cd", FileUtils.getAbsolutePath(repository.getRunDirectory(version.getId()))).toString());
+                        writer.write(new CommandBuilder().addAll("cd", FileUtils.getAbsolutePath(repository.getRunDirectory(version.getId()))).toString());
                     }
                     writer.newLine();
                     if (StringUtils.isNotBlank(options.getPreLaunchCommand())) {
@@ -746,7 +859,7 @@ public class DefaultLauncher extends Launcher {
                         writer.newLine();
                     }
                     if (commandLine.tempNativeFolder != null) {
-                        writer.write(new CommandBuilder().add("rm", commandLine.tempNativeFolder.toString()).toString());
+                        writer.write(new CommandBuilder().addAll("rm", commandLine.tempNativeFolder.toString()).toString());
                         writer.newLine();
                     }
                 }
@@ -760,7 +873,7 @@ public class DefaultLauncher extends Launcher {
             throw new ExecutionPolicyLimitException();
     }
 
-    private void startMonitors(ManagedProcess managedProcess, ProcessListener processListener, Charset encoding, boolean isDaemon) {
+    private void startMonitors(ManagedProcess managedProcess, Path nativeFolder, ProcessListener processListener, Charset encoding, boolean isDaemon) {
         processListener.setProcess(managedProcess);
         Thread stdout = Lang.thread(new StreamPump(managedProcess.getProcess().getInputStream(), it -> {
             processListener.onLog(it, false);
@@ -777,8 +890,8 @@ public class DefaultLauncher extends Launcher {
 
             if (StringUtils.isNotBlank(options.getPostExitCommand())) {
                 try {
-                    ProcessBuilder builder = new ProcessBuilder(StringUtils.tokenize(options.getPostExitCommand(), getEnvVars())).directory(options.getGameDir().toFile());
-                    builder.environment().putAll(getEnvVars());
+                    ProcessBuilder builder = new ProcessBuilder(StringUtils.tokenize(options.getPostExitCommand(), getEnvVars(nativeFolder))).directory(options.getGameDir().toFile());
+                    builder.environment().putAll(getEnvVars(nativeFolder));
                     SystemUtils.callExternalProcess(builder);
                 } catch (Throwable e) {
                     LOG.warning("An Exception happened while running exit command.", e);
@@ -787,15 +900,10 @@ public class DefaultLauncher extends Launcher {
         }), "exit-waiter", isDaemon));
     }
 
-    private static final class Command {
-        final CommandBuilder commandLine;
-        final Path tempNativeFolder;
-        final Charset encoding;
-
-        Command(CommandBuilder commandBuilder, Path tempNativeFolder, Charset encoding) {
-            this.commandLine = commandBuilder;
-            this.tempNativeFolder = tempNativeFolder;
-            this.encoding = encoding;
-        }
+    private record Command(
+            CommandBuilder commandLine,
+            @Nullable Path tempNativeFolder,
+            Path javaNativeFolder,
+            Charset encoding) {
     }
 }

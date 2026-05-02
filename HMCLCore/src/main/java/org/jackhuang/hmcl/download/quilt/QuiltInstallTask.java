@@ -28,6 +28,7 @@ import org.jackhuang.hmcl.game.Library;
 import org.jackhuang.hmcl.game.Version;
 import org.jackhuang.hmcl.task.GetTask;
 import org.jackhuang.hmcl.task.Task;
+import org.jackhuang.hmcl.util.gson.JsonSerializable;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 
 import java.util.*;
@@ -135,6 +136,7 @@ public final class QuiltInstallTask extends Task<Version> {
         }
     }
 
+    @JsonSerializable
     public static class QuiltInfo {
         private final LoaderInfo loader;
         private final IntermediaryInfo hashed;
@@ -165,6 +167,7 @@ public final class QuiltInstallTask extends Task<Version> {
         }
     }
 
+    @JsonSerializable
     public static class LoaderInfo {
         private final String separator;
         private final int build;
@@ -201,6 +204,7 @@ public final class QuiltInstallTask extends Task<Version> {
         }
     }
 
+    @JsonSerializable
     public static class IntermediaryInfo {
         private final String maven;
         private final String version;

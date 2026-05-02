@@ -55,7 +55,8 @@ public final class MultiFileItem<T> extends VBox {
 
     @SuppressWarnings("unchecked")
     public MultiFileItem() {
-        setPadding(new Insets(0, 0, 10, 0));
+        this.getStyleClass().add("multi-file-item");
+
         setSpacing(8);
 
         group.selectedToggleProperty().addListener((a, b, newValue) -> {
@@ -181,6 +182,7 @@ public final class MultiFileItem<T> extends VBox {
                 center.setWrapText(true);
                 center.getStyleClass().add("subtitle-label");
                 center.setStyle("-fx-font-size: 10;");
+                center.setPadding(new Insets(0, 0, 0, 15));
                 pane.setCenter(center);
             }
 
@@ -265,8 +267,8 @@ public final class MultiFileItem<T> extends VBox {
             selector.setValue(value);
         }
 
-        public FileOption<T> setDirectory(boolean directory) {
-            selector.setDirectory(directory);
+        public FileOption<T> setSelectionMode(FileSelector.SelectionMode selectionMode) {
+            selector.setSelectionMode(selectionMode);
             return this;
         }
 

@@ -19,12 +19,16 @@ package org.jackhuang.hmcl.mod;
 
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.SimpleBooleanProperty;
+import org.jackhuang.hmcl.download.DownloadProvider;
 import org.jackhuang.hmcl.util.io.FileUtils;
 
 import java.io.IOException;
 import java.nio.file.Path;
-import java.util.*;
-import java.util.stream.Collectors;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.List;
+import java.util.Objects;
+import java.util.Optional;
 
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
@@ -174,17 +178,17 @@ public final class LocalModFile implements Comparable<LocalModFile> {
         file = modManager.disableMod(file);
     }
 
-    public ModUpdate checkUpdates(String gameVersion, RemoteModRepository repository) throws IOException {
+    public ModUpdate checkUpdates(DownloadProvider downloadProvider, String gameVersion, RemoteModRepository repository) throws IOException {
         Optional<RemoteMod.Version> currentVersion = repository.getRemoteVersionByLocalFile(this, file);
         if (!currentVersion.isPresent()) return null;
-        List<RemoteMod.Version> remoteVersions = repository.getRemoteVersionsById(currentVersion.get().getModid())
+        List<RemoteMod.Version> remoteVersions = repository.getRemoteVersionsById(downloadProvider, currentVersion.get().getModid())
                 .filter(version -> version.getGameVersions().contains(gameVersion))
                 .filter(version -> version.getLoaders().contains(getModLoaderType()))
                 .filter(version -> version.getDatePublished().compareTo(currentVersion.get().getDatePublished()) > 0)
                 .sorted(Comparator.comparing(RemoteMod.Version::getDatePublished).reversed())
-                .collect(Collectors.toList());
+                .toList();
         if (remoteVersions.isEmpty()) return null;
-        return new ModUpdate(this, currentVersion.get(), remoteVersions);
+        return new ModUpdate(this, currentVersion.get(), remoteVersions.get(0));
     }
 
     @Override
@@ -205,12 +209,12 @@ public final class LocalModFile implements Comparable<LocalModFile> {
     public static class ModUpdate {
         private final LocalModFile localModFile;
         private final RemoteMod.Version currentVersion;
-        private final List<RemoteMod.Version> candidates;
+        private final RemoteMod.Version candidate;
 
-        public ModUpdate(LocalModFile localModFile, RemoteMod.Version currentVersion, List<RemoteMod.Version> candidates) {
+        public ModUpdate(LocalModFile localModFile, RemoteMod.Version currentVersion, RemoteMod.Version candidate) {
             this.localModFile = localModFile;
             this.currentVersion = currentVersion;
-            this.candidates = candidates;
+            this.candidate = candidate;
         }
 
         public LocalModFile getLocalMod() {
@@ -221,8 +225,8 @@ public final class LocalModFile implements Comparable<LocalModFile> {
             return currentVersion;
         }
 
-        public List<RemoteMod.Version> getCandidates() {
-            return candidates;
+        public RemoteMod.Version getCandidate() {
+            return candidate;
         }
     }
 

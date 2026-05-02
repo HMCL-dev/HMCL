@@ -21,16 +21,16 @@ import com.google.gson.JsonParseException;
 import com.google.gson.annotations.SerializedName;
 import com.google.gson.stream.JsonReader;
 import com.google.gson.stream.JsonToken;
+import kala.compress.archivers.zip.ZipArchiveEntry;
 import org.jackhuang.hmcl.mod.LocalModFile;
 import org.jackhuang.hmcl.mod.ModLoaderType;
 import org.jackhuang.hmcl.mod.ModManager;
 import org.jackhuang.hmcl.util.Immutable;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
+import org.jackhuang.hmcl.util.tree.ZipFileTree;
 
 import java.io.IOException;
-import java.nio.file.FileSystem;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 
@@ -123,14 +123,14 @@ public final class ForgeOldModMetadata {
         return authors;
     }
 
-    public static LocalModFile fromFile(ModManager modManager, Path modFile, FileSystem fs) throws IOException, JsonParseException {
-        Path mcmod = fs.getPath("mcmod.info");
-        if (Files.notExists(mcmod))
+    public static LocalModFile fromFile(ModManager modManager, Path modFile, ZipFileTree tree) throws IOException, JsonParseException {
+        ZipArchiveEntry mcmod = tree.getEntry("mcmod.info");
+        if (mcmod == null)
             throw new IOException("File " + modFile + " is not a Forge mod.");
 
         List<ForgeOldModMetadata> modList;
 
-        try (var reader = Files.newBufferedReader(mcmod);
+        try (var reader = tree.getBufferedReader(mcmod);
              var jsonReader = new JsonReader(reader)) {
             JsonToken firstToken = jsonReader.peek();
 

@@ -25,7 +25,7 @@ import org.jackhuang.hmcl.util.Pair;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.io.CompressingUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
-import org.jackhuang.hmcl.util.versioning.VersionNumber;
+import org.jackhuang.hmcl.util.tree.ZipFileTree;
 import org.jetbrains.annotations.Unmodifiable;
 
 import java.io.IOException;
@@ -38,7 +38,7 @@ import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 public final class ModManager {
     @FunctionalInterface
     private interface ModMetadataReader {
-        LocalModFile fromFile(ModManager modManager, Path modFile, FileSystem fs) throws IOException, JsonParseException;
+        LocalModFile fromFile(ModManager modManager, Path modFile, ZipFileTree tree) throws IOException, JsonParseException;
     }
 
     private static final Map<String, List<Pair<ModMetadataReader, ModLoaderType>>> READERS;
@@ -47,7 +47,7 @@ public final class ModManager {
         var map = new HashMap<String, List<Pair<ModMetadataReader, ModLoaderType>>>();
         var zipReaders = List.<Pair<ModMetadataReader, ModLoaderType>>of(
                 pair(ForgeNewModMetadata::fromForgeFile, ModLoaderType.FORGE),
-                pair(ForgeNewModMetadata::fromNeoForgeFile, ModLoaderType.NEO_FORGED),
+                pair(ForgeNewModMetadata::fromNeoForgeFile, ModLoaderType.NEO_FORGE),
                 pair(ForgeOldModMetadata::fromFile, ModLoaderType.FORGE),
                 pair(FabricModMetadata::fromFile, ModLoaderType.FABRIC),
                 pair(QuiltModMetadata::fromFile, ModLoaderType.QUILT),
@@ -125,10 +125,10 @@ public final class ModManager {
         LocalModFile modInfo = null;
 
         List<Exception> exceptions = new ArrayList<>();
-        try (FileSystem fs = CompressingUtils.createReadOnlyZipFileSystem(file)) {
+        try (ZipFileTree tree = CompressingUtils.openZipTree(file)) {
             for (ModMetadataReader reader : supportedReaders) {
                 try {
-                    modInfo = reader.fromFile(this, file, fs);
+                    modInfo = reader.fromFile(this, file, tree);
                     break;
                 } catch (Exception e) {
                     exceptions.add(e);
@@ -138,7 +138,7 @@ public final class ModManager {
             if (modInfo == null) {
                 for (ModMetadataReader reader : unsupportedReaders) {
                     try {
-                        modInfo = reader.fromFile(this, file, fs);
+                        modInfo = reader.fromFile(this, file, tree);
                         break;
                     } catch (Exception ignored) {
                     }
@@ -176,11 +176,13 @@ public final class ModManager {
 
         analyzer = LibraryAnalyzer.analyze(getRepository().getResolvedPreservingPatchesVersion(id), null);
 
+        boolean supportSubfolders = analyzer.has(LibraryAnalyzer.LibraryType.FORGE)
+                || analyzer.has(LibraryAnalyzer.LibraryType.QUILT);
+
         if (Files.isDirectory(getModsDirectory())) {
             try (DirectoryStream<Path> modsDirectoryStream = Files.newDirectoryStream(getModsDirectory())) {
                 for (Path subitem : modsDirectoryStream) {
-                    if (Files.isDirectory(subitem) && VersionNumber.isIntVersionNumber(FileUtils.getName(subitem))) {
-                        // If the folder name is game version, forge will search mod in this subdirectory
+                    if (supportSubfolders && Files.isDirectory(subitem) && !".connector".equalsIgnoreCase(subitem.getFileName().toString())) {
                         try (DirectoryStream<Path> subitemDirectoryStream = Files.newDirectoryStream(subitem)) {
                             for (Path subsubitem : subitemDirectoryStream) {
                                 addModInfo(subsubitem);
@@ -363,14 +365,16 @@ public final class ModManager {
     }
 
     /**
-     * Check if "mods" directory has mod file named "fileName" no matter the mod is disabled or not
+     * Check if "mods" directory has mod file named "fileName" no matter the mod is disabled,upgraded or not
      *
      * @param fileName name of the file whose existence is being checked
      * @return true if the file exists
      */
     public boolean hasSimpleMod(String fileName) {
         return Files.exists(getModsDirectory().resolve(StringUtils.removeSuffix(fileName, DISABLED_EXTENSION)))
-                || Files.exists(getModsDirectory().resolve(StringUtils.addSuffix(fileName, DISABLED_EXTENSION)));
+                || Files.exists(getModsDirectory().resolve(StringUtils.addSuffix(fileName, DISABLED_EXTENSION)))
+                || Files.exists(getModsDirectory().resolve(StringUtils.removeSuffix(fileName, OLD_EXTENSION)))
+                || Files.exists(getModsDirectory().resolve(StringUtils.addSuffix(fileName, OLD_EXTENSION)));
     }
 
     public Path getSimpleModPath(String fileName) {

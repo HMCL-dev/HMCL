@@ -21,6 +21,7 @@ import javafx.beans.binding.Bindings;
 import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.beans.value.ObservableValue;
+import javafx.geometry.Pos;
 import javafx.scene.canvas.Canvas;
 import javafx.scene.control.Tooltip;
 import org.jackhuang.hmcl.auth.Account;
@@ -68,17 +69,26 @@ public class AccountAdvancedListItem extends AdvancedListItem {
     };
 
     public AccountAdvancedListItem() {
+        this(null);
+    }
+
+    public AccountAdvancedListItem(Account account) {
         tooltip = new Tooltip();
         FXUtils.installFastTooltip(this, tooltip);
 
         canvas = new Canvas(32, 32);
+        canvas.setMouseTransparent(true);
+        AdvancedListItem.setAlignment(canvas, Pos.CENTER);
+
         setLeftGraphic(canvas);
 
-        setActionButtonVisible(false);
-
-        FXUtils.onScroll(this, Accounts.getAccounts(),
-                accounts -> accounts.indexOf(account.get()),
-                Accounts::setSelectedAccount);
+        if (account != null) {
+            this.accountProperty().set(account);
+        } else {
+            FXUtils.onScroll(this, Accounts.getAccounts(),
+                    accounts -> accounts.indexOf(accountProperty().get()),
+                    Accounts::setSelectedAccount);
+        }
     }
 
     public ObjectProperty<Account> accountProperty() {

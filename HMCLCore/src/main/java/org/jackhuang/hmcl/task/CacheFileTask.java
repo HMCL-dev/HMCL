@@ -50,6 +50,14 @@ public final class CacheFileTask extends FetchTask<Path> {
             throw new IllegalArgumentException(uri.toString());
     }
 
+    public CacheFileTask(@NotNull List<@NotNull URI> uris) {
+        super(uris);
+        setName(uris.get(0).toString());
+
+        if (!uris.stream().allMatch(NetworkUtils::isHttpUri))
+            throw new IllegalArgumentException(uris.toString());
+    }
+
     @Override
     protected EnumCheckETag shouldCheckETag() {
         // Check cache

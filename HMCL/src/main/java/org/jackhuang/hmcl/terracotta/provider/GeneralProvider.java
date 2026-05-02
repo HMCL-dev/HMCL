@@ -17,51 +17,21 @@
  */
 package org.jackhuang.hmcl.terracotta.provider;
 
-import org.jackhuang.hmcl.task.Task;
-import org.jackhuang.hmcl.terracotta.TerracottaNative;
-import org.jackhuang.hmcl.util.platform.OperatingSystem;
-import org.jackhuang.hmcl.util.tree.TarFileTree;
-import org.jetbrains.annotations.Nullable;
+import org.jackhuang.hmcl.terracotta.TerracottaBundle;
 
-import java.io.IOException;
-import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.attribute.PosixFilePermission;
 import java.util.List;
-import java.util.Set;
 
-public final class GeneralProvider implements ITerracottaProvider {
-    private final TerracottaNative target;
+public final class GeneralProvider extends AbstractTerracottaProvider {
+    private final Path executable;
 
-    public GeneralProvider(TerracottaNative target) {
-        this.target = target;
+    public GeneralProvider(TerracottaBundle bundle, Path executable) {
+        super(bundle);
+        this.executable = executable;
     }
 
     @Override
-    public Status status() throws IOException {
-        return target.status();
-    }
-
-    @Override
-    public Task<?> install(Context context, @Nullable TarFileTree tree) throws IOException {
-        Task<?> task = target.install(context, tree);
-        context.bindProgress(task.progressProperty());
-        if (OperatingSystem.CURRENT_OS.isLinuxOrBSD()) {
-            task = task.thenRunAsync(() -> Files.setPosixFilePermissions(target.getPath(), Set.of(
-                    PosixFilePermission.OWNER_READ,
-                    PosixFilePermission.OWNER_WRITE,
-                    PosixFilePermission.OWNER_EXECUTE,
-                    PosixFilePermission.GROUP_READ,
-                    PosixFilePermission.GROUP_EXECUTE,
-                    PosixFilePermission.OTHERS_READ,
-                    PosixFilePermission.OTHERS_EXECUTE
-            )));
-        }
-        return task;
-    }
-
-    @Override
-    public List<String> ofCommandLine(Path path) {
-        return List.of(target.getPath().toString(), "--hmcl", path.toString());
+    public List<String> ofCommandLine(Path portTransfer) {
+        return List.of(executable.toString(), "--hmcl", portTransfer.toString());
     }
 }

@@ -1,3 +1,4 @@
+import org.jackhuang.hmcl.gradle.TerracottaConfigUpgradeTask
 import org.jackhuang.hmcl.gradle.ci.GitHubActionUtils
 import org.jackhuang.hmcl.gradle.ci.JenkinsUtils
 import org.jackhuang.hmcl.gradle.l10n.CheckTranslations
@@ -5,6 +6,8 @@ import org.jackhuang.hmcl.gradle.l10n.CreateLanguageList
 import org.jackhuang.hmcl.gradle.l10n.CreateLocaleNamesResourceBundle
 import org.jackhuang.hmcl.gradle.l10n.UpsideDownTranslate
 import org.jackhuang.hmcl.gradle.mod.ParseModDataTask
+import org.jackhuang.hmcl.gradle.pack.CreateDeb
+import org.jackhuang.hmcl.gradle.pack.ReleaseType
 import org.jackhuang.hmcl.gradle.utils.PropertiesUtils
 import java.net.URI
 import java.nio.file.FileSystems
@@ -27,7 +30,6 @@ val versionType = System.getenv("VERSION_TYPE") ?: if (isOfficial) "nightly" els
 val versionRoot = System.getenv("VERSION_ROOT") ?: projectConfig.getProperty("versionRoot") ?: "3"
 
 val microsoftAuthId = System.getenv("MICROSOFT_AUTH_ID") ?: ""
-val microsoftAuthSecret = System.getenv("MICROSOFT_AUTH_SECRET") ?: ""
 val curseForgeApiKey = System.getenv("CURSEFORGE_API_KEY") ?: ""
 
 val launcherExe = System.getenv("HMCL_LAUNCHER_EXE") ?: ""
@@ -56,15 +58,18 @@ dependencies {
     implementation(project(":HMCLCore"))
     implementation(project(":HMCLBoot"))
     implementation("libs:JFoenix")
-    implementation(libs.twelvemonkeys.imageio.webp)
+    implementation(libs.jwebp)
+    implementation(libs.fxsvgimage)
     implementation(libs.java.info)
     implementation(libs.monet.fx)
+    implementation(libs.nayuki.qrcodegen)
 
     if (launcherExe.isBlank()) {
         implementation(libs.hmclauncher)
     }
 
     embedResources(libs.authlib.injector)
+    embedResources(libs.lwjgl.unsafe.agent)
 }
 
 fun digest(algorithm: String, bytes: ByteArray): ByteArray = MessageDigest.getInstance(algorithm).digest(bytes)
@@ -128,6 +133,7 @@ val addOpens = listOf(
     "javafx.base/javafx.beans.property",
     "javafx.graphics/javafx.css",
     "javafx.graphics/javafx.stage",
+    "javafx.graphics/javafx.scene",
     "javafx.graphics/com.sun.glass.ui",
     "javafx.graphics/com.sun.javafx.stage",
     "javafx.graphics/com.sun.javafx.util",
@@ -151,9 +157,9 @@ val hmclProperties = buildList {
     }
     add("hmcl.version.type" to versionType)
     add("hmcl.microsoft.auth.id" to microsoftAuthId)
-    add("hmcl.microsoft.auth.secret" to microsoftAuthSecret)
     add("hmcl.curseforge.apikey" to curseForgeApiKey)
     add("hmcl.authlib-injector.version" to libs.authlib.injector.get().version!!)
+    add("hmcl.lwjgl-unsafe-agent.version" to libs.lwjgl.unsafe.agent.get().version!!)
 }
 
 val hmclPropertiesFile = layout.buildDirectory.file("hmcl.properties")
@@ -191,7 +197,7 @@ tasks.shadowJar {
     exclude("META-INF/services/javax.imageio.spi.ImageInputStreamSpi")
 
     listOf(
-        "aix-*", "sunos-*", "openbsd-*", "dragonflybsd-*", "freebsd-*", "linux-*", "darwin-*",
+        "aix-*", "sunos-*", "openbsd-*", "dragonflybsd-*", "freebsd-*", "linux-*",
         "*-ppc", "*-ppc64le", "*-s390x", "*-armel",
     ).forEach { exclude("com/sun/jna/$it/**") }
 
@@ -240,7 +246,14 @@ tasks.processResources {
         from(upsideDownTranslate.map { it.outputFile })
         from(createLocaleNamesResourceBundle.map { it.outputDirectory })
     }
+
+    inputs.property("terracotta_version", libs.versions.terracotta)
+    doLast {
+        upgradeTerracottaConfig.get().checkValid()
+    }
 }
+
+fun artifactFile(ext: String) = jarPath.resolveSibling(jarPath.nameWithoutExtension + '.' + ext)
 
 val makeExecutables by tasks.registering {
     val extensions = listOf("exe", "sh")
@@ -248,14 +261,14 @@ val makeExecutables by tasks.registering {
     dependsOn(tasks.jar)
 
     inputs.file(jarPath)
-    outputs.files(extensions.map { File(jarPath.parentFile, jarPath.nameWithoutExtension + '.' + it) })
+    outputs.files(extensions.map { artifactFile(it) })
 
     doLast {
         val jarContent = jarPath.readBytes()
 
         ZipFile(jarPath).use { zipFile ->
             for (extension in extensions) {
-                val output = File(jarPath.parentFile, jarPath.nameWithoutExtension + '.' + extension)
+                val output = artifactFile(extension)
                 val entry = zipFile.getEntry("assets/HMCLauncher.$extension")
                     ?: throw GradleException("HMCLauncher.$extension not found")
 
@@ -270,8 +283,31 @@ val makeExecutables by tasks.registering {
     }
 }
 
+val makeDeb by tasks.registering(CreateDeb::class) {
+    dependsOn(makeExecutables)
+
+    val debFile = layout.file(provider { artifactFile("deb") })
+
+    val debChannel = when (versionType) {
+        "stable" -> ReleaseType.STABLE
+        "dev" -> ReleaseType.DEVELOPMENT
+        else -> ReleaseType.NIGHTLY
+    }
+
+    version.set(project.version.toString())
+    releaseType.set(debChannel)
+    appShFile.set(layout.file(provider { artifactFile("sh") }))
+    iconFile.set(layout.projectDirectory.file("image/hmcl.png"))
+    outputFile.set(debFile)
+
+    doLast {
+        createChecksum(debFile.get().asFile)
+    }
+}
+
 tasks.build {
     dependsOn(makeExecutables)
+    dependsOn(makeDeb)
 }
 
 fun parseToolOptions(options: String?): MutableList<String> {
@@ -360,6 +396,28 @@ tasks.register<JavaExec>("run") {
         logger.quiet("HMCL_JAVA_OPTS: {}", vmOptions)
         logger.quiet("HMCL_JAVA_HOME: {}", hmclJavaHome ?: System.getProperty("java.home"))
     }
+}
+
+// terracotta
+
+val upgradeTerracottaConfig = tasks.register<TerracottaConfigUpgradeTask>("upgradeTerracottaConfig") {
+    val destination = layout.projectDirectory.file("src/main/resources/assets/terracotta.json")
+    val source = layout.projectDirectory.file("terracotta-template.json");
+
+    classifiers.set(
+        listOf(
+            "windows-x86_64", "windows-arm64",
+            "macos-x86_64", "macos-arm64",
+            "linux-x86_64", "linux-arm64", "linux-loongarch64", "linux-riscv64",
+            "freebsd-x86_64"
+        )
+    )
+
+    version.set(libs.versions.terracotta)
+    downloadURL.set($$"https://github.com/burningtnt/Terracotta/releases/download/v${version}/terracotta-${version}-${classifier}-pkg.tar.gz")
+
+    templateFile.set(source)
+    outputFile.set(destination)
 }
 
 // Check Translations

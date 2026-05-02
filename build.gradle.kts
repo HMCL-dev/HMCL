@@ -41,6 +41,8 @@ subprojects {
     @Suppress("UnstableApiUsage")
     tasks.withType<Checkstyle> {
         maxHeapSize.set("2g")
+
+        setConfigProperties("licenseHeaderFile" to rootProject.rootDir.resolve("config/checkstyle/license-header.txt"))
     }
 
     configure<CheckstyleExtension> {

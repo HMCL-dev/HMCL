@@ -24,7 +24,7 @@ import org.jackhuang.hmcl.ui.SVG;
 public final class IconedMenuItem extends IconedItem {
 
     public IconedMenuItem(SVG icon, String text, Runnable action, JFXPopup popup) {
-        super(icon != null ? FXUtils.limitingSize(icon.createIcon(14), 14, 14) : null, text);
+        super(icon != null ? icon.createIcon(14) : null, text);
 
         getStyleClass().setAll("iconed-menu-item");
 

@@ -28,6 +28,7 @@ import org.jackhuang.hmcl.game.Library;
 import org.jackhuang.hmcl.game.Version;
 import org.jackhuang.hmcl.task.GetTask;
 import org.jackhuang.hmcl.task.Task;
+import org.jackhuang.hmcl.util.gson.JsonSerializable;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 
 import java.io.IOException;
@@ -127,6 +128,7 @@ public final class FabricInstallTask extends Task<Version> {
         return new Version(LibraryAnalyzer.LibraryType.FABRIC.getPatchId(), loaderVersion, Version.PRIORITY_LOADER, arguments, mainClass, libraries);
     }
 
+    @JsonSerializable
     public static class FabricInfo {
         private final LoaderInfo loader;
         private final IntermediaryInfo intermediary;
@@ -151,6 +153,7 @@ public final class FabricInstallTask extends Task<Version> {
         }
     }
 
+    @JsonSerializable
     public static class LoaderInfo {
         private final String separator;
         private final int build;
@@ -187,6 +190,7 @@ public final class FabricInstallTask extends Task<Version> {
         }
     }
 
+    @JsonSerializable
     public static class IntermediaryInfo {
         private final String maven;
         private final String version;

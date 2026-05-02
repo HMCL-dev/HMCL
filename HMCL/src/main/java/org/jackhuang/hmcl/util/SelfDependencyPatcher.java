@@ -79,10 +79,11 @@ public final class SelfDependencyPatcher {
     private final byte[] buffer = new byte[IOUtils.DEFAULT_BUFFER_SIZE];
     private final MessageDigest digest = DigestUtils.getDigest("SHA-1");
 
-    private SelfDependencyPatcher() throws IncompatibleVersionException {
+    private SelfDependencyPatcher() throws PatchException {
         // We can only self-patch JavaFX on specific platform.
         if (dependencies == null) {
-            throw new IncompatibleVersionException();
+            throw new PatchException("Unsupported platform: operating system %s, architecture %s".formatted(
+                    System.getProperty("os.name"), System.getProperty("os.arch")));
         }
 
         final String customUrl = System.getProperty("hmcl.openjfx.repo");
@@ -159,18 +160,12 @@ public final class SelfDependencyPatcher {
     /**
      * Patch in any missing dependencies, if any.
      */
-    public static void patch() throws PatchException, IncompatibleVersionException, CancellationException {
+    public static void patch() throws PatchException, CancellationException {
         // Do nothing if JavaFX is detected
         try {
-            try {
-                Class.forName("javafx.application.Application");
-                return;
-            } catch (Exception ignored) {
-            }
-        } catch (UnsupportedClassVersionError error) {
-            // Loading the JavaFX class was unsupported.
-            // We are probably on 8 and its on 11
-            throw new IncompatibleVersionException();
+            Class.forName("javafx.application.Application");
+            return;
+        } catch (Exception ignored) {
         }
 
         SelfDependencyPatcher patcher = new SelfDependencyPatcher();
@@ -378,12 +373,13 @@ public final class SelfDependencyPatcher {
     }
 
     public static class PatchException extends Exception {
+        PatchException(String message) {
+            super(message);
+        }
+
         PatchException(String message, Throwable cause) {
             super(message, cause);
         }
-    }
-
-    public static class IncompatibleVersionException extends Exception {
     }
 
     public static class ProgressFrame extends JDialog {

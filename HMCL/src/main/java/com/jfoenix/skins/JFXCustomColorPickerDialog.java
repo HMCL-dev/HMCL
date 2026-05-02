@@ -34,14 +34,21 @@ import javafx.geometry.Insets;
 import javafx.geometry.Rectangle2D;
 import javafx.scene.Scene;
 import javafx.scene.control.Tab;
+import javafx.scene.control.TextFormatter;
 import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
 import javafx.stage.*;
 import javafx.util.Duration;
+import org.glavo.monetfx.ColorScheme;
 import org.jackhuang.hmcl.setting.StyleSheets;
+import org.jackhuang.hmcl.theme.Themes;
+import org.jackhuang.hmcl.util.StringUtils;
 
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.regex.Pattern;
+
+import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 /**
  * @author Shadi Shaheen
@@ -75,7 +82,7 @@ public class JFXCustomColorPickerDialog extends StackPane {
 
         // create JFX Decorator
         pickerDecorator = new JFXDecorator(dialog, this, false, false, false);
-        pickerDecorator.setOnCloseButtonAction(this::updateColor);
+        pickerDecorator.setOnCloseButtonAction(this::close);
         pickerDecorator.setPickOnBounds(false);
         customScene = new Scene(pickerDecorator, Color.TRANSPARENT);
         StyleSheets.init(customScene);
@@ -95,14 +102,17 @@ public class JFXCustomColorPickerDialog extends StackPane {
 
         rgbField.getStyleClass().add("custom-color-field");
         rgbField.setPromptText("RGB Color");
+        rgbField.setTextFormatter(colorCharFormatter());
         rgbField.textProperty().addListener((o, oldVal, newVal) -> updateColorFromUserInput(newVal));
 
         hsbField.getStyleClass().add("custom-color-field");
         hsbField.setPromptText("HSB Color");
+        hsbField.setTextFormatter(colorCharFormatter());
         hsbField.textProperty().addListener((o, oldVal, newVal) -> updateColorFromUserInput(newVal));
 
         hexField.getStyleClass().add("custom-color-field");
         hexField.setPromptText("#HEX Color");
+        hexField.setTextFormatter(colorCharFormatter());
         hexField.textProperty().addListener((o, oldVal, newVal) -> updateColorFromUserInput(newVal));
 
         StackPane tabContent = new StackPane();
@@ -116,9 +126,9 @@ public class JFXCustomColorPickerDialog extends StackPane {
         Tab hexTab = new Tab("HEX");
         hexTab.setContent(hexField);
 
+        tabs.getTabs().add(hexTab);
         tabs.getTabs().add(rgbTab);
         tabs.getTabs().add(hsbTab);
-        tabs.getTabs().add(hexTab);
 
         curvedColorPicker.selectedPath.addListener((o, oldVal, newVal) -> {
             if (paraTransition != null) {
@@ -147,6 +157,22 @@ public class JFXCustomColorPickerDialog extends StackPane {
             paraTransition.play();
         });
 
+        container.getChildren().add(tabs);
+
+        HBox actionsHBox = new HBox();
+        actionsHBox.getStyleClass().add("jfx-color-dialog-actions");
+
+        JFXButton acceptButton = new JFXButton(i18n("button.ok"));
+        acceptButton.setOnAction(event -> updateColor());
+        acceptButton.getStyleClass().add("jfx-color-dialog-accept");
+
+        JFXButton cancelButton = new JFXButton(i18n("button.cancel"));
+        cancelButton.setOnAction(event -> close());
+        cancelButton.getStyleClass().add("jfx-color-dialog-cancel");
+
+        actionsHBox.getChildren().addAll(acceptButton, cancelButton);
+        container.getChildren().add(actionsHBox);
+
         initRun = () -> {
             // change tabs labels font color according to the selected color
             pane.backgroundProperty().addListener((o, oldVal, newVal) -> {
@@ -173,7 +199,7 @@ public class JFXCustomColorPickerDialog extends StackPane {
                             (int) (newColor.getRed() * 255),
                             (int) (newColor.getGreen() * 255),
                             (int) (newColor.getBlue() * 255));
-                    String rgb = String.format("rgba(%d, %d, %d, 1)",
+                    String rgb = String.format("rgb(%d, %d, %d)",
                             (int) (newColor.getRed() * 255),
                             (int) (newColor.getGreen() * 255),
                             (int) (newColor.getBlue() * 255));
@@ -226,7 +252,13 @@ public class JFXCustomColorPickerDialog extends StackPane {
                 hexField.focusColorProperty().bind(Bindings.createObjectBinding(() -> {
                     return pane.getBackground().getFills().get(0).getFill();
                 }, pane.backgroundProperty()));
-
+                acceptButton.textFillProperty().bind(Bindings.createObjectBinding(() -> {
+                    Color fill = (Color) pane.getBackground().getFills().get(0).getFill();
+                    return ColorScheme.newBuilder(Themes.getColorScheme())
+                            .setPrimaryColorSeed(fill)
+                            .build()
+                            .getPrimary();
+                }, pane.backgroundProperty()));
 
                 ((Pane) pickerDecorator.lookup(".jfx-decorator-buttons-container")).backgroundProperty()
                         .bind(Bindings.createObjectBinding(() -> {
@@ -255,9 +287,6 @@ public class JFXCustomColorPickerDialog extends StackPane {
                         }, pane.backgroundProperty()));
             });
         };
-
-
-        container.getChildren().add(tabs);
 
         this.getChildren().add(container);
         this.setPadding(new Insets(0));
@@ -288,7 +317,11 @@ public class JFXCustomColorPickerDialog extends StackPane {
         if (!systemChange) {
             userChange = true;
             try {
-                curvedColorPicker.setColor(Color.valueOf(colorWebString));
+                Color color = Color.valueOf(colorWebString);
+                if (color.getOpacity() != 1.0) {
+                    color = Color.color(color.getRed(), color.getGreen(), color.getBlue());
+                }
+                curvedColorPicker.setColor(color);
             } catch (IllegalArgumentException ignored) {
                 // if color is not valid then do nothing
             }
@@ -303,6 +336,9 @@ public class JFXCustomColorPickerDialog extends StackPane {
 
     public void setCurrentColor(Color currentColor) {
         this.currentColorProperty.set(currentColor);
+        if (curvedColorPicker != null && currentColor != null) {
+            curvedColorPicker.setColor(currentColor);
+        }
     }
 
     Color getCurrentColor() {
@@ -403,5 +439,21 @@ public class JFXCustomColorPickerDialog extends StackPane {
         double minHeight = Math.max(0, computeMinHeight(getWidth()) + (dialog.getHeight() - customScene.getHeight()));
         dialog.setMinWidth(minWidth);
         dialog.setMinHeight(minHeight);
+    }
+
+    private static final Pattern COLOR_CHAR_PATTERN = Pattern.compile("[0-9a-zA-Z#(),%.\\s]*");
+
+    private static TextFormatter<String> colorCharFormatter() {
+        return new TextFormatter<>(change -> {
+            if (!change.isContentChange()) return change;
+
+            String ins = StringUtils.toHalfWidth(change.getText());
+            if (!COLOR_CHAR_PATTERN.matcher(ins).matches()) return null;
+            String full = StringUtils.toHalfWidth(change.getControlNewText());
+            long h = full.chars().filter(c -> c == '#').count();
+            if (h > 1 || (h == 1 && full.indexOf('#') != 0)) return null;
+            change.setText(ins);
+            return change;
+        });
     }
 }

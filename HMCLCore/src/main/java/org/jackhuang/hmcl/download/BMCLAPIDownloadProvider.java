@@ -22,6 +22,8 @@ import org.jackhuang.hmcl.download.fabric.FabricAPIVersionList;
 import org.jackhuang.hmcl.download.fabric.FabricVersionList;
 import org.jackhuang.hmcl.download.forge.ForgeBMCLVersionList;
 import org.jackhuang.hmcl.download.game.GameVersionList;
+import org.jackhuang.hmcl.download.legacyfabric.LegacyFabricAPIVersionList;
+import org.jackhuang.hmcl.download.legacyfabric.LegacyFabricVersionList;
 import org.jackhuang.hmcl.download.liteloader.LiteLoaderBMCLVersionList;
 import org.jackhuang.hmcl.download.neoforge.NeoForgeBMCLVersionList;
 import org.jackhuang.hmcl.download.optifine.OptiFineBMCLVersionList;
@@ -31,7 +33,6 @@ import org.jackhuang.hmcl.util.Pair;
 import org.jackhuang.hmcl.util.io.NetworkUtils;
 
 import java.net.URI;
-import java.util.Arrays;
 import java.util.List;
 
 import static org.jackhuang.hmcl.util.Pair.pair;
@@ -47,12 +48,15 @@ public final class BMCLAPIDownloadProvider implements DownloadProvider {
     private final FabricAPIVersionList fabricApi;
     private final ForgeBMCLVersionList forge;
     private final CleanroomVersionList cleanroom;
+    private final LegacyFabricVersionList legacyFabric;
+    private final LegacyFabricAPIVersionList legacyFabricApi;
     private final NeoForgeBMCLVersionList neoforge;
     private final LiteLoaderBMCLVersionList liteLoader;
     private final OptiFineBMCLVersionList optifine;
     private final QuiltVersionList quilt;
     private final QuiltAPIVersionList quiltApi;
     private final List<Pair<String, String>> replacement;
+    private final List<Pair<String, String>> fallbackReplacement;
 
     public BMCLAPIDownloadProvider(String apiRoot) {
         this.apiRoot = apiRoot;
@@ -66,7 +70,10 @@ public final class BMCLAPIDownloadProvider implements DownloadProvider {
         this.optifine = new OptiFineBMCLVersionList(apiRoot);
         this.quilt = new QuiltVersionList(this);
         this.quiltApi = new QuiltAPIVersionList(this);
-        this.replacement = Arrays.asList(
+        this.legacyFabric = new LegacyFabricVersionList(this);
+        this.legacyFabricApi = new LegacyFabricAPIVersionList(this);
+
+        this.replacement = List.of(
                 pair("https://bmclapi2.bangbang93.com", apiRoot),
                 pair("https://launchermeta.mojang.com", apiRoot),
                 pair("https://piston-meta.mojang.com", apiRoot),
@@ -87,12 +94,14 @@ public final class BMCLAPIDownloadProvider implements DownloadProvider {
                 pair("https://hmcl.glavo.site/metadata/cleanroom", "https://alist.8mi.tech/d/mirror/HMCL-Metadata/Auto/cleanroom"),
                 pair("https://hmcl.glavo.site/metadata/fmllibs", "https://alist.8mi.tech/d/mirror/HMCL-Metadata/Auto/fmllibs"),
                 pair("https://zkitefly.github.io/unlisted-versions-of-minecraft", "https://alist.8mi.tech/d/mirror/unlisted-versions-of-minecraft/Auto")
-//                // https://github.com/mcmod-info-mirror/mcim-rust-api
-//                pair("https://api.modrinth.com", "https://mod.mcimirror.top/modrinth"),
-//                pair("https://cdn.modrinth.com", "https://mod.mcimirror.top"),
-//                pair("https://api.curseforge.com", "https://mod.mcimirror.top/curseforge"),
-//                pair("https://edge.forgecdn.net", "https://mod.mcimirror.top"),
-//                pair("https://mediafilez.forgecdn.net", "https://mod.mcimirror.top")
+        );
+
+        this.fallbackReplacement = List.of(
+                // https://github.com/mcmod-info-mirror/mcim-rust-api
+                pair("https://api.modrinth.com", "https://mod.mcimirror.top/modrinth"),
+                pair("https://cdn.modrinth.com", "https://mod.mcimirror.top"),
+                pair("https://api.curseforge.com", "https://mod.mcimirror.top/curseforge"),
+                pair("https://edge.forgecdn.net", "https://mod.mcimirror.top")
         );
     }
 
@@ -112,41 +121,53 @@ public final class BMCLAPIDownloadProvider implements DownloadProvider {
 
     @Override
     public VersionList<?> getVersionListById(String id) {
-        switch (id) {
-            case "game":
-                return game;
-            case "fabric":
-                return fabric;
-            case "fabric-api":
-                return fabricApi;
-            case "forge":
-                return forge;
-            case "cleanroom":
-                return cleanroom;
-            case "neoforge":
-                return neoforge;
-            case "liteloader":
-                return liteLoader;
-            case "optifine":
-                return optifine;
-            case "quilt":
-                return quilt;
-            case "quilt-api":
-                return quiltApi;
-            default:
-                throw new IllegalArgumentException("Unrecognized version list id: " + id);
-        }
+        return switch (id) {
+            case "game" -> game;
+            case "fabric" -> fabric;
+            case "fabric-api" -> fabricApi;
+            case "forge" -> forge;
+            case "cleanroom" -> cleanroom;
+            case "neoforge" -> neoforge;
+            case "liteloader" -> liteLoader;
+            case "optifine" -> optifine;
+            case "quilt" -> quilt;
+            case "quilt-api" -> quiltApi;
+            case "legacyfabric" -> legacyFabric;
+            case "legacyfabric-api" -> legacyFabricApi;
+            default -> throw new IllegalArgumentException("Unrecognized version list id: " + id);
+        };
     }
 
-    @Override
-    public String injectURL(String baseURL) {
+    private static String injectURL(List<Pair<String, String>> replacement, String baseURL) {
         for (Pair<String, String> pair : replacement) {
             if (baseURL.startsWith(pair.getKey())) {
                 return pair.getValue() + baseURL.substring(pair.getKey().length());
             }
         }
-
         return baseURL;
+    }
+
+    @Override
+    public String injectURL(String baseURL) {
+        return injectURL(replacement, baseURL);
+    }
+
+    @Override
+    public List<URI> injectURLWithCandidates(String baseURL) {
+        String injected = injectURL(replacement, baseURL);
+        if (injected.equals(baseURL)) {
+            String fallbackInjected = injectURL(fallbackReplacement, baseURL);
+            if (fallbackInjected.equals(baseURL)) {
+                return List.of(NetworkUtils.toURI(baseURL));
+            } else {
+                return List.of(
+                        NetworkUtils.toURI(baseURL),
+                        NetworkUtils.toURI(fallbackInjected)
+                );
+            }
+        } else {
+            return List.of(NetworkUtils.toURI(injected));
+        }
     }
 
     @Override

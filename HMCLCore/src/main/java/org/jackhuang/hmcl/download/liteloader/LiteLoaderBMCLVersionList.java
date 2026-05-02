@@ -22,6 +22,7 @@ import org.jackhuang.hmcl.download.RemoteVersion;
 import org.jackhuang.hmcl.download.VersionList;
 import org.jackhuang.hmcl.task.GetTask;
 import org.jackhuang.hmcl.task.Task;
+import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.io.NetworkUtils;
 
 import java.util.Collections;
@@ -64,11 +65,13 @@ public final class LiteLoaderBMCLVersionList extends VersionList<LiteLoaderRemot
                 NetworkUtils.withQuery(downloadProvider.getApiRoot() + "/liteloader/list", Map.of(
                         "mcversion", gameVersion
                 )))
-                .thenGetJsonAsync(LiteLoaderBMCLVersion.class)
+                .thenApplyAsync(json -> JsonUtils.fromMaybeMalformedJson(json, LiteLoaderBMCLVersion.class))
                 .thenAcceptAsync(v -> {
                     lock.writeLock().lock();
                     try {
                         versions.clear();
+                        if (v == null)
+                            return;
                         versions.put(gameVersion, new LiteLoaderRemoteVersion(
                                 gameVersion, v.version, RemoteVersion.Type.UNCATEGORIZED,
                                 Collections.singletonList(NetworkUtils.withQuery(

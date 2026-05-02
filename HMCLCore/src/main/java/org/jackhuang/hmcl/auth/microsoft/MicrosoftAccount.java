@@ -47,10 +47,10 @@ public final class MicrosoftAccount extends OAuthAccount {
         this.characterUUID = requireNonNull(session.getProfile().getId());
     }
 
-    protected MicrosoftAccount(MicrosoftService service, CharacterSelector characterSelector) throws AuthenticationException {
+    protected MicrosoftAccount(MicrosoftService service, OAuth.GrantFlow flow) throws AuthenticationException {
         this.service = requireNonNull(service);
 
-        MicrosoftSession acquiredSession = service.authenticate();
+        MicrosoftSession acquiredSession = service.authenticate(flow);
         if (acquiredSession.getProfile() == null) {
             session = service.refresh(acquiredSession);
         } else {
@@ -105,7 +105,7 @@ public final class MicrosoftAccount extends OAuthAccount {
 
     @Override
     public AuthInfo logInWhenCredentialsExpired() throws AuthenticationException {
-        MicrosoftSession acquiredSession = service.authenticate();
+        MicrosoftSession acquiredSession = service.authenticate(OAuth.GrantFlow.DEVICE);
         if (!Objects.equals(characterUUID, acquiredSession.getProfile().getId())) {
             throw new WrongAccountException(characterUUID, acquiredSession.getProfile().getId());
         }

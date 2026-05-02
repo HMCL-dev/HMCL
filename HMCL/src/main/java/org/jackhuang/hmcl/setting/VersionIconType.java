@@ -36,14 +36,16 @@ public enum VersionIconType {
     FURNACE("/assets/img/furnace.png"),
     QUILT("/assets/img/quilt.png"),
     APRIL_FOOLS("/assets/img/april_fools.png"),
-    CLEANROOM("/assets/img/cleanroom.png");
+    CLEANROOM("/assets/img/cleanroom.png"),
+    LEGACY_FABRIC("/assets/img/legacyfabric.png")
+    ;
 
     // Please append new items at last
 
     public static VersionIconType getIconType(ModLoaderType modLoaderType) {
         return switch (modLoaderType) {
             case FORGE -> VersionIconType.FORGE;
-            case NEO_FORGED -> VersionIconType.NEO_FORGE;
+            case NEO_FORGE -> VersionIconType.NEO_FORGE;
             case FABRIC -> VersionIconType.FABRIC;
             case QUILT -> VersionIconType.QUILT;
             case LITE_LOADER -> VersionIconType.CHICKEN;
