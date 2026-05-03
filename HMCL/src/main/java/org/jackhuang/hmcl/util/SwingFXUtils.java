@@ -74,10 +74,6 @@ public final class SwingFXUtils {
             }
         }
         switch (fxFormat.getType()) {
-            default:
-            case BYTE_BGRA_PRE:
-            case INT_ARGB_PRE:
-                return BufferedImage.TYPE_INT_ARGB_PRE;
             case BYTE_BGRA:
             case INT_ARGB:
                 return BufferedImage.TYPE_INT_ARGB;
@@ -85,6 +81,10 @@ public final class SwingFXUtils {
                 return BufferedImage.TYPE_INT_RGB;
             case BYTE_INDEXED:
                 return (fxFormat.isPremultiplied() ? BufferedImage.TYPE_INT_ARGB_PRE : BufferedImage.TYPE_INT_ARGB);
+            case BYTE_BGRA_PRE:
+            case INT_ARGB_PRE:
+            default:
+                return BufferedImage.TYPE_INT_ARGB_PRE;
         }
     }
 
@@ -195,7 +195,7 @@ public final class SwingFXUtils {
             bimg = new BufferedImage(iw, ih, prefBimgType);
         }
         DataBufferInt db = (DataBufferInt) bimg.getRaster().getDataBuffer();
-        int data[] = db.getData();
+        int[] data = db.getData();
         int offset = bimg.getRaster().getDataBuffer().getOffset();
         int scan = 0;
         SampleModel sm = bimg.getRaster().getSampleModel();
