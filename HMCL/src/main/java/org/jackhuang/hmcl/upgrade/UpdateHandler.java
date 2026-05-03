@@ -106,18 +106,23 @@ public final class UpdateHandler {
         }
 
         Controllers.dialog(new UpgradeDialog(version, () -> {
-            Path downloaded;
-            try {
-                downloaded = Files.createTempFile("hmcl-update-", ".jar");
-            } catch (IOException e) {
-                LOG.warning("Failed to create temp file", e);
-                return;
+            Path downloaded = version.downloadedFile();
+            TaskExecutor executor;
+            if (downloaded != null && Files.isRegularFile(downloaded)) {
+                executor = Task.completed(null).executor();
+            } else {
+                try {
+                    downloaded = Files.createTempFile("hmcl-update-", ".jar");
+                } catch (IOException e) {
+                    LOG.warning("Failed to create temp file", e);
+                    return;
+                }
+
+                Task<?> task = new HMCLDownloadTask(version, downloaded);
+                executor = task.executor();
+                Controllers.taskDialog(executor, i18n("message.downloading"), TaskCancellationAction.NORMAL);
             }
-
-            Task<?> task = new HMCLDownloadTask(version, downloaded);
-
-            TaskExecutor executor = task.executor();
-            Controllers.taskDialog(executor, i18n("message.downloading"), TaskCancellationAction.NORMAL);
+            final Path finalDownloaded = downloaded;
             thread(() -> {
                 boolean success = executor.test();
 
@@ -150,7 +155,7 @@ public final class UpdateHandler {
                             // Ignore
                         }
 
-                        requestUpdate(downloaded, getCurrentLocation());
+                        requestUpdate(finalDownloaded, getCurrentLocation());
                         EntryPoint.exit(0);
                     } catch (IOException e) {
                         LOG.warning("Failed to update to " + version, e);

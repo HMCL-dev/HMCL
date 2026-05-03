@@ -21,6 +21,7 @@ import com.jfoenix.controls.JFXButton;
 import javafx.beans.InvalidationListener;
 import javafx.beans.WeakInvalidationListener;
 import javafx.beans.binding.Bindings;
+import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.StringProperty;
 import javafx.css.PseudoClass;
@@ -173,17 +174,13 @@ public final class SettingsPage extends ScrollPane {
                 settingsPane.getContent().add(updatePane);
             }
 
+            BooleanProperty preview;
             {
                 LineToggleButton previewPane = new LineToggleButton();
                 previewPane.setTitle(i18n("update.preview"));
                 previewPane.setSubtitle(i18n("update.preview.subtitle"));
                 previewPane.selectedProperty().bindBidirectional(config().acceptPreviewUpdateProperty());
-
-                InvalidationListener checkUpdateListener = e -> {
-                    UpdateChecker.requestCheckUpdate(updateChannel.get(), previewPane.isSelected());
-                };
-                updateChannel.addListener(checkUpdateListener);
-                previewPane.selectedProperty().addListener(checkUpdateListener);
+                preview = previewPane.selectedProperty();
 
                 settingsPane.getContent().add(previewPane);
             }
@@ -194,6 +191,26 @@ public final class SettingsPage extends ScrollPane {
                 disableAutoShowUpdateDialogPane.setSubtitle(i18n("update.disable_auto_show_update_dialog.subtitle"));
                 disableAutoShowUpdateDialogPane.selectedProperty().bindBidirectional(config().disableAutoShowUpdateDialogProperty());
                 settingsPane.getContent().add(disableAutoShowUpdateDialogPane);
+            }
+
+            BooleanProperty autoDownloadUpdate;
+            {
+                LineToggleButton autoDownloadUpdatePane = new LineToggleButton();
+                autoDownloadUpdatePane.setTitle(i18n("update.auto_download"));
+                autoDownloadUpdatePane.setSubtitle(i18n("update.auto_download.subtitle"));
+                autoDownloadUpdatePane.selectedProperty().bindBidirectional(config().autoDownloadUpdateProperty());
+                autoDownloadUpdate = autoDownloadUpdatePane.selectedProperty();
+
+                settingsPane.getContent().add(autoDownloadUpdatePane);
+            }
+
+            {
+                InvalidationListener checkUpdateListener = e -> {
+                    UpdateChecker.requestCheckUpdate(updateChannel.get(), preview.get(), autoDownloadUpdate.get());
+                };
+                updateChannel.addListener(checkUpdateListener);
+                preview.addListener(checkUpdateListener);
+                autoDownloadUpdate.addListener(checkUpdateListener);
             }
 
             if (AprilFools.isShowAprilFoolsSettings()) {
