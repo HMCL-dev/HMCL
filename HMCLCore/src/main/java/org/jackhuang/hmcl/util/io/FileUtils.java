@@ -490,7 +490,7 @@ public final class FileUtils {
     }
 
     public static Optional<Path> tryGetPath(String first, String... more) {
-        if (first == null) return Optional.empty();
+        if (first == null || first.isEmpty()) return Optional.empty();
         try {
             return Optional.of(Paths.get(first, more));
         } catch (InvalidPathException e) {

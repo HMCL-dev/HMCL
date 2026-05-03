@@ -87,7 +87,7 @@ public abstract class SkinPageBase<T extends Account> extends DecoratorAnimatedP
             var fxCapeImage = skinObjectProperty().get().cape().image();
             var bufferedCapeImage = SwingFXUtils.fromFXImage(fxCapeImage, null);
             try {
-                savePng(bufferedCapeImage);
+                savePng(bufferedCapeImage, "cape");
             } catch (Exception e) {
                 LOG.warning("Failed to export skin img", e);
                 Controllers.dialog(i18n("message.failed") + "\n" + StringUtils.getStackTrace(e), i18n("message.failed"), MessageDialogPane.MessageType.ERROR);
@@ -98,7 +98,7 @@ public abstract class SkinPageBase<T extends Account> extends DecoratorAnimatedP
             var fxSkinImage = skinObjectProperty().get().skin().image();
             var bufferedSkinImage = SwingFXUtils.fromFXImage(fxSkinImage, null);
             try {
-                savePng(bufferedSkinImage);
+                savePng(bufferedSkinImage, "skin");
             } catch (Exception e) {
                 LOG.warning("Failed to export skin img", e);
                 Controllers.dialog(i18n("message.failed") + "\n" + StringUtils.getStackTrace(e), i18n("message.failed"), MessageDialogPane.MessageType.ERROR);
@@ -119,11 +119,11 @@ public abstract class SkinPageBase<T extends Account> extends DecoratorAnimatedP
         this.state.set(State.fromTitle(i18n("account.skin.manage", account.getUsername())));
     }
 
-    public void savePng(RenderedImage image) throws IOException {
+    public void savePng(RenderedImage image, String name) throws IOException {
         FileChooser fileChooser = new FileChooser();
         fileChooser.setTitle(i18n("button.save_as"));
         fileChooser.getExtensionFilters().add(new FileChooser.ExtensionFilter(i18n("file"), "*.png"));
-        fileChooser.setInitialFileName("skin.png");
+        fileChooser.setInitialFileName(name + ".png");
         File target = fileChooser.showSaveDialog(Controllers.getStage());
         if (target == null) return;
         ImageIO.write(image, "png", target);
