@@ -128,18 +128,18 @@ public class SkinMultipleCubes extends Group {
             b.setTranslateY(-((height - 1) / 2.0 - p.getY()) * b.getHeight());
             b.setTranslateZ(-(depth * length + thick) / 2.0);
         }));
-        // LEFT  (左面，X-) —— 原来在 X+，改到 X-
+        // LEFT
         getChildren().add(new Face(skin, start_x + width_interval + depth_interval, start_y + depth_interval, depth, height, interval, false, false,
                 () -> new Box(thick, length, length), (b, p) -> {
-            b.setTranslateX(-(width * length + thick) / 2.0);   // ← 改为负值
+            b.setTranslateX(-(width * length + thick) / 2.0);
             b.setTranslateY(-((height - 1) / 2.0 - p.getY()) * b.getHeight());
             b.setTranslateZ(((depth - 1) / 2.0 - p.getX()) * b.getDepth());
         }));
 
-        // RIGHT (右面，X+) —— 原来在 X-，改到 X+
+        // RIGHT
         getChildren().add(new Face(skin, start_x, start_y + depth_interval, depth, height, interval, true, false,
                 () -> new Box(thick, length, length), (b, p) -> {
-            b.setTranslateX((width * length + thick) / 2.0);    // ← 改为正值
+            b.setTranslateX((width * length + thick) / 2.0);
             b.setTranslateY(-((height - 1) / 2.0 - p.getY()) * b.getHeight());
             b.setTranslateZ(((depth - 1) / 2.0 - p.getX()) * b.getDepth());
         }));
