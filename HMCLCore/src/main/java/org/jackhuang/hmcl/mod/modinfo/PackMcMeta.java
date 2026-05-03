@@ -151,17 +151,17 @@ public record PackMcMeta(@SerializedName("pack") PackInfo pack) implements Valid
             return this.majorVersion < 0 || this.minorVersion < 0;
         }
 
-        public static PackVersion fromJson(JsonElement element) throws JsonParseException {
+        public static PackVersion fromJson(JsonElement element, boolean anyMinor) throws JsonParseException {
             if (element == null || element.isJsonNull()) {
                 return UNSPECIFIED;
             }
 
             try {
                 if (element instanceof JsonPrimitive primitive && primitive.isNumber()) {
-                    return new PackVersion(element.getAsInt(), 0);
+                    return new PackVersion(element.getAsInt(), anyMinor ? Integer.MAX_VALUE : 0);
                 } else if (element instanceof JsonArray jsonArray) {
                     if (jsonArray.size() == 1 && jsonArray.get(0) instanceof JsonPrimitive) {
-                        return new PackVersion(jsonArray.get(0).getAsInt(), 0);
+                        return new PackVersion(jsonArray.get(0).getAsInt(), anyMinor ? Integer.MAX_VALUE : 0);
                     } else if (jsonArray.size() == 2 && jsonArray.get(0) instanceof JsonPrimitive && jsonArray.get(1) instanceof JsonPrimitive) {
                         return new PackVersion(jsonArray.get(0).getAsInt(), jsonArray.get(1).getAsInt());
                     } else {
@@ -243,8 +243,8 @@ public record PackMcMeta(@SerializedName("pack") PackInfo pack) implements Valid
                 packFormat = 0;
             }
             SupportedFormats supportedFormats = SupportedFormats.fromJson(packInfo.get("supported_formats"));
-            PackVersion minVersion = PackVersion.fromJson(packInfo.get("min_format"));
-            PackVersion maxVersion = PackVersion.fromJson(packInfo.get("max_format"));
+            PackVersion minVersion = PackVersion.fromJson(packInfo.get("min_format"), false);
+            PackVersion maxVersion = PackVersion.fromJson(packInfo.get("max_format"), true);
 
             List<LocalAddonFile.Description.Part> parts = parseDescription(packInfo.get("description"));
             return new PackInfo(packFormat, supportedFormats, minVersion, maxVersion, new LocalAddonFile.Description(parts));
