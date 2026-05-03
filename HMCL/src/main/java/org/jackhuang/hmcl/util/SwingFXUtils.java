@@ -42,10 +42,12 @@ import java.nio.IntBuffer;
 /**
  * This class provides utility methods for converting data types between
  * Swing/AWT and JavaFX formats.
+ *
  * @since JavaFX 2.2
  */
-public class SwingFXUtils {
-    private SwingFXUtils() {} // no instances
+public final class SwingFXUtils {
+    private SwingFXUtils() {
+    } // no instances
 
     /**
      * Determine the optimal BufferedImage type to use for the specified
@@ -53,22 +55,14 @@ public class SwingFXUtils {
      * as a potential default storage space if it is not null and is compatible.
      *
      * @param fxFormat the PixelFormat of the source FX Image
-     * @param bimg an optional existing {@code BufferedImage} to be used
-     *             for storage if it is compatible, or null
+     * @param bimg     an optional existing {@code BufferedImage} to be used
+     *                 for storage if it is compatible, or null
      * @return
      */
-    static int
-    getBestBufferedImageType(PixelFormat<?> fxFormat, BufferedImage bimg,
-                             boolean isOpaque)
-    {
+    static int getBestBufferedImageType(PixelFormat<?> fxFormat, BufferedImage bimg, boolean isOpaque) {
         if (bimg != null) {
             int bimgType = bimg.getType();
-            if (bimgType == BufferedImage.TYPE_INT_ARGB ||
-                    bimgType == BufferedImage.TYPE_INT_ARGB_PRE ||
-                    (isOpaque &&
-                            (bimgType == BufferedImage.TYPE_INT_BGR ||
-                                    bimgType == BufferedImage.TYPE_INT_RGB)))
-            {
+            if (bimgType == BufferedImage.TYPE_INT_ARGB || bimgType == BufferedImage.TYPE_INT_ARGB_PRE || (isOpaque && (bimgType == BufferedImage.TYPE_INT_BGR || bimgType == BufferedImage.TYPE_INT_RGB))) {
                 // We will allow the caller to give us a BufferedImage
                 // that has an alpha channel, but we might not otherwise
                 // construct one ourselves.
@@ -90,9 +84,7 @@ public class SwingFXUtils {
             case BYTE_RGB:
                 return BufferedImage.TYPE_INT_RGB;
             case BYTE_INDEXED:
-                return (fxFormat.isPremultiplied()
-                        ? BufferedImage.TYPE_INT_ARGB_PRE
-                        : BufferedImage.TYPE_INT_ARGB);
+                return (fxFormat.isPremultiplied() ? BufferedImage.TYPE_INT_ARGB_PRE : BufferedImage.TYPE_INT_ARGB);
         }
     }
 
@@ -104,9 +96,7 @@ public class SwingFXUtils {
      *             a {@code PixelReader<IntBuffer>#getPixels()} operation.
      * @return
      */
-    private static WritablePixelFormat<IntBuffer>
-    getAssociatedPixelFormat(BufferedImage bimg)
-    {
+    private static WritablePixelFormat<IntBuffer> getAssociatedPixelFormat(BufferedImage bimg) {
         switch (bimg.getType()) {
             // We lie here for xRGB, but we vetted that the src data was opaque
             // so we can ignore the alpha.  We use ArgbPre instead of Argb
@@ -126,7 +116,7 @@ public class SwingFXUtils {
     private static boolean checkFXImageOpaque(PixelReader pr, int iw, int ih) {
         for (int x = 0; x < iw; x++) {
             for (int y = 0; y < ih; y++) {
-                Color color = pr.getColor(x,y);
+                Color color = pr.getColor(x, y);
                 if (color.getOpacity() != 1.0) {
                     return false;
                 }
@@ -157,11 +147,11 @@ public class SwingFXUtils {
      * is null, is too small or of a type which the image pixels cannot
      * be easily converted into.
      *
-     * @param img the JavaFX {@code Image} to be converted
+     * @param img  the JavaFX {@code Image} to be converted
      * @param bimg an optional {@code BufferedImage} object that may be
-     *        used to store the returned pixel data
+     *             used to store the returned pixel data
      * @return a {@code BufferedImage} containing a snapshot of the JavaFX
-     *         {@code Image}, or null if the {@code Image} is not readable.
+     * {@code Image}, or null if the {@code Image} is not readable.
      * @since JavaFX 2.2
      */
     public static BufferedImage fromFXImage(Image img, BufferedImage bimg) {
@@ -180,9 +170,7 @@ public class SwingFXUtils {
             case BYTE_BGRA:
                 // Check fx image opacity only if
                 // supplied BufferedImage is without alpha channel
-                if (bimg != null &&
-                        (bimg.getType() == BufferedImage.TYPE_INT_BGR ||
-                                bimg.getType() == BufferedImage.TYPE_INT_RGB)) {
+                if (bimg != null && (bimg.getType() == BufferedImage.TYPE_INT_BGR || bimg.getType() == BufferedImage.TYPE_INT_RGB)) {
                     srcPixelsAreOpaque = checkFXImageOpaque(pr, iw, ih);
                 }
                 break;
@@ -206,13 +194,13 @@ public class SwingFXUtils {
         if (bimg == null) {
             bimg = new BufferedImage(iw, ih, prefBimgType);
         }
-        DataBufferInt db = (DataBufferInt)bimg.getRaster().getDataBuffer();
+        DataBufferInt db = (DataBufferInt) bimg.getRaster().getDataBuffer();
         int data[] = db.getData();
         int offset = bimg.getRaster().getDataBuffer().getOffset();
-        int scan =  0;
+        int scan = 0;
         SampleModel sm = bimg.getRaster().getSampleModel();
         if (sm instanceof SinglePixelPackedSampleModel) {
-            scan = ((SinglePixelPackedSampleModel)sm).getScanlineStride();
+            scan = ((SinglePixelPackedSampleModel) sm).getScanlineStride();
         }
 
         WritablePixelFormat<IntBuffer> pf = getAssociatedPixelFormat(bimg);
