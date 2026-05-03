@@ -24,10 +24,12 @@ import javafx.beans.property.ReadOnlyObjectWrapper;
 import javafx.beans.property.SimpleBooleanProperty;
 import javafx.geometry.Insets;
 import javafx.scene.layout.*;
+import javafx.stage.FileChooser;
 import org.jackhuang.hmcl.auth.Account;
 import org.jackhuang.hmcl.game.TexturesLoader;
 import org.jackhuang.hmcl.game.skin.Skin;
 import org.jackhuang.hmcl.game.skin.TextureModel;
+import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
 import org.jackhuang.hmcl.ui.animation.TransitionPane;
@@ -37,9 +39,17 @@ import org.jackhuang.hmcl.ui.decorator.DecoratorPage;
 import org.jackhuang.hmcl.ui.skin.SkinCanvas;
 import org.jackhuang.hmcl.ui.skin.animation.SkinAniRunning;
 import org.jackhuang.hmcl.ui.skin.animation.SkinAniWavingArms;
+import org.jackhuang.hmcl.util.StringUtils;
+import org.jackhuang.hmcl.util.SwingFXUtils;
 import org.jetbrains.annotations.Nullable;
 
+import javax.imageio.ImageIO;
+import java.awt.image.RenderedImage;
+import java.io.File;
+import java.io.IOException;
+
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
+import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 public abstract class SkinPageBase<T extends Account> extends DecoratorAnimatedPage implements DecoratorPage, PageAware {
     protected final T account;
@@ -72,10 +82,32 @@ public abstract class SkinPageBase<T extends Account> extends DecoratorAnimatedP
 
         PopupMenu saveList = new PopupMenu();
         JFXPopup savePopup = new JFXPopup(saveList);
-        saveList.getContent().setAll(new IconedMenuItem(SVG.APPAREL, i18n("account.skin.manage.save.skin"), () -> {
-        }, savePopup), new IconedMenuItem(SVG.CROP_9_16, i18n("account.skin.manage.save.cape"), () -> {
-        }, savePopup));
 
+        var capeItem = new IconedMenuItem(SVG.CROP_9_16, i18n("account.skin.manage.save.cape"), () -> {
+            var fxCapeImage = skinObjectProperty().get().cape().image();
+            var bufferedCapeImage = SwingFXUtils.fromFXImage(fxCapeImage, null);
+            try {
+                savePng(bufferedCapeImage);
+            } catch (Exception e) {
+                LOG.warning("Failed to export skin img", e);
+                Controllers.dialog(i18n("message.failed") + "\n" + StringUtils.getStackTrace(e), i18n("message.failed"), MessageDialogPane.MessageType.ERROR);
+            }
+        }, savePopup);
+
+        saveList.getContent().setAll(new IconedMenuItem(SVG.APPAREL, i18n("account.skin.manage.save.skin"), () -> {
+            var fxSkinImage = skinObjectProperty().get().skin().image();
+            var bufferedSkinImage = SwingFXUtils.fromFXImage(fxSkinImage, null);
+            try {
+                savePng(bufferedSkinImage);
+            } catch (Exception e) {
+                LOG.warning("Failed to export skin img", e);
+                Controllers.dialog(i18n("message.failed") + "\n" + StringUtils.getStackTrace(e), i18n("message.failed"), MessageDialogPane.MessageType.ERROR);
+            }
+        }, savePopup), capeItem);
+
+        skinObjectProperty().addListener((observable, oldValue, newValue) -> {
+            capeItem.setDisable(newValue.cape() == null);
+        });
         AdvancedListBox toolbar = new AdvancedListBox().addNavigationDrawerItem(i18n("button.save"), SVG.OUTPUT, null, item -> {
             item.setOnAction(e -> savePopup.show(item, JFXPopup.PopupVPosition.BOTTOM, JFXPopup.PopupHPosition.LEFT, item.getWidth(), 0));
         });
@@ -85,6 +117,16 @@ public abstract class SkinPageBase<T extends Account> extends DecoratorAnimatedP
         setCenter(transitionPane);
 
         this.state.set(State.fromTitle(i18n("account.skin.manage", account.getUsername())));
+    }
+
+    public void savePng(RenderedImage image) throws IOException {
+        FileChooser fileChooser = new FileChooser();
+        fileChooser.setTitle(i18n("button.save_as"));
+        fileChooser.getExtensionFilters().add(new FileChooser.ExtensionFilter(i18n("file"), "*.png"));
+        fileChooser.setInitialFileName("skin.png");
+        File target = fileChooser.showSaveDialog(Controllers.getStage());
+        if (target == null) return;
+        ImageIO.write(image, "png", target);
     }
 
     @Override
