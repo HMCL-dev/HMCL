@@ -27,6 +27,9 @@ import javafx.scene.canvas.Canvas;
 import javafx.scene.control.Label;
 import javafx.scene.control.SkinBase;
 import javafx.scene.control.Tooltip;
+import javafx.scene.input.ClipboardContent;
+import javafx.scene.input.Dragboard;
+import javafx.scene.input.TransferMode;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
@@ -95,24 +98,10 @@ public final class AccountListItemSkin extends SkinBase<AccountListItem> {
         spinnerMove.getStyleClass().add("small-spinner-pane");
         btnMove.setOnAction(e -> {
             Account account = skinnable.getAccount();
-            Accounts.getAccounts().remove(account);
-            if (account.isPortable()) {
-                account.setPortable(false);
-                if (!Accounts.getAccounts().contains(account))
-                    Accounts.getAccounts().add(account);
-            } else {
-                account.setPortable(true);
-                if (!Accounts.getAccounts().contains(account)) {
-                    int idx = 0;
-                    for (int i = Accounts.getAccounts().size() - 1; i >= 0; i--) {
-                        if (Accounts.getAccounts().get(i).isPortable()) {
-                            idx = i + 1;
-                            break;
-                        }
-                    }
-                    Accounts.getAccounts().add(idx, account);
-                }
-            }
+            int index = Accounts.getAccounts().indexOf(account);
+            Accounts.getAccounts().removeAll(account);
+            account.setPortable(!account.isPortable());
+            Accounts.getAccounts().add(index, account);
         });
         btnMove.getStyleClass().add("toggle-icon4");
         if (skinnable.getAccount().isPortable()) {
@@ -183,6 +172,17 @@ public final class AccountListItemSkin extends SkinBase<AccountListItem> {
         root.getStyleClass().add("card");
         root.setStyle("-fx-padding: 8 8 8 0;");
         JFXDepthManager.setDepth(root, 1);
+
+        // Enable drag detection for reordering
+        root.setOnDragDetected(event -> {
+            if (skinnable.getPage().isSearching().get()) return;
+            Dragboard db = root.startDragAndDrop(TransferMode.MOVE);
+            ClipboardContent content = new ClipboardContent();
+            content.putString(skinnable.getAccount().getIdentifier());
+            db.setContent(content);
+            db.setDragView(FXUtils.takeSnapshot(root));
+            event.consume();
+        });
 
         getChildren().setAll(root);
     }
