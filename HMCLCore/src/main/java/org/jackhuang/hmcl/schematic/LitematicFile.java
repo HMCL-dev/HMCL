@@ -17,33 +17,31 @@
  */
 package org.jackhuang.hmcl.schematic;
 
-import javafx.geometry.Point3D;
-import org.glavo.nbt.io.NBTCodec;
-import org.glavo.nbt.tag.*;
+import org.glavo.nbt.tag.CompoundTag;
+import org.glavo.nbt.tag.IntArrayTag;
+import org.glavo.nbt.tag.IntTag;
+import org.glavo.nbt.tag.Tag;
+import org.jackhuang.hmcl.util.Lang;
+import org.jackhuang.hmcl.util.Point3I;
+import org.jackhuang.hmcl.util.StringUtils;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
-import java.io.InputStream;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Instant;
-import java.util.zip.GZIPInputStream;
+import java.util.OptionalInt;
 
-/// @author Glavo
-/// @see <a href="https://litemapy.readthedocs.io/en/v0.9.0b0/litematics.html">The Litematic file format</a>
-public final class LitematicFile {
+import static org.jackhuang.hmcl.util.NBTUtils.*;
 
-    private static @Nullable String tryGetString(Tag tag) {
-        return tag instanceof StringTag stringTag ? stringTag.get() : null;
-    }
+/**
+ * @author Glavo
+ * @see <a href="https://litemapy.readthedocs.io/en/v0.9.0b0/litematics.html">The Litematic file format</a>
+ */
+public final class LitematicFile extends Schematic {
 
     public static LitematicFile load(Path file) throws IOException {
 
-        CompoundTag root;
-        try (InputStream in = new GZIPInputStream(Files.newInputStream(file))) {
-            root = NBTCodec.of().readTag(in, TagType.COMPOUND);
-        }
+        CompoundTag root = readCompressed(file);
 
         Tag versionTag = root.get("Version");
         if (versionTag == null)
@@ -61,19 +59,29 @@ public final class LitematicFile {
         if (root.get("Regions") instanceof CompoundTag regionsTag)
             regions = regionsTag.size();
 
+        Point3I enclosingSize = null;
+        Tag enclosingSizeTag = ((CompoundTag) metadataTag).get("EnclosingSize");
+        if (enclosingSizeTag instanceof CompoundTag) {
+            CompoundTag list = (CompoundTag) enclosingSizeTag;
+            int x = tryGetInt(list.get("x")).orElse(0);
+            int y = tryGetInt(list.get("y")).orElse(0);
+            int z = tryGetInt(list.get("z")).orElse(0);
+
+            if (x > 0 && y > 0 && z > 0) enclosingSize = new Point3I(x, y, z);
+        }
+
+        Tag subVersionTag = root.get("SubVersion");
         return new LitematicFile(file, (CompoundTag) metadataTag,
                 ((IntTag) versionTag).getValue(),
-                root.getIntOrZero("SubVersion"),
-                root.getIntOrZero("MinecraftDataVersion"),
-                regions
+                tryGetInt(subVersionTag).orElse(-1),
+                tryGetInt(root.get("MinecraftDataVersion")).orElse(0),
+                regions,
+                enclosingSize
         );
     }
 
-    private final @NotNull Path file;
-
     private final int version;
     private final int subVersion;
-    private final int minecraftDataVersion;
     private final int regionCount;
     private final int[] previewImageData;
     private final String name;
@@ -83,14 +91,12 @@ public final class LitematicFile {
     private final Instant timeModified;
     private final int totalBlocks;
     private final int totalVolume;
-    private final Point3D enclosingSize;
 
     private LitematicFile(@NotNull Path file, @NotNull CompoundTag metadata,
-                          int version, int subVersion, int minecraftDataVersion, int regionCount) {
-        this.file = file;
+                          int version, int subVersion, int minecraftDataVersion, int regionCount, Point3I enclosingSize) {
+        super(file, minecraftDataVersion, enclosingSize);
         this.version = version;
         this.subVersion = subVersion;
-        this.minecraftDataVersion = minecraftDataVersion;
         this.regionCount = regionCount;
 
         Tag previewImageData = metadata.get("PreviewImageData");
@@ -101,48 +107,39 @@ public final class LitematicFile {
         this.name = tryGetString(metadata.get("Name"));
         this.author = tryGetString(metadata.get("Author"));
         this.description = tryGetString(metadata.get("Description"));
-        this.timeCreated = metadata.get("TimeCreated") instanceof LongTag time ? Instant.ofEpochMilli(time.getValue()) : null;
-        this.timeModified = metadata.get("TimeModified") instanceof LongTag time ? Instant.ofEpochMilli(time.getValue()) : null;
-        this.totalBlocks = metadata.getIntOrZero("TotalBlocks");
-        this.totalVolume = metadata.getIntOrZero("TotalVolume");
-
-        Point3D enclosingSize = null;
-        if (metadata.get("EnclosingSize") instanceof CompoundTag list) {
-            int x = list.getIntOrZero("x");
-            int y = list.getIntOrZero("y");
-            int z = list.getIntOrZero("z");
-
-            if (x >= 0 && y >= 0 && z >= 0)
-                enclosingSize = new Point3D(x, y, z);
-        }
-        this.enclosingSize = enclosingSize;
+        this.timeCreated = tryGetLongTimestamp(metadata.get("TimeCreated"));
+        this.timeModified = tryGetLongTimestamp(metadata.get("TimeModified"));
+        this.totalBlocks = tryGetInt(metadata.get("TotalBlocks")).orElse(-1);
+        this.totalVolume = tryGetInt(metadata.get("TotalVolume")).orElse(-1);
 
     }
 
-    public @NotNull Path getFile() {
-        return file;
+    @Override
+    public SchematicType getType() {
+        return SchematicType.LITEMATIC;
     }
 
-    public int getVersion() {
-        return version;
+    @Override
+    public OptionalInt getVersion() {
+        return OptionalInt.of(version);
     }
 
-    public int getSubVersion() {
-        return subVersion;
+    @Override
+    public OptionalInt getSubVersion() {
+        return Lang.wrapWithMinValue(subVersion, 0);
     }
 
-    public int getMinecraftDataVersion() {
-        return minecraftDataVersion;
-    }
-
+    @Override
     public int[] getPreviewImageData() {
         return previewImageData != null ? previewImageData.clone() : null;
     }
 
-    public String getName() {
-        return name;
+    @Override
+    public @NotNull String getName() {
+        return StringUtils.isNotBlank(name) ? name : super.getName();
     }
 
+    @Override
     public String getAuthor() {
         return author;
     }
@@ -151,27 +148,29 @@ public final class LitematicFile {
         return description;
     }
 
+    @Override
     public Instant getTimeCreated() {
         return timeCreated;
     }
 
+    @Override
     public Instant getTimeModified() {
         return timeModified;
     }
 
-    public int getTotalBlocks() {
-        return totalBlocks;
+    @Override
+    public OptionalInt getTotalBlocks() {
+        return Lang.wrapWithMinValue(totalBlocks, 1);
     }
 
-    public int getTotalVolume() {
-        return totalVolume;
+    @Override
+    public OptionalInt getTotalVolume() {
+        return Lang.wrapWithMinValue(totalVolume, 1);
     }
 
-    public Point3D getEnclosingSize() {
-        return enclosingSize;
+    @Override
+    public OptionalInt getRegionCount() {
+        return Lang.wrapWithMinValue(regionCount, 1);
     }
 
-    public int getRegionCount() {
-        return regionCount;
-    }
 }
