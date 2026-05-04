@@ -22,19 +22,23 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParseException;
 import org.jackhuang.hmcl.task.FileDownloadTask.IntegrityCheck;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
+import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.io.NetworkUtils;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Optional;
 
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 public record RemoteVersion(UpdateChannel channel, String version, String url, Type type, IntegrityCheck integrityCheck,
-                            boolean preview, boolean force, @Nullable Path downloadedFile) {
+                            boolean preview, boolean force) {
+
+    public static final Map<RemoteVersion, Path> downloadCache = new HashMap<>();
 
     public static RemoteVersion fetch(UpdateChannel channel, boolean preview, String url) throws IOException {
         try {
@@ -44,7 +48,7 @@ public record RemoteVersion(UpdateChannel channel, String version, String url, T
             String jarHash = Optional.ofNullable(response.get("jarsha1")).map(JsonElement::getAsString).orElse(null);
             boolean force = Optional.ofNullable(response.get("force")).map(JsonElement::getAsBoolean).orElse(false);
             if (jarUrl != null && jarHash != null) {
-                return new RemoteVersion(channel, version, jarUrl, Type.JAR, new IntegrityCheck("SHA-1", jarHash), preview, force, null);
+                return new RemoteVersion(channel, version, jarUrl, Type.JAR, new IntegrityCheck("SHA-1", jarHash), preview, force);
             } else {
                 throw new IOException("No download url is available");
             }
@@ -58,22 +62,22 @@ public record RemoteVersion(UpdateChannel channel, String version, String url, T
         return "[" + version + " from " + url + "]";
     }
 
-    public RemoteVersion tryDownload() {
-        if (downloadedFile() != null) return this;
-        Path downloaded;
+    public void tryDownload() {
+        Path downloaded  = downloadCache.get(this);
+        if (downloaded != null && FileUtils.verifyHash(downloaded, integrityCheck().algorithm(), integrityCheck().checksum())) return;
+
         try {
             downloaded = Files.createTempFile("hmcl-update-", ".jar");
         } catch (IOException e) {
             LOG.warning("Failed to create temp file", e);
-            return this;
+            return;
         }
 
         var executor = new HMCLDownloadTask(this, downloaded).executor();
         if (executor.test()) {
-            return new RemoteVersion(channel(), version(), url(), type(), integrityCheck(), preview(), force(), downloaded);
+            downloadCache.put(this, downloaded);
         } else {
             LOG.warning("Failed to download update for " + this, executor.getException());
-            return this;
         }
     }
 

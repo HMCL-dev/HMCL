@@ -20,6 +20,7 @@ package org.jackhuang.hmcl.util.io;
 import com.google.errorprone.annotations.CanIgnoreReturnValue;
 import org.glavo.chardet.DetectedCharset;
 import org.glavo.chardet.UniversalDetector;
+import org.jackhuang.hmcl.util.DigestUtils;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.function.ExceptionalConsumer;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
@@ -558,5 +559,18 @@ public final class FileUtils {
         if ((unixMode & 0001) != 0) permissions.add(PosixFilePermission.OTHERS_EXECUTE);
 
         return permissions;
+    }
+
+    public static boolean verifyHash(Path file, String algorithm, String hash) {
+        if (Files.exists(file)) {
+            try {
+                return DigestUtils.digestToString(algorithm, file).equalsIgnoreCase(hash);
+            } catch (IOException e) {
+                LOG.warning("Failed to verify hash for file " + file, e);
+                return false;
+            }
+        } else {
+            return false;
+        }
     }
 }

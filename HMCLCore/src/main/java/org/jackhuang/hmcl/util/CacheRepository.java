@@ -103,15 +103,7 @@ public class CacheRepository {
     protected boolean fileExists(String algorithm, String hash) {
         if (hash == null) return false;
         Path file = getFile(algorithm, hash);
-        if (Files.exists(file)) {
-            try {
-                return DigestUtils.digestToString(algorithm, file).equalsIgnoreCase(hash);
-            } catch (IOException e) {
-                return false;
-            }
-        } else {
-            return false;
-        }
+        return FileUtils.verifyHash(file, algorithm, hash);
     }
 
     public void tryCacheFile(Path path, String algorithm, String hash) throws IOException {
