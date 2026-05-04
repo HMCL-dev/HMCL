@@ -60,6 +60,7 @@ public class VersionPage extends DecoratorAnimatedPage implements DecoratorPage 
     private final TabHeader.Tab<WorldListPage> worldListTab = new TabHeader.Tab<>("worldList");
     private final TabHeader.Tab<SchematicsPage> schematicsTab = new TabHeader.Tab<>("schematicsTab");
     private final TabHeader.Tab<ResourcepackListPage> resourcePackTab = new TabHeader.Tab<>("resourcePackTab");
+    private final TabHeader.Tab<ScreenshotsPage> screenshotsTab = new TabHeader.Tab<>("screenshotsTab");
     private final TransitionPane transitionPane = new TransitionPane();
     private final BooleanProperty currentVersionUpgradable = new SimpleBooleanProperty();
     private final ObjectProperty<Profile.ProfileVersion> version = new SimpleObjectProperty<>();
@@ -81,8 +82,9 @@ public class VersionPage extends DecoratorAnimatedPage implements DecoratorPage 
         resourcePackTab.setNodeSupplier(loadVersionFor(ResourcepackListPage::new));
         worldListTab.setNodeSupplier(loadVersionFor(WorldListPage::new));
         schematicsTab.setNodeSupplier(loadVersionFor(SchematicsPage::new));
+        screenshotsTab.setNodeSupplier(loadVersionFor(ScreenshotsPage::new));
 
-        tab = new TabHeader(transitionPane, versionSettingsTab, installerListTab, modListTab, resourcePackTab, worldListTab, schematicsTab);
+        tab = new TabHeader(transitionPane, versionSettingsTab, installerListTab, modListTab, resourcePackTab, worldListTab, schematicsTab, screenshotsTab);
         tab.select(versionSettingsTab);
 
         addEventHandler(Navigator.NavigationEvent.NAVIGATED, this::onNavigated);
@@ -99,6 +101,8 @@ public class VersionPage extends DecoratorAnimatedPage implements DecoratorPage 
                     worldListTab.getNode().loadVersion(getProfile(), getVersion());
                 if (schematicsTab.isInitialized())
                     schematicsTab.getNode().loadVersion(getProfile(), getVersion());
+                if (screenshotsTab.isInitialized())
+                    screenshotsTab.getNode().loadVersion(getProfile(), getVersion());
             }
         });
         
@@ -163,6 +167,8 @@ public class VersionPage extends DecoratorAnimatedPage implements DecoratorPage 
             worldListTab.getNode().loadVersion(profile, version);
         if (schematicsTab.isInitialized())
             schematicsTab.getNode().loadVersion(profile, version);
+        if (screenshotsTab.isInitialized())
+            screenshotsTab.getNode().loadVersion(profile, version);
         currentVersionUpgradable.set(profile.getRepository().isModpack(version));
     }
 
@@ -288,7 +294,8 @@ public class VersionPage extends DecoratorAnimatedPage implements DecoratorPage 
                         .addNavigationDrawerTab(control.tab, control.modListTab, i18n("mods.manage"), SVG.EXTENSION, SVG.EXTENSION_FILL)
                         .addNavigationDrawerTab(control.tab, control.resourcePackTab, i18n("resourcepack.manage"), SVG.TEXTURE)
                         .addNavigationDrawerTab(control.tab, control.worldListTab, i18n("world.manage"), SVG.PUBLIC)
-                        .addNavigationDrawerTab(control.tab, control.schematicsTab, i18n("schematics.manage"), SVG.SCHEMA, SVG.SCHEMA_FILL);
+                        .addNavigationDrawerTab(control.tab, control.schematicsTab, i18n("schematics.manage"), SVG.SCHEMA, SVG.SCHEMA_FILL)
+                        .addNavigationDrawerTab(control.tab, control.screenshotsTab, i18n("screenshots.manage"), SVG.SCREENSHOT_MONITOR, SVG.SCREENSHOT_MONITOR_FILL);
                 VBox.setVgrow(sideBar, Priority.ALWAYS);
 
                 PopupMenu browseList = new PopupMenu();

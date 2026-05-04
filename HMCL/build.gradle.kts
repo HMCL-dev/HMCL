@@ -141,6 +141,7 @@ val addOpens = listOf(
     "javafx.controls/com.sun.javafx.scene.control",
     "javafx.controls/com.sun.javafx.scene.control.behavior",
     "javafx.graphics/com.sun.javafx.tk.quantum",
+    "javafx.controls/javafx.scene.control",
     "javafx.controls/javafx.scene.control.skin",
     "jdk.attach/sun.tools.attach",
 )
