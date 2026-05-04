@@ -22,14 +22,23 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParseException;
 import org.jackhuang.hmcl.task.FileDownloadTask.IntegrityCheck;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
+import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.io.NetworkUtils;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Optional;
+
+import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 public record RemoteVersion(UpdateChannel channel, String version, String url, Type type, IntegrityCheck integrityCheck,
                             boolean preview, boolean force) {
+
+    public static final Map<RemoteVersion, Path> downloadCache = new HashMap<>();
 
     public static RemoteVersion fetch(UpdateChannel channel, boolean preview, String url) throws IOException {
         try {
@@ -51,6 +60,25 @@ public record RemoteVersion(UpdateChannel channel, String version, String url, T
     @Override
     public @NotNull String toString() {
         return "[" + version + " from " + url + "]";
+    }
+
+    public void tryDownload() {
+        Path downloaded = downloadCache.get(this);
+        if (downloaded != null && FileUtils.verifyHash(downloaded, integrityCheck().algorithm(), integrityCheck().checksum())) return;
+
+        try {
+            downloaded = Files.createTempFile("hmcl-update-", ".jar");
+        } catch (IOException e) {
+            LOG.warning("Failed to create temp file", e);
+            return;
+        }
+
+        var executor = new HMCLDownloadTask(this, downloaded).executor();
+        if (executor.test()) {
+            downloadCache.put(this, downloaded);
+        } else {
+            LOG.warning("Failed to download update for " + this, executor.getException());
+        }
     }
 
     public enum Type {

@@ -237,6 +237,21 @@ public final class Config extends ObservableSetting {
         this.disableAutoShowUpdateDialog.set(disableAutoShowUpdateDialog);
     }
 
+    @SerializedName("autoDownloadUpdate")
+    private final BooleanProperty autoDownloadUpdate = new SimpleBooleanProperty(false);
+
+    public BooleanProperty autoDownloadUpdateProperty() {
+        return autoDownloadUpdate;
+    }
+
+    public boolean isAutoDownloadUpdate() {
+        return autoDownloadUpdate.get();
+    }
+
+    public void setAutoDownloadUpdate(boolean autoDownloadUpdate) {
+        this.autoDownloadUpdate.set(autoDownloadUpdate);
+    }
+
     @SerializedName("disableAprilFools")
     private final BooleanProperty disableAprilFools = new SimpleBooleanProperty(false);
 

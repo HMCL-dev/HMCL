@@ -33,6 +33,7 @@ import org.jackhuang.hmcl.util.FileSaver;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.SwingUtils;
 import org.jackhuang.hmcl.util.TaskCancellationAction;
+import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.io.JarUtils;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
 
@@ -106,22 +107,26 @@ public final class UpdateHandler {
         }
 
         Controllers.dialog(new UpgradeDialog(version, () -> {
-            Path downloaded;
-            try {
-                downloaded = Files.createTempFile("hmcl-update-", ".jar");
-            } catch (IOException e) {
-                LOG.warning("Failed to create temp file", e);
-                return;
+            Path downloaded = RemoteVersion.downloadCache.get(version);
+            TaskExecutor executor;
+            if (downloaded != null && FileUtils.verifyHash(downloaded, version.integrityCheck().algorithm(), version.integrityCheck().checksum())) {
+                executor = Task.completed(null).executor();
+            } else {
+                try {
+                    downloaded = Files.createTempFile("hmcl-update-", ".jar");
+                } catch (IOException e) {
+                    LOG.warning("Failed to create temp file", e);
+                    return;
+                }
+
+                Task<?> task = new HMCLDownloadTask(version, downloaded);
+                executor = task.executor();
+                Controllers.taskDialog(executor, i18n("message.downloading"), TaskCancellationAction.NORMAL);
             }
-
-            Task<?> task = new HMCLDownloadTask(version, downloaded);
-
-            TaskExecutor executor = task.executor();
-            Controllers.taskDialog(executor, i18n("message.downloading"), TaskCancellationAction.NORMAL);
+            final Path finalDownloaded = downloaded;
             thread(() -> {
-                boolean success = executor.test();
-
-                if (success) {
+                if (executor.test()) {
+                    RemoteVersion.downloadCache.put(version, finalDownloaded);
                     try {
                         if (!IntegrityChecker.isSelfVerified() && !IntegrityChecker.DISABLE_SELF_INTEGRITY_CHECK) {
                             throw new IOException("Current JAR is not verified");
@@ -150,7 +155,7 @@ public final class UpdateHandler {
                             // Ignore
                         }
 
-                        requestUpdate(downloaded, getCurrentLocation());
+                        requestUpdate(finalDownloaded, getCurrentLocation());
                         EntryPoint.exit(0);
                     } catch (IOException e) {
                         LOG.warning("Failed to update to " + version, e);

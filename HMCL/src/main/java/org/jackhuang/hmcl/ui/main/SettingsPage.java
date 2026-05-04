@@ -20,6 +20,7 @@ package org.jackhuang.hmcl.ui.main;
 import com.jfoenix.controls.JFXButton;
 import javafx.beans.InvalidationListener;
 import javafx.beans.WeakInvalidationListener;
+import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.StringProperty;
 import javafx.css.PseudoClass;
@@ -86,7 +87,6 @@ public final class SettingsPage extends ScrollPane {
             {
                 ObjectProperty<UpdateChannel> updateChannel;
                 {
-
                     JFXButton updateButton = FXUtils.newToggleButton4(SVG.UPDATE, 20);
                     updateButton.setOnAction(e -> onUpdate());
                     updateButton.setPadding(Insets.EMPTY);
@@ -139,17 +139,13 @@ public final class SettingsPage extends ScrollPane {
                     updatePaneList.getContent().add(updatePane);
                 }
 
+                BooleanProperty preview;
                 {
                     LineToggleButton previewPane = new LineToggleButton();
                     previewPane.setTitle(i18n("update.preview"));
                     previewPane.setSubtitle(i18n("update.preview.subtitle"));
                     previewPane.selectedProperty().bindBidirectional(config().acceptPreviewUpdateProperty());
-
-                    InvalidationListener checkUpdateListener = e -> {
-                        UpdateChecker.requestCheckUpdate(updateChannel.get(), previewPane.isSelected());
-                    };
-                    updateChannel.addListener(checkUpdateListener);
-                    previewPane.selectedProperty().addListener(checkUpdateListener);
+                    preview = previewPane.selectedProperty();
 
                     updatePaneList.getContent().add(previewPane);
                 }
@@ -160,6 +156,26 @@ public final class SettingsPage extends ScrollPane {
                     disableAutoShowUpdateDialogPane.setSubtitle(i18n("update.disable_auto_show_update_dialog.subtitle"));
                     disableAutoShowUpdateDialogPane.selectedProperty().bindBidirectional(config().disableAutoShowUpdateDialogProperty());
                     updatePaneList.getContent().add(disableAutoShowUpdateDialogPane);
+                }
+
+                BooleanProperty autoDownloadUpdate;
+                {
+                    LineToggleButton autoDownloadUpdatePane = new LineToggleButton();
+                    autoDownloadUpdatePane.setTitle(i18n("update.auto_download"));
+                    autoDownloadUpdatePane.setSubtitle(i18n("update.auto_download.subtitle"));
+                    autoDownloadUpdatePane.selectedProperty().bindBidirectional(config().autoDownloadUpdateProperty());
+                    autoDownloadUpdate = autoDownloadUpdatePane.selectedProperty();
+
+                    updatePaneList.getContent().add(autoDownloadUpdatePane);
+                }
+
+                {
+                    InvalidationListener checkUpdateListener = e -> {
+                        UpdateChecker.requestCheckUpdate(updateChannel.get(), preview.get(), autoDownloadUpdate.get());
+                    };
+                    updateChannel.addListener(checkUpdateListener);
+                    preview.addListener(checkUpdateListener);
+                    autoDownloadUpdate.addListener(checkUpdateListener);
                 }
 
                 rootPane.getChildren().addAll(ComponentList.createComponentListTitle(i18n("update")), updatePaneList);

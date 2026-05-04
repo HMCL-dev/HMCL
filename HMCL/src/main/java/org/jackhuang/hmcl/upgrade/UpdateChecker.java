@@ -56,7 +56,7 @@ public final class UpdateChecker {
     private static final ReadOnlyBooleanWrapper checkingUpdate = new ReadOnlyBooleanWrapper(false);
 
     public static void init() {
-        requestCheckUpdate(UpdateChannel.getChannel(), config().isAcceptPreviewUpdate());
+        requestCheckUpdate(UpdateChannel.getChannel(), config().isAcceptPreviewUpdate(), config().isAutoDownloadUpdate());
     }
 
     public static RemoteVersion getLatestVersion() {
@@ -101,7 +101,7 @@ public final class UpdateChecker {
                 version.contains("SNAPSHOT"); // eg. 3.5.SNAPSHOT
     }
 
-    public static void requestCheckUpdate(UpdateChannel channel, boolean preview) {
+    public static void requestCheckUpdate(UpdateChannel channel, boolean preview, boolean download) {
         Platform.runLater(() -> {
             if (isCheckingUpdate())
                 return;
@@ -112,6 +112,7 @@ public final class UpdateChecker {
                 try {
                     result = checkUpdate(channel, preview);
                     LOG.info("Latest version (" + channel + ", preview=" + preview + ") is " + result);
+                    if (download) result.tryDownload();
                 } catch (Throwable e) {
                     LOG.warning("Failed to check for update", e);
                 }
