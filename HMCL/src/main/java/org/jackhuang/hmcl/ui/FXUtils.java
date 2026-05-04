@@ -82,6 +82,7 @@ import org.jackhuang.hmcl.util.javafx.SafeStringConverter;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
 import org.jackhuang.hmcl.util.platform.SystemUtils;
 import org.jetbrains.annotations.Nullable;
+import org.jsoup.Jsoup;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
@@ -1678,5 +1679,11 @@ public final class FXUtils {
 
             e.consume();
         });
+    }
+
+    public static TextFlow renderAddonChangelog(String changelogHtml, String baseUri) {
+        var textFlow = new HTMLRenderer(Controllers::openUriInBrowser).appendNode(Jsoup.parse(changelogHtml, baseUri)).mergeLineBreaks().render();
+        textFlow.getStyleClass().add("addon-changelog");
+        return textFlow;
     }
 }
