@@ -91,6 +91,7 @@ public final class MainPage extends StackPane implements DecoratorPage {
 
     private final StringProperty currentGame = new SimpleStringProperty(this, "currentGame");
     private final BooleanProperty showUpdate = new SimpleBooleanProperty(this, "showUpdate");
+    private final BooleanProperty showUpdateDialog = new SimpleBooleanProperty(this, "showUpdateDialog");
     private final ObjectProperty<RemoteVersion> latestVersion = new SimpleObjectProperty<>(this, "latestVersion");
     private final ObservableList<Version> versions = FXCollections.observableArrayList();
     private Profile profile;
@@ -98,6 +99,8 @@ public final class MainPage extends StackPane implements DecoratorPage {
     private TransitionPane announcementPane;
     private final StackPane updatePane;
     private final JFXButton menuButton;
+
+    private RemoteVersion lastShownVersion;
 
     {
         HBox titleNode = new HBox(8);
@@ -172,7 +175,8 @@ public final class MainPage extends StackPane implements DecoratorPage {
         StackPane.setAlignment(updatePane, Pos.TOP_RIGHT);
         FXUtils.onClicked(updatePane, this::onUpgrade);
         updatePane.setCursor(Cursor.HAND);
-        FXUtils.onChange(showUpdateProperty(), this::showUpdate);
+        FXUtils.onChange(showUpdateProperty(), this::doAnimation);
+        FXUtils.onChange(showUpdateDialogProperty(), this::showUpdateDialog);
 
         {
             HBox hBox = new HBox();
@@ -276,13 +280,12 @@ public final class MainPage extends StackPane implements DecoratorPage {
 
     }
 
-    private void showUpdate(boolean show) {
-        doAnimation(show);
-
-        if (show && !config().isDisableAutoShowUpdateDialog()
-                && getLatestVersion() != null
-                && !Objects.equals(config().getPromptedVersion(), getLatestVersion().version())) {
-            Controllers.dialog(new MessageDialogPane.Builder("", i18n("update.bubble.title", getLatestVersion().version()), MessageDialogPane.MessageType.INFO)
+    private void showUpdateDialog(boolean show) {
+        if (show && getLatestVersion() != null && !Objects.equals(getLatestVersion(), lastShownVersion)
+                && !Objects.equals(config().getPromptedVersion(), getLatestVersion().version())
+        ) {
+            lastShownVersion = getLatestVersion();
+            Controllers.dialogLater(new MessageDialogPane.Builder("", i18n("update.bubble.title", getLatestVersion().version()), MessageDialogPane.MessageType.INFO)
                     .addAction(i18n("button.view"), () -> {
                         config().setPromptedVersion(getLatestVersion().version());
                         onUpgrade();
@@ -403,6 +406,18 @@ public final class MainPage extends StackPane implements DecoratorPage {
 
     public void setShowUpdate(boolean showUpdate) {
         this.showUpdate.set(showUpdate);
+    }
+
+    public boolean isShowUpdateDialog() {
+        return showUpdateDialog.get();
+    }
+
+    public BooleanProperty showUpdateDialogProperty() {
+        return showUpdateDialog;
+    }
+
+    public void setShowUpdateDialog(boolean showUpdateDialog) {
+        this.showUpdateDialog.set(showUpdateDialog);
     }
 
     public RemoteVersion getLatestVersion() {
