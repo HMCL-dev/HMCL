@@ -63,7 +63,7 @@ public record RemoteVersion(UpdateChannel channel, String version, String url, T
     }
 
     public void tryDownload() {
-        Path downloaded  = downloadCache.get(this);
+        Path downloaded = downloadCache.get(this);
         if (downloaded != null && FileUtils.verifyHash(downloaded, integrityCheck().algorithm(), integrityCheck().checksum())) return;
 
         try {
