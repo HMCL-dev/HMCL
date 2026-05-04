@@ -134,6 +134,24 @@ public final class GlobalConfig extends ObservableSetting {
         this.fontAntiAliasing.set(value);
     }
 
+    /// The UI scale factor for the launcher.
+    /// Stored as a percentage string (e.g. `"150%"`), or `null` for auto (system default).
+    /// This setting requires a restart to take effect, as it configures JavaFX Glass properties before toolkit initialization.
+    @SerializedName("uiScale")
+    private final StringProperty uiScale = new SimpleStringProperty();
+
+    public StringProperty uiScaleProperty() {
+        return uiScale;
+    }
+
+    public @Nullable String getUiScale() {
+        return uiScale.get();
+    }
+
+    public void setUiScale(String value) {
+        this.uiScale.set(value);
+    }
+
     @SerializedName("userJava")
     private final ObservableSet<String> userJava = FXCollections.observableSet(new LinkedHashSet<>());
 

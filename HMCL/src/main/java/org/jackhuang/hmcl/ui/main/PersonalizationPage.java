@@ -41,6 +41,7 @@ import org.jackhuang.hmcl.ui.SVG;
 import org.jackhuang.hmcl.ui.construct.*;
 import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.javafx.SafeStringConverter;
+import org.jackhuang.hmcl.util.platform.OperatingSystem;
 
 import java.util.Arrays;
 import java.util.Locale;
@@ -116,6 +117,28 @@ public class PersonalizationPage extends StackPane {
             animationButton.selectedProperty().bindBidirectional(config().animationDisabledProperty());
             animationButton.setTitle(i18n("settings.launcher.turn_off_animations"));
             animationButton.setSubtitle(i18n("settings.take_effect_after_restart"));
+        }
+        {
+            var uiScalePane = new LineSelectButton<String>();
+            uiScalePane.setTitle(i18n("settings.launcher.ui_scale"));
+            uiScalePane.setSubtitle(OperatingSystem.CURRENT_OS == OperatingSystem.MACOS
+                    ? i18n("settings.launcher.ui_scale.unsupported")
+                    : i18n("settings.take_effect_after_restart"));
+            uiScalePane.setConverter(name -> "auto".equals(name)
+                    ? i18n("settings.launcher.ui_scale.auto")
+                    : name);
+            uiScalePane.setItems("auto", "100%", "125%", "150%", "175%", "200%", "250%", "300%");
+
+            String currentScale = globalConfig().getUiScale();
+            uiScalePane.setValue(currentScale != null ? currentScale : "auto");
+            FXUtils.onChange(uiScalePane.valueProperty(), value ->
+                    globalConfig().setUiScale("auto".equals(value) ? null : value));
+
+            if (OperatingSystem.CURRENT_OS == OperatingSystem.MACOS) {
+                uiScalePane.setDisable(true);
+            }
+
+            themeList.getContent().add(uiScalePane);
         }
         content.getChildren().addAll(ComponentList.createComponentListTitle(i18n("settings.launcher.appearance")), themeList);
 

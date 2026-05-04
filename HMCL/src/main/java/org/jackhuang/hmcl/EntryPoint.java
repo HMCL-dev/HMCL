@@ -25,6 +25,8 @@ import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.io.JarUtils;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
 
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
 import javax.swing.JOptionPane;
 import java.io.IOException;
 import java.lang.invoke.MethodHandle;
@@ -52,6 +54,7 @@ public final class EntryPoint {
 
         checkWine();
 
+        applyUiScaleFromGlobalConfig();
         setupJavaFXVMOptions();
 
         if (OperatingSystem.CURRENT_OS == OperatingSystem.MACOS) {
@@ -72,6 +75,34 @@ public final class EntryPoint {
         FileSaver.shutdown();
         LOG.shutdown();
         System.exit(exitCode);
+    }
+
+    /// Reads the UI scale from the global config file and sets it as the {@code hmcl.uiScale} system property,
+    /// so that {@link #setupJavaFXVMOptions()} can apply it before JavaFX initializes.
+    /// This is needed because the config is normally loaded after JavaFX starts.
+    private static void applyUiScaleFromGlobalConfig() {
+        if (System.getProperty("hmcl.uiScale") != null || System.getenv("HMCL_UI_SCALE") != null) {
+            return; // already set via command line or environment variable
+        }
+
+        try {
+            Path configPath = Metadata.HMCL_GLOBAL_DIRECTORY.resolve("config.json");
+            if (!Files.isRegularFile(configPath)) {
+                return;
+            }
+
+            String content = Files.readString(configPath);
+            JsonObject json = JsonParser.parseString(content).getAsJsonObject();
+            if (json.has("uiScale") && !json.get("uiScale").isJsonNull()) {
+                String uiScale = json.get("uiScale").getAsString();
+                if (uiScale != null && !uiScale.isEmpty()) {
+                    System.setProperty("hmcl.uiScale", uiScale);
+                    LOG.info("Applied UI scale from global config: " + uiScale);
+                }
+            }
+        } catch (Throwable e) {
+            LOG.warning("Failed to read UI scale from global config", e);
+        }
     }
 
     private static void setupJavaFXVMOptions() {

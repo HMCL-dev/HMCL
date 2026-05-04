@@ -71,3 +71,9 @@ language-subtag-registry
 !/.gemini/config.yaml
 .codex
 /.gradle-*/
+
+# local/tools
+.workbuddy/
+node_modules/
+/package.json
+/package-lock.json
