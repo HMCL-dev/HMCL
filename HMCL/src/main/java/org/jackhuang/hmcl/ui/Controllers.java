@@ -49,6 +49,8 @@ import org.jackhuang.hmcl.java.JavaRuntime;
 import org.jackhuang.hmcl.setting.*;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.task.TaskExecutor;
+import org.jackhuang.hmcl.upgrade.RemoteVersion;
+import org.jackhuang.hmcl.upgrade.UpdateHandler;
 import org.jackhuang.hmcl.ui.account.AccountListPage;
 import org.jackhuang.hmcl.ui.animation.AnimationUtils;
 import org.jackhuang.hmcl.ui.animation.ContainerAnimations;
@@ -119,6 +121,8 @@ public final class Controllers {
     });
     private static Lazy<RootPage> rootPage = new Lazy<>(RootPage::new);
     private static DecoratorController decorator;
+    @Nullable
+    private static Path lastPendingUpdateNotificationJar;
     private static DownloadPage downloadPage;
     private static Lazy<AccountListPage> accountListPage = new Lazy<>(() -> {
         AccountListPage accountListPage = new AccountListPage();
@@ -622,6 +626,18 @@ public final class Controllers {
         decorator.showToast(content);
     }
 
+    public static void showPendingUpdateNotification(Path stagedJar, RemoteVersion version) {
+        FXUtils.checkFxUserThread();
+        if (stagedJar.equals(lastPendingUpdateNotificationJar)) {
+            return;
+        }
+        lastPendingUpdateNotificationJar = stagedJar;
+        decorator.showPersistentSnackbar(
+                i18n("update.background_downloaded.toast", version.version()),
+                i18n("update.restart_to_apply"),
+                () -> UpdateHandler.applyStagedUpdate(stagedJar));
+    }
+
     public static void onHyperlinkAction(String href) {
         if (href.startsWith("hmcl://")) {
             switch (href) {
@@ -644,6 +660,7 @@ public final class Controllers {
     }
 
     public static void shutdown() {
+        lastPendingUpdateNotificationJar = null;
         rootPage = null;
         versionPage = null;
         gameListPage = null;

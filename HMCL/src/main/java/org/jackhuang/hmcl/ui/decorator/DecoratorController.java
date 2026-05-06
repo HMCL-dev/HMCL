@@ -433,6 +433,13 @@ public class DecoratorController {
         decorator.getSnackbar().fireEvent(new JFXSnackbar.SnackbarEvent(new JFXSnackbarLayout(content)));
     }
 
+    /// Shows a snackbar until the user triggers the action or another snackbar replaces it.
+    public void showPersistentSnackbar(String message, String actionText, Runnable action) {
+        FXUtils.checkFxUserThread();
+        JFXSnackbarLayout layout = new JFXSnackbarLayout(message, actionText, e -> action.run());
+        decorator.getSnackbar().enqueue(new JFXSnackbar.SnackbarEvent(layout, Duration.INDEFINITE));
+    }
+
     // ==== Wizard ====
 
     public void startWizard(WizardProvider wizardProvider) {

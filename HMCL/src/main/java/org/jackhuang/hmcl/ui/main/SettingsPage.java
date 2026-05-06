@@ -162,6 +162,19 @@ public final class SettingsPage extends ScrollPane {
                     updatePaneList.getContent().add(disableAutoShowUpdateDialogPane);
                 }
 
+                {
+                    LineToggleButton backgroundDownloadPane = new LineToggleButton();
+                    backgroundDownloadPane.setTitle(i18n("settings.launcher.update.background_auto_download"));
+                    backgroundDownloadPane.setSubtitle(i18n("settings.launcher.update.background_auto_download.subtitle"));
+                    backgroundDownloadPane.selectedProperty().bindBidirectional(config().backgroundAutoDownloadUpdateProperty());
+                    backgroundDownloadPane.selectedProperty().addListener((obs, oldVal, newVal) -> {
+                        if (Boolean.TRUE.equals(newVal) && !Boolean.TRUE.equals(oldVal)) {
+                            UpdateHandler.tryAutoDownloadIfOutdated();
+                        }
+                    });
+                    updatePaneList.getContent().add(backgroundDownloadPane);
+                }
+
                 rootPane.getChildren().addAll(ComponentList.createComponentListTitle(i18n("update")), updatePaneList);
             }
 

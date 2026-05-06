@@ -57,6 +57,7 @@ public final class UpdateChecker {
 
     public static void init() {
         requestCheckUpdate(UpdateChannel.getChannel(), config().isAcceptPreviewUpdate());
+        outdated.addListener(obs -> UpdateHandler.onOutdatedStateMayHaveChanged());
     }
 
     public static RemoteVersion getLatestVersion() {
