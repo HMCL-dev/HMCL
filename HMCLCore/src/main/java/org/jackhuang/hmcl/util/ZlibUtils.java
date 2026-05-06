@@ -70,7 +70,10 @@ public final class ZlibUtils {
 
         byte[] compressedData = compressedTestData.toByteArray();
 
-        IS_ZLIB_COMPATIBLE = Arrays.equals(testData, compressedData);
+        IS_ZLIB_COMPATIBLE = Arrays.equals(
+                new byte[]{120, -100, -13, 72, -51, -55, -55, 87, 8, -49, 47, -54, 73, 81, 4, 0, 28, 73, 4, 62},
+                compressedData
+        );
     }
 
     private ZlibUtils() {
