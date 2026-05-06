@@ -19,6 +19,7 @@ package org.jackhuang.hmcl.ui.construct;
 
 import javafx.beans.InvalidationListener;
 import javafx.beans.binding.Bindings;
+import javafx.beans.binding.DoubleBinding;
 import javafx.beans.property.StringProperty;
 import javafx.beans.property.StringPropertyBase;
 import javafx.collections.FXCollections;
@@ -30,7 +31,6 @@ import javafx.scene.control.ScrollPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
-import org.jackhuang.hmcl.ui.FXUtils;
 
 public class TwoLineListItem extends VBox {
     private static final String DEFAULT_STYLE_CLASS = "two-line-list-item";
@@ -177,7 +177,14 @@ public class TwoLineListItem extends VBox {
             lblTitle.setMinWidth(Label.USE_PREF_SIZE);
             scrollPane.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
             scrollPane.setVbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
-            FXUtils.onChangeAndOperate(tagsBox.heightProperty(), height -> FXUtils.setLimitHeight(scrollPane, height.doubleValue()));
+            DoubleBinding expectedHeight = Bindings.createDoubleBinding(
+                    () -> tags.isEmpty() ? 0.0 : tagsBox.prefHeight(-1),
+                    tags
+            );
+
+            scrollPane.minHeightProperty().bind(expectedHeight);
+            scrollPane.prefHeightProperty().bind(expectedHeight);
+            scrollPane.maxHeightProperty().bind(expectedHeight);
             firstLine.getChildren().setAll(lblTitle, scrollPane);
 
             tags.addListener((InvalidationListener) ignored -> scrollPane.requestLayout());
