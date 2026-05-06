@@ -70,6 +70,7 @@ import org.jackhuang.hmcl.util.i18n.SupportedLocale;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.platform.Architecture;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
@@ -211,6 +212,21 @@ public final class Controllers {
     // FXThread
     public static DecoratorController getDecorator() {
         return decorator;
+    }
+
+    public static void saveWindowStates() {
+        if (stageX != null) {
+            config().setX(stageX.get() / SCREEN.getBounds().getWidth());
+        }
+        if (stageY != null) {
+            config().setY(stageY.get() / SCREEN.getBounds().getHeight());
+        }
+        if (stageHeight != null) {
+            config().setHeight(stageHeight.get());
+        }
+        if (stageWidth != null) {
+            config().setWidth(stageWidth.get());
+        }
     }
 
     public static void onApplicationStop() {
@@ -375,7 +391,7 @@ public final class Controllers {
             Runnable continueAction = () -> globalConfig().setPlatformPromptVersion(1);
 
             if (OperatingSystem.CURRENT_OS == OperatingSystem.MACOS && Architecture.SYSTEM_ARCH == Architecture.ARM64) {
-                Controllers.dialog(i18n("fatal.unsupported_platform.macos_arm64"), null, MessageType.INFO, continueAction);
+                continueAction.run();
             } else if (OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS && Architecture.SYSTEM_ARCH == Architecture.ARM64) {
                 Controllers.dialog(i18n("fatal.unsupported_platform.windows_arm64"), null, MessageType.INFO, continueAction);
             } else if (OperatingSystem.CURRENT_OS == OperatingSystem.LINUX &&
@@ -579,7 +595,7 @@ public final class Controllers {
         return pane.getCompletableFuture();
     }
 
-    public static TaskExecutorDialogPane taskDialog(TaskExecutor executor, String title, TaskCancellationAction onCancel) {
+    public static TaskExecutorDialogPane taskDialog(TaskExecutor executor, String title, @NotNull TaskCancellationAction onCancel) {
         TaskExecutorDialogPane pane = new TaskExecutorDialogPane(onCancel);
         pane.setTitle(title);
         pane.setExecutor(executor);
@@ -587,7 +603,7 @@ public final class Controllers {
         return pane;
     }
 
-    public static TaskExecutorDialogPane taskDialog(Task<?> task, String title, TaskCancellationAction onCancel) {
+    public static TaskExecutorDialogPane taskDialog(Task<?> task, String title, @NotNull TaskCancellationAction onCancel) {
         TaskExecutor executor = task.executor();
         TaskExecutorDialogPane pane = taskDialog(executor, title, onCancel);
         executor.start();
