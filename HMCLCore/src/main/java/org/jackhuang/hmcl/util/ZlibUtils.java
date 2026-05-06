@@ -36,7 +36,7 @@ import java.util.zip.Deflater;
 public final class ZlibUtils {
 
     /// Whether the JVM's [Deflater] produces output that is byte-for-byte identical
-    /// to the original uncompressed data for the internal test vector.
+    /// to the expected output of the standard reference zlib for a known test vector.
     ///
     /// This flag is `true` when the system's zlib behaves like the standard reference
     /// implementation, and `false` when an alternative library such as zlib-ng is in
