@@ -33,6 +33,7 @@ import org.jackhuang.hmcl.task.FileDownloadTask;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.util.DigestUtils;
 import org.jackhuang.hmcl.util.StringUtils;
+import org.jackhuang.hmcl.util.ZlibUtils;
 import org.jackhuang.hmcl.util.function.ExceptionalFunction;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.io.ChecksumMismatchException;
@@ -162,12 +163,28 @@ public class ForgeNewInstallTask extends Task<Version> {
                 if (!Files.isRegularFile(artifact))
                     throw new FileNotFoundException("File missing: " + artifact);
 
+
                 String code;
                 try (InputStream stream = Files.newInputStream(artifact)) {
                     code = DigestUtils.digestToString("SHA-1", stream);
                 }
 
                 if (!Objects.equals(code, entry.getValue())) {
+                    if (!ZlibUtils.IS_ZLIB_COMPATIBLE && FileUtils.getExtension(artifact).equals("jar")) {
+                        // Forge/NeoForge generates JARs dynamically during installation.
+                        // When native compression libraries such as zlib-ng are in use,
+                        // the resulting JAR may be compressed differently, causing its
+                        // SHA-1 hash to differ from the expected value recorded in the
+                        // install profile.In this case, fall back to verifying that the
+                        // file is at least a structurally valid ZIP/JAR archive.
+                        try {
+                            FileDownloadTask.ZIP_INTEGRITY_CHECK_HANDLER.checkIntegrity(artifact, artifact);
+                            continue;
+                        } catch (Exception ignored) {
+                        }
+                    }
+
+
                     Files.delete(artifact);
                     throw new ChecksumMismatchException("SHA-1", entry.getValue(), code);
                 }
