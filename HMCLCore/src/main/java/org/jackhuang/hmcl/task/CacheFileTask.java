@@ -115,25 +115,27 @@ public final class CacheFileTask extends FetchTask<Path> {
                     fileOutput.close();
                 } catch (IOException e) {
                     LOG.warning("Failed to close file: " + temp, e);
+                    deleteTempFile();
+                    throw e;
                 }
 
                 if (!isSuccess()) {
-                    try {
-                        Files.deleteIfExists(temp);
-                    } catch (IOException e) {
-                        LOG.warning("Failed to delete file: " + temp, e);
-                    }
+                    deleteTempFile();
                     return;
                 }
 
                 try {
                     setResult(repository.cacheRemoteFile(UrlResponseInfo.of(response), temp));
                 } finally {
-                    try {
-                        Files.deleteIfExists(temp);
-                    } catch (IOException e) {
-                        LOG.warning("Failed to delete file: " + temp, e);
-                    }
+                    deleteTempFile();
+                }
+            }
+
+            private void deleteTempFile() {
+                try {
+                    Files.deleteIfExists(temp);
+                } catch (IOException e) {
+                    LOG.warning("Failed to delete file: " + temp, e);
                 }
             }
         };

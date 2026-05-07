@@ -231,47 +231,60 @@ public class FileDownloadTask extends FetchTask<Void> {
                     fileOutput.close();
                 } catch (IOException e) {
                     LOG.warning("Failed to close file: " + temp, e);
+                    deleteTempFile();
+                    throw e;
                 }
 
                 if (!isSuccess()) {
-                    try {
-                        Files.deleteIfExists(temp);
-                    } catch (IOException e) {
-                        LOG.warning("Failed to delete file: " + temp, e);
-                    }
+                    deleteTempFile();
                     return;
                 }
 
-                for (IntegrityCheckHandler handler : integrityCheckHandlers) {
-                    handler.checkIntegrity(temp, file);
-                }
-
-                Files.createDirectories(file.toAbsolutePath().getParent());
-
+                boolean moved = false;
                 try {
-                    Files.move(temp, file, StandardCopyOption.REPLACE_EXISTING);
-                } catch (Exception e) {
-                    throw new IOException("Unable to move temp file from " + temp + " to " + file, e);
-                }
-
-                // Integrity check
-                if (checksum != null) {
-                    String actualChecksum = HexFormat.of().formatHex(digest.digest());
-                    if (!checksum.equalsIgnoreCase(actualChecksum)) {
-                        throw new ChecksumMismatchException(algorithm, checksum, actualChecksum);
+                    for (IntegrityCheckHandler handler : integrityCheckHandlers) {
+                        handler.checkIntegrity(temp, file);
                     }
-                }
 
-                if (caching && algorithm != null) {
+                    if (checksum != null) {
+                        String actualChecksum = HexFormat.of().formatHex(digest.digest());
+                        if (!checksum.equalsIgnoreCase(actualChecksum)) {
+                            throw new ChecksumMismatchException(algorithm, checksum, actualChecksum);
+                        }
+                    }
+
+                    Files.createDirectories(file.toAbsolutePath().getParent());
+
                     try {
-                        repository.cacheFile(file, algorithm, checksum);
-                    } catch (IOException e) {
-                        LOG.warning("Failed to cache file", e);
+                        Files.move(temp, file, StandardCopyOption.REPLACE_EXISTING);
+                        moved = true;
+                    } catch (Exception e) {
+                        throw new IOException("Unable to move temp file from " + temp + " to " + file, e);
+                    }
+
+                    if (caching && algorithm != null) {
+                        try {
+                            repository.cacheFile(file, algorithm, checksum);
+                        } catch (IOException e) {
+                            LOG.warning("Failed to cache file", e);
+                        }
+                    }
+
+                    if (checkETag) {
+                        repository.cacheRemoteFile(UrlResponseInfo.of(response), file);
+                    }
+                } finally {
+                    if (!moved) {
+                        deleteTempFile();
                     }
                 }
+            }
 
-                if (checkETag) {
-                    repository.cacheRemoteFile(UrlResponseInfo.of(response), file);
+            private void deleteTempFile() {
+                try {
+                    Files.deleteIfExists(temp);
+                } catch (IOException e) {
+                    LOG.warning("Failed to delete file: " + temp, e);
                 }
             }
         };

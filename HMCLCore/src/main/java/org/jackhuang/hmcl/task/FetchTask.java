@@ -40,6 +40,8 @@ import java.util.concurrent.Semaphore;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import static org.jackhuang.hmcl.util.Lang.threadPool;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
@@ -133,8 +135,13 @@ public abstract class FetchTask<T> extends Task<T> {
     }
 
     private static final class HttpResumeContext {
+        private static final Pattern CONTENT_RANGE_PATTERN = Pattern.compile("bytes ([0-9]+)-([0-9]+)/([0-9]+)");
+
         static @Nullable FetchTask.HttpResumeContext of(HttpResponse<?> response) throws IOException {
-            boolean acceptRanges = response.headers().firstValue("accept-ranges").orElse("").equals("bytes");
+            if (response.statusCode() != HttpURLConnection.HTTP_OK)
+                return null;
+
+            boolean acceptRanges = response.headers().firstValue("accept-ranges").orElse("").equalsIgnoreCase("bytes");
             if (!acceptRanges)
                 return null;
 
@@ -142,7 +149,7 @@ public abstract class FetchTask<T> extends Task<T> {
             if (contentEncoding != ContentEncoding.IDENTITY)
                 return null;
 
-            long contentLength = response.headers().firstValueAsLong("content-length").orElse(1L);
+            long contentLength = response.headers().firstValueAsLong("content-length").orElse(-1L);
             if (contentLength < 0)
                 return null;
 
@@ -166,11 +173,14 @@ public abstract class FetchTask<T> extends Task<T> {
         }
 
         boolean canResume(HttpResponse<?> response) throws IOException {
+            if (response.statusCode() != HttpURLConnection.HTTP_PARTIAL)
+                return false;
+
             var contentEncoding = ContentEncoding.fromHeaders(response.headers());
             if (contentEncoding != ContentEncoding.IDENTITY)
                 return false;
 
-            long contentLength = response.headers().firstValueAsLong("content-length").orElse(1L);
+            long contentLength = response.headers().firstValueAsLong("content-length").orElse(-1L);
             if (this.contentLength != contentLength + this.countUncompressed)
                 return false;
 
@@ -178,10 +188,27 @@ public abstract class FetchTask<T> extends Task<T> {
             if (!this.lastModified.equals(lastModified))
                 return false;
 
-            // TODO: 更仔细的验证完成
-            if (!response.headers().firstValue("content-range").orElse("").startsWith("bytes "))
+            String contentRange = response.headers().firstValue("content-range").orElse("");
+            Matcher matcher = CONTENT_RANGE_PATTERN.matcher(contentRange);
+            if (!matcher.matches())
                 return false;
-            return true;
+
+            try {
+                long start = Long.parseLong(matcher.group(1));
+                long end = Long.parseLong(matcher.group(2));
+                long total = Long.parseLong(matcher.group(3));
+
+                if (start != countUncompressed || end < start || total != this.contentLength)
+                    return false;
+
+                return end - start + 1 == contentLength;
+            } catch (NumberFormatException e) {
+                return false;
+            }
+        }
+
+        boolean hasPartialContent() {
+            return countUncompressed > 0 && countUncompressed < contentLength;
         }
     }
 
@@ -189,6 +216,7 @@ public abstract class FetchTask<T> extends Task<T> {
                           @Nullable FetchTask.HttpResumeContext resume, InputStream inputStream,
                           long contentLength,
                           ContentEncoding contentEncoding) throws IOException, InterruptedException {
+        boolean success = false;
         try (var counter = new CounterInputStream(inputStream);
              var input = contentEncoding.wrap(counter)) {
             long lastDownloaded = 0L;
@@ -226,6 +254,10 @@ public abstract class FetchTask<T> extends Task<T> {
             if (contentLength >= 0 && counter.downloaded != contentLength)
                 throw new IOException("Unexpected file size: " + counter.downloaded + ", expected: " + contentLength);
 
+            success = true;
+        }
+
+        if (success) {
             context.withResult(true);
         }
     }
@@ -270,7 +302,8 @@ public abstract class FetchTask<T> extends Task<T> {
                     if (useCachedResult && checkETag && resumeContext == null)
                         headers.putAll(repository.injectConnection(uri));
 
-                    if (resumeContext != null)
+                    boolean resumeRequested = resumeContext != null && resumeContext.hasPartialContent();
+                    if (resumeRequested)
                         headers.put("range", "bytes=" + resumeContext.countUncompressed + "-");
 
                     do {
@@ -315,6 +348,20 @@ public abstract class FetchTask<T> extends Task<T> {
                     } while (true);
 
                     int responseCode = response.statusCode();
+                    if (resumeRequested && responseCode == 416) {
+                        resumeContext = null;
+                        try {
+                            context.reset();
+                        } catch (Throwable e) {
+                            IOUtils.closeQuietly(context, e);
+                            LOG.warning("Failed to reset context for " + uri, e);
+
+                            context = null;
+                        }
+                        retryLimit++;
+                        continue;
+                    }
+
                     if (useCachedResult && responseCode == HttpURLConnection.HTTP_NOT_MODIFIED) {
                         // Handle cache
                         try {
@@ -345,7 +392,7 @@ public abstract class FetchTask<T> extends Task<T> {
                     if (context == null) {
                         context = getContext(response, checkETag, bmclapiHash);
                         resumeContext = HttpResumeContext.of(response);
-                    } else if (resumeContext != null) {
+                    } else if (resumeRequested) {
                         if (resumeContext.canResume(response)) {
                             // Resume download
                             LOG.warning("Resuming " + resumeContext.uri);
@@ -373,6 +420,7 @@ public abstract class FetchTask<T> extends Task<T> {
 
                             context = getContext(response, checkETag, bmclapiHash);
                         }
+                        resumeContext = HttpResumeContext.of(response);
                     }
 
                     try {
@@ -388,6 +436,16 @@ public abstract class FetchTask<T> extends Task<T> {
                         }
                         throw e;
                     }
+                    try {
+                        context.close();
+                    } catch (IOException | RuntimeException | Error e) {
+                        context.withResult(false);
+                        IOUtils.closeQuietly(context, e);
+                        context = null;
+                        resumeContext = null;
+                        throw e;
+                    }
+                    context = null;
                     return;
                 } catch (InterruptedException e) {
                     throw e;
