@@ -149,6 +149,7 @@ public final class Profiles {
             profile.setName(name);
         });
         checkProfiles();
+        migrateGameSettings();
 
         // Platform.runLater is necessary or profiles will be empty
         // since checkProfiles adds 2 base profile later.
@@ -172,6 +173,28 @@ public final class Profiles {
                 }
             });
         });
+    }
+
+    private static void migrateGameSettings() {
+        if (config().getGameSettings().isEmpty()) {
+            for (Profile profile : profiles) {
+                GameSetting.Global gameSetting = GameSetting.fromVersionSetting(getProfileDisplayName(profile), profile.getGlobal());
+                config().getGameSettings().add(gameSetting);
+                profile.setLegacyGameSettingParent(gameSetting.idProperty().getValue());
+            }
+        } else {
+            for (Profile profile : profiles) {
+                if (profile.getLegacyGameSettingParent() == null) {
+                    profile.setLegacyGameSettingParent(config().getDefaultGameSettingOrCreate().idProperty().getValue());
+                }
+            }
+        }
+
+        if (config().getGameSettings().isEmpty()) {
+            config().getDefaultGameSettingOrCreate();
+        } else if (config().getGameSetting(config().getDefaultGameSetting()) == null) {
+            config().setDefaultGameSetting(config().getGameSettings().get(0).idProperty().getValue());
+        }
     }
 
     public static ObservableList<Profile> getProfiles() {

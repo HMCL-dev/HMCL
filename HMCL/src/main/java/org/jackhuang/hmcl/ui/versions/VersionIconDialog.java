@@ -22,9 +22,9 @@ import javafx.scene.image.ImageView;
 import javafx.scene.layout.FlowPane;
 import javafx.stage.FileChooser;
 import org.jackhuang.hmcl.event.Event;
+import org.jackhuang.hmcl.setting.GameSetting;
 import org.jackhuang.hmcl.setting.Profile;
 import org.jackhuang.hmcl.setting.VersionIconType;
-import org.jackhuang.hmcl.setting.VersionSetting;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
@@ -42,13 +42,13 @@ public class VersionIconDialog extends DialogPane {
     private final Profile profile;
     private final String versionId;
     private final Runnable onFinish;
-    private final VersionSetting vs;
+    private final GameSetting.Instance setting;
 
     public VersionIconDialog(Profile profile, String versionId, Runnable onFinish) {
         this.profile = profile;
         this.versionId = versionId;
         this.onFinish = onFinish;
-        this.vs = profile.getRepository().getLocalVersionSettingOrCreate(versionId);
+        this.setting = profile.getRepository().getLocalGameSettingOrCreate(versionId);
 
         setTitle(i18n("settings.icon"));
         FlowPane pane = new FlowPane();
@@ -81,8 +81,8 @@ public class VersionIconDialog extends DialogPane {
             try {
                 profile.getRepository().setVersionIconFile(versionId, selectedFile);
 
-                if (vs != null) {
-                    vs.setVersionIcon(VersionIconType.DEFAULT);
+                if (setting != null) {
+                    setting.iconProperty().setValue(VersionIconType.DEFAULT);
                 }
 
                 onAccept();
@@ -109,8 +109,8 @@ public class VersionIconDialog extends DialogPane {
         FXUtils.setLimitWidth(container, 36);
         FXUtils.setLimitHeight(container, 36);
         FXUtils.onClicked(container, () -> {
-            if (vs != null) {
-                vs.setVersionIcon(type);
+            if (setting != null) {
+                setting.iconProperty().setValue(type);
                 onAccept();
             }
         });

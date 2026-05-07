@@ -31,9 +31,11 @@ import org.jackhuang.hmcl.mod.multimc.MultiMCModpackProvider;
 import org.jackhuang.hmcl.mod.server.ServerModpackManifest;
 import org.jackhuang.hmcl.mod.server.ServerModpackProvider;
 import org.jackhuang.hmcl.mod.server.ServerModpackRemoteInstallTask;
+import org.jackhuang.hmcl.setting.GameSetting;
+import org.jackhuang.hmcl.setting.GameWindowType;
+import org.jackhuang.hmcl.setting.JavaVersionType;
 import org.jackhuang.hmcl.setting.Profile;
 import org.jackhuang.hmcl.setting.Profiles;
-import org.jackhuang.hmcl.setting.VersionSetting;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.util.Lang;
@@ -155,10 +157,12 @@ public final class ModpackHelper {
         ExceptionalRunnable<?> success = () -> {
             HMCLGameRepository repository = profile.getRepository();
             repository.refreshVersions();
-            VersionSetting vs = repository.specializeVersionSetting(name);
+            GameSetting.Instance setting = repository.getLocalGameSettingOrCreate(name);
             repository.undoMark(name);
-            if (vs != null)
-                vs.setGameDirType(GameDirectoryType.VERSION_FOLDER);
+            if (setting != null) {
+                setting.isolationProperty().setValue(true);
+                setting.gameDirTypeProperty().setValue(GameDirectoryType.VERSION_FOLDER);
+            }
         };
 
         ExceptionalConsumer<Exception, ?> failure = ex -> {
@@ -197,10 +201,12 @@ public final class ModpackHelper {
         ExceptionalRunnable<?> success = () -> {
             HMCLGameRepository repository = profile.getRepository();
             repository.refreshVersions();
-            VersionSetting vs = repository.specializeVersionSetting(name);
+            GameSetting.Instance setting = repository.getLocalGameSettingOrCreate(name);
             repository.undoMark(name);
-            if (vs != null)
-                vs.setGameDirType(GameDirectoryType.VERSION_FOLDER);
+            if (setting != null) {
+                setting.isolationProperty().setValue(true);
+                setting.gameDirTypeProperty().setValue(GameDirectoryType.VERSION_FOLDER);
+            }
         };
 
         ExceptionalConsumer<Exception, ?> failure = ex -> {
@@ -252,73 +258,84 @@ public final class ModpackHelper {
                     .thenComposeAsync(profile.getRepository().refreshVersionsAsync());
     }
 
-    public static void toVersionSetting(MultiMCInstanceConfiguration c, VersionSetting vs) {
-        vs.setUsesGlobal(false);
-        vs.setGameDirType(GameDirectoryType.VERSION_FOLDER);
+    public static void toGameSetting(MultiMCInstanceConfiguration c, GameSetting.Instance setting) {
+        setting.isolationProperty().setValue(true);
+        setting.gameDirTypeProperty().setValue(GameDirectoryType.VERSION_FOLDER);
 
         if (c.isOverrideJavaLocation()) {
-            vs.setJavaDir(Lang.nonNull(c.getJavaPath(), ""));
+            setting.javaTypeProperty().setValue(JavaVersionType.CUSTOM);
+            setting.customJavaPathProperty().setValue(Lang.nonNull(c.getJavaPath(), ""));
         }
 
         if (c.isOverrideMemory()) {
-            vs.setPermSize(Optional.ofNullable(c.getPermGen()).map(Object::toString).orElse(""));
+            setting.getOverrideGroups().add(GameSetting.MEMORY_SETTINGS);
+            setting.permSizeProperty().setValue(Optional.ofNullable(c.getPermGen()).map(Object::toString).orElse(""));
             if (c.getMaxMemory() != null)
-                vs.setMaxMemory(c.getMaxMemory());
-            vs.setMinMemory(c.getMinMemory());
+                setting.maxMemoryProperty().setValue(c.getMaxMemory());
+            setting.minMemoryProperty().setValue(c.getMinMemory());
         }
 
         if (c.isOverrideCommands()) {
-            vs.setWrapper(Lang.nonNull(c.getWrapperCommand(), ""));
-            vs.setPreLaunchCommand(Lang.nonNull(c.getPreLaunchCommand(), ""));
+            setting.commandWrapperProperty().setValue(Lang.nonNull(c.getWrapperCommand(), ""));
+            setting.preLaunchCommandProperty().setValue(Lang.nonNull(c.getPreLaunchCommand(), ""));
         }
 
         if (c.isOverrideJavaArgs()) {
-            vs.setJavaArgs(Lang.nonNull(c.getJvmArgs(), ""));
+            setting.getOverrideGroups().add(GameSetting.JVM_OPTIONS);
+            setting.jvmOptionsProperty().setValue(Lang.nonNull(c.getJvmArgs(), ""));
         }
 
         if (c.isOverrideConsole()) {
-            vs.setShowLogs(c.isShowConsole());
+            setting.showLogsProperty().setValue(c.isShowConsole());
         }
 
         if (c.isOverrideWindow()) {
-            vs.setFullscreen(c.isFullscreen());
+            setting.windowTypeProperty().setValue(c.isFullscreen() ? GameWindowType.FULLSCREEN : GameWindowType.WINDOWED);
             if (c.getWidth() != null)
-                vs.setWidth(c.getWidth());
+                setting.widthProperty().setValue(c.getWidth().doubleValue());
             if (c.getHeight() != null)
-                vs.setHeight(c.getHeight());
+                setting.heightProperty().setValue(c.getHeight().doubleValue());
         }
     }
 
-    private static void applyCommandAndJvmSettings(MultiMCInstanceConfiguration c, VersionSetting vs) {
+    private static void applyCommandAndJvmSettings(MultiMCInstanceConfiguration c, GameSetting.Instance setting) {
         if (c.isOverrideCommands()) {
-            vs.setWrapper(Lang.nonNull(c.getWrapperCommand(), ""));
-            vs.setPreLaunchCommand(Lang.nonNull(c.getPreLaunchCommand(), ""));
+            setting.commandWrapperProperty().setValue(Lang.nonNull(c.getWrapperCommand(), ""));
+            setting.preLaunchCommandProperty().setValue(Lang.nonNull(c.getPreLaunchCommand(), ""));
         }
 
         if (c.isOverrideJavaArgs()) {
-            vs.setJavaArgs(Lang.nonNull(c.getJvmArgs(), ""));
+            setting.getOverrideGroups().add(GameSetting.JVM_OPTIONS);
+            setting.jvmOptionsProperty().setValue(Lang.nonNull(c.getJvmArgs(), ""));
         }
     }
 
     private static Task<Void> createMultiMCPostUpdateTask(Profile profile, MultiMCInstanceConfiguration manifest, String version) {
         return Task.runAsync(Schedulers.javafx(), () -> {
-            VersionSetting vs = Objects.requireNonNull(profile.getRepository().specializeVersionSetting(version));
-            ModpackHelper.applyCommandAndJvmSettings(manifest, vs);
+            GameSetting.Instance setting = Objects.requireNonNull(profile.getRepository().getLocalGameSettingOrCreate(version));
+            ModpackHelper.applyCommandAndJvmSettings(manifest, setting);
         });
     }
 
     private static Task<Void> createMultiMCPostInstallTask(Profile profile, MultiMCInstanceConfiguration manifest, String version) {
         return Task.runAsync(Schedulers.javafx(), () -> {
-            VersionSetting vs = Objects.requireNonNull(profile.getRepository().specializeVersionSetting(version));
-            ModpackHelper.toVersionSetting(manifest, vs);
+            GameSetting.Instance setting = Objects.requireNonNull(profile.getRepository().getLocalGameSettingOrCreate(version));
+            ModpackHelper.toGameSetting(manifest, setting);
         });
     }
 
     private static Task<Void> createMcbbsPostInstallTask(Profile profile, McbbsModpackManifest manifest, String version) {
         return Task.runAsync(Schedulers.javafx(), () -> {
-            VersionSetting vs = Objects.requireNonNull(profile.getRepository().specializeVersionSetting(version));
-            if (manifest.getLaunchInfo().getMinMemory() > vs.getMaxMemory())
-                vs.setMaxMemory(manifest.getLaunchInfo().getMinMemory());
+            HMCLGameRepository repository = profile.getRepository();
+            GameSetting.Effective effective = repository.getEffectiveGameSetting(version);
+            if (manifest.getLaunchInfo().getMinMemory() > effective.getMaxMemory()) {
+                GameSetting.Instance setting = Objects.requireNonNull(repository.getLocalGameSettingOrCreate(version));
+                setting.getOverrideGroups().add(GameSetting.MEMORY_SETTINGS);
+                setting.autoMemoryProperty().setValue(effective.isAutoMemory());
+                setting.minMemoryProperty().setValue(effective.getMinMemory());
+                setting.maxMemoryProperty().setValue(manifest.getLaunchInfo().getMinMemory());
+                setting.permSizeProperty().setValue(effective.getPermSize());
+            }
         });
     }
 }

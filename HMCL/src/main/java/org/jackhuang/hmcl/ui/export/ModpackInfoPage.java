@@ -39,7 +39,7 @@ import org.jackhuang.hmcl.game.HMCLGameRepository;
 import org.jackhuang.hmcl.mod.ModpackExportInfo;
 import org.jackhuang.hmcl.mod.mcbbs.McbbsModpackManifest;
 import org.jackhuang.hmcl.setting.Accounts;
-import org.jackhuang.hmcl.setting.VersionSetting;
+import org.jackhuang.hmcl.setting.GameSetting;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.construct.*;
@@ -100,10 +100,10 @@ public final class ModpackInfoPage extends Control implements WizardPage {
         name.set(version);
         author.set(Optional.ofNullable(Accounts.getSelectedAccount()).map(Account::getUsername).orElse(""));
 
-        VersionSetting versionSetting = gameRepository.getVersionSetting(versionName);
+        GameSetting.Effective versionSetting = gameRepository.getEffectiveGameSetting(versionName);
         minMemory.set(Optional.ofNullable(versionSetting.getMinMemory()).orElse(0));
-        launchArguments.set(versionSetting.getMinecraftArgs());
-        javaArguments.set(versionSetting.getJavaArgs());
+        launchArguments.set(versionSetting.getGameArgs());
+        javaArguments.set(versionSetting.getJVMOptions());
 
         canIncludeLauncher = JarUtils.thisJarPath() != null;
     }

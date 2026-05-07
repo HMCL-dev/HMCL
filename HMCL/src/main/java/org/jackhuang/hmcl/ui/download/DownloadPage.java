@@ -309,7 +309,10 @@ public class DownloadPage extends DecoratorAnimatedPage implements DecoratorPage
                     builder.version(remoteVersion);
             });
 
-            return builder.buildAsync().whenComplete(any -> profile.getRepository().refreshVersions())
+            return builder.buildAsync().whenComplete(any -> {
+                        profile.getRepository().refreshVersions();
+                        profile.getRepository().applyDefaultIsolationSetting(name);
+                    })
                     .thenRunAsync(Schedulers.javafx(), () -> profile.setSelectedVersion(name));
         }
 

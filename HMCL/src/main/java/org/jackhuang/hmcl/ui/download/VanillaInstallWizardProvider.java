@@ -60,7 +60,10 @@ public final class VanillaInstallWizardProvider implements WizardProvider {
                 builder.version(remoteVersion);
         });
 
-        return builder.buildAsync().whenComplete(any -> profile.getRepository().refreshVersions())
+        return builder.buildAsync().whenComplete(any -> {
+                    profile.getRepository().refreshVersions();
+                    profile.getRepository().applyDefaultIsolationSetting(name);
+                })
                 .thenRunAsync(Schedulers.javafx(), () -> profile.setSelectedVersion(name));
     }
 

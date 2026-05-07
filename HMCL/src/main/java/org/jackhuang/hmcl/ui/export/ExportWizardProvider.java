@@ -28,8 +28,9 @@ import org.jackhuang.hmcl.mod.multimc.MultiMCModpackExportTask;
 import org.jackhuang.hmcl.mod.server.ServerModpackExportTask;
 import org.jackhuang.hmcl.setting.Config;
 import org.jackhuang.hmcl.setting.FontManager;
+import org.jackhuang.hmcl.setting.GameSetting;
+import org.jackhuang.hmcl.setting.GameWindowType;
 import org.jackhuang.hmcl.setting.Profile;
-import org.jackhuang.hmcl.setting.VersionSetting;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.wizard.WizardController;
@@ -198,25 +199,25 @@ public final class ExportWizardProvider implements WizardProvider {
 
             @Override
             public void execute() {
-                VersionSetting vs = profile.getVersionSetting(version);
+                GameSetting.Effective setting = profile.getRepository().getEffectiveGameSetting(version);
                 dependency = new MultiMCModpackExportTask(profile.getRepository(), version, exportInfo.getWhitelist(),
                         new MultiMCInstanceConfiguration(
                                 "OneSix",
                                 exportInfo.getName() + "-" + exportInfo.getVersion(),
                                 null,
-                                Lang.toIntOrNull(vs.getPermSize()),
-                                vs.getWrapper(),
-                                vs.getPreLaunchCommand(),
+                                Lang.toIntOrNull(setting.getPermSize()),
+                                setting.getCommandWrapper(),
+                                setting.getPreLaunchCommand(),
                                 null,
                                 exportInfo.getDescription(),
                                 null,
                                 exportInfo.getJavaArguments(),
-                                vs.isFullscreen(),
-                                vs.getWidth(),
-                                vs.getHeight(),
+                                setting.getWindowType() == GameWindowType.FULLSCREEN,
+                                setting.getWidth(),
+                                setting.getHeight(),
                                 null,
                                 exportInfo.getMinMemory(),
-                                vs.isShowLogs(),
+                                setting.isShowLogs(),
                                 /* showConsoleOnError */ true,
                                 /* autoCloseConsole */ false,
                                 /* overrideMemory */ true,

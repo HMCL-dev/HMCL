@@ -114,7 +114,7 @@ public final class Versions {
     }
 
     public static void deleteVersion(Profile profile, String version) {
-        boolean isIndependent = profile.getVersionSetting(version).getGameDirType() == GameDirectoryType.VERSION_FOLDER;
+        boolean isIndependent = profile.getRepository().getGameDirectoryType(version) == GameDirectoryType.VERSION_FOLDER;
         String message = isIndependent ? i18n("version.manage.remove.confirm.independent", version) :
                 i18n("version.manage.remove.confirm.trash", version, version + "_removed");
 

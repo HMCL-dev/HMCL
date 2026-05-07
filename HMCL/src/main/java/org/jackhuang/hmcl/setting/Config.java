@@ -52,6 +52,7 @@ public final class Config extends ObservableSetting {
 
     public static final Gson CONFIG_GSON = new GsonBuilder()
             .registerTypeAdapter(Path.class, PathTypeAdapter.INSTANCE)
+            .registerTypeAdapter(UUID.class, UUIDTypeAdapter.INSTANCE)
             .registerTypeAdapter(ObservableList.class, new ObservableListCreator())
             .registerTypeAdapter(ObservableSet.class, new ObservableSetCreator())
             .registerTypeAdapter(ObservableMap.class, new ObservableMapCreator())
@@ -805,6 +806,62 @@ public final class Config extends ObservableSetting {
 
     public MapProperty<String, Profile> getConfigurations() {
         return configurations;
+    }
+
+    // Game Settings
+
+    @SerializedName("gameSettings")
+    private final ObservableList<GameSetting.Global> gameSettings = FXCollections.observableArrayList(setting -> new Observable[] { setting });
+
+    public ObservableList<GameSetting.Global> getGameSettings() {
+        return gameSettings;
+    }
+
+    @SerializedName("defaultGameSetting")
+    private final ObjectProperty<UUID> defaultGameSetting = new SimpleObjectProperty<>(this, "defaultGameSetting");
+
+    public ObjectProperty<UUID> defaultGameSettingProperty() {
+        return defaultGameSetting;
+    }
+
+    public UUID getDefaultGameSetting() {
+        return defaultGameSetting.get();
+    }
+
+    public void setDefaultGameSetting(UUID defaultGameSetting) {
+        this.defaultGameSetting.set(defaultGameSetting);
+    }
+
+    public GameSetting.Global getGameSetting(UUID id) {
+        if (id == null) {
+            return null;
+        }
+
+        for (GameSetting.Global setting : gameSettings) {
+            if (id.equals(setting.idProperty().getValue())) {
+                return setting;
+            }
+        }
+        return null;
+    }
+
+    public GameSetting.Global getDefaultGameSettingOrCreate() {
+        GameSetting.Global setting = getGameSetting(getDefaultGameSetting());
+        if (setting != null) {
+            return setting;
+        }
+
+        if (!gameSettings.isEmpty()) {
+            setting = gameSettings.get(0);
+            setDefaultGameSetting(setting.idProperty().getValue());
+            return setting;
+        }
+
+        setting = new GameSetting.Global();
+        setting.nameProperty().setValue("Default");
+        gameSettings.add(setting);
+        setDefaultGameSetting(setting.idProperty().getValue());
+        return setting;
     }
 
     public static final class Adapter extends ObservableSetting.Adapter<Config> {

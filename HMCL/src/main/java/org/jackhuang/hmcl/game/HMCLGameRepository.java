@@ -30,6 +30,10 @@ import org.jackhuang.hmcl.mod.ModAdviser;
 import org.jackhuang.hmcl.mod.Modpack;
 import org.jackhuang.hmcl.mod.ModpackConfiguration;
 import org.jackhuang.hmcl.mod.ModpackProvider;
+import org.jackhuang.hmcl.setting.Config;
+import org.jackhuang.hmcl.setting.DefaultIsolationType;
+import org.jackhuang.hmcl.setting.GameSetting;
+import org.jackhuang.hmcl.setting.GameWindowType;
 import org.jackhuang.hmcl.setting.Profile;
 import org.jackhuang.hmcl.setting.VersionIconType;
 import org.jackhuang.hmcl.setting.VersionSetting;
@@ -63,6 +67,9 @@ public final class HMCLGameRepository extends DefaultGameRepository {
     private final Profile profile;
 
     // local version settings
+    private final Map<String, GameSetting.Instance> localGameSettings = new HashMap<>();
+    private final Set<String> loadedLocalGameSettings = new HashSet<>();
+    private final Set<String> migratedLocalGameSettings = new HashSet<>();
     private final Map<String, VersionSetting> localVersionSettings = new HashMap<>();
     private final Set<String> beingModpackVersions = new HashSet<>();
 
@@ -82,7 +89,11 @@ public final class HMCLGameRepository extends DefaultGameRepository {
         if (beingModpackVersions.contains(id) || isModpack(id)) {
             return GameDirectoryType.VERSION_FOLDER;
         } else {
-            return getVersionSetting(id).getGameDirType();
+            GameSetting.Instance localSetting = getLocalGameSetting(id);
+            if (localSetting != null && Boolean.TRUE.equals(localSetting.isolationProperty().getValue())) {
+                return GameDirectoryType.VERSION_FOLDER;
+            }
+            return getEffectiveGameSetting(id).getGameDirType();
         }
     }
 
@@ -95,7 +106,7 @@ public final class HMCLGameRepository extends DefaultGameRepository {
                 return super.getRunDirectory(id);
             case CUSTOM:
                 try {
-                    return Path.of(getVersionSetting(id).getGameDir());
+                    return Path.of(getEffectiveGameSetting(id).getRunningDir());
                 } catch (InvalidPathException ignored) {
                     return getVersionRoot(id);
                 }
@@ -113,14 +124,13 @@ public final class HMCLGameRepository extends DefaultGameRepository {
 
     @Override
     protected void refreshVersionsImpl() {
+        localGameSettings.clear();
+        loadedLocalGameSettings.clear();
+        migratedLocalGameSettings.clear();
         localVersionSettings.clear();
         super.refreshVersionsImpl();
+        versions.keySet().forEach(this::loadLocalGameSetting);
         versions.keySet().forEach(this::loadLocalVersionSetting);
-        versions.keySet().forEach(version -> {
-            if (isModpack(version)) {
-                specializeVersionSetting(version);
-            }
-        });
 
         try {
             Path file = getBaseDirectory().resolve("launcher_profiles.json");
@@ -177,18 +187,130 @@ public final class HMCLGameRepository extends DefaultGameRepository {
 
         JsonUtils.writeToJsonFile(toJson, fromVersion.setId(dstId).setJar(dstId));
 
-        VersionSetting oldVersionSetting = getVersionSetting(srcId).clone();
-        GameDirectoryType originalGameDirType = oldVersionSetting.getGameDirType();
-        oldVersionSetting.setUsesGlobal(false);
-        oldVersionSetting.setGameDirType(GameDirectoryType.VERSION_FOLDER);
-        VersionSetting newVersionSetting = initLocalVersionSetting(dstId, oldVersionSetting);
-        saveVersionSetting(dstId);
-
+        GameDirectoryType originalGameDirType = getGameDirectoryType(srcId);
         Path srcGameDir = getRunDirectory(srcId);
+
+        GameSetting.Instance newGameSetting = copyLocalGameSetting(srcId);
+        newGameSetting.isolationProperty().setValue(true);
+        newGameSetting.gameDirTypeProperty().setValue(GameDirectoryType.VERSION_FOLDER);
+        initLocalGameSetting(dstId, newGameSetting);
+        saveGameSetting(dstId);
+
         Path dstGameDir = getRunDirectory(dstId);
 
         if (originalGameDirType != GameDirectoryType.VERSION_FOLDER)
             FileUtils.copyDirectory(srcGameDir, dstGameDir, path -> Modpack.acceptFile(path, blackList, null));
+    }
+
+    private GameSetting.Instance copyLocalGameSetting(String id) {
+        GameSetting.Instance setting = getLocalGameSetting(id);
+        if (setting != null) {
+            GameSetting.Instance copied = Config.CONFIG_GSON.fromJson(Config.CONFIG_GSON.toJson(setting), GameSetting.Instance.class);
+            if (copied != null) {
+                return copied;
+            }
+        }
+
+        GameSetting.Instance copied = new GameSetting.Instance();
+        copied.parentProperty().setValue(getEffectiveGameSetting(id).getGlobal().idProperty().getValue());
+        return copied;
+    }
+
+    private Path getLocalGameSettingFile(String id) {
+        return getVersionRoot(id).resolve("hmcl-game-setting.cfg");
+    }
+
+    private void loadLocalGameSetting(String id) {
+        Path file = getLocalGameSettingFile(id);
+        if (Files.exists(file)) {
+            try {
+                GameSetting.Instance gameSetting = Config.CONFIG_GSON.fromJson(Files.readString(file), GameSetting.Instance.class);
+                if (gameSetting != null) {
+                    initLocalGameSetting(id, gameSetting);
+                    loadedLocalGameSettings.add(id);
+                }
+                return;
+            } catch (Exception ex) {
+                LOG.warning("Failed to load game setting " + file, ex);
+            }
+        }
+
+        VersionSetting legacySetting = getLocalVersionSetting(id);
+        if (legacySetting != null) {
+            UUID parent = profile.getLegacyGameSettingParent();
+            initLocalGameSetting(id, GameSetting.fromVersionSetting(parent, legacySetting, !legacySetting.isUsesGlobal()));
+            migratedLocalGameSettings.add(id);
+        }
+    }
+
+    public GameSetting.Instance createLocalGameSetting(String id) {
+        if (!hasVersion(id)) {
+            return null;
+        }
+        if (localGameSettings.containsKey(id)) {
+            return getLocalGameSetting(id);
+        }
+
+        GameSetting.Instance setting = new GameSetting.Instance();
+        setting.parentProperty().setValue(Optional.ofNullable(profile.getLegacyGameSettingParent()).orElse(config().getDefaultGameSetting()));
+        return initLocalGameSetting(id, setting);
+    }
+
+    private GameSetting.Instance initLocalGameSetting(String id, GameSetting.Instance setting) {
+        localGameSettings.put(id, setting);
+        setting.addListener(a -> saveGameSetting(id));
+        return setting;
+    }
+
+    @Nullable
+    public GameSetting.Instance getLocalGameSetting(String id) {
+        if (!localGameSettings.containsKey(id)) {
+            loadLocalGameSetting(id);
+        }
+        return localGameSettings.get(id);
+    }
+
+    @Nullable
+    public GameSetting.Instance getLocalGameSettingOrCreate(String id) {
+        GameSetting.Instance setting = getLocalGameSetting(id);
+        if (setting == null) {
+            setting = createLocalGameSetting(id);
+        }
+        return setting;
+    }
+
+    public GameSetting.Global getParentGameSetting(@Nullable GameSetting.Instance instance) {
+        UUID parent = instance != null ? instance.parentProperty().getValue() : null;
+        GameSetting.Global parentSetting = config().getGameSetting(parent);
+        return parentSetting != null ? parentSetting : config().getDefaultGameSettingOrCreate();
+    }
+
+    public GameSetting.Effective getEffectiveGameSetting(String id) {
+        GameSetting.Instance instance = getLocalGameSetting(id);
+        return GameSetting.resolve(getParentGameSetting(instance), instance);
+    }
+
+    public void applyDefaultIsolationSetting(String id) {
+        if (!hasVersion(id)) {
+            return;
+        }
+
+        GameSetting.Global global = config().getDefaultGameSettingOrCreate();
+        DefaultIsolationType type = Lang.requireNonNullElse(global.defaultIsolationTypeProperty().getValue(), DefaultIsolationType.MODED);
+        boolean isolated = switch (type) {
+            case NEVER -> false;
+            case ALWAYS -> true;
+            case MODED -> LibraryAnalyzer.isModded(this, getVersion(id).resolve(this));
+        };
+
+        if (isolated) {
+            GameSetting.Instance setting = getLocalGameSettingOrCreate(id);
+            if (setting != null) {
+                setting.parentProperty().setValue(global.idProperty().getValue());
+                setting.isolationProperty().setValue(true);
+                setting.gameDirTypeProperty().setValue(GameDirectoryType.VERSION_FOLDER);
+            }
+        }
     }
 
     private Path getLocalVersionSettingFile(String id) {
@@ -239,8 +361,6 @@ public final class HMCLGameRepository extends DefaultGameRepository {
         if (!localVersionSettings.containsKey(id))
             loadLocalVersionSetting(id);
         VersionSetting setting = localVersionSettings.get(id);
-        if (setting != null && isModpack(id))
-            setting.setGameDirType(GameDirectoryType.VERSION_FOLDER);
         return setting;
     }
 
@@ -302,8 +422,8 @@ public final class HMCLGameRepository extends DefaultGameRepository {
         if (id == null || !isLoaded())
             return VersionIconType.DEFAULT.getIcon();
 
-        VersionSetting vs = getLocalVersionSettingOrCreate(id);
-        VersionIconType iconType = vs != null ? Lang.requireNonNullElse(vs.getVersionIcon(), VersionIconType.DEFAULT) : VersionIconType.DEFAULT;
+        GameSetting.Instance setting = getLocalGameSetting(id);
+        VersionIconType iconType = setting != null ? Lang.requireNonNullElse(setting.iconProperty().getValue(), VersionIconType.DEFAULT) : VersionIconType.DEFAULT;
 
         if (iconType == VersionIconType.DEFAULT) {
             Version version = getVersion(id).resolve(this);
@@ -366,6 +486,26 @@ public final class HMCLGameRepository extends DefaultGameRepository {
         FileSaver.save(file, GSON.toJson(localVersionSettings.get(id)));
     }
 
+    public void saveGameSetting(String id) {
+        if (!localGameSettings.containsKey(id))
+            return;
+        Path file = getLocalGameSettingFile(id).toAbsolutePath().normalize();
+        try {
+            Files.createDirectories(file.getParent());
+        } catch (IOException e) {
+            LOG.warning("Failed to create directory: " + file.getParent(), e);
+        }
+
+        if (migratedLocalGameSettings.contains(id) && !loadedLocalGameSettings.contains(id) && Files.exists(file)) {
+            LOG.warning("Skipped saving migrated game setting because the new setting file already exists: " + file);
+            return;
+        }
+
+        FileSaver.save(file, Config.CONFIG_GSON.toJson(localGameSettings.get(id)));
+        loadedLocalGameSettings.add(id);
+        migratedLocalGameSettings.remove(id);
+    }
+
     /**
      * Make version use self version settings instead of the global one.
      *
@@ -391,7 +531,7 @@ public final class HMCLGameRepository extends DefaultGameRepository {
     }
 
     public LaunchOptions.Builder getLaunchOptions(String version, JavaRuntime javaVersion, Path gameDir, List<String> javaAgents, List<String> javaArguments, boolean makeLaunchScript) {
-        VersionSetting vs = getVersionSetting(version);
+        GameSetting.Effective vs = getEffectiveGameSetting(version);
 
         LaunchOptions.Builder builder = new LaunchOptions.Builder()
                 .setGameDir(gameDir)
@@ -399,9 +539,9 @@ public final class HMCLGameRepository extends DefaultGameRepository {
                 .setVersionType(Metadata.TITLE)
                 .setVersionName(version)
                 .setProfileName(Metadata.TITLE)
-                .setGameArguments(StringUtils.tokenize(vs.getMinecraftArgs()))
-                .setOverrideJavaArguments(StringUtils.tokenize(vs.getJavaArgs()))
-                .setMaxMemory(vs.isNoJVMArgs() && vs.isAutoMemory() ? null : (int) (getAllocatedMemory(
+                .setGameArguments(StringUtils.tokenize(vs.getGameArgs()))
+                .setOverrideJavaArguments(StringUtils.tokenize(vs.getJVMOptions()))
+                .setMaxMemory(vs.isNoJVMOptions() && vs.isAutoMemory() ? null : (int) (getAllocatedMemory(
                         vs.getMaxMemory() * 1024L * 1024L,
                         SystemInfo.getPhysicalMemoryStatus().getAvailable(),
                         vs.isAutoMemory()
@@ -420,13 +560,13 @@ public final class HMCLGameRepository extends DefaultGameRepository {
                 )
                 .setWidth(vs.getWidth())
                 .setHeight(vs.getHeight())
-                .setFullscreen(vs.isFullscreen())
-                .setWrapper(vs.getWrapper())
+                .setFullscreen(vs.getWindowType() == GameWindowType.FULLSCREEN)
+                .setWrapper(vs.getCommandWrapper())
                 .setProxyOption(getProxyOption())
                 .setPreLaunchCommand(vs.getPreLaunchCommand())
                 .setPostExitCommand(vs.getPostExitCommand())
-                .setNoGeneratedJVMArgs(vs.isNoJVMArgs())
-                .setNoGeneratedOptimizingJVMArgs(vs.isNoOptimizingJVMArgs())
+                .setNoGeneratedJVMArgs(vs.isNoJVMOptions())
+                .setNoGeneratedOptimizingJVMArgs(vs.isNoOptimizingJVMOptions())
                 .setNativesDirType(vs.getNativesDirType())
                 .setNativesDir(vs.getNativesDir())
                 .setProcessPriority(vs.getProcessPriority())
@@ -439,8 +579,9 @@ public final class HMCLGameRepository extends DefaultGameRepository {
                 .setJavaAgents(javaAgents)
                 .setJavaArguments(javaArguments);
 
-        if (StringUtils.isNotBlank(vs.getServerIp())) {
-            builder.setQuickPlayOption(new QuickPlayOption.MultiPlayer(vs.getServerIp()));
+        QuickPlayOption quickPlayOption = vs.getQuickPlayOption();
+        if (quickPlayOption != null) {
+            builder.setQuickPlayOption(quickPlayOption);
         }
 
         Path json = getModpackConfiguration(version);

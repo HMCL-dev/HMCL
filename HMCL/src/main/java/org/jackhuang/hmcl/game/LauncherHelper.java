@@ -81,7 +81,7 @@ public final class LauncherHelper {
     private Account account;
     private final String selectedVersion;
     private Path scriptFile;
-    private final VersionSetting setting;
+    private final GameSetting.Effective setting;
     private LauncherVisibility launcherVisibility;
     private boolean showLogs;
     private QuickPlayOption quickPlayOption;
@@ -91,7 +91,7 @@ public final class LauncherHelper {
         this.profile = Objects.requireNonNull(profile);
         this.account = Objects.requireNonNull(account);
         this.selectedVersion = Objects.requireNonNull(selectedVersion);
-        this.setting = profile.getVersionSetting(selectedVersion);
+        this.setting = profile.getRepository().getEffectiveGameSetting(selectedVersion);
         this.launcherVisibility = setting.getLauncherVisibility();
         this.showLogs = setting.isShowLogs();
         this.launchingStepsPane.setTitle(i18n("version.launch"));
@@ -201,8 +201,8 @@ public final class LauncherHelper {
                 .thenComposeAsync(() -> gameVersion.map(s -> new GameVerificationFixTask(dependencyManager, s, version.get())).orElse(null))
                 .thenComposeAsync(() -> {
                     if (config().getAllowAutoAgent()
-                            || setting.isNoJVMArgs()
-                            || setting.isNoOptimizingJVMArgs()
+                            || setting.isNoJVMOptions()
+                            || setting.isNoOptimizingJVMOptions()
                             || Boolean.TRUE.equals(config().getShownTips().get(LWJGL_3_4_1_TIP))
                             || !NativePatcher.needPatchMemoryUtil(version.get(), javaVersionRef.get().getParsedVersion())) {
                         return Task.completed(null);
@@ -382,7 +382,7 @@ public final class LauncherHelper {
         executor.start();
     }
 
-    private static Task<JavaRuntime> checkGameState(Profile profile, VersionSetting setting, Version version) {
+    private static Task<JavaRuntime> checkGameState(Profile profile, GameSetting.Effective setting, Version version) {
         LibraryAnalyzer analyzer = LibraryAnalyzer.analyze(version, profile.getRepository().getGameVersion(version).orElse(null));
         GameVersionNumber gameVersion = GameVersionNumber.asGameVersion(analyzer.getVersion(LibraryAnalyzer.LibraryType.MINECRAFT));
 

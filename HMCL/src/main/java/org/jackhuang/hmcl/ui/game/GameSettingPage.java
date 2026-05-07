@@ -24,6 +24,9 @@ import javafx.beans.InvalidationListener;
 import javafx.beans.Observable;
 import javafx.beans.WeakListener;
 import javafx.beans.property.*;
+import javafx.beans.value.ChangeListener;
+import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.geometry.Rectangle2D;
@@ -39,6 +42,7 @@ import org.jackhuang.hmcl.java.JavaManager;
 import org.jackhuang.hmcl.java.JavaRuntime;
 import org.jackhuang.hmcl.setting.*;
 import org.jackhuang.hmcl.setting.property.InheritableProperty;
+import org.jackhuang.hmcl.setting.property.SettingGroup;
 import org.jackhuang.hmcl.ui.*;
 import org.jackhuang.hmcl.ui.construct.*;
 import org.jackhuang.hmcl.ui.decorator.DecoratorPage;
@@ -62,10 +66,13 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
+import java.util.Objects;
+import java.util.UUID;
 import java.util.function.Function;
 
 import static org.jackhuang.hmcl.util.Pair.pair;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
+import static org.jackhuang.hmcl.setting.ConfigHolder.config;
 
 /// @author Glavo
 @NotNullByDefault
@@ -90,6 +97,9 @@ public final class GameSettingPage<S extends GameSetting> extends StackPane
 
     private boolean updatingJavaSetting = false;
     private boolean updatingSelectedJava = false;
+    private boolean updatingOverrideGroup = false;
+    private boolean updatingParentSetting = false;
+    private boolean updatingGlobalSelection = false;
 
     // GUI
     private final VBox rootPane;
@@ -130,6 +140,7 @@ public final class GameSettingPage<S extends GameSetting> extends StackPane
         {
             if (isGlobalSetting) {
                 iconPickerItem = null;
+                createGlobalSettingManagement(basicSettings);
             } else {
                 iconPickerItem = new ImagePickerItem();
                 basicSettings.getContent().add(iconPickerItem);
@@ -138,11 +149,11 @@ public final class GameSettingPage<S extends GameSetting> extends StackPane
                 iconPickerItem.setOnSelectButtonClicked(e -> onExploreIcon());
                 iconPickerItem.setOnDeleteButtonClicked(e -> onDeleteIcon());
 
-                // TODO
-//                var globalSettingPane = new LineSelectButton<>();
-//                basicSettings.getContent().add(globalSettingPane);
-//                globalSettingPane.setTitle("全局游戏设置"); // TODO: i18n
-//                globalSettingPane.setOnAction(event -> Versions.modifyGlobalSettings(profile));
+                var parentGameSettingPane = new LineSelectButton<GameSetting.Global>();
+                basicSettings.getContent().add(parentGameSettingPane);
+                parentGameSettingPane.setTitle("Global game setting"); // TODO: i18n
+                parentGameSettingPane.setConverter2(setting -> setting != null ? setting.nameProperty().getValue() : "Default global setting");
+                bindInstanceParentSetting(parentGameSettingPane);
             }
 
             // Java Setting
@@ -209,6 +220,61 @@ public final class GameSettingPage<S extends GameSetting> extends StackPane
                 initJavaSubtitle();
             });
 
+            javaItem.setToggleSelectedListener(newValue -> {
+                S setting = currentSetting.get();
+                if (setting == null || updatingSelectedJava) {
+                    return;
+                }
+
+                updatingJavaSetting = true;
+                try {
+                    if (javaInheritedOption.isSelected()) {
+                        setting.javaTypeProperty().setValue(null);
+                        return;
+                    }
+
+                    if (javaCustomOption.isSelected()) {
+                        setting.javaTypeProperty().setValue(JavaVersionType.CUSTOM);
+                        setting.customJavaPathProperty().setValue(javaCustomOption.getValue());
+                        setting.javaVersionProperty().setValue("");
+                        setting.defaultJavaPathProperty().setValue("");
+                    } else if (javaAutoDeterminedOption.isSelected()) {
+                        setting.javaTypeProperty().setValue(JavaVersionType.AUTO);
+                        setting.javaVersionProperty().setValue("");
+                        setting.defaultJavaPathProperty().setValue("");
+                    } else if (javaVersionOption.isSelected()) {
+                        setting.javaTypeProperty().setValue(JavaVersionType.VERSION);
+                        setting.javaVersionProperty().setValue(javaVersionOption.getValue());
+                        setting.defaultJavaPathProperty().setValue("");
+                    } else if (newValue != null && newValue.getUserData() instanceof Pair<?, ?> pair
+                            && pair.getKey() == JavaVersionType.DETECTED
+                            && pair.getValue() instanceof JavaRuntime java) {
+                        setting.javaTypeProperty().setValue(JavaVersionType.DETECTED);
+                        setting.javaVersionProperty().setValue(java.getVersion());
+                        setting.defaultJavaPathProperty().setValue(java.getBinary().toString());
+                    }
+                } finally {
+                    updatingJavaSetting = false;
+                    initJavaSubtitle();
+                }
+            });
+
+            javaVersionOption.valueProperty().addListener((observable, oldValue, newValue) -> {
+                S setting = currentSetting.get();
+                if (setting != null && javaVersionOption.isSelected() && !updatingSelectedJava) {
+                    setting.javaVersionProperty().setValue(newValue);
+                    initJavaSubtitle();
+                }
+            });
+
+            javaCustomOption.valueProperty().addListener((observable, oldValue, newValue) -> {
+                S setting = currentSetting.get();
+                if (setting != null && javaCustomOption.isSelected() && !updatingSelectedJava) {
+                    setting.customJavaPathProperty().setValue(newValue);
+                    initJavaSubtitle();
+                }
+            });
+
             // Isolation Setting
 
             if (isGlobalSetting) {
@@ -226,7 +292,41 @@ public final class GameSettingPage<S extends GameSetting> extends StackPane
                 bindInstanceSettingBidirectional(isolationPane.selectedProperty(), GameSetting.Instance::isolationProperty);
             }
 
-            // TODO: Memory Setting
+            // Memory Setting
+            var memorySublist = new ComponentSublist(() -> {
+                var autoMemoryPane = new LineToggleButton();
+                autoMemoryPane.setTitle(i18n("settings.memory.auto_allocate"));
+                bindSettingBidirectional(autoMemoryPane.selectedProperty(), GameSetting::autoMemoryProperty);
+
+                var txtMaxMemory = new JFXTextField();
+                txtMaxMemory.setPrefWidth(160);
+                bindIntegerTextField(txtMaxMemory, GameSetting::maxMemoryProperty, false);
+                var maxMemoryPane = new LinePane();
+                maxMemoryPane.setTitle(i18n("settings.memory"));
+                maxMemoryPane.setRight(new HBox(8, txtMaxMemory, new Label("MiB")));
+
+                var txtMinMemory = new JFXTextField();
+                txtMinMemory.setPrefWidth(160);
+                bindIntegerTextField(txtMinMemory, GameSetting::minMemoryProperty, true);
+                var minMemoryPane = new LinePane();
+                minMemoryPane.setTitle(i18n("settings.memory.lower_bound"));
+                minMemoryPane.setRight(new HBox(8, txtMinMemory, new Label("MiB")));
+
+                var txtMetaspace = new JFXTextField();
+                txtMetaspace.setPromptText(i18n("settings.advanced.java_permanent_generation_space.prompt"));
+                txtMetaspace.setPrefWidth(160);
+                bindSettingBidirectional(txtMetaspace.textProperty(), GameSetting::permSizeProperty);
+                var metaspacePane = new LinePane();
+                metaspacePane.setTitle(i18n("settings.advanced.java_permanent_generation_space"));
+                metaspacePane.setRight(new HBox(8, txtMetaspace, new Label("MiB")));
+
+                return List.of(autoMemoryPane, maxMemoryPane, minMemoryPane, metaspacePane);
+            });
+            basicSettings.getContent().add(memorySublist);
+            memorySublist.setTitle(i18n("settings.memory"));
+            memorySublist.setHasSubtitle(true);
+            memorySublist.setSubtitle(i18n("settings.memory.auto_allocate"));
+            memorySublist.setHeaderRight(createHeaderRight(GameSetting.MEMORY_SETTINGS));
 
             // Launcher Visibility Setting
             var launcherVisibilityPane = createInheritableButton(
@@ -252,6 +352,46 @@ public final class GameSettingPage<S extends GameSetting> extends StackPane
             );
             basicSettings.getContent().add(windowTypePane);
             windowTypePane.setTitle("游戏窗口类型"); // TODO: i18n
+
+            var windowSizePane = new LinePane();
+            basicSettings.getContent().add(windowSizePane);
+            windowSizePane.setTitle("Window size"); // TODO: i18n
+            {
+                var txtWidth = new JFXTextField();
+                txtWidth.setPrefWidth(80);
+                bindDoubleTextField(txtWidth, GameSetting::widthProperty, true);
+
+                var txtHeight = new JFXTextField();
+                txtHeight.setPrefWidth(80);
+                bindDoubleTextField(txtHeight, GameSetting::heightProperty, true);
+
+                var box = new HBox(8, txtWidth, new Label("x"), txtHeight);
+                box.setAlignment(Pos.CENTER_LEFT);
+                windowSizePane.setRight(box);
+            }
+
+            var gameDirTypePane = createInheritableButton(
+                    GameSetting::gameDirTypeProperty,
+                    type -> switch (type) {
+                        case ROOT_FOLDER -> i18n("settings.advanced.game_dir.default");
+                        case VERSION_FOLDER -> i18n("settings.advanced.game_dir.independent");
+                        case CUSTOM -> i18n("settings.custom");
+                    },
+                    null,
+                    GameDirectoryType.values()
+            );
+            basicSettings.getContent().add(gameDirTypePane);
+            gameDirTypePane.setTitle(i18n("settings.game.working_directory"));
+
+            var runningDirPane = new LinePane();
+            basicSettings.getContent().add(runningDirPane);
+            runningDirPane.setTitle(i18n("settings.game.working_directory"));
+            {
+                var txtRunningDir = new JFXTextField();
+                txtRunningDir.setPrefWidth(400);
+                runningDirPane.setRight(txtRunningDir);
+                bindSettingBidirectional(txtRunningDir.textProperty(), GameSetting::runningDirProperty);
+            }
 
             // Show Logs Window Setting
             var showLogsPane = createInheritableBooleanButton(GameSetting::showLogsProperty);
@@ -294,7 +434,7 @@ public final class GameSettingPage<S extends GameSetting> extends StackPane
                     }
                 }));
 
-                var singleplayerOption = new MultiFileItem.StringOption<>("单人游戏", QuickPlayType.MULTIPLAYER);
+                var singleplayerOption = new MultiFileItem.StringOption<>("单人游戏", QuickPlayType.SINGLEPLAYER);
                 singleplayerOption.setValidators(new Validator(str -> {
                     if (StringUtils.isBlank(str))
                         return true;
@@ -321,6 +461,9 @@ public final class GameSettingPage<S extends GameSetting> extends StackPane
 
                 //noinspection NullableProblems
                 bindSettingBidirectional(quickPlayItem.selectedDataProperty(), GameSetting::quickPlayProperty);
+                bindSettingBidirectional(multiplayerOption.valueProperty(), GameSetting::quickPlayMultiplayerProperty);
+                bindSettingBidirectional(singleplayerOption.valueProperty(), GameSetting::quickPlaySingleplayerProperty);
+                bindSettingBidirectional(realmsOption.valueProperty(), GameSetting::quickPlayRealmsProperty);
                 return List.of(quickPlayItem);
             });
             basicSettings.getContent().add(quickSublist);
@@ -335,19 +478,20 @@ public final class GameSettingPage<S extends GameSetting> extends StackPane
                 jvmSettings
         );
         {
-            var noJVMArgsPane = new LineToggleButton();
+            var noJVMArgsPane = createInheritableBooleanButton(GameSetting::noJVMOptionsProperty);
             jvmSettings.getContent().add(noJVMArgsPane);
             noJVMArgsPane.setTitle(i18n("settings.advanced.no_jvm_args"));
 
-            var noOptimizingJVMArgsPane = new LineToggleButton();
+            var noOptimizingJVMArgsPane = createInheritableBooleanButton(GameSetting::noOptimizingJVMOptionsProperty);
             jvmSettings.getContent().add(noOptimizingJVMArgsPane);
             noOptimizingJVMArgsPane.setTitle(i18n("settings.advanced.no_optimizing_jvm_args"));
-            noOptimizingJVMArgsPane.disableProperty().bind(noJVMArgsPane.selectedProperty());
+            noOptimizingJVMArgsPane.disableProperty().bind(noJVMArgsPane.valueProperty().isEqualTo(Boolean.TRUE));
 
             if (!isGlobalSetting) {
                 var noInheritJVMArgsPane = new LineToggleButton();
                 jvmSettings.getContent().add(noInheritJVMArgsPane);
                 noInheritJVMArgsPane.setTitle("覆盖全局 JVM 参数");
+                bindOverrideGroup(noInheritJVMArgsPane.selectedProperty(), GameSetting.JVM_OPTIONS);
             }
 
             var jvmArgsPane = new LinePane();
@@ -358,16 +502,7 @@ public final class GameSettingPage<S extends GameSetting> extends StackPane
                 // txtJVMArgs.setPromptText(i18n("settings.advanced.jvm_args.prompt"));
                 txtJVMArgs.setPrefWidth(400);
                 jvmArgsPane.setRight(txtJVMArgs);
-            }
-
-            var metaSpacePane = new LinePane();
-            jvmSettings.getContent().add(metaSpacePane);
-            metaSpacePane.setTitle(i18n("settings.advanced.java_permanent_generation_space"));
-            {
-                var txtMetaspace = new JFXTextField();
-                txtMetaspace.setPromptText(i18n("settings.advanced.java_permanent_generation_space.prompt"));
-                txtMetaspace.setPrefWidth(400);
-                metaSpacePane.setRight(txtMetaspace);
+                bindSettingBidirectional(txtJVMArgs.textProperty(), GameSetting::jvmOptionsProperty);
             }
         }
 
@@ -388,21 +523,25 @@ public final class GameSettingPage<S extends GameSetting> extends StackPane
             txtGameArgs.setPromptText(i18n("settings.advanced.minecraft_arguments.prompt"));
             txtGameArgs.getStyleClass().add("fit-width");
             pane.addRow(0, new Label(i18n("settings.advanced.minecraft_arguments")), txtGameArgs);
+            bindSettingBidirectional(txtGameArgs.textProperty(), GameSetting::gameArgsProperty);
 
             var txtPreLaunchCommand = new JFXTextField();
             txtPreLaunchCommand.setPromptText(i18n("settings.advanced.precall_command.prompt"));
             txtPreLaunchCommand.getStyleClass().add("fit-width");
             pane.addRow(1, new Label(i18n("settings.advanced.precall_command")), txtPreLaunchCommand);
+            bindSettingBidirectional(txtPreLaunchCommand.textProperty(), GameSetting::preLaunchCommandProperty);
 
             var txtWrapper = new JFXTextField();
             txtWrapper.setPromptText(i18n("settings.advanced.wrapper_launcher.prompt"));
             txtWrapper.getStyleClass().add("fit-width");
             pane.addRow(2, new Label(i18n("settings.advanced.wrapper_launcher")), txtWrapper);
+            bindSettingBidirectional(txtWrapper.textProperty(), GameSetting::commandWrapperProperty);
 
             var txtPostExitCommand = new JFXTextField();
             txtPostExitCommand.setPromptText(i18n("settings.advanced.post_exit_command.prompt"));
             txtPostExitCommand.getStyleClass().add("fit-width");
             pane.addRow(3, new Label(i18n("settings.advanced.post_exit_command")), txtPostExitCommand);
+            bindSettingBidirectional(txtPostExitCommand.textProperty(), GameSetting::postExitCommandProperty);
 
             return List.of(pane);
         });
@@ -411,44 +550,110 @@ public final class GameSettingPage<S extends GameSetting> extends StackPane
         customCommandSettings.setTitle(i18n("settings.advanced.custom_commands"));
         customCommandSettings.setSubtitle("自定义启动游戏时的命令"); // TODO: i18n
         customCommandSettings.setTip(i18n("settings.advanced.custom_commands.hint"));
-        customCommandSettings.setHeaderRight(createHeaderRight());
+        customCommandSettings.setHeaderRight(createHeaderRight(GameSetting.GAME_ARGUMENTS));
 
+        var environmentSettings = new ComponentSublist(() -> {
+            var pane = new LinePane();
+            pane.setTitle("Environment variables"); // TODO: i18n
 
-        var noAutoNatives = new LineToggleButton();
-        advancedSettings.getContent().add(noAutoNatives);
-        noAutoNatives.setTitle("不使用自动提供的本机库"); // TODO: i18n
+            var txtEnvironmentVariables = new JFXTextField();
+            txtEnvironmentVariables.setPrefWidth(400);
+            pane.setRight(txtEnvironmentVariables);
+            bindSettingBidirectional(txtEnvironmentVariables.textProperty(), GameSetting::environmentVariablesProperty);
+
+            return List.of(pane);
+        });
+        advancedSettings.getContent().add(environmentSettings);
+        environmentSettings.setHasSubtitle(true);
+        environmentSettings.setTitle("Environment variables"); // TODO: i18n
+        environmentSettings.setSubtitle("KEY=value pairs passed to the game process"); // TODO: i18n
+        environmentSettings.setHeaderRight(createHeaderRight(GameSetting.ENVIRONMENT_VARIABLES));
+
+        var nativesDirTypePane = createInheritableButton(
+                GameSetting::nativesDirTypeProperty,
+                type -> switch (type) {
+                    case VERSION_FOLDER -> "Version folder";
+                    case CUSTOM -> i18n("settings.custom");
+                },
+                null,
+                NativesDirectoryType.values()
+        );
+        advancedSettings.getContent().add(nativesDirTypePane);
+        nativesDirTypePane.setTitle("Native library directory"); // TODO: i18n
+
+        var nativesDirPane = new LinePane();
+        advancedSettings.getContent().add(nativesDirPane);
+        nativesDirPane.setTitle(i18n("settings.custom"));
+        {
+            var txtNativesDir = new JFXTextField();
+            txtNativesDir.setPrefWidth(400);
+            nativesDirPane.setRight(txtNativesDir);
+            bindSettingBidirectional(txtNativesDir.textProperty(), GameSetting::nativesDirProperty);
+        }
 
         var graphicsBackendPane = new LineSelectButton<GraphicsAPI>();
         advancedSettings.getContent().add(graphicsBackendPane);
         graphicsBackendPane.setTitle(i18n("settings.advanced.graphics_backend"));
-        graphicsBackendPane.setConverter(backend -> i18n("settings.advanced.graphics_backend." + backend.name().toLowerCase(Locale.ROOT)));
-        graphicsBackendPane.setDescriptionConverter(backend -> switch (backend) {
-            case DEFAULT -> i18n("settings.advanced.graphics_backend.default.desc");
-            case OPENGL -> i18n("settings.advanced.graphics_backend.opengl.desc");
-            case VULKAN -> {
-                yield i18n("settings.advanced.graphics_backend.vulkan.desc");
+        graphicsBackendPane.setConverter2(backend -> backend != null
+                ? i18n("settings.advanced.graphics_backend." + backend.name().toLowerCase(Locale.ROOT))
+                : I18N_INHERIT_GLOBAL_SETTING);
+        graphicsBackendPane.setDescriptionConverter(backend -> {
+            if (backend == null) {
+                return null;
             }
-            default -> null;
+
+            return switch (backend) {
+                case DEFAULT -> i18n("settings.advanced.graphics_backend.default.desc");
+                case OPENGL -> i18n("settings.advanced.graphics_backend.opengl.desc");
+                case VULKAN -> i18n("settings.advanced.graphics_backend.vulkan.desc");
+            };
         });
         graphicsBackendPane.setValue(GraphicsAPI.DEFAULT);
-        graphicsBackendPane.setItems(GraphicsAPI.values());
+        if (isGlobalSetting) {
+            graphicsBackendPane.setItems(GraphicsAPI.values());
+        } else {
+            var graphicsBackends = new ArrayList<GraphicsAPI>();
+            graphicsBackends.add(null);
+            graphicsBackends.addAll(Arrays.asList(GraphicsAPI.values()));
+            graphicsBackendPane.setItems(graphicsBackends);
+        }
+        bindSettingBidirectional(graphicsBackendPane.valueProperty(), GameSetting::graphicsBackendProperty);
 
         var rendererPane = new LineSelectButton<Renderer>();
         advancedSettings.getContent().add(rendererPane);
         rendererPane.setTitle(i18n("settings.advanced.renderer"));
-        rendererPane.setConverter(e -> i18n("settings.advanced.renderer." + e.name().toLowerCase(Locale.ROOT)));
+        rendererPane.setConverter2(e -> e != null
+                ? i18n("settings.advanced.renderer." + e.name().toLowerCase(Locale.ROOT))
+                : I18N_INHERIT_GLOBAL_SETTING);
         rendererPane.setDescriptionConverter(e -> {
+            if (e == null) {
+                return null;
+            }
             String bundleKey = "settings.advanced.renderer." + e.name().toLowerCase(Locale.ROOT) + ".desc";
             return I18n.hasKey(bundleKey) ? i18n(bundleKey) : null;
         });
         rendererPane.setValue(Renderer.DEFAULT);
 
         FXUtils.onChangeAndOperate(graphicsBackendPane.valueProperty(), backend -> {
-            if (backend == null) { // unbind
+            if (backend == null) {
+                rendererPane.setDisable(false);
+                if (!isGlobalSetting) {
+                    var renderers = new ArrayList<Renderer>();
+                    renderers.add(null);
+                    renderers.add(Renderer.DEFAULT);
+                    rendererPane.setItems(renderers);
+                }
                 return;
             }
 
-            rendererPane.setItems(Renderer.getSupported(backend));
+            if (isGlobalSetting) {
+                rendererPane.setItems(Renderer.getSupported(backend));
+            } else {
+                var renderers = new ArrayList<Renderer>();
+                renderers.add(null);
+                renderers.addAll(Renderer.getSupported(backend));
+                rendererPane.setItems(renderers);
+            }
             if (backend == GraphicsAPI.DEFAULT) {
                 rendererPane.setDisable(true);
                 rendererPane.setValue(Renderer.DEFAULT);
@@ -458,24 +663,25 @@ public final class GameSettingPage<S extends GameSetting> extends StackPane
                     rendererPane.setValue(Renderer.DEFAULT);
             }
         });
+        bindSettingBidirectional(rendererPane.valueProperty(), GameSetting::rendererProperty);
 
-        var noGameCheckPane = new LineToggleButton();
+        var noGameCheckPane = createInheritableBooleanButton(GameSetting::notCheckGameProperty);
         advancedSettings.getContent().add(noGameCheckPane);
         noGameCheckPane.setTitle(i18n("settings.advanced.dont_check_game_completeness"));
 
-        var noJVMCheckPane = new LineToggleButton();
+        var noJVMCheckPane = createInheritableBooleanButton(GameSetting::notCheckJVMProperty);
         advancedSettings.getContent().add(noJVMCheckPane);
         noJVMCheckPane.setTitle(i18n("settings.advanced.dont_check_jvm_validity"));
 
-        var noNativesPatchPane = new LineToggleButton();
+        var noNativesPatchPane = createInheritableBooleanButton(GameSetting::notPatchNativesProperty);
         advancedSettings.getContent().add(noNativesPatchPane);
         noNativesPatchPane.setTitle(i18n("settings.advanced.dont_patch_natives"));
 
-        var useNativeGLFWPane = new LineToggleButton();
+        var useNativeGLFWPane = createInheritableBooleanButton(GameSetting::useNativeGLFWProperty);
         useNativeGLFWPane.setTitle(i18n("settings.advanced.use_native_glfw"));
         useNativeGLFWPane.setSubtitle(i18n("settings.advanced.linux_freebsd_only"));
 
-        var useNativeOpenALPane = new LineToggleButton();
+        var useNativeOpenALPane = createInheritableBooleanButton(GameSetting::useNativeOpenALProperty);
         useNativeOpenALPane.setTitle(i18n("settings.advanced.use_native_openal"));
         useNativeOpenALPane.setSubtitle(i18n("settings.advanced.linux_freebsd_only"));
 
@@ -492,7 +698,364 @@ public final class GameSettingPage<S extends GameSetting> extends StackPane
 
     // region Helper Methods for UI
 
-    private @Nullable Pane createHeaderRight() {
+    @SuppressWarnings("unchecked")
+    private void selectGlobalSetting(GameSetting.Global setting) {
+        currentSetting.set((S) setting);
+    }
+
+    private void createGlobalSettingManagement(ComponentList list) {
+        var selector = new LineSelectButton<GameSetting.Global>();
+        selector.setTitle("Global game setting"); // TODO: i18n
+        selector.setItems(config().getGameSettings());
+        selector.setConverter(setting -> StringUtils.isBlank(setting.nameProperty().getValue())
+                ? setting.idProperty().getValue().toString()
+                : setting.nameProperty().getValue());
+        selector.setDescriptionConverter(setting -> Objects.equals(setting.idProperty().getValue(), config().getDefaultGameSetting())
+                ? "Default"
+                : "");
+        selector.valueProperty().addListener((observable, oldValue, newValue) -> {
+            if (!updatingGlobalSelection && newValue != null) {
+                selectGlobalSetting(newValue);
+            }
+        });
+        currentSetting.addListener((observable, oldValue, newValue) -> {
+            if (newValue instanceof GameSetting.Global global) {
+                updatingGlobalSelection = true;
+                try {
+                    selector.setValue(global);
+                } finally {
+                    updatingGlobalSelection = false;
+                }
+            }
+        });
+
+        var setDefaultButton = new LineButton();
+        setDefaultButton.setTitle("Set as default"); // TODO: i18n
+        setDefaultButton.setTrailingIcon(SVG.CHECK);
+        setDefaultButton.setOnAction(event -> {
+            if (currentSetting.get() instanceof GameSetting.Global global) {
+                config().setDefaultGameSetting(global.idProperty().getValue());
+                selector.setValue(global);
+            }
+        });
+
+        var createButton = new LineButton();
+        createButton.setTitle("Create global game setting"); // TODO: i18n
+        createButton.setTrailingIcon(SVG.ADD);
+        createButton.setOnAction(event -> createGlobalSetting());
+
+        var renameButton = new LineButton();
+        renameButton.setTitle("Rename global game setting"); // TODO: i18n
+        renameButton.setTrailingIcon(SVG.EDIT);
+        renameButton.setOnAction(event -> renameGlobalSetting());
+
+        var copyButton = new LineButton();
+        copyButton.setTitle("Copy global game setting"); // TODO: i18n
+        copyButton.setTrailingIcon(SVG.CONTENT_COPY);
+        copyButton.setOnAction(event -> copyGlobalSetting());
+
+        var deleteButton = new LineButton();
+        deleteButton.setTitle("Delete global game setting"); // TODO: i18n
+        deleteButton.setTrailingIcon(SVG.DELETE);
+        deleteButton.setOnAction(event -> deleteGlobalSetting());
+
+        list.getContent().addAll(selector, setDefaultButton, createButton, renameButton, copyButton, deleteButton);
+    }
+
+    private void createGlobalSetting() {
+        Controllers.prompt("Create global game setting", (name, handler) -> {
+            if (StringUtils.isBlank(name)) {
+                handler.reject(i18n("input.not_empty"));
+                return;
+            }
+
+            GameSetting.Global setting = new GameSetting.Global();
+            setting.nameProperty().setValue(name.trim());
+            config().getGameSettings().add(setting);
+            selectGlobalSetting(setting);
+            handler.resolve();
+        }, "New Setting", new RequiredValidator());
+    }
+
+    private void renameGlobalSetting() {
+        if (!(currentSetting.get() instanceof GameSetting.Global setting)) {
+            return;
+        }
+
+        Controllers.prompt("Rename global game setting", (name, handler) -> {
+            if (StringUtils.isBlank(name)) {
+                handler.reject(i18n("input.not_empty"));
+                return;
+            }
+
+            setting.nameProperty().setValue(name.trim());
+            handler.resolve();
+        }, setting.nameProperty().getValue(), new RequiredValidator());
+    }
+
+    private void copyGlobalSetting() {
+        if (!(currentSetting.get() instanceof GameSetting.Global source)) {
+            return;
+        }
+
+        GameSetting.Global copied = Config.CONFIG_GSON.fromJson(Config.CONFIG_GSON.toJson(source), GameSetting.Global.class);
+        if (copied == null) {
+            copied = new GameSetting.Global();
+        }
+        copied.idProperty().setValue(UUID.randomUUID());
+        copied.nameProperty().setValue((StringUtils.isBlank(source.nameProperty().getValue())
+                ? "Global Setting"
+                : source.nameProperty().getValue()) + " Copy");
+        config().getGameSettings().add(copied);
+        selectGlobalSetting(copied);
+    }
+
+    private void deleteGlobalSetting() {
+        if (!(currentSetting.get() instanceof GameSetting.Global setting)) {
+            return;
+        }
+
+        UUID id = setting.idProperty().getValue();
+        if (Objects.equals(config().getDefaultGameSetting(), id)) {
+            Controllers.dialog("The default global game setting cannot be deleted.", i18n("message.warning"), MessageDialogPane.MessageType.WARNING);
+            return;
+        }
+
+        if (isGlobalSettingReferenced(id)) {
+            Controllers.dialog("This global game setting is used by at least one instance.", i18n("message.warning"), MessageDialogPane.MessageType.WARNING);
+            return;
+        }
+
+        config().getGameSettings().remove(setting);
+        selectGlobalSetting(config().getDefaultGameSettingOrCreate());
+    }
+
+    private boolean isGlobalSettingReferenced(UUID id) {
+        for (Profile knownProfile : Profiles.getProfiles()) {
+            HMCLGameRepository repository = knownProfile.getRepository();
+            if (!repository.isLoaded()) {
+                continue;
+            }
+
+            if (repository.getDisplayVersions().anyMatch(version -> {
+                GameSetting.Instance setting = repository.getLocalGameSetting(version.getId());
+                return setting != null && Objects.equals(id, setting.parentProperty().getValue());
+            })) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private void bindInstanceParentSetting(LineSelectButton<GameSetting.Global> button) {
+        ObservableList<GameSetting.Global> items = FXCollections.observableArrayList();
+        InvalidationListener updateItems = observable -> {
+            @Nullable GameSetting.Global selected = button.getValue();
+            items.setAll((GameSetting.Global) null);
+            items.addAll(config().getGameSettings());
+            if (selected != null && config().getGameSetting(selected.idProperty().getValue()) == null) {
+                button.setValue(null);
+            }
+        };
+        updateItems.invalidated(config().getGameSettings());
+        config().getGameSettings().addListener(updateItems);
+        button.setItems(items);
+
+        button.valueProperty().addListener((observable, oldValue, newValue) -> {
+            if (updatingParentSetting || !(currentSetting.get() instanceof GameSetting.Instance setting)) {
+                return;
+            }
+            setting.parentProperty().setValue(newValue != null ? newValue.idProperty().getValue() : null);
+        });
+
+        currentSetting.addListener((observable, oldValue, newValue) -> {
+            if (newValue instanceof GameSetting.Instance setting) {
+                updatingParentSetting = true;
+                try {
+                    UUID parent = setting.parentProperty().getValue();
+                    button.setValue(parent != null ? config().getGameSetting(parent) : null);
+                } finally {
+                    updatingParentSetting = false;
+                }
+            }
+        });
+    }
+
+    private void bindOverrideGroup(BooleanProperty selected, SettingGroup group) {
+        if (isGlobalSetting) {
+            return;
+        }
+
+        selected.addListener((observable, oldValue, newValue) -> {
+            if (updatingOverrideGroup || !(currentSetting.get() instanceof GameSetting.Instance setting)) {
+                return;
+            }
+
+            if (newValue) {
+                setting.getOverrideGroups().add(group);
+            } else {
+                setting.getOverrideGroups().remove(group);
+            }
+        });
+
+        currentSetting.addListener((observable, oldValue, newValue) -> {
+            updatingOverrideGroup = true;
+            try {
+                selected.set(newValue instanceof GameSetting.Instance setting && setting.getOverrideGroups().contains(group));
+            } finally {
+                updatingOverrideGroup = false;
+            }
+        });
+
+        updatingOverrideGroup = true;
+        try {
+            selected.set(currentSetting.get() instanceof GameSetting.Instance setting && setting.getOverrideGroups().contains(group));
+        } finally {
+            updatingOverrideGroup = false;
+        }
+    }
+
+    @SuppressWarnings("unchecked")
+    private void bindIntegerTextField(JFXTextField textField, Function<S, ? extends Property<Integer>> propertyGetter, boolean nullable) {
+        ObjectProperty<Property<Integer>> activeProperty = new SimpleObjectProperty<>();
+        final boolean[] updating = {false};
+
+        InvalidationListener propertyListener = observable -> {
+            Property<Integer> property = activeProperty.get();
+            if (property == null || updating[0]) {
+                return;
+            }
+
+            updating[0] = true;
+            try {
+                Integer value = property.getValue();
+                textField.setText(value != null ? value.toString() : "");
+            } finally {
+                updating[0] = false;
+            }
+        };
+
+        ChangeListener<String> textListener = (observable, oldValue, newValue) -> {
+            Property<Integer> property = activeProperty.get();
+            if (property == null || updating[0]) {
+                return;
+            }
+
+            updating[0] = true;
+            try {
+                property.setValue(parseInteger(newValue, nullable));
+            } finally {
+                updating[0] = false;
+            }
+        };
+
+        textField.textProperty().addListener(textListener);
+        currentSetting.addListener((observable, oldValue, newValue) -> {
+            Property<Integer> oldProperty = activeProperty.get();
+            if (oldProperty != null) {
+                oldProperty.removeListener(propertyListener);
+            }
+
+            Property<Integer> newProperty = newValue != null ? (Property<Integer>) propertyGetter.apply(newValue) : null;
+            activeProperty.set(newProperty);
+            if (newProperty != null) {
+                newProperty.addListener(propertyListener);
+            }
+            propertyListener.invalidated(newProperty);
+        });
+
+        S setting = currentSetting.get();
+        if (setting != null) {
+            Property<Integer> property = (Property<Integer>) propertyGetter.apply(setting);
+            activeProperty.set(property);
+            property.addListener(propertyListener);
+            propertyListener.invalidated(property);
+        }
+    }
+
+    private static @Nullable Integer parseInteger(@Nullable String value, boolean nullable) {
+        if (StringUtils.isBlank(value)) {
+            return nullable ? null : 0;
+        }
+
+        try {
+            return Integer.parseInt(value.trim());
+        } catch (NumberFormatException ignored) {
+            return nullable ? null : 0;
+        }
+    }
+
+    @SuppressWarnings("unchecked")
+    private void bindDoubleTextField(JFXTextField textField, Function<S, ? extends Property<Double>> propertyGetter, boolean nullable) {
+        ObjectProperty<Property<Double>> activeProperty = new SimpleObjectProperty<>();
+        final boolean[] updating = {false};
+
+        InvalidationListener propertyListener = observable -> {
+            Property<Double> property = activeProperty.get();
+            if (property == null || updating[0]) {
+                return;
+            }
+
+            updating[0] = true;
+            try {
+                Double value = property.getValue();
+                textField.setText(value != null ? Integer.toString((int) Math.round(value)) : "");
+            } finally {
+                updating[0] = false;
+            }
+        };
+
+        ChangeListener<String> textListener = (observable, oldValue, newValue) -> {
+            Property<Double> property = activeProperty.get();
+            if (property == null || updating[0]) {
+                return;
+            }
+
+            updating[0] = true;
+            try {
+                property.setValue(parseDouble(newValue, nullable));
+            } finally {
+                updating[0] = false;
+            }
+        };
+
+        textField.textProperty().addListener(textListener);
+        currentSetting.addListener((observable, oldValue, newValue) -> {
+            Property<Double> oldProperty = activeProperty.get();
+            if (oldProperty != null) {
+                oldProperty.removeListener(propertyListener);
+            }
+
+            Property<Double> newProperty = newValue != null ? (Property<Double>) propertyGetter.apply(newValue) : null;
+            activeProperty.set(newProperty);
+            if (newProperty != null) {
+                newProperty.addListener(propertyListener);
+            }
+            propertyListener.invalidated(newProperty);
+        });
+
+        S setting = currentSetting.get();
+        if (setting != null) {
+            Property<Double> property = (Property<Double>) propertyGetter.apply(setting);
+            activeProperty.set(property);
+            property.addListener(propertyListener);
+            propertyListener.invalidated(property);
+        }
+    }
+
+    private static @Nullable Double parseDouble(@Nullable String value, boolean nullable) {
+        if (StringUtils.isBlank(value)) {
+            return nullable ? null : 0.0;
+        }
+
+        try {
+            return Double.parseDouble(value.trim());
+        } catch (NumberFormatException ignored) {
+            return nullable ? null : 0.0;
+        }
+    }
+
+    private @Nullable Pane createHeaderRight(SettingGroup group) {
         if (isGlobalSetting) { // TODO: use inheritGlobalSettings
             return null;
         }
@@ -502,6 +1065,7 @@ public final class GameSettingPage<S extends GameSetting> extends StackPane
 
         var inherit = new JFXCheckBox();
         box.getChildren().addAll(inherit, new Label("覆盖全局设置"));
+        bindOverrideGroup(inherit.selectedProperty(), group);
 
         return box;
     }
@@ -523,6 +1087,11 @@ public final class GameSettingPage<S extends GameSetting> extends StackPane
             if (newValue != null)
                 property.bindBidirectional(propertyGetter.apply(newValue));
         });
+
+        S setting = currentSetting.get();
+        if (setting != null) {
+            property.bindBidirectional(propertyGetter.apply(setting));
+        }
     }
 
     @SuppressWarnings("unchecked")
@@ -575,11 +1144,10 @@ public final class GameSettingPage<S extends GameSetting> extends StackPane
         this.currentSetting.addListener((o, oldValue, newValue) -> {
             if (oldValue != null) {
                 var property = propertyGetter.apply(oldValue);
-                button.setValue(isGlobalSetting ? property.defaultValue() : null);
-
                 var binding = new InheritableBidirectionalBinding<>(isGlobalSetting, button, property);
                 button.valueProperty().removeListener(binding);
                 oldValue.removeListener(binding);
+                button.setValue(isGlobalSetting ? property.defaultValue() : null);
             }
 
             if (newValue != null) {
@@ -693,9 +1261,10 @@ public final class GameSettingPage<S extends GameSetting> extends StackPane
         assert isGlobalSetting == (instanceId == null);
 
         if (instanceId != null) {
-            this.currentSetting.set((S) new GameSetting.Instance()); // TODO: for test UI
+            this.currentSetting.set((S) profile.getRepository().getLocalGameSettingOrCreate(instanceId));
+            loadIcon();
         } else {
-            this.currentSetting.set((S) new GameSetting.Global()); // TODO: for test UI
+            this.currentSetting.set((S) config().getDefaultGameSettingOrCreate());
         }
     }
 
@@ -773,7 +1342,9 @@ public final class GameSettingPage<S extends GameSetting> extends StackPane
 
         HMCLGameRepository repository = this.profile.getRepository();
         JavaVersionType javaVersionType = setting.javaTypeProperty().getValue();
-        boolean autoSelected = javaVersionType == JavaVersionType.AUTO || javaVersionType == JavaVersionType.VERSION;
+        GameSetting.Effective effectiveSetting = this.instanceId != null ? repository.getEffectiveGameSetting(this.instanceId) : null;
+        JavaVersionType effectiveJavaVersionType = effectiveSetting != null ? effectiveSetting.getJavaVersionType() : javaVersionType;
+        boolean autoSelected = effectiveJavaVersionType == JavaVersionType.AUTO || effectiveJavaVersionType == JavaVersionType.VERSION;
 
         if (instanceId == null && autoSelected) {
             javaSublist.setSubtitle(i18n("settings.game.java_directory.auto"));
@@ -798,7 +1369,9 @@ public final class GameSettingPage<S extends GameSetting> extends StackPane
             }
 
             try {
-                JavaRuntime java = setting.getJava(gameVersionNumber, version);
+                JavaRuntime java = effectiveSetting != null
+                        ? effectiveSetting.getJava(gameVersionNumber, version)
+                        : setting.getJava(gameVersionNumber, version);
                 if (java != null) {
                     javaSublist.setSubtitle(java.getBinary().toString());
                 } else {
@@ -829,9 +1402,9 @@ public final class GameSettingPage<S extends GameSetting> extends StackPane
             return;
 
         profile.getRepository().deleteIconFile(instanceId);
-        VersionSetting localVersionSetting = profile.getRepository().getLocalVersionSettingOrCreate(instanceId);
-        if (localVersionSetting != null) {
-            localVersionSetting.setVersionIcon(VersionIconType.DEFAULT);
+        GameSetting.Instance localGameSetting = profile.getRepository().getLocalGameSettingOrCreate(instanceId);
+        if (localGameSetting != null) {
+            localGameSetting.iconProperty().setValue(VersionIconType.DEFAULT);
         }
         loadIcon();
     }

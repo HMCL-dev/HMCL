@@ -717,9 +717,9 @@ public final class VersionSettingsPage extends StackPane implements DecoratorPag
             return;
 
         profile.getRepository().deleteIconFile(versionId);
-        VersionSetting localVersionSetting = profile.getRepository().getLocalVersionSettingOrCreate(versionId);
-        if (localVersionSetting != null) {
-            localVersionSetting.setVersionIcon(VersionIconType.DEFAULT);
+        GameSetting.Instance setting = profile.getRepository().getLocalGameSettingOrCreate(versionId);
+        if (setting != null) {
+            setting.iconProperty().setValue(VersionIconType.DEFAULT);
         }
         loadIcon();
     }

@@ -38,6 +38,7 @@ import org.jackhuang.hmcl.util.javafx.ObservableHelper;
 import java.lang.reflect.Type;
 import java.nio.file.Path;
 import java.util.Optional;
+import java.util.UUID;
 
 import static org.jackhuang.hmcl.ui.FXUtils.onInvalidating;
 import static org.jackhuang.hmcl.ui.FXUtils.runInFX;
@@ -89,6 +90,20 @@ public final class Profile implements Observable {
         return global.get();
     }
 
+    private final ObjectProperty<UUID> legacyGameSettingParent = new SimpleObjectProperty<>(this, "legacyGameSettingParent");
+
+    public ObjectProperty<UUID> legacyGameSettingParentProperty() {
+        return legacyGameSettingParent;
+    }
+
+    public UUID getLegacyGameSettingParent() {
+        return legacyGameSettingParent.get();
+    }
+
+    public void setLegacyGameSettingParent(UUID legacyGameSettingParent) {
+        this.legacyGameSettingParent.set(legacyGameSettingParent);
+    }
+
     private final SimpleStringProperty name;
 
     public StringProperty nameProperty() {
@@ -130,12 +145,17 @@ public final class Profile implements Observable {
     }
 
     public Profile(String name, Path initialGameDir, VersionSetting global, String selectedVersion, boolean useRelativePath) {
+        this(name, initialGameDir, global, selectedVersion, useRelativePath, null);
+    }
+
+    public Profile(String name, Path initialGameDir, VersionSetting global, String selectedVersion, boolean useRelativePath, UUID legacyGameSettingParent) {
         this.name = new SimpleStringProperty(this, "name", name);
         gameDir = new SimpleObjectProperty<>(this, "gameDir", initialGameDir);
         repository = new HMCLGameRepository(this, initialGameDir);
         this.global.set(global == null ? new VersionSetting() : global);
         this.selectedVersion.set(selectedVersion);
         this.useRelativePath.set(useRelativePath);
+        this.legacyGameSettingParent.set(legacyGameSettingParent);
 
         gameDir.addListener((a, b, newValue) -> repository.changeDirectory(newValue));
         this.selectedVersion.addListener(o -> checkSelectedVersion());
@@ -188,6 +208,7 @@ public final class Profile implements Observable {
         global.addListener(listener);
         gameDir.addListener(listener);
         useRelativePath.addListener(listener);
+        legacyGameSettingParent.addListener(listener);
         global.get().addListener(listener);
         selectedVersion.addListener(listener);
     }
@@ -234,6 +255,9 @@ public final class Profile implements Observable {
 
             JsonObject jsonObject = new JsonObject();
             jsonObject.add("global", context.serialize(src.getGlobal()));
+            if (src.getLegacyGameSettingParent() != null) {
+                jsonObject.add("legacyGameSettingParent", context.serialize(src.getLegacyGameSettingParent()));
+            }
             jsonObject.addProperty("gameDir", src.getGameDir().toString());
             jsonObject.addProperty("useRelativePath", src.isUseRelativePath());
             jsonObject.addProperty("selectedMinecraftVersion", src.getSelectedVersion());
@@ -250,7 +274,8 @@ public final class Profile implements Observable {
                     Path.of(gameDir),
                     context.deserialize(obj.get("global"), VersionSetting.class),
                     Optional.ofNullable(obj.get("selectedMinecraftVersion")).map(JsonElement::getAsString).orElse(""),
-                    Optional.ofNullable(obj.get("useRelativePath")).map(JsonElement::getAsBoolean).orElse(false));
+                    Optional.ofNullable(obj.get("useRelativePath")).map(JsonElement::getAsBoolean).orElse(false),
+                    context.deserialize(obj.get("legacyGameSettingParent"), UUID.class));
         }
 
     }
