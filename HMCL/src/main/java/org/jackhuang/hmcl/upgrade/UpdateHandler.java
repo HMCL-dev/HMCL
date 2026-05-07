@@ -222,6 +222,7 @@ public final class UpdateHandler {
             Controllers.dialog(StringUtils.getStackTrace(e), i18n("update.failed"), MessageType.ERROR);
         }
     }
+
     private static void prepareExitForUpdate() throws IOException, InterruptedException {
         if (!IntegrityChecker.DISABLE_SELF_INTEGRITY_CHECK && !IntegrityChecker.isSelfVerified()) {
             throw new IOException("Current JAR is not verified");
