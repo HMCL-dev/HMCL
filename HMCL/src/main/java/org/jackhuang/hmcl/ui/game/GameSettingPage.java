@@ -721,7 +721,6 @@ public final class GameSettingPage<S extends GameSetting> extends StackPane
     private void createGlobalSettingListButton(ComponentList list) {
         var listButton = LineButton.createNavigationButton();
         listButton.setTitle("管理所有全局游戏设置"); // TODO: i18n
-        listButton.setSubtitle("进入后以卡片形式选择要编辑的全局游戏设置"); // TODO: i18n
         listButton.setOnAction(event -> showGlobalSettingList());
         list.getContent().add(listButton);
     }
@@ -793,19 +792,9 @@ public final class GameSettingPage<S extends GameSetting> extends StackPane
     }
 
     private String getGlobalSettingCardSubtitle(GameSetting.Global setting) {
-        boolean isDefault = Objects.equals(setting.idProperty().getValue(), config().getDefaultGameSetting());
-        boolean isSelected = Objects.equals(currentSetting.get(), setting);
-
-        if (isDefault && isSelected) {
-            return "默认，正在编辑"; // TODO: i18n
-        }
-        if (isDefault) {
-            return "默认"; // TODO: i18n
-        }
-        if (isSelected) {
-            return "正在编辑"; // TODO: i18n
-        }
-        return null;
+        return Objects.equals(setting.idProperty().getValue(), config().getDefaultGameSetting())
+                ? "默认" // TODO: i18n
+                : null;
     }
 
     private void createGlobalSetting() {
