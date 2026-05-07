@@ -375,24 +375,16 @@ public final class UpdateHandler {
         startJava(updateTo, "--apply-to", self.toString());
     }
 
-    /// Whether an {@code hmcl.*} system property key should be passed to a child HMCL JVM.
     private static boolean shouldForwardChildHmclPropertyKey(String key) {
         return !"hmcl.version.override".equals(key);
     }
 
-    /// Parses the property key from a {@code -Dkey=value} (or {@code -Dkey}) argument for forwarding rules.
     private static boolean shouldForwardChildJvmDefinition(String inputArgument) {
         int eq = inputArgument.indexOf('=', 2);
         String key = eq == -1 ? inputArgument.substring(2) : inputArgument.substring(2, eq);
         return shouldForwardChildHmclPropertyKey(key);
     }
 
-    /// Starts a new JVM running {@code jar} with the given trailing arguments.
-    ///
-    /// Input JVM definitions from the current process are copied so child behaviour matches the parent (memory,
-    /// exports, etc.). {@code hmcl.version.override} is intentionally omitted so an update subprocess and the
-    /// post-update launcher read the real version from the target JAR manifest instead of a test-only override
-    /// that would otherwise stick across {@code --apply-to} and make {@link Metadata#VERSION} wrong for renames.
     public static void startJava(Path jar, String... appArgs) throws IOException {
         List<String> commandline = new ArrayList<>();
         commandline.add(JavaRuntime.getDefault().getBinary().toString());

@@ -282,7 +282,6 @@ public final class SettingsPage extends ScrollPane {
         FXUtils.openFolder(LOG.getLogFile().getParent());
     }
 
-    /// Opens the update flow for the latest known remote build, or re-requests a check when none is cached yet.
     private void onUpdate(ObjectProperty<UpdateChannel> updateChannel) {
         RemoteVersion target = UpdateChecker.getLatestVersion();
         if (target == null) {
