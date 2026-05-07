@@ -24,6 +24,7 @@ import org.jackhuang.hmcl.java.JavaRuntime;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.io.JarUtils;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
+import org.jackhuang.hmcl.util.platform.SystemUtils;
 
 import javax.swing.JOptionPane;
 import java.io.IOException;
@@ -32,6 +33,9 @@ import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.time.Duration;
+import java.util.List;
+import java.util.Objects;
 import java.util.concurrent.CancellationException;
 
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
@@ -94,8 +98,49 @@ public final class EntryPoint {
             }
         }
 
+        double scale = Double.NEGATIVE_INFINITY;
+
         String uiScale = System.getProperty("hmcl.uiScale", System.getenv("HMCL_UI_SCALE"));
-        if (uiScale != null) {
+        if (uiScale == null) {
+            if (OperatingSystem.CURRENT_OS.isLinuxOrBSD()) {
+                String sessionType = System.getenv("XDG_SESSION_TYPE");
+                String currentDesktop = Objects.requireNonNullElse(System.getenv("XDG_CURRENT_DESKTOP"), "");
+
+                // On KDE Wayland, JavaFX cannot read the UI scale correctly.
+                if ("wayland".equals(sessionType) && currentDesktop.startsWith("kde")) {
+                    Path dbusSend = SystemUtils.which("dbus-send");
+                    if (dbusSend != null) {
+                        try {
+                            String[] result = SystemUtils.run(List.of(
+                                    FileUtils.getAbsolutePath(dbusSend),
+                                    "--session",
+                                    "--print-reply=literal",
+                                    "--reply-timeout=1000",
+                                    "--dest=org.freedesktop.portal.Desktop",
+                                    "/org/freedesktop/portal/desktop",
+                                    "org.freedesktop.portal.Settings.Read",
+                                    "string:org.kde.kdeglobals.KScreen",
+                                    "string:ScaleFactor"
+                            ), Duration.ofSeconds(2)).trim().split(" ");
+
+                            if (result.length > 0) {
+                                String value = result[result.length - 1];
+
+                                try {
+                                    double scaleValue = Double.parseDouble(value.trim());
+                                    if (scaleValue > 1.0 && scaleValue <= 4) {
+                                        scale = scaleValue;
+                                    }
+                                } catch (NumberFormatException ignored) {
+                                }
+                            }
+                        } catch (Exception e) {
+                            LOG.warning("Failed to get system theme from D-Bus", e);
+                        }
+                    }
+                }
+            }
+        } else {
             uiScale = uiScale.trim();
 
             LOG.info("HMCL_UI_SCALE: " + uiScale);
@@ -123,18 +168,22 @@ public final class EntryPoint {
                 }
 
                 if (scaleValue >= lowerBound && scaleValue <= upperBound) {
-                    if (OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS) {
-                        System.getProperties().putIfAbsent("glass.win.uiScale", uiScale);
-                    } else if (OperatingSystem.CURRENT_OS == OperatingSystem.MACOS) {
-                        LOG.warning("macOS does not support setting UI scale, so it will be ignored");
-                    } else {
-                        System.getProperties().putIfAbsent("glass.gtk.uiScale", uiScale);
-                    }
+                    scale = scaleValue;
                 } else {
                     LOG.warning("UI scale out of range: " + uiScale);
                 }
             } catch (Throwable e) {
                 LOG.warning("Invalid UI scale: " + uiScale);
+            }
+        }
+
+        if (scale > 0) {
+            if (OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS) {
+                System.getProperties().putIfAbsent("glass.win.uiScale", uiScale);
+            } else if (OperatingSystem.CURRENT_OS == OperatingSystem.MACOS) {
+                LOG.warning("macOS does not support setting UI scale, so it will be ignored");
+            } else {
+                System.getProperties().putIfAbsent("glass.gtk.uiScale", uiScale);
             }
         }
     }
