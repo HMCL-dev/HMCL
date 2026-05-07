@@ -873,8 +873,8 @@ public final class GameSettingPage<S extends GameSetting> extends StackPane
         /// Fixed card height used by both setting and action cards.
         private static final double CARD_HEIGHT = 46;
 
-        /// Fixed width of the leading area so all card text starts at the same x coordinate.
-        private static final double LEADING_WIDTH = 48;
+        /// Fixed width of the leading area for action cards.
+        private static final double LEADING_WIDTH = 36;
 
         /// Fixed width of the action area so all cards reserve the same trailing space.
         private static final double ACTION_WIDTH = 30;
@@ -891,23 +891,20 @@ public final class GameSettingPage<S extends GameSetting> extends StackPane
             root.setStyle("-fx-padding: 8 8 8 0;");
             FXUtils.onClicked(root, skinnable::fire);
 
-            StackPane leading = new StackPane();
-            leading.setMinWidth(LEADING_WIDTH);
-            leading.setPrefWidth(LEADING_WIDTH);
-            leading.setMaxWidth(LEADING_WIDTH);
-            BorderPane.setAlignment(leading, Pos.CENTER);
-            root.setLeft(leading);
-
             if (skinnable.isSelectableCard()) {
                 JFXRadioButton selected = new JFXRadioButton();
                 selected.setMouseTransparent(true);
                 selected.selectedProperty().bind(skinnable.selectedProperty());
-                leading.getChildren().setAll(selected);
-                leading.setOnMouseClicked(event -> {
-                    skinnable.fire();
-                    event.consume();
-                });
+                BorderPane.setAlignment(selected, Pos.CENTER);
+                root.setLeft(selected);
             } else if (skinnable.getLeadingIcon() != null) {
+                StackPane leading = new StackPane();
+                leading.setMinWidth(LEADING_WIDTH);
+                leading.setPrefWidth(LEADING_WIDTH);
+                leading.setMaxWidth(LEADING_WIDTH);
+                BorderPane.setAlignment(leading, Pos.CENTER);
+                root.setLeft(leading);
+
                 Node icon = skinnable.getLeadingIcon().createIcon();
                 icon.setMouseTransparent(true);
                 leading.getChildren().setAll(icon);
