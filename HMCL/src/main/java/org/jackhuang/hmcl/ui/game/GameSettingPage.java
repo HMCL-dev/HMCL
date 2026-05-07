@@ -18,6 +18,7 @@
 package org.jackhuang.hmcl.ui.game;
 
 import com.jfoenix.controls.JFXCheckBox;
+import com.jfoenix.controls.JFXComboBox;
 import com.jfoenix.controls.JFXTextField;
 import com.jfoenix.controls.JFXToggleButton;
 import javafx.beans.InvalidationListener;
@@ -31,6 +32,7 @@ import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.geometry.Rectangle2D;
 import javafx.scene.Node;
+import javafx.scene.Scene;
 import javafx.scene.control.Label;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.control.Toggle;
@@ -361,17 +363,13 @@ public final class GameSettingPage<S extends GameSetting> extends StackPane
             basicSettings.getContent().add(windowSizePane);
             windowSizePane.setTitle("窗口大小"); // TODO: i18n
             {
-                var txtWidth = new JFXTextField();
-                txtWidth.setPrefWidth(80);
-                bindDoubleTextField(txtWidth, GameSetting::widthProperty, true);
-
-                var txtHeight = new JFXTextField();
-                txtHeight.setPrefWidth(80);
-                bindDoubleTextField(txtHeight, GameSetting::heightProperty, true);
-
-                var box = new HBox(8, txtWidth, new Label("x"), txtHeight); // TODO: i18n
-                box.setAlignment(Pos.CENTER_LEFT);
-                windowSizePane.setRight(box);
+                var cboWindowSize = new JFXComboBox<String>();
+                cboWindowSize.setPrefWidth(150);
+                cboWindowSize.setEditable(true);
+                cboWindowSize.setPromptText("854x480"); // TODO: i18n
+                cboWindowSize.getItems().setAll(getSupportedResolutions());
+                bindWindowSizeComboBox(cboWindowSize);
+                windowSizePane.setRight(cboWindowSize);
             }
 
             var gameDirTypePane = createInheritableButton(
@@ -990,74 +988,121 @@ public final class GameSettingPage<S extends GameSetting> extends StackPane
         }
     }
 
-    @SuppressWarnings("unchecked")
-    private void bindDoubleTextField(JFXTextField textField, Function<S, ? extends Property<Double>> propertyGetter, boolean nullable) {
-        ObjectProperty<Property<Double>> activeProperty = new SimpleObjectProperty<>();
+    private void bindWindowSizeComboBox(JFXComboBox<String> comboBox) {
+        ObjectProperty<Property<Double>> activeWidthProperty = new SimpleObjectProperty<>();
+        ObjectProperty<Property<Double>> activeHeightProperty = new SimpleObjectProperty<>();
         final boolean[] updating = {false};
 
         InvalidationListener propertyListener = observable -> {
-            Property<Double> property = activeProperty.get();
-            if (property == null || updating[0]) {
+            Property<Double> widthProperty = activeWidthProperty.get();
+            Property<Double> heightProperty = activeHeightProperty.get();
+            if (widthProperty == null || heightProperty == null || updating[0]) {
                 return;
             }
 
             updating[0] = true;
             try {
-                Double value = property.getValue();
-                textField.setText(value != null ? Integer.toString((int) Math.round(value)) : "");
+                Double width = widthProperty.getValue();
+                Double height = heightProperty.getValue();
+                comboBox.setValue(width != null && height != null ? formatWindowSize(width, height) : null);
             } finally {
                 updating[0] = false;
             }
         };
 
-        ChangeListener<String> textListener = (observable, oldValue, newValue) -> {
-            Property<Double> property = activeProperty.get();
-            if (property == null || updating[0]) {
-                return;
-            }
-
-            updating[0] = true;
-            try {
-                property.setValue(parseDouble(newValue, nullable));
-            } finally {
-                updating[0] = false;
+        ChangeListener<Boolean> focusedListener = (observable, oldValue, newValue) -> {
+            if (!newValue) {
+                applyWindowSizeComboBoxValue(comboBox, activeWidthProperty.get(), activeHeightProperty.get(), updating);
             }
         };
 
-        textField.textProperty().addListener(textListener);
+        ChangeListener<Scene> sceneListener = (observable, oldValue, newValue) -> {
+            if (newValue == null) {
+                applyWindowSizeComboBoxValue(comboBox, activeWidthProperty.get(), activeHeightProperty.get(), updating);
+            }
+        };
+
+        comboBox.focusedProperty().addListener(focusedListener);
+        comboBox.sceneProperty().addListener(sceneListener);
         currentSetting.addListener((observable, oldValue, newValue) -> {
-            Property<Double> oldProperty = activeProperty.get();
-            if (oldProperty != null) {
-                oldProperty.removeListener(propertyListener);
+            Property<Double> oldWidthProperty = activeWidthProperty.get();
+            Property<Double> oldHeightProperty = activeHeightProperty.get();
+            if (oldWidthProperty != null) {
+                oldWidthProperty.removeListener(propertyListener);
+            }
+            if (oldHeightProperty != null) {
+                oldHeightProperty.removeListener(propertyListener);
             }
 
-            Property<Double> newProperty = newValue != null ? (Property<Double>) propertyGetter.apply(newValue) : null;
-            activeProperty.set(newProperty);
-            if (newProperty != null) {
-                newProperty.addListener(propertyListener);
+            Property<Double> newWidthProperty = newValue != null ? newValue.widthProperty() : null;
+            Property<Double> newHeightProperty = newValue != null ? newValue.heightProperty() : null;
+            activeWidthProperty.set(newWidthProperty);
+            activeHeightProperty.set(newHeightProperty);
+            if (newWidthProperty != null) {
+                newWidthProperty.addListener(propertyListener);
             }
-            propertyListener.invalidated(newProperty);
+            if (newHeightProperty != null) {
+                newHeightProperty.addListener(propertyListener);
+            }
+            propertyListener.invalidated(newWidthProperty);
         });
 
         S setting = currentSetting.get();
         if (setting != null) {
-            Property<Double> property = (Property<Double>) propertyGetter.apply(setting);
-            activeProperty.set(property);
-            property.addListener(propertyListener);
-            propertyListener.invalidated(property);
+            Property<Double> widthProperty = setting.widthProperty();
+            Property<Double> heightProperty = setting.heightProperty();
+            activeWidthProperty.set(widthProperty);
+            activeHeightProperty.set(heightProperty);
+            widthProperty.addListener(propertyListener);
+            heightProperty.addListener(propertyListener);
+            propertyListener.invalidated(widthProperty);
         }
     }
 
-    private static @Nullable Double parseDouble(@Nullable String value, boolean nullable) {
-        if (StringUtils.isBlank(value)) {
-            return nullable ? null : 0.0;
+    private static void applyWindowSizeComboBoxValue(JFXComboBox<String> comboBox,
+                                                     @Nullable Property<Double> widthProperty,
+                                                     @Nullable Property<Double> heightProperty,
+                                                     boolean[] updating) {
+        if (widthProperty == null || heightProperty == null || updating[0]) {
+            return;
         }
 
+        updating[0] = true;
         try {
-            return Double.parseDouble(value.trim());
-        } catch (NumberFormatException ignored) {
-            return nullable ? null : 0.0;
+            String value = comboBox.getValue();
+            if (StringUtils.isBlank(value)) {
+                widthProperty.setValue(null);
+                heightProperty.setValue(null);
+                return;
+            }
+
+            int idx = value.indexOf('x');
+            if (idx < 0) {
+                idx = value.indexOf('*');
+            }
+
+            if (idx < 0) {
+                comboBox.setValue(formatNullableWindowSize(widthProperty.getValue(), heightProperty.getValue()));
+                return;
+            }
+
+            try {
+                widthProperty.setValue(Double.parseDouble(value.substring(0, idx).trim()));
+                heightProperty.setValue(Double.parseDouble(value.substring(idx + 1).trim()));
+            } catch (NumberFormatException e) {
+                comboBox.setValue(formatNullableWindowSize(widthProperty.getValue(), heightProperty.getValue()));
+            }
+        } finally {
+            updating[0] = false;
         }
+    }
+
+    private static @Nullable String formatNullableWindowSize(@Nullable Double width, @Nullable Double height) {
+        return width != null && height != null ? formatWindowSize(width, height) : null;
+    }
+
+    private static String formatWindowSize(double width, double height) {
+        return Math.round(width) + "x" + Math.round(height);
     }
 
     private @Nullable Pane createHeaderRight(SettingGroup group) {
