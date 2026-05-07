@@ -161,7 +161,6 @@ public final class ModpackHelper {
             repository.undoMark(name);
             if (setting != null) {
                 setting.isolationProperty().setValue(true);
-                setting.gameDirTypeProperty().setValue(GameDirectoryType.VERSION_FOLDER);
             }
         };
 
@@ -205,7 +204,6 @@ public final class ModpackHelper {
             repository.undoMark(name);
             if (setting != null) {
                 setting.isolationProperty().setValue(true);
-                setting.gameDirTypeProperty().setValue(GameDirectoryType.VERSION_FOLDER);
             }
         };
 
@@ -260,7 +258,6 @@ public final class ModpackHelper {
 
     public static void toGameSetting(MultiMCInstanceConfiguration c, GameSetting.Instance setting) {
         setting.isolationProperty().setValue(true);
-        setting.gameDirTypeProperty().setValue(GameDirectoryType.VERSION_FOLDER);
 
         if (c.isOverrideJavaLocation()) {
             setting.javaTypeProperty().setValue(JavaVersionType.CUSTOM);

@@ -192,7 +192,6 @@ public final class HMCLGameRepository extends DefaultGameRepository {
 
         GameSetting.Instance newGameSetting = copyLocalGameSetting(srcId);
         newGameSetting.isolationProperty().setValue(true);
-        newGameSetting.gameDirTypeProperty().setValue(GameDirectoryType.VERSION_FOLDER);
         initLocalGameSetting(dstId, newGameSetting);
         saveGameSetting(dstId);
 
@@ -239,6 +238,12 @@ public final class HMCLGameRepository extends DefaultGameRepository {
         if (legacySetting != null) {
             UUID parent = profile.getLegacyGameSettingParent();
             initLocalGameSetting(id, GameSetting.fromVersionSetting(parent, legacySetting, !legacySetting.isUsesGlobal()));
+            migratedLocalGameSettings.add(id);
+        } else if (profile.getGlobal().getGameDirType() == GameDirectoryType.VERSION_FOLDER) {
+            GameSetting.Instance setting = new GameSetting.Instance();
+            setting.parentProperty().setValue(profile.getLegacyGameSettingParent());
+            setting.isolationProperty().setValue(true);
+            initLocalGameSetting(id, setting);
             migratedLocalGameSettings.add(id);
         }
     }
@@ -308,7 +313,6 @@ public final class HMCLGameRepository extends DefaultGameRepository {
             if (setting != null) {
                 setting.parentProperty().setValue(global.idProperty().getValue());
                 setting.isolationProperty().setValue(true);
-                setting.gameDirTypeProperty().setValue(GameDirectoryType.VERSION_FOLDER);
             }
         }
     }

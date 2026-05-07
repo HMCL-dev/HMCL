@@ -550,6 +550,9 @@ public sealed abstract class GameSetting extends ObservableSetting {
     public static Global fromVersionSetting(String name, VersionSetting source) {
         Global target = new Global();
         target.nameProperty().setValue(name);
+        if (source.getGameDirType() == GameDirectoryType.VERSION_FOLDER) {
+            target.defaultIsolationTypeProperty().setValue(DefaultIsolationType.ALWAYS);
+        }
         copyCommonProperties(source, target);
         return target;
     }
@@ -590,7 +593,9 @@ public sealed abstract class GameSetting extends ObservableSetting {
         target.windowTypeProperty().setValue(source.isFullscreen() ? GameWindowType.FULLSCREEN : GameWindowType.WINDOWED);
         target.widthProperty().setValue((double) source.getWidth());
         target.heightProperty().setValue((double) source.getHeight());
-        target.gameDirTypeProperty().setValue(source.getGameDirType());
+        target.gameDirTypeProperty().setValue(source.getGameDirType() == GameDirectoryType.VERSION_FOLDER
+                ? GameDirectoryType.ROOT_FOLDER
+                : source.getGameDirType());
         target.runningDirProperty().setValue(empty(source.getGameDir()));
 
         target.processPriorityProperty().setValue(source.getProcessPriority());

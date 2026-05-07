@@ -377,19 +377,20 @@ public final class GameSettingPage<S extends GameSetting> extends StackPane
             var gameDirTypePane = createInheritableButton(
                     GameSetting::gameDirTypeProperty,
                     type -> switch (type) {
-                        case ROOT_FOLDER -> i18n("settings.advanced.game_dir.default");
-                        case VERSION_FOLDER -> i18n("settings.advanced.game_dir.independent");
+                        case ROOT_FOLDER -> "默认运行路径"; // TODO: i18n
                         case CUSTOM -> i18n("settings.custom");
+                        case VERSION_FOLDER -> "版本文件夹"; // TODO: i18n
                     },
                     null,
-                    GameDirectoryType.values()
+                    GameDirectoryType.ROOT_FOLDER,
+                    GameDirectoryType.CUSTOM
             );
             basicSettings.getContent().add(gameDirTypePane);
-            gameDirTypePane.setTitle(i18n("settings.game.working_directory"));
+            gameDirTypePane.setTitle("游戏运行路径"); // TODO: i18n
 
             var runningDirPane = new LinePane();
             basicSettings.getContent().add(runningDirPane);
-            runningDirPane.setTitle(i18n("settings.game.working_directory"));
+            runningDirPane.setTitle("自定义运行路径"); // TODO: i18n
             {
                 var txtRunningDir = new JFXTextField();
                 txtRunningDir.setPrefWidth(400);
