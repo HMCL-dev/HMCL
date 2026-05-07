@@ -858,7 +858,7 @@ public final class Config extends ObservableSetting {
         }
 
         setting = new GameSetting.Global();
-        setting.nameProperty().setValue("Default");
+        setting.nameProperty().setValue("默认"); // TODO: i18n
         gameSettings.add(setting);
         setDefaultGameSetting(setting.idProperty().getValue());
         return setting;
