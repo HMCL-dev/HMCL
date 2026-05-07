@@ -873,9 +873,6 @@ public final class GameSettingPage<S extends GameSetting> extends StackPane
         /// Fixed card height used by both setting and action cards.
         private static final double CARD_HEIGHT = 46;
 
-        /// Fixed width of the leading area for action cards.
-        private static final double LEADING_WIDTH = 36;
-
         /// Fixed width of the action area so all cards reserve the same trailing space.
         private static final double ACTION_WIDTH = 30;
 
@@ -899,15 +896,16 @@ public final class GameSettingPage<S extends GameSetting> extends StackPane
                 root.setLeft(selected);
             } else if (skinnable.getLeadingIcon() != null) {
                 StackPane leading = new StackPane();
-                leading.setMinWidth(LEADING_WIDTH);
-                leading.setPrefWidth(LEADING_WIDTH);
-                leading.setMaxWidth(LEADING_WIDTH);
                 BorderPane.setAlignment(leading, Pos.CENTER);
                 root.setLeft(leading);
 
+                JFXRadioButton placeholder = new JFXRadioButton();
+                placeholder.setMouseTransparent(true);
+                placeholder.setVisible(false);
+
                 Node icon = skinnable.getLeadingIcon().createIcon();
                 icon.setMouseTransparent(true);
-                leading.getChildren().setAll(icon);
+                leading.getChildren().setAll(placeholder, icon);
             }
 
             TwoLineListItem item = new TwoLineListItem();
