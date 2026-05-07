@@ -870,8 +870,14 @@ public final class GameSettingPage<S extends GameSetting> extends StackPane
 
     /// Skin that follows the account list card layout.
     private static final class GlobalSettingCardSkin extends SkinBase<GlobalSettingCard> {
+        /// Fixed card height used by both setting and action cards.
+        private static final double CARD_HEIGHT = 46;
+
         /// Fixed width of the leading area so all card text starts at the same x coordinate.
         private static final double LEADING_WIDTH = 48;
+
+        /// Fixed width of the action area so all cards reserve the same trailing space.
+        private static final double ACTION_WIDTH = 30;
 
         /// Creates the card skin.
         private GlobalSettingCardSkin(GlobalSettingCard skinnable) {
@@ -879,6 +885,8 @@ public final class GameSettingPage<S extends GameSetting> extends StackPane
 
             BorderPane root = new BorderPane();
             root.setCursor(Cursor.HAND);
+            root.setMinHeight(CARD_HEIGHT);
+            root.setPrefHeight(CARD_HEIGHT);
             root.getStyleClass().add("card");
             root.setStyle("-fx-padding: 8 8 8 0;");
             FXUtils.onClicked(root, skinnable::fire);
@@ -906,23 +914,25 @@ public final class GameSettingPage<S extends GameSetting> extends StackPane
             }
 
             TwoLineListItem item = new TwoLineListItem();
+            item.setAlignment(Pos.CENTER_LEFT);
             item.setMouseTransparent(true);
             item.titleProperty().bind(skinnable.titleProperty());
             BorderPane.setAlignment(item, Pos.CENTER);
             root.setCenter(item);
 
+            HBox right = new HBox();
+            right.setAlignment(Pos.CENTER_RIGHT);
+            right.setMinWidth(ACTION_WIDTH);
+            right.setPrefWidth(ACTION_WIDTH);
+            right.setMaxWidth(ACTION_WIDTH);
             if (skinnable.hasEditAction()) {
-                HBox right = new HBox();
-                right.setAlignment(Pos.CENTER_RIGHT);
-
                 JFXButton editButton = FXUtils.newToggleButton4(SVG.EDIT, 20);
                 editButton.setOnAction(event -> skinnable.edit());
                 FXUtils.installFastTooltip(editButton, "编辑全局游戏设置"); // TODO: i18n
                 right.getChildren().add(editButton);
-
-                BorderPane.setAlignment(right, Pos.CENTER);
-                root.setRight(right);
             }
+            BorderPane.setAlignment(right, Pos.CENTER);
+            root.setRight(right);
 
             JFXDepthManager.setDepth(root, 1);
             getChildren().setAll(root);
