@@ -21,30 +21,48 @@ import org.jackhuang.hmcl.download.DefaultDependencyManager;
 import org.jackhuang.hmcl.download.LibraryAnalyzer;
 import org.jackhuang.hmcl.download.UnsupportedInstallationException;
 import org.jackhuang.hmcl.download.VersionMismatchException;
+import org.jackhuang.hmcl.download.forge.ForgeNewInstallProfile;
 import org.jackhuang.hmcl.download.forge.ForgeNewInstallTask;
 import org.jackhuang.hmcl.game.Version;
 import org.jackhuang.hmcl.task.FileDownloadTask;
 import org.jackhuang.hmcl.task.Task;
+import org.jackhuang.hmcl.util.gson.JsonUtils;
+import org.jackhuang.hmcl.util.io.CompressingUtils;
 
 import java.io.IOException;
+import java.nio.file.FileSystem;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Map;
+import java.util.Optional;
 
 public final class CleanroomInstallTask extends Task<Version> {
 
     private final DefaultDependencyManager dependencyManager;
     private final Version version;
-    private Path installer;
     private final CleanroomRemoteVersion remote;
+    private Path installer;
     private FileDownloadTask dependent;
     private Task<Version> task;
+    private String selfVersion;
 
     public CleanroomInstallTask(DefaultDependencyManager dependencyManager, Version version, CleanroomRemoteVersion remoteVersion) {
         this.dependencyManager = dependencyManager;
         this.version = version;
         this.remote = remoteVersion;
+
+        setSignificance(TaskSignificance.MODERATE);
+    }
+
+    public CleanroomInstallTask(DefaultDependencyManager dependencyManager, Version version, String selfVersion, Path installer) {
+        this.dependencyManager = dependencyManager;
+        this.version = version;
+        this.selfVersion = selfVersion;
+        this.remote = null;
+        this.installer = installer;
+
         setSignificance(TaskSignificance.MODERATE);
     }
 
@@ -55,14 +73,16 @@ public final class CleanroomInstallTask extends Task<Version> {
 
     @Override
     public void preExecute() throws Exception {
-        installer = Files.createTempFile("cleanroom-installer", ".jar");
+        if (installer == null) {
+            installer = Files.createTempFile("cleanroom-installer", ".jar");
 
-        dependent = new FileDownloadTask(
-                dependencyManager.getDownloadProvider().injectURLsWithCandidates(remote.getUrls()),
-                installer, null);
-        dependent.setCacheRepository(dependencyManager.getCacheRepository());
-        dependent.setCaching(true);
-        dependent.addIntegrityCheckHandler(FileDownloadTask.ZIP_INTEGRITY_CHECK_HANDLER);
+            dependent = new FileDownloadTask(
+                    dependencyManager.getDownloadProvider().injectURLsWithCandidates(remote.getUrls()),
+                    installer, null);
+            dependent.setCacheRepository(dependencyManager.getCacheRepository());
+            dependent.setCaching(true);
+            dependent.addIntegrityCheckHandler(FileDownloadTask.ZIP_INTEGRITY_CHECK_HANDLER);
+        }
     }
 
     @Override
@@ -72,13 +92,16 @@ public final class CleanroomInstallTask extends Task<Version> {
 
     @Override
     public void postExecute() throws Exception {
-        Files.deleteIfExists(installer);
+        if (remote != null) {
+            Files.deleteIfExists(installer);
+        }
+
         setResult(task.getResult());
     }
 
     @Override
     public Collection<Task<?>> getDependents() {
-        return Collections.singleton(dependent);
+        return dependent == null ? Collections.emptySet() : Collections.singleton(dependent);
     }
 
     @Override
@@ -88,6 +111,31 @@ public final class CleanroomInstallTask extends Task<Version> {
 
     @Override
     public void execute() throws IOException, VersionMismatchException, UnsupportedInstallationException {
-        task = new ForgeNewInstallTask(dependencyManager, version, remote.getSelfVersion(), installer).thenApplyAsync((version) -> version.setId(LibraryAnalyzer.LibraryType.CLEANROOM.getPatchId()));
+        if (selfVersion == null) {
+            task = new ForgeNewInstallTask(dependencyManager, version, remote.getSelfVersion(), installer).thenApplyAsync((version) -> version.setId(LibraryAnalyzer.LibraryType.CLEANROOM.getPatchId()));
+        } else {
+            task = new ForgeNewInstallTask(dependencyManager, version, selfVersion, installer).thenApplyAsync((version) -> version.setId(LibraryAnalyzer.LibraryType.CLEANROOM.getPatchId()));
+        }
+    }
+
+    public static Task<Version> install(DefaultDependencyManager dependencyManager, Version version, Path installer) throws IOException, VersionMismatchException {
+        Optional<String> gameVersion = dependencyManager.getGameRepository().getGameVersion(version);
+        if (gameVersion.isEmpty()) throw new IOException();
+        try (FileSystem fs = CompressingUtils.createReadOnlyZipFileSystem(installer)) {
+            String installProfileText = Files.readString(fs.getPath("install_profile.json"));
+            Map<?, ?> installProfile = JsonUtils.fromNonNullJson(installProfileText, Map.class);
+            if (LibraryAnalyzer.LibraryType.CLEANROOM.getPatchId().equals(installProfile.get("profile"))) {
+                ForgeNewInstallProfile profile = JsonUtils.fromNonNullJson(installProfileText, ForgeNewInstallProfile.class);
+                if (!gameVersion.get().equals(profile.getMinecraft()))
+                    throw new VersionMismatchException(profile.getMinecraft(), gameVersion.get());
+                return new CleanroomInstallTask(dependencyManager, version, modifyVersion(profile.getVersion()), installer);
+            } else {
+                throw new IOException();
+            }
+        }
+    }
+
+    private static String modifyVersion(String version) {
+        return version.replace("cleanroom-", "");
     }
 }

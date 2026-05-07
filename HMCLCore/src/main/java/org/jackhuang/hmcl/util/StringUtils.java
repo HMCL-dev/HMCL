@@ -20,6 +20,8 @@ package org.jackhuang.hmcl.util;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * @author huangyuhui
@@ -87,7 +89,7 @@ public final class StringUtils {
                         builder.append(str, start, i);
                     }
                     builder.append(' ');
-                    i = whitespaceEnd ;
+                    i = whitespaceEnd;
                     continue;
                 }
             }
@@ -261,6 +263,71 @@ public final class StringUtils {
         return false;
     }
 
+    public static boolean containsEmoji(String str) {
+        for (int i = 0; i < str.length(); ) {
+            int ch = str.codePointAt(i);
+
+            if (ch >= 0x1F300 && ch <= 0x1FAFF)
+                return true;
+
+            i += Character.charCount(ch);
+        }
+
+        return false;
+    }
+
+    /// Check if the code point is a full-width character.
+    public static boolean isFullWidth(int codePoint) {
+        return codePoint >= '\uff10' && codePoint <= '\uff19'       // full-width digits
+                || codePoint >= '\uff21' && codePoint <= '\uff3a'   // full-width uppercase letters
+                || codePoint >= '\uff41' && codePoint <= '\uff5a'   // full-width lowercase letters
+                || codePoint == '\uff08'                            // full-width left parenthesis
+                || codePoint == '\uff09'                            // full-width right parenthesis
+                || codePoint == '\uff0c'                            // full-width comma
+                || codePoint == '\uff05'                            // full-width percent sign
+                || codePoint == '\uff0e'                            // full-width period
+                || codePoint == '\u3000'                            // full-width ideographic space
+                || codePoint == '\uff03';                           // full-width number sign
+    }
+
+    /// Convert full-width characters to half-width characters.
+    public static String toHalfWidth(String str) {
+        int i = 0;
+        while (i < str.length()) {
+            int cp = str.codePointAt(i);
+
+            if (isFullWidth(cp)) {
+                break;
+            }
+
+            i += Character.charCount(cp);
+        }
+
+        if (i == str.length())
+            return str;
+
+        var builder = new StringBuilder(str.length());
+        builder.append(str, 0, i);
+        while (i < str.length()) {
+            int c = str.codePointAt(i);
+
+            if (c >= '\uff10' && c <= '\uff19') builder.append((char) (c - 0xfee0));
+            else if (c >= '\uff21' && c <= '\uff3a') builder.append((char) (c - 0xfee0));
+            else if (c >= '\uff41' && c <= '\uff5a') builder.append((char) (c - 0xfee0));
+            else if (c == '\uff08') builder.append('(');
+            else if (c == '\uff09') builder.append(')');
+            else if (c == '\uff0c') builder.append(',');
+            else if (c == '\uff05') builder.append('%');
+            else if (c == '\uff0e') builder.append('.');
+            else if (c == '\u3000') builder.append(' ');
+            else if (c == '\uff03') builder.append('#');
+            else builder.appendCodePoint(c);
+
+            i += Character.charCount(c);
+        }
+        return builder.toString();
+    }
+
     private static boolean isVarNameStart(char ch) {
         return (ch >= 'a' && ch <= 'z') || (ch >= 'A' && ch <= 'Z') || ch == '_';
     }
@@ -396,7 +463,62 @@ public final class StringUtils {
         if (original.indexOf('\u00A7') < 0)
             return original;
 
-        return original.replaceAll("\u00A7[0-9a-gklmnor]", "");
+        return original.replaceAll("\u00A7[0-9a-fk-or]", "");
+    }
+
+    private static final Pattern COLOR_CODE_PATTERN = Pattern.compile("\u00A7([0-9a-fk-or])");
+    private static final String FORMAT_CODE = "format_code";
+
+    public static List<Pair<String, String>> parseMinecraftColorCodes(String original) {
+        List<Pair<String, String>> pairs = new ArrayList<>();
+        if (isBlank(original)) {
+            return pairs;
+        }
+        Matcher matcher = COLOR_CODE_PATTERN.matcher(original);
+        String currentColor = "";
+        int lastIndex = 0;
+
+        while (matcher.find()) {
+            String text = original.substring(lastIndex, matcher.start());
+            if (!text.isEmpty()) {
+                pairs.add(new Pair<>(text, currentColor));
+            }
+
+            char code = matcher.group(1).charAt(0);
+            String newColor = switch (code) {
+                case '0' -> "black";
+                case '1' -> "dark_blue";
+                case '2' -> "dark_green";
+                case '3' -> "dark_aqua";
+                case '4' -> "dark_red";
+                case '5' -> "dark_purple";
+                case '6' -> "gold";
+                case '7' -> "gray";
+                case '8' -> "dark_gray";
+                case '9' -> "blue";
+                case 'a' -> "green";
+                case 'b' -> "aqua";
+                case 'c' -> "red";
+                case 'd' -> "light_purple";
+                case 'e' -> "yellow";
+                case 'f' -> "white";
+                case 'k', 'l', 'm', 'n', 'o' -> FORMAT_CODE;
+                case 'r' -> "";
+                default -> null;
+            };
+
+            if (newColor != null && !newColor.equals(FORMAT_CODE)) {
+                currentColor = newColor;
+            }
+
+            lastIndex = matcher.end();
+        }
+
+        if (lastIndex < original.length()) {
+            String remainingText = original.substring(lastIndex);
+            pairs.add(new Pair<>(remainingText, currentColor));
+        }
+        return pairs;
     }
 
     public static String parseEscapeSequence(String str) {
@@ -421,6 +543,15 @@ public final class StringUtils {
             }
         }
         return builder.toString();
+    }
+
+    public static String escapeXmlAttribute(String str) {
+        return str
+                .replace("&", "&amp;")
+                .replace("\"", "&quot;")
+                .replace("<", "&lt;")
+                .replace(">", "&gt;")
+                .replace("'", "&apos;");
     }
 
     public static String repeats(char ch, int repeat) {

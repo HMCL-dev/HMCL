@@ -23,6 +23,7 @@ import javafx.scene.control.Skin;
 import org.jackhuang.hmcl.game.World;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.ui.wizard.WizardSinglePage;
+import org.jackhuang.hmcl.util.i18n.I18n;
 
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -41,7 +42,8 @@ public class WorldExportPage extends WizardSinglePage {
         this.world = world;
 
         path.set(export.toString());
-        gameVersion.set(world.getGameVersion());
+        if (world.getGameVersion() != null)
+            gameVersion.set(I18n.getDisplayVersion(world.getGameVersion()));
         worldName.set(world.getWorldName());
     }
 

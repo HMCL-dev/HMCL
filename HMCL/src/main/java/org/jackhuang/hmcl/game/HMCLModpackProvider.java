@@ -77,9 +77,9 @@ public final class HMCLModpackProvider implements ModpackProvider {
         return manifest;
     }
 
-    private static class HMCLModpack extends Modpack {
+    private final static class HMCLModpack extends Modpack {
         @Override
-        public Task<?> getInstallTask(DefaultDependencyManager dependencyManager, Path zipFile, String name) {
+        public Task<?> getInstallTask(DefaultDependencyManager dependencyManager, Path zipFile, String name, String iconUrl) {
             return new HMCLModpackInstallTask(((HMCLGameRepository) dependencyManager.getGameRepository()).getProfile(), zipFile, this, name);
         }
     }

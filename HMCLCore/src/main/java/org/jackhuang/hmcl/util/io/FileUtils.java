@@ -177,6 +177,7 @@ public final class FileUtils {
             if (!Character.isValidCodePoint(codePoint)
                     || Character.isISOControl(codePoint)
                     || codePoint == '/' || codePoint == '\0'
+                    || codePoint == ':'
                     // Unicode replacement character
                     || codePoint == 0xfffd
                     // Not Unicode character
@@ -185,7 +186,7 @@ public final class FileUtils {
 
             // https://learn.microsoft.com/windows/win32/fileio/naming-a-file
             if (os == OperatingSystem.WINDOWS &&
-                    (ch == '<' || ch == '>' || ch == ':' || ch == '"' || ch == '\\' || ch == '|' || ch == '?' || ch == '*')) {
+                    (ch == '<' || ch == '>' || ch == '"' || ch == '\\' || ch == '|' || ch == '?' || ch == '*')) {
                 return false;
             }
         }
@@ -206,6 +207,17 @@ public final class FileUtils {
         }
 
         return true;
+    }
+
+    /// @see #isNameValidForJar(OperatingSystem, String)
+    public static boolean isNameValidForJar(String name) {
+        return isNameValidForJar(OperatingSystem.CURRENT_OS, name);
+    }
+
+    /// Returns true if the given name is a valid jar file name on the given operating system,
+    /// and `false` otherwise.
+    public static boolean isNameValidForJar(OperatingSystem os, String name) {
+        return !name.contains("!") && isNameValid(os, name);
     }
 
     /// Safely get the file size. Returns `0` if the file does not exist or the size cannot be obtained.
@@ -525,5 +537,26 @@ public final class FileUtils {
 
     public static String printFileStructure(Path path, int maxDepth) throws IOException {
         return DirectoryStructurePrinter.list(path, maxDepth);
+    }
+
+    public static EnumSet<PosixFilePermission> parsePosixFilePermission(int unixMode) {
+        EnumSet<PosixFilePermission> permissions = EnumSet.noneOf(PosixFilePermission.class);
+
+        // Owner permissions
+        if ((unixMode & 0400) != 0) permissions.add(PosixFilePermission.OWNER_READ);
+        if ((unixMode & 0200) != 0) permissions.add(PosixFilePermission.OWNER_WRITE);
+        if ((unixMode & 0100) != 0) permissions.add(PosixFilePermission.OWNER_EXECUTE);
+
+        // Group permissions
+        if ((unixMode & 0040) != 0) permissions.add(PosixFilePermission.GROUP_READ);
+        if ((unixMode & 0020) != 0) permissions.add(PosixFilePermission.GROUP_WRITE);
+        if ((unixMode & 0010) != 0) permissions.add(PosixFilePermission.GROUP_EXECUTE);
+
+        // Others permissions
+        if ((unixMode & 0004) != 0) permissions.add(PosixFilePermission.OTHERS_READ);
+        if ((unixMode & 0002) != 0) permissions.add(PosixFilePermission.OTHERS_WRITE);
+        if ((unixMode & 0001) != 0) permissions.add(PosixFilePermission.OTHERS_EXECUTE);
+
+        return permissions;
     }
 }

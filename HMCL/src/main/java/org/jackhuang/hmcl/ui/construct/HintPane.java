@@ -26,12 +26,11 @@ import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import javafx.scene.text.Text;
 import javafx.scene.text.TextFlow;
-import org.jackhuang.hmcl.setting.Theme;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.FXUtils;
-import org.jackhuang.hmcl.ui.SVG;
 
 import java.util.Locale;
+import java.util.function.Consumer;
 
 public class HintPane extends VBox {
     private final Text label = new Text();
@@ -46,29 +45,9 @@ public class HintPane extends VBox {
         setFillWidth(true);
         getStyleClass().addAll("hint", type.name().toLowerCase(Locale.ROOT));
 
-        SVG svg;
-        switch (type) {
-            case INFO:
-                svg = SVG.INFO;
-                break;
-            case ERROR:
-                svg = SVG.ERROR;
-                break;
-            case SUCCESS:
-                svg = SVG.CHECK_CIRCLE;
-                break;
-            case WARNING:
-                svg = SVG.WARNING;
-                break;
-            case QUESTION:
-                svg = SVG.HELP;
-                break;
-            default:
-                throw new IllegalArgumentException("Unrecognized message box message type " + type);
-        }
-
-        HBox hbox = new HBox(svg.createIcon(Theme.blackFill(), 16), new Text(type.getDisplayName()));
+        HBox hbox = new HBox(type.getIcon().createIcon(16), new Text(type.getDisplayName()));
         hbox.setAlignment(Pos.CENTER_LEFT);
+        hbox.setSpacing(2);
         flow.getChildren().setAll(label);
         getChildren().setAll(hbox, flow);
         label.textProperty().bind(text);
@@ -88,7 +67,11 @@ public class HintPane extends VBox {
     }
 
     public void setSegment(String segment) {
-        flow.getChildren().setAll(FXUtils.parseSegment(segment, Controllers::onHyperlinkAction));
+        this.setSegment(segment, Controllers::onHyperlinkAction);
+    }
+
+    public void setSegment(String segment, Consumer<String> hyperlinkAction) {
+        flow.getChildren().setAll(FXUtils.parseSegment(segment, hyperlinkAction));
     }
 
     public void setChildren(Node... children) {

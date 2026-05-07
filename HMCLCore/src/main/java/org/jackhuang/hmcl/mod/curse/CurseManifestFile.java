@@ -19,61 +19,19 @@ package org.jackhuang.hmcl.mod.curse;
 
 import com.google.gson.JsonParseException;
 import com.google.gson.annotations.SerializedName;
-import org.jackhuang.hmcl.util.Immutable;
+import org.jackhuang.hmcl.util.gson.JsonSerializable;
 import org.jackhuang.hmcl.util.gson.Validation;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Objects;
 
-/**
- *
- * @author huangyuhui
- */
-@Immutable
-public final class CurseManifestFile implements Validation {
-
-    @SerializedName("projectID")
-    private final int projectID;
-    
-    @SerializedName("fileID")
-    private final int fileID;
-    
-    @SerializedName("fileName")
-    private final String fileName;
-
-    @SerializedName("url")
-    private final String url;
-    
-    @SerializedName("required")
-    private final boolean required;
-
-    public CurseManifestFile() {
-        this(0, 0, null, null, true);
-    }
-
-    public CurseManifestFile(int projectID, int fileID, String fileName, String url, boolean required) {
-        this.projectID = projectID;
-        this.fileID = fileID;
-        this.fileName = fileName;
-        this.url = url;
-        this.required = required;
-    }
-
-    public int getProjectID() {
-        return projectID;
-    }
-
-    public int getFileID() {
-        return fileID;
-    }
-
-    public String getFileName() {
-        return fileName;
-    }
-
-    public boolean isRequired() {
-        return required;
-    }
+/// @author huangyuhui
+@JsonSerializable
+public record CurseManifestFile(@SerializedName("projectID") int projectID,
+                                @SerializedName("fileID") int fileID,
+                                @SerializedName("fileName") String fileName,
+                                @SerializedName("url") String url,
+                                @SerializedName("required") boolean required) implements Validation {
 
     @Override
     public void validate() throws JsonParseException {
@@ -81,8 +39,9 @@ public final class CurseManifestFile implements Validation {
             throw new JsonParseException("Missing Project ID or File ID.");
     }
 
+    @Override
     @Nullable
-    public String getUrl() {
+    public String url() {
         if (url == null) {
             return fileName != null
                     ? String.format("https://edge.forgecdn.net/files/%d/%d/%s", fileID / 1000, fileID % 1000, fileName)
@@ -102,11 +61,9 @@ public final class CurseManifestFile implements Validation {
 
     @Override
     public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-        CurseManifestFile that = (CurseManifestFile) o;
-        return projectID == that.projectID &&
-                fileID == that.fileID;
+        return this == o || o instanceof CurseManifestFile that
+                && this.projectID == that.projectID
+                && this.fileID == that.fileID;
     }
 
     @Override

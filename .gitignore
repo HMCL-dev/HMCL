@@ -15,7 +15,13 @@ hs_err_pid*
 NVIDIA
 minecraft-exported-crash-info*
 hmcl-exported-logs-*
+terracotta-log-*
 /.java/
+/.local/
+/.cache/
+
+# IANA Language Subtag Registry
+language-subtag-registry
 
 # gradle build
 /build/
@@ -59,3 +65,9 @@ hmcl-exported-logs-*
 /hmcl.json
 /.hmcl.json
 /.hmcl/
+
+# AI
+/.gemini/
+!/.gemini/config.yaml
+.codex
+/.gradle-*/

@@ -97,7 +97,7 @@ public final class Schedulers {
         return ForkJoinPool.commonPool();
     }
 
-    public static synchronized void shutdown() {
+    public static void shutdown() {
         LOG.info("Shutting down executor services.");
 
         // shutdownNow will interrupt all threads.

@@ -19,116 +19,108 @@ package org.jackhuang.hmcl.setting;
 
 import com.google.gson.*;
 import com.google.gson.annotations.JsonAdapter;
-import javafx.beans.InvalidationListener;
-import javafx.beans.Observable;
+import com.google.gson.annotations.SerializedName;
 import javafx.beans.property.*;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableSet;
-import org.jackhuang.hmcl.util.javafx.ObservableHelper;
-import org.jackhuang.hmcl.util.javafx.PropertyUtils;
+import org.jackhuang.hmcl.util.gson.ObservableSetting;
 import org.jetbrains.annotations.Nullable;
 
-import java.lang.reflect.Type;
 import java.util.*;
 
-@JsonAdapter(GlobalConfig.Serializer.class)
-public final class GlobalConfig implements Observable {
+@JsonAdapter(GlobalConfig.Adapter.class)
+public final class GlobalConfig extends ObservableSetting {
 
     @Nullable
     public static GlobalConfig fromJson(String json) throws JsonParseException {
-        GlobalConfig loaded = Config.CONFIG_GSON.fromJson(json, GlobalConfig.class);
-        if (loaded == null) {
-            return null;
-        }
-        GlobalConfig instance = new GlobalConfig();
-        PropertyUtils.copyProperties(loaded, instance);
-        instance.unknownFields.putAll(loaded.unknownFields);
-        return instance;
+        return Config.CONFIG_GSON.fromJson(json, GlobalConfig.class);
     }
-
-    private final IntegerProperty agreementVersion = new SimpleIntegerProperty();
-
-    private final IntegerProperty platformPromptVersion = new SimpleIntegerProperty();
-
-    private final IntegerProperty logRetention = new SimpleIntegerProperty();
-
-    private final BooleanProperty enableOfflineAccount = new SimpleBooleanProperty(false);
-
-    private final StringProperty fontAntiAliasing = new SimpleStringProperty();
-
-    private final ObservableSet<String> userJava = FXCollections.observableSet(new LinkedHashSet<>());
-
-    private final ObservableSet<String> disabledJava = FXCollections.observableSet(new LinkedHashSet<>());
-
-    private final Map<String, Object> unknownFields = new HashMap<>();
-
-    private final transient ObservableHelper helper = new ObservableHelper(this);
 
     public GlobalConfig() {
-        PropertyUtils.attachListener(this, helper);
-    }
-
-    @Override
-    public void addListener(InvalidationListener listener) {
-        helper.addListener(listener);
-    }
-
-    @Override
-    public void removeListener(InvalidationListener listener) {
-        helper.removeListener(listener);
+        register();
     }
 
     public String toJson() {
         return Config.CONFIG_GSON.toJson(this);
     }
 
-    public int getAgreementVersion() {
-        return agreementVersion.get();
-    }
+    @SerializedName("agreementVersion")
+    private final IntegerProperty agreementVersion = new SimpleIntegerProperty();
 
     public IntegerProperty agreementVersionProperty() {
         return agreementVersion;
+    }
+
+    public int getAgreementVersion() {
+        return agreementVersion.get();
     }
 
     public void setAgreementVersion(int agreementVersion) {
         this.agreementVersion.set(agreementVersion);
     }
 
-    public int getPlatformPromptVersion() {
-        return platformPromptVersion.get();
+    @SerializedName("terracottaAgreementVersion")
+    private final IntegerProperty terracottaAgreementVersion = new SimpleIntegerProperty();
+
+    public IntegerProperty terracottaAgreementVersionProperty() {
+        return terracottaAgreementVersion;
     }
+
+    public int getTerracottaAgreementVersion() {
+        return terracottaAgreementVersion.get();
+    }
+
+    public void setTerracottaAgreementVersion(int terracottaAgreementVersion) {
+        this.terracottaAgreementVersion.set(terracottaAgreementVersion);
+    }
+
+    @SerializedName("platformPromptVersion")
+    private final IntegerProperty platformPromptVersion = new SimpleIntegerProperty();
 
     public IntegerProperty platformPromptVersionProperty() {
         return platformPromptVersion;
+    }
+
+    public int getPlatformPromptVersion() {
+        return platformPromptVersion.get();
     }
 
     public void setPlatformPromptVersion(int platformPromptVersion) {
         this.platformPromptVersion.set(platformPromptVersion);
     }
 
-    public int getLogRetention() {
-        return logRetention.get();
-    }
+    @SerializedName("logRetention")
+    private final IntegerProperty logRetention = new SimpleIntegerProperty(20);
 
     public IntegerProperty logRetentionProperty() {
         return logRetention;
+    }
+
+    public int getLogRetention() {
+        return logRetention.get();
     }
 
     public void setLogRetention(int logRetention) {
         this.logRetention.set(logRetention);
     }
 
-    public boolean isEnableOfflineAccount() {
-        return enableOfflineAccount.get();
-    }
+    @SerializedName("enableOfflineAccount")
+    private final BooleanProperty enableOfflineAccount = new SimpleBooleanProperty(false);
 
     public BooleanProperty enableOfflineAccountProperty() {
         return enableOfflineAccount;
     }
 
+    public boolean isEnableOfflineAccount() {
+        return enableOfflineAccount.get();
+    }
+
     public void setEnableOfflineAccount(boolean value) {
         enableOfflineAccount.set(value);
     }
+
+    @SerializedName("fontAntiAliasing")
+    private final StringProperty fontAntiAliasing = new SimpleStringProperty();
 
     public StringProperty fontAntiAliasingProperty() {
         return fontAntiAliasing;
@@ -142,86 +134,24 @@ public final class GlobalConfig implements Observable {
         this.fontAntiAliasing.set(value);
     }
 
+    @SerializedName("userJava")
+    private final ObservableSet<String> userJava = FXCollections.observableSet(new LinkedHashSet<>());
+
     public ObservableSet<String> getUserJava() {
         return userJava;
     }
+
+    @SerializedName("disabledJava")
+    private final ObservableSet<String> disabledJava = FXCollections.observableSet(new LinkedHashSet<>());
 
     public ObservableSet<String> getDisabledJava() {
         return disabledJava;
     }
 
-    public static final class Serializer implements JsonSerializer<GlobalConfig>, JsonDeserializer<GlobalConfig> {
-        private static final Set<String> knownFields = new HashSet<>(Arrays.asList(
-                "agreementVersion",
-                "platformPromptVersion",
-                "logRetention",
-                "userJava",
-                "disabledJava",
-                "enableOfflineAccount",
-                "fontAntiAliasing"
-        ));
-
+    static final class Adapter extends ObservableSetting.Adapter<GlobalConfig> {
         @Override
-        public JsonElement serialize(GlobalConfig src, Type typeOfSrc, JsonSerializationContext context) {
-            if (src == null) {
-                return JsonNull.INSTANCE;
-            }
-
-            JsonObject jsonObject = new JsonObject();
-            jsonObject.add("agreementVersion", context.serialize(src.getAgreementVersion()));
-            jsonObject.add("platformPromptVersion", context.serialize(src.getPlatformPromptVersion()));
-            jsonObject.add("logRetention", context.serialize(src.getLogRetention()));
-            jsonObject.add("fontAntiAliasing", context.serialize(src.getFontAntiAliasing()));
-            if (src.enableOfflineAccount.get())
-                jsonObject.addProperty("enableOfflineAccount", true);
-
-            if (!src.getUserJava().isEmpty())
-                jsonObject.add("userJava", context.serialize(src.getUserJava()));
-
-            if (!src.getDisabledJava().isEmpty())
-                jsonObject.add("disabledJava", context.serialize(src.getDisabledJava()));
-
-            for (Map.Entry<String, Object> entry : src.unknownFields.entrySet()) {
-                jsonObject.add(entry.getKey(), context.serialize(entry.getValue()));
-            }
-
-            return jsonObject;
-        }
-
-        @Override
-        public GlobalConfig deserialize(JsonElement json, Type typeOfT, JsonDeserializationContext context) throws JsonParseException {
-            if (!(json instanceof JsonObject)) return null;
-
-            JsonObject obj = (JsonObject) json;
-
-            GlobalConfig config = new GlobalConfig();
-            config.setAgreementVersion(Optional.ofNullable(obj.get("agreementVersion")).map(JsonElement::getAsInt).orElse(0));
-            config.setPlatformPromptVersion(Optional.ofNullable(obj.get("platformPromptVersion")).map(JsonElement::getAsInt).orElse(0));
-            config.setLogRetention(Optional.ofNullable(obj.get("logRetention")).map(JsonElement::getAsInt).orElse(20));
-            config.setEnableOfflineAccount(Optional.ofNullable(obj.get("enableOfflineAccount")).map(JsonElement::getAsBoolean).orElse(false));
-            config.setFontAntiAliasing(Optional.ofNullable(obj.get("fontAntiAliasing")).map(JsonElement::getAsString).orElse(null));
-
-            JsonElement userJava = obj.get("userJava");
-            if (userJava != null && userJava.isJsonArray()) {
-                for (JsonElement element : userJava.getAsJsonArray()) {
-                    config.userJava.add(element.getAsString());
-                }
-            }
-
-            JsonElement disabledJava = obj.get("disabledJava");
-            if (disabledJava != null && disabledJava.isJsonArray()) {
-                for (JsonElement element : disabledJava.getAsJsonArray()) {
-                    config.disabledJava.add(element.getAsString());
-                }
-            }
-
-            for (Map.Entry<String, JsonElement> entry : obj.entrySet()) {
-                if (!knownFields.contains(entry.getKey())) {
-                    config.unknownFields.put(entry.getKey(), context.deserialize(entry.getValue(), Object.class));
-                }
-            }
-
-            return config;
+        protected GlobalConfig createInstance() {
+            return new GlobalConfig();
         }
     }
 }

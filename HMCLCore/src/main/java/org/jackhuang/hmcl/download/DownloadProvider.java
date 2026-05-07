@@ -20,64 +20,55 @@ package org.jackhuang.hmcl.download;
 import org.jackhuang.hmcl.util.io.NetworkUtils;
 
 import java.net.URI;
+import java.util.LinkedHashSet;
 import java.util.List;
-import java.util.stream.Collectors;
 
-/**
- * The service provider that provides Minecraft online file downloads.
- *
- * @author huangyuhui
- */
+/// The service provider that provides Minecraft online file downloads.
+///
+/// @author huangyuhui
 public interface DownloadProvider {
 
-    String getVersionListURL();
+    List<URI> getVersionListURLs();
 
-    String getAssetBaseURL();
+    List<URI> getAssetObjectCandidates(String assetObjectLocation);
 
-    default List<URI> getAssetObjectCandidates(String assetObjectLocation) {
-        return List.of(NetworkUtils.toURI(getAssetBaseURL() + assetObjectLocation));
-    }
-
-    /**
-     * Inject into original URL provided by Mojang and Forge.
-     *
-     * Since there are many provided URLs that are written in JSONs and are unmodifiable,
-     * this method provides a way to change them.
-     *
-     * @param baseURL original URL provided by Mojang and Forge.
-     * @return the URL that is equivalent to [baseURL], but belongs to your own service provider.
-     */
+    /// Inject into original URL provided by Mojang and Forge.
+    ///
+    /// Since there are many provided URLs that are written in JSONs and are unmodifiable,
+    /// this method provides a way to change them.
+    ///
+    /// @param baseURL original URL provided by Mojang and Forge.
+    /// @return the URL that is equivalent to `baseURL``, but belongs to your own service provider.
     String injectURL(String baseURL);
 
-    /**
-     * Inject into original URL provided by Mojang and Forge.
-     *
-     * Since there are many provided URLs that are written in JSONs and are unmodifiable,
-     * this method provides a way to change them.
-     *
-     * @param baseURL original URL provided by Mojang and Forge.
-     * @return the URL that is equivalent to [baseURL], but belongs to your own service provider.
-     */
+    /// Inject into original URL provided by Mojang and Forge.
+    ///
+    /// Since there are many provided URLs that are written in JSONs and are unmodifiable,
+    /// this method provides a way to change them.
+    ///
+    /// @param baseURL original URL provided by Mojang and Forge.
+    /// @return the URL that is equivalent to `baseURL`, but belongs to your own service provider.
     default List<URI> injectURLWithCandidates(String baseURL) {
         return List.of(NetworkUtils.toURI(injectURL(baseURL)));
     }
 
     default List<URI> injectURLsWithCandidates(List<String> urls) {
-        return urls.stream().flatMap(url -> injectURLWithCandidates(url).stream()).collect(Collectors.toList());
+        LinkedHashSet<URI> result = new LinkedHashSet<>();
+        for (String url : urls) {
+            result.addAll(injectURLWithCandidates(url));
+        }
+        return List.copyOf(result);
     }
 
-    /**
-     * the specific version list that this download provider provides. i.e. "fabric", "forge", "liteloader", "game", "optifine"
-     *
-     * @param id the id of specific version list that this download provider provides. i.e. "fabric", "forge", "liteloader", "game", "optifine"
-     * @return the version list
-     * @throws IllegalArgumentException if the version list does not exist
-     */
+    /// the specific version list that this download provider provides. i.e. "fabric", "forge", "liteloader", "game", "optifine"
+    ///
+    /// @param id the id of specific version list that this download provider provides. i.e. "fabric", "forge", "liteloader", "game", "optifine"
+    /// @return the version list
+    /// @throws IllegalArgumentException if the version list does not exist
     VersionList<?> getVersionListById(String id);
 
-    /**
-     * The maximum download concurrency that this download provider supports.
-     * @return the maximum download concurrency.
-     */
+    /// The maximum download concurrency that this download provider supports.
+    ///
+    /// @return the maximum download concurrency.
     int getConcurrency();
 }

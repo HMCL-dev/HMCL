@@ -18,17 +18,24 @@
 package org.jackhuang.hmcl.task;
 
 import org.jackhuang.hmcl.util.DigestUtils;
-import org.jackhuang.hmcl.util.io.*;
+import org.jackhuang.hmcl.util.io.ChecksumMismatchException;
+import org.jackhuang.hmcl.util.io.CompressingUtils;
+import org.jackhuang.hmcl.util.io.FileUtils;
+import org.jackhuang.hmcl.util.io.NetworkUtils;
+import org.jackhuang.hmcl.util.io.UrlResponseInfo;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
-import java.io.OutputStream;
 import java.net.URI;
 import java.net.http.HttpResponse;
+import java.nio.ByteBuffer;
+import java.nio.channels.FileChannel;
 import java.nio.file.FileSystem;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
+import java.nio.file.StandardOpenOption;
 import java.security.MessageDigest;
 import java.util.*;
 
@@ -51,6 +58,11 @@ public class FileDownloadTask extends FetchTask<Void> {
         public static IntegrityCheck of(String algorithm, String checksum) {
             if (checksum == null) return null;
             else return new IntegrityCheck(algorithm, checksum);
+        }
+
+        @Override
+        public @NotNull String toString() {
+            return String.format("IntegrityCheck[algorithm='%s', checksum='%s']", algorithm, checksum);
         }
     }
 
@@ -175,7 +187,7 @@ public class FileDownloadTask extends FetchTask<Void> {
         if (integrityCheck != null) {
             algorithm = integrityCheck.algorithm();
             checksum = integrityCheck.checksum();
-        } else if (bmclapiHash != null) {
+        } else if (bmclapiHash != null && DigestUtils.isSha1Digest(bmclapiHash)) {
             algorithm = "SHA-1";
             checksum = bmclapiHash;
         } else {
@@ -185,11 +197,19 @@ public class FileDownloadTask extends FetchTask<Void> {
 
         MessageDigest digest = algorithm != null ? DigestUtils.getDigest(algorithm) : null;
 
-        OutputStream fileOutput = Files.newOutputStream(temp);
+        FileChannel fileOutput = FileChannel.open(temp,
+                StandardOpenOption.WRITE,
+                StandardOpenOption.TRUNCATE_EXISTING,
+                StandardOpenOption.CREATE);
         return new Context() {
             @Override
             public void reset() throws IOException {
-                // TODO
+                if (digest != null) {
+                    digest.reset();
+                }
+
+                fileOutput.truncate(0L);
+                fileOutput.position(0L);
             }
 
             @Override
@@ -198,7 +218,11 @@ public class FileDownloadTask extends FetchTask<Void> {
                     digest.update(buffer, offset, len);
                 }
 
-                fileOutput.write(buffer, offset, len);
+                ByteBuffer byteBuffer = ByteBuffer.wrap(buffer, offset, len);
+                while (byteBuffer.hasRemaining()) {
+                    //noinspection ResultOfMethodCallIgnored
+                    fileOutput.write(byteBuffer);
+                }
             }
 
             @Override

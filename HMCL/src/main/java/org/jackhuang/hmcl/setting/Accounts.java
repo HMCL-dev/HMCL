@@ -414,6 +414,12 @@ public final class Accounts {
             return i18n("account.failed.no_character");
         } else if (exception instanceof ServerDisconnectException) {
             if (exception.getCause() instanceof SSLException) {
+                if (exception.getCause().getMessage() != null && exception.getCause().getMessage().contains("Remote host terminated")) {
+                    return i18n("account.failed.connect_authentication_server");
+                }
+                if (exception.getCause().getMessage() != null && (exception.getCause().getMessage().contains("No name matching") || exception.getCause().getMessage().contains("No subject alternative DNS name matching"))) {
+                    return i18n("account.failed.dns");
+                }
                 return i18n("account.failed.ssl");
             } else {
                 return i18n("account.failed.connect_authentication_server");
@@ -462,10 +468,12 @@ public final class Accounts {
             }
         } else if (exception instanceof MicrosoftService.XBox400Exception) {
             return i18n("account.methods.microsoft.error.wrong_verify_method");
-        } else if (exception instanceof MicrosoftService.NoMinecraftJavaEditionProfileException) {
+        } else if (exception instanceof MicrosoftService.MinecraftJavaEditionLicenseNotFoundException) {
+            return i18n("account.methods.microsoft.error.no_license");
+        } else if (exception instanceof MicrosoftService.MinecraftJavaEditionProfileNotFoundException) {
             return i18n("account.methods.microsoft.error.no_character");
         } else if (exception instanceof MicrosoftService.NoXuiException) {
-            return i18n("account.methods.microsoft.error.add_family_probably");
+            return i18n("account.methods.microsoft.error.add_family");
         } else if (exception instanceof OAuthServer.MicrosoftAuthenticationNotSupportedException) {
             return i18n("account.methods.microsoft.snapshot");
         } else if (exception instanceof OAuthAccount.WrongAccountException) {

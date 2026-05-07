@@ -47,6 +47,7 @@ import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.io.ChecksumMismatchException;
 import org.jackhuang.hmcl.util.io.IOUtils;
 import org.jackhuang.hmcl.java.JavaRuntime;
+import org.jackhuang.hmcl.util.io.JarUtils;
 import org.jackhuang.hmcl.util.platform.Platform;
 
 import javax.swing.*;
@@ -62,7 +63,6 @@ import java.util.List;
 import java.util.*;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.jar.Manifest;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.util.stream.Collectors.toSet;
@@ -79,10 +79,11 @@ public final class SelfDependencyPatcher {
     private final byte[] buffer = new byte[IOUtils.DEFAULT_BUFFER_SIZE];
     private final MessageDigest digest = DigestUtils.getDigest("SHA-1");
 
-    private SelfDependencyPatcher() throws IncompatibleVersionException {
+    private SelfDependencyPatcher() throws PatchException {
         // We can only self-patch JavaFX on specific platform.
         if (dependencies == null) {
-            throw new IncompatibleVersionException();
+            throw new PatchException("Unsupported platform: operating system %s, architecture %s".formatted(
+                    System.getProperty("os.name"), System.getProperty("os.arch")));
         }
 
         final String customUrl = System.getProperty("hmcl.openjfx.repo");
@@ -101,14 +102,14 @@ public final class SelfDependencyPatcher {
 
     private static final class DependencyDescriptor {
         private static final String DEPENDENCIES_LIST_FILE = "/assets/openjfx-dependencies.json";
-        private static final Path DEPENDENCIES_DIR_PATH = Metadata.DEPENDENCIES_DIRECTORY.resolve(Platform.getPlatform().toString()).resolve("openjfx");
+        private static final Path DEPENDENCIES_DIR_PATH = Metadata.DEPENDENCIES_DIRECTORY.resolve(Platform.CURRENT_PLATFORM.toString()).resolve("openjfx");
 
         static List<DependencyDescriptor> readDependencies() {
             //noinspection ConstantConditions
             try (Reader reader = new InputStreamReader(SelfDependencyPatcher.class.getResourceAsStream(DEPENDENCIES_LIST_FILE), UTF_8)) {
                 Map<String, Map<String, List<DependencyDescriptor>>> allDependencies =
                         JsonUtils.GSON.fromJson(reader, mapTypeOf(String.class, mapTypeOf(String.class, listTypeOf(DependencyDescriptor.class))));
-                Map<String, List<DependencyDescriptor>> platform = allDependencies.get(Platform.getPlatform().toString());
+                Map<String, List<DependencyDescriptor>> platform = allDependencies.get(Platform.CURRENT_PLATFORM.toString());
                 if (platform == null)
                     return null;
 
@@ -159,18 +160,12 @@ public final class SelfDependencyPatcher {
     /**
      * Patch in any missing dependencies, if any.
      */
-    public static void patch() throws PatchException, IncompatibleVersionException, CancellationException {
+    public static void patch() throws PatchException, CancellationException {
         // Do nothing if JavaFX is detected
         try {
-            try {
-                Class.forName("javafx.application.Application");
-                return;
-            } catch (Exception ignored) {
-            }
-        } catch (UnsupportedClassVersionError error) {
-            // Loading the JavaFX class was unsupported.
-            // We are probably on 8 and its on 11
-            throw new IncompatibleVersionException();
+            Class.forName("javafx.application.Application");
+            return;
+        } catch (Exception ignored) {
         }
 
         SelfDependencyPatcher patcher = new SelfDependencyPatcher();
@@ -253,14 +248,7 @@ public final class SelfDependencyPatcher {
                 .map(DependencyDescriptor::localPath)
                 .toArray(Path[]::new);
 
-        String addOpens = null;
-        try (InputStream input = SelfDependencyPatcher.class.getResourceAsStream("/META-INF/MANIFEST.MF")) {
-            if (input != null)
-                addOpens = new Manifest(input).getMainAttributes().getValue("Add-Opens");
-        } catch (IOException e) {
-            LOG.warning("Failed to read MANIFEST.MF file", e);
-        }
-
+        String addOpens = JarUtils.getAttribute("hmcl.add-opens", null);
         JavaFXPatcher.patch(modules, jars, addOpens != null ? addOpens.split(" ") : new String[0]);
     }
 
@@ -385,12 +373,13 @@ public final class SelfDependencyPatcher {
     }
 
     public static class PatchException extends Exception {
+        PatchException(String message) {
+            super(message);
+        }
+
         PatchException(String message, Throwable cause) {
             super(message, cause);
         }
-    }
-
-    public static class IncompatibleVersionException extends Exception {
     }
 
     public static class ProgressFrame extends JDialog {

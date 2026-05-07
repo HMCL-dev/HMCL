@@ -17,33 +17,37 @@
  */
 package org.jackhuang.hmcl;
 
+import javafx.animation.KeyFrame;
+import javafx.animation.KeyValue;
+import javafx.animation.Timeline;
 import javafx.application.Application;
 import javafx.application.Platform;
 import javafx.beans.value.ObservableBooleanValue;
+import javafx.geometry.Rectangle2D;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Alert.AlertType;
+import javafx.scene.control.Button;
 import javafx.scene.control.ButtonType;
 import javafx.scene.input.Clipboard;
 import javafx.scene.input.DataFormat;
+import javafx.stage.Screen;
 import javafx.stage.Stage;
+import javafx.util.Duration;
 import org.jackhuang.hmcl.setting.ConfigHolder;
 import org.jackhuang.hmcl.setting.SambaException;
-import org.jackhuang.hmcl.ui.FXUtils;
-import org.jackhuang.hmcl.util.FileSaver;
 import org.jackhuang.hmcl.task.AsyncTaskExecutor;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.ui.Controllers;
+import org.jackhuang.hmcl.ui.FXUtils;
+import org.jackhuang.hmcl.theme.Themes;
 import org.jackhuang.hmcl.upgrade.UpdateChecker;
 import org.jackhuang.hmcl.upgrade.UpdateHandler;
 import org.jackhuang.hmcl.util.CrashReporter;
+import org.jackhuang.hmcl.util.FileSaver;
 import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.io.JarUtils;
-import org.jackhuang.hmcl.util.platform.Architecture;
-import org.jackhuang.hmcl.util.platform.CommandBuilder;
-import org.jackhuang.hmcl.util.platform.NativeUtils;
-import org.jackhuang.hmcl.util.platform.OperatingSystem;
-import org.jackhuang.hmcl.util.platform.SystemInfo;
+import org.jackhuang.hmcl.util.platform.*;
 
 import java.io.File;
 import java.io.IOException;
@@ -54,6 +58,7 @@ import java.net.CookieManager;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Objects;
@@ -62,8 +67,8 @@ import java.util.concurrent.TimeUnit;
 
 import static org.jackhuang.hmcl.ui.FXUtils.runInFX;
 import static org.jackhuang.hmcl.util.DataSizeUnit.MEGABYTES;
-import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
+import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 public final class Launcher extends Application {
     public static final CookieManager COOKIE_MANAGER = new CookieManager();
@@ -78,6 +83,18 @@ public final class Launcher extends Application {
         LOG.info("Prism Pipeline: " + FXUtils.GRAPHICS_PIPELINE);
         LOG.info("Dark Mode: " + Optional.ofNullable(FXUtils.DARK_MODE).map(ObservableBooleanValue::get).orElse(false));
         LOG.info("Reduced Motion: " + Objects.requireNonNullElse(FXUtils.REDUCED_MOTION, false));
+
+        if (Screen.getScreens().isEmpty()) {
+            LOG.info("No screen");
+        } else {
+            StringBuilder builder = new StringBuilder("Screens:");
+            int count = 0;
+            for (Screen screen : Screen.getScreens()) {
+                builder.append("\n - Screen ").append(++count).append(": ");
+                appendScreen(builder, screen);
+            }
+            LOG.info(builder.toString());
+        }
 
         try {
             try {
@@ -96,7 +113,7 @@ public final class Launcher extends Application {
             if (OperatingSystem.CURRENT_OS == OperatingSystem.MACOS
                     && ConfigHolder.isNewlyCreated()
                     && System.getProperty("user.dir").startsWith("/private/var/folders/")) {
-                if (showAlert(AlertType.WARNING, i18n("fatal.mac_app_translocation"), ButtonType.YES, ButtonType.NO) == ButtonType.NO)
+                if (!confirmWithCountdown(AlertType.WARNING, i18n("fatal.mac_app_translocation"), 5))
                     return;
             } else {
                 checkConfigInTempDir();
@@ -122,6 +139,9 @@ public final class Launcher extends Application {
                 Platform.setImplicitExit(false);
                 Controllers.initialize(primaryStage);
 
+                if (OperatingSystem.CURRENT_OS == OperatingSystem.MACOS)
+                    Themes.applyNativeDarkMode(primaryStage);
+
                 UpdateChecker.init();
 
                 primaryStage.show();
@@ -131,8 +151,61 @@ public final class Launcher extends Application {
         }
     }
 
+    private static void appendScreen(StringBuilder builder, Screen screen) {
+        Rectangle2D bounds = screen.getBounds();
+        double scale = screen.getOutputScaleX();
+
+        builder.append(Math.round(bounds.getWidth() * scale));
+        builder.append('x');
+        builder.append(Math.round(bounds.getHeight() * scale));
+
+        DecimalFormat decimalFormat = new DecimalFormat("#.##");
+
+        if (scale != 1.0) {
+            builder.append(" @ ");
+            builder.append(decimalFormat.format(scale));
+            builder.append('x');
+        }
+
+        double dpi = screen.getDpi();
+        builder.append(' ');
+        builder.append(decimalFormat.format(dpi));
+        builder.append("dpi");
+
+        builder.append(" in ")
+                .append(Math.round(Math.sqrt(bounds.getWidth() * bounds.getWidth() + bounds.getHeight() * bounds.getHeight()) / dpi))
+                .append('"');
+
+        builder.append(" (").append(decimalFormat.format(bounds.getMinX()))
+                .append(", ").append(decimalFormat.format(bounds.getMinY()))
+                .append(", ").append(decimalFormat.format(bounds.getMaxX()))
+                .append(", ").append(decimalFormat.format(bounds.getMaxY()))
+                .append(")");
+    }
+
     private static ButtonType showAlert(AlertType alertType, String contentText, ButtonType... buttons) {
         return new Alert(alertType, contentText, buttons).showAndWait().orElse(null);
+    }
+
+    private static boolean confirmWithCountdown(Alert.AlertType alertType, String contentText, int seconds) {
+        Alert alert = new Alert(alertType, contentText, ButtonType.YES, ButtonType.NO);
+        Button okButton = (Button) alert.getDialogPane().lookupButton(ButtonType.YES);
+
+        okButton.setDisable(true);
+
+        KeyFrame[] keyFrames = new KeyFrame[seconds + 1];
+        for (int i = 0; i < seconds; i++) {
+            keyFrames[i] = new KeyFrame(Duration.seconds(i),
+                    new KeyValue(okButton.textProperty(), i18n("button.ok.countdown", seconds - i)));
+        }
+        keyFrames[seconds] = new KeyFrame(Duration.seconds(seconds),
+                new KeyValue(okButton.textProperty(), i18n("button.ok")),
+                new KeyValue(okButton.disableProperty(), false));
+
+        Timeline timeline = new Timeline(keyFrames);
+        alert.setOnShown(e -> timeline.play());
+        alert.setOnCloseRequest(e -> timeline.stop());
+        return alert.showAndWait().orElse(null) == ButtonType.YES;
     }
 
     private static boolean isConfigInTempDir() {
@@ -174,7 +247,7 @@ public final class Launcher extends Application {
 
     private static void checkConfigInTempDir() {
         if (ConfigHolder.isNewlyCreated() && isConfigInTempDir()
-                && showAlert(AlertType.WARNING, i18n("fatal.config_in_temp_dir"), ButtonType.YES, ButtonType.NO) == ButtonType.NO) {
+                && !confirmWithCountdown(AlertType.WARNING, i18n("fatal.config_in_temp_dir"), 5)) {
             EntryPoint.exit(0);
         }
     }
@@ -206,7 +279,7 @@ public final class Launcher extends Application {
         if (Files.exists(mcDir))
             files.add(mcDir.toString());
 
-        String command = new CommandBuilder().add("sudo", "chown", "-R", userName).addAll(files).toString();
+        String command = new CommandBuilder().addAll("sudo", "chown", "-R", userName).addAll(files).toString();
         ButtonType copyAndExit = new ButtonType(i18n("button.copy_and_exit"));
 
         if (showAlert(AlertType.ERROR,

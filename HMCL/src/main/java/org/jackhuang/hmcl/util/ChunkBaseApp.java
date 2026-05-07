@@ -28,28 +28,40 @@ public final class ChunkBaseApp {
     private static final String CHUNK_BASE_URL = "https://www.chunkbase.com";
 
     private static final GameVersionNumber MIN_GAME_VERSION = GameVersionNumber.asGameVersion("1.7");
+    private static final GameVersionNumber MIN_END_CITY_VERSION = GameVersionNumber.asGameVersion("1.13");
 
     private static final String[] SEED_MAP_GAME_VERSIONS = {
-            "1.21.6", "1.21.5", "1.21.4", "1.21.2", "1.21", "1.20", "1.19.3",
-            "1.19", "1.18", "1.17", "1.16", "1.15", "1.14", "1.13", "1.12",
-            "1.11", "1.10", "1.9", "1.8", "1.7"
+            "26.1", "1.21.9", "1.21.6", "1.21.5", "1.21.4", "1.21.2", "1.21",
+            "1.20", "1.19.3", "1.19", "1.18", "1.17", "1.16", "1.15", "1.14",
+            "1.13", "1.12", "1.11", "1.10", "1.9", "1.8", "1.7"
     };
 
     public static final String[] STRONGHOLD_FINDER_GAME_VERSIONS = {
-            "1.20", "1.19.3", "1.19", "1.18", "1.16", "1.13", "1.9", "1.7"
+            "26.1", "1.21.9", "1.21.6", "1.21.5", "1.21.4", "1.21.2", "1.21",
+            "1.20", "1.19.3", "1.19", "1.18", "1.17", "1.16", "1.15", "1.14",
+            "1.13", "1.12", "1.11", "1.10", "1.9", "1.8", "1.7"
     };
 
     public static final String[] NETHER_FORTRESS_GAME_VERSIONS = {
-            "1.18", "1.16", "1.7"
+            "26.1", "1.21.9", "1.21.6", "1.21.5", "1.21.4", "1.21.2", "1.21",
+            "1.20", "1.19.3", "1.19", "1.18", "1.17", "1.16", "1.15", "1.14",
+            "1.13", "1.12", "1.11", "1.10", "1.9", "1.8", "1.7"
     };
 
     public static final String[] END_CITY_GAME_VERSIONS = {
-            "1.19", "1.13"
+            "26.1", "1.21.9", "1.21.6", "1.21.5", "1.21.4", "1.21.2", "1.21",
+            "1.20", "1.19.3", "1.19", "1.18", "1.17", "1.16", "1.15", "1.14",
+            "1.13"
     };
 
     public static boolean isSupported(@NotNull World world) {
         return world.getSeed() != null && world.getGameVersion() != null &&
-                GameVersionNumber.asGameVersion(world.getGameVersion()).compareTo(MIN_GAME_VERSION) >= 0;
+                world.getGameVersion().compareTo(MIN_GAME_VERSION) >= 0;
+    }
+
+    public static boolean supportEndCity(@NotNull World world) {
+        return world.getSeed() != null && world.getGameVersion() != null &&
+                world.getGameVersion().compareTo(MIN_END_CITY_VERSION) >= 0;
     }
 
     public static ChunkBaseApp newBuilder(String app, long seed) {
@@ -60,7 +72,7 @@ public final class ChunkBaseApp {
         assert isSupported(world);
 
         newBuilder("seed-map", Objects.requireNonNull(world.getSeed()))
-                .addPlatform(GameVersionNumber.asGameVersion(world.getGameVersion()), world.isLargeBiomes(), SEED_MAP_GAME_VERSIONS)
+                .addPlatform(world.getGameVersion(), world.isLargeBiomes(), SEED_MAP_GAME_VERSIONS)
                 .open();
     }
 
@@ -68,7 +80,7 @@ public final class ChunkBaseApp {
         assert isSupported(world);
 
         newBuilder("stronghold-finder", Objects.requireNonNull(world.getSeed()))
-                .addPlatform(GameVersionNumber.asGameVersion(world.getGameVersion()), world.isLargeBiomes(), STRONGHOLD_FINDER_GAME_VERSIONS)
+                .addPlatform(world.getGameVersion(), world.isLargeBiomes(), STRONGHOLD_FINDER_GAME_VERSIONS)
                 .open();
     }
 
@@ -76,7 +88,7 @@ public final class ChunkBaseApp {
         assert isSupported(world);
 
         newBuilder("nether-fortress-finder", Objects.requireNonNull(world.getSeed()))
-                .addPlatform(GameVersionNumber.asGameVersion(world.getGameVersion()), false, NETHER_FORTRESS_GAME_VERSIONS)
+                .addPlatform(world.getGameVersion(), false, NETHER_FORTRESS_GAME_VERSIONS)
                 .open();
     }
 
@@ -84,7 +96,7 @@ public final class ChunkBaseApp {
         assert isSupported(world);
 
         newBuilder("endcity-finder", Objects.requireNonNull(world.getSeed()))
-                .addPlatform(GameVersionNumber.asGameVersion(world.getGameVersion()), false, END_CITY_GAME_VERSIONS)
+                .addPlatform(world.getGameVersion(), false, END_CITY_GAME_VERSIONS)
                 .open();
     }
 

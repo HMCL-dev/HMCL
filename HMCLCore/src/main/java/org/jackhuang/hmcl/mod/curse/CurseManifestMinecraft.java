@@ -19,42 +19,27 @@ package org.jackhuang.hmcl.mod.curse;
 
 import com.google.gson.JsonParseException;
 import com.google.gson.annotations.SerializedName;
-import org.jackhuang.hmcl.util.Immutable;
 import org.jackhuang.hmcl.util.StringUtils;
+import org.jackhuang.hmcl.util.gson.JsonSerializable;
 import org.jackhuang.hmcl.util.gson.Validation;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-/**
- *
- * @author huangyuhui
- */
-@Immutable
-public final class CurseManifestMinecraft implements Validation {
-
-    @SerializedName("version")
-    private final String gameVersion;
-
-    @SerializedName("modLoaders")
-    private final List<CurseManifestModLoader> modLoaders;
-
-    public CurseManifestMinecraft() {
-        this.gameVersion = "";
-        this.modLoaders = Collections.emptyList();
-    }
+/// @author huangyuhui
+@JsonSerializable
+public record CurseManifestMinecraft(@SerializedName("version") String gameVersion,
+                                     @SerializedName("modLoaders") @Unmodifiable List<CurseManifestModLoader> modLoaders) implements Validation {
 
     public CurseManifestMinecraft(String gameVersion, List<CurseManifestModLoader> modLoaders) {
         this.gameVersion = gameVersion;
-        this.modLoaders = new ArrayList<>(modLoaders);
+        this.modLoaders = Collections.unmodifiableList(new ArrayList<>(modLoaders)); // TODO: Is the modLoaders nullable?
     }
 
-    public String getGameVersion() {
-        return gameVersion;
-    }
-
-    public List<CurseManifestModLoader> getModLoaders() {
+    @Override
+    public List<CurseManifestModLoader> modLoaders() {
         return Collections.unmodifiableList(modLoaders);
     }
 

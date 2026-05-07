@@ -40,7 +40,6 @@ import org.jetbrains.annotations.Nullable;
 import java.net.SocketTimeoutException;
 import java.net.URI;
 import java.util.ArrayList;
-import java.util.List;
 import java.util.concurrent.CancellationException;
 import java.util.zip.ZipException;
 
@@ -78,21 +77,21 @@ public final class UpdateInstallerWizardProvider implements WizardProvider {
         // We remove library but not save it,
         // so if installation failed will not break down current version.
         Task<Version> ret = Task.supplyAsync(() -> version);
-        List<String> stages = new ArrayList<>();
+        var hints = new ArrayList<Task.StagesHint>();
         for (Object value : settings.asStringMap().values()) {
             if (value instanceof RemoteVersion remoteVersion) {
                 ret = ret.thenComposeAsync(version -> dependencyManager.installLibraryAsync(version, remoteVersion));
-                stages.add(String.format("hmcl.install.%s:%s", remoteVersion.getLibraryId(), remoteVersion.getSelfVersion()));
+                hints.add(new Task.StagesHint(String.format("hmcl.install.%s:%s", remoteVersion.getLibraryId(), remoteVersion.getSelfVersion())));
                 if ("game".equals(remoteVersion.getLibraryId())) {
-                    stages.add("hmcl.install.libraries");
-                    stages.add("hmcl.install.assets");
+                    hints.add(new Task.StagesHint("hmcl.install.libraries"));
+                    hints.add(new Task.StagesHint("hmcl.install.assets"));
                 }
             } else if (value instanceof RemoveVersionAction removeVersionAction) {
                 ret = ret.thenComposeAsync(version -> dependencyManager.removeLibraryAsync(version, removeVersionAction.libraryId));
             }
         }
 
-        return ret.thenComposeAsync(profile.getRepository()::saveAsync).thenComposeAsync(profile.getRepository().refreshVersionsAsync()).withStagesHint(stages);
+        return ret.thenComposeAsync(profile.getRepository()::saveAsync).thenComposeAsync(profile.getRepository().refreshVersionsAsync()).withStagesHints(hints);
     }
 
     @Override

@@ -2,6 +2,10 @@ plugins {
     id("java-library")
 }
 
-tasks.withType<JavaCompile> {
+tasks.compileJava {
     options.release.set(8)
+}
+
+tasks.compileTestJava {
+    options.release.set(17)
 }

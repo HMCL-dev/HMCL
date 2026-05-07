@@ -21,6 +21,7 @@ import kala.compress.archivers.zip.ZipArchiveEntry;
 import kala.compress.archivers.zip.ZipArchiveReader;
 import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
+import org.jackhuang.hmcl.util.tree.ZipFileTree;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -127,13 +128,33 @@ public final class CompressingUtils {
         throw new IOException("Cannot find suitable encoding for the zip.");
     }
 
+    public static ZipFileTree openZipTree(Path zipFile) throws IOException {
+        return new ZipFileTree(openZipFile(zipFile));
+    }
+
     public static ZipArchiveReader openZipFile(Path zipFile) throws IOException {
+        return openZipFileWithPossibleEncoding(zipFile, StandardCharsets.UTF_8);
+    }
+
+    public static ZipArchiveReader openZipFile(Path zipFile, Charset charset) throws IOException {
+        return new ZipArchiveReader(zipFile, charset);
+    }
+
+    public static ZipArchiveReader openZipFileWithPossibleEncoding(Path zipFile, Charset possibleEncoding) throws IOException {
+        if (possibleEncoding == null)
+            possibleEncoding = StandardCharsets.UTF_8;
+
         ZipArchiveReader zipReader = new ZipArchiveReader(Files.newByteChannel(zipFile));
+
         Charset suitableEncoding;
         try {
-            suitableEncoding = findSuitableEncoding(zipReader);
-            if (suitableEncoding == StandardCharsets.UTF_8)
-                return zipReader;
+            if (possibleEncoding != StandardCharsets.UTF_8 && CompressingUtils.testEncoding(zipReader, possibleEncoding)) {
+                suitableEncoding = possibleEncoding;
+            } else {
+                suitableEncoding = CompressingUtils.findSuitableEncoding(zipReader);
+                if (suitableEncoding == StandardCharsets.UTF_8)
+                    return zipReader;
+            }
         } catch (Throwable e) {
             IOUtils.closeQuietly(zipReader, e);
             throw e;
@@ -141,10 +162,6 @@ public final class CompressingUtils {
 
         zipReader.close();
         return new ZipArchiveReader(Files.newByteChannel(zipFile), suitableEncoding);
-    }
-
-    public static ZipArchiveReader openZipFile(Path zipFile, Charset charset) throws IOException {
-        return new ZipArchiveReader(zipFile, charset);
     }
 
     public static final class Builder {

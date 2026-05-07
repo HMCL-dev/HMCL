@@ -19,6 +19,7 @@ package org.jackhuang.hmcl.task;
 
 import org.jackhuang.hmcl.event.Event;
 import org.jackhuang.hmcl.event.EventBus;
+import org.jackhuang.hmcl.event.EventManager;
 import org.jackhuang.hmcl.util.*;
 import org.jackhuang.hmcl.util.io.*;
 import org.jetbrains.annotations.NotNull;
@@ -44,16 +45,6 @@ import static org.jackhuang.hmcl.util.Lang.threadPool;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 public abstract class FetchTask<T> extends Task<T> {
-    private static final HttpClient HTTP_CLIENT;
-
-    static {
-        boolean useHttp2 = !"false".equalsIgnoreCase(System.getProperty("hmcl.http2"));
-
-        HTTP_CLIENT = HttpClient.newBuilder()
-                .connectTimeout(Duration.ofMillis(NetworkUtils.TIME_OUT))
-                .version(useHttp2 ? HttpClient.Version.HTTP_2 : HttpClient.Version.HTTP_1_1)
-                .build();
-    }
 
     protected static final int DEFAULT_RETRY = 3;
 
@@ -235,7 +226,7 @@ public abstract class FetchTask<T> extends Task<T> {
             if (contentLength >= 0 && counter.downloaded != contentLength)
                 throw new IOException("Unexpected file size: " + counter.downloaded + ", expected: " + contentLength);
 
-            context.markSuccess();
+            context.withResult(true);
         }
     }
 
@@ -254,10 +245,12 @@ public abstract class FetchTask<T> extends Task<T> {
         Context context = null;
         HttpResumeContext resumeContext = null;
 
-        ArrayList<IOException> exceptions = null;
+        ArrayList<Exception> exceptions = null;
 
+        // If loading the cache fails, the cache should not be loaded again.
+        boolean useCachedResult = true;
         try {
-            for (int retryTime = 0; retryTime < retry; retryTime++) {
+            for (int retryTime = 0, retryLimit = retry; retryTime < retryLimit; retryTime++) {
                 if (isCancelled()) {
                     throw new InterruptedException();
                 }
@@ -274,17 +267,18 @@ public abstract class FetchTask<T> extends Task<T> {
 
                     LinkedHashMap<String, String> headers = new LinkedHashMap<>();
                     headers.put("accept-encoding", "gzip");
-                    if (checkETag)
+                    if (useCachedResult && checkETag && resumeContext == null)
                         headers.putAll(repository.injectConnection(uri));
 
                     if (resumeContext != null)
                         headers.put("range", "bytes=" + resumeContext.countUncompressed + "-");
 
-                    while (true) {
-                        HttpRequest.Builder requestBuilder = HttpRequest.newBuilder(currentURI);
-                        requestBuilder.timeout(Duration.ofMillis(NetworkUtils.TIME_OUT));
+                    do {
+                        HttpRequest.Builder requestBuilder = HttpRequest.newBuilder(currentURI)
+                                .timeout(Duration.ofMillis(NetworkUtils.TIME_OUT))
+                                .header("User-Agent", NetworkUtils.USER_AGENT);
                         headers.forEach(requestBuilder::header);
-                        response = HTTP_CLIENT.send(requestBuilder.build(), BODY_HANDLER);
+                        response = Holder.HTTP_CLIENT.send(requestBuilder.build(), BODY_HANDLER);
 
                         bmclapiHash = response.headers().firstValue("x-bmclapi-hash").orElse(null);
                         if (DigestUtils.isSha1Digest(bmclapiHash)) {
@@ -318,10 +312,10 @@ public abstract class FetchTask<T> extends Task<T> {
                         } else {
                             break;
                         }
-                    }
+                    } while (true);
 
                     int responseCode = response.statusCode();
-                    if (responseCode == HttpURLConnection.HTTP_NOT_MODIFIED) {
+                    if (useCachedResult && responseCode == HttpURLConnection.HTTP_NOT_MODIFIED) {
                         // Handle cache
                         try {
                             Path cache = repository.getCachedRemoteFile(currentURI, false);
@@ -333,9 +327,10 @@ public abstract class FetchTask<T> extends Task<T> {
                         } catch (IOException e) {
                             LOG.warning("Unable to use cached file, redownload " + NetworkUtils.dropQuery(uri), e);
                             repository.removeRemoteEntry(currentURI);
+                            useCachedResult = false;
                             // Now we must reconnect the server since 304 may result in empty content,
                             // if we want to redownload the file, we must reconnect the server without etag settings.
-                            retryTime--;
+                            retryLimit++;
                             continue;
                         }
                     } else if (responseCode / 100 == 4) {
@@ -356,7 +351,6 @@ public abstract class FetchTask<T> extends Task<T> {
                             LOG.warning("Resuming " + resumeContext.uri);
                         } else {
                             // Failed to resume download, so we will retry from the beginning
-                            retryTime--;
                             resumeContext = null;
 
                             try {
@@ -367,6 +361,7 @@ public abstract class FetchTask<T> extends Task<T> {
 
                                 context = null;
                             }
+                            retryLimit++;
                             continue;
                         }
                     } else {
@@ -385,24 +380,32 @@ public abstract class FetchTask<T> extends Task<T> {
                                 resumeContext, response.body(),
                                 contentLength,
                                 contentEncoding);
-                    } catch (Throwable e) {
+                    } catch (IOException | InterruptedException | RuntimeException | Error e) {
                         if (context.broken) {
                             IOUtils.closeQuietly(context, e);
                             context = null;
                             resumeContext = null;
                         }
+                        throw e;
                     }
                     return;
+                } catch (InterruptedException e) {
+                    throw e;
                 } catch (FileNotFoundException ex) {
                     LOG.warning("Failed to download " + uri + ", not found" + (redirects == null ? "" : ", redirects: " + redirects), ex);
                     throw toDownloadException(uri, ex, exceptions); // we will not try this URL again
-                } catch (IOException ex) {
+                } catch (Exception ex) {
                     if (exceptions == null)
                         exceptions = new ArrayList<>();
 
                     exceptions.add(ex);
 
                     LOG.warning("Failed to download " + uri + ", repeat times: " + retryTime + (redirects == null ? "" : ", redirects: " + redirects), ex);
+
+                    if (retryTime < retryLimit - 1) {
+                        // Wait for a while before retrying
+                        Thread.sleep(200);
+                    }
                 }
             }
         } finally {
@@ -419,7 +422,7 @@ public abstract class FetchTask<T> extends Task<T> {
     }
 
     private void downloadNotHttp(URI uri) throws DownloadException, InterruptedException {
-        ArrayList<IOException> exceptions = null;
+        ArrayList<Exception> exceptions = null;
         for (int retryTime = 0; retryTime < retry; retryTime++) {
             if (isCancelled()) {
                 throw new InterruptedException();
@@ -437,11 +440,13 @@ public abstract class FetchTask<T> extends Task<T> {
                             ContentEncoding.fromConnection(conn));
                 }
                 return;
+            } catch (InterruptedException e) {
+                throw e;
             } catch (FileNotFoundException ex) {
                 LOG.warning("Failed to download " + uri + ", not found", ex);
 
                 throw toDownloadException(uri, ex, exceptions); // we will not try this URL again
-            } catch (IOException ex) {
+            } catch (Exception ex) {
                 if (exceptions == null)
                     exceptions = new ArrayList<>();
 
@@ -453,7 +458,7 @@ public abstract class FetchTask<T> extends Task<T> {
         throw toDownloadException(uri, null, exceptions);
     }
 
-    private static DownloadException toDownloadException(URI uri, @Nullable IOException last, @Nullable ArrayList<IOException> exceptions) {
+    private static DownloadException toDownloadException(URI uri, @Nullable Exception last, @Nullable ArrayList<Exception> exceptions) {
         if (exceptions == null || exceptions.isEmpty()) {
             return new DownloadException(uri, last != null
                     ? last
@@ -462,7 +467,7 @@ public abstract class FetchTask<T> extends Task<T> {
             if (last == null)
                 last = exceptions.remove(exceptions.size() - 1);
 
-            for (IOException e : exceptions) {
+            for (Exception e : exceptions) {
                 last.addSuppressed(e);
             }
             return new DownloadException(uri, last);
@@ -471,13 +476,13 @@ public abstract class FetchTask<T> extends Task<T> {
 
     private static final Timer timer = new Timer("DownloadSpeedRecorder", true);
     private static final AtomicLong downloadSpeed = new AtomicLong(0L);
-    public static final EventBus speedEvent = new EventBus();
+    public static final EventManager<SpeedEvent> SPEED_EVENT = EventBus.EVENT_BUS.channel(SpeedEvent.class);
 
     static {
         timer.schedule(new TimerTask() {
             @Override
             public void run() {
-                speedEvent.channel(SpeedEvent.class).fireEvent(new SpeedEvent(speedEvent, downloadSpeed.getAndSet(0)));
+                SPEED_EVENT.fireEvent(new SpeedEvent(SPEED_EVENT, downloadSpeed.getAndSet(0)));
             }
         }, 0, 1000);
     }
@@ -542,8 +547,8 @@ public abstract class FetchTask<T> extends Task<T> {
             return success;
         }
 
-        private void markSuccess() {
-            success = true;
+        public void withResult(boolean success) {
+            this.success = success;
         }
 
         public abstract void reset() throws IOException;
@@ -629,5 +634,32 @@ public abstract class FetchTask<T> extends Task<T> {
 
     public static int getDownloadExecutorConcurrency() {
         return downloadExecutorConcurrency;
+    }
+
+    private static volatile boolean initialized = false;
+
+    public static void notifyInitialized() {
+        initialized = true;
+    }
+
+    /// Ensure that [#HTTP_CLIENT] is initialized after ProxyManager has been initialized.
+    private static final class Holder {
+        private static final HttpClient HTTP_CLIENT;
+
+        static {
+            if (!initialized) {
+                throw new AssertionError("FetchTask.Holder accessed before ProxyManager initialization.");
+            }
+
+            boolean useHttp2 = !"false".equalsIgnoreCase(System.getProperty("hmcl.http2"));
+
+            HTTP_CLIENT = HttpClient.newBuilder()
+                    .connectTimeout(Duration.ofMillis(NetworkUtils.TIME_OUT))
+                    .version(useHttp2 ? HttpClient.Version.HTTP_2 : HttpClient.Version.HTTP_1_1)
+                    .build();
+        }
+
+        private Holder() {
+        }
     }
 }

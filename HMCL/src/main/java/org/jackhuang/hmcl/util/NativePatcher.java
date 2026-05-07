@@ -45,8 +45,6 @@ import static org.jackhuang.hmcl.util.logging.Logger.LOG;
  * @author Glavo
  */
 public final class NativePatcher {
-    private NativePatcher() {
-    }
 
     private static final Library NONEXISTENT_LIBRARY = new Library(null);
 
@@ -63,6 +61,16 @@ public final class NativePatcher {
                 return Collections.emptyMap();
             }
         });
+    }
+
+    // https://github.com/LWJGL/lwjgl3/issues/1111
+    public static boolean needPatchMemoryUtil(Version version, int javaVersion) {
+        return javaVersion >= 25 && javaVersion <= 26 && version.getLibraries().stream().anyMatch(library ->
+                "org.lwjgl".equals(library.getGroupId())
+                        && "lwjgl".equals(library.getArtifactId())
+                        && "3.4.1".equals(library.getVersion())
+                        && library.getClassifier() == null
+        );
     }
 
     public static Version patchNative(DefaultGameRepository repository,
@@ -181,19 +189,105 @@ public final class NativePatcher {
         return version.setLibraries(newLibraries);
     }
 
-    public static @Nullable Library getWindowsMesaLoader(@NotNull JavaRuntime javaVersion, @NotNull Renderer renderer, @NotNull OSVersion windowsVersion) {
+    /// @see <a href="https://github.com/HMCL-dev/mesa-loader-windows">Java Mesa Loader for Windows</a>
+    public static @Nullable Library getWindowsMesaLoader(@NotNull JavaRuntime java, @NotNull Renderer renderer, @NotNull OSVersion windowsVersion) {
         if (renderer == Renderer.DEFAULT)
             return null;
 
         if (windowsVersion.isAtLeast(OSVersion.WINDOWS_10)) {
-            return getNatives(javaVersion.getPlatform()).get("mesa-loader");
+            return getNatives(java.getPlatform()).get("mesa-loader");
         } else if (windowsVersion.isAtLeast(OSVersion.WINDOWS_7)) {
-            if (renderer == Renderer.LLVMPIPE)
-                return getNatives(javaVersion.getPlatform()).get("software-renderer-loader");
+            if (renderer == Renderer.OpenGL.LLVMPIPE)
+                return getNatives(java.getPlatform()).get("software-renderer-loader");
             else
                 return null;
         } else {
             return null;
         }
+    }
+
+    public static SupportStatus checkSupportedStatus(GameVersionNumber gameVersion, Platform platform,
+                                                     OSVersion systemVersion) {
+        if (platform.equals(Platform.WINDOWS_X86_64)) {
+            if (!systemVersion.isAtLeast(OSVersion.WINDOWS_7) && gameVersion.isAtLeast("1.20.5", "24w14a"))
+                return SupportStatus.UNSUPPORTED;
+
+            return SupportStatus.OFFICIAL_SUPPORTED;
+        }
+
+        if (platform.equals(Platform.MACOS_X86_64) || platform.equals(Platform.LINUX_X86_64))
+            return SupportStatus.OFFICIAL_SUPPORTED;
+
+        if (platform.equals(Platform.WINDOWS_X86) || platform.equals(Platform.LINUX_X86)) {
+            if (gameVersion.isAtLeast("1.20.5", "24w14a"))
+                return SupportStatus.UNSUPPORTED;
+            else
+                return SupportStatus.OFFICIAL_SUPPORTED;
+        }
+
+        if (platform.equals(Platform.WINDOWS_ARM64) || platform.equals(Platform.MACOS_ARM64)) {
+            if (gameVersion.compareTo("1.19") >= 0)
+                return SupportStatus.OFFICIAL_SUPPORTED;
+
+            String minVersion = platform.getOperatingSystem() == OperatingSystem.WINDOWS
+                    ? "1.8"
+                    : "1.6";
+
+            return gameVersion.compareTo(minVersion) >= 0
+                    ? SupportStatus.LAUNCHER_SUPPORTED
+                    : SupportStatus.TRANSLATION_SUPPORTED;
+        }
+
+        String minVersion = null;
+        String maxVersion = null;
+
+        if (platform.equals(Platform.FREEBSD_X86_64)) {
+            minVersion = "1.13";
+        } else if (platform.equals(Platform.LINUX_ARM64)) {
+            minVersion = "1.6";
+        } else if (platform.equals(Platform.LINUX_RISCV64)) {
+            minVersion = "1.8";
+
+            if (gameVersion.compareTo("1.21.5") > 0 && gameVersion.compareTo("26.1-snapshot-8") < 0) {
+                // LWJGL version mismatch
+                return SupportStatus.UNSUPPORTED;
+            }
+        } else if (platform.equals(Platform.LINUX_LOONGARCH64)) {
+            minVersion = "1.6";
+        } else if (platform.equals(Platform.LINUX_LOONGARCH64_OW)) {
+            minVersion = "1.6";
+            maxVersion = "1.20.1";
+        } else if (platform.equals(Platform.LINUX_MIPS64EL) || platform.equals(Platform.LINUX_ARM32)) {
+            minVersion = "1.8";
+            maxVersion = "1.20.1";
+        }
+
+        if (minVersion != null) {
+            if (gameVersion.compareTo(minVersion) >= 0) {
+                if (maxVersion != null && gameVersion.compareTo(maxVersion) > 0)
+                    return SupportStatus.UNSUPPORTED;
+
+                String[] defaultGameVersions = GameVersionNumber.getDefaultGameVersions();
+                if (defaultGameVersions.length > 0 && gameVersion.compareTo(defaultGameVersions[0]) > 0) {
+                    return SupportStatus.UNTESTED;
+                }
+                return SupportStatus.LAUNCHER_SUPPORTED;
+            } else {
+                return SupportStatus.UNSUPPORTED;
+            }
+        }
+
+        return SupportStatus.UNTESTED;
+    }
+
+    public enum SupportStatus {
+        OFFICIAL_SUPPORTED,
+        LAUNCHER_SUPPORTED,
+        TRANSLATION_SUPPORTED,
+        UNTESTED,
+        UNSUPPORTED,
+    }
+
+    private NativePatcher() {
     }
 }

@@ -33,6 +33,7 @@ import org.jackhuang.hmcl.ui.construct.MessageDialogPane.MessageType;
 import org.jackhuang.hmcl.ui.wizard.WizardController;
 import org.jackhuang.hmcl.ui.wizard.WizardProvider;
 import org.jackhuang.hmcl.util.SettingsMap;
+import org.jackhuang.hmcl.util.StringUtils;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -45,6 +46,8 @@ public final class ModpackInstallWizardProvider implements WizardProvider {
     private final Profile profile;
     private final Path file;
     private final String updateVersion;
+    private String iconUrl;
+    private boolean hasSource;
 
     public ModpackInstallWizardProvider(Profile profile) {
         this(profile, null, null);
@@ -64,13 +67,20 @@ public final class ModpackInstallWizardProvider implements WizardProvider {
         this.updateVersion = updateVersion;
     }
 
+    public void setIconUrl(String iconUrl) {
+        this.iconUrl = iconUrl;
+    }
+
     @Override
     public void start(SettingsMap settings) {
         if (file != null)
             settings.put(LocalModpackPage.MODPACK_FILE, file);
         if (updateVersion != null)
             settings.put(LocalModpackPage.MODPACK_NAME, updateVersion);
+        if (StringUtils.isNotBlank(iconUrl))
+            settings.put(LocalModpackPage.MODPACK_ICON_URL, iconUrl);
         settings.put(ModpackPage.PROFILE, profile);
+        hasSource = settings.containsKey(LocalModpackPage.MODPACK_FILE) || settings.containsKey(RemoteModpackPage.MODPACK_SERVER_MANIFEST);
     }
 
     private Task<?> finishModpackInstallingAsync(SettingsMap settings) {
@@ -78,6 +88,7 @@ public final class ModpackInstallWizardProvider implements WizardProvider {
         ServerModpackManifest serverModpackManifest = settings.get(RemoteModpackPage.MODPACK_SERVER_MANIFEST);
         Modpack modpack = settings.get(LocalModpackPage.MODPACK_MANIFEST);
         String name = settings.get(LocalModpackPage.MODPACK_NAME);
+        String iconUrl = settings.get(LocalModpackPage.MODPACK_ICON_URL);
         Charset charset = settings.get(LocalModpackPage.MODPACK_CHARSET);
         boolean isManuallyCreated = settings.getOrDefault(LocalModpackPage.MODPACK_MANUALLY_CREATED, false);
 
@@ -111,7 +122,7 @@ public final class ModpackInstallWizardProvider implements WizardProvider {
                 return ModpackHelper.getInstallTask(profile, serverModpackManifest, name, modpack)
                         .thenRunAsync(Schedulers.javafx(), () -> profile.setSelectedVersion(name));
             } else {
-                return ModpackHelper.getInstallTask(profile, selected, name, modpack)
+                return ModpackHelper.getInstallTask(profile, selected, name, modpack, iconUrl)
                         .thenRunAsync(Schedulers.javafx(), () -> profile.setSelectedVersion(name));
             }
         }
@@ -136,20 +147,30 @@ public final class ModpackInstallWizardProvider implements WizardProvider {
         return finishModpackInstallingAsync(settings);
     }
 
+    private static Node createModpackInstallPage(WizardController controller) {
+        if (controller.getSettings().containsKey(LocalModpackPage.MODPACK_FILE))
+            return new LocalModpackPage(controller);
+        else if (controller.getSettings().containsKey(RemoteModpackPage.MODPACK_SERVER_MANIFEST))
+            return new RemoteModpackPage(controller);
+        else
+            throw new IllegalArgumentException();
+    }
+
     @Override
     public Node createPage(WizardController controller, int step, SettingsMap settings) {
-        switch (step) {
-            case 0:
-                return new ModpackSelectionPage(controller);
-            case 1:
-                if (controller.getSettings().containsKey(LocalModpackPage.MODPACK_FILE))
-                    return new LocalModpackPage(controller);
-                else if (controller.getSettings().containsKey(RemoteModpackPage.MODPACK_SERVER_MANIFEST))
-                    return new RemoteModpackPage(controller);
-                else
-                    throw new IllegalArgumentException();
-            default:
-                throw new IllegalStateException("error step " + step + ", settings: " + settings + ", pages: " + controller.getPages());
+        if (hasSource) {
+            return switch (step) {
+                case 0 -> createModpackInstallPage(controller);
+                default -> throw new IllegalStateException(
+                        "error step " + step + ", settings: " + settings + ", pages: " + controller.getPages());
+            };
+        } else {
+            return switch (step) {
+                case 0 -> new ModpackSelectionPage(controller);
+                case 1 -> createModpackInstallPage(controller);
+                default -> throw new IllegalStateException(
+                        "error step " + step + ", settings: " + settings + ", pages: " + controller.getPages());
+            };
         }
     }
 

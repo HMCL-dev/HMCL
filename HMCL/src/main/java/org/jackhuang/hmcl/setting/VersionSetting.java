@@ -459,6 +459,20 @@ public final class VersionSetting implements Cloneable, Observable {
         showLogsProperty.set(showLogs);
     }
 
+    private final BooleanProperty enableDebugLogOutputProperty = new SimpleBooleanProperty(this, "enableDebugLogOutput", false);
+
+    public BooleanProperty enableDebugLogOutputProperty() {
+        return enableDebugLogOutputProperty;
+    }
+
+    public boolean isEnableDebugLogOutput() {
+        return enableDebugLogOutputProperty.get();
+    }
+
+    public void setEnableDebugLogOutput(boolean u) {
+        this.enableDebugLogOutputProperty.set(u);
+    }
+
     // Minecraft settings.
 
     private final StringProperty serverIpProperty = new SimpleStringProperty(this, "serverIp", "");
@@ -587,6 +601,20 @@ public final class VersionSetting implements Cloneable, Observable {
 
     public void setProcessPriority(ProcessPriority processPriority) {
         processPriorityProperty.set(processPriority);
+    }
+
+    private final ObjectProperty<GraphicsAPI> graphicsBackend = new SimpleObjectProperty<>(this, "graphicsBackend", GraphicsAPI.DEFAULT);
+
+    public ObjectProperty<GraphicsAPI> graphicsBackendProperty() {
+        return graphicsBackend;
+    }
+
+    public GraphicsAPI getGraphicsBackend() {
+        return graphicsBackendProperty().get();
+    }
+
+    public void setGraphicsBackend(GraphicsAPI api) {
+        graphicsBackendProperty().set(api);
     }
 
     private final ObjectProperty<Renderer> rendererProperty = new SimpleObjectProperty<>(this, "renderer", Renderer.DEFAULT);
@@ -771,10 +799,12 @@ public final class VersionSetting implements Cloneable, Observable {
             obj.addProperty("wrapper", src.getWrapper());
             obj.addProperty("fullscreen", src.isFullscreen());
             obj.addProperty("noJVMArgs", src.isNoJVMArgs());
+            obj.addProperty("noOptimizingJVMArgs", src.isNoOptimizingJVMArgs());
             obj.addProperty("notCheckGame", src.isNotCheckGame());
             obj.addProperty("notCheckJVM", src.isNotCheckJVM());
             obj.addProperty("notPatchNatives", src.isNotPatchNatives());
             obj.addProperty("showLogs", src.isShowLogs());
+            obj.addProperty("enableDebugLogOutput", src.isEnableDebugLogOutput());
             obj.addProperty("gameDir", src.getGameDir());
             obj.addProperty("launcherVisibility", src.getLauncherVisibility().ordinal());
             obj.addProperty("processPriority", src.getProcessPriority().ordinal());
@@ -804,8 +834,9 @@ public final class VersionSetting implements Cloneable, Observable {
             }
             obj.addProperty("java", java);
 
+            obj.addProperty("graphicsBackend", src.getGraphicsBackend().name());
             obj.addProperty("renderer", src.getRenderer().name());
-            if (src.getRenderer() == Renderer.LLVMPIPE)
+            if (src.getRenderer() == Renderer.OpenGL.LLVMPIPE)
                 obj.addProperty("useSoftwareRenderer", true);
 
             return obj;
@@ -841,10 +872,12 @@ public final class VersionSetting implements Cloneable, Observable {
             vs.setNativesDir(Optional.ofNullable(obj.get("nativesDir")).map(JsonElement::getAsString).orElse(""));
             vs.setFullscreen(Optional.ofNullable(obj.get("fullscreen")).map(JsonElement::getAsBoolean).orElse(false));
             vs.setNoJVMArgs(Optional.ofNullable(obj.get("noJVMArgs")).map(JsonElement::getAsBoolean).orElse(false));
+            vs.setNoOptimizingJVMArgs(Optional.ofNullable(obj.get("noOptimizingJVMArgs")).map(JsonElement::getAsBoolean).orElse(false));
             vs.setNotCheckGame(Optional.ofNullable(obj.get("notCheckGame")).map(JsonElement::getAsBoolean).orElse(false));
             vs.setNotCheckJVM(Optional.ofNullable(obj.get("notCheckJVM")).map(JsonElement::getAsBoolean).orElse(false));
             vs.setNotPatchNatives(Optional.ofNullable(obj.get("notPatchNatives")).map(JsonElement::getAsBoolean).orElse(false));
             vs.setShowLogs(Optional.ofNullable(obj.get("showLogs")).map(JsonElement::getAsBoolean).orElse(false));
+            vs.setEnableDebugLogOutput(Optional.ofNullable(obj.get("enableDebugLogOutput")).map(JsonElement::getAsBoolean).orElse(false));
             vs.setLauncherVisibility(parseJsonPrimitive(obj.getAsJsonPrimitive("launcherVisibility"), LauncherVisibility.class, LauncherVisibility.HIDE));
             vs.setProcessPriority(parseJsonPrimitive(obj.getAsJsonPrimitive("processPriority"), ProcessPriority.class, ProcessPriority.NORMAL));
             vs.setUseNativeGLFW(Optional.ofNullable(obj.get("useNativeGLFW")).map(JsonElement::getAsBoolean).orElse(false));
@@ -876,16 +909,19 @@ public final class VersionSetting implements Cloneable, Observable {
             }
 
             vs.setRenderer(Optional.ofNullable(obj.get("renderer")).map(JsonElement::getAsString)
+                    .map(Renderer::of).orElseGet(() -> {
+                        boolean useSoftwareRenderer = Optional.ofNullable(obj.get("useSoftwareRenderer")).map(JsonElement::getAsBoolean).orElse(false);
+                        return useSoftwareRenderer ? Renderer.OpenGL.LLVMPIPE : Renderer.DEFAULT;
+                    }));
+
+            vs.setGraphicsBackend(Optional.ofNullable(obj.get("graphicsBackend")).map(JsonElement::getAsString)
                     .flatMap(name -> {
                         try {
-                            return Optional.of(Renderer.valueOf(name.toUpperCase(Locale.ROOT)));
+                            return Optional.of(GraphicsAPI.valueOf(name.toUpperCase(Locale.ROOT)));
                         } catch (IllegalArgumentException ignored) {
                             return Optional.empty();
                         }
-                    }).orElseGet(() -> {
-                        boolean useSoftwareRenderer = Optional.ofNullable(obj.get("useSoftwareRenderer")).map(JsonElement::getAsBoolean).orElse(false);
-                        return useSoftwareRenderer ? Renderer.LLVMPIPE : Renderer.DEFAULT;
-                    }));
+                    }).orElseGet(() -> vs.getRenderer() instanceof Renderer.Driver renderer ? renderer.api() : GraphicsAPI.DEFAULT));
 
             return vs;
         }

@@ -27,19 +27,25 @@ import javafx.scene.control.ScrollPane;
 import javafx.scene.control.ToggleGroup;
 import javafx.scene.layout.*;
 import org.jackhuang.hmcl.setting.DownloadProviders;
+import org.jackhuang.hmcl.setting.EnumCommonDirectory;
+import org.jackhuang.hmcl.setting.Settings;
 import org.jackhuang.hmcl.task.FetchTask;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.WeakListenerHolder;
 import org.jackhuang.hmcl.ui.construct.*;
+import org.jackhuang.hmcl.util.i18n.I18n;
+import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.javafx.SafeStringConverter;
 
 import java.net.Proxy;
+import java.nio.file.Path;
+import java.util.Arrays;
+import java.util.Optional;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.Function;
 
 import static org.jackhuang.hmcl.setting.ConfigHolder.config;
-import static org.jackhuang.hmcl.ui.FXUtils.stringConverter;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
-import static org.jackhuang.hmcl.util.javafx.ExtendedProperties.selectedItemPropertyFor;
 
 public class DownloadSettingsPage extends StackPane {
 
@@ -55,60 +61,80 @@ public class DownloadSettingsPage extends StackPane {
         getChildren().setAll(scrollPane);
 
         {
-            VBox downloadSource = new VBox(8);
+            var downloadSource = new ComponentList();
             downloadSource.getStyleClass().add("card-non-transparent");
             {
 
-                VBox chooseWrapper = new VBox();
-                chooseWrapper.setPadding(new Insets(8, 0, 8, 0));
-                JFXCheckBox chkAutoChooseDownloadSource = new JFXCheckBox(i18n("settings.launcher.download_source.auto"));
-                chkAutoChooseDownloadSource.selectedProperty().bindBidirectional(config().autoChooseDownloadTypeProperty());
-                chooseWrapper.getChildren().setAll(chkAutoChooseDownloadSource);
+                var autoChooseDownloadSource = new LineToggleButton();
+                autoChooseDownloadSource.setTitle(i18n("settings.launcher.download_source.auto"));
+                autoChooseDownloadSource.selectedProperty().bindBidirectional(config().autoChooseDownloadTypeProperty());
 
-                BorderPane versionListSourcePane = new BorderPane();
-                versionListSourcePane.setPadding(new Insets(0, 0, 8, 30));
-                versionListSourcePane.disableProperty().bind(chkAutoChooseDownloadSource.selectedProperty().not());
-                {
-                    Label label = new Label(i18n("settings.launcher.version_list_source"));
-                    BorderPane.setAlignment(label, Pos.CENTER_LEFT);
-                    versionListSourcePane.setLeft(label);
+                Function<String, String> converter = key -> i18n("download.provider." + key);
+                Function<String, String> descriptionConverter = key -> {
+                    String bundleKey = "download.provider." + key + ".desc";
+                    return I18n.hasKey(bundleKey) ? i18n(bundleKey) : null;
+                };
 
-                    JFXComboBox<String> cboVersionListSource = new JFXComboBox<>();
-                    cboVersionListSource.setConverter(stringConverter(key -> i18n("download.provider." + key)));
-                    versionListSourcePane.setRight(cboVersionListSource);
-                    FXUtils.setLimitWidth(cboVersionListSource, 400);
+                var versionListSourcePane = new LineSelectButton<String>();
+                versionListSourcePane.disableProperty().bind(autoChooseDownloadSource.selectedProperty().not());
+                versionListSourcePane.setTitle(i18n("settings.launcher.version_list_source"));
+                versionListSourcePane.setConverter(converter);
+                versionListSourcePane.setDescriptionConverter(descriptionConverter);
+                versionListSourcePane.setItems(DownloadProviders.AUTO_PROVIDERS.keySet());
+                versionListSourcePane.valueProperty().bindBidirectional(config().versionListSourceProperty());
 
-                    cboVersionListSource.getItems().setAll(DownloadProviders.providersById.keySet());
-                    selectedItemPropertyFor(cboVersionListSource).bindBidirectional(config().versionListSourceProperty());
-                }
+                var downloadSourcePane = new LineSelectButton<String>();
+                downloadSourcePane.disableProperty().bind(autoChooseDownloadSource.selectedProperty());
+                downloadSourcePane.setTitle(i18n("settings.launcher.download_source"));
+                downloadSourcePane.setConverter(converter);
+                downloadSourcePane.setDescriptionConverter(descriptionConverter);
+                downloadSourcePane.setItems(DownloadProviders.DIRECT_PROVIDERS.keySet());
+                downloadSourcePane.valueProperty().bindBidirectional(config().downloadTypeProperty());
 
-                BorderPane downloadSourcePane = new BorderPane();
-                downloadSourcePane.setPadding(new Insets(0, 0, 8, 30));
-                downloadSourcePane.disableProperty().bind(chkAutoChooseDownloadSource.selectedProperty());
-                {
-                    Label label = new Label(i18n("settings.launcher.download_source"));
-                    BorderPane.setAlignment(label, Pos.CENTER_LEFT);
-                    downloadSourcePane.setLeft(label);
+                var defaultAddonSourcePane = new LineSelectButton<String>();
+                defaultAddonSourcePane.setTitle(i18n("settings.launcher.default_addon_source"));
+                defaultAddonSourcePane.setConverter(key -> I18n.i18n("mods." + key));
+                defaultAddonSourcePane.setItems("modrinth", "curseforge");
+                defaultAddonSourcePane.valueProperty().bindBidirectional(config().defaultAddonSourceProperty());
 
-                    JFXComboBox<String> cboDownloadSource = new JFXComboBox<>();
-                    cboDownloadSource.setConverter(stringConverter(key -> i18n("download.provider." + key)));
-                    downloadSourcePane.setRight(cboDownloadSource);
-                    FXUtils.setLimitWidth(cboDownloadSource, 420);
-
-                    cboDownloadSource.getItems().setAll(DownloadProviders.rawProviders.keySet());
-                    selectedItemPropertyFor(cboDownloadSource).bindBidirectional(config().downloadTypeProperty());
-                }
-
-                downloadSource.getChildren().setAll(chooseWrapper, versionListSourcePane, downloadSourcePane);
+                downloadSource.getContent().setAll(autoChooseDownloadSource, versionListSourcePane, downloadSourcePane, defaultAddonSourcePane);
             }
 
             content.getChildren().addAll(ComponentList.createComponentListTitle(i18n("settings.launcher.download_source")), downloadSource);
         }
 
         {
+            var downloadList = new ComponentList();
+
             VBox downloadThreads = new VBox(16);
-            downloadThreads.getStyleClass().add("card-non-transparent");
+
+            ComponentSublist fileCommonLocationSublist = new ComponentSublist();
+
             {
+                {
+                    MultiFileItem<EnumCommonDirectory> fileCommonLocation = new MultiFileItem<>();
+                    fileCommonLocation.loadChildren(Arrays.asList(
+                            new MultiFileItem.Option<>(i18n("launcher.cache_directory.default"), EnumCommonDirectory.DEFAULT),
+                            new MultiFileItem.FileOption<>(i18n("settings.custom"), EnumCommonDirectory.CUSTOM)
+                                    .setChooserTitle(i18n("launcher.cache_directory.choose"))
+                                    .setSelectionMode(FileSelector.SelectionMode.DIRECTORY)
+                                    .bindBidirectional(config().commonDirectoryProperty())
+                    ));
+                    fileCommonLocation.selectedDataProperty().bindBidirectional(config().commonDirTypeProperty());
+
+                    fileCommonLocationSublist.getContent().add(fileCommonLocation);
+                    fileCommonLocationSublist.setTitle(i18n("launcher.cache_directory"));
+                    fileCommonLocationSublist.setHasSubtitle(true);
+                    fileCommonLocationSublist.subtitleProperty().bind(
+                            Bindings.createObjectBinding(() -> Optional.ofNullable(Settings.instance().getCommonDirectory())
+                                            .orElse(i18n("launcher.cache_directory.disabled")),
+                                    config().commonDirectoryProperty(), config().commonDirTypeProperty()));
+
+                    JFXButton cleanButton = FXUtils.newBorderButton(i18n("launcher.cache_directory.clean"));
+                    cleanButton.setOnAction(e -> clearCacheDirectory());
+                    fileCommonLocationSublist.setHeaderRight(cleanButton);
+                }
+
                 {
                     JFXCheckBox chkAutoDownloadThreads = new JFXCheckBox(i18n("settings.launcher.download.threads.auto"));
                     VBox.setMargin(chkAutoDownloadThreads, new Insets(8, 0, 0, 0));
@@ -161,7 +187,8 @@ public class DownloadSettingsPage extends StackPane {
                 }
             }
 
-            content.getChildren().addAll(ComponentList.createComponentListTitle(i18n("download")), downloadThreads);
+            downloadList.getContent().addAll(fileCommonLocationSublist, downloadThreads);
+            content.getChildren().addAll(ComponentList.createComponentListTitle(i18n("download")), downloadList);
         }
 
         {
@@ -337,5 +364,12 @@ public class DownloadSettingsPage extends StackPane {
             content.getChildren().addAll(ComponentList.createComponentListTitle(i18n("settings.launcher.proxy")), proxyList);
         }
 
+    }
+
+    private void clearCacheDirectory() {
+        String commonDirectory = Settings.instance().getCommonDirectory();
+        if (commonDirectory != null) {
+            FileUtils.cleanDirectoryQuietly(Path.of(commonDirectory, "cache"));
+        }
     }
 }

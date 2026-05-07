@@ -273,7 +273,7 @@ public class McbbsModpackCompletionTask extends CompletableFutureTask<Void> {
     @Nullable
     private Path getFilePath(McbbsModpackManifest.File file) {
         if (file instanceof McbbsModpackManifest.AddonFile) {
-            return modManager.getRepository().getRunDirectory(modManager.getVersion()).resolve(((McbbsModpackManifest.AddonFile) file).getPath());
+            return modManager.getRepository().getRunDirectory(modManager.getInstanceId()).resolve(((McbbsModpackManifest.AddonFile) file).getPath());
         } else if (file instanceof McbbsModpackManifest.CurseFile) {
             String fileName = ((McbbsModpackManifest.CurseFile) file).getFileName();
             if (fileName == null) return null;
