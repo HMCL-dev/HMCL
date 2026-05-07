@@ -101,10 +101,11 @@ public final class GameSettingPage<S extends GameSetting> extends StackPane
     private boolean updatingSelectedJava = false;
     private boolean updatingOverrideGroup = false;
     private boolean updatingParentSetting = false;
-    private boolean updatingGlobalSelection = false;
+    private boolean showingGlobalSettingList = false;
 
     // GUI
     private final VBox rootPane;
+    private final List<Node> editorNodes = new ArrayList<>();
 
     private final @UnknownNullability ImagePickerItem iconPickerItem;
 
@@ -134,6 +135,12 @@ public final class GameSettingPage<S extends GameSetting> extends StackPane
         rootPane.getStyleClass().add("card-list");
         scrollPane.setContent(rootPane);
 
+        if (isGlobalSetting) {
+            var globalSettingListButton = new ComponentList();
+            rootPane.getChildren().add(globalSettingListButton);
+            createGlobalSettingListButton(globalSettingListButton);
+        }
+
         var basicSettings = new ComponentList();
         rootPane.getChildren().addAll(
                 ComponentList.createComponentListTitle("基本设置"), // TODO: i18n
@@ -142,7 +149,6 @@ public final class GameSettingPage<S extends GameSetting> extends StackPane
         {
             if (isGlobalSetting) {
                 iconPickerItem = null;
-                createGlobalSettingManagement(basicSettings);
             } else {
                 iconPickerItem = new ImagePickerItem();
                 basicSettings.getContent().add(iconPickerItem);
@@ -697,6 +703,11 @@ public final class GameSettingPage<S extends GameSetting> extends StackPane
             unsupportedOptionsSublist.getContent().addAll(useNativeGLFWPane, useNativeOpenALPane);
             advancedSettings.getContent().add(unsupportedOptionsSublist);
         }
+
+        if (isGlobalSetting) {
+            editorNodes.clear();
+            editorNodes.addAll(rootPane.getChildren());
+        }
     }
 
     // region Helper Methods for UI
@@ -706,63 +717,93 @@ public final class GameSettingPage<S extends GameSetting> extends StackPane
         currentSetting.set((S) setting);
     }
 
-    private void createGlobalSettingManagement(ComponentList list) {
-        var selector = new LineSelectButton<GameSetting.Global>();
-        selector.setTitle("全局游戏设置"); // TODO: i18n
-        selector.setItems(config().getGameSettings());
-        selector.setConverter(setting -> StringUtils.isBlank(setting.nameProperty().getValue())
-                ? setting.idProperty().getValue().toString()
-                : setting.nameProperty().getValue());
-        selector.setDescriptionConverter(setting -> Objects.equals(setting.idProperty().getValue(), config().getDefaultGameSetting())
-                ? "默认" // TODO: i18n
-                : "");
-        selector.valueProperty().addListener((observable, oldValue, newValue) -> {
-            if (!updatingGlobalSelection && newValue != null) {
-                selectGlobalSetting(newValue);
-            }
-        });
-        currentSetting.addListener((observable, oldValue, newValue) -> {
-            if (newValue instanceof GameSetting.Global global) {
-                updatingGlobalSelection = true;
-                try {
-                    selector.setValue(global);
-                } finally {
-                    updatingGlobalSelection = false;
-                }
-            }
+    private void createGlobalSettingListButton(ComponentList list) {
+        var listButton = LineButton.createNavigationButton();
+        listButton.setTitle("管理所有全局游戏设置"); // TODO: i18n
+        listButton.setSubtitle("进入列表后可以新建、复制、重命名、删除和设置默认项"); // TODO: i18n
+        listButton.setOnAction(event -> showGlobalSettingList());
+        list.getContent().add(listButton);
+    }
+
+    private void showGlobalSettingEditor() {
+        showingGlobalSettingList = false;
+        rootPane.getChildren().setAll(editorNodes);
+    }
+
+    private void showGlobalSettingList() {
+        showingGlobalSettingList = true;
+
+        var navigationList = new ComponentList();
+        var backButton = new LineButton();
+        backButton.setTitle("返回设置编辑"); // TODO: i18n
+        backButton.setTrailingIcon(SVG.ARROW_BACK);
+        backButton.setOnAction(event -> showGlobalSettingEditor());
+        navigationList.getContent().add(backButton);
+
+        var actionList = new ComponentList();
+        var createButton = new LineButton();
+        createButton.setTitle("新建全局游戏设置"); // TODO: i18n
+        createButton.setTrailingIcon(SVG.ADD);
+        createButton.setOnAction(event -> createGlobalSetting());
+        actionList.getContent().add(createButton);
+
+        var settingsList = new ComponentList();
+        for (GameSetting.Global setting : config().getGameSettings()) {
+            settingsList.getContent().add(createGlobalSettingListItem(setting));
+        }
+
+        rootPane.getChildren().setAll(
+                navigationList,
+                ComponentList.createComponentListTitle("全局游戏设置列表"), // TODO: i18n
+                actionList,
+                settingsList
+        );
+    }
+
+    private ComponentSublist createGlobalSettingListItem(GameSetting.Global setting) {
+        var item = new ComponentSublist();
+        item.setTitle(getGlobalSettingDisplayName(setting));
+        item.setHasSubtitle(true);
+        item.setSubtitle(Objects.equals(setting.idProperty().getValue(), config().getDefaultGameSetting()) ? "默认" : ""); // TODO: i18n
+
+        var editButton = LineButton.createNavigationButton();
+        editButton.setTitle("编辑该全局游戏设置"); // TODO: i18n
+        editButton.setOnAction(event -> {
+            selectGlobalSetting(setting);
+            showGlobalSettingEditor();
         });
 
         var setDefaultButton = new LineButton();
         setDefaultButton.setTitle("设为默认"); // TODO: i18n
         setDefaultButton.setTrailingIcon(SVG.CHECK);
         setDefaultButton.setOnAction(event -> {
-            if (currentSetting.get() instanceof GameSetting.Global global) {
-                config().setDefaultGameSetting(global.idProperty().getValue());
-                selector.setValue(global);
-            }
+            config().setDefaultGameSetting(setting.idProperty().getValue());
+            showGlobalSettingList();
         });
 
-        var createButton = new LineButton();
-        createButton.setTitle("新建全局游戏设置"); // TODO: i18n
-        createButton.setTrailingIcon(SVG.ADD);
-        createButton.setOnAction(event -> createGlobalSetting());
-
         var renameButton = new LineButton();
-        renameButton.setTitle("重命名全局游戏设置"); // TODO: i18n
+        renameButton.setTitle("重命名"); // TODO: i18n
         renameButton.setTrailingIcon(SVG.EDIT);
-        renameButton.setOnAction(event -> renameGlobalSetting());
+        renameButton.setOnAction(event -> renameGlobalSetting(setting));
 
         var copyButton = new LineButton();
-        copyButton.setTitle("复制全局游戏设置"); // TODO: i18n
+        copyButton.setTitle("复制"); // TODO: i18n
         copyButton.setTrailingIcon(SVG.CONTENT_COPY);
-        copyButton.setOnAction(event -> copyGlobalSetting());
+        copyButton.setOnAction(event -> copyGlobalSetting(setting));
 
         var deleteButton = new LineButton();
-        deleteButton.setTitle("删除全局游戏设置"); // TODO: i18n
+        deleteButton.setTitle("删除"); // TODO: i18n
         deleteButton.setTrailingIcon(SVG.DELETE);
-        deleteButton.setOnAction(event -> deleteGlobalSetting());
+        deleteButton.setOnAction(event -> deleteGlobalSetting(setting));
 
-        list.getContent().addAll(selector, setDefaultButton, createButton, renameButton, copyButton, deleteButton);
+        item.getContent().addAll(editButton, setDefaultButton, renameButton, copyButton, deleteButton);
+        return item;
+    }
+
+    private static String getGlobalSettingDisplayName(GameSetting.Global setting) {
+        return StringUtils.isBlank(setting.nameProperty().getValue())
+                ? setting.idProperty().getValue().toString()
+                : setting.nameProperty().getValue();
     }
 
     private void createGlobalSetting() {
@@ -776,12 +817,15 @@ public final class GameSettingPage<S extends GameSetting> extends StackPane
             setting.nameProperty().setValue(name.trim());
             config().getGameSettings().add(setting);
             selectGlobalSetting(setting);
+            if (showingGlobalSettingList) {
+                showGlobalSettingList();
+            }
             handler.resolve();
         }, "新设置", new RequiredValidator()); // TODO: i18n
     }
 
-    private void renameGlobalSetting() {
-        if (!(currentSetting.get() instanceof GameSetting.Global setting)) {
+    private void renameGlobalSetting(GameSetting.Global setting) {
+        if (!config().getGameSettings().contains(setting)) {
             return;
         }
 
@@ -792,12 +836,15 @@ public final class GameSettingPage<S extends GameSetting> extends StackPane
             }
 
             setting.nameProperty().setValue(name.trim());
+            if (showingGlobalSettingList) {
+                showGlobalSettingList();
+            }
             handler.resolve();
         }, setting.nameProperty().getValue(), new RequiredValidator());
     }
 
-    private void copyGlobalSetting() {
-        if (!(currentSetting.get() instanceof GameSetting.Global source)) {
+    private void copyGlobalSetting(GameSetting.Global source) {
+        if (!config().getGameSettings().contains(source)) {
             return;
         }
 
@@ -811,10 +858,13 @@ public final class GameSettingPage<S extends GameSetting> extends StackPane
                 : source.nameProperty().getValue()) + " 副本"); // TODO: i18n
         config().getGameSettings().add(copied);
         selectGlobalSetting(copied);
+        if (showingGlobalSettingList) {
+            showGlobalSettingList();
+        }
     }
 
-    private void deleteGlobalSetting() {
-        if (!(currentSetting.get() instanceof GameSetting.Global setting)) {
+    private void deleteGlobalSetting(GameSetting.Global setting) {
+        if (!config().getGameSettings().contains(setting)) {
             return;
         }
 
@@ -830,7 +880,12 @@ public final class GameSettingPage<S extends GameSetting> extends StackPane
         }
 
         config().getGameSettings().remove(setting);
-        selectGlobalSetting(config().getDefaultGameSettingOrCreate());
+        if (Objects.equals(currentSetting.get(), setting)) {
+            selectGlobalSetting(config().getDefaultGameSettingOrCreate());
+        }
+        if (showingGlobalSettingList) {
+            showGlobalSettingList();
+        }
     }
 
     private boolean isGlobalSettingReferenced(UUID id) {
