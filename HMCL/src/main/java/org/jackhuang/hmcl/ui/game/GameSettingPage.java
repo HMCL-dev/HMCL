@@ -754,32 +754,18 @@ public final class GameSettingPage<S extends GameSetting> extends StackPane
         var card = new GlobalSettingCard(setting, getGlobalSettingDisplayName(setting), getGlobalSettingCardSubtitle(setting));
         card.setToggleGroup(group);
         card.setSelected(Objects.equals(currentSetting.get(), setting));
-        card.setOnAction(event -> {
+        card.setOnAction(event -> selectGlobalSetting(setting));
+        card.setOnEdit(() -> {
             selectGlobalSetting(setting);
             showGlobalSettingEditor();
         });
         return card;
     }
 
-    private JFXButton createCreateGlobalSettingCard() {
-        var button = new JFXButton();
-        button.getStyleClass().add("card");
-        button.setStyle("-fx-padding: 8 8 8 16; -fx-cursor: HAND;");
-        button.setMaxWidth(Double.MAX_VALUE);
-        button.setOnAction(event -> createGlobalSetting());
-
-        var graphic = new BorderPane();
-        graphic.setMouseTransparent(true);
-        graphic.prefWidthProperty().bind(button.widthProperty().subtract(24));
-        graphic.setLeft(new TwoLineListItem("新建全局游戏设置", null)); // TODO: i18n
-
-        Node icon = SVG.ADD.createIcon();
-        BorderPane.setAlignment(icon, Pos.CENTER);
-        graphic.setRight(icon);
-
-        button.setGraphic(graphic);
-        JFXDepthManager.setDepth(button, 1);
-        return button;
+    private GlobalSettingCard createCreateGlobalSettingCard() {
+        var card = new GlobalSettingCard("新建全局游戏设置", "", SVG.ADD); // TODO: i18n
+        card.setOnAction(event -> createGlobalSetting());
+        return card;
     }
 
     private static String getGlobalSettingDisplayName(GameSetting.Global setting) {
@@ -791,7 +777,7 @@ public final class GameSettingPage<S extends GameSetting> extends StackPane
     private String getGlobalSettingCardSubtitle(GameSetting.Global setting) {
         return Objects.equals(setting.idProperty().getValue(), config().getDefaultGameSetting())
                 ? "默认" // TODO: i18n
-                : null;
+                : "";
     }
 
     private void createGlobalSetting() {
@@ -814,14 +800,38 @@ public final class GameSettingPage<S extends GameSetting> extends StackPane
 
     /// Card item for a global game setting in the setting picker page.
     private static final class GlobalSettingCard extends RadioButton {
+        /// The card title.
         private final StringProperty title = new SimpleStringProperty(this, "title");
+
+        /// The card subtitle.
         private final StringProperty subtitle = new SimpleStringProperty(this, "subtitle");
 
+        /// Whether the leading area is a selection control.
+        private final boolean selectable;
+
+        /// The leading icon used by non-selectable action cards.
+        private final @Nullable SVG leadingIcon;
+
+        /// The callback invoked by the edit action button.
+        private @Nullable Runnable onEdit;
+
         /// Creates a card item for the given global game setting.
-        private GlobalSettingCard(GameSetting.Global setting, String title, @Nullable String subtitle) {
+        private GlobalSettingCard(GameSetting.Global setting, String title, String subtitle) {
             getStyleClass().clear();
             setUserData(setting);
             setMaxWidth(Double.MAX_VALUE);
+            this.selectable = true;
+            this.leadingIcon = null;
+            setTitle(title);
+            setSubtitle(subtitle);
+        }
+
+        /// Creates an action card.
+        private GlobalSettingCard(String title, String subtitle, SVG leadingIcon) {
+            getStyleClass().clear();
+            setMaxWidth(Double.MAX_VALUE);
+            this.selectable = false;
+            this.leadingIcon = leadingIcon;
             setTitle(title);
             setSubtitle(subtitle);
         }
@@ -829,6 +839,33 @@ public final class GameSettingPage<S extends GameSetting> extends StackPane
         @Override
         protected Skin<?> createDefaultSkin() {
             return new GlobalSettingCardSkin(this);
+        }
+
+        /// Returns whether this card represents a selectable setting.
+        private boolean isSelectableCard() {
+            return selectable;
+        }
+
+        /// Returns the leading icon for action cards.
+        private @Nullable SVG getLeadingIcon() {
+            return leadingIcon;
+        }
+
+        /// Returns whether this card has an edit action button.
+        private boolean hasEditAction() {
+            return onEdit != null;
+        }
+
+        /// Sets the callback invoked by the edit action button.
+        private void setOnEdit(@Nullable Runnable onEdit) {
+            this.onEdit = onEdit;
+        }
+
+        /// Invokes the edit action.
+        private void edit() {
+            if (onEdit != null) {
+                onEdit.run();
+            }
         }
 
         /// Returns the card title.
@@ -847,13 +884,16 @@ public final class GameSettingPage<S extends GameSetting> extends StackPane
         }
 
         /// Sets the card subtitle.
-        private void setSubtitle(@Nullable String subtitle) {
+        private void setSubtitle(String subtitle) {
             this.subtitle.set(subtitle);
         }
     }
 
     /// Skin that follows the account list card layout.
     private static final class GlobalSettingCardSkin extends SkinBase<GlobalSettingCard> {
+        /// Fixed width of the leading area so all card text starts at the same x coordinate.
+        private static final double LEADING_WIDTH = 48;
+
         /// Creates the card skin.
         private GlobalSettingCardSkin(GlobalSettingCard skinnable) {
             super(skinnable);
@@ -864,22 +904,47 @@ public final class GameSettingPage<S extends GameSetting> extends StackPane
             root.setStyle("-fx-padding: 8 8 8 0;");
             FXUtils.onClicked(root, skinnable::fire);
 
-            JFXRadioButton selected = new JFXRadioButton();
-            selected.setMouseTransparent(true);
-            selected.selectedProperty().bind(skinnable.selectedProperty());
-            BorderPane.setAlignment(selected, Pos.CENTER);
-            root.setLeft(selected);
+            StackPane leading = new StackPane();
+            leading.setMinWidth(LEADING_WIDTH);
+            leading.setPrefWidth(LEADING_WIDTH);
+            leading.setMaxWidth(LEADING_WIDTH);
+            BorderPane.setAlignment(leading, Pos.CENTER);
+            root.setLeft(leading);
+
+            if (skinnable.isSelectableCard()) {
+                JFXRadioButton selected = new JFXRadioButton();
+                selected.setMouseTransparent(true);
+                selected.selectedProperty().bind(skinnable.selectedProperty());
+                leading.getChildren().setAll(selected);
+                leading.setOnMouseClicked(event -> {
+                    skinnable.fire();
+                    event.consume();
+                });
+            } else if (skinnable.getLeadingIcon() != null) {
+                Node icon = skinnable.getLeadingIcon().createIcon();
+                icon.setMouseTransparent(true);
+                leading.getChildren().setAll(icon);
+            }
 
             TwoLineListItem item = new TwoLineListItem();
+            item.setMouseTransparent(true);
             item.titleProperty().bind(skinnable.titleProperty());
             item.subtitleProperty().bind(skinnable.subtitleProperty());
             BorderPane.setAlignment(item, Pos.CENTER);
             root.setCenter(item);
 
-            Node arrow = SVG.ARROW_FORWARD.createIcon();
-            arrow.setMouseTransparent(true);
-            BorderPane.setAlignment(arrow, Pos.CENTER);
-            root.setRight(arrow);
+            if (skinnable.hasEditAction()) {
+                HBox right = new HBox();
+                right.setAlignment(Pos.CENTER_RIGHT);
+
+                JFXButton editButton = FXUtils.newToggleButton4(SVG.EDIT, 20);
+                editButton.setOnAction(event -> skinnable.edit());
+                FXUtils.installFastTooltip(editButton, "编辑全局游戏设置"); // TODO: i18n
+                right.getChildren().add(editButton);
+
+                BorderPane.setAlignment(right, Pos.CENTER);
+                root.setRight(right);
+            }
 
             JFXDepthManager.setDepth(root, 1);
             getChildren().setAll(root);
