@@ -222,31 +222,34 @@ public final class UpdateHandler {
             Controllers.dialog(StringUtils.getStackTrace(e), i18n("update.failed"), MessageType.ERROR);
         }
     }
-
     private static void prepareExitForUpdate() throws IOException, InterruptedException {
         if (!IntegrityChecker.DISABLE_SELF_INTEGRITY_CHECK && !IntegrityChecker.isSelfVerified()) {
             throw new IOException("Current JAR is not verified");
         }
 
-        CompletableFuture<Void> future = new CompletableFuture<>();
-        Platform.runLater(() -> {
+        if (Platform.isFxApplicationThread()) {
+            Controllers.saveWindowStates();
+        } else {
+            CompletableFuture<Void> future = new CompletableFuture<>();
+            Platform.runLater(() -> {
+                try {
+                    Controllers.saveWindowStates();
+                } finally {
+                    future.complete(null);
+                }
+            });
             try {
-                Controllers.saveWindowStates();
-            } finally {
-                future.complete(null);
+                future.get();
+            } catch (ExecutionException e) {
+                Throwable cause = e.getCause();
+                if (cause instanceof IOException) {
+                    throw (IOException) cause;
+                }
+                if (cause instanceof RuntimeException) {
+                    throw (RuntimeException) cause;
+                }
+                throw new IOException(cause);
             }
-        });
-        try {
-            future.get();
-        } catch (ExecutionException e) {
-            Throwable cause = e.getCause();
-            if (cause instanceof IOException) {
-                throw (IOException) cause;
-            }
-            if (cause instanceof RuntimeException) {
-                throw (RuntimeException) cause;
-            }
-            throw new IOException(cause);
         }
 
         FileSaver.waitForAllSaves();
@@ -372,13 +375,33 @@ public final class UpdateHandler {
         startJava(updateTo, "--apply-to", self.toString());
     }
 
+    /// Whether an {@code hmcl.*} system property key should be passed to a child HMCL JVM.
+    private static boolean shouldForwardChildHmclPropertyKey(String key) {
+        return !"hmcl.version.override".equals(key);
+    }
+
+    /// Parses the property key from a {@code -Dkey=value} (or {@code -Dkey}) argument for forwarding rules.
+    private static boolean shouldForwardChildJvmDefinition(String inputArgument) {
+        int eq = inputArgument.indexOf('=', 2);
+        String key = eq == -1 ? inputArgument.substring(2) : inputArgument.substring(2, eq);
+        return shouldForwardChildHmclPropertyKey(key);
+    }
+
+    /// Starts a new JVM running {@code jar} with the given trailing arguments.
+    ///
+    /// Input JVM definitions from the current process are copied so child behaviour matches the parent (memory,
+    /// exports, etc.). {@code hmcl.version.override} is intentionally omitted so an update subprocess and the
+    /// post-update launcher read the real version from the target JAR manifest instead of a test-only override
+    /// that would otherwise stick across {@code --apply-to} and make {@link Metadata#VERSION} wrong for renames.
     public static void startJava(Path jar, String... appArgs) throws IOException {
         List<String> commandline = new ArrayList<>();
         commandline.add(JavaRuntime.getDefault().getBinary().toString());
 
         try {
             for (String inputArgument : ManagementFactory.getRuntimeMXBean().getInputArguments()) {
-                if (inputArgument.startsWith("-D") || inputArgument.startsWith("-X")) {
+                if (inputArgument.startsWith("-X")) {
+                    commandline.add(inputArgument);
+                } else if (inputArgument.startsWith("-D") && shouldForwardChildJvmDefinition(inputArgument)) {
                     commandline.add(inputArgument);
                 }
             }
@@ -386,6 +409,9 @@ public final class UpdateHandler {
             // ManagementFactory not available
             for (Map.Entry<Object, Object> entry : System.getProperties().entrySet()) {
                 if (entry.getKey() instanceof String key && key.startsWith("hmcl.")) {
+                    if (!shouldForwardChildHmclPropertyKey(key)) {
+                        continue;
+                    }
                     commandline.add("-D" + key + "=" + entry.getValue());
                 }
             }

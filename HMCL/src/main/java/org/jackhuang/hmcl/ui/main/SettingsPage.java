@@ -88,7 +88,6 @@ public final class SettingsPage extends ScrollPane {
                 {
 
                     JFXButton updateButton = FXUtils.newToggleButton4(SVG.UPDATE, 20);
-                    updateButton.setOnAction(e -> onUpdate());
                     updateButton.setPadding(Insets.EMPTY);
                     FXUtils.installFastTooltip(updateButton, i18n("update.tooltip"));
 
@@ -108,6 +107,8 @@ public final class SettingsPage extends ScrollPane {
                     updatePane.setTitle(i18n("update"));
                     updatePane.setValue(UpdateChannel.getChannel());
 
+                    updateButton.setOnAction(e -> onUpdate(updateChannel));
+
                     updatePane.setConverter(channel -> i18n("update.channel." + channel.channelName));
                     updatePane.setItems(List.of(UpdateChannel.STABLE, UpdateChannel.DEVELOPMENT));
                     updatePane.setDescriptionConverter(channel -> i18n("update.note." + channel.channelName));
@@ -118,8 +119,6 @@ public final class SettingsPage extends ScrollPane {
                         updateListener = any -> {
                             boolean outdated = UpdateChecker.isOutdated();
 
-                            updateButton.setVisible(outdated);
-                            updateButton.setManaged(outdated);
                             updatePane.pseudoClassStateChanged(PseudoClass.getPseudoClass("active"), outdated);
 
                             if (UpdateChecker.isOutdated()) {
@@ -283,9 +282,12 @@ public final class SettingsPage extends ScrollPane {
         FXUtils.openFolder(LOG.getLogFile().getParent());
     }
 
-    private void onUpdate() {
+    /// Opens the update flow for the latest known remote build, or re-requests a check when none is cached yet.
+    private void onUpdate(ObjectProperty<UpdateChannel> updateChannel) {
         RemoteVersion target = UpdateChecker.getLatestVersion();
         if (target == null) {
+            UpdateChecker.requestCheckUpdate(updateChannel.get(), config().isAcceptPreviewUpdate());
+            Controllers.showToast(i18n("update.checking"));
             return;
         }
         UpdateHandler.updateFrom(target);
