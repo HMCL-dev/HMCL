@@ -751,7 +751,7 @@ public final class GameSettingPage<S extends GameSetting> extends StackPane
     }
 
     private GlobalSettingCard createGlobalSettingCard(ToggleGroup group, GameSetting.Global setting) {
-        var card = new GlobalSettingCard(setting, getGlobalSettingDisplayName(setting), getGlobalSettingCardSubtitle(setting));
+        var card = new GlobalSettingCard(setting, getGlobalSettingDisplayName(setting));
         card.setToggleGroup(group);
         card.setSelected(Objects.equals(currentSetting.get(), setting));
         card.setOnAction(event -> selectGlobalSetting(setting));
@@ -763,7 +763,7 @@ public final class GameSettingPage<S extends GameSetting> extends StackPane
     }
 
     private GlobalSettingCard createCreateGlobalSettingCard() {
-        var card = new GlobalSettingCard("新建全局游戏设置", "", SVG.ADD); // TODO: i18n
+        var card = new GlobalSettingCard("新建全局游戏设置", SVG.ADD); // TODO: i18n
         card.setOnAction(event -> createGlobalSetting());
         return card;
     }
@@ -772,12 +772,6 @@ public final class GameSettingPage<S extends GameSetting> extends StackPane
         return StringUtils.isBlank(setting.nameProperty().getValue())
                 ? setting.idProperty().getValue().toString()
                 : setting.nameProperty().getValue();
-    }
-
-    private String getGlobalSettingCardSubtitle(GameSetting.Global setting) {
-        return Objects.equals(setting.idProperty().getValue(), config().getDefaultGameSetting())
-                ? "默认" // TODO: i18n
-                : "";
     }
 
     private void createGlobalSetting() {
@@ -803,9 +797,6 @@ public final class GameSettingPage<S extends GameSetting> extends StackPane
         /// The card title.
         private final StringProperty title = new SimpleStringProperty(this, "title");
 
-        /// The card subtitle.
-        private final StringProperty subtitle = new SimpleStringProperty(this, "subtitle");
-
         /// Whether the leading area is a selection control.
         private final boolean selectable;
 
@@ -816,24 +807,22 @@ public final class GameSettingPage<S extends GameSetting> extends StackPane
         private @Nullable Runnable onEdit;
 
         /// Creates a card item for the given global game setting.
-        private GlobalSettingCard(GameSetting.Global setting, String title, String subtitle) {
+        private GlobalSettingCard(GameSetting.Global setting, String title) {
             getStyleClass().clear();
             setUserData(setting);
             setMaxWidth(Double.MAX_VALUE);
             this.selectable = true;
             this.leadingIcon = null;
             setTitle(title);
-            setSubtitle(subtitle);
         }
 
         /// Creates an action card.
-        private GlobalSettingCard(String title, String subtitle, SVG leadingIcon) {
+        private GlobalSettingCard(String title, SVG leadingIcon) {
             getStyleClass().clear();
             setMaxWidth(Double.MAX_VALUE);
             this.selectable = false;
             this.leadingIcon = leadingIcon;
             setTitle(title);
-            setSubtitle(subtitle);
         }
 
         @Override
@@ -877,16 +866,6 @@ public final class GameSettingPage<S extends GameSetting> extends StackPane
         private void setTitle(String title) {
             this.title.set(title);
         }
-
-        /// Returns the card subtitle.
-        private StringProperty subtitleProperty() {
-            return subtitle;
-        }
-
-        /// Sets the card subtitle.
-        private void setSubtitle(String subtitle) {
-            this.subtitle.set(subtitle);
-        }
     }
 
     /// Skin that follows the account list card layout.
@@ -929,7 +908,6 @@ public final class GameSettingPage<S extends GameSetting> extends StackPane
             TwoLineListItem item = new TwoLineListItem();
             item.setMouseTransparent(true);
             item.titleProperty().bind(skinnable.titleProperty());
-            item.subtitleProperty().bind(skinnable.subtitleProperty());
             BorderPane.setAlignment(item, Pos.CENTER);
             root.setCenter(item);
 
