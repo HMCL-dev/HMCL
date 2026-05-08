@@ -163,7 +163,6 @@ public class ForgeNewInstallTask extends Task<Version> {
                 if (!Files.isRegularFile(artifact))
                     throw new FileNotFoundException("File missing: " + artifact);
 
-
                 String code;
                 try (InputStream stream = Files.newInputStream(artifact)) {
                     code = DigestUtils.digestToString("SHA-1", stream);
