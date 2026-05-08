@@ -528,7 +528,7 @@ public final class GameSettingPage<S extends GameSetting> extends StackPane
                 advancedSettings
         );
 
-        var customCommandSettings = new ComponentSublist(() -> {
+        var gameArgumentSettings = new ComponentSublist(() -> {
             var pane = new GridPane();
             pane.setPadding(new Insets(10, 16, 10, 16));
             pane.setHgap(16);
@@ -541,22 +541,35 @@ public final class GameSettingPage<S extends GameSetting> extends StackPane
             pane.addRow(0, new Label(i18n("settings.advanced.minecraft_arguments")), txtGameArgs);
             bindSettingBidirectional(txtGameArgs.textProperty(), GameSetting::gameArgsProperty);
 
+            return List.of(pane);
+        });
+        advancedSettings.getContent().add(gameArgumentSettings);
+        gameArgumentSettings.setTitle(i18n("settings.advanced.minecraft_arguments"));
+        gameArgumentSettings.setHeaderRight(createHeaderRight(GameSetting.GAME_ARGUMENTS));
+
+        var customCommandSettings = new ComponentSublist(() -> {
+            var pane = new GridPane();
+            pane.setPadding(new Insets(10, 16, 10, 16));
+            pane.setHgap(16);
+            pane.setVgap(8);
+            pane.getColumnConstraints().setAll(new ColumnConstraints(), FXUtils.getColumnHgrowing());
+
             var txtPreLaunchCommand = new JFXTextField();
             txtPreLaunchCommand.setPromptText(i18n("settings.advanced.precall_command.prompt"));
             txtPreLaunchCommand.getStyleClass().add("fit-width");
-            pane.addRow(1, new Label(i18n("settings.advanced.precall_command")), txtPreLaunchCommand);
+            pane.addRow(0, new Label(i18n("settings.advanced.precall_command")), txtPreLaunchCommand);
             bindSettingBidirectional(txtPreLaunchCommand.textProperty(), GameSetting::preLaunchCommandProperty);
 
             var txtWrapper = new JFXTextField();
             txtWrapper.setPromptText(i18n("settings.advanced.wrapper_launcher.prompt"));
             txtWrapper.getStyleClass().add("fit-width");
-            pane.addRow(2, new Label(i18n("settings.advanced.wrapper_launcher")), txtWrapper);
+            pane.addRow(1, new Label(i18n("settings.advanced.wrapper_launcher")), txtWrapper);
             bindSettingBidirectional(txtWrapper.textProperty(), GameSetting::commandWrapperProperty);
 
             var txtPostExitCommand = new JFXTextField();
             txtPostExitCommand.setPromptText(i18n("settings.advanced.post_exit_command.prompt"));
             txtPostExitCommand.getStyleClass().add("fit-width");
-            pane.addRow(3, new Label(i18n("settings.advanced.post_exit_command")), txtPostExitCommand);
+            pane.addRow(2, new Label(i18n("settings.advanced.post_exit_command")), txtPostExitCommand);
             bindSettingBidirectional(txtPostExitCommand.textProperty(), GameSetting::postExitCommandProperty);
 
             return List.of(pane);
@@ -566,7 +579,6 @@ public final class GameSettingPage<S extends GameSetting> extends StackPane
         customCommandSettings.setTitle(i18n("settings.advanced.custom_commands"));
         customCommandSettings.setSubtitle("自定义启动游戏时的命令"); // TODO: i18n
         customCommandSettings.setTip(i18n("settings.advanced.custom_commands.hint"));
-        customCommandSettings.setHeaderRight(createHeaderRight(GameSetting.GAME_ARGUMENTS));
 
         var environmentSettings = new ComponentSublist(() -> {
             var pane = new LinePane();
