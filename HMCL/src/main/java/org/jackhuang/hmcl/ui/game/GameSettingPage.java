@@ -528,24 +528,23 @@ public final class GameSettingPage<S extends GameSetting> extends StackPane
                 advancedSettings
         );
 
-        var gameArgumentSettings = new ComponentSublist(() -> {
-            var pane = new GridPane();
-            pane.setPadding(new Insets(10, 16, 10, 16));
-            pane.setHgap(16);
-            pane.setVgap(8);
-            pane.getColumnConstraints().setAll(new ColumnConstraints(), FXUtils.getColumnHgrowing());
+        if (!isGlobalSetting) {
+            var noInheritGameArgsPane = new LineToggleButton();
+            advancedSettings.getContent().add(noInheritGameArgsPane);
+            noInheritGameArgsPane.setTitle("覆盖全局游戏参数"); // TODO: i18n
+            bindOverrideGroup(noInheritGameArgsPane.selectedProperty(), GameSetting.GAME_ARGUMENTS);
+        }
 
+        var gameArgsPane = new LinePane();
+        advancedSettings.getContent().add(gameArgsPane);
+        gameArgsPane.setTitle(i18n("settings.advanced.minecraft_arguments"));
+        {
             var txtGameArgs = new JFXTextField();
             txtGameArgs.setPromptText(i18n("settings.advanced.minecraft_arguments.prompt"));
-            txtGameArgs.getStyleClass().add("fit-width");
-            pane.addRow(0, new Label(i18n("settings.advanced.minecraft_arguments")), txtGameArgs);
+            txtGameArgs.setPrefWidth(400);
+            gameArgsPane.setRight(txtGameArgs);
             bindSettingBidirectional(txtGameArgs.textProperty(), GameSetting::gameArgsProperty);
-
-            return List.of(pane);
-        });
-        advancedSettings.getContent().add(gameArgumentSettings);
-        gameArgumentSettings.setTitle(i18n("settings.advanced.minecraft_arguments"));
-        gameArgumentSettings.setHeaderRight(createHeaderRight(GameSetting.GAME_ARGUMENTS));
+        }
 
         var customCommandSettings = new ComponentSublist(() -> {
             var pane = new GridPane();
@@ -580,22 +579,23 @@ public final class GameSettingPage<S extends GameSetting> extends StackPane
         customCommandSettings.setSubtitle("自定义启动游戏时的命令"); // TODO: i18n
         customCommandSettings.setTip(i18n("settings.advanced.custom_commands.hint"));
 
-        var environmentSettings = new ComponentSublist(() -> {
-            var pane = new LinePane();
-            pane.setTitle("环境变量"); // TODO: i18n
+        if (!isGlobalSetting) {
+            var noInheritEnvironmentVariablesPane = new LineToggleButton();
+            advancedSettings.getContent().add(noInheritEnvironmentVariablesPane);
+            noInheritEnvironmentVariablesPane.setTitle("覆盖全局环境变量"); // TODO: i18n
+            bindOverrideGroup(noInheritEnvironmentVariablesPane.selectedProperty(), GameSetting.ENVIRONMENT_VARIABLES);
+        }
 
+        var environmentVariablesPane = new LinePane();
+        advancedSettings.getContent().add(environmentVariablesPane);
+        environmentVariablesPane.setTitle("环境变量"); // TODO: i18n
+        environmentVariablesPane.setSubtitle("传递给游戏进程的键值对"); // TODO: i18n
+        {
             var txtEnvironmentVariables = new JFXTextField();
             txtEnvironmentVariables.setPrefWidth(400);
-            pane.setRight(txtEnvironmentVariables);
+            environmentVariablesPane.setRight(txtEnvironmentVariables);
             bindSettingBidirectional(txtEnvironmentVariables.textProperty(), GameSetting::environmentVariablesProperty);
-
-            return List.of(pane);
-        });
-        advancedSettings.getContent().add(environmentSettings);
-        environmentSettings.setHasSubtitle(true);
-        environmentSettings.setTitle("环境变量"); // TODO: i18n
-        environmentSettings.setSubtitle("传递给游戏进程的 KEY=value 键值对"); // TODO: i18n
-        environmentSettings.setHeaderRight(createHeaderRight(GameSetting.ENVIRONMENT_VARIABLES));
+        }
 
         var nativesDirTypePane = createInheritableButton(
                 GameSetting::nativesDirTypeProperty,
