@@ -191,7 +191,7 @@ public final class AdvancedVersionSettingPage extends StackPane implements Decor
 
             graphicsBackendPane = new LineSelectButton<>();
             graphicsBackendPane.setTitle(i18n("settings.advanced.graphics_backend"));
-            graphicsBackendPane.setConverter(backend -> i18n("settings.advanced.graphics_backend." + backend.name().toLowerCase(Locale.ROOT)));
+            graphicsBackendPane.setNullSafeConverter(backend -> i18n("settings.advanced.graphics_backend." + backend.name().toLowerCase(Locale.ROOT)));
             graphicsBackendPane.setDescriptionConverter(backend -> switch (backend) {
                     case DEFAULT -> i18n("settings.advanced.graphics_backend.default.desc");
                     case OPENGL -> i18n("settings.advanced.graphics_backend.opengl.desc");
@@ -210,7 +210,7 @@ public final class AdvancedVersionSettingPage extends StackPane implements Decor
 
             rendererPane = new LineSelectButton<>();
             rendererPane.setTitle(i18n("settings.advanced.renderer"));
-            rendererPane.setConverter(e -> i18n("settings.advanced.renderer." + e.name().toLowerCase(Locale.ROOT)));
+            rendererPane.setNullSafeConverter(e -> i18n("settings.advanced.renderer." + e.name().toLowerCase(Locale.ROOT)));
             rendererPane.setDescriptionConverter(e -> {
                 String bundleKey = "settings.advanced.renderer." + e.name().toLowerCase(Locale.ROOT) + ".desc";
                 return I18n.hasKey(bundleKey) ? i18n(bundleKey) : null;

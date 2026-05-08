@@ -78,7 +78,7 @@ public class DownloadSettingsPage extends StackPane {
                 var versionListSourcePane = new LineSelectButton<String>();
                 versionListSourcePane.disableProperty().bind(autoChooseDownloadSource.selectedProperty().not());
                 versionListSourcePane.setTitle(i18n("settings.launcher.version_list_source"));
-                versionListSourcePane.setConverter(converter);
+                versionListSourcePane.setNullSafeConverter(converter);
                 versionListSourcePane.setDescriptionConverter(descriptionConverter);
                 versionListSourcePane.setItems(DownloadProviders.AUTO_PROVIDERS.keySet());
                 versionListSourcePane.valueProperty().bindBidirectional(config().versionListSourceProperty());
@@ -86,14 +86,14 @@ public class DownloadSettingsPage extends StackPane {
                 var downloadSourcePane = new LineSelectButton<String>();
                 downloadSourcePane.disableProperty().bind(autoChooseDownloadSource.selectedProperty());
                 downloadSourcePane.setTitle(i18n("settings.launcher.download_source"));
-                downloadSourcePane.setConverter(converter);
+                downloadSourcePane.setNullSafeConverter(converter);
                 downloadSourcePane.setDescriptionConverter(descriptionConverter);
                 downloadSourcePane.setItems(DownloadProviders.DIRECT_PROVIDERS.keySet());
                 downloadSourcePane.valueProperty().bindBidirectional(config().downloadTypeProperty());
 
                 var defaultAddonSourcePane = new LineSelectButton<String>();
                 defaultAddonSourcePane.setTitle(i18n("settings.launcher.default_addon_source"));
-                defaultAddonSourcePane.setConverter(key -> I18n.i18n("mods." + key));
+                defaultAddonSourcePane.setNullSafeConverter(key -> I18n.i18n("mods." + key));
                 defaultAddonSourcePane.setItems("modrinth", "curseforge");
                 defaultAddonSourcePane.valueProperty().bindBidirectional(config().defaultAddonSourceProperty());
 
