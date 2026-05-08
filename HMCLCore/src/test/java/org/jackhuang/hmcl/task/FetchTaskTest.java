@@ -106,6 +106,45 @@ public final class FetchTaskTest {
         }
     }
 
+    /// Ensures a valid Content-Range response is appended without a full redownload.
+    @Test
+    public void validContentRangeCompletesResume(@TempDir Path tempDir) throws IOException {
+        byte[] data = "abcdefghij".getBytes(UTF_8);
+        byte[] resumedData = "efghij".getBytes(UTF_8);
+        AtomicInteger requestCount = new AtomicInteger();
+        List<@Nullable String> ranges = new ArrayList<>();
+
+        try (TestHttpServer server = TestHttpServer.start(exchange -> {
+            ranges.add(exchange.getRequestHeaders().getFirst("Range"));
+            exchange.getResponseHeaders().set("Accept-Ranges", "bytes");
+            exchange.getResponseHeaders().set("Last-Modified", "Thu, 01 Jan 2026 00:00:00 GMT");
+
+            switch (requestCount.incrementAndGet()) {
+                case 1 -> {
+                    exchange.sendResponseHeaders(200, data.length);
+                    exchange.getResponseBody().write(data, 0, 4);
+                    exchange.getResponseBody().flush();
+                    exchange.close();
+                }
+                case 2 -> {
+                    exchange.getResponseHeaders().set("Content-Range", "bytes 4-9/10");
+                    sendBytes(exchange, 206, resumedData);
+                }
+                default -> fail("Unexpected full redownload request");
+            }
+        })) {
+            Path target = tempDir.resolve("target.bin");
+            FileDownloadTask task = new FileDownloadTask(server.uri(), target);
+            task.setCacheRepository(newRepository(tempDir));
+            task.setRetry(3);
+
+            assertTrue(task.test(), () -> String.valueOf(task.getException()));
+            assertArrayEquals(data, Files.readAllBytes(target));
+            assertEquals(Arrays.asList(null, "bytes=4-"), ranges);
+            assertEquals(2, requestCount.get());
+        }
+    }
+
     /// Creates an isolated cache repository for one test.
     private static CacheRepository newRepository(Path tempDir) throws IOException {
         CacheRepository repository = new CacheRepository();

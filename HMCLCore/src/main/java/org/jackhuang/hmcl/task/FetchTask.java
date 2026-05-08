@@ -317,6 +317,7 @@ public abstract class FetchTask<T> extends Task<T> {
                         if (DigestUtils.isSha1Digest(bmclapiHash)) {
                             Optional<Path> cache = repository.checkExistentFile(null, "SHA-1", bmclapiHash);
                             if (cache.isPresent()) {
+                                closeResponseBody(response);
                                 useCachedResult(cache.get());
                                 LOG.info("Using cached file for " + NetworkUtils.dropQuery(uri));
                                 return;
@@ -341,65 +342,18 @@ public abstract class FetchTask<T> extends Task<T> {
                             if (!NetworkUtils.isHttpUri(target))
                                 throw new IOException("Redirected to not http URI: " + target);
 
+                            closeResponseBody(response);
                             currentURI = target;
                         } else {
                             break;
                         }
                     } while (true);
 
-                    int responseCode = response.statusCode();
-                    if (resumeRequested && responseCode == 416) {
-                        resumeContext = null;
-                        try {
-                            context.reset();
-                        } catch (Throwable e) {
-                            IOUtils.closeQuietly(context, e);
-                            LOG.warning("Failed to reset context for " + uri, e);
-
-                            context = null;
-                        }
-                        retryLimit++;
-                        continue;
-                    }
-
-                    if (useCachedResult && responseCode == HttpURLConnection.HTTP_NOT_MODIFIED) {
-                        // Handle cache
-                        try {
-                            Path cache = repository.getCachedRemoteFile(currentURI, false);
-                            useCachedResult(cache);
-                            LOG.info("Using cached file for " + NetworkUtils.dropQuery(uri));
-                            return;
-                        } catch (CacheRepository.CacheExpiredException e) {
-                            LOG.info("Cache expired for " + NetworkUtils.dropQuery(uri));
-                        } catch (IOException e) {
-                            LOG.warning("Unable to use cached file, redownload " + NetworkUtils.dropQuery(uri), e);
-                            repository.removeRemoteEntry(currentURI);
-                            useCachedResult = false;
-                            // Now we must reconnect the server since 304 may result in empty content,
-                            // if we want to redownload the file, we must reconnect the server without etag settings.
-                            retryLimit++;
-                            continue;
-                        }
-                    } else if (responseCode / 100 == 4) {
-                        throw new FileNotFoundException(uri.toString());
-                    } else if (responseCode / 100 != 2) {
-                        throw new ResponseCodeException(uri, responseCode);
-                    }
-
-                    long contentLength = response.headers().firstValueAsLong("content-length").orElse(-1L);
-                    var contentEncoding = ContentEncoding.fromHeaders(response.headers());
-
-                    if (context == null) {
-                        context = getContext(response, checkETag, bmclapiHash);
-                        resumeContext = HttpResumeContext.of(response);
-                    } else if (resumeRequested) {
-                        if (resumeContext.canResume(response)) {
-                            // Resume download
-                            LOG.warning("Resuming " + resumeContext.uri);
-                        } else {
-                            // Failed to resume download, so we will retry from the beginning
+                    boolean closeResponseBody = true;
+                    try {
+                        int responseCode = response.statusCode();
+                        if (resumeRequested && responseCode == 416) {
                             resumeContext = null;
-
                             try {
                                 context.reset();
                             } catch (Throwable e) {
@@ -411,42 +365,98 @@ public abstract class FetchTask<T> extends Task<T> {
                             retryLimit++;
                             continue;
                         }
-                    } else {
-                        try {
-                            context.reset();
-                        } catch (IOException e) {
-                            IOUtils.closeQuietly(context, e);
-                            LOG.warning("Failed to reset context for " + uri, e);
 
-                            context = getContext(response, checkETag, bmclapiHash);
+                        if (useCachedResult && responseCode == HttpURLConnection.HTTP_NOT_MODIFIED) {
+                            // Handle cache
+                            try {
+                                Path cache = repository.getCachedRemoteFile(currentURI, false);
+                                useCachedResult(cache);
+                                LOG.info("Using cached file for " + NetworkUtils.dropQuery(uri));
+                                return;
+                            } catch (CacheRepository.CacheExpiredException e) {
+                                LOG.info("Cache expired for " + NetworkUtils.dropQuery(uri));
+                            } catch (IOException e) {
+                                LOG.warning("Unable to use cached file, redownload " + NetworkUtils.dropQuery(uri), e);
+                                repository.removeRemoteEntry(currentURI);
+                                useCachedResult = false;
+                                // Now we must reconnect the server since 304 may result in empty content,
+                                // if we want to redownload the file, we must reconnect the server without etag settings.
+                                retryLimit++;
+                                continue;
+                            }
+                        } else if (responseCode / 100 == 4) {
+                            throw new FileNotFoundException(uri.toString());
+                        } else if (responseCode / 100 != 2) {
+                            throw new ResponseCodeException(uri, responseCode);
                         }
-                        resumeContext = HttpResumeContext.of(response);
-                    }
 
-                    try {
-                        download(context,
-                                resumeContext, response.body(),
-                                contentLength,
-                                contentEncoding);
-                    } catch (IOException | InterruptedException | RuntimeException | Error e) {
-                        if (context.broken) {
+                        long contentLength = response.headers().firstValueAsLong("content-length").orElse(-1L);
+                        var contentEncoding = ContentEncoding.fromHeaders(response.headers());
+
+                        if (context == null) {
+                            context = getContext(response, checkETag, bmclapiHash);
+                            resumeContext = HttpResumeContext.of(response);
+                        } else if (resumeRequested) {
+                            if (resumeContext.canResume(response)) {
+                                // Resume download
+                                LOG.warning("Resuming " + resumeContext.uri);
+                            } else {
+                                // Failed to resume download, so we will retry from the beginning
+                                resumeContext = null;
+
+                                try {
+                                    context.reset();
+                                } catch (Throwable e) {
+                                    IOUtils.closeQuietly(context, e);
+                                    LOG.warning("Failed to reset context for " + uri, e);
+
+                                    context = null;
+                                }
+                                retryLimit++;
+                                continue;
+                            }
+                        } else {
+                            try {
+                                context.reset();
+                            } catch (IOException e) {
+                                IOUtils.closeQuietly(context, e);
+                                LOG.warning("Failed to reset context for " + uri, e);
+
+                                context = getContext(response, checkETag, bmclapiHash);
+                            }
+                            resumeContext = HttpResumeContext.of(response);
+                        }
+
+                        try {
+                            closeResponseBody = false;
+                            download(context,
+                                    resumeContext, response.body(),
+                                    contentLength,
+                                    contentEncoding);
+                        } catch (IOException | InterruptedException | RuntimeException | Error e) {
+                            if (context.broken) {
+                                IOUtils.closeQuietly(context, e);
+                                context = null;
+                                resumeContext = null;
+                            }
+                            throw e;
+                        }
+                        try {
+                            context.close();
+                        } catch (IOException | RuntimeException | Error e) {
+                            context.withResult(false);
                             IOUtils.closeQuietly(context, e);
                             context = null;
                             resumeContext = null;
+                            throw e;
                         }
-                        throw e;
-                    }
-                    try {
-                        context.close();
-                    } catch (IOException | RuntimeException | Error e) {
-                        context.withResult(false);
-                        IOUtils.closeQuietly(context, e);
                         context = null;
-                        resumeContext = null;
-                        throw e;
+                        return;
+                    } finally {
+                        if (closeResponseBody) {
+                            closeResponseBody(response);
+                        }
                     }
-                    context = null;
-                    return;
                 } catch (InterruptedException e) {
                     throw e;
                 } catch (FileNotFoundException ex) {
@@ -477,6 +487,12 @@ public abstract class FetchTask<T> extends Task<T> {
         }
 
         throw toDownloadException(uri, null, exceptions);
+    }
+
+    private static void closeResponseBody(HttpResponse<InputStream> response) {
+        InputStream body = response.body();
+        if (body != null)
+            IOUtils.closeQuietly(body);
     }
 
     private void downloadNotHttp(URI uri) throws DownloadException, InterruptedException {
