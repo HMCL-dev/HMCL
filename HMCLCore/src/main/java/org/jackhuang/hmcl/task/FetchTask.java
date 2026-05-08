@@ -299,10 +299,10 @@ public abstract class FetchTask<T> extends Task<T> {
 
                     LinkedHashMap<String, String> headers = new LinkedHashMap<>();
                     headers.put("accept-encoding", "gzip");
-                    if (useCachedResult && checkETag && resumeContext == null)
-                        headers.putAll(repository.injectConnection(uri));
 
                     boolean resumeRequested = resumeContext != null && resumeContext.hasPartialContent();
+                    if (useCachedResult && checkETag && !resumeRequested)
+                        headers.putAll(repository.injectConnection(uri));
                     if (resumeRequested)
                         headers.put("range", "bytes=" + resumeContext.countUncompressed + "-");
 
