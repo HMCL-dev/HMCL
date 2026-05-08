@@ -399,7 +399,7 @@ public abstract class FetchTask<T> extends Task<T> {
                         } else if (resumeRequested) {
                             if (resumeContext.canResume(response)) {
                                 // Resume download
-                                LOG.warning("Resuming " + resumeContext.uri);
+                                LOG.info("Resuming " + resumeContext.uri + " from " + resumeContext.countUncompressed);
                             } else {
                                 // Failed to resume download, so we will retry from the beginning
                                 resumeContext = null;
