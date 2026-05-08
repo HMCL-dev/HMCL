@@ -175,10 +175,11 @@ public class ForgeNewInstallTask extends Task<Version> {
                         // When native compression libraries such as zlib-ng are in use,
                         // the resulting JAR may be compressed differently, causing its
                         // SHA-1 hash to differ from the expected value recorded in the
-                        // install profile.In this case, fall back to verifying that the
+                        // install profile. In this case, fall back to verifying that the
                         // file is at least a structurally valid ZIP/JAR archive.
                         try {
                             FileDownloadTask.ZIP_INTEGRITY_CHECK_HANDLER.checkIntegrity(artifact, artifact);
+                            LOG.info("Ignoring SHA-1 mismatch for " + artifact + " due to non-standard zlib compression output");
                             continue;
                         } catch (Exception ignored) {
                         }

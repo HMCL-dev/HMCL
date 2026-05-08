@@ -19,8 +19,6 @@ package org.jackhuang.hmcl.util;
 
 import org.jetbrains.annotations.NotNullByDefault;
 
-import java.io.ByteArrayOutputStream;
-import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.zip.Deflater;
 
@@ -50,29 +48,27 @@ public final class ZlibUtils {
     public static boolean IS_ZLIB_COMPATIBLE;
 
     static {
-        byte[] testData = "Hello World!".getBytes(StandardCharsets.UTF_8);
+        var expectedCompressed = new byte[]{120, -100, 99, 96, 0, 2, 0, 0, 5, 0, 1};
+        byte[] compressed = new byte[64];
+        int compressedLength = 0;
 
-        var compressedTestData = new ByteArrayOutputStream(testData.length * 2);
-
-        @SuppressWarnings("resource")
-        var compressor = new Deflater();
+        var deflater = new Deflater();
         try {
-            compressor.setInput(testData);
-            compressor.finish();
-            while (!compressor.finished()) {
-                byte[] tmpBuffer = new byte[100];
-                int numCompressed = compressor.deflate(tmpBuffer);
-                compressedTestData.write(tmpBuffer, 0, numCompressed);
+            deflater.setInput(new byte[5]);
+            deflater.finish();
+
+            while (!deflater.finished()) {
+                compressedLength += deflater.deflate(compressed, compressedLength, compressed.length - compressedLength);
             }
         } finally {
-            compressor.end();
+            deflater.end();
         }
 
-        byte[] compressedData = compressedTestData.toByteArray();
-
         IS_ZLIB_COMPATIBLE = Arrays.equals(
-                new byte[]{120, -100, -13, 72, -51, -55, -55, 87, 8, -49, 47, -54, 73, 81, 4, 0, 28, 73, 4, 62},
-                compressedData
+                expectedCompressed,
+                0, expectedCompressed.length,
+                compressed,
+                0, compressedLength
         );
     }
 
