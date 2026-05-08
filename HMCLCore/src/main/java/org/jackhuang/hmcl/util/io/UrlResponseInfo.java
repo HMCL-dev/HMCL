@@ -18,7 +18,6 @@
 package org.jackhuang.hmcl.util.io;
 
 import java.net.URI;
-import java.net.URLConnection;
 import java.net.http.HttpHeaders;
 import java.net.http.HttpResponse;
 
@@ -30,10 +29,5 @@ public record UrlResponseInfo(URI uri, HttpHeaders headers) {
 
     public static UrlResponseInfo of(URI uri, HttpResponse.ResponseInfo info) {
         return new UrlResponseInfo(uri, info.headers());
-    }
-
-    public static UrlResponseInfo of(URLConnection connection) {
-        return new UrlResponseInfo(NetworkUtils.toURI(connection.getURL()),
-                HttpHeaders.of(connection.getHeaderFields(), (a, b) -> true));
     }
 }
