@@ -135,7 +135,7 @@ public final class EntryPoint {
                                 }
                             }
                         } catch (Exception e) {
-                            LOG.warning("Failed to get system theme from D-Bus", e);
+                            LOG.warning("Failed to get UI scale from D-Bus", e);
                         }
                     }
                 }
