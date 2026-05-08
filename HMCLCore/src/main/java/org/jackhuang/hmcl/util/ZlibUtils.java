@@ -45,7 +45,7 @@ public final class ZlibUtils {
     /// be relaxed to a structural integrity check rather than an exact hash match,
     /// because the alternative zlib may legitimately produce files with different
     /// checksums.
-    public static boolean IS_ZLIB_COMPATIBLE;
+    public static final boolean IS_ZLIB_COMPATIBLE;
 
     static {
         var expectedCompressed = new byte[]{120, -100, 99, 96, 0, 2, 0, 0, 5, 0, 1};
