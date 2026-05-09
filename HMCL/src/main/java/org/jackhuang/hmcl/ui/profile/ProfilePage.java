@@ -92,7 +92,7 @@ public final class ProfilePage extends BorderPane implements DecoratorPage {
                         txtProfileName.getValidators().add(validator);
                         BorderPane.setMargin(txtProfileName, new Insets(8, 0, 8, 0));
 
-                        txtProfileName.setText(profileDisplayName);
+                        txtProfileName.setText(profile == null ? "" : profile.getName());
                         txtProfileName.getValidators().add(new ValidatorBase() {
                             {
                                 setMessage(i18n("profile.already_exists"));
@@ -168,7 +168,9 @@ public final class ProfilePage extends BorderPane implements DecoratorPage {
                 txtProfileName.setText(suggestedName);
             }
         };
-        locationProperty().addListener(locationChangeListener);
+        if (profile == null) {
+            locationProperty().addListener(locationChangeListener);
+        }
 
         txtProfileNameChangeListener = new ChangeListener<>() {
             @Override
