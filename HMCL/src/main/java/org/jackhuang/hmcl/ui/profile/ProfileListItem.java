@@ -24,12 +24,14 @@ import javafx.scene.control.Skin;
 import org.jackhuang.hmcl.setting.Profile;
 import org.jackhuang.hmcl.setting.Profiles;
 import org.jackhuang.hmcl.ui.FXUtils;
+import org.jackhuang.hmcl.ui.WeakListenerHolder;
 import org.jetbrains.annotations.NotNull;
 
 public class ProfileListItem extends RadioButton {
     private final Profile profile;
     private final StringProperty title = new SimpleStringProperty();
     private final StringProperty subtitle = new SimpleStringProperty();
+    private final WeakListenerHolder listeners = new WeakListenerHolder();
 
     public ProfileListItem(@NotNull Profile profile) {
         this.profile = profile;
@@ -39,8 +41,8 @@ public class ProfileListItem extends RadioButton {
         title.set(Profiles.getProfileDisplayName(profile));
         subtitle.set(profile.getGameDir().toString());
 
-        profile.nameProperty().addListener((obs, oldVal, newVal) -> title.set(Profiles.getProfileDisplayName(profile)));
-        profile.gameDirProperty().addListener((obs, oldVal, newVal) -> subtitle.set(profile.getGameDir().toString()));
+        listeners.add(FXUtils.onWeakChange(profile.nameProperty(), p -> title.set(Profiles.getProfileDisplayName(profile))));
+        listeners.add(FXUtils.onWeakChange(profile.gameDirProperty(), p -> subtitle.set(profile.getGameDir().toString())));
 
         FXUtils.onSecondaryButtonClicked(this, () -> ProfileListPopupMenu.show(this, profile));
     }
