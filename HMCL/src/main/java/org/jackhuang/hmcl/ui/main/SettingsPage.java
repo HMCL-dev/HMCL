@@ -110,6 +110,7 @@ public final class SettingsPage extends ScrollPane {
                     updateButton.setOnAction(e -> onUpdate(updateChannel));
 
                     updatePane.setConverter(channel -> i18n("update.channel." + channel.channelName));
+                    updatePane.setNullSafeConverter(channel -> i18n("update.channel." + channel.channelName));
                     updatePane.setItems(List.of(UpdateChannel.STABLE, UpdateChannel.DEVELOPMENT));
                     updatePane.setDescriptionConverter(channel -> i18n("update.note." + channel.channelName));
 
@@ -186,7 +187,7 @@ public final class SettingsPage extends ScrollPane {
                     chooseLanguagePane.setSubtitle(i18n("settings.take_effect_after_restart"));
 
                     SupportedLocale currentLocale = I18n.getLocale();
-                    chooseLanguagePane.setConverter(locale -> {
+                    chooseLanguagePane.setNullSafeConverter(locale -> {
                         if (locale.isDefault())
                             return locale.getDisplayName(currentLocale);
                         else if (locale.isSameLanguage(currentLocale))
