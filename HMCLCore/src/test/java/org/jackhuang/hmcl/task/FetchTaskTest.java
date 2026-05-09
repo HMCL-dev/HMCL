@@ -20,14 +20,18 @@ package org.jackhuang.hmcl.task;
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpServer;
 import org.jackhuang.hmcl.util.CacheRepository;
+import org.jackhuang.hmcl.util.io.NetworkUtils;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.net.URI;
+import java.net.http.HttpResponse;
+import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -100,7 +104,7 @@ public final class FetchTaskTest {
             task.setCacheRepository(newRepository(tempDir));
             task.setRetry(3);
 
-            assertTrue(task.test(), () -> String.valueOf(task.getException()));
+            assertTrue(task.test(), () -> requestCount.get() + ": " + task.getException());
             assertArrayEquals(data, Files.readAllBytes(target));
             assertEquals(Arrays.asList(null, "bytes=4-", null), ranges);
         }
@@ -113,9 +117,11 @@ public final class FetchTaskTest {
         byte[] resumedData = "efghij".getBytes(UTF_8);
         AtomicInteger requestCount = new AtomicInteger();
         List<@Nullable String> ranges = new ArrayList<>();
+        List<@Nullable String> ifRanges = new ArrayList<>();
 
         try (TestHttpServer server = TestHttpServer.start(exchange -> {
             ranges.add(exchange.getRequestHeaders().getFirst("Range"));
+            ifRanges.add(exchange.getRequestHeaders().getFirst("If-Range"));
             exchange.getResponseHeaders().set("Accept-Ranges", "bytes");
             exchange.getResponseHeaders().set("Last-Modified", "Thu, 01 Jan 2026 00:00:00 GMT");
 
@@ -138,10 +144,151 @@ public final class FetchTaskTest {
             task.setCacheRepository(newRepository(tempDir));
             task.setRetry(3);
 
-            assertTrue(task.test(), () -> String.valueOf(task.getException()));
+            assertTrue(task.test(), () -> requestCount.get() + ": " + task.getException());
             assertArrayEquals(data, Files.readAllBytes(target));
             assertEquals(Arrays.asList(null, "bytes=4-"), ranges);
+            assertEquals(Arrays.asList(null, "Thu, 01 Jan 2026 00:00:00 GMT"), ifRanges);
             assertEquals(2, requestCount.get());
+        }
+    }
+
+    /// Ensures a changed strong ETag prevents appending a partial response.
+    @Test
+    public void changedStrongETagFallsBackToFullDownload(@TempDir Path tempDir) throws IOException {
+        byte[] data = "abcdefghij".getBytes(UTF_8);
+        byte[] resumedData = "efghij".getBytes(UTF_8);
+        AtomicInteger requestCount = new AtomicInteger();
+        List<@Nullable String> ranges = new ArrayList<>();
+        List<@Nullable String> ifRanges = new ArrayList<>();
+
+        try (TestHttpServer server = TestHttpServer.start(exchange -> {
+            ranges.add(exchange.getRequestHeaders().getFirst("Range"));
+            ifRanges.add(exchange.getRequestHeaders().getFirst("If-Range"));
+            exchange.getResponseHeaders().set("Accept-Ranges", "bytes");
+            exchange.getResponseHeaders().set("Last-Modified", "Thu, 01 Jan 2026 00:00:00 GMT");
+
+            switch (requestCount.incrementAndGet()) {
+                case 1 -> {
+                    exchange.getResponseHeaders().set("ETag", "\"first\"");
+                    exchange.sendResponseHeaders(200, data.length);
+                    exchange.getResponseBody().write(data, 0, 4);
+                    exchange.getResponseBody().flush();
+                    exchange.close();
+                }
+                case 2 -> {
+                    exchange.getResponseHeaders().set("ETag", "\"second\"");
+                    exchange.getResponseHeaders().set("Content-Range", "bytes 4-9/10");
+                    sendBytes(exchange, 206, resumedData);
+                }
+                default -> {
+                    exchange.getResponseHeaders().set("ETag", "\"second\"");
+                    sendBytes(exchange, 200, data);
+                }
+            }
+        })) {
+            Path target = tempDir.resolve("target.bin");
+            FileDownloadTask task = new FileDownloadTask(server.uri(), target);
+            task.setCacheRepository(newRepository(tempDir));
+            task.setRetry(3);
+
+            assertTrue(task.test(), () -> String.valueOf(task.getException()));
+            assertArrayEquals(data, Files.readAllBytes(target));
+            assertEquals(Arrays.asList(null, "bytes=4-", null), ranges);
+            assertEquals(Arrays.asList(null, "\"first\"", null), ifRanges);
+        }
+    }
+
+    /// Ensures a full retry uses the latest response metadata instead of stale headers.
+    @Test
+    public void fullRetryUsesLatestResponseMetadata(@TempDir Path tempDir) throws IOException {
+        byte[] data = "ok".getBytes(UTF_8);
+        byte[] firstData = "abcdefghij".getBytes(UTF_8);
+        byte[] wrongRangeData = "defghi".getBytes(UTF_8);
+        AtomicInteger requestCount = new AtomicInteger();
+
+        try (TestHttpServer server = TestHttpServer.start(exchange -> {
+            switch (requestCount.incrementAndGet()) {
+                case 1 -> {
+                    exchange.getResponseHeaders().set("Content-Type", "text/plain; charset=UTF-16LE");
+                    exchange.getResponseHeaders().set("Accept-Ranges", "bytes");
+                    exchange.getResponseHeaders().set("Last-Modified", "Thu, 01 Jan 2026 00:00:00 GMT");
+                    exchange.sendResponseHeaders(200, firstData.length);
+                    exchange.getResponseBody().write(firstData, 0, 4);
+                    exchange.getResponseBody().flush();
+                    exchange.close();
+                }
+                case 2 -> {
+                    exchange.getResponseHeaders().set("Accept-Ranges", "bytes");
+                    exchange.getResponseHeaders().set("Last-Modified", "Thu, 01 Jan 2026 00:00:00 GMT");
+                    exchange.getResponseHeaders().set("Content-Range", "bytes 3-8/10");
+                    sendBytes(exchange, 206, wrongRangeData);
+                }
+                default -> {
+                    exchange.getResponseHeaders().set("Content-Type", "text/plain; charset=UTF-8");
+                    sendBytes(exchange, 200, data);
+                }
+            }
+        })) {
+            TextFetchTask task = new TextFetchTask(server.uri());
+            task.setCacheRepository(newRepository(tempDir));
+            task.setRetry(2);
+
+            assertTrue(task.test(), () -> requestCount.get() + ": " + task.getException());
+            assertEquals("ok", task.getResult());
+            assertEquals(3, requestCount.get());
+        }
+    }
+
+    /// Text fetch task that avoids JavaFX progress updates in isolated unit tests.
+    private static final class TextFetchTask extends FetchTask<String> {
+        /// Creates a text fetch task for one URI.
+        TextFetchTask(URI uri) {
+            super(List.of(uri));
+        }
+
+        @Override
+        protected void useCachedResult(Path cachedFile) throws IOException {
+            setResult(Files.readString(cachedFile));
+        }
+
+        @Override
+        protected EnumCheckETag shouldCheckETag() {
+            return EnumCheckETag.NOT_CHECK_E_TAG;
+        }
+
+        @Override
+        protected Context getContext(@Nullable HttpResponse<?> response, boolean checkETag, String bmclapiHash) {
+            Charset charset = NetworkUtils.getCharsetFromContentType(response == null
+                    ? null
+                    : response.headers().firstValue("content-type").orElse(null));
+            ByteArrayOutputStream baos = new ByteArrayOutputStream();
+
+            return new Context() {
+                @Override
+                public void reset() {
+                    baos.reset();
+                }
+
+                @Override
+                public void write(byte[] buffer, int offset, int len) {
+                    baos.write(buffer, offset, len);
+                }
+
+                @Override
+                public void close() {
+                    if (isSuccess()) {
+                        setResult(baos.toString(charset));
+                    }
+                }
+            };
+        }
+
+        @Override
+        protected void updateProgress(long count, long total) {
+        }
+
+        @Override
+        protected void updateProgress(double progress) {
         }
     }
 

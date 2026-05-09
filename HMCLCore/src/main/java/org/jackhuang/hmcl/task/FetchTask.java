@@ -153,23 +153,35 @@ public abstract class FetchTask<T> extends Task<T> {
             if (contentLength < 0)
                 return null;
 
-            String lastModified = response.headers().firstValue("last-modified").orElse("");
-            if (lastModified.isBlank())
+            String eTag = response.headers().firstValue("etag").orElse(null);
+            String strongETag = isStrongETag(eTag) ? eTag : null;
+            String lastModified = response.headers().firstValue("last-modified").orElse(null);
+            if (strongETag == null && StringUtils.isBlank(lastModified))
                 return null;
 
-            return new HttpResumeContext(response.uri(), contentLength, lastModified);
+            return new HttpResumeContext(response.uri(), contentLength, strongETag, lastModified);
         }
 
         private final URI uri;
         private final long contentLength;
-        private final String lastModified;
+        private final @Nullable String strongETag;
+        private final @Nullable String lastModified;
 
         long countUncompressed;
 
-        private HttpResumeContext(URI uri, long contentLength, String lastModified) {
+        private HttpResumeContext(URI uri, long contentLength, @Nullable String strongETag, @Nullable String lastModified) {
             this.uri = uri;
             this.contentLength = contentLength;
+            this.strongETag = strongETag;
             this.lastModified = lastModified;
+        }
+
+        private static boolean isStrongETag(@Nullable String eTag) {
+            return StringUtils.isNotBlank(eTag) && !eTag.regionMatches(true, 0, "W/", 0, 2);
+        }
+
+        String ifRange() {
+            return strongETag != null ? strongETag : Objects.requireNonNull(lastModified);
         }
 
         boolean canResume(HttpResponse<?> response) throws IOException {
@@ -184,9 +196,18 @@ public abstract class FetchTask<T> extends Task<T> {
             if (this.contentLength != contentLength + this.countUncompressed)
                 return false;
 
-            String lastModified = response.headers().firstValue("last-modified").orElse("");
-            if (!this.lastModified.equals(lastModified))
-                return false;
+            if (strongETag != null) {
+                String eTag = response.headers().firstValue("etag").orElse(null);
+                if (!strongETag.equals(eTag))
+                    return false;
+            } else {
+                if (!uri.equals(response.uri()))
+                    return false;
+
+                String lastModified = response.headers().firstValue("last-modified").orElse("");
+                if (!Objects.requireNonNull(this.lastModified).equals(lastModified))
+                    return false;
+            }
 
             String contentRange = response.headers().firstValue("content-range").orElse("");
             Matcher matcher = CONTENT_RANGE_PATTERN.matcher(contentRange);
@@ -303,8 +324,10 @@ public abstract class FetchTask<T> extends Task<T> {
                     boolean resumeRequested = resumeContext != null && resumeContext.hasPartialContent();
                     if (useCachedResult && checkETag && !resumeRequested)
                         headers.putAll(repository.injectConnection(uri));
-                    if (resumeRequested)
+                    if (resumeRequested) {
                         headers.put("range", "bytes=" + resumeContext.countUncompressed + "-");
+                        headers.put("if-range", resumeContext.ifRange());
+                    }
 
                     do {
                         HttpRequest.Builder requestBuilder = HttpRequest.newBuilder(currentURI)
@@ -354,14 +377,8 @@ public abstract class FetchTask<T> extends Task<T> {
                         int responseCode = response.statusCode();
                         if (resumeRequested && responseCode == 416) {
                             resumeContext = null;
-                            try {
-                                context.reset();
-                            } catch (Throwable e) {
-                                IOUtils.closeQuietly(context, e);
-                                LOG.warning("Failed to reset context for " + uri, e);
-
-                                context = null;
-                            }
+                            discardContext(context);
+                            context = null;
                             retryLimit++;
                             continue;
                         }
@@ -403,27 +420,14 @@ public abstract class FetchTask<T> extends Task<T> {
                             } else {
                                 // Failed to resume download, so we will retry from the beginning
                                 resumeContext = null;
-
-                                try {
-                                    context.reset();
-                                } catch (Throwable e) {
-                                    IOUtils.closeQuietly(context, e);
-                                    LOG.warning("Failed to reset context for " + uri, e);
-
-                                    context = null;
-                                }
+                                discardContext(context);
+                                context = null;
                                 retryLimit++;
                                 continue;
                             }
                         } else {
-                            try {
-                                context.reset();
-                            } catch (IOException e) {
-                                IOUtils.closeQuietly(context, e);
-                                LOG.warning("Failed to reset context for " + uri, e);
-
-                                context = getContext(response, checkETag, bmclapiHash);
-                            }
+                            discardContext(context);
+                            context = getContext(response, checkETag, bmclapiHash);
                             resumeContext = HttpResumeContext.of(response);
                         }
 
@@ -493,6 +497,13 @@ public abstract class FetchTask<T> extends Task<T> {
         InputStream body = response.body();
         if (body != null)
             IOUtils.closeQuietly(body);
+    }
+
+    private static void discardContext(@Nullable Context context) {
+        if (context != null) {
+            context.withResult(false);
+            IOUtils.closeQuietly(context);
+        }
     }
 
     private void downloadNotHttp(URI uri) throws DownloadException, InterruptedException {
