@@ -55,9 +55,18 @@ fi
 
 # _HMCL_VM_OPTIONS
 if [ -n "${HMCL_JAVA_OPTS+x}" ]; then
+  # User-specified JVM options take precedence.
   _HMCL_VM_OPTIONS=${HMCL_JAVA_OPTS}
 else
   _HMCL_VM_OPTIONS="-XX:MinHeapFreeRatio=5 -XX:MaxHeapFreeRatio=15"
+
+  # JavaFX may not respect KDE Plasma Wayland fractional scaling automatically.
+  # Bridge QT_SCALE_FACTOR to JavaFX's GTK UI scale when available.
+  if [ "$_HMCL_OS" = "linux" ] && [ "$XDG_SESSION_TYPE" = "wayland" ]; then
+    if [ -n "$QT_SCALE_FACTOR" ]; then
+      _HMCL_VM_OPTIONS="$_HMCL_VM_OPTIONS -Dglass.gtk.uiScale=$QT_SCALE_FACTOR"
+    fi
+  fi
 fi
 
 function show_warning_console() {
