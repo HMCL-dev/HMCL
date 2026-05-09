@@ -288,11 +288,17 @@ public final class Versions {
             }
 
             versions.stream().map(v -> repository.getRunDirectory(v.getId())).distinct().forEach(runDir -> {
+                for (String folderName : uselessFolderNames) {
+                    Path target = runDir.resolve(folderName);
+                    if (Files.isDirectory(target)) {
+                        unusedFolders.add(target);
+                    }
+                }
                 try (var walker = Files.walk(runDir, 1)) {
                     unusedFolders.addAll(walker
                             .filter(it -> {
                                 var name = it.getFileName().toString();
-                                return (name.startsWith("natives-") || name.endsWith("-natives") || uselessFolderNames.contains(name)) && Files.isDirectory(it);
+                                return (name.startsWith("natives-") || name.endsWith("-natives")) && Files.isDirectory(it);
                             }).toList());
                 } catch (IOException ignored) {
                 }
