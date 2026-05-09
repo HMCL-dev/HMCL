@@ -71,7 +71,13 @@ public final class TerracottaBundle {
                             return new Context() {
                                 @Override
                                 public void withResult(boolean success) {
+                                    super.withResult(success);
                                     delegate.withResult(success);
+                                }
+
+                                @Override
+                                public void reset() throws IOException {
+                                    delegate.reset();
                                 }
 
                                 @Override

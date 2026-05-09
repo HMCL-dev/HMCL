@@ -22,16 +22,20 @@ import org.jackhuang.hmcl.util.io.ChecksumMismatchException;
 import org.jackhuang.hmcl.util.io.CompressingUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.io.NetworkUtils;
+import org.jackhuang.hmcl.util.io.UrlResponseInfo;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
-import java.io.OutputStream;
 import java.net.URI;
 import java.net.http.HttpResponse;
+import java.nio.ByteBuffer;
+import java.nio.channels.FileChannel;
 import java.nio.file.FileSystem;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
+import java.nio.file.StandardOpenOption;
 import java.security.MessageDigest;
 import java.util.*;
 
@@ -175,7 +179,7 @@ public class FileDownloadTask extends FetchTask<Void> {
     }
 
     @Override
-    protected Context getContext(HttpResponse<?> response, boolean checkETag, String bmclapiHash) throws IOException {
+    protected Context getContext(@Nullable HttpResponse<?> response, boolean checkETag, String bmclapiHash) throws IOException {
         Path temp = Files.createTempFile(null, null);
 
         String algorithm;
@@ -193,15 +197,32 @@ public class FileDownloadTask extends FetchTask<Void> {
 
         MessageDigest digest = algorithm != null ? DigestUtils.getDigest(algorithm) : null;
 
-        OutputStream fileOutput = Files.newOutputStream(temp);
+        FileChannel fileOutput = FileChannel.open(temp,
+                StandardOpenOption.WRITE,
+                StandardOpenOption.TRUNCATE_EXISTING,
+                StandardOpenOption.CREATE);
         return new Context() {
+            @Override
+            public void reset() throws IOException {
+                if (digest != null) {
+                    digest.reset();
+                }
+
+                fileOutput.truncate(0L);
+                fileOutput.position(0L);
+            }
+
             @Override
             public void write(byte[] buffer, int offset, int len) throws IOException {
                 if (digest != null) {
                     digest.update(buffer, offset, len);
                 }
 
-                fileOutput.write(buffer, offset, len);
+                ByteBuffer byteBuffer = ByteBuffer.wrap(buffer, offset, len);
+                while (byteBuffer.hasRemaining()) {
+                    //noinspection ResultOfMethodCallIgnored
+                    fileOutput.write(byteBuffer);
+                }
             }
 
             @Override
@@ -210,47 +231,60 @@ public class FileDownloadTask extends FetchTask<Void> {
                     fileOutput.close();
                 } catch (IOException e) {
                     LOG.warning("Failed to close file: " + temp, e);
+                    deleteTempFile();
+                    throw e;
                 }
 
                 if (!isSuccess()) {
-                    try {
-                        Files.deleteIfExists(temp);
-                    } catch (IOException e) {
-                        LOG.warning("Failed to delete file: " + temp, e);
-                    }
+                    deleteTempFile();
                     return;
                 }
 
-                for (IntegrityCheckHandler handler : integrityCheckHandlers) {
-                    handler.checkIntegrity(temp, file);
-                }
-
-                Files.createDirectories(file.toAbsolutePath().getParent());
-
+                boolean moved = false;
                 try {
-                    Files.move(temp, file, StandardCopyOption.REPLACE_EXISTING);
-                } catch (Exception e) {
-                    throw new IOException("Unable to move temp file from " + temp + " to " + file, e);
-                }
-
-                // Integrity check
-                if (checksum != null) {
-                    String actualChecksum = HexFormat.of().formatHex(digest.digest());
-                    if (!checksum.equalsIgnoreCase(actualChecksum)) {
-                        throw new ChecksumMismatchException(algorithm, checksum, actualChecksum);
+                    for (IntegrityCheckHandler handler : integrityCheckHandlers) {
+                        handler.checkIntegrity(temp, file);
                     }
-                }
 
-                if (caching && algorithm != null) {
+                    if (checksum != null) {
+                        String actualChecksum = HexFormat.of().formatHex(digest.digest());
+                        if (!checksum.equalsIgnoreCase(actualChecksum)) {
+                            throw new ChecksumMismatchException(algorithm, checksum, actualChecksum);
+                        }
+                    }
+
+                    Files.createDirectories(file.toAbsolutePath().getParent());
+
                     try {
-                        repository.cacheFile(file, algorithm, checksum);
-                    } catch (IOException e) {
-                        LOG.warning("Failed to cache file", e);
+                        Files.move(temp, file, StandardCopyOption.REPLACE_EXISTING);
+                        moved = true;
+                    } catch (Exception e) {
+                        throw new IOException("Unable to move temp file from " + temp + " to " + file, e);
+                    }
+
+                    if (caching && algorithm != null) {
+                        try {
+                            repository.cacheFile(file, algorithm, checksum);
+                        } catch (IOException e) {
+                            LOG.warning("Failed to cache file", e);
+                        }
+                    }
+
+                    if (checkETag) {
+                        repository.cacheRemoteFile(UrlResponseInfo.of(response), file);
+                    }
+                } finally {
+                    if (!moved) {
+                        deleteTempFile();
                     }
                 }
+            }
 
-                if (checkETag) {
-                    repository.cacheRemoteFile(response, file);
+            private void deleteTempFile() {
+                try {
+                    Files.deleteIfExists(temp);
+                } catch (IOException e) {
+                    LOG.warning("Failed to delete file: " + temp, e);
                 }
             }
         };
