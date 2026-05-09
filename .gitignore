@@ -72,8 +72,3 @@ language-subtag-registry
 .codex
 /.gradle-*/
 
-# local/tools
-.workbuddy/
-node_modules/
-/package.json
-/package-lock.json
