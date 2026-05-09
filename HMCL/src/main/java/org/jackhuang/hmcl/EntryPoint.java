@@ -17,6 +17,7 @@
  */
 package org.jackhuang.hmcl;
 
+import org.jackhuang.hmcl.setting.ConfigHolder;
 import org.jackhuang.hmcl.util.FileSaver;
 import org.jackhuang.hmcl.util.SelfDependencyPatcher;
 import org.jackhuang.hmcl.util.SwingUtils;
@@ -86,12 +87,11 @@ public final class EntryPoint {
         }
 
         try {
-            Path configPath = Metadata.HMCL_GLOBAL_DIRECTORY.resolve("config.json");
-            if (!Files.isRegularFile(configPath)) {
+            if (!Files.isRegularFile(ConfigHolder.GLOBAL_CONFIG_PATH)) {
                 return;
             }
 
-            String content = Files.readString(configPath);
+            String content = Files.readString(ConfigHolder.GLOBAL_CONFIG_PATH);
             JsonObject json = JsonParser.parseString(content).getAsJsonObject();
             if (json.has("uiScale") && !json.get("uiScale").isJsonNull()) {
                 String uiScale = json.get("uiScale").getAsString();
