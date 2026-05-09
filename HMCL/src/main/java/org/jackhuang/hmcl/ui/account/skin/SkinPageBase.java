@@ -18,11 +18,13 @@
 package org.jackhuang.hmcl.ui.account.skin;
 
 import com.jfoenix.controls.JFXPopup;
+import javafx.application.Platform;
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.ReadOnlyObjectProperty;
 import javafx.beans.property.ReadOnlyObjectWrapper;
 import javafx.beans.property.SimpleBooleanProperty;
 import javafx.geometry.Insets;
+import javafx.scene.input.TransferMode;
 import javafx.scene.layout.*;
 import javafx.stage.FileChooser;
 import org.jackhuang.hmcl.auth.Account;
@@ -41,12 +43,14 @@ import org.jackhuang.hmcl.ui.skin.animation.SkinAniRunning;
 import org.jackhuang.hmcl.ui.skin.animation.SkinAniWavingArms;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.SwingFXUtils;
+import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jetbrains.annotations.Nullable;
 
 import javax.imageio.ImageIO;
 import java.awt.image.RenderedImage;
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Path;
 
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
@@ -114,10 +118,29 @@ public abstract class SkinPageBase<T extends Account> extends DecoratorAnimatedP
         BorderPane.setMargin(toolbar, new Insets(0, 0, 12, 0));
         left.setBottom(toolbar);
 
+        skinManage.setOnDragOver(e -> {
+            if (e.getDragboard().hasFiles()) {
+                Path file = e.getDragboard().getFiles().get(0).toPath();
+                if (FileUtils.getName(file).endsWith(".png")) {
+                    e.acceptTransferModes(TransferMode.COPY);
+                }
+            }
+        });
+        skinManage.setOnDragDropped(e -> {
+            if (e.isAccepted()) {
+                Path skin = e.getDragboard().getFiles().get(0).toPath();
+                Platform.runLater(() -> {
+                    onDrag(skin);
+                });
+            }
+        });
+
         setCenter(transitionPane);
 
         this.state.set(State.fromTitle(i18n("account.skin.manage", account.getUsername())));
     }
+
+    protected abstract void onDrag(Path skin);
 
     public void savePng(RenderedImage image, String name) throws IOException {
         FileChooser fileChooser = new FileChooser();

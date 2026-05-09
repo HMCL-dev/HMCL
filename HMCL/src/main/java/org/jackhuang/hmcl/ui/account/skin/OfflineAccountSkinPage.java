@@ -38,7 +38,9 @@ import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.construct.FileSelector;
 import org.jackhuang.hmcl.ui.construct.MultiFileItem;
+import org.jackhuang.hmcl.util.io.FileUtils;
 
+import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.UUID;
 
@@ -48,7 +50,7 @@ import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 public class OfflineAccountSkinPage extends SkinPageBase<OfflineAccount> {
     private ReadOnlyObjectWrapper<Skin> skinProperty;
 
-    private final MultiFileItem<OfflineSkinConfig.Type> skinItem = new MultiFileItem<>();
+    private final MultiFileItem<OfflineSkinConfig.Type> skinTypeItem = new MultiFileItem<>();
     private final JFXComboBox<TextureModel> modelCombobox = new JFXComboBox<>();
     private final FileSelector skinSelector = new FileSelector();
     private final FileSelector capeSelector = new FileSelector();
@@ -56,7 +58,7 @@ public class OfflineAccountSkinPage extends SkinPageBase<OfflineAccount> {
     public OfflineAccountSkinPage(OfflineAccount account) {
         super(account, null);
 
-        skinItem.loadChildren(Arrays.asList(
+        skinTypeItem.loadChildren(Arrays.asList(
                 new MultiFileItem.Option<>(i18n("message.default"), OfflineSkinConfig.Type.DEFAULT),
                 new MultiFileItem.Option<>(i18n("account.skin.type.steve"), OfflineSkinConfig.Type.STEVE),
                 new MultiFileItem.Option<>(i18n("account.skin.type.alex"), OfflineSkinConfig.Type.ALEX),
@@ -68,10 +70,10 @@ public class OfflineAccountSkinPage extends SkinPageBase<OfflineAccount> {
 
         OfflineSkinConfig config = account.getSkin();
         if (config == null) {
-            skinItem.setSelectedData(OfflineSkinConfig.Type.DEFAULT);
+            skinTypeItem.setSelectedData(OfflineSkinConfig.Type.DEFAULT);
             modelCombobox.setValue(TextureModel.WIDE);
         } else {
-            skinItem.setSelectedData(config.type());
+            skinTypeItem.setSelectedData(config.type());
             modelCombobox.setValue(config.textureModel() != null ? config.textureModel() : TextureModel.WIDE);
             skinSelector.setValue(config.localSkinPath());
             capeSelector.setValue(config.localCapePath());
@@ -94,38 +96,20 @@ public class OfflineAccountSkinPage extends SkinPageBase<OfflineAccount> {
             }
         };
 
-        listener.changed(null, null, skinItem.getSelectedData());
-        skinItem.selectedDataProperty().addListener(listener);
+        listener.changed(null, null, skinTypeItem.getSelectedData());
+        skinTypeItem.selectedDataProperty().addListener(listener);
 
-        settingsBox.getChildren().addAll(skinItem, grid);
+        settingsBox.getChildren().addAll(skinTypeItem, grid);
         contentPane.getChildren().setAll(settingsBox);
         StackPane.setAlignment(settingsBox, Pos.CENTER);
         settingsBox.setAlignment(Pos.CENTER);
-
-//        super.skinManage.setOnDragOver(e -> {
-//            if (e.getDragboard().hasFiles()) {
-//                Path file = e.getDragboard().getFiles().get(0).toPath();
-//                if (FileUtils.getName(file).endsWith(".png")) {
-//                    e.acceptTransferModes(TransferMode.COPY);
-//                }
-//            }
-//        });
-//        super.skinManage.setOnDragDropped(e -> {
-//            if (e.isAccepted()) {
-//                Path skin = e.getDragboard().getFiles().get(0).toPath();
-//                Platform.runLater(() -> {
-//                    skinSelector.setValue(FileUtils.getAbsolutePath(skin));
-//                    skinItem.setSelectedData(OfflineSkinConfig.Type.LOCAL_FILE);
-//                });
-//            }
-//        });
 
         InvalidationListener invalidationListener = (e) -> {
             account.setSkin(getConfig());
             loadSkinPreview();
         };
 
-        skinItem.selectedDataProperty().addListener(invalidationListener);
+        skinTypeItem.selectedDataProperty().addListener(invalidationListener);
         modelCombobox.valueProperty().addListener(invalidationListener);
         skinSelector.valueProperty().addListener(invalidationListener);
         capeSelector.valueProperty().addListener(invalidationListener);
@@ -134,7 +118,7 @@ public class OfflineAccountSkinPage extends SkinPageBase<OfflineAccount> {
     }
 
     private OfflineSkinConfig getConfig() {
-        OfflineSkinConfig.Type type = skinItem.getSelectedData();
+        OfflineSkinConfig.Type type = skinTypeItem.getSelectedData();
         if (type == null) type = OfflineSkinConfig.Type.DEFAULT;
         TextureModel model = modelCombobox.getValue();
 
@@ -175,6 +159,12 @@ public class OfflineAccountSkinPage extends SkinPageBase<OfflineAccount> {
 
             skinProperty.set(new Skin(model, skinTex, capeTex));
         }).start();
+    }
+
+    @Override
+    protected void onDrag(Path skin) {
+        skinTypeItem.setSelectedData(OfflineSkinConfig.Type.LOCAL_FILE);
+        skinSelector.setValue(FileUtils.getAbsolutePath(skin));
     }
 
     @Override

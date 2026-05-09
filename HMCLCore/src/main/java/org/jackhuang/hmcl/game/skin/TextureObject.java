@@ -18,8 +18,13 @@
 package org.jackhuang.hmcl.game.skin;
 
 import javafx.scene.image.Image;
+import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jetbrains.annotations.NotNull;
 
-public record TextureObject(@NotNull Image image, @NotNull String url) {
+import java.nio.file.Path;
 
+public record TextureObject(@NotNull Image image, @NotNull String url) {
+    public TextureObject of(Path path) {
+        return new TextureObject(new Image(path.toString()), FileUtils.getAbsolutePath(path));
+    }
 }
