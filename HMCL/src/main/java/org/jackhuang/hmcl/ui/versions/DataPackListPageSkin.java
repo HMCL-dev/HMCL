@@ -29,6 +29,7 @@ import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.ReadOnlyBooleanProperty;
 import javafx.beans.property.SimpleBooleanProperty;
+import javafx.collections.ListChangeListener;
 import javafx.collections.transformation.FilteredList;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
@@ -98,6 +99,14 @@ final class DataPackListPageSkin extends SkinBase<DataPackListPage> {
         listView = new JFXListView<>();
         filteredList = new FilteredList<>(skinnable.itemsProperty());
 
+        // reason for not using selectAll() is that selectAll() first clears all selected then selects all, causing the toolbar to flicker
+        var selectAllButton = createToolbarButton2(i18n("button.select_all"), SVG.SELECT_ALL, () -> listView.getSelectionModel().selectRange(0, listView.getItems().size()));
+
+        ListChangeListener<Object> listener = change -> {
+            selectAllButton.setDisable(!listView.getItems().isEmpty()
+                    && listView.getSelectionModel().getSelectedItems().size() == listView.getItems().size());
+        };
+
         {
             toolbarPane = new TransitionPane();
             searchBar = new HBox();
@@ -124,12 +133,13 @@ final class DataPackListPageSkin extends SkinBase<DataPackListPage> {
             enableButton.disableProperty().bind(getSkinnable().readOnlyProperty());
             disableButton.disableProperty().bind(getSkinnable().readOnlyProperty());
 
+            listView.getSelectionModel().getSelectedItems().addListener(listener);
+
             selectingToolbar.getChildren().addAll(
                     removeButton,
                     enableButton,
                     disableButton,
-                    createToolbarButton2(i18n("button.select_all"), SVG.SELECT_ALL, () ->
-                            listView.getSelectionModel().selectRange(0, listView.getItems().size())),//reason for not using selectAll() is that selectAll() first clears all selected then selects all, causing the toolbar to flicker
+                    selectAllButton,
                     createToolbarButton2(i18n("button.cancel"), SVG.CANCEL, () ->
                             listView.getSelectionModel().clearSelection())
             );
@@ -187,6 +197,7 @@ final class DataPackListPageSkin extends SkinBase<DataPackListPage> {
             listView.setCellFactory(x -> new DataPackInfoListCell(listView, getSkinnable().readOnlyProperty()));
             listView.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
             this.listView.setItems(filteredList);
+            listView.getItems().addListener(listener);
 
             // ListViewBehavior would consume ESC pressed event, preventing us from handling it, so we ignore it here
             FXUtils.ignoreEvent(listView, KeyEvent.KEY_PRESSED, e -> e.getCode() == KeyCode.ESCAPE);

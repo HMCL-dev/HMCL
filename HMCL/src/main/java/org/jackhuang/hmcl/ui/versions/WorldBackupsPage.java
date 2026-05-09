@@ -37,6 +37,7 @@ import org.jackhuang.hmcl.ui.*;
 import org.jackhuang.hmcl.ui.construct.*;
 import org.jackhuang.hmcl.util.Pair;
 import org.jackhuang.hmcl.util.StringUtils;
+import org.jackhuang.hmcl.util.TaskCancellationAction;
 import org.jackhuang.hmcl.util.i18n.I18n;
 import org.jetbrains.annotations.NotNull;
 
@@ -157,7 +158,7 @@ public final class WorldBackupsPage extends ListPageBase<WorldBackupsPage.Backup
                 LOG.warning("Failed to create backup", exception);
                 Controllers.dialog(i18n("world.backup.create.failed", StringUtils.getStackTrace(exception)), null, MessageDialogPane.MessageType.WARNING);
             }
-        }), i18n("world.backup"), null);
+        }), i18n("world.backup"), TaskCancellationAction.NO_CANCEL);
     }
 
     private final class WorldBackupsPageSkin extends ToolbarListPageSkin<BackupInfo, WorldBackupsPage> {

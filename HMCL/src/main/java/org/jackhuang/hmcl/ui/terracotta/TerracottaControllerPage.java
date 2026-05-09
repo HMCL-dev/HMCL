@@ -246,7 +246,7 @@ public class TerracottaControllerPage extends StackPane {
                         } else {
                             handler.resolve();
                         }
-                    });
+                    }, "", new RequiredValidator(i18n("input.not_empty")));
                 });
 
                 if (ThreadLocalRandom.current().nextDouble() < 0.02D) {

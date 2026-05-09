@@ -20,6 +20,7 @@ package org.jackhuang.hmcl.game;
 import javafx.scene.image.Image;
 import org.glavo.nbt.io.NBTCodec;
 import org.glavo.nbt.tag.*;
+import org.jackhuang.hmcl.util.io.CompressingUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.io.IOUtils;
 import org.jackhuang.hmcl.util.io.Zipper;
@@ -61,6 +62,28 @@ public final class World {
             fileName = FileUtils.getName(this.file);
             loadAndCheckWorldData(findLevelDatPath(this.file));
             icon = loadIcon(this.file);
+        } else if (Files.isRegularFile(file)) {
+            try (FileSystem fs = CompressingUtils.readonly(this.file).setAutoDetectEncoding(true).build()) {
+                Path root;
+                if (Files.isRegularFile(fs.getPath("/level.dat")) || Files.isRegularFile(fs.getPath("/special_level.dat"))) {
+                    root = fs.getPath("/");
+                    fileName = FileUtils.getName(this.file);
+                } else {
+                    try (Stream<Path> filesStream = Files.list(fs.getPath("/"))) {
+                        List<Path> files = filesStream.toList();
+                        if (files.size() != 1 || !Files.isDirectory(files.get(0))) {
+                            throw new IOException("Not a valid world zip file");
+                        }
+
+                        root = files.get(0);
+                        fileName = FileUtils.getName(root);
+                    }
+                }
+
+                loadAndCheckLevelData(findLevelDatPath(root), null);
+                loadOtherData(root, false);
+                icon = loadIcon(root);
+            }
         } else {
             throw new IOException("Path " + file + " cannot be recognized as a Minecraft world");
         }
@@ -206,10 +229,14 @@ public final class World {
 
     private void loadAndCheckWorldData(Path levelDataPath) throws IOException {
         loadAndCheckLevelData(levelDataPath);
-        loadOtherData();
+        loadOtherData(file, true);
     }
 
     private void loadAndCheckLevelData(Path levelDatPath) throws IOException {
+        loadAndCheckLevelData(levelDatPath, levelDatPath);
+    }
+
+    private void loadAndCheckLevelData(Path levelDatPath, @Nullable Path writableLevelDatPath) throws IOException {
         CompoundTag levelData = NBTCodec.of().readTag(levelDatPath, TagType.COMPOUND);
         if (!(levelData.get("Data") instanceof CompoundTag data))
             throw new IOException("level.dat missing Data");
@@ -219,18 +246,17 @@ public final class World {
 
         if (!(data.get("LastPlayed") instanceof LongTag))
             throw new IOException("level.dat missing LastPlayed");
-        this.levelDataTag = new WorldDataSection(levelDatPath, levelData, data);
+        this.levelDataTag = new WorldDataSection(writableLevelDatPath, levelData, data);
     }
 
-    private void loadOtherData() throws IOException {
-
-        Path worldGenSettingsDatPath = file.resolve("data/minecraft/world_gen_settings.dat");
+    private void loadOtherData(Path root, boolean writable) throws IOException {
+        Path worldGenSettingsDatPath = root.resolve("data/minecraft/world_gen_settings.dat");
         if (getLevelDataTag().get("WorldGenSettings") instanceof CompoundTag worldGenSettingsTag) {
             this.worldGenSettingsTag = new WorldDataSection(null, worldGenSettingsTag, worldGenSettingsTag);
         } else if (Files.isRegularFile(worldGenSettingsDatPath)) {
             CompoundTag raw = NBTCodec.of().readTag(worldGenSettingsDatPath, TagType.COMPOUND);
             if (raw.get("data") instanceof CompoundTag compoundTag) {
-                this.worldGenSettingsTag = new WorldDataSection(worldGenSettingsDatPath, raw, compoundTag);
+                this.worldGenSettingsTag = new WorldDataSection(writable ? worldGenSettingsDatPath : null, raw, compoundTag);
             } else {
                 this.worldGenSettingsTag = new WorldDataSection(null, null, null);
             }
@@ -242,10 +268,10 @@ public final class World {
             this.playerTag = new WorldDataSection(null, playerTag, playerTag);
         } else if (getLevelDataTag().get("singleplayer_uuid") instanceof IntArrayTag uuidTag && uuidTag.isUUID()) {
             String playerUUID = uuidTag.getUUID().toString();
-            Path playerDatPath = file.resolve("players/data/" + playerUUID + ".dat");
+            Path playerDatPath = root.resolve("players/data/" + playerUUID + ".dat");
             if (Files.exists(playerDatPath)) {
                 CompoundTag playerTag = NBTCodec.of().readTag(playerDatPath, TagType.COMPOUND);
-                this.playerTag = new WorldDataSection(playerDatPath, playerTag, playerTag);
+                this.playerTag = new WorldDataSection(writable ? playerDatPath : null, playerTag, playerTag);
             } else {
                 this.playerTag = new WorldDataSection(null, null, null);
             }
@@ -255,7 +281,11 @@ public final class World {
     }
 
     public void reloadWorldData() throws IOException {
-        loadAndCheckWorldData(levelDataTag.nbtPath());
+        Path nbtPath = levelDataTag.nbtPath();
+        if (nbtPath == null) {
+            throw new IOException("Cannot reload read-only world data");
+        }
+        loadAndCheckWorldData(nbtPath);
     }
 
     // The renameWorld method do not modify the `file` field.
@@ -479,12 +509,12 @@ public final class World {
         }
     }
 
-    record WorldDataSection(Path nbtPath,
-                            CompoundTag nbtBackingTag, // Use for writing back to the file
-                            CompoundTag normalizedNbtTag // Use for reading/modification
+    record WorldDataSection(@Nullable Path nbtPath,
+                            @Nullable CompoundTag nbtBackingTag, // Use for writing back to the file
+                            @Nullable CompoundTag normalizedNbtTag // Use for reading/modification
     ) {
         public void write() throws IOException {
-            if (nbtPath != null) {
+            if (nbtPath != null && nbtBackingTag != null) {
                 FileUtils.saveSafely(nbtPath, os -> {
                     try (OutputStream gos = new GZIPOutputStream(os)) {
                         NBTCodec.of().writeTag(gos, nbtBackingTag);

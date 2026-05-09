@@ -183,18 +183,15 @@ public final class AdvancedVersionSettingPage extends StackPane implements Decor
             nativesDirSublist.setHasSubtitle(true);
             nativesDirCustomOption = new MultiFileItem.FileOption<>(i18n("settings.advanced.natives_directory.custom"), NativesDirectoryType.CUSTOM)
                     .setChooserTitle(i18n("settings.advanced.natives_directory.choose"))
-                    .setDirectory(true);
+                    .setSelectionMode(FileSelector.SelectionMode.DIRECTORY);
             nativesDirItem.loadChildren(Arrays.asList(
                     new MultiFileItem.Option<>(i18n("settings.advanced.natives_directory.default"), NativesDirectoryType.VERSION_FOLDER),
                     nativesDirCustomOption
             ));
-            HintPane nativesDirHint = new HintPane(MessageDialogPane.MessageType.WARNING);
-            nativesDirHint.setText(i18n("settings.advanced.natives_directory.hint"));
-            nativesDirItem.getChildren().add(nativesDirHint);
 
             graphicsBackendPane = new LineSelectButton<>();
             graphicsBackendPane.setTitle(i18n("settings.advanced.graphics_backend"));
-            graphicsBackendPane.setConverter(backend -> i18n("settings.advanced.graphics_backend." + backend.name().toLowerCase(Locale.ROOT)));
+            graphicsBackendPane.setNullSafeConverter(backend -> i18n("settings.advanced.graphics_backend." + backend.name().toLowerCase(Locale.ROOT)));
             graphicsBackendPane.setDescriptionConverter(backend -> switch (backend) {
                     case DEFAULT -> i18n("settings.advanced.graphics_backend.default.desc");
                     case OPENGL -> i18n("settings.advanced.graphics_backend.opengl.desc");
@@ -213,7 +210,7 @@ public final class AdvancedVersionSettingPage extends StackPane implements Decor
 
             rendererPane = new LineSelectButton<>();
             rendererPane.setTitle(i18n("settings.advanced.renderer"));
-            rendererPane.setConverter(e -> i18n("settings.advanced.renderer." + e.name().toLowerCase(Locale.ROOT)));
+            rendererPane.setNullSafeConverter(e -> i18n("settings.advanced.renderer." + e.name().toLowerCase(Locale.ROOT)));
             rendererPane.setDescriptionConverter(e -> {
                 String bundleKey = "settings.advanced.renderer." + e.name().toLowerCase(Locale.ROOT) + ".desc";
                 return I18n.hasKey(bundleKey) ? i18n(bundleKey) : null;

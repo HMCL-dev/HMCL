@@ -48,3 +48,9 @@ jobs:
         name: HMCL-${{ env.SHORT_SHA }}-sh
         path: HMCL/build/libs/HMCL-*.sh
         archive: false
+    - name: Upload DEB
+      uses: actions/upload-artifact@v7
+      with:
+        name: HMCL-${{ env.SHORT_SHA }}-deb
+        path: HMCL/build/libs/HMCL-*.deb
+        archive: false
