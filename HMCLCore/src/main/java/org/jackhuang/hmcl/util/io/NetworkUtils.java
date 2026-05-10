@@ -17,6 +17,7 @@
  */
 package org.jackhuang.hmcl.util.io;
 
+import org.glavo.url.WebURL;
 import org.jackhuang.hmcl.util.Pair;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jetbrains.annotations.NotNull;
@@ -436,16 +437,7 @@ public final class NetworkUtils {
 
     /// @throws IllegalArgumentException if the string is not a valid URI
     public static @NotNull URI toURI(@NotNull String uri) {
-        try {
-            return new URI(encodeLocation(uri));
-        } catch (URISyntaxException e) {
-            // Possibly an Internationalized Domain Name (IDN)
-            return URI.create(uri);
-        }
-    }
-
-    public static @NotNull URI toURI(@NotNull URL url) {
-        return toURI(url.toExternalForm());
+        return WebURL.toURI(uri);
     }
 
     public static @NotNull HttpResponse.ResponseInfo getResponseInfo(@NotNull HttpResponse<?> response) {
