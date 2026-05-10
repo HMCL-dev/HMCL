@@ -437,7 +437,7 @@ public final class NetworkUtils {
 
     /// @throws IllegalArgumentException if the string is not a valid URI
     public static @NotNull URI toURI(@NotNull String uri) {
-        return WebURL.toURI(uri);
+        return WebURL.parseBrowserInput(uri).toURI();
     }
 
     public static @NotNull HttpResponse.ResponseInfo getResponseInfo(@NotNull HttpResponse<?> response) {
