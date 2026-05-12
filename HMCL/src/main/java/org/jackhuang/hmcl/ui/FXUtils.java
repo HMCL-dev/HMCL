@@ -62,6 +62,7 @@ import javafx.stage.Stage;
 import javafx.util.Callback;
 import javafx.util.Duration;
 import javafx.util.StringConverter;
+import org.glavo.url.WebURL;
 import org.jackhuang.hmcl.setting.StyleSheets;
 import org.jackhuang.hmcl.task.CacheFileTask;
 import org.jackhuang.hmcl.task.Schedulers;
@@ -1166,10 +1167,10 @@ public final class FXUtils {
         }
     }
 
-    public static Image loadImage(URI uri) throws Exception {
-        URLConnection connection = NetworkUtils.createConnection(uri);
-        if (connection instanceof HttpURLConnection)
-            connection = NetworkUtils.resolveConnection((HttpURLConnection) connection);
+    public static Image loadImage(WebURL url) throws Exception {
+        URLConnection connection = NetworkUtils.createConnection(url);
+        if (connection instanceof HttpURLConnection httpConnection)
+            connection = NetworkUtils.resolveConnection(httpConnection);
 
         try (BufferedInputStream input = new BufferedInputStream(connection.getInputStream())) {
             String contentType = Objects.requireNonNull(connection.getContentType(), "");

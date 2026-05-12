@@ -206,7 +206,7 @@ public class DecoratorController {
                 String backgroundImageUrl = config().getBackgroundImageUrl();
                 if (backgroundImageUrl != null) {
                     try {
-                        image = FXUtils.loadImage(WebURL.parseBrowserInputToURI(backgroundImageUrl));
+                        image = FXUtils.loadImage(WebURL.parseBrowserInput(backgroundImageUrl));
                     } catch (Exception e) {
                         LOG.warning("Couldn't load background image", e);
                     }
