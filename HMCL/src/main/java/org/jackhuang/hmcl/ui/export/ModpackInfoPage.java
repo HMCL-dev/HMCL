@@ -316,7 +316,7 @@ public final class ModpackInfoPage extends Control implements WizardPage {
                     if (skinnable.options.isRequireAuthlibInjectorServer()) {
                         var serversSelectButton = new LineSelectButton<AuthlibInjectorServer>();
                         serversSelectButton.setTitle(i18n("account.injector.server"));
-                        serversSelectButton.setConverter(AuthlibInjectorServer::getName);
+                        serversSelectButton.setNullSafeConverter(AuthlibInjectorServer::getName);
                         serversSelectButton.setDescriptionConverter(AuthlibInjectorServer::getUrl);
                         serversSelectButton.itemsProperty().set(config().getAuthlibInjectorServers());
 

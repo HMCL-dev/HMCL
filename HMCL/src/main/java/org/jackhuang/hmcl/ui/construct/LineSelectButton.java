@@ -34,6 +34,7 @@ import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
 import org.jackhuang.hmcl.util.javafx.MappedObservableList;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.UnknownNullability;
 
 import java.util.Collection;
 import java.util.Objects;
@@ -42,7 +43,7 @@ import java.util.function.Function;
 import static org.jackhuang.hmcl.ui.FXUtils.determineOptimalPopupPosition;
 
 /// @author Glavo
-public class LineSelectButton<T> extends LineButton {
+public class LineSelectButton<T extends @UnknownNullability Object> extends LineButton {
 
     private static final String DEFAULT_STYLE_CLASS = "line-select-button";
     private static final PseudoClass SELECTED_PSEUDO_CLASS = PseudoClass.getPseudoClass("selected");
@@ -164,12 +165,12 @@ public class LineSelectButton<T> extends LineButton {
         return converterProperty().get();
     }
 
-    public void setConverter(Function<@NotNull T, String> value) { // TODO: rename
-        converterProperty().set(it -> it != null ? value.apply(it) : "");
+    public void setConverter(Function<T, String> value) { // TODO: rename
+        converterProperty().set(value);
     }
 
-    public void setConverter2(Function<T, String> value) { // TODO: rename
-        converterProperty().set(value);
+    public void setNullSafeConverter(Function<@NotNull T, String> value) {
+        converterProperty().set(it -> it != null ? value.apply(it) : "");
     }
 
     private ObjectProperty<Function<T, String>> descriptionConverter;

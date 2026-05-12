@@ -23,7 +23,6 @@ import com.jfoenix.controls.JFXComboBox;
 import com.jfoenix.controls.JFXListView;
 import com.jfoenix.controls.JFXRadioButton;
 import com.jfoenix.controls.JFXTextField;
-import com.jfoenix.controls.JFXToggleButton;
 import javafx.event.ActionEvent;
 import javafx.beans.InvalidationListener;
 import javafx.beans.Observable;
@@ -167,7 +166,7 @@ public final class GameSettingPage<S extends GameSetting> extends StackPane
                 var parentGameSettingPane = new LineSelectButton<GameSetting.Global>();
                 basicSettings.getContent().add(parentGameSettingPane);
                 parentGameSettingPane.setTitle("全局游戏设置"); // TODO: i18n
-                parentGameSettingPane.setConverter2(setting -> setting != null ? setting.nameProperty().getValue() : "默认全局设置"); // TODO: i18n
+                parentGameSettingPane.setConverter(setting -> setting != null ? setting.nameProperty().getValue() : "默认全局设置"); // TODO: i18n
                 bindInstanceParentSetting(parentGameSettingPane);
             }
 
@@ -297,7 +296,7 @@ public final class GameSettingPage<S extends GameSetting> extends StackPane
                 basicSettings.getContent().add(defaultIsolationTypePane);
                 defaultIsolationTypePane.setTitle("默认版本隔离策略"); // TODO: i18n
                 defaultIsolationTypePane.setItems(DefaultIsolationType.values());
-                defaultIsolationTypePane.setConverter(type -> switch (type) {
+                defaultIsolationTypePane.setNullSafeConverter(type -> switch (type) {
                     case NEVER -> "从不隔离"; // TODO: i18n
                     case ALWAYS -> "总是隔离"; // TODO: i18n
                     case MODED -> "仅隔离模组实例"; // TODO: i18n
@@ -622,7 +621,7 @@ public final class GameSettingPage<S extends GameSetting> extends StackPane
         var graphicsBackendPane = new LineSelectButton<GraphicsAPI>();
         advancedSettings.getContent().add(graphicsBackendPane);
         graphicsBackendPane.setTitle(i18n("settings.advanced.graphics_backend"));
-        graphicsBackendPane.setConverter2(backend -> backend != null
+        graphicsBackendPane.setConverter(backend -> backend != null
                 ? i18n("settings.advanced.graphics_backend." + backend.name().toLowerCase(Locale.ROOT))
                 : I18N_INHERIT_GLOBAL_SETTING);
         graphicsBackendPane.setDescriptionConverter(backend -> {
@@ -650,7 +649,7 @@ public final class GameSettingPage<S extends GameSetting> extends StackPane
         var rendererPane = new LineSelectButton<Renderer>();
         advancedSettings.getContent().add(rendererPane);
         rendererPane.setTitle(i18n("settings.advanced.renderer"));
-        rendererPane.setConverter2(e -> e != null
+        rendererPane.setConverter(e -> e != null
                 ? i18n("settings.advanced.renderer." + e.name().toLowerCase(Locale.ROOT))
                 : I18N_INHERIT_GLOBAL_SETTING);
         rendererPane.setDescriptionConverter(e -> {
@@ -1227,7 +1226,7 @@ public final class GameSettingPage<S extends GameSetting> extends StackPane
     ) {
         var button = new LineSelectButton<@Nullable T>();
 
-        button.setConverter2(value -> value != null ? convert.apply(value) : I18N_INHERIT_GLOBAL_SETTING);
+        button.setConverter(value -> value != null ? convert.apply(value) : I18N_INHERIT_GLOBAL_SETTING);
 
         if (descriptionConverter != null)
             button.setDescriptionConverter(value -> value != null ? descriptionConverter.apply(value) : null); // TODO
