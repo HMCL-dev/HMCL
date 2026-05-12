@@ -17,6 +17,7 @@
  */
 package org.jackhuang.hmcl.util.io;
 
+import org.glavo.url.WebURL;
 import org.jackhuang.hmcl.util.Pair;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jetbrains.annotations.NotNull;
@@ -24,9 +25,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.*;
 import java.net.*;
-import java.net.http.HttpClient;
-import java.net.http.HttpHeaders;
-import java.net.http.HttpResponse;
 import java.nio.charset.Charset;
 import java.util.*;
 import java.util.Map.Entry;
@@ -162,10 +160,10 @@ public final class NetworkUtils {
         }
     }
 
-    public static URLConnection createConnection(URI uri) throws IOException {
+    public static URLConnection createConnection(WebURL url) throws IOException {
         URLConnection connection;
         try {
-            connection = uri.toURL().openConnection();
+            connection = url.toURL().openConnection();
         } catch (IllegalArgumentException | MalformedURLException e) {
             throw new IOException(e);
         }
@@ -179,8 +177,16 @@ public final class NetworkUtils {
         return connection;
     }
 
+    public static URLConnection createConnection(URI uri) throws IOException {
+        return createConnection(WebURL.of(uri));
+    }
+
+    public static HttpURLConnection createHttpConnection(WebURL url) throws IOException {
+        return (HttpURLConnection) createConnection(url);
+    }
+
     public static HttpURLConnection createHttpConnection(String url) throws IOException {
-        return (HttpURLConnection) createConnection(toURI(url));
+        return (HttpURLConnection) createConnection(WebURL.parse(url));
     }
 
     public static HttpURLConnection createHttpConnection(URI url) throws IOException {
@@ -436,24 +442,7 @@ public final class NetworkUtils {
 
     /// @throws IllegalArgumentException if the string is not a valid URI
     public static @NotNull URI toURI(@NotNull String uri) {
-        try {
-            return new URI(encodeLocation(uri));
-        } catch (URISyntaxException e) {
-            // Possibly an Internationalized Domain Name (IDN)
-            return URI.create(uri);
-        }
-    }
-
-    public static @NotNull URI toURI(@NotNull URL url) {
-        return toURI(url.toExternalForm());
-    }
-
-    public static @NotNull HttpResponse.ResponseInfo getResponseInfo(@NotNull HttpResponse<?> response) {
-        record ResponseInfoImpl(int statusCode, HttpHeaders headers, HttpClient.Version version)
-                implements HttpResponse.ResponseInfo {
-        }
-
-        return new ResponseInfoImpl(response.statusCode(), response.headers(), response.version());
+        return WebURL.toURI(uri);
     }
 
     public static @Nullable URI toURIOrNull(String uri) {
