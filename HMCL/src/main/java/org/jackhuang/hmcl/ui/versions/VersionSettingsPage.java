@@ -239,7 +239,7 @@ public final class VersionSettingsPage extends StackPane implements DecoratorPag
             gameDirItem.disableProperty().bind(modpack);
             gameDirCustomOption = new MultiFileItem.FileOption<>(i18n("settings.custom"), GameDirectoryType.CUSTOM)
                     .setChooserTitle(i18n("settings.game.working_directory.choose"))
-                    .setDirectory(true);
+                    .setSelectionMode(FileSelector.SelectionMode.DIRECTORY);
 
             gameDirItem.loadChildren(Arrays.asList(
                     new MultiFileItem.Option<>(i18n("settings.advanced.game_dir.default"), GameDirectoryType.ROOT_FOLDER),
@@ -336,7 +336,7 @@ public final class VersionSettingsPage extends StackPane implements DecoratorPag
             launcherVisibilityPane = new LineSelectButton<>();
             launcherVisibilityPane.setTitle(i18n("settings.advanced.launcher_visible"));
             launcherVisibilityPane.setItems(LauncherVisibility.values());
-            launcherVisibilityPane.setConverter(e -> i18n("settings.advanced.launcher_visibility." + e.name().toLowerCase(Locale.ROOT)));
+            launcherVisibilityPane.setNullSafeConverter(e -> i18n("settings.advanced.launcher_visibility." + e.name().toLowerCase(Locale.ROOT)));
 
             BorderPane dimensionPane = new BorderPane();
             {
@@ -372,7 +372,7 @@ public final class VersionSettingsPage extends StackPane implements DecoratorPag
             enableDebugLogOutputPane.setTitle(i18n("settings.enable_debug_log_output"));
             processPriorityPane = new LineSelectButton<>();
             processPriorityPane.setTitle(i18n("settings.advanced.process_priority"));
-            processPriorityPane.setConverter(e -> i18n("settings.advanced.process_priority." + e.name().toLowerCase(Locale.ROOT)));
+            processPriorityPane.setNullSafeConverter(e -> i18n("settings.advanced.process_priority." + e.name().toLowerCase(Locale.ROOT)));
             processPriorityPane.setDescriptionConverter(e -> {
                 String bundleKey = "settings.advanced.process_priority." + e.name().toLowerCase(Locale.ROOT) + ".desc";
                 return I18n.hasKey(bundleKey) ? i18n(bundleKey) : null;
