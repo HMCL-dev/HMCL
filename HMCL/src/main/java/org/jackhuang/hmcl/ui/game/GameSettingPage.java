@@ -63,6 +63,7 @@ import org.jackhuang.hmcl.util.i18n.I18n;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.platform.Architecture;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
+import org.jackhuang.hmcl.util.platform.Platform;
 import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
@@ -297,10 +298,10 @@ public final class GameSettingPage<S extends GameSetting> extends StackPane
                 defaultIsolationTypePane.setTitle("默认版本隔离策略"); // TODO: i18n
                 defaultIsolationTypePane.setItems(DefaultIsolationType.values());
                 defaultIsolationTypePane.setNullSafeConverter(type -> switch (type) {
-                    case NEVER -> "从不隔离"; // TODO: i18n
-                    case ALWAYS -> "总是隔离"; // TODO: i18n
-                    case MODED -> "仅隔离模组实例"; // TODO: i18n
-                }); // TODO: i18n
+                        case NEVER -> "从不隔离"; // TODO: i18n
+                        case ALWAYS -> "总是隔离"; // TODO: i18n
+                        case MODED -> "仅隔离模组实例"; // TODO: i18n
+                    }); // TODO: i18n
 
                 bindGlobalSettingBidirectional(defaultIsolationTypePane.valueProperty(), GameSetting.Global::defaultIsolationTypeProperty);
             } else {
@@ -357,19 +358,32 @@ public final class GameSettingPage<S extends GameSetting> extends StackPane
             launcherVisibilityPane.setTitle(i18n("settings.advanced.launcher_visible"));
 
             // Game Window Setting
-            var windowTypePane = createInheritableButton(
-                    GameSetting::windowTypeProperty,
-                    type -> switch (type) {
-                        // TODO: i18n
-                        case FULLSCREEN -> "全屏"; // TODO: i18n
-                        case MAXIMIZED -> "最大化"; // TODO: i18n
-                        case WINDOWED -> "窗口化"; // TODO: i18n
-                    },
-                    null,
-                    GameWindowType.values()
-            );
-            basicSettings.getContent().add(windowTypePane);
-            windowTypePane.setTitle("游戏窗口类型"); // TODO: i18n
+            var windowTypeSublist = new ComponentSublist();
+            basicSettings.getContent().add(windowTypeSublist);
+            windowTypeSublist.setTitle("游戏窗口类型"); // TODO: i18n
+            windowTypeSublist.setHasSubtitle(true);
+            {
+                var windowTypeItem = new MultiFileItem<@Nullable GameWindowType>();
+                var windowTypeOptions = new ArrayList<MultiFileItem.Option<@Nullable GameWindowType>>();
+                if (isGlobalSetting) {
+                    windowTypeItem.setFallbackData(GameWindowType.WINDOWED);
+                } else {
+                    windowTypeOptions.add(new MultiFileItem.Option<>(I18N_INHERIT_GLOBAL_SETTING, null));
+                    windowTypeItem.setFallbackData(null);
+                }
+
+                for (GameWindowType type : GameWindowType.values()) {
+                    windowTypeOptions.add(new MultiFileItem.Option<>(getWindowTypeDisplayName(type), type));
+                }
+
+                windowTypeItem.loadChildren(windowTypeOptions);
+                windowTypeSublist.getContent().add(windowTypeItem);
+                bindInheritableMultiFileItem(windowTypeItem, GameSetting::windowTypeProperty);
+                bindInheritableSublistSubtitle(
+                        windowTypeSublist,
+                        GameSetting::windowTypeProperty,
+                        GameSettingPage::getWindowTypeDisplayName);
+            }
 
             var windowSizePane = new LinePane();
             basicSettings.getContent().add(windowSizePane);
@@ -596,27 +610,57 @@ public final class GameSettingPage<S extends GameSetting> extends StackPane
             bindSettingBidirectional(txtEnvironmentVariables.textProperty(), GameSetting::environmentVariablesProperty);
         }
 
-        var nativesDirTypePane = createInheritableButton(
-                GameSetting::nativesDirTypeProperty,
-                type -> switch (type) {
-                    case VERSION_FOLDER -> "版本文件夹"; // TODO: i18n
-                    case CUSTOM -> i18n("settings.custom");
-                },
-                null,
-                NativesDirectoryType.values()
+        var nativesSettings = new ComponentList();
+        rootPane.getChildren().addAll(
+                ComponentList.createComponentListTitle(i18n("settings.advanced.natives")),
+                nativesSettings
         );
-        advancedSettings.getContent().add(nativesDirTypePane);
-        nativesDirTypePane.setTitle("本机库目录"); // TODO: i18n
 
-        var nativesDirPane = new LinePane();
-        advancedSettings.getContent().add(nativesDirPane);
-        nativesDirPane.setTitle(i18n("settings.custom"));
+        var nativesDirSublist = new ComponentSublist();
+        nativesSettings.getContent().add(nativesDirSublist);
+        nativesDirSublist.setTitle(i18n("settings.advanced.natives_directory"));
+        nativesDirSublist.setHasSubtitle(true);
         {
-            var txtNativesDir = new JFXTextField();
-            txtNativesDir.setPrefWidth(400);
-            nativesDirPane.setRight(txtNativesDir);
-            bindSettingBidirectional(txtNativesDir.textProperty(), GameSetting::nativesDirProperty);
+            var nativesDirItem = new MultiFileItem<@Nullable NativesDirectoryType>();
+            nativesDirSublist.getContent().add(nativesDirItem);
+
+            var nativesDirOptions = new ArrayList<MultiFileItem.Option<@Nullable NativesDirectoryType>>();
+            if (isGlobalSetting) {
+                nativesDirItem.setFallbackData(NativesDirectoryType.VERSION_FOLDER);
+            } else {
+                nativesDirOptions.add(new MultiFileItem.Option<>(I18N_INHERIT_GLOBAL_SETTING, null));
+                nativesDirItem.setFallbackData(null);
+            }
+
+            var nativesDirCustomOption = new MultiFileItem.FileOption<@Nullable NativesDirectoryType>(
+                    i18n("settings.advanced.natives_directory.custom"),
+                    NativesDirectoryType.CUSTOM
+            ).setChooserTitle(i18n("settings.advanced.natives_directory.choose"))
+                    .setSelectionMode(FileSelector.SelectionMode.DIRECTORY);
+            nativesDirOptions.addAll(List.of(
+                    new MultiFileItem.Option<>(i18n("settings.advanced.natives_directory.default"), NativesDirectoryType.VERSION_FOLDER),
+                    nativesDirCustomOption
+            ));
+
+            nativesDirItem.loadChildren(nativesDirOptions);
+            bindInheritableMultiFileItem(nativesDirItem, GameSetting::nativesDirTypeProperty);
+            bindSettingBidirectional(nativesDirCustomOption.valueProperty(), GameSetting::nativesDirProperty);
+            bindNativesDirSubtitle(nativesDirSublist);
         }
+
+        var noNativesPatchPane = createInheritableBooleanButton(GameSetting::notPatchNativesProperty);
+        nativesSettings.getContent().add(noNativesPatchPane);
+        noNativesPatchPane.setTitle(i18n("settings.advanced.dont_patch_natives"));
+
+        var useNativeGLFWPane = createInheritableBooleanButton(GameSetting::useNativeGLFWProperty);
+        useNativeGLFWPane.setTitle(i18n("settings.advanced.use_native_glfw"));
+        useNativeGLFWPane.setSubtitle(i18n("settings.advanced.linux_freebsd_only"));
+
+        var useNativeOpenALPane = createInheritableBooleanButton(GameSetting::useNativeOpenALProperty);
+        useNativeOpenALPane.setTitle(i18n("settings.advanced.use_native_openal"));
+        useNativeOpenALPane.setSubtitle(i18n("settings.advanced.linux_freebsd_only"));
+
+        nativesSettings.getContent().addAll(useNativeGLFWPane, useNativeOpenALPane);
 
         var graphicsBackendPane = new LineSelectButton<GraphicsAPI>();
         advancedSettings.getContent().add(graphicsBackendPane);
@@ -699,28 +743,6 @@ public final class GameSettingPage<S extends GameSetting> extends StackPane
         var noJVMCheckPane = createInheritableBooleanButton(GameSetting::notCheckJVMProperty);
         advancedSettings.getContent().add(noJVMCheckPane);
         noJVMCheckPane.setTitle(i18n("settings.advanced.dont_check_jvm_validity"));
-
-        var noNativesPatchPane = createInheritableBooleanButton(GameSetting::notPatchNativesProperty);
-        advancedSettings.getContent().add(noNativesPatchPane);
-        noNativesPatchPane.setTitle(i18n("settings.advanced.dont_patch_natives"));
-
-        var useNativeGLFWPane = createInheritableBooleanButton(GameSetting::useNativeGLFWProperty);
-        useNativeGLFWPane.setTitle(i18n("settings.advanced.use_native_glfw"));
-        useNativeGLFWPane.setSubtitle(i18n("settings.advanced.linux_freebsd_only"));
-
-        var useNativeOpenALPane = createInheritableBooleanButton(GameSetting::useNativeOpenALProperty);
-        useNativeOpenALPane.setTitle(i18n("settings.advanced.use_native_openal"));
-        useNativeOpenALPane.setSubtitle(i18n("settings.advanced.linux_freebsd_only"));
-
-        if (OperatingSystem.CURRENT_OS.isLinuxOrBSD()) {
-            advancedSettings.getContent().add(useNativeGLFWPane);
-            advancedSettings.getContent().add(useNativeOpenALPane);
-        } else {
-            ComponentSublist unsupportedOptionsSublist = new ComponentSublist();
-            unsupportedOptionsSublist.setTitle(i18n("settings.advanced.unsupported_system_options"));
-            unsupportedOptionsSublist.getContent().addAll(useNativeGLFWPane, useNativeOpenALPane);
-            advancedSettings.getContent().add(unsupportedOptionsSublist);
-        }
 
         if (isGlobalSetting) {
             editorNodes.clear();
@@ -1191,6 +1213,193 @@ public final class GameSettingPage<S extends GameSetting> extends StackPane
         if (setting != null) {
             property.bindBidirectional(propertyGetter.apply(setting));
         }
+    }
+
+    private <T> void bindInheritableMultiFileItem(MultiFileItem<@Nullable T> item, Function<S, InheritableProperty<T>> propertyGetter) {
+        ObjectProperty<@Nullable InheritableProperty<T>> activeProperty = new SimpleObjectProperty<>();
+        final boolean[] updating = {false};
+
+        InvalidationListener propertyListener = observable -> {
+            InheritableProperty<T> property = activeProperty.get();
+            if (property == null || updating[0]) {
+                return;
+            }
+
+            updating[0] = true;
+            try {
+                @Nullable T value = property.getValue();
+                item.setSelectedData(isGlobalSetting && value == null ? property.defaultValue() : value);
+            } finally {
+                updating[0] = false;
+            }
+        };
+
+        ChangeListener<@Nullable T> itemListener = (observable, oldValue, newValue) -> {
+            InheritableProperty<T> property = activeProperty.get();
+            if (property == null || updating[0]) {
+                return;
+            }
+
+            updating[0] = true;
+            try {
+                property.setValue(newValue);
+            } finally {
+                updating[0] = false;
+            }
+        };
+
+        item.selectedDataProperty().addListener(itemListener);
+        currentSetting.addListener((observable, oldValue, newValue) -> {
+            InheritableProperty<T> oldProperty = activeProperty.get();
+            if (oldProperty != null) {
+                oldProperty.removeListener(propertyListener);
+            }
+
+            InheritableProperty<T> newProperty = newValue != null ? propertyGetter.apply(newValue) : null;
+            activeProperty.set(newProperty);
+            if (newProperty != null) {
+                newProperty.addListener(propertyListener);
+            }
+            propertyListener.invalidated(newProperty);
+        });
+
+        S setting = currentSetting.get();
+        if (setting != null) {
+            InheritableProperty<T> property = propertyGetter.apply(setting);
+            activeProperty.set(property);
+            property.addListener(propertyListener);
+            propertyListener.invalidated(property);
+        }
+    }
+
+    private <T> void bindInheritableSublistSubtitle(ComponentSublist sublist,
+                                                    Function<S, InheritableProperty<T>> propertyGetter,
+                                                    Function<T, String> converter) {
+        InvalidationListener propertyListener = observable -> initInheritableSublistSubtitle(sublist, propertyGetter, converter);
+
+        currentSetting.addListener((observable, oldValue, newValue) -> {
+            if (oldValue != null) {
+                propertyGetter.apply(oldValue).removeListener(propertyListener);
+            }
+
+            if (newValue != null) {
+                propertyGetter.apply(newValue).addListener(propertyListener);
+            }
+
+            initInheritableSublistSubtitle(sublist, propertyGetter, converter);
+        });
+
+        S setting = currentSetting.get();
+        if (setting != null) {
+            propertyGetter.apply(setting).addListener(propertyListener);
+        }
+        initInheritableSublistSubtitle(sublist, propertyGetter, converter);
+    }
+
+    private <T> void initInheritableSublistSubtitle(ComponentSublist sublist,
+                                                   Function<S, InheritableProperty<T>> propertyGetter,
+                                                   Function<T, String> converter) {
+        S setting = currentSetting.get();
+        if (setting == null) {
+            sublist.setSubtitle("");
+            return;
+        }
+
+        InheritableProperty<T> property = propertyGetter.apply(setting);
+        @Nullable T value = property.getValue();
+        if (value != null) {
+            sublist.setSubtitle(converter.apply(value));
+        } else if (isGlobalSetting) {
+            sublist.setSubtitle(converter.apply(property.defaultValue()));
+        } else {
+            sublist.setSubtitle(I18N_INHERIT_GLOBAL_SETTING);
+        }
+    }
+
+    private void bindNativesDirSubtitle(ComponentSublist sublist) {
+        InvalidationListener propertyListener = observable -> initNativesDirSubtitle(sublist);
+
+        currentSetting.addListener((observable, oldValue, newValue) -> {
+            if (oldValue != null) {
+                oldValue.nativesDirTypeProperty().removeListener(propertyListener);
+                oldValue.nativesDirProperty().removeListener(propertyListener);
+            }
+
+            if (newValue != null) {
+                newValue.nativesDirTypeProperty().addListener(propertyListener);
+                newValue.nativesDirProperty().addListener(propertyListener);
+            }
+
+            initNativesDirSubtitle(sublist);
+        });
+
+        S setting = currentSetting.get();
+        if (setting != null) {
+            setting.nativesDirTypeProperty().addListener(propertyListener);
+            setting.nativesDirProperty().addListener(propertyListener);
+        }
+        initNativesDirSubtitle(sublist);
+    }
+
+    private void initNativesDirSubtitle(ComponentSublist sublist) {
+        S setting = currentSetting.get();
+        if (setting == null) {
+            sublist.setSubtitle("");
+            return;
+        }
+
+        NativesDirectoryType nativesDirType;
+        @Nullable String nativesDir;
+        if (profile != null && instanceId != null) {
+            GameSetting.Effective effectiveSetting = profile.getRepository().getEffectiveGameSetting(instanceId);
+            nativesDirType = effectiveSetting.getNativesDirType();
+            nativesDir = effectiveSetting.getNativesDir();
+        } else {
+            nativesDirType = setting.nativesDirTypeProperty().getValue();
+            if (nativesDirType == null) {
+                nativesDirType = isGlobalSetting ? setting.nativesDirTypeProperty().defaultValue() : null;
+            }
+            nativesDir = setting.nativesDirProperty().getValue();
+        }
+
+        if (nativesDirType == null) {
+            sublist.setSubtitle(I18N_INHERIT_GLOBAL_SETTING);
+        } else if (nativesDirType == NativesDirectoryType.VERSION_FOLDER) {
+            sublist.setSubtitle(getDefaultNativesDir());
+        } else {
+            sublist.setSubtitle(nativesDir != null ? nativesDir : "");
+        }
+    }
+
+    private String getDefaultNativesDir() {
+        String nativesDirName = "natives-" + Platform.SYSTEM_PLATFORM;
+        if (profile == null) {
+            return nativesDirName;
+        }
+
+        if (instanceId == null) {
+            return profile.getRepository().getBaseDirectory()
+                    .resolve("versions")
+                    .toAbsolutePath()
+                    .normalize()
+                    .resolve(i18n("settings.advanced.natives_directory.default.version_id"))
+                    .resolve(nativesDirName)
+                    .toString();
+        }
+
+        return profile.getRepository().getVersionRoot(instanceId)
+                .toAbsolutePath()
+                .normalize()
+                .resolve(nativesDirName)
+                .toString();
+    }
+
+    private static String getWindowTypeDisplayName(GameWindowType type) {
+        return switch (type) {
+            case FULLSCREEN -> "全屏"; // TODO: i18n
+            case MAXIMIZED -> "最大化"; // TODO: i18n
+            case WINDOWED -> "窗口化"; // TODO: i18n
+        };
     }
 
     @SuppressWarnings("unchecked")
