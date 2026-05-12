@@ -25,9 +25,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.*;
 import java.net.*;
-import java.net.http.HttpClient;
-import java.net.http.HttpHeaders;
-import java.net.http.HttpResponse;
 import java.nio.charset.Charset;
 import java.util.*;
 import java.util.Map.Entry;
@@ -446,14 +443,6 @@ public final class NetworkUtils {
     /// @throws IllegalArgumentException if the string is not a valid URI
     public static @NotNull URI toURI(@NotNull String uri) {
         return WebURL.toURI(uri);
-    }
-
-    public static @NotNull HttpResponse.ResponseInfo getResponseInfo(@NotNull HttpResponse<?> response) {
-        record ResponseInfoImpl(int statusCode, HttpHeaders headers, HttpClient.Version version)
-                implements HttpResponse.ResponseInfo {
-        }
-
-        return new ResponseInfoImpl(response.statusCode(), response.headers(), response.version());
     }
 
     public static @Nullable URI toURIOrNull(String uri) {
