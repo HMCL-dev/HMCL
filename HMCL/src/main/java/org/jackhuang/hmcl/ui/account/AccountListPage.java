@@ -47,6 +47,7 @@ import org.jackhuang.hmcl.ui.construct.ClassTitle;
 import org.jackhuang.hmcl.ui.decorator.DecoratorAnimatedPage;
 import org.jackhuang.hmcl.ui.decorator.DecoratorPage;
 import org.jackhuang.hmcl.util.i18n.LocaleUtils;
+import org.jackhuang.hmcl.util.io.NetworkUtils;
 import org.jackhuang.hmcl.util.javafx.BindingMapping;
 import org.jackhuang.hmcl.util.javafx.MappedObservableList;
 
@@ -152,7 +153,7 @@ public final class AccountListPage extends DecoratorAnimatedPage implements Deco
                         item.titleProperty().bind(title);
                         String host = "";
                         try {
-                            host = WebURL.toURI(server.getUrl()).getHost();
+                            host = NetworkUtils.toURI(server.getUrl()).getHost();
                         } catch (IllegalArgumentException e) {
                             LOG.warning("Unparsable authlib-injector server url " + server.getUrl(), e);
                         }
