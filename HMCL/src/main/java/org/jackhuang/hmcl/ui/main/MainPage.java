@@ -23,8 +23,6 @@ import javafx.animation.KeyFrame;
 import javafx.animation.KeyValue;
 import javafx.animation.Timeline;
 import javafx.beans.property.*;
-import javafx.beans.value.ChangeListener;
-import javafx.beans.value.ObservableValue;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.event.EventHandler;
@@ -373,17 +371,9 @@ public final class MainPage extends StackPane implements DecoratorPage {
 
     public void onSwitchToStableChannel() {
         Controllers.confirm(i18n("update.switch_to_stable.confirm"), i18n("update.switch_to_stable.title"), () -> {
-            UpdateChecker.requestCheckUpdate(UpdateChannel.STABLE, config().acceptPreviewUpdateProperty().get());
-            UpdateChecker.checkingUpdateProperty().addListener(new ChangeListener<>() {
-                @Override
-                public void changed(ObservableValue<? extends Boolean> observable, Boolean old, Boolean now) {
-                    if (!now) {
-                        UpdateChecker.checkingUpdateProperty().removeListener(this);
-                        RemoteVersion target = UpdateChecker.getLatestVersion();
-                        if (target != null) {
-                            UpdateHandler.updateFrom(target);
-                        }
-                    }
+            UpdateChecker.requestCheckUpdate(UpdateChannel.STABLE, config().acceptPreviewUpdateProperty().get(), target -> {
+                if (target != null) {
+                    UpdateHandler.updateFrom(target);
                 }
             });
         }, null);

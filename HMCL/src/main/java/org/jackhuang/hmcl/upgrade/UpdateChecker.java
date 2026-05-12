@@ -25,9 +25,11 @@ import javafx.beans.value.ObservableBooleanValue;
 import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.util.io.NetworkUtils;
 import org.jackhuang.hmcl.util.versioning.VersionNumber;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.util.LinkedHashMap;
+import java.util.function.Consumer;
 
 import static org.jackhuang.hmcl.setting.ConfigHolder.config;
 import static org.jackhuang.hmcl.util.Lang.*;
@@ -102,6 +104,11 @@ public final class UpdateChecker {
     }
 
     public static void requestCheckUpdate(UpdateChannel channel, boolean preview) {
+        requestCheckUpdate(channel, preview, null);
+    }
+
+    public static void requestCheckUpdate(UpdateChannel channel, boolean preview,
+                                          @Nullable Consumer<@Nullable RemoteVersion> callback) {
         Platform.runLater(() -> {
             if (isCheckingUpdate())
                 return;
@@ -118,10 +125,14 @@ public final class UpdateChecker {
 
                 RemoteVersion finalResult = result;
                 Platform.runLater(() -> {
+                    checkingUpdate.set(false);
                     if (finalResult != null) {
                         latestVersion.set(finalResult);
                     }
-                    checkingUpdate.set(false);
+
+                    if (callback != null) {
+                        callback.accept(finalResult);
+                    }
                 });
             }, "Update Checker", true);
         });
