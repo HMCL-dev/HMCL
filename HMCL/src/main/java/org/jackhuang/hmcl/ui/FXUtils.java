@@ -1166,9 +1166,7 @@ public final class FXUtils {
         }
     }
 
-    public static Image loadImage(String url) throws Exception {
-        URI uri = NetworkUtils.toURI(url);
-
+    public static Image loadImage(URI uri) throws Exception {
         URLConnection connection = NetworkUtils.createConnection(uri);
         if (connection instanceof HttpURLConnection)
             connection = NetworkUtils.resolveConnection((HttpURLConnection) connection);

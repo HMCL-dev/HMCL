@@ -30,6 +30,8 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Optional;
 
+import org.glavo.url.WebURL;
+import org.glavo.url.WebURLParseException;
 import org.jackhuang.hmcl.auth.yggdrasil.YggdrasilService;
 import org.jackhuang.hmcl.util.io.HttpRequest;
 import org.jackhuang.hmcl.util.io.NetworkUtils;
@@ -58,13 +60,17 @@ public class AuthlibInjectorServer implements Observable {
     public static AuthlibInjectorServer locateServer(String url) throws IOException {
         try {
             url = NetworkUtils.addHttpsIfMissing(url);
-            HttpURLConnection conn = NetworkUtils.createHttpConnection(url);
+
+            WebURL webURL = WebURL.parseBrowserInput(url);
+            url = webURL.toString();
+
+            HttpURLConnection conn = NetworkUtils.createHttpConnection(webURL);
             conn = NetworkUtils.resolveConnection(conn);
 
             String ali = conn.getHeaderField("x-authlib-injector-api-location");
             if (ali != null) {
-                URI absoluteAli = conn.getURL().toURI().resolve(NetworkUtils.toURI(ali));
-                if (!urlEqualsIgnoreSlash(url, absoluteAli.toString())) {
+                WebURL absoluteAli = WebURL.parse(ali, WebURL.of(conn.getURL()));
+                if (!urlEqualsIgnoreSlash(webURL.toString(), absoluteAli.toString())) {
                     conn.disconnect();
                     url = absoluteAli.toString();
                     conn = NetworkUtils.resolveConnection(NetworkUtils.createHttpConnection(absoluteAli));
@@ -81,7 +87,7 @@ public class AuthlibInjectorServer implements Observable {
             } finally {
                 conn.disconnect();
             }
-        } catch (IllegalArgumentException | URISyntaxException e) {
+        } catch (IllegalArgumentException e) {
             throw new IOException(e);
         }
     }

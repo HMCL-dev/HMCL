@@ -35,6 +35,7 @@ import javafx.scene.control.Skin;
 import javafx.scene.control.Tooltip;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
+import org.glavo.url.WebURL;
 import org.jackhuang.hmcl.auth.Account;
 import org.jackhuang.hmcl.auth.authlibinjector.AuthlibInjectorServer;
 import org.jackhuang.hmcl.setting.Accounts;
@@ -152,7 +153,7 @@ public final class AccountListPage extends DecoratorAnimatedPage implements Deco
                         item.titleProperty().bind(title);
                         String host = "";
                         try {
-                            host = NetworkUtils.toURI(server.getUrl()).getHost();
+                            host = WebURL.toURI(server.getUrl()).getHost();
                         } catch (IllegalArgumentException e) {
                             LOG.warning("Unparsable authlib-injector server url " + server.getUrl(), e);
                         }
