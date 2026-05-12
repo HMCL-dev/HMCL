@@ -41,6 +41,7 @@ import javafx.scene.control.Label;
 import javafx.scene.control.ListCell;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.control.Toggle;
+import javafx.scene.control.ToggleGroup;
 import javafx.scene.layout.*;
 import javafx.stage.FileChooser;
 import javafx.stage.Screen;
@@ -372,8 +373,19 @@ public final class GameSettingPage<S extends GameSetting> extends StackPane
                     windowTypeItem.setFallbackData(null);
                 }
 
+                var cboWindowSize = new JFXComboBox<String>();
+                cboWindowSize.setPrefWidth(150);
+                cboWindowSize.setEditable(true);
+                cboWindowSize.setPromptText("854x480"); // TODO: i18n
+                cboWindowSize.getItems().setAll(getSupportedResolutions());
+                bindWindowSizeComboBox(cboWindowSize);
+
                 for (GameWindowType type : GameWindowType.values()) {
-                    windowTypeOptions.add(new MultiFileItem.Option<>(getWindowTypeDisplayName(type), type));
+                    if (type == GameWindowType.WINDOWED) {
+                        windowTypeOptions.add(new WindowedWindowTypeOption(cboWindowSize));
+                    } else {
+                        windowTypeOptions.add(new MultiFileItem.Option<>(getWindowTypeDisplayName(type), type));
+                    }
                 }
 
                 windowTypeItem.loadChildren(windowTypeOptions);
@@ -383,19 +395,6 @@ public final class GameSettingPage<S extends GameSetting> extends StackPane
                         windowTypeSublist,
                         GameSetting::windowTypeProperty,
                         GameSettingPage::getWindowTypeDisplayName);
-            }
-
-            var windowSizePane = new LinePane();
-            basicSettings.getContent().add(windowSizePane);
-            windowSizePane.setTitle("窗口大小"); // TODO: i18n
-            {
-                var cboWindowSize = new JFXComboBox<String>();
-                cboWindowSize.setPrefWidth(150);
-                cboWindowSize.setEditable(true);
-                cboWindowSize.setPromptText("854x480"); // TODO: i18n
-                cboWindowSize.getItems().setAll(getSupportedResolutions());
-                bindWindowSizeComboBox(cboWindowSize);
-                windowSizePane.setRight(cboWindowSize);
             }
 
             var gameDirTypePane = createInheritableButton(
@@ -1400,6 +1399,40 @@ public final class GameSettingPage<S extends GameSetting> extends StackPane
             case MAXIMIZED -> "最大化"; // TODO: i18n
             case WINDOWED -> "窗口化"; // TODO: i18n
         };
+    }
+
+    /// Windowed game window mode option with the window size selector on the same row.
+    private static final class WindowedWindowTypeOption extends MultiFileItem.Option<@Nullable GameWindowType> {
+        /// The selector used to edit the initial game window size.
+        private final JFXComboBox<String> windowSizeComboBox;
+
+        /// Creates the windowed option.
+        private WindowedWindowTypeOption(JFXComboBox<String> windowSizeComboBox) {
+            super(getWindowTypeDisplayName(GameWindowType.WINDOWED), GameWindowType.WINDOWED);
+            this.windowSizeComboBox = windowSizeComboBox;
+        }
+
+        /// Creates the option row with the size selector placed on the right.
+        @Override
+        protected Node createItem(ToggleGroup group) {
+            BorderPane pane = new BorderPane();
+            pane.setPadding(new Insets(3));
+            FXUtils.setLimitHeight(pane, 30);
+
+            left.setText(title);
+            BorderPane.setAlignment(left, Pos.CENTER_LEFT);
+            left.setToggleGroup(group);
+            left.setUserData(data);
+            if (StringUtils.isNotBlank(tooltip)) {
+                FXUtils.installFastTooltip(left, tooltip);
+            }
+            pane.setLeft(left);
+
+            windowSizeComboBox.disableProperty().bind(left.selectedProperty().not());
+            BorderPane.setAlignment(windowSizeComboBox, Pos.CENTER_RIGHT);
+            pane.setRight(windowSizeComboBox);
+            return pane;
+        }
     }
 
     @SuppressWarnings("unchecked")
