@@ -24,14 +24,11 @@ import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 import java.io.IOException;
 import java.lang.reflect.Type;
 import java.net.HttpURLConnection;
-import java.net.URI;
-import java.net.URISyntaxException;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Optional;
 
 import org.glavo.url.WebURL;
-import org.glavo.url.WebURLParseException;
 import org.jackhuang.hmcl.auth.yggdrasil.YggdrasilService;
 import org.jackhuang.hmcl.util.io.HttpRequest;
 import org.jackhuang.hmcl.util.io.NetworkUtils;
