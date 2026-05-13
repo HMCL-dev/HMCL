@@ -160,6 +160,8 @@ public class OAuth {
                 continue;
             }
 
+            options.callback.loginCompletedDeviceCode();
+
             return new Result(tokenResponse.accessToken, tokenResponse.refreshToken);
         }
     }
@@ -267,6 +269,8 @@ public class OAuth {
         Session startServer() throws IOException, AuthenticationException;
 
         void grantDeviceCode(String userCode, String verificationURI);
+
+        void loginCompletedDeviceCode();
 
         /**
          * Open browser
