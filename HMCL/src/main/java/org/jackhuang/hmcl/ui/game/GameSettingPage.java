@@ -64,7 +64,6 @@ import org.jackhuang.hmcl.util.i18n.I18n;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.platform.Architecture;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
-import org.jackhuang.hmcl.util.platform.Platform;
 import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
@@ -615,36 +614,19 @@ public final class GameSettingPage<S extends GameSetting> extends StackPane
                 nativesSettings
         );
 
-        var nativesDirSublist = new ComponentSublist();
-        nativesSettings.getContent().add(nativesDirSublist);
-        nativesDirSublist.setTitle(i18n("settings.advanced.natives_directory"));
-        nativesDirSublist.setHasSubtitle(true);
+        var useCustomNativesDirPane = createNativesDirTypeButton();
+        nativesSettings.getContent().add(useCustomNativesDirPane);
+        useCustomNativesDirPane.setTitle(i18n("settings.advanced.natives_directory.custom.enabled"));
+
+        var nativesDirPane = new LinePane();
+        nativesSettings.getContent().add(nativesDirPane);
+        nativesDirPane.setTitle(i18n("settings.advanced.natives_directory"));
         {
-            var nativesDirItem = new MultiFileItem<@Nullable NativesDirectoryType>();
-            nativesDirSublist.getContent().add(nativesDirItem);
-
-            var nativesDirOptions = new ArrayList<MultiFileItem.Option<@Nullable NativesDirectoryType>>();
-            if (isGlobalSetting) {
-                nativesDirItem.setFallbackData(NativesDirectoryType.VERSION_FOLDER);
-            } else {
-                nativesDirOptions.add(new MultiFileItem.Option<>(I18N_INHERIT_GLOBAL_SETTING, null));
-                nativesDirItem.setFallbackData(null);
-            }
-
-            var nativesDirCustomOption = new MultiFileItem.FileOption<@Nullable NativesDirectoryType>(
-                    i18n("settings.advanced.natives_directory.custom"),
-                    NativesDirectoryType.CUSTOM
-            ).setChooserTitle(i18n("settings.advanced.natives_directory.choose"))
-                    .setSelectionMode(FileSelector.SelectionMode.DIRECTORY);
-            nativesDirOptions.addAll(List.of(
-                    new MultiFileItem.Option<>(i18n("settings.advanced.natives_directory.default"), NativesDirectoryType.VERSION_FOLDER),
-                    nativesDirCustomOption
-            ));
-
-            nativesDirItem.loadChildren(nativesDirOptions);
-            bindInheritableMultiFileItem(nativesDirItem, GameSetting::nativesDirTypeProperty);
-            bindSettingBidirectional(nativesDirCustomOption.valueProperty(), GameSetting::nativesDirProperty);
-            bindNativesDirSubtitle(nativesDirSublist);
+            var txtNativesDir = new JFXTextField();
+            txtNativesDir.setPrefWidth(400);
+            txtNativesDir.disableProperty().bind(useCustomNativesDirPane.valueProperty().isNotEqualTo(Boolean.TRUE));
+            nativesDirPane.setRight(txtNativesDir);
+            bindSettingBidirectional(txtNativesDir.textProperty(), GameSetting::nativesDirProperty);
         }
 
         var noNativesPatchPane = createInheritableBooleanButton(GameSetting::notPatchNativesProperty);
@@ -1271,6 +1253,92 @@ public final class GameSettingPage<S extends GameSetting> extends StackPane
         }
     }
 
+    /// Creates the selector that maps custom native library usage to the native directory mode.
+    private LineSelectButton<@Nullable Boolean> createNativesDirTypeButton() {
+        var button = new LineSelectButton<@Nullable Boolean>();
+        button.setConverter(value -> value != null
+                ? i18n(value ? "mods.enable" : "mods.disable")
+                : I18N_INHERIT_GLOBAL_SETTING);
+
+        if (isGlobalSetting) {
+            button.setItems(Boolean.FALSE, Boolean.TRUE);
+        } else {
+            var items = new ArrayList<@Nullable Boolean>();
+            items.add(null);
+            items.add(Boolean.FALSE);
+            items.add(Boolean.TRUE);
+            button.setItems(items);
+        }
+
+        bindNativesDirTypeButton(button.valueProperty());
+        return button;
+    }
+
+    /// Binds a boolean selector to the native library directory mode.
+    private void bindNativesDirTypeButton(ObjectProperty<@Nullable Boolean> value) {
+        ObjectProperty<@Nullable InheritableProperty<NativesDirectoryType>> activeProperty = new SimpleObjectProperty<>();
+        final boolean[] updating = {false};
+
+        InvalidationListener propertyListener = observable -> {
+            InheritableProperty<NativesDirectoryType> property = activeProperty.get();
+            if (property == null || updating[0]) {
+                return;
+            }
+
+            updating[0] = true;
+            try {
+                @Nullable NativesDirectoryType nativesDirType = property.getValue();
+                if (isGlobalSetting && nativesDirType == null) {
+                    nativesDirType = property.defaultValue();
+                }
+                value.setValue(nativesDirType != null ? nativesDirType == NativesDirectoryType.CUSTOM : null);
+            } finally {
+                updating[0] = false;
+            }
+        };
+
+        ChangeListener<@Nullable Boolean> valueListener = (observable, oldValue, newValue) -> {
+            InheritableProperty<NativesDirectoryType> property = activeProperty.get();
+            if (property == null || updating[0]) {
+                return;
+            }
+
+            updating[0] = true;
+            try {
+                property.setValue(newValue == null
+                        ? null
+                        : newValue ? NativesDirectoryType.CUSTOM : NativesDirectoryType.VERSION_FOLDER);
+            } finally {
+                updating[0] = false;
+            }
+        };
+
+        value.addListener(valueListener);
+        currentSetting.addListener((observable, oldValue, newValue) -> {
+            InheritableProperty<NativesDirectoryType> oldProperty = activeProperty.get();
+            if (oldProperty != null) {
+                oldProperty.removeListener(propertyListener);
+            }
+
+            InheritableProperty<NativesDirectoryType> newProperty = newValue != null
+                    ? newValue.nativesDirTypeProperty()
+                    : null;
+            activeProperty.set(newProperty);
+            if (newProperty != null) {
+                newProperty.addListener(propertyListener);
+            }
+            propertyListener.invalidated(newProperty);
+        });
+
+        S setting = currentSetting.get();
+        if (setting != null) {
+            InheritableProperty<NativesDirectoryType> property = setting.nativesDirTypeProperty();
+            activeProperty.set(property);
+            property.addListener(propertyListener);
+            propertyListener.invalidated(property);
+        }
+    }
+
     private <T> void bindInheritableSublistSubtitle(ComponentSublist sublist,
                                                     Function<S, InheritableProperty<T>> propertyGetter,
                                                     Function<T, String> converter) {
@@ -1313,84 +1381,6 @@ public final class GameSettingPage<S extends GameSetting> extends StackPane
         } else {
             sublist.setSubtitle(I18N_INHERIT_GLOBAL_SETTING);
         }
-    }
-
-    private void bindNativesDirSubtitle(ComponentSublist sublist) {
-        InvalidationListener propertyListener = observable -> initNativesDirSubtitle(sublist);
-
-        currentSetting.addListener((observable, oldValue, newValue) -> {
-            if (oldValue != null) {
-                oldValue.nativesDirTypeProperty().removeListener(propertyListener);
-                oldValue.nativesDirProperty().removeListener(propertyListener);
-            }
-
-            if (newValue != null) {
-                newValue.nativesDirTypeProperty().addListener(propertyListener);
-                newValue.nativesDirProperty().addListener(propertyListener);
-            }
-
-            initNativesDirSubtitle(sublist);
-        });
-
-        S setting = currentSetting.get();
-        if (setting != null) {
-            setting.nativesDirTypeProperty().addListener(propertyListener);
-            setting.nativesDirProperty().addListener(propertyListener);
-        }
-        initNativesDirSubtitle(sublist);
-    }
-
-    private void initNativesDirSubtitle(ComponentSublist sublist) {
-        S setting = currentSetting.get();
-        if (setting == null) {
-            sublist.setSubtitle("");
-            return;
-        }
-
-        NativesDirectoryType nativesDirType;
-        @Nullable String nativesDir;
-        if (profile != null && instanceId != null) {
-            GameSetting.Effective effectiveSetting = profile.getRepository().getEffectiveGameSetting(instanceId);
-            nativesDirType = effectiveSetting.getNativesDirType();
-            nativesDir = effectiveSetting.getNativesDir();
-        } else {
-            nativesDirType = setting.nativesDirTypeProperty().getValue();
-            if (nativesDirType == null) {
-                nativesDirType = isGlobalSetting ? setting.nativesDirTypeProperty().defaultValue() : null;
-            }
-            nativesDir = setting.nativesDirProperty().getValue();
-        }
-
-        if (nativesDirType == null) {
-            sublist.setSubtitle(I18N_INHERIT_GLOBAL_SETTING);
-        } else if (nativesDirType == NativesDirectoryType.VERSION_FOLDER) {
-            sublist.setSubtitle(getDefaultNativesDir());
-        } else {
-            sublist.setSubtitle(nativesDir != null ? nativesDir : "");
-        }
-    }
-
-    private String getDefaultNativesDir() {
-        String nativesDirName = "natives-" + Platform.SYSTEM_PLATFORM;
-        if (profile == null) {
-            return nativesDirName;
-        }
-
-        if (instanceId == null) {
-            return profile.getRepository().getBaseDirectory()
-                    .resolve("versions")
-                    .toAbsolutePath()
-                    .normalize()
-                    .resolve(i18n("settings.advanced.natives_directory.default.version_id"))
-                    .resolve(nativesDirName)
-                    .toString();
-        }
-
-        return profile.getRepository().getVersionRoot(instanceId)
-                .toAbsolutePath()
-                .normalize()
-                .resolve(nativesDirName)
-                .toString();
     }
 
     private static String getWindowTypeDisplayName(GameWindowType type) {
