@@ -108,7 +108,7 @@ public abstract class LineComponent extends StackPane implements NoPaddingCompon
     }
 
     /// Sets the node displayed immediately after the title label.
-    protected final void setTitleTrailing(@Nullable Node node) {
+    public final void setTitleTrailing(@Nullable Node node) {
         if (titleTrailing == node) {
             return;
         }

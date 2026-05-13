@@ -104,6 +104,24 @@ public class ComponentSublist extends ComponentList {
         this.headerRight = headerRight;
     }
 
+    /// The node displayed immediately after the default title text.
+    private final ObjectProperty<Node> titleRight = new SimpleObjectProperty<>(this, "titleRight");
+
+    /// Returns the node displayed immediately after the default title text.
+    public ObjectProperty<Node> titleRightProperty() {
+        return titleRight;
+    }
+
+    /// Returns the node displayed immediately after the default title text.
+    public Node getTitleRight() {
+        return titleRightProperty().get();
+    }
+
+    /// Sets the node displayed immediately after the default title text.
+    public void setTitleRight(Node titleRight) {
+        titleRightProperty().set(titleRight);
+    }
+
     private boolean componentPadding = true;
 
     public boolean hasComponentPadding() {

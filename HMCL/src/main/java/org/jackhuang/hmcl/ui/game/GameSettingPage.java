@@ -18,15 +18,13 @@
 package org.jackhuang.hmcl.ui.game;
 
 import com.jfoenix.controls.JFXButton;
-import com.jfoenix.controls.JFXCheckBox;
 import com.jfoenix.controls.JFXComboBox;
 import com.jfoenix.controls.JFXListView;
 import com.jfoenix.controls.JFXRadioButton;
 import com.jfoenix.controls.JFXTextField;
+import javafx.css.PseudoClass;
 import javafx.event.ActionEvent;
 import javafx.beans.InvalidationListener;
-import javafx.beans.Observable;
-import javafx.beans.WeakListener;
 import javafx.beans.property.*;
 import javafx.beans.value.ChangeListener;
 import javafx.collections.FXCollections;
@@ -40,6 +38,7 @@ import javafx.scene.Scene;
 import javafx.scene.control.Label;
 import javafx.scene.control.ListCell;
 import javafx.scene.control.ScrollPane;
+import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.*;
 import javafx.stage.FileChooser;
 import javafx.stage.Screen;
@@ -68,9 +67,7 @@ import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.UnknownNullability;
 
-import java.lang.ref.WeakReference;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
 import java.util.Objects;
@@ -87,6 +84,9 @@ public final class GameSettingPage<S extends GameSetting> extends StackPane
         implements DecoratorPage, VersionPage.VersionLoadable, PageAware {
 
     private static final String I18N_INHERIT_GLOBAL_SETTING = "继承全局设置"; // TODO: i18n
+    private static final PseudoClass PSEUDO_OVERRIDDEN = PseudoClass.getPseudoClass("overridden");
+    private static final String INHERIT_BUTTON_STYLE_CLASS = "toggle-icon-tiny";
+    private static final int INHERIT_BUTTON_ICON_SIZE = 12;
 
     private final boolean isGlobalSetting;
 
@@ -117,7 +117,6 @@ public final class GameSettingPage<S extends GameSetting> extends StackPane
 
     private final ComponentSublist javaSublist;
     private final RadioChoiceList<@Nullable Pair<@Nullable JavaVersionType, @Nullable JavaRuntime>> javaItem;
-    private final RadioChoiceList.Choice<@Nullable Pair<@Nullable JavaVersionType, @Nullable JavaRuntime>> javaInheritedOption;
     private final RadioChoiceList.Choice<@Nullable Pair<@Nullable JavaVersionType, @Nullable JavaRuntime>> javaAutoDeterminedOption;
     private final RadioChoiceList.TextChoice<@Nullable Pair<@Nullable JavaVersionType, @Nullable JavaRuntime>> javaVersionOption;
     private final RadioChoiceList.FileChoice<@Nullable Pair<@Nullable JavaVersionType, @Nullable JavaRuntime>> javaCustomOption;
@@ -178,8 +177,8 @@ public final class GameSettingPage<S extends GameSetting> extends StackPane
             {
                 javaItem = new RadioChoiceList<>();
                 javaSublist.getContent().setAll(javaItem);
+                bindJavaInheritanceButton(javaSublist);
 
-                javaInheritedOption = new RadioChoiceList.Choice<>(I18N_INHERIT_GLOBAL_SETTING, pair(null, null));
                 javaAutoDeterminedOption = new RadioChoiceList.Choice<>(i18n("settings.game.java_directory.auto"), pair(JavaVersionType.AUTO, null));
                 javaVersionOption = new RadioChoiceList.TextChoice<>(i18n("settings.game.java_directory.version"), pair(JavaVersionType.VERSION, null));
                 javaVersionOption.setValidators(new NumberValidator(true));
@@ -192,9 +191,6 @@ public final class GameSettingPage<S extends GameSetting> extends StackPane
 
                 holder.add(FXUtils.onWeakChangeAndOperate(JavaManager.getAllJavaProperty(), allJava -> {
                     var options = new ArrayList<RadioChoiceList.Choice<@Nullable Pair<@Nullable JavaVersionType, @Nullable JavaRuntime>>>();
-                    if (!isGlobalSetting) {
-                        options.add(javaInheritedOption);
-                    }
                     options.add(javaAutoDeterminedOption);
                     options.add(javaVersionOption);
                     if (allJava != null) {
@@ -242,11 +238,6 @@ public final class GameSettingPage<S extends GameSetting> extends StackPane
 
                 updatingJavaSetting = true;
                 try {
-                    if (javaInheritedOption.isSelected()) {
-                        setting.javaTypeProperty().setValue(null);
-                        return;
-                    }
-
                     if (javaCustomOption.isSelected()) {
                         setting.javaTypeProperty().setValue(JavaVersionType.CUSTOM);
                         setting.customJavaPathProperty().setValue(javaCustomOption.getPath());
@@ -280,6 +271,7 @@ public final class GameSettingPage<S extends GameSetting> extends StackPane
             javaVersionOption.textProperty().addListener((observable, oldValue, newValue) -> {
                 S setting = currentSetting.get();
                 if (setting != null && javaVersionOption.isSelected() && !updatingSelectedJava) {
+                    setting.javaTypeProperty().setValue(JavaVersionType.VERSION);
                     setting.javaVersionProperty().setValue(newValue);
                     initJavaSubtitle();
                 }
@@ -288,6 +280,7 @@ public final class GameSettingPage<S extends GameSetting> extends StackPane
             javaCustomOption.pathProperty().addListener((observable, oldValue, newValue) -> {
                 S setting = currentSetting.get();
                 if (setting != null && javaCustomOption.isSelected() && !updatingSelectedJava) {
+                    setting.javaTypeProperty().setValue(JavaVersionType.CUSTOM);
                     setting.customJavaPathProperty().setValue(newValue);
                     initJavaSubtitle();
                 }
@@ -333,7 +326,7 @@ public final class GameSettingPage<S extends GameSetting> extends StackPane
             memorySublist.setTitle(i18n("settings.memory"));
             memorySublist.setHasSubtitle(true);
             memorySublist.setSubtitle(i18n("settings.memory.auto_allocate"));
-            memorySublist.setHeaderRight(createHeaderRight(memorySublist, GameSetting.MEMORY_SETTINGS));
+            memorySublist.setTitleRight(createOverrideGroupTitleButton(memorySublist, GameSetting.MEMORY_SETTINGS));
 
             // Launcher Visibility Setting
             var launcherVisibilityPane = createInheritableButton(
@@ -351,14 +344,9 @@ public final class GameSettingPage<S extends GameSetting> extends StackPane
             windowTypeSublist.setTitle("游戏窗口类型"); // TODO: i18n
             windowTypeSublist.setHasSubtitle(true);
             {
-                var windowTypeItem = new RadioChoiceList<@Nullable GameWindowType>();
-                var windowTypeOptions = new ArrayList<RadioChoiceList.Choice<@Nullable GameWindowType>>();
-                if (isGlobalSetting) {
-                    windowTypeItem.setFallbackValue(GameWindowType.WINDOWED);
-                } else {
-                    windowTypeOptions.add(new RadioChoiceList.Choice<>(I18N_INHERIT_GLOBAL_SETTING, null));
-                    windowTypeItem.setFallbackValue(null);
-                }
+                var windowTypeItem = new RadioChoiceList<GameWindowType>();
+                var windowTypeOptions = new ArrayList<RadioChoiceList.Choice<GameWindowType>>();
+                windowTypeItem.setFallbackValue(GameWindowType.WINDOWED);
 
                 var cboWindowSize = new JFXComboBox<String>();
                 cboWindowSize.setPrefWidth(150);
@@ -377,7 +365,7 @@ public final class GameSettingPage<S extends GameSetting> extends StackPane
 
                 windowTypeItem.setChoices(windowTypeOptions);
                 windowTypeSublist.getContent().add(windowTypeItem);
-                bindInheritableRadioChoiceList(windowTypeItem, GameSetting::windowTypeProperty);
+                bindInheritableRadioChoiceList(windowTypeSublist, windowTypeItem, GameSetting::windowTypeProperty);
                 bindInheritableSublistSubtitle(
                         windowTypeSublist,
                         GameSetting::windowTypeProperty,
@@ -432,8 +420,9 @@ public final class GameSettingPage<S extends GameSetting> extends StackPane
             processPriorityPane.setTitle(i18n("settings.advanced.process_priority"));
 
             // Quick Play
-            var quickSublist = new ComponentSublist(() -> {
-                var quickPlayItem = new RadioChoiceList<@Nullable QuickPlayType>();
+            var quickSublist = new ComponentSublist();
+            {
+                var quickPlayItem = new RadioChoiceList<QuickPlayType>();
 
                 var noneOption = new RadioChoiceList.Choice<>("无", QuickPlayType.NONE); // TODO: i18n
 
@@ -458,13 +447,8 @@ public final class GameSettingPage<S extends GameSetting> extends StackPane
 
                 var realmsOption = new RadioChoiceList.TextChoice<>("领域服", QuickPlayType.REALMS); // TODO: i18n
 
-                var options = new ArrayList<RadioChoiceList.Choice<@Nullable QuickPlayType>>();
-                if (isGlobalSetting) {
-                    quickPlayItem.setFallbackValue(QuickPlayType.NONE);
-                } else {
-                    options.add(new RadioChoiceList.Choice<>(I18N_INHERIT_GLOBAL_SETTING, null));
-                    quickPlayItem.setFallbackValue(null);
-                }
+                var options = new ArrayList<RadioChoiceList.Choice<QuickPlayType>>();
+                quickPlayItem.setFallbackValue(QuickPlayType.NONE);
                 options.addAll(List.of(
                         noneOption,
                         multiplayerOption,
@@ -474,13 +458,12 @@ public final class GameSettingPage<S extends GameSetting> extends StackPane
 
                 quickPlayItem.setChoices(options);
 
-                //noinspection NullableProblems
-                bindSettingBidirectional(quickPlayItem.selectedValueProperty(), GameSetting::quickPlayProperty);
+                bindInheritableRadioChoiceList(quickSublist, quickPlayItem, GameSetting::quickPlayProperty);
                 bindSettingBidirectional(multiplayerOption.textProperty(), GameSetting::quickPlayMultiplayerProperty);
                 bindSettingBidirectional(singleplayerOption.textProperty(), GameSetting::quickPlaySingleplayerProperty);
                 bindSettingBidirectional(realmsOption.textProperty(), GameSetting::quickPlayRealmsProperty);
-                return List.of(quickPlayItem);
-            });
+                quickSublist.getContent().setAll(quickPlayItem);
+            }
             basicSettings.getContent().add(quickSublist);
             quickSublist.setTitle("快速游玩"); // TODO: i18n
             quickSublist.setSubtitle("启动游戏后直接进入指定服务器或世界"); // TODO: i18n
@@ -523,13 +506,6 @@ public final class GameSettingPage<S extends GameSetting> extends StackPane
             noOptimizingJVMArgsPane.setTitle(i18n("settings.advanced.no_optimizing_jvm_args"));
             noOptimizingJVMArgsPane.disableProperty().bind(noJVMArgsPane.effectiveValueProperty());
 
-            if (!isGlobalSetting) {
-                var noInheritJVMArgsPane = new LineToggleButton();
-                jvmSettings.getContent().add(noInheritJVMArgsPane);
-                noInheritJVMArgsPane.setTitle("覆盖全局 JVM 参数"); // TODO: i18n
-                bindOverrideGroup(noInheritJVMArgsPane.selectedProperty(), GameSetting.JVM_OPTIONS);
-            }
-
             var jvmArgsPane = new LinePane();
             jvmSettings.getContent().add(jvmArgsPane);
             jvmArgsPane.setTitle(i18n("settings.advanced.jvm_args"));
@@ -538,6 +514,7 @@ public final class GameSettingPage<S extends GameSetting> extends StackPane
                 // txtJVMArgs.setPromptText(i18n("settings.advanced.jvm_args.prompt"));
                 txtJVMArgs.setPrefWidth(400);
                 jvmArgsPane.setRight(txtJVMArgs);
+                bindOverrideGroupTitleButton(jvmArgsPane, txtJVMArgs, GameSetting.JVM_OPTIONS);
                 bindSettingBidirectional(txtJVMArgs.textProperty(), GameSetting::jvmOptionsProperty);
             }
         }
@@ -556,14 +533,8 @@ public final class GameSettingPage<S extends GameSetting> extends StackPane
             txtGameArgs.setPromptText(i18n("settings.advanced.minecraft_arguments.prompt"));
             txtGameArgs.setPrefWidth(400);
             gameArgsPane.setRight(txtGameArgs);
+            bindOverrideGroupTitleButton(gameArgsPane, txtGameArgs, GameSetting.GAME_ARGUMENTS);
             bindSettingBidirectional(txtGameArgs.textProperty(), GameSetting::gameArgsProperty);
-        }
-
-        if (!isGlobalSetting) {
-            var noInheritGameArgsPane = new LineToggleButton();
-            advancedSettings.getContent().add(noInheritGameArgsPane);
-            noInheritGameArgsPane.setTitle("覆盖全局游戏参数"); // TODO: i18n
-            bindOverrideGroup(noInheritGameArgsPane.selectedProperty(), GameSetting.GAME_ARGUMENTS);
         }
 
         var customCommandSettings = new ComponentSublist(() -> {
@@ -607,14 +578,8 @@ public final class GameSettingPage<S extends GameSetting> extends StackPane
             var txtEnvironmentVariables = new JFXTextField();
             txtEnvironmentVariables.setPrefWidth(400);
             environmentVariablesPane.setRight(txtEnvironmentVariables);
+            bindOverrideGroupTitleButton(environmentVariablesPane, txtEnvironmentVariables, GameSetting.ENVIRONMENT_VARIABLES);
             bindSettingBidirectional(txtEnvironmentVariables.textProperty(), GameSetting::environmentVariablesProperty);
-        }
-
-        if (!isGlobalSetting) {
-            var noInheritEnvironmentVariablesPane = new LineToggleButton();
-            advancedSettings.getContent().add(noInheritEnvironmentVariablesPane);
-            noInheritEnvironmentVariablesPane.setTitle("覆盖全局环境变量"); // TODO: i18n
-            bindOverrideGroup(noInheritEnvironmentVariablesPane.selectedProperty(), GameSetting.ENVIRONMENT_VARIABLES);
         }
 
         var nativesSettings = new ComponentSublist(() -> {
@@ -649,71 +614,33 @@ public final class GameSettingPage<S extends GameSetting> extends StackPane
         });
         advancedSettings.getContent().add(nativesSettings);
         nativesSettings.setTitle(i18n("settings.advanced.natives"));
-        nativesSettings.setHeaderRight(createHeaderRight(nativesSettings, GameSetting.NATIVE_SETTINGS));
+        nativesSettings.setTitleRight(createOverrideGroupTitleButton(nativesSettings, GameSetting.NATIVE_SETTINGS));
 
-        var graphicsBackendPane = new LineSelectButton<GraphicsAPI>();
+        var graphicsBackendPane = createInheritableButton(
+                GameSetting::graphicsBackendProperty,
+                backend -> i18n("settings.advanced.graphics_backend." + backend.name().toLowerCase(Locale.ROOT)),
+                backend -> switch (backend) {
+                    case DEFAULT -> i18n("settings.advanced.graphics_backend.default.desc");
+                    case OPENGL -> i18n("settings.advanced.graphics_backend.opengl.desc");
+                    case VULKAN -> i18n("settings.advanced.graphics_backend.vulkan.desc");
+                },
+                GraphicsAPI.values());
         advancedSettings.getContent().add(graphicsBackendPane);
         graphicsBackendPane.setTitle(i18n("settings.advanced.graphics_backend"));
-        graphicsBackendPane.setConverter(backend -> backend != null
-                ? i18n("settings.advanced.graphics_backend." + backend.name().toLowerCase(Locale.ROOT))
-                : I18N_INHERIT_GLOBAL_SETTING);
-        graphicsBackendPane.setDescriptionConverter(backend -> {
-            if (backend == null) {
-                return null;
-            }
 
-            return switch (backend) {
-                case DEFAULT -> i18n("settings.advanced.graphics_backend.default.desc");
-                case OPENGL -> i18n("settings.advanced.graphics_backend.opengl.desc");
-                case VULKAN -> i18n("settings.advanced.graphics_backend.vulkan.desc");
-            };
-        });
-        graphicsBackendPane.setValue(GraphicsAPI.DEFAULT);
-        if (isGlobalSetting) {
-            graphicsBackendPane.setItems(GraphicsAPI.values());
-        } else {
-            var graphicsBackends = new ArrayList<GraphicsAPI>();
-            graphicsBackends.add(null);
-            graphicsBackends.addAll(Arrays.asList(GraphicsAPI.values()));
-            graphicsBackendPane.setItems(graphicsBackends);
-        }
-        bindSettingBidirectional(graphicsBackendPane.valueProperty(), GameSetting::graphicsBackendProperty);
-
-        var rendererPane = new LineSelectButton<Renderer>();
+        var rendererPane = createInheritableButton(
+                GameSetting::rendererProperty,
+                e -> i18n("settings.advanced.renderer." + e.name().toLowerCase(Locale.ROOT)),
+                e -> {
+                    String bundleKey = "settings.advanced.renderer." + e.name().toLowerCase(Locale.ROOT) + ".desc";
+                    return I18n.hasKey(bundleKey) ? i18n(bundleKey) : null;
+                },
+                Renderer.DEFAULT);
         advancedSettings.getContent().add(rendererPane);
         rendererPane.setTitle(i18n("settings.advanced.renderer"));
-        rendererPane.setConverter(e -> e != null
-                ? i18n("settings.advanced.renderer." + e.name().toLowerCase(Locale.ROOT))
-                : I18N_INHERIT_GLOBAL_SETTING);
-        rendererPane.setDescriptionConverter(e -> {
-            if (e == null) {
-                return null;
-            }
-            String bundleKey = "settings.advanced.renderer." + e.name().toLowerCase(Locale.ROOT) + ".desc";
-            return I18n.hasKey(bundleKey) ? i18n(bundleKey) : null;
-        });
-        rendererPane.setValue(Renderer.DEFAULT);
 
         FXUtils.onChangeAndOperate(graphicsBackendPane.valueProperty(), backend -> {
-            if (backend == null) {
-                rendererPane.setDisable(false);
-                if (!isGlobalSetting) {
-                    var renderers = new ArrayList<Renderer>();
-                    renderers.add(null);
-                    renderers.add(Renderer.DEFAULT);
-                    rendererPane.setItems(renderers);
-                }
-                return;
-            }
-
-            if (isGlobalSetting) {
-                rendererPane.setItems(Renderer.getSupported(backend));
-            } else {
-                var renderers = new ArrayList<Renderer>();
-                renderers.add(null);
-                renderers.addAll(Renderer.getSupported(backend));
-                rendererPane.setItems(renderers);
-            }
+            rendererPane.setItems(Renderer.getSupported(backend));
             if (backend == GraphicsAPI.DEFAULT) {
                 rendererPane.setDisable(true);
                 rendererPane.setValue(Renderer.DEFAULT);
@@ -723,7 +650,6 @@ public final class GameSettingPage<S extends GameSetting> extends StackPane
                     rendererPane.setValue(Renderer.DEFAULT);
             }
         });
-        bindSettingBidirectional(rendererPane.valueProperty(), GameSetting::rendererProperty);
 
         var noGameCheckPane = createInheritableBooleanButton(GameSetting::notCheckGameProperty);
         advancedSettings.getContent().add(noGameCheckPane);
@@ -978,6 +904,64 @@ public final class GameSettingPage<S extends GameSetting> extends StackPane
         }
     }
 
+    /// Adds the title-line inheritance button for the Java selection sublist.
+    private void bindJavaInheritanceButton(ComponentSublist sublist) {
+        if (isGlobalSetting) {
+            return;
+        }
+
+        var button = createInheritanceButton();
+        sublist.setTitleRight(button);
+
+        InvalidationListener refresh = observable -> {
+            S setting = currentSetting.get();
+            updateInheritanceButton(button, setting == null || setting.javaTypeProperty().getValue() == null);
+        };
+
+        button.addEventFilter(MouseEvent.MOUSE_CLICKED, event -> {
+            S setting = currentSetting.get();
+            if (setting == null) {
+                return;
+            }
+
+            updatingJavaSetting = true;
+            try {
+                if (setting.javaTypeProperty().getValue() == null) {
+                    GameSetting source = getEffectiveInheritableSource(setting, GameSetting::javaTypeProperty);
+                    setting.javaTypeProperty().setValue(getEffectiveValue(setting, GameSetting::javaTypeProperty));
+                    setting.javaVersionProperty().setValue(source.javaVersionProperty().getValue());
+                    setting.customJavaPathProperty().setValue(source.customJavaPathProperty().getValue());
+                    setting.defaultJavaPathProperty().setValue(source.defaultJavaPathProperty().getValue());
+                } else {
+                    setting.javaTypeProperty().setValue(null);
+                }
+            } finally {
+                updatingJavaSetting = false;
+            }
+
+            initializeSelectedJava();
+            initJavaSubtitle();
+            refresh.invalidated(setting);
+            event.consume();
+        });
+
+        currentSetting.addListener((observable, oldValue, newValue) -> {
+            if (oldValue != null) {
+                oldValue.removeListener(refresh);
+            }
+            if (newValue != null) {
+                newValue.addListener(refresh);
+            }
+            refresh.invalidated(newValue);
+        });
+
+        S setting = currentSetting.get();
+        if (setting != null) {
+            setting.addListener(refresh);
+        }
+        refresh.invalidated(setting);
+    }
+
     @SuppressWarnings("unchecked")
     private void bindIntegerTextField(JFXTextField textField, Function<S, ? extends Property<Integer>> propertyGetter, boolean nullable) {
         ObjectProperty<Property<Integer>> activeProperty = new SimpleObjectProperty<>();
@@ -1165,29 +1149,59 @@ public final class GameSettingPage<S extends GameSetting> extends StackPane
         return Math.round(width) + "x" + Math.round(height);
     }
 
-    private @Nullable Pane createHeaderRight(ComponentSublist sublist, SettingGroup group) {
-        if (isGlobalSetting) { // TODO: use inheritGlobalSettings
+    /// Creates a title-line inheritance button for a grouped setting sublist.
+    private @Nullable JFXButton createOverrideGroupTitleButton(ComponentSublist sublist, SettingGroup group) {
+        if (isGlobalSetting) {
             return null;
         }
 
-        HBox box = new HBox(8);
-        box.setAlignment(Pos.CENTER_LEFT);
-
-        var inherit = new JFXCheckBox();
-        box.getChildren().addAll(inherit, new Label("覆盖全局设置")); // TODO: i18n
-        bindOverrideGroup(inherit.selectedProperty(), group);
-        sublist.disableProperty().bind(inherit.selectedProperty().not());
-
-        return box;
+        var button = createInheritanceButton();
+        BooleanProperty overridden = bindOverrideGroupButton(button, group);
+        sublist.disableProperty().bind(overridden.not());
+        return button;
     }
 
-    private Node createLabelWithTip(String title, String tip) {
-        var tipIcon = new StackPane(SVG.INFO.createIcon(16));
-        FXUtils.installFastTooltip(tipIcon, tip);
+    /// Adds a title-line inheritance button to a grouped setting row.
+    private void bindOverrideGroupTitleButton(LineComponent line, Node content, SettingGroup group) {
+        if (isGlobalSetting) {
+            return;
+        }
 
-        var box = new HBox(8, new Label(title), tipIcon);
-        box.setAlignment(Pos.CENTER_LEFT);
-        return box;
+        var button = createInheritanceButton();
+        BooleanProperty overridden = bindOverrideGroupButton(button, group);
+        content.disableProperty().bind(overridden.not());
+        line.setTitleTrailing(button);
+    }
+
+    /// Binds an inheritance button to an override group flag.
+    private BooleanProperty bindOverrideGroupButton(JFXButton button, SettingGroup group) {
+        BooleanProperty overridden = new SimpleBooleanProperty();
+        bindOverrideGroup(overridden, group);
+
+        InvalidationListener refresh = observable -> updateInheritanceButton(button, !overridden.get());
+        overridden.addListener(refresh);
+        refresh.invalidated(overridden);
+
+        button.addEventFilter(MouseEvent.MOUSE_CLICKED, event -> {
+            overridden.set(!overridden.get());
+            event.consume();
+        });
+        return overridden;
+    }
+
+    /// Creates a compact button that displays inherited or overridden state.
+    private JFXButton createInheritanceButton() {
+        var button = new JFXButton();
+        button.getStyleClass().add(INHERIT_BUTTON_STYLE_CLASS);
+        button.setGraphic(SVG.PUBLIC.createIcon(INHERIT_BUTTON_ICON_SIZE));
+        FXUtils.installFastTooltip(button, I18N_INHERIT_GLOBAL_SETTING);
+        return button;
+    }
+
+    /// Updates the icon and pseudo class of an inheritance state button.
+    private static void updateInheritanceButton(JFXButton button, boolean inherited) {
+        button.setGraphic((inherited ? SVG.PUBLIC : SVG.TUNE).createIcon(INHERIT_BUTTON_ICON_SIZE));
+        button.pseudoClassStateChanged(PSEUDO_OVERRIDDEN, !inherited);
     }
 
     private <T> void bindSettingBidirectional(Property<T> property, Function<S, Property<T>> propertyGetter) {
@@ -1206,20 +1220,32 @@ public final class GameSettingPage<S extends GameSetting> extends StackPane
     }
 
     /// Binds a radio choice list to an inheritable setting property.
-    private <T> void bindInheritableRadioChoiceList(RadioChoiceList<@Nullable T> item, Function<S, InheritableProperty<T>> propertyGetter) {
+    private <T> void bindInheritableRadioChoiceList(
+            ComponentSublist sublist,
+            RadioChoiceList<T> item,
+            Function<GameSetting, InheritableProperty<T>> propertyGetter) {
         ObjectProperty<@Nullable InheritableProperty<T>> activeProperty = new SimpleObjectProperty<>();
         final boolean[] updating = {false};
+        @Nullable JFXButton inheritButton = null;
+        if (!isGlobalSetting) {
+            inheritButton = createInheritanceButton();
+            sublist.setTitleRight(inheritButton);
+        }
+        @Nullable JFXButton finalInheritButton = inheritButton;
 
         InvalidationListener propertyListener = observable -> {
+            GameSetting setting = currentSetting.get();
             InheritableProperty<T> property = activeProperty.get();
-            if (property == null || updating[0]) {
+            if (setting == null || property == null || updating[0]) {
                 return;
             }
 
             updating[0] = true;
             try {
-                @Nullable T value = property.getValue();
-                item.setSelectedValue(isGlobalSetting && value == null ? property.defaultValue() : value);
+                item.setSelectedValue(getEffectiveValue(setting, propertyGetter));
+                if (finalInheritButton != null) {
+                    updateInheritanceButton(finalInheritButton, property.getValue() == null);
+                }
             } finally {
                 updating[0] = false;
             }
@@ -1234,13 +1260,42 @@ public final class GameSettingPage<S extends GameSetting> extends StackPane
             updating[0] = true;
             try {
                 property.setValue(newValue);
+                if (finalInheritButton != null) {
+                    updateInheritanceButton(finalInheritButton, false);
+                }
             } finally {
                 updating[0] = false;
             }
         };
 
         item.selectedValueProperty().addListener(itemListener);
+        if (finalInheritButton != null) {
+            finalInheritButton.addEventFilter(MouseEvent.MOUSE_CLICKED, event -> {
+                GameSetting setting = currentSetting.get();
+                InheritableProperty<T> property = activeProperty.get();
+                if (setting == null || property == null || updating[0]) {
+                    return;
+                }
+
+                updating[0] = true;
+                try {
+                    if (property.getValue() == null) {
+                        property.setValue(getEffectiveValue(setting, propertyGetter));
+                    } else {
+                        property.setValue(null);
+                    }
+                } finally {
+                    updating[0] = false;
+                }
+                propertyListener.invalidated(property);
+                event.consume();
+            });
+        }
         currentSetting.addListener((observable, oldValue, newValue) -> {
+            if (oldValue != null) {
+                oldValue.removeListener(propertyListener);
+            }
+
             InheritableProperty<T> oldProperty = activeProperty.get();
             if (oldProperty != null) {
                 oldProperty.removeListener(propertyListener);
@@ -1248,16 +1303,22 @@ public final class GameSettingPage<S extends GameSetting> extends StackPane
 
             InheritableProperty<T> newProperty = newValue != null ? propertyGetter.apply(newValue) : null;
             activeProperty.set(newProperty);
+            if (newValue != null) {
+                newValue.addListener(propertyListener);
+            }
             if (newProperty != null) {
                 newProperty.addListener(propertyListener);
             }
             propertyListener.invalidated(newProperty);
         });
+        config().getGameSettings().addListener(propertyListener);
+        config().defaultGameSettingProperty().addListener(propertyListener);
 
         S setting = currentSetting.get();
         if (setting != null) {
             InheritableProperty<T> property = propertyGetter.apply(setting);
             activeProperty.set(property);
+            setting.addListener(propertyListener);
             property.addListener(propertyListener);
             propertyListener.invalidated(property);
         }
@@ -1327,7 +1388,7 @@ public final class GameSettingPage<S extends GameSetting> extends StackPane
     }
 
     private <T> void bindInheritableSublistSubtitle(ComponentSublist sublist,
-                                                    Function<S, InheritableProperty<T>> propertyGetter,
+                                                    Function<GameSetting, InheritableProperty<T>> propertyGetter,
                                                     Function<T, String> converter) {
         InvalidationListener propertyListener = observable -> initInheritableSublistSubtitle(sublist, propertyGetter, converter);
 
@@ -1342,6 +1403,8 @@ public final class GameSettingPage<S extends GameSetting> extends StackPane
 
             initInheritableSublistSubtitle(sublist, propertyGetter, converter);
         });
+        config().getGameSettings().addListener(propertyListener);
+        config().defaultGameSettingProperty().addListener(propertyListener);
 
         S setting = currentSetting.get();
         if (setting != null) {
@@ -1351,7 +1414,7 @@ public final class GameSettingPage<S extends GameSetting> extends StackPane
     }
 
     private <T> void initInheritableSublistSubtitle(ComponentSublist sublist,
-                                                   Function<S, InheritableProperty<T>> propertyGetter,
+                                                   Function<GameSetting, InheritableProperty<T>> propertyGetter,
                                                    Function<T, String> converter) {
         S setting = currentSetting.get();
         if (setting == null) {
@@ -1359,15 +1422,7 @@ public final class GameSettingPage<S extends GameSetting> extends StackPane
             return;
         }
 
-        InheritableProperty<T> property = propertyGetter.apply(setting);
-        @Nullable T value = property.getValue();
-        if (value != null) {
-            sublist.setSubtitle(converter.apply(value));
-        } else if (isGlobalSetting) {
-            sublist.setSubtitle(converter.apply(property.defaultValue()));
-        } else {
-            sublist.setSubtitle(I18N_INHERIT_GLOBAL_SETTING);
-        }
+        sublist.setSubtitle(converter.apply(getEffectiveValue(setting, propertyGetter)));
     }
 
     private static String getWindowTypeDisplayName(GameWindowType type) {
@@ -1379,7 +1434,7 @@ public final class GameSettingPage<S extends GameSetting> extends StackPane
     }
 
     /// Windowed game window mode option with the window size selector on the same row.
-    private static final class WindowedWindowTypeOption extends RadioChoiceList.Choice<@Nullable GameWindowType> {
+    private static final class WindowedWindowTypeOption extends RadioChoiceList.Choice<GameWindowType> {
         /// The selector used to edit the initial game window size.
         private final JFXComboBox<String> windowSizeComboBox;
 
@@ -1423,6 +1478,110 @@ public final class GameSettingPage<S extends GameSetting> extends StackPane
         return button;
     }
 
+    /// Binds an inheritable select editor to an inheritable setting.
+    private <T> void bindInheritableLineSelectButton(
+            LineSelectButton<T> button,
+            Function<GameSetting, InheritableProperty<T>> propertyGetter) {
+        ObjectProperty<@Nullable InheritableProperty<T>> activeProperty = new SimpleObjectProperty<>();
+        final boolean[] updating = {false};
+        @Nullable JFXButton inheritButton = null;
+        if (!isGlobalSetting) {
+            inheritButton = createInheritanceButton();
+            button.setTitleTrailing(inheritButton);
+        }
+        @Nullable JFXButton finalInheritButton = inheritButton;
+
+        InvalidationListener refresh = observable -> {
+            GameSetting setting = currentSetting.get();
+            InheritableProperty<T> property = activeProperty.get();
+            if (setting == null || property == null || updating[0]) {
+                return;
+            }
+
+            updating[0] = true;
+            try {
+                button.setValue(getEffectiveValue(setting, propertyGetter));
+                if (finalInheritButton != null) {
+                    updateInheritanceButton(finalInheritButton, property.getValue() == null);
+                }
+            } finally {
+                updating[0] = false;
+            }
+        };
+
+        button.valueProperty().addListener((observable, oldValue, newValue) -> {
+            InheritableProperty<T> property = activeProperty.get();
+            if (property == null || updating[0]) {
+                return;
+            }
+
+            updating[0] = true;
+            try {
+                property.setValue(newValue);
+                if (finalInheritButton != null) {
+                    updateInheritanceButton(finalInheritButton, false);
+                }
+            } finally {
+                updating[0] = false;
+            }
+        });
+
+        if (finalInheritButton != null) {
+            finalInheritButton.addEventFilter(MouseEvent.MOUSE_CLICKED, event -> {
+                GameSetting setting = currentSetting.get();
+                InheritableProperty<T> property = activeProperty.get();
+                if (setting == null || property == null || updating[0]) {
+                    return;
+                }
+
+                updating[0] = true;
+                try {
+                    if (property.getValue() == null) {
+                        property.setValue(getEffectiveValue(setting, propertyGetter));
+                    } else {
+                        property.setValue(null);
+                    }
+                } finally {
+                    updating[0] = false;
+                }
+                refresh.invalidated(property);
+                event.consume();
+            });
+        }
+
+        currentSetting.addListener((observable, oldValue, newValue) -> {
+            if (oldValue != null) {
+                oldValue.removeListener(refresh);
+            }
+
+            InheritableProperty<T> oldProperty = activeProperty.get();
+            if (oldProperty != null) {
+                oldProperty.removeListener(refresh);
+            }
+
+            InheritableProperty<T> newProperty = newValue != null ? propertyGetter.apply(newValue) : null;
+            activeProperty.set(newProperty);
+            if (newValue != null) {
+                newValue.addListener(refresh);
+            }
+            if (newProperty != null) {
+                newProperty.addListener(refresh);
+            }
+            refresh.invalidated(newValue);
+        });
+
+        config().getGameSettings().addListener(refresh);
+        config().defaultGameSettingProperty().addListener(refresh);
+
+        S setting = currentSetting.get();
+        if (setting != null) {
+            activeProperty.set(propertyGetter.apply(setting));
+            setting.addListener(refresh);
+            activeProperty.get().addListener(refresh);
+            refresh.invalidated(setting);
+        }
+    }
+
     /// Binds an inheritable toggle editor to an inheritable boolean setting.
     private void bindEffectiveInheritableToggleButton(
             LineInheritableToggleButton button,
@@ -1440,7 +1599,7 @@ public final class GameSettingPage<S extends GameSetting> extends StackPane
             updating[0] = true;
             try {
                 button.setRawValue(property.getValue());
-                button.setEffectiveValue(getEffectiveBooleanValue(setting, propertyGetter));
+                button.setEffectiveValue(getEffectiveValue(setting, propertyGetter));
             } finally {
                 updating[0] = false;
             }
@@ -1456,7 +1615,7 @@ public final class GameSettingPage<S extends GameSetting> extends StackPane
             updating[0] = true;
             try {
                 property.setValue(newValue);
-                button.setEffectiveValue(getEffectiveBooleanValue(setting, propertyGetter));
+                button.setEffectiveValue(getEffectiveValue(setting, propertyGetter));
             } finally {
                 updating[0] = false;
             }
@@ -1486,12 +1645,12 @@ public final class GameSettingPage<S extends GameSetting> extends StackPane
         }
     }
 
-    /// Returns the effective boolean value after applying parent inheritance.
-    private boolean getEffectiveBooleanValue(
+    /// Returns the effective value after applying parent inheritance.
+    private <T> T getEffectiveValue(
             GameSetting setting,
-            Function<GameSetting, InheritableProperty<Boolean>> propertyGetter) {
-        InheritableProperty<Boolean> property = propertyGetter.apply(setting);
-        @Nullable Boolean value = property.getValue();
+            Function<GameSetting, InheritableProperty<T>> propertyGetter) {
+        InheritableProperty<T> property = propertyGetter.apply(setting);
+        @Nullable T value = property.getValue();
         if (value != null) {
             return value;
         }
@@ -1500,12 +1659,25 @@ public final class GameSettingPage<S extends GameSetting> extends StackPane
             GameSetting.Global parent = profile != null
                     ? profile.getRepository().getParentGameSetting(instance)
                     : getParentGameSetting(instance);
-            InheritableProperty<Boolean> parentProperty = propertyGetter.apply(parent);
-            @Nullable Boolean parentValue = parentProperty.getValue();
+            InheritableProperty<T> parentProperty = propertyGetter.apply(parent);
+            @Nullable T parentValue = parentProperty.getValue();
             return parentValue != null ? parentValue : parentProperty.defaultValue();
         }
 
         return property.defaultValue();
+    }
+
+    /// Returns the setting object that provides the effective inheritable value.
+    private <T> GameSetting getEffectiveInheritableSource(
+            GameSetting setting,
+            Function<GameSetting, InheritableProperty<T>> propertyGetter) {
+        if (propertyGetter.apply(setting).getValue() != null || !(setting instanceof GameSetting.Instance instance)) {
+            return setting;
+        }
+
+        return profile != null
+                ? profile.getRepository().getParentGameSetting(instance)
+                : getParentGameSetting(instance);
     }
 
     /// Returns the configured parent global setting for an instance.
@@ -1516,130 +1688,23 @@ public final class GameSettingPage<S extends GameSetting> extends StackPane
     }
 
     @SafeVarargs
-    private <T> LineSelectButton<@Nullable T> createInheritableButton(
-            Function<S, InheritableProperty<T>> propertyGetter,
+    private <T> LineSelectButton<T> createInheritableButton(
+            Function<GameSetting, InheritableProperty<T>> propertyGetter,
             Function<T, String> convert,
             @Nullable Function<T, String> descriptionConverter,
             T... items
     ) {
-        var button = new LineSelectButton<@Nullable T>();
+        var button = new LineSelectButton<T>();
 
-        button.setConverter(value -> value != null ? convert.apply(value) : I18N_INHERIT_GLOBAL_SETTING);
+        button.setConverter(convert);
 
         if (descriptionConverter != null)
-            button.setDescriptionConverter(value -> value != null ? descriptionConverter.apply(value) : null); // TODO
+            button.setDescriptionConverter(descriptionConverter); // TODO
 
-        if (isGlobalSetting) {
-            button.setItems(items);
-        } else {
-            var actualItems = new ArrayList<@Nullable T>(items.length + 1);
-            actualItems.add(null);
-            actualItems.addAll(Arrays.asList(items));
-            button.setItems(actualItems);
-        }
-
-        this.currentSetting.addListener((o, oldValue, newValue) -> {
-            if (oldValue != null) {
-                var property = propertyGetter.apply(oldValue);
-                var binding = new InheritableBidirectionalBinding<>(isGlobalSetting, button, property);
-                button.valueProperty().removeListener(binding);
-                oldValue.removeListener(binding);
-                button.setValue(isGlobalSetting ? property.defaultValue() : null);
-            }
-
-            if (newValue != null) {
-                var property = propertyGetter.apply(newValue);
-                button.setValue(isGlobalSetting && property.getValue() == null ? property.defaultValue() : property.getValue());
-
-                var binding = new InheritableBidirectionalBinding<>(isGlobalSetting, button, property);
-                button.valueProperty().addListener(binding);
-                newValue.addListener(binding);
-            }
-        });
+        button.setItems(items);
+        bindInheritableLineSelectButton(button, propertyGetter);
 
         return button;
-    }
-
-    /// Binds an inheritable select button to an inheritable setting.
-    private static final class InheritableBidirectionalBinding<T> implements InvalidationListener, WeakListener {
-        private final boolean isGlobalSetting;
-        private final WeakReference<LineSelectButton<@Nullable T>> buttonRef;
-        private final WeakReference<InheritableProperty<T>> propertyRef;
-        private final int hashCode;
-
-        private boolean updating = false;
-
-        private InheritableBidirectionalBinding(boolean isGlobal,
-                                                LineSelectButton<@Nullable T> button,
-                                                InheritableProperty<T> property) {
-            this.isGlobalSetting = isGlobal;
-            this.buttonRef = new WeakReference<>(button);
-            this.propertyRef = new WeakReference<>(property);
-            this.hashCode = System.identityHashCode(button) ^ System.identityHashCode(property);
-        }
-
-        @Override
-        public void invalidated(Observable sourceProperty) {
-            if (!updating) {
-                final LineSelectButton<@Nullable T> button = buttonRef.get();
-                final InheritableProperty<T> property = propertyRef.get();
-
-                if (button == null || property == null) {
-                    if (button != null) {
-                        button.valueProperty().removeListener(this);
-                    }
-
-                    if (property != null) {
-                        property.removeListener(this);
-                    }
-                } else {
-                    updating = true;
-                    try {
-                        if (property == sourceProperty) {
-                            @Nullable T newValue = property.getValue();
-                            if (newValue == null) {
-                                button.setValue(isGlobalSetting ? property.defaultValue() : null);
-                            } else {
-                                button.setValue(newValue);
-                            }
-                        } else {
-                            property.setValue(button.getValue());
-                        }
-                    } finally {
-                        updating = false;
-                    }
-                }
-            }
-        }
-
-        @Override
-        public boolean wasGarbageCollected() {
-            return buttonRef.get() == null || propertyRef.get() == null;
-        }
-
-        @Override
-        public int hashCode() {
-            return hashCode;
-        }
-
-        @Override
-        public boolean equals(Object o) {
-            if (this == o)
-                return true;
-            if (!(o instanceof GameSettingPage.InheritableBidirectionalBinding<?> that))
-                return false;
-
-            final var button = this.buttonRef.get();
-            final var property = this.propertyRef.get();
-
-            final var thatColorPicker = that.buttonRef.get();
-            final var thatProperty = that.propertyRef.get();
-
-            if (button == null || property == null || thatColorPicker == null || thatProperty == null)
-                return false;
-
-            return button == thatColorPicker && property == thatProperty;
-        }
     }
 
     // endregion
@@ -1679,46 +1744,44 @@ public final class GameSettingPage<S extends GameSetting> extends StackPane
             return;
 
         updatingSelectedJava = true;
-        JavaVersionType javaType = setting.javaTypeProperty().getValue();
-        if (javaType != null) {
-            switch (javaType) {
-                case CUSTOM:
-                    javaCustomOption.setSelected(true);
-                    break;
-                case VERSION:
-                    javaVersionOption.setSelected(true);
-                    javaVersionOption.setText(setting.javaVersionProperty().getValue());
-                    break;
-                case AUTO:
-                    javaAutoDeterminedOption.setSelected(true);
-                    break;
-                default:
-                    RadioChoiceList.Choice<@Nullable Pair<@Nullable JavaVersionType, @Nullable JavaRuntime>> choice = null;
-                    if (JavaManager.isInitialized()) {
-                        try {
-                            JavaRuntime java = setting.getJava(null, null);
-                            if (java != null) {
-                                for (var candidate : javaItem.getChoices()) {
-                                    var value = candidate.getValue();
-                                    if (value != null && value.getValue() != null && java.getBinary().equals(value.getValue().getBinary())) {
-                                        choice = candidate;
-                                        break;
-                                    }
+        GameSetting source = getEffectiveInheritableSource(setting, GameSetting::javaTypeProperty);
+        JavaVersionType javaType = getEffectiveValue(setting, GameSetting::javaTypeProperty);
+        switch (javaType) {
+            case CUSTOM:
+                javaCustomOption.setSelected(true);
+                javaCustomOption.setPath(source.customJavaPathProperty().getValue());
+                break;
+            case VERSION:
+                javaVersionOption.setSelected(true);
+                javaVersionOption.setText(source.javaVersionProperty().getValue());
+                break;
+            case AUTO:
+                javaAutoDeterminedOption.setSelected(true);
+                break;
+            default:
+                RadioChoiceList.Choice<@Nullable Pair<@Nullable JavaVersionType, @Nullable JavaRuntime>> choice = null;
+                if (JavaManager.isInitialized()) {
+                    try {
+                        JavaRuntime java = setting.getJava(null, null);
+                        if (java != null) {
+                            for (var candidate : javaItem.getChoices()) {
+                                var value = candidate.getValue();
+                                if (value != null && value.getValue() != null && java.getBinary().equals(value.getValue().getBinary())) {
+                                    choice = candidate;
+                                    break;
                                 }
                             }
-                        } catch (InterruptedException ignored) {
                         }
+                    } catch (InterruptedException ignored) {
                     }
+                }
 
-                    if (choice != null) {
-                        choice.setSelected(true);
-                    } else {
-                        javaItem.clearSelection();
-                    }
-                    break;
-            }
-        } else {
-            javaInheritedOption.setSelected(true);
+                if (choice != null) {
+                    choice.setSelected(true);
+                } else {
+                    javaItem.clearSelection();
+                }
+                break;
         }
         updatingSelectedJava = false;
     }

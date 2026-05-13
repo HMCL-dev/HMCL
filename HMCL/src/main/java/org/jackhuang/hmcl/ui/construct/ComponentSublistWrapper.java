@@ -70,15 +70,24 @@ final class ComponentSublistWrapper extends VBox implements NoPaddingComponent {
             titleLabel.textProperty().bind(sublist.titleProperty());
             titleLabel.getStyleClass().add("title-label");
 
-            FXUtils.onChangeAndOperate(sublist.tipProperty(), tip -> {
-                if (StringUtils.isBlank(tip))
-                    firstLine.getChildren().setAll(titleLabel);
-                else {
+            InvalidationListener updateTitleLine = observable -> {
+                firstLine.getChildren().setAll(titleLabel);
+
+                Node titleRight = sublist.getTitleRight();
+                if (titleRight != null) {
+                    firstLine.getChildren().add(titleRight);
+                }
+
+                String tip = sublist.getTip();
+                if (!StringUtils.isBlank(tip)) {
                     var tipContainer = new StackPane(SVG.INFO.createIcon(16));
                     FXUtils.installFastTooltip(tipContainer, tip);
-                    firstLine.getChildren().setAll(titleLabel, tipContainer);
+                    firstLine.getChildren().add(tipContainer);
                 }
-            });
+            };
+            sublist.tipProperty().addListener(updateTitleLine);
+            sublist.titleRightProperty().addListener(updateTitleLine);
+            updateTitleLine.invalidated(null);
 
             if (sublist.isHasSubtitle()) {
                 Label subtitleLabel = new Label();
