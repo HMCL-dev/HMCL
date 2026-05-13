@@ -327,22 +327,7 @@ public final class GameSettingPage<S extends GameSetting> extends StackPane
                 maxMemoryPane.setTitle(i18n("settings.memory"));
                 maxMemoryPane.setRight(new HBox(8, txtMaxMemory, new Label("MiB"))); // TODO: i18n
 
-                var txtMinMemory = new JFXTextField();
-                txtMinMemory.setPrefWidth(160);
-                bindIntegerTextField(txtMinMemory, GameSetting::minMemoryProperty, true);
-                var minMemoryPane = new LinePane();
-                minMemoryPane.setTitle(i18n("settings.memory.lower_bound"));
-                minMemoryPane.setRight(new HBox(8, txtMinMemory, new Label("MiB"))); // TODO: i18n
-
-                var txtMetaspace = new JFXTextField();
-                txtMetaspace.setPromptText(i18n("settings.advanced.java_permanent_generation_space.prompt"));
-                txtMetaspace.setPrefWidth(160);
-                bindSettingBidirectional(txtMetaspace.textProperty(), GameSetting::permSizeProperty);
-                var metaspacePane = new LinePane();
-                metaspacePane.setTitle(i18n("settings.advanced.java_permanent_generation_space"));
-                metaspacePane.setRight(new HBox(8, txtMetaspace, new Label("MiB"))); // TODO: i18n
-
-                return List.of(autoMemoryPane, maxMemoryPane, minMemoryPane, metaspacePane);
+                return List.of(autoMemoryPane, maxMemoryPane);
             });
             basicSettings.getContent().add(memorySublist);
             memorySublist.setTitle(i18n("settings.memory"));
@@ -508,6 +493,27 @@ public final class GameSettingPage<S extends GameSetting> extends StackPane
                 jvmSettings
         );
         {
+            var minMemoryPane = new LinePane();
+            jvmSettings.getContent().add(minMemoryPane);
+            minMemoryPane.setTitle(i18n("settings.memory.lower_bound"));
+            {
+                var txtMinMemory = new JFXTextField();
+                txtMinMemory.setPrefWidth(160);
+                minMemoryPane.setRight(new HBox(8, txtMinMemory, new Label("MiB"))); // TODO: i18n
+                bindIntegerTextField(txtMinMemory, GameSetting::minMemoryProperty, true);
+            }
+
+            var metaspacePane = new LinePane();
+            jvmSettings.getContent().add(metaspacePane);
+            metaspacePane.setTitle(i18n("settings.advanced.java_permanent_generation_space"));
+            {
+                var txtMetaspace = new JFXTextField();
+                txtMetaspace.setPromptText(i18n("settings.advanced.java_permanent_generation_space.prompt"));
+                txtMetaspace.setPrefWidth(160);
+                metaspacePane.setRight(new HBox(8, txtMetaspace, new Label("MiB"))); // TODO: i18n
+                bindSettingBidirectional(txtMetaspace.textProperty(), GameSetting::permSizeProperty);
+            }
+
             var noJVMArgsPane = createInheritableBooleanButton(GameSetting::noJVMOptionsProperty);
             jvmSettings.getContent().add(noJVMArgsPane);
             noJVMArgsPane.setTitle(i18n("settings.advanced.no_jvm_args"));
