@@ -640,13 +640,14 @@ public final class GameSettingPage<S extends GameSetting> extends StackPane
         rendererPane.setTitle(i18n("settings.advanced.renderer"));
 
         FXUtils.onChangeAndOperate(graphicsBackendPane.valueProperty(), backend -> {
-            rendererPane.setItems(Renderer.getSupported(backend));
-            if (backend == GraphicsAPI.DEFAULT) {
+            GraphicsAPI effectiveBackend = backend != null ? backend : GraphicsAPI.DEFAULT;
+            rendererPane.setItems(Renderer.getSupported(effectiveBackend));
+            if (effectiveBackend == GraphicsAPI.DEFAULT) {
                 rendererPane.setDisable(true);
                 rendererPane.setValue(Renderer.DEFAULT);
             } else {
                 rendererPane.setDisable(false);
-                if (!(rendererPane.getValue() instanceof Renderer.Driver driver) || driver.api() != backend)
+                if (!(rendererPane.getValue() instanceof Renderer.Driver driver) || driver.api() != effectiveBackend)
                     rendererPane.setValue(Renderer.DEFAULT);
             }
         });
@@ -1696,10 +1697,10 @@ public final class GameSettingPage<S extends GameSetting> extends StackPane
     ) {
         var button = new LineSelectButton<T>();
 
-        button.setConverter(convert);
+        button.setConverter(value -> value != null ? convert.apply(value) : "");
 
         if (descriptionConverter != null)
-            button.setDescriptionConverter(descriptionConverter); // TODO
+            button.setDescriptionConverter(value -> value != null ? descriptionConverter.apply(value) : ""); // TODO
 
         button.setItems(items);
         bindInheritableLineSelectButton(button, propertyGetter);
