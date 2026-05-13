@@ -424,7 +424,7 @@ public final class GameSettingPage<S extends GameSetting> extends StackPane
             }
 
             // Show Logs Window Setting
-            var showLogsPane = createInheritableBooleanButton(GameSetting::showLogsProperty);
+            var showLogsPane = createEffectiveInheritableToggleButton(GameSetting::showLogsProperty);
             basicSettings.getContent().add(showLogsPane);
             showLogsPane.setTitle(i18n("settings.show_log"));
 
@@ -1412,6 +1412,111 @@ public final class GameSettingPage<S extends GameSetting> extends StackPane
                 null,
                 true, false
         );
+    }
+
+    /// Creates a toggle-based inheritable boolean editor that displays the effective value.
+    private LineInheritableToggleButton createEffectiveInheritableToggleButton(
+            Function<GameSetting, InheritableProperty<Boolean>> propertyGetter) {
+        var button = new LineInheritableToggleButton();
+        button.setInheritedText("继承"); // TODO: i18n
+        button.setOverriddenText("覆盖"); // TODO: i18n
+        button.setInheritTooltip(I18N_INHERIT_GLOBAL_SETTING);
+        button.setInheritAvailable(!isGlobalSetting);
+
+        bindEffectiveInheritableToggleButton(button, propertyGetter);
+        return button;
+    }
+
+    /// Binds an inheritable toggle editor to an inheritable boolean setting.
+    private void bindEffectiveInheritableToggleButton(
+            LineInheritableToggleButton button,
+            Function<GameSetting, InheritableProperty<Boolean>> propertyGetter) {
+        ObjectProperty<@Nullable InheritableProperty<Boolean>> activeProperty = new SimpleObjectProperty<>();
+        final boolean[] updating = {false};
+
+        InvalidationListener refresh = observable -> {
+            GameSetting setting = currentSetting.get();
+            InheritableProperty<Boolean> property = activeProperty.get();
+            if (setting == null || property == null || updating[0]) {
+                return;
+            }
+
+            updating[0] = true;
+            try {
+                button.setRawValue(property.getValue());
+                button.setEffectiveValue(getEffectiveBooleanValue(setting, propertyGetter));
+            } finally {
+                updating[0] = false;
+            }
+        };
+
+        button.rawValueProperty().addListener((observable, oldValue, newValue) -> {
+            InheritableProperty<Boolean> property = activeProperty.get();
+            GameSetting setting = currentSetting.get();
+            if (property == null || setting == null || updating[0]) {
+                return;
+            }
+
+            updating[0] = true;
+            try {
+                property.setValue(newValue);
+                button.setEffectiveValue(getEffectiveBooleanValue(setting, propertyGetter));
+            } finally {
+                updating[0] = false;
+            }
+        });
+
+        currentSetting.addListener((observable, oldValue, newValue) -> {
+            if (oldValue != null) {
+                oldValue.removeListener(refresh);
+            }
+
+            InheritableProperty<Boolean> newProperty = newValue != null ? propertyGetter.apply(newValue) : null;
+            activeProperty.set(newProperty);
+            if (newValue != null) {
+                newValue.addListener(refresh);
+            }
+            refresh.invalidated(newValue);
+        });
+
+        config().getGameSettings().addListener(refresh);
+        config().defaultGameSettingProperty().addListener(refresh);
+
+        S setting = currentSetting.get();
+        if (setting != null) {
+            activeProperty.set(propertyGetter.apply(setting));
+            setting.addListener(refresh);
+            refresh.invalidated(setting);
+        }
+    }
+
+    /// Returns the effective boolean value after applying parent inheritance.
+    private boolean getEffectiveBooleanValue(
+            GameSetting setting,
+            Function<GameSetting, InheritableProperty<Boolean>> propertyGetter) {
+        InheritableProperty<Boolean> property = propertyGetter.apply(setting);
+        @Nullable Boolean value = property.getValue();
+        if (value != null) {
+            return value;
+        }
+
+        if (setting instanceof GameSetting.Instance instance) {
+            GameSetting.Global parent = profile != null
+                    ? profile.getRepository().getParentGameSetting(instance)
+                    : getParentGameSetting(instance);
+            InheritableProperty<Boolean> parentProperty = propertyGetter.apply(parent);
+            @Nullable Boolean parentValue = parentProperty.getValue();
+            return parentValue != null ? parentValue : parentProperty.defaultValue();
+        }
+
+        return property.defaultValue();
+    }
+
+    /// Returns the configured parent global setting for an instance.
+    private GameSetting.Global getParentGameSetting(GameSetting.Instance instance) {
+        UUID parent = instance.parentProperty().getValue();
+        GameSetting.Global parentSetting = config().getGameSetting(parent);
+        return parentSetting != null ? parentSetting : config().getDefaultGameSettingOrCreate();
     }
 
     @SafeVarargs
