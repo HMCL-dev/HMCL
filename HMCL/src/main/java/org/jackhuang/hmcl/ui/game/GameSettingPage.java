@@ -346,7 +346,7 @@ public final class GameSettingPage<S extends GameSetting> extends StackPane
             memorySublist.setTitle(i18n("settings.memory"));
             memorySublist.setHasSubtitle(true);
             memorySublist.setSubtitle(i18n("settings.memory.auto_allocate"));
-            memorySublist.setHeaderRight(createHeaderRight(GameSetting.MEMORY_SETTINGS));
+            memorySublist.setHeaderRight(createHeaderRight(memorySublist, GameSetting.MEMORY_SETTINGS));
 
             // Launcher Visibility Setting
             var launcherVisibilityPane = createInheritableButton(
@@ -641,7 +641,7 @@ public final class GameSettingPage<S extends GameSetting> extends StackPane
         });
         advancedSettings.getContent().add(nativesSettings);
         nativesSettings.setTitle(i18n("settings.advanced.natives"));
-        nativesSettings.setHeaderRight(createHeaderRight(GameSetting.NATIVE_SETTINGS));
+        nativesSettings.setHeaderRight(createHeaderRight(nativesSettings, GameSetting.NATIVE_SETTINGS));
 
         var graphicsBackendPane = new LineSelectButton<GraphicsAPI>();
         advancedSettings.getContent().add(graphicsBackendPane);
@@ -1157,7 +1157,7 @@ public final class GameSettingPage<S extends GameSetting> extends StackPane
         return Math.round(width) + "x" + Math.round(height);
     }
 
-    private @Nullable Pane createHeaderRight(SettingGroup group) {
+    private @Nullable Pane createHeaderRight(ComponentSublist sublist, SettingGroup group) {
         if (isGlobalSetting) { // TODO: use inheritGlobalSettings
             return null;
         }
@@ -1168,6 +1168,7 @@ public final class GameSettingPage<S extends GameSetting> extends StackPane
         var inherit = new JFXCheckBox();
         box.getChildren().addAll(inherit, new Label("覆盖全局设置")); // TODO: i18n
         bindOverrideGroup(inherit.selectedProperty(), group);
+        sublist.disableProperty().bind(inherit.selectedProperty().not());
 
         return box;
     }
