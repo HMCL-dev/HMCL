@@ -51,6 +51,7 @@ import org.jackhuang.hmcl.java.JavaRuntime;
 import org.jackhuang.hmcl.setting.*;
 import org.jackhuang.hmcl.setting.property.InheritableProperty;
 import org.jackhuang.hmcl.setting.property.SettingGroup;
+import org.jackhuang.hmcl.setting.property.SettingProperty;
 import org.jackhuang.hmcl.ui.*;
 import org.jackhuang.hmcl.ui.construct.*;
 import org.jackhuang.hmcl.ui.decorator.DecoratorPage;
@@ -539,13 +540,6 @@ public final class GameSettingPage<S extends GameSetting> extends StackPane
                 advancedSettings
         );
 
-        if (!isGlobalSetting) {
-            var noInheritGameArgsPane = new LineToggleButton();
-            advancedSettings.getContent().add(noInheritGameArgsPane);
-            noInheritGameArgsPane.setTitle("覆盖全局游戏参数"); // TODO: i18n
-            bindOverrideGroup(noInheritGameArgsPane.selectedProperty(), GameSetting.GAME_ARGUMENTS);
-        }
-
         var gameArgsPane = new LinePane();
         advancedSettings.getContent().add(gameArgsPane);
         gameArgsPane.setTitle(i18n("settings.advanced.minecraft_arguments"));
@@ -555,6 +549,13 @@ public final class GameSettingPage<S extends GameSetting> extends StackPane
             txtGameArgs.setPrefWidth(400);
             gameArgsPane.setRight(txtGameArgs);
             bindSettingBidirectional(txtGameArgs.textProperty(), GameSetting::gameArgsProperty);
+        }
+
+        if (!isGlobalSetting) {
+            var noInheritGameArgsPane = new LineToggleButton();
+            advancedSettings.getContent().add(noInheritGameArgsPane);
+            noInheritGameArgsPane.setTitle("覆盖全局游戏参数"); // TODO: i18n
+            bindOverrideGroup(noInheritGameArgsPane.selectedProperty(), GameSetting.GAME_ARGUMENTS);
         }
 
         var customCommandSettings = new ComponentSublist(() -> {
@@ -590,13 +591,6 @@ public final class GameSettingPage<S extends GameSetting> extends StackPane
         customCommandSettings.setSubtitle("自定义启动游戏时的命令"); // TODO: i18n
         customCommandSettings.setTip(i18n("settings.advanced.custom_commands.hint"));
 
-        if (!isGlobalSetting) {
-            var noInheritEnvironmentVariablesPane = new LineToggleButton();
-            advancedSettings.getContent().add(noInheritEnvironmentVariablesPane);
-            noInheritEnvironmentVariablesPane.setTitle("覆盖全局环境变量"); // TODO: i18n
-            bindOverrideGroup(noInheritEnvironmentVariablesPane.selectedProperty(), GameSetting.ENVIRONMENT_VARIABLES);
-        }
-
         var environmentVariablesPane = new LinePane();
         advancedSettings.getContent().add(environmentVariablesPane);
         environmentVariablesPane.setTitle("环境变量"); // TODO: i18n
@@ -608,40 +602,46 @@ public final class GameSettingPage<S extends GameSetting> extends StackPane
             bindSettingBidirectional(txtEnvironmentVariables.textProperty(), GameSetting::environmentVariablesProperty);
         }
 
-        var nativesSettings = new ComponentList();
-        rootPane.getChildren().addAll(
-                ComponentList.createComponentListTitle(i18n("settings.advanced.natives")),
-                nativesSettings
-        );
-
-        var useCustomNativesDirPane = createNativesDirTypeButton();
-        nativesSettings.getContent().add(useCustomNativesDirPane);
-        useCustomNativesDirPane.setTitle(i18n("settings.advanced.natives_directory.custom.enabled"));
-
-        var nativesDirPane = new LinePane();
-        nativesSettings.getContent().add(nativesDirPane);
-        nativesDirPane.setTitle(i18n("settings.advanced.natives_directory"));
-        {
-            var txtNativesDir = new JFXTextField();
-            txtNativesDir.setPrefWidth(400);
-            txtNativesDir.disableProperty().bind(useCustomNativesDirPane.valueProperty().isNotEqualTo(Boolean.TRUE));
-            nativesDirPane.setRight(txtNativesDir);
-            bindSettingBidirectional(txtNativesDir.textProperty(), GameSetting::nativesDirProperty);
+        if (!isGlobalSetting) {
+            var noInheritEnvironmentVariablesPane = new LineToggleButton();
+            advancedSettings.getContent().add(noInheritEnvironmentVariablesPane);
+            noInheritEnvironmentVariablesPane.setTitle("覆盖全局环境变量"); // TODO: i18n
+            bindOverrideGroup(noInheritEnvironmentVariablesPane.selectedProperty(), GameSetting.ENVIRONMENT_VARIABLES);
         }
 
-        var noNativesPatchPane = createInheritableBooleanButton(GameSetting::notPatchNativesProperty);
-        nativesSettings.getContent().add(noNativesPatchPane);
-        noNativesPatchPane.setTitle(i18n("settings.advanced.dont_patch_natives"));
+        var nativesSettings = new ComponentSublist(() -> {
+            var useCustomNativesDirPane = new LineToggleButton();
+            useCustomNativesDirPane.setTitle(i18n("settings.advanced.natives_directory.custom.enabled"));
+            bindNativesDirTypeButton(useCustomNativesDirPane.selectedProperty());
 
-        var useNativeGLFWPane = createInheritableBooleanButton(GameSetting::useNativeGLFWProperty);
-        useNativeGLFWPane.setTitle(i18n("settings.advanced.use_native_glfw"));
-        useNativeGLFWPane.setSubtitle(i18n("settings.advanced.linux_freebsd_only"));
+            var nativesDirPane = new LinePane();
+            nativesDirPane.setTitle(i18n("settings.advanced.natives_directory"));
+            {
+                var txtNativesDir = new JFXTextField();
+                txtNativesDir.setPrefWidth(400);
+                nativesDirPane.setRight(txtNativesDir);
+                bindSettingBidirectional(txtNativesDir.textProperty(), GameSetting::nativesDirProperty);
+            }
 
-        var useNativeOpenALPane = createInheritableBooleanButton(GameSetting::useNativeOpenALProperty);
-        useNativeOpenALPane.setTitle(i18n("settings.advanced.use_native_openal"));
-        useNativeOpenALPane.setSubtitle(i18n("settings.advanced.linux_freebsd_only"));
+            var noNativesPatchPane = new LineToggleButton();
+            noNativesPatchPane.setTitle(i18n("settings.advanced.dont_patch_natives"));
+            bindSettingBidirectional(noNativesPatchPane.selectedProperty(), GameSetting::notPatchNativesProperty);
 
-        nativesSettings.getContent().addAll(useNativeGLFWPane, useNativeOpenALPane);
+            var useNativeGLFWPane = new LineToggleButton();
+            useNativeGLFWPane.setTitle(i18n("settings.advanced.use_native_glfw"));
+            useNativeGLFWPane.setSubtitle(i18n("settings.advanced.linux_freebsd_only"));
+            bindSettingBidirectional(useNativeGLFWPane.selectedProperty(), GameSetting::useNativeGLFWProperty);
+
+            var useNativeOpenALPane = new LineToggleButton();
+            useNativeOpenALPane.setTitle(i18n("settings.advanced.use_native_openal"));
+            useNativeOpenALPane.setSubtitle(i18n("settings.advanced.linux_freebsd_only"));
+            bindSettingBidirectional(useNativeOpenALPane.selectedProperty(), GameSetting::useNativeOpenALProperty);
+
+            return List.of(useCustomNativesDirPane, nativesDirPane, noNativesPatchPane, useNativeGLFWPane, useNativeOpenALPane);
+        });
+        advancedSettings.getContent().add(nativesSettings);
+        nativesSettings.setTitle(i18n("settings.advanced.natives"));
+        nativesSettings.setHeaderRight(createHeaderRight(GameSetting.NATIVE_SETTINGS));
 
         var graphicsBackendPane = new LineSelectButton<GraphicsAPI>();
         advancedSettings.getContent().add(graphicsBackendPane);
@@ -1253,34 +1253,13 @@ public final class GameSettingPage<S extends GameSetting> extends StackPane
         }
     }
 
-    /// Creates the selector that maps custom native library usage to the native directory mode.
-    private LineSelectButton<@Nullable Boolean> createNativesDirTypeButton() {
-        var button = new LineSelectButton<@Nullable Boolean>();
-        button.setConverter(value -> value != null
-                ? i18n(value ? "mods.enable" : "mods.disable")
-                : I18N_INHERIT_GLOBAL_SETTING);
-
-        if (isGlobalSetting) {
-            button.setItems(Boolean.FALSE, Boolean.TRUE);
-        } else {
-            var items = new ArrayList<@Nullable Boolean>();
-            items.add(null);
-            items.add(Boolean.FALSE);
-            items.add(Boolean.TRUE);
-            button.setItems(items);
-        }
-
-        bindNativesDirTypeButton(button.valueProperty());
-        return button;
-    }
-
-    /// Binds a boolean selector to the native library directory mode.
-    private void bindNativesDirTypeButton(ObjectProperty<@Nullable Boolean> value) {
-        ObjectProperty<@Nullable InheritableProperty<NativesDirectoryType>> activeProperty = new SimpleObjectProperty<>();
+    /// Binds a boolean toggle to the native library directory mode.
+    private void bindNativesDirTypeButton(BooleanProperty selected) {
+        ObjectProperty<@Nullable SettingProperty<NativesDirectoryType>> activeProperty = new SimpleObjectProperty<>();
         final boolean[] updating = {false};
 
         InvalidationListener propertyListener = observable -> {
-            InheritableProperty<NativesDirectoryType> property = activeProperty.get();
+            SettingProperty<NativesDirectoryType> property = activeProperty.get();
             if (property == null || updating[0]) {
                 return;
             }
@@ -1288,39 +1267,37 @@ public final class GameSettingPage<S extends GameSetting> extends StackPane
             updating[0] = true;
             try {
                 @Nullable NativesDirectoryType nativesDirType = property.getValue();
-                if (isGlobalSetting && nativesDirType == null) {
+                if (nativesDirType == null) {
                     nativesDirType = property.defaultValue();
                 }
-                value.setValue(nativesDirType != null ? nativesDirType == NativesDirectoryType.CUSTOM : null);
+                selected.set(nativesDirType == NativesDirectoryType.CUSTOM);
             } finally {
                 updating[0] = false;
             }
         };
 
-        ChangeListener<@Nullable Boolean> valueListener = (observable, oldValue, newValue) -> {
-            InheritableProperty<NativesDirectoryType> property = activeProperty.get();
+        ChangeListener<Boolean> selectedListener = (observable, oldValue, newValue) -> {
+            SettingProperty<NativesDirectoryType> property = activeProperty.get();
             if (property == null || updating[0]) {
                 return;
             }
 
             updating[0] = true;
             try {
-                property.setValue(newValue == null
-                        ? null
-                        : newValue ? NativesDirectoryType.CUSTOM : NativesDirectoryType.VERSION_FOLDER);
+                property.setValue(newValue ? NativesDirectoryType.CUSTOM : NativesDirectoryType.VERSION_FOLDER);
             } finally {
                 updating[0] = false;
             }
         };
 
-        value.addListener(valueListener);
+        selected.addListener(selectedListener);
         currentSetting.addListener((observable, oldValue, newValue) -> {
-            InheritableProperty<NativesDirectoryType> oldProperty = activeProperty.get();
+            SettingProperty<NativesDirectoryType> oldProperty = activeProperty.get();
             if (oldProperty != null) {
                 oldProperty.removeListener(propertyListener);
             }
 
-            InheritableProperty<NativesDirectoryType> newProperty = newValue != null
+            SettingProperty<NativesDirectoryType> newProperty = newValue != null
                     ? newValue.nativesDirTypeProperty()
                     : null;
             activeProperty.set(newProperty);
@@ -1332,7 +1309,7 @@ public final class GameSettingPage<S extends GameSetting> extends StackPane
 
         S setting = currentSetting.get();
         if (setting != null) {
-            InheritableProperty<NativesDirectoryType> property = setting.nativesDirTypeProperty();
+            SettingProperty<NativesDirectoryType> property = setting.nativesDirTypeProperty();
             activeProperty.set(property);
             property.addListener(propertyListener);
             propertyListener.invalidated(property);

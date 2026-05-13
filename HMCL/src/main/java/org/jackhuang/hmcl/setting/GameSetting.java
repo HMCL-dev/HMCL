@@ -64,6 +64,9 @@ public sealed abstract class GameSetting extends ObservableSetting {
     /// Environment variable text can inherit and merge with the parent setting.
     public static final SettingGroup ENVIRONMENT_VARIABLES = new SettingGroup("environmentVariables");
 
+    /// Native library settings are overridden as one group.
+    public static final SettingGroup NATIVE_SETTINGS = new SettingGroup("natives");
+
     private static final int SUGGESTED_MEMORY;
 
     static {
@@ -503,46 +506,46 @@ public sealed abstract class GameSetting extends ObservableSetting {
 
     /// If `true`, HMCL does not patch native libraries.
     @SerializedName("notPatchNatives")
-    private final InheritableProperty<Boolean> notPatchNatives = newInheritableProperty("notPatchNatives", false);
+    private final SettingProperty<Boolean> notPatchNatives = newSettingProperty(NATIVE_SETTINGS, "notPatchNatives", false);
 
     /// Returns the native library patching property.
-    public InheritableProperty<Boolean> notPatchNativesProperty() {
+    public SettingProperty<Boolean> notPatchNativesProperty() {
         return notPatchNatives;
     }
 
     /// The native library directory mode.
     @SerializedName("nativesDirType")
-    private final InheritableProperty<NativesDirectoryType> nativesDirType = newInheritableProperty("nativesDirType", NativesDirectoryType.VERSION_FOLDER);
+    private final SettingProperty<NativesDirectoryType> nativesDirType = newSettingProperty(NATIVE_SETTINGS, "nativesDirType", NativesDirectoryType.VERSION_FOLDER);
 
     /// Returns the native library directory mode property.
-    public InheritableProperty<NativesDirectoryType> nativesDirTypeProperty() {
+    public SettingProperty<NativesDirectoryType> nativesDirTypeProperty() {
         return nativesDirType;
     }
 
     /// The path to the native library directory.
     @SerializedName("nativesDir")
-    private final InheritableProperty<String> nativesDir = newInheritableProperty("nativesDir", "");
+    private final SettingProperty<String> nativesDir = newSettingProperty(NATIVE_SETTINGS, "nativesDir", "");
 
     /// Returns the native library directory property.
-    public InheritableProperty<String> nativesDirProperty() {
+    public SettingProperty<String> nativesDirProperty() {
         return nativesDir;
     }
 
     /// If `true`, HMCL will use native GLFW.
     @SerializedName("useNativeGLFW")
-    private final InheritableProperty<Boolean> useNativeGLFW = newInheritableProperty("useNativeGLFW", false);
+    private final SettingProperty<Boolean> useNativeGLFW = newSettingProperty(NATIVE_SETTINGS, "useNativeGLFW", false);
 
     /// Returns the native GLFW property.
-    public InheritableProperty<Boolean> useNativeGLFWProperty() {
+    public SettingProperty<Boolean> useNativeGLFWProperty() {
         return useNativeGLFW;
     }
 
     /// If `true`, HMCL will use native OpenAL.
     @SerializedName("useNativeOpenAL")
-    private final InheritableProperty<Boolean> useNativeOpenAL = newInheritableProperty("useNativeOpenAL", false);
+    private final SettingProperty<Boolean> useNativeOpenAL = newSettingProperty(NATIVE_SETTINGS, "useNativeOpenAL", false);
 
     /// Returns the native OpenAL property.
-    public InheritableProperty<Boolean> useNativeOpenALProperty() {
+    public SettingProperty<Boolean> useNativeOpenALProperty() {
         return useNativeOpenAL;
     }
 
@@ -569,6 +572,7 @@ public sealed abstract class GameSetting extends ObservableSetting {
             target.getOverrideGroups().add(JVM_OPTIONS);
             target.getOverrideGroups().add(GAME_ARGUMENTS);
             target.getOverrideGroups().add(ENVIRONMENT_VARIABLES);
+            target.getOverrideGroups().add(NATIVE_SETTINGS);
         }
         return target;
     }
@@ -960,27 +964,27 @@ public sealed abstract class GameSetting extends ObservableSetting {
 
         /// Returns whether native library patching is disabled.
         public boolean isNotPatchNatives() {
-            return inherited(global, instance, GameSetting::notPatchNativesProperty);
+            return grouped(global, instance, NATIVE_SETTINGS, GameSetting::notPatchNativesProperty);
         }
 
         /// Returns the effective native directory mode.
         public NativesDirectoryType getNativesDirType() {
-            return inherited(global, instance, GameSetting::nativesDirTypeProperty);
+            return grouped(global, instance, NATIVE_SETTINGS, GameSetting::nativesDirTypeProperty);
         }
 
         /// Returns the effective native directory.
         public String getNativesDir() {
-            return empty(inherited(global, instance, GameSetting::nativesDirProperty));
+            return empty(grouped(global, instance, NATIVE_SETTINGS, GameSetting::nativesDirProperty));
         }
 
         /// Returns whether native GLFW should be used.
         public boolean isUseNativeGLFW() {
-            return inherited(global, instance, GameSetting::useNativeGLFWProperty);
+            return grouped(global, instance, NATIVE_SETTINGS, GameSetting::useNativeGLFWProperty);
         }
 
         /// Returns whether native OpenAL should be used.
         public boolean isUseNativeOpenAL() {
-            return inherited(global, instance, GameSetting::useNativeOpenALProperty);
+            return grouped(global, instance, NATIVE_SETTINGS, GameSetting::useNativeOpenALProperty);
         }
     }
 }
