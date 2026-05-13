@@ -40,7 +40,6 @@ import javafx.scene.Scene;
 import javafx.scene.control.Label;
 import javafx.scene.control.ListCell;
 import javafx.scene.control.ScrollPane;
-import javafx.scene.control.Toggle;
 import javafx.scene.control.ToggleGroup;
 import javafx.scene.layout.*;
 import javafx.stage.FileChooser;
@@ -118,11 +117,11 @@ public final class GameSettingPage<S extends GameSetting> extends StackPane
     private final @UnknownNullability ImagePickerItem iconPickerItem;
 
     private final ComponentSublist javaSublist;
-    private final MultiFileItem<@Nullable Pair<@Nullable JavaVersionType, @Nullable JavaRuntime>> javaItem;
-    private final MultiFileItem.Option<Pair<@Nullable JavaVersionType, @Nullable JavaRuntime>> javaInheritedOption;
-    private final MultiFileItem.Option<Pair<JavaVersionType, @Nullable JavaRuntime>> javaAutoDeterminedOption;
-    private final MultiFileItem.StringOption<Pair<JavaVersionType, @Nullable JavaRuntime>> javaVersionOption;
-    private final MultiFileItem.FileOption<Pair<JavaVersionType, @Nullable JavaRuntime>> javaCustomOption;
+    private final RadioChoiceList<@Nullable Pair<@Nullable JavaVersionType, @Nullable JavaRuntime>> javaItem;
+    private final RadioChoiceList.Choice<@Nullable Pair<@Nullable JavaVersionType, @Nullable JavaRuntime>> javaInheritedOption;
+    private final RadioChoiceList.Choice<@Nullable Pair<@Nullable JavaVersionType, @Nullable JavaRuntime>> javaAutoDeterminedOption;
+    private final RadioChoiceList.TextChoice<@Nullable Pair<@Nullable JavaVersionType, @Nullable JavaRuntime>> javaVersionOption;
+    private final RadioChoiceList.FileChoice<@Nullable Pair<@Nullable JavaVersionType, @Nullable JavaRuntime>> javaCustomOption;
     private final InvalidationListener javaListener = o -> initializeSelectedJava();
 
     public GameSettingPage(Class<S> settingType) {
@@ -178,22 +177,22 @@ public final class GameSettingPage<S extends GameSetting> extends StackPane
             javaSublist.setTitle(i18n("settings.game.java_directory"));
             javaSublist.setHasSubtitle(true);
             {
-                javaItem = new MultiFileItem<>();
+                javaItem = new RadioChoiceList<>();
                 javaSublist.getContent().setAll(javaItem);
 
-                javaInheritedOption = new MultiFileItem.Option<>(I18N_INHERIT_GLOBAL_SETTING, pair(null, null));
-                javaAutoDeterminedOption = new MultiFileItem.Option<>(i18n("settings.game.java_directory.auto"), pair(JavaVersionType.AUTO, null));
-                javaVersionOption = new MultiFileItem.StringOption<>(i18n("settings.game.java_directory.version"), pair(JavaVersionType.VERSION, null));
+                javaInheritedOption = new RadioChoiceList.Choice<>(I18N_INHERIT_GLOBAL_SETTING, pair(null, null));
+                javaAutoDeterminedOption = new RadioChoiceList.Choice<>(i18n("settings.game.java_directory.auto"), pair(JavaVersionType.AUTO, null));
+                javaVersionOption = new RadioChoiceList.TextChoice<>(i18n("settings.game.java_directory.version"), pair(JavaVersionType.VERSION, null));
                 javaVersionOption.setValidators(new NumberValidator(true));
-                FXUtils.setLimitWidth(javaVersionOption.getCustomField(), 40);
+                FXUtils.setLimitWidth(javaVersionOption.getTextField(), 40);
 
-                javaCustomOption = new MultiFileItem.FileOption<Pair<JavaVersionType, JavaRuntime>>(i18n("settings.custom"), pair(JavaVersionType.CUSTOM, null))
+                javaCustomOption = new RadioChoiceList.FileChoice<@Nullable Pair<@Nullable JavaVersionType, @Nullable JavaRuntime>>(i18n("settings.custom"), pair(JavaVersionType.CUSTOM, null))
                         .setChooserTitle(i18n("settings.game.java_directory.choose"));
                 if (OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS)
                     javaCustomOption.addExtensionFilter(new FileChooser.ExtensionFilter("Java", "java.exe")); // TODO: i18n
 
                 holder.add(FXUtils.onWeakChangeAndOperate(JavaManager.getAllJavaProperty(), allJava -> {
-                    var options = new ArrayList<MultiFileItem.Option<@Nullable Pair<@Nullable JavaVersionType, @Nullable JavaRuntime>>>();
+                    var options = new ArrayList<RadioChoiceList.Choice<@Nullable Pair<@Nullable JavaVersionType, @Nullable JavaRuntime>>>();
                     if (!isGlobalSetting) {
                         options.add(javaInheritedOption);
                     }
@@ -203,7 +202,7 @@ public final class GameSettingPage<S extends GameSetting> extends StackPane
                         boolean isX86 = Architecture.SYSTEM_ARCH.isX86() && allJava.stream().allMatch(java -> java.getArchitecture().isX86());
 
                         for (JavaRuntime java : allJava) {
-                            options.add(new MultiFileItem.Option<>(
+                            options.add(new RadioChoiceList.Choice<>(
                                     i18n("settings.game.java_directory.template",
                                             java.getVersion(),
                                             isX86 ? i18n("settings.game.java_directory.bit", java.getBits().getBit())
@@ -214,7 +213,7 @@ public final class GameSettingPage<S extends GameSetting> extends StackPane
                     }
 
                     options.add(javaCustomOption);
-                    javaItem.loadChildren(options);
+                    javaItem.setChoices(options);
                     initializeSelectedJava();
                 }));
             }
@@ -236,7 +235,7 @@ public final class GameSettingPage<S extends GameSetting> extends StackPane
                 initJavaSubtitle();
             });
 
-            javaItem.setToggleSelectedListener(newValue -> {
+            javaItem.selectedChoiceProperty().addListener((observable, oldChoice, newChoice) -> {
                 S setting = currentSetting.get();
                 if (setting == null || updatingSelectedJava) {
                     return;
@@ -251,7 +250,7 @@ public final class GameSettingPage<S extends GameSetting> extends StackPane
 
                     if (javaCustomOption.isSelected()) {
                         setting.javaTypeProperty().setValue(JavaVersionType.CUSTOM);
-                        setting.customJavaPathProperty().setValue(javaCustomOption.getValue());
+                        setting.customJavaPathProperty().setValue(javaCustomOption.getPath());
                         setting.javaVersionProperty().setValue("");
                         setting.defaultJavaPathProperty().setValue("");
                     } else if (javaAutoDeterminedOption.isSelected()) {
@@ -260,14 +259,18 @@ public final class GameSettingPage<S extends GameSetting> extends StackPane
                         setting.defaultJavaPathProperty().setValue("");
                     } else if (javaVersionOption.isSelected()) {
                         setting.javaTypeProperty().setValue(JavaVersionType.VERSION);
-                        setting.javaVersionProperty().setValue(javaVersionOption.getValue());
+                        setting.javaVersionProperty().setValue(javaVersionOption.getText());
                         setting.defaultJavaPathProperty().setValue("");
-                    } else if (newValue != null && newValue.getUserData() instanceof Pair<?, ?> pair
-                            && pair.getKey() == JavaVersionType.DETECTED
-                            && pair.getValue() instanceof JavaRuntime java) {
-                        setting.javaTypeProperty().setValue(JavaVersionType.DETECTED);
-                        setting.javaVersionProperty().setValue(java.getVersion());
-                        setting.defaultJavaPathProperty().setValue(java.getBinary().toString());
+                    } else if (newChoice != null) {
+                        @Nullable Pair<@Nullable JavaVersionType, @Nullable JavaRuntime> selectedJava = newChoice.getValue();
+                        if (selectedJava != null
+                                && selectedJava.getKey() == JavaVersionType.DETECTED
+                                && selectedJava.getValue() != null) {
+                            JavaRuntime java = selectedJava.getValue();
+                            setting.javaTypeProperty().setValue(JavaVersionType.DETECTED);
+                            setting.javaVersionProperty().setValue(java.getVersion());
+                            setting.defaultJavaPathProperty().setValue(java.getBinary().toString());
+                        }
                     }
                 } finally {
                     updatingJavaSetting = false;
@@ -275,7 +278,7 @@ public final class GameSettingPage<S extends GameSetting> extends StackPane
                 }
             });
 
-            javaVersionOption.valueProperty().addListener((observable, oldValue, newValue) -> {
+            javaVersionOption.textProperty().addListener((observable, oldValue, newValue) -> {
                 S setting = currentSetting.get();
                 if (setting != null && javaVersionOption.isSelected() && !updatingSelectedJava) {
                     setting.javaVersionProperty().setValue(newValue);
@@ -283,7 +286,7 @@ public final class GameSettingPage<S extends GameSetting> extends StackPane
                 }
             });
 
-            javaCustomOption.valueProperty().addListener((observable, oldValue, newValue) -> {
+            javaCustomOption.pathProperty().addListener((observable, oldValue, newValue) -> {
                 S setting = currentSetting.get();
                 if (setting != null && javaCustomOption.isSelected() && !updatingSelectedJava) {
                     setting.customJavaPathProperty().setValue(newValue);
@@ -364,13 +367,13 @@ public final class GameSettingPage<S extends GameSetting> extends StackPane
             windowTypeSublist.setTitle("游戏窗口类型"); // TODO: i18n
             windowTypeSublist.setHasSubtitle(true);
             {
-                var windowTypeItem = new MultiFileItem<@Nullable GameWindowType>();
-                var windowTypeOptions = new ArrayList<MultiFileItem.Option<@Nullable GameWindowType>>();
+                var windowTypeItem = new RadioChoiceList<@Nullable GameWindowType>();
+                var windowTypeOptions = new ArrayList<RadioChoiceList.Choice<@Nullable GameWindowType>>();
                 if (isGlobalSetting) {
-                    windowTypeItem.setFallbackData(GameWindowType.WINDOWED);
+                    windowTypeItem.setFallbackValue(GameWindowType.WINDOWED);
                 } else {
-                    windowTypeOptions.add(new MultiFileItem.Option<>(I18N_INHERIT_GLOBAL_SETTING, null));
-                    windowTypeItem.setFallbackData(null);
+                    windowTypeOptions.add(new RadioChoiceList.Choice<>(I18N_INHERIT_GLOBAL_SETTING, null));
+                    windowTypeItem.setFallbackValue(null);
                 }
 
                 var cboWindowSize = new JFXComboBox<String>();
@@ -384,13 +387,13 @@ public final class GameSettingPage<S extends GameSetting> extends StackPane
                     if (type == GameWindowType.WINDOWED) {
                         windowTypeOptions.add(new WindowedWindowTypeOption(cboWindowSize));
                     } else {
-                        windowTypeOptions.add(new MultiFileItem.Option<>(getWindowTypeDisplayName(type), type));
+                        windowTypeOptions.add(new RadioChoiceList.Choice<>(getWindowTypeDisplayName(type), type));
                     }
                 }
 
-                windowTypeItem.loadChildren(windowTypeOptions);
+                windowTypeItem.setChoices(windowTypeOptions);
                 windowTypeSublist.getContent().add(windowTypeItem);
-                bindInheritableMultiFileItem(windowTypeItem, GameSetting::windowTypeProperty);
+                bindInheritableRadioChoiceList(windowTypeItem, GameSetting::windowTypeProperty);
                 bindInheritableSublistSubtitle(
                         windowTypeSublist,
                         GameSetting::windowTypeProperty,
@@ -446,11 +449,11 @@ public final class GameSettingPage<S extends GameSetting> extends StackPane
 
             // Quick Play
             var quickSublist = new ComponentSublist(() -> {
-                var quickPlayItem = new MultiFileItem<@Nullable QuickPlayType>();
+                var quickPlayItem = new RadioChoiceList<@Nullable QuickPlayType>();
 
-                var noneOption = new MultiFileItem.Option<>("无", QuickPlayType.NONE); // TODO: i18n
+                var noneOption = new RadioChoiceList.Choice<>("无", QuickPlayType.NONE); // TODO: i18n
 
-                var multiplayerOption = new MultiFileItem.StringOption<>("多人联机", QuickPlayType.MULTIPLAYER); // TODO: i18n
+                var multiplayerOption = new RadioChoiceList.TextChoice<>("多人联机", QuickPlayType.MULTIPLAYER); // TODO: i18n
                 multiplayerOption.setValidators(new Validator(str -> {
                     if (StringUtils.isBlank(str))
                         return true;
@@ -462,21 +465,21 @@ public final class GameSettingPage<S extends GameSetting> extends StackPane
                     }
                 }));
 
-                var singleplayerOption = new MultiFileItem.StringOption<>("单人游戏", QuickPlayType.SINGLEPLAYER); // TODO: i18n
+                var singleplayerOption = new RadioChoiceList.TextChoice<>("单人游戏", QuickPlayType.SINGLEPLAYER); // TODO: i18n
                 singleplayerOption.setValidators(new Validator(str -> {
                     if (StringUtils.isBlank(str))
                         return true;
                     return FileUtils.isNameValid(str);
                 }));
 
-                var realmsOption = new MultiFileItem.StringOption<>("领域服", QuickPlayType.REALMS); // TODO: i18n
+                var realmsOption = new RadioChoiceList.TextChoice<>("领域服", QuickPlayType.REALMS); // TODO: i18n
 
-                var options = new ArrayList<MultiFileItem.Option<@Nullable QuickPlayType>>();
+                var options = new ArrayList<RadioChoiceList.Choice<@Nullable QuickPlayType>>();
                 if (isGlobalSetting) {
-                    quickPlayItem.setFallbackData(QuickPlayType.NONE);
+                    quickPlayItem.setFallbackValue(QuickPlayType.NONE);
                 } else {
-                    options.add(new MultiFileItem.Option<>(I18N_INHERIT_GLOBAL_SETTING, null));
-                    quickPlayItem.setFallbackData(null);
+                    options.add(new RadioChoiceList.Choice<>(I18N_INHERIT_GLOBAL_SETTING, null));
+                    quickPlayItem.setFallbackValue(null);
                 }
                 options.addAll(List.of(
                         noneOption,
@@ -485,13 +488,13 @@ public final class GameSettingPage<S extends GameSetting> extends StackPane
                         realmsOption
                 ));
 
-                quickPlayItem.loadChildren(options);
+                quickPlayItem.setChoices(options);
 
                 //noinspection NullableProblems
-                bindSettingBidirectional(quickPlayItem.selectedDataProperty(), GameSetting::quickPlayProperty);
-                bindSettingBidirectional(multiplayerOption.valueProperty(), GameSetting::quickPlayMultiplayerProperty);
-                bindSettingBidirectional(singleplayerOption.valueProperty(), GameSetting::quickPlaySingleplayerProperty);
-                bindSettingBidirectional(realmsOption.valueProperty(), GameSetting::quickPlayRealmsProperty);
+                bindSettingBidirectional(quickPlayItem.selectedValueProperty(), GameSetting::quickPlayProperty);
+                bindSettingBidirectional(multiplayerOption.textProperty(), GameSetting::quickPlayMultiplayerProperty);
+                bindSettingBidirectional(singleplayerOption.textProperty(), GameSetting::quickPlaySingleplayerProperty);
+                bindSettingBidirectional(realmsOption.textProperty(), GameSetting::quickPlayRealmsProperty);
                 return List.of(quickPlayItem);
             });
             basicSettings.getContent().add(quickSublist);
@@ -1197,7 +1200,8 @@ public final class GameSettingPage<S extends GameSetting> extends StackPane
         }
     }
 
-    private <T> void bindInheritableMultiFileItem(MultiFileItem<@Nullable T> item, Function<S, InheritableProperty<T>> propertyGetter) {
+    /// Binds a radio choice list to an inheritable setting property.
+    private <T> void bindInheritableRadioChoiceList(RadioChoiceList<@Nullable T> item, Function<S, InheritableProperty<T>> propertyGetter) {
         ObjectProperty<@Nullable InheritableProperty<T>> activeProperty = new SimpleObjectProperty<>();
         final boolean[] updating = {false};
 
@@ -1210,7 +1214,7 @@ public final class GameSettingPage<S extends GameSetting> extends StackPane
             updating[0] = true;
             try {
                 @Nullable T value = property.getValue();
-                item.setSelectedData(isGlobalSetting && value == null ? property.defaultValue() : value);
+                item.setSelectedValue(isGlobalSetting && value == null ? property.defaultValue() : value);
             } finally {
                 updating[0] = false;
             }
@@ -1230,7 +1234,7 @@ public final class GameSettingPage<S extends GameSetting> extends StackPane
             }
         };
 
-        item.selectedDataProperty().addListener(itemListener);
+        item.selectedValueProperty().addListener(itemListener);
         currentSetting.addListener((observable, oldValue, newValue) -> {
             InheritableProperty<T> oldProperty = activeProperty.get();
             if (oldProperty != null) {
@@ -1370,7 +1374,7 @@ public final class GameSettingPage<S extends GameSetting> extends StackPane
     }
 
     /// Windowed game window mode option with the window size selector on the same row.
-    private static final class WindowedWindowTypeOption extends MultiFileItem.Option<@Nullable GameWindowType> {
+    private static final class WindowedWindowTypeOption extends RadioChoiceList.Choice<@Nullable GameWindowType> {
         /// The selector used to edit the initial game window size.
         private final JFXComboBox<String> windowSizeComboBox;
 
@@ -1382,21 +1386,16 @@ public final class GameSettingPage<S extends GameSetting> extends StackPane
 
         /// Creates the option row with the size selector placed on the right.
         @Override
-        protected Node createItem(ToggleGroup group) {
+        protected Node createNode(ToggleGroup group) {
             BorderPane pane = new BorderPane();
             pane.setPadding(new Insets(3));
             FXUtils.setLimitHeight(pane, 30);
 
-            left.setText(title);
-            BorderPane.setAlignment(left, Pos.CENTER_LEFT);
-            left.setToggleGroup(group);
-            left.setUserData(data);
-            if (StringUtils.isNotBlank(tooltip)) {
-                FXUtils.installFastTooltip(left, tooltip);
-            }
-            pane.setLeft(left);
+            configureRadioButton(group);
+            BorderPane.setAlignment(radioButton, Pos.CENTER_LEFT);
+            pane.setLeft(radioButton);
 
-            windowSizeComboBox.disableProperty().bind(left.selectedProperty().not());
+            windowSizeComboBox.disableProperty().bind(radioButton.selectedProperty().not());
             BorderPane.setAlignment(windowSizeComboBox, Pos.CENTER_RIGHT);
             pane.setRight(windowSizeComboBox);
             return pane;
@@ -1599,26 +1598,22 @@ public final class GameSettingPage<S extends GameSetting> extends StackPane
                     break;
                 case VERSION:
                     javaVersionOption.setSelected(true);
-                    javaVersionOption.setValue(setting.javaVersionProperty().getValue());
+                    javaVersionOption.setText(setting.javaVersionProperty().getValue());
                     break;
                 case AUTO:
                     javaAutoDeterminedOption.setSelected(true);
                     break;
                 default:
-                    Toggle toggle = null;
+                    RadioChoiceList.Choice<@Nullable Pair<@Nullable JavaVersionType, @Nullable JavaRuntime>> choice = null;
                     if (JavaManager.isInitialized()) {
                         try {
                             JavaRuntime java = setting.getJava(null, null);
                             if (java != null) {
-                                for (Toggle t : javaItem.getGroup().getToggles()) {
-                                    if (t.getUserData() != null) {
-                                        @SuppressWarnings("unchecked")
-                                        var userData = (Pair<JavaVersionType, JavaRuntime>) t.getUserData();
-                                        if (userData.getValue() != null && java.getBinary().equals(userData.getValue().getBinary())) {
-                                            toggle = t;
-                                            break;
-
-                                        }
+                                for (var candidate : javaItem.getChoices()) {
+                                    var value = candidate.getValue();
+                                    if (value != null && value.getValue() != null && java.getBinary().equals(value.getValue().getBinary())) {
+                                        choice = candidate;
+                                        break;
                                     }
                                 }
                             }
@@ -1626,13 +1621,10 @@ public final class GameSettingPage<S extends GameSetting> extends StackPane
                         }
                     }
 
-                    if (toggle != null) {
-                        toggle.setSelected(true);
+                    if (choice != null) {
+                        choice.setSelected(true);
                     } else {
-                        Toggle selectedToggle = javaItem.getGroup().getSelectedToggle();
-                        if (selectedToggle != null) {
-                            selectedToggle.setSelected(false);
-                        }
+                        javaItem.clearSelection();
                     }
                     break;
             }
@@ -1660,9 +1652,9 @@ public final class GameSettingPage<S extends GameSetting> extends StackPane
             return;
         }
 
-        var selectedData = javaItem.getSelectedData();
-        if (selectedData != null && selectedData.getValue() != null) {
-            javaSublist.setSubtitle(selectedData.getValue().getBinary().toString());
+        var selectedJava = javaItem.getSelectedValue();
+        if (selectedJava != null && selectedJava.getValue() != null) {
+            javaSublist.setSubtitle(selectedJava.getValue().getBinary().toString());
             return;
         }
 
