@@ -263,7 +263,7 @@ public final class RadioChoiceList<T extends @UnknownNullability Object> extends
         }
 
         /// Creates the rendered row node.
-        protected Node createNode(ToggleGroup group) {
+        private Node createNode(ToggleGroup group) {
             BorderPane pane = new BorderPane();
             pane.setPadding(new Insets(3));
             FXUtils.setLimitHeight(pane, 30);
@@ -272,17 +272,32 @@ public final class RadioChoiceList<T extends @UnknownNullability Object> extends
             BorderPane.setAlignment(radioButton, Pos.CENTER_LEFT);
             pane.setLeft(radioButton);
 
-            if (StringUtils.isNotBlank(subtitle)) {
-                var label = new javafx.scene.control.Label(subtitle);
-                BorderPane.setAlignment(label, Pos.CENTER_RIGHT);
-                label.setWrapText(true);
-                label.getStyleClass().add("subtitle-label");
-                label.setStyle("-fx-font-size: 10;");
-                label.setPadding(new Insets(0, 0, 0, 15));
-                pane.setCenter(label);
+            @Nullable Node right = createRightNode();
+            if (right != null) {
+                right.disableProperty().bind(radioButton.selectedProperty().not());
+                BorderPane.setAlignment(right, Pos.CENTER_RIGHT);
+                pane.setRight(right);
+            } else if (StringUtils.isNotBlank(subtitle)) {
+                pane.setCenter(createSubtitleLabel());
             }
 
             return pane;
+        }
+
+        /// Creates the optional right-side editor node.
+        protected @Nullable Node createRightNode() {
+            return null;
+        }
+
+        /// Creates the subtitle label for choices without a right-side editor.
+        private Node createSubtitleLabel() {
+            var label = new javafx.scene.control.Label(subtitle);
+            BorderPane.setAlignment(label, Pos.CENTER_RIGHT);
+            label.setWrapText(true);
+            label.getStyleClass().add("subtitle-label");
+            label.setStyle("-fx-font-size: 10;");
+            label.setPadding(new Insets(0, 0, 0, 15));
+            return label;
         }
     }
 
@@ -330,26 +345,13 @@ public final class RadioChoiceList<T extends @UnknownNullability Object> extends
             return this;
         }
 
-        /// Creates the rendered row node.
+        /// Creates the right-side text field.
         @Override
-        protected Node createNode(ToggleGroup group) {
-            BorderPane pane = new BorderPane();
-            pane.setPadding(new Insets(3));
-            FXUtils.setLimitHeight(pane, 30);
-
-            configureRadioButton(group);
-            BorderPane.setAlignment(radioButton, Pos.CENTER_LEFT);
-            pane.setLeft(radioButton);
-
-            BorderPane.setAlignment(textField, Pos.CENTER_RIGHT);
-            textField.disableProperty().bind(radioButton.selectedProperty().not());
-
+        protected Node createRightNode() {
             if (!textField.getValidators().isEmpty()) {
                 FXUtils.setValidateWhileTextChanged(textField, true);
             }
-
-            pane.setRight(textField);
-            return pane;
+            return textField;
         }
     }
 
@@ -404,21 +406,10 @@ public final class RadioChoiceList<T extends @UnknownNullability Object> extends
             return this;
         }
 
-        /// Creates the rendered row node.
+        /// Creates the right-side file selector.
         @Override
-        protected Node createNode(ToggleGroup group) {
-            BorderPane pane = new BorderPane();
-            pane.setPadding(new Insets(3));
-            FXUtils.setLimitHeight(pane, 30);
-
-            configureRadioButton(group);
-            BorderPane.setAlignment(radioButton, Pos.CENTER_LEFT);
-            pane.setLeft(radioButton);
-
-            selector.disableProperty().bind(radioButton.selectedProperty().not());
-            BorderPane.setAlignment(selector, Pos.CENTER_RIGHT);
-            pane.setRight(selector);
-            return pane;
+        protected Node createRightNode() {
+            return selector;
         }
     }
 }

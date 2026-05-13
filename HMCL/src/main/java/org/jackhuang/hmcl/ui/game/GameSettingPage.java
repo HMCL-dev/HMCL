@@ -40,7 +40,6 @@ import javafx.scene.Scene;
 import javafx.scene.control.Label;
 import javafx.scene.control.ListCell;
 import javafx.scene.control.ScrollPane;
-import javafx.scene.control.ToggleGroup;
 import javafx.scene.layout.*;
 import javafx.stage.FileChooser;
 import javafx.stage.Screen;
@@ -1384,21 +1383,10 @@ public final class GameSettingPage<S extends GameSetting> extends StackPane
             this.windowSizeComboBox = windowSizeComboBox;
         }
 
-        /// Creates the option row with the size selector placed on the right.
+        /// Creates the right-side size selector.
         @Override
-        protected Node createNode(ToggleGroup group) {
-            BorderPane pane = new BorderPane();
-            pane.setPadding(new Insets(3));
-            FXUtils.setLimitHeight(pane, 30);
-
-            configureRadioButton(group);
-            BorderPane.setAlignment(radioButton, Pos.CENTER_LEFT);
-            pane.setLeft(radioButton);
-
-            windowSizeComboBox.disableProperty().bind(radioButton.selectedProperty().not());
-            BorderPane.setAlignment(windowSizeComboBox, Pos.CENTER_RIGHT);
-            pane.setRight(windowSizeComboBox);
-            return pane;
+        protected Node createRightNode() {
+            return windowSizeComboBox;
         }
     }
 
