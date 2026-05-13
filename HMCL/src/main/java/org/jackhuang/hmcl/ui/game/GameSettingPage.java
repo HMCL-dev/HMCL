@@ -424,7 +424,7 @@ public final class GameSettingPage<S extends GameSetting> extends StackPane
             }
 
             // Show Logs Window Setting
-            var showLogsPane = createEffectiveInheritableToggleButton(GameSetting::showLogsProperty);
+            var showLogsPane = createInheritableBooleanButton(GameSetting::showLogsProperty);
             basicSettings.getContent().add(showLogsPane);
             showLogsPane.setTitle(i18n("settings.show_log"));
 
@@ -515,7 +515,7 @@ public final class GameSettingPage<S extends GameSetting> extends StackPane
             var noOptimizingJVMArgsPane = createInheritableBooleanButton(GameSetting::noOptimizingJVMOptionsProperty);
             jvmSettings.getContent().add(noOptimizingJVMArgsPane);
             noOptimizingJVMArgsPane.setTitle(i18n("settings.advanced.no_optimizing_jvm_args"));
-            noOptimizingJVMArgsPane.disableProperty().bind(noJVMArgsPane.valueProperty().isEqualTo(Boolean.TRUE));
+            noOptimizingJVMArgsPane.disableProperty().bind(noJVMArgsPane.effectiveValueProperty());
 
             if (!isGlobalSetting) {
                 var noInheritJVMArgsPane = new LineToggleButton();
@@ -1404,18 +1404,8 @@ public final class GameSettingPage<S extends GameSetting> extends StackPane
         bindSettingBidirectional(property, (Function<S, Property<T>>) propertyGetter);
     }
 
-    private LineSelectButton<@Nullable Boolean> createInheritableBooleanButton(
-            Function<S, InheritableProperty<Boolean>> propertyGetter) {
-        return createInheritableButton(
-                propertyGetter,
-                value -> value ? "启用" : "禁用", // TODO: i18n
-                null,
-                true, false
-        );
-    }
-
     /// Creates a toggle-based inheritable boolean editor that displays the effective value.
-    private LineInheritableToggleButton createEffectiveInheritableToggleButton(
+    private LineInheritableToggleButton createInheritableBooleanButton(
             Function<GameSetting, InheritableProperty<Boolean>> propertyGetter) {
         var button = new LineInheritableToggleButton();
         button.setInheritedText("继承"); // TODO: i18n
@@ -1564,7 +1554,7 @@ public final class GameSettingPage<S extends GameSetting> extends StackPane
         return button;
     }
 
-    /// @see #createInheritableBooleanButton(Function)
+    /// Binds an inheritable select button to an inheritable setting.
     private static final class InheritableBidirectionalBinding<T> implements InvalidationListener, WeakListener {
         private final boolean isGlobalSetting;
         private final WeakReference<LineSelectButton<@Nullable T>> buttonRef;

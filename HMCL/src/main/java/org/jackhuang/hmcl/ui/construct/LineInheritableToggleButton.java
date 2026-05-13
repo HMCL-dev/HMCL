@@ -25,11 +25,8 @@ import javafx.beans.property.SimpleBooleanProperty;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.property.StringProperty;
-import javafx.geometry.Pos;
-import javafx.scene.control.Label;
+import javafx.css.PseudoClass;
 import javafx.scene.input.MouseEvent;
-import javafx.scene.layout.HBox;
-import javafx.scene.layout.Region;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
 import org.jetbrains.annotations.NotNullByDefault;
@@ -44,10 +41,16 @@ public final class LineInheritableToggleButton extends LineButtonBase {
     /// The style class applied to inheritable toggle rows.
     private static final String DEFAULT_STYLE_CLASS = "line-inheritable-toggle-button";
 
-    /// The label that displays whether the value is inherited or overridden.
-    private final Label sourceLabel;
+    /// The pseudo class applied while the value overrides the inherited setting.
+    private static final PseudoClass PSEUDO_OVERRIDDEN = PseudoClass.getPseudoClass("overridden");
 
-    /// The button that resets the raw value to inherited mode.
+    /// The style class applied to the compact inheritance state button.
+    private static final String INHERIT_BUTTON_STYLE_CLASS = "toggle-icon-tiny";
+
+    /// The icon size used by the compact inheritance state button.
+    private static final int INHERIT_BUTTON_ICON_SIZE = 12;
+
+    /// The button that toggles between inherited and overridden mode.
     private final JFXButton inheritButton;
 
     /// The visual toggle that displays the effective value.
@@ -57,13 +60,19 @@ public final class LineInheritableToggleButton extends LineButtonBase {
     public LineInheritableToggleButton() {
         this.getStyleClass().addAll(DEFAULT_STYLE_CLASS, "line-toggle-button");
 
-        this.sourceLabel = new Label();
-        sourceLabel.setMinWidth(Region.USE_PREF_SIZE);
-        sourceLabel.setMouseTransparent(true);
-
-        this.inheritButton = FXUtils.newToggleButton4(SVG.RESTORE, 18);
+        this.inheritButton = new JFXButton();
+        inheritButton.getStyleClass().add(INHERIT_BUTTON_STYLE_CLASS);
+        inheritButton.setGraphic(SVG.PUBLIC.createIcon(INHERIT_BUTTON_ICON_SIZE));
         inheritButton.addEventFilter(MouseEvent.MOUSE_CLICKED, event -> {
-            setRawValue(null);
+            if (!isInheritAvailable()) {
+                return;
+            }
+
+            if (getRawValue() == null) {
+                setRawValue(isEffectiveValue());
+            } else {
+                setRawValue(null);
+            }
             super.fire();
             event.consume();
         });
@@ -73,9 +82,8 @@ public final class LineInheritableToggleButton extends LineButtonBase {
         toggleButton.setSize(8);
         FXUtils.setLimitHeight(toggleButton, 30);
 
-        var box = new HBox(8, sourceLabel, inheritButton, toggleButton);
-        box.setAlignment(Pos.CENTER);
-        setNode(IDX_TRAILING, box);
+        setTitleTrailing(inheritButton);
+        setNode(IDX_TRAILING, toggleButton);
 
         rawValue.addListener(observable -> refresh());
         effectiveValue.addListener(observable -> refresh());
@@ -93,14 +101,14 @@ public final class LineInheritableToggleButton extends LineButtonBase {
 
     /// Refreshes the visual state from the raw and effective values.
     private void refresh() {
-        boolean inherited = isInheritAvailable() && getRawValue() == null;
+        boolean inheritAvailable = isInheritAvailable();
+        boolean inherited = inheritAvailable && getRawValue() == null;
+        boolean overridden = inheritAvailable && getRawValue() != null;
 
-        sourceLabel.setText(inherited ? getInheritedText() : getOverriddenText());
-        sourceLabel.setVisible(isInheritAvailable());
-        sourceLabel.setManaged(isInheritAvailable());
-
-        inheritButton.setVisible(isInheritAvailable() && !inherited);
-        inheritButton.setManaged(isInheritAvailable() && !inherited);
+        inheritButton.setGraphic((inherited ? SVG.PUBLIC : SVG.TUNE).createIcon(INHERIT_BUTTON_ICON_SIZE));
+        inheritButton.pseudoClassStateChanged(PSEUDO_OVERRIDDEN, overridden);
+        inheritButton.setVisible(inheritAvailable);
+        inheritButton.setManaged(inheritAvailable);
 
         toggleButton.setSelected(isEffectiveValue());
     }
@@ -159,38 +167,38 @@ public final class LineInheritableToggleButton extends LineButtonBase {
         inheritAvailableProperty().set(inheritAvailable);
     }
 
-    /// The text displayed while inheriting the parent value.
+    /// The text that describes inherited mode.
     private final StringProperty inheritedText = new SimpleStringProperty(this, "inheritedText", "");
 
-    /// Returns the text displayed while inheriting the parent value.
+    /// Returns the text that describes inherited mode.
     public StringProperty inheritedTextProperty() {
         return inheritedText;
     }
 
-    /// Returns the text displayed while inheriting the parent value.
+    /// Returns the text that describes inherited mode.
     public String getInheritedText() {
         return inheritedTextProperty().get();
     }
 
-    /// Sets the text displayed while inheriting the parent value.
+    /// Sets the text that describes inherited mode.
     public void setInheritedText(String inheritedText) {
         inheritedTextProperty().set(inheritedText);
     }
 
-    /// The text displayed while overriding the parent value.
+    /// The text that describes overridden mode.
     private final StringProperty overriddenText = new SimpleStringProperty(this, "overriddenText", "");
 
-    /// Returns the text displayed while overriding the parent value.
+    /// Returns the text that describes overridden mode.
     public StringProperty overriddenTextProperty() {
         return overriddenText;
     }
 
-    /// Returns the text displayed while overriding the parent value.
+    /// Returns the text that describes overridden mode.
     public String getOverriddenText() {
         return overriddenTextProperty().get();
     }
 
-    /// Sets the text displayed while overriding the parent value.
+    /// Sets the text that describes overridden mode.
     public void setOverriddenText(String overriddenText) {
         overriddenTextProperty().set(overriddenText);
     }

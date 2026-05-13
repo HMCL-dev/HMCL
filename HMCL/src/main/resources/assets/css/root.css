@@ -1323,6 +1323,10 @@
     -fx-padding: 5.0;
 }
 
+.toggle-icon-tiny:overridden .svg {
+    -fx-fill: -monet-primary;
+}
+
 .toggle-icon-tiny .jfx-rippler {
     -jfx-rippler-fill: -monet-primary;
     -jfx-mask-type: CIRCLE;
