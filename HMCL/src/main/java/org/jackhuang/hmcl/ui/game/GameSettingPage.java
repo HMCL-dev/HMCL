@@ -147,9 +147,15 @@ public final class GameSettingPage<S extends GameSetting> extends StackPane
         }
 
         var basicSettings = new ComponentList();
+        var gameSettings = new ComponentList();
+        var launcherSettings = new ComponentList();
         rootPane.getChildren().addAll(
                 ComponentList.createComponentListTitle("基本设置"), // TODO: i18n
-                basicSettings
+                basicSettings,
+                ComponentList.createComponentListTitle("游戏设置"), // TODO: i18n
+                gameSettings,
+                ComponentList.createComponentListTitle("启动器设置"), // TODO: i18n
+                launcherSettings
         );
         {
             if (isGlobalSetting) {
@@ -171,7 +177,7 @@ public final class GameSettingPage<S extends GameSetting> extends StackPane
 
             // Java Setting
             javaSublist = new ComponentSublist();
-            basicSettings.getContent().add(javaSublist);
+            gameSettings.getContent().add(javaSublist);
             javaSublist.setTitle(i18n("settings.game.java_directory"));
             javaSublist.setHasSubtitle(true);
             {
@@ -322,7 +328,7 @@ public final class GameSettingPage<S extends GameSetting> extends StackPane
 
                 return List.of(autoMemoryPane, maxMemoryPane);
             });
-            basicSettings.getContent().add(memorySublist);
+            gameSettings.getContent().add(memorySublist);
             memorySublist.setTitle(i18n("settings.memory"));
             memorySublist.setHasSubtitle(true);
             memorySublist.setSubtitle(i18n("settings.memory.auto_allocate"));
@@ -335,12 +341,12 @@ public final class GameSettingPage<S extends GameSetting> extends StackPane
                     null,
                     LauncherVisibility.values()
             );
-            basicSettings.getContent().add(launcherVisibilityPane);
+            launcherSettings.getContent().add(launcherVisibilityPane);
             launcherVisibilityPane.setTitle(i18n("settings.advanced.launcher_visible"));
 
             // Game Window Setting
             var windowTypeSublist = new ComponentSublist();
-            basicSettings.getContent().add(windowTypeSublist);
+            gameSettings.getContent().add(windowTypeSublist);
             windowTypeSublist.setTitle("游戏窗口类型"); // TODO: i18n
             windowTypeSublist.setHasSubtitle(true);
             {
@@ -372,38 +378,15 @@ public final class GameSettingPage<S extends GameSetting> extends StackPane
                         GameSettingPage::getWindowTypeDisplayName);
             }
 
-            var runningDirPane = new LinePane();
-            basicSettings.getContent().add(runningDirPane);
-            runningDirPane.setTitle("游戏运行路径"); // TODO: i18n
-            {
-                var txtRunningDir = new JFXTextField();
-                txtRunningDir.setPrefWidth(400);
-                runningDirPane.setRight(txtRunningDir);
-                bindRunningDirTextField(runningDirPane, txtRunningDir);
-            }
-
             // Show Logs Window Setting
             var showLogsPane = createInheritableBooleanButton(GameSetting::showLogsProperty);
-            basicSettings.getContent().add(showLogsPane);
+            launcherSettings.getContent().add(showLogsPane);
             showLogsPane.setTitle(i18n("settings.show_log"));
 
             // Enable Debug Log Output Setting
             var enableDebugLogOutputPane = createInheritableBooleanButton(GameSetting::enableDebugLogOutputProperty);
-            basicSettings.getContent().add(enableDebugLogOutputPane);
+            launcherSettings.getContent().add(enableDebugLogOutputPane);
             enableDebugLogOutputPane.setTitle(i18n("settings.enable_debug_log_output"));
-
-            // Process Priority Setting
-            var processPriorityPane = createInheritableButton(
-                    GameSetting::processPriorityProperty,
-                    e -> i18n("settings.advanced.process_priority." + e.name().toLowerCase(Locale.ROOT)),
-                    e -> {
-                        String bundleKey = "settings.advanced.process_priority." + e.name().toLowerCase(Locale.ROOT) + ".desc";
-                        return I18n.hasKey(bundleKey) ? i18n(bundleKey) : "";
-                    },
-                    ProcessPriority.values()
-            );
-            basicSettings.getContent().add(processPriorityPane);
-            processPriorityPane.setTitle(i18n("settings.advanced.process_priority"));
 
             // Quick Play
             var quickSublist = new ComponentSublist();
@@ -450,7 +433,7 @@ public final class GameSettingPage<S extends GameSetting> extends StackPane
                 bindSettingBidirectional(realmsOption.textProperty(), GameSetting::quickPlayRealmsProperty);
                 quickSublist.getContent().setAll(quickPlayItem);
             }
-            basicSettings.getContent().add(quickSublist);
+            gameSettings.getContent().add(quickSublist);
             quickSublist.setTitle("快速游玩"); // TODO: i18n
             quickSublist.setSubtitle("启动游戏后直接进入指定服务器或世界"); // TODO: i18n
             quickSublist.setHasSubtitle(true);
@@ -510,6 +493,28 @@ public final class GameSettingPage<S extends GameSetting> extends StackPane
                 ComponentList.createComponentListTitle(i18n("settings.advanced")),
                 advancedSettings
         );
+
+        var runningDirPane = new LinePane();
+        advancedSettings.getContent().add(runningDirPane);
+        runningDirPane.setTitle("游戏运行路径"); // TODO: i18n
+        {
+            var txtRunningDir = new JFXTextField();
+            txtRunningDir.setPrefWidth(400);
+            runningDirPane.setRight(txtRunningDir);
+            bindRunningDirTextField(runningDirPane, txtRunningDir);
+        }
+
+        var processPriorityPane = createInheritableButton(
+                GameSetting::processPriorityProperty,
+                e -> i18n("settings.advanced.process_priority." + e.name().toLowerCase(Locale.ROOT)),
+                e -> {
+                    String bundleKey = "settings.advanced.process_priority." + e.name().toLowerCase(Locale.ROOT) + ".desc";
+                    return I18n.hasKey(bundleKey) ? i18n(bundleKey) : "";
+                },
+                ProcessPriority.values()
+        );
+        advancedSettings.getContent().add(processPriorityPane);
+        processPriorityPane.setTitle(i18n("settings.advanced.process_priority"));
 
         var gameArgsPane = new LinePane();
         advancedSettings.getContent().add(gameArgsPane);
