@@ -1689,7 +1689,7 @@ public final class GameSettingPage<S extends GameSetting> extends StackPane
     }
 
     @SafeVarargs
-    private <T> LineSelectButton<T> createInheritableButton(
+    private <T extends @UnknownNullability Object> LineSelectButton<T> createInheritableButton(
             Function<GameSetting, InheritableProperty<T>> propertyGetter,
             Function<T, String> convert,
             @Nullable Function<T, String> descriptionConverter,

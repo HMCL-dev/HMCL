@@ -81,7 +81,7 @@ public abstract class LineComponent extends StackPane implements NoPaddingCompon
         titleLabel.setMinWidth(Region.USE_PREF_SIZE);
         titleLabel.setMouseTransparent(true);
 
-        this.titleLine = new HBox(6, titleLabel);
+        this.titleLine = new HBox(4, titleLabel);
         titleLine.setAlignment(Pos.CENTER_LEFT);
 
         this.titleContainer = new VBox(titleLine);
