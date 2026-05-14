@@ -372,28 +372,14 @@ public final class GameSettingPage<S extends GameSetting> extends StackPane
                         GameSettingPage::getWindowTypeDisplayName);
             }
 
-            var gameDirTypePane = createInheritableButton(
-                    GameSetting::gameDirTypeProperty,
-                    type -> switch (type) {
-                        case ROOT_FOLDER -> "默认运行路径"; // TODO: i18n
-                        case CUSTOM -> i18n("settings.custom");
-                        case VERSION_FOLDER -> "版本文件夹"; // TODO: i18n
-                    },
-                    null,
-                    GameDirectoryType.ROOT_FOLDER,
-                    GameDirectoryType.CUSTOM
-            );
-            basicSettings.getContent().add(gameDirTypePane);
-            gameDirTypePane.setTitle("游戏运行路径"); // TODO: i18n
-
             var runningDirPane = new LinePane();
             basicSettings.getContent().add(runningDirPane);
-            runningDirPane.setTitle("自定义运行路径"); // TODO: i18n
+            runningDirPane.setTitle("游戏运行路径"); // TODO: i18n
             {
                 var txtRunningDir = new JFXTextField();
                 txtRunningDir.setPrefWidth(400);
                 runningDirPane.setRight(txtRunningDir);
-                bindSettingBidirectional(txtRunningDir.textProperty(), GameSetting::runningDirProperty);
+                bindRunningDirTextField(runningDirPane, txtRunningDir);
             }
 
             // Show Logs Window Setting
@@ -1217,6 +1203,123 @@ public final class GameSettingPage<S extends GameSetting> extends StackPane
         S setting = currentSetting.get();
         if (setting != null) {
             property.bindBidirectional(propertyGetter.apply(setting));
+        }
+    }
+
+    /// Binds the run directory text field and derives the directory mode from its value.
+    private void bindRunningDirTextField(LineComponent line, JFXTextField textField) {
+        ObjectProperty<@Nullable InheritableProperty<GameDirectoryType>> activeTypeProperty = new SimpleObjectProperty<>();
+        ObjectProperty<@Nullable InheritableProperty<String>> activeDirProperty = new SimpleObjectProperty<>();
+        final boolean[] updating = {false};
+
+        @Nullable JFXButton inheritButton = null;
+        if (!isGlobalSetting) {
+            inheritButton = createInheritanceButton();
+            line.setTitleTrailing(inheritButton);
+        }
+        @Nullable JFXButton finalInheritButton = inheritButton;
+
+        InvalidationListener refresh = observable -> {
+            GameSetting setting = currentSetting.get();
+            InheritableProperty<GameDirectoryType> typeProperty = activeTypeProperty.get();
+            InheritableProperty<String> dirProperty = activeDirProperty.get();
+            if (setting == null || typeProperty == null || dirProperty == null || updating[0]) {
+                return;
+            }
+
+            updating[0] = true;
+            try {
+                String path = getEffectiveValue(setting, GameSetting::gameDirTypeProperty) == GameDirectoryType.CUSTOM
+                        ? getEffectiveValue(setting, GameSetting::runningDirProperty)
+                        : "";
+                textField.setText(path);
+                if (finalInheritButton != null) {
+                    updateInheritanceButton(finalInheritButton, typeProperty.getValue() == null && dirProperty.getValue() == null);
+                }
+            } finally {
+                updating[0] = false;
+            }
+        };
+
+        textField.textProperty().addListener((observable, oldValue, newValue) -> {
+            InheritableProperty<GameDirectoryType> typeProperty = activeTypeProperty.get();
+            InheritableProperty<String> dirProperty = activeDirProperty.get();
+            if (typeProperty == null || dirProperty == null || updating[0]) {
+                return;
+            }
+
+            updating[0] = true;
+            try {
+                String path = newValue != null ? newValue : "";
+                dirProperty.setValue(path);
+                typeProperty.setValue(StringUtils.isBlank(path) ? GameDirectoryType.ROOT_FOLDER : GameDirectoryType.CUSTOM);
+                if (finalInheritButton != null) {
+                    updateInheritanceButton(finalInheritButton, false);
+                }
+            } finally {
+                updating[0] = false;
+            }
+        });
+
+        if (finalInheritButton != null) {
+            finalInheritButton.addEventFilter(MouseEvent.MOUSE_CLICKED, event -> {
+                GameSetting setting = currentSetting.get();
+                InheritableProperty<GameDirectoryType> typeProperty = activeTypeProperty.get();
+                InheritableProperty<String> dirProperty = activeDirProperty.get();
+                if (setting == null || typeProperty == null || dirProperty == null || updating[0]) {
+                    return;
+                }
+
+                updating[0] = true;
+                try {
+                    if (typeProperty.getValue() == null && dirProperty.getValue() == null) {
+                        typeProperty.setValue(getEffectiveValue(setting, GameSetting::gameDirTypeProperty));
+                        dirProperty.setValue(getEffectiveValue(setting, GameSetting::runningDirProperty));
+                    } else {
+                        typeProperty.setValue(null);
+                        dirProperty.setValue(null);
+                    }
+                } finally {
+                    updating[0] = false;
+                }
+                refresh.invalidated(setting);
+                event.consume();
+            });
+        }
+
+        currentSetting.addListener((observable, oldValue, newValue) -> {
+            if (oldValue != null) {
+                oldValue.removeListener(refresh);
+            }
+
+            InheritableProperty<GameDirectoryType> oldTypeProperty = activeTypeProperty.get();
+            if (oldTypeProperty != null) {
+                oldTypeProperty.removeListener(refresh);
+            }
+
+            InheritableProperty<String> oldDirProperty = activeDirProperty.get();
+            if (oldDirProperty != null) {
+                oldDirProperty.removeListener(refresh);
+            }
+
+            activeTypeProperty.set(newValue != null ? newValue.gameDirTypeProperty() : null);
+            activeDirProperty.set(newValue != null ? newValue.runningDirProperty() : null);
+            if (newValue != null) {
+                newValue.addListener(refresh);
+                newValue.gameDirTypeProperty().addListener(refresh);
+                newValue.runningDirProperty().addListener(refresh);
+            }
+            refresh.invalidated(newValue);
+        });
+
+        S setting = currentSetting.get();
+        if (setting != null) {
+            activeTypeProperty.set(setting.gameDirTypeProperty());
+            activeDirProperty.set(setting.runningDirProperty());
+            setting.addListener(refresh);
+            setting.gameDirTypeProperty().addListener(refresh);
+            setting.runningDirProperty().addListener(refresh);
+            refresh.invalidated(setting);
         }
     }
 

@@ -62,6 +62,7 @@ final class ComponentSublistWrapper extends VBox implements NoPaddingComponent {
             labelVBox.setPickOnBounds(true);
 
             var firstLine = new HBox(4);
+            firstLine.setAlignment(Pos.CENTER_LEFT);
             firstLine.setPickOnBounds(true);
             labelVBox.getChildren().add(firstLine);
 
