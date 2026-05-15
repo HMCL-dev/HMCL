@@ -71,6 +71,12 @@
     "externalLink" : "https://github.com/mcmod-info-mirror"
   },
   {
+    "image" : "/assets/img/8mi-tech.png",
+    "titleLocalized" : "about.thanks_to.8mi-tech",
+    "subtitleLocalized" : "about.thanks_to.8mi-tech.statement",
+    "externalLink" : "https://8mi.tech"
+  },
+  {
     "image" : {
       "light" : "/assets/img/github.png",
       "dark" : "/assets/img/github-white.png"
