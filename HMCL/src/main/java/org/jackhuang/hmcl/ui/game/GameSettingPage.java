@@ -334,19 +334,33 @@ public final class GameSettingPage<S extends GameSetting> extends StackPane
                 memoryItem.setChoices(options);
 
                 var memoryStatusBar = new MemoryStatusBar();
-                VBox.setMargin(memoryStatusBar, new Insets(8, 0, 0, 16));
+
+                var digitalPane = new BorderPane();
+                var physicalMemoryLabel = new Label();
+                physicalMemoryLabel.getStyleClass().add("memory-label");
+                digitalPane.setLeft(physicalMemoryLabel);
+                var allocatedMemoryLabel = new Label();
+                allocatedMemoryLabel.getStyleClass().add("memory-label");
+                digitalPane.setRight(allocatedMemoryLabel);
+
+                var memoryStatusPane = new VBox();
+                memoryStatusPane.setPadding(new Insets(16, 16, 10, 16));
+                memoryStatusPane.getChildren().setAll(memoryStatusBar, digitalPane);
+                ComponentList.setNoPadding(memoryStatusPane);
 
                 IndependentSettingBinder.bindMemoryChoiceList(
                         currentSetting,
                         memoryItem,
                         maxMemorySlider,
                         memoryStatusBar,
+                        physicalMemoryLabel,
+                        allocatedMemoryLabel,
                         autoMemoryButton,
                         maxMemoryButton,
                         GameSettingPage::updateInheritanceButton,
                         this::getParentGameSetting);
 
-                return List.of(memoryItem, memoryStatusBar);
+                return List.of(memoryItem, memoryStatusPane);
             });
             if (autoMemoryButton != null) {
                 memorySublist.setTitleRight(autoMemoryButton);

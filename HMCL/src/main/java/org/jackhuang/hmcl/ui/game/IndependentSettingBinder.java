@@ -23,6 +23,7 @@ import com.jfoenix.controls.JFXTextField;
 import javafx.beans.InvalidationListener;
 import javafx.beans.binding.Bindings;
 import javafx.beans.property.ObjectProperty;
+import javafx.scene.control.Label;
 import javafx.scene.input.MouseEvent;
 import org.jackhuang.hmcl.game.HMCLGameRepository;
 import org.jackhuang.hmcl.game.NativesDirectoryType;
@@ -34,6 +35,7 @@ import org.jackhuang.hmcl.ui.construct.LineComponent;
 import org.jackhuang.hmcl.ui.construct.LineInheritableToggleButton;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.platform.SystemInfo;
+import org.jackhuang.hmcl.util.platform.hardware.PhysicalMemoryStatus;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
 
@@ -42,7 +44,9 @@ import java.util.function.Function;
 import java.util.function.Supplier;
 
 import static org.jackhuang.hmcl.setting.ConfigHolder.config;
+import static org.jackhuang.hmcl.util.DataSizeUnit.GIGABYTES;
 import static org.jackhuang.hmcl.util.DataSizeUnit.MEGABYTES;
+import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 /// Binds independently overridden game setting properties to setting page controls.
 @NotNullByDefault
@@ -235,6 +239,8 @@ final class IndependentSettingBinder {
             RadioChoiceList<Boolean> choiceList,
             JFXSlider maxMemorySlider,
             MemoryStatusBar memoryStatusBar,
+            Label physicalMemoryLabel,
+            Label allocatedMemoryLabel,
             @Nullable JFXButton autoMemoryButton,
             @Nullable JFXButton maxMemoryButton,
             BiConsumer<JFXButton, Boolean> inheritanceButtonUpdater,
@@ -266,6 +272,7 @@ final class IndependentSettingBinder {
                 choiceList.setSelectedValue(Boolean.TRUE.equals(autoMemory));
                 maxMemorySlider.setValue(maxMemoryToSliderValue(maxMemory, totalMemoryMiB));
                 memoryStatusBar.memoryAllocatedProperty().set(calculateAllocatedMemory(memoryStatusBar, autoMemory, maxMemory));
+                updateMemoryLabels(memoryStatusBar, physicalMemoryLabel, allocatedMemoryLabel, autoMemory, maxMemory);
                 if (autoMemoryButton != null) {
                     inheritanceButtonUpdater.accept(autoMemoryButton, !autoMemoryOverridden);
                 }
@@ -516,6 +523,34 @@ final class IndependentSettingBinder {
                 maxMemoryBytes,
                 memoryStatusBar.getMemoryStatus().getAvailable(),
                 Boolean.TRUE.equals(autoMemory));
+    }
+
+    private static void updateMemoryLabels(
+            MemoryStatusBar memoryStatusBar,
+            Label physicalMemoryLabel,
+            Label allocatedMemoryLabel,
+            @Nullable Boolean autoMemory,
+            @Nullable Integer maxMemory) {
+        PhysicalMemoryStatus memoryStatus = memoryStatusBar.getMemoryStatus();
+        long maxMemoryBytes = Math.max(0, maxMemory != null ? maxMemory : 0) * 1024L * 1024L;
+        boolean autoMemoryEnabled = Boolean.TRUE.equals(autoMemory);
+        physicalMemoryLabel.setText(i18n("settings.memory.used_per_total",
+                GIGABYTES.convertFromBytes(memoryStatus.getUsed()),
+                GIGABYTES.convertFromBytes(memoryStatus.getTotal())));
+        allocatedMemoryLabel.setText(i18n(
+                memoryStatus.hasAvailable() && maxMemoryBytes > memoryStatus.getAvailable()
+                        ? (autoMemoryEnabled
+                                ? "settings.memory.allocate.auto.exceeded"
+                                : "settings.memory.allocate.manual.exceeded")
+                        : (autoMemoryEnabled
+                                ? "settings.memory.allocate.auto"
+                                : "settings.memory.allocate.manual"),
+                GIGABYTES.convertFromBytes(maxMemoryBytes),
+                GIGABYTES.convertFromBytes(HMCLGameRepository.getAllocatedMemory(
+                        maxMemoryBytes,
+                        memoryStatus.getAvailable(),
+                        autoMemoryEnabled)),
+                GIGABYTES.convertFromBytes(memoryStatus.getAvailable())));
     }
 
     private static <T> void toggleOverride(
