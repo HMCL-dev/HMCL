@@ -21,6 +21,7 @@ import com.jfoenix.controls.JFXButton;
 import com.jfoenix.controls.JFXComboBox;
 import com.jfoenix.controls.JFXListView;
 import com.jfoenix.controls.JFXRadioButton;
+import com.jfoenix.controls.JFXSlider;
 import com.jfoenix.controls.JFXTextField;
 import javafx.css.PseudoClass;
 import javafx.event.ActionEvent;
@@ -312,19 +313,39 @@ public final class GameSettingPage<S extends GameSetting> extends StackPane
             }
 
             // Memory Setting
+            @Nullable JFXButton autoMemoryButton = !isGlobalSetting ? createInheritanceButton() : null;
             var memorySublist = new ComponentSublist(() -> {
-                var autoMemoryPane = createIndependentBooleanButton(GameSetting::autoMemoryProperty);
-                autoMemoryPane.setTitle(i18n("settings.memory.auto_allocate"));
+                var memoryItem = new RadioChoiceList<Boolean>();
+                memoryItem.setFallbackValue(true);
 
-                var txtMaxMemory = new JFXTextField();
-                txtMaxMemory.setPrefWidth(160);
-                var maxMemoryPane = new LinePane();
-                maxMemoryPane.setTitle(i18n("settings.memory"));
-                maxMemoryPane.setRight(new HBox(8, txtMaxMemory, new Label("MiB"))); // TODO: i18n
-                bindIndependentIntegerTextField(maxMemoryPane, txtMaxMemory, GameSetting::maxMemoryProperty, false);
+                var maxMemorySlider = new JFXSlider(0, 1, 0);
+                maxMemorySlider.setPrefWidth(220);
+                HBox.setHgrow(maxMemorySlider, Priority.ALWAYS);
 
-                return List.of(autoMemoryPane, maxMemoryPane);
+                @Nullable JFXButton maxMemoryButton = null;
+                if (!isGlobalSetting) {
+                    maxMemoryButton = createInheritanceButton();
+                }
+
+                var options = new ArrayList<RadioChoiceList.Choice<Boolean>>();
+                options.add(new RadioChoiceList.Choice<>(i18n("settings.memory.auto_allocate"), true));
+                options.add(new ManualMemoryChoice(maxMemorySlider, maxMemoryButton));
+                memoryItem.setChoices(options);
+
+                IndependentSettingBinder.bindMemoryChoiceList(
+                        currentSetting,
+                        memoryItem,
+                        maxMemorySlider,
+                        autoMemoryButton,
+                        maxMemoryButton,
+                        GameSettingPage::updateInheritanceButton,
+                        this::getParentGameSetting);
+
+                return List.of(memoryItem);
             });
+            if (autoMemoryButton != null) {
+                memorySublist.setTitleRight(autoMemoryButton);
+            }
             gameSettings.getContent().add(memorySublist);
             memorySublist.setTitle(i18n("settings.memory"));
             memorySublist.setHasSubtitle(true);
@@ -1356,6 +1377,29 @@ public final class GameSettingPage<S extends GameSetting> extends StackPane
             case MAXIMIZED -> "最大化"; // TODO: i18n
             case WINDOWED -> "窗口化"; // TODO: i18n
         };
+    }
+
+    /// Manual memory option with the maximum memory slider on the same row.
+    private static final class ManualMemoryChoice extends RadioChoiceList.Choice<Boolean> {
+        /// The right-side editor used to select maximum memory.
+        private final HBox rightNode;
+
+        /// Creates the manual memory option.
+        private ManualMemoryChoice(JFXSlider maxMemorySlider, @Nullable JFXButton inheritButton) {
+            super("手动选择内存", false); // TODO: i18n
+            this.rightNode = new HBox(8);
+            rightNode.setAlignment(Pos.CENTER_RIGHT);
+            if (inheritButton != null) {
+                rightNode.getChildren().add(inheritButton);
+            }
+            rightNode.getChildren().add(maxMemorySlider);
+        }
+
+        /// Creates the right-side memory slider.
+        @Override
+        protected Node createRightNode() {
+            return rightNode;
+        }
     }
 
     /// Windowed game window mode option with the window size selector on the same row.

@@ -18,16 +18,20 @@
 package org.jackhuang.hmcl.ui.game;
 
 import com.jfoenix.controls.JFXButton;
+import com.jfoenix.controls.JFXSlider;
 import com.jfoenix.controls.JFXTextField;
 import javafx.beans.InvalidationListener;
+import javafx.beans.binding.Bindings;
 import javafx.beans.property.ObjectProperty;
 import javafx.scene.input.MouseEvent;
 import org.jackhuang.hmcl.game.NativesDirectoryType;
 import org.jackhuang.hmcl.setting.GameSetting;
 import org.jackhuang.hmcl.setting.property.SettingProperty;
+import org.jackhuang.hmcl.ui.construct.RadioChoiceList;
 import org.jackhuang.hmcl.ui.construct.LineComponent;
 import org.jackhuang.hmcl.ui.construct.LineInheritableToggleButton;
 import org.jackhuang.hmcl.util.StringUtils;
+import org.jackhuang.hmcl.util.platform.SystemInfo;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
 
@@ -36,6 +40,7 @@ import java.util.function.Function;
 import java.util.function.Supplier;
 
 import static org.jackhuang.hmcl.setting.ConfigHolder.config;
+import static org.jackhuang.hmcl.util.DataSizeUnit.MEGABYTES;
 
 /// Binds independently overridden game setting properties to setting page controls.
 @NotNullByDefault
@@ -222,6 +227,160 @@ final class IndependentSettingBinder {
                 refresh);
     }
 
+    /// Binds the game memory radio options and manual memory slider.
+    static void bindMemoryChoiceList(
+            ObjectProperty<? extends GameSetting> currentSetting,
+            RadioChoiceList<Boolean> choiceList,
+            JFXSlider maxMemorySlider,
+            @Nullable JFXButton autoMemoryButton,
+            @Nullable JFXButton maxMemoryButton,
+            BiConsumer<JFXButton, Boolean> inheritanceButtonUpdater,
+            Function<GameSetting.Instance, GameSetting.Global> parentGetter) {
+        ObjectProperty<@Nullable SettingProperty<Boolean>> activeAutoMemoryProperty = new javafx.beans.property.SimpleObjectProperty<>();
+        ObjectProperty<@Nullable SettingProperty<Integer>> activeMaxMemoryProperty = new javafx.beans.property.SimpleObjectProperty<>();
+        final boolean[] updating = {false};
+
+        int totalMemoryMiB = Math.max(1, (int) MEGABYTES.convertFromBytes(SystemInfo.getTotalMemorySize()));
+        maxMemorySlider.setValueFactory(slider -> Bindings.createStringBinding(
+                () -> sliderValueToMaxMemory(slider.getValue(), totalMemoryMiB) + " MiB",
+                slider.valueProperty()));
+
+        InvalidationListener refresh = observable -> {
+            GameSetting setting = currentSetting.get();
+            SettingProperty<Boolean> autoMemoryProperty = activeAutoMemoryProperty.get();
+            SettingProperty<Integer> maxMemoryProperty = activeMaxMemoryProperty.get();
+            if (setting == null || autoMemoryProperty == null || maxMemoryProperty == null || updating[0]) {
+                return;
+            }
+
+            updating[0] = true;
+            try {
+                boolean autoMemoryOverridden = isOverridden(setting, autoMemoryProperty);
+                boolean maxMemoryOverridden = isOverridden(setting, maxMemoryProperty);
+                Boolean autoMemory = getEffectiveValue(setting, GameSetting::autoMemoryProperty, parentGetter);
+                Integer maxMemory = getEffectiveValue(setting, GameSetting::maxMemoryProperty, parentGetter);
+
+                choiceList.setSelectedValue(Boolean.TRUE.equals(autoMemory));
+                maxMemorySlider.setValue(maxMemoryToSliderValue(maxMemory, totalMemoryMiB));
+                if (autoMemoryButton != null) {
+                    inheritanceButtonUpdater.accept(autoMemoryButton, !autoMemoryOverridden);
+                }
+                if (maxMemoryButton != null) {
+                    inheritanceButtonUpdater.accept(maxMemoryButton, !maxMemoryOverridden);
+                }
+            } finally {
+                updating[0] = false;
+            }
+        };
+
+        choiceList.selectedValueProperty().addListener((observable, oldValue, newValue) -> {
+            GameSetting setting = currentSetting.get();
+            SettingProperty<Boolean> property = activeAutoMemoryProperty.get();
+            if (setting == null || property == null || updating[0]) {
+                return;
+            }
+
+            updating[0] = true;
+            try {
+                setOverridden(setting, property, true);
+                property.setValue(Boolean.TRUE.equals(newValue));
+                if (autoMemoryButton != null) {
+                    inheritanceButtonUpdater.accept(autoMemoryButton, false);
+                }
+            } finally {
+                updating[0] = false;
+            }
+        });
+
+        maxMemorySlider.valueProperty().addListener((observable, oldValue, newValue) -> {
+            GameSetting setting = currentSetting.get();
+            SettingProperty<Integer> property = activeMaxMemoryProperty.get();
+            if (setting == null || property == null || updating[0]) {
+                return;
+            }
+
+            updating[0] = true;
+            try {
+                setOverridden(setting, property, true);
+                property.setValue(sliderValueToMaxMemory(newValue.doubleValue(), totalMemoryMiB));
+                if (maxMemoryButton != null) {
+                    inheritanceButtonUpdater.accept(maxMemoryButton, false);
+                }
+            } finally {
+                updating[0] = false;
+            }
+        });
+
+        if (autoMemoryButton != null) {
+            autoMemoryButton.addEventFilter(MouseEvent.MOUSE_CLICKED, event -> {
+                GameSetting setting = currentSetting.get();
+                toggleOverride(
+                        setting,
+                        activeAutoMemoryProperty.get(),
+                        () -> getEffectiveValue(setting, GameSetting::autoMemoryProperty, parentGetter),
+                        refresh);
+                event.consume();
+            });
+        }
+
+        if (maxMemoryButton != null) {
+            maxMemoryButton.addEventFilter(MouseEvent.MOUSE_CLICKED, event -> {
+                GameSetting setting = currentSetting.get();
+                toggleOverride(
+                        setting,
+                        activeMaxMemoryProperty.get(),
+                        () -> getEffectiveValue(setting, GameSetting::maxMemoryProperty, parentGetter),
+                        refresh);
+                event.consume();
+            });
+        }
+
+        currentSetting.addListener((observable, oldValue, newValue) -> {
+            if (oldValue != null) {
+                oldValue.removeListener(refresh);
+            }
+
+            SettingProperty<Boolean> oldAutoMemoryProperty = activeAutoMemoryProperty.get();
+            if (oldAutoMemoryProperty != null) {
+                oldAutoMemoryProperty.removeListener(refresh);
+            }
+
+            SettingProperty<Integer> oldMaxMemoryProperty = activeMaxMemoryProperty.get();
+            if (oldMaxMemoryProperty != null) {
+                oldMaxMemoryProperty.removeListener(refresh);
+            }
+
+            SettingProperty<Boolean> newAutoMemoryProperty = newValue != null ? newValue.autoMemoryProperty() : null;
+            SettingProperty<Integer> newMaxMemoryProperty = newValue != null ? newValue.maxMemoryProperty() : null;
+            activeAutoMemoryProperty.set(newAutoMemoryProperty);
+            activeMaxMemoryProperty.set(newMaxMemoryProperty);
+            if (newValue != null) {
+                newValue.addListener(refresh);
+            }
+            if (newAutoMemoryProperty != null) {
+                newAutoMemoryProperty.addListener(refresh);
+            }
+            if (newMaxMemoryProperty != null) {
+                newMaxMemoryProperty.addListener(refresh);
+            }
+            refresh.invalidated(newValue);
+        });
+        config().getGameSettings().addListener(refresh);
+        config().defaultGameSettingProperty().addListener(refresh);
+
+        GameSetting setting = currentSetting.get();
+        if (setting != null) {
+            SettingProperty<Boolean> autoMemoryProperty = setting.autoMemoryProperty();
+            SettingProperty<Integer> maxMemoryProperty = setting.maxMemoryProperty();
+            activeAutoMemoryProperty.set(autoMemoryProperty);
+            activeMaxMemoryProperty.set(maxMemoryProperty);
+            setting.addListener(refresh);
+            autoMemoryProperty.addListener(refresh);
+            maxMemoryProperty.addListener(refresh);
+            refresh.invalidated(setting);
+        }
+    }
+
     /// Binds an independent boolean setting to a toggle editor.
     static void bindToggleButton(
             ObjectProperty<? extends GameSetting> currentSetting,
@@ -325,6 +484,41 @@ final class IndependentSettingBinder {
         });
 
         bindActiveProperty(currentSetting, activeProperty, GameSetting::nativesDirTypeProperty, refresh);
+    }
+
+    private static int sliderValueToMaxMemory(double value, int totalMemoryMiB) {
+        return Math.max(0, (int) (clamp(value) * totalMemoryMiB));
+    }
+
+    private static double maxMemoryToSliderValue(@Nullable Integer maxMemory, int totalMemoryMiB) {
+        if (maxMemory == null || totalMemoryMiB <= 0) {
+            return 0;
+        }
+
+        return clamp(maxMemory.doubleValue() / totalMemoryMiB);
+    }
+
+    private static double clamp(double value) {
+        return Math.max(0, Math.min(1, value));
+    }
+
+    private static <T> void toggleOverride(
+            @Nullable GameSetting setting,
+            @Nullable SettingProperty<T> property,
+            Supplier<T> effectiveValueSupplier,
+            InvalidationListener refresh) {
+        if (setting == null || property == null) {
+            return;
+        }
+
+        if (isOverridden(setting, property)) {
+            setOverridden(setting, property, false);
+            property.setValue(null);
+        } else {
+            property.setValue(effectiveValueSupplier.get());
+            setOverridden(setting, property, true);
+        }
+        refresh.invalidated(property);
     }
 
     private static <T> void bindActiveProperty(
