@@ -181,12 +181,16 @@ public final class ProfilePage extends BorderPane implements DecoratorPage {
                 }
             }
         };
-        txtProfileName.textProperty().addListener(txtProfileNameChangeListener);
+        if (profile == null) {
+            txtProfileName.textProperty().addListener(txtProfileNameChangeListener);
+        }
     }
 
     private void onSave() {
-        locationProperty().removeListener(locationChangeListener);
-        txtProfileName.textProperty().removeListener(txtProfileNameChangeListener);
+        if (profile == null) {
+            locationProperty().removeListener(locationChangeListener);
+            txtProfileName.textProperty().removeListener(txtProfileNameChangeListener);
+        }
 
         if (profile != null) {
             profile.setName(txtProfileName.getText());
