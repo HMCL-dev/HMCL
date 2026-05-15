@@ -19,7 +19,6 @@ package org.jackhuang.hmcl.ui.construct;
 
 import javafx.beans.InvalidationListener;
 import javafx.beans.binding.Bindings;
-import javafx.beans.binding.DoubleBinding;
 import javafx.beans.property.StringProperty;
 import javafx.beans.property.StringPropertyBase;
 import javafx.collections.FXCollections;
@@ -177,9 +176,13 @@ public class TwoLineListItem extends VBox {
             lblTitle.setMinWidth(Label.USE_PREF_SIZE);
             scrollPane.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
             scrollPane.setVbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
-            DoubleBinding expectedHeight = Bindings.createDoubleBinding(
-                    () -> tags.isEmpty() ? 0.0 : tagsBox.prefHeight(-1),
-                    tags
+            var expectedHeight = Bindings.createDoubleBinding(
+                    () -> {
+                        if (tags.isEmpty()) return 0.0;
+                        double h = tagsBox.prefHeight(-1);
+                        return h > 0 ? h : Double.NaN;
+                    },
+                    tags, tagsBox.heightProperty()
             );
 
             scrollPane.minHeightProperty().bind(expectedHeight);
