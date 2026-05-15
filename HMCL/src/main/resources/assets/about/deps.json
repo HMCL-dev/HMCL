@@ -98,5 +98,10 @@
     "title": "TomlJ",
     "subtitle": "Licensed under the Apache 2.0 License.",
     "externalLink": "https://github.com/tomlj/tomlj"
+  },
+  {
+    "title": "WebURL for Java",
+    "subtitle": "Licensed under the Apache 2.0 License.",
+    "externalLink": "https://github.com/Glavo/weburl-java"
   }
 ]
