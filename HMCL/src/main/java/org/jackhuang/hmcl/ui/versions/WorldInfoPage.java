@@ -24,13 +24,11 @@ import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.geometry.Pos;
-import javafx.scene.Cursor;
 import javafx.scene.control.Label;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.effect.BoxBlur;
 import javafx.scene.image.Image;
 import javafx.scene.layout.HBox;
-import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.stage.FileChooser;
 import org.glavo.nbt.tag.*;
@@ -162,11 +160,10 @@ public final class WorldInfoPage extends SpinnerPane implements WorldManagePage.
                 seedPane.setTitle(i18n("world.info.random_seed"));
 
                 SimpleBooleanProperty visibility = new SimpleBooleanProperty();
-                StackPane visibilityButton = new StackPane();
+                JFXButton visibilityButton = FXUtils.newToggleButton4(SVG.VISIBILITY_OFF);
                 {
-                    visibilityButton.setCursor(Cursor.HAND);
-                    visibilityButton.setAlignment(Pos.CENTER_RIGHT);
-                    FXUtils.onClicked(visibilityButton, () -> visibility.set(!visibility.get()));
+                    visibilityButton.setAlignment(Pos.CENTER);
+                    visibilityButton.setOnAction((event) -> visibility.set(!visibility.get()));
                 }
 
                 Label seedLabel = new Label();
@@ -180,7 +177,7 @@ public final class WorldInfoPage extends SpinnerPane implements WorldManagePage.
                     blur.setIterations(3);
                     FXUtils.onChangeAndOperate(visibility, isVisibility -> {
                         SVG icon = isVisibility ? SVG.VISIBILITY : SVG.VISIBILITY_OFF;
-                        visibilityButton.getChildren().setAll(icon.createIcon(12));
+                        visibilityButton.setGraphic(icon.createIcon(16));
                         seedLabel.setEffect(isVisibility ? null : blur);
                     });
                 }
