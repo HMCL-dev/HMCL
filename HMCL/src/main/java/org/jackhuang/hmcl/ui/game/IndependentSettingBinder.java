@@ -24,9 +24,11 @@ import javafx.beans.InvalidationListener;
 import javafx.beans.binding.Bindings;
 import javafx.beans.property.ObjectProperty;
 import javafx.scene.input.MouseEvent;
+import org.jackhuang.hmcl.game.HMCLGameRepository;
 import org.jackhuang.hmcl.game.NativesDirectoryType;
 import org.jackhuang.hmcl.setting.GameSetting;
 import org.jackhuang.hmcl.setting.property.SettingProperty;
+import org.jackhuang.hmcl.ui.MemoryStatusBar;
 import org.jackhuang.hmcl.ui.construct.RadioChoiceList;
 import org.jackhuang.hmcl.ui.construct.LineComponent;
 import org.jackhuang.hmcl.ui.construct.LineInheritableToggleButton;
@@ -232,6 +234,7 @@ final class IndependentSettingBinder {
             ObjectProperty<? extends GameSetting> currentSetting,
             RadioChoiceList<Boolean> choiceList,
             JFXSlider maxMemorySlider,
+            MemoryStatusBar memoryStatusBar,
             @Nullable JFXButton autoMemoryButton,
             @Nullable JFXButton maxMemoryButton,
             BiConsumer<JFXButton, Boolean> inheritanceButtonUpdater,
@@ -242,7 +245,7 @@ final class IndependentSettingBinder {
 
         int totalMemoryMiB = Math.max(1, (int) MEGABYTES.convertFromBytes(SystemInfo.getTotalMemorySize()));
         maxMemorySlider.setValueFactory(slider -> Bindings.createStringBinding(
-                () -> sliderValueToMaxMemory(slider.getValue(), totalMemoryMiB) + " MiB",
+                () -> (int) (slider.getValue() * 100) + "%",
                 slider.valueProperty()));
 
         InvalidationListener refresh = observable -> {
@@ -262,6 +265,7 @@ final class IndependentSettingBinder {
 
                 choiceList.setSelectedValue(Boolean.TRUE.equals(autoMemory));
                 maxMemorySlider.setValue(maxMemoryToSliderValue(maxMemory, totalMemoryMiB));
+                memoryStatusBar.memoryAllocatedProperty().set(calculateAllocatedMemory(memoryStatusBar, autoMemory, maxMemory));
                 if (autoMemoryButton != null) {
                     inheritanceButtonUpdater.accept(autoMemoryButton, !autoMemoryOverridden);
                 }
@@ -367,6 +371,7 @@ final class IndependentSettingBinder {
         });
         config().getGameSettings().addListener(refresh);
         config().defaultGameSettingProperty().addListener(refresh);
+        memoryStatusBar.memoryStatusProperty().addListener(refresh);
 
         GameSetting setting = currentSetting.get();
         if (setting != null) {
@@ -500,6 +505,17 @@ final class IndependentSettingBinder {
 
     private static double clamp(double value) {
         return Math.max(0, Math.min(1, value));
+    }
+
+    private static double calculateAllocatedMemory(
+            MemoryStatusBar memoryStatusBar,
+            @Nullable Boolean autoMemory,
+            @Nullable Integer maxMemory) {
+        long maxMemoryBytes = Math.max(0, maxMemory != null ? maxMemory : 0) * 1024L * 1024L;
+        return HMCLGameRepository.getAllocatedMemory(
+                maxMemoryBytes,
+                memoryStatusBar.getMemoryStatus().getAvailable(),
+                Boolean.TRUE.equals(autoMemory));
     }
 
     private static <T> void toggleOverride(

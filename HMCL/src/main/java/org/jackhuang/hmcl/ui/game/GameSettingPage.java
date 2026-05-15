@@ -320,6 +320,7 @@ public final class GameSettingPage<S extends GameSetting> extends StackPane
 
                 var maxMemorySlider = new JFXSlider(0, 1, 0);
                 maxMemorySlider.setPrefWidth(220);
+                HBox.setMargin(maxMemorySlider, new Insets(0, 0, 0, 8));
                 HBox.setHgrow(maxMemorySlider, Priority.ALWAYS);
 
                 @Nullable JFXButton maxMemoryButton = null;
@@ -332,16 +333,20 @@ public final class GameSettingPage<S extends GameSetting> extends StackPane
                 options.add(new ManualMemoryChoice(maxMemorySlider, maxMemoryButton));
                 memoryItem.setChoices(options);
 
+                var memoryStatusBar = new MemoryStatusBar();
+                VBox.setMargin(memoryStatusBar, new Insets(8, 0, 0, 16));
+
                 IndependentSettingBinder.bindMemoryChoiceList(
                         currentSetting,
                         memoryItem,
                         maxMemorySlider,
+                        memoryStatusBar,
                         autoMemoryButton,
                         maxMemoryButton,
                         GameSettingPage::updateInheritanceButton,
                         this::getParentGameSetting);
 
-                return List.of(memoryItem);
+                return List.of(memoryItem, memoryStatusBar);
             });
             if (autoMemoryButton != null) {
                 memorySublist.setTitleRight(autoMemoryButton);
