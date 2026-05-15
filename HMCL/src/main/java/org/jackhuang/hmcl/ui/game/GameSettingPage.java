@@ -487,27 +487,6 @@ public final class GameSettingPage<S extends GameSetting> extends StackPane
                 jvmSettings
         );
         {
-            var minMemoryPane = new LinePane();
-            jvmSettings.getContent().add(minMemoryPane);
-            minMemoryPane.setTitle(i18n("settings.memory.lower_bound"));
-            {
-                var txtMinMemory = new JFXTextField();
-                txtMinMemory.setPrefWidth(160);
-                minMemoryPane.setRight(new HBox(8, txtMinMemory, new Label("MiB"))); // TODO: i18n
-                bindIndependentIntegerTextField(minMemoryPane, txtMinMemory, GameSetting::minMemoryProperty, true);
-            }
-
-            var metaspacePane = new LinePane();
-            jvmSettings.getContent().add(metaspacePane);
-            metaspacePane.setTitle(i18n("settings.advanced.java_permanent_generation_space"));
-            {
-                var txtMetaspace = new JFXTextField();
-                txtMetaspace.setPromptText(i18n("settings.advanced.java_permanent_generation_space.prompt"));
-                txtMetaspace.setPrefWidth(160);
-                metaspacePane.setRight(new HBox(8, txtMetaspace, new Label("MiB"))); // TODO: i18n
-                bindIndependentTextField(metaspacePane, txtMetaspace, GameSetting::permSizeProperty);
-            }
-
             var noJVMArgsPane = createInheritableBooleanButton(GameSetting::noJVMOptionsProperty);
             jvmSettings.getContent().add(noJVMArgsPane);
             noJVMArgsPane.setTitle(i18n("settings.advanced.no_jvm_args"));
@@ -527,6 +506,33 @@ public final class GameSettingPage<S extends GameSetting> extends StackPane
                 jvmArgsPane.setRight(txtJVMArgs);
                 bindIndependentTextField(jvmArgsPane, txtJVMArgs, GameSetting::jvmOptionsProperty);
             }
+
+            var deprecatedJvmMemorySettings = new ComponentSublist(() -> {
+                var minMemoryPane = new LinePane();
+                minMemoryPane.setTitle(i18n("settings.memory.lower_bound"));
+                {
+                    var txtMinMemory = new JFXTextField();
+                    txtMinMemory.setPrefWidth(160);
+                    minMemoryPane.setRight(new HBox(8, txtMinMemory, new Label("MiB"))); // TODO: i18n
+                    bindIndependentIntegerTextField(minMemoryPane, txtMinMemory, GameSetting::minMemoryProperty, true);
+                }
+
+                var metaspacePane = new LinePane();
+                metaspacePane.setTitle(i18n("settings.advanced.java_permanent_generation_space"));
+                {
+                    var txtMetaspace = new JFXTextField();
+                    txtMetaspace.setPromptText(i18n("settings.advanced.java_permanent_generation_space.prompt"));
+                    txtMetaspace.setPrefWidth(160);
+                    metaspacePane.setRight(new HBox(8, txtMetaspace, new Label("MiB"))); // TODO: i18n
+                    bindIndependentTextField(metaspacePane, txtMetaspace, GameSetting::permSizeProperty);
+                }
+
+                return List.of(minMemoryPane, metaspacePane);
+            });
+            jvmSettings.getContent().add(deprecatedJvmMemorySettings);
+            deprecatedJvmMemorySettings.setTitle("已弃用的 JVM 内存选项"); // TODO: i18n
+            deprecatedJvmMemorySettings.setHasSubtitle(true);
+            deprecatedJvmMemorySettings.setSubtitle("这些选项只为兼容旧版本保留"); // TODO: i18n
         }
 
         var advancedSettings = new ComponentList();
