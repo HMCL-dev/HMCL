@@ -36,6 +36,7 @@ import javafx.geometry.Pos;
 import javafx.geometry.Rectangle2D;
 import javafx.scene.Node;
 import javafx.scene.Scene;
+import javafx.scene.control.ContentDisplay;
 import javafx.scene.control.Label;
 import javafx.scene.control.ListCell;
 import javafx.scene.control.ScrollPane;
@@ -323,6 +324,11 @@ public final class GameSettingPage<S extends GameSetting> extends StackPane
                 HBox.setMargin(maxMemorySlider, new Insets(0, 0, 0, 8));
                 HBox.setHgrow(maxMemorySlider, Priority.ALWAYS);
 
+                var maxMemoryTextField = new JFXTextField();
+                FXUtils.setLimitWidth(maxMemoryTextField, 60);
+                FXUtils.setValidateWhileTextChanged(maxMemoryTextField, true);
+                maxMemoryTextField.setValidators(new NumberValidator(i18n("input.number"), false));
+
                 @Nullable JFXButton maxMemoryButton = null;
                 if (!isGlobalSetting) {
                     maxMemoryButton = createInheritanceButton();
@@ -330,7 +336,7 @@ public final class GameSettingPage<S extends GameSetting> extends StackPane
 
                 var options = new ArrayList<RadioChoiceList.Choice<Boolean>>();
                 options.add(new RadioChoiceList.Choice<>(i18n("settings.memory.auto_allocate"), true));
-                options.add(new ManualMemoryChoice(maxMemorySlider, maxMemoryButton));
+                options.add(new ManualMemoryChoice(maxMemorySlider, maxMemoryTextField, maxMemoryButton));
                 memoryItem.setChoices(options);
 
                 var memoryStatusBar = new MemoryStatusBar();
@@ -352,9 +358,9 @@ public final class GameSettingPage<S extends GameSetting> extends StackPane
                         currentSetting,
                         memoryItem,
                         maxMemorySlider,
+                        maxMemoryTextField,
                         memoryStatusBar,
-                        physicalMemoryLabel,
-                        allocatedMemoryLabel,
+                        digitalPane,
                         autoMemoryButton,
                         maxMemoryButton,
                         GameSettingPage::updateInheritanceButton,
@@ -1404,14 +1410,22 @@ public final class GameSettingPage<S extends GameSetting> extends StackPane
         private final HBox rightNode;
 
         /// Creates the manual memory option.
-        private ManualMemoryChoice(JFXSlider maxMemorySlider, @Nullable JFXButton inheritButton) {
+        private ManualMemoryChoice(
+                JFXSlider maxMemorySlider,
+                JFXTextField maxMemoryTextField,
+                @Nullable JFXButton inheritButton) {
             super("手动选择内存", false); // TODO: i18n
             this.rightNode = new HBox(8);
             rightNode.setAlignment(Pos.CENTER_RIGHT);
             if (inheritButton != null) {
-                rightNode.getChildren().add(inheritButton);
+                radioButton.setGraphic(inheritButton);
+                radioButton.setContentDisplay(ContentDisplay.RIGHT);
+                radioButton.setGraphicTextGap(4);
             }
-            rightNode.getChildren().add(maxMemorySlider);
+            rightNode.getChildren().setAll(
+                    maxMemorySlider,
+                    maxMemoryTextField,
+                    new Label(i18n("settings.memory.unit.mib")));
         }
 
         /// Creates the right-side memory slider.

@@ -25,6 +25,7 @@ import javafx.beans.binding.Bindings;
 import javafx.beans.property.ObjectProperty;
 import javafx.scene.control.Label;
 import javafx.scene.input.MouseEvent;
+import javafx.scene.layout.BorderPane;
 import org.jackhuang.hmcl.game.HMCLGameRepository;
 import org.jackhuang.hmcl.game.NativesDirectoryType;
 import org.jackhuang.hmcl.setting.GameSetting;
@@ -238,15 +239,17 @@ final class IndependentSettingBinder {
             ObjectProperty<? extends GameSetting> currentSetting,
             RadioChoiceList<Boolean> choiceList,
             JFXSlider maxMemorySlider,
+            JFXTextField maxMemoryTextField,
             MemoryStatusBar memoryStatusBar,
-            Label physicalMemoryLabel,
-            Label allocatedMemoryLabel,
+            BorderPane memoryStatusLabels,
             @Nullable JFXButton autoMemoryButton,
             @Nullable JFXButton maxMemoryButton,
             BiConsumer<JFXButton, Boolean> inheritanceButtonUpdater,
             Function<GameSetting.Instance, GameSetting.Global> parentGetter) {
         ObjectProperty<@Nullable SettingProperty<Boolean>> activeAutoMemoryProperty = new javafx.beans.property.SimpleObjectProperty<>();
         ObjectProperty<@Nullable SettingProperty<Integer>> activeMaxMemoryProperty = new javafx.beans.property.SimpleObjectProperty<>();
+        Label physicalMemoryLabel = (Label) memoryStatusLabels.getLeft();
+        Label allocatedMemoryLabel = (Label) memoryStatusLabels.getRight();
         final boolean[] updating = {false};
 
         int totalMemoryMiB = Math.max(1, (int) MEGABYTES.convertFromBytes(SystemInfo.getTotalMemorySize()));
@@ -271,8 +274,8 @@ final class IndependentSettingBinder {
 
                 choiceList.setSelectedValue(Boolean.TRUE.equals(autoMemory));
                 maxMemorySlider.setValue(maxMemoryToSliderValue(maxMemory, totalMemoryMiB));
-                memoryStatusBar.memoryAllocatedProperty().set(calculateAllocatedMemory(memoryStatusBar, autoMemory, maxMemory));
-                updateMemoryLabels(memoryStatusBar, physicalMemoryLabel, allocatedMemoryLabel, autoMemory, maxMemory);
+                maxMemoryTextField.setText(maxMemoryToText(maxMemory));
+                updateMemoryStatus(memoryStatusBar, physicalMemoryLabel, allocatedMemoryLabel, autoMemory, maxMemory);
                 if (autoMemoryButton != null) {
                     inheritanceButtonUpdater.accept(autoMemoryButton, !autoMemoryOverridden);
                 }
@@ -298,6 +301,12 @@ final class IndependentSettingBinder {
                 if (autoMemoryButton != null) {
                     inheritanceButtonUpdater.accept(autoMemoryButton, false);
                 }
+                updateMemoryStatus(
+                        memoryStatusBar,
+                        physicalMemoryLabel,
+                        allocatedMemoryLabel,
+                        property.getValue(),
+                        getEffectiveValue(setting, GameSetting::maxMemoryProperty, parentGetter));
             } finally {
                 updating[0] = false;
             }
@@ -312,11 +321,46 @@ final class IndependentSettingBinder {
 
             updating[0] = true;
             try {
+                int maxMemory = sliderValueToMaxMemory(newValue.doubleValue(), totalMemoryMiB);
                 setOverridden(setting, property, true);
-                property.setValue(sliderValueToMaxMemory(newValue.doubleValue(), totalMemoryMiB));
+                property.setValue(maxMemory);
+                maxMemoryTextField.setText(Integer.toString(maxMemory));
                 if (maxMemoryButton != null) {
                     inheritanceButtonUpdater.accept(maxMemoryButton, false);
                 }
+                updateMemoryStatus(
+                        memoryStatusBar,
+                        physicalMemoryLabel,
+                        allocatedMemoryLabel,
+                        getEffectiveValue(setting, GameSetting::autoMemoryProperty, parentGetter),
+                        maxMemory);
+            } finally {
+                updating[0] = false;
+            }
+        });
+
+        maxMemoryTextField.textProperty().addListener((observable, oldValue, newValue) -> {
+            GameSetting setting = currentSetting.get();
+            SettingProperty<Integer> property = activeMaxMemoryProperty.get();
+            Integer maxMemory = parseMemoryText(newValue);
+            if (setting == null || property == null || maxMemory == null || updating[0]) {
+                return;
+            }
+
+            updating[0] = true;
+            try {
+                setOverridden(setting, property, true);
+                property.setValue(maxMemory);
+                maxMemorySlider.setValue(maxMemoryToSliderValue(maxMemory, totalMemoryMiB));
+                if (maxMemoryButton != null) {
+                    inheritanceButtonUpdater.accept(maxMemoryButton, false);
+                }
+                updateMemoryStatus(
+                        memoryStatusBar,
+                        physicalMemoryLabel,
+                        allocatedMemoryLabel,
+                        getEffectiveValue(setting, GameSetting::autoMemoryProperty, parentGetter),
+                        maxMemory);
             } finally {
                 updating[0] = false;
             }
@@ -378,7 +422,19 @@ final class IndependentSettingBinder {
         });
         config().getGameSettings().addListener(refresh);
         config().defaultGameSettingProperty().addListener(refresh);
-        memoryStatusBar.memoryStatusProperty().addListener(refresh);
+        memoryStatusBar.memoryStatusProperty().addListener(observable -> {
+            GameSetting setting = currentSetting.get();
+            if (setting == null) {
+                return;
+            }
+
+            updateMemoryStatus(
+                    memoryStatusBar,
+                    physicalMemoryLabel,
+                    allocatedMemoryLabel,
+                    getEffectiveValue(setting, GameSetting::autoMemoryProperty, parentGetter),
+                    getEffectiveValue(setting, GameSetting::maxMemoryProperty, parentGetter));
+        });
 
         GameSetting setting = currentSetting.get();
         if (setting != null) {
@@ -512,6 +568,32 @@ final class IndependentSettingBinder {
 
     private static double clamp(double value) {
         return Math.max(0, Math.min(1, value));
+    }
+
+    private static String maxMemoryToText(@Nullable Integer maxMemory) {
+        return Integer.toString(Math.max(0, maxMemory != null ? maxMemory : 0));
+    }
+
+    private static @Nullable Integer parseMemoryText(String text) {
+        if (StringUtils.isBlank(text)) {
+            return null;
+        }
+
+        try {
+            return Math.max(0, Integer.parseInt(text));
+        } catch (NumberFormatException e) {
+            return null;
+        }
+    }
+
+    private static void updateMemoryStatus(
+            MemoryStatusBar memoryStatusBar,
+            Label physicalMemoryLabel,
+            Label allocatedMemoryLabel,
+            @Nullable Boolean autoMemory,
+            @Nullable Integer maxMemory) {
+        memoryStatusBar.memoryAllocatedProperty().set(calculateAllocatedMemory(memoryStatusBar, autoMemory, maxMemory));
+        updateMemoryLabels(memoryStatusBar, physicalMemoryLabel, allocatedMemoryLabel, autoMemory, maxMemory);
     }
 
     private static double calculateAllocatedMemory(
