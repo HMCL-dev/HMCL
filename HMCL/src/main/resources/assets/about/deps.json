@@ -100,6 +100,11 @@
     "externalLink": "https://github.com/tomlj/tomlj"
   },
   {
+    "title": "WebURL for Java",
+    "subtitle": "Licensed under the Apache 2.0 License.",
+    "externalLink": "https://github.com/Glavo/weburl-java"
+  },
+  {
     "title": "CommonMark",
     "subtitle": "Copyright (c) 2015 Robin Stocker.\nAll rights reserved.",
     "externalLink": "https://github.com/commonmark/commonmark-java"

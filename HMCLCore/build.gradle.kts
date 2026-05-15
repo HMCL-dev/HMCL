@@ -27,6 +27,7 @@ dependencies {
     api(libs.jna)
     api(libs.pci.ids)
     api(libs.hello.nbt)
+    api(libs.weburl)
     api(libs.commonmark)
     api(libs.commonmark.autolink)
     api(libs.commonmark.underline)
