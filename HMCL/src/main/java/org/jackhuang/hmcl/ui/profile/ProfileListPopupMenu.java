@@ -19,18 +19,18 @@ package org.jackhuang.hmcl.ui.profile;
 
 import com.jfoenix.controls.JFXPopup;
 import javafx.scene.Node;
-import javafx.scene.layout.StackPane;
 import org.jackhuang.hmcl.setting.Profile;
 import org.jackhuang.hmcl.ui.Controllers;
+import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.construct.IconedMenuItem;
 import org.jackhuang.hmcl.ui.construct.PopupMenu;
 
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
-/// Popup menu for ProfileListItem.
-public final class ProfileListPopupMenu extends StackPane {
+public final class ProfileListPopupMenu {
 
-    /// Shows the popup menu for the given profile item.
+    private ProfileListPopupMenu() {}
+
     public static void show(Node owner, Profile profile) {
         PopupMenu menu = new PopupMenu();
         JFXPopup popup = new JFXPopup(menu);
@@ -39,10 +39,7 @@ public final class ProfileListPopupMenu extends StackPane {
                 i18n("button.edit"),
                 () -> Controllers.navigate(new ProfilePage(profile)),
                 popup));
-        popup.show(owner, JFXPopup.PopupVPosition.BOTTOM, JFXPopup.PopupHPosition.LEFT, 0, 0);
-    }
-
-    public ProfileListPopupMenu() {
-        getStyleClass().add("popup-menu-content");
+        JFXPopup.PopupVPosition vPosition = FXUtils.determineOptimalPopupPosition(owner, popup);
+        popup.show(owner, vPosition, JFXPopup.PopupHPosition.LEFT, 0, 0);
     }
 }
