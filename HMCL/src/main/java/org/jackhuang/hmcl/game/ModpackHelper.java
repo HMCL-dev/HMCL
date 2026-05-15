@@ -265,7 +265,7 @@ public final class ModpackHelper {
         }
 
         if (c.isOverrideMemory()) {
-            setting.getOverrideGroups().add(GameSetting.MEMORY_SETTINGS);
+            setting.getOverrideProperties().addAll(List.of("autoMemory", "permSize", "maxMemory", "minMemory"));
             setting.permSizeProperty().setValue(Optional.ofNullable(c.getPermGen()).map(Object::toString).orElse(""));
             if (c.getMaxMemory() != null)
                 setting.maxMemoryProperty().setValue(c.getMaxMemory());
@@ -278,7 +278,7 @@ public final class ModpackHelper {
         }
 
         if (c.isOverrideJavaArgs()) {
-            setting.getOverrideGroups().add(GameSetting.JVM_OPTIONS);
+            setting.getOverrideProperties().add("jvmOptions");
             setting.jvmOptionsProperty().setValue(Lang.nonNull(c.getJvmArgs(), ""));
         }
 
@@ -302,7 +302,7 @@ public final class ModpackHelper {
         }
 
         if (c.isOverrideJavaArgs()) {
-            setting.getOverrideGroups().add(GameSetting.JVM_OPTIONS);
+            setting.getOverrideProperties().add("jvmOptions");
             setting.jvmOptionsProperty().setValue(Lang.nonNull(c.getJvmArgs(), ""));
         }
     }
@@ -327,7 +327,7 @@ public final class ModpackHelper {
             GameSetting.Effective effective = repository.getEffectiveGameSetting(version);
             if (manifest.getLaunchInfo().getMinMemory() > effective.getMaxMemory()) {
                 GameSetting.Instance setting = Objects.requireNonNull(repository.getLocalGameSettingOrCreate(version));
-                setting.getOverrideGroups().add(GameSetting.MEMORY_SETTINGS);
+                setting.getOverrideProperties().addAll(List.of("autoMemory", "minMemory", "maxMemory", "permSize"));
                 setting.autoMemoryProperty().setValue(effective.isAutoMemory());
                 setting.minMemoryProperty().setValue(effective.getMinMemory());
                 setting.maxMemoryProperty().setValue(manifest.getLaunchInfo().getMinMemory());

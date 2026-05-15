@@ -17,18 +17,8 @@
  */
 package org.jackhuang.hmcl.setting.property;
 
-import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.Nullable;
 
 /// @author Glavo
 public interface InheritableProperty<T> extends SettingProperty<@Nullable T> {
-
-    /// Always returns `null` because each `InheritableProperty`
-    /// can independently override properties from the parent settings.
-    @Override
-    @Contract(value = "-> null", pure = true)
-    default @Nullable SettingGroup getGroup() {
-        return null;
-    }
-
 }

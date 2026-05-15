@@ -25,10 +25,10 @@ public final class SimpleInheritableProperty<T>
         extends SimpleSettingProperty<T>
         implements InheritableProperty<T> {
     public SimpleInheritableProperty(@NotNull GameSetting bean, String name) {
-        super(bean, null, name);
+        super(bean, name);
     }
 
     public SimpleInheritableProperty(@NotNull GameSetting bean, String name, T defaultValue) {
-        super(bean, null, name, defaultValue);
+        super(bean, name, defaultValue);
     }
 }

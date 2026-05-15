@@ -21,7 +21,6 @@ import javafx.beans.property.Property;
 import org.jackhuang.hmcl.setting.GameSetting;
 import org.jackhuang.hmcl.util.gson.RawPreservingProperty;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 /// @author Glavo
 public interface SettingProperty<T> extends Property<T>, RawPreservingProperty<T> {
@@ -29,9 +28,4 @@ public interface SettingProperty<T> extends Property<T>, RawPreservingProperty<T
     @NotNull GameSetting getBean();
 
     T defaultValue();
-
-    /// Get the group to which this setting belongs.
-    ///
-    /// If `null` is returned, it means this setting does not belong to any group.
-    @Nullable SettingGroup getGroup();
 }

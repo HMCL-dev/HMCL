@@ -19,11 +19,12 @@ package org.jackhuang.hmcl.setting;
 
 import com.google.gson.annotations.JsonAdapter;
 import com.google.gson.annotations.SerializedName;
+import javafx.collections.FXCollections;
+import javafx.collections.ObservableSet;
 import org.jackhuang.hmcl.game.*;
 import org.jackhuang.hmcl.java.JavaManager;
 import org.jackhuang.hmcl.java.JavaRuntime;
 import org.jackhuang.hmcl.setting.property.InheritableProperty;
-import org.jackhuang.hmcl.setting.property.SettingGroup;
 import org.jackhuang.hmcl.setting.property.SettingProperty;
 import org.jackhuang.hmcl.setting.property.SimpleInheritableProperty;
 import org.jackhuang.hmcl.setting.property.SimpleSettingProperty;
@@ -52,21 +53,6 @@ import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 /// @author Glavo
 @NotNullByDefault
 public sealed abstract class GameSetting extends ObservableSetting {
-    /// Memory settings are overridden as one group.
-    public static final SettingGroup MEMORY_SETTINGS = new SettingGroup("memory");
-
-    /// JVM option text can inherit and merge with the parent setting.
-    public static final SettingGroup JVM_OPTIONS = new SettingGroup("jvmOptions");
-
-    /// Game argument text can inherit and merge with the parent setting.
-    public static final SettingGroup GAME_ARGUMENTS = new SettingGroup("gameArguments");
-
-    /// Environment variable text can inherit and merge with the parent setting.
-    public static final SettingGroup ENVIRONMENT_VARIABLES = new SettingGroup("environmentVariables");
-
-    /// Native library settings are overridden as one group.
-    public static final SettingGroup NATIVE_SETTINGS = new SettingGroup("natives");
-
     private static final int SUGGESTED_MEMORY;
 
     static {
@@ -111,13 +97,58 @@ public sealed abstract class GameSetting extends ObservableSetting {
             return isolation;
         }
 
-        /// Setting groups overridden by this instance instead of merged or inherited.
-        @SerializedName("overrideGroups")
-        private final javafx.collections.ObservableSet<SettingGroup> overrideGroups = javafx.collections.FXCollections.observableSet();
+        /// Setting property names overridden by this instance.
+        @SerializedName("overrideProperties")
+        private final ObservableSet<String> overrideProperties = FXCollections.observableSet();
 
-        /// Returns the overridden setting groups.
-        public javafx.collections.ObservableSet<SettingGroup> getOverrideGroups() {
-            return overrideGroups;
+        /// Returns the overridden setting property names.
+        public ObservableSet<String> getOverrideProperties() {
+            return overrideProperties;
+        }
+
+        /// Migrates legacy group override flags to independent property override flags.
+        private void migrateLegacyOverrideGroups() {
+            var legacyOverrideGroups = unknownFields.remove("overrideGroups");
+            if (legacyOverrideGroups == null || !legacyOverrideGroups.isJsonArray()) {
+                return;
+            }
+
+            for (var element : legacyOverrideGroups.getAsJsonArray()) {
+                @Nullable String groupName = null;
+                if (element.isJsonPrimitive()) {
+                    groupName = element.getAsString();
+                } else if (element.isJsonObject()) {
+                    var name = element.getAsJsonObject().get("name");
+                    if (name != null && name.isJsonPrimitive()) {
+                        groupName = name.getAsString();
+                    }
+                }
+
+                if (groupName == null) {
+                    continue;
+                }
+
+                switch (groupName) {
+                    case "memory" -> overrideProperties.addAll(java.util.List.of(
+                            "autoMemory",
+                            "minMemory",
+                            "maxMemory",
+                            "permSize"
+                    ));
+                    case "jvmOptions" -> overrideProperties.add("jvmOptions");
+                    case "gameArguments" -> overrideProperties.add("gameArgs");
+                    case "environmentVariables" -> overrideProperties.add("environmentVariables");
+                    case "natives" -> overrideProperties.addAll(java.util.List.of(
+                            "notPatchNatives",
+                            "nativesDirType",
+                            "nativesDir",
+                            "useNativeGLFW",
+                            "useNativeOpenAL"
+                    ));
+                    default -> {
+                    }
+                }
+            }
         }
 
         /// JSON adapter for instance settings.
@@ -125,6 +156,17 @@ public sealed abstract class GameSetting extends ObservableSetting {
             @Override
             protected Instance createInstance() {
                 return new Instance();
+            }
+
+            /// Deserializes instance settings and migrates legacy group override flags.
+            @Override
+            public Instance deserialize(com.google.gson.JsonElement json,
+                                        java.lang.reflect.Type typeOfT,
+                                        com.google.gson.JsonDeserializationContext context)
+                    throws com.google.gson.JsonParseException {
+                Instance instance = super.deserialize(json, typeOfT, context);
+                instance.migrateLegacyOverrideGroups();
+                return instance;
             }
         }
     }
@@ -178,22 +220,12 @@ public sealed abstract class GameSetting extends ObservableSetting {
 
     /// Creates a new setting property without a default value.
     protected final <T> SettingProperty<T> newSettingProperty(String name) {
-        return new SimpleSettingProperty<>(this, null, name);
+        return new SimpleSettingProperty<>(this, name);
     }
 
     /// Creates a new setting property with the given default value.
     protected final <T> SettingProperty<T> newSettingProperty(String name, T defaultValue) {
-        return new SimpleSettingProperty<>(this, null, name, defaultValue);
-    }
-
-    /// Creates a new group-scoped setting property without a default value.
-    protected final <T> SettingProperty<T> newSettingProperty(SettingGroup group, String name) {
-        return new SimpleSettingProperty<>(this, group, name);
-    }
-
-    /// Creates a new group-scoped setting property with the given default value.
-    protected final <T> SettingProperty<T> newSettingProperty(SettingGroup group, String name, T defaultValue) {
-        return new SimpleSettingProperty<>(this, group, name, defaultValue);
+        return new SimpleSettingProperty<>(this, name, defaultValue);
     }
 
     /// Creates a new inheritable property.
@@ -245,7 +277,7 @@ public sealed abstract class GameSetting extends ObservableSetting {
 
     /// User customized JVM options.
     @SerializedName("jvmOptions")
-    private final SettingProperty<String> jvmOptions = newSettingProperty(JVM_OPTIONS, "jvmOptions", "");
+    private final SettingProperty<String> jvmOptions = newSettingProperty("jvmOptions", "");
 
     /// Returns the user customized JVM options property.
     public SettingProperty<String> jvmOptionsProperty() {
@@ -290,7 +322,7 @@ public sealed abstract class GameSetting extends ObservableSetting {
 
     /// If `true`, HMCL will automatically adjust memory allocation.
     @SerializedName("autoMemory")
-    private final SettingProperty<Boolean> autoMemory = newSettingProperty(MEMORY_SETTINGS, "autoMemory", true);
+    private final SettingProperty<Boolean> autoMemory = newSettingProperty("autoMemory", true);
 
     /// Returns the automatic memory allocation property.
     public SettingProperty<Boolean> autoMemoryProperty() {
@@ -299,7 +331,7 @@ public sealed abstract class GameSetting extends ObservableSetting {
 
     /// The minimum heap memory in MiB.
     @SerializedName("minMemory")
-    private final SettingProperty<@Nullable Integer> minMemory = newSettingProperty(MEMORY_SETTINGS, "minMemory");
+    private final SettingProperty<@Nullable Integer> minMemory = newSettingProperty("minMemory");
 
     /// Returns the minimum heap memory property.
     public SettingProperty<@Nullable Integer> minMemoryProperty() {
@@ -308,7 +340,7 @@ public sealed abstract class GameSetting extends ObservableSetting {
 
     /// The maximum heap memory in MiB.
     @SerializedName("maxMemory")
-    private final SettingProperty<Integer> maxMemory = newSettingProperty(MEMORY_SETTINGS, "maxMemory", SUGGESTED_MEMORY);
+    private final SettingProperty<Integer> maxMemory = newSettingProperty("maxMemory", SUGGESTED_MEMORY);
 
     /// Returns the maximum heap memory property.
     public SettingProperty<Integer> maxMemoryProperty() {
@@ -317,7 +349,7 @@ public sealed abstract class GameSetting extends ObservableSetting {
 
     /// The permanent generation or metaspace size in MiB.
     @SerializedName("permSize")
-    private final SettingProperty<String> permSize = newSettingProperty(MEMORY_SETTINGS, "permSize", "");
+    private final SettingProperty<String> permSize = newSettingProperty("permSize", "");
 
     /// Returns the permanent generation or metaspace size property.
     public SettingProperty<String> permSizeProperty() {
@@ -389,7 +421,7 @@ public sealed abstract class GameSetting extends ObservableSetting {
 
     /// User customized arguments passed to the game.
     @SerializedName("gameArgs")
-    private final SettingProperty<String> gameArgs = newSettingProperty(GAME_ARGUMENTS, "gameArgs", "");
+    private final SettingProperty<String> gameArgs = newSettingProperty("gameArgs", "");
 
     /// Returns the customized game arguments property.
     public SettingProperty<String> gameArgsProperty() {
@@ -416,7 +448,7 @@ public sealed abstract class GameSetting extends ObservableSetting {
 
     /// User customized environment variables passed to the game.
     @SerializedName("environmentVariables")
-    private final SettingProperty<String> environmentVariables = newSettingProperty(ENVIRONMENT_VARIABLES, "environmentVariables", "");
+    private final SettingProperty<String> environmentVariables = newSettingProperty("environmentVariables", "");
 
     /// Returns the customized environment variables property.
     public SettingProperty<String> environmentVariablesProperty() {
@@ -506,7 +538,7 @@ public sealed abstract class GameSetting extends ObservableSetting {
 
     /// If `true`, HMCL does not patch native libraries.
     @SerializedName("notPatchNatives")
-    private final SettingProperty<Boolean> notPatchNatives = newSettingProperty(NATIVE_SETTINGS, "notPatchNatives", false);
+    private final SettingProperty<Boolean> notPatchNatives = newSettingProperty("notPatchNatives", false);
 
     /// Returns the native library patching property.
     public SettingProperty<Boolean> notPatchNativesProperty() {
@@ -515,7 +547,7 @@ public sealed abstract class GameSetting extends ObservableSetting {
 
     /// The native library directory mode.
     @SerializedName("nativesDirType")
-    private final SettingProperty<NativesDirectoryType> nativesDirType = newSettingProperty(NATIVE_SETTINGS, "nativesDirType", NativesDirectoryType.VERSION_FOLDER);
+    private final SettingProperty<NativesDirectoryType> nativesDirType = newSettingProperty("nativesDirType", NativesDirectoryType.VERSION_FOLDER);
 
     /// Returns the native library directory mode property.
     public SettingProperty<NativesDirectoryType> nativesDirTypeProperty() {
@@ -524,7 +556,7 @@ public sealed abstract class GameSetting extends ObservableSetting {
 
     /// The path to the native library directory.
     @SerializedName("nativesDir")
-    private final SettingProperty<String> nativesDir = newSettingProperty(NATIVE_SETTINGS, "nativesDir", "");
+    private final SettingProperty<String> nativesDir = newSettingProperty("nativesDir", "");
 
     /// Returns the native library directory property.
     public SettingProperty<String> nativesDirProperty() {
@@ -533,7 +565,7 @@ public sealed abstract class GameSetting extends ObservableSetting {
 
     /// If `true`, HMCL will use native GLFW.
     @SerializedName("useNativeGLFW")
-    private final SettingProperty<Boolean> useNativeGLFW = newSettingProperty(NATIVE_SETTINGS, "useNativeGLFW", false);
+    private final SettingProperty<Boolean> useNativeGLFW = newSettingProperty("useNativeGLFW", false);
 
     /// Returns the native GLFW property.
     public SettingProperty<Boolean> useNativeGLFWProperty() {
@@ -542,7 +574,7 @@ public sealed abstract class GameSetting extends ObservableSetting {
 
     /// If `true`, HMCL will use native OpenAL.
     @SerializedName("useNativeOpenAL")
-    private final SettingProperty<Boolean> useNativeOpenAL = newSettingProperty(NATIVE_SETTINGS, "useNativeOpenAL", false);
+    private final SettingProperty<Boolean> useNativeOpenAL = newSettingProperty("useNativeOpenAL", false);
 
     /// Returns the native OpenAL property.
     public SettingProperty<Boolean> useNativeOpenALProperty() {
@@ -568,11 +600,20 @@ public sealed abstract class GameSetting extends ObservableSetting {
         target.isolationProperty().setValue(source.getGameDirType() == GameDirectoryType.VERSION_FOLDER);
         if (copyValues) {
             copyCommonProperties(source, target);
-            target.getOverrideGroups().add(MEMORY_SETTINGS);
-            target.getOverrideGroups().add(JVM_OPTIONS);
-            target.getOverrideGroups().add(GAME_ARGUMENTS);
-            target.getOverrideGroups().add(ENVIRONMENT_VARIABLES);
-            target.getOverrideGroups().add(NATIVE_SETTINGS);
+            target.getOverrideProperties().addAll(java.util.List.of(
+                    "jvmOptions",
+                    "autoMemory",
+                    "minMemory",
+                    "maxMemory",
+                    "permSize",
+                    "gameArgs",
+                    "environmentVariables",
+                    "notPatchNatives",
+                    "nativesDirType",
+                    "nativesDir",
+                    "useNativeGLFW",
+                    "useNativeOpenAL"
+            ));
         }
         return target;
     }
@@ -633,10 +674,6 @@ public sealed abstract class GameSetting extends ObservableSetting {
         return new Effective(global, instance);
     }
 
-    private static boolean overrides(@Nullable Instance instance, SettingGroup group) {
-        return instance != null && instance.getOverrideGroups().contains(group);
-    }
-
     private static String empty(@Nullable String value) {
         return value != null ? value : "";
     }
@@ -646,17 +683,17 @@ public sealed abstract class GameSetting extends ObservableSetting {
         return value != null ? value : property.defaultValue();
     }
 
-    private static <T> T grouped(Global global, @Nullable Instance instance, SettingGroup group, Function<GameSetting, SettingProperty<T>> propertyGetter) {
-        if (overrides(instance, group)) {
-            T value = propertyGetter.apply(instance).getValue();
-            if (value != null) {
-                return value;
+    private static <T> T inherited(Global global, @Nullable Instance instance, Function<GameSetting, SettingProperty<T>> propertyGetter) {
+        if (instance != null) {
+            SettingProperty<T> property = propertyGetter.apply(instance);
+            if (instance.getOverrideProperties().contains(property.getName())) {
+                return direct(property);
             }
         }
         return direct(propertyGetter.apply(global));
     }
 
-    private static <T> T inherited(Global global, @Nullable Instance instance, Function<GameSetting, InheritableProperty<T>> propertyGetter) {
+    private static <T> T inheritable(Global global, @Nullable Instance instance, Function<GameSetting, InheritableProperty<T>> propertyGetter) {
         if (instance != null) {
             T value = propertyGetter.apply(instance).getValue();
             if (value != null) {
@@ -667,25 +704,6 @@ public sealed abstract class GameSetting extends ObservableSetting {
         InheritableProperty<T> globalProperty = propertyGetter.apply(global);
         T value = globalProperty.getValue();
         return value != null ? value : globalProperty.defaultValue();
-    }
-
-    private static String merged(Global global, @Nullable Instance instance, SettingGroup group, Function<GameSetting, SettingProperty<String>> propertyGetter) {
-        String globalValue = empty(propertyGetter.apply(global).getValue());
-        if (instance == null) {
-            return globalValue;
-        }
-
-        String instanceValue = empty(propertyGetter.apply(instance).getValue());
-        if (overrides(instance, group)) {
-            return instanceValue;
-        }
-        if (StringUtils.isBlank(globalValue)) {
-            return instanceValue;
-        }
-        if (StringUtils.isBlank(instanceValue)) {
-            return globalValue;
-        }
-        return globalValue + " " + instanceValue;
     }
 
     /// Launch-time effective game setting.
@@ -710,7 +728,7 @@ public sealed abstract class GameSetting extends ObservableSetting {
 
         /// Returns the effective Java selection mode.
         public JavaVersionType getJavaVersionType() {
-            return inherited(global, instance, GameSetting::javaTypeProperty);
+            return inheritable(global, instance, GameSetting::javaTypeProperty);
         }
 
         /// Returns the effective Java version text.
@@ -814,123 +832,123 @@ public sealed abstract class GameSetting extends ObservableSetting {
 
         /// Returns the effective JVM option text.
         public String getJVMOptions() {
-            return merged(global, instance, JVM_OPTIONS, GameSetting::jvmOptionsProperty);
+            return empty(inherited(global, instance, GameSetting::jvmOptionsProperty));
         }
 
         /// Returns whether generated JVM options are disabled.
         public boolean isNoJVMOptions() {
-            return inherited(global, instance, GameSetting::noJVMOptionsProperty);
+            return inheritable(global, instance, GameSetting::noJVMOptionsProperty);
         }
 
         /// Returns whether generated optimizing JVM options are disabled.
         public boolean isNoOptimizingJVMOptions() {
-            return inherited(global, instance, GameSetting::noOptimizingJVMOptionsProperty);
+            return inheritable(global, instance, GameSetting::noOptimizingJVMOptionsProperty);
         }
 
         /// Returns whether JVM validity checks are disabled.
         public boolean isNotCheckJVM() {
-            return inherited(global, instance, GameSetting::notCheckJVMProperty);
+            return inheritable(global, instance, GameSetting::notCheckJVMProperty);
         }
 
         /// Returns whether game completeness checks are disabled.
         public boolean isNotCheckGame() {
-            return inherited(global, instance, GameSetting::notCheckGameProperty);
+            return inheritable(global, instance, GameSetting::notCheckGameProperty);
         }
 
         /// Returns whether automatic memory allocation is enabled.
         public boolean isAutoMemory() {
-            return grouped(global, instance, MEMORY_SETTINGS, GameSetting::autoMemoryProperty);
+            return inherited(global, instance, GameSetting::autoMemoryProperty);
         }
 
         /// Returns the effective minimum heap memory in MiB.
         public @Nullable Integer getMinMemory() {
-            return grouped(global, instance, MEMORY_SETTINGS, GameSetting::minMemoryProperty);
+            return inherited(global, instance, GameSetting::minMemoryProperty);
         }
 
         /// Returns the effective maximum heap memory in MiB.
         public int getMaxMemory() {
-            Integer value = grouped(global, instance, MEMORY_SETTINGS, GameSetting::maxMemoryProperty);
+            Integer value = inherited(global, instance, GameSetting::maxMemoryProperty);
             return value != null && value > 0 ? value : SUGGESTED_MEMORY;
         }
 
         /// Returns the effective permanent generation or metaspace size text.
         public String getPermSize() {
-            return empty(grouped(global, instance, MEMORY_SETTINGS, GameSetting::permSizeProperty));
+            return empty(inherited(global, instance, GameSetting::permSizeProperty));
         }
 
         /// Returns the effective game window mode.
         public GameWindowType getWindowType() {
-            return inherited(global, instance, GameSetting::windowTypeProperty);
+            return inheritable(global, instance, GameSetting::windowTypeProperty);
         }
 
         /// Returns the effective game window width.
         public int getWidth() {
-            return Math.max(0, Lang.parseInt(String.valueOf(Math.round(inherited(global, instance, GameSetting::widthProperty))), 0));
+            return Math.max(0, Lang.parseInt(String.valueOf(Math.round(inheritable(global, instance, GameSetting::widthProperty))), 0));
         }
 
         /// Returns the effective game window height.
         public int getHeight() {
-            return Math.max(0, Lang.parseInt(String.valueOf(Math.round(inherited(global, instance, GameSetting::heightProperty))), 0));
+            return Math.max(0, Lang.parseInt(String.valueOf(Math.round(inheritable(global, instance, GameSetting::heightProperty))), 0));
         }
 
         /// Returns the effective game directory mode.
         public GameDirectoryType getGameDirType() {
-            return inherited(global, instance, GameSetting::gameDirTypeProperty);
+            return inheritable(global, instance, GameSetting::gameDirTypeProperty);
         }
 
         /// Returns the effective custom run directory.
         public String getRunningDir() {
-            return empty(inherited(global, instance, GameSetting::runningDirProperty));
+            return empty(inheritable(global, instance, GameSetting::runningDirProperty));
         }
 
         /// Returns the effective process priority.
         public ProcessPriority getProcessPriority() {
-            return inherited(global, instance, GameSetting::processPriorityProperty);
+            return inheritable(global, instance, GameSetting::processPriorityProperty);
         }
 
         /// Returns the effective launcher visibility.
         public LauncherVisibility getLauncherVisibility() {
-            return inherited(global, instance, GameSetting::launcherVisibilityProperty);
+            return inheritable(global, instance, GameSetting::launcherVisibilityProperty);
         }
 
         /// Returns the effective game arguments.
         public String getGameArgs() {
-            return merged(global, instance, GAME_ARGUMENTS, GameSetting::gameArgsProperty);
+            return empty(inherited(global, instance, GameSetting::gameArgsProperty));
         }
 
         /// Returns the effective graphics API.
         public GraphicsAPI getGraphicsBackend() {
-            return inherited(global, instance, GameSetting::graphicsBackendProperty);
+            return inheritable(global, instance, GameSetting::graphicsBackendProperty);
         }
 
         /// Returns the effective renderer.
         public Renderer getRenderer() {
-            return inherited(global, instance, GameSetting::rendererProperty);
+            return inheritable(global, instance, GameSetting::rendererProperty);
         }
 
         /// Returns the effective environment variables.
         public String getEnvironmentVariables() {
-            return merged(global, instance, ENVIRONMENT_VARIABLES, GameSetting::environmentVariablesProperty);
+            return empty(inherited(global, instance, GameSetting::environmentVariablesProperty));
         }
 
         /// Returns the effective command wrapper.
         public String getCommandWrapper() {
-            return empty(inherited(global, instance, GameSetting::commandWrapperProperty));
+            return empty(inheritable(global, instance, GameSetting::commandWrapperProperty));
         }
 
         /// Returns the effective pre-launch command.
         public String getPreLaunchCommand() {
-            return empty(inherited(global, instance, GameSetting::preLaunchCommandProperty));
+            return empty(inheritable(global, instance, GameSetting::preLaunchCommandProperty));
         }
 
         /// Returns the effective post-exit command.
         public String getPostExitCommand() {
-            return empty(inherited(global, instance, GameSetting::postExitCommandProperty));
+            return empty(inheritable(global, instance, GameSetting::postExitCommandProperty));
         }
 
         /// Returns the effective quick play type.
         public QuickPlayType getQuickPlay() {
-            return inherited(global, instance, GameSetting::quickPlayProperty);
+            return inheritable(global, instance, GameSetting::quickPlayProperty);
         }
 
         /// Returns the effective quick play option.
@@ -938,15 +956,15 @@ public sealed abstract class GameSetting extends ObservableSetting {
             return switch (getQuickPlay()) {
                 case NONE -> null;
                 case MULTIPLAYER -> {
-                    String server = empty(inherited(global, instance, GameSetting::quickPlayMultiplayerProperty));
+                    String server = empty(inheritable(global, instance, GameSetting::quickPlayMultiplayerProperty));
                     yield StringUtils.isBlank(server) ? null : new QuickPlayOption.MultiPlayer(server);
                 }
                 case SINGLEPLAYER -> {
-                    String world = empty(inherited(global, instance, GameSetting::quickPlaySingleplayerProperty));
+                    String world = empty(inheritable(global, instance, GameSetting::quickPlaySingleplayerProperty));
                     yield StringUtils.isBlank(world) ? null : new QuickPlayOption.SinglePlayer(world);
                 }
                 case REALMS -> {
-                    String realm = empty(inherited(global, instance, GameSetting::quickPlayRealmsProperty));
+                    String realm = empty(inheritable(global, instance, GameSetting::quickPlayRealmsProperty));
                     yield StringUtils.isBlank(realm) ? null : new QuickPlayOption.Realm(realm);
                 }
             };
@@ -954,37 +972,37 @@ public sealed abstract class GameSetting extends ObservableSetting {
 
         /// Returns whether logs should be shown after launch.
         public boolean isShowLogs() {
-            return inherited(global, instance, GameSetting::showLogsProperty);
+            return inheritable(global, instance, GameSetting::showLogsProperty);
         }
 
         /// Returns whether debug log output is enabled.
         public boolean isEnableDebugLogOutput() {
-            return inherited(global, instance, GameSetting::enableDebugLogOutputProperty);
+            return inheritable(global, instance, GameSetting::enableDebugLogOutputProperty);
         }
 
         /// Returns whether native library patching is disabled.
         public boolean isNotPatchNatives() {
-            return grouped(global, instance, NATIVE_SETTINGS, GameSetting::notPatchNativesProperty);
+            return inherited(global, instance, GameSetting::notPatchNativesProperty);
         }
 
         /// Returns the effective native directory mode.
         public NativesDirectoryType getNativesDirType() {
-            return grouped(global, instance, NATIVE_SETTINGS, GameSetting::nativesDirTypeProperty);
+            return inherited(global, instance, GameSetting::nativesDirTypeProperty);
         }
 
         /// Returns the effective native directory.
         public String getNativesDir() {
-            return empty(grouped(global, instance, NATIVE_SETTINGS, GameSetting::nativesDirProperty));
+            return empty(inherited(global, instance, GameSetting::nativesDirProperty));
         }
 
         /// Returns whether native GLFW should be used.
         public boolean isUseNativeGLFW() {
-            return grouped(global, instance, NATIVE_SETTINGS, GameSetting::useNativeGLFWProperty);
+            return inherited(global, instance, GameSetting::useNativeGLFWProperty);
         }
 
         /// Returns whether native OpenAL should be used.
         public boolean isUseNativeOpenAL() {
-            return grouped(global, instance, NATIVE_SETTINGS, GameSetting::useNativeOpenALProperty);
+            return inherited(global, instance, GameSetting::useNativeOpenALProperty);
         }
     }
 }

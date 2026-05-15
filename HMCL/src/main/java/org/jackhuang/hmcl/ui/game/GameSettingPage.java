@@ -47,7 +47,6 @@ import org.jackhuang.hmcl.java.JavaManager;
 import org.jackhuang.hmcl.java.JavaRuntime;
 import org.jackhuang.hmcl.setting.*;
 import org.jackhuang.hmcl.setting.property.InheritableProperty;
-import org.jackhuang.hmcl.setting.property.SettingGroup;
 import org.jackhuang.hmcl.setting.property.SettingProperty;
 import org.jackhuang.hmcl.ui.*;
 import org.jackhuang.hmcl.ui.construct.*;
@@ -104,7 +103,6 @@ public final class GameSettingPage<S extends GameSetting> extends StackPane
 
     private boolean updatingJavaSetting = false;
     private boolean updatingSelectedJava = false;
-    private boolean updatingOverrideGroup = false;
     private boolean updatingParentSetting = false;
     private boolean showingGlobalSettingList = false;
 
@@ -315,16 +313,15 @@ public final class GameSettingPage<S extends GameSetting> extends StackPane
 
             // Memory Setting
             var memorySublist = new ComponentSublist(() -> {
-                var autoMemoryPane = new LineToggleButton();
+                var autoMemoryPane = createIndependentBooleanButton(GameSetting::autoMemoryProperty);
                 autoMemoryPane.setTitle(i18n("settings.memory.auto_allocate"));
-                bindSettingBidirectional(autoMemoryPane.selectedProperty(), GameSetting::autoMemoryProperty);
 
                 var txtMaxMemory = new JFXTextField();
                 txtMaxMemory.setPrefWidth(160);
-                bindIntegerTextField(txtMaxMemory, GameSetting::maxMemoryProperty, false);
                 var maxMemoryPane = new LinePane();
                 maxMemoryPane.setTitle(i18n("settings.memory"));
                 maxMemoryPane.setRight(new HBox(8, txtMaxMemory, new Label("MiB"))); // TODO: i18n
+                bindIndependentIntegerTextField(maxMemoryPane, txtMaxMemory, GameSetting::maxMemoryProperty, false);
 
                 return List.of(autoMemoryPane, maxMemoryPane);
             });
@@ -332,7 +329,6 @@ public final class GameSettingPage<S extends GameSetting> extends StackPane
             memorySublist.setTitle(i18n("settings.memory"));
             memorySublist.setHasSubtitle(true);
             memorySublist.setSubtitle(i18n("settings.memory.auto_allocate"));
-            memorySublist.setTitleRight(createOverrideGroupTitleButton(memorySublist, GameSetting.MEMORY_SETTINGS));
 
             // Launcher Visibility Setting
             var launcherVisibilityPane = createInheritableButton(
@@ -452,7 +448,7 @@ public final class GameSettingPage<S extends GameSetting> extends StackPane
                 var txtMinMemory = new JFXTextField();
                 txtMinMemory.setPrefWidth(160);
                 minMemoryPane.setRight(new HBox(8, txtMinMemory, new Label("MiB"))); // TODO: i18n
-                bindIntegerTextField(txtMinMemory, GameSetting::minMemoryProperty, true);
+                bindIndependentIntegerTextField(minMemoryPane, txtMinMemory, GameSetting::minMemoryProperty, true);
             }
 
             var metaspacePane = new LinePane();
@@ -463,7 +459,7 @@ public final class GameSettingPage<S extends GameSetting> extends StackPane
                 txtMetaspace.setPromptText(i18n("settings.advanced.java_permanent_generation_space.prompt"));
                 txtMetaspace.setPrefWidth(160);
                 metaspacePane.setRight(new HBox(8, txtMetaspace, new Label("MiB"))); // TODO: i18n
-                bindSettingBidirectional(txtMetaspace.textProperty(), GameSetting::permSizeProperty);
+                bindIndependentTextField(metaspacePane, txtMetaspace, GameSetting::permSizeProperty);
             }
 
             var noJVMArgsPane = createInheritableBooleanButton(GameSetting::noJVMOptionsProperty);
@@ -483,8 +479,7 @@ public final class GameSettingPage<S extends GameSetting> extends StackPane
                 // txtJVMArgs.setPromptText(i18n("settings.advanced.jvm_args.prompt"));
                 txtJVMArgs.setPrefWidth(400);
                 jvmArgsPane.setRight(txtJVMArgs);
-                bindOverrideGroupTitleButton(jvmArgsPane, txtJVMArgs, GameSetting.JVM_OPTIONS);
-                bindSettingBidirectional(txtJVMArgs.textProperty(), GameSetting::jvmOptionsProperty);
+                bindIndependentTextField(jvmArgsPane, txtJVMArgs, GameSetting::jvmOptionsProperty);
             }
         }
 
@@ -524,8 +519,7 @@ public final class GameSettingPage<S extends GameSetting> extends StackPane
             txtGameArgs.setPromptText(i18n("settings.advanced.minecraft_arguments.prompt"));
             txtGameArgs.setPrefWidth(400);
             gameArgsPane.setRight(txtGameArgs);
-            bindOverrideGroupTitleButton(gameArgsPane, txtGameArgs, GameSetting.GAME_ARGUMENTS);
-            bindSettingBidirectional(txtGameArgs.textProperty(), GameSetting::gameArgsProperty);
+            bindIndependentTextField(gameArgsPane, txtGameArgs, GameSetting::gameArgsProperty);
         }
 
         var customCommandSettings = new ComponentSublist(() -> {
@@ -569,14 +563,12 @@ public final class GameSettingPage<S extends GameSetting> extends StackPane
             var txtEnvironmentVariables = new JFXTextField();
             txtEnvironmentVariables.setPrefWidth(400);
             environmentVariablesPane.setRight(txtEnvironmentVariables);
-            bindOverrideGroupTitleButton(environmentVariablesPane, txtEnvironmentVariables, GameSetting.ENVIRONMENT_VARIABLES);
-            bindSettingBidirectional(txtEnvironmentVariables.textProperty(), GameSetting::environmentVariablesProperty);
+            bindIndependentTextField(environmentVariablesPane, txtEnvironmentVariables, GameSetting::environmentVariablesProperty);
         }
 
         var nativesSettings = new ComponentSublist(() -> {
-            var useCustomNativesDirPane = new LineToggleButton();
+            var useCustomNativesDirPane = createIndependentNativesDirTypeButton();
             useCustomNativesDirPane.setTitle(i18n("settings.advanced.natives_directory.custom.enabled"));
-            bindNativesDirTypeButton(useCustomNativesDirPane.selectedProperty());
 
             var nativesDirPane = new LinePane();
             nativesDirPane.setTitle(i18n("settings.advanced.natives_directory"));
@@ -584,28 +576,24 @@ public final class GameSettingPage<S extends GameSetting> extends StackPane
                 var txtNativesDir = new JFXTextField();
                 txtNativesDir.setPrefWidth(400);
                 nativesDirPane.setRight(txtNativesDir);
-                bindSettingBidirectional(txtNativesDir.textProperty(), GameSetting::nativesDirProperty);
+                bindIndependentTextField(nativesDirPane, txtNativesDir, GameSetting::nativesDirProperty);
             }
 
-            var noNativesPatchPane = new LineToggleButton();
+            var noNativesPatchPane = createIndependentBooleanButton(GameSetting::notPatchNativesProperty);
             noNativesPatchPane.setTitle(i18n("settings.advanced.dont_patch_natives"));
-            bindSettingBidirectional(noNativesPatchPane.selectedProperty(), GameSetting::notPatchNativesProperty);
 
-            var useNativeGLFWPane = new LineToggleButton();
+            var useNativeGLFWPane = createIndependentBooleanButton(GameSetting::useNativeGLFWProperty);
             useNativeGLFWPane.setTitle(i18n("settings.advanced.use_native_glfw"));
             useNativeGLFWPane.setSubtitle(i18n("settings.advanced.linux_freebsd_only"));
-            bindSettingBidirectional(useNativeGLFWPane.selectedProperty(), GameSetting::useNativeGLFWProperty);
 
-            var useNativeOpenALPane = new LineToggleButton();
+            var useNativeOpenALPane = createIndependentBooleanButton(GameSetting::useNativeOpenALProperty);
             useNativeOpenALPane.setTitle(i18n("settings.advanced.use_native_openal"));
             useNativeOpenALPane.setSubtitle(i18n("settings.advanced.linux_freebsd_only"));
-            bindSettingBidirectional(useNativeOpenALPane.selectedProperty(), GameSetting::useNativeOpenALProperty);
 
             return List.of(useCustomNativesDirPane, nativesDirPane, noNativesPatchPane, useNativeGLFWPane, useNativeOpenALPane);
         });
         advancedSettings.getContent().add(nativesSettings);
         nativesSettings.setTitle(i18n("settings.advanced.natives"));
-        nativesSettings.setTitleRight(createOverrideGroupTitleButton(nativesSettings, GameSetting.NATIVE_SETTINGS));
 
         var graphicsBackendPane = createInheritableButton(
                 GameSetting::graphicsBackendProperty,
@@ -862,40 +850,6 @@ public final class GameSettingPage<S extends GameSetting> extends StackPane
         });
     }
 
-    private void bindOverrideGroup(BooleanProperty selected, SettingGroup group) {
-        if (isGlobalSetting) {
-            return;
-        }
-
-        selected.addListener((observable, oldValue, newValue) -> {
-            if (updatingOverrideGroup || !(currentSetting.get() instanceof GameSetting.Instance setting)) {
-                return;
-            }
-
-            if (newValue) {
-                setting.getOverrideGroups().add(group);
-            } else {
-                setting.getOverrideGroups().remove(group);
-            }
-        });
-
-        currentSetting.addListener((observable, oldValue, newValue) -> {
-            updatingOverrideGroup = true;
-            try {
-                selected.set(newValue instanceof GameSetting.Instance setting && setting.getOverrideGroups().contains(group));
-            } finally {
-                updatingOverrideGroup = false;
-            }
-        });
-
-        updatingOverrideGroup = true;
-        try {
-            selected.set(currentSetting.get() instanceof GameSetting.Instance setting && setting.getOverrideGroups().contains(group));
-        } finally {
-            updatingOverrideGroup = false;
-        }
-    }
-
     /// Adds the title-line inheritance button for the Java selection sublist.
     private void bindJavaInheritanceButton(ComponentSublist sublist) {
         if (isGlobalSetting) {
@@ -954,74 +908,39 @@ public final class GameSettingPage<S extends GameSetting> extends StackPane
         refresh.invalidated(setting);
     }
 
-    @SuppressWarnings("unchecked")
-    private void bindIntegerTextField(JFXTextField textField, Function<S, ? extends Property<Integer>> propertyGetter, boolean nullable) {
-        ObjectProperty<Property<Integer>> activeProperty = new SimpleObjectProperty<>();
-        final boolean[] updating = {false};
-
-        InvalidationListener propertyListener = observable -> {
-            Property<Integer> property = activeProperty.get();
-            if (property == null || updating[0]) {
-                return;
-            }
-
-            updating[0] = true;
-            try {
-                Integer value = property.getValue();
-                textField.setText(value != null ? value.toString() : "");
-            } finally {
-                updating[0] = false;
-            }
-        };
-
-        ChangeListener<String> textListener = (observable, oldValue, newValue) -> {
-            Property<Integer> property = activeProperty.get();
-            if (property == null || updating[0]) {
-                return;
-            }
-
-            updating[0] = true;
-            try {
-                property.setValue(parseInteger(newValue, nullable));
-            } finally {
-                updating[0] = false;
-            }
-        };
-
-        textField.textProperty().addListener(textListener);
-        currentSetting.addListener((observable, oldValue, newValue) -> {
-            Property<Integer> oldProperty = activeProperty.get();
-            if (oldProperty != null) {
-                oldProperty.removeListener(propertyListener);
-            }
-
-            Property<Integer> newProperty = newValue != null ? (Property<Integer>) propertyGetter.apply(newValue) : null;
-            activeProperty.set(newProperty);
-            if (newProperty != null) {
-                newProperty.addListener(propertyListener);
-            }
-            propertyListener.invalidated(newProperty);
-        });
-
-        S setting = currentSetting.get();
-        if (setting != null) {
-            Property<Integer> property = (Property<Integer>) propertyGetter.apply(setting);
-            activeProperty.set(property);
-            property.addListener(propertyListener);
-            propertyListener.invalidated(property);
-        }
+    /// Binds a text field to a setting property with independent override state.
+    private void bindIndependentTextField(
+            LineComponent line,
+            JFXTextField textField,
+            Function<GameSetting, SettingProperty<String>> propertyGetter) {
+        IndependentSettingBinder.bindTextField(
+                isGlobalSetting,
+                currentSetting,
+                line,
+                textField,
+                propertyGetter,
+                this::createInheritanceButton,
+                GameSettingPage::updateInheritanceButton,
+                this::getParentGameSetting);
     }
 
-    private static @Nullable Integer parseInteger(@Nullable String value, boolean nullable) {
-        if (StringUtils.isBlank(value)) {
-            return nullable ? null : 0;
-        }
-
-        try {
-            return Integer.parseInt(value.trim());
-        } catch (NumberFormatException ignored) {
-            return nullable ? null : 0;
-        }
+    /// Binds an integer text field to a setting property with independent override state.
+    @SuppressWarnings("unchecked")
+    private void bindIndependentIntegerTextField(
+            LineComponent line,
+            JFXTextField textField,
+            Function<GameSetting, ? extends SettingProperty<Integer>> propertyGetter,
+            boolean nullable) {
+        IndependentSettingBinder.bindIntegerTextField(
+                isGlobalSetting,
+                currentSetting,
+                line,
+                textField,
+                propertyGetter,
+                nullable,
+                this::createInheritanceButton,
+                GameSettingPage::updateInheritanceButton,
+                this::getParentGameSetting);
     }
 
     private void bindWindowSizeComboBox(JFXComboBox<String> comboBox) {
@@ -1139,46 +1058,6 @@ public final class GameSettingPage<S extends GameSetting> extends StackPane
 
     private static String formatWindowSize(double width, double height) {
         return Math.round(width) + "x" + Math.round(height);
-    }
-
-    /// Creates a title-line inheritance button for a grouped setting sublist.
-    private @Nullable JFXButton createOverrideGroupTitleButton(ComponentSublist sublist, SettingGroup group) {
-        if (isGlobalSetting) {
-            return null;
-        }
-
-        var button = createInheritanceButton();
-        BooleanProperty overridden = bindOverrideGroupButton(button, group);
-        sublist.disableProperty().bind(overridden.not());
-        return button;
-    }
-
-    /// Adds a title-line inheritance button to a grouped setting row.
-    private void bindOverrideGroupTitleButton(LineComponent line, Node content, SettingGroup group) {
-        if (isGlobalSetting) {
-            return;
-        }
-
-        var button = createInheritanceButton();
-        BooleanProperty overridden = bindOverrideGroupButton(button, group);
-        content.disableProperty().bind(overridden.not());
-        line.setTitleTrailing(button);
-    }
-
-    /// Binds an inheritance button to an override group flag.
-    private BooleanProperty bindOverrideGroupButton(JFXButton button, SettingGroup group) {
-        BooleanProperty overridden = new SimpleBooleanProperty();
-        bindOverrideGroup(overridden, group);
-
-        InvalidationListener refresh = observable -> updateInheritanceButton(button, !overridden.get());
-        overridden.addListener(refresh);
-        refresh.invalidated(overridden);
-
-        button.addEventFilter(MouseEvent.MOUSE_CLICKED, event -> {
-            overridden.set(!overridden.get());
-            event.consume();
-        });
-        return overridden;
     }
 
     /// Creates a compact button that displays inherited or overridden state.
@@ -1433,69 +1312,6 @@ public final class GameSettingPage<S extends GameSetting> extends StackPane
         }
     }
 
-    /// Binds a boolean toggle to the native library directory mode.
-    private void bindNativesDirTypeButton(BooleanProperty selected) {
-        ObjectProperty<@Nullable SettingProperty<NativesDirectoryType>> activeProperty = new SimpleObjectProperty<>();
-        final boolean[] updating = {false};
-
-        InvalidationListener propertyListener = observable -> {
-            SettingProperty<NativesDirectoryType> property = activeProperty.get();
-            if (property == null || updating[0]) {
-                return;
-            }
-
-            updating[0] = true;
-            try {
-                @Nullable NativesDirectoryType nativesDirType = property.getValue();
-                if (nativesDirType == null) {
-                    nativesDirType = property.defaultValue();
-                }
-                selected.set(nativesDirType == NativesDirectoryType.CUSTOM);
-            } finally {
-                updating[0] = false;
-            }
-        };
-
-        ChangeListener<Boolean> selectedListener = (observable, oldValue, newValue) -> {
-            SettingProperty<NativesDirectoryType> property = activeProperty.get();
-            if (property == null || updating[0]) {
-                return;
-            }
-
-            updating[0] = true;
-            try {
-                property.setValue(newValue ? NativesDirectoryType.CUSTOM : NativesDirectoryType.VERSION_FOLDER);
-            } finally {
-                updating[0] = false;
-            }
-        };
-
-        selected.addListener(selectedListener);
-        currentSetting.addListener((observable, oldValue, newValue) -> {
-            SettingProperty<NativesDirectoryType> oldProperty = activeProperty.get();
-            if (oldProperty != null) {
-                oldProperty.removeListener(propertyListener);
-            }
-
-            SettingProperty<NativesDirectoryType> newProperty = newValue != null
-                    ? newValue.nativesDirTypeProperty()
-                    : null;
-            activeProperty.set(newProperty);
-            if (newProperty != null) {
-                newProperty.addListener(propertyListener);
-            }
-            propertyListener.invalidated(newProperty);
-        });
-
-        S setting = currentSetting.get();
-        if (setting != null) {
-            SettingProperty<NativesDirectoryType> property = setting.nativesDirTypeProperty();
-            activeProperty.set(property);
-            property.addListener(propertyListener);
-            propertyListener.invalidated(property);
-        }
-    }
-
     private <T> void bindInheritableSublistSubtitle(ComponentSublist sublist,
                                                     Function<GameSetting, InheritableProperty<T>> propertyGetter,
                                                     Function<T, String> converter) {
@@ -1572,6 +1388,31 @@ public final class GameSettingPage<S extends GameSetting> extends StackPane
         assert isGlobalSetting;
 
         bindSettingBidirectional(property, (Function<S, Property<T>>) propertyGetter);
+    }
+
+    /// Creates a toggle-based editor for a setting property with independent override state.
+    private LineInheritableToggleButton createIndependentBooleanButton(
+            Function<GameSetting, SettingProperty<Boolean>> propertyGetter) {
+        var button = new LineInheritableToggleButton();
+        button.setInheritedText("继承"); // TODO: i18n
+        button.setOverriddenText("覆盖"); // TODO: i18n
+        button.setInheritTooltip(I18N_INHERIT_GLOBAL_SETTING);
+        button.setInheritAvailable(!isGlobalSetting);
+
+        IndependentSettingBinder.bindToggleButton(currentSetting, button, propertyGetter, this::getParentGameSetting);
+        return button;
+    }
+
+    /// Creates the native directory mode editor with independent override state.
+    private LineInheritableToggleButton createIndependentNativesDirTypeButton() {
+        var button = new LineInheritableToggleButton();
+        button.setInheritedText("继承"); // TODO: i18n
+        button.setOverriddenText("覆盖"); // TODO: i18n
+        button.setInheritTooltip(I18N_INHERIT_GLOBAL_SETTING);
+        button.setInheritAvailable(!isGlobalSetting);
+
+        IndependentSettingBinder.bindNativesDirTypeButton(currentSetting, button, this::getParentGameSetting);
+        return button;
     }
 
     /// Creates a toggle-based inheritable boolean editor that displays the effective value.
