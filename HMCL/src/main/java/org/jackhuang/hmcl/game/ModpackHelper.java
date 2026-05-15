@@ -265,7 +265,12 @@ public final class ModpackHelper {
         }
 
         if (c.isOverrideMemory()) {
-            setting.getOverrideProperties().addAll(List.of("autoMemory", "permSize", "maxMemory", "minMemory"));
+            setting.getOverrideProperties().addAll(List.of(
+                    GameSetting.PROPERTY_AUTO_MEMORY,
+                    GameSetting.PROPERTY_PERM_SIZE,
+                    GameSetting.PROPERTY_MAX_MEMORY,
+                    GameSetting.PROPERTY_MIN_MEMORY
+            ));
             setting.permSizeProperty().setValue(Optional.ofNullable(c.getPermGen()).map(Object::toString).orElse(""));
             if (c.getMaxMemory() != null)
                 setting.maxMemoryProperty().setValue(c.getMaxMemory());
@@ -278,7 +283,7 @@ public final class ModpackHelper {
         }
 
         if (c.isOverrideJavaArgs()) {
-            setting.getOverrideProperties().add("jvmOptions");
+            setting.getOverrideProperties().add(GameSetting.PROPERTY_JVM_OPTIONS);
             setting.jvmOptionsProperty().setValue(Lang.nonNull(c.getJvmArgs(), ""));
         }
 
@@ -302,7 +307,7 @@ public final class ModpackHelper {
         }
 
         if (c.isOverrideJavaArgs()) {
-            setting.getOverrideProperties().add("jvmOptions");
+            setting.getOverrideProperties().add(GameSetting.PROPERTY_JVM_OPTIONS);
             setting.jvmOptionsProperty().setValue(Lang.nonNull(c.getJvmArgs(), ""));
         }
     }
@@ -327,7 +332,12 @@ public final class ModpackHelper {
             GameSetting.Effective effective = repository.getEffectiveGameSetting(version);
             if (manifest.getLaunchInfo().getMinMemory() > effective.getMaxMemory()) {
                 GameSetting.Instance setting = Objects.requireNonNull(repository.getLocalGameSettingOrCreate(version));
-                setting.getOverrideProperties().addAll(List.of("autoMemory", "minMemory", "maxMemory", "permSize"));
+                setting.getOverrideProperties().addAll(List.of(
+                        GameSetting.PROPERTY_AUTO_MEMORY,
+                        GameSetting.PROPERTY_MIN_MEMORY,
+                        GameSetting.PROPERTY_MAX_MEMORY,
+                        GameSetting.PROPERTY_PERM_SIZE
+                ));
                 setting.autoMemoryProperty().setValue(effective.isAutoMemory());
                 setting.minMemoryProperty().setValue(effective.getMinMemory());
                 setting.maxMemoryProperty().setValue(manifest.getLaunchInfo().getMinMemory());

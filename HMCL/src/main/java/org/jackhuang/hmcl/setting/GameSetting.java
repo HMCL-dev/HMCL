@@ -106,67 +106,11 @@ public sealed abstract class GameSetting extends ObservableSetting {
             return overrideProperties;
         }
 
-        /// Migrates legacy group override flags to independent property override flags.
-        private void migrateLegacyOverrideGroups() {
-            var legacyOverrideGroups = unknownFields.remove("overrideGroups");
-            if (legacyOverrideGroups == null || !legacyOverrideGroups.isJsonArray()) {
-                return;
-            }
-
-            for (var element : legacyOverrideGroups.getAsJsonArray()) {
-                @Nullable String groupName = null;
-                if (element.isJsonPrimitive()) {
-                    groupName = element.getAsString();
-                } else if (element.isJsonObject()) {
-                    var name = element.getAsJsonObject().get("name");
-                    if (name != null && name.isJsonPrimitive()) {
-                        groupName = name.getAsString();
-                    }
-                }
-
-                if (groupName == null) {
-                    continue;
-                }
-
-                switch (groupName) {
-                    case "memory" -> overrideProperties.addAll(java.util.List.of(
-                            "autoMemory",
-                            "minMemory",
-                            "maxMemory",
-                            "permSize"
-                    ));
-                    case "jvmOptions" -> overrideProperties.add("jvmOptions");
-                    case "gameArguments" -> overrideProperties.add("gameArgs");
-                    case "environmentVariables" -> overrideProperties.add("environmentVariables");
-                    case "natives" -> overrideProperties.addAll(java.util.List.of(
-                            "notPatchNatives",
-                            "nativesDirType",
-                            "nativesDir",
-                            "useNativeGLFW",
-                            "useNativeOpenAL"
-                    ));
-                    default -> {
-                    }
-                }
-            }
-        }
-
         /// JSON adapter for instance settings.
         public static final class Adapter extends ObservableSetting.Adapter<Instance> {
             @Override
             protected Instance createInstance() {
                 return new Instance();
-            }
-
-            /// Deserializes instance settings and migrates legacy group override flags.
-            @Override
-            public Instance deserialize(com.google.gson.JsonElement json,
-                                        java.lang.reflect.Type typeOfT,
-                                        com.google.gson.JsonDeserializationContext context)
-                    throws com.google.gson.JsonParseException {
-                Instance instance = super.deserialize(json, typeOfT, context);
-                instance.migrateLegacyOverrideGroups();
-                return instance;
             }
         }
     }
@@ -275,9 +219,12 @@ public sealed abstract class GameSetting extends ObservableSetting {
                 .getJava(gameVersion, version);
     }
 
+    /// Property name for customized JVM options.
+    public static final String PROPERTY_JVM_OPTIONS = "jvmOptions";
+
     /// User customized JVM options.
-    @SerializedName("jvmOptions")
-    private final SettingProperty<String> jvmOptions = newSettingProperty("jvmOptions", "");
+    @SerializedName(PROPERTY_JVM_OPTIONS)
+    private final SettingProperty<String> jvmOptions = newSettingProperty(PROPERTY_JVM_OPTIONS, "");
 
     /// Returns the user customized JVM options property.
     public SettingProperty<String> jvmOptionsProperty() {
@@ -320,36 +267,48 @@ public sealed abstract class GameSetting extends ObservableSetting {
         return notCheckGame;
     }
 
+    /// Property name for automatic memory allocation.
+    public static final String PROPERTY_AUTO_MEMORY = "autoMemory";
+
     /// If `true`, HMCL will automatically adjust memory allocation.
-    @SerializedName("autoMemory")
-    private final SettingProperty<Boolean> autoMemory = newSettingProperty("autoMemory", true);
+    @SerializedName(PROPERTY_AUTO_MEMORY)
+    private final SettingProperty<Boolean> autoMemory = newSettingProperty(PROPERTY_AUTO_MEMORY, true);
 
     /// Returns the automatic memory allocation property.
     public SettingProperty<Boolean> autoMemoryProperty() {
         return autoMemory;
     }
 
+    /// Property name for the minimum heap memory.
+    public static final String PROPERTY_MIN_MEMORY = "minMemory";
+
     /// The minimum heap memory in MiB.
-    @SerializedName("minMemory")
-    private final SettingProperty<@Nullable Integer> minMemory = newSettingProperty("minMemory");
+    @SerializedName(PROPERTY_MIN_MEMORY)
+    private final SettingProperty<@Nullable Integer> minMemory = newSettingProperty(PROPERTY_MIN_MEMORY);
 
     /// Returns the minimum heap memory property.
     public SettingProperty<@Nullable Integer> minMemoryProperty() {
         return minMemory;
     }
 
+    /// Property name for the maximum heap memory.
+    public static final String PROPERTY_MAX_MEMORY = "maxMemory";
+
     /// The maximum heap memory in MiB.
-    @SerializedName("maxMemory")
-    private final SettingProperty<Integer> maxMemory = newSettingProperty("maxMemory", SUGGESTED_MEMORY);
+    @SerializedName(PROPERTY_MAX_MEMORY)
+    private final SettingProperty<Integer> maxMemory = newSettingProperty(PROPERTY_MAX_MEMORY, SUGGESTED_MEMORY);
 
     /// Returns the maximum heap memory property.
     public SettingProperty<Integer> maxMemoryProperty() {
         return maxMemory;
     }
 
+    /// Property name for the permanent generation or metaspace size.
+    public static final String PROPERTY_PERM_SIZE = "permSize";
+
     /// The permanent generation or metaspace size in MiB.
-    @SerializedName("permSize")
-    private final SettingProperty<String> permSize = newSettingProperty("permSize", "");
+    @SerializedName(PROPERTY_PERM_SIZE)
+    private final SettingProperty<String> permSize = newSettingProperty(PROPERTY_PERM_SIZE, "");
 
     /// Returns the permanent generation or metaspace size property.
     public SettingProperty<String> permSizeProperty() {
@@ -419,9 +378,12 @@ public sealed abstract class GameSetting extends ObservableSetting {
         return launcherVisibility;
     }
 
+    /// Property name for customized game arguments.
+    public static final String PROPERTY_GAME_ARGS = "gameArgs";
+
     /// User customized arguments passed to the game.
-    @SerializedName("gameArgs")
-    private final SettingProperty<String> gameArgs = newSettingProperty("gameArgs", "");
+    @SerializedName(PROPERTY_GAME_ARGS)
+    private final SettingProperty<String> gameArgs = newSettingProperty(PROPERTY_GAME_ARGS, "");
 
     /// Returns the customized game arguments property.
     public SettingProperty<String> gameArgsProperty() {
@@ -446,9 +408,12 @@ public sealed abstract class GameSetting extends ObservableSetting {
         return renderer;
     }
 
+    /// Property name for customized environment variables.
+    public static final String PROPERTY_ENVIRONMENT_VARIABLES = "environmentVariables";
+
     /// User customized environment variables passed to the game.
-    @SerializedName("environmentVariables")
-    private final SettingProperty<String> environmentVariables = newSettingProperty("environmentVariables", "");
+    @SerializedName(PROPERTY_ENVIRONMENT_VARIABLES)
+    private final SettingProperty<String> environmentVariables = newSettingProperty(PROPERTY_ENVIRONMENT_VARIABLES, "");
 
     /// Returns the customized environment variables property.
     public SettingProperty<String> environmentVariablesProperty() {
@@ -536,45 +501,60 @@ public sealed abstract class GameSetting extends ObservableSetting {
         return enableDebugLogOutput;
     }
 
+    /// Property name for disabling native library patching.
+    public static final String PROPERTY_NOT_PATCH_NATIVES = "notPatchNatives";
+
     /// If `true`, HMCL does not patch native libraries.
-    @SerializedName("notPatchNatives")
-    private final SettingProperty<Boolean> notPatchNatives = newSettingProperty("notPatchNatives", false);
+    @SerializedName(PROPERTY_NOT_PATCH_NATIVES)
+    private final SettingProperty<Boolean> notPatchNatives = newSettingProperty(PROPERTY_NOT_PATCH_NATIVES, false);
 
     /// Returns the native library patching property.
     public SettingProperty<Boolean> notPatchNativesProperty() {
         return notPatchNatives;
     }
 
+    /// Property name for the native library directory mode.
+    public static final String PROPERTY_NATIVES_DIR_TYPE = "nativesDirType";
+
     /// The native library directory mode.
-    @SerializedName("nativesDirType")
-    private final SettingProperty<NativesDirectoryType> nativesDirType = newSettingProperty("nativesDirType", NativesDirectoryType.VERSION_FOLDER);
+    @SerializedName(PROPERTY_NATIVES_DIR_TYPE)
+    private final SettingProperty<NativesDirectoryType> nativesDirType = newSettingProperty(PROPERTY_NATIVES_DIR_TYPE, NativesDirectoryType.VERSION_FOLDER);
 
     /// Returns the native library directory mode property.
     public SettingProperty<NativesDirectoryType> nativesDirTypeProperty() {
         return nativesDirType;
     }
 
+    /// Property name for the native library directory path.
+    public static final String PROPERTY_NATIVES_DIR = "nativesDir";
+
     /// The path to the native library directory.
-    @SerializedName("nativesDir")
-    private final SettingProperty<String> nativesDir = newSettingProperty("nativesDir", "");
+    @SerializedName(PROPERTY_NATIVES_DIR)
+    private final SettingProperty<String> nativesDir = newSettingProperty(PROPERTY_NATIVES_DIR, "");
 
     /// Returns the native library directory property.
     public SettingProperty<String> nativesDirProperty() {
         return nativesDir;
     }
 
+    /// Property name for using native GLFW.
+    public static final String PROPERTY_USE_NATIVE_GLFW = "useNativeGLFW";
+
     /// If `true`, HMCL will use native GLFW.
-    @SerializedName("useNativeGLFW")
-    private final SettingProperty<Boolean> useNativeGLFW = newSettingProperty("useNativeGLFW", false);
+    @SerializedName(PROPERTY_USE_NATIVE_GLFW)
+    private final SettingProperty<Boolean> useNativeGLFW = newSettingProperty(PROPERTY_USE_NATIVE_GLFW, false);
 
     /// Returns the native GLFW property.
     public SettingProperty<Boolean> useNativeGLFWProperty() {
         return useNativeGLFW;
     }
 
+    /// Property name for using native OpenAL.
+    public static final String PROPERTY_USE_NATIVE_OPENAL = "useNativeOpenAL";
+
     /// If `true`, HMCL will use native OpenAL.
-    @SerializedName("useNativeOpenAL")
-    private final SettingProperty<Boolean> useNativeOpenAL = newSettingProperty("useNativeOpenAL", false);
+    @SerializedName(PROPERTY_USE_NATIVE_OPENAL)
+    private final SettingProperty<Boolean> useNativeOpenAL = newSettingProperty(PROPERTY_USE_NATIVE_OPENAL, false);
 
     /// Returns the native OpenAL property.
     public SettingProperty<Boolean> useNativeOpenALProperty() {
@@ -601,18 +581,18 @@ public sealed abstract class GameSetting extends ObservableSetting {
         if (copyValues) {
             copyCommonProperties(source, target);
             target.getOverrideProperties().addAll(java.util.List.of(
-                    "jvmOptions",
-                    "autoMemory",
-                    "minMemory",
-                    "maxMemory",
-                    "permSize",
-                    "gameArgs",
-                    "environmentVariables",
-                    "notPatchNatives",
-                    "nativesDirType",
-                    "nativesDir",
-                    "useNativeGLFW",
-                    "useNativeOpenAL"
+                    PROPERTY_JVM_OPTIONS,
+                    PROPERTY_AUTO_MEMORY,
+                    PROPERTY_MIN_MEMORY,
+                    PROPERTY_MAX_MEMORY,
+                    PROPERTY_PERM_SIZE,
+                    PROPERTY_GAME_ARGS,
+                    PROPERTY_ENVIRONMENT_VARIABLES,
+                    PROPERTY_NOT_PATCH_NATIVES,
+                    PROPERTY_NATIVES_DIR_TYPE,
+                    PROPERTY_NATIVES_DIR,
+                    PROPERTY_USE_NATIVE_GLFW,
+                    PROPERTY_USE_NATIVE_OPENAL
             ));
         }
         return target;
