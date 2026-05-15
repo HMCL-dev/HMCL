@@ -22,7 +22,7 @@
 *.txt         text eol=lf
 *.md          text eol=lf
 *.svg         text eol=lf
-*.MF                            text eol=lf
+*.MF          text eol=lf
 
 # Gradle dependency-lock files
 *.lockfile    text eol=lf
