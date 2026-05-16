@@ -192,7 +192,7 @@ public class DownloadListPage extends Control implements DecoratorPage, VersionP
         }).executor(true);
     }
 
-    protected String getLocalizedCategory(String category) {
+    protected String getLocalizedCategory(String category, Object self) {
         return repository instanceof ModrinthRemoteModRepository
                 ? i18n("modrinth.category." + category)
                 : i18n("curse.category." + category);
@@ -206,7 +206,7 @@ public class DownloadListPage extends Control implements DecoratorPage, VersionP
         return StringUtils.repeats(' ', category.indent * 4) +
                 (category.category() == null
                         ? i18n("curse.category.0")
-                        : getLocalizedCategory(category.category().id()));
+                        : getLocalizedCategory(category.category().id(), category.category().self()));
     }
 
     protected String getLocalizedOfficialPage() {
@@ -585,7 +585,7 @@ public class DownloadListPage extends Control implements DecoratorPage, VersionP
                             content.getTags().clear();
                             for (String category : item.getCategories()) {
                                 if (getSkinnable().shouldDisplayCategory(category))
-                                    content.addTag(getSkinnable().getLocalizedCategory(category));
+                                    content.addTag(getSkinnable().getLocalizedCategory(category, null));
                             }
                             iconLoader.load(imageContainer.imageProperty(), item.getIconUrl());
                             setGraphic(wrapper);

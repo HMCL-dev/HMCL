@@ -226,7 +226,7 @@ public class DownloadPage extends Control implements DecoratorPage {
                 content.getSubtitleLabel().setWrapText(true);
                 getSkinnable().addon.getCategories().stream()
                         .filter(category -> getSkinnable().page.shouldDisplayCategory(category))
-                        .map(category -> getSkinnable().page.getLocalizedCategory(category))
+                        .map(category -> getSkinnable().page.getLocalizedCategory(category, null))
                         .forEach(content::addTag);
                 content.getFirstLine().setMinWidth(0);
                 descriptionPane.getChildren().add(content);
@@ -386,7 +386,7 @@ public class DownloadPage extends Control implements DecoratorPage {
                 content.setSubtitle(addon.getDescription());
                 for (String category : addon.getCategories()) {
                     if (page.shouldDisplayCategory(category))
-                        content.addTag(page.getLocalizedCategory(category));
+                        content.addTag(page.getLocalizedCategory(category, null));
                 }
                 if (StringUtils.isNotBlank(addon.getIconUrl())) {
                     imageView.imageProperty().bind(FXUtils.newRemoteImage(addon.getIconUrl(), 80, 80, true, true));
