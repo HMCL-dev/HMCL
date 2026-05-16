@@ -34,7 +34,6 @@ import static org.jackhuang.hmcl.setting.ConfigHolder.config;
 public final class AprilFools {
 
     private static final boolean ENABLED;
-    private static final boolean SHOW_APRIL_FOOLS_SETTINGS;
 
     static {
         var date = LocalDate.now();
@@ -58,14 +57,6 @@ public final class AprilFools {
             aprilFoolsMode = date.getMonth() == Month.APRIL && date.getDayOfMonth() == 1;
 
         ENABLED = aprilFoolsMode && !config().isDisableAprilFools();
-        SHOW_APRIL_FOOLS_SETTINGS = aprilFoolsMode || supportedRegion && date.getMonth() == Month.MARCH && date.getDayOfMonth() > 30;
-    }
-
-    /// Whether April Fools settings should be shown.
-    ///
-    /// This method returns true if April Fools settings should be shown.
-    public static boolean isShowAprilFoolsSettings() {
-        return SHOW_APRIL_FOOLS_SETTINGS;
     }
 
     /// Whether April Fools is enabled.
