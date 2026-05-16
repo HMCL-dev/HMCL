@@ -87,6 +87,10 @@ public class FileSelector extends HBox {
     }
 
     public FileSelector() {
+        this(false);
+    }
+
+    public FileSelector(boolean buttonOnLeft) {
         JFXTextField customField = new JFXTextField();
         FXUtils.bindString(customField, valueProperty());
 
@@ -110,7 +114,10 @@ public class FileSelector extends HBox {
 
         setAlignment(Pos.CENTER_LEFT);
         setSpacing(3);
-        getChildren().addAll(customField, selectButton);
+        if (buttonOnLeft)
+            getChildren().addAll(selectButton, customField);
+        else
+            getChildren().addAll(customField, selectButton);
     }
 
     private void openFileChooser(JFXTextField customField) {

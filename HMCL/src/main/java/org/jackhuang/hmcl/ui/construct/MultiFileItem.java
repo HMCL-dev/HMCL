@@ -249,7 +249,7 @@ public final class MultiFileItem<T> extends VBox {
     }
 
     public static final class FileOption<T> extends Option<T> {
-        private final FileSelector selector = new FileSelector();
+        private final FileSelector selector = new FileSelector(true);
 
         public FileOption(String title, T data) {
             super(title, data);
