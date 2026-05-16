@@ -290,8 +290,13 @@ public final class LogWindow extends Stage {
 
                     FXUtils.installFastTooltip(control.btnAlwaysOnTop, i18n("logwindow.always_on_top"));
                     control.stage.alwaysOnTopProperty().addListener((observable, oldValue, newValue) -> {
-                        if (newValue) control.btnAlwaysOnTop.setRotate(45);
-                        else control.btnAlwaysOnTop.setRotate(0.0);
+                        if (newValue) {
+                            control.btnAlwaysOnTop.setRotate(45);
+                            control.btnAlwaysOnTop.setStyle("-fx-background-color: -monet-secondary-container-transparent-80;");
+                        } else {
+                            control.btnAlwaysOnTop.setRotate(0.0);
+                            control.btnAlwaysOnTop.setStyle("");
+                        }
                     });
                     hBox.getChildren().setAll(control.btnAlwaysOnTop, label, control.cboLines);
 
