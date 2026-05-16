@@ -17,6 +17,10 @@
  */
 package org.jackhuang.hmcl.setting;
 
+import com.google.gson.JsonDeserializationContext;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonParseException;
+import com.google.gson.JsonPrimitive;
 import com.google.gson.annotations.JsonAdapter;
 import com.google.gson.annotations.SerializedName;
 import javafx.collections.FXCollections;
@@ -37,6 +41,7 @@ import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
+import java.lang.reflect.Type;
 import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
 import java.util.Collection;
@@ -112,6 +117,14 @@ public sealed abstract class GameSetting extends ObservableSetting {
             protected Instance createInstance() {
                 return new Instance();
             }
+
+            @Override
+            public Instance deserialize(JsonElement json, Type typeOfT, JsonDeserializationContext context)
+                    throws JsonParseException {
+                Instance setting = super.deserialize(json, typeOfT, context);
+                migrateLegacyRenderer(setting);
+                return setting;
+            }
         }
     }
 
@@ -158,6 +171,14 @@ public sealed abstract class GameSetting extends ObservableSetting {
             @Override
             protected Global createInstance() {
                 return new Global();
+            }
+
+            @Override
+            public Global deserialize(JsonElement json, Type typeOfT, JsonDeserializationContext context)
+                    throws JsonParseException {
+                Global setting = super.deserialize(json, typeOfT, context);
+                migrateLegacyRenderer(setting);
+                return setting;
             }
         }
     }
@@ -399,13 +420,33 @@ public sealed abstract class GameSetting extends ObservableSetting {
         return graphicsBackend;
     }
 
-    /// The renderer used by the game.
-    @SerializedName("renderer")
-    private final InheritableProperty<Renderer> renderer = newInheritableProperty("renderer", Renderer.DEFAULT);
+    /// Legacy property name for the renderer used by the game before OpenGL and Vulkan settings were split.
+    private static final String PROPERTY_LEGACY_RENDERER = "renderer";
 
-    /// Returns the renderer property.
-    public InheritableProperty<Renderer> rendererProperty() {
-        return renderer;
+    /// Property name for the OpenGL renderer.
+    public static final String PROPERTY_OPENGL_RENDERER = "openGLRenderer";
+
+    /// The OpenGL renderer used by the game.
+    @SerializedName(PROPERTY_OPENGL_RENDERER)
+    private final InheritableProperty<Renderer> openGLRenderer =
+            newInheritableProperty(PROPERTY_OPENGL_RENDERER, Renderer.DEFAULT);
+
+    /// Returns the OpenGL renderer property.
+    public InheritableProperty<Renderer> openGLRendererProperty() {
+        return openGLRenderer;
+    }
+
+    /// Property name for the Vulkan renderer.
+    public static final String PROPERTY_VULKAN_RENDERER = "vulkanRenderer";
+
+    /// The Vulkan renderer used by the game.
+    @SerializedName(PROPERTY_VULKAN_RENDERER)
+    private final InheritableProperty<Renderer> vulkanRenderer =
+            newInheritableProperty(PROPERTY_VULKAN_RENDERER, Renderer.DEFAULT);
+
+    /// Returns the Vulkan renderer property.
+    public InheritableProperty<Renderer> vulkanRendererProperty() {
+        return vulkanRenderer;
     }
 
     /// Property name for customized environment variables.
@@ -627,7 +668,7 @@ public sealed abstract class GameSetting extends ObservableSetting {
         target.launcherVisibilityProperty().setValue(source.getLauncherVisibility());
         target.gameArgsProperty().setValue(empty(source.getMinecraftArgs()));
         target.graphicsBackendProperty().setValue(source.getGraphicsBackend());
-        target.rendererProperty().setValue(source.getRenderer());
+        setRendererForApi(target, source.getRenderer(), source.getGraphicsBackend());
         target.environmentVariablesProperty().setValue(empty(source.getEnvironmentVariables()));
         target.commandWrapperProperty().setValue(empty(source.getWrapper()));
         target.preLaunchCommandProperty().setValue(empty(source.getPreLaunchCommand()));
@@ -647,6 +688,70 @@ public sealed abstract class GameSetting extends ObservableSetting {
         target.nativesDirProperty().setValue(empty(source.getNativesDir()));
         target.useNativeGLFWProperty().setValue(source.isUseNativeGLFW());
         target.useNativeOpenALProperty().setValue(source.isUseNativeOpenAL());
+    }
+
+    private static void migrateLegacyRenderer(@Nullable GameSetting setting) {
+        if (setting == null) {
+            return;
+        }
+
+        JsonElement legacyRenderer = setting.unknownFields.remove(PROPERTY_LEGACY_RENDERER);
+        if (legacyRenderer == null || legacyRenderer.isJsonNull()) {
+            return;
+        }
+
+        Renderer renderer = parseLegacyRenderer(legacyRenderer);
+        if (renderer != null) {
+            setRendererForApi(setting, renderer, setting.graphicsBackendProperty().getValue());
+        }
+    }
+
+    private static @Nullable Renderer parseLegacyRenderer(JsonElement element) {
+        if (element instanceof JsonPrimitive primitive && primitive.isString()) {
+            return Renderer.of(primitive.getAsString());
+        }
+
+        if (element.isJsonObject()) {
+            JsonElement name = element.getAsJsonObject().get("name");
+            if (name instanceof JsonPrimitive primitive && primitive.isString()) {
+                return Renderer.of(primitive.getAsString());
+            }
+        }
+
+        return null;
+    }
+
+    private static void setRendererForApi(GameSetting setting, Renderer renderer, @Nullable GraphicsAPI fallbackApi) {
+        if (renderer instanceof Renderer.Driver driver) {
+            rendererPropertyForApi(setting, driver.api()).setValue(renderer);
+            if (fallbackApi == null || fallbackApi == GraphicsAPI.DEFAULT) {
+                setting.graphicsBackendProperty().setValue(driver.api());
+            }
+            return;
+        }
+
+        if (fallbackApi == GraphicsAPI.OPENGL || fallbackApi == GraphicsAPI.VULKAN) {
+            rendererPropertyForApi(setting, fallbackApi).setValue(renderer);
+        } else {
+            setting.openGLRendererProperty().setValue(renderer);
+            setting.vulkanRendererProperty().setValue(renderer);
+        }
+    }
+
+    private static InheritableProperty<Renderer> rendererPropertyForApi(GameSetting setting, GraphicsAPI api) {
+        return switch (api) {
+            case OPENGL -> setting.openGLRendererProperty();
+            case VULKAN -> setting.vulkanRendererProperty();
+            case DEFAULT -> throw new IllegalArgumentException("The default graphics API has no renderer property");
+        };
+    }
+
+    private static Renderer selectRenderer(GraphicsAPI api, @Nullable Renderer renderer) {
+        if (renderer instanceof Renderer.Driver driver && driver.api() != api) {
+            return Renderer.DEFAULT;
+        }
+
+        return renderer != null ? renderer : Renderer.DEFAULT;
     }
 
     /// Resolves a global setting and an optional instance setting into launch-time values.
@@ -901,9 +1006,23 @@ public sealed abstract class GameSetting extends ObservableSetting {
             return inheritable(global, instance, GameSetting::graphicsBackendProperty);
         }
 
+        /// Returns the effective OpenGL renderer.
+        public Renderer getOpenGLRenderer() {
+            return selectRenderer(GraphicsAPI.OPENGL, inheritable(global, instance, GameSetting::openGLRendererProperty));
+        }
+
+        /// Returns the effective Vulkan renderer.
+        public Renderer getVulkanRenderer() {
+            return selectRenderer(GraphicsAPI.VULKAN, inheritable(global, instance, GameSetting::vulkanRendererProperty));
+        }
+
         /// Returns the effective renderer.
         public Renderer getRenderer() {
-            return inheritable(global, instance, GameSetting::rendererProperty);
+            return switch (getGraphicsBackend()) {
+                case OPENGL -> getOpenGLRenderer();
+                case VULKAN -> getVulkanRenderer();
+                case DEFAULT -> Renderer.DEFAULT;
+            };
         }
 
         /// Returns the effective environment variables.

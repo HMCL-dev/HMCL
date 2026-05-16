@@ -659,28 +659,32 @@ public final class GameSettingPage<S extends GameSetting> extends StackPane
         advancedSettings.getContent().add(graphicsBackendPane);
         graphicsBackendPane.setTitle(i18n("settings.advanced.graphics_backend"));
 
-        var rendererPane = createInheritableButton(
-                GameSetting::rendererProperty,
+        var openGLRendererPane = createInheritableButton(
+                GameSetting::openGLRendererProperty,
                 e -> i18n("settings.advanced.renderer." + e.name().toLowerCase(Locale.ROOT)),
                 e -> {
                     String bundleKey = "settings.advanced.renderer." + e.name().toLowerCase(Locale.ROOT) + ".desc";
                     return I18n.hasKey(bundleKey) ? i18n(bundleKey) : null;
                 },
-                Renderer.DEFAULT);
-        advancedSettings.getContent().add(rendererPane);
-        rendererPane.setTitle(i18n("settings.advanced.renderer"));
+                Renderer.getSupported(GraphicsAPI.OPENGL).toArray(Renderer[]::new));
+        advancedSettings.getContent().add(openGLRendererPane);
+        openGLRendererPane.setTitle("OpenGL 渲染器/驱动"); // TODO: i18n
+
+        var vulkanRendererPane = createInheritableButton(
+                GameSetting::vulkanRendererProperty,
+                e -> i18n("settings.advanced.renderer." + e.name().toLowerCase(Locale.ROOT)),
+                e -> {
+                    String bundleKey = "settings.advanced.renderer." + e.name().toLowerCase(Locale.ROOT) + ".desc";
+                    return I18n.hasKey(bundleKey) ? i18n(bundleKey) : null;
+                },
+                Renderer.getSupported(GraphicsAPI.VULKAN).toArray(Renderer[]::new));
+        advancedSettings.getContent().add(vulkanRendererPane);
+        vulkanRendererPane.setTitle("Vulkan 渲染器/驱动"); // TODO: i18n
 
         FXUtils.onChangeAndOperate(graphicsBackendPane.valueProperty(), backend -> {
             GraphicsAPI effectiveBackend = backend != null ? backend : GraphicsAPI.DEFAULT;
-            rendererPane.setItems(Renderer.getSupported(effectiveBackend));
-            if (effectiveBackend == GraphicsAPI.DEFAULT) {
-                rendererPane.setDisable(true);
-                rendererPane.setValue(Renderer.DEFAULT);
-            } else {
-                rendererPane.setDisable(false);
-                if (!(rendererPane.getValue() instanceof Renderer.Driver driver) || driver.api() != effectiveBackend)
-                    rendererPane.setValue(Renderer.DEFAULT);
-            }
+            openGLRendererPane.setDisable(effectiveBackend != GraphicsAPI.OPENGL);
+            vulkanRendererPane.setDisable(effectiveBackend != GraphicsAPI.VULKAN);
         });
 
         var noGameCheckPane = createInheritableBooleanButton(GameSetting::notCheckGameProperty);
