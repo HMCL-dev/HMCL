@@ -39,12 +39,10 @@ import org.jackhuang.hmcl.task.AsyncTaskExecutor;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.FXUtils;
+import org.jackhuang.hmcl.theme.Themes;
 import org.jackhuang.hmcl.upgrade.UpdateChecker;
 import org.jackhuang.hmcl.upgrade.UpdateHandler;
-import org.jackhuang.hmcl.util.CrashReporter;
-import org.jackhuang.hmcl.util.FileSaver;
-import org.jackhuang.hmcl.util.Lang;
-import org.jackhuang.hmcl.util.StringUtils;
+import org.jackhuang.hmcl.util.*;
 import org.jackhuang.hmcl.util.io.JarUtils;
 import org.jackhuang.hmcl.util.platform.*;
 
@@ -137,6 +135,9 @@ public final class Launcher extends Application {
                 // Stage.show() cannot work again because JavaFX Toolkit have already shut down.
                 Platform.setImplicitExit(false);
                 Controllers.initialize(primaryStage);
+
+                if (OperatingSystem.CURRENT_OS == OperatingSystem.MACOS)
+                    Themes.applyNativeDarkMode(primaryStage);
 
                 UpdateChecker.init();
 
@@ -342,6 +343,8 @@ public final class Launcher extends Application {
                 LOG.info("XDG Session Type: " + System.getenv("XDG_SESSION_TYPE"));
                 LOG.info("XDG Current Desktop: " + System.getenv("XDG_CURRENT_DESKTOP"));
             }
+
+            LOG.info("Zlib Compatible: " + ZlibUtils.IS_ZLIB_COMPATIBLE);
 
             Lang.thread(SystemInfo::initialize, "Detection System Information", true);
 

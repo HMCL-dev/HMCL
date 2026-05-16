@@ -603,6 +603,20 @@ public final class VersionSetting implements Cloneable, Observable {
         processPriorityProperty.set(processPriority);
     }
 
+    private final ObjectProperty<GraphicsAPI> graphicsBackend = new SimpleObjectProperty<>(this, "graphicsBackend", GraphicsAPI.DEFAULT);
+
+    public ObjectProperty<GraphicsAPI> graphicsBackendProperty() {
+        return graphicsBackend;
+    }
+
+    public GraphicsAPI getGraphicsBackend() {
+        return graphicsBackendProperty().get();
+    }
+
+    public void setGraphicsBackend(GraphicsAPI api) {
+        graphicsBackendProperty().set(api);
+    }
+
     private final ObjectProperty<Renderer> rendererProperty = new SimpleObjectProperty<>(this, "renderer", Renderer.DEFAULT);
 
     public Renderer getRenderer() {
@@ -820,8 +834,9 @@ public final class VersionSetting implements Cloneable, Observable {
             }
             obj.addProperty("java", java);
 
+            obj.addProperty("graphicsBackend", src.getGraphicsBackend().name());
             obj.addProperty("renderer", src.getRenderer().name());
-            if (src.getRenderer() == Renderer.LLVMPIPE)
+            if (src.getRenderer() == Renderer.OpenGL.LLVMPIPE)
                 obj.addProperty("useSoftwareRenderer", true);
 
             return obj;
@@ -894,16 +909,19 @@ public final class VersionSetting implements Cloneable, Observable {
             }
 
             vs.setRenderer(Optional.ofNullable(obj.get("renderer")).map(JsonElement::getAsString)
+                    .map(Renderer::of).orElseGet(() -> {
+                        boolean useSoftwareRenderer = Optional.ofNullable(obj.get("useSoftwareRenderer")).map(JsonElement::getAsBoolean).orElse(false);
+                        return useSoftwareRenderer ? Renderer.OpenGL.LLVMPIPE : Renderer.DEFAULT;
+                    }));
+
+            vs.setGraphicsBackend(Optional.ofNullable(obj.get("graphicsBackend")).map(JsonElement::getAsString)
                     .flatMap(name -> {
                         try {
-                            return Optional.of(Renderer.valueOf(name.toUpperCase(Locale.ROOT)));
+                            return Optional.of(GraphicsAPI.valueOf(name.toUpperCase(Locale.ROOT)));
                         } catch (IllegalArgumentException ignored) {
                             return Optional.empty();
                         }
-                    }).orElseGet(() -> {
-                        boolean useSoftwareRenderer = Optional.ofNullable(obj.get("useSoftwareRenderer")).map(JsonElement::getAsBoolean).orElse(false);
-                        return useSoftwareRenderer ? Renderer.LLVMPIPE : Renderer.DEFAULT;
-                    }));
+                    }).orElseGet(() -> vs.getRenderer() instanceof Renderer.Driver renderer ? renderer.api() : GraphicsAPI.DEFAULT));
 
             return vs;
         }

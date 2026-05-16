@@ -95,6 +95,18 @@ public abstract sealed class GameVersionNumber implements Comparable<GameVersion
         return VersionRange.atMost(asGameVersion(maximum));
     }
 
+    /// Determines whether the given version string corresponds to a known Minecraft version.
+    ///
+    /// If the version string cannot be parsed as any known version type (release, snapshot, pre-release, etc.)
+    /// and is not a known April Fools snapshot, it is considered an unknown version.
+    ///
+    /// @param version the version string to check, e.g. `"1.21.4"`, `"25w14craftmine"`, etc.
+    /// @return {@code true} if the version string corresponds to a known Minecraft version, {@code false} otherwise
+    /// @see #asGameVersion(String)
+    public static boolean isKnown(String version) {
+        return !(asGameVersion(version) instanceof Special special && special.prev == null);
+    }
+
     final String value;
     final String normalized;
 
@@ -151,7 +163,7 @@ public abstract sealed class GameVersionNumber implements Comparable<GameVersion
     ///
     /// ```java
     /// GameVersionNumber.asVersion("...").isAtLeast("1.13", "17w43a");
-    ///```
+    /// ```
     ///
     /// @param strictReleaseVersion When `strictReleaseVersion` is `false`, `releaseVersion` is considered less than
     ///                             its corresponding pre/rc versions.
