@@ -65,8 +65,10 @@ public final class AccountListPopupMenu extends StackPane {
                 });
                 box.add(item);
             }
+
+            Platform.runLater(() -> box.setVvalue(Double.MIN_VALUE));
         };
-        Platform.runLater(() -> listener.invalidated(null));
+        listener.invalidated(null);
         Accounts.getAccounts().addListener(new WeakInvalidationListener(listener));
 
         Label placeholder = new Label(i18n("account.empty"));
