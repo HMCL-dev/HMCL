@@ -117,8 +117,8 @@ public final class CurseForgeRemoteModRepository implements RemoteModRepository 
         SEMAPHORE.acquireUninterruptibly();
         try {
             int categoryId = 0;
-            if (category != null && category.getSelf() instanceof CurseAddon.Category) {
-                categoryId = ((CurseAddon.Category) category.getSelf()).getId();
+            if (category != null && category.self() instanceof CurseAddon.Category) {
+                categoryId = ((CurseAddon.Category) category.self()).getId();
             }
 
             var query = new LinkedHashMap<String, String>();
