@@ -40,6 +40,7 @@ import javafx.scene.control.ContentDisplay;
 import javafx.scene.control.Label;
 import javafx.scene.control.ListCell;
 import javafx.scene.control.ScrollPane;
+import javafx.scene.control.Tooltip;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.*;
 import javafx.stage.FileChooser;
@@ -85,6 +86,8 @@ public final class GameSettingPage<S extends GameSetting> extends StackPane
         implements DecoratorPage, VersionPage.VersionLoadable, PageAware {
 
     private static final String I18N_INHERIT_GLOBAL_SETTING = "继承全局设置"; // TODO: i18n
+    private static final String I18N_OVERRIDE_GLOBAL_SETTING = "覆盖全局设置"; // TODO: i18n
+    private static final Object INHERIT_BUTTON_TOOLTIP_KEY = new Object();
     private static final PseudoClass PSEUDO_OVERRIDDEN = PseudoClass.getPseudoClass("overridden");
     private static final String INHERIT_BUTTON_STYLE_CLASS = "toggle-icon-tiny";
     private static final int INHERIT_BUTTON_ICON_SIZE = 12;
@@ -1120,8 +1123,10 @@ public final class GameSettingPage<S extends GameSetting> extends StackPane
     private JFXButton createInheritanceButton() {
         var button = new JFXButton();
         button.getStyleClass().add(INHERIT_BUTTON_STYLE_CLASS);
-        button.setGraphic(SVG.PUBLIC.createIcon(INHERIT_BUTTON_ICON_SIZE));
-        FXUtils.installFastTooltip(button, I18N_INHERIT_GLOBAL_SETTING);
+        Tooltip tooltip = new Tooltip();
+        button.getProperties().put(INHERIT_BUTTON_TOOLTIP_KEY, tooltip);
+        FXUtils.installFastTooltip(button, tooltip);
+        updateInheritanceButton(button, true);
         return button;
     }
 
@@ -1129,6 +1134,11 @@ public final class GameSettingPage<S extends GameSetting> extends StackPane
     private static void updateInheritanceButton(JFXButton button, boolean inherited) {
         button.setGraphic((inherited ? SVG.PUBLIC : SVG.TUNE).createIcon(INHERIT_BUTTON_ICON_SIZE));
         button.pseudoClassStateChanged(PSEUDO_OVERRIDDEN, !inherited);
+
+        Object tooltip = button.getProperties().get(INHERIT_BUTTON_TOOLTIP_KEY);
+        if (tooltip instanceof Tooltip inheritTooltip) {
+            inheritTooltip.setText(inherited ? I18N_INHERIT_GLOBAL_SETTING : I18N_OVERRIDE_GLOBAL_SETTING);
+        }
     }
 
     private <T> void bindSettingBidirectional(Property<T> property, Function<S, Property<T>> propertyGetter) {
@@ -1484,6 +1494,7 @@ public final class GameSettingPage<S extends GameSetting> extends StackPane
         button.setInheritedText("继承"); // TODO: i18n
         button.setOverriddenText("覆盖"); // TODO: i18n
         button.setInheritTooltip(I18N_INHERIT_GLOBAL_SETTING);
+        button.setOverriddenTooltip(I18N_OVERRIDE_GLOBAL_SETTING);
         button.setInheritAvailable(!isGlobalSetting);
 
         IndependentSettingBinder.bindToggleButton(currentSetting, button, propertyGetter, this::getParentGameSetting);
@@ -1496,6 +1507,7 @@ public final class GameSettingPage<S extends GameSetting> extends StackPane
         button.setInheritedText("继承"); // TODO: i18n
         button.setOverriddenText("覆盖"); // TODO: i18n
         button.setInheritTooltip(I18N_INHERIT_GLOBAL_SETTING);
+        button.setOverriddenTooltip(I18N_OVERRIDE_GLOBAL_SETTING);
         button.setInheritAvailable(!isGlobalSetting);
 
         IndependentSettingBinder.bindNativesDirTypeButton(currentSetting, button, this::getParentGameSetting);
@@ -1509,6 +1521,7 @@ public final class GameSettingPage<S extends GameSetting> extends StackPane
         button.setInheritedText("继承"); // TODO: i18n
         button.setOverriddenText("覆盖"); // TODO: i18n
         button.setInheritTooltip(I18N_INHERIT_GLOBAL_SETTING);
+        button.setOverriddenTooltip(I18N_OVERRIDE_GLOBAL_SETTING);
         button.setInheritAvailable(!isGlobalSetting);
 
         bindEffectiveInheritableToggleButton(button, propertyGetter);

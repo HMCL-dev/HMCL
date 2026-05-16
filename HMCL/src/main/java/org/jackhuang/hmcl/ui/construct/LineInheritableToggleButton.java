@@ -26,6 +26,7 @@ import javafx.beans.property.SimpleObjectProperty;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.property.StringProperty;
 import javafx.css.PseudoClass;
+import javafx.scene.control.Tooltip;
 import javafx.scene.input.MouseEvent;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
@@ -53,6 +54,9 @@ public final class LineInheritableToggleButton extends LineButtonBase {
     /// The button that toggles between inherited and overridden mode.
     private final JFXButton inheritButton;
 
+    /// The tooltip shown on the inheritance button.
+    private final Tooltip inheritTooltip;
+
     /// The visual toggle that displays the effective value.
     private final JFXToggleButton toggleButton;
 
@@ -63,6 +67,8 @@ public final class LineInheritableToggleButton extends LineButtonBase {
         this.inheritButton = new JFXButton();
         inheritButton.getStyleClass().add(INHERIT_BUTTON_STYLE_CLASS);
         inheritButton.setGraphic(SVG.PUBLIC.createIcon(INHERIT_BUTTON_ICON_SIZE));
+        this.inheritTooltip = new Tooltip();
+        FXUtils.installFastTooltip(inheritButton, inheritTooltip);
         inheritButton.addEventFilter(MouseEvent.MOUSE_CLICKED, event -> {
             if (!isInheritAvailable()) {
                 return;
@@ -90,6 +96,8 @@ public final class LineInheritableToggleButton extends LineButtonBase {
         inheritAvailable.addListener(observable -> refresh());
         inheritedText.addListener(observable -> refresh());
         overriddenText.addListener(observable -> refresh());
+        inheritedTooltip.addListener(observable -> refresh());
+        overriddenTooltip.addListener(observable -> refresh());
         refresh();
     }
 
@@ -109,6 +117,7 @@ public final class LineInheritableToggleButton extends LineButtonBase {
         inheritButton.pseudoClassStateChanged(PSEUDO_OVERRIDDEN, overridden);
         inheritButton.setVisible(inheritAvailable);
         inheritButton.setManaged(inheritAvailable);
+        inheritTooltip.setText(inherited ? getInheritedTooltip() : getOverriddenTooltip());
 
         toggleButton.setSelected(isEffectiveValue());
     }
@@ -203,8 +212,46 @@ public final class LineInheritableToggleButton extends LineButtonBase {
         overriddenTextProperty().set(overriddenText);
     }
 
-    /// Sets the tooltip displayed on the inherit button.
+    /// The tooltip displayed while inheriting the parent value.
+    private final StringProperty inheritedTooltip = new SimpleStringProperty(this, "inheritedTooltip", "");
+
+    /// Returns the tooltip displayed while inheriting the parent value.
+    public StringProperty inheritedTooltipProperty() {
+        return inheritedTooltip;
+    }
+
+    /// Returns the tooltip displayed while inheriting the parent value.
+    public String getInheritedTooltip() {
+        return inheritedTooltipProperty().get();
+    }
+
+    /// Sets the tooltip displayed while inheriting the parent value.
+    public void setInheritedTooltip(String inheritedTooltip) {
+        inheritedTooltipProperty().set(inheritedTooltip);
+        refresh();
+    }
+
+    /// The tooltip displayed while overriding the parent value.
+    private final StringProperty overriddenTooltip = new SimpleStringProperty(this, "overriddenTooltip", "");
+
+    /// Returns the tooltip displayed while overriding the parent value.
+    public StringProperty overriddenTooltipProperty() {
+        return overriddenTooltip;
+    }
+
+    /// Returns the tooltip displayed while overriding the parent value.
+    public String getOverriddenTooltip() {
+        return overriddenTooltipProperty().get();
+    }
+
+    /// Sets the tooltip displayed while overriding the parent value.
+    public void setOverriddenTooltip(String overriddenTooltip) {
+        overriddenTooltipProperty().set(overriddenTooltip);
+        refresh();
+    }
+
+    /// Sets the tooltip displayed on the inherit button in inherited mode.
     public void setInheritTooltip(String tooltip) {
-        FXUtils.installFastTooltip(inheritButton, tooltip);
+        setInheritedTooltip(tooltip);
     }
 }
