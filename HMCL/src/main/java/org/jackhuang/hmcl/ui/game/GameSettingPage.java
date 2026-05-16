@@ -538,6 +538,128 @@ public final class GameSettingPage<S extends GameSetting> extends StackPane
             deprecatedJvmMemorySettings.setSubtitle("这些选项只为兼容旧版本保留"); // TODO: i18n
         }
 
+        var customCommandSettings = new ComponentList();
+        rootPane.getChildren().addAll(
+                ComponentList.createComponentListTitle(i18n("settings.advanced.custom_commands")),
+                customCommandSettings
+        );
+        {
+            var preLaunchCommandPane = new LinePane();
+            customCommandSettings.getContent().add(preLaunchCommandPane);
+            preLaunchCommandPane.setTitle(i18n("settings.advanced.precall_command"));
+            {
+                var txtPreLaunchCommand = new JFXTextField();
+                txtPreLaunchCommand.setPromptText(i18n("settings.advanced.precall_command.prompt"));
+                txtPreLaunchCommand.setPrefWidth(400);
+                preLaunchCommandPane.setRight(txtPreLaunchCommand);
+                bindSettingBidirectional(txtPreLaunchCommand.textProperty(), GameSetting::preLaunchCommandProperty);
+            }
+
+            var wrapperPane = new LinePane();
+            customCommandSettings.getContent().add(wrapperPane);
+            wrapperPane.setTitle(i18n("settings.advanced.wrapper_launcher"));
+            {
+                var txtWrapper = new JFXTextField();
+                txtWrapper.setPromptText(i18n("settings.advanced.wrapper_launcher.prompt"));
+                txtWrapper.setPrefWidth(400);
+                wrapperPane.setRight(txtWrapper);
+                bindSettingBidirectional(txtWrapper.textProperty(), GameSetting::commandWrapperProperty);
+            }
+
+            var postExitCommandPane = new LinePane();
+            customCommandSettings.getContent().add(postExitCommandPane);
+            postExitCommandPane.setTitle(i18n("settings.advanced.post_exit_command"));
+            {
+                var txtPostExitCommand = new JFXTextField();
+                txtPostExitCommand.setPromptText(i18n("settings.advanced.post_exit_command.prompt"));
+                txtPostExitCommand.setPrefWidth(400);
+                postExitCommandPane.setRight(txtPostExitCommand);
+                bindSettingBidirectional(txtPostExitCommand.textProperty(), GameSetting::postExitCommandProperty);
+            }
+        }
+
+        var graphicsSettings = new ComponentList();
+        rootPane.getChildren().addAll(
+                ComponentList.createComponentListTitle("图形设置"), // TODO: i18n
+                graphicsSettings
+        );
+        {
+            var graphicsBackendPane = createInheritableButton(
+                    GameSetting::graphicsBackendProperty,
+                    backend -> i18n("settings.advanced.graphics_backend." + backend.name().toLowerCase(Locale.ROOT)),
+                    backend -> switch (backend) {
+                        case DEFAULT -> i18n("settings.advanced.graphics_backend.default.desc");
+                        case OPENGL -> i18n("settings.advanced.graphics_backend.opengl.desc");
+                        case VULKAN -> i18n("settings.advanced.graphics_backend.vulkan.desc");
+                    },
+                    GraphicsAPI.values());
+            graphicsSettings.getContent().add(graphicsBackendPane);
+            graphicsBackendPane.setTitle(i18n("settings.advanced.graphics_backend"));
+
+            var openGLRendererPane = createInheritableButton(
+                    GameSetting::openGLRendererProperty,
+                    e -> i18n("settings.advanced.renderer." + e.name().toLowerCase(Locale.ROOT)),
+                    e -> {
+                        String bundleKey = "settings.advanced.renderer." + e.name().toLowerCase(Locale.ROOT) + ".desc";
+                        return I18n.hasKey(bundleKey) ? i18n(bundleKey) : null;
+                    },
+                    Renderer.getSupported(GraphicsAPI.OPENGL).toArray(Renderer[]::new));
+            graphicsSettings.getContent().add(openGLRendererPane);
+            openGLRendererPane.setTitle("OpenGL 渲染器/驱动"); // TODO: i18n
+
+            var vulkanRendererPane = createInheritableButton(
+                    GameSetting::vulkanRendererProperty,
+                    e -> i18n("settings.advanced.renderer." + e.name().toLowerCase(Locale.ROOT)),
+                    e -> {
+                        String bundleKey = "settings.advanced.renderer." + e.name().toLowerCase(Locale.ROOT) + ".desc";
+                        return I18n.hasKey(bundleKey) ? i18n(bundleKey) : null;
+                    },
+                    Renderer.getSupported(GraphicsAPI.VULKAN).toArray(Renderer[]::new));
+            graphicsSettings.getContent().add(vulkanRendererPane);
+            vulkanRendererPane.setTitle("Vulkan 渲染器/驱动"); // TODO: i18n
+
+            FXUtils.onChangeAndOperate(graphicsBackendPane.valueProperty(), backend -> {
+                GraphicsAPI effectiveBackend = backend != null ? backend : GraphicsAPI.DEFAULT;
+                openGLRendererPane.setDisable(effectiveBackend != GraphicsAPI.OPENGL);
+                vulkanRendererPane.setDisable(effectiveBackend != GraphicsAPI.VULKAN);
+            });
+        }
+
+        var nativeLibrarySettings = new ComponentList();
+        rootPane.getChildren().addAll(
+                ComponentList.createComponentListTitle("本机库设置"), // TODO: i18n
+                nativeLibrarySettings
+        );
+        {
+            var useCustomNativesDirPane = createIndependentNativesDirTypeButton();
+            nativeLibrarySettings.getContent().add(useCustomNativesDirPane);
+            useCustomNativesDirPane.setTitle(i18n("settings.advanced.natives_directory.custom.enabled"));
+
+            var nativesDirPane = new LinePane();
+            nativeLibrarySettings.getContent().add(nativesDirPane);
+            nativesDirPane.setTitle(i18n("settings.advanced.natives_directory"));
+            {
+                var txtNativesDir = new JFXTextField();
+                txtNativesDir.setPrefWidth(400);
+                nativesDirPane.setRight(txtNativesDir);
+                bindIndependentTextField(nativesDirPane, txtNativesDir, GameSetting::nativesDirProperty);
+            }
+
+            var noNativesPatchPane = createIndependentBooleanButton(GameSetting::notPatchNativesProperty);
+            nativeLibrarySettings.getContent().add(noNativesPatchPane);
+            noNativesPatchPane.setTitle(i18n("settings.advanced.dont_patch_natives"));
+
+            var useNativeGLFWPane = createIndependentBooleanButton(GameSetting::useNativeGLFWProperty);
+            nativeLibrarySettings.getContent().add(useNativeGLFWPane);
+            useNativeGLFWPane.setTitle(i18n("settings.advanced.use_native_glfw"));
+            useNativeGLFWPane.setSubtitle(i18n("settings.advanced.linux_freebsd_only"));
+
+            var useNativeOpenALPane = createIndependentBooleanButton(GameSetting::useNativeOpenALProperty);
+            nativeLibrarySettings.getContent().add(useNativeOpenALPane);
+            useNativeOpenALPane.setTitle(i18n("settings.advanced.use_native_openal"));
+            useNativeOpenALPane.setSubtitle(i18n("settings.advanced.linux_freebsd_only"));
+        }
+
         var advancedSettings = new ComponentList();
         rootPane.getChildren().addAll(
                 ComponentList.createComponentListTitle(i18n("settings.advanced")),
@@ -577,39 +699,6 @@ public final class GameSettingPage<S extends GameSetting> extends StackPane
             bindIndependentTextField(gameArgsPane, txtGameArgs, GameSetting::gameArgsProperty);
         }
 
-        var customCommandSettings = new ComponentSublist(() -> {
-            var pane = new GridPane();
-            pane.setPadding(new Insets(10, 16, 10, 16));
-            pane.setHgap(16);
-            pane.setVgap(8);
-            pane.getColumnConstraints().setAll(new ColumnConstraints(), FXUtils.getColumnHgrowing());
-
-            var txtPreLaunchCommand = new JFXTextField();
-            txtPreLaunchCommand.setPromptText(i18n("settings.advanced.precall_command.prompt"));
-            txtPreLaunchCommand.getStyleClass().add("fit-width");
-            pane.addRow(0, new Label(i18n("settings.advanced.precall_command")), txtPreLaunchCommand);
-            bindSettingBidirectional(txtPreLaunchCommand.textProperty(), GameSetting::preLaunchCommandProperty);
-
-            var txtWrapper = new JFXTextField();
-            txtWrapper.setPromptText(i18n("settings.advanced.wrapper_launcher.prompt"));
-            txtWrapper.getStyleClass().add("fit-width");
-            pane.addRow(1, new Label(i18n("settings.advanced.wrapper_launcher")), txtWrapper);
-            bindSettingBidirectional(txtWrapper.textProperty(), GameSetting::commandWrapperProperty);
-
-            var txtPostExitCommand = new JFXTextField();
-            txtPostExitCommand.setPromptText(i18n("settings.advanced.post_exit_command.prompt"));
-            txtPostExitCommand.getStyleClass().add("fit-width");
-            pane.addRow(2, new Label(i18n("settings.advanced.post_exit_command")), txtPostExitCommand);
-            bindSettingBidirectional(txtPostExitCommand.textProperty(), GameSetting::postExitCommandProperty);
-
-            return List.of(pane);
-        });
-        advancedSettings.getContent().add(customCommandSettings);
-        customCommandSettings.setHasSubtitle(true);
-        customCommandSettings.setTitle(i18n("settings.advanced.custom_commands"));
-        customCommandSettings.setSubtitle("自定义启动游戏时的命令"); // TODO: i18n
-        customCommandSettings.setTip(i18n("settings.advanced.custom_commands.hint"));
-
         var environmentVariablesPane = new LinePane();
         advancedSettings.getContent().add(environmentVariablesPane);
         environmentVariablesPane.setTitle("环境变量"); // TODO: i18n
@@ -620,75 +709,6 @@ public final class GameSettingPage<S extends GameSetting> extends StackPane
             environmentVariablesPane.setRight(txtEnvironmentVariables);
             bindIndependentTextField(environmentVariablesPane, txtEnvironmentVariables, GameSetting::environmentVariablesProperty);
         }
-
-        var nativesSettings = new ComponentSublist(() -> {
-            var useCustomNativesDirPane = createIndependentNativesDirTypeButton();
-            useCustomNativesDirPane.setTitle(i18n("settings.advanced.natives_directory.custom.enabled"));
-
-            var nativesDirPane = new LinePane();
-            nativesDirPane.setTitle(i18n("settings.advanced.natives_directory"));
-            {
-                var txtNativesDir = new JFXTextField();
-                txtNativesDir.setPrefWidth(400);
-                nativesDirPane.setRight(txtNativesDir);
-                bindIndependentTextField(nativesDirPane, txtNativesDir, GameSetting::nativesDirProperty);
-            }
-
-            var noNativesPatchPane = createIndependentBooleanButton(GameSetting::notPatchNativesProperty);
-            noNativesPatchPane.setTitle(i18n("settings.advanced.dont_patch_natives"));
-
-            var useNativeGLFWPane = createIndependentBooleanButton(GameSetting::useNativeGLFWProperty);
-            useNativeGLFWPane.setTitle(i18n("settings.advanced.use_native_glfw"));
-            useNativeGLFWPane.setSubtitle(i18n("settings.advanced.linux_freebsd_only"));
-
-            var useNativeOpenALPane = createIndependentBooleanButton(GameSetting::useNativeOpenALProperty);
-            useNativeOpenALPane.setTitle(i18n("settings.advanced.use_native_openal"));
-            useNativeOpenALPane.setSubtitle(i18n("settings.advanced.linux_freebsd_only"));
-
-            return List.of(useCustomNativesDirPane, nativesDirPane, noNativesPatchPane, useNativeGLFWPane, useNativeOpenALPane);
-        });
-        advancedSettings.getContent().add(nativesSettings);
-        nativesSettings.setTitle(i18n("settings.advanced.natives"));
-
-        var graphicsBackendPane = createInheritableButton(
-                GameSetting::graphicsBackendProperty,
-                backend -> i18n("settings.advanced.graphics_backend." + backend.name().toLowerCase(Locale.ROOT)),
-                backend -> switch (backend) {
-                    case DEFAULT -> i18n("settings.advanced.graphics_backend.default.desc");
-                    case OPENGL -> i18n("settings.advanced.graphics_backend.opengl.desc");
-                    case VULKAN -> i18n("settings.advanced.graphics_backend.vulkan.desc");
-                },
-                GraphicsAPI.values());
-        advancedSettings.getContent().add(graphicsBackendPane);
-        graphicsBackendPane.setTitle(i18n("settings.advanced.graphics_backend"));
-
-        var openGLRendererPane = createInheritableButton(
-                GameSetting::openGLRendererProperty,
-                e -> i18n("settings.advanced.renderer." + e.name().toLowerCase(Locale.ROOT)),
-                e -> {
-                    String bundleKey = "settings.advanced.renderer." + e.name().toLowerCase(Locale.ROOT) + ".desc";
-                    return I18n.hasKey(bundleKey) ? i18n(bundleKey) : null;
-                },
-                Renderer.getSupported(GraphicsAPI.OPENGL).toArray(Renderer[]::new));
-        advancedSettings.getContent().add(openGLRendererPane);
-        openGLRendererPane.setTitle("OpenGL 渲染器/驱动"); // TODO: i18n
-
-        var vulkanRendererPane = createInheritableButton(
-                GameSetting::vulkanRendererProperty,
-                e -> i18n("settings.advanced.renderer." + e.name().toLowerCase(Locale.ROOT)),
-                e -> {
-                    String bundleKey = "settings.advanced.renderer." + e.name().toLowerCase(Locale.ROOT) + ".desc";
-                    return I18n.hasKey(bundleKey) ? i18n(bundleKey) : null;
-                },
-                Renderer.getSupported(GraphicsAPI.VULKAN).toArray(Renderer[]::new));
-        advancedSettings.getContent().add(vulkanRendererPane);
-        vulkanRendererPane.setTitle("Vulkan 渲染器/驱动"); // TODO: i18n
-
-        FXUtils.onChangeAndOperate(graphicsBackendPane.valueProperty(), backend -> {
-            GraphicsAPI effectiveBackend = backend != null ? backend : GraphicsAPI.DEFAULT;
-            openGLRendererPane.setDisable(effectiveBackend != GraphicsAPI.OPENGL);
-            vulkanRendererPane.setDisable(effectiveBackend != GraphicsAPI.VULKAN);
-        });
 
         var noGameCheckPane = createInheritableBooleanButton(GameSetting::notCheckGameProperty);
         advancedSettings.getContent().add(noGameCheckPane);
