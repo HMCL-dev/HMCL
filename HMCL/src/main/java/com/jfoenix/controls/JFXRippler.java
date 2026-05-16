@@ -46,7 +46,6 @@ import javafx.scene.shape.Circle;
 import javafx.scene.shape.Rectangle;
 import javafx.scene.shape.Shape;
 import javafx.util.Duration;
-import org.jackhuang.hmcl.theme.Themes;
 import org.jackhuang.hmcl.ui.animation.AnimationUtils;
 import org.jackhuang.hmcl.ui.animation.Motion;
 
@@ -143,9 +142,6 @@ public class JFXRippler extends StackPane {
                 }
 
                 boolean isEntered = event.getEventType() == MouseEvent.MOUSE_ENTERED;
-                Color onSurface = Themes.getColorScheme().getOnSurface();
-                hoverOverlay.setFill(Color.color(onSurface.getRed(), onSurface.getGreen(), onSurface.getBlue(), 0.04));
-
                 coverAnimation = new Timeline(new KeyFrame(Motion.SHORT4,
                         new KeyValue(hoverOverlay.opacityProperty(), isEntered ? 1 : 0, isEntered ? Motion.EASE_IN : Motion.EASE_OUT)));
                 coverAnimation.play();
@@ -161,8 +157,6 @@ public class JFXRippler extends StackPane {
 
     private void interpolateBackground(double frac) {
         if (hoverOverlay == null) return;
-        Color onSurface = Themes.getColorScheme().getOnSurface();
-        hoverOverlay.setFill(Color.color(onSurface.getRed(), onSurface.getGreen(), onSurface.getBlue(), 0.04));
         hoverOverlay.setOpacity(frac);
     }
 
@@ -177,6 +171,16 @@ public class JFXRippler extends StackPane {
         hoverOverlay.setCache(true);
         hoverOverlay.setCacheHint(CacheHint.SPEED);
         hoverOverlay.setOpacity(0);
+
+        hoverOverlay.fillProperty().bind(Bindings.createObjectBinding(() -> {
+            Paint currentFill = getRipplerFill();
+            if (currentFill instanceof Color fill) {
+                return Color.color(fill.getRed(), fill.getGreen(), fill.getBlue(), 0.15);
+            } else {
+                return currentFill;
+            }
+        }, ripplerFillProperty()));
+
         ripplerPane.getChildren().addAll(hoverOverlay, rippler);
         getChildren().add(ripplerPane);
     }
