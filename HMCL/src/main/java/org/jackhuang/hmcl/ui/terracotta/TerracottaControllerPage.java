@@ -164,7 +164,7 @@ public class TerracottaControllerPage extends StackPane {
                     if (uninitialized.hasLegacy() && I18n.isUseChinese()) {
                         Object feedback = config().getShownTips().get(FEEDBACK_TIP);
                         if (!(feedback instanceof Number number) || number.intValue() < 1) {
-                            Controllers.confirm(i18n("terracotta.feedback.desc"), i18n("terracotta.feedback.title"), () -> {
+                            Controllers.confirm(i18n("terracotta.feedback.desc.update"), i18n("terracotta.feedback.title"), () -> {
                                 FXUtils.openLink(TerracottaMetadata.FEEDBACK_LINK);
                                 config().getShownTips().put(FEEDBACK_TIP, 1);
                             }, () -> {
@@ -249,7 +249,7 @@ public class TerracottaControllerPage extends StackPane {
                     }, "", new RequiredValidator(i18n("input.not_empty")));
                 });
 
-                if (ThreadLocalRandom.current().nextDouble() < 0.02D) {
+                if (ThreadLocalRandom.current().nextDouble() < 200D) {
                     var feedback = createLargeTitleLineButton();
                     feedback.setLeading(SVG.FEEDBACK, ICON_SIZE);
                     feedback.setTitle(i18n("terracotta.feedback.title"));
