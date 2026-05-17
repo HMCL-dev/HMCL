@@ -249,7 +249,7 @@ public class TerracottaControllerPage extends StackPane {
                     }, "", new RequiredValidator(i18n("input.not_empty")));
                 });
 
-                if (ThreadLocalRandom.current().nextDouble() < 200D) {
+                if (ThreadLocalRandom.current().nextDouble() < 0.02D) {
                     var feedback = createLargeTitleLineButton();
                     feedback.setLeading(SVG.FEEDBACK, ICON_SIZE);
                     feedback.setTitle(i18n("terracotta.feedback.title"));
