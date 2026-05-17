@@ -353,6 +353,7 @@ public final class ResourcePackListPage extends ListPageBase<ResourcePackListPag
                             else
                                 changeToolbar(toolbarSelecting);
                         });
+                FXUtils.setOverflowHidden(toolbarPane, 8);
                 root.getContent().add(toolbarPane);
 
                 // Clear selection when pressing ESC
