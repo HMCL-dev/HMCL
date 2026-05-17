@@ -110,19 +110,25 @@ public final class ModpackFileSelectionPage extends BorderPane implements Wizard
                     state = ModAdviser.ModSuggestion.HIDDEN;
             }
 
-            if (isDirectory && fileName.equals(version + "-natives")) // Ignore <version>-natives
-                state = ModAdviser.ModSuggestion.HIDDEN;
+            if (isDirectory) {
+                if (fileName.equals(version + "-natives")) { // Ignore <version>-natives
+                    state = ModAdviser.ModSuggestion.HIDDEN;
+                }
+                if (fileName.startsWith("natives-")) { // Ignore natives-os-arch
+                    state = ModAdviser.ModSuggestion.HIDDEN;
+                }
+            }
             if (state == ModAdviser.ModSuggestion.HIDDEN)
                 return null;
         }
 
-        CheckBoxTreeItem<String> node = new CheckBoxTreeItem<>(StringUtils.substringAfterLast(basePath, "/"));
+        CheckBoxTreeItem<String> node = new CheckBoxTreeItem<>("");
         if (state == ModAdviser.ModSuggestion.SUGGESTED)
             node.setSelected(true);
 
         if (isDirectory) {
             try (var stream = Files.list(file)) {
-                stream.forEach(it -> {
+                stream.sorted(FileUtils.dirFirstComparator).forEach(it -> {
                     CheckBoxTreeItem<String> subNode = getTreeItem(it, basePath + "/" + FileUtils.getName(it));
                     if (subNode != null) {
                         node.setSelected(subNode.isSelected() || node.isSelected());
@@ -150,6 +156,11 @@ public final class ModpackFileSelectionPage extends BorderPane implements Wizard
         checkBox.indeterminateProperty().bindBidirectional(node.indeterminateProperty());
         graphic.getChildren().add(checkBox);
 
+        {
+            Label text = new Label(StringUtils.substringAfter(basePath, '/'));
+            text.setMouseTransparent(true);
+            graphic.getChildren().add(text);
+        }
         if (TRANSLATION.containsKey(basePath)) {
             Label comment = new Label(TRANSLATION.get(basePath));
             comment.setStyle("-fx-text-fill: -monet-on-surface-variant;");
