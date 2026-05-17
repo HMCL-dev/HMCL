@@ -391,6 +391,13 @@ public final class FXUtils {
         return rectangle;
     }
 
+    public static Rectangle setOverflowHidden(Region region, int radius) {
+        Rectangle rectangle = setOverflowHidden(region);
+        rectangle.setArcWidth(radius);
+        rectangle.setArcHeight(radius);
+        return rectangle;
+    }
+
     public static Rectangle setOverflowHidden(Region region, double arc) {
         Rectangle rectangle = setOverflowHidden(region);
         rectangle.setArcWidth(arc);

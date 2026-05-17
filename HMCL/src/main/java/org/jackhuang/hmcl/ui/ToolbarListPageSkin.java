@@ -55,6 +55,7 @@ public abstract class ToolbarListPageSkin<E, P extends ListPageBase<E>> extends 
             toolbar.setAlignment(Pos.CENTER_LEFT);
             toolbar.setPickOnBounds(false);
             toolbar.getChildren().setAll(toolbarButtons);
+            FXUtils.setOverflowHidden(toolbar, 8);
             root.getContent().add(toolbar);
         }
 
