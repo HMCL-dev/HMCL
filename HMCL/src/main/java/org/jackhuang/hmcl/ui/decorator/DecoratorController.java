@@ -34,10 +34,10 @@ import javafx.scene.paint.Color;
 import javafx.scene.paint.Paint;
 import javafx.stage.Stage;
 import javafx.util.Duration;
-import org.glavo.url.WebURL;
 import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.auth.authlibinjector.AuthlibInjectorDnD;
 import org.jackhuang.hmcl.setting.EnumBackgroundImage;
+import org.jackhuang.hmcl.task.CacheFileTask;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.ui.Controllers;
@@ -52,7 +52,9 @@ import org.jackhuang.hmcl.ui.construct.Navigator;
 import org.jackhuang.hmcl.ui.wizard.Refreshable;
 import org.jackhuang.hmcl.ui.wizard.WizardProvider;
 import org.jackhuang.hmcl.util.MathUtils;
+import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
@@ -71,6 +73,8 @@ import static org.jackhuang.hmcl.util.io.FileUtils.getExtension;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 public class DecoratorController {
+    private static final Path remoteBgCachePath = Metadata.HMCL_CURRENT_DIRECTORY.resolve("bg.png");
+
     private final Decorator decorator;
     private final Navigator navigator;
 
@@ -169,13 +173,15 @@ public class DecoratorController {
     @SuppressWarnings("FieldCanBeLocal") // Strong reference
     private final InvalidationListener changeBackgroundListener;
 
+    private volatile boolean remoteFetched = false;
+
     private void updateBackground() {
         final int currentCount = ++this.changeBackgroundCount;
         Task.supplyAsync(Schedulers.io(), this::getBackground)
                 .setName("Update background")
                 .whenComplete(Schedulers.javafx(), (background, exception) -> {
                     if (exception == null) {
-                        if (this.changeBackgroundCount == currentCount)
+                        if (this.changeBackgroundCount == currentCount && !remoteFetched)
                             decorator.setContentBackground(background);
                     } else {
                         LOG.warning("Failed to update background", exception);
@@ -184,6 +190,7 @@ public class DecoratorController {
     }
 
     private Background getBackground() {
+        remoteFetched = false;
         EnumBackgroundImage imageType = config().getBackgroundImageType();
         if (imageType == null)
             imageType = EnumBackgroundImage.DEFAULT;
@@ -206,7 +213,8 @@ public class DecoratorController {
                 String backgroundImageUrl = config().getBackgroundImageUrl();
                 if (backgroundImageUrl != null) {
                     try {
-                        image = FXUtils.loadImage(WebURL.parseBrowserInput(backgroundImageUrl));
+                        asyncFetchRemoteImage(backgroundImageUrl);
+                        image = tryLoadImage(remoteBgCachePath);
                     } catch (Exception e) {
                         LOG.warning("Couldn't load background image", e);
                     }
@@ -336,6 +344,26 @@ public class DecoratorController {
             LOG.warning("Couldn't load background image", e);
             return null;
         }
+    }
+
+    private void asyncFetchRemoteImage(@NotNull String backgroundImageUrl) {
+        final int currentCount = this.changeBackgroundCount;
+        new CacheFileTask(backgroundImageUrl)
+                .setExecutor(Schedulers.io())
+                .thenApplyAsync(Schedulers.io(), path -> {
+                    if (this.changeBackgroundCount == currentCount) FileUtils.copyFile(path, remoteBgCachePath);
+                    return FXUtils.loadImage(path);
+                })
+                .whenComplete(Schedulers.javafx(), ((image, exception) -> {
+                    if (exception == null) {
+                        if (this.changeBackgroundCount == currentCount) {
+                            decorator.setContentBackground(createBackgroundWithOpacity(image, config().getBackgroundImageOpacity()));
+                            remoteFetched = true;
+                        }
+                    } else {
+                        LOG.warning("Failed to load network background image from " + backgroundImageUrl, exception);
+                    }
+                })).start();
     }
 
     // ==== Navigation ====
