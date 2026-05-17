@@ -785,6 +785,7 @@ public final class SchematicsPage extends ListPageBase<SchematicsPage.Item> impl
                         createToolbarButton2(i18n("button.reveal_dir"), SVG.FOLDER_OPEN, skinnable::onRevealSchematicsFolder),
                         btnDownload
                 );
+                FXUtils.setOverflowHidden(toolbar, 8);
                 root.getContent().add(toolbar);
             }
 
