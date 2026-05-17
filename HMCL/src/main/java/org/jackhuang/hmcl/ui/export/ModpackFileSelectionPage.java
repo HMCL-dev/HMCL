@@ -65,7 +65,7 @@ public final class ModpackFileSelectionPage extends BorderPane implements Wizard
         this.adviser = adviser;
 
         JFXTreeView<String> treeView = new JFXTreeView<>();
-        rootNode = getTreeItem(profile.getRepository().getRunDirectory(version), "minecraft");
+        rootNode = getTreeItem(profile.getRepository().getRunDirectory(version), "minecraft", 0);
         treeView.setRoot(rootNode);
         treeView.setSelectionModel(new NoneMultipleSelectionModel<>());
         onEscPressed(treeView, () -> controller.onPrev(true));
@@ -86,7 +86,7 @@ public final class ModpackFileSelectionPage extends BorderPane implements Wizard
         this.setBottom(nextPane);
     }
 
-    private CheckBoxTreeItem<String> getTreeItem(Path file, String basePath) {
+    private CheckBoxTreeItem<String> getTreeItem(Path file, String basePath, int level) {
         if (Files.notExists(file))
             return null;
 
@@ -114,7 +114,7 @@ public final class ModpackFileSelectionPage extends BorderPane implements Wizard
                 if (fileName.equals(version + "-natives")) { // Ignore <version>-natives
                     state = ModAdviser.ModSuggestion.HIDDEN;
                 }
-                if (fileName.startsWith("natives-")) { // Ignore natives-os-arch
+                if (level == 1 && fileName.startsWith("natives-")) { // Ignore natives-os-arch
                     state = ModAdviser.ModSuggestion.HIDDEN;
                 }
             }
@@ -129,7 +129,7 @@ public final class ModpackFileSelectionPage extends BorderPane implements Wizard
         if (isDirectory) {
             try (var stream = Files.list(file)) {
                 stream.sorted(FileUtils.dirFirstComparator).forEach(it -> {
-                    CheckBoxTreeItem<String> subNode = getTreeItem(it, basePath + "/" + FileUtils.getName(it));
+                    CheckBoxTreeItem<String> subNode = getTreeItem(it, basePath + "/" + FileUtils.getName(it), level + 1);
                     if (subNode != null) {
                         node.setSelected(subNode.isSelected() || node.isSelected());
                         if (!subNode.isSelected()) {
