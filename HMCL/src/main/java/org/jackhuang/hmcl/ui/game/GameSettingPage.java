@@ -447,6 +447,10 @@ public final class GameSettingPage<S extends GameSetting> extends StackPane
             launcherSettings.getContent().add(enableDebugLogOutputPane);
             enableDebugLogOutputPane.setTitle(i18n("settings.enable_debug_log_output"));
 
+            var noGameCheckPane = createInheritableBooleanButton(GameSetting::notCheckGameProperty);
+            launcherSettings.getContent().add(noGameCheckPane);
+            noGameCheckPane.setTitle(i18n("settings.advanced.dont_check_game_completeness"));
+
             // Quick Play
             var quickSublist = new ComponentSublist();
             {
@@ -723,10 +727,6 @@ public final class GameSettingPage<S extends GameSetting> extends StackPane
         );
         advancedSettings.getContent().add(processPriorityPane);
         processPriorityPane.setTitle(i18n("settings.advanced.process_priority"));
-
-        var noGameCheckPane = createInheritableBooleanButton(GameSetting::notCheckGameProperty);
-        advancedSettings.getContent().add(noGameCheckPane);
-        noGameCheckPane.setTitle(i18n("settings.advanced.dont_check_game_completeness"));
 
         if (isGlobalSetting) {
             editorNodes.clear();
