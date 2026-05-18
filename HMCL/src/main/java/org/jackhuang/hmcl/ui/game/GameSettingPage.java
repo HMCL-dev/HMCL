@@ -496,6 +496,34 @@ public final class GameSettingPage<S extends GameSetting> extends StackPane
             quickSublist.setTitle("快速游玩"); // TODO: i18n
             quickSublist.setSubtitle("启动游戏后直接进入指定服务器或世界"); // TODO: i18n
             quickSublist.setHasSubtitle(true);
+
+            var advancedLaunchSublist = new ComponentSublist(() -> {
+                var gameArgsPane = new LinePane();
+                gameArgsPane.setTitle(i18n("settings.advanced.minecraft_arguments"));
+                {
+                    var txtGameArgs = new JFXTextField();
+                    txtGameArgs.setPromptText(i18n("settings.advanced.minecraft_arguments.prompt"));
+                    txtGameArgs.setPrefWidth(400);
+                    gameArgsPane.setRight(txtGameArgs);
+                    bindIndependentTextField(gameArgsPane, txtGameArgs, GameSetting::gameArgsProperty);
+                }
+
+                var environmentVariablesPane = new LinePane();
+                environmentVariablesPane.setTitle("环境变量"); // TODO: i18n
+                environmentVariablesPane.setSubtitle("传递给游戏进程的键值对"); // TODO: i18n
+                {
+                    var txtEnvironmentVariables = new JFXTextField();
+                    txtEnvironmentVariables.setPrefWidth(400);
+                    environmentVariablesPane.setRight(txtEnvironmentVariables);
+                    bindIndependentTextField(environmentVariablesPane, txtEnvironmentVariables, GameSetting::environmentVariablesProperty);
+                }
+
+                return List.of(gameArgsPane, environmentVariablesPane);
+            });
+            gameSettings.getContent().add(advancedLaunchSublist);
+            advancedLaunchSublist.setTitle("高级启动选项"); // TODO: i18n
+            advancedLaunchSublist.setSubtitle("游戏参数与环境变量"); // TODO: i18n
+            advancedLaunchSublist.setHasSubtitle(true);
         }
 
         var jvmSettings = new ComponentList();
@@ -695,28 +723,6 @@ public final class GameSettingPage<S extends GameSetting> extends StackPane
         );
         advancedSettings.getContent().add(processPriorityPane);
         processPriorityPane.setTitle(i18n("settings.advanced.process_priority"));
-
-        var gameArgsPane = new LinePane();
-        advancedSettings.getContent().add(gameArgsPane);
-        gameArgsPane.setTitle(i18n("settings.advanced.minecraft_arguments"));
-        {
-            var txtGameArgs = new JFXTextField();
-            txtGameArgs.setPromptText(i18n("settings.advanced.minecraft_arguments.prompt"));
-            txtGameArgs.setPrefWidth(400);
-            gameArgsPane.setRight(txtGameArgs);
-            bindIndependentTextField(gameArgsPane, txtGameArgs, GameSetting::gameArgsProperty);
-        }
-
-        var environmentVariablesPane = new LinePane();
-        advancedSettings.getContent().add(environmentVariablesPane);
-        environmentVariablesPane.setTitle("环境变量"); // TODO: i18n
-        environmentVariablesPane.setSubtitle("传递给游戏进程的键值对"); // TODO: i18n
-        {
-            var txtEnvironmentVariables = new JFXTextField();
-            txtEnvironmentVariables.setPrefWidth(400);
-            environmentVariablesPane.setRight(txtEnvironmentVariables);
-            bindIndependentTextField(environmentVariablesPane, txtEnvironmentVariables, GameSetting::environmentVariablesProperty);
-        }
 
         var noGameCheckPane = createInheritableBooleanButton(GameSetting::notCheckGameProperty);
         advancedSettings.getContent().add(noGameCheckPane);
