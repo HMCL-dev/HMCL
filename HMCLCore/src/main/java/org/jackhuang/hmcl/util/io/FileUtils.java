@@ -49,14 +49,6 @@ public final class FileUtils {
     private FileUtils() {
     }
 
-    public static final Comparator<Path> dirFirstComparator = (p1, p2) -> {
-        if (p1 == null) return p2 == null ? 0 : -1;
-        if (p2 == null) return 1;
-        if (!p1.getParent().equals(p2.getParent())) return p1.compareTo(p2);
-        if (Files.isDirectory(p1) == Files.isDirectory(p2)) return p1.compareTo(p2);
-        return Files.isDirectory(p1) ? -1 : 1;
-    };
-
     public static @Nullable Path toPath(@Nullable File file) {
         try {
             return file != null ? file.toPath() : null;

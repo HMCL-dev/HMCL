@@ -33,6 +33,7 @@ import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.construct.NoneMultipleSelectionModel;
 import org.jackhuang.hmcl.ui.wizard.WizardController;
 import org.jackhuang.hmcl.ui.wizard.WizardPage;
+import org.jackhuang.hmcl.util.Pair;
 import org.jackhuang.hmcl.util.SettingsMap;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
@@ -128,7 +129,10 @@ public final class ModpackFileSelectionPage extends BorderPane implements Wizard
 
         if (isDirectory) {
             try (var stream = Files.list(file)) {
-                stream.sorted(FileUtils.dirFirstComparator).forEach(it -> {
+                stream.map(path -> Pair.pair(path, Files.isDirectory(path))).sorted((p1, p2) -> {
+                    if (p1.value() == p2.value()) return p1.key().compareTo(p2.key());
+                    return p1.value() ? -1 : 1;
+                }).map(Pair::key).forEach(it -> {
                     ModpackFileTreeItem subNode = getTreeItem(it, basePath + "/" + FileUtils.getName(it), level + 1);
                     if (subNode != null) {
                         node.setSelected(subNode.isSelected() || node.isSelected());
