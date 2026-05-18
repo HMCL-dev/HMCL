@@ -613,7 +613,7 @@ public final class GameSettingPage<S extends GameSetting> extends StackPane
                 txtPreLaunchCommand.setPromptText(i18n("settings.advanced.precall_command.prompt"));
                 txtPreLaunchCommand.setPrefWidth(400);
                 preLaunchCommandPane.setRight(txtPreLaunchCommand);
-                bindSettingBidirectional(txtPreLaunchCommand.textProperty(), GameSetting::preLaunchCommandProperty);
+                bindInheritableTextField(preLaunchCommandPane, txtPreLaunchCommand, GameSetting::preLaunchCommandProperty);
             }
 
             var wrapperPane = new LinePane();
@@ -624,7 +624,7 @@ public final class GameSettingPage<S extends GameSetting> extends StackPane
                 txtWrapper.setPromptText(i18n("settings.advanced.wrapper_launcher.prompt"));
                 txtWrapper.setPrefWidth(400);
                 wrapperPane.setRight(txtWrapper);
-                bindSettingBidirectional(txtWrapper.textProperty(), GameSetting::commandWrapperProperty);
+                bindInheritableTextField(wrapperPane, txtWrapper, GameSetting::commandWrapperProperty);
             }
 
             var postExitCommandPane = new LinePane();
@@ -635,7 +635,7 @@ public final class GameSettingPage<S extends GameSetting> extends StackPane
                 txtPostExitCommand.setPromptText(i18n("settings.advanced.post_exit_command.prompt"));
                 txtPostExitCommand.setPrefWidth(400);
                 postExitCommandPane.setRight(txtPostExitCommand);
-                bindSettingBidirectional(txtPostExitCommand.textProperty(), GameSetting::postExitCommandProperty);
+                bindInheritableTextField(postExitCommandPane, txtPostExitCommand, GameSetting::postExitCommandProperty);
             }
         }
 
@@ -1176,6 +1176,112 @@ public final class GameSettingPage<S extends GameSetting> extends StackPane
         S setting = currentSetting.get();
         if (setting != null) {
             property.bindBidirectional(propertyGetter.apply(setting));
+        }
+    }
+
+    /// Binds a text field to an inheritable string setting.
+    private void bindInheritableTextField(
+            LineComponent line,
+            JFXTextField textField,
+            Function<GameSetting, InheritableProperty<String>> propertyGetter) {
+        ObjectProperty<@Nullable InheritableProperty<String>> activeProperty = new SimpleObjectProperty<>();
+        final boolean[] updating = {false};
+        @Nullable JFXButton inheritButton = null;
+        if (!isGlobalSetting) {
+            inheritButton = createInheritanceButton();
+            line.setTitleTrailing(inheritButton);
+        }
+        @Nullable JFXButton finalInheritButton = inheritButton;
+
+        InvalidationListener refresh = observable -> {
+            GameSetting setting = currentSetting.get();
+            InheritableProperty<String> property = activeProperty.get();
+            if (setting == null || property == null || updating[0]) {
+                return;
+            }
+
+            updating[0] = true;
+            try {
+                textField.setText(getEffectiveValue(setting, propertyGetter));
+                if (finalInheritButton != null) {
+                    updateInheritanceButton(finalInheritButton, property.getValue() == null);
+                }
+            } finally {
+                updating[0] = false;
+            }
+        };
+
+        textField.textProperty().addListener((observable, oldValue, newValue) -> {
+            InheritableProperty<String> property = activeProperty.get();
+            if (property == null || updating[0]) {
+                return;
+            }
+
+            updating[0] = true;
+            try {
+                property.setValue(newValue != null ? newValue : "");
+                if (finalInheritButton != null) {
+                    updateInheritanceButton(finalInheritButton, false);
+                }
+            } finally {
+                updating[0] = false;
+            }
+        });
+
+        if (finalInheritButton != null) {
+            finalInheritButton.addEventFilter(MouseEvent.MOUSE_CLICKED, event -> {
+                GameSetting setting = currentSetting.get();
+                InheritableProperty<String> property = activeProperty.get();
+                if (setting == null || property == null || updating[0]) {
+                    return;
+                }
+
+                updating[0] = true;
+                try {
+                    if (property.getValue() == null) {
+                        property.setValue(getEffectiveValue(setting, propertyGetter));
+                    } else {
+                        property.setValue(null);
+                    }
+                } finally {
+                    updating[0] = false;
+                }
+                refresh.invalidated(property);
+                event.consume();
+            });
+        }
+
+        currentSetting.addListener((observable, oldValue, newValue) -> {
+            if (oldValue != null) {
+                oldValue.removeListener(refresh);
+            }
+
+            InheritableProperty<String> oldProperty = activeProperty.get();
+            if (oldProperty != null) {
+                oldProperty.removeListener(refresh);
+            }
+
+            InheritableProperty<String> newProperty = newValue != null ? propertyGetter.apply(newValue) : null;
+            activeProperty.set(newProperty);
+            if (newValue != null) {
+                newValue.addListener(refresh);
+            }
+            if (newProperty != null) {
+                newProperty.addListener(refresh);
+            }
+            refresh.invalidated(newValue);
+        });
+
+        config().getGameSettings().addListener(refresh);
+        config().defaultGameSettingProperty().addListener(refresh);
+
+        S setting = currentSetting.get();
+        if (setting != null) {
+            InheritableProperty<String> property = propertyGetter.apply(setting);
+            activeProperty.set(property);
+            setting.addListener(refresh);
+            property.addListener(refresh);
+            refresh.invalidated(setting);
         }
     }
 
