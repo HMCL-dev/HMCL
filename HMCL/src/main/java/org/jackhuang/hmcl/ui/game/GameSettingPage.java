@@ -21,6 +21,7 @@ import com.jfoenix.controls.JFXButton;
 import com.jfoenix.controls.JFXComboBox;
 import com.jfoenix.controls.JFXSlider;
 import com.jfoenix.controls.JFXTextField;
+import javafx.animation.PauseTransition;
 import javafx.css.PseudoClass;
 import javafx.beans.InvalidationListener;
 import javafx.beans.property.*;
@@ -40,6 +41,7 @@ import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.*;
 import javafx.stage.FileChooser;
 import javafx.stage.Screen;
+import javafx.util.Duration;
 import org.jackhuang.hmcl.game.*;
 import org.jackhuang.hmcl.java.JavaManager;
 import org.jackhuang.hmcl.java.JavaRuntime;
@@ -725,13 +727,17 @@ public final class GameSettingPage<S extends GameSetting> extends StackPane
     private void createGlobalSettingListButton(ComponentList list) {
         var listButton = LineButton.createNavigationButton();
         listButton.setTitle("管理所有全局游戏设置"); // TODO: i18n
-        listButton.setOnAction(event -> Controllers.navigateForward(new GlobalGameSettingListPage(
-                this::getCurrentGlobalSetting,
-                this::selectGlobalSetting,
-                setting -> {
-                    selectGlobalSetting(setting);
-                    Controllers.navigate(this);
-                })));
+        listButton.setOnAction(event -> {
+            var transition = new PauseTransition(Duration.millis(120));
+            transition.setOnFinished(ignored -> Controllers.navigateForward(new GlobalGameSettingListPage(
+                    this::getCurrentGlobalSetting,
+                    this::selectGlobalSetting,
+                    setting -> {
+                        selectGlobalSetting(setting);
+                        Controllers.navigate(this);
+                    })));
+            transition.play();
+        });
         list.getContent().add(listButton);
     }
 
