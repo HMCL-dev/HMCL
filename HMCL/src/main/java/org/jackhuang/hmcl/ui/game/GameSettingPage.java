@@ -1143,13 +1143,6 @@ public final class GameSettingPage<S extends GameSetting> extends StackPane
         ObjectProperty<@Nullable SettingProperty<Boolean>> activeIsolationProperty = new SimpleObjectProperty<>();
         final boolean[] updating = {false};
 
-        @Nullable JFXButton inheritButton = null;
-        if (!isGlobalSetting) {
-            inheritButton = createInheritanceButton();
-            sublist.setTitleRight(inheritButton);
-        }
-        @Nullable JFXButton finalInheritButton = inheritButton;
-
         InvalidationListener refresh = observable -> {
             GameSetting setting = currentSetting.get();
             InheritableProperty<GameDirectoryType> typeProperty = activeTypeProperty.get();
@@ -1167,9 +1160,6 @@ public final class GameSettingPage<S extends GameSetting> extends StackPane
                         ? getEffectiveValue(setting, GameSetting::runningDirProperty)
                         : "");
                 sublist.setSubtitle(getEffectiveGameDirectorySubtitle());
-                if (finalInheritButton != null) {
-                    updateInheritanceButton(finalInheritButton, isGameDirectoryInherited(typeProperty, dirProperty, isolationProperty));
-                }
                 choiceList.setDisable(isCurrentInstanceModpack());
             } finally {
                 updating[0] = false;
@@ -1187,9 +1177,6 @@ public final class GameSettingPage<S extends GameSetting> extends StackPane
             updating[0] = true;
             try {
                 applyGameDirectorySelection(newValue, customOption.getPath(), typeProperty, dirProperty, isolationProperty);
-                if (finalInheritButton != null) {
-                    updateInheritanceButton(finalInheritButton, false);
-                }
             } finally {
                 updating[0] = false;
             }
@@ -1206,47 +1193,10 @@ public final class GameSettingPage<S extends GameSetting> extends StackPane
             updating[0] = true;
             try {
                 applyGameDirectorySelection(GameDirectoryType.CUSTOM, newValue, typeProperty, dirProperty, isolationProperty);
-                if (finalInheritButton != null) {
-                    updateInheritanceButton(finalInheritButton, false);
-                }
             } finally {
                 updating[0] = false;
             }
         });
-
-        if (finalInheritButton != null) {
-            finalInheritButton.addEventFilter(MouseEvent.MOUSE_CLICKED, event -> {
-                GameSetting setting = currentSetting.get();
-                InheritableProperty<GameDirectoryType> typeProperty = activeTypeProperty.get();
-                InheritableProperty<String> dirProperty = activeDirProperty.get();
-                SettingProperty<Boolean> isolationProperty = activeIsolationProperty.get();
-                if (setting == null || typeProperty == null || dirProperty == null || updating[0]) {
-                    return;
-                }
-
-                updating[0] = true;
-                try {
-                    if (isGameDirectoryInherited(typeProperty, dirProperty, isolationProperty)) {
-                        applyGameDirectorySelection(
-                                getEffectiveGameDirectoryType(setting),
-                                getEffectiveValue(setting, GameSetting::runningDirProperty),
-                                typeProperty,
-                                dirProperty,
-                                isolationProperty);
-                    } else {
-                        typeProperty.setValue(null);
-                        dirProperty.setValue(null);
-                        if (isolationProperty != null) {
-                            isolationProperty.setValue(false);
-                        }
-                    }
-                } finally {
-                    updating[0] = false;
-                }
-                refresh.invalidated(setting);
-                event.consume();
-            });
-        }
 
         currentSetting.addListener((observable, oldValue, newValue) -> {
             if (oldValue != null) {
@@ -1295,15 +1245,6 @@ public final class GameSettingPage<S extends GameSetting> extends StackPane
             }
             refresh.invalidated(setting);
         }
-    }
-
-    private boolean isGameDirectoryInherited(
-            InheritableProperty<GameDirectoryType> typeProperty,
-            InheritableProperty<String> dirProperty,
-            @Nullable SettingProperty<Boolean> isolationProperty) {
-        return typeProperty.getValue() == null
-                && dirProperty.getValue() == null
-                && (isolationProperty == null || !Boolean.TRUE.equals(isolationProperty.getValue()));
     }
 
     private void applyGameDirectorySelection(
