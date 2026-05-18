@@ -157,7 +157,7 @@ public final class ModpackFileSelectionPage extends BorderPane implements Wizard
         graphic.getChildren().add(checkBox);
 
         {
-            Label text = new Label(StringUtils.substringAfter(basePath, '/'));
+            Label text = new Label(level == 0 ? version : StringUtils.substringAfter(basePath, '/'));
             text.setMouseTransparent(true);
             graphic.getChildren().add(text);
         }
