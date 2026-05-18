@@ -22,11 +22,11 @@ import com.jfoenix.controls.JFXListView;
 import com.jfoenix.controls.JFXRadioButton;
 import javafx.beans.property.ReadOnlyObjectProperty;
 import javafx.beans.property.ReadOnlyObjectWrapper;
-import javafx.event.ActionEvent;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Cursor;
 import javafx.scene.control.ListCell;
+import javafx.scene.control.ToggleGroup;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
@@ -75,6 +75,9 @@ public final class GlobalGameSettingListPage extends StackPane implements Decora
 
     /// The global setting list view.
     private final JFXListView<GameSetting.Global> listView = new JFXListView<>();
+
+    /// The selected setting radio group.
+    private final ToggleGroup selectedGroup = new ToggleGroup();
 
     /// Creates the global game setting list page.
     public GlobalGameSettingListPage(
@@ -163,15 +166,9 @@ public final class GlobalGameSettingListPage extends StackPane implements Decora
             root.setCursor(Cursor.HAND);
             this.graphic = new RipplerContainer(root);
 
-            this.selectedButton = new JFXRadioButton() {
-                @Override
-                public void fire() {
-                    if (!isDisable() && !isSelected()) {
-                        fireEvent(new ActionEvent());
-                        selectCurrentItem();
-                    }
-                }
-            };
+            this.selectedButton = new JFXRadioButton();
+            selectedButton.setToggleGroup(selectedGroup);
+            selectedButton.setOnAction(event -> selectCurrentItem());
             root.setLeft(selectedButton);
             BorderPane.setAlignment(selectedButton, Pos.CENTER);
 
@@ -194,7 +191,11 @@ public final class GlobalGameSettingListPage extends StackPane implements Decora
             right.getChildren().add(editButton);
             root.setRight(right);
 
-            FXUtils.onClicked(graphic, this::selectCurrentItem);
+            FXUtils.onClicked(graphic, () -> {
+                if (!selectedButton.isSelected()) {
+                    selectedButton.fire();
+                }
+            });
         }
 
         @Override
