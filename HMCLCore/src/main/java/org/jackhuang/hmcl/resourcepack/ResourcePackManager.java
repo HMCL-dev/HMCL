@@ -427,18 +427,18 @@ public final class ResourcePackManager extends LocalAddonManager<ResourcePackFil
         return modified;
     }
 
-    public boolean isEnabled(ResourcePackFile resourcePack) {
-        Map<String, String> options = loadOptions();
-        List<String> optPacks = deserializePackList(options.get("resourcePacks"));
-        List<String> optIncompatiblePacks = deserializePackList(options.get("incompatibleResourcePacks"));
-        return isEnabled(resourcePack, optPacks, optIncompatiblePacks);
-    }
-
     private boolean isEnabled(ResourcePackFile pack, List<String> optPacks, List<String> optIncompatiblePacks) {
         if (pack.manager != this) return false;
         String packIdOld = pack.getFileNameWithExtension();
         if (!containsResourcePack(optPacks, packIdOld)) return false;
         return isIncompatible(pack) == containsResourcePack(optIncompatiblePacks, packIdOld);
+    }
+
+    public boolean isEnabled(ResourcePackFile resourcePack) {
+        Map<String, String> options = loadOptions();
+        List<String> optPacks = deserializePackList(options.get("resourcePacks"));
+        List<String> optIncompatiblePacks = deserializePackList(options.get("incompatibleResourcePacks"));
+        return isEnabled(resourcePack, optPacks, optIncompatiblePacks);
     }
 
     public Stream<Pair<ResourcePackFile, Boolean>> arePacksEnabled(Stream<ResourcePackFile> resourcePacks) {
