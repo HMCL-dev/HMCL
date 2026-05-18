@@ -1622,7 +1622,7 @@ public final class FXUtils {
         // 3. Constrain by parent ScrollPanes to handle clipping within the UI layout
         Node parent = root.getParent();
         while (parent != null) {
-            if (parent instanceof javafx.scene.control.ScrollPane) {
+            if (parent instanceof ScrollPane) {
                 Bounds spBounds = parent.localToScreen(parent.getBoundsInLocal());
                 if (spBounds != null) {
                     clipMinY = Math.max(clipMinY, spBounds.getMinY());
