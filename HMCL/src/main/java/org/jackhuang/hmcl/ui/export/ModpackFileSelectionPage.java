@@ -57,7 +57,7 @@ public final class ModpackFileSelectionPage extends BorderPane implements Wizard
     private final WizardController controller;
     private final String version;
     private final ModAdviser adviser;
-    private final CheckBoxTreeItem<String> rootNode;
+    private final ModpackFileTreeItem rootNode;
 
     public ModpackFileSelectionPage(WizardController controller, Profile profile, String version, ModAdviser adviser) {
         this.controller = controller;
@@ -86,7 +86,7 @@ public final class ModpackFileSelectionPage extends BorderPane implements Wizard
         this.setBottom(nextPane);
     }
 
-    private CheckBoxTreeItem<String> getTreeItem(Path file, String basePath, int level) {
+    private ModpackFileTreeItem getTreeItem(Path file, String basePath, int level) {
         if (Files.notExists(file))
             return null;
 
@@ -122,14 +122,14 @@ public final class ModpackFileSelectionPage extends BorderPane implements Wizard
                 return null;
         }
 
-        CheckBoxTreeItem<String> node = new CheckBoxTreeItem<>("");
+        ModpackFileTreeItem node = new ModpackFileTreeItem(level == 0 ? version : StringUtils.substringAfterLast(basePath, '/'), basePath);
         if (state == ModAdviser.ModSuggestion.SUGGESTED)
             node.setSelected(true);
 
         if (isDirectory) {
             try (var stream = Files.list(file)) {
                 stream.sorted(FileUtils.dirFirstComparator).forEach(it -> {
-                    CheckBoxTreeItem<String> subNode = getTreeItem(it, basePath + "/" + FileUtils.getName(it), level + 1);
+                    ModpackFileTreeItem subNode = getTreeItem(it, basePath + "/" + FileUtils.getName(it), level + 1);
                     if (subNode != null) {
                         node.setSelected(subNode.isSelected() || node.isSelected());
                         if (!subNode.isSelected()) {
@@ -150,38 +150,17 @@ public final class ModpackFileSelectionPage extends BorderPane implements Wizard
             }
         }
 
-        HBox graphic = new HBox();
-        JFXCheckBox checkBox = new JFXCheckBox();
-        checkBox.selectedProperty().bindBidirectional(node.selectedProperty());
-        checkBox.indeterminateProperty().bindBidirectional(node.indeterminateProperty());
-        graphic.getChildren().add(checkBox);
-
-        {
-            Label text = new Label(level == 0 ? version : StringUtils.substringAfter(basePath, '/'));
-            text.setMouseTransparent(true);
-            graphic.getChildren().add(text);
-        }
-        if (TRANSLATION.containsKey(basePath)) {
-            Label comment = new Label(TRANSLATION.get(basePath));
-            comment.setStyle("-fx-text-fill: -monet-on-surface-variant;");
-            comment.setMouseTransparent(true);
-            graphic.getChildren().add(comment);
-        }
-        graphic.setPickOnBounds(false);
-        node.setExpanded("minecraft".equals(basePath));
-        node.setGraphic(graphic);
-
         return node;
     }
 
-    private void getFilesNeeded(CheckBoxTreeItem<String> node, String basePath, List<String> list) {
+    private void getFilesNeeded(ModpackFileTreeItem node, String basePath, List<String> list) {
         if (node == null) return;
         if (node.isSelected() || node.isIndeterminate()) {
             if (basePath.length() > "minecraft/".length())
                 list.add(StringUtils.substringAfter(basePath, "minecraft/"));
             for (TreeItem<String> child : node.getChildren()) {
-                if (child instanceof CheckBoxTreeItem) {
-                    getFilesNeeded(((CheckBoxTreeItem<String>) child), basePath + "/" + child.getValue(), list);
+                if (child instanceof ModpackFileTreeItem mChild) {
+                    getFilesNeeded(mChild, basePath + "/" + mChild.getFileName(), list);
                 }
             }
         }
@@ -221,4 +200,40 @@ public final class ModpackFileSelectionPage extends BorderPane implements Wizard
             pair("minecraft/blueprints", i18n("modpack.files.blueprints")),
             pair("minecraft/scripts", i18n("modpack.files.scripts"))
     );
+
+    private static final class ModpackFileTreeItem extends CheckBoxTreeItem<String> {
+
+        private final String fileName;
+
+        public ModpackFileTreeItem(String fileName, String basePath) {
+            this.fileName = fileName;
+
+            HBox graphic = new HBox();
+            JFXCheckBox checkBox = new JFXCheckBox();
+            checkBox.selectedProperty().bindBidirectional(this.selectedProperty());
+            checkBox.indeterminateProperty().bindBidirectional(this.indeterminateProperty());
+            graphic.getChildren().add(checkBox);
+
+            {
+                Label text = new Label(fileName);
+                text.setMouseTransparent(true);
+                graphic.getChildren().add(text);
+            }
+            if (TRANSLATION.containsKey(basePath)) {
+                Label comment = new Label(TRANSLATION.get(basePath));
+                comment.setStyle("-fx-text-fill: -monet-on-surface-variant;");
+                comment.setMouseTransparent(true);
+                graphic.getChildren().add(comment);
+            }
+            graphic.setPickOnBounds(false);
+            this.setExpanded("minecraft".equals(basePath));
+            this.setValue(""); // To disable the default display of text
+            this.setGraphic(graphic);
+        }
+
+        public String getFileName() {
+            return fileName;
+        }
+
+    }
 }
