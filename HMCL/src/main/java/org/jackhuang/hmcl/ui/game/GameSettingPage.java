@@ -522,11 +522,22 @@ public final class GameSettingPage<S extends GameSetting> extends StackPane
                     bindIndependentTextField(environmentVariablesPane, txtEnvironmentVariables, GameSetting::environmentVariablesProperty);
                 }
 
-                return List.of(gameArgsPane, environmentVariablesPane);
+                var processPriorityPane = createInheritableButton(
+                        GameSetting::processPriorityProperty,
+                        e -> i18n("settings.advanced.process_priority." + e.name().toLowerCase(Locale.ROOT)),
+                        e -> {
+                            String bundleKey = "settings.advanced.process_priority." + e.name().toLowerCase(Locale.ROOT) + ".desc";
+                            return I18n.hasKey(bundleKey) ? i18n(bundleKey) : "";
+                        },
+                        ProcessPriority.values()
+                );
+                processPriorityPane.setTitle(i18n("settings.advanced.process_priority"));
+
+                return List.of(gameArgsPane, environmentVariablesPane, processPriorityPane);
             });
             gameSettings.getContent().add(advancedLaunchSublist);
-            advancedLaunchSublist.setTitle("高级启动选项"); // TODO: i18n
-            advancedLaunchSublist.setSubtitle("游戏参数与环境变量"); // TODO: i18n
+            advancedLaunchSublist.setTitle("高级选项"); // TODO: i18n
+            advancedLaunchSublist.setSubtitle("游戏参数、环境变量与进程优先级"); // TODO: i18n
             advancedLaunchSublist.setHasSubtitle(true);
         }
 
@@ -709,24 +720,6 @@ public final class GameSettingPage<S extends GameSetting> extends StackPane
             useNativeOpenALPane.setTitle(i18n("settings.advanced.use_native_openal"));
             useNativeOpenALPane.setSubtitle(i18n("settings.advanced.linux_freebsd_only"));
         }
-
-        var advancedSettings = new ComponentList();
-        rootPane.getChildren().addAll(
-                ComponentList.createComponentListTitle(i18n("settings.advanced")),
-                advancedSettings
-        );
-
-        var processPriorityPane = createInheritableButton(
-                GameSetting::processPriorityProperty,
-                e -> i18n("settings.advanced.process_priority." + e.name().toLowerCase(Locale.ROOT)),
-                e -> {
-                    String bundleKey = "settings.advanced.process_priority." + e.name().toLowerCase(Locale.ROOT) + ".desc";
-                    return I18n.hasKey(bundleKey) ? i18n(bundleKey) : "";
-                },
-                ProcessPriority.values()
-        );
-        advancedSettings.getContent().add(processPriorityPane);
-        processPriorityPane.setTitle(i18n("settings.advanced.process_priority"));
 
         if (isGlobalSetting) {
             editorNodes.clear();
