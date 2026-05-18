@@ -21,6 +21,7 @@ import com.google.gson.annotations.SerializedName;
 import org.jackhuang.hmcl.game.GameRepository;
 import org.jackhuang.hmcl.mod.LocalAddonManager;
 import org.jackhuang.hmcl.mod.modinfo.PackMcMeta;
+import org.jackhuang.hmcl.util.Pair;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.gson.JsonSerializable;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
@@ -38,6 +39,7 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.*;
 import java.util.*;
+import java.util.stream.Stream;
 
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
@@ -426,13 +428,24 @@ public final class ResourcePackManager extends LocalAddonManager<ResourcePackFil
     }
 
     public boolean isEnabled(ResourcePackFile resourcePack) {
-        if (resourcePack.manager != this) return false;
         Map<String, String> options = loadOptions();
-        String packIdOld = resourcePack.getFileNameWithExtension();
-        List<String> resourcePacks = deserializePackList(options.get("resourcePacks"));
-        if (!containsResourcePack(resourcePacks, packIdOld)) return false;
-        List<String> incompatibleResourcePacks = deserializePackList(options.get("incompatibleResourcePacks"));
-        return isIncompatible(resourcePack) == containsResourcePack(incompatibleResourcePacks, packIdOld);
+        List<String> optPacks = deserializePackList(options.get("resourcePacks"));
+        List<String> optIncompatiblePacks = deserializePackList(options.get("incompatibleResourcePacks"));
+        return isEnabled(resourcePack, optPacks, optIncompatiblePacks);
+    }
+
+    private boolean isEnabled(ResourcePackFile pack, List<String> optPacks, List<String> optIncompatiblePacks) {
+        if (pack.manager != this) return false;
+        String packIdOld = pack.getFileNameWithExtension();
+        if (!containsResourcePack(optPacks, packIdOld)) return false;
+        return isIncompatible(pack) == containsResourcePack(optIncompatiblePacks, packIdOld);
+    }
+
+    public Stream<Pair<ResourcePackFile, Boolean>> arePacksEnabled(Stream<ResourcePackFile> resourcePacks) {
+        Map<String, String> options = loadOptions();
+        List<String> optPacks = deserializePackList(options.get("resourcePacks"));
+        List<String> optIncompatiblePacks = deserializePackList(options.get("incompatibleResourcePacks"));
+        return resourcePacks.map(pack -> Pair.pair(pack, isEnabled(pack, optPacks, optIncompatiblePacks)));
     }
 
     public ResourcePackFile.Compatibility getCompatibility(@NotNull ResourcePackFile resourcePack) {

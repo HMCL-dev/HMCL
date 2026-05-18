@@ -126,8 +126,7 @@ public final class ResourcePackListPage extends ListPageBase<ResourcePackListPag
             try {
                 if (!ResourcePackManager.isMcVersionSupported(resourcePackManager.getMinecraftVersion())) return null;
                 resourcePackManager.refresh();
-                return resourcePackManager.getLocalFiles()
-                        .stream()
+                return resourcePackManager.arePacksEnabled(resourcePackManager.getLocalFiles().stream())
                         .map(ResourcePackInfoObject::new)
                         .toList();
             } finally {
@@ -446,9 +445,9 @@ public final class ResourcePackListPage extends ListPageBase<ResourcePackListPag
         private final BooleanProperty enabled;
         private WeakReference<Image> iconCache;
 
-        public ResourcePackInfoObject(ResourcePackFile file) {
-            this.file = file;
-            this.enabled = new SimpleBooleanProperty(this, "enabled", file.isEnabled());
+        public ResourcePackInfoObject(Pair<ResourcePackFile, Boolean> pair) {
+            this.file = pair.key();
+            this.enabled = new SimpleBooleanProperty(this, "enabled", pair.value());
         }
 
         public ResourcePackFile getFile() {
