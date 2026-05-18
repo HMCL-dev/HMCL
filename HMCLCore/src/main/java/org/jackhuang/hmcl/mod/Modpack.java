@@ -121,10 +121,23 @@ public abstract class Modpack {
 
     public abstract Task<?> getInstallTask(DefaultDependencyManager dependencyManager, Path zipFile, String name, String iconUrl);
 
+    private static boolean match(List<String> l, String fileName) {
+        for (String s : l) {
+            if (s.startsWith("regex:")) {
+                if (fileName.matches(s.substring("regex:".length())))
+                    return true;
+            } else {
+                if (fileName.equals(s))
+                    return true;
+            }
+        }
+        return false;
+    }
+
     public static boolean acceptFile(String path, List<String> blackList, List<String> whiteList) {
         if (path.isEmpty())
             return true;
-        if (ModAdviser.match(blackList, path, false))
+        if (match(blackList, path))
             return false;
         if (whiteList == null || whiteList.isEmpty())
             return true;
