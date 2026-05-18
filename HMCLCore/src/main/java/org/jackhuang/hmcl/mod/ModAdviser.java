@@ -84,6 +84,7 @@ public interface ModAdviser {
             return ModAdviser.ModSuggestion.SUGGESTED;
     }
 
+    /// @param fileName "fileName/" for directories and "fileName" for files, regardless of the operating system
     static boolean match(List<String> l, String fileName, boolean isDirectory) {
         for (String s : l)
             if (isDirectory) {
