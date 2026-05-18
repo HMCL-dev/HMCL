@@ -19,18 +19,14 @@ package org.jackhuang.hmcl.ui.game;
 
 import com.jfoenix.controls.JFXButton;
 import com.jfoenix.controls.JFXComboBox;
-import com.jfoenix.controls.JFXListView;
-import com.jfoenix.controls.JFXRadioButton;
 import com.jfoenix.controls.JFXSlider;
 import com.jfoenix.controls.JFXTextField;
 import javafx.css.PseudoClass;
-import javafx.event.ActionEvent;
 import javafx.beans.InvalidationListener;
 import javafx.beans.property.*;
 import javafx.beans.value.ChangeListener;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
-import javafx.scene.Cursor;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.geometry.Rectangle2D;
@@ -38,7 +34,6 @@ import javafx.scene.Node;
 import javafx.scene.Scene;
 import javafx.scene.control.ContentDisplay;
 import javafx.scene.control.Label;
-import javafx.scene.control.ListCell;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.control.Tooltip;
 import javafx.scene.input.MouseEvent;
@@ -72,7 +67,6 @@ import org.jetbrains.annotations.UnknownNullability;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
-import java.util.Objects;
 import java.util.UUID;
 import java.util.function.Function;
 
@@ -109,12 +103,10 @@ public final class GameSettingPage<S extends GameSetting> extends StackPane
     private boolean updatingJavaSetting = false;
     private boolean updatingSelectedJava = false;
     private boolean updatingParentSetting = false;
-    private boolean showingGlobalSettingList = false;
 
     // GUI
     private final ScrollPane scrollPane;
     private final VBox rootPane;
-    private final List<Node> editorNodes = new ArrayList<>();
 
     private final @UnknownNullability ImagePickerItem iconPickerItem;
 
@@ -315,7 +307,7 @@ public final class GameSettingPage<S extends GameSetting> extends StackPane
                 gameDirSublist.setHasSubtitle(true);
                 {
                     var gameDirItem = new RadioChoiceList<GameDirectoryType>();
-                    var gameDirCustomOption = new RadioChoiceList.FileChoice<GameDirectoryType>(i18n("settings.custom"), GameDirectoryType.CUSTOM)
+                    var gameDirCustomOption = new RadioChoiceList.FileChoice<>(i18n("settings.custom"), GameDirectoryType.CUSTOM)
                             .setChooserTitle(i18n("settings.game.working_directory.choose"))
                             .setSelectionMode(FileSelector.SelectionMode.DIRECTORY);
 
@@ -721,10 +713,6 @@ public final class GameSettingPage<S extends GameSetting> extends StackPane
             useNativeOpenALPane.setSubtitle(i18n("settings.advanced.linux_freebsd_only"));
         }
 
-        if (isGlobalSetting) {
-            editorNodes.clear();
-            editorNodes.addAll(rootPane.getChildren());
-        }
     }
 
     // region Helper Methods for UI
@@ -737,165 +725,19 @@ public final class GameSettingPage<S extends GameSetting> extends StackPane
     private void createGlobalSettingListButton(ComponentList list) {
         var listButton = LineButton.createNavigationButton();
         listButton.setTitle("管理所有全局游戏设置"); // TODO: i18n
-        listButton.setOnAction(event -> showGlobalSettingList());
+        listButton.setOnAction(event -> Controllers.navigateForward(new GlobalGameSettingListPage(
+                this::getCurrentGlobalSetting,
+                this::selectGlobalSetting,
+                setting -> {
+                    selectGlobalSetting(setting);
+                    Controllers.navigate(this);
+                })));
         list.getContent().add(listButton);
     }
 
-    private void showGlobalSettingEditor() {
-        showingGlobalSettingList = false;
-        getChildren().setAll(scrollPane);
-        scrollPane.setContent(rootPane);
-        rootPane.getChildren().setAll(editorNodes);
-    }
-
-    private void showGlobalSettingList() {
-        showingGlobalSettingList = true;
-
-        StackPane pane = new StackPane();
-        pane.setPadding(new Insets(10));
-        pane.getStyleClass().addAll("notice-pane");
-
-        ComponentList root = new ComponentList();
-        root.getStyleClass().add("no-padding");
-
-        HBox toolbar = new HBox();
-        toolbar.setAlignment(Pos.CENTER_LEFT);
-        toolbar.setPickOnBounds(false);
-        toolbar.getChildren().setAll(ToolbarListPageSkin.createToolbarButton2(
-                "新建全局游戏设置", // TODO: i18n
-                SVG.ADD,
-                this::createGlobalSetting));
-        root.getContent().add(toolbar);
-
-        JFXListView<GameSetting.Global> listView = new JFXListView<>();
-        listView.setPadding(Insets.EMPTY);
-        listView.setItems(FXCollections.observableArrayList(config().getGameSettings()));
-        listView.setCellFactory(ignored -> new GlobalSettingListCell());
-        listView.getStyleClass().add("no-horizontal-scrollbar");
-
-        SpinnerPane center = new SpinnerPane();
-        ComponentList.setVgrow(center, Priority.ALWAYS);
-        center.setContent(listView);
-        root.getContent().add(center);
-
-        pane.getChildren().setAll(root);
-        getChildren().setAll(pane);
-    }
-
-    private static String getGlobalSettingDisplayName(GameSetting.Global setting) {
-        return StringUtils.isBlank(setting.nameProperty().getValue())
-                ? setting.idProperty().getValue().toString()
-                : setting.nameProperty().getValue();
-    }
-
-    private void createGlobalSetting() {
-        Controllers.prompt("新建全局游戏设置", (name, handler) -> { // TODO: i18n
-            if (StringUtils.isBlank(name)) {
-                handler.reject(i18n("input.not_empty"));
-                return;
-            }
-
-            GameSetting.Global setting = new GameSetting.Global();
-            setting.nameProperty().setValue(name.trim());
-            config().getGameSettings().add(setting);
-            selectGlobalSetting(setting);
-            if (showingGlobalSettingList) {
-                showGlobalSettingEditor();
-            }
-            handler.resolve();
-        }, "新设置", new RequiredValidator()); // TODO: i18n
-    }
-
-    /// List cell for global game settings, matching the instance list row layout.
-    private final class GlobalSettingListCell extends ListCell<GameSetting.Global> {
-        /// The reusable row graphic.
-        private final RipplerContainer graphic;
-
-        /// The selected-state radio button.
-        private final JFXRadioButton selectedButton;
-
-        /// The row text.
-        private final TwoLineListItem content;
-
-        /// Creates a global setting list cell.
-        private GlobalSettingListCell() {
-            BorderPane root = new BorderPane();
-            root.getStyleClass().add("md-list-cell");
-            root.setPadding(new Insets(8, 8, 8, 0));
-            root.setCursor(Cursor.HAND);
-            this.graphic = new RipplerContainer(root);
-
-            this.selectedButton = new JFXRadioButton() {
-                @Override
-                public void fire() {
-                    if (!isDisable() && !isSelected()) {
-                        fireEvent(new ActionEvent());
-                        selectCurrentItem();
-                    }
-                }
-            };
-            root.setLeft(selectedButton);
-            BorderPane.setAlignment(selectedButton, Pos.CENTER);
-
-            HBox center = new HBox();
-            center.setMouseTransparent(true);
-            center.setPrefWidth(Region.USE_PREF_SIZE);
-            center.setAlignment(Pos.CENTER_LEFT);
-
-            this.content = new TwoLineListItem();
-            BorderPane.setAlignment(content, Pos.CENTER);
-            center.getChildren().setAll(content);
-            root.setCenter(center);
-
-            HBox right = new HBox();
-            right.setAlignment(Pos.CENTER_RIGHT);
-
-            JFXButton editButton = FXUtils.newToggleButton4(SVG.EDIT, 20);
-            editButton.setOnAction(event -> editCurrentItem());
-            FXUtils.installFastTooltip(editButton, "编辑全局游戏设置"); // TODO: i18n
-            right.getChildren().add(editButton);
-            root.setRight(right);
-
-            FXUtils.onClicked(graphic, this::selectCurrentItem);
-        }
-
-        @Override
-        protected void updateItem(@Nullable GameSetting.Global item, boolean empty) {
-            super.updateItem(item, empty);
-
-            if (empty || item == null) {
-                setGraphic(null);
-                return;
-            }
-
-            setGraphic(graphic);
-            content.setTitle(getGlobalSettingDisplayName(item));
-            selectedButton.setSelected(Objects.equals(currentSetting.get(), item));
-        }
-
-        /// Selects the item represented by this cell.
-        private void selectCurrentItem() {
-            GameSetting.Global item = getItem();
-            if (item == null) {
-                return;
-            }
-
-            selectGlobalSetting(item);
-            if (getListView() != null) {
-                getListView().refresh();
-            }
-        }
-
-        /// Opens the editor for the item represented by this cell.
-        private void editCurrentItem() {
-            GameSetting.Global item = getItem();
-            if (item == null) {
-                return;
-            }
-
-            selectGlobalSetting(item);
-            showGlobalSettingEditor();
-        }
+    private @Nullable GameSetting.Global getCurrentGlobalSetting() {
+        GameSetting setting = currentSetting.get();
+        return setting instanceof GameSetting.Global global ? global : null;
     }
 
     private void bindInstanceParentSetting(LineSelectButton<GameSetting.Global> button) {
