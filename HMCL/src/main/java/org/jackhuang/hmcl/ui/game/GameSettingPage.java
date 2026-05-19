@@ -674,11 +674,6 @@ public final class GameSettingPage<S extends GameSetting> extends StackPane
             graphicsSettings.getContent().add(vulkanRendererPane);
             vulkanRendererPane.setTitle("Vulkan 渲染器/驱动"); // TODO: i18n
 
-            FXUtils.onChangeAndOperate(graphicsBackendPane.valueProperty(), backend -> {
-                GraphicsAPI effectiveBackend = backend != null ? backend : GraphicsAPI.DEFAULT;
-                openGLRendererPane.setDisable(effectiveBackend != GraphicsAPI.OPENGL);
-                vulkanRendererPane.setDisable(effectiveBackend != GraphicsAPI.VULKAN);
-            });
         }
 
         var nativeLibrarySettings = new ComponentList();
