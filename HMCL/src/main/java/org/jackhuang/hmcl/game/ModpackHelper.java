@@ -55,6 +55,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Stream;
 
 import static org.jackhuang.hmcl.util.Lang.mapOf;
@@ -191,7 +192,7 @@ public final class ModpackHelper {
                 });
     }
 
-    public static Task<?> getInstallTask(Profile profile, Path zipFile, String name, Modpack modpack, String iconUrl) {
+    public static Task<?> getInstallTask(Profile profile, Path zipFile, String name, Modpack modpack, String iconUrl, Set<? extends ModpackFile> selectedFiles) {
         profile.getRepository().markVersionAsModpack(name);
 
         ExceptionalRunnable<?> success = () -> {
@@ -211,17 +212,17 @@ public final class ModpackHelper {
         };
 
         if (modpack.getManifest() instanceof MultiMCInstanceConfiguration)
-            return modpack.getInstallTask(profile.getDependency(), zipFile, name, iconUrl)
+            return modpack.getInstallTask(profile.getDependency(), zipFile, name, iconUrl, selectedFiles)
                     .whenComplete(Schedulers.defaultScheduler(), success, failure)
                     .thenComposeAsync(createMultiMCPostInstallTask(profile, (MultiMCInstanceConfiguration) modpack.getManifest(), name))
                     .withStagesHints(new Task.StagesHint("hmcl.modpack"), new Task.StagesHint("hmcl.modpack.download", List.of("hmcl.install.assets", "hmcl.install.libraries")));
         else if (modpack.getManifest() instanceof McbbsModpackManifest)
-            return modpack.getInstallTask(profile.getDependency(), zipFile, name, iconUrl)
+            return modpack.getInstallTask(profile.getDependency(), zipFile, name, iconUrl, selectedFiles)
                     .whenComplete(Schedulers.defaultScheduler(), success, failure)
                     .thenComposeAsync(createMcbbsPostInstallTask(profile, (McbbsModpackManifest) modpack.getManifest(), name))
                     .withStagesHints(new Task.StagesHint("hmcl.modpack"), new Task.StagesHint("hmcl.modpack.download", List.of("hmcl.install.assets", "hmcl.install.libraries")));
         else
-            return modpack.getInstallTask(profile.getDependency(), zipFile, name, iconUrl)
+            return modpack.getInstallTask(profile.getDependency(), zipFile, name, iconUrl, selectedFiles)
                     .whenComplete(Schedulers.javafx(), success, failure)
                     .withStagesHints(new Task.StagesHint("hmcl.modpack"), new Task.StagesHint("hmcl.modpack.download", List.of("hmcl.install.assets", "hmcl.install.libraries")));
     }
@@ -237,18 +238,19 @@ public final class ModpackHelper {
         }
     }
 
-    public static Task<?> getUpdateTask(Profile profile, Path zipFile, Charset charset, String name, ModpackConfiguration<?> configuration) throws UnsupportedModpackException, ManuallyCreatedModpackException, MismatchedModpackTypeException {
+    public static Task<?> getUpdateTask(Profile profile, Path zipFile, Charset charset, String name, ModpackConfiguration<?> configuration, Set<? extends ModpackFile> selectedFiles) throws UnsupportedModpackException, ManuallyCreatedModpackException, MismatchedModpackTypeException {
         Modpack modpack = ModpackHelper.readModpackManifest(zipFile, charset);
         ModpackProvider provider = getProviderByType(configuration.getType());
         if (provider == null) {
             throw new UnsupportedModpackException();
         }
+        Task<?> updateTask = provider.createUpdateTask(profile.getDependency(), name, zipFile, modpack, selectedFiles);
         if (modpack.getManifest() instanceof MultiMCInstanceConfiguration)
-            return provider.createUpdateTask(profile.getDependency(), name, zipFile, modpack)
+            return updateTask
                     .thenComposeAsync(() -> createMultiMCPostUpdateTask(profile, (MultiMCInstanceConfiguration) modpack.getManifest(), name))
                     .thenComposeAsync(profile.getRepository().refreshVersionsAsync());
         else
-            return provider.createUpdateTask(profile.getDependency(), name, zipFile, modpack)
+            return updateTask
                     .thenComposeAsync(profile.getRepository().refreshVersionsAsync());
     }
 

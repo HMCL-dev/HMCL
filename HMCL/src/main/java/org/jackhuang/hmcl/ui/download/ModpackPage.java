@@ -22,6 +22,7 @@ import com.jfoenix.controls.JFXTextField;
 import javafx.beans.property.StringProperty;
 import javafx.geometry.Pos;
 import javafx.scene.layout.BorderPane;
+import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import org.jackhuang.hmcl.setting.Profile;
 import org.jackhuang.hmcl.ui.FXUtils;
@@ -33,7 +34,6 @@ import org.jackhuang.hmcl.ui.wizard.WizardController;
 import org.jackhuang.hmcl.ui.wizard.WizardPage;
 import org.jackhuang.hmcl.util.SettingsMap;
 
-import static javafx.beans.binding.Bindings.createBooleanBinding;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 public abstract class ModpackPage extends SpinnerPane implements WizardPage {
@@ -47,6 +47,7 @@ public abstract class ModpackPage extends SpinnerPane implements WizardPage {
     protected final JFXTextField txtModpackName;
     protected final JFXButton btnInstall;
     protected final JFXButton btnDescription;
+    protected final JFXButton btnOptionalFiles;
 
     protected ModpackPage(WizardController controller) {
         this.controller = controller;
@@ -64,7 +65,6 @@ public abstract class ModpackPage extends SpinnerPane implements WizardPage {
                 txtModpackName = new JFXTextField();
                 txtModpackName.setPrefWidth(300);
                 FXUtils.setLimitHeight(archiveNamePane, 75);
-                // BorderPane.setMargin(txtModpackName, new Insets(0, 0, 8, 32));
                 BorderPane.setAlignment(txtModpackName, Pos.CENTER_RIGHT);
                 archiveNamePane.setRight(txtModpackName);
             }
@@ -93,18 +93,30 @@ public abstract class ModpackPage extends SpinnerPane implements WizardPage {
                 btnDescription.setOnAction(e -> onDescribe());
                 descriptionPane.setLeft(btnDescription);
 
+                var installHBox = new HBox(8);
+                btnOptionalFiles = FXUtils.newRaisedButton(i18n("modpack.optional_files"));
+                installHBox.getChildren().add(btnOptionalFiles);
+
                 btnInstall = FXUtils.newRaisedButton(i18n("button.install"));
                 btnInstall.setOnAction(e -> onInstall());
-                btnInstall.disableProperty().bind(createBooleanBinding(() -> !txtModpackName.validate(), txtModpackName.textProperty()));
-                descriptionPane.setRight(btnInstall);
+                installHBox.getChildren().add(btnInstall);
+
+                descriptionPane.setRight(installHBox);
             }
 
             componentList.getContent().setAll(
                     archiveNamePane, modpackNamePane, versionPane, authorPane, descriptionPane);
         }
-
         borderPane.getChildren().setAll(componentList);
-        this.setContent(borderPane);
+        setContent(borderPane);
+    }
+
+    public void showSpinner() {
+        super.showSpinner();
+    }
+
+    public void hideSpinner() {
+        super.hideSpinner();
     }
 
     protected abstract void onInstall();

@@ -40,6 +40,7 @@ public final class RemoteModpackPage extends ModpackPage {
 
     public RemoteModpackPage(WizardController controller) {
         super(controller);
+        btnOptionalFiles.setVisible(false);
 
         manifest = controller.getSettings().get(MODPACK_SERVER_MANIFEST);
         if (manifest == null)

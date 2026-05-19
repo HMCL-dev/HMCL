@@ -20,10 +20,7 @@ package org.jackhuang.hmcl.game;
 import com.google.gson.JsonParseException;
 import kala.compress.archivers.zip.ZipArchiveReader;
 import org.jackhuang.hmcl.download.DefaultDependencyManager;
-import org.jackhuang.hmcl.mod.MismatchedModpackTypeException;
-import org.jackhuang.hmcl.mod.Modpack;
-import org.jackhuang.hmcl.mod.ModpackProvider;
-import org.jackhuang.hmcl.mod.ModpackUpdateTask;
+import org.jackhuang.hmcl.mod.*;
 import org.jackhuang.hmcl.setting.Profile;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.util.StringUtils;
@@ -33,6 +30,7 @@ import org.jackhuang.hmcl.util.io.CompressingUtils;
 import java.io.IOException;
 import java.nio.charset.Charset;
 import java.nio.file.Path;
+import java.util.Set;
 
 public final class HMCLModpackProvider implements ModpackProvider {
     public static final HMCLModpackProvider INSTANCE = new HMCLModpackProvider();
@@ -48,7 +46,7 @@ public final class HMCLModpackProvider implements ModpackProvider {
     }
 
     @Override
-    public Task<?> createUpdateTask(DefaultDependencyManager dependencyManager, String name, Path zipFile, Modpack modpack) throws MismatchedModpackTypeException {
+    public Task<?> createUpdateTask(DefaultDependencyManager dependencyManager, String name, Path zipFile, Modpack modpack, Set<? extends ModpackFile> selectedFiles) throws MismatchedModpackTypeException {
         if (!(modpack.getManifest() instanceof HMCLModpackManifest))
             throw new MismatchedModpackTypeException(getName(), modpack.getManifest().getProvider().getName());
 
@@ -79,7 +77,7 @@ public final class HMCLModpackProvider implements ModpackProvider {
 
     private final static class HMCLModpack extends Modpack {
         @Override
-        public Task<?> getInstallTask(DefaultDependencyManager dependencyManager, Path zipFile, String name, String iconUrl) {
+        public Task<?> getInstallTask(DefaultDependencyManager dependencyManager, Path zipFile, String name, String iconUrl, Set<? extends ModpackFile> selectedFiles) {
             return new HMCLModpackInstallTask(((HMCLGameRepository) dependencyManager.getGameRepository()).getProfile(), zipFile, this, name);
         }
     }

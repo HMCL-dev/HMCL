@@ -19,19 +19,101 @@ package org.jackhuang.hmcl.mod.curse;
 
 import com.google.gson.JsonParseException;
 import com.google.gson.annotations.SerializedName;
+import org.jackhuang.hmcl.mod.ModpackFile;
+import org.jackhuang.hmcl.mod.RemoteMod;
+import org.jackhuang.hmcl.util.Immutable;
 import org.jackhuang.hmcl.util.gson.JsonSerializable;
 import org.jackhuang.hmcl.util.gson.Validation;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Objects;
+import java.util.Optional;
 
-/// @author huangyuhui
+/**
+ *
+ * @author huangyuhui
+ */
+@Immutable
 @JsonSerializable
-public record CurseManifestFile(@SerializedName("projectID") int projectID,
-                                @SerializedName("fileID") int fileID,
-                                @SerializedName("fileName") String fileName,
-                                @SerializedName("url") String url,
-                                @SerializedName("required") boolean required) implements Validation {
+public final class CurseManifestFile implements Validation, ModpackFile {
+
+    @SerializedName("projectID")
+    private final int projectID;
+
+    @SerializedName("fileID")
+    private final int fileID;
+
+    @SerializedName("fileName")
+    private final String fileName;
+
+    @SerializedName("url")
+    private final String url;
+
+    @SerializedName("required")
+    private final boolean required;
+
+    @Nullable
+    private transient final RemoteMod mod;
+
+    public CurseManifestFile() {
+        this(0, 0, null, null, true, null);
+    }
+
+    public CurseManifestFile(int projectID, int fileID, String fileName, String url, boolean required, RemoteMod mod) {
+        this.projectID = projectID;
+        this.fileID = fileID;
+        this.fileName = fileName;
+        this.url = url;
+        this.required = required;
+        this.mod = mod;
+    }
+
+    public CurseManifestFile(int projectID, int fileID, String fileName, String url, boolean required) {
+        this(projectID, fileID, fileName, url, required, null);
+    }
+
+    public int getProjectID() {
+        return projectID;
+    }
+
+    public int getFileID() {
+        return fileID;
+    }
+
+    @Override
+    public String getFileName() {
+        return fileName;
+    }
+
+    @Override
+    public boolean isOptional() {
+        return !isRequired();
+    }
+
+    @Override
+    public String getPath() {
+        return "mods/" + getFileName();
+    }
+
+    public boolean isRequired() {
+        return required;
+    }
+
+    public int projectID() {
+        return projectID;
+    }
+
+    public int fileID() {
+        return fileID;
+    }
+
+    public String fileName() {
+        return fileName;
+    }
+
+    public boolean required() {
+        return required;
+    }
 
     @Override
     public void validate() throws JsonParseException {
@@ -39,7 +121,6 @@ public record CurseManifestFile(@SerializedName("projectID") int projectID,
             throw new JsonParseException("Missing Project ID or File ID.");
     }
 
-    @Override
     @Nullable
     public String url() {
         if (url == null) {
@@ -51,12 +132,27 @@ public record CurseManifestFile(@SerializedName("projectID") int projectID,
         }
     }
 
+    @Nullable
+    public String getUrl() {
+        return url();
+    }
+
+    @SuppressWarnings("OptionalAssignedToNull")
+    @Override
+    public @Nullable Optional<RemoteMod> getMod() {
+        return mod == null ? null : Optional.of(mod);
+    }
+
     public CurseManifestFile withFileName(String fileName) {
-        return new CurseManifestFile(projectID, fileID, fileName, url, required);
+        return new CurseManifestFile(projectID, fileID, fileName, url, required, mod);
     }
 
     public CurseManifestFile withURL(String url) {
-        return new CurseManifestFile(projectID, fileID, fileName, url, required);
+        return new CurseManifestFile(projectID, fileID, fileName, url, required, mod);
+    }
+
+    public CurseManifestFile withMod(@Nullable RemoteMod mod) {
+        return new CurseManifestFile(projectID, fileID, fileName, url, required, mod);
     }
 
     @Override

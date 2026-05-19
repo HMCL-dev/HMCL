@@ -66,7 +66,7 @@ public final class CurseInstallTask extends Task<Void> {
      * @param manifest          The manifest content of given CurseForge modpack.
      * @param name              the new version name
      */
-    public CurseInstallTask(DefaultDependencyManager dependencyManager, Path zipFile, Modpack modpack, CurseManifest manifest, String name, String iconUrl) {
+    public CurseInstallTask(DefaultDependencyManager dependencyManager, Path zipFile, Modpack modpack, CurseManifest manifest, String name, String iconUrl, Set<? extends ModpackFile> selectedFiles) {
         this.dependencyManager = dependencyManager;
         this.zipFile = zipFile;
         this.modpack = modpack;
@@ -123,7 +123,7 @@ public final class CurseInstallTask extends Task<Void> {
                 dependents.add(downloadIconTask = new CacheFileTask(dependencyManager.getDownloadProvider().injectURLWithCandidates(iconUrl)));
             }
         }
-        dependencies.add(new CurseCompletionTask(dependencyManager, name, manifest));
+        dependencies.add(new CurseCompletionTask(dependencyManager, name, manifest, selectedFiles));
     }
 
     @Override

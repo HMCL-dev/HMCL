@@ -23,6 +23,7 @@ import org.jackhuang.hmcl.download.DownloadProvider;
 import org.jackhuang.hmcl.game.DefaultGameRepository;
 import org.jackhuang.hmcl.mod.ModManager;
 import org.jackhuang.hmcl.mod.ModpackCompletionException;
+import org.jackhuang.hmcl.mod.ModpackFile;
 import org.jackhuang.hmcl.mod.RemoteMod;
 import org.jackhuang.hmcl.task.FileDownloadTask;
 import org.jackhuang.hmcl.task.Task;
@@ -34,7 +35,9 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
@@ -54,6 +57,7 @@ public final class CurseCompletionTask extends Task<Void> {
     private final ModManager modManager;
     private final String version;
     private CurseManifest manifest;
+    private Set<? extends ModpackFile> selectedFiles;
     private List<Task<?>> dependencies;
 
     private final AtomicBoolean allNameKnown = new AtomicBoolean(true);
@@ -67,7 +71,7 @@ public final class CurseCompletionTask extends Task<Void> {
      * @param version           the existent and physical version.
      */
     public CurseCompletionTask(DefaultDependencyManager dependencyManager, String version) {
-        this(dependencyManager, version, null);
+        this(dependencyManager, version, null, null);
     }
 
     /**
@@ -77,18 +81,29 @@ public final class CurseCompletionTask extends Task<Void> {
      * @param version           the existent and physical version.
      * @param manifest          the CurseForgeModpack manifest.
      */
-    public CurseCompletionTask(DefaultDependencyManager dependencyManager, String version, CurseManifest manifest) {
+    public CurseCompletionTask(DefaultDependencyManager dependencyManager, String version, CurseManifest manifest, Set<? extends ModpackFile> selectedFiles) {
         this.dependency = dependencyManager;
         this.repository = dependencyManager.getGameRepository();
         this.modManager = repository.getModManager(version);
         this.version = version;
         this.manifest = manifest;
+        this.selectedFiles = selectedFiles;
 
         if (manifest == null)
             try {
-                Path manifestFile = repository.getVersionRoot(version).resolve("manifest.json");
+                Path versionRoot = repository.getVersionRoot(version);
+                Path manifestFile = versionRoot.resolve("manifest.json");
                 if (Files.exists(manifestFile))
                     this.manifest = JsonUtils.fromJsonFile(manifestFile, CurseManifest.class);
+                Path filesFile = versionRoot.resolve("files.json");
+                if (this.manifest != null && Files.exists(filesFile)) {
+                    Set<String> files = new HashSet<>(JsonUtils.fromJsonFile(filesFile, JsonUtils.listTypeOf(String.class)));
+                    this.selectedFiles = this.manifest.getFiles().stream()
+                            .filter(f -> files.contains(f.getPath()))
+                            .collect(Collectors.toSet());
+                } else {
+                    this.selectedFiles = null;
+                }
             } catch (Exception e) {
                 LOG.warning("Unable to read CurseForge modpack manifest.json", e);
             }
@@ -138,6 +153,9 @@ public final class CurseCompletionTask extends Task<Void> {
                         })
                         .collect(Collectors.toList()));
         JsonUtils.writeToJsonFile(root.resolve("manifest.json"), newManifest);
+        if (selectedFiles != null) {
+            JsonUtils.writeToJsonFile(root.resolve("files.json"), selectedFiles.stream().map(ModpackFile::getPath).collect(Collectors.toList()));
+        }
 
         Path versionRoot = repository.getVersionRoot(modManager.getInstanceId());
         Path resourcePacksRoot = versionRoot.resolve("resourcepacks");
@@ -146,6 +164,7 @@ public final class CurseCompletionTask extends Task<Void> {
         dependencies = newManifest.files()
                 .stream().parallel()
                 .filter(f -> f.fileName() != null)
+                .filter(f -> selectedFiles == null || selectedFiles.contains(f))
                 .flatMap(f -> {
                     try {
                         Path path = guessFilePath(f, dependency.getDownloadProvider(), resourcePacksRoot, shaderPacksRoot);
