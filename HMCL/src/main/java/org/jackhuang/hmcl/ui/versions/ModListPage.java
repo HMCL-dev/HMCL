@@ -85,6 +85,36 @@ public final class ModListPage extends ListPageBase<ModListPageSkin.ModInfoObjec
         loadMods(modManager);
     }
 
+    public void filterEnabled() {
+        if (modManager == null) return;
+        List<ModListPageSkin.ModInfoObject> enabled = new ArrayList<>();
+        try {
+            for (LocalModFile mod : modManager.getMods()) {
+                if (mod.isActive()) {
+                    enabled.add(new ModListPageSkin.ModInfoObject(mod));
+                }
+            }
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+        getItems().setAll(enabled);
+    }
+
+    public void filterDisabled() {
+        if (modManager == null) return;
+        List<ModListPageSkin.ModInfoObject> disabled = new ArrayList<>();
+        try {
+            for (LocalModFile mod : modManager.getMods()) {
+                if (!mod.isActive()) {
+                    disabled.add(new ModListPageSkin.ModInfoObject(mod));
+                }
+            }
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+        getItems().setAll(disabled);
+    }
+
     @Override
     public void loadVersion(Profile profile, String id) {
         this.profile = profile;

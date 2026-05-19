@@ -143,6 +143,8 @@ final class ModListPageSkin extends SkinBase<ModListPage> {
             // Toolbar Normal
             toolbarNormal.getChildren().setAll(
                     createToolbarButton2(i18n("button.refresh"), SVG.REFRESH, skinnable::refresh),
+                    createToolbarButton2(i18n("mods.filter.enabled"), SVG.FILTER_ENABLED_MODS, skinnable::filterEnabled),
+                    createToolbarButton2(i18n("mods.filter.disabled"), SVG.FILTER_DISABLED_MODS, skinnable::filterDisabled),
                     createToolbarButton2(i18n("mods.add"), SVG.ADD, skinnable::add),
                     createToolbarButton2(i18n("button.reveal_dir"), SVG.FOLDER_OPEN, skinnable::openModFolder),
                     createToolbarButton2(i18n("mods.check_updates.button"), SVG.UPDATE, () ->
