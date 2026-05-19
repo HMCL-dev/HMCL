@@ -85,34 +85,34 @@ public final class ModListPage extends ListPageBase<ModListPageSkin.ModInfoObjec
         loadMods(modManager);
     }
 
-    public void filterEnabled() {
+    public void filterEnabledMods() {
         if (modManager == null) return;
-        List<ModListPageSkin.ModInfoObject> enabled = new ArrayList<>();
+        List<ModListPageSkin.ModInfoObject> enabledMods = new ArrayList<>();
         try {
             for (LocalModFile mod : modManager.getMods()) {
                 if (mod.isActive()) {
-                    enabled.add(new ModListPageSkin.ModInfoObject(mod));
+                    enabledMods.add(new ModListPageSkin.ModInfoObject(mod));
                 }
             }
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
-        getItems().setAll(enabled);
+        getItems().setAll(enabledMods);
     }
 
-    public void filterDisabled() {
+    public void filterDisabledMods() {
         if (modManager == null) return;
-        List<ModListPageSkin.ModInfoObject> disabled = new ArrayList<>();
+        List<ModListPageSkin.ModInfoObject> disabledMods = new ArrayList<>();
         try {
             for (LocalModFile mod : modManager.getMods()) {
                 if (!mod.isActive()) {
-                    disabled.add(new ModListPageSkin.ModInfoObject(mod));
+                    disabledMods.add(new ModListPageSkin.ModInfoObject(mod));
                 }
             }
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
-        getItems().setAll(disabled);
+        getItems().setAll(disabledMods);
     }
 
     @Override
