@@ -184,7 +184,7 @@ public final class LogWindow extends Stage {
             }
 
             btnAlwaysOnTop.setOnAction(e -> stage.setAlwaysOnTop(!stage.isAlwaysOnTop()));
-            btnAlwaysOnTop.getStyleClass().add("log-window-always-on-top-button");
+            btnAlwaysOnTop.getStyleClass().add("always-on-top-button");
 
             cboLines.getItems().setAll(500, 2000, 5000, 10000);
             cboLines.setValue(Log.getLogLines());
