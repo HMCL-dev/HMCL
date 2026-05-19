@@ -83,11 +83,14 @@ public abstract class LineComponent extends StackPane implements NoPaddingCompon
 
         this.titleLine = new HBox(4, titleLabel);
         titleLine.setAlignment(Pos.CENTER_LEFT);
+        titleLine.setPickOnBounds(false);
 
         this.titleContainer = new VBox(titleLine);
         titleContainer.getStyleClass().add("title-container");
         titleContainer.setAlignment(Pos.CENTER_LEFT);
         titleContainer.minWidthProperty().bind(titleLine.prefWidthProperty());
+        titleContainer.setMouseTransparent(true);
+        titleContainer.setPickOnBounds(false);
         HBox.setHgrow(titleContainer, Priority.ALWAYS);
 
         this.setNode(IDX_TITLE, titleContainer);
@@ -121,6 +124,7 @@ public abstract class LineComponent extends StackPane implements NoPaddingCompon
         if (node != null) {
             titleLine.getChildren().add(node);
         }
+        titleContainer.setMouseTransparent(node == null);
     }
 
     public void setLargeTitle(boolean largeTitle) {
