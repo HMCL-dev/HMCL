@@ -305,7 +305,8 @@ public final class GameSettingPage<S extends GameSetting> extends StackPane
             } else {
                 var gameDirSublist = new ComponentSublist();
                 basicSettings.getContent().add(gameDirSublist);
-                gameDirSublist.setTitle(i18n("settings.game.working_directory"));
+                gameDirSublist.setTitle("版本隔离"); // TODO: i18n
+                // gameDirSublist.setSubtitle("建议使用模组时选择“各实例独立”。改后需移动世界、模组等相关游戏文件"); // TODO: i18n
                 gameDirSublist.setHasSubtitle(true);
                 {
                     var gameDirItem = new RadioChoiceList<GameDirectoryType>();
@@ -1159,7 +1160,7 @@ public final class GameSettingPage<S extends GameSetting> extends StackPane
                 customOption.setPath(effectiveType == GameDirectoryType.CUSTOM
                         ? getEffectiveValue(setting, GameSetting::runningDirProperty)
                         : "");
-                sublist.setSubtitle(getEffectiveGameDirectorySubtitle());
+                sublist.setDescription(getEffectiveGameDirectorySubtitle());
                 choiceList.setDisable(isCurrentInstanceModpack());
             } finally {
                 updating[0] = false;

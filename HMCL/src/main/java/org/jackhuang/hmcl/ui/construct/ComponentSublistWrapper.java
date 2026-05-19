@@ -21,20 +21,12 @@ import javafx.animation.*;
 import javafx.application.Platform;
 import javafx.beans.InvalidationListener;
 import javafx.css.PseudoClass;
-import javafx.geometry.Insets;
-import javafx.geometry.Pos;
 import javafx.scene.Node;
-import javafx.scene.control.Label;
-import javafx.scene.control.OverrunStyle;
-import javafx.scene.input.MouseButton;
-import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.HBox;
-import javafx.scene.layout.Priority;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.scene.shape.Rectangle;
 import javafx.util.Duration;
-import org.jackhuang.hmcl.theme.Themes;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
 import org.jackhuang.hmcl.ui.animation.AnimationUtils;
@@ -55,105 +47,14 @@ final class ComponentSublistWrapper extends VBox implements NoPaddingComponent {
         expandIcon.getStyleClass().add("expand-icon");
         expandIcon.setMouseTransparent(true);
 
-        VBox labelVBox = new VBox();
-        labelVBox.setAlignment(Pos.CENTER_LEFT);
-
-        Node leftNode = sublist.getHeaderLeft();
-        if (leftNode == null) {
-            labelVBox.setPickOnBounds(true);
-
-            var firstLine = new HBox(4);
-            firstLine.setAlignment(Pos.CENTER_LEFT);
-            firstLine.setPickOnBounds(true);
-            labelVBox.getChildren().add(firstLine);
-
-            var titleLabel = new Label();
-            titleLabel.setMouseTransparent(true);
-            titleLabel.textProperty().bind(sublist.titleProperty());
-            titleLabel.getStyleClass().add("title-label");
-
-            InvalidationListener updateTitleLine = observable -> {
-                firstLine.getChildren().setAll(titleLabel);
-
-                Node titleTrailing = sublist.getTitleTrailing();
-                if (titleTrailing != null) {
-                    firstLine.getChildren().add(titleTrailing);
-                }
-
-                String tip = sublist.getTip();
-                if (!StringUtils.isBlank(tip)) {
-                    var tipContainer = new StackPane(SVG.INFO.createIcon(16));
-                    FXUtils.installFastTooltip(tipContainer, tip);
-                    firstLine.getChildren().add(tipContainer);
-                }
-            };
-            sublist.tipProperty().addListener(updateTitleLine);
-            sublist.titleTrailingProperty().addListener(updateTitleLine);
-            updateTitleLine.invalidated(null);
-
-            Label subtitleLabel = new Label();
-            subtitleLabel.setPickOnBounds(true);
-            subtitleLabel.getStyleClass().add("subtitle-label");
-            subtitleLabel.textFillProperty().bind(Themes.colorSchemeProperty().getOnSurfaceVariant());
-            InvalidationListener updateSubtitle = observable -> {
-                String subtitle = sublist.getSubtitle();
-                if (StringUtils.isBlank(subtitle)) {
-                    labelVBox.getChildren().remove(subtitleLabel);
-                } else {
-                    subtitleLabel.setText(subtitle);
-                    if (!labelVBox.getChildren().contains(subtitleLabel)) {
-                        labelVBox.getChildren().add(subtitleLabel);
-                    }
-                }
-            };
-            sublist.subtitleProperty().addListener(updateSubtitle);
-            updateSubtitle.invalidated(null);
-        } else {
-            labelVBox.setMouseTransparent(true);
-            labelVBox.getChildren().setAll(leftNode);
-        }
-
-        HBox header = new HBox();
-        header.setSpacing(12);
-        header.setPadding(new Insets(10, 16, 10, 16));
-        header.setAlignment(Pos.CENTER_LEFT);
-
-        Label descriptionLabel = new Label();
-        descriptionLabel.getStyleClass().add("trailing-label");
-        descriptionLabel.setTextOverrun(OverrunStyle.CENTER_ELLIPSIS);
-        descriptionLabel.setMouseTransparent(true);
-        descriptionLabel.textFillProperty().bind(Themes.colorSchemeProperty().getOnSurfaceVariant());
-
-        InvalidationListener updateHeaderLine = observable -> {
-            header.getChildren().setAll(labelVBox);
-            HBox.setHgrow(labelVBox, Priority.ALWAYS);
-
-            String description = sublist.getDescription();
-            if (!StringUtils.isBlank(description)) {
-                descriptionLabel.setText(description);
-                header.getChildren().add(descriptionLabel);
-            }
-
-            Node trailing = sublist.getTrailing();
-            if (trailing != null) {
-                header.getChildren().add(trailing);
-            }
-
-            header.getChildren().add(expandIcon);
-        };
-        sublist.descriptionProperty().addListener(updateHeaderLine);
-        sublist.trailingProperty().addListener(updateHeaderLine);
-        updateHeaderLine.invalidated(null);
-
-        RipplerContainer headerRippler = new RipplerContainer(header);
-        this.getChildren().add(headerRippler);
-
-        headerRippler.addEventHandler(MouseEvent.MOUSE_CLICKED, event -> {
-            if (event.getButton() != MouseButton.PRIMARY)
-                return;
-
-            event.consume();
-
+        HeaderButton header = new HeaderButton();
+        header.getStyleClass().add("options-sublist-header");
+        header.titleProperty().bind(sublist.titleProperty());
+        header.subtitleProperty().bind(sublist.subtitleProperty());
+        header.leadingProperty().bind(sublist.leadingProperty());
+        header.trailingTextProperty().bind(sublist.descriptionProperty());
+        header.setTrailingIcon(expandIcon);
+        header.setOnAction(event -> {
             if (expandAnimation != null && expandAnimation.getStatus() == Animation.Status.RUNNING) {
                 expandAnimation.stop();
             }
@@ -218,5 +119,57 @@ final class ComponentSublistWrapper extends VBox implements NoPaddingComponent {
                 }
             });
         });
+
+        Node headerLeft = sublist.getHeaderLeft();
+        if (headerLeft != null) {
+            header.setTitleContent(headerLeft);
+        }
+
+        InvalidationListener updateTitleTrailing = observable -> {
+            Node titleTrailing = sublist.getTitleTrailing();
+            String tip = sublist.getTip();
+
+            if (titleTrailing == null && StringUtils.isBlank(tip)) {
+                header.setTitleTrailing(null);
+                return;
+            }
+
+            HBox box = new HBox(4);
+            if (titleTrailing != null) {
+                box.getChildren().add(titleTrailing);
+            }
+            if (!StringUtils.isBlank(tip)) {
+                var tipContainer = new StackPane(SVG.INFO.createIcon(16));
+                FXUtils.installFastTooltip(tipContainer, tip);
+                box.getChildren().add(tipContainer);
+            }
+            header.setTitleTrailing(box);
+        };
+        sublist.tipProperty().addListener(updateTitleTrailing);
+        sublist.titleTrailingProperty().addListener(updateTitleTrailing);
+        updateTitleTrailing.invalidated(null);
+
+        InvalidationListener updateTrailing = observable -> header.setExtraTrailing(sublist.getTrailing());
+        sublist.trailingProperty().addListener(updateTrailing);
+        updateTrailing.invalidated(null);
+
+        this.getChildren().add(header);
+    }
+
+    private static final class HeaderButton extends LineButton {
+        private static final int EXTRA_TRAILING_INDEX = IDX_TRAILING + 1;
+
+        @Override
+        protected int getTrailingIconIndex() {
+            return IDX_TRAILING + 2;
+        }
+
+        private void setExtraTrailing(Node node) {
+            setNode(EXTRA_TRAILING_INDEX, node);
+        }
+
+        private void setTitleContent(Node node) {
+            setNode(IDX_TITLE, node);
+        }
     }
 }

@@ -122,12 +122,18 @@ public class ComponentSublist extends Control implements NoPaddingComponent {
         leadingProperty().set(leading);
     }
 
+    private final ObjectProperty<Node> headerLeft = new SimpleObjectProperty<>(this, "headerLeft");
+
+    public ObjectProperty<Node> headerLeftProperty() {
+        return headerLeft;
+    }
+
     public Node getHeaderLeft() {
-        return getLeading();
+        return headerLeftProperty().get();
     }
 
     public void setHeaderLeft(Node headerLeft) {
-        setLeading(headerLeft);
+        headerLeftProperty().set(headerLeft);
     }
 
     private final ObjectProperty<Node> trailing = new SimpleObjectProperty<>(this, "trailing");
