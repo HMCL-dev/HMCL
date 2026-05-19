@@ -49,7 +49,6 @@ final class ComponentSublistWrapper extends VBox implements NoPaddingComponent {
 
         HeaderButton header = new HeaderButton();
         header.getStyleClass().add("options-sublist-header");
-        FXUtils.setOverflowHidden(header);
         header.titleProperty().bind(sublist.titleProperty());
         header.subtitleProperty().bind(sublist.subtitleProperty());
         header.leadingProperty().bind(sublist.leadingProperty());

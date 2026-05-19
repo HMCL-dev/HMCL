@@ -36,6 +36,7 @@ public abstract class LineButtonBase extends LineComponent {
         this.ripplerContainer = new RipplerContainer(container);
         container.getChildren().addListener((ListChangeListener<Node>) change -> updateCursor());
         disabledProperty().addListener(observable -> updateCursor());
+        FXUtils.setOverflowHidden(this);
         FXUtils.onClicked(this, this::fire);
 
         this.getChildren().setAll(ripplerContainer);
