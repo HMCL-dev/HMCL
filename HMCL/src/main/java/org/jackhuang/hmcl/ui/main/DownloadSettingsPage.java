@@ -125,7 +125,7 @@ public class DownloadSettingsPage extends StackPane {
                     fileCommonLocationSublist.getContent().add(fileCommonLocation);
                     fileCommonLocationSublist.setTitle(i18n("launcher.cache_directory"));
                     fileCommonLocationSublist.setHasSubtitle(true);
-                    fileCommonLocationSublist.subtitleProperty().bind(
+                    fileCommonLocationSublist.descriptionProperty().bind(
                             Bindings.createObjectBinding(() -> Optional.ofNullable(Settings.instance().getCommonDirectory())
                                             .orElse(i18n("launcher.cache_directory.disabled")),
                                     config().commonDirectoryProperty(), config().commonDirTypeProperty()));

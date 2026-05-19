@@ -514,7 +514,7 @@ public final class VersionSettingsPage extends StackPane implements DecoratorPag
             lastVersionSetting.gameDirProperty().removeListener(gameDirListener);
 
             gameDirItem.selectedDataProperty().unbindBidirectional(lastVersionSetting.gameDirTypeProperty());
-            gameDirSublist.subtitleProperty().unbind();
+            gameDirSublist.descriptionProperty().unbind();
 
             enableSpecificSettings.removeListener(specificSettingsListener);
 
@@ -586,7 +586,7 @@ public final class VersionSettingsPage extends StackPane implements DecoratorPag
         versionSetting.javaVersionProperty().addListener(javaListener);
 
         gameDirItem.selectedDataProperty().bindBidirectional(versionSetting.gameDirTypeProperty());
-        gameDirSublist.subtitleProperty().bind(Bindings.createStringBinding(() -> profile.getRepository().getRunDirectory(versionId).toAbsolutePath().normalize().toString(),
+        gameDirSublist.descriptionProperty().bind(Bindings.createStringBinding(() -> profile.getRepository().getRunDirectory(versionId).toAbsolutePath().normalize().toString(),
                 versionSetting.gameDirProperty(), versionSetting.gameDirTypeProperty()));
 
         versionSetting.gameDirTypeProperty().addListener(gameDirTypeListener);
@@ -661,13 +661,13 @@ public final class VersionSettingsPage extends StackPane implements DecoratorPag
         boolean autoSelected = javaVersionType == JavaVersionType.AUTO || javaVersionType == JavaVersionType.VERSION;
 
         if (versionId == null && autoSelected) {
-            javaSublist.setSubtitle(i18n("settings.game.java_directory.auto"));
+            javaSublist.setDescription(i18n("settings.game.java_directory.auto"));
             return;
         }
 
         Pair<JavaVersionType, JavaRuntime> selectedData = javaItem.getSelectedData();
         if (selectedData != null && selectedData.getValue() != null) {
-            javaSublist.setSubtitle(selectedData.getValue().getBinary().toString());
+            javaSublist.setDescription(selectedData.getValue().getBinary().toString());
             return;
         }
 
@@ -685,16 +685,16 @@ public final class VersionSettingsPage extends StackPane implements DecoratorPag
             try {
                 JavaRuntime java = lastVersionSetting.getJava(gameVersionNumber, version);
                 if (java != null) {
-                    javaSublist.setSubtitle(java.getBinary().toString());
+                    javaSublist.setDescription(java.getBinary().toString());
                 } else {
-                    javaSublist.setSubtitle(autoSelected ? i18n("settings.game.java_directory.auto.not_found") : i18n("settings.game.java_directory.invalid"));
+                    javaSublist.setDescription(autoSelected ? i18n("settings.game.java_directory.auto.not_found") : i18n("settings.game.java_directory.invalid"));
                 }
                 return;
             } catch (InterruptedException ignored) {
             }
         }
 
-        javaSublist.setSubtitle("");
+        javaSublist.setDescription("");
     }
 
     private void editSpecificSettings() {

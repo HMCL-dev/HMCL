@@ -386,7 +386,7 @@ public final class GameSettingPage<S extends GameSetting> extends StackPane
             gameSettings.getContent().add(memorySublist);
             memorySublist.setTitle(i18n("settings.memory"));
             memorySublist.setHasSubtitle(true);
-            memorySublist.setSubtitle(i18n("settings.memory.auto_allocate"));
+            memorySublist.setDescription(i18n("settings.memory.auto_allocate"));
 
             // Launcher Visibility Setting
             var launcherVisibilityPane = createInheritableButton(
@@ -426,7 +426,7 @@ public final class GameSettingPage<S extends GameSetting> extends StackPane
                 windowTypeItem.setChoices(windowTypeOptions);
                 windowTypeSublist.getContent().add(windowTypeItem);
                 bindInheritableRadioChoiceList(windowTypeSublist, windowTypeItem, GameSetting::windowTypeProperty);
-                bindInheritableSublistSubtitle(
+                bindInheritableSublistDescription(
                         windowTypeSublist,
                         GameSetting::windowTypeProperty,
                         GameSettingPage::getWindowTypeDisplayName);
@@ -1397,10 +1397,10 @@ public final class GameSettingPage<S extends GameSetting> extends StackPane
         }
     }
 
-    private <T> void bindInheritableSublistSubtitle(ComponentSublist sublist,
-                                                    Function<GameSetting, InheritableProperty<T>> propertyGetter,
-                                                    Function<T, String> converter) {
-        InvalidationListener propertyListener = observable -> initInheritableSublistSubtitle(sublist, propertyGetter, converter);
+    private <T> void bindInheritableSublistDescription(ComponentSublist sublist,
+                                                       Function<GameSetting, InheritableProperty<T>> propertyGetter,
+                                                       Function<T, String> converter) {
+        InvalidationListener propertyListener = observable -> initInheritableSublistDescription(sublist, propertyGetter, converter);
 
         currentSetting.addListener((observable, oldValue, newValue) -> {
             if (oldValue != null) {
@@ -1411,7 +1411,7 @@ public final class GameSettingPage<S extends GameSetting> extends StackPane
                 propertyGetter.apply(newValue).addListener(propertyListener);
             }
 
-            initInheritableSublistSubtitle(sublist, propertyGetter, converter);
+            initInheritableSublistDescription(sublist, propertyGetter, converter);
         });
         config().getGameSettings().addListener(propertyListener);
         config().defaultGameSettingProperty().addListener(propertyListener);
@@ -1420,19 +1420,19 @@ public final class GameSettingPage<S extends GameSetting> extends StackPane
         if (setting != null) {
             propertyGetter.apply(setting).addListener(propertyListener);
         }
-        initInheritableSublistSubtitle(sublist, propertyGetter, converter);
+        initInheritableSublistDescription(sublist, propertyGetter, converter);
     }
 
-    private <T> void initInheritableSublistSubtitle(ComponentSublist sublist,
-                                                   Function<GameSetting, InheritableProperty<T>> propertyGetter,
-                                                   Function<T, String> converter) {
+    private <T> void initInheritableSublistDescription(ComponentSublist sublist,
+                                                      Function<GameSetting, InheritableProperty<T>> propertyGetter,
+                                                      Function<T, String> converter) {
         S setting = currentSetting.get();
         if (setting == null) {
-            sublist.setSubtitle("");
+            sublist.setDescription("");
             return;
         }
 
-        sublist.setSubtitle(converter.apply(getEffectiveValue(setting, propertyGetter)));
+        sublist.setDescription(converter.apply(getEffectiveValue(setting, propertyGetter)));
     }
 
     private static String getWindowTypeDisplayName(GameWindowType type) {
@@ -1869,13 +1869,13 @@ public final class GameSettingPage<S extends GameSetting> extends StackPane
         boolean autoSelected = effectiveJavaVersionType == JavaVersionType.AUTO || effectiveJavaVersionType == JavaVersionType.VERSION;
 
         if (instanceId == null && autoSelected) {
-            javaSublist.setSubtitle(i18n("settings.game.java_directory.auto"));
+            javaSublist.setDescription(i18n("settings.game.java_directory.auto"));
             return;
         }
 
         var selectedJava = javaItem.getSelectedValue();
         if (selectedJava != null && selectedJava.getValue() != null) {
-            javaSublist.setSubtitle(selectedJava.getValue().getBinary().toString());
+            javaSublist.setDescription(selectedJava.getValue().getBinary().toString());
             return;
         }
 
@@ -1895,16 +1895,16 @@ public final class GameSettingPage<S extends GameSetting> extends StackPane
                         ? effectiveSetting.getJava(gameVersionNumber, version)
                         : setting.getJava(gameVersionNumber, version);
                 if (java != null) {
-                    javaSublist.setSubtitle(java.getBinary().toString());
+                    javaSublist.setDescription(java.getBinary().toString());
                 } else {
-                    javaSublist.setSubtitle(autoSelected ? i18n("settings.game.java_directory.auto.not_found") : i18n("settings.game.java_directory.invalid"));
+                    javaSublist.setDescription(autoSelected ? i18n("settings.game.java_directory.auto.not_found") : i18n("settings.game.java_directory.invalid"));
                 }
                 return;
             } catch (InterruptedException ignored) {
             }
         }
 
-        javaSublist.setSubtitle("");
+        javaSublist.setDescription("");
     }
 
     private void editSpecificSettings() {

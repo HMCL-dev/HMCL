@@ -144,7 +144,7 @@ public class PersonalizationPage extends StackPane {
                             .bindBidirectional(config().backgroundPaintProperty())
             ));
             backgroundItem.selectedDataProperty().bindBidirectional(config().backgroundImageTypeProperty());
-            backgroundSublist.subtitleProperty().bind(
+            backgroundSublist.descriptionProperty().bind(
                     new When(backgroundItem.selectedDataProperty().isEqualTo(EnumBackgroundImage.DEFAULT))
                             .then(i18n("launcher.background.default"))
                             .otherwise(config().backgroundImageProperty()));

@@ -301,7 +301,7 @@ public final class AdvancedVersionSettingPage extends StackPane implements Decor
         useNativeOpenALPane.selectedProperty().bindBidirectional(versionSetting.useNativeOpenALProperty());
 
         nativesDirItem.selectedDataProperty().bindBidirectional(versionSetting.nativesDirTypeProperty());
-        nativesDirSublist.subtitleProperty().bind(Bindings.createStringBinding(() -> {
+        nativesDirSublist.descriptionProperty().bind(Bindings.createStringBinding(() -> {
             if (versionSetting.getNativesDirType() == NativesDirectoryType.VERSION_FOLDER) {
                 String nativesDirName = "natives-" + Platform.SYSTEM_PLATFORM;
                 if (versionId == null) {
@@ -344,7 +344,7 @@ public final class AdvancedVersionSettingPage extends StackPane implements Decor
         useNativeOpenALPane.selectedProperty().unbindBidirectional(versionSetting.useNativeOpenALProperty());
 
         nativesDirItem.selectedDataProperty().unbindBidirectional(versionSetting.nativesDirTypeProperty());
-        nativesDirSublist.subtitleProperty().unbind();
+        nativesDirSublist.descriptionProperty().unbind();
     }
 
     @Override
