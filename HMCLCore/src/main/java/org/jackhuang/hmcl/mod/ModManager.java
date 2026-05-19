@@ -80,12 +80,22 @@ public final class ModManager extends LocalAddonManager<LocalModFile> {
     }
 
     public LocalMod getLocalMod(String modId, ModLoaderType modLoaderType) {
-        return localMods.computeIfAbsent(pair(modId, modLoaderType),
-                x -> new LocalMod(x.getKey(), x.getValue()));
+        lock.lock();
+        try {
+            return localMods.computeIfAbsent(pair(modId, modLoaderType),
+                    x -> new LocalMod(x.getKey(), x.getValue()));
+        } finally {
+            lock.unlock();
+        }
     }
 
     public boolean hasMod(String modId, ModLoaderType modLoaderType) {
-        return localMods.containsKey(pair(modId, modLoaderType));
+        lock.lock();
+        try {
+            return localMods.containsKey(pair(modId, modLoaderType));
+        } finally {
+            lock.unlock();
+        }
     }
 
     private void addModInfo(Path file) {
@@ -161,30 +171,35 @@ public final class ModManager extends LocalAddonManager<LocalModFile> {
 
     @Override
     public void refresh() throws IOException {
-        localFiles.clear();
-        localMods.clear();
+        lock.lock();
+        try {
+            localFiles.clear();
+            localMods.clear();
 
-        analyzer = LibraryAnalyzer.analyze(getRepository().getResolvedPreservingPatchesVersion(id), null);
+            analyzer = LibraryAnalyzer.analyze(getRepository().getResolvedPreservingPatchesVersion(id), null);
 
-        boolean supportSubfolders = analyzer.has(LibraryAnalyzer.LibraryType.FORGE)
-                || analyzer.has(LibraryAnalyzer.LibraryType.QUILT);
+            boolean supportSubfolders = analyzer.has(LibraryAnalyzer.LibraryType.FORGE)
+                    || analyzer.has(LibraryAnalyzer.LibraryType.QUILT);
 
-        if (Files.isDirectory(getDirectory())) {
-            try (DirectoryStream<Path> modsDirectoryStream = Files.newDirectoryStream(getDirectory())) {
-                for (Path subitem : modsDirectoryStream) {
-                    if (supportSubfolders && Files.isDirectory(subitem) && !".connector".equalsIgnoreCase(subitem.getFileName().toString())) {
-                        try (DirectoryStream<Path> subitemDirectoryStream = Files.newDirectoryStream(subitem)) {
-                            for (Path subsubitem : subitemDirectoryStream) {
-                                addModInfo(subsubitem);
+            if (Files.isDirectory(getDirectory())) {
+                try (DirectoryStream<Path> modsDirectoryStream = Files.newDirectoryStream(getDirectory())) {
+                    for (Path subitem : modsDirectoryStream) {
+                        if (supportSubfolders && Files.isDirectory(subitem) && !".connector".equalsIgnoreCase(subitem.getFileName().toString())) {
+                            try (DirectoryStream<Path> subitemDirectoryStream = Files.newDirectoryStream(subitem)) {
+                                for (Path subsubitem : subitemDirectoryStream) {
+                                    addModInfo(subsubitem);
+                                }
                             }
+                        } else {
+                            addModInfo(subitem);
                         }
-                    } else {
-                        addModInfo(subitem);
                     }
                 }
             }
+            loaded = true;
+        } finally {
+            lock.unlock();
         }
-        loaded = true;
     }
 
     @Override
@@ -193,25 +208,35 @@ public final class ModManager extends LocalAddonManager<LocalModFile> {
     }
 
     public @Unmodifiable List<LocalModFile> getLocalFiles() throws IOException {
-        if (!loaded)
-            refresh();
-        return super.getLocalFiles();
+        lock.lock();
+        try {
+            if (!loaded)
+                refresh();
+            return super.getLocalFiles();
+        } finally {
+            lock.unlock();
+        }
     }
 
     public void addMod(Path file) throws IOException {
         if (!isFileNameMod(file))
             throw new IllegalArgumentException("File " + file + " is not a valid mod file.");
 
-        if (!loaded)
-            refresh();
+        lock.lock();
+        try {
+            if (!loaded)
+                refresh();
 
-        Path modsDirectory = getDirectory();
-        Files.createDirectories(modsDirectory);
+            Path modsDirectory = getDirectory();
+            Files.createDirectories(modsDirectory);
 
-        Path newFile = modsDirectory.resolve(file.getFileName());
-        FileUtils.copyFile(file, newFile);
+            Path newFile = modsDirectory.resolve(file.getFileName());
+            FileUtils.copyFile(file, newFile);
 
-        addModInfo(newFile);
+            addModInfo(newFile);
+        } finally {
+            lock.unlock();
+        }
     }
 
     public void removeMods(LocalModFile... localModFiles) throws IOException {
@@ -221,37 +246,42 @@ public final class ModManager extends LocalAddonManager<LocalModFile> {
     }
 
     public void rollback(LocalModFile from, LocalModFile to) throws IOException {
-        if (!loaded) {
-            throw new IllegalStateException("ModManager Not loaded");
-        }
-        if (!localFiles.contains(from)) {
-            throw new IllegalStateException("Rolling back an unknown mod " + from.getFileName());
-        }
-        if (from.isOld()) {
-            throw new IllegalArgumentException("Rolling back an old mod " + from.getFileName());
-        }
-        if (!to.isOld()) {
-            throw new IllegalArgumentException("Rolling back to an old path " + to.getFileName());
-        }
-        if (from.getFileName().equals(to.getFileName())) {
-            // We cannot roll back to the mod with the same name.
-            return;
-        }
+        lock.lock();
+        try {
+            if (!loaded) {
+                throw new IllegalStateException("ModManager Not loaded");
+            }
+            if (!localFiles.contains(from)) {
+                throw new IllegalStateException("Rolling back an unknown mod " + from.getFileName());
+            }
+            if (from.isOld()) {
+                throw new IllegalArgumentException("Rolling back an old mod " + from.getFileName());
+            }
+            if (!to.isOld()) {
+                throw new IllegalArgumentException("Rolling back to an old path " + to.getFileName());
+            }
+            if (from.getFileName().equals(to.getFileName())) {
+                // We cannot roll back to the mod with the same name.
+                return;
+            }
 
-        LocalMod mod = Objects.requireNonNull(from.getMod());
-        if (mod != to.getMod()) {
-            throw new IllegalArgumentException("Rolling back mod " + from.getFileName() + " to a different mod " + to.getFileName());
-        }
-        if (!mod.getFiles().contains(from)
-                || !mod.getOldFiles().contains(to)) {
-            throw new IllegalStateException("LocalMod state corrupt");
-        }
+            LocalMod mod = Objects.requireNonNull(from.getMod());
+            if (mod != to.getMod()) {
+                throw new IllegalArgumentException("Rolling back mod " + from.getFileName() + " to a different mod " + to.getFileName());
+            }
+            if (!mod.getFiles().contains(from)
+                    || !mod.getOldFiles().contains(to)) {
+                throw new IllegalStateException("LocalMod state corrupt");
+            }
 
-        boolean active = from.isActive();
-        from.setActive(true);
-        from.setOld(true);
-        to.setOld(false);
-        to.setActive(active);
+            boolean active = from.isActive();
+            from.setActive(true);
+            from.setOld(true);
+            to.setOld(false);
+            to.setActive(active);
+        } finally {
+            lock.unlock();
+        }
     }
 
     public Path disableMod(Path file) throws IOException {

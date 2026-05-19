@@ -283,20 +283,25 @@ public final class ResourcePackManager extends LocalAddonManager<ResourcePackFil
 
     @Override
     public void refresh() throws IOException {
-        localFiles.clear();
+        lock.lock();
+        try {
+            localFiles.clear();
 
-        if (Files.isDirectory(resourcePackDirectory)) {
-            try (DirectoryStream<Path> directoryStream = Files.newDirectoryStream(resourcePackDirectory)) {
-                for (Path subitem : directoryStream) {
-                    try {
-                        addResourcePackInfo(subitem);
-                    } catch (IOException e) {
-                        LOG.warning("Failed to load resource pack " + subitem, e);
+            if (Files.isDirectory(resourcePackDirectory)) {
+                try (DirectoryStream<Path> directoryStream = Files.newDirectoryStream(resourcePackDirectory)) {
+                    for (Path subitem : directoryStream) {
+                        try {
+                            addResourcePackInfo(subitem);
+                        } catch (IOException e) {
+                            LOG.warning("Failed to load resource pack " + subitem, e);
+                        }
                     }
                 }
             }
+            loaded = true;
+        } finally {
+            lock.unlock();
         }
-        loaded = true;
     }
 
     @Override
@@ -306,41 +311,55 @@ public final class ResourcePackManager extends LocalAddonManager<ResourcePackFil
 
     @Override
     public @Unmodifiable List<ResourcePackFile> getLocalFiles() throws IOException {
-        if (!loaded)
-            refresh();
-        return super.getLocalFiles();
+        lock.lock();
+        try {
+            if (!loaded)
+                refresh();
+            return super.getLocalFiles();
+        } finally {
+            lock.unlock();
+        }
     }
 
     public void importResourcePack(Path file) throws IOException, IllegalArgumentException {
-        if (ResourcePackFile.isFileResourcePack(file)) {
-            if (!loaded)
-                refresh();
-            Files.createDirectories(resourcePackDirectory);
+        lock.lock();
+        try {
+            if (ResourcePackFile.isFileResourcePack(file)) {
+                if (!loaded)
+                    refresh();
+                Files.createDirectories(resourcePackDirectory);
 
-            Path newFile = resourcePackDirectory.resolve(file.getFileName());
-            if (Files.isDirectory(file)) {
-                FileUtils.copyDirectory(file, newFile);
+                Path newFile = resourcePackDirectory.resolve(file.getFileName());
+                if (Files.isDirectory(file)) {
+                    FileUtils.copyDirectory(file, newFile);
+                } else {
+                    FileUtils.copyFile(file, newFile);
+                }
+
+                addResourcePackInfo(newFile);
             } else {
-                FileUtils.copyFile(file, newFile);
+                throw new IllegalArgumentException("File '" + file + "' is not a resource pack");
             }
-
-            addResourcePackInfo(newFile);
-        } else {
-            throw new IllegalArgumentException("File '" + file + "' is not a resource pack");
+        } finally {
+            lock.unlock();
         }
-
     }
 
     public boolean removeResourcePacks(List<ResourcePackFile> resourcePacks) throws IOException {
-        boolean modified = disableResourcePacks(resourcePacks);
-        for (ResourcePackFile resourcePack : resourcePacks) {
-            if (resourcePack != null && resourcePack.manager == this) {
-                resourcePack.delete();
-                localFiles.remove(resourcePack);
-                modified = true;
+        lock.lock();
+        try {
+            boolean modified = disableResourcePacks(resourcePacks);
+            for (ResourcePackFile resourcePack : resourcePacks) {
+                if (resourcePack != null && resourcePack.manager == this) {
+                    resourcePack.delete();
+                    localFiles.remove(resourcePack);
+                    modified = true;
+                }
             }
+            return modified;
+        } finally {
+            lock.unlock();
         }
-        return modified;
     }
 
     private boolean containsResourcePack(List<String> resourcePacks, String packIdOld) {
@@ -350,19 +369,24 @@ public final class ResourcePackManager extends LocalAddonManager<ResourcePackFil
     }
 
     public boolean enableResourcePacks(List<ResourcePackFile> resourcePackFiles) {
-        boolean modified = false;
-        Map<String, String> options = loadOptions();
-        List<String> resourcePacks = new ArrayList<>(deserializePackList(options.get("resourcePacks")));
-        List<String> incompatibleResourcePacks = new ArrayList<>(deserializePackList(options.get("incompatibleResourcePacks")));
-        for (var pack : resourcePackFiles) {
-            if (enableResourcePack(pack, resourcePacks, incompatibleResourcePacks)) modified = true;
+        lock.lock();
+        try {
+            boolean modified = false;
+            Map<String, String> options = loadOptions();
+            List<String> resourcePacks = new ArrayList<>(deserializePackList(options.get("resourcePacks")));
+            List<String> incompatibleResourcePacks = new ArrayList<>(deserializePackList(options.get("incompatibleResourcePacks")));
+            for (var pack : resourcePackFiles) {
+                if (enableResourcePack(pack, resourcePacks, incompatibleResourcePacks)) modified = true;
+            }
+            if (modified) {
+                options.put("resourcePacks", serializePackList(resourcePacks));
+                options.put("incompatibleResourcePacks", serializePackList(incompatibleResourcePacks));
+                saveOptions(options);
+            }
+            return modified;
+        } finally {
+            lock.unlock();
         }
-        if (modified) {
-            options.put("resourcePacks", serializePackList(resourcePacks));
-            options.put("incompatibleResourcePacks", serializePackList(incompatibleResourcePacks));
-            saveOptions(options);
-        }
-        return modified;
     }
 
     private boolean enableResourcePack(ResourcePackFile resourcePack, List<String> resourcePacks, List<String> incompatibleResourcePacks) {
@@ -388,19 +412,24 @@ public final class ResourcePackManager extends LocalAddonManager<ResourcePackFil
     }
 
     public boolean disableResourcePacks(List<ResourcePackFile> resourcePackFiles) {
-        boolean modified = false;
-        Map<String, String> options = loadOptions();
-        List<String> resourcePacks = new ArrayList<>(deserializePackList(options.get("resourcePacks")));
-        List<String> incompatibleResourcePacks = new ArrayList<>(deserializePackList(options.get("incompatibleResourcePacks")));
-        for (var pack : resourcePackFiles) {
-            if (disableResourcePack(pack, resourcePacks, incompatibleResourcePacks)) modified = true;
+        lock.lock();
+        try {
+            boolean modified = false;
+            Map<String, String> options = loadOptions();
+            List<String> resourcePacks = new ArrayList<>(deserializePackList(options.get("resourcePacks")));
+            List<String> incompatibleResourcePacks = new ArrayList<>(deserializePackList(options.get("incompatibleResourcePacks")));
+            for (var pack : resourcePackFiles) {
+                if (disableResourcePack(pack, resourcePacks, incompatibleResourcePacks)) modified = true;
+            }
+            if (modified) {
+                options.put("resourcePacks", serializePackList(resourcePacks));
+                options.put("incompatibleResourcePacks", serializePackList(incompatibleResourcePacks));
+                saveOptions(options);
+            }
+            return modified;
+        } finally {
+            lock.unlock();
         }
-        if (modified) {
-            options.put("resourcePacks", serializePackList(resourcePacks));
-            options.put("incompatibleResourcePacks", serializePackList(incompatibleResourcePacks));
-            saveOptions(options);
-        }
-        return modified;
     }
 
     private boolean disableResourcePack(ResourcePackFile resourcePack, List<String> resourcePacks, List<String> incompatibleResourcePacks) {
@@ -435,17 +464,27 @@ public final class ResourcePackManager extends LocalAddonManager<ResourcePackFil
     }
 
     public boolean isEnabled(ResourcePackFile resourcePack) {
-        Map<String, String> options = loadOptions();
-        List<String> optPacks = deserializePackList(options.get("resourcePacks"));
-        List<String> optIncompatiblePacks = deserializePackList(options.get("incompatibleResourcePacks"));
-        return isEnabled(resourcePack, optPacks, optIncompatiblePacks);
+        lock.lock();
+        try {
+            Map<String, String> options = loadOptions();
+            List<String> optPacks = deserializePackList(options.get("resourcePacks"));
+            List<String> optIncompatiblePacks = deserializePackList(options.get("incompatibleResourcePacks"));
+            return isEnabled(resourcePack, optPacks, optIncompatiblePacks);
+        } finally {
+            lock.unlock();
+        }
     }
 
     public Stream<Pair<ResourcePackFile, Boolean>> arePacksEnabled(Stream<ResourcePackFile> resourcePacks) {
-        Map<String, String> options = loadOptions();
-        List<String> optPacks = deserializePackList(options.get("resourcePacks"));
-        List<String> optIncompatiblePacks = deserializePackList(options.get("incompatibleResourcePacks"));
-        return resourcePacks.map(pack -> Pair.pair(pack, isEnabled(pack, optPacks, optIncompatiblePacks)));
+        lock.lock();
+        try {
+            Map<String, String> options = loadOptions();
+            List<String> optPacks = deserializePackList(options.get("resourcePacks"));
+            List<String> optIncompatiblePacks = deserializePackList(options.get("incompatibleResourcePacks"));
+            return resourcePacks.map(pack -> Pair.pair(pack, isEnabled(pack, optPacks, optIncompatiblePacks)));
+        } finally {
+            lock.unlock();
+        }
     }
 
     public ResourcePackFile.Compatibility getCompatibility(@NotNull ResourcePackFile resourcePack) {

@@ -31,6 +31,7 @@ import java.util.Comparator;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.locks.ReentrantLock;
 
 public abstract class LocalAddonManager<T extends LocalAddonFile> {
 
@@ -40,6 +41,8 @@ public abstract class LocalAddonManager<T extends LocalAddonFile> {
     public static String getLocalAddonName(Path file) {
         return StringUtils.removeSuffix(FileUtils.getName(file), DISABLED_EXTENSION, OLD_EXTENSION);
     }
+
+    protected final ReentrantLock lock = new ReentrantLock();
 
     protected final Set<@NotNull T> localFiles = new LinkedHashSet<>();
 
@@ -66,19 +69,29 @@ public abstract class LocalAddonManager<T extends LocalAddonFile> {
     public abstract Comparator<T> getComparator();
 
     public @Unmodifiable List<T> getLocalFiles() throws IOException {
-        return localFiles.stream().sorted(getComparator()).toList();
+        lock.lock();
+        try {
+            return localFiles.stream().sorted(getComparator()).toList();
+        } finally {
+            lock.unlock();
+        }
     }
 
     public Path setOld(T modFile, boolean old) throws IOException {
-        Path newPath;
-        if (old) {
-            newPath = backupFile(modFile.getFile());
-            localFiles.remove(modFile);
-        } else {
-            newPath = restoreFile(modFile.getFile());
-            localFiles.add(modFile);
+        lock.lock();
+        try {
+            Path newPath;
+            if (old) {
+                newPath = backupFile(modFile.getFile());
+                localFiles.remove(modFile);
+            } else {
+                newPath = restoreFile(modFile.getFile());
+                localFiles.add(modFile);
+            }
+            return newPath;
+        } finally {
+            lock.unlock();
         }
-        return newPath;
     }
 
     private Path backupFile(Path file) throws IOException {
