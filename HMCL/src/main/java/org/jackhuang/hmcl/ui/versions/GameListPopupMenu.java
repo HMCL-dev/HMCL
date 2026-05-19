@@ -115,11 +115,11 @@ public final class GameListPopupMenu extends StackPane {
             container.setCenter(content);
 
             RipplerContainer ripplerContainer = new RipplerContainer(container);
-            ripplerContainer.maxWidthProperty().bind(listView.widthProperty().subtract(5));
 
             StackPane rootPane = new StackPane();
             rootPane.getStyleClass().add("advanced-list-item");
             rootPane.getChildren().setAll(ripplerContainer);
+            rootPane.maxWidthProperty().bind(listView.widthProperty().subtract(5));
 
             FXUtils.onClicked(rootPane, () -> {
                 GameItem item = getItem();
