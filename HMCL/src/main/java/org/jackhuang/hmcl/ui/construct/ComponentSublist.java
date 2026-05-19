@@ -18,21 +18,48 @@
 package org.jackhuang.hmcl.ui.construct;
 
 import javafx.beans.property.*;
+import javafx.collections.ObservableList;
+import javafx.geometry.Orientation;
 import javafx.scene.Node;
+import javafx.scene.control.Control;
 
 import java.util.List;
 import java.util.function.Supplier;
 
-public class ComponentSublist extends ComponentList {
+public class ComponentSublist extends Control implements NoPaddingComponent {
 
+    private final ComponentList contentList = new ComponentList();
     Supplier<List<? extends Node>> lazyInitializer;
 
     public ComponentSublist() {
-        super();
+        contentList.getStyleClass().remove("options-list");
+        contentList.getStyleClass().add("options-sublist");
     }
 
     public ComponentSublist(Supplier<List<? extends Node>> lazyInitializer) {
+        this();
         this.lazyInitializer = lazyInitializer;
+    }
+
+    public ObservableList<Node> getContent() {
+        return contentList.getContent();
+    }
+
+    @Override
+    public Orientation getContentBias() {
+        return Orientation.HORIZONTAL;
+    }
+
+    @Override
+    protected javafx.scene.control.Skin<?> createDefaultSkin() {
+        return new Skin(this);
+    }
+
+    private static final class Skin extends ControlSkinBase<ComponentSublist> {
+        Skin(ComponentSublist control) {
+            super(control);
+            node = control.contentList;
+        }
     }
 
     void doLazyInit() {
