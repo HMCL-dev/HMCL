@@ -67,6 +67,7 @@ import static org.jackhuang.hmcl.util.logging.Logger.LOG;
  * @author huangyuhui
  */
 public final class LogWindow extends Stage {
+    private static final PseudoClass SELECTED = PseudoClass.getPseudoClass("selected");
 
     private static final Log4jLevel[] LEVELS = {Log4jLevel.FATAL, Log4jLevel.ERROR, Log4jLevel.WARN, Log4jLevel.INFO, Log4jLevel.DEBUG};
 
@@ -183,6 +184,7 @@ public final class LogWindow extends Stage {
             }
 
             btnAlwaysOnTop.setOnAction(e -> stage.setAlwaysOnTop(!stage.isAlwaysOnTop()));
+            btnAlwaysOnTop.getStyleClass().add("log-window-always-on-top-button");
 
             cboLines.getItems().setAll(500, 2000, 5000, 10000);
             cboLines.setValue(Log.getLogLines());
@@ -290,13 +292,7 @@ public final class LogWindow extends Stage {
 
                     FXUtils.installFastTooltip(control.btnAlwaysOnTop, i18n("logwindow.always_on_top"));
                     control.stage.alwaysOnTopProperty().addListener((observable, oldValue, newValue) -> {
-                        if (newValue) {
-                            control.btnAlwaysOnTop.setRotate(45);
-                            control.btnAlwaysOnTop.setStyle("-fx-background-color: -monet-secondary-container-transparent-80;");
-                        } else {
-                            control.btnAlwaysOnTop.setRotate(0.0);
-                            control.btnAlwaysOnTop.setStyle("");
-                        }
+                        control.btnAlwaysOnTop.pseudoClassStateChanged(SELECTED, newValue);
                     });
                     hBox.getChildren().setAll(control.btnAlwaysOnTop, label, control.cboLines);
 

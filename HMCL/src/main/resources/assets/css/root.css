@@ -1457,6 +1457,16 @@
     -fx-background-color: -fixed-log-selected;
 }
 
+.log-window-always-on-top-button {
+    -fx-rotate: 0.0;
+}
+
+.log-window-always-on-top-button:selected {
+    -fx-background-color: -monet-secondary-container-transparent-80;
+    -fx-rotate: 45.0;
+}
+
+
 /*******************************************************************************
 *                                                                              *
 * JFX Spinner                                                                  *
