@@ -41,7 +41,7 @@ public abstract class LocalAddonManager<T extends LocalAddonFile> {
         return StringUtils.removeSuffix(FileUtils.getName(file), DISABLED_EXTENSION, OLD_EXTENSION);
     }
 
-    protected final Set<@NotNull T> localFiles = java.util.Collections.synchronizedSet(new LinkedHashSet<>());
+    protected final Set<@NotNull T> localFiles = new LinkedHashSet<>();
 
     protected final GameRepository repository;
     protected final String id;
