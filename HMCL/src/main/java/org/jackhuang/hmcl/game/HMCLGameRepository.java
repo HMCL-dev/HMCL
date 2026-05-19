@@ -19,6 +19,7 @@ package org.jackhuang.hmcl.game;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import com.google.gson.JsonObject;
 import com.google.gson.JsonParseException;
 import javafx.scene.image.Image;
 import org.jackhuang.hmcl.Metadata;
@@ -34,6 +35,7 @@ import org.jackhuang.hmcl.setting.Config;
 import org.jackhuang.hmcl.setting.DefaultIsolationType;
 import org.jackhuang.hmcl.setting.GameSetting;
 import org.jackhuang.hmcl.setting.GameWindowType;
+import org.jackhuang.hmcl.setting.LegacyGameSettingMigrator;
 import org.jackhuang.hmcl.setting.Profile;
 import org.jackhuang.hmcl.setting.VersionIconType;
 import org.jackhuang.hmcl.setting.VersionSetting;
@@ -70,6 +72,8 @@ public final class HMCLGameRepository extends DefaultGameRepository {
     private final Map<String, GameSetting.Instance> localGameSettings = new HashMap<>();
     private final Set<String> loadedLocalGameSettings = new HashSet<>();
     private final Set<String> migratedLocalGameSettings = new HashSet<>();
+    private final Map<String, JsonObject> localVersionSettingJsons = new HashMap<>();
+    private final Set<String> loadedLocalVersionSettingJsons = new HashSet<>();
     private final Map<String, VersionSetting> localVersionSettings = new HashMap<>();
     private final Set<String> beingModpackVersions = new HashSet<>();
 
@@ -127,6 +131,8 @@ public final class HMCLGameRepository extends DefaultGameRepository {
         localGameSettings.clear();
         loadedLocalGameSettings.clear();
         migratedLocalGameSettings.clear();
+        localVersionSettingJsons.clear();
+        loadedLocalVersionSettingJsons.clear();
         localVersionSettings.clear();
         super.refreshVersionsImpl();
         versions.keySet().forEach(this::loadLocalGameSetting);
@@ -234,12 +240,12 @@ public final class HMCLGameRepository extends DefaultGameRepository {
             }
         }
 
-        VersionSetting legacySetting = getLocalVersionSetting(id);
+        JsonObject legacySetting = getLocalVersionSettingJson(id);
         if (legacySetting != null) {
             UUID parent = profile.getLegacyGameSettingParent();
-            initLocalGameSetting(id, GameSetting.fromVersionSetting(parent, legacySetting, !legacySetting.isUsesGlobal()));
+            initLocalGameSetting(id, LegacyGameSettingMigrator.toInstance(parent, legacySetting, !LegacyGameSettingMigrator.isUsesGlobal(legacySetting)));
             migratedLocalGameSettings.add(id);
-        } else if (profile.getGlobal().getGameDirType() == GameDirectoryType.VERSION_FOLDER) {
+        } else if (LegacyGameSettingMigrator.getGameDirType(profile.getLegacyGlobalSettingJson(), GameDirectoryType.ROOT_FOLDER) == GameDirectoryType.VERSION_FOLDER) {
             GameSetting.Instance setting = new GameSetting.Instance();
             setting.parentProperty().setValue(profile.getLegacyGameSettingParent());
             setting.isolationProperty().setValue(true);
@@ -319,6 +325,32 @@ public final class HMCLGameRepository extends DefaultGameRepository {
 
     private Path getLocalVersionSettingFile(String id) {
         return getVersionRoot(id).resolve("hmclversion.cfg");
+    }
+
+    private void loadLocalVersionSettingJson(String id) {
+        loadedLocalVersionSettingJsons.add(id);
+        Path file = getLocalVersionSettingFile(id);
+        if (!Files.exists(file)) {
+            return;
+        }
+
+        try {
+            JsonObject versionSettingJson = Config.CONFIG_GSON.fromJson(Files.readString(file), JsonObject.class);
+            if (versionSettingJson != null) {
+                localVersionSettingJsons.put(id, versionSettingJson);
+            }
+        } catch (Exception ex) {
+            LOG.warning("Failed to load legacy version setting JSON " + file, ex);
+        }
+    }
+
+    @Nullable
+    private JsonObject getLocalVersionSettingJson(String id) {
+        if (!loadedLocalVersionSettingJsons.contains(id)) {
+            loadLocalVersionSettingJson(id);
+        }
+        JsonObject versionSettingJson = localVersionSettingJsons.get(id);
+        return versionSettingJson != null ? versionSettingJson.deepCopy() : null;
     }
 
     private void loadLocalVersionSetting(String id) {

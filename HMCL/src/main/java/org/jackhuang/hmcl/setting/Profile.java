@@ -34,6 +34,7 @@ import org.jackhuang.hmcl.game.Version;
 import org.jackhuang.hmcl.ui.WeakListenerHolder;
 import org.jackhuang.hmcl.util.ToStringBuilder;
 import org.jackhuang.hmcl.util.javafx.ObservableHelper;
+import org.jetbrains.annotations.Nullable;
 
 import java.lang.reflect.Type;
 import java.nio.file.Path;
@@ -88,6 +89,14 @@ public final class Profile implements Observable {
 
     public VersionSetting getGlobal() {
         return global.get();
+    }
+
+    /// Original legacy global `VersionSetting` JSON kept for migration without depending on `VersionSetting`.
+    private final @Nullable JsonObject legacyGlobalSettingJson;
+
+    /// Returns the original legacy global `VersionSetting` JSON, if this profile was loaded from one.
+    public @Nullable JsonObject getLegacyGlobalSettingJson() {
+        return legacyGlobalSettingJson != null ? legacyGlobalSettingJson.deepCopy() : null;
     }
 
     private final ObjectProperty<UUID> legacyGameSettingParent = new SimpleObjectProperty<>(this, "legacyGameSettingParent");
@@ -149,10 +158,15 @@ public final class Profile implements Observable {
     }
 
     public Profile(String name, Path initialGameDir, VersionSetting global, String selectedVersion, boolean useRelativePath, UUID legacyGameSettingParent) {
+        this(name, initialGameDir, global, selectedVersion, useRelativePath, legacyGameSettingParent, null);
+    }
+
+    public Profile(String name, Path initialGameDir, VersionSetting global, String selectedVersion, boolean useRelativePath, UUID legacyGameSettingParent, @Nullable JsonObject legacyGlobalSettingJson) {
         this.name = new SimpleStringProperty(this, "name", name);
         gameDir = new SimpleObjectProperty<>(this, "gameDir", initialGameDir);
         repository = new HMCLGameRepository(this, initialGameDir);
         this.global.set(global == null ? new VersionSetting() : global);
+        this.legacyGlobalSettingJson = legacyGlobalSettingJson != null ? legacyGlobalSettingJson.deepCopy() : null;
         this.selectedVersion.set(selectedVersion);
         this.useRelativePath.set(useRelativePath);
         this.legacyGameSettingParent.set(legacyGameSettingParent);
@@ -254,7 +268,8 @@ public final class Profile implements Observable {
                 return JsonNull.INSTANCE;
 
             JsonObject jsonObject = new JsonObject();
-            jsonObject.add("global", context.serialize(src.getGlobal()));
+            JsonObject legacyGlobalSettingJson = src.getLegacyGlobalSettingJson();
+            jsonObject.add("global", legacyGlobalSettingJson != null ? legacyGlobalSettingJson : context.serialize(src.getGlobal()));
             if (src.getLegacyGameSettingParent() != null) {
                 jsonObject.add("legacyGameSettingParent", context.serialize(src.getLegacyGameSettingParent()));
             }
@@ -269,13 +284,15 @@ public final class Profile implements Observable {
         public Profile deserialize(JsonElement json, Type typeOfT, JsonDeserializationContext context) throws JsonParseException {
             if (!(json instanceof JsonObject obj)) return null;
             String gameDir = Optional.ofNullable(obj.get("gameDir")).map(JsonElement::getAsString).orElse("");
+            JsonObject legacyGlobalSettingJson = obj.get("global") instanceof JsonObject globalJson ? globalJson : null;
 
             return new Profile("Default",
                     Path.of(gameDir),
                     context.deserialize(obj.get("global"), VersionSetting.class),
                     Optional.ofNullable(obj.get("selectedMinecraftVersion")).map(JsonElement::getAsString).orElse(""),
                     Optional.ofNullable(obj.get("useRelativePath")).map(JsonElement::getAsBoolean).orElse(false),
-                    context.deserialize(obj.get("legacyGameSettingParent"), UUID.class));
+                    context.deserialize(obj.get("legacyGameSettingParent"), UUID.class),
+                    legacyGlobalSettingJson);
         }
 
     }

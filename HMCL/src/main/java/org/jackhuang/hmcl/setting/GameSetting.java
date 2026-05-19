@@ -58,7 +58,8 @@ import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 /// @author Glavo
 @NotNullByDefault
 public sealed abstract class GameSetting extends ObservableSetting {
-    private static final int SUGGESTED_MEMORY;
+    /// Suggested maximum heap memory in MiB.
+    static final int SUGGESTED_MEMORY;
 
     static {
         double totalMemoryMB = MEGABYTES.convertFromBytes(SystemInfo.getTotalMemorySize());
@@ -602,94 +603,6 @@ public sealed abstract class GameSetting extends ObservableSetting {
         return useNativeOpenAL;
     }
 
-    /// Converts a legacy setting into a named global game setting.
-    public static Global fromVersionSetting(String name, VersionSetting source) {
-        Global target = new Global();
-        target.nameProperty().setValue(name);
-        if (source.getGameDirType() == GameDirectoryType.VERSION_FOLDER) {
-            target.defaultIsolationTypeProperty().setValue(DefaultIsolationType.ALWAYS);
-        }
-        copyCommonProperties(source, target);
-        return target;
-    }
-
-    /// Converts a legacy setting into an instance game setting.
-    public static Instance fromVersionSetting(@Nullable UUID parent, VersionSetting source, boolean copyValues) {
-        Instance target = new Instance();
-        target.parentProperty().setValue(parent);
-        target.iconProperty().setValue(source.getVersionIcon());
-        target.isolationProperty().setValue(source.getGameDirType() == GameDirectoryType.VERSION_FOLDER);
-        if (copyValues) {
-            copyCommonProperties(source, target);
-            target.getOverrideProperties().addAll(java.util.List.of(
-                    PROPERTY_JVM_OPTIONS,
-                    PROPERTY_AUTO_MEMORY,
-                    PROPERTY_MIN_MEMORY,
-                    PROPERTY_MAX_MEMORY,
-                    PROPERTY_PERM_SIZE,
-                    PROPERTY_GAME_ARGS,
-                    PROPERTY_ENVIRONMENT_VARIABLES,
-                    PROPERTY_NOT_PATCH_NATIVES,
-                    PROPERTY_NATIVES_DIR_TYPE,
-                    PROPERTY_NATIVES_DIR,
-                    PROPERTY_USE_NATIVE_GLFW,
-                    PROPERTY_USE_NATIVE_OPENAL
-            ));
-        }
-        return target;
-    }
-
-    private static void copyCommonProperties(VersionSetting source, GameSetting target) {
-        target.javaTypeProperty().setValue(source.getJavaVersionType());
-        target.javaVersionProperty().setValue(empty(source.getJavaVersion()));
-        target.customJavaPathProperty().setValue(empty(source.getJavaDir()));
-        target.defaultJavaPathProperty().setValue(empty(source.getDefaultJavaPath()));
-
-        target.jvmOptionsProperty().setValue(empty(source.getJavaArgs()));
-        target.noJVMOptionsProperty().setValue(source.isNoJVMArgs());
-        target.noOptimizingJVMOptionsProperty().setValue(source.isNoOptimizingJVMArgs());
-        target.notCheckJVMProperty().setValue(source.isNotCheckJVM());
-        target.notCheckGameProperty().setValue(source.isNotCheckGame());
-
-        target.autoMemoryProperty().setValue(source.isAutoMemory());
-        target.minMemoryProperty().setValue(source.getMinMemory());
-        target.maxMemoryProperty().setValue(source.getMaxMemory());
-        target.permSizeProperty().setValue(empty(source.getPermSize()));
-
-        target.windowTypeProperty().setValue(source.isFullscreen() ? GameWindowType.FULLSCREEN : GameWindowType.WINDOWED);
-        target.widthProperty().setValue((double) source.getWidth());
-        target.heightProperty().setValue((double) source.getHeight());
-        target.gameDirTypeProperty().setValue(source.getGameDirType() == GameDirectoryType.VERSION_FOLDER
-                ? GameDirectoryType.ROOT_FOLDER
-                : source.getGameDirType());
-        target.runningDirProperty().setValue(empty(source.getGameDir()));
-
-        target.processPriorityProperty().setValue(source.getProcessPriority());
-        target.launcherVisibilityProperty().setValue(source.getLauncherVisibility());
-        target.gameArgsProperty().setValue(empty(source.getMinecraftArgs()));
-        target.graphicsBackendProperty().setValue(source.getGraphicsBackend());
-        setRendererForApi(target, source.getRenderer(), source.getGraphicsBackend());
-        target.environmentVariablesProperty().setValue(empty(source.getEnvironmentVariables()));
-        target.commandWrapperProperty().setValue(empty(source.getWrapper()));
-        target.preLaunchCommandProperty().setValue(empty(source.getPreLaunchCommand()));
-        target.postExitCommandProperty().setValue(empty(source.getPostExitCommand()));
-
-        if (StringUtils.isBlank(source.getServerIp())) {
-            target.quickPlayProperty().setValue(QuickPlayType.NONE);
-        } else {
-            target.quickPlayProperty().setValue(QuickPlayType.MULTIPLAYER);
-            target.quickPlayMultiplayerProperty().setValue(source.getServerIp());
-        }
-
-        target.showLogsProperty().setValue(source.isShowLogs());
-        target.enableDebugLogOutputProperty().setValue(source.isEnableDebugLogOutput());
-        target.notPatchNativesProperty().setValue(source.isNotPatchNatives());
-        target.nativesDirTypeProperty().setValue(source.getNativesDirType());
-        target.nativesDirProperty().setValue(empty(source.getNativesDir()));
-        target.useNativeGLFWProperty().setValue(source.isUseNativeGLFW());
-        target.useNativeOpenALProperty().setValue(source.isUseNativeOpenAL());
-    }
-
     private static void migrateLegacyRenderer(@Nullable GameSetting setting) {
         if (setting == null) {
             return;
@@ -721,7 +634,7 @@ public sealed abstract class GameSetting extends ObservableSetting {
         return null;
     }
 
-    private static void setRendererForApi(GameSetting setting, Renderer renderer, @Nullable GraphicsAPI fallbackApi) {
+    static void setRendererForApi(GameSetting setting, Renderer renderer, @Nullable GraphicsAPI fallbackApi) {
         if (renderer instanceof Renderer.Driver driver) {
             rendererPropertyForApi(setting, driver.api()).setValue(renderer);
             if (fallbackApi == null || fallbackApi == GraphicsAPI.DEFAULT) {

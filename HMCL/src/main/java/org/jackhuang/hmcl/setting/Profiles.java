@@ -178,7 +178,7 @@ public final class Profiles {
     private static void migrateGameSettings() {
         if (config().getGameSettings().isEmpty()) {
             for (Profile profile : profiles) {
-                GameSetting.Global gameSetting = GameSetting.fromVersionSetting(getProfileDisplayName(profile), profile.getGlobal());
+                GameSetting.Global gameSetting = LegacyGameSettingMigrator.toGlobal(getProfileDisplayName(profile), profile.getLegacyGlobalSettingJson());
                 config().getGameSettings().add(gameSetting);
                 profile.setLegacyGameSettingParent(gameSetting.idProperty().getValue());
             }
