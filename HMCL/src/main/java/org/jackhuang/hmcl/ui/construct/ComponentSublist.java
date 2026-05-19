@@ -84,12 +84,9 @@ public class ComponentSublist extends Control implements NoPaddingComponent {
         titleProperty().set(title);
     }
 
-    private StringProperty subtitle;
+    private final StringProperty subtitle = new SimpleStringProperty(this, "subtitle", "");
 
     public StringProperty subtitleProperty() {
-        if (subtitle == null)
-            subtitle = new SimpleStringProperty(this, "subtitle", "");
-
         return subtitle;
     }
 
@@ -101,7 +98,7 @@ public class ComponentSublist extends Control implements NoPaddingComponent {
         subtitleProperty().set(subtitle);
     }
 
-    private boolean hasSubtitle = false;
+    private boolean hasSubtitle;
 
     public boolean isHasSubtitle() {
         return hasSubtitle;
@@ -111,42 +108,95 @@ public class ComponentSublist extends Control implements NoPaddingComponent {
         this.hasSubtitle = hasSubtitle;
     }
 
-    private Node headerLeft;
+    private final ObjectProperty<Node> leading = new SimpleObjectProperty<>(this, "leading");
+
+    public ObjectProperty<Node> leadingProperty() {
+        return leading;
+    }
+
+    public Node getLeading() {
+        return leadingProperty().get();
+    }
+
+    public void setLeading(Node leading) {
+        leadingProperty().set(leading);
+    }
 
     public Node getHeaderLeft() {
-        return headerLeft;
+        return getLeading();
     }
 
     public void setHeaderLeft(Node headerLeft) {
-        this.headerLeft = headerLeft;
+        setLeading(headerLeft);
     }
 
-    private Node headerRight;
+    private final ObjectProperty<Node> trailing = new SimpleObjectProperty<>(this, "trailing");
+
+    public ObjectProperty<Node> trailingProperty() {
+        return trailing;
+    }
+
+    public Node getTrailing() {
+        return trailingProperty().get();
+    }
+
+    public void setTrailing(Node trailing) {
+        trailingProperty().set(trailing);
+    }
 
     public Node getHeaderRight() {
-        return headerRight;
+        return getTrailing();
     }
 
     public void setHeaderRight(Node headerRight) {
-        this.headerRight = headerRight;
+        setTrailing(headerRight);
     }
 
     /// The node displayed immediately after the default title text.
-    private final ObjectProperty<Node> titleRight = new SimpleObjectProperty<>(this, "titleRight");
+    private final ObjectProperty<Node> titleTrailing = new SimpleObjectProperty<>(this, "titleTrailing");
+
+    /// Returns the node displayed immediately after the default title text.
+    public ObjectProperty<Node> titleTrailingProperty() {
+        return titleTrailing;
+    }
+
+    /// Returns the node displayed immediately after the default title text.
+    public Node getTitleTrailing() {
+        return titleTrailingProperty().get();
+    }
+
+    /// Sets the node displayed immediately after the default title text.
+    public void setTitleTrailing(Node titleTrailing) {
+        titleTrailingProperty().set(titleTrailing);
+    }
 
     /// Returns the node displayed immediately after the default title text.
     public ObjectProperty<Node> titleRightProperty() {
-        return titleRight;
+        return titleTrailingProperty();
     }
 
     /// Returns the node displayed immediately after the default title text.
     public Node getTitleRight() {
-        return titleRightProperty().get();
+        return getTitleTrailing();
     }
 
     /// Sets the node displayed immediately after the default title text.
     public void setTitleRight(Node titleRight) {
-        titleRightProperty().set(titleRight);
+        setTitleTrailing(titleRight);
+    }
+
+    private final StringProperty description = new SimpleStringProperty(this, "description", "");
+
+    public StringProperty descriptionProperty() {
+        return description;
+    }
+
+    public String getDescription() {
+        return descriptionProperty().get();
+    }
+
+    public void setDescription(String description) {
+        descriptionProperty().set(description);
     }
 
     private boolean componentPadding = true;

@@ -25,6 +25,7 @@ import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
 import javafx.scene.control.Label;
+import javafx.scene.control.OverrunStyle;
 import javafx.scene.input.MouseButton;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.HBox;
@@ -74,9 +75,9 @@ final class ComponentSublistWrapper extends VBox implements NoPaddingComponent {
             InvalidationListener updateTitleLine = observable -> {
                 firstLine.getChildren().setAll(titleLabel);
 
-                Node titleRight = sublist.getTitleRight();
-                if (titleRight != null) {
-                    firstLine.getChildren().add(titleRight);
+                Node titleTrailing = sublist.getTitleTrailing();
+                if (titleTrailing != null) {
+                    firstLine.getChildren().add(titleTrailing);
                 }
 
                 String tip = sublist.getTip();
@@ -87,17 +88,26 @@ final class ComponentSublistWrapper extends VBox implements NoPaddingComponent {
                 }
             };
             sublist.tipProperty().addListener(updateTitleLine);
-            sublist.titleRightProperty().addListener(updateTitleLine);
+            sublist.titleTrailingProperty().addListener(updateTitleLine);
             updateTitleLine.invalidated(null);
 
-            if (sublist.isHasSubtitle()) {
-                Label subtitleLabel = new Label();
-                subtitleLabel.setPickOnBounds(true);
-                subtitleLabel.textProperty().bind(sublist.subtitleProperty());
-                subtitleLabel.getStyleClass().add("subtitle-label");
-                subtitleLabel.textFillProperty().bind(Themes.colorSchemeProperty().getOnSurfaceVariant());
-                labelVBox.getChildren().add(subtitleLabel);
-            }
+            Label subtitleLabel = new Label();
+            subtitleLabel.setPickOnBounds(true);
+            subtitleLabel.getStyleClass().add("subtitle-label");
+            subtitleLabel.textFillProperty().bind(Themes.colorSchemeProperty().getOnSurfaceVariant());
+            InvalidationListener updateSubtitle = observable -> {
+                String subtitle = sublist.getSubtitle();
+                if (StringUtils.isBlank(subtitle)) {
+                    labelVBox.getChildren().remove(subtitleLabel);
+                } else {
+                    subtitleLabel.setText(subtitle);
+                    if (!labelVBox.getChildren().contains(subtitleLabel)) {
+                        labelVBox.getChildren().add(subtitleLabel);
+                    }
+                }
+            };
+            sublist.subtitleProperty().addListener(updateSubtitle);
+            updateSubtitle.invalidated(null);
         } else {
             labelVBox.setMouseTransparent(true);
             labelVBox.getChildren().setAll(leftNode);
@@ -105,14 +115,35 @@ final class ComponentSublistWrapper extends VBox implements NoPaddingComponent {
 
         HBox header = new HBox();
         header.setSpacing(12);
-        header.getChildren().add(labelVBox);
         header.setPadding(new Insets(10, 16, 10, 16));
         header.setAlignment(Pos.CENTER_LEFT);
-        HBox.setHgrow(labelVBox, Priority.ALWAYS);
-        Node rightNode = sublist.getHeaderRight();
-        if (rightNode != null)
-            header.getChildren().add(rightNode);
-        header.getChildren().add(expandIcon);
+
+        Label descriptionLabel = new Label();
+        descriptionLabel.getStyleClass().add("trailing-label");
+        descriptionLabel.setTextOverrun(OverrunStyle.CENTER_ELLIPSIS);
+        descriptionLabel.setMouseTransparent(true);
+        descriptionLabel.textFillProperty().bind(Themes.colorSchemeProperty().getOnSurfaceVariant());
+
+        InvalidationListener updateHeaderLine = observable -> {
+            header.getChildren().setAll(labelVBox);
+            HBox.setHgrow(labelVBox, Priority.ALWAYS);
+
+            String description = sublist.getDescription();
+            if (!StringUtils.isBlank(description)) {
+                descriptionLabel.setText(description);
+                header.getChildren().add(descriptionLabel);
+            }
+
+            Node trailing = sublist.getTrailing();
+            if (trailing != null) {
+                header.getChildren().add(trailing);
+            }
+
+            header.getChildren().add(expandIcon);
+        };
+        sublist.descriptionProperty().addListener(updateHeaderLine);
+        sublist.trailingProperty().addListener(updateHeaderLine);
+        updateHeaderLine.invalidated(null);
 
         RipplerContainer headerRippler = new RipplerContainer(header);
         this.getChildren().add(headerRippler);
