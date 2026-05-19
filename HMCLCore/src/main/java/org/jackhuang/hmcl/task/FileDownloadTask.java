@@ -162,9 +162,9 @@ public class FileDownloadTask extends FetchTask<Void> {
                     LOG.warning("Failed to copy cache files", e);
                 }
             }
-            return EnumCheckETag.NOT_CHECK_E_TAG;
-        } else {
             return EnumCheckETag.CHECK_E_TAG;
+        } else {
+            return EnumCheckETag.NOT_CHECK_E_TAG;
         }
     }
 

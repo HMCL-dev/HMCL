@@ -34,10 +34,11 @@ import javafx.scene.paint.Color;
 import javafx.scene.paint.Paint;
 import javafx.stage.Stage;
 import javafx.util.Duration;
+import org.glavo.url.WebURL;
 import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.auth.authlibinjector.AuthlibInjectorDnD;
 import org.jackhuang.hmcl.setting.EnumBackgroundImage;
-import org.jackhuang.hmcl.task.CacheFileTask;
+import org.jackhuang.hmcl.task.FileDownloadTask;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.ui.Controllers;
@@ -51,6 +52,8 @@ import org.jackhuang.hmcl.ui.construct.JFXDialogPane;
 import org.jackhuang.hmcl.ui.construct.Navigator;
 import org.jackhuang.hmcl.ui.wizard.Refreshable;
 import org.jackhuang.hmcl.ui.wizard.WizardProvider;
+import org.jackhuang.hmcl.util.CacheRepository;
+import org.jackhuang.hmcl.util.DigestUtils;
 import org.jackhuang.hmcl.util.MathUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
@@ -58,9 +61,11 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.HexFormat;
 import java.util.Locale;
 import java.util.Random;
 import java.util.stream.Collectors;
@@ -73,7 +78,7 @@ import static org.jackhuang.hmcl.util.io.FileUtils.getExtension;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 public class DecoratorController {
-    private static final Path remoteBgCachePath = Metadata.HMCL_CURRENT_DIRECTORY.resolve("bg.png");
+    private static final Path remoteBgCacheDir = Metadata.HMCL_CURRENT_DIRECTORY.resolve("bg_cache");
 
     private final Decorator decorator;
     private final Navigator navigator;
@@ -214,7 +219,7 @@ public class DecoratorController {
                 if (backgroundImageUrl != null) {
                     try {
                         asyncFetchRemoteImage(backgroundImageUrl);
-                        image = tryLoadImage(remoteBgCachePath);
+                        image = tryLoadImage(remoteBgCacheDir.resolve(generateFileName(backgroundImageUrl)));
                     } catch (Exception e) {
                         LOG.warning("Couldn't load background image", e);
                     }
@@ -347,16 +352,14 @@ public class DecoratorController {
     }
 
     private void asyncFetchRemoteImage(@NotNull String backgroundImageUrl) {
-        final int currentCount = this.changeBackgroundCount;
-        new CacheFileTask(backgroundImageUrl)
-                .setExecutor(Schedulers.io())
-                .thenApplyAsync(Schedulers.io(), path -> {
-                    if (this.changeBackgroundCount == currentCount) FileUtils.copyFile(path, remoteBgCachePath);
-                    return FXUtils.loadImage(path);
-                })
+        final int[] currentCount = new int[1];
+        final Path path = remoteBgCacheDir.resolve(generateFileName(backgroundImageUrl));
+        Task.runAsync(Schedulers.javafx(), () -> currentCount[0] = this.changeBackgroundCount)
+                .thenComposeAsync(new FileDownloadTask(backgroundImageUrl, path).setExecutor(Schedulers.io()))
+                .thenApplyAsync(Schedulers.io(), (__) -> tryLoadImage(path))
                 .whenComplete(Schedulers.javafx(), ((image, exception) -> {
-                    if (exception == null) {
-                        if (this.changeBackgroundCount == currentCount) {
+                    if (exception == null && image != null) {
+                        if (this.changeBackgroundCount == currentCount[0]) {
                             decorator.setContentBackground(createBackgroundWithOpacity(image, config().getBackgroundImageOpacity()));
                             remoteFetched = true;
                         }
@@ -364,6 +367,10 @@ public class DecoratorController {
                         LOG.warning("Failed to load network background image from " + backgroundImageUrl, exception);
                     }
                 })).start();
+    }
+
+    private static String generateFileName(@NotNull String url) {
+        return HexFormat.of().formatHex(DigestUtils.digest(CacheRepository.SHA1, url.getBytes(StandardCharsets.UTF_8))) + "." + FileUtils.getExtension(WebURL.parse(url).getPath());
     }
 
     // ==== Navigation ====
