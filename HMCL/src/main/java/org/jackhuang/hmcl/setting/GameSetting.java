@@ -674,8 +674,7 @@ public sealed abstract class GameSetting extends ObservableSetting {
     }
 
     private static <T> T direct(SettingProperty<T> property) {
-        T value = property.getValue();
-        return value != null ? value : property.defaultValue();
+        return property.getValue();
     }
 
     private static <T> T inherited(Global global, @Nullable Instance instance, Function<GameSetting, SettingProperty<T>> propertyGetter) {
@@ -729,9 +728,9 @@ public sealed abstract class GameSetting extends ObservableSetting {
         /// Returns the effective Java version text.
         public String getJavaVersion() {
             if (instance != null && instance.javaTypeProperty().getValue() != null) {
-                return Objects.requireNonNullElse(instance.javaVersionProperty().getValue(), "");
+                return instance.javaVersionProperty().getValue();
             }
-            return Objects.requireNonNullElse(global.javaVersionProperty().getValue(), "");
+            return global.javaVersionProperty().getValue();
         }
 
         /// Returns the effective custom Java executable path.

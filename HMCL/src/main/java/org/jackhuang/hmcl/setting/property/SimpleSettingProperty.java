@@ -44,7 +44,7 @@ public class SimpleSettingProperty<T extends @UnknownNullability Object> extends
     }
 
     @Override
-    public @UnknownNullability T defaultValue() {
+    public T defaultValue() {
         return defaultValue;
     }
 

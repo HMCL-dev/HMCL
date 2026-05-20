@@ -54,6 +54,7 @@ import org.jackhuang.hmcl.ui.decorator.DecoratorPage;
 import org.jackhuang.hmcl.ui.versions.VersionIconDialog;
 import org.jackhuang.hmcl.ui.versions.VersionPage;
 import org.jackhuang.hmcl.ui.versions.Versions;
+import org.jackhuang.hmcl.util.Holder;
 import org.jackhuang.hmcl.util.Pair;
 import org.jackhuang.hmcl.util.ServerAddress;
 import org.jackhuang.hmcl.util.StringUtils;
@@ -1547,7 +1548,7 @@ public final class GameSettingPage<S extends GameSetting> extends StackPane
             LineSelectButton<T> button,
             Function<GameSetting, InheritableProperty<T>> propertyGetter) {
         ObjectProperty<@Nullable InheritableProperty<T>> activeProperty = new SimpleObjectProperty<>();
-        final boolean[] updating = {false};
+        final Holder<Boolean> updating = new Holder<>(false);
         @Nullable JFXButton inheritButton = null;
         if (!isGlobalSetting) {
             inheritButton = createInheritanceButton();
@@ -1558,35 +1559,35 @@ public final class GameSettingPage<S extends GameSetting> extends StackPane
         InvalidationListener refresh = observable -> {
             GameSetting setting = currentSetting.get();
             InheritableProperty<T> property = activeProperty.get();
-            if (setting == null || property == null || updating[0]) {
+            if (setting == null || property == null || updating.value) {
                 return;
             }
 
-            updating[0] = true;
+            updating.value = true;
             try {
                 button.setValue(getEffectiveValue(setting, propertyGetter));
                 if (finalInheritButton != null) {
                     updateInheritanceButton(finalInheritButton, property.getValue() == null);
                 }
             } finally {
-                updating[0] = false;
+                updating.value = false;
             }
         };
 
         button.valueProperty().addListener((observable, oldValue, newValue) -> {
             InheritableProperty<T> property = activeProperty.get();
-            if (property == null || updating[0]) {
+            if (property == null || updating.value) {
                 return;
             }
 
-            updating[0] = true;
+            updating.value = true;
             try {
                 property.setValue(newValue);
                 if (finalInheritButton != null) {
                     updateInheritanceButton(finalInheritButton, false);
                 }
             } finally {
-                updating[0] = false;
+                updating.value = false;
             }
         });
 
@@ -1594,11 +1595,11 @@ public final class GameSettingPage<S extends GameSetting> extends StackPane
             finalInheritButton.addEventFilter(MouseEvent.MOUSE_CLICKED, event -> {
                 GameSetting setting = currentSetting.get();
                 InheritableProperty<T> property = activeProperty.get();
-                if (setting == null || property == null || updating[0]) {
+                if (setting == null || property == null || updating.value) {
                     return;
                 }
 
-                updating[0] = true;
+                updating.value = true;
                 try {
                     if (property.getValue() == null) {
                         property.setValue(getEffectiveValue(setting, propertyGetter));
@@ -1606,7 +1607,7 @@ public final class GameSettingPage<S extends GameSetting> extends StackPane
                         property.setValue(null);
                     }
                 } finally {
-                    updating[0] = false;
+                    updating.value = false;
                 }
                 refresh.invalidated(property);
                 event.consume();
@@ -1651,37 +1652,37 @@ public final class GameSettingPage<S extends GameSetting> extends StackPane
             LineInheritableToggleButton button,
             Function<GameSetting, InheritableProperty<Boolean>> propertyGetter) {
         ObjectProperty<@Nullable InheritableProperty<Boolean>> activeProperty = new SimpleObjectProperty<>();
-        final boolean[] updating = {false};
+        final Holder<Boolean> updating = new Holder<>(false);
 
         InvalidationListener refresh = observable -> {
             GameSetting setting = currentSetting.get();
             InheritableProperty<Boolean> property = activeProperty.get();
-            if (setting == null || property == null || updating[0]) {
+            if (setting == null || property == null || updating.value) {
                 return;
             }
 
-            updating[0] = true;
+            updating.value = true;
             try {
                 button.setRawValue(property.getValue());
                 button.setEffectiveValue(getEffectiveValue(setting, propertyGetter));
             } finally {
-                updating[0] = false;
+                updating.value = false;
             }
         };
 
         button.rawValueProperty().addListener((observable, oldValue, newValue) -> {
             InheritableProperty<Boolean> property = activeProperty.get();
             GameSetting setting = currentSetting.get();
-            if (property == null || setting == null || updating[0]) {
+            if (property == null || setting == null || updating.value) {
                 return;
             }
 
-            updating[0] = true;
+            updating.value = true;
             try {
                 property.setValue(newValue);
                 button.setEffectiveValue(getEffectiveValue(setting, propertyGetter));
             } finally {
-                updating[0] = false;
+                updating.value = false;
             }
         });
 
