@@ -34,6 +34,7 @@ import org.jackhuang.hmcl.ui.MemoryStatusBar;
 import org.jackhuang.hmcl.ui.construct.RadioChoiceList;
 import org.jackhuang.hmcl.ui.construct.LineComponent;
 import org.jackhuang.hmcl.ui.construct.LineInheritableToggleButton;
+import org.jackhuang.hmcl.util.Holder;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.platform.SystemInfo;
 import org.jackhuang.hmcl.util.platform.hardware.PhysicalMemoryStatus;
@@ -66,7 +67,7 @@ final class IndependentSettingBinder {
             BiConsumer<JFXButton, Boolean> inheritanceButtonUpdater,
             Function<GameSetting.Instance, GameSetting.Global> parentGetter) {
         ObjectProperty<@Nullable SettingProperty<String>> activeProperty = new javafx.beans.property.SimpleObjectProperty<>();
-        final boolean[] updating = {false};
+        final Holder<Boolean> updating = new Holder<>(false);
         @Nullable JFXButton inheritButton = null;
         if (!globalSetting) {
             inheritButton = inheritanceButtonFactory.get();
@@ -77,11 +78,11 @@ final class IndependentSettingBinder {
         InvalidationListener refresh = observable -> {
             GameSetting setting = currentSetting.get();
             SettingProperty<String> property = activeProperty.get();
-            if (setting == null || property == null || updating[0]) {
+            if (setting == null || property == null || updating.value) {
                 return;
             }
 
-            updating[0] = true;
+            updating.value = true;
             try {
                 boolean overridden = isOverridden(setting, property);
                 textField.setText(empty(getEffectiveValue(setting, propertyGetter, parentGetter)));
@@ -90,18 +91,18 @@ final class IndependentSettingBinder {
                     inheritanceButtonUpdater.accept(finalInheritButton, !overridden);
                 }
             } finally {
-                updating[0] = false;
+                updating.value = false;
             }
         };
 
         textField.textProperty().addListener((observable, oldValue, newValue) -> {
             GameSetting setting = currentSetting.get();
             SettingProperty<String> property = activeProperty.get();
-            if (setting == null || property == null || updating[0]) {
+            if (setting == null || property == null || updating.value) {
                 return;
             }
 
-            updating[0] = true;
+            updating.value = true;
             try {
                 setOverridden(setting, property, true);
                 property.setValue(newValue != null ? newValue : "");
@@ -109,7 +110,7 @@ final class IndependentSettingBinder {
                     inheritanceButtonUpdater.accept(finalInheritButton, false);
                 }
             } finally {
-                updating[0] = false;
+                updating.value = false;
             }
         });
 
@@ -117,11 +118,11 @@ final class IndependentSettingBinder {
             finalInheritButton.addEventFilter(MouseEvent.MOUSE_CLICKED, event -> {
                 GameSetting setting = currentSetting.get();
                 SettingProperty<String> property = activeProperty.get();
-                if (setting == null || property == null || updating[0]) {
+                if (setting == null || property == null || updating.value) {
                     return;
                 }
 
-                updating[0] = true;
+                updating.value = true;
                 try {
                     if (isOverridden(setting, property)) {
                         setOverridden(setting, property, false);
@@ -131,7 +132,7 @@ final class IndependentSettingBinder {
                         setOverridden(setting, property, true);
                     }
                 } finally {
-                    updating[0] = false;
+                    updating.value = false;
                 }
                 refresh.invalidated(property);
                 event.consume();
@@ -154,7 +155,7 @@ final class IndependentSettingBinder {
             BiConsumer<JFXButton, Boolean> inheritanceButtonUpdater,
             Function<GameSetting.Instance, GameSetting.Global> parentGetter) {
         ObjectProperty<@Nullable SettingProperty<Integer>> activeProperty = new javafx.beans.property.SimpleObjectProperty<>();
-        final boolean[] updating = {false};
+        final Holder<Boolean> updating = new Holder<>(false);
         @Nullable JFXButton inheritButton = null;
         if (!globalSetting) {
             inheritButton = inheritanceButtonFactory.get();
@@ -165,11 +166,11 @@ final class IndependentSettingBinder {
         InvalidationListener refresh = observable -> {
             GameSetting setting = currentSetting.get();
             SettingProperty<Integer> property = activeProperty.get();
-            if (setting == null || property == null || updating[0]) {
+            if (setting == null || property == null || updating.value) {
                 return;
             }
 
-            updating[0] = true;
+            updating.value = true;
             try {
                 boolean overridden = isOverridden(setting, property);
                 Integer value = getEffectiveValue(setting, propertyGetter, parentGetter);
@@ -179,18 +180,18 @@ final class IndependentSettingBinder {
                     inheritanceButtonUpdater.accept(finalInheritButton, !overridden);
                 }
             } finally {
-                updating[0] = false;
+                updating.value = false;
             }
         };
 
         textField.textProperty().addListener((observable, oldValue, newValue) -> {
             GameSetting setting = currentSetting.get();
             SettingProperty<Integer> property = activeProperty.get();
-            if (setting == null || property == null || updating[0]) {
+            if (setting == null || property == null || updating.value) {
                 return;
             }
 
-            updating[0] = true;
+            updating.value = true;
             try {
                 setOverridden(setting, property, true);
                 property.setValue(parseInteger(newValue, nullable));
@@ -198,7 +199,7 @@ final class IndependentSettingBinder {
                     inheritanceButtonUpdater.accept(finalInheritButton, false);
                 }
             } finally {
-                updating[0] = false;
+                updating.value = false;
             }
         });
 
@@ -206,11 +207,11 @@ final class IndependentSettingBinder {
             finalInheritButton.addEventFilter(MouseEvent.MOUSE_CLICKED, event -> {
                 GameSetting setting = currentSetting.get();
                 SettingProperty<Integer> property = activeProperty.get();
-                if (setting == null || property == null || updating[0]) {
+                if (setting == null || property == null || updating.value) {
                     return;
                 }
 
-                updating[0] = true;
+                updating.value = true;
                 try {
                     if (isOverridden(setting, property)) {
                         setOverridden(setting, property, false);
@@ -220,7 +221,7 @@ final class IndependentSettingBinder {
                         setOverridden(setting, property, true);
                     }
                 } finally {
-                    updating[0] = false;
+                    updating.value = false;
                 }
                 refresh.invalidated(property);
                 event.consume();
@@ -250,7 +251,7 @@ final class IndependentSettingBinder {
         ObjectProperty<@Nullable SettingProperty<Integer>> activeMaxMemoryProperty = new javafx.beans.property.SimpleObjectProperty<>();
         Label physicalMemoryLabel = (Label) memoryStatusLabels.getLeft();
         Label allocatedMemoryLabel = (Label) memoryStatusLabels.getRight();
-        final boolean[] updating = {false};
+        final Holder<Boolean> updating = new Holder<>(false);
 
         int totalMemoryMiB = Math.max(1, (int) MEGABYTES.convertFromBytes(SystemInfo.getTotalMemorySize()));
         maxMemorySlider.setValueFactory(slider -> Bindings.createStringBinding(
@@ -261,11 +262,11 @@ final class IndependentSettingBinder {
             GameSetting setting = currentSetting.get();
             SettingProperty<Boolean> autoMemoryProperty = activeAutoMemoryProperty.get();
             SettingProperty<Integer> maxMemoryProperty = activeMaxMemoryProperty.get();
-            if (setting == null || autoMemoryProperty == null || maxMemoryProperty == null || updating[0]) {
+            if (setting == null || autoMemoryProperty == null || maxMemoryProperty == null || updating.value) {
                 return;
             }
 
-            updating[0] = true;
+            updating.value = true;
             try {
                 boolean autoMemoryOverridden = isOverridden(setting, autoMemoryProperty);
                 boolean maxMemoryOverridden = isOverridden(setting, maxMemoryProperty);
@@ -283,18 +284,18 @@ final class IndependentSettingBinder {
                     inheritanceButtonUpdater.accept(maxMemoryButton, !maxMemoryOverridden);
                 }
             } finally {
-                updating[0] = false;
+                updating.value = false;
             }
         };
 
         choiceList.selectedValueProperty().addListener((observable, oldValue, newValue) -> {
             GameSetting setting = currentSetting.get();
             SettingProperty<Boolean> property = activeAutoMemoryProperty.get();
-            if (setting == null || property == null || updating[0]) {
+            if (setting == null || property == null || updating.value) {
                 return;
             }
 
-            updating[0] = true;
+            updating.value = true;
             try {
                 setOverridden(setting, property, true);
                 property.setValue(Boolean.TRUE.equals(newValue));
@@ -308,18 +309,18 @@ final class IndependentSettingBinder {
                         property.getValue(),
                         getEffectiveValue(setting, GameSetting::maxMemoryProperty, parentGetter));
             } finally {
-                updating[0] = false;
+                updating.value = false;
             }
         });
 
         maxMemorySlider.valueProperty().addListener((observable, oldValue, newValue) -> {
             GameSetting setting = currentSetting.get();
             SettingProperty<Integer> property = activeMaxMemoryProperty.get();
-            if (setting == null || property == null || updating[0]) {
+            if (setting == null || property == null || updating.value) {
                 return;
             }
 
-            updating[0] = true;
+            updating.value = true;
             try {
                 int maxMemory = sliderValueToMaxMemory(newValue.doubleValue(), totalMemoryMiB);
                 setOverridden(setting, property, true);
@@ -335,7 +336,7 @@ final class IndependentSettingBinder {
                         getEffectiveValue(setting, GameSetting::autoMemoryProperty, parentGetter),
                         maxMemory);
             } finally {
-                updating[0] = false;
+                updating.value = false;
             }
         });
 
@@ -343,11 +344,11 @@ final class IndependentSettingBinder {
             GameSetting setting = currentSetting.get();
             SettingProperty<Integer> property = activeMaxMemoryProperty.get();
             Integer maxMemory = parseMemoryText(newValue);
-            if (setting == null || property == null || maxMemory == null || updating[0]) {
+            if (setting == null || property == null || maxMemory == null || updating.value) {
                 return;
             }
 
-            updating[0] = true;
+            updating.value = true;
             try {
                 setOverridden(setting, property, true);
                 property.setValue(maxMemory);
@@ -362,7 +363,7 @@ final class IndependentSettingBinder {
                         getEffectiveValue(setting, GameSetting::autoMemoryProperty, parentGetter),
                         maxMemory);
             } finally {
-                updating[0] = false;
+                updating.value = false;
             }
         });
 
@@ -456,16 +457,16 @@ final class IndependentSettingBinder {
             Function<GameSetting, SettingProperty<Boolean>> propertyGetter,
             Function<GameSetting.Instance, GameSetting.Global> parentGetter) {
         ObjectProperty<@Nullable SettingProperty<Boolean>> activeProperty = new javafx.beans.property.SimpleObjectProperty<>();
-        final boolean[] updating = {false};
+        final Holder<Boolean> updating = new Holder<>(false);
 
         InvalidationListener refresh = observable -> {
             GameSetting setting = currentSetting.get();
             SettingProperty<Boolean> property = activeProperty.get();
-            if (setting == null || property == null || updating[0]) {
+            if (setting == null || property == null || updating.value) {
                 return;
             }
 
-            updating[0] = true;
+            updating.value = true;
             try {
                 boolean overridden = isOverridden(setting, property);
                 Boolean rawValue = overridden ? getDirectValue(property) : null;
@@ -473,18 +474,18 @@ final class IndependentSettingBinder {
                 button.setRawValue(rawValue);
                 button.setEffectiveValue(Boolean.TRUE.equals(effectiveValue));
             } finally {
-                updating[0] = false;
+                updating.value = false;
             }
         };
 
         button.rawValueProperty().addListener((observable, oldValue, newValue) -> {
             GameSetting setting = currentSetting.get();
             SettingProperty<Boolean> property = activeProperty.get();
-            if (setting == null || property == null || updating[0]) {
+            if (setting == null || property == null || updating.value) {
                 return;
             }
 
-            updating[0] = true;
+            updating.value = true;
             try {
                 if (newValue == null) {
                     setOverridden(setting, property, false);
@@ -495,7 +496,7 @@ final class IndependentSettingBinder {
                 }
                 button.setEffectiveValue(Boolean.TRUE.equals(getEffectiveValue(setting, propertyGetter, parentGetter)));
             } finally {
-                updating[0] = false;
+                updating.value = false;
             }
         });
 
@@ -508,16 +509,16 @@ final class IndependentSettingBinder {
             LineInheritableToggleButton button,
             Function<GameSetting.Instance, GameSetting.Global> parentGetter) {
         ObjectProperty<@Nullable SettingProperty<NativesDirectoryType>> activeProperty = new javafx.beans.property.SimpleObjectProperty<>();
-        final boolean[] updating = {false};
+        final Holder<Boolean> updating = new Holder<>(false);
 
         InvalidationListener refresh = observable -> {
             GameSetting setting = currentSetting.get();
             SettingProperty<NativesDirectoryType> property = activeProperty.get();
-            if (setting == null || property == null || updating[0]) {
+            if (setting == null || property == null || updating.value) {
                 return;
             }
 
-            updating[0] = true;
+            updating.value = true;
             try {
                 boolean overridden = isOverridden(setting, property);
                 NativesDirectoryType rawValue = getDirectValue(property);
@@ -525,18 +526,18 @@ final class IndependentSettingBinder {
                 button.setRawValue(overridden ? rawValue == NativesDirectoryType.CUSTOM : null);
                 button.setEffectiveValue(effectiveValue == NativesDirectoryType.CUSTOM);
             } finally {
-                updating[0] = false;
+                updating.value = false;
             }
         };
 
         button.rawValueProperty().addListener((observable, oldValue, newValue) -> {
             GameSetting setting = currentSetting.get();
             SettingProperty<NativesDirectoryType> property = activeProperty.get();
-            if (setting == null || property == null || updating[0]) {
+            if (setting == null || property == null || updating.value) {
                 return;
             }
 
-            updating[0] = true;
+            updating.value = true;
             try {
                 if (newValue == null) {
                     setOverridden(setting, property, false);
@@ -547,7 +548,7 @@ final class IndependentSettingBinder {
                 }
                 button.setEffectiveValue(getEffectiveValue(setting, GameSetting::nativesDirTypeProperty, parentGetter) == NativesDirectoryType.CUSTOM);
             } finally {
-                updating[0] = false;
+                updating.value = false;
             }
         });
 

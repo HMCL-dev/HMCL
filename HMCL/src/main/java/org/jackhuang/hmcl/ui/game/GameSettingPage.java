@@ -873,22 +873,22 @@ public final class GameSettingPage<S extends GameSetting> extends StackPane
     private void bindWindowSizeComboBox(JFXComboBox<String> comboBox) {
         ObjectProperty<Property<Double>> activeWidthProperty = new SimpleObjectProperty<>();
         ObjectProperty<Property<Double>> activeHeightProperty = new SimpleObjectProperty<>();
-        final boolean[] updating = {false};
+        final Holder<Boolean> updating = new Holder<>(false);
 
         InvalidationListener propertyListener = observable -> {
             Property<Double> widthProperty = activeWidthProperty.get();
             Property<Double> heightProperty = activeHeightProperty.get();
-            if (widthProperty == null || heightProperty == null || updating[0]) {
+            if (widthProperty == null || heightProperty == null || updating.value) {
                 return;
             }
 
-            updating[0] = true;
+            updating.value = true;
             try {
                 Double width = widthProperty.getValue();
                 Double height = heightProperty.getValue();
                 comboBox.setValue(width != null && height != null ? formatWindowSize(width, height) : null);
             } finally {
-                updating[0] = false;
+                updating.value = false;
             }
         };
 
@@ -944,12 +944,12 @@ public final class GameSettingPage<S extends GameSetting> extends StackPane
     private static void applyWindowSizeComboBoxValue(JFXComboBox<String> comboBox,
                                                      @Nullable Property<Double> widthProperty,
                                                      @Nullable Property<Double> heightProperty,
-                                                     boolean[] updating) {
-        if (widthProperty == null || heightProperty == null || updating[0]) {
+                                                     Holder<Boolean> updating) {
+        if (widthProperty == null || heightProperty == null || updating.value) {
             return;
         }
 
-        updating[0] = true;
+        updating.value = true;
         try {
             String value = comboBox.getValue();
             if (StringUtils.isBlank(value)) {
@@ -975,7 +975,7 @@ public final class GameSettingPage<S extends GameSetting> extends StackPane
                 comboBox.setValue(formatNullableWindowSize(widthProperty.getValue(), heightProperty.getValue()));
             }
         } finally {
-            updating[0] = false;
+            updating.value = false;
         }
     }
 
@@ -1030,7 +1030,7 @@ public final class GameSettingPage<S extends GameSetting> extends StackPane
             JFXTextField textField,
             Function<GameSetting, InheritableProperty<String>> propertyGetter) {
         ObjectProperty<@Nullable InheritableProperty<String>> activeProperty = new SimpleObjectProperty<>();
-        final boolean[] updating = {false};
+        final Holder<Boolean> updating = new Holder<>(false);
         @Nullable JFXButton inheritButton = null;
         if (!isGlobalSetting) {
             inheritButton = createInheritanceButton();
@@ -1041,35 +1041,35 @@ public final class GameSettingPage<S extends GameSetting> extends StackPane
         InvalidationListener refresh = observable -> {
             GameSetting setting = currentSetting.get();
             InheritableProperty<String> property = activeProperty.get();
-            if (setting == null || property == null || updating[0]) {
+            if (setting == null || property == null || updating.value) {
                 return;
             }
 
-            updating[0] = true;
+            updating.value = true;
             try {
                 textField.setText(getEffectiveValue(setting, propertyGetter));
                 if (finalInheritButton != null) {
                     updateInheritanceButton(finalInheritButton, property.getValue() == null);
                 }
             } finally {
-                updating[0] = false;
+                updating.value = false;
             }
         };
 
         textField.textProperty().addListener((observable, oldValue, newValue) -> {
             InheritableProperty<String> property = activeProperty.get();
-            if (property == null || updating[0]) {
+            if (property == null || updating.value) {
                 return;
             }
 
-            updating[0] = true;
+            updating.value = true;
             try {
                 property.setValue(newValue != null ? newValue : "");
                 if (finalInheritButton != null) {
                     updateInheritanceButton(finalInheritButton, false);
                 }
             } finally {
-                updating[0] = false;
+                updating.value = false;
             }
         });
 
@@ -1077,11 +1077,11 @@ public final class GameSettingPage<S extends GameSetting> extends StackPane
             finalInheritButton.addEventFilter(MouseEvent.MOUSE_CLICKED, event -> {
                 GameSetting setting = currentSetting.get();
                 InheritableProperty<String> property = activeProperty.get();
-                if (setting == null || property == null || updating[0]) {
+                if (setting == null || property == null || updating.value) {
                     return;
                 }
 
-                updating[0] = true;
+                updating.value = true;
                 try {
                     if (property.getValue() == null) {
                         property.setValue(getEffectiveValue(setting, propertyGetter));
@@ -1089,7 +1089,7 @@ public final class GameSettingPage<S extends GameSetting> extends StackPane
                         property.setValue(null);
                     }
                 } finally {
-                    updating[0] = false;
+                    updating.value = false;
                 }
                 refresh.invalidated(property);
                 event.consume();
@@ -1138,18 +1138,18 @@ public final class GameSettingPage<S extends GameSetting> extends StackPane
         ObjectProperty<@Nullable InheritableProperty<GameDirectoryType>> activeTypeProperty = new SimpleObjectProperty<>();
         ObjectProperty<@Nullable InheritableProperty<String>> activeDirProperty = new SimpleObjectProperty<>();
         ObjectProperty<@Nullable SettingProperty<Boolean>> activeIsolationProperty = new SimpleObjectProperty<>();
-        final boolean[] updating = {false};
+        final Holder<Boolean> updating = new Holder<>(false);
 
         InvalidationListener refresh = observable -> {
             GameSetting setting = currentSetting.get();
             InheritableProperty<GameDirectoryType> typeProperty = activeTypeProperty.get();
             InheritableProperty<String> dirProperty = activeDirProperty.get();
             SettingProperty<Boolean> isolationProperty = activeIsolationProperty.get();
-            if (setting == null || typeProperty == null || dirProperty == null || updating[0]) {
+            if (setting == null || typeProperty == null || dirProperty == null || updating.value) {
                 return;
             }
 
-            updating[0] = true;
+            updating.value = true;
             try {
                 GameDirectoryType effectiveType = getEffectiveGameDirectoryType(setting);
                 choiceList.setSelectedValue(effectiveType);
@@ -1159,7 +1159,7 @@ public final class GameSettingPage<S extends GameSetting> extends StackPane
                 sublist.setDescription(getEffectiveGameDirectorySubtitle());
                 choiceList.setDisable(isCurrentInstanceModpack());
             } finally {
-                updating[0] = false;
+                updating.value = false;
             }
         };
 
@@ -1167,15 +1167,15 @@ public final class GameSettingPage<S extends GameSetting> extends StackPane
             InheritableProperty<GameDirectoryType> typeProperty = activeTypeProperty.get();
             InheritableProperty<String> dirProperty = activeDirProperty.get();
             SettingProperty<Boolean> isolationProperty = activeIsolationProperty.get();
-            if (typeProperty == null || dirProperty == null || updating[0]) {
+            if (typeProperty == null || dirProperty == null || updating.value) {
                 return;
             }
 
-            updating[0] = true;
+            updating.value = true;
             try {
                 applyGameDirectorySelection(newValue, customOption.getPath(), typeProperty, dirProperty, isolationProperty);
             } finally {
-                updating[0] = false;
+                updating.value = false;
             }
         });
 
@@ -1183,15 +1183,15 @@ public final class GameSettingPage<S extends GameSetting> extends StackPane
             InheritableProperty<GameDirectoryType> typeProperty = activeTypeProperty.get();
             InheritableProperty<String> dirProperty = activeDirProperty.get();
             SettingProperty<Boolean> isolationProperty = activeIsolationProperty.get();
-            if (typeProperty == null || dirProperty == null || updating[0] || choiceList.getSelectedValue() != GameDirectoryType.CUSTOM) {
+            if (typeProperty == null || dirProperty == null || updating.value || choiceList.getSelectedValue() != GameDirectoryType.CUSTOM) {
                 return;
             }
 
-            updating[0] = true;
+            updating.value = true;
             try {
                 applyGameDirectorySelection(GameDirectoryType.CUSTOM, newValue, typeProperty, dirProperty, isolationProperty);
             } finally {
-                updating[0] = false;
+                updating.value = false;
             }
         });
 
@@ -1294,7 +1294,7 @@ public final class GameSettingPage<S extends GameSetting> extends StackPane
             RadioChoiceList<T> item,
             Function<GameSetting, InheritableProperty<T>> propertyGetter) {
         ObjectProperty<@Nullable InheritableProperty<T>> activeProperty = new SimpleObjectProperty<>();
-        final boolean[] updating = {false};
+        final Holder<Boolean> updating = new Holder<>(false);
         @Nullable JFXButton inheritButton = null;
         if (!isGlobalSetting) {
             inheritButton = createInheritanceButton();
@@ -1305,35 +1305,35 @@ public final class GameSettingPage<S extends GameSetting> extends StackPane
         InvalidationListener propertyListener = observable -> {
             GameSetting setting = currentSetting.get();
             InheritableProperty<T> property = activeProperty.get();
-            if (setting == null || property == null || updating[0]) {
+            if (setting == null || property == null || updating.value) {
                 return;
             }
 
-            updating[0] = true;
+            updating.value = true;
             try {
                 item.setSelectedValue(getEffectiveValue(setting, propertyGetter));
                 if (finalInheritButton != null) {
                     updateInheritanceButton(finalInheritButton, property.getValue() == null);
                 }
             } finally {
-                updating[0] = false;
+                updating.value = false;
             }
         };
 
         ChangeListener<@Nullable T> itemListener = (observable, oldValue, newValue) -> {
             InheritableProperty<T> property = activeProperty.get();
-            if (property == null || updating[0]) {
+            if (property == null || updating.value) {
                 return;
             }
 
-            updating[0] = true;
+            updating.value = true;
             try {
                 property.setValue(newValue);
                 if (finalInheritButton != null) {
                     updateInheritanceButton(finalInheritButton, false);
                 }
             } finally {
-                updating[0] = false;
+                updating.value = false;
             }
         };
 
@@ -1342,11 +1342,11 @@ public final class GameSettingPage<S extends GameSetting> extends StackPane
             finalInheritButton.addEventFilter(MouseEvent.MOUSE_CLICKED, event -> {
                 GameSetting setting = currentSetting.get();
                 InheritableProperty<T> property = activeProperty.get();
-                if (setting == null || property == null || updating[0]) {
+                if (setting == null || property == null || updating.value) {
                     return;
                 }
 
-                updating[0] = true;
+                updating.value = true;
                 try {
                     if (property.getValue() == null) {
                         property.setValue(getEffectiveValue(setting, propertyGetter));
@@ -1354,7 +1354,7 @@ public final class GameSettingPage<S extends GameSetting> extends StackPane
                         property.setValue(null);
                     }
                 } finally {
-                    updating[0] = false;
+                    updating.value = false;
                 }
                 propertyListener.invalidated(property);
                 event.consume();
