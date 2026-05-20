@@ -40,6 +40,7 @@ import org.jackhuang.hmcl.util.platform.SystemInfo;
 import org.jackhuang.hmcl.util.platform.hardware.PhysicalMemoryStatus;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.UnknownNullability;
 
 import java.util.function.BiConsumer;
 import java.util.function.Function;
@@ -237,7 +238,7 @@ final class IndependentSettingBinder {
 
     /// Binds the game memory radio options and manual memory slider.
     static void bindMemoryChoiceList(
-            ObjectProperty<? extends GameSetting> currentSetting,
+            ObjectProperty<? extends @Nullable GameSetting> currentSetting,
             RadioChoiceList<Boolean> choiceList,
             JFXSlider maxMemorySlider,
             JFXTextField maxMemoryTextField,
@@ -271,9 +272,9 @@ final class IndependentSettingBinder {
                 boolean autoMemoryOverridden = isOverridden(setting, autoMemoryProperty);
                 boolean maxMemoryOverridden = isOverridden(setting, maxMemoryProperty);
                 Boolean autoMemory = getEffectiveValue(setting, GameSetting::autoMemoryProperty, parentGetter);
-                Integer maxMemory = getEffectiveValue(setting, GameSetting::maxMemoryProperty, parentGetter);
+                @Nullable Integer maxMemory = getEffectiveValue(setting, GameSetting::maxMemoryProperty, parentGetter);
 
-                choiceList.setSelectedValue(Boolean.TRUE.equals(autoMemory));
+                choiceList.setSelectedValue(autoMemory);
                 maxMemorySlider.setValue(maxMemoryToSliderValue(maxMemory, totalMemoryMiB));
                 maxMemoryTextField.setText(maxMemoryToText(maxMemory));
                 updateMemoryStatus(memoryStatusBar, physicalMemoryLabel, allocatedMemoryLabel, autoMemory, maxMemory);
@@ -731,7 +732,7 @@ final class IndependentSettingBinder {
         }
     }
 
-    private static <T> T getEffectiveValue(
+    private static <T extends @UnknownNullability Object> T getEffectiveValue(
             GameSetting setting,
             Function<GameSetting, ? extends SettingProperty<T>> propertyGetter,
             Function<GameSetting.Instance, GameSetting.Global> parentGetter) {

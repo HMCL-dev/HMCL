@@ -475,16 +475,13 @@ public final class GameSettingPage<S extends GameSetting> extends StackPane
 
                 var realmsOption = new RadioChoiceList.TextChoice<>("领域服", QuickPlayType.REALMS); // TODO: i18n
 
-                var options = new ArrayList<RadioChoiceList.Choice<QuickPlayType>>();
                 quickPlayItem.setFallbackValue(QuickPlayType.NONE);
-                options.addAll(List.of(
+                quickPlayItem.setChoices(List.of(
                         noneOption,
                         multiplayerOption,
                         singleplayerOption,
                         realmsOption
                 ));
-
-                quickPlayItem.setChoices(options);
 
                 bindInheritableRadioChoiceList(quickSublist, quickPlayItem, GameSetting::quickPlayProperty);
                 bindSettingBidirectional(multiplayerOption.textProperty(), GameSetting::quickPlayMultiplayerProperty);
