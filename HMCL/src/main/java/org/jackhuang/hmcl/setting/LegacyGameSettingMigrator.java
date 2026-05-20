@@ -28,10 +28,9 @@ import org.jackhuang.hmcl.game.QuickPlayType;
 import org.jackhuang.hmcl.game.Renderer;
 import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.StringUtils;
-import org.jetbrains.annotations.NotNullByDefault;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.Unmodifiable;
+import org.jetbrains.annotations.*;
 
+import java.util.List;
 import java.util.Locale;
 import java.util.UUID;
 
@@ -82,7 +81,7 @@ public final class LegacyGameSettingMigrator {
         target.isolationProperty().setValue(getGameDirType(source, GameDirectoryType.ROOT_FOLDER) == GameDirectoryType.VERSION_FOLDER);
         if (source != null && copyValues) {
             copyCommonProperties(source, target);
-            target.getOverrideProperties().addAll(java.util.List.of(
+            target.getOverrideProperties().addAll(List.of(
                     GameSetting.PROPERTY_JVM_OPTIONS,
                     GameSetting.PROPERTY_AUTO_MEMORY,
                     GameSetting.PROPERTY_MIN_MEMORY,
@@ -185,7 +184,7 @@ public final class LegacyGameSettingMigrator {
     /// Parses the legacy Java version value.
     private static @Nullable String parseLegacyJavaVersion(JsonObject source) {
         if (source.has("javaVersionType")) {
-            return readNullableString(source, "java");
+            return readString(source, "java", null);
         }
 
         String java = readString(source, "java", "");
@@ -226,7 +225,7 @@ public final class LegacyGameSettingMigrator {
 
     /// Parses the graphics API selection with renderer-derived fallback.
     private static GraphicsAPI parseGraphicsBackend(JsonObject source, Renderer renderer) {
-        String name = readNullableString(source, "graphicsBackend");
+        String name = readString(source, "graphicsBackend", null);
         if (name != null) {
             try {
                 return GraphicsAPI.valueOf(name.toUpperCase(Locale.ROOT));
@@ -270,27 +269,22 @@ public final class LegacyGameSettingMigrator {
             return null;
         }
 
-        JsonElement element = source.get(name);
-        return element instanceof JsonPrimitive primitive ? primitive : null;
+        return source.get(name) instanceof JsonPrimitive primitive ? primitive : null;
     }
 
-    /// Reads a nullable string property.
-    private static @Nullable String readNullableString(@Nullable JsonObject source, String name) {
+    /// Reads a string property.
+    @Contract("_,_,!null->!null")
+    private static @UnknownNullability String readString(@Nullable JsonObject source, String name, @Nullable String defaultValue) {
         JsonPrimitive primitive = getPrimitive(source, name);
         if (primitive == null) {
-            return null;
+            return defaultValue;
         }
 
         try {
             return primitive.getAsString();
         } catch (RuntimeException ignored) {
-            return null;
+            return defaultValue;
         }
-    }
-
-    /// Reads a string property.
-    private static String readString(@Nullable JsonObject source, String name, String defaultValue) {
-        return Lang.requireNonNullElse(readNullableString(source, name), defaultValue);
     }
 
     /// Reads a boolean property.
@@ -329,7 +323,10 @@ public final class LegacyGameSettingMigrator {
         }
 
         try {
-            return primitive.isNumber() ? primitive.getAsInt() : Lang.toIntOrNull(primitive.getAsString());
+            if (primitive.isNumber())
+                return primitive.getAsInt();
+            else
+                return Lang.toIntOrNull(primitive.getAsString());
         } catch (RuntimeException ignored) {
             return null;
         }

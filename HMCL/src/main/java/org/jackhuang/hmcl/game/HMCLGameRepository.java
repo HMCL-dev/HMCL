@@ -229,7 +229,11 @@ public final class HMCLGameRepository extends DefaultGameRepository {
         Path file = getLocalGameSettingFile(id);
         if (Files.exists(file)) {
             try {
-                GameSetting.Instance gameSetting = Config.CONFIG_GSON.fromJson(Files.readString(file), GameSetting.Instance.class);
+                GameSetting.Instance gameSetting;
+                try (var reader = Files.newBufferedReader(file)) {
+                    gameSetting = Config.CONFIG_GSON.fromJson(reader, GameSetting.Instance.class);
+                }
+
                 if (gameSetting != null) {
                     initLocalGameSetting(id, gameSetting);
                     loadedLocalGameSettings.add(id);
