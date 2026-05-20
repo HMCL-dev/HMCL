@@ -2,7 +2,7 @@
 
 ## Summary
 
-Migrate game settings from the old `VersionSetting` model to the new `GameSetting` model. Global settings will become a list of `GameSetting.Global` entries stored in `Config`; each global setting has a `UUID` and editable `name`. Instance settings will be stored in `versions/<id>/hmcl-game-setting.cfg`. The old `hmclversion.cfg` files and old `Profile.global` data must remain untouched. Launching, exporting, installing, and the settings UI should all read effective `GameSetting` values.
+Migrate game settings from the old JSON format to the new `GameSetting` model. Global settings will become a list of `GameSetting.Global` entries stored in `Config`; each global setting has a `UUID` and editable `name`. Instance settings will be stored in `versions/<id>/hmcl-game-setting.cfg`. The old `hmclversion.cfg` files and old `Profile.global` data must remain untouched. Launching, exporting, installing, and the settings UI should all read effective `GameSetting` values.
 
 ## Key Changes
 
@@ -33,7 +33,7 @@ Migrate game settings from the old `VersionSetting` model to the new `GameSettin
 ## Test Plan
 
 - Run IDEA build and `./gradlew -g .gradle-user-home compileJava test`.
-- Add unit tests for old `VersionSetting` to `GameSetting` conversion, parent fallback, merged field order, and old-file preservation.
+- Add unit tests for old JSON to `GameSetting` conversion, parent fallback, merged field order, and old-file preservation.
 - Verify these integration scenarios:
   - A launcher with only old config starts, opens settings, and creates the global setting list plus migration UUIDs.
   - Editing an instance creates only `hmcl-game-setting.cfg` and does not modify `hmclversion.cfg`.
@@ -44,5 +44,5 @@ Migrate game settings from the old `VersionSetting` model to the new `GameSettin
 ## Assumptions
 
 - The new instance setting file name is `hmcl-game-setting.cfg`.
-- `VersionSetting` can remain temporarily as a migration reader and compatibility conversion source, but new runtime paths should no longer depend on it.
+- Old local settings are read as raw JSON and immediately converted into `GameSetting.Instance`; runtime paths should never keep old setting objects.
 - Deleting a `GameSetting.Global` that is used as the default or referenced by an instance should be blocked, or the user must switch references first.

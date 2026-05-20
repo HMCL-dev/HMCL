@@ -34,10 +34,10 @@ import java.util.List;
 import java.util.Locale;
 import java.util.UUID;
 
-/// Converts legacy `VersionSetting` JSON into `GameSetting` models.
+/// Converts legacy game setting JSON into `GameSetting` models.
 @NotNullByDefault
 public final class LegacyGameSettingMigrator {
-    /// Legacy `VersionIconType` ordinal order used by `VersionSetting`.
+    /// Legacy `VersionIconType` ordinal order used by old local settings.
     private static final VersionIconType @Unmodifiable [] LEGACY_VERSION_ICON_TYPES = {
             VersionIconType.DEFAULT,
             VersionIconType.GRASS,
@@ -60,7 +60,7 @@ public final class LegacyGameSettingMigrator {
     private LegacyGameSettingMigrator() {
     }
 
-    /// Converts a legacy `VersionSetting` JSON object into a named global game setting.
+    /// Converts a legacy global setting JSON object into a named global game setting.
     public static GameSetting.Global toGlobal(String name, @Nullable JsonObject source) {
         GameSetting.Global target = new GameSetting.Global();
         target.nameProperty().setValue(name);
@@ -73,7 +73,7 @@ public final class LegacyGameSettingMigrator {
         return target;
     }
 
-    /// Converts a legacy `VersionSetting` JSON object into an instance game setting.
+    /// Converts a legacy local setting JSON object into an instance game setting.
     public static GameSetting.Instance toInstance(@Nullable UUID parent, @Nullable JsonObject source, boolean copyValues) {
         GameSetting.Instance target = new GameSetting.Instance();
         target.parentProperty().setValue(parent);
@@ -99,12 +99,12 @@ public final class LegacyGameSettingMigrator {
         return target;
     }
 
-    /// Returns the legacy `usesGlobal` flag from a `VersionSetting` JSON object.
+    /// Returns the legacy `usesGlobal` flag from a local setting JSON object.
     public static boolean isUsesGlobal(@Nullable JsonObject source) {
         return readBoolean(source, "usesGlobal", false);
     }
 
-    /// Returns the legacy game directory type from a `VersionSetting` JSON object.
+    /// Returns the legacy game directory type from a setting JSON object.
     public static GameDirectoryType getGameDirType(@Nullable JsonObject source, GameDirectoryType defaultValue) {
         return parseEnum(source, "gameDirType", GameDirectoryType.class, defaultValue);
     }

@@ -17,8 +17,6 @@
  */
 package org.jackhuang.hmcl.game;
 
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParseException;
 import javafx.scene.image.Image;
@@ -38,7 +36,6 @@ import org.jackhuang.hmcl.setting.GameWindowType;
 import org.jackhuang.hmcl.setting.LegacyGameSettingMigrator;
 import org.jackhuang.hmcl.setting.Profile;
 import org.jackhuang.hmcl.setting.VersionIconType;
-import org.jackhuang.hmcl.setting.VersionSetting;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.util.FileSaver;
 import org.jackhuang.hmcl.util.Lang;
@@ -68,13 +65,10 @@ import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 public final class HMCLGameRepository extends DefaultGameRepository {
     private final Profile profile;
 
-    // local version settings
+    // local game settings
     private final Map<String, GameSetting.Instance> localGameSettings = new HashMap<>();
     private final Set<String> loadedLocalGameSettings = new HashSet<>();
     private final Set<String> migratedLocalGameSettings = new HashSet<>();
-    private final Map<String, JsonObject> localVersionSettingJsons = new HashMap<>();
-    private final Set<String> loadedLocalVersionSettingJsons = new HashSet<>();
-    private final Map<String, VersionSetting> localVersionSettings = new HashMap<>();
     private final Set<String> beingModpackVersions = new HashSet<>();
 
     public final EventManager<Event> onVersionIconChanged = new EventManager<>();
@@ -131,12 +125,8 @@ public final class HMCLGameRepository extends DefaultGameRepository {
         localGameSettings.clear();
         loadedLocalGameSettings.clear();
         migratedLocalGameSettings.clear();
-        localVersionSettingJsons.clear();
-        loadedLocalVersionSettingJsons.clear();
-        localVersionSettings.clear();
         super.refreshVersionsImpl();
         versions.keySet().forEach(this::loadLocalGameSetting);
-        versions.keySet().forEach(this::loadLocalVersionSetting);
 
         try {
             Path file = getBaseDirectory().resolve("launcher_profiles.json");
@@ -244,10 +234,9 @@ public final class HMCLGameRepository extends DefaultGameRepository {
             }
         }
 
-        JsonObject legacySetting = getLocalVersionSettingJson(id);
+        GameSetting.Instance legacySetting = loadLegacyGameSetting(id);
         if (legacySetting != null) {
-            UUID parent = profile.getLegacyGameSettingParent();
-            initLocalGameSetting(id, LegacyGameSettingMigrator.toInstance(parent, legacySetting, !LegacyGameSettingMigrator.isUsesGlobal(legacySetting)));
+            initLocalGameSetting(id, legacySetting);
             migratedLocalGameSettings.add(id);
         } else if (LegacyGameSettingMigrator.getGameDirType(profile.getLegacyGlobalSettingJson(), GameDirectoryType.ROOT_FOLDER) == GameDirectoryType.VERSION_FOLDER) {
             GameSetting.Instance setting = new GameSetting.Instance();
@@ -327,99 +316,31 @@ public final class HMCLGameRepository extends DefaultGameRepository {
         }
     }
 
-    private Path getLocalVersionSettingFile(String id) {
+    private Path getLegacyGameSettingFile(String id) {
         return getVersionRoot(id).resolve("hmclversion.cfg");
     }
 
-    private void loadLocalVersionSettingJson(String id) {
-        loadedLocalVersionSettingJsons.add(id);
-        Path file = getLocalVersionSettingFile(id);
+    @Nullable
+    private GameSetting.Instance loadLegacyGameSetting(String id) {
+        Path file = getLegacyGameSettingFile(id);
         if (!Files.exists(file)) {
-            return;
+            return null;
         }
 
         try {
-            JsonObject versionSettingJson = Config.CONFIG_GSON.fromJson(Files.readString(file), JsonObject.class);
-            if (versionSettingJson != null) {
-                localVersionSettingJsons.put(id, versionSettingJson);
+            JsonObject legacySettingJson;
+            try (var reader = Files.newBufferedReader(file)) {
+                legacySettingJson = Config.CONFIG_GSON.fromJson(reader, JsonObject.class);
+            }
+
+            if (legacySettingJson != null) {
+                UUID parent = profile.getLegacyGameSettingParent();
+                return LegacyGameSettingMigrator.toInstance(parent, legacySettingJson, !LegacyGameSettingMigrator.isUsesGlobal(legacySettingJson));
             }
         } catch (Exception ex) {
-            LOG.warning("Failed to load legacy version setting JSON " + file, ex);
+            LOG.warning("Failed to migrate legacy version setting " + file, ex);
         }
-    }
-
-    @Nullable
-    private JsonObject getLocalVersionSettingJson(String id) {
-        if (!loadedLocalVersionSettingJsons.contains(id)) {
-            loadLocalVersionSettingJson(id);
-        }
-        JsonObject versionSettingJson = localVersionSettingJsons.get(id);
-        return versionSettingJson != null ? versionSettingJson.deepCopy() : null;
-    }
-
-    private void loadLocalVersionSetting(String id) {
-        Path file = getLocalVersionSettingFile(id);
-        if (Files.exists(file))
-            try {
-                VersionSetting versionSetting = JsonUtils.fromJsonFile(file, VersionSetting.class);
-                initLocalVersionSetting(id, versionSetting);
-            } catch (Exception ex) {
-                // If [JsonParseException], [IOException] or [NullPointerException] happens, the json file is malformed and needed to be recreated.
-                initLocalVersionSetting(id, new VersionSetting());
-            }
-    }
-
-    /**
-     * Create new version setting if version id has no version setting.
-     *
-     * @param id the version id.
-     * @return new version setting, null if given version does not exist.
-     */
-    public VersionSetting createLocalVersionSetting(String id) {
-        if (!hasVersion(id))
-            return null;
-        if (localVersionSettings.containsKey(id))
-            return getLocalVersionSetting(id);
-        else
-            return initLocalVersionSetting(id, new VersionSetting());
-    }
-
-    private VersionSetting initLocalVersionSetting(String id, VersionSetting vs) {
-        localVersionSettings.put(id, vs);
-        vs.addListener(a -> saveVersionSetting(id));
-        return vs;
-    }
-
-    /**
-     * Get the version setting for version id.
-     *
-     * @param id version id
-     * @return corresponding version setting, null if the version has no its own version setting.
-     */
-    @Nullable
-    public VersionSetting getLocalVersionSetting(String id) {
-        if (!localVersionSettings.containsKey(id))
-            loadLocalVersionSetting(id);
-        VersionSetting setting = localVersionSettings.get(id);
-        return setting;
-    }
-
-    @Nullable
-    public VersionSetting getLocalVersionSettingOrCreate(String id) {
-        VersionSetting vs = getLocalVersionSetting(id);
-        if (vs == null) {
-            vs = createLocalVersionSetting(id);
-        }
-        return vs;
-    }
-
-    public VersionSetting getVersionSetting(String id) {
-        VersionSetting vs = getLocalVersionSetting(id);
-        if (vs == null || vs.isUsesGlobal()) {
-            profile.getGlobal().setUsesGlobal(true);
-            return profile.getGlobal();
-        } else
-            return vs;
+        return null;
     }
 
     public Optional<Path> getVersionIconFile(String id) {
@@ -513,19 +434,6 @@ public final class HMCLGameRepository extends DefaultGameRepository {
         }
     }
 
-    public void saveVersionSetting(String id) {
-        if (!localVersionSettings.containsKey(id))
-            return;
-        Path file = getLocalVersionSettingFile(id).toAbsolutePath().normalize();
-        try {
-            Files.createDirectories(file.getParent());
-        } catch (IOException e) {
-            LOG.warning("Failed to create directory: " + file.getParent(), e);
-        }
-
-        FileSaver.save(file, GSON.toJson(localVersionSettings.get(id)));
-    }
-
     public void saveGameSetting(String id) {
         if (!localGameSettings.containsKey(id))
             return;
@@ -544,30 +452,6 @@ public final class HMCLGameRepository extends DefaultGameRepository {
         FileSaver.save(file, Config.CONFIG_GSON.toJson(localGameSettings.get(id)));
         loadedLocalGameSettings.add(id);
         migratedLocalGameSettings.remove(id);
-    }
-
-    /**
-     * Make version use self version settings instead of the global one.
-     *
-     * @param id the version id.
-     * @return specialized version setting, null if given version does not exist.
-     */
-    public VersionSetting specializeVersionSetting(String id) {
-        VersionSetting vs = getLocalVersionSetting(id);
-        if (vs == null)
-            vs = createLocalVersionSetting(id);
-        if (vs == null)
-            return null;
-        if (vs.isUsesGlobal()) {
-            vs.setUsesGlobal(false);
-        }
-        return vs;
-    }
-
-    public void globalizeVersionSetting(String id) {
-        VersionSetting vs = getLocalVersionSetting(id);
-        if (vs != null)
-            vs.setUsesGlobal(true);
     }
 
     public LaunchOptions.Builder getLaunchOptions(String version, JavaRuntime javaVersion, Path gameDir, List<String> javaAgents, List<String> javaArguments, boolean makeLaunchScript) {
@@ -676,10 +560,6 @@ public final class HMCLGameRepository extends DefaultGameRepository {
             return false;
         }
     }
-
-    private static final Gson GSON = new GsonBuilder()
-            .setPrettyPrinting()
-            .create();
 
     private static final String PROFILE = "{\"selectedProfile\": \"(Default)\",\"profiles\": {\"(Default)\": {\"name\": \"(Default)\"}},\"clientToken\": \"88888888-8888-8888-8888-888888888888\"}";
 
