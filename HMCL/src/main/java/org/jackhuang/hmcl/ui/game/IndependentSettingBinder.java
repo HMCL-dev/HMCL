@@ -61,7 +61,7 @@ final class IndependentSettingBinder {
     /// Binds a text field to a setting property with independent override state.
     static void bindTextField(
             boolean globalSetting,
-            ObjectProperty<? extends GameSetting> currentSetting,
+            ObjectProperty<? extends @Nullable GameSetting> currentSetting,
             LineComponent line,
             JFXTextField textField,
             Function<GameSetting, SettingProperty<String>> propertyGetter,
@@ -454,7 +454,7 @@ final class IndependentSettingBinder {
 
     /// Binds an independent boolean setting to a toggle editor.
     static void bindToggleButton(
-            ObjectProperty<? extends GameSetting> currentSetting,
+            ObjectProperty<? extends @Nullable GameSetting> currentSetting,
             LineInheritableToggleButton button,
             Function<GameSetting, SettingProperty<Boolean>> propertyGetter,
             Function<GameSetting.Instance, GameSetting.Global> parentGetter) {
