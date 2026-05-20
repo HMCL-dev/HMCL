@@ -409,7 +409,7 @@ public final class ResourcePackManager extends LocalAddonManager<ResourcePackFil
         String packIdOld = resourcePack.getFileNameWithExtension();
         boolean modified = false;
         if (!containsResourcePack(resourcePacks, packIdOld)) {
-            resourcePacks.add(0, supportsNewOptionsFormat ? packId : packIdOld);
+            resourcePacks.add(supportsNewOptionsFormat ? packId : packIdOld);
             modified = true;
         }
         boolean incompatibleContains = containsResourcePack(incompatibleResourcePacks, packIdOld);
