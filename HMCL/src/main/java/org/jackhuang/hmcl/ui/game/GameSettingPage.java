@@ -571,7 +571,7 @@ public final class GameSettingPage<S extends GameSetting> extends StackPane
                     var txtMinMemory = new JFXTextField();
                     txtMinMemory.setPrefWidth(160);
                     minMemoryPane.setRight(new HBox(8, txtMinMemory, new Label("MiB"))); // TODO: i18n
-                    bindIndependentIntegerTextField(minMemoryPane, txtMinMemory, GameSetting::minMemoryProperty, true);
+                    bindIndependentIntegerTextField(minMemoryPane, txtMinMemory, GameSetting::minMemoryProperty);
                 }
 
                 var metaspacePane = new LinePane();
@@ -849,19 +849,16 @@ public final class GameSettingPage<S extends GameSetting> extends StackPane
     }
 
     /// Binds an integer text field to a setting property with independent override state.
-    @SuppressWarnings("unchecked")
     private void bindIndependentIntegerTextField(
             LineComponent line,
             JFXTextField textField,
-            Function<GameSetting, ? extends SettingProperty<Integer>> propertyGetter,
-            boolean nullable) {
+            Function<GameSetting, ? extends SettingProperty<Integer>> propertyGetter) {
         IndependentSettingBinder.bindIntegerTextField(
                 isGlobalSetting,
                 currentSetting,
                 line,
                 textField,
                 propertyGetter,
-                nullable,
                 this::createInheritanceButton,
                 GameSettingPage::updateInheritanceButton,
                 this::getParentGameSetting);

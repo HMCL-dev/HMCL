@@ -144,14 +144,12 @@ final class IndependentSettingBinder {
     }
 
     /// Binds an integer text field to a setting property with independent override state.
-    @SuppressWarnings("unchecked")
     static void bindIntegerTextField(
             boolean globalSetting,
-            ObjectProperty<? extends GameSetting> currentSetting,
+            ObjectProperty<? extends @Nullable GameSetting> currentSetting,
             LineComponent line,
             JFXTextField textField,
             Function<GameSetting, ? extends SettingProperty<Integer>> propertyGetter,
-            boolean nullable,
             Supplier<JFXButton> inheritanceButtonFactory,
             BiConsumer<JFXButton, Boolean> inheritanceButtonUpdater,
             Function<GameSetting.Instance, GameSetting.Global> parentGetter) {
@@ -195,7 +193,7 @@ final class IndependentSettingBinder {
             updating.value = true;
             try {
                 setOverridden(setting, property, true);
-                property.setValue(parseInteger(newValue, nullable));
+                property.setValue(parseInteger(newValue, true));
                 if (finalInheritButton != null) {
                     inheritanceButtonUpdater.accept(finalInheritButton, false);
                 }
