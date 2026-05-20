@@ -865,13 +865,13 @@ public final class GameSettingPage<S extends GameSetting> extends StackPane
     }
 
     private void bindWindowSizeComboBox(JFXComboBox<String> comboBox) {
-        ObjectProperty<Property<Double>> activeWidthProperty = new SimpleObjectProperty<>();
-        ObjectProperty<Property<Double>> activeHeightProperty = new SimpleObjectProperty<>();
+        ObjectProperty<@Nullable Property<Double>> activeWidthProperty = new SimpleObjectProperty<>();
+        ObjectProperty<@Nullable Property<Double>> activeHeightProperty = new SimpleObjectProperty<>();
         final Holder<Boolean> updating = new Holder<>(false);
 
         InvalidationListener propertyListener = observable -> {
-            Property<Double> widthProperty = activeWidthProperty.get();
-            Property<Double> heightProperty = activeHeightProperty.get();
+            @Nullable Property<Double> widthProperty = activeWidthProperty.get();
+            @Nullable Property<Double> heightProperty = activeHeightProperty.get();
             if (widthProperty == null || heightProperty == null || updating.value) {
                 return;
             }
