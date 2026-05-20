@@ -25,22 +25,16 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.UnknownNullability;
 
 /// @author Glavo
-public class SimpleSettingProperty<T> extends SimpleObjectProperty<T>
+public class SimpleSettingProperty<T extends @UnknownNullability Object> extends SimpleObjectProperty<T>
         implements SettingProperty<T> {
     private @Nullable JsonElement rawJson;
 
-    private final @UnknownNullability T defaultValue;
-
-    public SimpleSettingProperty(@NotNull GameSetting bean,
-                                 String name) {
-        super(bean, name);
-        this.defaultValue = null;
-    }
+    private final T defaultValue;
 
     public SimpleSettingProperty(@NotNull GameSetting bean,
                                  String name,
                                  T defaultValue) {
-        super(bean, name, bean instanceof GameSetting.Global ? defaultValue : null);
+        super(bean, name, defaultValue);
         this.defaultValue = defaultValue;
     }
 

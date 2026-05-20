@@ -39,6 +39,7 @@ import org.jackhuang.hmcl.util.platform.SystemInfo;
 import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.UnknownNullability;
 
 import java.io.IOException;
 import java.lang.reflect.Type;
@@ -185,17 +186,17 @@ public sealed abstract class GameSetting extends ObservableSetting {
     }
 
     /// Creates a new setting property without a default value.
-    protected final <T> SettingProperty<T> newSettingProperty(String name) {
-        return new SimpleSettingProperty<>(this, name);
+    protected final <T extends @UnknownNullability Object> SettingProperty<T> newSettingProperty(String name) {
+        return new SimpleSettingProperty<>(this, name, null);
     }
 
     /// Creates a new setting property with the given default value.
-    protected final <T> SettingProperty<T> newSettingProperty(String name, T defaultValue) {
+    protected final <T extends @UnknownNullability Object> SettingProperty<T> newSettingProperty(String name, T defaultValue) {
         return new SimpleSettingProperty<>(this, name, defaultValue);
     }
 
     /// Creates a new inheritable property.
-    protected final <T> InheritableProperty<T> newInheritableProperty(String name, T defaultValue) {
+    protected final <T extends @UnknownNullability Object> InheritableProperty<T> newInheritableProperty(String name, T defaultValue) {
         return new SimpleInheritableProperty<>(this, name, defaultValue);
     }
 
