@@ -297,10 +297,10 @@ public final class GameSettingPage<S extends GameSetting> extends StackPane
                 defaultIsolationTypePane.setTitle("默认版本隔离策略"); // TODO: i18n
                 defaultIsolationTypePane.setItems(DefaultIsolationType.values());
                 defaultIsolationTypePane.setNullSafeConverter(type -> switch (type) {
-                        case NEVER -> "从不隔离"; // TODO: i18n
-                        case ALWAYS -> "总是隔离"; // TODO: i18n
-                        case MODED -> "仅隔离模组实例"; // TODO: i18n
-                    }); // TODO: i18n
+                    case NEVER -> "从不隔离"; // TODO: i18n
+                    case ALWAYS -> "总是隔离"; // TODO: i18n
+                    case MODED -> "仅隔离模组实例"; // TODO: i18n
+                }); // TODO: i18n
 
                 bindGlobalSettingBidirectional(defaultIsolationTypePane.valueProperty(), GameSetting.Global::defaultIsolationTypeProperty);
             } else {
@@ -1417,8 +1417,8 @@ public final class GameSettingPage<S extends GameSetting> extends StackPane
     }
 
     private <T> void initInheritableSublistDescription(ComponentSublist sublist,
-                                                      Function<GameSetting, InheritableProperty<T>> propertyGetter,
-                                                      Function<T, String> converter) {
+                                                       Function<GameSetting, InheritableProperty<T>> propertyGetter,
+                                                       Function<T, String> converter) {
         S setting = currentSetting.get();
         if (setting == null) {
             sublist.setDescription("");
@@ -1758,11 +1758,8 @@ public final class GameSettingPage<S extends GameSetting> extends StackPane
     ) {
         var button = new LineSelectButton<T>();
 
-        button.setConverter(value -> value != null ? convert.apply(value) : "");
-
-        if (descriptionConverter != null)
-            button.setDescriptionConverter(value -> value != null ? descriptionConverter.apply(value) : ""); // TODO
-
+        button.setConverter(convert);
+        button.setDescriptionConverter(descriptionConverter);
         button.setItems(items);
         bindInheritableLineSelectButton(button, propertyGetter);
 
