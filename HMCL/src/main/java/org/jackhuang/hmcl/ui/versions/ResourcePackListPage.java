@@ -60,9 +60,7 @@ import org.jackhuang.hmcl.util.TaskCancellationAction;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.ByteArrayInputStream;
 import java.io.IOException;
-import java.lang.ref.WeakReference;
 import java.nio.file.Path;
 import java.util.*;
 import java.util.concurrent.locks.ReentrantLock;
@@ -443,7 +441,6 @@ public final class ResourcePackListPage extends ListPageBase<ResourcePackListPag
     public static class ResourcePackInfoObject {
         private final ResourcePackFile file;
         private final BooleanProperty enabled;
-        private WeakReference<Image> iconCache;
 
         public ResourcePackInfoObject(Pair<ResourcePackFile, Boolean> pair) {
             this.file = pair.key();
@@ -459,24 +456,11 @@ public final class ResourcePackListPage extends ListPageBase<ResourcePackListPag
         }
 
         Image getIcon() {
-            Image image = null;
-            if (iconCache != null && (image = iconCache.get()) != null) {
-                return image;
-            }
-            byte[] iconData = file.getIcon();
-            if (iconData != null) {
-                try (ByteArrayInputStream inputStream = new ByteArrayInputStream(iconData)) {
-                    image = new Image(inputStream, 64, 64, true, true);
-                } catch (Exception e) {
-                    LOG.warning("Failed to load resource pack icon " + file.getFile(), e);
-                }
-            }
-
+            Image image = file.getIcon();
             if (image == null || image.isError() || image.getWidth() <= 0 || image.getHeight() <= 0 ||
                     (Math.abs(image.getWidth() - image.getHeight()) >= 1)) {
                 image = FXUtils.newBuiltinImage("/assets/img/unknown_pack.png");
             }
-            iconCache = new WeakReference<>(image);
             return image;
         }
     }

@@ -17,6 +17,7 @@
  */
 package org.jackhuang.hmcl.resourcepack;
 
+import javafx.scene.image.Image;
 import org.jackhuang.hmcl.download.DownloadProvider;
 import org.jackhuang.hmcl.mod.RemoteMod;
 import org.jackhuang.hmcl.mod.RemoteModRepository;
@@ -24,6 +25,7 @@ import org.jackhuang.hmcl.mod.modinfo.PackMcMeta;
 import org.jackhuang.hmcl.util.io.CompressingUtils;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -35,13 +37,13 @@ import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 final class ResourcePackZipFile extends ResourcePackFile {
     private final PackMcMeta meta;
-    private final byte @Nullable [] icon;
+    private final @Nullable Image icon;
 
     public ResourcePackZipFile(ResourcePackManager manager, Path path) throws IOException {
         super(manager, path);
 
         PackMcMeta metaTemp = null;
-        byte[] iconTemp = null;
+        byte[] iconData = null;
 
         try (var zipFileTree = CompressingUtils.openZipTree(path)) {
             try {
@@ -53,13 +55,22 @@ final class ResourcePackZipFile extends ResourcePackFile {
             var iconEntry = zipFileTree.getEntry("/pack.png");
             if (iconEntry != null) {
                 try {
-                    iconTemp = zipFileTree.readBinaryEntry(iconEntry);
+                    iconData = zipFileTree.readBinaryEntry(iconEntry);
                 } catch (Exception e) {
                     LOG.warning("Failed to load resource pack icon", e);
                 }
             }
         }
         this.meta = metaTemp;
+
+        Image iconTemp = null;
+        if (iconData != null) {
+            try (ByteArrayInputStream inputStream = new ByteArrayInputStream(iconData)) {
+                iconTemp = new Image(inputStream, 64, 64, true, true);
+            } catch (Exception e) {
+                LOG.warning("Failed to load resource pack icon", e);
+            }
+        }
         this.icon = iconTemp;
     }
 
@@ -69,7 +80,7 @@ final class ResourcePackZipFile extends ResourcePackFile {
     }
 
     @Override
-    public byte @Nullable [] getIcon() {
+    public @Nullable Image getIcon() {
         return icon;
     }
 

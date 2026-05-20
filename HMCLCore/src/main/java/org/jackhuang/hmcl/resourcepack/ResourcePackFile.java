@@ -17,6 +17,7 @@
  */
 package org.jackhuang.hmcl.resourcepack;
 
+import javafx.scene.image.Image;
 import org.jackhuang.hmcl.mod.LocalAddonFile;
 import org.jackhuang.hmcl.mod.modinfo.PackMcMeta;
 import org.jackhuang.hmcl.util.StringUtils;
@@ -121,7 +122,8 @@ public sealed abstract class ResourcePackFile extends LocalAddonFile implements 
         return getMeta().pack().description();
     }
 
-    public abstract byte @Nullable [] getIcon();
+    // 64*64
+    public abstract @Nullable Image getIcon();
 
     @Override
     public int compareTo(@NotNull ResourcePackFile other) {

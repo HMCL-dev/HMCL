@@ -17,12 +17,14 @@
  */
 package org.jackhuang.hmcl.resourcepack;
 
+import javafx.scene.image.Image;
 import org.jackhuang.hmcl.download.DownloadProvider;
 import org.jackhuang.hmcl.mod.RemoteMod;
 import org.jackhuang.hmcl.mod.modinfo.PackMcMeta;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -31,7 +33,7 @@ import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 final class ResourcePackFolder extends ResourcePackFile {
     private final PackMcMeta meta;
-    private final byte @Nullable [] icon;
+    private final @Nullable Image icon;
 
     public ResourcePackFolder(ResourcePackManager manager, Path path) {
         super(manager, path);
@@ -44,14 +46,21 @@ final class ResourcePackFolder extends ResourcePackFile {
         }
         this.meta = meta;
 
-        byte[] icon;
+        byte[] iconData = null;
+        Image iconTemp = null;
         try {
-            icon = Files.readAllBytes(path.resolve("pack.png"));
+            iconData = Files.readAllBytes(path.resolve("pack.png"));
         } catch (IOException e) {
-            icon = null;
             LOG.warning("Failed to read resource pack icon", e);
         }
-        this.icon = icon;
+        if (iconData != null) {
+            try (ByteArrayInputStream inputStream = new ByteArrayInputStream(iconData)) {
+                iconTemp = new Image(inputStream, 64, 64, true, true);
+            } catch (Exception e) {
+                LOG.warning("Failed to load resource pack icon", e);
+            }
+        }
+        this.icon = iconTemp;
     }
 
     @Override
@@ -60,7 +69,7 @@ final class ResourcePackFolder extends ResourcePackFile {
     }
 
     @Override
-    public byte @Nullable [] getIcon() {
+    public @Nullable Image getIcon() {
         return icon;
     }
 
