@@ -180,14 +180,20 @@ public final class ModManager extends LocalAddonManager<LocalModFile> {
     }
 
     public void analyze() {
-        var resolved = getRepository().getResolvedPreservingPatchesVersion(id);
-        gameVersion = repository.getGameVersion(resolved).orElse(null);
-        analyzer = LibraryAnalyzer.analyze(resolved, gameVersion);
+        lock.lock();
+        try {
+            var resolved = getRepository().getResolvedPreservingPatchesVersion(id);
+            gameVersion = repository.getGameVersion(resolved).orElse(null);
+            analyzer = LibraryAnalyzer.analyze(resolved, gameVersion);
 
-        updateSupportedLoaders();
+            updateSupportedLoaders();
+        } finally {
+            lock.lock();
+        }
     }
 
-    public void refreshMods() throws IOException {
+    @Override
+    public void refresh() throws IOException {
         lock.lock();
         try {
             localFiles.clear();
