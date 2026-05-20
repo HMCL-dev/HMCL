@@ -672,10 +672,6 @@ public sealed abstract class GameSetting extends ObservableSetting {
         return new Effective(global, instance);
     }
 
-    private static String empty(@Nullable String value) {
-        return value != null ? value : "";
-    }
-
     private static <T> T direct(SettingProperty<T> property) {
         T value = property.getValue();
         return value != null ? value : property.defaultValue();
@@ -732,25 +728,25 @@ public sealed abstract class GameSetting extends ObservableSetting {
         /// Returns the effective Java version text.
         public String getJavaVersion() {
             if (instance != null && instance.javaTypeProperty().getValue() != null) {
-                return empty(instance.javaVersionProperty().getValue());
+                return Objects.requireNonNullElse(instance.javaVersionProperty().getValue(), "");
             }
-            return empty(global.javaVersionProperty().getValue());
+            return Objects.requireNonNullElse(global.javaVersionProperty().getValue(), "");
         }
 
         /// Returns the effective custom Java executable path.
         public String getCustomJavaPath() {
             if (instance != null && instance.javaTypeProperty().getValue() != null) {
-                return empty(instance.customJavaPathProperty().getValue());
+                return Objects.requireNonNullElse(instance.customJavaPathProperty().getValue(), "");
             }
-            return empty(global.customJavaPathProperty().getValue());
+            return Objects.requireNonNullElse(global.customJavaPathProperty().getValue(), "");
         }
 
         /// Returns the effective default Java executable path.
         public String getDefaultJavaPath() {
             if (instance != null && instance.javaTypeProperty().getValue() != null) {
-                return empty(instance.defaultJavaPathProperty().getValue());
+                return Objects.requireNonNullElse(instance.defaultJavaPathProperty().getValue(), "");
             }
-            return empty(global.defaultJavaPathProperty().getValue());
+            return Objects.requireNonNullElse(global.defaultJavaPathProperty().getValue(), "");
         }
 
         /// Switches the effective Java selection back to automatic mode.
@@ -830,7 +826,7 @@ public sealed abstract class GameSetting extends ObservableSetting {
 
         /// Returns the effective JVM option text.
         public String getJVMOptions() {
-            return empty(inherited(global, instance, GameSetting::jvmOptionsProperty));
+            return Objects.requireNonNullElse(inherited(global, instance, GameSetting::jvmOptionsProperty), "");
         }
 
         /// Returns whether generated JVM options are disabled.
@@ -871,7 +867,7 @@ public sealed abstract class GameSetting extends ObservableSetting {
 
         /// Returns the effective permanent generation or metaspace size text.
         public String getPermSize() {
-            return empty(inherited(global, instance, GameSetting::permSizeProperty));
+            return Objects.requireNonNullElse(inherited(global, instance, GameSetting::permSizeProperty), "");
         }
 
         /// Returns the effective game window mode.
@@ -896,7 +892,7 @@ public sealed abstract class GameSetting extends ObservableSetting {
 
         /// Returns the effective custom run directory.
         public String getRunningDir() {
-            return empty(inheritable(global, instance, GameSetting::runningDirProperty));
+            return Objects.requireNonNullElse(inheritable(global, instance, GameSetting::runningDirProperty), "");
         }
 
         /// Returns the effective process priority.
@@ -911,7 +907,7 @@ public sealed abstract class GameSetting extends ObservableSetting {
 
         /// Returns the effective game arguments.
         public String getGameArgs() {
-            return empty(inherited(global, instance, GameSetting::gameArgsProperty));
+            return Objects.requireNonNullElse(inherited(global, instance, GameSetting::gameArgsProperty), "");
         }
 
         /// Returns the effective graphics API.
@@ -940,22 +936,22 @@ public sealed abstract class GameSetting extends ObservableSetting {
 
         /// Returns the effective environment variables.
         public String getEnvironmentVariables() {
-            return empty(inherited(global, instance, GameSetting::environmentVariablesProperty));
+            return Objects.requireNonNullElse(inherited(global, instance, GameSetting::environmentVariablesProperty), "");
         }
 
         /// Returns the effective command wrapper.
         public String getCommandWrapper() {
-            return empty(inheritable(global, instance, GameSetting::commandWrapperProperty));
+            return Objects.requireNonNullElse(inheritable(global, instance, GameSetting::commandWrapperProperty), "");
         }
 
         /// Returns the effective pre-launch command.
         public String getPreLaunchCommand() {
-            return empty(inheritable(global, instance, GameSetting::preLaunchCommandProperty));
+            return Objects.requireNonNullElse(inheritable(global, instance, GameSetting::preLaunchCommandProperty), "");
         }
 
         /// Returns the effective post-exit command.
         public String getPostExitCommand() {
-            return empty(inheritable(global, instance, GameSetting::postExitCommandProperty));
+            return Objects.requireNonNullElse(inheritable(global, instance, GameSetting::postExitCommandProperty), "");
         }
 
         /// Returns the effective quick play type.
@@ -968,15 +964,15 @@ public sealed abstract class GameSetting extends ObservableSetting {
             return switch (getQuickPlay()) {
                 case NONE -> null;
                 case MULTIPLAYER -> {
-                    String server = empty(inheritable(global, instance, GameSetting::quickPlayMultiplayerProperty));
+                    String server = Objects.requireNonNullElse(inheritable(global, instance, GameSetting::quickPlayMultiplayerProperty), "");
                     yield StringUtils.isBlank(server) ? null : new QuickPlayOption.MultiPlayer(server);
                 }
                 case SINGLEPLAYER -> {
-                    String world = empty(inheritable(global, instance, GameSetting::quickPlaySingleplayerProperty));
+                    String world = Objects.requireNonNullElse(inheritable(global, instance, GameSetting::quickPlaySingleplayerProperty), "");
                     yield StringUtils.isBlank(world) ? null : new QuickPlayOption.SinglePlayer(world);
                 }
                 case REALMS -> {
-                    String realm = empty(inheritable(global, instance, GameSetting::quickPlayRealmsProperty));
+                    String realm = Objects.requireNonNullElse(inheritable(global, instance, GameSetting::quickPlayRealmsProperty), "");
                     yield StringUtils.isBlank(realm) ? null : new QuickPlayOption.Realm(realm);
                 }
             };
@@ -1004,7 +1000,7 @@ public sealed abstract class GameSetting extends ObservableSetting {
 
         /// Returns the effective native directory.
         public String getNativesDir() {
-            return empty(inherited(global, instance, GameSetting::nativesDirProperty));
+            return Objects.requireNonNullElse(inherited(global, instance, GameSetting::nativesDirProperty), "");
         }
 
         /// Returns whether native GLFW should be used.
