@@ -157,6 +157,11 @@ public class DefaultGameRepository implements GameRepository {
     }
 
     @Override
+    public Path getResourcePackDirectory(String id) {
+        return getRunDirectory(id).resolve("resourcepacks");
+    }
+
+    @Override
     public Path getVersionRoot(String id) {
         return getBaseDirectory().resolve("versions/" + id);
     }
@@ -583,9 +588,5 @@ public class DefaultGameRepository implements GameRepository {
                 .append("versions", versions == null ? null : versions.keySet())
                 .append("baseDirectory", baseDirectory)
                 .toString();
-    }
-
-    public Path getResourcepacksDirectory(String id) {
-        return getRunDirectory(id).resolve("resourcepacks");
     }
 }
