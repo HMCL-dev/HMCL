@@ -886,13 +886,13 @@ public final class GameSettingPage<S extends GameSetting> extends StackPane
             }
         };
 
-        ChangeListener<Boolean> focusedListener = (observable, oldValue, newValue) -> {
+        ChangeListener<@Nullable Boolean> focusedListener = (observable, oldValue, newValue) -> {
             if (!newValue) {
                 applyWindowSizeComboBoxValue(comboBox, activeWidthProperty.get(), activeHeightProperty.get(), updating);
             }
         };
 
-        ChangeListener<Scene> sceneListener = (observable, oldValue, newValue) -> {
+        ChangeListener<@Nullable Scene> sceneListener = (observable, oldValue, newValue) -> {
             if (newValue == null) {
                 applyWindowSizeComboBoxValue(comboBox, activeWidthProperty.get(), activeHeightProperty.get(), updating);
             }
@@ -1755,8 +1755,9 @@ public final class GameSettingPage<S extends GameSetting> extends StackPane
     ) {
         var button = new LineSelectButton<T>();
 
-        button.setConverter(convert);
-        button.setDescriptionConverter(descriptionConverter);
+        button.setNullSafeConverter(convert);
+        if (descriptionConverter != null)
+            button.setDescriptionConverter(value -> value != null ? descriptionConverter.apply(value) : "");
         button.setItems(items);
         bindInheritableLineSelectButton(button, propertyGetter);
 
