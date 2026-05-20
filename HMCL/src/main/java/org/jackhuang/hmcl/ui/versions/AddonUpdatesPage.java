@@ -31,8 +31,6 @@ import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
-import org.jackhuang.hmcl.mod.LocalModFile;
-import org.jackhuang.hmcl.mod.ModManager;
 import org.jackhuang.hmcl.mod.LocalAddonFile;
 import org.jackhuang.hmcl.mod.LocalAddonManager;
 import org.jackhuang.hmcl.mod.RemoteMod;
@@ -43,8 +41,6 @@ import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.construct.*;
 import org.jackhuang.hmcl.ui.decorator.DecoratorPage;
-import org.jackhuang.hmcl.util.Pair;
-import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.TaskCancellationAction;
 import org.jackhuang.hmcl.util.io.CSVTable;
@@ -102,19 +98,19 @@ public class AddonUpdatesPage<F extends LocalAddonFile> extends BorderPane imple
         TableColumn<AddonUpdateObject, String> sourceColumn = new TableColumn<>(i18n("mods.check_updates.source"));
         setupCellValueFactory(sourceColumn, AddonUpdateObject::sourceProperty);
 
-        TableColumn<ModUpdateObject, String> changelogColumn = new TableColumn<>(i18n("mods.changelog"));
+        TableColumn<AddonUpdateObject, String> changelogColumn = new TableColumn<>(i18n("mods.changelog"));
         {
             var oldCellFactory = changelogColumn.getCellFactory();
             changelogColumn.setCellFactory(param -> {
-                TableCell<ModUpdateObject, String> cell = oldCellFactory.call(param);
+                TableCell<AddonUpdateObject, String> cell = oldCellFactory.call(param);
                 cell.getStyleClass().add("addon-changelog-table-cell");
                 cell.setOnMouseClicked(event -> {
-                    List<ModUpdateObject> items = cell.getTableColumn().getTableView().getItems();
+                    List<AddonUpdateObject> items = cell.getTableColumn().getTableView().getItems();
                     if (cell.getIndex() >= items.size() || cell.getIndex() < 0) {
                         return;
                     }
-                    ModUpdateObject object = items.get(cell.getIndex());
-                    Controllers.dialog(new ModChangelog(object));
+                    AddonUpdateObject object = items.get(cell.getIndex());
+                    Controllers.dialog(new AddonChangelog(object));
                 });
                 return cell;
             });
@@ -305,10 +301,10 @@ public class AddonUpdatesPage<F extends LocalAddonFile> extends BorderPane imple
         }
     }
 
-    private static final class ModChangelog extends JFXDialogLayout {
+    private static final class AddonChangelog extends JFXDialogLayout {
 
-        public ModChangelog(ModUpdateObject object) {
-            RemoteMod.Version targetVersion = object.data.getCandidate();
+        public AddonChangelog(AddonUpdateObject object) {
+            RemoteMod.Version targetVersion = object.data.targetVersion();
 
             this.setHeading(new HBox(new Label(i18n("mods.changelog") + " - " + targetVersion.getName())));
 
@@ -346,18 +342,18 @@ public class AddonUpdatesPage<F extends LocalAddonFile> extends BorderPane imple
             onEscPressed(this, closeButton::fire);
         }
 
-        private void loadChangelog(ModUpdateObject object, SpinnerPane spinnerPane, ScrollPane scrollPane) {
+        private void loadChangelog(AddonUpdateObject object, SpinnerPane spinnerPane, ScrollPane scrollPane) {
             spinnerPane.setLoading(true);
             Task.supplyAsync(() -> {
                 if (object.changelog != null) {
                     return object.changelog;
                 }
-                RemoteMod.Version version = object.data.getCandidate();
-                return StringUtils.convertToHtml(object.data.getRepository().getModChangelog(version.getModid(), version.getVersionId()));
+                RemoteMod.Version version = object.data.targetVersion();
+                return StringUtils.convertToHtml(object.data.repository().getModChangelog(version.getModid(), version.getVersionId()));
             }).whenComplete(Schedulers.javafx(), (result, exception) -> {
                 if (exception == null) {
                     object.changelog = StringUtils.isNotBlank(result) ? result : i18n("mods.changelog.empty");
-                    scrollPane.setContent(FXUtils.renderAddonChangelog(object.changelog, object.data.getRepository().getBaseUrl()));
+                    scrollPane.setContent(FXUtils.renderAddonChangelog(object.changelog, object.data.repository().getBaseUrl()));
                     FXUtils.smoothScrolling(scrollPane);
                     spinnerPane.setFailedReason(null);
                 } else {
@@ -367,8 +363,8 @@ public class AddonUpdatesPage<F extends LocalAddonFile> extends BorderPane imple
             }).start();
         }
 
-        private void loadVersionPageUrl(ModUpdateObject object, JFXHyperlink button) {
-            Task.supplyAsync(() -> object.data.getRepository().getVersionPageUrl(object.data.getCandidate()))
+        private void loadVersionPageUrl(AddonUpdateObject object, JFXHyperlink button) {
+            Task.supplyAsync(() -> object.data.repository().getVersionPageUrl(object.data.targetVersion()))
                     .whenComplete(Schedulers.javafx(), (result, exception) -> {
                         if (exception == null && StringUtils.isNotBlank(result)) {
                             button.setOnAction(__ -> Controllers.openUriInBrowser(result));

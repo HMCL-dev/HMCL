@@ -279,18 +279,18 @@ public class DownloadPage extends Control implements DecoratorPage {
                         String gameVersion = repository.getGameVersion(game).orElse(null);
 
                         if (gameVersion != null && control.versions.containsKey(gameVersion)) {
-                            List<RemoteMod.Version> modVersions = control.versions.get(gameVersion);
-                            if (modVersions != null && !modVersions.isEmpty()) {
+                            List<RemoteMod.Version> addonVersions = control.versions.get(gameVersion);
+                            if (addonVersions != null && !addonVersions.isEmpty()) {
                                 Set<ModLoaderType> targetLoaders = LibraryAnalyzer.analyze(game, gameVersion).getModLoaders();
 
                                 resolve:
-                                for (RemoteMod.Version modVersion : modVersions) {
+                                for (RemoteMod.Version addonVersion : addonVersions) {
                                     if (getSkinnable().type == RemoteModRepository.Type.MOD) {
-                                        for (ModLoaderType loader : modVersion.getLoaders()) {
+                                        for (ModLoaderType loader : addonVersion.getLoaders()) {
                                             if (targetLoaders.contains(loader)) {
                                                 list.getContent().addAll(
                                                         ComponentList.createComponentListTitle(i18n("mods.download.recommend", gameVersion)),
-                                                        new AddonItem(control.addon, modVersion, control)
+                                                        new AddonItem(control.addon, addonVersion, control)
                                                 );
                                                 break resolve;
                                             }
@@ -298,7 +298,7 @@ public class DownloadPage extends Control implements DecoratorPage {
                                     } else {
                                         list.getContent().addAll(
                                                 ComponentList.createComponentListTitle(i18n("mods.download.recommend", gameVersion)),
-                                                new ModItem(control.addon, modVersion, control)
+                                                new AddonItem(control.addon, addonVersion, control)
                                         );
                                         break;
                                     }

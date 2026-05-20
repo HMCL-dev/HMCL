@@ -56,6 +56,7 @@ public abstract class LocalAddonFile {
     public abstract AddonUpdate checkUpdates(DownloadProvider downloadProvider, String gameVersion, RemoteMod.Type type) throws IOException;
 
     public record AddonUpdate(
+            RemoteModRepository repository,
             LocalAddonFile localAddonFile,
             RemoteMod.Version currentVersion,
             RemoteMod.Version targetVersion,
