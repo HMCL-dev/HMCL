@@ -261,7 +261,7 @@ public final class ModpackHelper {
 
         if (c.isOverrideJavaLocation()) {
             setting.javaTypeProperty().setValue(JavaVersionType.CUSTOM);
-            setting.customJavaPathProperty().setValue(Lang.nonNull(c.getJavaPath(), ""));
+            setting.customJavaPathProperty().setValue(Objects.requireNonNullElse(c.getJavaPath(), ""));
         }
 
         if (c.isOverrideMemory()) {
@@ -278,13 +278,13 @@ public final class ModpackHelper {
         }
 
         if (c.isOverrideCommands()) {
-            setting.commandWrapperProperty().setValue(Lang.nonNull(c.getWrapperCommand(), ""));
-            setting.preLaunchCommandProperty().setValue(Lang.nonNull(c.getPreLaunchCommand(), ""));
+            setting.commandWrapperProperty().setValue(Objects.requireNonNullElse(c.getWrapperCommand(), ""));
+            setting.preLaunchCommandProperty().setValue(Objects.requireNonNullElse(c.getPreLaunchCommand(), ""));
         }
 
         if (c.isOverrideJavaArgs()) {
             setting.getOverrideProperties().add(GameSetting.PROPERTY_JVM_OPTIONS);
-            setting.jvmOptionsProperty().setValue(Lang.nonNull(c.getJvmArgs(), ""));
+            setting.jvmOptionsProperty().setValue(Objects.requireNonNullElse(c.getJvmArgs(), ""));
         }
 
         if (c.isOverrideConsole()) {

@@ -319,10 +319,10 @@ public sealed abstract class GameSetting extends ObservableSetting {
 
     /// The maximum heap memory in MiB.
     @SerializedName(PROPERTY_MAX_MEMORY)
-    private final SettingProperty<Integer> maxMemory = newSettingProperty(PROPERTY_MAX_MEMORY, SUGGESTED_MEMORY);
+    private final SettingProperty<@Nullable Integer> maxMemory = newSettingProperty(PROPERTY_MAX_MEMORY, SUGGESTED_MEMORY);
 
     /// Returns the maximum heap memory property.
-    public SettingProperty<Integer> maxMemoryProperty() {
+    public SettingProperty<@Nullable Integer> maxMemoryProperty() {
         return maxMemory;
     }
 
