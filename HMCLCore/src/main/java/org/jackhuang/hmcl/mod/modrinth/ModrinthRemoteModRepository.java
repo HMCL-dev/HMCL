@@ -20,7 +20,6 @@ package org.jackhuang.hmcl.mod.modrinth;
 import com.google.gson.annotations.SerializedName;
 import com.google.gson.reflect.TypeToken;
 import org.jackhuang.hmcl.download.DownloadProvider;
-import org.jackhuang.hmcl.mod.LocalModFile;
 import org.jackhuang.hmcl.mod.ModLoaderType;
 import org.jackhuang.hmcl.mod.RemoteMod;
 import org.jackhuang.hmcl.mod.RemoteModRepository;
@@ -96,13 +95,21 @@ public final class ModrinthRemoteModRepository implements RemoteModRepository {
 
     private final String projectType;
 
+    private final RemoteModRepository.Type type;
+
     private ModrinthRemoteModRepository(String projectType) {
         this.projectType = projectType;
+        this.type = switch (projectType) {
+            case "modpack" -> Type.MODPACK;
+            case "resourcepack" -> Type.RESOURCE_PACK;
+            case "shader" -> Type.SHADER_PACK;
+            default -> Type.MOD;
+        };
     }
 
     @Override
     public Type getType() {
-        return Type.MOD;
+        return this.type;
     }
 
     @Override
@@ -147,8 +154,8 @@ public final class ModrinthRemoteModRepository implements RemoteModRepository {
             if (StringUtils.isNotBlank(gameVersion)) {
                 facets.add(Collections.singletonList("versions:" + gameVersion));
             }
-            if (category != null && StringUtils.isNotBlank(category.getId())) {
-                facets.add(Collections.singletonList("categories:" + category.getId()));
+            if (category != null && StringUtils.isNotBlank(category.id())) {
+                facets.add(Collections.singletonList("categories:" + category.id()));
             }
             Map<String, String> query = mapOf(
                     pair("query", searchFilter),
@@ -188,7 +195,7 @@ public final class ModrinthRemoteModRepository implements RemoteModRepository {
     }
 
     @Override
-    public Optional<RemoteMod.Version> getRemoteVersionByLocalFile(LocalModFile localModFile, Path file) throws IOException {
+    public Optional<RemoteMod.Version> getRemoteVersionByLocalFile(Path file) throws IOException {
         String sha1 = DigestUtils.digestToString("SHA-1", file);
 
         SEMAPHORE.acquireUninterruptibly();
@@ -478,6 +485,12 @@ public final class ModrinthRemoteModRepository implements RemoteModRepository {
         }
 
         public RemoteMod toMod() {
+            RemoteModRepository.Type type = switch (projectType) {
+                case "modpack" -> RemoteModRepository.Type.MODPACK;
+                case "resourcepack" -> RemoteModRepository.Type.RESOURCE_PACK;
+                case "shader" -> RemoteModRepository.Type.SHADER_PACK;
+                default -> RemoteModRepository.Type.MOD;
+            };
             return new RemoteMod(
                     slug,
                     "",
@@ -486,7 +499,8 @@ public final class ModrinthRemoteModRepository implements RemoteModRepository {
                     categories,
                     String.format("https://modrinth.com/%s/%s", projectType, id),
                     iconUrl,
-                    this
+                    this,
+                    type
             );
         }
     }
@@ -865,6 +879,12 @@ public final class ModrinthRemoteModRepository implements RemoteModRepository {
         }
 
         public RemoteMod toMod() {
+            RemoteModRepository.Type type = switch (projectType) {
+                case "modpack" -> RemoteModRepository.Type.MODPACK;
+                case "resourcepack" -> RemoteModRepository.Type.RESOURCE_PACK;
+                case "shader" -> RemoteModRepository.Type.SHADER_PACK;
+                default -> RemoteModRepository.Type.MOD;
+            };
             return new RemoteMod(
                     slug,
                     author,
@@ -873,7 +893,8 @@ public final class ModrinthRemoteModRepository implements RemoteModRepository {
                     sortDisplayCategories(displayCategories),
                     String.format("https://modrinth.com/%s/%s", projectType, projectId),
                     iconUrl,
-                    this
+                    this,
+                    type
             );
         }
     }

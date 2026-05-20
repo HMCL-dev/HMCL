@@ -74,6 +74,7 @@ public class DownloadPage extends Control implements DecoratorPage {
     private final Profile.ProfileVersion version;
     private final DownloadCallback callback;
     private final DownloadListPage page;
+    private final RemoteModRepository.Type type;
 
     private SimpleMultimap<String, RemoteMod.Version, List<RemoteMod.Version>> versions;
 
@@ -81,7 +82,8 @@ public class DownloadPage extends Control implements DecoratorPage {
         this.page = page;
         this.repository = page.repository;
         this.addon = addon;
-        this.translations = ModTranslations.getTranslationsByRepositoryType(repository.getType());
+        this.type = Objects.requireNonNullElse(addon.getRepositoryType(), repository.getType());
+        this.translations = ModTranslations.getTranslationsByRepositoryType(this.type);
         this.mod = translations.getModByCurseForgeId(addon.getSlug());
         this.version = version;
         this.callback = callback;
@@ -227,7 +229,7 @@ public class DownloadPage extends Control implements DecoratorPage {
                 content.getSubtitleLabel().setWrapText(true);
                 getSkinnable().addon.getCategories().stream()
                         .filter(category -> getSkinnable().page.shouldDisplayCategory(category))
-                        .map(category -> getSkinnable().page.getLocalizedCategory(category))
+                        .map(category -> getSkinnable().page.getLocalizedCategory(category, null))
                         .forEach(content::addTag);
                 content.getFirstLine().setMinWidth(0);
                 descriptionPane.getChildren().add(content);
@@ -283,14 +285,22 @@ public class DownloadPage extends Control implements DecoratorPage {
 
                                 resolve:
                                 for (RemoteMod.Version modVersion : modVersions) {
-                                    for (ModLoaderType loader : modVersion.getLoaders()) {
-                                        if (targetLoaders.contains(loader)) {
-                                            list.getContent().addAll(
-                                                    ComponentList.createComponentListTitle(i18n("mods.download.recommend", gameVersion)),
-                                                    new AddonItem(control.addon, modVersion, control)
-                                            );
-                                            break resolve;
+                                    if (getSkinnable().type == RemoteModRepository.Type.MOD) {
+                                        for (ModLoaderType loader : modVersion.getLoaders()) {
+                                            if (targetLoaders.contains(loader)) {
+                                                list.getContent().addAll(
+                                                        ComponentList.createComponentListTitle(i18n("mods.download.recommend", gameVersion)),
+                                                        new AddonItem(control.addon, modVersion, control)
+                                                );
+                                                break resolve;
+                                            }
                                         }
+                                    } else {
+                                        list.getContent().addAll(
+                                                ComponentList.createComponentListTitle(i18n("mods.download.recommend", gameVersion)),
+                                                new ModItem(control.addon, modVersion, control)
+                                        );
+                                        break;
                                     }
                                 }
                             }
@@ -365,7 +375,7 @@ public class DownloadPage extends Control implements DecoratorPage {
                 Pair.pair(RemoteMod.DependencyType.BROKEN, "mods.dependency.broken")
         ));
 
-        DependencyAddonItem(DownloadListPage page, RemoteMod addon, Profile.ProfileVersion version, DownloadCallback callback) {
+        DependencyAddonItem(DownloadListPage page, RemoteMod addon, Profile.ProfileVersion version) {
             HBox pane = new HBox(8);
             pane.setPadding(new Insets(0, 8, 0, 8));
             pane.setAlignment(Pos.CENTER_LEFT);
@@ -375,6 +385,14 @@ public class DownloadPage extends Control implements DecoratorPage {
             var imageView = new ImageContainer(40);
             pane.getChildren().setAll(imageView, content);
             FXUtils.setLimitHeight(this, 60);
+
+            RemoteModRepository.Type type = addon.getRepositoryType();
+            DownloadCallback callback = switch (type) {
+                case MOD -> org.jackhuang.hmcl.ui.download.DownloadPage.FOR_MOD;
+                case RESOURCE_PACK -> org.jackhuang.hmcl.ui.download.DownloadPage.FOR_RESOURCE_PACK;
+                case SHADER_PACK -> org.jackhuang.hmcl.ui.download.DownloadPage.FOR_SHADER;
+                default -> null; // Dependencies should not be modpacks, worlds or customized stuff
+            };
             setOnAction((e) -> {
                 fireEvent(new DialogCloseEvent());
                 Controllers.navigate(new DownloadPage(page, addon, version, callback));
@@ -382,12 +400,12 @@ public class DownloadPage extends Control implements DecoratorPage {
             setNode(IDX_LEADING, pane);
 
             if (addon != RemoteMod.BROKEN) {
-                ModTranslations.Mod mod = ModTranslations.getTranslationsByRepositoryType(page.repository.getType()).getModByCurseForgeId(addon.getSlug());
+                ModTranslations.Mod mod = ModTranslations.getTranslationsByRepositoryType(type).getModByCurseForgeId(addon.getSlug());
                 content.setTitle(mod != null && I18n.isUseChinese() ? mod.getDisplayName() : addon.getTitle());
                 content.setSubtitle(addon.getDescription());
                 for (String category : addon.getCategories()) {
                     if (page.shouldDisplayCategory(category))
-                        content.addTag(page.getLocalizedCategory(category));
+                        content.addTag(page.getLocalizedCategory(category, null));
                 }
                 if (StringUtils.isNotBlank(addon.getIconUrl())) {
                     imageView.imageProperty().bind(FXUtils.newRemoteImage(addon.getIconUrl(), 80, 80, true, true));
@@ -474,7 +492,7 @@ public class DownloadPage extends Control implements DecoratorPage {
 
     private static final class AddonVersion extends JFXDialogLayout {
         public AddonVersion(RemoteMod mod, RemoteMod.Version version, DownloadPage selfPage) {
-            RemoteModRepository.Type type = selfPage.repository.getType();
+            RemoteModRepository.Type type = selfPage.type;
 
             String title = switch (type) {
                 case WORLD -> "world.download.title";
@@ -581,7 +599,7 @@ public class DownloadPage extends Control implements DecoratorPage {
                                 if (dep == RemoteMod.BROKEN) {
                                     return;
                                 }
-                                DependencyAddonItem dependencyAddonItem = new DependencyAddonItem(selfPage.page, dep, selfPage.version, selfPage.callback);
+                                DependencyAddonItem dependencyAddonItem = new DependencyAddonItem(selfPage.page, dep, selfPage.version);
                                 dependencies.get(dependency.getType()).add(dependencyAddonItem);
                             })
                             .setSignificance(Task.TaskSignificance.MINOR));

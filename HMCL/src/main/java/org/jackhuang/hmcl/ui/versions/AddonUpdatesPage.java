@@ -33,6 +33,8 @@ import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
 import org.jackhuang.hmcl.mod.LocalModFile;
 import org.jackhuang.hmcl.mod.ModManager;
+import org.jackhuang.hmcl.mod.LocalAddonFile;
+import org.jackhuang.hmcl.mod.LocalAddonManager;
 import org.jackhuang.hmcl.mod.RemoteMod;
 import org.jackhuang.hmcl.task.FileDownloadTask;
 import org.jackhuang.hmcl.task.Schedulers;
@@ -43,10 +45,12 @@ import org.jackhuang.hmcl.ui.construct.*;
 import org.jackhuang.hmcl.ui.decorator.DecoratorPage;
 import org.jackhuang.hmcl.util.Pair;
 import org.jackhuang.hmcl.util.StringUtils;
+import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.TaskCancellationAction;
 import org.jackhuang.hmcl.util.io.CSVTable;
 import org.jackhuang.hmcl.util.javafx.BindingMapping;
 
+import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.LocalDateTime;
@@ -58,45 +62,45 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import static org.jackhuang.hmcl.ui.FXUtils.onEscPressed;
-import static org.jackhuang.hmcl.util.Pair.pair;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
+import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
-public class ModUpdatesPage extends BorderPane implements DecoratorPage {
+public class AddonUpdatesPage<F extends LocalAddonFile> extends BorderPane implements DecoratorPage {
     private final ReadOnlyObjectWrapper<State> state = new ReadOnlyObjectWrapper<>(DecoratorPage.State.fromTitle(i18n("mods.check_updates")));
 
-    private final ModManager modManager;
-    private final ObservableList<ModUpdateObject> objects;
+    private final LocalAddonManager<F> localAddonManager;
+    private final ObservableList<AddonUpdateObject> objects;
 
     @SuppressWarnings("unchecked")
-    public ModUpdatesPage(ModManager modManager, List<LocalModFile.ModUpdate> updates) {
-        this.modManager = modManager;
+    public AddonUpdatesPage(LocalAddonManager<F> localAddonManager, List<LocalAddonFile.AddonUpdate> updates) {
+        this.localAddonManager = localAddonManager;
 
         getStyleClass().add("gray-background");
 
-        TableColumn<ModUpdateObject, Boolean> enabledColumn = new TableColumn<>();
+        TableColumn<AddonUpdateObject, Boolean> enabledColumn = new TableColumn<>();
         var allEnabledBox = new JFXCheckBox();
         enabledColumn.setStyle("-fx-alignment: CENTER;");
         enabledColumn.setGraphic(allEnabledBox);
         enabledColumn.setCellFactory(JFXCheckBoxTableCell.forTableColumn(enabledColumn));
-        setupCellValueFactory(enabledColumn, ModUpdateObject::enabledProperty);
+        setupCellValueFactory(enabledColumn, AddonUpdateObject::enabledProperty);
         enabledColumn.setEditable(true);
         enabledColumn.setMaxWidth(40);
         enabledColumn.setMinWidth(40);
 
-        TableColumn<ModUpdateObject, String> fileNameColumn = new TableColumn<>(i18n("mods.check_updates.file"));
+        TableColumn<AddonUpdateObject, String> fileNameColumn = new TableColumn<>(i18n("mods.check_updates.file"));
         fileNameColumn.setPrefWidth(180);
-        setupCellValueFactory(fileNameColumn, ModUpdateObject::fileNameProperty);
+        setupCellValueFactory(fileNameColumn, AddonUpdateObject::fileNameProperty);
 
-        TableColumn<ModUpdateObject, String> currentVersionColumn = new TableColumn<>(i18n("mods.check_updates.current_version"));
+        TableColumn<AddonUpdateObject, String> currentVersionColumn = new TableColumn<>(i18n("mods.check_updates.current_version"));
         currentVersionColumn.setPrefWidth(180);
-        setupCellValueFactory(currentVersionColumn, ModUpdateObject::currentVersionProperty);
+        setupCellValueFactory(currentVersionColumn, AddonUpdateObject::currentVersionProperty);
 
-        TableColumn<ModUpdateObject, String> targetVersionColumn = new TableColumn<>(i18n("mods.check_updates.target_version"));
+        TableColumn<AddonUpdateObject, String> targetVersionColumn = new TableColumn<>(i18n("mods.check_updates.target_version"));
         targetVersionColumn.setPrefWidth(180);
-        setupCellValueFactory(targetVersionColumn, ModUpdateObject::targetVersionProperty);
+        setupCellValueFactory(targetVersionColumn, AddonUpdateObject::targetVersionProperty);
 
-        TableColumn<ModUpdateObject, String> sourceColumn = new TableColumn<>(i18n("mods.check_updates.source"));
-        setupCellValueFactory(sourceColumn, ModUpdateObject::sourceProperty);
+        TableColumn<AddonUpdateObject, String> sourceColumn = new TableColumn<>(i18n("mods.check_updates.source"));
+        setupCellValueFactory(sourceColumn, AddonUpdateObject::sourceProperty);
 
         TableColumn<ModUpdateObject, String> changelogColumn = new TableColumn<>(i18n("mods.changelog"));
         {
@@ -117,10 +121,10 @@ public class ModUpdatesPage extends BorderPane implements DecoratorPage {
             changelogColumn.setCellValueFactory(__ -> new SimpleStringProperty(i18n("button.view")));
         }
 
-        objects = FXCollections.observableList(updates.stream().map(ModUpdateObject::new).collect(Collectors.toList()));
+        objects = FXCollections.observableList(updates.stream().map(AddonUpdateObject::new).collect(Collectors.toList()));
         FXUtils.bindAllEnabled(allEnabledBox.selectedProperty(), objects.stream().map(o -> o.enabled).toArray(BooleanProperty[]::new));
 
-        TableView<ModUpdateObject> table = new TableView<>(objects);
+        TableView<AddonUpdateObject> table = new TableView<>(objects);
         table.setEditable(true);
         table.getColumns().setAll(enabledColumn, fileNameColumn, currentVersionColumn, targetVersionColumn, sourceColumn, changelogColumn);
         setMargin(table, new Insets(10, 10, 5, 10));
@@ -135,7 +139,7 @@ public class ModUpdatesPage extends BorderPane implements DecoratorPage {
         exportListButton.setOnAction(e -> exportList());
 
         JFXButton nextButton = FXUtils.newRaisedButton(i18n("mods.check_updates.confirm"));
-        nextButton.setOnAction(e -> updateMods());
+        nextButton.setOnAction(e -> updateFiles());
 
         JFXButton cancelButton = FXUtils.newRaisedButton(i18n("button.cancel"));
         cancelButton.setOnAction(e -> fireEvent(new PageCloseEvent()));
@@ -146,23 +150,24 @@ public class ModUpdatesPage extends BorderPane implements DecoratorPage {
         setBottom(actions);
     }
 
-    private <T> void setupCellValueFactory(TableColumn<ModUpdateObject, T> column, Function<ModUpdateObject, ObservableValue<T>> mapper) {
+    private <T> void setupCellValueFactory(TableColumn<AddonUpdateObject, T> column, Function<AddonUpdateObject, ObservableValue<T>> mapper) {
         column.setCellValueFactory(param -> mapper.apply(param.getValue()));
     }
 
-    private void updateMods() {
-        ModUpdateTask task = new ModUpdateTask(
-                modManager,
+    private void updateFiles() {
+        AddonUpdateTask task = new AddonUpdateTask(
+                localAddonManager.getDirectory(),
                 objects.stream()
-                        .filter(o -> o.enabled.get())
-                        .map(object -> pair(object.data.getLocalMod(), object.data.getCandidate()))
-                        .collect(Collectors.toList()));
+                        .filter(AddonUpdateObject::isEnabled)
+                        .map(AddonUpdateObject::getData)
+                        .toList()
+        );
         Controllers.taskDialog(
                 task.whenComplete(Schedulers.javafx(), exception -> {
                     fireEvent(new PageCloseEvent());
-                    if (!task.getFailedMods().isEmpty()) {
+                    if (!task.getFailedAddons().isEmpty()) {
                         Controllers.dialog(i18n("mods.check_updates.failed_download") + "\n" +
-                                        task.getFailedMods().stream().map(LocalModFile::getFileName).collect(Collectors.joining("\n")),
+                                        task.getFailedAddons().stream().map(LocalAddonFile::getFileName).collect(Collectors.joining("\n")),
                                 i18n("install.failed"),
                                 MessageDialogPane.MessageType.ERROR);
                     }
@@ -210,8 +215,8 @@ public class ModUpdatesPage extends BorderPane implements DecoratorPage {
         return state;
     }
 
-    private static final class ModUpdateObject {
-        final LocalModFile.ModUpdate data;
+    private static final class AddonUpdateObject {
+        final LocalAddonFile.AddonUpdate data;
         final BooleanProperty enabled = new SimpleBooleanProperty();
         final StringProperty fileName = new SimpleStringProperty();
         final StringProperty currentVersion = new SimpleStringProperty();
@@ -219,20 +224,24 @@ public class ModUpdatesPage extends BorderPane implements DecoratorPage {
         final StringProperty source = new SimpleStringProperty();
         String changelog = null;
 
-        public ModUpdateObject(LocalModFile.ModUpdate data) {
+        public AddonUpdateObject(LocalAddonFile.AddonUpdate data) {
             this.data = data;
 
-            enabled.set(!data.getLocalMod().getModManager().isDisabled(data.getLocalMod().getFile()));
-            fileName.set(data.getLocalMod().getFileName());
-            currentVersion.set(data.getCurrentVersion().getVersion());
-            targetVersion.set(data.getCandidate().getVersion());
-            switch (data.getCurrentVersion().getSelf().getType()) {
+            enabled.set(!data.localAddonFile().isDisabled());
+            fileName.set(data.localAddonFile().getFileName());
+            currentVersion.set(data.currentVersion().getVersion());
+            targetVersion.set(data.targetVersion().getVersion());
+            switch (data.currentVersion().getSelf().getType()) {
                 case CURSEFORGE:
                     source.set(i18n("mods.curseforge"));
                     break;
                 case MODRINTH:
                     source.set(i18n("mods.modrinth"));
             }
+        }
+
+        public LocalAddonFile.AddonUpdate getData() {
+            return data;
         }
 
         public boolean isEnabled() {
@@ -370,30 +379,32 @@ public class ModUpdatesPage extends BorderPane implements DecoratorPage {
         }
     }
 
-    public static class ModUpdateTask extends Task<Void> {
+    public static class AddonUpdateTask extends Task<Void> {
         private final Collection<Task<?>> dependents;
-        private final List<LocalModFile> failedMods = new ArrayList<>();
+        private final List<LocalAddonFile> failedAddons = new ArrayList<>();
 
-        ModUpdateTask(ModManager modManager, List<Pair<LocalModFile, RemoteMod.Version>> mods) {
+        AddonUpdateTask(Path addonDirectory, List<LocalAddonFile.AddonUpdate> addons) {
             setStage("mods.check_updates.confirm");
-            getProperties().put("total", mods.size());
+            getProperties().put("total", addons.size());
 
             this.dependents = new ArrayList<>();
-            for (Pair<LocalModFile, RemoteMod.Version> mod : mods) {
-                LocalModFile local = mod.getKey();
-                RemoteMod.Version remote = mod.getValue();
-                boolean isDisabled = local.getModManager().isDisabled(local.getFile());
+            for (LocalAddonFile.AddonUpdate addon : addons) {
+                LocalAddonFile local = addon.localAddonFile();
+                RemoteMod.Version remote = addon.targetVersion();
+                boolean isDisabled = local.isDisabled();
+                String originalFileName = local.getFile().getFileName().toString();
 
                 dependents.add(Task
                         .runAsync(Schedulers.javafx(), () -> local.setOld(true))
                         .thenComposeAsync(() -> {
-                            String fileName = remote.getFile().getFilename();
+                            String fileName = addon.useRemoteFileName() ? remote.getFile().getFilename() : originalFileName;
                             if (isDisabled)
-                                fileName += ModManager.DISABLED_EXTENSION;
+                                fileName = StringUtils.addSuffix(fileName, LocalAddonManager.DISABLED_EXTENSION);
 
                             var task = new FileDownloadTask(
                                     remote.getFile().getUrl(),
-                                    modManager.getModsDirectory().resolve(fileName));
+                                    addonDirectory.resolve(fileName)
+                            );
 
                             task.setName(remote.getName());
                             return task;
@@ -403,16 +414,22 @@ public class ModUpdatesPage extends BorderPane implements DecoratorPage {
                                 // restore state if failed
                                 local.setOld(false);
                                 if (isDisabled)
-                                    local.disable();
-                                failedMods.add(local);
+                                    local.markDisabled();
+                                failedAddons.add(local);
+                            } else if (!local.keepOldFiles()) {
+                                try {
+                                    local.delete();
+                                } catch (IOException e) {
+                                    LOG.warning("Failed to delete outdated addon: " + local.getFile(), e);
+                                }
                             }
                         })
                         .withCounter("mods.check_updates.confirm"));
             }
         }
 
-        public List<LocalModFile> getFailedMods() {
-            return failedMods;
+        public List<LocalAddonFile> getFailedAddons() {
+            return failedAddons;
         }
 
         @Override
