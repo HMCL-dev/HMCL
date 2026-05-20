@@ -166,7 +166,7 @@ public final class GameSettingPage<S extends GameSetting> extends StackPane
                 iconPickerItem.setOnSelectButtonClicked(e -> onExploreIcon());
                 iconPickerItem.setOnDeleteButtonClicked(e -> onDeleteIcon());
 
-                var parentGameSettingPane = new LineSelectButton<GameSetting.Global>();
+                var parentGameSettingPane = new LineSelectButton<GameSetting.@Nullable Global>();
                 basicSettings.getContent().add(parentGameSettingPane);
                 parentGameSettingPane.setTitle("全局游戏设置"); // TODO: i18n
                 parentGameSettingPane.setConverter(setting -> setting != null ? setting.nameProperty().getValue() : "默认全局设置"); // TODO: i18n
@@ -743,7 +743,7 @@ public final class GameSettingPage<S extends GameSetting> extends StackPane
         return setting instanceof GameSetting.Global global ? global : null;
     }
 
-    private void bindInstanceParentSetting(LineSelectButton<GameSetting.Global> button) {
+    private void bindInstanceParentSetting(LineSelectButton<GameSetting.@Nullable Global> button) {
         ObservableList<GameSetting.Global> items = FXCollections.observableArrayList();
         InvalidationListener updateItems = observable -> {
             @Nullable GameSetting.Global selected = button.getValue();
