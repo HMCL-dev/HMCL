@@ -59,7 +59,7 @@ public class VersionPage extends DecoratorAnimatedPage implements DecoratorPage 
     private final TabHeader.Tab<ModListPage> modListTab = new TabHeader.Tab<>("modListTab");
     private final TabHeader.Tab<WorldListPage> worldListTab = new TabHeader.Tab<>("worldList");
     private final TabHeader.Tab<SchematicsPage> schematicsTab = new TabHeader.Tab<>("schematicsTab");
-    private final TabHeader.Tab<ResourcepackListPage> resourcePackTab = new TabHeader.Tab<>("resourcePackTab");
+    private final TabHeader.Tab<ResourcePackListPage> resourcePackTab = new TabHeader.Tab<>("resourcePackTab");
     private final TabHeader.Tab<ScreenshotsPage> screenshotsTab = new TabHeader.Tab<>("screenshotsTab");
     private final TransitionPane transitionPane = new TransitionPane();
     private final BooleanProperty currentVersionUpgradable = new SimpleBooleanProperty();
@@ -79,7 +79,7 @@ public class VersionPage extends DecoratorAnimatedPage implements DecoratorPage 
         versionSettingsTab.setNodeSupplier(loadVersionFor(() -> new VersionSettingsPage(false)));
         installerListTab.setNodeSupplier(loadVersionFor(InstallerListPage::new));
         modListTab.setNodeSupplier(loadVersionFor(ModListPage::new));
-        resourcePackTab.setNodeSupplier(loadVersionFor(ResourcepackListPage::new));
+        resourcePackTab.setNodeSupplier(loadVersionFor(ResourcePackListPage::new));
         worldListTab.setNodeSupplier(loadVersionFor(WorldListPage::new));
         schematicsTab.setNodeSupplier(loadVersionFor(SchematicsPage::new));
         screenshotsTab.setNodeSupplier(loadVersionFor(ScreenshotsPage::new));
@@ -309,7 +309,8 @@ public class VersionPage extends DecoratorAnimatedPage implements DecoratorPage 
                         new IconedMenuItem(SVG.WB_SUNNY, i18n("folder.shaderpacks"), () -> control.onBrowse("shaderpacks"), browsePopup),
                         new IconedMenuItem(SVG.SCREENSHOT_MONITOR, i18n("folder.screenshots"), () -> control.onBrowse("screenshots"), browsePopup),
                         new IconedMenuItem(SVG.SETTINGS, i18n("folder.config"), () -> control.onBrowse("config"), browsePopup),
-                        new IconedMenuItem(SVG.SCRIPT, i18n("folder.logs"), () -> control.onBrowse("logs"), browsePopup)
+                        new IconedMenuItem(SVG.SCRIPT, i18n("folder.logs"), () -> control.onBrowse("logs"), browsePopup),
+                        new IconedMenuItem(SVG.FRAME_BUG, i18n("folder.crash-reports"), () -> control.onBrowse("crash-reports"), browsePopup)
                 );
 
                 PopupMenu managementList = new PopupMenu();

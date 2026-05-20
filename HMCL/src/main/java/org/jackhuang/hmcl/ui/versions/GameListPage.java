@@ -34,7 +34,10 @@ import javafx.scene.control.Skin;
 import javafx.scene.control.SkinBase;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
-import javafx.scene.layout.*;
+import javafx.scene.layout.HBox;
+import javafx.scene.layout.Priority;
+import javafx.scene.layout.StackPane;
+import javafx.scene.layout.VBox;
 import javafx.util.Duration;
 import org.jackhuang.hmcl.setting.Profile;
 import org.jackhuang.hmcl.setting.Profiles;
@@ -240,6 +243,8 @@ public class GameListPage extends DecoratorAnimatedPage implements DecoratorPage
                     toolbarNormal.getChildren().setAll(createToolbarButton2(i18n("button.refresh"), SVG.REFRESH, skinnable::refreshList), createToolbarButton2(i18n("search"), SVG.SEARCH, () -> changeToolbar(searchBar)));
 
                     toolbarPane.setContent(toolbarNormal, ContainerAnimations.FADE);
+
+                    FXUtils.setOverflowHidden(toolbarPane, 8);
 
                     root.getContent().add(toolbarPane);
                 }
