@@ -259,15 +259,29 @@ public final class ResourcePackManager extends LocalAddonManager<ResourcePackFil
     @NotNull
     public GameVersionNumber getMinecraftVersion() {
         if (minecraftVersion == null) {
-            minecraftVersion = GameVersionNumber.asGameVersion(repository.getGameVersion(id));
-            supportsNewOptionsFormat = isMcVersionSupportsNewOptionsFormat(minecraftVersion);
+            lock.lock();
+            try {
+                if (minecraftVersion == null) {
+                    minecraftVersion = GameVersionNumber.asGameVersion(repository.getGameVersion(id));
+                    supportsNewOptionsFormat = isMcVersionSupportsNewOptionsFormat(minecraftVersion);
+                }
+            } finally {
+                lock.unlock();
+            }
         }
         return minecraftVersion;
     }
 
     @NotNull
     public PackMcMeta.PackVersion getRequiredVersion() {
-        if (requiredVersion == null) requiredVersion = getPackVersion(getMinecraftVersion(), repository.getVersionJar(id));
+        if (requiredVersion == null) {
+            lock.lock();
+            try {
+                if (requiredVersion == null) requiredVersion = getPackVersion(getMinecraftVersion(), repository.getVersionJar(id));
+            } finally {
+                lock.unlock();
+            }
+        }
         return requiredVersion;
     }
 
