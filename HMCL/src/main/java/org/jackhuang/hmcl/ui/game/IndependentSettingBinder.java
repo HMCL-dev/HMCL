@@ -23,6 +23,7 @@ import com.jfoenix.controls.JFXTextField;
 import javafx.beans.InvalidationListener;
 import javafx.beans.binding.Bindings;
 import javafx.beans.property.ObjectProperty;
+import javafx.beans.property.SimpleObjectProperty;
 import javafx.scene.control.Label;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.BorderPane;
@@ -67,14 +68,15 @@ final class IndependentSettingBinder {
             Supplier<JFXButton> inheritanceButtonFactory,
             BiConsumer<JFXButton, Boolean> inheritanceButtonUpdater,
             Function<GameSetting.Instance, GameSetting.Global> parentGetter) {
-        ObjectProperty<@Nullable SettingProperty<String>> activeProperty = new javafx.beans.property.SimpleObjectProperty<>();
+        ObjectProperty<@Nullable SettingProperty<String>> activeProperty = new SimpleObjectProperty<>();
         final Holder<Boolean> updating = new Holder<>(false);
-        @Nullable JFXButton inheritButton = null;
-        if (!globalSetting) {
+        @Nullable JFXButton inheritButton;
+        if (globalSetting) {
+            inheritButton = null;
+        } else {
             inheritButton = inheritanceButtonFactory.get();
             line.setTitleTrailing(inheritButton);
         }
-        @Nullable JFXButton finalInheritButton = inheritButton;
 
         InvalidationListener refresh = observable -> {
             GameSetting setting = currentSetting.get();
@@ -88,8 +90,8 @@ final class IndependentSettingBinder {
                 boolean overridden = isOverridden(setting, property);
                 textField.setText(empty(getEffectiveValue(setting, propertyGetter, parentGetter)));
                 textField.setDisable(!overridden);
-                if (finalInheritButton != null) {
-                    inheritanceButtonUpdater.accept(finalInheritButton, !overridden);
+                if (inheritButton != null) {
+                    inheritanceButtonUpdater.accept(inheritButton, !overridden);
                 }
             } finally {
                 updating.value = false;
@@ -107,16 +109,16 @@ final class IndependentSettingBinder {
             try {
                 setOverridden(setting, property, true);
                 property.setValue(newValue != null ? newValue : "");
-                if (finalInheritButton != null) {
-                    inheritanceButtonUpdater.accept(finalInheritButton, false);
+                if (inheritButton != null) {
+                    inheritanceButtonUpdater.accept(inheritButton, false);
                 }
             } finally {
                 updating.value = false;
             }
         });
 
-        if (finalInheritButton != null) {
-            finalInheritButton.addEventFilter(MouseEvent.MOUSE_CLICKED, event -> {
+        if (inheritButton != null) {
+            inheritButton.addEventFilter(MouseEvent.MOUSE_CLICKED, event -> {
                 GameSetting setting = currentSetting.get();
                 SettingProperty<String> property = activeProperty.get();
                 if (setting == null || property == null || updating.value) {
@@ -153,14 +155,15 @@ final class IndependentSettingBinder {
             Supplier<JFXButton> inheritanceButtonFactory,
             BiConsumer<JFXButton, Boolean> inheritanceButtonUpdater,
             Function<GameSetting.Instance, GameSetting.Global> parentGetter) {
-        ObjectProperty<@Nullable SettingProperty<Integer>> activeProperty = new javafx.beans.property.SimpleObjectProperty<>();
+        ObjectProperty<@Nullable SettingProperty<Integer>> activeProperty = new SimpleObjectProperty<>();
         final Holder<Boolean> updating = new Holder<>(false);
-        @Nullable JFXButton inheritButton = null;
-        if (!globalSetting) {
+        @Nullable JFXButton inheritButton;
+        if (globalSetting) {
+            inheritButton = null;
+        } else {
             inheritButton = inheritanceButtonFactory.get();
             line.setTitleTrailing(inheritButton);
         }
-        @Nullable JFXButton finalInheritButton = inheritButton;
 
         InvalidationListener refresh = observable -> {
             GameSetting setting = currentSetting.get();
@@ -175,8 +178,8 @@ final class IndependentSettingBinder {
                 Integer value = getEffectiveValue(setting, propertyGetter, parentGetter);
                 textField.setText(value != null ? value.toString() : "");
                 textField.setDisable(!overridden);
-                if (finalInheritButton != null) {
-                    inheritanceButtonUpdater.accept(finalInheritButton, !overridden);
+                if (inheritButton != null) {
+                    inheritanceButtonUpdater.accept(inheritButton, !overridden);
                 }
             } finally {
                 updating.value = false;
@@ -194,16 +197,16 @@ final class IndependentSettingBinder {
             try {
                 setOverridden(setting, property, true);
                 property.setValue(parseInteger(newValue, true));
-                if (finalInheritButton != null) {
-                    inheritanceButtonUpdater.accept(finalInheritButton, false);
+                if (inheritButton != null) {
+                    inheritanceButtonUpdater.accept(inheritButton, false);
                 }
             } finally {
                 updating.value = false;
             }
         });
 
-        if (finalInheritButton != null) {
-            finalInheritButton.addEventFilter(MouseEvent.MOUSE_CLICKED, event -> {
+        if (inheritButton != null) {
+            inheritButton.addEventFilter(MouseEvent.MOUSE_CLICKED, event -> {
                 GameSetting setting = currentSetting.get();
                 SettingProperty<Integer> property = activeProperty.get();
                 if (setting == null || property == null || updating.value) {
@@ -246,8 +249,8 @@ final class IndependentSettingBinder {
             @Nullable JFXButton maxMemoryButton,
             BiConsumer<JFXButton, Boolean> inheritanceButtonUpdater,
             Function<GameSetting.Instance, GameSetting.Global> parentGetter) {
-        ObjectProperty<@Nullable SettingProperty<Boolean>> activeAutoMemoryProperty = new javafx.beans.property.SimpleObjectProperty<>();
-        ObjectProperty<@Nullable SettingProperty<Integer>> activeMaxMemoryProperty = new javafx.beans.property.SimpleObjectProperty<>();
+        ObjectProperty<@Nullable SettingProperty<Boolean>> activeAutoMemoryProperty = new SimpleObjectProperty<>();
+        ObjectProperty<@Nullable SettingProperty<Integer>> activeMaxMemoryProperty = new SimpleObjectProperty<>();
         Label physicalMemoryLabel = (Label) memoryStatusLabels.getLeft();
         Label allocatedMemoryLabel = (Label) memoryStatusLabels.getRight();
         final Holder<Boolean> updating = new Holder<>(false);
@@ -455,7 +458,7 @@ final class IndependentSettingBinder {
             LineInheritableToggleButton button,
             Function<GameSetting, SettingProperty<Boolean>> propertyGetter,
             Function<GameSetting.Instance, GameSetting.Global> parentGetter) {
-        ObjectProperty<@Nullable SettingProperty<Boolean>> activeProperty = new javafx.beans.property.SimpleObjectProperty<>();
+        ObjectProperty<@Nullable SettingProperty<Boolean>> activeProperty = new SimpleObjectProperty<>();
         final Holder<Boolean> updating = new Holder<>(false);
 
         InvalidationListener refresh = observable -> {
@@ -507,7 +510,7 @@ final class IndependentSettingBinder {
             ObjectProperty<? extends GameSetting> currentSetting,
             LineInheritableToggleButton button,
             Function<GameSetting.Instance, GameSetting.Global> parentGetter) {
-        ObjectProperty<@Nullable SettingProperty<NativesDirectoryType>> activeProperty = new javafx.beans.property.SimpleObjectProperty<>();
+        ObjectProperty<@Nullable SettingProperty<NativesDirectoryType>> activeProperty = new SimpleObjectProperty<>();
         final Holder<Boolean> updating = new Holder<>(false);
 
         InvalidationListener refresh = observable -> {
