@@ -676,7 +676,7 @@ public sealed abstract class GameSetting extends ObservableSetting {
         return new Effective(global, instance);
     }
 
-    private static <T> T inherited(Global global, @Nullable Instance instance, Function<GameSetting, SettingProperty<T>> propertyGetter) {
+    private static <T extends @UnknownNullability Object> T inherited(Global global, @Nullable Instance instance, Function<GameSetting, SettingProperty<T>> propertyGetter) {
         if (instance != null) {
             SettingProperty<T> property = propertyGetter.apply(instance);
             if (instance.getOverrideProperties().contains(property.getName())) {
@@ -686,7 +686,7 @@ public sealed abstract class GameSetting extends ObservableSetting {
         return propertyGetter.apply(global).getValue();
     }
 
-    private static <T> T inheritable(Global global, @Nullable Instance instance, Function<GameSetting, InheritableProperty<T>> propertyGetter) {
+    private static <T extends @UnknownNullability Object> T inheritable(Global global, @Nullable Instance instance, Function<GameSetting, InheritableProperty<T>> propertyGetter) {
         if (instance != null) {
             T value = propertyGetter.apply(instance).getValue();
             if (value != null) {
