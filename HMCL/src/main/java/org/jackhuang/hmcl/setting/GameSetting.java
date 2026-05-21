@@ -159,6 +159,15 @@ public sealed abstract class GameSetting extends ObservableSetting {
             return name;
         }
 
+        /// The profile name that this global setting was migrated from.
+        @SerializedName("legacyProfile")
+        private final SettingProperty<@Nullable String> legacyProfile = newSettingProperty("legacyProfile");
+
+        /// Returns the migrated profile name property.
+        public SettingProperty<@Nullable String> legacyProfileProperty() {
+            return legacyProfile;
+        }
+
         /// Whether to enable the version isolation strategy when installing a new instance.
         @SerializedName("defaultIsolationType")
         private final SettingProperty<DefaultIsolationType> defaultIsolationType = newSettingProperty("defaultIsolationType", DefaultIsolationType.MODED);

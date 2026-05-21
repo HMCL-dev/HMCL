@@ -176,17 +176,9 @@ public final class Profiles {
     }
 
     private static void migrateGameSettings() {
-        if (config().getGameSettings().isEmpty()) {
-            for (Profile profile : profiles) {
-                GameSetting.Global gameSetting = LegacyGameSettingMigrator.toGlobal(getProfileDisplayName(profile), profile.getLegacyGlobalSettingJson());
-                config().getGameSettings().add(gameSetting);
-                profile.setLegacyGameSettingParent(gameSetting.idProperty().getValue());
-            }
-        } else {
-            for (Profile profile : profiles) {
-                if (profile.getLegacyGameSettingParent() == null) {
-                    profile.setLegacyGameSettingParent(config().getDefaultGameSettingOrCreate().idProperty().getValue());
-                }
+        for (Profile profile : profiles) {
+            if (profile.getLegacyGameSettingParent() == null) {
+                profile.setLegacyGameSettingParent(config().getDefaultGameSettingOrCreate().idProperty().getValue());
             }
         }
 

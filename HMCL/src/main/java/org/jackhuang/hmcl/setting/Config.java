@@ -45,6 +45,7 @@ import org.jackhuang.hmcl.util.i18n.SupportedLocale;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
+import java.lang.reflect.Type;
 import java.net.Proxy;
 import java.nio.file.Path;
 import java.util.*;
@@ -893,6 +894,65 @@ public final class Config extends ObservableSetting {
         @Override
         protected Config createInstance() {
             return new Config();
+        }
+
+        @Override
+        public Config deserialize(JsonElement json, Type typeOfT, JsonDeserializationContext context) throws JsonParseException {
+            Config config = super.deserialize(json, typeOfT, context);
+            if (config != null && json instanceof JsonObject object) {
+                migrateLegacyGlobalGameSettings(config, object);
+            }
+            return config;
+        }
+
+        private static void migrateLegacyGlobalGameSettings(Config config, JsonObject object) {
+            JsonElement configurationsElement = object.get("configurations");
+            if (configurationsElement == null || !configurationsElement.isJsonObject()) {
+                return;
+            }
+
+            JsonObject configurations = configurationsElement.getAsJsonObject();
+            for (Map.Entry<String, Profile> entry : config.getConfigurations().entrySet()) {
+                Profile profile = entry.getValue();
+                if (profile == null) {
+                    continue;
+                }
+
+                String profileName = entry.getKey();
+                UUID parentId = profile.getLegacyGameSettingParent();
+                if (parentId != null) {
+                    GameSetting.Global parent = config.getGameSetting(parentId);
+                    if (parent != null) {
+                        if (parent.legacyProfileProperty().getValue() == null) {
+                            parent.legacyProfileProperty().setValue(profileName);
+                        }
+                        continue;
+                    }
+                }
+
+                GameSetting.Global legacyParent = findLegacyGameSetting(config, profileName);
+                if (legacyParent == null) {
+                    JsonObject profileObject = configurations.get(profileName) instanceof JsonObject profileJson ? profileJson : null;
+                    JsonObject globalSettingObject = profileObject != null && profileObject.get("global") instanceof JsonObject globalJson ? globalJson : null;
+                    if (globalSettingObject == null) {
+                        continue;
+                    }
+
+                    legacyParent = LegacyGameSettingMigrator.toGlobal(profileName, profileName, globalSettingObject);
+                    config.getGameSettings().add(legacyParent);
+                }
+
+                profile.setLegacyGameSettingParent(legacyParent.idProperty().getValue());
+            }
+        }
+
+        private static @Nullable GameSetting.Global findLegacyGameSetting(Config config, String profileName) {
+            for (GameSetting.Global setting : config.getGameSettings()) {
+                if (Objects.equals(profileName, setting.legacyProfileProperty().getValue())) {
+                    return setting;
+                }
+            }
+            return null;
         }
     }
 }

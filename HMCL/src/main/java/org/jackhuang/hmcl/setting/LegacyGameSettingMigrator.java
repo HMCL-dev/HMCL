@@ -61,9 +61,10 @@ public final class LegacyGameSettingMigrator {
     }
 
     /// Converts a legacy global setting JSON object into a named global game setting.
-    public static GameSetting.Global toGlobal(String name, @Nullable JsonObject source) {
+    public static GameSetting.Global toGlobal(String name, String legacyProfile, @Nullable JsonObject source) {
         GameSetting.Global target = new GameSetting.Global();
         target.nameProperty().setValue(name);
+        target.legacyProfileProperty().setValue(legacyProfile);
         if (getGameDirType(source, GameDirectoryType.ROOT_FOLDER) == GameDirectoryType.VERSION_FOLDER) {
             target.defaultIsolationTypeProperty().setValue(DefaultIsolationType.ALWAYS);
         }

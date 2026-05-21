@@ -238,13 +238,18 @@ public final class HMCLGameRepository extends DefaultGameRepository {
         if (legacySetting != null) {
             initLocalGameSetting(id, legacySetting);
             migratedLocalGameSettings.add(id);
-        } else if (LegacyGameSettingMigrator.getGameDirType(profile.getLegacyGlobalSettingJson(), GameDirectoryType.ROOT_FOLDER) == GameDirectoryType.VERSION_FOLDER) {
+        } else if (isLegacyProfileAlwaysIsolated()) {
             GameSetting.Instance setting = new GameSetting.Instance();
             setting.parentProperty().setValue(profile.getLegacyGameSettingParent());
             setting.isolationProperty().setValue(true);
             initLocalGameSetting(id, setting);
             migratedLocalGameSettings.add(id);
         }
+    }
+
+    private boolean isLegacyProfileAlwaysIsolated() {
+        GameSetting.Global parent = config().getGameSetting(profile.getLegacyGameSettingParent());
+        return parent != null && parent.defaultIsolationTypeProperty().getValue() == DefaultIsolationType.ALWAYS;
     }
 
     public GameSetting.Instance createLocalGameSetting(String id) {
