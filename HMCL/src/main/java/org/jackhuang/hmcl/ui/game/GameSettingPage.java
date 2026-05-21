@@ -480,6 +480,18 @@ public final class GameSettingPage<S extends GameSetting> extends StackPane
             quickSublist.setHasSubtitle(true);
 
             var advancedLaunchSublist = new ComponentSublist(() -> {
+                var runningDirPane = new LinePane();
+                runningDirPane.setTitle("游戏运行路径"); // TODO: i18n
+                runningDirPane.setSubtitle("留空则使用默认游戏文件夹，启用版本隔离时使用实例路径"); // TODO: i18n
+                {
+                    var runningDirSelector = new FileSelector()
+                            .setChooserTitle(i18n("settings.game.working_directory.choose"))
+                            .setSelectionMode(FileSelector.SelectionMode.DIRECTORY);
+                    runningDirSelector.setPrefWidth(400);
+                    runningDirPane.setRight(runningDirSelector);
+                    bindInheritableStringProperty(runningDirPane, runningDirSelector.valueProperty(), GameSetting::runningDirProperty);
+                }
+
                 var gameArgsPane = new LinePane();
                 gameArgsPane.setTitle(i18n("settings.advanced.minecraft_arguments"));
                 {
@@ -511,11 +523,11 @@ public final class GameSettingPage<S extends GameSetting> extends StackPane
                 );
                 processPriorityPane.setTitle(i18n("settings.advanced.process_priority"));
 
-                return List.of(gameArgsPane, environmentVariablesPane, processPriorityPane);
+                return List.of(runningDirPane, gameArgsPane, environmentVariablesPane, processPriorityPane);
             });
             gameSettings.getContent().add(advancedLaunchSublist);
             advancedLaunchSublist.setTitle("高级选项"); // TODO: i18n
-            advancedLaunchSublist.setSubtitle("游戏参数、环境变量与进程优先级"); // TODO: i18n
+            advancedLaunchSublist.setSubtitle("运行路径、游戏参数、环境变量与进程优先级"); // TODO: i18n
             advancedLaunchSublist.setHasSubtitle(true);
         }
 
@@ -1008,6 +1020,14 @@ public final class GameSettingPage<S extends GameSetting> extends StackPane
             LineComponent line,
             JFXTextField textField,
             Function<GameSetting, InheritableProperty<String>> propertyGetter) {
+        bindInheritableStringProperty(line, textField.textProperty(), propertyGetter);
+    }
+
+    /// Binds a string property to an inheritable string setting.
+    private void bindInheritableStringProperty(
+            LineComponent line,
+            Property<String> textProperty,
+            Function<GameSetting, InheritableProperty<String>> propertyGetter) {
         ObjectProperty<@Nullable InheritableProperty<String>> activeProperty = new SimpleObjectProperty<>();
         final Holder<Boolean> updating = new Holder<>(false);
         @Nullable JFXButton inheritButton = null;
@@ -1026,7 +1046,7 @@ public final class GameSettingPage<S extends GameSetting> extends StackPane
 
             updating.value = true;
             try {
-                textField.setText(getEffectiveValue(setting, propertyGetter));
+                textProperty.setValue(getEffectiveValue(setting, propertyGetter));
                 if (finalInheritButton != null) {
                     updateInheritanceButton(finalInheritButton, property.getValue() == null);
                 }
@@ -1035,7 +1055,7 @@ public final class GameSettingPage<S extends GameSetting> extends StackPane
             }
         };
 
-        textField.textProperty().addListener((observable, oldValue, newValue) -> {
+        textProperty.addListener((observable, oldValue, newValue) -> {
             InheritableProperty<String> property = activeProperty.get();
             if (property == null || updating.value) {
                 return;
