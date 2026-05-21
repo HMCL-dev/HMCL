@@ -939,6 +939,14 @@ public final class Config extends ObservableSetting {
                     }
 
                     legacyParent = LegacyGameSettingMigrator.toGlobal(profileName, profileName, globalSettingObject);
+                    if (config.getGameSetting(legacyParent.idProperty().getValue()) != null) {
+                        // Avoid duplicate IDs if an existing setting already occupies the deterministic legacy ID.
+                        UUID id;
+                        do {
+                            id = UUID.randomUUID();
+                        } while (config.getGameSetting(id) != null);
+                        legacyParent.idProperty().setValue(id);
+                    }
                     config.getGameSettings().add(legacyParent);
                 }
 

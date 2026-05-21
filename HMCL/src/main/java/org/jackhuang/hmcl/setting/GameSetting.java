@@ -135,10 +135,13 @@ public sealed abstract class GameSetting extends ObservableSetting {
     public static final class Global extends GameSetting {
         /// Creates a global setting with generated identity.
         public Global() {
+            this(UUID.randomUUID());
+        }
+
+        /// Creates a global setting with the given identity.
+        public Global(UUID id) {
             register();
-            if (id.getValue() == null) {
-                id.setValue(UUID.randomUUID());
-            }
+            this.id.setValue(id);
         }
 
         /// The stable global setting ID.

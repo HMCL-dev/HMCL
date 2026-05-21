@@ -30,6 +30,7 @@ import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jetbrains.annotations.*;
 
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Locale;
 import java.util.UUID;
@@ -37,6 +38,9 @@ import java.util.UUID;
 /// Converts legacy game setting JSON into `GameSetting` models.
 @NotNullByDefault
 public final class LegacyGameSettingMigrator {
+    /// Namespace used to generate stable global setting IDs for legacy profiles.
+    private static final String LEGACY_GLOBAL_SETTING_ID_NAMESPACE = "hmcl:legacy-global-game-setting:";
+
     /// Legacy `VersionIconType` ordinal order used by old local settings.
     private static final VersionIconType @Unmodifiable [] LEGACY_VERSION_ICON_TYPES = {
             VersionIconType.DEFAULT,
@@ -60,9 +64,15 @@ public final class LegacyGameSettingMigrator {
     private LegacyGameSettingMigrator() {
     }
 
+    /// Returns the stable global setting ID for a migrated legacy profile.
+    public static UUID getLegacyGlobalSettingId(String legacyProfile) {
+        return UUID.nameUUIDFromBytes(
+                (LEGACY_GLOBAL_SETTING_ID_NAMESPACE + legacyProfile).getBytes(StandardCharsets.UTF_8));
+    }
+
     /// Converts a legacy global setting JSON object into a named global game setting.
     public static GameSetting.Global toGlobal(String name, String legacyProfile, @Nullable JsonObject source) {
-        GameSetting.Global target = new GameSetting.Global();
+        GameSetting.Global target = new GameSetting.Global(getLegacyGlobalSettingId(legacyProfile));
         target.nameProperty().setValue(name);
         target.legacyProfileProperty().setValue(legacyProfile);
         if (getGameDirType(source, GameDirectoryType.ROOT_FOLDER) == GameDirectoryType.VERSION_FOLDER) {
