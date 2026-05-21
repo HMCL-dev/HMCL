@@ -377,15 +377,6 @@ public sealed abstract class GameSetting extends ObservableSetting {
         return height;
     }
 
-    /// The game directory mode.
-    @SerializedName("gameDirType")
-    private final InheritableProperty<GameDirectoryType> gameDirType = newInheritableProperty("gameDirType", GameDirectoryType.ROOT_FOLDER);
-
-    /// Returns the game directory mode property.
-    public InheritableProperty<GameDirectoryType> gameDirTypeProperty() {
-        return gameDirType;
-    }
-
     /// The custom run directory.
     @SerializedName("runningDir")
     private final InheritableProperty<String> runningDir = newInheritableProperty("runningDir", "");
@@ -895,11 +886,6 @@ public sealed abstract class GameSetting extends ObservableSetting {
         /// Returns the effective game window height.
         public int getHeight() {
             return Math.max(0, Lang.parseInt(String.valueOf(Math.round(inheritable(global, instance, GameSetting::heightProperty))), 0));
-        }
-
-        /// Returns the effective game directory mode.
-        public GameDirectoryType getGameDirType() {
-            return inheritable(global, instance, GameSetting::gameDirTypeProperty);
         }
 
         /// Returns the effective custom run directory.

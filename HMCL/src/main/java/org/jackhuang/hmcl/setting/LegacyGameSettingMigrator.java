@@ -75,7 +75,7 @@ public final class LegacyGameSettingMigrator {
         GameSetting.Global target = new GameSetting.Global(getLegacyGlobalSettingId(legacyProfile));
         target.nameProperty().setValue(name);
         target.legacyProfileProperty().setValue(legacyProfile);
-        if (getGameDirType(source, GameDirectoryType.ROOT_FOLDER) == GameDirectoryType.VERSION_FOLDER) {
+        if (getLegacyGameDirType(source, GameDirectoryType.ROOT_FOLDER) == GameDirectoryType.VERSION_FOLDER) {
             target.defaultIsolationTypeProperty().setValue(DefaultIsolationType.ALWAYS);
         }
         if (source != null) {
@@ -89,7 +89,7 @@ public final class LegacyGameSettingMigrator {
         GameSetting.Instance target = new GameSetting.Instance();
         target.parentProperty().setValue(parent);
         target.iconProperty().setValue(parseLegacyVersionIconType(source));
-        target.isolationProperty().setValue(getGameDirType(source, GameDirectoryType.ROOT_FOLDER) == GameDirectoryType.VERSION_FOLDER);
+        target.isolationProperty().setValue(getLegacyGameDirType(source, GameDirectoryType.ROOT_FOLDER) == GameDirectoryType.VERSION_FOLDER);
         if (source != null && copyValues) {
             copyCommonProperties(source, target);
             target.getOverrideProperties().addAll(List.of(
@@ -116,7 +116,7 @@ public final class LegacyGameSettingMigrator {
     }
 
     /// Returns the legacy game directory type from a setting JSON object.
-    public static GameDirectoryType getGameDirType(@Nullable JsonObject source, GameDirectoryType defaultValue) {
+    public static GameDirectoryType getLegacyGameDirType(@Nullable JsonObject source, GameDirectoryType defaultValue) {
         return parseEnum(source, "gameDirType", GameDirectoryType.class, defaultValue);
     }
 
@@ -143,11 +143,8 @@ public final class LegacyGameSettingMigrator {
         target.windowTypeProperty().setValue(readBoolean(source, "fullscreen", false) ? GameWindowType.FULLSCREEN : GameWindowType.WINDOWED);
         target.widthProperty().setValue((double) readInt(source, "width", 0));
         target.heightProperty().setValue((double) readInt(source, "height", 0));
-        GameDirectoryType gameDirType = getGameDirType(source, GameDirectoryType.ROOT_FOLDER);
-        target.gameDirTypeProperty().setValue(gameDirType == GameDirectoryType.VERSION_FOLDER
-                ? GameDirectoryType.ROOT_FOLDER
-                : gameDirType);
-        target.runningDirProperty().setValue(readString(source, "gameDir", ""));
+        GameDirectoryType legacyGameDirType = getLegacyGameDirType(source, GameDirectoryType.ROOT_FOLDER);
+        target.runningDirProperty().setValue(legacyGameDirType == GameDirectoryType.CUSTOM ? readString(source, "gameDir", "") : "");
 
         target.processPriorityProperty().setValue(parseEnum(source, "processPriority", ProcessPriority.class, ProcessPriority.NORMAL));
         target.launcherVisibilityProperty().setValue(parseEnum(source, "launcherVisibility", LauncherVisibility.class, LauncherVisibility.HIDE));

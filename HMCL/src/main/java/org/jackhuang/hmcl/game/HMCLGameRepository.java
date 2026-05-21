@@ -91,7 +91,9 @@ public final class HMCLGameRepository extends DefaultGameRepository {
             if (localSetting != null && Boolean.TRUE.equals(localSetting.isolationProperty().getValue())) {
                 return GameDirectoryType.VERSION_FOLDER;
             }
-            return getEffectiveGameSetting(id).getGameDirType();
+            return StringUtils.isBlank(getEffectiveGameSetting(id).getRunningDir())
+                    ? GameDirectoryType.ROOT_FOLDER
+                    : GameDirectoryType.CUSTOM;
         }
     }
 
