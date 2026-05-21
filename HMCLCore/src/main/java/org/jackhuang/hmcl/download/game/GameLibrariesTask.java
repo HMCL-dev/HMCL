@@ -19,6 +19,7 @@ package org.jackhuang.hmcl.download.game;
 
 import org.jackhuang.hmcl.download.AbstractDependencyManager;
 import org.jackhuang.hmcl.download.LibraryAnalyzer;
+import org.jackhuang.hmcl.download.MaintainTask;
 import org.jackhuang.hmcl.game.DefaultGameRepository;
 import org.jackhuang.hmcl.game.GameRepository;
 import org.jackhuang.hmcl.game.Library;
@@ -33,12 +34,15 @@ import org.jackhuang.hmcl.util.versioning.VersionNumber;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.URI;
 import java.nio.file.FileSystem;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
@@ -169,7 +173,13 @@ public final class GameLibrariesTask extends Task<Void> {
                         throw new IOException("Cannot fix optifine", e);
                     }
                 }
+            } else if ("org.jackhuang.hmcl".equals(library.getGroupId()) && "mmc-bootstrap".equals(library.getArtifactId())) {
+                try (InputStream input = MaintainTask.class.getResourceAsStream("/assets/game/HMCLMultiMCBootstrap-1.0.jar")) {
+                    Files.createDirectories(file.getParent());
+                    Files.copy(Objects.requireNonNull(input, "Bundled HMCLMultiMCBootstrap is missing."), file, StandardCopyOption.REPLACE_EXISTING);
+                }
             }
+
             if (shouldDownloadLibrary(gameRepository, version, library, integrityCheck) && (library.hasDownloadURL() || !"optifine".equals(library.getGroupId()))) {
                 dependencies.add(new LibraryDownloadTask(dependencyManager, file, library).withCounter("hmcl.install.libraries"));
             } else {

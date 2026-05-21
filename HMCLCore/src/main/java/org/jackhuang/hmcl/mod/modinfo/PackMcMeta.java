@@ -20,20 +20,17 @@ package org.jackhuang.hmcl.mod.modinfo;
 import com.google.gson.*;
 import com.google.gson.annotations.JsonAdapter;
 import com.google.gson.annotations.SerializedName;
-import kala.compress.archivers.zip.ZipArchiveEntry;
-import org.jackhuang.hmcl.mod.LocalModFile;
-import org.jackhuang.hmcl.mod.ModLoaderType;
-import org.jackhuang.hmcl.mod.ModManager;
+import org.jackhuang.hmcl.mod.LocalAddonFile;
 import org.jackhuang.hmcl.util.Pair;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.gson.JsonSerializable;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.gson.Validation;
-import org.jackhuang.hmcl.util.io.FileUtils;
-import org.jackhuang.hmcl.util.tree.ZipFileTree;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 import java.lang.reflect.Type;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
@@ -42,15 +39,18 @@ import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 @JsonSerializable
 public record PackMcMeta(@SerializedName("pack") PackInfo pack) implements Validation {
-    private static List<LocalModFile.Description.Part> pairToPart(List<Pair<String, String>> lists, String color) {
-        List<LocalModFile.Description.Part> parts = new ArrayList<>();
+
+    private static final Gson LENIENT_GSON = JsonUtils.defaultGsonBuilder().setStrictness(Strictness.LENIENT).create();
+
+    private static List<LocalAddonFile.Description.Part> pairToPart(List<Pair<String, String>> lists, String color) {
+        List<LocalAddonFile.Description.Part> parts = new ArrayList<>();
         for (Pair<String, String> list : lists) {
-            parts.add(new LocalModFile.Description.Part(list.getKey(), list.getValue().isEmpty() ? color : list.getValue()));
+            parts.add(new LocalAddonFile.Description.Part(list.getKey(), list.getValue().isEmpty() ? color : list.getValue()));
         }
         return parts;
     }
 
-    private static void parseComponent(JsonElement element, List<LocalModFile.Description.Part> parts, String parentColor) throws JsonParseException {
+    private static void parseComponent(JsonElement element, List<LocalAddonFile.Description.Part> parts, String parentColor) throws JsonParseException {
         if (parentColor == null) {
             parentColor = "";
         }
@@ -80,11 +80,11 @@ public record PackMcMeta(@SerializedName("pack") PackInfo pack) implements Valid
         }
     }
 
-    public static LocalModFile.Description parseDescription(JsonElement json) throws JsonParseException {
-        List<LocalModFile.Description.Part> parts = new ArrayList<>();
+    public static LocalAddonFile.Description parseDescription(JsonElement json) throws JsonParseException {
+        List<LocalAddonFile.Description.Part> parts = new ArrayList<>();
 
         if (json == null || json.isJsonNull()) {
-            return new LocalModFile.Description(parts);
+            return new LocalAddonFile.Description(parts);
         }
 
         try {
@@ -94,11 +94,41 @@ public record PackMcMeta(@SerializedName("pack") PackInfo pack) implements Valid
             LOG.warning("An unexpected error occurred while parsing a description component. The description may be incomplete.", e);
         }
 
-        return new LocalModFile.Description(parts);
+        return new LocalAddonFile.Description(parts);
     }
 
-    public static LocalModFile.Description parseDescription(String text) {
+    public static LocalAddonFile.Description parseDescription(String text) {
         return parseDescription(new JsonPrimitive(text));
+    }
+
+    public static PackMcMeta fromNonNullJson(String jsonString) throws JsonParseException {
+        PackMcMeta parsed = LENIENT_GSON.fromJson(jsonString, PackMcMeta.class);
+        if (parsed == null)
+            throw new JsonParseException("Json object cannot be null.");
+        return parsed;
+    }
+
+    public static PackMcMeta fromNonNullJsonFile(Path jsonFile) throws JsonParseException, IOException {
+        try (var reader = Files.newBufferedReader(jsonFile)) {
+            PackMcMeta parsed = LENIENT_GSON.fromJson(reader, PackMcMeta.class);
+            if (parsed == null)
+                throw new JsonParseException("Json object cannot be null.");
+            return parsed;
+        }
+    }
+
+    public PackMcMeta withDescription(LocalAddonFile.Description description) {
+        if (pack == null) {
+            return this;
+        }
+
+        return new PackMcMeta(new PackInfo(
+                pack.packFormat(),
+                pack.supportedFormats(),
+                pack.minPackVersion(),
+                pack.maxPackVersion(),
+                description
+        ));
     }
 
     @Override
@@ -109,9 +139,10 @@ public record PackMcMeta(@SerializedName("pack") PackInfo pack) implements Valid
 
     @JsonAdapter(PackInfoDeserializer.class)
     public record PackInfo(@SerializedName("pack_format") int packFormat,
+                           @SerializedName("supported_formats") SupportedFormats supportedFormats,
                            @SerializedName("min_format") PackVersion minPackVersion,
                            @SerializedName("max_format") PackVersion maxPackVersion,
-                           @SerializedName("description") LocalModFile.Description description) {
+                           @SerializedName("description") LocalAddonFile.Description description) {
         public PackVersion getEffectiveMinVersion() {
             return !minPackVersion.isUnspecified() ? minPackVersion : new PackVersion(packFormat, 0);
         }
@@ -121,17 +152,67 @@ public record PackMcMeta(@SerializedName("pack") PackInfo pack) implements Valid
         }
     }
 
+    public record SupportedFormats(int min, int max) {
+
+        public static final SupportedFormats UNSPECIFIED = new SupportedFormats(-1, -1);
+
+        public static SupportedFormats fromJson(JsonElement element) {
+            if (element == null || element.isJsonNull()) {
+                return UNSPECIFIED;
+            }
+
+            try {
+                if (element instanceof JsonArray jsonArray) {
+                    if (jsonArray.size() == 2 && jsonArray.get(0).isJsonPrimitive() && jsonArray.get(1).isJsonPrimitive()) {
+                        return new SupportedFormats(jsonArray.get(0).getAsInt(), jsonArray.get(1).getAsInt());
+                    } else {
+                        LOG.warning("Supported formats array must have 2 elements, but got " + jsonArray.size());
+                    }
+                } else if (element instanceof JsonObject jsonObj) {
+                    if (jsonObj.get("min_inclusive").isJsonPrimitive() && jsonObj.get("max_inclusive").isJsonPrimitive()) {
+                        return new SupportedFormats(jsonObj.get("min_inclusive").getAsInt(), jsonObj.get("max_inclusive").getAsInt());
+                    } else {
+                        LOG.warning("Supported formats object must have min_inclusive and max_inclusive properties, but got: " + jsonObj);
+                    }
+                }
+            } catch (ClassCastException | NumberFormatException e) {
+                LOG.warning("Failed to parse pack version component as a number. Value: " + element, e);
+            }
+
+            return UNSPECIFIED;
+        }
+
+        public boolean isUnspecified() {
+            return getMin().isUnspecified() || getMax().isUnspecified() || getMin().compareTo(getMax()) > 0;
+        }
+
+        public PackVersion getMin() {
+            return new PackVersion(min, 0);
+        }
+
+        public PackVersion getMax() {
+            return new PackVersion(max, 0);
+        }
+
+    }
+
     public record PackVersion(int majorVersion, int minorVersion) implements Comparable<PackVersion> {
 
-        public static final PackVersion UNSPECIFIED = new PackVersion(0, 0);
+        public static final PackVersion UNSPECIFIED = new PackVersion(-1, -1);
 
         @Override
-        public String toString() {
+        public @NotNull String toString() {
+            if (isUnspecified()) return "UNSPECIFIED";
             return minorVersion != 0 ? majorVersion + "." + minorVersion : String.valueOf(majorVersion);
         }
 
         @Override
         public int compareTo(PackVersion other) {
+            boolean thisUnspecified = this.isUnspecified();
+            boolean otherUnspecified = other.isUnspecified();
+            if (thisUnspecified && otherUnspecified) return 0;
+            if (thisUnspecified) return -1;
+            if (otherUnspecified) return 1;
             int majorCompare = Integer.compare(this.majorVersion, other.majorVersion);
             if (majorCompare != 0) {
                 return majorCompare;
@@ -140,28 +221,28 @@ public record PackMcMeta(@SerializedName("pack") PackInfo pack) implements Valid
         }
 
         public boolean isUnspecified() {
-            return this.equals(UNSPECIFIED);
+            return this.majorVersion < 0 || this.minorVersion < 0;
         }
 
-        public static PackVersion fromJson(JsonElement element) throws JsonParseException {
+        public static PackVersion fromJson(JsonElement element, boolean anyMinor) throws JsonParseException {
             if (element == null || element.isJsonNull()) {
                 return UNSPECIFIED;
             }
 
             try {
                 if (element instanceof JsonPrimitive primitive && primitive.isNumber()) {
-                    return new PackVersion(element.getAsInt(), 0);
+                    return new PackVersion(element.getAsInt(), anyMinor ? Integer.MAX_VALUE : 0);
                 } else if (element instanceof JsonArray jsonArray) {
                     if (jsonArray.size() == 1 && jsonArray.get(0) instanceof JsonPrimitive) {
-                        return new PackVersion(jsonArray.get(0).getAsInt(), 0);
+                        return new PackVersion(jsonArray.get(0).getAsInt(), anyMinor ? Integer.MAX_VALUE : 0);
                     } else if (jsonArray.size() == 2 && jsonArray.get(0) instanceof JsonPrimitive && jsonArray.get(1) instanceof JsonPrimitive) {
                         return new PackVersion(jsonArray.get(0).getAsInt(), jsonArray.get(1).getAsInt());
                     } else {
-                        LOG.warning("Datapack version array must have 1 or 2 elements, but got " + jsonArray.size());
+                        LOG.warning("Pack version array must have 1 or 2 elements, but got " + jsonArray.size());
                     }
                 }
             } catch (NumberFormatException e) {
-                LOG.warning("Failed to parse datapack version component as a number. Value: " + element, e);
+                LOG.warning("Failed to parse pack version component as a number. Value: " + element, e);
             }
 
             return UNSPECIFIED;
@@ -178,24 +259,12 @@ public record PackMcMeta(@SerializedName("pack") PackInfo pack) implements Valid
             } else {
                 packFormat = 0;
             }
-            PackVersion minVersion = PackVersion.fromJson(packInfo.get("min_format"));
-            PackVersion maxVersion = PackVersion.fromJson(packInfo.get("max_format"));
+            SupportedFormats supportedFormats = SupportedFormats.fromJson(packInfo.get("supported_formats"));
+            PackVersion minVersion = PackVersion.fromJson(packInfo.get("min_format"), false);
+            PackVersion maxVersion = PackVersion.fromJson(packInfo.get("max_format"), true);
 
-            return new PackInfo(packFormat, minVersion, maxVersion, PackMcMeta.parseDescription(packInfo.get("description")));
+            return new PackInfo(packFormat, supportedFormats, minVersion, maxVersion, PackMcMeta.parseDescription(packInfo.get("description")));
         }
     }
 
-    public static LocalModFile fromFile(ModManager modManager, Path modFile, ZipFileTree tree) throws IOException, JsonParseException {
-        ZipArchiveEntry mcmod = tree.getEntry("pack.mcmeta");
-        if (mcmod == null)
-            throw new IOException("File " + modFile + " is not a resource pack.");
-        PackMcMeta metadata = JsonUtils.fromNonNullJsonFully(tree.getInputStream(mcmod), PackMcMeta.class);
-        return new LocalModFile(
-                modManager,
-                modManager.getLocalMod(FileUtils.getNameWithoutExtension(modFile), ModLoaderType.PACK),
-                modFile,
-                FileUtils.getNameWithoutExtension(modFile),
-                metadata.pack.description,
-                "", "", "", "", "");
-    }
 }

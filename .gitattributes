@@ -1,0 +1,65 @@
+# Default: normalize all text files to LF in the repository and on checkout.
+# Git auto-detects binary files and leaves them untouched.
+* text=auto eol=lf
+
+# ─── Explicitly text – source & build ────────────────────────────────────────
+*.java        text eol=lf
+*.kt          text eol=lf
+*.kts         text eol=lf
+*.groovy      text eol=lf
+*.gradle      text eol=lf
+
+# ─── Configuration & data ─────────────────────────────────────────────────────
+*.properties  text eol=lf
+*.toml        text eol=lf
+*.xml         text eol=lf
+*.json        text eol=lf
+*.yaml        text eol=lf
+*.yml         text eol=lf
+*.csv         text eol=lf
+*.html        text eol=lf
+*.css         text eol=lf
+*.txt         text eol=lf
+*.md          text eol=lf
+*.svg         text eol=lf
+*.MF          text eol=lf
+
+# Gradle dependency-lock files
+*.lockfile    text eol=lf
+
+# ─── Scripts ──────────────────────────────────────────────────────────────────
+# Unix shell scripts must always use LF so they stay executable on Linux/macOS.
+*.sh          text eol=lf
+gradlew       text eol=lf
+
+# CI pipeline scripts
+Jenkinsfile   text eol=lf
+
+# Windows batch files must keep CRLF so cmd.exe can parse them.
+*.bat         text eol=crlf
+
+# ─── Binary files ─────────────────────────────────────────────────────────────
+# Raster / animated images
+*.png         binary
+*.apng        binary
+*.jpg         binary
+*.jpeg        binary
+*.webp        binary
+*.gif         binary
+*.ico         binary
+
+# Archives & compiled artifacts
+*.jar         binary
+*.zip         binary
+*.class       binary
+
+# Cryptographic / certificate files
+*.der         binary
+
+# Minecraft schematic
+*.litematic   binary
+
+# Compiled / intermediate build artefacts
+*.bin         binary
+*.probe       binary
+

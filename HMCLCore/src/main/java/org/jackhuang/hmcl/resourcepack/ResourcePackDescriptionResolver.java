@@ -22,7 +22,7 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParseException;
 import com.google.gson.JsonPrimitive;
 import kala.compress.archivers.zip.ZipArchiveEntry;
-import org.jackhuang.hmcl.mod.LocalModFile;
+import org.jackhuang.hmcl.mod.LocalAddonFile;
 import org.jackhuang.hmcl.mod.modinfo.PackMcMeta;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
@@ -38,22 +38,22 @@ import java.util.*;
 
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
-final class ResourcepackDescriptionResolver {
-    private ResourcepackDescriptionResolver() {
+final class ResourcePackDescriptionResolver {
+    private ResourcePackDescriptionResolver() {
     }
 
-    static @Nullable LocalModFile.Description resolveFromFolder(Path root, Locale locale) throws IOException {
+    static @Nullable LocalAddonFile.Description resolveFromFolder(Path root, Locale locale) throws IOException {
         Path mcmeta = root.resolve("pack.mcmeta");
         String mcmetaText = Files.readString(mcmeta);
         return resolve(mcmetaText, locale, new FolderTranslationLookup(root));
     }
 
-    static @Nullable LocalModFile.Description resolveFromZip(ZipFileTree tree, Locale locale) throws IOException {
+    static @Nullable LocalAddonFile.Description resolveFromZip(ZipFileTree tree, Locale locale) throws IOException {
         String mcmetaText = tree.readTextEntry("/pack.mcmeta");
         return resolve(mcmetaText, locale, new ZipTranslationLookup(tree));
     }
 
-    static @Nullable LocalModFile.Description resolve(String mcmetaText, Locale locale, TranslationLookup translationLookup) {
+    static @Nullable LocalAddonFile.Description resolve(String mcmetaText, Locale locale, TranslationLookup translationLookup) {
         JsonObject json = JsonUtils.fromMaybeMalformedJson(mcmetaText, JsonObject.class);
         if (json == null) {
             return null;
@@ -72,7 +72,7 @@ final class ResourcepackDescriptionResolver {
         return PackMcMeta.parseDescription(description);
     }
 
-    private static @Nullable LocalModFile.Description resolveTranslatedDescription(JsonObject descriptionObject, Locale locale, TranslationLookup translationLookup) {
+    private static @Nullable LocalAddonFile.Description resolveTranslatedDescription(JsonObject descriptionObject, Locale locale, TranslationLookup translationLookup) {
         String translate = getJsonString(descriptionObject, "translate");
         if (StringUtils.isNotBlank(translate)) {
             try {

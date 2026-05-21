@@ -19,6 +19,7 @@ package org.jackhuang.hmcl.ui.versions;
 
 import org.jackhuang.hmcl.game.LocalizedRemoteModRepository;
 import org.jackhuang.hmcl.mod.RemoteModRepository;
+import org.jackhuang.hmcl.mod.curse.CurseAddon;
 import org.jackhuang.hmcl.mod.curse.CurseForgeRemoteModRepository;
 import org.jackhuang.hmcl.mod.modrinth.ModrinthRemoteModRepository;
 import org.jackhuang.hmcl.util.i18n.I18n;
@@ -48,6 +49,14 @@ public final class HMCLLocalizedDownloadListPage extends DownloadListPage {
 
     public static DownloadListPage ofResourcePack(DownloadPage.DownloadCallback callback, boolean versionSelection) {
         return new HMCLLocalizedDownloadListPage(callback, versionSelection, RemoteModRepository.Type.RESOURCE_PACK, CurseForgeRemoteModRepository.RESOURCE_PACKS, ModrinthRemoteModRepository.RESOURCE_PACKS);
+    }
+
+    public static DownloadListPage ofCurseForgeResourcePack(DownloadPage.DownloadCallback callback, boolean versionSelection) {
+        return new HMCLLocalizedDownloadListPage(callback, versionSelection, RemoteModRepository.Type.RESOURCE_PACK, CurseForgeRemoteModRepository.RESOURCE_PACKS, null);
+    }
+
+    public static DownloadListPage ofModrinthResourcePack(DownloadPage.DownloadCallback callback, boolean versionSelection) {
+        return new HMCLLocalizedDownloadListPage(callback, versionSelection, RemoteModRepository.Type.RESOURCE_PACK, null, ModrinthRemoteModRepository.RESOURCE_PACKS);
     }
 
     public static DownloadListPage ofShaderPack(DownloadPage.DownloadCallback callback, boolean versionSelection) {
@@ -125,7 +134,7 @@ public final class HMCLLocalizedDownloadListPage extends DownloadListPage {
     }
 
     @Override
-    protected String getLocalizedCategory(String category) {
+    protected String getLocalizedCategory(String category, Object self) {
         if (category.isEmpty()) {
             return "";
         }
@@ -135,6 +144,9 @@ public final class HMCLLocalizedDownloadListPage extends DownloadListPage {
             return I18n.getResourceBundle().getString(key);
         } catch (MissingResourceException e) {
             LOG.warning("Cannot find key " + key + " in resource bundle");
+            if (self instanceof CurseAddon.Category curseCategory) {
+                return curseCategory.getName();
+            }
             return category;
         }
     }
