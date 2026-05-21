@@ -20,354 +20,373 @@
 package com.jfoenix.controls;
 
 import com.jfoenix.skins.JFXToggleButtonSkin;
-import javafx.css.*;
+import javafx.css.CssMetaData;
+import javafx.css.SimpleStyleableBooleanProperty;
+import javafx.css.SimpleStyleableDoubleProperty;
+import javafx.css.Styleable;
+import javafx.css.StyleableBooleanProperty;
+import javafx.css.StyleableDoubleProperty;
+import javafx.css.StyleableProperty;
 import javafx.css.converter.BooleanConverter;
-import javafx.css.converter.PaintConverter;
+import javafx.css.converter.SizeConverter;
+import javafx.geometry.Pos;
+import javafx.scene.AccessibleAttribute;
+import javafx.scene.AccessibleRole;
 import javafx.scene.control.Skin;
 import javafx.scene.control.ToggleButton;
-import javafx.scene.paint.Color;
-import javafx.scene.paint.Paint;
 import org.jackhuang.hmcl.ui.animation.AnimationUtils;
+import org.jetbrains.annotations.NotNullByDefault;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 
-/**
- * JFXToggleButton is the material design implementation of a toggle button.
- * important CSS Selectors:
- * <p>
- * .jfx-toggle-button{
- * -fx-toggle-color: color-value;
- * -fx-untoggle-color: color-value;
- * -fx-toggle-line-color: color-value;
- * -fx-untoggle-line-color: color-value;
- * }
- * <p>
- * To change the rippler color when toggled:
- * <p>
- * .jfx-toggle-button .jfx-rippler{
- * -fx-rippler-fill: color-value;
- * }
- * <p>
- * .jfx-toggle-button:selected .jfx-rippler{
- * -fx-rippler-fill: color-value;
- * }
- *
- * @author Shadi Shaheen
- * @version 1.0
- * @since 2016-03-09
- */
+/// A Material Design 3 switch exposed through the historical JFoenix toggle button type.
+///
+/// The class keeps the `JFXToggleButton` name and selected-state contract used by HMCL, while its default skin
+/// renders an M3 switch track, thumb, touch target, state layer, and selection animation.
+@NotNullByDefault
 public class JFXToggleButton extends ToggleButton {
+    /// The legacy style class retained for existing HMCL stylesheets.
+    public static final String DEFAULT_STYLE_CLASS = "jfx-toggle-button";
 
-    /**
-     * {@inheritDoc}
-     */
+    /// The Material switch style class used by the replacement skin.
+    public static final String M3_STYLE_CLASS = "m3-switch";
+
+    /// The default minimum touch target height.
+    private static final double DEFAULT_TOUCH_TARGET_SIZE = 40.0;
+
+    /// The default rounded switch track radius.
+    private static final double DEFAULT_TRACK_SHAPE = 999.0;
+
+    /// The legacy knob radius that maps to the default M3 switch scale.
+    private static final double DEFAULT_SIZE = 8.0;
+
+    /// The styleable minimum touch target height.
+    private @Nullable StyleableDoubleProperty touchTargetSize;
+
+    /// The styleable switch track radius.
+    private @Nullable StyleableDoubleProperty trackShape;
+
+    /// The legacy styleable knob radius used as the switch scale.
+    private @Nullable StyleableDoubleProperty size;
+
+    /// Whether focus state layers should be hidden.
+    private @Nullable StyleableBooleanProperty disableVisualFocus;
+
+    /// Whether switch animations should be disabled.
+    private @Nullable StyleableBooleanProperty disableAnimation;
+
+    /// Creates an empty switch.
     public JFXToggleButton() {
         initialize();
     }
 
-    /**
-     * {@inheritDoc}
-     */
+    /// Creates a switch with text.
+    public JFXToggleButton(String text) {
+        super(text);
+        initialize();
+    }
+
+    /// Returns the preferred touch target size.
+    public final double getTouchTargetSize() {
+        return touchTargetSize == null ? DEFAULT_TOUCH_TARGET_SIZE : touchTargetSize.get();
+    }
+
+    /// Sets the preferred touch target size.
+    public final void setTouchTargetSize(double touchTargetSize) {
+        touchTargetSizeProperty().set(nonNegative(touchTargetSize, "touchTargetSize"));
+    }
+
+    /// Returns the preferred touch target size property.
+    public final StyleableDoubleProperty touchTargetSizeProperty() {
+        if (touchTargetSize == null) {
+            touchTargetSize = new SimpleStyleableDoubleProperty(
+                    StyleableProperties.TOUCH_TARGET_SIZE,
+                    this,
+                    "touchTargetSize",
+                    DEFAULT_TOUCH_TARGET_SIZE
+            ) {
+                /// Applies updated layout metrics when the token changes.
+                @Override
+                protected void invalidated() {
+                    set(nonNegative(get(), "touchTargetSize"));
+                    updateMetrics();
+                }
+            };
+        }
+        return touchTargetSize;
+    }
+
+    /// Returns the switch track shape radius.
+    public final double getTrackShape() {
+        return trackShape == null ? DEFAULT_TRACK_SHAPE : trackShape.get();
+    }
+
+    /// Sets the switch track shape radius.
+    public final void setTrackShape(double trackShape) {
+        trackShapeProperty().set(nonNegative(trackShape, "trackShape"));
+    }
+
+    /// Returns the switch track shape radius property.
+    public final StyleableDoubleProperty trackShapeProperty() {
+        if (trackShape == null) {
+            trackShape = new SimpleStyleableDoubleProperty(
+                    StyleableProperties.TRACK_SHAPE,
+                    this,
+                    "trackShape",
+                    DEFAULT_TRACK_SHAPE
+            ) {
+                /// Validates updated track shape values.
+                @Override
+                protected void invalidated() {
+                    set(nonNegative(get(), "trackShape"));
+                }
+            };
+        }
+        return trackShape;
+    }
+
+    /// Returns the legacy knob radius used to scale the switch.
+    public double getSize() {
+        return size == null ? DEFAULT_SIZE : size.get();
+    }
+
+    /// Sets the legacy knob radius used to scale the switch.
+    public void setSize(double size) {
+        sizeProperty().set(nonNegative(size, "size"));
+    }
+
+    /// Returns the legacy knob radius property used to scale the switch.
+    public StyleableDoubleProperty sizeProperty() {
+        if (size == null) {
+            size = new SimpleStyleableDoubleProperty(
+                    StyleableProperties.SIZE,
+                    this,
+                    "size",
+                    DEFAULT_SIZE
+            ) {
+                /// Applies updated layout metrics when the legacy size changes.
+                @Override
+                protected void invalidated() {
+                    set(nonNegative(get(), "size"));
+                    updateMetrics();
+                }
+            };
+        }
+        return size;
+    }
+
+    /// Returns the visual focus suppression property.
+    public final StyleableBooleanProperty disableVisualFocusProperty() {
+        if (disableVisualFocus == null) {
+            disableVisualFocus = new SimpleStyleableBooleanProperty(
+                    StyleableProperties.DISABLE_VISUAL_FOCUS,
+                    this,
+                    "disableVisualFocus",
+                    false
+            );
+        }
+        return disableVisualFocus;
+    }
+
+    /// Returns whether focus state layers are hidden.
+    public final Boolean isDisableVisualFocus() {
+        return disableVisualFocus != null && disableVisualFocus.get();
+    }
+
+    /// Sets whether focus state layers should be hidden.
+    public final void setDisableVisualFocus(Boolean disabled) {
+        disableVisualFocusProperty().set(Objects.requireNonNull(disabled, "disabled"));
+    }
+
+    /// Returns the animation suppression property.
+    public final StyleableBooleanProperty disableAnimationProperty() {
+        if (disableAnimation == null) {
+            disableAnimation = new SimpleStyleableBooleanProperty(
+                    StyleableProperties.DISABLE_ANIMATION,
+                    this,
+                    "disableAnimation",
+                    !AnimationUtils.isAnimationEnabled()
+            );
+        }
+        return disableAnimation;
+    }
+
+    /// Returns whether switch animations are disabled.
+    public final Boolean isDisableAnimation() {
+        return disableAnimation != null ? disableAnimation.get() : !AnimationUtils.isAnimationEnabled();
+    }
+
+    /// Sets whether switch animations should be disabled.
+    public final void setDisableAnimation(Boolean disabled) {
+        disableAnimationProperty().set(Objects.requireNonNull(disabled, "disabled"));
+    }
+
+    /// Creates the default Material Design 3 switch skin.
     @Override
     protected Skin<?> createDefaultSkin() {
         return new JFXToggleButtonSkin(this);
     }
 
-    private void initialize() {
-        this.getStyleClass().add(DEFAULT_STYLE_CLASS);
-        // it's up for the user to add this behavior
-//        toggleColor.addListener((o, oldVal, newVal) -> {
-//            // update line color in case not set by the user
-//            if(newVal instanceof Color)
-//                toggleLineColor.set(((Color)newVal).desaturate().desaturate().brighter());
-//        });
+    /// Returns the CSS metadata for this control class.
+    public static List<CssMetaData<? extends Styleable, ?>> getClassCssMetaData() {
+        return StyleableProperties.STYLEABLES;
     }
 
-    /***************************************************************************
-     *                                                                         *
-     * styleable Properties                                                    *
-     *                                                                         *
-     **************************************************************************/
-
-    /**
-     * Initialize the style class to 'jfx-toggle-button'.
-     * <p>
-     * This is the selector class from which CSS can be used to style
-     * this control.
-     */
-    private static final String DEFAULT_STYLE_CLASS = "jfx-toggle-button";
-
-    /**
-     * default color used when the button is toggled
-     */
-    private final StyleableObjectProperty<Paint> toggleColor = new SimpleStyleableObjectProperty<>(StyleableProperties.TOGGLE_COLOR,
-            JFXToggleButton.this,
-            "toggleColor",
-            Color.valueOf(
-                    "#009688"));
-
-    public Paint getToggleColor() {
-        return toggleColor == null ? Color.valueOf("#009688") : toggleColor.get();
-    }
-
-    public StyleableObjectProperty<Paint> toggleColorProperty() {
-        return this.toggleColor;
-    }
-
-    public void setToggleColor(Paint color) {
-        this.toggleColor.set(color);
-    }
-
-    /**
-     * default color used when the button is not toggled
-     */
-    private StyleableObjectProperty<Paint> untoggleColor = new SimpleStyleableObjectProperty<>(StyleableProperties.UNTOGGLE_COLOR,
-            JFXToggleButton.this,
-            "unToggleColor",
-            Color.valueOf(
-                    "#FAFAFA"));
-
-    public Paint getUnToggleColor() {
-        return untoggleColor == null ? Color.valueOf("#FAFAFA") : untoggleColor.get();
-    }
-
-    public StyleableObjectProperty<Paint> unToggleColorProperty() {
-        return this.untoggleColor;
-    }
-
-    public void setUnToggleColor(Paint color) {
-        this.untoggleColor.set(color);
-    }
-
-    /**
-     * default line color used when the button is toggled
-     */
-    private final StyleableObjectProperty<Paint> toggleLineColor = new SimpleStyleableObjectProperty<>(
-            StyleableProperties.TOGGLE_LINE_COLOR,
-            JFXToggleButton.this,
-            "toggleLineColor",
-            Color.valueOf("#77C2BB"));
-
-    public Paint getToggleLineColor() {
-        return toggleLineColor == null ? Color.valueOf("#77C2BB") : toggleLineColor.get();
-    }
-
-    public StyleableObjectProperty<Paint> toggleLineColorProperty() {
-        return this.toggleLineColor;
-    }
-
-    public void setToggleLineColor(Paint color) {
-        this.toggleLineColor.set(color);
-    }
-
-    /**
-     * default line color used when the button is not toggled
-     */
-    private final StyleableObjectProperty<Paint> untoggleLineColor = new SimpleStyleableObjectProperty<>(
-            StyleableProperties.UNTOGGLE_LINE_COLOR,
-            JFXToggleButton.this,
-            "unToggleLineColor",
-            Color.valueOf("#999999"));
-
-    public Paint getUnToggleLineColor() {
-        return untoggleLineColor == null ? Color.valueOf("#999999") : untoggleLineColor.get();
-    }
-
-    public StyleableObjectProperty<Paint> unToggleLineColorProperty() {
-        return this.untoggleLineColor;
-    }
-
-    public void setUnToggleLineColor(Paint color) {
-        this.untoggleLineColor.set(color);
-    }
-
-    /**
-     * Default size of the toggle button.
-     */
-    private final StyleableDoubleProperty size = new SimpleStyleableDoubleProperty(
-            StyleableProperties.SIZE,
-            JFXToggleButton.this,
-            "size",
-            10.0);
-
-    public double getSize() {
-        return size.get();
-    }
-
-    public StyleableDoubleProperty sizeProperty() {
-        return this.size;
-    }
-
-    public void setSize(double size) {
-        this.size.set(size);
-    }
-
-    /**
-     * Disable the visual indicator for focus
-     */
-    private final StyleableBooleanProperty disableVisualFocus = new SimpleStyleableBooleanProperty(StyleableProperties.DISABLE_VISUAL_FOCUS,
-            JFXToggleButton.this,
-            "disableVisualFocus",
-            false);
-
-    public final StyleableBooleanProperty disableVisualFocusProperty() {
-        return this.disableVisualFocus;
-    }
-
-    public final Boolean isDisableVisualFocus() {
-        return disableVisualFocus != null && this.disableVisualFocusProperty().get();
-    }
-
-    public final void setDisableVisualFocus(final Boolean disabled) {
-        this.disableVisualFocusProperty().set(disabled);
-    }
-
-
-    /**
-     * disable animation on button action
-     */
-    private final StyleableBooleanProperty disableAnimation = new SimpleStyleableBooleanProperty(StyleableProperties.DISABLE_ANIMATION,
-            JFXToggleButton.this,
-            "disableAnimation",
-            !AnimationUtils.isAnimationEnabled());
-
-    public final StyleableBooleanProperty disableAnimationProperty() {
-        return this.disableAnimation;
-    }
-
-    public final Boolean isDisableAnimation() {
-        return disableAnimation != null && this.disableAnimationProperty().get();
-    }
-
-    public final void setDisableAnimation(final Boolean disabled) {
-        this.disableAnimationProperty().set(disabled);
-    }
-
-    private static final class StyleableProperties {
-        private static final CssMetaData<JFXToggleButton, Paint> TOGGLE_COLOR =
-                new CssMetaData<>("-jfx-toggle-color",
-                        PaintConverter.getInstance(), Color.valueOf("#009688")) {
-                    @Override
-                    public boolean isSettable(JFXToggleButton control) {
-                        return control.toggleColor == null || !control.toggleColor.isBound();
-                    }
-
-                    @Override
-                    public StyleableProperty<Paint> getStyleableProperty(JFXToggleButton control) {
-                        return control.toggleColorProperty();
-                    }
-                };
-
-        private static final CssMetaData<JFXToggleButton, Paint> UNTOGGLE_COLOR =
-                new CssMetaData<>("-jfx-untoggle-color",
-                        PaintConverter.getInstance(), Color.valueOf("#FAFAFA")) {
-                    @Override
-                    public boolean isSettable(JFXToggleButton control) {
-                        return control.untoggleColor == null || !control.untoggleColor.isBound();
-                    }
-
-                    @Override
-                    public StyleableProperty<Paint> getStyleableProperty(JFXToggleButton control) {
-                        return control.unToggleColorProperty();
-                    }
-                };
-
-        private static final CssMetaData<JFXToggleButton, Paint> TOGGLE_LINE_COLOR =
-                new CssMetaData<>("-jfx-toggle-line-color",
-                        PaintConverter.getInstance(), Color.valueOf("#77C2BB")) {
-                    @Override
-                    public boolean isSettable(JFXToggleButton control) {
-                        return control.toggleLineColor == null || !control.toggleLineColor.isBound();
-                    }
-
-                    @Override
-                    public StyleableProperty<Paint> getStyleableProperty(JFXToggleButton control) {
-                        return control.toggleLineColorProperty();
-                    }
-                };
-
-        private static final CssMetaData<JFXToggleButton, Paint> UNTOGGLE_LINE_COLOR =
-                new CssMetaData<>("-jfx-untoggle-line-color",
-                        PaintConverter.getInstance(), Color.valueOf("#999999")) {
-                    @Override
-                    public boolean isSettable(JFXToggleButton control) {
-                        return control.untoggleLineColor == null || !control.untoggleLineColor.isBound();
-                    }
-
-                    @Override
-                    public StyleableProperty<Paint> getStyleableProperty(JFXToggleButton control) {
-                        return control.unToggleLineColorProperty();
-                    }
-                };
-
-        private static final CssMetaData<JFXToggleButton, Number> SIZE =
-                new CssMetaData<>("-jfx-size",
-                        StyleConverter.getSizeConverter(), 10.0) {
-                    @Override
-                    public boolean isSettable(JFXToggleButton control) {
-                        return !control.size.isBound();
-                    }
-
-                    @Override
-                    public StyleableProperty<Number> getStyleableProperty(JFXToggleButton control) {
-                        return control.sizeProperty();
-                    }
-                };
-        private static final CssMetaData<JFXToggleButton, Boolean> DISABLE_VISUAL_FOCUS =
-                new CssMetaData<>("-jfx-disable-visual-focus",
-                        BooleanConverter.getInstance(), false) {
-                    @Override
-                    public boolean isSettable(JFXToggleButton control) {
-                        return control.disableVisualFocus == null || !control.disableVisualFocus.isBound();
-                    }
-
-                    @Override
-                    public StyleableBooleanProperty getStyleableProperty(JFXToggleButton control) {
-                        return control.disableVisualFocusProperty();
-                    }
-                };
-
-        private static final CssMetaData<JFXToggleButton, Boolean> DISABLE_ANIMATION =
-                new CssMetaData<>("-jfx-disable-animation",
-                        BooleanConverter.getInstance(), false) {
-                    @Override
-                    public boolean isSettable(JFXToggleButton control) {
-                        return control.disableAnimation == null || !control.disableAnimation.isBound();
-                    }
-
-                    @Override
-                    public StyleableBooleanProperty getStyleableProperty(JFXToggleButton control) {
-                        return control.disableAnimationProperty();
-                    }
-                };
-
-        private static final List<CssMetaData<? extends Styleable, ?>> CHILD_STYLEABLES;
-
-        static {
-            final List<CssMetaData<? extends Styleable, ?>> styleables =
-                    new ArrayList<>(ToggleButton.getClassCssMetaData());
-            Collections.addAll(styleables,
-                    SIZE,
-                    TOGGLE_COLOR,
-                    UNTOGGLE_COLOR,
-                    TOGGLE_LINE_COLOR,
-                    UNTOGGLE_LINE_COLOR,
-                    DISABLE_VISUAL_FOCUS,
-                    DISABLE_ANIMATION
-            );
-            CHILD_STYLEABLES = Collections.unmodifiableList(styleables);
-        }
-    }
-
+    /// Returns the CSS metadata for this control.
     @Override
     public List<CssMetaData<? extends Styleable, ?>> getControlCssMetaData() {
         return getClassCssMetaData();
     }
 
-    public static List<CssMetaData<? extends Styleable, ?>> getClassCssMetaData() {
-        return StyleableProperties.CHILD_STYLEABLES;
+    /// Returns accessibility attributes for switch selection state.
+    @Override
+    public @Nullable Object queryAccessibleAttribute(AccessibleAttribute attribute, Object... parameters) {
+        Objects.requireNonNull(attribute, "attribute");
+        return switch (attribute) {
+            case SELECTED -> isSelected();
+            case TOGGLE_STATE -> isSelected()
+                    ? AccessibleAttribute.ToggleState.CHECKED
+                    : AccessibleAttribute.ToggleState.UNCHECKED;
+            default -> super.queryAccessibleAttribute(attribute, parameters);
+        };
     }
 
+    /// Adds base style classes and switch defaults.
+    private void initialize() {
+        addStyleClass(DEFAULT_STYLE_CLASS);
+        addStyleClass(M3_STYLE_CLASS);
+        setAccessibleRole(AccessibleRole.CHECK_BOX);
+        setAlignment(Pos.CENTER_LEFT);
+        setFocusTraversable(true);
+        setMnemonicParsing(true);
+        updateMetrics();
+    }
+
+    /// Adds a style class when it is not already present.
+    private void addStyleClass(String styleClass) {
+        List<String> styleClasses = getStyleClass();
+        if (!styleClasses.contains(styleClass)) {
+            styleClasses.add(styleClass);
+        }
+    }
+
+    /// Applies size-related component tokens to JavaFX layout properties.
+    private void updateMetrics() {
+        double scaledTrackHeight = 32.0 * getSize() / DEFAULT_SIZE;
+        double size = Math.max(getTouchTargetSize(), scaledTrackHeight);
+        setMinHeight(size);
+        setPrefHeight(size);
+    }
+
+    /// Validates that a size token is not negative.
+    private static double nonNegative(double value, String name) {
+        if (value < 0.0) {
+            throw new IllegalArgumentException(name + " must not be negative");
+        }
+        return value;
+    }
+
+    /// CSS metadata for switch component tokens.
+    @NotNullByDefault
+    private static final class StyleableProperties {
+        /// CSS metadata for the touch target size token.
+        private static final CssMetaData<JFXToggleButton, Number> TOUCH_TARGET_SIZE =
+                new CssMetaData<>("-m3-touch-target-size", SizeConverter.getInstance(), DEFAULT_TOUCH_TARGET_SIZE) {
+                    /// Returns whether this property can be set by CSS.
+                    @Override
+                    public boolean isSettable(JFXToggleButton control) {
+                        return control.touchTargetSize == null || !control.touchTargetSize.isBound();
+                    }
+
+                    /// Returns the styleable property for a control.
+                    @Override
+                    public StyleableProperty<Number> getStyleableProperty(JFXToggleButton control) {
+                        return control.touchTargetSizeProperty();
+                    }
+                };
+
+        /// CSS metadata for the switch track shape token.
+        private static final CssMetaData<JFXToggleButton, Number> TRACK_SHAPE =
+                new CssMetaData<>("-m3-track-shape", SizeConverter.getInstance(), DEFAULT_TRACK_SHAPE) {
+                    /// Returns whether this property can be set by CSS.
+                    @Override
+                    public boolean isSettable(JFXToggleButton control) {
+                        return control.trackShape == null || !control.trackShape.isBound();
+                    }
+
+                    /// Returns the styleable property for a control.
+                    @Override
+                    public StyleableProperty<Number> getStyleableProperty(JFXToggleButton control) {
+                        return control.trackShapeProperty();
+                    }
+                };
+
+        /// CSS metadata for the legacy switch size token.
+        private static final CssMetaData<JFXToggleButton, Number> SIZE =
+                new CssMetaData<>("-jfx-size", SizeConverter.getInstance(), DEFAULT_SIZE) {
+                    /// Returns whether this property can be set by CSS.
+                    @Override
+                    public boolean isSettable(JFXToggleButton control) {
+                        return control.size == null || !control.size.isBound();
+                    }
+
+                    /// Returns the styleable property for a control.
+                    @Override
+                    public StyleableProperty<Number> getStyleableProperty(JFXToggleButton control) {
+                        return control.sizeProperty();
+                    }
+                };
+
+        /// CSS metadata for the visual focus suppression flag.
+        private static final CssMetaData<JFXToggleButton, Boolean> DISABLE_VISUAL_FOCUS =
+                new CssMetaData<>("-jfx-disable-visual-focus", BooleanConverter.getInstance(), false) {
+                    /// Returns whether this property can be set by CSS.
+                    @Override
+                    public boolean isSettable(JFXToggleButton control) {
+                        return control.disableVisualFocus == null || !control.disableVisualFocus.isBound();
+                    }
+
+                    /// Returns the styleable property for a control.
+                    @Override
+                    public StyleableProperty<Boolean> getStyleableProperty(JFXToggleButton control) {
+                        return control.disableVisualFocusProperty();
+                    }
+                };
+
+        /// CSS metadata for the animation suppression flag.
+        private static final CssMetaData<JFXToggleButton, Boolean> DISABLE_ANIMATION =
+                new CssMetaData<>("-jfx-disable-animation", BooleanConverter.getInstance(), false) {
+                    /// Returns whether this property can be set by CSS.
+                    @Override
+                    public boolean isSettable(JFXToggleButton control) {
+                        return control.disableAnimation == null || !control.disableAnimation.isBound();
+                    }
+
+                    /// Returns the styleable property for a control.
+                    @Override
+                    public StyleableProperty<Boolean> getStyleableProperty(JFXToggleButton control) {
+                        return control.disableAnimationProperty();
+                    }
+                };
+
+        /// The complete immutable CSS metadata list.
+        private static final List<CssMetaData<? extends Styleable, ?>> STYLEABLES;
+
+        static {
+            List<CssMetaData<? extends Styleable, ?>> styleables = new ArrayList<>(ToggleButton.getClassCssMetaData());
+            Collections.addAll(
+                    styleables,
+                    TOUCH_TARGET_SIZE,
+                    TRACK_SHAPE,
+                    SIZE,
+                    DISABLE_VISUAL_FOCUS,
+                    DISABLE_ANIMATION
+            );
+            STYLEABLES = Collections.unmodifiableList(styleables);
+        }
+    }
 }

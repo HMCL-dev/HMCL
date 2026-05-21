@@ -1180,40 +1180,99 @@
 .jfx-toggle-button:focused,
 .jfx-toggle-button:selected,
 .jfx-toggle-button:focused:selected {
-    -fx-background-color: TRANSPARENT, TRANSPARENT, TRANSPARENT, TRANSPARENT;
+    -m3-touch-target-size: 40px;
+    -m3-track-shape: 999px;
+    -jfx-size: 8px;
+    -fx-background-color: transparent;
     -fx-background-radius: 3px;
-    -fx-background-insets: 0px;
-
-    -jfx-toggle-color: -monet-primary;
-    -jfx-toggle-line-color: -monet-secondary-container;
-    -jfx-untoggle-color: -monet-outline;
-    -jfx-untoggle-line-color: -monet-surface-container-highest;
-    -jfx-size: 10;
+    -fx-background-insets: 0;
+    -fx-text-fill: -monet-on-surface;
+    -fx-font-size: 14px;
 }
 
-
-.jfx-toggle-button Line {
-    -fx-stroke: -jfx-untoggle-line-color;
+.jfx-toggle-button .m3-selection-container {
+    -fx-alignment: center-left;
+    -fx-spacing: 4px;
 }
 
-.jfx-toggle-button:selected Line {
-    -fx-stroke: -jfx-toggle-line-color;
+.jfx-toggle-button .m3-selection-indicator {
+    -fx-alignment: center;
 }
 
-.jfx-toggle-button Circle {
-    -fx-fill: -jfx-untoggle-color;
+.jfx-toggle-button .box,
+.jfx-toggle-button:hover .box,
+.jfx-toggle-button:focused .box,
+.jfx-toggle-button:armed .box,
+.jfx-toggle-button:pressed .box {
+    -fx-background-color: -monet-surface-container-highest;
+    -fx-background-radius: 999px;
+    -fx-border-color: -monet-outline;
+    -fx-border-insets: 0;
+    -fx-border-radius: 999px;
+    -fx-border-width: 2px;
+    -fx-padding: 4px;
+    -fx-alignment: center-left;
 }
 
-.jfx-toggle-button:selected Circle {
-    -fx-fill: -jfx-toggle-color;
+.jfx-toggle-button:selected .box,
+.jfx-toggle-button:selected:hover .box,
+.jfx-toggle-button:selected:focused .box,
+.jfx-toggle-button:selected:armed .box,
+.jfx-toggle-button:selected:pressed .box {
+    -fx-background-color: -monet-primary;
+    -fx-border-color: -monet-primary;
 }
 
-.jfx-toggle-button .jfx-rippler {
-    -jfx-rippler-fill: -jfx-untoggle-line-color;
+.jfx-toggle-button .thumb,
+.jfx-toggle-button:hover .thumb,
+.jfx-toggle-button:focused .thumb,
+.jfx-toggle-button:armed .thumb,
+.jfx-toggle-button:pressed .thumb {
+    -fx-background-color: -monet-outline;
+    -fx-background-insets: 0;
+    -fx-background-radius: 999px;
 }
 
-.jfx-toggle-button:selected .jfx-rippler {
-    -jfx-rippler-fill: -jfx-toggle-line-color;
+.jfx-toggle-button:selected .thumb,
+.jfx-toggle-button:selected:hover .thumb,
+.jfx-toggle-button:selected:focused .thumb,
+.jfx-toggle-button:selected:armed .thumb,
+.jfx-toggle-button:selected:pressed .thumb {
+    -fx-background-color: -monet-on-primary;
+}
+
+.jfx-toggle-button .m3-state-layer,
+.jfx-toggle-button .m3-ripple {
+    -fx-background-color: -monet-primary;
+    -fx-background-insets: 0;
+}
+
+.jfx-toggle-button:disabled .m3-selection-label {
+    -fx-opacity: 0.38;
+}
+
+.jfx-toggle-button:disabled .box,
+.jfx-toggle-button:disabled:hover .box,
+.jfx-toggle-button:disabled:focused .box,
+.jfx-toggle-button:disabled:armed .box,
+.jfx-toggle-button:disabled:pressed .box {
+    -fx-background-color: -monet-on-surface;
+    -fx-border-color: -monet-on-surface;
+    -fx-opacity: 0.12;
+}
+
+.jfx-toggle-button:disabled .thumb,
+.jfx-toggle-button:disabled:hover .thumb,
+.jfx-toggle-button:disabled:focused .thumb,
+.jfx-toggle-button:disabled:armed .thumb,
+.jfx-toggle-button:disabled:pressed .thumb,
+.jfx-toggle-button:selected:disabled .thumb,
+.jfx-toggle-button:selected:disabled:hover .thumb,
+.jfx-toggle-button:selected:disabled:focused .thumb,
+.jfx-toggle-button:selected:disabled:armed .thumb,
+.jfx-toggle-button:selected:disabled:pressed .thumb {
+    -fx-background-color: -monet-on-surface;
+    -fx-opacity: 0.38;
 }
 
 
