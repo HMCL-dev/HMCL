@@ -304,10 +304,15 @@ public final class GameSettingPage<S extends GameSetting> extends StackPane
 
                 bindGlobalSettingBidirectional(defaultIsolationTypePane.valueProperty(), GameSetting.Global::defaultIsolationTypeProperty);
             } else {
+                var isolationButton = new LineToggleButton();
+                basicSettings.getContent().add(isolationButton);
+                isolationButton.setTitle("版本隔离"); // TODO: i18n
+                isolationButton.setSubtitle("启用后，当前实例将使用独立的游戏文件夹。"); // TODO: i18n
+                bindInstanceIsolationButton(isolationButton);
+
                 var gameDirSublist = new ComponentSublist();
                 basicSettings.getContent().add(gameDirSublist);
-                gameDirSublist.setTitle("版本隔离"); // TODO: i18n
-                // gameDirSublist.setSubtitle("建议使用模组时选择“各实例独立”。改后需移动世界、模组等相关游戏文件"); // TODO: i18n
+                gameDirSublist.setTitle(i18n("game.directory"));
                 gameDirSublist.setHasSubtitle(true);
                 {
                     var gameDirItem = new RadioChoiceList<GameDirectoryType>();
@@ -318,7 +323,6 @@ public final class GameSettingPage<S extends GameSetting> extends StackPane
                     gameDirItem.setFallbackValue(GameDirectoryType.ROOT_FOLDER);
                     gameDirItem.setChoices(List.of(
                             new RadioChoiceList.Choice<>(i18n("settings.advanced.game_dir.default"), GameDirectoryType.ROOT_FOLDER),
-                            new RadioChoiceList.Choice<>(i18n("settings.advanced.game_dir.independent"), GameDirectoryType.VERSION_FOLDER),
                             gameDirCustomOption
                     ));
                     gameDirSublist.getContent().add(gameDirItem);
@@ -1124,6 +1128,63 @@ public final class GameSettingPage<S extends GameSetting> extends StackPane
         }
     }
 
+    /// Binds the instance isolation toggle to the current instance setting.
+    private void bindInstanceIsolationButton(LineToggleButton button) {
+        ObjectProperty<@Nullable SettingProperty<Boolean>> activeProperty = new SimpleObjectProperty<>();
+        final Holder<Boolean> updating = new Holder<>(false);
+
+        InvalidationListener refresh = observable -> {
+            SettingProperty<Boolean> property = activeProperty.get();
+            if (property == null || updating.value) {
+                return;
+            }
+
+            updating.value = true;
+            try {
+                boolean forceIsolated = isCurrentInstanceModpack();
+                button.setSelected(forceIsolated || Boolean.TRUE.equals(property.getValue()));
+                button.setDisable(forceIsolated);
+            } finally {
+                updating.value = false;
+            }
+        };
+
+        button.selectedProperty().addListener((observable, oldValue, newValue) -> {
+            SettingProperty<Boolean> property = activeProperty.get();
+            if (property == null || updating.value || isCurrentInstanceModpack()) {
+                return;
+            }
+
+            updating.value = true;
+            try {
+                property.setValue(newValue);
+            } finally {
+                updating.value = false;
+            }
+            refresh.invalidated(property);
+        });
+
+        currentSetting.addListener((observable, oldValue, newValue) -> {
+            if (oldValue instanceof GameSetting.Instance oldInstance) {
+                oldInstance.isolationProperty().removeListener(refresh);
+            }
+
+            SettingProperty<Boolean> newProperty = newValue instanceof GameSetting.Instance instance ? instance.isolationProperty() : null;
+            activeProperty.set(newProperty);
+            if (newValue instanceof GameSetting.Instance instance) {
+                instance.isolationProperty().addListener(refresh);
+            }
+            refresh.invalidated(newValue);
+        });
+
+        S setting = currentSetting.get();
+        if (setting instanceof GameSetting.Instance instance) {
+            activeProperty.set(instance.isolationProperty());
+            instance.isolationProperty().addListener(refresh);
+            refresh.invalidated(setting);
+        }
+    }
+
     /// Binds the working directory choices and keeps isolated instances compatible with the new setting model.
     private void bindGameDirectoryChoiceList(
             ComponentSublist sublist,
@@ -1151,7 +1212,8 @@ public final class GameSettingPage<S extends GameSetting> extends StackPane
                         ? getEffectiveValue(setting, GameSetting::runningDirProperty)
                         : "");
                 sublist.setDescription(getEffectiveGameDirectorySubtitle());
-                choiceList.setDisable(isCurrentInstanceModpack());
+                choiceList.setDisable(isCurrentInstanceModpack() ||
+                        isolationProperty != null && Boolean.TRUE.equals(isolationProperty.getValue()));
             } finally {
                 updating.value = false;
             }
@@ -1167,7 +1229,7 @@ public final class GameSettingPage<S extends GameSetting> extends StackPane
 
             updating.value = true;
             try {
-                applyGameDirectorySelection(newValue, customOption.getPath(), typeProperty, dirProperty, isolationProperty);
+                applyGameDirectorySelection(newValue, customOption.getPath(), typeProperty, dirProperty);
             } finally {
                 updating.value = false;
             }
@@ -1183,7 +1245,7 @@ public final class GameSettingPage<S extends GameSetting> extends StackPane
 
             updating.value = true;
             try {
-                applyGameDirectorySelection(GameDirectoryType.CUSTOM, newValue, typeProperty, dirProperty, isolationProperty);
+                applyGameDirectorySelection(GameDirectoryType.CUSTOM, newValue, typeProperty, dirProperty);
             } finally {
                 updating.value = false;
             }
@@ -1242,13 +1304,8 @@ public final class GameSettingPage<S extends GameSetting> extends StackPane
             @Nullable GameDirectoryType type,
             @Nullable String customPath,
             InheritableProperty<GameDirectoryType> typeProperty,
-            InheritableProperty<String> dirProperty,
-            @Nullable SettingProperty<Boolean> isolationProperty) {
+            InheritableProperty<String> dirProperty) {
         GameDirectoryType selectedType = type != null ? type : GameDirectoryType.ROOT_FOLDER;
-        if (isolationProperty != null) {
-            isolationProperty.setValue(selectedType == GameDirectoryType.VERSION_FOLDER);
-        }
-
         if (selectedType == GameDirectoryType.VERSION_FOLDER) {
             typeProperty.setValue(GameDirectoryType.ROOT_FOLDER);
             dirProperty.setValue("");
@@ -1259,15 +1316,8 @@ public final class GameSettingPage<S extends GameSetting> extends StackPane
     }
 
     private GameDirectoryType getEffectiveGameDirectoryType(GameSetting setting) {
-        if (isCurrentInstanceModpack()) {
-            return GameDirectoryType.VERSION_FOLDER;
-        }
-
-        if (setting instanceof GameSetting.Instance instance && Boolean.TRUE.equals(instance.isolationProperty().getValue())) {
-            return GameDirectoryType.VERSION_FOLDER;
-        }
-
-        return getEffectiveValue(setting, GameSetting::gameDirTypeProperty);
+        GameDirectoryType type = getEffectiveValue(setting, GameSetting::gameDirTypeProperty);
+        return type == GameDirectoryType.VERSION_FOLDER ? GameDirectoryType.ROOT_FOLDER : type;
     }
 
     private String getEffectiveGameDirectorySubtitle() {
