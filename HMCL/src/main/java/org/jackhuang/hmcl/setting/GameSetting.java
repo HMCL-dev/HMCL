@@ -72,9 +72,6 @@ public sealed abstract class GameSetting extends ObservableSetting {
                 : Integer.max((int) (Math.round(totalMemoryMB / 4.0 / 128.0) * 128), 256);
     }
 
-    /// Legacy property name for the old version isolation boolean.
-    private static final String PROPERTY_LEGACY_ISOLATION = "isolation";
-
     /// Instance-specific game setting.
     @JsonAdapter(Instance.Adapter.class)
     public static final class Instance extends GameSetting {
@@ -139,8 +136,6 @@ public sealed abstract class GameSetting extends ObservableSetting {
             public Instance deserialize(JsonElement json, Type typeOfT, JsonDeserializationContext context)
                     throws JsonParseException {
                 Instance setting = super.deserialize(json, typeOfT, context);
-                migrateLegacyIsolation(setting);
-                migrateLegacyOverrides(setting);
                 migrateLegacyRenderer(setting);
                 return setting;
             }
@@ -725,79 +720,6 @@ public sealed abstract class GameSetting extends ObservableSetting {
             PROPERTY_USE_NATIVE_GLFW,
             PROPERTY_USE_NATIVE_OPENAL
     };
-
-    /// Migrates the old `isolation` flag into the running directory override marker.
-    private static void migrateLegacyIsolation(Instance setting) {
-        JsonElement legacyIsolation = setting.unknownFields.remove(PROPERTY_LEGACY_ISOLATION);
-        if (legacyIsolation == null || legacyIsolation.isJsonNull()) {
-            return;
-        }
-
-        try {
-            if (legacyIsolation.getAsBoolean()) {
-                setting.getOverrideProperties().add(PROPERTY_RUNNING_DIR);
-            }
-        } catch (RuntimeException ignored) {
-        }
-    }
-
-    /// Migrates old serialized setting fields to `overrideProperties`.
-    private static void migrateLegacyOverrides(Instance setting) {
-        migrateLegacyOverride(setting, setting.jvmOptionsProperty());
-        migrateLegacyOverride(setting, setting.autoMemoryProperty());
-        migrateLegacyOverride(setting, setting.minMemoryProperty());
-        migrateLegacyOverride(setting, setting.maxMemoryProperty());
-        migrateLegacyOverride(setting, setting.permSizeProperty());
-        migrateLegacyOverride(setting, setting.gameArgsProperty());
-        migrateLegacyOverride(setting, setting.environmentVariablesProperty());
-        migrateLegacyOverride(setting, setting.notPatchNativesProperty());
-        migrateLegacyOverride(setting, setting.nativesDirTypeProperty());
-        migrateLegacyOverride(setting, setting.nativesDirProperty());
-        migrateLegacyOverride(setting, setting.useNativeGLFWProperty());
-        migrateLegacyOverride(setting, setting.useNativeOpenALProperty());
-
-        migrateLegacyInheritableOverride(setting, setting.javaTypeProperty());
-        migrateLegacyInheritableOverride(setting, setting.noJVMOptionsProperty());
-        migrateLegacyInheritableOverride(setting, setting.noOptimizingJVMOptionsProperty());
-        migrateLegacyInheritableOverride(setting, setting.notCheckJVMProperty());
-        migrateLegacyInheritableOverride(setting, setting.notCheckGameProperty());
-        migrateLegacyInheritableOverride(setting, setting.windowTypeProperty());
-        migrateLegacyInheritableOverride(setting, setting.widthProperty());
-        migrateLegacyInheritableOverride(setting, setting.heightProperty());
-        migrateLegacyInheritableOverride(setting, setting.runningDirProperty());
-        migrateLegacyInheritableOverride(setting, setting.processPriorityProperty());
-        migrateLegacyInheritableOverride(setting, setting.launcherVisibilityProperty());
-        migrateLegacyInheritableOverride(setting, setting.graphicsBackendProperty());
-        migrateLegacyInheritableOverride(setting, setting.openGLRendererProperty());
-        migrateLegacyInheritableOverride(setting, setting.vulkanRendererProperty());
-        migrateLegacyInheritableOverride(setting, setting.commandWrapperProperty());
-        migrateLegacyInheritableOverride(setting, setting.preLaunchCommandProperty());
-        migrateLegacyInheritableOverride(setting, setting.postExitCommandProperty());
-        migrateLegacyInheritableOverride(setting, setting.quickPlayProperty());
-        migrateLegacyInheritableOverride(setting, setting.quickPlayMultiplayerProperty());
-        migrateLegacyInheritableOverride(setting, setting.quickPlaySingleplayerProperty());
-        migrateLegacyInheritableOverride(setting, setting.quickPlayRealmsProperty());
-        migrateLegacyInheritableOverride(setting, setting.showLogsProperty());
-        migrateLegacyInheritableOverride(setting, setting.enableDebugLogOutputProperty());
-    }
-
-    /// Converts one old serialized direct property into the new override marker form.
-    private static void migrateLegacyOverride(Instance setting, SettingProperty<?> property) {
-        if (setting.tracker.isDirty(property)) {
-            setting.getOverrideProperties().add(property.getName());
-        }
-    }
-
-    /// Converts one old inheritable property into the new override marker form.
-    private static <T extends @UnknownNullability Object> void migrateLegacyInheritableOverride(
-            Instance setting,
-            InheritableProperty<T> property) {
-        if (property.getValue() == null) {
-            property.setValue(property.defaultValue());
-        } else if (setting.tracker.isDirty(property)) {
-            setting.getOverrideProperties().add(property.getName());
-        }
-    }
 
     private static void migrateLegacyRenderer(@Nullable GameSetting setting) {
         if (setting == null) {
