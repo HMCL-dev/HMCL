@@ -925,14 +925,12 @@ public final class Config extends ObservableSetting {
                 if (parentId != null) {
                     GameSetting.Global parent = config.getGameSetting(parentId);
                     if (parent != null) {
-                        if (parent.legacyProfileProperty().getValue() == null) {
-                            parent.legacyProfileProperty().setValue(profileName);
-                        }
                         continue;
                     }
                 }
 
-                GameSetting.Global legacyParent = findLegacyGameSetting(config, profileName);
+                GameSetting.Global legacyParent = config.getGameSetting(
+                        LegacyGameSettingMigrator.getLegacyGlobalSettingId(profileName));
                 if (legacyParent == null) {
                     JsonObject profileObject = configurations.get(profileName) instanceof JsonObject profileJson ? profileJson : null;
                     JsonObject globalSettingObject = profileObject != null && profileObject.get("global") instanceof JsonObject globalJson ? globalJson : null;
@@ -941,28 +939,11 @@ public final class Config extends ObservableSetting {
                     }
 
                     legacyParent = LegacyGameSettingMigrator.toGlobal(profileName, profileName, globalSettingObject);
-                    if (config.getGameSetting(legacyParent.idProperty().getValue()) != null) {
-                        // Avoid duplicate IDs if an existing setting already occupies the deterministic legacy ID.
-                        UUID id;
-                        do {
-                            id = UUID.randomUUID();
-                        } while (config.getGameSetting(id) != null);
-                        legacyParent.idProperty().setValue(id);
-                    }
                     config.getGameSettings().add(legacyParent);
                 }
 
                 profile.setLegacyGameSettingParent(legacyParent.idProperty().getValue());
             }
-        }
-
-        private static @Nullable GameSetting.Global findLegacyGameSetting(Config config, String profileName) {
-            for (GameSetting.Global setting : config.getGameSettings()) {
-                if (Objects.equals(profileName, setting.legacyProfileProperty().getValue())) {
-                    return setting;
-                }
-            }
-            return null;
         }
     }
 }

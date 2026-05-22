@@ -65,16 +65,15 @@ public final class LegacyGameSettingMigrator {
     }
 
     /// Returns the stable global setting ID for a migrated legacy profile.
-    public static UUID getLegacyGlobalSettingId(String legacyProfile) {
+    public static UUID getLegacyGlobalSettingId(String profileName) {
         return UUID.nameUUIDFromBytes(
-                (LEGACY_GLOBAL_SETTING_ID_NAMESPACE + legacyProfile).getBytes(StandardCharsets.UTF_8));
+                (LEGACY_GLOBAL_SETTING_ID_NAMESPACE + profileName).getBytes(StandardCharsets.UTF_8));
     }
 
     /// Converts a legacy global setting JSON object into a named global game setting.
-    public static GameSetting.Global toGlobal(String name, String legacyProfile, @Nullable JsonObject source) {
-        GameSetting.Global target = new GameSetting.Global(getLegacyGlobalSettingId(legacyProfile));
+    public static GameSetting.Global toGlobal(String name, String profileName, @Nullable JsonObject source) {
+        GameSetting.Global target = new GameSetting.Global(getLegacyGlobalSettingId(profileName));
         target.nameProperty().setValue(name);
-        target.legacyProfileProperty().setValue(legacyProfile);
         if (getLegacyGameDirType(source, GameDirectoryType.ROOT_FOLDER) == GameDirectoryType.VERSION_FOLDER) {
             target.defaultIsolationTypeProperty().setValue(DefaultIsolationType.ALWAYS);
         }
