@@ -21,11 +21,14 @@ import javafx.beans.property.Property;
 import org.jackhuang.hmcl.setting.GameSetting;
 import org.jackhuang.hmcl.util.gson.RawPreservingProperty;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.NotNullByDefault;
+import org.jetbrains.annotations.UnknownNullability;
 
 /// @author Glavo
-public interface SettingProperty<T> extends Property<T>, RawPreservingProperty<T> {
+@NotNullByDefault
+public interface SettingProperty<T extends @UnknownNullability Object> extends Property<T>, RawPreservingProperty<T> {
     @Override
-    @NotNull GameSetting getBean();
+    GameSetting getBean();
 
     T defaultValue();
 }

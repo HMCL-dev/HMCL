@@ -21,17 +21,19 @@ import com.google.gson.JsonElement;
 import javafx.beans.property.SimpleObjectProperty;
 import org.jackhuang.hmcl.setting.GameSetting;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.UnknownNullability;
 
 /// @author Glavo
+@NotNullByDefault
 public class SimpleSettingProperty<T extends @UnknownNullability Object> extends SimpleObjectProperty<T>
         implements SettingProperty<T> {
     private @Nullable JsonElement rawJson;
 
     private final T defaultValue;
 
-    public SimpleSettingProperty(@NotNull GameSetting bean,
+    public SimpleSettingProperty(GameSetting bean,
                                  String name,
                                  T defaultValue) {
         super(bean, name, defaultValue);
@@ -39,7 +41,7 @@ public class SimpleSettingProperty<T extends @UnknownNullability Object> extends
     }
 
     @Override
-    public @NotNull GameSetting getBean() {
+    public GameSetting getBean() {
         return (GameSetting) super.getBean();
     }
 
