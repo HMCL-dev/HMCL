@@ -187,11 +187,6 @@ public final class ProfilePage extends BorderPane implements DecoratorPage {
     }
 
     private void onSave() {
-        if (profile == null) {
-            locationProperty().removeListener(locationChangeListener);
-            txtProfileName.textProperty().removeListener(txtProfileNameChangeListener);
-        }
-
         if (profile != null) {
             profile.setName(txtProfileName.getText());
             profile.setUseRelativePath(toggleUseRelativePath.isSelected());
@@ -205,6 +200,11 @@ public final class ProfilePage extends BorderPane implements DecoratorPage {
             Profile newProfile = new Profile(txtProfileName.getText(), Path.of(getLocation()));
             newProfile.setUseRelativePath(toggleUseRelativePath.isSelected());
             Profiles.getProfiles().add(newProfile);
+        }
+
+        if (profile == null) {
+            locationProperty().removeListener(locationChangeListener);
+            txtProfileName.textProperty().removeListener(txtProfileNameChangeListener);
         }
 
         fireEvent(new PageCloseEvent());
