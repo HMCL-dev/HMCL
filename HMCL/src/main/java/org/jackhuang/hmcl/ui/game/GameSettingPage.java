@@ -485,14 +485,16 @@ public final class GameSettingPage<S extends GameSetting> extends StackPane
             var advancedLaunchSublist = new ComponentSublist(() -> {
                 var runningDirPane = new LinePane();
                 runningDirPane.setTitle(i18n("settings.game.running_directory"));
-                runningDirPane.setSubtitle(i18n("settings.game.running_directory.subtitle"));
+                runningDirPane.setSubtitle(i18n(isGlobalSetting
+                        ? "settings.game.running_directory.subtitle"
+                        : "settings.game.running_directory.subtitle.instance"));
                 {
                     var runningDirSelector = new FileSelector()
                             .setChooserTitle(i18n("settings.game.working_directory.choose"))
                             .setSelectionMode(FileSelector.SelectionMode.DIRECTORY);
                     runningDirSelector.setPrefWidth(400);
                     runningDirPane.setRight(runningDirSelector);
-                    bindInheritableStringProperty(runningDirPane, runningDirSelector.valueProperty(), GameSetting::runningDirProperty);
+                    bindRunningDirectoryProperty(runningDirPane, runningDirSelector.valueProperty(), runningDirSelector);
                 }
 
                 var gameArgsPane = new LinePane();
@@ -1191,6 +1193,81 @@ public final class GameSettingPage<S extends GameSetting> extends StackPane
         }
     }
 
+    /// Binds the running directory editor to the source selected by version isolation.
+    private void bindRunningDirectoryProperty(
+            LineComponent line,
+            Property<String> textProperty,
+            Node editor) {
+        if (isGlobalSetting) {
+            bindInheritableStringProperty(line, textProperty, GameSetting::runningDirProperty);
+            return;
+        }
+
+        final Holder<Boolean> updating = new Holder<>(false);
+
+        InvalidationListener refresh = observable -> {
+            GameSetting setting = currentSetting.get();
+            if (!(setting instanceof GameSetting.Instance instance) || updating.value) {
+                return;
+            }
+
+            updating.value = true;
+            try {
+                boolean useInstanceRunningDirectory = isCurrentInstanceModpack()
+                        || Boolean.TRUE.equals(instance.isolationProperty().getValue());
+                String runningDirectory;
+                if (useInstanceRunningDirectory) {
+                    String value = instance.runningDirProperty().getValue();
+                    runningDirectory = value != null ? value : "";
+                } else {
+                    runningDirectory = getParentValue(instance, GameSetting::runningDirProperty);
+                }
+
+                textProperty.setValue(runningDirectory);
+                editor.setDisable(!useInstanceRunningDirectory);
+            } finally {
+                updating.value = false;
+            }
+        };
+
+        textProperty.addListener((observable, oldValue, newValue) -> {
+            GameSetting setting = currentSetting.get();
+            if (!(setting instanceof GameSetting.Instance instance)
+                    || updating.value
+                    || (!isCurrentInstanceModpack()
+                            && !Boolean.TRUE.equals(instance.isolationProperty().getValue()))) {
+                return;
+            }
+
+            updating.value = true;
+            try {
+                instance.runningDirProperty().setValue(newValue != null ? newValue : "");
+            } finally {
+                updating.value = false;
+            }
+        });
+
+        currentSetting.addListener((observable, oldValue, newValue) -> {
+            if (oldValue instanceof GameSetting.Instance oldInstance) {
+                oldInstance.removeListener(refresh);
+            }
+
+            if (newValue instanceof GameSetting.Instance newInstance) {
+                newInstance.addListener(refresh);
+            }
+            refresh.invalidated(newValue);
+        });
+
+        config().getGameSettings().addListener(refresh);
+        config().defaultGameSettingProperty().addListener(refresh);
+
+        S setting = currentSetting.get();
+        if (setting instanceof GameSetting.Instance instance) {
+            instance.addListener(refresh);
+            refresh.invalidated(setting);
+        }
+    }
+
     private boolean isCurrentInstanceModpack() {
         return profile != null && instanceId != null && profile.getRepository().isModpack(instanceId);
     }
@@ -1637,6 +1714,18 @@ public final class GameSettingPage<S extends GameSetting> extends StackPane
         }
 
         return property.defaultValue();
+    }
+
+    /// Returns the value provided by an instance's parent global setting.
+    private <T> T getParentValue(
+            GameSetting.Instance instance,
+            Function<GameSetting, InheritableProperty<T>> propertyGetter) {
+        GameSetting.Global parent = profile != null
+                ? profile.getRepository().getParentGameSetting(instance)
+                : getParentGameSetting(instance);
+        InheritableProperty<T> property = propertyGetter.apply(parent);
+        @Nullable T value = property.getValue();
+        return value != null ? value : property.defaultValue();
     }
 
     /// Returns the setting object that provides the effective inheritable value.

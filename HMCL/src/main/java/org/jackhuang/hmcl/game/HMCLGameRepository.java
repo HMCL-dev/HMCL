@@ -46,6 +46,7 @@ import org.jackhuang.hmcl.util.platform.OperatingSystem;
 import org.jackhuang.hmcl.util.platform.SystemInfo;
 import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
 import org.jackhuang.hmcl.util.versioning.VersionNumber;
+import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
@@ -62,6 +63,8 @@ import static org.jackhuang.hmcl.setting.ConfigHolder.config;
 import static org.jackhuang.hmcl.util.Pair.pair;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
+/// HMCL game repository implementation backed by a profile and per-instance game settings.
+@NotNullByDefault
 public final class HMCLGameRepository extends DefaultGameRepository {
     private final Profile profile;
 
@@ -84,35 +87,55 @@ public final class HMCLGameRepository extends DefaultGameRepository {
 
     @Override
     public GameDirectoryType getGameDirectoryType(String id) {
-        if (beingModpackVersions.contains(id) || isModpack(id)) {
-            return GameDirectoryType.VERSION_FOLDER;
-        } else {
-            GameSetting.Instance localSetting = getLocalGameSetting(id);
-            if (localSetting != null && Boolean.TRUE.equals(localSetting.isolationProperty().getValue())) {
-                return GameDirectoryType.VERSION_FOLDER;
-            }
-            return StringUtils.isBlank(getEffectiveGameSetting(id).getRunningDir())
-                    ? GameDirectoryType.ROOT_FOLDER
-                    : GameDirectoryType.CUSTOM;
+        GameSetting.Instance localSetting = getLocalGameSetting(id);
+        boolean useInstanceRunningDirectory = useInstanceRunningDirectory(id, localSetting);
+        String runningDirectory = getSelectedRunningDirectory(localSetting, useInstanceRunningDirectory);
+        if (StringUtils.isNotBlank(runningDirectory)) {
+            return GameDirectoryType.CUSTOM;
         }
+
+        return useInstanceRunningDirectory ? GameDirectoryType.VERSION_FOLDER : GameDirectoryType.ROOT_FOLDER;
     }
 
     @Override
     public Path getRunDirectory(String id) {
-        switch (getGameDirectoryType(id)) {
-            case VERSION_FOLDER:
-                return getVersionRoot(id);
-            case ROOT_FOLDER:
-                return super.getRunDirectory(id);
-            case CUSTOM:
-                try {
-                    return Path.of(getEffectiveGameSetting(id).getRunningDir());
-                } catch (InvalidPathException ignored) {
-                    return getVersionRoot(id);
-                }
-            default:
-                throw new AssertionError("Unreachable");
+        GameSetting.Instance localSetting = getLocalGameSetting(id);
+        boolean useInstanceRunningDirectory = useInstanceRunningDirectory(id, localSetting);
+        String runningDirectory = getSelectedRunningDirectory(localSetting, useInstanceRunningDirectory);
+        if (StringUtils.isBlank(runningDirectory)) {
+            return useInstanceRunningDirectory ? getVersionRoot(id) : super.getRunDirectory(id);
         }
+
+        try {
+            return Path.of(runningDirectory);
+        } catch (InvalidPathException ignored) {
+            return getVersionRoot(id);
+        }
+    }
+
+    /// Returns whether this instance uses its own running directory setting instead of the parent global setting.
+    private boolean useInstanceRunningDirectory(String id, @Nullable GameSetting.Instance localSetting) {
+        return beingModpackVersions.contains(id)
+                || isModpack(id)
+                || (localSetting != null && Boolean.TRUE.equals(localSetting.isolationProperty().getValue()));
+    }
+
+    /// Returns the running directory string selected by the current source.
+    private String getSelectedRunningDirectory(
+            @Nullable GameSetting.Instance localSetting,
+            boolean useInstanceRunningDirectory) {
+        if (useInstanceRunningDirectory) {
+            if (localSetting == null) {
+                return "";
+            }
+
+            String localRunningDirectory = localSetting.runningDirProperty().getValue();
+            return localRunningDirectory != null ? localRunningDirectory : "";
+        }
+
+        GameSetting.Global parent = getParentGameSetting(localSetting);
+        String globalRunningDirectory = parent.runningDirProperty().getValue();
+        return globalRunningDirectory != null ? globalRunningDirectory : parent.runningDirProperty().defaultValue();
     }
 
     public Stream<Version> getDisplayVersions() {
@@ -190,6 +213,7 @@ public final class HMCLGameRepository extends DefaultGameRepository {
 
         GameSetting.Instance newGameSetting = copyLocalGameSetting(srcId);
         newGameSetting.isolationProperty().setValue(true);
+        newGameSetting.runningDirProperty().setValue("");
         initLocalGameSetting(dstId, newGameSetting);
         saveGameSetting(dstId);
 
@@ -254,7 +278,7 @@ public final class HMCLGameRepository extends DefaultGameRepository {
         return parent != null && parent.defaultIsolationTypeProperty().getValue() == DefaultIsolationType.ALWAYS;
     }
 
-    public GameSetting.Instance createLocalGameSetting(String id) {
+    public @Nullable GameSetting.Instance createLocalGameSetting(String id) {
         if (!hasVersion(id)) {
             return null;
         }
@@ -268,9 +292,18 @@ public final class HMCLGameRepository extends DefaultGameRepository {
     }
 
     private GameSetting.Instance initLocalGameSetting(String id, GameSetting.Instance setting) {
+        normalizeRunningDirectoryIsolation(setting);
         localGameSettings.put(id, setting);
         setting.addListener(a -> saveGameSetting(id));
         return setting;
+    }
+
+    /// Keeps old local custom running directories effective under the new source-selection model.
+    private void normalizeRunningDirectoryIsolation(GameSetting.Instance setting) {
+        if (!Boolean.TRUE.equals(setting.isolationProperty().getValue())
+                && StringUtils.isNotBlank(setting.runningDirProperty().getValue())) {
+            setting.isolationProperty().setValue(true);
+        }
     }
 
     @Nullable
@@ -386,7 +419,7 @@ public final class HMCLGameRepository extends DefaultGameRepository {
         }
     }
 
-    public Image getVersionIconImage(String id) {
+    public Image getVersionIconImage(@Nullable String id) {
         if (id == null || !isLoaded())
             return VersionIconType.DEFAULT.getIcon();
 
