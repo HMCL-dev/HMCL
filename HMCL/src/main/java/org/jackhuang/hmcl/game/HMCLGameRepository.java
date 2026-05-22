@@ -84,18 +84,6 @@ public final class HMCLGameRepository extends DefaultGameRepository {
     }
 
     @Override
-    public GameDirectoryType getGameDirectoryType(String id) {
-        GameSetting.Instance localSetting = getLocalGameSetting(id);
-        boolean useInstanceRunningDirectory = useInstanceRunningDirectory(id, localSetting);
-        String runningDirectory = getSelectedRunningDirectory(localSetting, useInstanceRunningDirectory);
-        if (StringUtils.isNotBlank(runningDirectory)) {
-            return GameDirectoryType.CUSTOM;
-        }
-
-        return useInstanceRunningDirectory ? GameDirectoryType.VERSION_FOLDER : GameDirectoryType.ROOT_FOLDER;
-    }
-
-    @Override
     public Path getRunDirectory(String id) {
         GameSetting.Instance localSetting = getLocalGameSetting(id);
         boolean useInstanceRunningDirectory = useInstanceRunningDirectory(id, localSetting);
@@ -109,6 +97,12 @@ public final class HMCLGameRepository extends DefaultGameRepository {
         } catch (InvalidPathException ignored) {
             return getVersionRoot(id);
         }
+    }
+
+    /// Returns whether the instance uses its version folder as the run directory.
+    private boolean usesVersionFolderRunDirectory(String id) {
+        return getRunDirectory(id).toAbsolutePath().normalize()
+                .equals(getVersionRoot(id).toAbsolutePath().normalize());
     }
 
     /// Returns whether this instance uses its own running directory setting instead of the parent global setting.
@@ -209,7 +203,7 @@ public final class HMCLGameRepository extends DefaultGameRepository {
 
         JsonUtils.writeToJsonFile(toJson, fromVersion.setId(dstId).setJar(dstId));
 
-        GameDirectoryType originalGameDirType = getGameDirectoryType(srcId);
+        boolean copyOriginalGameDir = !usesVersionFolderRunDirectory(srcId);
         Path srcGameDir = getRunDirectory(srcId);
 
         GameSetting.Instance newGameSetting = copyLocalGameSetting(srcId);
@@ -220,7 +214,7 @@ public final class HMCLGameRepository extends DefaultGameRepository {
 
         Path dstGameDir = getRunDirectory(dstId);
 
-        if (originalGameDirType != GameDirectoryType.VERSION_FOLDER)
+        if (copyOriginalGameDir)
             FileUtils.copyDirectory(srcGameDir, dstGameDir, path -> Modpack.acceptFile(path, blackList, null));
     }
 
