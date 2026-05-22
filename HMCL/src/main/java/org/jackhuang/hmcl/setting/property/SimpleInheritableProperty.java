@@ -19,12 +19,17 @@ package org.jackhuang.hmcl.setting.property;
 
 import org.jackhuang.hmcl.setting.GameSetting;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.NotNullByDefault;
 
+/// Stores a direct setting value that can be inherited by removing its name from `overrideProperties`.
+///
 /// @author Glavo
+@NotNullByDefault
 public final class SimpleInheritableProperty<T>
         extends SimpleSettingProperty<T>
         implements InheritableProperty<T> {
 
+    /// Creates a property with the given owner, serialized name, and direct default value.
     public SimpleInheritableProperty(@NotNull GameSetting bean, String name, T defaultValue) {
         super(bean, name, defaultValue);
     }

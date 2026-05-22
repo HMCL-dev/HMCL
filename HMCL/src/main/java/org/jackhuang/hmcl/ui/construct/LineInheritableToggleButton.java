@@ -20,9 +20,7 @@ package org.jackhuang.hmcl.ui.construct;
 import com.jfoenix.controls.JFXButton;
 import com.jfoenix.controls.JFXToggleButton;
 import javafx.beans.property.BooleanProperty;
-import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.SimpleBooleanProperty;
-import javafx.beans.property.SimpleObjectProperty;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.property.StringProperty;
 import javafx.css.PseudoClass;
@@ -31,12 +29,11 @@ import javafx.scene.input.MouseEvent;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
 import org.jetbrains.annotations.NotNullByDefault;
-import org.jetbrains.annotations.Nullable;
 
 /// A line component that edits an inheritable boolean while showing the effective toggle state.
 ///
-/// The raw value uses {@code null} to inherit from the parent setting. The toggle always reflects
-/// the effective value currently applied by the setting hierarchy.
+/// The override state is represented separately from the direct boolean value. The toggle always
+/// reflects the effective value currently applied by the setting hierarchy.
 @NotNullByDefault
 public final class LineInheritableToggleButton extends LineButtonBase {
     /// The style class applied to inheritable toggle rows.
@@ -74,10 +71,11 @@ public final class LineInheritableToggleButton extends LineButtonBase {
                 return;
             }
 
-            if (getRawValue() == null) {
+            if (!isOverridden()) {
                 setRawValue(isEffectiveValue());
+                setOverridden(true);
             } else {
-                setRawValue(null);
+                setOverridden(false);
             }
             super.fire();
             event.consume();
@@ -92,6 +90,7 @@ public final class LineInheritableToggleButton extends LineButtonBase {
         setNode(IDX_TRAILING, toggleButton);
 
         rawValue.addListener(observable -> refresh());
+        overridden.addListener(observable -> refresh());
         effectiveValue.addListener(observable -> refresh());
         inheritAvailable.addListener(observable -> refresh());
         inheritedText.addListener(observable -> refresh());
@@ -103,6 +102,7 @@ public final class LineInheritableToggleButton extends LineButtonBase {
 
     @Override
     public void fire() {
+        setOverridden(true);
         setRawValue(!isEffectiveValue());
         super.fire();
     }
@@ -110,8 +110,8 @@ public final class LineInheritableToggleButton extends LineButtonBase {
     /// Refreshes the visual state from the raw and effective values.
     private void refresh() {
         boolean inheritAvailable = isInheritAvailable();
-        boolean inherited = inheritAvailable && getRawValue() == null;
-        boolean overridden = inheritAvailable && getRawValue() != null;
+        boolean inherited = inheritAvailable && !isOverridden();
+        boolean overridden = inheritAvailable && isOverridden();
 
         inheritButton.setGraphic((inherited ? SVG.PUBLIC : SVG.TUNE).createIcon(INHERIT_BUTTON_ICON_SIZE));
         inheritButton.pseudoClassStateChanged(PSEUDO_OVERRIDDEN, overridden);
@@ -123,21 +123,39 @@ public final class LineInheritableToggleButton extends LineButtonBase {
     }
 
     /// The raw value stored in this setting.
-    private final ObjectProperty<@Nullable Boolean> rawValue = new SimpleObjectProperty<>(this, "rawValue");
+    private final BooleanProperty rawValue = new SimpleBooleanProperty(this, "rawValue");
 
     /// Returns the raw setting value.
-    public ObjectProperty<@Nullable Boolean> rawValueProperty() {
+    public BooleanProperty rawValueProperty() {
         return rawValue;
     }
 
     /// Returns the raw setting value.
-    public @Nullable Boolean getRawValue() {
+    public boolean getRawValue() {
         return rawValueProperty().get();
     }
 
     /// Sets the raw setting value.
-    public void setRawValue(@Nullable Boolean rawValue) {
+    public void setRawValue(boolean rawValue) {
         rawValueProperty().set(rawValue);
+    }
+
+    /// Whether the direct value overrides the inherited value.
+    private final BooleanProperty overridden = new SimpleBooleanProperty(this, "overridden");
+
+    /// Returns the override-state property.
+    public BooleanProperty overriddenProperty() {
+        return overridden;
+    }
+
+    /// Returns whether the direct value overrides the inherited value.
+    public boolean isOverridden() {
+        return overriddenProperty().get();
+    }
+
+    /// Sets whether the direct value overrides the inherited value.
+    public void setOverridden(boolean overridden) {
+        overriddenProperty().set(overridden);
     }
 
     /// The effective value displayed by the toggle.

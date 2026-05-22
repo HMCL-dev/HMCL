@@ -44,6 +44,7 @@ import org.jackhuang.hmcl.util.function.ExceptionalRunnable;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.io.CompressingUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
+import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.FileNotFoundException;
@@ -63,6 +64,8 @@ import static org.jackhuang.hmcl.util.Lang.mapOf;
 import static org.jackhuang.hmcl.util.Lang.toIterable;
 import static org.jackhuang.hmcl.util.Pair.pair;
 
+/// Utilities for reading, installing, and applying modpack-specific game settings.
+@NotNullByDefault
 public final class ModpackHelper {
     private ModpackHelper() {
     }
@@ -160,7 +163,7 @@ public final class ModpackHelper {
             GameSetting.Instance setting = repository.getLocalGameSettingOrCreate(name);
             repository.undoMark(name);
             if (setting != null) {
-                setting.isolationProperty().setValue(true);
+                setting.getOverrideProperties().add(GameSetting.PROPERTY_RUNNING_DIR);
             }
         };
 
@@ -203,7 +206,7 @@ public final class ModpackHelper {
             GameSetting.Instance setting = repository.getLocalGameSettingOrCreate(name);
             repository.undoMark(name);
             if (setting != null) {
-                setting.isolationProperty().setValue(true);
+                setting.getOverrideProperties().add(GameSetting.PROPERTY_RUNNING_DIR);
             }
         };
 
@@ -257,9 +260,10 @@ public final class ModpackHelper {
     }
 
     public static void toGameSetting(MultiMCInstanceConfiguration c, GameSetting.Instance setting) {
-        setting.isolationProperty().setValue(true);
+        setting.getOverrideProperties().add(GameSetting.PROPERTY_RUNNING_DIR);
 
         if (c.isOverrideJavaLocation()) {
+            setting.getOverrideProperties().add(GameSetting.PROPERTY_JAVA_TYPE);
             setting.javaTypeProperty().setValue(JavaVersionType.CUSTOM);
             setting.customJavaPathProperty().setValue(Objects.requireNonNullElse(c.getJavaPath(), ""));
         }
@@ -278,6 +282,10 @@ public final class ModpackHelper {
         }
 
         if (c.isOverrideCommands()) {
+            setting.getOverrideProperties().addAll(List.of(
+                    GameSetting.PROPERTY_COMMAND_WRAPPER,
+                    GameSetting.PROPERTY_PRE_LAUNCH_COMMAND
+            ));
             setting.commandWrapperProperty().setValue(Objects.requireNonNullElse(c.getWrapperCommand(), ""));
             setting.preLaunchCommandProperty().setValue(Objects.requireNonNullElse(c.getPreLaunchCommand(), ""));
         }
@@ -288,10 +296,16 @@ public final class ModpackHelper {
         }
 
         if (c.isOverrideConsole()) {
+            setting.getOverrideProperties().add(GameSetting.PROPERTY_SHOW_LOGS);
             setting.showLogsProperty().setValue(c.isShowConsole());
         }
 
         if (c.isOverrideWindow()) {
+            setting.getOverrideProperties().addAll(List.of(
+                    GameSetting.PROPERTY_WINDOW_TYPE,
+                    GameSetting.PROPERTY_WIDTH,
+                    GameSetting.PROPERTY_HEIGHT
+            ));
             setting.windowTypeProperty().setValue(c.isFullscreen() ? GameWindowType.FULLSCREEN : GameWindowType.WINDOWED);
             if (c.getWidth() != null)
                 setting.widthProperty().setValue(c.getWidth().doubleValue());
@@ -302,6 +316,10 @@ public final class ModpackHelper {
 
     private static void applyCommandAndJvmSettings(MultiMCInstanceConfiguration c, GameSetting.Instance setting) {
         if (c.isOverrideCommands()) {
+            setting.getOverrideProperties().addAll(List.of(
+                    GameSetting.PROPERTY_COMMAND_WRAPPER,
+                    GameSetting.PROPERTY_PRE_LAUNCH_COMMAND
+            ));
             setting.commandWrapperProperty().setValue(Lang.nonNull(c.getWrapperCommand(), ""));
             setting.preLaunchCommandProperty().setValue(Lang.nonNull(c.getPreLaunchCommand(), ""));
         }

@@ -17,8 +17,11 @@
  */
 package org.jackhuang.hmcl.setting.property;
 
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNullByDefault;
 
+/// A setting value whose instance override state is stored in `GameSetting.Instance.overrideProperties`.
+///
 /// @author Glavo
-public interface InheritableProperty<T> extends SettingProperty<@Nullable T> {
+@NotNullByDefault
+public interface InheritableProperty<T> extends SettingProperty<T> {
 }

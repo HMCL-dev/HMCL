@@ -89,17 +89,45 @@ public final class LegacyGameSettingMigrator {
         GameSetting.Instance target = new GameSetting.Instance();
         target.parentProperty().setValue(parent);
         target.iconProperty().setValue(parseLegacyVersionIconType(source));
-        target.isolationProperty().setValue(getLegacyGameDirType(source, GameDirectoryType.ROOT_FOLDER) != GameDirectoryType.ROOT_FOLDER);
+        GameDirectoryType legacyGameDirType = getLegacyGameDirType(source, GameDirectoryType.ROOT_FOLDER);
+        if (legacyGameDirType != GameDirectoryType.ROOT_FOLDER) {
+            target.getOverrideProperties().add(GameSetting.PROPERTY_RUNNING_DIR);
+            if (legacyGameDirType == GameDirectoryType.CUSTOM) {
+                target.runningDirProperty().setValue(readString(source, "gameDir", ""));
+            }
+        }
         if (source != null && copyValues) {
             copyCommonProperties(source, target);
             target.getOverrideProperties().addAll(List.of(
+                    GameSetting.PROPERTY_JAVA_TYPE,
                     GameSetting.PROPERTY_JVM_OPTIONS,
+                    GameSetting.PROPERTY_NO_JVM_OPTIONS,
+                    GameSetting.PROPERTY_NO_OPTIMIZING_JVM_OPTIONS,
+                    GameSetting.PROPERTY_NOT_CHECK_JVM,
+                    GameSetting.PROPERTY_NOT_CHECK_GAME,
                     GameSetting.PROPERTY_AUTO_MEMORY,
                     GameSetting.PROPERTY_MIN_MEMORY,
                     GameSetting.PROPERTY_MAX_MEMORY,
                     GameSetting.PROPERTY_PERM_SIZE,
+                    GameSetting.PROPERTY_WINDOW_TYPE,
+                    GameSetting.PROPERTY_WIDTH,
+                    GameSetting.PROPERTY_HEIGHT,
+                    GameSetting.PROPERTY_PROCESS_PRIORITY,
+                    GameSetting.PROPERTY_LAUNCHER_VISIBILITY,
                     GameSetting.PROPERTY_GAME_ARGS,
+                    GameSetting.PROPERTY_GRAPHICS_BACKEND,
+                    GameSetting.PROPERTY_OPENGL_RENDERER,
+                    GameSetting.PROPERTY_VULKAN_RENDERER,
                     GameSetting.PROPERTY_ENVIRONMENT_VARIABLES,
+                    GameSetting.PROPERTY_COMMAND_WRAPPER,
+                    GameSetting.PROPERTY_PRE_LAUNCH_COMMAND,
+                    GameSetting.PROPERTY_POST_EXIT_COMMAND,
+                    GameSetting.PROPERTY_QUICK_PLAY,
+                    GameSetting.PROPERTY_QUICK_PLAY_MULTIPLAYER,
+                    GameSetting.PROPERTY_QUICK_PLAY_SINGLEPLAYER,
+                    GameSetting.PROPERTY_QUICK_PLAY_REALMS,
+                    GameSetting.PROPERTY_SHOW_LOGS,
+                    GameSetting.PROPERTY_ENABLE_DEBUG_LOG_OUTPUT,
                     GameSetting.PROPERTY_NOT_PATCH_NATIVES,
                     GameSetting.PROPERTY_NATIVES_DIR_TYPE,
                     GameSetting.PROPERTY_NATIVES_DIR,

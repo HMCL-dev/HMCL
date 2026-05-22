@@ -117,7 +117,7 @@ public final class HMCLGameRepository extends DefaultGameRepository {
     private boolean useInstanceRunningDirectory(String id, @Nullable GameSetting.Instance localSetting) {
         return beingModpackVersions.contains(id)
                 || isModpack(id)
-                || (localSetting != null && Boolean.TRUE.equals(localSetting.isolationProperty().getValue()));
+                || (localSetting != null && isRunningDirectoryOverridden(localSetting));
     }
 
     /// Returns the running directory string selected by the current source.
@@ -130,12 +130,17 @@ public final class HMCLGameRepository extends DefaultGameRepository {
             }
 
             String localRunningDirectory = localSetting.runningDirProperty().getValue();
-            return localRunningDirectory != null ? localRunningDirectory : "";
+            return localRunningDirectory != null ? localRunningDirectory : localSetting.runningDirProperty().defaultValue();
         }
 
         GameSetting.Global parent = getParentGameSetting(localSetting);
         String globalRunningDirectory = parent.runningDirProperty().getValue();
         return globalRunningDirectory != null ? globalRunningDirectory : parent.runningDirProperty().defaultValue();
+    }
+
+    /// Returns whether the instance overrides the global running directory setting.
+    private static boolean isRunningDirectoryOverridden(GameSetting.Instance setting) {
+        return setting.getOverrideProperties().contains(GameSetting.PROPERTY_RUNNING_DIR);
     }
 
     public Stream<Version> getDisplayVersions() {
@@ -212,7 +217,7 @@ public final class HMCLGameRepository extends DefaultGameRepository {
         Path srcGameDir = getRunDirectory(srcId);
 
         GameSetting.Instance newGameSetting = copyLocalGameSetting(srcId);
-        newGameSetting.isolationProperty().setValue(true);
+        newGameSetting.getOverrideProperties().add(GameSetting.PROPERTY_RUNNING_DIR);
         newGameSetting.runningDirProperty().setValue("");
         initLocalGameSetting(dstId, newGameSetting);
         saveGameSetting(dstId);
@@ -267,7 +272,7 @@ public final class HMCLGameRepository extends DefaultGameRepository {
         } else if (isLegacyProfileAlwaysIsolated()) {
             GameSetting.Instance setting = new GameSetting.Instance();
             setting.parentProperty().setValue(profile.getLegacyGameSettingParent());
-            setting.isolationProperty().setValue(true);
+            setting.getOverrideProperties().add(GameSetting.PROPERTY_RUNNING_DIR);
             initLocalGameSetting(id, setting);
             migratedLocalGameSettings.add(id);
         }
@@ -292,17 +297,16 @@ public final class HMCLGameRepository extends DefaultGameRepository {
     }
 
     private GameSetting.Instance initLocalGameSetting(String id, GameSetting.Instance setting) {
-        normalizeRunningDirectoryIsolation(setting);
+        normalizeRunningDirectoryOverride(setting);
         localGameSettings.put(id, setting);
         setting.addListener(a -> saveGameSetting(id));
         return setting;
     }
 
     /// Keeps old local custom running directories effective under the new source-selection model.
-    private void normalizeRunningDirectoryIsolation(GameSetting.Instance setting) {
-        if (!Boolean.TRUE.equals(setting.isolationProperty().getValue())
-                && StringUtils.isNotBlank(setting.runningDirProperty().getValue())) {
-            setting.isolationProperty().setValue(true);
+    private void normalizeRunningDirectoryOverride(GameSetting.Instance setting) {
+        if (StringUtils.isNotBlank(setting.runningDirProperty().getValue())) {
+            setting.getOverrideProperties().add(GameSetting.PROPERTY_RUNNING_DIR);
         }
     }
 
@@ -351,7 +355,7 @@ public final class HMCLGameRepository extends DefaultGameRepository {
             GameSetting.Instance setting = getLocalGameSettingOrCreate(id);
             if (setting != null) {
                 setting.parentProperty().setValue(global.idProperty().getValue());
-                setting.isolationProperty().setValue(true);
+                setting.getOverrideProperties().add(GameSetting.PROPERTY_RUNNING_DIR);
             }
         }
     }

@@ -19,8 +19,10 @@ package org.jackhuang.hmcl.setting;
 
 import com.google.gson.JsonDeserializationContext;
 import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
 import com.google.gson.JsonParseException;
 import com.google.gson.JsonPrimitive;
+import com.google.gson.JsonSerializationContext;
 import com.google.gson.annotations.JsonAdapter;
 import com.google.gson.annotations.SerializedName;
 import javafx.collections.FXCollections;
@@ -39,6 +41,7 @@ import org.jackhuang.hmcl.util.platform.SystemInfo;
 import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 import org.jetbrains.annotations.UnknownNullability;
 
 import java.io.IOException;
@@ -69,6 +72,9 @@ public sealed abstract class GameSetting extends ObservableSetting {
                 : Integer.max((int) (Math.round(totalMemoryMB / 4.0 / 128.0) * 128), 256);
     }
 
+    /// Legacy property name for the old version isolation boolean.
+    private static final String PROPERTY_LEGACY_ISOLATION = "isolation";
+
     /// Instance-specific game setting.
     @JsonAdapter(Instance.Adapter.class)
     public static final class Instance extends GameSetting {
@@ -95,15 +101,6 @@ public sealed abstract class GameSetting extends ObservableSetting {
             return icon;
         }
 
-        /// Whether to isolate the instance from other instances.
-        @SerializedName("isolation")
-        private final SettingProperty<Boolean> isolation = newSettingProperty("isolation", false);
-
-        /// Returns the instance isolation property.
-        public SettingProperty<Boolean> isolationProperty() {
-            return isolation;
-        }
-
         /// Setting property names overridden by this instance.
         @SerializedName("overrideProperties")
         private final ObservableSet<String> overrideProperties = FXCollections.observableSet();
@@ -121,9 +118,29 @@ public sealed abstract class GameSetting extends ObservableSetting {
             }
 
             @Override
+            public JsonElement serialize(Instance setting, Type typeOfSrc, JsonSerializationContext context) {
+                JsonElement serialized = super.serialize(setting, typeOfSrc, context);
+                if (serialized instanceof JsonObject object) {
+                    for (String propertyName : OVERRIDABLE_PROPERTY_NAMES) {
+                        if (!setting.getOverrideProperties().contains(propertyName)) {
+                            object.remove(propertyName);
+                        }
+                    }
+                    if (!setting.getOverrideProperties().contains(PROPERTY_JAVA_TYPE)) {
+                        object.remove("javaVersion");
+                        object.remove("customJavaPath");
+                        object.remove("defaultJavaPath");
+                    }
+                }
+                return serialized;
+            }
+
+            @Override
             public Instance deserialize(JsonElement json, Type typeOfT, JsonDeserializationContext context)
                     throws JsonParseException {
                 Instance setting = super.deserialize(json, typeOfT, context);
+                migrateLegacyIsolation(setting);
+                migrateLegacyOverrides(setting);
                 migrateLegacyRenderer(setting);
                 return setting;
             }
@@ -212,9 +229,12 @@ public sealed abstract class GameSetting extends ObservableSetting {
         return new SimpleInheritableProperty<>(this, name, defaultValue);
     }
 
+    /// Property name for the Java selection mode.
+    public static final String PROPERTY_JAVA_TYPE = "javaType";
+
     /// The Java selection mode.
-    @SerializedName("javaType")
-    private final InheritableProperty<JavaVersionType> javaType = newInheritableProperty("javaType", JavaVersionType.AUTO);
+    @SerializedName(PROPERTY_JAVA_TYPE)
+    private final InheritableProperty<JavaVersionType> javaType = newInheritableProperty(PROPERTY_JAVA_TYPE, JavaVersionType.AUTO);
 
     /// Returns the Java selection mode property.
     public InheritableProperty<JavaVersionType> javaTypeProperty() {
@@ -266,36 +286,48 @@ public sealed abstract class GameSetting extends ObservableSetting {
         return jvmOptions;
     }
 
+    /// Property name for disabling generated JVM options.
+    public static final String PROPERTY_NO_JVM_OPTIONS = "noJVMOptions";
+
     /// If `true`, HMCL will not use default JVM arguments.
-    @SerializedName("noJVMOptions")
-    private final InheritableProperty<Boolean> noJVMOptions = newInheritableProperty("noJVMOptions", false);
+    @SerializedName(PROPERTY_NO_JVM_OPTIONS)
+    private final InheritableProperty<Boolean> noJVMOptions = newInheritableProperty(PROPERTY_NO_JVM_OPTIONS, false);
 
     /// Returns the no generated JVM options property.
     public InheritableProperty<Boolean> noJVMOptionsProperty() {
         return noJVMOptions;
     }
 
+    /// Property name for disabling generated optimizing JVM options.
+    public static final String PROPERTY_NO_OPTIMIZING_JVM_OPTIONS = "noOptimizingJVMOptions";
+
     /// If `true`, HMCL will not use the default optimizing JVM options.
-    @SerializedName("noOptimizingJVMOptions")
-    private final InheritableProperty<Boolean> noOptimizingJVMOptions = newInheritableProperty("noOptimizingJVMOptions", false);
+    @SerializedName(PROPERTY_NO_OPTIMIZING_JVM_OPTIONS)
+    private final InheritableProperty<Boolean> noOptimizingJVMOptions = newInheritableProperty(PROPERTY_NO_OPTIMIZING_JVM_OPTIONS, false);
 
     /// Returns the no optimizing JVM options property.
     public InheritableProperty<Boolean> noOptimizingJVMOptionsProperty() {
         return noOptimizingJVMOptions;
     }
 
+    /// Property name for disabling JVM validity checks.
+    public static final String PROPERTY_NOT_CHECK_JVM = "notCheckJVM";
+
     /// If `true`, HMCL does not check JVM validity.
-    @SerializedName("notCheckJVM")
-    private final InheritableProperty<Boolean> notCheckJVM = newInheritableProperty("notCheckJVM", false);
+    @SerializedName(PROPERTY_NOT_CHECK_JVM)
+    private final InheritableProperty<Boolean> notCheckJVM = newInheritableProperty(PROPERTY_NOT_CHECK_JVM, false);
 
     /// Returns the JVM validity check property.
     public InheritableProperty<Boolean> notCheckJVMProperty() {
         return notCheckJVM;
     }
 
+    /// Property name for disabling game completeness checks.
+    public static final String PROPERTY_NOT_CHECK_GAME = "notCheckGame";
+
     /// If `true`, HMCL does not check game completeness.
-    @SerializedName("notCheckGame")
-    private final InheritableProperty<Boolean> notCheckGame = newInheritableProperty("notCheckGame", false);
+    @SerializedName(PROPERTY_NOT_CHECK_GAME)
+    private final InheritableProperty<Boolean> notCheckGame = newInheritableProperty(PROPERTY_NOT_CHECK_GAME, false);
 
     /// Returns the game completeness check property.
     public InheritableProperty<Boolean> notCheckGameProperty() {
@@ -350,54 +382,72 @@ public sealed abstract class GameSetting extends ObservableSetting {
         return permSize;
     }
 
+    /// Property name for the initial game window mode.
+    public static final String PROPERTY_WINDOW_TYPE = "windowType";
+
     /// The initial game window mode.
-    @SerializedName("windowType")
-    private final InheritableProperty<GameWindowType> windowType = newInheritableProperty("windowType", GameWindowType.WINDOWED);
+    @SerializedName(PROPERTY_WINDOW_TYPE)
+    private final InheritableProperty<GameWindowType> windowType = newInheritableProperty(PROPERTY_WINDOW_TYPE, GameWindowType.WINDOWED);
 
     /// Returns the game window mode property.
     public InheritableProperty<GameWindowType> windowTypeProperty() {
         return windowType;
     }
 
+    /// Property name for the game window width.
+    public static final String PROPERTY_WIDTH = "width";
+
     /// The width of the game window.
-    @SerializedName("width")
-    private final InheritableProperty<Double> width = newInheritableProperty("width", 854.0);
+    @SerializedName(PROPERTY_WIDTH)
+    private final InheritableProperty<Double> width = newInheritableProperty(PROPERTY_WIDTH, 854.0);
 
     /// Returns the game window width property.
     public InheritableProperty<Double> widthProperty() {
         return width;
     }
 
+    /// Property name for the game window height.
+    public static final String PROPERTY_HEIGHT = "height";
+
     /// The height of the game window.
-    @SerializedName("height")
-    private final InheritableProperty<Double> height = newInheritableProperty("height", 480.0);
+    @SerializedName(PROPERTY_HEIGHT)
+    private final InheritableProperty<Double> height = newInheritableProperty(PROPERTY_HEIGHT, 480.0);
 
     /// Returns the game window height property.
     public InheritableProperty<Double> heightProperty() {
         return height;
     }
 
+    /// Property name for the custom run directory.
+    public static final String PROPERTY_RUNNING_DIR = "runningDir";
+
     /// The custom run directory.
-    @SerializedName("runningDir")
-    private final InheritableProperty<String> runningDir = newInheritableProperty("runningDir", "");
+    @SerializedName(PROPERTY_RUNNING_DIR)
+    private final InheritableProperty<String> runningDir = newInheritableProperty(PROPERTY_RUNNING_DIR, "");
 
     /// Returns the custom run directory property.
     public InheritableProperty<String> runningDirProperty() {
         return runningDir;
     }
 
+    /// Property name for the process priority.
+    public static final String PROPERTY_PROCESS_PRIORITY = "processPriority";
+
     /// The process priority of the game.
-    @SerializedName("processPriority")
-    private final InheritableProperty<ProcessPriority> processPriority = newInheritableProperty("processPriority", ProcessPriority.NORMAL);
+    @SerializedName(PROPERTY_PROCESS_PRIORITY)
+    private final InheritableProperty<ProcessPriority> processPriority = newInheritableProperty(PROPERTY_PROCESS_PRIORITY, ProcessPriority.NORMAL);
 
     /// Returns the process priority property.
     public InheritableProperty<ProcessPriority> processPriorityProperty() {
         return processPriority;
     }
 
+    /// Property name for launcher behavior after game start.
+    public static final String PROPERTY_LAUNCHER_VISIBILITY = "launcherVisibility";
+
     /// Launcher behavior after the game starts.
-    @SerializedName("launcherVisibility")
-    private final InheritableProperty<LauncherVisibility> launcherVisibility = newInheritableProperty("launcherVisibility", LauncherVisibility.KEEP);
+    @SerializedName(PROPERTY_LAUNCHER_VISIBILITY)
+    private final InheritableProperty<LauncherVisibility> launcherVisibility = newInheritableProperty(PROPERTY_LAUNCHER_VISIBILITY, LauncherVisibility.KEEP);
 
     /// Returns the launcher visibility property.
     public InheritableProperty<LauncherVisibility> launcherVisibilityProperty() {
@@ -416,9 +466,12 @@ public sealed abstract class GameSetting extends ObservableSetting {
         return gameArgs;
     }
 
+    /// Property name for the requested graphics API.
+    public static final String PROPERTY_GRAPHICS_BACKEND = "graphicsBackend";
+
     /// Graphics API requested by the launcher.
-    @SerializedName("graphicsBackend")
-    private final InheritableProperty<GraphicsAPI> graphicsBackend = newInheritableProperty("graphicsBackend", GraphicsAPI.DEFAULT);
+    @SerializedName(PROPERTY_GRAPHICS_BACKEND)
+    private final InheritableProperty<GraphicsAPI> graphicsBackend = newInheritableProperty(PROPERTY_GRAPHICS_BACKEND, GraphicsAPI.DEFAULT);
 
     /// Returns the graphics API property.
     public InheritableProperty<GraphicsAPI> graphicsBackendProperty() {
@@ -466,81 +519,108 @@ public sealed abstract class GameSetting extends ObservableSetting {
         return environmentVariables;
     }
 
+    /// Property name for the command wrapper.
+    public static final String PROPERTY_COMMAND_WRAPPER = "commandWrapper";
+
     /// The command wrapper for launching Minecraft.
-    @SerializedName("commandWrapper")
-    private final InheritableProperty<String> commandWrapper = newInheritableProperty("commandWrapper", "");
+    @SerializedName(PROPERTY_COMMAND_WRAPPER)
+    private final InheritableProperty<String> commandWrapper = newInheritableProperty(PROPERTY_COMMAND_WRAPPER, "");
 
     /// Returns the command wrapper property.
     public InheritableProperty<String> commandWrapperProperty() {
         return commandWrapper;
     }
 
+    /// Property name for the pre-launch command.
+    public static final String PROPERTY_PRE_LAUNCH_COMMAND = "preLaunchCommand";
+
     /// The command that will be executed before launching the game.
-    @SerializedName("preLaunchCommand")
-    private final InheritableProperty<String> preLaunchCommand = newInheritableProperty("preLaunchCommand", "");
+    @SerializedName(PROPERTY_PRE_LAUNCH_COMMAND)
+    private final InheritableProperty<String> preLaunchCommand = newInheritableProperty(PROPERTY_PRE_LAUNCH_COMMAND, "");
 
     /// Returns the pre-launch command property.
     public InheritableProperty<String> preLaunchCommandProperty() {
         return preLaunchCommand;
     }
 
+    /// Property name for the post-exit command.
+    public static final String PROPERTY_POST_EXIT_COMMAND = "postExitCommand";
+
     /// The command that will be executed after the game exits.
-    @SerializedName("postExitCommand")
-    private final InheritableProperty<String> postExitCommand = newInheritableProperty("postExitCommand", "");
+    @SerializedName(PROPERTY_POST_EXIT_COMMAND)
+    private final InheritableProperty<String> postExitCommand = newInheritableProperty(PROPERTY_POST_EXIT_COMMAND, "");
 
     /// Returns the post-exit command property.
     public InheritableProperty<String> postExitCommandProperty() {
         return postExitCommand;
     }
 
+    /// Property name for the quick play target type.
+    public static final String PROPERTY_QUICK_PLAY = "quickPlay";
+
     /// The quick play target type.
-    @SerializedName("quickPlay")
-    private final InheritableProperty<QuickPlayType> quickPlay = newInheritableProperty("quickPlay", QuickPlayType.NONE);
+    @SerializedName(PROPERTY_QUICK_PLAY)
+    private final InheritableProperty<QuickPlayType> quickPlay = newInheritableProperty(PROPERTY_QUICK_PLAY, QuickPlayType.NONE);
 
     /// Returns the quick play target type property.
     public InheritableProperty<QuickPlayType> quickPlayProperty() {
         return quickPlay;
     }
 
+    /// Property name for the multiplayer quick play target.
+    public static final String PROPERTY_QUICK_PLAY_MULTIPLAYER = "quickPlayMultiplayer";
+
     /// The server address for multiplayer quick play.
-    @SerializedName("quickPlayMultiplayer")
-    private final InheritableProperty<String> quickPlayMultiplayer = newInheritableProperty("quickPlayMultiplayer", "");
+    @SerializedName(PROPERTY_QUICK_PLAY_MULTIPLAYER)
+    private final InheritableProperty<String> quickPlayMultiplayer = newInheritableProperty(PROPERTY_QUICK_PLAY_MULTIPLAYER, "");
 
     /// Returns the multiplayer quick play target property.
     public InheritableProperty<String> quickPlayMultiplayerProperty() {
         return quickPlayMultiplayer;
     }
 
+    /// Property name for the singleplayer quick play target.
+    public static final String PROPERTY_QUICK_PLAY_SINGLEPLAYER = "quickPlaySingleplayer";
+
     /// The world folder name for singleplayer quick play.
-    @SerializedName("quickPlaySingleplayer")
-    private final InheritableProperty<String> quickPlaySingleplayer = newInheritableProperty("quickPlaySingleplayer", "");
+    @SerializedName(PROPERTY_QUICK_PLAY_SINGLEPLAYER)
+    private final InheritableProperty<String> quickPlaySingleplayer = newInheritableProperty(PROPERTY_QUICK_PLAY_SINGLEPLAYER, "");
 
     /// Returns the singleplayer quick play target property.
     public InheritableProperty<String> quickPlaySingleplayerProperty() {
         return quickPlaySingleplayer;
     }
 
+    /// Property name for the Realms quick play target.
+    public static final String PROPERTY_QUICK_PLAY_REALMS = "quickPlayRealms";
+
     /// The realm ID for Realms quick play.
-    @SerializedName("quickPlayRealms")
-    private final InheritableProperty<String> quickPlayRealms = newInheritableProperty("quickPlayRealms", "");
+    @SerializedName(PROPERTY_QUICK_PLAY_REALMS)
+    private final InheritableProperty<String> quickPlayRealms = newInheritableProperty(PROPERTY_QUICK_PLAY_REALMS, "");
 
     /// Returns the Realms quick play target property.
     public InheritableProperty<String> quickPlayRealmsProperty() {
         return quickPlayRealms;
     }
 
+    /// Property name for showing logs after game start.
+    public static final String PROPERTY_SHOW_LOGS = "showLogs";
+
     /// If `true`, show the logs after game launched.
-    @SerializedName("showLogs")
-    private final InheritableProperty<Boolean> showLogs = newInheritableProperty("showLogs", false);
+    @SerializedName(PROPERTY_SHOW_LOGS)
+    private final InheritableProperty<Boolean> showLogs = newInheritableProperty(PROPERTY_SHOW_LOGS, false);
 
     /// Returns the show logs property.
     public InheritableProperty<Boolean> showLogsProperty() {
         return showLogs;
     }
 
+    /// Property name for enabling debug log output.
+    public static final String PROPERTY_ENABLE_DEBUG_LOG_OUTPUT = "enableDebugLogOutput";
+
     /// If `true`, enable debug log output.
-    @SerializedName("enableDebugLogOutput")
-    private final InheritableProperty<Boolean> enableDebugLogOutput = newInheritableProperty("enableDebugLogOutput", false);
+    @SerializedName(PROPERTY_ENABLE_DEBUG_LOG_OUTPUT)
+    private final InheritableProperty<Boolean> enableDebugLogOutput = newInheritableProperty(PROPERTY_ENABLE_DEBUG_LOG_OUTPUT, false);
 
     /// Returns the debug log output property.
     public InheritableProperty<Boolean> enableDebugLogOutputProperty() {
@@ -607,6 +687,118 @@ public sealed abstract class GameSetting extends ObservableSetting {
         return useNativeOpenAL;
     }
 
+    /// Property names whose instance override state is stored in `Instance.overrideProperties`.
+    private static final String @Unmodifiable [] OVERRIDABLE_PROPERTY_NAMES = {
+            PROPERTY_JAVA_TYPE,
+            PROPERTY_JVM_OPTIONS,
+            PROPERTY_NO_JVM_OPTIONS,
+            PROPERTY_NO_OPTIMIZING_JVM_OPTIONS,
+            PROPERTY_NOT_CHECK_JVM,
+            PROPERTY_NOT_CHECK_GAME,
+            PROPERTY_AUTO_MEMORY,
+            PROPERTY_MIN_MEMORY,
+            PROPERTY_MAX_MEMORY,
+            PROPERTY_PERM_SIZE,
+            PROPERTY_WINDOW_TYPE,
+            PROPERTY_WIDTH,
+            PROPERTY_HEIGHT,
+            PROPERTY_RUNNING_DIR,
+            PROPERTY_PROCESS_PRIORITY,
+            PROPERTY_LAUNCHER_VISIBILITY,
+            PROPERTY_GAME_ARGS,
+            PROPERTY_GRAPHICS_BACKEND,
+            PROPERTY_OPENGL_RENDERER,
+            PROPERTY_VULKAN_RENDERER,
+            PROPERTY_ENVIRONMENT_VARIABLES,
+            PROPERTY_COMMAND_WRAPPER,
+            PROPERTY_PRE_LAUNCH_COMMAND,
+            PROPERTY_POST_EXIT_COMMAND,
+            PROPERTY_QUICK_PLAY,
+            PROPERTY_QUICK_PLAY_MULTIPLAYER,
+            PROPERTY_QUICK_PLAY_SINGLEPLAYER,
+            PROPERTY_QUICK_PLAY_REALMS,
+            PROPERTY_SHOW_LOGS,
+            PROPERTY_ENABLE_DEBUG_LOG_OUTPUT,
+            PROPERTY_NOT_PATCH_NATIVES,
+            PROPERTY_NATIVES_DIR_TYPE,
+            PROPERTY_NATIVES_DIR,
+            PROPERTY_USE_NATIVE_GLFW,
+            PROPERTY_USE_NATIVE_OPENAL
+    };
+
+    /// Migrates the old `isolation` flag into the running directory override marker.
+    private static void migrateLegacyIsolation(Instance setting) {
+        JsonElement legacyIsolation = setting.unknownFields.remove(PROPERTY_LEGACY_ISOLATION);
+        if (legacyIsolation == null || legacyIsolation.isJsonNull()) {
+            return;
+        }
+
+        try {
+            if (legacyIsolation.getAsBoolean()) {
+                setting.getOverrideProperties().add(PROPERTY_RUNNING_DIR);
+            }
+        } catch (RuntimeException ignored) {
+        }
+    }
+
+    /// Migrates old serialized setting fields to `overrideProperties`.
+    private static void migrateLegacyOverrides(Instance setting) {
+        migrateLegacyOverride(setting, setting.jvmOptionsProperty());
+        migrateLegacyOverride(setting, setting.autoMemoryProperty());
+        migrateLegacyOverride(setting, setting.minMemoryProperty());
+        migrateLegacyOverride(setting, setting.maxMemoryProperty());
+        migrateLegacyOverride(setting, setting.permSizeProperty());
+        migrateLegacyOverride(setting, setting.gameArgsProperty());
+        migrateLegacyOverride(setting, setting.environmentVariablesProperty());
+        migrateLegacyOverride(setting, setting.notPatchNativesProperty());
+        migrateLegacyOverride(setting, setting.nativesDirTypeProperty());
+        migrateLegacyOverride(setting, setting.nativesDirProperty());
+        migrateLegacyOverride(setting, setting.useNativeGLFWProperty());
+        migrateLegacyOverride(setting, setting.useNativeOpenALProperty());
+
+        migrateLegacyInheritableOverride(setting, setting.javaTypeProperty());
+        migrateLegacyInheritableOverride(setting, setting.noJVMOptionsProperty());
+        migrateLegacyInheritableOverride(setting, setting.noOptimizingJVMOptionsProperty());
+        migrateLegacyInheritableOverride(setting, setting.notCheckJVMProperty());
+        migrateLegacyInheritableOverride(setting, setting.notCheckGameProperty());
+        migrateLegacyInheritableOverride(setting, setting.windowTypeProperty());
+        migrateLegacyInheritableOverride(setting, setting.widthProperty());
+        migrateLegacyInheritableOverride(setting, setting.heightProperty());
+        migrateLegacyInheritableOverride(setting, setting.runningDirProperty());
+        migrateLegacyInheritableOverride(setting, setting.processPriorityProperty());
+        migrateLegacyInheritableOverride(setting, setting.launcherVisibilityProperty());
+        migrateLegacyInheritableOverride(setting, setting.graphicsBackendProperty());
+        migrateLegacyInheritableOverride(setting, setting.openGLRendererProperty());
+        migrateLegacyInheritableOverride(setting, setting.vulkanRendererProperty());
+        migrateLegacyInheritableOverride(setting, setting.commandWrapperProperty());
+        migrateLegacyInheritableOverride(setting, setting.preLaunchCommandProperty());
+        migrateLegacyInheritableOverride(setting, setting.postExitCommandProperty());
+        migrateLegacyInheritableOverride(setting, setting.quickPlayProperty());
+        migrateLegacyInheritableOverride(setting, setting.quickPlayMultiplayerProperty());
+        migrateLegacyInheritableOverride(setting, setting.quickPlaySingleplayerProperty());
+        migrateLegacyInheritableOverride(setting, setting.quickPlayRealmsProperty());
+        migrateLegacyInheritableOverride(setting, setting.showLogsProperty());
+        migrateLegacyInheritableOverride(setting, setting.enableDebugLogOutputProperty());
+    }
+
+    /// Converts one old serialized direct property into the new override marker form.
+    private static void migrateLegacyOverride(Instance setting, SettingProperty<?> property) {
+        if (setting.tracker.isDirty(property)) {
+            setting.getOverrideProperties().add(property.getName());
+        }
+    }
+
+    /// Converts one old inheritable property into the new override marker form.
+    private static <T extends @UnknownNullability Object> void migrateLegacyInheritableOverride(
+            Instance setting,
+            InheritableProperty<T> property) {
+        if (property.getValue() == null) {
+            property.setValue(property.defaultValue());
+        } else if (setting.tracker.isDirty(property)) {
+            setting.getOverrideProperties().add(property.getName());
+        }
+    }
+
     private static void migrateLegacyRenderer(@Nullable GameSetting setting) {
         if (setting == null) {
             return;
@@ -619,7 +811,29 @@ public sealed abstract class GameSetting extends ObservableSetting {
 
         Renderer renderer = parseLegacyRenderer(legacyRenderer);
         if (renderer != null) {
-            setRendererForApi(setting, renderer, setting.graphicsBackendProperty().getValue());
+            GraphicsAPI fallbackApi = setting.graphicsBackendProperty().getValue();
+            setRendererForApi(setting, renderer, fallbackApi);
+            markLegacyRendererOverride(setting, renderer, fallbackApi);
+        }
+    }
+
+    /// Marks renderer-related properties as overridden when migrating an instance-level legacy renderer.
+    private static void markLegacyRendererOverride(
+            GameSetting setting,
+            Renderer renderer,
+            @Nullable GraphicsAPI fallbackApi) {
+        if (!(setting instanceof Instance instance)) {
+            return;
+        }
+
+        instance.getOverrideProperties().add(PROPERTY_GRAPHICS_BACKEND);
+        if (renderer instanceof Renderer.Driver driver) {
+            instance.getOverrideProperties().add(rendererPropertyForApi(setting, driver.api()).getName());
+        } else if (fallbackApi == GraphicsAPI.OPENGL || fallbackApi == GraphicsAPI.VULKAN) {
+            instance.getOverrideProperties().add(rendererPropertyForApi(setting, fallbackApi).getName());
+        } else {
+            instance.getOverrideProperties().add(PROPERTY_OPENGL_RENDERER);
+            instance.getOverrideProperties().add(PROPERTY_VULKAN_RENDERER);
         }
     }
 
@@ -679,7 +893,7 @@ public sealed abstract class GameSetting extends ObservableSetting {
     private static <T extends @UnknownNullability Object> T inherited(Global global, @Nullable Instance instance, Function<GameSetting, SettingProperty<T>> propertyGetter) {
         if (instance != null) {
             SettingProperty<T> property = propertyGetter.apply(instance);
-            if (instance.getOverrideProperties().contains(property.getName())) {
+            if (isOverridden(instance, property)) {
                 return property.getValue();
             }
         }
@@ -688,15 +902,22 @@ public sealed abstract class GameSetting extends ObservableSetting {
 
     private static <T extends @UnknownNullability Object> T inheritable(Global global, @Nullable Instance instance, Function<GameSetting, InheritableProperty<T>> propertyGetter) {
         if (instance != null) {
-            T value = propertyGetter.apply(instance).getValue();
-            if (value != null) {
-                return value;
+            InheritableProperty<T> property = propertyGetter.apply(instance);
+            if (isOverridden(instance, property)) {
+                return getDirectValue(property);
             }
         }
 
-        InheritableProperty<T> globalProperty = propertyGetter.apply(global);
-        T value = globalProperty.getValue();
-        return value != null ? value : globalProperty.defaultValue();
+        return getDirectValue(propertyGetter.apply(global));
+    }
+
+    private static boolean isOverridden(Instance instance, SettingProperty<?> property) {
+        return instance.getOverrideProperties().contains(property.getName());
+    }
+
+    private static <T extends @UnknownNullability Object> T getDirectValue(SettingProperty<T> property) {
+        T value = property.getValue();
+        return value != null ? value : property.defaultValue();
     }
 
     /// Launch-time effective game setting.
@@ -726,7 +947,7 @@ public sealed abstract class GameSetting extends ObservableSetting {
 
         /// Returns the effective Java version text.
         public String getJavaVersion() {
-            if (instance != null && instance.javaTypeProperty().getValue() != null) {
+            if (instance != null && isOverridden(instance, instance.javaTypeProperty())) {
                 return instance.javaVersionProperty().getValue();
             }
             return global.javaVersionProperty().getValue();
@@ -734,7 +955,7 @@ public sealed abstract class GameSetting extends ObservableSetting {
 
         /// Returns the effective custom Java executable path.
         public String getCustomJavaPath() {
-            if (instance != null && instance.javaTypeProperty().getValue() != null) {
+            if (instance != null && isOverridden(instance, instance.javaTypeProperty())) {
                 return Objects.requireNonNullElse(instance.customJavaPathProperty().getValue(), "");
             }
             return Objects.requireNonNullElse(global.customJavaPathProperty().getValue(), "");
@@ -742,7 +963,7 @@ public sealed abstract class GameSetting extends ObservableSetting {
 
         /// Returns the effective default Java executable path.
         public String getDefaultJavaPath() {
-            if (instance != null && instance.javaTypeProperty().getValue() != null) {
+            if (instance != null && isOverridden(instance, instance.javaTypeProperty())) {
                 return Objects.requireNonNullElse(instance.defaultJavaPathProperty().getValue(), "");
             }
             return Objects.requireNonNullElse(global.defaultJavaPathProperty().getValue(), "");
@@ -750,7 +971,7 @@ public sealed abstract class GameSetting extends ObservableSetting {
 
         /// Switches the effective Java selection back to automatic mode.
         public void setJavaAutoSelected() {
-            GameSetting target = instance != null && instance.javaTypeProperty().getValue() != null ? instance : global;
+            GameSetting target = instance != null && isOverridden(instance, instance.javaTypeProperty()) ? instance : global;
             target.javaTypeProperty().setValue(JavaVersionType.AUTO);
             target.javaVersionProperty().setValue("");
             target.customJavaPathProperty().setValue("");

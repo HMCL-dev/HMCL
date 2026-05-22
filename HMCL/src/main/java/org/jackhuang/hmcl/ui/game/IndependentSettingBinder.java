@@ -129,7 +129,6 @@ final class IndependentSettingBinder {
                 try {
                     if (isOverridden(setting, property)) {
                         setOverridden(setting, property, false);
-                        property.setValue(null);
                     } else {
                         property.setValue(empty(getEffectiveValue(setting, propertyGetter, parentGetter)));
                         setOverridden(setting, property, true);
@@ -217,7 +216,6 @@ final class IndependentSettingBinder {
                 try {
                     if (isOverridden(setting, property)) {
                         setOverridden(setting, property, false);
-                        property.setValue(null);
                     } else {
                         property.setValue(getEffectiveValue(setting, propertyGetter, parentGetter));
                         setOverridden(setting, property, true);
@@ -471,9 +469,9 @@ final class IndependentSettingBinder {
             updating.value = true;
             try {
                 boolean overridden = isOverridden(setting, property);
-                Boolean rawValue = overridden ? getDirectValue(property) : null;
                 Boolean effectiveValue = getEffectiveValue(setting, propertyGetter, parentGetter);
-                button.setRawValue(rawValue);
+                button.setRawValue(overridden ? getDirectValue(property) : Boolean.TRUE.equals(effectiveValue));
+                button.setOverridden(overridden);
                 button.setEffectiveValue(Boolean.TRUE.equals(effectiveValue));
             } finally {
                 updating.value = false;
@@ -489,12 +487,26 @@ final class IndependentSettingBinder {
 
             updating.value = true;
             try {
-                if (newValue == null) {
-                    setOverridden(setting, property, false);
-                    property.setValue(null);
-                } else {
-                    setOverridden(setting, property, true);
-                    property.setValue(newValue);
+                setOverridden(setting, property, true);
+                property.setValue(newValue);
+                button.setEffectiveValue(Boolean.TRUE.equals(getEffectiveValue(setting, propertyGetter, parentGetter)));
+            } finally {
+                updating.value = false;
+            }
+        });
+
+        button.overriddenProperty().addListener((observable, oldValue, newValue) -> {
+            GameSetting setting = currentSetting.get();
+            SettingProperty<Boolean> property = activeProperty.get();
+            if (setting == null || property == null || updating.value) {
+                return;
+            }
+
+            updating.value = true;
+            try {
+                setOverridden(setting, property, newValue);
+                if (newValue) {
+                    property.setValue(button.getRawValue());
                 }
                 button.setEffectiveValue(Boolean.TRUE.equals(getEffectiveValue(setting, propertyGetter, parentGetter)));
             } finally {
@@ -525,7 +537,8 @@ final class IndependentSettingBinder {
                 boolean overridden = isOverridden(setting, property);
                 NativesDirectoryType rawValue = getDirectValue(property);
                 NativesDirectoryType effectiveValue = getEffectiveValue(setting, GameSetting::nativesDirTypeProperty, parentGetter);
-                button.setRawValue(overridden ? rawValue == NativesDirectoryType.CUSTOM : null);
+                button.setRawValue((overridden ? rawValue : effectiveValue) == NativesDirectoryType.CUSTOM);
+                button.setOverridden(overridden);
                 button.setEffectiveValue(effectiveValue == NativesDirectoryType.CUSTOM);
             } finally {
                 updating.value = false;
@@ -541,12 +554,26 @@ final class IndependentSettingBinder {
 
             updating.value = true;
             try {
-                if (newValue == null) {
-                    setOverridden(setting, property, false);
-                    property.setValue(null);
-                } else {
-                    setOverridden(setting, property, true);
-                    property.setValue(newValue ? NativesDirectoryType.CUSTOM : NativesDirectoryType.VERSION_FOLDER);
+                setOverridden(setting, property, true);
+                property.setValue(newValue ? NativesDirectoryType.CUSTOM : NativesDirectoryType.VERSION_FOLDER);
+                button.setEffectiveValue(getEffectiveValue(setting, GameSetting::nativesDirTypeProperty, parentGetter) == NativesDirectoryType.CUSTOM);
+            } finally {
+                updating.value = false;
+            }
+        });
+
+        button.overriddenProperty().addListener((observable, oldValue, newValue) -> {
+            GameSetting setting = currentSetting.get();
+            SettingProperty<NativesDirectoryType> property = activeProperty.get();
+            if (setting == null || property == null || updating.value) {
+                return;
+            }
+
+            updating.value = true;
+            try {
+                setOverridden(setting, property, newValue);
+                if (newValue) {
+                    property.setValue(button.getRawValue() ? NativesDirectoryType.CUSTOM : NativesDirectoryType.VERSION_FOLDER);
                 }
                 button.setEffectiveValue(getEffectiveValue(setting, GameSetting::nativesDirTypeProperty, parentGetter) == NativesDirectoryType.CUSTOM);
             } finally {
@@ -649,7 +676,6 @@ final class IndependentSettingBinder {
 
         if (isOverridden(setting, property)) {
             setOverridden(setting, property, false);
-            property.setValue(null);
         } else {
             property.setValue(effectiveValueSupplier.get());
             setOverridden(setting, property, true);
