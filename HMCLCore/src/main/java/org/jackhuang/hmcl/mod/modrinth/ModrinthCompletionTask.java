@@ -23,6 +23,7 @@ import org.jackhuang.hmcl.mod.ModManager;
 import org.jackhuang.hmcl.mod.ModpackCompletionException;
 import org.jackhuang.hmcl.task.FileDownloadTask;
 import org.jackhuang.hmcl.task.Task;
+import org.jackhuang.hmcl.util.DigestUtils;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
 
@@ -115,7 +116,8 @@ public class ModrinthCompletionTask extends Task<Void> {
             if (!filePath.startsWith(runDirectory))
                 throw new IOException("Unsecure path: " + file.getPath());
 
-            if (Files.exists(filePath))
+            String sha1 = file.getHashes() != null ? file.getHashes().get("sha1") : null;
+            if (sha1 != null && Files.exists(filePath) && DigestUtils.digestToString("SHA-1", filePath).equalsIgnoreCase(sha1))
                 continue;
             if (modsDirectory.equals(filePath.getParent()) && this.modManager.hasSimpleMod(FileUtils.getName(filePath)))
                 continue;
