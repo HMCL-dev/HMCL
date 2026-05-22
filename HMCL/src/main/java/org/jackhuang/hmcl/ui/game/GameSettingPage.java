@@ -1100,7 +1100,9 @@ public final class GameSettingPage<S extends GameSetting> extends StackPane
             Property<String> textProperty,
             Function<GameSetting, InheritableProperty<String>> propertyGetter) {
         ObjectProperty<@Nullable InheritableProperty<String>> activeProperty = new SimpleObjectProperty<>();
+        ObjectProperty<@Nullable InheritableProperty<String>> activeParentProperty = new SimpleObjectProperty<>();
         final Holder<Boolean> updating = new Holder<>(false);
+        final Holder<InvalidationListener> refreshHolder = new Holder<>();
         @Nullable JFXButton inheritButton = null;
         if (!isGlobalSetting) {
             inheritButton = createInheritanceButton();
@@ -1110,6 +1112,7 @@ public final class GameSettingPage<S extends GameSetting> extends StackPane
 
         InvalidationListener refresh = observable -> {
             GameSetting setting = currentSetting.get();
+            updateParentInheritablePropertyListener(setting, activeParentProperty, propertyGetter, refreshHolder.value);
             InheritableProperty<String> property = activeProperty.get();
             if (setting == null || property == null || updating.value) {
                 return;
@@ -1125,6 +1128,7 @@ public final class GameSettingPage<S extends GameSetting> extends StackPane
                 updating.value = false;
             }
         };
+        refreshHolder.value = refresh;
 
         textProperty.addListener((observable, oldValue, newValue) -> {
             GameSetting setting = currentSetting.get();
@@ -1208,10 +1212,13 @@ public final class GameSettingPage<S extends GameSetting> extends StackPane
             Property<String> textProperty,
             Function<GameSetting, InheritableProperty<String>> propertyGetter) {
         ObjectProperty<@Nullable InheritableProperty<String>> activeProperty = new SimpleObjectProperty<>();
+        ObjectProperty<@Nullable InheritableProperty<String>> activeParentProperty = new SimpleObjectProperty<>();
         final Holder<Boolean> updating = new Holder<>(false);
+        final Holder<InvalidationListener> refreshHolder = new Holder<>();
 
         InvalidationListener refresh = observable -> {
             GameSetting setting = currentSetting.get();
+            updateParentInheritablePropertyListener(setting, activeParentProperty, propertyGetter, refreshHolder.value);
             InheritableProperty<String> property = activeProperty.get();
             if (setting == null || property == null || updating.value) {
                 return;
@@ -1224,6 +1231,7 @@ public final class GameSettingPage<S extends GameSetting> extends StackPane
                 updating.value = false;
             }
         };
+        refreshHolder.value = refresh;
 
         textProperty.addListener((observable, oldValue, newValue) -> {
             GameSetting setting = currentSetting.get();
@@ -1345,11 +1353,14 @@ public final class GameSettingPage<S extends GameSetting> extends StackPane
         }
 
         final Holder<Boolean> updating = new Holder<>(false);
+        ObjectProperty<@Nullable InheritableProperty<String>> activeParentProperty = new SimpleObjectProperty<>();
+        final Holder<InvalidationListener> refreshHolder = new Holder<>();
         JFXButton inheritButton = createInheritanceButton();
         line.setTitleTrailing(inheritButton);
 
         InvalidationListener refresh = observable -> {
             GameSetting setting = currentSetting.get();
+            updateParentInheritablePropertyListener(setting, activeParentProperty, GameSetting::runningDirProperty, refreshHolder.value);
             if (!(setting instanceof GameSetting.Instance instance) || updating.value) {
                 return;
             }
@@ -1374,6 +1385,7 @@ public final class GameSettingPage<S extends GameSetting> extends StackPane
                 updating.value = false;
             }
         };
+        refreshHolder.value = refresh;
 
         inheritButton.addEventFilter(MouseEvent.MOUSE_CLICKED, event -> {
             GameSetting setting = currentSetting.get();
@@ -1437,6 +1449,29 @@ public final class GameSettingPage<S extends GameSetting> extends StackPane
 
     private boolean isCurrentInstanceModpack() {
         return profile != null && instanceId != null && profile.getRepository().isModpack(instanceId);
+    }
+
+    /// Keeps a listener attached to the current instance's parent global property.
+    private <T> void updateParentInheritablePropertyListener(
+            @Nullable GameSetting setting,
+            ObjectProperty<@Nullable InheritableProperty<T>> activeParentProperty,
+            Function<GameSetting, InheritableProperty<T>> propertyGetter,
+            InvalidationListener listener) {
+        InheritableProperty<T> oldParentProperty = activeParentProperty.get();
+        InheritableProperty<T> newParentProperty = setting instanceof GameSetting.Instance instance
+                ? propertyGetter.apply(getParentGameSetting(instance))
+                : null;
+        if (oldParentProperty == newParentProperty) {
+            return;
+        }
+
+        if (oldParentProperty != null) {
+            oldParentProperty.removeListener(listener);
+        }
+        activeParentProperty.set(newParentProperty);
+        if (newParentProperty != null) {
+            newParentProperty.addListener(listener);
+        }
     }
 
     /// Binds a radio choice list to an inheritable setting property.

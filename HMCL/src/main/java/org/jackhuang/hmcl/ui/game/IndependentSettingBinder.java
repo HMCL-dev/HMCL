@@ -69,7 +69,9 @@ final class IndependentSettingBinder {
             BiConsumer<JFXButton, Boolean> inheritanceButtonUpdater,
             Function<GameSetting.Instance, GameSetting.Global> parentGetter) {
         ObjectProperty<@Nullable SettingProperty<String>> activeProperty = new SimpleObjectProperty<>();
+        ObjectProperty<@Nullable SettingProperty<String>> activeParentProperty = new SimpleObjectProperty<>();
         final Holder<Boolean> updating = new Holder<>(false);
+        final Holder<InvalidationListener> refreshHolder = new Holder<>();
         @Nullable JFXButton inheritButton;
         if (globalSetting) {
             inheritButton = null;
@@ -80,6 +82,7 @@ final class IndependentSettingBinder {
 
         InvalidationListener refresh = observable -> {
             GameSetting setting = currentSetting.get();
+            updateParentPropertyListener(setting, activeParentProperty, propertyGetter, parentGetter, refreshHolder.value);
             SettingProperty<String> property = activeProperty.get();
             if (setting == null || property == null || updating.value) {
                 return;
@@ -97,6 +100,7 @@ final class IndependentSettingBinder {
                 updating.value = false;
             }
         };
+        refreshHolder.value = refresh;
 
         textField.textProperty().addListener((observable, oldValue, newValue) -> {
             GameSetting setting = currentSetting.get();
@@ -773,5 +777,29 @@ final class IndependentSettingBinder {
         }
 
         return getDirectValue(property);
+    }
+
+    /// Keeps a listener attached to the current instance's parent global property.
+    private static <T> void updateParentPropertyListener(
+            @Nullable GameSetting setting,
+            ObjectProperty<@Nullable SettingProperty<T>> activeParentProperty,
+            Function<GameSetting, ? extends SettingProperty<T>> propertyGetter,
+            Function<GameSetting.Instance, GameSetting.Global> parentGetter,
+            InvalidationListener listener) {
+        SettingProperty<T> oldParentProperty = activeParentProperty.get();
+        SettingProperty<T> newParentProperty = setting instanceof GameSetting.Instance instance
+                ? propertyGetter.apply(parentGetter.apply(instance))
+                : null;
+        if (oldParentProperty == newParentProperty) {
+            return;
+        }
+
+        if (oldParentProperty != null) {
+            oldParentProperty.removeListener(listener);
+        }
+        activeParentProperty.set(newParentProperty);
+        if (newParentProperty != null) {
+            newParentProperty.addListener(listener);
+        }
     }
 }
