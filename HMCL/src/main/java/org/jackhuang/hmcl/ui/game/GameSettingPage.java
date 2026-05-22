@@ -1345,6 +1345,8 @@ public final class GameSettingPage<S extends GameSetting> extends StackPane
         }
 
         final Holder<Boolean> updating = new Holder<>(false);
+        JFXButton inheritButton = createInheritanceButton();
+        line.setTitleTrailing(inheritButton);
 
         InvalidationListener refresh = observable -> {
             GameSetting setting = currentSetting.get();
@@ -1366,10 +1368,33 @@ public final class GameSettingPage<S extends GameSetting> extends StackPane
 
                 textProperty.setValue(runningDirectory);
                 editor.setDisable(!useInstanceRunningDirectory);
+                updateInheritanceButton(inheritButton, !useInstanceRunningDirectory);
+                inheritButton.setDisable(isCurrentInstanceModpack());
             } finally {
                 updating.value = false;
             }
         };
+
+        inheritButton.addEventFilter(MouseEvent.MOUSE_CLICKED, event -> {
+            GameSetting setting = currentSetting.get();
+            if (!(setting instanceof GameSetting.Instance instance) || updating.value || isCurrentInstanceModpack()) {
+                return;
+            }
+
+            updating.value = true;
+            try {
+                if (instance.getOverrideProperties().contains(GameSetting.PROPERTY_RUNNING_DIR)) {
+                    instance.getOverrideProperties().remove(GameSetting.PROPERTY_RUNNING_DIR);
+                } else {
+                    instance.runningDirProperty().setValue("");
+                    instance.getOverrideProperties().add(GameSetting.PROPERTY_RUNNING_DIR);
+                }
+            } finally {
+                updating.value = false;
+            }
+            refresh.invalidated(instance);
+            event.consume();
+        });
 
         textProperty.addListener((observable, oldValue, newValue) -> {
             GameSetting setting = currentSetting.get();
