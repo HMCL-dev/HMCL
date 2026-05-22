@@ -31,6 +31,7 @@ import org.jackhuang.hmcl.mod.Modpack;
 import org.jackhuang.hmcl.mod.ModpackExportInfo;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.util.DigestUtils;
+import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.io.Zipper;
 import org.jackhuang.hmcl.mod.LocalModFile;
@@ -136,6 +137,7 @@ public class ModrinthModpackExportTask extends Task<Void> {
             Set<String> filesInManifest = new HashSet<>();
 
             String[] resourceDirs = {"resourcepacks", "shaderpacks", "mods"};
+            String fileApi = info.getFileApi() == null ? null : StringUtils.removeSuffix(info.getFileApi(), "/");
             for (String dir : resourceDirs) {
                 Path dirPath = runDirectory.resolve(dir);
                 if (Files.exists(dirPath)) {
@@ -150,6 +152,23 @@ public class ModrinthModpackExportTask extends Task<Void> {
                                     }
 
                                     ModrinthManifest.File fileEntry = tryGetRemoteFile(file, relativePath);
+                                    if (fileEntry == null && fileApi != null) {
+                                        Map<String, String> hashes = new HashMap<>();
+                                        hashes.put("sha1", DigestUtils.digestToString("SHA-1", file));
+                                        hashes.put("sha512", DigestUtils.digestToString("SHA-512", file));
+
+                                        long fileSize = Files.size(file);
+                                        if (fileSize > Integer.MAX_VALUE) {
+                                            LOG.warning("File " + relativePath + " is too large (size: " + fileSize + " bytes), precision may be lost when converting to int");
+                                        }
+                                        fileEntry = new ModrinthManifest.File(
+                                                relativePath,
+                                                hashes,
+                                                null,
+                                                Collections.singletonList(fileApi + "/" + relativePath),
+                                                (int) fileSize
+                                        );
+                                    }
                                     if (fileEntry != null) {
                                         files.add(fileEntry);
                                         filesInManifest.add(relativePath);
