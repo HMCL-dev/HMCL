@@ -17,11 +17,17 @@
  */
 package org.jackhuang.hmcl.util;
 
+import org.jackhuang.hmcl.util.gson.JsonUtils;
+import org.jetbrains.annotations.Contract;
+import org.jetbrains.annotations.Nullable;
+
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.util.*;
+import java.util.function.Predicate;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.regex.PatternSyntaxException;
 
 /**
  * @author huangyuhui
@@ -252,6 +258,18 @@ public final class StringUtils {
             if (lowerPattern.contains(target.toLowerCase(Locale.ROOT)))
                 return true;
         return false;
+    }
+
+    public static Predicate<@Nullable String> compileQuery(String queryString) throws PatternSyntaxException {
+        Predicate<@Nullable String> predicate;
+        if (queryString.startsWith("regex:")) {
+            Pattern pattern = Pattern.compile(queryString.substring("regex:".length()));
+            predicate = s -> s != null && pattern.matcher(s).find();
+        } else {
+            String lowerQueryString = queryString.toLowerCase(Locale.ROOT);
+            predicate = s -> s != null && s.toLowerCase(Locale.ROOT).contains(lowerQueryString);
+        }
+        return predicate;
     }
 
     public static boolean containsChinese(String str) {
@@ -588,6 +606,20 @@ public final class StringUtils {
                 return false;
         }
         return true;
+    }
+
+    /// Turns `List.of("a", "b", "c")` into `["a", "b", "c"]`
+    @Contract(pure = true)
+    public static String serializeStringList(List<String> list) {
+        if (list == null) return "[]";
+        return JsonUtils.UGLY_GSON.toJson(list.stream().filter(Objects::nonNull).toList(), JsonUtils.listTypeOf(String.class).getType());
+    }
+
+    /// Turns `["a", "b", "c"]` into `List.of("a", "b", "c")`
+    @Contract(pure = true)
+    public static List<String> deserializeStringList(String json) {
+        if (json == null || json.isBlank()) return List.of();
+        return JsonUtils.fromNonNullJson(json, JsonUtils.listTypeOf(String.class));
     }
 
     public static class LevCalculator {

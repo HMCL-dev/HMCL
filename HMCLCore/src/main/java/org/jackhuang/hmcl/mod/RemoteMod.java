@@ -21,6 +21,7 @@ import org.jackhuang.hmcl.download.DownloadProvider;
 import org.jackhuang.hmcl.mod.curse.CurseForgeRemoteModRepository;
 import org.jackhuang.hmcl.mod.modrinth.ModrinthRemoteModRepository;
 import org.jackhuang.hmcl.task.FileDownloadTask;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.time.Instant;
@@ -41,7 +42,7 @@ public final class RemoteMod {
         public Stream<RemoteMod.Version> loadVersions(RemoteModRepository modRepository, DownloadProvider downloadProvider) throws IOException {
             throw new IOException();
         }
-    });
+    }, RemoteModRepository.Type.MOD);
 
     private final String slug;
     private final String author;
@@ -51,8 +52,9 @@ public final class RemoteMod {
     private final String pageUrl;
     private final String iconUrl;
     private final IMod data;
+    private final RemoteModRepository.Type repoType;
 
-    public RemoteMod(String slug, String author, String title, String description, List<String> categories, String pageUrl, String iconUrl, IMod data) {
+    public RemoteMod(String slug, String author, String title, String description, List<String> categories, String pageUrl, String iconUrl, IMod data, RemoteModRepository.Type repoType) {
         this.slug = slug;
         this.author = author;
         this.title = title;
@@ -61,6 +63,7 @@ public final class RemoteMod {
         this.pageUrl = pageUrl;
         this.iconUrl = iconUrl;
         this.data = data;
+        this.repoType = repoType;
     }
 
     public String getSlug() {
@@ -93,6 +96,10 @@ public final class RemoteMod {
 
     public IMod getData() {
         return data;
+    }
+
+    public RemoteModRepository.Type getRepositoryType() {
+        return repoType;
     }
 
     public enum VersionType {
@@ -188,17 +195,56 @@ public final class RemoteMod {
     }
 
     public enum Type {
-        CURSEFORGE(CurseForgeRemoteModRepository.MODS),
-        MODRINTH(ModrinthRemoteModRepository.MODS);
+        CURSEFORGE(
+                CurseForgeRemoteModRepository.MODS,
+                CurseForgeRemoteModRepository.RESOURCE_PACKS,
+                CurseForgeRemoteModRepository.SHADERS,
+                CurseForgeRemoteModRepository.WORLDS,
+                CurseForgeRemoteModRepository.MODPACKS,
+                CurseForgeRemoteModRepository.CUSTOMIZATIONS
+        ),
+        MODRINTH(
+                ModrinthRemoteModRepository.MODS,
+                ModrinthRemoteModRepository.RESOURCE_PACKS,
+                ModrinthRemoteModRepository.SHADER_PACKS,
+                null,
+                ModrinthRemoteModRepository.MODPACKS,
+                null
+        );
 
-        private final RemoteModRepository remoteModRepository;
+        public final RemoteModRepository modRepo;
+        public final RemoteModRepository resourcePackRepo;
+        public final RemoteModRepository shaderPackRepo;
+        public final RemoteModRepository worldRepo;
+        public final RemoteModRepository modpackRepo;
+        public final RemoteModRepository customizationRepo;
 
-        public RemoteModRepository getRemoteModRepository() {
-            return this.remoteModRepository;
+        @Nullable
+        public RemoteModRepository getRepoForType(RemoteModRepository.Type type) {
+            return switch (type) {
+                case MOD -> modRepo;
+                case RESOURCE_PACK -> resourcePackRepo;
+                case SHADER_PACK -> shaderPackRepo;
+                case WORLD -> worldRepo;
+                case MODPACK -> modpackRepo;
+                case CUSTOMIZATION -> customizationRepo;
+            };
         }
 
-        Type(RemoteModRepository remoteModRepository) {
-            this.remoteModRepository = remoteModRepository;
+        Type(
+                RemoteModRepository modRepo,
+                RemoteModRepository resourcePackRepo,
+                RemoteModRepository shaderPackRepo,
+                RemoteModRepository worldRepo,
+                RemoteModRepository modpackRepo,
+                RemoteModRepository customizationRepo
+        ) {
+            this.modRepo = modRepo;
+            this.resourcePackRepo = resourcePackRepo;
+            this.shaderPackRepo = shaderPackRepo;
+            this.worldRepo = worldRepo;
+            this.modpackRepo = modpackRepo;
+            this.customizationRepo = customizationRepo;
         }
     }
 

@@ -5,6 +5,7 @@ hs_err_pid*
 *.hprof
 
 .gradle
+gradle.properties
 
 *.lck
 *.1
