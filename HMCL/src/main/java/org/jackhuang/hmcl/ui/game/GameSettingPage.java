@@ -1643,13 +1643,6 @@ public final class GameSettingPage<S extends GameSetting> extends StackPane
     }
 
     @SuppressWarnings("unchecked")
-    private <T> void bindInstanceSettingBidirectional(Property<T> property, Function<GameSetting.Instance, Property<T>> propertyGetter) {
-        assert !isGlobalSetting;
-
-        bindSettingBidirectional(property, (Function<S, Property<T>>) propertyGetter);
-    }
-
-    @SuppressWarnings("unchecked")
     private <T> void bindGlobalSettingBidirectional(Property<T> property, Function<GameSetting.Global, Property<T>> propertyGetter) {
         assert isGlobalSetting;
 
