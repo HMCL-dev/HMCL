@@ -17,11 +17,8 @@
  */
 package org.jackhuang.hmcl.setting;
 
-import com.google.gson.JsonDeserializationContext;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
-import com.google.gson.JsonParseException;
-import com.google.gson.JsonPrimitive;
 import com.google.gson.JsonSerializationContext;
 import com.google.gson.annotations.JsonAdapter;
 import com.google.gson.annotations.SerializedName;
@@ -36,6 +33,7 @@ import org.jackhuang.hmcl.setting.property.SimpleInheritableProperty;
 import org.jackhuang.hmcl.setting.property.SimpleSettingProperty;
 import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.StringUtils;
+import org.jackhuang.hmcl.util.gson.JsonSerializable;
 import org.jackhuang.hmcl.util.gson.ObservableSetting;
 import org.jackhuang.hmcl.util.platform.SystemInfo;
 import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
@@ -74,6 +72,7 @@ public sealed abstract class GameSetting extends ObservableSetting {
 
     /// Instance-specific game setting.
     @JsonAdapter(Instance.Adapter.class)
+    @JsonSerializable
     public static final class Instance extends GameSetting {
         /// Creates an empty instance setting.
         public Instance() {
@@ -131,19 +130,12 @@ public sealed abstract class GameSetting extends ObservableSetting {
                 }
                 return serialized;
             }
-
-            @Override
-            public Instance deserialize(JsonElement json, Type typeOfT, JsonDeserializationContext context)
-                    throws JsonParseException {
-                Instance setting = super.deserialize(json, typeOfT, context);
-                migrateLegacyRenderer(setting);
-                return setting;
-            }
         }
     }
 
     /// Reusable global game setting.
     @JsonAdapter(Global.Adapter.class)
+    @JsonSerializable
     public static final class Global extends GameSetting {
         /// Creates a global setting with generated identity.
         public Global() {
@@ -197,14 +189,6 @@ public sealed abstract class GameSetting extends ObservableSetting {
             @Override
             protected Global createInstance() {
                 return new Global();
-            }
-
-            @Override
-            public Global deserialize(JsonElement json, Type typeOfT, JsonDeserializationContext context)
-                    throws JsonParseException {
-                Global setting = super.deserialize(json, typeOfT, context);
-                migrateLegacyRenderer(setting);
-                return setting;
             }
         }
     }
@@ -473,9 +457,6 @@ public sealed abstract class GameSetting extends ObservableSetting {
         return graphicsBackend;
     }
 
-    /// Legacy property name for the renderer used by the game before OpenGL and Vulkan settings were split.
-    private static final String PROPERTY_LEGACY_RENDERER = "renderer";
-
     /// Property name for the OpenGL renderer.
     public static final String PROPERTY_OPENGL_RENDERER = "openGLRenderer";
 
@@ -720,59 +701,6 @@ public sealed abstract class GameSetting extends ObservableSetting {
             PROPERTY_USE_NATIVE_GLFW,
             PROPERTY_USE_NATIVE_OPENAL
     };
-
-    private static void migrateLegacyRenderer(@Nullable GameSetting setting) {
-        if (setting == null) {
-            return;
-        }
-
-        JsonElement legacyRenderer = setting.unknownFields.remove(PROPERTY_LEGACY_RENDERER);
-        if (legacyRenderer == null || legacyRenderer.isJsonNull()) {
-            return;
-        }
-
-        Renderer renderer = parseLegacyRenderer(legacyRenderer);
-        if (renderer != null) {
-            GraphicsAPI fallbackApi = setting.graphicsBackendProperty().getValue();
-            setRendererForApi(setting, renderer, fallbackApi);
-            markLegacyRendererOverride(setting, renderer, fallbackApi);
-        }
-    }
-
-    /// Marks renderer-related properties as overridden when migrating an instance-level legacy renderer.
-    private static void markLegacyRendererOverride(
-            GameSetting setting,
-            Renderer renderer,
-            @Nullable GraphicsAPI fallbackApi) {
-        if (!(setting instanceof Instance instance)) {
-            return;
-        }
-
-        instance.getOverrideProperties().add(PROPERTY_GRAPHICS_BACKEND);
-        if (renderer instanceof Renderer.Driver driver) {
-            instance.getOverrideProperties().add(rendererPropertyForApi(setting, driver.api()).getName());
-        } else if (fallbackApi == GraphicsAPI.OPENGL || fallbackApi == GraphicsAPI.VULKAN) {
-            instance.getOverrideProperties().add(rendererPropertyForApi(setting, fallbackApi).getName());
-        } else {
-            instance.getOverrideProperties().add(PROPERTY_OPENGL_RENDERER);
-            instance.getOverrideProperties().add(PROPERTY_VULKAN_RENDERER);
-        }
-    }
-
-    private static @Nullable Renderer parseLegacyRenderer(JsonElement element) {
-        if (element instanceof JsonPrimitive primitive && primitive.isString()) {
-            return Renderer.of(primitive.getAsString());
-        }
-
-        if (element.isJsonObject()) {
-            JsonElement name = element.getAsJsonObject().get("name");
-            if (name instanceof JsonPrimitive primitive && primitive.isString()) {
-                return Renderer.of(primitive.getAsString());
-            }
-        }
-
-        return null;
-    }
 
     static void setRendererForApi(GameSetting setting, Renderer renderer, @Nullable GraphicsAPI fallbackApi) {
         if (renderer instanceof Renderer.Driver driver) {
