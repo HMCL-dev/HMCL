@@ -58,8 +58,8 @@ import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 /// Page for managing global game setting presets.
 @NotNullByDefault
 public final class GlobalGameSettingListPage extends StackPane implements DecoratorPage {
-    /// The page title.
-    private static final String TITLE = "管理所有全局游戏设置"; // TODO: i18n
+    /// The page title translation key.
+    private static final String TITLE_KEY = "settings.type.global.manage_all";
 
     /// The selected setting supplier.
     private final Supplier<GameSetting.@Nullable Global> selectedSettingSupplier;
@@ -71,7 +71,7 @@ public final class GlobalGameSettingListPage extends StackPane implements Decora
     private final Consumer<GameSetting.Global> settingEditor;
 
     /// The page state.
-    private final ReadOnlyObjectWrapper<State> state = new ReadOnlyObjectWrapper<>(State.fromTitle(TITLE));
+    private final ReadOnlyObjectWrapper<State> state = new ReadOnlyObjectWrapper<>(State.fromTitle(i18n(TITLE_KEY)));
 
     /// The global setting list view.
     private final JFXListView<GameSetting.Global> listView = new JFXListView<>();
@@ -99,7 +99,7 @@ public final class GlobalGameSettingListPage extends StackPane implements Decora
         toolbar.setAlignment(Pos.CENTER_LEFT);
         toolbar.setPickOnBounds(false);
         toolbar.getChildren().setAll(ToolbarListPageSkin.createToolbarButton2(
-                "新建全局游戏设置", // TODO: i18n
+                i18n("settings.type.global.create"),
                 SVG.ADD,
                 this::createGlobalSetting));
         root.getContent().add(toolbar);
@@ -132,7 +132,7 @@ public final class GlobalGameSettingListPage extends StackPane implements Decora
 
     /// Creates a new global game setting and opens it in the editor.
     private void createGlobalSetting() {
-        Controllers.prompt("新建全局游戏设置", (name, handler) -> { // TODO: i18n
+        Controllers.prompt(i18n("settings.type.global.create"), (name, handler) -> {
             if (StringUtils.isBlank(name)) {
                 handler.reject(i18n("input.not_empty"));
                 return;
@@ -144,7 +144,7 @@ public final class GlobalGameSettingListPage extends StackPane implements Decora
             settingSelector.accept(setting);
             settingEditor.accept(setting);
             handler.resolve();
-        }, "新设置", new RequiredValidator()); // TODO: i18n
+        }, i18n("settings.type.global.new"), new RequiredValidator());
     }
 
     /// List cell for global game settings, matching the instance list row layout.
@@ -187,7 +187,7 @@ public final class GlobalGameSettingListPage extends StackPane implements Decora
 
             JFXButton editButton = FXUtils.newToggleButton4(SVG.EDIT, 20);
             editButton.setOnAction(event -> editCurrentItem());
-            FXUtils.installFastTooltip(editButton, "编辑全局游戏设置"); // TODO: i18n
+            FXUtils.installFastTooltip(editButton, i18n("settings.type.global.edit"));
             right.getChildren().add(editButton);
             root.setRight(right);
 

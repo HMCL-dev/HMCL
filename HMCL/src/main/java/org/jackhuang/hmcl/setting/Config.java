@@ -50,6 +50,8 @@ import java.net.Proxy;
 import java.nio.file.Path;
 import java.util.*;
 
+import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
+
 @JsonAdapter(value = Config.Adapter.class)
 public final class Config extends ObservableSetting {
 
@@ -884,7 +886,7 @@ public final class Config extends ObservableSetting {
         }
 
         setting = new GameSetting.Global();
-        setting.nameProperty().setValue("默认"); // TODO: i18n
+        setting.nameProperty().setValue(i18n("message.default"));
         gameSettings.add(setting);
         setDefaultGameSetting(setting.idProperty().getValue());
         return setting;

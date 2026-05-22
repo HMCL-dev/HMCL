@@ -82,8 +82,6 @@ import static org.jackhuang.hmcl.setting.ConfigHolder.config;
 public final class GameSettingPage<S extends GameSetting> extends StackPane
         implements DecoratorPage, VersionPage.VersionLoadable, PageAware {
 
-    private static final String I18N_INHERIT_GLOBAL_SETTING = "继承全局设置"; // TODO: i18n
-    private static final String I18N_OVERRIDE_GLOBAL_SETTING = "覆盖全局设置"; // TODO: i18n
     private static final Object INHERIT_BUTTON_TOOLTIP_KEY = new Object();
     private static final PseudoClass PSEUDO_OVERRIDDEN = PseudoClass.getPseudoClass("overridden");
     private static final String INHERIT_BUTTON_STYLE_CLASS = "toggle-icon-tiny";
@@ -148,11 +146,11 @@ public final class GameSettingPage<S extends GameSetting> extends StackPane
         var gameSettings = new ComponentList();
         var launcherSettings = new ComponentList();
         rootPane.getChildren().addAll(
-                ComponentList.createComponentListTitle("基本设置"), // TODO: i18n
+                ComponentList.createComponentListTitle(i18n("settings.game.section.basic")),
                 basicSettings,
-                ComponentList.createComponentListTitle("游戏设置"), // TODO: i18n
+                ComponentList.createComponentListTitle(i18n("settings.game.section.game")),
                 gameSettings,
-                ComponentList.createComponentListTitle("启动器设置"), // TODO: i18n
+                ComponentList.createComponentListTitle(i18n("settings.launcher")),
                 launcherSettings
         );
         {
@@ -168,8 +166,10 @@ public final class GameSettingPage<S extends GameSetting> extends StackPane
 
                 var parentGameSettingPane = new LineSelectButton<GameSetting.@Nullable Global>();
                 basicSettings.getContent().add(parentGameSettingPane);
-                parentGameSettingPane.setTitle("全局游戏设置"); // TODO: i18n
-                parentGameSettingPane.setConverter(setting -> setting != null ? setting.nameProperty().getValue() : "默认全局设置"); // TODO: i18n
+                parentGameSettingPane.setTitle(i18n("settings.type.global.manage"));
+                parentGameSettingPane.setConverter(setting -> setting != null
+                        ? setting.nameProperty().getValue()
+                        : i18n("settings.type.global.default"));
                 bindInstanceParentSetting(parentGameSettingPane);
             }
 
@@ -191,7 +191,7 @@ public final class GameSettingPage<S extends GameSetting> extends StackPane
                 javaCustomOption = new RadioChoiceList.FileChoice<@Nullable Pair<@Nullable JavaVersionType, @Nullable JavaRuntime>>(i18n("settings.custom"), pair(JavaVersionType.CUSTOM, null))
                         .setChooserTitle(i18n("settings.game.java_directory.choose"));
                 if (OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS)
-                    javaCustomOption.addExtensionFilter(new FileChooser.ExtensionFilter("Java", "java.exe")); // TODO: i18n
+                    javaCustomOption.addExtensionFilter(new FileChooser.ExtensionFilter(i18n("settings.game.java_directory"), "java.exe"));
 
                 holder.add(FXUtils.onWeakChangeAndOperate(JavaManager.getAllJavaProperty(), allJava -> {
                     var options = new ArrayList<RadioChoiceList.Choice<@Nullable Pair<@Nullable JavaVersionType, @Nullable JavaRuntime>>>();
@@ -294,20 +294,20 @@ public final class GameSettingPage<S extends GameSetting> extends StackPane
             if (isGlobalSetting) {
                 var defaultIsolationTypePane = new LineSelectButton<DefaultIsolationType>();
                 basicSettings.getContent().add(defaultIsolationTypePane);
-                defaultIsolationTypePane.setTitle("默认版本隔离策略"); // TODO: i18n
+                defaultIsolationTypePane.setTitle(i18n("settings.game.default_isolation"));
                 defaultIsolationTypePane.setItems(DefaultIsolationType.values());
                 defaultIsolationTypePane.setNullSafeConverter(type -> switch (type) {
-                    case NEVER -> "从不隔离"; // TODO: i18n
-                    case ALWAYS -> "总是隔离"; // TODO: i18n
-                    case MODED -> "仅隔离模组实例"; // TODO: i18n
-                }); // TODO: i18n
+                    case NEVER -> i18n("settings.game.default_isolation.never");
+                    case ALWAYS -> i18n("settings.game.default_isolation.always");
+                    case MODED -> i18n("settings.game.default_isolation.modded");
+                });
 
                 bindGlobalSettingBidirectional(defaultIsolationTypePane.valueProperty(), GameSetting.Global::defaultIsolationTypeProperty);
             } else {
                 var isolationButton = new LineToggleButton();
                 basicSettings.getContent().add(isolationButton);
-                isolationButton.setTitle("版本隔离"); // TODO: i18n
-                isolationButton.setSubtitle("启用后，当前实例将使用独立的游戏文件夹。"); // TODO: i18n
+                isolationButton.setTitle(i18n("settings.game.isolation"));
+                isolationButton.setSubtitle(i18n("settings.game.isolation.subtitle"));
                 bindInstanceIsolationButton(isolationButton);
             }
 
@@ -387,7 +387,7 @@ public final class GameSettingPage<S extends GameSetting> extends StackPane
             // Game Window Setting
             var windowTypeSublist = new ComponentSublist();
             gameSettings.getContent().add(windowTypeSublist);
-            windowTypeSublist.setTitle("游戏窗口类型"); // TODO: i18n
+            windowTypeSublist.setTitle(i18n("settings.game.window_type"));
             windowTypeSublist.setHasSubtitle(true);
             {
                 var windowTypeItem = new RadioChoiceList<GameWindowType>();
@@ -397,7 +397,7 @@ public final class GameSettingPage<S extends GameSetting> extends StackPane
                 var cboWindowSize = new JFXComboBox<String>();
                 cboWindowSize.setPrefWidth(150);
                 cboWindowSize.setEditable(true);
-                cboWindowSize.setPromptText("854x480"); // TODO: i18n
+                cboWindowSize.setPromptText("854x480");
                 cboWindowSize.getItems().setAll(getSupportedResolutions());
                 bindWindowSizeComboBox(cboWindowSize);
 
@@ -437,9 +437,10 @@ public final class GameSettingPage<S extends GameSetting> extends StackPane
             {
                 var quickPlayItem = new RadioChoiceList<QuickPlayType>();
 
-                var noneOption = new RadioChoiceList.Choice<>("无", QuickPlayType.NONE); // TODO: i18n
+                var noneOption = new RadioChoiceList.Choice<>(i18n("settings.game.quick_play.none"), QuickPlayType.NONE);
 
-                var multiplayerOption = new RadioChoiceList.TextChoice<>("多人联机", QuickPlayType.MULTIPLAYER); // TODO: i18n
+                var multiplayerOption = new RadioChoiceList.TextChoice<>(
+                        i18n("settings.game.quick_play.multiplayer"), QuickPlayType.MULTIPLAYER);
                 multiplayerOption.setValidators(new Validator(str -> {
                     if (StringUtils.isBlank(str))
                         return true;
@@ -451,14 +452,16 @@ public final class GameSettingPage<S extends GameSetting> extends StackPane
                     }
                 }));
 
-                var singleplayerOption = new RadioChoiceList.TextChoice<>("单人游戏", QuickPlayType.SINGLEPLAYER); // TODO: i18n
+                var singleplayerOption = new RadioChoiceList.TextChoice<>(
+                        i18n("settings.game.quick_play.singleplayer"), QuickPlayType.SINGLEPLAYER);
                 singleplayerOption.setValidators(new Validator(str -> {
                     if (StringUtils.isBlank(str))
                         return true;
                     return FileUtils.isNameValid(str);
                 }));
 
-                var realmsOption = new RadioChoiceList.TextChoice<>("领域服", QuickPlayType.REALMS); // TODO: i18n
+                var realmsOption = new RadioChoiceList.TextChoice<>(
+                        i18n("settings.game.quick_play.realms"), QuickPlayType.REALMS);
 
                 quickPlayItem.setFallbackValue(QuickPlayType.NONE);
                 quickPlayItem.setChoices(List.of(
@@ -475,14 +478,14 @@ public final class GameSettingPage<S extends GameSetting> extends StackPane
                 quickSublist.getContent().setAll(quickPlayItem);
             }
             gameSettings.getContent().add(quickSublist);
-            quickSublist.setTitle("快速游玩"); // TODO: i18n
-            quickSublist.setSubtitle("启动游戏后直接进入指定服务器或世界"); // TODO: i18n
+            quickSublist.setTitle(i18n("settings.game.quick_play"));
+            quickSublist.setSubtitle(i18n("settings.game.quick_play.subtitle"));
             quickSublist.setHasSubtitle(true);
 
             var advancedLaunchSublist = new ComponentSublist(() -> {
                 var runningDirPane = new LinePane();
-                runningDirPane.setTitle("游戏运行路径"); // TODO: i18n
-                runningDirPane.setSubtitle("留空则使用默认游戏文件夹，启用版本隔离时使用实例路径"); // TODO: i18n
+                runningDirPane.setTitle(i18n("settings.game.running_directory"));
+                runningDirPane.setSubtitle(i18n("settings.game.running_directory.subtitle"));
                 {
                     var runningDirSelector = new FileSelector()
                             .setChooserTitle(i18n("settings.game.working_directory.choose"))
@@ -503,8 +506,8 @@ public final class GameSettingPage<S extends GameSetting> extends StackPane
                 }
 
                 var environmentVariablesPane = new LinePane();
-                environmentVariablesPane.setTitle("环境变量"); // TODO: i18n
-                environmentVariablesPane.setSubtitle("传递给游戏进程的键值对"); // TODO: i18n
+                environmentVariablesPane.setTitle(i18n("settings.advanced.environment_variables"));
+                environmentVariablesPane.setSubtitle(i18n("settings.advanced.environment_variables.subtitle"));
                 {
                     var txtEnvironmentVariables = new JFXTextField();
                     txtEnvironmentVariables.setPrefWidth(400);
@@ -526,14 +529,14 @@ public final class GameSettingPage<S extends GameSetting> extends StackPane
                 return List.of(runningDirPane, gameArgsPane, environmentVariablesPane, processPriorityPane);
             });
             gameSettings.getContent().add(advancedLaunchSublist);
-            advancedLaunchSublist.setTitle("高级选项"); // TODO: i18n
-            advancedLaunchSublist.setSubtitle("运行路径、游戏参数、环境变量与进程优先级"); // TODO: i18n
+            advancedLaunchSublist.setTitle(i18n("settings.advanced.launch_options"));
+            advancedLaunchSublist.setSubtitle(i18n("settings.advanced.launch_options.subtitle"));
             advancedLaunchSublist.setHasSubtitle(true);
         }
 
         var jvmSettings = new ComponentList();
         rootPane.getChildren().addAll(
-                ComponentList.createComponentListTitle("JVM 选项"), // TODO: i18n
+                ComponentList.createComponentListTitle(i18n("settings.advanced.jvm")),
                 jvmSettings
         );
         {
@@ -567,7 +570,7 @@ public final class GameSettingPage<S extends GameSetting> extends StackPane
                 {
                     var txtMinMemory = new JFXTextField();
                     txtMinMemory.setPrefWidth(160);
-                    minMemoryPane.setRight(new HBox(8, txtMinMemory, new Label("MiB"))); // TODO: i18n
+                    minMemoryPane.setRight(new HBox(8, txtMinMemory, new Label(i18n("settings.memory.unit.mib"))));
                     bindIndependentIntegerTextField(minMemoryPane, txtMinMemory, GameSetting::minMemoryProperty);
                 }
 
@@ -577,16 +580,16 @@ public final class GameSettingPage<S extends GameSetting> extends StackPane
                     var txtMetaspace = new JFXTextField();
                     txtMetaspace.setPromptText(i18n("settings.advanced.java_permanent_generation_space.prompt"));
                     txtMetaspace.setPrefWidth(160);
-                    metaspacePane.setRight(new HBox(8, txtMetaspace, new Label("MiB"))); // TODO: i18n
+                    metaspacePane.setRight(new HBox(8, txtMetaspace, new Label(i18n("settings.memory.unit.mib"))));
                     bindIndependentTextField(metaspacePane, txtMetaspace, GameSetting::permSizeProperty);
                 }
 
                 return List.of(minMemoryPane, metaspacePane);
             });
             jvmSettings.getContent().add(deprecatedJvmMemorySettings);
-            deprecatedJvmMemorySettings.setTitle("已弃用的 JVM 内存选项"); // TODO: i18n
+            deprecatedJvmMemorySettings.setTitle(i18n("settings.advanced.jvm_memory.deprecated"));
             deprecatedJvmMemorySettings.setHasSubtitle(true);
-            deprecatedJvmMemorySettings.setSubtitle("这些选项只为兼容旧版本保留"); // TODO: i18n
+            deprecatedJvmMemorySettings.setSubtitle(i18n("settings.advanced.jvm_memory.deprecated.subtitle"));
         }
 
         var customCommandSettings = new ComponentList();
@@ -631,7 +634,7 @@ public final class GameSettingPage<S extends GameSetting> extends StackPane
 
         var graphicsSettings = new ComponentList();
         rootPane.getChildren().addAll(
-                ComponentList.createComponentListTitle("图形设置"), // TODO: i18n
+                ComponentList.createComponentListTitle(i18n("settings.advanced.graphics")),
                 graphicsSettings
         );
         {
@@ -656,7 +659,7 @@ public final class GameSettingPage<S extends GameSetting> extends StackPane
                     },
                     Renderer.getSupported(GraphicsAPI.OPENGL).toArray(Renderer[]::new));
             graphicsSettings.getContent().add(openGLRendererPane);
-            openGLRendererPane.setTitle("OpenGL 渲染器/驱动"); // TODO: i18n
+            openGLRendererPane.setTitle(i18n("settings.advanced.renderer.opengl"));
 
             var vulkanRendererPane = createInheritableButton(
                     GameSetting::vulkanRendererProperty,
@@ -667,13 +670,13 @@ public final class GameSettingPage<S extends GameSetting> extends StackPane
                     },
                     Renderer.getSupported(GraphicsAPI.VULKAN).toArray(Renderer[]::new));
             graphicsSettings.getContent().add(vulkanRendererPane);
-            vulkanRendererPane.setTitle("Vulkan 渲染器/驱动"); // TODO: i18n
+            vulkanRendererPane.setTitle(i18n("settings.advanced.renderer.vulkan"));
 
         }
 
         var nativeLibrarySettings = new ComponentList();
         rootPane.getChildren().addAll(
-                ComponentList.createComponentListTitle("本机库设置"), // TODO: i18n
+                ComponentList.createComponentListTitle(i18n("settings.advanced.natives_settings")),
                 nativeLibrarySettings
         );
         {
@@ -717,7 +720,7 @@ public final class GameSettingPage<S extends GameSetting> extends StackPane
 
     private void createGlobalSettingListButton(ComponentList list) {
         var listButton = LineButton.createNavigationButton();
-        listButton.setTitle("管理所有全局游戏设置"); // TODO: i18n
+        listButton.setTitle(i18n("settings.type.global.manage_all"));
         listButton.setOnAction(event -> {
             var transition = new PauseTransition(Duration.millis(120));
             transition.setOnFinished(ignored -> Controllers.navigateForward(new GlobalGameSettingListPage(
@@ -996,7 +999,9 @@ public final class GameSettingPage<S extends GameSetting> extends StackPane
 
         Object tooltip = button.getProperties().get(INHERIT_BUTTON_TOOLTIP_KEY);
         if (tooltip instanceof Tooltip inheritTooltip) {
-            inheritTooltip.setText(inherited ? I18N_INHERIT_GLOBAL_SETTING : I18N_OVERRIDE_GLOBAL_SETTING);
+            inheritTooltip.setText(i18n(inherited
+                    ? "settings.game.inherit_global"
+                    : "settings.game.override_global"));
         }
     }
 
@@ -1335,9 +1340,9 @@ public final class GameSettingPage<S extends GameSetting> extends StackPane
 
     private static String getWindowTypeDisplayName(GameWindowType type) {
         return switch (type) {
-            case FULLSCREEN -> "全屏"; // TODO: i18n
-            case MAXIMIZED -> "最大化"; // TODO: i18n
-            case WINDOWED -> "窗口化"; // TODO: i18n
+            case FULLSCREEN -> i18n("settings.game.window_type.fullscreen");
+            case MAXIMIZED -> i18n("settings.game.window_type.maximized");
+            case WINDOWED -> i18n("settings.game.window_type.windowed");
         };
     }
 
@@ -1351,7 +1356,7 @@ public final class GameSettingPage<S extends GameSetting> extends StackPane
                 JFXSlider maxMemorySlider,
                 JFXTextField maxMemoryTextField,
                 @Nullable JFXButton inheritButton) {
-            super("手动选择内存", false); // TODO: i18n
+            super(i18n("settings.memory.manual_allocate"), false);
             this.rightNode = new HBox(8);
             rightNode.setAlignment(Pos.CENTER_RIGHT);
             if (inheritButton != null) {
@@ -1408,10 +1413,10 @@ public final class GameSettingPage<S extends GameSetting> extends StackPane
     private LineInheritableToggleButton createIndependentBooleanButton(
             Function<GameSetting, SettingProperty<Boolean>> propertyGetter) {
         var button = new LineInheritableToggleButton();
-        button.setInheritedText("继承"); // TODO: i18n
-        button.setOverriddenText("覆盖"); // TODO: i18n
-        button.setInheritTooltip(I18N_INHERIT_GLOBAL_SETTING);
-        button.setOverriddenTooltip(I18N_OVERRIDE_GLOBAL_SETTING);
+        button.setInheritedText(i18n("settings.game.inherit"));
+        button.setOverriddenText(i18n("settings.game.override"));
+        button.setInheritTooltip(i18n("settings.game.inherit_global"));
+        button.setOverriddenTooltip(i18n("settings.game.override_global"));
         button.setInheritAvailable(!isGlobalSetting);
 
         IndependentSettingBinder.bindToggleButton(currentSetting, button, propertyGetter, this::getParentGameSetting);
@@ -1421,10 +1426,10 @@ public final class GameSettingPage<S extends GameSetting> extends StackPane
     /// Creates the native directory mode editor with independent override state.
     private LineInheritableToggleButton createIndependentNativesDirTypeButton() {
         var button = new LineInheritableToggleButton();
-        button.setInheritedText("继承"); // TODO: i18n
-        button.setOverriddenText("覆盖"); // TODO: i18n
-        button.setInheritTooltip(I18N_INHERIT_GLOBAL_SETTING);
-        button.setOverriddenTooltip(I18N_OVERRIDE_GLOBAL_SETTING);
+        button.setInheritedText(i18n("settings.game.inherit"));
+        button.setOverriddenText(i18n("settings.game.override"));
+        button.setInheritTooltip(i18n("settings.game.inherit_global"));
+        button.setOverriddenTooltip(i18n("settings.game.override_global"));
         button.setInheritAvailable(!isGlobalSetting);
 
         IndependentSettingBinder.bindNativesDirTypeButton(currentSetting, button, this::getParentGameSetting);
@@ -1435,10 +1440,10 @@ public final class GameSettingPage<S extends GameSetting> extends StackPane
     private LineInheritableToggleButton createInheritableBooleanButton(
             Function<GameSetting, InheritableProperty<Boolean>> propertyGetter) {
         var button = new LineInheritableToggleButton();
-        button.setInheritedText("继承"); // TODO: i18n
-        button.setOverriddenText("覆盖"); // TODO: i18n
-        button.setInheritTooltip(I18N_INHERIT_GLOBAL_SETTING);
-        button.setOverriddenTooltip(I18N_OVERRIDE_GLOBAL_SETTING);
+        button.setInheritedText(i18n("settings.game.inherit"));
+        button.setOverriddenText(i18n("settings.game.override"));
+        button.setInheritTooltip(i18n("settings.game.inherit_global"));
+        button.setOverriddenTooltip(i18n("settings.game.override_global"));
         button.setInheritAvailable(!isGlobalSetting);
 
         bindEffectiveInheritableToggleButton(button, propertyGetter);
