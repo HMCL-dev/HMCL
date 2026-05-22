@@ -12,13 +12,14 @@ Migrate game settings from the old JSON format to the new `GameSetting` model. G
   - Add a migration-only `legacyGameSettingParent` field to `Profile` to record the global setting UUID converted from that profile's old global setting.
   - Resolve `GameSetting.Instance.parent` as follows: explicit instance parent first, then `Config.defaultGameSetting`; during migration only, an unsaved converted old instance may use `Profile.legacyGameSettingParent`.
 - Implement compatibility migration:
-  - If the new global settings list is absent, convert each old `Profile.global` into one `GameSetting.Global`, name it from the profile display name, and write the UUID into `legacyGameSettingParent`.
+  - If the new global settings list is absent, convert each old `Profile.global` into one `GameSetting.Global`, name it from the profile display name, generate a deterministic UUID from the legacy profile key, and write that UUID into `legacyGameSettingParent`.
+  - If a deterministic migration UUID is already occupied by another global setting, fall back to a newly generated unique random UUID for that migrated setting.
   - Load instance settings from `hmcl-game-setting.cfg` first. If missing, convert old `hmclversion.cfg` into a transient `GameSetting.Instance`.
   - Do not rewrite old config files. Create `hmcl-game-setting.cfg` only after the user changes instance settings or the repository explicitly saves the new instance setting.
   - If multiple old profiles share the same physical instance with different legacy parents, the first saved new instance setting wins; later conflicts should only be logged.
 - Define effective setting resolution:
-  - Memory settings are overridden as a group.
-  - `jvmOptions`, `gameArgs`, and `environmentVariables` merge when inherited, with global values first and instance values second.
+  - Memory settings are inherited or overridden as a group.
+  - `jvmOptions`, `gameArgs`, and `environmentVariables` are inherited or overridden as complete values. They do not merge global and instance text.
   - `commandWrapper`, `preLaunchCommand`, and `postExitCommand` inherit per field and do not merge.
   - Java, window, Quick Play, logging, renderer, native library, and check-related options inherit per field.
   - `GameWindowType.MAXIMIZED` is saved and displayed only; launching should currently treat it like a normal windowed launch.
@@ -33,12 +34,12 @@ Migrate game settings from the old JSON format to the new `GameSetting` model. G
 ## Test Plan
 
 - Run IDEA build and `./gradlew -g .gradle-user-home compileJava test`.
-- Add unit tests for old JSON to `GameSetting` conversion, parent fallback, merged field order, and old-file preservation.
+- Add unit tests for old JSON to `GameSetting` conversion, deterministic migration UUIDs, parent fallback, override behavior, and old-file preservation.
 - Verify these integration scenarios:
   - A launcher with only old config starts, opens settings, and creates the global setting list plus migration UUIDs.
   - Editing an instance creates only `hmcl-game-setting.cfg` and does not modify `hmclversion.cfg`.
   - Different instance parent UUIDs produce different effective launch options.
-  - JVM options, game arguments, and environment variables merge in the intended order.
+  - JVM options, game arguments, and environment variables inherit from the selected global setting unless the instance explicitly overrides them.
   - Quick Play creates the correct `QuickPlayOption` for multiplayer, singleplayer, and realms.
 
 ## Assumptions
