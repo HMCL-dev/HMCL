@@ -17,9 +17,6 @@
  */
 package org.jackhuang.hmcl.setting;
 
-import com.google.gson.JsonElement;
-import com.google.gson.JsonObject;
-import com.google.gson.JsonSerializationContext;
 import com.google.gson.annotations.JsonAdapter;
 import com.google.gson.annotations.SerializedName;
 import javafx.collections.FXCollections;
@@ -39,11 +36,9 @@ import org.jackhuang.hmcl.util.platform.SystemInfo;
 import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.Unmodifiable;
 import org.jetbrains.annotations.UnknownNullability;
 
 import java.io.IOException;
-import java.lang.reflect.Type;
 import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
 import java.util.Collection;
@@ -111,24 +106,6 @@ public sealed abstract class GameSetting extends ObservableSetting {
             @Override
             protected Instance createInstance() {
                 return new Instance();
-            }
-
-            @Override
-            public JsonElement serialize(Instance setting, Type typeOfSrc, JsonSerializationContext context) {
-                JsonElement serialized = super.serialize(setting, typeOfSrc, context);
-                if (serialized instanceof JsonObject object) {
-                    for (String propertyName : OVERRIDABLE_PROPERTY_NAMES) {
-                        if (!setting.getOverrideProperties().contains(propertyName)) {
-                            object.remove(propertyName);
-                        }
-                    }
-                    if (!setting.getOverrideProperties().contains(PROPERTY_JAVA_TYPE)) {
-                        object.remove("javaVersion");
-                        object.remove("customJavaPath");
-                        object.remove("defaultJavaPath");
-                    }
-                }
-                return serialized;
             }
         }
     }
@@ -662,45 +639,6 @@ public sealed abstract class GameSetting extends ObservableSetting {
     public SettingProperty<Boolean> useNativeOpenALProperty() {
         return useNativeOpenAL;
     }
-
-    /// Property names whose instance override state is stored in `Instance.overrideProperties`.
-    private static final String @Unmodifiable [] OVERRIDABLE_PROPERTY_NAMES = {
-            PROPERTY_JAVA_TYPE,
-            PROPERTY_JVM_OPTIONS,
-            PROPERTY_NO_JVM_OPTIONS,
-            PROPERTY_NO_OPTIMIZING_JVM_OPTIONS,
-            PROPERTY_NOT_CHECK_JVM,
-            PROPERTY_NOT_CHECK_GAME,
-            PROPERTY_AUTO_MEMORY,
-            PROPERTY_MIN_MEMORY,
-            PROPERTY_MAX_MEMORY,
-            PROPERTY_PERM_SIZE,
-            PROPERTY_WINDOW_TYPE,
-            PROPERTY_WIDTH,
-            PROPERTY_HEIGHT,
-            PROPERTY_RUNNING_DIR,
-            PROPERTY_PROCESS_PRIORITY,
-            PROPERTY_LAUNCHER_VISIBILITY,
-            PROPERTY_GAME_ARGS,
-            PROPERTY_GRAPHICS_BACKEND,
-            PROPERTY_OPENGL_RENDERER,
-            PROPERTY_VULKAN_RENDERER,
-            PROPERTY_ENVIRONMENT_VARIABLES,
-            PROPERTY_COMMAND_WRAPPER,
-            PROPERTY_PRE_LAUNCH_COMMAND,
-            PROPERTY_POST_EXIT_COMMAND,
-            PROPERTY_QUICK_PLAY,
-            PROPERTY_QUICK_PLAY_MULTIPLAYER,
-            PROPERTY_QUICK_PLAY_SINGLEPLAYER,
-            PROPERTY_QUICK_PLAY_REALMS,
-            PROPERTY_SHOW_LOGS,
-            PROPERTY_ENABLE_DEBUG_LOG_OUTPUT,
-            PROPERTY_NOT_PATCH_NATIVES,
-            PROPERTY_NATIVES_DIR_TYPE,
-            PROPERTY_NATIVES_DIR,
-            PROPERTY_USE_NATIVE_GLFW,
-            PROPERTY_USE_NATIVE_OPENAL
-    };
 
     static void setRendererForApi(GameSetting setting, Renderer renderer, @Nullable GraphicsAPI fallbackApi) {
         if (renderer instanceof Renderer.Driver driver) {
