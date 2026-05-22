@@ -37,8 +37,9 @@ public class ModrinthManifest implements ModpackManifest, Validation {
     private final @Nullable String summary;
     private final List<File> files;
     private final Map<String, String> dependencies;
+    private final @Nullable String fileApi;
 
-    public ModrinthManifest(String game, int formatVersion, String versionId, String name, @Nullable String summary, List<File> files, Map<String, String> dependencies) {
+    public ModrinthManifest(String game, int formatVersion, String versionId, String name, @Nullable String summary, List<File> files, Map<String, String> dependencies, @Nullable String fileApi) {
         this.game = game;
         this.formatVersion = formatVersion;
         this.versionId = versionId;
@@ -46,6 +47,11 @@ public class ModrinthManifest implements ModpackManifest, Validation {
         this.summary = summary;
         this.files = files;
         this.dependencies = dependencies;
+        this.fileApi = fileApi;
+    }
+
+    public ModrinthManifest(String game, int formatVersion, String versionId, String name, @Nullable String summary, List<File> files, Map<String, String> dependencies) {
+        this(game, formatVersion, versionId, name, summary, files, dependencies, null);
     }
 
     public String getGame() {
@@ -78,6 +84,11 @@ public class ModrinthManifest implements ModpackManifest, Validation {
 
     public String getGameVersion() {
         return dependencies.get("minecraft");
+    }
+
+    @Nullable
+    public String getFileApi() {
+        return fileApi;
     }
 
     @Override

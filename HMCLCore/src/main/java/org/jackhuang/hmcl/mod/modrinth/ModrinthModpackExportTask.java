@@ -211,7 +211,8 @@ public class ModrinthModpackExportTask extends Task<Void> {
                     info.getName(),
                     info.getDescription(),
                     files,
-                    dependencies
+                    dependencies,
+                    fileApi
             );
 
             zip.putTextFile(JsonUtils.GSON.toJson(manifest), "modrinth.index.json");
@@ -219,6 +220,7 @@ public class ModrinthModpackExportTask extends Task<Void> {
     }
 
     public static final ModpackExportInfo.Options OPTION = new ModpackExportInfo.Options()
+            .requireFileApi(true)
             .requireNoCreateRemoteFiles()
             .requireSkipCurseForgeRemoteFiles();
 }
