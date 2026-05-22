@@ -70,8 +70,6 @@ public final class HMCLGameRepository extends DefaultGameRepository {
 
     // local game settings
     private final Map<String, GameSetting.Instance> localGameSettings = new HashMap<>();
-    private final Set<String> loadedLocalGameSettings = new HashSet<>();
-    private final Set<String> migratedLocalGameSettings = new HashSet<>();
     private final Set<String> beingModpackVersions = new HashSet<>();
 
     public final EventManager<Event> onVersionIconChanged = new EventManager<>();
@@ -153,8 +151,6 @@ public final class HMCLGameRepository extends DefaultGameRepository {
     @Override
     protected void refreshVersionsImpl() {
         localGameSettings.clear();
-        loadedLocalGameSettings.clear();
-        migratedLocalGameSettings.clear();
         super.refreshVersionsImpl();
         versions.keySet().forEach(this::loadLocalGameSetting);
 
@@ -257,7 +253,6 @@ public final class HMCLGameRepository extends DefaultGameRepository {
 
                 if (gameSetting != null) {
                     initLocalGameSetting(id, gameSetting);
-                    loadedLocalGameSettings.add(id);
                 }
                 return;
             } catch (Exception ex) {
@@ -268,13 +263,13 @@ public final class HMCLGameRepository extends DefaultGameRepository {
         GameSetting.Instance legacySetting = loadLegacyGameSetting(id);
         if (legacySetting != null) {
             initLocalGameSetting(id, legacySetting);
-            migratedLocalGameSettings.add(id);
+            saveGameSetting(id);
         } else if (isLegacyProfileAlwaysIsolated()) {
             GameSetting.Instance setting = new GameSetting.Instance();
             setting.parentProperty().setValue(profile.getLegacyGameSettingParent());
             setting.getOverrideProperties().add(GameSetting.PROPERTY_RUNNING_DIR);
             initLocalGameSetting(id, setting);
-            migratedLocalGameSettings.add(id);
+            saveGameSetting(id);
         }
     }
 
@@ -488,14 +483,7 @@ public final class HMCLGameRepository extends DefaultGameRepository {
             LOG.warning("Failed to create directory: " + file.getParent(), e);
         }
 
-        if (migratedLocalGameSettings.contains(id) && !loadedLocalGameSettings.contains(id) && Files.exists(file)) {
-            LOG.warning("Skipped saving migrated game setting because the new setting file already exists: " + file);
-            return;
-        }
-
         FileSaver.save(file, Config.CONFIG_GSON.toJson(localGameSettings.get(id)));
-        loadedLocalGameSettings.add(id);
-        migratedLocalGameSettings.remove(id);
     }
 
     public LaunchOptions.Builder getLaunchOptions(String version, JavaRuntime javaVersion, Path gameDir, List<String> javaAgents, List<String> javaArguments, boolean makeLaunchScript) {
