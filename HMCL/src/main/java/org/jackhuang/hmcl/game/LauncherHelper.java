@@ -34,6 +34,7 @@ import org.jackhuang.hmcl.launch.*;
 import org.jackhuang.hmcl.mod.ModpackCompletionException;
 import org.jackhuang.hmcl.mod.ModpackConfiguration;
 import org.jackhuang.hmcl.mod.ModpackProvider;
+import org.jackhuang.hmcl.mod.ModpackUpdateRequiredException;
 import org.jackhuang.hmcl.setting.*;
 import org.jackhuang.hmcl.task.*;
 import org.jackhuang.hmcl.ui.*;
@@ -299,6 +300,17 @@ public final class LauncherHelper {
                                         message = i18n("modpack.type.curse.not_found");
                                     else
                                         message = i18n("modpack.type.curse.error");
+                                } else if (ex instanceof ModpackUpdateRequiredException updateEx) {
+                                    Controllers.confirm(i18n("modpack.update.found", updateEx.getVersionId()), i18n("modpack.update"), MessageType.QUESTION, () -> {
+                                        try {
+                                            ModpackConfiguration<?> config = ModpackHelper.readModpackConfiguration(profile.getRepository().getModpackConfiguration(selectedVersion));
+                                            Task<?> updateTask = ModpackHelper.getUpdateTask(profile, updateEx.getModpackFile(), java.nio.charset.StandardCharsets.UTF_8, selectedVersion, config);
+                                            Controllers.taskDialog(updateTask, i18n("modpack.update"), TaskCancellationAction.NORMAL);
+                                        } catch (Exception e) {
+                                            Controllers.dialog(StringUtils.getStackTrace(e), i18n("message.error"), MessageType.ERROR);
+                                        }
+                                    }, null);
+                                    return;
                                 } else if (ex instanceof PermissionException) {
                                     message = i18n("launch.failed.executable_permission");
                                 } else if (ex instanceof ProcessCreationException) {

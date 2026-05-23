@@ -21,11 +21,16 @@ import org.jackhuang.hmcl.download.DefaultDependencyManager;
 import org.jackhuang.hmcl.game.DefaultGameRepository;
 import org.jackhuang.hmcl.mod.ModManager;
 import org.jackhuang.hmcl.mod.ModpackCompletionException;
+import org.jackhuang.hmcl.mod.ModpackUpdateRequiredException;
+import org.jackhuang.hmcl.task.CacheFileTask;
 import org.jackhuang.hmcl.task.FileDownloadTask;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.util.DigestUtils;
+import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
+import org.jackhuang.hmcl.util.io.CompressingUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
+import org.jackhuang.hmcl.util.versioning.VersionNumber;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -52,23 +57,12 @@ public class ModrinthCompletionTask extends Task<Void> {
     private final AtomicInteger finished = new AtomicInteger(0);
     private final AtomicBoolean notFound = new AtomicBoolean(false);
 
-    /**
-     * Constructor.
-     *
-     * @param dependencyManager the dependency manager.
-     * @param version           the existent and physical version.
-     */
+    private CacheFileTask downloadServerMrpackTask;
+
     public ModrinthCompletionTask(DefaultDependencyManager dependencyManager, String version) {
         this(dependencyManager, version, null);
     }
 
-    /**
-     * Constructor.
-     *
-     * @param dependencyManager the dependency manager.
-     * @param version           the existent and physical version.
-     * @param manifest          the CurseForgeModpack manifest.
-     */
     public ModrinthCompletionTask(DefaultDependencyManager dependencyManager, String version, ModrinthManifest manifest) {
         this.dependency = dependencyManager;
         this.repository = dependencyManager.getGameRepository();
@@ -89,6 +83,24 @@ public class ModrinthCompletionTask extends Task<Void> {
     }
 
     @Override
+    public boolean doPreExecute() {
+        return true;
+    }
+
+    @Override
+    public void preExecute() throws Exception {
+        if (manifest == null || StringUtils.isBlank(manifest.getFileApi())) return;
+
+        downloadServerMrpackTask = new CacheFileTask(
+                dependency.getDownloadProvider().injectURLWithCandidates(manifest.getFileApi() + "/server.mrpack"));
+    }
+
+    @Override
+    public Collection<Task<?>> getDependents() {
+        return downloadServerMrpackTask == null ? List.of() : List.of(downloadServerMrpackTask);
+    }
+
+    @Override
     public Collection<Task<?>> getDependencies() {
         return dependencies;
     }
@@ -102,6 +114,21 @@ public class ModrinthCompletionTask extends Task<Void> {
     public void execute() throws Exception {
         if (manifest == null)
             return;
+
+        if (downloadServerMrpackTask != null) {
+            Path serverMrpack = downloadServerMrpackTask.getResult();
+
+            ModrinthManifest remoteManifest;
+            try (var zip = CompressingUtils.openZipFile(serverMrpack)) {
+                remoteManifest = JsonUtils.fromNonNullJson(
+                        CompressingUtils.readTextZipEntry(zip, "modrinth.index.json"),
+                        ModrinthManifest.class);
+            }
+
+            if (VersionNumber.compare(remoteManifest.getVersionId(), manifest.getVersionId()) > 0) {
+                throw new ModpackUpdateRequiredException(serverMrpack, remoteManifest.getVersionId());
+            }
+        }
 
         Path runDirectory = FileUtils.toAbsolute(repository.getRunDirectory(version));
         Path modsDirectory = runDirectory.resolve("mods");
@@ -143,8 +170,6 @@ public class ModrinthCompletionTask extends Task<Void> {
 
     @Override
     public void postExecute() throws Exception {
-        // Let this task fail if the curse manifest has not been completed.
-        // But continue other downloads.
         if (notFound.get())
             throw new ModpackCompletionException(new FileNotFoundException());
         if (!allNameKnown.get() || !isDependenciesSucceeded())
