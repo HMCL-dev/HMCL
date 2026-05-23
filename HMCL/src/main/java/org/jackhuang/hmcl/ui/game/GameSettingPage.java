@@ -19,10 +19,8 @@ package org.jackhuang.hmcl.ui.game;
 
 import com.jfoenix.controls.JFXButton;
 import com.jfoenix.controls.JFXComboBox;
-import com.jfoenix.controls.JFXRadioButton;
 import com.jfoenix.controls.JFXSlider;
 import com.jfoenix.controls.JFXTextField;
-import javafx.beans.binding.Bindings;
 import javafx.css.PseudoClass;
 import javafx.beans.InvalidationListener;
 import javafx.beans.property.*;
@@ -38,7 +36,6 @@ import javafx.scene.control.ContentDisplay;
 import javafx.scene.control.Label;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.control.Tooltip;
-import javafx.scene.control.ToggleGroup;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.*;
 import javafx.stage.FileChooser;
@@ -110,12 +107,6 @@ public final class GameSettingPage<S extends GameSetting> extends StackPane
     private final ScrollPane scrollPane;
     private final VBox rootPane;
 
-    /// The selected global setting radio group.
-    private final ToggleGroup globalSettingGroup = new ToggleGroup();
-
-    /// Global setting rows currently displayed in the management sublist.
-    private final List<GlobalSettingRow> globalSettingRows = new ArrayList<>();
-
     private final @UnknownNullability ImagePickerItem iconPickerItem;
 
     private final ComponentSublist javaSublist;
@@ -143,12 +134,6 @@ public final class GameSettingPage<S extends GameSetting> extends StackPane
         rootPane.getStyleClass().add("card-list");
         scrollPane.setContent(rootPane);
 
-        if (isGlobalSetting) {
-            var globalSettingManagement = new ComponentList();
-            rootPane.getChildren().add(globalSettingManagement);
-            createGlobalSettingManagementSublist(globalSettingManagement);
-        }
-
         var basicSettings = new ComponentList();
         var gameSettings = new ComponentList();
         var launcherSettings = new ComponentList();
@@ -163,6 +148,7 @@ public final class GameSettingPage<S extends GameSetting> extends StackPane
         {
             if (isGlobalSetting) {
                 iconPickerItem = null;
+                createGlobalSettingManagementSublist(basicSettings);
             } else {
                 iconPickerItem = new ImagePickerItem();
                 basicSettings.getContent().add(iconPickerItem);
@@ -749,34 +735,58 @@ public final class GameSettingPage<S extends GameSetting> extends StackPane
     private void createGlobalSettingManagementSublist(ComponentList list) {
         var sublist = new ComponentSublist();
         sublist.setTitle(i18n("settings.type.global.manage_all"));
+        sublist.setHasSubtitle(true);
+
+        JFXButton createButton = FXUtils.newToggleButton4(SVG.ADD, 20);
+        createButton.setOnAction(event -> createGlobalSetting());
+        FXUtils.installFastTooltip(createButton, i18n("settings.type.global.create"));
+        sublist.setHeaderRight(createButton);
+
+        var globalSettingItem = new RadioChoiceList<GameSetting.Global>();
+        sublist.getContent().setAll(globalSettingItem);
         list.getContent().add(sublist);
 
-        InvalidationListener updateItems = observable -> updateGlobalSettingManagementSublist(sublist);
+        final Holder<Boolean> updating = new Holder<>(false);
+        InvalidationListener updateItems = observable -> {
+            updating.value = true;
+            try {
+                List<RadioChoiceList.Choice<GameSetting.Global>> choices = new ArrayList<>();
+                for (GameSetting.Global setting : config().getGameSettings()) {
+                    choices.add(new RadioChoiceList.Choice<>(getGlobalSettingDisplayName(setting), setting));
+                }
+                globalSettingItem.setFallbackValue(config().getDefaultGameSettingOrCreate());
+                globalSettingItem.setChoices(choices);
+                globalSettingItem.setSelectedValue(getCurrentGlobalSetting());
+                updateGlobalSettingManagementDescription(sublist);
+            } finally {
+                updating.value = false;
+            }
+        };
+
+        globalSettingItem.selectedValueProperty().addListener((observable, oldValue, newValue) -> {
+            if (!updating.value && newValue != null) {
+                selectGlobalSetting(newValue);
+            }
+        });
+
+        currentSetting.addListener((observable, oldValue, newValue) -> {
+            updating.value = true;
+            try {
+                globalSettingItem.setSelectedValue(getCurrentGlobalSetting());
+                updateGlobalSettingManagementDescription(sublist);
+            } finally {
+                updating.value = false;
+            }
+        });
+
         config().getGameSettings().addListener(holder.weak(updateItems));
-        currentSetting.addListener((observable, oldValue, newValue) -> updateGlobalSettingRowSelection());
-        updateGlobalSettingManagementSublist(sublist);
+        updateItems.invalidated(config().getGameSettings());
     }
 
-    /// Updates the global game setting rows shown in the management sublist.
-    private void updateGlobalSettingManagementSublist(ComponentSublist sublist) {
-        globalSettingGroup.getToggles().clear();
-        globalSettingRows.clear();
-
-        List<Node> rows = new ArrayList<>();
-        var createButton = new LineButton();
-        createButton.setTitle(i18n("settings.type.global.create"));
-        createButton.setLeading(SVG.ADD, 20);
-        createButton.setOnAction(event -> createGlobalSetting());
-        rows.add(createButton);
-
-        for (GameSetting.Global setting : config().getGameSettings()) {
-            var row = new GlobalSettingRow(setting);
-            globalSettingRows.add(row);
-            rows.add(row);
-        }
-
-        sublist.getContent().setAll(rows);
-        updateGlobalSettingRowSelection();
+    /// Updates the selected global game setting name shown in the management sublist header.
+    private void updateGlobalSettingManagementDescription(ComponentSublist sublist) {
+        GameSetting.Global setting = getCurrentGlobalSetting();
+        sublist.setDescription(setting != null ? getGlobalSettingDisplayName(setting) : "");
     }
 
     /// Creates a new global game setting and selects it for editing.
@@ -793,48 +803,6 @@ public final class GameSettingPage<S extends GameSetting> extends StackPane
             selectGlobalSetting(setting);
             handler.resolve();
         }, i18n("settings.type.global.new"), new RequiredValidator());
-    }
-
-    /// Updates radio selection in the global setting management rows.
-    private void updateGlobalSettingRowSelection() {
-        for (GlobalSettingRow row : globalSettingRows) {
-            row.updateSelected();
-        }
-    }
-
-    /// Row shown in the global game setting management sublist.
-    private final class GlobalSettingRow extends LineButton {
-        /// The represented global game setting.
-        private final GameSetting.Global setting;
-
-        /// The radio button showing whether this setting is selected.
-        private final JFXRadioButton selectedButton = new JFXRadioButton();
-
-        /// Creates a row for the given global game setting.
-        private GlobalSettingRow(GameSetting.Global setting) {
-            this.setting = setting;
-
-            selectedButton.setToggleGroup(globalSettingGroup);
-            selectedButton.setOnAction(event -> selectGlobalSetting(setting));
-            setLeading(selectedButton);
-
-            titleProperty().bind(Bindings.createStringBinding(
-                    () -> getGlobalSettingDisplayName(setting),
-                    setting.nameProperty(),
-                    setting.idProperty()));
-
-            setOnAction(event -> {
-                if (!selectedButton.isSelected()) {
-                    selectedButton.fire();
-                }
-            });
-            updateSelected();
-        }
-
-        /// Updates the radio button selection from the current editor setting.
-        private void updateSelected() {
-            selectedButton.setSelected(getCurrentGlobalSetting() == setting);
-        }
     }
 
     private void bindInstanceParentSetting(LineSelectButton<GameSetting.@Nullable Global> button) {
