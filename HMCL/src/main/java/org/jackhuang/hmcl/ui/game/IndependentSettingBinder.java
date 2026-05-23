@@ -60,20 +60,20 @@ final class IndependentSettingBinder {
 
     /// Binds a text field to a setting property with independent override state.
     static void bindTextField(
-            boolean globalSetting,
+            boolean presetSetting,
             ObjectProperty<? extends @Nullable GameSetting> currentSetting,
             LineComponent line,
             JFXTextField textField,
             Function<GameSetting, SettingProperty<String>> propertyGetter,
             Supplier<JFXButton> inheritanceButtonFactory,
             BiConsumer<JFXButton, Boolean> inheritanceButtonUpdater,
-            Function<GameSetting.Instance, GameSetting.Global> parentGetter) {
+            Function<GameSetting.Instance, GameSetting.Preset> parentGetter) {
         ObjectProperty<@Nullable SettingProperty<String>> activeProperty = new SimpleObjectProperty<>();
         ObjectProperty<@Nullable SettingProperty<String>> activeParentProperty = new SimpleObjectProperty<>();
         final Holder<Boolean> updating = new Holder<>(false);
         final Holder<InvalidationListener> refreshHolder = new Holder<>();
         @Nullable JFXButton inheritButton;
-        if (globalSetting) {
+        if (presetSetting) {
             inheritButton = null;
         } else {
             inheritButton = inheritanceButtonFactory.get();
@@ -150,18 +150,18 @@ final class IndependentSettingBinder {
 
     /// Binds an integer text field to a setting property with independent override state.
     static void bindIntegerTextField(
-            boolean globalSetting,
+            boolean presetSetting,
             ObjectProperty<? extends @Nullable GameSetting> currentSetting,
             LineComponent line,
             JFXTextField textField,
             Function<GameSetting, ? extends SettingProperty<Integer>> propertyGetter,
             Supplier<JFXButton> inheritanceButtonFactory,
             BiConsumer<JFXButton, Boolean> inheritanceButtonUpdater,
-            Function<GameSetting.Instance, GameSetting.Global> parentGetter) {
+            Function<GameSetting.Instance, GameSetting.Preset> parentGetter) {
         ObjectProperty<@Nullable SettingProperty<Integer>> activeProperty = new SimpleObjectProperty<>();
         final Holder<Boolean> updating = new Holder<>(false);
         @Nullable JFXButton inheritButton;
-        if (globalSetting) {
+        if (presetSetting) {
             inheritButton = null;
         } else {
             inheritButton = inheritanceButtonFactory.get();
@@ -250,7 +250,7 @@ final class IndependentSettingBinder {
             @Nullable JFXButton autoMemoryButton,
             @Nullable JFXButton maxMemoryButton,
             BiConsumer<JFXButton, Boolean> inheritanceButtonUpdater,
-            Function<GameSetting.Instance, GameSetting.Global> parentGetter) {
+            Function<GameSetting.Instance, GameSetting.Preset> parentGetter) {
         ObjectProperty<@Nullable SettingProperty<Boolean>> activeAutoMemoryProperty = new SimpleObjectProperty<>();
         ObjectProperty<@Nullable SettingProperty<Integer>> activeMaxMemoryProperty = new SimpleObjectProperty<>();
         Label physicalMemoryLabel = (Label) memoryStatusLabels.getLeft();
@@ -459,7 +459,7 @@ final class IndependentSettingBinder {
             ObjectProperty<? extends @Nullable GameSetting> currentSetting,
             LineInheritableToggleButton button,
             Function<GameSetting, SettingProperty<Boolean>> propertyGetter,
-            Function<GameSetting.Instance, GameSetting.Global> parentGetter) {
+            Function<GameSetting.Instance, GameSetting.Preset> parentGetter) {
         ObjectProperty<@Nullable SettingProperty<Boolean>> activeProperty = new SimpleObjectProperty<>();
         final Holder<Boolean> updating = new Holder<>(false);
 
@@ -525,7 +525,7 @@ final class IndependentSettingBinder {
     static void bindNativesDirTypeButton(
             ObjectProperty<? extends GameSetting> currentSetting,
             LineInheritableToggleButton button,
-            Function<GameSetting.Instance, GameSetting.Global> parentGetter) {
+            Function<GameSetting.Instance, GameSetting.Preset> parentGetter) {
         ObjectProperty<@Nullable SettingProperty<NativesDirectoryType>> activeProperty = new SimpleObjectProperty<>();
         final Holder<Boolean> updating = new Holder<>(false);
 
@@ -766,7 +766,7 @@ final class IndependentSettingBinder {
     private static <T extends @UnknownNullability Object> T getEffectiveValue(
             GameSetting setting,
             Function<GameSetting, ? extends SettingProperty<T>> propertyGetter,
-            Function<GameSetting.Instance, GameSetting.Global> parentGetter) {
+            Function<GameSetting.Instance, GameSetting.Preset> parentGetter) {
         SettingProperty<T> property = propertyGetter.apply(setting);
         if (isOverridden(setting, property)) {
             return getDirectValue(property);
@@ -779,12 +779,12 @@ final class IndependentSettingBinder {
         return getDirectValue(property);
     }
 
-    /// Keeps a listener attached to the current instance's parent global property.
+    /// Keeps a listener attached to the current instance's parent preset property.
     private static <T> void updateParentPropertyListener(
             @Nullable GameSetting setting,
             ObjectProperty<@Nullable SettingProperty<T>> activeParentProperty,
             Function<GameSetting, ? extends SettingProperty<T>> propertyGetter,
-            Function<GameSetting.Instance, GameSetting.Global> parentGetter,
+            Function<GameSetting.Instance, GameSetting.Preset> parentGetter,
             InvalidationListener listener) {
         SettingProperty<T> oldParentProperty = activeParentProperty.get();
         SettingProperty<T> newParentProperty = setting instanceof GameSetting.Instance instance

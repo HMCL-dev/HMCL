@@ -367,7 +367,7 @@ public final class Versions {
         }
     }
 
-    public static void modifyGlobalSettings(Profile profile) {
+    public static void modifyPresetSettings(Profile profile) {
         Controllers.getSettingsPage().showGameSettings(profile);
         Controllers.navigate(Controllers.getSettingsPage());
     }

@@ -37,7 +37,7 @@ import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 public class LauncherSettingsPage extends DecoratorAnimatedPage implements DecoratorPage, PageAware {
     private final ReadOnlyObjectWrapper<State> state = new ReadOnlyObjectWrapper<>(State.fromTitle(i18n("settings")));
     private final TabHeader tab;
-    private final TabHeader.Tab<GameSettingPage<GameSetting.Global>> gameTab = new TabHeader.Tab<>("versionSettingsPage");
+    private final TabHeader.Tab<GameSettingPage<GameSetting.Preset>> gameTab = new TabHeader.Tab<>("versionSettingsPage");
     private final TabControl.Tab<JavaManagementPage> javaManagementTab = new TabControl.Tab<>("javaManagementPage");
     private final TabHeader.Tab<SettingsPage> settingsTab = new TabHeader.Tab<>("settingsPage");
     private final TabHeader.Tab<PersonalizationPage> personalizationTab = new TabHeader.Tab<>("personalizationPage");
@@ -48,7 +48,7 @@ public class LauncherSettingsPage extends DecoratorAnimatedPage implements Decor
     private final TransitionPane transitionPane = new TransitionPane();
 
     public LauncherSettingsPage() {
-        gameTab.setNodeSupplier(() -> new GameSettingPage<>(GameSetting.Global.class));
+        gameTab.setNodeSupplier(() -> new GameSettingPage<>(GameSetting.Preset.class));
         javaManagementTab.setNodeSupplier(JavaManagementPage::new);
         settingsTab.setNodeSupplier(SettingsPage::new);
         personalizationTab.setNodeSupplier(PersonalizationPage::new);

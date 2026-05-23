@@ -87,7 +87,7 @@ public final class GameSettingPage<S extends GameSetting> extends StackPane
     private static final String INHERIT_BUTTON_STYLE_CLASS = "toggle-icon-tiny";
     private static final int INHERIT_BUTTON_ICON_SIZE = 12;
 
-    private final boolean isGlobalSetting;
+    private final boolean isPresetSetting;
 
     private final ObjectProperty<State> state = new SimpleObjectProperty<>(this, "state", new State("", null, false, false, false));
     private final WeakListenerHolder holder = new WeakListenerHolder();
@@ -119,9 +119,9 @@ public final class GameSettingPage<S extends GameSetting> extends StackPane
     private final InvalidationListener javaListener = o -> initializeSelectedJava();
 
     public GameSettingPage(Class<S> settingType) {
-        assert settingType == GameSetting.Global.class || settingType == GameSetting.Instance.class;
+        assert settingType == GameSetting.Preset.class || settingType == GameSetting.Instance.class;
 
-        this.isGlobalSetting = settingType == GameSetting.Global.class;
+        this.isPresetSetting = settingType == GameSetting.Preset.class;
 
         this.scrollPane = new ScrollPane();
         scrollPane.setFitToHeight(true);
@@ -140,7 +140,7 @@ public final class GameSettingPage<S extends GameSetting> extends StackPane
         var gameSettings = new ComponentList();
         var launcherSettings = new ComponentList();
         {
-            if (isGlobalSetting) {
+            if (isPresetSetting) {
                 var presetSettings = new ComponentList();
                 rootPane.getChildren().addAll(
                         ComponentList.createComponentListTitle(i18n("settings.type.global.preset")),
@@ -154,14 +154,14 @@ public final class GameSettingPage<S extends GameSetting> extends StackPane
                 );
 
                 iconPickerItem = null;
-                createGlobalSettingManagementSublist(presetSettings);
-                var globalSettingNamePane = new LinePane();
-                globalSettingNamePane.setTitle(i18n("settings.type.global.name"));
-                var globalSettingNameField = new JFXTextField();
-                globalSettingNameField.setPrefWidth(400);
-                globalSettingNamePane.setRight(globalSettingNameField);
-                bindGlobalSettingBidirectional(globalSettingNameField.textProperty(), GameSetting.Global::nameProperty);
-                presetSettings.getContent().add(globalSettingNamePane);
+                createPresetManagementSublist(presetSettings);
+                var presetNamePane = new LinePane();
+                presetNamePane.setTitle(i18n("settings.type.global.name"));
+                var presetNameField = new JFXTextField();
+                presetNameField.setPrefWidth(400);
+                presetNamePane.setRight(presetNameField);
+                bindPresetBidirectional(presetNameField.textProperty(), GameSetting.Preset::nameProperty);
+                presetSettings.getContent().add(presetNamePane);
             } else {
                 rootPane.getChildren().addAll(
                         ComponentList.createComponentListTitle(i18n("settings.game.section.basic")),
@@ -179,7 +179,7 @@ public final class GameSettingPage<S extends GameSetting> extends StackPane
                 iconPickerItem.setOnSelectButtonClicked(e -> onExploreIcon());
                 iconPickerItem.setOnDeleteButtonClicked(e -> onDeleteIcon());
 
-                var parentGameSettingPane = new LineSelectButton<GameSetting.@Nullable Global>();
+                var parentGameSettingPane = new LineSelectButton<GameSetting.@Nullable Preset>();
                 basicSettings.getContent().add(parentGameSettingPane);
                 parentGameSettingPane.setTitle(i18n("settings.type.global.preset"));
                 parentGameSettingPane.setConverter(setting -> setting != null
@@ -312,7 +312,7 @@ public final class GameSettingPage<S extends GameSetting> extends StackPane
             });
 
             // Isolation Setting
-            if (isGlobalSetting) {
+            if (isPresetSetting) {
                 var defaultIsolationTypePane = new LineSelectButton<DefaultIsolationType>();
                 basicSettings.getContent().add(defaultIsolationTypePane);
                 defaultIsolationTypePane.setTitle(i18n("settings.game.default_isolation"));
@@ -323,7 +323,7 @@ public final class GameSettingPage<S extends GameSetting> extends StackPane
                         case MODED -> i18n("settings.game.default_isolation.modded");
                     });
 
-                bindGlobalSettingBidirectional(defaultIsolationTypePane.valueProperty(), GameSetting.Global::defaultIsolationTypeProperty);
+                bindPresetBidirectional(defaultIsolationTypePane.valueProperty(), GameSetting.Preset::defaultIsolationTypeProperty);
             } else {
                 var isolationButton = new LineToggleButton();
                 basicSettings.getContent().add(isolationButton);
@@ -333,7 +333,7 @@ public final class GameSettingPage<S extends GameSetting> extends StackPane
             }
 
             // Memory Setting
-            @Nullable JFXButton autoMemoryButton = !isGlobalSetting ? createInheritanceButton() : null;
+            @Nullable JFXButton autoMemoryButton = !isPresetSetting ? createInheritanceButton() : null;
             var memorySublist = new ComponentSublist(() -> {
                 var memoryItem = new RadioChoiceList<Boolean>();
                 memoryItem.setFallbackValue(true);
@@ -349,7 +349,7 @@ public final class GameSettingPage<S extends GameSetting> extends StackPane
                 maxMemoryTextField.setValidators(new NumberValidator(i18n("input.number"), false));
 
                 @Nullable JFXButton maxMemoryButton = null;
-                if (!isGlobalSetting) {
+                if (!isPresetSetting) {
                     maxMemoryButton = createInheritanceButton();
                 }
 
@@ -506,7 +506,7 @@ public final class GameSettingPage<S extends GameSetting> extends StackPane
             var advancedLaunchSublist = new ComponentSublist(() -> {
                 var runningDirPane = new LinePane();
                 runningDirPane.setTitle(i18n("settings.game.running_directory"));
-                runningDirPane.setSubtitle(i18n(isGlobalSetting
+                runningDirPane.setSubtitle(i18n(isPresetSetting
                         ? "settings.game.running_directory.subtitle"
                         : "settings.game.running_directory.subtitle.instance"));
                 {
@@ -737,53 +737,53 @@ public final class GameSettingPage<S extends GameSetting> extends StackPane
     // region Helper Methods for UI
 
     @SuppressWarnings("unchecked")
-    private void selectGlobalSetting(GameSetting.Global setting) {
+    private void selectPreset(GameSetting.Preset setting) {
         currentSetting.set((S) setting);
     }
 
-    private @Nullable GameSetting.Global getCurrentGlobalSetting() {
+    private @Nullable GameSetting.Preset getCurrentPreset() {
         GameSetting setting = currentSetting.get();
-        return setting instanceof GameSetting.Global global ? global : null;
+        return setting instanceof GameSetting.Preset preset ? preset : null;
     }
 
-    /// Returns the display name for a global game setting.
-    private static String getGlobalSettingDisplayName(GameSetting.Global setting) {
+    /// Returns the display name for a preset.
+    private static String getPresetDisplayName(GameSetting.Preset setting) {
         return StringUtils.isBlank(setting.nameProperty().getValue())
                 ? setting.idProperty().getValue().toString()
                 : setting.nameProperty().getValue();
     }
 
-    /// Creates the global game setting management sublist.
-    private void createGlobalSettingManagementSublist(ComponentList list) {
+    /// Creates the preset management sublist.
+    private void createPresetManagementSublist(ComponentList list) {
         var sublist = new ComponentSublist();
         sublist.setTitle(i18n("settings.type.global.manage_all"));
         sublist.setHasSubtitle(true);
 
-        var globalSettingItem = new RadioChoiceList<GameSetting.Global>();
+        var presetItem = new RadioChoiceList<GameSetting.Preset>();
         var createButton = new LineButton();
         createButton.setTitle(i18n("settings.type.global.create"));
         createButton.setLeading(SVG.ADD, 20);
-        createButton.setOnAction(event -> createGlobalSetting());
-        sublist.getContent().setAll(globalSettingItem, createButton);
+        createButton.setOnAction(event -> createPreset());
+        sublist.getContent().setAll(presetItem, createButton);
         list.getContent().add(sublist);
 
         final Holder<Boolean> updating = new Holder<>(false);
         Runnable rebuildItems = () -> {
             updating.value = true;
             try {
-                List<RadioChoiceList.Choice<GameSetting.Global>> choices = new ArrayList<>();
-                for (GameSetting.Global setting : config().getGameSettings()) {
-                    choices.add(new RadioChoiceList.Choice<>(getGlobalSettingDisplayName(setting), setting));
+                List<RadioChoiceList.Choice<GameSetting.Preset>> choices = new ArrayList<>();
+                for (GameSetting.Preset setting : config().getGameSettings()) {
+                    choices.add(new RadioChoiceList.Choice<>(getPresetDisplayName(setting), setting));
                 }
-                globalSettingItem.setFallbackValue(config().getDefaultGameSettingOrCreate());
-                globalSettingItem.setChoices(choices);
-                globalSettingItem.setSelectedValue(getCurrentGlobalSetting());
-                updateGlobalSettingManagementDescription(sublist);
+                presetItem.setFallbackValue(config().getDefaultGameSettingOrCreate());
+                presetItem.setChoices(choices);
+                presetItem.setSelectedValue(getCurrentPreset());
+                updatePresetManagementDescription(sublist);
             } finally {
                 updating.value = false;
             }
         };
-        ListChangeListener<GameSetting.Global> updateItems = change -> {
+        ListChangeListener<GameSetting.Preset> updateItems = change -> {
             boolean rebuild = false;
             while (change.next()) {
                 if (change.wasAdded() || change.wasRemoved() || change.wasPermutated()) {
@@ -794,21 +794,21 @@ public final class GameSettingPage<S extends GameSetting> extends StackPane
             if (rebuild) {
                 rebuildItems.run();
             } else {
-                updateGlobalSettingManagementLabels(globalSettingItem, sublist);
+                updatePresetManagementLabels(presetItem, sublist);
             }
         };
 
-        globalSettingItem.selectedValueProperty().addListener((observable, oldValue, newValue) -> {
+        presetItem.selectedValueProperty().addListener((observable, oldValue, newValue) -> {
             if (!updating.value && newValue != null) {
-                selectGlobalSetting(newValue);
+                selectPreset(newValue);
             }
         });
 
         currentSetting.addListener((observable, oldValue, newValue) -> {
             updating.value = true;
             try {
-                globalSettingItem.setSelectedValue(getCurrentGlobalSetting());
-                updateGlobalSettingManagementDescription(sublist);
+                presetItem.setSelectedValue(getCurrentPreset());
+                updatePresetManagementDescription(sublist);
             } finally {
                 updating.value = false;
             }
@@ -818,43 +818,43 @@ public final class GameSettingPage<S extends GameSetting> extends StackPane
         rebuildItems.run();
     }
 
-    /// Updates existing global setting choices without rebuilding the rendered list.
-    private void updateGlobalSettingManagementLabels(
-            RadioChoiceList<GameSetting.Global> globalSettingItem,
+    /// Updates existing preset choices without rebuilding the rendered list.
+    private void updatePresetManagementLabels(
+            RadioChoiceList<GameSetting.Preset> presetItem,
             ComponentSublist sublist) {
-        for (RadioChoiceList.Choice<GameSetting.Global> choice : globalSettingItem.getChoices()) {
-            choice.setTitle(getGlobalSettingDisplayName(choice.getValue()));
+        for (RadioChoiceList.Choice<GameSetting.Preset> choice : presetItem.getChoices()) {
+            choice.setTitle(getPresetDisplayName(choice.getValue()));
         }
-        updateGlobalSettingManagementDescription(sublist);
+        updatePresetManagementDescription(sublist);
     }
 
-    /// Updates the selected global game setting name shown in the management sublist header.
-    private void updateGlobalSettingManagementDescription(ComponentSublist sublist) {
-        GameSetting.Global setting = getCurrentGlobalSetting();
-        sublist.setDescription(setting != null ? getGlobalSettingDisplayName(setting) : "");
+    /// Updates the selected preset name shown in the management sublist header.
+    private void updatePresetManagementDescription(ComponentSublist sublist) {
+        GameSetting.Preset setting = getCurrentPreset();
+        sublist.setDescription(setting != null ? getPresetDisplayName(setting) : "");
     }
 
-    /// Creates a new global game setting and selects it for editing.
-    private void createGlobalSetting() {
+    /// Creates a new preset and selects it for editing.
+    private void createPreset() {
         Controllers.prompt(i18n("settings.type.global.create"), (name, handler) -> {
             if (StringUtils.isBlank(name)) {
                 handler.reject(i18n("input.not_empty"));
                 return;
             }
 
-            GameSetting.Global setting = new GameSetting.Global();
+            GameSetting.Preset setting = new GameSetting.Preset();
             setting.nameProperty().setValue(name.trim());
             config().getGameSettings().add(setting);
-            selectGlobalSetting(setting);
+            selectPreset(setting);
             handler.resolve();
         }, i18n("settings.type.global.new"), new RequiredValidator());
     }
 
-    private void bindInstanceParentSetting(LineSelectButton<GameSetting.@Nullable Global> button) {
-        ObservableList<GameSetting.Global> items = FXCollections.observableArrayList();
+    private void bindInstanceParentSetting(LineSelectButton<GameSetting.@Nullable Preset> button) {
+        ObservableList<GameSetting.Preset> items = FXCollections.observableArrayList();
         InvalidationListener updateItems = observable -> {
-            @Nullable GameSetting.Global selected = button.getValue();
-            items.setAll((GameSetting.Global) null);
+            @Nullable GameSetting.Preset selected = button.getValue();
+            items.setAll((GameSetting.Preset) null);
             items.addAll(config().getGameSettings());
             if (selected != null && config().getGameSetting(selected.idProperty().getValue()) == null) {
                 button.setValue(null);
@@ -886,7 +886,7 @@ public final class GameSettingPage<S extends GameSetting> extends StackPane
 
     /// Adds the title-line inheritance button for the Java selection sublist.
     private void bindJavaInheritanceButton(ComponentSublist sublist) {
-        if (isGlobalSetting) {
+        if (isPresetSetting) {
             return;
         }
 
@@ -949,7 +949,7 @@ public final class GameSettingPage<S extends GameSetting> extends StackPane
             JFXTextField textField,
             Function<GameSetting, SettingProperty<String>> propertyGetter) {
         IndependentSettingBinder.bindTextField(
-                isGlobalSetting,
+                isPresetSetting,
                 currentSetting,
                 line,
                 textField,
@@ -965,7 +965,7 @@ public final class GameSettingPage<S extends GameSetting> extends StackPane
             JFXTextField textField,
             Function<GameSetting, ? extends SettingProperty<Integer>> propertyGetter) {
         IndependentSettingBinder.bindIntegerTextField(
-                isGlobalSetting,
+                isPresetSetting,
                 currentSetting,
                 line,
                 textField,
@@ -1216,7 +1216,7 @@ public final class GameSettingPage<S extends GameSetting> extends StackPane
         final Holder<Boolean> updating = new Holder<>(false);
         final Holder<InvalidationListener> refreshHolder = new Holder<>();
         @Nullable JFXButton inheritButton = null;
-        if (!isGlobalSetting) {
+        if (!isPresetSetting) {
             inheritButton = createInheritanceButton();
             line.setTitleTrailing(inheritButton);
         }
@@ -1459,7 +1459,7 @@ public final class GameSettingPage<S extends GameSetting> extends StackPane
             LineComponent line,
             Property<String> textProperty,
             Node editor) {
-        if (isGlobalSetting) {
+        if (isPresetSetting) {
             bindInheritableStringProperty(line, textProperty, GameSetting::runningDirProperty);
             return;
         }
@@ -1563,7 +1563,7 @@ public final class GameSettingPage<S extends GameSetting> extends StackPane
         return profile != null && instanceId != null && profile.getRepository().isModpack(instanceId);
     }
 
-    /// Keeps a listener attached to the current instance's parent global property.
+    /// Keeps a listener attached to the current instance's parent preset property.
     private <T> void updateParentInheritablePropertyListener(
             @Nullable GameSetting setting,
             ObjectProperty<@Nullable InheritableProperty<T>> activeParentProperty,
@@ -1594,7 +1594,7 @@ public final class GameSettingPage<S extends GameSetting> extends StackPane
         ObjectProperty<@Nullable InheritableProperty<T>> activeProperty = new SimpleObjectProperty<>();
         final Holder<Boolean> updating = new Holder<>(false);
         @Nullable JFXButton inheritButton = null;
-        if (!isGlobalSetting) {
+        if (!isPresetSetting) {
             inheritButton = createInheritanceButton();
             sublist.setTitleRight(inheritButton);
         }
@@ -1701,7 +1701,7 @@ public final class GameSettingPage<S extends GameSetting> extends StackPane
         ObjectProperty<@Nullable InheritableProperty<Double>> activeHeightProperty = new SimpleObjectProperty<>();
         final Holder<Boolean> updating = new Holder<>(false);
         @Nullable JFXButton inheritButton = null;
-        if (!isGlobalSetting) {
+        if (!isPresetSetting) {
             inheritButton = createInheritanceButton();
             sublist.setTitleRight(inheritButton);
         }
@@ -1943,8 +1943,8 @@ public final class GameSettingPage<S extends GameSetting> extends StackPane
     }
 
     @SuppressWarnings("unchecked")
-    private <T> void bindGlobalSettingBidirectional(Property<T> property, Function<GameSetting.Global, Property<T>> propertyGetter) {
-        assert isGlobalSetting;
+    private <T> void bindPresetBidirectional(Property<T> property, Function<GameSetting.Preset, Property<T>> propertyGetter) {
+        assert isPresetSetting;
 
         bindSettingBidirectional(property, (Function<S, Property<T>>) propertyGetter);
     }
@@ -1957,7 +1957,7 @@ public final class GameSettingPage<S extends GameSetting> extends StackPane
         button.setOverriddenText(i18n("settings.game.override"));
         button.setInheritTooltip(i18n("settings.game.inherit_global"));
         button.setOverriddenTooltip(i18n("settings.game.override_global"));
-        button.setInheritAvailable(!isGlobalSetting);
+        button.setInheritAvailable(!isPresetSetting);
 
         IndependentSettingBinder.bindToggleButton(currentSetting, button, propertyGetter, this::getParentGameSetting);
         return button;
@@ -1970,7 +1970,7 @@ public final class GameSettingPage<S extends GameSetting> extends StackPane
         button.setOverriddenText(i18n("settings.game.override"));
         button.setInheritTooltip(i18n("settings.game.inherit_global"));
         button.setOverriddenTooltip(i18n("settings.game.override_global"));
-        button.setInheritAvailable(!isGlobalSetting);
+        button.setInheritAvailable(!isPresetSetting);
 
         IndependentSettingBinder.bindNativesDirTypeButton(currentSetting, button, this::getParentGameSetting);
         return button;
@@ -1984,7 +1984,7 @@ public final class GameSettingPage<S extends GameSetting> extends StackPane
         button.setOverriddenText(i18n("settings.game.override"));
         button.setInheritTooltip(i18n("settings.game.inherit_global"));
         button.setOverriddenTooltip(i18n("settings.game.override_global"));
-        button.setInheritAvailable(!isGlobalSetting);
+        button.setInheritAvailable(!isPresetSetting);
 
         bindEffectiveInheritableToggleButton(button, propertyGetter);
         return button;
@@ -1997,7 +1997,7 @@ public final class GameSettingPage<S extends GameSetting> extends StackPane
         ObjectProperty<@Nullable InheritableProperty<T>> activeProperty = new SimpleObjectProperty<>();
         final Holder<Boolean> updating = new Holder<>(false);
         @Nullable JFXButton inheritButton = null;
-        if (!isGlobalSetting) {
+        if (!isPresetSetting) {
             inheritButton = createInheritanceButton();
             button.setTitleTrailing(inheritButton);
         }
@@ -2182,10 +2182,10 @@ public final class GameSettingPage<S extends GameSetting> extends StackPane
         }
     }
 
-    /// Resolves the setting with its parent global setting for effective-value queries.
+    /// Resolves the setting with its parent preset for effective-value queries.
     private GameSetting.Effective resolveEffectiveSetting(GameSetting setting) {
-        if (setting instanceof GameSetting.Global global) {
-            return GameSetting.resolve(global, null);
+        if (setting instanceof GameSetting.Preset preset) {
+            return GameSetting.resolve(preset, null);
         }
 
         if (setting instanceof GameSetting.Instance instance) {
@@ -2211,11 +2211,11 @@ public final class GameSettingPage<S extends GameSetting> extends StackPane
         return getDirectValue(property);
     }
 
-    /// Returns the value provided by an instance's parent global setting.
+    /// Returns the value provided by an instance's parent preset.
     private <T> T getParentValue(
             GameSetting.Instance instance,
             Function<GameSetting, InheritableProperty<T>> propertyGetter) {
-        GameSetting.Global parent = profile != null
+        GameSetting.Preset parent = profile != null
                 ? profile.getRepository().getParentGameSetting(instance)
                 : getParentGameSetting(instance);
         return getDirectValue(propertyGetter.apply(parent));
@@ -2234,10 +2234,10 @@ public final class GameSettingPage<S extends GameSetting> extends StackPane
                 : getParentGameSetting(instance);
     }
 
-    /// Returns the configured parent global setting for an instance.
-    private GameSetting.Global getParentGameSetting(GameSetting.Instance instance) {
+    /// Returns the configured parent preset for an instance.
+    private GameSetting.Preset getParentGameSetting(GameSetting.Instance instance) {
         UUID parent = instance.parentProperty().getValue();
-        GameSetting.Global parentSetting = config().getGameSetting(parent);
+        GameSetting.Preset parentSetting = config().getGameSetting(parent);
         return parentSetting != null ? parentSetting : config().getDefaultGameSettingOrCreate();
     }
 
@@ -2272,7 +2272,7 @@ public final class GameSettingPage<S extends GameSetting> extends StackPane
         this.profile = profile;
         this.instanceId = instanceId;
 
-        assert isGlobalSetting == (instanceId == null);
+        assert isPresetSetting == (instanceId == null);
 
         if (instanceId != null) {
             this.currentSetting.set((S) profile.getRepository().getLocalGameSettingOrCreate(instanceId));

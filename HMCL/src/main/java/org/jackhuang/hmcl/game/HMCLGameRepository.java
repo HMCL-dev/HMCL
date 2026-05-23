@@ -115,7 +115,7 @@ public final class HMCLGameRepository extends DefaultGameRepository {
             return Objects.requireNonNullElse(localSetting.runningDirProperty().getValue(), "");
         }
 
-        GameSetting.Global parent = getParentGameSetting(localSetting);
+        GameSetting.Preset parent = getParentGameSetting(localSetting);
         //noinspection DataFlowIssue
         return Objects.requireNonNullElse(parent.runningDirProperty().getValue(), "");
     }
@@ -219,7 +219,7 @@ public final class HMCLGameRepository extends DefaultGameRepository {
         }
 
         GameSetting.Instance copied = new GameSetting.Instance();
-        copied.parentProperty().setValue(getEffectiveGameSetting(id).getGlobal().idProperty().getValue());
+        copied.parentProperty().setValue(getEffectiveGameSetting(id).getPreset().idProperty().getValue());
         return copied;
     }
 
@@ -259,7 +259,7 @@ public final class HMCLGameRepository extends DefaultGameRepository {
     }
 
     private boolean isLegacyProfileAlwaysIsolated() {
-        GameSetting.Global parent = config().getGameSetting(profile.getLegacyGameSettingParent());
+        GameSetting.Preset parent = config().getGameSetting(profile.getLegacyGameSettingParent());
         return parent != null && parent.defaultIsolationTypeProperty().getValue() == DefaultIsolationType.ALWAYS;
     }
 
@@ -307,11 +307,11 @@ public final class HMCLGameRepository extends DefaultGameRepository {
         return setting;
     }
 
-    public GameSetting.Global getParentGameSetting(@Nullable GameSetting.Instance instance) {
+    public GameSetting.Preset getParentGameSetting(@Nullable GameSetting.Instance instance) {
         @Nullable UUID parent = instance != null
                 ? instance.parentProperty().getValue()
                 : profile.getLegacyGameSettingParent();
-        GameSetting.Global parentSetting = config().getGameSetting(parent);
+        GameSetting.Preset parentSetting = config().getGameSetting(parent);
         return parentSetting != null ? parentSetting : config().getDefaultGameSettingOrCreate();
     }
 
@@ -325,8 +325,8 @@ public final class HMCLGameRepository extends DefaultGameRepository {
             return;
         }
 
-        GameSetting.Global global = getParentGameSetting(null);
-        DefaultIsolationType type = Lang.requireNonNullElse(global.defaultIsolationTypeProperty().getValue(), DefaultIsolationType.MODED);
+        GameSetting.Preset preset = getParentGameSetting(null);
+        DefaultIsolationType type = Lang.requireNonNullElse(preset.defaultIsolationTypeProperty().getValue(), DefaultIsolationType.MODED);
         boolean isolated = switch (type) {
             case NEVER -> false;
             case ALWAYS -> true;
@@ -336,7 +336,7 @@ public final class HMCLGameRepository extends DefaultGameRepository {
         if (isolated) {
             GameSetting.Instance setting = getLocalGameSettingOrCreate(id);
             if (setting != null) {
-                setting.parentProperty().setValue(global.idProperty().getValue());
+                setting.parentProperty().setValue(preset.idProperty().getValue());
                 setting.getOverrideProperties().add(GameSetting.PROPERTY_RUNNING_DIR);
             }
         }
@@ -374,7 +374,7 @@ public final class HMCLGameRepository extends DefaultGameRepository {
 
     /// Preserves inherited legacy `VERSION_FOLDER` semantics for local settings that use global values.
     private void preserveLegacyGlobalRunningDirectory(GameSetting.Instance setting, @Nullable UUID parent) {
-        GameSetting.Global parentSetting = config().getGameSetting(parent);
+        GameSetting.Preset parentSetting = config().getGameSetting(parent);
         if (parentSetting != null && parentSetting.defaultIsolationTypeProperty().getValue() == DefaultIsolationType.ALWAYS) {
             setting.runningDirProperty().setValue("");
             setting.getOverrideProperties().add(GameSetting.PROPERTY_RUNNING_DIR);
@@ -386,7 +386,7 @@ public final class HMCLGameRepository extends DefaultGameRepository {
             GameSetting.Instance setting,
             JsonObject legacySettingJson,
             @Nullable UUID parent) {
-        GameSetting.Global parentSetting = config().getGameSetting(parent);
+        GameSetting.Preset parentSetting = config().getGameSetting(parent);
         if (parentSetting != null
                 && LegacyGameSettingMigrator.isLegacyRootGameDirectory(legacySettingJson)
                 && StringUtils.isNotBlank(parentSetting.runningDirProperty().getValue())) {

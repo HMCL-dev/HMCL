@@ -50,7 +50,7 @@ import java.util.stream.Collectors;
 import static org.jackhuang.hmcl.util.DataSizeUnit.MEGABYTES;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
-/// Game launch settings shared by global presets and instance-specific overrides.
+/// Game launch settings shared by presets and instance-specific overrides.
 ///
 /// @author Glavo
 @NotNullByDefault
@@ -74,11 +74,11 @@ public sealed abstract class GameSetting extends ObservableSetting {
             register();
         }
 
-        /// The parent global game setting ID.
+        /// The parent preset ID.
         @SerializedName("parent")
         private final SettingProperty<@Nullable UUID> parent = newSettingProperty("parent");
 
-        /// Returns the parent global game setting ID property.
+        /// Returns the parent preset ID property.
         public SettingProperty<@Nullable UUID> parentProperty() {
             return parent;
         }
@@ -110,31 +110,31 @@ public sealed abstract class GameSetting extends ObservableSetting {
         }
     }
 
-    /// Reusable global game setting.
-    @JsonAdapter(Global.Adapter.class)
+    /// Reusable game setting preset.
+    @JsonAdapter(Preset.Adapter.class)
     @JsonSerializable
-    public static final class Global extends GameSetting {
-        /// Creates a global setting with generated identity.
-        public Global() {
+    public static final class Preset extends GameSetting {
+        /// Creates a preset with generated identity.
+        public Preset() {
             this(UUID.randomUUID());
         }
 
-        /// Creates a global setting with the given identity.
-        public Global(UUID id) {
+        /// Creates a preset with the given identity.
+        public Preset(UUID id) {
             register();
             this.id.setValue(id);
         }
 
-        /// The stable global setting ID.
+        /// The stable preset ID.
         @SerializedName("id")
         private final SettingProperty<UUID> id = newSettingProperty("id");
 
-        /// Returns the global setting ID property.
+        /// Returns the preset ID property.
         public SettingProperty<UUID> idProperty() {
             return id;
         }
 
-        /// The display name of this global setting.
+        /// The display name of this preset.
         @SerializedName("name")
         private final SettingProperty<String> name = newSettingProperty("name", "");
 
@@ -152,11 +152,11 @@ public sealed abstract class GameSetting extends ObservableSetting {
             return defaultIsolationType;
         }
 
-        /// JSON adapter for global settings.
-        public static final class Adapter extends ObservableSetting.Adapter<Global> {
+        /// JSON adapter for presets.
+        public static final class Adapter extends ObservableSetting.Adapter<Preset> {
             @Override
-            protected Global createInstance() {
-                return new Global();
+            protected Preset createInstance() {
+                return new Preset();
             }
         }
     }
@@ -658,22 +658,22 @@ public sealed abstract class GameSetting extends ObservableSetting {
         return renderer != null ? renderer : Renderer.DEFAULT;
     }
 
-    /// Resolves a global setting and an optional instance setting into launch-time values.
-    public static Effective resolve(Global global, @Nullable Instance instance) {
-        return new Effective(global, instance);
+    /// Resolves a preset and an optional instance setting into launch-time values.
+    public static Effective resolve(Preset preset, @Nullable Instance instance) {
+        return new Effective(preset, instance);
     }
 
-    private static <T extends @UnknownNullability Object> T inherited(Global global, @Nullable Instance instance, Function<GameSetting, SettingProperty<T>> propertyGetter) {
+    private static <T extends @UnknownNullability Object> T inherited(Preset preset, @Nullable Instance instance, Function<GameSetting, SettingProperty<T>> propertyGetter) {
         if (instance != null) {
             SettingProperty<T> property = propertyGetter.apply(instance);
             if (isOverridden(instance, property)) {
                 return property.getValue();
             }
         }
-        return propertyGetter.apply(global).getValue();
+        return propertyGetter.apply(preset).getValue();
     }
 
-    private static <T extends @UnknownNullability Object> T inheritable(Global global, @Nullable Instance instance, Function<GameSetting, InheritableProperty<T>> propertyGetter) {
+    private static <T extends @UnknownNullability Object> T inheritable(Preset preset, @Nullable Instance instance, Function<GameSetting, InheritableProperty<T>> propertyGetter) {
         if (instance != null) {
             InheritableProperty<T> property = propertyGetter.apply(instance);
             if (isOverridden(instance, property)) {
@@ -681,7 +681,7 @@ public sealed abstract class GameSetting extends ObservableSetting {
             }
         }
 
-        return getDirectValue(propertyGetter.apply(global));
+        return getDirectValue(propertyGetter.apply(preset));
     }
 
     private static boolean isOverridden(Instance instance, SettingProperty<?> property) {
@@ -695,17 +695,17 @@ public sealed abstract class GameSetting extends ObservableSetting {
 
     /// Launch-time effective game setting.
     public static final class Effective {
-        private final Global global;
+        private final Preset preset;
         private final @Nullable Instance instance;
 
-        private Effective(Global global, @Nullable Instance instance) {
-            this.global = Objects.requireNonNull(global);
+        private Effective(Preset preset, @Nullable Instance instance) {
+            this.preset = Objects.requireNonNull(preset);
             this.instance = instance;
         }
 
-        /// Returns the parent global setting.
-        public Global getGlobal() {
-            return global;
+        /// Returns the parent preset.
+        public Preset getPreset() {
+            return preset;
         }
 
         /// Returns the instance setting, if one exists.
@@ -715,7 +715,7 @@ public sealed abstract class GameSetting extends ObservableSetting {
 
         /// Returns the effective Java selection mode.
         public JavaVersionType getJavaVersionType() {
-            return inheritable(global, instance, GameSetting::javaTypeProperty);
+            return inheritable(preset, instance, GameSetting::javaTypeProperty);
         }
 
         /// Returns the effective Java version text.
@@ -723,7 +723,7 @@ public sealed abstract class GameSetting extends ObservableSetting {
             if (instance != null && isOverridden(instance, instance.javaTypeProperty())) {
                 return instance.javaVersionProperty().getValue();
             }
-            return global.javaVersionProperty().getValue();
+            return preset.javaVersionProperty().getValue();
         }
 
         /// Returns the effective custom Java executable path.
@@ -731,7 +731,7 @@ public sealed abstract class GameSetting extends ObservableSetting {
             if (instance != null && isOverridden(instance, instance.javaTypeProperty())) {
                 return Objects.requireNonNullElse(instance.customJavaPathProperty().getValue(), "");
             }
-            return Objects.requireNonNullElse(global.customJavaPathProperty().getValue(), "");
+            return Objects.requireNonNullElse(preset.customJavaPathProperty().getValue(), "");
         }
 
         /// Returns the effective default Java executable path.
@@ -739,12 +739,12 @@ public sealed abstract class GameSetting extends ObservableSetting {
             if (instance != null && isOverridden(instance, instance.javaTypeProperty())) {
                 return Objects.requireNonNullElse(instance.defaultJavaPathProperty().getValue(), "");
             }
-            return Objects.requireNonNullElse(global.defaultJavaPathProperty().getValue(), "");
+            return Objects.requireNonNullElse(preset.defaultJavaPathProperty().getValue(), "");
         }
 
         /// Switches the effective Java selection back to automatic mode.
         public void setJavaAutoSelected() {
-            GameSetting target = instance != null && isOverridden(instance, instance.javaTypeProperty()) ? instance : global;
+            GameSetting target = instance != null && isOverridden(instance, instance.javaTypeProperty()) ? instance : preset;
             target.javaTypeProperty().setValue(JavaVersionType.AUTO);
             target.javaVersionProperty().setValue("");
             target.customJavaPathProperty().setValue("");
@@ -819,98 +819,98 @@ public sealed abstract class GameSetting extends ObservableSetting {
 
         /// Returns the effective JVM option text.
         public String getJVMOptions() {
-            return Objects.requireNonNullElse(inherited(global, instance, GameSetting::jvmOptionsProperty), "");
+            return Objects.requireNonNullElse(inherited(preset, instance, GameSetting::jvmOptionsProperty), "");
         }
 
         /// Returns whether generated JVM options are disabled.
         public boolean isNoJVMOptions() {
-            return inheritable(global, instance, GameSetting::noJVMOptionsProperty);
+            return inheritable(preset, instance, GameSetting::noJVMOptionsProperty);
         }
 
         /// Returns whether generated optimizing JVM options are disabled.
         public boolean isNoOptimizingJVMOptions() {
-            return inheritable(global, instance, GameSetting::noOptimizingJVMOptionsProperty);
+            return inheritable(preset, instance, GameSetting::noOptimizingJVMOptionsProperty);
         }
 
         /// Returns whether JVM validity checks are disabled.
         public boolean isNotCheckJVM() {
-            return inheritable(global, instance, GameSetting::notCheckJVMProperty);
+            return inheritable(preset, instance, GameSetting::notCheckJVMProperty);
         }
 
         /// Returns whether game completeness checks are disabled.
         public boolean isNotCheckGame() {
-            return inheritable(global, instance, GameSetting::notCheckGameProperty);
+            return inheritable(preset, instance, GameSetting::notCheckGameProperty);
         }
 
         /// Returns whether automatic memory allocation is enabled.
         public boolean isAutoMemory() {
-            return inherited(global, instance, GameSetting::autoMemoryProperty);
+            return inherited(preset, instance, GameSetting::autoMemoryProperty);
         }
 
         /// Returns the effective minimum heap memory in MiB.
         public @Nullable Integer getMinMemory() {
-            return inherited(global, instance, GameSetting::minMemoryProperty);
+            return inherited(preset, instance, GameSetting::minMemoryProperty);
         }
 
         /// Returns the effective maximum heap memory in MiB.
         public int getMaxMemory() {
-            Integer value = inherited(global, instance, GameSetting::maxMemoryProperty);
+            Integer value = inherited(preset, instance, GameSetting::maxMemoryProperty);
             return value != null && value > 0 ? value : SUGGESTED_MEMORY;
         }
 
         /// Returns the effective permanent generation or metaspace size text.
         public String getPermSize() {
-            return Objects.requireNonNullElse(inherited(global, instance, GameSetting::permSizeProperty), "");
+            return Objects.requireNonNullElse(inherited(preset, instance, GameSetting::permSizeProperty), "");
         }
 
         /// Returns the effective game window mode.
         public GameWindowType getWindowType() {
-            return inheritable(global, instance, GameSetting::windowTypeProperty);
+            return inheritable(preset, instance, GameSetting::windowTypeProperty);
         }
 
         /// Returns the effective game window width.
         public int getWidth() {
-            return Math.max(0, Lang.parseInt(String.valueOf(Math.round(inheritable(global, instance, GameSetting::widthProperty))), 0));
+            return Math.max(0, Lang.parseInt(String.valueOf(Math.round(inheritable(preset, instance, GameSetting::widthProperty))), 0));
         }
 
         /// Returns the effective game window height.
         public int getHeight() {
-            return Math.max(0, Lang.parseInt(String.valueOf(Math.round(inheritable(global, instance, GameSetting::heightProperty))), 0));
+            return Math.max(0, Lang.parseInt(String.valueOf(Math.round(inheritable(preset, instance, GameSetting::heightProperty))), 0));
         }
 
         /// Returns the effective custom run directory.
         public String getRunningDir() {
-            return Objects.requireNonNullElse(inheritable(global, instance, GameSetting::runningDirProperty), "");
+            return Objects.requireNonNullElse(inheritable(preset, instance, GameSetting::runningDirProperty), "");
         }
 
         /// Returns the effective process priority.
         public ProcessPriority getProcessPriority() {
-            return inheritable(global, instance, GameSetting::processPriorityProperty);
+            return inheritable(preset, instance, GameSetting::processPriorityProperty);
         }
 
         /// Returns the effective launcher visibility.
         public LauncherVisibility getLauncherVisibility() {
-            return inheritable(global, instance, GameSetting::launcherVisibilityProperty);
+            return inheritable(preset, instance, GameSetting::launcherVisibilityProperty);
         }
 
         /// Returns the effective game arguments.
         public String getGameArgs() {
-            return Objects.requireNonNullElse(inherited(global, instance, GameSetting::gameArgsProperty), "");
+            return Objects.requireNonNullElse(inherited(preset, instance, GameSetting::gameArgsProperty), "");
         }
 
         /// Returns the effective graphics API.
         public GraphicsAPI getGraphicsBackend() {
-            return inheritable(global, instance, GameSetting::graphicsBackendProperty);
+            return inheritable(preset, instance, GameSetting::graphicsBackendProperty);
         }
 
         /// Returns the effective OpenGL renderer.
         public Renderer getOpenGLRenderer() {
-            return selectRenderer(GraphicsAPI.OPENGL, inheritable(global, instance, GameSetting::openGLRendererProperty));
+            return selectRenderer(GraphicsAPI.OPENGL, inheritable(preset, instance, GameSetting::openGLRendererProperty));
         }
 
         /// Returns the effective Vulkan renderer.
         public Renderer getVulkanRenderer() {
-            return selectRenderer(GraphicsAPI.VULKAN, inheritable(global, instance, GameSetting::vulkanRendererProperty));
+            return selectRenderer(GraphicsAPI.VULKAN, inheritable(preset, instance, GameSetting::vulkanRendererProperty));
         }
 
         /// Returns the effective renderer.
@@ -924,27 +924,27 @@ public sealed abstract class GameSetting extends ObservableSetting {
 
         /// Returns the effective environment variables.
         public String getEnvironmentVariables() {
-            return Objects.requireNonNullElse(inherited(global, instance, GameSetting::environmentVariablesProperty), "");
+            return Objects.requireNonNullElse(inherited(preset, instance, GameSetting::environmentVariablesProperty), "");
         }
 
         /// Returns the effective command wrapper.
         public String getCommandWrapper() {
-            return Objects.requireNonNullElse(inheritable(global, instance, GameSetting::commandWrapperProperty), "");
+            return Objects.requireNonNullElse(inheritable(preset, instance, GameSetting::commandWrapperProperty), "");
         }
 
         /// Returns the effective pre-launch command.
         public String getPreLaunchCommand() {
-            return Objects.requireNonNullElse(inheritable(global, instance, GameSetting::preLaunchCommandProperty), "");
+            return Objects.requireNonNullElse(inheritable(preset, instance, GameSetting::preLaunchCommandProperty), "");
         }
 
         /// Returns the effective post-exit command.
         public String getPostExitCommand() {
-            return Objects.requireNonNullElse(inheritable(global, instance, GameSetting::postExitCommandProperty), "");
+            return Objects.requireNonNullElse(inheritable(preset, instance, GameSetting::postExitCommandProperty), "");
         }
 
         /// Returns the effective quick play type.
         public QuickPlayType getQuickPlay() {
-            return inheritable(global, instance, GameSetting::quickPlayProperty);
+            return inheritable(preset, instance, GameSetting::quickPlayProperty);
         }
 
         /// Returns the effective quick play option.
@@ -952,15 +952,15 @@ public sealed abstract class GameSetting extends ObservableSetting {
             return switch (getQuickPlay()) {
                 case NONE -> null;
                 case MULTIPLAYER -> {
-                    String server = Objects.requireNonNullElse(inheritable(global, instance, GameSetting::quickPlayMultiplayerProperty), "");
+                    String server = Objects.requireNonNullElse(inheritable(preset, instance, GameSetting::quickPlayMultiplayerProperty), "");
                     yield StringUtils.isBlank(server) ? null : new QuickPlayOption.MultiPlayer(server);
                 }
                 case SINGLEPLAYER -> {
-                    String world = Objects.requireNonNullElse(inheritable(global, instance, GameSetting::quickPlaySingleplayerProperty), "");
+                    String world = Objects.requireNonNullElse(inheritable(preset, instance, GameSetting::quickPlaySingleplayerProperty), "");
                     yield StringUtils.isBlank(world) ? null : new QuickPlayOption.SinglePlayer(world);
                 }
                 case REALMS -> {
-                    String realm = Objects.requireNonNullElse(inheritable(global, instance, GameSetting::quickPlayRealmsProperty), "");
+                    String realm = Objects.requireNonNullElse(inheritable(preset, instance, GameSetting::quickPlayRealmsProperty), "");
                     yield StringUtils.isBlank(realm) ? null : new QuickPlayOption.Realm(realm);
                 }
             };
@@ -968,37 +968,37 @@ public sealed abstract class GameSetting extends ObservableSetting {
 
         /// Returns whether logs should be shown after launch.
         public boolean isShowLogs() {
-            return inheritable(global, instance, GameSetting::showLogsProperty);
+            return inheritable(preset, instance, GameSetting::showLogsProperty);
         }
 
         /// Returns whether debug log output is enabled.
         public boolean isEnableDebugLogOutput() {
-            return inheritable(global, instance, GameSetting::enableDebugLogOutputProperty);
+            return inheritable(preset, instance, GameSetting::enableDebugLogOutputProperty);
         }
 
         /// Returns whether native library patching is disabled.
         public boolean isNotPatchNatives() {
-            return inherited(global, instance, GameSetting::notPatchNativesProperty);
+            return inherited(preset, instance, GameSetting::notPatchNativesProperty);
         }
 
         /// Returns the effective native directory mode.
         public NativesDirectoryType getNativesDirType() {
-            return inherited(global, instance, GameSetting::nativesDirTypeProperty);
+            return inherited(preset, instance, GameSetting::nativesDirTypeProperty);
         }
 
         /// Returns the effective native directory.
         public String getNativesDir() {
-            return Objects.requireNonNullElse(inherited(global, instance, GameSetting::nativesDirProperty), "");
+            return Objects.requireNonNullElse(inherited(preset, instance, GameSetting::nativesDirProperty), "");
         }
 
         /// Returns whether native GLFW should be used.
         public boolean isUseNativeGLFW() {
-            return inherited(global, instance, GameSetting::useNativeGLFWProperty);
+            return inherited(preset, instance, GameSetting::useNativeGLFWProperty);
         }
 
         /// Returns whether native OpenAL should be used.
         public boolean isUseNativeOpenAL() {
-            return inherited(global, instance, GameSetting::useNativeOpenALProperty);
+            return inherited(preset, instance, GameSetting::useNativeOpenALProperty);
         }
     }
 }

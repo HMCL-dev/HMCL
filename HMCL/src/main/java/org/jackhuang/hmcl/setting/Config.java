@@ -839,9 +839,9 @@ public final class Config extends ObservableSetting {
     // Game Settings
 
     @SerializedName("gameSettings")
-    private final ObservableList<GameSetting.Global> gameSettings = FXCollections.observableArrayList(setting -> new Observable[] { setting });
+    private final ObservableList<GameSetting.Preset> gameSettings = FXCollections.observableArrayList(setting -> new Observable[] { setting });
 
-    public ObservableList<GameSetting.Global> getGameSettings() {
+    public ObservableList<GameSetting.Preset> getGameSettings() {
         return gameSettings;
     }
 
@@ -860,12 +860,12 @@ public final class Config extends ObservableSetting {
         this.defaultGameSetting.set(defaultGameSetting);
     }
 
-    public GameSetting.@Nullable Global getGameSetting(@Nullable UUID id) {
+    public GameSetting.@Nullable Preset getGameSetting(@Nullable UUID id) {
         if (id == null) {
             return null;
         }
 
-        for (GameSetting.Global setting : gameSettings) {
+        for (GameSetting.Preset setting : gameSettings) {
             if (id.equals(setting.idProperty().getValue())) {
                 return setting;
             }
@@ -873,8 +873,8 @@ public final class Config extends ObservableSetting {
         return null;
     }
 
-    public GameSetting.Global getDefaultGameSettingOrCreate() {
-        GameSetting.Global setting = getGameSetting(getDefaultGameSetting());
+    public GameSetting.Preset getDefaultGameSettingOrCreate() {
+        GameSetting.Preset setting = getGameSetting(getDefaultGameSetting());
         if (setting != null) {
             return setting;
         }
@@ -885,7 +885,7 @@ public final class Config extends ObservableSetting {
             return setting;
         }
 
-        setting = new GameSetting.Global();
+        setting = new GameSetting.Preset();
         setting.nameProperty().setValue(i18n("message.default"));
         gameSettings.add(setting);
         setDefaultGameSetting(setting.idProperty().getValue());
@@ -923,22 +923,22 @@ public final class Config extends ObservableSetting {
                 String profileName = entry.getKey();
                 UUID parentId = profile.getLegacyGameSettingParent();
                 if (parentId != null) {
-                    GameSetting.Global parent = config.getGameSetting(parentId);
+                    GameSetting.Preset parent = config.getGameSetting(parentId);
                     if (parent != null) {
                         continue;
                     }
                 }
 
-                GameSetting.Global legacyParent = config.getGameSetting(
-                        LegacyGameSettingMigrator.getLegacyGlobalSettingId(profileName));
+                GameSetting.Preset legacyParent = config.getGameSetting(
+                        LegacyGameSettingMigrator.getLegacyPresetId(profileName));
                 if (legacyParent == null) {
                     JsonObject profileObject = configurations.get(profileName) instanceof JsonObject profileJson ? profileJson : null;
-                    JsonObject globalSettingObject = profileObject != null && profileObject.get("global") instanceof JsonObject globalJson ? globalJson : null;
-                    if (globalSettingObject == null) {
+                    JsonObject legacySettingObject = profileObject != null && profileObject.get("global") instanceof JsonObject globalJson ? globalJson : null;
+                    if (legacySettingObject == null) {
                         continue;
                     }
 
-                    legacyParent = LegacyGameSettingMigrator.toGlobal(profileName, profileName, globalSettingObject);
+                    legacyParent = LegacyGameSettingMigrator.toPreset(profileName, profileName, legacySettingObject);
                     config.getGameSettings().add(legacyParent);
                 }
 

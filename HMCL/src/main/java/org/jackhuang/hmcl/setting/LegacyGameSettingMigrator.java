@@ -37,8 +37,8 @@ import java.util.UUID;
 /// Converts legacy game setting JSON into `GameSetting` models.
 @NotNullByDefault
 public final class LegacyGameSettingMigrator {
-    /// Namespace used to generate stable global setting IDs for legacy profiles.
-    private static final String LEGACY_GLOBAL_SETTING_ID_NAMESPACE = "hmcl:legacy-global-game-setting:";
+    /// Namespace used to generate stable preset IDs for legacy profiles.
+    private static final String LEGACY_PRESET_ID_NAMESPACE = "hmcl:legacy-global-game-setting:";
 
     /// Legacy game directory modes stored by old configuration files.
     private enum GameDirectoryType {
@@ -75,15 +75,15 @@ public final class LegacyGameSettingMigrator {
     private LegacyGameSettingMigrator() {
     }
 
-    /// Returns the stable global setting ID for a migrated legacy profile.
-    public static UUID getLegacyGlobalSettingId(String profileName) {
+    /// Returns the stable preset ID for a migrated legacy profile.
+    public static UUID getLegacyPresetId(String profileName) {
         return UUID.nameUUIDFromBytes(
-                (LEGACY_GLOBAL_SETTING_ID_NAMESPACE + profileName).getBytes(StandardCharsets.UTF_8));
+                (LEGACY_PRESET_ID_NAMESPACE + profileName).getBytes(StandardCharsets.UTF_8));
     }
 
-    /// Converts a legacy global setting JSON object into a named global game setting.
-    public static GameSetting.Global toGlobal(String name, String profileName, @Nullable JsonObject source) {
-        GameSetting.Global target = new GameSetting.Global(getLegacyGlobalSettingId(profileName));
+    /// Converts a legacy global setting JSON object into a named preset.
+    public static GameSetting.Preset toPreset(String name, String profileName, @Nullable JsonObject source) {
+        GameSetting.Preset target = new GameSetting.Preset(getLegacyPresetId(profileName));
         target.nameProperty().setValue(name);
         if (getLegacyGameDirType(source, GameDirectoryType.ROOT_FOLDER) == GameDirectoryType.VERSION_FOLDER) {
             target.defaultIsolationTypeProperty().setValue(DefaultIsolationType.ALWAYS);
