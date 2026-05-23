@@ -56,10 +56,10 @@ import static org.jackhuang.hmcl.setting.ConfigHolder.config;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 /// Page for managing global game setting presets.
+///
+/// @author Glavo
 @NotNullByDefault
 public final class GlobalGameSettingListPage extends StackPane implements DecoratorPage {
-    /// The page title translation key.
-    private static final String TITLE_KEY = "settings.type.global.manage_all";
 
     /// The selected setting supplier.
     private final Supplier<GameSetting.@Nullable Global> selectedSettingSupplier;
@@ -71,7 +71,8 @@ public final class GlobalGameSettingListPage extends StackPane implements Decora
     private final Consumer<GameSetting.Global> settingEditor;
 
     /// The page state.
-    private final ReadOnlyObjectWrapper<State> state = new ReadOnlyObjectWrapper<>(State.fromTitle(i18n(TITLE_KEY)));
+    private final ReadOnlyObjectWrapper<State> state = new ReadOnlyObjectWrapper<>(
+            State.fromTitle(i18n("settings.type.global.manage_all")));
 
     /// The global setting list view.
     private final JFXListView<GameSetting.Global> listView = new JFXListView<>();
