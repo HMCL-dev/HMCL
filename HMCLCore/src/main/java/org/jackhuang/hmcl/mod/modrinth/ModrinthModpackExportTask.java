@@ -23,6 +23,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
+import java.util.stream.Stream;
 
 import org.jackhuang.hmcl.download.LibraryAnalyzer;
 import org.jackhuang.hmcl.game.DefaultGameRepository;
@@ -135,13 +136,14 @@ public class ModrinthModpackExportTask extends Task<Void> {
         try (var zip = new Zipper(modpackFile)) {
             Path runDirectory = repository.getRunDirectory(version);
             List<ModrinthManifest.File> files = new ArrayList<>();
-            Set<String> filesInManifest = new HashSet<>();
+            Set<String> filesInManifest = new HashSet<>(); // a set contains the value of key "path" in every element of files
 
             String[] resourceDirs = {"resourcepacks", "shaderpacks", "mods"};
             String fileApi = StringUtils.isBlank(info.getFileApi()) ? null : StringUtils.removeSuffix(info.getFileApi(), "/");
-            for (String dir : resourceDirs) {
-                Path dirPath = runDirectory.resolve(dir);
+            try (Stream<Path> stream = Files.list(runDirectory)) {
+                for (Path dirPath : (Iterable<Path>) stream::iterator) {
                 if (Files.exists(dirPath)) {
+                    boolean isValidDir = Arrays.asList(resourceDirs).contains(dirPath.getFileName().toString()); // allow remote file match
                     Files.walk(dirPath)
                             .filter(Files::isRegularFile)
                             .forEach(file -> {
@@ -152,32 +154,37 @@ public class ModrinthModpackExportTask extends Task<Void> {
                                         return;
                                     }
 
-                                    ModrinthManifest.File fileEntry = tryGetRemoteFile(file, relativePath);
-                                    if (fileEntry == null && fileApi != null) {
-                                        Map<String, String> hashes = new HashMap<>();
-                                        hashes.put("sha1", DigestUtils.digestToString("SHA-1", file));
-                                        hashes.put("sha512", DigestUtils.digestToString("SHA-512", file));
-
-                                        long fileSize = Files.size(file);
-                                        if (fileSize > Integer.MAX_VALUE) {
-                                            LOG.warning("File " + relativePath + " is too large (size: " + fileSize + " bytes), precision may be lost when converting to int");
-                                        }
-                                        fileEntry = new ModrinthManifest.File(
-                                                relativePath,
-                                                hashes,
-                                                null,
-                                                Collections.singletonList(fileApi + "/" + NetworkUtils.encodeLocation(relativePath)),
-                                                (int) fileSize
-                                        );
+                                    ModrinthManifest.File fileEntry = null;
+                                    if (isValidDir){
+                                        fileEntry = tryGetRemoteFile(file, relativePath);
                                     }
                                     if (fileEntry != null) {
                                         files.add(fileEntry);
                                         filesInManifest.add(relativePath);
+                                    } else {
+                                        if (fileApi != null) {
+                                            Map<String, String> hashes = new HashMap<>();
+                                            hashes.put("sha1", DigestUtils.digestToString("SHA-1", file));
+                                            hashes.put("sha512", DigestUtils.digestToString("SHA-512", file));
+
+                                            long fileSize = Files.size(file);
+                                            if (fileSize > Integer.MAX_VALUE) {
+                                                LOG.warning("File " + relativePath + " is too large (size: " + fileSize + " bytes), precision may be lost when converting to int");
+                                            }
+                                            files.add(new ModrinthManifest.File(
+                                                    relativePath,
+                                                    hashes,
+                                                    null,
+                                                    Collections.singletonList(fileApi + "/" + NetworkUtils.encodeLocation(relativePath)),
+                                                    (int) fileSize
+                                            ));
+                                        }
                                     }
                                 } catch (IOException e) {
                                     LOG.warning("Failed to process file: " + file, e);
                                 }
                             });
+                }
                 }
             }
 
