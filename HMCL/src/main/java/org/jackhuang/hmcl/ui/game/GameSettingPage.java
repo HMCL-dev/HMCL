@@ -166,7 +166,7 @@ public final class GameSettingPage<S extends GameSetting> extends StackPane
 
                 var parentGameSettingPane = new LineSelectButton<GameSetting.@Nullable Global>();
                 basicSettings.getContent().add(parentGameSettingPane);
-                parentGameSettingPane.setTitle(i18n("settings.type.global.manage"));
+                parentGameSettingPane.setTitle(i18n("settings.type.global.preset"));
                 parentGameSettingPane.setConverter(setting -> setting != null
                         ? setting.nameProperty().getValue()
                         : i18n("settings.type.global.default"));
