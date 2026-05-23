@@ -846,21 +846,21 @@ public final class Config extends ObservableSetting {
     }
 
     @SerializedName("defaultGameSetting")
-    private final ObjectProperty<UUID> defaultGameSetting = new SimpleObjectProperty<>(this, "defaultGameSetting");
+    private final ObjectProperty<@Nullable UUID> defaultGameSetting = new SimpleObjectProperty<>(this, "defaultGameSetting");
 
-    public ObjectProperty<UUID> defaultGameSettingProperty() {
+    public ObjectProperty<@Nullable UUID> defaultGameSettingProperty() {
         return defaultGameSetting;
     }
 
-    public UUID getDefaultGameSetting() {
+    public @Nullable UUID getDefaultGameSetting() {
         return defaultGameSetting.get();
     }
 
-    public void setDefaultGameSetting(UUID defaultGameSetting) {
+    public void setDefaultGameSetting(@Nullable UUID defaultGameSetting) {
         this.defaultGameSetting.set(defaultGameSetting);
     }
 
-    public GameSetting.Global getGameSetting(UUID id) {
+    public GameSetting.@Nullable Global getGameSetting(@Nullable UUID id) {
         if (id == null) {
             return null;
         }

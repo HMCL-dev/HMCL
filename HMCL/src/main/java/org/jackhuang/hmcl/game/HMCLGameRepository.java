@@ -86,7 +86,10 @@ public final class HMCLGameRepository extends DefaultGameRepository {
     @Override
     public Path getRunDirectory(String id) {
         GameSetting.Instance localSetting = getLocalGameSetting(id);
-        boolean useInstanceRunningDirectory = useInstanceRunningDirectory(id, localSetting);
+        boolean useInstanceRunningDirectory = beingModpackVersions.contains(id)
+                || isModpack(id)
+                || (localSetting != null && localSetting.getOverrideProperties().contains(GameSetting.PROPERTY_RUNNING_DIR));
+
         String runningDirectory = getSelectedRunningDirectory(localSetting, useInstanceRunningDirectory);
         if (StringUtils.isBlank(runningDirectory)) {
             return useInstanceRunningDirectory ? getVersionRoot(id) : super.getRunDirectory(id);
@@ -99,19 +102,6 @@ public final class HMCLGameRepository extends DefaultGameRepository {
         }
     }
 
-    /// Returns whether the instance uses its version folder as the run directory.
-    private boolean usesVersionFolderRunDirectory(String id) {
-        return getRunDirectory(id).toAbsolutePath().normalize()
-                .equals(getVersionRoot(id).toAbsolutePath().normalize());
-    }
-
-    /// Returns whether this instance uses its own running directory setting instead of the parent global setting.
-    private boolean useInstanceRunningDirectory(String id, @Nullable GameSetting.Instance localSetting) {
-        return beingModpackVersions.contains(id)
-                || isModpack(id)
-                || (localSetting != null && isRunningDirectoryOverridden(localSetting));
-    }
-
     /// Returns the running directory string selected by the current source.
     private String getSelectedRunningDirectory(
             @Nullable GameSetting.Instance localSetting,
@@ -121,19 +111,15 @@ public final class HMCLGameRepository extends DefaultGameRepository {
                 return "";
             }
 
-            String localRunningDirectory = localSetting.runningDirProperty().getValue();
-            return localRunningDirectory != null ? localRunningDirectory : localSetting.runningDirProperty().defaultValue();
+            //noinspection DataFlowIssue
+            return Objects.requireNonNullElse(localSetting.runningDirProperty().getValue(), "");
         }
 
         GameSetting.Global parent = getParentGameSetting(localSetting);
-        String globalRunningDirectory = parent.runningDirProperty().getValue();
-        return globalRunningDirectory != null ? globalRunningDirectory : parent.runningDirProperty().defaultValue();
+        //noinspection DataFlowIssue
+        return Objects.requireNonNullElse(parent.runningDirProperty().getValue(), "");
     }
 
-    /// Returns whether the instance overrides the global running directory setting.
-    private static boolean isRunningDirectoryOverridden(GameSetting.Instance setting) {
-        return setting.getOverrideProperties().contains(GameSetting.PROPERTY_RUNNING_DIR);
-    }
 
     public Stream<Version> getDisplayVersions() {
         return getVersions().stream()
@@ -203,7 +189,13 @@ public final class HMCLGameRepository extends DefaultGameRepository {
 
         JsonUtils.writeToJsonFile(toJson, fromVersion.setId(dstId).setJar(dstId));
 
-        boolean copyOriginalGameDir = !usesVersionFolderRunDirectory(srcId);
+        boolean copyOriginalGameDir;
+        try {
+            copyOriginalGameDir = !Files.isSameFile(getRunDirectory(srcId), getVersionRoot(srcId));
+        } catch (IOException e) {
+            copyOriginalGameDir = true;
+        }
+
         Path srcGameDir = getRunDirectory(srcId);
 
         GameSetting.Instance newGameSetting = copyLocalGameSetting(srcId);
