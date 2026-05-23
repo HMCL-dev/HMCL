@@ -902,12 +902,12 @@ public final class Config extends ObservableSetting {
         public Config deserialize(JsonElement json, Type typeOfT, JsonDeserializationContext context) throws JsonParseException {
             Config config = super.deserialize(json, typeOfT, context);
             if (config != null && json instanceof JsonObject object) {
-                migrateLegacyGlobalGameSettings(config, object);
+                migrateLegacyPresetSettings(config, object);
             }
             return config;
         }
 
-        private static void migrateLegacyGlobalGameSettings(Config config, JsonObject object) {
+        private static void migrateLegacyPresetSettings(Config config, JsonObject object) {
             JsonElement configurationsElement = object.get("configurations");
             if (configurationsElement == null || !configurationsElement.isJsonObject()) {
                 return;
@@ -933,7 +933,7 @@ public final class Config extends ObservableSetting {
                         LegacyGameSettingMigrator.getLegacyPresetId(profileName));
                 if (legacyParent == null) {
                     JsonObject profileObject = configurations.get(profileName) instanceof JsonObject profileJson ? profileJson : null;
-                    JsonObject legacySettingObject = profileObject != null && profileObject.get("global") instanceof JsonObject globalJson ? globalJson : null;
+                    JsonObject legacySettingObject = profileObject != null && profileObject.get("global") instanceof JsonObject legacyJson ? legacyJson : null;
                     if (legacySettingObject == null) {
                         continue;
                     }

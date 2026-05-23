@@ -81,7 +81,7 @@ public final class LegacyGameSettingMigrator {
                 (LEGACY_PRESET_ID_NAMESPACE + profileName).getBytes(StandardCharsets.UTF_8));
     }
 
-    /// Converts a legacy global setting JSON object into a named preset.
+    /// Converts a legacy profile-level setting JSON object into a named preset.
     public static GameSetting.Preset toPreset(String name, String profileName, @Nullable JsonObject source) {
         GameSetting.Preset target = new GameSetting.Preset(getLegacyPresetId(profileName));
         target.nameProperty().setValue(name);
@@ -144,8 +144,8 @@ public final class LegacyGameSettingMigrator {
         return target;
     }
 
-    /// Returns the legacy `usesGlobal` flag from a local setting JSON object.
-    public static boolean isUsesGlobal(@Nullable JsonObject source) {
+    /// Returns whether a legacy local setting inherits its parent setting.
+    public static boolean usesLegacyParentSetting(@Nullable JsonObject source) {
         return readBoolean(source, "usesGlobal", false);
     }
 

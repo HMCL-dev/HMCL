@@ -357,10 +357,10 @@ public final class HMCLGameRepository extends DefaultGameRepository {
 
             if (legacySettingJson != null) {
                 @Nullable UUID parent = profile.getLegacyGameSettingParent();
-                boolean usesGlobal = LegacyGameSettingMigrator.isUsesGlobal(legacySettingJson);
-                GameSetting.Instance setting = LegacyGameSettingMigrator.toInstance(parent, legacySettingJson, !usesGlobal);
-                if (usesGlobal) {
-                    preserveLegacyGlobalRunningDirectory(setting, parent);
+                boolean inheritsLegacyParent = LegacyGameSettingMigrator.usesLegacyParentSetting(legacySettingJson);
+                GameSetting.Instance setting = LegacyGameSettingMigrator.toInstance(parent, legacySettingJson, !inheritsLegacyParent);
+                if (inheritsLegacyParent) {
+                    preserveLegacyInheritedRunningDirectory(setting, parent);
                 } else {
                     preserveLegacyLocalRootRunningDirectory(setting, legacySettingJson, parent);
                 }
@@ -372,8 +372,8 @@ public final class HMCLGameRepository extends DefaultGameRepository {
         return null;
     }
 
-    /// Preserves inherited legacy `VERSION_FOLDER` semantics for local settings that use global values.
-    private void preserveLegacyGlobalRunningDirectory(GameSetting.Instance setting, @Nullable UUID parent) {
+    /// Preserves inherited legacy `VERSION_FOLDER` semantics for local settings that inherit parent values.
+    private void preserveLegacyInheritedRunningDirectory(GameSetting.Instance setting, @Nullable UUID parent) {
         GameSetting.Preset parentSetting = config().getGameSetting(parent);
         if (parentSetting != null && parentSetting.defaultIsolationTypeProperty().getValue() == DefaultIsolationType.ALWAYS) {
             setting.runningDirProperty().setValue("");
