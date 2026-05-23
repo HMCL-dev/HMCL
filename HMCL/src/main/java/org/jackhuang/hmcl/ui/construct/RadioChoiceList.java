@@ -185,7 +185,7 @@ public final class RadioChoiceList<T extends @UnknownNullability Object> extends
     /// @param <T> the selected value type
     public static class Choice<T extends @UnknownNullability Object> {
         /// The title shown beside the radio button.
-        protected final String title;
+        protected String title;
 
         /// The selected value represented by this choice.
         protected final T value;
@@ -213,6 +213,13 @@ public final class RadioChoiceList<T extends @UnknownNullability Object> extends
         /// Returns the title shown beside the radio button.
         public String getTitle() {
             return title;
+        }
+
+        /// Sets the title shown beside the radio button.
+        public Choice<T> setTitle(String title) {
+            this.title = title;
+            radioButton.setText(title);
+            return this;
         }
 
         /// Returns the optional subtitle.

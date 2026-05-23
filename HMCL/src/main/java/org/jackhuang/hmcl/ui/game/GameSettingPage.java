@@ -26,6 +26,7 @@ import javafx.beans.InvalidationListener;
 import javafx.beans.property.*;
 import javafx.beans.value.ChangeListener;
 import javafx.collections.FXCollections;
+import javafx.collections.ListChangeListener;
 import javafx.collections.ObservableList;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
@@ -137,26 +138,39 @@ public final class GameSettingPage<S extends GameSetting> extends StackPane
         var basicSettings = new ComponentList();
         var gameSettings = new ComponentList();
         var launcherSettings = new ComponentList();
-        rootPane.getChildren().addAll(
-                ComponentList.createComponentListTitle(i18n("settings.game.section.basic")),
-                basicSettings,
-                ComponentList.createComponentListTitle(i18n("settings.game.section.game")),
-                gameSettings,
-                ComponentList.createComponentListTitle(i18n("settings.launcher")),
-                launcherSettings
-        );
         {
             if (isGlobalSetting) {
+                var presetSettings = new ComponentList();
+                rootPane.getChildren().addAll(
+                        ComponentList.createComponentListTitle(i18n("settings.type.global.preset")),
+                        presetSettings,
+                        ComponentList.createComponentListTitle(i18n("settings.game.section.basic")),
+                        basicSettings,
+                        ComponentList.createComponentListTitle(i18n("settings.game.section.game")),
+                        gameSettings,
+                        ComponentList.createComponentListTitle(i18n("settings.launcher")),
+                        launcherSettings
+                );
+
                 iconPickerItem = null;
-                createGlobalSettingManagementSublist(basicSettings);
+                createGlobalSettingManagementSublist(presetSettings);
                 var globalSettingNamePane = new LinePane();
                 globalSettingNamePane.setTitle(i18n("settings.type.global.name"));
                 var globalSettingNameField = new JFXTextField();
                 globalSettingNameField.setPrefWidth(400);
                 globalSettingNamePane.setRight(globalSettingNameField);
                 bindGlobalSettingBidirectional(globalSettingNameField.textProperty(), GameSetting.Global::nameProperty);
-                basicSettings.getContent().add(globalSettingNamePane);
+                presetSettings.getContent().add(globalSettingNamePane);
             } else {
+                rootPane.getChildren().addAll(
+                        ComponentList.createComponentListTitle(i18n("settings.game.section.basic")),
+                        basicSettings,
+                        ComponentList.createComponentListTitle(i18n("settings.game.section.game")),
+                        gameSettings,
+                        ComponentList.createComponentListTitle(i18n("settings.launcher")),
+                        launcherSettings
+                );
+
                 iconPickerItem = new ImagePickerItem();
                 basicSettings.getContent().add(iconPickerItem);
                 iconPickerItem.setImage(FXUtils.newBuiltinImage("/assets/img/icon.png"));
@@ -753,7 +767,7 @@ public final class GameSettingPage<S extends GameSetting> extends StackPane
         list.getContent().add(sublist);
 
         final Holder<Boolean> updating = new Holder<>(false);
-        InvalidationListener updateItems = observable -> {
+        Runnable rebuildItems = () -> {
             updating.value = true;
             try {
                 List<RadioChoiceList.Choice<GameSetting.Global>> choices = new ArrayList<>();
@@ -766,6 +780,20 @@ public final class GameSettingPage<S extends GameSetting> extends StackPane
                 updateGlobalSettingManagementDescription(sublist);
             } finally {
                 updating.value = false;
+            }
+        };
+        ListChangeListener<GameSetting.Global> updateItems = change -> {
+            boolean rebuild = false;
+            while (change.next()) {
+                if (change.wasAdded() || change.wasRemoved() || change.wasPermutated()) {
+                    rebuild = true;
+                }
+            }
+
+            if (rebuild) {
+                rebuildItems.run();
+            } else {
+                updateGlobalSettingManagementLabels(globalSettingItem, sublist);
             }
         };
 
@@ -786,7 +814,17 @@ public final class GameSettingPage<S extends GameSetting> extends StackPane
         });
 
         config().getGameSettings().addListener(holder.weak(updateItems));
-        updateItems.invalidated(config().getGameSettings());
+        rebuildItems.run();
+    }
+
+    /// Updates existing global setting choices without rebuilding the rendered list.
+    private void updateGlobalSettingManagementLabels(
+            RadioChoiceList<GameSetting.Global> globalSettingItem,
+            ComponentSublist sublist) {
+        for (RadioChoiceList.Choice<GameSetting.Global> choice : globalSettingItem.getChoices()) {
+            choice.setTitle(getGlobalSettingDisplayName(choice.getValue()));
+        }
+        updateGlobalSettingManagementDescription(sublist);
     }
 
     /// Updates the selected global game setting name shown in the management sublist header.
