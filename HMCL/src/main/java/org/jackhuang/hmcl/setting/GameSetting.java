@@ -215,12 +215,6 @@ public sealed abstract class GameSetting extends ObservableSetting {
         return defaultJavaPath;
     }
 
-    /// Finds Java using this setting without resolving a parent setting.
-    public @Nullable JavaRuntime getJava(@Nullable GameVersionNumber gameVersion, @Nullable Version version) throws InterruptedException {
-        return resolve(this instanceof Global global ? global : new Global(), this instanceof Instance instance ? instance : null)
-                .getJava(gameVersion, version);
-    }
-
     /// Property name for customized JVM options.
     public static final String PROPERTY_JVM_OPTIONS = "jvmOptions";
 

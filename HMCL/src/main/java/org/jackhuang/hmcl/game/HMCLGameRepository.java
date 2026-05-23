@@ -325,7 +325,7 @@ public final class HMCLGameRepository extends DefaultGameRepository {
             return;
         }
 
-        GameSetting.Global global = config().getDefaultGameSettingOrCreate();
+        GameSetting.Global global = getParentGameSetting(null);
         DefaultIsolationType type = Lang.requireNonNullElse(global.defaultIsolationTypeProperty().getValue(), DefaultIsolationType.MODED);
         boolean isolated = switch (type) {
             case NEVER -> false;
