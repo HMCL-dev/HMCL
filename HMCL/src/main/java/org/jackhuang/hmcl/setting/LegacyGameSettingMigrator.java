@@ -20,7 +20,6 @@ package org.jackhuang.hmcl.setting;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonPrimitive;
-import org.jackhuang.hmcl.game.GameDirectoryType;
 import org.jackhuang.hmcl.game.GraphicsAPI;
 import org.jackhuang.hmcl.game.NativesDirectoryType;
 import org.jackhuang.hmcl.game.ProcessPriority;
@@ -40,6 +39,18 @@ import java.util.UUID;
 public final class LegacyGameSettingMigrator {
     /// Namespace used to generate stable global setting IDs for legacy profiles.
     private static final String LEGACY_GLOBAL_SETTING_ID_NAMESPACE = "hmcl:legacy-global-game-setting:";
+
+    /// Legacy game directory modes stored by old configuration files.
+    private enum GameDirectoryType {
+        /// Use the root `.minecraft` folder.
+        ROOT_FOLDER,
+
+        /// Use the version-specific folder.
+        VERSION_FOLDER,
+
+        /// Use a custom game directory.
+        CUSTOM
+    }
 
     /// Legacy `VersionIconType` ordinal order used by old local settings.
     private static final VersionIconType @Unmodifiable [] LEGACY_VERSION_ICON_TYPES = {
@@ -143,7 +154,7 @@ public final class LegacyGameSettingMigrator {
     }
 
     /// Returns the legacy game directory type from a setting JSON object.
-    public static GameDirectoryType getLegacyGameDirType(@Nullable JsonObject source, GameDirectoryType defaultValue) {
+    private static GameDirectoryType getLegacyGameDirType(@Nullable JsonObject source, GameDirectoryType defaultValue) {
         return parseEnum(source, "gameDirType", GameDirectoryType.class, defaultValue);
     }
 
