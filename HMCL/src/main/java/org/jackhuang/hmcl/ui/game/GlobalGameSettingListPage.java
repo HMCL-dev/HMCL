@@ -221,7 +221,6 @@ public final class GlobalGameSettingListPage extends StackPane implements Decora
             }
 
             settingSelector.accept(item);
-            listView.refresh();
         }
 
         /// Opens the editor for the item represented by this cell.
