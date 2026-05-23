@@ -20,15 +20,10 @@ package org.jackhuang.hmcl.mod.modrinth;
 import com.google.gson.annotations.SerializedName;
 import com.google.gson.reflect.TypeToken;
 import org.jackhuang.hmcl.download.DownloadProvider;
-import org.jackhuang.hmcl.mod.LocalModFile;
 import org.jackhuang.hmcl.mod.ModLoaderType;
 import org.jackhuang.hmcl.mod.RemoteMod;
 import org.jackhuang.hmcl.mod.RemoteModRepository;
-import org.jackhuang.hmcl.util.DigestUtils;
-import org.jackhuang.hmcl.util.Immutable;
-import org.jackhuang.hmcl.util.Lang;
-import org.jackhuang.hmcl.util.Pair;
-import org.jackhuang.hmcl.util.StringUtils;
+import org.jackhuang.hmcl.util.*;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.io.HttpRequest;
 import org.jackhuang.hmcl.util.io.NetworkUtils;
@@ -41,13 +36,7 @@ import java.net.URI;
 import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.time.Instant;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.Semaphore;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -63,19 +52,62 @@ public final class ModrinthRemoteModRepository implements RemoteModRepository {
     public static final ModrinthRemoteModRepository RESOURCE_PACKS = new ModrinthRemoteModRepository("resourcepack");
     public static final ModrinthRemoteModRepository SHADER_PACKS = new ModrinthRemoteModRepository("shader");
 
+    private static final Comparator<String> TAG_COMPARATOR = PriorityComparator.of(
+            List.of("babric",
+                    "bta-babric",
+                    "bukkit",
+                    "bungeecord",
+                    "canvas",
+                    "datapack",
+                    "fabric",
+                    "folia",
+                    "forge",
+                    "geyser",
+                    "iris",
+                    "java-agent",
+                    "legacy-fabric",
+                    "liteloader",
+                    "minecraft",
+                    "modloader",
+                    "mrpack",
+                    "neoforge",
+                    "nilloader",
+                    "optifine",
+                    "ornith",
+                    "paper",
+                    "purpur",
+                    "quilt",
+                    "rift",
+                    "spigot",
+                    "sponge",
+                    "vanilla",
+                    "velocity",
+                    "waterfall"),
+            Comparator.naturalOrder(),
+            false
+    );
+
     private static final Semaphore SEMAPHORE = new Semaphore(16);
 
     private static final String PREFIX = "https://api.modrinth.com";
 
     private final String projectType;
 
+    private final RemoteModRepository.Type type;
+
     private ModrinthRemoteModRepository(String projectType) {
         this.projectType = projectType;
+        this.type = switch (projectType) {
+            case "modpack" -> Type.MODPACK;
+            case "resourcepack" -> Type.RESOURCE_PACK;
+            case "shader" -> Type.SHADER_PACK;
+            default -> Type.MOD;
+        };
     }
 
     @Override
     public Type getType() {
-        return Type.MOD;
+        return this.type;
     }
 
     private static String convertSortType(SortType sortType) {
@@ -95,6 +127,12 @@ public final class ModrinthRemoteModRepository implements RemoteModRepository {
         }
     }
 
+    static List<String> sortDisplayCategories(List<String> displayCategories) {
+        return displayCategories != null && !displayCategories.isEmpty()
+                ? displayCategories.stream().sorted(TAG_COMPARATOR).toList()
+                : List.of();
+    }
+
     @Override
     public SearchResult search(DownloadProvider downloadProvider, String gameVersion, @Nullable RemoteModRepository.Category category, int pageOffset, int pageSize, String searchFilter, SortType sort, SortOrder sortOrder) throws IOException {
         SEMAPHORE.acquireUninterruptibly();
@@ -104,8 +142,8 @@ public final class ModrinthRemoteModRepository implements RemoteModRepository {
             if (StringUtils.isNotBlank(gameVersion)) {
                 facets.add(Collections.singletonList("versions:" + gameVersion));
             }
-            if (category != null && StringUtils.isNotBlank(category.getId())) {
-                facets.add(Collections.singletonList("categories:" + category.getId()));
+            if (category != null && StringUtils.isNotBlank(category.id())) {
+                facets.add(Collections.singletonList("categories:" + category.id()));
             }
             Map<String, String> query = mapOf(
                     pair("query", searchFilter),
@@ -145,7 +183,7 @@ public final class ModrinthRemoteModRepository implements RemoteModRepository {
     }
 
     @Override
-    public Optional<RemoteMod.Version> getRemoteVersionByLocalFile(LocalModFile localModFile, Path file) throws IOException {
+    public Optional<RemoteMod.Version> getRemoteVersionByLocalFile(Path file) throws IOException {
         String sha1 = DigestUtils.digestToString("SHA-1", file);
 
         SEMAPHORE.acquireUninterruptibly();
@@ -419,6 +457,12 @@ public final class ModrinthRemoteModRepository implements RemoteModRepository {
         }
 
         public RemoteMod toMod() {
+            RemoteModRepository.Type type = switch (projectType) {
+                case "modpack" -> RemoteModRepository.Type.MODPACK;
+                case "resourcepack" -> RemoteModRepository.Type.RESOURCE_PACK;
+                case "shader" -> RemoteModRepository.Type.SHADER_PACK;
+                default -> RemoteModRepository.Type.MOD;
+            };
             return new RemoteMod(
                     slug,
                     "",
@@ -427,7 +471,8 @@ public final class ModrinthRemoteModRepository implements RemoteModRepository {
                     categories,
                     String.format("https://modrinth.com/%s/%s", projectType, id),
                     iconUrl,
-                    this
+                    this,
+                    type
             );
         }
     }
@@ -630,7 +675,7 @@ public final class ModrinthRemoteModRepository implements RemoteModRepository {
                     loaders.stream().flatMap(loader -> {
                         if ("fabric".equalsIgnoreCase(loader)) return Stream.of(ModLoaderType.FABRIC);
                         else if ("forge".equalsIgnoreCase(loader)) return Stream.of(ModLoaderType.FORGE);
-                        else if ("neoforge".equalsIgnoreCase(loader)) return Stream.of(ModLoaderType.NEO_FORGED);
+                        else if ("neoforge".equalsIgnoreCase(loader)) return Stream.of(ModLoaderType.NEO_FORGE);
                         else if ("quilt".equalsIgnoreCase(loader)) return Stream.of(ModLoaderType.QUILT);
                         else if ("liteloader".equalsIgnoreCase(loader)) return Stream.of(ModLoaderType.LITE_LOADER);
                         else return Stream.empty();
@@ -806,15 +851,22 @@ public final class ModrinthRemoteModRepository implements RemoteModRepository {
         }
 
         public RemoteMod toMod() {
+            RemoteModRepository.Type type = switch (projectType) {
+                case "modpack" -> RemoteModRepository.Type.MODPACK;
+                case "resourcepack" -> RemoteModRepository.Type.RESOURCE_PACK;
+                case "shader" -> RemoteModRepository.Type.SHADER_PACK;
+                default -> RemoteModRepository.Type.MOD;
+            };
             return new RemoteMod(
                     slug,
                     author,
                     title,
                     description,
-                    displayCategories,
+                    sortDisplayCategories(displayCategories),
                     String.format("https://modrinth.com/%s/%s", projectType, projectId),
                     iconUrl,
-                    this
+                    this,
+                    type
             );
         }
     }

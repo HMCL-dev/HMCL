@@ -79,7 +79,7 @@ public class PersonalizationPage extends StackPane {
         {
             var brightnessPane = new LineSelectButton<String>();
             brightnessPane.setTitle(i18n("settings.launcher.brightness"));
-            brightnessPane.setConverter(name -> i18n("settings.launcher.brightness." + name));
+            brightnessPane.setNullSafeConverter(name -> i18n("settings.launcher.brightness." + name));
             brightnessPane.setItems("auto", "light", "dark");
             brightnessPane.valueProperty().bindBidirectional(config().themeBrightnessProperty());
 
@@ -135,6 +135,7 @@ public class PersonalizationPage extends StackPane {
                     new MultiFileItem.FileOption<>(i18n("settings.custom"), EnumBackgroundImage.CUSTOM)
                             .setChooserTitle(i18n("launcher.background.choose"))
                             .addExtensionFilter(FXUtils.getImageExtensionFilter())
+                            .setSelectionMode(FileSelector.SelectionMode.FILE_OR_DIRECTORY)
                             .bindBidirectional(config().backgroundImageProperty()),
                     new MultiFileItem.StringOption<>(i18n("launcher.background.network"), EnumBackgroundImage.NETWORK)
                             .setValidators(new URLValidator(true))
@@ -294,7 +295,7 @@ public class PersonalizationPage extends StackPane {
                 var fontAntiAliasingPane = new LineSelectButton<Optional<FontSmoothingType>>();
                 fontAntiAliasingPane.setTitle(i18n("settings.launcher.font.anti_aliasing"));
                 fontAntiAliasingPane.setSubtitle(i18n("settings.take_effect_after_restart"));
-                fontAntiAliasingPane.setConverter(value ->
+                fontAntiAliasingPane.setNullSafeConverter(value ->
                         value.isPresent()
                                 ? i18n("settings.launcher.font.anti_aliasing." + value.get().name().toLowerCase(Locale.ROOT))
                                 : i18n("settings.launcher.font.anti_aliasing.auto")

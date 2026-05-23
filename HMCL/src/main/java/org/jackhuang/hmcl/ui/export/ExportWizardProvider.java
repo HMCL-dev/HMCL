@@ -214,7 +214,7 @@ public final class ExportWizardProvider implements WizardProvider {
                                 vs.isFullscreen(),
                                 vs.getWidth(),
                                 vs.getHeight(),
-                                vs.getMaxMemory(),
+                                null,
                                 exportInfo.getMinMemory(),
                                 vs.isShowLogs(),
                                 /* showConsoleOnError */ true,

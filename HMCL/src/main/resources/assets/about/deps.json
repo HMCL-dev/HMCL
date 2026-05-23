@@ -47,7 +47,7 @@
   {
     "title" : "HelloNBT",
     "subtitle" : "Copyright © 2026 Glavo.\nLicensed under the Apache 2.0 License.",
-    "externalLink" : "https://github.com/Glavo/HelloNBT"
+    "externalLink" : "https://github.com/HMCL-dev/HelloNBT"
   },
   {
     "title" : "minecraft-jfx-skin",
@@ -88,5 +88,20 @@
     "title": "MonetFX",
     "subtitle": "Copyright © 2025 Glavo.\nLicensed under the Apache 2.0 License.",
     "externalLink": "https://github.com/Glavo/MonetFX"
+  },
+  {
+    "title": "LWJGL Unsafe Agent",
+    "subtitle": "Copyright © 2026 Glavo.\nLicensed under the Apache 2.0 License.",
+    "externalLink": "https://github.com/HMCL-dev/lwjgl-unsafe-agent"
+  },
+  {
+    "title": "TomlJ",
+    "subtitle": "Licensed under the Apache 2.0 License.",
+    "externalLink": "https://github.com/tomlj/tomlj"
+  },
+  {
+    "title": "WebURL for Java",
+    "subtitle": "Licensed under the Apache 2.0 License.",
+    "externalLink": "https://github.com/Glavo/weburl-java"
   }
 ]

@@ -6,6 +6,8 @@ import org.jackhuang.hmcl.gradle.l10n.CreateLanguageList
 import org.jackhuang.hmcl.gradle.l10n.CreateLocaleNamesResourceBundle
 import org.jackhuang.hmcl.gradle.l10n.UpsideDownTranslate
 import org.jackhuang.hmcl.gradle.mod.ParseModDataTask
+import org.jackhuang.hmcl.gradle.pack.CreateDeb
+import org.jackhuang.hmcl.gradle.pack.ReleaseType
 import org.jackhuang.hmcl.gradle.utils.PropertiesUtils
 import java.net.URI
 import java.nio.file.FileSystems
@@ -56,7 +58,7 @@ dependencies {
     implementation(project(":HMCLCore"))
     implementation(project(":HMCLBoot"))
     implementation("libs:JFoenix")
-    implementation(libs.twelvemonkeys.imageio.webp)
+    implementation(libs.jwebp)
     implementation(libs.fxsvgimage)
     implementation(libs.java.info)
     implementation(libs.monet.fx)
@@ -195,7 +197,7 @@ tasks.shadowJar {
     exclude("META-INF/services/javax.imageio.spi.ImageInputStreamSpi")
 
     listOf(
-        "aix-*", "sunos-*", "openbsd-*", "dragonflybsd-*", "freebsd-*", "linux-*", "darwin-*",
+        "aix-*", "sunos-*", "openbsd-*", "dragonflybsd-*", "freebsd-*", "linux-*",
         "*-ppc", "*-ppc64le", "*-s390x", "*-armel",
     ).forEach { exclude("com/sun/jna/$it/**") }
 
@@ -251,20 +253,22 @@ tasks.processResources {
     }
 }
 
+fun artifactFile(ext: String) = jarPath.resolveSibling(jarPath.nameWithoutExtension + '.' + ext)
+
 val makeExecutables by tasks.registering {
     val extensions = listOf("exe", "sh")
 
     dependsOn(tasks.jar)
 
     inputs.file(jarPath)
-    outputs.files(extensions.map { File(jarPath.parentFile, jarPath.nameWithoutExtension + '.' + it) })
+    outputs.files(extensions.map { artifactFile(it) })
 
     doLast {
         val jarContent = jarPath.readBytes()
 
         ZipFile(jarPath).use { zipFile ->
             for (extension in extensions) {
-                val output = File(jarPath.parentFile, jarPath.nameWithoutExtension + '.' + extension)
+                val output = artifactFile(extension)
                 val entry = zipFile.getEntry("assets/HMCLauncher.$extension")
                     ?: throw GradleException("HMCLauncher.$extension not found")
 
@@ -279,8 +283,31 @@ val makeExecutables by tasks.registering {
     }
 }
 
+val makeDeb by tasks.registering(CreateDeb::class) {
+    dependsOn(makeExecutables)
+
+    val debFile = layout.file(provider { artifactFile("deb") })
+
+    val debChannel = when (versionType) {
+        "stable" -> ReleaseType.STABLE
+        "dev" -> ReleaseType.DEVELOPMENT
+        else -> ReleaseType.NIGHTLY
+    }
+
+    version.set(project.version.toString())
+    releaseType.set(debChannel)
+    appShFile.set(layout.file(provider { artifactFile("sh") }))
+    iconFile.set(layout.projectDirectory.file("image/hmcl.png"))
+    outputFile.set(debFile)
+
+    doLast {
+        createChecksum(debFile.get().asFile)
+    }
+}
+
 tasks.build {
     dependsOn(makeExecutables)
+    dependsOn(makeDeb)
 }
 
 fun parseToolOptions(options: String?): MutableList<String> {
@@ -377,12 +404,14 @@ val upgradeTerracottaConfig = tasks.register<TerracottaConfigUpgradeTask>("upgra
     val destination = layout.projectDirectory.file("src/main/resources/assets/terracotta.json")
     val source = layout.projectDirectory.file("terracotta-template.json");
 
-    classifiers.set(listOf(
-        "windows-x86_64", "windows-arm64",
-        "macos-x86_64", "macos-arm64",
-        "linux-x86_64", "linux-arm64", "linux-loongarch64", "linux-riscv64",
-        "freebsd-x86_64"
-    ))
+    classifiers.set(
+        listOf(
+            "windows-x86_64", "windows-arm64",
+            "macos-x86_64", "macos-arm64",
+            "linux-x86_64", "linux-arm64", "linux-loongarch64", "linux-riscv64",
+            "freebsd-x86_64"
+        )
+    )
 
     version.set(libs.versions.terracotta)
     downloadURL.set($$"https://github.com/burningtnt/Terracotta/releases/download/v${version}/terracotta-${version}-${classifier}-pkg.tar.gz")

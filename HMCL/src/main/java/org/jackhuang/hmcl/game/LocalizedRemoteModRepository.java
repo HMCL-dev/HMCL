@@ -18,7 +18,6 @@
 package org.jackhuang.hmcl.game;
 
 import org.jackhuang.hmcl.download.DownloadProvider;
-import org.jackhuang.hmcl.mod.LocalModFile;
 import org.jackhuang.hmcl.mod.RemoteMod;
 import org.jackhuang.hmcl.mod.RemoteModRepository;
 import org.jackhuang.hmcl.ui.versions.ModTranslations;
@@ -110,8 +109,8 @@ public abstract class LocalizedRemoteModRepository implements RemoteModRepositor
     }
 
     @Override
-    public Optional<RemoteMod.Version> getRemoteVersionByLocalFile(LocalModFile localModFile, Path file) throws IOException {
-        return getBackedRemoteModRepository().getRemoteVersionByLocalFile(localModFile, file);
+    public Optional<RemoteMod.Version> getRemoteVersionByLocalFile(Path file) throws IOException {
+        return getBackedRemoteModRepository().getRemoteVersionByLocalFile(file);
     }
 
     @Override
