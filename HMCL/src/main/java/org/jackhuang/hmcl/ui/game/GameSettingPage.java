@@ -21,7 +21,6 @@ import com.jfoenix.controls.JFXButton;
 import com.jfoenix.controls.JFXComboBox;
 import com.jfoenix.controls.JFXSlider;
 import com.jfoenix.controls.JFXTextField;
-import javafx.animation.PauseTransition;
 import javafx.css.PseudoClass;
 import javafx.beans.InvalidationListener;
 import javafx.beans.property.*;
@@ -41,7 +40,6 @@ import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.*;
 import javafx.stage.FileChooser;
 import javafx.stage.Screen;
-import javafx.util.Duration;
 import org.jackhuang.hmcl.game.*;
 import org.jackhuang.hmcl.java.JavaManager;
 import org.jackhuang.hmcl.java.JavaRuntime;
@@ -730,15 +728,13 @@ public final class GameSettingPage<S extends GameSetting> extends StackPane
         var listButton = LineButton.createNavigationButton();
         listButton.setTitle(i18n("settings.type.global.manage_all"));
         listButton.setOnAction(event -> {
-            var transition = new PauseTransition(Duration.millis(120));
-            transition.setOnFinished(ignored -> Controllers.navigateForward(new GlobalGameSettingListPage(
+            Controllers.navigateForward(new GlobalGameSettingListPage(
                     this::getCurrentGlobalSetting,
                     this::selectGlobalSetting,
                     setting -> {
                         selectGlobalSetting(setting);
                         Controllers.navigate(this);
-                    })));
-            transition.play();
+                    }));
         });
         list.getContent().add(listButton);
     }
@@ -1413,7 +1409,7 @@ public final class GameSettingPage<S extends GameSetting> extends StackPane
             if (!(setting instanceof GameSetting.Instance instance)
                     || updating.value
                     || (!isCurrentInstanceModpack()
-                            && !instance.getOverrideProperties().contains(GameSetting.PROPERTY_RUNNING_DIR))) {
+                    && !instance.getOverrideProperties().contains(GameSetting.PROPERTY_RUNNING_DIR))) {
                 return;
             }
 

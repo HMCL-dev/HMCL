@@ -341,13 +341,9 @@ public final class HMCLGameRepository extends DefaultGameRepository {
         }
     }
 
-    private Path getLegacyGameSettingFile(String id) {
-        return getVersionRoot(id).resolve("hmclversion.cfg");
-    }
-
     @Nullable
     private GameSetting.Instance loadLegacyGameSetting(String id) {
-        Path file = getLegacyGameSettingFile(id);
+        Path file = getVersionRoot(id).resolve("hmclversion.cfg");
         if (!Files.exists(file)) {
             return null;
         }
