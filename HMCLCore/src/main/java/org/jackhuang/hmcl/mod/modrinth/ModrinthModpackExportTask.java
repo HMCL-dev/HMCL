@@ -33,6 +33,7 @@ import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.util.DigestUtils;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
+import org.jackhuang.hmcl.util.io.NetworkUtils;
 import org.jackhuang.hmcl.util.io.Zipper;
 import org.jackhuang.hmcl.mod.LocalModFile;
 import org.jackhuang.hmcl.mod.RemoteMod;
@@ -137,7 +138,7 @@ public class ModrinthModpackExportTask extends Task<Void> {
             Set<String> filesInManifest = new HashSet<>();
 
             String[] resourceDirs = {"resourcepacks", "shaderpacks", "mods"};
-            String fileApi = info.getFileApi() == null ? null : StringUtils.removeSuffix(info.getFileApi(), "/");
+            String fileApi = StringUtils.isBlank(info.getFileApi()) ? null : StringUtils.removeSuffix(info.getFileApi(), "/");
             for (String dir : resourceDirs) {
                 Path dirPath = runDirectory.resolve(dir);
                 if (Files.exists(dirPath)) {
@@ -165,7 +166,7 @@ public class ModrinthModpackExportTask extends Task<Void> {
                                                 relativePath,
                                                 hashes,
                                                 null,
-                                                Collections.singletonList(fileApi + "/" + relativePath),
+                                                Collections.singletonList(fileApi + "/" + NetworkUtils.encodeLocation(relativePath)),
                                                 (int) fileSize
                                         );
                                     }
