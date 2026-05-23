@@ -356,13 +356,43 @@ public final class HMCLGameRepository extends DefaultGameRepository {
             }
 
             if (legacySettingJson != null) {
-                UUID parent = profile.getLegacyGameSettingParent();
-                return LegacyGameSettingMigrator.toInstance(parent, legacySettingJson, !LegacyGameSettingMigrator.isUsesGlobal(legacySettingJson));
+                @Nullable UUID parent = profile.getLegacyGameSettingParent();
+                boolean usesGlobal = LegacyGameSettingMigrator.isUsesGlobal(legacySettingJson);
+                GameSetting.Instance setting = LegacyGameSettingMigrator.toInstance(parent, legacySettingJson, !usesGlobal);
+                if (usesGlobal) {
+                    preserveLegacyGlobalRunningDirectory(setting, parent);
+                } else {
+                    preserveLegacyLocalRootRunningDirectory(setting, legacySettingJson, parent);
+                }
+                return setting;
             }
         } catch (Exception ex) {
             LOG.warning("Failed to migrate legacy version setting " + file, ex);
         }
         return null;
+    }
+
+    /// Preserves inherited legacy `VERSION_FOLDER` semantics for local settings that use global values.
+    private void preserveLegacyGlobalRunningDirectory(GameSetting.Instance setting, @Nullable UUID parent) {
+        GameSetting.Global parentSetting = config().getGameSetting(parent);
+        if (parentSetting != null && parentSetting.defaultIsolationTypeProperty().getValue() == DefaultIsolationType.ALWAYS) {
+            setting.runningDirProperty().setValue("");
+            setting.getOverrideProperties().add(GameSetting.PROPERTY_RUNNING_DIR);
+        }
+    }
+
+    /// Preserves explicit legacy `ROOT_FOLDER` local settings when the parent uses a custom directory.
+    private void preserveLegacyLocalRootRunningDirectory(
+            GameSetting.Instance setting,
+            JsonObject legacySettingJson,
+            @Nullable UUID parent) {
+        GameSetting.Global parentSetting = config().getGameSetting(parent);
+        if (parentSetting != null
+                && LegacyGameSettingMigrator.isLegacyRootGameDirectory(legacySettingJson)
+                && StringUtils.isNotBlank(parentSetting.runningDirProperty().getValue())) {
+            setting.runningDirProperty().setValue(getBaseDirectory().toString());
+            setting.getOverrideProperties().add(GameSetting.PROPERTY_RUNNING_DIR);
+        }
     }
 
     public Optional<Path> getVersionIconFile(String id) {

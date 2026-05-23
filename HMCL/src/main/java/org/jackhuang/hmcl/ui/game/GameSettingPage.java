@@ -69,6 +69,7 @@ import org.jetbrains.annotations.UnknownNullability;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
+import java.util.Objects;
 import java.util.UUID;
 import java.util.function.Function;
 
@@ -977,6 +978,7 @@ public final class GameSettingPage<S extends GameSetting> extends StackPane
     private void bindWindowSizeComboBox(JFXComboBox<String> comboBox) {
         ObjectProperty<@Nullable Property<Double>> activeWidthProperty = new SimpleObjectProperty<>();
         ObjectProperty<@Nullable Property<Double>> activeHeightProperty = new SimpleObjectProperty<>();
+        final Holder<@Nullable String> committedValue = new Holder<>();
         final Holder<Boolean> updating = new Holder<>(false);
 
         InvalidationListener propertyListener = observable -> {
@@ -991,7 +993,9 @@ public final class GameSettingPage<S extends GameSetting> extends StackPane
                 S setting = currentSetting.get();
                 Double width = setting != null ? getEffectiveValue(setting, GameSetting::widthProperty) : widthProperty.getValue();
                 Double height = setting != null ? getEffectiveValue(setting, GameSetting::heightProperty) : heightProperty.getValue();
-                comboBox.setValue(isSpecifiedWindowSize(width, height) ? formatWindowSize(width, height) : null);
+                String value = isSpecifiedWindowSize(width, height) ? formatWindowSize(width, height) : null;
+                committedValue.value = value;
+                comboBox.setValue(value);
             } finally {
                 updating.value = false;
             }
@@ -1004,6 +1008,7 @@ public final class GameSettingPage<S extends GameSetting> extends StackPane
                         currentSetting.get(),
                         activeWidthProperty.get(),
                         activeHeightProperty.get(),
+                        committedValue,
                         updating);
             }
         };
@@ -1015,6 +1020,7 @@ public final class GameSettingPage<S extends GameSetting> extends StackPane
                         currentSetting.get(),
                         activeWidthProperty.get(),
                         activeHeightProperty.get(),
+                        committedValue,
                         updating);
             }
         };
@@ -1060,18 +1066,25 @@ public final class GameSettingPage<S extends GameSetting> extends StackPane
                                                      @Nullable GameSetting setting,
                                                      @Nullable Property<Double> widthProperty,
                                                      @Nullable Property<Double> heightProperty,
+                                                     Holder<@Nullable String> committedValue,
                                                      Holder<Boolean> updating) {
         if (widthProperty == null || heightProperty == null || updating.value) {
             return;
         }
 
+        String value = comboBox.getValue();
+        if (Objects.equals(value, committedValue.value)) {
+            return;
+        }
+
         updating.value = true;
         try {
-            setWindowSizeOverridden(setting, widthProperty, heightProperty);
-            String value = comboBox.getValue();
             if (StringUtils.isBlank(value)) {
+                setWindowSizeOverridden(setting, widthProperty, heightProperty);
                 widthProperty.setValue(0.0);
                 heightProperty.setValue(0.0);
+                comboBox.setValue(null);
+                committedValue.value = null;
                 return;
             }
 
@@ -1081,15 +1094,21 @@ public final class GameSettingPage<S extends GameSetting> extends StackPane
             }
 
             if (idx < 0) {
-                comboBox.setValue(formatNullableWindowSize(widthProperty.getValue(), heightProperty.getValue()));
+                comboBox.setValue(committedValue.value);
                 return;
             }
 
             try {
-                widthProperty.setValue(Double.parseDouble(value.substring(0, idx).trim()));
-                heightProperty.setValue(Double.parseDouble(value.substring(idx + 1).trim()));
+                double width = Double.parseDouble(value.substring(0, idx).trim());
+                double height = Double.parseDouble(value.substring(idx + 1).trim());
+                setWindowSizeOverridden(setting, widthProperty, heightProperty);
+                widthProperty.setValue(width);
+                heightProperty.setValue(height);
+                String formattedValue = formatNullableWindowSize(width, height);
+                comboBox.setValue(formattedValue);
+                committedValue.value = formattedValue;
             } catch (NumberFormatException e) {
-                comboBox.setValue(formatNullableWindowSize(widthProperty.getValue(), heightProperty.getValue()));
+                comboBox.setValue(committedValue.value);
             }
         } finally {
             updating.value = false;

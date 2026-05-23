@@ -149,6 +149,11 @@ public final class LegacyGameSettingMigrator {
         return readBoolean(source, "usesGlobal", false);
     }
 
+    /// Returns whether a legacy setting explicitly uses the root game directory.
+    public static boolean isLegacyRootGameDirectory(@Nullable JsonObject source) {
+        return getLegacyGameDirType(source, GameDirectoryType.ROOT_FOLDER) == GameDirectoryType.ROOT_FOLDER;
+    }
+
     /// Returns the legacy game directory type from a setting JSON object.
     private static GameDirectoryType getLegacyGameDirType(@Nullable JsonObject source, GameDirectoryType defaultValue) {
         return parseEnum(source, "gameDirType", GameDirectoryType.class, defaultValue);
