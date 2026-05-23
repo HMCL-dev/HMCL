@@ -19,8 +19,10 @@ package org.jackhuang.hmcl.ui.game;
 
 import com.jfoenix.controls.JFXButton;
 import com.jfoenix.controls.JFXComboBox;
+import com.jfoenix.controls.JFXRadioButton;
 import com.jfoenix.controls.JFXSlider;
 import com.jfoenix.controls.JFXTextField;
+import javafx.beans.binding.Bindings;
 import javafx.css.PseudoClass;
 import javafx.beans.InvalidationListener;
 import javafx.beans.property.*;
@@ -36,6 +38,7 @@ import javafx.scene.control.ContentDisplay;
 import javafx.scene.control.Label;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.control.Tooltip;
+import javafx.scene.control.ToggleGroup;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.*;
 import javafx.stage.FileChooser;
@@ -47,8 +50,6 @@ import org.jackhuang.hmcl.setting.*;
 import org.jackhuang.hmcl.setting.property.InheritableProperty;
 import org.jackhuang.hmcl.setting.property.SettingProperty;
 import org.jackhuang.hmcl.ui.*;
-import org.jackhuang.hmcl.ui.animation.ContainerAnimations;
-import org.jackhuang.hmcl.ui.animation.TransitionPane;
 import org.jackhuang.hmcl.ui.construct.*;
 import org.jackhuang.hmcl.ui.decorator.DecoratorPage;
 import org.jackhuang.hmcl.ui.versions.VersionIconDialog;
@@ -106,9 +107,14 @@ public final class GameSettingPage<S extends GameSetting> extends StackPane
     private boolean updatingParentSetting = false;
 
     // GUI
-    private final TransitionPane contentPane;
     private final ScrollPane scrollPane;
     private final VBox rootPane;
+
+    /// The selected global setting radio group.
+    private final ToggleGroup globalSettingGroup = new ToggleGroup();
+
+    /// Global setting rows currently displayed in the management sublist.
+    private final List<GlobalSettingRow> globalSettingRows = new ArrayList<>();
 
     private final @UnknownNullability ImagePickerItem iconPickerItem;
 
@@ -128,6 +134,7 @@ public final class GameSettingPage<S extends GameSetting> extends StackPane
         scrollPane.setFitToHeight(true);
         scrollPane.setFitToWidth(true);
         scrollPane.setVbarPolicy(ScrollPane.ScrollBarPolicy.AS_NEEDED);
+        getChildren().setAll(scrollPane);
 
         this.rootPane = new VBox();
         rootPane.setFillWidth(true);
@@ -136,14 +143,10 @@ public final class GameSettingPage<S extends GameSetting> extends StackPane
         rootPane.getStyleClass().add("card-list");
         scrollPane.setContent(rootPane);
 
-        this.contentPane = new TransitionPane();
-        contentPane.setContent(scrollPane, ContainerAnimations.NONE);
-        getChildren().setAll(contentPane);
-
         if (isGlobalSetting) {
-            var globalSettingListButton = new ComponentList();
-            rootPane.getChildren().add(globalSettingListButton);
-            createGlobalSettingListButton(globalSettingListButton);
+            var globalSettingManagement = new ComponentList();
+            rootPane.getChildren().add(globalSettingManagement);
+            createGlobalSettingManagementSublist(globalSettingManagement);
         }
 
         var basicSettings = new ComponentList();
@@ -730,30 +733,108 @@ public final class GameSettingPage<S extends GameSetting> extends StackPane
         currentSetting.set((S) setting);
     }
 
-    private void createGlobalSettingListButton(ComponentList list) {
-        var listButton = LineButton.createNavigationButton();
-        listButton.setTitle(i18n("settings.type.global.manage_all"));
-        listButton.setOnAction(event -> showGlobalSettingListPage());
-        list.getContent().add(listButton);
-    }
-
-    /// Replaces the editor content with the global game setting list.
-    private void showGlobalSettingListPage() {
-        contentPane.setContent(new GlobalGameSettingListPage(
-                this::getCurrentGlobalSetting,
-                this::selectGlobalSetting,
-                this::showGlobalSettingEditor), ContainerAnimations.FORWARD);
-    }
-
-    /// Replaces the global game setting list with the editor for the given setting.
-    private void showGlobalSettingEditor(GameSetting.Global setting) {
-        selectGlobalSetting(setting);
-        contentPane.setContent(scrollPane, ContainerAnimations.BACKWARD);
-    }
-
     private @Nullable GameSetting.Global getCurrentGlobalSetting() {
         GameSetting setting = currentSetting.get();
         return setting instanceof GameSetting.Global global ? global : null;
+    }
+
+    /// Returns the display name for a global game setting.
+    private static String getGlobalSettingDisplayName(GameSetting.Global setting) {
+        return StringUtils.isBlank(setting.nameProperty().getValue())
+                ? setting.idProperty().getValue().toString()
+                : setting.nameProperty().getValue();
+    }
+
+    /// Creates the global game setting management sublist.
+    private void createGlobalSettingManagementSublist(ComponentList list) {
+        var sublist = new ComponentSublist();
+        sublist.setTitle(i18n("settings.type.global.manage_all"));
+        list.getContent().add(sublist);
+
+        InvalidationListener updateItems = observable -> updateGlobalSettingManagementSublist(sublist);
+        config().getGameSettings().addListener(holder.weak(updateItems));
+        currentSetting.addListener((observable, oldValue, newValue) -> updateGlobalSettingRowSelection());
+        updateGlobalSettingManagementSublist(sublist);
+    }
+
+    /// Updates the global game setting rows shown in the management sublist.
+    private void updateGlobalSettingManagementSublist(ComponentSublist sublist) {
+        globalSettingGroup.getToggles().clear();
+        globalSettingRows.clear();
+
+        List<Node> rows = new ArrayList<>();
+        var createButton = new LineButton();
+        createButton.setTitle(i18n("settings.type.global.create"));
+        createButton.setLeading(SVG.ADD, 20);
+        createButton.setOnAction(event -> createGlobalSetting());
+        rows.add(createButton);
+
+        for (GameSetting.Global setting : config().getGameSettings()) {
+            var row = new GlobalSettingRow(setting);
+            globalSettingRows.add(row);
+            rows.add(row);
+        }
+
+        sublist.getContent().setAll(rows);
+        updateGlobalSettingRowSelection();
+    }
+
+    /// Creates a new global game setting and selects it for editing.
+    private void createGlobalSetting() {
+        Controllers.prompt(i18n("settings.type.global.create"), (name, handler) -> {
+            if (StringUtils.isBlank(name)) {
+                handler.reject(i18n("input.not_empty"));
+                return;
+            }
+
+            GameSetting.Global setting = new GameSetting.Global();
+            setting.nameProperty().setValue(name.trim());
+            config().getGameSettings().add(setting);
+            selectGlobalSetting(setting);
+            handler.resolve();
+        }, i18n("settings.type.global.new"), new RequiredValidator());
+    }
+
+    /// Updates radio selection in the global setting management rows.
+    private void updateGlobalSettingRowSelection() {
+        for (GlobalSettingRow row : globalSettingRows) {
+            row.updateSelected();
+        }
+    }
+
+    /// Row shown in the global game setting management sublist.
+    private final class GlobalSettingRow extends LineButton {
+        /// The represented global game setting.
+        private final GameSetting.Global setting;
+
+        /// The radio button showing whether this setting is selected.
+        private final JFXRadioButton selectedButton = new JFXRadioButton();
+
+        /// Creates a row for the given global game setting.
+        private GlobalSettingRow(GameSetting.Global setting) {
+            this.setting = setting;
+
+            selectedButton.setToggleGroup(globalSettingGroup);
+            selectedButton.setOnAction(event -> selectGlobalSetting(setting));
+            setLeading(selectedButton);
+
+            titleProperty().bind(Bindings.createStringBinding(
+                    () -> getGlobalSettingDisplayName(setting),
+                    setting.nameProperty(),
+                    setting.idProperty()));
+
+            setOnAction(event -> {
+                if (!selectedButton.isSelected()) {
+                    selectedButton.fire();
+                }
+            });
+            updateSelected();
+        }
+
+        /// Updates the radio button selection from the current editor setting.
+        private void updateSelected() {
+            selectedButton.setSelected(getCurrentGlobalSetting() == setting);
+        }
     }
 
     private void bindInstanceParentSetting(LineSelectButton<GameSetting.@Nullable Global> button) {
