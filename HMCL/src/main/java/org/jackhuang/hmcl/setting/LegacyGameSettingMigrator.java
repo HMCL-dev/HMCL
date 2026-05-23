@@ -99,15 +99,11 @@ public final class LegacyGameSettingMigrator {
         GameSetting.Instance target = new GameSetting.Instance();
         target.parentProperty().setValue(parent);
         target.iconProperty().setValue(parseLegacyVersionIconType(source));
-        GameDirectoryType legacyGameDirType = getLegacyGameDirType(source, GameDirectoryType.ROOT_FOLDER);
-        if (legacyGameDirType != GameDirectoryType.ROOT_FOLDER) {
-            target.getOverrideProperties().add(GameSetting.PROPERTY_RUNNING_DIR);
-            if (legacyGameDirType == GameDirectoryType.CUSTOM) {
-                target.runningDirProperty().setValue(readString(source, "gameDir", ""));
-            }
-        }
         if (source != null && copyValues) {
             copyCommonProperties(source, target);
+            if (getLegacyGameDirType(source, GameDirectoryType.ROOT_FOLDER) != GameDirectoryType.ROOT_FOLDER) {
+                target.getOverrideProperties().add(GameSetting.PROPERTY_RUNNING_DIR);
+            }
             target.getOverrideProperties().addAll(List.of(
                     GameSetting.PROPERTY_JAVA_TYPE,
                     GameSetting.PROPERTY_JVM_OPTIONS,

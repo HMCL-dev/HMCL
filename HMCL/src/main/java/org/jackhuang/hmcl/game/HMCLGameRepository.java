@@ -120,7 +120,6 @@ public final class HMCLGameRepository extends DefaultGameRepository {
         return Objects.requireNonNullElse(parent.runningDirProperty().getValue(), "");
     }
 
-
     public Stream<Version> getDisplayVersions() {
         return getVersions().stream()
                 .filter(v -> !v.isHidden())
@@ -309,7 +308,9 @@ public final class HMCLGameRepository extends DefaultGameRepository {
     }
 
     public GameSetting.Global getParentGameSetting(@Nullable GameSetting.Instance instance) {
-        UUID parent = instance != null ? instance.parentProperty().getValue() : null;
+        @Nullable UUID parent = instance != null
+                ? instance.parentProperty().getValue()
+                : profile.getLegacyGameSettingParent();
         GameSetting.Global parentSetting = config().getGameSetting(parent);
         return parentSetting != null ? parentSetting : config().getDefaultGameSettingOrCreate();
     }

@@ -20,7 +20,6 @@ package org.jackhuang.hmcl.setting.property;
 import javafx.beans.property.Property;
 import org.jackhuang.hmcl.setting.GameSetting;
 import org.jackhuang.hmcl.util.gson.RawPreservingProperty;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.UnknownNullability;
 

@@ -61,9 +61,9 @@ public final class VanillaInstallWizardProvider implements WizardProvider {
         });
 
         return builder.buildAsync().whenComplete(any -> {
-                    profile.getRepository().refreshVersions();
-                    profile.getRepository().applyDefaultIsolationSetting(name);
-                })
+            profile.getRepository().refreshVersions();
+            profile.getRepository().applyDefaultIsolationSetting(name);
+        })
                 .thenRunAsync(Schedulers.javafx(), () -> profile.setSelectedVersion(name));
     }
 

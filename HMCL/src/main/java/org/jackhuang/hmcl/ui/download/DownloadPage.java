@@ -318,9 +318,9 @@ public class DownloadPage extends DecoratorAnimatedPage implements DecoratorPage
             });
 
             return builder.buildAsync().whenComplete(any -> {
-                        profile.getRepository().refreshVersions();
-                        profile.getRepository().applyDefaultIsolationSetting(name);
-                    })
+                profile.getRepository().refreshVersions();
+                profile.getRepository().applyDefaultIsolationSetting(name);
+            })
                     .thenRunAsync(Schedulers.javafx(), () -> profile.setSelectedVersion(name));
         }
 

@@ -134,6 +134,11 @@
         <property name="files" value=".*[\\/](ScrollUtils|TypeUtils).java"/>
     </module>
 
+    <module name="SuppressionSingleFilter">
+        <property name="checks" value="FileLength"/>
+        <property name="files" value=".*[\\/]org[\\/]jackhuang[\\/]hmcl[\\/]ui[\\/]game[\\/]GameSettingPage.java"/>
+    </module>
+
     <module name="RegexpHeader">
         <property name="headerFile" value="${licenseHeaderFile}"/>
         <property name="charset" value="UTF-8"/>
