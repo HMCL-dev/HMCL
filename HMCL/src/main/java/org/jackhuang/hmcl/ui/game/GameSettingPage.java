@@ -149,6 +149,13 @@ public final class GameSettingPage<S extends GameSetting> extends StackPane
             if (isGlobalSetting) {
                 iconPickerItem = null;
                 createGlobalSettingManagementSublist(basicSettings);
+                var globalSettingNamePane = new LinePane();
+                globalSettingNamePane.setTitle(i18n("settings.type.global.name"));
+                var globalSettingNameField = new JFXTextField();
+                globalSettingNameField.setPrefWidth(400);
+                globalSettingNamePane.setRight(globalSettingNameField);
+                bindGlobalSettingBidirectional(globalSettingNameField.textProperty(), GameSetting.Global::nameProperty);
+                basicSettings.getContent().add(globalSettingNamePane);
             } else {
                 iconPickerItem = new ImagePickerItem();
                 basicSettings.getContent().add(iconPickerItem);
@@ -737,13 +744,12 @@ public final class GameSettingPage<S extends GameSetting> extends StackPane
         sublist.setTitle(i18n("settings.type.global.manage_all"));
         sublist.setHasSubtitle(true);
 
-        JFXButton createButton = FXUtils.newToggleButton4(SVG.ADD, 20);
-        createButton.setOnAction(event -> createGlobalSetting());
-        FXUtils.installFastTooltip(createButton, i18n("settings.type.global.create"));
-        sublist.setHeaderRight(createButton);
-
         var globalSettingItem = new RadioChoiceList<GameSetting.Global>();
-        sublist.getContent().setAll(globalSettingItem);
+        var createButton = new LineButton();
+        createButton.setTitle(i18n("settings.type.global.create"));
+        createButton.setLeading(SVG.ADD, 20);
+        createButton.setOnAction(event -> createGlobalSetting());
+        sublist.getContent().setAll(globalSettingItem, createButton);
         list.getContent().add(sublist);
 
         final Holder<Boolean> updating = new Holder<>(false);
