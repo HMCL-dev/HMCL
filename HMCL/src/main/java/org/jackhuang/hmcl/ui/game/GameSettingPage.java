@@ -47,6 +47,8 @@ import org.jackhuang.hmcl.setting.*;
 import org.jackhuang.hmcl.setting.property.InheritableProperty;
 import org.jackhuang.hmcl.setting.property.SettingProperty;
 import org.jackhuang.hmcl.ui.*;
+import org.jackhuang.hmcl.ui.animation.ContainerAnimations;
+import org.jackhuang.hmcl.ui.animation.TransitionPane;
 import org.jackhuang.hmcl.ui.construct.*;
 import org.jackhuang.hmcl.ui.decorator.DecoratorPage;
 import org.jackhuang.hmcl.ui.versions.VersionIconDialog;
@@ -104,6 +106,7 @@ public final class GameSettingPage<S extends GameSetting> extends StackPane
     private boolean updatingParentSetting = false;
 
     // GUI
+    private final TransitionPane contentPane;
     private final ScrollPane scrollPane;
     private final VBox rootPane;
 
@@ -125,7 +128,6 @@ public final class GameSettingPage<S extends GameSetting> extends StackPane
         scrollPane.setFitToHeight(true);
         scrollPane.setFitToWidth(true);
         scrollPane.setVbarPolicy(ScrollPane.ScrollBarPolicy.AS_NEEDED);
-        getChildren().setAll(scrollPane);
 
         this.rootPane = new VBox();
         rootPane.setFillWidth(true);
@@ -133,6 +135,10 @@ public final class GameSettingPage<S extends GameSetting> extends StackPane
         FXUtils.smoothScrolling(scrollPane);
         rootPane.getStyleClass().add("card-list");
         scrollPane.setContent(rootPane);
+
+        this.contentPane = new TransitionPane();
+        contentPane.setContent(scrollPane, ContainerAnimations.NONE);
+        getChildren().setAll(contentPane);
 
         if (isGlobalSetting) {
             var globalSettingListButton = new ComponentList();
@@ -727,16 +733,22 @@ public final class GameSettingPage<S extends GameSetting> extends StackPane
     private void createGlobalSettingListButton(ComponentList list) {
         var listButton = LineButton.createNavigationButton();
         listButton.setTitle(i18n("settings.type.global.manage_all"));
-        listButton.setOnAction(event -> {
-            Controllers.navigateForward(new GlobalGameSettingListPage(
-                    this::getCurrentGlobalSetting,
-                    this::selectGlobalSetting,
-                    setting -> {
-                        selectGlobalSetting(setting);
-                        Controllers.navigate(this);
-                    }));
-        });
+        listButton.setOnAction(event -> showGlobalSettingListPage());
         list.getContent().add(listButton);
+    }
+
+    /// Replaces the editor content with the global game setting list.
+    private void showGlobalSettingListPage() {
+        contentPane.setContent(new GlobalGameSettingListPage(
+                this::getCurrentGlobalSetting,
+                this::selectGlobalSetting,
+                this::showGlobalSettingEditor), ContainerAnimations.FORWARD);
+    }
+
+    /// Replaces the global game setting list with the editor for the given setting.
+    private void showGlobalSettingEditor(GameSetting.Global setting) {
+        selectGlobalSetting(setting);
+        contentPane.setContent(scrollPane, ContainerAnimations.BACKWARD);
     }
 
     private @Nullable GameSetting.Global getCurrentGlobalSetting() {
