@@ -23,6 +23,7 @@ import javafx.beans.InvalidationListener;
 import javafx.css.PseudoClass;
 import javafx.scene.Node;
 import javafx.scene.layout.HBox;
+import javafx.scene.layout.Region;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.scene.shape.Rectangle;
@@ -96,8 +97,12 @@ final class ComponentSublistWrapper extends VBox implements NoPaddingComponent {
             }
 
             Platform.runLater(() -> {
-                double contentHeight = expanded ? sublist.prefHeight(sublist.getWidth()) : 0;
                 double targetRotate = expanded ? -180 : 0;
+                if (!expanded && container != null) {
+                    double currentHeight = container.getHeight() > 0 ? container.getHeight() : computeContentHeight(sublist);
+                    container.setMinHeight(currentHeight);
+                    container.setMaxHeight(currentHeight);
+                }
 
                 if (AnimationUtils.isAnimationEnabled()) {
                     double currentRotate = expandIcon.getRotate();
@@ -106,15 +111,24 @@ final class ComponentSublistWrapper extends VBox implements NoPaddingComponent {
 
                     expandAnimation = new Timeline(
                             new KeyFrame(duration,
-                                    new KeyValue(container.minHeightProperty(), contentHeight, interpolator),
-                                    new KeyValue(container.maxHeightProperty(), contentHeight, interpolator),
+                                    new KeyValue(container.minHeightProperty(), expanded ? computeContentHeight(sublist) : 0, interpolator),
+                                    new KeyValue(container.maxHeightProperty(), expanded ? computeContentHeight(sublist) : 0, interpolator),
                                     new KeyValue(expandIcon.rotateProperty(), targetRotate, interpolator))
                     );
+                    expandAnimation.setOnFinished(e -> {
+                        if (this.expanded) {
+                            useComputedContentHeight();
+                        }
+                    });
 
                     expandAnimation.play();
                 } else {
-                    container.setMinHeight(contentHeight);
-                    container.setMaxHeight(contentHeight);
+                    if (expanded) {
+                        useComputedContentHeight();
+                    } else {
+                        container.setMinHeight(0);
+                        container.setMaxHeight(0);
+                    }
                     expandIcon.setRotate(targetRotate);
                 }
             });
@@ -153,7 +167,43 @@ final class ComponentSublistWrapper extends VBox implements NoPaddingComponent {
         sublist.trailingProperty().addListener(updateTrailing);
         updateTrailing.invalidated(null);
 
+        sublist.getContent().addListener((InvalidationListener) observable -> updateExpandedContentHeight(sublist));
+
         this.getChildren().add(header);
+    }
+
+    /// Uses the sublist's computed height while expanded so dynamic content can resize naturally.
+    private void updateExpandedContentHeight(ComponentSublist sublist) {
+        if (!expanded || container == null) {
+            return;
+        }
+
+        Platform.runLater(() -> {
+            if (!expanded || container == null) {
+                return;
+            }
+
+            if (expandAnimation != null && expandAnimation.getStatus() == Animation.Status.RUNNING) {
+                expandAnimation.stop();
+            }
+
+            useComputedContentHeight();
+        });
+    }
+
+    /// Returns the preferred height for the current sublist content.
+    private double computeContentHeight(ComponentSublist sublist) {
+        return sublist.prefHeight(sublist.getWidth());
+    }
+
+    /// Clears fixed height constraints on the expanded content container.
+    private void useComputedContentHeight() {
+        if (container == null) {
+            return;
+        }
+
+        container.setMinHeight(Region.USE_COMPUTED_SIZE);
+        container.setMaxHeight(Region.USE_COMPUTED_SIZE);
     }
 
     private static final class HeaderButton extends LineButton {
