@@ -156,7 +156,7 @@ public final class GameSettingPage<S extends GameSetting> extends StackPane
                 iconPickerItem = null;
                 createPresetManagementSublist(presetSettings);
                 var presetNamePane = new LinePane();
-                presetNamePane.setTitle(i18n("settings.type.global.name"));
+                presetNamePane.setTitle(i18n("settings.type.global.preset.name"));
                 var presetNameField = new JFXTextField();
                 presetNameField.setPrefWidth(400);
                 presetNamePane.setRight(presetNameField);
@@ -184,7 +184,7 @@ public final class GameSettingPage<S extends GameSetting> extends StackPane
                 parentGameSettingPane.setTitle(i18n("settings.type.global.preset"));
                 parentGameSettingPane.setConverter(setting -> setting != null
                         ? setting.nameProperty().getValue()
-                        : i18n("settings.type.global.default"));
+                        : i18n("settings.type.global.preset.default"));
                 bindInstanceParentSetting(parentGameSettingPane);
             }
 
@@ -756,12 +756,12 @@ public final class GameSettingPage<S extends GameSetting> extends StackPane
     /// Creates the preset management sublist.
     private void createPresetManagementSublist(ComponentList list) {
         var sublist = new ComponentSublist();
-        sublist.setTitle(i18n("settings.type.global.manage_all"));
+        sublist.setTitle(i18n("settings.type.global.preset.manage_all"));
         sublist.setHasSubtitle(true);
 
         var presetItem = new RadioChoiceList<GameSetting.Preset>();
         var createButton = new LineButton();
-        createButton.setTitle(i18n("settings.type.global.create"));
+        createButton.setTitle(i18n("settings.type.global.preset.create"));
         createButton.setLeading(SVG.ADD, 20);
         createButton.setOnAction(event -> createPreset());
         sublist.getContent().setAll(presetItem, createButton);
@@ -836,7 +836,7 @@ public final class GameSettingPage<S extends GameSetting> extends StackPane
 
     /// Creates a new preset and selects it for editing.
     private void createPreset() {
-        Controllers.prompt(i18n("settings.type.global.create"), (name, handler) -> {
+        Controllers.prompt(i18n("settings.type.global.preset.create"), (name, handler) -> {
             if (StringUtils.isBlank(name)) {
                 handler.reject(i18n("input.not_empty"));
                 return;
@@ -847,7 +847,7 @@ public final class GameSettingPage<S extends GameSetting> extends StackPane
             config().getGameSettings().add(setting);
             selectPreset(setting);
             handler.resolve();
-        }, i18n("settings.type.global.new"), new RequiredValidator());
+        }, i18n("settings.type.global.preset.new"), new RequiredValidator());
     }
 
     private void bindInstanceParentSetting(LineSelectButton<GameSetting.@Nullable Preset> button) {
