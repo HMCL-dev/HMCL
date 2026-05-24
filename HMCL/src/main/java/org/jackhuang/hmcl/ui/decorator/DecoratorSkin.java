@@ -36,7 +36,6 @@ import javafx.scene.control.Label;
 import javafx.scene.control.SkinBase;
 import javafx.scene.effect.BlurType;
 import javafx.scene.effect.DropShadow;
-import javafx.scene.input.MouseButton;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
@@ -62,7 +61,6 @@ public class DecoratorSkin extends SkinBase<Decorator> {
 
     @SuppressWarnings("FieldCanBeLocal")
     private final InvalidationListener onWindowsStatusChange;
-    private final EventHandler<MouseEvent> onTitleBarDoubleClick;
 
     private double mouseInitX, mouseInitY, stageInitX, stageInitY, stageInitWidth, stageInitHeight;
 
@@ -111,12 +109,6 @@ public class DecoratorSkin extends SkinBase<Decorator> {
                     root.addEventFilter(MouseEvent.MOUSE_MOVED, onMouseMoved);
                 }
             };
-            onTitleBarDoubleClick = event -> {
-                if (event.getButton() == MouseButton.PRIMARY && event.getClickCount() == 2) {
-                    primaryStage.setMaximized(!primaryStage.isMaximized());
-                    event.consume();
-                }
-            };
             WeakInvalidationListener weakOnWindowsStatusChange = new WeakInvalidationListener(onWindowsStatusChange);
             primaryStage.iconifiedProperty().addListener(weakOnWindowsStatusChange);
             primaryStage.maximizedProperty().addListener(weakOnWindowsStatusChange);
@@ -124,7 +116,6 @@ public class DecoratorSkin extends SkinBase<Decorator> {
             onWindowsStatusChange.invalidated(null);
         } else {
             onWindowsStatusChange = null;
-            onTitleBarDoubleClick = null;
             root.addEventFilter(MouseEvent.MOUSE_RELEASED, onMouseReleased);
             root.addEventFilter(MouseEvent.MOUSE_DRAGGED, onMouseDragged);
             root.addEventFilter(MouseEvent.MOUSE_MOVED, onMouseMoved);
@@ -328,8 +319,6 @@ public class DecoratorSkin extends SkinBase<Decorator> {
                 BorderPane.setAlignment(titleNode, Pos.CENTER_LEFT);
                 BorderPane.setMargin(titleNode, new Insets(0, 0, 0, 8));
             }
-            if (onTitleBarDoubleClick != null)
-                center.setOnMouseClicked(onTitleBarDoubleClick);
             center.setOnMouseDragged(mouseEvent -> {
                 if (!getSkinnable().isDragging() && primaryStage.isMaximized()) {
                     getSkinnable().setDragging(true);
