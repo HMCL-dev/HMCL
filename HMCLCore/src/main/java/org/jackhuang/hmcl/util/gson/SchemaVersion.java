@@ -33,7 +33,11 @@ import java.io.IOException;
 /// The JSON representation is a string in `major.minor` form. The adapter also accepts a bare
 /// `major` string and treats it as `major.0` for compatibility with compact schema version markers.
 ///
-/// This type only records the numeric version components; it does not define compatibility policy.
+/// Config files use the following compatibility policy:
+///
+/// - When the major version differs from the supported schema, the config must be rejected.
+/// - When only the minor version differs, the config may be read but must not be overwritten.
+/// - When both major and minor versions match, the config may be read and saved normally.
 ///
 /// @param major the major schema version
 /// @param minor the minor schema version
