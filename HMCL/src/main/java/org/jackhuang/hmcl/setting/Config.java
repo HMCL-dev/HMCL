@@ -54,6 +54,9 @@ import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 @JsonAdapter(value = Config.Adapter.class)
 public final class Config extends ObservableSetting {
 
+    /// The schema version supported by this config class.
+    public static final SchemaVersion CURRENT_SCHEMA_VERSION = new SchemaVersion(3, 0);
+
     public static final Gson CONFIG_GSON = new GsonBuilder()
             .registerTypeAdapter(Path.class, PathTypeAdapter.INSTANCE)
             .registerTypeAdapter(UUID.class, UUIDTypeAdapter.INSTANCE)
@@ -94,6 +97,7 @@ public final class Config extends ObservableSetting {
     }
 
     public Config() {
+        tracker.markDirty(schemaVersion);
         register();
     }
 
@@ -102,6 +106,25 @@ public final class Config extends ObservableSetting {
     }
 
     // Properties
+
+    /// The schema version used by this config file.
+    @SerializedName("schemaVersion")
+    private final ObjectProperty<SchemaVersion> schemaVersion = new SimpleObjectProperty<>(CURRENT_SCHEMA_VERSION);
+
+    /// Returns the schema version property.
+    public ObjectProperty<SchemaVersion> schemaVersionProperty() {
+        return schemaVersion;
+    }
+
+    /// Returns the schema version used by this config file.
+    public SchemaVersion getSchemaVersion() {
+        return schemaVersion.get();
+    }
+
+    /// Sets the schema version used by this config file.
+    public void setSchemaVersion(SchemaVersion schemaVersion) {
+        this.schemaVersion.set(Objects.requireNonNull(schemaVersion));
+    }
 
     @SerializedName("x")
     private final DoubleProperty x = new SimpleDoubleProperty();
