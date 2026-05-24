@@ -224,7 +224,7 @@ public final class LegacyConfigMigrator {
         if (!(object.get("configurations") instanceof JsonObject configurations))
             return;
 
-        for (Map.Entry<String, Profile> entry : config.getConfigurations().entrySet()) {
+        for (Map.Entry<String, @Nullable Profile> entry : config.getConfigurations().entrySet()) {
             Profile profile = entry.getValue();
             if (profile == null) {
                 continue;
