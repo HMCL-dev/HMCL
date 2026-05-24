@@ -92,7 +92,7 @@ public final class Config extends ObservableSetting {
             .create();
 
     @Nullable
-    public static Config fromJson(String json) throws JsonParseException {
+    public static Config fromJson(JsonObject json) throws JsonParseException {
         return CONFIG_GSON.fromJson(json, Config.class);
     }
 

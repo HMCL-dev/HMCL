@@ -18,11 +18,13 @@
 package org.jackhuang.hmcl.setting;
 
 import com.google.gson.JsonParseException;
+import com.google.gson.JsonObject;
 import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.util.FileSaver;
 import org.jackhuang.hmcl.util.i18n.I18n;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.nio.file.*;
@@ -117,12 +119,16 @@ public final class ConfigHolder {
         if (Files.exists(configLocation)) {
             checkOwner(configLocation);
             try {
-                String content = Files.readString(configLocation);
-                Config deserialized = Config.fromJson(content);
-                if (deserialized == null) {
+                JsonObject jsonObject = readJsonObject(configLocation);
+                if (jsonObject == null) {
                     LOG.info("Config is empty");
                 } else {
-                    return deserialized;
+                    Config deserialized = Config.fromJson(jsonObject);
+                    if (deserialized == null) {
+                        LOG.info("Config is empty");
+                    } else {
+                        return deserialized;
+                    }
                 }
             } catch (JsonParseException e) {
                 LOG.warning("Malformed config.", e);
@@ -141,6 +147,13 @@ public final class ConfigHolder {
 
         newlyCreated = true;
         return new Config();
+    }
+
+    /// Reads the given JSON file as an object.
+    private static @Nullable JsonObject readJsonObject(Path path) throws IOException, JsonParseException {
+        try (var reader = Files.newBufferedReader(path)) {
+            return Config.CONFIG_GSON.fromJson(reader, JsonObject.class);
+        }
     }
 
     /// Checks whether root is reading a config file owned by another user.

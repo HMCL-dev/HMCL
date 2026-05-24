@@ -17,8 +17,9 @@
  */
 package org.jackhuang.hmcl.setting;
 
-import com.google.gson.Gson;
 import com.google.gson.JsonParseException;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
 import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.io.JarUtils;
@@ -29,7 +30,6 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -54,22 +54,25 @@ public final class LegacyConfigMigrator {
 
     /// Loads a legacy config file and applies legacy schema upgrades in memory.
     private static @Nullable LoadedConfig loadLegacyConfig(Path path) throws IOException, JsonParseException {
-        String content = Files.readString(path);
-        Map<?, ?> rawJson = readRawJson(content);
-        Config deserialized = Config.fromJson(content);
+        JsonObject jsonObject = readJsonObject(path);
+        if (jsonObject == null) {
+            return null;
+        }
+
+        Config deserialized = Config.fromJson(jsonObject);
         if (deserialized == null) {
             return null;
         }
 
-        int configVersion = getLegacyConfigVersion(rawJson);
+        int configVersion = getLegacyConfigVersion(jsonObject);
         if (configVersion < LEGACY_CURRENT_CONFIG_VERSION) {
-            upgradeConfig(deserialized, rawJson, configVersion);
-            return new LoadedConfig(deserialized, content, deserialized.toJson(), false);
+            upgradeConfig(deserialized, jsonObject, configVersion);
+            return new LoadedConfig(deserialized, deserialized.toJson(), false);
         } else if (configVersion > LEGACY_CURRENT_CONFIG_VERSION) {
             LOG.warning(String.format("Current HMCL only support the legacy configuration version up to %d. However, the version now is %d.", LEGACY_CURRENT_CONFIG_VERSION, configVersion));
-            return new LoadedConfig(deserialized, content, null, true);
+            return new LoadedConfig(deserialized, Config.CONFIG_GSON.toJson(jsonObject), true);
         } else {
-            return new LoadedConfig(deserialized, content, deserialized.toJson(), false);
+            return new LoadedConfig(deserialized, deserialized.toJson(), false);
         }
     }
 
@@ -133,22 +136,26 @@ public final class LegacyConfigMigrator {
     }
 
     /// Reads the legacy numeric config version from raw JSON.
-    private static int getLegacyConfigVersion(Map<?, ?> rawJson) {
-        return tryCast(rawJson.get("_version"), Number.class)
-                .map(Number::intValue)
-                .orElse(LEGACY_CURRENT_CONFIG_VERSION);
+    private static int getLegacyConfigVersion(JsonObject jsonObject) {
+        JsonElement version = jsonObject.get("_version");
+        if (version != null && version.isJsonPrimitive() && version.getAsJsonPrimitive().isNumber()) {
+            return version.getAsInt();
+        }
+        return LEGACY_CURRENT_CONFIG_VERSION;
     }
 
-    /// Reads the raw legacy config JSON object.
-    private static Map<?, ?> readRawJson(String rawContent) {
-        Map<?, ?> rawJson = Collections.unmodifiableMap(new Gson().<Map<?, ?>>fromJson(rawContent, Map.class));
-        return rawJson;
+    /// Reads the legacy config file as a JSON object.
+    private static @Nullable JsonObject readJsonObject(Path path) throws IOException, JsonParseException {
+        try (var reader = Files.newBufferedReader(path)) {
+            return Config.CONFIG_GSON.fromJson(reader, JsonObject.class);
+        }
     }
 
     /// Upgrades old config fields to the current schema.
-    private static void upgradeConfig(Config deserialized, Map<?, ?> rawJson, int configVersion) {
+    private static void upgradeConfig(Config deserialized, JsonObject jsonObject, int configVersion) {
         LOG.info(String.format("Updating legacy configuration from %d to %d.", configVersion, LEGACY_CURRENT_CONFIG_VERSION));
         if (configVersion < 1) {
+            Map<?, ?> rawJson = Config.CONFIG_GSON.fromJson(jsonObject, Map.class);
             tryCast(rawJson.get("auth"), Map.class).ifPresent(auth -> {
                 tryCast(auth.get("offline"), Map.class).ifPresent(offline -> {
                     String selected = rawJson.containsKey("selectedAccount") ? null
@@ -201,20 +208,16 @@ public final class LegacyConfigMigrator {
         /// The parsed config object.
         private final Config config;
 
-        /// The original file content.
-        private final String rawContent;
-
-        /// The upgraded content to save, or null when no schema upgrade was needed.
-        private final @Nullable String upgradedContent;
+        /// The content to save when migrating to the new config file.
+        private final String contentForMigration;
 
         /// Whether the config version is newer than this HMCL build supports.
         private final boolean unsupportedVersion;
 
         /// Creates a loaded config result.
-        private LoadedConfig(Config config, String rawContent, @Nullable String upgradedContent, boolean unsupportedVersion) {
+        private LoadedConfig(Config config, String contentForMigration, boolean unsupportedVersion) {
             this.config = config;
-            this.rawContent = rawContent;
-            this.upgradedContent = upgradedContent;
+            this.contentForMigration = contentForMigration;
             this.unsupportedVersion = unsupportedVersion;
         }
 
@@ -225,7 +228,7 @@ public final class LegacyConfigMigrator {
 
         /// Returns the content that should be written when migrating to the new path.
         String contentForMigration() {
-            return upgradedContent != null ? upgradedContent : rawContent;
+            return contentForMigration;
         }
 
         /// Returns whether the config version is unsupported.
