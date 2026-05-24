@@ -45,7 +45,6 @@ import org.jackhuang.hmcl.util.i18n.SupportedLocale;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
-import java.lang.reflect.Type;
 import java.net.Proxy;
 import java.nio.file.Path;
 import java.util.*;
@@ -854,54 +853,6 @@ public final class Config extends ObservableSetting {
         @Override
         protected Config createInstance() {
             return new Config();
-        }
-
-        @Override
-        public Config deserialize(JsonElement json, Type typeOfT, JsonDeserializationContext context) throws JsonParseException {
-            Config config = super.deserialize(json, typeOfT, context);
-            if (config != null && json instanceof JsonObject object) {
-                migrateLegacyPresetSettings(config, object);
-            }
-            return config;
-        }
-
-        private static void migrateLegacyPresetSettings(Config config, JsonObject object) {
-            JsonElement configurationsElement = object.get("configurations");
-            if (configurationsElement == null || !configurationsElement.isJsonObject()) {
-                return;
-            }
-
-            JsonObject configurations = configurationsElement.getAsJsonObject();
-            for (Map.Entry<String, Profile> entry : config.getConfigurations().entrySet()) {
-                Profile profile = entry.getValue();
-                if (profile == null) {
-                    continue;
-                }
-
-                String profileName = entry.getKey();
-                UUID parentId = profile.getLegacyGameSettingParent();
-                if (parentId != null) {
-                    GameSetting.Preset parent = config.getGameSetting(parentId);
-                    if (parent != null) {
-                        continue;
-                    }
-                }
-
-                GameSetting.Preset legacyParent = config.getGameSetting(
-                        LegacyGameSettingMigrator.getLegacyPresetId(profileName));
-                if (legacyParent == null) {
-                    JsonObject profileObject = configurations.get(profileName) instanceof JsonObject profileJson ? profileJson : null;
-                    JsonObject legacySettingObject = profileObject != null && profileObject.get("global") instanceof JsonObject legacyJson ? legacyJson : null;
-                    if (legacySettingObject == null) {
-                        continue;
-                    }
-
-                    legacyParent = LegacyGameSettingMigrator.toPreset(profileName, profileName, legacySettingObject);
-                    config.getGameSettings().add(legacyParent);
-                }
-
-                profile.setLegacyGameSettingParent(legacyParent.idProperty().getValue());
-            }
         }
     }
 }
