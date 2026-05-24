@@ -36,16 +36,21 @@ import java.util.Map;
 import static org.jackhuang.hmcl.util.Lang.tryCast;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
+/// Migrates legacy per-workspace config files into the current settings.json file.
+///
+/// HMCL used hmcl.json and .hmcl.json as the main per-workspace config files through HMCL 3.14.1.
+/// Those files are now legacy inputs only: migration reads them, writes a new settings.json, and leaves the original files unchanged.
+///
 /// @author Glavo
 @NotNullByDefault
 public final class LegacyConfigMigrator {
-    /// The last numeric config version used by legacy config files.
+    /// The last numeric config version used by the legacy hmcl.json and .hmcl.json files.
     private static final int LEGACY_CURRENT_CONFIG_VERSION = 2;
 
-    /// The legacy Windows and portable configuration file name.
+    /// The legacy Windows and portable configuration file name used through HMCL 3.14.1.
     private static final String LEGACY_CONFIG_FILENAME = "hmcl.json";
 
-    /// The legacy Linux configuration file name.
+    /// The legacy Linux configuration file name used through HMCL 3.14.1.
     private static final String LEGACY_CONFIG_FILENAME_LINUX = ".hmcl.json";
 
     /// Prevents instantiation.
@@ -64,6 +69,8 @@ public final class LegacyConfigMigrator {
             return null;
         }
 
+        // _version belongs to the legacy file format only. The current settings.json format will use
+        // a separate versioning scheme and must not depend on this numeric value.
         int configVersion = getLegacyConfigVersion(jsonObject);
         if (configVersion < LEGACY_CURRENT_CONFIG_VERSION) {
             upgradeConfig(deserialized, jsonObject, configVersion);
@@ -99,6 +106,7 @@ public final class LegacyConfigMigrator {
 
     /// Finds a legacy config file with the same precedence as old HMCL versions.
     private static @Nullable Path locateLegacyConfig() {
+        // Keep this order aligned with old ConfigHolder behavior so the same legacy file wins during migration.
         Path defaultConfigFile = Metadata.HMCL_CURRENT_DIRECTORY.resolve(LEGACY_CONFIG_FILENAME);
         if (Files.isRegularFile(defaultConfigFile)) {
             return defaultConfigFile;
@@ -137,6 +145,8 @@ public final class LegacyConfigMigrator {
 
     /// Reads the legacy numeric config version from raw JSON.
     private static int getLegacyConfigVersion(JsonObject jsonObject) {
+        // Older configs may not contain _version; historically those should be treated as the last
+        // pre-settings.json schema unless older-field probes below prove they need extra upgrades.
         JsonElement version = jsonObject.get("_version");
         if (version != null && version.isJsonPrimitive() && version.getAsJsonPrimitive().isNumber()) {
             return version.getAsInt();
@@ -206,15 +216,15 @@ public final class LegacyConfigMigrator {
         }
     }
 
-    /// Result of loading a config file.
+    /// Result of loading a legacy config file.
     static final class LoadedConfig {
         /// The parsed config object.
         private final Config config;
 
-        /// The content to save when migrating to the new config file.
+        /// The content to save when migrating to settings.json.
         private final String contentForMigration;
 
-        /// Whether the config version is newer than this HMCL build supports.
+        /// Whether the legacy numeric config version is newer than this HMCL build supports.
         private final boolean unsupportedVersion;
 
         /// Creates a loaded config result.
@@ -240,7 +250,7 @@ public final class LegacyConfigMigrator {
         }
     }
 
-    /// Result of locating and loading a legacy config file.
+    /// Result of locating and loading a legacy config file without modifying it.
     static final class MigrationResult {
         /// The legacy config path.
         private final Path path;
