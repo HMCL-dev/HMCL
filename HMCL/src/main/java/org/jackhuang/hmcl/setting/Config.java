@@ -55,8 +55,6 @@ import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 @JsonAdapter(value = Config.Adapter.class)
 public final class Config extends ObservableSetting {
 
-    public static final int CURRENT_UI_VERSION = 0;
-
     public static final Gson CONFIG_GSON = new GsonBuilder()
             .registerTypeAdapter(Path.class, PathTypeAdapter.INSTANCE)
             .registerTypeAdapter(UUID.class, UUIDTypeAdapter.INSTANCE)
@@ -97,7 +95,6 @@ public final class Config extends ObservableSetting {
     }
 
     public Config() {
-        tracker.markDirty(uiVersion);
         register();
     }
 
@@ -106,28 +103,6 @@ public final class Config extends ObservableSetting {
     }
 
     // Properties
-
-    /**
-     * The version of UI that the user have last used.
-     * If there is a major change in UI, {@link Config#CURRENT_UI_VERSION} should be increased.
-     * When {@link #CURRENT_UI_VERSION} is higher than the property, the user guide should be shown,
-     * then this property is set to the same value as {@link #CURRENT_UI_VERSION}.
-     * In particular, the property is default to 0, so that whoever open the application for the first time will see the guide.
-     */
-    @SerializedName("uiVersion")
-    private final IntegerProperty uiVersion = new SimpleIntegerProperty(CURRENT_UI_VERSION);
-
-    public IntegerProperty uiVersionProperty() {
-        return uiVersion;
-    }
-
-    public int getUiVersion() {
-        return uiVersion.get();
-    }
-
-    public void setUiVersion(int uiVersion) {
-        this.uiVersion.set(uiVersion);
-    }
 
     @SerializedName("x")
     private final DoubleProperty x = new SimpleDoubleProperty();
