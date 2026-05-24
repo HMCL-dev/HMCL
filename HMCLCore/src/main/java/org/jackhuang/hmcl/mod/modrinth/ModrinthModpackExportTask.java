@@ -219,8 +219,7 @@ public class ModrinthModpackExportTask extends Task<Void> {
                     info.getName(),
                     info.getDescription(),
                     files,
-                    dependencies,
-                    fileApi
+                    dependencies
             );
 
             zip.putTextFile(JsonUtils.GSON.toJson(manifest), "modrinth.index.json");
