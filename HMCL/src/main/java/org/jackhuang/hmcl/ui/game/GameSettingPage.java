@@ -764,10 +764,16 @@ public final class GameSettingPage<S extends GameSetting> extends StackPane
         createButton.setTitle(i18n("settings.type.global.preset.create"));
         createButton.setLeading(SVG.ADD, 20);
         createButton.setOnAction(event -> createPreset());
-        sublist.getContent().setAll(presetItem, createButton);
+        var removeButton = new LineButton();
+        removeButton.setTitle(i18n("settings.type.global.preset.remove"));
+        removeButton.setLeading(SVG.DELETE, 20);
+        removeButton.setOnAction(event -> removeCurrentPreset());
+        sublist.getContent().setAll(presetItem, createButton, removeButton);
         list.getContent().add(sublist);
 
         final Holder<Boolean> updating = new Holder<>(false);
+        Runnable updateRemoveButton = () -> removeButton.setDisable(
+                config().getGameSettings().size() <= 1 || getCurrentPreset() == null);
         Runnable rebuildItems = () -> {
             updating.value = true;
             try {
@@ -779,6 +785,7 @@ public final class GameSettingPage<S extends GameSetting> extends StackPane
                 presetItem.setChoices(choices);
                 presetItem.setSelectedValue(getCurrentPreset());
                 updatePresetManagementDescription(sublist);
+                updateRemoveButton.run();
             } finally {
                 updating.value = false;
             }
@@ -795,6 +802,7 @@ public final class GameSettingPage<S extends GameSetting> extends StackPane
                 rebuildItems.run();
             } else {
                 updatePresetManagementLabels(presetItem, sublist);
+                updateRemoveButton.run();
             }
         };
 
@@ -809,6 +817,7 @@ public final class GameSettingPage<S extends GameSetting> extends StackPane
             try {
                 presetItem.setSelectedValue(getCurrentPreset());
                 updatePresetManagementDescription(sublist);
+                updateRemoveButton.run();
             } finally {
                 updating.value = false;
             }
@@ -848,6 +857,41 @@ public final class GameSettingPage<S extends GameSetting> extends StackPane
             selectPreset(setting);
             handler.resolve();
         }, i18n("settings.type.global.preset.new"), new RequiredValidator());
+    }
+
+    /// Deletes the currently selected preset after confirmation.
+    private void removeCurrentPreset() {
+        GameSetting.Preset setting = getCurrentPreset();
+        if (setting == null || config().getGameSettings().size() <= 1) {
+            return;
+        }
+
+        Controllers.confirm(
+                i18n("settings.type.global.preset.remove.confirm", getPresetDisplayName(setting)),
+                i18n("settings.type.global.preset.remove"),
+                () -> removePreset(setting),
+                null);
+    }
+
+    /// Removes a preset and selects another preset for editing.
+    private void removePreset(GameSetting.Preset setting) {
+        ObservableList<GameSetting.Preset> settings = config().getGameSettings();
+        int index = settings.indexOf(setting);
+        if (index < 0 || settings.size() <= 1) {
+            return;
+        }
+
+        GameSetting.Preset next = settings.get(index == 0 ? 1 : index - 1);
+        UUID removedId = setting.idProperty().getValue();
+        if (Objects.equals(config().getDefaultGameSetting(), removedId)) {
+            config().setDefaultGameSetting(next.idProperty().getValue());
+        }
+
+        settings.remove(index);
+        if (config().getGameSetting(config().getDefaultGameSetting()) == null) {
+            config().setDefaultGameSetting(next.idProperty().getValue());
+        }
+        selectPreset(next);
     }
 
     private void bindInstanceParentSetting(LineSelectButton<GameSetting.@Nullable Preset> button) {
