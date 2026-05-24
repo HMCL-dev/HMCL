@@ -163,7 +163,7 @@ public final class GameSettingPage<S extends GameSetting> extends StackPane
                 presetNamePane.setRight(presetNameField);
                 bindPresetBidirectional(presetNameField.textProperty(), GameSetting.Preset::nameProperty);
                 presetSettings.getContent().add(presetNamePane);
-                presetSettings.getContent().add(createRemovePresetButton());
+                presetSettings.getContent().add(createRemovePresetPane());
             } else {
                 rootPane.getChildren().addAll(
                         ComponentList.createComponentListTitle(i18n("settings.game.section.basic")),
@@ -852,17 +852,21 @@ public final class GameSettingPage<S extends GameSetting> extends StackPane
         }, i18n("settings.type.global.preset.new"), new RequiredValidator());
     }
 
-    /// Creates the top-level remove button for the currently selected preset.
-    private LineButton createRemovePresetButton() {
-        var button = new LineButton();
-        button.setTitle(i18n("settings.type.global.preset.remove"));
-        button.setLeading(SVG.DELETE, 20);
+    /// Creates the top-level remove row for the currently selected preset.
+    private LinePane createRemovePresetPane() {
+        var pane = new LinePane();
+        pane.setTitle(i18n("settings.type.global.preset.remove"));
+
+        JFXButton button = FXUtils.newToggleButton4(SVG.DELETE_FOREVER, 20);
         button.setOnAction(event -> removeCurrentPreset());
-        button.disableProperty().bind(Bindings.createBooleanBinding(
+        FXUtils.installFastTooltip(button, i18n("settings.type.global.preset.remove"));
+        pane.setRight(button);
+
+        pane.disableProperty().bind(Bindings.createBooleanBinding(
                 () -> config().getGameSettings().size() <= 1 || getCurrentPreset() == null,
                 config().getGameSettings(),
                 currentSetting));
-        return button;
+        return pane;
     }
 
     /// Deletes the currently selected preset after confirmation.
