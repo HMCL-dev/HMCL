@@ -49,8 +49,8 @@ public final class LegacyConfigMigrator {
     private LegacyConfigMigrator() {
     }
 
-    /// Loads a config file and applies legacy schema upgrades in memory.
-    static @Nullable LoadedConfig loadConfig(Path path) throws IOException, JsonParseException {
+    /// Loads a legacy config file and applies legacy schema upgrades in memory.
+    private static @Nullable LoadedConfig loadLegacyConfig(Path path) throws IOException, JsonParseException {
         String content = Files.readString(path);
         Config deserialized = Config.fromJson(content);
         if (deserialized == null) {
@@ -77,7 +77,7 @@ public final class LegacyConfigMigrator {
         }
 
         try {
-            @Nullable LoadedConfig loadedConfig = loadConfig(path);
+            @Nullable LoadedConfig loadedConfig = loadLegacyConfig(path);
             if (loadedConfig == null) {
                 LOG.info("Legacy config is empty: " + path);
                 return null;
@@ -129,7 +129,7 @@ public final class LegacyConfigMigrator {
     }
 
     /// Upgrades old config fields to the current schema.
-    private static void upgradeConfig(Config deserialized, String rawContent) {
+    static void upgradeConfig(Config deserialized, String rawContent) {
         int configVersion = deserialized.getConfigVersion();
 
         if (configVersion >= Config.CURRENT_VERSION) {

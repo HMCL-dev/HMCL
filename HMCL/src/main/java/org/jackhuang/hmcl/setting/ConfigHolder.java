@@ -117,16 +117,21 @@ public final class ConfigHolder {
         if (Files.exists(configLocation)) {
             checkOwner(configLocation);
             try {
-                LegacyConfigMigrator.LoadedConfig loadedConfig = LegacyConfigMigrator.loadConfig(configLocation);
-                if (loadedConfig == null) {
+                String content = Files.readString(configLocation);
+                Config deserialized = Config.fromJson(content);
+                if (deserialized == null) {
                     LOG.info("Config is empty");
                 } else {
-                    unsupportedVersion = loadedConfig.unsupportedVersion();
-                    if (loadedConfig.upgradedContent() != null) {
-                        FileUtils.saveSafely(configLocation, loadedConfig.upgradedContent());
+                    int configVersion = deserialized.getConfigVersion();
+                    if (configVersion < Config.CURRENT_VERSION) {
+                        LegacyConfigMigrator.upgradeConfig(deserialized, content);
+                        FileUtils.saveSafely(configLocation, deserialized.toJson());
+                    } else if (configVersion > Config.CURRENT_VERSION) {
+                        unsupportedVersion = true;
+                        LOG.warning(String.format("Current HMCL only support the configuration version up to %d. However, the version now is %d.", Config.CURRENT_VERSION, configVersion));
                     }
 
-                    return loadedConfig.config();
+                    return deserialized;
                 }
             } catch (JsonParseException e) {
                 LOG.warning("Malformed config.", e);
