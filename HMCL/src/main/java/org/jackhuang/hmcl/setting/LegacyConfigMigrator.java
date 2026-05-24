@@ -156,6 +156,8 @@ public final class LegacyConfigMigrator {
         LOG.info(String.format("Updating legacy configuration from %d to %d.", configVersion, LEGACY_CURRENT_CONFIG_VERSION));
         if (configVersion < 1) {
             Map<?, ?> rawJson = Config.CONFIG_GSON.fromJson(jsonObject, Map.class);
+
+            // Upgrade configuration of HMCL 2.x: Convert OfflineAccounts whose stored uuid is important.
             tryCast(rawJson.get("auth"), Map.class).ifPresent(auth -> {
                 tryCast(auth.get("offline"), Map.class).ifPresent(offline -> {
                     String selected = rawJson.containsKey("selectedAccount") ? null
@@ -176,6 +178,7 @@ public final class LegacyConfigMigrator {
                 });
             });
 
+            // Upgrade configuration of HMCL earlier than 3.1.70.
             if (!rawJson.containsKey("commonDirType")) {
                 deserialized.setCommonDirType(deserialized.getCommonDirectory().equals(Settings.getDefaultCommonDirectory()) ? EnumCommonDirectory.DEFAULT : EnumCommonDirectory.CUSTOM);
             }
