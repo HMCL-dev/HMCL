@@ -142,49 +142,49 @@ public class ModrinthModpackExportTask extends Task<Void> {
             String fileApi = StringUtils.isBlank(info.getFileApi()) ? null : StringUtils.removeSuffix(info.getFileApi(), "/");
             try (Stream<Path> stream = Files.list(runDirectory)) {
                 for (Path dirPath : (Iterable<Path>) stream::iterator) {
-                if (Files.exists(dirPath)) {
-                    boolean isValidDir = Arrays.asList(resourceDirs).contains(dirPath.getFileName().toString()); // allow remote file match
-                    Files.walk(dirPath)
-                            .filter(Files::isRegularFile)
-                            .forEach(file -> {
-                                try {
-                                    String relativePath = runDirectory.relativize(file).normalize().toString().replace(File.separatorChar, '/');
+                    if (Files.exists(dirPath)) {
+                        boolean isValidDir = Arrays.asList(resourceDirs).contains(dirPath.getFileName().toString()); // allow remote file match
+                        Files.walk(dirPath)
+                                .filter(Files::isRegularFile)
+                                .forEach(file -> {
+                                    try {
+                                        String relativePath = runDirectory.relativize(file).normalize().toString().replace(File.separatorChar, '/');
 
-                                    if (!info.getWhitelist().contains(relativePath)) {
-                                        return;
-                                    }
-
-                                    ModrinthManifest.File fileEntry = null;
-                                    if (isValidDir){
-                                        fileEntry = tryGetRemoteFile(file, relativePath);
-                                    }
-                                    if (fileEntry != null) {
-                                        files.add(fileEntry);
-                                        filesInManifest.add(relativePath);
-                                    } else {
-                                        if (fileApi != null) {
-                                            Map<String, String> hashes = new HashMap<>();
-                                            hashes.put("sha1", DigestUtils.digestToString("SHA-1", file));
-                                            hashes.put("sha512", DigestUtils.digestToString("SHA-512", file));
-
-                                            long fileSize = Files.size(file);
-                                            if (fileSize > Integer.MAX_VALUE) {
-                                                LOG.warning("File " + relativePath + " is too large (size: " + fileSize + " bytes), precision may be lost when converting to int");
-                                            }
-                                            files.add(new ModrinthManifest.File(
-                                                    relativePath,
-                                                    hashes,
-                                                    null,
-                                                    Collections.singletonList(fileApi + "/" + NetworkUtils.encodeLocation(relativePath)),
-                                                    (int) fileSize
-                                            ));
+                                        if (!info.getWhitelist().contains(relativePath)) {
+                                            return;
                                         }
+
+                                        ModrinthManifest.File fileEntry = null;
+                                        if (isValidDir) {
+                                            fileEntry = tryGetRemoteFile(file, relativePath);
+                                        }
+                                        if (fileEntry != null) {
+                                            files.add(fileEntry);
+                                            filesInManifest.add(relativePath);
+                                        } else {
+                                            if (fileApi != null) {
+                                                Map<String, String> hashes = new HashMap<>();
+                                                hashes.put("sha1", DigestUtils.digestToString("SHA-1", file));
+                                                hashes.put("sha512", DigestUtils.digestToString("SHA-512", file));
+
+                                                long fileSize = Files.size(file);
+                                                if (fileSize > Integer.MAX_VALUE) {
+                                                    LOG.warning("File " + relativePath + " is too large (size: " + fileSize + " bytes), precision may be lost when converting to int");
+                                                }
+                                                files.add(new ModrinthManifest.File(
+                                                        relativePath,
+                                                        hashes,
+                                                        null,
+                                                        Collections.singletonList(fileApi + "/" + NetworkUtils.encodeLocation(relativePath)),
+                                                        (int) fileSize
+                                                ));
+                                            }
+                                        }
+                                    } catch (IOException e) {
+                                        LOG.warning("Failed to process file: " + file, e);
                                     }
-                                } catch (IOException e) {
-                                    LOG.warning("Failed to process file: " + file, e);
-                                }
-                            });
-                }
+                                });
+                    }
                 }
             }
 
