@@ -240,7 +240,7 @@ public class DecoratorController {
 
     private Background createBackgroundWithOpacity(Image image, int opacity) {
         if (opacity <= 0) {
-            return new Background(new BackgroundFill(new Color(1, 1, 1, 0), CornerRadii.EMPTY, Insets.EMPTY));
+            return new Background(new BackgroundFill(new Color(0, 0, 0, 0.004), CornerRadii.EMPTY, Insets.EMPTY));
         } else if (opacity >= 100 || image.getPixelReader() == null) {
             return new Background(new BackgroundImage(
                     image,
