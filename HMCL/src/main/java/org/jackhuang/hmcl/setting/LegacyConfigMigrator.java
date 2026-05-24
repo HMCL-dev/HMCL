@@ -64,6 +64,9 @@ public final class LegacyConfigMigrator {
         if (jsonObject == null) {
             return null;
         }
+        // _version belongs to the legacy file format only. The current settings.json format will use
+        // a separate versioning scheme and must not depend on this numeric value.
+        int configVersion = getLegacyConfigVersion(jsonObject);
 
         Config deserialized = Config.fromJson(jsonObject);
         if (deserialized == null) {
@@ -72,9 +75,6 @@ public final class LegacyConfigMigrator {
 
         migrateLegacyPresetSettings(deserialized, jsonObject);
 
-        // _version belongs to the legacy file format only. The current settings.json format will use
-        // a separate versioning scheme and must not depend on this numeric value.
-        int configVersion = getLegacyConfigVersion(jsonObject);
         if (configVersion < LEGACY_CURRENT_CONFIG_VERSION) {
             upgradeConfig(deserialized, jsonObject, configVersion);
             return new LoadedConfig(deserialized, deserialized.toJson(), false);
@@ -221,12 +221,9 @@ public final class LegacyConfigMigrator {
 
     /// Migrates profile-global game settings from HMCL 3.14.1 and older config files.
     private static void migrateLegacyPresetSettings(Config config, JsonObject object) {
-        JsonElement configurationsElement = object.get("configurations");
-        if (configurationsElement == null || !configurationsElement.isJsonObject()) {
+        if (!(object.get("configurations") instanceof JsonObject configurations))
             return;
-        }
 
-        JsonObject configurations = configurationsElement.getAsJsonObject();
         for (Map.Entry<String, Profile> entry : config.getConfigurations().entrySet()) {
             Profile profile = entry.getValue();
             if (profile == null) {
@@ -260,61 +257,17 @@ public final class LegacyConfigMigrator {
     }
 
     /// Result of loading a legacy config file.
-    static final class LoadedConfig {
-        /// The parsed config object.
-        private final Config config;
-
-        /// The content to save when migrating to settings.json.
-        private final String contentForMigration;
-
-        /// Whether the legacy numeric config version is newer than this HMCL build supports.
-        private final boolean unsupportedVersion;
-
-        /// Creates a loaded config result.
-        private LoadedConfig(Config config, String contentForMigration, boolean unsupportedVersion) {
-            this.config = config;
-            this.contentForMigration = contentForMigration;
-            this.unsupportedVersion = unsupportedVersion;
-        }
-
-        /// Returns the parsed config object.
-        Config config() {
-            return config;
-        }
-
-        /// Returns the content that should be written when migrating to the new path.
-        String contentForMigration() {
-            return contentForMigration;
-        }
-
-        /// Returns whether the config version is unsupported.
-        boolean unsupportedVersion() {
-            return unsupportedVersion;
-        }
+    ///
+    /// @param config              The parsed config object.
+    /// @param contentForMigration The content to save when migrating to settings.json.
+    /// @param unsupportedVersion  Whether the legacy numeric config version is newer than this HMCL build supports.
+    record LoadedConfig(Config config, String contentForMigration, boolean unsupportedVersion) {
     }
 
     /// Result of locating and loading a legacy config file without modifying it.
-    static final class MigrationResult {
-        /// The legacy config path.
-        private final Path path;
-
-        /// The loaded config data.
-        private final LoadedConfig loadedConfig;
-
-        /// Creates a migration result.
-        private MigrationResult(Path path, LoadedConfig loadedConfig) {
-            this.path = path;
-            this.loadedConfig = loadedConfig;
-        }
-
-        /// Returns the legacy config path.
-        Path path() {
-            return path;
-        }
-
-        /// Returns the loaded config data.
-        LoadedConfig loadedConfig() {
-            return loadedConfig;
-        }
+    ///
+    /// @param path         The legacy config path.
+    /// @param loadedConfig The loaded config data.
+    record MigrationResult(Path path, LoadedConfig loadedConfig) {
     }
 }
