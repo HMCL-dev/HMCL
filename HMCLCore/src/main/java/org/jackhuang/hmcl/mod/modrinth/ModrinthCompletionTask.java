@@ -19,11 +19,9 @@ package org.jackhuang.hmcl.mod.modrinth;
 
 import org.jackhuang.hmcl.download.DefaultDependencyManager;
 import org.jackhuang.hmcl.game.DefaultGameRepository;
-import org.jackhuang.hmcl.mod.ModManager;
 import org.jackhuang.hmcl.mod.ModpackCompletionException;
 import org.jackhuang.hmcl.task.FileDownloadTask;
 import org.jackhuang.hmcl.task.Task;
-import org.jackhuang.hmcl.util.DigestUtils;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
 
@@ -43,7 +41,6 @@ public class ModrinthCompletionTask extends Task<Void> {
 
     private final DefaultDependencyManager dependency;
     private final DefaultGameRepository repository;
-    private final ModManager modManager;
     private final String version;
     private ModrinthManifest manifest;
     private final List<Task<?>> dependencies = new ArrayList<>();
@@ -72,7 +69,6 @@ public class ModrinthCompletionTask extends Task<Void> {
     public ModrinthCompletionTask(DefaultDependencyManager dependencyManager, String version, ModrinthManifest manifest) {
         this.dependency = dependencyManager;
         this.repository = dependencyManager.getGameRepository();
-        this.modManager = repository.getModManager(version);
         this.version = version;
         this.manifest = manifest;
 
@@ -104,7 +100,6 @@ public class ModrinthCompletionTask extends Task<Void> {
             return;
 
         Path runDirectory = FileUtils.toAbsolute(repository.getRunDirectory(version));
-        Path modsDirectory = runDirectory.resolve("mods");
 
         for (ModrinthManifest.File file : manifest.getFiles()) {
             if (file.getEnv() != null && file.getEnv().getOrDefault("client", "required").equals("unsupported"))
@@ -116,10 +111,7 @@ public class ModrinthCompletionTask extends Task<Void> {
             if (!filePath.startsWith(runDirectory))
                 throw new IOException("Unsecure path: " + file.getPath());
 
-            String sha1 = file.getHashes() != null ? file.getHashes().get("sha1") : null;
-            if (sha1 != null && Files.exists(filePath) && DigestUtils.digestToString("SHA-1", filePath).equalsIgnoreCase(sha1))
-                continue;
-            if (modsDirectory.equals(filePath.getParent()) && this.modManager.hasSimpleMod(FileUtils.getName(filePath)))
+            if (Files.exists(filePath))
                 continue;
 
             var task = new FileDownloadTask(

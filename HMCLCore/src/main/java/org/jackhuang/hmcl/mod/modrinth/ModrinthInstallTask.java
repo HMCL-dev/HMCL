@@ -153,6 +153,15 @@ public class ModrinthInstallTask extends Task<Void> {
                     Files.deleteIfExists(oldFile);
                 }
             }
+            // For local files which is already in new manifest, remove them
+            for (ModrinthManifest.File newManifestFile : manifest.getFiles()) {
+                if (config.getManifest().getFiles().stream().noneMatch(newManifestFile::equals)) {
+                    Path newFile = run.resolve(newManifestFile.getPath());
+                    if (Files.exists(newFile)) {
+                        Files.deleteIfExists(newFile);
+                    }
+                }
+            }
         }
 
         Path root = repository.getVersionRoot(name);
