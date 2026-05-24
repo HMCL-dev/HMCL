@@ -33,19 +33,43 @@ import java.util.Collections;
 
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
-/// Checks whether a Modrinth modpack with `fileApi` has a newer version available on the remote server.
-///
-/// The result is `true` if an update is available, `false` otherwise. When an update is found,
-/// the downloaded `server.mrpack` path and remote version id are stored in static fields and can
-/// be retrieved via [getPendingUpdateFile] and [getPendingUpdateVersionId].
-/// Call [consumePendingUpdate] to retrieve and clear the pending update info.
+/**
+ * Checks whether a Modrinth server modpack has a newer version available on the remote server.
+ *
+ * The task downloads {@code server.mrpack} from the remote API, extracts the manifest, and compares
+ * the remote version ID with the local one using {@link VersionNumber}. The result is {@code true} if
+ * an update is available, {@code false} otherwise.
+ *
+ * When an update is found, the downloaded {@code server.mrpack} path is stored in a static field
+ * and can be retrieved via {@link #getUpdateFile()}. If no update is available or an error occurs,
+ * the temporary file is deleted.
+ *
+ * @see ModrinthManifest
+ * @see FileDownloadTask
+ */
 public class ModrinthCheckServerPackUpdateTask extends Task<Boolean> {
 
+    /**
+     * The path to the downloaded {@code server.mrpack} file, or {@code null} if no update file is available.
+     */
     private static @Nullable Path updateFilePath = null;
 
+    /**
+     * The current local version ID of the modpack.
+     */
     private final String versionId;
-    private final FileDownloadTask downloadTask;
 
+    /**
+     * The task that downloads {@code server.mrpack} from the remote API, or {@code null} if no download URL is available.
+     */
+    private final @Nullable FileDownloadTask downloadTask;
+
+    /**
+     * Creates a new update check task.
+     *
+     * @param versionId the current local version ID of the modpack.
+     * @param fileApi   the base URL for downloading the server modpack; if blank, no download will be attempted.
+     */
     public ModrinthCheckServerPackUpdateTask(String versionId, String fileApi) {
         this.versionId = versionId;
 
@@ -71,6 +95,11 @@ public class ModrinthCheckServerPackUpdateTask extends Task<Boolean> {
         return false;
     }
 
+    /**
+     * Returns the path to the downloaded {@code server.mrpack} file, or {@code null} if no update file is available.
+     *
+     * @return the path to the downloaded update file, or {@code null}
+     */
     public static @Nullable Path getUpdateFile() {
         return updateFilePath;
     }
