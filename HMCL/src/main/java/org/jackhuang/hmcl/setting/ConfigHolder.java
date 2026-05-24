@@ -22,7 +22,6 @@ import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.util.FileSaver;
 import org.jackhuang.hmcl.util.i18n.I18n;
 import org.jackhuang.hmcl.util.io.FileUtils;
-import org.jackhuang.hmcl.util.io.JarUtils;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
 
 import java.io.IOException;
@@ -36,11 +35,9 @@ public final class ConfigHolder {
     private ConfigHolder() {
     }
 
-    public static final String CONFIG_FILENAME = "hmcl.json";
-    public static final String CONFIG_FILENAME_LINUX = ".hmcl.json";
     public static final Path GLOBAL_CONFIG_PATH = Metadata.HMCL_GLOBAL_DIRECTORY.resolve("config.json");
 
-    private static Path configLocation;
+    private static final Path configLocation = Metadata.HMCL_CURRENT_DIRECTORY.resolve("settings.json");
     private static Config configInstance;
     private static GlobalConfig globalConfigInstance;
     private static boolean newlyCreated;
@@ -82,8 +79,6 @@ public final class ConfigHolder {
             throw new IllegalStateException("Configuration is already loaded");
         }
 
-        configLocation = locateConfig();
-
         LOG.info("Config location: " + configLocation);
 
         configInstance = loadConfig();
@@ -118,74 +113,51 @@ public final class ConfigHolder {
         }
     }
 
-    private static Path locateConfig() {
-        Path defaultConfigFile = Metadata.HMCL_CURRENT_DIRECTORY.resolve(CONFIG_FILENAME);
-        if (Files.isRegularFile(defaultConfigFile))
-            return defaultConfigFile;
-
-        try {
-            Path jarPath = JarUtils.thisJarPath();
-            if (jarPath != null && Files.isRegularFile(jarPath) && Files.isWritable(jarPath)) {
-                jarPath = jarPath.getParent();
-
-                Path config = jarPath.resolve(CONFIG_FILENAME);
-                if (Files.isRegularFile(config))
-                    return config;
-
-                Path dotConfig = jarPath.resolve(CONFIG_FILENAME_LINUX);
-                if (Files.isRegularFile(dotConfig))
-                    return dotConfig;
-            }
-
-        } catch (Throwable ignore) {
-        }
-
-        Path config = Paths.get(CONFIG_FILENAME);
-        if (Files.isRegularFile(config))
-            return config;
-
-        Path dotConfig = Paths.get(CONFIG_FILENAME_LINUX);
-        if (Files.isRegularFile(dotConfig))
-            return dotConfig;
-
-        // create new
-        return defaultConfigFile;
-    }
-
     private static Config loadConfig() throws IOException {
         if (Files.exists(configLocation)) {
+            checkOwner(configLocation);
             try {
-                if (OperatingSystem.CURRENT_OS != OperatingSystem.WINDOWS
-                        && "root".equals(System.getProperty("user.name"))
-                        && !"root".equals(Files.getOwner(configLocation).getName())) {
-                    ownerChanged = true;
-                }
-            } catch (IOException e1) {
-                LOG.warning("Failed to get owner");
-            }
-            try {
-                String content = Files.readString(configLocation);
-                Config deserialized = Config.fromJson(content);
-                if (deserialized == null) {
+                LegacyConfigMigrator.LoadedConfig loadedConfig = LegacyConfigMigrator.loadConfig(configLocation);
+                if (loadedConfig == null) {
                     LOG.info("Config is empty");
                 } else {
-                    int configVersion = deserialized.getConfigVersion();
-                    if (configVersion < Config.CURRENT_VERSION) {
-                        ConfigUpgrader.upgradeConfig(deserialized, content);
-                    } else if (configVersion > Config.CURRENT_VERSION) {
-                        unsupportedVersion = true;
-                        LOG.warning(String.format("Current HMCL only support the configuration version up to %d. However, the version now is %d.", Config.CURRENT_VERSION, configVersion));
+                    unsupportedVersion = loadedConfig.unsupportedVersion();
+                    if (loadedConfig.upgradedContent() != null) {
+                        FileUtils.saveSafely(configLocation, loadedConfig.upgradedContent());
                     }
 
-                    return deserialized;
+                    return loadedConfig.config();
                 }
             } catch (JsonParseException e) {
                 LOG.warning("Malformed config.", e);
+            }
+        } else {
+            LegacyConfigMigrator.MigrationResult migrationResult = LegacyConfigMigrator.migrateLegacyConfig();
+            if (migrationResult != null) {
+                checkOwner(migrationResult.path());
+                LegacyConfigMigrator.LoadedConfig loadedConfig = migrationResult.loadedConfig();
+                unsupportedVersion = loadedConfig.unsupportedVersion();
+                LOG.info("Migrating config from " + migrationResult.path() + " to " + configLocation);
+                FileUtils.saveSafely(configLocation, loadedConfig.contentForMigration());
+                return loadedConfig.config();
             }
         }
 
         newlyCreated = true;
         return new Config();
+    }
+
+    /// Checks whether root is reading a config file owned by another user.
+    private static void checkOwner(Path location) {
+        try {
+            if (OperatingSystem.CURRENT_OS != OperatingSystem.WINDOWS
+                    && "root".equals(System.getProperty("user.name"))
+                    && !"root".equals(Files.getOwner(location).getName())) {
+                ownerChanged = true;
+            }
+        } catch (IOException e) {
+            LOG.warning("Failed to get owner");
+        }
     }
 
     // Global Config

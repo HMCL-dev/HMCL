@@ -134,7 +134,7 @@ public final class ExportWizardProvider implements WizardProvider {
                     exported.setPreferredLoginType(config().getPreferredLoginType());
                     exported.getAuthlibInjectorServers().setAll(config().getAuthlibInjectorServers());
 
-                    zip.putTextFile(exported.toJson(), ".hmcl/hmcl.json");
+                    zip.putTextFile(exported.toJson(), ".hmcl/settings.json");
                     zip.putFile(tempModpack, ModpackTypeSelectionPage.MODPACK_TYPE_MODRINTH.equals(modpackType)
                             ? "modpack.mrpack"
                             : "modpack.zip");
