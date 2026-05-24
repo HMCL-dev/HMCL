@@ -122,15 +122,6 @@ public final class ConfigHolder {
                 if (deserialized == null) {
                     LOG.info("Config is empty");
                 } else {
-                    int configVersion = deserialized.getConfigVersion();
-                    if (configVersion < Config.CURRENT_VERSION) {
-                        LegacyConfigMigrator.upgradeConfig(deserialized, content);
-                        FileUtils.saveSafely(configLocation, deserialized.toJson());
-                    } else if (configVersion > Config.CURRENT_VERSION) {
-                        unsupportedVersion = true;
-                        LOG.warning(String.format("Current HMCL only support the configuration version up to %d. However, the version now is %d.", Config.CURRENT_VERSION, configVersion));
-                    }
-
                     return deserialized;
                 }
             } catch (JsonParseException e) {

@@ -55,7 +55,6 @@ import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 @JsonAdapter(value = Config.Adapter.class)
 public final class Config extends ObservableSetting {
 
-    public static final int CURRENT_VERSION = 2;
     public static final int CURRENT_UI_VERSION = 0;
 
     public static final Gson CONFIG_GSON = new GsonBuilder()
@@ -98,7 +97,6 @@ public final class Config extends ObservableSetting {
     }
 
     public Config() {
-        tracker.markDirty(configVersion);
         tracker.markDirty(uiVersion);
         register();
     }
@@ -108,21 +106,6 @@ public final class Config extends ObservableSetting {
     }
 
     // Properties
-
-    @SerializedName("_version")
-    private final IntegerProperty configVersion = new SimpleIntegerProperty(CURRENT_VERSION);
-
-    public IntegerProperty configVersionProperty() {
-        return configVersion;
-    }
-
-    public int getConfigVersion() {
-        return configVersion.get();
-    }
-
-    public void setConfigVersion(int configVersion) {
-        this.configVersion.set(configVersion);
-    }
 
     /**
      * The version of UI that the user have last used.

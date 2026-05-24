@@ -39,6 +39,9 @@ import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 /// @author Glavo
 @NotNullByDefault
 public final class LegacyConfigMigrator {
+    /// The last numeric config version used by legacy config files.
+    private static final int LEGACY_CURRENT_CONFIG_VERSION = 2;
+
     /// The legacy Windows and portable configuration file name.
     private static final String LEGACY_CONFIG_FILENAME = "hmcl.json";
 
@@ -52,20 +55,21 @@ public final class LegacyConfigMigrator {
     /// Loads a legacy config file and applies legacy schema upgrades in memory.
     private static @Nullable LoadedConfig loadLegacyConfig(Path path) throws IOException, JsonParseException {
         String content = Files.readString(path);
+        Map<?, ?> rawJson = readRawJson(content);
         Config deserialized = Config.fromJson(content);
         if (deserialized == null) {
             return null;
         }
 
-        int configVersion = deserialized.getConfigVersion();
-        if (configVersion < Config.CURRENT_VERSION) {
-            upgradeConfig(deserialized, content);
+        int configVersion = getLegacyConfigVersion(rawJson);
+        if (configVersion < LEGACY_CURRENT_CONFIG_VERSION) {
+            upgradeConfig(deserialized, rawJson, configVersion);
             return new LoadedConfig(deserialized, content, deserialized.toJson(), false);
-        } else if (configVersion > Config.CURRENT_VERSION) {
-            LOG.warning(String.format("Current HMCL only support the configuration version up to %d. However, the version now is %d.", Config.CURRENT_VERSION, configVersion));
+        } else if (configVersion > LEGACY_CURRENT_CONFIG_VERSION) {
+            LOG.warning(String.format("Current HMCL only support the legacy configuration version up to %d. However, the version now is %d.", LEGACY_CURRENT_CONFIG_VERSION, configVersion));
             return new LoadedConfig(deserialized, content, null, true);
         } else {
-            return new LoadedConfig(deserialized, content, null, false);
+            return new LoadedConfig(deserialized, content, deserialized.toJson(), false);
         }
     }
 
@@ -128,17 +132,22 @@ public final class LegacyConfigMigrator {
         return null;
     }
 
-    /// Upgrades old config fields to the current schema.
-    static void upgradeConfig(Config deserialized, String rawContent) {
-        int configVersion = deserialized.getConfigVersion();
+    /// Reads the legacy numeric config version from raw JSON.
+    private static int getLegacyConfigVersion(Map<?, ?> rawJson) {
+        return tryCast(rawJson.get("_version"), Number.class)
+                .map(Number::intValue)
+                .orElse(LEGACY_CURRENT_CONFIG_VERSION);
+    }
 
-        if (configVersion >= Config.CURRENT_VERSION) {
-            return;
-        }
-
-        LOG.info(String.format("Updating configuration from %d to %d.", configVersion, Config.CURRENT_VERSION));
+    /// Reads the raw legacy config JSON object.
+    private static Map<?, ?> readRawJson(String rawContent) {
         Map<?, ?> rawJson = Collections.unmodifiableMap(new Gson().<Map<?, ?>>fromJson(rawContent, Map.class));
+        return rawJson;
+    }
 
+    /// Upgrades old config fields to the current schema.
+    private static void upgradeConfig(Config deserialized, Map<?, ?> rawJson, int configVersion) {
+        LOG.info(String.format("Updating legacy configuration from %d to %d.", configVersion, LEGACY_CURRENT_CONFIG_VERSION));
         if (configVersion < 1) {
             tryCast(rawJson.get("auth"), Map.class).ifPresent(auth -> {
                 tryCast(auth.get("offline"), Map.class).ifPresent(offline -> {
@@ -185,8 +194,6 @@ public final class LegacyConfigMigrator {
                         });
             }
         }
-
-        deserialized.setConfigVersion(Config.CURRENT_VERSION);
     }
 
     /// Result of loading a config file.
@@ -219,11 +226,6 @@ public final class LegacyConfigMigrator {
         /// Returns the content that should be written when migrating to the new path.
         String contentForMigration() {
             return upgradedContent != null ? upgradedContent : rawContent;
-        }
-
-        /// Returns the upgraded content to save over the new config file.
-        @Nullable String upgradedContent() {
-            return upgradedContent;
         }
 
         /// Returns whether the config version is unsupported.
