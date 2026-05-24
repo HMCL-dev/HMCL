@@ -163,7 +163,6 @@ public final class GameSettingPage<S extends GameSetting> extends StackPane
                 presetNamePane.setRight(presetNameField);
                 bindPresetBidirectional(presetNameField.textProperty(), GameSetting.Preset::nameProperty);
                 presetSettings.getContent().add(presetNamePane);
-                presetSettings.getContent().add(createRemovePresetPane());
             } else {
                 rootPane.getChildren().addAll(
                         ComponentList.createComponentListTitle(i18n("settings.game.section.basic")),
@@ -775,7 +774,7 @@ public final class GameSettingPage<S extends GameSetting> extends StackPane
             try {
                 List<RadioChoiceList.Choice<GameSetting.Preset>> choices = new ArrayList<>();
                 for (GameSetting.Preset setting : config().getGameSettings()) {
-                    choices.add(new RadioChoiceList.Choice<>(getPresetDisplayName(setting), setting));
+                    choices.add(new PresetChoice(setting));
                 }
                 presetItem.setFallbackValue(config().getDefaultGameSettingOrCreate());
                 presetItem.setChoices(choices);
@@ -852,27 +851,9 @@ public final class GameSettingPage<S extends GameSetting> extends StackPane
         }, i18n("settings.type.global.preset.new"), new RequiredValidator());
     }
 
-    /// Creates the top-level remove row for the currently selected preset.
-    private LinePane createRemovePresetPane() {
-        var pane = new LinePane();
-        pane.setTitle(i18n("settings.type.global.preset.remove"));
-
-        JFXButton button = FXUtils.newToggleButton4(SVG.DELETE_FOREVER, 20);
-        button.setOnAction(event -> removeCurrentPreset());
-        FXUtils.installFastTooltip(button, i18n("settings.type.global.preset.remove"));
-        pane.setRight(button);
-
-        pane.disableProperty().bind(Bindings.createBooleanBinding(
-                () -> config().getGameSettings().size() <= 1 || getCurrentPreset() == null,
-                config().getGameSettings(),
-                currentSetting));
-        return pane;
-    }
-
-    /// Deletes the currently selected preset after confirmation.
-    private void removeCurrentPreset() {
-        GameSetting.Preset setting = getCurrentPreset();
-        if (setting == null || config().getGameSettings().size() <= 1) {
+    /// Asks the user to confirm removing the given preset.
+    private void confirmRemovePreset(GameSetting.Preset setting) {
+        if (config().getGameSettings().size() <= 1) {
             return;
         }
 
@@ -891,6 +872,7 @@ public final class GameSettingPage<S extends GameSetting> extends StackPane
             return;
         }
 
+        boolean removedCurrentPreset = Objects.equals(getCurrentPreset(), setting);
         GameSetting.Preset next = settings.get(index == 0 ? 1 : index - 1);
         UUID removedId = setting.idProperty().getValue();
         if (Objects.equals(config().getDefaultGameSetting(), removedId)) {
@@ -901,7 +883,9 @@ public final class GameSettingPage<S extends GameSetting> extends StackPane
         if (config().getGameSetting(config().getDefaultGameSetting()) == null) {
             config().setDefaultGameSetting(next.idProperty().getValue());
         }
-        selectPreset(next);
+        if (removedCurrentPreset) {
+            selectPreset(next);
+        }
     }
 
     private void bindInstanceParentSetting(LineSelectButton<GameSetting.@Nullable Preset> button) {
@@ -1945,6 +1929,35 @@ public final class GameSettingPage<S extends GameSetting> extends StackPane
             case MAXIMIZED -> i18n("settings.game.window_type.maximized");
             case WINDOWED -> i18n("settings.game.window_type.windowed");
         };
+    }
+
+    /// Preset option with an inline remove button.
+    private final class PresetChoice extends RadioChoiceList.Choice<GameSetting.Preset> {
+        /// Creates a preset option.
+        private PresetChoice(GameSetting.Preset setting) {
+            super(getPresetDisplayName(setting), setting);
+        }
+
+        /// Creates the remove button shown on the right side of the option.
+        @Override
+        protected Node createRightNode() {
+            JFXButton button = FXUtils.newToggleButton4(SVG.DELETE_FOREVER, 14);
+            button.disableProperty().bind(Bindings.createBooleanBinding(
+                    () -> config().getGameSettings().size() <= 1,
+                    config().getGameSettings()));
+            button.setOnAction(event -> {
+                confirmRemovePreset(getValue());
+                event.consume();
+            });
+            FXUtils.installFastTooltip(button, i18n("settings.type.global.preset.remove"));
+            return button;
+        }
+
+        /// Keeps the remove button available on every preset option, not only the selected one.
+        @Override
+        protected boolean shouldDisableRightNodeWhenUnselected() {
+            return false;
+        }
     }
 
     /// Manual memory option with the maximum memory slider on the same row.

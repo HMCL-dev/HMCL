@@ -281,7 +281,9 @@ public final class RadioChoiceList<T extends @UnknownNullability Object> extends
 
             @Nullable Node right = createRightNode();
             if (right != null) {
-                right.disableProperty().bind(radioButton.selectedProperty().not());
+                if (shouldDisableRightNodeWhenUnselected()) {
+                    right.disableProperty().bind(radioButton.selectedProperty().not());
+                }
                 BorderPane.setAlignment(right, Pos.CENTER_RIGHT);
                 pane.setRight(right);
             } else if (StringUtils.isNotBlank(subtitle)) {
@@ -294,6 +296,11 @@ public final class RadioChoiceList<T extends @UnknownNullability Object> extends
         /// Creates the optional right-side editor node.
         protected @Nullable Node createRightNode() {
             return null;
+        }
+
+        /// Returns whether the right-side node should be disabled while this choice is not selected.
+        protected boolean shouldDisableRightNodeWhenUnselected() {
+            return true;
         }
 
         /// Creates the subtitle label for choices without a right-side editor.
