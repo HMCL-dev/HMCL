@@ -156,13 +156,6 @@ public final class GameSettingPage<S extends GameSetting> extends StackPane
 
                 iconPickerItem = null;
                 createPresetManagementSublist(presetSettings);
-                var presetNamePane = new LinePane();
-                presetNamePane.setTitle(i18n("settings.type.global.preset.name"));
-                var presetNameField = new JFXTextField();
-                presetNameField.setPrefWidth(400);
-                presetNamePane.setRight(presetNameField);
-                bindPresetBidirectional(presetNameField.textProperty(), GameSetting.Preset::nameProperty);
-                presetSettings.getContent().add(presetNamePane);
             } else {
                 rootPane.getChildren().addAll(
                         ComponentList.createComponentListTitle(i18n("settings.game.section.basic")),
@@ -848,7 +841,38 @@ public final class GameSettingPage<S extends GameSetting> extends StackPane
             config().getGameSettings().add(setting);
             selectPreset(setting);
             handler.resolve();
-        }, i18n("settings.type.global.preset.new"), new RequiredValidator());
+        }, createDefaultPresetName(), new RequiredValidator());
+    }
+
+    /// Returns the first numbered preset name that is not used by existing presets.
+    private String createDefaultPresetName() {
+        for (int index = 1; ; index++) {
+            String name = i18n("settings.type.global.preset.new", index);
+            boolean used = false;
+            for (GameSetting.Preset setting : config().getGameSettings()) {
+                if (Objects.equals(name, setting.nameProperty().getValue())) {
+                    used = true;
+                    break;
+                }
+            }
+
+            if (!used) {
+                return name;
+            }
+        }
+    }
+
+    /// Asks the user for a new preset name.
+    private void renamePreset(GameSetting.Preset setting) {
+        Controllers.prompt(i18n("settings.type.global.preset.rename"), (name, handler) -> {
+            if (StringUtils.isBlank(name)) {
+                handler.reject(i18n("input.not_empty"));
+                return;
+            }
+
+            setting.nameProperty().setValue(name.trim());
+            handler.resolve();
+        }, setting.nameProperty().getValue(), new RequiredValidator());
     }
 
     /// Asks the user to confirm removing the given preset.
@@ -1941,16 +1965,26 @@ public final class GameSettingPage<S extends GameSetting> extends StackPane
         /// Creates the remove button shown on the right side of the option.
         @Override
         protected Node createRightNode() {
-            JFXButton button = FXUtils.newToggleButton4(SVG.DELETE_FOREVER, 14);
-            button.disableProperty().bind(Bindings.createBooleanBinding(
+            JFXButton renameButton = FXUtils.newToggleButton4(SVG.EDIT, 14);
+            renameButton.setOnAction(event -> {
+                renamePreset(getValue());
+                event.consume();
+            });
+            FXUtils.installFastTooltip(renameButton, i18n("settings.type.global.preset.rename"));
+
+            JFXButton removeButton = FXUtils.newToggleButton4(SVG.DELETE_FOREVER, 14);
+            removeButton.disableProperty().bind(Bindings.createBooleanBinding(
                     () -> config().getGameSettings().size() <= 1,
                     config().getGameSettings()));
-            button.setOnAction(event -> {
+            removeButton.setOnAction(event -> {
                 confirmRemovePreset(getValue());
                 event.consume();
             });
-            FXUtils.installFastTooltip(button, i18n("settings.type.global.preset.remove"));
-            return button;
+            FXUtils.installFastTooltip(removeButton, i18n("settings.type.global.preset.remove"));
+
+            HBox buttons = new HBox(8, renameButton, removeButton);
+            buttons.setAlignment(Pos.CENTER_RIGHT);
+            return buttons;
         }
 
         /// Keeps the remove button available on every preset option, not only the selected one.
