@@ -28,19 +28,53 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 
+/// Semantic version marker for a serialized data schema.
+///
+/// The JSON representation is a string in `major.minor` form. The adapter also accepts a bare
+/// `major` string and treats it as `major.0` for compatibility with compact schema version markers.
+///
+/// This type only records the numeric version components; it does not define compatibility policy.
+///
+/// @param major the major schema version
+/// @param minor the minor schema version
 /// @author Glavo
 @JsonSerializable
 @JsonAdapter(SchemaVersion.Adapter.class)
 @NotNullByDefault
 public record SchemaVersion(int major, int minor) {
 
+    public SchemaVersion {
+        if (major < 0) throw new IllegalArgumentException("Major version must be non-negative: " + major);
+        if (minor < 0) throw new IllegalArgumentException("Minor version must be non-negative: " + minor);
+    }
+
+    public static SchemaVersion parse(String version) {
+        int dot = version.indexOf('.');
+
+        try {
+            if (dot == -1) {
+                return new SchemaVersion(Integer.parseInt(version), 0);
+            } else {
+                return new SchemaVersion(Integer.parseInt(version.substring(0, dot)), Integer.parseInt(version.substring(dot + 1)));
+            }
+        } catch (NumberFormatException e) {
+            throw new IllegalArgumentException("Invalid schema version: " + version, e);
+        }
+    }
+
+    /// Returns the canonical `major.minor` string representation.
     @Override
     public String toString() {
         return major + "." + minor;
     }
 
+    /// Gson adapter for the string representation of [SchemaVersion].
+    ///
+    /// Null JSON values are preserved as null. Non-string values are rejected because schema
+    /// versions are intentionally serialized as stable textual identifiers.
     @NotNullByDefault
     public static final class Adapter extends TypeAdapter<@Nullable SchemaVersion> {
+        /// Writes the version as a `major.minor` string, or JSON null when the value is null.
         @Override
         public void write(JsonWriter out, @Nullable SchemaVersion value) throws IOException {
             if (value != null) {
@@ -50,6 +84,10 @@ public record SchemaVersion(int major, int minor) {
             }
         }
 
+        /// Reads a schema version from a string or null JSON token.
+        ///
+        /// Accepted strings are `major` and `major.minor`, where both parts must be parseable
+        /// decimal integers. The `major` form is normalized to a zero minor version.
         @Override
         public @Nullable SchemaVersion read(JsonReader in) throws IOException {
             if (in.peek() == JsonToken.NULL) {
@@ -58,17 +96,10 @@ public record SchemaVersion(int major, int minor) {
             }
 
             if (in.peek() == JsonToken.STRING) {
-                String version = in.nextString();
-                int dot = version.indexOf('.');
-
                 try {
-                    if (dot == -1) {
-                        return new SchemaVersion(Integer.parseInt(version), 0);
-                    } else {
-                        return new SchemaVersion(Integer.parseInt(version.substring(0, dot)), Integer.parseInt(version.substring(dot + 1)));
-                    }
-                } catch (NumberFormatException e) {
-                    throw new JsonParseException("Invalid schema version: " + version, e);
+                    return SchemaVersion.parse(in.nextString());
+                } catch (IllegalArgumentException e) {
+                    throw new JsonParseException("Invalid schema version: " + in.nextString(), e);
                 }
             } else {
                 throw new JsonParseException("Unexpected token: " + in.peek());
