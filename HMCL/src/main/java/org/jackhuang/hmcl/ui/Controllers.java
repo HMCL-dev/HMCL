@@ -298,7 +298,7 @@ public final class Controllers {
                     && !Controllers.stage.isIconified()
                     // https://github.com/HMCL-dev/HMCL/issues/4290
                     && (OperatingSystem.CURRENT_OS == OperatingSystem.MACOS ||
-                    !Controllers.stage.isFullScreen() && !Controllers.stage.isMaximized())
+                    !Controllers.stage.isMaximized())
             ) {
                 targetProperty.set(sourceProperty.get());
             }

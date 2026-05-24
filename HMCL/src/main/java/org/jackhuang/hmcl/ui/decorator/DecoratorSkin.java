@@ -99,7 +99,7 @@ public class DecoratorSkin extends SkinBase<Decorator> {
         // https://github.com/HMCL-dev/HMCL/issues/4290
         if (OperatingSystem.CURRENT_OS != OperatingSystem.MACOS) {
             onWindowsStatusChange = observable -> {
-                if (primaryStage.isIconified() || primaryStage.isFullScreen() || primaryStage.isMaximized()) {
+                if (primaryStage.isIconified() || primaryStage.isMaximized()) {
                     root.removeEventFilter(MouseEvent.MOUSE_RELEASED, onMouseReleased);
                     root.removeEventFilter(MouseEvent.MOUSE_DRAGGED, onMouseDragged);
                     root.removeEventFilter(MouseEvent.MOUSE_MOVED, onMouseMoved);
@@ -112,7 +112,6 @@ public class DecoratorSkin extends SkinBase<Decorator> {
             WeakInvalidationListener weakOnWindowsStatusChange = new WeakInvalidationListener(onWindowsStatusChange);
             primaryStage.iconifiedProperty().addListener(weakOnWindowsStatusChange);
             primaryStage.maximizedProperty().addListener(weakOnWindowsStatusChange);
-            primaryStage.fullScreenProperty().addListener(weakOnWindowsStatusChange);
             onWindowsStatusChange.invalidated(null);
         } else {
             onWindowsStatusChange = null;
@@ -386,7 +385,7 @@ public class DecoratorSkin extends SkinBase<Decorator> {
     }
 
     private void onMouseMoved(MouseEvent mouseEvent) {
-        if (!primaryStage.isFullScreen() && primaryStage.isResizable()) {
+        if (primaryStage.isResizable()) {
             double x = mouseEvent.getX(), y = mouseEvent.getY();
             Bounds boundsInParent = root.getBoundsInParent();
             double diagonalSize = root.snappedLeftInset() + 10;
@@ -445,7 +444,7 @@ public class DecoratorSkin extends SkinBase<Decorator> {
             stageInitHeight = primaryStage.getHeight();
         }
 
-        if (primaryStage.isFullScreen() || !mouseEvent.isPrimaryButtonDown() || mouseEvent.isStillSincePress())
+        if (!mouseEvent.isPrimaryButtonDown() || mouseEvent.isStillSincePress())
             return;
 
         double dx = mouseEvent.getScreenX() - mouseInitX;
