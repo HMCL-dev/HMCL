@@ -21,13 +21,14 @@ import com.jfoenix.controls.JFXButton;
 import com.jfoenix.controls.JFXComboBox;
 import com.jfoenix.controls.JFXSlider;
 import com.jfoenix.controls.JFXTextField;
-import javafx.css.PseudoClass;
 import javafx.beans.InvalidationListener;
+import javafx.beans.binding.Bindings;
 import javafx.beans.property.*;
 import javafx.beans.value.ChangeListener;
 import javafx.collections.FXCollections;
 import javafx.collections.ListChangeListener;
 import javafx.collections.ObservableList;
+import javafx.css.PseudoClass;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.geometry.Rectangle2D;
@@ -162,6 +163,7 @@ public final class GameSettingPage<S extends GameSetting> extends StackPane
                 presetNamePane.setRight(presetNameField);
                 bindPresetBidirectional(presetNameField.textProperty(), GameSetting.Preset::nameProperty);
                 presetSettings.getContent().add(presetNamePane);
+                presetSettings.getContent().add(createRemovePresetButton());
             } else {
                 rootPane.getChildren().addAll(
                         ComponentList.createComponentListTitle(i18n("settings.game.section.basic")),
@@ -764,16 +766,10 @@ public final class GameSettingPage<S extends GameSetting> extends StackPane
         createButton.setTitle(i18n("settings.type.global.preset.create"));
         createButton.setLeading(SVG.ADD, 20);
         createButton.setOnAction(event -> createPreset());
-        var removeButton = new LineButton();
-        removeButton.setTitle(i18n("settings.type.global.preset.remove"));
-        removeButton.setLeading(SVG.DELETE, 20);
-        removeButton.setOnAction(event -> removeCurrentPreset());
-        sublist.getContent().setAll(presetItem, createButton, removeButton);
+        sublist.getContent().setAll(presetItem, createButton);
         list.getContent().add(sublist);
 
         final Holder<Boolean> updating = new Holder<>(false);
-        Runnable updateRemoveButton = () -> removeButton.setDisable(
-                config().getGameSettings().size() <= 1 || getCurrentPreset() == null);
         Runnable rebuildItems = () -> {
             updating.value = true;
             try {
@@ -785,7 +781,6 @@ public final class GameSettingPage<S extends GameSetting> extends StackPane
                 presetItem.setChoices(choices);
                 presetItem.setSelectedValue(getCurrentPreset());
                 updatePresetManagementDescription(sublist);
-                updateRemoveButton.run();
             } finally {
                 updating.value = false;
             }
@@ -802,7 +797,6 @@ public final class GameSettingPage<S extends GameSetting> extends StackPane
                 rebuildItems.run();
             } else {
                 updatePresetManagementLabels(presetItem, sublist);
-                updateRemoveButton.run();
             }
         };
 
@@ -817,7 +811,6 @@ public final class GameSettingPage<S extends GameSetting> extends StackPane
             try {
                 presetItem.setSelectedValue(getCurrentPreset());
                 updatePresetManagementDescription(sublist);
-                updateRemoveButton.run();
             } finally {
                 updating.value = false;
             }
@@ -857,6 +850,19 @@ public final class GameSettingPage<S extends GameSetting> extends StackPane
             selectPreset(setting);
             handler.resolve();
         }, i18n("settings.type.global.preset.new"), new RequiredValidator());
+    }
+
+    /// Creates the top-level remove button for the currently selected preset.
+    private LineButton createRemovePresetButton() {
+        var button = new LineButton();
+        button.setTitle(i18n("settings.type.global.preset.remove"));
+        button.setLeading(SVG.DELETE, 20);
+        button.setOnAction(event -> removeCurrentPreset());
+        button.disableProperty().bind(Bindings.createBooleanBinding(
+                () -> config().getGameSettings().size() <= 1 || getCurrentPreset() == null,
+                config().getGameSettings(),
+                currentSetting));
+        return button;
     }
 
     /// Deletes the currently selected preset after confirmation.
