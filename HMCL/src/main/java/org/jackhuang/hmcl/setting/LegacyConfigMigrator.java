@@ -79,6 +79,11 @@ public final class LegacyConfigMigrator {
                     ? version.getAsInt()
                     : 0;
 
+            if (configVersion > LEGACY_CURRENT_CONFIG_VERSION) {
+                LOG.warning("Unsupported legacy config version: " + configVersion);
+                return null;
+            }
+
             if (configVersion < LEGACY_CURRENT_CONFIG_VERSION) {
                 upgradeConfig(jsonObject, configVersion);
             }
@@ -91,7 +96,7 @@ public final class LegacyConfigMigrator {
             }
 
             migrateLegacyPresetSettings(deserialized, jsonObject);
-            return new MigrationResult(path, deserialized, deserialized.toJson(), false);
+            return new MigrationResult(path, deserialized, deserialized.toJson());
         } catch (JsonParseException e) {
             LOG.warning("Malformed legacy config file: " + path, e);
             return null;
@@ -135,13 +140,6 @@ public final class LegacyConfigMigrator {
         }
 
         return null;
-    }
-
-    /// Reads the legacy config file as a JSON object.
-    private static @Nullable JsonObject readJsonObject(Path path) throws IOException, JsonParseException {
-        try (var reader = Files.newBufferedReader(path)) {
-            return Config.CONFIG_GSON.fromJson(reader, JsonObject.class);
-        }
     }
 
     /// Upgrades old config fields in the raw JSON object to the current schema.
@@ -270,7 +268,6 @@ public final class LegacyConfigMigrator {
     ///
     /// @param config              The parsed config object.
     /// @param contentForMigration The content to save when migrating to settings.json.
-    /// @param unsupportedVersion  Whether the legacy numeric config version is newer than this HMCL build supports.
-    record MigrationResult(Path path, Config config, String contentForMigration, boolean unsupportedVersion) {
+    record MigrationResult(Path path, Config config, String contentForMigration) {
     }
 }
