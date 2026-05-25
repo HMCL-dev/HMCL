@@ -35,6 +35,11 @@ import java.util.Locale;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 /// Owns the process-wide configuration instances.
+///
+/// The main per-workspace config is stored in `settings.json`, while reusable game setting
+/// presets are stored in `game-setting-presets.json`. Older config files may still embed those
+/// presets in `settings.json`; during startup this holder moves them into the detached preset file
+/// without modifying any legacy hmcl.json or .hmcl.json input file.
 @NotNullByDefault
 public final class ConfigHolder {
 
@@ -47,6 +52,9 @@ public final class ConfigHolder {
 
     /// The current per-workspace config path.
     private static final Path CONFIG_LOCATION = Metadata.HMCL_CURRENT_DIRECTORY.resolve("settings.json");
+
+    /// The current per-workspace game setting preset path.
+    private static final Path GAME_SETTING_PRESETS_LOCATION = Metadata.HMCL_CURRENT_DIRECTORY.resolve("game-setting-presets.json");
 
     /// The loaded per-workspace config instance.
     private static @UnknownNullability Config configInstance;
@@ -84,6 +92,11 @@ public final class ConfigHolder {
         return CONFIG_LOCATION;
     }
 
+    /// Returns the current per-workspace game setting preset path.
+    public static Path gameSettingPresetsLocation() {
+        return GAME_SETTING_PRESETS_LOCATION;
+    }
+
     /// Returns whether this run created a new per-workspace config.
     public static boolean isNewlyCreated() {
         return newlyCreated;
@@ -106,10 +119,15 @@ public final class ConfigHolder {
         }
 
         LOG.info("Config location: " + CONFIG_LOCATION);
+        LOG.info("Game setting presets location: " + GAME_SETTING_PRESETS_LOCATION);
 
         configInstance = loadConfig();
-        if (!unsupportedVersion)
+        boolean gameSettingPresetsNewlyCreated = loadGameSettingPresets(configInstance);
+        if (!unsupportedVersion) {
             configInstance.addListener(source -> FileSaver.save(CONFIG_LOCATION, configInstance.toJson()));
+            configInstance.gameSettingPresets().addListener(source ->
+                    FileSaver.save(GAME_SETTING_PRESETS_LOCATION, configInstance.gameSettingPresets().toJson()));
+        }
 
         globalConfigInstance = loadGlobalConfig();
         globalConfigInstance.addListener(source -> FileSaver.save(GLOBAL_CONFIG_PATH, globalConfigInstance.toJson()));
@@ -124,19 +142,18 @@ public final class ConfigHolder {
             FileUtils.saveSafely(CONFIG_LOCATION, configInstance.toJson());
         }
 
-        if (!Files.isWritable(CONFIG_LOCATION)) {
-            if (OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS
-                    && CONFIG_LOCATION.getFileSystem() == FileSystems.getDefault()
-                    && CONFIG_LOCATION.toFile().canWrite()) {
-                LOG.warning("Config at " + CONFIG_LOCATION + " is not writable, but it seems to be a Samba share or OpenJDK bug");
-                // There are some serious problems with the implementation of Samba or OpenJDK
-                throw new SambaException();
-            } else {
-                // the config cannot be saved
-                // throw up the error now to prevent further data loss
-                throw new IOException("Config at " + CONFIG_LOCATION + " is not writable");
-            }
+        if (gameSettingPresetsNewlyCreated) {
+            LOG.info("Creating game setting presets file " + GAME_SETTING_PRESETS_LOCATION);
+            FileUtils.saveSafely(GAME_SETTING_PRESETS_LOCATION, configInstance.gameSettingPresets().toJson());
         }
+
+        if (!unsupportedVersion && !newlyCreated && configInstance.hasEmbeddedGameSettingPresetsLoaded()) {
+            LOG.info("Removing embedded game setting presets from config file " + CONFIG_LOCATION);
+            FileUtils.saveSafely(CONFIG_LOCATION, configInstance.toJson());
+        }
+
+        checkWritable(CONFIG_LOCATION);
+        checkWritable(GAME_SETTING_PRESETS_LOCATION);
     }
 
     /// Loads the current per-workspace config or migrates a legacy config when needed.
@@ -174,6 +191,37 @@ public final class ConfigHolder {
         return new Config();
     }
 
+    /// Loads the detached game setting preset file.
+    ///
+    /// Returns `true` when the preset file is missing and should be created from any presets that
+    /// were embedded in the main config or produced by legacy migration.
+    private static boolean loadGameSettingPresets(Config config) throws IOException {
+        if (Files.exists(GAME_SETTING_PRESETS_LOCATION)) {
+            checkOwner(GAME_SETTING_PRESETS_LOCATION);
+            try {
+                JsonObject jsonObject = readJsonObject(GAME_SETTING_PRESETS_LOCATION);
+                if (jsonObject == null) {
+                    LOG.info("Game setting presets are empty");
+                } else {
+                    GameSettingPresets deserialized = GameSettingPresets.fromJson(jsonObject);
+                    if (deserialized == null) {
+                        LOG.info("Game setting presets are empty");
+                    } else {
+                        config.setGameSettingPresets(deserialized);
+                        return false;
+                    }
+                }
+            } catch (JsonParseException e) {
+                LOG.warning("Malformed game setting presets.", e);
+            }
+
+            config.setGameSettingPresets(new GameSettingPresets());
+            return false;
+        }
+
+        return true;
+    }
+
     /// Reads the given JSON file as an object.
     private static @Nullable JsonObject readJsonObject(Path path) throws IOException, JsonParseException {
         try (var reader = Files.newBufferedReader(path)) {
@@ -191,6 +239,23 @@ public final class ConfigHolder {
             }
         } catch (IOException e) {
             LOG.warning("Failed to get owner");
+        }
+    }
+
+    /// Checks that the given config file is writable.
+    private static void checkWritable(Path location) throws IOException {
+        if (!Files.isWritable(location)) {
+            if (OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS
+                    && location.getFileSystem() == FileSystems.getDefault()
+                    && location.toFile().canWrite()) {
+                LOG.warning("Config at " + location + " is not writable, but it seems to be a Samba share or OpenJDK bug");
+                // There are some serious problems with the implementation of Samba or OpenJDK
+                throw new SambaException();
+            } else {
+                // the config cannot be saved
+                // throw up the error now to prevent further data loss
+                throw new IOException("Config at " + location + " is not writable");
+            }
         }
     }
 
