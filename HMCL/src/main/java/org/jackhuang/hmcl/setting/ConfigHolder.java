@@ -152,11 +152,10 @@ public final class ConfigHolder {
             LegacyConfigMigrator.MigrationResult migrationResult = LegacyConfigMigrator.migrateLegacyConfig();
             if (migrationResult != null) {
                 checkOwner(migrationResult.path());
-                LegacyConfigMigrator.LoadedConfig loadedConfig = migrationResult.loadedConfig();
-                unsupportedVersion = loadedConfig.unsupportedVersion();
+                unsupportedVersion = migrationResult.unsupportedVersion();
                 LOG.info("Migrating config from " + migrationResult.path() + " to " + CONFIG_LOCATION);
-                FileUtils.saveSafely(CONFIG_LOCATION, loadedConfig.contentForMigration());
-                return loadedConfig.config();
+                FileUtils.saveSafely(CONFIG_LOCATION, migrationResult.contentForMigration());
+                return migrationResult.config();
             }
         }
 

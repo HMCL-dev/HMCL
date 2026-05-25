@@ -56,42 +56,6 @@ public final class LegacyConfigMigrator {
     private LegacyConfigMigrator() {
     }
 
-    /// Loads a legacy config file and applies legacy schema upgrades in memory.
-    private static @Nullable LoadedConfig loadLegacyConfig(Path path) throws IOException, JsonParseException {
-        JsonObject jsonObject = JsonUtils.fromJsonFile(path, JsonObject.class);
-        if (jsonObject == null) {
-            return null;
-        }
-
-        // _version belongs to the legacy file format only. The current settings.json format will use
-        // a separate versioning scheme and must not depend on this numeric value.
-        // Older configs may not contain _version; historically those should be treated as the last
-        // pre-settings.json schema unless older-field probes below prove they need extra upgrades.
-        int configVersion = jsonObject.remove("_version") instanceof JsonPrimitive version && version.isNumber()
-                ? version.getAsInt()
-                : 0;
-
-        if (configVersion > LEGACY_CURRENT_CONFIG_VERSION) {
-            Config deserialized = Config.fromJson(jsonObject);
-            if (deserialized == null) {
-                return null;
-            }
-            return new LoadedConfig(deserialized, Config.CONFIG_GSON.toJson(jsonObject), true);
-        }
-
-        if (configVersion < LEGACY_CURRENT_CONFIG_VERSION) {
-            upgradeConfig(jsonObject, configVersion);
-        }
-        migrateLegacyProfilePresetReferences(jsonObject);
-
-        Config deserialized = Config.fromJson(jsonObject);
-        if (deserialized == null) {
-            return null;
-        }
-
-        migrateLegacyPresetSettings(deserialized, jsonObject);
-        return new LoadedConfig(deserialized, deserialized.toJson(), false);
-    }
 
     /// Looks for a legacy config file and prepares it for writing as the new config file.
     static @Nullable MigrationResult migrateLegacyConfig() throws IOException {
@@ -101,13 +65,33 @@ public final class LegacyConfigMigrator {
         }
 
         try {
-            @Nullable LoadedConfig loadedConfig = loadLegacyConfig(path);
-            if (loadedConfig == null) {
-                LOG.info("Legacy config is empty");
+            JsonObject jsonObject = JsonUtils.fromJsonFile(path, JsonObject.class);
+            if (jsonObject == null) {
+                LOG.info("Legacy config file is empty");
                 return null;
             }
 
-            return new MigrationResult(path, loadedConfig);
+            // _version belongs to the legacy file format only. The current settings.json format will use
+            // a separate versioning scheme and must not depend on this numeric value.
+            // Older configs may not contain _version; historically those should be treated as the last
+            // pre-settings.json schema unless older-field probes below prove they need extra upgrades.
+            int configVersion = jsonObject.remove("_version") instanceof JsonPrimitive version && version.isNumber()
+                    ? version.getAsInt()
+                    : 0;
+
+            if (configVersion < LEGACY_CURRENT_CONFIG_VERSION) {
+                upgradeConfig(jsonObject, configVersion);
+            }
+
+            migrateLegacyProfilePresetReferences(jsonObject);
+
+            Config deserialized = Config.fromJson(jsonObject);
+            if (deserialized == null) {
+                return null;
+            }
+
+            migrateLegacyPresetSettings(deserialized, jsonObject);
+            return new MigrationResult(path, deserialized, deserialized.toJson(), false);
         } catch (JsonParseException e) {
             LOG.warning("Malformed legacy config file: " + path, e);
             return null;
@@ -224,19 +208,15 @@ public final class LegacyConfigMigrator {
 
     /// Writes legacy profile preset references into profile JSON before profile deserialization.
     private static void migrateLegacyProfilePresetReferences(JsonObject object) {
-        if (!(object.get("configurations") instanceof JsonObject configurations)) {
-            return;
-        }
-
-        for (Map.Entry<String, JsonElement> entry : configurations.entrySet()) {
-            if (!(entry.getValue() instanceof JsonObject profileObject)
-                    || profileObject.has("legacyGameSettingsParent")
-                    || !(profileObject.get("global") instanceof JsonObject)) {
-                continue;
+        if (object.get("configurations") instanceof JsonObject configurations) {
+            for (Map.Entry<String, JsonElement> entry : configurations.entrySet()) {
+                if (entry.getValue() instanceof JsonObject profileObject
+                        && !profileObject.has("legacyGameSettingsParent")
+                        && profileObject.get("global") instanceof JsonObject) {
+                    profileObject.addProperty("legacyGameSettingsParent",
+                            LegacyGameSettingsMigrator.getLegacyPresetId(entry.getKey()).toString());
+                }
             }
-
-            profileObject.addProperty("legacyGameSettingsParent",
-                    LegacyGameSettingsMigrator.getLegacyPresetId(entry.getKey()).toString());
         }
     }
 
@@ -286,17 +266,11 @@ public final class LegacyConfigMigrator {
                 : defaultValue;
     }
 
-    /// Result of loading a legacy config file.
+    /// Result of locating and loading a legacy config file without modifying it.
     ///
     /// @param config              The parsed config object.
     /// @param contentForMigration The content to save when migrating to settings.json.
     /// @param unsupportedVersion  Whether the legacy numeric config version is newer than this HMCL build supports.
-    record LoadedConfig(Config config, String contentForMigration, boolean unsupportedVersion) {
-    }
-
-    /// Result of locating and loading a legacy config file without modifying it.
-    ///
-    /// @param loadedConfig The loaded config data.
-    record MigrationResult(Path path, LoadedConfig loadedConfig) {
+    record MigrationResult(Path path, Config config, String contentForMigration, boolean unsupportedVersion) {
     }
 }
