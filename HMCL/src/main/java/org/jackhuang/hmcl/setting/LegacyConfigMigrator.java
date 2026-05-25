@@ -20,6 +20,7 @@ package org.jackhuang.hmcl.setting;
 import com.google.gson.*;
 import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.util.StringUtils;
+import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.io.JarUtils;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNullByDefault;
@@ -57,7 +58,7 @@ public final class LegacyConfigMigrator {
 
     /// Loads a legacy config file and applies legacy schema upgrades in memory.
     private static @Nullable LoadedConfig loadLegacyConfig(Path path) throws IOException, JsonParseException {
-        JsonObject jsonObject = readJsonObject(path);
+        JsonObject jsonObject = JsonUtils.fromJsonFile(path, JsonObject.class);
         if (jsonObject == null) {
             return null;
         }
@@ -71,7 +72,6 @@ public final class LegacyConfigMigrator {
                 : 0;
 
         if (configVersion > LEGACY_CURRENT_CONFIG_VERSION) {
-            LOG.warning(String.format("Current HMCL only support the legacy configuration version up to %d. However, the version now is %d.", LEGACY_CURRENT_CONFIG_VERSION, configVersion));
             Config deserialized = Config.fromJson(jsonObject);
             if (deserialized == null) {
                 return null;
@@ -103,13 +103,13 @@ public final class LegacyConfigMigrator {
         try {
             @Nullable LoadedConfig loadedConfig = loadLegacyConfig(path);
             if (loadedConfig == null) {
-                LOG.info("Legacy config is empty: " + path);
+                LOG.info("Legacy config is empty");
                 return null;
             }
 
             return new MigrationResult(path, loadedConfig);
         } catch (JsonParseException e) {
-            LOG.warning("Malformed legacy config: " + path, e);
+            LOG.warning("Malformed legacy config file: " + path, e);
             return null;
         }
     }
@@ -296,7 +296,6 @@ public final class LegacyConfigMigrator {
 
     /// Result of locating and loading a legacy config file without modifying it.
     ///
-    /// @param path         The legacy config path.
     /// @param loadedConfig The loaded config data.
     record MigrationResult(Path path, LoadedConfig loadedConfig) {
     }
