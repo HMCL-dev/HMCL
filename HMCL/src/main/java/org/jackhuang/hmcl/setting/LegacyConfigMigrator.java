@@ -18,6 +18,7 @@
 package org.jackhuang.hmcl.setting;
 
 import com.google.gson.JsonParseException;
+import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import org.jackhuang.hmcl.Metadata;
@@ -30,11 +31,9 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 
-import static org.jackhuang.hmcl.util.Lang.tryCast;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 /// Migrates legacy per-workspace config files into the current settings.json file.
@@ -68,22 +67,27 @@ public final class LegacyConfigMigrator {
         // a separate versioning scheme and must not depend on this numeric value.
         int configVersion = getLegacyConfigVersion(jsonObject);
 
+        if (configVersion > LEGACY_CURRENT_CONFIG_VERSION) {
+            LOG.warning(String.format("Current HMCL only support the legacy configuration version up to %d. However, the version now is %d.", LEGACY_CURRENT_CONFIG_VERSION, configVersion));
+            Config deserialized = Config.fromJson(jsonObject);
+            if (deserialized == null) {
+                return null;
+            }
+            return new LoadedConfig(deserialized, Config.CONFIG_GSON.toJson(jsonObject), true);
+        }
+
+        if (configVersion < LEGACY_CURRENT_CONFIG_VERSION) {
+            upgradeConfig(jsonObject, configVersion);
+        }
+        migrateLegacyProfilePresetReferences(jsonObject);
+
         Config deserialized = Config.fromJson(jsonObject);
         if (deserialized == null) {
             return null;
         }
 
         migrateLegacyPresetSettings(deserialized, jsonObject);
-
-        if (configVersion < LEGACY_CURRENT_CONFIG_VERSION) {
-            upgradeConfig(deserialized, jsonObject, configVersion);
-            return new LoadedConfig(deserialized, deserialized.toJson(), false);
-        } else if (configVersion > LEGACY_CURRENT_CONFIG_VERSION) {
-            LOG.warning(String.format("Current HMCL only support the legacy configuration version up to %d. However, the version now is %d.", LEGACY_CURRENT_CONFIG_VERSION, configVersion));
-            return new LoadedConfig(deserialized, Config.CONFIG_GSON.toJson(jsonObject), true);
-        } else {
-            return new LoadedConfig(deserialized, deserialized.toJson(), false);
-        }
+        return new LoadedConfig(deserialized, deserialized.toJson(), false);
     }
 
     /// Looks for a legacy config file and prepares it for writing as the new config file.
@@ -164,58 +168,87 @@ public final class LegacyConfigMigrator {
         }
     }
 
-    /// Upgrades old config fields to the current schema.
-    private static void upgradeConfig(Config deserialized, JsonObject jsonObject, int configVersion) {
+    /// Upgrades old config fields in the raw JSON object to the current schema.
+    private static void upgradeConfig(JsonObject jsonObject, int configVersion) {
         LOG.info(String.format("Updating legacy configuration from %d to %d.", configVersion, LEGACY_CURRENT_CONFIG_VERSION));
         if (configVersion < 1) {
-            Map<?, ?> rawJson = Config.CONFIG_GSON.fromJson(jsonObject, Map.class);
-
-            // Upgrade configuration of HMCL 2.x: Convert OfflineAccounts whose stored uuid is important.
-            tryCast(rawJson.get("auth"), Map.class).ifPresent(auth -> {
-                tryCast(auth.get("offline"), Map.class).ifPresent(offline -> {
-                    String selected = rawJson.containsKey("selectedAccount") ? null
-                            : tryCast(offline.get("IAuthenticator_UserName"), String.class).orElse(null);
-
-                    tryCast(offline.get("uuidMap"), Map.class).ifPresent(uuidMap -> {
-                        ((Map<?, ?>) uuidMap).forEach((key, value) -> {
-                            Map<Object, Object> storage = new HashMap<>();
-                            storage.put("type", "offline");
-                            storage.put("username", key);
-                            storage.put("uuid", value);
-                            if (key.equals(selected)) {
-                                storage.put("selected", true);
-                            }
-                            deserialized.getAccountStorages().add(storage);
-                        });
-                    });
-                });
-            });
+            migrateLegacyOfflineAccounts(jsonObject);
 
             // Upgrade configuration of HMCL earlier than 3.1.70.
-            if (!rawJson.containsKey("commonDirType")) {
-                deserialized.setCommonDirType(deserialized.getCommonDirectory().equals(Settings.getDefaultCommonDirectory()) ? EnumCommonDirectory.DEFAULT : EnumCommonDirectory.CUSTOM);
+            if (!jsonObject.has("commonDirType")) {
+                String commonDirectory = readString(jsonObject, "commonpath", Settings.getDefaultCommonDirectory());
+                jsonObject.addProperty("commonDirType", commonDirectory.equals(Settings.getDefaultCommonDirectory())
+                        ? EnumCommonDirectory.DEFAULT.name()
+                        : EnumCommonDirectory.CUSTOM.name());
             }
-            if (!rawJson.containsKey("backgroundType")) {
-                deserialized.setBackgroundImageType(StringUtils.isNotBlank(deserialized.getBackgroundImage()) ? EnumBackgroundImage.CUSTOM : EnumBackgroundImage.DEFAULT);
+            if (!jsonObject.has("backgroundType")) {
+                String backgroundImage = readString(jsonObject, "bgpath", "");
+                jsonObject.addProperty("backgroundType", StringUtils.isNotBlank(backgroundImage)
+                        ? EnumBackgroundImage.CUSTOM.name()
+                        : EnumBackgroundImage.DEFAULT.name());
             }
-            if (!rawJson.containsKey("hasProxy")) {
-                deserialized.setHasProxy(StringUtils.isNotBlank(deserialized.getProxyHost()));
+            if (!jsonObject.has("hasProxy")) {
+                jsonObject.addProperty("hasProxy", StringUtils.isNotBlank(readString(jsonObject, "proxyHost", "")));
             }
-            if (!rawJson.containsKey("hasProxyAuth")) {
-                deserialized.setHasProxyAuth(StringUtils.isNotBlank(deserialized.getProxyUser()));
+            if (!jsonObject.has("hasProxyAuth")) {
+                jsonObject.addProperty("hasProxyAuth", StringUtils.isNotBlank(readString(jsonObject, "proxyUserName", "")));
             }
 
-            if (!rawJson.containsKey("downloadType")) {
-                tryCast(rawJson.get("downloadtype"), Number.class)
-                        .map(Number::intValue)
-                        .ifPresent(id -> {
-                            if (id == 0) {
-                                deserialized.setDownloadType("mojang");
-                            } else if (id == 1) {
-                                deserialized.setDownloadType("bmclapi");
-                            }
-                        });
+            if (!jsonObject.has("downloadType")) {
+                JsonElement legacyDownloadType = jsonObject.get("downloadtype");
+                if (legacyDownloadType != null && legacyDownloadType.isJsonPrimitive()
+                        && legacyDownloadType.getAsJsonPrimitive().isNumber()) {
+                    int id = legacyDownloadType.getAsInt();
+                    if (id == 0) {
+                        jsonObject.addProperty("downloadType", "mojang");
+                    } else if (id == 1) {
+                        jsonObject.addProperty("downloadType", "bmclapi");
+                    }
+                }
             }
+        }
+    }
+
+    /// Converts legacy offline account UUID entries into the current account storage array.
+    private static void migrateLegacyOfflineAccounts(JsonObject jsonObject) {
+        if (!(jsonObject.get("auth") instanceof JsonObject auth)
+                || !(auth.get("offline") instanceof JsonObject offline)
+                || !(offline.get("uuidMap") instanceof JsonObject uuidMap)) {
+            return;
+        }
+
+        String selected = jsonObject.has("selectedAccount")
+                ? null
+                : readString(offline, "IAuthenticator_UserName", null);
+        JsonArray accounts = jsonObject.get("accounts") instanceof JsonArray array ? array : new JsonArray();
+        for (Map.Entry<String, JsonElement> entry : uuidMap.entrySet()) {
+            JsonObject storage = new JsonObject();
+            storage.addProperty("type", "offline");
+            storage.addProperty("username", entry.getKey());
+            storage.add("uuid", entry.getValue());
+            if (entry.getKey().equals(selected)) {
+                storage.addProperty("selected", true);
+            }
+            accounts.add(storage);
+        }
+        jsonObject.add("accounts", accounts);
+    }
+
+    /// Writes legacy profile preset references into profile JSON before profile deserialization.
+    private static void migrateLegacyProfilePresetReferences(JsonObject object) {
+        if (!(object.get("configurations") instanceof JsonObject configurations)) {
+            return;
+        }
+
+        for (Map.Entry<String, JsonElement> entry : configurations.entrySet()) {
+            if (!(entry.getValue() instanceof JsonObject profileObject)
+                    || profileObject.has("legacyGameSettingsParent")
+                    || !(profileObject.get("global") instanceof JsonObject)) {
+                continue;
+            }
+
+            profileObject.addProperty("legacyGameSettingsParent",
+                    LegacyGameSettingsMigrator.getLegacyPresetId(entry.getKey()).toString());
         }
     }
 
@@ -254,6 +287,14 @@ public final class LegacyConfigMigrator {
 
             profile.setLegacyGameSettingsParent(legacyParent.idProperty().getValue());
         }
+    }
+
+    /// Reads a string field from a JSON object.
+    private static @Nullable String readString(JsonObject object, String key, @Nullable String defaultValue) {
+        JsonElement element = object.get(key);
+        return element != null && element.isJsonPrimitive() && element.getAsJsonPrimitive().isString()
+                ? element.getAsString()
+                : defaultValue;
     }
 
     /// Result of loading a legacy config file.
