@@ -22,10 +22,15 @@ import com.google.gson.GsonBuilder;
 import com.google.gson.JsonParseException;
 import com.google.gson.JsonSyntaxException;
 import com.google.gson.reflect.TypeToken;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.NotNullByDefault;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.UnknownNullability;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.Reader;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -38,6 +43,7 @@ import java.util.UUID;
  * @author yushijinhun
  */
 @SuppressWarnings("unchecked")
+@NotNullByDefault
 public final class JsonUtils {
 
     public static final Gson GSON = defaultGsonBuilder().create();
@@ -51,93 +57,145 @@ public final class JsonUtils {
     private JsonUtils() {
     }
 
-    public static <T> TypeToken<List<T>> listTypeOf(Class<T> elementType) {
+    public static <T> TypeToken<List<@Nullable T>> listTypeOf(Class<T> elementType) {
         return (TypeToken<List<T>>) TypeToken.getParameterized(List.class, elementType);
     }
 
-    public static <T> TypeToken<List<T>> listTypeOf(TypeToken<T> elementType) {
+    public static <T> TypeToken<List<@Nullable T>> listTypeOf(TypeToken<T> elementType) {
         return (TypeToken<List<T>>) TypeToken.getParameterized(List.class, elementType.getType());
     }
 
-    public static <K, V> TypeToken<Map<K, V>> mapTypeOf(Class<K> keyType, Class<V> valueType) {
+    public static <K, V> TypeToken<Map<K, @Nullable V>> mapTypeOf(Class<K> keyType, Class<V> valueType) {
         return (TypeToken<Map<K, V>>) TypeToken.getParameterized(Map.class, keyType, valueType);
     }
 
-    public static <K, V> TypeToken<Map<K, V>> mapTypeOf(Class<K> keyType, TypeToken<V> valueType) {
+    public static <K, V> TypeToken<Map<K, @Nullable V>> mapTypeOf(Class<K> keyType, TypeToken<V> valueType) {
         return (TypeToken<Map<K, V>>) TypeToken.getParameterized(Map.class, keyType, valueType.getType());
     }
 
-    public static <T> T fromJsonFile(Path file, Class<T> classOfT) throws IOException {
-        return fromJsonFile(file, TypeToken.get(classOfT));
+    public static <T> @Nullable T fromJson(Gson gson, String json, Class<T> type) {
+        return gson.<@Nullable T>fromJson(json, type);
     }
 
-    public static <T> T fromJsonFile(Path file, TypeToken<T> type) throws IOException {
+    public static <T> @Nullable T fromJson(String json, Class<T> type) {
+        return fromJson(GSON, json, type);
+    }
+
+    public static <T> @Nullable T fromJson(Gson gson, String json, TypeToken<T> type) {
+        return gson.<@Nullable T>fromJson(json, type);
+    }
+
+    public static <T> @Nullable T fromJson(String json, TypeToken<T> type) {
+        return fromJson(GSON, json, type);
+    }
+
+    public static <T> @Nullable T fromJson(Gson gson, Reader reader, Class<T> type) {
+        return gson.<@Nullable T>fromJson(reader, type);
+    }
+
+    public static <T> @Nullable T fromJson(Reader reader, Class<T> type) {
+        return fromJson(GSON, reader, type);
+    }
+
+    public static <T> @Nullable T fromJson(Gson gson, Reader reader, TypeToken<T> type) {
+        return gson.<@Nullable T>fromJson(reader, type);
+    }
+
+    public static <T> @Nullable T fromJson(Reader reader, TypeToken<T> type) {
+        return fromJson(GSON, reader, type);
+    }
+
+    public static <T> @Nullable T fromJsonFile(Gson gson, Path file, Class<T> classOfT) throws IOException {
+        return fromJsonFile(gson, file, TypeToken.get(classOfT));
+    }
+
+    public static <T> @Nullable T fromJsonFile(Path file, Class<T> classOfT) throws IOException {
+        return fromJsonFile(GSON, file, classOfT);
+    }
+
+    public static <T> @Nullable T fromJsonFile(Gson gson, Path file, TypeToken<T> type) throws IOException {
         try (var reader = Files.newBufferedReader(file)) {
-            return GSON.fromJson(reader, type.getType());
+            return gson.fromJson(reader, type.getType());
         }
     }
 
-    public static <T> T fromJsonFully(InputStream json, Class<T> classOfT) throws IOException, JsonParseException {
+    public static <T> @Nullable T fromJsonFile(Path file, TypeToken<T> type) throws IOException {
+        return fromJsonFile(GSON, file, type);
+    }
+
+    public static <T> @Nullable T fromJsonFully(InputStream json, Class<T> classOfT) throws IOException, JsonParseException {
         try (InputStreamReader reader = new InputStreamReader(json, StandardCharsets.UTF_8)) {
-            return GSON.fromJson(reader, classOfT);
+            return GSON.<@Nullable T>fromJson(reader, classOfT);
         }
     }
 
-    public static <T> T fromJsonFully(InputStream json, TypeToken<T> type) throws IOException, JsonParseException {
+    public static <T> @Nullable T fromJsonFully(InputStream json, TypeToken<T> type) throws IOException, JsonParseException {
         try (InputStreamReader reader = new InputStreamReader(json, StandardCharsets.UTF_8)) {
-            return GSON.fromJson(reader, type);
+            return GSON.<@Nullable T>fromJson(reader, type);
         }
+    }
+
+    public static <T> T fromNonNullJson(Gson gson, String json, Class<T> classOfT) throws JsonParseException {
+        return fromNonNullJson(gson, json, TypeToken.get(classOfT));
     }
 
     public static <T> T fromNonNullJson(String json, Class<T> classOfT) throws JsonParseException {
-        T parsed = GSON.fromJson(json, classOfT);
+        return fromNonNullJson(GSON, json, classOfT);
+    }
+
+    public static <T> T fromNonNullJson(Gson gson, String json, TypeToken<T> type) throws JsonParseException {
+        T parsed = fromJson(gson, json, type);
         if (parsed == null)
             throw new JsonParseException("Json object cannot be null.");
         return parsed;
     }
 
     public static <T> T fromNonNullJson(String json, TypeToken<T> type) throws JsonParseException {
-        T parsed = GSON.fromJson(json, type);
-        if (parsed == null)
-            throw new JsonParseException("Json object cannot be null.");
-        return parsed;
+        return fromNonNullJson(GSON, json, type);
     }
 
-    public static <T> T fromNonNullJsonFully(InputStream json, Class<T> classOfT) throws IOException, JsonParseException {
-        try (InputStreamReader reader = new InputStreamReader(json, StandardCharsets.UTF_8)) {
-            T parsed = GSON.fromJson(reader, classOfT);
+    public static <T> T fromNonNullJsonFully(Gson gson, InputStream inputStream, Class<T> classOfT) throws IOException, JsonParseException {
+        return fromNonNullJsonFully(gson, inputStream, TypeToken.get(classOfT));
+    }
+
+    public static <T> T fromNonNullJsonFully(InputStream inputStream, Class<T> classOfT) throws IOException, JsonParseException {
+        return fromNonNullJsonFully(GSON, inputStream, classOfT);
+    }
+
+    public static <T> T fromNonNullJsonFully(Gson gson, InputStream inputStream, TypeToken<T> type) throws IOException, JsonParseException {
+        try (InputStreamReader reader = new InputStreamReader(inputStream, StandardCharsets.UTF_8)) {
+            T parsed = fromJson(gson, reader, type);
             if (parsed == null)
                 throw new JsonParseException("Json object cannot be null.");
             return parsed;
         }
     }
 
-    public static <T> T fromNonNullJsonFully(InputStream json, TypeToken<T> type) throws IOException, JsonParseException {
-        try (InputStreamReader reader = new InputStreamReader(json, StandardCharsets.UTF_8)) {
-            T parsed = GSON.fromJson(reader, type);
-            if (parsed == null)
-                throw new JsonParseException("Json object cannot be null.");
-            return parsed;
-        }
+    public static <T> T fromNonNullJsonFully(InputStream inputStream, TypeToken<T> type) throws IOException, JsonParseException {
+        return fromNonNullJsonFully(GSON, inputStream, type);
     }
 
-    public static <T> T fromMaybeMalformedJson(String json, Class<T> classOfT) throws JsonParseException {
+    public static <T> @Nullable T fromMaybeMalformedJson(Gson gson, String json, Class<T> classOfT) throws JsonParseException {
+        return fromMaybeMalformedJson(gson, json, TypeToken.get(classOfT));
+    }
+
+    public static <T> @Nullable T fromMaybeMalformedJson(String json, Class<T> classOfT) throws JsonParseException {
+        return fromMaybeMalformedJson(GSON, json, classOfT);
+    }
+
+    public static <T> @Nullable T fromMaybeMalformedJson(Gson gson, String json, TypeToken<T> type) throws JsonParseException {
         try {
-            return GSON.fromJson(json, classOfT);
+            return gson.fromJson(json, type);
         } catch (JsonSyntaxException e) {
             return null;
         }
     }
 
-    public static <T> T fromMaybeMalformedJson(String json, TypeToken<T> type) throws JsonParseException {
-        try {
-            return GSON.fromJson(json, type);
-        } catch (JsonSyntaxException e) {
-            return null;
-        }
+    public static <T> @Nullable T fromMaybeMalformedJson(String json, TypeToken<T> type) throws JsonParseException {
+        return fromMaybeMalformedJson(GSON, json, type);
     }
 
-    public static void writeToJsonFile(Path file, Object value) throws IOException {
+    public static void writeToJsonFile(Path file, @Nullable Object value) throws IOException {
         try (var writer = Files.newBufferedWriter(file)) {
             GSON.toJson(value, writer);
         }
