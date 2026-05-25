@@ -21,6 +21,7 @@ import com.google.gson.JsonParseException;
 import com.google.gson.JsonObject;
 import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.util.FileSaver;
+import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.i18n.I18n;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
@@ -145,7 +146,7 @@ public final class ConfigHolder {
                     }
                 }
             } catch (JsonParseException e) {
-                LOG.warning("Malformed config.", e);
+                LOG.warning("Malformed config file: " + CONFIG_LOCATION, e);
             }
         } else {
             LegacyConfigMigrator.MigrationResult migrationResult = LegacyConfigMigrator.migrateLegacyConfig();
