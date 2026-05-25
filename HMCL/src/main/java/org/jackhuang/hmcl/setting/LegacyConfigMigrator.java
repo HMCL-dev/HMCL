@@ -17,13 +17,11 @@
  */
 package org.jackhuang.hmcl.setting;
 
-import com.google.gson.JsonParseException;
-import com.google.gson.JsonArray;
-import com.google.gson.JsonElement;
-import com.google.gson.JsonObject;
+import com.google.gson.*;
 import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.io.JarUtils;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
 
@@ -63,9 +61,14 @@ public final class LegacyConfigMigrator {
         if (jsonObject == null) {
             return null;
         }
+
         // _version belongs to the legacy file format only. The current settings.json format will use
         // a separate versioning scheme and must not depend on this numeric value.
-        int configVersion = getLegacyConfigVersion(jsonObject);
+        // Older configs may not contain _version; historically those should be treated as the last
+        // pre-settings.json schema unless older-field probes below prove they need extra upgrades.
+        int configVersion = jsonObject.remove("_version") instanceof JsonPrimitive version && version.isNumber()
+                ? version.getAsInt()
+                : 0;
 
         if (configVersion > LEGACY_CURRENT_CONFIG_VERSION) {
             LOG.warning(String.format("Current HMCL only support the legacy configuration version up to %d. However, the version now is %d.", LEGACY_CURRENT_CONFIG_VERSION, configVersion));
@@ -150,17 +153,6 @@ public final class LegacyConfigMigrator {
         return null;
     }
 
-    /// Reads the legacy numeric config version from raw JSON.
-    private static int getLegacyConfigVersion(JsonObject jsonObject) {
-        // Older configs may not contain _version; historically those should be treated as the last
-        // pre-settings.json schema unless older-field probes below prove they need extra upgrades.
-        JsonElement version = jsonObject.get("_version");
-        if (version != null && version.isJsonPrimitive() && version.getAsJsonPrimitive().isNumber()) {
-            return version.getAsInt();
-        }
-        return LEGACY_CURRENT_CONFIG_VERSION;
-    }
-
     /// Reads the legacy config file as a JSON object.
     private static @Nullable JsonObject readJsonObject(Path path) throws IOException, JsonParseException {
         try (var reader = Files.newBufferedReader(path)) {
@@ -172,7 +164,28 @@ public final class LegacyConfigMigrator {
     private static void upgradeConfig(JsonObject jsonObject, int configVersion) {
         LOG.info(String.format("Updating legacy configuration from %d to %d.", configVersion, LEGACY_CURRENT_CONFIG_VERSION));
         if (configVersion < 1) {
-            migrateLegacyOfflineAccounts(jsonObject);
+            // Upgrade configuration of HMCL 2.x: Convert OfflineAccounts whose stored uuid is important.
+            if (jsonObject.get("auth") instanceof JsonObject auth
+                    && auth.get("offline") instanceof JsonObject offline
+                    && offline.get("uuidMap") instanceof JsonObject uuidMap) {
+
+                String selected = jsonObject.has("selectedAccount")
+                        ? null
+                        : readString(offline, "IAuthenticator_UserName", null);
+                JsonArray accounts = new JsonArray();
+                for (Map.Entry<String, JsonElement> entry : uuidMap.entrySet()) {
+                    JsonObject storage = new JsonObject();
+                    storage.addProperty("type", "offline");
+                    storage.addProperty("username", entry.getKey());
+                    storage.add("uuid", entry.getValue());
+                    if (entry.getKey().equals(selected)) {
+                        storage.addProperty("selected", true);
+                    }
+                    accounts.add(storage);
+                }
+                jsonObject.add("accounts", accounts);
+            }
+
 
             // Upgrade configuration of HMCL earlier than 3.1.70.
             if (!jsonObject.has("commonDirType")) {
@@ -207,31 +220,6 @@ public final class LegacyConfigMigrator {
                 }
             }
         }
-    }
-
-    /// Converts legacy offline account UUID entries into the current account storage array.
-    private static void migrateLegacyOfflineAccounts(JsonObject jsonObject) {
-        if (!(jsonObject.get("auth") instanceof JsonObject auth)
-                || !(auth.get("offline") instanceof JsonObject offline)
-                || !(offline.get("uuidMap") instanceof JsonObject uuidMap)) {
-            return;
-        }
-
-        String selected = jsonObject.has("selectedAccount")
-                ? null
-                : readString(offline, "IAuthenticator_UserName", null);
-        JsonArray accounts = jsonObject.get("accounts") instanceof JsonArray array ? array : new JsonArray();
-        for (Map.Entry<String, JsonElement> entry : uuidMap.entrySet()) {
-            JsonObject storage = new JsonObject();
-            storage.addProperty("type", "offline");
-            storage.addProperty("username", entry.getKey());
-            storage.add("uuid", entry.getValue());
-            if (entry.getKey().equals(selected)) {
-                storage.addProperty("selected", true);
-            }
-            accounts.add(storage);
-        }
-        jsonObject.add("accounts", accounts);
     }
 
     /// Writes legacy profile preset references into profile JSON before profile deserialization.
@@ -290,6 +278,7 @@ public final class LegacyConfigMigrator {
     }
 
     /// Reads a string field from a JSON object.
+    @Contract("_,_,!null->!null")
     private static @Nullable String readString(JsonObject object, String key, @Nullable String defaultValue) {
         JsonElement element = object.get(key);
         return element != null && element.isJsonPrimitive() && element.getAsJsonPrimitive().isString()
