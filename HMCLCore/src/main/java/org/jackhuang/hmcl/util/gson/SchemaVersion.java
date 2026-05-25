@@ -45,7 +45,7 @@ import java.io.IOException;
 @JsonSerializable
 @JsonAdapter(SchemaVersion.Adapter.class)
 @NotNullByDefault
-public record SchemaVersion(int major, int minor) {
+public record SchemaVersion(int major, int minor) implements Comparable<SchemaVersion> {
 
     public SchemaVersion {
         if (major < 0) throw new IllegalArgumentException("Major version must be non-negative: " + major);
@@ -70,6 +70,13 @@ public record SchemaVersion(int major, int minor) {
     @Override
     public String toString() {
         return major + "." + minor;
+    }
+
+    @Override
+    public int compareTo(SchemaVersion o) {
+        return major != o.major
+                ? Integer.compare(major, o.major)
+                : Integer.compare(minor, o.minor);
     }
 
     /// Gson adapter for the string representation of [SchemaVersion].
