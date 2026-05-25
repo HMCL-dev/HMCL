@@ -35,8 +35,7 @@ import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 /// Owns loading and saving of detached game settings presets.
 ///
 /// The preset file is stored separately from the main `settings.json` file as
-/// `game-settings-presets.json`. When the main config still contains embedded preset fields, this
-/// holder moves them into the detached file and rewrites the main config without those fields.
+/// `game-settings-presets.json`.
 ///
 /// @author Glavo
 @NotNullByDefault
@@ -69,20 +68,13 @@ public final class GameSettingsPresetsHolder {
             FileUtils.saveSafely(LOCATION, config.gameSettingPresets().toJson());
         }
 
-        if (!ConfigHolder.isUnsupportedVersion()
-                && !ConfigHolder.isNewlyCreated()
-                && config.hasEmbeddedGameSettingsPresetsLoaded()) {
-            LOG.info("Removing embedded game settings presets from config file " + ConfigHolder.configLocation());
-            FileUtils.saveSafely(ConfigHolder.configLocation(), config.toJson());
-        }
-
         checkWritable(LOCATION);
     }
 
     /// Loads the detached game settings preset file.
     ///
-    /// Returns `true` when the preset file is missing and should be created from any presets that
-    /// were embedded in the main config or produced by legacy migration.
+    /// Returns `true` when the preset file is missing and should be created from presets produced by
+    /// legacy migration.
     private static boolean load(Config config) throws IOException {
         if (Files.exists(LOCATION)) {
             try {

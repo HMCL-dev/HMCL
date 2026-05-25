@@ -58,24 +58,6 @@ public final class GameSettingsPresets extends ObservableSetting {
         return Config.CONFIG_GSON.fromJson(json, GameSettingsPresets.class);
     }
 
-    /// Reads a game settings preset store embedded in the main config JSON object.
-    static @Nullable GameSettingsPresets fromEmbeddedConfig(
-            JsonObject json,
-            JsonDeserializationContext context) throws JsonParseException {
-        if (!json.has("gameSettings") && !json.has("defaultGameSettings")) {
-            return null;
-        }
-
-        JsonObject embedded = new JsonObject();
-        if (json.has("gameSettings")) {
-            embedded.add("gameSettings", json.get("gameSettings"));
-        }
-        if (json.has("defaultGameSettings")) {
-            embedded.add("defaultGameSettings", json.get("defaultGameSettings"));
-        }
-        return context.deserialize(embedded, GameSettingsPresets.class);
-    }
-
     /// Serializes this game settings preset store to JSON.
     public String toJson() {
         return Config.CONFIG_GSON.toJson(this);
