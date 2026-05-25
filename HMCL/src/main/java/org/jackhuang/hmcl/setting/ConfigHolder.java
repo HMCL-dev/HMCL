@@ -26,7 +26,6 @@ import org.jackhuang.hmcl.util.i18n.I18n;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
 import org.jetbrains.annotations.NotNullByDefault;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.UnknownNullability;
 
 import java.io.IOException;
@@ -134,7 +133,7 @@ public final class ConfigHolder {
         if (Files.exists(CONFIG_LOCATION)) {
             checkOwner(CONFIG_LOCATION);
             try {
-                JsonObject jsonObject = readJsonObject(CONFIG_LOCATION);
+                JsonObject jsonObject = JsonUtils.fromJsonFile(CONFIG_LOCATION, JsonObject.class);
                 if (jsonObject == null) {
                     LOG.info("Config is empty");
                 } else {
@@ -161,13 +160,6 @@ public final class ConfigHolder {
 
         newlyCreated = true;
         return new Config();
-    }
-
-    /// Reads the given JSON file as an object.
-    private static @Nullable JsonObject readJsonObject(Path path) throws IOException, JsonParseException {
-        try (var reader = Files.newBufferedReader(path)) {
-            return Config.CONFIG_GSON.fromJson(reader, JsonObject.class);
-        }
     }
 
     /// Checks whether root is reading a config file owned by another user.
