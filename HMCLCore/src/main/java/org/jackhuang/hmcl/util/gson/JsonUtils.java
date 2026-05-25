@@ -492,8 +492,6 @@ public final class JsonUtils {
     }
 
     /// Serializes `value` to JSON and writes it to the file at the given [Path] using [GSON].
-    /// The file is created or overwritten atomically by the underlying [java.nio.file.Files]
-    /// API.
     ///
     /// @param file  the path to the output file
     /// @param value the object to serialize; may be `null`, in which case the JSON `null`
