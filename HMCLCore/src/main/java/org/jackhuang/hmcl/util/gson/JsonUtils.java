@@ -22,7 +22,6 @@ import com.google.gson.GsonBuilder;
 import com.google.gson.JsonParseException;
 import com.google.gson.JsonSyntaxException;
 import com.google.gson.reflect.TypeToken;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.UnknownNullability;
@@ -239,7 +238,7 @@ public final class JsonUtils {
     /// @param file     the path to the JSON file
     /// @param classOfT the target class
     /// @return the deserialized object, or `null` if the JSON root is `null`
-    /// @throws IOException if an I/O error occurs reading the file
+    /// @throws IOException                         if an I/O error occurs reading the file
     /// @throws com.google.gson.JsonSyntaxException if the file content is not valid JSON for `classOfT`
     public static <T> @Nullable T fromJsonFile(Gson gson, Path file, Class<T> classOfT) throws IOException {
         return fromJsonFile(gson, file, TypeToken.get(classOfT));
@@ -252,7 +251,7 @@ public final class JsonUtils {
     /// @param file     the path to the JSON file
     /// @param classOfT the target class
     /// @return the deserialized object, or `null` if the JSON root is `null`
-    /// @throws IOException if an I/O error occurs reading the file
+    /// @throws IOException                         if an I/O error occurs reading the file
     /// @throws com.google.gson.JsonSyntaxException if the file content is not valid JSON for `classOfT`
     public static <T> @Nullable T fromJsonFile(Path file, Class<T> classOfT) throws IOException {
         return fromJsonFile(GSON, file, classOfT);
@@ -266,7 +265,7 @@ public final class JsonUtils {
     /// @param file the path to the JSON file
     /// @param type a [TypeToken] describing the target type
     /// @return the deserialized object, or `null` if the JSON root is `null`
-    /// @throws IOException if an I/O error occurs reading the file
+    /// @throws IOException                         if an I/O error occurs reading the file
     /// @throws com.google.gson.JsonSyntaxException if the file content is not valid JSON for `type`
     public static <T> @Nullable T fromJsonFile(Gson gson, Path file, TypeToken<T> type) throws IOException {
         try (var reader = Files.newBufferedReader(file)) {
@@ -281,7 +280,7 @@ public final class JsonUtils {
     /// @param file the path to the JSON file
     /// @param type a [TypeToken] describing the target type
     /// @return the deserialized object, or `null` if the JSON root is `null`
-    /// @throws IOException if an I/O error occurs reading the file
+    /// @throws IOException                         if an I/O error occurs reading the file
     /// @throws com.google.gson.JsonSyntaxException if the file content is not valid JSON for `type`
     public static <T> @Nullable T fromJsonFile(Path file, TypeToken<T> type) throws IOException {
         return fromJsonFile(GSON, file, type);
