@@ -43,25 +43,25 @@ import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 /// only the legacy embedded fields and ignores unrelated config data.
 ///
 /// @author Glavo
-@JsonAdapter(GameSettingPresets.Adapter.class)
+@JsonAdapter(GameSettingsPresets.Adapter.class)
 @NotNullByDefault
-public final class GameSettingPresets extends ObservableSetting {
+public final class GameSettingsPresets extends ObservableSetting {
     /// The schema version supported by this preset store.
     public static final SchemaVersion CURRENT_SCHEMA_VERSION = new SchemaVersion(1, 0);
 
     /// Creates an empty preset store.
-    public GameSettingPresets() {
+    public GameSettingsPresets() {
         tracker.markDirty(schemaVersion);
         register();
     }
 
     /// Reads a preset store from a JSON object.
-    public static @Nullable GameSettingPresets fromJson(JsonObject json) throws JsonParseException {
-        return Config.CONFIG_GSON.fromJson(json, GameSettingPresets.class);
+    public static @Nullable GameSettingsPresets fromJson(JsonObject json) throws JsonParseException {
+        return Config.CONFIG_GSON.fromJson(json, GameSettingsPresets.class);
     }
 
     /// Reads a preset store embedded in an older main config JSON object.
-    static @Nullable GameSettingPresets fromEmbeddedConfig(
+    static @Nullable GameSettingsPresets fromEmbeddedConfig(
             JsonObject json,
             JsonDeserializationContext context) throws JsonParseException {
         if (!json.has("gameSettings") && !json.has("defaultGameSetting")) {
@@ -75,7 +75,7 @@ public final class GameSettingPresets extends ObservableSetting {
         if (json.has("defaultGameSetting")) {
             embedded.add("defaultGameSetting", json.get("defaultGameSetting"));
         }
-        return context.deserialize(embedded, GameSettingPresets.class);
+        return context.deserialize(embedded, GameSettingsPresets.class);
     }
 
     /// Serializes this preset store to JSON.
@@ -84,13 +84,13 @@ public final class GameSettingPresets extends ObservableSetting {
     }
 
     /// Copies another preset store into this instance.
-    void copyFrom(GameSettingPresets source) {
+    void copyFrom(GameSettingsPresets source) {
         if (source == this) {
             return;
         }
 
         gameSettings.setAll(source.getGameSettings());
-        setDefaultGameSetting(source.getDefaultGameSetting());
+        setDefaultGameSettings(source.getDefaultGameSettings());
     }
 
     /// The schema version used by this preset store file.
@@ -114,40 +114,40 @@ public final class GameSettingPresets extends ObservableSetting {
 
     /// Reusable game setting presets.
     @SerializedName("gameSettings")
-    private final ObservableList<GameSetting.Preset> gameSettings =
+    private final ObservableList<GameSettings.Preset> gameSettings =
             FXCollections.observableArrayList(setting -> new Observable[] { setting });
 
     /// Returns the reusable game setting presets.
-    public ObservableList<GameSetting.Preset> getGameSettings() {
+    public ObservableList<GameSettings.Preset> getGameSettings() {
         return gameSettings;
     }
 
     /// The default preset ID.
     @SerializedName("defaultGameSetting")
-    private final ObjectProperty<@Nullable UUID> defaultGameSetting = new SimpleObjectProperty<>(this, "defaultGameSetting");
+    private final ObjectProperty<@Nullable UUID> defaultGameSettings = new SimpleObjectProperty<>(this, "defaultGameSetting");
 
     /// Returns the default preset ID property.
-    public ObjectProperty<@Nullable UUID> defaultGameSettingProperty() {
-        return defaultGameSetting;
+    public ObjectProperty<@Nullable UUID> defaultGameSettingsProperty() {
+        return defaultGameSettings;
     }
 
     /// Returns the default preset ID.
-    public @Nullable UUID getDefaultGameSetting() {
-        return defaultGameSetting.get();
+    public @Nullable UUID getDefaultGameSettings() {
+        return defaultGameSettings.get();
     }
 
     /// Sets the default preset ID.
-    public void setDefaultGameSetting(@Nullable UUID defaultGameSetting) {
-        this.defaultGameSetting.set(defaultGameSetting);
+    public void setDefaultGameSettings(@Nullable UUID defaultGameSettings) {
+        this.defaultGameSettings.set(defaultGameSettings);
     }
 
     /// Returns the preset with the given ID.
-    public GameSetting.@Nullable Preset getGameSetting(@Nullable UUID id) {
+    public GameSettings.@Nullable Preset getGameSettings(@Nullable UUID id) {
         if (id == null) {
             return null;
         }
 
-        for (GameSetting.Preset setting : gameSettings) {
+        for (GameSettings.Preset setting : gameSettings) {
             if (id.equals(setting.idProperty().getValue())) {
                 return setting;
             }
@@ -156,31 +156,31 @@ public final class GameSettingPresets extends ObservableSetting {
     }
 
     /// Returns the default preset, creating one when needed.
-    public GameSetting.Preset getDefaultGameSettingOrCreate() {
-        GameSetting.Preset setting = getGameSetting(getDefaultGameSetting());
+    public GameSettings.Preset getDefaultGameSettingsOrCreate() {
+        GameSettings.Preset setting = getGameSettings(getDefaultGameSettings());
         if (setting != null) {
             return setting;
         }
 
         if (!gameSettings.isEmpty()) {
             setting = gameSettings.get(0);
-            setDefaultGameSetting(setting.idProperty().getValue());
+            setDefaultGameSettings(setting.idProperty().getValue());
             return setting;
         }
 
-        setting = new GameSetting.Preset();
+        setting = new GameSettings.Preset();
         setting.nameProperty().setValue(i18n("message.default"));
         gameSettings.add(setting);
-        setDefaultGameSetting(setting.idProperty().getValue());
+        setDefaultGameSettings(setting.idProperty().getValue());
         return setting;
     }
 
-    /// JSON adapter for [GameSettingPresets].
-    public static final class Adapter extends ObservableSetting.Adapter<GameSettingPresets> {
+    /// JSON adapter for [GameSettingsPresets].
+    public static final class Adapter extends ObservableSetting.Adapter<GameSettingsPresets> {
         /// Creates an empty preset store for deserialization.
         @Override
-        protected GameSettingPresets createInstance() {
-            return new GameSettingPresets();
+        protected GameSettingsPresets createInstance() {
+            return new GameSettingsPresets();
         }
     }
 }

@@ -22,7 +22,7 @@ import javafx.scene.image.ImageView;
 import javafx.scene.layout.FlowPane;
 import javafx.stage.FileChooser;
 import org.jackhuang.hmcl.event.Event;
-import org.jackhuang.hmcl.setting.GameSetting;
+import org.jackhuang.hmcl.setting.GameSettings;
 import org.jackhuang.hmcl.setting.Profile;
 import org.jackhuang.hmcl.setting.VersionIconType;
 import org.jackhuang.hmcl.ui.Controllers;
@@ -42,13 +42,13 @@ public class VersionIconDialog extends DialogPane {
     private final Profile profile;
     private final String versionId;
     private final Runnable onFinish;
-    private final GameSetting.Instance setting;
+    private final GameSettings.Instance setting;
 
     public VersionIconDialog(Profile profile, String versionId, Runnable onFinish) {
         this.profile = profile;
         this.versionId = versionId;
         this.onFinish = onFinish;
-        this.setting = profile.getRepository().getLocalGameSettingOrCreate(versionId);
+        this.setting = profile.getRepository().getLocalGameSettingsOrCreate(versionId);
 
         setTitle(i18n("settings.icon"));
         FlowPane pane = new FlowPane();

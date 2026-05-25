@@ -28,7 +28,7 @@ import org.jackhuang.hmcl.mod.multimc.MultiMCModpackExportTask;
 import org.jackhuang.hmcl.mod.server.ServerModpackExportTask;
 import org.jackhuang.hmcl.setting.Config;
 import org.jackhuang.hmcl.setting.FontManager;
-import org.jackhuang.hmcl.setting.GameSetting;
+import org.jackhuang.hmcl.setting.GameSettings;
 import org.jackhuang.hmcl.setting.GameWindowType;
 import org.jackhuang.hmcl.setting.Profile;
 import org.jackhuang.hmcl.task.Task;
@@ -199,7 +199,7 @@ public final class ExportWizardProvider implements WizardProvider {
 
             @Override
             public void execute() {
-                GameSetting.Effective setting = profile.getRepository().getEffectiveGameSetting(version);
+                GameSettings.Effective setting = profile.getRepository().getEffectiveGameSettings(version);
                 dependency = new MultiMCModpackExportTask(profile.getRepository(), version, exportInfo.getWhitelist(),
                         new MultiMCInstanceConfiguration(
                                 "OneSix",

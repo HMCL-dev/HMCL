@@ -231,16 +231,16 @@ public final class LegacyConfigMigrator {
             }
 
             String profileName = entry.getKey();
-            UUID parentId = profile.getLegacyGameSettingParent();
+            UUID parentId = profile.getLegacyGameSettingsParent();
             if (parentId != null) {
-                GameSetting.Preset parent = config.getGameSetting(parentId);
+                GameSettings.Preset parent = config.getGameSettings(parentId);
                 if (parent != null) {
                     continue;
                 }
             }
 
-            GameSetting.Preset legacyParent = config.getGameSetting(
-                    LegacyGameSettingMigrator.getLegacyPresetId(profileName));
+            GameSettings.Preset legacyParent = config.getGameSettings(
+                    LegacyGameSettingsMigrator.getLegacyPresetId(profileName));
             if (legacyParent == null) {
                 JsonObject profileObject = configurations.get(profileName) instanceof JsonObject profileJson ? profileJson : null;
                 JsonObject legacySettingObject = profileObject != null && profileObject.get("global") instanceof JsonObject legacyJson ? legacyJson : null;
@@ -248,11 +248,11 @@ public final class LegacyConfigMigrator {
                     continue;
                 }
 
-                legacyParent = LegacyGameSettingMigrator.toPreset(profileName, profileName, legacySettingObject);
+                legacyParent = LegacyGameSettingsMigrator.toPreset(profileName, profileName, legacySettingObject);
                 config.getGameSettings().add(legacyParent);
             }
 
-            profile.setLegacyGameSettingParent(legacyParent.idProperty().getValue());
+            profile.setLegacyGameSettingsParent(legacyParent.idProperty().getValue());
         }
     }
 

@@ -29,7 +29,7 @@ import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.BorderPane;
 import org.jackhuang.hmcl.game.HMCLGameRepository;
 import org.jackhuang.hmcl.game.NativesDirectoryType;
-import org.jackhuang.hmcl.setting.GameSetting;
+import org.jackhuang.hmcl.setting.GameSettings;
 import org.jackhuang.hmcl.setting.property.SettingProperty;
 import org.jackhuang.hmcl.ui.MemoryStatusBar;
 import org.jackhuang.hmcl.ui.construct.RadioChoiceList;
@@ -61,13 +61,13 @@ final class IndependentSettingBinder {
     /// Binds a text field to a setting property with independent override state.
     static void bindTextField(
             boolean presetSetting,
-            ObjectProperty<? extends @Nullable GameSetting> currentSetting,
+            ObjectProperty<? extends @Nullable GameSettings> currentSetting,
             LineComponent line,
             JFXTextField textField,
-            Function<GameSetting, SettingProperty<String>> propertyGetter,
+            Function<GameSettings, SettingProperty<String>> propertyGetter,
             Supplier<JFXButton> inheritanceButtonFactory,
             BiConsumer<JFXButton, Boolean> inheritanceButtonUpdater,
-            Function<GameSetting.Instance, GameSetting.Preset> parentGetter) {
+            Function<GameSettings.Instance, GameSettings.Preset> parentGetter) {
         ObjectProperty<@Nullable SettingProperty<String>> activeProperty = new SimpleObjectProperty<>();
         ObjectProperty<@Nullable SettingProperty<String>> activeParentProperty = new SimpleObjectProperty<>();
         final Holder<Boolean> updating = new Holder<>(false);
@@ -81,7 +81,7 @@ final class IndependentSettingBinder {
         }
 
         InvalidationListener refresh = observable -> {
-            GameSetting setting = currentSetting.get();
+            GameSettings setting = currentSetting.get();
             updateParentPropertyListener(setting, activeParentProperty, propertyGetter, parentGetter, refreshHolder.value);
             SettingProperty<String> property = activeProperty.get();
             if (setting == null || property == null || updating.value) {
@@ -103,7 +103,7 @@ final class IndependentSettingBinder {
         refreshHolder.value = refresh;
 
         textField.textProperty().addListener((observable, oldValue, newValue) -> {
-            GameSetting setting = currentSetting.get();
+            GameSettings setting = currentSetting.get();
             SettingProperty<String> property = activeProperty.get();
             if (setting == null || property == null || updating.value) {
                 return;
@@ -123,7 +123,7 @@ final class IndependentSettingBinder {
 
         if (inheritButton != null) {
             inheritButton.addEventFilter(MouseEvent.MOUSE_CLICKED, event -> {
-                GameSetting setting = currentSetting.get();
+                GameSettings setting = currentSetting.get();
                 SettingProperty<String> property = activeProperty.get();
                 if (setting == null || property == null || updating.value) {
                     return;
@@ -151,13 +151,13 @@ final class IndependentSettingBinder {
     /// Binds an integer text field to a setting property with independent override state.
     static void bindIntegerTextField(
             boolean presetSetting,
-            ObjectProperty<? extends @Nullable GameSetting> currentSetting,
+            ObjectProperty<? extends @Nullable GameSettings> currentSetting,
             LineComponent line,
             JFXTextField textField,
-            Function<GameSetting, ? extends SettingProperty<Integer>> propertyGetter,
+            Function<GameSettings, ? extends SettingProperty<Integer>> propertyGetter,
             Supplier<JFXButton> inheritanceButtonFactory,
             BiConsumer<JFXButton, Boolean> inheritanceButtonUpdater,
-            Function<GameSetting.Instance, GameSetting.Preset> parentGetter) {
+            Function<GameSettings.Instance, GameSettings.Preset> parentGetter) {
         ObjectProperty<@Nullable SettingProperty<Integer>> activeProperty = new SimpleObjectProperty<>();
         final Holder<Boolean> updating = new Holder<>(false);
         @Nullable JFXButton inheritButton;
@@ -169,7 +169,7 @@ final class IndependentSettingBinder {
         }
 
         InvalidationListener refresh = observable -> {
-            GameSetting setting = currentSetting.get();
+            GameSettings setting = currentSetting.get();
             SettingProperty<Integer> property = activeProperty.get();
             if (setting == null || property == null || updating.value) {
                 return;
@@ -190,7 +190,7 @@ final class IndependentSettingBinder {
         };
 
         textField.textProperty().addListener((observable, oldValue, newValue) -> {
-            GameSetting setting = currentSetting.get();
+            GameSettings setting = currentSetting.get();
             SettingProperty<Integer> property = activeProperty.get();
             if (setting == null || property == null || updating.value) {
                 return;
@@ -210,7 +210,7 @@ final class IndependentSettingBinder {
 
         if (inheritButton != null) {
             inheritButton.addEventFilter(MouseEvent.MOUSE_CLICKED, event -> {
-                GameSetting setting = currentSetting.get();
+                GameSettings setting = currentSetting.get();
                 SettingProperty<Integer> property = activeProperty.get();
                 if (setting == null || property == null || updating.value) {
                     return;
@@ -241,7 +241,7 @@ final class IndependentSettingBinder {
 
     /// Binds the game memory radio options and manual memory slider.
     static void bindMemoryChoiceList(
-            ObjectProperty<? extends @Nullable GameSetting> currentSetting,
+            ObjectProperty<? extends @Nullable GameSettings> currentSetting,
             RadioChoiceList<Boolean> choiceList,
             JFXSlider maxMemorySlider,
             JFXTextField maxMemoryTextField,
@@ -250,7 +250,7 @@ final class IndependentSettingBinder {
             @Nullable JFXButton autoMemoryButton,
             @Nullable JFXButton maxMemoryButton,
             BiConsumer<JFXButton, Boolean> inheritanceButtonUpdater,
-            Function<GameSetting.Instance, GameSetting.Preset> parentGetter) {
+            Function<GameSettings.Instance, GameSettings.Preset> parentGetter) {
         ObjectProperty<@Nullable SettingProperty<Boolean>> activeAutoMemoryProperty = new SimpleObjectProperty<>();
         ObjectProperty<@Nullable SettingProperty<Integer>> activeMaxMemoryProperty = new SimpleObjectProperty<>();
         Label physicalMemoryLabel = (Label) memoryStatusLabels.getLeft();
@@ -263,7 +263,7 @@ final class IndependentSettingBinder {
                 slider.valueProperty()));
 
         InvalidationListener refresh = observable -> {
-            GameSetting setting = currentSetting.get();
+            GameSettings setting = currentSetting.get();
             SettingProperty<Boolean> autoMemoryProperty = activeAutoMemoryProperty.get();
             SettingProperty<Integer> maxMemoryProperty = activeMaxMemoryProperty.get();
             if (setting == null || autoMemoryProperty == null || maxMemoryProperty == null || updating.value) {
@@ -274,8 +274,8 @@ final class IndependentSettingBinder {
             try {
                 boolean autoMemoryOverridden = isOverridden(setting, autoMemoryProperty);
                 boolean maxMemoryOverridden = isOverridden(setting, maxMemoryProperty);
-                Boolean autoMemory = getEffectiveValue(setting, GameSetting::autoMemoryProperty, parentGetter);
-                @Nullable Integer maxMemory = getEffectiveValue(setting, GameSetting::maxMemoryProperty, parentGetter);
+                Boolean autoMemory = getEffectiveValue(setting, GameSettings::autoMemoryProperty, parentGetter);
+                @Nullable Integer maxMemory = getEffectiveValue(setting, GameSettings::maxMemoryProperty, parentGetter);
 
                 choiceList.setSelectedValue(autoMemory);
                 maxMemorySlider.setValue(maxMemoryToSliderValue(maxMemory, totalMemoryMiB));
@@ -293,7 +293,7 @@ final class IndependentSettingBinder {
         };
 
         choiceList.selectedValueProperty().addListener((observable, oldValue, newValue) -> {
-            GameSetting setting = currentSetting.get();
+            GameSettings setting = currentSetting.get();
             SettingProperty<Boolean> property = activeAutoMemoryProperty.get();
             if (setting == null || property == null || updating.value) {
                 return;
@@ -311,14 +311,14 @@ final class IndependentSettingBinder {
                         physicalMemoryLabel,
                         allocatedMemoryLabel,
                         property.getValue(),
-                        getEffectiveValue(setting, GameSetting::maxMemoryProperty, parentGetter));
+                        getEffectiveValue(setting, GameSettings::maxMemoryProperty, parentGetter));
             } finally {
                 updating.value = false;
             }
         });
 
         maxMemorySlider.valueProperty().addListener((observable, oldValue, newValue) -> {
-            GameSetting setting = currentSetting.get();
+            GameSettings setting = currentSetting.get();
             SettingProperty<Integer> property = activeMaxMemoryProperty.get();
             if (setting == null || property == null || updating.value) {
                 return;
@@ -337,7 +337,7 @@ final class IndependentSettingBinder {
                         memoryStatusBar,
                         physicalMemoryLabel,
                         allocatedMemoryLabel,
-                        getEffectiveValue(setting, GameSetting::autoMemoryProperty, parentGetter),
+                        getEffectiveValue(setting, GameSettings::autoMemoryProperty, parentGetter),
                         maxMemory);
             } finally {
                 updating.value = false;
@@ -345,7 +345,7 @@ final class IndependentSettingBinder {
         });
 
         maxMemoryTextField.textProperty().addListener((observable, oldValue, newValue) -> {
-            GameSetting setting = currentSetting.get();
+            GameSettings setting = currentSetting.get();
             SettingProperty<Integer> property = activeMaxMemoryProperty.get();
             Integer maxMemory = parseMemoryText(newValue);
             if (setting == null || property == null || maxMemory == null || updating.value) {
@@ -364,7 +364,7 @@ final class IndependentSettingBinder {
                         memoryStatusBar,
                         physicalMemoryLabel,
                         allocatedMemoryLabel,
-                        getEffectiveValue(setting, GameSetting::autoMemoryProperty, parentGetter),
+                        getEffectiveValue(setting, GameSettings::autoMemoryProperty, parentGetter),
                         maxMemory);
             } finally {
                 updating.value = false;
@@ -373,11 +373,11 @@ final class IndependentSettingBinder {
 
         if (autoMemoryButton != null) {
             autoMemoryButton.addEventFilter(MouseEvent.MOUSE_CLICKED, event -> {
-                GameSetting setting = currentSetting.get();
+                GameSettings setting = currentSetting.get();
                 toggleOverride(
                         setting,
                         activeAutoMemoryProperty.get(),
-                        () -> getEffectiveValue(setting, GameSetting::autoMemoryProperty, parentGetter),
+                        () -> getEffectiveValue(setting, GameSettings::autoMemoryProperty, parentGetter),
                         refresh);
                 event.consume();
             });
@@ -385,11 +385,11 @@ final class IndependentSettingBinder {
 
         if (maxMemoryButton != null) {
             maxMemoryButton.addEventFilter(MouseEvent.MOUSE_CLICKED, event -> {
-                GameSetting setting = currentSetting.get();
+                GameSettings setting = currentSetting.get();
                 toggleOverride(
                         setting,
                         activeMaxMemoryProperty.get(),
-                        () -> getEffectiveValue(setting, GameSetting::maxMemoryProperty, parentGetter),
+                        () -> getEffectiveValue(setting, GameSettings::maxMemoryProperty, parentGetter),
                         refresh);
                 event.consume();
             });
@@ -426,9 +426,9 @@ final class IndependentSettingBinder {
             refresh.invalidated(newValue);
         });
         config().getGameSettings().addListener(refresh);
-        config().defaultGameSettingProperty().addListener(refresh);
+        config().defaultGameSettingsProperty().addListener(refresh);
         memoryStatusBar.memoryStatusProperty().addListener(observable -> {
-            GameSetting setting = currentSetting.get();
+            GameSettings setting = currentSetting.get();
             if (setting == null) {
                 return;
             }
@@ -437,11 +437,11 @@ final class IndependentSettingBinder {
                     memoryStatusBar,
                     physicalMemoryLabel,
                     allocatedMemoryLabel,
-                    getEffectiveValue(setting, GameSetting::autoMemoryProperty, parentGetter),
-                    getEffectiveValue(setting, GameSetting::maxMemoryProperty, parentGetter));
+                    getEffectiveValue(setting, GameSettings::autoMemoryProperty, parentGetter),
+                    getEffectiveValue(setting, GameSettings::maxMemoryProperty, parentGetter));
         });
 
-        GameSetting setting = currentSetting.get();
+        GameSettings setting = currentSetting.get();
         if (setting != null) {
             SettingProperty<Boolean> autoMemoryProperty = setting.autoMemoryProperty();
             SettingProperty<Integer> maxMemoryProperty = setting.maxMemoryProperty();
@@ -456,15 +456,15 @@ final class IndependentSettingBinder {
 
     /// Binds an independent boolean setting to a toggle editor.
     static void bindToggleButton(
-            ObjectProperty<? extends @Nullable GameSetting> currentSetting,
+            ObjectProperty<? extends @Nullable GameSettings> currentSetting,
             LineInheritableToggleButton button,
-            Function<GameSetting, SettingProperty<Boolean>> propertyGetter,
-            Function<GameSetting.Instance, GameSetting.Preset> parentGetter) {
+            Function<GameSettings, SettingProperty<Boolean>> propertyGetter,
+            Function<GameSettings.Instance, GameSettings.Preset> parentGetter) {
         ObjectProperty<@Nullable SettingProperty<Boolean>> activeProperty = new SimpleObjectProperty<>();
         final Holder<Boolean> updating = new Holder<>(false);
 
         InvalidationListener refresh = observable -> {
-            GameSetting setting = currentSetting.get();
+            GameSettings setting = currentSetting.get();
             SettingProperty<Boolean> property = activeProperty.get();
             if (setting == null || property == null || updating.value) {
                 return;
@@ -483,7 +483,7 @@ final class IndependentSettingBinder {
         };
 
         button.rawValueProperty().addListener((observable, oldValue, newValue) -> {
-            GameSetting setting = currentSetting.get();
+            GameSettings setting = currentSetting.get();
             SettingProperty<Boolean> property = activeProperty.get();
             if (setting == null || property == null || updating.value) {
                 return;
@@ -500,7 +500,7 @@ final class IndependentSettingBinder {
         });
 
         button.overriddenProperty().addListener((observable, oldValue, newValue) -> {
-            GameSetting setting = currentSetting.get();
+            GameSettings setting = currentSetting.get();
             SettingProperty<Boolean> property = activeProperty.get();
             if (setting == null || property == null || updating.value) {
                 return;
@@ -523,14 +523,14 @@ final class IndependentSettingBinder {
 
     /// Binds the native directory mode to a boolean toggle editor.
     static void bindNativesDirTypeButton(
-            ObjectProperty<? extends GameSetting> currentSetting,
+            ObjectProperty<? extends GameSettings> currentSetting,
             LineInheritableToggleButton button,
-            Function<GameSetting.Instance, GameSetting.Preset> parentGetter) {
+            Function<GameSettings.Instance, GameSettings.Preset> parentGetter) {
         ObjectProperty<@Nullable SettingProperty<NativesDirectoryType>> activeProperty = new SimpleObjectProperty<>();
         final Holder<Boolean> updating = new Holder<>(false);
 
         InvalidationListener refresh = observable -> {
-            GameSetting setting = currentSetting.get();
+            GameSettings setting = currentSetting.get();
             SettingProperty<NativesDirectoryType> property = activeProperty.get();
             if (setting == null || property == null || updating.value) {
                 return;
@@ -540,7 +540,7 @@ final class IndependentSettingBinder {
             try {
                 boolean overridden = isOverridden(setting, property);
                 NativesDirectoryType rawValue = getDirectValue(property);
-                NativesDirectoryType effectiveValue = getEffectiveValue(setting, GameSetting::nativesDirTypeProperty, parentGetter);
+                NativesDirectoryType effectiveValue = getEffectiveValue(setting, GameSettings::nativesDirTypeProperty, parentGetter);
                 button.setRawValue((overridden ? rawValue : effectiveValue) == NativesDirectoryType.CUSTOM);
                 button.setOverridden(overridden);
                 button.setEffectiveValue(effectiveValue == NativesDirectoryType.CUSTOM);
@@ -550,7 +550,7 @@ final class IndependentSettingBinder {
         };
 
         button.rawValueProperty().addListener((observable, oldValue, newValue) -> {
-            GameSetting setting = currentSetting.get();
+            GameSettings setting = currentSetting.get();
             SettingProperty<NativesDirectoryType> property = activeProperty.get();
             if (setting == null || property == null || updating.value) {
                 return;
@@ -560,14 +560,14 @@ final class IndependentSettingBinder {
             try {
                 setOverridden(setting, property, true);
                 property.setValue(newValue ? NativesDirectoryType.CUSTOM : NativesDirectoryType.VERSION_FOLDER);
-                button.setEffectiveValue(getEffectiveValue(setting, GameSetting::nativesDirTypeProperty, parentGetter) == NativesDirectoryType.CUSTOM);
+                button.setEffectiveValue(getEffectiveValue(setting, GameSettings::nativesDirTypeProperty, parentGetter) == NativesDirectoryType.CUSTOM);
             } finally {
                 updating.value = false;
             }
         });
 
         button.overriddenProperty().addListener((observable, oldValue, newValue) -> {
-            GameSetting setting = currentSetting.get();
+            GameSettings setting = currentSetting.get();
             SettingProperty<NativesDirectoryType> property = activeProperty.get();
             if (setting == null || property == null || updating.value) {
                 return;
@@ -579,13 +579,13 @@ final class IndependentSettingBinder {
                 if (newValue) {
                     property.setValue(button.getRawValue() ? NativesDirectoryType.CUSTOM : NativesDirectoryType.VERSION_FOLDER);
                 }
-                button.setEffectiveValue(getEffectiveValue(setting, GameSetting::nativesDirTypeProperty, parentGetter) == NativesDirectoryType.CUSTOM);
+                button.setEffectiveValue(getEffectiveValue(setting, GameSettings::nativesDirTypeProperty, parentGetter) == NativesDirectoryType.CUSTOM);
             } finally {
                 updating.value = false;
             }
         });
 
-        bindActiveProperty(currentSetting, activeProperty, GameSetting::nativesDirTypeProperty, refresh);
+        bindActiveProperty(currentSetting, activeProperty, GameSettings::nativesDirTypeProperty, refresh);
     }
 
     private static int sliderValueToMaxMemory(double value, int totalMemoryMiB) {
@@ -670,7 +670,7 @@ final class IndependentSettingBinder {
     }
 
     private static <T> void toggleOverride(
-            @Nullable GameSetting setting,
+            @Nullable GameSettings setting,
             @Nullable SettingProperty<T> property,
             Supplier<T> effectiveValueSupplier,
             InvalidationListener refresh) {
@@ -688,9 +688,9 @@ final class IndependentSettingBinder {
     }
 
     private static <T> void bindActiveProperty(
-            ObjectProperty<? extends GameSetting> currentSetting,
+            ObjectProperty<? extends GameSettings> currentSetting,
             ObjectProperty<@Nullable SettingProperty<T>> activeProperty,
-            Function<GameSetting, SettingProperty<T>> propertyGetter,
+            Function<GameSettings, SettingProperty<T>> propertyGetter,
             InvalidationListener refresh) {
         currentSetting.addListener((observable, oldValue, newValue) -> {
             if (oldValue != null) {
@@ -713,9 +713,9 @@ final class IndependentSettingBinder {
             refresh.invalidated(newProperty);
         });
         config().getGameSettings().addListener(refresh);
-        config().defaultGameSettingProperty().addListener(refresh);
+        config().defaultGameSettingsProperty().addListener(refresh);
 
-        GameSetting setting = currentSetting.get();
+        GameSettings setting = currentSetting.get();
         if (setting != null) {
             SettingProperty<T> property = propertyGetter.apply(setting);
             activeProperty.set(property);
@@ -746,13 +746,13 @@ final class IndependentSettingBinder {
         return value != null ? value : property.defaultValue();
     }
 
-    private static boolean isOverridden(GameSetting setting, SettingProperty<?> property) {
-        return !(setting instanceof GameSetting.Instance instance)
+    private static boolean isOverridden(GameSettings setting, SettingProperty<?> property) {
+        return !(setting instanceof GameSettings.Instance instance)
                 || instance.getOverrideProperties().contains(property.getName());
     }
 
-    private static void setOverridden(GameSetting setting, SettingProperty<?> property, boolean overridden) {
-        if (!(setting instanceof GameSetting.Instance instance)) {
+    private static void setOverridden(GameSettings setting, SettingProperty<?> property, boolean overridden) {
+        if (!(setting instanceof GameSettings.Instance instance)) {
             return;
         }
 
@@ -764,15 +764,15 @@ final class IndependentSettingBinder {
     }
 
     private static <T extends @UnknownNullability Object> T getEffectiveValue(
-            GameSetting setting,
-            Function<GameSetting, ? extends SettingProperty<T>> propertyGetter,
-            Function<GameSetting.Instance, GameSetting.Preset> parentGetter) {
+            GameSettings setting,
+            Function<GameSettings, ? extends SettingProperty<T>> propertyGetter,
+            Function<GameSettings.Instance, GameSettings.Preset> parentGetter) {
         SettingProperty<T> property = propertyGetter.apply(setting);
         if (isOverridden(setting, property)) {
             return getDirectValue(property);
         }
 
-        if (setting instanceof GameSetting.Instance instance) {
+        if (setting instanceof GameSettings.Instance instance) {
             return getDirectValue(propertyGetter.apply(parentGetter.apply(instance)));
         }
 
@@ -781,13 +781,13 @@ final class IndependentSettingBinder {
 
     /// Keeps a listener attached to the current instance's parent preset property.
     private static <T> void updateParentPropertyListener(
-            @Nullable GameSetting setting,
+            @Nullable GameSettings setting,
             ObjectProperty<@Nullable SettingProperty<T>> activeParentProperty,
-            Function<GameSetting, ? extends SettingProperty<T>> propertyGetter,
-            Function<GameSetting.Instance, GameSetting.Preset> parentGetter,
+            Function<GameSettings, ? extends SettingProperty<T>> propertyGetter,
+            Function<GameSettings.Instance, GameSettings.Preset> parentGetter,
             InvalidationListener listener) {
         SettingProperty<T> oldParentProperty = activeParentProperty.get();
-        SettingProperty<T> newParentProperty = setting instanceof GameSetting.Instance instance
+        SettingProperty<T> newParentProperty = setting instanceof GameSettings.Instance instance
                 ? propertyGetter.apply(parentGetter.apply(instance))
                 : null;
         if (oldParentProperty == newParentProperty) {

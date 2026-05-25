@@ -816,54 +816,54 @@ public final class Config extends ObservableSetting {
     }
 
     /// The detached game setting preset store.
-    private transient final GameSettingPresets gameSettingPresets = new GameSettingPresets();
+    private transient final GameSettingsPresets gameSettingPresets = new GameSettingsPresets();
 
     /// Whether this config was loaded from JSON with embedded game setting presets.
-    private transient boolean embeddedGameSettingPresetsLoaded;
+    private transient boolean embeddedGameSettingsPresetsLoaded;
 
     /// Returns the detached game setting preset store.
-    GameSettingPresets gameSettingPresets() {
+    GameSettingsPresets gameSettingPresets() {
         return gameSettingPresets;
     }
 
     /// Returns whether embedded game setting presets were found while deserializing this config.
-    boolean hasEmbeddedGameSettingPresetsLoaded() {
-        return embeddedGameSettingPresetsLoaded;
+    boolean hasEmbeddedGameSettingsPresetsLoaded() {
+        return embeddedGameSettingsPresetsLoaded;
     }
 
     /// Replaces the detached game setting preset store content.
-    void setGameSettingPresets(GameSettingPresets gameSettingPresets) {
+    void setGameSettingsPresets(GameSettingsPresets gameSettingPresets) {
         this.gameSettingPresets.copyFrom(gameSettingPresets);
     }
 
     /// Returns the reusable game setting presets.
-    public ObservableList<GameSetting.Preset> getGameSettings() {
+    public ObservableList<GameSettings.Preset> getGameSettings() {
         return gameSettingPresets.getGameSettings();
     }
 
     /// Returns the default game setting preset ID property.
-    public ObjectProperty<@Nullable UUID> defaultGameSettingProperty() {
-        return gameSettingPresets.defaultGameSettingProperty();
+    public ObjectProperty<@Nullable UUID> defaultGameSettingsProperty() {
+        return gameSettingPresets.defaultGameSettingsProperty();
     }
 
     /// Returns the default game setting preset ID.
-    public @Nullable UUID getDefaultGameSetting() {
-        return gameSettingPresets.getDefaultGameSetting();
+    public @Nullable UUID getDefaultGameSettings() {
+        return gameSettingPresets.getDefaultGameSettings();
     }
 
     /// Sets the default game setting preset ID.
-    public void setDefaultGameSetting(@Nullable UUID defaultGameSetting) {
-        gameSettingPresets.setDefaultGameSetting(defaultGameSetting);
+    public void setDefaultGameSettings(@Nullable UUID defaultGameSettings) {
+        gameSettingPresets.setDefaultGameSettings(defaultGameSettings);
     }
 
     /// Returns the game setting preset with the given ID.
-    public GameSetting.@Nullable Preset getGameSetting(@Nullable UUID id) {
-        return gameSettingPresets.getGameSetting(id);
+    public GameSettings.@Nullable Preset getGameSettings(@Nullable UUID id) {
+        return gameSettingPresets.getGameSettings(id);
     }
 
     /// Returns the default game setting preset, creating one when needed.
-    public GameSetting.Preset getDefaultGameSettingOrCreate() {
-        return gameSettingPresets.getDefaultGameSettingOrCreate();
+    public GameSettings.Preset getDefaultGameSettingsOrCreate() {
+        return gameSettingPresets.getDefaultGameSettingsOrCreate();
     }
 
     /// JSON adapter for [Config].
@@ -895,11 +895,11 @@ public final class Config extends ObservableSetting {
             }
 
             if (json != null && json.isJsonObject()) {
-                @Nullable GameSettingPresets presets =
-                        GameSettingPresets.fromEmbeddedConfig(json.getAsJsonObject(), context);
+                @Nullable GameSettingsPresets presets =
+                        GameSettingsPresets.fromEmbeddedConfig(json.getAsJsonObject(), context);
                 if (presets != null) {
-                    config.setGameSettingPresets(presets);
-                    config.embeddedGameSettingPresetsLoaded = true;
+                    config.setGameSettingsPresets(presets);
+                    config.embeddedGameSettingsPresetsLoaded = true;
                 }
                 config.unknownFields.remove("gameSettings");
                 config.unknownFields.remove("defaultGameSetting");

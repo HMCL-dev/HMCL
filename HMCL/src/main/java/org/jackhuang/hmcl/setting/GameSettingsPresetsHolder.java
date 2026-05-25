@@ -41,12 +41,12 @@ import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 ///
 /// @author Glavo
 @NotNullByDefault
-public final class GameSettingPresetsHolder {
+public final class GameSettingsPresetsHolder {
     /// The current per-workspace game setting preset path.
     private static final Path LOCATION = Metadata.HMCL_CURRENT_DIRECTORY.resolve("game-setting-presets.json");
 
     /// Prevents instantiation.
-    private GameSettingPresetsHolder() {
+    private GameSettingsPresetsHolder() {
     }
 
     /// Returns the current per-workspace game setting preset path.
@@ -72,7 +72,7 @@ public final class GameSettingPresetsHolder {
 
         if (!ConfigHolder.isUnsupportedVersion()
                 && !ConfigHolder.isNewlyCreated()
-                && config.hasEmbeddedGameSettingPresetsLoaded()) {
+                && config.hasEmbeddedGameSettingsPresetsLoaded()) {
             LOG.info("Removing embedded game setting presets from config file " + ConfigHolder.configLocation());
             FileUtils.saveSafely(ConfigHolder.configLocation(), config.toJson());
         }
@@ -91,11 +91,11 @@ public final class GameSettingPresetsHolder {
                 if (jsonObject == null) {
                     LOG.info("Game setting presets are empty");
                 } else {
-                    GameSettingPresets deserialized = GameSettingPresets.fromJson(jsonObject);
+                    GameSettingsPresets deserialized = GameSettingsPresets.fromJson(jsonObject);
                     if (deserialized == null) {
                         LOG.info("Game setting presets are empty");
                     } else {
-                        config.setGameSettingPresets(deserialized);
+                        config.setGameSettingsPresets(deserialized);
                         return false;
                     }
                 }
@@ -103,7 +103,7 @@ public final class GameSettingPresetsHolder {
                 LOG.warning("Malformed game setting presets.", e);
             }
 
-            config.setGameSettingPresets(new GameSettingPresets());
+            config.setGameSettingsPresets(new GameSettingsPresets());
             return false;
         }
 

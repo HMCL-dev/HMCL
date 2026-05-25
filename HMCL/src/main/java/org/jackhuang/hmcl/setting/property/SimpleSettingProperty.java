@@ -19,7 +19,7 @@ package org.jackhuang.hmcl.setting.property;
 
 import com.google.gson.JsonElement;
 import javafx.beans.property.SimpleObjectProperty;
-import org.jackhuang.hmcl.setting.GameSetting;
+import org.jackhuang.hmcl.setting.GameSettings;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.UnknownNullability;
@@ -32,7 +32,7 @@ public class SimpleSettingProperty<T extends @UnknownNullability Object> extends
 
     private final T defaultValue;
 
-    public SimpleSettingProperty(GameSetting bean,
+    public SimpleSettingProperty(GameSettings bean,
                                  String name,
                                  T defaultValue) {
         super(bean, name, defaultValue);
@@ -40,8 +40,8 @@ public class SimpleSettingProperty<T extends @UnknownNullability Object> extends
     }
 
     @Override
-    public GameSetting getBean() {
-        return (GameSetting) super.getBean();
+    public GameSettings getBean() {
+        return (GameSettings) super.getBean();
     }
 
     @Override

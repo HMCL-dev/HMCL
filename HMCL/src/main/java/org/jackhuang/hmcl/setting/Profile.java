@@ -86,18 +86,18 @@ public final class Profile implements Observable {
         this.gameDir.set(gameDir);
     }
 
-    private final ObjectProperty<UUID> legacyGameSettingParent = new SimpleObjectProperty<>(this, "legacyGameSettingParent");
+    private final ObjectProperty<UUID> legacyGameSettingsParent = new SimpleObjectProperty<>(this, "legacyGameSettingParent");
 
-    public ObjectProperty<UUID> legacyGameSettingParentProperty() {
-        return legacyGameSettingParent;
+    public ObjectProperty<UUID> legacyGameSettingsParentProperty() {
+        return legacyGameSettingsParent;
     }
 
-    public UUID getLegacyGameSettingParent() {
-        return legacyGameSettingParent.get();
+    public UUID getLegacyGameSettingsParent() {
+        return legacyGameSettingsParent.get();
     }
 
-    public void setLegacyGameSettingParent(UUID legacyGameSettingParent) {
-        this.legacyGameSettingParent.set(legacyGameSettingParent);
+    public void setLegacyGameSettingsParent(UUID legacyGameSettingsParent) {
+        this.legacyGameSettingsParent.set(legacyGameSettingsParent);
     }
 
     private final SimpleStringProperty name;
@@ -140,13 +140,13 @@ public final class Profile implements Observable {
         this(name, initialGameDir, selectedVersion, useRelativePath, null);
     }
 
-    public Profile(String name, Path initialGameDir, @Nullable String selectedVersion, boolean useRelativePath, @Nullable UUID legacyGameSettingParent) {
+    public Profile(String name, Path initialGameDir, @Nullable String selectedVersion, boolean useRelativePath, @Nullable UUID legacyGameSettingsParent) {
         this.name = new SimpleStringProperty(this, "name", name);
         gameDir = new SimpleObjectProperty<>(this, "gameDir", initialGameDir);
         repository = new HMCLGameRepository(this, initialGameDir);
         this.selectedVersion.set(selectedVersion);
         this.useRelativePath.set(useRelativePath);
-        this.legacyGameSettingParent.set(legacyGameSettingParent);
+        this.legacyGameSettingsParent.set(legacyGameSettingsParent);
 
         gameDir.addListener((a, b, newValue) -> repository.changeDirectory(newValue));
         this.selectedVersion.addListener(o -> checkSelectedVersion());
@@ -194,7 +194,7 @@ public final class Profile implements Observable {
         name.addListener(listener);
         gameDir.addListener(listener);
         useRelativePath.addListener(listener);
-        legacyGameSettingParent.addListener(listener);
+        legacyGameSettingsParent.addListener(listener);
         selectedVersion.addListener(listener);
     }
 
@@ -239,8 +239,8 @@ public final class Profile implements Observable {
                 return JsonNull.INSTANCE;
 
             JsonObject jsonObject = new JsonObject();
-            if (src.getLegacyGameSettingParent() != null) {
-                jsonObject.add("legacyGameSettingParent", context.serialize(src.getLegacyGameSettingParent()));
+            if (src.getLegacyGameSettingsParent() != null) {
+                jsonObject.add("legacyGameSettingParent", context.serialize(src.getLegacyGameSettingsParent()));
             }
             jsonObject.addProperty("gameDir", src.getGameDir().toString());
             jsonObject.addProperty("useRelativePath", src.isUseRelativePath());

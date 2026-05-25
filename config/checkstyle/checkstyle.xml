@@ -136,7 +136,7 @@
 
     <module name="SuppressionSingleFilter">
         <property name="checks" value="FileLength"/>
-        <property name="files" value=".*[\\/]org[\\/]jackhuang[\\/]hmcl[\\/]ui[\\/]game[\\/]GameSettingPage.java"/>
+        <property name="files" value=".*[\\/]org[\\/]jackhuang[\\/]hmcl[\\/]ui[\\/]game[\\/]GameSettingsPage.java"/>
     </module>
 
     <module name="RegexpHeader">

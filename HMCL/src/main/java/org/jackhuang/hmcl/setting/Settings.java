@@ -41,7 +41,7 @@ public final class Settings {
 
     /// Initializes process-wide setting modules.
     static void init() throws IOException {
-        GameSettingPresetsHolder.init();
+        GameSettingsPresetsHolder.init();
         instance = new Settings();
     }
 

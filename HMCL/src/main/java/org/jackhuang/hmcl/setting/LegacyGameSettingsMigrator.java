@@ -34,9 +34,9 @@ import java.util.List;
 import java.util.Locale;
 import java.util.UUID;
 
-/// Converts legacy game setting JSON into `GameSetting` models.
+/// Converts legacy game setting JSON into `GameSettings` models.
 @NotNullByDefault
-public final class LegacyGameSettingMigrator {
+public final class LegacyGameSettingsMigrator {
     /// Namespace used to generate stable preset IDs for legacy profiles.
     private static final String LEGACY_PRESET_ID_NAMESPACE = "hmcl:legacy-global-game-setting:";
 
@@ -72,7 +72,7 @@ public final class LegacyGameSettingMigrator {
     };
 
     /// Prevents instantiation.
-    private LegacyGameSettingMigrator() {
+    private LegacyGameSettingsMigrator() {
     }
 
     /// Returns the stable preset ID for a migrated legacy profile.
@@ -82,8 +82,8 @@ public final class LegacyGameSettingMigrator {
     }
 
     /// Converts a legacy profile-level setting JSON object into a named preset.
-    public static GameSetting.Preset toPreset(String name, String profileName, @Nullable JsonObject source) {
-        GameSetting.Preset target = new GameSetting.Preset(getLegacyPresetId(profileName));
+    public static GameSettings.Preset toPreset(String name, String profileName, @Nullable JsonObject source) {
+        GameSettings.Preset target = new GameSettings.Preset(getLegacyPresetId(profileName));
         target.nameProperty().setValue(name);
         if (getLegacyGameDirType(source, GameDirectoryType.ROOT_FOLDER) == GameDirectoryType.VERSION_FOLDER) {
             target.defaultIsolationTypeProperty().setValue(DefaultIsolationType.ALWAYS);
@@ -95,50 +95,50 @@ public final class LegacyGameSettingMigrator {
     }
 
     /// Converts a legacy local setting JSON object into an instance game setting.
-    public static GameSetting.Instance toInstance(@Nullable UUID parent, @Nullable JsonObject source, boolean copyValues) {
-        GameSetting.Instance target = new GameSetting.Instance();
+    public static GameSettings.Instance toInstance(@Nullable UUID parent, @Nullable JsonObject source, boolean copyValues) {
+        GameSettings.Instance target = new GameSettings.Instance();
         target.parentProperty().setValue(parent);
         target.iconProperty().setValue(parseLegacyVersionIconType(source));
         if (source != null && copyValues) {
             copyCommonProperties(source, target);
             if (getLegacyGameDirType(source, GameDirectoryType.ROOT_FOLDER) != GameDirectoryType.ROOT_FOLDER) {
-                target.getOverrideProperties().add(GameSetting.PROPERTY_RUNNING_DIR);
+                target.getOverrideProperties().add(GameSettings.PROPERTY_RUNNING_DIR);
             }
             target.getOverrideProperties().addAll(List.of(
-                    GameSetting.PROPERTY_JAVA_TYPE,
-                    GameSetting.PROPERTY_JVM_OPTIONS,
-                    GameSetting.PROPERTY_NO_JVM_OPTIONS,
-                    GameSetting.PROPERTY_NO_OPTIMIZING_JVM_OPTIONS,
-                    GameSetting.PROPERTY_NOT_CHECK_JVM,
-                    GameSetting.PROPERTY_NOT_CHECK_GAME,
-                    GameSetting.PROPERTY_AUTO_MEMORY,
-                    GameSetting.PROPERTY_MIN_MEMORY,
-                    GameSetting.PROPERTY_MAX_MEMORY,
-                    GameSetting.PROPERTY_PERM_SIZE,
-                    GameSetting.PROPERTY_WINDOW_TYPE,
-                    GameSetting.PROPERTY_WIDTH,
-                    GameSetting.PROPERTY_HEIGHT,
-                    GameSetting.PROPERTY_PROCESS_PRIORITY,
-                    GameSetting.PROPERTY_LAUNCHER_VISIBILITY,
-                    GameSetting.PROPERTY_GAME_ARGS,
-                    GameSetting.PROPERTY_GRAPHICS_BACKEND,
-                    GameSetting.PROPERTY_OPENGL_RENDERER,
-                    GameSetting.PROPERTY_VULKAN_RENDERER,
-                    GameSetting.PROPERTY_ENVIRONMENT_VARIABLES,
-                    GameSetting.PROPERTY_COMMAND_WRAPPER,
-                    GameSetting.PROPERTY_PRE_LAUNCH_COMMAND,
-                    GameSetting.PROPERTY_POST_EXIT_COMMAND,
-                    GameSetting.PROPERTY_QUICK_PLAY,
-                    GameSetting.PROPERTY_QUICK_PLAY_MULTIPLAYER,
-                    GameSetting.PROPERTY_QUICK_PLAY_SINGLEPLAYER,
-                    GameSetting.PROPERTY_QUICK_PLAY_REALMS,
-                    GameSetting.PROPERTY_SHOW_LOGS,
-                    GameSetting.PROPERTY_ENABLE_DEBUG_LOG_OUTPUT,
-                    GameSetting.PROPERTY_NOT_PATCH_NATIVES,
-                    GameSetting.PROPERTY_NATIVES_DIR_TYPE,
-                    GameSetting.PROPERTY_NATIVES_DIR,
-                    GameSetting.PROPERTY_USE_NATIVE_GLFW,
-                    GameSetting.PROPERTY_USE_NATIVE_OPENAL
+                    GameSettings.PROPERTY_JAVA_TYPE,
+                    GameSettings.PROPERTY_JVM_OPTIONS,
+                    GameSettings.PROPERTY_NO_JVM_OPTIONS,
+                    GameSettings.PROPERTY_NO_OPTIMIZING_JVM_OPTIONS,
+                    GameSettings.PROPERTY_NOT_CHECK_JVM,
+                    GameSettings.PROPERTY_NOT_CHECK_GAME,
+                    GameSettings.PROPERTY_AUTO_MEMORY,
+                    GameSettings.PROPERTY_MIN_MEMORY,
+                    GameSettings.PROPERTY_MAX_MEMORY,
+                    GameSettings.PROPERTY_PERM_SIZE,
+                    GameSettings.PROPERTY_WINDOW_TYPE,
+                    GameSettings.PROPERTY_WIDTH,
+                    GameSettings.PROPERTY_HEIGHT,
+                    GameSettings.PROPERTY_PROCESS_PRIORITY,
+                    GameSettings.PROPERTY_LAUNCHER_VISIBILITY,
+                    GameSettings.PROPERTY_GAME_ARGS,
+                    GameSettings.PROPERTY_GRAPHICS_BACKEND,
+                    GameSettings.PROPERTY_OPENGL_RENDERER,
+                    GameSettings.PROPERTY_VULKAN_RENDERER,
+                    GameSettings.PROPERTY_ENVIRONMENT_VARIABLES,
+                    GameSettings.PROPERTY_COMMAND_WRAPPER,
+                    GameSettings.PROPERTY_PRE_LAUNCH_COMMAND,
+                    GameSettings.PROPERTY_POST_EXIT_COMMAND,
+                    GameSettings.PROPERTY_QUICK_PLAY,
+                    GameSettings.PROPERTY_QUICK_PLAY_MULTIPLAYER,
+                    GameSettings.PROPERTY_QUICK_PLAY_SINGLEPLAYER,
+                    GameSettings.PROPERTY_QUICK_PLAY_REALMS,
+                    GameSettings.PROPERTY_SHOW_LOGS,
+                    GameSettings.PROPERTY_ENABLE_DEBUG_LOG_OUTPUT,
+                    GameSettings.PROPERTY_NOT_PATCH_NATIVES,
+                    GameSettings.PROPERTY_NATIVES_DIR_TYPE,
+                    GameSettings.PROPERTY_NATIVES_DIR,
+                    GameSettings.PROPERTY_USE_NATIVE_GLFW,
+                    GameSettings.PROPERTY_USE_NATIVE_OPENAL
             ));
         }
         return target;
@@ -160,7 +160,7 @@ public final class LegacyGameSettingMigrator {
     }
 
     /// Copies shared legacy properties into the target setting.
-    private static void copyCommonProperties(JsonObject source, GameSetting target) {
+    private static void copyCommonProperties(JsonObject source, GameSettings target) {
         JavaVersionType javaVersionType = parseLegacyJavaVersionType(source);
         target.javaTypeProperty().setValue(javaVersionType);
         target.javaVersionProperty().setValue(empty(parseLegacyJavaVersion(source)));
@@ -173,10 +173,10 @@ public final class LegacyGameSettingMigrator {
         target.notCheckJVMProperty().setValue(readBoolean(source, "notCheckJVM", false));
         target.notCheckGameProperty().setValue(readBoolean(source, "notCheckGame", false));
 
-        int maxMemory = readInt(source, "maxMemory", GameSetting.SUGGESTED_MEMORY);
+        int maxMemory = readInt(source, "maxMemory", GameSettings.SUGGESTED_MEMORY);
         target.autoMemoryProperty().setValue(readBoolean(source, "autoMemory", true));
         target.minMemoryProperty().setValue(readNullableInt(source, "minMemory"));
-        target.maxMemoryProperty().setValue(maxMemory > 0 ? maxMemory : GameSetting.SUGGESTED_MEMORY);
+        target.maxMemoryProperty().setValue(maxMemory > 0 ? maxMemory : GameSettings.SUGGESTED_MEMORY);
         target.permSizeProperty().setValue(readString(source, "permSize", ""));
 
         target.windowTypeProperty().setValue(readBoolean(source, "fullscreen", false) ? GameWindowType.FULLSCREEN : GameWindowType.WINDOWED);
@@ -191,7 +191,7 @@ public final class LegacyGameSettingMigrator {
         Renderer renderer = parseLegacyRenderer(source);
         GraphicsAPI graphicsBackend = parseGraphicsBackend(source, renderer);
         target.graphicsBackendProperty().setValue(graphicsBackend);
-        GameSetting.setRendererForApi(target, renderer, graphicsBackend);
+        GameSettings.setRendererForApi(target, renderer, graphicsBackend);
         target.environmentVariablesProperty().setValue(readString(source, "environmentVariables", ""));
         target.commandWrapperProperty().setValue(readString(source, "wrapper", ""));
         target.preLaunchCommandProperty().setValue(readString(source, "precalledCommand", ""));

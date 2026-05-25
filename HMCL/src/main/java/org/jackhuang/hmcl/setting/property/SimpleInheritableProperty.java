@@ -17,7 +17,7 @@
  */
 package org.jackhuang.hmcl.setting.property;
 
-import org.jackhuang.hmcl.setting.GameSetting;
+import org.jackhuang.hmcl.setting.GameSettings;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.UnknownNullability;
 
@@ -30,7 +30,7 @@ public final class SimpleInheritableProperty<T extends @UnknownNullability Objec
         implements InheritableProperty<T> {
 
     /// Creates a property with the given owner, serialized name, and direct default value.
-    public SimpleInheritableProperty(GameSetting bean, String name, T defaultValue) {
+    public SimpleInheritableProperty(GameSettings bean, String name, T defaultValue) {
         super(bean, name, defaultValue);
     }
 }
