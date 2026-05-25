@@ -90,7 +90,7 @@ public final class JsonUtils {
     /// @param <T>         the element type
     /// @param elementType the runtime [Class] of the list element
     /// @return a [TypeToken] for `List<T>`
-    public static <T extends @UnknownNullability Object> TypeToken<List<@Nullable T>> listTypeOf(Class<T> elementType) {
+    public static <T extends @UnknownNullability Object> TypeToken<List<T>> listTypeOf(Class<T> elementType) {
         return (TypeToken<List<T>>) TypeToken.getParameterized(List.class, elementType);
     }
 
