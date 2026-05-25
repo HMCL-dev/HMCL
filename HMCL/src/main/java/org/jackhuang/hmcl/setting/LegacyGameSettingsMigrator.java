@@ -34,11 +34,11 @@ import java.util.List;
 import java.util.Locale;
 import java.util.UUID;
 
-/// Converts legacy game setting JSON into `GameSettings` models.
+/// Converts legacy game settings JSON into `GameSettings` models.
 @NotNullByDefault
 public final class LegacyGameSettingsMigrator {
     /// Namespace used to generate stable preset IDs for legacy profiles.
-    private static final String LEGACY_PRESET_ID_NAMESPACE = "hmcl:legacy-global-game-setting:";
+    private static final String LEGACY_PRESET_ID_NAMESPACE = "hmcl:legacy-global-game-settings:";
 
     /// Legacy game directory modes stored by old configuration files.
     private enum GameDirectoryType {

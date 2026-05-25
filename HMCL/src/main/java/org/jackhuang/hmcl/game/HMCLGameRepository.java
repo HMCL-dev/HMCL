@@ -224,7 +224,7 @@ public final class HMCLGameRepository extends DefaultGameRepository {
     }
 
     private Path getLocalGameSettingsFile(String id) {
-        return getVersionRoot(id).resolve("hmcl-game-setting.cfg");
+        return getVersionRoot(id).resolve("hmcl-game-settings.cfg");
     }
 
     private void loadLocalGameSettings(String id) {

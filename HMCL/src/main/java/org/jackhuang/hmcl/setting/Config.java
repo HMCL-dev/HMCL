@@ -818,17 +818,9 @@ public final class Config extends ObservableSetting {
     /// The detached game setting preset store.
     private transient final GameSettingsPresets gameSettingPresets = new GameSettingsPresets();
 
-    /// Whether this config was loaded from JSON with embedded game setting presets.
-    private transient boolean embeddedGameSettingsPresetsLoaded;
-
     /// Returns the detached game setting preset store.
     GameSettingsPresets gameSettingPresets() {
         return gameSettingPresets;
-    }
-
-    /// Returns whether embedded game setting presets were found while deserializing this config.
-    boolean hasEmbeddedGameSettingsPresetsLoaded() {
-        return embeddedGameSettingsPresetsLoaded;
     }
 
     /// Replaces the detached game setting preset store content.
@@ -879,11 +871,11 @@ public final class Config extends ObservableSetting {
         public JsonElement serialize(Config src, Type typeOfSrc, JsonSerializationContext context) {
             JsonObject result = super.serialize(src, typeOfSrc, context).getAsJsonObject();
             result.remove("gameSettings");
-            result.remove("defaultGameSetting");
+            result.remove("defaultGameSettings");
             return result;
         }
 
-        /// Deserializes the main config and imports legacy embedded game setting presets.
+        /// Deserializes the main config without detached game setting presets.
         @Override
         public @Nullable Config deserialize(
                 JsonElement json,
@@ -894,16 +886,8 @@ public final class Config extends ObservableSetting {
                 return null;
             }
 
-            if (json != null && json.isJsonObject()) {
-                @Nullable GameSettingsPresets presets =
-                        GameSettingsPresets.fromEmbeddedConfig(json.getAsJsonObject(), context);
-                if (presets != null) {
-                    config.setGameSettingsPresets(presets);
-                    config.embeddedGameSettingsPresetsLoaded = true;
-                }
-                config.unknownFields.remove("gameSettings");
-                config.unknownFields.remove("defaultGameSetting");
-            }
+            config.unknownFields.remove("gameSettings");
+            config.unknownFields.remove("defaultGameSettings");
             return config;
         }
     }

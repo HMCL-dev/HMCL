@@ -86,7 +86,7 @@ public final class Profile implements Observable {
         this.gameDir.set(gameDir);
     }
 
-    private final ObjectProperty<UUID> legacyGameSettingsParent = new SimpleObjectProperty<>(this, "legacyGameSettingParent");
+    private final ObjectProperty<UUID> legacyGameSettingsParent = new SimpleObjectProperty<>(this, "legacyGameSettingsParent");
 
     public ObjectProperty<UUID> legacyGameSettingsParentProperty() {
         return legacyGameSettingsParent;
@@ -240,7 +240,7 @@ public final class Profile implements Observable {
 
             JsonObject jsonObject = new JsonObject();
             if (src.getLegacyGameSettingsParent() != null) {
-                jsonObject.add("legacyGameSettingParent", context.serialize(src.getLegacyGameSettingsParent()));
+                jsonObject.add("legacyGameSettingsParent", context.serialize(src.getLegacyGameSettingsParent()));
             }
             jsonObject.addProperty("gameDir", src.getGameDir().toString());
             jsonObject.addProperty("useRelativePath", src.isUseRelativePath());
@@ -258,7 +258,7 @@ public final class Profile implements Observable {
                     Path.of(gameDir),
                     Optional.ofNullable(obj.get("selectedMinecraftVersion")).map(JsonElement::getAsString).orElse(""),
                     Optional.ofNullable(obj.get("useRelativePath")).map(JsonElement::getAsBoolean).orElse(false),
-                    context.deserialize(obj.get("legacyGameSettingParent"), UUID.class));
+                    context.deserialize(obj.get("legacyGameSettingsParent"), UUID.class));
         }
 
     }

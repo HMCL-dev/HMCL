@@ -35,50 +35,30 @@ import java.util.UUID;
 
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
-/// Stores reusable game setting presets independently from the main config file.
+/// Stores reusable game settings presets independently from the main config file.
 ///
-/// The JSON representation is saved as `game-setting-presets.json` under the current HMCL
-/// directory. The main `settings.json` file may still contain the same fields when migrating from
-/// older development builds, so [#fromEmbeddedConfig(JsonObject, JsonDeserializationContext)] reads
-/// only the legacy embedded fields and ignores unrelated config data.
+/// The JSON representation is saved as `game-settings-presets.json` under the current HMCL
+/// directory.
 ///
 /// @author Glavo
 @JsonAdapter(GameSettingsPresets.Adapter.class)
 @NotNullByDefault
 public final class GameSettingsPresets extends ObservableSetting {
-    /// The schema version supported by this preset store.
+    /// The schema version supported by this game settings preset store.
     public static final SchemaVersion CURRENT_SCHEMA_VERSION = new SchemaVersion(1, 0);
 
-    /// Creates an empty preset store.
+    /// Creates an empty game settings preset store.
     public GameSettingsPresets() {
         tracker.markDirty(schemaVersion);
         register();
     }
 
-    /// Reads a preset store from a JSON object.
+    /// Reads a game settings preset store from a JSON object.
     public static @Nullable GameSettingsPresets fromJson(JsonObject json) throws JsonParseException {
         return Config.CONFIG_GSON.fromJson(json, GameSettingsPresets.class);
     }
 
-    /// Reads a preset store embedded in an older main config JSON object.
-    static @Nullable GameSettingsPresets fromEmbeddedConfig(
-            JsonObject json,
-            JsonDeserializationContext context) throws JsonParseException {
-        if (!json.has("gameSettings") && !json.has("defaultGameSetting")) {
-            return null;
-        }
-
-        JsonObject embedded = new JsonObject();
-        if (json.has("gameSettings")) {
-            embedded.add("gameSettings", json.get("gameSettings"));
-        }
-        if (json.has("defaultGameSetting")) {
-            embedded.add("defaultGameSetting", json.get("defaultGameSetting"));
-        }
-        return context.deserialize(embedded, GameSettingsPresets.class);
-    }
-
-    /// Serializes this preset store to JSON.
+    /// Serializes this game settings preset store to JSON.
     public String toJson() {
         return Config.CONFIG_GSON.toJson(this);
     }
@@ -93,7 +73,7 @@ public final class GameSettingsPresets extends ObservableSetting {
         setDefaultGameSettings(source.getDefaultGameSettings());
     }
 
-    /// The schema version used by this preset store file.
+    /// The schema version used by this game settings preset store file.
     @SerializedName("schemaVersion")
     private final ObjectProperty<SchemaVersion> schemaVersion = new SimpleObjectProperty<>(CURRENT_SCHEMA_VERSION);
 
@@ -102,12 +82,12 @@ public final class GameSettingsPresets extends ObservableSetting {
         return schemaVersion;
     }
 
-    /// Returns the schema version used by this preset store file.
+    /// Returns the schema version used by this game settings preset store file.
     public SchemaVersion getSchemaVersion() {
         return schemaVersion.get();
     }
 
-    /// Sets the schema version used by this preset store file.
+    /// Sets the schema version used by this game settings preset store file.
     public void setSchemaVersion(SchemaVersion schemaVersion) {
         this.schemaVersion.set(Objects.requireNonNull(schemaVersion));
     }
@@ -123,8 +103,8 @@ public final class GameSettingsPresets extends ObservableSetting {
     }
 
     /// The default preset ID.
-    @SerializedName("defaultGameSetting")
-    private final ObjectProperty<@Nullable UUID> defaultGameSettings = new SimpleObjectProperty<>(this, "defaultGameSetting");
+    @SerializedName("defaultGameSettings")
+    private final ObjectProperty<@Nullable UUID> defaultGameSettings = new SimpleObjectProperty<>(this, "defaultGameSettings");
 
     /// Returns the default preset ID property.
     public ObjectProperty<@Nullable UUID> defaultGameSettingsProperty() {
