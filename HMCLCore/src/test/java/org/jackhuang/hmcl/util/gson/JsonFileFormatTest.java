@@ -71,10 +71,10 @@ public final class JsonFileFormatTest {
         assertTrue(invalidVersion.isInvalid());
         assertEquals("{\"id\":\"hmcl.settings\",\"version\":\"3.x\"}", invalidVersion.invalidValue());
 
-        object.add(JsonFileFormat.DEFAULT_MEMBER_NAME, createFormatObject("hmcl.game-settings-presets", "1.0"));
+        object.add(JsonFileFormat.DEFAULT_MEMBER_NAME, createFormatObject("hmcl.game-settings", "1.0"));
         JsonFileFormat.CheckResult unexpected = JsonFileFormat.check(object, expected);
         assertTrue(unexpected.isUnexpectedId());
-        assertEquals("hmcl.game-settings-presets", unexpected.actual().id());
+        assertEquals("hmcl.game-settings", unexpected.actual().id());
 
         object.add(JsonFileFormat.DEFAULT_MEMBER_NAME, createFormatObject("hmcl.settings", "3.1"));
         JsonFileFormat.CheckResult newerMinor = JsonFileFormat.check(object, expected);

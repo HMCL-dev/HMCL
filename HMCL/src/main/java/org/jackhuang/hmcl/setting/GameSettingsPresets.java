@@ -37,7 +37,7 @@ import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 /// Stores reusable game settings presets independently from the main config file.
 ///
-/// The JSON representation is saved as `game-settings-presets.json` under the current HMCL
+/// The JSON representation is saved as `game-settings.json` under the current HMCL
 /// directory.
 ///
 /// @author Glavo
@@ -46,7 +46,8 @@ import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 @JsonSerializable
 public final class GameSettingsPresets extends ObservableSetting implements FormattedJsonSetting {
     /// The file format supported by this game settings preset store.
-    public static final JsonFileFormat CURRENT_FORMAT = new JsonFileFormat("hmcl.game-settings-presets", new JsonFileFormat.Version(1, 1));
+    public static final JsonFileFormat CURRENT_FORMAT =
+            new JsonFileFormat("hmcl.game-settings", new JsonFileFormat.Version(1, 1));
 
     /// Creates an empty game settings preset store.
     public GameSettingsPresets() {

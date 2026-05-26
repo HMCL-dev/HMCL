@@ -2,7 +2,7 @@
 
 ## Summary
 
-Migrate game settings from the old JSON format to the new `GameSettings` model. Global game setting presets will become a list of `GameSettings.Preset` entries stored in `game-settings-presets.json`; each preset has a `UUID` and editable `name`. Instance settings will be stored in `versions/<id>/.hmcl/instance-game-settings.json`. The old `hmclversion.cfg` files and old `Profile.global` data must remain untouched. Launching, exporting, installing, and the settings UI should all read effective `GameSettings` values.
+Migrate game settings from the old JSON format to the new `GameSettings` model. Global game setting presets will become a list of `GameSettings.Preset` entries stored in `game-settings.json`; each preset has a `UUID` and editable `name`. Instance settings will be stored in `versions/<id>/.hmcl/instance-game-settings.json`. The old `hmclversion.cfg` files and old `Profile.global` data must remain untouched. Launching, exporting, installing, and the settings UI should all read effective `GameSettings` values.
 
 ## Key Changes
 

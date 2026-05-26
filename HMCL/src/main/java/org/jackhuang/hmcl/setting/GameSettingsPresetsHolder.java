@@ -34,18 +34,18 @@ import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 /// Owns loading and saving of detached game settings presets.
 ///
 /// The preset file is stored separately from the main `settings.json` file as
-/// `game-settings-presets.json`.
+/// `game-settings.json`.
 ///
 /// @author Glavo
 @NotNullByDefault
 public final class GameSettingsPresetsHolder {
-    /// The current per-workspace game settings preset path.
-    private static final Path LOCATION = Metadata.HMCL_CURRENT_DIRECTORY.resolve("game-settings-presets.json");
+    /// The current per-workspace game settings path.
+    private static final Path LOCATION = Metadata.HMCL_CURRENT_DIRECTORY.resolve("game-settings.json");
 
-    /// The detached game settings preset file helper.
+    /// The detached game settings file helper.
     private static final JsonSettingFile<GameSettingsPresets> FILE = new JsonSettingFile<>(
             LOCATION,
-            "game settings presets",
+            "game settings",
             GameSettingsPresets.class,
             GameSettingsPresets.CURRENT_FORMAT,
             GameSettingsPresets::new);
@@ -57,7 +57,7 @@ public final class GameSettingsPresetsHolder {
     private GameSettingsPresetsHolder() {
     }
 
-    /// Returns the current per-workspace game settings preset path.
+    /// Returns the current per-workspace game settings path.
     public static Path location() {
         return LOCATION;
     }
@@ -109,7 +109,7 @@ public final class GameSettingsPresetsHolder {
             throw new IllegalStateException("Game settings presets are already loaded");
         }
 
-        LOG.info("Game settings presets location: " + LOCATION);
+        LOG.info("Game settings location: " + LOCATION);
 
         boolean newlyCreated = !Files.exists(LOCATION);
         JsonSettingFile.LoadResult<GameSettingsPresets> result = FILE.load(migratedGameSettingsPresets);
@@ -119,7 +119,7 @@ public final class GameSettingsPresetsHolder {
         }
 
         if (newlyCreated && allowSave && result.allowSave()) {
-            LOG.info("Creating game settings presets file " + LOCATION);
+            LOG.info("Creating game settings file " + LOCATION);
             FILE.save(gameSettingsPresets);
         }
     }
