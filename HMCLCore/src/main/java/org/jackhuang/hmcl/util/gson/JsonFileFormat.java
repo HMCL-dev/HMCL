@@ -172,18 +172,7 @@ public record JsonFileFormat(String id, Version version) {
 
     /// Returns whether a format ID is valid.
     private static boolean isValidId(String id) {
-        if (id.isEmpty()) {
-            return false;
-        }
-
-        for (int i = 0; i < id.length(); i++) {
-            char ch = id.charAt(i);
-            if (ch == '/' || Character.isWhitespace(ch)) {
-                return false;
-            }
-        }
-
-        return true;
+        return !id.isEmpty();
     }
 
     /// Result of checking a serialized file format against the format supported by the current code.
