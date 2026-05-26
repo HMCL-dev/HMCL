@@ -17,7 +17,6 @@
  */
 package org.jackhuang.hmcl.game;
 
-import com.google.gson.JsonObject;
 import com.google.gson.JsonParseException;
 import javafx.scene.image.Image;
 import org.jackhuang.hmcl.Metadata;
@@ -72,9 +71,6 @@ public final class HMCLGameRepository extends DefaultGameRepository {
 
     /// Current file name for instance-specific game settings.
     private static final String LOCAL_GAME_SETTINGS_FILENAME = "instance-game-settings.json";
-
-    /// Legacy file name used by old `VersionSetting` data.
-    private static final String LEGACY_VERSION_SETTING_FILENAME = "hmclversion.cfg";
 
     private final Profile profile;
 
@@ -245,7 +241,10 @@ public final class HMCLGameRepository extends DefaultGameRepository {
             return;
         }
 
-        GameSettings.Instance legacySetting = loadLegacyGameSettings(id);
+        GameSettings.Instance legacySetting = LegacyGameSettingsMigrator.migrateInstanceGameSettings(
+                getVersionRoot(id),
+                getBaseDirectory(),
+                profile.getLegacyGameSettingsParent());
         if (legacySetting != null) {
             initLocalGameSettings(id, legacySetting);
             saveGameSettings(id);
@@ -355,59 +354,6 @@ public final class HMCLGameRepository extends DefaultGameRepository {
                 setting.parentProperty().setValue(preset.idProperty().getValue());
                 setting.getOverrideProperties().add(GameSettings.PROPERTY_RUNNING_DIR);
             }
-        }
-    }
-
-    @Nullable
-    private GameSettings.Instance loadLegacyGameSettings(String id) {
-        Path file = getVersionRoot(id).resolve(LEGACY_VERSION_SETTING_FILENAME);
-        if (!Files.exists(file)) {
-            return null;
-        }
-
-        try {
-            JsonObject legacySettingJson;
-            try (var reader = Files.newBufferedReader(file)) {
-                legacySettingJson = Config.CONFIG_GSON.fromJson(reader, JsonObject.class);
-            }
-
-            if (legacySettingJson != null) {
-                @Nullable UUID parent = profile.getLegacyGameSettingsParent();
-                boolean inheritsLegacyParent = LegacyGameSettingsMigrator.usesLegacyParentSetting(legacySettingJson);
-                GameSettings.Instance setting = LegacyGameSettingsMigrator.toInstance(parent, legacySettingJson, !inheritsLegacyParent);
-                if (inheritsLegacyParent) {
-                    preserveLegacyInheritedRunningDirectory(setting, parent);
-                } else {
-                    preserveLegacyLocalRootRunningDirectory(setting, legacySettingJson, parent);
-                }
-                return setting;
-            }
-        } catch (Exception ex) {
-            LOG.warning("Failed to migrate legacy version setting " + file, ex);
-        }
-        return null;
-    }
-
-    /// Preserves inherited legacy `VERSION_FOLDER` semantics for local settings that inherit parent values.
-    private void preserveLegacyInheritedRunningDirectory(GameSettings.Instance setting, @Nullable UUID parent) {
-        GameSettings.Preset parentSetting = GameSettingsPresetsHolder.getGameSettings(parent);
-        if (parentSetting != null && parentSetting.defaultIsolationTypeProperty().getValue() == DefaultIsolationType.ALWAYS) {
-            setting.runningDirProperty().setValue("");
-            setting.getOverrideProperties().add(GameSettings.PROPERTY_RUNNING_DIR);
-        }
-    }
-
-    /// Preserves explicit legacy `ROOT_FOLDER` local settings when the parent uses a custom directory.
-    private void preserveLegacyLocalRootRunningDirectory(
-            GameSettings.Instance setting,
-            JsonObject legacySettingJson,
-            @Nullable UUID parent) {
-        GameSettings.Preset parentSetting = GameSettingsPresetsHolder.getGameSettings(parent);
-        if (parentSetting != null
-                && LegacyGameSettingsMigrator.isLegacyRootGameDirectory(legacySettingJson)
-                && StringUtils.isNotBlank(parentSetting.runningDirProperty().getValue())) {
-            setting.runningDirProperty().setValue(getBaseDirectory().toString());
-            setting.getOverrideProperties().add(GameSettings.PROPERTY_RUNNING_DIR);
         }
     }
 

@@ -56,7 +56,6 @@ public final class LegacyConfigMigrator {
     private LegacyConfigMigrator() {
     }
 
-
     /// Looks for a legacy config file and prepares it for writing as the new config file.
     static @Nullable MigrationResult migrateLegacyConfig() throws IOException {
         @Nullable Path path = locateLegacyConfig();
