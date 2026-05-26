@@ -73,7 +73,7 @@ public final class Profiles {
         if (!initialized)
             return;
 
-        ObservableList<Profile> profiles = GameDirectoriesHolder.getGameDirectories();
+        ObservableList<Profile> profiles = ConfigHolder.getGameDirectories();
         Profile profile = selectedProfile.get();
 
         if (profiles.isEmpty()) {
@@ -88,7 +88,7 @@ public final class Profiles {
             }
         }
 
-        GameDirectoriesHolder.setSelectedGameDirectory(profile == null ? null : profile.getId());
+        ConfigHolder.setSelectedGameDirectory(profile == null ? null : profile.getId());
         if (profile != null) {
             if (profile.getRepository().isLoaded())
                 selectedVersion.bind(profile.selectedVersionProperty());
@@ -105,7 +105,7 @@ public final class Profiles {
     }
 
     private static void checkProfiles() {
-        ObservableList<Profile> profiles = GameDirectoriesHolder.getGameDirectories();
+        ObservableList<Profile> profiles = ConfigHolder.getGameDirectories();
         if (profiles.isEmpty()) {
             Profile current = new Profile(
                     Profiles.DEFAULT_PROFILE_ID, Profiles.DEFAULT_PROFILE, Path.of(".minecraft"), null, true);
@@ -127,15 +127,15 @@ public final class Profiles {
         });
     }
 
-    /// Called when it's ready to load profiles from [GameDirectoriesHolder].
+    /// Called when it's ready to load profiles from [ConfigHolder].
     static void init() {
         if (initialized)
             throw new IllegalStateException("Already initialized");
 
-        profilesWrapper.set(GameDirectoriesHolder.getGameDirectories());
-        removeDuplicateProfiles(GameDirectoriesHolder.getGameDirectories());
-        GameDirectoriesHolder.getGameDirectories().addListener(onInvalidating(Profiles::refreshSelectedProfile));
-        GameDirectoriesHolder.getGameDirectories().addListener(onInvalidating(Profiles::checkProfiles));
+        profilesWrapper.set(ConfigHolder.getGameDirectories());
+        removeDuplicateProfiles(ConfigHolder.getGameDirectories());
+        ConfigHolder.getGameDirectories().addListener(onInvalidating(Profiles::refreshSelectedProfile));
+        ConfigHolder.getGameDirectories().addListener(onInvalidating(Profiles::checkProfiles));
         checkProfiles();
         migrateGameSettings();
 
@@ -144,12 +144,12 @@ public final class Profiles {
         Platform.runLater(() -> {
             initialized = true;
 
-            @Nullable GUID selectedId = GameDirectoriesHolder.getSelectedGameDirectory();
+            @Nullable GUID selectedId = ConfigHolder.getSelectedGameDirectory();
             selectedProfile.set(
-                    GameDirectoriesHolder.getGameDirectories().stream()
+                    ConfigHolder.getGameDirectories().stream()
                             .filter(it -> it.getId().equals(selectedId))
                             .findFirst()
-                            .orElse(GameDirectoriesHolder.getGameDirectories().isEmpty() ? null : GameDirectoriesHolder.getGameDirectories().get(0)));
+                            .orElse(ConfigHolder.getGameDirectories().isEmpty() ? null : ConfigHolder.getGameDirectories().get(0)));
         });
 
         EventBus.EVENT_BUS.channel(RefreshedVersionsEvent.class).registerWeak(event -> {
@@ -173,15 +173,15 @@ public final class Profiles {
     }
 
     private static void migrateGameSettings() {
-        if (GameSettingsPresetsHolder.getGameSettings().isEmpty()) {
-            GameSettingsPresetsHolder.getDefaultGameSettingsOrCreate();
-        } else if (GameSettingsPresetsHolder.getGameSettings(GameSettingsPresetsHolder.getDefaultGameSettings()) == null) {
-            GameSettingsPresetsHolder.setDefaultGameSettings(GameSettingsPresetsHolder.getGameSettings().get(0).idProperty().getValue());
+        if (ConfigHolder.getGameSettings().isEmpty()) {
+            ConfigHolder.getDefaultGameSettingsOrCreate();
+        } else if (ConfigHolder.getGameSettings(ConfigHolder.getDefaultGameSettings()) == null) {
+            ConfigHolder.setDefaultGameSettings(ConfigHolder.getGameSettings().get(0).idProperty().getValue());
         }
     }
 
     public static ObservableList<Profile> getProfiles() {
-        return GameDirectoriesHolder.getGameDirectories();
+        return ConfigHolder.getGameDirectories();
     }
 
     public static ReadOnlyListProperty<Profile> profilesProperty() {

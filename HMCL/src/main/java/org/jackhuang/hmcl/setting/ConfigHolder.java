@@ -19,8 +19,11 @@ package org.jackhuang.hmcl.setting;
 
 import com.google.gson.JsonParseException;
 import com.google.gson.JsonObject;
+import javafx.beans.property.ObjectProperty;
+import javafx.collections.ObservableList;
 import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.util.FileSaver;
+import org.jackhuang.hmcl.util.GUID;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.i18n.I18n;
 import org.jackhuang.hmcl.util.io.FileUtils;
@@ -35,7 +38,7 @@ import java.util.Locale;
 
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
-/// Owns the process-wide configuration instances.
+/// Owns the process-wide configuration and detached workspace settings instances.
 @NotNullByDefault
 public final class ConfigHolder {
 
@@ -49,11 +52,41 @@ public final class ConfigHolder {
     /// The current per-workspace config path.
     private static final Path SETTINGS_LOCATION = Metadata.HMCL_CURRENT_DIRECTORY.resolve("settings.json");
 
+    /// The current per-workspace game directories path.
+    private static final Path GAME_DIRECTORIES_LOCATION =
+            Metadata.HMCL_CURRENT_DIRECTORY.resolve("game-directories.json");
+
+    /// The current per-workspace game settings path.
+    private static final Path GAME_SETTINGS_LOCATION =
+            Metadata.HMCL_CURRENT_DIRECTORY.resolve("game-settings.json");
+
+    /// The detached game directory file helper.
+    private static final JsonSettingFile<GameDirectories> GAME_DIRECTORIES_FILE = new JsonSettingFile<>(
+            GAME_DIRECTORIES_LOCATION,
+            "game directories",
+            GameDirectories.class,
+            GameDirectories.CURRENT_FORMAT,
+            GameDirectories::new);
+
+    /// The detached game settings file helper.
+    private static final JsonSettingFile<GameSettingsPresets> GAME_SETTINGS_FILE = new JsonSettingFile<>(
+            GAME_SETTINGS_LOCATION,
+            "game settings",
+            GameSettingsPresets.class,
+            GameSettingsPresets.CURRENT_FORMAT,
+            GameSettingsPresets::new);
+
     /// The loaded per-workspace config instance.
     private static @UnknownNullability Config configInstance;
 
     /// The loaded user-global config instance.
     private static @UnknownNullability GlobalConfig globalConfigInstance;
+
+    /// The loaded detached game directory store.
+    private static @UnknownNullability GameDirectories gameDirectories;
+
+    /// The loaded detached preset store.
+    private static @UnknownNullability GameSettingsPresets gameSettingsPresets;
 
     /// Whether no current or legacy per-workspace config could be loaded.
     private static boolean newlyCreated;
@@ -98,6 +131,82 @@ public final class ConfigHolder {
         return SETTINGS_LOCATION;
     }
 
+    /// Returns the current per-workspace game directories path.
+    public static Path gameDirectoriesLocation() {
+        return GAME_DIRECTORIES_LOCATION;
+    }
+
+    /// Returns the current per-workspace game settings path.
+    public static Path gameSettingsLocation() {
+        return GAME_SETTINGS_LOCATION;
+    }
+
+    /// Returns the loaded detached game directory store.
+    public static GameDirectories gameDirectories() {
+        if (gameDirectories == null) {
+            throw new IllegalStateException("Game directories haven't been loaded");
+        }
+        return gameDirectories;
+    }
+
+    /// Returns the loaded detached preset store.
+    public static GameSettingsPresets gameSettingsPresets() {
+        if (gameSettingsPresets == null) {
+            throw new IllegalStateException("Game settings presets haven't been loaded");
+        }
+        return gameSettingsPresets;
+    }
+
+    /// Returns the per-workspace game directories.
+    public static ObservableList<Profile> getGameDirectories() {
+        return gameDirectories().getGameDirectories();
+    }
+
+    /// Returns the selected game directory ID property.
+    public static ObjectProperty<@Nullable GUID> selectedGameDirectoryProperty() {
+        return gameDirectories().selectedGameDirectoryProperty();
+    }
+
+    /// Returns the selected game directory ID.
+    public static @Nullable GUID getSelectedGameDirectory() {
+        return gameDirectories().getSelectedGameDirectory();
+    }
+
+    /// Sets the selected game directory ID.
+    public static void setSelectedGameDirectory(@Nullable GUID selectedGameDirectory) {
+        gameDirectories().setSelectedGameDirectory(selectedGameDirectory);
+    }
+
+    /// Returns the reusable game setting presets.
+    public static ObservableList<GameSettings.Preset> getGameSettings() {
+        return gameSettingsPresets().getGameSettings();
+    }
+
+    /// Returns the default game setting preset ID property.
+    public static ObjectProperty<@Nullable GUID> defaultGameSettingsProperty() {
+        return gameSettingsPresets().defaultGameSettingsProperty();
+    }
+
+    /// Returns the default game setting preset ID.
+    public static @Nullable GUID getDefaultGameSettings() {
+        return gameSettingsPresets().getDefaultGameSettings();
+    }
+
+    /// Sets the default game setting preset ID.
+    public static void setDefaultGameSettings(@Nullable GUID defaultGameSettings) {
+        gameSettingsPresets().setDefaultGameSettings(defaultGameSettings);
+    }
+
+    /// Returns the game setting preset with the given ID.
+    public static GameSettings.@Nullable Preset getGameSettings(@Nullable GUID id) {
+        return gameSettingsPresets().getGameSettings(id);
+    }
+
+    /// Returns the default game setting preset, creating one when needed.
+    public static GameSettings.Preset getDefaultGameSettingsOrCreate() {
+        return gameSettingsPresets().getDefaultGameSettingsOrCreate();
+    }
+
     /// Returns whether this run created a new per-workspace config.
     public static boolean isNewlyCreated() {
         return newlyCreated;
@@ -139,8 +248,8 @@ public final class ConfigHolder {
         Locale.setDefault(config().getLocalization().getLocale());
         I18n.setLocale(configInstance.getLocalization());
         LOG.setLogRetention(globalConfig().getLogRetention());
-        GameDirectoriesHolder.init(migratedGameDirectories, !unsupportedVersion);
-        GameSettingsPresetsHolder.init(migratedGameSettingsPresets, !unsupportedVersion);
+        loadGameDirectories(migratedGameDirectories, !unsupportedVersion);
+        loadGameSettingsPresets(migratedGameSettingsPresets, !unsupportedVersion);
         Settings.init();
 
         if (!unsupportedVersion && (newlyCreated || needSaveSettings)) {
@@ -215,6 +324,59 @@ public final class ConfigHolder {
         var newSettings = new Config();
         newlyCreated = true;
         return newSettings;
+    }
+
+    /// Loads game directories and installs the save listener.
+    ///
+    /// @param migratedGameDirectories the game directory store migrated from a config file
+    /// @param allowSave whether the detached game directory file may be overwritten
+    private static void loadGameDirectories(
+            @Nullable GameDirectories migratedGameDirectories,
+            boolean allowSave) throws IOException {
+        if (gameDirectories != null) {
+            throw new IllegalStateException("Game directories are already loaded");
+        }
+
+        LOG.info("Game directories location: " + GAME_DIRECTORIES_LOCATION);
+
+        boolean newlyCreated = !Files.exists(GAME_DIRECTORIES_LOCATION);
+        JsonSettingFile.LoadResult<GameDirectories> result = GAME_DIRECTORIES_FILE.load(migratedGameDirectories);
+        gameDirectories = result.value();
+        if (allowSave && result.allowSave()) {
+            GAME_DIRECTORIES_FILE.installAutoSave(gameDirectories);
+        }
+
+        if (newlyCreated && allowSave && result.allowSave()) {
+            LOG.info("Creating game directories file " + GAME_DIRECTORIES_LOCATION);
+            GAME_DIRECTORIES_FILE.save(gameDirectories);
+        }
+    }
+
+    /// Loads game settings presets and installs the save listener.
+    ///
+    /// @param migratedGameSettingsPresets the preset store migrated from a legacy config file
+    /// @param allowSave whether the detached preset file may be overwritten
+    private static void loadGameSettingsPresets(
+            @Nullable GameSettingsPresets migratedGameSettingsPresets,
+            boolean allowSave) throws IOException {
+        if (gameSettingsPresets != null) {
+            throw new IllegalStateException("Game settings presets are already loaded");
+        }
+
+        LOG.info("Game settings location: " + GAME_SETTINGS_LOCATION);
+
+        boolean newlyCreated = !Files.exists(GAME_SETTINGS_LOCATION);
+        JsonSettingFile.LoadResult<GameSettingsPresets> result =
+                GAME_SETTINGS_FILE.load(migratedGameSettingsPresets);
+        gameSettingsPresets = result.value();
+        if (allowSave && result.allowSave()) {
+            GAME_SETTINGS_FILE.installAutoSave(gameSettingsPresets);
+        }
+
+        if (newlyCreated && allowSave && result.allowSave()) {
+            LOG.info("Creating game settings file " + GAME_SETTINGS_LOCATION);
+            GAME_SETTINGS_FILE.save(gameSettingsPresets);
+        }
     }
 
     /// Moves an invalid config file to a numbered backup path (e.g. {@code settings.json.1},

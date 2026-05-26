@@ -29,13 +29,13 @@ import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.BorderPane;
 import org.jackhuang.hmcl.game.HMCLGameRepository;
 import org.jackhuang.hmcl.game.NativesDirectoryType;
+import org.jackhuang.hmcl.setting.ConfigHolder;
 import org.jackhuang.hmcl.setting.GameSettings;
-import org.jackhuang.hmcl.setting.GameSettingsPresetsHolder;
 import org.jackhuang.hmcl.setting.property.SettingProperty;
 import org.jackhuang.hmcl.ui.MemoryStatusBar;
-import org.jackhuang.hmcl.ui.construct.RadioChoiceList;
 import org.jackhuang.hmcl.ui.construct.LineComponent;
 import org.jackhuang.hmcl.ui.construct.LineInheritableToggleButton;
+import org.jackhuang.hmcl.ui.construct.RadioChoiceList;
 import org.jackhuang.hmcl.util.Holder;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.platform.SystemInfo;
@@ -425,8 +425,8 @@ final class IndependentSettingBinder {
             }
             refresh.invalidated(newValue);
         });
-        GameSettingsPresetsHolder.getGameSettings().addListener(refresh);
-        GameSettingsPresetsHolder.defaultGameSettingsProperty().addListener(refresh);
+        ConfigHolder.getGameSettings().addListener(refresh);
+        ConfigHolder.defaultGameSettingsProperty().addListener(refresh);
         memoryStatusBar.memoryStatusProperty().addListener(observable -> {
             GameSettings setting = currentSetting.get();
             if (setting == null) {
@@ -712,8 +712,8 @@ final class IndependentSettingBinder {
             }
             refresh.invalidated(newProperty);
         });
-        GameSettingsPresetsHolder.getGameSettings().addListener(refresh);
-        GameSettingsPresetsHolder.defaultGameSettingsProperty().addListener(refresh);
+        ConfigHolder.getGameSettings().addListener(refresh);
+        ConfigHolder.defaultGameSettingsProperty().addListener(refresh);
 
         GameSettings setting = currentSetting.get();
         if (setting != null) {

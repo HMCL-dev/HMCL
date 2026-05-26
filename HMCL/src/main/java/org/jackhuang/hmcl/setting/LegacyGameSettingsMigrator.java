@@ -199,7 +199,7 @@ public final class LegacyGameSettingsMigrator {
 
     /// Preserves inherited legacy `VERSION_FOLDER` semantics for local settings that inherit parent values.
     private static void preserveInheritedRunningDirectory(GameSettings.Instance setting, @Nullable GUID parent) {
-        GameSettings.Preset parentSetting = GameSettingsPresetsHolder.getGameSettings(parent);
+        GameSettings.Preset parentSetting = ConfigHolder.getGameSettings(parent);
         if (parentSetting != null && parentSetting.defaultIsolationTypeProperty().getValue() == DefaultIsolationType.ALWAYS) {
             setting.runningDirProperty().setValue("");
             setting.getOverrideProperties().add(GameSettings.PROPERTY_RUNNING_DIR);
@@ -212,7 +212,7 @@ public final class LegacyGameSettingsMigrator {
             JsonObject legacySettingJson,
             Path baseDirectory,
             @Nullable GUID parent) {
-        GameSettings.Preset parentSetting = GameSettingsPresetsHolder.getGameSettings(parent);
+        GameSettings.Preset parentSetting = ConfigHolder.getGameSettings(parent);
         if (parentSetting != null
                 && getLegacyGameDirType(legacySettingJson, GameDirectoryType.ROOT_FOLDER) == GameDirectoryType.ROOT_FOLDER
                 && StringUtils.isNotBlank(parentSetting.runningDirProperty().getValue())) {
