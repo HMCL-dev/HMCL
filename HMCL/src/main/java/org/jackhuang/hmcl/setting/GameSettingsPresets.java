@@ -49,7 +49,7 @@ import java.util.Objects;
 public final class GameSettingsPresets extends ObservableSetting implements FormattedJsonSetting {
     /// The file format supported by this game settings preset store.
     public static final JsonFileFormat CURRENT_FORMAT =
-            new JsonFileFormat("hmcl.game-settings", new JsonFileFormat.Version(1, 2));
+            new JsonFileFormat("hmcl.game-settings", new JsonFileFormat.Version(1, 0));
 
     /// Creates an empty game settings preset store.
     public GameSettingsPresets() {

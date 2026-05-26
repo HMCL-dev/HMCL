@@ -50,7 +50,7 @@ import java.util.*;
 public final class Config extends ObservableSetting {
 
     /// The file format supported by this config class.
-    public static final JsonFileFormat CURRENT_FORMAT = new JsonFileFormat("hmcl.settings", new JsonFileFormat.Version(1, 3));
+    public static final JsonFileFormat CURRENT_FORMAT = new JsonFileFormat("hmcl.settings", new JsonFileFormat.Version(1, 0));
 
     /// The JSON member name for the default game setting preset ID.
     static final String DEFAULT_GAME_SETTINGS_MEMBER_NAME = "defaultGameSettings";

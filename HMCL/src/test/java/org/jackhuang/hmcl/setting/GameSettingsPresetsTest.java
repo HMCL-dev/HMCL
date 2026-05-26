@@ -49,7 +49,7 @@ public final class GameSettingsPresetsTest {
                 {
                   "$format": {
                     "id": "hmcl.game-settings",
-                    "version": "1.2"
+                    "version": "1.0"
                   },
                   "defaultGameSettings": "123e4567-e89b-12d3-a456-426614174000",
                   "gameSettings": []
