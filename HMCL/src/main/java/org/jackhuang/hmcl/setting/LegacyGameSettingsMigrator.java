@@ -127,7 +127,7 @@ public final class LegacyGameSettingsMigrator {
                 return null;
             }
 
-            boolean inheritsLegacyParent = usesLegacyParentSetting(legacySettingJson);
+            boolean inheritsLegacyParent = readBoolean(legacySettingJson, "usesGlobal", false);
             GameSettings.Instance setting = toInstance(parent, legacySettingJson, !inheritsLegacyParent);
             if (inheritsLegacyParent) {
                 preserveInheritedRunningDirectory(setting, parent);
@@ -191,16 +191,6 @@ public final class LegacyGameSettingsMigrator {
         return target;
     }
 
-    /// Returns whether a legacy local setting inherits its parent setting.
-    private static boolean usesLegacyParentSetting(@Nullable JsonObject source) {
-        return readBoolean(source, "usesGlobal", false);
-    }
-
-    /// Returns whether a legacy setting explicitly uses the root game directory.
-    private static boolean isLegacyRootGameDirectory(@Nullable JsonObject source) {
-        return getLegacyGameDirType(source, GameDirectoryType.ROOT_FOLDER) == GameDirectoryType.ROOT_FOLDER;
-    }
-
     /// Preserves inherited legacy `VERSION_FOLDER` semantics for local settings that inherit parent values.
     private static void preserveInheritedRunningDirectory(GameSettings.Instance setting, @Nullable UUID parent) {
         GameSettings.Preset parentSetting = GameSettingsPresetsHolder.getGameSettings(parent);
@@ -218,7 +208,7 @@ public final class LegacyGameSettingsMigrator {
             @Nullable UUID parent) {
         GameSettings.Preset parentSetting = GameSettingsPresetsHolder.getGameSettings(parent);
         if (parentSetting != null
-                && isLegacyRootGameDirectory(legacySettingJson)
+                && getLegacyGameDirType(legacySettingJson, GameDirectoryType.ROOT_FOLDER) == GameDirectoryType.ROOT_FOLDER
                 && StringUtils.isNotBlank(parentSetting.runningDirProperty().getValue())) {
             setting.runningDirProperty().setValue(baseDirectory.toString());
             setting.getOverrideProperties().add(GameSettings.PROPERTY_RUNNING_DIR);
