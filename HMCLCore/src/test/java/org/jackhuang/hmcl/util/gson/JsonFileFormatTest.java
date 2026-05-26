@@ -37,7 +37,7 @@ public final class JsonFileFormatTest {
 
         assertEquals("hmcl.settings", format.id());
         assertEquals(new JsonFileFormat.Version(3, 0), format.version());
-        assertEquals("hmcl.config/3.0", format.toString());
+        assertEquals("hmcl.settings/3.0", format.toString());
     }
 
     /// Tests serialization of file format objects.
@@ -69,7 +69,7 @@ public final class JsonFileFormatTest {
         object.add(JsonFileFormat.DEFAULT_MEMBER_NAME, createFormatObject("hmcl.settings", "3.x"));
         JsonFileFormat.CheckResult invalidVersion = JsonFileFormat.check(object, expected);
         assertTrue(invalidVersion.isInvalid());
-        assertEquals("{\"id\":\"hmcl.config\",\"version\":\"3.x\"}", invalidVersion.invalidValue());
+        assertEquals("{\"id\":\"hmcl.settings\",\"version\":\"3.x\"}", invalidVersion.invalidValue());
 
         object.add(JsonFileFormat.DEFAULT_MEMBER_NAME, createFormatObject("hmcl.game-settings-presets", "1.0"));
         JsonFileFormat.CheckResult unexpected = JsonFileFormat.check(object, expected);

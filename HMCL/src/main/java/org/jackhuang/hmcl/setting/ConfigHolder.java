@@ -21,7 +21,6 @@ import com.google.gson.JsonParseException;
 import com.google.gson.JsonObject;
 import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.util.FileSaver;
-import org.jackhuang.hmcl.util.gson.JsonFileFormat;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.i18n.I18n;
 import org.jackhuang.hmcl.util.io.FileUtils;
@@ -171,30 +170,13 @@ public final class ConfigHolder {
                 return new Config();
             }
 
-            JsonFileFormat.CheckResult format = JsonFileFormat.check(jsonObject, Config.CURRENT_FORMAT);
-            if (format.isMissing()) {
-                LOG.warning("Missing format in settings file: " + SETTINGS_LOCATION);
+            JsonFileFormatPolicy.Result format =
+                    JsonFileFormatPolicy.check(SETTINGS_LOCATION, "settings file", jsonObject, Config.CURRENT_FORMAT);
+            if (!format.allowSave()) {
                 unsupportedVersion = true;
+            }
+            if (!format.readable()) {
                 return new Config();
-            } else if (format.isInvalid()) {
-                LOG.warning("Invalid format in settings file: "
-                        + SETTINGS_LOCATION + ", Actual: " + format.invalidValue());
-                unsupportedVersion = true;
-                return new Config();
-            } else if (format.isUnexpectedId()) {
-                LOG.warning("Unexpected settings file format. Expected: "
-                        + Config.CURRENT_FORMAT + ", Actual: " + format.actual());
-                unsupportedVersion = true;
-                return new Config();
-            } else if (format.isNewerThanExpected()) {
-                LOG.warning("Unsupported settings file format. Expected: "
-                        + Config.CURRENT_FORMAT + ", Actual: " + format.actual());
-                unsupportedVersion = true;
-
-                if (format.hasNewerMajorVersion()) {
-                    // Unsupported major version, reset to default
-                    return new Config();
-                }
             }
 
             try {

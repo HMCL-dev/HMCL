@@ -17,21 +17,17 @@
  */
 package org.jackhuang.hmcl.setting;
 
-import com.google.gson.JsonObject;
-import com.google.gson.JsonParseException;
 import javafx.beans.property.ObjectProperty;
 import javafx.collections.ObservableList;
 import org.jackhuang.hmcl.Metadata;
-import org.jackhuang.hmcl.util.FileSaver;
 import org.jackhuang.hmcl.util.GUID;
-import org.jackhuang.hmcl.util.gson.JsonFileFormat;
-import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.UnknownNullability;
 
 import java.io.IOException;
-import java.nio.file.*;
+import java.nio.file.Files;
+import java.nio.file.Path;
 
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
@@ -45,6 +41,17 @@ import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 public final class GameDirectoriesHolder {
     /// The current per-workspace game directories path.
     private static final Path LOCATION = Metadata.HMCL_CURRENT_DIRECTORY.resolve("game-directories.json");
+
+    /// The detached game directory file helper.
+    private static final JsonSettingFile<GameDirectories> FILE = new JsonSettingFile<>(
+            LOCATION,
+            "game directories",
+            GameDirectories.CURRENT_FORMAT,
+            GameDirectories::new,
+            GameDirectories::fromJson,
+            GameDirectories::toJson,
+            GameDirectories::getFormat,
+            GameDirectories::setFormat);
 
     /// The loaded detached game directory store.
     private static @UnknownNullability GameDirectories gameDirectories;
@@ -98,73 +105,15 @@ public final class GameDirectoriesHolder {
         LOG.info("Game directories location: " + LOCATION);
 
         boolean newlyCreated = !Files.exists(LOCATION);
-        LoadResult result = load(migratedGameDirectories);
-        gameDirectories = result.gameDirectories();
+        JsonSettingFile.LoadResult<GameDirectories> result = FILE.load(migratedGameDirectories);
+        gameDirectories = result.value();
         if (allowSave && result.allowSave()) {
-            gameDirectories.addListener(source -> FileSaver.save(LOCATION, gameDirectories.toJson()));
+            FILE.installAutoSave(gameDirectories);
         }
 
         if (newlyCreated && allowSave && result.allowSave()) {
             LOG.info("Creating game directories file " + LOCATION);
-            FileSaver.save(LOCATION, gameDirectories.toJson());
+            FILE.save(gameDirectories);
         }
-    }
-
-    /// Loads the detached game directory file, falling back to migrated game directories when the file is absent.
-    private static LoadResult load(@Nullable GameDirectories migratedGameDirectories) throws IOException {
-        if (Files.exists(LOCATION)) {
-            try {
-                JsonObject jsonObject = JsonUtils.fromJsonFile(LOCATION, JsonObject.class);
-                if (jsonObject == null) {
-                    LOG.info("Game directories are empty");
-                } else {
-                    JsonFileFormat.CheckResult format =
-                            JsonFileFormat.check(jsonObject, GameDirectories.CURRENT_FORMAT);
-                    if (format.isMissing()) {
-                        LOG.warning("Missing format in game directories: " + LOCATION);
-                        return new LoadResult(new GameDirectories(), false);
-                    } else if (format.isInvalid()) {
-                        LOG.warning("Invalid format in game directories: "
-                                + LOCATION + ", Actual: " + format.invalidValue());
-                        return new LoadResult(new GameDirectories(), false);
-                    } else if (format.isUnexpectedId()) {
-                        LOG.warning("Unexpected game directories format. Expected: "
-                                + GameDirectories.CURRENT_FORMAT + ", Actual: " + format.actual());
-                        return new LoadResult(new GameDirectories(), false);
-                    } else if (format.isNewerThanExpected()) {
-                        LOG.warning("Unsupported game directories format. Expected: "
-                                + GameDirectories.CURRENT_FORMAT + ", Actual: " + format.actual());
-                        if (format.hasNewerMajorVersion()) {
-                            return new LoadResult(new GameDirectories(), false);
-                        }
-                    }
-
-                    GameDirectories deserialized = GameDirectories.fromJson(jsonObject);
-                    if (deserialized != null) {
-                        if (!GameDirectories.CURRENT_FORMAT.equals(deserialized.getFormat())) {
-                            deserialized.setFormat(GameDirectories.CURRENT_FORMAT);
-                        }
-
-                        return new LoadResult(deserialized, !format.isNewerThanExpected());
-                    }
-
-                    LOG.info("Game directories are empty");
-                }
-            } catch (JsonParseException e) {
-                LOG.warning("Malformed game directories.", e);
-            }
-
-            return new LoadResult(new GameDirectories(), true);
-        }
-
-        return new LoadResult(
-                migratedGameDirectories != null ? migratedGameDirectories : new GameDirectories(), true);
-    }
-
-    /// Result of loading the detached game directory store.
-    ///
-    /// @param gameDirectories the loaded game directory store
-    /// @param allowSave whether the game directory file may be overwritten
-    private record LoadResult(GameDirectories gameDirectories, boolean allowSave) {
     }
 }
