@@ -133,10 +133,6 @@ public final class Profile implements Observable {
         this.useRelativePath.set(useRelativePath);
     }
 
-    public Profile(String name) {
-        this(name, Path.of(".minecraft"));
-    }
-
     public Profile(String name, Path initialGameDir) {
         this(name, initialGameDir, null, false);
     }
