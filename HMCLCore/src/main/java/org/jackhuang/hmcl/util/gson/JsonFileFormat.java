@@ -70,12 +70,12 @@ public record JsonFileFormat(String id, Version version) {
         }
     }
 
-    /// Reads a file format from a JSON object that contains `id` and `version` members.
+    /// Parses a file format object that contains `id` and `version` members.
     ///
     /// @param formatObject the JSON object that contains the file format fields
     /// @return the parsed file format
     /// @throws JsonParseException if the file format object is invalid
-    public static JsonFileFormat fromJsonObject(JsonObject formatObject) throws JsonParseException {
+    public static JsonFileFormat parseObject(JsonObject formatObject) throws JsonParseException {
         Objects.requireNonNull(formatObject);
 
         @Nullable JsonElement idElement = formatObject.get(ID_MEMBER_NAME);
@@ -95,26 +95,26 @@ public record JsonFileFormat(String id, Version version) {
         }
     }
 
-    /// Reads a file format from the default `format` member of a JSON object.
+    /// Reads a file format from the default format member of a container object.
     ///
-    /// @param object the JSON object that contains the file format
+    /// @param object the container object that contains the file format member
     /// @return the parsed file format
     /// @throws JsonParseException if the format member is missing or invalid
-    public static JsonFileFormat readFrom(JsonObject object) throws JsonParseException {
-        return readFrom(object, DEFAULT_MEMBER_NAME);
+    public static JsonFileFormat readFromMember(JsonObject object) throws JsonParseException {
+        return readFromMember(object, DEFAULT_MEMBER_NAME);
     }
 
-    /// Reads a file format from a JSON object member.
+    /// Reads a file format from a member of a container object.
     ///
-    /// @param object the JSON object that contains the file format
+    /// @param object the container object that contains the file format member
     /// @param memberName the JSON member name
     /// @return the parsed file format
     /// @throws JsonParseException if the format member is missing or invalid
-    public static JsonFileFormat readFrom(JsonObject object, String memberName) throws JsonParseException {
+    public static JsonFileFormat readFromMember(JsonObject object, String memberName) throws JsonParseException {
         Objects.requireNonNull(object);
         Objects.requireNonNull(memberName);
 
-        return readFromElement(object.get(memberName), memberName);
+        return parseElement(object.get(memberName), "member `" + memberName + "`");
     }
 
     /// Reads and checks the default `format` member of a JSON object.
@@ -142,7 +142,7 @@ public record JsonFileFormat(String id, Version version) {
         }
 
         try {
-            JsonFileFormat actual = readFrom(object, memberName);
+            JsonFileFormat actual = readFromMember(object, memberName);
             return new CheckResult(actual, expected, actual.id.equals(expected.id)
                     ? CheckResult.Status.VALID
                     : CheckResult.Status.UNEXPECTED_ID, null);
@@ -151,16 +151,16 @@ public record JsonFileFormat(String id, Version version) {
         }
     }
 
-    /// Reads a file format from a JSON element.
-    private static JsonFileFormat readFromElement(@Nullable JsonElement element, String memberName) throws JsonParseException {
+    /// Parses a file format from a JSON element.
+    private static JsonFileFormat parseElement(@Nullable JsonElement element, String source) throws JsonParseException {
         if (!(element instanceof JsonObject formatObject)) {
-            throw new JsonParseException("Invalid file format member `" + memberName + "`: " + element);
+            throw new JsonParseException("Invalid file format " + source + ": " + element);
         }
 
         try {
-            return fromJsonObject(formatObject);
+            return parseObject(formatObject);
         } catch (JsonParseException e) {
-            throw new JsonParseException("Invalid file format member `" + memberName + "`: " + element, e);
+            throw new JsonParseException("Invalid file format " + source + ": " + element, e);
         }
     }
 
@@ -275,7 +275,7 @@ public record JsonFileFormat(String id, Version version) {
                 return null;
             }
 
-            return readFromElement(element, DEFAULT_MEMBER_NAME);
+            return parseElement(element, "value");
         }
     }
 

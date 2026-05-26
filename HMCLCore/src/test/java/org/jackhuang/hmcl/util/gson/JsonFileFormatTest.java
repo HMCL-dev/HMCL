@@ -33,7 +33,7 @@ public final class JsonFileFormatTest {
         JsonObject object = new JsonObject();
         object.add(JsonFileFormat.DEFAULT_MEMBER_NAME, createFormatObject("hmcl.config", "3.0"));
 
-        JsonFileFormat format = JsonFileFormat.readFrom(object);
+        JsonFileFormat format = JsonFileFormat.readFromMember(object);
 
         assertEquals("hmcl.config", format.id());
         assertEquals(new JsonFileFormat.Version(3, 0), format.version());
