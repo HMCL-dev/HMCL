@@ -21,10 +21,10 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParseException;
 import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.util.FileSaver;
+import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
 import org.jetbrains.annotations.NotNullByDefault;
-import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.nio.file.*;
@@ -78,7 +78,7 @@ public final class GameSettingsPresetsHolder {
     private static boolean load(Config config) throws IOException {
         if (Files.exists(LOCATION)) {
             try {
-                JsonObject jsonObject = readJsonObject(LOCATION);
+                JsonObject jsonObject = JsonUtils.fromJsonFile(LOCATION, JsonObject.class);
                 if (jsonObject == null) {
                     LOG.info("Game setting presets are empty");
                 } else {
@@ -99,13 +99,6 @@ public final class GameSettingsPresetsHolder {
         }
 
         return true;
-    }
-
-    /// Reads the given JSON file as an object.
-    private static @Nullable JsonObject readJsonObject(Path path) throws IOException, JsonParseException {
-        try (var reader = Files.newBufferedReader(path)) {
-            return Config.CONFIG_GSON.fromJson(reader, JsonObject.class);
-        }
     }
 
     /// Checks that the given preset file is writable.
