@@ -139,7 +139,7 @@ public final class ConfigHolder {
             try {
                 jsonObject = JsonUtils.fromJsonFile(SETTINGS_LOCATION, JsonObject.class);
             } catch (Exception e) {
-                // TODO: Save the invalid settings file to a backup location
+                backupInvalidConfig(SETTINGS_LOCATION);
                 LOG.warning("Failed to read settings file: " + SETTINGS_LOCATION, e);
                 return new Config();
             }
@@ -185,7 +185,7 @@ public final class ConfigHolder {
 
                 return settings;
             } catch (JsonParseException e) {
-                // TODO: Save the invalid settings file to a backup location
+                backupInvalidConfig(SETTINGS_LOCATION);
                 LOG.warning("Failed to parse settings file: " + SETTINGS_LOCATION, e);
                 return new Config();
             }
@@ -201,6 +201,33 @@ public final class ConfigHolder {
         var newSettings = new Config();
         newlyCreated = true;
         return newSettings;
+    }
+
+    /// Copies an invalid config file to a numbered backup path (e.g. {@code settings.json.1},
+    /// {@code settings.json.2}, …) so the original data is preserved for diagnosis.
+    /// Does nothing and logs a warning when the copy fails.
+    ///
+    /// @param location the invalid config file to back up
+    private static void backupInvalidConfig(Path location) {
+        try {
+            // Find the first unused backup index: settings.json.1, settings.json.2, …
+            Path backup = null;
+            for (int i = 1; i < Integer.MAX_VALUE; i++) {
+                Path candidate = location.resolveSibling(location.getFileName() + "." + i);
+                if (!Files.exists(candidate)) {
+                    backup = candidate;
+                    break;
+                }
+            }
+            if (backup == null) {
+                LOG.warning("Could not find an available backup path for " + location);
+                return;
+            }
+            Files.copy(location, backup);
+            LOG.info("Backed up invalid config to " + backup);
+        } catch (IOException e) {
+            LOG.warning("Failed to back up invalid config " + location, e);
+        }
     }
 
     /// Checks whether root is reading a config file owned by another user.
