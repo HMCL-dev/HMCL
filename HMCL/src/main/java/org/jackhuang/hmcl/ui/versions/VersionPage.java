@@ -111,10 +111,10 @@ public class VersionPage extends DecoratorAnimatedPage implements DecoratorPage 
     private void checkSelectedVersion() {
         runInFX(() -> {
             if (this.version.get() == null) return;
-            GameRepository repository = this.version.get().getProfile().getRepository();
-            if (!repository.hasVersion(this.version.get().getVersion())) {
+            GameRepository repository = this.version.get().profile().getRepository();
+            if (!repository.hasVersion(this.version.get().version())) {
                 if (preferredVersionName != null) {
-                    loadVersion(preferredVersionName, this.version.get().getProfile());
+                    loadVersion(preferredVersionName, this.version.get().profile());
                 } else {
                     fireEvent(new PageCloseEvent());
                 }
@@ -127,7 +127,7 @@ public class VersionPage extends DecoratorAnimatedPage implements DecoratorPage 
             T node = nodeSupplier.get();
             if (version.get() != null) {
                 if (node instanceof VersionPage.VersionLoadable) {
-                    ((VersionLoadable) node).loadVersion(version.get().getProfile(), version.get().getVersion());
+                    ((VersionLoadable) node).loadVersion(version.get().profile(), version.get().version());
                 }
             }
             return node;
@@ -208,7 +208,7 @@ public class VersionPage extends DecoratorAnimatedPage implements DecoratorPage 
 
         Profile.ProfileVersion currentVersion = version.get();
         Path resourcesDir = currentVersion != null
-                ? getProfile().getRepository().getRunDirectory(currentVersion.getVersion()).resolve("resources")
+                ? getProfile().getRepository().getRunDirectory(currentVersion.version()).resolve("resources")
                 : null;
 
         Task.runAsync(Schedulers.io(), () -> {
@@ -257,11 +257,11 @@ public class VersionPage extends DecoratorAnimatedPage implements DecoratorPage 
     }
 
     public Profile getProfile() {
-        return Optional.ofNullable(version.get()).map(Profile.ProfileVersion::getProfile).orElse(null);
+        return Optional.ofNullable(version.get()).map(Profile.ProfileVersion::profile).orElse(null);
     }
 
     public String getVersion() {
-        return Optional.ofNullable(version.get()).map(Profile.ProfileVersion::getVersion).orElse(null);
+        return Optional.ofNullable(version.get()).map(Profile.ProfileVersion::version).orElse(null);
     }
 
     @Override

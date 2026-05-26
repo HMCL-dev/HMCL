@@ -165,11 +165,11 @@ public class DownloadListPage extends Control implements DecoratorPage, VersionP
         int currentSearchID = searchID = searchID + 1;
         Task.supplyAsync(() -> {
             Profile.ProfileVersion version = this.version.get();
-            if (StringUtils.isBlank(version.getVersion())) {
+            if (StringUtils.isBlank(version.version())) {
                 return userGameVersion;
             } else {
-                return StringUtils.isNotBlank(version.getVersion())
-                        ? version.getProfile().getRepository().getGameVersion(version.getVersion()).orElse("")
+                return StringUtils.isNotBlank(version.version())
+                        ? version.profile().getRepository().getGameVersion(version.version()).orElse("")
                         : "";
             }
         }).thenApplyAsync(
@@ -219,7 +219,7 @@ public class DownloadListPage extends Control implements DecoratorPage, VersionP
 
     protected Profile.ProfileVersion getProfileVersion() {
         if (versionSelection) {
-            return new Profile.ProfileVersion(version.get().getProfile(), selectedVersion.get());
+            return new Profile.ProfileVersion(version.get().profile(), selectedVersion.get());
         } else {
             return version.get();
         }
@@ -320,7 +320,7 @@ public class DownloadListPage extends Control implements DecoratorPage, VersionP
                 searchPane.addRow(rowIndex++, new Label(i18n("mods.name")), nameField, lblGameVersion, gameVersionField);
 
                 ObjectBinding<Boolean> hasVersion = BindingMapping.of(getSkinnable().version)
-                        .map(version -> version.getVersion() == null);
+                        .map(version -> version.version() == null);
                 lblGameVersion.managedProperty().bind(hasVersion);
                 lblGameVersion.visibleProperty().bind(hasVersion);
                 gameVersionField.managedProperty().bind(hasVersion);
@@ -328,7 +328,7 @@ public class DownloadListPage extends Control implements DecoratorPage, VersionP
                 FXUtils.installFastTooltip(gameVersionField, i18n("search.enter"));
 
                 FXUtils.onChangeAndOperate(getSkinnable().version, version -> {
-                    if (StringUtils.isNotBlank(version.getVersion())) {
+                    if (StringUtils.isNotBlank(version.version())) {
                         GridPane.setColumnSpan(nameField, 3);
                     } else {
                         GridPane.setColumnSpan(nameField, 1);
