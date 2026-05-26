@@ -23,8 +23,8 @@ import javafx.beans.property.ObjectProperty;
 import javafx.collections.ObservableList;
 import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.util.FileSaver;
+import org.jackhuang.hmcl.util.gson.FileFormat;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
-import org.jackhuang.hmcl.util.gson.SchemaVersion;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.UnknownNullability;
@@ -128,30 +128,34 @@ public final class GameSettingsPresetsHolder {
                 if (jsonObject == null) {
                     LOG.info("Game setting presets are empty");
                 } else {
-                    SchemaVersion.CheckResult schemaVersion =
-                            SchemaVersion.check(jsonObject, GameSettingsPresets.CURRENT_SCHEMA_VERSION);
-                    if (schemaVersion.isMissing()) {
-                        LOG.warning("Missing schema version in game settings presets: " + LOCATION);
+                    FileFormat.CheckResult format =
+                            FileFormat.check(jsonObject, GameSettingsPresets.CURRENT_FORMAT);
+                    if (format.isMissing()) {
+                        LOG.warning("Missing format in game settings presets: " + LOCATION);
                         return new LoadResult(new GameSettingsPresets(), false);
-                    } else if (schemaVersion.isInvalid()) {
-                        LOG.warning("Invalid schema version in game settings presets: "
-                                + LOCATION + ", Actual: " + schemaVersion.invalidValue());
+                    } else if (format.isInvalid()) {
+                        LOG.warning("Invalid format in game settings presets: "
+                                + LOCATION + ", Actual: " + format.invalidValue());
                         return new LoadResult(new GameSettingsPresets(), false);
-                    } else if (schemaVersion.isNewerThanExpected()) {
-                        LOG.warning("Unsupported game settings presets schema version. Expected: "
-                                + GameSettingsPresets.CURRENT_SCHEMA_VERSION + ", Actual: " + schemaVersion.actual());
-                        if (schemaVersion.hasNewerMajorVersion()) {
+                    } else if (format.isUnexpectedId()) {
+                        LOG.warning("Unexpected game settings presets format. Expected: "
+                                + GameSettingsPresets.CURRENT_FORMAT + ", Actual: " + format.actual());
+                        return new LoadResult(new GameSettingsPresets(), false);
+                    } else if (format.isNewerThanExpected()) {
+                        LOG.warning("Unsupported game settings presets format. Expected: "
+                                + GameSettingsPresets.CURRENT_FORMAT + ", Actual: " + format.actual());
+                        if (format.hasNewerMajorVersion()) {
                             return new LoadResult(new GameSettingsPresets(), false);
                         }
                     }
 
                     GameSettingsPresets deserialized = GameSettingsPresets.fromJson(jsonObject);
                     if (deserialized != null) {
-                        if (!GameSettingsPresets.CURRENT_SCHEMA_VERSION.equals(deserialized.getSchemaVersion())) {
-                            deserialized.setSchemaVersion(GameSettingsPresets.CURRENT_SCHEMA_VERSION);
+                        if (!GameSettingsPresets.CURRENT_FORMAT.equals(deserialized.getFormat())) {
+                            deserialized.setFormat(GameSettingsPresets.CURRENT_FORMAT);
                         }
 
-                        return new LoadResult(deserialized, !schemaVersion.isNewerThanExpected());
+                        return new LoadResult(deserialized, !format.isNewerThanExpected());
                     }
 
                     LOG.info("Game setting presets are empty");

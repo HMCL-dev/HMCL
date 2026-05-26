@@ -21,8 +21,8 @@ import com.google.gson.JsonParseException;
 import com.google.gson.JsonObject;
 import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.util.FileSaver;
+import org.jackhuang.hmcl.util.gson.FileFormat;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
-import org.jackhuang.hmcl.util.gson.SchemaVersion;
 import org.jackhuang.hmcl.util.i18n.I18n;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
@@ -164,22 +164,27 @@ public final class ConfigHolder {
                 return new Config();
             }
 
-            SchemaVersion.CheckResult schemaVersion = SchemaVersion.check(jsonObject, Config.CURRENT_SCHEMA_VERSION);
-            if (schemaVersion.isMissing()) {
-                LOG.warning("Missing schema version in settings file: " + SETTINGS_LOCATION);
+            FileFormat.CheckResult format = FileFormat.check(jsonObject, Config.CURRENT_FORMAT);
+            if (format.isMissing()) {
+                LOG.warning("Missing format in settings file: " + SETTINGS_LOCATION);
                 unsupportedVersion = true;
                 return new Config();
-            } else if (schemaVersion.isInvalid()) {
-                LOG.warning("Invalid schema version in settings file: "
-                        + SETTINGS_LOCATION + ", Actual: " + schemaVersion.invalidValue());
+            } else if (format.isInvalid()) {
+                LOG.warning("Invalid format in settings file: "
+                        + SETTINGS_LOCATION + ", Actual: " + format.invalidValue());
                 unsupportedVersion = true;
                 return new Config();
-            } else if (schemaVersion.isNewerThanExpected()) {
-                LOG.warning("Unsupported settings file schema version. Expected: "
-                        + Config.CURRENT_SCHEMA_VERSION + ", Actual: " + schemaVersion.actual());
+            } else if (format.isUnexpectedId()) {
+                LOG.warning("Unexpected settings file format. Expected: "
+                        + Config.CURRENT_FORMAT + ", Actual: " + format.actual());
+                unsupportedVersion = true;
+                return new Config();
+            } else if (format.isNewerThanExpected()) {
+                LOG.warning("Unsupported settings file format. Expected: "
+                        + Config.CURRENT_FORMAT + ", Actual: " + format.actual());
                 unsupportedVersion = true;
 
-                if (schemaVersion.hasNewerMajorVersion()) {
+                if (format.hasNewerMajorVersion()) {
                     // Unsupported major version, reset to default
                     return new Config();
                 }
@@ -191,8 +196,8 @@ public final class ConfigHolder {
                     return new Config();
                 }
 
-                if (!Config.CURRENT_SCHEMA_VERSION.equals(settings.getSchemaVersion())) {
-                    settings.setSchemaVersion(Config.CURRENT_SCHEMA_VERSION);
+                if (!Config.CURRENT_FORMAT.equals(settings.getFormat())) {
+                    settings.setFormat(Config.CURRENT_FORMAT);
                 }
 
                 return settings;

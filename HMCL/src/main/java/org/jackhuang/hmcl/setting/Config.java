@@ -48,8 +48,8 @@ import java.util.*;
 @JsonAdapter(value = Config.Adapter.class)
 public final class Config extends ObservableSetting {
 
-    /// The schema version supported by this config class.
-    public static final SchemaVersion CURRENT_SCHEMA_VERSION = new SchemaVersion(3, 0);
+    /// The file format supported by this config class.
+    public static final FileFormat CURRENT_FORMAT = new FileFormat("hmcl.config", new FormatVersion(3, 0));
 
     public static final Gson CONFIG_GSON = new GsonBuilder()
             .registerTypeAdapter(Path.class, PathTypeAdapter.INSTANCE)
@@ -71,7 +71,7 @@ public final class Config extends ObservableSetting {
     }
 
     public Config() {
-        tracker.markDirty(schemaVersion);
+        tracker.markDirty(format);
         register();
     }
 
@@ -81,23 +81,23 @@ public final class Config extends ObservableSetting {
 
     // Properties
 
-    /// The schema version used by this config file.
-    @SerializedName("schemaVersion")
-    private final ObjectProperty<SchemaVersion> schemaVersion = new SimpleObjectProperty<>(CURRENT_SCHEMA_VERSION);
+    /// The format used by this config file.
+    @SerializedName("format")
+    private final ObjectProperty<FileFormat> format = new SimpleObjectProperty<>(CURRENT_FORMAT);
 
-    /// Returns the schema version property.
-    public ObjectProperty<SchemaVersion> schemaVersionProperty() {
-        return schemaVersion;
+    /// Returns the format property.
+    public ObjectProperty<FileFormat> formatProperty() {
+        return format;
     }
 
-    /// Returns the schema version used by this config file.
-    public SchemaVersion getSchemaVersion() {
-        return schemaVersion.get();
+    /// Returns the format used by this config file.
+    public FileFormat getFormat() {
+        return format.get();
     }
 
-    /// Sets the schema version used by this config file.
-    public void setSchemaVersion(SchemaVersion schemaVersion) {
-        this.schemaVersion.set(schemaVersion);
+    /// Sets the format used by this config file.
+    public void setFormat(FileFormat format) {
+        this.format.set(Objects.requireNonNull(format));
     }
 
     @SerializedName("x")
@@ -798,7 +798,7 @@ public final class Config extends ObservableSetting {
             return new Config();
         }
 
-        /// Serializes the main config with the current schema version.
+        /// Serializes the main config with the current format.
         @Override
         public JsonElement serialize(Config src, Type typeOfSrc, JsonSerializationContext context) {
             if (src == null) {
@@ -806,7 +806,7 @@ public final class Config extends ObservableSetting {
             }
 
             JsonObject result = super.serialize(src, typeOfSrc, context).getAsJsonObject();
-            result.addProperty("schemaVersion", CURRENT_SCHEMA_VERSION.toString());
+            result.addProperty("format", CURRENT_FORMAT.toString());
             return result;
         }
 

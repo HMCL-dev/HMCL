@@ -27,7 +27,8 @@ import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import org.jackhuang.hmcl.util.gson.JsonSerializable;
 import org.jackhuang.hmcl.util.gson.ObservableSetting;
-import org.jackhuang.hmcl.util.gson.SchemaVersion;
+import org.jackhuang.hmcl.util.gson.FileFormat;
+import org.jackhuang.hmcl.util.gson.FormatVersion;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
 
@@ -46,12 +47,12 @@ import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 @NotNullByDefault
 @JsonSerializable
 public final class GameSettingsPresets extends ObservableSetting {
-    /// The schema version supported by this game settings preset store.
-    public static final SchemaVersion CURRENT_SCHEMA_VERSION = new SchemaVersion(1, 0);
+    /// The file format supported by this game settings preset store.
+    public static final FileFormat CURRENT_FORMAT = new FileFormat("hmcl.game-settings-presets", new FormatVersion(1, 0));
 
     /// Creates an empty game settings preset store.
     public GameSettingsPresets() {
-        tracker.markDirty(schemaVersion);
+        tracker.markDirty(format);
         register();
     }
 
@@ -75,23 +76,23 @@ public final class GameSettingsPresets extends ObservableSetting {
         setDefaultGameSettings(source.getDefaultGameSettings());
     }
 
-    /// The schema version used by this game settings preset store file.
-    @SerializedName("schemaVersion")
-    private final ObjectProperty<SchemaVersion> schemaVersion = new SimpleObjectProperty<>(CURRENT_SCHEMA_VERSION);
+    /// The format used by this game settings preset store file.
+    @SerializedName("format")
+    private final ObjectProperty<FileFormat> format = new SimpleObjectProperty<>(CURRENT_FORMAT);
 
-    /// Returns the schema version property.
-    public ObjectProperty<SchemaVersion> schemaVersionProperty() {
-        return schemaVersion;
+    /// Returns the format property.
+    public ObjectProperty<FileFormat> formatProperty() {
+        return format;
     }
 
-    /// Returns the schema version used by this game settings preset store file.
-    public SchemaVersion getSchemaVersion() {
-        return schemaVersion.get();
+    /// Returns the format used by this game settings preset store file.
+    public FileFormat getFormat() {
+        return format.get();
     }
 
-    /// Sets the schema version used by this game settings preset store file.
-    public void setSchemaVersion(SchemaVersion schemaVersion) {
-        this.schemaVersion.set(Objects.requireNonNull(schemaVersion));
+    /// Sets the format used by this game settings preset store file.
+    public void setFormat(FileFormat format) {
+        this.format.set(Objects.requireNonNull(format));
     }
 
     /// Reusable game setting presets.
