@@ -115,8 +115,7 @@ public record SchemaVersion(int major, int minor) implements Comparable<SchemaVe
     /// @param object the JSON object that contains the schema version
     /// @param expected the schema version supported by the current code
     /// @return the schema version check result
-    /// @throws JsonParseException if the schema version member exists but is invalid
-    public static CheckResult check(JsonObject object, SchemaVersion expected) throws JsonParseException {
+    public static CheckResult check(JsonObject object, SchemaVersion expected) {
         return check(object, DEFAULT_MEMBER_NAME, expected);
     }
 
@@ -126,16 +125,20 @@ public record SchemaVersion(int major, int minor) implements Comparable<SchemaVe
     /// @param memberName the JSON member name
     /// @param expected the schema version supported by the current code
     /// @return the schema version check result
-    /// @throws JsonParseException if the schema version member exists but is invalid
-    public static CheckResult check(JsonObject object, String memberName, SchemaVersion expected) throws JsonParseException {
+    public static CheckResult check(JsonObject object, String memberName, SchemaVersion expected) {
         Objects.requireNonNull(object);
         Objects.requireNonNull(memberName);
+        Objects.requireNonNull(expected);
 
         if (!object.has(memberName)) {
-            return new CheckResult(null, expected);
+            return new CheckResult(null, expected, CheckResult.Status.MISSING, null);
         }
 
-        return new CheckResult(readFrom(object, memberName), Objects.requireNonNull(expected));
+        try {
+            return new CheckResult(readFrom(object, memberName), expected, CheckResult.Status.VALID, null);
+        } catch (JsonParseException e) {
+            return new CheckResult(null, expected, CheckResult.Status.INVALID, String.valueOf(object.get(memberName)));
+        }
     }
 
     /// Compares this version with another schema version.
@@ -156,32 +159,68 @@ public record SchemaVersion(int major, int minor) implements Comparable<SchemaVe
         return major + "." + minor;
     }
 
-    /// Result of comparing a serialized schema version with the version supported by the current code.
+    /// Result of checking a serialized schema version against the version supported by the current code.
     ///
-    /// @param actual the schema version read from serialized data, or `null` when the member is missing
+    /// @param actual the schema version read from serialized data, or `null` when no valid version was read
     /// @param expected the schema version supported by the current code
-    public record CheckResult(@Nullable SchemaVersion actual, SchemaVersion expected) {
+    /// @param status the schema version check status
+    /// @param invalidValue the raw invalid JSON value text, or `null` when the member is valid or missing
+    public record CheckResult(@Nullable SchemaVersion actual,
+                              SchemaVersion expected,
+                              Status status,
+                              @Nullable String invalidValue) {
+        /// The schema version check status.
+        public enum Status {
+            /// A schema version member exists and was parsed successfully.
+            VALID,
+
+            /// No schema version member exists.
+            MISSING,
+
+            /// A schema version member exists but cannot be parsed.
+            INVALID
+        }
+
         /// Creates a schema version check result.
         ///
-        /// @param actual the schema version read from serialized data, or `null` when the member is missing
+        /// @param actual the schema version read from serialized data, or `null` when no valid version was read
         /// @param expected the schema version supported by the current code
+        /// @param status the schema version check status
+        /// @param invalidValue the raw invalid JSON value text, or `null` when the member is valid or missing
         public CheckResult {
             Objects.requireNonNull(expected);
+            Objects.requireNonNull(status);
+            if (status == Status.VALID) {
+                Objects.requireNonNull(actual);
+            } else if (actual != null) {
+                throw new IllegalArgumentException("Only valid schema version checks may have an actual version");
+            }
+
+            if (status == Status.INVALID) {
+                Objects.requireNonNull(invalidValue);
+            } else if (invalidValue != null) {
+                throw new IllegalArgumentException("Only invalid schema version checks may have an invalid value");
+            }
         }
 
         /// Returns whether the serialized data does not contain a schema version member.
         public boolean isMissing() {
-            return actual == null;
+            return status == Status.MISSING;
+        }
+
+        /// Returns whether the serialized data contains an unparseable schema version member.
+        public boolean isInvalid() {
+            return status == Status.INVALID;
         }
 
         /// Returns whether the serialized schema is newer than the supported schema.
         public boolean isNewerThanExpected() {
-            return actual != null && actual.compareTo(expected) > 0;
+            return actual != null && status == Status.VALID && actual.compareTo(expected) > 0;
         }
 
         /// Returns whether the serialized schema has a newer major version than the supported schema.
         public boolean hasNewerMajorVersion() {
-            return actual != null && actual.major() > expected.major();
+            return actual != null && status == Status.VALID && actual.major() > expected.major();
         }
     }
 

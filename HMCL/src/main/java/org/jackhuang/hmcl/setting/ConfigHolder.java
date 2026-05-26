@@ -164,26 +164,25 @@ public final class ConfigHolder {
                 return new Config();
             }
 
-            try {
-                SchemaVersion.CheckResult schemaVersion = SchemaVersion.check(jsonObject, Config.CURRENT_SCHEMA_VERSION);
-                if (schemaVersion.isMissing()) {
-                    LOG.warning("Missing schema version in settings file: " + SETTINGS_LOCATION);
-                    unsupportedVersion = true;
-                    return new Config();
-                } else if (schemaVersion.isNewerThanExpected()) {
-                    LOG.warning("Unsupported settings file schema version. Expected: "
-                            + Config.CURRENT_SCHEMA_VERSION + ", Actual: " + schemaVersion.actual());
-                    unsupportedVersion = true;
-
-                    if (schemaVersion.hasNewerMajorVersion()) {
-                        // Unsupported major version, reset to default
-                        return new Config();
-                    }
-                }
-            } catch (JsonParseException e) {
-                LOG.warning("Invalid schema version in settings file: " + SETTINGS_LOCATION, e);
+            SchemaVersion.CheckResult schemaVersion = SchemaVersion.check(jsonObject, Config.CURRENT_SCHEMA_VERSION);
+            if (schemaVersion.isMissing()) {
+                LOG.warning("Missing schema version in settings file: " + SETTINGS_LOCATION);
                 unsupportedVersion = true;
                 return new Config();
+            } else if (schemaVersion.isInvalid()) {
+                LOG.warning("Invalid schema version in settings file: "
+                        + SETTINGS_LOCATION + ", Actual: " + schemaVersion.invalidValue());
+                unsupportedVersion = true;
+                return new Config();
+            } else if (schemaVersion.isNewerThanExpected()) {
+                LOG.warning("Unsupported settings file schema version. Expected: "
+                        + Config.CURRENT_SCHEMA_VERSION + ", Actual: " + schemaVersion.actual());
+                unsupportedVersion = true;
+
+                if (schemaVersion.hasNewerMajorVersion()) {
+                    // Unsupported major version, reset to default
+                    return new Config();
+                }
             }
 
             try {
