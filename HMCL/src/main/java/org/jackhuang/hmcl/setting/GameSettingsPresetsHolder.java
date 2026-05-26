@@ -23,7 +23,7 @@ import javafx.beans.property.ObjectProperty;
 import javafx.collections.ObservableList;
 import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.util.FileSaver;
-import org.jackhuang.hmcl.util.gson.FileFormat;
+import org.jackhuang.hmcl.util.gson.JsonFileFormat;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
@@ -128,8 +128,8 @@ public final class GameSettingsPresetsHolder {
                 if (jsonObject == null) {
                     LOG.info("Game setting presets are empty");
                 } else {
-                    FileFormat.CheckResult format =
-                            FileFormat.check(jsonObject, GameSettingsPresets.CURRENT_FORMAT);
+                    JsonFileFormat.CheckResult format =
+                            JsonFileFormat.check(jsonObject, GameSettingsPresets.CURRENT_FORMAT);
                     if (format.isMissing()) {
                         LOG.warning("Missing format in game settings presets: " + LOCATION);
                         return new LoadResult(new GameSettingsPresets(), false);

@@ -21,7 +21,7 @@ import com.google.gson.JsonParseException;
 import com.google.gson.JsonObject;
 import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.util.FileSaver;
-import org.jackhuang.hmcl.util.gson.FileFormat;
+import org.jackhuang.hmcl.util.gson.JsonFileFormat;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.i18n.I18n;
 import org.jackhuang.hmcl.util.io.FileUtils;
@@ -164,7 +164,7 @@ public final class ConfigHolder {
                 return new Config();
             }
 
-            FileFormat.CheckResult format = FileFormat.check(jsonObject, Config.CURRENT_FORMAT);
+            JsonFileFormat.CheckResult format = JsonFileFormat.check(jsonObject, Config.CURRENT_FORMAT);
             if (format.isMissing()) {
                 LOG.warning("Missing format in settings file: " + SETTINGS_LOCATION);
                 unsupportedVersion = true;

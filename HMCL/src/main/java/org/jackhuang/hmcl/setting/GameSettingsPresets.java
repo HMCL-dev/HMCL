@@ -27,8 +27,7 @@ import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import org.jackhuang.hmcl.util.gson.JsonSerializable;
 import org.jackhuang.hmcl.util.gson.ObservableSetting;
-import org.jackhuang.hmcl.util.gson.FileFormat;
-import org.jackhuang.hmcl.util.gson.FormatVersion;
+import org.jackhuang.hmcl.util.gson.JsonFileFormat;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
 
@@ -48,7 +47,7 @@ import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 @JsonSerializable
 public final class GameSettingsPresets extends ObservableSetting {
     /// The file format supported by this game settings preset store.
-    public static final FileFormat CURRENT_FORMAT = new FileFormat("hmcl.game-settings-presets", new FormatVersion(1, 0));
+    public static final JsonFileFormat CURRENT_FORMAT = new JsonFileFormat("hmcl.game-settings-presets", new JsonFileFormat.Version(1, 0));
 
     /// Creates an empty game settings preset store.
     public GameSettingsPresets() {
@@ -78,20 +77,20 @@ public final class GameSettingsPresets extends ObservableSetting {
 
     /// The format used by this game settings preset store file.
     @SerializedName("format")
-    private final ObjectProperty<FileFormat> format = new SimpleObjectProperty<>(CURRENT_FORMAT);
+    private final ObjectProperty<JsonFileFormat> format = new SimpleObjectProperty<>(CURRENT_FORMAT);
 
     /// Returns the format property.
-    public ObjectProperty<FileFormat> formatProperty() {
+    public ObjectProperty<JsonFileFormat> formatProperty() {
         return format;
     }
 
     /// Returns the format used by this game settings preset store file.
-    public FileFormat getFormat() {
+    public JsonFileFormat getFormat() {
         return format.get();
     }
 
     /// Sets the format used by this game settings preset store file.
-    public void setFormat(FileFormat format) {
+    public void setFormat(JsonFileFormat format) {
         this.format.set(Objects.requireNonNull(format));
     }
 

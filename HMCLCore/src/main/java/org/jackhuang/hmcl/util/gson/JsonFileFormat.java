@@ -47,9 +47,9 @@ import java.util.Objects;
 /// @param version the format version
 /// @author Glavo
 @JsonSerializable
-@JsonAdapter(FileFormat.Adapter.class)
+@JsonAdapter(JsonFileFormat.Adapter.class)
 @NotNullByDefault
-public record FileFormat(String id, FormatVersion version) {
+public record JsonFileFormat(String id, Version version) {
     /// The default JSON member name used for file formats.
     public static final String DEFAULT_MEMBER_NAME = "format";
 
@@ -61,7 +61,7 @@ public record FileFormat(String id, FormatVersion version) {
 
     /// @param id the stable format identifier
     /// @param version the format version
-    public FileFormat {
+    public JsonFileFormat {
         Objects.requireNonNull(id);
         Objects.requireNonNull(version);
 
@@ -75,7 +75,7 @@ public record FileFormat(String id, FormatVersion version) {
     /// @param formatObject the JSON object that contains the file format fields
     /// @return the parsed file format
     /// @throws JsonParseException if the file format object is invalid
-    public static FileFormat fromJsonObject(JsonObject formatObject) throws JsonParseException {
+    public static JsonFileFormat fromJsonObject(JsonObject formatObject) throws JsonParseException {
         Objects.requireNonNull(formatObject);
 
         @Nullable JsonElement idElement = formatObject.get(ID_MEMBER_NAME);
@@ -89,7 +89,7 @@ public record FileFormat(String id, FormatVersion version) {
         }
 
         try {
-            return new FileFormat(idPrimitive.getAsString(), FormatVersion.parse(versionPrimitive.getAsString()));
+            return new JsonFileFormat(idPrimitive.getAsString(), Version.parse(versionPrimitive.getAsString()));
         } catch (IllegalArgumentException e) {
             throw new JsonParseException("Invalid file format: " + formatObject, e);
         }
@@ -100,7 +100,7 @@ public record FileFormat(String id, FormatVersion version) {
     /// @param object the JSON object that contains the file format
     /// @return the parsed file format
     /// @throws JsonParseException if the format member is missing or invalid
-    public static FileFormat readFrom(JsonObject object) throws JsonParseException {
+    public static JsonFileFormat readFrom(JsonObject object) throws JsonParseException {
         return readFrom(object, DEFAULT_MEMBER_NAME);
     }
 
@@ -110,7 +110,7 @@ public record FileFormat(String id, FormatVersion version) {
     /// @param memberName the JSON member name
     /// @return the parsed file format
     /// @throws JsonParseException if the format member is missing or invalid
-    public static FileFormat readFrom(JsonObject object, String memberName) throws JsonParseException {
+    public static JsonFileFormat readFrom(JsonObject object, String memberName) throws JsonParseException {
         Objects.requireNonNull(object);
         Objects.requireNonNull(memberName);
 
@@ -122,7 +122,7 @@ public record FileFormat(String id, FormatVersion version) {
     /// @param object the JSON object that contains the file format
     /// @param expected the file format supported by the current code
     /// @return the file format check result
-    public static CheckResult check(JsonObject object, FileFormat expected) {
+    public static CheckResult check(JsonObject object, JsonFileFormat expected) {
         return check(object, DEFAULT_MEMBER_NAME, expected);
     }
 
@@ -132,7 +132,7 @@ public record FileFormat(String id, FormatVersion version) {
     /// @param memberName the JSON member name
     /// @param expected the file format supported by the current code
     /// @return the file format check result
-    public static CheckResult check(JsonObject object, String memberName, FileFormat expected) {
+    public static CheckResult check(JsonObject object, String memberName, JsonFileFormat expected) {
         Objects.requireNonNull(object);
         Objects.requireNonNull(memberName);
         Objects.requireNonNull(expected);
@@ -142,7 +142,7 @@ public record FileFormat(String id, FormatVersion version) {
         }
 
         try {
-            FileFormat actual = readFrom(object, memberName);
+            JsonFileFormat actual = readFrom(object, memberName);
             return new CheckResult(actual, expected, actual.id.equals(expected.id)
                     ? CheckResult.Status.VALID
                     : CheckResult.Status.UNEXPECTED_ID, null);
@@ -152,7 +152,7 @@ public record FileFormat(String id, FormatVersion version) {
     }
 
     /// Reads a file format from a JSON element.
-    private static FileFormat readFromElement(@Nullable JsonElement element, String memberName) throws JsonParseException {
+    private static JsonFileFormat readFromElement(@Nullable JsonElement element, String memberName) throws JsonParseException {
         if (!(element instanceof JsonObject formatObject)) {
             throw new JsonParseException("Invalid file format member `" + memberName + "`: " + element);
         }
@@ -192,8 +192,8 @@ public record FileFormat(String id, FormatVersion version) {
     /// @param expected the file format supported by the current code
     /// @param status the file format check status
     /// @param invalidValue the raw invalid JSON value text, or `null` when the member is valid or missing
-    public record CheckResult(@Nullable FileFormat actual,
-                              FileFormat expected,
+    public record CheckResult(@Nullable JsonFileFormat actual,
+                              JsonFileFormat expected,
                               Status status,
                               @Nullable String invalidValue) {
         /// The file format check status.
@@ -259,15 +259,15 @@ public record FileFormat(String id, FormatVersion version) {
         }
     }
 
-    /// Gson adapter for the JSON object representation of [FileFormat].
+    /// Gson adapter for the JSON object representation of [JsonFileFormat].
     ///
     /// Null JSON values are preserved as null. Non-object values are rejected because file
     /// formats are intentionally serialized as structured metadata.
     @NotNullByDefault
-    public static final class Adapter extends TypeAdapter<@Nullable FileFormat> {
+    public static final class Adapter extends TypeAdapter<@Nullable JsonFileFormat> {
         /// Writes the format as an object, or JSON null when the value is null.
         @Override
-        public void write(JsonWriter out, @Nullable FileFormat value) throws IOException {
+        public void write(JsonWriter out, @Nullable JsonFileFormat value) throws IOException {
             if (value != null) {
                 out.beginObject();
                 out.name(ID_MEMBER_NAME).value(value.id);
@@ -280,13 +280,78 @@ public record FileFormat(String id, FormatVersion version) {
 
         /// Reads a file format from an object or null JSON token.
         @Override
-        public @Nullable FileFormat read(JsonReader in) throws IOException {
+        public @Nullable JsonFileFormat read(JsonReader in) throws IOException {
             JsonElement element = JsonParser.parseReader(in);
             if (element.isJsonNull()) {
                 return null;
             }
 
             return readFromElement(element, DEFAULT_MEMBER_NAME);
+        }
+    }
+
+    /// Semantic version marker for a serialized file format.
+    ///
+    /// The string representation is the strict `major.minor` form.
+    ///
+    /// @param major the major format version
+    /// @param minor the minor format version
+    /// @author Glavo
+    @NotNullByDefault
+    public record Version(int major, int minor) implements Comparable<Version> {
+        /// @param major the major format version
+        /// @param minor the minor format version
+        public Version {
+            if (major < 0) throw new IllegalArgumentException("Major version must be non-negative: " + major);
+            if (minor < 0) throw new IllegalArgumentException("Minor version must be non-negative: " + minor);
+        }
+
+        /// Parses a format version string.
+        ///
+        /// @param version the version string in `major.minor` form
+        /// @return the parsed format version
+        /// @throws IllegalArgumentException if the version string is invalid
+        public static Version parse(String version) {
+            int dot = version.indexOf('.');
+            if (dot <= 0 || dot != version.lastIndexOf('.') || dot == version.length() - 1) {
+                throw new IllegalArgumentException("Invalid format version: " + version);
+            }
+
+            try {
+                return new Version(parsePart(version, 0, dot), parsePart(version, dot + 1, version.length()));
+            } catch (IllegalArgumentException e) {
+                throw new IllegalArgumentException("Invalid format version: " + version, e);
+            }
+        }
+
+        /// Parses a decimal version part.
+        private static int parsePart(String version, int start, int end) {
+            for (int i = start; i < end; i++) {
+                char ch = version.charAt(i);
+                if (ch < '0' || ch > '9') {
+                    throw new IllegalArgumentException("Invalid format version: " + version);
+                }
+            }
+
+            return Integer.parseInt(version.substring(start, end));
+        }
+
+        /// Compares this version with another format version.
+        ///
+        /// @param o the other version to compare to
+        /// @return a negative integer, zero, or a positive integer as this version
+        ///         is less than, equal to, or greater than the specified version
+        @Override
+        public int compareTo(Version o) {
+            return major != o.major
+                    ? Integer.compare(major, o.major)
+                    : Integer.compare(minor, o.minor);
+        }
+
+        /// Returns the canonical `major.minor` string representation.
+        @Override
+        public String toString() {
+            return major + "." + minor;
         }
     }
 }

@@ -49,7 +49,7 @@ import java.util.*;
 public final class Config extends ObservableSetting {
 
     /// The file format supported by this config class.
-    public static final FileFormat CURRENT_FORMAT = new FileFormat("hmcl.config", new FormatVersion(3, 0));
+    public static final JsonFileFormat CURRENT_FORMAT = new JsonFileFormat("hmcl.config", new JsonFileFormat.Version(3, 0));
 
     public static final Gson CONFIG_GSON = new GsonBuilder()
             .registerTypeAdapter(Path.class, PathTypeAdapter.INSTANCE)
@@ -83,20 +83,20 @@ public final class Config extends ObservableSetting {
 
     /// The format used by this config file.
     @SerializedName("format")
-    private final ObjectProperty<FileFormat> format = new SimpleObjectProperty<>(CURRENT_FORMAT);
+    private final ObjectProperty<JsonFileFormat> format = new SimpleObjectProperty<>(CURRENT_FORMAT);
 
     /// Returns the format property.
-    public ObjectProperty<FileFormat> formatProperty() {
+    public ObjectProperty<JsonFileFormat> formatProperty() {
         return format;
     }
 
     /// Returns the format used by this config file.
-    public FileFormat getFormat() {
+    public JsonFileFormat getFormat() {
         return format.get();
     }
 
     /// Sets the format used by this config file.
-    public void setFormat(FileFormat format) {
+    public void setFormat(JsonFileFormat format) {
         this.format.set(Objects.requireNonNull(format));
     }
 
@@ -806,7 +806,7 @@ public final class Config extends ObservableSetting {
             }
 
             JsonObject result = super.serialize(src, typeOfSrc, context).getAsJsonObject();
-            result.add("format", context.serialize(CURRENT_FORMAT, FileFormat.class));
+            result.add("format", context.serialize(CURRENT_FORMAT, JsonFileFormat.class));
             return result;
         }
 
