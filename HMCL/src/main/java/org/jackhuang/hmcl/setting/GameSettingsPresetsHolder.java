@@ -24,8 +24,7 @@ import javafx.collections.ObservableList;
 import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.util.FileSaver;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
-import org.jackhuang.hmcl.util.io.FileUtils;
-import org.jackhuang.hmcl.util.platform.OperatingSystem;
+import org.jackhuang.hmcl.util.gson.SchemaVersion;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.UnknownNullability;
@@ -109,39 +108,69 @@ public final class GameSettingsPresetsHolder {
         LOG.info("Game settings presets location: " + LOCATION);
 
         boolean newlyCreated = !Files.exists(LOCATION);
-        gameSettingsPresets = load(migratedGameSettingsPresets);
-        if (allowSave) {
+        LoadResult result = load(migratedGameSettingsPresets);
+        gameSettingsPresets = result.presets();
+        if (allowSave && result.allowSave()) {
             gameSettingsPresets.addListener(source -> FileSaver.save(LOCATION, gameSettingsPresets.toJson()));
         }
 
-        if (newlyCreated) {
+        if (newlyCreated && allowSave && result.allowSave()) {
             LOG.info("Creating game settings presets file " + LOCATION);
-            FileUtils.saveSafely(LOCATION, gameSettingsPresets.toJson());
+            FileSaver.save(LOCATION, gameSettingsPresets.toJson());
         }
     }
 
     /// Loads the detached game settings preset file, falling back to migrated presets when the file is absent.
-    private static GameSettingsPresets load(@Nullable GameSettingsPresets migratedGameSettingsPresets) throws IOException {
+    private static LoadResult load(@Nullable GameSettingsPresets migratedGameSettingsPresets) throws IOException {
         if (Files.exists(LOCATION)) {
             try {
                 JsonObject jsonObject = JsonUtils.fromJsonFile(LOCATION, JsonObject.class);
                 if (jsonObject == null) {
                     LOG.info("Game setting presets are empty");
                 } else {
-                    GameSettingsPresets deserialized = GameSettingsPresets.fromJson(jsonObject);
-                    if (deserialized == null) {
-                        LOG.info("Game setting presets are empty");
-                    } else {
-                        return deserialized;
+                    SchemaVersion.CheckResult schemaVersion =
+                            SchemaVersion.check(jsonObject, GameSettingsPresets.CURRENT_SCHEMA_VERSION);
+                    if (schemaVersion.isMissing()) {
+                        LOG.warning("Missing schema version in game settings presets: " + LOCATION);
+                        return new LoadResult(new GameSettingsPresets(), false);
+                    } else if (schemaVersion.isInvalid()) {
+                        LOG.warning("Invalid schema version in game settings presets: "
+                                + LOCATION + ", Actual: " + schemaVersion.invalidValue());
+                        return new LoadResult(new GameSettingsPresets(), false);
+                    } else if (schemaVersion.isNewerThanExpected()) {
+                        LOG.warning("Unsupported game settings presets schema version. Expected: "
+                                + GameSettingsPresets.CURRENT_SCHEMA_VERSION + ", Actual: " + schemaVersion.actual());
+                        if (schemaVersion.hasNewerMajorVersion()) {
+                            return new LoadResult(new GameSettingsPresets(), false);
+                        }
                     }
+
+                    GameSettingsPresets deserialized = GameSettingsPresets.fromJson(jsonObject);
+                    if (deserialized != null) {
+                        if (!GameSettingsPresets.CURRENT_SCHEMA_VERSION.equals(deserialized.getSchemaVersion())) {
+                            deserialized.setSchemaVersion(GameSettingsPresets.CURRENT_SCHEMA_VERSION);
+                        }
+
+                        return new LoadResult(deserialized, !schemaVersion.isNewerThanExpected());
+                    }
+
+                    LOG.info("Game setting presets are empty");
                 }
             } catch (JsonParseException e) {
                 LOG.warning("Malformed game setting presets.", e);
             }
 
-            return new GameSettingsPresets();
+            return new LoadResult(new GameSettingsPresets(), true);
         }
 
-        return migratedGameSettingsPresets != null ? migratedGameSettingsPresets : new GameSettingsPresets();
+        return new LoadResult(
+                migratedGameSettingsPresets != null ? migratedGameSettingsPresets : new GameSettingsPresets(), true);
+    }
+
+    /// Result of loading the detached preset store.
+    ///
+    /// @param presets the loaded preset store
+    /// @param allowSave whether the preset file may be overwritten
+    private record LoadResult(GameSettingsPresets presets, boolean allowSave) {
     }
 }
