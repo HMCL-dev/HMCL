@@ -48,6 +48,7 @@ public final class GUIDTest {
 
         assertEquals("\"123e4567-e89b-12d3-a456-426614174000\"", gson.toJson(guid));
         assertEquals(guid, gson.fromJson("\"123e4567-e89b-12d3-a456-426614174000\"", GUID.class));
+        assertEquals(guid, gson.fromJson("\"123e4567e89b12d3a456426614174000\"", GUID.class));
         assertNull(gson.fromJson("null", GUID.class));
     }
 }

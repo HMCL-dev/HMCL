@@ -54,6 +54,7 @@ import org.jackhuang.hmcl.ui.decorator.DecoratorPage;
 import org.jackhuang.hmcl.ui.versions.VersionIconDialog;
 import org.jackhuang.hmcl.ui.versions.VersionPage;
 import org.jackhuang.hmcl.ui.versions.Versions;
+import org.jackhuang.hmcl.util.GUID;
 import org.jackhuang.hmcl.util.Holder;
 import org.jackhuang.hmcl.util.Pair;
 import org.jackhuang.hmcl.util.ServerAddress;
@@ -71,7 +72,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 import java.util.Objects;
-import java.util.UUID;
 import java.util.function.Function;
 
 import static org.jackhuang.hmcl.util.Pair.pair;
@@ -897,7 +897,7 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
 
         boolean removedCurrentPreset = Objects.equals(getCurrentPreset(), setting);
         GameSettings.Preset next = settings.get(index == 0 ? 1 : index - 1);
-        UUID removedId = setting.idProperty().getValue();
+        GUID removedId = setting.idProperty().getValue();
         if (Objects.equals(GameSettingsPresetsHolder.getDefaultGameSettings(), removedId)) {
             GameSettingsPresetsHolder.setDefaultGameSettings(next.idProperty().getValue());
         }
@@ -936,7 +936,7 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
             if (newValue instanceof GameSettings.Instance setting) {
                 updatingParentSetting = true;
                 try {
-                    UUID parent = setting.parentProperty().getValue();
+                    GUID parent = setting.parentProperty().getValue();
                     button.setValue(parent != null ? GameSettingsPresetsHolder.getGameSettings(parent) : null);
                 } finally {
                     updatingParentSetting = false;
@@ -2336,7 +2336,7 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
 
     /// Returns the configured parent preset for an instance.
     private GameSettings.Preset getParentGameSettings(GameSettings.Instance instance) {
-        UUID parent = instance.parentProperty().getValue();
+        GUID parent = instance.parentProperty().getValue();
         GameSettings.Preset parentSetting = GameSettingsPresetsHolder.getGameSettings(parent);
         return parentSetting != null ? parentSetting : GameSettingsPresetsHolder.getDefaultGameSettingsOrCreate();
     }

@@ -38,6 +38,7 @@ import org.jackhuang.hmcl.setting.Profile;
 import org.jackhuang.hmcl.setting.VersionIconType;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.util.FileSaver;
+import org.jackhuang.hmcl.util.GUID;
 import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
@@ -326,7 +327,7 @@ public final class HMCLGameRepository extends DefaultGameRepository {
     }
 
     public GameSettings.Preset getParentGameSettings(@Nullable GameSettings.Instance instance) {
-        @Nullable UUID parent = instance != null
+        @Nullable GUID parent = instance != null
                 ? instance.parentProperty().getValue()
                 : profile.getId();
         GameSettings.Preset parentSetting = GameSettingsPresetsHolder.getGameSettings(parent);

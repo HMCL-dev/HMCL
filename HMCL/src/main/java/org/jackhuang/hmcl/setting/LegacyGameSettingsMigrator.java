@@ -25,6 +25,7 @@ import org.jackhuang.hmcl.game.NativesDirectoryType;
 import org.jackhuang.hmcl.game.ProcessPriority;
 import org.jackhuang.hmcl.game.QuickPlayType;
 import org.jackhuang.hmcl.game.Renderer;
+import org.jackhuang.hmcl.util.GUID;
 import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
@@ -85,9 +86,9 @@ public final class LegacyGameSettingsMigrator {
     }
 
     /// Returns the stable profile ID for a migrated legacy profile.
-    public static UUID getLegacyProfileId(String profileName) {
-        return UUID.nameUUIDFromBytes(
-                (LEGACY_PROFILE_ID_NAMESPACE + profileName).getBytes(StandardCharsets.UTF_8));
+    public static GUID getLegacyProfileId(String profileName) {
+        return GUID.fromUUID(UUID.nameUUIDFromBytes(
+                (LEGACY_PROFILE_ID_NAMESPACE + profileName).getBytes(StandardCharsets.UTF_8)));
     }
 
     /// Converts a legacy profile-level setting JSON object into a named preset.
@@ -96,7 +97,7 @@ public final class LegacyGameSettingsMigrator {
     }
 
     /// Converts a legacy profile-level setting JSON object into a preset with the given ID.
-    public static GameSettings.Preset toPreset(UUID id, String name, @Nullable JsonObject source) {
+    public static GameSettings.Preset toPreset(GUID id, String name, @Nullable JsonObject source) {
         GameSettings.Preset target = new GameSettings.Preset(id);
         target.nameProperty().setValue(name);
         if (getLegacyGameDirType(source, GameDirectoryType.ROOT_FOLDER) == GameDirectoryType.VERSION_FOLDER) {
@@ -117,7 +118,7 @@ public final class LegacyGameSettingsMigrator {
     public static @Nullable GameSettings.Instance migrateInstanceGameSettings(
             Path versionRoot,
             Path baseDirectory,
-            @Nullable UUID parent) {
+            @Nullable GUID parent) {
         Objects.requireNonNull(versionRoot);
         Objects.requireNonNull(baseDirectory);
 
@@ -147,7 +148,7 @@ public final class LegacyGameSettingsMigrator {
     }
 
     /// Converts a legacy local setting JSON object into an instance game setting.
-    public static GameSettings.Instance toInstance(@Nullable UUID parent, @Nullable JsonObject source, boolean copyValues) {
+    public static GameSettings.Instance toInstance(@Nullable GUID parent, @Nullable JsonObject source, boolean copyValues) {
         GameSettings.Instance target = new GameSettings.Instance();
         target.parentProperty().setValue(parent);
         target.iconProperty().setValue(parseLegacyVersionIconType(source));
@@ -197,7 +198,7 @@ public final class LegacyGameSettingsMigrator {
     }
 
     /// Preserves inherited legacy `VERSION_FOLDER` semantics for local settings that inherit parent values.
-    private static void preserveInheritedRunningDirectory(GameSettings.Instance setting, @Nullable UUID parent) {
+    private static void preserveInheritedRunningDirectory(GameSettings.Instance setting, @Nullable GUID parent) {
         GameSettings.Preset parentSetting = GameSettingsPresetsHolder.getGameSettings(parent);
         if (parentSetting != null && parentSetting.defaultIsolationTypeProperty().getValue() == DefaultIsolationType.ALWAYS) {
             setting.runningDirProperty().setValue("");
@@ -210,7 +211,7 @@ public final class LegacyGameSettingsMigrator {
             GameSettings.Instance setting,
             JsonObject legacySettingJson,
             Path baseDirectory,
-            @Nullable UUID parent) {
+            @Nullable GUID parent) {
         GameSettings.Preset parentSetting = GameSettingsPresetsHolder.getGameSettings(parent);
         if (parentSetting != null
                 && getLegacyGameDirType(legacySettingJson, GameDirectoryType.ROOT_FOLDER) == GameDirectoryType.ROOT_FOLDER

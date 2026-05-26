@@ -37,6 +37,7 @@ import org.jackhuang.hmcl.game.HMCLCacheRepository;
 import org.jackhuang.hmcl.game.HMCLGameRepository;
 import org.jackhuang.hmcl.game.Version;
 import org.jackhuang.hmcl.ui.WeakListenerHolder;
+import org.jackhuang.hmcl.util.GUID;
 import org.jackhuang.hmcl.util.ToStringBuilder;
 import org.jackhuang.hmcl.util.javafx.ObservableHelper;
 import org.jetbrains.annotations.Nullable;
@@ -45,7 +46,6 @@ import java.lang.reflect.Type;
 import java.nio.file.Path;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.UUID;
 
 import static org.jackhuang.hmcl.ui.FXUtils.onInvalidating;
 import static org.jackhuang.hmcl.ui.FXUtils.runInFX;
@@ -60,20 +60,20 @@ public final class Profile implements Observable {
     private final HMCLGameRepository repository;
 
     /// The stable profile ID.
-    private final ObjectProperty<UUID> id = new SimpleObjectProperty<>(this, "id", UUID.randomUUID());
+    private final ObjectProperty<GUID> id = new SimpleObjectProperty<>(this, "id", GUID.random());
 
     /// Returns the stable profile ID property.
-    public ObjectProperty<UUID> idProperty() {
+    public ObjectProperty<GUID> idProperty() {
         return id;
     }
 
     /// Returns the stable profile ID.
-    public UUID getId() {
+    public GUID getId() {
         return id.get();
     }
 
     /// Sets the stable profile ID.
-    public void setId(UUID id) {
+    public void setId(GUID id) {
         this.id.set(Objects.requireNonNull(id));
     }
 
@@ -138,10 +138,10 @@ public final class Profile implements Observable {
     }
 
     public Profile(String name, Path initialGameDir, @Nullable String selectedVersion, boolean useRelativePath) {
-        this(UUID.randomUUID(), name, initialGameDir, selectedVersion, useRelativePath);
+        this(GUID.random(), name, initialGameDir, selectedVersion, useRelativePath);
     }
 
-    private Profile(UUID id, String name, Path initialGameDir, @Nullable String selectedVersion, boolean useRelativePath) {
+    private Profile(GUID id, String name, Path initialGameDir, @Nullable String selectedVersion, boolean useRelativePath) {
         this.id.set(Objects.requireNonNull(id));
         this.name = new SimpleStringProperty(this, "name", name);
         gameDir = new SimpleObjectProperty<>(this, "gameDir", initialGameDir);
@@ -225,7 +225,7 @@ public final class Profile implements Observable {
                 return JsonNull.INSTANCE;
 
             JsonObject jsonObject = new JsonObject();
-            jsonObject.add("id", context.serialize(src.getId(), UUID.class));
+            jsonObject.add("id", context.serialize(src.getId(), GUID.class));
             jsonObject.addProperty("name", src.getName());
             jsonObject.addProperty("gameDir", src.getGameDir().toString());
             jsonObject.addProperty("useRelativePath", src.isUseRelativePath());
@@ -237,7 +237,7 @@ public final class Profile implements Observable {
         @Override
         public Profile deserialize(JsonElement json, Type typeOfT, JsonDeserializationContext context) throws JsonParseException {
             if (!(json instanceof JsonObject obj)) return null;
-            UUID id = context.deserialize(obj.get("id"), UUID.class);
+            GUID id = context.deserialize(obj.get("id"), GUID.class);
             if (id == null) {
                 throw new JsonParseException("Profile ID cannot be null");
             }

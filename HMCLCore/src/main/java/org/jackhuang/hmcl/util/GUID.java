@@ -24,6 +24,7 @@ import com.google.gson.stream.JsonReader;
 import com.google.gson.stream.JsonToken;
 import com.google.gson.stream.JsonWriter;
 import org.jackhuang.hmcl.util.gson.JsonSerializable;
+import org.jackhuang.hmcl.util.gson.UUIDTypeAdapter;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
 
@@ -119,7 +120,11 @@ public record GUID(UUID uuid) implements Comparable<GUID> {
             try {
                 return GUID.fromString(value);
             } catch (IllegalArgumentException e) {
-                throw new JsonParseException("GUID malformed: " + value, e);
+                try {
+                    return GUID.fromUUID(UUIDTypeAdapter.fromString(value));
+                } catch (IllegalArgumentException ignored) {
+                    throw new JsonParseException("GUID malformed: " + value, e);
+                }
             }
         }
     }

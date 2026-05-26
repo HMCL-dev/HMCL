@@ -23,6 +23,7 @@ import javafx.beans.property.ObjectProperty;
 import javafx.collections.ObservableList;
 import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.util.FileSaver;
+import org.jackhuang.hmcl.util.GUID;
 import org.jackhuang.hmcl.util.gson.JsonFileFormat;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jetbrains.annotations.NotNullByDefault;
@@ -31,7 +32,6 @@ import org.jetbrains.annotations.UnknownNullability;
 
 import java.io.IOException;
 import java.nio.file.*;
-import java.util.UUID;
 
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
@@ -72,22 +72,22 @@ public final class GameSettingsPresetsHolder {
     }
 
     /// Returns the default game setting preset ID property.
-    public static ObjectProperty<@Nullable UUID> defaultGameSettingsProperty() {
+    public static ObjectProperty<@Nullable GUID> defaultGameSettingsProperty() {
         return gameSettingsPresets().defaultGameSettingsProperty();
     }
 
     /// Returns the default game setting preset ID.
-    public static @Nullable UUID getDefaultGameSettings() {
+    public static @Nullable GUID getDefaultGameSettings() {
         return gameSettingsPresets().getDefaultGameSettings();
     }
 
     /// Sets the default game setting preset ID.
-    public static void setDefaultGameSettings(@Nullable UUID defaultGameSettings) {
+    public static void setDefaultGameSettings(@Nullable GUID defaultGameSettings) {
         gameSettingsPresets().setDefaultGameSettings(defaultGameSettings);
     }
 
     /// Returns the game setting preset with the given ID.
-    public static GameSettings.@Nullable Preset getGameSettings(@Nullable UUID id) {
+    public static GameSettings.@Nullable Preset getGameSettings(@Nullable GUID id) {
         return gameSettingsPresets().getGameSettings(id);
     }
 

@@ -28,6 +28,7 @@ import org.jackhuang.hmcl.setting.property.InheritableProperty;
 import org.jackhuang.hmcl.setting.property.SettingProperty;
 import org.jackhuang.hmcl.setting.property.SimpleInheritableProperty;
 import org.jackhuang.hmcl.setting.property.SimpleSettingProperty;
+import org.jackhuang.hmcl.util.GUID;
 import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.gson.JsonSerializable;
@@ -43,7 +44,6 @@ import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
 import java.util.Collection;
 import java.util.Objects;
-import java.util.UUID;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -76,10 +76,10 @@ public sealed abstract class GameSettings extends ObservableSetting {
 
         /// The parent preset ID.
         @SerializedName("parent")
-        private final SettingProperty<@Nullable UUID> parent = newSettingProperty("parent");
+        private final SettingProperty<@Nullable GUID> parent = newSettingProperty("parent");
 
         /// Returns the parent preset ID property.
-        public SettingProperty<@Nullable UUID> parentProperty() {
+        public SettingProperty<@Nullable GUID> parentProperty() {
             return parent;
         }
 
@@ -116,21 +116,21 @@ public sealed abstract class GameSettings extends ObservableSetting {
     public static final class Preset extends GameSettings {
         /// Creates a preset with generated identity.
         public Preset() {
-            this(UUID.randomUUID());
+            this(GUID.random());
         }
 
         /// Creates a preset with the given identity.
-        public Preset(UUID id) {
+        public Preset(GUID id) {
             register();
             this.id.setValue(id);
         }
 
         /// The stable preset ID.
         @SerializedName("id")
-        private final SettingProperty<UUID> id = newSettingProperty("id");
+        private final SettingProperty<GUID> id = newSettingProperty("id");
 
         /// Returns the preset ID property.
-        public SettingProperty<UUID> idProperty() {
+        public SettingProperty<GUID> idProperty() {
             return id;
         }
 

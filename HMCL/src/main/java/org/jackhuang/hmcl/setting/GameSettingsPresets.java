@@ -25,6 +25,7 @@ import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
+import org.jackhuang.hmcl.util.GUID;
 import org.jackhuang.hmcl.util.gson.JsonSerializable;
 import org.jackhuang.hmcl.util.gson.ObservableSetting;
 import org.jackhuang.hmcl.util.gson.JsonFileFormat;
@@ -32,7 +33,6 @@ import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Objects;
-import java.util.UUID;
 
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
@@ -47,7 +47,7 @@ import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 @JsonSerializable
 public final class GameSettingsPresets extends ObservableSetting {
     /// The file format supported by this game settings preset store.
-    public static final JsonFileFormat CURRENT_FORMAT = new JsonFileFormat("hmcl.game-settings-presets", new JsonFileFormat.Version(1, 0));
+    public static final JsonFileFormat CURRENT_FORMAT = new JsonFileFormat("hmcl.game-settings-presets", new JsonFileFormat.Version(1, 1));
 
     /// Creates an empty game settings preset store.
     public GameSettingsPresets() {
@@ -96,20 +96,20 @@ public final class GameSettingsPresets extends ObservableSetting {
 
     /// The default preset ID.
     @SerializedName("defaultGameSettings")
-    private final ObjectProperty<@Nullable UUID> defaultGameSettings = new SimpleObjectProperty<>(this, "defaultGameSettings");
+    private final ObjectProperty<@Nullable GUID> defaultGameSettings = new SimpleObjectProperty<>(this, "defaultGameSettings");
 
     /// Returns the default preset ID property.
-    public ObjectProperty<@Nullable UUID> defaultGameSettingsProperty() {
+    public ObjectProperty<@Nullable GUID> defaultGameSettingsProperty() {
         return defaultGameSettings;
     }
 
     /// Returns the default preset ID.
-    public @Nullable UUID getDefaultGameSettings() {
+    public @Nullable GUID getDefaultGameSettings() {
         return defaultGameSettings.get();
     }
 
     /// Sets the default preset ID.
-    public void setDefaultGameSettings(@Nullable UUID defaultGameSettings) {
+    public void setDefaultGameSettings(@Nullable GUID defaultGameSettings) {
         this.defaultGameSettings.set(defaultGameSettings);
     }
 
@@ -124,7 +124,7 @@ public final class GameSettingsPresets extends ObservableSetting {
     }
 
     /// Returns the preset with the given ID.
-    public GameSettings.@Nullable Preset getGameSettings(@Nullable UUID id) {
+    public GameSettings.@Nullable Preset getGameSettings(@Nullable GUID id) {
         if (id == null) {
             return null;
         }

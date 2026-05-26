@@ -36,6 +36,7 @@ import org.jackhuang.hmcl.auth.authlibinjector.AuthlibInjectorServer;
 import org.jackhuang.hmcl.java.JavaRuntime;
 import org.jackhuang.hmcl.theme.ThemeColor;
 import org.jackhuang.hmcl.ui.FXUtils;
+import org.jackhuang.hmcl.util.GUID;
 import org.jackhuang.hmcl.util.gson.*;
 import org.jackhuang.hmcl.util.i18n.SupportedLocale;
 import org.jetbrains.annotations.Nullable;
@@ -82,7 +83,7 @@ public final class Config extends ObservableSetting {
             for (JsonElement element : profiles) {
                 if (element instanceof JsonObject profile) {
                     if (!profile.has("id")) {
-                        @Nullable UUID legacyParent = readLegacyProfileId(profile);
+                        @Nullable GUID legacyParent = readLegacyProfileId(profile);
                         if (legacyParent != null) {
                             profile.addProperty("id", legacyParent.toString());
                         }
@@ -105,7 +106,7 @@ public final class Config extends ObservableSetting {
             }
 
             JsonObject migrated = profile.deepCopy();
-            @Nullable UUID legacyParent = readLegacyProfileId(migrated);
+            @Nullable GUID legacyParent = readLegacyProfileId(migrated);
             migrated.addProperty("name", entry.getKey());
             migrated.addProperty("id", Objects.requireNonNullElseGet(
                     legacyParent,
@@ -118,13 +119,13 @@ public final class Config extends ObservableSetting {
     }
 
     /// Reads the legacy profile-parent preset ID from a profile JSON object.
-    private static @Nullable UUID readLegacyProfileId(JsonObject profile) {
+    private static @Nullable GUID readLegacyProfileId(JsonObject profile) {
         if (!(profile.get("legacyGameSettingsParent") instanceof JsonPrimitive primitive) || !primitive.isString()) {
             return null;
         }
 
         try {
-            return UUIDTypeAdapter.fromString(primitive.getAsString());
+            return GUID.fromUUID(UUIDTypeAdapter.fromString(primitive.getAsString()));
         } catch (IllegalArgumentException e) {
             return null;
         }
