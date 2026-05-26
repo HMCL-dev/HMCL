@@ -1,0 +1,260 @@
+/*
+ * Hello Minecraft! Launcher
+ * Copyright (C) 2026 huangyuhui <huanghongxun2008@126.com> and contributors
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
+package org.jackhuang.hmcl.setting;
+
+import com.google.gson.*;
+import com.google.gson.annotations.JsonAdapter;
+import com.google.gson.annotations.SerializedName;
+import javafx.beans.Observable;
+import javafx.beans.property.ObjectProperty;
+import javafx.beans.property.SimpleObjectProperty;
+import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
+import org.jackhuang.hmcl.util.GUID;
+import org.jackhuang.hmcl.util.gson.JsonFileFormat;
+import org.jackhuang.hmcl.util.gson.JsonSerializable;
+import org.jackhuang.hmcl.util.gson.ObservableSetting;
+import org.jackhuang.hmcl.util.gson.UUIDTypeAdapter;
+import org.jetbrains.annotations.NotNullByDefault;
+import org.jetbrains.annotations.Nullable;
+
+import java.util.Map;
+import java.util.Objects;
+
+/// Stores per-workspace game directories independently from the main config file.
+///
+/// The JSON representation is saved as `game-directories.json` under the current HMCL
+/// directory.
+///
+/// @author Glavo
+@JsonAdapter(GameDirectories.Adapter.class)
+@NotNullByDefault
+@JsonSerializable
+public final class GameDirectories extends ObservableSetting {
+    /// The file format supported by this game directory store.
+    public static final JsonFileFormat CURRENT_FORMAT =
+            new JsonFileFormat("hmcl.game-directories", new JsonFileFormat.Version(1, 0));
+
+    /// Creates an empty game directory store.
+    public GameDirectories() {
+        tracker.markDirty(format);
+        register();
+    }
+
+    /// Reads a game directory store from a JSON object.
+    ///
+    /// @param json the JSON object to read
+    /// @return the parsed game directory store
+    /// @throws JsonParseException if the JSON object is malformed
+    public static @Nullable GameDirectories fromJson(JsonObject json) throws JsonParseException {
+        return Config.CONFIG_GSON.<@Nullable GameDirectories>fromJson(json, GameDirectories.class);
+    }
+
+    /// Extracts game directory data from a settings JSON object and removes the legacy members.
+    ///
+    /// This supports migrating the in-development `profiles` list and the old `configurations`
+    /// map into `game-directories.json`.
+    ///
+    /// @param json the settings JSON object
+    /// @return the extracted game directory store, or `null` when the object contains no game directory data
+    static @Nullable GameDirectories extractFromConfigJson(JsonObject json) {
+        Objects.requireNonNull(json);
+
+        @Nullable String selectedName = readString(json.remove("last"));
+        @Nullable JsonElement profilesElement = json.remove("profiles");
+        @Nullable JsonElement configurationsElement = json.remove("configurations");
+
+        @Nullable JsonArray profiles = null;
+        if (profilesElement instanceof JsonArray profileArray) {
+            profiles = migrateProfileArray(profileArray);
+        } else if (configurationsElement instanceof JsonObject configurations) {
+            profiles = migrateConfigurationMap(configurations);
+        }
+
+        if (profiles == null) {
+            return null;
+        }
+
+        JsonObject object = new JsonObject();
+        object.add(JsonFileFormat.DEFAULT_MEMBER_NAME, Config.CONFIG_GSON.toJsonTree(CURRENT_FORMAT, JsonFileFormat.class));
+        object.add("gameDirectories", profiles);
+
+        @Nullable GUID selected = findProfileId(profiles, selectedName);
+        if (selected != null) {
+            object.add("selectedGameDirectory", Config.CONFIG_GSON.toJsonTree(selected, GUID.class));
+        }
+
+        return fromJson(object);
+    }
+
+    /// Serializes this game directory store to JSON.
+    public String toJson() {
+        return Config.CONFIG_GSON.toJson(this);
+    }
+
+    /// The format used by this game directory store file.
+    @SerializedName(JsonFileFormat.DEFAULT_MEMBER_NAME)
+    private final ObjectProperty<JsonFileFormat> format = new SimpleObjectProperty<>(CURRENT_FORMAT);
+
+    /// Returns the format property.
+    public ObjectProperty<JsonFileFormat> formatProperty() {
+        return format;
+    }
+
+    /// Returns the format used by this game directory store file.
+    public JsonFileFormat getFormat() {
+        return format.get();
+    }
+
+    /// Sets the format used by this game directory store file.
+    public void setFormat(JsonFileFormat format) {
+        this.format.set(Objects.requireNonNull(format));
+    }
+
+    /// The selected game directory ID.
+    @SerializedName("selectedGameDirectory")
+    private final ObjectProperty<@Nullable GUID> selectedGameDirectory =
+            new SimpleObjectProperty<>(this, "selectedGameDirectory");
+
+    /// Returns the selected game directory ID property.
+    public ObjectProperty<@Nullable GUID> selectedGameDirectoryProperty() {
+        return selectedGameDirectory;
+    }
+
+    /// Returns the selected game directory ID.
+    public @Nullable GUID getSelectedGameDirectory() {
+        return selectedGameDirectory.get();
+    }
+
+    /// Sets the selected game directory ID.
+    public void setSelectedGameDirectory(@Nullable GUID selectedGameDirectory) {
+        this.selectedGameDirectory.set(selectedGameDirectory);
+    }
+
+    /// Per-workspace game directories.
+    @SerializedName("gameDirectories")
+    private final ObservableList<Profile> gameDirectories =
+            FXCollections.observableArrayList(profile -> new Observable[] { profile });
+
+    /// Returns the per-workspace game directories.
+    public ObservableList<Profile> getGameDirectories() {
+        return gameDirectories;
+    }
+
+    /// Converts a current profile array into game directory JSON.
+    private static JsonArray migrateProfileArray(JsonArray profiles) {
+        JsonArray result = new JsonArray();
+        for (JsonElement element : profiles) {
+            if (!(element instanceof JsonObject profile)) {
+                continue;
+            }
+
+            JsonObject migrated = profile.deepCopy();
+            if (!migrated.has("id")) {
+                @Nullable GUID id = readLegacyProfileId(migrated);
+                if (id == null) {
+                    @Nullable String name = readString(migrated.get("name"));
+                    if (name != null) {
+                        id = LegacyGameSettingsMigrator.getLegacyProfileId(name);
+                    }
+                }
+                if (id != null) {
+                    migrated.addProperty("id", id.toString());
+                }
+            }
+            migrated.remove("legacyGameSettingsParent");
+            result.add(migrated);
+        }
+        return result;
+    }
+
+    /// Converts a legacy profile map into game directory JSON.
+    private static JsonArray migrateConfigurationMap(JsonObject configurations) {
+        JsonArray result = new JsonArray();
+        for (Map.Entry<String, JsonElement> entry : configurations.entrySet()) {
+            if (!(entry.getValue() instanceof JsonObject profile)) {
+                continue;
+            }
+
+            JsonObject migrated = profile.deepCopy();
+            @Nullable GUID id = readLegacyProfileId(migrated);
+            migrated.addProperty("name", entry.getKey());
+            migrated.addProperty("id", Objects.requireNonNullElseGet(
+                    id,
+                    () -> LegacyGameSettingsMigrator.getLegacyProfileId(entry.getKey())
+            ).toString());
+            migrated.remove("legacyGameSettingsParent");
+            result.add(migrated);
+        }
+        return result;
+    }
+
+    /// Finds a profile ID by its profile name.
+    private static @Nullable GUID findProfileId(JsonArray profiles, @Nullable String name) {
+        if (name == null) {
+            return null;
+        }
+
+        for (JsonElement element : profiles) {
+            if (element instanceof JsonObject profile
+                    && Objects.equals(name, readString(profile.get("name")))) {
+                @Nullable JsonElement id = profile.get("id");
+                if (id instanceof JsonPrimitive primitive && primitive.isString()) {
+                    try {
+                        return GUID.fromString(primitive.getAsString());
+                    } catch (IllegalArgumentException ignored) {
+                        try {
+                            return GUID.fromUUID(UUIDTypeAdapter.fromString(primitive.getAsString()));
+                        } catch (IllegalArgumentException ignoredAgain) {
+                        }
+                    }
+                }
+            }
+        }
+        return null;
+    }
+
+    /// Reads the legacy profile-parent preset ID from a profile JSON object.
+    private static @Nullable GUID readLegacyProfileId(JsonObject profile) {
+        if (!(profile.get("legacyGameSettingsParent") instanceof JsonPrimitive primitive) || !primitive.isString()) {
+            return null;
+        }
+
+        try {
+            return GUID.fromUUID(UUIDTypeAdapter.fromString(primitive.getAsString()));
+        } catch (IllegalArgumentException e) {
+            return null;
+        }
+    }
+
+    /// Reads a string JSON value.
+    private static @Nullable String readString(@Nullable JsonElement element) {
+        return element instanceof JsonPrimitive primitive && primitive.isString()
+                ? primitive.getAsString()
+                : null;
+    }
+
+    /// JSON adapter for [GameDirectories].
+    public static final class Adapter extends ObservableSetting.Adapter<GameDirectories> {
+        /// Creates an empty game directory store for deserialization.
+        @Override
+        protected GameDirectories createInstance() {
+            return new GameDirectories();
+        }
+    }
+}

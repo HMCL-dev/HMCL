@@ -36,7 +36,6 @@ import org.jackhuang.hmcl.auth.authlibinjector.AuthlibInjectorServer;
 import org.jackhuang.hmcl.java.JavaRuntime;
 import org.jackhuang.hmcl.theme.ThemeColor;
 import org.jackhuang.hmcl.ui.FXUtils;
-import org.jackhuang.hmcl.util.GUID;
 import org.jackhuang.hmcl.util.gson.*;
 import org.jackhuang.hmcl.util.i18n.SupportedLocale;
 import org.jetbrains.annotations.Nullable;
@@ -50,7 +49,7 @@ import java.util.*;
 public final class Config extends ObservableSetting {
 
     /// The file format supported by this config class.
-    public static final JsonFileFormat CURRENT_FORMAT = new JsonFileFormat("hmcl.settings", new JsonFileFormat.Version(1, 1));
+    public static final JsonFileFormat CURRENT_FORMAT = new JsonFileFormat("hmcl.settings", new JsonFileFormat.Version(1, 2));
 
     public static final Gson CONFIG_GSON = new GsonBuilder()
             .registerTypeAdapter(Path.class, PathTypeAdapter.INSTANCE)
@@ -68,67 +67,7 @@ public final class Config extends ObservableSetting {
 
     @Nullable
     public static Config fromJson(JsonObject json) throws JsonParseException {
-        migrateLegacyProfiles(json);
         return CONFIG_GSON.fromJson(json, Config.class);
-    }
-
-    /// Converts legacy profile maps into the current profile list shape.
-    static void migrateLegacyProfiles(JsonObject json) {
-        if (json == null) {
-            return;
-        }
-
-        if (json.get("profiles") instanceof JsonArray profiles) {
-            json.remove("configurations");
-            for (JsonElement element : profiles) {
-                if (element instanceof JsonObject profile) {
-                    if (!profile.has("id")) {
-                        @Nullable GUID legacyParent = readLegacyProfileId(profile);
-                        if (legacyParent != null) {
-                            profile.addProperty("id", legacyParent.toString());
-                        }
-                    }
-                    profile.remove("legacyGameSettingsParent");
-                }
-            }
-            return;
-        }
-
-        JsonElement configurationsElement = json.remove("configurations");
-        if (!(configurationsElement instanceof JsonObject configurations)) {
-            return;
-        }
-
-        JsonArray profiles = new JsonArray();
-        for (Map.Entry<String, JsonElement> entry : configurations.entrySet()) {
-            if (!(entry.getValue() instanceof JsonObject profile)) {
-                continue;
-            }
-
-            JsonObject migrated = profile.deepCopy();
-            @Nullable GUID legacyParent = readLegacyProfileId(migrated);
-            migrated.addProperty("name", entry.getKey());
-            migrated.addProperty("id", Objects.requireNonNullElseGet(
-                    legacyParent,
-                    () -> LegacyGameSettingsMigrator.getLegacyProfileId(entry.getKey())
-            ).toString());
-            migrated.remove("legacyGameSettingsParent");
-            profiles.add(migrated);
-        }
-        json.add("profiles", profiles);
-    }
-
-    /// Reads the legacy profile-parent preset ID from a profile JSON object.
-    private static @Nullable GUID readLegacyProfileId(JsonObject profile) {
-        if (!(profile.get("legacyGameSettingsParent") instanceof JsonPrimitive primitive) || !primitive.isString()) {
-            return null;
-        }
-
-        try {
-            return GUID.fromUUID(UUIDTypeAdapter.fromString(primitive.getAsString()));
-        } catch (IllegalArgumentException e) {
-            return null;
-        }
     }
 
     public Config() {
@@ -825,31 +764,6 @@ public final class Config extends ObservableSetting {
 
     public ObservableList<Map<Object, Object>> getAccountStorages() {
         return accountStorages;
-    }
-
-    // Configurations
-
-    @SerializedName("last")
-    private final StringProperty selectedProfile = new SimpleStringProperty("");
-
-    public StringProperty selectedProfileProperty() {
-        return selectedProfile;
-    }
-
-    public String getSelectedProfile() {
-        return selectedProfile.get();
-    }
-
-    public void setSelectedProfile(String selectedProfile) {
-        this.selectedProfile.set(selectedProfile);
-    }
-
-    @SerializedName("profiles")
-    private final ObservableList<Profile> profiles =
-            FXCollections.observableArrayList(profile -> new Observable[] { profile });
-
-    public ObservableList<Profile> getProfiles() {
-        return profiles;
     }
 
     /// JSON adapter for [Config].

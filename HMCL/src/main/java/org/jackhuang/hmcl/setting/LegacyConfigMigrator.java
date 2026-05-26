@@ -90,14 +90,19 @@ public final class LegacyConfigMigrator {
                     ? configurations.deepCopy()
                     : null;
 
+            @Nullable GameDirectories migratedGameDirectories = GameDirectories.extractFromConfigJson(jsonObject);
+            GameDirectories gameDirectories = migratedGameDirectories != null
+                    ? migratedGameDirectories
+                    : new GameDirectories();
+
             Config deserialized = Config.fromJson(jsonObject);
             if (deserialized == null) {
                 return null;
             }
 
             GameSettingsPresets gameSettingsPresets = new GameSettingsPresets();
-            migrateLegacyPresetSettings(deserialized, gameSettingsPresets, legacyConfigurations);
-            return new MigrationResult(path, deserialized, gameSettingsPresets, deserialized.toJson());
+            migrateLegacyPresetSettings(gameDirectories, gameSettingsPresets, legacyConfigurations);
+            return new MigrationResult(path, deserialized, gameDirectories, gameSettingsPresets, deserialized.toJson());
         } catch (JsonParseException e) {
             LOG.warning("Malformed legacy config file: " + path, e);
             return null;
@@ -207,14 +212,14 @@ public final class LegacyConfigMigrator {
 
     /// Migrates profile-global game settings from HMCL 3.15.0.345 and older config files.
     private static void migrateLegacyPresetSettings(
-            Config config,
+            GameDirectories gameDirectories,
             GameSettingsPresets gameSettingsPresets,
             @Nullable JsonObject configurations) {
         if (configurations == null) {
             return;
         }
 
-        for (Profile profile : config.getProfiles()) {
+        for (Profile profile : gameDirectories.getGameDirectories()) {
             GameSettings.Preset legacyParent = gameSettingsPresets.getGameSettings(profile.getId());
             if (legacyParent == null) {
                 String profileName = profile.getName();
@@ -242,8 +247,9 @@ public final class LegacyConfigMigrator {
     /// Result of locating and loading a legacy config file without modifying it.
     ///
     /// @param config              The parsed config object.
+    /// @param gameDirectories     The detached game directory store migrated from legacy profiles.
     /// @param gameSettingsPresets The detached preset store migrated from legacy profile globals.
     /// @param contentForMigration The content to save when migrating to settings.json.
-    record MigrationResult(Path path, Config config, GameSettingsPresets gameSettingsPresets, String contentForMigration) {
+    record MigrationResult(Path path, Config config, GameDirectories gameDirectories, GameSettingsPresets gameSettingsPresets, String contentForMigration) {
     }
 }

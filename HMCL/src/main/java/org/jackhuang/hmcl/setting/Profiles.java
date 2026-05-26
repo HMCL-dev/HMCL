@@ -25,6 +25,7 @@ import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.event.EventBus;
 import org.jackhuang.hmcl.event.RefreshedVersionsEvent;
 import org.jackhuang.hmcl.util.GUID;
+import org.jetbrains.annotations.Nullable;
 
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -32,7 +33,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.function.Consumer;
 
-import static org.jackhuang.hmcl.setting.ConfigHolder.config;
 import static org.jackhuang.hmcl.ui.FXUtils.onInvalidating;
 import static org.jackhuang.hmcl.ui.FXUtils.runInFX;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
@@ -73,7 +73,7 @@ public final class Profiles {
         if (!initialized)
             return;
 
-        ObservableList<Profile> profiles = ConfigHolder.config().getProfiles();
+        ObservableList<Profile> profiles = GameDirectoriesHolder.getGameDirectories();
         Profile profile = selectedProfile.get();
 
         if (profiles.isEmpty()) {
@@ -88,7 +88,7 @@ public final class Profiles {
             }
         }
 
-        config().setSelectedProfile(profile == null ? "" : profile.getName());
+        GameDirectoriesHolder.setSelectedGameDirectory(profile == null ? null : profile.getId());
         if (profile != null) {
             if (profile.getRepository().isLoaded())
                 selectedVersion.bind(profile.selectedVersionProperty());
@@ -105,7 +105,7 @@ public final class Profiles {
     }
 
     private static void checkProfiles() {
-        ObservableList<Profile> profiles = ConfigHolder.config().getProfiles();
+        ObservableList<Profile> profiles = GameDirectoriesHolder.getGameDirectories();
         if (profiles.isEmpty()) {
             Profile current = new Profile(
                     Profiles.DEFAULT_PROFILE_ID, Profiles.DEFAULT_PROFILE, Path.of(".minecraft"), null, true);
@@ -127,17 +127,15 @@ public final class Profiles {
         });
     }
 
-    /**
-     * Called when it's ready to load profiles from {@link ConfigHolder#config()}.
-     */
+    /// Called when it's ready to load profiles from [GameDirectoriesHolder].
     static void init() {
         if (initialized)
             throw new IllegalStateException("Already initialized");
 
-        profilesWrapper.set(ConfigHolder.config().getProfiles());
-        removeDuplicateProfiles(ConfigHolder.config().getProfiles());
-        ConfigHolder.config().getProfiles().addListener(onInvalidating(Profiles::refreshSelectedProfile));
-        ConfigHolder.config().getProfiles().addListener(onInvalidating(Profiles::checkProfiles));
+        profilesWrapper.set(GameDirectoriesHolder.getGameDirectories());
+        removeDuplicateProfiles(GameDirectoriesHolder.getGameDirectories());
+        GameDirectoriesHolder.getGameDirectories().addListener(onInvalidating(Profiles::refreshSelectedProfile));
+        GameDirectoriesHolder.getGameDirectories().addListener(onInvalidating(Profiles::checkProfiles));
         checkProfiles();
         migrateGameSettings();
 
@@ -146,11 +144,12 @@ public final class Profiles {
         Platform.runLater(() -> {
             initialized = true;
 
+            @Nullable GUID selectedId = GameDirectoriesHolder.getSelectedGameDirectory();
             selectedProfile.set(
-                    ConfigHolder.config().getProfiles().stream()
-                            .filter(it -> it.getName().equals(config().getSelectedProfile()))
+                    GameDirectoriesHolder.getGameDirectories().stream()
+                            .filter(it -> it.getId().equals(selectedId))
                             .findFirst()
-                            .orElse(ConfigHolder.config().getProfiles().isEmpty() ? null : ConfigHolder.config().getProfiles().get(0)));
+                            .orElse(GameDirectoriesHolder.getGameDirectories().isEmpty() ? null : GameDirectoriesHolder.getGameDirectories().get(0)));
         });
 
         EventBus.EVENT_BUS.channel(RefreshedVersionsEvent.class).registerWeak(event -> {
@@ -182,7 +181,7 @@ public final class Profiles {
     }
 
     public static ObservableList<Profile> getProfiles() {
-        return config().getProfiles();
+        return GameDirectoriesHolder.getGameDirectories();
     }
 
     public static ReadOnlyListProperty<Profile> profilesProperty() {

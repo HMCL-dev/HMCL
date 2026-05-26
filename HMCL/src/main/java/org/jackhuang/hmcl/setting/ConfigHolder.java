@@ -69,6 +69,12 @@ public final class ConfigHolder {
     /// before being overwritten by the first successful save.
     private static boolean needBackupSettings = false;
 
+    /// Whether the per-workspace config should be saved after extracting detached data.
+    private static boolean needSaveSettings = false;
+
+    /// Detached game directories migrated from a config file.
+    private static @Nullable GameDirectories migratedGameDirectories;
+
     /// Detached game settings presets migrated from a legacy config file.
     private static @Nullable GameSettingsPresets migratedGameSettingsPresets;
 
@@ -134,11 +140,12 @@ public final class ConfigHolder {
         Locale.setDefault(config().getLocalization().getLocale());
         I18n.setLocale(configInstance.getLocalization());
         LOG.setLogRetention(globalConfig().getLogRetention());
+        GameDirectoriesHolder.init(migratedGameDirectories, !unsupportedVersion);
         GameSettingsPresetsHolder.init(migratedGameSettingsPresets, !unsupportedVersion);
         Settings.init();
 
-        if (newlyCreated) {
-            LOG.info("Creating config file " + SETTINGS_LOCATION);
+        if (!unsupportedVersion && (newlyCreated || needSaveSettings)) {
+            LOG.info((newlyCreated ? "Creating" : "Updating") + " config file " + SETTINGS_LOCATION);
             FileUtils.saveSafely(SETTINGS_LOCATION, configInstance.toJson());
         }
 
@@ -191,6 +198,12 @@ public final class ConfigHolder {
             }
 
             try {
+                @Nullable GameDirectories gameDirectories = GameDirectories.extractFromConfigJson(jsonObject);
+                if (gameDirectories != null) {
+                    migratedGameDirectories = gameDirectories;
+                    needSaveSettings = true;
+                }
+
                 Config settings = Config.fromJson(jsonObject);
                 if (settings == null) {
                     return new Config();
@@ -210,6 +223,7 @@ public final class ConfigHolder {
             LegacyConfigMigrator.MigrationResult migrationResult = LegacyConfigMigrator.migrateLegacyConfig();
             if (migrationResult != null) {
                 LOG.info("Migrating settings from " + migrationResult.path() + " to " + SETTINGS_LOCATION);
+                migratedGameDirectories = migrationResult.gameDirectories();
                 migratedGameSettingsPresets = migrationResult.gameSettingsPresets();
                 FileUtils.saveSafely(SETTINGS_LOCATION, migrationResult.contentForMigration());
                 return migrationResult.config();
