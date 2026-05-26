@@ -256,11 +256,11 @@ public final class Profile implements Observable {
         @Override
         public Profile deserialize(JsonElement json, Type typeOfT, JsonDeserializationContext context) throws JsonParseException {
             if (!(json instanceof JsonObject obj)) return null;
-            String gameDir = Optional.ofNullable(obj.get("gameDir")).map(JsonElement::getAsString).orElse("");
             UUID id = context.deserialize(obj.get("id"), UUID.class);
             if (id == null) {
-                id = UUID.randomUUID();
+                throw new JsonParseException("Profile ID cannot be null");
             }
+            String gameDir = Optional.ofNullable(obj.get("gameDir")).map(JsonElement::getAsString).orElse("");
 
             return new Profile(id,
                     Optional.ofNullable(obj.get("name")).map(JsonElement::getAsString).orElse("Default"),
