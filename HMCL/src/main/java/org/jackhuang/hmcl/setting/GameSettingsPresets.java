@@ -17,6 +17,9 @@
  */
 package org.jackhuang.hmcl.setting;
 
+import com.google.gson.JsonDeserializationContext;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonParseException;
 import com.google.gson.annotations.JsonAdapter;
 import com.google.gson.annotations.SerializedName;
 import javafx.beans.Observable;
@@ -31,9 +34,8 @@ import org.jackhuang.hmcl.util.gson.ObservableSetting;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
 
+import java.lang.reflect.Type;
 import java.util.Objects;
-
-import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 /// Stores reusable game settings presets independently from the main config file.
 ///
@@ -47,7 +49,7 @@ import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 public final class GameSettingsPresets extends ObservableSetting implements FormattedJsonSetting {
     /// The file format supported by this game settings preset store.
     public static final JsonFileFormat CURRENT_FORMAT =
-            new JsonFileFormat("hmcl.game-settings", new JsonFileFormat.Version(1, 1));
+            new JsonFileFormat("hmcl.game-settings", new JsonFileFormat.Version(1, 2));
 
     /// Creates an empty game settings preset store.
     public GameSettingsPresets() {
@@ -62,7 +64,6 @@ public final class GameSettingsPresets extends ObservableSetting implements Form
         }
 
         gameSettings.setAll(source.getGameSettings());
-        setDefaultGameSettings(source.getDefaultGameSettings());
     }
 
     /// The format used by this game settings preset store file.
@@ -82,25 +83,6 @@ public final class GameSettingsPresets extends ObservableSetting implements Form
     /// Sets the format used by this game settings preset store file.
     public void setFormat(JsonFileFormat format) {
         this.format.set(Objects.requireNonNull(format));
-    }
-
-    /// The default preset ID.
-    @SerializedName("defaultGameSettings")
-    private final ObjectProperty<@Nullable GUID> defaultGameSettings = new SimpleObjectProperty<>(this, "defaultGameSettings");
-
-    /// Returns the default preset ID property.
-    public ObjectProperty<@Nullable GUID> defaultGameSettingsProperty() {
-        return defaultGameSettings;
-    }
-
-    /// Returns the default preset ID.
-    public @Nullable GUID getDefaultGameSettings() {
-        return defaultGameSettings.get();
-    }
-
-    /// Sets the default preset ID.
-    public void setDefaultGameSettings(@Nullable GUID defaultGameSettings) {
-        this.defaultGameSettings.set(defaultGameSettings);
     }
 
     /// Reusable game setting presets.
@@ -127,32 +109,25 @@ public final class GameSettingsPresets extends ObservableSetting implements Form
         return null;
     }
 
-    /// Returns the default preset, creating one when needed.
-    public GameSettings.Preset getDefaultGameSettingsOrCreate() {
-        GameSettings.Preset setting = getGameSettings(getDefaultGameSettings());
-        if (setting != null) {
-            return setting;
-        }
-
-        if (!gameSettings.isEmpty()) {
-            setting = gameSettings.get(0);
-            setDefaultGameSettings(setting.idProperty().getValue());
-            return setting;
-        }
-
-        setting = new GameSettings.Preset();
-        setting.nameProperty().setValue(i18n("message.default"));
-        gameSettings.add(setting);
-        setDefaultGameSettings(setting.idProperty().getValue());
-        return setting;
-    }
-
     /// JSON adapter for [GameSettingsPresets].
     public static final class Adapter extends ObservableSetting.Adapter<GameSettingsPresets> {
         /// Creates an empty preset store for deserialization.
         @Override
         protected GameSettingsPresets createInstance() {
             return new GameSettingsPresets();
+        }
+
+        /// Deserializes presets and drops the workspace-level default preset selection.
+        @Override
+        public @Nullable GameSettingsPresets deserialize(
+                JsonElement json,
+                Type typeOfT,
+                JsonDeserializationContext context) throws JsonParseException {
+            @Nullable GameSettingsPresets result = super.deserialize(json, typeOfT, context);
+            if (result != null) {
+                result.unknownFields.remove(Config.DEFAULT_GAME_SETTINGS_MEMBER_NAME);
+            }
+            return result;
         }
     }
 }

@@ -36,6 +36,7 @@ import java.io.IOException;
 import java.nio.file.*;
 import java.util.Locale;
 
+import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 /// Owns the process-wide configuration and detached workspace settings instances.
@@ -184,17 +185,17 @@ public final class ConfigHolder {
 
     /// Returns the default game setting preset ID property.
     public static ObjectProperty<@Nullable GUID> defaultGameSettingsProperty() {
-        return gameSettingsPresets().defaultGameSettingsProperty();
+        return config().defaultGameSettingsProperty();
     }
 
     /// Returns the default game setting preset ID.
     public static @Nullable GUID getDefaultGameSettings() {
-        return gameSettingsPresets().getDefaultGameSettings();
+        return config().getDefaultGameSettings();
     }
 
     /// Sets the default game setting preset ID.
     public static void setDefaultGameSettings(@Nullable GUID defaultGameSettings) {
-        gameSettingsPresets().setDefaultGameSettings(defaultGameSettings);
+        config().setDefaultGameSettings(defaultGameSettings);
     }
 
     /// Returns the game setting preset with the given ID.
@@ -204,7 +205,22 @@ public final class ConfigHolder {
 
     /// Returns the default game setting preset, creating one when needed.
     public static GameSettings.Preset getDefaultGameSettingsOrCreate() {
-        return gameSettingsPresets().getDefaultGameSettingsOrCreate();
+        GameSettings.Preset setting = getGameSettings(getDefaultGameSettings());
+        if (setting != null) {
+            return setting;
+        }
+
+        if (!getGameSettings().isEmpty()) {
+            setting = getGameSettings().get(0);
+            setDefaultGameSettings(setting.idProperty().getValue());
+            return setting;
+        }
+
+        setting = new GameSettings.Preset();
+        setting.nameProperty().setValue(i18n("message.default"));
+        getGameSettings().add(setting);
+        setDefaultGameSettings(setting.idProperty().getValue());
+        return setting;
     }
 
     /// Returns whether this run created a new per-workspace config.

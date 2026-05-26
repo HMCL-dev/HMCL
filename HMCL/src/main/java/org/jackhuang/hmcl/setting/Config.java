@@ -36,6 +36,7 @@ import org.jackhuang.hmcl.auth.authlibinjector.AuthlibInjectorServer;
 import org.jackhuang.hmcl.java.JavaRuntime;
 import org.jackhuang.hmcl.theme.ThemeColor;
 import org.jackhuang.hmcl.ui.FXUtils;
+import org.jackhuang.hmcl.util.GUID;
 import org.jackhuang.hmcl.util.gson.*;
 import org.jackhuang.hmcl.util.i18n.SupportedLocale;
 import org.jetbrains.annotations.Nullable;
@@ -49,7 +50,10 @@ import java.util.*;
 public final class Config extends ObservableSetting {
 
     /// The file format supported by this config class.
-    public static final JsonFileFormat CURRENT_FORMAT = new JsonFileFormat("hmcl.settings", new JsonFileFormat.Version(1, 2));
+    public static final JsonFileFormat CURRENT_FORMAT = new JsonFileFormat("hmcl.settings", new JsonFileFormat.Version(1, 3));
+
+    /// The JSON member name for the default game setting preset ID.
+    static final String DEFAULT_GAME_SETTINGS_MEMBER_NAME = "defaultGameSettings";
 
     public static final Gson CONFIG_GSON = new GsonBuilder()
             .registerTypeAdapter(Path.class, PathTypeAdapter.INSTANCE)
@@ -700,6 +704,26 @@ public final class Config extends ObservableSetting {
 
     public void setAllowAutoAgent(boolean allowAutoAgent) {
         this.allowAutoAgent.set(allowAutoAgent);
+    }
+
+    /// The default game setting preset ID.
+    @SerializedName(DEFAULT_GAME_SETTINGS_MEMBER_NAME)
+    private final ObjectProperty<@Nullable GUID> defaultGameSettings =
+            new SimpleObjectProperty<>(this, DEFAULT_GAME_SETTINGS_MEMBER_NAME);
+
+    /// Returns the default game setting preset ID property.
+    public ObjectProperty<@Nullable GUID> defaultGameSettingsProperty() {
+        return defaultGameSettings;
+    }
+
+    /// Returns the default game setting preset ID.
+    public @Nullable GUID getDefaultGameSettings() {
+        return defaultGameSettings.get();
+    }
+
+    /// Sets the default game setting preset ID.
+    public void setDefaultGameSettings(@Nullable GUID defaultGameSettings) {
+        this.defaultGameSettings.set(defaultGameSettings);
     }
 
     // Accounts
