@@ -125,11 +125,10 @@ public final class Profiles {
         if (initialized)
             throw new IllegalStateException("Already initialized");
 
-        ObservableList<Profile> profiles = ConfigHolder.config().getProfiles();
-        profilesWrapper.set(profiles);
-        removeDuplicateProfiles(profiles);
-        profiles.addListener(onInvalidating(Profiles::refreshSelectedProfile));
-        profiles.addListener(onInvalidating(Profiles::checkProfiles));
+        profilesWrapper.set(ConfigHolder.config().getProfiles());
+        removeDuplicateProfiles(ConfigHolder.config().getProfiles());
+        ConfigHolder.config().getProfiles().addListener(onInvalidating(Profiles::refreshSelectedProfile));
+        ConfigHolder.config().getProfiles().addListener(onInvalidating(Profiles::checkProfiles));
         checkProfiles();
         migrateGameSettings();
 
@@ -139,10 +138,10 @@ public final class Profiles {
             initialized = true;
 
             selectedProfile.set(
-                    profiles.stream()
+                    ConfigHolder.config().getProfiles().stream()
                             .filter(it -> it.getName().equals(config().getSelectedProfile()))
                             .findFirst()
-                            .orElse(profiles.isEmpty() ? null : profiles.get(0)));
+                            .orElse(ConfigHolder.config().getProfiles().isEmpty() ? null : ConfigHolder.config().getProfiles().get(0)));
         });
 
         EventBus.EVENT_BUS.channel(RefreshedVersionsEvent.class).registerWeak(event -> {
