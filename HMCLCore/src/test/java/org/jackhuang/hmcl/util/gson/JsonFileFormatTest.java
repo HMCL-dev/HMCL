@@ -31,11 +31,11 @@ public final class JsonFileFormatTest {
     @Test
     public void readsFileFormat() {
         JsonObject object = new JsonObject();
-        object.add(JsonFileFormat.DEFAULT_MEMBER_NAME, createFormatObject("hmcl.config", "3.0"));
+        object.add(JsonFileFormat.DEFAULT_MEMBER_NAME, createFormatObject("hmcl.settings", "3.0"));
 
         JsonFileFormat format = JsonFileFormat.readFromMember(object);
 
-        assertEquals("hmcl.config", format.id());
+        assertEquals("hmcl.settings", format.id());
         assertEquals(new JsonFileFormat.Version(3, 0), format.version());
         assertEquals("hmcl.config/3.0", format.toString());
     }
@@ -43,11 +43,11 @@ public final class JsonFileFormatTest {
     /// Tests serialization of file format objects.
     @Test
     public void serializesFileFormat() {
-        JsonFileFormat format = new JsonFileFormat("hmcl.config", new JsonFileFormat.Version(3, 0));
+        JsonFileFormat format = new JsonFileFormat("hmcl.settings", new JsonFileFormat.Version(3, 0));
 
         JsonObject serialized = JsonParser.parseString(JsonUtils.GSON.toJson(format)).getAsJsonObject();
 
-        assertEquals("hmcl.config", serialized.get("id").getAsString());
+        assertEquals("hmcl.settings", serialized.get("id").getAsString());
         assertEquals("3.0", serialized.get("version").getAsString());
         assertEquals(format, JsonUtils.GSON.fromJson(serialized, JsonFileFormat.class));
     }
@@ -55,7 +55,7 @@ public final class JsonFileFormatTest {
     /// Tests file format compatibility check statuses.
     @Test
     public void checksFileFormat() {
-        JsonFileFormat expected = new JsonFileFormat("hmcl.config", new JsonFileFormat.Version(3, 0));
+        JsonFileFormat expected = new JsonFileFormat("hmcl.settings", new JsonFileFormat.Version(3, 0));
         JsonObject object = new JsonObject();
 
         JsonFileFormat.CheckResult missing = JsonFileFormat.check(object, expected);
@@ -66,7 +66,7 @@ public final class JsonFileFormatTest {
         assertTrue(invalid.isInvalid());
         assertEquals("\"hmcl.config/3.x\"", invalid.invalidValue());
 
-        object.add(JsonFileFormat.DEFAULT_MEMBER_NAME, createFormatObject("hmcl.config", "3.x"));
+        object.add(JsonFileFormat.DEFAULT_MEMBER_NAME, createFormatObject("hmcl.settings", "3.x"));
         JsonFileFormat.CheckResult invalidVersion = JsonFileFormat.check(object, expected);
         assertTrue(invalidVersion.isInvalid());
         assertEquals("{\"id\":\"hmcl.config\",\"version\":\"3.x\"}", invalidVersion.invalidValue());
@@ -76,12 +76,12 @@ public final class JsonFileFormatTest {
         assertTrue(unexpected.isUnexpectedId());
         assertEquals("hmcl.game-settings-presets", unexpected.actual().id());
 
-        object.add(JsonFileFormat.DEFAULT_MEMBER_NAME, createFormatObject("hmcl.config", "3.1"));
+        object.add(JsonFileFormat.DEFAULT_MEMBER_NAME, createFormatObject("hmcl.settings", "3.1"));
         JsonFileFormat.CheckResult newerMinor = JsonFileFormat.check(object, expected);
         assertTrue(newerMinor.isNewerThanExpected());
         assertFalse(newerMinor.hasNewerMajorVersion());
 
-        object.add(JsonFileFormat.DEFAULT_MEMBER_NAME, createFormatObject("hmcl.config", "4.0"));
+        object.add(JsonFileFormat.DEFAULT_MEMBER_NAME, createFormatObject("hmcl.settings", "4.0"));
         JsonFileFormat.CheckResult newerMajor = JsonFileFormat.check(object, expected);
         assertTrue(newerMajor.isNewerThanExpected());
         assertTrue(newerMajor.hasNewerMajorVersion());
