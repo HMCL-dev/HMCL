@@ -27,6 +27,7 @@ import org.jackhuang.hmcl.game.QuickPlayType;
 import org.jackhuang.hmcl.game.Renderer;
 import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.StringUtils;
+import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jetbrains.annotations.*;
 
 import java.nio.charset.StandardCharsets;
@@ -46,7 +47,7 @@ public final class LegacyGameSettingsMigrator {
     private static final String LEGACY_PRESET_ID_NAMESPACE = "hmcl:legacy-global-game-settings:";
 
     /// Legacy file name used by old per-version `VersionSetting` data.
-    private static final String LEGACY_VERSION_SETTING_FILENAME = "hmclversion.cfg";
+    private static final String LEGACY_INSTANCE_SETTINGS_FILENAME = "hmclversion.cfg";
 
     /// Legacy game directory modes stored by old configuration files.
     private enum GameDirectoryType {
@@ -115,17 +116,13 @@ public final class LegacyGameSettingsMigrator {
         Objects.requireNonNull(versionRoot);
         Objects.requireNonNull(baseDirectory);
 
-        Path file = versionRoot.resolve(LEGACY_VERSION_SETTING_FILENAME);
+        Path file = versionRoot.resolve(LEGACY_INSTANCE_SETTINGS_FILENAME);
         if (!Files.exists(file)) {
             return null;
         }
 
         try {
-            JsonObject legacySettingJson;
-            try (var reader = Files.newBufferedReader(file)) {
-                legacySettingJson = Config.CONFIG_GSON.fromJson(reader, JsonObject.class);
-            }
-
+            JsonObject legacySettingJson = JsonUtils.fromJsonFile(file, JsonObject.class);
             if (legacySettingJson == null) {
                 return null;
             }
