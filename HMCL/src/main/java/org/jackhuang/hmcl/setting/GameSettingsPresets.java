@@ -94,16 +94,6 @@ public final class GameSettingsPresets extends ObservableSetting {
         this.format.set(Objects.requireNonNull(format));
     }
 
-    /// Reusable game setting presets.
-    @SerializedName("gameSettings")
-    private final ObservableList<GameSettings.Preset> gameSettings =
-            FXCollections.observableArrayList(setting -> new Observable[] { setting });
-
-    /// Returns the reusable game setting presets.
-    public ObservableList<GameSettings.Preset> getGameSettings() {
-        return gameSettings;
-    }
-
     /// The default preset ID.
     @SerializedName("defaultGameSettings")
     private final ObjectProperty<@Nullable UUID> defaultGameSettings = new SimpleObjectProperty<>(this, "defaultGameSettings");
@@ -121,6 +111,16 @@ public final class GameSettingsPresets extends ObservableSetting {
     /// Sets the default preset ID.
     public void setDefaultGameSettings(@Nullable UUID defaultGameSettings) {
         this.defaultGameSettings.set(defaultGameSettings);
+    }
+
+    /// Reusable game setting presets.
+    @SerializedName("gameSettings")
+    private final ObservableList<GameSettings.Preset> gameSettings =
+            FXCollections.observableArrayList(setting -> new Observable[] { setting });
+
+    /// Returns the reusable game setting presets.
+    public ObservableList<GameSettings.Preset> getGameSettings() {
+        return gameSettings;
     }
 
     /// Returns the preset with the given ID.
