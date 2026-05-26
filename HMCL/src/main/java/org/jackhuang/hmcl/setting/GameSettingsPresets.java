@@ -17,7 +17,6 @@
  */
 package org.jackhuang.hmcl.setting;
 
-import com.google.gson.*;
 import com.google.gson.annotations.JsonAdapter;
 import com.google.gson.annotations.SerializedName;
 import javafx.beans.Observable;
@@ -26,9 +25,9 @@ import javafx.beans.property.SimpleObjectProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import org.jackhuang.hmcl.util.GUID;
+import org.jackhuang.hmcl.util.gson.JsonFileFormat;
 import org.jackhuang.hmcl.util.gson.JsonSerializable;
 import org.jackhuang.hmcl.util.gson.ObservableSetting;
-import org.jackhuang.hmcl.util.gson.JsonFileFormat;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
 
@@ -45,7 +44,7 @@ import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 @JsonAdapter(GameSettingsPresets.Adapter.class)
 @NotNullByDefault
 @JsonSerializable
-public final class GameSettingsPresets extends ObservableSetting {
+public final class GameSettingsPresets extends ObservableSetting implements FormattedJsonSetting {
     /// The file format supported by this game settings preset store.
     public static final JsonFileFormat CURRENT_FORMAT = new JsonFileFormat("hmcl.game-settings-presets", new JsonFileFormat.Version(1, 1));
 
@@ -53,16 +52,6 @@ public final class GameSettingsPresets extends ObservableSetting {
     public GameSettingsPresets() {
         tracker.markDirty(format);
         register();
-    }
-
-    /// Reads a game settings preset store from a JSON object.
-    public static @Nullable GameSettingsPresets fromJson(JsonObject json) throws JsonParseException {
-        return Config.CONFIG_GSON.<@Nullable GameSettingsPresets>fromJson(json, GameSettingsPresets.class);
-    }
-
-    /// Serializes this game settings preset store to JSON.
-    public String toJson() {
-        return Config.CONFIG_GSON.toJson(this);
     }
 
     /// Copies another preset store into this instance.

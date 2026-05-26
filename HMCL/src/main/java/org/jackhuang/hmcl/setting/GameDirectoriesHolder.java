@@ -46,12 +46,9 @@ public final class GameDirectoriesHolder {
     private static final JsonSettingFile<GameDirectories> FILE = new JsonSettingFile<>(
             LOCATION,
             "game directories",
+            GameDirectories.class,
             GameDirectories.CURRENT_FORMAT,
-            GameDirectories::new,
-            GameDirectories::fromJson,
-            GameDirectories::toJson,
-            GameDirectories::getFormat,
-            GameDirectories::setFormat);
+            GameDirectories::new);
 
     /// The loaded detached game directory store.
     private static @UnknownNullability GameDirectories gameDirectories;

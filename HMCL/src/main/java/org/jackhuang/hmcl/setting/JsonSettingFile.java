@@ -30,8 +30,6 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Objects;
-import java.util.function.BiConsumer;
-import java.util.function.Function;
 import java.util.function.Supplier;
 
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
@@ -41,12 +39,15 @@ import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 /// @param <T> the settings object type
 /// @author Glavo
 @NotNullByDefault
-final class JsonSettingFile<T extends ObservableSetting> {
+final class JsonSettingFile<T extends ObservableSetting & FormattedJsonSetting> {
     /// The settings file location.
     private final Path location;
 
     /// The human-readable file type name used in logs.
     private final String displayName;
+
+    /// The settings object type.
+    private final Class<T> type;
 
     /// The file format supported by the current code.
     private final JsonFileFormat expectedFormat;
@@ -54,50 +55,24 @@ final class JsonSettingFile<T extends ObservableSetting> {
     /// Creates a default settings object.
     private final Supplier<T> createDefault;
 
-    /// Deserializes a JSON object into a settings object.
-    private final Function<JsonObject, @Nullable T> deserialize;
-
-    /// Serializes a settings object into JSON text.
-    private final Function<T, String> serialize;
-
-    /// Reads the format stored in a settings object.
-    private final Function<T, JsonFileFormat> getFormat;
-
-    /// Updates the format stored in a settings object.
-    private final BiConsumer<T, JsonFileFormat> setFormat;
-
     /// Creates a detached JSON settings file helper.
     ///
     /// @param location the settings file location
     /// @param displayName the human-readable file type name used in logs
+    /// @param type the settings object type
     /// @param expectedFormat the file format supported by the current code
     /// @param createDefault creates a default settings object
-    /// @param deserialize deserializes a JSON object into a settings object
-    /// @param serialize serializes a settings object into JSON text
-    /// @param getFormat reads the format stored in a settings object
-    /// @param setFormat updates the format stored in a settings object
     JsonSettingFile(
             Path location,
             String displayName,
+            Class<T> type,
             JsonFileFormat expectedFormat,
-            Supplier<T> createDefault,
-            Function<JsonObject, @Nullable T> deserialize,
-            Function<T, String> serialize,
-            Function<T, JsonFileFormat> getFormat,
-            BiConsumer<T, JsonFileFormat> setFormat) {
+            Supplier<T> createDefault) {
         this.location = Objects.requireNonNull(location);
         this.displayName = Objects.requireNonNull(displayName);
+        this.type = Objects.requireNonNull(type);
         this.expectedFormat = Objects.requireNonNull(expectedFormat);
         this.createDefault = Objects.requireNonNull(createDefault);
-        this.deserialize = Objects.requireNonNull(deserialize);
-        this.serialize = Objects.requireNonNull(serialize);
-        this.getFormat = Objects.requireNonNull(getFormat);
-        this.setFormat = Objects.requireNonNull(setFormat);
-    }
-
-    /// Returns the settings file location.
-    Path location() {
-        return location;
     }
 
     /// Loads the settings file, falling back to migrated data or a default object when absent.
@@ -118,10 +93,10 @@ final class JsonSettingFile<T extends ObservableSetting> {
                         return new LoadResult<>(createDefault.get(), false);
                     }
 
-                    @Nullable T deserialized = deserialize.apply(jsonObject);
+                    @Nullable T deserialized = JsonUtils.GSON.fromJson(jsonObject, type);
                     if (deserialized != null) {
-                        if (!expectedFormat.equals(getFormat.apply(deserialized))) {
-                            setFormat.accept(deserialized, expectedFormat);
+                        if (!expectedFormat.equals(deserialized.getFormat())) {
+                            deserialized.setFormat(expectedFormat);
                         }
 
                         return new LoadResult<>(deserialized, format.allowSave());
@@ -150,13 +125,13 @@ final class JsonSettingFile<T extends ObservableSetting> {
     ///
     /// @param value the settings object to save
     void save(T value) {
-        FileSaver.save(location, serialize.apply(value));
+        FileSaver.save(location, JsonUtils.GSON.toJson(value, type));
     }
 
     /// Result of loading a detached JSON settings file.
     ///
     /// @param value the loaded settings object
     /// @param allowSave whether the file may be overwritten
-    record LoadResult<T extends ObservableSetting>(T value, boolean allowSave) {
+    record LoadResult<T extends ObservableSetting & FormattedJsonSetting>(T value, boolean allowSave) {
     }
 }

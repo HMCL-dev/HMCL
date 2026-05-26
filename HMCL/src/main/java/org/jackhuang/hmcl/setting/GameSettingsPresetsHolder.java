@@ -46,12 +46,9 @@ public final class GameSettingsPresetsHolder {
     private static final JsonSettingFile<GameSettingsPresets> FILE = new JsonSettingFile<>(
             LOCATION,
             "game settings presets",
+            GameSettingsPresets.class,
             GameSettingsPresets.CURRENT_FORMAT,
-            GameSettingsPresets::new,
-            GameSettingsPresets::fromJson,
-            GameSettingsPresets::toJson,
-            GameSettingsPresets::getFormat,
-            GameSettingsPresets::setFormat);
+            GameSettingsPresets::new);
 
     /// The loaded detached preset store.
     private static @UnknownNullability GameSettingsPresets gameSettingsPresets;

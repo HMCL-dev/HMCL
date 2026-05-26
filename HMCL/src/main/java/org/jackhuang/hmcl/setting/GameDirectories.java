@@ -28,6 +28,7 @@ import javafx.collections.ObservableList;
 import org.jackhuang.hmcl.util.GUID;
 import org.jackhuang.hmcl.util.gson.JsonFileFormat;
 import org.jackhuang.hmcl.util.gson.JsonSerializable;
+import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.gson.ObservableSetting;
 import org.jackhuang.hmcl.util.gson.UUIDTypeAdapter;
 import org.jetbrains.annotations.NotNullByDefault;
@@ -45,7 +46,7 @@ import java.util.Objects;
 @JsonAdapter(GameDirectories.Adapter.class)
 @NotNullByDefault
 @JsonSerializable
-public final class GameDirectories extends ObservableSetting {
+public final class GameDirectories extends ObservableSetting implements FormattedJsonSetting {
     /// The file format supported by this game directory store.
     public static final JsonFileFormat CURRENT_FORMAT =
             new JsonFileFormat("hmcl.game-directories", new JsonFileFormat.Version(1, 0));
@@ -54,15 +55,6 @@ public final class GameDirectories extends ObservableSetting {
     public GameDirectories() {
         tracker.markDirty(format);
         register();
-    }
-
-    /// Reads a game directory store from a JSON object.
-    ///
-    /// @param json the JSON object to read
-    /// @return the parsed game directory store
-    /// @throws JsonParseException if the JSON object is malformed
-    public static @Nullable GameDirectories fromJson(JsonObject json) throws JsonParseException {
-        return Config.CONFIG_GSON.<@Nullable GameDirectories>fromJson(json, GameDirectories.class);
     }
 
     /// Extracts game directory data from a settings JSON object and removes the legacy members.
@@ -91,20 +83,15 @@ public final class GameDirectories extends ObservableSetting {
         }
 
         JsonObject object = new JsonObject();
-        object.add(JsonFileFormat.DEFAULT_MEMBER_NAME, Config.CONFIG_GSON.toJsonTree(CURRENT_FORMAT, JsonFileFormat.class));
+        object.add(JsonFileFormat.DEFAULT_MEMBER_NAME, JsonUtils.GSON.toJsonTree(CURRENT_FORMAT, JsonFileFormat.class));
         object.add("gameDirectories", profiles);
 
         @Nullable GUID selected = findProfileId(profiles, selectedName);
         if (selected != null) {
-            object.add("selectedGameDirectory", Config.CONFIG_GSON.toJsonTree(selected, GUID.class));
+            object.add("selectedGameDirectory", JsonUtils.GSON.toJsonTree(selected, GUID.class));
         }
 
-        return fromJson(object);
-    }
-
-    /// Serializes this game directory store to JSON.
-    public String toJson() {
-        return Config.CONFIG_GSON.toJson(this);
+        return JsonUtils.GSON.fromJson(object, GameDirectories.class);
     }
 
     /// The format used by this game directory store file.
