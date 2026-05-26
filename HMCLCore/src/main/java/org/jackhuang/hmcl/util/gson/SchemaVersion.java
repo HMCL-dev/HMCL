@@ -17,7 +17,10 @@
  */
 package org.jackhuang.hmcl.util.gson;
 
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
 import com.google.gson.JsonParseException;
+import com.google.gson.JsonPrimitive;
 import com.google.gson.TypeAdapter;
 import com.google.gson.annotations.JsonAdapter;
 import com.google.gson.stream.JsonReader;
@@ -27,6 +30,7 @@ import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
+import java.util.Objects;
 
 /// Semantic version marker for a serialized data schema.
 ///
@@ -46,6 +50,8 @@ import java.io.IOException;
 @JsonAdapter(SchemaVersion.Adapter.class)
 @NotNullByDefault
 public record SchemaVersion(int major, int minor) implements Comparable<SchemaVersion> {
+    /// The default JSON member name used for schema versions.
+    public static final String DEFAULT_MEMBER_NAME = "schemaVersion";
 
     /// @param major the major schema version
     /// @param minor the minor schema version
@@ -73,6 +79,58 @@ public record SchemaVersion(int major, int minor) implements Comparable<SchemaVe
         }
     }
 
+    /// Reads a schema version from the default `schemaVersion` member of a JSON object.
+    ///
+    /// @param object the JSON object that contains the schema version
+    /// @return the parsed schema version
+    /// @throws JsonParseException if the schema version member is missing or invalid
+    public static SchemaVersion readFrom(JsonObject object) throws JsonParseException {
+        return readFrom(object, DEFAULT_MEMBER_NAME);
+    }
+
+    /// Reads a schema version from a JSON object member.
+    ///
+    /// @param object the JSON object that contains the schema version
+    /// @param memberName the JSON member name
+    /// @return the parsed schema version
+    /// @throws JsonParseException if the schema version member is missing or invalid
+    public static SchemaVersion readFrom(JsonObject object, String memberName) throws JsonParseException {
+        Objects.requireNonNull(object);
+        Objects.requireNonNull(memberName);
+
+        JsonElement element = object.get(memberName);
+        if (!(element instanceof JsonPrimitive primitive) || !primitive.isString()) {
+            throw new JsonParseException("Invalid schema version member `" + memberName + "`: " + element);
+        }
+
+        try {
+            return parse(primitive.getAsString());
+        } catch (IllegalArgumentException e) {
+            throw new JsonParseException("Invalid schema version member `" + memberName + "`: " + primitive, e);
+        }
+    }
+
+    /// Reads and checks the default `schemaVersion` member of a JSON object.
+    ///
+    /// @param object the JSON object that contains the schema version
+    /// @param expected the schema version supported by the current code
+    /// @return the schema version check result
+    /// @throws JsonParseException if the schema version member is missing or invalid
+    public static CheckResult check(JsonObject object, SchemaVersion expected) throws JsonParseException {
+        return check(object, DEFAULT_MEMBER_NAME, expected);
+    }
+
+    /// Reads and checks a schema version JSON object member.
+    ///
+    /// @param object the JSON object that contains the schema version
+    /// @param memberName the JSON member name
+    /// @param expected the schema version supported by the current code
+    /// @return the schema version check result
+    /// @throws JsonParseException if the schema version member is missing or invalid
+    public static CheckResult check(JsonObject object, String memberName, SchemaVersion expected) throws JsonParseException {
+        return new CheckResult(readFrom(object, memberName), Objects.requireNonNull(expected));
+    }
+
     /// Compares this version with another schema version.
     ///
     /// @param o the other version to compare to
@@ -89,6 +147,31 @@ public record SchemaVersion(int major, int minor) implements Comparable<SchemaVe
     @Override
     public String toString() {
         return major + "." + minor;
+    }
+
+    /// Result of comparing a serialized schema version with the version supported by the current code.
+    ///
+    /// @param actual the schema version read from serialized data
+    /// @param expected the schema version supported by the current code
+    public record CheckResult(SchemaVersion actual, SchemaVersion expected) {
+        /// Creates a schema version check result.
+        ///
+        /// @param actual the schema version read from serialized data
+        /// @param expected the schema version supported by the current code
+        public CheckResult {
+            Objects.requireNonNull(actual);
+            Objects.requireNonNull(expected);
+        }
+
+        /// Returns whether the serialized schema is newer than the supported schema.
+        public boolean isNewerThanExpected() {
+            return actual.compareTo(expected) > 0;
+        }
+
+        /// Returns whether the serialized schema has a newer major version than the supported schema.
+        public boolean hasNewerMajorVersion() {
+            return actual.major() > expected.major();
+        }
     }
 
     /// Gson adapter for the string representation of [SchemaVersion].
@@ -119,10 +202,11 @@ public record SchemaVersion(int major, int minor) implements Comparable<SchemaVe
             }
 
             if (in.peek() == JsonToken.STRING) {
+                String value = in.nextString();
                 try {
-                    return SchemaVersion.parse(in.nextString());
+                    return SchemaVersion.parse(value);
                 } catch (IllegalArgumentException e) {
-                    throw new JsonParseException("Invalid schema version: " + in.nextString(), e);
+                    throw new JsonParseException("Invalid schema version: " + value, e);
                 }
             } else {
                 throw new JsonParseException("Unexpected token: " + in.peek());

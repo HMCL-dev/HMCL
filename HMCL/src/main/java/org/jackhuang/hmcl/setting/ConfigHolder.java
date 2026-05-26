@@ -19,7 +19,6 @@ package org.jackhuang.hmcl.setting;
 
 import com.google.gson.JsonParseException;
 import com.google.gson.JsonObject;
-import com.google.gson.JsonPrimitive;
 import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.util.FileSaver;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
@@ -165,26 +164,20 @@ public final class ConfigHolder {
                 return new Config();
             }
 
-            // Check schema version
-            if (jsonObject.get("schemaVersion") instanceof JsonPrimitive schemaVersion) {
-                try {
-                    var version = SchemaVersion.parse(schemaVersion.getAsString());
-                    if (version.compareTo(Config.CURRENT_SCHEMA_VERSION) > 0) {
-                        LOG.warning("Unsupported settings file schema version. Excepted: " + Config.CONFIG_GSON + ", Actual: " + schemaVersion);
-                        unsupportedVersion = true;
+            try {
+                SchemaVersion.CheckResult schemaVersion = SchemaVersion.check(jsonObject, Config.CURRENT_SCHEMA_VERSION);
+                if (schemaVersion.isNewerThanExpected()) {
+                    LOG.warning("Unsupported settings file schema version. Expected: "
+                            + Config.CURRENT_SCHEMA_VERSION + ", Actual: " + schemaVersion.actual());
+                    unsupportedVersion = true;
 
-                        if (version.major() > Config.CURRENT_SCHEMA_VERSION.major()) {
-                            // Unsupported major version, reset to default
-                            return new Config();
-                        }
+                    if (schemaVersion.hasNewerMajorVersion()) {
+                        // Unsupported major version, reset to default
+                        return new Config();
                     }
-                } catch (Exception e) {
-                    LOG.warning("Failed to parse schema version: " + schemaVersion, e);
-                    return new Config();
                 }
-
-            } else {
-                LOG.warning("Invalid schema version in settings file: " + SETTINGS_LOCATION);
+            } catch (JsonParseException e) {
+                LOG.warning("Invalid schema version in settings file: " + SETTINGS_LOCATION, e);
                 unsupportedVersion = true;
                 return new Config();
             }
