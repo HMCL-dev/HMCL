@@ -122,7 +122,7 @@ public final class Config extends ObservableSetting {
 
     /// Sets the schema version used by this config file.
     public void setSchemaVersion(SchemaVersion schemaVersion) {
-        this.schemaVersion.set(Objects.requireNonNull(schemaVersion));
+        this.schemaVersion.set(schemaVersion);
     }
 
     @SerializedName("x")
@@ -869,7 +869,12 @@ public final class Config extends ObservableSetting {
         /// Serializes the main config without detached game setting presets.
         @Override
         public JsonElement serialize(Config src, Type typeOfSrc, JsonSerializationContext context) {
+            if (src == null) {
+                return JsonNull.INSTANCE;
+            }
+
             JsonObject result = super.serialize(src, typeOfSrc, context).getAsJsonObject();
+            result.addProperty("schemaVersion", CURRENT_SCHEMA_VERSION.toString());
             result.remove("gameSettings");
             result.remove("defaultGameSettings");
             return result;

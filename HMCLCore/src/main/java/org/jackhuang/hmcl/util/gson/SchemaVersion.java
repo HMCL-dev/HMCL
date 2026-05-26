@@ -66,17 +66,17 @@ public record SchemaVersion(int major, int minor) implements Comparable<SchemaVe
         }
     }
 
-    /// Returns the canonical `major.minor` string representation.
-    @Override
-    public String toString() {
-        return major + "." + minor;
-    }
-
     @Override
     public int compareTo(SchemaVersion o) {
         return major != o.major
                 ? Integer.compare(major, o.major)
                 : Integer.compare(minor, o.minor);
+    }
+
+    /// Returns the canonical `major.minor` string representation.
+    @Override
+    public String toString() {
+        return major + "." + minor;
     }
 
     /// Gson adapter for the string representation of [SchemaVersion].

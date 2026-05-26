@@ -19,9 +19,11 @@ package org.jackhuang.hmcl.setting;
 
 import com.google.gson.JsonParseException;
 import com.google.gson.JsonObject;
+import com.google.gson.JsonPrimitive;
 import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.util.FileSaver;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
+import org.jackhuang.hmcl.util.gson.SchemaVersion;
 import org.jackhuang.hmcl.util.i18n.I18n;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
@@ -31,6 +33,7 @@ import org.jetbrains.annotations.UnknownNullability;
 import java.io.IOException;
 import java.nio.file.*;
 import java.util.Locale;
+import java.util.Objects;
 
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
@@ -46,7 +49,7 @@ public final class ConfigHolder {
     public static final Path GLOBAL_CONFIG_PATH = Metadata.HMCL_GLOBAL_DIRECTORY.resolve("config.json");
 
     /// The current per-workspace config path.
-    private static final Path CONFIG_LOCATION = Metadata.HMCL_CURRENT_DIRECTORY.resolve("settings.json");
+    private static final Path SETTINGS_LOCATION = Metadata.HMCL_CURRENT_DIRECTORY.resolve("settings.json");
 
     /// The loaded per-workspace config instance.
     private static @UnknownNullability Config configInstance;
@@ -81,7 +84,7 @@ public final class ConfigHolder {
 
     /// Returns the current per-workspace config path.
     public static Path configLocation() {
-        return CONFIG_LOCATION;
+        return SETTINGS_LOCATION;
     }
 
     /// Returns whether this run created a new per-workspace config.
@@ -105,11 +108,11 @@ public final class ConfigHolder {
             throw new IllegalStateException("Configuration is already loaded");
         }
 
-        LOG.info("Config location: " + CONFIG_LOCATION);
+        LOG.info("Config location: " + SETTINGS_LOCATION);
 
         configInstance = loadConfig();
         if (!unsupportedVersion) {
-            configInstance.addListener(source -> FileSaver.save(CONFIG_LOCATION, configInstance.toJson()));
+            configInstance.addListener(source -> FileSaver.save(SETTINGS_LOCATION, configInstance.toJson()));
         }
 
         globalConfigInstance = loadGlobalConfig();
@@ -121,44 +124,78 @@ public final class ConfigHolder {
         Settings.init();
 
         if (newlyCreated) {
-            LOG.info("Creating config file " + CONFIG_LOCATION);
-            FileUtils.saveSafely(CONFIG_LOCATION, configInstance.toJson());
+            LOG.info("Creating config file " + SETTINGS_LOCATION);
+            FileUtils.saveSafely(SETTINGS_LOCATION, configInstance.toJson());
         }
 
-        checkWritable(CONFIG_LOCATION);
+        checkWritable(SETTINGS_LOCATION);
     }
 
     /// Loads the current per-workspace config or migrates a legacy config when needed.
     private static Config loadConfig() throws IOException {
-        if (Files.exists(CONFIG_LOCATION)) {
-            checkOwner(CONFIG_LOCATION);
+        if (Files.exists(SETTINGS_LOCATION)) {
+            checkOwner(SETTINGS_LOCATION);
+
+            JsonObject jsonObject;
             try {
-                JsonObject jsonObject = JsonUtils.fromJsonFile(CONFIG_LOCATION, JsonObject.class);
-                if (jsonObject == null) {
-                    LOG.info("Config is empty");
-                } else {
-                    Config deserialized = Config.fromJson(jsonObject);
-                    if (deserialized == null) {
-                        LOG.info("Config is empty");
-                    } else {
-                        return deserialized;
+                jsonObject = JsonUtils.fromJsonFile(SETTINGS_LOCATION, JsonObject.class);
+            } catch (Exception e) {
+                // TODO: Save the invalid settings file to a backup location
+                LOG.warning("Failed to read settings file: " + SETTINGS_LOCATION, e);
+                return new Config();
+            }
+
+            if (jsonObject == null) {
+                LOG.warning("Settings file is empty: " + SETTINGS_LOCATION);
+                return new Config();
+            }
+
+            // Check schema version
+            if (jsonObject.get("schemaVersion") instanceof JsonPrimitive schemaVersion) {
+                try {
+                    var version = SchemaVersion.parse(schemaVersion.getAsString());
+                    if (version.compareTo(Config.CURRENT_SCHEMA_VERSION) > 0) {
+                        LOG.warning("Unsupported settings file schema version. Excepted: " + Config.CONFIG_GSON + ", Actual: " + schemaVersion);
+                        unsupportedVersion = true;
+
+                        if (version.major() > Config.CURRENT_SCHEMA_VERSION.major()) {
+                            // Unsupported major version, reset to default
+                            return new Config();
+                        }
                     }
+                } catch (Exception e) {
+                    LOG.warning("Failed to parse schema version: " + schemaVersion, e);
+                    return new Config();
                 }
+
+            } else {
+                LOG.warning("Invalid schema version in settings file: " + SETTINGS_LOCATION);
+                unsupportedVersion = true;
+                return new Config();
+            }
+
+
+
+            try {
+                return Objects.requireNonNullElseGet(Config.fromJson(jsonObject), Config::new);
             } catch (JsonParseException e) {
-                LOG.warning("Malformed config file: " + CONFIG_LOCATION, e);
+                // TODO: Save the invalid settings file to a backup location
+                LOG.warning("Failed to parse settings file: " + SETTINGS_LOCATION, e);
+                return new Config();
             }
         } else {
             LegacyConfigMigrator.MigrationResult migrationResult = LegacyConfigMigrator.migrateLegacyConfig();
             if (migrationResult != null) {
                 checkOwner(migrationResult.path());
-                LOG.info("Migrating config from " + migrationResult.path() + " to " + CONFIG_LOCATION);
-                FileUtils.saveSafely(CONFIG_LOCATION, migrationResult.contentForMigration());
+                LOG.info("Migrating settings from " + migrationResult.path() + " to " + SETTINGS_LOCATION);
+                FileUtils.saveSafely(SETTINGS_LOCATION, migrationResult.contentForMigration());
                 return migrationResult.config();
             }
         }
 
+        var newSettings = new Config();
         newlyCreated = true;
-        return new Config();
+        return newSettings;
     }
 
     /// Checks whether root is reading a config file owned by another user.
