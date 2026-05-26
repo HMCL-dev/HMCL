@@ -32,6 +32,7 @@ import org.jackhuang.hmcl.mod.ModpackProvider;
 import org.jackhuang.hmcl.setting.Config;
 import org.jackhuang.hmcl.setting.DefaultIsolationType;
 import org.jackhuang.hmcl.setting.GameSettings;
+import org.jackhuang.hmcl.setting.GameSettingsPresetsHolder;
 import org.jackhuang.hmcl.setting.GameWindowType;
 import org.jackhuang.hmcl.setting.LegacyGameSettingsMigrator;
 import org.jackhuang.hmcl.setting.Profile;
@@ -259,7 +260,7 @@ public final class HMCLGameRepository extends DefaultGameRepository {
     }
 
     private boolean isLegacyProfileAlwaysIsolated() {
-        GameSettings.Preset parent = config().getGameSettings(profile.getLegacyGameSettingsParent());
+        GameSettings.Preset parent = GameSettingsPresetsHolder.getGameSettings(profile.getLegacyGameSettingsParent());
         return parent != null && parent.defaultIsolationTypeProperty().getValue() == DefaultIsolationType.ALWAYS;
     }
 
@@ -272,7 +273,7 @@ public final class HMCLGameRepository extends DefaultGameRepository {
         }
 
         GameSettings.Instance setting = new GameSettings.Instance();
-        setting.parentProperty().setValue(Optional.ofNullable(profile.getLegacyGameSettingsParent()).orElse(config().getDefaultGameSettings()));
+        setting.parentProperty().setValue(Optional.ofNullable(profile.getLegacyGameSettingsParent()).orElse(GameSettingsPresetsHolder.getDefaultGameSettings()));
         return initLocalGameSettings(id, setting);
     }
 
@@ -311,8 +312,8 @@ public final class HMCLGameRepository extends DefaultGameRepository {
         @Nullable UUID parent = instance != null
                 ? instance.parentProperty().getValue()
                 : profile.getLegacyGameSettingsParent();
-        GameSettings.Preset parentSetting = config().getGameSettings(parent);
-        return parentSetting != null ? parentSetting : config().getDefaultGameSettingsOrCreate();
+        GameSettings.Preset parentSetting = GameSettingsPresetsHolder.getGameSettings(parent);
+        return parentSetting != null ? parentSetting : GameSettingsPresetsHolder.getDefaultGameSettingsOrCreate();
     }
 
     public GameSettings.Effective getEffectiveGameSettings(String id) {
@@ -374,7 +375,7 @@ public final class HMCLGameRepository extends DefaultGameRepository {
 
     /// Preserves inherited legacy `VERSION_FOLDER` semantics for local settings that inherit parent values.
     private void preserveLegacyInheritedRunningDirectory(GameSettings.Instance setting, @Nullable UUID parent) {
-        GameSettings.Preset parentSetting = config().getGameSettings(parent);
+        GameSettings.Preset parentSetting = GameSettingsPresetsHolder.getGameSettings(parent);
         if (parentSetting != null && parentSetting.defaultIsolationTypeProperty().getValue() == DefaultIsolationType.ALWAYS) {
             setting.runningDirProperty().setValue("");
             setting.getOverrideProperties().add(GameSettings.PROPERTY_RUNNING_DIR);
@@ -386,7 +387,7 @@ public final class HMCLGameRepository extends DefaultGameRepository {
             GameSettings.Instance setting,
             JsonObject legacySettingJson,
             @Nullable UUID parent) {
-        GameSettings.Preset parentSetting = config().getGameSettings(parent);
+        GameSettings.Preset parentSetting = GameSettingsPresetsHolder.getGameSettings(parent);
         if (parentSetting != null
                 && LegacyGameSettingsMigrator.isLegacyRootGameDirectory(legacySettingJson)
                 && StringUtils.isNotBlank(parentSetting.runningDirProperty().getValue())) {

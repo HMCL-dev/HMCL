@@ -815,49 +815,6 @@ public final class Config extends ObservableSetting {
         return configurations;
     }
 
-    /// The detached game setting preset store.
-    private transient final GameSettingsPresets gameSettingPresets = new GameSettingsPresets();
-
-    /// Returns the detached game setting preset store.
-    GameSettingsPresets gameSettingPresets() {
-        return gameSettingPresets;
-    }
-
-    /// Replaces the detached game setting preset store content.
-    void setGameSettingsPresets(GameSettingsPresets gameSettingPresets) {
-        this.gameSettingPresets.copyFrom(gameSettingPresets);
-    }
-
-    /// Returns the reusable game setting presets.
-    public ObservableList<GameSettings.Preset> getGameSettings() {
-        return gameSettingPresets.getGameSettings();
-    }
-
-    /// Returns the default game setting preset ID property.
-    public ObjectProperty<@Nullable UUID> defaultGameSettingsProperty() {
-        return gameSettingPresets.defaultGameSettingsProperty();
-    }
-
-    /// Returns the default game setting preset ID.
-    public @Nullable UUID getDefaultGameSettings() {
-        return gameSettingPresets.getDefaultGameSettings();
-    }
-
-    /// Sets the default game setting preset ID.
-    public void setDefaultGameSettings(@Nullable UUID defaultGameSettings) {
-        gameSettingPresets.setDefaultGameSettings(defaultGameSettings);
-    }
-
-    /// Returns the game setting preset with the given ID.
-    public GameSettings.@Nullable Preset getGameSettings(@Nullable UUID id) {
-        return gameSettingPresets.getGameSettings(id);
-    }
-
-    /// Returns the default game setting preset, creating one when needed.
-    public GameSettings.Preset getDefaultGameSettingsOrCreate() {
-        return gameSettingPresets.getDefaultGameSettingsOrCreate();
-    }
-
     /// JSON adapter for [Config].
     public static final class Adapter extends ObservableSetting.Adapter<Config> {
         /// Creates an empty config for deserialization.
@@ -866,7 +823,7 @@ public final class Config extends ObservableSetting {
             return new Config();
         }
 
-        /// Serializes the main config without detached game setting presets.
+        /// Serializes the main config with the current schema version.
         @Override
         public JsonElement serialize(Config src, Type typeOfSrc, JsonSerializationContext context) {
             if (src == null) {
@@ -875,8 +832,6 @@ public final class Config extends ObservableSetting {
 
             JsonObject result = super.serialize(src, typeOfSrc, context).getAsJsonObject();
             result.addProperty("schemaVersion", CURRENT_SCHEMA_VERSION.toString());
-            result.remove("gameSettings");
-            result.remove("defaultGameSettings");
             return result;
         }
 

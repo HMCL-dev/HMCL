@@ -28,6 +28,7 @@ import org.jackhuang.hmcl.util.i18n.I18n;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
 import org.jetbrains.annotations.NotNullByDefault;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.UnknownNullability;
 
 import java.io.IOException;
@@ -68,6 +69,9 @@ public final class ConfigHolder {
     /// Whether the per-workspace config file on disk is invalid and must be backed up
     /// before being overwritten by the first successful save.
     private static boolean needBackupSettings = false;
+
+    /// Detached game settings presets migrated from a legacy config file.
+    private static @Nullable GameSettingsPresets migratedGameSettingsPresets;
 
     /// Returns the loaded per-workspace config.
     public static Config config() {
@@ -131,7 +135,7 @@ public final class ConfigHolder {
         Locale.setDefault(config().getLocalization().getLocale());
         I18n.setLocale(configInstance.getLocalization());
         LOG.setLogRetention(globalConfig().getLogRetention());
-        GameSettingsPresetsHolder.init(configInstance, !unsupportedVersion);
+        GameSettingsPresetsHolder.init(migratedGameSettingsPresets, !unsupportedVersion);
         Settings.init();
 
         if (newlyCreated) {
@@ -205,6 +209,7 @@ public final class ConfigHolder {
             LegacyConfigMigrator.MigrationResult migrationResult = LegacyConfigMigrator.migrateLegacyConfig();
             if (migrationResult != null) {
                 LOG.info("Migrating settings from " + migrationResult.path() + " to " + SETTINGS_LOCATION);
+                migratedGameSettingsPresets = migrationResult.gameSettingsPresets();
                 FileUtils.saveSafely(SETTINGS_LOCATION, migrationResult.contentForMigration());
                 return migrationResult.config();
             }

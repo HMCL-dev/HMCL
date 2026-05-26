@@ -178,14 +178,14 @@ public final class Profiles {
     private static void migrateGameSettings() {
         for (Profile profile : profiles) {
             if (profile.getLegacyGameSettingsParent() == null) {
-                profile.setLegacyGameSettingsParent(config().getDefaultGameSettingsOrCreate().idProperty().getValue());
+                profile.setLegacyGameSettingsParent(GameSettingsPresetsHolder.getDefaultGameSettingsOrCreate().idProperty().getValue());
             }
         }
 
-        if (config().getGameSettings().isEmpty()) {
-            config().getDefaultGameSettingsOrCreate();
-        } else if (config().getGameSettings(config().getDefaultGameSettings()) == null) {
-            config().setDefaultGameSettings(config().getGameSettings().get(0).idProperty().getValue());
+        if (GameSettingsPresetsHolder.getGameSettings().isEmpty()) {
+            GameSettingsPresetsHolder.getDefaultGameSettingsOrCreate();
+        } else if (GameSettingsPresetsHolder.getGameSettings(GameSettingsPresetsHolder.getDefaultGameSettings()) == null) {
+            GameSettingsPresetsHolder.setDefaultGameSettings(GameSettingsPresetsHolder.getGameSettings().get(0).idProperty().getValue());
         }
     }
 

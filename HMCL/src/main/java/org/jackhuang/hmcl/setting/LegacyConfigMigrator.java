@@ -95,8 +95,9 @@ public final class LegacyConfigMigrator {
                 return null;
             }
 
-            migrateLegacyPresetSettings(deserialized, jsonObject);
-            return new MigrationResult(path, deserialized, deserialized.toJson());
+            GameSettingsPresets gameSettingsPresets = new GameSettingsPresets();
+            migrateLegacyPresetSettings(deserialized, gameSettingsPresets, jsonObject);
+            return new MigrationResult(path, deserialized, gameSettingsPresets, deserialized.toJson());
         } catch (JsonParseException e) {
             LOG.warning("Malformed legacy config file: " + path, e);
             return null;
@@ -219,7 +220,7 @@ public final class LegacyConfigMigrator {
     }
 
     /// Migrates profile-global game settings from HMCL 3.14.1 and older config files.
-    private static void migrateLegacyPresetSettings(Config config, JsonObject object) {
+    private static void migrateLegacyPresetSettings(Config config, GameSettingsPresets gameSettingsPresets, JsonObject object) {
         if (!(object.get("configurations") instanceof JsonObject configurations))
             return;
 
@@ -232,13 +233,13 @@ public final class LegacyConfigMigrator {
             String profileName = entry.getKey();
             UUID parentId = profile.getLegacyGameSettingsParent();
             if (parentId != null) {
-                GameSettings.Preset parent = config.getGameSettings(parentId);
+                GameSettings.Preset parent = gameSettingsPresets.getGameSettings(parentId);
                 if (parent != null) {
                     continue;
                 }
             }
 
-            GameSettings.Preset legacyParent = config.getGameSettings(
+            GameSettings.Preset legacyParent = gameSettingsPresets.getGameSettings(
                     LegacyGameSettingsMigrator.getLegacyPresetId(profileName));
             if (legacyParent == null) {
                 JsonObject profileObject = configurations.get(profileName) instanceof JsonObject profileJson ? profileJson : null;
@@ -248,7 +249,7 @@ public final class LegacyConfigMigrator {
                 }
 
                 legacyParent = LegacyGameSettingsMigrator.toPreset(profileName, profileName, legacySettingObject);
-                config.getGameSettings().add(legacyParent);
+                gameSettingsPresets.getGameSettings().add(legacyParent);
             }
 
             profile.setLegacyGameSettingsParent(legacyParent.idProperty().getValue());
@@ -267,7 +268,8 @@ public final class LegacyConfigMigrator {
     /// Result of locating and loading a legacy config file without modifying it.
     ///
     /// @param config              The parsed config object.
+    /// @param gameSettingsPresets The detached preset store migrated from legacy profile globals.
     /// @param contentForMigration The content to save when migrating to settings.json.
-    record MigrationResult(Path path, Config config, String contentForMigration) {
+    record MigrationResult(Path path, Config config, GameSettingsPresets gameSettingsPresets, String contentForMigration) {
     }
 }

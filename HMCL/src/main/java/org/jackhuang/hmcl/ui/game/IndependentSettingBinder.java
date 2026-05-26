@@ -30,6 +30,7 @@ import javafx.scene.layout.BorderPane;
 import org.jackhuang.hmcl.game.HMCLGameRepository;
 import org.jackhuang.hmcl.game.NativesDirectoryType;
 import org.jackhuang.hmcl.setting.GameSettings;
+import org.jackhuang.hmcl.setting.GameSettingsPresetsHolder;
 import org.jackhuang.hmcl.setting.property.SettingProperty;
 import org.jackhuang.hmcl.ui.MemoryStatusBar;
 import org.jackhuang.hmcl.ui.construct.RadioChoiceList;
@@ -47,7 +48,6 @@ import java.util.function.BiConsumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
-import static org.jackhuang.hmcl.setting.ConfigHolder.config;
 import static org.jackhuang.hmcl.util.DataSizeUnit.GIGABYTES;
 import static org.jackhuang.hmcl.util.DataSizeUnit.MEGABYTES;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
@@ -425,8 +425,8 @@ final class IndependentSettingBinder {
             }
             refresh.invalidated(newValue);
         });
-        config().getGameSettings().addListener(refresh);
-        config().defaultGameSettingsProperty().addListener(refresh);
+        GameSettingsPresetsHolder.getGameSettings().addListener(refresh);
+        GameSettingsPresetsHolder.defaultGameSettingsProperty().addListener(refresh);
         memoryStatusBar.memoryStatusProperty().addListener(observable -> {
             GameSettings setting = currentSetting.get();
             if (setting == null) {
@@ -712,8 +712,8 @@ final class IndependentSettingBinder {
             }
             refresh.invalidated(newProperty);
         });
-        config().getGameSettings().addListener(refresh);
-        config().defaultGameSettingsProperty().addListener(refresh);
+        GameSettingsPresetsHolder.getGameSettings().addListener(refresh);
+        GameSettingsPresetsHolder.defaultGameSettingsProperty().addListener(refresh);
 
         GameSettings setting = currentSetting.get();
         if (setting != null) {
