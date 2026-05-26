@@ -806,7 +806,7 @@ public final class Config extends ObservableSetting {
             }
 
             JsonObject result = super.serialize(src, typeOfSrc, context).getAsJsonObject();
-            result.addProperty("format", CURRENT_FORMAT.toString());
+            result.add("format", context.serialize(CURRENT_FORMAT, FileFormat.class));
             return result;
         }
 

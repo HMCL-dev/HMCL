@@ -18,6 +18,7 @@
 package org.jackhuang.hmcl.util.gson;
 
 import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.junit.jupiter.api.Test;
 
@@ -26,23 +27,29 @@ import static org.junit.jupiter.api.Assertions.*;
 /// Tests for file format parsing and compatibility checks.
 @NotNullByDefault
 public final class FileFormatTest {
-    /// Tests strict parsing of file format strings.
+    /// Tests reading file format objects.
     @Test
-    public void parsesFileFormat() {
-        FileFormat format = FileFormat.parse("hmcl.config/3.0");
+    public void readsFileFormat() {
+        JsonObject object = new JsonObject();
+        object.add("format", createFormatObject("hmcl.config", "3.0"));
+
+        FileFormat format = FileFormat.readFrom(object);
 
         assertEquals("hmcl.config", format.id());
         assertEquals(new FormatVersion(3, 0), format.version());
         assertEquals("hmcl.config/3.0", format.toString());
     }
 
-    /// Tests invalid file format strings.
+    /// Tests serialization of file format objects.
     @Test
-    public void rejectsInvalidFileFormat() {
-        assertThrows(IllegalArgumentException.class, () -> FileFormat.parse("hmcl.config"));
-        assertThrows(IllegalArgumentException.class, () -> FileFormat.parse("hmcl.config/3"));
-        assertThrows(IllegalArgumentException.class, () -> FileFormat.parse("hmcl.config/3.x"));
-        assertThrows(IllegalArgumentException.class, () -> FileFormat.parse("hmcl.config/3.0/extra"));
+    public void serializesFileFormat() {
+        FileFormat format = new FileFormat("hmcl.config", new FormatVersion(3, 0));
+
+        JsonObject serialized = JsonParser.parseString(JsonUtils.GSON.toJson(format)).getAsJsonObject();
+
+        assertEquals("hmcl.config", serialized.get("id").getAsString());
+        assertEquals("3.0", serialized.get("version").getAsString());
+        assertEquals(format, JsonUtils.GSON.fromJson(serialized, FileFormat.class));
     }
 
     /// Tests file format compatibility check statuses.
@@ -59,19 +66,32 @@ public final class FileFormatTest {
         assertTrue(invalid.isInvalid());
         assertEquals("\"hmcl.config/3.x\"", invalid.invalidValue());
 
-        object.addProperty("format", "hmcl.game-settings-presets/1.0");
+        object.add("format", createFormatObject("hmcl.config", "3.x"));
+        FileFormat.CheckResult invalidVersion = FileFormat.check(object, expected);
+        assertTrue(invalidVersion.isInvalid());
+        assertEquals("{\"id\":\"hmcl.config\",\"version\":\"3.x\"}", invalidVersion.invalidValue());
+
+        object.add("format", createFormatObject("hmcl.game-settings-presets", "1.0"));
         FileFormat.CheckResult unexpected = FileFormat.check(object, expected);
         assertTrue(unexpected.isUnexpectedId());
         assertEquals("hmcl.game-settings-presets", unexpected.actual().id());
 
-        object.addProperty("format", "hmcl.config/3.1");
+        object.add("format", createFormatObject("hmcl.config", "3.1"));
         FileFormat.CheckResult newerMinor = FileFormat.check(object, expected);
         assertTrue(newerMinor.isNewerThanExpected());
         assertFalse(newerMinor.hasNewerMajorVersion());
 
-        object.addProperty("format", "hmcl.config/4.0");
+        object.add("format", createFormatObject("hmcl.config", "4.0"));
         FileFormat.CheckResult newerMajor = FileFormat.check(object, expected);
         assertTrue(newerMajor.isNewerThanExpected());
         assertTrue(newerMajor.hasNewerMajorVersion());
+    }
+
+    /// Creates a file format JSON object.
+    private static JsonObject createFormatObject(String id, String version) {
+        JsonObject object = new JsonObject();
+        object.addProperty("id", id);
+        object.addProperty("version", version);
+        return object;
     }
 }

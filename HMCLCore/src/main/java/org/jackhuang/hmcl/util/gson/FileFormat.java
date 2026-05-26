@@ -20,11 +20,11 @@ package org.jackhuang.hmcl.util.gson;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParseException;
+import com.google.gson.JsonParser;
 import com.google.gson.JsonPrimitive;
 import com.google.gson.TypeAdapter;
 import com.google.gson.annotations.JsonAdapter;
 import com.google.gson.stream.JsonReader;
-import com.google.gson.stream.JsonToken;
 import com.google.gson.stream.JsonWriter;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
@@ -34,8 +34,7 @@ import java.util.Objects;
 
 /// Identifies the data format used by a serialized file.
 ///
-/// The JSON representation is a string in `id/major.minor` form, for example
-/// `hmcl.config/3.0`.
+/// The JSON representation is an object with `id` and `version` members.
 ///
 /// File formats use the following compatibility policy:
 ///
@@ -54,6 +53,12 @@ public record FileFormat(String id, FormatVersion version) {
     /// The default JSON member name used for file formats.
     public static final String DEFAULT_MEMBER_NAME = "format";
 
+    /// The JSON member name used for the format ID.
+    private static final String ID_MEMBER_NAME = "id";
+
+    /// The JSON member name used for the format version.
+    private static final String VERSION_MEMBER_NAME = "version";
+
     /// @param id the stable format identifier
     /// @param version the format version
     public FileFormat {
@@ -65,21 +70,28 @@ public record FileFormat(String id, FormatVersion version) {
         }
     }
 
-    /// Parses a file format string.
+    /// Reads a file format from a JSON object that contains `id` and `version` members.
     ///
-    /// @param format the file format string in `id/major.minor` form
+    /// @param formatObject the JSON object that contains the file format fields
     /// @return the parsed file format
-    /// @throws IllegalArgumentException if the format string is invalid
-    public static FileFormat parse(String format) {
-        int slash = format.indexOf('/');
-        if (slash <= 0 || slash != format.lastIndexOf('/') || slash == format.length() - 1) {
-            throw new IllegalArgumentException("Invalid file format: " + format);
+    /// @throws JsonParseException if the file format object is invalid
+    public static FileFormat fromJsonObject(JsonObject formatObject) throws JsonParseException {
+        Objects.requireNonNull(formatObject);
+
+        @Nullable JsonElement idElement = formatObject.get(ID_MEMBER_NAME);
+        if (!(idElement instanceof JsonPrimitive idPrimitive) || !idPrimitive.isString()) {
+            throw new JsonParseException("Invalid file format ID: " + idElement);
+        }
+
+        @Nullable JsonElement versionElement = formatObject.get(VERSION_MEMBER_NAME);
+        if (!(versionElement instanceof JsonPrimitive versionPrimitive) || !versionPrimitive.isString()) {
+            throw new JsonParseException("Invalid file format version: " + versionElement);
         }
 
         try {
-            return new FileFormat(format.substring(0, slash), FormatVersion.parse(format.substring(slash + 1)));
+            return new FileFormat(idPrimitive.getAsString(), FormatVersion.parse(versionPrimitive.getAsString()));
         } catch (IllegalArgumentException e) {
-            throw new IllegalArgumentException("Invalid file format: " + format, e);
+            throw new JsonParseException("Invalid file format: " + formatObject, e);
         }
     }
 
@@ -102,16 +114,7 @@ public record FileFormat(String id, FormatVersion version) {
         Objects.requireNonNull(object);
         Objects.requireNonNull(memberName);
 
-        JsonElement element = object.get(memberName);
-        if (!(element instanceof JsonPrimitive primitive) || !primitive.isString()) {
-            throw new JsonParseException("Invalid file format member `" + memberName + "`: " + element);
-        }
-
-        try {
-            return parse(primitive.getAsString());
-        } catch (IllegalArgumentException e) {
-            throw new JsonParseException("Invalid file format member `" + memberName + "`: " + primitive, e);
-        }
+        return readFromElement(object.get(memberName), memberName);
     }
 
     /// Reads and checks the default `format` member of a JSON object.
@@ -148,7 +151,20 @@ public record FileFormat(String id, FormatVersion version) {
         }
     }
 
-    /// Returns the canonical `id/major.minor` string representation.
+    /// Reads a file format from a JSON element.
+    private static FileFormat readFromElement(@Nullable JsonElement element, String memberName) throws JsonParseException {
+        if (!(element instanceof JsonObject formatObject)) {
+            throw new JsonParseException("Invalid file format member `" + memberName + "`: " + element);
+        }
+
+        try {
+            return fromJsonObject(formatObject);
+        } catch (JsonParseException e) {
+            throw new JsonParseException("Invalid file format member `" + memberName + "`: " + element, e);
+        }
+    }
+
+    /// Returns the canonical human-readable `id/major.minor` string representation.
     @Override
     public String toString() {
         return id + "/" + version;
@@ -243,42 +259,34 @@ public record FileFormat(String id, FormatVersion version) {
         }
     }
 
-    /// Gson adapter for the string representation of [FileFormat].
+    /// Gson adapter for the JSON object representation of [FileFormat].
     ///
-    /// Null JSON values are preserved as null. Non-string values are rejected because file
-    /// formats are intentionally serialized as stable textual identifiers.
+    /// Null JSON values are preserved as null. Non-object values are rejected because file
+    /// formats are intentionally serialized as structured metadata.
     @NotNullByDefault
     public static final class Adapter extends TypeAdapter<@Nullable FileFormat> {
-        /// Writes the format as `id/major.minor`, or JSON null when the value is null.
+        /// Writes the format as an object, or JSON null when the value is null.
         @Override
         public void write(JsonWriter out, @Nullable FileFormat value) throws IOException {
             if (value != null) {
-                out.value(value.toString());
+                out.beginObject();
+                out.name(ID_MEMBER_NAME).value(value.id);
+                out.name(VERSION_MEMBER_NAME).value(value.version.toString());
+                out.endObject();
             } else {
                 out.nullValue();
             }
         }
 
-        /// Reads a file format from a string or null JSON token.
-        ///
-        /// Accepted strings are in `id/major.minor` form.
+        /// Reads a file format from an object or null JSON token.
         @Override
         public @Nullable FileFormat read(JsonReader in) throws IOException {
-            if (in.peek() == JsonToken.NULL) {
-                in.nextNull();
+            JsonElement element = JsonParser.parseReader(in);
+            if (element.isJsonNull()) {
                 return null;
             }
 
-            if (in.peek() == JsonToken.STRING) {
-                String value = in.nextString();
-                try {
-                    return FileFormat.parse(value);
-                } catch (IllegalArgumentException e) {
-                    throw new JsonParseException("Invalid file format: " + value, e);
-                }
-            } else {
-                throw new JsonParseException("Unexpected token: " + in.peek());
-            }
+            return readFromElement(element, DEFAULT_MEMBER_NAME);
         }
     }
 }
