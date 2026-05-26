@@ -18,8 +18,8 @@
 package org.jackhuang.hmcl.setting;
 
 import javafx.application.Platform;
-import javafx.beans.Observable;
 import javafx.beans.property.*;
+import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.event.EventBus;
@@ -31,7 +31,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.function.Consumer;
 
-import static javafx.collections.FXCollections.observableArrayList;
 import static org.jackhuang.hmcl.setting.ConfigHolder.config;
 import static org.jackhuang.hmcl.ui.FXUtils.onInvalidating;
 import static org.jackhuang.hmcl.ui.FXUtils.runInFX;
@@ -53,51 +52,57 @@ public final class Profiles {
         };
     }
 
-    private static final ObservableList<Profile> profiles = observableArrayList(profile -> new Observable[] { profile });
-    private static final ReadOnlyListWrapper<Profile> profilesWrapper = new ReadOnlyListWrapper<>(profiles);
+    private static final ReadOnlyListWrapper<Profile> profilesWrapper =
+            new ReadOnlyListWrapper<>(FXCollections.emptyObservableList());
 
-    private static final ObjectProperty<Profile> selectedProfile = new SimpleObjectProperty<Profile>() {
-        {
-            profiles.addListener(onInvalidating(this::invalidated));
-        }
-
+    private static final ObjectProperty<Profile> selectedProfile = new SimpleObjectProperty<>() {
         @Override
         protected void invalidated() {
-            if (!initialized)
-                return;
-
-            Profile profile = get();
-
-            if (profiles.isEmpty()) {
-                if (profile != null) {
-                    set(null);
-                    return;
-                }
-            } else {
-                if (!profiles.contains(profile)) {
-                    set(profiles.get(0));
-                    return;
-                }
-            }
-
-            config().setSelectedProfile(profile == null ? "" : profile.getName());
-            if (profile != null) {
-                if (profile.getRepository().isLoaded())
-                    selectedVersion.bind(profile.selectedVersionProperty());
-                else {
-                    selectedVersion.unbind();
-                    selectedVersion.set(null);
-                    // bind when repository was reloaded.
-                    profile.getRepository().refreshVersionsAsync().start();
-                }
-            } else {
-                selectedVersion.unbind();
-                selectedVersion.set(null);
-            }
+            refreshSelectedProfile();
         }
     };
 
+    private static ObservableList<Profile> profiles() {
+        return config().getProfiles();
+    }
+
+    private static void refreshSelectedProfile() {
+        if (!initialized)
+            return;
+
+        ObservableList<Profile> profiles = profiles();
+        Profile profile = selectedProfile.get();
+
+        if (profiles.isEmpty()) {
+            if (profile != null) {
+                selectedProfile.set(null);
+                return;
+            }
+        } else {
+            if (!profiles.contains(profile)) {
+                selectedProfile.set(profiles.get(0));
+                return;
+            }
+        }
+
+        config().setSelectedProfile(profile == null ? "" : profile.getName());
+        if (profile != null) {
+            if (profile.getRepository().isLoaded())
+                selectedVersion.bind(profile.selectedVersionProperty());
+            else {
+                selectedVersion.unbind();
+                selectedVersion.set(null);
+                // bind when repository was reloaded.
+                profile.getRepository().refreshVersionsAsync().start();
+            }
+        } else {
+            selectedVersion.unbind();
+            selectedVersion.set(null);
+        }
+    }
+
     private static void checkProfiles() {
+        ObservableList<Profile> profiles = profiles();
         if (profiles.isEmpty()) {
             Profile current = new Profile(Profiles.DEFAULT_PROFILE, Path.of(".minecraft"), null, true);
             Profile home = new Profile(Profiles.HOME_PROFILE, Metadata.MINECRAFT_DIRECTORY);
@@ -111,21 +116,10 @@ public final class Profiles {
     private static boolean initialized = false;
 
     static {
-        profiles.addListener(onInvalidating(Profiles::updateProfileStorages));
-        profiles.addListener(onInvalidating(Profiles::checkProfiles));
-
         selectedProfile.addListener((a, b, newValue) -> {
             if (newValue != null)
                 newValue.getRepository().refreshVersionsAsync().start();
         });
-    }
-
-    private static void updateProfileStorages() {
-        // don't update the underlying storage before data loading is completed
-        // otherwise it might cause data loss
-        if (!initialized)
-            return;
-        config().getProfiles().setAll(profiles);
     }
 
     /**
@@ -135,14 +129,11 @@ public final class Profiles {
         if (initialized)
             throw new IllegalStateException("Already initialized");
 
-        HashSet<String> names = new HashSet<>();
-        for (Profile profile : config().getProfiles()) {
-            String name = profile.getName();
-            if (name == null || !names.add(name)) {
-                continue;
-            }
-            profiles.add(profile);
-        }
+        ObservableList<Profile> profiles = profiles();
+        profilesWrapper.set(profiles);
+        removeDuplicateProfiles(profiles);
+        profiles.addListener(onInvalidating(Profiles::refreshSelectedProfile));
+        profiles.addListener(onInvalidating(Profiles::checkProfiles));
         checkProfiles();
         migrateGameSettings();
 
@@ -155,7 +146,7 @@ public final class Profiles {
                     profiles.stream()
                             .filter(it -> it.getName().equals(config().getSelectedProfile()))
                             .findFirst()
-                            .orElse(profiles.get(0)));
+                            .orElse(profiles.isEmpty() ? null : profiles.get(0)));
         });
 
         EventBus.EVENT_BUS.channel(RefreshedVersionsEvent.class).registerWeak(event -> {
@@ -170,6 +161,14 @@ public final class Profiles {
         });
     }
 
+    private static void removeDuplicateProfiles(ObservableList<Profile> profiles) {
+        HashSet<String> names = new HashSet<>();
+        profiles.removeIf(profile -> {
+            String name = profile.getName();
+            return name == null || !names.add(name);
+        });
+    }
+
     private static void migrateGameSettings() {
         if (GameSettingsPresetsHolder.getGameSettings().isEmpty()) {
             GameSettingsPresetsHolder.getDefaultGameSettingsOrCreate();
@@ -179,7 +178,7 @@ public final class Profiles {
     }
 
     public static ObservableList<Profile> getProfiles() {
-        return profiles;
+        return profiles();
     }
 
     public static ReadOnlyListProperty<Profile> profilesProperty() {
