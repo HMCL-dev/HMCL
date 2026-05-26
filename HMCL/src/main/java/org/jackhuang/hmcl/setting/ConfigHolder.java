@@ -166,7 +166,11 @@ public final class ConfigHolder {
 
             try {
                 SchemaVersion.CheckResult schemaVersion = SchemaVersion.check(jsonObject, Config.CURRENT_SCHEMA_VERSION);
-                if (schemaVersion.isNewerThanExpected()) {
+                if (schemaVersion.isMissing()) {
+                    LOG.warning("Missing schema version in settings file: " + SETTINGS_LOCATION);
+                    unsupportedVersion = true;
+                    return new Config();
+                } else if (schemaVersion.isNewerThanExpected()) {
                     LOG.warning("Unsupported settings file schema version. Expected: "
                             + Config.CURRENT_SCHEMA_VERSION + ", Actual: " + schemaVersion.actual());
                     unsupportedVersion = true;

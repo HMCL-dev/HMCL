@@ -115,7 +115,7 @@ public record SchemaVersion(int major, int minor) implements Comparable<SchemaVe
     /// @param object the JSON object that contains the schema version
     /// @param expected the schema version supported by the current code
     /// @return the schema version check result
-    /// @throws JsonParseException if the schema version member is missing or invalid
+    /// @throws JsonParseException if the schema version member exists but is invalid
     public static CheckResult check(JsonObject object, SchemaVersion expected) throws JsonParseException {
         return check(object, DEFAULT_MEMBER_NAME, expected);
     }
@@ -126,8 +126,15 @@ public record SchemaVersion(int major, int minor) implements Comparable<SchemaVe
     /// @param memberName the JSON member name
     /// @param expected the schema version supported by the current code
     /// @return the schema version check result
-    /// @throws JsonParseException if the schema version member is missing or invalid
+    /// @throws JsonParseException if the schema version member exists but is invalid
     public static CheckResult check(JsonObject object, String memberName, SchemaVersion expected) throws JsonParseException {
+        Objects.requireNonNull(object);
+        Objects.requireNonNull(memberName);
+
+        if (!object.has(memberName)) {
+            return new CheckResult(null, expected);
+        }
+
         return new CheckResult(readFrom(object, memberName), Objects.requireNonNull(expected));
     }
 
@@ -151,26 +158,30 @@ public record SchemaVersion(int major, int minor) implements Comparable<SchemaVe
 
     /// Result of comparing a serialized schema version with the version supported by the current code.
     ///
-    /// @param actual the schema version read from serialized data
+    /// @param actual the schema version read from serialized data, or `null` when the member is missing
     /// @param expected the schema version supported by the current code
-    public record CheckResult(SchemaVersion actual, SchemaVersion expected) {
+    public record CheckResult(@Nullable SchemaVersion actual, SchemaVersion expected) {
         /// Creates a schema version check result.
         ///
-        /// @param actual the schema version read from serialized data
+        /// @param actual the schema version read from serialized data, or `null` when the member is missing
         /// @param expected the schema version supported by the current code
         public CheckResult {
-            Objects.requireNonNull(actual);
             Objects.requireNonNull(expected);
+        }
+
+        /// Returns whether the serialized data does not contain a schema version member.
+        public boolean isMissing() {
+            return actual == null;
         }
 
         /// Returns whether the serialized schema is newer than the supported schema.
         public boolean isNewerThanExpected() {
-            return actual.compareTo(expected) > 0;
+            return actual != null && actual.compareTo(expected) > 0;
         }
 
         /// Returns whether the serialized schema has a newer major version than the supported schema.
         public boolean hasNewerMajorVersion() {
-            return actual.major() > expected.major();
+            return actual != null && actual.major() > expected.major();
         }
     }
 
