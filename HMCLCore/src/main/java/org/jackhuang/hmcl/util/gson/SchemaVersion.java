@@ -47,11 +47,18 @@ import java.io.IOException;
 @NotNullByDefault
 public record SchemaVersion(int major, int minor) implements Comparable<SchemaVersion> {
 
+    /// @param major the major schema version
+    /// @param minor the minor schema version
     public SchemaVersion {
         if (major < 0) throw new IllegalArgumentException("Major version must be non-negative: " + major);
         if (minor < 0) throw new IllegalArgumentException("Minor version must be non-negative: " + minor);
     }
 
+    /// Parses a schema version string.
+    ///
+    /// @param version the version string, either `major` or `major.minor`
+    /// @return the parsed schema version
+    /// @throws IllegalArgumentException if the version string is invalid
     public static SchemaVersion parse(String version) {
         int dot = version.indexOf('.');
 
@@ -66,6 +73,11 @@ public record SchemaVersion(int major, int minor) implements Comparable<SchemaVe
         }
     }
 
+    /// Compares this version with another schema version.
+    ///
+    /// @param o the other version to compare to
+    /// @return a negative integer, zero, or a positive integer as this version
+    ///         is less than, equal to, or greater than the specified version
     @Override
     public int compareTo(SchemaVersion o) {
         return major != o.major
