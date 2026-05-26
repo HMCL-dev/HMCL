@@ -174,10 +174,17 @@ public final class ConfigHolder {
                 return new Config();
             }
 
-
-
             try {
-                return Objects.requireNonNullElseGet(Config.fromJson(jsonObject), Config::new);
+                Config settings = Config.fromJson(jsonObject);
+                if (settings == null) {
+                    return new Config();
+                }
+
+                if (!Config.CURRENT_SCHEMA_VERSION.equals(settings.getSchemaVersion())) {
+                    settings.setSchemaVersion(Config.CURRENT_SCHEMA_VERSION);
+                }
+
+                return settings;
             } catch (JsonParseException e) {
                 // TODO: Save the invalid settings file to a backup location
                 LOG.warning("Failed to parse settings file: " + SETTINGS_LOCATION, e);
