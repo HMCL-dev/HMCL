@@ -118,8 +118,6 @@ public final class GameSettingsPresetsHolder {
             LOG.info("Creating game settings presets file " + LOCATION);
             FileUtils.saveSafely(LOCATION, gameSettingsPresets.toJson());
         }
-
-        checkWritable(LOCATION);
     }
 
     /// Loads the detached game settings preset file, falling back to migrated presets when the file is absent.
@@ -145,23 +143,5 @@ public final class GameSettingsPresetsHolder {
         }
 
         return migratedGameSettingsPresets != null ? migratedGameSettingsPresets : new GameSettingsPresets();
-    }
-
-    /// Checks that the given preset file is writable.
-    private static void checkWritable(Path location) throws IOException {
-        if (!Files.isWritable(location)) {
-            if (OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS
-                    && location.getFileSystem() == FileSystems.getDefault()
-                    && location.toFile().canWrite()) {
-                LOG.warning("Config at " + location
-                        + " is not writable, but it seems to be a Samba share or OpenJDK bug");
-                // There are some serious problems with the implementation of Samba or OpenJDK
-                throw new SambaException();
-            } else {
-                // the config cannot be saved
-                // throw up the error now to prevent further data loss
-                throw new IOException("Config at " + location + " is not writable");
-            }
-        }
     }
 }
