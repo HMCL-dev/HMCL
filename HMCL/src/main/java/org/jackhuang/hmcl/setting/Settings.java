@@ -24,8 +24,6 @@ import org.jackhuang.hmcl.ui.animation.AnimationUtils;
 import org.jackhuang.hmcl.util.CacheRepository;
 import org.jackhuang.hmcl.util.io.FileUtils;
 
-import java.io.IOException;
-
 import static org.jackhuang.hmcl.setting.ConfigHolder.config;
 
 public final class Settings {
@@ -40,8 +38,7 @@ public final class Settings {
     }
 
     /// Initializes process-wide setting modules.
-    static void init() throws IOException {
-        GameSettingsPresetsHolder.init();
+    static void init() {
         instance = new Settings();
     }
 

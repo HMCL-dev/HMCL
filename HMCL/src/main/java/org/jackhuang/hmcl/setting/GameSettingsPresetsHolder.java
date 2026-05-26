@@ -28,8 +28,8 @@ import org.jetbrains.annotations.NotNullByDefault;
 
 import java.io.IOException;
 import java.nio.file.*;
+import java.util.Objects;
 
-import static org.jackhuang.hmcl.setting.ConfigHolder.config;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 /// Owns loading and saving of detached game settings presets.
@@ -53,12 +53,15 @@ public final class GameSettingsPresetsHolder {
     }
 
     /// Loads game settings presets and installs the save listener.
-    static void init() throws IOException {
+    ///
+    /// @param config the owning config instance
+    /// @param allowSave whether the detached preset file may be overwritten
+    static void init(Config config, boolean allowSave) throws IOException {
+        Objects.requireNonNull(config);
         LOG.info("Game settings presets location: " + LOCATION);
 
-        Config config = config();
         boolean newlyCreated = load(config);
-        if (!ConfigHolder.isUnsupportedVersion()) {
+        if (allowSave) {
             config.gameSettingPresets().addListener(source ->
                     FileSaver.save(LOCATION, config.gameSettingPresets().toJson()));
         }

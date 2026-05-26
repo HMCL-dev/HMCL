@@ -131,6 +131,7 @@ public final class ConfigHolder {
         Locale.setDefault(config().getLocalization().getLocale());
         I18n.setLocale(configInstance.getLocalization());
         LOG.setLogRetention(globalConfig().getLogRetention());
+        GameSettingsPresetsHolder.init(configInstance, !unsupportedVersion);
         Settings.init();
 
         if (newlyCreated) {
