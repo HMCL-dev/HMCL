@@ -8,7 +8,7 @@ Migrate game settings from the old JSON format to the new `GameSettings` model. 
 
 - Extend the data model:
   - Add `UUID id` and `String name` to `GameSettings.Preset`.
-  - Add `GameSettingsPresets` for `ObservableList<GameSettings.Preset>`, with `UUID defaultGameSettings` stored in `Config`.
+  - Add `GameSettingsPresets` for `ObservableList<GameSettings.Preset> presets`, with `UUID defaultGameSettings` stored in `Config`.
   - Add a migration-only `legacyGameSettingsParent` field to `Profile` to record the global setting UUID converted from that profile's old global setting.
   - Resolve `GameSettings.Instance.parent` as follows: explicit instance parent first, then `defaultGameSettings`; during migration only, an unsaved converted old instance may use `Profile.legacyGameSettingsParent`.
 - Implement compatibility migration:

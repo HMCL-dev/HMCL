@@ -180,7 +180,7 @@ public final class ConfigHolder {
 
     /// Returns the reusable game setting presets.
     public static ObservableList<GameSettings.Preset> getGameSettings() {
-        return gameSettingsPresets().getGameSettings();
+        return gameSettingsPresets().getPresets();
     }
 
     /// Returns the default game setting preset ID property.
@@ -200,7 +200,7 @@ public final class ConfigHolder {
 
     /// Returns the game setting preset with the given ID.
     public static GameSettings.@Nullable Preset getGameSettings(@Nullable GUID id) {
-        return gameSettingsPresets().getGameSettings(id);
+        return gameSettingsPresets().getPreset(id);
     }
 
     /// Returns the default game setting preset, creating one when needed.

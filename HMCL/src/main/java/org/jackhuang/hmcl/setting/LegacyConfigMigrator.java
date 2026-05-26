@@ -220,7 +220,7 @@ public final class LegacyConfigMigrator {
         }
 
         for (Profile profile : gameDirectories.getGameDirectories()) {
-            GameSettings.Preset legacyParent = gameSettingsPresets.getGameSettings(profile.getId());
+            GameSettings.Preset legacyParent = gameSettingsPresets.getPreset(profile.getId());
             if (legacyParent == null) {
                 String profileName = profile.getName();
                 JsonObject profileObject = configurations.get(profileName) instanceof JsonObject profileJson ? profileJson : null;
@@ -230,7 +230,7 @@ public final class LegacyConfigMigrator {
                 }
 
                 legacyParent = LegacyGameSettingsMigrator.toPreset(profile.getId(), profileName, legacySettingObject);
-                gameSettingsPresets.getGameSettings().add(legacyParent);
+                gameSettingsPresets.getPresets().add(legacyParent);
             }
         }
     }

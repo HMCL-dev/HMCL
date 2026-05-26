@@ -52,7 +52,7 @@ public final class GameSettingsPresetsTest {
                     "version": "1.0"
                   },
                   "defaultGameSettings": "123e4567-e89b-12d3-a456-426614174000",
-                  "gameSettings": []
+                  "presets": []
                 }
                 """).getAsJsonObject();
 
@@ -63,5 +63,7 @@ public final class GameSettingsPresetsTest {
         assertEquals(GameSettingsPresets.CURRENT_FORMAT,
                 JsonFileFormat.readFromMember(rewritten, JsonFileFormat.DEFAULT_MEMBER_NAME));
         assertFalse(rewritten.has(Config.DEFAULT_GAME_SETTINGS_MEMBER_NAME));
+        assertTrue(rewritten.has("presets"));
+        assertFalse(rewritten.has("gameSettings"));
     }
 }

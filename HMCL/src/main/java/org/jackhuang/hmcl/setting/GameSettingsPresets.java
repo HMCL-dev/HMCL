@@ -63,7 +63,7 @@ public final class GameSettingsPresets extends ObservableSetting implements Form
             return;
         }
 
-        gameSettings.setAll(source.getGameSettings());
+        presets.setAll(source.getPresets());
     }
 
     /// The format used by this game settings preset store file.
@@ -86,22 +86,22 @@ public final class GameSettingsPresets extends ObservableSetting implements Form
     }
 
     /// Reusable game setting presets.
-    @SerializedName("gameSettings")
-    private final ObservableList<GameSettings.Preset> gameSettings =
+    @SerializedName("presets")
+    private final ObservableList<GameSettings.Preset> presets =
             FXCollections.observableArrayList(setting -> new Observable[] { setting });
 
     /// Returns the reusable game setting presets.
-    public ObservableList<GameSettings.Preset> getGameSettings() {
-        return gameSettings;
+    public ObservableList<GameSettings.Preset> getPresets() {
+        return presets;
     }
 
     /// Returns the preset with the given ID.
-    public GameSettings.@Nullable Preset getGameSettings(@Nullable GUID id) {
+    public GameSettings.@Nullable Preset getPreset(@Nullable GUID id) {
         if (id == null) {
             return null;
         }
 
-        for (GameSettings.Preset setting : gameSettings) {
+        for (GameSettings.Preset setting : presets) {
             if (id.equals(setting.idProperty().getValue())) {
                 return setting;
             }
