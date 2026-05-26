@@ -43,8 +43,8 @@ import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 /// Converts legacy game settings JSON into `GameSettings` models.
 @NotNullByDefault
 public final class LegacyGameSettingsMigrator {
-    /// Namespace used to generate stable preset IDs for legacy profiles.
-    private static final String LEGACY_PRESET_ID_NAMESPACE = "hmcl:legacy-global-game-settings:";
+    /// Namespace used to generate stable IDs for legacy profiles.
+    private static final String LEGACY_PROFILE_ID_NAMESPACE = "hmcl:legacy-profile:";
 
     /// Legacy file name used by old per-version `VersionSetting` data.
     private static final String LEGACY_INSTANCE_SETTINGS_FILENAME = "hmclversion.cfg";
@@ -84,15 +84,20 @@ public final class LegacyGameSettingsMigrator {
     private LegacyGameSettingsMigrator() {
     }
 
-    /// Returns the stable preset ID for a migrated legacy profile.
-    public static UUID getLegacyPresetId(String profileName) {
+    /// Returns the stable profile ID for a migrated legacy profile.
+    public static UUID getLegacyProfileId(String profileName) {
         return UUID.nameUUIDFromBytes(
-                (LEGACY_PRESET_ID_NAMESPACE + profileName).getBytes(StandardCharsets.UTF_8));
+                (LEGACY_PROFILE_ID_NAMESPACE + profileName).getBytes(StandardCharsets.UTF_8));
     }
 
     /// Converts a legacy profile-level setting JSON object into a named preset.
     public static GameSettings.Preset toPreset(String name, String profileName, @Nullable JsonObject source) {
-        GameSettings.Preset target = new GameSettings.Preset(getLegacyPresetId(profileName));
+        return toPreset(getLegacyProfileId(profileName), name, source);
+    }
+
+    /// Converts a legacy profile-level setting JSON object into a preset with the given ID.
+    public static GameSettings.Preset toPreset(UUID id, String name, @Nullable JsonObject source) {
+        GameSettings.Preset target = new GameSettings.Preset(id);
         target.nameProperty().setValue(name);
         if (getLegacyGameDirType(source, GameDirectoryType.ROOT_FOLDER) == GameDirectoryType.VERSION_FOLDER) {
             target.defaultIsolationTypeProperty().setValue(DefaultIsolationType.ALWAYS);

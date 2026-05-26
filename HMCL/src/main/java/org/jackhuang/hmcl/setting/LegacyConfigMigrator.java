@@ -31,7 +31,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Map;
-import java.util.UUID;
 
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
@@ -87,7 +86,9 @@ public final class LegacyConfigMigrator {
                 upgradeConfig(jsonObject, configVersion);
             }
 
-            migrateLegacyProfilePresetReferences(jsonObject);
+            @Nullable JsonObject legacyConfigurations = jsonObject.get("configurations") instanceof JsonObject configurations
+                    ? configurations.deepCopy()
+                    : null;
 
             Config deserialized = Config.fromJson(jsonObject);
             if (deserialized == null) {
@@ -95,7 +96,7 @@ public final class LegacyConfigMigrator {
             }
 
             GameSettingsPresets gameSettingsPresets = new GameSettingsPresets();
-            migrateLegacyPresetSettings(deserialized, gameSettingsPresets, jsonObject);
+            migrateLegacyPresetSettings(deserialized, gameSettingsPresets, legacyConfigurations);
             return new MigrationResult(path, deserialized, gameSettingsPresets, deserialized.toJson());
         } catch (JsonParseException e) {
             LOG.warning("Malformed legacy config file: " + path, e);
@@ -204,54 +205,28 @@ public final class LegacyConfigMigrator {
         }
     }
 
-    /// Writes legacy profile preset references into profile JSON before profile deserialization.
-    private static void migrateLegacyProfilePresetReferences(JsonObject object) {
-        if (object.get("configurations") instanceof JsonObject configurations) {
-            for (Map.Entry<String, JsonElement> entry : configurations.entrySet()) {
-                if (entry.getValue() instanceof JsonObject profileObject
-                        && !profileObject.has("legacyGameSettingsParent")
-                        && profileObject.get("global") instanceof JsonObject) {
-                    profileObject.addProperty("legacyGameSettingsParent",
-                            LegacyGameSettingsMigrator.getLegacyPresetId(entry.getKey()).toString());
-                }
-            }
-        }
-    }
-
     /// Migrates profile-global game settings from HMCL 3.15.0.345 and older config files.
-    private static void migrateLegacyPresetSettings(Config config, GameSettingsPresets gameSettingsPresets, JsonObject object) {
-        if (!(object.get("configurations") instanceof JsonObject configurations))
+    private static void migrateLegacyPresetSettings(
+            Config config,
+            GameSettingsPresets gameSettingsPresets,
+            @Nullable JsonObject configurations) {
+        if (configurations == null) {
             return;
+        }
 
-        for (Map.Entry<String, @Nullable Profile> entry : config.getConfigurations().entrySet()) {
-            Profile profile = entry.getValue();
-            if (profile == null) {
-                continue;
-            }
-
-            String profileName = entry.getKey();
-            UUID parentId = profile.getLegacyGameSettingsParent();
-            if (parentId != null) {
-                GameSettings.Preset parent = gameSettingsPresets.getGameSettings(parentId);
-                if (parent != null) {
-                    continue;
-                }
-            }
-
-            GameSettings.Preset legacyParent = gameSettingsPresets.getGameSettings(
-                    LegacyGameSettingsMigrator.getLegacyPresetId(profileName));
+        for (Profile profile : config.getProfiles()) {
+            GameSettings.Preset legacyParent = gameSettingsPresets.getGameSettings(profile.getId());
             if (legacyParent == null) {
+                String profileName = profile.getName();
                 JsonObject profileObject = configurations.get(profileName) instanceof JsonObject profileJson ? profileJson : null;
                 JsonObject legacySettingObject = profileObject != null && profileObject.get("global") instanceof JsonObject legacyJson ? legacyJson : null;
                 if (legacySettingObject == null) {
                     continue;
                 }
 
-                legacyParent = LegacyGameSettingsMigrator.toPreset(profileName, profileName, legacySettingObject);
+                legacyParent = LegacyGameSettingsMigrator.toPreset(profile.getId(), profileName, legacySettingObject);
                 gameSettingsPresets.getGameSettings().add(legacyParent);
             }
-
-            profile.setLegacyGameSettingsParent(legacyParent.idProperty().getValue());
         }
     }
 

@@ -49,7 +49,7 @@ import java.util.*;
 public final class Config extends ObservableSetting {
 
     /// The file format supported by this config class.
-    public static final JsonFileFormat CURRENT_FORMAT = new JsonFileFormat("hmcl.settings", new JsonFileFormat.Version(1, 0));
+    public static final JsonFileFormat CURRENT_FORMAT = new JsonFileFormat("hmcl.settings", new JsonFileFormat.Version(1, 1));
 
     public static final Gson CONFIG_GSON = new GsonBuilder()
             .registerTypeAdapter(Path.class, PathTypeAdapter.INSTANCE)
@@ -67,7 +67,67 @@ public final class Config extends ObservableSetting {
 
     @Nullable
     public static Config fromJson(JsonObject json) throws JsonParseException {
+        migrateLegacyProfiles(json);
         return CONFIG_GSON.fromJson(json, Config.class);
+    }
+
+    /// Converts legacy profile maps into the current profile list shape.
+    static void migrateLegacyProfiles(JsonObject json) {
+        if (json == null) {
+            return;
+        }
+
+        if (json.get("profiles") instanceof JsonArray profiles) {
+            json.remove("configurations");
+            for (JsonElement element : profiles) {
+                if (element instanceof JsonObject profile) {
+                    if (!profile.has("id")) {
+                        @Nullable UUID legacyParent = readLegacyProfileId(profile);
+                        if (legacyParent != null) {
+                            profile.addProperty("id", legacyParent.toString());
+                        }
+                    }
+                    profile.remove("legacyGameSettingsParent");
+                }
+            }
+            return;
+        }
+
+        JsonElement configurationsElement = json.remove("configurations");
+        if (!(configurationsElement instanceof JsonObject configurations)) {
+            return;
+        }
+
+        JsonArray profiles = new JsonArray();
+        for (Map.Entry<String, JsonElement> entry : configurations.entrySet()) {
+            if (!(entry.getValue() instanceof JsonObject profile)) {
+                continue;
+            }
+
+            JsonObject migrated = profile.deepCopy();
+            @Nullable UUID legacyParent = readLegacyProfileId(migrated);
+            migrated.addProperty("name", entry.getKey());
+            migrated.addProperty("id", Objects.requireNonNullElseGet(
+                    legacyParent,
+                    () -> LegacyGameSettingsMigrator.getLegacyProfileId(entry.getKey())
+            ).toString());
+            migrated.remove("legacyGameSettingsParent");
+            profiles.add(migrated);
+        }
+        json.add("profiles", profiles);
+    }
+
+    /// Reads the legacy profile-parent preset ID from a profile JSON object.
+    private static @Nullable UUID readLegacyProfileId(JsonObject profile) {
+        if (!(profile.get("legacyGameSettingsParent") instanceof JsonPrimitive primitive) || !primitive.isString()) {
+            return null;
+        }
+
+        try {
+            return UUIDTypeAdapter.fromString(primitive.getAsString());
+        } catch (IllegalArgumentException e) {
+            return null;
+        }
     }
 
     public Config() {
@@ -783,11 +843,12 @@ public final class Config extends ObservableSetting {
         this.selectedProfile.set(selectedProfile);
     }
 
-    @SerializedName("configurations")
-    private final SimpleMapProperty<String, Profile> configurations = new SimpleMapProperty<>(FXCollections.observableMap(new TreeMap<>()));
+    @SerializedName("profiles")
+    private final ObservableList<Profile> profiles =
+            FXCollections.observableArrayList(profile -> new Observable[] { profile });
 
-    public MapProperty<String, Profile> getConfigurations() {
-        return configurations;
+    public ObservableList<Profile> getProfiles() {
+        return profiles;
     }
 
     /// JSON adapter for [Config].

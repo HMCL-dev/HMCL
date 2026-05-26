@@ -43,6 +43,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.lang.reflect.Type;
 import java.nio.file.Path;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -57,6 +58,24 @@ import static org.jackhuang.hmcl.ui.FXUtils.runInFX;
 public final class Profile implements Observable {
     private final WeakListenerHolder listenerHolder = new WeakListenerHolder();
     private final HMCLGameRepository repository;
+
+    /// The stable profile ID.
+    private final ObjectProperty<UUID> id = new SimpleObjectProperty<>(this, "id", UUID.randomUUID());
+
+    /// Returns the stable profile ID property.
+    public ObjectProperty<UUID> idProperty() {
+        return id;
+    }
+
+    /// Returns the stable profile ID.
+    public UUID getId() {
+        return id.get();
+    }
+
+    /// Sets the stable profile ID.
+    public void setId(UUID id) {
+        this.id.set(Objects.requireNonNull(id));
+    }
 
     private final StringProperty selectedVersion = new SimpleStringProperty();
 
@@ -84,20 +103,6 @@ public final class Profile implements Observable {
 
     public void setGameDir(Path gameDir) {
         this.gameDir.set(gameDir);
-    }
-
-    private final ObjectProperty<UUID> legacyGameSettingsParent = new SimpleObjectProperty<>(this, "legacyGameSettingsParent");
-
-    public ObjectProperty<UUID> legacyGameSettingsParentProperty() {
-        return legacyGameSettingsParent;
-    }
-
-    public UUID getLegacyGameSettingsParent() {
-        return legacyGameSettingsParent.get();
-    }
-
-    public void setLegacyGameSettingsParent(UUID legacyGameSettingsParent) {
-        this.legacyGameSettingsParent.set(legacyGameSettingsParent);
     }
 
     private final SimpleStringProperty name;
@@ -137,16 +142,16 @@ public final class Profile implements Observable {
     }
 
     public Profile(String name, Path initialGameDir, @Nullable String selectedVersion, boolean useRelativePath) {
-        this(name, initialGameDir, selectedVersion, useRelativePath, null);
+        this(UUID.randomUUID(), name, initialGameDir, selectedVersion, useRelativePath);
     }
 
-    public Profile(String name, Path initialGameDir, @Nullable String selectedVersion, boolean useRelativePath, @Nullable UUID legacyGameSettingsParent) {
+    private Profile(UUID id, String name, Path initialGameDir, @Nullable String selectedVersion, boolean useRelativePath) {
+        this.id.set(Objects.requireNonNull(id));
         this.name = new SimpleStringProperty(this, "name", name);
         gameDir = new SimpleObjectProperty<>(this, "gameDir", initialGameDir);
         repository = new HMCLGameRepository(this, initialGameDir);
         this.selectedVersion.set(selectedVersion);
         this.useRelativePath.set(useRelativePath);
-        this.legacyGameSettingsParent.set(legacyGameSettingsParent);
 
         gameDir.addListener((a, b, newValue) -> repository.changeDirectory(newValue));
         this.selectedVersion.addListener(o -> checkSelectedVersion());
@@ -191,10 +196,10 @@ public final class Profile implements Observable {
     }
 
     private void addPropertyChangedListener(InvalidationListener listener) {
+        id.addListener(listener);
         name.addListener(listener);
         gameDir.addListener(listener);
         useRelativePath.addListener(listener);
-        legacyGameSettingsParent.addListener(listener);
         selectedVersion.addListener(listener);
     }
 
@@ -239,9 +244,8 @@ public final class Profile implements Observable {
                 return JsonNull.INSTANCE;
 
             JsonObject jsonObject = new JsonObject();
-            if (src.getLegacyGameSettingsParent() != null) {
-                jsonObject.add("legacyGameSettingsParent", context.serialize(src.getLegacyGameSettingsParent()));
-            }
+            jsonObject.add("id", context.serialize(src.getId(), UUID.class));
+            jsonObject.addProperty("name", src.getName());
             jsonObject.addProperty("gameDir", src.getGameDir().toString());
             jsonObject.addProperty("useRelativePath", src.isUseRelativePath());
             jsonObject.addProperty("selectedMinecraftVersion", src.getSelectedVersion());
@@ -253,12 +257,16 @@ public final class Profile implements Observable {
         public Profile deserialize(JsonElement json, Type typeOfT, JsonDeserializationContext context) throws JsonParseException {
             if (!(json instanceof JsonObject obj)) return null;
             String gameDir = Optional.ofNullable(obj.get("gameDir")).map(JsonElement::getAsString).orElse("");
+            UUID id = context.deserialize(obj.get("id"), UUID.class);
+            if (id == null) {
+                id = UUID.randomUUID();
+            }
 
-            return new Profile("Default",
+            return new Profile(id,
+                    Optional.ofNullable(obj.get("name")).map(JsonElement::getAsString).orElse("Default"),
                     Path.of(gameDir),
                     Optional.ofNullable(obj.get("selectedMinecraftVersion")).map(JsonElement::getAsString).orElse(""),
-                    Optional.ofNullable(obj.get("useRelativePath")).map(JsonElement::getAsBoolean).orElse(false),
-                    context.deserialize(obj.get("legacyGameSettingsParent"), UUID.class));
+                    Optional.ofNullable(obj.get("useRelativePath")).map(JsonElement::getAsBoolean).orElse(false));
         }
 
     }

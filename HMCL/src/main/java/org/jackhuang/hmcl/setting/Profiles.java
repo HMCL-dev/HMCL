@@ -20,7 +20,6 @@ package org.jackhuang.hmcl.setting;
 import javafx.application.Platform;
 import javafx.beans.Observable;
 import javafx.beans.property.*;
-import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.event.EventBus;
@@ -30,7 +29,6 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
-import java.util.TreeMap;
 import java.util.function.Consumer;
 
 import static javafx.collections.FXCollections.observableArrayList;
@@ -127,12 +125,7 @@ public final class Profiles {
         // otherwise it might cause data loss
         if (!initialized)
             return;
-        // update storage
-        TreeMap<String, Profile> newConfigurations = new TreeMap<>();
-        for (Profile profile : profiles) {
-            newConfigurations.put(profile.getName(), profile);
-        }
-        config().getConfigurations().setValue(FXCollections.observableMap(newConfigurations));
+        config().getProfiles().setAll(profiles);
     }
 
     /**
@@ -143,11 +136,13 @@ public final class Profiles {
             throw new IllegalStateException("Already initialized");
 
         HashSet<String> names = new HashSet<>();
-        config().getConfigurations().forEach((name, profile) -> {
-            if (!names.add(name)) return;
+        for (Profile profile : config().getProfiles()) {
+            String name = profile.getName();
+            if (name == null || !names.add(name)) {
+                continue;
+            }
             profiles.add(profile);
-            profile.setName(name);
-        });
+        }
         checkProfiles();
         migrateGameSettings();
 
@@ -176,12 +171,6 @@ public final class Profiles {
     }
 
     private static void migrateGameSettings() {
-        for (Profile profile : profiles) {
-            if (profile.getLegacyGameSettingsParent() == null) {
-                profile.setLegacyGameSettingsParent(GameSettingsPresetsHolder.getDefaultGameSettingsOrCreate().idProperty().getValue());
-            }
-        }
-
         if (GameSettingsPresetsHolder.getGameSettings().isEmpty()) {
             GameSettingsPresetsHolder.getDefaultGameSettingsOrCreate();
         } else if (GameSettingsPresetsHolder.getGameSettings(GameSettingsPresetsHolder.getDefaultGameSettings()) == null) {
