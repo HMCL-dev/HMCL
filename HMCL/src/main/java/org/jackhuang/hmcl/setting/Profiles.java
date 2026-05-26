@@ -24,6 +24,7 @@ import javafx.collections.ObservableList;
 import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.event.EventBus;
 import org.jackhuang.hmcl.event.RefreshedVersionsEvent;
+import org.jackhuang.hmcl.util.GUID;
 
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -40,6 +41,12 @@ public final class Profiles {
 
     public static final String DEFAULT_PROFILE = "Default";
     public static final String HOME_PROFILE = "Home";
+
+    /// The stable ID used by the built-in default profile.
+    public static final GUID DEFAULT_PROFILE_ID = LegacyGameSettingsMigrator.getLegacyProfileId(DEFAULT_PROFILE);
+
+    /// The stable ID used by the built-in home profile.
+    public static final GUID HOME_PROFILE_ID = LegacyGameSettingsMigrator.getLegacyProfileId(HOME_PROFILE);
 
     private Profiles() {
     }
@@ -100,8 +107,10 @@ public final class Profiles {
     private static void checkProfiles() {
         ObservableList<Profile> profiles = ConfigHolder.config().getProfiles();
         if (profiles.isEmpty()) {
-            Profile current = new Profile(Profiles.DEFAULT_PROFILE, Path.of(".minecraft"), null, true);
-            Profile home = new Profile(Profiles.HOME_PROFILE, Metadata.MINECRAFT_DIRECTORY);
+            Profile current = new Profile(
+                    Profiles.DEFAULT_PROFILE_ID, Profiles.DEFAULT_PROFILE, Path.of(".minecraft"), null, true);
+            Profile home = new Profile(
+                    Profiles.HOME_PROFILE_ID, Profiles.HOME_PROFILE, Metadata.MINECRAFT_DIRECTORY, null, false);
             Platform.runLater(() -> profiles.addAll(current, home));
         }
     }

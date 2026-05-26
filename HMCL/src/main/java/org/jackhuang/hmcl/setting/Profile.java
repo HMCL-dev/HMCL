@@ -141,7 +141,8 @@ public final class Profile implements Observable {
         this(GUID.random(), name, initialGameDir, selectedVersion, useRelativePath);
     }
 
-    private Profile(GUID id, String name, Path initialGameDir, @Nullable String selectedVersion, boolean useRelativePath) {
+    /// Creates a profile with an explicit stable ID.
+    Profile(GUID id, String name, Path initialGameDir, @Nullable String selectedVersion, boolean useRelativePath) {
         this.id.set(Objects.requireNonNull(id));
         this.name = new SimpleStringProperty(this, "name", name);
         gameDir = new SimpleObjectProperty<>(this, "gameDir", initialGameDir);
