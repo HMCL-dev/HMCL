@@ -67,6 +67,18 @@ import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 /// HMCL game repository implementation backed by a profile and per-instance game settings.
 @NotNullByDefault
 public final class HMCLGameRepository extends DefaultGameRepository {
+    /// Directory under the version root that stores HMCL instance metadata.
+    private static final String LOCAL_GAME_SETTINGS_DIRECTORY = ".hmcl";
+
+    /// Current file name for instance-specific game settings.
+    private static final String LOCAL_GAME_SETTINGS_FILENAME = "instance-game-settings.json";
+
+    /// Previous file name used by the new `GameSettings.Instance` format before it moved under `.hmcl`.
+    private static final String LEGACY_LOCAL_GAME_SETTINGS_FILENAME = "hmcl-game-settings.cfg";
+
+    /// Legacy file name used by old `VersionSetting` data.
+    private static final String LEGACY_VERSION_SETTING_FILENAME = "hmclversion.cfg";
+
     private final Profile profile;
 
     // local game settings
@@ -224,26 +236,28 @@ public final class HMCLGameRepository extends DefaultGameRepository {
         return copied;
     }
 
+    /// Returns the current local game settings path under the version root metadata directory.
     private Path getLocalGameSettingsFile(String id) {
-        return getVersionRoot(id).resolve("hmcl-game-settings.cfg");
+        return getVersionRoot(id).resolve(LOCAL_GAME_SETTINGS_DIRECTORY).resolve(LOCAL_GAME_SETTINGS_FILENAME);
+    }
+
+    /// Returns the previous new-format local game settings path used before the `.hmcl` directory.
+    private Path getLegacyLocalGameSettingsFile(String id) {
+        return getVersionRoot(id).resolve(LEGACY_LOCAL_GAME_SETTINGS_FILENAME);
     }
 
     private void loadLocalGameSettings(String id) {
-        Path file = getLocalGameSettingsFile(id);
-        if (Files.exists(file)) {
-            try {
-                GameSettings.Instance gameSetting;
-                try (var reader = Files.newBufferedReader(file)) {
-                    gameSetting = Config.CONFIG_GSON.fromJson(reader, GameSettings.Instance.class);
-                }
+        GameSettings.Instance setting = loadGameSettingsFile(getLocalGameSettingsFile(id));
+        if (setting != null) {
+            initLocalGameSettings(id, setting);
+            return;
+        }
 
-                if (gameSetting != null) {
-                    initLocalGameSettings(id, gameSetting);
-                }
-                return;
-            } catch (Exception ex) {
-                LOG.warning("Failed to load game setting " + file, ex);
-            }
+        GameSettings.Instance legacyNewSetting = loadGameSettingsFile(getLegacyLocalGameSettingsFile(id));
+        if (legacyNewSetting != null) {
+            initLocalGameSettings(id, legacyNewSetting);
+            saveGameSettings(id);
+            return;
         }
 
         GameSettings.Instance legacySetting = loadLegacyGameSettings(id);
@@ -251,11 +265,27 @@ public final class HMCLGameRepository extends DefaultGameRepository {
             initLocalGameSettings(id, legacySetting);
             saveGameSettings(id);
         } else if (isLegacyProfileAlwaysIsolated()) {
-            GameSettings.Instance setting = new GameSettings.Instance();
+            setting = new GameSettings.Instance();
             setting.parentProperty().setValue(profile.getLegacyGameSettingsParent());
             setting.getOverrideProperties().add(GameSettings.PROPERTY_RUNNING_DIR);
             initLocalGameSettings(id, setting);
             saveGameSettings(id);
+        }
+    }
+
+    /// Loads a new-format instance game settings file.
+    private @Nullable GameSettings.Instance loadGameSettingsFile(Path file) {
+        if (!Files.exists(file)) {
+            return null;
+        }
+
+        try {
+            try (var reader = Files.newBufferedReader(file)) {
+                return Config.CONFIG_GSON.fromJson(reader, GameSettings.Instance.class);
+            }
+        } catch (Exception ex) {
+            LOG.warning("Failed to load game setting " + file, ex);
+            return null;
         }
     }
 
@@ -345,7 +375,7 @@ public final class HMCLGameRepository extends DefaultGameRepository {
 
     @Nullable
     private GameSettings.Instance loadLegacyGameSettings(String id) {
-        Path file = getVersionRoot(id).resolve("hmclversion.cfg");
+        Path file = getVersionRoot(id).resolve(LEGACY_VERSION_SETTING_FILENAME);
         if (!Files.exists(file)) {
             return null;
         }

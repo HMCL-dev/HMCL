@@ -2,7 +2,7 @@
 
 ## Summary
 
-Migrate game settings from the old JSON format to the new `GameSettings` model. Global game setting presets will become a list of `GameSettings.Preset` entries stored in `game-settings-presets.json`; each preset has a `UUID` and editable `name`. Instance settings will be stored in `versions/<id>/hmcl-game-settings.cfg`. The old `hmclversion.cfg` files and old `Profile.global` data must remain untouched. Launching, exporting, installing, and the settings UI should all read effective `GameSettings` values.
+Migrate game settings from the old JSON format to the new `GameSettings` model. Global game setting presets will become a list of `GameSettings.Preset` entries stored in `game-settings-presets.json`; each preset has a `UUID` and editable `name`. Instance settings will be stored in `versions/<id>/.hmcl/instance-game-settings.json`. The old `hmclversion.cfg` files and old `Profile.global` data must remain untouched. Launching, exporting, installing, and the settings UI should all read effective `GameSettings` values.
 
 ## Key Changes
 
@@ -14,8 +14,8 @@ Migrate game settings from the old JSON format to the new `GameSettings` model. 
 - Implement compatibility migration:
   - If the new preset list is absent, convert each old `Profile.global` into one `GameSettings.Preset`, name it from the profile display name, generate a deterministic UUID from the legacy profile key, and write that UUID into `legacyGameSettingsParent`.
   - If a deterministic migration UUID is already occupied by another global setting, fall back to a newly generated unique random UUID for that migrated setting.
-  - Load instance settings from `hmcl-game-settings.cfg` first. If missing, convert old `hmclversion.cfg` into a transient `GameSettings.Instance`.
-  - Do not rewrite old config files. Create `hmcl-game-settings.cfg` only after the user changes instance settings or the repository explicitly saves the new instance setting.
+  - Load instance settings from `.hmcl/instance-game-settings.json` first. If missing, migrate `hmcl-game-settings.cfg`; if that is also missing, convert old `hmclversion.cfg` into a transient `GameSettings.Instance`.
+  - Do not rewrite old config files. Create `.hmcl/instance-game-settings.json` only after the user changes instance settings or the repository explicitly saves the new instance setting.
   - If multiple old profiles share the same physical instance with different legacy parents, the first saved new instance setting wins; later conflicts should only be logged.
 - Define effective setting resolution:
   - Memory settings are inherited or overridden as a group.
@@ -37,13 +37,13 @@ Migrate game settings from the old JSON format to the new `GameSettings` model. 
 - Add unit tests for old JSON to `GameSettings` conversion, deterministic migration UUIDs, parent fallback, override behavior, and old-file preservation.
 - Verify these integration scenarios:
   - A launcher with only old config starts, opens settings, and creates the global setting list plus migration UUIDs.
-  - Editing an instance creates only `hmcl-game-settings.cfg` and does not modify `hmclversion.cfg`.
+  - Editing an instance creates only `.hmcl/instance-game-settings.json` and does not modify `hmclversion.cfg`.
   - Different instance parent UUIDs produce different effective launch options.
   - JVM options, game arguments, and environment variables inherit from the selected global setting unless the instance explicitly overrides them.
   - Quick Play creates the correct `QuickPlayOption` for multiplayer, singleplayer, and realms.
 
 ## Assumptions
 
-- The new instance setting file name is `hmcl-game-settings.cfg`.
+- The new instance setting file name is `.hmcl/instance-game-settings.json`.
 - Old local settings are read as raw JSON and immediately converted into `GameSettings.Instance`; runtime paths should never keep old setting objects.
 - Deleting a `GameSettings.Preset` that is used as the default or referenced by an instance should be blocked, or the user must switch references first.
