@@ -73,9 +73,6 @@ public final class HMCLGameRepository extends DefaultGameRepository {
     /// Current file name for instance-specific game settings.
     private static final String LOCAL_GAME_SETTINGS_FILENAME = "instance-game-settings.json";
 
-    /// Previous file name used by the new `GameSettings.Instance` format before it moved under `.hmcl`.
-    private static final String LEGACY_LOCAL_GAME_SETTINGS_FILENAME = "hmcl-game-settings.cfg";
-
     /// Legacy file name used by old `VersionSetting` data.
     private static final String LEGACY_VERSION_SETTING_FILENAME = "hmclversion.cfg";
 
@@ -241,22 +238,10 @@ public final class HMCLGameRepository extends DefaultGameRepository {
         return getVersionRoot(id).resolve(LOCAL_GAME_SETTINGS_DIRECTORY).resolve(LOCAL_GAME_SETTINGS_FILENAME);
     }
 
-    /// Returns the previous new-format local game settings path used before the `.hmcl` directory.
-    private Path getLegacyLocalGameSettingsFile(String id) {
-        return getVersionRoot(id).resolve(LEGACY_LOCAL_GAME_SETTINGS_FILENAME);
-    }
-
     private void loadLocalGameSettings(String id) {
         GameSettings.Instance setting = loadGameSettingsFile(getLocalGameSettingsFile(id));
         if (setting != null) {
             initLocalGameSettings(id, setting);
-            return;
-        }
-
-        GameSettings.Instance legacyNewSetting = loadGameSettingsFile(getLegacyLocalGameSettingsFile(id));
-        if (legacyNewSetting != null) {
-            initLocalGameSettings(id, legacyNewSetting);
-            saveGameSettings(id);
             return;
         }
 

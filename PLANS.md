@@ -14,7 +14,7 @@ Migrate game settings from the old JSON format to the new `GameSettings` model. 
 - Implement compatibility migration:
   - If the new preset list is absent, convert each old `Profile.global` into one `GameSettings.Preset`, name it from the profile display name, generate a deterministic UUID from the legacy profile key, and write that UUID into `legacyGameSettingsParent`.
   - If a deterministic migration UUID is already occupied by another global setting, fall back to a newly generated unique random UUID for that migrated setting.
-  - Load instance settings from `.hmcl/instance-game-settings.json` first. If missing, migrate `hmcl-game-settings.cfg`; if that is also missing, convert old `hmclversion.cfg` into a transient `GameSettings.Instance`.
+  - Load instance settings from `.hmcl/instance-game-settings.json` first. If missing, convert old `hmclversion.cfg` into a transient `GameSettings.Instance`.
   - Do not rewrite old config files. Create `.hmcl/instance-game-settings.json` only after the user changes instance settings or the repository explicitly saves the new instance setting.
   - If multiple old profiles share the same physical instance with different legacy parents, the first saved new instance setting wins; later conflicts should only be logged.
 - Define effective setting resolution:
