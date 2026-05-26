@@ -62,15 +62,11 @@ public final class Profiles {
         }
     };
 
-    private static ObservableList<Profile> profiles() {
-        return config().getProfiles();
-    }
-
     private static void refreshSelectedProfile() {
         if (!initialized)
             return;
 
-        ObservableList<Profile> profiles = profiles();
+        ObservableList<Profile> profiles = ConfigHolder.config().getProfiles();
         Profile profile = selectedProfile.get();
 
         if (profiles.isEmpty()) {
@@ -102,7 +98,7 @@ public final class Profiles {
     }
 
     private static void checkProfiles() {
-        ObservableList<Profile> profiles = profiles();
+        ObservableList<Profile> profiles = ConfigHolder.config().getProfiles();
         if (profiles.isEmpty()) {
             Profile current = new Profile(Profiles.DEFAULT_PROFILE, Path.of(".minecraft"), null, true);
             Profile home = new Profile(Profiles.HOME_PROFILE, Metadata.MINECRAFT_DIRECTORY);
@@ -129,7 +125,7 @@ public final class Profiles {
         if (initialized)
             throw new IllegalStateException("Already initialized");
 
-        ObservableList<Profile> profiles = profiles();
+        ObservableList<Profile> profiles = ConfigHolder.config().getProfiles();
         profilesWrapper.set(profiles);
         removeDuplicateProfiles(profiles);
         profiles.addListener(onInvalidating(Profiles::refreshSelectedProfile));
@@ -178,7 +174,7 @@ public final class Profiles {
     }
 
     public static ObservableList<Profile> getProfiles() {
-        return profiles();
+        return config().getProfiles();
     }
 
     public static ReadOnlyListProperty<Profile> profilesProperty() {
