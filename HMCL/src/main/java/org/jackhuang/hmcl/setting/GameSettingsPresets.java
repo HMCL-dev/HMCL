@@ -25,6 +25,7 @@ import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
+import org.jackhuang.hmcl.util.gson.JsonSerializable;
 import org.jackhuang.hmcl.util.gson.ObservableSetting;
 import org.jackhuang.hmcl.util.gson.SchemaVersion;
 import org.jetbrains.annotations.NotNullByDefault;
@@ -43,6 +44,7 @@ import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 /// @author Glavo
 @JsonAdapter(GameSettingsPresets.Adapter.class)
 @NotNullByDefault
+@JsonSerializable
 public final class GameSettingsPresets extends ObservableSetting {
     /// The schema version supported by this game settings preset store.
     public static final SchemaVersion CURRENT_SCHEMA_VERSION = new SchemaVersion(1, 0);
@@ -55,7 +57,7 @@ public final class GameSettingsPresets extends ObservableSetting {
 
     /// Reads a game settings preset store from a JSON object.
     public static @Nullable GameSettingsPresets fromJson(JsonObject json) throws JsonParseException {
-        return Config.CONFIG_GSON.fromJson(json, GameSettingsPresets.class);
+        return Config.CONFIG_GSON.<@Nullable GameSettingsPresets>fromJson(json, GameSettingsPresets.class);
     }
 
     /// Serializes this game settings preset store to JSON.
