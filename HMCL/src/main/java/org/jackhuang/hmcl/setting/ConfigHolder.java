@@ -65,6 +65,10 @@ public final class ConfigHolder {
     /// Whether a legacy config was newer than this build can safely overwrite.
     private static boolean unsupportedVersion = false;
 
+    /// Whether the per-workspace config file on disk is invalid and must be backed up
+    /// before being overwritten by the first successful save.
+    private static boolean needBackupSettings = false;
+
     /// Returns the loaded per-workspace config.
     public static Config config() {
         if (configInstance == null) {
@@ -111,7 +115,14 @@ public final class ConfigHolder {
 
         configInstance = loadConfig();
         if (!unsupportedVersion) {
-            configInstance.addListener(source -> FileSaver.save(SETTINGS_LOCATION, configInstance.toJson()));
+            configInstance.addListener(source -> {
+                // Back up the invalid on-disk file the first time we are about to overwrite it.
+                if (needBackupSettings) {
+                    needBackupSettings = false;
+                    backupInvalidConfig(SETTINGS_LOCATION);
+                }
+                FileSaver.save(SETTINGS_LOCATION, configInstance.toJson());
+            });
         }
 
         globalConfigInstance = loadGlobalConfig();
@@ -139,7 +150,7 @@ public final class ConfigHolder {
             try {
                 jsonObject = JsonUtils.fromJsonFile(SETTINGS_LOCATION, JsonObject.class);
             } catch (Exception e) {
-                backupInvalidConfig(SETTINGS_LOCATION);
+                needBackupSettings = true;
                 LOG.warning("Failed to read settings file: " + SETTINGS_LOCATION, e);
                 return new Config();
             }
@@ -185,7 +196,7 @@ public final class ConfigHolder {
 
                 return settings;
             } catch (JsonParseException e) {
-                backupInvalidConfig(SETTINGS_LOCATION);
+                needBackupSettings = true;
                 LOG.warning("Failed to parse settings file: " + SETTINGS_LOCATION, e);
                 return new Config();
             }
@@ -203,9 +214,11 @@ public final class ConfigHolder {
         return newSettings;
     }
 
-    /// Copies an invalid config file to a numbered backup path (e.g. {@code settings.json.1},
+    /// Moves an invalid config file to a numbered backup path (e.g. {@code settings.json.1},
     /// {@code settings.json.2}, …) so the original data is preserved for diagnosis.
-    /// Does nothing and logs a warning when the copy fails.
+    /// This is called synchronously from the save listener, immediately before the first
+    /// successful write overwrites the invalid file.
+    /// Does nothing and logs a warning when the move fails.
     ///
     /// @param location the invalid config file to back up
     private static void backupInvalidConfig(Path location) {
@@ -223,8 +236,8 @@ public final class ConfigHolder {
                 LOG.warning("Could not find an available backup path for " + location);
                 return;
             }
-            Files.copy(location, backup);
             LOG.info("Backed up invalid config to " + backup);
+            Files.move(location, backup);
         } catch (IOException e) {
             LOG.warning("Failed to back up invalid config " + location, e);
         }
