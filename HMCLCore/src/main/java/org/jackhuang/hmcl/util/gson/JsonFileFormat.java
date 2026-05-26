@@ -51,7 +51,7 @@ import java.util.Objects;
 @NotNullByDefault
 public record JsonFileFormat(String id, Version version) {
     /// The default JSON member name used for file formats.
-    public static final String DEFAULT_MEMBER_NAME = "format";
+    public static final String DEFAULT_MEMBER_NAME = "$format";
 
     /// The JSON member name used for the format ID.
     private static final String ID_MEMBER_NAME = "id";

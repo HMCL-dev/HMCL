@@ -82,7 +82,7 @@ public final class Config extends ObservableSetting {
     // Properties
 
     /// The format used by this config file.
-    @SerializedName("format")
+    @SerializedName(JsonFileFormat.DEFAULT_MEMBER_NAME)
     private final ObjectProperty<JsonFileFormat> format = new SimpleObjectProperty<>(CURRENT_FORMAT);
 
     /// Returns the format property.
@@ -806,7 +806,7 @@ public final class Config extends ObservableSetting {
             }
 
             JsonObject result = super.serialize(src, typeOfSrc, context).getAsJsonObject();
-            result.add("format", context.serialize(CURRENT_FORMAT, JsonFileFormat.class));
+            result.add(JsonFileFormat.DEFAULT_MEMBER_NAME, context.serialize(CURRENT_FORMAT, JsonFileFormat.class));
             return result;
         }
 

@@ -76,7 +76,7 @@ public final class GameSettingsPresets extends ObservableSetting {
     }
 
     /// The format used by this game settings preset store file.
-    @SerializedName("format")
+    @SerializedName(JsonFileFormat.DEFAULT_MEMBER_NAME)
     private final ObjectProperty<JsonFileFormat> format = new SimpleObjectProperty<>(CURRENT_FORMAT);
 
     /// Returns the format property.
