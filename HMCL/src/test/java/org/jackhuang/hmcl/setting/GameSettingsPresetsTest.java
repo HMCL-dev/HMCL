@@ -32,26 +32,26 @@ import static org.junit.jupiter.api.Assertions.*;
 public final class GameSettingsPresetsTest {
     /// Tests that the default preset selection belongs to Config.
     @Test
-    public void storesDefaultGameSettingsInConfig() {
+    public void storesDefaultGameSettingsPresetInConfig() {
         GUID id = GUID.fromString("123e4567-e89b-12d3-a456-426614174000");
         Config config = new Config();
 
-        config.setDefaultGameSettings(id);
+        config.setDefaultGameSettingsPreset(id);
         JsonObject serialized = JsonParser.parseString(config.toJson()).getAsJsonObject();
 
-        assertEquals(id.toString(), serialized.get(Config.DEFAULT_GAME_SETTINGS_MEMBER_NAME).getAsString());
+        assertEquals(id.toString(), serialized.get(Config.DEFAULT_GAME_SETTINGS_PRESET_MEMBER_NAME).getAsString());
     }
 
     /// Tests that preset files do not preserve the workspace-level default preset selection.
     @Test
-    public void doesNotStoreDefaultGameSettingsInPresets() {
+    public void doesNotStoreDefaultGameSettingsPresetInPresets() {
         JsonObject serialized = JsonParser.parseString("""
                 {
                   "$format": {
                     "id": "hmcl.game-settings",
                     "version": "1.0"
                   },
-                  "defaultGameSettings": "123e4567-e89b-12d3-a456-426614174000",
+                  "defaultGameSettingsPreset": "123e4567-e89b-12d3-a456-426614174000",
                   "presets": []
                 }
                 """).getAsJsonObject();
@@ -62,7 +62,7 @@ public final class GameSettingsPresetsTest {
 
         assertEquals(GameSettingsPresets.CURRENT_FORMAT,
                 JsonFileFormat.readFromMember(rewritten, JsonFileFormat.DEFAULT_MEMBER_NAME));
-        assertFalse(rewritten.has(Config.DEFAULT_GAME_SETTINGS_MEMBER_NAME));
+        assertFalse(rewritten.has(Config.DEFAULT_GAME_SETTINGS_PRESET_MEMBER_NAME));
         assertTrue(rewritten.has("presets"));
         assertFalse(rewritten.has("gameSettings"));
     }

@@ -8,9 +8,9 @@ Migrate game settings from the old JSON format to the new `GameSettings` model. 
 
 - Extend the data model:
   - Add `UUID id` and `String name` to `GameSettings.Preset`.
-  - Add `GameSettingsPresets` for `ObservableList<GameSettings.Preset> presets`, with `UUID defaultGameSettings` stored in `Config`.
+  - Add `GameSettingsPresets` for `ObservableList<GameSettings.Preset> presets`, with `UUID defaultGameSettingsPreset` stored in `Config`.
   - Add a migration-only `legacyGameSettingsParent` field to `Profile` to record the global setting UUID converted from that profile's old global setting.
-  - Resolve `GameSettings.Instance.parent` as follows: explicit instance parent first, then `defaultGameSettings`; during migration only, an unsaved converted old instance may use `Profile.legacyGameSettingsParent`.
+  - Resolve `GameSettings.Instance.parent` as follows: explicit instance parent first, then `defaultGameSettingsPreset`; during migration only, an unsaved converted old instance may use `Profile.legacyGameSettingsParent`.
 - Implement compatibility migration:
   - If the new preset list is absent, convert each old `Profile.global` into one `GameSettings.Preset`, name it from the profile display name, generate a deterministic UUID from the legacy profile key, and write that UUID into `legacyGameSettingsParent`.
   - If a deterministic migration UUID is already occupied by another global setting, fall back to a newly generated unique random UUID for that migrated setting.
@@ -25,11 +25,11 @@ Migrate game settings from the old JSON format to the new `GameSettings` model. 
   - `GameWindowType.MAXIMIZED` is saved and displayed only; launching should currently treat it like a normal windowed launch.
 - Finish UI and launch integration:
   - Make `GameSettingsPage` load and save real settings instead of creating temporary test objects.
-  - Add global setting management UI for selecting, creating, renaming, copying, deleting global settings, and setting `defaultGameSettings`.
+  - Add global setting management UI for selecting, creating, renaming, copying, deleting global settings, and setting `defaultGameSettingsPreset`.
   - Add instance UI for selecting or clearing parent UUID, showing inherited source, and binding all existing controls to `GameSettings`.
   - Update `HMCLGameRepository`, `LauncherHelper`, export, and install flows to use effective `GameSettings`.
   - Support Quick Play values for none, multiplayer, singleplayer, and realms.
-  - Apply `defaultGameSettings.defaultIsolationType` when deciding the default isolation strategy for newly installed instances.
+  - Apply `defaultGameSettingsPreset.defaultIsolationType` when deciding the default isolation strategy for newly installed instances.
 
 ## Test Plan
 

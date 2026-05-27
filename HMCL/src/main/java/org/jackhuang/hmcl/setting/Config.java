@@ -53,7 +53,7 @@ public final class Config extends ObservableSetting {
     public static final JsonFileFormat CURRENT_FORMAT = new JsonFileFormat("hmcl.settings", new JsonFileFormat.Version(1, 0));
 
     /// The JSON member name for the default game setting preset ID.
-    static final String DEFAULT_GAME_SETTINGS_MEMBER_NAME = "defaultGameSettings";
+    static final String DEFAULT_GAME_SETTINGS_PRESET_MEMBER_NAME = "defaultGameSettingsPreset";
 
     public static final Gson CONFIG_GSON = new GsonBuilder()
             .registerTypeAdapter(Path.class, PathTypeAdapter.INSTANCE)
@@ -707,23 +707,23 @@ public final class Config extends ObservableSetting {
     }
 
     /// The default game setting preset ID.
-    @SerializedName(DEFAULT_GAME_SETTINGS_MEMBER_NAME)
-    private final ObjectProperty<@Nullable GUID> defaultGameSettings =
-            new SimpleObjectProperty<>(this, DEFAULT_GAME_SETTINGS_MEMBER_NAME);
+    @SerializedName(DEFAULT_GAME_SETTINGS_PRESET_MEMBER_NAME)
+    private final ObjectProperty<@Nullable GUID> defaultGameSettingsPreset =
+            new SimpleObjectProperty<>(this, DEFAULT_GAME_SETTINGS_PRESET_MEMBER_NAME);
 
     /// Returns the default game setting preset ID property.
-    public ObjectProperty<@Nullable GUID> defaultGameSettingsProperty() {
-        return defaultGameSettings;
+    public ObjectProperty<@Nullable GUID> defaultGameSettingsPresetProperty() {
+        return defaultGameSettingsPreset;
     }
 
     /// Returns the default game setting preset ID.
-    public @Nullable GUID getDefaultGameSettings() {
-        return defaultGameSettings.get();
+    public @Nullable GUID getDefaultGameSettingsPreset() {
+        return defaultGameSettingsPreset.get();
     }
 
     /// Sets the default game setting preset ID.
-    public void setDefaultGameSettings(@Nullable GUID defaultGameSettings) {
-        this.defaultGameSettings.set(defaultGameSettings);
+    public void setDefaultGameSettingsPreset(@Nullable GUID defaultGameSettingsPreset) {
+        this.defaultGameSettingsPreset.set(defaultGameSettingsPreset);
     }
 
     // Accounts

@@ -331,7 +331,7 @@ public final class HMCLGameRepository extends DefaultGameRepository {
                 ? instance.parentProperty().getValue()
                 : profile.getId();
         GameSettings.Preset parentSetting = ConfigHolder.getGameSettings(parent);
-        return parentSetting != null ? parentSetting : ConfigHolder.getDefaultGameSettingsOrCreate();
+        return parentSetting != null ? parentSetting : ConfigHolder.getDefaultGameSettingsPresetOrCreate();
     }
 
     public GameSettings.Effective getEffectiveGameSettings(String id) {

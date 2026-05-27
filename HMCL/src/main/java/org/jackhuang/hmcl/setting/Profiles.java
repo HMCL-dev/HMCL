@@ -174,9 +174,9 @@ public final class Profiles {
 
     private static void migrateGameSettings() {
         if (ConfigHolder.getGameSettings().isEmpty()) {
-            ConfigHolder.getDefaultGameSettingsOrCreate();
-        } else if (ConfigHolder.getGameSettings(ConfigHolder.getDefaultGameSettings()) == null) {
-            ConfigHolder.setDefaultGameSettings(ConfigHolder.getGameSettings().get(0).idProperty().getValue());
+            ConfigHolder.getDefaultGameSettingsPresetOrCreate();
+        } else if (ConfigHolder.getGameSettings(ConfigHolder.getDefaultGameSettingsPreset()) == null) {
+            ConfigHolder.setDefaultGameSettingsPreset(ConfigHolder.getGameSettings().get(0).idProperty().getValue());
         }
     }
 

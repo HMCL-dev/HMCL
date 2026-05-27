@@ -426,7 +426,7 @@ final class IndependentSettingBinder {
             refresh.invalidated(newValue);
         });
         ConfigHolder.getGameSettings().addListener(refresh);
-        ConfigHolder.defaultGameSettingsProperty().addListener(refresh);
+        ConfigHolder.defaultGameSettingsPresetProperty().addListener(refresh);
         memoryStatusBar.memoryStatusProperty().addListener(observable -> {
             GameSettings setting = currentSetting.get();
             if (setting == null) {
@@ -713,7 +713,7 @@ final class IndependentSettingBinder {
             refresh.invalidated(newProperty);
         });
         ConfigHolder.getGameSettings().addListener(refresh);
-        ConfigHolder.defaultGameSettingsProperty().addListener(refresh);
+        ConfigHolder.defaultGameSettingsPresetProperty().addListener(refresh);
 
         GameSettings setting = currentSetting.get();
         if (setting != null) {

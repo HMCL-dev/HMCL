@@ -184,18 +184,18 @@ public final class ConfigHolder {
     }
 
     /// Returns the default game setting preset ID property.
-    public static ObjectProperty<@Nullable GUID> defaultGameSettingsProperty() {
-        return config().defaultGameSettingsProperty();
+    public static ObjectProperty<@Nullable GUID> defaultGameSettingsPresetProperty() {
+        return config().defaultGameSettingsPresetProperty();
     }
 
     /// Returns the default game setting preset ID.
-    public static @Nullable GUID getDefaultGameSettings() {
-        return config().getDefaultGameSettings();
+    public static @Nullable GUID getDefaultGameSettingsPreset() {
+        return config().getDefaultGameSettingsPreset();
     }
 
     /// Sets the default game setting preset ID.
-    public static void setDefaultGameSettings(@Nullable GUID defaultGameSettings) {
-        config().setDefaultGameSettings(defaultGameSettings);
+    public static void setDefaultGameSettingsPreset(@Nullable GUID defaultGameSettingsPreset) {
+        config().setDefaultGameSettingsPreset(defaultGameSettingsPreset);
     }
 
     /// Returns the game setting preset with the given ID.
@@ -204,22 +204,22 @@ public final class ConfigHolder {
     }
 
     /// Returns the default game setting preset, creating one when needed.
-    public static GameSettings.Preset getDefaultGameSettingsOrCreate() {
-        GameSettings.Preset setting = getGameSettings(getDefaultGameSettings());
+    public static GameSettings.Preset getDefaultGameSettingsPresetOrCreate() {
+        GameSettings.Preset setting = getGameSettings(getDefaultGameSettingsPreset());
         if (setting != null) {
             return setting;
         }
 
         if (!getGameSettings().isEmpty()) {
             setting = getGameSettings().get(0);
-            setDefaultGameSettings(setting.idProperty().getValue());
+            setDefaultGameSettingsPreset(setting.idProperty().getValue());
             return setting;
         }
 
         setting = new GameSettings.Preset();
         setting.nameProperty().setValue(i18n("message.default"));
         getGameSettings().add(setting);
-        setDefaultGameSettings(setting.idProperty().getValue());
+        setDefaultGameSettingsPreset(setting.idProperty().getValue());
         return setting;
     }
 

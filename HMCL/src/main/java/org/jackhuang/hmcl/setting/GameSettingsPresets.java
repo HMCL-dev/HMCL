@@ -125,7 +125,7 @@ public final class GameSettingsPresets extends ObservableSetting implements Form
                 JsonDeserializationContext context) throws JsonParseException {
             @Nullable GameSettingsPresets result = super.deserialize(json, typeOfT, context);
             if (result != null) {
-                result.unknownFields.remove(Config.DEFAULT_GAME_SETTINGS_MEMBER_NAME);
+                result.unknownFields.remove(Config.DEFAULT_GAME_SETTINGS_PRESET_MEMBER_NAME);
             }
             return result;
         }
