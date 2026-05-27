@@ -78,22 +78,26 @@ public final class Profile implements Observable {
         this.path.set(Objects.requireNonNull(path));
     }
 
+    /// The custom profile name, or `null` for profiles without a stored name.
     private final SimpleStringProperty name;
 
+    /// Returns the custom profile name property.
     public StringProperty nameProperty() {
         return name;
     }
 
-    public String getName() {
+    /// Returns the custom profile name, or `null` when no name is stored.
+    public @Nullable String getName() {
         return name.get();
     }
 
-    public void setName(String name) {
+    /// Sets the custom profile name.
+    public void setName(@Nullable String name) {
         this.name.set(name);
     }
 
     /// Creates a profile.
-    public Profile(GUID id, String name, PortablePath path) {
+    public Profile(GUID id, @Nullable String name, PortablePath path) {
         this.id = Objects.requireNonNull(id);
         this.name = new SimpleStringProperty(this, "name", name);
         this.path = new SimpleObjectProperty<>(this, "path", Objects.requireNonNull(path));
@@ -156,7 +160,9 @@ public final class Profile implements Observable {
 
             JsonObject jsonObject = new JsonObject();
             jsonObject.add("id", context.serialize(src.getId(), GUID.class));
-            jsonObject.addProperty("name", src.getName());
+            if (src.getName() != null) {
+                jsonObject.addProperty("name", src.getName());
+            }
             jsonObject.add("path", context.serialize(src.getPath(), PortablePath.class));
 
             return jsonObject;
@@ -178,7 +184,7 @@ public final class Profile implements Observable {
             }
 
             return new Profile(id,
-                    Optional.ofNullable(obj.get("name")).map(JsonElement::getAsString).orElse("Default"),
+                    Optional.ofNullable(obj.get("name")).map(JsonElement::getAsString).orElse(null),
                     path);
         }
 

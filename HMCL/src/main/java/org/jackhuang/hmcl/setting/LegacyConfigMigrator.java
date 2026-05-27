@@ -163,10 +163,10 @@ public final class LegacyConfigMigrator {
             }
 
             JsonObject migrated = profile.deepCopy();
+            @Nullable String name = readString(migrated.get("name"));
             if (!migrated.has("id")) {
                 @Nullable GUID id = readLegacyProfileId(migrated);
                 if (id == null) {
-                    @Nullable String name = readString(migrated.get("name"));
                     if (name != null) {
                         id = getLegacyProfileId(name);
                     }
@@ -174,6 +174,9 @@ public final class LegacyConfigMigrator {
                 if (id != null) {
                     migrated.addProperty("id", id.toString());
                 }
+            }
+            if (isBuiltInProfileName(name)) {
+                migrated.remove("name");
             }
             migrated.remove("legacyGameSettingsParent");
             result.add(migrated);
@@ -191,10 +194,15 @@ public final class LegacyConfigMigrator {
 
             JsonObject migrated = profile.deepCopy();
             @Nullable GUID id = readLegacyProfileId(migrated);
-            migrated.addProperty("name", entry.getKey());
+            String name = entry.getKey();
+            if (isBuiltInProfileName(name)) {
+                migrated.remove("name");
+            } else {
+                migrated.addProperty("name", name);
+            }
             migrated.addProperty("id", Objects.requireNonNullElseGet(
                     id,
-                    () -> getLegacyProfileId(entry.getKey())
+                    () -> getLegacyProfileId(name)
             ).toString());
             migrated.remove("legacyGameSettingsParent");
             result.add(migrated);
@@ -213,6 +221,22 @@ public final class LegacyConfigMigrator {
         } catch (IllegalArgumentException e) {
             return null;
         }
+    }
+
+    /// Returns whether the given legacy profile name belongs to a built-in profile.
+    private static boolean isBuiltInProfileName(@Nullable String name) {
+        return Profiles.DEFAULT_PROFILE.equals(name) || Profiles.HOME_PROFILE.equals(name);
+    }
+
+    /// Returns the built-in profile ID for the given legacy profile name.
+    private static @Nullable GUID getBuiltInProfileId(@Nullable String name) {
+        if (Profiles.DEFAULT_PROFILE.equals(name)) {
+            return Profiles.DEFAULT_PROFILE_ID;
+        }
+        if (Profiles.HOME_PROFILE.equals(name)) {
+            return Profiles.HOME_PROFILE_ID;
+        }
+        return null;
     }
 
     /// Finds a legacy config file with the same precedence as old HMCL versions.
@@ -390,6 +414,11 @@ public final class LegacyConfigMigrator {
             return null;
         }
 
+        @Nullable GUID builtInId = getBuiltInProfileId(name);
+        if (builtInId != null) {
+            return builtInId;
+        }
+
         for (Profile gameDirectory : gameDirectories.getGameDirectories()) {
             if (Objects.equals(name, gameDirectory.getName())) {
                 return gameDirectory.getId();
@@ -410,7 +439,10 @@ public final class LegacyConfigMigrator {
         for (Profile profile : gameDirectories.getGameDirectories()) {
             GameSettings.Preset legacyParent = gameSettingsPresets.getPreset(profile.getId());
             if (legacyParent == null) {
-                String profileName = profile.getName();
+                @Nullable String profileName = getLegacyProfileName(profile);
+                if (profileName == null) {
+                    continue;
+                }
                 JsonObject profileObject = configurations.get(profileName) instanceof JsonObject profileJson ? profileJson : null;
                 JsonObject legacySettingObject = profileObject != null && profileObject.get("global") instanceof JsonObject legacyJson ? legacyJson : null;
                 if (legacySettingObject == null) {
@@ -421,6 +453,17 @@ public final class LegacyConfigMigrator {
                 gameSettingsPresets.getPresets().add(legacyParent);
             }
         }
+    }
+
+    /// Returns the legacy profile name used in `configurations`.
+    private static @Nullable String getLegacyProfileName(Profile profile) {
+        if (Profiles.DEFAULT_PROFILE_ID.equals(profile.getId())) {
+            return Profiles.DEFAULT_PROFILE;
+        }
+        if (Profiles.HOME_PROFILE_ID.equals(profile.getId())) {
+            return Profiles.HOME_PROFILE;
+        }
+        return profile.getName();
     }
 
     /// Reads a string JSON value.

@@ -55,11 +55,15 @@ public final class Profiles {
     }
 
     public static String getProfileDisplayName(Profile profile) {
-        return switch (profile.getName()) {
-            case Profiles.DEFAULT_PROFILE -> i18n("profile.default");
-            case Profiles.HOME_PROFILE -> i18n("profile.home");
-            default -> profile.getName();
-        };
+        if (DEFAULT_PROFILE_ID.equals(profile.getId())) {
+            return i18n("profile.default");
+        }
+        if (HOME_PROFILE_ID.equals(profile.getId())) {
+            return i18n("profile.home");
+        }
+
+        String name = profile.getName();
+        return name != null ? name : profile.getId().toString();
     }
 
     private static final ReadOnlyListWrapper<Profile> profilesWrapper =
@@ -123,9 +127,9 @@ public final class Profiles {
         ObservableList<Profile> profiles = ConfigHolder.getGameDirectories();
         if (profiles.isEmpty()) {
             Profile current = new Profile(
-                    Profiles.DEFAULT_PROFILE_ID, Profiles.DEFAULT_PROFILE, PortablePath.of(".minecraft"));
+                    Profiles.DEFAULT_PROFILE_ID, null, PortablePath.of(".minecraft"));
             Profile home = new Profile(
-                    Profiles.HOME_PROFILE_ID, Profiles.HOME_PROFILE, PortablePath.fromPath(Metadata.MINECRAFT_DIRECTORY));
+                    Profiles.HOME_PROFILE_ID, null, PortablePath.fromPath(Metadata.MINECRAFT_DIRECTORY));
             Platform.runLater(() -> profiles.addAll(current, home));
         }
     }
@@ -186,10 +190,11 @@ public final class Profiles {
     }
 
     private static void removeDuplicateProfiles(ObservableList<Profile> profiles) {
+        HashSet<GUID> ids = new HashSet<>();
         HashSet<String> names = new HashSet<>();
         profiles.removeIf(profile -> {
             String name = profile.getName();
-            return name == null || !names.add(name);
+            return !ids.add(profile.getId()) || (name != null && !names.add(name));
         });
     }
 

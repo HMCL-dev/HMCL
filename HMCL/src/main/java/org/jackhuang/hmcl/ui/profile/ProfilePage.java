@@ -44,6 +44,7 @@ import org.jackhuang.hmcl.util.io.FileUtils;
 
 import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
+import java.util.Objects;
 import java.util.Optional;
 
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
@@ -101,7 +102,7 @@ public final class ProfilePage extends BorderPane implements DecoratorPage {
                             @Override
                             protected void eval() {
                                 JFXTextField control = (JFXTextField) this.getSrcControl();
-                                hasErrors.set(Profiles.getProfiles().stream().anyMatch(profile -> profile.getName().equals(control.getText())));
+                                hasErrors.set(Profiles.getProfiles().stream().anyMatch(profile -> Objects.equals(profile.getName(), control.getText())));
                             }
                         });
                     }

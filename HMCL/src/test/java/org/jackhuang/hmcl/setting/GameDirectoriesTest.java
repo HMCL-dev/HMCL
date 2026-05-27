@@ -69,6 +69,45 @@ public final class GameDirectoriesTest {
         assertEquals(".minecraft", gameDirectories.getGameDirectories().get(0).getPath().getPath());
     }
 
+    /// Tests that built-in profiles do not store names after migration.
+    @Test
+    public void removesBuiltInProfileNamesDuringMigration() {
+        JsonObject settings = JsonParser.parseString("""
+                {
+                  "configurations": {
+                    "Default": {
+                      "gameDir": ".minecraft"
+                    },
+                    "Home": {
+                      "gameDir": "/home/user/.minecraft"
+                    },
+                    "Dev": {
+                      "gameDir": "versions/Dev"
+                    }
+                  }
+                }
+                """).getAsJsonObject();
+
+        GameDirectories gameDirectories = Objects.requireNonNull(LegacyConfigMigrator.extractGameDirectoriesFromConfigJson(settings));
+
+        Profile defaultProfile = gameDirectories.getGameDirectories().stream()
+                .filter(profile -> Profiles.DEFAULT_PROFILE_ID.equals(profile.getId()))
+                .findFirst()
+                .orElseThrow();
+        Profile homeProfile = gameDirectories.getGameDirectories().stream()
+                .filter(profile -> Profiles.HOME_PROFILE_ID.equals(profile.getId()))
+                .findFirst()
+                .orElseThrow();
+        Profile devProfile = gameDirectories.getGameDirectories().stream()
+                .filter(profile -> "Dev".equals(profile.getName()))
+                .findFirst()
+                .orElseThrow();
+
+        assertNull(defaultProfile.getName());
+        assertNull(homeProfile.getName());
+        assertEquals("Dev", devProfile.getName());
+    }
+
     /// Tests migrating upstream/main selected version fields into the main config.
     @Test
     public void migratesLegacySelectedVersionsFromConfigurations() {
@@ -116,6 +155,20 @@ public final class GameDirectoriesTest {
         assertFalse(serialized.has("useRelativePath"));
         assertEquals("versions/Dev", deserialized.getPath().getPath());
         assertFalse(deserialized.getPath().isAbsolute());
+    }
+
+    /// Tests that unnamed profiles are displayed by ID and serialized without a name.
+    @Test
+    public void displaysUnnamedProfileAsId() {
+        GUID id = new GUID("123e4567-e89b-12d3-a456-426614174000");
+        Profile profile = new Profile(id, null, PortablePath.of("versions\\Dev"));
+
+        JsonObject serialized = JsonUtils.GSON.toJsonTree(profile, Profile.class).getAsJsonObject();
+        Profile deserialized = Objects.requireNonNull(JsonUtils.GSON.fromJson(serialized, Profile.class));
+
+        assertFalse(serialized.has("name"));
+        assertNull(deserialized.getName());
+        assertEquals(id.toString(), Profiles.getProfileDisplayName(profile));
     }
 
     /// Tests that profiles must be deserialized with a non-nil ID.
