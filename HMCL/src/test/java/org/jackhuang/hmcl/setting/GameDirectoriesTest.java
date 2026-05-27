@@ -40,7 +40,6 @@ public final class GameDirectoriesTest {
         GUID id = new GUID("123e4567-e89b-12d3-a456-426614174000");
         JsonObject settings = JsonParser.parseString("""
                 {
-                  "last": "Dev",
                   "profiles": [
                     {
                       "id": "123e4567-e89b-12d3-a456-426614174000",
@@ -53,16 +52,8 @@ public final class GameDirectoriesTest {
                 """).getAsJsonObject();
 
         GameDirectories gameDirectories = Objects.requireNonNull(LegacyConfigMigrator.extractGameDirectoriesFromConfigJson(settings));
-        assertTrue(LegacyConfigMigrator.migrateLegacySelectedGameDirectory(settings, gameDirectories));
-        Config config = Objects.requireNonNull(Config.fromJson(settings));
 
-        assertFalse(settings.has("last"));
         assertFalse(settings.has("profiles"));
-        assertEquals(id, config.getSelectedGameDirectory());
-        assertEquals(id.toString(), JsonParser.parseString(config.toJson())
-                .getAsJsonObject()
-                .get(Config.SELECTED_GAME_DIRECTORY_MEMBER_NAME)
-                .getAsString());
         assertEquals(1, gameDirectories.getGameDirectories().size());
         assertEquals(id, gameDirectories.getGameDirectories().get(0).getId());
         assertEquals("Dev", gameDirectories.getGameDirectories().get(0).getName());
@@ -127,7 +118,7 @@ public final class GameDirectoriesTest {
 
         assertTrue(LegacyConfigMigrator.migrateLegacySelectedVersions(settings));
         GameDirectories gameDirectories = Objects.requireNonNull(LegacyConfigMigrator.extractGameDirectoriesFromConfigJson(settings));
-        assertTrue(LegacyConfigMigrator.migrateLegacySelectedGameDirectory(settings, gameDirectories));
+        assertTrue(LegacyConfigMigrator.migrateLegacySelectedGameDirectory(settings));
         Config config = Objects.requireNonNull(Config.fromJson(settings));
 
         assertFalse(settings.has("configurations"));

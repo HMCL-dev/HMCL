@@ -107,7 +107,7 @@ public final class LegacyConfigMigrator {
             GameDirectories gameDirectories = migratedGameDirectories != null
                     ? migratedGameDirectories
                     : new GameDirectories();
-            migrateLegacySelectedGameDirectory(jsonObject, gameDirectories);
+            migrateLegacySelectedGameDirectory(jsonObject);
 
             Config deserialized = Config.fromJson(jsonObject);
             if (deserialized == null) {
@@ -228,17 +228,6 @@ public final class LegacyConfigMigrator {
         return Profiles.DEFAULT_PROFILE.equals(name) || Profiles.HOME_PROFILE.equals(name);
     }
 
-    /// Returns the built-in profile ID for the given legacy profile name.
-    private static @Nullable GUID getBuiltInProfileId(@Nullable String name) {
-        if (Profiles.DEFAULT_PROFILE.equals(name)) {
-            return Profiles.DEFAULT_PROFILE_ID;
-        }
-        if (Profiles.HOME_PROFILE.equals(name)) {
-            return Profiles.HOME_PROFILE_ID;
-        }
-        return null;
-    }
-
     /// Finds a legacy config file with the same precedence as old HMCL versions.
     private static @Nullable Path locateLegacyConfig() {
         // Keep this order aligned with old ConfigHolder behavior so the same legacy file wins during migration.
@@ -343,11 +332,8 @@ public final class LegacyConfigMigrator {
     /// Migrates the legacy selected profile name into the current selected game directory ID.
     ///
     /// @param json the settings JSON object
-    /// @param gameDirectories the migrated game directory store used to resolve the selected ID
     /// @return whether the JSON object was changed
-    static boolean migrateLegacySelectedGameDirectory(
-            JsonObject json,
-            @Nullable GameDirectories gameDirectories) {
+    static boolean migrateLegacySelectedGameDirectory(JsonObject json) {
         Objects.requireNonNull(json);
 
         @Nullable JsonElement lastElement = json.remove("last");
@@ -360,9 +346,9 @@ public final class LegacyConfigMigrator {
         }
 
         @Nullable String selectedName = readString(lastElement);
-        @Nullable GUID selected = findGameDirectoryId(gameDirectories, selectedName);
-        if (selected != null) {
-            json.add(Config.SELECTED_GAME_DIRECTORY_MEMBER_NAME, JsonUtils.GSON.toJsonTree(selected, GUID.class));
+        if (selectedName != null) {
+            json.add(Config.SELECTED_GAME_DIRECTORY_MEMBER_NAME,
+                    JsonUtils.GSON.toJsonTree(getLegacyProfileId(selectedName), GUID.class));
         }
         return true;
     }
@@ -404,27 +390,6 @@ public final class LegacyConfigMigrator {
             json.add(Config.SELECTED_INSTANCE_MEMBER_NAME, selectedInstance);
         }
         return changed;
-    }
-
-    /// Finds the game directory ID with the given legacy profile name.
-    private static @Nullable GUID findGameDirectoryId(
-            @Nullable GameDirectories gameDirectories,
-            @Nullable String name) {
-        if (gameDirectories == null || name == null) {
-            return null;
-        }
-
-        @Nullable GUID builtInId = getBuiltInProfileId(name);
-        if (builtInId != null) {
-            return builtInId;
-        }
-
-        for (Profile gameDirectory : gameDirectories.getGameDirectories()) {
-            if (Objects.equals(name, gameDirectory.getName())) {
-                return gameDirectory.getId();
-            }
-        }
-        return null;
     }
 
     /// Migrates profile-global game settings from HMCL 3.15.0.345 and older config files.

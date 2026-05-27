@@ -329,7 +329,7 @@ public final class ConfigHolder {
                     migratedGameDirectories = gameDirectories;
                     needSaveSettings = true;
                 }
-                if (LegacyConfigMigrator.migrateLegacySelectedGameDirectory(jsonObject, gameDirectories)) {
+                if (LegacyConfigMigrator.migrateLegacySelectedGameDirectory(jsonObject)) {
                     needSaveSettings = true;
                 }
 
