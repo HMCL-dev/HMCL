@@ -91,11 +91,6 @@ public final class LegacyGameSettingsMigrator {
                 (LEGACY_PROFILE_ID_NAMESPACE + profileName).getBytes(StandardCharsets.UTF_8)));
     }
 
-    /// Converts a legacy profile-level setting JSON object into a named preset.
-    public static GameSettings.Preset toPreset(String name, String profileName, @Nullable JsonObject source) {
-        return toPreset(getLegacyProfileId(profileName), name, source);
-    }
-
     /// Converts a legacy profile-level setting JSON object into a preset with the given ID.
     public static GameSettings.Preset toPreset(GUID id, String name, @Nullable JsonObject source) {
         GameSettings.Preset target = new GameSettings.Preset(id);
