@@ -290,7 +290,6 @@ public final class HMCLGameRepository extends DefaultGameRepository {
         }
 
         GameSettings.Instance setting = new GameSettings.Instance();
-        setting.parentProperty().setValue(getParentGameSettings(null).idProperty().getValue());
         return initLocalGameSettings(id, setting);
     }
 
@@ -354,7 +353,6 @@ public final class HMCLGameRepository extends DefaultGameRepository {
         if (isolated) {
             GameSettings.Instance setting = getLocalGameSettingsOrCreate(id);
             if (setting != null) {
-                setting.parentProperty().setValue(preset.idProperty().getValue());
                 setting.getOverrideProperties().add(GameSettings.PROPERTY_RUNNING_DIR);
             }
         }
