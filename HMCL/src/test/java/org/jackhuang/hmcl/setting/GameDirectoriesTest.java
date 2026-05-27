@@ -53,7 +53,7 @@ public final class GameDirectoriesTest {
                 """).getAsJsonObject();
 
         GameDirectories gameDirectories = Objects.requireNonNull(GameDirectories.extractFromConfigJson(settings));
-        assertTrue(Config.migrateLegacySelectedGameDirectory(settings, gameDirectories));
+        assertTrue(LegacyConfigMigrator.migrateLegacySelectedGameDirectory(settings, gameDirectories));
         Config config = Objects.requireNonNull(Config.fromJson(settings));
 
         assertFalse(settings.has("last"));
@@ -85,9 +85,9 @@ public final class GameDirectoriesTest {
                 }
                 """).getAsJsonObject();
 
-        assertTrue(Config.migrateLegacySelectedVersions(settings));
+        assertTrue(LegacyConfigMigrator.migrateLegacySelectedVersions(settings));
         GameDirectories gameDirectories = Objects.requireNonNull(GameDirectories.extractFromConfigJson(settings));
-        assertTrue(Config.migrateLegacySelectedGameDirectory(settings, gameDirectories));
+        assertTrue(LegacyConfigMigrator.migrateLegacySelectedGameDirectory(settings, gameDirectories));
         Config config = Objects.requireNonNull(Config.fromJson(settings));
 
         assertFalse(settings.has("configurations"));

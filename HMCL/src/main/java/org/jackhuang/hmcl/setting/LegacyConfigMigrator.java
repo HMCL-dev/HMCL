@@ -17,6 +17,7 @@
  */
 package org.jackhuang.hmcl.setting;
 
+import com.github.f4b6a3.uuid.alt.GUID;
 import com.google.gson.*;
 import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.util.StringUtils;
@@ -31,6 +32,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Map;
+import java.util.Objects;
 
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
@@ -90,12 +92,12 @@ public final class LegacyConfigMigrator {
                     ? configurations.deepCopy()
                     : null;
 
-            Config.migrateLegacySelectedVersions(jsonObject);
+            migrateLegacySelectedVersions(jsonObject);
             @Nullable GameDirectories migratedGameDirectories = GameDirectories.extractFromConfigJson(jsonObject);
             GameDirectories gameDirectories = migratedGameDirectories != null
                     ? migratedGameDirectories
                     : new GameDirectories();
-            Config.migrateLegacySelectedGameDirectory(jsonObject, gameDirectories);
+            migrateLegacySelectedGameDirectory(jsonObject, gameDirectories);
 
             Config deserialized = Config.fromJson(jsonObject);
             if (deserialized == null) {
@@ -212,6 +214,88 @@ public final class LegacyConfigMigrator {
         }
     }
 
+    /// Migrates the legacy selected profile name into the current selected game directory ID.
+    ///
+    /// @param json the settings JSON object
+    /// @param gameDirectories the migrated game directory store used to resolve the selected ID
+    /// @return whether the JSON object was changed
+    static boolean migrateLegacySelectedGameDirectory(
+            JsonObject json,
+            @Nullable GameDirectories gameDirectories) {
+        Objects.requireNonNull(json);
+
+        @Nullable JsonElement lastElement = json.remove("last");
+        if (lastElement == null) {
+            return false;
+        }
+
+        if (json.has(Config.SELECTED_GAME_DIRECTORY_MEMBER_NAME)) {
+            return true;
+        }
+
+        @Nullable String selectedName = readString(lastElement);
+        @Nullable GUID selected = findGameDirectoryId(gameDirectories, selectedName);
+        if (selected != null) {
+            json.add(Config.SELECTED_GAME_DIRECTORY_MEMBER_NAME, JsonUtils.GSON.toJsonTree(selected, GUID.class));
+        }
+        return true;
+    }
+
+    /// Migrates legacy per-profile selected versions into the current selected version map.
+    ///
+    /// @param json the settings JSON object
+    /// @return whether the JSON object was changed
+    static boolean migrateLegacySelectedVersions(JsonObject json) {
+        Objects.requireNonNull(json);
+
+        if (!(json.get("configurations") instanceof JsonObject configurations)) {
+            return false;
+        }
+
+        JsonObject selectedVersions = json.get(Config.SELECTED_VERSIONS_MEMBER_NAME) instanceof JsonObject existingSelectedVersions
+                ? existingSelectedVersions
+                : new JsonObject();
+        boolean changed = false;
+
+        for (Map.Entry<String, JsonElement> entry : configurations.entrySet()) {
+            if (!(entry.getValue() instanceof JsonObject profile)) {
+                continue;
+            }
+
+            @Nullable String selectedVersion = readString(profile.get("selectedMinecraftVersion"));
+            if (StringUtils.isBlank(selectedVersion)) {
+                continue;
+            }
+
+            String id = LegacyGameSettingsMigrator.getLegacyProfileId(entry.getKey()).toString();
+            if (!selectedVersions.has(id)) {
+                selectedVersions.addProperty(id, selectedVersion);
+                changed = true;
+            }
+        }
+
+        if (changed && !json.has(Config.SELECTED_VERSIONS_MEMBER_NAME)) {
+            json.add(Config.SELECTED_VERSIONS_MEMBER_NAME, selectedVersions);
+        }
+        return changed;
+    }
+
+    /// Finds the game directory ID with the given legacy profile name.
+    private static @Nullable GUID findGameDirectoryId(
+            @Nullable GameDirectories gameDirectories,
+            @Nullable String name) {
+        if (gameDirectories == null || name == null) {
+            return null;
+        }
+
+        for (Profile gameDirectory : gameDirectories.getGameDirectories()) {
+            if (Objects.equals(name, gameDirectory.getName())) {
+                return gameDirectory.getId();
+            }
+        }
+        return null;
+    }
+
     /// Migrates profile-global game settings from HMCL 3.15.0.345 and older config files.
     private static void migrateLegacyPresetSettings(
             GameDirectories gameDirectories,
@@ -237,13 +321,18 @@ public final class LegacyConfigMigrator {
         }
     }
 
+    /// Reads a string JSON value.
+    private static @Nullable String readString(@Nullable JsonElement element) {
+        return element instanceof JsonPrimitive primitive && primitive.isString()
+                ? primitive.getAsString()
+                : null;
+    }
+
     /// Reads a string field from a JSON object.
     @Contract("_,_,!null->!null")
     private static @Nullable String readString(JsonObject object, String key, @Nullable String defaultValue) {
-        JsonElement element = object.get(key);
-        return element != null && element.isJsonPrimitive() && element.getAsJsonPrimitive().isString()
-                ? element.getAsString()
-                : defaultValue;
+        @Nullable String value = readString(object.get(key));
+        return value != null ? value : defaultValue;
     }
 
     /// Result of locating and loading a legacy config file without modifying it.

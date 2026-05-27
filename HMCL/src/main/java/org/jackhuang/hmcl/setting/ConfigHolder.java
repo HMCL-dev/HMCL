@@ -321,7 +321,7 @@ public final class ConfigHolder {
             }
 
             try {
-                if (Config.migrateLegacySelectedVersions(jsonObject)) {
+                if (LegacyConfigMigrator.migrateLegacySelectedVersions(jsonObject)) {
                     needSaveSettings = true;
                 }
                 @Nullable GameDirectories gameDirectories = GameDirectories.extractFromConfigJson(jsonObject);
@@ -329,7 +329,7 @@ public final class ConfigHolder {
                     migratedGameDirectories = gameDirectories;
                     needSaveSettings = true;
                 }
-                if (Config.migrateLegacySelectedGameDirectory(jsonObject, gameDirectories)) {
+                if (LegacyConfigMigrator.migrateLegacySelectedGameDirectory(jsonObject, gameDirectories)) {
                     needSaveSettings = true;
                 }
 
