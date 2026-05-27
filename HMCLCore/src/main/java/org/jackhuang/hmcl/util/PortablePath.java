@@ -632,7 +632,7 @@ public final class PortablePath implements Comparable<PortablePath> {
     /// Returns whether a path string is a Windows absolute path.
     private static boolean isWindowsAbsolutePath(CharSequence path) {
         return hasDrivePrefix(path)
-                || path.length() > 0 && path.charAt(0) == WINDOWS_SEPARATOR
+                || !path.isEmpty() && path.charAt(0) == WINDOWS_SEPARATOR
                 || startsWith(path, "//") && path.length() > 2 && path.charAt(2) != SEPARATOR;
     }
 
