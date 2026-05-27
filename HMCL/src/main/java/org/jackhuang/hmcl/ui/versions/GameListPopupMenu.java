@@ -53,7 +53,10 @@ public final class GameListPopupMenu extends StackPane {
                             double initOffsetX, double initOffsetY,
                             Profile profile, List<Version> versions) {
         GameListPopupMenu menu = new GameListPopupMenu();
-        menu.getItems().setAll(versions.stream().map(it -> new GameItem(profile, it.getId())).toList());
+        menu.getItems().setAll(versions.stream()
+                .filter(it -> profile.getRepository().hasVersion(it.getId()))
+                .map(it -> new GameItem(profile, it.getId()))
+                .toList());
         JFXPopup popup = new JFXPopup(menu);
         popup.show(owner, vAlign, hAlign, initOffsetX, initOffsetY);
     }
