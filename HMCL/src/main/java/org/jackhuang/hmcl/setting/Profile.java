@@ -38,7 +38,6 @@ import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
 
 import java.lang.reflect.Type;
-import java.nio.file.Path;
 import java.util.Objects;
 import java.util.Optional;
 
@@ -101,11 +100,6 @@ public final class Profile implements Observable {
 
     public void setName(String name) {
         this.name.set(name);
-    }
-
-    /// Creates a profile.
-    public Profile(GUID id, String name, Path initialGameDir) {
-        this(id, name, PortablePath.fromPath(initialGameDir));
     }
 
     /// Creates a profile.
