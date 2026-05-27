@@ -39,6 +39,7 @@ import org.jackhuang.hmcl.setting.Profiles;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.util.Lang;
+import org.jackhuang.hmcl.util.PortablePath;
 import org.jackhuang.hmcl.util.function.ExceptionalConsumer;
 import org.jackhuang.hmcl.util.function.ExceptionalRunnable;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
@@ -190,8 +191,7 @@ public final class ModpackHelper {
 
         return new ManuallyCreatedModpackInstallTask(profile, zipFile, charset, name)
                 .thenAcceptAsync(Schedulers.javafx(), location -> {
-                    Profile newProfile = new Profile(name, location);
-                    newProfile.setUseRelativePath(true);
+                    Profile newProfile = new Profile(name, PortablePath.fromPath(location));
                     Profiles.getProfiles().add(newProfile);
                     Profiles.setSelectedProfile(newProfile);
                 });

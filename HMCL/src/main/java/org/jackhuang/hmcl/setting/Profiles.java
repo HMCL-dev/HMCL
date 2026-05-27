@@ -25,9 +25,9 @@ import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.event.EventBus;
 import org.jackhuang.hmcl.event.RefreshedVersionsEvent;
 import org.jackhuang.hmcl.util.GUID;
+import org.jackhuang.hmcl.util.PortablePath;
 import org.jetbrains.annotations.Nullable;
 
-import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -108,9 +108,9 @@ public final class Profiles {
         ObservableList<Profile> profiles = ConfigHolder.getGameDirectories();
         if (profiles.isEmpty()) {
             Profile current = new Profile(
-                    Profiles.DEFAULT_PROFILE_ID, Profiles.DEFAULT_PROFILE, Path.of(".minecraft"), null, true);
+                    Profiles.DEFAULT_PROFILE_ID, Profiles.DEFAULT_PROFILE, PortablePath.of(".minecraft"), null);
             Profile home = new Profile(
-                    Profiles.HOME_PROFILE_ID, Profiles.HOME_PROFILE, Metadata.MINECRAFT_DIRECTORY, null, false);
+                    Profiles.HOME_PROFILE_ID, Profiles.HOME_PROFILE, PortablePath.fromPath(Metadata.MINECRAFT_DIRECTORY), null);
             Platform.runLater(() -> profiles.addAll(current, home));
         }
     }

@@ -17,6 +17,7 @@
  */
 package org.jackhuang.hmcl.util;
 
+import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.junit.jupiter.api.Test;
 
@@ -54,6 +55,15 @@ public final class PortablePathTest {
         PortablePath path = PortablePath.of("game\\dir");
 
         assertEquals(path.getPath(), path.toString());
+    }
+
+    /// Tests JSON serialization as a path string.
+    @Test
+    public void serializesAsString() {
+        PortablePath path = PortablePath.of("game\\dir");
+
+        assertEquals("\"game/dir\"", JsonUtils.GSON.toJson(path, PortablePath.class));
+        assertEquals("game/dir", JsonUtils.GSON.fromJson("\"game/dir\"", PortablePath.class).getPath());
     }
 
     /// Tests conversion from and to relative [Path] values.

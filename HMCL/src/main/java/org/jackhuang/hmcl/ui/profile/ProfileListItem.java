@@ -36,7 +36,7 @@ public class ProfileListItem extends RadioButton {
         setUserData(profile);
 
         title.set(Profiles.getProfileDisplayName(profile));
-        subtitle.set(profile.getGameDir().toString());
+        subtitle.set(profile.getPath().toString());
     }
 
     @Override

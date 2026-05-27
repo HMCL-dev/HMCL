@@ -20,6 +20,7 @@ package org.jackhuang.hmcl.setting;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import org.jackhuang.hmcl.util.GUID;
+import org.jackhuang.hmcl.util.PortablePath;
 import org.jackhuang.hmcl.util.gson.JsonFileFormat;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jetbrains.annotations.NotNullByDefault;
@@ -65,6 +66,23 @@ public final class GameDirectoriesTest {
         assertEquals(1, gameDirectories.getGameDirectories().size());
         assertEquals(id, gameDirectories.getGameDirectories().get(0).getId());
         assertEquals("Dev", gameDirectories.getGameDirectories().get(0).getName());
+        assertEquals(".minecraft", gameDirectories.getGameDirectories().get(0).getPath().getPath());
+    }
+
+    /// Tests that profiles store their directory as a portable path.
+    @Test
+    public void storesProfilePath() {
+        GUID id = GUID.fromString("123e4567-e89b-12d3-a456-426614174000");
+        Profile profile = new Profile(id, "Dev", PortablePath.of("versions\\Dev"), "1.20.1");
+
+        JsonObject serialized = JsonUtils.GSON.toJsonTree(profile, Profile.class).getAsJsonObject();
+        Profile deserialized = Objects.requireNonNull(JsonUtils.GSON.fromJson(serialized, Profile.class));
+
+        assertEquals("versions/Dev", serialized.get("path").getAsString());
+        assertFalse(serialized.has("gameDir"));
+        assertFalse(serialized.has("useRelativePath"));
+        assertEquals("versions/Dev", deserialized.getPath().getPath());
+        assertFalse(deserialized.getPath().isAbsolute());
     }
 
     /// Tests that game directory files do not preserve the workspace-level selected directory.

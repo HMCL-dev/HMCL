@@ -37,6 +37,7 @@ import org.jackhuang.hmcl.setting.Profiles;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.construct.*;
 import org.jackhuang.hmcl.ui.decorator.DecoratorPage;
+import org.jackhuang.hmcl.util.PortablePath;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
 
@@ -65,7 +66,7 @@ public final class ProfilePage extends BorderPane implements DecoratorPage {
 
         state.set(State.fromTitle(profile == null ? i18n("profile.new") : i18n("profile") + " - " + profileDisplayName));
         location = new SimpleStringProperty(this, "location",
-                Optional.ofNullable(profile).map(Profile::getGameDir).map(FileUtils::getAbsolutePath).orElse(".minecraft"));
+                Optional.ofNullable(profile).map(Profile::getPath).map(PortablePath::toPath).map(FileUtils::getAbsolutePath).orElse(".minecraft"));
 
         ScrollPane scroll = new ScrollPane();
         this.setCenter(scroll);
@@ -115,7 +116,7 @@ public final class ProfilePage extends BorderPane implements DecoratorPage {
 
                     gameDir.convertToRelativePathProperty().bind(toggleUseRelativePath.selectedProperty());
                     if (profile != null) {
-                        toggleUseRelativePath.setSelected(profile.isUseRelativePath());
+                        toggleUseRelativePath.setSelected(!profile.getPath().isAbsolute());
                     }
 
                     componentList.getContent().setAll(profileNamePane, gameDir, toggleUseRelativePath);
@@ -180,16 +181,14 @@ public final class ProfilePage extends BorderPane implements DecoratorPage {
     private void onSave() {
         if (profile != null) {
             profile.setName(txtProfileName.getText());
-            profile.setUseRelativePath(toggleUseRelativePath.isSelected());
             if (StringUtils.isNotBlank(getLocation())) {
-                profile.setGameDir(Path.of(getLocation()));
+                profile.setPath(PortablePath.of(getLocation()));
             }
         } else {
             if (StringUtils.isBlank(getLocation())) {
                 gameDir.fire();
             }
-            Profile newProfile = new Profile(txtProfileName.getText(), Path.of(getLocation()));
-            newProfile.setUseRelativePath(toggleUseRelativePath.isSelected());
+            Profile newProfile = new Profile(txtProfileName.getText(), PortablePath.of(getLocation()));
             Profiles.getProfiles().add(newProfile);
         }
 

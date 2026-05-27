@@ -22,9 +22,7 @@ import com.google.gson.annotations.JsonAdapter;
 import javafx.application.Platform;
 import javafx.beans.InvalidationListener;
 import javafx.beans.Observable;
-import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.ObjectProperty;
-import javafx.beans.property.SimpleBooleanProperty;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.property.StringProperty;
@@ -38,8 +36,10 @@ import org.jackhuang.hmcl.game.HMCLGameRepository;
 import org.jackhuang.hmcl.game.Version;
 import org.jackhuang.hmcl.ui.WeakListenerHolder;
 import org.jackhuang.hmcl.util.GUID;
+import org.jackhuang.hmcl.util.PortablePath;
 import org.jackhuang.hmcl.util.ToStringBuilder;
 import org.jackhuang.hmcl.util.javafx.ObservableHelper;
+import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
 
 import java.lang.reflect.Type;
@@ -55,6 +55,7 @@ import static org.jackhuang.hmcl.ui.FXUtils.runInFX;
  * @author huangyuhui
  */
 @JsonAdapter(Profile.Serializer.class)
+@NotNullByDefault
 public final class Profile implements Observable {
     private final WeakListenerHolder listenerHolder = new WeakListenerHolder();
     private final HMCLGameRepository repository;
@@ -83,26 +84,30 @@ public final class Profile implements Observable {
         return selectedVersion;
     }
 
-    public String getSelectedVersion() {
+    public @Nullable String getSelectedVersion() {
         return selectedVersion.get();
     }
 
-    public void setSelectedVersion(String selectedVersion) {
+    public void setSelectedVersion(@Nullable String selectedVersion) {
         this.selectedVersion.set(selectedVersion);
     }
 
-    private final ObjectProperty<Path> gameDir;
+    /// The game directory path.
+    private final ObjectProperty<PortablePath> path;
 
-    public ObjectProperty<Path> gameDirProperty() {
-        return gameDir;
+    /// Returns the game directory path property.
+    public ObjectProperty<PortablePath> pathProperty() {
+        return path;
     }
 
-    public Path getGameDir() {
-        return gameDir.get();
+    /// Returns the game directory path.
+    public PortablePath getPath() {
+        return path.get();
     }
 
-    public void setGameDir(Path gameDir) {
-        this.gameDir.set(gameDir);
+    /// Sets the game directory path.
+    public void setPath(PortablePath path) {
+        this.path.set(Objects.requireNonNull(path));
     }
 
     private final SimpleStringProperty name;
@@ -119,38 +124,24 @@ public final class Profile implements Observable {
         this.name.set(name);
     }
 
-    private final BooleanProperty useRelativePath = new SimpleBooleanProperty(this, "useRelativePath", false);
-
-    public BooleanProperty useRelativePathProperty() {
-        return useRelativePath;
-    }
-
-    public boolean isUseRelativePath() {
-        return useRelativePath.get();
-    }
-
-    public void setUseRelativePath(boolean useRelativePath) {
-        this.useRelativePath.set(useRelativePath);
-    }
-
     public Profile(String name, Path initialGameDir) {
-        this(name, initialGameDir, null, false);
+        this(name, PortablePath.fromPath(initialGameDir));
     }
 
-    public Profile(String name, Path initialGameDir, @Nullable String selectedVersion, boolean useRelativePath) {
-        this(GUID.random(), name, initialGameDir, selectedVersion, useRelativePath);
+    /// Creates a profile.
+    public Profile(String name, PortablePath path) {
+        this(GUID.random(), name, path, null);
     }
 
     /// Creates a profile with an explicit stable ID.
-    Profile(GUID id, String name, Path initialGameDir, @Nullable String selectedVersion, boolean useRelativePath) {
+    Profile(GUID id, String name, PortablePath path, @Nullable String selectedVersion) {
         this.id.set(Objects.requireNonNull(id));
         this.name = new SimpleStringProperty(this, "name", name);
-        gameDir = new SimpleObjectProperty<>(this, "gameDir", initialGameDir);
-        repository = new HMCLGameRepository(this, initialGameDir);
+        this.path = new SimpleObjectProperty<>(this, "path", Objects.requireNonNull(path));
+        repository = new HMCLGameRepository(this, path.toPath());
         this.selectedVersion.set(selectedVersion);
-        this.useRelativePath.set(useRelativePath);
 
-        gameDir.addListener((a, b, newValue) -> repository.changeDirectory(newValue));
+        this.path.addListener((a, b, newValue) -> repository.changeDirectory(newValue.toPath()));
         this.selectedVersion.addListener(o -> checkSelectedVersion());
         listenerHolder.add(EventBus.EVENT_BUS.channel(RefreshedVersionsEvent.class).registerWeak(event -> checkSelectedVersion(), EventPriority.HIGHEST));
 
@@ -186,17 +177,15 @@ public final class Profile implements Observable {
     @Override
     public String toString() {
         return new ToStringBuilder(this)
-                .append("gameDir", getGameDir())
+                .append("path", getPath())
                 .append("name", getName())
-                .append("useRelativePath", isUseRelativePath())
                 .toString();
     }
 
     private void addPropertyChangedListener(InvalidationListener listener) {
         id.addListener(listener);
         name.addListener(listener);
-        gameDir.addListener(listener);
-        useRelativePath.addListener(listener);
+        path.addListener(listener);
         selectedVersion.addListener(listener);
     }
 
@@ -216,39 +205,41 @@ public final class Profile implements Observable {
         Platform.runLater(observableHelper::invalidate);
     }
 
-    public record ProfileVersion(Profile profile, String version) {
+    public record ProfileVersion(Profile profile, @Nullable String version) {
     }
 
     public static final class Serializer implements JsonSerializer<Profile>, JsonDeserializer<Profile> {
         @Override
-        public JsonElement serialize(Profile src, Type typeOfSrc, JsonSerializationContext context) {
+        public JsonElement serialize(@Nullable Profile src, Type typeOfSrc, JsonSerializationContext context) {
             if (src == null)
                 return JsonNull.INSTANCE;
 
             JsonObject jsonObject = new JsonObject();
             jsonObject.add("id", context.serialize(src.getId(), GUID.class));
             jsonObject.addProperty("name", src.getName());
-            jsonObject.addProperty("gameDir", src.getGameDir().toString());
-            jsonObject.addProperty("useRelativePath", src.isUseRelativePath());
+            jsonObject.add("path", context.serialize(src.getPath(), PortablePath.class));
             jsonObject.addProperty("selectedMinecraftVersion", src.getSelectedVersion());
 
             return jsonObject;
         }
 
         @Override
-        public Profile deserialize(JsonElement json, Type typeOfT, JsonDeserializationContext context) throws JsonParseException {
+        public @Nullable Profile deserialize(@Nullable JsonElement json, Type typeOfT, JsonDeserializationContext context) throws JsonParseException {
             if (!(json instanceof JsonObject obj)) return null;
             GUID id = context.deserialize(obj.get("id"), GUID.class);
             if (id == null) {
                 throw new JsonParseException("Profile ID cannot be null");
             }
-            String gameDir = Optional.ofNullable(obj.get("gameDir")).map(JsonElement::getAsString).orElse("");
+            PortablePath path = context.deserialize(obj.get("path"), PortablePath.class);
+            if (path == null) {
+                String gameDir = Optional.ofNullable(obj.get("gameDir")).map(JsonElement::getAsString).orElse("");
+                path = PortablePath.of(gameDir);
+            }
 
             return new Profile(id,
                     Optional.ofNullable(obj.get("name")).map(JsonElement::getAsString).orElse("Default"),
-                    Path.of(gameDir),
-                    Optional.ofNullable(obj.get("selectedMinecraftVersion")).map(JsonElement::getAsString).orElse(""),
-                    Optional.ofNullable(obj.get("useRelativePath")).map(JsonElement::getAsBoolean).orElse(false));
+                    path,
+                    Optional.ofNullable(obj.get("selectedMinecraftVersion")).map(JsonElement::getAsString).orElse(""));
         }
 
     }

@@ -17,8 +17,17 @@
  */
 package org.jackhuang.hmcl.util;
 
+import com.google.gson.JsonParseException;
+import com.google.gson.TypeAdapter;
+import com.google.gson.annotations.JsonAdapter;
+import com.google.gson.stream.JsonReader;
+import com.google.gson.stream.JsonToken;
+import com.google.gson.stream.JsonWriter;
+import org.jackhuang.hmcl.util.gson.JsonSerializable;
 import org.jetbrains.annotations.NotNullByDefault;
+import org.jetbrains.annotations.Nullable;
 
+import java.io.IOException;
 import java.nio.file.Path;
 import java.util.Objects;
 
@@ -28,6 +37,8 @@ import java.util.Objects;
 /// provided so their platform-specific separators are preserved.
 ///
 /// @author Glavo
+@JsonAdapter(PortablePath.Adapter.class)
+@JsonSerializable
 @NotNullByDefault
 public final class PortablePath {
     /// The separator used by relative portable paths.
@@ -105,5 +116,29 @@ public final class PortablePath {
     @Override
     public String toString() {
         return path;
+    }
+
+    /// Gson adapter that serializes portable paths as strings.
+    @NotNullByDefault
+    public static final class Adapter extends TypeAdapter<@Nullable PortablePath> {
+        /// Writes a portable path as its stored path string, or JSON null when the value is null.
+        @Override
+        public void write(JsonWriter out, @Nullable PortablePath value) throws IOException {
+            out.value(value == null ? null : value.getPath());
+        }
+
+        /// Reads a portable path from a string or JSON null.
+        @Override
+        public @Nullable PortablePath read(JsonReader in) throws IOException {
+            if (in.peek() == JsonToken.NULL) {
+                in.nextNull();
+                return null;
+            }
+            if (in.peek() != JsonToken.STRING) {
+                throw new JsonParseException("PortablePath must be a string: " + in.peek());
+            }
+
+            return PortablePath.of(in.nextString());
+        }
     }
 }
