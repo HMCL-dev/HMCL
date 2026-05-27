@@ -36,11 +36,16 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
-/// An immutable path value that uses `/` as its canonical separator on every platform.
+/// An immutable path value that uses `/` as the canonical separator for relative paths.
 ///
 /// This class performs lexical path operations without consulting the current operating
 /// system or the real file system. It can represent relative paths, `/`-rooted paths,
-/// drive-rooted paths such as `C:/Users`, and UNC-like paths such as `//server/share/file`.
+/// drive-rooted paths such as `C:\Users`, and UNC-like paths such as
+/// `\\server\share\file`.
+///
+/// Relative paths are portable and use `/` as their canonical separator. Absolute paths
+/// keep the separator style of their platform, so Windows absolute paths use `\` and
+/// POSIX absolute paths use `/`.
 ///
 /// The Gson representation is the canonical string returned by [#toString()].
 ///
@@ -51,6 +56,9 @@ import java.util.Objects;
 public final class PortablePath implements Comparable<PortablePath> {
     /// The canonical separator used by portable paths.
     public static final char SEPARATOR = '/';
+
+    /// The separator used by Windows absolute paths.
+    private static final char WINDOWS_SEPARATOR = '\\';
 
     /// The empty relative path.
     public static final PortablePath EMPTY = new PortablePath("");
@@ -76,8 +84,8 @@ public final class PortablePath implements Comparable<PortablePath> {
 
     /// Creates a path from a path string.
     ///
-    /// Both `/` and `\` are accepted as separators. Repeated separators are collapsed,
-    /// except for the leading `//` of UNC-like roots.
+    /// Relative paths accept both `/` and `\` as separators and are stored with `/`.
+    /// Absolute paths are stored with their platform separator.
     ///
     /// @param path the path string
     /// @return the canonical portable path
@@ -160,7 +168,8 @@ public final class PortablePath implements Comparable<PortablePath> {
         }
 
         int rootLength = rootLength(path);
-        int lastSeparator = path.lastIndexOf(SEPARATOR);
+        char separator = separator();
+        int lastSeparator = path.lastIndexOf(separator);
         if (lastSeparator < rootLength) {
             return rootLength == 0 ? null : of(path.substring(0, rootLength));
         }
@@ -178,7 +187,7 @@ public final class PortablePath implements Comparable<PortablePath> {
             return null;
         }
 
-        int lastSeparator = path.lastIndexOf(SEPARATOR);
+        int lastSeparator = path.lastIndexOf(separator());
         return of(lastSeparator < rootLength(path) ? path.substring(rootLength(path)) : path.substring(lastSeparator + 1));
     }
 
@@ -218,10 +227,15 @@ public final class PortablePath implements Comparable<PortablePath> {
         if (other.isEmpty()) {
             return this;
         }
-        if (path.endsWith("/")) {
-            return of(path + other.path);
+
+        char separator = separator();
+        String otherPath = separator == WINDOWS_SEPARATOR
+                ? other.path.replace(SEPARATOR, WINDOWS_SEPARATOR)
+                : other.path;
+        if (path.endsWith(String.valueOf(separator))) {
+            return of(path + otherPath);
         }
-        return of(path + SEPARATOR + other.path);
+        return of(path + separator + otherPath);
     }
 
     /// Resolves another path string against this path.
@@ -279,7 +293,7 @@ public final class PortablePath implements Comparable<PortablePath> {
             }
         }
 
-        return of(assemble(root, normalized));
+        return of(assemble(root, normalized, separator()));
     }
 
     /// Relativizes another path against this path lexically.
@@ -309,7 +323,7 @@ public final class PortablePath implements Comparable<PortablePath> {
             result.add("..");
         }
         result.addAll(otherNames.subList(common, otherNames.size()));
-        return of(assemble("", result));
+        return of(assemble("", result, SEPARATOR));
     }
 
     /// Returns whether this path starts with another path on a name boundary.
@@ -318,7 +332,25 @@ public final class PortablePath implements Comparable<PortablePath> {
     /// @return whether this path starts with `other`
     public boolean startsWith(PortablePath other) {
         Objects.requireNonNull(other);
-        return matchesPrefix(path, other.path);
+        if (other.isEmpty()) {
+            return isEmpty();
+        }
+        if (!root().equals(other.root())) {
+            return false;
+        }
+
+        List<String> names = names();
+        List<String> otherNames = other.names();
+        if (otherNames.size() > names.size()) {
+            return false;
+        }
+
+        for (int i = 0; i < otherNames.size(); i++) {
+            if (!names.get(i).equals(otherNames.get(i))) {
+                return false;
+            }
+        }
+        return true;
     }
 
     /// Returns whether this path starts with another path string on a name boundary.
@@ -338,7 +370,23 @@ public final class PortablePath implements Comparable<PortablePath> {
         if (other.isAbsolute()) {
             return equals(other);
         }
-        return matchesSuffix(path, other.path);
+        if (other.isEmpty()) {
+            return isEmpty();
+        }
+
+        List<String> names = names();
+        List<String> otherNames = other.names();
+        if (otherNames.size() > names.size()) {
+            return false;
+        }
+
+        int offset = names.size() - otherNames.size();
+        for (int i = 0; i < otherNames.size(); i++) {
+            if (!names.get(offset + i).equals(otherNames.get(i))) {
+                return false;
+            }
+        }
+        return true;
     }
 
     /// Returns whether this path ends with another path string on a name boundary.
@@ -353,7 +401,7 @@ public final class PortablePath implements Comparable<PortablePath> {
     ///
     /// @return the platform-specific path string
     public String toNativeString() {
-        return File.separatorChar == SEPARATOR ? path : path.replace(SEPARATOR, File.separatorChar);
+        return isAbsolute() || File.separatorChar == SEPARATOR ? path : path.replace(SEPARATOR, File.separatorChar);
     }
 
     /// Converts this path to a [Path] on the default JVM file system.
@@ -411,6 +459,11 @@ public final class PortablePath implements Comparable<PortablePath> {
         return path.substring(0, rootLength(path));
     }
 
+    /// Returns the separator used by this path.
+    private char separator() {
+        return separatorOf(path);
+    }
+
     /// Returns the name elements of this path.
     private List<String> names() {
         int rootLength = rootLength(path);
@@ -423,10 +476,11 @@ public final class PortablePath implements Comparable<PortablePath> {
             return List.of();
         }
 
+        char separator = separator();
         ArrayList<String> result = new ArrayList<>();
         int start = 0;
         while (start <= names.length()) {
-            int end = names.indexOf(SEPARATOR, start);
+            int end = names.indexOf(separator, start);
             if (end < 0) {
                 result.add(names.substring(start));
                 break;
@@ -447,16 +501,91 @@ public final class PortablePath implements Comparable<PortablePath> {
             return "";
         }
 
-        String value = path.replace('\\', SEPARATOR);
-        StringBuilder builder = new StringBuilder(value.length() + 1);
-        int index = appendRoot(builder, value);
-        boolean previousSeparator = builder.length() > 0 && builder.charAt(builder.length() - 1) == SEPARATOR;
+        if (isWindowsAbsolutePath(path)) {
+            return canonicalizeWindowsAbsolutePath(path);
+        }
+        if (path.charAt(0) == SEPARATOR) {
+            return canonicalizePosixAbsolutePath(path);
+        }
+        return canonicalizeRelativePath(path);
+    }
 
+    /// Canonicalizes a relative path string with the portable separator.
+    private static String canonicalizeRelativePath(String path) {
+        String value = path.replace(WINDOWS_SEPARATOR, SEPARATOR);
+        StringBuilder builder = new StringBuilder(value.length() + 1);
+        appendNames(builder, value, 0, SEPARATOR);
+        trimTrailingSeparators(builder, SEPARATOR);
+        return builder.toString();
+    }
+
+    /// Canonicalizes a Windows absolute path string with Windows separators.
+    private static String canonicalizeWindowsAbsolutePath(String path) {
+        String value = path.replace(SEPARATOR, WINDOWS_SEPARATOR);
+        StringBuilder builder = new StringBuilder(value.length() + 1);
+        int index = appendWindowsRoot(builder, value);
+        appendNames(builder, value, index, WINDOWS_SEPARATOR);
+        trimTrailingSeparators(builder, WINDOWS_SEPARATOR);
+        ensureWindowsRoot(builder);
+        return builder.toString();
+    }
+
+    /// Canonicalizes a POSIX absolute path string with POSIX separators.
+    private static String canonicalizePosixAbsolutePath(String path) {
+        StringBuilder builder = new StringBuilder(path.length());
+        builder.append(SEPARATOR);
+        int index = 1;
+        while (index < path.length() && path.charAt(index) == SEPARATOR) {
+            index++;
+        }
+
+        appendNames(builder, path, index, SEPARATOR);
+        trimTrailingSeparators(builder, SEPARATOR);
+        return builder.toString();
+    }
+
+    /// Appends the Windows root of `value` and returns the first unconsumed character index.
+    private static int appendWindowsRoot(StringBuilder builder, String value) {
+        if (hasDrivePrefix(value)) {
+            builder.append(value.charAt(0)).append(':');
+            if (value.length() == 2) {
+                builder.append(WINDOWS_SEPARATOR);
+                return 2;
+            }
+
+            builder.append(WINDOWS_SEPARATOR);
+            int index = value.charAt(2) == WINDOWS_SEPARATOR ? 3 : 2;
+            while (index < value.length() && value.charAt(index) == WINDOWS_SEPARATOR) {
+                index++;
+            }
+            return index;
+        }
+
+        if (startsWith(value, "\\\\") && value.length() > 2 && value.charAt(2) != WINDOWS_SEPARATOR) {
+            builder.append("\\\\");
+            int index = 2;
+            while (index < value.length() && value.charAt(index) == WINDOWS_SEPARATOR) {
+                index++;
+            }
+            return index;
+        }
+
+        builder.append(WINDOWS_SEPARATOR);
+        int index = 1;
+        while (index < value.length() && value.charAt(index) == WINDOWS_SEPARATOR) {
+            index++;
+        }
+        return index;
+    }
+
+    /// Appends name characters while collapsing repeated separators.
+    private static void appendNames(StringBuilder builder, String value, int index, char separator) {
+        boolean previousSeparator = builder.length() > 0 && builder.charAt(builder.length() - 1) == separator;
         while (index < value.length()) {
             char ch = value.charAt(index++);
-            if (ch == SEPARATOR) {
+            if (ch == separator) {
                 if (!previousSeparator) {
-                    builder.append(SEPARATOR);
+                    builder.append(separator);
                     previousSeparator = true;
                 }
             } else {
@@ -464,95 +593,47 @@ public final class PortablePath implements Comparable<PortablePath> {
                 previousSeparator = false;
             }
         }
-
-        trimTrailingSeparators(builder);
-        ensureCanonicalRoot(builder);
-        return builder.toString();
-    }
-
-    /// Appends the root of `value` and returns the first unconsumed character index.
-    private static int appendRoot(StringBuilder builder, String value) {
-        if (hasDrivePrefix(value)) {
-            builder.append(value.charAt(0)).append(':');
-            if (value.length() == 2) {
-                builder.append(SEPARATOR);
-                return 2;
-            }
-
-            builder.append(SEPARATOR);
-            int index = value.charAt(2) == SEPARATOR ? 3 : 2;
-            while (index < value.length() && value.charAt(index) == SEPARATOR) {
-                index++;
-            }
-            return index;
-        }
-
-        if (value.startsWith("//") && value.length() > 2 && value.charAt(2) != SEPARATOR) {
-            builder.append("//");
-            int index = 2;
-            while (index < value.length() && value.charAt(index) == SEPARATOR) {
-                index++;
-            }
-            return index;
-        }
-
-        if (value.charAt(0) == SEPARATOR) {
-            builder.append(SEPARATOR);
-            int index = 1;
-            while (index < value.length() && value.charAt(index) == SEPARATOR) {
-                index++;
-            }
-            return index;
-        }
-
-        return 0;
     }
 
     /// Removes trailing separators while preserving the root.
-    private static void trimTrailingSeparators(StringBuilder builder) {
-        while (builder.length() > rootLength(builder) && builder.charAt(builder.length() - 1) == SEPARATOR) {
+    private static void trimTrailingSeparators(StringBuilder builder, char separator) {
+        while (builder.length() > rootLength(builder) && builder.charAt(builder.length() - 1) == separator) {
             builder.setLength(builder.length() - 1);
         }
     }
 
-    /// Ensures drive and UNC roots use their canonical spelling.
-    private static void ensureCanonicalRoot(StringBuilder builder) {
+    /// Ensures drive roots use their canonical spelling.
+    private static void ensureWindowsRoot(StringBuilder builder) {
         if (builder.length() == 2 && hasDrivePrefix(builder)) {
-            builder.append(SEPARATOR);
-            return;
-        }
-
-        if (startsWith(builder, "//")) {
-            int serverEnd = indexOf(builder, SEPARATOR, 2);
-            if (serverEnd < 0 || serverEnd == builder.length() - 1) {
-                return;
-            }
-
-            int shareEnd = indexOf(builder, SEPARATOR, serverEnd + 1);
-            if (shareEnd < 0) {
-                builder.append(SEPARATOR);
-            }
+            builder.append(WINDOWS_SEPARATOR);
         }
     }
 
     /// Assembles a path from a root and name elements.
-    private static String assemble(String root, List<String> names) {
+    private static String assemble(String root, List<String> names, char separator) {
         if (names.isEmpty()) {
             return root;
         }
 
         StringBuilder builder = new StringBuilder(root);
-        if (!root.isEmpty() && builder.charAt(builder.length() - 1) != SEPARATOR) {
-            builder.append(SEPARATOR);
+        if (!root.isEmpty() && builder.charAt(builder.length() - 1) != separator) {
+            builder.append(separator);
         }
 
         for (int i = 0; i < names.size(); i++) {
             if (i > 0) {
-                builder.append(SEPARATOR);
+                builder.append(separator);
             }
             builder.append(names.get(i));
         }
         return builder.toString();
+    }
+
+    /// Returns whether a path string is a Windows absolute path.
+    private static boolean isWindowsAbsolutePath(CharSequence path) {
+        return hasDrivePrefix(path)
+                || path.length() > 0 && path.charAt(0) == WINDOWS_SEPARATOR
+                || startsWith(path, "//") && path.length() > 2 && path.charAt(2) != SEPARATOR;
     }
 
     /// Returns whether a string starts with a drive prefix.
@@ -569,21 +650,30 @@ public final class PortablePath implements Comparable<PortablePath> {
 
     /// Returns the root length of a canonical path string.
     private static int rootLength(CharSequence path) {
+        char separator = separatorOf(path);
         if (hasDrivePrefix(path)) {
-            return path.length() >= 3 && path.charAt(2) == SEPARATOR ? 3 : 2;
+            return path.length() >= 3 && path.charAt(2) == separator ? 3 : 2;
         }
 
-        if (startsWith(path, "//")) {
-            int serverEnd = indexOf(path, SEPARATOR, 2);
+        if (separator == WINDOWS_SEPARATOR && startsWith(path, "\\\\")) {
+            int serverEnd = indexOf(path, WINDOWS_SEPARATOR, 2);
             if (serverEnd < 0) {
                 return path.length();
             }
 
-            int shareEnd = indexOf(path, SEPARATOR, serverEnd + 1);
+            int shareEnd = indexOf(path, WINDOWS_SEPARATOR, serverEnd + 1);
             return shareEnd < 0 ? path.length() : shareEnd + 1;
         }
 
-        return path.length() > 0 && path.charAt(0) == SEPARATOR ? 1 : 0;
+        return path.length() > 0 && path.charAt(0) == separator ? 1 : 0;
+    }
+
+    /// Returns the separator used by a canonical path string.
+    private static char separatorOf(CharSequence path) {
+        return hasDrivePrefix(path)
+                || path.length() > 0 && path.charAt(0) == WINDOWS_SEPARATOR
+                ? WINDOWS_SEPARATOR
+                : SEPARATOR;
     }
 
     /// Returns whether `value` starts with `prefix`.
@@ -607,26 +697,6 @@ public final class PortablePath implements Comparable<PortablePath> {
             }
         }
         return -1;
-    }
-
-    /// Returns whether `path` starts with `prefix` on a name boundary.
-    private static boolean matchesPrefix(String path, String prefix) {
-        if (prefix.isEmpty()) {
-            return path.isEmpty();
-        }
-        return path.equals(prefix)
-                || path.startsWith(prefix)
-                && (prefix.endsWith("/") || path.charAt(prefix.length()) == SEPARATOR);
-    }
-
-    /// Returns whether `path` ends with `suffix` on a name boundary.
-    private static boolean matchesSuffix(String path, String suffix) {
-        if (suffix.isEmpty()) {
-            return path.isEmpty();
-        }
-        return path.equals(suffix)
-                || path.endsWith(suffix)
-                && path.charAt(path.length() - suffix.length() - 1) == SEPARATOR;
     }
 
     /// Gson adapter that serializes portable paths as canonical strings.
