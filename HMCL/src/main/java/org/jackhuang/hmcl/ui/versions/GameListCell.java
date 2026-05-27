@@ -70,7 +70,7 @@ public final class GameListCell extends ListCell<GameListItem> {
                         fireEvent(new ActionEvent());
                         GameListItem item = GameListCell.this.getItem();
                         if (item != null) {
-                            Profiles.setSelectedVersion(item.getProfile(), item.getId());
+                            Profiles.setSelectedInstance(item.getProfile(), item.getId());
                         }
                     }
                 }

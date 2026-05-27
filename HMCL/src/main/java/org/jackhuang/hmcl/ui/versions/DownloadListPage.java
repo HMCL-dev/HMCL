@@ -126,7 +126,7 @@ public class DownloadListPage extends Control implements DecoratorPage, VersionP
             versions.setAll(profile.getRepository().getDisplayVersions()
                     .map(Version::getId)
                     .collect(Collectors.toList()));
-            selectedVersion.set(Profiles.getSelectedVersion(profile));
+            selectedVersion.set(Profiles.getSelectedInstance(profile));
         }
     }
 

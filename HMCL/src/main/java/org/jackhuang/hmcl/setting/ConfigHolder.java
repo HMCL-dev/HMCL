@@ -179,19 +179,19 @@ public final class ConfigHolder {
         config().setSelectedGameDirectory(selectedGameDirectory);
     }
 
-    /// Returns selected version IDs keyed by game directory ID.
-    public static ObservableMap<GUID, String> getSelectedVersions() {
-        return config().getSelectedVersions();
+    /// Returns selected instance IDs keyed by game directory ID.
+    public static ObservableMap<GUID, String> getSelectedInstance() {
+        return config().getSelectedInstance();
     }
 
-    /// Returns the selected version ID for the given game directory ID.
-    public static @Nullable String getSelectedVersion(@Nullable GUID gameDirectoryId) {
-        return config().getSelectedVersion(gameDirectoryId);
+    /// Returns the selected instance ID for the given game directory ID.
+    public static @Nullable String getSelectedInstance(@Nullable GUID gameDirectoryId) {
+        return config().getSelectedInstance(gameDirectoryId);
     }
 
-    /// Sets the selected version ID for the given game directory ID.
-    public static void setSelectedVersion(@Nullable GUID gameDirectoryId, @Nullable String selectedVersion) {
-        config().setSelectedVersion(gameDirectoryId, selectedVersion);
+    /// Sets the selected instance ID for the given game directory ID.
+    public static void setSelectedInstance(@Nullable GUID gameDirectoryId, @Nullable String selectedInstance) {
+        config().setSelectedInstance(gameDirectoryId, selectedInstance);
     }
 
     /// Returns the reusable game setting presets.

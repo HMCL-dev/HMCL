@@ -106,14 +106,14 @@ public final class Profiles {
     }
 
     private static void refreshSelectedVersion(Profile profile) {
-        String version = ConfigHolder.getSelectedVersion(profile.getId());
+        String version = ConfigHolder.getSelectedInstance(profile.getId());
         if (!profile.getRepository().hasVersion(version)) {
             Optional<String> fallback = profile.getRepository().getVersions().stream()
                     .findFirst()
                     .map(Version::getId);
             version = fallback.orElse(null);
-            if (!Objects.equals(ConfigHolder.getSelectedVersion(profile.getId()), version)) {
-                ConfigHolder.setSelectedVersion(profile.getId(), version);
+            if (!Objects.equals(ConfigHolder.getSelectedInstance(profile.getId()), version)) {
+                ConfigHolder.setSelectedInstance(profile.getId(), version);
             }
         }
         selectedVersion.set(version);
@@ -151,7 +151,7 @@ public final class Profiles {
         removeDuplicateProfiles(ConfigHolder.getGameDirectories());
         ConfigHolder.getGameDirectories().addListener(onInvalidating(Profiles::refreshSelectedProfile));
         ConfigHolder.getGameDirectories().addListener(onInvalidating(Profiles::checkProfiles));
-        ConfigHolder.getSelectedVersions().addListener(onInvalidating(() -> {
+        ConfigHolder.getSelectedInstance().addListener(onInvalidating(() -> {
             Profile profile = selectedProfile.get();
             if (profile != null && profile.getRepository().isLoaded()) {
                 refreshSelectedVersion(profile);
@@ -228,28 +228,28 @@ public final class Profiles {
     }
 
     // Guaranteed that the repository is loaded.
-    public static @Nullable String getSelectedVersion() {
+    public static @Nullable String getSelectedInstance() {
         return selectedVersion.get();
     }
 
-    /// Returns the selected version ID for the given profile.
-    public static @Nullable String getSelectedVersion(Profile profile) {
-        return ConfigHolder.getSelectedVersion(profile.getId());
+    /// Returns the selected instance ID for the given profile.
+    public static @Nullable String getSelectedInstance(Profile profile) {
+        return ConfigHolder.getSelectedInstance(profile.getId());
     }
 
-    /// Sets the selected version ID for the currently selected profile.
-    public static void setSelectedVersion(@Nullable String version) {
+    /// Sets the selected instance ID for the currently selected profile.
+    public static void setSelectedInstance(@Nullable String instance) {
         Profile profile = selectedProfile.get();
         if (profile != null) {
-            setSelectedVersion(profile, version);
+            setSelectedInstance(profile, instance);
         }
     }
 
-    /// Sets the selected version ID for the given profile.
-    public static void setSelectedVersion(Profile profile, @Nullable String version) {
-        ConfigHolder.setSelectedVersion(profile.getId(), version);
+    /// Sets the selected instance ID for the given profile.
+    public static void setSelectedInstance(Profile profile, @Nullable String instance) {
+        ConfigHolder.setSelectedInstance(profile.getId(), instance);
         if (profile == selectedProfile.get()) {
-            selectedVersion.set(ConfigHolder.getSelectedVersion(profile.getId()));
+            selectedVersion.set(ConfigHolder.getSelectedInstance(profile.getId()));
         }
     }
 

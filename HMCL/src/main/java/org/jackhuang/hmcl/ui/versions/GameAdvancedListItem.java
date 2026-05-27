@@ -52,7 +52,7 @@ public class GameAdvancedListItem extends AdvancedListItem {
             profile = Profiles.getSelectedProfile();
             if (profile != null) {
                 onVersionIconChangedListener = profile.getRepository().onVersionIconChanged.registerWeak(event -> {
-                    this.loadVersion(Profiles.getSelectedVersion());
+                    this.loadVersion(Profiles.getSelectedInstance());
                 });
             }
         }

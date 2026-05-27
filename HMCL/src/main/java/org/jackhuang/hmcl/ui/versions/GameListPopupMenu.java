@@ -126,7 +126,7 @@ public final class GameListPopupMenu extends StackPane {
             FXUtils.onClicked(ripplerContainer, () -> {
                 GameItem item = getItem();
                 if (item != null) {
-                    Profiles.setSelectedVersion(item.getProfile(), item.getId());
+                    Profiles.setSelectedInstance(item.getProfile(), item.getId());
                     if (getScene().getWindow() instanceof JFXPopup popup)
                         popup.hide();
                 }

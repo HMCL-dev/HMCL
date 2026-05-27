@@ -252,8 +252,8 @@ public final class LegacyConfigMigrator {
             return false;
         }
 
-        JsonObject selectedVersions = json.get(Config.SELECTED_VERSIONS_MEMBER_NAME) instanceof JsonObject existingSelectedVersions
-                ? existingSelectedVersions
+        JsonObject selectedInstance = json.get(Config.SELECTED_INSTANCE_MEMBER_NAME) instanceof JsonObject existingSelectedInstance
+                ? existingSelectedInstance
                 : new JsonObject();
         boolean changed = false;
 
@@ -268,14 +268,14 @@ public final class LegacyConfigMigrator {
             }
 
             String id = LegacyGameSettingsMigrator.getLegacyProfileId(entry.getKey()).toString();
-            if (!selectedVersions.has(id)) {
-                selectedVersions.addProperty(id, selectedVersion);
+            if (!selectedInstance.has(id)) {
+                selectedInstance.addProperty(id, selectedVersion);
                 changed = true;
             }
         }
 
-        if (changed && !json.has(Config.SELECTED_VERSIONS_MEMBER_NAME)) {
-            json.add(Config.SELECTED_VERSIONS_MEMBER_NAME, selectedVersions);
+        if (changed && !json.has(Config.SELECTED_INSTANCE_MEMBER_NAME)) {
+            json.add(Config.SELECTED_INSTANCE_MEMBER_NAME, selectedInstance);
         }
         return changed;
     }

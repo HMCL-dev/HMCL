@@ -631,7 +631,7 @@ public final class Controllers {
                     break;
                 case "hmcl://game/launch":
                     Profile profile = Profiles.getSelectedProfile();
-                    Versions.launch(profile, Profiles.getSelectedVersion(profile), LauncherHelper::setKeep);
+                    Versions.launch(profile, Profiles.getSelectedInstance(profile), LauncherHelper::setKeep);
                     break;
             }
         } else {

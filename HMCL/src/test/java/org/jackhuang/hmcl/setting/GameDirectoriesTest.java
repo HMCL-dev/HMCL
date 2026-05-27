@@ -92,11 +92,11 @@ public final class GameDirectoriesTest {
 
         assertFalse(settings.has("configurations"));
         assertEquals(id, config.getSelectedGameDirectory());
-        assertEquals("1.20.1", config.getSelectedVersion(id));
+        assertEquals("1.20.1", config.getSelectedInstance(id));
 
         JsonObject serialized = JsonParser.parseString(config.toJson()).getAsJsonObject();
         assertEquals("1.20.1", serialized
-                .getAsJsonObject(Config.SELECTED_VERSIONS_MEMBER_NAME)
+                .getAsJsonObject(Config.SELECTED_INSTANCE_MEMBER_NAME)
                 .get(id.toString())
                 .getAsString());
     }

@@ -81,7 +81,7 @@ public class TerracottaPage extends DecoratorAnimatedPage implements DecoratorPa
                 .add(accountListItem)
                 .addNavigationDrawerItem(i18n("version.launch"), SVG.ROCKET_LAUNCH, () -> {
                     Profile profile = Profiles.getSelectedProfile();
-                    Versions.launch(profile, Profiles.getSelectedVersion(profile), launcherHelper -> {
+                    Versions.launch(profile, Profiles.getSelectedInstance(profile), launcherHelper -> {
                         launcherHelper.setKeep();
                         launcherHelper.setDisableOfflineSkin();
                     });
@@ -94,7 +94,7 @@ public class TerracottaPage extends DecoratorAnimatedPage implements DecoratorPa
                     FXUtils.onScroll(item, mainPage.getVersions(), list -> {
                         String currentId = mainPage.getCurrentGame();
                         return Lang.indexWhere(list, instance -> instance.getId().equals(currentId));
-                    }, it -> Profiles.setSelectedVersion(mainPage.getProfile(), it.getId()));
+                    }, it -> Profiles.setSelectedInstance(mainPage.getProfile(), it.getId()));
 
                     FXUtils.onSecondaryButtonClicked(item, () -> GameListPopupMenu.show(item,
                             JFXPopup.PopupVPosition.BOTTOM,

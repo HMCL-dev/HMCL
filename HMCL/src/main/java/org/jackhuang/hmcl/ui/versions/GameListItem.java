@@ -34,7 +34,7 @@ public class GameListItem extends GameItem {
         super(profile, id);
         this.isModpack = profile.getRepository().isModpack(id);
         selected.bind(Bindings.createBooleanBinding(
-                () -> profile == Profiles.getSelectedProfile() && Objects.equals(Profiles.getSelectedVersion(profile), id),
+                () -> profile == Profiles.getSelectedProfile() && Objects.equals(Profiles.getSelectedInstance(profile), id),
                 Profiles.selectedProfileProperty(),
                 Profiles.selectedVersionProperty()));
     }

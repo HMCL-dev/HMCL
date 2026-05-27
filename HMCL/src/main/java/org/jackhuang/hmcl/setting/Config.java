@@ -59,8 +59,8 @@ public final class Config extends ObservableSetting {
     /// The JSON member name for the selected game directory ID.
     static final String SELECTED_GAME_DIRECTORY_MEMBER_NAME = "selectedGameDirectory";
 
-    /// The JSON member name for selected version IDs keyed by game directory ID.
-    static final String SELECTED_VERSIONS_MEMBER_NAME = "selectedVersions";
+    /// The JSON member name for selected instance IDs keyed by game directory ID.
+    static final String SELECTED_INSTANCE_MEMBER_NAME = "selectedInstance";
 
     public static final Gson CONFIG_GSON = new GsonBuilder()
             .registerTypeAdapter(Path.class, PathTypeAdapter.INSTANCE)
@@ -754,30 +754,30 @@ public final class Config extends ObservableSetting {
         this.defaultGameSettingsPreset.set(defaultGameSettingsPreset);
     }
 
-    /// Selected version IDs keyed by game directory ID.
-    @SerializedName(SELECTED_VERSIONS_MEMBER_NAME)
-    private final ObservableMap<GUID, String> selectedVersions = FXCollections.observableHashMap();
+    /// Selected instance IDs keyed by game directory ID.
+    @SerializedName(SELECTED_INSTANCE_MEMBER_NAME)
+    private final ObservableMap<GUID, String> selectedInstance = FXCollections.observableHashMap();
 
-    /// Returns selected version IDs keyed by game directory ID.
-    public ObservableMap<GUID, String> getSelectedVersions() {
-        return selectedVersions;
+    /// Returns selected instance IDs keyed by game directory ID.
+    public ObservableMap<GUID, String> getSelectedInstance() {
+        return selectedInstance;
     }
 
-    /// Returns the selected version ID for the given game directory ID.
-    public @Nullable String getSelectedVersion(@Nullable GUID gameDirectoryId) {
-        return gameDirectoryId == null ? null : selectedVersions.get(gameDirectoryId);
+    /// Returns the selected instance ID for the given game directory ID.
+    public @Nullable String getSelectedInstance(@Nullable GUID gameDirectoryId) {
+        return gameDirectoryId != null ? selectedInstance.get(gameDirectoryId) : null;
     }
 
-    /// Sets the selected version ID for the given game directory ID.
-    public void setSelectedVersion(@Nullable GUID gameDirectoryId, @Nullable String selectedVersion) {
+    /// Sets the selected instance ID for the given game directory ID.
+    public void setSelectedInstance(@Nullable GUID gameDirectoryId, @Nullable String selectedInstance) {
         if (gameDirectoryId == null) {
             return;
         }
 
-        if (StringUtils.isBlank(selectedVersion)) {
-            selectedVersions.remove(gameDirectoryId);
+        if (StringUtils.isBlank(selectedInstance)) {
+            this.selectedInstance.remove(gameDirectoryId);
         } else {
-            selectedVersions.put(gameDirectoryId, selectedVersion);
+            this.selectedInstance.put(gameDirectoryId, selectedInstance);
         }
     }
 

@@ -142,7 +142,7 @@ public class DownloadPage extends DecoratorAnimatedPage implements DecoratorPage
     }
 
     public static void download(DownloadProvider downloadProvider, Profile profile, @Nullable String version, RemoteMod.Version file, String subdirectoryName) {
-        if (version == null) version = Profiles.getSelectedVersion(profile);
+        if (version == null) version = Profiles.getSelectedInstance(profile);
 
         Path runDirectory = profile.getRepository().hasVersion(version) ? profile.getRepository().getRunDirectory(version) : profile.getRepository().getBaseDirectory();
 
@@ -321,7 +321,7 @@ public class DownloadPage extends DecoratorAnimatedPage implements DecoratorPage
                 profile.getRepository().refreshVersions();
             profile.getRepository().applyDefaultIsolationSetting(name);
         })
-                    .thenRunAsync(Schedulers.javafx(), () -> Profiles.setSelectedVersion(profile, name));
+                    .thenRunAsync(Schedulers.javafx(), () -> Profiles.setSelectedInstance(profile, name));
         }
 
         @Override

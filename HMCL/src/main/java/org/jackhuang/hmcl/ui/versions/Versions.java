@@ -144,7 +144,7 @@ public final class Versions {
                 profile.getRepository().refreshVersionsAsync()
                         .thenRunAsync(Schedulers.javafx(), () -> {
                             if (profile.getRepository().hasVersion(newName)) {
-                                Profiles.setSelectedVersion(profile, newName);
+                                Profiles.setSelectedInstance(profile, newName);
                             }
                         }).start();
             } else {
@@ -191,7 +191,7 @@ public final class Versions {
                             .thenRunAsync(repository::refreshVersions)
                             .whenComplete(Schedulers.javafx(), (exception) -> {
                                 if (exception == null) {
-                                    Profiles.setSelectedVersion(profile, result);
+                                    Profiles.setSelectedInstance(profile, result);
                                 } else {
                                     Controllers.dialog(
                                             DownloadProviders.localizeErrorMessage(exception), i18n("install.failed"), MessageDialogPane.MessageType.ERROR);
