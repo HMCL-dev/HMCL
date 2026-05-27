@@ -55,6 +55,11 @@ public final class Profiles {
     }
 
     public static String getProfileDisplayName(Profile profile) {
+        String name = profile.getName();
+        if (name != null) {
+            return name;
+        }
+
         if (DEFAULT_PROFILE_ID.equals(profile.getId())) {
             return i18n("profile.default");
         }
@@ -62,8 +67,7 @@ public final class Profiles {
             return i18n("profile.home");
         }
 
-        String name = profile.getName();
-        return name != null ? name : profile.getId().toString();
+        return profile.getId().toString();
     }
 
     private static final ReadOnlyListWrapper<Profile> profilesWrapper =

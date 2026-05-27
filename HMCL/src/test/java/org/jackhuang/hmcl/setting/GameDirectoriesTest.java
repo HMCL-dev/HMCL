@@ -171,6 +171,14 @@ public final class GameDirectoriesTest {
         assertEquals(id.toString(), Profiles.getProfileDisplayName(profile));
     }
 
+    /// Tests that an explicit name overrides built-in display names.
+    @Test
+    public void displaysExplicitNameBeforeBuiltInName() {
+        Profile profile = new Profile(Profiles.DEFAULT_PROFILE_ID, "Custom Default", PortablePath.of(".minecraft"));
+
+        assertEquals("Custom Default", Profiles.getProfileDisplayName(profile));
+    }
+
     /// Tests that profiles must be deserialized with a non-nil ID.
     @Test
     public void rejectsNilProfileId() {
