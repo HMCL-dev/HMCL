@@ -166,7 +166,7 @@ public class RootPage extends DecoratorAnimatedPage implements DecoratorPage {
             FXUtils.onScroll(gameListItem, getSkinnable().getMainPage().getVersions(), list -> {
                 String currentId = getSkinnable().getMainPage().getCurrentGame();
                 return Lang.indexWhere(list, instance -> instance.getId().equals(currentId));
-            }, it -> getSkinnable().getMainPage().getProfile().setSelectedVersion(it.getId()));
+            }, it -> Profiles.setSelectedVersion(getSkinnable().getMainPage().getProfile(), it.getId()));
             if (AnimationUtils.isAnimationEnabled()) {
                 FXUtils.prepareOnMouseEnter(gameListItem, Controllers::prepareVersionPage);
             }

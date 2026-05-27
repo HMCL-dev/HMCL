@@ -22,6 +22,7 @@ import com.google.gson.JsonParseException;
 import com.google.gson.JsonObject;
 import javafx.beans.property.ObjectProperty;
 import javafx.collections.ObservableList;
+import javafx.collections.ObservableMap;
 import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.util.FileSaver;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
@@ -178,6 +179,21 @@ public final class ConfigHolder {
         config().setSelectedGameDirectory(selectedGameDirectory);
     }
 
+    /// Returns selected version IDs keyed by game directory ID.
+    public static ObservableMap<GUID, String> getSelectedVersions() {
+        return config().getSelectedVersions();
+    }
+
+    /// Returns the selected version ID for the given game directory ID.
+    public static @Nullable String getSelectedVersion(@Nullable GUID gameDirectoryId) {
+        return config().getSelectedVersion(gameDirectoryId);
+    }
+
+    /// Sets the selected version ID for the given game directory ID.
+    public static void setSelectedVersion(@Nullable GUID gameDirectoryId, @Nullable String selectedVersion) {
+        config().setSelectedVersion(gameDirectoryId, selectedVersion);
+    }
+
     /// Returns the reusable game setting presets.
     public static ObservableList<GameSettings.Preset> getGameSettings() {
         return gameSettingsPresets().getPresets();
@@ -305,6 +321,9 @@ public final class ConfigHolder {
             }
 
             try {
+                if (Config.migrateLegacySelectedVersions(jsonObject)) {
+                    needSaveSettings = true;
+                }
                 @Nullable GameDirectories gameDirectories = GameDirectories.extractFromConfigJson(jsonObject);
                 if (gameDirectories != null) {
                     migratedGameDirectories = gameDirectories;

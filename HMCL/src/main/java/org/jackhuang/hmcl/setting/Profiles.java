@@ -25,12 +25,15 @@ import javafx.collections.ObservableList;
 import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.event.EventBus;
 import org.jackhuang.hmcl.event.RefreshedVersionsEvent;
+import org.jackhuang.hmcl.game.Version;
 import org.jackhuang.hmcl.util.PortablePath;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Objects;
+import java.util.Optional;
 import java.util.function.Consumer;
 
 import static org.jackhuang.hmcl.ui.FXUtils.onInvalidating;
@@ -90,27 +93,39 @@ public final class Profiles {
 
         ConfigHolder.setSelectedGameDirectory(profile == null ? null : profile.getId());
         if (profile != null) {
-            if (profile.getRepository().isLoaded())
-                selectedVersion.bind(profile.selectedVersionProperty());
-            else {
-                selectedVersion.unbind();
+            if (profile.getRepository().isLoaded()) {
+                refreshSelectedVersion(profile);
+            } else {
                 selectedVersion.set(null);
                 // bind when repository was reloaded.
                 profile.getRepository().refreshVersionsAsync().start();
             }
         } else {
-            selectedVersion.unbind();
             selectedVersion.set(null);
         }
+    }
+
+    private static void refreshSelectedVersion(Profile profile) {
+        String version = ConfigHolder.getSelectedVersion(profile.getId());
+        if (!profile.getRepository().hasVersion(version)) {
+            Optional<String> fallback = profile.getRepository().getVersions().stream()
+                    .findFirst()
+                    .map(Version::getId);
+            version = fallback.orElse(null);
+            if (!Objects.equals(ConfigHolder.getSelectedVersion(profile.getId()), version)) {
+                ConfigHolder.setSelectedVersion(profile.getId(), version);
+            }
+        }
+        selectedVersion.set(version);
     }
 
     private static void checkProfiles() {
         ObservableList<Profile> profiles = ConfigHolder.getGameDirectories();
         if (profiles.isEmpty()) {
             Profile current = new Profile(
-                    Profiles.DEFAULT_PROFILE_ID, Profiles.DEFAULT_PROFILE, PortablePath.of(".minecraft"), null);
+                    Profiles.DEFAULT_PROFILE_ID, Profiles.DEFAULT_PROFILE, PortablePath.of(".minecraft"));
             Profile home = new Profile(
-                    Profiles.HOME_PROFILE_ID, Profiles.HOME_PROFILE, PortablePath.fromPath(Metadata.MINECRAFT_DIRECTORY), null);
+                    Profiles.HOME_PROFILE_ID, Profiles.HOME_PROFILE, PortablePath.fromPath(Metadata.MINECRAFT_DIRECTORY));
             Platform.runLater(() -> profiles.addAll(current, home));
         }
     }
@@ -136,6 +151,12 @@ public final class Profiles {
         removeDuplicateProfiles(ConfigHolder.getGameDirectories());
         ConfigHolder.getGameDirectories().addListener(onInvalidating(Profiles::refreshSelectedProfile));
         ConfigHolder.getGameDirectories().addListener(onInvalidating(Profiles::checkProfiles));
+        ConfigHolder.getSelectedVersions().addListener(onInvalidating(() -> {
+            Profile profile = selectedProfile.get();
+            if (profile != null && profile.getRepository().isLoaded()) {
+                refreshSelectedVersion(profile);
+            }
+        }));
         checkProfiles();
         migrateGameSettings();
 
@@ -156,7 +177,7 @@ public final class Profiles {
             runInFX(() -> {
                 Profile profile = selectedProfile.get();
                 if (profile != null && profile.getRepository() == event.getSource()) {
-                    selectedVersion.bind(profile.selectedVersionProperty());
+                    refreshSelectedVersion(profile);
                     for (Consumer<Profile> listener : versionsListeners)
                         listener.accept(profile);
                 }
@@ -207,8 +228,29 @@ public final class Profiles {
     }
 
     // Guaranteed that the repository is loaded.
-    public static String getSelectedVersion() {
+    public static @Nullable String getSelectedVersion() {
         return selectedVersion.get();
+    }
+
+    /// Returns the selected version ID for the given profile.
+    public static @Nullable String getSelectedVersion(Profile profile) {
+        return ConfigHolder.getSelectedVersion(profile.getId());
+    }
+
+    /// Sets the selected version ID for the currently selected profile.
+    public static void setSelectedVersion(@Nullable String version) {
+        Profile profile = selectedProfile.get();
+        if (profile != null) {
+            setSelectedVersion(profile, version);
+        }
+    }
+
+    /// Sets the selected version ID for the given profile.
+    public static void setSelectedVersion(Profile profile, @Nullable String version) {
+        ConfigHolder.setSelectedVersion(profile.getId(), version);
+        if (profile == selectedProfile.get()) {
+            selectedVersion.set(ConfigHolder.getSelectedVersion(profile.getId()));
+        }
     }
 
     private static final List<Consumer<Profile>> versionsListeners = new ArrayList<>(4);

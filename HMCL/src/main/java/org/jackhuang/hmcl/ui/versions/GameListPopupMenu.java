@@ -36,6 +36,7 @@ import javafx.scene.layout.Region;
 import javafx.scene.layout.StackPane;
 import org.jackhuang.hmcl.game.Version;
 import org.jackhuang.hmcl.setting.Profile;
+import org.jackhuang.hmcl.setting.Profiles;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.construct.ImageContainer;
 import org.jackhuang.hmcl.ui.construct.RipplerContainer;
@@ -125,7 +126,7 @@ public final class GameListPopupMenu extends StackPane {
             FXUtils.onClicked(ripplerContainer, () -> {
                 GameItem item = getItem();
                 if (item != null) {
-                    item.getProfile().setSelectedVersion(item.getId());
+                    Profiles.setSelectedVersion(item.getProfile(), item.getId());
                     if (getScene().getWindow() instanceof JFXPopup popup)
                         popup.hide();
                 }

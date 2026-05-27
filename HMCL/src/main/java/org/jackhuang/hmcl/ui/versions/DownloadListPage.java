@@ -44,6 +44,7 @@ import org.jackhuang.hmcl.mod.RemoteModRepository;
 import org.jackhuang.hmcl.mod.modrinth.ModrinthRemoteModRepository;
 import org.jackhuang.hmcl.setting.DownloadProviders;
 import org.jackhuang.hmcl.setting.Profile;
+import org.jackhuang.hmcl.setting.Profiles;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.ui.Controllers;
@@ -125,7 +126,7 @@ public class DownloadListPage extends Control implements DecoratorPage, VersionP
             versions.setAll(profile.getRepository().getDisplayVersions()
                     .map(Version::getId)
                     .collect(Collectors.toList()));
-            selectedVersion.set(profile.getSelectedVersion());
+            selectedVersion.set(Profiles.getSelectedVersion(profile));
         }
     }
 

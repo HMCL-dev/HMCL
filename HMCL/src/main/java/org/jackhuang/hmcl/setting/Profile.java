@@ -29,13 +29,8 @@ import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.property.StringProperty;
 import org.jackhuang.hmcl.download.DefaultDependencyManager;
 import org.jackhuang.hmcl.download.DownloadProvider;
-import org.jackhuang.hmcl.event.EventBus;
-import org.jackhuang.hmcl.event.EventPriority;
-import org.jackhuang.hmcl.event.RefreshedVersionsEvent;
 import org.jackhuang.hmcl.game.HMCLCacheRepository;
 import org.jackhuang.hmcl.game.HMCLGameRepository;
-import org.jackhuang.hmcl.game.Version;
-import org.jackhuang.hmcl.ui.WeakListenerHolder;
 import org.jackhuang.hmcl.util.PortablePath;
 import org.jackhuang.hmcl.util.ToStringBuilder;
 import org.jackhuang.hmcl.util.javafx.ObservableHelper;
@@ -48,7 +43,6 @@ import java.util.Objects;
 import java.util.Optional;
 
 import static org.jackhuang.hmcl.ui.FXUtils.onInvalidating;
-import static org.jackhuang.hmcl.ui.FXUtils.runInFX;
 
 /**
  *
@@ -57,7 +51,6 @@ import static org.jackhuang.hmcl.ui.FXUtils.runInFX;
 @JsonAdapter(Profile.Serializer.class)
 @NotNullByDefault
 public final class Profile implements Observable {
-    private final WeakListenerHolder listenerHolder = new WeakListenerHolder();
     private final HMCLGameRepository repository;
 
     /// The stable profile ID.
@@ -76,20 +69,6 @@ public final class Profile implements Observable {
     /// Sets the stable profile ID.
     public void setId(GUID id) {
         this.id.set(Objects.requireNonNull(id));
-    }
-
-    private final StringProperty selectedVersion = new SimpleStringProperty();
-
-    public StringProperty selectedVersionProperty() {
-        return selectedVersion;
-    }
-
-    public @Nullable String getSelectedVersion() {
-        return selectedVersion.get();
-    }
-
-    public void setSelectedVersion(@Nullable String selectedVersion) {
-        this.selectedVersion.set(selectedVersion);
     }
 
     /// The game directory path.
@@ -131,36 +110,14 @@ public final class Profile implements Observable {
 
     /// Creates a profile.
     public Profile(GUID id, String name, PortablePath path) {
-        this(id, name, path, null);
-    }
-
-    /// Creates a profile with an explicit stable ID.
-    Profile(GUID id, String name, PortablePath path, @Nullable String selectedVersion) {
         this.id.set(Objects.requireNonNull(id));
         this.name = new SimpleStringProperty(this, "name", name);
         this.path = new SimpleObjectProperty<>(this, "path", Objects.requireNonNull(path));
         repository = new HMCLGameRepository(this, path.toPath());
-        this.selectedVersion.set(selectedVersion);
 
         this.path.addListener((a, b, newValue) -> repository.changeDirectory(newValue.toPath()));
-        this.selectedVersion.addListener(o -> checkSelectedVersion());
-        listenerHolder.add(EventBus.EVENT_BUS.channel(RefreshedVersionsEvent.class).registerWeak(event -> checkSelectedVersion(), EventPriority.HIGHEST));
 
         addPropertyChangedListener(onInvalidating(this::invalidate));
-    }
-
-    private void checkSelectedVersion() {
-        runInFX(() -> {
-            if (!repository.isLoaded()) return;
-            String newValue = selectedVersion.get();
-            if (!repository.hasVersion(newValue)) {
-                Optional<String> version = repository.getVersions().stream().findFirst().map(Version::getId);
-                if (version.isPresent())
-                    selectedVersion.setValue(version.get());
-                else if (newValue != null)
-                    selectedVersion.setValue(null);
-            }
-        });
     }
 
     public HMCLGameRepository getRepository() {
@@ -187,7 +144,6 @@ public final class Profile implements Observable {
         id.addListener(listener);
         name.addListener(listener);
         path.addListener(listener);
-        selectedVersion.addListener(listener);
     }
 
     private ObservableHelper observableHelper = new ObservableHelper(this);
@@ -219,7 +175,6 @@ public final class Profile implements Observable {
             jsonObject.add("id", context.serialize(src.getId(), GUID.class));
             jsonObject.addProperty("name", src.getName());
             jsonObject.add("path", context.serialize(src.getPath(), PortablePath.class));
-            jsonObject.addProperty("selectedMinecraftVersion", src.getSelectedVersion());
 
             return jsonObject;
         }
@@ -241,8 +196,7 @@ public final class Profile implements Observable {
 
             return new Profile(id,
                     Optional.ofNullable(obj.get("name")).map(JsonElement::getAsString).orElse("Default"),
-                    path,
-                    Optional.ofNullable(obj.get("selectedMinecraftVersion")).map(JsonElement::getAsString).orElse(""));
+                    path);
         }
 
     }

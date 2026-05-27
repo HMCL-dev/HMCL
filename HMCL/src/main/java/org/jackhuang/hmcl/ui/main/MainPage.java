@@ -205,7 +205,7 @@ public final class MainPage extends StackPane implements DecoratorPage {
         FXUtils.onScroll(launchPane, versions, list -> {
             String currentId = getCurrentGame();
             return Lang.indexWhere(list, instance -> instance.getId().equals(currentId));
-        }, it -> profile.setSelectedVersion(it.getId()));
+        }, it -> Profiles.setSelectedVersion(profile, it.getId()));
 
         StackPane.setAlignment(launchPane, Pos.BOTTOM_RIGHT);
         {
@@ -313,7 +313,7 @@ public final class MainPage extends StackPane implements DecoratorPage {
 
     private void launch() {
         Profile profile = Profiles.getSelectedProfile();
-        Versions.launch(profile, profile.getSelectedVersion());
+        Versions.launch(profile, Profiles.getSelectedVersion(profile));
     }
 
     private void launchNoGame() {
@@ -341,7 +341,7 @@ public final class MainPage extends StackPane implements DecoratorPage {
                 .whenComplete(any -> profile.getRepository().refreshVersions())
                 .whenComplete(Schedulers.javafx(), (result, exception) -> {
                     if (exception == null) {
-                        profile.setSelectedVersion(gameVersionHolder.value);
+                        Profiles.setSelectedVersion(profile, gameVersionHolder.value);
                         launch();
                     } else if (exception instanceof CancellationException) {
                         Controllers.showToast(i18n("message.cancelled"));

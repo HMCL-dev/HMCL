@@ -17,10 +17,14 @@
  */
 package org.jackhuang.hmcl.ui.versions;
 
+import javafx.beans.binding.Bindings;
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.ReadOnlyBooleanProperty;
 import javafx.beans.property.SimpleBooleanProperty;
 import org.jackhuang.hmcl.setting.Profile;
+import org.jackhuang.hmcl.setting.Profiles;
+
+import java.util.Objects;
 
 public class GameListItem extends GameItem {
     private final boolean isModpack;
@@ -29,7 +33,10 @@ public class GameListItem extends GameItem {
     public GameListItem(Profile profile, String id) {
         super(profile, id);
         this.isModpack = profile.getRepository().isModpack(id);
-        selected.bind(profile.selectedVersionProperty().isEqualTo(id));
+        selected.bind(Bindings.createBooleanBinding(
+                () -> profile == Profiles.getSelectedProfile() && Objects.equals(Profiles.getSelectedVersion(profile), id),
+                Profiles.selectedProfileProperty(),
+                Profiles.selectedVersionProperty()));
     }
 
     public ReadOnlyBooleanProperty selectedProperty() {

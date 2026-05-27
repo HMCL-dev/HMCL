@@ -142,7 +142,7 @@ public class DownloadPage extends DecoratorAnimatedPage implements DecoratorPage
     }
 
     public static void download(DownloadProvider downloadProvider, Profile profile, @Nullable String version, RemoteMod.Version file, String subdirectoryName) {
-        if (version == null) version = profile.getSelectedVersion();
+        if (version == null) version = Profiles.getSelectedVersion(profile);
 
         Path runDirectory = profile.getRepository().hasVersion(version) ? profile.getRepository().getRunDirectory(version) : profile.getRepository().getBaseDirectory();
 
@@ -186,7 +186,7 @@ public class DownloadPage extends DecoratorAnimatedPage implements DecoratorPage
         listenerHolder = new WeakListenerHolder();
         runInFX(() -> {
             if (profile == Profiles.getSelectedProfile()) {
-                listenerHolder.add(FXUtils.onWeakChangeAndOperate(profile.selectedVersionProperty(), version -> {
+                listenerHolder.add(FXUtils.onWeakChangeAndOperate(Profiles.selectedVersionProperty(), version -> {
                     if (modTab.isInitialized()) {
                         modTab.getNode().loadVersion(profile, null);
                     }
@@ -319,9 +319,9 @@ public class DownloadPage extends DecoratorAnimatedPage implements DecoratorPage
 
             return builder.buildAsync().whenComplete(any -> {
                 profile.getRepository().refreshVersions();
-                profile.getRepository().applyDefaultIsolationSetting(name);
-            })
-                    .thenRunAsync(Schedulers.javafx(), () -> profile.setSelectedVersion(name));
+            profile.getRepository().applyDefaultIsolationSetting(name);
+        })
+                    .thenRunAsync(Schedulers.javafx(), () -> Profiles.setSelectedVersion(profile, name));
         }
 
         @Override

@@ -2492,7 +2492,7 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
 
     private void editSpecificSettings() {
         if (profile != null)
-            Versions.modifyGameSettings(profile, profile.getSelectedVersion());
+            Versions.modifyGameSettings(profile, Profiles.getSelectedVersion(profile));
     }
 
     private void onExploreIcon() {

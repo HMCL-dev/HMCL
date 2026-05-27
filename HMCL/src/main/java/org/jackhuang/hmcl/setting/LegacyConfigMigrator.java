@@ -90,6 +90,7 @@ public final class LegacyConfigMigrator {
                     ? configurations.deepCopy()
                     : null;
 
+            Config.migrateLegacySelectedVersions(jsonObject);
             @Nullable GameDirectories migratedGameDirectories = GameDirectories.extractFromConfigJson(jsonObject);
             GameDirectories gameDirectories = migratedGameDirectories != null
                     ? migratedGameDirectories

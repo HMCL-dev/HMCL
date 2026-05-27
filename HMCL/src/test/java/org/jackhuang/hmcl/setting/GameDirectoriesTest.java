@@ -46,7 +46,6 @@ public final class GameDirectoriesTest {
                       "id": "123e4567-e89b-12d3-a456-426614174000",
                       "name": "Dev",
                       "gameDir": ".minecraft",
-                      "selectedMinecraftVersion": "1.20.1",
                       "useRelativePath": true
                     }
                   ]
@@ -70,11 +69,43 @@ public final class GameDirectoriesTest {
         assertEquals(".minecraft", gameDirectories.getGameDirectories().get(0).getPath().getPath());
     }
 
+    /// Tests migrating upstream/main selected version fields into the main config.
+    @Test
+    public void migratesLegacySelectedVersionsFromConfigurations() {
+        GUID id = LegacyGameSettingsMigrator.getLegacyProfileId("Dev");
+        JsonObject settings = JsonParser.parseString("""
+                {
+                  "last": "Dev",
+                  "configurations": {
+                    "Dev": {
+                      "gameDir": ".minecraft",
+                      "selectedMinecraftVersion": "1.20.1"
+                    }
+                  }
+                }
+                """).getAsJsonObject();
+
+        assertTrue(Config.migrateLegacySelectedVersions(settings));
+        GameDirectories gameDirectories = Objects.requireNonNull(GameDirectories.extractFromConfigJson(settings));
+        assertTrue(Config.migrateLegacySelectedGameDirectory(settings, gameDirectories));
+        Config config = Objects.requireNonNull(Config.fromJson(settings));
+
+        assertFalse(settings.has("configurations"));
+        assertEquals(id, config.getSelectedGameDirectory());
+        assertEquals("1.20.1", config.getSelectedVersion(id));
+
+        JsonObject serialized = JsonParser.parseString(config.toJson()).getAsJsonObject();
+        assertEquals("1.20.1", serialized
+                .getAsJsonObject(Config.SELECTED_VERSIONS_MEMBER_NAME)
+                .get(id.toString())
+                .getAsString());
+    }
+
     /// Tests that profiles store their directory as a portable path.
     @Test
     public void storesProfilePath() {
         GUID id = new GUID("123e4567-e89b-12d3-a456-426614174000");
-        Profile profile = new Profile(id, "Dev", PortablePath.of("versions\\Dev"), "1.20.1");
+        Profile profile = new Profile(id, "Dev", PortablePath.of("versions\\Dev"));
 
         JsonObject serialized = JsonUtils.GSON.toJsonTree(profile, Profile.class).getAsJsonObject();
         Profile deserialized = Objects.requireNonNull(JsonUtils.GSON.fromJson(serialized, Profile.class));

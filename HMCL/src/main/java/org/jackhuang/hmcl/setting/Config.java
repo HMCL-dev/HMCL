@@ -37,6 +37,7 @@ import org.jackhuang.hmcl.auth.authlibinjector.AuthlibInjectorServer;
 import org.jackhuang.hmcl.java.JavaRuntime;
 import org.jackhuang.hmcl.theme.ThemeColor;
 import org.jackhuang.hmcl.ui.FXUtils;
+import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.gson.*;
 import org.jackhuang.hmcl.util.i18n.SupportedLocale;
 import org.jetbrains.annotations.Nullable;
@@ -57,6 +58,9 @@ public final class Config extends ObservableSetting {
 
     /// The JSON member name for the selected game directory ID.
     static final String SELECTED_GAME_DIRECTORY_MEMBER_NAME = "selectedGameDirectory";
+
+    /// The JSON member name for selected version IDs keyed by game directory ID.
+    static final String SELECTED_VERSIONS_MEMBER_NAME = "selectedVersions";
 
     public static final Gson CONFIG_GSON = new GsonBuilder()
             .registerTypeAdapter(Path.class, PathTypeAdapter.INSTANCE)
@@ -103,6 +107,45 @@ public final class Config extends ObservableSetting {
             json.add(SELECTED_GAME_DIRECTORY_MEMBER_NAME, JsonUtils.GSON.toJsonTree(selected, GUID.class));
         }
         return true;
+    }
+
+    /// Migrates legacy per-profile selected versions into the current selected version map.
+    ///
+    /// @param json the settings JSON object
+    /// @return whether the JSON object was changed
+    static boolean migrateLegacySelectedVersions(JsonObject json) {
+        Objects.requireNonNull(json);
+
+        if (!(json.get("configurations") instanceof JsonObject configurations)) {
+            return false;
+        }
+
+        JsonObject selectedVersions = json.get(SELECTED_VERSIONS_MEMBER_NAME) instanceof JsonObject existingSelectedVersions
+                ? existingSelectedVersions
+                : new JsonObject();
+        boolean changed = false;
+
+        for (Map.Entry<String, JsonElement> entry : configurations.entrySet()) {
+            if (!(entry.getValue() instanceof JsonObject profile)) {
+                continue;
+            }
+
+            @Nullable String selectedVersion = readString(profile.get("selectedMinecraftVersion"));
+            if (StringUtils.isBlank(selectedVersion)) {
+                continue;
+            }
+
+            String id = LegacyGameSettingsMigrator.getLegacyProfileId(entry.getKey()).toString();
+            if (!selectedVersions.has(id)) {
+                selectedVersions.addProperty(id, selectedVersion);
+                changed = true;
+            }
+        }
+
+        if (changed && !json.has(SELECTED_VERSIONS_MEMBER_NAME)) {
+            json.add(SELECTED_VERSIONS_MEMBER_NAME, selectedVersions);
+        }
+        return changed;
     }
 
     /// Finds the game directory ID with the given legacy profile name.
@@ -798,6 +841,33 @@ public final class Config extends ObservableSetting {
     /// Sets the default game setting preset ID.
     public void setDefaultGameSettingsPreset(@Nullable GUID defaultGameSettingsPreset) {
         this.defaultGameSettingsPreset.set(defaultGameSettingsPreset);
+    }
+
+    /// Selected version IDs keyed by game directory ID.
+    @SerializedName(SELECTED_VERSIONS_MEMBER_NAME)
+    private final ObservableMap<GUID, String> selectedVersions = FXCollections.observableHashMap();
+
+    /// Returns selected version IDs keyed by game directory ID.
+    public ObservableMap<GUID, String> getSelectedVersions() {
+        return selectedVersions;
+    }
+
+    /// Returns the selected version ID for the given game directory ID.
+    public @Nullable String getSelectedVersion(@Nullable GUID gameDirectoryId) {
+        return gameDirectoryId == null ? null : selectedVersions.get(gameDirectoryId);
+    }
+
+    /// Sets the selected version ID for the given game directory ID.
+    public void setSelectedVersion(@Nullable GUID gameDirectoryId, @Nullable String selectedVersion) {
+        if (gameDirectoryId == null) {
+            return;
+        }
+
+        if (StringUtils.isBlank(selectedVersion)) {
+            selectedVersions.remove(gameDirectoryId);
+        } else {
+            selectedVersions.put(gameDirectoryId, selectedVersion);
+        }
     }
 
     // Accounts
