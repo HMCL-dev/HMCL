@@ -120,13 +120,13 @@ public sealed abstract class GameSettings extends ObservableSetting {
     public static final class Preset extends GameSettings {
         /// Creates a preset with the given identity.
         public Preset(GUID id) {
-            this(id, true);
+            register();
+            this.id.setValue(Objects.requireNonNull(id));
         }
 
         /// Creates a preset with the given identity.
-        private Preset(GUID id, boolean checkNonNil) {
+        private Preset() {
             register();
-            this.id.setValue(checkNonNil ? requireNonNilId(id) : Objects.requireNonNull(id));
         }
 
         /// The stable preset ID.
@@ -135,15 +135,6 @@ public sealed abstract class GameSettings extends ObservableSetting {
 
         /// Returns the preset ID property.
         public SettingProperty<GUID> idProperty() {
-            return id;
-        }
-
-        /// Returns a non-nil preset ID or throws when the value is not usable.
-        private static GUID requireNonNilId(GUID id) {
-            Objects.requireNonNull(id);
-            if (GUID.NIL.equals(id)) {
-                throw new IllegalArgumentException("Preset ID cannot be nil");
-            }
             return id;
         }
 
@@ -169,7 +160,7 @@ public sealed abstract class GameSettings extends ObservableSetting {
         public static final class Adapter extends ObservableSetting.Adapter<@Nullable Preset> {
             @Override
             protected Preset createInstance() {
-                return new Preset(GUID.NIL, false);
+                return new Preset();
             }
 
             @Override

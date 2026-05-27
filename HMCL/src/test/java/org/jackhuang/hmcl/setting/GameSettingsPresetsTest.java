@@ -43,11 +43,9 @@ public final class GameSettingsPresetsTest {
         assertEquals(id.toString(), serialized.get(Config.DEFAULT_GAME_SETTINGS_PRESET_MEMBER_NAME).getAsString());
     }
 
-    /// Tests that presets must be initialized with a non-nil ID.
+    /// Tests that presets must be deserialized with a non-nil ID.
     @Test
     public void rejectsNilPresetId() {
-        assertThrows(IllegalArgumentException.class, () -> new GameSettings.Preset(GUID.NIL));
-
         assertThrows(JsonParseException.class, () -> JsonUtils.GSON.fromJson("""
                 {
                   "id": "00000000-0000-0000-0000-000000000000"
