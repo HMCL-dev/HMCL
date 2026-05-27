@@ -53,21 +53,11 @@ public final class Profile implements Observable {
     private final HMCLGameRepository repository;
 
     /// The stable profile ID.
-    private final ObjectProperty<GUID> id = new SimpleObjectProperty<>(this, "id", GUID.NIL);
-
-    /// Returns the stable profile ID property.
-    public ObjectProperty<GUID> idProperty() {
-        return id;
-    }
+    private final GUID id;
 
     /// Returns the stable profile ID.
     public GUID getId() {
-        return id.get();
-    }
-
-    /// Sets the stable profile ID.
-    public void setId(GUID id) {
-        this.id.set(Objects.requireNonNull(id));
+        return id;
     }
 
     /// The game directory path.
@@ -104,7 +94,7 @@ public final class Profile implements Observable {
 
     /// Creates a profile.
     public Profile(GUID id, String name, PortablePath path) {
-        this.id.set(Objects.requireNonNull(id));
+        this.id = Objects.requireNonNull(id);
         this.name = new SimpleStringProperty(this, "name", name);
         this.path = new SimpleObjectProperty<>(this, "path", Objects.requireNonNull(path));
         repository = new HMCLGameRepository(this, path.toPath());
@@ -135,7 +125,6 @@ public final class Profile implements Observable {
     }
 
     private void addPropertyChangedListener(InvalidationListener listener) {
-        id.addListener(listener);
         name.addListener(listener);
         path.addListener(listener);
     }
