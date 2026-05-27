@@ -18,6 +18,7 @@
 package org.jackhuang.hmcl.setting;
 
 import com.github.f4b6a3.uuid.alt.GUID;
+import com.google.gson.JsonParseException;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import org.jackhuang.hmcl.util.gson.JsonFileFormat;
@@ -40,6 +41,21 @@ public final class GameSettingsPresetsTest {
         JsonObject serialized = JsonParser.parseString(config.toJson()).getAsJsonObject();
 
         assertEquals(id.toString(), serialized.get(Config.DEFAULT_GAME_SETTINGS_PRESET_MEMBER_NAME).getAsString());
+    }
+
+    /// Tests that presets must be initialized with a non-nil ID.
+    @Test
+    public void rejectsNilPresetId() {
+        assertThrows(IllegalArgumentException.class, () -> new GameSettings.Preset(GUID.NIL));
+
+        assertThrows(JsonParseException.class, () -> JsonUtils.GSON.fromJson("""
+                {
+                  "id": "00000000-0000-0000-0000-000000000000"
+                }
+                """, GameSettings.Preset.class));
+
+        assertThrows(JsonParseException.class,
+                () -> JsonUtils.GSON.fromJson("{}", GameSettings.Preset.class));
     }
 
     /// Tests that preset files do not preserve the workspace-level default preset selection.

@@ -18,6 +18,7 @@
 package org.jackhuang.hmcl.setting;
 
 import com.github.f4b6a3.uuid.alt.GUID;
+import com.google.gson.JsonParseException;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import org.jackhuang.hmcl.util.PortablePath;
@@ -83,6 +84,21 @@ public final class GameDirectoriesTest {
         assertFalse(serialized.has("useRelativePath"));
         assertEquals("versions/Dev", deserialized.getPath().getPath());
         assertFalse(deserialized.getPath().isAbsolute());
+    }
+
+    /// Tests that profiles must be initialized with a non-nil ID.
+    @Test
+    public void rejectsNilProfileId() {
+        assertThrows(IllegalArgumentException.class,
+                () -> new Profile(GUID.NIL, "Dev", PortablePath.of("versions/Dev")));
+
+        assertThrows(JsonParseException.class, () -> JsonUtils.GSON.fromJson("""
+                {
+                  "id": "00000000-0000-0000-0000-000000000000",
+                  "name": "Dev",
+                  "path": "versions/Dev"
+                }
+                """, Profile.class));
     }
 
     /// Tests that game directory files do not preserve the workspace-level selected directory.

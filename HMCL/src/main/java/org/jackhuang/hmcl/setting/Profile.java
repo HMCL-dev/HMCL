@@ -61,7 +61,7 @@ public final class Profile implements Observable {
     private final HMCLGameRepository repository;
 
     /// The stable profile ID.
-    private final ObjectProperty<GUID> id = new SimpleObjectProperty<>(this, "id", GUID.v4());
+    private final ObjectProperty<GUID> id = new SimpleObjectProperty<>(this, "id", GUID.NIL);
 
     /// Returns the stable profile ID property.
     public ObjectProperty<GUID> idProperty() {
@@ -75,7 +75,7 @@ public final class Profile implements Observable {
 
     /// Sets the stable profile ID.
     public void setId(GUID id) {
-        this.id.set(Objects.requireNonNull(id));
+        this.id.set(requireNonNilId(id));
     }
 
     private final StringProperty selectedVersion = new SimpleStringProperty();
@@ -124,18 +124,19 @@ public final class Profile implements Observable {
         this.name.set(name);
     }
 
-    public Profile(String name, Path initialGameDir) {
-        this(name, PortablePath.fromPath(initialGameDir));
+    /// Creates a profile.
+    public Profile(GUID id, String name, Path initialGameDir) {
+        this(id, name, PortablePath.fromPath(initialGameDir));
     }
 
     /// Creates a profile.
-    public Profile(String name, PortablePath path) {
-        this(GUID.v4(), name, path, null);
+    public Profile(GUID id, String name, PortablePath path) {
+        this(id, name, path, null);
     }
 
     /// Creates a profile with an explicit stable ID.
     Profile(GUID id, String name, PortablePath path, @Nullable String selectedVersion) {
-        this.id.set(Objects.requireNonNull(id));
+        this.id.set(requireNonNilId(id));
         this.name = new SimpleStringProperty(this, "name", name);
         this.path = new SimpleObjectProperty<>(this, "path", Objects.requireNonNull(path));
         repository = new HMCLGameRepository(this, path.toPath());
@@ -146,6 +147,15 @@ public final class Profile implements Observable {
         listenerHolder.add(EventBus.EVENT_BUS.channel(RefreshedVersionsEvent.class).registerWeak(event -> checkSelectedVersion(), EventPriority.HIGHEST));
 
         addPropertyChangedListener(onInvalidating(this::invalidate));
+    }
+
+    /// Returns a non-nil profile ID or throws when the value is not usable.
+    private static GUID requireNonNilId(GUID id) {
+        Objects.requireNonNull(id);
+        if (GUID.NIL.equals(id)) {
+            throw new IllegalArgumentException("Profile ID cannot be nil");
+        }
+        return id;
     }
 
     private void checkSelectedVersion() {
@@ -229,6 +239,8 @@ public final class Profile implements Observable {
             GUID id = context.deserialize(obj.get("id"), GUID.class);
             if (id == null) {
                 throw new JsonParseException("Profile ID cannot be null");
+            } else if (GUID.NIL.equals(id)) {
+                throw new JsonParseException("Profile ID cannot be nil");
             }
             PortablePath path = context.deserialize(obj.get("path"), PortablePath.class);
             if (path == null) {

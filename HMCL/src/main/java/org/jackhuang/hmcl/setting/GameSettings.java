@@ -18,6 +18,9 @@
 package org.jackhuang.hmcl.setting;
 
 import com.github.f4b6a3.uuid.alt.GUID;
+import com.google.gson.JsonDeserializationContext;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonParseException;
 import com.google.gson.annotations.JsonAdapter;
 import com.google.gson.annotations.SerializedName;
 import javafx.collections.FXCollections;
@@ -40,6 +43,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.UnknownNullability;
 
 import java.io.IOException;
+import java.lang.reflect.Type;
 import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
 import java.util.Collection;
@@ -114,23 +118,32 @@ public sealed abstract class GameSettings extends ObservableSetting {
     @JsonAdapter(Preset.Adapter.class)
     @JsonSerializable
     public static final class Preset extends GameSettings {
-        /// Creates a preset with generated identity.
-        public Preset() {
-            this(GUID.v4());
+        /// Creates a preset with the given identity.
+        public Preset(GUID id) {
+            this(id, true);
         }
 
         /// Creates a preset with the given identity.
-        public Preset(GUID id) {
+        private Preset(GUID id, boolean checkNonNil) {
             register();
-            this.id.setValue(id);
+            this.id.setValue(checkNonNil ? requireNonNilId(id) : Objects.requireNonNull(id));
         }
 
         /// The stable preset ID.
         @SerializedName("id")
-        private final SettingProperty<GUID> id = newSettingProperty("id");
+        private final SettingProperty<GUID> id = newSettingProperty("id", GUID.NIL);
 
         /// Returns the preset ID property.
         public SettingProperty<GUID> idProperty() {
+            return id;
+        }
+
+        /// Returns a non-nil preset ID or throws when the value is not usable.
+        private static GUID requireNonNilId(GUID id) {
+            Objects.requireNonNull(id);
+            if (GUID.NIL.equals(id)) {
+                throw new IllegalArgumentException("Preset ID cannot be nil");
+            }
             return id;
         }
 
@@ -153,10 +166,22 @@ public sealed abstract class GameSettings extends ObservableSetting {
         }
 
         /// JSON adapter for presets.
-        public static final class Adapter extends ObservableSetting.Adapter<Preset> {
+        public static final class Adapter extends ObservableSetting.Adapter<@Nullable Preset> {
             @Override
             protected Preset createInstance() {
-                return new Preset();
+                return new Preset(GUID.NIL, false);
+            }
+
+            @Override
+            public @Nullable Preset deserialize(
+                    JsonElement json,
+                    Type typeOfT,
+                    JsonDeserializationContext context) throws JsonParseException {
+                @Nullable Preset result = super.deserialize(json, typeOfT, context);
+                if (result != null && GUID.NIL.equals(result.idProperty().getValue())) {
+                    throw new JsonParseException("Preset ID cannot be nil");
+                }
+                return result;
             }
         }
     }

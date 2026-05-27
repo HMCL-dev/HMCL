@@ -17,6 +17,7 @@
  */
 package org.jackhuang.hmcl.ui.profile;
 
+import com.github.f4b6a3.uuid.alt.GUID;
 import com.jfoenix.controls.JFXButton;
 import com.jfoenix.controls.JFXTextField;
 import com.jfoenix.validation.RequiredFieldValidator;
@@ -188,7 +189,7 @@ public final class ProfilePage extends BorderPane implements DecoratorPage {
             if (StringUtils.isBlank(getLocation())) {
                 gameDir.fire();
             }
-            Profile newProfile = new Profile(txtProfileName.getText(), PortablePath.of(getLocation()));
+            Profile newProfile = new Profile(GUID.v4(), txtProfileName.getText(), PortablePath.of(getLocation()));
             Profiles.getProfiles().add(newProfile);
         }
 
