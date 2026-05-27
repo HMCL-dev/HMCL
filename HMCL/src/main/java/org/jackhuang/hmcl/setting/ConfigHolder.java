@@ -232,7 +232,7 @@ public final class ConfigHolder {
             return setting;
         }
 
-        setting = new GameSettings.Preset(GUID.v4());
+        setting = new GameSettings.Preset(gameSettingsPresets().newPresetId());
         setting.nameProperty().setValue(i18n("message.default"));
         getGameSettings().add(setting);
         setDefaultGameSettingsPreset(setting.idProperty().getValue());

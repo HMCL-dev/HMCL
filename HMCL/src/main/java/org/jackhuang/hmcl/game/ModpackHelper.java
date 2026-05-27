@@ -17,7 +17,6 @@
  */
 package org.jackhuang.hmcl.game;
 
-import com.github.f4b6a3.uuid.alt.GUID;
 import com.google.gson.JsonParseException;
 import kala.compress.archivers.zip.ZipArchiveReader;
 import org.jackhuang.hmcl.Metadata;
@@ -192,7 +191,7 @@ public final class ModpackHelper {
 
         return new ManuallyCreatedModpackInstallTask(profile, zipFile, charset, name)
                 .thenAcceptAsync(Schedulers.javafx(), location -> {
-                    Profile newProfile = new Profile(GUID.v7(), name, PortablePath.fromPath(location));
+                    Profile newProfile = new Profile(Profiles.newProfileId(), name, PortablePath.fromPath(location));
                     Profiles.getProfiles().add(newProfile);
                     Profiles.setSelectedProfile(newProfile);
                 });

@@ -835,7 +835,7 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
                 return;
             }
 
-            GameSettings.Preset setting = new GameSettings.Preset(GUID.v4());
+            GameSettings.Preset setting = new GameSettings.Preset(ConfigHolder.gameSettingsPresets().newPresetId());
             setting.nameProperty().setValue(name.trim());
             ConfigHolder.getGameSettings().add(setting);
             selectPreset(setting);

@@ -54,6 +54,25 @@ public final class Profiles {
     private Profiles() {
     }
 
+    /// Creates a profile ID that does not collide with existing profiles.
+    public static GUID newProfileId() {
+        GUID id;
+        do {
+            id = GUID.v7();
+        } while (hasProfileId(id));
+        return id;
+    }
+
+    /// Returns whether an existing profile uses the given ID.
+    private static boolean hasProfileId(GUID id) {
+        for (Profile profile : ConfigHolder.getGameDirectories()) {
+            if (id.equals(profile.getId())) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     public static String getProfileDisplayName(Profile profile) {
         String name = profile.getName();
         if (name != null) {

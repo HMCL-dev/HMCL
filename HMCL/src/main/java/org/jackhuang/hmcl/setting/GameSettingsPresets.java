@@ -95,6 +95,15 @@ public final class GameSettingsPresets extends ObservableSetting implements Form
         return presets;
     }
 
+    /// Creates a preset ID that does not collide with existing presets.
+    public GUID newPresetId() {
+        GUID id;
+        do {
+            id = GUID.v7();
+        } while (getPreset(id) != null);
+        return id;
+    }
+
     /// Returns the preset with the given ID.
     public GameSettings.@Nullable Preset getPreset(@Nullable GUID id) {
         if (id == null) {
