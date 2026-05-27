@@ -23,7 +23,6 @@ import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.gson.JsonFileFormat;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
-import org.jackhuang.hmcl.util.gson.UUIDTypeAdapter;
 import org.jackhuang.hmcl.util.io.JarUtils;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNullByDefault;
@@ -165,20 +164,13 @@ public final class LegacyConfigMigrator {
             JsonObject migrated = profile.deepCopy();
             @Nullable String name = readString(migrated.get("name"));
             if (!migrated.has("id")) {
-                @Nullable GUID id = readLegacyProfileId(migrated);
-                if (id == null) {
-                    if (name != null) {
-                        id = getLegacyProfileId(name);
-                    }
-                }
-                if (id != null) {
-                    migrated.addProperty("id", id.toString());
+                if (name != null) {
+                    migrated.addProperty("id", getLegacyProfileId(name).toString());
                 }
             }
             if (isBuiltInProfileName(name)) {
                 migrated.remove("name");
             }
-            migrated.remove("legacyGameSettingsParent");
             result.add(migrated);
         }
         return result;
@@ -193,34 +185,16 @@ public final class LegacyConfigMigrator {
             }
 
             JsonObject migrated = profile.deepCopy();
-            @Nullable GUID id = readLegacyProfileId(migrated);
             String name = entry.getKey();
             if (isBuiltInProfileName(name)) {
                 migrated.remove("name");
             } else {
                 migrated.addProperty("name", name);
             }
-            migrated.addProperty("id", Objects.requireNonNullElseGet(
-                    id,
-                    () -> getLegacyProfileId(name)
-            ).toString());
-            migrated.remove("legacyGameSettingsParent");
+            migrated.addProperty("id", getLegacyProfileId(name).toString());
             result.add(migrated);
         }
         return result;
-    }
-
-    /// Reads the legacy profile-parent preset ID from a profile JSON object.
-    private static @Nullable GUID readLegacyProfileId(JsonObject profile) {
-        if (!(profile.get("legacyGameSettingsParent") instanceof JsonPrimitive primitive) || !primitive.isString()) {
-            return null;
-        }
-
-        try {
-            return new GUID(UUIDTypeAdapter.fromString(primitive.getAsString()));
-        } catch (IllegalArgumentException e) {
-            return null;
-        }
     }
 
     /// Returns whether the given legacy profile name belongs to a built-in profile.
