@@ -17,6 +17,7 @@
  */
 package org.jackhuang.hmcl.setting;
 
+import com.github.f4b6a3.uuid.alt.GUID;
 import com.google.gson.*;
 import com.google.gson.annotations.JsonAdapter;
 import javafx.application.Platform;
@@ -35,7 +36,6 @@ import org.jackhuang.hmcl.game.HMCLCacheRepository;
 import org.jackhuang.hmcl.game.HMCLGameRepository;
 import org.jackhuang.hmcl.game.Version;
 import org.jackhuang.hmcl.ui.WeakListenerHolder;
-import org.jackhuang.hmcl.util.GUID;
 import org.jackhuang.hmcl.util.PortablePath;
 import org.jackhuang.hmcl.util.ToStringBuilder;
 import org.jackhuang.hmcl.util.javafx.ObservableHelper;
@@ -61,7 +61,7 @@ public final class Profile implements Observable {
     private final HMCLGameRepository repository;
 
     /// The stable profile ID.
-    private final ObjectProperty<GUID> id = new SimpleObjectProperty<>(this, "id", GUID.random());
+    private final ObjectProperty<GUID> id = new SimpleObjectProperty<>(this, "id", GUID.v4());
 
     /// Returns the stable profile ID property.
     public ObjectProperty<GUID> idProperty() {
@@ -130,7 +130,7 @@ public final class Profile implements Observable {
 
     /// Creates a profile.
     public Profile(String name, PortablePath path) {
-        this(GUID.random(), name, path, null);
+        this(GUID.v4(), name, path, null);
     }
 
     /// Creates a profile with an explicit stable ID.

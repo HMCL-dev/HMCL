@@ -17,9 +17,9 @@
  */
 package org.jackhuang.hmcl.setting;
 
+import com.github.f4b6a3.uuid.alt.GUID;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
-import org.jackhuang.hmcl.util.GUID;
 import org.jackhuang.hmcl.util.gson.JsonFileFormat;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jetbrains.annotations.NotNullByDefault;
@@ -33,7 +33,7 @@ public final class GameSettingsPresetsTest {
     /// Tests that the default preset selection belongs to Config.
     @Test
     public void storesDefaultGameSettingsPresetInConfig() {
-        GUID id = GUID.fromString("123e4567-e89b-12d3-a456-426614174000");
+        GUID id = new GUID("123e4567-e89b-12d3-a456-426614174000");
         Config config = new Config();
 
         config.setDefaultGameSettingsPreset(id);

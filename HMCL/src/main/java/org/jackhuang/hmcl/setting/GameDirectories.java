@@ -17,6 +17,7 @@
  */
 package org.jackhuang.hmcl.setting;
 
+import com.github.f4b6a3.uuid.alt.GUID;
 import com.google.gson.*;
 import com.google.gson.annotations.JsonAdapter;
 import com.google.gson.annotations.SerializedName;
@@ -25,7 +26,6 @@ import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
-import org.jackhuang.hmcl.util.GUID;
 import org.jackhuang.hmcl.util.gson.JsonFileFormat;
 import org.jackhuang.hmcl.util.gson.JsonSerializable;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
@@ -173,7 +173,7 @@ public final class GameDirectories extends ObservableSetting implements Formatte
         }
 
         try {
-            return GUID.fromUUID(UUIDTypeAdapter.fromString(primitive.getAsString()));
+            return new GUID(UUIDTypeAdapter.fromString(primitive.getAsString()));
         } catch (IllegalArgumentException e) {
             return null;
         }

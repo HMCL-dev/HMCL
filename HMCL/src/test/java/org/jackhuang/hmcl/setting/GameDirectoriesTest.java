@@ -17,9 +17,9 @@
  */
 package org.jackhuang.hmcl.setting;
 
+import com.github.f4b6a3.uuid.alt.GUID;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
-import org.jackhuang.hmcl.util.GUID;
 import org.jackhuang.hmcl.util.PortablePath;
 import org.jackhuang.hmcl.util.gson.JsonFileFormat;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
@@ -36,7 +36,7 @@ public final class GameDirectoriesTest {
     /// Tests extracting current in-settings profile data into a detached game directory store.
     @Test
     public void extractsProfilesFromConfigJson() {
-        GUID id = GUID.fromString("123e4567-e89b-12d3-a456-426614174000");
+        GUID id = new GUID("123e4567-e89b-12d3-a456-426614174000");
         JsonObject settings = JsonParser.parseString("""
                 {
                   "last": "Dev",
@@ -72,7 +72,7 @@ public final class GameDirectoriesTest {
     /// Tests that profiles store their directory as a portable path.
     @Test
     public void storesProfilePath() {
-        GUID id = GUID.fromString("123e4567-e89b-12d3-a456-426614174000");
+        GUID id = new GUID("123e4567-e89b-12d3-a456-426614174000");
         Profile profile = new Profile(id, "Dev", PortablePath.of("versions\\Dev"), "1.20.1");
 
         JsonObject serialized = JsonUtils.GSON.toJsonTree(profile, Profile.class).getAsJsonObject();

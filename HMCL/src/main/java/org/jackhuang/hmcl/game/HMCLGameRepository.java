@@ -17,6 +17,7 @@
  */
 package org.jackhuang.hmcl.game;
 
+import com.github.f4b6a3.uuid.alt.GUID;
 import com.google.gson.JsonParseException;
 import javafx.scene.image.Image;
 import org.jackhuang.hmcl.Metadata;
@@ -38,7 +39,6 @@ import org.jackhuang.hmcl.setting.Profile;
 import org.jackhuang.hmcl.setting.VersionIconType;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.util.FileSaver;
-import org.jackhuang.hmcl.util.GUID;
 import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.gson.JsonUtils;

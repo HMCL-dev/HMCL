@@ -17,6 +17,7 @@
  */
 package org.jackhuang.hmcl.setting;
 
+import com.github.f4b6a3.uuid.alt.GUID;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonPrimitive;
@@ -25,7 +26,6 @@ import org.jackhuang.hmcl.game.NativesDirectoryType;
 import org.jackhuang.hmcl.game.ProcessPriority;
 import org.jackhuang.hmcl.game.QuickPlayType;
 import org.jackhuang.hmcl.game.Renderer;
-import org.jackhuang.hmcl.util.GUID;
 import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
@@ -87,7 +87,7 @@ public final class LegacyGameSettingsMigrator {
 
     /// Returns the stable profile ID for a migrated legacy profile.
     public static GUID getLegacyProfileId(String profileName) {
-        return GUID.fromUUID(UUID.nameUUIDFromBytes(
+        return new GUID(UUID.nameUUIDFromBytes(
                 (LEGACY_PROFILE_ID_NAMESPACE + profileName).getBytes(StandardCharsets.UTF_8)));
     }
 

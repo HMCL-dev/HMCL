@@ -17,6 +17,7 @@
  */
 package org.jackhuang.hmcl.setting;
 
+import com.github.f4b6a3.uuid.alt.GUID;
 import com.google.gson.annotations.JsonAdapter;
 import com.google.gson.annotations.SerializedName;
 import javafx.collections.FXCollections;
@@ -28,7 +29,6 @@ import org.jackhuang.hmcl.setting.property.InheritableProperty;
 import org.jackhuang.hmcl.setting.property.SettingProperty;
 import org.jackhuang.hmcl.setting.property.SimpleInheritableProperty;
 import org.jackhuang.hmcl.setting.property.SimpleSettingProperty;
-import org.jackhuang.hmcl.util.GUID;
 import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.gson.JsonSerializable;
@@ -116,7 +116,7 @@ public sealed abstract class GameSettings extends ObservableSetting {
     public static final class Preset extends GameSettings {
         /// Creates a preset with generated identity.
         public Preset() {
-            this(GUID.random());
+            this(GUID.v4());
         }
 
         /// Creates a preset with the given identity.
