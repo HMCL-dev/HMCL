@@ -255,7 +255,6 @@ public final class HMCLGameRepository extends DefaultGameRepository {
         GameSettings.Preset profilePreset = getProfileGameSettingsPreset();
         if (profilePreset != null && profilePreset.defaultIsolationTypeProperty().getValue() == DefaultIsolationType.ALWAYS) {
             setting = new GameSettings.Instance();
-            setting.parentProperty().setValue(profilePreset.idProperty().getValue());
             setting.getOverrideProperties().add(GameSettings.PROPERTY_RUNNING_DIR);
             initLocalGameSettings(id, setting);
             saveGameSettings(id);
