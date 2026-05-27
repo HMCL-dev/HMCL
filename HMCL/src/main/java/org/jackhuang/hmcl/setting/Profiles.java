@@ -60,14 +60,15 @@ public final class Profiles {
             return name;
         }
 
-        if (DEFAULT_PROFILE_ID.equals(profile.getId())) {
+        GUID id = profile.getId();
+        if (DEFAULT_PROFILE_ID.equals(id)) {
             return i18n("profile.default");
         }
-        if (HOME_PROFILE_ID.equals(profile.getId())) {
+        if (HOME_PROFILE_ID.equals(id)) {
             return i18n("profile.home");
         }
 
-        return profile.getId().toString();
+        return id.toString();
     }
 
     private static final ReadOnlyListWrapper<Profile> profilesWrapper =
