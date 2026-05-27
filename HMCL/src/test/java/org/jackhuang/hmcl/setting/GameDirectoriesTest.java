@@ -73,6 +73,7 @@ public final class GameDirectoriesTest {
     @Test
     public void migratesLegacySelectedVersionsFromConfigurations() {
         GUID id = LegacyGameSettingsMigrator.getLegacyProfileId("Dev");
+        assertEquals(5, id.version());
         JsonObject settings = JsonParser.parseString("""
                 {
                   "last": "Dev",

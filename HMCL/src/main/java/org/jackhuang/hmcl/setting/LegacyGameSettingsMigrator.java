@@ -31,13 +31,11 @@ import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jetbrains.annotations.*;
 
-import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Locale;
 import java.util.Objects;
-import java.util.UUID;
 
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
@@ -45,7 +43,7 @@ import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 @NotNullByDefault
 public final class LegacyGameSettingsMigrator {
     /// Namespace used to generate stable IDs for legacy profiles.
-    private static final String LEGACY_PROFILE_ID_NAMESPACE = "hmcl:legacy-profile:";
+    private static final GUID LEGACY_PROFILE_ID_NAMESPACE = GUID.v5(GUID.NAMESPACE_URL, "hmcl:legacy-profile");
 
     /// Legacy file name used by old per-version `VersionSetting` data.
     private static final String LEGACY_INSTANCE_SETTINGS_FILENAME = "hmclversion.cfg";
@@ -87,8 +85,7 @@ public final class LegacyGameSettingsMigrator {
 
     /// Returns the stable profile ID for a migrated legacy profile.
     public static GUID getLegacyProfileId(String profileName) {
-        return new GUID(UUID.nameUUIDFromBytes(
-                (LEGACY_PROFILE_ID_NAMESPACE + profileName).getBytes(StandardCharsets.UTF_8)));
+        return GUID.v5(LEGACY_PROFILE_ID_NAMESPACE, profileName);
     }
 
     /// Converts a legacy profile-level setting JSON object into a preset with the given ID.
