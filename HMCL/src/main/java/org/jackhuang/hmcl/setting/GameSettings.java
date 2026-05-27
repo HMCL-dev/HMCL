@@ -178,7 +178,7 @@ public sealed abstract class GameSettings extends ObservableSetting {
     }
 
     /// Creates a new setting property without a default value.
-    protected final <T extends @UnknownNullability Object> SettingProperty<T> newSettingProperty(String name) {
+    protected final <T extends @Nullable Object> SettingProperty<@Nullable T> newSettingProperty(String name) {
         return new SimpleSettingProperty<>(this, name, null);
     }
 
