@@ -19,6 +19,7 @@ package org.jackhuang.hmcl.util;
 
 import org.jetbrains.annotations.NotNullByDefault;
 
+import java.nio.file.Path;
 import java.util.Objects;
 
 /// Stores a path string together with whether the path is absolute.
@@ -41,6 +42,14 @@ public final class PortablePath {
 
         boolean absolute = isAbsolute(path);
         return new PortablePath(absolute ? path : path.replace('\\', SEPARATOR), absolute);
+    }
+
+    /// Creates a portable path from a [Path].
+    ///
+    /// @param path the path to convert
+    /// @return the portable path
+    public static PortablePath fromPath(Path path) {
+        return of(Objects.requireNonNull(path).toString());
     }
 
     /// Returns whether the given path string is absolute.
@@ -81,6 +90,13 @@ public final class PortablePath {
     /// @return whether this path is absolute
     public boolean isAbsolute() {
         return absolute;
+    }
+
+    /// Converts this portable path to a [Path] on the current platform.
+    ///
+    /// @return the converted path
+    public Path toPath() {
+        return Path.of(path);
     }
 
     /// Returns the stored path string.

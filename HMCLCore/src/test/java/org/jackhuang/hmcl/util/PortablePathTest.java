@@ -20,6 +20,8 @@ package org.jackhuang.hmcl.util;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.junit.jupiter.api.Test;
 
+import java.nio.file.Path;
+
 import static org.junit.jupiter.api.Assertions.*;
 
 /// Tests for [PortablePath].
@@ -52,5 +54,27 @@ public final class PortablePathTest {
         PortablePath path = PortablePath.of("game\\dir");
 
         assertEquals(path.getPath(), path.toString());
+    }
+
+    /// Tests conversion from and to relative [Path] values.
+    @Test
+    public void convertsRelativePath() {
+        Path path = Path.of("versions", "1.20.1");
+        PortablePath portablePath = PortablePath.fromPath(path);
+
+        assertEquals("versions/1.20.1", portablePath.getPath());
+        assertFalse(portablePath.isAbsolute());
+        assertEquals(path, portablePath.toPath());
+    }
+
+    /// Tests conversion from and to absolute [Path] values.
+    @Test
+    public void convertsAbsolutePath() {
+        Path path = Path.of(".").toAbsolutePath();
+        PortablePath portablePath = PortablePath.fromPath(path);
+
+        assertEquals(path.toString(), portablePath.getPath());
+        assertTrue(portablePath.isAbsolute());
+        assertEquals(path, portablePath.toPath());
     }
 }
