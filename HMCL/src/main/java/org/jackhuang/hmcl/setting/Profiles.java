@@ -46,10 +46,10 @@ public final class Profiles {
     public static final String HOME_PROFILE = "Home";
 
     /// The stable ID used by the built-in default profile.
-    public static final GUID DEFAULT_PROFILE_ID = LegacyGameSettingsMigrator.getLegacyProfileId(DEFAULT_PROFILE);
+    public static final GUID DEFAULT_PROFILE_ID = LegacyConfigMigrator.getLegacyProfileId(DEFAULT_PROFILE);
 
     /// The stable ID used by the built-in home profile.
-    public static final GUID HOME_PROFILE_ID = LegacyGameSettingsMigrator.getLegacyProfileId(HOME_PROFILE);
+    public static final GUID HOME_PROFILE_ID = LegacyConfigMigrator.getLegacyProfileId(HOME_PROFILE);
 
     private Profiles() {
     }

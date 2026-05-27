@@ -21,7 +21,9 @@ import com.github.f4b6a3.uuid.alt.GUID;
 import com.google.gson.*;
 import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.util.StringUtils;
+import org.jackhuang.hmcl.util.gson.JsonFileFormat;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
+import org.jackhuang.hmcl.util.gson.UUIDTypeAdapter;
 import org.jackhuang.hmcl.util.io.JarUtils;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNullByDefault;
@@ -47,6 +49,9 @@ public final class LegacyConfigMigrator {
     /// The last numeric config version used by the legacy hmcl.json and .hmcl.json files.
     private static final int LEGACY_CURRENT_CONFIG_VERSION = 2;
 
+    /// Namespace used to generate stable IDs for legacy profiles.
+    private static final GUID LEGACY_PROFILE_ID_NAMESPACE = GUID.v5(GUID.NAMESPACE_URL, "hmcl:legacy-profile");
+
     /// The legacy Windows and portable configuration file name used through HMCL 3.15.0.345.
     private static final String LEGACY_CONFIG_FILENAME = "hmcl.json";
 
@@ -55,6 +60,11 @@ public final class LegacyConfigMigrator {
 
     /// Prevents instantiation.
     private LegacyConfigMigrator() {
+    }
+
+    /// Returns the stable profile ID for a migrated legacy profile.
+    public static GUID getLegacyProfileId(String profileName) {
+        return GUID.v5(LEGACY_PROFILE_ID_NAMESPACE, profileName);
     }
 
     /// Looks for a legacy config file and prepares it for writing as the new config file.
@@ -93,7 +103,7 @@ public final class LegacyConfigMigrator {
                     : null;
 
             migrateLegacySelectedVersions(jsonObject);
-            @Nullable GameDirectories migratedGameDirectories = GameDirectories.extractFromConfigJson(jsonObject);
+            @Nullable GameDirectories migratedGameDirectories = extractGameDirectoriesFromConfigJson(jsonObject);
             GameDirectories gameDirectories = migratedGameDirectories != null
                     ? migratedGameDirectories
                     : new GameDirectories();
@@ -109,6 +119,98 @@ public final class LegacyConfigMigrator {
             return new MigrationResult(path, deserialized, gameDirectories, gameSettingsPresets, deserialized.toJson());
         } catch (JsonParseException e) {
             LOG.warning("Malformed legacy config file: " + path, e);
+            return null;
+        }
+    }
+
+    /// Extracts game directory data from a settings JSON object and removes the legacy members.
+    ///
+    /// This supports migrating the in-development `profiles` list and the old `configurations`
+    /// map into `game-directories.json`.
+    ///
+    /// @param json the settings JSON object
+    /// @return the extracted game directory store, or `null` when the object contains no game directory data
+    static @Nullable GameDirectories extractGameDirectoriesFromConfigJson(JsonObject json) {
+        Objects.requireNonNull(json);
+
+        @Nullable JsonElement profilesElement = json.remove("profiles");
+        @Nullable JsonElement configurationsElement = json.remove("configurations");
+
+        @Nullable JsonArray profiles = null;
+        if (profilesElement instanceof JsonArray profileArray) {
+            profiles = migrateProfileArray(profileArray);
+        } else if (configurationsElement instanceof JsonObject configurations) {
+            profiles = migrateConfigurationMap(configurations);
+        }
+
+        if (profiles == null) {
+            return null;
+        }
+
+        JsonObject object = new JsonObject();
+        object.add(JsonFileFormat.DEFAULT_MEMBER_NAME, JsonUtils.GSON.toJsonTree(GameDirectories.CURRENT_FORMAT, JsonFileFormat.class));
+        object.add("gameDirectories", profiles);
+
+        return JsonUtils.GSON.fromJson(object, GameDirectories.class);
+    }
+
+    /// Converts a current profile array into game directory JSON.
+    private static JsonArray migrateProfileArray(JsonArray profiles) {
+        JsonArray result = new JsonArray();
+        for (JsonElement element : profiles) {
+            if (!(element instanceof JsonObject profile)) {
+                continue;
+            }
+
+            JsonObject migrated = profile.deepCopy();
+            if (!migrated.has("id")) {
+                @Nullable GUID id = readLegacyProfileId(migrated);
+                if (id == null) {
+                    @Nullable String name = readString(migrated.get("name"));
+                    if (name != null) {
+                        id = getLegacyProfileId(name);
+                    }
+                }
+                if (id != null) {
+                    migrated.addProperty("id", id.toString());
+                }
+            }
+            migrated.remove("legacyGameSettingsParent");
+            result.add(migrated);
+        }
+        return result;
+    }
+
+    /// Converts a legacy profile map into game directory JSON.
+    private static JsonArray migrateConfigurationMap(JsonObject configurations) {
+        JsonArray result = new JsonArray();
+        for (Map.Entry<String, JsonElement> entry : configurations.entrySet()) {
+            if (!(entry.getValue() instanceof JsonObject profile)) {
+                continue;
+            }
+
+            JsonObject migrated = profile.deepCopy();
+            @Nullable GUID id = readLegacyProfileId(migrated);
+            migrated.addProperty("name", entry.getKey());
+            migrated.addProperty("id", Objects.requireNonNullElseGet(
+                    id,
+                    () -> getLegacyProfileId(entry.getKey())
+            ).toString());
+            migrated.remove("legacyGameSettingsParent");
+            result.add(migrated);
+        }
+        return result;
+    }
+
+    /// Reads the legacy profile-parent preset ID from a profile JSON object.
+    private static @Nullable GUID readLegacyProfileId(JsonObject profile) {
+        if (!(profile.get("legacyGameSettingsParent") instanceof JsonPrimitive primitive) || !primitive.isString()) {
+            return null;
+        }
+
+        try {
+            return new GUID(UUIDTypeAdapter.fromString(primitive.getAsString()));
+        } catch (IllegalArgumentException e) {
             return null;
         }
     }
@@ -267,7 +369,7 @@ public final class LegacyConfigMigrator {
                 continue;
             }
 
-            String id = LegacyGameSettingsMigrator.getLegacyProfileId(entry.getKey()).toString();
+            String id = getLegacyProfileId(entry.getKey()).toString();
             if (!selectedInstance.has(id)) {
                 selectedInstance.addProperty(id, selectedVersion);
                 changed = true;

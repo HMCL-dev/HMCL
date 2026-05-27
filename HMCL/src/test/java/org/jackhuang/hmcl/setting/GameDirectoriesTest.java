@@ -52,7 +52,7 @@ public final class GameDirectoriesTest {
                 }
                 """).getAsJsonObject();
 
-        GameDirectories gameDirectories = Objects.requireNonNull(GameDirectories.extractFromConfigJson(settings));
+        GameDirectories gameDirectories = Objects.requireNonNull(LegacyConfigMigrator.extractGameDirectoriesFromConfigJson(settings));
         assertTrue(LegacyConfigMigrator.migrateLegacySelectedGameDirectory(settings, gameDirectories));
         Config config = Objects.requireNonNull(Config.fromJson(settings));
 
@@ -72,7 +72,7 @@ public final class GameDirectoriesTest {
     /// Tests migrating upstream/main selected version fields into the main config.
     @Test
     public void migratesLegacySelectedVersionsFromConfigurations() {
-        GUID id = LegacyGameSettingsMigrator.getLegacyProfileId("Dev");
+        GUID id = LegacyConfigMigrator.getLegacyProfileId("Dev");
         assertEquals(5, id.version());
         JsonObject settings = JsonParser.parseString("""
                 {
@@ -87,7 +87,7 @@ public final class GameDirectoriesTest {
                 """).getAsJsonObject();
 
         assertTrue(LegacyConfigMigrator.migrateLegacySelectedVersions(settings));
-        GameDirectories gameDirectories = Objects.requireNonNull(GameDirectories.extractFromConfigJson(settings));
+        GameDirectories gameDirectories = Objects.requireNonNull(LegacyConfigMigrator.extractGameDirectoriesFromConfigJson(settings));
         assertTrue(LegacyConfigMigrator.migrateLegacySelectedGameDirectory(settings, gameDirectories));
         Config config = Objects.requireNonNull(Config.fromJson(settings));
 

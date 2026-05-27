@@ -42,9 +42,6 @@ import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 /// Converts legacy game settings JSON into `GameSettings` models.
 @NotNullByDefault
 public final class LegacyGameSettingsMigrator {
-    /// Namespace used to generate stable IDs for legacy profiles.
-    private static final GUID LEGACY_PROFILE_ID_NAMESPACE = GUID.v5(GUID.NAMESPACE_URL, "hmcl:legacy-profile");
-
     /// Legacy file name used by old per-version `VersionSetting` data.
     private static final String LEGACY_INSTANCE_SETTINGS_FILENAME = "hmclversion.cfg";
 
@@ -81,11 +78,6 @@ public final class LegacyGameSettingsMigrator {
 
     /// Prevents instantiation.
     private LegacyGameSettingsMigrator() {
-    }
-
-    /// Returns the stable profile ID for a migrated legacy profile.
-    public static GUID getLegacyProfileId(String profileName) {
-        return GUID.v5(LEGACY_PROFILE_ID_NAMESPACE, profileName);
     }
 
     /// Converts a legacy profile-level setting JSON object into a preset with the given ID.
