@@ -189,7 +189,7 @@ public final class ProfilePage extends BorderPane implements DecoratorPage {
             if (StringUtils.isBlank(getLocation())) {
                 gameDir.fire();
             }
-            Profile newProfile = new Profile(GUID.v4(), txtProfileName.getText(), PortablePath.of(getLocation()));
+            Profile newProfile = new Profile(GUID.v7(), txtProfileName.getText(), PortablePath.of(getLocation()));
             Profiles.getProfiles().add(newProfile);
         }
 
