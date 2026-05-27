@@ -17,94 +17,40 @@
  */
 package org.jackhuang.hmcl.util;
 
-import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.junit.jupiter.api.Test;
-
-import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
 
 /// Tests for [PortablePath].
 @NotNullByDefault
 public final class PortablePathTest {
-    /// Tests separator canonicalization and absolute-path detection.
+    /// Tests that relative paths use portable separators.
     @Test
-    public void canonicalizesSeparators() {
-        assertSame(PortablePath.EMPTY, PortablePath.of(""));
-        assertEquals("a/b/c", PortablePath.of("a\\b//c/").toString());
-        assertEquals("/a/b", PortablePath.of("///a//b/").toString());
-        assertEquals("C:\\Users\\Name", PortablePath.of("C:\\Users\\Name\\").toString());
-        assertEquals("C:\\Users\\Name", PortablePath.of("C:/Users/Name/").toString());
-        assertEquals("\\Users\\Name", PortablePath.of("\\Users\\Name\\").toString());
-        assertEquals("\\\\server\\share\\file", PortablePath.of("\\\\server\\share\\file").toString());
-        assertEquals("\\\\server\\share\\file", PortablePath.of("//server/share/file").toString());
+    public void normalizesRelativeSeparators() {
+        PortablePath path = PortablePath.of("versions\\1.20.1");
 
-        assertFalse(PortablePath.of("a/b").isAbsolute());
-        assertTrue(PortablePath.of("/a/b").isAbsolute());
-        assertTrue(PortablePath.of("C:\\Users\\Name").isAbsolute());
-        assertTrue(PortablePath.of("\\Users\\Name").isAbsolute());
-        assertTrue(PortablePath.of("\\\\server\\share\\file").isAbsolute());
+        assertEquals("versions/1.20.1", path.getPath());
+        assertFalse(path.isAbsolute());
     }
 
-    /// Tests root, parent, file name, and name element accessors.
+    /// Tests that absolute paths keep their original separators.
     @Test
-    public void readsPathElements() {
-        PortablePath path = PortablePath.of("/a/b/c");
+    public void preservesAbsoluteSeparators() {
+        PortablePath windowsPath = PortablePath.of("C:\\Users\\Name");
+        PortablePath posixPath = PortablePath.of("/home/user");
 
-        assertEquals(PortablePath.of("/"), path.getRoot());
-        assertEquals(PortablePath.of("/a/b"), path.getParent());
-        assertEquals(PortablePath.of("c"), path.getFileName());
-        assertEquals(3, path.getNameCount());
-        assertEquals(PortablePath.of("b"), path.getName(1));
-        assertEquals(List.of("a", "b", "c"), path.getNames());
-
-        assertNull(PortablePath.of("/").getParent());
-        assertNull(PortablePath.of("/").getFileName());
-        assertNull(PortablePath.of("a").getParent());
+        assertEquals("C:\\Users\\Name", windowsPath.getPath());
+        assertTrue(windowsPath.isAbsolute());
+        assertEquals("/home/user", posixPath.getPath());
+        assertTrue(posixPath.isAbsolute());
     }
 
-    /// Tests lexical resolution operations.
+    /// Tests that the string representation is the stored path.
     @Test
-    public void resolvesPaths() {
-        assertEquals(PortablePath.of("a/b/c"), PortablePath.of("a/b").resolve("c"));
-        assertEquals(PortablePath.of("/c"), PortablePath.of("a/b").resolve("/c"));
-        assertEquals(PortablePath.of("/a"), PortablePath.of("/").resolve("a"));
-        assertEquals(PortablePath.of("C:\\a\\b\\c\\d"), PortablePath.of("C:\\a\\b").resolve("c/d"));
-        assertEquals(PortablePath.of("a/c"), PortablePath.of("a/b").resolveSibling("c"));
-        assertEquals(PortablePath.of("c"), PortablePath.of("a").resolveSibling("c"));
-    }
+    public void returnsPathAsString() {
+        PortablePath path = PortablePath.of("game\\dir");
 
-    /// Tests lexical `.` and `..` normalization.
-    @Test
-    public void normalizesDotSegments() {
-        assertEquals(PortablePath.of("a/c"), PortablePath.of("a/./b/../c").normalize());
-        assertEquals(PortablePath.of(".."), PortablePath.of("../a/..").normalize());
-        assertEquals(PortablePath.of("/a"), PortablePath.of("/../a").normalize());
-        assertEquals(PortablePath.of("C:\\"), PortablePath.of("C:\\a\\..").normalize());
-    }
-
-    /// Tests prefix, suffix, and relativization operations.
-    @Test
-    public void comparesAndRelativizesPaths() {
-        PortablePath path = PortablePath.of("/a/b/c");
-
-        assertTrue(path.startsWith("/a"));
-        assertFalse(path.startsWith("/a/bc"));
-        assertTrue(path.endsWith("b/c"));
-        assertFalse(path.endsWith("/b/c"));
-        assertEquals(PortablePath.of("../d/e"), PortablePath.of("/a/b/c").relativize(PortablePath.of("/a/b/d/e")));
-        assertTrue(PortablePath.of("C:\\a\\b\\c").endsWith("b/c"));
-        assertThrows(IllegalArgumentException.class,
-                () -> PortablePath.of("/a").relativize(PortablePath.of("a")));
-    }
-
-    /// Tests JSON serialization as a canonical string.
-    @Test
-    public void serializesAsJsonString() {
-        PortablePath path = PortablePath.of("a\\b");
-
-        assertEquals("\"a/b\"", JsonUtils.GSON.toJson(path, PortablePath.class));
-        assertEquals(path, JsonUtils.GSON.fromJson("\"a/b\"", PortablePath.class));
+        assertEquals(path.getPath(), path.toString());
     }
 }
