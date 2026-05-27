@@ -20,6 +20,8 @@ package org.jackhuang.hmcl.setting;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import org.jackhuang.hmcl.util.GUID;
+import org.jackhuang.hmcl.util.gson.JsonFileFormat;
+import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.junit.jupiter.api.Test;
 
@@ -50,12 +52,42 @@ public final class GameDirectoriesTest {
                 """).getAsJsonObject();
 
         GameDirectories gameDirectories = Objects.requireNonNull(GameDirectories.extractFromConfigJson(settings));
+        assertTrue(Config.migrateLegacySelectedGameDirectory(settings, gameDirectories));
+        Config config = Objects.requireNonNull(Config.fromJson(settings));
 
         assertFalse(settings.has("last"));
         assertFalse(settings.has("profiles"));
-        assertEquals(id, gameDirectories.getSelectedGameDirectory());
+        assertEquals(id, config.getSelectedGameDirectory());
+        assertEquals(id.toString(), JsonParser.parseString(config.toJson())
+                .getAsJsonObject()
+                .get(Config.SELECTED_GAME_DIRECTORY_MEMBER_NAME)
+                .getAsString());
         assertEquals(1, gameDirectories.getGameDirectories().size());
         assertEquals(id, gameDirectories.getGameDirectories().get(0).getId());
         assertEquals("Dev", gameDirectories.getGameDirectories().get(0).getName());
+    }
+
+    /// Tests that game directory files do not preserve the workspace-level selected directory.
+    @Test
+    public void doesNotStoreSelectedGameDirectoryInGameDirectories() {
+        JsonObject serialized = JsonParser.parseString("""
+                {
+                  "$format": {
+                    "id": "hmcl.game-directories",
+                    "version": "1.0"
+                  },
+                  "selectedGameDirectory": "123e4567-e89b-12d3-a456-426614174000",
+                  "gameDirectories": []
+                }
+                """).getAsJsonObject();
+
+        GameDirectories gameDirectories = JsonUtils.GSON.fromJson(serialized, GameDirectories.class);
+        JsonObject rewritten = JsonParser.parseString(JsonUtils.GSON.toJson(gameDirectories, GameDirectories.class))
+                .getAsJsonObject();
+
+        assertEquals(GameDirectories.CURRENT_FORMAT,
+                JsonFileFormat.readFromMember(rewritten, JsonFileFormat.DEFAULT_MEMBER_NAME));
+        assertFalse(rewritten.has(Config.SELECTED_GAME_DIRECTORY_MEMBER_NAME));
+        assertTrue(rewritten.has("gameDirectories"));
     }
 }

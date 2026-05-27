@@ -34,6 +34,7 @@ import org.jackhuang.hmcl.util.gson.UUIDTypeAdapter;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
 
+import java.lang.reflect.Type;
 import java.util.Map;
 import java.util.Objects;
 
@@ -67,7 +68,6 @@ public final class GameDirectories extends ObservableSetting implements Formatte
     static @Nullable GameDirectories extractFromConfigJson(JsonObject json) {
         Objects.requireNonNull(json);
 
-        @Nullable String selectedName = readString(json.remove("last"));
         @Nullable JsonElement profilesElement = json.remove("profiles");
         @Nullable JsonElement configurationsElement = json.remove("configurations");
 
@@ -85,11 +85,6 @@ public final class GameDirectories extends ObservableSetting implements Formatte
         JsonObject object = new JsonObject();
         object.add(JsonFileFormat.DEFAULT_MEMBER_NAME, JsonUtils.GSON.toJsonTree(CURRENT_FORMAT, JsonFileFormat.class));
         object.add("gameDirectories", profiles);
-
-        @Nullable GUID selected = findProfileId(profiles, selectedName);
-        if (selected != null) {
-            object.add("selectedGameDirectory", JsonUtils.GSON.toJsonTree(selected, GUID.class));
-        }
 
         return JsonUtils.GSON.fromJson(object, GameDirectories.class);
     }
@@ -111,26 +106,6 @@ public final class GameDirectories extends ObservableSetting implements Formatte
     /// Sets the format used by this game directory store file.
     public void setFormat(JsonFileFormat format) {
         this.format.set(Objects.requireNonNull(format));
-    }
-
-    /// The selected game directory ID.
-    @SerializedName("selectedGameDirectory")
-    private final ObjectProperty<@Nullable GUID> selectedGameDirectory =
-            new SimpleObjectProperty<>(this, "selectedGameDirectory");
-
-    /// Returns the selected game directory ID property.
-    public ObjectProperty<@Nullable GUID> selectedGameDirectoryProperty() {
-        return selectedGameDirectory;
-    }
-
-    /// Returns the selected game directory ID.
-    public @Nullable GUID getSelectedGameDirectory() {
-        return selectedGameDirectory.get();
-    }
-
-    /// Sets the selected game directory ID.
-    public void setSelectedGameDirectory(@Nullable GUID selectedGameDirectory) {
-        this.selectedGameDirectory.set(selectedGameDirectory);
     }
 
     /// Per-workspace game directories.
@@ -191,31 +166,6 @@ public final class GameDirectories extends ObservableSetting implements Formatte
         return result;
     }
 
-    /// Finds a profile ID by its profile name.
-    private static @Nullable GUID findProfileId(JsonArray profiles, @Nullable String name) {
-        if (name == null) {
-            return null;
-        }
-
-        for (JsonElement element : profiles) {
-            if (element instanceof JsonObject profile
-                    && Objects.equals(name, readString(profile.get("name")))) {
-                @Nullable JsonElement id = profile.get("id");
-                if (id instanceof JsonPrimitive primitive && primitive.isString()) {
-                    try {
-                        return GUID.fromString(primitive.getAsString());
-                    } catch (IllegalArgumentException ignored) {
-                        try {
-                            return GUID.fromUUID(UUIDTypeAdapter.fromString(primitive.getAsString()));
-                        } catch (IllegalArgumentException ignoredAgain) {
-                        }
-                    }
-                }
-            }
-        }
-        return null;
-    }
-
     /// Reads the legacy profile-parent preset ID from a profile JSON object.
     private static @Nullable GUID readLegacyProfileId(JsonObject profile) {
         if (!(profile.get("legacyGameSettingsParent") instanceof JsonPrimitive primitive) || !primitive.isString()) {
@@ -242,6 +192,19 @@ public final class GameDirectories extends ObservableSetting implements Formatte
         @Override
         protected GameDirectories createInstance() {
             return new GameDirectories();
+        }
+
+        /// Deserializes game directories and drops the workspace-level selected directory.
+        @Override
+        public @Nullable GameDirectories deserialize(
+                JsonElement json,
+                Type typeOfT,
+                JsonDeserializationContext context) throws JsonParseException {
+            @Nullable GameDirectories result = super.deserialize(json, typeOfT, context);
+            if (result != null) {
+                result.unknownFields.remove(Config.SELECTED_GAME_DIRECTORY_MEMBER_NAME);
+            }
+            return result;
         }
     }
 }

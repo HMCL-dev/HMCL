@@ -94,6 +94,7 @@ public final class LegacyConfigMigrator {
             GameDirectories gameDirectories = migratedGameDirectories != null
                     ? migratedGameDirectories
                     : new GameDirectories();
+            Config.migrateLegacySelectedGameDirectory(jsonObject, gameDirectories);
 
             Config deserialized = Config.fromJson(jsonObject);
             if (deserialized == null) {

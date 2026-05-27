@@ -165,17 +165,17 @@ public final class ConfigHolder {
 
     /// Returns the selected game directory ID property.
     public static ObjectProperty<@Nullable GUID> selectedGameDirectoryProperty() {
-        return gameDirectories().selectedGameDirectoryProperty();
+        return config().selectedGameDirectoryProperty();
     }
 
     /// Returns the selected game directory ID.
     public static @Nullable GUID getSelectedGameDirectory() {
-        return gameDirectories().getSelectedGameDirectory();
+        return config().getSelectedGameDirectory();
     }
 
     /// Sets the selected game directory ID.
     public static void setSelectedGameDirectory(@Nullable GUID selectedGameDirectory) {
-        gameDirectories().setSelectedGameDirectory(selectedGameDirectory);
+        config().setSelectedGameDirectory(selectedGameDirectory);
     }
 
     /// Returns the reusable game setting presets.
@@ -308,6 +308,9 @@ public final class ConfigHolder {
                 @Nullable GameDirectories gameDirectories = GameDirectories.extractFromConfigJson(jsonObject);
                 if (gameDirectories != null) {
                     migratedGameDirectories = gameDirectories;
+                    needSaveSettings = true;
+                }
+                if (Config.migrateLegacySelectedGameDirectory(jsonObject, gameDirectories)) {
                     needSaveSettings = true;
                 }
 

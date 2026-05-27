@@ -55,6 +55,9 @@ public final class Config extends ObservableSetting {
     /// The JSON member name for the default game setting preset ID.
     static final String DEFAULT_GAME_SETTINGS_PRESET_MEMBER_NAME = "defaultGameSettingsPreset";
 
+    /// The JSON member name for the selected game directory ID.
+    static final String SELECTED_GAME_DIRECTORY_MEMBER_NAME = "selectedGameDirectory";
+
     public static final Gson CONFIG_GSON = new GsonBuilder()
             .registerTypeAdapter(Path.class, PathTypeAdapter.INSTANCE)
             .registerTypeAdapter(UUID.class, UUIDTypeAdapter.INSTANCE)
@@ -72,6 +75,56 @@ public final class Config extends ObservableSetting {
     @Nullable
     public static Config fromJson(JsonObject json) throws JsonParseException {
         return CONFIG_GSON.fromJson(json, Config.class);
+    }
+
+    /// Migrates the legacy selected profile name into the current selected game directory ID.
+    ///
+    /// @param json the settings JSON object
+    /// @param gameDirectories the migrated game directory store used to resolve the selected ID
+    /// @return whether the JSON object was changed
+    static boolean migrateLegacySelectedGameDirectory(
+            JsonObject json,
+            @Nullable GameDirectories gameDirectories) {
+        Objects.requireNonNull(json);
+
+        @Nullable JsonElement lastElement = json.remove("last");
+        if (lastElement == null) {
+            return false;
+        }
+
+        if (json.has(SELECTED_GAME_DIRECTORY_MEMBER_NAME)) {
+            return true;
+        }
+
+        @Nullable String selectedName = readString(lastElement);
+        @Nullable GUID selected = findGameDirectoryId(gameDirectories, selectedName);
+        if (selected != null) {
+            json.add(SELECTED_GAME_DIRECTORY_MEMBER_NAME, JsonUtils.GSON.toJsonTree(selected, GUID.class));
+        }
+        return true;
+    }
+
+    /// Finds the game directory ID with the given legacy profile name.
+    private static @Nullable GUID findGameDirectoryId(
+            @Nullable GameDirectories gameDirectories,
+            @Nullable String name) {
+        if (gameDirectories == null || name == null) {
+            return null;
+        }
+
+        for (Profile gameDirectory : gameDirectories.getGameDirectories()) {
+            if (Objects.equals(name, gameDirectory.getName())) {
+                return gameDirectory.getId();
+            }
+        }
+        return null;
+    }
+
+    /// Reads a string JSON value.
+    private static @Nullable String readString(@Nullable JsonElement element) {
+        return element instanceof JsonPrimitive primitive && primitive.isString()
+                ? primitive.getAsString()
+                : null;
     }
 
     public Config() {
@@ -704,6 +757,26 @@ public final class Config extends ObservableSetting {
 
     public void setAllowAutoAgent(boolean allowAutoAgent) {
         this.allowAutoAgent.set(allowAutoAgent);
+    }
+
+    /// The selected game directory ID.
+    @SerializedName(SELECTED_GAME_DIRECTORY_MEMBER_NAME)
+    private final ObjectProperty<@Nullable GUID> selectedGameDirectory =
+            new SimpleObjectProperty<>(this, SELECTED_GAME_DIRECTORY_MEMBER_NAME);
+
+    /// Returns the selected game directory ID property.
+    public ObjectProperty<@Nullable GUID> selectedGameDirectoryProperty() {
+        return selectedGameDirectory;
+    }
+
+    /// Returns the selected game directory ID.
+    public @Nullable GUID getSelectedGameDirectory() {
+        return selectedGameDirectory.get();
+    }
+
+    /// Sets the selected game directory ID.
+    public void setSelectedGameDirectory(@Nullable GUID selectedGameDirectory) {
+        this.selectedGameDirectory.set(selectedGameDirectory);
     }
 
     /// The default game setting preset ID.
