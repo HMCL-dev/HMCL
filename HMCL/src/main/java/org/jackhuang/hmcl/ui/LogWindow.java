@@ -185,6 +185,9 @@ public final class LogWindow extends Stage {
 
             btnAlwaysOnTop.setOnAction(e -> stage.setAlwaysOnTop(!stage.isAlwaysOnTop()));
             btnAlwaysOnTop.getStyleClass().add("always-on-top-button");
+            stage.alwaysOnTopProperty().addListener((observable, oldValue, newValue) -> {
+                btnAlwaysOnTop.pseudoClassStateChanged(SELECTED, newValue);
+            });
 
             cboLines.getItems().setAll(500, 2000, 5000, 10000);
             cboLines.setValue(Log.getLogLines());
@@ -291,9 +294,6 @@ public final class LogWindow extends Stage {
                     Label label = new Label(i18n("logwindow.show_lines"));
 
                     FXUtils.installFastTooltip(control.btnAlwaysOnTop, i18n("logwindow.always_on_top"));
-                    control.stage.alwaysOnTopProperty().addListener((observable, oldValue, newValue) -> {
-                        control.btnAlwaysOnTop.pseudoClassStateChanged(SELECTED, newValue);
-                    });
                     hBox.getChildren().setAll(control.btnAlwaysOnTop, label, control.cboLines);
 
                     borderPane.setLeft(hBox);
