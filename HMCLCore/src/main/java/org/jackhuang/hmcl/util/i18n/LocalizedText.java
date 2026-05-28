@@ -23,28 +23,31 @@ import com.google.gson.annotations.JsonAdapter;
 import com.google.gson.stream.JsonReader;
 import com.google.gson.stream.JsonToken;
 import com.google.gson.stream.JsonWriter;
-import org.jetbrains.annotations.NotNull;
+import org.jackhuang.hmcl.util.gson.JsonSerializable;
+import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.util.*;
 
+@NotNullByDefault
 @JsonAdapter(LocalizedText.Adapter.class)
+@JsonSerializable
 public final class LocalizedText {
     private final @Nullable String value;
     private final @Nullable Map<String, String> localizedValues;
 
-    public LocalizedText(String value) {
+    public LocalizedText(@Nullable String value) {
         this.value = value;
         this.localizedValues = null;
     }
 
-    public LocalizedText(@NotNull Map<String, String> localizedValues) {
+    public LocalizedText(Map<String, String> localizedValues) {
         this.value = null;
         this.localizedValues = Objects.requireNonNull(localizedValues);
     }
 
-    public String getText(@NotNull List<Locale> candidates) {
+    public @Nullable String getText(List<Locale> candidates) {
         if (localizedValues != null) {
             for (Locale locale : candidates) {
                 String value = localizedValues.get(LocaleUtils.toLanguageKey(locale));
@@ -59,7 +62,7 @@ public final class LocalizedText {
     static final class Adapter extends TypeAdapter<LocalizedText> {
 
         @Override
-        public LocalizedText read(JsonReader jsonReader) throws IOException {
+        public @Nullable LocalizedText read(JsonReader jsonReader) throws IOException {
             JsonToken nextToken = jsonReader.peek();
             if (nextToken == JsonToken.NULL) {
                 return null;
@@ -84,7 +87,7 @@ public final class LocalizedText {
         }
 
         @Override
-        public void write(JsonWriter jsonWriter, LocalizedText localizedText) throws IOException {
+        public void write(JsonWriter jsonWriter, @Nullable LocalizedText localizedText) throws IOException {
             if (localizedText == null) {
                 jsonWriter.nullValue();
             } else if (localizedText.localizedValues != null) {
