@@ -103,6 +103,7 @@ public final class LegacyConfigMigrator {
 
             LauncherState launcherState = extractLauncherState(jsonObject);
             AuthlibInjectorServerList authlibInjectorServers = extractAuthlibInjectorServers(jsonObject);
+            JsonElement legacyAllowAutoAgent = jsonObject.remove("allowAutoAgent");
             migrateLegacyLanguage(jsonObject);
             migrateLegacySelectedVersions(jsonObject);
             @Nullable GameDirectories migratedGameDirectories = extractGameDirectoriesFromConfigJson(jsonObject);
@@ -118,6 +119,7 @@ public final class LegacyConfigMigrator {
 
             GameSettingsPresets gameSettingsPresets = new GameSettingsPresets();
             migrateLegacyPresetSettings(gameDirectories, gameSettingsPresets, legacyConfigurations);
+            migrateLegacyAllowAutoAgent(deserialized, gameSettingsPresets, legacyAllowAutoAgent);
             return new MigrationResult(path, deserialized, gameDirectories, gameSettingsPresets,
                     launcherState, authlibInjectorServers, deserialized.toJson());
         } catch (JsonParseException e) {
@@ -191,6 +193,32 @@ public final class LegacyConfigMigrator {
             case "zh" -> "zh-Hant";
             default -> primitive.getAsString();
         });
+    }
+
+    /// Migrates the legacy workspace-wide automatic Java agent permission into game setting presets.
+    static void migrateLegacyAllowAutoAgent(
+            Config config,
+            GameSettingsPresets gameSettingsPresets,
+            @Nullable JsonElement legacyAllowAutoAgent) {
+        Objects.requireNonNull(config);
+        Objects.requireNonNull(gameSettingsPresets);
+
+        if (!(legacyAllowAutoAgent instanceof JsonPrimitive primitive)
+                || !primitive.isBoolean()
+                || !primitive.getAsBoolean()) {
+            return;
+        }
+
+        if (gameSettingsPresets.getPresets().isEmpty()) {
+            GameSettings.Preset preset = new GameSettings.Preset(gameSettingsPresets.newPresetId());
+            preset.nameProperty().setValue("Default");
+            gameSettingsPresets.getPresets().add(preset);
+            config.setDefaultGameSettingsPreset(preset.idProperty().getValue());
+        }
+
+        for (GameSettings.Preset preset : gameSettingsPresets.getPresets()) {
+            preset.allowAutoAgentProperty().setValue(true);
+        }
     }
 
     /// Extracts game directory data from a legacy config JSON object and removes the legacy members.

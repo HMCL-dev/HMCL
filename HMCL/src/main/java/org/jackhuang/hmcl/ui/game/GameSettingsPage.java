@@ -398,6 +398,11 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
             launcherSettings.getContent().add(launcherVisibilityPane);
             launcherVisibilityPane.setTitle(i18n("settings.advanced.launcher_visible"));
 
+            var allowAutoAgentPane = createInheritableBooleanButton(GameSettings::allowAutoAgentProperty);
+            launcherSettings.getContent().add(allowAutoAgentPane);
+            allowAutoAgentPane.setTitle(i18n("settings.launcher.allow_auto_agent"));
+            allowAutoAgentPane.setSubtitle(i18n("settings.launcher.allow_auto_agent.subtitle"));
+
             // Game Window Setting
             var windowTypeSublist = new ComponentSublist();
             gameSettings.getContent().add(windowTypeSublist);

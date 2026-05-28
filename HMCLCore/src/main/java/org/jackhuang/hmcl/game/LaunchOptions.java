@@ -61,6 +61,7 @@ public class LaunchOptions implements Serializable {
     private boolean useNativeGLFW;
     private boolean useNativeOpenAL;
     private boolean enableDebugLogOutput;
+    private boolean allowAutoAgent;
     private boolean daemon;
 
     /**
@@ -265,6 +266,10 @@ public class LaunchOptions implements Serializable {
         return enableDebugLogOutput;
     }
 
+    public boolean isAllowAutoAgent() {
+        return allowAutoAgent;
+    }
+
     /**
      * Will launcher keeps alive after game launched or not.
      */
@@ -467,6 +472,11 @@ public class LaunchOptions implements Serializable {
 
         public Builder setEnableDebugLogOutput(boolean u) {
             options.enableDebugLogOutput = u;
+            return this;
+        }
+
+        public Builder setAllowAutoAgent(boolean allowAutoAgent) {
+            options.allowAutoAgent = allowAutoAgent;
             return this;
         }
     }

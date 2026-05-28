@@ -19,6 +19,7 @@ package org.jackhuang.hmcl.setting;
 
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
+import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.junit.jupiter.api.Test;
 
@@ -63,5 +64,41 @@ public final class ConfigMigrationTest {
 
         assertEquals("zh-Hant", settings.get("language").getAsString());
         assertEquals("zh-Hant", config.getLanguage().getName());
+    }
+
+    /// Tests migrating the legacy workspace-wide automatic Java agent permission into game settings.
+    @Test
+    public void migratesLegacyAllowAutoAgentToGameSettings() {
+        JsonObject settings = JsonParser.parseString("""
+                {
+                  "allowAutoAgent": true
+                }
+                """).getAsJsonObject();
+
+        Config config = new Config();
+        GameSettingsPresets gameSettingsPresets = new GameSettingsPresets();
+
+        LegacyConfigMigrator.migrateLegacyAllowAutoAgent(
+                config,
+                gameSettingsPresets,
+                settings.remove("allowAutoAgent"));
+        JsonObject serializedConfig = JsonParser.parseString(config.toJson()).getAsJsonObject();
+        JsonObject serializedGameSettings = JsonParser.parseString(
+                JsonUtils.GSON.toJson(gameSettingsPresets, GameSettingsPresets.class)
+        ).getAsJsonObject();
+
+        assertFalse(settings.has("allowAutoAgent"));
+        assertFalse(serializedConfig.has("allowAutoAgent"));
+        assertEquals(1, gameSettingsPresets.getPresets().size());
+
+        GameSettings.Preset preset = gameSettingsPresets.getPresets().get(0);
+        assertEquals(preset.idProperty().getValue(), config.getDefaultGameSettingsPreset());
+        assertTrue(preset.allowAutoAgentProperty().getValue());
+        assertTrue(serializedGameSettings
+                .getAsJsonArray("presets")
+                .get(0)
+                .getAsJsonObject()
+                .get("allowAutoAgent")
+                .getAsBoolean());
     }
 }

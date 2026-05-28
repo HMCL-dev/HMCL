@@ -411,6 +411,18 @@ public sealed abstract class GameSettings extends ObservableSetting {
         return launcherVisibility;
     }
 
+    /// Property name for allowing HMCL to modify the game with Java agents.
+    public static final String PROPERTY_ALLOW_AUTO_AGENT = "allowAutoAgent";
+
+    /// If `true`, HMCL may attach Java agents to improve the game experience.
+    @SerializedName(PROPERTY_ALLOW_AUTO_AGENT)
+    private final InheritableProperty<Boolean> allowAutoAgent = newInheritableProperty(PROPERTY_ALLOW_AUTO_AGENT, false);
+
+    /// Returns the automatic Java agent permission property.
+    public InheritableProperty<Boolean> allowAutoAgentProperty() {
+        return allowAutoAgent;
+    }
+
     /// Property name for customized game arguments.
     public static final String PROPERTY_GAME_ARGS = "gameArgs";
 
@@ -907,6 +919,11 @@ public sealed abstract class GameSettings extends ObservableSetting {
         /// Returns the effective launcher visibility.
         public LauncherVisibility getLauncherVisibility() {
             return inheritable(preset, instance, GameSettings::launcherVisibilityProperty);
+        }
+
+        /// Returns whether HMCL may attach Java agents to improve the game experience.
+        public boolean isAllowAutoAgent() {
+            return inheritable(preset, instance, GameSettings::allowAutoAgentProperty);
         }
 
         /// Returns the effective game arguments.

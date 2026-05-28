@@ -615,21 +615,6 @@ public final class Config extends ObservableSetting {
         this.disableAutoGameOptions.set(disableAutoGameOptions);
     }
 
-    @SerializedName("allowAutoAgent")
-    private final BooleanProperty allowAutoAgent = new SimpleBooleanProperty(false);
-
-    public BooleanProperty allowAutoAgentProperty() {
-        return allowAutoAgent;
-    }
-
-    public boolean getAllowAutoAgent() {
-        return allowAutoAgent.get();
-    }
-
-    public void setAllowAutoAgent(boolean allowAutoAgent) {
-        this.allowAutoAgent.set(allowAutoAgent);
-    }
-
     /// The selected game directory ID.
     @SerializedName(SELECTED_GAME_DIRECTORY_MEMBER_NAME)
     private final ObjectProperty<@Nullable GUID> selectedGameDirectory =

@@ -65,7 +65,6 @@ import java.util.stream.Collectors;
 
 import static javafx.application.Platform.runLater;
 import static javafx.application.Platform.setImplicitExit;
-import static org.jackhuang.hmcl.setting.ConfigHolder.config;
 import static org.jackhuang.hmcl.setting.ConfigHolder.state;
 import static org.jackhuang.hmcl.ui.FXUtils.runInFX;
 import static org.jackhuang.hmcl.util.DataSizeUnit.MEGABYTES;
@@ -201,7 +200,7 @@ public final class LauncherHelper {
                 }).withStage("launch.state.dependencies")
                 .thenComposeAsync(() -> gameVersion.map(s -> new GameVerificationFixTask(dependencyManager, s, version.get())).orElse(null))
                 .thenComposeAsync(() -> {
-                    if (config().getAllowAutoAgent()
+                    if (setting.isAllowAutoAgent()
                             || setting.isNoJVMOptions()
                             || setting.isNoOptimizingJVMOptions()
                             || Boolean.TRUE.equals(state().getShownTips().get(LWJGL_3_4_1_TIP))
@@ -212,7 +211,7 @@ public final class LauncherHelper {
                         runInFX(() -> {
                             Controllers.confirm(i18n("launch.advice.lwjgl_3_4_1"), i18n("launch.advice.lwjgl_3_4_1.title"), MessageType.QUESTION, () -> {
                                 state().getShownTips().put(LWJGL_3_4_1_TIP, true);
-                                config().setAllowAutoAgent(true);
+                                enableAutoAgentForCurrentSetting();
                                 future.complete(null);
                             }, () -> {
                                 state().getShownTips().put(LWJGL_3_4_1_TIP, true);
@@ -772,6 +771,16 @@ public final class LauncherHelper {
                     Launcher.stopWithoutPlatform();
                 });
                 break;
+        }
+    }
+
+    private void enableAutoAgentForCurrentSetting() {
+        GameSettings.Instance instance = setting.getInstance();
+        if (instance != null
+                && instance.getOverrideProperties().contains(GameSettings.PROPERTY_ALLOW_AUTO_AGENT)) {
+            instance.allowAutoAgentProperty().setValue(true);
+        } else {
+            setting.getPreset().allowAutoAgentProperty().setValue(true);
         }
     }
 

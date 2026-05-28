@@ -159,7 +159,7 @@ public final class HMCLGameLauncher extends DefaultLauncher {
     protected void appendJvmArgs(CommandBuilder result) {
         super.appendJvmArgs(result);
 
-        if (config().getAllowAutoAgent()
+        if (options.isAllowAutoAgent()
                 && !options.isNoGeneratedJVMArgs()
                 && !options.isNoGeneratedOptimizingJVMArgs()
                 && NativePatcher.needPatchMemoryUtil(version, options.getJava().getParsedVersion())) {
