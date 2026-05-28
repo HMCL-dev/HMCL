@@ -91,7 +91,7 @@ public final class SupportedLocale {
 
     SupportedLocale() {
         this.isDefault = true;
-        this.name = "def"; // TODO: Change to "default" after updating the Config format
+        this.name = "default";
 
         String language = System.getenv("HMCL_LANGUAGE");
         if (StringUtils.isBlank(language)) {
