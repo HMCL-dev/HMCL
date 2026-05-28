@@ -1,49 +1,35 @@
-# Complete GameSettings Migration Plan
+# GameSettings Migration Notes
 
-## Summary
+## Current Storage Layout
 
-Migrate game settings from the old JSON format to the new `GameSettings` model. Global game setting presets will become a list of `GameSettings.Preset` entries stored in `game-settings.json`; each preset has a `UUID` and editable `name`. Instance settings will be stored in `versions/<id>/.hmcl/instance-game-settings.json`. The old `hmclversion.cfg` files and old `Profile.global` data must remain untouched. Launching, exporting, installing, and the settings UI should all read effective `GameSettings` values.
+- `settings.json` stores launcher configuration that is still part of the main workspace config.
+- `state.json` stores launcher UI/runtime state.
+- `authlib-injector-servers.json` stores authlib-injector server entries.
+- `game-directories.json` stores game directory profiles.
+- `game-settings.json` stores reusable `GameSettings.Preset` entries.
+- `game-accounts.json` stores account storage entries in an object with an `accounts` list.
+- `versions/<id>/.hmcl/instance-game-settings.json` stores instance-specific game settings.
 
-## Key Changes
+## Migration Rules
 
-- Extend the data model:
-  - Add `UUID id` and `String name` to `GameSettings.Preset`.
-  - Add `GameSettingsPresets` for `ObservableList<GameSettings.Preset> presets`, with `UUID defaultGameSettingsPreset` stored in `Config`.
-  - Add a migration-only `legacyGameSettingsParent` field to `Profile` to record the global setting UUID converted from that profile's old global setting.
-  - Resolve `GameSettings.Instance.parent` as follows: explicit instance parent first, then `defaultGameSettingsPreset`; during migration only, an unsaved converted old instance may use `Profile.legacyGameSettingsParent`.
-- Implement compatibility migration:
-  - If the new preset list is absent, convert each old `Profile.global` into one `GameSettings.Preset`, name it from the profile display name, generate a deterministic UUID from the legacy profile key, and write that UUID into `legacyGameSettingsParent`.
-  - If a deterministic migration UUID is already occupied by another global setting, fall back to a newly generated unique random UUID for that migrated setting.
-  - Load instance settings from `.hmcl/instance-game-settings.json` first. If missing, convert old `hmclversion.cfg` into a transient `GameSettings.Instance`.
-  - Do not rewrite old config files. Create `.hmcl/instance-game-settings.json` only after the user changes instance settings or the repository explicitly saves the new instance setting.
-  - If multiple old profiles share the same physical instance with different legacy parents, the first saved new instance setting wins; later conflicts should only be logged.
-- Define effective setting resolution:
-  - Memory settings are inherited or overridden as a group.
-  - `jvmOptions`, `gameArgs`, and `environmentVariables` are inherited or overridden as complete values. They do not merge global and instance text.
-  - `commandWrapper`, `preLaunchCommand`, and `postExitCommand` inherit per field and do not merge.
-  - Java, window, Quick Play, logging, renderer, native library, and check-related options inherit per field.
-  - `GameWindowType.MAXIMIZED` is saved and displayed only; launching should currently treat it like a normal windowed launch.
-- Finish UI and launch integration:
-  - Make `GameSettingsPage` load and save real settings instead of creating temporary test objects.
-  - Add global setting management UI for selecting, creating, renaming, copying, deleting global settings, and setting `defaultGameSettingsPreset`.
-  - Add instance UI for selecting or clearing parent UUID, showing inherited source, and binding all existing controls to `GameSettings`.
-  - Update `HMCLGameRepository`, `LauncherHelper`, export, and install flows to use effective `GameSettings`.
-  - Support Quick Play values for none, multiplayer, singleplayer, and realms.
-  - Apply `defaultGameSettingsPreset.defaultIsolationType` when deciding the default isolation strategy for newly installed instances.
+- Legacy `hmcl.json` and `.hmcl.json` are read as migration inputs and left untouched.
+- Legacy `accounts` fields are extracted from the main config into `game-accounts.json`.
+- Legacy global `accounts.json` is used only as a migration input when global `game-accounts.json` does not exist.
+- Legacy `authlibInjectorServers` and `addedLittleSkin` fields are extracted into `authlib-injector-servers.json`.
+- Legacy profile data from `configurations` is converted into `game-directories.json`.
+- Legacy profile global settings are converted into `GameSettings.Preset` entries.
+- Legacy per-instance `hmclversion.cfg` files are converted into `GameSettings.Instance` data.
 
-## Test Plan
+## Compatibility Constraints
 
-- Run IDEA build and `./gradlew -g .gradle-user-home compileJava test`.
-- Add unit tests for old JSON to `GameSettings` conversion, deterministic migration UUIDs, parent fallback, override behavior, and old-file preservation.
-- Verify these integration scenarios:
-  - A launcher with only old config starts, opens settings, and creates the global setting list plus migration UUIDs.
-  - Editing an instance creates only `.hmcl/instance-game-settings.json` and does not modify `hmclversion.cfg`.
-  - Different instance parent UUIDs produce different effective launch options.
-  - JVM options, game arguments, and environment variables inherit from the selected global setting unless the instance explicitly overrides them.
-  - Quick Play creates the correct `QuickPlayOption` for multiplayer, singleplayer, and realms.
+- Old config files should not be rewritten during migration.
+- New detached files should be created only through the new storage model.
+- Instance settings should resolve effective values from their selected parent preset.
+- Inheritable fields should preserve explicit overrides and default to parent values when not overridden.
 
-## Assumptions
+## Verification Focus
 
-- The new instance setting file name is `.hmcl/instance-game-settings.json`.
-- Old local settings are read as raw JSON and immediately converted into `GameSettings.Instance`; runtime paths should never keep old setting objects.
-- Deleting a `GameSettings.Preset` that is used as the default or referenced by an instance should be blocked, or the user must switch references first.
+- Loading an old config should create detached files without losing selected account, selected directory, or selected instance state.
+- Editing accounts should update `game-accounts.json`, not `settings.json`.
+- Existing global `accounts.json` should migrate to global `game-accounts.json`.
+- Launch, export, install, and settings UI flows should read effective `GameSettings` values.
