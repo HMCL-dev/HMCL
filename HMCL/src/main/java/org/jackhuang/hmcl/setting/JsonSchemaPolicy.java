@@ -50,6 +50,10 @@ final class JsonSchemaPolicy {
             LOG.warning("Invalid schema in " + displayName + ": "
                     + location + ", Actual: " + schema.invalidValue());
             return Result.UNREADABLE;
+        } else if (schema.isUnparseable()) {
+            LOG.warning("Unparseable schema in " + displayName + ": "
+                    + location + ", Actual: " + schema.actual());
+            return Result.UNREADABLE;
         } else if (schema.isUnexpectedId()) {
             LOG.warning("Unexpected " + displayName + " schema. Expected: "
                     + expected + ", Actual: " + schema.actual());

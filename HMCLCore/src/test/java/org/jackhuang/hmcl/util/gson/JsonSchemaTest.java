@@ -36,10 +36,25 @@ public final class JsonSchemaTest {
 
         JsonSchema schema = JsonSchema.readFromMember(object);
 
+        assertTrue(schema.isParsed());
         assertEquals("settings", schema.id());
         assertEquals(new JsonSchema.Version(3, 0), schema.version());
         assertEquals(schemaUrl("settings", "3.0"), schema.url());
         assertEquals(schemaUrl("settings", "3.0"), schema.toString());
+    }
+
+    /// Tests reading schema strings that are not HMCL schema URLs.
+    @Test
+    public void readsUnparseableSchemaString() {
+        JsonObject object = new JsonObject();
+        object.addProperty(JsonSchema.DEFAULT_MEMBER_NAME, "https://json-schema.org/draft/2020-12/schema");
+
+        JsonSchema schema = JsonSchema.readFromMember(object);
+
+        assertFalse(schema.isParsed());
+        assertNull(schema.id());
+        assertNull(schema.version());
+        assertEquals("https://json-schema.org/draft/2020-12/schema", schema.url());
     }
 
     /// Tests serialization of schema URL strings.
@@ -53,6 +68,17 @@ public final class JsonSchemaTest {
         assertEquals(schema, JsonUtils.GSON.fromJson(serialized, JsonSchema.class));
     }
 
+    /// Tests serialization of arbitrary schema strings.
+    @Test
+    public void serializesUnparseableSchemaString() {
+        JsonSchema schema = new JsonSchema("custom-schema");
+
+        JsonElement serialized = JsonParser.parseString(JsonUtils.GSON.toJson(schema));
+
+        assertEquals("custom-schema", serialized.getAsString());
+        assertEquals(schema, JsonUtils.GSON.fromJson(serialized, JsonSchema.class));
+    }
+
     /// Tests schema URL compatibility check statuses.
     @Test
     public void checksSchema() {
@@ -63,14 +89,19 @@ public final class JsonSchemaTest {
         assertTrue(missing.isMissing());
 
         object.addProperty(JsonSchema.DEFAULT_MEMBER_NAME, "hmcl.config/3.x");
+        JsonSchema.CheckResult unparseable = JsonSchema.check(object, expected);
+        assertTrue(unparseable.isUnparseable());
+        assertEquals("hmcl.config/3.x", unparseable.actual().url());
+
+        object.add(JsonSchema.DEFAULT_MEMBER_NAME, new JsonObject());
         JsonSchema.CheckResult invalid = JsonSchema.check(object, expected);
         assertTrue(invalid.isInvalid());
-        assertEquals("\"hmcl.config/3.x\"", invalid.invalidValue());
+        assertEquals("{}", invalid.invalidValue());
 
         object.addProperty(JsonSchema.DEFAULT_MEMBER_NAME, schemaUrl("settings", "3.x"));
         JsonSchema.CheckResult invalidVersion = JsonSchema.check(object, expected);
-        assertTrue(invalidVersion.isInvalid());
-        assertEquals("\"" + schemaUrl("settings", "3.x") + "\"", invalidVersion.invalidValue());
+        assertTrue(invalidVersion.isUnparseable());
+        assertEquals(schemaUrl("settings", "3.x"), invalidVersion.actual().url());
 
         object.addProperty(JsonSchema.DEFAULT_MEMBER_NAME, schemaUrl("game-settings", "1.0"));
         JsonSchema.CheckResult unexpected = JsonSchema.check(object, expected);

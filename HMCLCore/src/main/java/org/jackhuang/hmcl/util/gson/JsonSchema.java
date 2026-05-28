@@ -34,27 +34,29 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.Objects;
 
-/// Identifies the JSON schema used by a serialized file.
+/// Stores a raw JSON schema string and, when possible, its parsed HMCL schema identifier.
 ///
-/// The JSON representation is a schema URL in the following fixed form:
+/// The JSON representation is always a string. HMCL-owned schemas use the following
+/// fixed URL form, but other strings can still be represented as unparseable schemas:
 ///
 /// `https://schemas.glavo.site/hmcl/<id>/<version>/<id>-<version>.schema.json`
 ///
-/// Schema URLs use the following compatibility policy:
+/// Parsed HMCL schemas use the following compatibility policy:
 ///
+/// - When the schema string is not parseable as an HMCL schema URL, the file must be rejected.
 /// - When the schema ID differs from the expected schema, the file must be rejected.
 /// - When the major version differs from the supported schema, the file must be rejected.
 /// - When only the minor version is newer, the file may be read but must not be overwritten.
 /// - When both major and minor versions match, the file may be read and saved normally.
 ///
-/// @param id the stable schema identifier
-/// @param version the schema version
+/// @param value the raw JSON schema string
+/// @param parsed the parsed HMCL schema identifier, or `null` when the string is not parseable
 /// @author Glavo
 @JsonSerializable
 @JsonAdapter(JsonSchema.Adapter.class)
 @NotNullByDefault
-public record JsonSchema(String id, Version version) {
-    /// The default JSON member name used for schema URLs.
+public record JsonSchema(String value, @Nullable Parsed parsed) {
+    /// The default JSON member name used for schema strings.
     public static final String DEFAULT_MEMBER_NAME = "$schema";
 
     /// The schema URL scheme.
@@ -69,88 +71,64 @@ public record JsonSchema(String id, Version version) {
     /// The schema file suffix.
     private static final String FILE_SUFFIX = ".schema.json";
 
-    /// @param id the stable schema identifier
-    /// @param version the schema version
+    /// @param value the raw JSON schema string
+    /// @param parsed the parsed HMCL schema identifier, or `null` when the string is not parseable
     public JsonSchema {
-        Objects.requireNonNull(id);
-        Objects.requireNonNull(version);
-
-        if (!isValidId(id)) {
-            throw new IllegalArgumentException("Invalid JSON schema ID: " + id);
+        Objects.requireNonNull(value);
+        if (parsed != null && !value.equals(parsed.url())) {
+            throw new IllegalArgumentException("Parsed schema does not match raw schema string: " + value);
         }
     }
 
-    /// Parses a schema URL.
+    /// Creates a schema from any raw string value.
+    ///
+    /// @param value the raw JSON schema string
+    public JsonSchema(String value) {
+        this(value, parseCanonicalUrl(value));
+    }
+
+    /// Creates a parsed HMCL schema from an ID and version.
+    ///
+    /// @param id the stable schema identifier
+    /// @param version the schema version
+    public JsonSchema(String id, Version version) {
+        this(new Parsed(id, version));
+    }
+
+    /// Creates a schema from a parsed HMCL schema identifier.
+    private JsonSchema(Parsed parsed) {
+        this(parsed.url(), parsed);
+    }
+
+    /// Parses a canonical HMCL schema URL.
     ///
     /// @param url the schema URL
-    /// @return the parsed schema identifier
-    /// @throws JsonParseException if the schema URL is invalid
+    /// @return the parsed schema
+    /// @throws JsonParseException if the schema URL is not a canonical HMCL schema URL
     public static JsonSchema parseUrl(String url) throws JsonParseException {
-        Objects.requireNonNull(url);
-
-        URI uri;
-        try {
-            uri = new URI(url);
-        } catch (URISyntaxException e) {
-            throw new JsonParseException("Invalid JSON schema URL: " + url, e);
-        }
-
-        if (!SCHEME.equals(uri.getScheme())
-                || !HOST.equals(uri.getHost())
-                || uri.getPort() != -1
-                || uri.getUserInfo() != null
-                || uri.getQuery() != null
-                || uri.getFragment() != null) {
+        @Nullable Parsed parsed = parseCanonicalUrl(url);
+        if (parsed == null) {
             throw new JsonParseException("Invalid JSON schema URL: " + url);
         }
 
-        String[] segments = uri.getPath().split("/", -1);
-        if (segments.length != 5 || !segments[0].isEmpty() || !ROOT_PATH.equals(segments[1])) {
-            throw new JsonParseException("Invalid JSON schema URL path: " + url);
-        }
-
-        String id = segments[2];
-        String versionString = segments[3];
-        String fileName = segments[4];
-        if (!isValidId(id)) {
-            throw new JsonParseException("Invalid JSON schema ID: " + id);
-        }
-
-        Version version;
-        try {
-            version = Version.parse(versionString);
-        } catch (IllegalArgumentException e) {
-            throw new JsonParseException("Invalid JSON schema version: " + versionString, e);
-        }
-
-        String canonicalVersion = version.toString();
-        if (!versionString.equals(canonicalVersion)) {
-            throw new JsonParseException("Non-canonical JSON schema version: " + versionString);
-        }
-
-        String expectedFileName = id + "-" + canonicalVersion + FILE_SUFFIX;
-        if (!expectedFileName.equals(fileName)) {
-            throw new JsonParseException("Invalid JSON schema file name: " + fileName);
-        }
-
-        return new JsonSchema(id, version);
+        return new JsonSchema(parsed);
     }
 
-    /// Reads a schema URL from the default schema member of a container object.
+    /// Reads a schema string from the default schema member of a container object.
     ///
     /// @param object the container object that contains the schema member
-    /// @return the parsed schema identifier
-    /// @throws JsonParseException if the schema member is missing or invalid
+    /// @return the schema string and optional parsed identifier
+    /// @throws JsonParseException if the schema member is missing or is not a string
     public static JsonSchema readFromMember(JsonObject object) throws JsonParseException {
         return readFromMember(object, DEFAULT_MEMBER_NAME);
     }
 
-    /// Reads a schema URL from a member of a container object.
+    /// Reads a schema string from a member of a container object.
     ///
     /// @param object the container object that contains the schema member
     /// @param memberName the JSON member name
-    /// @return the parsed schema identifier
-    /// @throws JsonParseException if the schema member is missing or invalid
+    /// @return the schema string and optional parsed identifier
+    /// @throws JsonParseException if the schema member is missing or is not a string
     public static JsonSchema readFromMember(JsonObject object, String memberName) throws JsonParseException {
         Objects.requireNonNull(object);
         Objects.requireNonNull(memberName);
@@ -160,16 +138,16 @@ public record JsonSchema(String id, Version version) {
 
     /// Reads and checks the default schema member of a JSON object.
     ///
-    /// @param object the JSON object that contains the schema URL
+    /// @param object the JSON object that contains the schema string
     /// @param expected the schema supported by the current code
     /// @return the schema check result
     public static CheckResult check(JsonObject object, JsonSchema expected) {
         return check(object, DEFAULT_MEMBER_NAME, expected);
     }
 
-    /// Reads and checks a schema URL JSON object member.
+    /// Reads and checks a schema string JSON object member.
     ///
-    /// @param object the JSON object that contains the schema URL
+    /// @param object the JSON object that contains the schema string
     /// @param memberName the JSON member name
     /// @param expected the schema supported by the current code
     /// @return the schema check result
@@ -177,43 +155,118 @@ public record JsonSchema(String id, Version version) {
         Objects.requireNonNull(object);
         Objects.requireNonNull(memberName);
         Objects.requireNonNull(expected);
+        if (!expected.isParsed()) {
+            throw new IllegalArgumentException("Expected JSON schema must be parseable: " + expected);
+        }
 
         if (!object.has(memberName)) {
             return new CheckResult(null, expected, CheckResult.Status.MISSING, null);
         }
 
+        JsonSchema actual;
         try {
-            JsonSchema actual = readFromMember(object, memberName);
-            return new CheckResult(actual, expected, actual.id.equals(expected.id)
-                    ? CheckResult.Status.VALID
-                    : CheckResult.Status.UNEXPECTED_ID, null);
+            actual = readFromMember(object, memberName);
         } catch (JsonParseException e) {
             return new CheckResult(null, expected, CheckResult.Status.INVALID, String.valueOf(object.get(memberName)));
         }
+
+        @Nullable Parsed actualParsed = actual.parsed;
+        if (actualParsed == null) {
+            return new CheckResult(actual, expected, CheckResult.Status.UNPARSEABLE, null);
+        }
+
+        return new CheckResult(actual, expected, actualParsed.id.equals(Objects.requireNonNull(expected.parsed).id)
+                ? CheckResult.Status.VALID
+                : CheckResult.Status.UNEXPECTED_ID, null);
     }
 
-    /// Parses a schema URL from a JSON element.
+    /// Parses a schema string from a JSON element.
     private static JsonSchema parseElement(@Nullable JsonElement element, String source) throws JsonParseException {
         if (!(element instanceof JsonPrimitive primitive) || !primitive.isString()) {
             throw new JsonParseException("Invalid JSON schema " + source + ": " + element);
         }
 
+        return new JsonSchema(primitive.getAsString());
+    }
+
+    /// Parses a canonical HMCL schema URL, returning `null` for any other string.
+    private static @Nullable Parsed parseCanonicalUrl(String value) {
+        Objects.requireNonNull(value);
+
+        URI uri;
         try {
-            return parseUrl(primitive.getAsString());
-        } catch (JsonParseException e) {
-            throw new JsonParseException("Invalid JSON schema " + source + ": " + element, e);
+            uri = new URI(value);
+        } catch (URISyntaxException e) {
+            return null;
         }
+
+        @Nullable String path = uri.getPath();
+        if (!SCHEME.equals(uri.getScheme())
+                || !HOST.equals(uri.getHost())
+                || uri.getPort() != -1
+                || uri.getUserInfo() != null
+                || uri.getQuery() != null
+                || uri.getFragment() != null
+                || path == null) {
+            return null;
+        }
+
+        String[] segments = path.split("/", -1);
+        if (segments.length != 5 || !segments[0].isEmpty() || !ROOT_PATH.equals(segments[1])) {
+            return null;
+        }
+
+        String id = segments[2];
+        String versionString = segments[3];
+        String fileName = segments[4];
+        if (!isValidId(id)) {
+            return null;
+        }
+
+        Version version;
+        try {
+            version = Version.parse(versionString);
+        } catch (IllegalArgumentException e) {
+            return null;
+        }
+
+        String canonicalVersion = version.toString();
+        if (!versionString.equals(canonicalVersion)) {
+            return null;
+        }
+
+        String expectedFileName = id + "-" + canonicalVersion + FILE_SUFFIX;
+        if (!expectedFileName.equals(fileName)) {
+            return null;
+        }
+
+        return new Parsed(id, version);
     }
 
-    /// Returns the canonical schema URL.
+    /// Returns whether this schema string is parseable as an HMCL schema URL.
+    public boolean isParsed() {
+        return parsed != null;
+    }
+
+    /// Returns the parsed HMCL schema ID, or `null` when the schema string is not parseable.
+    public @Nullable String id() {
+        return parsed != null ? parsed.id : null;
+    }
+
+    /// Returns the parsed HMCL schema version, or `null` when the schema string is not parseable.
+    public @Nullable Version version() {
+        return parsed != null ? parsed.version : null;
+    }
+
+    /// Returns the raw schema string.
     public String url() {
-        return SCHEME + "://" + HOST + "/" + ROOT_PATH + "/" + id + "/" + version + "/" + id + "-" + version + FILE_SUFFIX;
+        return value;
     }
 
-    /// Returns the canonical schema URL.
+    /// Returns the raw schema string.
     @Override
     public String toString() {
-        return url();
+        return value;
     }
 
     /// Returns whether a schema ID is valid.
@@ -237,12 +290,35 @@ public record JsonSchema(String id, Version version) {
         return true;
     }
 
-    /// Result of checking a serialized schema URL against the schema supported by the current code.
+    /// Parsed identifier for an HMCL schema URL.
     ///
-    /// @param actual the schema read from serialized data, or `null` when no valid schema was read
+    /// @param id the stable schema identifier
+    /// @param version the schema version
+    @NotNullByDefault
+    public record Parsed(String id, Version version) {
+        /// @param id the stable schema identifier
+        /// @param version the schema version
+        public Parsed {
+            Objects.requireNonNull(id);
+            Objects.requireNonNull(version);
+
+            if (!isValidId(id)) {
+                throw new IllegalArgumentException("Invalid JSON schema ID: " + id);
+            }
+        }
+
+        /// Returns the canonical schema URL.
+        public String url() {
+            return SCHEME + "://" + HOST + "/" + ROOT_PATH + "/" + id + "/" + version + "/" + id + "-" + version + FILE_SUFFIX;
+        }
+    }
+
+    /// Result of checking a serialized schema string against the schema supported by the current code.
+    ///
+    /// @param actual the schema string read from serialized data, or `null` when no schema string was read
     /// @param expected the schema supported by the current code
     /// @param status the schema check status
-    /// @param invalidValue the raw invalid JSON value text, or `null` when the member is valid or missing
+    /// @param invalidValue the raw invalid JSON value text, or `null` when the member is a string or is missing
     public record CheckResult(@Nullable JsonSchema actual,
                               JsonSchema expected,
                               Status status,
@@ -255,8 +331,11 @@ public record JsonSchema(String id, Version version) {
             /// No schema member exists.
             MISSING,
 
-            /// A schema member exists but cannot be parsed.
+            /// A schema member exists but is not a string.
             INVALID,
+
+            /// A schema member exists as a string but cannot be parsed as an HMCL schema URL.
+            UNPARSEABLE,
 
             /// A schema member exists and was parsed, but its ID differs from the expected ID.
             UNEXPECTED_ID
@@ -264,17 +343,29 @@ public record JsonSchema(String id, Version version) {
 
         /// Creates a schema check result.
         ///
-        /// @param actual the schema read from serialized data, or `null` when no valid schema was read
+        /// @param actual the schema string read from serialized data, or `null` when no schema string was read
         /// @param expected the schema supported by the current code
         /// @param status the schema check status
-        /// @param invalidValue the raw invalid JSON value text, or `null` when the member is valid or missing
+        /// @param invalidValue the raw invalid JSON value text, or `null` when the member is a string or is missing
         public CheckResult {
             Objects.requireNonNull(expected);
             Objects.requireNonNull(status);
-            if (status == Status.VALID || status == Status.UNEXPECTED_ID) {
+            if (!expected.isParsed()) {
+                throw new IllegalArgumentException("Expected JSON schema must be parseable: " + expected);
+            }
+
+            if (status == Status.VALID || status == Status.UNEXPECTED_ID || status == Status.UNPARSEABLE) {
                 Objects.requireNonNull(actual);
             } else if (actual != null) {
-                throw new IllegalArgumentException("Only parsed JSON schema checks may have an actual schema");
+                throw new IllegalArgumentException("Only present JSON schema checks may have an actual schema");
+            }
+
+            if ((status == Status.VALID || status == Status.UNEXPECTED_ID) && !Objects.requireNonNull(actual).isParsed()) {
+                throw new IllegalArgumentException("Only parsed JSON schema checks may be valid or use an unexpected ID");
+            }
+
+            if (status == Status.UNPARSEABLE && Objects.requireNonNull(actual).isParsed()) {
+                throw new IllegalArgumentException("Only unparseable JSON schema strings may have the unparseable status");
             }
 
             if (status == Status.INVALID) {
@@ -289,9 +380,14 @@ public record JsonSchema(String id, Version version) {
             return status == Status.MISSING;
         }
 
-        /// Returns whether the serialized data contains an unparseable schema member.
+        /// Returns whether the serialized data contains a non-string schema member.
         public boolean isInvalid() {
             return status == Status.INVALID;
+        }
+
+        /// Returns whether the serialized data contains a schema string that is not parseable as an HMCL schema URL.
+        public boolean isUnparseable() {
+            return status == Status.UNPARSEABLE;
         }
 
         /// Returns whether the serialized data uses an unexpected schema ID.
@@ -301,32 +397,34 @@ public record JsonSchema(String id, Version version) {
 
         /// Returns whether the serialized schema is newer than the supported schema.
         public boolean isNewerThanExpected() {
-            return status == Status.VALID && actual != null && actual.version.compareTo(expected.version) > 0;
+            return status == Status.VALID
+                    && Objects.requireNonNull(actual).parsed.version.compareTo(Objects.requireNonNull(expected.parsed).version) > 0;
         }
 
         /// Returns whether the serialized schema has a newer major version than the supported schema.
         public boolean hasNewerMajorVersion() {
-            return status == Status.VALID && actual != null && actual.version.major() > expected.version.major();
+            return status == Status.VALID
+                    && Objects.requireNonNull(actual).parsed.version.major() > Objects.requireNonNull(expected.parsed).version.major();
         }
     }
 
     /// Gson adapter for the JSON string representation of [JsonSchema].
     ///
     /// Null JSON values are preserved as null. Non-string values are rejected because
-    /// schemas are intentionally serialized as canonical URLs.
+    /// schemas are intentionally serialized as raw strings.
     @NotNullByDefault
     public static final class Adapter extends TypeAdapter<@Nullable JsonSchema> {
-        /// Writes the schema as a URL string, or JSON null when the value is null.
+        /// Writes the schema as a raw string, or JSON null when the value is null.
         @Override
         public void write(JsonWriter out, @Nullable JsonSchema value) throws IOException {
             if (value != null) {
-                out.value(value.url());
+                out.value(value.value);
             } else {
                 out.nullValue();
             }
         }
 
-        /// Reads a schema from a URL string or null JSON token.
+        /// Reads a schema from a raw string or null JSON token.
         @Override
         public @Nullable JsonSchema read(JsonReader in) throws IOException {
             JsonElement element = JsonParser.parseReader(in);
