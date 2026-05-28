@@ -49,6 +49,7 @@ import java.util.Collections;
 import java.util.List;
 
 import static org.jackhuang.hmcl.setting.ConfigHolder.config;
+import static org.jackhuang.hmcl.setting.ConfigHolder.gameAccountsToJson;
 import static org.jackhuang.hmcl.setting.ConfigHolder.getAuthlibInjectorServers;
 
 public final class ExportWizardProvider implements WizardProvider {
@@ -142,6 +143,7 @@ public final class ExportWizardProvider implements WizardProvider {
                     zip.putTextFile(
                             JsonUtils.GSON.toJson(exportedServers, AuthlibInjectorServerList.class),
                             ".hmcl/authlib-injector-servers.json");
+                    zip.putTextFile(gameAccountsToJson(), ".hmcl/game-accounts.json");
                     zip.putFile(tempModpack, ModpackTypeSelectionPage.MODPACK_TYPE_MODRINTH.equals(modpackType)
                             ? "modpack.mrpack"
                             : "modpack.zip");

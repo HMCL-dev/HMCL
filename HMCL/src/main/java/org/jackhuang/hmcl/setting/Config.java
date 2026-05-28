@@ -717,13 +717,6 @@ public final class Config extends ObservableSetting {
         this.selectedAccount.set(selectedAccount);
     }
 
-    @SerializedName("accounts")
-    private final ObservableList<Map<Object, Object>> accountStorages = FXCollections.observableArrayList();
-
-    public ObservableList<Map<Object, Object>> getAccountStorages() {
-        return accountStorages;
-    }
-
     /// JSON adapter for [Config].
     public static final class Adapter extends ObservableSetting.Adapter<Config> {
         /// Creates an empty config for deserialization.

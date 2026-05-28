@@ -21,7 +21,6 @@ import javafx.beans.InvalidationListener;
 import javafx.beans.Observable;
 import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.SimpleObjectProperty;
-import javafx.collections.FXCollections;
 import javafx.collections.ListChangeListener;
 import javafx.collections.ObservableList;
 import org.jackhuang.hmcl.Metadata;
@@ -35,9 +34,9 @@ import org.jackhuang.hmcl.auth.offline.OfflineAccountFactory;
 import org.jackhuang.hmcl.auth.yggdrasil.RemoteAuthenticationException;
 import org.jackhuang.hmcl.game.OAuthServer;
 import org.jackhuang.hmcl.task.Schedulers;
-import org.jackhuang.hmcl.util.FileSaver;
 import org.jackhuang.hmcl.util.io.JarUtils;
 import org.jackhuang.hmcl.util.skin.InvalidSkinException;
+import org.jetbrains.annotations.Nullable;
 
 import javax.net.ssl.SSLException;
 import java.io.IOException;
@@ -50,6 +49,7 @@ import java.util.*;
 import static java.util.stream.Collectors.toList;
 import static javafx.collections.FXCollections.observableArrayList;
 import static org.jackhuang.hmcl.setting.ConfigHolder.config;
+import static org.jackhuang.hmcl.setting.ConfigHolder.getAccountStorages;
 import static org.jackhuang.hmcl.setting.ConfigHolder.getAuthlibInjectorServers;
 import static org.jackhuang.hmcl.setting.ConfigHolder.globalConfig;
 import static org.jackhuang.hmcl.ui.FXUtils.onInvalidating;
@@ -122,7 +122,17 @@ public final class Accounts {
     }
 
     private static final String GLOBAL_PREFIX = "$GLOBAL:";
-    private static final ObservableList<Map<Object, Object>> globalAccountStorages = FXCollections.observableArrayList();
+    private static final Path GLOBAL_GAME_ACCOUNTS_LOCATION =
+            Metadata.HMCL_GLOBAL_DIRECTORY.resolve("game-accounts.json");
+    private static final Path LEGACY_GLOBAL_ACCOUNTS_LOCATION =
+            Metadata.HMCL_GLOBAL_DIRECTORY.resolve("accounts.json");
+    private static final JsonSettingFile<AccountStorages> GLOBAL_GAME_ACCOUNTS_FILE = new JsonSettingFile<>(
+            GLOBAL_GAME_ACCOUNTS_LOCATION,
+            "global game accounts",
+            AccountStorages.class,
+            AccountStorages.CURRENT_FORMAT,
+            AccountStorages::new);
+    private static @Nullable AccountStorages globalAccounts;
 
     private static final ObservableList<Account> accounts = observableArrayList(account -> new Observable[]{account});
     private static final ObjectProperty<Account> selectedAccount = new SimpleObjectProperty<>(Accounts.class, "selectedAccount");
@@ -156,24 +166,60 @@ public final class Accounts {
                 global.add(storage);
         }
 
-        if (!global.equals(globalAccountStorages))
-            globalAccountStorages.setAll(global);
-        if (!portable.equals(config().getAccountStorages()))
-            config().getAccountStorages().setAll(portable);
+        ObservableList<Map<Object, Object>> globalStorages = globalAccountStorages();
+        if (!global.equals(globalStorages))
+            globalStorages.setAll(global);
+        if (!portable.equals(getAccountStorages()))
+            getAccountStorages().setAll(portable);
     }
 
     private static void loadGlobalAccountStorages() {
-        Path globalAccountsFile = Metadata.HMCL_GLOBAL_DIRECTORY.resolve("accounts.json");
-        if (Files.exists(globalAccountsFile)) {
-            try (Reader reader = Files.newBufferedReader(globalAccountsFile)) {
-                globalAccountStorages.setAll(Config.CONFIG_GSON.fromJson(reader, listTypeOf(mapTypeOf(Object.class, Object.class))));
-            } catch (Throwable e) {
-                LOG.warning("Failed to load global accounts", e);
-            }
+        if (globalAccounts != null) {
+            throw new IllegalStateException("Global accounts are already loaded");
         }
 
-        globalAccountStorages.addListener(onInvalidating(() ->
-                FileSaver.save(globalAccountsFile, Config.CONFIG_GSON.toJson(globalAccountStorages))));
+        LOG.info("Global game accounts location: " + GLOBAL_GAME_ACCOUNTS_LOCATION);
+
+        @Nullable AccountStorages migrated = loadLegacyGlobalAccountStorages();
+        boolean newlyCreated = !Files.exists(GLOBAL_GAME_ACCOUNTS_LOCATION);
+        try {
+            JsonSettingFile.LoadResult<AccountStorages> result = GLOBAL_GAME_ACCOUNTS_FILE.load(migrated);
+            globalAccounts = result.value();
+            if (result.allowSave()) {
+                GLOBAL_GAME_ACCOUNTS_FILE.installAutoSave(globalAccounts);
+            }
+
+            if (newlyCreated && result.allowSave()) {
+                LOG.info("Creating global game accounts file " + GLOBAL_GAME_ACCOUNTS_LOCATION);
+                GLOBAL_GAME_ACCOUNTS_FILE.save(globalAccounts);
+            }
+        } catch (IOException e) {
+            LOG.warning("Failed to load global game accounts", e);
+            globalAccounts = migrated != null ? migrated : new AccountStorages();
+            GLOBAL_GAME_ACCOUNTS_FILE.installAutoSave(globalAccounts);
+        }
+    }
+
+    private static @Nullable AccountStorages loadLegacyGlobalAccountStorages() {
+        if (Files.exists(GLOBAL_GAME_ACCOUNTS_LOCATION) || !Files.exists(LEGACY_GLOBAL_ACCOUNTS_LOCATION)) {
+            return null;
+        }
+
+        try (Reader reader = Files.newBufferedReader(LEGACY_GLOBAL_ACCOUNTS_LOCATION)) {
+            List<Map<Object, Object>> accounts =
+                    Config.CONFIG_GSON.fromJson(reader, listTypeOf(mapTypeOf(Object.class, Object.class)));
+            return accounts != null ? AccountStorages.fromAccounts(accounts) : null;
+        } catch (Throwable e) {
+            LOG.warning("Failed to load legacy global accounts", e);
+            return null;
+        }
+    }
+
+    private static ObservableList<Map<Object, Object>> globalAccountStorages() {
+        if (globalAccounts == null) {
+            throw new IllegalStateException("Global accounts haven't been loaded");
+        }
+        return globalAccounts.getAccounts();
     }
 
     private static Account parseAccount(Map<Object, Object> storage) {
@@ -202,7 +248,7 @@ public final class Accounts {
 
         // load accounts
         Account selected = null;
-        for (Map<Object, Object> storage : config().getAccountStorages()) {
+        for (Map<Object, Object> storage : getAccountStorages()) {
             Account account = parseAccount(storage);
             if (account != null) {
                 account.setPortable(true);
@@ -213,7 +259,7 @@ public final class Accounts {
             }
         }
 
-        for (Map<Object, Object> storage : globalAccountStorages) {
+        for (Map<Object, Object> storage : globalAccountStorages()) {
             Account account = parseAccount(storage);
             if (account != null) {
                 accounts.add(account);

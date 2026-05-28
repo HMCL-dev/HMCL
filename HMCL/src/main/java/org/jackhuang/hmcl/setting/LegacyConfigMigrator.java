@@ -103,6 +103,9 @@ public final class LegacyConfigMigrator {
 
             LauncherState launcherState = extractLauncherState(jsonObject);
             AuthlibInjectorServerList authlibInjectorServers = extractAuthlibInjectorServers(jsonObject);
+            AccountStorages accountStorages = Objects.requireNonNullElseGet(
+                    extractAccountStorages(jsonObject),
+                    AccountStorages::new);
             JsonElement legacyAllowAutoAgent = jsonObject.remove("allowAutoAgent");
             migrateLegacyLanguage(jsonObject);
             migrateLegacySelectedVersions(jsonObject);
@@ -121,7 +124,7 @@ public final class LegacyConfigMigrator {
             migrateLegacyPresetSettings(gameDirectories, gameSettingsPresets, legacyConfigurations);
             migrateLegacyAllowAutoAgent(deserialized, gameSettingsPresets, legacyAllowAutoAgent);
             return new MigrationResult(path, deserialized, gameDirectories, gameSettingsPresets,
-                    launcherState, authlibInjectorServers, deserialized.toJson());
+                    launcherState, authlibInjectorServers, accountStorages, deserialized.toJson());
         } catch (JsonParseException e) {
             LOG.warning("Malformed legacy config file: " + path, e);
             return null;
@@ -169,6 +172,26 @@ public final class LegacyConfigMigrator {
             result.addLittleSkinIfAbsent();
         }
         return result;
+    }
+
+    /// Extracts account storages from a config JSON object and removes the legacy member.
+    static @Nullable AccountStorages extractAccountStorages(JsonObject json) {
+        Objects.requireNonNull(json);
+
+        JsonElement accounts = json.remove("accounts");
+        if (accounts == null) {
+            return null;
+        }
+
+        JsonObject object = new JsonObject();
+        object.add(JsonFileFormat.DEFAULT_MEMBER_NAME,
+                JsonUtils.GSON.toJsonTree(AccountStorages.CURRENT_FORMAT, JsonFileFormat.class));
+        if (accounts instanceof JsonArray) {
+            object.add("accounts", accounts);
+        }
+
+        AccountStorages result = JsonUtils.GSON.fromJson(object, AccountStorages.class);
+        return result != null ? result : new AccountStorages();
     }
 
     /// Moves one JSON member from the source object to the target object.
@@ -498,9 +521,11 @@ public final class LegacyConfigMigrator {
     /// @param gameSettingsPresets The detached preset store migrated from legacy profile globals.
     /// @param launcherState       The detached launcher state migrated from legacy config fields.
     /// @param authlibInjectorServers The detached authlib-injector servers migrated from legacy config fields.
+    /// @param accountStorages    The detached account storages migrated from legacy config fields.
     /// @param contentForMigration The content to save when migrating to settings.json.
     record MigrationResult(Path path, Config config, GameDirectories gameDirectories,
                            GameSettingsPresets gameSettingsPresets, LauncherState launcherState,
-                           AuthlibInjectorServerList authlibInjectorServers, String contentForMigration) {
+                           AuthlibInjectorServerList authlibInjectorServers,
+                           AccountStorages accountStorages, String contentForMigration) {
     }
 }

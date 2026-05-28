@@ -37,6 +37,7 @@ import org.jetbrains.annotations.UnknownNullability;
 import java.io.IOException;
 import java.nio.file.*;
 import java.util.Locale;
+import java.util.Map;
 
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
@@ -70,6 +71,10 @@ public final class ConfigHolder {
     private static final Path GAME_SETTINGS_LOCATION =
             Metadata.HMCL_CURRENT_DIRECTORY.resolve("game-settings.json");
 
+    /// The current per-workspace account storage path.
+    private static final Path GAME_ACCOUNTS_LOCATION =
+            Metadata.HMCL_CURRENT_DIRECTORY.resolve("game-accounts.json");
+
     /// The detached game directory file helper.
     private static final JsonSettingFile<GameDirectories> GAME_DIRECTORIES_FILE = new JsonSettingFile<>(
             GAME_DIRECTORIES_LOCATION,
@@ -85,6 +90,14 @@ public final class ConfigHolder {
             GameSettingsPresets.class,
             GameSettingsPresets.CURRENT_FORMAT,
             GameSettingsPresets::new);
+
+    /// The detached account storage file helper.
+    private static final JsonSettingFile<AccountStorages> GAME_ACCOUNTS_FILE = new JsonSettingFile<>(
+            GAME_ACCOUNTS_LOCATION,
+            "game accounts",
+            AccountStorages.class,
+            AccountStorages.CURRENT_FORMAT,
+            AccountStorages::new);
 
     /// The detached launcher state file helper.
     private static final JsonSettingFile<LauncherState> STATE_FILE = new JsonSettingFile<>(
@@ -120,6 +133,9 @@ public final class ConfigHolder {
     /// The loaded detached authlib-injector server list store.
     private static @UnknownNullability AuthlibInjectorServerList authlibInjectorServers;
 
+    /// The loaded detached account storage store.
+    private static @UnknownNullability AccountStorages gameAccounts;
+
     /// Whether no current or legacy per-workspace config could be loaded.
     private static boolean newlyCreated;
 
@@ -147,6 +163,9 @@ public final class ConfigHolder {
 
     /// Detached authlib-injector servers migrated from a legacy config file.
     private static @Nullable AuthlibInjectorServerList migratedAuthlibInjectorServers;
+
+    /// Detached account storages migrated from a config file.
+    private static @Nullable AccountStorages migratedGameAccounts;
 
     /// Returns the loaded per-workspace config.
     public static Config config() {
@@ -205,6 +224,11 @@ public final class ConfigHolder {
         return GAME_SETTINGS_LOCATION;
     }
 
+    /// Returns the current per-workspace account storage path.
+    public static Path gameAccountsLocation() {
+        return GAME_ACCOUNTS_LOCATION;
+    }
+
     /// Returns the loaded detached game directory store.
     public static GameDirectories gameDirectories() {
         if (gameDirectories == null) {
@@ -221,9 +245,27 @@ public final class ConfigHolder {
         return gameSettingsPresets;
     }
 
+    /// Returns the loaded detached account storage store.
+    static AccountStorages gameAccounts() {
+        if (gameAccounts == null) {
+            throw new IllegalStateException("Game accounts haven't been loaded");
+        }
+        return gameAccounts;
+    }
+
     /// Returns the per-workspace authlib-injector servers.
     public static ObservableList<AuthlibInjectorServer> getAuthlibInjectorServers() {
         return authlibInjectorServers().getServers();
+    }
+
+    /// Returns the per-workspace account storages.
+    public static ObservableList<Map<Object, Object>> getAccountStorages() {
+        return gameAccounts().getAccounts();
+    }
+
+    /// Serializes the per-workspace account storage file content.
+    public static String gameAccountsToJson() {
+        return JsonUtils.GSON.toJson(gameAccounts(), AccountStorages.class);
     }
 
     /// Returns the per-workspace game directories.
@@ -351,6 +393,7 @@ public final class ConfigHolder {
         loadGameSettingsPresets(migratedGameSettingsPresets, !unsupportedVersion);
         loadLauncherState(migratedLauncherState, !unsupportedVersion);
         loadAuthlibInjectorServers(migratedAuthlibInjectorServers, !unsupportedVersion);
+        loadGameAccounts(migratedGameAccounts, !unsupportedVersion);
         Settings.init();
 
         if (!unsupportedVersion && (newlyCreated || needSaveSettings)) {
@@ -389,6 +432,11 @@ public final class ConfigHolder {
                 return new Config();
             }
 
+            migratedGameAccounts = LegacyConfigMigrator.extractAccountStorages(jsonObject);
+            if (migratedGameAccounts != null) {
+                needSaveSettings = true;
+            }
+
             try {
                 Config settings = Config.fromJson(jsonObject);
                 if (settings == null) {
@@ -413,6 +461,7 @@ public final class ConfigHolder {
                 migratedGameSettingsPresets = migrationResult.gameSettingsPresets();
                 migratedLauncherState = migrationResult.launcherState();
                 migratedAuthlibInjectorServers = migrationResult.authlibInjectorServers();
+                migratedGameAccounts = migrationResult.accountStorages();
                 FileUtils.saveSafely(SETTINGS_LOCATION, migrationResult.contentForMigration());
                 return migrationResult.config();
             }
@@ -527,6 +576,33 @@ public final class ConfigHolder {
         if (newlyCreated && allowSave && result.allowSave()) {
             LOG.info("Creating authlib-injector servers file " + AUTHLIB_INJECTOR_SERVERS_LOCATION);
             AUTHLIB_INJECTOR_SERVERS_FILE.save(authlibInjectorServers);
+        }
+    }
+
+    /// Loads account storages and installs the save listener.
+    ///
+    /// @param migratedGameAccounts the account storage store migrated from a config file
+    /// @param allowSave whether the detached account storage file may be overwritten
+    private static void loadGameAccounts(
+            @Nullable AccountStorages migratedGameAccounts,
+            boolean allowSave) throws IOException {
+        if (gameAccounts != null) {
+            throw new IllegalStateException("Game accounts are already loaded");
+        }
+
+        LOG.info("Game accounts location: " + GAME_ACCOUNTS_LOCATION);
+
+        boolean newlyCreated = !Files.exists(GAME_ACCOUNTS_LOCATION);
+        JsonSettingFile.LoadResult<AccountStorages> result =
+                GAME_ACCOUNTS_FILE.load(migratedGameAccounts);
+        gameAccounts = result.value();
+        if (allowSave && result.allowSave()) {
+            GAME_ACCOUNTS_FILE.installAutoSave(gameAccounts);
+        }
+
+        if (newlyCreated && allowSave && result.allowSave()) {
+            LOG.info("Creating game accounts file " + GAME_ACCOUNTS_LOCATION);
+            GAME_ACCOUNTS_FILE.save(gameAccounts);
         }
     }
 
