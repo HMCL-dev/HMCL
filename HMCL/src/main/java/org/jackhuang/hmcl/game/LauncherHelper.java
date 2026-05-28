@@ -66,6 +66,7 @@ import java.util.stream.Collectors;
 import static javafx.application.Platform.runLater;
 import static javafx.application.Platform.setImplicitExit;
 import static org.jackhuang.hmcl.setting.ConfigHolder.config;
+import static org.jackhuang.hmcl.setting.ConfigHolder.state;
 import static org.jackhuang.hmcl.ui.FXUtils.runInFX;
 import static org.jackhuang.hmcl.util.DataSizeUnit.MEGABYTES;
 import static org.jackhuang.hmcl.util.Lang.resolveException;
@@ -203,18 +204,18 @@ public final class LauncherHelper {
                     if (config().getAllowAutoAgent()
                             || setting.isNoJVMOptions()
                             || setting.isNoOptimizingJVMOptions()
-                            || Boolean.TRUE.equals(config().getShownTips().get(LWJGL_3_4_1_TIP))
+                            || Boolean.TRUE.equals(state().getShownTips().get(LWJGL_3_4_1_TIP))
                             || !NativePatcher.needPatchMemoryUtil(version.get(), javaVersionRef.get().getParsedVersion())) {
                         return Task.completed(null);
                     } else {
                         CompletableFuture<Void> future = new CompletableFuture<>();
                         runInFX(() -> {
                             Controllers.confirm(i18n("launch.advice.lwjgl_3_4_1"), i18n("launch.advice.lwjgl_3_4_1.title"), MessageType.QUESTION, () -> {
-                                config().getShownTips().put(LWJGL_3_4_1_TIP, true);
+                                state().getShownTips().put(LWJGL_3_4_1_TIP, true);
                                 config().setAllowAutoAgent(true);
                                 future.complete(null);
                             }, () -> {
-                                config().getShownTips().put(LWJGL_3_4_1_TIP, true);
+                                state().getShownTips().put(LWJGL_3_4_1_TIP, true);
                                 future.complete(null);
                             });
                         });

@@ -38,7 +38,7 @@ import org.jackhuang.hmcl.ui.wizard.WizardController;
 import org.jackhuang.hmcl.ui.wizard.WizardPage;
 import org.jackhuang.hmcl.util.SettingsMap;
 
-import static org.jackhuang.hmcl.setting.ConfigHolder.config;
+import static org.jackhuang.hmcl.setting.ConfigHolder.state;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 public abstract class AbstractInstallersPage extends Control implements WizardPage {
@@ -58,7 +58,7 @@ public abstract class AbstractInstallersPage extends Control implements WizardPa
             String libraryId = library.getLibraryId();
             if (libraryId.equals(LibraryAnalyzer.LibraryType.MINECRAFT.getPatchId())) continue;
             library.setOnInstall(() -> {
-                if (!Boolean.TRUE.equals(config().getShownTips().get(FABRIC_QUILT_API_TIP))
+                if (!Boolean.TRUE.equals(state().getShownTips().get(FABRIC_QUILT_API_TIP))
                         && (LibraryAnalyzer.LibraryType.FABRIC_API.getPatchId().equals(libraryId)
                         || LibraryAnalyzer.LibraryType.QUILT_API.getPatchId().equals(libraryId)
                         || LibraryAnalyzer.LibraryType.LEGACY_FABRIC_API.getPatchId().equals(libraryId))) {
@@ -66,7 +66,7 @@ public abstract class AbstractInstallersPage extends Control implements WizardPa
                             i18n("install.installer.fabric-quilt-api.warning", i18n("install.installer." + libraryId)),
                             i18n("message.warning"),
                             MessageDialogPane.MessageType.WARNING
-                    ).ok(null).addCancel(i18n("button.do_not_show_again"), () -> config().getShownTips().put(FABRIC_QUILT_API_TIP, true)).build());
+                    ).ok(null).addCancel(i18n("button.do_not_show_again"), () -> state().getShownTips().put(FABRIC_QUILT_API_TIP, true)).build());
                 }
 
                 if (!(library.resolvedStateProperty().get() instanceof InstallerItem.IncompatibleState))

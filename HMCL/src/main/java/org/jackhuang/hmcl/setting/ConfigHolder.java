@@ -54,6 +54,9 @@ public final class ConfigHolder {
     /// The current per-workspace config path.
     private static final Path SETTINGS_LOCATION = Metadata.HMCL_CURRENT_DIRECTORY.resolve("settings.json");
 
+    /// The current per-workspace launcher state path.
+    private static final Path STATE_LOCATION = Metadata.HMCL_CURRENT_DIRECTORY.resolve("state.json");
+
     /// The current per-workspace game directories path.
     private static final Path GAME_DIRECTORIES_LOCATION =
             Metadata.HMCL_CURRENT_DIRECTORY.resolve("game-directories.json");
@@ -78,6 +81,14 @@ public final class ConfigHolder {
             GameSettingsPresets.CURRENT_FORMAT,
             GameSettingsPresets::new);
 
+    /// The detached launcher state file helper.
+    private static final JsonSettingFile<LauncherState> STATE_FILE = new JsonSettingFile<>(
+            STATE_LOCATION,
+            "launcher state",
+            LauncherState.class,
+            LauncherState.CURRENT_FORMAT,
+            LauncherState::new);
+
     /// The loaded per-workspace config instance.
     private static @UnknownNullability Config configInstance;
 
@@ -89,6 +100,9 @@ public final class ConfigHolder {
 
     /// The loaded detached preset store.
     private static @UnknownNullability GameSettingsPresets gameSettingsPresets;
+
+    /// The loaded detached launcher state store.
+    private static @UnknownNullability LauncherState launcherState;
 
     /// Whether no current or legacy per-workspace config could be loaded.
     private static boolean newlyCreated;
@@ -112,6 +126,9 @@ public final class ConfigHolder {
     /// Detached game settings presets migrated from a legacy config file.
     private static @Nullable GameSettingsPresets migratedGameSettingsPresets;
 
+    /// Detached launcher state migrated from a legacy config file.
+    private static @Nullable LauncherState migratedLauncherState;
+
     /// Returns the loaded per-workspace config.
     public static Config config() {
         if (configInstance == null) {
@@ -128,9 +145,22 @@ public final class ConfigHolder {
         return globalConfigInstance;
     }
 
+    /// Returns the loaded per-workspace launcher state.
+    public static LauncherState state() {
+        if (launcherState == null) {
+            throw new IllegalStateException("Launcher state hasn't been loaded");
+        }
+        return launcherState;
+    }
+
     /// Returns the current per-workspace config path.
     public static Path configLocation() {
         return SETTINGS_LOCATION;
+    }
+
+    /// Returns the current per-workspace launcher state path.
+    public static Path stateLocation() {
+        return STATE_LOCATION;
     }
 
     /// Returns the current per-workspace game directories path.
@@ -282,6 +312,7 @@ public final class ConfigHolder {
         LOG.setLogRetention(globalConfig().getLogRetention());
         loadGameDirectories(migratedGameDirectories, !unsupportedVersion);
         loadGameSettingsPresets(migratedGameSettingsPresets, !unsupportedVersion);
+        loadLauncherState(migratedLauncherState, !unsupportedVersion);
         Settings.init();
 
         if (!unsupportedVersion && (newlyCreated || needSaveSettings)) {
@@ -321,18 +352,6 @@ public final class ConfigHolder {
             }
 
             try {
-                if (LegacyConfigMigrator.migrateLegacySelectedVersions(jsonObject)) {
-                    needSaveSettings = true;
-                }
-                @Nullable GameDirectories gameDirectories = LegacyConfigMigrator.extractGameDirectoriesFromConfigJson(jsonObject);
-                if (gameDirectories != null) {
-                    migratedGameDirectories = gameDirectories;
-                    needSaveSettings = true;
-                }
-                if (LegacyConfigMigrator.migrateLegacySelectedGameDirectory(jsonObject)) {
-                    needSaveSettings = true;
-                }
-
                 Config settings = Config.fromJson(jsonObject);
                 if (settings == null) {
                     return new Config();
@@ -354,6 +373,7 @@ public final class ConfigHolder {
                 LOG.info("Migrating settings from " + migrationResult.path() + " to " + SETTINGS_LOCATION);
                 migratedGameDirectories = migrationResult.gameDirectories();
                 migratedGameSettingsPresets = migrationResult.gameSettingsPresets();
+                migratedLauncherState = migrationResult.launcherState();
                 FileUtils.saveSafely(SETTINGS_LOCATION, migrationResult.contentForMigration());
                 return migrationResult.config();
             }
@@ -414,6 +434,33 @@ public final class ConfigHolder {
         if (newlyCreated && allowSave && result.allowSave()) {
             LOG.info("Creating game settings file " + GAME_SETTINGS_LOCATION);
             GAME_SETTINGS_FILE.save(gameSettingsPresets);
+        }
+    }
+
+    /// Loads launcher state and installs the save listener.
+    ///
+    /// @param migratedLauncherState the launcher state migrated from a legacy config file
+    /// @param allowSave whether the detached launcher state file may be overwritten
+    private static void loadLauncherState(
+            @Nullable LauncherState migratedLauncherState,
+            boolean allowSave) throws IOException {
+        if (launcherState != null) {
+            throw new IllegalStateException("Launcher state is already loaded");
+        }
+
+        LOG.info("Launcher state location: " + STATE_LOCATION);
+
+        boolean newlyCreated = !Files.exists(STATE_LOCATION);
+        JsonSettingFile.LoadResult<LauncherState> result =
+                STATE_FILE.load(migratedLauncherState);
+        launcherState = result.value();
+        if (allowSave && result.allowSave()) {
+            STATE_FILE.installAutoSave(launcherState);
+        }
+
+        if (newlyCreated && allowSave && result.allowSave()) {
+            LOG.info("Creating launcher state file " + STATE_LOCATION);
+            STATE_FILE.save(launcherState);
         }
     }
 

@@ -101,6 +101,7 @@ public final class LegacyConfigMigrator {
                     ? configurations.deepCopy()
                     : null;
 
+            LauncherState launcherState = extractLauncherState(jsonObject);
             migrateLegacySelectedVersions(jsonObject);
             @Nullable GameDirectories migratedGameDirectories = extractGameDirectoriesFromConfigJson(jsonObject);
             GameDirectories gameDirectories = migratedGameDirectories != null
@@ -115,30 +116,52 @@ public final class LegacyConfigMigrator {
 
             GameSettingsPresets gameSettingsPresets = new GameSettingsPresets();
             migrateLegacyPresetSettings(gameDirectories, gameSettingsPresets, legacyConfigurations);
-            return new MigrationResult(path, deserialized, gameDirectories, gameSettingsPresets, deserialized.toJson());
+            return new MigrationResult(path, deserialized, gameDirectories, gameSettingsPresets, launcherState, deserialized.toJson());
         } catch (JsonParseException e) {
             LOG.warning("Malformed legacy config file: " + path, e);
             return null;
         }
     }
 
-    /// Extracts game directory data from a settings JSON object and removes the legacy members.
+    /// Extracts launcher state from a legacy config JSON object and removes those members.
+    static LauncherState extractLauncherState(JsonObject json) {
+        Objects.requireNonNull(json);
+
+        JsonObject state = new JsonObject();
+        state.add(JsonFileFormat.DEFAULT_MEMBER_NAME, JsonUtils.GSON.toJsonTree(LauncherState.CURRENT_FORMAT, JsonFileFormat.class));
+        moveMember(json, state, "x");
+        moveMember(json, state, "y");
+        moveMember(json, state, "width");
+        moveMember(json, state, "height");
+        moveMember(json, state, "promptedVersion");
+        moveMember(json, state, "shownTips");
+        moveMember(json, state, "logLines");
+
+        LauncherState result = JsonUtils.GSON.fromJson(state, LauncherState.class);
+        return result != null ? result : new LauncherState();
+    }
+
+    /// Moves one JSON member from the source object to the target object.
+    private static void moveMember(JsonObject source, JsonObject target, String name) {
+        JsonElement element = source.remove(name);
+        if (element != null) {
+            target.add(name, element);
+        }
+    }
+
+    /// Extracts game directory data from a legacy config JSON object and removes the legacy members.
     ///
-    /// This supports migrating the in-development `profiles` list and the old `configurations`
-    /// map into `game-directories.json`.
+    /// This supports migrating the upstream/main `configurations` map into `game-directories.json`.
     ///
-    /// @param json the settings JSON object
+    /// @param json the legacy config JSON object
     /// @return the extracted game directory store, or `null` when the object contains no game directory data
     static @Nullable GameDirectories extractGameDirectoriesFromConfigJson(JsonObject json) {
         Objects.requireNonNull(json);
 
-        @Nullable JsonElement profilesElement = json.remove("profiles");
         @Nullable JsonElement configurationsElement = json.remove("configurations");
 
         @Nullable JsonArray profiles = null;
-        if (profilesElement instanceof JsonArray profileArray) {
-            profiles = migrateProfileArray(profileArray);
-        } else if (configurationsElement instanceof JsonObject configurations) {
+        if (configurationsElement instanceof JsonObject configurations) {
             profiles = migrateConfigurationMap(configurations);
         }
 
@@ -151,29 +174,6 @@ public final class LegacyConfigMigrator {
         object.add("gameDirectories", profiles);
 
         return JsonUtils.GSON.fromJson(object, GameDirectories.class);
-    }
-
-    /// Converts a current profile array into game directory JSON.
-    private static JsonArray migrateProfileArray(JsonArray profiles) {
-        JsonArray result = new JsonArray();
-        for (JsonElement element : profiles) {
-            if (!(element instanceof JsonObject profile)) {
-                continue;
-            }
-
-            JsonObject migrated = profile.deepCopy();
-            @Nullable String name = readString(migrated.get("name"));
-            if (!migrated.has("id")) {
-                if (name != null) {
-                    migrated.addProperty("id", getLegacyProfileId(name).toString());
-                }
-            }
-            if (isBuiltInProfileName(name)) {
-                migrated.remove("name");
-            }
-            result.add(migrated);
-        }
-        return result;
     }
 
     /// Converts a legacy profile map into game directory JSON.
@@ -305,7 +305,7 @@ public final class LegacyConfigMigrator {
 
     /// Migrates the legacy selected profile name into the current selected game directory ID.
     ///
-    /// @param json the settings JSON object
+    /// @param json the legacy config JSON object
     /// @return whether the JSON object was changed
     static boolean migrateLegacySelectedGameDirectory(JsonObject json) {
         Objects.requireNonNull(json);
@@ -329,7 +329,7 @@ public final class LegacyConfigMigrator {
 
     /// Migrates legacy per-profile selected versions into the current selected version map.
     ///
-    /// @param json the settings JSON object
+    /// @param json the legacy config JSON object
     /// @return whether the JSON object was changed
     static boolean migrateLegacySelectedVersions(JsonObject json) {
         Objects.requireNonNull(json);
@@ -424,7 +424,8 @@ public final class LegacyConfigMigrator {
     /// @param config              The parsed config object.
     /// @param gameDirectories     The detached game directory store migrated from legacy profiles.
     /// @param gameSettingsPresets The detached preset store migrated from legacy profile globals.
+    /// @param launcherState       The detached launcher state migrated from legacy config fields.
     /// @param contentForMigration The content to save when migrating to settings.json.
-    record MigrationResult(Path path, Config config, GameDirectories gameDirectories, GameSettingsPresets gameSettingsPresets, String contentForMigration) {
+    record MigrationResult(Path path, Config config, GameDirectories gameDirectories, GameSettingsPresets gameSettingsPresets, LauncherState launcherState, String contentForMigration) {
     }
 }

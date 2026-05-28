@@ -80,6 +80,7 @@ import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
 import static org.jackhuang.hmcl.setting.ConfigHolder.config;
+import static org.jackhuang.hmcl.setting.ConfigHolder.state;
 import static org.jackhuang.hmcl.setting.ConfigHolder.globalConfig;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
@@ -216,35 +217,35 @@ public final class Controllers {
 
     public static void saveWindowStates() {
         if (stageX != null) {
-            config().setX(stageX.get() / SCREEN.getBounds().getWidth());
+            state().setX(stageX.get() / SCREEN.getBounds().getWidth());
         }
         if (stageY != null) {
-            config().setY(stageY.get() / SCREEN.getBounds().getHeight());
+            state().setY(stageY.get() / SCREEN.getBounds().getHeight());
         }
         if (stageHeight != null) {
-            config().setHeight(stageHeight.get());
+            state().setHeight(stageHeight.get());
         }
         if (stageWidth != null) {
-            config().setWidth(stageWidth.get());
+            state().setWidth(stageWidth.get());
         }
     }
 
     public static void onApplicationStop() {
         stageSizeChangeListener = null;
         if (stageX != null) {
-            config().setX(stageX.get() / SCREEN.getBounds().getWidth());
+            state().setX(stageX.get() / SCREEN.getBounds().getWidth());
             stageX = null;
         }
         if (stageY != null) {
-            config().setY(stageY.get() / SCREEN.getBounds().getHeight());
+            state().setY(stageY.get() / SCREEN.getBounds().getHeight());
             stageY = null;
         }
         if (stageHeight != null) {
-            config().setHeight(stageHeight.get());
+            state().setHeight(stageHeight.get());
             stageHeight = null;
         }
         if (stageWidth != null) {
-            config().setWidth(stageWidth.get());
+            state().setWidth(stageWidth.get());
             stageWidth = null;
         }
     }
@@ -306,12 +307,12 @@ public final class Controllers {
 
         WeakInvalidationListener weakListener = new WeakInvalidationListener(stageSizeChangeListener);
 
-        double initWidth = Math.max(MIN_WIDTH, config().getWidth());
-        double initHeight = Math.max(MIN_HEIGHT, config().getHeight());
+        double initWidth = Math.max(MIN_WIDTH, state().getWidth());
+        double initHeight = Math.max(MIN_HEIGHT, state().getHeight());
 
         {
-            double initX = config().getX() * SCREEN.getBounds().getWidth();
-            double initY = config().getY() * SCREEN.getBounds().getHeight();
+            double initX = state().getX() * SCREEN.getBounds().getWidth();
+            double initY = state().getY() * SCREEN.getBounds().getHeight();
 
             boolean invalid = true;
             double border = 20D;
@@ -407,7 +408,7 @@ public final class Controllers {
         if (JavaRuntime.CURRENT_VERSION < Metadata.MINIMUM_SUPPORTED_JAVA_VERSION) {
             Number shownTipVersion = null;
             try {
-                shownTipVersion = (Number) config().getShownTips().get(JAVA_VERSION_TIP);
+                shownTipVersion = (Number) state().getShownTips().get(JAVA_VERSION_TIP);
             } catch (ClassCastException e) {
                 LOG.warning("Invalid type for shown tips key: " + JAVA_VERSION_TIP, e);
             }
@@ -420,26 +421,26 @@ public final class Controllers {
                             downloadLink
                     );
                 Controllers.dialog(builder
-                        .ok(() -> config().getShownTips().put(JAVA_VERSION_TIP, Metadata.MINIMUM_SUPPORTED_JAVA_VERSION))
+                        .ok(() -> state().getShownTips().put(JAVA_VERSION_TIP, Metadata.MINIMUM_SUPPORTED_JAVA_VERSION))
                         .build());
             }
         }
 
         // Check whether JIT is enabled in the current environment
-        if (!JavaRuntime.CURRENT_JIT_ENABLED && !Boolean.TRUE.equals(config().getShownTips().get(JAVA_INTERPRETED_MODE_TIP))) {
+        if (!JavaRuntime.CURRENT_JIT_ENABLED && !Boolean.TRUE.equals(state().getShownTips().get(JAVA_INTERPRETED_MODE_TIP))) {
             Controllers.dialog(new MessageDialogPane.Builder(i18n("warning.java_interpreted_mode"), i18n("message.warning"), MessageType.WARNING)
                     .ok(null)
                     .addCancel(i18n("button.do_not_show_again"), () ->
-                            config().getShownTips().put(JAVA_INTERPRETED_MODE_TIP, true))
+                            state().getShownTips().put(JAVA_INTERPRETED_MODE_TIP, true))
                     .build());
         }
 
         // Check whether hardware acceleration is enabled
-        if (!FXUtils.GPU_ACCELERATION_ENABLED && !Boolean.TRUE.equals(config().getShownTips().get(SOFTWARE_RENDERING))) {
+        if (!FXUtils.GPU_ACCELERATION_ENABLED && !Boolean.TRUE.equals(state().getShownTips().get(SOFTWARE_RENDERING))) {
             Controllers.dialog(new MessageDialogPane.Builder(i18n("warning.software_rendering"), i18n("message.warning"), MessageType.WARNING)
                     .ok(null)
                     .addCancel(i18n("button.do_not_show_again"), () ->
-                            config().getShownTips().put(SOFTWARE_RENDERING, true))
+                            state().getShownTips().put(SOFTWARE_RENDERING, true))
                     .build());
         }
 
@@ -465,7 +466,7 @@ public final class Controllers {
         aprilFools:
         if (AprilFools.isEnabled()) {
             int currentYear = LocalDate.now().getYear();
-            if (config().getShownTips().get(APRIL_FOOLS) instanceof Number year && year.intValue() >= currentYear)
+            if (state().getShownTips().get(APRIL_FOOLS) instanceof Number year && year.intValue() >= currentYear)
                 break aprilFools;
 
             if (!I18n.getLocale().getLocale().getLanguage().equals("zh"))
@@ -480,7 +481,7 @@ public final class Controllers {
                 break aprilFools;
             }
 
-            Runnable updateShowTips = () -> config().getShownTips().put(APRIL_FOOLS, currentYear);
+            Runnable updateShowTips = () -> state().getShownTips().put(APRIL_FOOLS, currentYear);
 
             Controllers.confirmWithCountdown(i18n("launcher.april_fools.switch_lzh"), null, 10,
                     MessageType.QUESTION, () -> {

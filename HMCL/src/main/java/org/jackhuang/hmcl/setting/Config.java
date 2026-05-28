@@ -112,66 +112,6 @@ public final class Config extends ObservableSetting {
         this.format.set(Objects.requireNonNull(format));
     }
 
-    @SerializedName("x")
-    private final DoubleProperty x = new SimpleDoubleProperty();
-
-    public DoubleProperty xProperty() {
-        return x;
-    }
-
-    public double getX() {
-        return x.get();
-    }
-
-    public void setX(double x) {
-        this.x.set(x);
-    }
-
-    @SerializedName("y")
-    private final DoubleProperty y = new SimpleDoubleProperty();
-
-    public DoubleProperty yProperty() {
-        return y;
-    }
-
-    public double getY() {
-        return y.get();
-    }
-
-    public void setY(double y) {
-        this.y.set(y);
-    }
-
-    @SerializedName("width")
-    private final DoubleProperty width = new SimpleDoubleProperty();
-
-    public DoubleProperty widthProperty() {
-        return width;
-    }
-
-    public double getWidth() {
-        return width.get();
-    }
-
-    public void setWidth(double width) {
-        this.width.set(width);
-    }
-
-    @SerializedName("height")
-    private final DoubleProperty height = new SimpleDoubleProperty();
-
-    public DoubleProperty heightProperty() {
-        return height;
-    }
-
-    public double getHeight() {
-        return height.get();
-    }
-
-    public void setHeight(double height) {
-        this.height.set(height);
-    }
-
     @SerializedName("localization")
     private final ObjectProperty<SupportedLocale> localization = new SimpleObjectProperty<>(SupportedLocale.DEFAULT);
 
@@ -185,21 +125,6 @@ public final class Config extends ObservableSetting {
 
     public void setLocalization(SupportedLocale localization) {
         this.localization.set(localization);
-    }
-
-    @SerializedName("promptedVersion")
-    private final StringProperty promptedVersion = new SimpleStringProperty();
-
-    public String getPromptedVersion() {
-        return promptedVersion.get();
-    }
-
-    public StringProperty promptedVersionProperty() {
-        return promptedVersion;
-    }
-
-    public void setPromptedVersion(String promptedVersion) {
-        this.promptedVersion.set(promptedVersion);
     }
 
     @SerializedName("acceptPreviewUpdate")
@@ -247,13 +172,6 @@ public final class Config extends ObservableSetting {
         this.disableAprilFools.set(disableAprilFools);
     }
 
-    @SerializedName("shownTips")
-    private final ObservableMap<String, Object> shownTips = FXCollections.observableHashMap();
-
-    public ObservableMap<String, Object> getShownTips() {
-        return shownTips;
-    }
-
     @SerializedName("commonDirType")
     private final ObjectProperty<EnumCommonDirectory> commonDirType = new RawPreservingObjectProperty<>(EnumCommonDirectory.DEFAULT);
 
@@ -282,21 +200,6 @@ public final class Config extends ObservableSetting {
 
     public void setCommonDirectory(String commonDirectory) {
         this.commonDirectory.set(commonDirectory);
-    }
-
-    @SerializedName("logLines")
-    private final ObjectProperty<Integer> logLines = new SimpleObjectProperty<>();
-
-    public ObjectProperty<Integer> logLinesProperty() {
-        return logLines;
-    }
-
-    public Integer getLogLines() {
-        return logLines.get();
-    }
-
-    public void setLogLines(Integer logLines) {
-        this.logLines.set(logLines);
     }
 
     // UI

@@ -34,26 +34,24 @@ import static org.junit.jupiter.api.Assertions.*;
 /// Tests for detached game directory migration.
 @NotNullByDefault
 public final class GameDirectoriesTest {
-    /// Tests extracting current in-settings profile data into a detached game directory store.
+    /// Tests extracting legacy configuration data into a detached game directory store.
     @Test
-    public void extractsProfilesFromConfigJson() {
-        GUID id = new GUID("123e4567-e89b-12d3-a456-426614174000");
+    public void extractsConfigurationsFromLegacyConfigJson() {
+        GUID id = LegacyConfigMigrator.getLegacyProfileId("Dev");
         JsonObject settings = JsonParser.parseString("""
                 {
-                  "profiles": [
-                    {
-                      "id": "123e4567-e89b-12d3-a456-426614174000",
-                      "name": "Dev",
+                  "configurations": {
+                    "Dev": {
                       "gameDir": ".minecraft",
                       "useRelativePath": true
                     }
-                  ]
+                  }
                 }
                 """).getAsJsonObject();
 
         GameDirectories gameDirectories = Objects.requireNonNull(LegacyConfigMigrator.extractGameDirectoriesFromConfigJson(settings));
 
-        assertFalse(settings.has("profiles"));
+        assertFalse(settings.has("configurations"));
         assertEquals(1, gameDirectories.getGameDirectories().size());
         assertEquals(id, gameDirectories.getGameDirectories().get(0).getId());
         assertEquals("Dev", gameDirectories.getGameDirectories().get(0).getName());

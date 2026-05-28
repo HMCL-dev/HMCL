@@ -80,6 +80,7 @@ import java.util.function.Consumer;
 
 import static org.jackhuang.hmcl.download.RemoteVersion.Type.RELEASE;
 import static org.jackhuang.hmcl.setting.ConfigHolder.config;
+import static org.jackhuang.hmcl.setting.ConfigHolder.state;
 import static org.jackhuang.hmcl.ui.FXUtils.SINE;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
@@ -118,7 +119,7 @@ public final class MainPage extends StackPane implements DecoratorPage {
 
         setPadding(new Insets(20));
 
-        if (Metadata.isNightly() || (Metadata.isDev() && !Objects.equals(Metadata.VERSION, config().getShownTips().get(ANNOUNCEMENT)))) {
+        if (Metadata.isNightly() || (Metadata.isDev() && !Objects.equals(Metadata.VERSION, state().getShownTips().get(ANNOUNCEMENT)))) {
             String title;
             String content;
             if (Metadata.isNightly()) {
@@ -139,7 +140,7 @@ public final class MainPage extends StackPane implements DecoratorPage {
             btnHide.setOnAction(e -> {
                 announcementPane.setContent(new StackPane(), ContainerAnimations.FADE);
                 if (Metadata.isDev()) {
-                    config().getShownTips().put(ANNOUNCEMENT, Metadata.VERSION);
+                    state().getShownTips().put(ANNOUNCEMENT, Metadata.VERSION);
                 }
             });
             btnHide.getStyleClass().add("announcement-close-button");
@@ -281,10 +282,10 @@ public final class MainPage extends StackPane implements DecoratorPage {
 
         if (show && !config().isDisableAutoShowUpdateDialog()
                 && getLatestVersion() != null
-                && !Objects.equals(config().getPromptedVersion(), getLatestVersion().version())) {
+                && !Objects.equals(state().getPromptedVersion(), getLatestVersion().version())) {
             Controllers.dialog(new MessageDialogPane.Builder("", i18n("update.bubble.title", getLatestVersion().version()), MessageDialogPane.MessageType.INFO)
                     .addAction(i18n("button.view"), () -> {
-                        config().setPromptedVersion(getLatestVersion().version());
+                        state().setPromptedVersion(getLatestVersion().version());
                         onUpgrade();
                     })
                     .addCancel(null)
