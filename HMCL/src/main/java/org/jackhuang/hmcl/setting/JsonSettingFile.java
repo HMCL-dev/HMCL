@@ -20,7 +20,7 @@ package org.jackhuang.hmcl.setting;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParseException;
 import org.jackhuang.hmcl.util.FileSaver;
-import org.jackhuang.hmcl.util.gson.JsonFileFormat;
+import org.jackhuang.hmcl.util.gson.JsonSchema;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.gson.ObservableSetting;
 import org.jetbrains.annotations.NotNullByDefault;
@@ -34,12 +34,12 @@ import java.util.function.Supplier;
 
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
-/// Loads, saves, and validates a detached JSON settings file with a [JsonFileFormat] marker.
+/// Loads, saves, and validates a detached JSON settings file with a [JsonSchema] marker.
 ///
 /// @param <T> the settings object type
 /// @author Glavo
 @NotNullByDefault
-final class JsonSettingFile<T extends ObservableSetting & FormattedJsonSetting> {
+final class JsonSettingFile<T extends ObservableSetting & JsonSchemaSetting> {
     /// The settings file location.
     private final Path location;
 
@@ -49,8 +49,8 @@ final class JsonSettingFile<T extends ObservableSetting & FormattedJsonSetting> 
     /// The settings object type.
     private final Class<T> type;
 
-    /// The file format supported by the current code.
-    private final JsonFileFormat expectedFormat;
+    /// The JSON schema supported by the current code.
+    private final JsonSchema expectedSchema;
 
     /// Creates a default settings object.
     private final Supplier<T> createDefault;
@@ -60,18 +60,18 @@ final class JsonSettingFile<T extends ObservableSetting & FormattedJsonSetting> 
     /// @param location the settings file location
     /// @param displayName the human-readable file type name used in logs
     /// @param type the settings object type
-    /// @param expectedFormat the file format supported by the current code
+    /// @param expectedSchema the JSON schema supported by the current code
     /// @param createDefault creates a default settings object
     JsonSettingFile(
             Path location,
             String displayName,
             Class<T> type,
-            JsonFileFormat expectedFormat,
+            JsonSchema expectedSchema,
             Supplier<T> createDefault) {
         this.location = Objects.requireNonNull(location);
         this.displayName = Objects.requireNonNull(displayName);
         this.type = Objects.requireNonNull(type);
-        this.expectedFormat = Objects.requireNonNull(expectedFormat);
+        this.expectedSchema = Objects.requireNonNull(expectedSchema);
         this.createDefault = Objects.requireNonNull(createDefault);
     }
 
@@ -87,19 +87,19 @@ final class JsonSettingFile<T extends ObservableSetting & FormattedJsonSetting> 
                 if (jsonObject == null) {
                     LOG.info(displayName + " are empty: " + location);
                 } else {
-                    JsonFileFormatPolicy.Result format =
-                            JsonFileFormatPolicy.check(location, displayName, jsonObject, expectedFormat);
-                    if (!format.readable()) {
+                    JsonSchemaPolicy.Result schema =
+                            JsonSchemaPolicy.check(location, displayName, jsonObject, expectedSchema);
+                    if (!schema.readable()) {
                         return new LoadResult<>(createDefault.get(), false);
                     }
 
                     @Nullable T deserialized = JsonUtils.GSON.fromJson(jsonObject, type);
                     if (deserialized != null) {
-                        if (!expectedFormat.equals(deserialized.getFormat())) {
-                            deserialized.setFormat(expectedFormat);
+                        if (!expectedSchema.equals(deserialized.getSchema())) {
+                            deserialized.setSchema(expectedSchema);
                         }
 
-                        return new LoadResult<>(deserialized, format.allowSave());
+                        return new LoadResult<>(deserialized, schema.allowSave());
                     }
 
                     LOG.info(displayName + " are empty: " + location);
@@ -132,6 +132,6 @@ final class JsonSettingFile<T extends ObservableSetting & FormattedJsonSetting> 
     ///
     /// @param value the loaded settings object
     /// @param allowSave whether the file may be overwritten
-    record LoadResult<T extends ObservableSetting & FormattedJsonSetting>(T value, boolean allowSave) {
+    record LoadResult<T extends ObservableSetting & JsonSchemaSetting>(T value, boolean allowSave) {
     }
 }

@@ -28,7 +28,7 @@ import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
-import org.jackhuang.hmcl.util.gson.JsonFileFormat;
+import org.jackhuang.hmcl.util.gson.JsonSchema;
 import org.jackhuang.hmcl.util.gson.JsonSerializable;
 import org.jackhuang.hmcl.util.gson.ObservableSetting;
 import org.jetbrains.annotations.NotNullByDefault;
@@ -46,14 +46,14 @@ import java.util.Objects;
 @JsonAdapter(GameSettingsPresets.Adapter.class)
 @NotNullByDefault
 @JsonSerializable
-public final class GameSettingsPresets extends ObservableSetting implements FormattedJsonSetting {
-    /// The file format supported by this game settings preset store.
-    public static final JsonFileFormat CURRENT_FORMAT =
-            new JsonFileFormat("hmcl.game-settings", new JsonFileFormat.Version(1, 0));
+public final class GameSettingsPresets extends ObservableSetting implements JsonSchemaSetting {
+    /// The JSON schema supported by this game settings preset store.
+    public static final JsonSchema CURRENT_SCHEMA =
+            new JsonSchema("game-settings", new JsonSchema.Version(1, 0));
 
     /// Creates an empty game settings preset store.
     public GameSettingsPresets() {
-        tracker.markDirty(format);
+        tracker.markDirty(schema);
         register();
     }
 
@@ -66,23 +66,23 @@ public final class GameSettingsPresets extends ObservableSetting implements Form
         presets.setAll(source.getPresets());
     }
 
-    /// The format used by this game settings preset store file.
-    @SerializedName(JsonFileFormat.DEFAULT_MEMBER_NAME)
-    private final ObjectProperty<JsonFileFormat> format = new SimpleObjectProperty<>(CURRENT_FORMAT);
+    /// The schema used by this game settings preset store file.
+    @SerializedName(JsonSchema.DEFAULT_MEMBER_NAME)
+    private final ObjectProperty<JsonSchema> schema = new SimpleObjectProperty<>(CURRENT_SCHEMA);
 
-    /// Returns the format property.
-    public ObjectProperty<JsonFileFormat> formatProperty() {
-        return format;
+    /// Returns the schema property.
+    public ObjectProperty<JsonSchema> schemaProperty() {
+        return schema;
     }
 
-    /// Returns the format used by this game settings preset store file.
-    public JsonFileFormat getFormat() {
-        return format.get();
+    /// Returns the schema used by this game settings preset store file.
+    public JsonSchema getSchema() {
+        return schema.get();
     }
 
-    /// Sets the format used by this game settings preset store file.
-    public void setFormat(JsonFileFormat format) {
-        this.format.set(Objects.requireNonNull(format));
+    /// Sets the schema used by this game settings preset store file.
+    public void setSchema(JsonSchema schema) {
+        this.schema.set(Objects.requireNonNull(schema));
     }
 
     /// Reusable game setting presets.

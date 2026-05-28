@@ -25,7 +25,7 @@ import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
-import org.jackhuang.hmcl.util.gson.JsonFileFormat;
+import org.jackhuang.hmcl.util.gson.JsonSchema;
 import org.jackhuang.hmcl.util.gson.JsonSerializable;
 import org.jackhuang.hmcl.util.gson.ObservableSetting;
 import org.jetbrains.annotations.NotNullByDefault;
@@ -43,34 +43,34 @@ import java.util.Objects;
 @JsonAdapter(GameDirectories.Adapter.class)
 @NotNullByDefault
 @JsonSerializable
-public final class GameDirectories extends ObservableSetting implements FormattedJsonSetting {
-    /// The file format supported by this game directory store.
-    public static final JsonFileFormat CURRENT_FORMAT =
-            new JsonFileFormat("hmcl.game-directories", new JsonFileFormat.Version(1, 0));
+public final class GameDirectories extends ObservableSetting implements JsonSchemaSetting {
+    /// The JSON schema supported by this game directory store.
+    public static final JsonSchema CURRENT_SCHEMA =
+            new JsonSchema("game-directories", new JsonSchema.Version(1, 0));
 
     /// Creates an empty game directory store.
     public GameDirectories() {
-        tracker.markDirty(format);
+        tracker.markDirty(schema);
         register();
     }
 
-    /// The format used by this game directory store file.
-    @SerializedName(JsonFileFormat.DEFAULT_MEMBER_NAME)
-    private final ObjectProperty<JsonFileFormat> format = new SimpleObjectProperty<>(CURRENT_FORMAT);
+    /// The schema used by this game directory store file.
+    @SerializedName(JsonSchema.DEFAULT_MEMBER_NAME)
+    private final ObjectProperty<JsonSchema> schema = new SimpleObjectProperty<>(CURRENT_SCHEMA);
 
-    /// Returns the format property.
-    public ObjectProperty<JsonFileFormat> formatProperty() {
-        return format;
+    /// Returns the schema property.
+    public ObjectProperty<JsonSchema> schemaProperty() {
+        return schema;
     }
 
-    /// Returns the format used by this game directory store file.
-    public JsonFileFormat getFormat() {
-        return format.get();
+    /// Returns the schema used by this game directory store file.
+    public JsonSchema getSchema() {
+        return schema.get();
     }
 
-    /// Sets the format used by this game directory store file.
-    public void setFormat(JsonFileFormat format) {
-        this.format.set(Objects.requireNonNull(format));
+    /// Sets the schema used by this game directory store file.
+    public void setSchema(JsonSchema schema) {
+        this.schema.set(Objects.requireNonNull(schema));
     }
 
     /// Per-workspace game directories.

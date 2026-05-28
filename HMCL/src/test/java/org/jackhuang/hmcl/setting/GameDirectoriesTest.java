@@ -22,7 +22,7 @@ import com.google.gson.JsonParseException;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import org.jackhuang.hmcl.util.PortablePath;
-import org.jackhuang.hmcl.util.gson.JsonFileFormat;
+import org.jackhuang.hmcl.util.gson.JsonSchema;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.junit.jupiter.api.Test;
@@ -185,10 +185,7 @@ public final class GameDirectoriesTest {
     public void doesNotStoreSelectedGameDirectoryInGameDirectories() {
         JsonObject serialized = JsonParser.parseString("""
                 {
-                  "$format": {
-                    "id": "hmcl.game-directories",
-                    "version": "1.0"
-                  },
+                  "$schema": "https://schemas.glavo.site/hmcl/game-directories/1.0/game-directories-1.0.schema.json",
                   "selectedGameDirectory": "123e4567-e89b-12d3-a456-426614174000",
                   "gameDirectories": []
                 }
@@ -198,8 +195,8 @@ public final class GameDirectoriesTest {
         JsonObject rewritten = JsonParser.parseString(JsonUtils.GSON.toJson(gameDirectories, GameDirectories.class))
                 .getAsJsonObject();
 
-        assertEquals(GameDirectories.CURRENT_FORMAT,
-                JsonFileFormat.readFromMember(rewritten, JsonFileFormat.DEFAULT_MEMBER_NAME));
+        assertEquals(GameDirectories.CURRENT_SCHEMA,
+                JsonSchema.readFromMember(rewritten, JsonSchema.DEFAULT_MEMBER_NAME));
         assertFalse(rewritten.has(Config.SELECTED_GAME_DIRECTORY_MEMBER_NAME));
         assertTrue(rewritten.has("gameDirectories"));
     }

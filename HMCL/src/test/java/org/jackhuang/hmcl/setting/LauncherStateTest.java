@@ -64,7 +64,7 @@ public final class LauncherStateTest {
         assertEquals(720.0, state.getHeight());
         assertEquals("3.6.15", state.getPromptedVersion());
         assertEquals(21.0, state.getShownTips().get("javaVersionTip"));
-        assertEquals(LauncherState.CURRENT_FORMAT, state.getFormat());
+        assertEquals(LauncherState.CURRENT_SCHEMA, state.getSchema());
 
         Config config = Objects.requireNonNull(Config.fromJson(settings));
         assertEquals(5000, config.getLogLines());

@@ -23,7 +23,7 @@ import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
-import org.jackhuang.hmcl.util.gson.JsonFileFormat;
+import org.jackhuang.hmcl.util.gson.JsonSchema;
 import org.jackhuang.hmcl.util.gson.JsonSerializable;
 import org.jackhuang.hmcl.util.gson.ObservableSetting;
 import org.jetbrains.annotations.NotNullByDefault;
@@ -38,14 +38,14 @@ import java.util.Objects;
 @JsonAdapter(AccountStorages.Adapter.class)
 @NotNullByDefault
 @JsonSerializable
-final class AccountStorages extends ObservableSetting implements FormattedJsonSetting {
-    /// The file format supported by this account storage list.
-    static final JsonFileFormat CURRENT_FORMAT =
-            new JsonFileFormat("hmcl.game-accounts", new JsonFileFormat.Version(1, 0));
+final class AccountStorages extends ObservableSetting implements JsonSchemaSetting {
+    /// The JSON schema supported by this account storage list.
+    static final JsonSchema CURRENT_SCHEMA =
+            new JsonSchema("game-accounts", new JsonSchema.Version(1, 0));
 
     /// Creates an empty account storage list.
     AccountStorages() {
-        tracker.markDirty(format);
+        tracker.markDirty(schema);
         tracker.markDirty(accounts);
         register();
     }
@@ -60,25 +60,25 @@ final class AccountStorages extends ObservableSetting implements FormattedJsonSe
         return result;
     }
 
-    /// The format used by this account storage list file.
-    @SerializedName(JsonFileFormat.DEFAULT_MEMBER_NAME)
-    private final ObjectProperty<JsonFileFormat> format = new SimpleObjectProperty<>(CURRENT_FORMAT);
+    /// The schema used by this account storage list file.
+    @SerializedName(JsonSchema.DEFAULT_MEMBER_NAME)
+    private final ObjectProperty<JsonSchema> schema = new SimpleObjectProperty<>(CURRENT_SCHEMA);
 
-    /// Returns the format property.
-    public ObjectProperty<JsonFileFormat> formatProperty() {
-        return format;
+    /// Returns the schema property.
+    public ObjectProperty<JsonSchema> schemaProperty() {
+        return schema;
     }
 
-    /// Returns the format used by this account storage list file.
+    /// Returns the schema used by this account storage list file.
     @Override
-    public JsonFileFormat getFormat() {
-        return format.get();
+    public JsonSchema getSchema() {
+        return schema.get();
     }
 
-    /// Sets the format used by this account storage list file.
+    /// Sets the schema used by this account storage list file.
     @Override
-    public void setFormat(JsonFileFormat format) {
-        this.format.set(Objects.requireNonNull(format));
+    public void setSchema(JsonSchema schema) {
+        this.schema.set(Objects.requireNonNull(schema));
     }
 
     /// Serialized account entries.

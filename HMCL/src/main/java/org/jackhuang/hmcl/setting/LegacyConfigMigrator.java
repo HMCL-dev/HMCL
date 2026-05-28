@@ -21,7 +21,7 @@ import com.github.f4b6a3.uuid.alt.GUID;
 import com.google.gson.*;
 import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.util.StringUtils;
-import org.jackhuang.hmcl.util.gson.JsonFileFormat;
+import org.jackhuang.hmcl.util.gson.JsonSchema;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.io.JarUtils;
 import org.jetbrains.annotations.Contract;
@@ -136,7 +136,7 @@ public final class LegacyConfigMigrator {
         Objects.requireNonNull(json);
 
         JsonObject state = new JsonObject();
-        state.add(JsonFileFormat.DEFAULT_MEMBER_NAME, JsonUtils.GSON.toJsonTree(LauncherState.CURRENT_FORMAT, JsonFileFormat.class));
+        state.add(JsonSchema.DEFAULT_MEMBER_NAME, JsonUtils.GSON.toJsonTree(LauncherState.CURRENT_SCHEMA, JsonSchema.class));
         moveMember(json, state, "x");
         moveMember(json, state, "y");
         moveMember(json, state, "width");
@@ -153,8 +153,8 @@ public final class LegacyConfigMigrator {
         Objects.requireNonNull(json);
 
         JsonObject servers = new JsonObject();
-        servers.add(JsonFileFormat.DEFAULT_MEMBER_NAME,
-                JsonUtils.GSON.toJsonTree(AuthlibInjectorServerList.CURRENT_FORMAT, JsonFileFormat.class));
+        servers.add(JsonSchema.DEFAULT_MEMBER_NAME,
+                JsonUtils.GSON.toJsonTree(AuthlibInjectorServerList.CURRENT_SCHEMA, JsonSchema.class));
         JsonElement authlibInjectorServers = json.remove("authlibInjectorServers");
         if (authlibInjectorServers != null) {
             servers.add("servers", authlibInjectorServers);
@@ -184,8 +184,8 @@ public final class LegacyConfigMigrator {
         }
 
         JsonObject object = new JsonObject();
-        object.add(JsonFileFormat.DEFAULT_MEMBER_NAME,
-                JsonUtils.GSON.toJsonTree(AccountStorages.CURRENT_FORMAT, JsonFileFormat.class));
+        object.add(JsonSchema.DEFAULT_MEMBER_NAME,
+                JsonUtils.GSON.toJsonTree(AccountStorages.CURRENT_SCHEMA, JsonSchema.class));
         if (accounts instanceof JsonArray) {
             object.add("accounts", accounts);
         }
@@ -265,7 +265,7 @@ public final class LegacyConfigMigrator {
         }
 
         JsonObject object = new JsonObject();
-        object.add(JsonFileFormat.DEFAULT_MEMBER_NAME, JsonUtils.GSON.toJsonTree(GameDirectories.CURRENT_FORMAT, JsonFileFormat.class));
+        object.add(JsonSchema.DEFAULT_MEMBER_NAME, JsonUtils.GSON.toJsonTree(GameDirectories.CURRENT_SCHEMA, JsonSchema.class));
         object.add("gameDirectories", profiles);
 
         return JsonUtils.GSON.fromJson(object, GameDirectories.class);

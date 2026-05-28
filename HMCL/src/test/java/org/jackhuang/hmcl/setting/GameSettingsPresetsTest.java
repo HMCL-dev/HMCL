@@ -21,7 +21,7 @@ import com.github.f4b6a3.uuid.alt.GUID;
 import com.google.gson.JsonParseException;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
-import org.jackhuang.hmcl.util.gson.JsonFileFormat;
+import org.jackhuang.hmcl.util.gson.JsonSchema;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.junit.jupiter.api.Test;
@@ -61,10 +61,7 @@ public final class GameSettingsPresetsTest {
     public void doesNotStoreDefaultGameSettingsPresetInPresets() {
         JsonObject serialized = JsonParser.parseString("""
                 {
-                  "$format": {
-                    "id": "hmcl.game-settings",
-                    "version": "1.0"
-                  },
+                  "$schema": "https://schemas.glavo.site/hmcl/game-settings/1.0/game-settings-1.0.schema.json",
                   "defaultGameSettingsPreset": "123e4567-e89b-12d3-a456-426614174000",
                   "presets": []
                 }
@@ -74,8 +71,8 @@ public final class GameSettingsPresetsTest {
         JsonObject rewritten = JsonParser.parseString(JsonUtils.GSON.toJson(presets, GameSettingsPresets.class))
                 .getAsJsonObject();
 
-        assertEquals(GameSettingsPresets.CURRENT_FORMAT,
-                JsonFileFormat.readFromMember(rewritten, JsonFileFormat.DEFAULT_MEMBER_NAME));
+        assertEquals(GameSettingsPresets.CURRENT_SCHEMA,
+                JsonSchema.readFromMember(rewritten, JsonSchema.DEFAULT_MEMBER_NAME));
         assertFalse(rewritten.has(Config.DEFAULT_GAME_SETTINGS_PRESET_MEMBER_NAME));
         assertTrue(rewritten.has("presets"));
         assertFalse(rewritten.has("gameSettings"));

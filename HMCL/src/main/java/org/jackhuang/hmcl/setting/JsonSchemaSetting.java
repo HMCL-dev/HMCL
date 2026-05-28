@@ -17,19 +17,19 @@
  */
 package org.jackhuang.hmcl.setting;
 
-import org.jackhuang.hmcl.util.gson.JsonFileFormat;
+import org.jackhuang.hmcl.util.gson.JsonSchema;
 import org.jetbrains.annotations.NotNullByDefault;
 
-/// Marks a detached settings object that stores its own JSON file format.
+/// Marks a detached settings object that stores its own JSON schema URL.
 ///
 /// @author Glavo
 @NotNullByDefault
-interface FormattedJsonSetting {
-    /// Returns the format used by this JSON settings file.
-    JsonFileFormat getFormat();
+interface JsonSchemaSetting {
+    /// Returns the schema used by this JSON settings file.
+    JsonSchema getSchema();
 
-    /// Sets the format used by this JSON settings file.
+    /// Sets the schema used by this JSON settings file.
     ///
-    /// @param format the format to store
-    void setFormat(JsonFileFormat format);
+    /// @param schema the schema to store
+    void setSchema(JsonSchema schema);
 }

@@ -48,8 +48,8 @@ import java.util.*;
 @JsonAdapter(value = Config.Adapter.class)
 public final class Config extends ObservableSetting {
 
-    /// The file format supported by this config class.
-    public static final JsonFileFormat CURRENT_FORMAT = new JsonFileFormat("hmcl.settings", new JsonFileFormat.Version(1, 0));
+    /// The JSON schema supported by this config class.
+    public static final JsonSchema CURRENT_SCHEMA = new JsonSchema("settings", new JsonSchema.Version(1, 0));
 
     /// The JSON member name for the default game setting preset ID.
     static final String DEFAULT_GAME_SETTINGS_PRESET_MEMBER_NAME = "defaultGameSettingsPreset";
@@ -81,7 +81,7 @@ public final class Config extends ObservableSetting {
     }
 
     public Config() {
-        tracker.markDirty(format);
+        tracker.markDirty(schema);
         register();
     }
 
@@ -91,23 +91,23 @@ public final class Config extends ObservableSetting {
 
     // Properties
 
-    /// The format used by this config file.
-    @SerializedName(JsonFileFormat.DEFAULT_MEMBER_NAME)
-    private final ObjectProperty<JsonFileFormat> format = new SimpleObjectProperty<>(CURRENT_FORMAT);
+    /// The schema used by this config file.
+    @SerializedName(JsonSchema.DEFAULT_MEMBER_NAME)
+    private final ObjectProperty<JsonSchema> schema = new SimpleObjectProperty<>(CURRENT_SCHEMA);
 
-    /// Returns the format property.
-    public ObjectProperty<JsonFileFormat> formatProperty() {
-        return format;
+    /// Returns the schema property.
+    public ObjectProperty<JsonSchema> schemaProperty() {
+        return schema;
     }
 
-    /// Returns the format used by this config file.
-    public JsonFileFormat getFormat() {
-        return format.get();
+    /// Returns the schema used by this config file.
+    public JsonSchema getSchema() {
+        return schema.get();
     }
 
-    /// Sets the format used by this config file.
-    public void setFormat(JsonFileFormat format) {
-        this.format.set(Objects.requireNonNull(format));
+    /// Sets the schema used by this config file.
+    public void setSchema(JsonSchema schema) {
+        this.schema.set(Objects.requireNonNull(schema));
     }
 
     @SerializedName("language")
@@ -725,7 +725,7 @@ public final class Config extends ObservableSetting {
             return new Config();
         }
 
-        /// Serializes the main config with the current format.
+        /// Serializes the main config with the current schema.
         @Override
         public JsonElement serialize(Config src, Type typeOfSrc, JsonSerializationContext context) {
             if (src == null) {
@@ -733,7 +733,7 @@ public final class Config extends ObservableSetting {
             }
 
             JsonObject result = super.serialize(src, typeOfSrc, context).getAsJsonObject();
-            result.add(JsonFileFormat.DEFAULT_MEMBER_NAME, context.serialize(CURRENT_FORMAT, JsonFileFormat.class));
+            result.add(JsonSchema.DEFAULT_MEMBER_NAME, context.serialize(CURRENT_SCHEMA, JsonSchema.class));
             return result;
         }
 

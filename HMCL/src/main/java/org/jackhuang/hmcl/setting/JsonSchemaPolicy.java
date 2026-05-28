@@ -18,46 +18,46 @@
 package org.jackhuang.hmcl.setting;
 
 import com.google.gson.JsonObject;
-import org.jackhuang.hmcl.util.gson.JsonFileFormat;
+import org.jackhuang.hmcl.util.gson.JsonSchema;
 import org.jetbrains.annotations.NotNullByDefault;
 
 import java.nio.file.Path;
 
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
-/// Applies the common compatibility policy for JSON files with a [JsonFileFormat] marker.
+/// Applies the common compatibility policy for JSON files with a [JsonSchema] marker.
 ///
 /// @author Glavo
 @NotNullByDefault
-final class JsonFileFormatPolicy {
+final class JsonSchemaPolicy {
     /// Prevents instantiation.
-    private JsonFileFormatPolicy() {
+    private JsonSchemaPolicy() {
     }
 
-    /// Checks the format marker of a JSON file.
+    /// Checks the schema marker of a JSON file.
     ///
     /// @param location the file location used in logs
     /// @param displayName the human-readable file type name used in logs
-    /// @param object the JSON object that contains the format marker
-    /// @param expected the file format supported by the current code
+    /// @param object the JSON object that contains the schema marker
+    /// @param expected the JSON schema supported by the current code
     /// @return the compatibility result
-    static Result check(Path location, String displayName, JsonObject object, JsonFileFormat expected) {
-        JsonFileFormat.CheckResult format = JsonFileFormat.check(object, expected);
-        if (format.isMissing()) {
-            LOG.warning("Missing format in " + displayName + ": " + location);
+    static Result check(Path location, String displayName, JsonObject object, JsonSchema expected) {
+        JsonSchema.CheckResult schema = JsonSchema.check(object, expected);
+        if (schema.isMissing()) {
+            LOG.warning("Missing schema in " + displayName + ": " + location);
             return Result.UNREADABLE;
-        } else if (format.isInvalid()) {
-            LOG.warning("Invalid format in " + displayName + ": "
-                    + location + ", Actual: " + format.invalidValue());
+        } else if (schema.isInvalid()) {
+            LOG.warning("Invalid schema in " + displayName + ": "
+                    + location + ", Actual: " + schema.invalidValue());
             return Result.UNREADABLE;
-        } else if (format.isUnexpectedId()) {
-            LOG.warning("Unexpected " + displayName + " format. Expected: "
-                    + expected + ", Actual: " + format.actual());
+        } else if (schema.isUnexpectedId()) {
+            LOG.warning("Unexpected " + displayName + " schema. Expected: "
+                    + expected + ", Actual: " + schema.actual());
             return Result.UNREADABLE;
-        } else if (format.isNewerThanExpected()) {
-            LOG.warning("Unsupported " + displayName + " format. Expected: "
-                    + expected + ", Actual: " + format.actual());
-            return format.hasNewerMajorVersion() ? Result.UNREADABLE : Result.READ_ONLY;
+        } else if (schema.isNewerThanExpected()) {
+            LOG.warning("Unsupported " + displayName + " schema. Expected: "
+                    + expected + ", Actual: " + schema.actual());
+            return schema.hasNewerMajorVersion() ? Result.UNREADABLE : Result.READ_ONLY;
         } else {
             return Result.READ_WRITE;
         }

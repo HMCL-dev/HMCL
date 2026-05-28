@@ -80,7 +80,7 @@ public final class ConfigHolder {
             GAME_DIRECTORIES_LOCATION,
             "game directories",
             GameDirectories.class,
-            GameDirectories.CURRENT_FORMAT,
+            GameDirectories.CURRENT_SCHEMA,
             GameDirectories::new);
 
     /// The detached game settings file helper.
@@ -88,7 +88,7 @@ public final class ConfigHolder {
             GAME_SETTINGS_LOCATION,
             "game settings",
             GameSettingsPresets.class,
-            GameSettingsPresets.CURRENT_FORMAT,
+            GameSettingsPresets.CURRENT_SCHEMA,
             GameSettingsPresets::new);
 
     /// The detached account storage file helper.
@@ -96,7 +96,7 @@ public final class ConfigHolder {
             GAME_ACCOUNTS_LOCATION,
             "game accounts",
             AccountStorages.class,
-            AccountStorages.CURRENT_FORMAT,
+            AccountStorages.CURRENT_SCHEMA,
             AccountStorages::new);
 
     /// The detached launcher state file helper.
@@ -104,7 +104,7 @@ public final class ConfigHolder {
             STATE_LOCATION,
             "launcher state",
             LauncherState.class,
-            LauncherState.CURRENT_FORMAT,
+            LauncherState.CURRENT_SCHEMA,
             LauncherState::new);
 
     /// The detached authlib-injector server list file helper.
@@ -112,7 +112,7 @@ public final class ConfigHolder {
             AUTHLIB_INJECTOR_SERVERS_LOCATION,
             "authlib-injector servers",
             AuthlibInjectorServerList.class,
-            AuthlibInjectorServerList.CURRENT_FORMAT,
+            AuthlibInjectorServerList.CURRENT_SCHEMA,
             AuthlibInjectorServerList::createDefault);
 
     /// The loaded per-workspace config instance.
@@ -423,12 +423,12 @@ public final class ConfigHolder {
                 return new Config();
             }
 
-            JsonFileFormatPolicy.Result format =
-                    JsonFileFormatPolicy.check(SETTINGS_LOCATION, "settings file", jsonObject, Config.CURRENT_FORMAT);
-            if (!format.allowSave()) {
+            JsonSchemaPolicy.Result schema =
+                    JsonSchemaPolicy.check(SETTINGS_LOCATION, "settings file", jsonObject, Config.CURRENT_SCHEMA);
+            if (!schema.allowSave()) {
                 unsupportedVersion = true;
             }
-            if (!format.readable()) {
+            if (!schema.readable()) {
                 return new Config();
             }
 
@@ -443,8 +443,8 @@ public final class ConfigHolder {
                     return new Config();
                 }
 
-                if (!Config.CURRENT_FORMAT.equals(settings.getFormat())) {
-                    settings.setFormat(Config.CURRENT_FORMAT);
+                if (!Config.CURRENT_SCHEMA.equals(settings.getSchema())) {
+                    settings.setSchema(Config.CURRENT_SCHEMA);
                 }
 
                 return settings;

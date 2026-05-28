@@ -130,7 +130,7 @@ public final class Accounts {
             GLOBAL_GAME_ACCOUNTS_LOCATION,
             "global game accounts",
             AccountStorages.class,
-            AccountStorages.CURRENT_FORMAT,
+            AccountStorages.CURRENT_SCHEMA,
             AccountStorages::new);
     private static @Nullable AccountStorages globalAccounts;
 

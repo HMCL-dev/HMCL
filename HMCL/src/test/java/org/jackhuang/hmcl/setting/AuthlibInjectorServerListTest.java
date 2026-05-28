@@ -59,7 +59,7 @@ public final class AuthlibInjectorServerListTest {
 
         assertEquals(1, list.getServers().size());
         assertEquals("https://example.com/api/yggdrasil/", list.getServers().get(0).getUrl());
-        assertEquals(AuthlibInjectorServerList.CURRENT_FORMAT, list.getFormat());
+        assertEquals(AuthlibInjectorServerList.CURRENT_SCHEMA, list.getSchema());
     }
 
     /// Tests that legacy configs without `addedLittleSkin` receive LittleSkin during migration.

@@ -19,6 +19,7 @@ package org.jackhuang.hmcl.setting;
 
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
+import org.jackhuang.hmcl.util.gson.JsonSchema;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.junit.jupiter.api.Test;
@@ -43,8 +44,8 @@ public final class AccountStoragesTest {
                 JsonUtils.GSON.toJson(accountStorages, AccountStorages.class)
         ).getAsJsonObject();
 
-        assertEquals(AccountStorages.CURRENT_FORMAT.id(),
-                serialized.getAsJsonObject("$format").get("id").getAsString());
+        assertEquals(AccountStorages.CURRENT_SCHEMA.url(),
+                serialized.get(JsonSchema.DEFAULT_MEMBER_NAME).getAsString());
         assertTrue(serialized.has("accounts"));
         assertEquals(1, serialized.getAsJsonArray("accounts").size());
         assertEquals("offline", serialized.getAsJsonArray("accounts")
@@ -76,6 +77,6 @@ public final class AccountStoragesTest {
         assertTrue(settings.has("selectedAccount"));
         assertEquals(1, accountStorages.getAccounts().size());
         assertEquals("offline", accountStorages.getAccounts().get(0).get("type"));
-        assertEquals(AccountStorages.CURRENT_FORMAT, accountStorages.getFormat());
+        assertEquals(AccountStorages.CURRENT_SCHEMA, accountStorages.getSchema());
     }
 }

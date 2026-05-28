@@ -25,7 +25,7 @@ import javafx.beans.property.SimpleObjectProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import org.jackhuang.hmcl.auth.authlibinjector.AuthlibInjectorServer;
-import org.jackhuang.hmcl.util.gson.JsonFileFormat;
+import org.jackhuang.hmcl.util.gson.JsonSchema;
 import org.jackhuang.hmcl.util.gson.JsonSerializable;
 import org.jackhuang.hmcl.util.gson.ObservableSetting;
 import org.jetbrains.annotations.NotNullByDefault;
@@ -40,17 +40,17 @@ import java.util.Objects;
 @JsonAdapter(AuthlibInjectorServerList.Adapter.class)
 @NotNullByDefault
 @JsonSerializable
-public final class AuthlibInjectorServerList extends ObservableSetting implements FormattedJsonSetting {
+public final class AuthlibInjectorServerList extends ObservableSetting implements JsonSchemaSetting {
     /// The LittleSkin Yggdrasil API endpoint bundled into newly created server lists.
     public static final String LITTLE_SKIN_URL = "https://littleskin.cn/api/yggdrasil/";
 
-    /// The file format supported by this authlib-injector server list.
-    public static final JsonFileFormat CURRENT_FORMAT =
-            new JsonFileFormat("hmcl.authlib-injector-servers", new JsonFileFormat.Version(1, 0));
+    /// The JSON schema supported by this authlib-injector server list.
+    public static final JsonSchema CURRENT_SCHEMA =
+            new JsonSchema("authlib-injector-servers", new JsonSchema.Version(1, 0));
 
     /// Creates an empty authlib-injector server list.
     public AuthlibInjectorServerList() {
-        tracker.markDirty(format);
+        tracker.markDirty(schema);
         register();
     }
 
@@ -68,25 +68,25 @@ public final class AuthlibInjectorServerList extends ObservableSetting implement
         }
     }
 
-    /// The format used by this authlib-injector server list file.
-    @SerializedName(JsonFileFormat.DEFAULT_MEMBER_NAME)
-    private final ObjectProperty<JsonFileFormat> format = new SimpleObjectProperty<>(CURRENT_FORMAT);
+    /// The schema used by this authlib-injector server list file.
+    @SerializedName(JsonSchema.DEFAULT_MEMBER_NAME)
+    private final ObjectProperty<JsonSchema> schema = new SimpleObjectProperty<>(CURRENT_SCHEMA);
 
-    /// Returns the format property.
-    public ObjectProperty<JsonFileFormat> formatProperty() {
-        return format;
+    /// Returns the schema property.
+    public ObjectProperty<JsonSchema> schemaProperty() {
+        return schema;
     }
 
-    /// Returns the format used by this authlib-injector server list file.
+    /// Returns the schema used by this authlib-injector server list file.
     @Override
-    public JsonFileFormat getFormat() {
-        return format.get();
+    public JsonSchema getSchema() {
+        return schema.get();
     }
 
-    /// Sets the format used by this authlib-injector server list file.
+    /// Sets the schema used by this authlib-injector server list file.
     @Override
-    public void setFormat(JsonFileFormat format) {
-        this.format.set(Objects.requireNonNull(format));
+    public void setSchema(JsonSchema schema) {
+        this.schema.set(Objects.requireNonNull(schema));
     }
 
     /// Authlib-injector authentication servers available for account login.
