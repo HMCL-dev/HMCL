@@ -181,25 +181,6 @@ public final class LauncherState extends ObservableSetting implements FormattedJ
         return shownTips;
     }
 
-    /// The number of log lines kept by the log window.
-    @SerializedName("logLines")
-    private final ObjectProperty<@Nullable Integer> logLines = new SimpleObjectProperty<>();
-
-    /// Returns the log line count property.
-    public ObjectProperty<@Nullable Integer> logLinesProperty() {
-        return logLines;
-    }
-
-    /// Returns the number of log lines kept by the log window.
-    public @Nullable Integer getLogLines() {
-        return logLines.get();
-    }
-
-    /// Sets the number of log lines kept by the log window.
-    public void setLogLines(@Nullable Integer logLines) {
-        this.logLines.set(logLines);
-    }
-
     /// JSON adapter for [LauncherState].
     public static final class Adapter extends ObservableSetting.Adapter<LauncherState> {
         /// Creates an empty launcher state store for deserialization.

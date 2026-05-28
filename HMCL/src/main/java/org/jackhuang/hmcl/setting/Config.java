@@ -202,6 +202,21 @@ public final class Config extends ObservableSetting {
         this.commonDirectory.set(commonDirectory);
     }
 
+    @SerializedName("logLines")
+    private final ObjectProperty<@Nullable Integer> logLines = new SimpleObjectProperty<>();
+
+    public ObjectProperty<@Nullable Integer> logLinesProperty() {
+        return logLines;
+    }
+
+    public @Nullable Integer getLogLines() {
+        return logLines.get();
+    }
+
+    public void setLogLines(@Nullable Integer logLines) {
+        this.logLines.set(logLines);
+    }
+
     // UI
 
     @SerializedName("themeBrightness")

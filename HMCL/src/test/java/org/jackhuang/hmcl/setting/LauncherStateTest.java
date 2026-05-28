@@ -22,6 +22,8 @@ import com.google.gson.JsonParser;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.junit.jupiter.api.Test;
 
+import java.util.Objects;
+
 import static org.junit.jupiter.api.Assertions.*;
 
 /// Tests for detached launcher state migration.
@@ -53,7 +55,7 @@ public final class LauncherStateTest {
         assertFalse(settings.has("height"));
         assertFalse(settings.has("promptedVersion"));
         assertFalse(settings.has("shownTips"));
-        assertFalse(settings.has("logLines"));
+        assertTrue(settings.has("logLines"));
         assertTrue(settings.has("localization"));
 
         assertEquals(0.25, state.getX());
@@ -62,7 +64,9 @@ public final class LauncherStateTest {
         assertEquals(720.0, state.getHeight());
         assertEquals("3.6.15", state.getPromptedVersion());
         assertEquals(21.0, state.getShownTips().get("javaVersionTip"));
-        assertEquals(5000, state.getLogLines());
         assertEquals(LauncherState.CURRENT_FORMAT, state.getFormat());
+
+        Config config = Objects.requireNonNull(Config.fromJson(settings));
+        assertEquals(5000, config.getLogLines());
     }
 }

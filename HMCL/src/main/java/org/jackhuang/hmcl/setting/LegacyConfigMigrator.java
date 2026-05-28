@@ -135,7 +135,6 @@ public final class LegacyConfigMigrator {
         moveMember(json, state, "height");
         moveMember(json, state, "promptedVersion");
         moveMember(json, state, "shownTips");
-        moveMember(json, state, "logLines");
 
         LauncherState result = JsonUtils.GSON.fromJson(state, LauncherState.class);
         return result != null ? result : new LauncherState();
