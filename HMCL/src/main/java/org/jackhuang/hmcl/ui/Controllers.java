@@ -490,7 +490,7 @@ public final class Controllers {
                             LOG.info("Switching locale to " + lzh);
 
                             updateShowTips.run();
-                            config().setLocalization(lzh);
+                            config().setLanguage(lzh);
 
                             Controllers.onApplicationStop();
 

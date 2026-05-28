@@ -110,19 +110,19 @@ public final class Config extends ObservableSetting {
         this.format.set(Objects.requireNonNull(format));
     }
 
-    @SerializedName("localization")
-    private final ObjectProperty<SupportedLocale> localization = new SimpleObjectProperty<>(SupportedLocale.DEFAULT);
+    @SerializedName("language")
+    private final ObjectProperty<SupportedLocale> language = new SimpleObjectProperty<>(SupportedLocale.DEFAULT);
 
-    public ObjectProperty<SupportedLocale> localizationProperty() {
-        return localization;
+    public ObjectProperty<SupportedLocale> languageProperty() {
+        return language;
     }
 
-    public SupportedLocale getLocalization() {
-        return localization.get();
+    public SupportedLocale getLanguage() {
+        return language.get();
     }
 
-    public void setLocalization(SupportedLocale localization) {
-        this.localization.set(localization);
+    public void setLanguage(SupportedLocale language) {
+        this.language.set(language);
     }
 
     @SerializedName("acceptPreviewUpdate")

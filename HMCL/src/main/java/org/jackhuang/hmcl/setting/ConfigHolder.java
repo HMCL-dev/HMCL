@@ -344,8 +344,8 @@ public final class ConfigHolder {
         globalConfigInstance = loadGlobalConfig();
         globalConfigInstance.addListener(source -> FileSaver.save(GLOBAL_CONFIG_PATH, globalConfigInstance.toJson()));
 
-        Locale.setDefault(config().getLocalization().getLocale());
-        I18n.setLocale(configInstance.getLocalization());
+        Locale.setDefault(config().getLanguage().getLocale());
+        I18n.setLocale(configInstance.getLanguage());
         LOG.setLogRetention(globalConfig().getLogRetention());
         loadGameDirectories(migratedGameDirectories, !unsupportedVersion);
         loadGameSettingsPresets(migratedGameSettingsPresets, !unsupportedVersion);

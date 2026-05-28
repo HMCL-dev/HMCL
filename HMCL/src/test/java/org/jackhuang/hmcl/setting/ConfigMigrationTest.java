@@ -1,0 +1,67 @@
+/*
+ * Hello Minecraft! Launcher
+ * Copyright (C) 2026 huangyuhui <huanghongxun2008@126.com> and contributors
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
+package org.jackhuang.hmcl.setting;
+
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
+import org.jetbrains.annotations.NotNullByDefault;
+import org.junit.jupiter.api.Test;
+
+import java.util.Objects;
+
+import static org.junit.jupiter.api.Assertions.*;
+
+/// Tests for legacy config migration into current settings.
+@NotNullByDefault
+public final class ConfigMigrationTest {
+    /// Tests migrating legacy language fields into the current main config field.
+    @Test
+    public void migratesLegacyLocalizationToLanguage() {
+        JsonObject settings = JsonParser.parseString("""
+                {
+                  "localization": "zh_CN"
+                }
+                """).getAsJsonObject();
+
+        LegacyConfigMigrator.migrateLegacyLanguage(settings);
+        Config config = Objects.requireNonNull(Config.fromJson(settings));
+        JsonObject serialized = JsonParser.parseString(config.toJson()).getAsJsonObject();
+
+        assertFalse(settings.has("localization"));
+        assertEquals("zh-Hans", settings.get("language").getAsString());
+        assertEquals("zh-Hans", config.getLanguage().getName());
+        assertFalse(serialized.has("localization"));
+        assertEquals("zh-Hans", serialized.get("language").getAsString());
+    }
+
+    /// Tests that legacy Traditional Chinese language values are migrated before locale deserialization.
+    @Test
+    public void migratesLegacyTraditionalChineseLanguage() {
+        JsonObject settings = JsonParser.parseString("""
+                {
+                  "localization": "zh"
+                }
+                """).getAsJsonObject();
+
+        LegacyConfigMigrator.migrateLegacyLanguage(settings);
+        Config config = Objects.requireNonNull(Config.fromJson(settings));
+
+        assertEquals("zh-Hant", settings.get("language").getAsString());
+        assertEquals("zh-Hant", config.getLanguage().getName());
+    }
+}

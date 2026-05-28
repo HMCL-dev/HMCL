@@ -103,6 +103,7 @@ public final class LegacyConfigMigrator {
 
             LauncherState launcherState = extractLauncherState(jsonObject);
             AuthlibInjectorServerList authlibInjectorServers = extractAuthlibInjectorServers(jsonObject);
+            migrateLegacyLanguage(jsonObject);
             migrateLegacySelectedVersions(jsonObject);
             @Nullable GameDirectories migratedGameDirectories = extractGameDirectoriesFromConfigJson(jsonObject);
             GameDirectories gameDirectories = migratedGameDirectories != null
@@ -174,6 +175,22 @@ public final class LegacyConfigMigrator {
         if (element != null) {
             target.add(name, element);
         }
+    }
+
+    /// Migrates the legacy `localization` field into the current `language` field.
+    static void migrateLegacyLanguage(JsonObject json) {
+        Objects.requireNonNull(json);
+
+        JsonElement legacyLanguage = json.remove("localization");
+        if (json.has("language") || !(legacyLanguage instanceof JsonPrimitive primitive) || !primitive.isString()) {
+            return;
+        }
+
+        json.addProperty("language", switch (primitive.getAsString()) {
+            case "zh_CN" -> "zh-Hans";
+            case "zh" -> "zh-Hant";
+            default -> primitive.getAsString();
+        });
     }
 
     /// Extracts game directory data from a legacy config JSON object and removes the legacy members.

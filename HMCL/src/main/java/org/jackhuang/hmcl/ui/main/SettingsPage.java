@@ -183,7 +183,7 @@ public final class SettingsPage extends ScrollPane {
                             return locale.getDisplayName(currentLocale) + " - " + locale.getDisplayName(locale);
                     });
                     chooseLanguagePane.setItems(SupportedLocale.getSupportedLocales());
-                    chooseLanguagePane.valueProperty().bindBidirectional(config().localizationProperty());
+                    chooseLanguagePane.valueProperty().bindBidirectional(config().languageProperty());
 
                     languagePaneList.getContent().add(chooseLanguagePane);
 

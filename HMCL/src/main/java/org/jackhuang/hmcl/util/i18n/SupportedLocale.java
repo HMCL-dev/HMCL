@@ -310,13 +310,7 @@ public final class SupportedLocale {
             if (in.peek() == JsonToken.NULL)
                 return DEFAULT;
 
-            String language = in.nextString();
-            return getLocaleByName(switch (language) {
-                // TODO: Remove these compatibility codes after updating the Config format
-                case "zh_CN" -> "zh-Hans"; // For compatibility
-                case "zh" -> "zh-Hant";    // For compatibility
-                default -> language;
-            });
+            return getLocaleByName(in.nextString());
         }
     }
 }
