@@ -50,6 +50,7 @@ import java.util.*;
 import static java.util.stream.Collectors.toList;
 import static javafx.collections.FXCollections.observableArrayList;
 import static org.jackhuang.hmcl.setting.ConfigHolder.config;
+import static org.jackhuang.hmcl.setting.ConfigHolder.getAuthlibInjectorServers;
 import static org.jackhuang.hmcl.setting.ConfigHolder.globalConfig;
 import static org.jackhuang.hmcl.ui.FXUtils.onInvalidating;
 import static org.jackhuang.hmcl.util.Lang.immutableListOf;
@@ -197,16 +198,6 @@ public final class Accounts {
         if (initialized)
             throw new IllegalStateException("Already initialized");
 
-        if (!config().isAddedLittleSkin()) {
-            AuthlibInjectorServer littleSkin = new AuthlibInjectorServer("https://littleskin.cn/api/yggdrasil/");
-
-            if (config().getAuthlibInjectorServers().stream().noneMatch(it -> littleSkin.getUrl().equals(it.getUrl()))) {
-                config().getAuthlibInjectorServers().add(0, littleSkin);
-            }
-
-            config().setAddedLittleSkin(true);
-        }
-
         loadGlobalAccountStorages();
 
         // load accounts
@@ -313,7 +304,7 @@ public final class Accounts {
 
         initialized = true;
 
-        config().getAuthlibInjectorServers().addListener(onInvalidating(Accounts::removeDanglingAuthlibInjectorAccounts));
+        getAuthlibInjectorServers().addListener(onInvalidating(Accounts::removeDanglingAuthlibInjectorAccounts));
 
         if (selected != null) {
             Account finalSelected = selected;
@@ -326,7 +317,7 @@ public final class Accounts {
             });
         }
 
-        for (AuthlibInjectorServer server : config().getAuthlibInjectorServers()) {
+        for (AuthlibInjectorServer server : getAuthlibInjectorServers()) {
             if (selected instanceof AuthlibInjectorAccount && ((AuthlibInjectorAccount) selected).getServer() == server)
                 continue;
             Schedulers.io().execute(() -> {
@@ -373,12 +364,12 @@ public final class Accounts {
     }
 
     private static AuthlibInjectorServer getOrCreateAuthlibInjectorServer(String url) {
-        return config().getAuthlibInjectorServers().stream()
+        return getAuthlibInjectorServers().stream()
                 .filter(server -> url.equals(server.getUrl()))
                 .findFirst()
                 .orElseGet(() -> {
                     AuthlibInjectorServer server = new AuthlibInjectorServer(url);
-                    config().getAuthlibInjectorServers().add(server);
+                    getAuthlibInjectorServers().add(server);
                     return server;
                 });
     }
@@ -391,7 +382,7 @@ public final class Accounts {
         accounts.stream()
                 .filter(AuthlibInjectorAccount.class::isInstance)
                 .map(AuthlibInjectorAccount.class::cast)
-                .filter(it -> !config().getAuthlibInjectorServers().contains(it.getServer()))
+                .filter(it -> !getAuthlibInjectorServers().contains(it.getServer()))
                 .collect(toList())
                 .forEach(accounts::remove);
     }

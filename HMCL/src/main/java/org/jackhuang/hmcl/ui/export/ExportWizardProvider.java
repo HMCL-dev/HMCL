@@ -26,6 +26,7 @@ import org.jackhuang.hmcl.mod.modrinth.ModrinthModpackExportTask;
 import org.jackhuang.hmcl.mod.multimc.MultiMCInstanceConfiguration;
 import org.jackhuang.hmcl.mod.multimc.MultiMCModpackExportTask;
 import org.jackhuang.hmcl.mod.server.ServerModpackExportTask;
+import org.jackhuang.hmcl.setting.AuthlibInjectorServerList;
 import org.jackhuang.hmcl.setting.Config;
 import org.jackhuang.hmcl.setting.FontManager;
 import org.jackhuang.hmcl.setting.GameSettings;
@@ -37,6 +38,7 @@ import org.jackhuang.hmcl.ui.wizard.WizardController;
 import org.jackhuang.hmcl.ui.wizard.WizardProvider;
 import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.SettingsMap;
+import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.io.JarUtils;
 import org.jackhuang.hmcl.util.io.Zipper;
 
@@ -47,6 +49,7 @@ import java.util.Collections;
 import java.util.List;
 
 import static org.jackhuang.hmcl.setting.ConfigHolder.config;
+import static org.jackhuang.hmcl.setting.ConfigHolder.getAuthlibInjectorServers;
 
 public final class ExportWizardProvider implements WizardProvider {
     private final Profile profile;
@@ -132,9 +135,13 @@ public final class ExportWizardProvider implements WizardProvider {
                     exported.setThemeColor(config().getThemeColor());
                     exported.setDownloadType(config().getDownloadType());
                     exported.setPreferredLoginType(config().getPreferredLoginType());
-                    exported.getAuthlibInjectorServers().setAll(config().getAuthlibInjectorServers());
 
                     zip.putTextFile(exported.toJson(), ".hmcl/settings.json");
+                    AuthlibInjectorServerList exportedServers = new AuthlibInjectorServerList();
+                    exportedServers.getServers().setAll(getAuthlibInjectorServers());
+                    zip.putTextFile(
+                            JsonUtils.GSON.toJson(exportedServers, AuthlibInjectorServerList.class),
+                            ".hmcl/authlib-injector-servers.json");
                     zip.putFile(tempModpack, ModpackTypeSelectionPage.MODPACK_TYPE_MODRINTH.equals(modpackType)
                             ? "modpack.mrpack"
                             : "modpack.zip");

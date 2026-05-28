@@ -34,7 +34,7 @@ import org.jackhuang.hmcl.util.Lang;
 import javax.net.ssl.SSLException;
 import java.io.IOException;
 
-import static org.jackhuang.hmcl.setting.ConfigHolder.config;
+import static org.jackhuang.hmcl.setting.ConfigHolder.getAuthlibInjectorServers;
 import static org.jackhuang.hmcl.ui.FXUtils.onEscPressed;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
@@ -221,8 +221,8 @@ public final class AddAuthlibInjectorServerPane extends TransitionPane implement
     }
 
     private void onAddFinish() {
-        if (!config().getAuthlibInjectorServers().contains(serverBeingAdded)) {
-            config().getAuthlibInjectorServers().add(serverBeingAdded);
+        if (!getAuthlibInjectorServers().contains(serverBeingAdded)) {
+            getAuthlibInjectorServers().add(serverBeingAdded);
         }
         fireEvent(new DialogCloseEvent());
     }

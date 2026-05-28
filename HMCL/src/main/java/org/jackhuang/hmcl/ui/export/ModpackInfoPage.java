@@ -57,6 +57,7 @@ import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import static org.jackhuang.hmcl.setting.ConfigHolder.config;
+import static org.jackhuang.hmcl.setting.ConfigHolder.getAuthlibInjectorServers;
 import static org.jackhuang.hmcl.ui.export.ModpackTypeSelectionPage.MODPACK_TYPE;
 import static org.jackhuang.hmcl.ui.export.ModpackTypeSelectionPage.MODPACK_TYPE_MODRINTH;
 import static org.jackhuang.hmcl.ui.export.ModpackTypeSelectionPage.MODPACK_TYPE_SERVER;
@@ -318,7 +319,7 @@ public final class ModpackInfoPage extends Control implements WizardPage {
                         serversSelectButton.setTitle(i18n("account.injector.server"));
                         serversSelectButton.setNullSafeConverter(AuthlibInjectorServer::getName);
                         serversSelectButton.setDescriptionConverter(AuthlibInjectorServer::getUrl);
-                        serversSelectButton.itemsProperty().set(config().getAuthlibInjectorServers());
+                        serversSelectButton.itemsProperty().set(getAuthlibInjectorServers());
 
                         skinnable.authlibInjectorServer.bind(Bindings.createStringBinding(() -> {
                             AuthlibInjectorServer selected = serversSelectButton.getValue();

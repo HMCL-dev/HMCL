@@ -102,6 +102,7 @@ public final class LegacyConfigMigrator {
                     : null;
 
             LauncherState launcherState = extractLauncherState(jsonObject);
+            AuthlibInjectorServerList authlibInjectorServers = extractAuthlibInjectorServers(jsonObject);
             migrateLegacySelectedVersions(jsonObject);
             @Nullable GameDirectories migratedGameDirectories = extractGameDirectoriesFromConfigJson(jsonObject);
             GameDirectories gameDirectories = migratedGameDirectories != null
@@ -116,7 +117,8 @@ public final class LegacyConfigMigrator {
 
             GameSettingsPresets gameSettingsPresets = new GameSettingsPresets();
             migrateLegacyPresetSettings(gameDirectories, gameSettingsPresets, legacyConfigurations);
-            return new MigrationResult(path, deserialized, gameDirectories, gameSettingsPresets, launcherState, deserialized.toJson());
+            return new MigrationResult(path, deserialized, gameDirectories, gameSettingsPresets,
+                    launcherState, authlibInjectorServers, deserialized.toJson());
         } catch (JsonParseException e) {
             LOG.warning("Malformed legacy config file: " + path, e);
             return null;
@@ -138,6 +140,23 @@ public final class LegacyConfigMigrator {
 
         LauncherState result = JsonUtils.GSON.fromJson(state, LauncherState.class);
         return result != null ? result : new LauncherState();
+    }
+
+    /// Extracts authlib-injector servers from a legacy config JSON object and removes those members.
+    static AuthlibInjectorServerList extractAuthlibInjectorServers(JsonObject json) {
+        Objects.requireNonNull(json);
+
+        JsonObject servers = new JsonObject();
+        servers.add(JsonFileFormat.DEFAULT_MEMBER_NAME,
+                JsonUtils.GSON.toJsonTree(AuthlibInjectorServerList.CURRENT_FORMAT, JsonFileFormat.class));
+        JsonElement authlibInjectorServers = json.remove("authlibInjectorServers");
+        if (authlibInjectorServers != null) {
+            servers.add("servers", authlibInjectorServers);
+        }
+        json.remove("addedLittleSkin");
+
+        AuthlibInjectorServerList result = JsonUtils.GSON.fromJson(servers, AuthlibInjectorServerList.class);
+        return result != null ? result : new AuthlibInjectorServerList();
     }
 
     /// Moves one JSON member from the source object to the target object.
@@ -424,7 +443,10 @@ public final class LegacyConfigMigrator {
     /// @param gameDirectories     The detached game directory store migrated from legacy profiles.
     /// @param gameSettingsPresets The detached preset store migrated from legacy profile globals.
     /// @param launcherState       The detached launcher state migrated from legacy config fields.
+    /// @param authlibInjectorServers The detached authlib-injector servers migrated from legacy config fields.
     /// @param contentForMigration The content to save when migrating to settings.json.
-    record MigrationResult(Path path, Config config, GameDirectories gameDirectories, GameSettingsPresets gameSettingsPresets, LauncherState launcherState, String contentForMigration) {
+    record MigrationResult(Path path, Config config, GameDirectories gameDirectories,
+                           GameSettingsPresets gameSettingsPresets, LauncherState launcherState,
+                           AuthlibInjectorServerList authlibInjectorServers, String contentForMigration) {
     }
 }

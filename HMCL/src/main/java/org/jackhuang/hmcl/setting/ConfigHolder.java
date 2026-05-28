@@ -24,6 +24,7 @@ import javafx.beans.property.ObjectProperty;
 import javafx.collections.ObservableList;
 import javafx.collections.ObservableMap;
 import org.jackhuang.hmcl.Metadata;
+import org.jackhuang.hmcl.auth.authlibinjector.AuthlibInjectorServer;
 import org.jackhuang.hmcl.util.FileSaver;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.i18n.I18n;
@@ -57,6 +58,10 @@ public final class ConfigHolder {
     /// The current per-workspace launcher state path.
     private static final Path STATE_LOCATION = Metadata.HMCL_CURRENT_DIRECTORY.resolve("state.json");
 
+    /// The current per-workspace authlib-injector server list path.
+    private static final Path AUTHLIB_INJECTOR_SERVERS_LOCATION =
+            Metadata.HMCL_CURRENT_DIRECTORY.resolve("authlib-injector-servers.json");
+
     /// The current per-workspace game directories path.
     private static final Path GAME_DIRECTORIES_LOCATION =
             Metadata.HMCL_CURRENT_DIRECTORY.resolve("game-directories.json");
@@ -89,6 +94,14 @@ public final class ConfigHolder {
             LauncherState.CURRENT_FORMAT,
             LauncherState::new);
 
+    /// The detached authlib-injector server list file helper.
+    private static final JsonSettingFile<AuthlibInjectorServerList> AUTHLIB_INJECTOR_SERVERS_FILE = new JsonSettingFile<>(
+            AUTHLIB_INJECTOR_SERVERS_LOCATION,
+            "authlib-injector servers",
+            AuthlibInjectorServerList.class,
+            AuthlibInjectorServerList.CURRENT_FORMAT,
+            AuthlibInjectorServerList::createDefault);
+
     /// The loaded per-workspace config instance.
     private static @UnknownNullability Config configInstance;
 
@@ -103,6 +116,9 @@ public final class ConfigHolder {
 
     /// The loaded detached launcher state store.
     private static @UnknownNullability LauncherState launcherState;
+
+    /// The loaded detached authlib-injector server list store.
+    private static @UnknownNullability AuthlibInjectorServerList authlibInjectorServers;
 
     /// Whether no current or legacy per-workspace config could be loaded.
     private static boolean newlyCreated;
@@ -129,6 +145,9 @@ public final class ConfigHolder {
     /// Detached launcher state migrated from a legacy config file.
     private static @Nullable LauncherState migratedLauncherState;
 
+    /// Detached authlib-injector servers migrated from a legacy config file.
+    private static @Nullable AuthlibInjectorServerList migratedAuthlibInjectorServers;
+
     /// Returns the loaded per-workspace config.
     public static Config config() {
         if (configInstance == null) {
@@ -153,6 +172,14 @@ public final class ConfigHolder {
         return launcherState;
     }
 
+    /// Returns the loaded per-workspace authlib-injector server list.
+    public static AuthlibInjectorServerList authlibInjectorServers() {
+        if (authlibInjectorServers == null) {
+            throw new IllegalStateException("Authlib-injector servers haven't been loaded");
+        }
+        return authlibInjectorServers;
+    }
+
     /// Returns the current per-workspace config path.
     public static Path configLocation() {
         return SETTINGS_LOCATION;
@@ -161,6 +188,11 @@ public final class ConfigHolder {
     /// Returns the current per-workspace launcher state path.
     public static Path stateLocation() {
         return STATE_LOCATION;
+    }
+
+    /// Returns the current per-workspace authlib-injector server list path.
+    public static Path authlibInjectorServersLocation() {
+        return AUTHLIB_INJECTOR_SERVERS_LOCATION;
     }
 
     /// Returns the current per-workspace game directories path.
@@ -187,6 +219,11 @@ public final class ConfigHolder {
             throw new IllegalStateException("Game settings presets haven't been loaded");
         }
         return gameSettingsPresets;
+    }
+
+    /// Returns the per-workspace authlib-injector servers.
+    public static ObservableList<AuthlibInjectorServer> getAuthlibInjectorServers() {
+        return authlibInjectorServers().getServers();
     }
 
     /// Returns the per-workspace game directories.
@@ -313,6 +350,7 @@ public final class ConfigHolder {
         loadGameDirectories(migratedGameDirectories, !unsupportedVersion);
         loadGameSettingsPresets(migratedGameSettingsPresets, !unsupportedVersion);
         loadLauncherState(migratedLauncherState, !unsupportedVersion);
+        loadAuthlibInjectorServers(migratedAuthlibInjectorServers, !unsupportedVersion);
         Settings.init();
 
         if (!unsupportedVersion && (newlyCreated || needSaveSettings)) {
@@ -374,6 +412,7 @@ public final class ConfigHolder {
                 migratedGameDirectories = migrationResult.gameDirectories();
                 migratedGameSettingsPresets = migrationResult.gameSettingsPresets();
                 migratedLauncherState = migrationResult.launcherState();
+                migratedAuthlibInjectorServers = migrationResult.authlibInjectorServers();
                 FileUtils.saveSafely(SETTINGS_LOCATION, migrationResult.contentForMigration());
                 return migrationResult.config();
             }
@@ -461,6 +500,33 @@ public final class ConfigHolder {
         if (newlyCreated && allowSave && result.allowSave()) {
             LOG.info("Creating launcher state file " + STATE_LOCATION);
             STATE_FILE.save(launcherState);
+        }
+    }
+
+    /// Loads authlib-injector servers and installs the save listener.
+    ///
+    /// @param migratedAuthlibInjectorServers the server list migrated from a legacy config file
+    /// @param allowSave whether the detached server list file may be overwritten
+    private static void loadAuthlibInjectorServers(
+            @Nullable AuthlibInjectorServerList migratedAuthlibInjectorServers,
+            boolean allowSave) throws IOException {
+        if (authlibInjectorServers != null) {
+            throw new IllegalStateException("Authlib-injector servers are already loaded");
+        }
+
+        LOG.info("Authlib-injector servers location: " + AUTHLIB_INJECTOR_SERVERS_LOCATION);
+
+        boolean newlyCreated = !Files.exists(AUTHLIB_INJECTOR_SERVERS_LOCATION);
+        JsonSettingFile.LoadResult<AuthlibInjectorServerList> result =
+                AUTHLIB_INJECTOR_SERVERS_FILE.load(migratedAuthlibInjectorServers);
+        authlibInjectorServers = result.value();
+        if (allowSave && result.allowSave()) {
+            AUTHLIB_INJECTOR_SERVERS_FILE.installAutoSave(authlibInjectorServers);
+        }
+
+        if (newlyCreated && allowSave && result.allowSave()) {
+            LOG.info("Creating authlib-injector servers file " + AUTHLIB_INJECTOR_SERVERS_LOCATION);
+            AUTHLIB_INJECTOR_SERVERS_FILE.save(authlibInjectorServers);
         }
     }
 

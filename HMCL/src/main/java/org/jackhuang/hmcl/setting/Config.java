@@ -21,7 +21,6 @@ import com.github.f4b6a3.uuid.alt.GUID;
 import com.google.gson.*;
 import com.google.gson.annotations.JsonAdapter;
 import com.google.gson.annotations.SerializedName;
-import javafx.beans.Observable;
 import javafx.beans.property.*;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
@@ -33,7 +32,6 @@ import org.hildan.fxgson.creators.ObservableMapCreator;
 import org.hildan.fxgson.creators.ObservableSetCreator;
 import org.hildan.fxgson.factories.JavaFxPropertyTypeAdapterFactory;
 import org.jackhuang.hmcl.Metadata;
-import org.jackhuang.hmcl.auth.authlibinjector.AuthlibInjectorServer;
 import org.jackhuang.hmcl.java.JavaRuntime;
 import org.jackhuang.hmcl.theme.ThemeColor;
 import org.jackhuang.hmcl.ui.FXUtils;
@@ -700,28 +698,6 @@ public final class Config extends ObservableSetting {
     }
 
     // Accounts
-
-    @SerializedName("authlibInjectorServers")
-    private final ObservableList<AuthlibInjectorServer> authlibInjectorServers = FXCollections.observableArrayList(server -> new Observable[]{server});
-
-    public ObservableList<AuthlibInjectorServer> getAuthlibInjectorServers() {
-        return authlibInjectorServers;
-    }
-
-    @SerializedName("addedLittleSkin")
-    private final BooleanProperty addedLittleSkin = new SimpleBooleanProperty(false);
-
-    public BooleanProperty addedLittleSkinProperty() {
-        return addedLittleSkin;
-    }
-
-    public boolean isAddedLittleSkin() {
-        return addedLittleSkin.get();
-    }
-
-    public void setAddedLittleSkin(boolean addedLittleSkin) {
-        this.addedLittleSkin.set(addedLittleSkin);
-    }
 
     /**
      * The preferred login type to use when the user wants to add an account.

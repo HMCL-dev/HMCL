@@ -80,6 +80,7 @@ import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
 import static org.jackhuang.hmcl.setting.ConfigHolder.config;
+import static org.jackhuang.hmcl.setting.ConfigHolder.getAuthlibInjectorServers;
 import static org.jackhuang.hmcl.setting.ConfigHolder.state;
 import static org.jackhuang.hmcl.setting.ConfigHolder.globalConfig;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
@@ -125,7 +126,7 @@ public final class Controllers {
         AccountListPage accountListPage = new AccountListPage();
         accountListPage.selectedAccountProperty().bindBidirectional(Accounts.selectedAccountProperty());
         accountListPage.accountsProperty().bindContent(Accounts.getAccounts());
-        accountListPage.authServersProperty().bindContentBidirectional(config().getAuthlibInjectorServers());
+        accountListPage.authServersProperty().bindContentBidirectional(getAuthlibInjectorServers());
         return accountListPage;
     });
     private static LauncherSettingsPage settingsPage;
