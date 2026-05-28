@@ -22,6 +22,9 @@
 
 ## Compatibility Constraints
 
+- This branch is still under active development, and file formats introduced by this branch are not finalized.
+- Changes in this branch do not need to preserve compatibility with earlier revisions of the same branch.
+- Compatibility work only needs to cover migration from old configuration formats used by `upstream/main`.
 - Old config files should not be rewritten during migration.
 - New detached files should be created only through the new storage model.
 - Instance settings should resolve effective values from their selected parent preset.
