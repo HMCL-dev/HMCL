@@ -164,7 +164,7 @@ public class TerracottaControllerPage extends StackPane {
                     if (uninitialized.hasLegacy() && I18n.isUseChinese()) {
                         Object feedback = state().getShownTips().get(FEEDBACK_TIP);
                         if (!(feedback instanceof Number number) || number.intValue() < 1) {
-                            Controllers.confirm(i18n("terracotta.feedback.desc"), i18n("terracotta.feedback.title"), () -> {
+                            Controllers.confirm(i18n("terracotta.feedback.desc.update"), i18n("terracotta.feedback.title"), () -> {
                                 FXUtils.openLink(TerracottaMetadata.FEEDBACK_LINK);
                                 state().getShownTips().put(FEEDBACK_TIP, 1);
                             }, () -> {
