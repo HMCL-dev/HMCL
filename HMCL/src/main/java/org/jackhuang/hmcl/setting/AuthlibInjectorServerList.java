@@ -42,7 +42,7 @@ import java.util.Objects;
 @JsonSerializable
 public final class AuthlibInjectorServerList extends ObservableSetting implements FormattedJsonSetting {
     /// The LittleSkin Yggdrasil API endpoint bundled into newly created server lists.
-    private static final String LITTLE_SKIN_URL = "https://littleskin.cn/api/yggdrasil/";
+    public static final String LITTLE_SKIN_URL = "https://littleskin.cn/api/yggdrasil/";
 
     /// The file format supported by this authlib-injector server list.
     public static final JsonFileFormat CURRENT_FORMAT =
@@ -57,8 +57,15 @@ public final class AuthlibInjectorServerList extends ObservableSetting implement
     /// Creates the default authlib-injector server list for a newly created file.
     public static AuthlibInjectorServerList createDefault() {
         AuthlibInjectorServerList result = new AuthlibInjectorServerList();
-        result.getServers().add(new AuthlibInjectorServer(LITTLE_SKIN_URL));
+        result.addLittleSkinIfAbsent();
         return result;
+    }
+
+    /// Adds the bundled LittleSkin server when it is not already present.
+    public void addLittleSkinIfAbsent() {
+        if (getServers().stream().noneMatch(server -> LITTLE_SKIN_URL.equals(server.getUrl()))) {
+            getServers().add(new AuthlibInjectorServer(LITTLE_SKIN_URL));
+        }
     }
 
     /// The format used by this authlib-injector server list file.

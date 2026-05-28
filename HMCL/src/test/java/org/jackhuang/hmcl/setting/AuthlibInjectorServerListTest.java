@@ -33,7 +33,7 @@ public final class AuthlibInjectorServerListTest {
         AuthlibInjectorServerList list = AuthlibInjectorServerList.createDefault();
 
         assertEquals(1, list.getServers().size());
-        assertEquals("https://littleskin.cn/api/yggdrasil/", list.getServers().get(0).getUrl());
+        assertEquals(AuthlibInjectorServerList.LITTLE_SKIN_URL, list.getServers().get(0).getUrl());
     }
 
     /// Tests extracting authlib-injector servers from an upstream/main config object.
@@ -60,5 +60,45 @@ public final class AuthlibInjectorServerListTest {
         assertEquals(1, list.getServers().size());
         assertEquals("https://example.com/api/yggdrasil/", list.getServers().get(0).getUrl());
         assertEquals(AuthlibInjectorServerList.CURRENT_FORMAT, list.getFormat());
+    }
+
+    /// Tests that legacy configs without `addedLittleSkin` receive LittleSkin during migration.
+    @Test
+    public void addsLittleSkinWhenLegacyFlagIsMissing() {
+        JsonObject settings = JsonParser.parseString("""
+                {
+                  "authlibInjectorServers": [
+                    {
+                      "url": "https://example.com/api/yggdrasil/"
+                    }
+                  ]
+                }
+                """).getAsJsonObject();
+
+        AuthlibInjectorServerList list = LegacyConfigMigrator.extractAuthlibInjectorServers(settings);
+
+        assertEquals(2, list.getServers().size());
+        assertEquals("https://example.com/api/yggdrasil/", list.getServers().get(0).getUrl());
+        assertEquals(AuthlibInjectorServerList.LITTLE_SKIN_URL, list.getServers().get(1).getUrl());
+    }
+
+    /// Tests that legacy configs with `addedLittleSkin=false` do not add a duplicate LittleSkin entry.
+    @Test
+    public void addsLittleSkinOnlyOnceWhenLegacyFlagIsFalse() {
+        JsonObject settings = JsonParser.parseString("""
+                {
+                  "authlibInjectorServers": [
+                    {
+                      "url": "https://littleskin.cn/api/yggdrasil/"
+                    }
+                  ],
+                  "addedLittleSkin": false
+                }
+                """).getAsJsonObject();
+
+        AuthlibInjectorServerList list = LegacyConfigMigrator.extractAuthlibInjectorServers(settings);
+
+        assertEquals(1, list.getServers().size());
+        assertEquals(AuthlibInjectorServerList.LITTLE_SKIN_URL, list.getServers().get(0).getUrl());
     }
 }

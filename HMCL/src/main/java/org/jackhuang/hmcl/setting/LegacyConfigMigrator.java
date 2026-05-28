@@ -153,10 +153,19 @@ public final class LegacyConfigMigrator {
         if (authlibInjectorServers != null) {
             servers.add("servers", authlibInjectorServers);
         }
-        json.remove("addedLittleSkin");
+        JsonElement addedLittleSkin = json.remove("addedLittleSkin");
+        boolean shouldAddLittleSkin = !(addedLittleSkin instanceof JsonPrimitive primitive
+                && primitive.isBoolean()
+                && primitive.getAsBoolean());
 
         AuthlibInjectorServerList result = JsonUtils.GSON.fromJson(servers, AuthlibInjectorServerList.class);
-        return result != null ? result : new AuthlibInjectorServerList();
+        if (result == null) {
+            result = new AuthlibInjectorServerList();
+        }
+        if (shouldAddLittleSkin) {
+            result.addLittleSkinIfAbsent();
+        }
+        return result;
     }
 
     /// Moves one JSON member from the source object to the target object.
