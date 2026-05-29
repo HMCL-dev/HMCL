@@ -40,7 +40,6 @@ import org.jackhuang.hmcl.util.gson.*;
 import org.jackhuang.hmcl.util.i18n.SupportedLocale;
 import org.jetbrains.annotations.Nullable;
 
-import java.lang.reflect.Type;
 import java.net.Proxy;
 import java.nio.file.Path;
 import java.util.*;
@@ -504,18 +503,5 @@ public final class LauncherSettings extends ObservableSetting {
         protected LauncherSettings createInstance() {
             return new LauncherSettings();
         }
-
-        /// Serializes the main launcher settings with their stored schema.
-        @Override
-        public JsonElement serialize(LauncherSettings src, Type typeOfSrc, JsonSerializationContext context) {
-            if (src == null) {
-                return JsonNull.INSTANCE;
-            }
-
-            JsonObject result = super.serialize(src, typeOfSrc, context).getAsJsonObject();
-            result.add(JsonSchema.DEFAULT_MEMBER_NAME, context.serialize(src.schemaProperty().get(), JsonSchema.class));
-            return result;
-        }
-
     }
 }

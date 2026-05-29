@@ -17,9 +17,6 @@
  */
 package org.jackhuang.hmcl.setting;
 
-import com.google.gson.JsonDeserializationContext;
-import com.google.gson.JsonElement;
-import com.google.gson.JsonParseException;
 import com.google.gson.annotations.JsonAdapter;
 import com.google.gson.annotations.SerializedName;
 import javafx.beans.property.DoubleProperty;
@@ -36,7 +33,6 @@ import org.jackhuang.hmcl.util.gson.ObservableSetting;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
 
-import java.lang.reflect.Type;
 import java.util.Objects;
 
 /// Stores per-workspace launcher runtime state independently from the main settings file.
@@ -187,19 +183,6 @@ public final class LauncherState extends ObservableSetting implements JsonSchema
         @Override
         protected LauncherState createInstance() {
             return new LauncherState();
-        }
-
-        /// Deserializes launcher state and drops the previous main settings file schema marker.
-        @Override
-        public @Nullable LauncherState deserialize(
-                JsonElement json,
-                Type typeOfT,
-                JsonDeserializationContext context) throws JsonParseException {
-            @Nullable LauncherState result = super.deserialize(json, typeOfT, context);
-            if (result != null) {
-                result.unknownFields.remove(JsonSchema.DEFAULT_MEMBER_NAME);
-            }
-            return result;
         }
     }
 }
