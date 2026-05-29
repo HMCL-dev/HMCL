@@ -123,12 +123,12 @@ public final class Accounts {
 
     private static final String GLOBAL_PREFIX = "$GLOBAL:";
     private static final Path GLOBAL_GAME_ACCOUNTS_LOCATION =
-            Metadata.HMCL_USER_HOME.resolve("game-accounts.json");
+            Metadata.HMCL_USER_HOME.resolve("user-game-accounts.json");
     private static final Path LEGACY_GLOBAL_ACCOUNTS_LOCATION =
             Metadata.HMCL_USER_HOME.resolve("accounts.json");
     private static final JsonSettingFile<AccountStorages> GLOBAL_GAME_ACCOUNTS_FILE = new JsonSettingFile<>(
             GLOBAL_GAME_ACCOUNTS_LOCATION,
-            "global game accounts",
+            "user game accounts",
             AccountStorages.class,
             AccountStorages.CURRENT_SCHEMA,
             AccountStorages::new);
@@ -178,7 +178,7 @@ public final class Accounts {
             throw new IllegalStateException("Global accounts are already loaded");
         }
 
-        LOG.info("Global game accounts location: " + GLOBAL_GAME_ACCOUNTS_LOCATION);
+        LOG.info("User game accounts location: " + GLOBAL_GAME_ACCOUNTS_LOCATION);
 
         boolean newlyCreated = !Files.exists(GLOBAL_GAME_ACCOUNTS_LOCATION);
         @Nullable AccountStorages migrated = newlyCreated ? loadLegacyGlobalAccountStorages() : null;
@@ -190,11 +190,11 @@ public final class Accounts {
             }
 
             if (newlyCreated && result.allowSave()) {
-                LOG.info("Creating global game accounts file " + GLOBAL_GAME_ACCOUNTS_LOCATION);
+                LOG.info("Creating user game accounts file " + GLOBAL_GAME_ACCOUNTS_LOCATION);
                 GLOBAL_GAME_ACCOUNTS_FILE.save(globalAccounts);
             }
         } catch (IOException e) {
-            LOG.warning("Failed to load global game accounts", e);
+            LOG.warning("Failed to load user game accounts", e);
             globalAccounts = migrated != null ? migrated : new AccountStorages();
             GLOBAL_GAME_ACCOUNTS_FILE.installAutoSave(globalAccounts);
         }
@@ -212,11 +212,11 @@ public final class Accounts {
                 return null;
             }
 
-            LOG.info("Migrating global accounts from " + LEGACY_GLOBAL_ACCOUNTS_LOCATION
+            LOG.info("Migrating user accounts from " + LEGACY_GLOBAL_ACCOUNTS_LOCATION
                     + " to " + GLOBAL_GAME_ACCOUNTS_LOCATION);
             return AccountStorages.fromAccounts(accounts);
         } catch (Throwable e) {
-            LOG.warning("Failed to load legacy global accounts", e);
+            LOG.warning("Failed to load legacy user accounts", e);
             return null;
         }
     }
