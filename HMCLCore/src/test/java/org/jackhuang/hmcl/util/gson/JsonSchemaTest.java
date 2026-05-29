@@ -43,6 +43,20 @@ public final class JsonSchemaTest {
         assertEquals(schemaUrl("settings", "3.0.1"), schema.toString());
     }
 
+    /// Tests reading schema URLs with an omitted patch number.
+    @Test
+    public void readsPatchlessSchema() {
+        JsonObject object = new JsonObject();
+        object.addProperty(JsonSchema.DEFAULT_MEMBER_NAME, schemaUrl("settings", "3.0"));
+
+        JsonSchema schema = JsonSchema.readFromMember(object);
+
+        assertTrue(schema.isParsed());
+        assertEquals("settings", schema.id());
+        assertEquals(new JsonSchema.Version(3, 0, 0), schema.version());
+        assertEquals(schemaUrl("settings", "3.0"), schema.url());
+    }
+
     /// Tests reading schema strings that are not HMCL schema URLs.
     @Test
     public void readsUnparseableSchemaString() {
@@ -60,11 +74,11 @@ public final class JsonSchemaTest {
     /// Tests serialization of schema URL strings.
     @Test
     public void serializesSchema() {
-        JsonSchema schema = new JsonSchema("settings", new JsonSchema.Version(3, 0, 1));
+        JsonSchema schema = new JsonSchema("settings", new JsonSchema.Version(3, 0, 0));
 
         JsonElement serialized = JsonParser.parseString(JsonUtils.GSON.toJson(schema));
 
-        assertEquals(schema.url(), serialized.getAsString());
+        assertEquals(schemaUrl("settings", "3.0.0"), serialized.getAsString());
         assertEquals(schema, JsonUtils.GSON.fromJson(serialized, JsonSchema.class));
     }
 
@@ -102,6 +116,12 @@ public final class JsonSchemaTest {
         JsonSchema.CheckResult invalidVersion = JsonSchema.check(object, expected);
         assertTrue(invalidVersion.isUnparseable());
         assertEquals(schemaUrl("settings", "3.x"), invalidVersion.actual().url());
+
+        object.addProperty(JsonSchema.DEFAULT_MEMBER_NAME, schemaUrl("settings", "3.0"));
+        JsonSchema.CheckResult patchless = JsonSchema.check(object, expected);
+        assertTrue(patchless.hasSameMajorAndMinorVersion());
+        assertFalse(patchless.hasNewerMinorVersion());
+        assertFalse(patchless.hasUnsupportedMajorVersion());
 
         object.addProperty(JsonSchema.DEFAULT_MEMBER_NAME, schemaUrl("game-settings", "1.0.0"));
         JsonSchema.CheckResult unexpected = JsonSchema.check(object, expected);

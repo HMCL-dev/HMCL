@@ -39,6 +39,9 @@ import java.util.Objects;
 ///
 /// `https://schemas.glavo.site/hmcl/<id>/<version>`
 ///
+/// Canonical URLs written by this class use `major.minor.patch` versions. Parsing
+/// also accepts `major.minor` versions and treats the missing patch number as `0`.
+///
 /// Parsed HMCL schemas use the following compatibility policy:
 ///
 /// - When the schema string is not parseable as an HMCL schema URL, the file must be rejected.
@@ -65,7 +68,7 @@ public record JsonSchema(String value, @Nullable Parsed parsed) {
     /// @param parsed the parsed HMCL schema identifier, or `null` when the string is not parseable
     public JsonSchema {
         Objects.requireNonNull(value);
-        if (parsed != null && !value.equals(parsed.url())) {
+        if (parsed != null && !parsed.equals(parseSchemaUrl(value))) {
             throw new IllegalArgumentException("Parsed schema does not match raw schema string: " + value);
         }
     }
@@ -74,7 +77,7 @@ public record JsonSchema(String value, @Nullable Parsed parsed) {
     ///
     /// @param value the raw JSON schema string
     public JsonSchema(String value) {
-        this(value, parseCanonicalUrl(value));
+        this(value, parseSchemaUrl(value));
     }
 
     /// Creates a parsed HMCL schema from an ID and version.
@@ -165,8 +168,8 @@ public record JsonSchema(String value, @Nullable Parsed parsed) {
         return new JsonSchema(primitive.getAsString());
     }
 
-    /// Parses a canonical HMCL schema URL, returning `null` for any other string.
-    private static @Nullable Parsed parseCanonicalUrl(String value) {
+    /// Parses an HMCL schema URL, returning `null` for any other string.
+    private static @Nullable Parsed parseSchemaUrl(String value) {
         Objects.requireNonNull(value);
 
         if (!value.startsWith(URL_PREFIX)) {
@@ -196,12 +199,17 @@ public record JsonSchema(String value, @Nullable Parsed parsed) {
             return null;
         }
 
-        String canonicalVersion = version.toString();
-        if (!versionString.equals(canonicalVersion)) {
+        if (!isAcceptedVersionString(versionString, version)) {
             return null;
         }
 
         return new Parsed(id, version);
+    }
+
+    /// Returns whether a raw version string is an accepted representation of a parsed version.
+    private static boolean isAcceptedVersionString(String versionString, Version version) {
+        return versionString.equals(version.toString())
+                || (version.patch() == 0 && versionString.equals(version.major() + "." + version.minor()));
     }
 
     /// Returns whether this schema string is parseable as an HMCL schema URL.
@@ -398,24 +406,33 @@ public record JsonSchema(String value, @Nullable Parsed parsed) {
 
         /// Parses a schema version string.
         ///
-        /// @param version the version string in `major.minor.patch` form
+        /// @param version the version string in `major.minor` or `major.minor.patch` form
         /// @return the parsed schema version
         /// @throws IllegalArgumentException if the version string is invalid
         public static Version parse(String version) {
             int firstDot = version.indexOf('.');
             int secondDot = version.indexOf('.', firstDot + 1);
             if (firstDot <= 0
-                    || secondDot <= firstDot + 1
+                    || firstDot == version.length() - 1
+                    || (secondDot >= 0 && (secondDot <= firstDot + 1
                     || secondDot != version.lastIndexOf('.')
-                    || secondDot == version.length() - 1) {
+                    || secondDot == version.length() - 1))) {
                 throw new IllegalArgumentException("Invalid JSON schema version: " + version);
             }
 
             try {
-                return new Version(
-                        parsePart(version, 0, firstDot),
-                        parsePart(version, firstDot + 1, secondDot),
-                        parsePart(version, secondDot + 1, version.length()));
+                int major = parsePart(version, 0, firstDot);
+                if (secondDot >= 0) {
+                    return new Version(
+                            major,
+                            parsePart(version, firstDot + 1, secondDot),
+                            parsePart(version, secondDot + 1, version.length()));
+                } else {
+                    return new Version(
+                            major,
+                            parsePart(version, firstDot + 1, version.length()),
+                            0);
+                }
             } catch (IllegalArgumentException e) {
                 throw new IllegalArgumentException("Invalid JSON schema version: " + version, e);
             }
