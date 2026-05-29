@@ -69,7 +69,7 @@ public final class ProxyManager {
     private static SimpleAuthenticator getAuthenticator() {
         if (settings().hasProxyProperty().get() && settings().hasProxyAuthProperty().get()) {
             String username = settings().proxyUserProperty().get();
-            String password = settings().proxyPassProperty().get();
+            String password = settings().proxyPasswordProperty().get();
 
             if (username != null || password != null)
                 return new SimpleAuthenticator(
@@ -115,7 +115,7 @@ public final class ProxyManager {
         settings().hasProxyProperty().addListener(updateAuthenticator);
         settings().hasProxyAuthProperty().addListener(updateAuthenticator);
         settings().proxyUserProperty().addListener(updateAuthenticator);
-        settings().proxyPassProperty().addListener(updateAuthenticator);
+        settings().proxyPasswordProperty().addListener(updateAuthenticator);
 
         FetchTask.notifyInitialized();
     }

@@ -638,7 +638,7 @@ public final class HMCLGameRepository extends DefaultGameRepository {
                 }
 
                 String proxyUser = settings().proxyUserProperty().get();
-                String proxyPass = settings().proxyPassProperty().get();
+                String proxyPass = settings().proxyPasswordProperty().get();
 
                 if (StringUtils.isBlank(proxyUser)) {
                     proxyUser = null;

@@ -410,11 +410,11 @@ public final class LauncherSettings extends ObservableSetting {
 
     /// The configured proxy authentication password.
     @SerializedName("proxyPassword")
-    private final StringProperty proxyPass = new SimpleStringProperty();
+    private final StringProperty proxyPassword = new SimpleStringProperty();
 
     /// Returns the proxy authentication password property.
-    public StringProperty proxyPassProperty() {
-        return proxyPass;
+    public StringProperty proxyPasswordProperty() {
+        return proxyPassword;
     }
 
     /// The selected game directory ID.

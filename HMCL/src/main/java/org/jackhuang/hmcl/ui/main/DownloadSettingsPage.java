@@ -354,7 +354,7 @@ public class DownloadSettingsPage extends StackPane {
                         GridPane.setRowIndex(txtProxyPassword, 1);
                         GridPane.setColumnIndex(txtProxyPassword, 1);
                         authPane.getChildren().add(txtProxyPassword);
-                        txtProxyPassword.textProperty().bindBidirectional(settings().proxyPassProperty());
+                        txtProxyPassword.textProperty().bindBidirectional(settings().proxyPasswordProperty());
                     }
 
                     proxyPane.getChildren().add(authPane);
