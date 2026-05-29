@@ -25,7 +25,7 @@ public final class Log {
     public static final int DEFAULT_LOG_LINES = 2000;
 
     public static int getLogLines() {
-        Integer lines = config().getLogLines();
+        Integer lines = config().logLinesProperty().get();
         return lines != null && lines > 0 ? lines : DEFAULT_LOG_LINES;
     }
 

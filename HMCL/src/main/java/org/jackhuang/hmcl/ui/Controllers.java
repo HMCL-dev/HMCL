@@ -350,9 +350,9 @@ public final class Controllers {
 
         decorator = new DecoratorController(stage, getRootPage());
 
-        if (config().getCommonDirType() == EnumCommonDirectory.CUSTOM &&
-                !FileUtils.canCreateDirectory(config().getCommonDirectory())) {
-            config().setCommonDirType(EnumCommonDirectory.DEFAULT);
+        if (config().commonDirTypeProperty().get() == EnumCommonDirectory.CUSTOM &&
+                !FileUtils.canCreateDirectory(config().commonDirectoryProperty().get())) {
+            config().commonDirTypeProperty().set(EnumCommonDirectory.DEFAULT);
             dialog(i18n("launcher.cache_directory.invalid"));
         }
 
@@ -490,7 +490,7 @@ public final class Controllers {
                             LOG.info("Switching locale to " + lzh);
 
                             updateShowTips.run();
-                            config().setLanguage(lzh);
+                            config().languageProperty().set(lzh);
 
                             Controllers.onApplicationStop();
 

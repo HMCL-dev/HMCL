@@ -82,7 +82,7 @@ public final class AuthlibInjectorServers implements Validation {
             }
 
             if (!configInstance.urls.isEmpty()) {
-                config().setPreferredLoginType(Accounts.getLoginType(Accounts.FACTORY_AUTHLIB_INJECTOR));
+                config().preferredLoginTypeProperty().set(Accounts.getLoginType(Accounts.FACTORY_AUTHLIB_INJECTOR));
                 for (String url : configInstance.urls) {
                     Task.supplyAsync(Schedulers.io(), () -> AuthlibInjectorServer.locateServer(url))
                             .thenAcceptAsync(Schedulers.javafx(), server -> {

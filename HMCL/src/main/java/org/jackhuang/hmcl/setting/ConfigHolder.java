@@ -280,12 +280,12 @@ public final class ConfigHolder {
 
     /// Returns the selected game directory ID.
     public static @Nullable GUID getSelectedGameDirectory() {
-        return config().getSelectedGameDirectory();
+        return config().selectedGameDirectoryProperty().get();
     }
 
     /// Sets the selected game directory ID.
     public static void setSelectedGameDirectory(@Nullable GUID selectedGameDirectory) {
-        config().setSelectedGameDirectory(selectedGameDirectory);
+        config().selectedGameDirectoryProperty().set(selectedGameDirectory);
     }
 
     /// Returns selected instance IDs keyed by game directory ID.
@@ -315,12 +315,12 @@ public final class ConfigHolder {
 
     /// Returns the default game setting preset ID.
     public static @Nullable GUID getDefaultGameSettingsPreset() {
-        return config().getDefaultGameSettingsPreset();
+        return config().defaultGameSettingsPresetProperty().get();
     }
 
     /// Sets the default game setting preset ID.
     public static void setDefaultGameSettingsPreset(@Nullable GUID defaultGameSettingsPreset) {
-        config().setDefaultGameSettingsPreset(defaultGameSettingsPreset);
+        config().defaultGameSettingsPresetProperty().set(defaultGameSettingsPreset);
     }
 
     /// Returns the game setting preset with the given ID.
@@ -386,8 +386,8 @@ public final class ConfigHolder {
         globalConfigInstance = loadGlobalConfig();
         globalConfigInstance.addListener(source -> FileSaver.save(GLOBAL_CONFIG_PATH, globalConfigInstance.toJson()));
 
-        Locale.setDefault(config().getLanguage().getLocale());
-        I18n.setLocale(configInstance.getLanguage());
+        Locale.setDefault(config().languageProperty().get().getLocale());
+        I18n.setLocale(configInstance.languageProperty().get());
         LOG.setLogRetention(globalConfig().getLogRetention());
         loadGameDirectories(migratedGameDirectories, !unsupportedVersion);
         loadGameSettingsPresets(migratedGameSettingsPresets, !unsupportedVersion);
@@ -443,8 +443,8 @@ public final class ConfigHolder {
                     return new Config();
                 }
 
-                if (!schema.preserveSchema() && !Config.CURRENT_SCHEMA.equals(settings.getSchema())) {
-                    settings.setSchema(Config.CURRENT_SCHEMA);
+                if (!schema.preserveSchema() && !Config.CURRENT_SCHEMA.equals(settings.schemaProperty().get())) {
+                    settings.schemaProperty().set(Config.CURRENT_SCHEMA);
                 }
 
                 return settings;

@@ -156,8 +156,8 @@ public class PersonalizationPage extends StackPane {
                 Label label = new Label(i18n("settings.launcher.background.settings.opacity"));
 
                 JFXSlider slider = new JFXSlider(0, 100,
-                        config().getBackgroundImageType() != EnumBackgroundImage.TRANSLUCENT
-                                ? config().getBackgroundImageOpacity() : 50);
+                        config().backgroundImageTypeProperty().get() != EnumBackgroundImage.TRANSLUCENT
+                                ? config().backgroundImageOpacityProperty().get() : 50);
                 slider.setShowTickMarks(true);
                 slider.setMajorTickUnit(10);
                 slider.setMinorTickCount(1);
@@ -166,7 +166,7 @@ public class PersonalizationPage extends StackPane {
                 slider.setPadding(new Insets(9, 0, 0, 0));
                 HBox.setHgrow(slider, Priority.ALWAYS);
 
-                if (config().getBackgroundImageType() == EnumBackgroundImage.TRANSLUCENT) {
+                if (config().backgroundImageTypeProperty().get() == EnumBackgroundImage.TRANSLUCENT) {
                     slider.setDisable(true);
                     config().backgroundImageTypeProperty().addListener(new ChangeListener<>() {
                         @Override
@@ -188,7 +188,7 @@ public class PersonalizationPage extends StackPane {
                 slider.setValueFactory(s -> valueBinding);
 
                 slider.valueProperty().addListener((observable, oldValue, newValue) ->
-                        config().setBackgroundImageOpacity(snapOpacity(newValue.doubleValue())));
+                        config().backgroundImageOpacityProperty().set(snapOpacity(newValue.doubleValue())));
 
                 opacityItem.getChildren().setAll(label, slider, textOpacity);
             }
@@ -240,7 +240,7 @@ public class PersonalizationPage extends StackPane {
 
                 Label lblLogFontDisplay = new Label("[23:33:33] [Client Thread/INFO] [WaterPower]: Loaded mod WaterPower.");
                 lblLogFontDisplay.fontProperty().bind(Bindings.createObjectBinding(
-                        () -> Font.font(Lang.requireNonNullElse(config().getFontFamily(), FXUtils.DEFAULT_MONOSPACE_FONT), config().getFontSize()),
+                        () -> Font.font(Lang.requireNonNullElse(config().fontFamilyProperty().get(), FXUtils.DEFAULT_MONOSPACE_FONT), config().fontSizeProperty().get()),
                         config().fontFamilyProperty(), config().fontSizeProperty()));
 
                 fontPane.getChildren().add(lblLogFontDisplay);
@@ -272,7 +272,7 @@ public class PersonalizationPage extends StackPane {
                         hBox.setSpacing(8);
 
                         FontComboBox cboFont = new FontComboBox();
-                        cboFont.setValue(config().getLauncherFontFamily());
+                        cboFont.setValue(config().launcherFontFamilyProperty().get());
                         FXUtils.onChange(cboFont.valueProperty(), FontManager::setFontFamily);
 
                         JFXButton clearButton = FXUtils.newToggleButton4(SVG.RESTORE);

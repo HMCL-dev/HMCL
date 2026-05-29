@@ -266,7 +266,7 @@ public final class LegacyConfigMigrator {
             GameSettings.Preset preset = new GameSettings.Preset(gameSettingsPresets.newPresetId());
             preset.nameProperty().setValue("Default");
             gameSettingsPresets.getPresets().add(preset);
-            config.setDefaultGameSettingsPreset(preset.idProperty().getValue());
+            config.defaultGameSettingsPresetProperty().set(preset.idProperty().getValue());
         }
     }
 

@@ -266,7 +266,7 @@ public final class Accounts {
             }
         }
 
-        String selectedAccountIdentifier = config().getSelectedAccount();
+        String selectedAccountIdentifier = config().selectedAccountProperty().get();
         if (selected == null && selectedAccountIdentifier != null) {
             boolean portable = true;
             if (selectedAccountIdentifier.startsWith(GLOBAL_PREFIX)) {
@@ -341,9 +341,9 @@ public final class Accounts {
         selectedAccount.addListener(onInvalidating(() -> {
             Account account = selectedAccount.get();
             if (account != null)
-                config().setSelectedAccount(account.isPortable() ? account.getIdentifier() : GLOBAL_PREFIX + account.getIdentifier());
+                config().selectedAccountProperty().set(account.isPortable() ? account.getIdentifier() : GLOBAL_PREFIX + account.getIdentifier());
             else
-                config().setSelectedAccount(null);
+                config().selectedAccountProperty().set(null);
         }));
         accounts.addListener(listener);
         accounts.addListener(onInvalidating(Accounts::updateAccountStorages));

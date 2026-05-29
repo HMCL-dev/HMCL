@@ -57,7 +57,7 @@ public final class AprilFools {
         else
             aprilFoolsMode = date.getMonth() == Month.APRIL && date.getDayOfMonth() == 1;
 
-        ENABLED = aprilFoolsMode && !config().isDisableAprilFools();
+        ENABLED = aprilFoolsMode && !config().disableAprilFoolsProperty().get();
         SHOW_APRIL_FOOLS_SETTINGS = aprilFoolsMode || supportedRegion && date.getMonth() == Month.MARCH && date.getDayOfMonth() > 30;
     }
 

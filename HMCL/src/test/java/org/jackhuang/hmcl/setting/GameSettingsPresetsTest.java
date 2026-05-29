@@ -37,7 +37,7 @@ public final class GameSettingsPresetsTest {
         GUID id = new GUID("123e4567-e89b-12d3-a456-426614174000");
         Config config = new Config();
 
-        config.setDefaultGameSettingsPreset(id);
+        config.defaultGameSettingsPresetProperty().set(id);
         JsonObject serialized = JsonParser.parseString(config.toJson()).getAsJsonObject();
 
         assertEquals(id.toString(), serialized.get(Config.DEFAULT_GAME_SETTINGS_PRESET_MEMBER_NAME).getAsString());

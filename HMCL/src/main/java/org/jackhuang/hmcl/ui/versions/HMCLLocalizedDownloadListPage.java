@@ -79,7 +79,7 @@ public final class HMCLLocalizedDownloadListPage extends DownloadListPage {
             downloadSources.add("mods.curseforge");
         }
 
-        if ("curseforge".equalsIgnoreCase(config().getDefaultAddonSource())) {
+        if ("curseforge".equalsIgnoreCase(config().defaultAddonSourceProperty().get())) {
             if (supportedCurseForge) {
                 downloadSource.set("mods.curseforge");
             } else if (modrinth != null) {

@@ -81,23 +81,23 @@ public final class DownloadProviders {
 
     static void init() {
         InvalidationListener onChangeDownloadThreads = observable -> {
-            FetchTask.setDownloadExecutorConcurrency(config().getAutoDownloadThreads()
+            FetchTask.setDownloadExecutorConcurrency(config().autoDownloadThreadsProperty().get()
                     ? DEFAULT_CONCURRENCY
-                    : config().getDownloadThreads());
+                    : config().downloadThreadsProperty().get());
         };
         config().autoDownloadThreadsProperty().addListener(onChangeDownloadThreads);
         config().downloadThreadsProperty().addListener(onChangeDownloadThreads);
         onChangeDownloadThreads.invalidated(null);
 
         InvalidationListener onChangeDownloadSource = observable -> {
-            if (config().isAutoChooseDownloadType()) {
-                String versionListSource = config().getVersionListSource();
+            if (config().autoChooseDownloadTypeProperty().get()) {
+                String versionListSource = config().versionListSourceProperty().get();
                 DownloadProvider downloadProvider = versionListSource != null
                         ? AUTO_PROVIDERS.getOrDefault(versionListSource, DEFAULT_PROVIDER)
                         : DEFAULT_PROVIDER;
                 PROVIDER_WRAPPER.setProvider(downloadProvider);
             } else {
-                String downloadType = config().getDownloadType();
+                String downloadType = config().downloadTypeProperty().get();
                 PROVIDER_WRAPPER.setProvider(downloadType != null
                         ? DIRECT_PROVIDERS.getOrDefault(downloadType, DEFAULT_PROVIDER)
                         : DEFAULT_PROVIDER);

@@ -65,11 +65,11 @@ public final class Settings {
     }
 
     public String getCommonDirectory() {
-        switch (config().getCommonDirType()) {
+        switch (config().commonDirTypeProperty().get()) {
             case DEFAULT:
                 return getDefaultCommonDirectory();
             case CUSTOM:
-                return config().getCommonDirectory();
+                return config().commonDirectoryProperty().get();
             default:
                 return null;
         }

@@ -114,16 +114,6 @@ public final class Config extends ObservableSetting {
         return schema;
     }
 
-    /// Returns the schema used by this config file.
-    public JsonSchema getSchema() {
-        return schema.get();
-    }
-
-    /// Sets the schema used by this config file.
-    public void setSchema(JsonSchema schema) {
-        this.schema.set(Objects.requireNonNull(schema));
-    }
-
     /// The launcher UI language.
     @SerializedName("language")
     private final ObjectProperty<SupportedLocale> language = new SimpleObjectProperty<>(SupportedLocale.DEFAULT);
@@ -131,16 +121,6 @@ public final class Config extends ObservableSetting {
     /// Returns the launcher UI language property.
     public ObjectProperty<SupportedLocale> languageProperty() {
         return language;
-    }
-
-    /// Returns the launcher UI language.
-    public SupportedLocale getLanguage() {
-        return language.get();
-    }
-
-    /// Sets the launcher UI language.
-    public void setLanguage(SupportedLocale language) {
-        this.language.set(language);
     }
 
     /// Whether preview builds are accepted by update checks.
@@ -152,16 +132,6 @@ public final class Config extends ObservableSetting {
         return acceptPreviewUpdate;
     }
 
-    /// Returns whether preview builds are accepted by update checks.
-    public boolean isAcceptPreviewUpdate() {
-        return acceptPreviewUpdate.get();
-    }
-
-    /// Sets whether preview builds are accepted by update checks.
-    public void setAcceptPreviewUpdate(boolean acceptPreviewUpdate) {
-        this.acceptPreviewUpdate.set(acceptPreviewUpdate);
-    }
-
     /// Whether automatic update dialogs are disabled.
     @SerializedName("disableAutoShowUpdateDialog")
     private final BooleanProperty disableAutoShowUpdateDialog = new SimpleBooleanProperty(false);
@@ -169,16 +139,6 @@ public final class Config extends ObservableSetting {
     /// Returns the automatic update dialog disable property.
     public BooleanProperty disableAutoShowUpdateDialogProperty() {
         return disableAutoShowUpdateDialog;
-    }
-
-    /// Returns whether automatic update dialogs are disabled.
-    public boolean isDisableAutoShowUpdateDialog() {
-        return disableAutoShowUpdateDialog.get();
-    }
-
-    /// Sets whether automatic update dialogs are disabled.
-    public void setDisableAutoShowUpdateDialog(boolean disableAutoShowUpdateDialog) {
-        this.disableAutoShowUpdateDialog.set(disableAutoShowUpdateDialog);
     }
 
     /// Whether April Fools features are disabled.
@@ -190,16 +150,6 @@ public final class Config extends ObservableSetting {
         return disableAprilFools;
     }
 
-    /// Returns whether April Fools features are disabled.
-    public boolean isDisableAprilFools() {
-        return disableAprilFools.get();
-    }
-
-    /// Sets whether April Fools features are disabled.
-    public void setDisableAprilFools(boolean disableAprilFools) {
-        this.disableAprilFools.set(disableAprilFools);
-    }
-
     /// The common Minecraft directory selection mode.
     @SerializedName("commonDirType")
     private final ObjectProperty<EnumCommonDirectory> commonDirType = new RawPreservingObjectProperty<>(EnumCommonDirectory.DEFAULT);
@@ -207,16 +157,6 @@ public final class Config extends ObservableSetting {
     /// Returns the common Minecraft directory selection mode property.
     public ObjectProperty<EnumCommonDirectory> commonDirTypeProperty() {
         return commonDirType;
-    }
-
-    /// Returns the common Minecraft directory selection mode.
-    public EnumCommonDirectory getCommonDirType() {
-        return commonDirType.get();
-    }
-
-    /// Sets the common Minecraft directory selection mode.
-    public void setCommonDirType(EnumCommonDirectory commonDirType) {
-        this.commonDirType.set(commonDirType);
     }
 
     /// The custom common Minecraft directory path.
@@ -228,16 +168,6 @@ public final class Config extends ObservableSetting {
         return commonDirectory;
     }
 
-    /// Returns the custom common Minecraft directory path.
-    public String getCommonDirectory() {
-        return commonDirectory.get();
-    }
-
-    /// Sets the custom common Minecraft directory path.
-    public void setCommonDirectory(String commonDirectory) {
-        this.commonDirectory.set(commonDirectory);
-    }
-
     /// The maximum number of log lines kept in log views.
     @SerializedName("logLines")
     private final ObjectProperty<@Nullable Integer> logLines = new SimpleObjectProperty<>();
@@ -245,16 +175,6 @@ public final class Config extends ObservableSetting {
     /// Returns the log line limit property.
     public ObjectProperty<@Nullable Integer> logLinesProperty() {
         return logLines;
-    }
-
-    /// Returns the maximum number of log lines kept in log views.
-    public @Nullable Integer getLogLines() {
-        return logLines.get();
-    }
-
-    /// Sets the maximum number of log lines kept in log views.
-    public void setLogLines(@Nullable Integer logLines) {
-        this.logLines.set(logLines);
     }
 
     // UI
@@ -268,16 +188,6 @@ public final class Config extends ObservableSetting {
         return themeBrightness;
     }
 
-    /// Returns the configured theme brightness identifier.
-    public String getThemeBrightness() {
-        return themeBrightness.get();
-    }
-
-    /// Sets the configured theme brightness identifier.
-    public void setThemeBrightness(String themeBrightness) {
-        this.themeBrightness.set(themeBrightness);
-    }
-
     /// The selected launcher theme color.
     @SerializedName("theme")
     private final ObjectProperty<ThemeColor> themeColor = new SimpleObjectProperty<>(ThemeColor.DEFAULT);
@@ -285,16 +195,6 @@ public final class Config extends ObservableSetting {
     /// Returns the launcher theme color property.
     public ObjectProperty<ThemeColor> themeColorProperty() {
         return themeColor;
-    }
-
-    /// Returns the selected launcher theme color.
-    public ThemeColor getThemeColor() {
-        return themeColor.get();
-    }
-
-    /// Sets the selected launcher theme color.
-    public void setThemeColor(ThemeColor themeColor) {
-        this.themeColor.set(themeColor);
     }
 
     /// The font family used by launcher content.
@@ -306,16 +206,6 @@ public final class Config extends ObservableSetting {
         return fontFamily;
     }
 
-    /// Returns the font family used by launcher content.
-    public String getFontFamily() {
-        return fontFamily.get();
-    }
-
-    /// Sets the font family used by launcher content.
-    public void setFontFamily(String fontFamily) {
-        this.fontFamily.set(fontFamily);
-    }
-
     /// The launcher UI font size.
     @SerializedName("fontSize")
     private final DoubleProperty fontSize = new SimpleDoubleProperty(12);
@@ -325,16 +215,6 @@ public final class Config extends ObservableSetting {
         return fontSize;
     }
 
-    /// Returns the launcher UI font size.
-    public double getFontSize() {
-        return fontSize.get();
-    }
-
-    /// Sets the launcher UI font size.
-    public void setFontSize(double fontSize) {
-        this.fontSize.set(fontSize);
-    }
-
     /// The font family used by launcher chrome.
     @SerializedName("launcherFontFamily")
     private final StringProperty launcherFontFamily = new SimpleStringProperty();
@@ -342,16 +222,6 @@ public final class Config extends ObservableSetting {
     /// Returns the launcher chrome font family property.
     public StringProperty launcherFontFamilyProperty() {
         return launcherFontFamily;
-    }
-
-    /// Returns the font family used by launcher chrome.
-    public String getLauncherFontFamily() {
-        return launcherFontFamily.get();
-    }
-
-    /// Sets the font family used by launcher chrome.
-    public void setLauncherFontFamily(String launcherFontFamily) {
-        this.launcherFontFamily.set(launcherFontFamily);
     }
 
     /// Whether UI animations are disabled.
@@ -367,16 +237,6 @@ public final class Config extends ObservableSetting {
         return animationDisabled;
     }
 
-    /// Returns whether UI animations are disabled.
-    public boolean isAnimationDisabled() {
-        return animationDisabled.get();
-    }
-
-    /// Sets whether UI animations are disabled.
-    public void setAnimationDisabled(boolean animationDisabled) {
-        this.animationDisabled.set(animationDisabled);
-    }
-
     /// Whether the launcher title area is transparent.
     @SerializedName("titleTransparent")
     private final BooleanProperty titleTransparent = new SimpleBooleanProperty(false);
@@ -384,16 +244,6 @@ public final class Config extends ObservableSetting {
     /// Returns the transparent title area property.
     public BooleanProperty titleTransparentProperty() {
         return titleTransparent;
-    }
-
-    /// Returns whether the launcher title area is transparent.
-    public boolean isTitleTransparent() {
-        return titleTransparent.get();
-    }
-
-    /// Sets whether the launcher title area is transparent.
-    public void setTitleTransparent(boolean titleTransparent) {
-        this.titleTransparent.set(titleTransparent);
     }
 
     /// The launcher background image source type.
@@ -405,16 +255,6 @@ public final class Config extends ObservableSetting {
         return backgroundImageType;
     }
 
-    /// Returns the launcher background image source type.
-    public EnumBackgroundImage getBackgroundImageType() {
-        return backgroundImageType.get();
-    }
-
-    /// Sets the launcher background image source type.
-    public void setBackgroundImageType(EnumBackgroundImage backgroundImageType) {
-        this.backgroundImageType.set(backgroundImageType);
-    }
-
     /// The local launcher background image path.
     @SerializedName("bgpath")
     private final StringProperty backgroundImage = new SimpleStringProperty();
@@ -422,16 +262,6 @@ public final class Config extends ObservableSetting {
     /// Returns the local launcher background image path property.
     public StringProperty backgroundImageProperty() {
         return backgroundImage;
-    }
-
-    /// Returns the local launcher background image path.
-    public String getBackgroundImage() {
-        return backgroundImage.get();
-    }
-
-    /// Sets the local launcher background image path.
-    public void setBackgroundImage(String backgroundImage) {
-        this.backgroundImage.set(backgroundImage);
     }
 
     /// The remote launcher background image URL.
@@ -443,33 +273,13 @@ public final class Config extends ObservableSetting {
         return backgroundImageUrl;
     }
 
-    /// Returns the remote launcher background image URL.
-    public String getBackgroundImageUrl() {
-        return backgroundImageUrl.get();
-    }
-
-    /// Sets the remote launcher background image URL.
-    public void setBackgroundImageUrl(String backgroundImageUrl) {
-        this.backgroundImageUrl.set(backgroundImageUrl);
-    }
-
     /// The launcher background paint.
     @SerializedName("bgpaint")
     private final ObjectProperty<Paint> backgroundPaint = new SimpleObjectProperty<>();
 
-    /// Returns the launcher background paint.
-    public Paint getBackgroundPaint() {
-        return backgroundPaint.get();
-    }
-
     /// Returns the launcher background paint property.
     public ObjectProperty<Paint> backgroundPaintProperty() {
         return backgroundPaint;
-    }
-
-    /// Sets the launcher background paint.
-    public void setBackgroundPaint(Paint backgroundPaint) {
-        this.backgroundPaint.set(backgroundPaint);
     }
 
     /// The launcher background image opacity percentage.
@@ -479,16 +289,6 @@ public final class Config extends ObservableSetting {
     /// Returns the launcher background image opacity property.
     public IntegerProperty backgroundImageOpacityProperty() {
         return backgroundImageOpacity;
-    }
-
-    /// Returns the launcher background image opacity percentage.
-    public int getBackgroundImageOpacity() {
-        return backgroundImageOpacity.get();
-    }
-
-    /// Sets the launcher background image opacity percentage.
-    public void setBackgroundImageOpacity(int backgroundImageOpacity) {
-        this.backgroundImageOpacity.set(backgroundImageOpacity);
     }
 
     // Networks
@@ -502,16 +302,6 @@ public final class Config extends ObservableSetting {
         return autoDownloadThreads;
     }
 
-    /// Returns whether HMCL automatically selects the number of download threads.
-    public boolean getAutoDownloadThreads() {
-        return autoDownloadThreads.get();
-    }
-
-    /// Sets whether HMCL automatically selects the number of download threads.
-    public void setAutoDownloadThreads(boolean autoDownloadThreads) {
-        this.autoDownloadThreads.set(autoDownloadThreads);
-    }
-
     /// The configured number of download threads.
     @SerializedName("downloadThreads")
     private final IntegerProperty downloadThreads = new SimpleIntegerProperty(64);
@@ -519,16 +309,6 @@ public final class Config extends ObservableSetting {
     /// Returns the download thread count property.
     public IntegerProperty downloadThreadsProperty() {
         return downloadThreads;
-    }
-
-    /// Returns the configured number of download threads.
-    public int getDownloadThreads() {
-        return downloadThreads.get();
-    }
-
-    /// Sets the configured number of download threads.
-    public void setDownloadThreads(int downloadThreads) {
-        this.downloadThreads.set(downloadThreads);
     }
 
     /// The selected download provider ID.
@@ -540,16 +320,6 @@ public final class Config extends ObservableSetting {
         return downloadType;
     }
 
-    /// Returns the selected download provider ID.
-    public String getDownloadType() {
-        return downloadType.get();
-    }
-
-    /// Sets the selected download provider ID.
-    public void setDownloadType(String downloadType) {
-        this.downloadType.set(downloadType);
-    }
-
     /// Whether HMCL automatically chooses a download provider.
     @SerializedName("autoChooseDownloadType")
     private final BooleanProperty autoChooseDownloadType = new SimpleBooleanProperty(true);
@@ -557,16 +327,6 @@ public final class Config extends ObservableSetting {
     /// Returns the automatic download provider selection property.
     public BooleanProperty autoChooseDownloadTypeProperty() {
         return autoChooseDownloadType;
-    }
-
-    /// Returns whether HMCL automatically chooses a download provider.
-    public boolean isAutoChooseDownloadType() {
-        return autoChooseDownloadType.get();
-    }
-
-    /// Sets whether HMCL automatically chooses a download provider.
-    public void setAutoChooseDownloadType(boolean autoChooseDownloadType) {
-        this.autoChooseDownloadType.set(autoChooseDownloadType);
     }
 
     /// The selected game version list source ID.
@@ -578,16 +338,6 @@ public final class Config extends ObservableSetting {
         return versionListSource;
     }
 
-    /// Returns the selected game version list source ID.
-    public String getVersionListSource() {
-        return versionListSource.get();
-    }
-
-    /// Sets the selected game version list source ID.
-    public void setVersionListSource(String versionListSource) {
-        this.versionListSource.set(versionListSource);
-    }
-
     /// The selected default add-on source ID.
     @SerializedName("defaultAddonSource")
     private final StringProperty defaultAddonSource = new SimpleStringProperty("modrinth");
@@ -595,16 +345,6 @@ public final class Config extends ObservableSetting {
     /// Returns the selected default add-on source ID property.
     public StringProperty defaultAddonSourceProperty() {
         return defaultAddonSource;
-    }
-
-    /// Returns the selected default add-on source ID.
-    public String getDefaultAddonSource() {
-        return defaultAddonSource.get();
-    }
-
-    /// Sets the selected default add-on source ID.
-    public void setDefaultAddonSource(String defaultAddonSource) {
-        this.defaultAddonSource.set(defaultAddonSource);
     }
 
     /// Whether a network proxy is enabled.
@@ -616,16 +356,6 @@ public final class Config extends ObservableSetting {
         return hasProxy;
     }
 
-    /// Returns whether a network proxy is enabled.
-    public boolean hasProxy() {
-        return hasProxy.get();
-    }
-
-    /// Sets whether a network proxy is enabled.
-    public void setHasProxy(boolean hasProxy) {
-        this.hasProxy.set(hasProxy);
-    }
-
     /// Whether proxy authentication is enabled.
     @SerializedName("hasProxyAuth")
     private final BooleanProperty hasProxyAuth = new SimpleBooleanProperty();
@@ -633,16 +363,6 @@ public final class Config extends ObservableSetting {
     /// Returns the proxy authentication enable property.
     public BooleanProperty hasProxyAuthProperty() {
         return hasProxyAuth;
-    }
-
-    /// Returns whether proxy authentication is enabled.
-    public boolean hasProxyAuth() {
-        return hasProxyAuth.get();
-    }
-
-    /// Sets whether proxy authentication is enabled.
-    public void setHasProxyAuth(boolean hasProxyAuth) {
-        this.hasProxyAuth.set(hasProxyAuth);
     }
 
     /// The configured network proxy type.
@@ -654,16 +374,6 @@ public final class Config extends ObservableSetting {
         return proxyType;
     }
 
-    /// Returns the configured network proxy type.
-    public Proxy.Type getProxyType() {
-        return proxyType.get();
-    }
-
-    /// Sets the configured network proxy type.
-    public void setProxyType(Proxy.Type proxyType) {
-        this.proxyType.set(proxyType);
-    }
-
     /// The configured network proxy host.
     @SerializedName("proxyHost")
     private final StringProperty proxyHost = new SimpleStringProperty();
@@ -671,16 +381,6 @@ public final class Config extends ObservableSetting {
     /// Returns the network proxy host property.
     public StringProperty proxyHostProperty() {
         return proxyHost;
-    }
-
-    /// Returns the configured network proxy host.
-    public String getProxyHost() {
-        return proxyHost.get();
-    }
-
-    /// Sets the configured network proxy host.
-    public void setProxyHost(String proxyHost) {
-        this.proxyHost.set(proxyHost);
     }
 
     /// The configured network proxy port.
@@ -692,16 +392,6 @@ public final class Config extends ObservableSetting {
         return proxyPort;
     }
 
-    /// Returns the configured network proxy port.
-    public int getProxyPort() {
-        return proxyPort.get();
-    }
-
-    /// Sets the configured network proxy port.
-    public void setProxyPort(int proxyPort) {
-        this.proxyPort.set(proxyPort);
-    }
-
     /// The configured proxy authentication username.
     @SerializedName("proxyUserName")
     private final StringProperty proxyUser = new SimpleStringProperty();
@@ -711,16 +401,6 @@ public final class Config extends ObservableSetting {
         return proxyUser;
     }
 
-    /// Returns the configured proxy authentication username.
-    public String getProxyUser() {
-        return proxyUser.get();
-    }
-
-    /// Sets the configured proxy authentication username.
-    public void setProxyUser(String proxyUser) {
-        this.proxyUser.set(proxyUser);
-    }
-
     /// The configured proxy authentication password.
     @SerializedName("proxyPassword")
     private final StringProperty proxyPass = new SimpleStringProperty();
@@ -728,16 +408,6 @@ public final class Config extends ObservableSetting {
     /// Returns the proxy authentication password property.
     public StringProperty proxyPassProperty() {
         return proxyPass;
-    }
-
-    /// Returns the configured proxy authentication password.
-    public String getProxyPass() {
-        return proxyPass.get();
-    }
-
-    /// Sets the configured proxy authentication password.
-    public void setProxyPass(String proxyPass) {
-        this.proxyPass.set(proxyPass);
     }
 
     /// The selected game directory ID.
@@ -750,16 +420,6 @@ public final class Config extends ObservableSetting {
         return selectedGameDirectory;
     }
 
-    /// Returns the selected game directory ID.
-    public @Nullable GUID getSelectedGameDirectory() {
-        return selectedGameDirectory.get();
-    }
-
-    /// Sets the selected game directory ID.
-    public void setSelectedGameDirectory(@Nullable GUID selectedGameDirectory) {
-        this.selectedGameDirectory.set(selectedGameDirectory);
-    }
-
     /// The default game setting preset ID.
     @SerializedName(DEFAULT_GAME_SETTINGS_PRESET_MEMBER_NAME)
     private final ObjectProperty<@Nullable GUID> defaultGameSettingsPreset =
@@ -768,16 +428,6 @@ public final class Config extends ObservableSetting {
     /// Returns the default game setting preset ID property.
     public ObjectProperty<@Nullable GUID> defaultGameSettingsPresetProperty() {
         return defaultGameSettingsPreset;
-    }
-
-    /// Returns the default game setting preset ID.
-    public @Nullable GUID getDefaultGameSettingsPreset() {
-        return defaultGameSettingsPreset.get();
-    }
-
-    /// Sets the default game setting preset ID.
-    public void setDefaultGameSettingsPreset(@Nullable GUID defaultGameSettingsPreset) {
-        this.defaultGameSettingsPreset.set(defaultGameSettingsPreset);
     }
 
     /// Selected instance IDs keyed by game directory ID.
@@ -818,16 +468,6 @@ public final class Config extends ObservableSetting {
         return preferredLoginType;
     }
 
-    /// Returns the preferred login type.
-    public String getPreferredLoginType() {
-        return preferredLoginType.get();
-    }
-
-    /// Sets the preferred login type.
-    public void setPreferredLoginType(String preferredLoginType) {
-        this.preferredLoginType.set(preferredLoginType);
-    }
-
     /// The selected account identifier.
     @SerializedName("selectedAccount")
     private final StringProperty selectedAccount = new SimpleStringProperty();
@@ -835,16 +475,6 @@ public final class Config extends ObservableSetting {
     /// Returns the selected account identifier property.
     public StringProperty selectedAccountProperty() {
         return selectedAccount;
-    }
-
-    /// Returns the selected account identifier.
-    public String getSelectedAccount() {
-        return selectedAccount.get();
-    }
-
-    /// Sets the selected account identifier.
-    public void setSelectedAccount(String selectedAccount) {
-        this.selectedAccount.set(selectedAccount);
     }
 
     /// JSON adapter for [Config].
@@ -863,7 +493,7 @@ public final class Config extends ObservableSetting {
             }
 
             JsonObject result = super.serialize(src, typeOfSrc, context).getAsJsonObject();
-            result.add(JsonSchema.DEFAULT_MEMBER_NAME, context.serialize(src.getSchema(), JsonSchema.class));
+            result.add(JsonSchema.DEFAULT_MEMBER_NAME, context.serialize(src.schemaProperty().get(), JsonSchema.class));
             return result;
         }
 

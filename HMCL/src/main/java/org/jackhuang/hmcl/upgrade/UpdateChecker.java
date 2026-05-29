@@ -56,7 +56,7 @@ public final class UpdateChecker {
     private static final ReadOnlyBooleanWrapper checkingUpdate = new ReadOnlyBooleanWrapper(false);
 
     public static void init() {
-        requestCheckUpdate(UpdateChannel.getChannel(), config().isAcceptPreviewUpdate());
+        requestCheckUpdate(UpdateChannel.getChannel(), config().acceptPreviewUpdateProperty().get());
     }
 
     public static RemoteVersion getLatestVersion() {

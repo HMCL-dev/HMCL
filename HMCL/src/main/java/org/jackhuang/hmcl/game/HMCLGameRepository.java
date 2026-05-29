@@ -623,22 +623,22 @@ public final class HMCLGameRepository extends DefaultGameRepository {
     }
 
     public static ProxyOption getProxyOption() {
-        if (!config().hasProxy() || config().getProxyType() == null) {
+        if (!config().hasProxyProperty().get() || config().proxyTypeProperty().get() == null) {
             return ProxyOption.Default.INSTANCE;
         }
 
-        return switch (config().getProxyType()) {
+        return switch (config().proxyTypeProperty().get()) {
             case DIRECT -> ProxyOption.Direct.INSTANCE;
             case HTTP, SOCKS -> {
-                String proxyHost = config().getProxyHost();
-                int proxyPort = config().getProxyPort();
+                String proxyHost = config().proxyHostProperty().get();
+                int proxyPort = config().proxyPortProperty().get();
 
                 if (StringUtils.isBlank(proxyHost) || proxyPort < 0 || proxyPort > 0xFFFF) {
                     yield ProxyOption.Default.INSTANCE;
                 }
 
-                String proxyUser = config().getProxyUser();
-                String proxyPass = config().getProxyPass();
+                String proxyUser = config().proxyUserProperty().get();
+                String proxyPass = config().proxyPassProperty().get();
 
                 if (StringUtils.isBlank(proxyUser)) {
                     proxyUser = null;
@@ -647,7 +647,7 @@ public final class HMCLGameRepository extends DefaultGameRepository {
                     proxyPass = "";
                 }
 
-                if (config().getProxyType() == Proxy.Type.HTTP) {
+                if (config().proxyTypeProperty().get() == Proxy.Type.HTTP) {
                     yield new ProxyOption.Http(proxyHost, proxyPort, proxyUser, proxyPass);
                 } else {
                     yield new ProxyOption.Socks(proxyHost, proxyPort, proxyUser, proxyPass);

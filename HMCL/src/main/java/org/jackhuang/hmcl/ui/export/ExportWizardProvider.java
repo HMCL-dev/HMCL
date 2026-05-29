@@ -131,11 +131,11 @@ public final class ExportWizardProvider implements WizardProvider {
                 try (Zipper zip = new Zipper(modpackFile)) {
                     Config exported = new Config();
 
-                    exported.setBackgroundImageType(config().getBackgroundImageType());
-                    exported.setBackgroundImage(config().getBackgroundImage());
-                    exported.setThemeColor(config().getThemeColor());
-                    exported.setDownloadType(config().getDownloadType());
-                    exported.setPreferredLoginType(config().getPreferredLoginType());
+                    exported.backgroundImageTypeProperty().set(config().backgroundImageTypeProperty().get());
+                    exported.backgroundImageProperty().set(config().backgroundImageProperty().get());
+                    exported.themeColorProperty().set(config().themeColorProperty().get());
+                    exported.downloadTypeProperty().set(config().downloadTypeProperty().get());
+                    exported.preferredLoginTypeProperty().set(config().preferredLoginTypeProperty().get());
 
                     zip.putTextFile(exported.toJson(), ".hmcl/settings.json");
                     AuthlibInjectorServerList exportedServers = new AuthlibInjectorServerList();

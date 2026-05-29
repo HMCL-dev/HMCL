@@ -46,7 +46,7 @@ public final class ConfigMigrationTest {
 
         assertFalse(settings.has("localization"));
         assertEquals("zh-Hans", settings.get("language").getAsString());
-        assertEquals("zh-Hans", config.getLanguage().getName());
+        assertEquals("zh-Hans", config.languageProperty().get().getName());
         assertFalse(serialized.has("localization"));
         assertEquals("zh-Hans", serialized.get("language").getAsString());
     }
@@ -64,7 +64,7 @@ public final class ConfigMigrationTest {
         Config config = Objects.requireNonNull(Config.fromJson(settings));
 
         assertEquals("zh-Hant", settings.get("language").getAsString());
-        assertEquals("zh-Hant", config.getLanguage().getName());
+        assertEquals("zh-Hant", config.languageProperty().get().getName());
     }
 
     /// Tests that config serialization preserves a patch-version schema and unknown fields.
@@ -110,7 +110,7 @@ public final class ConfigMigrationTest {
         assertEquals(1, gameSettingsPresets.getPresets().size());
 
         GameSettings.Preset preset = gameSettingsPresets.getPresets().get(0);
-        assertEquals(preset.idProperty().getValue(), config.getDefaultGameSettingsPreset());
+        assertEquals(preset.idProperty().getValue(), config.defaultGameSettingsPresetProperty().get());
         assertTrue(preset.allowAutoAgentProperty().getValue());
         assertTrue(serializedGameSettings
                 .getAsJsonArray("presets")
@@ -146,7 +146,7 @@ public final class ConfigMigrationTest {
         assertEquals(1, gameSettingsPresets.getPresets().size());
 
         GameSettings.Preset preset = gameSettingsPresets.getPresets().get(0);
-        assertEquals(preset.idProperty().getValue(), config.getDefaultGameSettingsPreset());
+        assertEquals(preset.idProperty().getValue(), config.defaultGameSettingsPresetProperty().get());
         assertTrue(preset.disableAutoGameOptionsProperty().getValue());
         assertTrue(serializedGameSettings
                 .getAsJsonArray("presets")

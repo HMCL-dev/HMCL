@@ -103,7 +103,7 @@ public final class FontManager {
     }
 
     private static void updateFont() {
-        String fontFamily = config().getLauncherFontFamily();
+        String fontFamily = config().launcherFontFamilyProperty().get();
         if (fontFamily == null)
             fontFamily = System.getProperty("hmcl.font.override");
         if (fontFamily == null)
@@ -236,7 +236,7 @@ public final class FontManager {
     }
 
     public static void setFontFamily(String fontFamily) {
-        config().setLauncherFontFamily(fontFamily);
+        config().launcherFontFamilyProperty().set(fontFamily);
         updateFont();
     }
 

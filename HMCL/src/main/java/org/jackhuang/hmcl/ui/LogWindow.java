@@ -179,7 +179,7 @@ public final class LogWindow extends Stage {
 
             cboLines.getItems().setAll(500, 2000, 5000, 10000);
             cboLines.setValue(Log.getLogLines());
-            cboLines.getSelectionModel().selectedItemProperty().addListener((a, b, newValue) -> config().setLogLines(newValue));
+            cboLines.getSelectionModel().selectedItemProperty().addListener((a, b, newValue) -> config().logLinesProperty().set(newValue));
 
             for (int i = 0; i < LEVELS.length; ++i) {
                 buttonText[i].bind(Bindings.concat(levelCountMap.get(LEVELS[i]), " " + LEVELS[i].name().toLowerCase(Locale.ROOT) + "s"));
@@ -310,8 +310,8 @@ public final class LogWindow extends Stage {
                         listView.scrollTo(listView.getItems().size() - 1);
                 });
 
-                listView.setStyle("-fx-font-family: \"" + Lang.requireNonNullElse(config().getFontFamily(), FXUtils.DEFAULT_MONOSPACE_FONT)
-                        + "\"; -fx-font-size: " + config().getFontSize() + "px;");
+                listView.setStyle("-fx-font-family: \"" + Lang.requireNonNullElse(config().fontFamilyProperty().get(), FXUtils.DEFAULT_MONOSPACE_FONT)
+                        + "\"; -fx-font-size: " + config().fontSizeProperty().get() + "px;");
                 listView.setCellFactory(x -> new ListCell<>() {
                     {
                         getStyleClass().add("log-window-list-cell");

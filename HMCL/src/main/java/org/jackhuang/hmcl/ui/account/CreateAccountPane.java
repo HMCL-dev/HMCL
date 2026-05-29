@@ -101,7 +101,7 @@ public class CreateAccountPane extends JFXDialogLayout implements DialogAware {
                 factory = Accounts.FACTORY_MICROSOFT;
             } else {
                 showMethodSwitcher = true;
-                String preferred = config().getPreferredLoginType();
+                String preferred = config().preferredLoginTypeProperty().get();
                 try {
                     factory = Accounts.getAccountFactory(preferred);
                 } catch (IllegalArgumentException e) {
@@ -169,7 +169,7 @@ public class CreateAccountPane extends JFXDialogLayout implements DialogAware {
                         if (newItem == null)
                             return;
                         AccountFactory<?> newMethod = (AccountFactory<?>) newItem.getUserData();
-                        config().setPreferredLoginType(Accounts.getLoginType(newMethod));
+                        config().preferredLoginTypeProperty().set(Accounts.getLoginType(newMethod));
                         this.factory = newMethod;
                         initDetailsPane();
                     });

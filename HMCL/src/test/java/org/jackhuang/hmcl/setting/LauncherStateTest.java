@@ -67,6 +67,6 @@ public final class LauncherStateTest {
         assertEquals(LauncherState.CURRENT_SCHEMA, state.getSchema());
 
         Config config = Objects.requireNonNull(Config.fromJson(settings));
-        assertEquals(5000, config.getLogLines());
+        assertEquals(5000, config.logLinesProperty().get());
     }
 }

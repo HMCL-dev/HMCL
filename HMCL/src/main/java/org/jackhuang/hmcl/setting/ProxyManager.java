@@ -48,10 +48,10 @@ public final class ProxyManager {
     private static volatile @Nullable SimpleAuthenticator defaultAuthenticator = null;
 
     private static ProxySelector getProxySelector() {
-        if (config().hasProxy()) {
-            Proxy.Type proxyType = config().getProxyType();
-            String host = config().getProxyHost();
-            int port = config().getProxyPort();
+        if (config().hasProxyProperty().get()) {
+            Proxy.Type proxyType = config().proxyTypeProperty().get();
+            String host = config().proxyHostProperty().get();
+            int port = config().proxyPortProperty().get();
 
             if (proxyType == Proxy.Type.DIRECT || StringUtils.isBlank(host)) {
                 return NO_PROXY;
@@ -67,9 +67,9 @@ public final class ProxyManager {
     }
 
     private static SimpleAuthenticator getAuthenticator() {
-        if (config().hasProxy() && config().hasProxyAuth()) {
-            String username = config().getProxyUser();
-            String password = config().getProxyPass();
+        if (config().hasProxyProperty().get() && config().hasProxyAuthProperty().get()) {
+            String username = config().proxyUserProperty().get();
+            String password = config().proxyPassProperty().get();
 
             if (username != null || password != null)
                 return new SimpleAuthenticator(

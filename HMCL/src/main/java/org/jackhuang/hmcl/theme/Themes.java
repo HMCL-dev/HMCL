@@ -71,7 +71,7 @@ public final class Themes {
         }
 
         private Brightness getBrightness() {
-            String themeBrightness = config().getThemeBrightness();
+            String themeBrightness = config().themeBrightnessProperty().get();
             if (themeBrightness == null)
                 return Brightness.DEFAULT;
 
@@ -91,7 +91,7 @@ public final class Themes {
 
         @Override
         protected Theme computeValue() {
-            ThemeColor themeColor = Objects.requireNonNullElse(config().getThemeColor(), ThemeColor.DEFAULT);
+            ThemeColor themeColor = Objects.requireNonNullElse(config().themeColorProperty().get(), ThemeColor.DEFAULT);
 
             return new Theme(themeColor, getBrightness(), Theme.DEFAULT.colorStyle(), Contrast.DEFAULT);
         }
@@ -189,7 +189,7 @@ public final class Themes {
     }
 
     private static final ObjectBinding<Color> titleFill = Bindings.createObjectBinding(
-            () -> config().isTitleTransparent()
+            () -> config().titleTransparentProperty().get()
                     ? getColorScheme().getOnSurface()
                     : getColorScheme().getOnPrimaryContainer(),
             colorSchemeProperty(),

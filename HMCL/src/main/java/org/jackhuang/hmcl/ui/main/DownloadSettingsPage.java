@@ -218,8 +218,8 @@ public class DownloadSettingsPage extends StackPane {
                 chkProxySocks.setUserData(Proxy.Type.SOCKS);
                 chkProxySocks.setToggleGroup(proxyConfigurationGroup);
 
-                if (config().hasProxy()) {
-                    Proxy.Type proxyType = config().getProxyType();
+                if (config().hasProxyProperty().get()) {
+                    Proxy.Type proxyType = config().proxyTypeProperty().get();
                     if (proxyType == Proxy.Type.DIRECT) {
                         chkProxyNone.setSelected(true);
                     } else if (proxyType == Proxy.Type.HTTP) {
@@ -237,11 +237,11 @@ public class DownloadSettingsPage extends StackPane {
                     Proxy.Type proxyType = toggle != null ? (Proxy.Type) toggle.getUserData() : null;
 
                     if (proxyType == null) {
-                        config().setHasProxy(false);
-                        config().setProxyType(null);
+                        config().hasProxyProperty().set(false);
+                        config().proxyTypeProperty().set(null);
                     } else {
-                        config().setHasProxy(true);
-                        config().setProxyType(proxyType);
+                        config().hasProxyProperty().set(true);
+                        config().proxyTypeProperty().set(proxyType);
                     }
                 }));
 
@@ -253,7 +253,7 @@ public class DownloadSettingsPage extends StackPane {
             {
                 proxyPane.disableProperty().bind(
                         Bindings.createBooleanBinding(() ->
-                                        !config().hasProxy() || config().getProxyType() == null || config().getProxyType() == Proxy.Type.DIRECT,
+                                        !config().hasProxyProperty().get() || config().proxyTypeProperty().get() == null || config().proxyTypeProperty().get() == Proxy.Type.DIRECT,
                                 config().hasProxyProperty(),
                                 config().proxyTypeProperty()));
 
