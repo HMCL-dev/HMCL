@@ -87,6 +87,26 @@ public final class LauncherSettingsMigrationTest {
         assertEquals("/home/user/.minecraft", serialized.get("commonDirectory").getAsString());
     }
 
+    /// Tests migrating the legacy common directory type field into the current launcher settings field.
+    @Test
+    public void migratesLegacyCommonDirTypeToCommonDirectoryType() {
+        JsonObject settings = JsonParser.parseString("""
+                {
+                  "commonDirType": "CUSTOM"
+                }
+                """).getAsJsonObject();
+
+        LegacyConfigMigrator.migrateLegacyCommonDirectoryType(settings);
+        LauncherSettings launcherSettings = Objects.requireNonNull(LauncherSettings.fromJson(settings));
+        JsonObject serialized = JsonParser.parseString(launcherSettings.toJson()).getAsJsonObject();
+
+        assertFalse(settings.has("commonDirType"));
+        assertEquals("CUSTOM", settings.get("commonDirectoryType").getAsString());
+        assertEquals(EnumCommonDirectory.CUSTOM, launcherSettings.commonDirectoryTypeProperty().get());
+        assertFalse(serialized.has("commonDirType"));
+        assertEquals("CUSTOM", serialized.get("commonDirectoryType").getAsString());
+    }
+
     /// Tests that launcher settings serialization preserves a patch-version schema and unknown fields.
     @Test
     public void preservesPatchSchemaAndUnknownFields() {
