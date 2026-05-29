@@ -159,7 +159,7 @@ public final class LauncherSettings extends ObservableSetting {
     }
 
     /// The custom common Minecraft directory path.
-    @SerializedName("commonpath")
+    @SerializedName("commonDirectory")
     private final StringProperty commonDirectory = new SimpleStringProperty();
 
     /// Returns the custom common Minecraft directory property.

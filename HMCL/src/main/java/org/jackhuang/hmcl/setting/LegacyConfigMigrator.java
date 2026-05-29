@@ -108,6 +108,7 @@ public final class LegacyConfigMigrator {
                     AccountStorages::new);
             JsonElement legacyAllowAutoAgent = jsonObject.remove("allowAutoAgent");
             JsonElement legacyDisableAutoGameOptions = jsonObject.remove("disableAutoGameOptions");
+            migrateLegacyCommonDirectory(jsonObject);
             migrateLegacyLanguage(jsonObject);
             migrateLegacySelectedVersions(jsonObject);
             @Nullable GameDirectories migratedGameDirectories = extractGameDirectoriesFromConfigJson(jsonObject);
@@ -218,6 +219,20 @@ public final class LegacyConfigMigrator {
             case "zh" -> "zh-Hant";
             default -> primitive.getAsString();
         });
+    }
+
+    /// Migrates the legacy `commonpath` field into the current `commonDirectory` field.
+    static void migrateLegacyCommonDirectory(JsonObject json) {
+        Objects.requireNonNull(json);
+
+        JsonElement legacyCommonDirectory = json.remove("commonpath");
+        if (json.has("commonDirectory")
+                || !(legacyCommonDirectory instanceof JsonPrimitive primitive)
+                || !primitive.isString()) {
+            return;
+        }
+
+        json.addProperty("commonDirectory", primitive.getAsString());
     }
 
     /// Migrates the legacy workspace-wide automatic Java agent permission into game setting presets.

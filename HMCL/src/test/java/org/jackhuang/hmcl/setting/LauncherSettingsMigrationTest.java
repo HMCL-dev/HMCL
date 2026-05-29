@@ -67,6 +67,26 @@ public final class LauncherSettingsMigrationTest {
         assertEquals("zh-Hant", launcherSettings.languageProperty().get().getName());
     }
 
+    /// Tests migrating the legacy common directory field into the current launcher settings field.
+    @Test
+    public void migratesLegacyCommonPathToCommonDirectory() {
+        JsonObject settings = JsonParser.parseString("""
+                {
+                  "commonpath": "/home/user/.minecraft"
+                }
+                """).getAsJsonObject();
+
+        LegacyConfigMigrator.migrateLegacyCommonDirectory(settings);
+        LauncherSettings launcherSettings = Objects.requireNonNull(LauncherSettings.fromJson(settings));
+        JsonObject serialized = JsonParser.parseString(launcherSettings.toJson()).getAsJsonObject();
+
+        assertFalse(settings.has("commonpath"));
+        assertEquals("/home/user/.minecraft", settings.get("commonDirectory").getAsString());
+        assertEquals("/home/user/.minecraft", launcherSettings.commonDirectoryProperty().get());
+        assertFalse(serialized.has("commonpath"));
+        assertEquals("/home/user/.minecraft", serialized.get("commonDirectory").getAsString());
+    }
+
     /// Tests that launcher settings serialization preserves a patch-version schema and unknown fields.
     @Test
     public void preservesPatchSchemaAndUnknownFields() {
