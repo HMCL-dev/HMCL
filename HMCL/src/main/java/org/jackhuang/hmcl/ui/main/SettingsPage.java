@@ -65,7 +65,7 @@ import java.util.zip.GZIPInputStream;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
-import static org.jackhuang.hmcl.setting.ConfigHolder.config;
+import static org.jackhuang.hmcl.setting.ConfigHolder.settings;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
@@ -143,7 +143,7 @@ public final class SettingsPage extends ScrollPane {
                     LineToggleButton previewPane = new LineToggleButton();
                     previewPane.setTitle(i18n("update.preview"));
                     previewPane.setSubtitle(i18n("update.preview.subtitle"));
-                    previewPane.selectedProperty().bindBidirectional(config().acceptPreviewUpdateProperty());
+                    previewPane.selectedProperty().bindBidirectional(settings().acceptPreviewUpdateProperty());
 
                     InvalidationListener checkUpdateListener = e -> {
                         UpdateChecker.requestCheckUpdate(updateChannel.get(), previewPane.isSelected());
@@ -158,7 +158,7 @@ public final class SettingsPage extends ScrollPane {
                     LineToggleButton disableAutoShowUpdateDialogPane = new LineToggleButton();
                     disableAutoShowUpdateDialogPane.setTitle(i18n("update.disable_auto_show_update_dialog"));
                     disableAutoShowUpdateDialogPane.setSubtitle(i18n("update.disable_auto_show_update_dialog.subtitle"));
-                    disableAutoShowUpdateDialogPane.selectedProperty().bindBidirectional(config().disableAutoShowUpdateDialogProperty());
+                    disableAutoShowUpdateDialogPane.selectedProperty().bindBidirectional(settings().disableAutoShowUpdateDialogProperty());
                     updatePaneList.getContent().add(disableAutoShowUpdateDialogPane);
                 }
 
@@ -183,7 +183,7 @@ public final class SettingsPage extends ScrollPane {
                             return locale.getDisplayName(currentLocale) + " - " + locale.getDisplayName(locale);
                     });
                     chooseLanguagePane.setItems(SupportedLocale.getSupportedLocales());
-                    chooseLanguagePane.valueProperty().bindBidirectional(config().languageProperty());
+                    chooseLanguagePane.valueProperty().bindBidirectional(settings().languageProperty());
 
                     languagePaneList.getContent().add(chooseLanguagePane);
 
@@ -199,7 +199,7 @@ public final class SettingsPage extends ScrollPane {
                     LineToggleButton disableAprilFools = new LineToggleButton();
                     disableAprilFools.setTitle(i18n("settings.launcher.disable_april_fools"));
                     disableAprilFools.setSubtitle(i18n("settings.take_effect_after_restart"));
-                    disableAprilFools.selectedProperty().bindBidirectional(config().disableAprilFoolsProperty());
+                    disableAprilFools.selectedProperty().bindBidirectional(settings().disableAprilFoolsProperty());
                     miscPaneList.getContent().add(disableAprilFools);
                 }
 

@@ -24,7 +24,7 @@ import org.jackhuang.hmcl.ui.animation.AnimationUtils;
 import org.jackhuang.hmcl.util.CacheRepository;
 import org.jackhuang.hmcl.util.io.FileUtils;
 
-import static org.jackhuang.hmcl.setting.ConfigHolder.config;
+import static org.jackhuang.hmcl.setting.ConfigHolder.settings;
 
 public final class Settings {
 
@@ -57,7 +57,7 @@ public final class Settings {
             } else {
                 return getDefaultCommonDirectory();
             }
-        }, config().commonDirectoryProperty(), config().commonDirTypeProperty()));
+        }, settings().commonDirectoryProperty(), settings().commonDirTypeProperty()));
     }
 
     public static String getDefaultCommonDirectory() {
@@ -65,11 +65,11 @@ public final class Settings {
     }
 
     public String getCommonDirectory() {
-        switch (config().commonDirTypeProperty().get()) {
+        switch (settings().commonDirTypeProperty().get()) {
             case DEFAULT:
                 return getDefaultCommonDirectory();
             case CUSTOM:
-                return config().commonDirectoryProperty().get();
+                return settings().commonDirectoryProperty().get();
             default:
                 return null;
         }

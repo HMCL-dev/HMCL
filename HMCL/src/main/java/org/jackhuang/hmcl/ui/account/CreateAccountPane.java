@@ -66,7 +66,7 @@ import static java.util.Collections.emptyList;
 import static java.util.Collections.unmodifiableList;
 import static javafx.beans.binding.Bindings.bindContent;
 import static javafx.beans.binding.Bindings.createBooleanBinding;
-import static org.jackhuang.hmcl.setting.ConfigHolder.config;
+import static org.jackhuang.hmcl.setting.ConfigHolder.settings;
 import static org.jackhuang.hmcl.setting.ConfigHolder.getAuthlibInjectorServers;
 import static org.jackhuang.hmcl.ui.FXUtils.*;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
@@ -101,7 +101,7 @@ public class CreateAccountPane extends JFXDialogLayout implements DialogAware {
                 factory = Accounts.FACTORY_MICROSOFT;
             } else {
                 showMethodSwitcher = true;
-                String preferred = config().preferredLoginTypeProperty().get();
+                String preferred = settings().preferredLoginTypeProperty().get();
                 try {
                     factory = Accounts.getAccountFactory(preferred);
                 } catch (IllegalArgumentException e) {
@@ -169,7 +169,7 @@ public class CreateAccountPane extends JFXDialogLayout implements DialogAware {
                         if (newItem == null)
                             return;
                         AccountFactory<?> newMethod = (AccountFactory<?>) newItem.getUserData();
-                        config().preferredLoginTypeProperty().set(Accounts.getLoginType(newMethod));
+                        settings().preferredLoginTypeProperty().set(Accounts.getLoginType(newMethod));
                         this.factory = newMethod;
                         initDetailsPane();
                     });

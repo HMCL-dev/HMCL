@@ -79,7 +79,7 @@ import java.util.concurrent.CancellationException;
 import java.util.function.Consumer;
 
 import static org.jackhuang.hmcl.download.RemoteVersion.Type.RELEASE;
-import static org.jackhuang.hmcl.setting.ConfigHolder.config;
+import static org.jackhuang.hmcl.setting.ConfigHolder.settings;
 import static org.jackhuang.hmcl.setting.ConfigHolder.state;
 import static org.jackhuang.hmcl.ui.FXUtils.SINE;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
@@ -280,7 +280,7 @@ public final class MainPage extends StackPane implements DecoratorPage {
     private void showUpdate(boolean show) {
         doAnimation(show);
 
-        if (show && !config().disableAutoShowUpdateDialogProperty().get()
+        if (show && !settings().disableAutoShowUpdateDialogProperty().get()
                 && getLatestVersion() != null
                 && !Objects.equals(state().getPromptedVersion(), getLatestVersion().version())) {
             Controllers.dialog(new MessageDialogPane.Builder("", i18n("update.bubble.title", getLatestVersion().version()), MessageDialogPane.MessageType.INFO)

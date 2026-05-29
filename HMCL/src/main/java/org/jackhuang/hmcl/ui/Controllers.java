@@ -79,7 +79,7 @@ import java.time.LocalDate;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
-import static org.jackhuang.hmcl.setting.ConfigHolder.config;
+import static org.jackhuang.hmcl.setting.ConfigHolder.settings;
 import static org.jackhuang.hmcl.setting.ConfigHolder.getAuthlibInjectorServers;
 import static org.jackhuang.hmcl.setting.ConfigHolder.state;
 import static org.jackhuang.hmcl.setting.ConfigHolder.userSettings;
@@ -350,9 +350,9 @@ public final class Controllers {
 
         decorator = new DecoratorController(stage, getRootPage());
 
-        if (config().commonDirTypeProperty().get() == EnumCommonDirectory.CUSTOM &&
-                !FileUtils.canCreateDirectory(config().commonDirectoryProperty().get())) {
-            config().commonDirTypeProperty().set(EnumCommonDirectory.DEFAULT);
+        if (settings().commonDirTypeProperty().get() == EnumCommonDirectory.CUSTOM &&
+                !FileUtils.canCreateDirectory(settings().commonDirectoryProperty().get())) {
+            settings().commonDirTypeProperty().set(EnumCommonDirectory.DEFAULT);
             dialog(i18n("launcher.cache_directory.invalid"));
         }
 
@@ -494,7 +494,7 @@ public final class Controllers {
                             LOG.info("Switching locale to " + lzh);
 
                             updateShowTips.run();
-                            config().languageProperty().set(lzh);
+                            settings().languageProperty().set(lzh);
 
                             Controllers.onApplicationStop();
 

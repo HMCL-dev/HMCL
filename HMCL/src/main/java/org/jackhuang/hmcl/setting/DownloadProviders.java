@@ -36,7 +36,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CancellationException;
 
-import static org.jackhuang.hmcl.setting.ConfigHolder.config;
+import static org.jackhuang.hmcl.setting.ConfigHolder.settings;
 import static org.jackhuang.hmcl.task.FetchTask.DEFAULT_CONCURRENCY;
 import static org.jackhuang.hmcl.util.Pair.pair;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
@@ -81,31 +81,31 @@ public final class DownloadProviders {
 
     static void init() {
         InvalidationListener onChangeDownloadThreads = observable -> {
-            FetchTask.setDownloadExecutorConcurrency(config().autoDownloadThreadsProperty().get()
+            FetchTask.setDownloadExecutorConcurrency(settings().autoDownloadThreadsProperty().get()
                     ? DEFAULT_CONCURRENCY
-                    : config().downloadThreadsProperty().get());
+                    : settings().downloadThreadsProperty().get());
         };
-        config().autoDownloadThreadsProperty().addListener(onChangeDownloadThreads);
-        config().downloadThreadsProperty().addListener(onChangeDownloadThreads);
+        settings().autoDownloadThreadsProperty().addListener(onChangeDownloadThreads);
+        settings().downloadThreadsProperty().addListener(onChangeDownloadThreads);
         onChangeDownloadThreads.invalidated(null);
 
         InvalidationListener onChangeDownloadSource = observable -> {
-            if (config().autoChooseDownloadTypeProperty().get()) {
-                String versionListSource = config().versionListSourceProperty().get();
+            if (settings().autoChooseDownloadTypeProperty().get()) {
+                String versionListSource = settings().versionListSourceProperty().get();
                 DownloadProvider downloadProvider = versionListSource != null
                         ? AUTO_PROVIDERS.getOrDefault(versionListSource, DEFAULT_PROVIDER)
                         : DEFAULT_PROVIDER;
                 PROVIDER_WRAPPER.setProvider(downloadProvider);
             } else {
-                String downloadType = config().downloadTypeProperty().get();
+                String downloadType = settings().downloadTypeProperty().get();
                 PROVIDER_WRAPPER.setProvider(downloadType != null
                         ? DIRECT_PROVIDERS.getOrDefault(downloadType, DEFAULT_PROVIDER)
                         : DEFAULT_PROVIDER);
             }
         };
-        config().versionListSourceProperty().addListener(onChangeDownloadSource);
-        config().autoChooseDownloadTypeProperty().addListener(onChangeDownloadSource);
-        config().downloadTypeProperty().addListener(onChangeDownloadSource);
+        settings().versionListSourceProperty().addListener(onChangeDownloadSource);
+        settings().autoChooseDownloadTypeProperty().addListener(onChangeDownloadSource);
+        settings().downloadTypeProperty().addListener(onChangeDownloadSource);
         onChangeDownloadSource.invalidated(null);
     }
 

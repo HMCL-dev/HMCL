@@ -48,7 +48,7 @@ import java.util.*;
 
 import static java.util.stream.Collectors.toList;
 import static javafx.collections.FXCollections.observableArrayList;
-import static org.jackhuang.hmcl.setting.ConfigHolder.config;
+import static org.jackhuang.hmcl.setting.ConfigHolder.settings;
 import static org.jackhuang.hmcl.setting.ConfigHolder.getAccountStorages;
 import static org.jackhuang.hmcl.setting.ConfigHolder.getAuthlibInjectorServers;
 import static org.jackhuang.hmcl.setting.ConfigHolder.userSettings;
@@ -238,7 +238,7 @@ public final class Accounts {
     }
 
     /**
-     * Called when it's ready to load accounts from {@link ConfigHolder#config()}.
+     * Called when it's ready to load accounts from {@link ConfigHolder#settings()}.
      */
     static void init() {
         if (initialized)
@@ -266,7 +266,7 @@ public final class Accounts {
             }
         }
 
-        String selectedAccountIdentifier = config().selectedAccountProperty().get();
+        String selectedAccountIdentifier = settings().selectedAccountProperty().get();
         if (selected == null && selectedAccountIdentifier != null) {
             boolean portable = true;
             if (selectedAccountIdentifier.startsWith(GLOBAL_PREFIX)) {
@@ -343,9 +343,9 @@ public final class Accounts {
         selectedAccount.addListener(onInvalidating(() -> {
             Account account = selectedAccount.get();
             if (account != null)
-                config().selectedAccountProperty().set(account.isPortable() ? account.getIdentifier() : GLOBAL_PREFIX + account.getIdentifier());
+                settings().selectedAccountProperty().set(account.isPortable() ? account.getIdentifier() : GLOBAL_PREFIX + account.getIdentifier());
             else
-                config().selectedAccountProperty().set(null);
+                settings().selectedAccountProperty().set(null);
         }));
         accounts.addListener(listener);
         accounts.addListener(onInvalidating(Accounts::updateAccountStorages));

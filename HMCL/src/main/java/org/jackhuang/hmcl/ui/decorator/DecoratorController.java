@@ -64,7 +64,7 @@ import java.util.Random;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import static org.jackhuang.hmcl.setting.ConfigHolder.config;
+import static org.jackhuang.hmcl.setting.ConfigHolder.settings;
 import static org.jackhuang.hmcl.ui.FXUtils.newBuiltinImage;
 import static org.jackhuang.hmcl.ui.FXUtils.onEscPressed;
 import static org.jackhuang.hmcl.util.io.FileUtils.getExtension;
@@ -76,7 +76,7 @@ public class DecoratorController {
 
     public DecoratorController(Stage stage, Node mainPage) {
         decorator = new Decorator(stage);
-        decorator.titleTransparentProperty().bind(config().titleTransparentProperty());
+        decorator.titleTransparentProperty().bind(settings().titleTransparentProperty());
 
         navigator = new Navigator();
         navigator.setOnNavigated(this::onNavigated);
@@ -93,11 +93,11 @@ public class DecoratorController {
         decorator.setContentBackground(getBackground());
         changeBackgroundListener = o -> updateBackground();
         WeakInvalidationListener weakListener = new WeakInvalidationListener(changeBackgroundListener);
-        config().backgroundImageTypeProperty().addListener(weakListener);
-        config().backgroundImageProperty().addListener(weakListener);
-        config().backgroundImageUrlProperty().addListener(weakListener);
-        config().backgroundPaintProperty().addListener(weakListener);
-        config().backgroundImageOpacityProperty().addListener(weakListener);
+        settings().backgroundImageTypeProperty().addListener(weakListener);
+        settings().backgroundImageProperty().addListener(weakListener);
+        settings().backgroundImageUrlProperty().addListener(weakListener);
+        settings().backgroundPaintProperty().addListener(weakListener);
+        settings().backgroundImageOpacityProperty().addListener(weakListener);
 
         // pass key events to current dialog / current page
         decorator.addEventFilter(KeyEvent.ANY, e -> {
@@ -184,14 +184,14 @@ public class DecoratorController {
     }
 
     private Background getBackground() {
-        EnumBackgroundImage imageType = config().backgroundImageTypeProperty().get();
+        EnumBackgroundImage imageType = settings().backgroundImageTypeProperty().get();
         if (imageType == null)
             imageType = EnumBackgroundImage.DEFAULT;
 
         Image image = null;
         switch (imageType) {
             case CUSTOM:
-                String backgroundImage = config().backgroundImageProperty().get();
+                String backgroundImage = settings().backgroundImageProperty().get();
                 if (backgroundImage != null)
                     try {
                         Path path = Path.of(backgroundImage);
@@ -203,7 +203,7 @@ public class DecoratorController {
                     }
                 break;
             case NETWORK:
-                String backgroundImageUrl = config().backgroundImageUrlProperty().get();
+                String backgroundImageUrl = settings().backgroundImageUrlProperty().get();
                 if (backgroundImageUrl != null) {
                     try {
                         image = FXUtils.loadImage(WebURL.parseBrowserInput(backgroundImageUrl));
@@ -218,8 +218,8 @@ public class DecoratorController {
             case TRANSLUCENT: // Deprecated
                 return new Background(new BackgroundFill(new Color(1, 1, 1, 0.5), CornerRadii.EMPTY, Insets.EMPTY));
             case PAINT:
-                Paint paint = config().backgroundPaintProperty().get();
-                double opacity = MathUtils.clamp(config().backgroundImageOpacityProperty().get(), 0, 100) / 100.;
+                Paint paint = settings().backgroundPaintProperty().get();
+                double opacity = MathUtils.clamp(settings().backgroundImageOpacityProperty().get(), 0, 100) / 100.;
                 if (paint instanceof Color || paint == null) {
                     Color color = (Color) paint;
                     if (color == null)
@@ -235,7 +235,7 @@ public class DecoratorController {
         if (image == null) {
             image = loadDefaultBackgroundImage();
         }
-        return createBackgroundWithOpacity(image, config().backgroundImageOpacityProperty().get());
+        return createBackgroundWithOpacity(image, settings().backgroundImageOpacityProperty().get());
     }
 
     private Background createBackgroundWithOpacity(Image image, int opacity) {

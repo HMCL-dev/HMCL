@@ -61,7 +61,7 @@ import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import static org.jackhuang.hmcl.setting.ConfigHolder.config;
+import static org.jackhuang.hmcl.setting.ConfigHolder.settings;
 import static org.jackhuang.hmcl.util.Pair.pair;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
@@ -623,22 +623,22 @@ public final class HMCLGameRepository extends DefaultGameRepository {
     }
 
     public static ProxyOption getProxyOption() {
-        if (!config().hasProxyProperty().get() || config().proxyTypeProperty().get() == null) {
+        if (!settings().hasProxyProperty().get() || settings().proxyTypeProperty().get() == null) {
             return ProxyOption.Default.INSTANCE;
         }
 
-        return switch (config().proxyTypeProperty().get()) {
+        return switch (settings().proxyTypeProperty().get()) {
             case DIRECT -> ProxyOption.Direct.INSTANCE;
             case HTTP, SOCKS -> {
-                String proxyHost = config().proxyHostProperty().get();
-                int proxyPort = config().proxyPortProperty().get();
+                String proxyHost = settings().proxyHostProperty().get();
+                int proxyPort = settings().proxyPortProperty().get();
 
                 if (StringUtils.isBlank(proxyHost) || proxyPort < 0 || proxyPort > 0xFFFF) {
                     yield ProxyOption.Default.INSTANCE;
                 }
 
-                String proxyUser = config().proxyUserProperty().get();
-                String proxyPass = config().proxyPassProperty().get();
+                String proxyUser = settings().proxyUserProperty().get();
+                String proxyPass = settings().proxyPassProperty().get();
 
                 if (StringUtils.isBlank(proxyUser)) {
                     proxyUser = null;
@@ -647,7 +647,7 @@ public final class HMCLGameRepository extends DefaultGameRepository {
                     proxyPass = "";
                 }
 
-                if (config().proxyTypeProperty().get() == Proxy.Type.HTTP) {
+                if (settings().proxyTypeProperty().get() == Proxy.Type.HTTP) {
                     yield new ProxyOption.Http(proxyHost, proxyPort, proxyUser, proxyPass);
                 } else {
                     yield new ProxyOption.Socks(proxyHost, proxyPort, proxyUser, proxyPass);

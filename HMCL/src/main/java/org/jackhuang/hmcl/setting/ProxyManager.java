@@ -29,7 +29,7 @@ import java.net.*;
 import java.util.List;
 import java.util.Objects;
 
-import static org.jackhuang.hmcl.setting.ConfigHolder.config;
+import static org.jackhuang.hmcl.setting.ConfigHolder.settings;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 public final class ProxyManager {
@@ -48,10 +48,10 @@ public final class ProxyManager {
     private static volatile @Nullable SimpleAuthenticator defaultAuthenticator = null;
 
     private static ProxySelector getProxySelector() {
-        if (config().hasProxyProperty().get()) {
-            Proxy.Type proxyType = config().proxyTypeProperty().get();
-            String host = config().proxyHostProperty().get();
-            int port = config().proxyPortProperty().get();
+        if (settings().hasProxyProperty().get()) {
+            Proxy.Type proxyType = settings().proxyTypeProperty().get();
+            String host = settings().proxyHostProperty().get();
+            int port = settings().proxyPortProperty().get();
 
             if (proxyType == Proxy.Type.DIRECT || StringUtils.isBlank(host)) {
                 return NO_PROXY;
@@ -67,9 +67,9 @@ public final class ProxyManager {
     }
 
     private static SimpleAuthenticator getAuthenticator() {
-        if (config().hasProxyProperty().get() && config().hasProxyAuthProperty().get()) {
-            String username = config().proxyUserProperty().get();
-            String password = config().proxyPassProperty().get();
+        if (settings().hasProxyProperty().get() && settings().hasProxyAuthProperty().get()) {
+            String username = settings().proxyUserProperty().get();
+            String password = settings().proxyPassProperty().get();
 
             if (username != null || password != null)
                 return new SimpleAuthenticator(
@@ -104,17 +104,17 @@ public final class ProxyManager {
 
         defaultProxySelector = getProxySelector();
         InvalidationListener updateProxySelector = observable -> defaultProxySelector = getProxySelector();
-        config().proxyTypeProperty().addListener(updateProxySelector);
-        config().proxyHostProperty().addListener(updateProxySelector);
-        config().proxyPortProperty().addListener(updateProxySelector);
-        config().hasProxyProperty().addListener(updateProxySelector);
+        settings().proxyTypeProperty().addListener(updateProxySelector);
+        settings().proxyHostProperty().addListener(updateProxySelector);
+        settings().proxyPortProperty().addListener(updateProxySelector);
+        settings().hasProxyProperty().addListener(updateProxySelector);
 
         defaultAuthenticator = getAuthenticator();
         InvalidationListener updateAuthenticator = observable -> defaultAuthenticator = getAuthenticator();
-        config().hasProxyProperty().addListener(updateAuthenticator);
-        config().hasProxyAuthProperty().addListener(updateAuthenticator);
-        config().proxyUserProperty().addListener(updateAuthenticator);
-        config().proxyPassProperty().addListener(updateAuthenticator);
+        settings().hasProxyProperty().addListener(updateAuthenticator);
+        settings().hasProxyAuthProperty().addListener(updateAuthenticator);
+        settings().proxyUserProperty().addListener(updateAuthenticator);
+        settings().proxyPassProperty().addListener(updateAuthenticator);
 
         FetchTask.notifyInitialized();
     }

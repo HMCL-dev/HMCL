@@ -55,7 +55,7 @@ import org.jackhuang.hmcl.util.StringUtils;
 import java.util.concurrent.CancellationException;
 import java.util.function.Consumer;
 
-import static org.jackhuang.hmcl.setting.ConfigHolder.config;
+import static org.jackhuang.hmcl.setting.ConfigHolder.settings;
 import static org.jackhuang.hmcl.ui.FXUtils.onEscPressed;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
@@ -211,7 +211,7 @@ public class MicrosoftAccountLoginPane extends JFXDialogLayout implements Dialog
 
             var lblCode = new Label(wait.userCode());
             lblCode.getStyleClass().add("code-label");
-            lblCode.setStyle("-fx-font-family: \"" + Lang.requireNonNullElse(config().fontFamilyProperty().get(), FXUtils.DEFAULT_MONOSPACE_FONT) + "\";");
+            lblCode.setStyle("-fx-font-family: \"" + Lang.requireNonNullElse(settings().fontFamilyProperty().get(), FXUtils.DEFAULT_MONOSPACE_FONT) + "\";");
 
             var codeBox = new StackPane(lblCode);
             codeBox.getStyleClass().add("code-box");

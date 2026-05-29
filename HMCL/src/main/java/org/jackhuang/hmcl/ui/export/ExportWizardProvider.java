@@ -48,7 +48,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
-import static org.jackhuang.hmcl.setting.ConfigHolder.config;
+import static org.jackhuang.hmcl.setting.ConfigHolder.settings;
 import static org.jackhuang.hmcl.setting.ConfigHolder.gameAccountsToJson;
 import static org.jackhuang.hmcl.setting.ConfigHolder.getAuthlibInjectorServers;
 
@@ -131,11 +131,11 @@ public final class ExportWizardProvider implements WizardProvider {
                 try (Zipper zip = new Zipper(modpackFile)) {
                     LauncherSettings exported = new LauncherSettings();
 
-                    exported.backgroundImageTypeProperty().set(config().backgroundImageTypeProperty().get());
-                    exported.backgroundImageProperty().set(config().backgroundImageProperty().get());
-                    exported.themeColorProperty().set(config().themeColorProperty().get());
-                    exported.downloadTypeProperty().set(config().downloadTypeProperty().get());
-                    exported.preferredLoginTypeProperty().set(config().preferredLoginTypeProperty().get());
+                    exported.backgroundImageTypeProperty().set(settings().backgroundImageTypeProperty().get());
+                    exported.backgroundImageProperty().set(settings().backgroundImageProperty().get());
+                    exported.themeColorProperty().set(settings().themeColorProperty().get());
+                    exported.downloadTypeProperty().set(settings().downloadTypeProperty().get());
+                    exported.preferredLoginTypeProperty().set(settings().preferredLoginTypeProperty().get());
 
                     zip.putTextFile(exported.toJson(), ".hmcl/settings.json");
                     AuthlibInjectorServerList exportedServers = new AuthlibInjectorServerList();

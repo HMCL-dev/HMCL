@@ -49,7 +49,7 @@ import java.util.Arrays;
 import java.util.Locale;
 import java.util.Optional;
 
-import static org.jackhuang.hmcl.setting.ConfigHolder.config;
+import static org.jackhuang.hmcl.setting.ConfigHolder.settings;
 import static org.jackhuang.hmcl.setting.ConfigHolder.userSettings;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
@@ -84,7 +84,7 @@ public class PersonalizationPage extends StackPane {
             brightnessPane.setTitle(i18n("settings.launcher.brightness"));
             brightnessPane.setNullSafeConverter(name -> i18n("settings.launcher.brightness." + name));
             brightnessPane.setItems("auto", "light", "dark");
-            brightnessPane.valueProperty().bindBidirectional(config().themeBrightnessProperty());
+            brightnessPane.valueProperty().bindBidirectional(settings().themeBrightnessProperty());
 
             themeList.getContent().add(brightnessPane);
         }
@@ -103,20 +103,20 @@ public class PersonalizationPage extends StackPane {
 
             ColorPicker picker = new JFXColorPicker();
             picker.getCustomColors().setAll(ThemeColor.STANDARD_COLORS.stream().map(ThemeColor::color).toList());
-            ThemeColor.bindBidirectional(picker, config().themeColorProperty());
+            ThemeColor.bindBidirectional(picker, settings().themeColorProperty());
             themeColorPickerContainer.getChildren().setAll(picker);
             Platform.runLater(() -> JFXDepthManager.setDepth(picker, 0));
         }
         {
             LineToggleButton titleTransparentButton = new LineToggleButton();
             themeList.getContent().add(titleTransparentButton);
-            titleTransparentButton.selectedProperty().bindBidirectional(config().titleTransparentProperty());
+            titleTransparentButton.selectedProperty().bindBidirectional(settings().titleTransparentProperty());
             titleTransparentButton.setTitle(i18n("settings.launcher.title_transparent"));
         }
         {
             LineToggleButton animationButton = new LineToggleButton();
             themeList.getContent().add(animationButton);
-            animationButton.selectedProperty().bindBidirectional(config().animationDisabledProperty());
+            animationButton.selectedProperty().bindBidirectional(settings().animationDisabledProperty());
             animationButton.setTitle(i18n("settings.launcher.turn_off_animations"));
             animationButton.setSubtitle(i18n("settings.take_effect_after_restart"));
         }
@@ -139,18 +139,18 @@ public class PersonalizationPage extends StackPane {
                             .setChooserTitle(i18n("launcher.background.choose"))
                             .addExtensionFilter(FXUtils.getImageExtensionFilter())
                             .setSelectionMode(FileSelector.SelectionMode.FILE_OR_DIRECTORY)
-                            .bindBidirectional(config().backgroundImageProperty()),
+                            .bindBidirectional(settings().backgroundImageProperty()),
                     new MultiFileItem.StringOption<>(i18n("launcher.background.network"), EnumBackgroundImage.NETWORK)
                             .setValidators(new URLValidator(true))
-                            .bindBidirectional(config().backgroundImageUrlProperty()),
+                            .bindBidirectional(settings().backgroundImageUrlProperty()),
                     new MultiFileItem.PaintOption<>(i18n("launcher.background.paint"), EnumBackgroundImage.PAINT)
-                            .bindBidirectional(config().backgroundPaintProperty())
+                            .bindBidirectional(settings().backgroundPaintProperty())
             ));
-            backgroundItem.selectedDataProperty().bindBidirectional(config().backgroundImageTypeProperty());
+            backgroundItem.selectedDataProperty().bindBidirectional(settings().backgroundImageTypeProperty());
             backgroundSublist.descriptionProperty().bind(
                     new When(backgroundItem.selectedDataProperty().isEqualTo(EnumBackgroundImage.DEFAULT))
                             .then(i18n("launcher.background.default"))
-                            .otherwise(config().backgroundImageProperty()));
+                            .otherwise(settings().backgroundImageProperty()));
 
             HBox opacityItem = new HBox(8);
             {
@@ -159,8 +159,8 @@ public class PersonalizationPage extends StackPane {
                 Label label = new Label(i18n("settings.launcher.background.settings.opacity"));
 
                 JFXSlider slider = new JFXSlider(0, 100,
-                        config().backgroundImageTypeProperty().get() != EnumBackgroundImage.TRANSLUCENT
-                                ? config().backgroundImageOpacityProperty().get() : 50);
+                        settings().backgroundImageTypeProperty().get() != EnumBackgroundImage.TRANSLUCENT
+                                ? settings().backgroundImageOpacityProperty().get() : 50);
                 slider.setShowTickMarks(true);
                 slider.setMajorTickUnit(10);
                 slider.setMinorTickCount(1);
@@ -169,13 +169,13 @@ public class PersonalizationPage extends StackPane {
                 slider.setPadding(new Insets(9, 0, 0, 0));
                 HBox.setHgrow(slider, Priority.ALWAYS);
 
-                if (config().backgroundImageTypeProperty().get() == EnumBackgroundImage.TRANSLUCENT) {
+                if (settings().backgroundImageTypeProperty().get() == EnumBackgroundImage.TRANSLUCENT) {
                     slider.setDisable(true);
-                    config().backgroundImageTypeProperty().addListener(new ChangeListener<>() {
+                    settings().backgroundImageTypeProperty().addListener(new ChangeListener<>() {
                         @Override
                         public void changed(ObservableValue<? extends EnumBackgroundImage> observable, EnumBackgroundImage oldValue, EnumBackgroundImage newValue) {
                             if (newValue != EnumBackgroundImage.TRANSLUCENT) {
-                                config().backgroundImageTypeProperty().removeListener(this);
+                                settings().backgroundImageTypeProperty().removeListener(this);
                                 slider.setDisable(false);
                                 slider.setValue(100);
                             }
@@ -191,7 +191,7 @@ public class PersonalizationPage extends StackPane {
                 slider.setValueFactory(s -> valueBinding);
 
                 slider.valueProperty().addListener((observable, oldValue, newValue) ->
-                        config().backgroundImageOpacityProperty().set(snapOpacity(newValue.doubleValue())));
+                        settings().backgroundImageOpacityProperty().set(snapOpacity(newValue.doubleValue())));
 
                 opacityItem.getChildren().setAll(label, slider, textOpacity);
             }
@@ -221,11 +221,11 @@ public class PersonalizationPage extends StackPane {
                         hBox.setSpacing(3);
 
                         FontComboBox cboLogFont = new FontComboBox();
-                        cboLogFont.valueProperty().bindBidirectional(config().fontFamilyProperty());
+                        cboLogFont.valueProperty().bindBidirectional(settings().fontFamilyProperty());
 
                         JFXTextField txtLogFontSize = new JFXTextField();
                         FXUtils.setLimitWidth(txtLogFontSize, 50);
-                        FXUtils.bind(txtLogFontSize, config().fontSizeProperty(), SafeStringConverter.fromFiniteDouble()
+                        FXUtils.bind(txtLogFontSize, settings().fontSizeProperty(), SafeStringConverter.fromFiniteDouble()
                                 .restrict(it -> it > 0)
                                 .fallbackTo(12.0)
                                 .asPredicate(Validator.addTo(txtLogFontSize)));
@@ -243,8 +243,8 @@ public class PersonalizationPage extends StackPane {
 
                 Label lblLogFontDisplay = new Label("[23:33:33] [Client Thread/INFO] [WaterPower]: Loaded mod WaterPower.");
                 lblLogFontDisplay.fontProperty().bind(Bindings.createObjectBinding(
-                        () -> Font.font(Lang.requireNonNullElse(config().fontFamilyProperty().get(), FXUtils.DEFAULT_MONOSPACE_FONT), config().fontSizeProperty().get()),
-                        config().fontFamilyProperty(), config().fontSizeProperty()));
+                        () -> Font.font(Lang.requireNonNullElse(settings().fontFamilyProperty().get(), FXUtils.DEFAULT_MONOSPACE_FONT), settings().fontSizeProperty().get()),
+                        settings().fontFamilyProperty(), settings().fontSizeProperty()));
 
                 fontPane.getChildren().add(lblLogFontDisplay);
 
@@ -275,7 +275,7 @@ public class PersonalizationPage extends StackPane {
                         hBox.setSpacing(8);
 
                         FontComboBox cboFont = new FontComboBox();
-                        cboFont.setValue(config().launcherFontFamilyProperty().get());
+                        cboFont.setValue(settings().launcherFontFamilyProperty().get());
                         FXUtils.onChange(cboFont.valueProperty(), FontManager::setFontFamily);
 
                         JFXButton clearButton = FXUtils.newToggleButton4(SVG.RESTORE);

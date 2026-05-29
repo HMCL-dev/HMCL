@@ -167,8 +167,8 @@ public final class ConfigHolder {
     /// Detached account storages migrated from a config file.
     private static @Nullable AccountStorages migratedGameAccounts;
 
-    /// Returns the loaded per-workspace config.
-    public static LauncherSettings config() {
+    /// Returns the loaded per-workspace launcher settings.
+    public static LauncherSettings settings() {
         if (configInstance == null) {
             throw new IllegalStateException("Configuration hasn't been loaded");
         }
@@ -275,32 +275,32 @@ public final class ConfigHolder {
 
     /// Returns the selected game directory ID property.
     public static ObjectProperty<@Nullable GUID> selectedGameDirectoryProperty() {
-        return config().selectedGameDirectoryProperty();
+        return settings().selectedGameDirectoryProperty();
     }
 
     /// Returns the selected game directory ID.
     public static @Nullable GUID getSelectedGameDirectory() {
-        return config().selectedGameDirectoryProperty().get();
+        return settings().selectedGameDirectoryProperty().get();
     }
 
     /// Sets the selected game directory ID.
     public static void setSelectedGameDirectory(@Nullable GUID selectedGameDirectory) {
-        config().selectedGameDirectoryProperty().set(selectedGameDirectory);
+        settings().selectedGameDirectoryProperty().set(selectedGameDirectory);
     }
 
     /// Returns selected instance IDs keyed by game directory ID.
     public static ObservableMap<GUID, String> getSelectedInstance() {
-        return config().getSelectedInstance();
+        return settings().getSelectedInstance();
     }
 
     /// Returns the selected instance ID for the given game directory ID.
     public static @Nullable String getSelectedInstance(@Nullable GUID gameDirectoryId) {
-        return config().getSelectedInstance(gameDirectoryId);
+        return settings().getSelectedInstance(gameDirectoryId);
     }
 
     /// Sets the selected instance ID for the given game directory ID.
     public static void setSelectedInstance(@Nullable GUID gameDirectoryId, @Nullable String selectedInstance) {
-        config().setSelectedInstance(gameDirectoryId, selectedInstance);
+        settings().setSelectedInstance(gameDirectoryId, selectedInstance);
     }
 
     /// Returns the reusable game setting presets.
@@ -310,17 +310,17 @@ public final class ConfigHolder {
 
     /// Returns the default game setting preset ID property.
     public static ObjectProperty<@Nullable GUID> defaultGameSettingsPresetProperty() {
-        return config().defaultGameSettingsPresetProperty();
+        return settings().defaultGameSettingsPresetProperty();
     }
 
     /// Returns the default game setting preset ID.
     public static @Nullable GUID getDefaultGameSettingsPreset() {
-        return config().defaultGameSettingsPresetProperty().get();
+        return settings().defaultGameSettingsPresetProperty().get();
     }
 
     /// Sets the default game setting preset ID.
     public static void setDefaultGameSettingsPreset(@Nullable GUID defaultGameSettingsPreset) {
-        config().defaultGameSettingsPresetProperty().set(defaultGameSettingsPreset);
+        settings().defaultGameSettingsPresetProperty().set(defaultGameSettingsPreset);
     }
 
     /// Returns the game setting preset with the given ID.
@@ -386,7 +386,7 @@ public final class ConfigHolder {
         userSettingsInstance = loadUserSettings();
         userSettingsInstance.addListener(source -> FileSaver.save(USER_SETTINGS_LOCATION, userSettingsInstance.toJson()));
 
-        Locale.setDefault(config().languageProperty().get().getLocale());
+        Locale.setDefault(settings().languageProperty().get().getLocale());
         I18n.setLocale(configInstance.languageProperty().get());
         LOG.setLogRetention(userSettings().logRetentionProperty().get());
         loadGameDirectories(migratedGameDirectories, !unsupportedVersion);

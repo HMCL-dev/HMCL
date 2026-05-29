@@ -35,7 +35,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.concurrent.CopyOnWriteArraySet;
 
-import static org.jackhuang.hmcl.setting.ConfigHolder.config;
+import static org.jackhuang.hmcl.setting.ConfigHolder.settings;
 import static org.jackhuang.hmcl.setting.ConfigHolder.getAuthlibInjectorServers;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
@@ -82,7 +82,7 @@ public final class AuthlibInjectorServers implements Validation {
             }
 
             if (!configInstance.urls.isEmpty()) {
-                config().preferredLoginTypeProperty().set(Accounts.getLoginType(Accounts.FACTORY_AUTHLIB_INJECTOR));
+                settings().preferredLoginTypeProperty().set(Accounts.getLoginType(Accounts.FACTORY_AUTHLIB_INJECTOR));
                 for (String url : configInstance.urls) {
                     Task.supplyAsync(Schedulers.io(), () -> AuthlibInjectorServer.locateServer(url))
                             .thenAcceptAsync(Schedulers.javafx(), server -> {

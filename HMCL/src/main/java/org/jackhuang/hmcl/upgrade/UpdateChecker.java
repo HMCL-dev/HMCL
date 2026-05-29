@@ -29,7 +29,7 @@ import org.jackhuang.hmcl.util.versioning.VersionNumber;
 import java.io.IOException;
 import java.util.LinkedHashMap;
 
-import static org.jackhuang.hmcl.setting.ConfigHolder.config;
+import static org.jackhuang.hmcl.setting.ConfigHolder.settings;
 import static org.jackhuang.hmcl.util.Lang.*;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
@@ -56,7 +56,7 @@ public final class UpdateChecker {
     private static final ReadOnlyBooleanWrapper checkingUpdate = new ReadOnlyBooleanWrapper(false);
 
     public static void init() {
-        requestCheckUpdate(UpdateChannel.getChannel(), config().acceptPreviewUpdateProperty().get());
+        requestCheckUpdate(UpdateChannel.getChannel(), settings().acceptPreviewUpdateProperty().get());
     }
 
     public static RemoteVersion getLatestVersion() {

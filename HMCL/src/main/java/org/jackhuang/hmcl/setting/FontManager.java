@@ -37,7 +37,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
 
-import static org.jackhuang.hmcl.setting.ConfigHolder.config;
+import static org.jackhuang.hmcl.setting.ConfigHolder.settings;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 /**
@@ -103,7 +103,7 @@ public final class FontManager {
     }
 
     private static void updateFont() {
-        String fontFamily = config().launcherFontFamilyProperty().get();
+        String fontFamily = settings().launcherFontFamilyProperty().get();
         if (fontFamily == null)
             fontFamily = System.getProperty("hmcl.font.override");
         if (fontFamily == null)
@@ -236,7 +236,7 @@ public final class FontManager {
     }
 
     public static void setFontFamily(String fontFamily) {
-        config().launcherFontFamilyProperty().set(fontFamily);
+        settings().launcherFontFamilyProperty().set(fontFamily);
         updateFont();
     }
 
