@@ -58,7 +58,7 @@ final class JsonSchemaPolicy {
             LOG.warning("Unexpected " + displayName + " schema. Expected: "
                     + expected + ", Actual: " + schema.actual());
             return Result.UNREADABLE;
-        } else if (schema.hasDifferentMajorVersion()) {
+        } else if (schema.hasUnsupportedMajorVersion()) {
             LOG.warning("Unsupported " + displayName + " schema. Expected: "
                     + expected + ", Actual: " + schema.actual());
             return Result.UNREADABLE;
@@ -77,12 +77,12 @@ final class JsonSchemaPolicy {
     ///
     /// @param readable whether the file may be deserialized
     /// @param allowSave whether the file may be overwritten
-    /// @param preserveSchema whether the serialized schema should keep the original value
+    /// @param preserveSchema whether saving should keep the original schema value
     record Result(boolean readable, boolean allowSave, boolean preserveSchema) {
         /// Result used when a file is compatible, may be saved, and should be upgraded to the expected schema.
         private static final Result READ_WRITE = new Result(true, true, false);
 
-        /// Result used when a file is compatible, may be saved, and should preserve the original schema.
+        /// Result used when a file is compatible, may be saved, and should preserve the original schema and unknown members.
         private static final Result READ_WRITE_PRESERVE_SCHEMA = new Result(true, true, true);
 
         /// Result used when a file is readable but must not be overwritten.

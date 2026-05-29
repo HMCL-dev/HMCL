@@ -112,16 +112,16 @@ public final class JsonSchemaTest {
         JsonSchema.CheckResult newerPatch = JsonSchema.check(object, expected);
         assertTrue(newerPatch.hasSameMajorAndMinorVersion());
         assertFalse(newerPatch.hasNewerMinorVersion());
-        assertFalse(newerPatch.hasDifferentMajorVersion());
+        assertFalse(newerPatch.hasUnsupportedMajorVersion());
 
         object.addProperty(JsonSchema.DEFAULT_MEMBER_NAME, schemaUrl("settings", "3.1.0"));
         JsonSchema.CheckResult newerMinor = JsonSchema.check(object, expected);
         assertTrue(newerMinor.hasNewerMinorVersion());
-        assertFalse(newerMinor.hasDifferentMajorVersion());
+        assertFalse(newerMinor.hasUnsupportedMajorVersion());
 
         object.addProperty(JsonSchema.DEFAULT_MEMBER_NAME, schemaUrl("settings", "4.0.0"));
         JsonSchema.CheckResult newerMajor = JsonSchema.check(object, expected);
-        assertTrue(newerMajor.hasDifferentMajorVersion());
+        assertTrue(newerMajor.hasUnsupportedMajorVersion());
         assertFalse(newerMajor.hasNewerMinorVersion());
     }
 

@@ -43,9 +43,10 @@ import java.util.Objects;
 ///
 /// - When the schema string is not parseable as an HMCL schema URL, the file must be rejected.
 /// - When the schema ID differs from the expected schema, the file must be rejected.
-/// - When the major version differs from the supported schema, the file must be rejected.
+/// - When the major version is not supported by the current code, the file must be rejected.
 /// - When the minor version is newer, the file may be read but must not be overwritten.
-/// - When only the patch version differs, the file may be read and saved while preserving the original schema string.
+/// - When only the patch version differs, the file may be read and saved while preserving the original schema string
+///   and unknown serialized members.
 ///
 /// @param value the raw JSON schema string
 /// @param parsed the parsed HMCL schema identifier, or `null` when the string is not parseable
@@ -355,8 +356,8 @@ public record JsonSchema(String value, @Nullable Parsed parsed) {
             return status == Status.UNEXPECTED_ID;
         }
 
-        /// Returns whether the serialized schema has a different major version from the supported schema.
-        public boolean hasDifferentMajorVersion() {
+        /// Returns whether the serialized schema uses a major version unsupported by the current code.
+        public boolean hasUnsupportedMajorVersion() {
             return status == Status.VALID
                     && Objects.requireNonNull(actual).parsed.version.major() != Objects.requireNonNull(expected.parsed).version.major();
         }
