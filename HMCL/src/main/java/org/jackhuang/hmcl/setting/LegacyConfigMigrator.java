@@ -292,7 +292,7 @@ public final class LegacyConfigMigrator {
 
         JsonObject object = new JsonObject();
         object.add(JsonSchema.DEFAULT_MEMBER_NAME, JsonUtils.GSON.toJsonTree(GameDirectories.CURRENT_SCHEMA, JsonSchema.class));
-        object.add("gameDirectories", profiles);
+        object.add("directories", profiles);
 
         return JsonUtils.GSON.fromJson(object, GameDirectories.class);
     }

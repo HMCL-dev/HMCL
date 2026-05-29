@@ -74,7 +74,7 @@ public final class GameDirectories extends ObservableSetting implements JsonSche
     }
 
     /// Per-workspace game directories.
-    @SerializedName("gameDirectories")
+    @SerializedName("directories")
     private final ObservableList<Profile> gameDirectories =
             FXCollections.observableArrayList(profile -> new Observable[] { profile });
 

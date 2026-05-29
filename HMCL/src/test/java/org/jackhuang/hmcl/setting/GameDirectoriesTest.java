@@ -191,7 +191,7 @@ public final class GameDirectoriesTest {
                 {
                   "$schema": "https://schemas.glavo.site/hmcl/game-directories/1.0.0",
                   "selectedGameDirectory": "123e4567-e89b-12d3-a456-426614174000",
-                  "gameDirectories": []
+                  "directories": []
                 }
                 """).getAsJsonObject();
 
@@ -202,7 +202,7 @@ public final class GameDirectoriesTest {
         assertEquals(GameDirectories.CURRENT_SCHEMA,
                 JsonSchema.readFromMember(rewritten, JsonSchema.DEFAULT_MEMBER_NAME));
         assertFalse(rewritten.has(LauncherSettings.SELECTED_GAME_DIRECTORY_MEMBER_NAME));
-        assertTrue(rewritten.has("gameDirectories"));
+        assertTrue(rewritten.has("directories"));
     }
 
     /// Tests that patch-version schemas are preserved together with unknown fields.
@@ -215,7 +215,7 @@ public final class GameDirectoriesTest {
                   "futureField": {
                     "enabled": true
                   },
-                  "gameDirectories": []
+                  "directories": []
                 }
                 """);
 
