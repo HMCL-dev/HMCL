@@ -60,6 +60,33 @@ public final class GameDirectoriesTest {
         assertEquals(id, gameDirectories.getGameDirectories().get(0).getId());
         assertEquals("Dev", gameDirectories.getGameDirectories().get(0).getName());
         assertEquals(".minecraft", gameDirectories.getGameDirectories().get(0).getPath().getPath());
+        assertNull(gameDirectories.getGameDirectories().get(0).getLegacyGameSettings());
+    }
+
+    /// Tests extracting the migrated legacy game settings ID from a legacy profile.
+    @Test
+    public void extractsLegacyGameSettingsIdFromLegacyProfileGlobalSettings() {
+        GUID profileId = LegacyConfigMigrator.getLegacyProfileId("Dev");
+        GUID legacyGameSettings = LegacyConfigMigrator.getLegacyGameSettingsId("Dev");
+        JsonObject settings = JsonParser.parseString("""
+                {
+                  "configurations": {
+                    "Dev": {
+                      "gameDir": ".minecraft",
+                      "global": {
+                        "maxMemory": 2048
+                      }
+                    }
+                  }
+                }
+                """).getAsJsonObject();
+
+        GameDirectories gameDirectories = Objects.requireNonNull(LegacyConfigMigrator.extractGameDirectoriesFromConfigJson(settings));
+
+        Profile profile = gameDirectories.getGameDirectories().get(0);
+        assertEquals(profileId, profile.getId());
+        assertEquals(legacyGameSettings, profile.getLegacyGameSettings());
+        assertNotEquals(profile.getId(), profile.getLegacyGameSettings());
     }
 
     /// Tests that built-in profiles do not store names after migration.
@@ -148,6 +175,20 @@ public final class GameDirectoriesTest {
         assertFalse(serialized.has("useRelativePath"));
         assertEquals("versions/Dev", deserialized.getPath().getPath());
         assertFalse(deserialized.getPath().isAbsolute());
+    }
+
+    /// Tests that profiles preserve migrated legacy game settings IDs.
+    @Test
+    public void storesLegacyGameSettingsId() {
+        GUID id = new GUID("123e4567-e89b-12d3-a456-426614174000");
+        GUID legacyGameSettings = new GUID("123e4567-e89b-12d3-a456-426614174001");
+        Profile profile = new Profile(id, "Dev", PortablePath.of("versions\\Dev"), legacyGameSettings);
+
+        JsonObject serialized = JsonUtils.GSON.toJsonTree(profile, Profile.class).getAsJsonObject();
+        Profile deserialized = Objects.requireNonNull(JsonUtils.GSON.fromJson(serialized, Profile.class));
+
+        assertEquals(legacyGameSettings.toString(), serialized.get("legacyGameSettings").getAsString());
+        assertEquals(legacyGameSettings, deserialized.getLegacyGameSettings());
     }
 
     /// Tests that unnamed profiles are displayed by ID and serialized without a name.

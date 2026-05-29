@@ -26,6 +26,8 @@ import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.junit.jupiter.api.Test;
 
+import java.util.Objects;
+
 import static org.junit.jupiter.api.Assertions.*;
 
 /// Tests for detached game settings presets.
@@ -76,5 +78,34 @@ public final class GameSettingsPresetsTest {
         assertFalse(rewritten.has(LauncherSettings.PROPERTY_DEFAULT_GAME_SETTINGS_PRESET));
         assertTrue(rewritten.has("presets"));
         assertFalse(rewritten.has("gameSettings"));
+    }
+
+    /// Tests that legacy profile-level game settings migrate to IDs separate from profile IDs.
+    @Test
+    public void migratesLegacyProfileGlobalSettingsToSeparatePresetId() {
+        JsonObject settings = JsonParser.parseString("""
+                {
+                  "configurations": {
+                    "Dev": {
+                      "gameDir": ".minecraft",
+                      "global": {
+                        "maxMemory": 2048
+                      }
+                    }
+                  }
+                }
+                """).getAsJsonObject();
+        JsonObject configurations = settings.getAsJsonObject("configurations").deepCopy();
+        GameDirectories gameDirectories = Objects.requireNonNull(LegacyConfigMigrator.extractGameDirectoriesFromConfigJson(settings));
+        GameSettingsPresets presets = new GameSettingsPresets();
+
+        LegacyConfigMigrator.migrateLegacyPresetSettings(gameDirectories, presets, configurations);
+
+        assertEquals(1, presets.getPresets().size());
+        Profile profile = gameDirectories.getGameDirectories().get(0);
+        GameSettings.Preset preset = presets.getPresets().get(0);
+        assertEquals(profile.getLegacyGameSettings(), preset.idProperty().getValue());
+        assertNotEquals(profile.getId(), preset.idProperty().getValue());
+        assertEquals(2048, preset.maxMemoryProperty().getValue());
     }
 }

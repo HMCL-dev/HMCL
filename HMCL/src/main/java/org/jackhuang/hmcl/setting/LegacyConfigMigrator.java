@@ -52,6 +52,9 @@ public final class LegacyConfigMigrator {
     /// Namespace used to generate stable IDs for legacy profiles.
     private static final GUID LEGACY_PROFILE_ID_NAMESPACE = GUID.v5(GUID.NAMESPACE_URL, "hmcl:legacy-profile");
 
+    /// Namespace used to generate stable IDs for profile-level game settings migrated from legacy profiles.
+    private static final GUID LEGACY_GAME_SETTINGS_ID_NAMESPACE = GUID.v5(GUID.NAMESPACE_URL, "hmcl:legacy-game-settings");
+
     /// The legacy Windows and portable configuration file name used through HMCL 3.15.0.345.
     private static final String LEGACY_CONFIG_FILENAME = "hmcl.json";
 
@@ -82,6 +85,11 @@ public final class LegacyConfigMigrator {
     /// Returns the stable profile ID for a migrated legacy profile.
     public static GUID getLegacyProfileId(String profileName) {
         return GUID.v5(LEGACY_PROFILE_ID_NAMESPACE, profileName);
+    }
+
+    /// Returns the stable game settings preset ID for a migrated legacy profile.
+    public static GUID getLegacyGameSettingsId(String profileName) {
+        return GUID.v5(LEGACY_GAME_SETTINGS_ID_NAMESPACE, profileName);
     }
 
     /// Looks for a legacy config file and prepares it for writing as the new config file.
@@ -450,6 +458,9 @@ public final class LegacyConfigMigrator {
                 migrated.addProperty("name", name);
             }
             migrated.addProperty("id", getLegacyProfileId(name).toString());
+            if (profile.get("global") instanceof JsonObject) {
+                migrated.addProperty("legacyGameSettings", getLegacyGameSettingsId(name).toString());
+            }
             result.add(migrated);
         }
         return result;
@@ -625,7 +636,7 @@ public final class LegacyConfigMigrator {
     }
 
     /// Migrates profile-global game settings from HMCL 3.15.0.345 and older config files.
-    private static void migrateLegacyPresetSettings(
+    static void migrateLegacyPresetSettings(
             GameDirectories gameDirectories,
             GameSettingsPresets gameSettingsPresets,
             @Nullable JsonObject configurations) {
@@ -634,7 +645,12 @@ public final class LegacyConfigMigrator {
         }
 
         for (Profile profile : gameDirectories.getGameDirectories()) {
-            GameSettings.Preset legacyParent = gameSettingsPresets.getPreset(profile.getId());
+            @Nullable GUID legacyGameSettings = profile.getLegacyGameSettings();
+            if (legacyGameSettings == null) {
+                continue;
+            }
+
+            GameSettings.Preset legacyParent = gameSettingsPresets.getPreset(legacyGameSettings);
             if (legacyParent == null) {
                 @Nullable String profileName = getLegacyProfileName(profile);
                 if (profileName == null) {
@@ -646,7 +662,7 @@ public final class LegacyConfigMigrator {
                     continue;
                 }
 
-                legacyParent = LegacyGameSettingsMigrator.toPreset(profile.getId(), profileName, legacySettingObject);
+                legacyParent = LegacyGameSettingsMigrator.toPreset(legacyGameSettings, profileName, legacySettingObject);
                 gameSettingsPresets.getPresets().add(legacyParent);
             }
         }

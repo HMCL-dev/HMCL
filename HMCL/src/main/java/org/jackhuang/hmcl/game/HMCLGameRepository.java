@@ -243,7 +243,7 @@ public final class HMCLGameRepository extends DefaultGameRepository {
         GameSettings.Instance legacySetting = LegacyGameSettingsMigrator.migrateInstanceGameSettings(
                 getVersionRoot(id),
                 getBaseDirectory(),
-                profile.getId());
+                getParentGameSettings(null).idProperty().getValue());
         if (legacySetting != null) {
             initLocalGameSettings(id, legacySetting);
             saveGameSettings(id);
@@ -276,7 +276,7 @@ public final class HMCLGameRepository extends DefaultGameRepository {
     }
 
     private GameSettings.@Nullable Preset getProfileGameSettingsPreset() {
-        return SettingsManager.getGameSettings(profile.getId());
+        return SettingsManager.getGameSettings(profile.getLegacyGameSettings());
     }
 
     public @Nullable GameSettings.Instance createLocalGameSettings(String id) {
@@ -323,9 +323,9 @@ public final class HMCLGameRepository extends DefaultGameRepository {
     }
 
     public GameSettings.Preset getParentGameSettings(@Nullable GameSettings.Instance instance) {
-        @Nullable GUID parent = instance != null
+        @Nullable GUID parent = instance != null && instance.parentProperty().getValue() != null
                 ? instance.parentProperty().getValue()
-                : profile.getId();
+                : profile.getLegacyGameSettings();
         GameSettings.Preset parentSetting = SettingsManager.getGameSettings(parent);
         return parentSetting != null ? parentSetting : SettingsManager.getDefaultGameSettingsPresetOrCreate();
     }

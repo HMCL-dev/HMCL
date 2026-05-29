@@ -96,11 +96,35 @@ public final class Profile implements Observable {
         this.name.set(name);
     }
 
+    /// The migrated legacy game settings preset ID, or `null` when this profile uses the default preset.
+    private final ObjectProperty<@Nullable GUID> legacyGameSettings;
+
+    /// Returns the migrated legacy game settings preset ID property.
+    public ObjectProperty<@Nullable GUID> legacyGameSettingsProperty() {
+        return legacyGameSettings;
+    }
+
+    /// Returns the migrated legacy game settings preset ID, or `null` when this profile uses the default preset.
+    public @Nullable GUID getLegacyGameSettings() {
+        return legacyGameSettings.get();
+    }
+
+    /// Sets the migrated legacy game settings preset ID.
+    public void setLegacyGameSettings(@Nullable GUID legacyGameSettings) {
+        this.legacyGameSettings.set(legacyGameSettings);
+    }
+
     /// Creates a profile.
     public Profile(GUID id, @Nullable String name, PortablePath path) {
+        this(id, name, path, null);
+    }
+
+    /// Creates a profile.
+    public Profile(GUID id, @Nullable String name, PortablePath path, @Nullable GUID legacyGameSettings) {
         this.id = Objects.requireNonNull(id);
         this.name = new SimpleStringProperty(this, "name", name);
         this.path = new SimpleObjectProperty<>(this, "path", Objects.requireNonNull(path));
+        this.legacyGameSettings = new SimpleObjectProperty<>(this, "legacyGameSettings", legacyGameSettings);
         repository = new HMCLGameRepository(this, path.toPath());
 
         this.path.addListener((a, b, newValue) -> repository.changeDirectory(newValue.toPath()));
@@ -131,6 +155,7 @@ public final class Profile implements Observable {
     private void addPropertyChangedListener(InvalidationListener listener) {
         name.addListener(listener);
         path.addListener(listener);
+        legacyGameSettings.addListener(listener);
     }
 
     private final ObservableHelper observableHelper = new ObservableHelper(this);
@@ -164,6 +189,9 @@ public final class Profile implements Observable {
                 jsonObject.addProperty("name", src.getName());
             }
             jsonObject.add("path", context.serialize(src.getPath(), PortablePath.class));
+            if (src.getLegacyGameSettings() != null) {
+                jsonObject.add("legacyGameSettings", context.serialize(src.getLegacyGameSettings(), GUID.class));
+            }
 
             return jsonObject;
         }
@@ -185,7 +213,8 @@ public final class Profile implements Observable {
 
             return new Profile(id,
                     Optional.ofNullable(obj.get("name")).map(JsonElement::getAsString).orElse(null),
-                    path);
+                    path,
+                    context.deserialize(obj.get("legacyGameSettings"), GUID.class));
         }
 
     }
