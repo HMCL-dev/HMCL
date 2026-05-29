@@ -46,7 +46,7 @@ import java.util.Objects;
 ///
 /// - When the schema string is not parseable as an HMCL schema URL, the file must be rejected.
 /// - When the schema ID differs from the expected schema, the file must be rejected.
-/// - When the major version is not supported by the current code, the file must be rejected.
+/// - When the current code does not support the major version, the file must be rejected.
 /// - When the minor version is newer, the file may be read but must not be overwritten.
 /// - When only the patch version differs, the file may be read and saved while preserving the original schema string
 ///   and unknown serialized members.
