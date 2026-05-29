@@ -51,7 +51,10 @@ public final class SettingsManager {
     }
 
     /// The user settings path shared by all workspaces.
-    public static final Path USER_SETTINGS_LOCATION = Metadata.HMCL_GLOBAL_DIRECTORY.resolve("config.json");
+    public static final Path USER_SETTINGS_LOCATION = Metadata.HMCL_GLOBAL_DIRECTORY.resolve("user-settings.json");
+
+    /// The legacy user settings path shared by all workspaces.
+    private static final Path LEGACY_USER_SETTINGS_LOCATION = Metadata.HMCL_GLOBAL_DIRECTORY.resolve("config.json");
 
     /// The current per-workspace config path.
     private static final Path SETTINGS_LOCATION = Metadata.HMCL_CURRENT_DIRECTORY.resolve("settings.json");
@@ -114,6 +117,14 @@ public final class SettingsManager {
             AuthlibInjectorServerList.class,
             AuthlibInjectorServerList.CURRENT_SCHEMA,
             AuthlibInjectorServerList::createDefault);
+
+    /// The user settings file helper.
+    private static final JsonSettingFile<UserSettings> USER_SETTINGS_FILE = new JsonSettingFile<>(
+            USER_SETTINGS_LOCATION,
+            "user settings",
+            UserSettings.class,
+            UserSettings.CURRENT_SCHEMA,
+            UserSettings::new);
 
     /// The loaded per-workspace config instance.
     private static @UnknownNullability LauncherSettings configInstance;
@@ -383,8 +394,7 @@ public final class SettingsManager {
             });
         }
 
-        userSettingsInstance = loadUserSettings();
-        userSettingsInstance.addListener(source -> FileSaver.save(USER_SETTINGS_LOCATION, userSettingsInstance.toJson()));
+        loadUserSettings();
 
         Locale.setDefault(settings().languageProperty().get().getLocale());
         I18n.setLocale(configInstance.languageProperty().get());
@@ -664,24 +674,47 @@ public final class SettingsManager {
         }
     }
 
-    /// Loads the user settings, creating an empty one when none can be read.
-    private static UserSettings loadUserSettings() throws IOException {
-        if (Files.exists(USER_SETTINGS_LOCATION)) {
+    /// Loads user settings and installs the save listener.
+    private static void loadUserSettings() throws IOException {
+        if (userSettingsInstance != null) {
+            throw new IllegalStateException("User settings are already loaded");
+        }
+
+        LOG.info("User settings location: " + USER_SETTINGS_LOCATION);
+
+        boolean newlyCreated = !Files.exists(USER_SETTINGS_LOCATION);
+        @Nullable UserSettings migratedUserSettings = newlyCreated ? migrateLegacyUserSettings() : null;
+        JsonSettingFile.LoadResult<UserSettings> result = USER_SETTINGS_FILE.load(migratedUserSettings);
+        userSettingsInstance = result.value();
+        if (result.allowSave()) {
+            USER_SETTINGS_FILE.installAutoSave(userSettingsInstance);
+        }
+
+        if (newlyCreated && result.allowSave()) {
+            LOG.info("Creating user settings file " + USER_SETTINGS_LOCATION);
+            USER_SETTINGS_FILE.save(userSettingsInstance);
+        }
+    }
+
+    /// Migrates user settings from the legacy global config file.
+    private static @Nullable UserSettings migrateLegacyUserSettings() throws IOException {
+        if (Files.exists(LEGACY_USER_SETTINGS_LOCATION)) {
             try {
-                String content = Files.readString(USER_SETTINGS_LOCATION);
+                String content = Files.readString(LEGACY_USER_SETTINGS_LOCATION);
                 UserSettings deserialized = UserSettings.fromJson(content);
                 if (deserialized == null) {
-                    LOG.info("User settings file is empty");
+                    LOG.info("Legacy user settings file is empty: " + LEGACY_USER_SETTINGS_LOCATION);
                 } else {
+                    LOG.info("Migrating user settings from " + LEGACY_USER_SETTINGS_LOCATION
+                            + " to " + USER_SETTINGS_LOCATION);
                     return deserialized;
                 }
             } catch (JsonParseException e) {
-                LOG.warning("Malformed user settings.", e);
+                LOG.warning("Malformed legacy user settings: " + LEGACY_USER_SETTINGS_LOCATION, e);
             }
         }
 
-        LOG.info("Creating empty user settings");
-        return new UserSettings();
+        return null;
     }
 
 }

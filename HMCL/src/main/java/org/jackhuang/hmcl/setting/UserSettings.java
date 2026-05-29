@@ -23,6 +23,8 @@ import com.google.gson.annotations.SerializedName;
 import javafx.beans.property.*;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableSet;
+import org.jackhuang.hmcl.util.gson.JsonSchema;
+import org.jackhuang.hmcl.util.gson.JsonSerializable;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.gson.ObservableSetting;
 import org.jetbrains.annotations.NotNullByDefault;
@@ -33,24 +35,50 @@ import java.util.*;
 /// Stores launcher settings shared by all workspaces for the current user.
 @NotNullByDefault
 @JsonAdapter(UserSettings.Adapter.class)
-public final class UserSettings extends ObservableSetting {
+@JsonSerializable
+public final class UserSettings extends ObservableSetting implements JsonSchemaSetting {
+    /// The JSON schema supported by this user settings store.
+    public static final JsonSchema CURRENT_SCHEMA =
+            new JsonSchema("user-settings", new JsonSchema.Version(1, 0, 0));
 
     /// Deserializes user settings from JSON.
     ///
     /// @param json the JSON content to parse
     /// @return the parsed settings, or {@code null} when the JSON value is {@code null}
     public static @Nullable UserSettings fromJson(String json) throws JsonParseException {
-        return JsonUtils.fromJson(LauncherSettings.SETTINGS_GSON, json, UserSettings.class);
+        return JsonUtils.fromJson(JsonUtils.GSON, json, UserSettings.class);
     }
 
     /// Creates empty user settings with default values.
     public UserSettings() {
+        tracker.markDirty(schema);
         register();
     }
 
     /// Serializes these settings to JSON.
     public String toJson() {
-        return LauncherSettings.SETTINGS_GSON.toJson(this);
+        return JsonUtils.GSON.toJson(this);
+    }
+
+    /// The schema used by this user settings file.
+    @SerializedName(JsonSchema.DEFAULT_MEMBER_NAME)
+    private final ObjectProperty<JsonSchema> schema = new SimpleObjectProperty<>(CURRENT_SCHEMA);
+
+    /// Returns the schema property.
+    public ObjectProperty<JsonSchema> schemaProperty() {
+        return schema;
+    }
+
+    /// Returns the schema used by this user settings file.
+    @Override
+    public JsonSchema getSchema() {
+        return schema.get();
+    }
+
+    /// Sets the schema used by this user settings file.
+    @Override
+    public void setSchema(JsonSchema schema) {
+        this.schema.set(Objects.requireNonNull(schema));
     }
 
     /// The accepted launcher agreement version.
