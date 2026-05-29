@@ -180,8 +180,8 @@ public final class Accounts {
 
         LOG.info("Global game accounts location: " + GLOBAL_GAME_ACCOUNTS_LOCATION);
 
-        @Nullable AccountStorages migrated = loadLegacyGlobalAccountStorages();
         boolean newlyCreated = !Files.exists(GLOBAL_GAME_ACCOUNTS_LOCATION);
+        @Nullable AccountStorages migrated = newlyCreated ? loadLegacyGlobalAccountStorages() : null;
         try {
             JsonSettingFile.LoadResult<AccountStorages> result = GLOBAL_GAME_ACCOUNTS_FILE.load(migrated);
             globalAccounts = result.value();
@@ -201,14 +201,20 @@ public final class Accounts {
     }
 
     private static @Nullable AccountStorages loadLegacyGlobalAccountStorages() {
-        if (Files.exists(GLOBAL_GAME_ACCOUNTS_LOCATION) || !Files.exists(LEGACY_GLOBAL_ACCOUNTS_LOCATION)) {
+        if (!Files.exists(LEGACY_GLOBAL_ACCOUNTS_LOCATION)) {
             return null;
         }
 
         try (Reader reader = Files.newBufferedReader(LEGACY_GLOBAL_ACCOUNTS_LOCATION)) {
             List<Map<Object, Object>> accounts =
                     LauncherSettings.SETTINGS_GSON.fromJson(reader, listTypeOf(mapTypeOf(Object.class, Object.class)));
-            return accounts != null ? AccountStorages.fromAccounts(accounts) : null;
+            if (accounts == null) {
+                return null;
+            }
+
+            LOG.info("Migrating global accounts from " + LEGACY_GLOBAL_ACCOUNTS_LOCATION
+                    + " to " + GLOBAL_GAME_ACCOUNTS_LOCATION);
+            return AccountStorages.fromAccounts(accounts);
         } catch (Throwable e) {
             LOG.warning("Failed to load legacy global accounts", e);
             return null;

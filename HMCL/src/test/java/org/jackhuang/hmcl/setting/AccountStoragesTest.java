@@ -17,6 +17,7 @@
  */
 package org.jackhuang.hmcl.setting;
 
+import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import org.jackhuang.hmcl.util.gson.JsonSchema;
@@ -53,6 +54,23 @@ public final class AccountStoragesTest {
                 .getAsJsonObject()
                 .get("type")
                 .getAsString());
+    }
+
+    /// Tests wrapping legacy account list content in the current `game-accounts.json` model.
+    @Test
+    public void wrapsLegacyAccountListInCurrentModel() {
+        AccountStorages storages = AccountStorages.fromAccounts(List.of(
+                Map.of("type", "offline", "username", "Steve")
+        ));
+
+        JsonObject serialized = JsonParser.parseString(
+                JsonUtils.GSON.toJson(storages, AccountStorages.class)).getAsJsonObject();
+
+        assertEquals(AccountStorages.CURRENT_SCHEMA.url(), serialized.get(JsonSchema.DEFAULT_MEMBER_NAME).getAsString());
+        JsonArray accounts = serialized.getAsJsonArray("accounts");
+        assertEquals(1, accounts.size());
+        assertEquals("offline", accounts.get(0).getAsJsonObject().get("type").getAsString());
+        assertEquals("Steve", accounts.get(0).getAsJsonObject().get("username").getAsString());
     }
 
     /// Tests extracting account storages from a main config object.
