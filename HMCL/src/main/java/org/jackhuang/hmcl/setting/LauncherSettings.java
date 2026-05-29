@@ -160,7 +160,7 @@ public final class LauncherSettings extends ObservableSetting {
 
     /// The custom common Minecraft directory path.
     @SerializedName("commonpath")
-    private final StringProperty commonDirectory = new SimpleStringProperty(Metadata.MINECRAFT_DIRECTORY.toString());
+    private final StringProperty commonDirectory = new SimpleStringProperty();
 
     /// Returns the custom common Minecraft directory property.
     public StringProperty commonDirectoryProperty() {
@@ -174,17 +174,14 @@ public final class LauncherSettings extends ObservableSetting {
 
     /// Resolves the effective common Minecraft directory from the current directory settings.
     ///
-    /// @return the effective directory path, or {@code null} when the configured mode is not recognized
-    public @Nullable String getResolvedCommonDirectory() {
+    /// @return the effective directory path, or `null` when the configured mode is not recognized
+    public String getResolvedCommonDirectory() {
         EnumCommonDirectory type = commonDirType.get();
-        if (type == null) {
-            return null;
-        }
+        String customPath = commonDirectory.get();
 
-        return switch (type) {
-            case DEFAULT -> getDefaultCommonDirectory();
-            case CUSTOM -> commonDirectory.get();
-        };
+        return type == EnumCommonDirectory.CUSTOM && StringUtils.isNotBlank(customPath)
+                ? customPath
+                : getDefaultCommonDirectory();
     }
 
     /// The maximum number of log lines kept in log views.
