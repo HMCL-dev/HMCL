@@ -37,7 +37,7 @@ import java.util.Objects;
 /// The JSON representation is always a string. HMCL-owned schemas use the following
 /// fixed URL form, but other strings can still be represented as unparseable schemas:
 ///
-/// `https://schemas.glavo.site/hmcl/<id>/<id>-<version>.schema.json`
+/// `https://schemas.glavo.site/hmcl/<id>/<version>`
 ///
 /// Parsed HMCL schemas use the following compatibility policy:
 ///
@@ -59,9 +59,6 @@ public record JsonSchema(String value, @Nullable Parsed parsed) {
 
     /// The HMCL schema URL prefix.
     private static final String URL_PREFIX = "https://schemas.glavo.site/hmcl/";
-
-    /// The schema file suffix.
-    private static final String FILE_SUFFIX = ".schema.json";
 
     /// @param value the raw JSON schema string
     /// @param parsed the parsed HMCL schema identifier, or `null` when the string is not parseable
@@ -196,17 +193,11 @@ public record JsonSchema(String value, @Nullable Parsed parsed) {
         }
 
         String id = path.substring(0, slash);
-        String fileName = path.substring(slash + 1);
+        String versionString = path.substring(slash + 1);
         if (!isValidId(id)) {
             return null;
         }
 
-        String fileNamePrefix = id + "-";
-        if (!fileName.startsWith(fileNamePrefix) || !fileName.endsWith(FILE_SUFFIX)) {
-            return null;
-        }
-
-        String versionString = fileName.substring(fileNamePrefix.length(), fileName.length() - FILE_SUFFIX.length());
         if (versionString.isEmpty()) {
             return null;
         }
@@ -220,11 +211,6 @@ public record JsonSchema(String value, @Nullable Parsed parsed) {
 
         String canonicalVersion = version.toString();
         if (!versionString.equals(canonicalVersion)) {
-            return null;
-        }
-
-        String expectedFileName = id + "-" + canonicalVersion + FILE_SUFFIX;
-        if (!expectedFileName.equals(fileName)) {
             return null;
         }
 
@@ -297,7 +283,7 @@ public record JsonSchema(String value, @Nullable Parsed parsed) {
 
         /// Returns the canonical schema URL.
         public String url() {
-            return URL_PREFIX + id + "/" + id + "-" + version + FILE_SUFFIX;
+            return URL_PREFIX + id + "/" + version;
         }
     }
 

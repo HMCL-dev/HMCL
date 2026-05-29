@@ -61,7 +61,7 @@ public final class GameSettingsPresetsTest {
     public void doesNotStoreDefaultGameSettingsPresetInPresets() {
         JsonObject serialized = JsonParser.parseString("""
                 {
-                  "$schema": "https://schemas.glavo.site/hmcl/game-settings/game-settings-1.0.schema.json",
+                  "$schema": "https://schemas.glavo.site/hmcl/game-settings/1.0",
                   "defaultGameSettingsPreset": "123e4567-e89b-12d3-a456-426614174000",
                   "presets": []
                 }
