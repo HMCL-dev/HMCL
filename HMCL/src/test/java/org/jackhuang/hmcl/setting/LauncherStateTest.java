@@ -66,7 +66,7 @@ public final class LauncherStateTest {
         assertEquals(21.0, state.getShownTips().get("javaVersionTip"));
         assertEquals(LauncherState.CURRENT_SCHEMA, state.getSchema());
 
-        Config config = Objects.requireNonNull(Config.fromJson(settings));
+        LauncherSettings config = Objects.requireNonNull(LauncherSettings.fromJson(settings));
         assertEquals(5000, config.logLinesProperty().get());
     }
 }

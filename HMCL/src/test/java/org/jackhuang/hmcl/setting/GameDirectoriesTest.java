@@ -121,7 +121,7 @@ public final class GameDirectoriesTest {
         assertTrue(LegacyConfigMigrator.migrateLegacySelectedVersions(settings));
         GameDirectories gameDirectories = Objects.requireNonNull(LegacyConfigMigrator.extractGameDirectoriesFromConfigJson(settings));
         assertTrue(LegacyConfigMigrator.migrateLegacySelectedGameDirectory(settings));
-        Config config = Objects.requireNonNull(Config.fromJson(settings));
+        LauncherSettings config = Objects.requireNonNull(LauncherSettings.fromJson(settings));
 
         assertFalse(settings.has("configurations"));
         assertEquals(id, config.selectedGameDirectoryProperty().get());
@@ -129,7 +129,7 @@ public final class GameDirectoriesTest {
 
         JsonObject serialized = JsonParser.parseString(config.toJson()).getAsJsonObject();
         assertEquals("1.20.1", serialized
-                .getAsJsonObject(Config.SELECTED_INSTANCE_MEMBER_NAME)
+                .getAsJsonObject(LauncherSettings.SELECTED_INSTANCE_MEMBER_NAME)
                 .get(id.toString())
                 .getAsString());
     }
@@ -201,7 +201,7 @@ public final class GameDirectoriesTest {
 
         assertEquals(GameDirectories.CURRENT_SCHEMA,
                 JsonSchema.readFromMember(rewritten, JsonSchema.DEFAULT_MEMBER_NAME));
-        assertFalse(rewritten.has(Config.SELECTED_GAME_DIRECTORY_MEMBER_NAME));
+        assertFalse(rewritten.has(LauncherSettings.SELECTED_GAME_DIRECTORY_MEMBER_NAME));
         assertTrue(rewritten.has("gameDirectories"));
     }
 

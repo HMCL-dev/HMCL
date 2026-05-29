@@ -31,16 +31,16 @@ import static org.junit.jupiter.api.Assertions.*;
 /// Tests for detached game settings presets.
 @NotNullByDefault
 public final class GameSettingsPresetsTest {
-    /// Tests that the default preset selection belongs to Config.
+    /// Tests that the default preset selection belongs to LauncherSettings.
     @Test
     public void storesDefaultGameSettingsPresetInConfig() {
         GUID id = new GUID("123e4567-e89b-12d3-a456-426614174000");
-        Config config = new Config();
+        LauncherSettings config = new LauncherSettings();
 
         config.defaultGameSettingsPresetProperty().set(id);
         JsonObject serialized = JsonParser.parseString(config.toJson()).getAsJsonObject();
 
-        assertEquals(id.toString(), serialized.get(Config.DEFAULT_GAME_SETTINGS_PRESET_MEMBER_NAME).getAsString());
+        assertEquals(id.toString(), serialized.get(LauncherSettings.DEFAULT_GAME_SETTINGS_PRESET_MEMBER_NAME).getAsString());
     }
 
     /// Tests that presets must be deserialized with a non-nil ID.
@@ -73,7 +73,7 @@ public final class GameSettingsPresetsTest {
 
         assertEquals(GameSettingsPresets.CURRENT_SCHEMA,
                 JsonSchema.readFromMember(rewritten, JsonSchema.DEFAULT_MEMBER_NAME));
-        assertFalse(rewritten.has(Config.DEFAULT_GAME_SETTINGS_PRESET_MEMBER_NAME));
+        assertFalse(rewritten.has(LauncherSettings.DEFAULT_GAME_SETTINGS_PRESET_MEMBER_NAME));
         assertTrue(rewritten.has("presets"));
         assertFalse(rewritten.has("gameSettings"));
     }

@@ -51,10 +51,10 @@ import java.util.*;
 /// selected instances, and account selection. Larger domain-specific stores, such as game directories,
 /// game settings presets, accounts, launcher state, and authlib-injector servers, are persisted in detached
 /// JSON files managed by [ConfigHolder].
-@JsonAdapter(value = Config.Adapter.class)
-public final class Config extends ObservableSetting {
+@JsonAdapter(value = LauncherSettings.Adapter.class)
+public final class LauncherSettings extends ObservableSetting {
 
-    /// The JSON schema supported by this config class.
+    /// The JSON schema supported by this launcher settings class.
     public static final JsonSchema CURRENT_SCHEMA = new JsonSchema("settings", new JsonSchema.Version(1, 0, 0));
 
     /// The JSON member name for the default game setting preset ID.
@@ -66,8 +66,8 @@ public final class Config extends ObservableSetting {
     /// The JSON member name for selected instance IDs keyed by game directory ID.
     static final String SELECTED_INSTANCE_MEMBER_NAME = "selectedInstance";
 
-    /// Gson instance used for main config and related settings objects that depend on JavaFX properties.
-    public static final Gson CONFIG_GSON = new GsonBuilder()
+    /// Gson instance used for launcher settings and related settings objects that depend on JavaFX properties.
+    public static final Gson GSON = new GsonBuilder()
             .registerTypeAdapter(Path.class, PathTypeAdapter.INSTANCE)
             .registerTypeAdapter(UUID.class, UUIDTypeAdapter.INSTANCE)
             .registerTypeAdapter(GUID.class, GUIDTypeAdapter.INSTANCE)
@@ -82,30 +82,30 @@ public final class Config extends ObservableSetting {
             .setObjectToNumberStrategy(ToNumberPolicy.LONG_OR_DOUBLE)
             .create();
 
-    /// Deserializes a config object from JSON.
+    /// Deserializes launcher settings from JSON.
     ///
     /// @param json the JSON object to read
-    /// @return the deserialized config, or `null` if the JSON represents `null`
-    /// @throws JsonParseException if the JSON cannot be deserialized as a config
+    /// @return the deserialized launcher settings, or `null` if the JSON represents `null`
+    /// @throws JsonParseException if the JSON cannot be deserialized as launcher settings
     @Nullable
-    public static Config fromJson(JsonObject json) throws JsonParseException {
-        return CONFIG_GSON.fromJson(json, Config.class);
+    public static LauncherSettings fromJson(JsonObject json) throws JsonParseException {
+        return GSON.fromJson(json, LauncherSettings.class);
     }
 
-    /// Creates an empty config using current defaults.
-    public Config() {
+    /// Creates empty launcher settings using current defaults.
+    public LauncherSettings() {
         tracker.markDirty(schema);
         register();
     }
 
-    /// Serializes this config to formatted JSON.
+    /// Serializes these launcher settings to formatted JSON.
     public String toJson() {
-        return CONFIG_GSON.toJson(this);
+        return GSON.toJson(this);
     }
 
     // Properties
 
-    /// The schema used by this config file.
+    /// The schema used by this launcher settings file.
     @SerializedName(JsonSchema.DEFAULT_MEMBER_NAME)
     private final ObjectProperty<JsonSchema> schema = new SimpleObjectProperty<>(CURRENT_SCHEMA);
 
@@ -477,17 +477,17 @@ public final class Config extends ObservableSetting {
         return selectedAccount;
     }
 
-    /// JSON adapter for [Config].
-    public static final class Adapter extends ObservableSetting.Adapter<Config> {
-        /// Creates an empty config for deserialization.
+    /// JSON adapter for [LauncherSettings].
+    public static final class Adapter extends ObservableSetting.Adapter<LauncherSettings> {
+        /// Creates empty launcher settings for deserialization.
         @Override
-        protected Config createInstance() {
-            return new Config();
+        protected LauncherSettings createInstance() {
+            return new LauncherSettings();
         }
 
-        /// Serializes the main config with its stored schema.
+        /// Serializes the main launcher settings with their stored schema.
         @Override
-        public JsonElement serialize(Config src, Type typeOfSrc, JsonSerializationContext context) {
+        public JsonElement serialize(LauncherSettings src, Type typeOfSrc, JsonSerializationContext context) {
             if (src == null) {
                 return JsonNull.INSTANCE;
             }

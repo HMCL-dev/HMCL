@@ -116,7 +116,7 @@ public final class ConfigHolder {
             AuthlibInjectorServerList::createDefault);
 
     /// The loaded per-workspace config instance.
-    private static @UnknownNullability Config configInstance;
+    private static @UnknownNullability LauncherSettings configInstance;
 
     /// The loaded user-global config instance.
     private static @UnknownNullability GlobalConfig globalConfigInstance;
@@ -168,7 +168,7 @@ public final class ConfigHolder {
     private static @Nullable AccountStorages migratedGameAccounts;
 
     /// Returns the loaded per-workspace config.
-    public static Config config() {
+    public static LauncherSettings config() {
         if (configInstance == null) {
             throw new IllegalStateException("Configuration hasn't been loaded");
         }
@@ -369,7 +369,7 @@ public final class ConfigHolder {
             throw new IllegalStateException("Configuration is already loaded");
         }
 
-        LOG.info("Config location: " + SETTINGS_LOCATION);
+        LOG.info("Launcher settings location: " + SETTINGS_LOCATION);
 
         configInstance = loadConfig();
         if (!unsupportedVersion) {
@@ -405,7 +405,7 @@ public final class ConfigHolder {
     }
 
     /// Loads the current per-workspace config or migrates a legacy config when needed.
-    private static Config loadConfig() throws IOException {
+    private static LauncherSettings loadConfig() throws IOException {
         if (Files.exists(SETTINGS_LOCATION)) {
             checkOwner(SETTINGS_LOCATION);
 
@@ -415,21 +415,21 @@ public final class ConfigHolder {
             } catch (Exception e) {
                 needBackupSettings = true;
                 LOG.warning("Failed to read settings file: " + SETTINGS_LOCATION, e);
-                return new Config();
+                return new LauncherSettings();
             }
 
             if (jsonObject == null) {
                 LOG.warning("Settings file is empty: " + SETTINGS_LOCATION);
-                return new Config();
+                return new LauncherSettings();
             }
 
             JsonSchemaPolicy.Result schema =
-                    JsonSchemaPolicy.check(SETTINGS_LOCATION, "settings file", jsonObject, Config.CURRENT_SCHEMA);
+                    JsonSchemaPolicy.check(SETTINGS_LOCATION, "settings file", jsonObject, LauncherSettings.CURRENT_SCHEMA);
             if (!schema.allowSave()) {
                 unsupportedVersion = true;
             }
             if (!schema.readable()) {
-                return new Config();
+                return new LauncherSettings();
             }
 
             migratedGameAccounts = LegacyConfigMigrator.extractAccountStorages(jsonObject);
@@ -438,20 +438,20 @@ public final class ConfigHolder {
             }
 
             try {
-                Config settings = Config.fromJson(jsonObject);
+                LauncherSettings settings = LauncherSettings.fromJson(jsonObject);
                 if (settings == null) {
-                    return new Config();
+                    return new LauncherSettings();
                 }
 
-                if (!schema.preserveSchema() && !Config.CURRENT_SCHEMA.equals(settings.schemaProperty().get())) {
-                    settings.schemaProperty().set(Config.CURRENT_SCHEMA);
+                if (!schema.preserveSchema() && !LauncherSettings.CURRENT_SCHEMA.equals(settings.schemaProperty().get())) {
+                    settings.schemaProperty().set(LauncherSettings.CURRENT_SCHEMA);
                 }
 
                 return settings;
             } catch (JsonParseException e) {
                 needBackupSettings = true;
                 LOG.warning("Failed to parse settings file: " + SETTINGS_LOCATION, e);
-                return new Config();
+                return new LauncherSettings();
             }
         } else {
             LegacyConfigMigrator.MigrationResult migrationResult = LegacyConfigMigrator.migrateLegacyConfig();
@@ -463,11 +463,11 @@ public final class ConfigHolder {
                 migratedAuthlibInjectorServers = migrationResult.authlibInjectorServers();
                 migratedGameAccounts = migrationResult.accountStorages();
                 FileUtils.saveSafely(SETTINGS_LOCATION, migrationResult.contentForMigration());
-                return migrationResult.config();
+                return migrationResult.launcherSettings();
             }
         }
 
-        var newSettings = new Config();
+        var newSettings = new LauncherSettings();
         newlyCreated = true;
         return newSettings;
     }
@@ -654,13 +654,13 @@ public final class ConfigHolder {
             if (OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS
                     && location.getFileSystem() == FileSystems.getDefault()
                     && location.toFile().canWrite()) {
-                LOG.warning("Config at " + location + " is not writable, but it seems to be a Samba share or OpenJDK bug");
+                LOG.warning("Launcher settings at " + location + " is not writable, but it seems to be a Samba share or OpenJDK bug");
                 // There are some serious problems with the implementation of Samba or OpenJDK
                 throw new SambaException();
             } else {
                 // the config cannot be saved
                 // throw up the error now to prevent further data loss
-                throw new IOException("Config at " + location + " is not writable");
+                throw new IOException("Launcher settings at " + location + " is not writable");
             }
         }
     }
@@ -672,7 +672,7 @@ public final class ConfigHolder {
                 String content = Files.readString(GLOBAL_CONFIG_PATH);
                 GlobalConfig deserialized = GlobalConfig.fromJson(content);
                 if (deserialized == null) {
-                    LOG.info("Config is empty");
+                    LOG.info("Global config is empty");
                 } else {
                     return deserialized;
                 }

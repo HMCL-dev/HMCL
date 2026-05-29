@@ -28,10 +28,10 @@ import java.util.Objects;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-/// Tests for legacy config migration into current settings.
+/// Tests for legacy config migration into current launcher settings.
 @NotNullByDefault
-public final class ConfigMigrationTest {
-    /// Tests migrating legacy language fields into the current main config field.
+public final class LauncherSettingsMigrationTest {
+    /// Tests migrating legacy language fields into the current launcher settings field.
     @Test
     public void migratesLegacyLocalizationToLanguage() {
         JsonObject settings = JsonParser.parseString("""
@@ -41,12 +41,12 @@ public final class ConfigMigrationTest {
                 """).getAsJsonObject();
 
         LegacyConfigMigrator.migrateLegacyLanguage(settings);
-        Config config = Objects.requireNonNull(Config.fromJson(settings));
-        JsonObject serialized = JsonParser.parseString(config.toJson()).getAsJsonObject();
+        LauncherSettings launcherSettings = Objects.requireNonNull(LauncherSettings.fromJson(settings));
+        JsonObject serialized = JsonParser.parseString(launcherSettings.toJson()).getAsJsonObject();
 
         assertFalse(settings.has("localization"));
         assertEquals("zh-Hans", settings.get("language").getAsString());
-        assertEquals("zh-Hans", config.languageProperty().get().getName());
+        assertEquals("zh-Hans", launcherSettings.languageProperty().get().getName());
         assertFalse(serialized.has("localization"));
         assertEquals("zh-Hans", serialized.get("language").getAsString());
     }
@@ -61,23 +61,23 @@ public final class ConfigMigrationTest {
                 """).getAsJsonObject();
 
         LegacyConfigMigrator.migrateLegacyLanguage(settings);
-        Config config = Objects.requireNonNull(Config.fromJson(settings));
+        LauncherSettings launcherSettings = Objects.requireNonNull(LauncherSettings.fromJson(settings));
 
         assertEquals("zh-Hant", settings.get("language").getAsString());
-        assertEquals("zh-Hant", config.languageProperty().get().getName());
+        assertEquals("zh-Hant", launcherSettings.languageProperty().get().getName());
     }
 
-    /// Tests that config serialization preserves a patch-version schema and unknown fields.
+    /// Tests that launcher settings serialization preserves a patch-version schema and unknown fields.
     @Test
     public void preservesPatchSchemaAndUnknownFields() {
-        Config config = Objects.requireNonNull(Config.fromJson(JsonParser.parseString("""
+        LauncherSettings launcherSettings = Objects.requireNonNull(LauncherSettings.fromJson(JsonParser.parseString("""
                 {
                   "$schema": "https://schemas.glavo.site/hmcl/settings/1.0.1",
                   "futureField": true
                 }
                 """).getAsJsonObject()));
 
-        JsonObject serialized = JsonParser.parseString(config.toJson()).getAsJsonObject();
+        JsonObject serialized = JsonParser.parseString(launcherSettings.toJson()).getAsJsonObject();
 
         assertEquals("https://schemas.glavo.site/hmcl/settings/1.0.1",
                 serialized.get(JsonSchema.DEFAULT_MEMBER_NAME).getAsString());
@@ -93,24 +93,24 @@ public final class ConfigMigrationTest {
                 }
                 """).getAsJsonObject();
 
-        Config config = new Config();
+        LauncherSettings launcherSettings = new LauncherSettings();
         GameSettingsPresets gameSettingsPresets = new GameSettingsPresets();
 
         LegacyConfigMigrator.migrateLegacyAllowAutoAgent(
-                config,
+                launcherSettings,
                 gameSettingsPresets,
                 settings.remove("allowAutoAgent"));
-        JsonObject serializedConfig = JsonParser.parseString(config.toJson()).getAsJsonObject();
+        JsonObject serializedLauncherSettings = JsonParser.parseString(launcherSettings.toJson()).getAsJsonObject();
         JsonObject serializedGameSettings = JsonParser.parseString(
                 JsonUtils.GSON.toJson(gameSettingsPresets, GameSettingsPresets.class)
         ).getAsJsonObject();
 
         assertFalse(settings.has("allowAutoAgent"));
-        assertFalse(serializedConfig.has("allowAutoAgent"));
+        assertFalse(serializedLauncherSettings.has("allowAutoAgent"));
         assertEquals(1, gameSettingsPresets.getPresets().size());
 
         GameSettings.Preset preset = gameSettingsPresets.getPresets().get(0);
-        assertEquals(preset.idProperty().getValue(), config.defaultGameSettingsPresetProperty().get());
+        assertEquals(preset.idProperty().getValue(), launcherSettings.defaultGameSettingsPresetProperty().get());
         assertTrue(preset.allowAutoAgentProperty().getValue());
         assertTrue(serializedGameSettings
                 .getAsJsonArray("presets")
@@ -129,24 +129,24 @@ public final class ConfigMigrationTest {
                 }
                 """).getAsJsonObject();
 
-        Config config = new Config();
+        LauncherSettings launcherSettings = new LauncherSettings();
         GameSettingsPresets gameSettingsPresets = new GameSettingsPresets();
 
         LegacyConfigMigrator.migrateLegacyDisableAutoGameOptions(
-                config,
+                launcherSettings,
                 gameSettingsPresets,
                 settings.remove("disableAutoGameOptions"));
-        JsonObject serializedConfig = JsonParser.parseString(config.toJson()).getAsJsonObject();
+        JsonObject serializedLauncherSettings = JsonParser.parseString(launcherSettings.toJson()).getAsJsonObject();
         JsonObject serializedGameSettings = JsonParser.parseString(
                 JsonUtils.GSON.toJson(gameSettingsPresets, GameSettingsPresets.class)
         ).getAsJsonObject();
 
         assertFalse(settings.has("disableAutoGameOptions"));
-        assertFalse(serializedConfig.has("disableAutoGameOptions"));
+        assertFalse(serializedLauncherSettings.has("disableAutoGameOptions"));
         assertEquals(1, gameSettingsPresets.getPresets().size());
 
         GameSettings.Preset preset = gameSettingsPresets.getPresets().get(0);
-        assertEquals(preset.idProperty().getValue(), config.defaultGameSettingsPresetProperty().get());
+        assertEquals(preset.idProperty().getValue(), launcherSettings.defaultGameSettingsPresetProperty().get());
         assertTrue(preset.disableAutoGameOptionsProperty().getValue());
         assertTrue(serializedGameSettings
                 .getAsJsonArray("presets")

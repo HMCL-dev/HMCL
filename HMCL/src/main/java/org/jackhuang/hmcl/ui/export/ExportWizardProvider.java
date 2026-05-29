@@ -27,7 +27,7 @@ import org.jackhuang.hmcl.mod.multimc.MultiMCInstanceConfiguration;
 import org.jackhuang.hmcl.mod.multimc.MultiMCModpackExportTask;
 import org.jackhuang.hmcl.mod.server.ServerModpackExportTask;
 import org.jackhuang.hmcl.setting.AuthlibInjectorServerList;
-import org.jackhuang.hmcl.setting.Config;
+import org.jackhuang.hmcl.setting.LauncherSettings;
 import org.jackhuang.hmcl.setting.FontManager;
 import org.jackhuang.hmcl.setting.GameSettings;
 import org.jackhuang.hmcl.setting.GameWindowType;
@@ -129,7 +129,7 @@ public final class ExportWizardProvider implements WizardProvider {
             public void execute() throws Exception {
                 if (!packWithLauncher) return;
                 try (Zipper zip = new Zipper(modpackFile)) {
-                    Config exported = new Config();
+                    LauncherSettings exported = new LauncherSettings();
 
                     exported.backgroundImageTypeProperty().set(config().backgroundImageTypeProperty().get());
                     exported.backgroundImageProperty().set(config().backgroundImageProperty().get());

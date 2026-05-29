@@ -30,7 +30,7 @@ import org.jackhuang.hmcl.mod.ModAdviser;
 import org.jackhuang.hmcl.mod.Modpack;
 import org.jackhuang.hmcl.mod.ModpackConfiguration;
 import org.jackhuang.hmcl.mod.ModpackProvider;
-import org.jackhuang.hmcl.setting.Config;
+import org.jackhuang.hmcl.setting.LauncherSettings;
 import org.jackhuang.hmcl.setting.ConfigHolder;
 import org.jackhuang.hmcl.setting.DefaultIsolationType;
 import org.jackhuang.hmcl.setting.GameSettings;
@@ -220,7 +220,7 @@ public final class HMCLGameRepository extends DefaultGameRepository {
     private GameSettings.Instance copyLocalGameSettings(String id) {
         GameSettings.Instance setting = getLocalGameSettings(id);
         if (setting != null) {
-            return JsonUtils.clone(Config.CONFIG_GSON, setting, TypeToken.get(GameSettings.Instance.class));
+            return JsonUtils.clone(LauncherSettings.GSON, setting, TypeToken.get(GameSettings.Instance.class));
         }
 
         GameSettings.Instance copied = new GameSettings.Instance();
@@ -267,7 +267,7 @@ public final class HMCLGameRepository extends DefaultGameRepository {
 
         try {
             try (var reader = Files.newBufferedReader(file)) {
-                return Config.CONFIG_GSON.fromJson(reader, GameSettings.Instance.class);
+                return LauncherSettings.GSON.fromJson(reader, GameSettings.Instance.class);
             }
         } catch (Exception ex) {
             LOG.warning("Failed to load game setting " + file, ex);
@@ -457,7 +457,7 @@ public final class HMCLGameRepository extends DefaultGameRepository {
             LOG.warning("Failed to create directory: " + file.getParent(), e);
         }
 
-        FileSaver.save(file, Config.CONFIG_GSON.toJson(localGameSettings.get(id)));
+        FileSaver.save(file, LauncherSettings.GSON.toJson(localGameSettings.get(id)));
     }
 
     public LaunchOptions.Builder getLaunchOptions(String version, JavaRuntime javaVersion, Path gameDir, List<String> javaAgents, List<String> javaArguments, boolean makeLaunchScript) {

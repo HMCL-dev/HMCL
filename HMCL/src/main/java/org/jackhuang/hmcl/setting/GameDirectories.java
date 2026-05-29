@@ -99,7 +99,7 @@ public final class GameDirectories extends ObservableSetting implements JsonSche
                 JsonDeserializationContext context) throws JsonParseException {
             @Nullable GameDirectories result = super.deserialize(json, typeOfT, context);
             if (result != null) {
-                result.unknownFields.remove(Config.SELECTED_GAME_DIRECTORY_MEMBER_NAME);
+                result.unknownFields.remove(LauncherSettings.SELECTED_GAME_DIRECTORY_MEMBER_NAME);
             }
             return result;
         }

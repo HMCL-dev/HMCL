@@ -116,7 +116,7 @@ public final class LegacyConfigMigrator {
                     : new GameDirectories();
             migrateLegacySelectedGameDirectory(jsonObject);
 
-            Config deserialized = Config.fromJson(jsonObject);
+            LauncherSettings deserialized = LauncherSettings.fromJson(jsonObject);
             if (deserialized == null) {
                 return null;
             }
@@ -222,10 +222,10 @@ public final class LegacyConfigMigrator {
 
     /// Migrates the legacy workspace-wide automatic Java agent permission into game setting presets.
     static void migrateLegacyAllowAutoAgent(
-            Config config,
+            LauncherSettings launcherSettings,
             GameSettingsPresets gameSettingsPresets,
             @Nullable JsonElement legacyAllowAutoAgent) {
-        Objects.requireNonNull(config);
+        Objects.requireNonNull(launcherSettings);
         Objects.requireNonNull(gameSettingsPresets);
 
         if (!(legacyAllowAutoAgent instanceof JsonPrimitive primitive)
@@ -234,7 +234,7 @@ public final class LegacyConfigMigrator {
             return;
         }
 
-        ensureDefaultGameSettingsPreset(config, gameSettingsPresets);
+        ensureDefaultGameSettingsPreset(launcherSettings, gameSettingsPresets);
         for (GameSettings.Preset preset : gameSettingsPresets.getPresets()) {
             preset.allowAutoAgentProperty().setValue(true);
         }
@@ -242,10 +242,10 @@ public final class LegacyConfigMigrator {
 
     /// Migrates the legacy workspace-wide automatic game options switch into game setting presets.
     static void migrateLegacyDisableAutoGameOptions(
-            Config config,
+            LauncherSettings launcherSettings,
             GameSettingsPresets gameSettingsPresets,
             @Nullable JsonElement legacyDisableAutoGameOptions) {
-        Objects.requireNonNull(config);
+        Objects.requireNonNull(launcherSettings);
         Objects.requireNonNull(gameSettingsPresets);
 
         if (!(legacyDisableAutoGameOptions instanceof JsonPrimitive primitive)
@@ -254,19 +254,19 @@ public final class LegacyConfigMigrator {
             return;
         }
 
-        ensureDefaultGameSettingsPreset(config, gameSettingsPresets);
+        ensureDefaultGameSettingsPreset(launcherSettings, gameSettingsPresets);
         for (GameSettings.Preset preset : gameSettingsPresets.getPresets()) {
             preset.disableAutoGameOptionsProperty().setValue(true);
         }
     }
 
     /// Ensures there is a default preset to receive migrated workspace-wide game settings.
-    private static void ensureDefaultGameSettingsPreset(Config config, GameSettingsPresets gameSettingsPresets) {
+    private static void ensureDefaultGameSettingsPreset(LauncherSettings launcherSettings, GameSettingsPresets gameSettingsPresets) {
         if (gameSettingsPresets.getPresets().isEmpty()) {
             GameSettings.Preset preset = new GameSettings.Preset(gameSettingsPresets.newPresetId());
             preset.nameProperty().setValue("Default");
             gameSettingsPresets.getPresets().add(preset);
-            config.defaultGameSettingsPresetProperty().set(preset.idProperty().getValue());
+            launcherSettings.defaultGameSettingsPresetProperty().set(preset.idProperty().getValue());
         }
     }
 
@@ -436,13 +436,13 @@ public final class LegacyConfigMigrator {
             return false;
         }
 
-        if (json.has(Config.SELECTED_GAME_DIRECTORY_MEMBER_NAME)) {
+        if (json.has(LauncherSettings.SELECTED_GAME_DIRECTORY_MEMBER_NAME)) {
             return true;
         }
 
         @Nullable String selectedName = readString(lastElement);
         if (selectedName != null) {
-            json.add(Config.SELECTED_GAME_DIRECTORY_MEMBER_NAME,
+            json.add(LauncherSettings.SELECTED_GAME_DIRECTORY_MEMBER_NAME,
                     JsonUtils.GSON.toJsonTree(getLegacyProfileId(selectedName), GUID.class));
         }
         return true;
@@ -459,7 +459,7 @@ public final class LegacyConfigMigrator {
             return false;
         }
 
-        JsonObject selectedInstance = json.get(Config.SELECTED_INSTANCE_MEMBER_NAME) instanceof JsonObject existingSelectedInstance
+        JsonObject selectedInstance = json.get(LauncherSettings.SELECTED_INSTANCE_MEMBER_NAME) instanceof JsonObject existingSelectedInstance
                 ? existingSelectedInstance
                 : new JsonObject();
         boolean changed = false;
@@ -481,8 +481,8 @@ public final class LegacyConfigMigrator {
             }
         }
 
-        if (changed && !json.has(Config.SELECTED_INSTANCE_MEMBER_NAME)) {
-            json.add(Config.SELECTED_INSTANCE_MEMBER_NAME, selectedInstance);
+        if (changed && !json.has(LauncherSettings.SELECTED_INSTANCE_MEMBER_NAME)) {
+            json.add(LauncherSettings.SELECTED_INSTANCE_MEMBER_NAME, selectedInstance);
         }
         return changed;
     }
@@ -542,14 +542,14 @@ public final class LegacyConfigMigrator {
 
     /// Result of locating and loading a legacy config file without modifying it.
     ///
-    /// @param config              The parsed config object.
+    /// @param launcherSettings    The parsed launcher settings.
     /// @param gameDirectories     The detached game directory store migrated from legacy profiles.
     /// @param gameSettingsPresets The detached preset store migrated from legacy profile globals.
     /// @param launcherState       The detached launcher state migrated from legacy config fields.
     /// @param authlibInjectorServers The detached authlib-injector servers migrated from legacy config fields.
     /// @param accountStorages    The detached account storages migrated from legacy config fields.
     /// @param contentForMigration The content to save when migrating to settings.json.
-    record MigrationResult(Path path, Config config, GameDirectories gameDirectories,
+    record MigrationResult(Path path, LauncherSettings launcherSettings, GameDirectories gameDirectories,
                            GameSettingsPresets gameSettingsPresets, LauncherState launcherState,
                            AuthlibInjectorServerList authlibInjectorServers,
                            AccountStorages accountStorages, String contentForMigration) {
