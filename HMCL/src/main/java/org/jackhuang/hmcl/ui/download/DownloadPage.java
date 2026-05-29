@@ -319,9 +319,8 @@ public class DownloadPage extends DecoratorAnimatedPage implements DecoratorPage
 
             return builder.buildAsync().whenComplete(any -> {
                 profile.getRepository().refreshVersions();
-            profile.getRepository().applyDefaultIsolationSetting(name);
-        })
-                    .thenRunAsync(Schedulers.javafx(), () -> Profiles.setSelectedInstance(profile, name));
+                profile.getRepository().applyDefaultIsolationSetting(name);
+            }).thenRunAsync(Schedulers.javafx(), () -> Profiles.setSelectedInstance(profile, name));
         }
 
         @Override
