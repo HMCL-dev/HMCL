@@ -50,8 +50,8 @@ public final class ConfigHolder {
     private ConfigHolder() {
     }
 
-    /// The global launcher config path shared by all workspaces.
-    public static final Path GLOBAL_CONFIG_PATH = Metadata.HMCL_GLOBAL_DIRECTORY.resolve("config.json");
+    /// The user settings path shared by all workspaces.
+    public static final Path USER_SETTINGS_LOCATION = Metadata.HMCL_GLOBAL_DIRECTORY.resolve("config.json");
 
     /// The current per-workspace config path.
     private static final Path SETTINGS_LOCATION = Metadata.HMCL_CURRENT_DIRECTORY.resolve("settings.json");
@@ -118,8 +118,8 @@ public final class ConfigHolder {
     /// The loaded per-workspace config instance.
     private static @UnknownNullability LauncherSettings configInstance;
 
-    /// The loaded user-global config instance.
-    private static @UnknownNullability GlobalConfig globalConfigInstance;
+    /// The loaded user settings instance.
+    private static @UnknownNullability UserSettings userSettingsInstance;
 
     /// The loaded detached game directory store.
     private static @UnknownNullability GameDirectories gameDirectories;
@@ -175,12 +175,12 @@ public final class ConfigHolder {
         return configInstance;
     }
 
-    /// Returns the loaded user-global config.
-    public static GlobalConfig globalConfig() {
-        if (globalConfigInstance == null) {
+    /// Returns the loaded user settings.
+    public static UserSettings userSettings() {
+        if (userSettingsInstance == null) {
             throw new IllegalStateException("Configuration hasn't been loaded");
         }
-        return globalConfigInstance;
+        return userSettingsInstance;
     }
 
     /// Returns the loaded per-workspace launcher state.
@@ -383,12 +383,12 @@ public final class ConfigHolder {
             });
         }
 
-        globalConfigInstance = loadGlobalConfig();
-        globalConfigInstance.addListener(source -> FileSaver.save(GLOBAL_CONFIG_PATH, globalConfigInstance.toJson()));
+        userSettingsInstance = loadUserSettings();
+        userSettingsInstance.addListener(source -> FileSaver.save(USER_SETTINGS_LOCATION, userSettingsInstance.toJson()));
 
         Locale.setDefault(config().languageProperty().get().getLocale());
         I18n.setLocale(configInstance.languageProperty().get());
-        LOG.setLogRetention(globalConfig().getLogRetention());
+        LOG.setLogRetention(userSettings().getLogRetention());
         loadGameDirectories(migratedGameDirectories, !unsupportedVersion);
         loadGameSettingsPresets(migratedGameSettingsPresets, !unsupportedVersion);
         loadLauncherState(migratedLauncherState, !unsupportedVersion);
@@ -665,24 +665,24 @@ public final class ConfigHolder {
         }
     }
 
-    /// Loads the user-global config, creating an empty one when none can be read.
-    private static GlobalConfig loadGlobalConfig() throws IOException {
-        if (Files.exists(GLOBAL_CONFIG_PATH)) {
+    /// Loads the user settings, creating an empty one when none can be read.
+    private static UserSettings loadUserSettings() throws IOException {
+        if (Files.exists(USER_SETTINGS_LOCATION)) {
             try {
-                String content = Files.readString(GLOBAL_CONFIG_PATH);
-                GlobalConfig deserialized = GlobalConfig.fromJson(content);
+                String content = Files.readString(USER_SETTINGS_LOCATION);
+                UserSettings deserialized = UserSettings.fromJson(content);
                 if (deserialized == null) {
-                    LOG.info("Global config is empty");
+                    LOG.info("User settings file is empty");
                 } else {
                     return deserialized;
                 }
             } catch (JsonParseException e) {
-                LOG.warning("Malformed config.", e);
+                LOG.warning("Malformed user settings.", e);
             }
         }
 
-        LOG.info("Creating an empty global config");
-        return new GlobalConfig();
+        LOG.info("Creating empty user settings");
+        return new UserSettings();
     }
 
 }

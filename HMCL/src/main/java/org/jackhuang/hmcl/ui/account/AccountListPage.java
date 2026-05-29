@@ -52,7 +52,7 @@ import org.jackhuang.hmcl.util.javafx.MappedObservableList;
 
 import java.util.Locale;
 
-import static org.jackhuang.hmcl.setting.ConfigHolder.globalConfig;
+import static org.jackhuang.hmcl.setting.ConfigHolder.userSettings;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 import static org.jackhuang.hmcl.util.javafx.ExtendedProperties.createSelectedItemPropertyFor;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
@@ -65,14 +65,14 @@ public final class AccountListPage extends DecoratorAnimatedPage implements Deco
 
         if ("false".equals(property)
                 || "auto".equals(property) && LocaleUtils.IS_CHINA_MAINLAND
-                || globalConfig().isEnableOfflineAccount())
+                || userSettings().isEnableOfflineAccount())
             RESTRICTED.set(false);
         else
-            globalConfig().enableOfflineAccountProperty().addListener(new ChangeListener<Boolean>() {
+            userSettings().enableOfflineAccountProperty().addListener(new ChangeListener<Boolean>() {
                 @Override
                 public void changed(ObservableValue<? extends Boolean> o, Boolean oldValue, Boolean newValue) {
                     if (newValue) {
-                        globalConfig().enableOfflineAccountProperty().removeListener(this);
+                        userSettings().enableOfflineAccountProperty().removeListener(this);
                         RESTRICTED.set(false);
                     }
                 }

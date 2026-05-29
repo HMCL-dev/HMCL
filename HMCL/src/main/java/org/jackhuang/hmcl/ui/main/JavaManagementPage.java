@@ -126,7 +126,7 @@ public final class JavaManagementPage extends ListPageBase<JavaRuntime> {
     }
 
     void onShowRestoreJavaPage() {
-        Controllers.navigateForward(new JavaRestorePage(ConfigHolder.globalConfig().getDisabledJava()));
+        Controllers.navigateForward(new JavaRestorePage(ConfigHolder.userSettings().getDisabledJava()));
     }
 
     private void onAddJavaBinary(Path file) {
@@ -203,7 +203,7 @@ public final class JavaManagementPage extends ListPageBase<JavaRuntime> {
             res.add(createToolbarButton2(i18n("java.add"), SVG.ADD, skinnable::onAddJava));
 
             JFXButton disableJava = createToolbarButton2(i18n("java.disabled.management"), SVG.FORMAT_LIST_BULLETED, skinnable::onShowRestoreJavaPage);
-            disableJava.disableProperty().bind(Bindings.isEmpty(ConfigHolder.globalConfig().getDisabledJava()));
+            disableJava.disableProperty().bind(Bindings.isEmpty(ConfigHolder.userSettings().getDisabledJava()));
             res.add(disableJava);
 
             return res;
@@ -332,8 +332,8 @@ public final class JavaManagementPage extends ListPageBase<JavaRuntime> {
                         i18n("message.warning"),
                         () -> {
                             String path = java.getBinary().toString();
-                            ConfigHolder.globalConfig().getUserJava().remove(path);
-                            ConfigHolder.globalConfig().getDisabledJava().add(path);
+                            ConfigHolder.userSettings().getUserJava().remove(path);
+                            ConfigHolder.userSettings().getDisabledJava().add(path);
                             try {
                                 JavaManager.removeJava(java);
                             } catch (InterruptedException ignored) {

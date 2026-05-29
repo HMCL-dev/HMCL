@@ -51,7 +51,7 @@ import static javafx.collections.FXCollections.observableArrayList;
 import static org.jackhuang.hmcl.setting.ConfigHolder.config;
 import static org.jackhuang.hmcl.setting.ConfigHolder.getAccountStorages;
 import static org.jackhuang.hmcl.setting.ConfigHolder.getAuthlibInjectorServers;
-import static org.jackhuang.hmcl.setting.ConfigHolder.globalConfig;
+import static org.jackhuang.hmcl.setting.ConfigHolder.userSettings;
 import static org.jackhuang.hmcl.ui.FXUtils.onInvalidating;
 import static org.jackhuang.hmcl.util.Lang.immutableListOf;
 import static org.jackhuang.hmcl.util.Lang.mapOf;
@@ -290,15 +290,15 @@ public final class Accounts {
             selected = accounts.get(0);
         }
 
-        if (!globalConfig().isEnableOfflineAccount())
+        if (!userSettings().isEnableOfflineAccount())
             for (Account account : accounts) {
                 if (account instanceof MicrosoftAccount) {
-                    globalConfig().setEnableOfflineAccount(true);
+                    userSettings().setEnableOfflineAccount(true);
                     break;
                 }
             }
 
-        if (!globalConfig().isEnableOfflineAccount())
+        if (!userSettings().isEnableOfflineAccount())
             accounts.addListener(new ListChangeListener<Account>() {
                 @Override
                 public void onChanged(Change<? extends Account> change) {
@@ -306,7 +306,7 @@ public final class Accounts {
                         for (Account account : change.getAddedSubList()) {
                             if (account instanceof MicrosoftAccount) {
                                 accounts.removeListener(this);
-                                globalConfig().setEnableOfflineAccount(true);
+                                userSettings().setEnableOfflineAccount(true);
                                 return;
                             }
                         }

@@ -41,13 +41,14 @@ import org.jackhuang.hmcl.ui.SVG;
 import org.jackhuang.hmcl.ui.construct.*;
 import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.javafx.SafeStringConverter;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
 import java.util.Locale;
 import java.util.Optional;
 
 import static org.jackhuang.hmcl.setting.ConfigHolder.config;
-import static org.jackhuang.hmcl.setting.ConfigHolder.globalConfig;
+import static org.jackhuang.hmcl.setting.ConfigHolder.userSettings;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 public class PersonalizationPage extends StackPane {
@@ -306,7 +307,7 @@ public class PersonalizationPage extends StackPane {
                         Optional.of(FontSmoothingType.GRAY)
                 );
 
-                String fontAntiAliasing = globalConfig().getFontAntiAliasing();
+                @Nullable String fontAntiAliasing = userSettings().getFontAntiAliasing();
                 if ("lcd".equalsIgnoreCase(fontAntiAliasing)) {
                     fontAntiAliasingPane.setValue(Optional.of(FontSmoothingType.LCD));
                 } else if ("gray".equalsIgnoreCase(fontAntiAliasing)) {
@@ -316,7 +317,7 @@ public class PersonalizationPage extends StackPane {
                 }
 
                 FXUtils.onChange(fontAntiAliasingPane.valueProperty(), value ->
-                        globalConfig().setFontAntiAliasing(value.map(it -> it.name().toLowerCase(Locale.ROOT))
+                        userSettings().setFontAntiAliasing(value.map(it -> it.name().toLowerCase(Locale.ROOT))
                                 .orElse(null)));
 
                 fontPane.getContent().add(fontAntiAliasingPane);
