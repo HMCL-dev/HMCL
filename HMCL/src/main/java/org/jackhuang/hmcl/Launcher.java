@@ -136,7 +136,7 @@ public final class Launcher extends Application {
                 showAlert(AlertType.WARNING, i18n("fatal.config_unsupported_version"));
             }
 
-            if (Metadata.HMCL_CURRENT_DIRECTORY.toString().indexOf('=') >= 0) {
+            if (Metadata.HMCL_LOCAL_HOME.toString().indexOf('=') >= 0) {
                 showAlert(AlertType.WARNING, i18n("fatal.illegal_char"));
             }
 
@@ -298,10 +298,10 @@ public final class Launcher extends Application {
 
         ArrayList<String> files = new ArrayList<>();
         files.add(SettingsManager.configLocation().toString());
-        if (Files.exists(Metadata.HMCL_GLOBAL_DIRECTORY))
-            files.add(Metadata.HMCL_GLOBAL_DIRECTORY.toString());
-        if (Files.exists(Metadata.HMCL_CURRENT_DIRECTORY))
-            files.add(Metadata.HMCL_CURRENT_DIRECTORY.toString());
+        if (Files.exists(Metadata.HMCL_USER_HOME))
+            files.add(Metadata.HMCL_USER_HOME.toString());
+        if (Files.exists(Metadata.HMCL_LOCAL_HOME))
+            files.add(Metadata.HMCL_LOCAL_HOME.toString());
 
         Path mcDir = Paths.get(".minecraft").toAbsolutePath().normalize();
         if (Files.exists(mcDir))
@@ -354,8 +354,8 @@ public final class Launcher extends Application {
             LOG.info("Java VM Version: " + System.getProperty("java.vm.name") + " (" + System.getProperty("java.vm.info") + "), " + System.getProperty("java.vm.vendor"));
             LOG.info("Java Home: " + System.getProperty("java.home"));
             LOG.info("Current Directory: " + Metadata.CURRENT_DIRECTORY);
-            LOG.info("HMCL Global Directory: " + Metadata.HMCL_GLOBAL_DIRECTORY);
-            LOG.info("HMCL Current Directory: " + Metadata.HMCL_CURRENT_DIRECTORY);
+            LOG.info("HMCL Global Directory: " + Metadata.HMCL_USER_HOME);
+            LOG.info("HMCL Current Directory: " + Metadata.HMCL_LOCAL_HOME);
             LOG.info("HMCL Jar Path: " + Lang.requireNonNullElse(JarUtils.thisJarPath(), "Not Found"));
             LOG.info("HMCL Log File: " + Lang.requireNonNullElse(LOG.getLogFile(), "In Memory"));
             LOG.info("JVM Max Memory: " + MEGABYTES.formatBytes(Runtime.getRuntime().maxMemory()));

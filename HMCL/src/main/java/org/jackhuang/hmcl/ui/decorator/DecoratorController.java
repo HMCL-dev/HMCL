@@ -275,12 +275,12 @@ public class DecoratorController {
      * Load background image from bg/, background.png, background.jpg, background.gif
      */
     private Image loadDefaultBackgroundImage() {
-        Image image = randomImageIn(Metadata.HMCL_CURRENT_DIRECTORY.resolve("background"));
+        Image image = randomImageIn(Metadata.HMCL_LOCAL_HOME.resolve("background"));
         if (image != null)
             return image;
 
         for (String extension : FXUtils.IMAGE_EXTENSIONS) {
-            image = tryLoadImage(Metadata.HMCL_CURRENT_DIRECTORY.resolve("background." + extension));
+            image = tryLoadImage(Metadata.HMCL_LOCAL_HOME.resolve("background." + extension));
             if (image != null)
                 return image;
         }

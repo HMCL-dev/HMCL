@@ -123,9 +123,9 @@ public final class Accounts {
 
     private static final String GLOBAL_PREFIX = "$GLOBAL:";
     private static final Path GLOBAL_GAME_ACCOUNTS_LOCATION =
-            Metadata.HMCL_GLOBAL_DIRECTORY.resolve("game-accounts.json");
+            Metadata.HMCL_USER_HOME.resolve("game-accounts.json");
     private static final Path LEGACY_GLOBAL_ACCOUNTS_LOCATION =
-            Metadata.HMCL_GLOBAL_DIRECTORY.resolve("accounts.json");
+            Metadata.HMCL_USER_HOME.resolve("accounts.json");
     private static final JsonSettingFile<AccountStorages> GLOBAL_GAME_ACCOUNTS_FILE = new JsonSettingFile<>(
             GLOBAL_GAME_ACCOUNTS_LOCATION,
             "global game accounts",

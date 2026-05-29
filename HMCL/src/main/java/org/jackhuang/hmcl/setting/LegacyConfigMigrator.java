@@ -463,7 +463,7 @@ public final class LegacyConfigMigrator {
     /// Finds a legacy config file with the same precedence as old HMCL versions.
     private static @Nullable Path locateLegacyConfig() {
         // Keep this order aligned with old HMCL versions so the same legacy file wins during migration.
-        Path defaultConfigFile = Metadata.HMCL_CURRENT_DIRECTORY.resolve(LEGACY_CONFIG_FILENAME);
+        Path defaultConfigFile = Metadata.HMCL_LOCAL_HOME.resolve(LEGACY_CONFIG_FILENAME);
         if (Files.isRegularFile(defaultConfigFile)) {
             return defaultConfigFile;
         }

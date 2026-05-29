@@ -48,7 +48,7 @@ public final class EntryPoint {
         System.getProperties().putIfAbsent("http.agent", "HMCL/" + Metadata.VERSION);
 
         createHMCLDirectories();
-        LOG.start(Metadata.HMCL_CURRENT_DIRECTORY.resolve("logs"));
+        LOG.start(Metadata.HMCL_LOCAL_HOME.resolve("logs"));
 
         checkWine();
 
@@ -140,29 +140,29 @@ public final class EntryPoint {
     }
 
     private static void createHMCLDirectories() {
-        if (!Files.isDirectory(Metadata.HMCL_CURRENT_DIRECTORY)) {
+        if (!Files.isDirectory(Metadata.HMCL_LOCAL_HOME)) {
             try {
-                Files.createDirectories(Metadata.HMCL_CURRENT_DIRECTORY);
+                Files.createDirectories(Metadata.HMCL_LOCAL_HOME);
                 if (OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS) {
                     try {
-                        Files.setAttribute(Metadata.HMCL_CURRENT_DIRECTORY, "dos:hidden", true);
+                        Files.setAttribute(Metadata.HMCL_LOCAL_HOME, "dos:hidden", true);
                     } catch (IOException e) {
-                        LOG.warning("Failed to set hidden attribute of " + Metadata.HMCL_CURRENT_DIRECTORY, e);
+                        LOG.warning("Failed to set hidden attribute of " + Metadata.HMCL_LOCAL_HOME, e);
                     }
                 }
             } catch (IOException e) {
                 // Logger has not been started yet, so print directly to System.err
-                System.err.println("Failed to create HMCL directory: " + Metadata.HMCL_CURRENT_DIRECTORY);
+                System.err.println("Failed to create HMCL directory: " + Metadata.HMCL_LOCAL_HOME);
                 e.printStackTrace(System.err);
-                showErrorAndExit(i18n("fatal.create_hmcl_current_directory_failure", Metadata.HMCL_CURRENT_DIRECTORY));
+                showErrorAndExit(i18n("fatal.create_hmcl_current_directory_failure", Metadata.HMCL_LOCAL_HOME));
             }
         }
 
-        if (!Files.isDirectory(Metadata.HMCL_GLOBAL_DIRECTORY)) {
+        if (!Files.isDirectory(Metadata.HMCL_USER_HOME)) {
             try {
-                Files.createDirectories(Metadata.HMCL_GLOBAL_DIRECTORY);
+                Files.createDirectories(Metadata.HMCL_USER_HOME);
             } catch (IOException e) {
-                LOG.warning("Failed to create HMCL global directory " + Metadata.HMCL_GLOBAL_DIRECTORY, e);
+                LOG.warning("Failed to create HMCL global directory " + Metadata.HMCL_USER_HOME, e);
             }
         }
     }

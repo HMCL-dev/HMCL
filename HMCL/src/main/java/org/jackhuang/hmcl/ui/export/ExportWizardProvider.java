@@ -149,7 +149,7 @@ public final class ExportWizardProvider implements WizardProvider {
                             ? "modpack.mrpack"
                             : "modpack.zip");
 
-                    Path bg = Metadata.HMCL_CURRENT_DIRECTORY.resolve("background");
+                    Path bg = Metadata.HMCL_LOCAL_HOME.resolve("background");
                     if (!Files.isDirectory(bg))
                         bg = Metadata.CURRENT_DIRECTORY.resolve("bg");
                     if (Files.isDirectory(bg))
@@ -157,7 +157,7 @@ public final class ExportWizardProvider implements WizardProvider {
 
                     for (String extension : FXUtils.IMAGE_EXTENSIONS) {
                         String fileName = "background." + extension;
-                        Path background = Metadata.HMCL_CURRENT_DIRECTORY.resolve(fileName);
+                        Path background = Metadata.HMCL_LOCAL_HOME.resolve(fileName);
                         if (!Files.isRegularFile(background))
                             background = Metadata.CURRENT_DIRECTORY.resolve(fileName);
                         if (Files.isRegularFile(background))
@@ -166,7 +166,7 @@ public final class ExportWizardProvider implements WizardProvider {
 
                     for (String extension : FontManager.FONT_EXTENSIONS) {
                         String fileName = "font." + extension;
-                        Path font = Metadata.HMCL_CURRENT_DIRECTORY.resolve(fileName);
+                        Path font = Metadata.HMCL_LOCAL_HOME.resolve(fileName);
                         if (!Files.isRegularFile(font))
                             font = Metadata.CURRENT_DIRECTORY.resolve(fileName);
                         if (Files.isRegularFile(font))

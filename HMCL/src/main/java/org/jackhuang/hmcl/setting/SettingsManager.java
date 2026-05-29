@@ -54,36 +54,36 @@ public final class SettingsManager {
     }
 
     /// The user settings path shared by all workspaces.
-    public static final Path USER_SETTINGS_LOCATION = Metadata.HMCL_GLOBAL_DIRECTORY.resolve("user-settings.json");
+    public static final Path USER_SETTINGS_LOCATION = Metadata.HMCL_USER_HOME.resolve("user-settings.json");
 
     /// The legacy user settings path shared by all workspaces.
-    private static final Path LEGACY_USER_SETTINGS_LOCATION = Metadata.HMCL_GLOBAL_DIRECTORY.resolve("config.json");
+    private static final Path LEGACY_USER_SETTINGS_LOCATION = Metadata.HMCL_USER_HOME.resolve("config.json");
 
     /// The current per-workspace config path.
-    private static final Path SETTINGS_LOCATION = Metadata.HMCL_CURRENT_DIRECTORY.resolve("settings.json");
+    private static final Path SETTINGS_LOCATION = Metadata.HMCL_LOCAL_HOME.resolve("settings.json");
 
     /// The current per-workspace launcher state path.
-    private static final Path STATE_LOCATION = Metadata.HMCL_CURRENT_DIRECTORY.resolve("state.json");
+    private static final Path STATE_LOCATION = Metadata.HMCL_LOCAL_HOME.resolve("state.json");
 
     /// The current per-workspace authlib-injector server list path.
     private static final Path AUTHLIB_INJECTOR_SERVERS_LOCATION =
-            Metadata.HMCL_CURRENT_DIRECTORY.resolve("authlib-injector-servers.json");
+            Metadata.HMCL_LOCAL_HOME.resolve("authlib-injector-servers.json");
 
     /// The current per-workspace game directories path.
     private static final Path LOCAL_GAME_DIRECTORIES_LOCATION =
-            Metadata.HMCL_CURRENT_DIRECTORY.resolve("game-directories.json");
+            Metadata.HMCL_LOCAL_HOME.resolve("game-directories.json");
 
     /// The current shared game directories path.
     private static final Path GLOBAL_GAME_DIRECTORIES_LOCATION =
-            Metadata.HMCL_GLOBAL_DIRECTORY.resolve("game-directories.json");
+            Metadata.HMCL_USER_HOME.resolve("game-directories.json");
 
     /// The current per-workspace game settings path.
     private static final Path GAME_SETTINGS_LOCATION =
-            Metadata.HMCL_CURRENT_DIRECTORY.resolve("game-settings.json");
+            Metadata.HMCL_LOCAL_HOME.resolve("game-settings.json");
 
     /// The current per-workspace account storage path.
     private static final Path GAME_ACCOUNTS_LOCATION =
-            Metadata.HMCL_CURRENT_DIRECTORY.resolve("game-accounts.json");
+            Metadata.HMCL_LOCAL_HOME.resolve("game-accounts.json");
 
     /// The per-workspace game directory file helper.
     private static final JsonSettingFile<GameDirectories> LOCAL_GAME_DIRECTORIES_FILE = new JsonSettingFile<>(

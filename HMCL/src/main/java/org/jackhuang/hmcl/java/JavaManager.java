@@ -74,8 +74,8 @@ public final class JavaManager {
             "Semeru"
     };
 
-    public static final HMCLJavaRepository REPOSITORY = new HMCLJavaRepository(Metadata.HMCL_GLOBAL_DIRECTORY.resolve("java"));
-    public static final HMCLJavaRepository LOCAL_REPOSITORY = new HMCLJavaRepository(Metadata.HMCL_CURRENT_DIRECTORY.resolve("java"));
+    public static final HMCLJavaRepository REPOSITORY = new HMCLJavaRepository(Metadata.HMCL_USER_HOME.resolve("java"));
+    public static final HMCLJavaRepository LOCAL_REPOSITORY = new HMCLJavaRepository(Metadata.HMCL_LOCAL_HOME.resolve("java"));
 
     public static String getMojangJavaPlatform(Platform platform) {
         if (platform.getOperatingSystem() == OperatingSystem.WINDOWS) {
@@ -365,7 +365,7 @@ public final class JavaManager {
     // search java
 
     private static Map<Path, JavaRuntime> searchPotentialJavaExecutables(boolean useCache) {
-        Searcher searcher = new Searcher(Metadata.HMCL_GLOBAL_DIRECTORY.resolve("javaCache.json"));
+        Searcher searcher = new Searcher(Metadata.HMCL_USER_HOME.resolve("javaCache.json"));
         if (useCache)
             searcher.loadCache();
 
