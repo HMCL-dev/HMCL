@@ -69,7 +69,7 @@ public final class AuthlibInjectorServerList extends ObservableSetting implement
     }
 
     /// The schema used by this authlib-injector server list file.
-    @SerializedName(JsonSchema.DEFAULT_MEMBER_NAME)
+    @SerializedName(JsonSchema.PROPERTY_SCHEMA)
     private final ObjectProperty<JsonSchema> schema = new SimpleObjectProperty<>(CURRENT_SCHEMA);
 
     /// Returns the schema property.

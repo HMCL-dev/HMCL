@@ -142,7 +142,7 @@ public final class LegacyConfigMigrator {
         Objects.requireNonNull(json);
 
         JsonObject state = new JsonObject();
-        state.add(JsonSchema.DEFAULT_MEMBER_NAME, JsonUtils.GSON.toJsonTree(LauncherState.CURRENT_SCHEMA, JsonSchema.class));
+        state.add(JsonSchema.PROPERTY_SCHEMA, JsonUtils.GSON.toJsonTree(LauncherState.CURRENT_SCHEMA, JsonSchema.class));
         moveMember(json, state, "x");
         moveMember(json, state, "y");
         moveMember(json, state, "width");
@@ -159,7 +159,7 @@ public final class LegacyConfigMigrator {
         Objects.requireNonNull(json);
 
         JsonObject servers = new JsonObject();
-        servers.add(JsonSchema.DEFAULT_MEMBER_NAME,
+        servers.add(JsonSchema.PROPERTY_SCHEMA,
                 JsonUtils.GSON.toJsonTree(AuthlibInjectorServerList.CURRENT_SCHEMA, JsonSchema.class));
         JsonElement authlibInjectorServers = json.remove("authlibInjectorServers");
         if (authlibInjectorServers != null) {
@@ -190,7 +190,7 @@ public final class LegacyConfigMigrator {
         }
 
         JsonObject object = new JsonObject();
-        object.add(JsonSchema.DEFAULT_MEMBER_NAME,
+        object.add(JsonSchema.PROPERTY_SCHEMA,
                 JsonUtils.GSON.toJsonTree(AccountStorages.CURRENT_SCHEMA, JsonSchema.class));
         if (accounts instanceof JsonArray) {
             object.add("accounts", accounts);
@@ -374,7 +374,7 @@ public final class LegacyConfigMigrator {
         }
 
         JsonObject object = new JsonObject();
-        object.add(JsonSchema.DEFAULT_MEMBER_NAME, JsonUtils.GSON.toJsonTree(GameDirectories.CURRENT_SCHEMA, JsonSchema.class));
+        object.add(JsonSchema.PROPERTY_SCHEMA, JsonUtils.GSON.toJsonTree(GameDirectories.CURRENT_SCHEMA, JsonSchema.class));
         object.add("directories", profiles);
 
         return JsonUtils.GSON.fromJson(object, GameDirectories.class);
@@ -519,13 +519,13 @@ public final class LegacyConfigMigrator {
             return false;
         }
 
-        if (json.has(LauncherSettings.SELECTED_GAME_DIRECTORY_MEMBER_NAME)) {
+        if (json.has(LauncherSettings.PROPERTY_SELECTED_GAME_DIRECTORY)) {
             return true;
         }
 
         @Nullable String selectedName = readString(lastElement);
         if (selectedName != null) {
-            json.add(LauncherSettings.SELECTED_GAME_DIRECTORY_MEMBER_NAME,
+            json.add(LauncherSettings.PROPERTY_SELECTED_GAME_DIRECTORY,
                     JsonUtils.GSON.toJsonTree(getLegacyProfileId(selectedName), GUID.class));
         }
         return true;
@@ -542,7 +542,7 @@ public final class LegacyConfigMigrator {
             return false;
         }
 
-        JsonObject selectedInstance = json.get(LauncherSettings.SELECTED_INSTANCE_MEMBER_NAME) instanceof JsonObject existingSelectedInstance
+        JsonObject selectedInstance = json.get(LauncherSettings.PROPERTY_SELECTED_INSTANCE) instanceof JsonObject existingSelectedInstance
                 ? existingSelectedInstance
                 : new JsonObject();
         boolean changed = false;
@@ -564,8 +564,8 @@ public final class LegacyConfigMigrator {
             }
         }
 
-        if (changed && !json.has(LauncherSettings.SELECTED_INSTANCE_MEMBER_NAME)) {
-            json.add(LauncherSettings.SELECTED_INSTANCE_MEMBER_NAME, selectedInstance);
+        if (changed && !json.has(LauncherSettings.PROPERTY_SELECTED_INSTANCE)) {
+            json.add(LauncherSettings.PROPERTY_SELECTED_INSTANCE, selectedInstance);
         }
         return changed;
     }

@@ -129,7 +129,7 @@ public final class GameDirectoriesTest {
 
         JsonObject serialized = JsonParser.parseString(config.toJson()).getAsJsonObject();
         assertEquals("1.20.1", serialized
-                .getAsJsonObject(LauncherSettings.SELECTED_INSTANCE_MEMBER_NAME)
+                .getAsJsonObject(LauncherSettings.PROPERTY_SELECTED_INSTANCE)
                 .get(id.toString())
                 .getAsString());
     }
@@ -200,8 +200,8 @@ public final class GameDirectoriesTest {
                 .getAsJsonObject();
 
         assertEquals(GameDirectories.CURRENT_SCHEMA,
-                JsonSchema.readFromMember(rewritten, JsonSchema.DEFAULT_MEMBER_NAME));
-        assertFalse(rewritten.has(LauncherSettings.SELECTED_GAME_DIRECTORY_MEMBER_NAME));
+                JsonSchema.readFromMember(rewritten, JsonSchema.PROPERTY_SCHEMA));
+        assertFalse(rewritten.has(LauncherSettings.PROPERTY_SELECTED_GAME_DIRECTORY));
         assertTrue(rewritten.has("directories"));
     }
 
@@ -234,7 +234,7 @@ public final class GameDirectoriesTest {
         JsonObject rewritten = JsonParser.parseString(JsonUtils.GSON.toJson(result.value(), GameDirectories.class))
                 .getAsJsonObject();
         assertEquals("https://schemas.glavo.site/hmcl/game-directories/1.0.1",
-                rewritten.get(JsonSchema.DEFAULT_MEMBER_NAME).getAsString());
+                rewritten.get(JsonSchema.PROPERTY_SCHEMA).getAsString());
         assertTrue(rewritten.getAsJsonObject("futureField").get("enabled").getAsBoolean());
     }
 }

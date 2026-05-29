@@ -32,7 +32,7 @@ public final class JsonSchemaTest {
     @Test
     public void readsSchema() {
         JsonObject object = new JsonObject();
-        object.addProperty(JsonSchema.DEFAULT_MEMBER_NAME, schemaUrl("settings", "3.0.1"));
+        object.addProperty(JsonSchema.PROPERTY_SCHEMA, schemaUrl("settings", "3.0.1"));
 
         JsonSchema schema = JsonSchema.readFromMember(object);
 
@@ -47,7 +47,7 @@ public final class JsonSchemaTest {
     @Test
     public void readsPatchlessSchema() {
         JsonObject object = new JsonObject();
-        object.addProperty(JsonSchema.DEFAULT_MEMBER_NAME, schemaUrl("settings", "3.0"));
+        object.addProperty(JsonSchema.PROPERTY_SCHEMA, schemaUrl("settings", "3.0"));
 
         JsonSchema schema = JsonSchema.readFromMember(object);
 
@@ -61,7 +61,7 @@ public final class JsonSchemaTest {
     @Test
     public void readsUnparseableSchemaString() {
         JsonObject object = new JsonObject();
-        object.addProperty(JsonSchema.DEFAULT_MEMBER_NAME, "https://json-schema.org/draft/2020-12/schema");
+        object.addProperty(JsonSchema.PROPERTY_SCHEMA, "https://json-schema.org/draft/2020-12/schema");
 
         JsonSchema schema = JsonSchema.readFromMember(object);
 
@@ -102,44 +102,44 @@ public final class JsonSchemaTest {
         JsonSchema.CheckResult missing = JsonSchema.check(object, expected);
         assertTrue(missing.isMissing());
 
-        object.addProperty(JsonSchema.DEFAULT_MEMBER_NAME, "hmcl.config/3.x");
+        object.addProperty(JsonSchema.PROPERTY_SCHEMA, "hmcl.config/3.x");
         JsonSchema.CheckResult unparseable = JsonSchema.check(object, expected);
         assertTrue(unparseable.isUnparseable());
         assertEquals("hmcl.config/3.x", unparseable.actual().url());
 
-        object.add(JsonSchema.DEFAULT_MEMBER_NAME, new JsonObject());
+        object.add(JsonSchema.PROPERTY_SCHEMA, new JsonObject());
         JsonSchema.CheckResult invalid = JsonSchema.check(object, expected);
         assertTrue(invalid.isInvalid());
         assertEquals("{}", invalid.invalidValue());
 
-        object.addProperty(JsonSchema.DEFAULT_MEMBER_NAME, schemaUrl("settings", "3.x"));
+        object.addProperty(JsonSchema.PROPERTY_SCHEMA, schemaUrl("settings", "3.x"));
         JsonSchema.CheckResult invalidVersion = JsonSchema.check(object, expected);
         assertTrue(invalidVersion.isUnparseable());
         assertEquals(schemaUrl("settings", "3.x"), invalidVersion.actual().url());
 
-        object.addProperty(JsonSchema.DEFAULT_MEMBER_NAME, schemaUrl("settings", "3.0"));
+        object.addProperty(JsonSchema.PROPERTY_SCHEMA, schemaUrl("settings", "3.0"));
         JsonSchema.CheckResult patchless = JsonSchema.check(object, expected);
         assertTrue(patchless.hasSameMajorAndMinorVersion());
         assertFalse(patchless.hasNewerMinorVersion());
         assertFalse(patchless.hasUnsupportedMajorVersion());
 
-        object.addProperty(JsonSchema.DEFAULT_MEMBER_NAME, schemaUrl("game-settings", "1.0.0"));
+        object.addProperty(JsonSchema.PROPERTY_SCHEMA, schemaUrl("game-settings", "1.0.0"));
         JsonSchema.CheckResult unexpected = JsonSchema.check(object, expected);
         assertTrue(unexpected.isUnexpectedId());
         assertEquals("game-settings", unexpected.actual().id());
 
-        object.addProperty(JsonSchema.DEFAULT_MEMBER_NAME, schemaUrl("settings", "3.0.2"));
+        object.addProperty(JsonSchema.PROPERTY_SCHEMA, schemaUrl("settings", "3.0.2"));
         JsonSchema.CheckResult newerPatch = JsonSchema.check(object, expected);
         assertTrue(newerPatch.hasSameMajorAndMinorVersion());
         assertFalse(newerPatch.hasNewerMinorVersion());
         assertFalse(newerPatch.hasUnsupportedMajorVersion());
 
-        object.addProperty(JsonSchema.DEFAULT_MEMBER_NAME, schemaUrl("settings", "3.1.0"));
+        object.addProperty(JsonSchema.PROPERTY_SCHEMA, schemaUrl("settings", "3.1.0"));
         JsonSchema.CheckResult newerMinor = JsonSchema.check(object, expected);
         assertTrue(newerMinor.hasNewerMinorVersion());
         assertFalse(newerMinor.hasUnsupportedMajorVersion());
 
-        object.addProperty(JsonSchema.DEFAULT_MEMBER_NAME, schemaUrl("settings", "4.0.0"));
+        object.addProperty(JsonSchema.PROPERTY_SCHEMA, schemaUrl("settings", "4.0.0"));
         JsonSchema.CheckResult newerMajor = JsonSchema.check(object, expected);
         assertTrue(newerMajor.hasUnsupportedMajorVersion());
         assertFalse(newerMajor.hasNewerMinorVersion());

@@ -40,7 +40,7 @@ public final class GameSettingsPresetsTest {
         config.defaultGameSettingsPresetProperty().set(id);
         JsonObject serialized = JsonParser.parseString(config.toJson()).getAsJsonObject();
 
-        assertEquals(id.toString(), serialized.get(LauncherSettings.DEFAULT_GAME_SETTINGS_PRESET_MEMBER_NAME).getAsString());
+        assertEquals(id.toString(), serialized.get(LauncherSettings.PROPERTY_DEFAULT_GAME_SETTINGS_PRESET).getAsString());
     }
 
     /// Tests that presets must be deserialized with a non-nil ID.
@@ -72,8 +72,8 @@ public final class GameSettingsPresetsTest {
                 .getAsJsonObject();
 
         assertEquals(GameSettingsPresets.CURRENT_SCHEMA,
-                JsonSchema.readFromMember(rewritten, JsonSchema.DEFAULT_MEMBER_NAME));
-        assertFalse(rewritten.has(LauncherSettings.DEFAULT_GAME_SETTINGS_PRESET_MEMBER_NAME));
+                JsonSchema.readFromMember(rewritten, JsonSchema.PROPERTY_SCHEMA));
+        assertFalse(rewritten.has(LauncherSettings.PROPERTY_DEFAULT_GAME_SETTINGS_PRESET));
         assertTrue(rewritten.has("presets"));
         assertFalse(rewritten.has("gameSettings"));
     }

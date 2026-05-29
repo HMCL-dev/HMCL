@@ -208,7 +208,7 @@ public final class LauncherSettingsMigrationTest {
         JsonObject serialized = JsonParser.parseString(launcherSettings.toJson()).getAsJsonObject();
 
         assertEquals("https://schemas.glavo.site/hmcl/settings/1.0.1",
-                serialized.get(JsonSchema.DEFAULT_MEMBER_NAME).getAsString());
+                serialized.get(JsonSchema.PROPERTY_SCHEMA).getAsString());
         assertTrue(serialized.get("futureField").getAsBoolean());
     }
 

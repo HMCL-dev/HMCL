@@ -56,14 +56,14 @@ public final class LauncherSettings extends ObservableSetting {
     /// The JSON schema supported by this launcher settings class.
     public static final JsonSchema CURRENT_SCHEMA = new JsonSchema("settings", new JsonSchema.Version(1, 0, 0));
 
-    /// The JSON member name for the default game setting preset ID.
-    static final String DEFAULT_GAME_SETTINGS_PRESET_MEMBER_NAME = "defaultGameSettingsPreset";
+    /// The JSON property name for the default game setting preset ID.
+    static final String PROPERTY_DEFAULT_GAME_SETTINGS_PRESET = "defaultGameSettingsPreset";
 
-    /// The JSON member name for the selected game directory ID.
-    static final String SELECTED_GAME_DIRECTORY_MEMBER_NAME = "selectedGameDirectory";
+    /// The JSON property name for the selected game directory ID.
+    static final String PROPERTY_SELECTED_GAME_DIRECTORY = "selectedGameDirectory";
 
-    /// The JSON member name for selected instance IDs keyed by game directory ID.
-    static final String SELECTED_INSTANCE_MEMBER_NAME = "selectedInstance";
+    /// The JSON property name for selected instance IDs keyed by game directory ID.
+    static final String PROPERTY_SELECTED_INSTANCE = "selectedInstance";
 
     /// Gson instance used for launcher settings and related settings objects that depend on JavaFX properties.
     public static final Gson SETTINGS_GSON = new GsonBuilder()
@@ -105,7 +105,7 @@ public final class LauncherSettings extends ObservableSetting {
     // Properties
 
     /// The schema used by this launcher settings file.
-    @SerializedName(JsonSchema.DEFAULT_MEMBER_NAME)
+    @SerializedName(JsonSchema.PROPERTY_SCHEMA)
     private final ObjectProperty<JsonSchema> schema = new SimpleObjectProperty<>(CURRENT_SCHEMA);
 
     /// Returns the schema property.
@@ -418,9 +418,9 @@ public final class LauncherSettings extends ObservableSetting {
     }
 
     /// The selected game directory ID.
-    @SerializedName(SELECTED_GAME_DIRECTORY_MEMBER_NAME)
+    @SerializedName(PROPERTY_SELECTED_GAME_DIRECTORY)
     private final ObjectProperty<@Nullable GUID> selectedGameDirectory =
-            new SimpleObjectProperty<>(this, SELECTED_GAME_DIRECTORY_MEMBER_NAME);
+            new SimpleObjectProperty<>(this, PROPERTY_SELECTED_GAME_DIRECTORY);
 
     /// Returns the selected game directory ID property.
     public ObjectProperty<@Nullable GUID> selectedGameDirectoryProperty() {
@@ -428,9 +428,9 @@ public final class LauncherSettings extends ObservableSetting {
     }
 
     /// The default game setting preset ID.
-    @SerializedName(DEFAULT_GAME_SETTINGS_PRESET_MEMBER_NAME)
+    @SerializedName(PROPERTY_DEFAULT_GAME_SETTINGS_PRESET)
     private final ObjectProperty<@Nullable GUID> defaultGameSettingsPreset =
-            new SimpleObjectProperty<>(this, DEFAULT_GAME_SETTINGS_PRESET_MEMBER_NAME);
+            new SimpleObjectProperty<>(this, PROPERTY_DEFAULT_GAME_SETTINGS_PRESET);
 
     /// Returns the default game setting preset ID property.
     public ObjectProperty<@Nullable GUID> defaultGameSettingsPresetProperty() {
@@ -438,7 +438,7 @@ public final class LauncherSettings extends ObservableSetting {
     }
 
     /// Selected instance IDs keyed by game directory ID.
-    @SerializedName(SELECTED_INSTANCE_MEMBER_NAME)
+    @SerializedName(PROPERTY_SELECTED_INSTANCE)
     private final ObservableMap<GUID, String> selectedInstance = FXCollections.observableHashMap();
 
     /// Returns selected instance IDs keyed by game directory ID.

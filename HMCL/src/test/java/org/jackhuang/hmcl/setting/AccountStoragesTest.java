@@ -46,7 +46,7 @@ public final class AccountStoragesTest {
         ).getAsJsonObject();
 
         assertEquals(AccountStorages.CURRENT_SCHEMA.url(),
-                serialized.get(JsonSchema.DEFAULT_MEMBER_NAME).getAsString());
+                serialized.get(JsonSchema.PROPERTY_SCHEMA).getAsString());
         assertTrue(serialized.has("accounts"));
         assertEquals(1, serialized.getAsJsonArray("accounts").size());
         assertEquals("offline", serialized.getAsJsonArray("accounts")
@@ -66,7 +66,7 @@ public final class AccountStoragesTest {
         JsonObject serialized = JsonParser.parseString(
                 JsonUtils.GSON.toJson(storages, AccountStorages.class)).getAsJsonObject();
 
-        assertEquals(AccountStorages.CURRENT_SCHEMA.url(), serialized.get(JsonSchema.DEFAULT_MEMBER_NAME).getAsString());
+        assertEquals(AccountStorages.CURRENT_SCHEMA.url(), serialized.get(JsonSchema.PROPERTY_SCHEMA).getAsString());
         JsonArray accounts = serialized.getAsJsonArray("accounts");
         assertEquals(1, accounts.size());
         assertEquals("offline", accounts.get(0).getAsJsonObject().get("type").getAsString());

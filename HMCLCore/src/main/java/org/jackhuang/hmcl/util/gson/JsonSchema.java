@@ -58,8 +58,8 @@ import java.util.Objects;
 @JsonAdapter(JsonSchema.Adapter.class)
 @NotNullByDefault
 public record JsonSchema(String value, @Nullable Parsed parsed) {
-    /// The default JSON member name used for schema strings.
-    public static final String DEFAULT_MEMBER_NAME = "$schema";
+    /// The JSON property name used for schema strings.
+    public static final String PROPERTY_SCHEMA = "$schema";
 
     /// The HMCL schema URL prefix.
     private static final String URL_PREFIX = "https://schemas.glavo.site/hmcl/";
@@ -99,7 +99,7 @@ public record JsonSchema(String value, @Nullable Parsed parsed) {
     /// @return the schema string and optional parsed identifier
     /// @throws JsonParseException if the schema member is missing or is not a string
     public static JsonSchema readFromMember(JsonObject object) throws JsonParseException {
-        return readFromMember(object, DEFAULT_MEMBER_NAME);
+        return readFromMember(object, PROPERTY_SCHEMA);
     }
 
     /// Reads a schema string from a member of a container object.
@@ -121,7 +121,7 @@ public record JsonSchema(String value, @Nullable Parsed parsed) {
     /// @param expected the schema supported by the current code
     /// @return the schema check result
     public static CheckResult check(JsonObject object, JsonSchema expected) {
-        return check(object, DEFAULT_MEMBER_NAME, expected);
+        return check(object, PROPERTY_SCHEMA, expected);
     }
 
     /// Reads and checks a schema string JSON object member.

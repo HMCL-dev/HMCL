@@ -37,7 +37,7 @@ public final class UserSettingsTest {
 
         JsonObject serialized = JsonParser.parseString(settings.toJson()).getAsJsonObject();
 
-        assertEquals(UserSettings.CURRENT_SCHEMA.url(), serialized.get(JsonSchema.DEFAULT_MEMBER_NAME).getAsString());
+        assertEquals(UserSettings.CURRENT_SCHEMA.url(), serialized.get(JsonSchema.PROPERTY_SCHEMA).getAsString());
     }
 
     /// Tests that legacy global config content can be read as current user settings.
@@ -67,6 +67,6 @@ public final class UserSettingsTest {
         assertTrue(settings.getDisabledJava().contains("java-b"));
 
         JsonObject serialized = JsonParser.parseString(settings.toJson()).getAsJsonObject();
-        assertEquals(UserSettings.CURRENT_SCHEMA.url(), serialized.get(JsonSchema.DEFAULT_MEMBER_NAME).getAsString());
+        assertEquals(UserSettings.CURRENT_SCHEMA.url(), serialized.get(JsonSchema.PROPERTY_SCHEMA).getAsString());
     }
 }

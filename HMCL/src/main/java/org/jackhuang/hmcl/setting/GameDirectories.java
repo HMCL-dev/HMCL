@@ -55,7 +55,7 @@ public final class GameDirectories extends ObservableSetting implements JsonSche
     }
 
     /// The schema used by this game directory store file.
-    @SerializedName(JsonSchema.DEFAULT_MEMBER_NAME)
+    @SerializedName(JsonSchema.PROPERTY_SCHEMA)
     private final ObjectProperty<JsonSchema> schema = new SimpleObjectProperty<>(CURRENT_SCHEMA);
 
     /// Returns the schema property.
@@ -99,7 +99,7 @@ public final class GameDirectories extends ObservableSetting implements JsonSche
                 JsonDeserializationContext context) throws JsonParseException {
             @Nullable GameDirectories result = super.deserialize(json, typeOfT, context);
             if (result != null) {
-                result.unknownFields.remove(LauncherSettings.SELECTED_GAME_DIRECTORY_MEMBER_NAME);
+                result.unknownFields.remove(LauncherSettings.PROPERTY_SELECTED_GAME_DIRECTORY);
             }
             return result;
         }

@@ -67,7 +67,7 @@ public final class GameSettingsPresets extends ObservableSetting implements Json
     }
 
     /// The schema used by this game settings preset store file.
-    @SerializedName(JsonSchema.DEFAULT_MEMBER_NAME)
+    @SerializedName(JsonSchema.PROPERTY_SCHEMA)
     private final ObjectProperty<JsonSchema> schema = new SimpleObjectProperty<>(CURRENT_SCHEMA);
 
     /// Returns the schema property.
@@ -134,7 +134,7 @@ public final class GameSettingsPresets extends ObservableSetting implements Json
                 JsonDeserializationContext context) throws JsonParseException {
             @Nullable GameSettingsPresets result = super.deserialize(json, typeOfT, context);
             if (result != null) {
-                result.unknownFields.remove(LauncherSettings.DEFAULT_GAME_SETTINGS_PRESET_MEMBER_NAME);
+                result.unknownFields.remove(LauncherSettings.PROPERTY_DEFAULT_GAME_SETTINGS_PRESET);
             }
             return result;
         }
