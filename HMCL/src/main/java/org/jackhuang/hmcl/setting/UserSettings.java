@@ -23,6 +23,7 @@ import com.google.gson.annotations.SerializedName;
 import javafx.beans.property.*;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableSet;
+import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.gson.ObservableSetting;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
@@ -38,9 +39,8 @@ public final class UserSettings extends ObservableSetting {
     ///
     /// @param json the JSON content to parse
     /// @return the parsed settings, or {@code null} when the JSON value is {@code null}
-    @Nullable
-    public static UserSettings fromJson(String json) throws JsonParseException {
-        return LauncherSettings.SETTINGS_GSON.fromJson(json, UserSettings.class);
+    public static @Nullable UserSettings fromJson(String json) throws JsonParseException {
+        return JsonUtils.fromJson(LauncherSettings.SETTINGS_GSON, json, UserSettings.class);
     }
 
     /// Creates empty user settings with default values.
