@@ -26,7 +26,7 @@ import javafx.scene.control.Label;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.control.ToggleGroup;
 import javafx.scene.layout.*;
-import org.jackhuang.hmcl.setting.DownloadProviders;
+import org.jackhuang.hmcl.setting.DownloadSource;
 import org.jackhuang.hmcl.setting.EnumCommonDirectory;
 import org.jackhuang.hmcl.task.FetchTask;
 import org.jackhuang.hmcl.ui.FXUtils;
@@ -63,32 +63,33 @@ public class DownloadSettingsPage extends StackPane {
             var downloadSource = new ComponentList();
             downloadSource.getStyleClass().add("card-non-transparent");
             {
-
-                var autoChooseDownloadSource = new LineToggleButton();
-                autoChooseDownloadSource.setTitle(i18n("settings.launcher.download_source.auto"));
-                autoChooseDownloadSource.selectedProperty().bindBidirectional(settings().autoChooseDownloadTypeProperty());
-
-                Function<String, String> converter = key -> i18n("download.provider." + key);
-                Function<String, String> descriptionConverter = key -> {
-                    String bundleKey = "download.provider." + key + ".desc";
+                Function<DownloadSource, String> converter = source -> switch (source) {
+                    case DEFAULT -> i18n("settings.launcher.download_source.auto");
+                    case OFFICIAL -> i18n("download.provider.official");
+                    case MIRROR -> i18n("download.provider.mirror");
+                };
+                Function<DownloadSource, String> descriptionConverter = source -> {
+                    String bundleKey = switch (source) {
+                        case DEFAULT -> "download.provider.balanced.desc";
+                        case OFFICIAL -> "download.provider.official.desc";
+                        case MIRROR -> "download.provider.mirror.desc";
+                    };
                     return I18n.hasKey(bundleKey) ? i18n(bundleKey) : null;
                 };
 
-                var versionListSourcePane = new LineSelectButton<String>();
-                versionListSourcePane.disableProperty().bind(autoChooseDownloadSource.selectedProperty().not());
+                var versionListSourcePane = new LineSelectButton<DownloadSource>();
                 versionListSourcePane.setTitle(i18n("settings.launcher.version_list_source"));
                 versionListSourcePane.setNullSafeConverter(converter);
                 versionListSourcePane.setDescriptionConverter(descriptionConverter);
-                versionListSourcePane.setItems(DownloadProviders.AUTO_PROVIDERS.keySet());
+                versionListSourcePane.setItems(DownloadSource.values());
                 versionListSourcePane.valueProperty().bindBidirectional(settings().versionListSourceProperty());
 
-                var downloadSourcePane = new LineSelectButton<String>();
-                downloadSourcePane.disableProperty().bind(autoChooseDownloadSource.selectedProperty());
+                var downloadSourcePane = new LineSelectButton<DownloadSource>();
                 downloadSourcePane.setTitle(i18n("settings.launcher.download_source"));
                 downloadSourcePane.setNullSafeConverter(converter);
                 downloadSourcePane.setDescriptionConverter(descriptionConverter);
-                downloadSourcePane.setItems(DownloadProviders.DIRECT_PROVIDERS.keySet());
-                downloadSourcePane.valueProperty().bindBidirectional(settings().downloadTypeProperty());
+                downloadSourcePane.setItems(DownloadSource.values());
+                downloadSourcePane.valueProperty().bindBidirectional(settings().fileDownloadSourceProperty());
 
                 var defaultAddonSourcePane = new LineSelectButton<String>();
                 defaultAddonSourcePane.setTitle(i18n("settings.launcher.default_addon_source"));
@@ -96,7 +97,7 @@ public class DownloadSettingsPage extends StackPane {
                 defaultAddonSourcePane.setItems("modrinth", "curseforge");
                 defaultAddonSourcePane.valueProperty().bindBidirectional(settings().defaultAddonSourceProperty());
 
-                downloadSource.getContent().setAll(autoChooseDownloadSource, versionListSourcePane, downloadSourcePane, defaultAddonSourcePane);
+                downloadSource.getContent().setAll(versionListSourcePane, downloadSourcePane, defaultAddonSourcePane);
             }
 
             content.getChildren().addAll(ComponentList.createComponentListTitle(i18n("settings.launcher.download_source")), downloadSource);

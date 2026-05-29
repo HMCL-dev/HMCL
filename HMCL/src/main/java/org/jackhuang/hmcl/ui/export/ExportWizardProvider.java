@@ -134,7 +134,8 @@ public final class ExportWizardProvider implements WizardProvider {
                     exported.backgroundImageTypeProperty().set(settings().backgroundImageTypeProperty().get());
                     exported.backgroundImageProperty().set(settings().backgroundImageProperty().get());
                     exported.themeColorProperty().set(settings().themeColorProperty().get());
-                    exported.downloadTypeProperty().set(settings().downloadTypeProperty().get());
+                    exported.versionListSourceProperty().set(settings().versionListSourceProperty().get());
+                    exported.fileDownloadSourceProperty().set(settings().fileDownloadSourceProperty().get());
                     exported.preferredLoginTypeProperty().set(settings().preferredLoginTypeProperty().get());
 
                     zip.putTextFile(exported.toJson(), ".hmcl/settings.json");

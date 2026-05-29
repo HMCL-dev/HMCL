@@ -327,31 +327,22 @@ public final class LauncherSettings extends ObservableSetting {
         return downloadThreads;
     }
 
-    /// The selected download provider ID.
-    @SerializedName("downloadType")
-    private final StringProperty downloadType = new SimpleStringProperty(DownloadProviders.DEFAULT_DIRECT_PROVIDER_ID);
-
-    /// Returns the selected download provider ID property.
-    public StringProperty downloadTypeProperty() {
-        return downloadType;
-    }
-
-    /// Whether HMCL automatically chooses a download provider.
-    @SerializedName("autoChooseDownloadType")
-    private final BooleanProperty autoChooseDownloadType = new SimpleBooleanProperty(true);
-
-    /// Returns the automatic download provider selection property.
-    public BooleanProperty autoChooseDownloadTypeProperty() {
-        return autoChooseDownloadType;
-    }
-
-    /// The selected game version list source ID.
+    /// The selected game version list download source.
     @SerializedName("versionListSource")
-    private final StringProperty versionListSource = new SimpleStringProperty(DownloadProviders.DEFAULT_AUTO_PROVIDER_ID);
+    private final ObjectProperty<DownloadSource> versionListSource = new RawPreservingObjectProperty<>(DownloadSource.DEFAULT);
 
-    /// Returns the selected game version list source ID property.
-    public StringProperty versionListSourceProperty() {
+    /// Returns the selected game version list download source property.
+    public ObjectProperty<DownloadSource> versionListSourceProperty() {
         return versionListSource;
+    }
+
+    /// The selected file download source.
+    @SerializedName("fileDownloadSource")
+    private final ObjectProperty<DownloadSource> fileDownloadSource = new RawPreservingObjectProperty<>(DownloadSource.DEFAULT);
+
+    /// Returns the selected file download source property.
+    public ObjectProperty<DownloadSource> fileDownloadSourceProperty() {
+        return fileDownloadSource;
     }
 
     /// The selected default add-on source ID.

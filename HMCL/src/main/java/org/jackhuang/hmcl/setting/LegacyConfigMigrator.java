@@ -32,6 +32,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 
@@ -108,6 +109,7 @@ public final class LegacyConfigMigrator {
                     AccountStorages::new);
             JsonElement legacyAllowAutoAgent = jsonObject.remove("allowAutoAgent");
             JsonElement legacyDisableAutoGameOptions = jsonObject.remove("disableAutoGameOptions");
+            migrateLegacyDownloadSources(jsonObject);
             migrateLegacyCommonDirectoryType(jsonObject);
             migrateLegacyCommonDirectory(jsonObject);
             migrateLegacyLanguage(jsonObject);
@@ -246,6 +248,59 @@ public final class LegacyConfigMigrator {
         }
 
         json.add("commonDirectoryType", legacyCommonDirectoryType);
+    }
+
+    /// Migrates legacy download source fields into `versionListSource` and `fileDownloadSource`.
+    static void migrateLegacyDownloadSources(JsonObject json) {
+        Objects.requireNonNull(json);
+
+        JsonElement autoChooseDownloadType = json.remove("autoChooseDownloadType");
+        JsonElement legacyDownloadType = json.remove("downloadType");
+        JsonElement legacyVersionListSource = json.remove("versionListSource");
+        if (autoChooseDownloadType == null && legacyDownloadType == null && legacyVersionListSource == null) {
+            return;
+        }
+
+        DownloadSource source = readBoolean(autoChooseDownloadType, true)
+                ? parseLegacyDownloadSource(legacyVersionListSource, DownloadSource.DEFAULT)
+                : parseLegacyDownloadSource(legacyDownloadType, DownloadSource.DEFAULT);
+
+        if (!json.has("versionListSource")) {
+            json.addProperty("versionListSource", source.name());
+        }
+        if (!json.has("fileDownloadSource")) {
+            json.addProperty("fileDownloadSource", source.name());
+        }
+    }
+
+    /// Parses an old download source identifier.
+    private static DownloadSource parseLegacyDownloadSource(@Nullable JsonElement element, DownloadSource defaultValue) {
+        @Nullable String value = readString(element);
+        if (value == null) {
+            return defaultValue;
+        }
+
+        return switch (value.toLowerCase(Locale.ROOT)) {
+            case "default", "balanced" -> DownloadSource.DEFAULT;
+            case "official", "mojang" -> DownloadSource.OFFICIAL;
+            case "mirror", "bmclapi" -> DownloadSource.MIRROR;
+            default -> {
+                try {
+                    yield DownloadSource.valueOf(value.toUpperCase(Locale.ROOT));
+                } catch (IllegalArgumentException e) {
+                    yield defaultValue;
+                }
+            }
+        };
+    }
+
+    /// Reads a boolean JSON value.
+    private static boolean readBoolean(@Nullable JsonElement element, boolean defaultValue) {
+        if (!(element instanceof JsonPrimitive primitive) || !primitive.isBoolean()) {
+            return defaultValue;
+        }
+
+        return primitive.getAsBoolean();
     }
 
     /// Migrates the legacy workspace-wide automatic Java agent permission into game setting presets.

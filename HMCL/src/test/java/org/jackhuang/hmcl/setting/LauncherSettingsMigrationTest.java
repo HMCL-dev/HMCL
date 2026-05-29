@@ -107,6 +107,94 @@ public final class LauncherSettingsMigrationTest {
         assertEquals("CUSTOM", serialized.get("commonDirectoryType").getAsString());
     }
 
+    /// Tests migrating legacy automatic download source fields into current download source fields.
+    @Test
+    public void migratesLegacyAutomaticDownloadSources() {
+        JsonObject settings = JsonParser.parseString("""
+                {
+                  "autoChooseDownloadType": true,
+                  "versionListSource": "mirror",
+                  "downloadType": "mojang"
+                }
+                """).getAsJsonObject();
+
+        LegacyConfigMigrator.migrateLegacyDownloadSources(settings);
+        LauncherSettings launcherSettings = Objects.requireNonNull(LauncherSettings.fromJson(settings));
+        JsonObject serialized = JsonParser.parseString(launcherSettings.toJson()).getAsJsonObject();
+
+        assertFalse(settings.has("autoChooseDownloadType"));
+        assertFalse(settings.has("downloadType"));
+        assertEquals("MIRROR", settings.get("versionListSource").getAsString());
+        assertEquals("MIRROR", settings.get("fileDownloadSource").getAsString());
+        assertEquals(DownloadSource.MIRROR, launcherSettings.versionListSourceProperty().get());
+        assertEquals(DownloadSource.MIRROR, launcherSettings.fileDownloadSourceProperty().get());
+        assertFalse(serialized.has("autoChooseDownloadType"));
+        assertFalse(serialized.has("downloadType"));
+    }
+
+    /// Tests migrating the legacy balanced automatic download source into the default source.
+    @Test
+    public void migratesLegacyBalancedDownloadSource() {
+        JsonObject settings = JsonParser.parseString("""
+                {
+                  "autoChooseDownloadType": true,
+                  "versionListSource": "balanced"
+                }
+                """).getAsJsonObject();
+
+        LegacyConfigMigrator.migrateLegacyDownloadSources(settings);
+        LauncherSettings launcherSettings = Objects.requireNonNull(LauncherSettings.fromJson(settings));
+
+        assertEquals("DEFAULT", settings.get("versionListSource").getAsString());
+        assertEquals("DEFAULT", settings.get("fileDownloadSource").getAsString());
+        assertEquals(DownloadSource.DEFAULT, launcherSettings.versionListSourceProperty().get());
+        assertEquals(DownloadSource.DEFAULT, launcherSettings.fileDownloadSourceProperty().get());
+    }
+
+    /// Tests migrating legacy direct download source fields into current download source fields.
+    @Test
+    public void migratesLegacyDirectDownloadSources() {
+        JsonObject settings = JsonParser.parseString("""
+                {
+                  "autoChooseDownloadType": false,
+                  "versionListSource": "official",
+                  "downloadType": "bmclapi"
+                }
+                """).getAsJsonObject();
+
+        LegacyConfigMigrator.migrateLegacyDownloadSources(settings);
+        LauncherSettings launcherSettings = Objects.requireNonNull(LauncherSettings.fromJson(settings));
+        JsonObject serialized = JsonParser.parseString(launcherSettings.toJson()).getAsJsonObject();
+
+        assertFalse(settings.has("autoChooseDownloadType"));
+        assertFalse(settings.has("downloadType"));
+        assertEquals("MIRROR", settings.get("versionListSource").getAsString());
+        assertEquals("MIRROR", settings.get("fileDownloadSource").getAsString());
+        assertEquals(DownloadSource.MIRROR, launcherSettings.versionListSourceProperty().get());
+        assertEquals(DownloadSource.MIRROR, launcherSettings.fileDownloadSourceProperty().get());
+        assertFalse(serialized.has("autoChooseDownloadType"));
+        assertFalse(serialized.has("downloadType"));
+    }
+
+    /// Tests migrating the legacy Mojang direct download source into the official source.
+    @Test
+    public void migratesLegacyMojangDownloadSource() {
+        JsonObject settings = JsonParser.parseString("""
+                {
+                  "autoChooseDownloadType": false,
+                  "downloadType": "mojang"
+                }
+                """).getAsJsonObject();
+
+        LegacyConfigMigrator.migrateLegacyDownloadSources(settings);
+        LauncherSettings launcherSettings = Objects.requireNonNull(LauncherSettings.fromJson(settings));
+
+        assertEquals("OFFICIAL", settings.get("versionListSource").getAsString());
+        assertEquals("OFFICIAL", settings.get("fileDownloadSource").getAsString());
+        assertEquals(DownloadSource.OFFICIAL, launcherSettings.versionListSourceProperty().get());
+        assertEquals(DownloadSource.OFFICIAL, launcherSettings.fileDownloadSourceProperty().get());
+    }
+
     /// Tests that launcher settings serialization preserves a patch-version schema and unknown fields.
     @Test
     public void preservesPatchSchemaAndUnknownFields() {
