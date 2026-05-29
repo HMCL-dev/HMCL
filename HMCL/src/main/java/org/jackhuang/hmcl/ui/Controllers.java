@@ -257,7 +257,7 @@ public final class Controllers {
         LOG.info("April Fools: " + AprilFools.isEnabled());
 
         if (System.getProperty("prism.lcdtext") == null) {
-            @Nullable String fontAntiAliasing = userSettings().getFontAntiAliasing();
+            @Nullable String fontAntiAliasing = ConfigHolder.userSettings().fontAntiAliasingProperty().get();
             if ("lcd".equalsIgnoreCase(fontAntiAliasing)) {
                 LOG.info("Enable sub-pixel antialiasing");
                 System.getProperties().put("prism.lcdtext", "true");
@@ -389,8 +389,11 @@ public final class Controllers {
             timeline.play();
         }
 
-        if (!Architecture.SYSTEM_ARCH.isX86() && userSettings().getPlatformPromptVersion() < 1) {
-            Runnable continueAction = () -> userSettings().setPlatformPromptVersion(1);
+        if (!Architecture.SYSTEM_ARCH.isX86() && ConfigHolder.userSettings().platformPromptVersionProperty().get() < 1) {
+            Runnable continueAction = () -> {
+                UserSettings userSettings = userSettings();
+                userSettings.platformPromptVersionProperty().set(1);
+            };
 
             if (OperatingSystem.CURRENT_OS == OperatingSystem.MACOS && Architecture.SYSTEM_ARCH == Architecture.ARM64) {
                 continueAction.run();
@@ -445,7 +448,7 @@ public final class Controllers {
                     .build());
         }
 
-        if (userSettings().getAgreementVersion() < 1) {
+        if (ConfigHolder.userSettings().agreementVersionProperty().get() < 1) {
             JFXDialogLayout agreementPane = new JFXDialogLayout();
             agreementPane.setHeading(new Label(i18n("launcher.agreement")));
             agreementPane.setBody(new Label(i18n("launcher.agreement.hint")));
@@ -454,7 +457,8 @@ public final class Controllers {
             JFXButton yesButton = new JFXButton(i18n("launcher.agreement.accept"));
             yesButton.getStyleClass().add("dialog-accept");
             yesButton.setOnAction(e -> {
-                userSettings().setAgreementVersion(1);
+                UserSettings userSettings = userSettings();
+                userSettings.agreementVersionProperty().set(1);
                 agreementPane.fireEvent(new DialogCloseEvent());
             });
             JFXButton noButton = new JFXButton(i18n("launcher.agreement.decline"));

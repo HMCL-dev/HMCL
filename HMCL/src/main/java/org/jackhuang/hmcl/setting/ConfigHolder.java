@@ -388,7 +388,7 @@ public final class ConfigHolder {
 
         Locale.setDefault(config().languageProperty().get().getLocale());
         I18n.setLocale(configInstance.languageProperty().get());
-        LOG.setLogRetention(userSettings().getLogRetention());
+        LOG.setLogRetention(userSettings().logRetentionProperty().get());
         loadGameDirectories(migratedGameDirectories, !unsupportedVersion);
         loadGameSettingsPresets(migratedGameSettingsPresets, !unsupportedVersion);
         loadLauncherState(migratedLauncherState, !unsupportedVersion);

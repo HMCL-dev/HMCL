@@ -38,6 +38,7 @@ import javafx.scene.layout.VBox;
 import org.jackhuang.hmcl.auth.Account;
 import org.jackhuang.hmcl.auth.authlibinjector.AuthlibInjectorServer;
 import org.jackhuang.hmcl.setting.Accounts;
+import org.jackhuang.hmcl.setting.ConfigHolder;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
@@ -65,7 +66,7 @@ public final class AccountListPage extends DecoratorAnimatedPage implements Deco
 
         if ("false".equals(property)
                 || "auto".equals(property) && LocaleUtils.IS_CHINA_MAINLAND
-                || userSettings().isEnableOfflineAccount())
+                || ConfigHolder.userSettings().enableOfflineAccountProperty().get())
             RESTRICTED.set(false);
         else
             userSettings().enableOfflineAccountProperty().addListener(new ChangeListener<Boolean>() {

@@ -290,15 +290,16 @@ public final class Accounts {
             selected = accounts.get(0);
         }
 
-        if (!userSettings().isEnableOfflineAccount())
+        if (!ConfigHolder.userSettings().enableOfflineAccountProperty().get())
             for (Account account : accounts) {
                 if (account instanceof MicrosoftAccount) {
-                    userSettings().setEnableOfflineAccount(true);
+                    UserSettings userSettings = userSettings();
+                    userSettings.enableOfflineAccountProperty().set(true);
                     break;
                 }
             }
 
-        if (!userSettings().isEnableOfflineAccount())
+        if (!ConfigHolder.userSettings().enableOfflineAccountProperty().get())
             accounts.addListener(new ListChangeListener<Account>() {
                 @Override
                 public void onChanged(Change<? extends Account> change) {
@@ -306,7 +307,8 @@ public final class Accounts {
                         for (Account account : change.getAddedSubList()) {
                             if (account instanceof MicrosoftAccount) {
                                 accounts.removeListener(this);
-                                userSettings().setEnableOfflineAccount(true);
+                                UserSettings userSettings = userSettings();
+                                userSettings.enableOfflineAccountProperty().set(true);
                                 return;
                             }
                         }

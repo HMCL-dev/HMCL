@@ -33,8 +33,10 @@ import javafx.scene.control.ScrollPane;
 import javafx.scene.layout.*;
 import javafx.scene.text.Font;
 import javafx.scene.text.FontSmoothingType;
+import org.jackhuang.hmcl.setting.ConfigHolder;
 import org.jackhuang.hmcl.setting.EnumBackgroundImage;
 import org.jackhuang.hmcl.setting.FontManager;
+import org.jackhuang.hmcl.setting.UserSettings;
 import org.jackhuang.hmcl.theme.ThemeColor;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
@@ -307,7 +309,7 @@ public class PersonalizationPage extends StackPane {
                         Optional.of(FontSmoothingType.GRAY)
                 );
 
-                @Nullable String fontAntiAliasing = userSettings().getFontAntiAliasing();
+                @Nullable String fontAntiAliasing = ConfigHolder.userSettings().fontAntiAliasingProperty().get();
                 if ("lcd".equalsIgnoreCase(fontAntiAliasing)) {
                     fontAntiAliasingPane.setValue(Optional.of(FontSmoothingType.LCD));
                 } else if ("gray".equalsIgnoreCase(fontAntiAliasing)) {
@@ -317,8 +319,11 @@ public class PersonalizationPage extends StackPane {
                 }
 
                 FXUtils.onChange(fontAntiAliasingPane.valueProperty(), value ->
-                        userSettings().setFontAntiAliasing(value.map(it -> it.name().toLowerCase(Locale.ROOT))
-                                .orElse(null)));
+                {
+                    UserSettings userSettings = userSettings();
+                    userSettings.fontAntiAliasingProperty().set(value.map(it -> it.name().toLowerCase(Locale.ROOT))
+                                            .orElse(null));
+                });
 
                 fontPane.getContent().add(fontAntiAliasingPane);
             }

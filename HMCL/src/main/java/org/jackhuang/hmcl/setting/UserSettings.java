@@ -62,16 +62,6 @@ public final class UserSettings extends ObservableSetting {
         return agreementVersion;
     }
 
-    /// Returns the accepted launcher agreement version.
-    public int getAgreementVersion() {
-        return agreementVersion.get();
-    }
-
-    /// Sets the accepted launcher agreement version.
-    public void setAgreementVersion(int agreementVersion) {
-        this.agreementVersion.set(agreementVersion);
-    }
-
     /// The accepted Terracotta agreement version.
     @SerializedName("terracottaAgreementVersion")
     private final IntegerProperty terracottaAgreementVersion = new SimpleIntegerProperty();
@@ -79,16 +69,6 @@ public final class UserSettings extends ObservableSetting {
     /// Returns the accepted Terracotta agreement version property.
     public IntegerProperty terracottaAgreementVersionProperty() {
         return terracottaAgreementVersion;
-    }
-
-    /// Returns the accepted Terracotta agreement version.
-    public int getTerracottaAgreementVersion() {
-        return terracottaAgreementVersion.get();
-    }
-
-    /// Sets the accepted Terracotta agreement version.
-    public void setTerracottaAgreementVersion(int terracottaAgreementVersion) {
-        this.terracottaAgreementVersion.set(terracottaAgreementVersion);
     }
 
     /// The platform prompt version shown to the user.
@@ -100,16 +80,6 @@ public final class UserSettings extends ObservableSetting {
         return platformPromptVersion;
     }
 
-    /// Returns the platform prompt version shown to the user.
-    public int getPlatformPromptVersion() {
-        return platformPromptVersion.get();
-    }
-
-    /// Sets the platform prompt version shown to the user.
-    public void setPlatformPromptVersion(int platformPromptVersion) {
-        this.platformPromptVersion.set(platformPromptVersion);
-    }
-
     /// The number of launcher log files to retain.
     @SerializedName("logRetention")
     private final IntegerProperty logRetention = new SimpleIntegerProperty(20);
@@ -117,16 +87,6 @@ public final class UserSettings extends ObservableSetting {
     /// Returns the log retention property.
     public IntegerProperty logRetentionProperty() {
         return logRetention;
-    }
-
-    /// Returns the number of launcher log files to retain.
-    public int getLogRetention() {
-        return logRetention.get();
-    }
-
-    /// Sets the number of launcher log files to retain.
-    public void setLogRetention(int logRetention) {
-        this.logRetention.set(logRetention);
     }
 
     /// Whether offline accounts are enabled for this user.
@@ -138,16 +98,6 @@ public final class UserSettings extends ObservableSetting {
         return enableOfflineAccount;
     }
 
-    /// Returns whether offline accounts are enabled for this user.
-    public boolean isEnableOfflineAccount() {
-        return enableOfflineAccount.get();
-    }
-
-    /// Sets whether offline accounts are enabled for this user.
-    public void setEnableOfflineAccount(boolean value) {
-        enableOfflineAccount.set(value);
-    }
-
     /// The JavaFX font antialiasing mode override.
     @SerializedName("fontAntiAliasing")
     private final StringProperty fontAntiAliasing = new SimpleStringProperty();
@@ -155,16 +105,6 @@ public final class UserSettings extends ObservableSetting {
     /// Returns the JavaFX font antialiasing mode override property.
     public StringProperty fontAntiAliasingProperty() {
         return fontAntiAliasing;
-    }
-
-    /// Returns the JavaFX font antialiasing mode override.
-    public @Nullable String getFontAntiAliasing() {
-        return fontAntiAliasing.get();
-    }
-
-    /// Sets the JavaFX font antialiasing mode override.
-    public void setFontAntiAliasing(@Nullable String value) {
-        this.fontAntiAliasing.set(value);
     }
 
     /// User-added Java executable paths.

@@ -25,9 +25,7 @@ import javafx.geometry.Insets;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
-import org.jackhuang.hmcl.setting.Accounts;
-import org.jackhuang.hmcl.setting.Profile;
-import org.jackhuang.hmcl.setting.Profiles;
+import org.jackhuang.hmcl.setting.*;
 import org.jackhuang.hmcl.terracotta.TerracottaMetadata;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.FXUtils;
@@ -114,9 +112,10 @@ public class TerracottaPage extends DecoratorAnimatedPage implements DecoratorPa
     public void onPageShown() {
         tab.onPageShown();
 
-        if (userSettings().getTerracottaAgreementVersion() < TERRACOTTA_AGREEMENT_VERSION) {
+        if (ConfigHolder.userSettings().terracottaAgreementVersionProperty().get() < TERRACOTTA_AGREEMENT_VERSION) {
             Controllers.confirmWithCountdown(i18n("terracotta.confirm.desc"), i18n("terracotta.confirm.title"), 5, MessageDialogPane.MessageType.INFO, () -> {
-                userSettings().setTerracottaAgreementVersion(TERRACOTTA_AGREEMENT_VERSION);
+                UserSettings userSettings = userSettings();
+                userSettings.terracottaAgreementVersionProperty().set(TERRACOTTA_AGREEMENT_VERSION);
             }, () -> fireEvent(new PageCloseEvent()));
         }
     }
