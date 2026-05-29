@@ -33,7 +33,7 @@ public final class GlobalConfig extends ObservableSetting {
 
     @Nullable
     public static GlobalConfig fromJson(String json) throws JsonParseException {
-        return LauncherSettings.GSON.fromJson(json, GlobalConfig.class);
+        return LauncherSettings.SETTINGS_GSON.fromJson(json, GlobalConfig.class);
     }
 
     public GlobalConfig() {
@@ -41,7 +41,7 @@ public final class GlobalConfig extends ObservableSetting {
     }
 
     public String toJson() {
-        return LauncherSettings.GSON.toJson(this);
+        return LauncherSettings.SETTINGS_GSON.toJson(this);
     }
 
     @SerializedName("agreementVersion")

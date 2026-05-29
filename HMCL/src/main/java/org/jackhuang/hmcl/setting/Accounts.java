@@ -207,7 +207,7 @@ public final class Accounts {
 
         try (Reader reader = Files.newBufferedReader(LEGACY_GLOBAL_ACCOUNTS_LOCATION)) {
             List<Map<Object, Object>> accounts =
-                    LauncherSettings.GSON.fromJson(reader, listTypeOf(mapTypeOf(Object.class, Object.class)));
+                    LauncherSettings.SETTINGS_GSON.fromJson(reader, listTypeOf(mapTypeOf(Object.class, Object.class)));
             return accounts != null ? AccountStorages.fromAccounts(accounts) : null;
         } catch (Throwable e) {
             LOG.warning("Failed to load legacy global accounts", e);

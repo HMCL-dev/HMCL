@@ -67,7 +67,7 @@ public final class LauncherSettings extends ObservableSetting {
     static final String SELECTED_INSTANCE_MEMBER_NAME = "selectedInstance";
 
     /// Gson instance used for launcher settings and related settings objects that depend on JavaFX properties.
-    public static final Gson GSON = new GsonBuilder()
+    public static final Gson SETTINGS_GSON = new GsonBuilder()
             .registerTypeAdapter(Path.class, PathTypeAdapter.INSTANCE)
             .registerTypeAdapter(UUID.class, UUIDTypeAdapter.INSTANCE)
             .registerTypeAdapter(GUID.class, GUIDTypeAdapter.INSTANCE)
@@ -89,7 +89,7 @@ public final class LauncherSettings extends ObservableSetting {
     /// @throws JsonParseException if the JSON cannot be deserialized as launcher settings
     @Nullable
     public static LauncherSettings fromJson(JsonObject json) throws JsonParseException {
-        return GSON.fromJson(json, LauncherSettings.class);
+        return SETTINGS_GSON.fromJson(json, LauncherSettings.class);
     }
 
     /// Creates empty launcher settings using current defaults.
@@ -100,7 +100,7 @@ public final class LauncherSettings extends ObservableSetting {
 
     /// Serializes these launcher settings to formatted JSON.
     public String toJson() {
-        return GSON.toJson(this);
+        return SETTINGS_GSON.toJson(this);
     }
 
     // Properties
