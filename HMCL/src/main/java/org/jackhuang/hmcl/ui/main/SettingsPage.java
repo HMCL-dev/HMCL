@@ -187,11 +187,6 @@ public final class SettingsPage extends ScrollPane {
 
                     languagePaneList.getContent().add(chooseLanguagePane);
 
-                    LineToggleButton disableAutoGameOptionsPane = new LineToggleButton();
-                    disableAutoGameOptionsPane.setTitle(i18n("settings.launcher.disable_auto_game_options"));
-                    disableAutoGameOptionsPane.selectedProperty().bindBidirectional(config().disableAutoGameOptionsProperty());
-
-                    languagePaneList.getContent().add(disableAutoGameOptionsPane);
                 }
 
                 rootPane.getChildren().addAll(ComponentList.createComponentListTitle(i18n("settings.launcher.language")), languagePaneList);

@@ -598,23 +598,6 @@ public final class Config extends ObservableSetting {
         this.proxyPass.set(proxyPass);
     }
 
-    // Game
-
-    @SerializedName("disableAutoGameOptions")
-    private final BooleanProperty disableAutoGameOptions = new SimpleBooleanProperty(false);
-
-    public BooleanProperty disableAutoGameOptionsProperty() {
-        return disableAutoGameOptions;
-    }
-
-    public boolean isDisableAutoGameOptions() {
-        return disableAutoGameOptions.get();
-    }
-
-    public void setDisableAutoGameOptions(boolean disableAutoGameOptions) {
-        this.disableAutoGameOptions.set(disableAutoGameOptions);
-    }
-
     /// The selected game directory ID.
     @SerializedName(SELECTED_GAME_DIRECTORY_MEMBER_NAME)
     private final ObjectProperty<@Nullable GUID> selectedGameDirectory =

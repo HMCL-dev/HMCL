@@ -107,6 +107,7 @@ public final class LegacyConfigMigrator {
                     extractAccountStorages(jsonObject),
                     AccountStorages::new);
             JsonElement legacyAllowAutoAgent = jsonObject.remove("allowAutoAgent");
+            JsonElement legacyDisableAutoGameOptions = jsonObject.remove("disableAutoGameOptions");
             migrateLegacyLanguage(jsonObject);
             migrateLegacySelectedVersions(jsonObject);
             @Nullable GameDirectories migratedGameDirectories = extractGameDirectoriesFromConfigJson(jsonObject);
@@ -123,6 +124,7 @@ public final class LegacyConfigMigrator {
             GameSettingsPresets gameSettingsPresets = new GameSettingsPresets();
             migrateLegacyPresetSettings(gameDirectories, gameSettingsPresets, legacyConfigurations);
             migrateLegacyAllowAutoAgent(deserialized, gameSettingsPresets, legacyAllowAutoAgent);
+            migrateLegacyDisableAutoGameOptions(deserialized, gameSettingsPresets, legacyDisableAutoGameOptions);
             return new MigrationResult(path, deserialized, gameDirectories, gameSettingsPresets,
                     launcherState, authlibInjectorServers, accountStorages, deserialized.toJson());
         } catch (JsonParseException e) {
@@ -232,15 +234,39 @@ public final class LegacyConfigMigrator {
             return;
         }
 
+        ensureDefaultGameSettingsPreset(config, gameSettingsPresets);
+        for (GameSettings.Preset preset : gameSettingsPresets.getPresets()) {
+            preset.allowAutoAgentProperty().setValue(true);
+        }
+    }
+
+    /// Migrates the legacy workspace-wide automatic game options switch into game setting presets.
+    static void migrateLegacyDisableAutoGameOptions(
+            Config config,
+            GameSettingsPresets gameSettingsPresets,
+            @Nullable JsonElement legacyDisableAutoGameOptions) {
+        Objects.requireNonNull(config);
+        Objects.requireNonNull(gameSettingsPresets);
+
+        if (!(legacyDisableAutoGameOptions instanceof JsonPrimitive primitive)
+                || !primitive.isBoolean()
+                || !primitive.getAsBoolean()) {
+            return;
+        }
+
+        ensureDefaultGameSettingsPreset(config, gameSettingsPresets);
+        for (GameSettings.Preset preset : gameSettingsPresets.getPresets()) {
+            preset.disableAutoGameOptionsProperty().setValue(true);
+        }
+    }
+
+    /// Ensures there is a default preset to receive migrated workspace-wide game settings.
+    private static void ensureDefaultGameSettingsPreset(Config config, GameSettingsPresets gameSettingsPresets) {
         if (gameSettingsPresets.getPresets().isEmpty()) {
             GameSettings.Preset preset = new GameSettings.Preset(gameSettingsPresets.newPresetId());
             preset.nameProperty().setValue("Default");
             gameSettingsPresets.getPresets().add(preset);
             config.setDefaultGameSettingsPreset(preset.idProperty().getValue());
-        }
-
-        for (GameSettings.Preset preset : gameSettingsPresets.getPresets()) {
-            preset.allowAutoAgentProperty().setValue(true);
         }
     }
 

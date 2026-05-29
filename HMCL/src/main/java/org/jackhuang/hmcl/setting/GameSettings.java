@@ -423,6 +423,19 @@ public sealed abstract class GameSettings extends ObservableSetting {
         return allowAutoAgent;
     }
 
+    /// Property name for disabling automatic game options generation.
+    public static final String PROPERTY_DISABLE_AUTO_GAME_OPTIONS = "disableAutoGameOptions";
+
+    /// If `true`, HMCL will not generate game options automatically.
+    @SerializedName(PROPERTY_DISABLE_AUTO_GAME_OPTIONS)
+    private final InheritableProperty<Boolean> disableAutoGameOptions =
+            newInheritableProperty(PROPERTY_DISABLE_AUTO_GAME_OPTIONS, false);
+
+    /// Returns the automatic game options generation disable property.
+    public InheritableProperty<Boolean> disableAutoGameOptionsProperty() {
+        return disableAutoGameOptions;
+    }
+
     /// Property name for customized game arguments.
     public static final String PROPERTY_GAME_ARGS = "gameArgs";
 
@@ -924,6 +937,11 @@ public sealed abstract class GameSettings extends ObservableSetting {
         /// Returns whether HMCL may attach Java agents to improve the game experience.
         public boolean isAllowAutoAgent() {
             return inheritable(preset, instance, GameSettings::allowAutoAgentProperty);
+        }
+
+        /// Returns whether automatic game options generation is disabled.
+        public boolean isDisableAutoGameOptions() {
+            return inheritable(preset, instance, GameSettings::disableAutoGameOptionsProperty);
         }
 
         /// Returns the effective game arguments.

@@ -504,6 +504,7 @@ public final class HMCLGameRepository extends DefaultGameRepository {
                 .setRenderer(vs.getRenderer())
                 .setEnableDebugLogOutput(vs.isEnableDebugLogOutput())
                 .setAllowAutoAgent(vs.isAllowAutoAgent())
+                .setDisableAutoGameOptions(vs.isDisableAutoGameOptions())
                 .setUseNativeGLFW(vs.isUseNativeGLFW())
                 .setUseNativeOpenAL(vs.isUseNativeOpenAL())
                 .setDaemon(!makeLaunchScript && vs.getLauncherVisibility().isDaemon())

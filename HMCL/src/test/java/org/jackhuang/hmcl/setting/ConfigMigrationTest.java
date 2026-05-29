@@ -119,4 +119,40 @@ public final class ConfigMigrationTest {
                 .get("allowAutoAgent")
                 .getAsBoolean());
     }
+
+    /// Tests migrating the legacy workspace-wide automatic game options switch into game settings.
+    @Test
+    public void migratesLegacyDisableAutoGameOptionsToGameSettings() {
+        JsonObject settings = JsonParser.parseString("""
+                {
+                  "disableAutoGameOptions": true
+                }
+                """).getAsJsonObject();
+
+        Config config = new Config();
+        GameSettingsPresets gameSettingsPresets = new GameSettingsPresets();
+
+        LegacyConfigMigrator.migrateLegacyDisableAutoGameOptions(
+                config,
+                gameSettingsPresets,
+                settings.remove("disableAutoGameOptions"));
+        JsonObject serializedConfig = JsonParser.parseString(config.toJson()).getAsJsonObject();
+        JsonObject serializedGameSettings = JsonParser.parseString(
+                JsonUtils.GSON.toJson(gameSettingsPresets, GameSettingsPresets.class)
+        ).getAsJsonObject();
+
+        assertFalse(settings.has("disableAutoGameOptions"));
+        assertFalse(serializedConfig.has("disableAutoGameOptions"));
+        assertEquals(1, gameSettingsPresets.getPresets().size());
+
+        GameSettings.Preset preset = gameSettingsPresets.getPresets().get(0);
+        assertEquals(preset.idProperty().getValue(), config.getDefaultGameSettingsPreset());
+        assertTrue(preset.disableAutoGameOptionsProperty().getValue());
+        assertTrue(serializedGameSettings
+                .getAsJsonArray("presets")
+                .get(0)
+                .getAsJsonObject()
+                .get("disableAutoGameOptions")
+                .getAsBoolean());
+    }
 }

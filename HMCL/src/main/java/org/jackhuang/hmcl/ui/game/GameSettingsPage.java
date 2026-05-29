@@ -403,6 +403,10 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
             allowAutoAgentPane.setTitle(i18n("settings.launcher.allow_auto_agent"));
             allowAutoAgentPane.setSubtitle(i18n("settings.launcher.allow_auto_agent.subtitle"));
 
+            var disableAutoGameOptionsPane = createInheritableBooleanButton(GameSettings::disableAutoGameOptionsProperty);
+            launcherSettings.getContent().add(disableAutoGameOptionsPane);
+            disableAutoGameOptionsPane.setTitle(i18n("settings.launcher.disable_auto_game_options"));
+
             // Game Window Setting
             var windowTypeSublist = new ComponentSublist();
             gameSettings.getContent().add(windowTypeSublist);

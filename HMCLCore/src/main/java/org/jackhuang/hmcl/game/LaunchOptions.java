@@ -62,6 +62,7 @@ public class LaunchOptions implements Serializable {
     private boolean useNativeOpenAL;
     private boolean enableDebugLogOutput;
     private boolean allowAutoAgent;
+    private boolean disableAutoGameOptions;
     private boolean daemon;
 
     /**
@@ -268,6 +269,11 @@ public class LaunchOptions implements Serializable {
 
     public boolean isAllowAutoAgent() {
         return allowAutoAgent;
+    }
+
+    /// Returns whether automatic game options generation is disabled.
+    public boolean isDisableAutoGameOptions() {
+        return disableAutoGameOptions;
     }
 
     /**
@@ -477,6 +483,11 @@ public class LaunchOptions implements Serializable {
 
         public Builder setAllowAutoAgent(boolean allowAutoAgent) {
             options.allowAutoAgent = allowAutoAgent;
+            return this;
+        }
+
+        public Builder setDisableAutoGameOptions(boolean disableAutoGameOptions) {
+            options.disableAutoGameOptions = disableAutoGameOptions;
             return this;
         }
     }
