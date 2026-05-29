@@ -30,8 +30,6 @@ import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
-import java.net.URI;
-import java.net.URISyntaxException;
 import java.util.Objects;
 
 /// Stores a raw JSON schema string and, when possible, its parsed HMCL schema identifier.
@@ -59,14 +57,8 @@ public record JsonSchema(String value, @Nullable Parsed parsed) {
     /// The default JSON member name used for schema strings.
     public static final String DEFAULT_MEMBER_NAME = "$schema";
 
-    /// The schema URL scheme.
-    private static final String SCHEME = "https";
-
-    /// The schema URL host.
-    private static final String HOST = "schemas.glavo.site";
-
-    /// The schema URL root path.
-    private static final String ROOT_PATH = "hmcl";
+    /// The HMCL schema URL prefix.
+    private static final String URL_PREFIX = "https://schemas.glavo.site/hmcl/";
 
     /// The schema file suffix.
     private static final String FILE_SUFFIX = ".schema.json";
@@ -193,31 +185,18 @@ public record JsonSchema(String value, @Nullable Parsed parsed) {
     private static @Nullable Parsed parseCanonicalUrl(String value) {
         Objects.requireNonNull(value);
 
-        URI uri;
-        try {
-            uri = new URI(value);
-        } catch (URISyntaxException e) {
+        if (!value.startsWith(URL_PREFIX)) {
             return null;
         }
 
-        @Nullable String path = uri.getPath();
-        if (!SCHEME.equals(uri.getScheme())
-                || !HOST.equals(uri.getHost())
-                || uri.getPort() != -1
-                || uri.getUserInfo() != null
-                || uri.getQuery() != null
-                || uri.getFragment() != null
-                || path == null) {
+        String path = value.substring(URL_PREFIX.length());
+        int slash = path.indexOf('/');
+        if (slash <= 0 || slash != path.lastIndexOf('/') || slash == path.length() - 1) {
             return null;
         }
 
-        String[] segments = path.split("/", -1);
-        if (segments.length != 4 || !segments[0].isEmpty() || !ROOT_PATH.equals(segments[1])) {
-            return null;
-        }
-
-        String id = segments[2];
-        String fileName = segments[3];
+        String id = path.substring(0, slash);
+        String fileName = path.substring(slash + 1);
         if (!isValidId(id)) {
             return null;
         }
@@ -318,7 +297,7 @@ public record JsonSchema(String value, @Nullable Parsed parsed) {
 
         /// Returns the canonical schema URL.
         public String url() {
-            return SCHEME + "://" + HOST + "/" + ROOT_PATH + "/" + id + "/" + id + "-" + version + FILE_SUFFIX;
+            return URL_PREFIX + id + "/" + id + "-" + version + FILE_SUFFIX;
         }
     }
 
