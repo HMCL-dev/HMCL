@@ -82,7 +82,8 @@ public final class ProxyManager {
             return null;
     }
 
-    static void init() {
+    /// Installs proxy and authentication handlers backed by launcher settings.
+    public static void init() {
         ProxySelector.setDefault(new ProxySelector() {
             @Override
             public List<Proxy> select(URI uri) {

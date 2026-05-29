@@ -168,6 +168,26 @@ public final class LauncherSettings extends ObservableSetting {
         return commonDirectory;
     }
 
+    /// Returns the default common Minecraft directory path.
+    public static String getDefaultCommonDirectory() {
+        return Metadata.MINECRAFT_DIRECTORY.toString();
+    }
+
+    /// Resolves the effective common Minecraft directory from the current directory settings.
+    ///
+    /// @return the effective directory path, or {@code null} when the configured mode is not recognized
+    public @Nullable String getResolvedCommonDirectory() {
+        EnumCommonDirectory type = commonDirType.get();
+        if (type == null) {
+            return null;
+        }
+
+        return switch (type) {
+            case DEFAULT -> getDefaultCommonDirectory();
+            case CUSTOM -> commonDirectory.get();
+        };
+    }
+
     /// The maximum number of log lines kept in log views.
     @SerializedName("logLines")
     private final ObjectProperty<@Nullable Integer> logLines = new SimpleObjectProperty<>();

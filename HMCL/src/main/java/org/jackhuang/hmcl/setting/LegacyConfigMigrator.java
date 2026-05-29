@@ -391,8 +391,8 @@ public final class LegacyConfigMigrator {
 
             // Upgrade configuration of HMCL earlier than 3.1.70.
             if (!jsonObject.has("commonDirType")) {
-                String commonDirectory = readString(jsonObject, "commonpath", Settings.getDefaultCommonDirectory());
-                jsonObject.addProperty("commonDirType", commonDirectory.equals(Settings.getDefaultCommonDirectory())
+                String commonDirectory = readString(jsonObject, "commonpath", LauncherSettings.getDefaultCommonDirectory());
+                jsonObject.addProperty("commonDirType", commonDirectory.equals(LauncherSettings.getDefaultCommonDirectory())
                         ? EnumCommonDirectory.DEFAULT.name()
                         : EnumCommonDirectory.CUSTOM.name());
             }

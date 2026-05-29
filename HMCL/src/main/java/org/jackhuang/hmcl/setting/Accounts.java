@@ -237,10 +237,8 @@ public final class Accounts {
         }
     }
 
-    /**
-     * Called when it's ready to load accounts from {@link SettingsManager#settings()}.
-     */
-    static void init() {
+    /// Called when it's ready to load accounts from [SettingsManager#settings()].
+    public static void init() {
         if (initialized)
             throw new IllegalStateException("Already initialized");
 

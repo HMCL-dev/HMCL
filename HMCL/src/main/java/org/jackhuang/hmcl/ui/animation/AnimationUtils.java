@@ -31,9 +31,8 @@ public final class AnimationUtils {
 
     /**
      * Trigger initialization of this class.
-     * Should be called from {@link org.jackhuang.hmcl.setting.Settings#init()}.
+     * Should be called after settings have been loaded.
      */
-    @SuppressWarnings("JavadocReference")
     public static void init() {
     }
 

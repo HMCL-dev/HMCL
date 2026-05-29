@@ -22,6 +22,7 @@ import javafx.animation.KeyValue;
 import javafx.animation.Timeline;
 import javafx.application.Application;
 import javafx.application.Platform;
+import javafx.beans.binding.Bindings;
 import javafx.beans.value.ObservableBooleanValue;
 import javafx.geometry.Rectangle2D;
 import javafx.scene.control.Alert;
@@ -33,16 +34,25 @@ import javafx.scene.input.DataFormat;
 import javafx.stage.Screen;
 import javafx.stage.Stage;
 import javafx.util.Duration;
+import org.jackhuang.hmcl.game.HMCLCacheRepository;
+import org.jackhuang.hmcl.setting.Accounts;
+import org.jackhuang.hmcl.setting.AuthlibInjectorServers;
+import org.jackhuang.hmcl.setting.DownloadProviders;
+import org.jackhuang.hmcl.setting.LauncherSettings;
+import org.jackhuang.hmcl.setting.Profiles;
+import org.jackhuang.hmcl.setting.ProxyManager;
 import org.jackhuang.hmcl.setting.SettingsManager;
 import org.jackhuang.hmcl.setting.SambaException;
 import org.jackhuang.hmcl.task.AsyncTaskExecutor;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.FXUtils;
+import org.jackhuang.hmcl.ui.animation.AnimationUtils;
 import org.jackhuang.hmcl.theme.Themes;
 import org.jackhuang.hmcl.upgrade.UpdateChecker;
 import org.jackhuang.hmcl.upgrade.UpdateHandler;
 import org.jackhuang.hmcl.util.*;
+import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.io.JarUtils;
 import org.jackhuang.hmcl.util.platform.*;
 
@@ -96,6 +106,7 @@ public final class Launcher extends Application {
         try {
             try {
                 SettingsManager.init();
+                initializeSettingsRuntime();
             } catch (SambaException e) {
                 showAlert(AlertType.WARNING, i18n("fatal.samba"));
             } catch (IOException e) {
@@ -146,6 +157,26 @@ public final class Launcher extends Application {
         } catch (Throwable e) {
             CRASH_REPORTER.uncaughtException(Thread.currentThread(), e);
         }
+    }
+
+    /// Initializes modules and runtime services that depend on loaded settings.
+    private static void initializeSettingsRuntime() {
+        DownloadProviders.init();
+        ProxyManager.init();
+        Accounts.init();
+        Profiles.init();
+        AuthlibInjectorServers.init();
+        AnimationUtils.init();
+
+        CacheRepository.setInstance(HMCLCacheRepository.REPOSITORY);
+        HMCLCacheRepository.REPOSITORY.directoryProperty().bind(Bindings.createStringBinding(() -> {
+            String commonDirectory = SettingsManager.settings().getResolvedCommonDirectory();
+            if (commonDirectory != null && FileUtils.canCreateDirectory(commonDirectory)) {
+                return commonDirectory;
+            } else {
+                return LauncherSettings.getDefaultCommonDirectory();
+            }
+        }, SettingsManager.settings().commonDirectoryProperty(), SettingsManager.settings().commonDirTypeProperty()));
     }
 
     private static void appendScreen(StringBuilder builder, Screen screen) {

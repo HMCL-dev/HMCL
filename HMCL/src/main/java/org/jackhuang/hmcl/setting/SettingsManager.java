@@ -394,7 +394,6 @@ public final class SettingsManager {
         loadLauncherState(migratedLauncherState, !unsupportedVersion);
         loadAuthlibInjectorServers(migratedAuthlibInjectorServers, !unsupportedVersion);
         loadGameAccounts(migratedGameAccounts, !unsupportedVersion);
-        Settings.init();
 
         if (!unsupportedVersion && (newlyCreated || needSaveSettings)) {
             LOG.info((newlyCreated ? "Creating" : "Updating") + " config file " + SETTINGS_LOCATION);

@@ -171,7 +171,7 @@ public final class Profiles {
     }
 
     /// Called when it's ready to load profiles from [SettingsManager].
-    static void init() {
+    public static void init() {
         if (initialized)
             throw new IllegalStateException("Already initialized");
 

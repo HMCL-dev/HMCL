@@ -79,7 +79,8 @@ public final class DownloadProviders {
         PROVIDER_WRAPPER = new DownloadProviderWrapper(DEFAULT_PROVIDER);
     }
 
-    static void init() {
+    /// Initializes download provider settings and synchronizes download thread settings.
+    public static void init() {
         InvalidationListener onChangeDownloadThreads = observable -> {
             FetchTask.setDownloadExecutorConcurrency(settings().autoDownloadThreadsProperty().get()
                     ? DEFAULT_CONCURRENCY

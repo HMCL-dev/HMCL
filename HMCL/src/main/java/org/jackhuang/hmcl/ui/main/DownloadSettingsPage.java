@@ -28,7 +28,6 @@ import javafx.scene.control.ToggleGroup;
 import javafx.scene.layout.*;
 import org.jackhuang.hmcl.setting.DownloadProviders;
 import org.jackhuang.hmcl.setting.EnumCommonDirectory;
-import org.jackhuang.hmcl.setting.Settings;
 import org.jackhuang.hmcl.task.FetchTask;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.WeakListenerHolder;
@@ -126,7 +125,7 @@ public class DownloadSettingsPage extends StackPane {
                     fileCommonLocationSublist.setTitle(i18n("launcher.cache_directory"));
                     fileCommonLocationSublist.setHasSubtitle(true);
                     fileCommonLocationSublist.descriptionProperty().bind(
-                            Bindings.createObjectBinding(() -> Optional.ofNullable(Settings.instance().getCommonDirectory())
+                            Bindings.createObjectBinding(() -> Optional.ofNullable(settings().getResolvedCommonDirectory())
                                             .orElse(i18n("launcher.cache_directory.disabled")),
                                     settings().commonDirectoryProperty(), settings().commonDirTypeProperty()));
 
@@ -367,7 +366,7 @@ public class DownloadSettingsPage extends StackPane {
     }
 
     private void clearCacheDirectory() {
-        String commonDirectory = Settings.instance().getCommonDirectory();
+        String commonDirectory = settings().getResolvedCommonDirectory();
         if (commonDirectory != null) {
             FileUtils.cleanDirectoryQuietly(Path.of(commonDirectory, "cache"));
         }
