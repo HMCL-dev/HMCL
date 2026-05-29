@@ -185,7 +185,7 @@ public final class GameDirectoriesTest {
     public void doesNotStoreSelectedGameDirectoryInGameDirectories() {
         JsonObject serialized = JsonParser.parseString("""
                 {
-                  "$schema": "https://schemas.glavo.site/hmcl/game-directories/1.0/game-directories-1.0.schema.json",
+                  "$schema": "https://schemas.glavo.site/hmcl/game-directories/game-directories-1.0.schema.json",
                   "selectedGameDirectory": "123e4567-e89b-12d3-a456-426614174000",
                   "gameDirectories": []
                 }

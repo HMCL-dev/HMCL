@@ -39,7 +39,7 @@ import java.util.Objects;
 /// The JSON representation is always a string. HMCL-owned schemas use the following
 /// fixed URL form, but other strings can still be represented as unparseable schemas:
 ///
-/// `https://schemas.glavo.site/hmcl/<id>/<version>/<id>-<version>.schema.json`
+/// `https://schemas.glavo.site/hmcl/<id>/<id>-<version>.schema.json`
 ///
 /// Parsed HMCL schemas use the following compatibility policy:
 ///
@@ -212,14 +212,23 @@ public record JsonSchema(String value, @Nullable Parsed parsed) {
         }
 
         String[] segments = path.split("/", -1);
-        if (segments.length != 5 || !segments[0].isEmpty() || !ROOT_PATH.equals(segments[1])) {
+        if (segments.length != 4 || !segments[0].isEmpty() || !ROOT_PATH.equals(segments[1])) {
             return null;
         }
 
         String id = segments[2];
-        String versionString = segments[3];
-        String fileName = segments[4];
+        String fileName = segments[3];
         if (!isValidId(id)) {
+            return null;
+        }
+
+        String fileNamePrefix = id + "-";
+        if (!fileName.startsWith(fileNamePrefix) || !fileName.endsWith(FILE_SUFFIX)) {
+            return null;
+        }
+
+        String versionString = fileName.substring(fileNamePrefix.length(), fileName.length() - FILE_SUFFIX.length());
+        if (versionString.isEmpty()) {
             return null;
         }
 
@@ -309,7 +318,7 @@ public record JsonSchema(String value, @Nullable Parsed parsed) {
 
         /// Returns the canonical schema URL.
         public String url() {
-            return SCHEME + "://" + HOST + "/" + ROOT_PATH + "/" + id + "/" + version + "/" + id + "-" + version + FILE_SUFFIX;
+            return SCHEME + "://" + HOST + "/" + ROOT_PATH + "/" + id + "/" + id + "-" + version + FILE_SUFFIX;
         }
     }
 
