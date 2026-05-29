@@ -684,9 +684,7 @@ public final class Config extends ObservableSetting {
 
     // Accounts
 
-    /**
-     * The preferred login type to use when the user wants to add an account.
-     */
+    /// The preferred login type to use when the user wants to add an account.
     @SerializedName("preferredLoginType")
     private final StringProperty preferredLoginType = new SimpleStringProperty();
 
