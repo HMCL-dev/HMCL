@@ -19,6 +19,7 @@ package org.jackhuang.hmcl.game;
 
 import com.github.f4b6a3.uuid.alt.GUID;
 import com.google.gson.JsonParseException;
+import com.google.gson.reflect.TypeToken;
 import javafx.scene.image.Image;
 import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.download.LibraryAnalyzer;
@@ -219,10 +220,7 @@ public final class HMCLGameRepository extends DefaultGameRepository {
     private GameSettings.Instance copyLocalGameSettings(String id) {
         GameSettings.Instance setting = getLocalGameSettings(id);
         if (setting != null) {
-            GameSettings.Instance copied = Config.CONFIG_GSON.fromJson(Config.CONFIG_GSON.toJson(setting), GameSettings.Instance.class);
-            if (copied != null) {
-                return copied;
-            }
+            return JsonUtils.clone(Config.CONFIG_GSON, setting, TypeToken.get(GameSettings.Instance.class));
         }
 
         GameSettings.Instance copied = new GameSettings.Instance();

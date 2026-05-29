@@ -31,6 +31,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.Reader;
+import java.lang.reflect.Type;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -502,6 +503,39 @@ public final class JsonUtils {
         try (var writer = Files.newBufferedWriter(file)) {
             GSON.toJson(value, writer);
         }
+    }
+
+    /// Performs a deep clone of `value` by round-tripping it through JSON serialization using
+    /// the provided [Gson] instance.
+    ///
+    /// The value is first serialized to a [com.google.gson.JsonElement] via
+    /// [Gson#toJsonTree], then immediately deserialized back into a new instance of `T`.
+    /// The result is therefore structurally equal to `value` but is an independent copy with
+    /// no shared mutable state.
+    ///
+    /// @param <T>   the type of the value to clone; may be `null` (see return)
+    /// @param gson  the [Gson] instance to use for serialization and deserialization
+    /// @param value the object to clone, or `null`
+    /// @param type  a [TypeToken] describing the runtime type of `value`
+    /// @return a deep clone of `value`, or `null` if `value` is `null`
+    public static <T extends @UnknownNullability Object> T clone(Gson gson, T value, TypeToken<T> type) {
+        if (value == null)
+            return null;
+
+        return gson.fromJson(gson.toJsonTree(value), type);
+    }
+
+    /// Performs a deep clone of `value` by round-tripping it through JSON serialization using
+    /// [GSON].
+    ///
+    /// Delegates to [#clone(Gson, Object, TypeToken)] with [GSON] as the serializer.
+    ///
+    /// @param <T>   the type of the value to clone; may be `null` (see return)
+    /// @param value the object to clone, or `null`
+    /// @param type  a [TypeToken] describing the runtime type of `value`
+    /// @return a deep clone of `value`, or `null` if `value` is `null`
+    public static <T extends @UnknownNullability Object> T clone(T value, TypeToken<T> type) {
+        return clone(GSON, value, type);
     }
 
     /// Creates and returns a pre-configured [GsonBuilder] used to construct [GSON].
