@@ -124,6 +124,11 @@ public class MicrosoftAccountLoginPane extends JFXDialogLayout implements Dialog
                 step.set(new Step.WaitForScanQrCode(event.getUserCode(), event.getVerificationUri()));
         }));
 
+        holder.registerWeak(Accounts.OAUTH_CALLBACK.onLoginCompletedDeviceCode, event -> Platform.runLater(() -> {
+            if (step.get() instanceof Step.WaitForScanQrCode)
+                step.set(new Step.DeviceLoginCompleted());
+        }));
+
         this.step.set(Accounts.OAUTH_CALLBACK.getClientId().isEmpty()
                 ? new Step.Init()
                 : new Step.StartAuthorizationCodeLogin());
@@ -220,6 +225,13 @@ public class MicrosoftAccountLoginPane extends JFXDialogLayout implements Dialog
             codeBox.setMaxWidth(USE_PREF_SIZE);
 
             rootContainer.getChildren().addAll(deviceHint, new Group(qrCode), codeBox);
+        } else if (currentStep instanceof Step.DeviceLoginCompleted) {
+            loginButtonSpinner.setLoading(true);
+
+            var hintPane = new HintPane(MessageDialogPane.MessageType.INFO);
+            hintPane.setSegment(i18n("account.methods.microsoft.methods.device.hint.completed"));
+
+            rootContainer.getChildren().addAll(hintPane);
         } else if (currentStep instanceof Step.LoginFailed failed) {
             btnLogin.setOnAction(e -> this.step.set(new Step.StartAuthorizationCodeLogin()));
             loginButtonSpinner.setLoading(false);
@@ -309,6 +321,10 @@ public class MicrosoftAccountLoginPane extends JFXDialogLayout implements Dialog
         }
 
         record WaitForScanQrCode(String userCode, String verificationUri) implements Step {
+
+        }
+
+        record DeviceLoginCompleted() implements Step {
 
         }
 
