@@ -50,7 +50,7 @@ import java.util.*;
 /// This file keeps launcher-level choices such as UI preferences, network settings, selected game directory,
 /// selected instances, and account selection. Larger domain-specific stores, such as game directories,
 /// game settings presets, accounts, launcher state, and authlib-injector servers, are persisted in detached
-/// JSON files managed by [ConfigHolder].
+/// JSON files managed by [SettingsManager].
 @JsonAdapter(value = LauncherSettings.Adapter.class)
 public final class LauncherSettings extends ObservableSetting {
 

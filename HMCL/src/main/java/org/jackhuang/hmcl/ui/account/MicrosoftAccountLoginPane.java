@@ -55,7 +55,7 @@ import org.jackhuang.hmcl.util.StringUtils;
 import java.util.concurrent.CancellationException;
 import java.util.function.Consumer;
 
-import static org.jackhuang.hmcl.setting.ConfigHolder.settings;
+import static org.jackhuang.hmcl.setting.SettingsManager.settings;
 import static org.jackhuang.hmcl.ui.FXUtils.onEscPressed;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 

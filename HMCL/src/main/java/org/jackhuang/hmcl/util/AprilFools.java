@@ -23,7 +23,7 @@ import java.time.LocalDate;
 import java.time.Month;
 import java.util.List;
 
-import static org.jackhuang.hmcl.setting.ConfigHolder.settings;
+import static org.jackhuang.hmcl.setting.SettingsManager.settings;
 
 /// April Fools' Day utilities.
 ///

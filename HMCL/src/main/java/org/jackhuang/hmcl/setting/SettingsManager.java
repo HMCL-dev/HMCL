@@ -44,10 +44,10 @@ import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 /// Owns the process-wide configuration and detached workspace settings instances.
 @NotNullByDefault
-public final class ConfigHolder {
+public final class SettingsManager {
 
     /// Prevents instantiation.
-    private ConfigHolder() {
+    private SettingsManager() {
     }
 
     /// The user settings path shared by all workspaces.

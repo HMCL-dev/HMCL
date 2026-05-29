@@ -38,7 +38,7 @@ import org.jackhuang.hmcl.ui.wizard.WizardController;
 import org.jackhuang.hmcl.ui.wizard.WizardPage;
 import org.jackhuang.hmcl.util.SettingsMap;
 
-import static org.jackhuang.hmcl.setting.ConfigHolder.state;
+import static org.jackhuang.hmcl.setting.SettingsManager.state;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 public abstract class AbstractInstallersPage extends Control implements WizardPage {

@@ -29,7 +29,7 @@ import org.jackhuang.hmcl.util.versioning.VersionNumber;
 import java.io.IOException;
 import java.util.LinkedHashMap;
 
-import static org.jackhuang.hmcl.setting.ConfigHolder.settings;
+import static org.jackhuang.hmcl.setting.SettingsManager.settings;
 import static org.jackhuang.hmcl.util.Lang.*;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 

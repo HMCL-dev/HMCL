@@ -65,7 +65,7 @@ public final class Profiles {
 
     /// Returns whether an existing profile uses the given ID.
     private static boolean hasProfileId(GUID id) {
-        for (Profile profile : ConfigHolder.getGameDirectories()) {
+        for (Profile profile : SettingsManager.getGameDirectories()) {
             if (id.equals(profile.getId())) {
                 return true;
             }
@@ -104,7 +104,7 @@ public final class Profiles {
         if (!initialized)
             return;
 
-        ObservableList<Profile> profiles = ConfigHolder.getGameDirectories();
+        ObservableList<Profile> profiles = SettingsManager.getGameDirectories();
         Profile profile = selectedProfile.get();
 
         if (profiles.isEmpty()) {
@@ -119,7 +119,7 @@ public final class Profiles {
             }
         }
 
-        ConfigHolder.setSelectedGameDirectory(profile == null ? null : profile.getId());
+        SettingsManager.setSelectedGameDirectory(profile == null ? null : profile.getId());
         if (profile != null) {
             if (profile.getRepository().isLoaded()) {
                 refreshSelectedVersion(profile);
@@ -134,21 +134,21 @@ public final class Profiles {
     }
 
     private static void refreshSelectedVersion(Profile profile) {
-        String version = ConfigHolder.getSelectedInstance(profile.getId());
+        String version = SettingsManager.getSelectedInstance(profile.getId());
         if (!profile.getRepository().hasVersion(version)) {
             Optional<String> fallback = profile.getRepository().getVersions().stream()
                     .findFirst()
                     .map(Version::getId);
             version = fallback.orElse(null);
-            if (!Objects.equals(ConfigHolder.getSelectedInstance(profile.getId()), version)) {
-                ConfigHolder.setSelectedInstance(profile.getId(), version);
+            if (!Objects.equals(SettingsManager.getSelectedInstance(profile.getId()), version)) {
+                SettingsManager.setSelectedInstance(profile.getId(), version);
             }
         }
         selectedVersion.set(version);
     }
 
     private static void checkProfiles() {
-        ObservableList<Profile> profiles = ConfigHolder.getGameDirectories();
+        ObservableList<Profile> profiles = SettingsManager.getGameDirectories();
         if (profiles.isEmpty()) {
             Profile current = new Profile(
                     Profiles.DEFAULT_PROFILE_ID, null, PortablePath.of(".minecraft"));
@@ -170,16 +170,16 @@ public final class Profiles {
         });
     }
 
-    /// Called when it's ready to load profiles from [ConfigHolder].
+    /// Called when it's ready to load profiles from [SettingsManager].
     static void init() {
         if (initialized)
             throw new IllegalStateException("Already initialized");
 
-        profilesWrapper.set(ConfigHolder.getGameDirectories());
-        removeDuplicateProfiles(ConfigHolder.getGameDirectories());
-        ConfigHolder.getGameDirectories().addListener(onInvalidating(Profiles::refreshSelectedProfile));
-        ConfigHolder.getGameDirectories().addListener(onInvalidating(Profiles::checkProfiles));
-        ConfigHolder.getSelectedInstance().addListener(onInvalidating(() -> {
+        profilesWrapper.set(SettingsManager.getGameDirectories());
+        removeDuplicateProfiles(SettingsManager.getGameDirectories());
+        SettingsManager.getGameDirectories().addListener(onInvalidating(Profiles::refreshSelectedProfile));
+        SettingsManager.getGameDirectories().addListener(onInvalidating(Profiles::checkProfiles));
+        SettingsManager.getSelectedInstance().addListener(onInvalidating(() -> {
             Profile profile = selectedProfile.get();
             if (profile != null && profile.getRepository().isLoaded()) {
                 refreshSelectedVersion(profile);
@@ -193,12 +193,12 @@ public final class Profiles {
         Platform.runLater(() -> {
             initialized = true;
 
-            @Nullable GUID selectedId = ConfigHolder.getSelectedGameDirectory();
+            @Nullable GUID selectedId = SettingsManager.getSelectedGameDirectory();
             selectedProfile.set(
-                    ConfigHolder.getGameDirectories().stream()
+                    SettingsManager.getGameDirectories().stream()
                             .filter(it -> it.getId().equals(selectedId))
                             .findFirst()
-                            .orElse(ConfigHolder.getGameDirectories().isEmpty() ? null : ConfigHolder.getGameDirectories().get(0)));
+                            .orElse(SettingsManager.getGameDirectories().isEmpty() ? null : SettingsManager.getGameDirectories().get(0)));
         });
 
         EventBus.EVENT_BUS.channel(RefreshedVersionsEvent.class).registerWeak(event -> {
@@ -223,15 +223,15 @@ public final class Profiles {
     }
 
     private static void migrateGameSettings() {
-        if (ConfigHolder.getGameSettings().isEmpty()) {
-            ConfigHolder.getDefaultGameSettingsPresetOrCreate();
-        } else if (ConfigHolder.getGameSettings(ConfigHolder.getDefaultGameSettingsPreset()) == null) {
-            ConfigHolder.setDefaultGameSettingsPreset(ConfigHolder.getGameSettings().get(0).idProperty().getValue());
+        if (SettingsManager.getGameSettings().isEmpty()) {
+            SettingsManager.getDefaultGameSettingsPresetOrCreate();
+        } else if (SettingsManager.getGameSettings(SettingsManager.getDefaultGameSettingsPreset()) == null) {
+            SettingsManager.setDefaultGameSettingsPreset(SettingsManager.getGameSettings().get(0).idProperty().getValue());
         }
     }
 
     public static ObservableList<Profile> getProfiles() {
-        return ConfigHolder.getGameDirectories();
+        return SettingsManager.getGameDirectories();
     }
 
     public static ReadOnlyListProperty<Profile> profilesProperty() {
@@ -263,7 +263,7 @@ public final class Profiles {
 
     /// Returns the selected instance ID for the given profile.
     public static @Nullable String getSelectedInstance(Profile profile) {
-        return ConfigHolder.getSelectedInstance(profile.getId());
+        return SettingsManager.getSelectedInstance(profile.getId());
     }
 
     /// Sets the selected instance ID for the currently selected profile.
@@ -276,9 +276,9 @@ public final class Profiles {
 
     /// Sets the selected instance ID for the given profile.
     public static void setSelectedInstance(Profile profile, @Nullable String instance) {
-        ConfigHolder.setSelectedInstance(profile.getId(), instance);
+        SettingsManager.setSelectedInstance(profile.getId(), instance);
         if (profile == selectedProfile.get()) {
-            selectedVersion.set(ConfigHolder.getSelectedInstance(profile.getId()));
+            selectedVersion.set(SettingsManager.getSelectedInstance(profile.getId()));
         }
     }
 

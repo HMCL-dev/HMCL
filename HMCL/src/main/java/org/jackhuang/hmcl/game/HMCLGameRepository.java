@@ -31,7 +31,7 @@ import org.jackhuang.hmcl.mod.Modpack;
 import org.jackhuang.hmcl.mod.ModpackConfiguration;
 import org.jackhuang.hmcl.mod.ModpackProvider;
 import org.jackhuang.hmcl.setting.LauncherSettings;
-import org.jackhuang.hmcl.setting.ConfigHolder;
+import org.jackhuang.hmcl.setting.SettingsManager;
 import org.jackhuang.hmcl.setting.DefaultIsolationType;
 import org.jackhuang.hmcl.setting.GameSettings;
 import org.jackhuang.hmcl.setting.GameWindowType;
@@ -61,7 +61,7 @@ import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import static org.jackhuang.hmcl.setting.ConfigHolder.settings;
+import static org.jackhuang.hmcl.setting.SettingsManager.settings;
 import static org.jackhuang.hmcl.util.Pair.pair;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
@@ -276,7 +276,7 @@ public final class HMCLGameRepository extends DefaultGameRepository {
     }
 
     private GameSettings.@Nullable Preset getProfileGameSettingsPreset() {
-        return ConfigHolder.getGameSettings(profile.getId());
+        return SettingsManager.getGameSettings(profile.getId());
     }
 
     public @Nullable GameSettings.Instance createLocalGameSettings(String id) {
@@ -326,8 +326,8 @@ public final class HMCLGameRepository extends DefaultGameRepository {
         @Nullable GUID parent = instance != null
                 ? instance.parentProperty().getValue()
                 : profile.getId();
-        GameSettings.Preset parentSetting = ConfigHolder.getGameSettings(parent);
-        return parentSetting != null ? parentSetting : ConfigHolder.getDefaultGameSettingsPresetOrCreate();
+        GameSettings.Preset parentSetting = SettingsManager.getGameSettings(parent);
+        return parentSetting != null ? parentSetting : SettingsManager.getDefaultGameSettingsPresetOrCreate();
     }
 
     public GameSettings.Effective getEffectiveGameSettings(String id) {

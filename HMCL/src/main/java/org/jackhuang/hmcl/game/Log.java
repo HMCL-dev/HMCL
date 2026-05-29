@@ -19,7 +19,7 @@ package org.jackhuang.hmcl.game;
 
 import org.jackhuang.hmcl.util.Log4jLevel;
 
-import static org.jackhuang.hmcl.setting.ConfigHolder.settings;
+import static org.jackhuang.hmcl.setting.SettingsManager.settings;
 
 public final class Log {
     public static final int DEFAULT_LOG_LINES = 2000;

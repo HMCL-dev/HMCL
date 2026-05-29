@@ -35,8 +35,8 @@ import java.util.List;
 import java.util.Set;
 import java.util.concurrent.CopyOnWriteArraySet;
 
-import static org.jackhuang.hmcl.setting.ConfigHolder.settings;
-import static org.jackhuang.hmcl.setting.ConfigHolder.getAuthlibInjectorServers;
+import static org.jackhuang.hmcl.setting.SettingsManager.settings;
+import static org.jackhuang.hmcl.setting.SettingsManager.getAuthlibInjectorServers;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 @JsonSerializable
@@ -72,7 +72,7 @@ public final class AuthlibInjectorServers implements Validation {
             configLocation = Paths.get(CONFIG_FILENAME);
         }
 
-        if (ConfigHolder.isNewlyCreated() && Files.exists(configLocation)) {
+        if (SettingsManager.isNewlyCreated() && Files.exists(configLocation)) {
             AuthlibInjectorServers configInstance;
             try {
                 configInstance = JsonUtils.fromJsonFile(configLocation, AuthlibInjectorServers.class);

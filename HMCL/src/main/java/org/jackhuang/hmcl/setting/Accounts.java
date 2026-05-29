@@ -48,10 +48,10 @@ import java.util.*;
 
 import static java.util.stream.Collectors.toList;
 import static javafx.collections.FXCollections.observableArrayList;
-import static org.jackhuang.hmcl.setting.ConfigHolder.settings;
-import static org.jackhuang.hmcl.setting.ConfigHolder.getAccountStorages;
-import static org.jackhuang.hmcl.setting.ConfigHolder.getAuthlibInjectorServers;
-import static org.jackhuang.hmcl.setting.ConfigHolder.userSettings;
+import static org.jackhuang.hmcl.setting.SettingsManager.settings;
+import static org.jackhuang.hmcl.setting.SettingsManager.getAccountStorages;
+import static org.jackhuang.hmcl.setting.SettingsManager.getAuthlibInjectorServers;
+import static org.jackhuang.hmcl.setting.SettingsManager.userSettings;
 import static org.jackhuang.hmcl.ui.FXUtils.onInvalidating;
 import static org.jackhuang.hmcl.util.Lang.immutableListOf;
 import static org.jackhuang.hmcl.util.Lang.mapOf;
@@ -238,7 +238,7 @@ public final class Accounts {
     }
 
     /**
-     * Called when it's ready to load accounts from {@link ConfigHolder#settings()}.
+     * Called when it's ready to load accounts from {@link SettingsManager#settings()}.
      */
     static void init() {
         if (initialized)
@@ -290,7 +290,7 @@ public final class Accounts {
             selected = accounts.get(0);
         }
 
-        if (!ConfigHolder.userSettings().enableOfflineAccountProperty().get())
+        if (!SettingsManager.userSettings().enableOfflineAccountProperty().get())
             for (Account account : accounts) {
                 if (account instanceof MicrosoftAccount) {
                     UserSettings userSettings = userSettings();
@@ -299,7 +299,7 @@ public final class Accounts {
                 }
             }
 
-        if (!ConfigHolder.userSettings().enableOfflineAccountProperty().get())
+        if (!SettingsManager.userSettings().enableOfflineAccountProperty().get())
             accounts.addListener(new ListChangeListener<Account>() {
                 @Override
                 public void onChanged(Change<? extends Account> change) {

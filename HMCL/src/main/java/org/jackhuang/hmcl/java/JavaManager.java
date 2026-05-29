@@ -27,7 +27,7 @@ import org.jackhuang.hmcl.download.LibraryAnalyzer;
 import org.jackhuang.hmcl.game.GameJavaVersion;
 import org.jackhuang.hmcl.game.JavaVersionConstraint;
 import org.jackhuang.hmcl.game.Version;
-import org.jackhuang.hmcl.setting.ConfigHolder;
+import org.jackhuang.hmcl.setting.SettingsManager;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.ui.FXUtils;
@@ -213,8 +213,8 @@ public final class JavaManager {
 
                     String pathString = javaRuntime.getBinary().toString();
 
-                    ConfigHolder.userSettings().getDisabledJava().remove(pathString);
-                    if (ConfigHolder.userSettings().getUserJava().add(pathString)) {
+                    SettingsManager.userSettings().getDisabledJava().remove(pathString);
+                    if (SettingsManager.userSettings().getUserJava().add(pathString)) {
                         addJava(javaRuntime);
                     }
                     return javaRuntime;
@@ -468,7 +468,7 @@ public final class JavaManager {
 
         searcher.searchAllJavaInDirectory(Path.of(System.getProperty("user.home"), ".jdks"));
 
-        for (String javaPath : ConfigHolder.userSettings().getUserJava()) {
+        for (String javaPath : SettingsManager.userSettings().getUserJava()) {
             try {
                 searcher.tryAddJavaExecutable(Path.of(javaPath));
             } catch (InvalidPathException e) {
@@ -479,7 +479,7 @@ public final class JavaManager {
         JavaRuntime currentJava = JavaRuntime.CURRENT_JAVA;
         if (currentJava != null
                 && !searcher.javaRuntimes.containsKey(currentJava.getBinary())
-                && !ConfigHolder.userSettings().getDisabledJava().contains(currentJava.getBinary().toString())) {
+                && !SettingsManager.userSettings().getDisabledJava().contains(currentJava.getBinary().toString())) {
             searcher.addResult(currentJava.getBinary(), currentJava);
         }
 
@@ -685,7 +685,7 @@ public final class JavaManager {
 
             if (javaRuntimes.containsKey(executable)
                     || failed.contains(executable)
-                    || ConfigHolder.userSettings().getDisabledJava().contains(executable.toString())) {
+                    || SettingsManager.userSettings().getDisabledJava().contains(executable.toString())) {
                 return;
             }
 

@@ -26,7 +26,7 @@ import org.jackhuang.hmcl.util.i18n.I18n;
 
 import java.util.MissingResourceException;
 
-import static org.jackhuang.hmcl.setting.ConfigHolder.settings;
+import static org.jackhuang.hmcl.setting.SettingsManager.settings;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 

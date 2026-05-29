@@ -48,9 +48,9 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
-import static org.jackhuang.hmcl.setting.ConfigHolder.settings;
-import static org.jackhuang.hmcl.setting.ConfigHolder.gameAccountsToJson;
-import static org.jackhuang.hmcl.setting.ConfigHolder.getAuthlibInjectorServers;
+import static org.jackhuang.hmcl.setting.SettingsManager.settings;
+import static org.jackhuang.hmcl.setting.SettingsManager.gameAccountsToJson;
+import static org.jackhuang.hmcl.setting.SettingsManager.getAuthlibInjectorServers;
 
 public final class ExportWizardProvider implements WizardProvider {
     private final Profile profile;

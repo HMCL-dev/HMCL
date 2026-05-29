@@ -52,7 +52,7 @@ import java.nio.file.Path;
 import java.time.Duration;
 import java.util.*;
 
-import static org.jackhuang.hmcl.setting.ConfigHolder.settings;
+import static org.jackhuang.hmcl.setting.SettingsManager.settings;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 /// @author Glavo

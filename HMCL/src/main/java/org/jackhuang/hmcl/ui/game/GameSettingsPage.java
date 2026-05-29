@@ -774,10 +774,10 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
             updating.value = true;
             try {
                 List<RadioChoiceList.Choice<GameSettings.Preset>> choices = new ArrayList<>();
-                for (GameSettings.Preset setting : ConfigHolder.getGameSettings()) {
+                for (GameSettings.Preset setting : SettingsManager.getGameSettings()) {
                     choices.add(new PresetChoice(setting));
                 }
-                presetItem.setFallbackValue(ConfigHolder.getDefaultGameSettingsPresetOrCreate());
+                presetItem.setFallbackValue(SettingsManager.getDefaultGameSettingsPresetOrCreate());
                 presetItem.setChoices(choices);
                 presetItem.setSelectedValue(getCurrentPreset());
                 updatePresetManagementDescription(sublist);
@@ -816,7 +816,7 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
             }
         });
 
-        ConfigHolder.getGameSettings().addListener(holder.weak(updateItems));
+        SettingsManager.getGameSettings().addListener(holder.weak(updateItems));
         rebuildItems.run();
     }
 
@@ -844,9 +844,9 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
                 return;
             }
 
-            GameSettings.Preset setting = new GameSettings.Preset(ConfigHolder.gameSettingsPresets().newPresetId());
+            GameSettings.Preset setting = new GameSettings.Preset(SettingsManager.gameSettingsPresets().newPresetId());
             setting.nameProperty().setValue(name.trim());
-            ConfigHolder.getGameSettings().add(setting);
+            SettingsManager.getGameSettings().add(setting);
             selectPreset(setting);
             handler.resolve();
         }, createDefaultPresetName(), new RequiredValidator());
@@ -857,7 +857,7 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
         for (int index = 1; ; index++) {
             String name = i18n("settings.type.global.preset.new", index);
             boolean used = false;
-            for (GameSettings.Preset setting : ConfigHolder.getGameSettings()) {
+            for (GameSettings.Preset setting : SettingsManager.getGameSettings()) {
                 if (Objects.equals(name, setting.nameProperty().getValue())) {
                     used = true;
                     break;
@@ -885,7 +885,7 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
 
     /// Asks the user to confirm removing the given preset.
     private void confirmRemovePreset(GameSettings.Preset setting) {
-        if (ConfigHolder.getGameSettings().size() <= 1) {
+        if (SettingsManager.getGameSettings().size() <= 1) {
             return;
         }
 
@@ -898,7 +898,7 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
 
     /// Removes a preset and selects another preset for editing.
     private void removePreset(GameSettings.Preset setting) {
-        ObservableList<GameSettings.Preset> settings = ConfigHolder.getGameSettings();
+        ObservableList<GameSettings.Preset> settings = SettingsManager.getGameSettings();
         int index = settings.indexOf(setting);
         if (index < 0 || settings.size() <= 1) {
             return;
@@ -907,13 +907,13 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
         boolean removedCurrentPreset = Objects.equals(getCurrentPreset(), setting);
         GameSettings.Preset next = settings.get(index == 0 ? 1 : index - 1);
         GUID removedId = setting.idProperty().getValue();
-        if (Objects.equals(ConfigHolder.getDefaultGameSettingsPreset(), removedId)) {
-            ConfigHolder.setDefaultGameSettingsPreset(next.idProperty().getValue());
+        if (Objects.equals(SettingsManager.getDefaultGameSettingsPreset(), removedId)) {
+            SettingsManager.setDefaultGameSettingsPreset(next.idProperty().getValue());
         }
 
         settings.remove(index);
-        if (ConfigHolder.getGameSettings(ConfigHolder.getDefaultGameSettingsPreset()) == null) {
-            ConfigHolder.setDefaultGameSettingsPreset(next.idProperty().getValue());
+        if (SettingsManager.getGameSettings(SettingsManager.getDefaultGameSettingsPreset()) == null) {
+            SettingsManager.setDefaultGameSettingsPreset(next.idProperty().getValue());
         }
         if (removedCurrentPreset) {
             selectPreset(next);
@@ -925,13 +925,13 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
         InvalidationListener updateItems = observable -> {
             @Nullable GameSettings.Preset selected = button.getValue();
             items.setAll((GameSettings.Preset) null);
-            items.addAll(ConfigHolder.getGameSettings());
-            if (selected != null && ConfigHolder.getGameSettings(selected.idProperty().getValue()) == null) {
+            items.addAll(SettingsManager.getGameSettings());
+            if (selected != null && SettingsManager.getGameSettings(selected.idProperty().getValue()) == null) {
                 button.setValue(null);
             }
         };
-        updateItems.invalidated(ConfigHolder.getGameSettings());
-        ConfigHolder.getGameSettings().addListener(updateItems);
+        updateItems.invalidated(SettingsManager.getGameSettings());
+        SettingsManager.getGameSettings().addListener(updateItems);
         button.setItems(items);
 
         button.valueProperty().addListener((observable, oldValue, newValue) -> {
@@ -946,7 +946,7 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
                 updatingParentSetting = true;
                 try {
                     GUID parent = setting.parentProperty().getValue();
-                    button.setValue(parent != null ? ConfigHolder.getGameSettings(parent) : null);
+                    button.setValue(parent != null ? SettingsManager.getGameSettings(parent) : null);
                 } finally {
                     updatingParentSetting = false;
                 }
@@ -1376,8 +1376,8 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
             refresh.invalidated(newValue);
         });
 
-        ConfigHolder.getGameSettings().addListener(refresh);
-        ConfigHolder.defaultGameSettingsPresetProperty().addListener(refresh);
+        SettingsManager.getGameSettings().addListener(refresh);
+        SettingsManager.defaultGameSettingsPresetProperty().addListener(refresh);
 
         S setting = currentSetting.get();
         if (setting != null) {
@@ -1452,8 +1452,8 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
             refresh.invalidated(newValue);
         });
 
-        ConfigHolder.getGameSettings().addListener(refresh);
-        ConfigHolder.defaultGameSettingsPresetProperty().addListener(refresh);
+        SettingsManager.getGameSettings().addListener(refresh);
+        SettingsManager.defaultGameSettingsPresetProperty().addListener(refresh);
 
         S setting = currentSetting.get();
         if (setting != null) {
@@ -1619,8 +1619,8 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
             refresh.invalidated(newValue);
         });
 
-        ConfigHolder.getGameSettings().addListener(refresh);
-        ConfigHolder.defaultGameSettingsPresetProperty().addListener(refresh);
+        SettingsManager.getGameSettings().addListener(refresh);
+        SettingsManager.defaultGameSettingsPresetProperty().addListener(refresh);
 
         S setting = currentSetting.get();
         if (setting instanceof GameSettings.Instance instance) {
@@ -1751,8 +1751,8 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
             }
             propertyListener.invalidated(newProperty);
         });
-        ConfigHolder.getGameSettings().addListener(propertyListener);
-        ConfigHolder.defaultGameSettingsPresetProperty().addListener(propertyListener);
+        SettingsManager.getGameSettings().addListener(propertyListener);
+        SettingsManager.defaultGameSettingsPresetProperty().addListener(propertyListener);
 
         S setting = currentSetting.get();
         if (setting != null) {
@@ -1871,8 +1871,8 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
             propertyListener.invalidated(newValue);
         });
 
-        ConfigHolder.getGameSettings().addListener(propertyListener);
-        ConfigHolder.defaultGameSettingsPresetProperty().addListener(propertyListener);
+        SettingsManager.getGameSettings().addListener(propertyListener);
+        SettingsManager.defaultGameSettingsPresetProperty().addListener(propertyListener);
 
         S setting = currentSetting.get();
         if (setting != null) {
@@ -1933,8 +1933,8 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
 
             initInheritableSublistDescription(sublist, propertyGetter, converter);
         });
-        ConfigHolder.getGameSettings().addListener(propertyListener);
-        ConfigHolder.defaultGameSettingsPresetProperty().addListener(propertyListener);
+        SettingsManager.getGameSettings().addListener(propertyListener);
+        SettingsManager.defaultGameSettingsPresetProperty().addListener(propertyListener);
 
         S setting = currentSetting.get();
         if (setting != null) {
@@ -1982,8 +1982,8 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
 
             JFXButton removeButton = FXUtils.newToggleButton4(SVG.DELETE_FOREVER, 14);
             removeButton.disableProperty().bind(Bindings.createBooleanBinding(
-                    () -> ConfigHolder.getGameSettings().size() <= 1,
-                    ConfigHolder.getGameSettings()));
+                    () -> SettingsManager.getGameSettings().size() <= 1,
+                    SettingsManager.getGameSettings()));
             removeButton.setOnAction(event -> {
                 confirmRemovePreset(getValue());
                 event.consume();
@@ -2194,8 +2194,8 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
             refresh.invalidated(newValue);
         });
 
-        ConfigHolder.getGameSettings().addListener(refresh);
-        ConfigHolder.defaultGameSettingsPresetProperty().addListener(refresh);
+        SettingsManager.getGameSettings().addListener(refresh);
+        SettingsManager.defaultGameSettingsPresetProperty().addListener(refresh);
 
         S setting = currentSetting.get();
         if (setting != null) {
@@ -2280,8 +2280,8 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
             refresh.invalidated(newValue);
         });
 
-        ConfigHolder.getGameSettings().addListener(refresh);
-        ConfigHolder.defaultGameSettingsPresetProperty().addListener(refresh);
+        SettingsManager.getGameSettings().addListener(refresh);
+        SettingsManager.defaultGameSettingsPresetProperty().addListener(refresh);
 
         S setting = currentSetting.get();
         if (setting != null) {
@@ -2346,8 +2346,8 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
     /// Returns the configured parent preset for an instance.
     private GameSettings.Preset getParentGameSettings(GameSettings.Instance instance) {
         GUID parent = instance.parentProperty().getValue();
-        GameSettings.Preset parentSetting = ConfigHolder.getGameSettings(parent);
-        return parentSetting != null ? parentSetting : ConfigHolder.getDefaultGameSettingsPresetOrCreate();
+        GameSettings.Preset parentSetting = SettingsManager.getGameSettings(parent);
+        return parentSetting != null ? parentSetting : SettingsManager.getDefaultGameSettingsPresetOrCreate();
     }
 
     @SafeVarargs
@@ -2387,7 +2387,7 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
             this.currentSetting.set((S) profile.getRepository().getLocalGameSettingsOrCreate(instanceId));
             loadIcon();
         } else {
-            this.currentSetting.set((S) ConfigHolder.getDefaultGameSettingsPresetOrCreate());
+            this.currentSetting.set((S) SettingsManager.getDefaultGameSettingsPresetOrCreate());
         }
     }
 

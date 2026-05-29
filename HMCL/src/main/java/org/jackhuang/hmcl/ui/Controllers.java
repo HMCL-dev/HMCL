@@ -79,10 +79,10 @@ import java.time.LocalDate;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
-import static org.jackhuang.hmcl.setting.ConfigHolder.settings;
-import static org.jackhuang.hmcl.setting.ConfigHolder.getAuthlibInjectorServers;
-import static org.jackhuang.hmcl.setting.ConfigHolder.state;
-import static org.jackhuang.hmcl.setting.ConfigHolder.userSettings;
+import static org.jackhuang.hmcl.setting.SettingsManager.settings;
+import static org.jackhuang.hmcl.setting.SettingsManager.getAuthlibInjectorServers;
+import static org.jackhuang.hmcl.setting.SettingsManager.state;
+import static org.jackhuang.hmcl.setting.SettingsManager.userSettings;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
@@ -257,7 +257,7 @@ public final class Controllers {
         LOG.info("April Fools: " + AprilFools.isEnabled());
 
         if (System.getProperty("prism.lcdtext") == null) {
-            @Nullable String fontAntiAliasing = ConfigHolder.userSettings().fontAntiAliasingProperty().get();
+            @Nullable String fontAntiAliasing = SettingsManager.userSettings().fontAntiAliasingProperty().get();
             if ("lcd".equalsIgnoreCase(fontAntiAliasing)) {
                 LOG.info("Enable sub-pixel antialiasing");
                 System.getProperties().put("prism.lcdtext", "true");
@@ -389,7 +389,7 @@ public final class Controllers {
             timeline.play();
         }
 
-        if (!Architecture.SYSTEM_ARCH.isX86() && ConfigHolder.userSettings().platformPromptVersionProperty().get() < 1) {
+        if (!Architecture.SYSTEM_ARCH.isX86() && SettingsManager.userSettings().platformPromptVersionProperty().get() < 1) {
             Runnable continueAction = () -> {
                 UserSettings userSettings = userSettings();
                 userSettings.platformPromptVersionProperty().set(1);
@@ -448,7 +448,7 @@ public final class Controllers {
                     .build());
         }
 
-        if (ConfigHolder.userSettings().agreementVersionProperty().get() < 1) {
+        if (SettingsManager.userSettings().agreementVersionProperty().get() < 1) {
             JFXDialogLayout agreementPane = new JFXDialogLayout();
             agreementPane.setHeading(new Label(i18n("launcher.agreement")));
             agreementPane.setBody(new Label(i18n("launcher.agreement.hint")));

@@ -29,7 +29,7 @@ import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.BorderPane;
 import org.jackhuang.hmcl.game.HMCLGameRepository;
 import org.jackhuang.hmcl.game.NativesDirectoryType;
-import org.jackhuang.hmcl.setting.ConfigHolder;
+import org.jackhuang.hmcl.setting.SettingsManager;
 import org.jackhuang.hmcl.setting.GameSettings;
 import org.jackhuang.hmcl.setting.property.SettingProperty;
 import org.jackhuang.hmcl.ui.MemoryStatusBar;
@@ -425,8 +425,8 @@ final class IndependentSettingBinder {
             }
             refresh.invalidated(newValue);
         });
-        ConfigHolder.getGameSettings().addListener(refresh);
-        ConfigHolder.defaultGameSettingsPresetProperty().addListener(refresh);
+        SettingsManager.getGameSettings().addListener(refresh);
+        SettingsManager.defaultGameSettingsPresetProperty().addListener(refresh);
         memoryStatusBar.memoryStatusProperty().addListener(observable -> {
             GameSettings setting = currentSetting.get();
             if (setting == null) {
@@ -712,8 +712,8 @@ final class IndependentSettingBinder {
             }
             refresh.invalidated(newProperty);
         });
-        ConfigHolder.getGameSettings().addListener(refresh);
-        ConfigHolder.defaultGameSettingsPresetProperty().addListener(refresh);
+        SettingsManager.getGameSettings().addListener(refresh);
+        SettingsManager.defaultGameSettingsPresetProperty().addListener(refresh);
 
         GameSettings setting = currentSetting.get();
         if (setting != null) {
