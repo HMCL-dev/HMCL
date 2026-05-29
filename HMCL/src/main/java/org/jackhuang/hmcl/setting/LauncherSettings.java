@@ -150,12 +150,12 @@ public final class LauncherSettings extends ObservableSetting {
     }
 
     /// The common Minecraft directory selection mode.
-    @SerializedName("commonDirType")
-    private final ObjectProperty<EnumCommonDirectory> commonDirType = new RawPreservingObjectProperty<>(EnumCommonDirectory.DEFAULT);
+    @SerializedName("commonDirectoryType")
+    private final ObjectProperty<EnumCommonDirectory> commonDirectoryType = new RawPreservingObjectProperty<>(EnumCommonDirectory.DEFAULT);
 
     /// Returns the common Minecraft directory selection mode property.
-    public ObjectProperty<EnumCommonDirectory> commonDirTypeProperty() {
-        return commonDirType;
+    public ObjectProperty<EnumCommonDirectory> commonDirectoryTypeProperty() {
+        return commonDirectoryType;
     }
 
     /// The custom common Minecraft directory path.
@@ -176,7 +176,7 @@ public final class LauncherSettings extends ObservableSetting {
     ///
     /// @return the effective directory path, or `null` when the configured mode is not recognized
     public String getResolvedCommonDirectory() {
-        EnumCommonDirectory type = commonDirType.get();
+        EnumCommonDirectory type = commonDirectoryType.get();
         String customPath = commonDirectory.get();
 
         return type == EnumCommonDirectory.CUSTOM && StringUtils.isNotBlank(customPath)

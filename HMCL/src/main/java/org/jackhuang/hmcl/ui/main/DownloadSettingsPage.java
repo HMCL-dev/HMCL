@@ -119,7 +119,7 @@ public class DownloadSettingsPage extends StackPane {
                                     .setSelectionMode(FileSelector.SelectionMode.DIRECTORY)
                                     .bindBidirectional(settings().commonDirectoryProperty())
                     ));
-                    fileCommonLocation.selectedDataProperty().bindBidirectional(settings().commonDirTypeProperty());
+                    fileCommonLocation.selectedDataProperty().bindBidirectional(settings().commonDirectoryTypeProperty());
 
                     fileCommonLocationSublist.getContent().add(fileCommonLocation);
                     fileCommonLocationSublist.setTitle(i18n("launcher.cache_directory"));
@@ -127,7 +127,7 @@ public class DownloadSettingsPage extends StackPane {
                     fileCommonLocationSublist.descriptionProperty().bind(
                             Bindings.createObjectBinding(() -> Optional.ofNullable(settings().getResolvedCommonDirectory())
                                             .orElse(i18n("launcher.cache_directory.disabled")),
-                                    settings().commonDirectoryProperty(), settings().commonDirTypeProperty()));
+                                    settings().commonDirectoryProperty(), settings().commonDirectoryTypeProperty()));
 
                     JFXButton cleanButton = FXUtils.newBorderButton(i18n("launcher.cache_directory.clean"));
                     cleanButton.setOnAction(e -> clearCacheDirectory());

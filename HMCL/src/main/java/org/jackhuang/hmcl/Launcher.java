@@ -176,7 +176,7 @@ public final class Launcher extends Application {
             } else {
                 return LauncherSettings.getDefaultCommonDirectory();
             }
-        }, SettingsManager.settings().commonDirectoryProperty(), SettingsManager.settings().commonDirTypeProperty()));
+        }, SettingsManager.settings().commonDirectoryProperty(), SettingsManager.settings().commonDirectoryTypeProperty()));
     }
 
     private static void appendScreen(StringBuilder builder, Screen screen) {

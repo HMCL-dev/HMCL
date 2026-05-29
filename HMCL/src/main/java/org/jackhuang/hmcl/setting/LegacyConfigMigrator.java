@@ -108,6 +108,7 @@ public final class LegacyConfigMigrator {
                     AccountStorages::new);
             JsonElement legacyAllowAutoAgent = jsonObject.remove("allowAutoAgent");
             JsonElement legacyDisableAutoGameOptions = jsonObject.remove("disableAutoGameOptions");
+            migrateLegacyCommonDirectoryType(jsonObject);
             migrateLegacyCommonDirectory(jsonObject);
             migrateLegacyLanguage(jsonObject);
             migrateLegacySelectedVersions(jsonObject);
@@ -233,6 +234,18 @@ public final class LegacyConfigMigrator {
         }
 
         json.addProperty("commonDirectory", primitive.getAsString());
+    }
+
+    /// Migrates the legacy `commonDirType` field into the current `commonDirectoryType` field.
+    static void migrateLegacyCommonDirectoryType(JsonObject json) {
+        Objects.requireNonNull(json);
+
+        JsonElement legacyCommonDirectoryType = json.remove("commonDirType");
+        if (json.has("commonDirectoryType") || legacyCommonDirectoryType == null) {
+            return;
+        }
+
+        json.add("commonDirectoryType", legacyCommonDirectoryType);
     }
 
     /// Migrates the legacy workspace-wide automatic Java agent permission into game setting presets.
@@ -405,9 +418,9 @@ public final class LegacyConfigMigrator {
 
 
             // Upgrade configuration of HMCL earlier than 3.1.70.
-            if (!jsonObject.has("commonDirType")) {
+            if (!jsonObject.has("commonDirType") && !jsonObject.has("commonDirectoryType")) {
                 String commonDirectory = readString(jsonObject, "commonpath", LauncherSettings.getDefaultCommonDirectory());
-                jsonObject.addProperty("commonDirType", commonDirectory.equals(LauncherSettings.getDefaultCommonDirectory())
+                jsonObject.addProperty("commonDirectoryType", commonDirectory.equals(LauncherSettings.getDefaultCommonDirectory())
                         ? EnumCommonDirectory.DEFAULT.name()
                         : EnumCommonDirectory.CUSTOM.name());
             }
