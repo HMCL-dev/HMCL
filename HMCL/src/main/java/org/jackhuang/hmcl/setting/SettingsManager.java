@@ -75,7 +75,7 @@ public final class SettingsManager {
 
     /// The current shared game directories path.
     private static final Path GLOBAL_GAME_DIRECTORIES_LOCATION =
-            Metadata.HMCL_USER_HOME.resolve("game-directories.json");
+            Metadata.HMCL_USER_HOME.resolve("user-game-directories.json");
 
     /// The current per-workspace game settings path.
     private static final Path GAME_SETTINGS_LOCATION =
@@ -96,7 +96,7 @@ public final class SettingsManager {
     /// The shared game directory file helper.
     private static final JsonSettingFile<GameDirectories> GLOBAL_GAME_DIRECTORIES_FILE = new JsonSettingFile<>(
             GLOBAL_GAME_DIRECTORIES_LOCATION,
-            "global game directories",
+            "user game directories",
             GameDirectories.class,
             GameDirectories.CURRENT_SCHEMA,
             GameDirectories::new);
@@ -522,7 +522,7 @@ public final class SettingsManager {
         }
 
         LOG.info("Game directories location: " + LOCAL_GAME_DIRECTORIES_LOCATION);
-        LOG.info("Global game directories location: " + GLOBAL_GAME_DIRECTORIES_LOCATION);
+        LOG.info("User game directories location: " + GLOBAL_GAME_DIRECTORIES_LOCATION);
 
         boolean newlyCreatedLocal = !Files.exists(LOCAL_GAME_DIRECTORIES_LOCATION);
         boolean newlyCreatedGlobal = !Files.exists(GLOBAL_GAME_DIRECTORIES_LOCATION);
@@ -542,7 +542,7 @@ public final class SettingsManager {
         }
 
         if (newlyCreatedGlobal && allowSaveGlobalGameDirectories) {
-            LOG.info("Creating global game directories file " + GLOBAL_GAME_DIRECTORIES_LOCATION);
+            LOG.info("Creating user game directories file " + GLOBAL_GAME_DIRECTORIES_LOCATION);
             saveGlobalGameDirectories();
         }
     }
@@ -846,10 +846,10 @@ public final class SettingsManager {
 
     /// Storage scope for a game directory entry.
     private enum GameDirectoryScope {
-        /// Stored in `HMCL_CURRENT_DIRECTORY/game-directories.json`.
+        /// Stored in `HMCL_LOCAL_HOME/game-directories.json`.
         LOCAL,
 
-        /// Stored in `HMCL_GLOBAL_DIRECTORY/game-directories.json`.
+        /// Stored in `HMCL_USER_HOME/user-game-directories.json`.
         GLOBAL
     }
 

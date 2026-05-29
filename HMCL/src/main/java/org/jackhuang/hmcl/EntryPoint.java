@@ -162,7 +162,7 @@ public final class EntryPoint {
             try {
                 Files.createDirectories(Metadata.HMCL_USER_HOME);
             } catch (IOException e) {
-                LOG.warning("Failed to create HMCL global directory " + Metadata.HMCL_USER_HOME, e);
+                LOG.warning("Failed to create HMCL user home " + Metadata.HMCL_USER_HOME, e);
             }
         }
     }
