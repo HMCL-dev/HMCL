@@ -46,7 +46,7 @@ import java.util.Objects;
 public final class GameDirectories extends ObservableSetting implements JsonSchemaSetting {
     /// The JSON schema supported by this game directory store.
     public static final JsonSchema CURRENT_SCHEMA =
-            new JsonSchema("game-directories", new JsonSchema.Version(1, 0));
+            new JsonSchema("game-directories", new JsonSchema.Version(1, 0, 0));
 
     /// Creates an empty game directory store.
     public GameDirectories() {

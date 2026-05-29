@@ -32,15 +32,15 @@ public final class JsonSchemaTest {
     @Test
     public void readsSchema() {
         JsonObject object = new JsonObject();
-        object.addProperty(JsonSchema.DEFAULT_MEMBER_NAME, schemaUrl("settings", "3.0"));
+        object.addProperty(JsonSchema.DEFAULT_MEMBER_NAME, schemaUrl("settings", "3.0.1"));
 
         JsonSchema schema = JsonSchema.readFromMember(object);
 
         assertTrue(schema.isParsed());
         assertEquals("settings", schema.id());
-        assertEquals(new JsonSchema.Version(3, 0), schema.version());
-        assertEquals(schemaUrl("settings", "3.0"), schema.url());
-        assertEquals(schemaUrl("settings", "3.0"), schema.toString());
+        assertEquals(new JsonSchema.Version(3, 0, 1), schema.version());
+        assertEquals(schemaUrl("settings", "3.0.1"), schema.url());
+        assertEquals(schemaUrl("settings", "3.0.1"), schema.toString());
     }
 
     /// Tests reading schema strings that are not HMCL schema URLs.
@@ -60,7 +60,7 @@ public final class JsonSchemaTest {
     /// Tests serialization of schema URL strings.
     @Test
     public void serializesSchema() {
-        JsonSchema schema = new JsonSchema("settings", new JsonSchema.Version(3, 0));
+        JsonSchema schema = new JsonSchema("settings", new JsonSchema.Version(3, 0, 1));
 
         JsonElement serialized = JsonParser.parseString(JsonUtils.GSON.toJson(schema));
 
@@ -82,7 +82,7 @@ public final class JsonSchemaTest {
     /// Tests schema URL compatibility check statuses.
     @Test
     public void checksSchema() {
-        JsonSchema expected = new JsonSchema("settings", new JsonSchema.Version(3, 0));
+        JsonSchema expected = new JsonSchema("settings", new JsonSchema.Version(3, 0, 1));
         JsonObject object = new JsonObject();
 
         JsonSchema.CheckResult missing = JsonSchema.check(object, expected);
@@ -103,20 +103,26 @@ public final class JsonSchemaTest {
         assertTrue(invalidVersion.isUnparseable());
         assertEquals(schemaUrl("settings", "3.x"), invalidVersion.actual().url());
 
-        object.addProperty(JsonSchema.DEFAULT_MEMBER_NAME, schemaUrl("game-settings", "1.0"));
+        object.addProperty(JsonSchema.DEFAULT_MEMBER_NAME, schemaUrl("game-settings", "1.0.0"));
         JsonSchema.CheckResult unexpected = JsonSchema.check(object, expected);
         assertTrue(unexpected.isUnexpectedId());
         assertEquals("game-settings", unexpected.actual().id());
 
-        object.addProperty(JsonSchema.DEFAULT_MEMBER_NAME, schemaUrl("settings", "3.1"));
-        JsonSchema.CheckResult newerMinor = JsonSchema.check(object, expected);
-        assertTrue(newerMinor.isNewerThanExpected());
-        assertFalse(newerMinor.hasNewerMajorVersion());
+        object.addProperty(JsonSchema.DEFAULT_MEMBER_NAME, schemaUrl("settings", "3.0.2"));
+        JsonSchema.CheckResult newerPatch = JsonSchema.check(object, expected);
+        assertTrue(newerPatch.hasSameMajorAndMinorVersion());
+        assertFalse(newerPatch.hasNewerMinorVersion());
+        assertFalse(newerPatch.hasDifferentMajorVersion());
 
-        object.addProperty(JsonSchema.DEFAULT_MEMBER_NAME, schemaUrl("settings", "4.0"));
+        object.addProperty(JsonSchema.DEFAULT_MEMBER_NAME, schemaUrl("settings", "3.1.0"));
+        JsonSchema.CheckResult newerMinor = JsonSchema.check(object, expected);
+        assertTrue(newerMinor.hasNewerMinorVersion());
+        assertFalse(newerMinor.hasDifferentMajorVersion());
+
+        object.addProperty(JsonSchema.DEFAULT_MEMBER_NAME, schemaUrl("settings", "4.0.0"));
         JsonSchema.CheckResult newerMajor = JsonSchema.check(object, expected);
-        assertTrue(newerMajor.isNewerThanExpected());
-        assertTrue(newerMajor.hasNewerMajorVersion());
+        assertTrue(newerMajor.hasDifferentMajorVersion());
+        assertFalse(newerMajor.hasNewerMinorVersion());
     }
 
     /// Creates a schema URL string.

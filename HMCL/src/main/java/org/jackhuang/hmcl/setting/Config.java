@@ -49,7 +49,7 @@ import java.util.*;
 public final class Config extends ObservableSetting {
 
     /// The JSON schema supported by this config class.
-    public static final JsonSchema CURRENT_SCHEMA = new JsonSchema("settings", new JsonSchema.Version(1, 0));
+    public static final JsonSchema CURRENT_SCHEMA = new JsonSchema("settings", new JsonSchema.Version(1, 0, 0));
 
     /// The JSON member name for the default game setting preset ID.
     static final String DEFAULT_GAME_SETTINGS_PRESET_MEMBER_NAME = "defaultGameSettingsPreset";
@@ -725,7 +725,7 @@ public final class Config extends ObservableSetting {
             return new Config();
         }
 
-        /// Serializes the main config with the current schema.
+        /// Serializes the main config with its stored schema.
         @Override
         public JsonElement serialize(Config src, Type typeOfSrc, JsonSerializationContext context) {
             if (src == null) {
@@ -733,7 +733,7 @@ public final class Config extends ObservableSetting {
             }
 
             JsonObject result = super.serialize(src, typeOfSrc, context).getAsJsonObject();
-            result.add(JsonSchema.DEFAULT_MEMBER_NAME, context.serialize(CURRENT_SCHEMA, JsonSchema.class));
+            result.add(JsonSchema.DEFAULT_MEMBER_NAME, context.serialize(src.getSchema(), JsonSchema.class));
             return result;
         }
 

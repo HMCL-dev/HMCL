@@ -95,7 +95,7 @@ final class JsonSettingFile<T extends ObservableSetting & JsonSchemaSetting> {
 
                     @Nullable T deserialized = JsonUtils.GSON.fromJson(jsonObject, type);
                     if (deserialized != null) {
-                        if (!expectedSchema.equals(deserialized.getSchema())) {
+                        if (!schema.preserveSchema() && !expectedSchema.equals(deserialized.getSchema())) {
                             deserialized.setSchema(expectedSchema);
                         }
 

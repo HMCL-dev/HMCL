@@ -443,7 +443,7 @@ public final class ConfigHolder {
                     return new Config();
                 }
 
-                if (!Config.CURRENT_SCHEMA.equals(settings.getSchema())) {
+                if (!schema.preserveSchema() && !Config.CURRENT_SCHEMA.equals(settings.getSchema())) {
                     settings.setSchema(Config.CURRENT_SCHEMA);
                 }
 

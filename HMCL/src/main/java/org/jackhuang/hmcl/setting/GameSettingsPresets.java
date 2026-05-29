@@ -49,7 +49,7 @@ import java.util.Objects;
 public final class GameSettingsPresets extends ObservableSetting implements JsonSchemaSetting {
     /// The JSON schema supported by this game settings preset store.
     public static final JsonSchema CURRENT_SCHEMA =
-            new JsonSchema("game-settings", new JsonSchema.Version(1, 0));
+            new JsonSchema("game-settings", new JsonSchema.Version(1, 0, 0));
 
     /// Creates an empty game settings preset store.
     public GameSettingsPresets() {

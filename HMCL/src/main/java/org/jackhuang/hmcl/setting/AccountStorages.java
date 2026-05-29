@@ -41,7 +41,7 @@ import java.util.Objects;
 final class AccountStorages extends ObservableSetting implements JsonSchemaSetting {
     /// The JSON schema supported by this account storage list.
     static final JsonSchema CURRENT_SCHEMA =
-            new JsonSchema("game-accounts", new JsonSchema.Version(1, 0));
+            new JsonSchema("game-accounts", new JsonSchema.Version(1, 0, 0));
 
     /// Creates an empty account storage list.
     AccountStorages() {

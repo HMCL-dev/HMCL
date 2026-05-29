@@ -26,7 +26,11 @@ import org.jackhuang.hmcl.util.gson.JsonSchema;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.Objects;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -185,7 +189,7 @@ public final class GameDirectoriesTest {
     public void doesNotStoreSelectedGameDirectoryInGameDirectories() {
         JsonObject serialized = JsonParser.parseString("""
                 {
-                  "$schema": "https://schemas.glavo.site/hmcl/game-directories/1.0",
+                  "$schema": "https://schemas.glavo.site/hmcl/game-directories/1.0.0",
                   "selectedGameDirectory": "123e4567-e89b-12d3-a456-426614174000",
                   "gameDirectories": []
                 }
@@ -199,5 +203,38 @@ public final class GameDirectoriesTest {
                 JsonSchema.readFromMember(rewritten, JsonSchema.DEFAULT_MEMBER_NAME));
         assertFalse(rewritten.has(Config.SELECTED_GAME_DIRECTORY_MEMBER_NAME));
         assertTrue(rewritten.has("gameDirectories"));
+    }
+
+    /// Tests that patch-version schemas are preserved together with unknown fields.
+    @Test
+    public void preservesPatchSchemaAndUnknownFields(@TempDir Path tempDir) throws IOException {
+        Path location = tempDir.resolve("game-directories.json");
+        Files.writeString(location, """
+                {
+                  "$schema": "https://schemas.glavo.site/hmcl/game-directories/1.0.1",
+                  "futureField": {
+                    "enabled": true
+                  },
+                  "gameDirectories": []
+                }
+                """);
+
+        JsonSettingFile<GameDirectories> file = new JsonSettingFile<>(
+                location,
+                "game directories",
+                GameDirectories.class,
+                GameDirectories.CURRENT_SCHEMA,
+                GameDirectories::new);
+
+        JsonSettingFile.LoadResult<GameDirectories> result = file.load(null);
+        assertTrue(result.allowSave());
+        assertEquals(new JsonSchema("https://schemas.glavo.site/hmcl/game-directories/1.0.1"),
+                result.value().getSchema());
+
+        JsonObject rewritten = JsonParser.parseString(JsonUtils.GSON.toJson(result.value(), GameDirectories.class))
+                .getAsJsonObject();
+        assertEquals("https://schemas.glavo.site/hmcl/game-directories/1.0.1",
+                rewritten.get(JsonSchema.DEFAULT_MEMBER_NAME).getAsString());
+        assertTrue(rewritten.getAsJsonObject("futureField").get("enabled").getAsBoolean());
     }
 }

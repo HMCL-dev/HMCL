@@ -50,7 +50,7 @@ import java.util.Objects;
 public final class LauncherState extends ObservableSetting implements JsonSchemaSetting {
     /// The JSON schema supported by this launcher state store.
     public static final JsonSchema CURRENT_SCHEMA =
-            new JsonSchema("state", new JsonSchema.Version(1, 0));
+            new JsonSchema("state", new JsonSchema.Version(1, 0, 0));
 
     /// Creates an empty launcher state store.
     public LauncherState() {

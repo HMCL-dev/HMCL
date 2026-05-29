@@ -19,6 +19,7 @@ package org.jackhuang.hmcl.setting;
 
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
+import org.jackhuang.hmcl.util.gson.JsonSchema;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.junit.jupiter.api.Test;
@@ -64,6 +65,23 @@ public final class ConfigMigrationTest {
 
         assertEquals("zh-Hant", settings.get("language").getAsString());
         assertEquals("zh-Hant", config.getLanguage().getName());
+    }
+
+    /// Tests that config serialization preserves a patch-version schema and unknown fields.
+    @Test
+    public void preservesPatchSchemaAndUnknownFields() {
+        Config config = Objects.requireNonNull(Config.fromJson(JsonParser.parseString("""
+                {
+                  "$schema": "https://schemas.glavo.site/hmcl/settings/1.0.1",
+                  "futureField": true
+                }
+                """).getAsJsonObject()));
+
+        JsonObject serialized = JsonParser.parseString(config.toJson()).getAsJsonObject();
+
+        assertEquals("https://schemas.glavo.site/hmcl/settings/1.0.1",
+                serialized.get(JsonSchema.DEFAULT_MEMBER_NAME).getAsString());
+        assertTrue(serialized.get("futureField").getAsBoolean());
     }
 
     /// Tests migrating the legacy workspace-wide automatic Java agent permission into game settings.

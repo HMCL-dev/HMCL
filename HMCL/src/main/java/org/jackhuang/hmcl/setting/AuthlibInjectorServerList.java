@@ -46,7 +46,7 @@ public final class AuthlibInjectorServerList extends ObservableSetting implement
 
     /// The JSON schema supported by this authlib-injector server list.
     public static final JsonSchema CURRENT_SCHEMA =
-            new JsonSchema("authlib-injector-servers", new JsonSchema.Version(1, 0));
+            new JsonSchema("authlib-injector-servers", new JsonSchema.Version(1, 0, 0));
 
     /// Creates an empty authlib-injector server list.
     public AuthlibInjectorServerList() {

@@ -44,8 +44,8 @@ import java.util.Objects;
 /// - When the schema string is not parseable as an HMCL schema URL, the file must be rejected.
 /// - When the schema ID differs from the expected schema, the file must be rejected.
 /// - When the major version differs from the supported schema, the file must be rejected.
-/// - When only the minor version is newer, the file may be read but must not be overwritten.
-/// - When both major and minor versions match, the file may be read and saved normally.
+/// - When the minor version is newer, the file may be read but must not be overwritten.
+/// - When only the patch version differs, the file may be read and saved while preserving the original schema string.
 ///
 /// @param value the raw JSON schema string
 /// @param parsed the parsed HMCL schema identifier, or `null` when the string is not parseable
@@ -87,20 +87,6 @@ public record JsonSchema(String value, @Nullable Parsed parsed) {
     /// Creates a schema from a parsed HMCL schema identifier.
     private JsonSchema(Parsed parsed) {
         this(parsed.url(), parsed);
-    }
-
-    /// Parses a canonical HMCL schema URL.
-    ///
-    /// @param url the schema URL
-    /// @return the parsed schema
-    /// @throws JsonParseException if the schema URL is not a canonical HMCL schema URL
-    public static JsonSchema parseUrl(String url) throws JsonParseException {
-        @Nullable Parsed parsed = parseCanonicalUrl(url);
-        if (parsed == null) {
-            throw new JsonParseException("Invalid JSON schema URL: " + url);
-        }
-
-        return new JsonSchema(parsed);
     }
 
     /// Reads a schema string from the default schema member of a container object.
@@ -369,16 +355,103 @@ public record JsonSchema(String value, @Nullable Parsed parsed) {
             return status == Status.UNEXPECTED_ID;
         }
 
-        /// Returns whether the serialized schema is newer than the supported schema.
-        public boolean isNewerThanExpected() {
+        /// Returns whether the serialized schema has a different major version from the supported schema.
+        public boolean hasDifferentMajorVersion() {
             return status == Status.VALID
-                    && Objects.requireNonNull(actual).parsed.version.compareTo(Objects.requireNonNull(expected.parsed).version) > 0;
+                    && Objects.requireNonNull(actual).parsed.version.major() != Objects.requireNonNull(expected.parsed).version.major();
         }
 
-        /// Returns whether the serialized schema has a newer major version than the supported schema.
-        public boolean hasNewerMajorVersion() {
+        /// Returns whether the serialized schema has a newer minor version than the supported schema.
+        public boolean hasNewerMinorVersion() {
             return status == Status.VALID
-                    && Objects.requireNonNull(actual).parsed.version.major() > Objects.requireNonNull(expected.parsed).version.major();
+                    && Objects.requireNonNull(actual).parsed.version.major() == Objects.requireNonNull(expected.parsed).version.major()
+                    && actual.parsed.version.minor() > expected.parsed.version.minor();
+        }
+
+        /// Returns whether the serialized schema has the same major and minor version as the supported schema.
+        public boolean hasSameMajorAndMinorVersion() {
+            return status == Status.VALID
+                    && Objects.requireNonNull(actual).parsed.version.major() == Objects.requireNonNull(expected.parsed).version.major()
+                    && actual.parsed.version.minor() == expected.parsed.version.minor();
+        }
+    }
+
+    /// Semantic version marker for a serialized JSON schema.
+    ///
+    /// The string representation is the strict `major.minor.patch` form.
+    ///
+    /// @param major the major schema version
+    /// @param minor the minor schema version
+    /// @param patch the patch schema version
+    /// @author Glavo
+    @NotNullByDefault
+    public record Version(int major, int minor, int patch) implements Comparable<Version> {
+        /// @param major the major schema version
+        /// @param minor the minor schema version
+        /// @param patch the patch schema version
+        public Version {
+            if (major < 0) throw new IllegalArgumentException("Major version must be non-negative: " + major);
+            if (minor < 0) throw new IllegalArgumentException("Minor version must be non-negative: " + minor);
+            if (patch < 0) throw new IllegalArgumentException("Patch version must be non-negative: " + patch);
+        }
+
+        /// Parses a schema version string.
+        ///
+        /// @param version the version string in `major.minor.patch` form
+        /// @return the parsed schema version
+        /// @throws IllegalArgumentException if the version string is invalid
+        public static Version parse(String version) {
+            int firstDot = version.indexOf('.');
+            int secondDot = version.indexOf('.', firstDot + 1);
+            if (firstDot <= 0
+                    || secondDot <= firstDot + 1
+                    || secondDot != version.lastIndexOf('.')
+                    || secondDot == version.length() - 1) {
+                throw new IllegalArgumentException("Invalid JSON schema version: " + version);
+            }
+
+            try {
+                return new Version(
+                        parsePart(version, 0, firstDot),
+                        parsePart(version, firstDot + 1, secondDot),
+                        parsePart(version, secondDot + 1, version.length()));
+            } catch (IllegalArgumentException e) {
+                throw new IllegalArgumentException("Invalid JSON schema version: " + version, e);
+            }
+        }
+
+        /// Parses a decimal version part.
+        private static int parsePart(String version, int start, int end) {
+            for (int i = start; i < end; i++) {
+                char ch = version.charAt(i);
+                if (ch < '0' || ch > '9') {
+                    throw new IllegalArgumentException("Invalid JSON schema version: " + version);
+                }
+            }
+
+            return Integer.parseInt(version.substring(start, end));
+        }
+
+        /// Compares this version with another schema version.
+        ///
+        /// @param o the other version to compare to
+        /// @return a negative integer, zero, or a positive integer as this version
+        ///         is less than, equal to, or greater than the specified version
+        @Override
+        public int compareTo(Version o) {
+            if (major != o.major) {
+                return Integer.compare(major, o.major);
+            } else if (minor != o.minor) {
+                return Integer.compare(minor, o.minor);
+            } else {
+                return Integer.compare(patch, o.patch);
+            }
+        }
+
+        /// Returns the canonical `major.minor.patch` string representation.
+        @Override
+        public String toString() {
+            return major + "." + minor + "." + patch;
         }
     }
 
@@ -407,71 +480,6 @@ public record JsonSchema(String value, @Nullable Parsed parsed) {
             }
 
             return parseElement(element, "value");
-        }
-    }
-
-    /// Semantic version marker for a serialized JSON schema.
-    ///
-    /// The string representation is the strict `major.minor` form.
-    ///
-    /// @param major the major schema version
-    /// @param minor the minor schema version
-    /// @author Glavo
-    @NotNullByDefault
-    public record Version(int major, int minor) implements Comparable<Version> {
-        /// @param major the major schema version
-        /// @param minor the minor schema version
-        public Version {
-            if (major < 0) throw new IllegalArgumentException("Major version must be non-negative: " + major);
-            if (minor < 0) throw new IllegalArgumentException("Minor version must be non-negative: " + minor);
-        }
-
-        /// Parses a schema version string.
-        ///
-        /// @param version the version string in `major.minor` form
-        /// @return the parsed schema version
-        /// @throws IllegalArgumentException if the version string is invalid
-        public static Version parse(String version) {
-            int dot = version.indexOf('.');
-            if (dot <= 0 || dot != version.lastIndexOf('.') || dot == version.length() - 1) {
-                throw new IllegalArgumentException("Invalid JSON schema version: " + version);
-            }
-
-            try {
-                return new Version(parsePart(version, 0, dot), parsePart(version, dot + 1, version.length()));
-            } catch (IllegalArgumentException e) {
-                throw new IllegalArgumentException("Invalid JSON schema version: " + version, e);
-            }
-        }
-
-        /// Parses a decimal version part.
-        private static int parsePart(String version, int start, int end) {
-            for (int i = start; i < end; i++) {
-                char ch = version.charAt(i);
-                if (ch < '0' || ch > '9') {
-                    throw new IllegalArgumentException("Invalid JSON schema version: " + version);
-                }
-            }
-
-            return Integer.parseInt(version.substring(start, end));
-        }
-
-        /// Compares this version with another schema version.
-        ///
-        /// @param o the other version to compare to
-        /// @return a negative integer, zero, or a positive integer as this version
-        ///         is less than, equal to, or greater than the specified version
-        @Override
-        public int compareTo(Version o) {
-            return major != o.major
-                    ? Integer.compare(major, o.major)
-                    : Integer.compare(minor, o.minor);
-        }
-
-        /// Returns the canonical `major.minor` string representation.
-        @Override
-        public String toString() {
-            return major + "." + minor;
         }
     }
 }

@@ -58,10 +58,16 @@ final class JsonSchemaPolicy {
             LOG.warning("Unexpected " + displayName + " schema. Expected: "
                     + expected + ", Actual: " + schema.actual());
             return Result.UNREADABLE;
-        } else if (schema.isNewerThanExpected()) {
+        } else if (schema.hasDifferentMajorVersion()) {
             LOG.warning("Unsupported " + displayName + " schema. Expected: "
                     + expected + ", Actual: " + schema.actual());
-            return schema.hasNewerMajorVersion() ? Result.UNREADABLE : Result.READ_ONLY;
+            return Result.UNREADABLE;
+        } else if (schema.hasNewerMinorVersion()) {
+            LOG.warning("Unsupported " + displayName + " schema. Expected: "
+                    + expected + ", Actual: " + schema.actual());
+            return Result.READ_ONLY_PRESERVE_SCHEMA;
+        } else if (schema.hasSameMajorAndMinorVersion()) {
+            return Result.READ_WRITE_PRESERVE_SCHEMA;
         } else {
             return Result.READ_WRITE;
         }
@@ -71,14 +77,18 @@ final class JsonSchemaPolicy {
     ///
     /// @param readable whether the file may be deserialized
     /// @param allowSave whether the file may be overwritten
-    record Result(boolean readable, boolean allowSave) {
-        /// Result used when a file is compatible and may be saved.
-        private static final Result READ_WRITE = new Result(true, true);
+    /// @param preserveSchema whether the serialized schema should keep the original value
+    record Result(boolean readable, boolean allowSave, boolean preserveSchema) {
+        /// Result used when a file is compatible, may be saved, and should be upgraded to the expected schema.
+        private static final Result READ_WRITE = new Result(true, true, false);
+
+        /// Result used when a file is compatible, may be saved, and should preserve the original schema.
+        private static final Result READ_WRITE_PRESERVE_SCHEMA = new Result(true, true, true);
 
         /// Result used when a file is readable but must not be overwritten.
-        private static final Result READ_ONLY = new Result(true, false);
+        private static final Result READ_ONLY_PRESERVE_SCHEMA = new Result(true, false, true);
 
         /// Result used when a file must not be read or overwritten.
-        private static final Result UNREADABLE = new Result(false, false);
+        private static final Result UNREADABLE = new Result(false, false, false);
     }
 }
