@@ -34,10 +34,10 @@ import org.jetbrains.annotations.Nullable;
 import java.lang.reflect.Type;
 import java.util.Objects;
 
-/// Stores per-workspace game directories independently from the main config file.
+/// Stores game directories independently from the main config file.
 ///
-/// The JSON representation is saved as `game-directories.json` under the current HMCL
-/// directory.
+/// The JSON representation is saved as `game-directories.json` under either the current
+/// HMCL directory or the global HMCL directory.
 ///
 /// @author Glavo
 @JsonAdapter(GameDirectories.Adapter.class)
@@ -73,12 +73,12 @@ public final class GameDirectories extends ObservableSetting implements JsonSche
         this.schema.set(Objects.requireNonNull(schema));
     }
 
-    /// Per-workspace game directories.
+    /// Game directories stored in this file.
     @SerializedName("directories")
     private final ObservableList<Profile> gameDirectories =
             FXCollections.observableArrayList(profile -> new Observable[] { profile });
 
-    /// Returns the per-workspace game directories.
+    /// Returns the game directories stored in this file.
     public ObservableList<Profile> getGameDirectories() {
         return gameDirectories;
     }
