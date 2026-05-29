@@ -58,6 +58,23 @@ public final class LegacyConfigMigrator {
     /// The legacy Linux configuration file name used through HMCL 3.15.0.345.
     private static final String LEGACY_CONFIG_FILENAME_LINUX = ".hmcl.json";
 
+    /// Legacy ordinal order for `EnumBackgroundImage` in upstream/main configs.
+    private static final String[] LEGACY_BACKGROUND_IMAGE_TYPES = {
+            "DEFAULT",
+            "CUSTOM",
+            "CLASSIC",
+            "NETWORK",
+            "TRANSLUCENT",
+            "PAINT"
+    };
+
+    /// Legacy ordinal order for `Proxy.Type` in upstream/main configs.
+    private static final String[] LEGACY_PROXY_TYPES = {
+            "DIRECT",
+            "HTTP",
+            "SOCKS"
+    };
+
     /// Prevents instantiation.
     private LegacyConfigMigrator() {
     }
@@ -109,6 +126,7 @@ public final class LegacyConfigMigrator {
                     AccountStorages::new);
             JsonElement legacyAllowAutoAgent = jsonObject.remove("allowAutoAgent");
             JsonElement legacyDisableAutoGameOptions = jsonObject.remove("disableAutoGameOptions");
+            migrateLegacyEnumOrdinals(jsonObject);
             migrateLegacyDownloadSources(jsonObject);
             migrateLegacyCommonDirectoryType(jsonObject);
             migrateLegacyCommonDirectory(jsonObject);
@@ -250,6 +268,24 @@ public final class LegacyConfigMigrator {
         json.add("commonDirectoryType", legacyCommonDirectoryType);
     }
 
+    /// Migrates legacy enum ordinal fields into stable enum names.
+    static void migrateLegacyEnumOrdinals(JsonObject json) {
+        Objects.requireNonNull(json);
+
+        migrateLegacyEnumOrdinal(json, "backgroundType", LEGACY_BACKGROUND_IMAGE_TYPES);
+        migrateLegacyEnumOrdinal(json, "proxyType", LEGACY_PROXY_TYPES);
+    }
+
+    /// Migrates one legacy enum ordinal field into a stable enum name.
+    private static void migrateLegacyEnumOrdinal(JsonObject json, String propertyName, String[] legacyNames) {
+        @Nullable Integer ordinal = readInteger(json.get(propertyName));
+        if (ordinal == null || ordinal < 0 || ordinal >= legacyNames.length) {
+            return;
+        }
+
+        json.addProperty(propertyName, legacyNames[ordinal]);
+    }
+
     /// Migrates legacy download source fields into `versionListSource` and `fileDownloadSource`.
     static void migrateLegacyDownloadSources(JsonObject json) {
         Objects.requireNonNull(json);
@@ -301,6 +337,24 @@ public final class LegacyConfigMigrator {
         }
 
         return primitive.getAsBoolean();
+    }
+
+    /// Reads an integer JSON value from either a number or a numeric string.
+    private static @Nullable Integer readInteger(@Nullable JsonElement element) {
+        if (!(element instanceof JsonPrimitive primitive)) {
+            return null;
+        }
+
+        try {
+            if (primitive.isNumber()) {
+                return primitive.getAsInt();
+            }
+            if (primitive.isString()) {
+                return Integer.parseInt(primitive.getAsString());
+            }
+        } catch (NumberFormatException ignored) {
+        }
+        return null;
     }
 
     /// Migrates the legacy workspace-wide automatic Java agent permission into game setting presets.

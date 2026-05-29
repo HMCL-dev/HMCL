@@ -24,6 +24,7 @@ import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.junit.jupiter.api.Test;
 
+import java.net.Proxy;
 import java.util.Objects;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -105,6 +106,47 @@ public final class LauncherSettingsMigrationTest {
         assertEquals(EnumCommonDirectory.CUSTOM, launcherSettings.commonDirectoryTypeProperty().get());
         assertFalse(serialized.has("commonDirType"));
         assertEquals("CUSTOM", serialized.get("commonDirectoryType").getAsString());
+    }
+
+    /// Tests migrating legacy enum ordinal fields into stable enum names.
+    @Test
+    public void migratesLegacyEnumOrdinals() {
+        JsonObject settings = JsonParser.parseString("""
+                {
+                  "backgroundType": 3,
+                  "proxyType": 2
+                }
+                """).getAsJsonObject();
+
+        LegacyConfigMigrator.migrateLegacyEnumOrdinals(settings);
+        LauncherSettings launcherSettings = Objects.requireNonNull(LauncherSettings.fromJson(settings));
+        JsonObject serialized = JsonParser.parseString(launcherSettings.toJson()).getAsJsonObject();
+
+        assertEquals("NETWORK", settings.get("backgroundType").getAsString());
+        assertEquals("SOCKS", settings.get("proxyType").getAsString());
+        assertEquals(EnumBackgroundImage.NETWORK, launcherSettings.backgroundImageTypeProperty().get());
+        assertEquals(Proxy.Type.SOCKS, launcherSettings.proxyTypeProperty().get());
+        assertEquals("NETWORK", serialized.get("backgroundType").getAsString());
+        assertEquals("SOCKS", serialized.get("proxyType").getAsString());
+    }
+
+    /// Tests migrating legacy enum ordinal strings into stable enum names.
+    @Test
+    public void migratesLegacyEnumOrdinalStrings() {
+        JsonObject settings = JsonParser.parseString("""
+                {
+                  "backgroundType": "1",
+                  "proxyType": "0"
+                }
+                """).getAsJsonObject();
+
+        LegacyConfigMigrator.migrateLegacyEnumOrdinals(settings);
+        LauncherSettings launcherSettings = Objects.requireNonNull(LauncherSettings.fromJson(settings));
+
+        assertEquals("CUSTOM", settings.get("backgroundType").getAsString());
+        assertEquals("DIRECT", settings.get("proxyType").getAsString());
+        assertEquals(EnumBackgroundImage.CUSTOM, launcherSettings.backgroundImageTypeProperty().get());
+        assertEquals(Proxy.Type.DIRECT, launcherSettings.proxyTypeProperty().get());
     }
 
     /// Tests migrating legacy automatic download source fields into current download source fields.
