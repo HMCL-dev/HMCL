@@ -48,7 +48,7 @@ public final class NetworkUtils {
     public static final String NAME_VALUE_SEPARATOR = "=";
 
     public static final Duration TIMEOUT = Duration.ofSeconds(30);
-    public static final int TIMEOUT_MILLS = (int) TIMEOUT.toMillis();
+    public static final int TIMEOUT_MILLIS = (int) TIMEOUT.toMillis();
 
     private NetworkUtils() {
     }
@@ -170,8 +170,8 @@ public final class NetworkUtils {
         } catch (IllegalArgumentException | MalformedURLException e) {
             throw new IOException(e);
         }
-        connection.setConnectTimeout(TIMEOUT_MILLS);
-        connection.setReadTimeout(TIMEOUT_MILLS);
+        connection.setConnectTimeout(TIMEOUT_MILLIS);
+        connection.setReadTimeout(TIMEOUT_MILLIS);
         if (connection instanceof HttpURLConnection httpConnection) {
             httpConnection.setRequestProperty("Accept-Language", Locale.getDefault().toLanguageTag());
             httpConnection.setRequestProperty("User-Agent", USER_AGENT);
@@ -279,8 +279,8 @@ public final class NetworkUtils {
         int redirect = 0;
         while (true) {
             conn.setUseCaches(useCache);
-            conn.setConnectTimeout(TIMEOUT_MILLS);
-            conn.setReadTimeout(TIMEOUT_MILLS);
+            conn.setConnectTimeout(TIMEOUT_MILLIS);
+            conn.setReadTimeout(TIMEOUT_MILLIS);
             conn.setInstanceFollowRedirects(false);
             Map<String, List<String>> properties = conn.getRequestProperties();
             String method = conn.getRequestMethod();
