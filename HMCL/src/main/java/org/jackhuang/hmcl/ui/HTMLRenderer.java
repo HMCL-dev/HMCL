@@ -370,14 +370,14 @@ public final class HTMLRenderer {
             TableColumn<List<Element>, javafx.scene.Node> c = new TableColumn<>();
             Element e = head.get(i);
             if (e != null) {
-                var box = new VBox(new HTMLRenderer(Controllers::openUriInBrowser).appendNode(e).mergeLineBreaks().render());
+                var box = new VBox(new HTMLRenderer(onClickHyperlink).appendNode(e).mergeLineBreaks().render());
                 box.setAlignment(Pos.CENTER_LEFT);
                 c.setGraphic(box);
             }
             c.setCellValueFactory(param -> {
                 Element el = param.getValue().get(finalI);
                 if (el == null) return new SimpleObjectProperty<>();
-                return new SimpleObjectProperty<>(new HTMLRenderer(Controllers::openUriInBrowser).appendNode(el).mergeLineBreaks().render());
+                return new SimpleObjectProperty<>(new HTMLRenderer(onClickHyperlink).appendNode(el).mergeLineBreaks().render());
             });
             tableView.getColumns().add(c);
         }
