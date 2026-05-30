@@ -25,6 +25,7 @@ import javafx.scene.Cursor;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
 import javafx.scene.image.ImageView;
+import javafx.scene.layout.Pane;
 import javafx.scene.layout.VBox;
 import javafx.scene.text.Text;
 import javafx.scene.text.TextFlow;
@@ -363,8 +364,6 @@ public final class HTMLRenderer {
             rows.add(Lang.copyWithSize(foot, columnCount, null));
 
         TableView<List<Element>> tableView = new TableView<>(FXCollections.observableList(rows));
-        tableView.setFixedCellSize(25);
-        tableView.setPrefHeight(25 * (rows.size() + 1) + 5);
         for (int i = 0; i < columnCount; i++) {
             int finalI = i;
             TableColumn<List<Element>, javafx.scene.Node> c = new TableColumn<>();
@@ -377,7 +376,7 @@ public final class HTMLRenderer {
             c.setCellValueFactory(param -> {
                 Element el = param.getValue().get(finalI);
                 if (el == null) return new SimpleObjectProperty<>();
-                return new SimpleObjectProperty<>(new HTMLRenderer(onClickHyperlink).appendNode(el).mergeLineBreaks().render());
+                return new SimpleObjectProperty<>(new Pane(new HTMLRenderer(onClickHyperlink).appendNode(el).mergeLineBreaks().render()));
             });
             tableView.getColumns().add(c);
         }
