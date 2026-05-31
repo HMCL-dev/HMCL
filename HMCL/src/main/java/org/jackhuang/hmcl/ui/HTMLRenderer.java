@@ -363,7 +363,7 @@ public final class HTMLRenderer {
         if (hasFoot)
             rows.add(Lang.copyWithSize(foot, columnCount, null));
 
-        TableView<List<Element>> tableView = new TableView<>(FXCollections.observableList(rows));
+        TableView<List<Element>> tableView = FXUtils.autoSizeTable(FXCollections.observableList(rows));
         for (int i = 0; i < columnCount; i++) {
             int finalI = i;
             TableColumn<List<Element>, javafx.scene.Node> c = new TableColumn<>();
@@ -375,7 +375,7 @@ public final class HTMLRenderer {
             }
             c.setCellValueFactory(param -> {
                 Element el = param.getValue().get(finalI);
-                if (el == null) return new SimpleObjectProperty<>();
+                if (el == null) return null;
                 return new SimpleObjectProperty<>(new Pane(new HTMLRenderer(onClickHyperlink).appendNode(el).mergeLineBreaks().render()));
             });
             tableView.getColumns().add(c);

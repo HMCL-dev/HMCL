@@ -32,6 +32,7 @@ import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableBooleanValue;
 import javafx.beans.value.ObservableValue;
 import javafx.beans.value.WeakChangeListener;
+import javafx.collections.ObservableList;
 import javafx.collections.ObservableMap;
 import javafx.event.Event;
 import javafx.event.EventDispatcher;
@@ -44,6 +45,7 @@ import javafx.scene.Node;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
+import javafx.scene.control.skin.TableViewSkin;
 import javafx.scene.control.skin.VirtualFlow;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
@@ -1711,4 +1713,56 @@ public final class FXUtils {
         textFlow.getStyleClass().add("addon-changelog");
         return textFlow;
     }
+
+    /// Be cautious when dealing with large amounts of data
+    public static <S> TableView<S> autoSizeTable(ObservableList<S> items) {
+        return new AutoSizeTableView<>(items);
+    }
+
+    private static final class AutoSizeTableView<S> extends TableView<S> {
+
+        public AutoSizeTableView() {
+            super();
+        }
+
+        public AutoSizeTableView(ObservableList<S> items) {
+            super(items);
+        }
+
+        @Override
+        protected Skin<?> createDefaultSkin() {
+            return new AutoSizeSkin<>(this);
+        }
+
+        private static final class AutoSizeSkin<S> extends TableViewSkin<S> {
+
+            private final VirtualFlow<TableRow<S>> flow;
+
+            public AutoSizeSkin(TableView<S> control) {
+                super(control);
+                this.flow = getVirtualFlow();
+            }
+
+            @Override
+            protected double computePrefHeight(double width, double topInset, double rightInset, double bottomInset, double leftInset) {
+                double fixedCellSize = getSkinnable().getFixedCellSize();
+                double w = width - rightInset - leftInset;
+                int itemCount = getItemCount();
+                double headerHeight = getTableHeaderRow().prefHeight(w);
+
+                double prefHeight = topInset + bottomInset + headerHeight;
+                if (fixedCellSize > 0 || itemCount == 0) return prefHeight + fixedCellSize * itemCount;
+                int i = 0;
+                TableRow<S> r;
+                while (!(r = flow.getCell(i)).isEmpty() && r.getItem() != null) {
+                    prefHeight += r.prefHeight(w);
+                    i++;
+                }
+                return prefHeight;
+            }
+
+        }
+
+    }
+
 }
