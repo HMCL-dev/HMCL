@@ -180,7 +180,7 @@ public class TwoLineListItem extends VBox {
                     () -> {
                         if (tags.isEmpty()) return 0.0;
                         double h = tagsBox.prefHeight(-1);
-                        return h > 0 ? h : Double.NaN;
+                        return h > 0 ? h : 24.0;
                     },
                     tags, tagsBox.heightProperty()
             );
