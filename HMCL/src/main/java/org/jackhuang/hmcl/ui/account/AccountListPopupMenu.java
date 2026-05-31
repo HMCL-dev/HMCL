@@ -57,6 +57,7 @@ public final class AccountListPopupMenu extends StackPane {
 
             for (Account account : Accounts.getAccounts()) {
                 AccountAdvancedListItem item = new AccountAdvancedListItem(account);
+                if (Accounts.getSelectedAccount() == account) item.setActive(true);
                 item.setOnAction(e -> {
                     Accounts.setSelectedAccount(account);
                     if (getScene().getWindow() instanceof JFXPopup popup)
