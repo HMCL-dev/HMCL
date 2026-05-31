@@ -17,7 +17,6 @@
  */
 package org.jackhuang.hmcl.ui.construct;
 
-import javafx.beans.InvalidationListener;
 import javafx.beans.binding.Bindings;
 import javafx.beans.property.StringProperty;
 import javafx.beans.property.StringPropertyBase;
@@ -26,7 +25,6 @@ import javafx.collections.ObservableList;
 import javafx.css.PseudoClass;
 import javafx.geometry.Pos;
 import javafx.scene.control.Label;
-import javafx.scene.control.ScrollPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
@@ -168,29 +166,13 @@ public class TwoLineListItem extends VBox {
             var tagsBox = new HBox(8);
             tagsBox.getStyleClass().add("tags");
             tagsBox.setAlignment(Pos.CENTER_LEFT);
+            HBox.setHgrow(tagsBox, Priority.ALWAYS);
             Bindings.bindContent(tagsBox.getChildren(), tags);
+            tagsBox.managedProperty().bind(Bindings.isNotEmpty(tags));
+            tagsBox.visibleProperty().bind(Bindings.isNotEmpty(tags));
 
-            var scrollPane = new ScrollPane(tagsBox);
-            scrollPane.setMinSize(0, 0);
-            HBox.setHgrow(scrollPane, Priority.ALWAYS);
             lblTitle.setMinWidth(Label.USE_PREF_SIZE);
-            scrollPane.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
-            scrollPane.setVbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
-            var expectedHeight = Bindings.createDoubleBinding(
-                    () -> {
-                        if (tags.isEmpty()) return 0.0;
-                        double h = tagsBox.prefHeight(-1);
-                        return h > 0 ? h : 24.0;
-                    },
-                    tags, tagsBox.heightProperty()
-            );
-
-            scrollPane.minHeightProperty().bind(expectedHeight);
-            scrollPane.prefHeightProperty().bind(expectedHeight);
-            scrollPane.maxHeightProperty().bind(expectedHeight);
-            firstLine.getChildren().setAll(lblTitle, scrollPane);
-
-            tags.addListener((InvalidationListener) ignored -> scrollPane.requestLayout());
+            firstLine.getChildren().setAll(lblTitle, tagsBox);
         }
         return tags;
     }
