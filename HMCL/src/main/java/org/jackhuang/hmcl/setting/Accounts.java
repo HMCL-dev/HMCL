@@ -150,12 +150,15 @@ public final class Accounts {
         ArrayList<Map<Object, Object>> global = new ArrayList<>();
         ArrayList<Map<Object, Object>> portable = new ArrayList<>();
 
-        for (Account account : accounts) {
+        for (int i = 0, accountsSize = accounts.size(); i < accountsSize; i++) {
+            Account account = accounts.get(i);
             Map<Object, Object> storage = getAccountStorage(account);
-            if (account.isPortable())
+            if (account.isPortable()) {
+                storage.put("index", i);
                 portable.add(storage);
-            else
+            } else {
                 global.add(storage);
+            }
         }
 
         if (!global.equals(globalAccountStorages))
@@ -213,24 +216,33 @@ public final class Accounts {
         loadGlobalAccountStorages();
 
         // load accounts
-        Account selected = null;
-        for (Map<Object, Object> storage : config().getAccountStorages()) {
-            Account account = parseAccount(storage);
-            if (account != null) {
-                account.setPortable(true);
-                accounts.add(account);
-                if (Boolean.TRUE.equals(storage.get("selected"))) {
-                    selected = account;
-                }
-            }
-        }
-
         for (Map<Object, Object> storage : globalAccountStorages) {
             Account account = parseAccount(storage);
             if (account != null) {
                 accounts.add(account);
             }
         }
+
+        List<Account> unordered = new ArrayList<>();
+        Account[] s = new Account[1];
+        config().getAccountStorages()
+                .stream()
+                .sorted(Comparator.comparingInt(storage -> storage.get("index") instanceof Number n ? n.intValue() : -1))
+                .forEachOrdered(storage -> {
+                    Account account = parseAccount(storage);
+                    if (account == null) return;
+                    account.setPortable(true);
+                    if (storage.get("index") instanceof Number n) {
+                        accounts.add(n.intValue(), account);
+                    } else {
+                        unordered.add(account);
+                    }
+                    if (Boolean.TRUE.equals(storage.get("selected"))) {
+                        s[0] = account;
+                    }
+                });
+        accounts.addAll(0, unordered);
+        Account selected = s[0];
 
         String selectedAccountIdentifier = config().getSelectedAccount();
         if (selected == null && selectedAccountIdentifier != null) {
