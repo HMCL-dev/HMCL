@@ -305,14 +305,17 @@ public final class AccountListPage extends DecoratorAnimatedPage implements Deco
                         if (draggedAccount != null && sourceIndex != targetIndex) {
                             // Remove from old position
                             Accounts.skipSelectionCheckFlag = true;
-                            Accounts.getAccounts().remove(sourceIndex);
-                            // Insert at new position
-                            int newIndex = targetIndex > sourceIndex ? targetIndex - 1 : targetIndex;
-                            if (newIndex < 0) newIndex = 0;
-                            if (newIndex > Accounts.getAccounts().size()) newIndex = Accounts.getAccounts().size();
-                            Accounts.getAccounts().add(newIndex, draggedAccount);
-                            if (selected) skinnable.selectedAccountProperty().set(draggedAccount);
-                            Accounts.skipSelectionCheckFlag = false;
+                            try {
+                                Accounts.getAccounts().remove(sourceIndex);
+                                // Insert at new position
+                                int newIndex = targetIndex > sourceIndex ? targetIndex - 1 : targetIndex;
+                                if (newIndex < 0) newIndex = 0;
+                                if (newIndex > Accounts.getAccounts().size()) newIndex = Accounts.getAccounts().size();
+                                Accounts.getAccounts().add(newIndex, draggedAccount);
+                                if (selected) skinnable.selectedAccountProperty().set(draggedAccount);
+                            } finally {
+                                Accounts.skipSelectionCheckFlag = false;
+                            }
                             success = true;
                         }
                     }
