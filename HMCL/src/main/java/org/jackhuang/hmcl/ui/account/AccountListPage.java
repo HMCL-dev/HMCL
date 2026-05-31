@@ -105,11 +105,11 @@ public final class AccountListPage extends DecoratorAnimatedPage implements Deco
         selectedAccount = createSelectedItemPropertyFor(items, Account.class);
 
         InvalidationListener listener = (observable) -> {
-            String text = searchingText.get().toLowerCase(Locale.ROOT);
-            if (StringUtils.isBlank(text)) {
+            if (StringUtils.isBlank(searchingText.get())) {
                 displayedItems.setAll(items);
                 return;
             }
+            String text = searchingText.get().toLowerCase(Locale.ROOT);
             displayedItems.setAll(
                     items.stream().filter(item -> {
                         Account account = item.getAccount();

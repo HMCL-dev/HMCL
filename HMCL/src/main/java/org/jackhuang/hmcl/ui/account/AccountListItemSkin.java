@@ -99,7 +99,8 @@ public final class AccountListItemSkin extends SkinBase<AccountListItem> {
         btnMove.setOnAction(e -> {
             Account account = skinnable.getAccount();
             int index = Accounts.getAccounts().indexOf(account);
-            Accounts.getAccounts().removeAll(account);
+            if (index < 0) return;
+            Accounts.getAccounts().remove(index);
             account.setPortable(!account.isPortable());
             Accounts.getAccounts().add(index, account);
         });
