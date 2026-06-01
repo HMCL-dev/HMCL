@@ -17,6 +17,8 @@
  */
 package org.jackhuang.hmcl.auth;
 
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
 import javafx.application.Platform;
 import javafx.beans.InvalidationListener;
 import javafx.beans.Observable;
@@ -29,6 +31,7 @@ import org.jackhuang.hmcl.auth.yggdrasil.Texture;
 import org.jackhuang.hmcl.auth.yggdrasil.TextureType;
 import org.jackhuang.hmcl.util.ToStringBuilder;
 import org.jackhuang.hmcl.util.javafx.ObservableHelper;
+import org.jetbrains.annotations.Contract;
 
 import java.nio.file.Path;
 import java.util.Map;
@@ -66,6 +69,7 @@ public abstract class Account implements Observable {
 
     /**
      * Play offline.
+     *
      * @return the specific offline player's info.
      */
     public abstract AuthInfo playOffline() throws AuthenticationException;
@@ -98,6 +102,32 @@ public abstract class Account implements Observable {
     }
 
     public abstract String getIdentifier();
+
+    /// Writes stable fields that identify this account into the given JSON object.
+    ///
+    /// The identifier object must not contain credentials or other secrets. It is used only to find the
+    /// same account again after account storages have been reloaded.
+    @Contract(mutates = "param1")
+    public abstract void toIdentifier(JsonObject json);
+
+    /// Returns whether the given identifier object matches the stable identifier fields of this account.
+    ///
+    /// Extra members in the given object are ignored by this method so callers can add storage or type metadata.
+    @Contract(pure = true)
+    public boolean matchIdentifier(JsonObject json) {
+        JsonObject identifier = new JsonObject();
+        toIdentifier(identifier);
+
+        for (Map.Entry<String, JsonElement> entry : identifier.asMap().entrySet()) {
+            String key = entry.getKey();
+            JsonElement value = entry.getValue();
+
+            if (!value.equals(json.get(key)))
+                return false;
+        }
+
+        return true;
+    }
 
     private final ObservableHelper helper = new ObservableHelper(this);
 

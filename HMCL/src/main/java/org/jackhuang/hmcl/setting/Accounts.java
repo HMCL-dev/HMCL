@@ -17,6 +17,7 @@
  */
 package org.jackhuang.hmcl.setting;
 
+import com.google.gson.JsonObject;
 import javafx.beans.InvalidationListener;
 import javafx.beans.Observable;
 import javafx.beans.property.ObjectProperty;
@@ -34,6 +35,7 @@ import org.jackhuang.hmcl.auth.offline.OfflineAccountFactory;
 import org.jackhuang.hmcl.auth.yggdrasil.RemoteAuthenticationException;
 import org.jackhuang.hmcl.game.OAuthServer;
 import org.jackhuang.hmcl.task.Schedulers;
+import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.io.JarUtils;
 import org.jackhuang.hmcl.util.skin.InvalidSkinException;
 import org.jetbrains.annotations.Nullable;
@@ -121,7 +123,10 @@ public final class Accounts {
             throw new IllegalArgumentException("Failed to determine account type: " + account);
     }
 
-    private static final String GLOBAL_PREFIX = "$GLOBAL:";
+    private static final String SELECTED_ACCOUNT_STORAGE = "storage";
+    private static final String SELECTED_ACCOUNT_STORAGE_LOCAL = "local";
+    private static final String SELECTED_ACCOUNT_STORAGE_USER = "user";
+    private static final String SELECTED_ACCOUNT_TYPE = "type";
     private static final Path GLOBAL_GAME_ACCOUNTS_LOCATION =
             Metadata.HMCL_USER_HOME.resolve("user-game-accounts.json");
     private static final Path LEGACY_GLOBAL_ACCOUNTS_LOCATION =
@@ -146,6 +151,31 @@ public final class Accounts {
         Map<Object, Object> storage = account.toStorage();
         storage.put("type", getLoginType(getAccountFactory(account)));
         return storage;
+    }
+
+    /// Creates the structured selected-account reference stored in launcher settings.
+    private static JsonObject toSelectedAccountReference(Account account) {
+        JsonObject reference = new JsonObject();
+        reference.addProperty(SELECTED_ACCOUNT_STORAGE,
+                account.isPortable() ? SELECTED_ACCOUNT_STORAGE_LOCAL : SELECTED_ACCOUNT_STORAGE_USER);
+        reference.addProperty(SELECTED_ACCOUNT_TYPE, getLoginType(getAccountFactory(account)));
+        account.toIdentifier(reference);
+        return reference;
+    }
+
+    /// Returns whether the given account is identified by a selected-account reference.
+    private static boolean matchesSelectedAccountReference(Account account, JsonObject reference) {
+        String storage = account.isPortable() ? SELECTED_ACCOUNT_STORAGE_LOCAL : SELECTED_ACCOUNT_STORAGE_USER;
+        if (!storage.equals(JsonUtils.getString(reference, SELECTED_ACCOUNT_STORAGE))) {
+            return false;
+        }
+
+        String type = getLoginType(getAccountFactory(account));
+        if (!type.equals(JsonUtils.getString(reference, SELECTED_ACCOUNT_TYPE))) {
+            return false;
+        }
+
+        return account.matchIdentifier(reference);
     }
 
     private static void updateAccountStorages() {
@@ -270,22 +300,12 @@ public final class Accounts {
             }
         }
 
-        String selectedAccountIdentifier = settings().selectedAccountProperty().get();
-        if (selected == null && selectedAccountIdentifier != null) {
-            boolean portable = true;
-            if (selectedAccountIdentifier.startsWith(GLOBAL_PREFIX)) {
-                portable = false;
-                selectedAccountIdentifier = selectedAccountIdentifier.substring(GLOBAL_PREFIX.length());
-            }
-
+        JsonObject selectedAccountReference = settings().selectedAccountProperty().get();
+        if (selected == null && selectedAccountReference != null) {
             for (Account account : accounts) {
-                if (selectedAccountIdentifier.equals(account.getIdentifier())) {
-                    if (portable == account.isPortable()) {
-                        selected = account;
-                        break;
-                    } else if (selected == null) {
-                        selected = account;
-                    }
+                if (matchesSelectedAccountReference(account, selectedAccountReference)) {
+                    selected = account;
+                    break;
                 }
             }
         }
@@ -347,7 +367,7 @@ public final class Accounts {
         selectedAccount.addListener(onInvalidating(() -> {
             Account account = selectedAccount.get();
             if (account != null)
-                settings().selectedAccountProperty().set(account.isPortable() ? account.getIdentifier() : GLOBAL_PREFIX + account.getIdentifier());
+                settings().selectedAccountProperty().set(toSelectedAccountReference(account));
             else
                 settings().selectedAccountProperty().set(null);
         }));

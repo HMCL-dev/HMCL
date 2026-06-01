@@ -473,12 +473,12 @@ public final class LauncherSettings extends ObservableSetting {
         return preferredLoginType;
     }
 
-    /// The selected account identifier.
+    /// The selected account reference.
     @SerializedName("selectedAccount")
-    private final StringProperty selectedAccount = new SimpleStringProperty();
+    private final ObjectProperty<@Nullable JsonObject> selectedAccount = new SimpleObjectProperty<>();
 
-    /// Returns the selected account identifier property.
-    public StringProperty selectedAccountProperty() {
+    /// Returns the selected account reference property.
+    public ObjectProperty<@Nullable JsonObject> selectedAccountProperty() {
         return selectedAccount;
     }
 

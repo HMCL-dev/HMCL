@@ -237,6 +237,99 @@ public final class LauncherSettingsMigrationTest {
         assertEquals(DownloadSource.OFFICIAL, launcherSettings.fileDownloadSourceProperty().get());
     }
 
+    /// Tests migrating the legacy selected account string into a structured account reference.
+    @Test
+    public void migratesLegacySelectedAccountToReference() {
+        JsonObject settings = JsonParser.parseString("""
+                {
+                  "accounts": [
+                    {
+                      "type": "offline",
+                      "username": "Alex"
+                    }
+                  ],
+                  "selectedAccount": "Alex:Alex"
+                }
+                """).getAsJsonObject();
+
+        AccountStorages accountStorages = Objects.requireNonNull(LegacyConfigMigrator.extractAccountStorages(settings));
+        assertTrue(LegacyConfigMigrator.migrateLegacySelectedAccount(settings, accountStorages));
+        LauncherSettings launcherSettings = Objects.requireNonNull(LauncherSettings.fromJson(settings));
+
+        JsonObject selectedAccount = Objects.requireNonNull(launcherSettings.selectedAccountProperty().get());
+        assertEquals("local", selectedAccount.get("storage").getAsString());
+        assertEquals("offline", selectedAccount.get("type").getAsString());
+        assertEquals("Alex", selectedAccount.get("username").getAsString());
+    }
+
+    /// Tests migrating older selected account values that store only the username.
+    @Test
+    public void migratesLegacySelectedAccountUsernameToReference() {
+        JsonObject settings = JsonParser.parseString("""
+                {
+                  "accounts": [
+                    {
+                      "type": "offline",
+                      "username": "Alex"
+                    }
+                  ],
+                  "selectedAccount": "Alex"
+                }
+                """).getAsJsonObject();
+
+        AccountStorages accountStorages = Objects.requireNonNull(LegacyConfigMigrator.extractAccountStorages(settings));
+        assertTrue(LegacyConfigMigrator.migrateLegacySelectedAccount(settings, accountStorages));
+
+        JsonObject selectedAccount = settings.getAsJsonObject("selectedAccount");
+        assertEquals("local", selectedAccount.get("storage").getAsString());
+        assertEquals("offline", selectedAccount.get("type").getAsString());
+        assertEquals("Alex", selectedAccount.get("username").getAsString());
+    }
+
+    /// Tests migrating legacy selected Microsoft account identifiers with hyphenated UUIDs.
+    @Test
+    public void migratesLegacySelectedMicrosoftAccountToReference() {
+        JsonObject settings = JsonParser.parseString("""
+                {
+                  "accounts": [
+                    {
+                      "type": "microsoft",
+                      "uuid": "123456781234123412341234567890ab",
+                      "userid": "user-id"
+                    }
+                  ],
+                  "selectedAccount": "microsoft:12345678-1234-1234-1234-1234567890ab"
+                }
+                """).getAsJsonObject();
+
+        AccountStorages accountStorages = Objects.requireNonNull(LegacyConfigMigrator.extractAccountStorages(settings));
+        assertTrue(LegacyConfigMigrator.migrateLegacySelectedAccount(settings, accountStorages));
+
+        JsonObject selectedAccount = settings.getAsJsonObject("selectedAccount");
+        assertEquals("local", selectedAccount.get("storage").getAsString());
+        assertEquals("microsoft", selectedAccount.get("type").getAsString());
+        assertEquals("123456781234123412341234567890ab", selectedAccount.get("uuid").getAsString());
+        assertEquals("user-id", selectedAccount.get("userid").getAsString());
+    }
+
+    /// Tests serializing selected account references as JSON objects.
+    @Test
+    public void serializesSelectedAccountReferenceAsObject() {
+        LauncherSettings launcherSettings = new LauncherSettings();
+        JsonObject selectedAccount = new JsonObject();
+        selectedAccount.addProperty("storage", "user");
+        selectedAccount.addProperty("type", "microsoft");
+        selectedAccount.addProperty("uuid", "123456781234123412341234567890ab");
+        launcherSettings.selectedAccountProperty().set(selectedAccount);
+
+        JsonObject serialized = JsonParser.parseString(launcherSettings.toJson()).getAsJsonObject();
+
+        JsonObject serializedSelectedAccount = serialized.getAsJsonObject("selectedAccount");
+        assertEquals("user", serializedSelectedAccount.get("storage").getAsString());
+        assertEquals("microsoft", serializedSelectedAccount.get("type").getAsString());
+        assertEquals("123456781234123412341234567890ab", serializedSelectedAccount.get("uuid").getAsString());
+    }
+
     /// Tests that launcher settings serialization preserves a patch-version schema and unknown fields.
     @Test
     public void preservesPatchSchemaAndUnknownFields() {

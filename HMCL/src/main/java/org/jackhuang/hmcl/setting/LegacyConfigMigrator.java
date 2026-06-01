@@ -23,15 +23,18 @@ import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.gson.JsonSchema;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
+import org.jackhuang.hmcl.util.gson.UUIDTypeAdapter;
 import org.jackhuang.hmcl.util.io.JarUtils;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
+import java.io.Reader;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
@@ -63,6 +66,9 @@ public final class LegacyConfigMigrator {
 
     /// The legacy user settings path shared by all workspaces.
     private static final Path LEGACY_USER_SETTINGS_LOCATION = Metadata.HMCL_USER_HOME.resolve("config.json");
+
+    /// The legacy user account storage path shared by all workspaces.
+    private static final Path LEGACY_USER_ACCOUNTS_LOCATION = Metadata.HMCL_USER_HOME.resolve("accounts.json");
 
     /// Legacy ordinal order for `EnumBackgroundImage` in upstream/main configs.
     private static final String[] LEGACY_BACKGROUND_IMAGE_TYPES = {
@@ -135,6 +141,7 @@ public final class LegacyConfigMigrator {
             AccountStorages accountStorages = Objects.requireNonNullElseGet(
                     extractAccountStorages(jsonObject),
                     AccountStorages::new);
+            migrateLegacySelectedAccount(jsonObject, accountStorages);
             JsonElement legacyAllowAutoAgent = jsonObject.remove("allowAutoAgent");
             JsonElement legacyDisableAutoGameOptions = jsonObject.remove("disableAutoGameOptions");
             migrateLegacyEnumOrdinals(jsonObject);
@@ -272,6 +279,184 @@ public final class LegacyConfigMigrator {
 
         AccountStorages result = JsonUtils.GSON.fromJson(object, AccountStorages.class);
         return result != null ? result : new AccountStorages();
+    }
+
+    /// Migrates the legacy selected account string into a structured selected account reference.
+    static boolean migrateLegacySelectedAccount(JsonObject json, AccountStorages localAccounts) {
+        Objects.requireNonNull(json);
+        Objects.requireNonNull(localAccounts);
+
+        JsonElement selectedAccount = json.get("selectedAccount");
+        if (selectedAccount == null || selectedAccount instanceof JsonObject) {
+            return false;
+        }
+
+        @Nullable String legacyIdentifier = readString(selectedAccount);
+        if (StringUtils.isBlank(legacyIdentifier)) {
+            json.remove("selectedAccount");
+            return true;
+        }
+
+        @Nullable JsonObject reference = findLegacySelectedAccountReference(legacyIdentifier, localAccounts, false);
+        if (reference == null) {
+            AccountStorages userAccounts = loadLegacyUserAccountStoragesForSelectedAccount();
+            if (userAccounts != null) {
+                reference = findLegacySelectedAccountReference(legacyIdentifier, userAccounts, true);
+            }
+        }
+
+        if (reference != null) {
+            json.add("selectedAccount", reference);
+        } else {
+            json.remove("selectedAccount");
+        }
+        return true;
+    }
+
+    /// Loads legacy user account storages only for resolving a selected account reference during migration.
+    private static @Nullable AccountStorages loadLegacyUserAccountStoragesForSelectedAccount() {
+        if (!Files.exists(LEGACY_USER_ACCOUNTS_LOCATION)) {
+            return null;
+        }
+
+        try (Reader reader = Files.newBufferedReader(LEGACY_USER_ACCOUNTS_LOCATION)) {
+            List<Map<Object, Object>> accounts =
+                    LauncherSettings.SETTINGS_GSON.fromJson(reader, JsonUtils.listTypeOf(JsonUtils.mapTypeOf(Object.class, Object.class)));
+            return accounts != null ? AccountStorages.fromAccounts(accounts) : null;
+        } catch (Exception e) {
+            LOG.warning("Failed to load legacy user accounts for selected account migration", e);
+            return null;
+        }
+    }
+
+    /// Finds the structured selected account reference matching a legacy selected account string.
+    private static @Nullable JsonObject findLegacySelectedAccountReference(
+            String legacyIdentifier,
+            AccountStorages accounts,
+            boolean userStorage) {
+        String identifier = legacyIdentifier;
+        boolean selectedUserStorage = false;
+        if (identifier.startsWith("$GLOBAL:")) {
+            selectedUserStorage = true;
+            identifier = identifier.substring("$GLOBAL:".length());
+        }
+        if (selectedUserStorage != userStorage) {
+            return null;
+        }
+
+        for (Map<Object, Object> account : accounts.getAccounts()) {
+            if (matchesLegacySelectedAccountIdentifier(identifier, account)) {
+                return createSelectedAccountReference(account, userStorage);
+            }
+        }
+        return null;
+    }
+
+    /// Returns whether a serialized account entry matches a legacy selected account string.
+    private static boolean matchesLegacySelectedAccountIdentifier(String identifier, Map<Object, Object> account) {
+        @Nullable String legacyIdentifier = getLegacyAccountIdentifier(account, false);
+        @Nullable String compactLegacyIdentifier = getLegacyAccountIdentifier(account, true);
+        if (Objects.equals(identifier, legacyIdentifier)
+                || Objects.equals(identifier, compactLegacyIdentifier)) {
+            return true;
+        }
+
+        // Older legacy configs may store only the username for offline and Yggdrasil accounts.
+        return Objects.equals(identifier, asString(account.get("username")));
+    }
+
+    /// Creates the structured selected account reference for a serialized account entry.
+    private static @Nullable JsonObject createSelectedAccountReference(Map<Object, Object> account, boolean userStorage) {
+        @Nullable String type = asString(account.get("type"));
+        if (type == null) {
+            return null;
+        }
+
+        JsonObject reference = new JsonObject();
+        reference.addProperty("storage", userStorage ? "user" : "local");
+        reference.addProperty("type", type);
+
+        switch (type) {
+            case "offline" -> {
+                @Nullable String username = asString(account.get("username"));
+                if (username == null) {
+                    return null;
+                }
+                reference.addProperty("username", username);
+            }
+            case "microsoft" -> {
+                @Nullable String uuid = asString(account.get("uuid"));
+                if (uuid == null) {
+                    return null;
+                }
+                reference.addProperty("uuid", uuid);
+                @Nullable String userId = asString(account.get("userid"));
+                if (userId != null) {
+                    reference.addProperty("userid", userId);
+                }
+            }
+            case "authlibInjector" -> {
+                @Nullable String serverBaseURL = asString(account.get("serverBaseURL"));
+                @Nullable String username = asString(account.get("username"));
+                @Nullable String uuid = asString(account.get("uuid"));
+                if (serverBaseURL == null || username == null || uuid == null) {
+                    return null;
+                }
+                reference.addProperty("serverBaseURL", serverBaseURL);
+                reference.addProperty("username", username);
+                reference.addProperty("uuid", uuid);
+            }
+            default -> {
+                return null;
+            }
+        }
+        return reference;
+    }
+
+    /// Returns the legacy string identifier for a serialized account entry.
+    private static @Nullable String getLegacyAccountIdentifier(Map<Object, Object> account, boolean compactUuid) {
+        @Nullable String type = asString(account.get("type"));
+        if (type == null) {
+            return null;
+        }
+
+        return switch (type) {
+            case "offline" -> {
+                @Nullable String username = asString(account.get("username"));
+                yield username != null ? username + ":" + username : null;
+            }
+            case "microsoft" -> {
+                @Nullable String uuid = asString(account.get("uuid"));
+                yield uuid != null ? "microsoft:" + formatLegacyUUID(uuid, compactUuid) : null;
+            }
+            case "authlibInjector" -> {
+                @Nullable String serverBaseURL = asString(account.get("serverBaseURL"));
+                @Nullable String username = asString(account.get("username"));
+                @Nullable String uuid = asString(account.get("uuid"));
+                yield serverBaseURL != null && username != null && uuid != null
+                        ? serverBaseURL + ":" + username + ":" + formatLegacyUUID(uuid, compactUuid)
+                        : null;
+            }
+            default -> null;
+        };
+    }
+
+    /// Formats a stored UUID the same way legacy account identifiers did.
+    private static String formatLegacyUUID(String uuid, boolean compact) {
+        if (compact) {
+            return uuid;
+        }
+
+        try {
+            return UUIDTypeAdapter.fromString(uuid).toString();
+        } catch (IllegalArgumentException ignored) {
+            return uuid;
+        }
+    }
+
+    /// Converts a value to a string when it already is a JSON string-equivalent value.
+    private static @Nullable String asString(@Nullable Object value) {
+        return value instanceof String string ? string : null;
     }
 
     /// Moves one JSON member from the source object to the target object.

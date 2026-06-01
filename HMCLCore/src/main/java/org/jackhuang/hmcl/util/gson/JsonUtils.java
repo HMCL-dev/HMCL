@@ -18,10 +18,7 @@
 package org.jackhuang.hmcl.util.gson;
 
 import com.github.f4b6a3.uuid.alt.GUID;
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
-import com.google.gson.JsonParseException;
-import com.google.gson.JsonSyntaxException;
+import com.google.gson.*;
 import com.google.gson.reflect.TypeToken;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
@@ -127,6 +124,15 @@ public final class JsonUtils {
     public static <K, V extends @UnknownNullability Object> TypeToken<Map<K, V>> mapTypeOf(
             Class<K> keyType, TypeToken<V> valueType) {
         return (TypeToken<Map<K, V>>) TypeToken.getParameterized(Map.class, keyType, valueType.getType());
+    }
+
+    /// Reads a string member from a JSON object.
+    ///
+    /// @return the string value, or `null` if the key is missing or not a string
+    public static @Nullable String getString(JsonObject reference, String key) {
+        return reference.get(key) instanceof JsonPrimitive primitive && primitive.isString()
+                ? primitive.getAsString()
+                : null;
     }
 
     /// Deserializes the JSON string into an object of the given class using the provided [Gson]

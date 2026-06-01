@@ -17,6 +17,7 @@
  */
 package org.jackhuang.hmcl.auth.authlibinjector;
 
+import com.google.gson.JsonObject;
 import org.jackhuang.hmcl.auth.*;
 import org.jackhuang.hmcl.auth.yggdrasil.CompleteGameProfile;
 import org.jackhuang.hmcl.auth.yggdrasil.TextureType;
@@ -156,6 +157,13 @@ public class AuthlibInjectorAccount extends YggdrasilAccount {
     @Override
     public String getIdentifier() {
         return server.getUrl() + ":" + super.getIdentifier();
+    }
+
+    /// Writes the authlib-injector server URL and inherited Yggdrasil account identifier fields.
+    @Override
+    public void toIdentifier(JsonObject json) {
+        json.addProperty("serverBaseURL", server.getUrl());
+        super.toIdentifier(json);
     }
 
     @Override

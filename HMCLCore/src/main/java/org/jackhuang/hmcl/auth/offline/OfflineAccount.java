@@ -17,6 +17,7 @@
  */
 package org.jackhuang.hmcl.auth.offline;
 
+import com.google.gson.JsonObject;
 import javafx.beans.binding.ObjectBinding;
 import org.jackhuang.hmcl.auth.Account;
 import org.jackhuang.hmcl.auth.AuthInfo;
@@ -88,6 +89,12 @@ public class OfflineAccount extends Account {
     @Override
     public String getIdentifier() {
         return username + ":" + username;
+    }
+
+    /// Writes the offline username used to identify this account.
+    @Override
+    public void toIdentifier(JsonObject json) {
+        json.addProperty("username", username);
     }
 
     public Skin getSkin() {

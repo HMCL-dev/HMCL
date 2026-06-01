@@ -17,6 +17,7 @@
  */
 package org.jackhuang.hmcl.auth.yggdrasil;
 
+import com.google.gson.JsonObject;
 import javafx.beans.binding.ObjectBinding;
 import org.jackhuang.hmcl.auth.*;
 import org.jackhuang.hmcl.util.gson.UUIDTypeAdapter;
@@ -100,6 +101,13 @@ public abstract class YggdrasilAccount extends ClassicAccount {
     @Override
     public String getIdentifier() {
         return getUsername() + ":" + getUUID();
+    }
+
+    /// Writes the username and selected character UUID used to identify this Yggdrasil account.
+    @Override
+    public void toIdentifier(JsonObject json) {
+        json.addProperty("username", getUsername());
+        json.addProperty("uuid", UUIDTypeAdapter.fromUUID(getUUID()));
     }
 
     @Override
