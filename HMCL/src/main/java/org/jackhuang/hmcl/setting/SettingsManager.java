@@ -56,9 +56,6 @@ public final class SettingsManager {
     /// The user settings path shared by all workspaces.
     public static final Path USER_SETTINGS_LOCATION = Metadata.HMCL_USER_HOME.resolve("user-settings.json");
 
-    /// The legacy user settings path shared by all workspaces.
-    private static final Path LEGACY_USER_SETTINGS_LOCATION = Metadata.HMCL_USER_HOME.resolve("config.json");
-
     /// The current per-workspace config path.
     private static final Path SETTINGS_LOCATION = Metadata.HMCL_LOCAL_HOME.resolve("settings.json");
 
@@ -187,20 +184,9 @@ public final class SettingsManager {
     /// Whether the per-workspace config should be saved after extracting detached data.
     private static boolean needSaveSettings = false;
 
-    /// Detached game directories migrated from a config file.
-    private static @Nullable GameDirectories migratedGameDirectories;
-
-    /// Detached game settings presets migrated from a legacy config file.
-    private static @Nullable GameSettingsPresets migratedGameSettingsPresets;
-
-    /// Detached launcher state migrated from a legacy config file.
-    private static @Nullable LauncherState migratedLauncherState;
-
-    /// Detached authlib-injector servers migrated from a legacy config file.
-    private static @Nullable AuthlibInjectorServerList migratedAuthlibInjectorServers;
-
-    /// Detached account storages migrated from a config file.
-    private static @Nullable AccountStorages migratedGameAccounts;
+    /// Detached settings used as fallbacks when detached settings files do not exist yet.
+    private static LegacyConfigMigrator.DetachedSettings detachedSettingsFallback =
+            LegacyConfigMigrator.DetachedSettings.empty();
 
     /// Returns the loaded per-workspace launcher settings.
     public static LauncherSettings settings() {
@@ -428,11 +414,11 @@ public final class SettingsManager {
         Locale.setDefault(settings().languageProperty().get().getLocale());
         I18n.setLocale(configInstance.languageProperty().get());
         LOG.setLogRetention(userSettings().logRetentionProperty().get());
-        loadGameDirectories(migratedGameDirectories, !unsupportedVersion);
-        loadGameSettingsPresets(migratedGameSettingsPresets, !unsupportedVersion);
-        loadLauncherState(migratedLauncherState, !unsupportedVersion);
-        loadAuthlibInjectorServers(migratedAuthlibInjectorServers, !unsupportedVersion);
-        loadGameAccounts(migratedGameAccounts, !unsupportedVersion);
+        loadGameDirectories(detachedSettingsFallback.gameDirectories(), !unsupportedVersion);
+        loadGameSettingsPresets(detachedSettingsFallback.gameSettingsPresets(), !unsupportedVersion);
+        loadLauncherState(detachedSettingsFallback.launcherState(), !unsupportedVersion);
+        loadAuthlibInjectorServers(detachedSettingsFallback.authlibInjectorServers(), !unsupportedVersion);
+        loadGameAccounts(detachedSettingsFallback.accountStorages(), !unsupportedVersion);
 
         if (!unsupportedVersion && (newlyCreated || needSaveSettings)) {
             LOG.info((newlyCreated ? "Creating" : "Updating") + " config file " + SETTINGS_LOCATION);
@@ -470,8 +456,10 @@ public final class SettingsManager {
                 return new LauncherSettings();
             }
 
-            migratedGameAccounts = LegacyConfigMigrator.extractAccountStorages(jsonObject);
-            if (migratedGameAccounts != null) {
+            LegacyConfigMigrator.CurrentSettingsMigration migration =
+                    LegacyConfigMigrator.migrateCurrentSettings(jsonObject);
+            detachedSettingsFallback = migration.detachedSettings();
+            if (migration.changed()) {
                 needSaveSettings = true;
             }
 
@@ -495,11 +483,7 @@ public final class SettingsManager {
             LegacyConfigMigrator.MigrationResult migrationResult = LegacyConfigMigrator.migrateLegacyConfig();
             if (migrationResult != null) {
                 LOG.info("Migrating settings from " + migrationResult.path() + " to " + SETTINGS_LOCATION);
-                migratedGameDirectories = migrationResult.gameDirectories();
-                migratedGameSettingsPresets = migrationResult.gameSettingsPresets();
-                migratedLauncherState = migrationResult.launcherState();
-                migratedAuthlibInjectorServers = migrationResult.authlibInjectorServers();
-                migratedGameAccounts = migrationResult.accountStorages();
+                detachedSettingsFallback = migrationResult.detachedSettings();
                 FileUtils.saveSafely(SETTINGS_LOCATION, migrationResult.contentForMigration());
                 return migrationResult.launcherSettings();
             }
@@ -512,10 +496,10 @@ public final class SettingsManager {
 
     /// Loads game directories and installs the save listener.
     ///
-    /// @param migratedGameDirectories the game directory store migrated from a config file
+    /// @param fallbackGameDirectories the fallback store used when the local game directory file does not exist
     /// @param allowSave whether the detached game directory file may be overwritten
     private static void loadGameDirectories(
-            @Nullable GameDirectories migratedGameDirectories,
+            @Nullable GameDirectories fallbackGameDirectories,
             boolean allowSave) throws IOException {
         if (gameDirectories != null) {
             throw new IllegalStateException("Game directories are already loaded");
@@ -527,7 +511,7 @@ public final class SettingsManager {
         boolean newlyCreatedLocal = !Files.exists(LOCAL_GAME_DIRECTORIES_LOCATION);
         boolean newlyCreatedGlobal = !Files.exists(GLOBAL_GAME_DIRECTORIES_LOCATION);
         JsonSettingFile.LoadResult<GameDirectories> globalResult = GLOBAL_GAME_DIRECTORIES_FILE.load(null);
-        JsonSettingFile.LoadResult<GameDirectories> localResult = LOCAL_GAME_DIRECTORIES_FILE.load(migratedGameDirectories);
+        JsonSettingFile.LoadResult<GameDirectories> localResult = LOCAL_GAME_DIRECTORIES_FILE.load(fallbackGameDirectories);
 
         gameDirectories = mergeGameDirectories(globalResult.value(), localResult.value());
         allowSaveLocalGameDirectories = allowSave && localResult.allowSave();
@@ -636,10 +620,10 @@ public final class SettingsManager {
 
     /// Loads game settings presets and installs the save listener.
     ///
-    /// @param migratedGameSettingsPresets the preset store migrated from a legacy config file
+    /// @param fallbackGameSettingsPresets the fallback store used when the preset file does not exist
     /// @param allowSave whether the detached preset file may be overwritten
     private static void loadGameSettingsPresets(
-            @Nullable GameSettingsPresets migratedGameSettingsPresets,
+            @Nullable GameSettingsPresets fallbackGameSettingsPresets,
             boolean allowSave) throws IOException {
         if (gameSettingsPresets != null) {
             throw new IllegalStateException("Game settings presets are already loaded");
@@ -649,7 +633,7 @@ public final class SettingsManager {
 
         boolean newlyCreated = !Files.exists(GAME_SETTINGS_LOCATION);
         JsonSettingFile.LoadResult<GameSettingsPresets> result =
-                GAME_SETTINGS_FILE.load(migratedGameSettingsPresets);
+                GAME_SETTINGS_FILE.load(fallbackGameSettingsPresets);
         gameSettingsPresets = result.value();
         if (allowSave && result.allowSave()) {
             GAME_SETTINGS_FILE.installAutoSave(gameSettingsPresets);
@@ -663,10 +647,10 @@ public final class SettingsManager {
 
     /// Loads launcher state and installs the save listener.
     ///
-    /// @param migratedLauncherState the launcher state migrated from a legacy config file
+    /// @param fallbackLauncherState the fallback state used when the launcher state file does not exist
     /// @param allowSave whether the detached launcher state file may be overwritten
     private static void loadLauncherState(
-            @Nullable LauncherState migratedLauncherState,
+            @Nullable LauncherState fallbackLauncherState,
             boolean allowSave) throws IOException {
         if (launcherState != null) {
             throw new IllegalStateException("Launcher state is already loaded");
@@ -676,7 +660,7 @@ public final class SettingsManager {
 
         boolean newlyCreated = !Files.exists(STATE_LOCATION);
         JsonSettingFile.LoadResult<LauncherState> result =
-                STATE_FILE.load(migratedLauncherState);
+                STATE_FILE.load(fallbackLauncherState);
         launcherState = result.value();
         if (allowSave && result.allowSave()) {
             STATE_FILE.installAutoSave(launcherState);
@@ -690,10 +674,10 @@ public final class SettingsManager {
 
     /// Loads authlib-injector servers and installs the save listener.
     ///
-    /// @param migratedAuthlibInjectorServers the server list migrated from a legacy config file
+    /// @param fallbackAuthlibInjectorServers the fallback list used when the server list file does not exist
     /// @param allowSave whether the detached server list file may be overwritten
     private static void loadAuthlibInjectorServers(
-            @Nullable AuthlibInjectorServerList migratedAuthlibInjectorServers,
+            @Nullable AuthlibInjectorServerList fallbackAuthlibInjectorServers,
             boolean allowSave) throws IOException {
         if (authlibInjectorServers != null) {
             throw new IllegalStateException("Authlib-injector servers are already loaded");
@@ -703,7 +687,7 @@ public final class SettingsManager {
 
         boolean newlyCreated = !Files.exists(AUTHLIB_INJECTOR_SERVERS_LOCATION);
         JsonSettingFile.LoadResult<AuthlibInjectorServerList> result =
-                AUTHLIB_INJECTOR_SERVERS_FILE.load(migratedAuthlibInjectorServers);
+                AUTHLIB_INJECTOR_SERVERS_FILE.load(fallbackAuthlibInjectorServers);
         authlibInjectorServers = result.value();
         if (allowSave && result.allowSave()) {
             AUTHLIB_INJECTOR_SERVERS_FILE.installAutoSave(authlibInjectorServers);
@@ -717,10 +701,10 @@ public final class SettingsManager {
 
     /// Loads account storages and installs the save listener.
     ///
-    /// @param migratedGameAccounts the account storage store migrated from a config file
+    /// @param fallbackGameAccounts the fallback store used when the account storage file does not exist
     /// @param allowSave whether the detached account storage file may be overwritten
     private static void loadGameAccounts(
-            @Nullable AccountStorages migratedGameAccounts,
+            @Nullable AccountStorages fallbackGameAccounts,
             boolean allowSave) throws IOException {
         if (gameAccounts != null) {
             throw new IllegalStateException("Game accounts are already loaded");
@@ -730,7 +714,7 @@ public final class SettingsManager {
 
         boolean newlyCreated = !Files.exists(GAME_ACCOUNTS_LOCATION);
         JsonSettingFile.LoadResult<AccountStorages> result =
-                GAME_ACCOUNTS_FILE.load(migratedGameAccounts);
+                GAME_ACCOUNTS_FILE.load(fallbackGameAccounts);
         gameAccounts = result.value();
         if (allowSave && result.allowSave()) {
             GAME_ACCOUNTS_FILE.installAutoSave(gameAccounts);
@@ -810,7 +794,9 @@ public final class SettingsManager {
         LOG.info("User settings location: " + USER_SETTINGS_LOCATION);
 
         boolean newlyCreated = !Files.exists(USER_SETTINGS_LOCATION);
-        @Nullable UserSettings migratedUserSettings = newlyCreated ? migrateLegacyUserSettings() : null;
+        @Nullable UserSettings migratedUserSettings = newlyCreated
+                ? LegacyConfigMigrator.migrateLegacyUserSettings(USER_SETTINGS_LOCATION)
+                : null;
         JsonSettingFile.LoadResult<UserSettings> result = USER_SETTINGS_FILE.load(migratedUserSettings);
         userSettingsInstance = result.value();
         if (result.allowSave()) {
@@ -821,27 +807,6 @@ public final class SettingsManager {
             LOG.info("Creating user settings file " + USER_SETTINGS_LOCATION);
             USER_SETTINGS_FILE.save(userSettingsInstance);
         }
-    }
-
-    /// Migrates user settings from the legacy global config file.
-    private static @Nullable UserSettings migrateLegacyUserSettings() throws IOException {
-        if (Files.exists(LEGACY_USER_SETTINGS_LOCATION)) {
-            try {
-                String content = Files.readString(LEGACY_USER_SETTINGS_LOCATION);
-                UserSettings deserialized = UserSettings.fromJson(content);
-                if (deserialized == null) {
-                    LOG.info("Legacy user settings file is empty: " + LEGACY_USER_SETTINGS_LOCATION);
-                } else {
-                    LOG.info("Migrating user settings from " + LEGACY_USER_SETTINGS_LOCATION
-                            + " to " + USER_SETTINGS_LOCATION);
-                    return deserialized;
-                }
-            } catch (JsonParseException e) {
-                LOG.warning("Malformed legacy user settings: " + LEGACY_USER_SETTINGS_LOCATION, e);
-            }
-        }
-
-        return null;
     }
 
     /// Storage scope for a game directory entry.

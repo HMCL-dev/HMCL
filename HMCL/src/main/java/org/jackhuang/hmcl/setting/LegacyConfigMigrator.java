@@ -61,6 +61,9 @@ public final class LegacyConfigMigrator {
     /// The legacy Linux configuration file name used through HMCL 3.15.0.345.
     private static final String LEGACY_CONFIG_FILENAME_LINUX = ".hmcl.json";
 
+    /// The legacy user settings path shared by all workspaces.
+    private static final Path LEGACY_USER_SETTINGS_LOCATION = Metadata.HMCL_USER_HOME.resolve("config.json");
+
     /// Legacy ordinal order for `EnumBackgroundImage` in upstream/main configs.
     private static final String[] LEGACY_BACKGROUND_IMAGE_TYPES = {
             "DEFAULT",
@@ -155,10 +158,55 @@ public final class LegacyConfigMigrator {
             migrateLegacyPresetSettings(gameDirectories, gameSettingsPresets, legacyConfigurations);
             migrateLegacyAllowAutoAgent(deserialized, gameSettingsPresets, legacyAllowAutoAgent);
             migrateLegacyDisableAutoGameOptions(deserialized, gameSettingsPresets, legacyDisableAutoGameOptions);
-            return new MigrationResult(path, deserialized, gameDirectories, gameSettingsPresets,
-                    launcherState, authlibInjectorServers, accountStorages, deserialized.toJson());
+            DetachedSettings detachedSettings = new DetachedSettings(gameDirectories, gameSettingsPresets,
+                    launcherState, authlibInjectorServers, accountStorages);
+            return new MigrationResult(path, deserialized, detachedSettings, deserialized.toJson());
         } catch (JsonParseException e) {
             LOG.warning("Malformed legacy config file: " + path, e);
+            return null;
+        }
+    }
+
+    /// Extracts detached settings data that may still be embedded in a current settings JSON object.
+    ///
+    /// @param json the current settings JSON object
+    /// @return the extracted detached settings and whether the JSON object was changed
+    static CurrentSettingsMigration migrateCurrentSettings(JsonObject json) {
+        Objects.requireNonNull(json);
+
+        @Nullable AccountStorages accountStorages = extractAccountStorages(json);
+        if (accountStorages == null) {
+            return new CurrentSettingsMigration(DetachedSettings.empty(), false);
+        }
+
+        return new CurrentSettingsMigration(
+                new DetachedSettings(null, null, null, null, accountStorages),
+                true);
+    }
+
+    /// Migrates user settings from the legacy global config file.
+    ///
+    /// @param targetLocation the current user settings path used for logging
+    /// @return the migrated user settings, or `null` when no legacy user settings can be used
+    static @Nullable UserSettings migrateLegacyUserSettings(Path targetLocation) throws IOException {
+        Objects.requireNonNull(targetLocation);
+
+        if (!Files.exists(LEGACY_USER_SETTINGS_LOCATION)) {
+            return null;
+        }
+
+        try {
+            String content = Files.readString(LEGACY_USER_SETTINGS_LOCATION);
+            UserSettings deserialized = UserSettings.fromJson(content);
+            if (deserialized == null) {
+                LOG.info("Legacy user settings file is empty: " + LEGACY_USER_SETTINGS_LOCATION);
+                return null;
+            }
+
+            LOG.info("Migrating user settings from " + LEGACY_USER_SETTINGS_LOCATION + " to " + targetLocation);
+            return deserialized;
+        } catch (JsonParseException e) {
+            LOG.warning("Malformed legacy user settings: " + LEGACY_USER_SETTINGS_LOCATION, e);
             return null;
         }
     }
@@ -693,18 +741,42 @@ public final class LegacyConfigMigrator {
         return value != null ? value : defaultValue;
     }
 
+    /// Detached settings migrated out of an old config file.
+    ///
+    /// @param gameDirectories the detached game directory store, or `null` when none was migrated
+    /// @param gameSettingsPresets the detached preset store, or `null` when none was migrated
+    /// @param launcherState the detached launcher state, or `null` when none was migrated
+    /// @param authlibInjectorServers the detached authlib-injector servers, or `null` when none was migrated
+    /// @param accountStorages the detached account storages, or `null` when none was migrated
+    record DetachedSettings(
+            @Nullable GameDirectories gameDirectories,
+            @Nullable GameSettingsPresets gameSettingsPresets,
+            @Nullable LauncherState launcherState,
+            @Nullable AuthlibInjectorServerList authlibInjectorServers,
+            @Nullable AccountStorages accountStorages) {
+        /// Returns an empty detached settings migration result.
+        static DetachedSettings empty() {
+            return new DetachedSettings(null, null, null, null, null);
+        }
+    }
+
+    /// Result of migrating detached data out of an existing settings file.
+    ///
+    /// @param detachedSettings the detached settings migrated out of the settings JSON object
+    /// @param changed whether the settings JSON object was changed
+    record CurrentSettingsMigration(DetachedSettings detachedSettings, boolean changed) {
+    }
+
     /// Result of locating and loading a legacy config file without modifying it.
     ///
-    /// @param launcherSettings    The parsed launcher settings.
-    /// @param gameDirectories     The detached game directory store migrated from legacy profiles.
-    /// @param gameSettingsPresets The detached preset store migrated from legacy profile globals.
-    /// @param launcherState       The detached launcher state migrated from legacy config fields.
-    /// @param authlibInjectorServers The detached authlib-injector servers migrated from legacy config fields.
-    /// @param accountStorages    The detached account storages migrated from legacy config fields.
-    /// @param contentForMigration The content to save when migrating to settings.json.
-    record MigrationResult(Path path, LauncherSettings launcherSettings, GameDirectories gameDirectories,
-                           GameSettingsPresets gameSettingsPresets, LauncherState launcherState,
-                           AuthlibInjectorServerList authlibInjectorServers,
-                           AccountStorages accountStorages, String contentForMigration) {
+    /// @param path the legacy config path
+    /// @param launcherSettings the parsed launcher settings
+    /// @param detachedSettings the detached settings migrated from legacy config fields
+    /// @param contentForMigration the content to save when migrating to settings.json
+    record MigrationResult(
+            Path path,
+            LauncherSettings launcherSettings,
+            DetachedSettings detachedSettings,
+            String contentForMigration) {
     }
 }
