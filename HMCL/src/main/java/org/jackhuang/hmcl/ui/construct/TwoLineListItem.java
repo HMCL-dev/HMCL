@@ -168,8 +168,9 @@ public class TwoLineListItem extends VBox {
             tagsBox.setAlignment(Pos.CENTER_LEFT);
             HBox.setHgrow(tagsBox, Priority.ALWAYS);
             Bindings.bindContent(tagsBox.getChildren(), tags);
-            tagsBox.managedProperty().bind(Bindings.isNotEmpty(tags));
-            tagsBox.visibleProperty().bind(Bindings.isNotEmpty(tags));
+            var isNotEmpty = Bindings.isNotEmpty(tags);
+            tagsBox.managedProperty().bind(isNotEmpty);
+            tagsBox.visibleProperty().bind(isNotEmpty);
 
             lblTitle.setMinWidth(Label.USE_PREF_SIZE);
             firstLine.getChildren().setAll(lblTitle, tagsBox);
