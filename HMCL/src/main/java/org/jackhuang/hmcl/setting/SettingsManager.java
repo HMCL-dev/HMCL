@@ -60,7 +60,7 @@ public final class SettingsManager {
     private static final Path SETTINGS_LOCATION = Metadata.HMCL_LOCAL_HOME.resolve("settings.json");
 
     /// The current per-workspace launcher state path.
-    private static final Path STATE_LOCATION = Metadata.HMCL_LOCAL_HOME.resolve("state.json");
+    private static final Path STATE_LOCATION = Metadata.HMCL_LOCAL_HOME.resolve("launcher-state.json");
 
     /// The current per-workspace authlib-injector server list path.
     private static final Path AUTHLIB_INJECTOR_SERVERS_LOCATION =

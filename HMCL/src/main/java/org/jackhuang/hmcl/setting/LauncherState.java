@@ -37,7 +37,7 @@ import java.util.Objects;
 
 /// Stores per-workspace launcher runtime state independently from the main settings file.
 ///
-/// The JSON representation is saved as `state.json` under the current HMCL directory.
+/// The JSON representation is saved as `launcher-state.json` under the current HMCL directory.
 ///
 /// @author Glavo
 @JsonAdapter(LauncherState.Adapter.class)
@@ -46,7 +46,7 @@ import java.util.Objects;
 public final class LauncherState extends ObservableSetting implements JsonSchemaSetting {
     /// The JSON schema supported by this launcher state store.
     public static final JsonSchema CURRENT_SCHEMA =
-            new JsonSchema("state", new JsonSchema.Version(1, 0, 0));
+            new JsonSchema("launcher-state", new JsonSchema.Version(1, 0, 0));
 
     /// Creates an empty launcher state store.
     public LauncherState() {

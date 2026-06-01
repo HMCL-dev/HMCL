@@ -3,7 +3,7 @@
 ## Storage Layout
 
 - `settings.json`: workspace launcher settings.
-- `state.json`: workspace UI/runtime state.
+- `launcher-state.json`: workspace UI/runtime state.
 - `authlib-injector-servers.json`: workspace authlib-injector server list.
 - `game-directories.json`: workspace game directory profiles in the `directories` list.
 - `user-game-directories.json`: shared game directory profiles in the `directories` list.
