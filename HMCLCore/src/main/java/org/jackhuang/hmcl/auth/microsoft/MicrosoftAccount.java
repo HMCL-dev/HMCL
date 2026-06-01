@@ -79,11 +79,6 @@ public final class MicrosoftAccount extends OAuthAccount {
         return session.getProfile().getId();
     }
 
-    @Override
-    public String getIdentifier() {
-        return "microsoft:" + getUUID();
-    }
-
     /// Writes the Minecraft profile UUID used to identify this Microsoft account.
     @Override
     public void toIdentifier(JsonObject json) {

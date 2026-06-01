@@ -101,8 +101,6 @@ public abstract class Account implements Observable {
         this.portable.set(value);
     }
 
-    public abstract String getIdentifier();
-
     /// Writes stable fields that identify this account into the given JSON object.
     ///
     /// The identifier object must not contain credentials or other secrets. It is used only to find the

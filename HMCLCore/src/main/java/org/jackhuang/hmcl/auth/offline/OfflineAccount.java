@@ -86,11 +86,6 @@ public class OfflineAccount extends Account {
         return username;
     }
 
-    @Override
-    public String getIdentifier() {
-        return username + ":" + username;
-    }
-
     /// Writes the offline username used to identify this account.
     @Override
     public void toIdentifier(JsonObject json) {

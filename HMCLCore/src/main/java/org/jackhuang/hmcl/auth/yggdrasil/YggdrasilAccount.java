@@ -98,11 +98,6 @@ public abstract class YggdrasilAccount extends ClassicAccount {
         return session.getSelectedProfile().getId();
     }
 
-    @Override
-    public String getIdentifier() {
-        return getUsername() + ":" + getUUID();
-    }
-
     /// Writes the username and selected character UUID used to identify this Yggdrasil account.
     @Override
     public void toIdentifier(JsonObject json) {

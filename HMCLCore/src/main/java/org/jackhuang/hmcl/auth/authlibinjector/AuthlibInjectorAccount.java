@@ -154,11 +154,6 @@ public class AuthlibInjectorAccount extends YggdrasilAccount {
         return server;
     }
 
-    @Override
-    public String getIdentifier() {
-        return server.getUrl() + ":" + super.getIdentifier();
-    }
-
     /// Writes the authlib-injector server URL and inherited Yggdrasil account identifier fields.
     @Override
     public void toIdentifier(JsonObject json) {
