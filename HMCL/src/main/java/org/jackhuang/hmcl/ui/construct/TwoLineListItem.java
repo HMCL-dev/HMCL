@@ -28,6 +28,7 @@ import javafx.scene.control.Label;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
+import javafx.scene.shape.Rectangle;
 
 public class TwoLineListItem extends VBox {
     private static final String DEFAULT_STYLE_CLASS = "two-line-list-item";
@@ -172,6 +173,12 @@ public class TwoLineListItem extends VBox {
             tagsBox.managedProperty().bind(isNotEmpty);
             tagsBox.visibleProperty().bind(isNotEmpty);
 
+            // Clip overflow tags, matching the previous ScrollPane behavior.
+            var clip = new Rectangle();
+            tagsBox.setClip(clip);
+            tagsBox.widthProperty().addListener((obs, old, val) -> clip.setWidth(val.doubleValue()));
+            tagsBox.heightProperty().addListener((obs, old, val) -> clip.setHeight(val.doubleValue()));
+
             lblTitle.setMinWidth(Label.USE_PREF_SIZE);
             firstLine.getChildren().setAll(lblTitle, tagsBox);
         }
@@ -181,6 +188,7 @@ public class TwoLineListItem extends VBox {
     public void addTag(String tag, PseudoClass pseudoClass) {
         var tagLabel = new Label(tag);
         tagLabel.getStyleClass().add("tag");
+        tagLabel.setMinWidth(Label.USE_PREF_SIZE);
         if (pseudoClass != null)
             tagLabel.pseudoClassStateChanged(pseudoClass, true);
         getTags().add(tagLabel);
