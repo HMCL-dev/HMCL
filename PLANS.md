@@ -1,38 +1,50 @@
-# GameSettings Migration Notes
+# Settings Migration Notes
 
-## Current Storage Layout
+## Storage Layout
 
-- `settings.json` stores launcher configuration that is still part of the main workspace config.
-- `state.json` stores launcher UI/runtime state.
-- `authlib-injector-servers.json` stores authlib-injector server entries.
-- `game-directories.json` stores game directory profiles.
-- `game-settings.json` stores reusable `GameSettings.Preset` entries.
-- `game-accounts.json` stores account storage entries in an object with an `accounts` list.
-- `versions/<id>/.hmcl/instance-game-settings.json` stores instance-specific game settings.
+- `settings.json`: workspace launcher settings.
+- `state.json`: workspace UI/runtime state.
+- `authlib-injector-servers.json`: workspace authlib-injector server list.
+- `game-directories.json`: workspace game directory profiles in the `directories` list.
+- `user-game-directories.json`: shared game directory profiles in the `directories` list.
+- `game-settings.json`: workspace `GameSettings.Preset` entries.
+- `game-accounts.json`: workspace portable account storages in the `accounts` list.
+- `user-game-accounts.json`: shared account storages in the `accounts` list.
+- `versions/<id>/.hmcl/instance-game-settings.json`: instance-specific game settings.
+
+## Migration Scope
+
+- Only configuration formats used by `upstream/main` need migration support.
+- File formats introduced by this branch are still unstable and do not need compatibility with earlier revisions of this branch.
+- Legacy config files are read as migration inputs and must not be rewritten.
+- Detached settings files should be created and saved only through the new storage model.
 
 ## Migration Rules
 
-- Legacy `hmcl.json` and `.hmcl.json` are read as migration inputs and left untouched.
-- Legacy `accounts` fields are extracted from the main config into `game-accounts.json`.
-- Legacy global `accounts.json` is used only as a migration input when global `game-accounts.json` does not exist.
+- Legacy `hmcl.json` and `.hmcl.json` are read as workspace migration inputs.
+- Legacy `accounts` fields in the workspace config are extracted into `game-accounts.json`.
+- Legacy shared `accounts.json` is used only as a migration input when `user-game-accounts.json` does not exist.
 - Legacy `authlibInjectorServers` and `addedLittleSkin` fields are extracted into `authlib-injector-servers.json`.
 - Legacy profile data from `configurations` is converted into `game-directories.json`.
 - Legacy profile global settings are converted into `GameSettings.Preset` entries.
 - Legacy per-instance `hmclversion.cfg` files are converted into `GameSettings.Instance` data.
 
-## Compatibility Constraints
+## Schema Policy
 
-- This branch is still under active development, and file formats introduced by this branch are not finalized.
-- Changes in this branch do not need to preserve compatibility with earlier revisions of the same branch.
-- Compatibility work only needs to cover migration from old configuration formats used by `upstream/main`.
-- Old config files should not be rewritten during migration.
-- New detached files should be created only through the new storage model.
-- Instance settings should resolve effective values from their selected parent preset.
-- Inheritable fields should preserve explicit overrides and default to parent values when not overridden.
+- Detached settings files use `$schema` with `https://schemas.glavo.site/hmcl/<id>/<version>`.
+- Schema versions are written as `major.minor.patch`; `major.minor` may be accepted as patch `0` when reading.
+- Unsupported major versions are rejected.
+- Newer minor versions may be read but must not be overwritten.
+- Patch-compatible files may be saved while preserving the original schema string and unknown serialized members.
+
+## Settings Semantics
+
+- Instance settings resolve effective values from their selected parent preset.
+- Inheritable fields preserve explicit overrides and default to parent values when not overridden.
 
 ## Verification Focus
 
 - Loading an old config should create detached files without losing selected account, selected directory, or selected instance state.
 - Editing accounts should update `game-accounts.json`, not `settings.json`.
-- Existing global `accounts.json` should migrate to global `game-accounts.json`.
+- Existing shared `accounts.json` should migrate to `user-game-accounts.json`.
 - Launch, export, install, and settings UI flows should read effective `GameSettings` values.
