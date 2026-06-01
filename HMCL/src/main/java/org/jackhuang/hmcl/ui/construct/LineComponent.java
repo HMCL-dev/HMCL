@@ -88,6 +88,7 @@ public abstract class LineComponent extends StackPane implements NoPaddingCompon
         this.titleContainer = new VBox(titleLine);
         titleContainer.getStyleClass().add("title-container");
         titleContainer.setAlignment(Pos.CENTER_LEFT);
+        titleContainer.setMaxWidth(Double.MAX_VALUE);
         titleContainer.minWidthProperty().bind(titleLine.prefWidthProperty());
         titleContainer.setMouseTransparent(true);
         titleContainer.setPickOnBounds(false);
@@ -185,6 +186,7 @@ public abstract class LineComponent extends StackPane implements NoPaddingCompon
                             subtitleLabel = new Label();
                             subtitleLabel.setWrapText(true);
                             subtitleLabel.setMinHeight(Region.USE_PREF_SIZE);
+                            subtitleLabel.setMaxWidth(Double.MAX_VALUE);
                             subtitleLabel.setMouseTransparent(true);
                             subtitleLabel.getStyleClass().add("subtitle-label");
                         }
