@@ -84,7 +84,7 @@ public final class GameDirectories extends ObservableSetting implements JsonSche
     }
 
     /// JSON adapter for [GameDirectories].
-    public static final class Adapter extends ObservableSetting.Adapter<GameDirectories> {
+    public static final class Adapter extends ObservableSetting.Adapter<@Nullable GameDirectories> {
         /// Creates an empty game directory store for deserialization.
         @Override
         protected GameDirectories createInstance() {
