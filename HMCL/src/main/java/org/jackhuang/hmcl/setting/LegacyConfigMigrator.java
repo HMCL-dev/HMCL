@@ -25,7 +25,6 @@ import org.jackhuang.hmcl.util.gson.JsonSchema;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.gson.UUIDTypeAdapter;
 import org.jackhuang.hmcl.util.io.JarUtils;
-import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
 
@@ -291,7 +290,7 @@ public final class LegacyConfigMigrator {
             return false;
         }
 
-        @Nullable String legacyIdentifier = readString(selectedAccount);
+        @Nullable String legacyIdentifier = JsonUtils.getString(selectedAccount);
         if (StringUtils.isBlank(legacyIdentifier)) {
             json.remove("selectedAccount");
             return true;
@@ -362,12 +361,12 @@ public final class LegacyConfigMigrator {
         }
 
         // Older legacy configs may store only the username for offline and Yggdrasil accounts.
-        return Objects.equals(identifier, asString(account.get("username")));
+        return Objects.equals(identifier, JsonUtils.getString(account, "username"));
     }
 
     /// Creates the structured selected account reference for a serialized account entry.
     private static @Nullable JsonObject createSelectedAccountReference(Map<Object, Object> account, boolean userStorage) {
-        @Nullable String type = asString(account.get("type"));
+        @Nullable String type = JsonUtils.getString(account, "type");
         if (type == null) {
             return null;
         }
@@ -378,27 +377,27 @@ public final class LegacyConfigMigrator {
 
         switch (type) {
             case "offline" -> {
-                @Nullable String username = asString(account.get("username"));
+                @Nullable String username = JsonUtils.getString(account, "username");
                 if (username == null) {
                     return null;
                 }
                 reference.addProperty("username", username);
             }
             case "microsoft" -> {
-                @Nullable String uuid = asString(account.get("uuid"));
+                @Nullable String uuid = JsonUtils.getString(account, "uuid");
                 if (uuid == null) {
                     return null;
                 }
                 reference.addProperty("uuid", uuid);
-                @Nullable String userId = asString(account.get("userid"));
+                @Nullable String userId = JsonUtils.getString(account, "userid");
                 if (userId != null) {
                     reference.addProperty("userid", userId);
                 }
             }
             case "authlibInjector" -> {
-                @Nullable String serverBaseURL = asString(account.get("serverBaseURL"));
-                @Nullable String username = asString(account.get("username"));
-                @Nullable String uuid = asString(account.get("uuid"));
+                @Nullable String serverBaseURL = JsonUtils.getString(account, "serverBaseURL");
+                @Nullable String username = JsonUtils.getString(account, "username");
+                @Nullable String uuid = JsonUtils.getString(account, "uuid");
                 if (serverBaseURL == null || username == null || uuid == null) {
                     return null;
                 }
@@ -415,24 +414,24 @@ public final class LegacyConfigMigrator {
 
     /// Returns the legacy string identifier for a serialized account entry.
     private static @Nullable String getLegacyAccountIdentifier(Map<Object, Object> account, boolean compactUuid) {
-        @Nullable String type = asString(account.get("type"));
+        @Nullable String type = JsonUtils.getString(account, "type");
         if (type == null) {
             return null;
         }
 
         return switch (type) {
             case "offline" -> {
-                @Nullable String username = asString(account.get("username"));
+                @Nullable String username = JsonUtils.getString(account, "username");
                 yield username != null ? username + ":" + username : null;
             }
             case "microsoft" -> {
-                @Nullable String uuid = asString(account.get("uuid"));
+                @Nullable String uuid = JsonUtils.getString(account, "uuid");
                 yield uuid != null ? "microsoft:" + formatLegacyUUID(uuid, compactUuid) : null;
             }
             case "authlibInjector" -> {
-                @Nullable String serverBaseURL = asString(account.get("serverBaseURL"));
-                @Nullable String username = asString(account.get("username"));
-                @Nullable String uuid = asString(account.get("uuid"));
+                @Nullable String serverBaseURL = JsonUtils.getString(account, "serverBaseURL");
+                @Nullable String username = JsonUtils.getString(account, "username");
+                @Nullable String uuid = JsonUtils.getString(account, "uuid");
                 yield serverBaseURL != null && username != null && uuid != null
                         ? serverBaseURL + ":" + username + ":" + formatLegacyUUID(uuid, compactUuid)
                         : null;
@@ -452,11 +451,6 @@ public final class LegacyConfigMigrator {
         } catch (IllegalArgumentException ignored) {
             return uuid;
         }
-    }
-
-    /// Converts a value to a string when it already is a JSON string-equivalent value.
-    private static @Nullable String asString(@Nullable Object value) {
-        return value instanceof String string ? string : null;
     }
 
     /// Moves one JSON member from the source object to the target object.
@@ -519,7 +513,7 @@ public final class LegacyConfigMigrator {
 
     /// Migrates one legacy enum ordinal field into a stable enum name.
     private static void migrateLegacyEnumOrdinal(JsonObject json, String propertyName, String[] legacyNames) {
-        @Nullable Integer ordinal = readInteger(json.get(propertyName));
+        @Nullable Integer ordinal = JsonUtils.getInteger(json.get(propertyName));
         if (ordinal == null || ordinal < 0 || ordinal >= legacyNames.length) {
             return;
         }
@@ -538,7 +532,7 @@ public final class LegacyConfigMigrator {
             return;
         }
 
-        DownloadSource source = readBoolean(autoChooseDownloadType, true)
+        DownloadSource source = JsonUtils.getBoolean(autoChooseDownloadType, true)
                 ? parseLegacyDownloadSource(legacyVersionListSource, DownloadSource.DEFAULT)
                 : parseLegacyDownloadSource(legacyDownloadType, DownloadSource.DEFAULT);
 
@@ -552,7 +546,7 @@ public final class LegacyConfigMigrator {
 
     /// Parses an old download source identifier.
     private static DownloadSource parseLegacyDownloadSource(@Nullable JsonElement element, DownloadSource defaultValue) {
-        @Nullable String value = readString(element);
+        @Nullable String value = JsonUtils.getString(element);
         if (value == null) {
             return defaultValue;
         }
@@ -569,33 +563,6 @@ public final class LegacyConfigMigrator {
                 }
             }
         };
-    }
-
-    /// Reads a boolean JSON value.
-    private static boolean readBoolean(@Nullable JsonElement element, boolean defaultValue) {
-        if (!(element instanceof JsonPrimitive primitive) || !primitive.isBoolean()) {
-            return defaultValue;
-        }
-
-        return primitive.getAsBoolean();
-    }
-
-    /// Reads an integer JSON value from either a number or a numeric string.
-    private static @Nullable Integer readInteger(@Nullable JsonElement element) {
-        if (!(element instanceof JsonPrimitive primitive)) {
-            return null;
-        }
-
-        try {
-            if (primitive.isNumber()) {
-                return primitive.getAsInt();
-            }
-            if (primitive.isString()) {
-                return Integer.parseInt(primitive.getAsString());
-            }
-        } catch (NumberFormatException ignored) {
-        }
-        return null;
     }
 
     /// Migrates the legacy workspace-wide automatic Java agent permission into game setting presets.
@@ -754,7 +721,7 @@ public final class LegacyConfigMigrator {
 
                 String selected = jsonObject.has("selectedAccount")
                         ? null
-                        : readString(offline, "IAuthenticator_UserName", null);
+                        : JsonUtils.getString(offline, "IAuthenticator_UserName", null);
                 JsonArray accounts = new JsonArray();
                 for (Map.Entry<String, JsonElement> entry : uuidMap.entrySet()) {
                     JsonObject storage = new JsonObject();
@@ -772,22 +739,22 @@ public final class LegacyConfigMigrator {
 
             // Upgrade configuration of HMCL earlier than 3.1.70.
             if (!jsonObject.has("commonDirType") && !jsonObject.has("commonDirectoryType")) {
-                String commonDirectory = readString(jsonObject, "commonpath", LauncherSettings.getDefaultCommonDirectory());
+                String commonDirectory = JsonUtils.getString(jsonObject, "commonpath", LauncherSettings.getDefaultCommonDirectory());
                 jsonObject.addProperty("commonDirectoryType", commonDirectory.equals(LauncherSettings.getDefaultCommonDirectory())
                         ? EnumCommonDirectory.DEFAULT.name()
                         : EnumCommonDirectory.CUSTOM.name());
             }
             if (!jsonObject.has("backgroundType")) {
-                String backgroundImage = readString(jsonObject, "bgpath", "");
+                String backgroundImage = JsonUtils.getString(jsonObject, "bgpath", "");
                 jsonObject.addProperty("backgroundType", StringUtils.isNotBlank(backgroundImage)
                         ? EnumBackgroundImage.CUSTOM.name()
                         : EnumBackgroundImage.DEFAULT.name());
             }
             if (!jsonObject.has("hasProxy")) {
-                jsonObject.addProperty("hasProxy", StringUtils.isNotBlank(readString(jsonObject, "proxyHost", "")));
+                jsonObject.addProperty("hasProxy", StringUtils.isNotBlank(JsonUtils.getString(jsonObject, "proxyHost", "")));
             }
             if (!jsonObject.has("hasProxyAuth")) {
-                jsonObject.addProperty("hasProxyAuth", StringUtils.isNotBlank(readString(jsonObject, "proxyUserName", "")));
+                jsonObject.addProperty("hasProxyAuth", StringUtils.isNotBlank(JsonUtils.getString(jsonObject, "proxyUserName", "")));
             }
 
             if (!jsonObject.has("downloadType")) {
@@ -821,7 +788,7 @@ public final class LegacyConfigMigrator {
             return true;
         }
 
-        @Nullable String selectedName = readString(lastElement);
+        @Nullable String selectedName = JsonUtils.getString(lastElement);
         if (selectedName != null) {
             json.add(LauncherSettings.PROPERTY_SELECTED_GAME_DIRECTORY,
                     JsonUtils.GSON.toJsonTree(getLegacyProfileId(selectedName), GUID.class));
@@ -850,7 +817,7 @@ public final class LegacyConfigMigrator {
                 continue;
             }
 
-            @Nullable String selectedVersion = readString(profile.get("selectedMinecraftVersion"));
+            @Nullable String selectedVersion = JsonUtils.getString(profile.get("selectedMinecraftVersion"));
             if (StringUtils.isBlank(selectedVersion)) {
                 continue;
             }
@@ -910,20 +877,6 @@ public final class LegacyConfigMigrator {
             return Profiles.HOME_PROFILE;
         }
         return profile.getName();
-    }
-
-    /// Reads a string JSON value.
-    private static @Nullable String readString(@Nullable JsonElement element) {
-        return element instanceof JsonPrimitive primitive && primitive.isString()
-                ? primitive.getAsString()
-                : null;
-    }
-
-    /// Reads a string field from a JSON object.
-    @Contract("_,_,!null->!null")
-    private static @Nullable String readString(JsonObject object, String key, @Nullable String defaultValue) {
-        @Nullable String value = readString(object.get(key));
-        return value != null ? value : defaultValue;
     }
 
     /// Detached settings migrated out of an old config file.

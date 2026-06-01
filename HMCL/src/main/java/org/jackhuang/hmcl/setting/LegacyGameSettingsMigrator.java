@@ -26,10 +26,11 @@ import org.jackhuang.hmcl.game.NativesDirectoryType;
 import org.jackhuang.hmcl.game.ProcessPriority;
 import org.jackhuang.hmcl.game.QuickPlayType;
 import org.jackhuang.hmcl.game.Renderer;
-import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.NotNullByDefault;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -117,7 +118,7 @@ public final class LegacyGameSettingsMigrator {
                 return null;
             }
 
-            boolean inheritsLegacyParent = readBoolean(legacySettingJson, "usesGlobal", false);
+            boolean inheritsLegacyParent = JsonUtils.getBoolean(legacySettingJson, "usesGlobal", false);
             GameSettings.Instance setting = toInstance(parent, legacySettingJson, !inheritsLegacyParent);
             if (inheritsLegacyParent) {
                 preserveInheritedRunningDirectory(setting, parent);
@@ -215,40 +216,40 @@ public final class LegacyGameSettingsMigrator {
         JavaVersionType javaVersionType = parseLegacyJavaVersionType(source);
         target.javaTypeProperty().setValue(javaVersionType);
         target.javaVersionProperty().setValue(empty(parseLegacyJavaVersion(source)));
-        target.customJavaPathProperty().setValue(readString(source, "javaDir", ""));
-        target.defaultJavaPathProperty().setValue(readString(source, "defaultJavaPath", ""));
+        target.customJavaPathProperty().setValue(JsonUtils.getString(source, "javaDir", ""));
+        target.defaultJavaPathProperty().setValue(JsonUtils.getString(source, "defaultJavaPath", ""));
 
-        target.jvmOptionsProperty().setValue(readString(source, "javaArgs", ""));
-        target.noJVMOptionsProperty().setValue(readBoolean(source, "noJVMArgs", false));
-        target.noOptimizingJVMOptionsProperty().setValue(readBoolean(source, "noOptimizingJVMArgs", false));
-        target.notCheckJVMProperty().setValue(readBoolean(source, "notCheckJVM", false));
-        target.notCheckGameProperty().setValue(readBoolean(source, "notCheckGame", false));
+        target.jvmOptionsProperty().setValue(JsonUtils.getString(source, "javaArgs", ""));
+        target.noJVMOptionsProperty().setValue(JsonUtils.getBoolean(source, "noJVMArgs", false));
+        target.noOptimizingJVMOptionsProperty().setValue(JsonUtils.getBoolean(source, "noOptimizingJVMArgs", false));
+        target.notCheckJVMProperty().setValue(JsonUtils.getBoolean(source, "notCheckJVM", false));
+        target.notCheckGameProperty().setValue(JsonUtils.getBoolean(source, "notCheckGame", false));
 
-        int maxMemory = readInt(source, "maxMemory", GameSettings.SUGGESTED_MEMORY);
-        target.autoMemoryProperty().setValue(readBoolean(source, "autoMemory", true));
-        target.minMemoryProperty().setValue(readNullableInt(source, "minMemory"));
+        int maxMemory = JsonUtils.getInt(source, "maxMemory", GameSettings.SUGGESTED_MEMORY);
+        target.autoMemoryProperty().setValue(JsonUtils.getBoolean(source, "autoMemory", true));
+        target.minMemoryProperty().setValue(JsonUtils.getNullableInt(source, "minMemory"));
         target.maxMemoryProperty().setValue(maxMemory > 0 ? maxMemory : GameSettings.SUGGESTED_MEMORY);
-        target.permSizeProperty().setValue(readString(source, "permSize", ""));
+        target.permSizeProperty().setValue(JsonUtils.getString(source, "permSize", ""));
 
-        target.windowTypeProperty().setValue(readBoolean(source, "fullscreen", false) ? GameWindowType.FULLSCREEN : GameWindowType.WINDOWED);
-        target.widthProperty().setValue((double) readInt(source, "width", 0));
-        target.heightProperty().setValue((double) readInt(source, "height", 0));
+        target.windowTypeProperty().setValue(JsonUtils.getBoolean(source, "fullscreen", false) ? GameWindowType.FULLSCREEN : GameWindowType.WINDOWED);
+        target.widthProperty().setValue((double) JsonUtils.getInt(source, "width", 0));
+        target.heightProperty().setValue((double) JsonUtils.getInt(source, "height", 0));
         GameDirectoryType legacyGameDirType = getLegacyGameDirType(source, GameDirectoryType.ROOT_FOLDER);
-        target.runningDirProperty().setValue(legacyGameDirType == GameDirectoryType.CUSTOM ? readString(source, "gameDir", "") : "");
+        target.runningDirProperty().setValue(legacyGameDirType == GameDirectoryType.CUSTOM ? JsonUtils.getString(source, "gameDir", "") : "");
 
         target.processPriorityProperty().setValue(parseEnum(source, "processPriority", ProcessPriority.class, ProcessPriority.NORMAL));
         target.launcherVisibilityProperty().setValue(parseEnum(source, "launcherVisibility", LauncherVisibility.class, LauncherVisibility.HIDE));
-        target.gameArgsProperty().setValue(readString(source, "minecraftArgs", ""));
+        target.gameArgsProperty().setValue(JsonUtils.getString(source, "minecraftArgs", ""));
         Renderer renderer = parseLegacyRenderer(source);
         GraphicsAPI graphicsBackend = parseGraphicsBackend(source, renderer);
         target.graphicsBackendProperty().setValue(graphicsBackend);
         GameSettings.setRendererForApi(target, renderer, graphicsBackend);
-        target.environmentVariablesProperty().setValue(readString(source, "environmentVariables", ""));
-        target.commandWrapperProperty().setValue(readString(source, "wrapper", ""));
-        target.preLaunchCommandProperty().setValue(readString(source, "precalledCommand", ""));
-        target.postExitCommandProperty().setValue(readString(source, "postExitCommand", ""));
+        target.environmentVariablesProperty().setValue(JsonUtils.getString(source, "environmentVariables", ""));
+        target.commandWrapperProperty().setValue(JsonUtils.getString(source, "wrapper", ""));
+        target.preLaunchCommandProperty().setValue(JsonUtils.getString(source, "precalledCommand", ""));
+        target.postExitCommandProperty().setValue(JsonUtils.getString(source, "postExitCommand", ""));
 
-        String serverIp = readString(source, "serverIp", "");
+        String serverIp = JsonUtils.getString(source, "serverIp", "");
         if (StringUtils.isBlank(serverIp)) {
             target.quickPlayProperty().setValue(QuickPlayType.NONE);
         } else {
@@ -256,13 +257,13 @@ public final class LegacyGameSettingsMigrator {
             target.quickPlayMultiplayerProperty().setValue(serverIp);
         }
 
-        target.showLogsProperty().setValue(readBoolean(source, "showLogs", false));
-        target.enableDebugLogOutputProperty().setValue(readBoolean(source, "enableDebugLogOutput", false));
-        target.notPatchNativesProperty().setValue(readBoolean(source, "notPatchNatives", false));
+        target.showLogsProperty().setValue(JsonUtils.getBoolean(source, "showLogs", false));
+        target.enableDebugLogOutputProperty().setValue(JsonUtils.getBoolean(source, "enableDebugLogOutput", false));
+        target.notPatchNativesProperty().setValue(JsonUtils.getBoolean(source, "notPatchNatives", false));
         target.nativesDirTypeProperty().setValue(parseEnum(source, "nativesDirType", NativesDirectoryType.class, NativesDirectoryType.VERSION_FOLDER));
-        target.nativesDirProperty().setValue(readString(source, "nativesDir", ""));
-        target.useNativeGLFWProperty().setValue(readBoolean(source, "useNativeGLFW", false));
-        target.useNativeOpenALProperty().setValue(readBoolean(source, "useNativeOpenAL", false));
+        target.nativesDirProperty().setValue(JsonUtils.getString(source, "nativesDir", ""));
+        target.useNativeGLFWProperty().setValue(JsonUtils.getBoolean(source, "useNativeGLFW", false));
+        target.useNativeOpenALProperty().setValue(JsonUtils.getBoolean(source, "useNativeOpenAL", false));
     }
 
     /// Parses the legacy Java selection mode.
@@ -271,7 +272,7 @@ public final class LegacyGameSettingsMigrator {
             return parseEnum(source, "javaVersionType", JavaVersionType.class, JavaVersionType.AUTO);
         }
 
-        return switch (readString(source, "java", "")) {
+        return switch (JsonUtils.getString(source, "java", "")) {
             case "Default" -> JavaVersionType.DEFAULT;
             case "Auto" -> JavaVersionType.AUTO;
             case "Custom" -> JavaVersionType.CUSTOM;
@@ -282,10 +283,10 @@ public final class LegacyGameSettingsMigrator {
     /// Parses the legacy Java version value.
     private static @Nullable String parseLegacyJavaVersion(JsonObject source) {
         if (source.has("javaVersionType")) {
-            return readString(source, "java", null);
+            return JsonUtils.getString(source, "java", null);
         }
 
-        String java = readString(source, "java", "");
+        String java = JsonUtils.getString(source, "java", "");
         return switch (java) {
             case "Default", "Auto", "Custom" -> "";
             default -> java;
@@ -302,7 +303,7 @@ public final class LegacyGameSettingsMigrator {
             }
         }
 
-        return readBoolean(source, "useSoftwareRenderer", false) ? Renderer.OpenGL.LLVMPIPE : Renderer.DEFAULT;
+        return JsonUtils.getBoolean(source, "useSoftwareRenderer", false) ? Renderer.OpenGL.LLVMPIPE : Renderer.DEFAULT;
     }
 
     /// Parses a renderer from a legacy JSON element.
@@ -323,7 +324,7 @@ public final class LegacyGameSettingsMigrator {
 
     /// Parses the graphics API selection with renderer-derived fallback.
     private static GraphicsAPI parseGraphicsBackend(JsonObject source, Renderer renderer) {
-        String name = readString(source, "graphicsBackend", null);
+        String name = JsonUtils.getString(source, "graphicsBackend", null);
         if (name != null) {
             try {
                 return GraphicsAPI.valueOf(name.toUpperCase(Locale.ROOT));
@@ -336,7 +337,7 @@ public final class LegacyGameSettingsMigrator {
 
     /// Parses the legacy icon selection with frozen ordinal order.
     private static VersionIconType parseLegacyVersionIconType(@Nullable JsonObject source) {
-        JsonPrimitive primitive = getPrimitive(source, "versionIcon");
+        JsonPrimitive primitive = JsonUtils.getPrimitive(source, "versionIcon");
         if (primitive == null) {
             return VersionIconType.DEFAULT;
         }
@@ -361,78 +362,9 @@ public final class LegacyGameSettingsMigrator {
         return VersionIconType.DEFAULT;
     }
 
-    /// Returns a JSON primitive property, or `null` when the property is absent or not primitive.
-    private static @Nullable JsonPrimitive getPrimitive(@Nullable JsonObject source, String name) {
-        if (source == null) {
-            return null;
-        }
-
-        return source.get(name) instanceof JsonPrimitive primitive ? primitive : null;
-    }
-
-    /// Reads a string property.
-    @Contract("_,_,!null->!null")
-    private static @UnknownNullability String readString(@Nullable JsonObject source, String name, @Nullable String defaultValue) {
-        JsonPrimitive primitive = getPrimitive(source, name);
-        if (primitive == null) {
-            return defaultValue;
-        }
-
-        try {
-            return primitive.getAsString();
-        } catch (RuntimeException ignored) {
-            return defaultValue;
-        }
-    }
-
-    /// Reads a boolean property.
-    private static boolean readBoolean(@Nullable JsonObject source, String name, boolean defaultValue) {
-        JsonPrimitive primitive = getPrimitive(source, name);
-        if (primitive == null) {
-            return defaultValue;
-        }
-
-        try {
-            return primitive.getAsBoolean();
-        } catch (RuntimeException ignored) {
-            return defaultValue;
-        }
-    }
-
-    /// Reads an integer property.
-    private static int readInt(@Nullable JsonObject source, String name, int defaultValue) {
-        JsonPrimitive primitive = getPrimitive(source, name);
-        if (primitive == null) {
-            return defaultValue;
-        }
-
-        try {
-            return primitive.isNumber() ? primitive.getAsInt() : Lang.parseInt(primitive.getAsString(), defaultValue);
-        } catch (RuntimeException ignored) {
-            return defaultValue;
-        }
-    }
-
-    /// Reads a nullable integer property.
-    private static @Nullable Integer readNullableInt(@Nullable JsonObject source, String name) {
-        JsonPrimitive primitive = getPrimitive(source, name);
-        if (primitive == null) {
-            return null;
-        }
-
-        try {
-            if (primitive.isNumber())
-                return primitive.getAsInt();
-            else
-                return Lang.toIntOrNull(primitive.getAsString());
-        } catch (RuntimeException ignored) {
-            return null;
-        }
-    }
-
     /// Reads an enum property from either ordinal or name.
     private static <E extends Enum<E>> E parseEnum(@Nullable JsonObject source, String name, Class<E> type, E defaultValue) {
-        JsonPrimitive primitive = getPrimitive(source, name);
+        JsonPrimitive primitive = JsonUtils.getPrimitive(source, name);
         if (primitive == null) {
             return defaultValue;
         }
