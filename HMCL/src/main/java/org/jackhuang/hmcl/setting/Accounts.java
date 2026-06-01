@@ -196,6 +196,14 @@ public final class Accounts {
         }
     }
 
+    private static int getAccountIndex(Map<Object, Object> storage) {
+        if (storage.get("index") instanceof Number n) {
+            int i = n.intValue();
+            return Math.max(i, -1);
+        }
+        return -1;
+    }
+
     /**
      * Called when it's ready to load accounts from {@link ConfigHolder#config()}.
      */
@@ -227,13 +235,14 @@ public final class Accounts {
         Account[] s = new Account[1];
         config().getAccountStorages()
                 .stream()
-                .sorted(Comparator.comparingInt(storage -> storage.get("index") instanceof Number n ? n.intValue() : -1))
+                .sorted(Comparator.comparingInt(Accounts::getAccountIndex))
                 .forEachOrdered(storage -> {
                     Account account = parseAccount(storage);
                     if (account == null) return;
                     account.setPortable(true);
-                    if (storage.get("index") instanceof Number n) {
-                        accounts.add(n.intValue(), account);
+                    int i = getAccountIndex(storage);
+                    if (i >= 0) {
+                        accounts.add(Math.max(i, accounts.size()), account);
                     } else {
                         unordered.add(account);
                     }

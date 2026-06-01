@@ -100,9 +100,16 @@ public final class AccountListItemSkin extends SkinBase<AccountListItem> {
             Account account = skinnable.getAccount();
             int index = Accounts.getAccounts().indexOf(account);
             if (index < 0) return;
-            Accounts.getAccounts().remove(index);
-            account.setPortable(!account.isPortable());
-            Accounts.getAccounts().add(index, account);
+            boolean selected = Accounts.getSelectedAccount() == account;
+            Accounts.skipSelectionCheckFlag = true;
+            try {
+                Accounts.getAccounts().remove(index);
+                account.setPortable(!account.isPortable());
+                Accounts.getAccounts().add(index, account);
+                if (selected) Accounts.setSelectedAccount(account);
+            } finally {
+                Accounts.skipSelectionCheckFlag = false;
+            }
         });
         btnMove.getStyleClass().add("toggle-icon4");
         if (skinnable.getAccount().isPortable()) {
