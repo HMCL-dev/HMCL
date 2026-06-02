@@ -21,14 +21,12 @@ import com.google.gson.*;
 
 import java.lang.reflect.Type;
 import java.time.*;
-import java.time.format.DateTimeFormatter;
-import java.time.format.DateTimeFormatterBuilder;
-import java.time.format.DateTimeParseException;
-import java.time.format.FormatStyle;
+import java.time.format.*;
 import java.time.temporal.ChronoUnit;
 import java.util.Locale;
 
 import static java.time.format.DateTimeFormatter.ISO_LOCAL_DATE_TIME;
+import static java.time.temporal.ChronoField.*;
 
 /// Serializes and deserializes [Instant] values for Gson.
 ///
@@ -67,14 +65,14 @@ public final class InstantTypeAdapter implements JsonSerializer<Instant>, JsonDe
     /// @throws IllegalArgumentException if `type` is not [Instant]
     @Override
     public Instant deserialize(JsonElement json, Type type, JsonDeserializationContext context) throws JsonParseException {
-        if (!(json instanceof JsonPrimitive))
-            throw new JsonParseException("The instant should be a string value");
-        else {
+        if (json instanceof JsonPrimitive) {
             Instant time = deserializeToInstant(json.getAsString());
             if (type == Instant.class)
                 return time;
             else
                 throw new IllegalArgumentException(this.getClass() + " cannot be deserialized to " + type);
+        } else {
+            throw new JsonParseException("The instant should be a string value");
         }
     }
 
@@ -87,6 +85,7 @@ public final class InstantTypeAdapter implements JsonSerializer<Instant>, JsonDe
     private static final DateTimeFormatter ISO_DATE_TIME = new DateTimeFormatterBuilder()
             .append(DateTimeFormatter.ISO_LOCAL_DATE_TIME)
             .optionalStart().appendOffset("+HH:MM", "+00:00").optionalEnd()
+            .optionalStart().appendOffset("+H:MM", "+0:00").optionalEnd()
             .optionalStart().appendOffset("+HHMM", "+0000").optionalEnd()
             .optionalStart().appendOffset("+HH", "Z").optionalEnd()
             .optionalStart().appendOffsetId().optionalEnd()
