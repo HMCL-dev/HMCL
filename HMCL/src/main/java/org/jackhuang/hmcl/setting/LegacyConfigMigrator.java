@@ -318,9 +318,10 @@ public final class LegacyConfigMigrator {
             return null;
         }
 
-        try (Reader reader = Files.newBufferedReader(LEGACY_USER_ACCOUNTS_LOCATION)) {
-            List<Map<Object, Object>> accounts =
-                    LauncherSettings.SETTINGS_GSON.fromJson(reader, JsonUtils.listTypeOf(JsonUtils.mapTypeOf(Object.class, Object.class)));
+        try {
+            List<Map<Object, Object>> accounts = JsonUtils.fromJsonFile(
+                    LEGACY_USER_ACCOUNTS_LOCATION,
+                    JsonUtils.listTypeOf(JsonUtils.mapTypeOf(Object.class, Object.class)));
             return accounts != null ? AccountStorages.fromAccounts(accounts) : null;
         } catch (Exception e) {
             LOG.warning("Failed to load legacy user accounts for selected account migration", e);
