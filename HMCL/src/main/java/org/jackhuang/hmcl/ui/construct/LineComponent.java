@@ -23,6 +23,7 @@ import javafx.beans.property.StringProperty;
 import javafx.beans.property.StringPropertyBase;
 import javafx.css.PseudoClass;
 import javafx.geometry.Insets;
+import javafx.geometry.Orientation;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
 import javafx.scene.control.*;
@@ -66,6 +67,9 @@ public abstract class LineComponent extends StackPane implements NoPaddingCompon
     /// The optional node displayed immediately after the title.
     private @Nullable Node titleTrailing;
 
+    /// The optional subtitle label.
+    private @Nullable Label subtitleLabel;
+
     public LineComponent() {
         this.getStyleClass().add(DEFAULT_STYLE_CLASS);
 
@@ -96,6 +100,65 @@ public abstract class LineComponent extends StackPane implements NoPaddingCompon
         this.setNode(IDX_TITLE, titleContainer);
 
         this.getChildren().setAll(container);
+        widthProperty().addListener(observable -> updatePreferredHeight());
+    }
+
+    /// Computes wrapped subtitle height from the row width.
+    @Override
+    public Orientation getContentBias() {
+        return Orientation.HORIZONTAL;
+    }
+
+    /// Computes preferred row height from the title column width after fixed-width nodes are removed.
+    @Override
+    protected double computePrefHeight(double width) {
+        return computeLineHeight(width);
+    }
+
+    /// Keeps wrapped subtitle rows from being compressed below their preferred height.
+    @Override
+    protected double computeMinHeight(double width) {
+        return computeLineHeight(width);
+    }
+
+    /// Computes row height with the same width split used by the `HBox` at layout time.
+    private double computeLineHeight(double width) {
+        double horizontalInsets = container.snappedLeftInset() + container.snappedRightInset();
+        double verticalInsets = container.snappedTopInset() + container.snappedBottomInset();
+        double contentWidth = width < 0 ? -1 : Math.max(0, width - horizontalInsets);
+
+        int managedCount = 0;
+        double fixedWidth = 0;
+        double contentHeight = 0;
+        for (Node child : container.getChildren()) {
+            if (!child.isManaged()) {
+                continue;
+            }
+
+            managedCount++;
+            if (child == titleContainer) {
+                continue;
+            }
+
+            fixedWidth += child.prefWidth(-1);
+            contentHeight = Math.max(contentHeight, child.prefHeight(-1));
+        }
+
+        double titleWidth = contentWidth < 0
+                ? -1
+                : Math.max(0, contentWidth - fixedWidth - container.getSpacing() * Math.max(0, managedCount - 1));
+        contentHeight = Math.max(contentHeight, computeTitleHeight(titleWidth));
+
+        return Math.max(MIN_HEIGHT, verticalInsets + contentHeight);
+    }
+
+    /// Computes the height of the title column at the given width.
+    private double computeTitleHeight(double width) {
+        double height = titleLine.prefHeight(width);
+        if (subtitleLabel != null && subtitleLabel.getParent() == titleContainer) {
+            height += titleContainer.getSpacing() + subtitleLabel.prefHeight(width);
+        }
+        return height;
     }
 
     private Node[] nodes = new Node[2];
@@ -107,6 +170,7 @@ public abstract class LineComponent extends StackPane implements NoPaddingCompon
         if (nodes[idx] != node) {
             nodes[idx] = node;
             container.getChildren().setAll(Arrays.stream(nodes).filter(Objects::nonNull).toArray(Node[]::new));
+            updatePreferredHeight();
         }
     }
 
@@ -165,8 +229,6 @@ public abstract class LineComponent extends StackPane implements NoPaddingCompon
     public final StringProperty subtitleProperty() {
         if (subtitle == null) {
             subtitle = new StringPropertyBase() {
-                private Label subtitleLabel;
-
                 @Override
                 public String getName() {
                     return "subtitle";
@@ -196,6 +258,7 @@ public abstract class LineComponent extends StackPane implements NoPaddingCompon
                         if (titleContainer.getChildren().size() == 2)
                             titleContainer.getChildren().remove(1);
                     }
+                    updatePreferredHeight();
                 }
             };
         }
@@ -209,6 +272,21 @@ public abstract class LineComponent extends StackPane implements NoPaddingCompon
 
     public final void setSubtitle(String subtitle) {
         subtitleProperty().set(subtitle);
+    }
+
+    /// Updates the fixed preferred height after the row width or subtitle content changes.
+    private void updatePreferredHeight() {
+        double width = getWidth();
+        if (width <= 0) {
+            setMinHeight(MIN_HEIGHT);
+            setPrefHeight(Region.USE_COMPUTED_SIZE);
+            return;
+        }
+
+        applyCss();
+        double height = computeLineHeight(width);
+        setMinHeight(height);
+        setPrefHeight(height);
     }
 
     private ObjectProperty<Node> leading;
