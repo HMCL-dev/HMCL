@@ -266,9 +266,7 @@ public final class HMCLGameRepository extends DefaultGameRepository {
         }
 
         try {
-            try (var reader = Files.newBufferedReader(file)) {
-                return LauncherSettings.SETTINGS_GSON.fromJson(reader, GameSettings.Instance.class);
-            }
+            return JsonUtils.fromJsonFile(LauncherSettings.SETTINGS_GSON, file, GameSettings.Instance.class);
         } catch (Exception ex) {
             LOG.warning("Failed to load game setting " + file, ex);
             return null;
