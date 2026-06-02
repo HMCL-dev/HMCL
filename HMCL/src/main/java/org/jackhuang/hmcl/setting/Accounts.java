@@ -242,7 +242,7 @@ public final class Accounts {
                     account.setPortable(true);
                     int i = getAccountIndex(storage);
                     if (i >= 0) {
-                        accounts.add(Math.max(i, accounts.size()), account);
+                        accounts.add(Math.min(i, accounts.size()), account);
                     } else {
                         unordered.add(account);
                     }

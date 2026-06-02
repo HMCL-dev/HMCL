@@ -277,6 +277,7 @@ public final class AccountListPage extends DecoratorAnimatedPage implements Deco
                 list.getStyleClass().add("card-list");
 
                 list.setOnDragOver((event) -> {
+                    if (skinnable.isSearching().get()) return;
                     if (event.getGestureSource() != list && event.getDragboard().hasString()) {
                         event.acceptTransferModes(TransferMode.MOVE);
                     }
@@ -284,6 +285,7 @@ public final class AccountListPage extends DecoratorAnimatedPage implements Deco
                 });
 
                 list.setOnDragDropped((event) -> {
+                    if (skinnable.isSearching().get()) return;
                     Dragboard db = event.getDragboard();
                     boolean success = false;
                     if (db.hasString()) {
@@ -294,7 +296,7 @@ public final class AccountListPage extends DecoratorAnimatedPage implements Deco
                         Account draggedAccount = null;
                         int sourceIndex = -1;
                         for (int i = 0; i < Accounts.getAccounts().size(); i++) {
-                            if (Accounts.getAccounts().get(i).getIdentifier().equals(accountId)) {
+                            if (accountId.equals(Accounts.getAccounts().get(i).getIdentifier())) {
                                 draggedAccount = Accounts.getAccounts().get(i);
                                 sourceIndex = i;
                                 break;
@@ -336,7 +338,8 @@ public final class AccountListPage extends DecoratorAnimatedPage implements Deco
             int index = 0;
             for (int i = 0; i < list.getChildren().size(); i++) {
                 javafx.scene.Node child = list.getChildren().get(i);
-                if (child.getLayoutY() + child.getBoundsInParent().getHeight() / 2 > y) {
+                var bounds = child.getBoundsInParent();
+                if (bounds.getMinY() + bounds.getHeight() / 2 > y) {
                     return i;
                 }
                 index = i + 1;
