@@ -374,9 +374,9 @@ public final class LauncherSettingsMigrationTest {
 
         GameSettings.Preset preset = gameSettingsPresets.getPresets().get(0);
         assertEquals(preset.idProperty().getValue(), launcherSettings.defaultGameSettingsPresetProperty().get());
-        assertEquals(0, preset.autoNameNumberProperty().getValue());
+        assertEquals(1, preset.autoNameNumberProperty().getValue());
         assertTrue(preset.allowAutoAgentProperty().getValue());
-        assertEquals(0, serializedGameSettings
+        assertEquals(1, serializedGameSettings
                 .getAsJsonArray("presets")
                 .get(0)
                 .getAsJsonObject()
@@ -417,9 +417,9 @@ public final class LauncherSettingsMigrationTest {
 
         GameSettings.Preset preset = gameSettingsPresets.getPresets().get(0);
         assertEquals(preset.idProperty().getValue(), launcherSettings.defaultGameSettingsPresetProperty().get());
-        assertEquals(0, preset.autoNameNumberProperty().getValue());
+        assertEquals(1, preset.autoNameNumberProperty().getValue());
         assertTrue(preset.disableAutoGameOptionsProperty().getValue());
-        assertEquals(0, serializedGameSettings
+        assertEquals(1, serializedGameSettings
                 .getAsJsonArray("presets")
                 .get(0)
                 .getAsJsonObject()

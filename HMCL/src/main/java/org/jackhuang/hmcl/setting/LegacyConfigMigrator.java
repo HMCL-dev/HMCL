@@ -621,7 +621,7 @@ public final class LegacyConfigMigrator {
     private static void ensureDefaultGameSettingsPreset(LauncherSettings launcherSettings, GameSettingsPresets gameSettingsPresets) {
         if (gameSettingsPresets.getPresets().isEmpty()) {
             GameSettings.Preset preset = new GameSettings.Preset(gameSettingsPresets.newPresetId());
-            preset.autoNameNumberProperty().setValue(0);
+            preset.autoNameNumberProperty().setValue(1);
             gameSettingsPresets.getPresets().add(preset);
             launcherSettings.defaultGameSettingsPresetProperty().set(preset.idProperty().getValue());
         }

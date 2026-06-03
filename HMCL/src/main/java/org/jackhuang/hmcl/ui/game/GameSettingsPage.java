@@ -759,9 +759,6 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
         if (autoNameNumber == null) {
             return setting.idProperty().getValue().toString();
         }
-        if (autoNameNumber == 0) {
-            return i18n("settings.type.global.preset.default_name");
-        }
         return i18n("settings.type.global.preset.auto_name", autoNameNumber);
     }
 

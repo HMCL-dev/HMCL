@@ -367,7 +367,7 @@ public final class SettingsManager {
         }
 
         setting = new GameSettings.Preset(gameSettingsPresets().newPresetId());
-        setting.autoNameNumberProperty().setValue(0);
+        setting.autoNameNumberProperty().setValue(1);
         getGameSettings().add(setting);
         setDefaultGameSettingsPreset(setting.idProperty().getValue());
         return setting;
