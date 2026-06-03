@@ -22,6 +22,7 @@ import javafx.application.Platform;
 import javafx.beans.InvalidationListener;
 import javafx.css.PseudoClass;
 import javafx.scene.Node;
+import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
@@ -148,6 +149,7 @@ final class ComponentSublistWrapper extends VBox implements NoPaddingComponent {
             }
 
             HBox box = new HBox(4);
+            box.addEventHandler(MouseEvent.MOUSE_CLICKED, event -> event.consume());
             if (titleTrailing != null) {
                 box.getChildren().add(titleTrailing);
             }
