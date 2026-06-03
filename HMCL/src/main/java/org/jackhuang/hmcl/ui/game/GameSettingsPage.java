@@ -757,7 +757,7 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
 
         Integer autoNameNumber = setting.autoNameNumberProperty().getValue();
         return autoNameNumber != null
-                ? i18n("settings.type.global.preset.new", autoNameNumber)
+                ? i18n("settings.type.global.preset.auto_name", autoNameNumber)
                 : setting.idProperty().getValue().toString();
     }
 
@@ -847,7 +847,7 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
         int number = createDefaultPresetNumber();
         PromptDialogPane.Builder.StringQuestion nameQuestion =
                 new PromptDialogPane.Builder.StringQuestion("", "")
-                        .setPromptText(i18n("settings.type.global.preset.new", number));
+                        .setPromptText(i18n("settings.type.global.preset.auto_name", number));
         Controllers.prompt(new PromptDialogPane.Builder(i18n("settings.type.global.preset.create"), (questions, handler) -> {
             String name = (String) questions.get(0).getValue();
             GameSettings.Preset setting = new GameSettings.Preset(SettingsManager.gameSettingsPresets().newPresetId());
@@ -865,7 +865,7 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
     /// Returns the first automatic preset number that is not used by existing presets.
     private int createDefaultPresetNumber() {
         for (int index = 1; ; index++) {
-            String name = i18n("settings.type.global.preset.new", index);
+            String name = i18n("settings.type.global.preset.auto_name", index);
             boolean used = false;
             for (GameSettings.Preset setting : SettingsManager.getGameSettings()) {
                 Integer autoNameNumber = setting.autoNameNumberProperty().getValue();
