@@ -554,14 +554,7 @@ public final class SettingsManager {
         merged.getGameDirectories().removeIf(existing -> existing.getId().equals(id));
         merged.getGameDirectories().add(profile);
         PortablePath path = profile.getPath();
-        gameDirectorySources.put(id, new GameDirectorySource(getEffectiveGameDirectoryScope(source, path), path.getPath()));
-    }
-
-    /// Returns the effective storage scope for a loaded profile.
-    private static GameDirectoryScope getEffectiveGameDirectoryScope(GameDirectoryScope source, PortablePath path) {
-        return source == GameDirectoryScope.GLOBAL && !path.isAbsolute()
-                ? GameDirectoryScope.LOCAL
-                : source;
+        gameDirectorySources.put(id, new GameDirectorySource(source, path.getPath()));
     }
 
     /// Saves the merged game directory store into the writable backing files.
