@@ -42,14 +42,11 @@ import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 public final class Profiles {
 
-    public static final String DEFAULT_PROFILE = "Default";
-    public static final String HOME_PROFILE = "Home";
+    /// The default current-workspace game directory path.
+    private static final PortablePath CURRENT_PROFILE_PATH = PortablePath.of(".minecraft");
 
-    /// The stable ID used by the built-in default profile.
-    public static final GUID DEFAULT_PROFILE_ID = LegacyConfigMigrator.getLegacyProfileId(DEFAULT_PROFILE);
-
-    /// The stable ID used by the built-in home profile.
-    public static final GUID HOME_PROFILE_ID = LegacyConfigMigrator.getLegacyProfileId(HOME_PROFILE);
+    /// The default user-home game directory path.
+    private static final PortablePath HOME_PROFILE_PATH = PortablePath.fromPath(Metadata.MINECRAFT_DIRECTORY);
 
     private Profiles() {
     }
@@ -79,15 +76,21 @@ public final class Profiles {
             return name;
         }
 
-        GUID id = profile.getId();
-        if (DEFAULT_PROFILE_ID.equals(id)) {
+        if (isProfilePath(profile, CURRENT_PROFILE_PATH)) {
             return i18n("profile.default");
         }
-        if (HOME_PROFILE_ID.equals(id)) {
+        if (isProfilePath(profile, HOME_PROFILE_PATH)) {
             return i18n("profile.home");
         }
 
-        return id.toString();
+        return profile.getId().toString();
+    }
+
+    /// Returns whether the profile uses the given path.
+    private static boolean isProfilePath(Profile profile, PortablePath expectedPath) {
+        PortablePath actualPath = profile.getPath();
+        return actualPath.isAbsolute() == expectedPath.isAbsolute()
+                && actualPath.getPath().equals(expectedPath.getPath());
     }
 
     private static final ReadOnlyListWrapper<Profile> profilesWrapper =
@@ -150,10 +153,16 @@ public final class Profiles {
     private static void checkProfiles() {
         ObservableList<Profile> profiles = SettingsManager.getGameDirectories();
         if (profiles.isEmpty()) {
+            GUID currentId = newProfileId();
+            GUID homeId;
+            do {
+                homeId = newProfileId();
+            } while (currentId.equals(homeId));
+
             Profile current = new Profile(
-                    Profiles.DEFAULT_PROFILE_ID, null, PortablePath.of(".minecraft"));
+                    currentId, null, CURRENT_PROFILE_PATH);
             Profile home = new Profile(
-                    Profiles.HOME_PROFILE_ID, null, PortablePath.fromPath(Metadata.MINECRAFT_DIRECTORY));
+                    homeId, null, HOME_PROFILE_PATH);
             Platform.runLater(() -> profiles.addAll(current, home));
         }
     }
