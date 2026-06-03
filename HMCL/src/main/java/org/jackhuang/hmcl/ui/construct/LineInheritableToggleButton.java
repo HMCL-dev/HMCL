@@ -24,6 +24,7 @@ import javafx.beans.property.SimpleBooleanProperty;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.property.StringProperty;
 import javafx.css.PseudoClass;
+import javafx.scene.control.ContentDisplay;
 import javafx.scene.control.Tooltip;
 import javafx.scene.input.MouseEvent;
 import org.jackhuang.hmcl.ui.FXUtils;
@@ -63,6 +64,7 @@ public final class LineInheritableToggleButton extends LineButtonBase {
 
         this.inheritButton = new JFXButton();
         inheritButton.getStyleClass().add(INHERIT_BUTTON_STYLE_CLASS);
+        inheritButton.setContentDisplay(ContentDisplay.GRAPHIC_ONLY);
         inheritButton.setGraphic(SVG.PUBLIC.createIcon(INHERIT_BUTTON_ICON_SIZE));
         this.inheritTooltip = new Tooltip();
         FXUtils.installFastTooltip(inheritButton, inheritTooltip);

@@ -1208,6 +1208,7 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
     private JFXButton createInheritanceButton() {
         var button = new JFXButton();
         button.getStyleClass().add(INHERIT_BUTTON_STYLE_CLASS);
+        button.setContentDisplay(ContentDisplay.GRAPHIC_ONLY);
         Tooltip tooltip = new Tooltip();
         button.getProperties().put(INHERIT_BUTTON_TOOLTIP_KEY, tooltip);
         FXUtils.installFastTooltip(button, tooltip);

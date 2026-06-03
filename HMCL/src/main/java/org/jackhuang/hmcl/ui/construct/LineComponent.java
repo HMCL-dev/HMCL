@@ -82,10 +82,13 @@ public abstract class LineComponent extends StackPane implements NoPaddingCompon
 
         this.titleLabel = new Label();
         titleLabel.getStyleClass().add("title-label");
+        titleLabel.setContentDisplay(ContentDisplay.RIGHT);
+        titleLabel.setGraphicTextGap(4);
         titleLabel.setMinWidth(Region.USE_PREF_SIZE);
         titleLabel.setMouseTransparent(true);
+        titleLabel.setPickOnBounds(false);
 
-        this.titleLine = new HBox(4, titleLabel);
+        this.titleLine = new HBox(titleLabel);
         titleLine.setAlignment(Pos.CENTER_LEFT);
         titleLine.setPickOnBounds(false);
 
@@ -180,14 +183,9 @@ public abstract class LineComponent extends StackPane implements NoPaddingCompon
             return;
         }
 
-        if (titleTrailing != null) {
-            titleLine.getChildren().remove(titleTrailing);
-        }
-
         titleTrailing = node;
-        if (node != null) {
-            titleLine.getChildren().add(node);
-        }
+        titleLabel.setGraphic(node);
+        titleLabel.setMouseTransparent(node == null);
         titleContainer.setMouseTransparent(node == null);
     }
 
