@@ -26,7 +26,6 @@ import org.jackhuang.hmcl.util.gson.JsonSchema;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.io.TempDir;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -251,7 +250,8 @@ public final class GameDirectoriesTest {
 
     /// Tests that patch-version schemas are preserved together with unknown fields.
     @Test
-    public void preservesPatchSchemaAndUnknownFields(@TempDir Path tempDir) throws IOException {
+    public void preservesPatchSchemaAndUnknownFields() throws IOException {
+        Path tempDir = createJsonSettingFileTestDirectory("patch-schema");
         Path location = tempDir.resolve("game-directories.json");
         Files.writeString(location, """
                 {
@@ -280,5 +280,32 @@ public final class GameDirectoriesTest {
         assertEquals("https://schemas.glavo.site/hmcl/game-directories/1.0.1",
                 rewritten.get(JsonSchema.PROPERTY_SCHEMA).getAsString());
         assertTrue(rewritten.getAsJsonObject("futureField").get("enabled").getAsBoolean());
+    }
+
+    /// Tests that malformed detached files are not allowed to be overwritten by fallback defaults.
+    @Test
+    public void rejectsSavingFallbackForMalformedDetachedFile() throws IOException {
+        Path tempDir = createJsonSettingFileTestDirectory("malformed");
+        Path location = tempDir.resolve("game-directories.json");
+        Files.writeString(location, "{");
+
+        JsonSettingFile<GameDirectories> file = new JsonSettingFile<>(
+                location,
+                "game directories",
+                GameDirectories.class,
+                GameDirectories.CURRENT_SCHEMA,
+                GameDirectories::new);
+
+        JsonSettingFile.LoadResult<GameDirectories> result = file.load(null);
+
+        assertFalse(result.allowSave());
+        assertEquals("{", Files.readString(location));
+    }
+
+    /// Creates a temporary directory under Gradle's build directory for JsonSettingFile tests.
+    private static Path createJsonSettingFileTestDirectory(String prefix) throws IOException {
+        Path root = Path.of("build", "tmp", "json-setting-file-tests");
+        Files.createDirectories(root);
+        return Files.createTempDirectory(root, prefix + "-");
     }
 }

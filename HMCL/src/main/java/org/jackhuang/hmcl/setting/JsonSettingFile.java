@@ -85,7 +85,7 @@ final class JsonSettingFile<T extends ObservableSetting & JsonSchemaSetting> {
             try {
                 JsonObject jsonObject = JsonUtils.fromJsonFile(location, JsonObject.class);
                 if (jsonObject == null) {
-                    LOG.info(displayName + " are empty: " + location);
+                    LOG.warning(displayName + " are empty: " + location);
                 } else {
                     JsonSchemaPolicy.Result schema =
                             JsonSchemaPolicy.check(location, displayName, jsonObject, expectedSchema);
@@ -103,13 +103,13 @@ final class JsonSettingFile<T extends ObservableSetting & JsonSchemaSetting> {
                         return new LoadResult<>(deserialized, schema.allowSave());
                     }
 
-                    LOG.info(displayName + " are empty: " + location);
+                    LOG.warning(displayName + " deserialized to null: " + location);
                 }
             } catch (JsonParseException e) {
                 LOG.warning("Malformed " + displayName + ".", e);
             }
 
-            return new LoadResult<>(createDefault.get(), true);
+            return new LoadResult<>(createDefault.get(), false);
         }
 
         return new LoadResult<>(migrated != null ? migrated : createDefault.get(), true);

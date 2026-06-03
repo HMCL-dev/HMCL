@@ -64,10 +64,10 @@ public class DownloadSettingsPage extends StackPane {
             downloadSource.getStyleClass().add("card-non-transparent");
             {
                 Function<DownloadSource, String> converter = source -> switch (source) {
-                    case DEFAULT -> i18n("settings.launcher.download_source.auto");
-                    case OFFICIAL -> i18n("download.provider.official");
-                    case MIRROR -> i18n("download.provider.mirror");
-                };
+                        case DEFAULT -> i18n("settings.launcher.download_source.auto");
+                        case OFFICIAL -> i18n("download.provider.official");
+                        case MIRROR -> i18n("download.provider.mirror");
+                    };
                 Function<DownloadSource, String> descriptionConverter = source -> {
                     String bundleKey = switch (source) {
                         case DEFAULT -> "download.provider.balanced.desc";

@@ -32,6 +32,7 @@ import javafx.scene.control.ScrollPane;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
+import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.setting.Profile;
 import org.jackhuang.hmcl.setting.Profiles;
 import org.jackhuang.hmcl.ui.FXUtils;
@@ -183,17 +184,32 @@ public final class ProfilePage extends BorderPane implements DecoratorPage {
         if (profile != null) {
             profile.setName(txtProfileName.getText());
             if (StringUtils.isNotBlank(getLocation())) {
-                profile.setPath(PortablePath.of(getLocation()));
+                profile.setPath(createPortableLocation());
             }
         } else {
             if (StringUtils.isBlank(getLocation())) {
                 gameDir.fire();
             }
-            Profile newProfile = new Profile(Profiles.newProfileId(), txtProfileName.getText(), PortablePath.of(getLocation()));
+            Profile newProfile = new Profile(Profiles.newProfileId(), txtProfileName.getText(), createPortableLocation());
             Profiles.getProfiles().add(newProfile);
         }
 
         fireEvent(new PageCloseEvent());
+    }
+
+    /// Creates the portable path for the current location according to the relative-path toggle.
+    private PortablePath createPortableLocation() {
+        if (toggleUseRelativePath.isSelected()) {
+            Path path = Path.of(getLocation());
+            Path absolutePath = FileUtils.toAbsolute(path);
+            try {
+                return PortablePath.fromPath(Metadata.CURRENT_DIRECTORY.relativize(absolutePath).normalize());
+            } catch (IllegalArgumentException ignored) {
+                // Keep the original path when it cannot be expressed relative to the launcher directory.
+            }
+        }
+
+        return PortablePath.of(getLocation());
     }
 
     @Override
