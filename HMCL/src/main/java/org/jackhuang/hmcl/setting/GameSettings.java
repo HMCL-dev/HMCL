@@ -138,13 +138,22 @@ public sealed abstract class GameSettings extends ObservableSetting {
             return id;
         }
 
-        /// The display name of this preset.
+        /// The custom display name of this preset.
         @SerializedName("name")
         private final SettingProperty<String> name = newSettingProperty("name", "");
 
-        /// Returns the display name property.
+        /// Returns the custom display name property.
         public SettingProperty<String> nameProperty() {
             return name;
+        }
+
+        /// The automatic display name number of this preset.
+        @SerializedName("autoNameNumber")
+        private final SettingProperty<@Nullable Integer> autoNameNumber = newSettingProperty("autoNameNumber");
+
+        /// Returns the automatic display name number property.
+        public SettingProperty<@Nullable Integer> autoNameNumberProperty() {
+            return autoNameNumber;
         }
 
         /// Whether to enable the version isolation strategy when installing a new instance.

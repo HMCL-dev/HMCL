@@ -58,6 +58,54 @@ public final class GameSettingsPresetsTest {
                 () -> JsonUtils.GSON.fromJson("{}", GameSettings.Preset.class));
     }
 
+    /// Tests that automatic preset name numbers are stored separately from custom names.
+    @Test
+    public void storesAutomaticPresetNameNumber() {
+        GameSettings.Preset preset = new GameSettings.Preset(new GUID("123e4567-e89b-12d3-a456-426614174000"));
+
+        preset.autoNameNumberProperty().setValue(3);
+        JsonObject serialized = JsonParser.parseString(JsonUtils.GSON.toJson(preset, GameSettings.Preset.class))
+                .getAsJsonObject();
+
+        assertFalse(serialized.has("name"));
+        assertEquals(3, serialized.get("autoNameNumber").getAsInt());
+    }
+
+    /// Tests that custom preset names are stored as strings.
+    @Test
+    public void storesCustomPresetNameAsString() {
+        GameSettings.Preset preset = new GameSettings.Preset(new GUID("123e4567-e89b-12d3-a456-426614174000"));
+
+        preset.nameProperty().setValue("Custom");
+        JsonObject serialized = JsonParser.parseString(JsonUtils.GSON.toJson(preset, GameSettings.Preset.class))
+                .getAsJsonObject();
+
+        assertEquals("Custom", serialized.get("name").getAsString());
+        assertFalse(serialized.has("autoNameNumber"));
+    }
+
+    /// Tests that custom preset names and automatic name numbers are read independently.
+    @Test
+    public void readsCustomNameAndAutomaticNameNumber() {
+        GameSettings.Preset automatic = JsonUtils.GSON.fromJson("""
+                {
+                  "id": "123e4567-e89b-12d3-a456-426614174000",
+                  "autoNameNumber": 4
+                }
+                """, GameSettings.Preset.class);
+        GameSettings.Preset custom = JsonUtils.GSON.fromJson("""
+                {
+                  "id": "123e4567-e89b-12d3-a456-426614174001",
+                  "name": "Custom"
+                }
+                """, GameSettings.Preset.class);
+
+        assertEquals(4, automatic.autoNameNumberProperty().getValue());
+        assertEquals("", automatic.nameProperty().getValue());
+        assertNull(custom.autoNameNumberProperty().getValue());
+        assertEquals("Custom", custom.nameProperty().getValue());
+    }
+
     /// Tests that preset files do not preserve the workspace-level default preset selection.
     @Test
     public void doesNotStoreDefaultGameSettingsPresetInPresets() {

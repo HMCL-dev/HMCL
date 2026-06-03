@@ -176,7 +176,7 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
                 basicSettings.getContent().add(parentGameSettingsPane);
                 parentGameSettingsPane.setTitle(i18n("settings.type.global.preset"));
                 parentGameSettingsPane.setConverter(setting -> setting != null
-                        ? setting.nameProperty().getValue()
+                        ? getPresetDisplayName(setting)
                         : i18n("settings.type.global.preset.default"));
                 bindInstanceParentSetting(parentGameSettingsPane);
             }
@@ -750,9 +750,15 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
 
     /// Returns the display name for a preset.
     private static String getPresetDisplayName(GameSettings.Preset setting) {
-        return StringUtils.isBlank(setting.nameProperty().getValue())
-                ? setting.idProperty().getValue().toString()
-                : setting.nameProperty().getValue();
+        String name = setting.nameProperty().getValue();
+        if (StringUtils.isNotBlank(name)) {
+            return name;
+        }
+
+        Integer autoNameNumber = setting.autoNameNumberProperty().getValue();
+        return autoNameNumber != null
+                ? i18n("settings.type.global.preset.new", autoNameNumber)
+                : setting.idProperty().getValue().toString();
     }
 
     /// Creates the preset management sublist.
@@ -838,49 +844,60 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
 
     /// Creates a new preset and selects it for editing.
     private void createPreset() {
-        Controllers.prompt(i18n("settings.type.global.preset.create"), (name, handler) -> {
-            if (StringUtils.isBlank(name)) {
-                handler.reject(i18n("input.not_empty"));
-                return;
-            }
-
+        int number = createDefaultPresetNumber();
+        PromptDialogPane.Builder.StringQuestion nameQuestion =
+                new PromptDialogPane.Builder.StringQuestion("", "")
+                        .setPromptText(i18n("settings.type.global.preset.new", number));
+        Controllers.prompt(new PromptDialogPane.Builder(i18n("settings.type.global.preset.create"), (questions, handler) -> {
+            String name = (String) questions.get(0).getValue();
             GameSettings.Preset setting = new GameSettings.Preset(SettingsManager.gameSettingsPresets().newPresetId());
-            setting.nameProperty().setValue(name.trim());
+            if (StringUtils.isBlank(name)) {
+                setting.autoNameNumberProperty().setValue(number);
+            } else {
+                setting.nameProperty().setValue(name.trim());
+            }
             SettingsManager.getGameSettings().add(setting);
             selectPreset(setting);
             handler.resolve();
-        }, createDefaultPresetName(), new RequiredValidator());
+        }).addQuestion(nameQuestion));
     }
 
-    /// Returns the first numbered preset name that is not used by existing presets.
-    private String createDefaultPresetName() {
+    /// Returns the first automatic preset number that is not used by existing presets.
+    private int createDefaultPresetNumber() {
         for (int index = 1; ; index++) {
             String name = i18n("settings.type.global.preset.new", index);
             boolean used = false;
             for (GameSettings.Preset setting : SettingsManager.getGameSettings()) {
-                if (Objects.equals(name, setting.nameProperty().getValue())) {
+                Integer autoNameNumber = setting.autoNameNumberProperty().getValue();
+                if ((autoNameNumber != null && autoNameNumber == index)
+                        || Objects.equals(name, getPresetDisplayName(setting))) {
                     used = true;
                     break;
                 }
             }
 
             if (!used) {
-                return name;
+                return index;
             }
         }
     }
 
     /// Asks the user for a new preset name.
     private void renamePreset(GameSettings.Preset setting) {
-        Controllers.prompt(i18n("settings.type.global.preset.rename"), (name, handler) -> {
+        PromptDialogPane.Builder.StringQuestion nameQuestion =
+                new PromptDialogPane.Builder.StringQuestion("", setting.nameProperty().getValue())
+                        .setPromptText(getPresetDisplayName(setting));
+        Controllers.prompt(new PromptDialogPane.Builder(i18n("settings.type.global.preset.rename"), (questions, handler) -> {
+            String name = (String) questions.get(0).getValue();
             if (StringUtils.isBlank(name)) {
                 handler.reject(i18n("input.not_empty"));
                 return;
             }
 
             setting.nameProperty().setValue(name.trim());
+            setting.autoNameNumberProperty().setValue(null);
             handler.resolve();
-        }, setting.nameProperty().getValue(), new RequiredValidator());
+        }).addQuestion(nameQuestion));
     }
 
     /// Asks the user to confirm removing the given preset.
