@@ -53,10 +53,15 @@ public final class Profiles {
 
     /// Creates a profile ID that does not collide with existing profiles.
     public static GUID newProfileId() {
+        return newProfileId(new HashSet<>());
+    }
+
+    /// Creates a profile ID that does not collide with existing profiles or reserved IDs.
+    private static GUID newProfileId(HashSet<GUID> reservedIds) {
         GUID id;
         do {
             id = GUID.v7();
-        } while (hasProfileId(id));
+        } while (hasProfileId(id) || reservedIds.contains(id));
         return id;
     }
 
@@ -95,6 +100,9 @@ public final class Profiles {
 
     private static final ReadOnlyListWrapper<Profile> profilesWrapper =
             new ReadOnlyListWrapper<>(FXCollections.emptyObservableList());
+
+    /// Whether default profile creation has already been scheduled on the FX thread.
+    private static boolean creatingDefaultProfiles = false;
 
     private static final ObjectProperty<Profile> selectedProfile = new SimpleObjectProperty<>() {
         @Override
@@ -151,19 +159,36 @@ public final class Profiles {
     }
 
     private static void checkProfiles() {
-        ObservableList<Profile> profiles = SettingsManager.getGameDirectories();
-        if (profiles.isEmpty()) {
-            GUID currentId = newProfileId();
-            GUID homeId;
-            do {
-                homeId = newProfileId();
-            } while (currentId.equals(homeId));
+        if (creatingDefaultProfiles) {
+            return;
+        }
 
-            Profile current = new Profile(
-                    currentId, null, CURRENT_PROFILE_PATH);
-            Profile home = new Profile(
-                    homeId, null, HOME_PROFILE_PATH);
-            Platform.runLater(() -> profiles.addAll(current, home));
+        ObservableList<Profile> profiles = SettingsManager.getGameDirectories();
+        HashSet<GUID> reservedIds = new HashSet<>();
+        ArrayList<Profile> missingProfiles = new ArrayList<>(2);
+
+        if (profiles.stream().noneMatch(profile -> isProfilePath(profile, CURRENT_PROFILE_PATH))) {
+            GUID id = newProfileId(reservedIds);
+            reservedIds.add(id);
+            missingProfiles.add(new Profile(id, null, CURRENT_PROFILE_PATH));
+        }
+        if (profiles.stream().noneMatch(profile -> isProfilePath(profile, HOME_PROFILE_PATH))) {
+            GUID id = newProfileId(reservedIds);
+            reservedIds.add(id);
+            missingProfiles.add(new Profile(id, null, HOME_PROFILE_PATH));
+        }
+
+        if (!missingProfiles.isEmpty()) {
+            creatingDefaultProfiles = true;
+            Platform.runLater(() -> {
+                try {
+                    profiles.addAll(missingProfiles.stream()
+                            .filter(profile -> profiles.stream().noneMatch(existing -> isProfilePath(existing, profile.getPath())))
+                            .toList());
+                } finally {
+                    creatingDefaultProfiles = false;
+                }
+            });
         }
     }
 

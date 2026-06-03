@@ -102,12 +102,12 @@ public final class LegacyConfigMigrator {
     }
 
     /// Returns the stable profile ID for a migrated legacy profile.
-    private static GUID getLegacyProfileId(String profileName) {
+    static GUID getLegacyProfileId(String profileName) {
         return GUID.v5(LEGACY_PROFILE_ID_NAMESPACE, profileName);
     }
 
     /// Returns the stable game settings preset ID for a migrated legacy profile.
-    private static GUID getLegacyGameSettingsId(String profileName) {
+    static GUID getLegacyGameSettingsId(String profileName) {
         return GUID.v5(LEGACY_GAME_SETTINGS_ID_NAMESPACE, profileName);
     }
 

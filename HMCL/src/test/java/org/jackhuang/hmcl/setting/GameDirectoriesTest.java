@@ -110,12 +110,14 @@ public final class GameDirectoriesTest {
 
         GameDirectories gameDirectories = Objects.requireNonNull(LegacyConfigMigrator.extractGameDirectoriesFromConfigJson(settings));
 
+        GUID defaultProfileId = LegacyConfigMigrator.getLegacyProfileId("Default");
+        GUID homeProfileId = LegacyConfigMigrator.getLegacyProfileId("Home");
         Profile defaultProfile = gameDirectories.getGameDirectories().stream()
-                .filter(profile -> Profiles.DEFAULT_PROFILE_ID.equals(profile.getId()))
+                .filter(profile -> defaultProfileId.equals(profile.getId()))
                 .findFirst()
                 .orElseThrow();
         Profile homeProfile = gameDirectories.getGameDirectories().stream()
-                .filter(profile -> Profiles.HOME_PROFILE_ID.equals(profile.getId()))
+                .filter(profile -> homeProfileId.equals(profile.getId()))
                 .findFirst()
                 .orElseThrow();
         Profile devProfile = gameDirectories.getGameDirectories().stream()
@@ -208,7 +210,8 @@ public final class GameDirectoriesTest {
     /// Tests that an explicit name overrides built-in display names.
     @Test
     public void displaysExplicitNameBeforeBuiltInName() {
-        Profile profile = new Profile(Profiles.DEFAULT_PROFILE_ID, "Custom Default", PortablePath.of(".minecraft"));
+        GUID id = new GUID("123e4567-e89b-12d3-a456-426614174000");
+        Profile profile = new Profile(id, "Custom Default", PortablePath.of(".minecraft"));
 
         assertEquals("Custom Default", Profiles.getProfileDisplayName(profile));
     }
