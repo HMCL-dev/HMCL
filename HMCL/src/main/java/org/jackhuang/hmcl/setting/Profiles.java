@@ -182,14 +182,30 @@ public final class Profiles {
             creatingDefaultProfiles = true;
             Platform.runLater(() -> {
                 try {
-                    profiles.addAll(missingProfiles.stream()
+                    List<Profile> profilesToAdd = missingProfiles.stream()
                             .filter(profile -> profiles.stream().noneMatch(existing -> isProfilePath(existing, profile.getPath())))
-                            .toList());
+                            .toList();
+                    for (Profile profile : profilesToAdd) {
+                        profiles.add(getDefaultProfileInsertionIndex(profiles, profile), profile);
+                    }
                 } finally {
                     creatingDefaultProfiles = false;
                 }
             });
         }
+    }
+
+    /// Returns the insertion index for a generated default profile.
+    private static int getDefaultProfileInsertionIndex(ObservableList<Profile> profiles, Profile profile) {
+        if (isProfilePath(profile, CURRENT_PROFILE_PATH)) {
+            for (int i = 0; i < profiles.size(); i++) {
+                if (isProfilePath(profiles.get(i), HOME_PROFILE_PATH)) {
+                    return i;
+                }
+            }
+        }
+
+        return profiles.size();
     }
 
     /**
