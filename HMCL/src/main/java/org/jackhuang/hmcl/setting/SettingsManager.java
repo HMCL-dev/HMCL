@@ -42,7 +42,6 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 
-import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 /// Owns the process-wide configuration and detached workspace settings instances.
@@ -368,7 +367,7 @@ public final class SettingsManager {
         }
 
         setting = new GameSettings.Preset(gameSettingsPresets().newPresetId());
-        setting.nameProperty().setValue(i18n("message.default"));
+        setting.autoNameNumberProperty().setValue(0);
         getGameSettings().add(setting);
         setDefaultGameSettingsPreset(setting.idProperty().getValue());
         return setting;

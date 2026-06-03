@@ -71,6 +71,19 @@ public final class GameSettingsPresetsTest {
         assertEquals(3, serialized.get("autoNameNumber").getAsInt());
     }
 
+    /// Tests that default preset names use automatic name number zero.
+    @Test
+    public void storesDefaultPresetNameNumberAsZero() {
+        GameSettings.Preset preset = new GameSettings.Preset(new GUID("123e4567-e89b-12d3-a456-426614174000"));
+
+        preset.autoNameNumberProperty().setValue(0);
+        JsonObject serialized = JsonParser.parseString(JsonUtils.GSON.toJson(preset, GameSettings.Preset.class))
+                .getAsJsonObject();
+
+        assertFalse(serialized.has("name"));
+        assertEquals(0, serialized.get("autoNameNumber").getAsInt());
+    }
+
     /// Tests that custom preset names are stored as strings.
     @Test
     public void storesCustomPresetNameAsString() {

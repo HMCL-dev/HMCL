@@ -756,9 +756,13 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
         }
 
         Integer autoNameNumber = setting.autoNameNumberProperty().getValue();
-        return autoNameNumber != null
-                ? i18n("settings.type.global.preset.auto_name", autoNameNumber)
-                : setting.idProperty().getValue().toString();
+        if (autoNameNumber == null) {
+            return setting.idProperty().getValue().toString();
+        }
+        if (autoNameNumber == 0) {
+            return i18n("settings.type.global.preset.default_name");
+        }
+        return i18n("settings.type.global.preset.auto_name", autoNameNumber);
     }
 
     /// Creates the preset management sublist.
