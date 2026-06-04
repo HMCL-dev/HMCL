@@ -23,6 +23,8 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonParseException;
 import com.google.gson.annotations.JsonAdapter;
 import com.google.gson.annotations.SerializedName;
+import javafx.beans.property.ObjectProperty;
+import javafx.beans.property.SimpleObjectProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableSet;
 import org.jackhuang.hmcl.game.*;
@@ -34,6 +36,7 @@ import org.jackhuang.hmcl.setting.property.SimpleInheritableProperty;
 import org.jackhuang.hmcl.setting.property.SimpleSettingProperty;
 import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.StringUtils;
+import org.jackhuang.hmcl.util.gson.JsonSchema;
 import org.jackhuang.hmcl.util.gson.JsonSerializable;
 import org.jackhuang.hmcl.util.gson.ObservableSetting;
 import org.jackhuang.hmcl.util.platform.SystemInfo;
@@ -72,10 +75,36 @@ public sealed abstract class GameSettings extends ObservableSetting {
     /// Instance-specific game setting.
     @JsonAdapter(Instance.Adapter.class)
     @JsonSerializable
-    public static final class Instance extends GameSettings {
+    public static final class Instance extends GameSettings implements JsonSchemaSetting {
+        /// The JSON schema supported by instance-specific game settings.
+        public static final JsonSchema CURRENT_SCHEMA =
+                new JsonSchema("instance-game-settings", new JsonSchema.Version(1, 0, 0));
+
         /// Creates an empty instance setting.
         public Instance() {
+            tracker.markDirty(schema);
             register();
+        }
+
+        /// The schema used by this instance game settings file.
+        @SerializedName(JsonSchema.PROPERTY_SCHEMA)
+        private final ObjectProperty<JsonSchema> schema = new SimpleObjectProperty<>(CURRENT_SCHEMA);
+
+        /// Returns the schema property.
+        public ObjectProperty<JsonSchema> schemaProperty() {
+            return schema;
+        }
+
+        /// Returns the schema used by this instance game settings file.
+        @Override
+        public JsonSchema getSchema() {
+            return schema.get();
+        }
+
+        /// Sets the schema used by this instance game settings file.
+        @Override
+        public void setSchema(JsonSchema schema) {
+            this.schema.set(Objects.requireNonNull(schema));
         }
 
         /// The parent preset ID.

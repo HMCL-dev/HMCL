@@ -29,7 +29,7 @@ import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 ///
 /// @author Glavo
 @NotNullByDefault
-final class JsonSchemaPolicy {
+public final class JsonSchemaPolicy {
     /// Prevents instantiation.
     private JsonSchemaPolicy() {
     }
@@ -41,7 +41,7 @@ final class JsonSchemaPolicy {
     /// @param object the JSON object that contains the schema marker
     /// @param expected the JSON schema supported by the current code
     /// @return the compatibility result
-    static Result check(Path location, String displayName, JsonObject object, JsonSchema expected) {
+    public static Result check(Path location, String displayName, JsonObject object, JsonSchema expected) {
         JsonSchema.CheckResult schema = JsonSchema.check(object, expected);
         if (schema.isMissing()) {
             LOG.warning("Missing schema in " + displayName + ": " + location);
@@ -78,7 +78,7 @@ final class JsonSchemaPolicy {
     /// @param readable whether the file may be deserialized
     /// @param allowSave whether the file may be overwritten
     /// @param preserveSchema whether saving should keep the original schema value
-    record Result(boolean readable, boolean allowSave, boolean preserveSchema) {
+    public record Result(boolean readable, boolean allowSave, boolean preserveSchema) {
         /// Result used when a file is compatible, may be saved, and should be upgraded to the expected schema.
         private static final Result READ_WRITE = new Result(true, true, false);
 
