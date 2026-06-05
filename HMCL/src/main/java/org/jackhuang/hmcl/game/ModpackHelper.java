@@ -43,6 +43,7 @@ import org.jackhuang.hmcl.util.PortablePath;
 import org.jackhuang.hmcl.util.function.ExceptionalConsumer;
 import org.jackhuang.hmcl.util.function.ExceptionalRunnable;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
+import org.jackhuang.hmcl.util.i18n.LocalizedText;
 import org.jackhuang.hmcl.util.io.CompressingUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jetbrains.annotations.NotNullByDefault;
@@ -191,7 +192,10 @@ public final class ModpackHelper {
 
         return new ManuallyCreatedModpackInstallTask(profile, zipFile, charset, name)
                 .thenAcceptAsync(Schedulers.javafx(), location -> {
-                    Profile newProfile = new Profile(Profiles.newProfileId(), name, PortablePath.fromPath(location));
+                    Profile newProfile = new Profile(
+                            Profiles.newProfileId(),
+                            LocalizedText.plain(name),
+                            PortablePath.fromPath(location));
                     Profiles.getProfiles().add(newProfile);
                     Profiles.setSelectedProfile(newProfile);
                 });

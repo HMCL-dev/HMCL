@@ -24,12 +24,16 @@ import com.google.gson.JsonParser;
 import org.jackhuang.hmcl.util.PortablePath;
 import org.jackhuang.hmcl.util.gson.JsonSchema;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
+import org.jackhuang.hmcl.util.i18n.LocaleUtils;
+import org.jackhuang.hmcl.util.i18n.LocalizedText;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.List;
+import java.util.Locale;
 import java.util.Objects;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -57,7 +61,7 @@ public final class GameDirectoriesTest {
         assertFalse(settings.has("configurations"));
         assertEquals(1, gameDirectories.getGameDirectories().size());
         assertEquals(id, gameDirectories.getGameDirectories().get(0).getId());
-        assertEquals("Dev", gameDirectories.getGameDirectories().get(0).getName());
+        assertEquals("Dev", Profiles.getProfileCustomName(gameDirectories.getGameDirectories().get(0)));
         assertEquals(".minecraft", gameDirectories.getGameDirectories().get(0).getPath().getPath());
         assertNull(gameDirectories.getGameDirectories().get(0).getLegacyGameSettings());
     }
@@ -120,13 +124,13 @@ public final class GameDirectoriesTest {
                 .findFirst()
                 .orElseThrow();
         Profile devProfile = gameDirectories.getGameDirectories().stream()
-                .filter(profile -> "Dev".equals(profile.getName()))
+                .filter(profile -> "Dev".equals(Profiles.getProfileCustomName(profile)))
                 .findFirst()
                 .orElseThrow();
 
         assertNull(defaultProfile.getName());
         assertNull(homeProfile.getName());
-        assertEquals("Dev", devProfile.getName());
+        assertEquals("Dev", Profiles.getProfileCustomName(devProfile));
     }
 
     /// Tests migrating upstream/main selected version fields into the main config.
@@ -166,16 +170,40 @@ public final class GameDirectoriesTest {
     @Test
     public void storesProfilePath() {
         GUID id = new GUID("123e4567-e89b-12d3-a456-426614174000");
-        Profile profile = new Profile(id, "Dev", PortablePath.of("versions\\Dev"));
+        Profile profile = new Profile(id, LocalizedText.plain("Dev"), PortablePath.of("versions\\Dev"));
 
         JsonObject serialized = JsonUtils.GSON.toJsonTree(profile, Profile.class).getAsJsonObject();
         Profile deserialized = Objects.requireNonNull(JsonUtils.GSON.fromJson(serialized, Profile.class));
 
         assertEquals("versions/Dev", serialized.get("path").getAsString());
+        assertEquals("Dev", serialized.get("name").getAsString());
         assertFalse(serialized.has("gameDir"));
         assertFalse(serialized.has("useRelativePath"));
         assertEquals("versions/Dev", deserialized.getPath().getPath());
         assertFalse(deserialized.getPath().isAbsolute());
+    }
+
+    /// Tests that localized profile names can be read and preserved as JSON objects.
+    @Test
+    public void readsLocalizedProfileName() {
+        Profile profile = Objects.requireNonNull(JsonUtils.GSON.fromJson("""
+                {
+                  "id": "123e4567-e89b-12d3-a456-426614174000",
+                  "name": {
+                    "en": "Development",
+                    "zh-Hans": "开发"
+                  },
+                  "path": "versions/Dev"
+                }
+                """, Profile.class));
+
+        LocalizedText name = Objects.requireNonNull(profile.getName());
+        JsonObject serialized = JsonUtils.GSON.toJsonTree(profile, Profile.class).getAsJsonObject();
+
+        assertEquals("Development", name.getText(List.of(Locale.ENGLISH)));
+        assertEquals("开发", name.getText(List.of(LocaleUtils.LOCALE_ZH_HANS)));
+        assertEquals("Development", serialized.getAsJsonObject("name").get("en").getAsString());
+        assertEquals("开发", serialized.getAsJsonObject("name").get("zh-Hans").getAsString());
     }
 
     /// Tests that profiles preserve migrated legacy game settings IDs.
@@ -183,7 +211,11 @@ public final class GameDirectoriesTest {
     public void storesLegacyGameSettingsId() {
         GUID id = new GUID("123e4567-e89b-12d3-a456-426614174000");
         GUID legacyGameSettings = new GUID("123e4567-e89b-12d3-a456-426614174001");
-        Profile profile = new Profile(id, "Dev", PortablePath.of("versions\\Dev"), legacyGameSettings);
+        Profile profile = new Profile(
+                id,
+                LocalizedText.plain("Dev"),
+                PortablePath.of("versions\\Dev"),
+                legacyGameSettings);
 
         JsonObject serialized = JsonUtils.GSON.toJsonTree(profile, Profile.class).getAsJsonObject();
         Profile deserialized = Objects.requireNonNull(JsonUtils.GSON.fromJson(serialized, Profile.class));
@@ -210,7 +242,7 @@ public final class GameDirectoriesTest {
     @Test
     public void displaysExplicitNameBeforeBuiltInName() {
         GUID id = new GUID("123e4567-e89b-12d3-a456-426614174000");
-        Profile profile = new Profile(id, "Custom Default", PortablePath.of(".minecraft"));
+        Profile profile = new Profile(id, LocalizedText.plain("Custom Default"), PortablePath.of(".minecraft"));
 
         assertEquals("Custom Default", Profiles.getProfileDisplayName(profile));
     }

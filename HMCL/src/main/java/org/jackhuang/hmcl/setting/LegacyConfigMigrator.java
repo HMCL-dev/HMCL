@@ -911,7 +911,7 @@ public final class LegacyConfigMigrator {
         if (LEGACY_HOME_PROFILE_ID.equals(profile.getId())) {
             return LEGACY_HOME_PROFILE;
         }
-        return profile.getName();
+        return Profiles.getProfileCustomName(profile);
     }
 
     /// Detached settings migrated out of an old config file.

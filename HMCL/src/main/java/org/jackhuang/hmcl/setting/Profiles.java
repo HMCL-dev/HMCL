@@ -27,6 +27,8 @@ import org.jackhuang.hmcl.event.EventBus;
 import org.jackhuang.hmcl.event.RefreshedVersionsEvent;
 import org.jackhuang.hmcl.game.Version;
 import org.jackhuang.hmcl.util.PortablePath;
+import org.jackhuang.hmcl.util.i18n.I18n;
+import org.jackhuang.hmcl.util.i18n.LocalizedText;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
@@ -76,7 +78,7 @@ public final class Profiles {
     }
 
     public static String getProfileDisplayName(Profile profile) {
-        String name = profile.getName();
+        String name = getProfileCustomName(profile);
         if (name != null) {
             return name;
         }
@@ -89,6 +91,12 @@ public final class Profiles {
         }
 
         return profile.getId().toString();
+    }
+
+    /// Returns the custom profile name in the current locale.
+    public static @Nullable String getProfileCustomName(Profile profile) {
+        @Nullable LocalizedText name = profile.getName();
+        return name != null ? name.getText(I18n.getLocale().getCandidateLocales()) : null;
     }
 
     /// Returns whether the profile uses the given path.
@@ -267,7 +275,7 @@ public final class Profiles {
         HashSet<GUID> ids = new HashSet<>();
         HashSet<String> names = new HashSet<>();
         profiles.removeIf(profile -> {
-            String name = profile.getName();
+            String name = getProfileCustomName(profile);
             return !ids.add(profile.getId()) || (name != null && !names.add(name));
         });
     }

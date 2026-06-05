@@ -25,14 +25,13 @@ import javafx.beans.InvalidationListener;
 import javafx.beans.Observable;
 import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.SimpleObjectProperty;
-import javafx.beans.property.SimpleStringProperty;
-import javafx.beans.property.StringProperty;
 import org.jackhuang.hmcl.download.DefaultDependencyManager;
 import org.jackhuang.hmcl.download.DownloadProvider;
 import org.jackhuang.hmcl.game.HMCLCacheRepository;
 import org.jackhuang.hmcl.game.HMCLGameRepository;
 import org.jackhuang.hmcl.util.PortablePath;
 import org.jackhuang.hmcl.util.ToStringBuilder;
+import org.jackhuang.hmcl.util.i18n.LocalizedText;
 import org.jackhuang.hmcl.util.javafx.ObservableHelper;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
@@ -78,21 +77,21 @@ public final class Profile implements Observable {
         this.path.set(Objects.requireNonNull(path));
     }
 
-    /// The custom profile name, or `null` for profiles without a stored name.
-    private final SimpleStringProperty name;
+    /// The custom localized profile name, or `null` for profiles without a stored name.
+    private final ObjectProperty<@Nullable LocalizedText> name;
 
-    /// Returns the custom profile name property.
-    public StringProperty nameProperty() {
+    /// Returns the custom localized profile name property.
+    public ObjectProperty<@Nullable LocalizedText> nameProperty() {
         return name;
     }
 
-    /// Returns the custom profile name, or `null` when no name is stored.
-    public @Nullable String getName() {
+    /// Returns the custom localized profile name, or `null` when no name is stored.
+    public @Nullable LocalizedText getName() {
         return name.get();
     }
 
-    /// Sets the custom profile name.
-    public void setName(@Nullable String name) {
+    /// Sets the custom localized profile name.
+    public void setName(@Nullable LocalizedText name) {
         this.name.set(name);
     }
 
@@ -115,14 +114,14 @@ public final class Profile implements Observable {
     }
 
     /// Creates a profile.
-    public Profile(GUID id, @Nullable String name, PortablePath path) {
+    public Profile(GUID id, @Nullable LocalizedText name, PortablePath path) {
         this(id, name, path, null);
     }
 
     /// Creates a profile.
-    public Profile(GUID id, @Nullable String name, PortablePath path, @Nullable GUID legacyGameSettings) {
+    public Profile(GUID id, @Nullable LocalizedText name, PortablePath path, @Nullable GUID legacyGameSettings) {
         this.id = Objects.requireNonNull(id);
-        this.name = new SimpleStringProperty(this, "name", name);
+        this.name = new SimpleObjectProperty<>(this, "name", name);
         this.path = new SimpleObjectProperty<>(this, "path", Objects.requireNonNull(path));
         this.legacyGameSettings = new SimpleObjectProperty<>(this, "legacyGameSettings", legacyGameSettings);
         repository = new HMCLGameRepository(this, path.toPath());
@@ -186,7 +185,10 @@ public final class Profile implements Observable {
             JsonObject jsonObject = new JsonObject();
             jsonObject.add("id", context.serialize(src.getId(), GUID.class));
             if (src.getName() != null) {
-                jsonObject.addProperty("name", src.getName());
+                JsonElement name = context.serialize(src.getName(), LocalizedText.class);
+                if (name != null && !name.isJsonNull()) {
+                    jsonObject.add("name", name);
+                }
             }
             jsonObject.add("path", context.serialize(src.getPath(), PortablePath.class));
             if (src.getLegacyGameSettings() != null) {
@@ -210,9 +212,10 @@ public final class Profile implements Observable {
                 String gameDir = Optional.ofNullable(obj.get("gameDir")).map(JsonElement::getAsString).orElse("");
                 path = PortablePath.of(gameDir);
             }
+            @Nullable LocalizedText name = context.deserialize(obj.get("name"), LocalizedText.class);
 
             return new Profile(id,
-                    Optional.ofNullable(obj.get("name")).map(JsonElement::getAsString).orElse(null),
+                    name,
                     path,
                     context.deserialize(obj.get("legacyGameSettings"), GUID.class));
         }

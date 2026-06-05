@@ -40,6 +40,7 @@ import org.jackhuang.hmcl.ui.construct.*;
 import org.jackhuang.hmcl.ui.decorator.DecoratorPage;
 import org.jackhuang.hmcl.util.PortablePath;
 import org.jackhuang.hmcl.util.StringUtils;
+import org.jackhuang.hmcl.util.i18n.LocalizedText;
 import org.jackhuang.hmcl.util.io.FileUtils;
 
 import java.nio.file.InvalidPathException;
@@ -102,7 +103,9 @@ public final class ProfilePage extends BorderPane implements DecoratorPage {
                             @Override
                             protected void eval() {
                                 JFXTextField control = (JFXTextField) this.getSrcControl();
-                                hasErrors.set(Profiles.getProfiles().stream().anyMatch(profile -> Objects.equals(profile.getName(), control.getText())));
+                                hasErrors.set(Profiles.getProfiles().stream()
+                                        .anyMatch(profile -> Objects.equals(
+                                                Profiles.getProfileCustomName(profile), control.getText())));
                             }
                         });
                     }
@@ -182,7 +185,7 @@ public final class ProfilePage extends BorderPane implements DecoratorPage {
 
     private void onSave() {
         if (profile != null) {
-            profile.setName(txtProfileName.getText());
+            profile.setName(LocalizedText.plain(txtProfileName.getText()));
             if (StringUtils.isNotBlank(getLocation())) {
                 profile.setPath(createPortableLocation());
             }
@@ -190,7 +193,10 @@ public final class ProfilePage extends BorderPane implements DecoratorPage {
             if (StringUtils.isBlank(getLocation())) {
                 gameDir.fire();
             }
-            Profile newProfile = new Profile(Profiles.newProfileId(), txtProfileName.getText(), createPortableLocation());
+            Profile newProfile = new Profile(
+                    Profiles.newProfileId(),
+                    LocalizedText.plain(txtProfileName.getText()),
+                    createPortableLocation());
             Profiles.getProfiles().add(newProfile);
         }
 
