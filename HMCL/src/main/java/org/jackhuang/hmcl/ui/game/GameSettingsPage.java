@@ -23,11 +23,9 @@ import com.jfoenix.controls.JFXComboBox;
 import com.jfoenix.controls.JFXSlider;
 import com.jfoenix.controls.JFXTextField;
 import javafx.beans.InvalidationListener;
-import javafx.beans.binding.Bindings;
 import javafx.beans.property.*;
 import javafx.beans.value.ChangeListener;
 import javafx.collections.FXCollections;
-import javafx.collections.ListChangeListener;
 import javafx.collections.ObservableList;
 import javafx.css.PseudoClass;
 import javafx.geometry.Insets;
@@ -154,7 +152,7 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
                 );
 
                 iconPickerItem = null;
-                createPresetManagementSublist(presetSettings);
+                presetSettings.getContent().add(new PresetManagementPane(currentSetting, this::selectPreset, holder));
             } else {
                 rootPane.getChildren().addAll(
                         ComponentList.createComponentListTitle(i18n("settings.game.section.basic")),
@@ -176,7 +174,7 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
                 basicSettings.getContent().add(parentGameSettingsPane);
                 parentGameSettingsPane.setTitle(i18n("settings.type.global.preset"));
                 parentGameSettingsPane.setConverter(setting -> setting != null
-                        ? getPresetDisplayName(setting)
+                        ? PresetManagementPane.getPresetDisplayName(setting)
                         : i18n("settings.type.global.preset.default"));
                 bindInstanceParentSetting(parentGameSettingsPane);
             }
@@ -741,201 +739,6 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
     @SuppressWarnings("unchecked")
     private void selectPreset(GameSettings.Preset setting) {
         currentSetting.set((S) setting);
-    }
-
-    private @Nullable GameSettings.Preset getCurrentPreset() {
-        GameSettings setting = currentSetting.get();
-        return setting instanceof GameSettings.Preset preset ? preset : null;
-    }
-
-    /// Returns the display name for a preset.
-    private static String getPresetDisplayName(GameSettings.Preset setting) {
-        String name = setting.nameProperty().getValue();
-        if (StringUtils.isNotBlank(name)) {
-            return name;
-        }
-
-        Integer autoNameNumber = setting.autoNameNumberProperty().getValue();
-        if (autoNameNumber == null) {
-            return setting.idProperty().getValue().toString();
-        }
-        return i18n("settings.type.global.preset.auto_name", autoNameNumber);
-    }
-
-    /// Creates the preset management sublist.
-    private void createPresetManagementSublist(ComponentList list) {
-        var sublist = new ComponentSublist();
-        sublist.setTitle(i18n("settings.type.global.preset.manage_all"));
-        sublist.setHasSubtitle(true);
-
-        var presetItem = new RadioChoiceList<GameSettings.Preset>();
-        var createButton = new LineButton();
-        createButton.setTitle(i18n("settings.type.global.preset.create"));
-        createButton.setLeading(SVG.ADD, 20);
-        createButton.setOnAction(event -> createPreset());
-        sublist.getContent().setAll(presetItem, createButton);
-        list.getContent().add(sublist);
-
-        final Holder<Boolean> updating = new Holder<>(false);
-        Runnable rebuildItems = () -> {
-            updating.value = true;
-            try {
-                List<RadioChoiceList.Choice<GameSettings.Preset>> choices = new ArrayList<>();
-                for (GameSettings.Preset setting : SettingsManager.getGameSettings()) {
-                    choices.add(new PresetChoice(setting));
-                }
-                presetItem.setFallbackValue(SettingsManager.getDefaultGameSettingsPresetOrCreate());
-                presetItem.setChoices(choices);
-                presetItem.setSelectedValue(getCurrentPreset());
-                updatePresetManagementDescription(sublist);
-            } finally {
-                updating.value = false;
-            }
-        };
-        ListChangeListener<GameSettings.Preset> updateItems = change -> {
-            boolean rebuild = false;
-            while (change.next()) {
-                if (change.wasAdded() || change.wasRemoved() || change.wasPermutated()) {
-                    rebuild = true;
-                }
-            }
-
-            if (rebuild) {
-                rebuildItems.run();
-            } else {
-                updatePresetManagementLabels(presetItem, sublist);
-            }
-        };
-
-        presetItem.selectedValueProperty().addListener((observable, oldValue, newValue) -> {
-            if (!updating.value && newValue != null) {
-                selectPreset(newValue);
-            }
-        });
-
-        currentSetting.addListener((observable, oldValue, newValue) -> {
-            updating.value = true;
-            try {
-                presetItem.setSelectedValue(getCurrentPreset());
-                updatePresetManagementDescription(sublist);
-            } finally {
-                updating.value = false;
-            }
-        });
-
-        SettingsManager.getGameSettings().addListener(holder.weak(updateItems));
-        rebuildItems.run();
-    }
-
-    /// Updates existing preset choices without rebuilding the rendered list.
-    private void updatePresetManagementLabels(
-            RadioChoiceList<GameSettings.Preset> presetItem,
-            ComponentSublist sublist) {
-        for (RadioChoiceList.Choice<GameSettings.Preset> choice : presetItem.getChoices()) {
-            choice.setTitle(getPresetDisplayName(choice.getValue()));
-        }
-        updatePresetManagementDescription(sublist);
-    }
-
-    /// Updates the selected preset name shown in the management sublist header.
-    private void updatePresetManagementDescription(ComponentSublist sublist) {
-        GameSettings.Preset setting = getCurrentPreset();
-        sublist.setDescription(setting != null ? getPresetDisplayName(setting) : "");
-    }
-
-    /// Creates a new preset and selects it for editing.
-    private void createPreset() {
-        int number = createDefaultPresetNumber();
-        PromptDialogPane.Builder.StringQuestion nameQuestion =
-                new PromptDialogPane.Builder.StringQuestion("", "")
-                        .setPromptText(i18n("settings.type.global.preset.auto_name", number));
-        Controllers.prompt(new PromptDialogPane.Builder(i18n("settings.type.global.preset.create"), (questions, handler) -> {
-            String name = (String) questions.get(0).getValue();
-            GameSettings.Preset setting = new GameSettings.Preset(SettingsManager.gameSettingsPresets().newPresetId());
-            if (StringUtils.isBlank(name)) {
-                setting.autoNameNumberProperty().setValue(number);
-            } else {
-                setting.nameProperty().setValue(name.trim());
-            }
-            SettingsManager.getGameSettings().add(setting);
-            selectPreset(setting);
-            handler.resolve();
-        }).addQuestion(nameQuestion));
-    }
-
-    /// Returns the first automatic preset number that is not used by existing presets.
-    private int createDefaultPresetNumber() {
-        for (int index = 1; ; index++) {
-            String name = i18n("settings.type.global.preset.auto_name", index);
-            boolean used = false;
-            for (GameSettings.Preset setting : SettingsManager.getGameSettings()) {
-                Integer autoNameNumber = setting.autoNameNumberProperty().getValue();
-                if ((autoNameNumber != null && autoNameNumber == index)
-                        || Objects.equals(name, getPresetDisplayName(setting))) {
-                    used = true;
-                    break;
-                }
-            }
-
-            if (!used) {
-                return index;
-            }
-        }
-    }
-
-    /// Asks the user for a new preset name.
-    private void renamePreset(GameSettings.Preset setting) {
-        PromptDialogPane.Builder.StringQuestion nameQuestion =
-                new PromptDialogPane.Builder.StringQuestion("", setting.nameProperty().getValue())
-                        .setPromptText(getPresetDisplayName(setting));
-        Controllers.prompt(new PromptDialogPane.Builder(i18n("settings.type.global.preset.rename"), (questions, handler) -> {
-            String name = (String) questions.get(0).getValue();
-            if (StringUtils.isBlank(name)) {
-                handler.reject(i18n("input.not_empty"));
-                return;
-            }
-
-            setting.nameProperty().setValue(name.trim());
-            setting.autoNameNumberProperty().setValue(null);
-            handler.resolve();
-        }).addQuestion(nameQuestion));
-    }
-
-    /// Asks the user to confirm removing the given preset.
-    private void confirmRemovePreset(GameSettings.Preset setting) {
-        if (SettingsManager.getGameSettings().size() <= 1) {
-            return;
-        }
-
-        Controllers.confirm(
-                i18n("settings.type.global.preset.remove.confirm", getPresetDisplayName(setting)),
-                i18n("settings.type.global.preset.remove"),
-                () -> removePreset(setting),
-                null);
-    }
-
-    /// Removes a preset and selects another preset for editing.
-    private void removePreset(GameSettings.Preset setting) {
-        ObservableList<GameSettings.Preset> settings = SettingsManager.getGameSettings();
-        int index = settings.indexOf(setting);
-        if (index < 0 || settings.size() <= 1) {
-            return;
-        }
-
-        boolean removedCurrentPreset = Objects.equals(getCurrentPreset(), setting);
-        GameSettings.Preset next = settings.get(index == 0 ? 1 : index - 1);
-        GUID removedId = setting.idProperty().getValue();
-        if (Objects.equals(SettingsManager.getDefaultGameSettingsPreset(), removedId)) {
-            SettingsManager.setDefaultGameSettingsPreset(next.idProperty().getValue());
-        }
-
-        settings.remove(index);
-        if (SettingsManager.getGameSettings(SettingsManager.getDefaultGameSettingsPreset()) == null) {
-            SettingsManager.setDefaultGameSettingsPreset(next.idProperty().getValue());
-        }
-        if (removedCurrentPreset) {
-            selectPreset(next);
-        }
     }
 
     private void bindInstanceParentSetting(LineSelectButton<GameSettings.@Nullable Preset> button) {
@@ -1980,45 +1783,6 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
             case MAXIMIZED -> i18n("settings.game.window_type.maximized");
             case WINDOWED -> i18n("settings.game.window_type.windowed");
         };
-    }
-
-    /// Preset option with an inline remove button.
-    private final class PresetChoice extends RadioChoiceList.Choice<GameSettings.Preset> {
-        /// Creates a preset option.
-        private PresetChoice(GameSettings.Preset setting) {
-            super(getPresetDisplayName(setting), setting);
-        }
-
-        /// Creates the remove button shown on the right side of the option.
-        @Override
-        protected Node createRightNode() {
-            JFXButton renameButton = FXUtils.newToggleButton4(SVG.EDIT, 14);
-            renameButton.setOnAction(event -> {
-                renamePreset(getValue());
-                event.consume();
-            });
-            FXUtils.installFastTooltip(renameButton, i18n("settings.type.global.preset.rename"));
-
-            JFXButton removeButton = FXUtils.newToggleButton4(SVG.DELETE_FOREVER, 14);
-            removeButton.disableProperty().bind(Bindings.createBooleanBinding(
-                    () -> SettingsManager.getGameSettings().size() <= 1,
-                    SettingsManager.getGameSettings()));
-            removeButton.setOnAction(event -> {
-                confirmRemovePreset(getValue());
-                event.consume();
-            });
-            FXUtils.installFastTooltip(removeButton, i18n("settings.type.global.preset.remove"));
-
-            HBox buttons = new HBox(8, renameButton, removeButton);
-            buttons.setAlignment(Pos.CENTER_RIGHT);
-            return buttons;
-        }
-
-        /// Keeps the remove button available on every preset option, not only the selected one.
-        @Override
-        protected boolean shouldDisableRightNodeWhenUnselected() {
-            return false;
-        }
     }
 
     /// Manual memory option with the maximum memory slider on the same row.
