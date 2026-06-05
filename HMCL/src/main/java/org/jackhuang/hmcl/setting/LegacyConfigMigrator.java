@@ -59,6 +59,9 @@ public final class LegacyConfigMigrator {
     /// The legacy built-in profile name for the current workspace game directory.
     private static final String LEGACY_DEFAULT_PROFILE = "Default";
 
+    /// The total transparent custom window shadow size used by legacy launcher window bounds.
+    private static final int LEGACY_CUSTOM_DECORATION_SHADOW_EXTENT = 16;
+
     /// The legacy built-in profile name for the user-home game directory.
     private static final String LEGACY_HOME_PROFILE = "Home";
 
@@ -238,11 +241,31 @@ public final class LegacyConfigMigrator {
         moveMember(json, state, "y");
         moveMember(json, state, "width");
         moveMember(json, state, "height");
+        migrateLegacyWindowContentSize(state);
         moveMember(json, state, "promptedVersion");
         moveMember(json, state, "shownTips");
 
         LauncherState result = JsonUtils.GSON.fromJson(state, LauncherState.class);
         return result != null ? result : new LauncherState();
+    }
+
+    /// Converts legacy launcher window outer sizes into content sizes.
+    private static void migrateLegacyWindowContentSize(JsonObject state) {
+        migrateLegacyWindowContentSize(state, "width");
+        migrateLegacyWindowContentSize(state, "height");
+    }
+
+    /// Converts one legacy launcher window outer size into a content size.
+    private static void migrateLegacyWindowContentSize(JsonObject state, String name) {
+        JsonElement element = state.get(name);
+        if (!(element instanceof JsonPrimitive primitive) || !primitive.isNumber()) {
+            return;
+        }
+
+        double size = primitive.getAsDouble() - LEGACY_CUSTOM_DECORATION_SHADOW_EXTENT;
+        if (Double.isFinite(size)) {
+            state.addProperty(name, Math.max(0.0, size));
+        }
     }
 
     /// Extracts authlib-injector servers from a legacy config JSON object and removes those members.

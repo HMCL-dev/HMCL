@@ -73,78 +73,78 @@ public final class LauncherState extends ObservableSetting implements JsonSchema
         this.schema.set(Objects.requireNonNull(schema));
     }
 
-    /// The normalized launcher window X position.
+    /// The normalized launcher window content X position.
     @SerializedName("x")
     private final DoubleProperty x = new SimpleDoubleProperty();
 
-    /// Returns the normalized launcher window X position property.
+    /// Returns the normalized launcher window content X position property.
     public DoubleProperty xProperty() {
         return x;
     }
 
-    /// Returns the normalized launcher window X position.
+    /// Returns the normalized launcher window content X position.
     public double getX() {
         return x.get();
     }
 
-    /// Sets the normalized launcher window X position.
+    /// Sets the normalized launcher window content X position.
     public void setX(double x) {
         this.x.set(x);
     }
 
-    /// The normalized launcher window Y position.
+    /// The normalized launcher window content Y position.
     @SerializedName("y")
     private final DoubleProperty y = new SimpleDoubleProperty();
 
-    /// Returns the normalized launcher window Y position property.
+    /// Returns the normalized launcher window content Y position property.
     public DoubleProperty yProperty() {
         return y;
     }
 
-    /// Returns the normalized launcher window Y position.
+    /// Returns the normalized launcher window content Y position.
     public double getY() {
         return y.get();
     }
 
-    /// Sets the normalized launcher window Y position.
+    /// Sets the normalized launcher window content Y position.
     public void setY(double y) {
         this.y.set(y);
     }
 
-    /// The launcher window width.
+    /// The launcher window content width.
     @SerializedName("width")
     private final DoubleProperty width = new SimpleDoubleProperty();
 
-    /// Returns the launcher window width property.
+    /// Returns the launcher window content width property.
     public DoubleProperty widthProperty() {
         return width;
     }
 
-    /// Returns the launcher window width.
+    /// Returns the launcher window content width.
     public double getWidth() {
         return width.get();
     }
 
-    /// Sets the launcher window width.
+    /// Sets the launcher window content width.
     public void setWidth(double width) {
         this.width.set(width);
     }
 
-    /// The launcher window height.
+    /// The launcher window content height.
     @SerializedName("height")
     private final DoubleProperty height = new SimpleDoubleProperty();
 
-    /// Returns the launcher window height property.
+    /// Returns the launcher window content height property.
     public DoubleProperty heightProperty() {
         return height;
     }
 
-    /// Returns the launcher window height.
+    /// Returns the launcher window content height.
     public double getHeight() {
         return height.get();
     }
 
-    /// Sets the launcher window height.
+    /// Sets the launcher window content height.
     public void setHeight(double height) {
         this.height.set(height);
     }

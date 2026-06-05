@@ -60,8 +60,8 @@ public final class LauncherStateTest {
 
         assertEquals(0.25, state.getX());
         assertEquals(0.5, state.getY());
-        assertEquals(1280.0, state.getWidth());
-        assertEquals(720.0, state.getHeight());
+        assertEquals(1264.0, state.getWidth());
+        assertEquals(704.0, state.getHeight());
         assertEquals("3.6.15", state.getPromptedVersion());
         assertEquals(21.0, state.getShownTips().get("javaVersionTip"));
         assertEquals(LauncherState.CURRENT_SCHEMA, state.getSchema());

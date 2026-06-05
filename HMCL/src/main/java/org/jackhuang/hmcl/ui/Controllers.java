@@ -92,8 +92,13 @@ public final class Controllers {
     public static final String SOFTWARE_RENDERING = "softwareRendering";
     public static final String APRIL_FOOLS = "aprilFools";
 
-    public static final int MIN_WIDTH = 800 + 2 + 16; // bg width + border width*2 + shadow width*2
-    public static final int MIN_HEIGHT = 450 + 2 + 40 + 16; // bg height + border width*2 + toolbar height + shadow width*2
+    private static final int CUSTOM_DECORATION_SHADOW_SIZE = 8;
+    private static final int CUSTOM_DECORATION_SHADOW_EXTENT = CUSTOM_DECORATION_SHADOW_SIZE * 2;
+
+    public static final int MIN_CONTENT_WIDTH = 800 + 2; // bg width + border width*2
+    public static final int MIN_CONTENT_HEIGHT = 450 + 2 + 40; // bg height + border width*2 + toolbar height
+    public static final int MIN_WIDTH = MIN_CONTENT_WIDTH + CUSTOM_DECORATION_SHADOW_EXTENT;
+    public static final int MIN_HEIGHT = MIN_CONTENT_HEIGHT + CUSTOM_DECORATION_SHADOW_EXTENT;
     public static final Screen SCREEN = Screen.getPrimary();
     private static InvalidationListener stageSizeChangeListener;
     private static DoubleProperty stageX = new SimpleDoubleProperty();
@@ -217,38 +222,63 @@ public final class Controllers {
     }
 
     public static void saveWindowStates() {
+        saveWindowBounds();
+    }
+
+    private static void saveWindowBounds() {
         if (stageX != null) {
-            state().setX(stageX.get() / SCREEN.getBounds().getWidth());
+            state().setX(toContentX(stageX.get()) / SCREEN.getBounds().getWidth());
         }
         if (stageY != null) {
-            state().setY(stageY.get() / SCREEN.getBounds().getHeight());
+            state().setY(toContentY(stageY.get()) / SCREEN.getBounds().getHeight());
         }
         if (stageHeight != null) {
-            state().setHeight(stageHeight.get());
+            state().setHeight(toContentHeight(stageHeight.get()));
         }
         if (stageWidth != null) {
-            state().setWidth(stageWidth.get());
+            state().setWidth(toContentWidth(stageWidth.get()));
         }
     }
 
     public static void onApplicationStop() {
         stageSizeChangeListener = null;
-        if (stageX != null) {
-            state().setX(stageX.get() / SCREEN.getBounds().getWidth());
-            stageX = null;
-        }
-        if (stageY != null) {
-            state().setY(stageY.get() / SCREEN.getBounds().getHeight());
-            stageY = null;
-        }
-        if (stageHeight != null) {
-            state().setHeight(stageHeight.get());
-            stageHeight = null;
-        }
-        if (stageWidth != null) {
-            state().setWidth(stageWidth.get());
-            stageWidth = null;
-        }
+        saveWindowBounds();
+        stageX = null;
+        stageY = null;
+        stageHeight = null;
+        stageWidth = null;
+    }
+
+    private static double toContentX(double stageX) {
+        return stageX + CUSTOM_DECORATION_SHADOW_SIZE;
+    }
+
+    private static double toContentY(double stageY) {
+        return stageY + CUSTOM_DECORATION_SHADOW_SIZE;
+    }
+
+    private static double toStageX(double contentX) {
+        return contentX - CUSTOM_DECORATION_SHADOW_SIZE;
+    }
+
+    private static double toStageY(double contentY) {
+        return contentY - CUSTOM_DECORATION_SHADOW_SIZE;
+    }
+
+    private static double toContentWidth(double stageWidth) {
+        return Math.max(0.0, stageWidth - CUSTOM_DECORATION_SHADOW_EXTENT);
+    }
+
+    private static double toContentHeight(double stageHeight) {
+        return Math.max(0.0, stageHeight - CUSTOM_DECORATION_SHADOW_EXTENT);
+    }
+
+    private static double toStageWidth(double contentWidth) {
+        return contentWidth + CUSTOM_DECORATION_SHADOW_EXTENT;
+    }
+
+    private static double toStageHeight(double contentHeight) {
+        return contentHeight + CUSTOM_DECORATION_SHADOW_EXTENT;
     }
 
     public static void initialize(Stage stage) {
@@ -308,29 +338,38 @@ public final class Controllers {
 
         WeakInvalidationListener weakListener = new WeakInvalidationListener(stageSizeChangeListener);
 
-        double initWidth = Math.max(MIN_WIDTH, state().getWidth());
-        double initHeight = Math.max(MIN_HEIGHT, state().getHeight());
+        double initContentWidth = Math.max(MIN_CONTENT_WIDTH, state().getWidth());
+        double initContentHeight = Math.max(MIN_CONTENT_HEIGHT, state().getHeight());
+        double initWidth = toStageWidth(initContentWidth);
+        double initHeight = toStageHeight(initContentHeight);
 
         {
-            double initX = state().getX() * SCREEN.getBounds().getWidth();
-            double initY = state().getY() * SCREEN.getBounds().getHeight();
+            double initContentX = state().getX() * SCREEN.getBounds().getWidth();
+            double initContentY = state().getY() * SCREEN.getBounds().getHeight();
 
             boolean invalid = true;
             double border = 20D;
             for (Screen screen : Screen.getScreens()) {
                 Rectangle2D bound = screen.getBounds();
 
-                if (bound.getMinX() + border <= initX + initWidth && initX <= bound.getMaxX() - border && bound.getMinY() + border <= initY && initY <= bound.getMaxY() - border) {
+                if (bound.getMinX() + border <= initContentX + initContentWidth
+                        && initContentX <= bound.getMaxX() - border
+                        && bound.getMinY() + border <= initContentY
+                        && initContentY <= bound.getMaxY() - border) {
                     invalid = false;
                     break;
                 }
             }
 
             if (invalid) {
-                initX = (0.5D - initWidth / SCREEN.getBounds().getWidth() / 2) * SCREEN.getBounds().getWidth();
-                initY = (0.5D - initHeight / SCREEN.getBounds().getHeight() / 2) * SCREEN.getBounds().getHeight();
+                initContentX = (0.5D - initContentWidth / SCREEN.getBounds().getWidth() / 2)
+                        * SCREEN.getBounds().getWidth();
+                initContentY = (0.5D - initContentHeight / SCREEN.getBounds().getHeight() / 2)
+                        * SCREEN.getBounds().getHeight();
             }
 
+            double initX = toStageX(initContentX);
+            double initY = toStageY(initContentY);
             stage.setX(initX);
             stage.setY(initY);
             stageX.set(initX);
