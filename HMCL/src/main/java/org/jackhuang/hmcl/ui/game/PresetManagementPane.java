@@ -38,6 +38,8 @@ import org.jackhuang.hmcl.ui.construct.PromptDialogPane;
 import org.jackhuang.hmcl.ui.construct.RadioChoiceList;
 import org.jackhuang.hmcl.util.Holder;
 import org.jackhuang.hmcl.util.StringUtils;
+import org.jackhuang.hmcl.util.i18n.I18n;
+import org.jackhuang.hmcl.util.i18n.LocalizedText;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
 
@@ -86,7 +88,7 @@ final class PresetManagementPane extends ComponentSublist {
 
     /// Returns the display name for a preset.
     static String getPresetDisplayName(GameSettings.Preset setting) {
-        String name = setting.nameProperty().getValue();
+        @Nullable String name = getPresetCustomName(setting);
         if (StringUtils.isNotBlank(name)) {
             return name;
         }
@@ -96,6 +98,12 @@ final class PresetManagementPane extends ComponentSublist {
             return setting.idProperty().getValue().toString();
         }
         return i18n("settings.type.global.preset.auto_name", autoNameNumber);
+    }
+
+    /// Returns the custom preset name in the current locale.
+    private static @Nullable String getPresetCustomName(GameSettings.Preset setting) {
+        @Nullable LocalizedText name = setting.nameProperty().getValue();
+        return name != null ? name.getText(I18n.getLocale().getCandidateLocales()) : null;
     }
 
     /// Returns the preset currently selected by the owning page.
@@ -183,7 +191,7 @@ final class PresetManagementPane extends ComponentSublist {
             if (StringUtils.isBlank(name)) {
                 setting.autoNameNumberProperty().setValue(number);
             } else {
-                setting.nameProperty().setValue(name.trim());
+                setting.nameProperty().setValue(LocalizedText.plain(name.trim()));
             }
             SettingsManager.getGameSettings().add(setting);
             selectPreset.accept(setting);
@@ -213,8 +221,9 @@ final class PresetManagementPane extends ComponentSublist {
 
     /// Asks the user for a new preset name.
     private void renamePreset(GameSettings.Preset setting) {
+        @Nullable String currentName = getPresetCustomName(setting);
         PromptDialogPane.Builder.StringQuestion nameQuestion =
-                new PromptDialogPane.Builder.StringQuestion("", setting.nameProperty().getValue())
+                new PromptDialogPane.Builder.StringQuestion("", currentName != null ? currentName : "")
                         .setPromptText(getPresetDisplayName(setting));
         Controllers.prompt(new PromptDialogPane.Builder(i18n("settings.type.global.preset.rename"), (questions, handler) -> {
             String name = (String) questions.get(0).getValue();
@@ -223,7 +232,7 @@ final class PresetManagementPane extends ComponentSublist {
                 return;
             }
 
-            setting.nameProperty().setValue(name.trim());
+            setting.nameProperty().setValue(LocalizedText.plain(name.trim()));
             setting.autoNameNumberProperty().setValue(null);
             handler.resolve();
         }).addQuestion(nameQuestion));

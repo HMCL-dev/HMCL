@@ -40,6 +40,14 @@ import java.util.*;
 @JsonAdapter(LocalizedText.Adapter.class)
 @JsonSerializable
 public final class LocalizedText {
+    /// Creates a locale-independent text value.
+    ///
+    /// @param value the text value, or `null` if the text is absent
+    /// @return a localized text object that serializes to a JSON string or `null`
+    public static LocalizedText plain(@Nullable String value) {
+        return new LocalizedText(value);
+    }
+
     /// Locale-independent text used when this instance is not backed by localized values.
     private final @Nullable String value;
 
@@ -86,6 +94,25 @@ public final class LocalizedText {
             return null;
         } else
             return value;
+    }
+
+    /// Returns whether this localized text has the same plain value or localized values as another object.
+    @Override
+    public boolean equals(@Nullable Object object) {
+        if (this == object) {
+            return true;
+        }
+        if (!(object instanceof LocalizedText that)) {
+            return false;
+        }
+        return Objects.equals(value, that.value)
+                && Objects.equals(localizedValues, that.localizedValues);
+    }
+
+    /// Returns a hash code based on the plain value or localized values.
+    @Override
+    public int hashCode() {
+        return Objects.hash(value, localizedValues);
     }
 
     /// Gson adapter for the compact localized text JSON representation.

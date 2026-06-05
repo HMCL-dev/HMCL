@@ -39,6 +39,7 @@ import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.gson.JsonSchema;
 import org.jackhuang.hmcl.util.gson.JsonSerializable;
 import org.jackhuang.hmcl.util.gson.ObservableSetting;
+import org.jackhuang.hmcl.util.i18n.LocalizedText;
 import org.jackhuang.hmcl.util.platform.SystemInfo;
 import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
 import org.jetbrains.annotations.NotNullByDefault;
@@ -167,12 +168,12 @@ public sealed abstract class GameSettings extends ObservableSetting {
             return id;
         }
 
-        /// The custom display name of this preset.
+        /// The custom localized display name of this preset.
         @SerializedName("name")
-        private final SettingProperty<String> name = newSettingProperty("name", "");
+        private final SettingProperty<@Nullable LocalizedText> name = newSettingProperty("name");
 
-        /// Returns the custom display name property.
-        public SettingProperty<String> nameProperty() {
+        /// Returns the custom localized display name property.
+        public SettingProperty<@Nullable LocalizedText> nameProperty() {
             return name;
         }
 
