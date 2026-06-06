@@ -1,0 +1,49 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.glavo.site/hmcl/authlib-injector-servers/1.0.0",
+  "title": "HMCL Authlib Injector Servers",
+  "type": "object",
+  "additionalProperties": true,
+  "required": [
+    "$schema"
+  ],
+  "patternProperties": {
+    "^\\$schema$": {
+      "enum": [
+        "https://schemas.glavo.site/hmcl/authlib-injector-servers/1.0.0"
+      ]
+    }
+  },
+  "properties": {
+    "servers": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/authlibInjectorServer"
+      }
+    }
+  },
+  "$defs": {
+    "authlibInjectorServer": {
+      "type": "object",
+      "additionalProperties": true,
+      "required": [
+        "url"
+      ],
+      "properties": {
+        "url": {
+          "type": "string",
+          "format": "uri"
+        },
+        "name": {
+          "type": "string"
+        },
+        "metadataResponse": {
+          "type": "string"
+        },
+        "metadataTimestamp": {
+          "type": "integer"
+        }
+      }
+    }
+  }
+}

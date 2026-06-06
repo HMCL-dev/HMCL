@@ -1,0 +1,190 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.glavo.site/hmcl/settings/1.0.0",
+  "title": "HMCL Launcher Settings",
+  "type": "object",
+  "additionalProperties": true,
+  "required": [
+    "$schema"
+  ],
+  "patternProperties": {
+    "^\\$schema$": {
+      "enum": [
+        "https://schemas.glavo.site/hmcl/settings/1.0.0"
+      ]
+    }
+  },
+  "properties": {
+    "language": {
+      "type": "string"
+    },
+    "acceptPreviewUpdate": {
+      "type": "boolean"
+    },
+    "disableAutoShowUpdateDialog": {
+      "type": "boolean"
+    },
+    "disableAprilFools": {
+      "type": "boolean"
+    },
+    "commonDirectoryType": {
+      "enum": [
+        "DEFAULT",
+        "CUSTOM"
+      ]
+    },
+    "commonDirectory": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "logLines": {
+      "type": [
+        "integer",
+        "null"
+      ]
+    },
+    "themeBrightness": {
+      "type": "string"
+    },
+    "theme": true,
+    "fontFamily": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "fontSize": {
+      "type": "number"
+    },
+    "launcherFontFamily": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "animationDisabled": {
+      "type": "boolean"
+    },
+    "titleTransparent": {
+      "type": "boolean"
+    },
+    "backgroundType": {
+      "enum": [
+        "DEFAULT",
+        "CUSTOM",
+        "CLASSIC",
+        "NETWORK",
+        "TRANSLUCENT",
+        "PAINT"
+      ]
+    },
+    "bgpath": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "bgurl": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "bgpaint": true,
+    "bgImageOpacity": {
+      "type": "integer"
+    },
+    "autoDownloadThreads": {
+      "type": "boolean"
+    },
+    "downloadThreads": {
+      "type": "integer"
+    },
+    "versionListSource": {
+      "$ref": "#/$defs/downloadSource"
+    },
+    "fileDownloadSource": {
+      "$ref": "#/$defs/downloadSource"
+    },
+    "defaultAddonSource": {
+      "type": "string"
+    },
+    "hasProxy": {
+      "type": "boolean"
+    },
+    "hasProxyAuth": {
+      "type": "boolean"
+    },
+    "proxyType": {
+      "enum": [
+        "DIRECT",
+        "HTTP",
+        "SOCKS"
+      ]
+    },
+    "proxyHost": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "proxyPort": {
+      "type": "integer"
+    },
+    "proxyUserName": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "proxyPassword": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "selectedGameDirectory": {
+      "$ref": "#/$defs/guidOrNull"
+    },
+    "defaultGameSettingsPreset": {
+      "$ref": "#/$defs/guidOrNull"
+    },
+    "selectedInstance": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "string"
+      }
+    },
+    "preferredLoginType": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "selectedAccount": {
+      "type": [
+        "object",
+        "null"
+      ],
+      "additionalProperties": true
+    }
+  },
+  "$defs": {
+    "downloadSource": {
+      "enum": [
+        "DEFAULT",
+        "OFFICIAL",
+        "MIRROR"
+      ]
+    },
+    "guidOrNull": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "pattern": "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$"
+    }
+  }
+}

@@ -1,0 +1,248 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.glavo.site/hmcl/game-settings/1.0.0",
+  "title": "HMCL Game Settings Presets",
+  "type": "object",
+  "additionalProperties": true,
+  "required": [
+    "$schema"
+  ],
+  "patternProperties": {
+    "^\\$schema$": {
+      "enum": [
+        "https://schemas.glavo.site/hmcl/game-settings/1.0.0"
+      ]
+    }
+  },
+  "properties": {
+    "presets": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/preset"
+      }
+    }
+  },
+  "$defs": {
+    "preset": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/gameSettings"
+        },
+        {
+          "type": "object",
+          "additionalProperties": true,
+          "required": [
+            "id"
+          ],
+          "properties": {
+            "id": {
+              "$ref": "#/$defs/guid"
+            },
+            "name": {
+              "$ref": "#/$defs/localizedTextOrNull"
+            },
+            "autoNameNumber": {
+              "type": [
+                "integer",
+                "null"
+              ],
+              "minimum": 1
+            },
+            "defaultIsolationType": {
+              "enum": [
+                "NEVER",
+                "ALWAYS",
+                "MODED"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    "gameSettings": {
+      "type": "object",
+      "additionalProperties": true,
+      "properties": {
+        "javaType": {
+          "enum": [
+            "DEFAULT",
+            "AUTO",
+            "VERSION",
+            "DETECTED",
+            "CUSTOM"
+          ]
+        },
+        "javaVersion": {
+          "type": "string"
+        },
+        "customJavaPath": {
+          "type": "string"
+        },
+        "defaultJavaPath": {
+          "type": "string"
+        },
+        "jvmOptions": {
+          "type": "string"
+        },
+        "noJVMOptions": {
+          "type": "boolean"
+        },
+        "noOptimizingJVMOptions": {
+          "type": "boolean"
+        },
+        "notCheckJVM": {
+          "type": "boolean"
+        },
+        "notCheckGame": {
+          "type": "boolean"
+        },
+        "autoMemory": {
+          "type": "boolean"
+        },
+        "minMemory": {
+          "type": [
+            "integer",
+            "null"
+          ]
+        },
+        "maxMemory": {
+          "type": [
+            "integer",
+            "null"
+          ]
+        },
+        "permSize": {
+          "type": "string"
+        },
+        "windowType": {
+          "enum": [
+            "WINDOWED",
+            "FULLSCREEN",
+            "MAXIMIZED"
+          ]
+        },
+        "width": {
+          "type": "number"
+        },
+        "height": {
+          "type": "number"
+        },
+        "runningDir": {
+          "type": "string"
+        },
+        "processPriority": {
+          "enum": [
+            "LOW",
+            "BELOW_NORMAL",
+            "NORMAL",
+            "ABOVE_NORMAL",
+            "HIGH"
+          ]
+        },
+        "launcherVisibility": {
+          "enum": [
+            "CLOSE",
+            "HIDE",
+            "KEEP",
+            "HIDE_AND_REOPEN"
+          ]
+        },
+        "allowAutoAgent": {
+          "type": "boolean"
+        },
+        "disableAutoGameOptions": {
+          "type": "boolean"
+        },
+        "gameArgs": {
+          "type": "string"
+        },
+        "graphicsBackend": {
+          "enum": [
+            "DEFAULT",
+            "OPENGL",
+            "VULKAN"
+          ]
+        },
+        "openGLRenderer": {
+          "type": "string"
+        },
+        "vulkanRenderer": {
+          "type": "string"
+        },
+        "environmentVariables": {
+          "type": "string"
+        },
+        "commandWrapper": {
+          "type": "string"
+        },
+        "preLaunchCommand": {
+          "type": "string"
+        },
+        "postExitCommand": {
+          "type": "string"
+        },
+        "quickPlay": {
+          "enum": [
+            "NONE",
+            "MULTIPLAYER",
+            "SINGLEPLAYER",
+            "REALMS"
+          ]
+        },
+        "quickPlayMultiplayer": {
+          "type": "string"
+        },
+        "quickPlaySingleplayer": {
+          "type": "string"
+        },
+        "quickPlayRealms": {
+          "type": "string"
+        },
+        "showLogs": {
+          "type": "boolean"
+        },
+        "enableDebugLogOutput": {
+          "type": "boolean"
+        },
+        "notPatchNatives": {
+          "type": "boolean"
+        },
+        "nativesDirType": {
+          "enum": [
+            "VERSION_FOLDER",
+            "CUSTOM"
+          ]
+        },
+        "nativesDir": {
+          "type": "string"
+        },
+        "useNativeGLFW": {
+          "type": "boolean"
+        },
+        "useNativeOpenAL": {
+          "type": "boolean"
+        }
+      }
+    },
+    "guid": {
+      "type": "string",
+      "pattern": "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$"
+    },
+    "localizedTextOrNull": {
+      "oneOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          }
+        },
+        {
+          "type": "null"
+        }
+      ]
+    }
+  }
+}

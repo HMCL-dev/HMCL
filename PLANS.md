@@ -32,6 +32,7 @@
 ## Schema Policy
 
 - Detached settings files use `$schema` with `https://schemas.glavo.site/hmcl/<id>/<version>`.
+- Schema documents are stored in `docs/schemas/<id>/<version>.json` as the source files for the `/hmcl/` URL space.
 - Schema versions are written as `major.minor.patch`; `major.minor` may be accepted as patch `0` when reading.
 - Unsupported major versions are rejected.
 - Newer minor versions may be read but must not be overwritten.
