@@ -161,20 +161,15 @@ public final class LegacyConfigMigrator {
             JsonElement legacyDisableAutoGameOptions = jsonObject.remove("disableAutoGameOptions");
             migrateLegacyEnumOrdinals(jsonObject);
             migrateLegacyDownloadSources(jsonObject);
-            renameMemberIfAbsent(jsonObject, "commonDirType", "commonDirectoryType");
-            JsonElement legacyCommonDirectory = jsonObject.remove("commonpath");
-            if (!jsonObject.has("commonDirectory")
-                    && legacyCommonDirectory instanceof JsonPrimitive primitive
-                    && primitive.isString()) {
-                jsonObject.addProperty("commonDirectory", primitive.getAsString());
-            }
+            renameMember(jsonObject, "commonDirType", "commonDirectoryType");
+            renameMember(jsonObject, "commonpath", "commonDirectory");
             migrateLegacyLanguage(jsonObject);
-            renameMemberIfAbsent(jsonObject, "theme", "themeColor");
-            renameMemberIfAbsent(jsonObject, "bgpath", "backgroundImage");
-            renameMemberIfAbsent(jsonObject, "bgurl", "backgroundImageUrl");
-            renameMemberIfAbsent(jsonObject, "bgpaint", "backgroundPaint");
-            renameMemberIfAbsent(jsonObject, "bgImageOpacity", "backgroundImageOpacity");
-            renameMemberIfAbsent(jsonObject, "proxyUserName", "proxyUser");
+            renameMember(jsonObject, "theme", "themeColor");
+            renameMember(jsonObject, "bgpath", "backgroundImage");
+            renameMember(jsonObject, "bgurl", "backgroundImageUrl");
+            renameMember(jsonObject, "bgpaint", "backgroundPaint");
+            renameMember(jsonObject, "bgImageOpacity", "backgroundImageOpacity");
+            renameMember(jsonObject, "proxyUserName", "proxyUser");
             migrateLegacySelectedVersions(jsonObject);
             @Nullable GameDirectories migratedGameDirectories = extractGameDirectoriesFromConfigJson(jsonObject);
             GameDirectories gameDirectories = migratedGameDirectories != null
@@ -333,7 +328,7 @@ public final class LegacyConfigMigrator {
         Objects.requireNonNull(localAccounts);
 
         JsonElement selectedAccount = json.get("selectedAccount");
-        if (selectedAccount == null || selectedAccount instanceof JsonObject) {
+        if (selectedAccount == null) {
             return false;
         }
 
@@ -509,10 +504,10 @@ public final class LegacyConfigMigrator {
         }
     }
 
-    /// Renames one JSON member without overriding an already-present current member.
-    private static void renameMemberIfAbsent(JsonObject json, String legacyName, String currentName) {
+    /// Renames one JSON member to the current name.
+    private static void renameMember(JsonObject json, String legacyName, String currentName) {
         JsonElement legacyValue = json.remove(legacyName);
-        if (!json.has(currentName) && legacyValue != null) {
+        if (legacyValue != null) {
             json.add(currentName, legacyValue);
         }
     }
@@ -522,7 +517,7 @@ public final class LegacyConfigMigrator {
         Objects.requireNonNull(json);
 
         JsonElement legacyLanguage = json.remove("localization");
-        if (json.has("language") || !(legacyLanguage instanceof JsonPrimitive primitive) || !primitive.isString()) {
+        if (!(legacyLanguage instanceof JsonPrimitive primitive) || !primitive.isString()) {
             return;
         }
 
@@ -550,15 +545,13 @@ public final class LegacyConfigMigrator {
         JsonElement legacyValue = json.remove(legacyPropertyName);
         @Nullable Integer ordinal = JsonUtils.getInteger(legacyValue);
         if (ordinal == null || ordinal < 0 || ordinal >= legacyNames.length) {
-            if (legacyValue != null && !json.has(currentPropertyName)) {
+            if (legacyValue != null) {
                 json.add(currentPropertyName, legacyValue);
             }
             return;
         }
 
-        if (!json.has(currentPropertyName)) {
-            json.addProperty(currentPropertyName, legacyNames[ordinal]);
-        }
+        json.addProperty(currentPropertyName, legacyNames[ordinal]);
     }
 
     /// Migrates legacy download source fields into `versionListSource` and `fileDownloadSource`.
@@ -576,12 +569,8 @@ public final class LegacyConfigMigrator {
                 ? parseLegacyDownloadSource(legacyVersionListSource, DownloadSource.DEFAULT)
                 : parseLegacyDownloadSource(legacyDownloadType, DownloadSource.DEFAULT);
 
-        if (!json.has("versionListSource")) {
-            json.addProperty("versionListSource", source.name());
-        }
-        if (!json.has("fileDownloadSource")) {
-            json.addProperty("fileDownloadSource", source.name());
-        }
+        json.addProperty("versionListSource", source.name());
+        json.addProperty("fileDownloadSource", source.name());
     }
 
     /// Parses an old download source identifier.
@@ -778,35 +767,27 @@ public final class LegacyConfigMigrator {
 
 
             // Upgrade configuration of HMCL earlier than 3.1.70.
-            if (!jsonObject.has("commonDirType") && !jsonObject.has("commonDirectoryType")) {
+            if (!jsonObject.has("commonDirType")) {
                 String commonDirectory = JsonUtils.getString(jsonObject, "commonpath", LauncherSettings.getDefaultCommonDirectory());
                 jsonObject.addProperty("commonDirectoryType", commonDirectory.equals(LauncherSettings.getDefaultCommonDirectory())
                         ? EnumCommonDirectory.DEFAULT.name()
                         : EnumCommonDirectory.CUSTOM.name());
             }
-            if (!jsonObject.has("backgroundType")) {
-                String backgroundImage = JsonUtils.getString(jsonObject, "bgpath", "");
-                jsonObject.addProperty("backgroundType", StringUtils.isNotBlank(backgroundImage)
-                        ? EnumBackgroundImage.CUSTOM.name()
-                        : EnumBackgroundImage.DEFAULT.name());
-            }
-            if (!jsonObject.has("hasProxy")) {
-                jsonObject.addProperty("hasProxy", StringUtils.isNotBlank(JsonUtils.getString(jsonObject, "proxyHost", "")));
-            }
-            if (!jsonObject.has("hasProxyAuth")) {
-                jsonObject.addProperty("hasProxyAuth", StringUtils.isNotBlank(JsonUtils.getString(jsonObject, "proxyUserName", "")));
-            }
+            String backgroundImage = JsonUtils.getString(jsonObject, "bgpath", "");
+            jsonObject.addProperty("backgroundType", StringUtils.isNotBlank(backgroundImage)
+                    ? EnumBackgroundImage.CUSTOM.name()
+                    : EnumBackgroundImage.DEFAULT.name());
+            jsonObject.addProperty("hasProxy", StringUtils.isNotBlank(JsonUtils.getString(jsonObject, "proxyHost", "")));
+            jsonObject.addProperty("hasProxyAuth", StringUtils.isNotBlank(JsonUtils.getString(jsonObject, "proxyUserName", "")));
 
-            if (!jsonObject.has("downloadType")) {
-                JsonElement legacyDownloadType = jsonObject.get("downloadtype");
-                if (legacyDownloadType != null && legacyDownloadType.isJsonPrimitive()
-                        && legacyDownloadType.getAsJsonPrimitive().isNumber()) {
-                    int id = legacyDownloadType.getAsInt();
-                    if (id == 0) {
-                        jsonObject.addProperty("downloadType", "mojang");
-                    } else if (id == 1) {
-                        jsonObject.addProperty("downloadType", "bmclapi");
-                    }
+            JsonElement legacyDownloadType = jsonObject.get("downloadtype");
+            if (legacyDownloadType != null && legacyDownloadType.isJsonPrimitive()
+                    && legacyDownloadType.getAsJsonPrimitive().isNumber()) {
+                int id = legacyDownloadType.getAsInt();
+                if (id == 0) {
+                    jsonObject.addProperty("downloadType", "mojang");
+                } else if (id == 1) {
+                    jsonObject.addProperty("downloadType", "bmclapi");
                 }
             }
         }
@@ -822,10 +803,6 @@ public final class LegacyConfigMigrator {
         @Nullable JsonElement lastElement = json.remove("last");
         if (lastElement == null) {
             return false;
-        }
-
-        if (json.has(LauncherSettings.PROPERTY_SELECTED_GAME_DIRECTORY)) {
-            return true;
         }
 
         @Nullable String selectedName = JsonUtils.getString(lastElement);
@@ -863,10 +840,8 @@ public final class LegacyConfigMigrator {
             }
 
             String id = getLegacyProfileId(entry.getKey()).toString();
-            if (!selectedInstance.has(id)) {
-                selectedInstance.addProperty(id, selectedVersion);
-                changed = true;
-            }
+            selectedInstance.addProperty(id, selectedVersion);
+            changed = true;
         }
 
         if (changed && !json.has(LauncherSettings.PROPERTY_SELECTED_INSTANCE)) {
