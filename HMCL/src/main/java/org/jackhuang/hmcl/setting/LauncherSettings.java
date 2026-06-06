@@ -203,7 +203,7 @@ public final class LauncherSettings extends ObservableSetting {
     }
 
     /// The selected launcher theme color.
-    @SerializedName("theme")
+    @SerializedName("themeColor")
     private final ObjectProperty<ThemeColor> themeColor = new SimpleObjectProperty<>(ThemeColor.DEFAULT);
 
     /// Returns the launcher theme color property.
@@ -261,7 +261,7 @@ public final class LauncherSettings extends ObservableSetting {
     }
 
     /// The launcher background image source type.
-    @SerializedName("backgroundType")
+    @SerializedName("backgroundImageType")
     private final ObjectProperty<EnumBackgroundImage> backgroundImageType = new RawPreservingObjectProperty<>(EnumBackgroundImage.DEFAULT);
 
     /// Returns the launcher background image source type property.
@@ -270,7 +270,7 @@ public final class LauncherSettings extends ObservableSetting {
     }
 
     /// The local launcher background image path.
-    @SerializedName("bgpath")
+    @SerializedName("backgroundImage")
     private final StringProperty backgroundImage = new SimpleStringProperty();
 
     /// Returns the local launcher background image path property.
@@ -279,7 +279,7 @@ public final class LauncherSettings extends ObservableSetting {
     }
 
     /// The remote launcher background image URL.
-    @SerializedName("bgurl")
+    @SerializedName("backgroundImageUrl")
     private final StringProperty backgroundImageUrl = new SimpleStringProperty();
 
     /// Returns the remote launcher background image URL property.
@@ -288,7 +288,7 @@ public final class LauncherSettings extends ObservableSetting {
     }
 
     /// The launcher background paint.
-    @SerializedName("bgpaint")
+    @SerializedName("backgroundPaint")
     private final ObjectProperty<Paint> backgroundPaint = new SimpleObjectProperty<>();
 
     /// Returns the launcher background paint property.
@@ -398,7 +398,7 @@ public final class LauncherSettings extends ObservableSetting {
     }
 
     /// The configured proxy authentication username.
-    @SerializedName("proxyUserName")
+    @SerializedName("proxyUser")
     private final StringProperty proxyUser = new SimpleStringProperty();
 
     /// Returns the proxy authentication username property.

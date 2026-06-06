@@ -19,6 +19,7 @@ package org.jackhuang.hmcl.setting;
 
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
+import javafx.scene.paint.Color;
 import org.jackhuang.hmcl.util.gson.JsonSchema;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jetbrains.annotations.NotNullByDefault;
@@ -119,14 +120,17 @@ public final class LauncherSettingsMigrationTest {
                 """).getAsJsonObject();
 
         LegacyConfigMigrator.migrateLegacyEnumOrdinals(settings);
+        LegacyConfigMigrator.migrateLegacyLauncherSettingNames(settings);
         LauncherSettings launcherSettings = Objects.requireNonNull(LauncherSettings.fromJson(settings));
         JsonObject serialized = JsonParser.parseString(launcherSettings.toJson()).getAsJsonObject();
 
-        assertEquals("NETWORK", settings.get("backgroundType").getAsString());
+        assertFalse(settings.has("backgroundType"));
+        assertEquals("NETWORK", settings.get("backgroundImageType").getAsString());
         assertEquals("SOCKS", settings.get("proxyType").getAsString());
         assertEquals(EnumBackgroundImage.NETWORK, launcherSettings.backgroundImageTypeProperty().get());
         assertEquals(Proxy.Type.SOCKS, launcherSettings.proxyTypeProperty().get());
-        assertEquals("NETWORK", serialized.get("backgroundType").getAsString());
+        assertFalse(serialized.has("backgroundType"));
+        assertEquals("NETWORK", serialized.get("backgroundImageType").getAsString());
         assertEquals("SOCKS", serialized.get("proxyType").getAsString());
     }
 
@@ -141,12 +145,85 @@ public final class LauncherSettingsMigrationTest {
                 """).getAsJsonObject();
 
         LegacyConfigMigrator.migrateLegacyEnumOrdinals(settings);
+        LegacyConfigMigrator.migrateLegacyLauncherSettingNames(settings);
         LauncherSettings launcherSettings = Objects.requireNonNull(LauncherSettings.fromJson(settings));
 
-        assertEquals("CUSTOM", settings.get("backgroundType").getAsString());
+        assertFalse(settings.has("backgroundType"));
+        assertEquals("CUSTOM", settings.get("backgroundImageType").getAsString());
         assertEquals("DIRECT", settings.get("proxyType").getAsString());
         assertEquals(EnumBackgroundImage.CUSTOM, launcherSettings.backgroundImageTypeProperty().get());
         assertEquals(Proxy.Type.DIRECT, launcherSettings.proxyTypeProperty().get());
+    }
+
+    /// Tests migrating legacy launcher setting JSON names into field-name JSON names.
+    @Test
+    public void migratesLegacyLauncherSettingNamesToFieldNames() {
+        JsonObject settings = JsonParser.parseString("""
+                {
+                  "theme": "orange",
+                  "backgroundType": "CUSTOM",
+                  "bgpath": "/tmp/background.png",
+                  "bgurl": "https://example.com/background.png",
+                  "bgpaint": "#112233",
+                  "proxyUserName": "Alex"
+                }
+                """).getAsJsonObject();
+
+        LegacyConfigMigrator.migrateLegacyLauncherSettingNames(settings);
+        LauncherSettings launcherSettings = Objects.requireNonNull(LauncherSettings.fromJson(settings));
+        JsonObject serialized = JsonParser.parseString(launcherSettings.toJson()).getAsJsonObject();
+
+        assertFalse(settings.has("theme"));
+        assertFalse(settings.has("backgroundType"));
+        assertFalse(settings.has("bgpath"));
+        assertFalse(settings.has("bgurl"));
+        assertFalse(settings.has("bgpaint"));
+        assertFalse(settings.has("proxyUserName"));
+        assertEquals("orange", settings.get("themeColor").getAsString());
+        assertEquals("CUSTOM", settings.get("backgroundImageType").getAsString());
+        assertEquals("/tmp/background.png", settings.get("backgroundImage").getAsString());
+        assertEquals("https://example.com/background.png", settings.get("backgroundImageUrl").getAsString());
+        assertEquals("#112233", settings.get("backgroundPaint").getAsString());
+        assertEquals("Alex", settings.get("proxyUser").getAsString());
+        assertEquals("orange", launcherSettings.themeColorProperty().get().name());
+        assertEquals(EnumBackgroundImage.CUSTOM, launcherSettings.backgroundImageTypeProperty().get());
+        assertEquals("/tmp/background.png", launcherSettings.backgroundImageProperty().get());
+        assertEquals("https://example.com/background.png", launcherSettings.backgroundImageUrlProperty().get());
+        assertEquals(Color.web("#112233"), launcherSettings.backgroundPaintProperty().get());
+        assertEquals("Alex", launcherSettings.proxyUserProperty().get());
+        assertFalse(serialized.has("theme"));
+        assertFalse(serialized.has("backgroundType"));
+        assertFalse(serialized.has("bgpath"));
+        assertFalse(serialized.has("bgurl"));
+        assertFalse(serialized.has("bgpaint"));
+        assertFalse(serialized.has("proxyUserName"));
+        assertEquals("orange", serialized.get("themeColor").getAsString());
+        assertEquals("CUSTOM", serialized.get("backgroundImageType").getAsString());
+        assertEquals("/tmp/background.png", serialized.get("backgroundImage").getAsString());
+        assertEquals("https://example.com/background.png", serialized.get("backgroundImageUrl").getAsString());
+        assertEquals("#112233", serialized.get("backgroundPaint").getAsString());
+        assertEquals("Alex", serialized.get("proxyUser").getAsString());
+    }
+
+    /// Tests that field-name launcher setting JSON names take precedence over legacy names.
+    @Test
+    public void fieldNameLauncherSettingNamesTakePrecedenceOverLegacyNames() {
+        JsonObject settings = JsonParser.parseString("""
+                {
+                  "backgroundImageType": "PAINT",
+                  "backgroundType": "CUSTOM"
+                }
+                """).getAsJsonObject();
+
+        LegacyConfigMigrator.migrateLegacyLauncherSettingNames(settings);
+        LauncherSettings launcherSettings = Objects.requireNonNull(LauncherSettings.fromJson(settings));
+        JsonObject serialized = JsonParser.parseString(launcherSettings.toJson()).getAsJsonObject();
+
+        assertFalse(settings.has("backgroundType"));
+        assertEquals("PAINT", settings.get("backgroundImageType").getAsString());
+        assertEquals(EnumBackgroundImage.PAINT, launcherSettings.backgroundImageTypeProperty().get());
+        assertEquals("PAINT", serialized.get("backgroundImageType").getAsString());
+        assertFalse(serialized.has("backgroundType"));
     }
 
     /// Tests migrating legacy automatic download source fields into current download source fields.

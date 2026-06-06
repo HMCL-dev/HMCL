@@ -163,6 +163,7 @@ public final class LegacyConfigMigrator {
             migrateLegacyDownloadSources(jsonObject);
             migrateLegacyCommonDirectoryType(jsonObject);
             migrateLegacyCommonDirectory(jsonObject);
+            migrateLegacyLauncherSettingNames(jsonObject);
             migrateLegacyLanguage(jsonObject);
             migrateLegacySelectedVersions(jsonObject);
             @Nullable GameDirectories migratedGameDirectories = extractGameDirectoriesFromConfigJson(jsonObject);
@@ -538,6 +539,26 @@ public final class LegacyConfigMigrator {
         }
 
         json.add("commonDirectoryType", legacyCommonDirectoryType);
+    }
+
+    /// Migrates legacy launcher setting field names into current field-name JSON properties.
+    static void migrateLegacyLauncherSettingNames(JsonObject json) {
+        Objects.requireNonNull(json);
+
+        migrateLegacyLauncherSettingName(json, "theme", "themeColor");
+        migrateLegacyLauncherSettingName(json, "backgroundType", "backgroundImageType");
+        migrateLegacyLauncherSettingName(json, "bgpath", "backgroundImage");
+        migrateLegacyLauncherSettingName(json, "bgurl", "backgroundImageUrl");
+        migrateLegacyLauncherSettingName(json, "bgpaint", "backgroundPaint");
+        migrateLegacyLauncherSettingName(json, "proxyUserName", "proxyUser");
+    }
+
+    /// Moves one legacy launcher setting field unless the current field already exists.
+    private static void migrateLegacyLauncherSettingName(JsonObject json, String legacyName, String currentName) {
+        JsonElement legacyValue = json.remove(legacyName);
+        if (!json.has(currentName) && legacyValue != null) {
+            json.add(currentName, legacyValue);
+        }
     }
 
     /// Migrates legacy enum ordinal fields into stable enum names.

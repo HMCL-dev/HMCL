@@ -48,7 +48,7 @@
     "themeBrightness": {
       "type": "string"
     },
-    "theme": true,
+    "themeColor": true,
     "fontFamily": {
       "type": [
         "string",
@@ -70,7 +70,7 @@
     "titleTransparent": {
       "type": "boolean"
     },
-    "backgroundType": {
+    "backgroundImageType": {
       "enum": [
         "DEFAULT",
         "CUSTOM",
@@ -80,19 +80,19 @@
         "PAINT"
       ]
     },
-    "bgpath": {
+    "backgroundImage": {
       "type": [
         "string",
         "null"
       ]
     },
-    "bgurl": {
+    "backgroundImageUrl": {
       "type": [
         "string",
         "null"
       ]
     },
-    "bgpaint": true,
+    "backgroundPaint": true,
     "bgImageOpacity": {
       "type": "integer"
     },
@@ -133,7 +133,7 @@
     "proxyPort": {
       "type": "integer"
     },
-    "proxyUserName": {
+    "proxyUser": {
       "type": [
         "string",
         "null"
