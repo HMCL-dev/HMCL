@@ -161,7 +161,7 @@ public final class LegacyConfigMigrator {
             JsonElement legacyDisableAutoGameOptions = jsonObject.remove("disableAutoGameOptions");
             migrateLegacyEnumOrdinals(jsonObject);
             migrateLegacyDownloadSources(jsonObject);
-            migrateLegacyCommonDirectoryType(jsonObject);
+            renameMemberIfAbsent(jsonObject, "commonDirType", "commonDirectoryType");
             migrateLegacyCommonDirectory(jsonObject);
             migrateLegacyLanguage(jsonObject);
             renameMemberIfAbsent(jsonObject, "theme", "themeColor");
@@ -540,13 +540,6 @@ public final class LegacyConfigMigrator {
         }
 
         json.addProperty("commonDirectory", primitive.getAsString());
-    }
-
-    /// Migrates the legacy `commonDirType` field into the current `commonDirectoryType` field.
-    static void migrateLegacyCommonDirectoryType(JsonObject json) {
-        Objects.requireNonNull(json);
-
-        renameMemberIfAbsent(json, "commonDirType", "commonDirectoryType");
     }
 
     /// Migrates legacy enum ordinal fields into stable enum names.
