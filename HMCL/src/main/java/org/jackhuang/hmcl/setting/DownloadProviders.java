@@ -91,7 +91,7 @@ public final class DownloadProviders {
             case DEFAULT -> LocaleUtils.IS_CHINA_MAINLAND
                     ? List.of(BMCLAPI_PROVIDER, MOJANG_PROVIDER)
                     : List.of(MOJANG_PROVIDER, BMCLAPI_PROVIDER);
-            case OFFICIAL -> List.of(MOJANG_PROVIDER, BMCLAPI_PROVIDER);
+            case OFFICIAL -> List.of(MOJANG_PROVIDER);
             case MIRROR -> List.of(BMCLAPI_PROVIDER, MOJANG_PROVIDER);
         };
     }

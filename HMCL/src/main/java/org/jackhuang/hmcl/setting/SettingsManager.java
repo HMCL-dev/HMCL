@@ -424,7 +424,9 @@ public final class SettingsManager {
             FileUtils.saveSafely(SETTINGS_LOCATION, configInstance.toJson());
         }
 
-        checkWritable(SETTINGS_LOCATION);
+        if (!unsupportedVersion || Files.exists(SETTINGS_LOCATION)) {
+            checkWritable(SETTINGS_LOCATION);
+        }
     }
 
     /// Loads the current per-workspace config or migrates a legacy config when needed.
@@ -479,7 +481,14 @@ public final class SettingsManager {
                 return new LauncherSettings();
             }
         } else {
-            LegacyConfigMigrator.MigrationResult migrationResult = LegacyConfigMigrator.migrateLegacyConfig();
+            LegacyConfigMigrator.MigrationResult migrationResult;
+            try {
+                migrationResult = LegacyConfigMigrator.migrateLegacyConfig();
+            } catch (LegacyConfigMigrator.UnsupportedLegacyConfigVersionException e) {
+                unsupportedVersion = true;
+                LOG.warning("Legacy config file is newer than this launcher supports.", e);
+                return new LauncherSettings();
+            }
             if (migrationResult != null) {
                 LOG.info("Migrating settings from " + migrationResult.path() + " to " + SETTINGS_LOCATION);
                 detachedSettingsFallback = migrationResult.detachedSettings();

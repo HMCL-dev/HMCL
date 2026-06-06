@@ -137,8 +137,10 @@ public final class LegacyConfigMigrator {
                     : 0;
 
             if (configVersion > LEGACY_CURRENT_CONFIG_VERSION) {
-                LOG.warning("Unsupported legacy config version: " + configVersion);
-                return null;
+                throw new UnsupportedLegacyConfigVersionException(
+                        path,
+                        configVersion,
+                        LEGACY_CURRENT_CONFIG_VERSION);
             }
 
             if (configVersion < LEGACY_CURRENT_CONFIG_VERSION) {
@@ -951,5 +953,46 @@ public final class LegacyConfigMigrator {
             LauncherSettings launcherSettings,
             DetachedSettings detachedSettings,
             String contentForMigration) {
+    }
+
+    /// Signals that a legacy config file belongs to a newer launcher and must not be overwritten.
+    static final class UnsupportedLegacyConfigVersionException extends IOException {
+        /// The legacy config path.
+        private final Path path;
+
+        /// The version found in the legacy config file.
+        private final int actualVersion;
+
+        /// The newest legacy config version supported by this launcher.
+        private final int supportedVersion;
+
+        /// Creates an unsupported legacy config version exception.
+        ///
+        /// @param path the legacy config path
+        /// @param actualVersion the version found in the legacy config file
+        /// @param supportedVersion the newest legacy config version supported by this launcher
+        UnsupportedLegacyConfigVersionException(Path path, int actualVersion, int supportedVersion) {
+            super("Unsupported legacy config version " + actualVersion
+                    + " in " + path
+                    + ", latest supported version is " + supportedVersion);
+            this.path = Objects.requireNonNull(path);
+            this.actualVersion = actualVersion;
+            this.supportedVersion = supportedVersion;
+        }
+
+        /// Returns the legacy config path.
+        Path path() {
+            return path;
+        }
+
+        /// Returns the version found in the legacy config file.
+        int actualVersion() {
+            return actualVersion;
+        }
+
+        /// Returns the newest legacy config version supported by this launcher.
+        int supportedVersion() {
+            return supportedVersion;
+        }
     }
 }
