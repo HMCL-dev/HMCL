@@ -22,6 +22,7 @@ import javafx.application.Platform;
 import javafx.beans.InvalidationListener;
 import javafx.css.PseudoClass;
 import javafx.scene.Node;
+import javafx.scene.Parent;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.StackPane;
@@ -34,12 +35,17 @@ import org.jackhuang.hmcl.ui.animation.AnimationUtils;
 import org.jackhuang.hmcl.ui.animation.Motion;
 import org.jackhuang.hmcl.util.StringUtils;
 
+import java.util.IdentityHashMap;
+import java.util.Map;
+
 /// @author Glavo
 final class ComponentSublistWrapper extends VBox implements NoPaddingComponent {
     private VBox container;
+    private final Map<Node, InvalidationListener> contentLayoutListeners = new IdentityHashMap<>();
 
     private Animation expandAnimation;
     private boolean expanded = false;
+    private boolean heightTransitionPending = false;
 
     ComponentSublistWrapper(ComponentSublist sublist) {
         this.getStyleClass().add("options-sublist-wrapper");
@@ -62,6 +68,7 @@ final class ComponentSublistWrapper extends VBox implements NoPaddingComponent {
 
             boolean expanded = !this.expanded;
             this.expanded = expanded;
+            heightTransitionPending = true;
             if (expanded) {
                 sublist.doLazyInit();
 
@@ -117,8 +124,9 @@ final class ComponentSublistWrapper extends VBox implements NoPaddingComponent {
                                     new KeyValue(expandIcon.rotateProperty(), targetRotate, interpolator))
                     );
                     expandAnimation.setOnFinished(e -> {
+                        heightTransitionPending = false;
                         if (this.expanded) {
-                            setContentHeight(targetHeight);
+                            setContentHeight(computeContentHeight(sublist));
                         }
                     });
 
@@ -130,6 +138,7 @@ final class ComponentSublistWrapper extends VBox implements NoPaddingComponent {
                         setContentHeight(0);
                     }
                     expandIcon.setRotate(targetRotate);
+                    heightTransitionPending = false;
                 }
             });
         });
@@ -168,19 +177,53 @@ final class ComponentSublistWrapper extends VBox implements NoPaddingComponent {
         sublist.trailingProperty().addListener(updateTrailing);
         updateTrailing.invalidated(null);
 
-        sublist.getContent().addListener((InvalidationListener) observable -> updateExpandedContentHeight(sublist));
+        InvalidationListener updateContentHeight = observable -> {
+            updateObservedContentNodes(sublist);
+            updateExpandedContentHeight(sublist);
+        };
+        sublist.getContent().addListener(updateContentHeight);
+        updateObservedContentNodes(sublist);
 
         this.getChildren().add(header);
     }
 
+    /// Keeps dynamic child layout changes reflected in the expanded container height.
+    private void updateObservedContentNodes(ComponentSublist sublist) {
+        contentLayoutListeners.entrySet().removeIf(entry -> {
+            Node node = entry.getKey();
+            if (sublist.getContent().contains(node)) {
+                return false;
+            }
+
+            node.layoutBoundsProperty().removeListener(entry.getValue());
+            if (node instanceof Parent parent) {
+                parent.needsLayoutProperty().removeListener(entry.getValue());
+            }
+            return true;
+        });
+
+        for (Node node : sublist.getContent()) {
+            if (contentLayoutListeners.containsKey(node)) {
+                continue;
+            }
+
+            InvalidationListener listener = observable -> updateExpandedContentHeight(sublist);
+            node.layoutBoundsProperty().addListener(listener);
+            if (node instanceof Parent parent) {
+                parent.needsLayoutProperty().addListener(listener);
+            }
+            contentLayoutListeners.put(node, listener);
+        }
+    }
+
     /// Uses the sublist's computed height while expanded so dynamic content can resize naturally.
     private void updateExpandedContentHeight(ComponentSublist sublist) {
-        if (!expanded || container == null) {
+        if (!expanded || container == null || heightTransitionPending) {
             return;
         }
 
         Platform.runLater(() -> {
-            if (!expanded || container == null) {
+            if (!expanded || container == null || heightTransitionPending) {
                 return;
             }
 
