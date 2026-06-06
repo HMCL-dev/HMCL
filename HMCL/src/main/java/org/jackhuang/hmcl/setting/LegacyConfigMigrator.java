@@ -162,7 +162,12 @@ public final class LegacyConfigMigrator {
             migrateLegacyEnumOrdinals(jsonObject);
             migrateLegacyDownloadSources(jsonObject);
             renameMemberIfAbsent(jsonObject, "commonDirType", "commonDirectoryType");
-            migrateLegacyCommonDirectory(jsonObject);
+            JsonElement legacyCommonDirectory = jsonObject.remove("commonpath");
+            if (!jsonObject.has("commonDirectory")
+                    && legacyCommonDirectory instanceof JsonPrimitive primitive
+                    && primitive.isString()) {
+                jsonObject.addProperty("commonDirectory", primitive.getAsString());
+            }
             migrateLegacyLanguage(jsonObject);
             renameMemberIfAbsent(jsonObject, "theme", "themeColor");
             renameMemberIfAbsent(jsonObject, "bgpath", "backgroundImage");
@@ -526,20 +531,6 @@ public final class LegacyConfigMigrator {
             case "zh" -> "zh-Hant";
             default -> primitive.getAsString();
         });
-    }
-
-    /// Migrates the legacy `commonpath` field into the current `commonDirectory` field.
-    static void migrateLegacyCommonDirectory(JsonObject json) {
-        Objects.requireNonNull(json);
-
-        JsonElement legacyCommonDirectory = json.remove("commonpath");
-        if (json.has("commonDirectory")
-                || !(legacyCommonDirectory instanceof JsonPrimitive primitive)
-                || !primitive.isString()) {
-            return;
-        }
-
-        json.addProperty("commonDirectory", primitive.getAsString());
     }
 
     /// Migrates legacy enum ordinal fields into stable enum names.
