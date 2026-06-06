@@ -93,7 +93,7 @@
       ]
     },
     "backgroundPaint": true,
-    "bgImageOpacity": {
+    "backgroundImageOpacity": {
       "type": "integer"
     },
     "autoDownloadThreads": {

@@ -165,6 +165,7 @@ public final class LauncherSettingsMigrationTest {
                   "bgpath": "/tmp/background.png",
                   "bgurl": "https://example.com/background.png",
                   "bgpaint": "#112233",
+                  "bgImageOpacity": 75,
                   "proxyUserName": "Alex"
                 }
                 """).getAsJsonObject();
@@ -178,30 +179,35 @@ public final class LauncherSettingsMigrationTest {
         assertFalse(settings.has("bgpath"));
         assertFalse(settings.has("bgurl"));
         assertFalse(settings.has("bgpaint"));
+        assertFalse(settings.has("bgImageOpacity"));
         assertFalse(settings.has("proxyUserName"));
         assertEquals("orange", settings.get("themeColor").getAsString());
         assertEquals("CUSTOM", settings.get("backgroundImageType").getAsString());
         assertEquals("/tmp/background.png", settings.get("backgroundImage").getAsString());
         assertEquals("https://example.com/background.png", settings.get("backgroundImageUrl").getAsString());
         assertEquals("#112233", settings.get("backgroundPaint").getAsString());
+        assertEquals(75, settings.get("backgroundImageOpacity").getAsInt());
         assertEquals("Alex", settings.get("proxyUser").getAsString());
         assertEquals("orange", launcherSettings.themeColorProperty().get().name());
         assertEquals(EnumBackgroundImage.CUSTOM, launcherSettings.backgroundImageTypeProperty().get());
         assertEquals("/tmp/background.png", launcherSettings.backgroundImageProperty().get());
         assertEquals("https://example.com/background.png", launcherSettings.backgroundImageUrlProperty().get());
         assertEquals(Color.web("#112233"), launcherSettings.backgroundPaintProperty().get());
+        assertEquals(75, launcherSettings.backgroundImageOpacityProperty().get());
         assertEquals("Alex", launcherSettings.proxyUserProperty().get());
         assertFalse(serialized.has("theme"));
         assertFalse(serialized.has("backgroundType"));
         assertFalse(serialized.has("bgpath"));
         assertFalse(serialized.has("bgurl"));
         assertFalse(serialized.has("bgpaint"));
+        assertFalse(serialized.has("bgImageOpacity"));
         assertFalse(serialized.has("proxyUserName"));
         assertEquals("orange", serialized.get("themeColor").getAsString());
         assertEquals("CUSTOM", serialized.get("backgroundImageType").getAsString());
         assertEquals("/tmp/background.png", serialized.get("backgroundImage").getAsString());
         assertEquals("https://example.com/background.png", serialized.get("backgroundImageUrl").getAsString());
         assertEquals("#112233", serialized.get("backgroundPaint").getAsString());
+        assertEquals(75, serialized.get("backgroundImageOpacity").getAsInt());
         assertEquals("Alex", serialized.get("proxyUser").getAsString());
     }
 

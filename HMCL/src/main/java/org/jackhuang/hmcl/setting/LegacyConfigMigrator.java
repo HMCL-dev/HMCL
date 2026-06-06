@@ -550,6 +550,7 @@ public final class LegacyConfigMigrator {
         migrateLegacyLauncherSettingName(json, "bgpath", "backgroundImage");
         migrateLegacyLauncherSettingName(json, "bgurl", "backgroundImageUrl");
         migrateLegacyLauncherSettingName(json, "bgpaint", "backgroundPaint");
+        migrateLegacyLauncherSettingName(json, "bgImageOpacity", "backgroundImageOpacity");
         migrateLegacyLauncherSettingName(json, "proxyUserName", "proxyUser");
     }
 
