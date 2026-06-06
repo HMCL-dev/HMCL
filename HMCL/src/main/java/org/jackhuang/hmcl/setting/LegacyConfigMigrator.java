@@ -163,8 +163,13 @@ public final class LegacyConfigMigrator {
             migrateLegacyDownloadSources(jsonObject);
             migrateLegacyCommonDirectoryType(jsonObject);
             migrateLegacyCommonDirectory(jsonObject);
-            migrateLegacyLauncherSettingNames(jsonObject);
             migrateLegacyLanguage(jsonObject);
+            renameMemberIfAbsent(jsonObject, "theme", "themeColor");
+            renameMemberIfAbsent(jsonObject, "bgpath", "backgroundImage");
+            renameMemberIfAbsent(jsonObject, "bgurl", "backgroundImageUrl");
+            renameMemberIfAbsent(jsonObject, "bgpaint", "backgroundPaint");
+            renameMemberIfAbsent(jsonObject, "bgImageOpacity", "backgroundImageOpacity");
+            renameMemberIfAbsent(jsonObject, "proxyUserName", "proxyUser");
             migrateLegacySelectedVersions(jsonObject);
             @Nullable GameDirectories migratedGameDirectories = extractGameDirectoriesFromConfigJson(jsonObject);
             GameDirectories gameDirectories = migratedGameDirectories != null
@@ -499,6 +504,14 @@ public final class LegacyConfigMigrator {
         }
     }
 
+    /// Renames one JSON member without overriding an already-present current member.
+    private static void renameMemberIfAbsent(JsonObject json, String legacyName, String currentName) {
+        JsonElement legacyValue = json.remove(legacyName);
+        if (!json.has(currentName) && legacyValue != null) {
+            json.add(currentName, legacyValue);
+        }
+    }
+
     /// Migrates the legacy `localization` field into the current `language` field.
     static void migrateLegacyLanguage(JsonObject json) {
         Objects.requireNonNull(json);
@@ -533,51 +546,35 @@ public final class LegacyConfigMigrator {
     static void migrateLegacyCommonDirectoryType(JsonObject json) {
         Objects.requireNonNull(json);
 
-        JsonElement legacyCommonDirectoryType = json.remove("commonDirType");
-        if (json.has("commonDirectoryType") || legacyCommonDirectoryType == null) {
-            return;
-        }
-
-        json.add("commonDirectoryType", legacyCommonDirectoryType);
-    }
-
-    /// Migrates legacy launcher setting field names into current field-name JSON properties.
-    static void migrateLegacyLauncherSettingNames(JsonObject json) {
-        Objects.requireNonNull(json);
-
-        migrateLegacyLauncherSettingName(json, "theme", "themeColor");
-        migrateLegacyLauncherSettingName(json, "backgroundType", "backgroundImageType");
-        migrateLegacyLauncherSettingName(json, "bgpath", "backgroundImage");
-        migrateLegacyLauncherSettingName(json, "bgurl", "backgroundImageUrl");
-        migrateLegacyLauncherSettingName(json, "bgpaint", "backgroundPaint");
-        migrateLegacyLauncherSettingName(json, "bgImageOpacity", "backgroundImageOpacity");
-        migrateLegacyLauncherSettingName(json, "proxyUserName", "proxyUser");
-    }
-
-    /// Moves one legacy launcher setting field unless the current field already exists.
-    private static void migrateLegacyLauncherSettingName(JsonObject json, String legacyName, String currentName) {
-        JsonElement legacyValue = json.remove(legacyName);
-        if (!json.has(currentName) && legacyValue != null) {
-            json.add(currentName, legacyValue);
-        }
+        renameMemberIfAbsent(json, "commonDirType", "commonDirectoryType");
     }
 
     /// Migrates legacy enum ordinal fields into stable enum names.
     static void migrateLegacyEnumOrdinals(JsonObject json) {
         Objects.requireNonNull(json);
 
-        migrateLegacyEnumOrdinal(json, "backgroundType", LEGACY_BACKGROUND_IMAGE_TYPES);
-        migrateLegacyEnumOrdinal(json, "proxyType", LEGACY_PROXY_TYPES);
+        migrateLegacyEnumOrdinal(json, "backgroundType", "backgroundImageType", LEGACY_BACKGROUND_IMAGE_TYPES);
+        migrateLegacyEnumOrdinal(json, "proxyType", "proxyType", LEGACY_PROXY_TYPES);
     }
 
     /// Migrates one legacy enum ordinal field into a stable enum name.
-    private static void migrateLegacyEnumOrdinal(JsonObject json, String propertyName, String[] legacyNames) {
-        @Nullable Integer ordinal = JsonUtils.getInteger(json.get(propertyName));
+    private static void migrateLegacyEnumOrdinal(
+            JsonObject json,
+            String legacyPropertyName,
+            String currentPropertyName,
+            String[] legacyNames) {
+        JsonElement legacyValue = json.remove(legacyPropertyName);
+        @Nullable Integer ordinal = JsonUtils.getInteger(legacyValue);
         if (ordinal == null || ordinal < 0 || ordinal >= legacyNames.length) {
+            if (legacyValue != null && !json.has(currentPropertyName)) {
+                json.add(currentPropertyName, legacyValue);
+            }
             return;
         }
 
-        json.addProperty(propertyName, legacyNames[ordinal]);
+        if (!json.has(currentPropertyName)) {
+            json.addProperty(currentPropertyName, legacyNames[ordinal]);
+        }
     }
 
     /// Migrates legacy download source fields into `versionListSource` and `fileDownloadSource`.
