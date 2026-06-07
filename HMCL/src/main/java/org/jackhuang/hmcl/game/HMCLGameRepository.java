@@ -512,6 +512,8 @@ public final class HMCLGameRepository extends DefaultGameRepository {
 
     public LaunchOptions.Builder getLaunchOptions(String version, JavaRuntime javaVersion, Path gameDir, List<String> javaAgents, List<String> javaArguments, boolean makeLaunchScript) {
         GameSettings.Effective vs = getEffectiveGameSettings(version);
+        boolean noJVMOptions = vs.getInheritable(GameSettings::noJVMOptionsProperty);
+        boolean autoMemory = vs.get(GameSettings::autoMemoryProperty);
 
         LaunchOptions.Builder builder = new LaunchOptions.Builder()
                 .setGameDir(gameDir)
@@ -519,17 +521,17 @@ public final class HMCLGameRepository extends DefaultGameRepository {
                 .setVersionType(Metadata.TITLE)
                 .setVersionName(version)
                 .setProfileName(Metadata.TITLE)
-                .setGameArguments(StringUtils.tokenize(vs.getGameArgs()))
-                .setOverrideJavaArguments(StringUtils.tokenize(vs.getJVMOptions()))
-                .setMaxMemory(vs.isNoJVMOptions() && vs.isAutoMemory() ? null : (int) (getAllocatedMemory(
+                .setGameArguments(StringUtils.tokenize(vs.get(GameSettings::gameArgsProperty)))
+                .setOverrideJavaArguments(StringUtils.tokenize(vs.get(GameSettings::jvmOptionsProperty)))
+                .setMaxMemory(noJVMOptions && autoMemory ? null : (int) (getAllocatedMemory(
                         vs.getMaxMemory() * 1024L * 1024L,
                         SystemInfo.getPhysicalMemoryStatus().getAvailable(),
-                        vs.isAutoMemory()
+                        autoMemory
                 ) / 1024 / 1024))
-                .setMinMemory(vs.getMinMemory())
-                .setMetaspace(Lang.toIntOrNull(vs.getPermSize()))
+                .setMinMemory(vs.get(GameSettings::minMemoryProperty))
+                .setMetaspace(Lang.toIntOrNull(vs.get(GameSettings::permSizeProperty)))
                 .setEnvironmentVariables(
-                        Lang.mapOf(StringUtils.tokenize(vs.getEnvironmentVariables())
+                        Lang.mapOf(StringUtils.tokenize(vs.get(GameSettings::environmentVariablesProperty))
                                 .stream()
                                 .map(it -> {
                                     int idx = it.indexOf('=');
@@ -540,24 +542,24 @@ public final class HMCLGameRepository extends DefaultGameRepository {
                 )
                 .setWidth(vs.getWidth())
                 .setHeight(vs.getHeight())
-                .setFullscreen(vs.getWindowType() == GameWindowType.FULLSCREEN)
-                .setWrapper(vs.getCommandWrapper())
+                .setFullscreen(vs.getInheritable(GameSettings::windowTypeProperty) == GameWindowType.FULLSCREEN)
+                .setWrapper(vs.getInheritable(GameSettings::commandWrapperProperty))
                 .setProxyOption(getProxyOption())
-                .setPreLaunchCommand(vs.getPreLaunchCommand())
-                .setPostExitCommand(vs.getPostExitCommand())
-                .setNoGeneratedJVMArgs(vs.isNoJVMOptions())
-                .setNoGeneratedOptimizingJVMArgs(vs.isNoOptimizingJVMOptions())
-                .setNativesDirType(vs.getNativesDirType())
-                .setNativesDir(vs.getNativesDir())
-                .setProcessPriority(vs.getProcessPriority())
-                .setGraphicsBackend(vs.getGraphicsBackend())
+                .setPreLaunchCommand(vs.getInheritable(GameSettings::preLaunchCommandProperty))
+                .setPostExitCommand(vs.getInheritable(GameSettings::postExitCommandProperty))
+                .setNoGeneratedJVMArgs(noJVMOptions)
+                .setNoGeneratedOptimizingJVMArgs(vs.getInheritable(GameSettings::noOptimizingJVMOptionsProperty))
+                .setNativesDirType(vs.get(GameSettings::nativesDirTypeProperty))
+                .setNativesDir(vs.get(GameSettings::nativesDirProperty))
+                .setProcessPriority(vs.getInheritable(GameSettings::processPriorityProperty))
+                .setGraphicsBackend(vs.getInheritable(GameSettings::graphicsBackendProperty))
                 .setRenderer(vs.getRenderer())
-                .setEnableDebugLogOutput(vs.isEnableDebugLogOutput())
-                .setAllowAutoAgent(vs.isAllowAutoAgent())
-                .setDisableAutoGameOptions(vs.isDisableAutoGameOptions())
-                .setUseNativeGLFW(vs.isUseNativeGLFW())
-                .setUseNativeOpenAL(vs.isUseNativeOpenAL())
-                .setDaemon(!makeLaunchScript && vs.getLauncherVisibility().isDaemon())
+                .setEnableDebugLogOutput(vs.getInheritable(GameSettings::enableDebugLogOutputProperty))
+                .setAllowAutoAgent(vs.getInheritable(GameSettings::allowAutoAgentProperty))
+                .setDisableAutoGameOptions(vs.getInheritable(GameSettings::disableAutoGameOptionsProperty))
+                .setUseNativeGLFW(vs.get(GameSettings::useNativeGLFWProperty))
+                .setUseNativeOpenAL(vs.get(GameSettings::useNativeOpenALProperty))
+                .setDaemon(!makeLaunchScript && vs.getInheritable(GameSettings::launcherVisibilityProperty).isDaemon())
                 .setJavaAgents(javaAgents)
                 .setJavaArguments(javaArguments);
 
@@ -578,7 +580,7 @@ public final class HMCLGameRepository extends DefaultGameRepository {
             }
         }
 
-        if (vs.isAutoMemory() && builder.getJavaArguments().stream().anyMatch(it -> it.startsWith("-Xmx")))
+        if (autoMemory && builder.getJavaArguments().stream().anyMatch(it -> it.startsWith("-Xmx")))
             builder.setMaxMemory(null);
 
         return builder;

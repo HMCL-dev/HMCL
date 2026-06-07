@@ -743,16 +743,31 @@ public sealed abstract class GameSettings extends ObservableSetting {
         return new Effective(preset, instance);
     }
 
+    /// Returns the effective value for a property whose override state is tracked by the property itself.
     private static <T extends @UnknownNullability Object> T inherited(Preset preset, @Nullable Instance instance, Function<GameSettings, SettingProperty<T>> propertyGetter) {
         if (instance != null) {
             SettingProperty<T> property = propertyGetter.apply(instance);
             if (isOverridden(instance, property)) {
-                return property.getValue();
+                return getDirectValue(property);
             }
         }
-        return propertyGetter.apply(preset).getValue();
+        return getDirectValue(propertyGetter.apply(preset));
     }
 
+    /// Returns the effective value for a property whose override state is tracked by another property.
+    private static <T extends @UnknownNullability Object> T inherited(
+            Preset preset,
+            @Nullable Instance instance,
+            Function<GameSettings, SettingProperty<T>> propertyGetter,
+            Function<GameSettings, ? extends SettingProperty<?>> overridePropertyGetter) {
+        if (instance != null && isOverridden(instance, overridePropertyGetter.apply(instance))) {
+            return getDirectValue(propertyGetter.apply(instance));
+        }
+
+        return getDirectValue(propertyGetter.apply(preset));
+    }
+
+    /// Returns the effective value for an inheritable property.
     private static <T extends @UnknownNullability Object> T inheritable(Preset preset, @Nullable Instance instance, Function<GameSettings, InheritableProperty<T>> propertyGetter) {
         if (instance != null) {
             InheritableProperty<T> property = propertyGetter.apply(instance);
@@ -764,10 +779,12 @@ public sealed abstract class GameSettings extends ObservableSetting {
         return getDirectValue(propertyGetter.apply(preset));
     }
 
+    /// Returns whether an instance overrides the given property.
     private static boolean isOverridden(Instance instance, SettingProperty<?> property) {
         return instance.getOverrideProperties().contains(property.getName());
     }
 
+    /// Returns the property's direct value, or its default value when the direct value is `null`.
     private static <T extends @UnknownNullability Object> T getDirectValue(SettingProperty<T> property) {
         T value = property.getValue();
         return value != null ? value : property.defaultValue();
@@ -793,33 +810,22 @@ public sealed abstract class GameSettings extends ObservableSetting {
             return instance;
         }
 
-        /// Returns the effective Java selection mode.
-        public JavaVersionType getJavaVersionType() {
-            return inheritable(preset, instance, GameSettings::javaTypeProperty);
+        /// Returns the effective value for a property whose override state is tracked by the property itself.
+        public <T extends @UnknownNullability Object> T get(Function<GameSettings, SettingProperty<T>> propertyGetter) {
+            return inherited(preset, instance, propertyGetter);
         }
 
-        /// Returns the effective Java version text.
-        public String getJavaVersion() {
-            if (instance != null && isOverridden(instance, instance.javaTypeProperty())) {
-                return instance.javaVersionProperty().getValue();
-            }
-            return preset.javaVersionProperty().getValue();
+        /// Returns the effective value for a property whose override state is tracked by another property.
+        public <T extends @UnknownNullability Object> T get(
+                Function<GameSettings, SettingProperty<T>> propertyGetter,
+                Function<GameSettings, ? extends SettingProperty<?>> overridePropertyGetter) {
+            return inherited(preset, instance, propertyGetter, overridePropertyGetter);
         }
 
-        /// Returns the effective custom Java executable path.
-        public String getCustomJavaPath() {
-            if (instance != null && isOverridden(instance, instance.javaTypeProperty())) {
-                return Objects.requireNonNullElse(instance.customJavaPathProperty().getValue(), "");
-            }
-            return Objects.requireNonNullElse(preset.customJavaPathProperty().getValue(), "");
-        }
-
-        /// Returns the effective default Java executable path.
-        public String getDefaultJavaPath() {
-            if (instance != null && isOverridden(instance, instance.javaTypeProperty())) {
-                return Objects.requireNonNullElse(instance.defaultJavaPathProperty().getValue(), "");
-            }
-            return Objects.requireNonNullElse(preset.defaultJavaPathProperty().getValue(), "");
+        /// Returns the effective value for an inheritable property.
+        public <T extends @UnknownNullability Object> T getInheritable(
+                Function<GameSettings, InheritableProperty<T>> propertyGetter) {
+            return inheritable(preset, instance, propertyGetter);
         }
 
         /// Switches the effective Java selection back to automatic mode.
@@ -833,19 +839,20 @@ public sealed abstract class GameSettings extends ObservableSetting {
 
         /// Finds the effective Java runtime.
         public @Nullable JavaRuntime getJava(@Nullable GameVersionNumber gameVersion, @Nullable Version version) throws InterruptedException {
-            switch (getJavaVersionType()) {
+            JavaVersionType javaVersionType = getInheritable(GameSettings::javaTypeProperty);
+            switch (javaVersionType) {
                 case DEFAULT:
                     return JavaRuntime.getDefault();
                 case AUTO:
                     return JavaManager.findSuitableJava(gameVersion, version);
                 case CUSTOM:
                     try {
-                        return JavaManager.getJava(Path.of(getCustomJavaPath()));
+                        return JavaManager.getJava(Path.of(get(GameSettings::customJavaPathProperty, GameSettings::javaTypeProperty)));
                     } catch (IOException | InvalidPathException e) {
                         return null;
                     }
                 case VERSION: {
-                    String javaVersion = getJavaVersion();
+                    String javaVersion = get(GameSettings::javaVersionProperty, GameSettings::javaTypeProperty);
                     if (StringUtils.isBlank(javaVersion)) {
                         return JavaManager.findSuitableJava(gameVersion, version);
                     }
@@ -868,13 +875,13 @@ public sealed abstract class GameSettings extends ObservableSetting {
                     return JavaManager.findSuitableJava(allJava, gameVersion, version);
                 }
                 case DETECTED: {
-                    String javaVersion = getJavaVersion();
+                    String javaVersion = get(GameSettings::javaVersionProperty, GameSettings::javaTypeProperty);
                     if (StringUtils.isBlank(javaVersion)) {
                         return JavaManager.findSuitableJava(gameVersion, version);
                     }
 
                     try {
-                        String defaultJavaPath = getDefaultJavaPath();
+                        String defaultJavaPath = get(GameSettings::defaultJavaPathProperty, GameSettings::javaTypeProperty);
                         if (StringUtils.isNotBlank(defaultJavaPath)) {
                             JavaRuntime java = JavaManager.getJava(Path.of(defaultJavaPath).toRealPath());
                             if (java.getVersion().equals(javaVersion)) {
@@ -893,202 +900,52 @@ public sealed abstract class GameSettings extends ObservableSetting {
                     return null;
                 }
                 default:
-                    throw new AssertionError("Java Type: " + getJavaVersionType());
+                    throw new AssertionError("Java Type: " + javaVersionType);
             }
-        }
-
-        /// Returns the effective JVM option text.
-        public String getJVMOptions() {
-            return Objects.requireNonNullElse(inherited(preset, instance, GameSettings::jvmOptionsProperty), "");
-        }
-
-        /// Returns whether generated JVM options are disabled.
-        public boolean isNoJVMOptions() {
-            return inheritable(preset, instance, GameSettings::noJVMOptionsProperty);
-        }
-
-        /// Returns whether generated optimizing JVM options are disabled.
-        public boolean isNoOptimizingJVMOptions() {
-            return inheritable(preset, instance, GameSettings::noOptimizingJVMOptionsProperty);
-        }
-
-        /// Returns whether JVM validity checks are disabled.
-        public boolean isNotCheckJVM() {
-            return inheritable(preset, instance, GameSettings::notCheckJVMProperty);
-        }
-
-        /// Returns whether game completeness checks are disabled.
-        public boolean isNotCheckGame() {
-            return inheritable(preset, instance, GameSettings::notCheckGameProperty);
-        }
-
-        /// Returns whether automatic memory allocation is enabled.
-        public boolean isAutoMemory() {
-            return inherited(preset, instance, GameSettings::autoMemoryProperty);
-        }
-
-        /// Returns the effective minimum heap memory in MiB.
-        public @Nullable Integer getMinMemory() {
-            return inherited(preset, instance, GameSettings::minMemoryProperty);
         }
 
         /// Returns the effective maximum heap memory in MiB.
         public int getMaxMemory() {
-            Integer value = inherited(preset, instance, GameSettings::maxMemoryProperty);
+            Integer value = get(GameSettings::maxMemoryProperty);
             return value != null && value > 0 ? value : SUGGESTED_MEMORY;
-        }
-
-        /// Returns the effective permanent generation or metaspace size text.
-        public String getPermSize() {
-            return Objects.requireNonNullElse(inherited(preset, instance, GameSettings::permSizeProperty), "");
-        }
-
-        /// Returns the effective game window mode.
-        public GameWindowType getWindowType() {
-            return inheritable(preset, instance, GameSettings::windowTypeProperty);
         }
 
         /// Returns the effective game window width.
         public int getWidth() {
-            return Math.max(0, Lang.parseInt(String.valueOf(Math.round(inheritable(preset, instance, GameSettings::widthProperty))), 0));
+            return Math.max(0, Lang.parseInt(String.valueOf(Math.round(getInheritable(GameSettings::widthProperty))), 0));
         }
 
         /// Returns the effective game window height.
         public int getHeight() {
-            return Math.max(0, Lang.parseInt(String.valueOf(Math.round(inheritable(preset, instance, GameSettings::heightProperty))), 0));
-        }
-
-        /// Returns the effective custom run directory.
-        public String getRunningDir() {
-            return Objects.requireNonNullElse(inheritable(preset, instance, GameSettings::runningDirProperty), "");
-        }
-
-        /// Returns the effective process priority.
-        public ProcessPriority getProcessPriority() {
-            return inheritable(preset, instance, GameSettings::processPriorityProperty);
-        }
-
-        /// Returns the effective launcher visibility.
-        public LauncherVisibility getLauncherVisibility() {
-            return inheritable(preset, instance, GameSettings::launcherVisibilityProperty);
-        }
-
-        /// Returns whether HMCL may attach Java agents to improve the game experience.
-        public boolean isAllowAutoAgent() {
-            return inheritable(preset, instance, GameSettings::allowAutoAgentProperty);
-        }
-
-        /// Returns whether automatic game options generation is disabled.
-        public boolean isDisableAutoGameOptions() {
-            return inheritable(preset, instance, GameSettings::disableAutoGameOptionsProperty);
-        }
-
-        /// Returns the effective game arguments.
-        public String getGameArgs() {
-            return Objects.requireNonNullElse(inherited(preset, instance, GameSettings::gameArgsProperty), "");
-        }
-
-        /// Returns the effective graphics API.
-        public GraphicsAPI getGraphicsBackend() {
-            return inheritable(preset, instance, GameSettings::graphicsBackendProperty);
-        }
-
-        /// Returns the effective OpenGL renderer.
-        public Renderer getOpenGLRenderer() {
-            return selectRenderer(GraphicsAPI.OPENGL, inheritable(preset, instance, GameSettings::openGLRendererProperty));
-        }
-
-        /// Returns the effective Vulkan renderer.
-        public Renderer getVulkanRenderer() {
-            return selectRenderer(GraphicsAPI.VULKAN, inheritable(preset, instance, GameSettings::vulkanRendererProperty));
+            return Math.max(0, Lang.parseInt(String.valueOf(Math.round(getInheritable(GameSettings::heightProperty))), 0));
         }
 
         /// Returns the effective renderer.
         public Renderer getRenderer() {
-            return switch (getGraphicsBackend()) {
-                case OPENGL -> getOpenGLRenderer();
-                case VULKAN -> getVulkanRenderer();
+            return switch (getInheritable(GameSettings::graphicsBackendProperty)) {
+                case OPENGL -> selectRenderer(GraphicsAPI.OPENGL, getInheritable(GameSettings::openGLRendererProperty));
+                case VULKAN -> selectRenderer(GraphicsAPI.VULKAN, getInheritable(GameSettings::vulkanRendererProperty));
                 case DEFAULT -> Renderer.DEFAULT;
             };
         }
 
-        /// Returns the effective environment variables.
-        public String getEnvironmentVariables() {
-            return Objects.requireNonNullElse(inherited(preset, instance, GameSettings::environmentVariablesProperty), "");
-        }
-
-        /// Returns the effective command wrapper.
-        public String getCommandWrapper() {
-            return Objects.requireNonNullElse(inheritable(preset, instance, GameSettings::commandWrapperProperty), "");
-        }
-
-        /// Returns the effective pre-launch command.
-        public String getPreLaunchCommand() {
-            return Objects.requireNonNullElse(inheritable(preset, instance, GameSettings::preLaunchCommandProperty), "");
-        }
-
-        /// Returns the effective post-exit command.
-        public String getPostExitCommand() {
-            return Objects.requireNonNullElse(inheritable(preset, instance, GameSettings::postExitCommandProperty), "");
-        }
-
-        /// Returns the effective quick play type.
-        public QuickPlayType getQuickPlay() {
-            return inheritable(preset, instance, GameSettings::quickPlayProperty);
-        }
-
         /// Returns the effective quick play option.
         public @Nullable QuickPlayOption getQuickPlayOption() {
-            return switch (getQuickPlay()) {
+            return switch (getInheritable(GameSettings::quickPlayProperty)) {
                 case NONE -> null;
                 case MULTIPLAYER -> {
-                    String server = Objects.requireNonNullElse(inheritable(preset, instance, GameSettings::quickPlayMultiplayerProperty), "");
+                    String server = getInheritable(GameSettings::quickPlayMultiplayerProperty);
                     yield StringUtils.isBlank(server) ? null : new QuickPlayOption.MultiPlayer(server);
                 }
                 case SINGLEPLAYER -> {
-                    String world = Objects.requireNonNullElse(inheritable(preset, instance, GameSettings::quickPlaySingleplayerProperty), "");
+                    String world = getInheritable(GameSettings::quickPlaySingleplayerProperty);
                     yield StringUtils.isBlank(world) ? null : new QuickPlayOption.SinglePlayer(world);
                 }
                 case REALMS -> {
-                    String realm = Objects.requireNonNullElse(inheritable(preset, instance, GameSettings::quickPlayRealmsProperty), "");
+                    String realm = getInheritable(GameSettings::quickPlayRealmsProperty);
                     yield StringUtils.isBlank(realm) ? null : new QuickPlayOption.Realm(realm);
                 }
             };
-        }
-
-        /// Returns whether logs should be shown after launch.
-        public boolean isShowLogs() {
-            return inheritable(preset, instance, GameSettings::showLogsProperty);
-        }
-
-        /// Returns whether debug log output is enabled.
-        public boolean isEnableDebugLogOutput() {
-            return inheritable(preset, instance, GameSettings::enableDebugLogOutputProperty);
-        }
-
-        /// Returns whether native library patching is disabled.
-        public boolean isNotPatchNatives() {
-            return inherited(preset, instance, GameSettings::notPatchNativesProperty);
-        }
-
-        /// Returns the effective native directory mode.
-        public NativesDirectoryType getNativesDirType() {
-            return inherited(preset, instance, GameSettings::nativesDirTypeProperty);
-        }
-
-        /// Returns the effective native directory.
-        public String getNativesDir() {
-            return Objects.requireNonNullElse(inherited(preset, instance, GameSettings::nativesDirProperty), "");
-        }
-
-        /// Returns whether native GLFW should be used.
-        public boolean isUseNativeGLFW() {
-            return inherited(preset, instance, GameSettings::useNativeGLFWProperty);
-        }
-
-        /// Returns whether native OpenAL should be used.
-        public boolean isUseNativeOpenAL() {
-            return inherited(preset, instance, GameSettings::useNativeOpenALProperty);
         }
     }
 }
