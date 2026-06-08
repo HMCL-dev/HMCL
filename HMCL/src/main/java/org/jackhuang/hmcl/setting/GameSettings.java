@@ -442,7 +442,7 @@ public sealed abstract class GameSettings extends ObservableSetting {
 
     /// Launcher behavior after the game starts.
     @SerializedName(PROPERTY_LAUNCHER_VISIBILITY)
-    private final InheritableProperty<LauncherVisibility> launcherVisibility = newInheritableProperty(PROPERTY_LAUNCHER_VISIBILITY, LauncherVisibility.KEEP);
+    private final InheritableProperty<LauncherVisibility> launcherVisibility = newInheritableProperty(PROPERTY_LAUNCHER_VISIBILITY, LauncherVisibility.HIDE);
 
     /// Returns the launcher visibility property.
     public InheritableProperty<LauncherVisibility> launcherVisibilityProperty() {
