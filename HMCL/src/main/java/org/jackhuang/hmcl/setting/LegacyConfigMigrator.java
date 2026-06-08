@@ -18,6 +18,7 @@
 package org.jackhuang.hmcl.setting;
 
 import com.google.gson.*;
+import org.glavo.uuid.UUIDs;
 import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.gson.JsonSchema;
@@ -35,6 +36,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
+import java.util.UUID;
 
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
@@ -50,10 +52,11 @@ public final class LegacyConfigMigrator {
     private static final int LEGACY_CURRENT_CONFIG_VERSION = 2;
 
     /// Namespace used to generate stable IDs for legacy profiles.
-    private static final SettingId LEGACY_PROFILE_ID_NAMESPACE = SettingId.v5(SettingId.NAMESPACE_URL, "hmcl:legacy-profile");
+    private static final UUID LEGACY_PROFILE_ID_NAMESPACE = UUIDs.generateV5(UUIDs.NAMESPACE_URL, "hmcl:legacy-profile");
 
     /// Namespace used to generate stable IDs for profile-level game settings migrated from legacy profiles.
-    private static final SettingId LEGACY_GAME_SETTINGS_ID_NAMESPACE = SettingId.v5(SettingId.NAMESPACE_URL, "hmcl:legacy-game-settings");
+    private static final UUID LEGACY_GAME_SETTINGS_ID_NAMESPACE =
+            UUIDs.generateV5(UUIDs.NAMESPACE_URL, "hmcl:legacy-game-settings");
 
     /// The legacy built-in profile name for the current workspace game directory.
     private static final String LEGACY_DEFAULT_PROFILE = "Default";
@@ -105,12 +108,17 @@ public final class LegacyConfigMigrator {
 
     /// Returns the stable profile ID for a migrated legacy profile.
     static SettingId getLegacyProfileId(String profileName) {
-        return SettingId.v5(LEGACY_PROFILE_ID_NAMESPACE, profileName);
+        return createLegacySettingId(LEGACY_PROFILE_ID_NAMESPACE, profileName);
     }
 
     /// Returns the stable game settings preset ID for a migrated legacy profile.
     static SettingId getLegacyGameSettingsId(String profileName) {
-        return SettingId.v5(LEGACY_GAME_SETTINGS_ID_NAMESPACE, profileName);
+        return createLegacySettingId(LEGACY_GAME_SETTINGS_ID_NAMESPACE, profileName);
+    }
+
+    /// Creates a deterministic setting ID for legacy migration data.
+    private static SettingId createLegacySettingId(UUID namespace, String name) {
+        return new SettingId(UUIDs.generateV5(namespace, name));
     }
 
     /// Looks for a legacy config file and prepares it for writing as the new config file.

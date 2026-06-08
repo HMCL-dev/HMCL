@@ -33,7 +33,7 @@ import java.util.UUID;
 
 /// Stable identifier for profile and game setting preset objects.
 ///
-/// This type wrap a [UUID] so profile and game setting references cannot be
+/// This type wraps a [UUID] so profile and game setting references cannot be
 /// accidentally mixed with unrelated UUID values.
 @JsonAdapter(SettingId.Adapter.class)
 @JsonSerializable
@@ -41,9 +41,6 @@ import java.util.UUID;
 public record SettingId(UUID uuid) {
     /// The nil identifier value.
     public static final SettingId NIL = new SettingId(UUIDs.NIL);
-
-    /// The URL namespace used for deterministic legacy setting IDs.
-    public static final SettingId NAMESPACE_URL = new SettingId(UUIDs.NAMESPACE_URL);
 
     /// Creates a setting ID.
     public SettingId {
@@ -58,11 +55,6 @@ public record SettingId(UUID uuid) {
     /// Generates a new time-ordered setting ID.
     public static SettingId generate() {
         return new SettingId(UUIDs.generateV7());
-    }
-
-    /// Generates a deterministic setting ID in the given namespace.
-    public static SettingId v5(SettingId namespace, String name) {
-        return new SettingId(UUIDs.generateV5(namespace.uuid, name));
     }
 
     /// Returns the canonical UUID string.

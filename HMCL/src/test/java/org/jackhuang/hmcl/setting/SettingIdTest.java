@@ -56,18 +56,6 @@ public final class SettingIdTest {
         assertNull(LauncherSettings.SETTINGS_GSON.fromJson("null", SettingId.class));
     }
 
-    /// Tests deterministic version 5 setting IDs.
-    @Test
-    public void generatesDeterministicVersion5Ids() {
-        SettingId first = SettingId.v5(SettingId.NAMESPACE_URL, "hmcl:test");
-        SettingId second = SettingId.v5(SettingId.NAMESPACE_URL, "hmcl:test");
-        SettingId other = SettingId.v5(SettingId.NAMESPACE_URL, "hmcl:other");
-
-        assertEquals(first, second);
-        assertNotEquals(first, other);
-        assertEquals(5, first.uuid().version());
-    }
-
     /// Tests generated IDs are version 7 IDs and not nil.
     @Test
     public void generatesVersion7Ids() {
