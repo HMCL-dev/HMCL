@@ -35,12 +35,16 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.UnknownNullability;
 
 import java.io.IOException;
+import java.io.Reader;
 import java.nio.file.*;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 
+import static org.jackhuang.hmcl.util.gson.JsonUtils.listTypeOf;
+import static org.jackhuang.hmcl.util.gson.JsonUtils.mapTypeOf;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 /// Owns the process-wide configuration and detached workspace settings instances.
@@ -80,6 +84,14 @@ public final class SettingsManager {
     private static final Path GAME_ACCOUNTS_LOCATION =
             Metadata.HMCL_LOCAL_HOME.resolve("game-accounts.json");
 
+    /// The shared account storage path.
+    private static final Path USER_GAME_ACCOUNTS_LOCATION =
+            Metadata.HMCL_USER_HOME.resolve("user-game-accounts.json");
+
+    /// The legacy shared account storage path.
+    private static final Path LEGACY_USER_ACCOUNTS_LOCATION =
+            Metadata.HMCL_USER_HOME.resolve("accounts.json");
+
     /// The per-workspace game directory file helper.
     private static final JsonSettingFile<GameDirectories> LOCAL_GAME_DIRECTORIES_FILE = new JsonSettingFile<>(
             LOCAL_GAME_DIRECTORIES_LOCATION,
@@ -108,6 +120,14 @@ public final class SettingsManager {
     private static final JsonSettingFile<AccountStorages> GAME_ACCOUNTS_FILE = new JsonSettingFile<>(
             GAME_ACCOUNTS_LOCATION,
             "game accounts",
+            AccountStorages.class,
+            AccountStorages.CURRENT_SCHEMA,
+            AccountStorages::new);
+
+    /// The shared account storage file helper.
+    private static final JsonSettingFile<AccountStorages> USER_GAME_ACCOUNTS_FILE = new JsonSettingFile<>(
+            USER_GAME_ACCOUNTS_LOCATION,
+            "user game accounts",
             AccountStorages.class,
             AccountStorages.CURRENT_SCHEMA,
             AccountStorages::new);
@@ -165,6 +185,9 @@ public final class SettingsManager {
 
     /// The loaded detached account storage store.
     private static @UnknownNullability AccountStorages gameAccounts;
+
+    /// The loaded shared account storage store.
+    private static @UnknownNullability AccountStorages userGameAccounts;
 
     /// Whether no current or legacy per-workspace config could be loaded.
     private static boolean newlyCreated;
@@ -253,6 +276,11 @@ public final class SettingsManager {
         return GAME_ACCOUNTS_LOCATION;
     }
 
+    /// Returns the shared account storage path.
+    public static Path userGameAccountsLocation() {
+        return USER_GAME_ACCOUNTS_LOCATION;
+    }
+
     /// Returns the loaded detached game directory store.
     public static GameDirectories gameDirectories() {
         if (gameDirectories == null) {
@@ -277,6 +305,14 @@ public final class SettingsManager {
         return gameAccounts;
     }
 
+    /// Returns the loaded shared account storage store.
+    static AccountStorages userGameAccounts() {
+        if (userGameAccounts == null) {
+            throw new IllegalStateException("User game accounts haven't been loaded");
+        }
+        return userGameAccounts;
+    }
+
     /// Returns the per-workspace authlib-injector servers.
     public static ObservableList<AuthlibInjectorServer> getAuthlibInjectorServers() {
         return authlibInjectorServers().getServers();
@@ -285,6 +321,11 @@ public final class SettingsManager {
     /// Returns the per-workspace account storages.
     public static ObservableList<Map<Object, Object>> getAccountStorages() {
         return gameAccounts().getAccounts();
+    }
+
+    /// Returns the shared account storages.
+    public static ObservableList<Map<Object, Object>> getUserAccountStorages() {
+        return userGameAccounts().getAccounts();
     }
 
     /// Serializes the per-workspace account storage file content.
@@ -416,6 +457,7 @@ public final class SettingsManager {
         loadGameSettingsPresets(detachedSettingsFallback.gameSettingsPresets(), !unsupportedVersion);
         loadLauncherState(detachedSettingsFallback.launcherState(), !unsupportedVersion);
         loadAuthlibInjectorServers(detachedSettingsFallback.authlibInjectorServers(), !unsupportedVersion);
+        loadUserGameAccounts(!unsupportedVersion);
         loadGameAccounts(detachedSettingsFallback.accountStorages(), !unsupportedVersion);
 
         if (!unsupportedVersion && (newlyCreated || needSaveSettings)) {
@@ -504,7 +546,7 @@ public final class SettingsManager {
     /// Loads game directories and installs the save listener.
     ///
     /// @param fallbackGameDirectories the fallback store used when the local game directory file does not exist
-    /// @param allowSave whether the detached game directory file may be overwritten
+    /// @param allowSave               whether the detached game directory file may be overwritten
     private static void loadGameDirectories(
             @Nullable GameDirectories fallbackGameDirectories,
             boolean allowSave) throws IOException {
@@ -621,7 +663,7 @@ public final class SettingsManager {
     /// Loads game settings presets and installs the save listener.
     ///
     /// @param fallbackGameSettingsPresets the fallback store used when the preset file does not exist
-    /// @param allowSave whether the detached preset file may be overwritten
+    /// @param allowSave                   whether the detached preset file may be overwritten
     private static void loadGameSettingsPresets(
             @Nullable GameSettingsPresets fallbackGameSettingsPresets,
             boolean allowSave) throws IOException {
@@ -648,7 +690,7 @@ public final class SettingsManager {
     /// Loads launcher state and installs the save listener.
     ///
     /// @param fallbackLauncherState the fallback state used when the launcher state file does not exist
-    /// @param allowSave whether the detached launcher state file may be overwritten
+    /// @param allowSave             whether the detached launcher state file may be overwritten
     private static void loadLauncherState(
             @Nullable LauncherState fallbackLauncherState,
             boolean allowSave) throws IOException {
@@ -675,7 +717,7 @@ public final class SettingsManager {
     /// Loads authlib-injector servers and installs the save listener.
     ///
     /// @param fallbackAuthlibInjectorServers the fallback list used when the server list file does not exist
-    /// @param allowSave whether the detached server list file may be overwritten
+    /// @param allowSave                      whether the detached server list file may be overwritten
     private static void loadAuthlibInjectorServers(
             @Nullable AuthlibInjectorServerList fallbackAuthlibInjectorServers,
             boolean allowSave) throws IOException {
@@ -699,10 +741,67 @@ public final class SettingsManager {
         }
     }
 
+    /// Loads shared account storages and installs the save listener.
+    ///
+    /// @param allowSave whether the shared account storage file may be overwritten
+    private static void loadUserGameAccounts(boolean allowSave) {
+        if (userGameAccounts != null) {
+            throw new IllegalStateException("User game accounts are already loaded");
+        }
+
+        LOG.info("User game accounts location: " + USER_GAME_ACCOUNTS_LOCATION);
+
+        boolean newlyCreated = !Files.exists(USER_GAME_ACCOUNTS_LOCATION);
+        @Nullable AccountStorages migrated = newlyCreated ? loadLegacyUserGameAccounts() : null;
+        try {
+            JsonSettingFile.LoadResult<AccountStorages> result = USER_GAME_ACCOUNTS_FILE.load(migrated);
+            userGameAccounts = result.value();
+            if (allowSave && result.allowSave()) {
+                USER_GAME_ACCOUNTS_FILE.installAutoSave(userGameAccounts);
+            }
+
+            if (newlyCreated && allowSave && result.allowSave()) {
+                LOG.info("Creating user game accounts file " + USER_GAME_ACCOUNTS_LOCATION);
+                USER_GAME_ACCOUNTS_FILE.save(userGameAccounts);
+            }
+        } catch (IOException e) {
+            LOG.warning("Failed to load user game accounts", e);
+            userGameAccounts = migrated != null ? migrated : new AccountStorages();
+            if (allowSave) {
+                USER_GAME_ACCOUNTS_FILE.installAutoSave(userGameAccounts);
+            }
+        }
+    }
+
+    /// Loads the legacy shared account storage file for first-time detached account migration.
+    private static @Nullable AccountStorages loadLegacyUserGameAccounts() {
+        if (!Files.exists(LEGACY_USER_ACCOUNTS_LOCATION)) {
+            return null;
+        }
+
+        try {
+            List<Map<Object, Object>> accounts = JsonUtils.fromJsonFile(
+                    LauncherSettings.SETTINGS_GSON,
+                    LEGACY_USER_ACCOUNTS_LOCATION,
+                    listTypeOf(mapTypeOf(Object.class, Object.class))
+            );
+            if (accounts == null) {
+                return null;
+            }
+
+            LOG.info("Migrating user accounts from " + LEGACY_USER_ACCOUNTS_LOCATION
+                    + " to " + USER_GAME_ACCOUNTS_LOCATION);
+            return AccountStorages.fromAccounts(accounts);
+        } catch (Throwable e) {
+            LOG.warning("Failed to load legacy user accounts", e);
+            return null;
+        }
+    }
+
     /// Loads account storages and installs the save listener.
     ///
     /// @param fallbackGameAccounts the fallback store used when the account storage file does not exist
-    /// @param allowSave whether the detached account storage file may be overwritten
+    /// @param allowSave            whether the detached account storage file may be overwritten
     private static void loadGameAccounts(
             @Nullable AccountStorages fallbackGameAccounts,
             boolean allowSave) throws IOException {
@@ -821,7 +920,7 @@ public final class SettingsManager {
     /// Original storage metadata for a game directory entry.
     ///
     /// @param scope the file where this entry belongs while its path remains unchanged
-    /// @param path the original serialized path string
+    /// @param path  the original serialized path string
     private record GameDirectorySource(GameDirectoryScope scope, String path) {
     }
 
