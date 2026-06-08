@@ -87,20 +87,20 @@ final class JsonSettingFile<T extends ObservableSetting & JsonSchemaSetting> {
                 if (jsonObject == null) {
                     LOG.warning(displayName + " are empty: " + location);
                 } else {
-                    JsonSchemaPolicy.Result schema =
+                    JsonSchemaPolicy.Result checkResult =
                             JsonSchemaPolicy.check(location, displayName, jsonObject, expectedSchema);
-                    if (!schema.readable()) {
+                    if (!checkResult.readable()) {
                         return new LoadResult<>(createDefault.get(), false);
                     }
 
                     T deserialized = LauncherSettings.SETTINGS_GSON.<@Nullable T>fromJson(jsonObject, type);
                     if (deserialized != null) {
                         // Patch-compatible files keep their original schema because unknown members are preserved.
-                        if (!schema.preserveSchema() && !expectedSchema.equals(deserialized.getSchema())) {
+                        if (!checkResult.preserveSchema() && !expectedSchema.equals(deserialized.getSchema())) {
                             deserialized.setSchema(expectedSchema);
                         }
 
-                        return new LoadResult<>(deserialized, schema.allowSave());
+                        return new LoadResult<>(deserialized, checkResult.allowSave());
                     }
 
                     LOG.warning(displayName + " deserialized to null: " + location);
