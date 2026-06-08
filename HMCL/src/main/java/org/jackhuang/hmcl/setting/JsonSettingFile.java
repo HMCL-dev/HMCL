@@ -112,7 +112,7 @@ final class JsonSettingFile<T extends ObservableSetting & JsonSchemaSetting> {
             return new LoadResult<>(createDefault.get(), false);
         }
 
-        return new LoadResult<>(migrated != null ? migrated : createDefault.get(), true);
+        return new LoadResult<>(Objects.requireNonNullElseGet(migrated, createDefault), true);
     }
 
     /// Installs an automatic save listener on a settings object.
