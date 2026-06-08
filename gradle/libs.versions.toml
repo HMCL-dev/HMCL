@@ -24,7 +24,7 @@ terracotta = "0.4.2"
 nayuki-qrcodegen = "1.8.0"
 jwebp = "0.2.0"
 weburl = "0.2.0"
-uuid-creator = "6.1.0"
+uuid-tools = "0.1.0"
 
 # testing
 junit = "6.0.1"
@@ -61,7 +61,7 @@ monet-fx = { module = "org.glavo:MonetFX", version.ref = "monet-fx" }
 nayuki-qrcodegen = { module = "io.nayuki:qrcodegen", version.ref = "nayuki-qrcodegen" }
 jwebp = { module = "org.glavo:webp", version.ref = "jwebp" }
 weburl = { module = "org.glavo:weburl", version.ref = "weburl" }
-uuid_creator = { module = "com.github.f4b6a3:uuid-creator", version.ref = "uuid-creator" }
+uuid-tools = { module = "org.glavo:uuid-tools", version.ref = "uuid-tools" }
 
 # testing
 junit-jupiter = { module = "org.junit.jupiter:junit-jupiter", version.ref = "junit" }

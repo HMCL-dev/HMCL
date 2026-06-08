@@ -17,7 +17,6 @@
  */
 package org.jackhuang.hmcl.setting;
 
-import com.github.f4b6a3.uuid.alt.GUID;
 import com.google.gson.JsonDeserializationContext;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonParseException;
@@ -96,16 +95,16 @@ public final class GameSettingsPresets extends ObservableSetting implements Json
     }
 
     /// Creates a preset ID that does not collide with existing presets.
-    public GUID newPresetId() {
-        GUID id;
+    public SettingId newPresetId() {
+        SettingId id;
         do {
-            id = GUID.v7();
+            id = SettingId.generate();
         } while (getPreset(id) != null);
         return id;
     }
 
     /// Returns the preset with the given ID.
-    public GameSettings.@Nullable Preset getPreset(@Nullable GUID id) {
+    public GameSettings.@Nullable Preset getPreset(@Nullable SettingId id) {
         if (id == null) {
             return null;
         }

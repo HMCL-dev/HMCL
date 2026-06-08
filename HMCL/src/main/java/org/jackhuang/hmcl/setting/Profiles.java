@@ -17,7 +17,6 @@
  */
 package org.jackhuang.hmcl.setting;
 
-import com.github.f4b6a3.uuid.alt.GUID;
 import javafx.application.Platform;
 import javafx.beans.property.*;
 import javafx.collections.FXCollections;
@@ -54,21 +53,21 @@ public final class Profiles {
     }
 
     /// Creates a profile ID that does not collide with existing profiles.
-    public static GUID newProfileId() {
+    public static SettingId newProfileId() {
         return newProfileId(new HashSet<>());
     }
 
     /// Creates a profile ID that does not collide with existing profiles or reserved IDs.
-    private static GUID newProfileId(HashSet<GUID> reservedIds) {
-        GUID id;
+    private static SettingId newProfileId(HashSet<SettingId> reservedIds) {
+        SettingId id;
         do {
-            id = GUID.v7();
+            id = SettingId.generate();
         } while (hasProfileId(id) || reservedIds.contains(id));
         return id;
     }
 
     /// Returns whether an existing profile uses the given ID.
-    private static boolean hasProfileId(GUID id) {
+    private static boolean hasProfileId(SettingId id) {
         for (Profile profile : SettingsManager.getGameDirectories()) {
             if (id.equals(profile.getId())) {
                 return true;
@@ -172,16 +171,16 @@ public final class Profiles {
         }
 
         ObservableList<Profile> profiles = SettingsManager.getGameDirectories();
-        HashSet<GUID> reservedIds = new HashSet<>();
+        HashSet<SettingId> reservedIds = new HashSet<>();
         ArrayList<Profile> missingProfiles = new ArrayList<>(2);
 
         if (profiles.stream().noneMatch(profile -> isProfilePath(profile, CURRENT_PROFILE_PATH))) {
-            GUID id = newProfileId(reservedIds);
+            SettingId id = newProfileId(reservedIds);
             reservedIds.add(id);
             missingProfiles.add(new Profile(id, null, CURRENT_PROFILE_PATH));
         }
         if (profiles.stream().noneMatch(profile -> isProfilePath(profile, HOME_PROFILE_PATH))) {
-            GUID id = newProfileId(reservedIds);
+            SettingId id = newProfileId(reservedIds);
             reservedIds.add(id);
             missingProfiles.add(new Profile(id, null, HOME_PROFILE_PATH));
         }
@@ -251,7 +250,7 @@ public final class Profiles {
         Platform.runLater(() -> {
             initialized = true;
 
-            @Nullable GUID selectedId = SettingsManager.getSelectedGameDirectory();
+            @Nullable SettingId selectedId = SettingsManager.getSelectedGameDirectory();
             selectedProfile.set(
                     SettingsManager.getGameDirectories().stream()
                             .filter(it -> it.getId().equals(selectedId))
@@ -272,7 +271,7 @@ public final class Profiles {
     }
 
     private static void removeDuplicateProfiles(ObservableList<Profile> profiles) {
-        HashSet<GUID> ids = new HashSet<>();
+        HashSet<SettingId> ids = new HashSet<>();
         HashSet<String> names = new HashSet<>();
         profiles.removeIf(profile -> {
             String name = getProfileCustomName(profile);

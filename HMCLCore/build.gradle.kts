@@ -28,8 +28,6 @@ dependencies {
     api(libs.pci.ids)
     api(libs.hello.nbt)
     api(libs.weburl)
-    api(libs.uuid.creator)
-
     compileOnlyApi(libs.jetbrains.annotations)
 
     testImplementation(libs.jna.platform)

@@ -17,7 +17,6 @@
  */
 package org.jackhuang.hmcl.setting;
 
-import com.github.f4b6a3.uuid.alt.GUID;
 import com.google.gson.JsonParseException;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
@@ -44,7 +43,7 @@ public final class GameDirectoriesTest {
     /// Tests extracting legacy configuration data into a detached game directory store.
     @Test
     public void extractsConfigurationsFromLegacyConfigJson() {
-        GUID id = LegacyConfigMigrator.getLegacyProfileId("Dev");
+        SettingId id = LegacyConfigMigrator.getLegacyProfileId("Dev");
         JsonObject settings = JsonParser.parseString("""
                 {
                   "configurations": {
@@ -69,8 +68,8 @@ public final class GameDirectoriesTest {
     /// Tests extracting the migrated legacy game settings ID from a legacy profile.
     @Test
     public void extractsLegacyGameSettingsIdFromLegacyProfileGlobalSettings() {
-        GUID profileId = LegacyConfigMigrator.getLegacyProfileId("Dev");
-        GUID legacyGameSettings = LegacyConfigMigrator.getLegacyGameSettingsId("Dev");
+        SettingId profileId = LegacyConfigMigrator.getLegacyProfileId("Dev");
+        SettingId legacyGameSettings = LegacyConfigMigrator.getLegacyGameSettingsId("Dev");
         JsonObject settings = JsonParser.parseString("""
                 {
                   "configurations": {
@@ -113,8 +112,8 @@ public final class GameDirectoriesTest {
 
         GameDirectories gameDirectories = Objects.requireNonNull(LegacyConfigMigrator.extractGameDirectoriesFromConfigJson(settings));
 
-        GUID defaultProfileId = LegacyConfigMigrator.getLegacyProfileId("Default");
-        GUID homeProfileId = LegacyConfigMigrator.getLegacyProfileId("Home");
+        SettingId defaultProfileId = LegacyConfigMigrator.getLegacyProfileId("Default");
+        SettingId homeProfileId = LegacyConfigMigrator.getLegacyProfileId("Home");
         Profile defaultProfile = gameDirectories.getGameDirectories().stream()
                 .filter(profile -> defaultProfileId.equals(profile.getId()))
                 .findFirst()
@@ -136,8 +135,8 @@ public final class GameDirectoriesTest {
     /// Tests migrating upstream/main selected version fields into the main config.
     @Test
     public void migratesLegacySelectedVersionsFromConfigurations() {
-        GUID id = LegacyConfigMigrator.getLegacyProfileId("Dev");
-        assertEquals(5, id.version());
+        SettingId id = LegacyConfigMigrator.getLegacyProfileId("Dev");
+        assertEquals(5, id.uuid().version());
         JsonObject settings = JsonParser.parseString("""
                 {
                   "last": "Dev",
@@ -169,7 +168,7 @@ public final class GameDirectoriesTest {
     /// Tests that profiles store their directory as a portable path.
     @Test
     public void storesProfilePath() {
-        GUID id = new GUID("123e4567-e89b-12d3-a456-426614174000");
+        SettingId id = SettingId.parse("123e4567-e89b-12d3-a456-426614174000");
         Profile profile = new Profile(id, LocalizedText.plain("Dev"), PortablePath.of("versions\\Dev"));
 
         JsonObject serialized = JsonUtils.GSON.toJsonTree(profile, Profile.class).getAsJsonObject();
@@ -209,8 +208,8 @@ public final class GameDirectoriesTest {
     /// Tests that profiles preserve migrated legacy game settings IDs.
     @Test
     public void storesLegacyGameSettingsId() {
-        GUID id = new GUID("123e4567-e89b-12d3-a456-426614174000");
-        GUID legacyGameSettings = new GUID("123e4567-e89b-12d3-a456-426614174001");
+        SettingId id = SettingId.parse("123e4567-e89b-12d3-a456-426614174000");
+        SettingId legacyGameSettings = SettingId.parse("123e4567-e89b-12d3-a456-426614174001");
         Profile profile = new Profile(
                 id,
                 LocalizedText.plain("Dev"),
@@ -227,7 +226,7 @@ public final class GameDirectoriesTest {
     /// Tests that unnamed profiles are displayed by ID and serialized without a name.
     @Test
     public void displaysUnnamedProfileAsId() {
-        GUID id = new GUID("123e4567-e89b-12d3-a456-426614174000");
+        SettingId id = SettingId.parse("123e4567-e89b-12d3-a456-426614174000");
         Profile profile = new Profile(id, null, PortablePath.of("versions\\Dev"));
 
         JsonObject serialized = JsonUtils.GSON.toJsonTree(profile, Profile.class).getAsJsonObject();
@@ -241,7 +240,7 @@ public final class GameDirectoriesTest {
     /// Tests that an explicit name overrides built-in display names.
     @Test
     public void displaysExplicitNameBeforeBuiltInName() {
-        GUID id = new GUID("123e4567-e89b-12d3-a456-426614174000");
+        SettingId id = SettingId.parse("123e4567-e89b-12d3-a456-426614174000");
         Profile profile = new Profile(id, LocalizedText.plain("Custom Default"), PortablePath.of(".minecraft"));
 
         assertEquals("Custom Default", Profiles.getProfileDisplayName(profile));

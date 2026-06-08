@@ -17,7 +17,6 @@
  */
 package org.jackhuang.hmcl.setting;
 
-import com.github.f4b6a3.uuid.alt.GUID;
 import com.google.gson.JsonDeserializationContext;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonParseException;
@@ -110,10 +109,10 @@ public sealed abstract class GameSettings extends ObservableSetting {
 
         /// The parent preset ID.
         @SerializedName("parent")
-        private final SettingProperty<@Nullable GUID> parent = newSettingProperty("parent");
+        private final SettingProperty<@Nullable SettingId> parent = newSettingProperty("parent");
 
         /// Returns the parent preset ID property.
-        public SettingProperty<@Nullable GUID> parentProperty() {
+        public SettingProperty<@Nullable SettingId> parentProperty() {
             return parent;
         }
 
@@ -149,7 +148,7 @@ public sealed abstract class GameSettings extends ObservableSetting {
     @JsonSerializable
     public static final class Preset extends GameSettings {
         /// Creates a preset with the given identity.
-        public Preset(GUID id) {
+        public Preset(SettingId id) {
             register();
             this.id.setValue(Objects.requireNonNull(id));
         }
@@ -161,10 +160,10 @@ public sealed abstract class GameSettings extends ObservableSetting {
 
         /// The stable preset ID.
         @SerializedName("id")
-        private final SettingProperty<GUID> id = newSettingProperty("id", GUID.NIL);
+        private final SettingProperty<SettingId> id = newSettingProperty("id", SettingId.NIL);
 
         /// Returns the preset ID property.
-        public SettingProperty<GUID> idProperty() {
+        public SettingProperty<SettingId> idProperty() {
             return id;
         }
 
@@ -208,7 +207,7 @@ public sealed abstract class GameSettings extends ObservableSetting {
                     Type typeOfT,
                     JsonDeserializationContext context) throws JsonParseException {
                 @Nullable Preset result = super.deserialize(json, typeOfT, context);
-                if (result != null && GUID.NIL.equals(result.idProperty().getValue())) {
+                if (result != null && SettingId.NIL.equals(result.idProperty().getValue())) {
                     throw new JsonParseException("Preset ID cannot be nil");
                 }
                 return result;

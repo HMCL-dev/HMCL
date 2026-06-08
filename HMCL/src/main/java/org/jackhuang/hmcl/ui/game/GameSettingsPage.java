@@ -17,7 +17,6 @@
  */
 package org.jackhuang.hmcl.ui.game;
 
-import com.github.f4b6a3.uuid.alt.GUID;
 import com.jfoenix.controls.JFXButton;
 import com.jfoenix.controls.JFXComboBox;
 import com.jfoenix.controls.JFXSlider;
@@ -766,7 +765,7 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
             if (newValue instanceof GameSettings.Instance setting) {
                 updatingParentSetting = true;
                 try {
-                    GUID parent = setting.parentProperty().getValue();
+                    SettingId parent = setting.parentProperty().getValue();
                     button.setValue(parent != null ? SettingsManager.getGameSettings(parent) : null);
                 } finally {
                     updatingParentSetting = false;
@@ -2128,7 +2127,7 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
 
     /// Returns the configured parent preset for an instance.
     private GameSettings.Preset getParentGameSettings(GameSettings.Instance instance) {
-        GUID parent = instance.parentProperty().getValue();
+        SettingId parent = instance.parentProperty().getValue();
         GameSettings.Preset parentSetting = SettingsManager.getGameSettings(parent);
         return parentSetting != null ? parentSetting : SettingsManager.getDefaultGameSettingsPresetOrCreate();
     }

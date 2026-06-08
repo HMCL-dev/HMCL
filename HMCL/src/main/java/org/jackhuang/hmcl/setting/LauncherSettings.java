@@ -17,7 +17,6 @@
  */
 package org.jackhuang.hmcl.setting;
 
-import com.github.f4b6a3.uuid.alt.GUID;
 import com.google.gson.*;
 import com.google.gson.annotations.JsonAdapter;
 import com.google.gson.annotations.SerializedName;
@@ -69,7 +68,6 @@ public final class LauncherSettings extends ObservableSetting {
     public static final Gson SETTINGS_GSON = new GsonBuilder()
             .registerTypeAdapter(Path.class, PathTypeAdapter.INSTANCE)
             .registerTypeAdapter(UUID.class, UUIDTypeAdapter.INSTANCE)
-            .registerTypeAdapter(GUID.class, GUIDTypeAdapter.INSTANCE)
             .registerTypeAdapter(ObservableList.class, new ObservableListCreator())
             .registerTypeAdapter(ObservableSet.class, new ObservableSetCreator())
             .registerTypeAdapter(ObservableMap.class, new ObservableMapCreator())
@@ -417,40 +415,40 @@ public final class LauncherSettings extends ObservableSetting {
 
     /// The selected game directory ID.
     @SerializedName(PROPERTY_SELECTED_GAME_DIRECTORY)
-    private final ObjectProperty<@Nullable GUID> selectedGameDirectory =
+    private final ObjectProperty<@Nullable SettingId> selectedGameDirectory =
             new SimpleObjectProperty<>(this, PROPERTY_SELECTED_GAME_DIRECTORY);
 
     /// Returns the selected game directory ID property.
-    public ObjectProperty<@Nullable GUID> selectedGameDirectoryProperty() {
+    public ObjectProperty<@Nullable SettingId> selectedGameDirectoryProperty() {
         return selectedGameDirectory;
     }
 
     /// The default game setting preset ID.
     @SerializedName(PROPERTY_DEFAULT_GAME_SETTINGS_PRESET)
-    private final ObjectProperty<@Nullable GUID> defaultGameSettingsPreset =
+    private final ObjectProperty<@Nullable SettingId> defaultGameSettingsPreset =
             new SimpleObjectProperty<>(this, PROPERTY_DEFAULT_GAME_SETTINGS_PRESET);
 
     /// Returns the default game setting preset ID property.
-    public ObjectProperty<@Nullable GUID> defaultGameSettingsPresetProperty() {
+    public ObjectProperty<@Nullable SettingId> defaultGameSettingsPresetProperty() {
         return defaultGameSettingsPreset;
     }
 
     /// Selected instance IDs keyed by game directory ID.
     @SerializedName(PROPERTY_SELECTED_INSTANCE)
-    private final ObservableMap<GUID, String> selectedInstance = FXCollections.observableHashMap();
+    private final ObservableMap<SettingId, String> selectedInstance = FXCollections.observableHashMap();
 
     /// Returns selected instance IDs keyed by game directory ID.
-    public ObservableMap<GUID, String> getSelectedInstance() {
+    public ObservableMap<SettingId, String> getSelectedInstance() {
         return selectedInstance;
     }
 
     /// Returns the selected instance ID for the given game directory ID.
-    public @Nullable String getSelectedInstance(@Nullable GUID gameDirectoryId) {
+    public @Nullable String getSelectedInstance(@Nullable SettingId gameDirectoryId) {
         return gameDirectoryId != null ? selectedInstance.get(gameDirectoryId) : null;
     }
 
     /// Sets the selected instance ID for the given game directory ID.
-    public void setSelectedInstance(@Nullable GUID gameDirectoryId, @Nullable String selectedInstance) {
+    public void setSelectedInstance(@Nullable SettingId gameDirectoryId, @Nullable String selectedInstance) {
         if (gameDirectoryId == null) {
             return;
         }

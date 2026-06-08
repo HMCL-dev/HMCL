@@ -17,7 +17,6 @@
  */
 package org.jackhuang.hmcl.setting;
 
-import com.github.f4b6a3.uuid.alt.GUID;
 import com.google.gson.*;
 import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.util.StringUtils;
@@ -51,10 +50,10 @@ public final class LegacyConfigMigrator {
     private static final int LEGACY_CURRENT_CONFIG_VERSION = 2;
 
     /// Namespace used to generate stable IDs for legacy profiles.
-    private static final GUID LEGACY_PROFILE_ID_NAMESPACE = GUID.v5(GUID.NAMESPACE_URL, "hmcl:legacy-profile");
+    private static final SettingId LEGACY_PROFILE_ID_NAMESPACE = SettingId.v5(SettingId.NAMESPACE_URL, "hmcl:legacy-profile");
 
     /// Namespace used to generate stable IDs for profile-level game settings migrated from legacy profiles.
-    private static final GUID LEGACY_GAME_SETTINGS_ID_NAMESPACE = GUID.v5(GUID.NAMESPACE_URL, "hmcl:legacy-game-settings");
+    private static final SettingId LEGACY_GAME_SETTINGS_ID_NAMESPACE = SettingId.v5(SettingId.NAMESPACE_URL, "hmcl:legacy-game-settings");
 
     /// The legacy built-in profile name for the current workspace game directory.
     private static final String LEGACY_DEFAULT_PROFILE = "Default";
@@ -66,10 +65,10 @@ public final class LegacyConfigMigrator {
     private static final String LEGACY_HOME_PROFILE = "Home";
 
     /// The legacy built-in current-workspace profile ID.
-    private static final GUID LEGACY_DEFAULT_PROFILE_ID = getLegacyProfileId(LEGACY_DEFAULT_PROFILE);
+    private static final SettingId LEGACY_DEFAULT_PROFILE_ID = getLegacyProfileId(LEGACY_DEFAULT_PROFILE);
 
     /// The legacy built-in user-home profile ID.
-    private static final GUID LEGACY_HOME_PROFILE_ID = getLegacyProfileId(LEGACY_HOME_PROFILE);
+    private static final SettingId LEGACY_HOME_PROFILE_ID = getLegacyProfileId(LEGACY_HOME_PROFILE);
 
     /// The legacy Windows and portable configuration file name used through HMCL 3.15.0.345.
     private static final String LEGACY_CONFIG_FILENAME = "hmcl.json";
@@ -105,13 +104,13 @@ public final class LegacyConfigMigrator {
     }
 
     /// Returns the stable profile ID for a migrated legacy profile.
-    static GUID getLegacyProfileId(String profileName) {
-        return GUID.v5(LEGACY_PROFILE_ID_NAMESPACE, profileName);
+    static SettingId getLegacyProfileId(String profileName) {
+        return SettingId.v5(LEGACY_PROFILE_ID_NAMESPACE, profileName);
     }
 
     /// Returns the stable game settings preset ID for a migrated legacy profile.
-    static GUID getLegacyGameSettingsId(String profileName) {
-        return GUID.v5(LEGACY_GAME_SETTINGS_ID_NAMESPACE, profileName);
+    static SettingId getLegacyGameSettingsId(String profileName) {
+        return SettingId.v5(LEGACY_GAME_SETTINGS_ID_NAMESPACE, profileName);
     }
 
     /// Looks for a legacy config file and prepares it for writing as the new config file.
@@ -808,7 +807,7 @@ public final class LegacyConfigMigrator {
         @Nullable String selectedName = JsonUtils.getString(lastElement);
         if (selectedName != null) {
             json.add(LauncherSettings.PROPERTY_SELECTED_GAME_DIRECTORY,
-                    JsonUtils.GSON.toJsonTree(getLegacyProfileId(selectedName), GUID.class));
+                    JsonUtils.GSON.toJsonTree(getLegacyProfileId(selectedName), SettingId.class));
         }
         return true;
     }
@@ -860,7 +859,7 @@ public final class LegacyConfigMigrator {
         }
 
         for (Profile profile : gameDirectories.getGameDirectories()) {
-            @Nullable GUID legacyGameSettings = profile.getLegacyGameSettings();
+            @Nullable SettingId legacyGameSettings = profile.getLegacyGameSettings();
             if (legacyGameSettings == null) {
                 continue;
             }

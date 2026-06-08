@@ -17,7 +17,6 @@
  */
 package org.jackhuang.hmcl.setting;
 
-import com.github.f4b6a3.uuid.alt.GUID;
 import com.google.gson.JsonParseException;
 import com.google.gson.JsonObject;
 import javafx.beans.property.ObjectProperty;
@@ -147,7 +146,7 @@ public final class SettingsManager {
     private static @UnknownNullability GameDirectories gameDirectories;
 
     /// Original storage location and path for loaded game directories.
-    private static final Map<GUID, GameDirectorySource> gameDirectorySources = new HashMap<>();
+    private static final Map<SettingId, GameDirectorySource> gameDirectorySources = new HashMap<>();
 
     /// Whether the per-workspace game directories file may be overwritten.
     private static boolean allowSaveLocalGameDirectories = false;
@@ -299,32 +298,32 @@ public final class SettingsManager {
     }
 
     /// Returns the selected game directory ID property.
-    public static ObjectProperty<@Nullable GUID> selectedGameDirectoryProperty() {
+    public static ObjectProperty<@Nullable SettingId> selectedGameDirectoryProperty() {
         return settings().selectedGameDirectoryProperty();
     }
 
     /// Returns the selected game directory ID.
-    public static @Nullable GUID getSelectedGameDirectory() {
+    public static @Nullable SettingId getSelectedGameDirectory() {
         return settings().selectedGameDirectoryProperty().get();
     }
 
     /// Sets the selected game directory ID.
-    public static void setSelectedGameDirectory(@Nullable GUID selectedGameDirectory) {
+    public static void setSelectedGameDirectory(@Nullable SettingId selectedGameDirectory) {
         settings().selectedGameDirectoryProperty().set(selectedGameDirectory);
     }
 
     /// Returns selected instance IDs keyed by game directory ID.
-    public static ObservableMap<GUID, String> getSelectedInstance() {
+    public static ObservableMap<SettingId, String> getSelectedInstance() {
         return settings().getSelectedInstance();
     }
 
     /// Returns the selected instance ID for the given game directory ID.
-    public static @Nullable String getSelectedInstance(@Nullable GUID gameDirectoryId) {
+    public static @Nullable String getSelectedInstance(@Nullable SettingId gameDirectoryId) {
         return settings().getSelectedInstance(gameDirectoryId);
     }
 
     /// Sets the selected instance ID for the given game directory ID.
-    public static void setSelectedInstance(@Nullable GUID gameDirectoryId, @Nullable String selectedInstance) {
+    public static void setSelectedInstance(@Nullable SettingId gameDirectoryId, @Nullable String selectedInstance) {
         settings().setSelectedInstance(gameDirectoryId, selectedInstance);
     }
 
@@ -334,22 +333,22 @@ public final class SettingsManager {
     }
 
     /// Returns the default game setting preset ID property.
-    public static ObjectProperty<@Nullable GUID> defaultGameSettingsPresetProperty() {
+    public static ObjectProperty<@Nullable SettingId> defaultGameSettingsPresetProperty() {
         return settings().defaultGameSettingsPresetProperty();
     }
 
     /// Returns the default game setting preset ID.
-    public static @Nullable GUID getDefaultGameSettingsPreset() {
+    public static @Nullable SettingId getDefaultGameSettingsPreset() {
         return settings().defaultGameSettingsPresetProperty().get();
     }
 
     /// Sets the default game setting preset ID.
-    public static void setDefaultGameSettingsPreset(@Nullable GUID defaultGameSettingsPreset) {
+    public static void setDefaultGameSettingsPreset(@Nullable SettingId defaultGameSettingsPreset) {
         settings().defaultGameSettingsPresetProperty().set(defaultGameSettingsPreset);
     }
 
     /// Returns the game setting preset with the given ID.
-    public static GameSettings.@Nullable Preset getGameSettings(@Nullable GUID id) {
+    public static GameSettings.@Nullable Preset getGameSettings(@Nullable SettingId id) {
         return gameSettingsPresets().getPreset(id);
     }
 
@@ -558,7 +557,7 @@ public final class SettingsManager {
         Objects.requireNonNull(profile);
         Objects.requireNonNull(source);
 
-        GUID id = profile.getId();
+        SettingId id = profile.getId();
         merged.getGameDirectories().removeIf(existing -> existing.getId().equals(id));
         merged.getGameDirectories().add(profile);
         PortablePath path = profile.getPath();
@@ -599,7 +598,7 @@ public final class SettingsManager {
 
     /// Updates source tracking after saving the current merged directory store.
     private static void updateGameDirectorySources() {
-        Map<GUID, GameDirectorySource> updated = new HashMap<>();
+        Map<SettingId, GameDirectorySource> updated = new HashMap<>();
         for (Profile profile : gameDirectories().getGameDirectories()) {
             PortablePath path = profile.getPath();
             updated.put(profile.getId(), new GameDirectorySource(getGameDirectoryScope(profile), path.getPath()));

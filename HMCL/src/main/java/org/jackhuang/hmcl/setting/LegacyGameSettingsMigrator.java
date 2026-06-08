@@ -17,7 +17,6 @@
  */
 package org.jackhuang.hmcl.setting;
 
-import com.github.f4b6a3.uuid.alt.GUID;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonPrimitive;
@@ -83,7 +82,7 @@ public final class LegacyGameSettingsMigrator {
     }
 
     /// Converts a legacy profile-level setting JSON object into a preset with the given ID.
-    public static GameSettings.Preset toPreset(GUID id, String name, @Nullable JsonObject source) {
+    public static GameSettings.Preset toPreset(SettingId id, String name, @Nullable JsonObject source) {
         GameSettings.Preset target = new GameSettings.Preset(id);
         target.nameProperty().setValue(LocalizedText.plain(name));
         if (getLegacyGameDirType(source, GameDirectoryType.ROOT_FOLDER) == GameDirectoryType.VERSION_FOLDER) {
@@ -104,7 +103,7 @@ public final class LegacyGameSettingsMigrator {
     public static @Nullable GameSettings.Instance migrateInstanceGameSettings(
             Path versionRoot,
             Path baseDirectory,
-            @Nullable GUID parent) {
+            @Nullable SettingId parent) {
         Objects.requireNonNull(versionRoot);
         Objects.requireNonNull(baseDirectory);
 
@@ -134,7 +133,7 @@ public final class LegacyGameSettingsMigrator {
     }
 
     /// Converts a legacy local setting JSON object into an instance game setting.
-    public static GameSettings.Instance toInstance(@Nullable GUID parent, @Nullable JsonObject source, boolean copyValues) {
+    public static GameSettings.Instance toInstance(@Nullable SettingId parent, @Nullable JsonObject source, boolean copyValues) {
         GameSettings.Instance target = new GameSettings.Instance();
         target.parentProperty().setValue(parent);
         target.iconProperty().setValue(parseLegacyVersionIconType(source));
@@ -184,7 +183,7 @@ public final class LegacyGameSettingsMigrator {
     }
 
     /// Preserves inherited legacy `VERSION_FOLDER` semantics for local settings that inherit parent values.
-    private static void preserveInheritedRunningDirectory(GameSettings.Instance setting, @Nullable GUID parent) {
+    private static void preserveInheritedRunningDirectory(GameSettings.Instance setting, @Nullable SettingId parent) {
         GameSettings.Preset parentSetting = SettingsManager.getGameSettings(parent);
         if (parentSetting != null && parentSetting.defaultIsolationTypeProperty().getValue() == DefaultIsolationType.ALWAYS) {
             setting.runningDirProperty().setValue("");
@@ -197,7 +196,7 @@ public final class LegacyGameSettingsMigrator {
             GameSettings.Instance setting,
             JsonObject legacySettingJson,
             Path baseDirectory,
-            @Nullable GUID parent) {
+            @Nullable SettingId parent) {
         GameSettings.Preset parentSetting = SettingsManager.getGameSettings(parent);
         if (parentSetting != null
                 && getLegacyGameDirType(legacySettingJson, GameDirectoryType.ROOT_FOLDER) == GameDirectoryType.ROOT_FOLDER

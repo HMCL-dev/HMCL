@@ -17,7 +17,6 @@
  */
 package org.jackhuang.hmcl.game;
 
-import com.github.f4b6a3.uuid.alt.GUID;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParseException;
 import com.google.gson.reflect.TypeToken;
@@ -39,6 +38,7 @@ import org.jackhuang.hmcl.setting.GameWindowType;
 import org.jackhuang.hmcl.setting.JsonSchemaPolicy;
 import org.jackhuang.hmcl.setting.LegacyGameSettingsMigrator;
 import org.jackhuang.hmcl.setting.Profile;
+import org.jackhuang.hmcl.setting.SettingId;
 import org.jackhuang.hmcl.setting.VersionIconType;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.util.FileSaver;
@@ -364,7 +364,7 @@ public final class HMCLGameRepository extends DefaultGameRepository {
     }
 
     public GameSettings.Preset getParentGameSettings(@Nullable GameSettings.Instance instance) {
-        @Nullable GUID parent = instance != null && instance.parentProperty().getValue() != null
+        @Nullable SettingId parent = instance != null && instance.parentProperty().getValue() != null
                 ? instance.parentProperty().getValue()
                 : profile.getLegacyGameSettings();
         GameSettings.Preset parentSetting = SettingsManager.getGameSettings(parent);
