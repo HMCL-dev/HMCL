@@ -246,8 +246,14 @@ public class DecoratorController {
                     image,
                     BackgroundRepeat.NO_REPEAT,
                     BackgroundRepeat.NO_REPEAT,
-                    BackgroundPosition.DEFAULT,
-                    new BackgroundSize(800, 480, false, false, true, true)
+                    BackgroundPosition.CENTER,
+                    new BackgroundSize(
+                            BackgroundSize.AUTO,
+                            BackgroundSize.AUTO,
+                            false,
+                            false,
+                            false,
+                            false)
             ));
         } else {
             WritableImage tempImage = new WritableImage((int) image.getWidth(), (int) image.getHeight());
@@ -265,8 +271,14 @@ public class DecoratorController {
                     tempImage,
                     BackgroundRepeat.NO_REPEAT,
                     BackgroundRepeat.NO_REPEAT,
-                    BackgroundPosition.DEFAULT,
-                    new BackgroundSize(800, 480, false, false, true, true)
+                    BackgroundPosition.CENTER,
+                    new BackgroundSize(
+                            BackgroundSize.AUTO,
+                            BackgroundSize.AUTO,
+                            false,
+                            false,
+                            false,
+                            false)
             ));
         }
     }

@@ -36,6 +36,7 @@ import javafx.scene.control.Label;
 import javafx.scene.control.SkinBase;
 import javafx.scene.effect.BlurType;
 import javafx.scene.effect.DropShadow;
+import javafx.scene.image.Image;
 import javafx.scene.input.MouseButton;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.*;
@@ -183,13 +184,13 @@ public class DecoratorSkin extends SkinBase<Decorator> {
         // and decide whether the whole top bar should be rendered in white or black. TODO
         FXUtils.onChangeAndOperate(skinnable.titleTransparentProperty(), titleTransparent -> {
             if (titleTransparent) {
-                wrapper.backgroundProperty().bind(skinnable.contentBackgroundProperty());
+                bindContentBackground(wrapper, skinnable);
                 container.backgroundProperty().unbind();
                 container.setBackground(null);
                 titleContainer.getStyleClass().remove("background");
                 titleContainer.getStyleClass().add("gray-background");
             } else {
-                container.backgroundProperty().bind(skinnable.contentBackgroundProperty());
+                bindContentBackground(container, skinnable);
                 wrapper.backgroundProperty().unbind();
                 wrapper.setBackground(null);
                 titleContainer.getStyleClass().add("background");
@@ -261,6 +262,86 @@ public class DecoratorSkin extends SkinBase<Decorator> {
         }
 
         getChildren().add(root);
+    }
+
+    /// Binds the target region to a background rebuilt for the region's current size.
+    private void bindContentBackground(Region target, Decorator skinnable) {
+        target.backgroundProperty().unbind();
+        target.backgroundProperty().bind(Bindings.createObjectBinding(
+                () -> createCenteredCoverBackground(
+                        skinnable.getContentBackground(),
+                        target.getWidth(),
+                        target.getHeight()
+                ),
+                skinnable.contentBackgroundProperty(),
+                target.widthProperty(),
+                target.heightProperty()
+        ));
+    }
+
+    /// Creates a background whose image layers use centered cover sizing without JavaFX cover mode.
+    private Background createCenteredCoverBackground(Background background, double regionWidth, double regionHeight) {
+        if (background == null || background.getImages().isEmpty()) {
+            return background;
+        }
+
+        return new Background(
+                background.getFills(),
+                background.getImages().stream()
+                        .map(backgroundImage -> new BackgroundImage(
+                                backgroundImage.getImage(),
+                                backgroundImage.getRepeatX(),
+                                backgroundImage.getRepeatY(),
+                                BackgroundPosition.CENTER,
+                                createCenteredCoverSize(
+                                        backgroundImage.getImage(),
+                                        regionWidth,
+                                        regionHeight
+                                )
+                        ))
+                        .toList()
+        );
+    }
+
+    /// Calculates percentage sizing that fills the region while letting BackgroundPosition center crop the overflow.
+    private BackgroundSize createCenteredCoverSize(Image image, double regionWidth, double regionHeight) {
+        if (image == null
+                || image.getWidth() <= 0
+                || image.getHeight() <= 0
+                || regionWidth <= 0
+                || regionHeight <= 0) {
+            return new BackgroundSize(
+                    BackgroundSize.AUTO,
+                    BackgroundSize.AUTO,
+                    false,
+                    false,
+                    false,
+                    false
+            );
+        }
+
+        double imageRatio = image.getWidth() / image.getHeight();
+        double regionRatio = regionWidth / regionHeight;
+
+        if (regionRatio > imageRatio) {
+            return new BackgroundSize(
+                    1.0,
+                    BackgroundSize.AUTO,
+                    true,
+                    false,
+                    false,
+                    false
+            );
+        } else {
+            return new BackgroundSize(
+                    BackgroundSize.AUTO,
+                    1.0,
+                    false,
+                    true,
+                    false,
+                    false
+            );
+        }
     }
 
     private Node createNavBar(Decorator skinnable, double leftPaneWidth, boolean canBack, boolean canClose, boolean showCloseAsHome, boolean canRefresh, String title, Node titleNode) {
