@@ -44,7 +44,7 @@ public abstract class LineButtonBase extends LineComponent {
     }
 
     public void fire() {
-        fireEvent(new ActionEvent());
+        fireEvent(new ActionEvent(this, this));
     }
 
     /// Updates the cursor shown by the row rippler.

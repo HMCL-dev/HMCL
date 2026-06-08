@@ -74,7 +74,12 @@ public class LineButton extends LineButtonBase {
 
                 @Override
                 protected void invalidated() {
-                    setEventHandler(ActionEvent.ACTION, get());
+                    EventHandler<ActionEvent> handler = get();
+                    setEventHandler(ActionEvent.ACTION, handler == null ? null : event -> {
+                        if (event.getTarget() == LineButton.this) {
+                            handler.handle(event);
+                        }
+                    });
                 }
             };
         }
