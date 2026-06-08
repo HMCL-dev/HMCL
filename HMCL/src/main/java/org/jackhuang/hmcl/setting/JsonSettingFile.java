@@ -93,7 +93,7 @@ final class JsonSettingFile<T extends ObservableSetting & JsonSchemaSetting> {
                         return new LoadResult<>(createDefault.get(), false);
                     }
 
-                    @Nullable T deserialized = JsonUtils.GSON.fromJson(jsonObject, type);
+                    T deserialized = LauncherSettings.SETTINGS_GSON.<@Nullable T>fromJson(jsonObject, type);
                     if (deserialized != null) {
                         // Patch-compatible files keep their original schema because unknown members are preserved.
                         if (!schema.preserveSchema() && !expectedSchema.equals(deserialized.getSchema())) {
