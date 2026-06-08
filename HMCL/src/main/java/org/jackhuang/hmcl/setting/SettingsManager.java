@@ -680,10 +680,20 @@ public final class SettingsManager {
         if (allowSave && result.allowSave()) {
             GAME_SETTINGS_FILE.installAutoSave(gameSettingsPresets);
         }
+        normalizeGameSettingsPresets();
 
         if (newlyCreated && allowSave && result.allowSave()) {
             LOG.info("Creating game settings file " + GAME_SETTINGS_LOCATION);
             GAME_SETTINGS_FILE.save(gameSettingsPresets);
+        }
+    }
+
+    /// Ensures there is a valid default game settings preset.
+    private static void normalizeGameSettingsPresets() {
+        if (getGameSettings().isEmpty()) {
+            getDefaultGameSettingsPresetOrCreate();
+        } else if (getGameSettings(getDefaultGameSettingsPreset()) == null) {
+            setDefaultGameSettingsPreset(getGameSettings().get(0).idProperty().getValue());
         }
     }
 

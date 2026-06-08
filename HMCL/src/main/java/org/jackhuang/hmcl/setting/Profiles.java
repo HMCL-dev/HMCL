@@ -242,7 +242,6 @@ public final class Profiles {
             }
         }));
         checkProfiles();
-        migrateGameSettings();
 
         // Platform.runLater is necessary or profiles will be empty
         // since checkProfiles adds 2 base profile later.
@@ -267,14 +266,6 @@ public final class Profiles {
                 }
             });
         });
-    }
-
-    private static void migrateGameSettings() {
-        if (SettingsManager.getGameSettings().isEmpty()) {
-            SettingsManager.getDefaultGameSettingsPresetOrCreate();
-        } else if (SettingsManager.getGameSettings(SettingsManager.getDefaultGameSettingsPreset()) == null) {
-            SettingsManager.setDefaultGameSettingsPreset(SettingsManager.getGameSettings().get(0).idProperty().getValue());
-        }
     }
 
     public static ObservableList<Profile> getProfiles() {
