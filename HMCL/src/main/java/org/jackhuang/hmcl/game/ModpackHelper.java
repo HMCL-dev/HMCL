@@ -360,10 +360,10 @@ public final class ModpackHelper {
                         GameSettings.PROPERTY_MAX_MEMORY,
                         GameSettings.PROPERTY_PERM_SIZE
                 ));
-                setting.autoMemoryProperty().setValue(effective.isAutoMemory());
-                setting.minMemoryProperty().setValue(effective.getMinMemory());
+                setting.autoMemoryProperty().setValue(effective.get(GameSettings::autoMemoryProperty));
+                setting.minMemoryProperty().setValue(effective.get(GameSettings::minMemoryProperty));
                 setting.maxMemoryProperty().setValue(manifest.getLaunchInfo().getMinMemory());
-                setting.permSizeProperty().setValue(effective.getPermSize());
+                setting.permSizeProperty().setValue(effective.get(GameSettings::permSizeProperty));
             }
         });
     }

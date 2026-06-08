@@ -2240,7 +2240,7 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
         HMCLGameRepository repository = this.profile.getRepository();
         JavaVersionType javaVersionType = setting.javaTypeProperty().getValue();
         GameSettings.Effective effectiveSetting = this.instanceId != null ? repository.getEffectiveGameSettings(this.instanceId) : null;
-        JavaVersionType effectiveJavaVersionType = effectiveSetting != null ? effectiveSetting.getJavaVersionType() : javaVersionType;
+        JavaVersionType effectiveJavaVersionType = effectiveSetting != null ? effectiveSetting.getInheritable(GameSettings::javaTypeProperty) : javaVersionType;
         boolean autoSelected = effectiveJavaVersionType == JavaVersionType.AUTO || effectiveJavaVersionType == JavaVersionType.VERSION;
 
         if (instanceId == null && autoSelected) {
