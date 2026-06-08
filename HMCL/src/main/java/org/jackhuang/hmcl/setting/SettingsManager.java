@@ -72,8 +72,8 @@ public final class SettingsManager {
     private static final Path LOCAL_GAME_DIRECTORIES_LOCATION =
             Metadata.HMCL_LOCAL_HOME.resolve("game-directories.json");
 
-    /// The current shared game directories path.
-    private static final Path GLOBAL_GAME_DIRECTORIES_LOCATION =
+    /// The current user game directories path.
+    private static final Path USER_GAME_DIRECTORIES_LOCATION =
             Metadata.HMCL_USER_HOME.resolve("user-game-directories.json");
 
     /// The current per-workspace game settings path.
@@ -100,9 +100,9 @@ public final class SettingsManager {
             GameDirectories.CURRENT_SCHEMA,
             GameDirectories::new);
 
-    /// The shared game directory file helper.
-    private static final JsonSettingFile<GameDirectories> GLOBAL_GAME_DIRECTORIES_FILE = new JsonSettingFile<>(
-            GLOBAL_GAME_DIRECTORIES_LOCATION,
+    /// The user game directory file helper.
+    private static final JsonSettingFile<GameDirectories> USER_GAME_DIRECTORIES_FILE = new JsonSettingFile<>(
+            USER_GAME_DIRECTORIES_LOCATION,
             "user game directories",
             GameDirectories.class,
             GameDirectories.CURRENT_SCHEMA,
@@ -171,8 +171,8 @@ public final class SettingsManager {
     /// Whether the per-workspace game directories file may be overwritten.
     private static boolean allowSaveLocalGameDirectories = false;
 
-    /// Whether the shared game directories file may be overwritten.
-    private static boolean allowSaveGlobalGameDirectories = false;
+    /// Whether the user game directories file may be overwritten.
+    private static boolean allowSaveUserGameDirectories = false;
 
     /// The loaded detached preset store.
     private static @UnknownNullability GameSettingsPresets gameSettingsPresets;
@@ -261,9 +261,9 @@ public final class SettingsManager {
         return LOCAL_GAME_DIRECTORIES_LOCATION;
     }
 
-    /// Returns the shared game directories path.
-    public static Path globalGameDirectoriesLocation() {
-        return GLOBAL_GAME_DIRECTORIES_LOCATION;
+    /// Returns the user game directories path.
+    public static Path userGameDirectoriesLocation() {
+        return USER_GAME_DIRECTORIES_LOCATION;
     }
 
     /// Returns the current per-workspace game settings path.
@@ -555,17 +555,17 @@ public final class SettingsManager {
         }
 
         LOG.info("Game directories location: " + LOCAL_GAME_DIRECTORIES_LOCATION);
-        LOG.info("User game directories location: " + GLOBAL_GAME_DIRECTORIES_LOCATION);
+        LOG.info("User game directories location: " + USER_GAME_DIRECTORIES_LOCATION);
 
         boolean newlyCreatedLocal = !Files.exists(LOCAL_GAME_DIRECTORIES_LOCATION);
-        boolean newlyCreatedGlobal = !Files.exists(GLOBAL_GAME_DIRECTORIES_LOCATION);
-        JsonSettingFile.LoadResult<GameDirectories> globalResult = GLOBAL_GAME_DIRECTORIES_FILE.load(null);
+        boolean newlyCreatedUser = !Files.exists(USER_GAME_DIRECTORIES_LOCATION);
+        JsonSettingFile.LoadResult<GameDirectories> userResult = USER_GAME_DIRECTORIES_FILE.load(null);
         JsonSettingFile.LoadResult<GameDirectories> localResult = LOCAL_GAME_DIRECTORIES_FILE.load(fallbackGameDirectories);
 
-        gameDirectories = mergeGameDirectories(globalResult.value(), localResult.value());
+        gameDirectories = mergeGameDirectories(userResult.value(), localResult.value());
         allowSaveLocalGameDirectories = allowSave && localResult.allowSave();
-        allowSaveGlobalGameDirectories = allowSave && globalResult.allowSave();
-        if (allowSaveLocalGameDirectories || allowSaveGlobalGameDirectories) {
+        allowSaveUserGameDirectories = allowSave && userResult.allowSave();
+        if (allowSaveLocalGameDirectories || allowSaveUserGameDirectories) {
             gameDirectories.addListener(source -> saveGameDirectories());
         }
 
@@ -574,18 +574,18 @@ public final class SettingsManager {
             saveLocalGameDirectories();
         }
 
-        if (newlyCreatedGlobal && allowSaveGlobalGameDirectories) {
-            LOG.info("Creating user game directories file " + GLOBAL_GAME_DIRECTORIES_LOCATION);
-            saveGlobalGameDirectories();
+        if (newlyCreatedUser && allowSaveUserGameDirectories) {
+            LOG.info("Creating user game directories file " + USER_GAME_DIRECTORIES_LOCATION);
+            saveUserGameDirectories();
         }
     }
 
-    /// Merges shared and per-workspace game directories into the runtime store.
-    private static GameDirectories mergeGameDirectories(GameDirectories global, GameDirectories local) {
+    /// Merges user and per-workspace game directories into the runtime store.
+    private static GameDirectories mergeGameDirectories(GameDirectories user, GameDirectories local) {
         GameDirectories merged = new GameDirectories();
         gameDirectorySources.clear();
-        for (Profile profile : global.getGameDirectories()) {
-            addMergedGameDirectory(merged, profile, GameDirectoryScope.GLOBAL);
+        for (Profile profile : user.getGameDirectories()) {
+            addMergedGameDirectory(merged, profile, GameDirectoryScope.USER);
         }
         for (Profile profile : local.getGameDirectories()) {
             addMergedGameDirectory(merged, profile, GameDirectoryScope.LOCAL);
@@ -611,8 +611,8 @@ public final class SettingsManager {
         if (allowSaveLocalGameDirectories) {
             saveLocalGameDirectories();
         }
-        if (allowSaveGlobalGameDirectories) {
-            saveGlobalGameDirectories();
+        if (allowSaveUserGameDirectories) {
+            saveUserGameDirectories();
         }
         updateGameDirectorySources();
     }
@@ -622,9 +622,9 @@ public final class SettingsManager {
         LOCAL_GAME_DIRECTORIES_FILE.save(createScopedGameDirectories(GameDirectoryScope.LOCAL));
     }
 
-    /// Saves shared game directories.
-    private static void saveGlobalGameDirectories() {
-        GLOBAL_GAME_DIRECTORIES_FILE.save(createScopedGameDirectories(GameDirectoryScope.GLOBAL));
+    /// Saves user game directories.
+    private static void saveUserGameDirectories() {
+        USER_GAME_DIRECTORIES_FILE.save(createScopedGameDirectories(GameDirectoryScope.USER));
     }
 
     /// Creates a game directory store containing only profiles that belong to the given scope.
@@ -657,7 +657,7 @@ public final class SettingsManager {
             return source.scope();
         }
 
-        return path.isAbsolute() ? GameDirectoryScope.GLOBAL : GameDirectoryScope.LOCAL;
+        return path.isAbsolute() ? GameDirectoryScope.USER : GameDirectoryScope.LOCAL;
     }
 
     /// Loads game settings presets and installs the save listener.
@@ -924,7 +924,7 @@ public final class SettingsManager {
         LOCAL,
 
         /// Stored in `HMCL_USER_HOME/user-game-directories.json`.
-        GLOBAL
+        USER
     }
 
     /// Original storage metadata for a game directory entry.
