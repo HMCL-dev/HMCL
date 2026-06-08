@@ -30,7 +30,6 @@ import org.jackhuang.hmcl.util.i18n.LocalizedText;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -53,15 +52,10 @@ public final class Profiles {
 
     /// Creates a profile ID that does not collide with existing profiles.
     public static SettingId newProfileId() {
-        return newProfileId(new HashSet<>());
-    }
-
-    /// Creates a profile ID that does not collide with existing profiles or reserved IDs.
-    private static SettingId newProfileId(HashSet<SettingId> reservedIds) {
         SettingId id;
         do {
             id = SettingId.generate();
-        } while (hasProfileId(id) || reservedIds.contains(id));
+        } while (hasProfileId(id));
         return id;
     }
 
@@ -168,18 +162,17 @@ public final class Profiles {
             return;
         }
 
-        HashSet<SettingId> reservedIds = new HashSet<>();
-        ArrayList<Profile> defaultProfiles = new ArrayList<>(2);
+        SettingId currentId = newProfileId();
+        SettingId homeId;
 
-        SettingId currentId = newProfileId(reservedIds);
-        reservedIds.add(currentId);
-        defaultProfiles.add(new Profile(currentId, null, CURRENT_PROFILE_PATH));
+        do {
+            homeId = SettingId.generate();
+        } while (homeId.equals(currentId));
 
-        SettingId homeId = newProfileId(reservedIds);
-        reservedIds.add(homeId);
-        defaultProfiles.add(new Profile(homeId, null, HOME_PROFILE_PATH));
-
-        profiles.addAll(defaultProfiles);
+        profiles.addAll(List.of(
+                new Profile(currentId, null, CURRENT_PROFILE_PATH),
+                new Profile(homeId, null, HOME_PROFILE_PATH)
+        ));
     }
 
     /**
@@ -232,6 +225,13 @@ public final class Profiles {
 
     public static ObservableList<Profile> getProfiles() {
         return SettingsManager.getGameDirectories();
+    }
+
+    /// Removes a profile and recreates the built-in game directories when the list becomes empty.
+    public static void removeProfile(Profile profile) {
+        ObservableList<Profile> profiles = SettingsManager.getGameDirectories();
+        profiles.remove(profile);
+        createDefaultProfilesIfEmpty();
     }
 
     public static ReadOnlyListProperty<Profile> profilesProperty() {

@@ -45,7 +45,7 @@ public class ProfileListItem extends RadioButton {
     }
 
     public void remove() {
-        Profiles.getProfiles().remove(profile);
+        Profiles.removeProfile(profile);
     }
 
     public Profile getProfile() {
