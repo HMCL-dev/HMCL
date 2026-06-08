@@ -17,7 +17,6 @@
  */
 package org.jackhuang.hmcl.setting;
 
-import javafx.application.Platform;
 import javafx.beans.property.*;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
@@ -108,9 +107,6 @@ public final class Profiles {
     private static final ReadOnlyListWrapper<Profile> profilesWrapper =
             new ReadOnlyListWrapper<>(FXCollections.emptyObservableList());
 
-    /// Whether default profile creation has already been scheduled on the FX thread.
-    private static boolean creatingDefaultProfiles = false;
-
     private static final ObjectProperty<Profile> selectedProfile = new SimpleObjectProperty<>() {
         @Override
         protected void invalidated() {
@@ -165,54 +161,25 @@ public final class Profiles {
         selectedVersion.set(version);
     }
 
-    private static void checkProfiles() {
-        if (creatingDefaultProfiles) {
+    /// Creates the built-in game directories only when no profile exists.
+    private static void createDefaultProfilesIfEmpty() {
+        ObservableList<Profile> profiles = SettingsManager.getGameDirectories();
+        if (!profiles.isEmpty()) {
             return;
         }
 
-        ObservableList<Profile> profiles = SettingsManager.getGameDirectories();
         HashSet<SettingId> reservedIds = new HashSet<>();
-        ArrayList<Profile> missingProfiles = new ArrayList<>(2);
+        ArrayList<Profile> defaultProfiles = new ArrayList<>(2);
 
-        if (profiles.stream().noneMatch(profile -> isProfilePath(profile, CURRENT_PROFILE_PATH))) {
-            SettingId id = newProfileId(reservedIds);
-            reservedIds.add(id);
-            missingProfiles.add(new Profile(id, null, CURRENT_PROFILE_PATH));
-        }
-        if (profiles.stream().noneMatch(profile -> isProfilePath(profile, HOME_PROFILE_PATH))) {
-            SettingId id = newProfileId(reservedIds);
-            reservedIds.add(id);
-            missingProfiles.add(new Profile(id, null, HOME_PROFILE_PATH));
-        }
+        SettingId currentId = newProfileId(reservedIds);
+        reservedIds.add(currentId);
+        defaultProfiles.add(new Profile(currentId, null, CURRENT_PROFILE_PATH));
 
-        if (!missingProfiles.isEmpty()) {
-            creatingDefaultProfiles = true;
-            Platform.runLater(() -> {
-                try {
-                    List<Profile> profilesToAdd = missingProfiles.stream()
-                            .filter(profile -> profiles.stream().noneMatch(existing -> isProfilePath(existing, profile.getPath())))
-                            .toList();
-                    for (Profile profile : profilesToAdd) {
-                        profiles.add(getDefaultProfileInsertionIndex(profiles, profile), profile);
-                    }
-                } finally {
-                    creatingDefaultProfiles = false;
-                }
-            });
-        }
-    }
+        SettingId homeId = newProfileId(reservedIds);
+        reservedIds.add(homeId);
+        defaultProfiles.add(new Profile(homeId, null, HOME_PROFILE_PATH));
 
-    /// Returns the insertion index for a generated default profile.
-    private static int getDefaultProfileInsertionIndex(ObservableList<Profile> profiles, Profile profile) {
-        if (isProfilePath(profile, CURRENT_PROFILE_PATH)) {
-            for (int i = 0; i < profiles.size(); i++) {
-                if (isProfilePath(profiles.get(i), HOME_PROFILE_PATH)) {
-                    return i;
-                }
-            }
-        }
-
-        return profiles.size();
+        profiles.addAll(defaultProfiles);
     }
 
     /**
@@ -234,27 +201,22 @@ public final class Profiles {
 
         profilesWrapper.set(SettingsManager.getGameDirectories());
         SettingsManager.getGameDirectories().addListener(onInvalidating(Profiles::refreshSelectedProfile));
-        SettingsManager.getGameDirectories().addListener(onInvalidating(Profiles::checkProfiles));
         SettingsManager.getSelectedInstance().addListener(onInvalidating(() -> {
             Profile profile = selectedProfile.get();
             if (profile != null && profile.getRepository().isLoaded()) {
                 refreshSelectedVersion(profile);
             }
         }));
-        checkProfiles();
+        createDefaultProfilesIfEmpty();
 
-        // Platform.runLater is necessary or profiles will be empty
-        // since checkProfiles adds 2 base profile later.
-        Platform.runLater(() -> {
-            initialized = true;
+        initialized = true;
 
-            @Nullable SettingId selectedId = SettingsManager.getSelectedGameDirectory();
-            selectedProfile.set(
-                    SettingsManager.getGameDirectories().stream()
-                            .filter(it -> it.getId().equals(selectedId))
-                            .findFirst()
-                            .orElse(SettingsManager.getGameDirectories().isEmpty() ? null : SettingsManager.getGameDirectories().get(0)));
-        });
+        @Nullable SettingId selectedId = SettingsManager.getSelectedGameDirectory();
+        selectedProfile.set(
+                SettingsManager.getGameDirectories().stream()
+                        .filter(it -> it.getId().equals(selectedId))
+                        .findFirst()
+                        .orElse(SettingsManager.getGameDirectories().isEmpty() ? null : SettingsManager.getGameDirectories().get(0)));
 
         EventBus.EVENT_BUS.channel(RefreshedVersionsEvent.class).registerWeak(event -> {
             runInFX(() -> {
