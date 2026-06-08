@@ -233,7 +233,6 @@ public final class Profiles {
             throw new IllegalStateException("Already initialized");
 
         profilesWrapper.set(SettingsManager.getGameDirectories());
-        removeDuplicateProfiles(SettingsManager.getGameDirectories());
         SettingsManager.getGameDirectories().addListener(onInvalidating(Profiles::refreshSelectedProfile));
         SettingsManager.getGameDirectories().addListener(onInvalidating(Profiles::checkProfiles));
         SettingsManager.getSelectedInstance().addListener(onInvalidating(() -> {
@@ -267,15 +266,6 @@ public final class Profiles {
                         listener.accept(profile);
                 }
             });
-        });
-    }
-
-    private static void removeDuplicateProfiles(ObservableList<Profile> profiles) {
-        HashSet<SettingId> ids = new HashSet<>();
-        HashSet<String> names = new HashSet<>();
-        profiles.removeIf(profile -> {
-            String name = getProfileCustomName(profile);
-            return !ids.add(profile.getId()) || (name != null && !names.add(name));
         });
     }
 
