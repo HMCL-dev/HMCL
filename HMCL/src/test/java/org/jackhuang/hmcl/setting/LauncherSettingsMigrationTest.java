@@ -19,6 +19,7 @@ package org.jackhuang.hmcl.setting;
 
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
+import org.glavo.uuid.UUIDs;
 import org.jackhuang.hmcl.util.gson.JsonSchema;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jetbrains.annotations.NotNullByDefault;
@@ -32,6 +33,16 @@ import static org.junit.jupiter.api.Assertions.*;
 /// Tests for legacy config migration into current launcher settings.
 @NotNullByDefault
 public final class LauncherSettingsMigrationTest {
+
+    @Test
+    public void testNameSpaces() {
+        assertEquals(LegacyConfigMigrator.LEGACY_GAME_SETTINGS_ID_NAMESPACE,
+                UUIDs.generateV5(UUIDs.NAMESPACE_URL, "hmcl:legacy-game-settings"));
+
+        assertEquals(LegacyConfigMigrator.LEGACY_PROFILE_ID_NAMESPACE,
+                UUIDs.generateV5(UUIDs.NAMESPACE_URL, "hmcl:legacy-profile"));
+    }
+
     /// Tests migrating legacy language fields into the current launcher settings field.
     @Test
     public void migratesLegacyLocalizationToLanguage() {

@@ -27,6 +27,7 @@ import org.jackhuang.hmcl.util.gson.UUIDTypeAdapter;
 import org.jackhuang.hmcl.util.io.JarUtils;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.VisibleForTesting;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -52,11 +53,12 @@ public final class LegacyConfigMigrator {
     private static final int LEGACY_CURRENT_CONFIG_VERSION = 2;
 
     /// Namespace used to generate stable IDs for legacy profiles.
-    private static final UUID LEGACY_PROFILE_ID_NAMESPACE = UUIDs.generateV5(UUIDs.NAMESPACE_URL, "hmcl:legacy-profile");
+    @VisibleForTesting
+    static final UUID LEGACY_PROFILE_ID_NAMESPACE = new UUID(0xd5193464a32e52adL, 0xb50ad88fe967c3a2L);
 
     /// Namespace used to generate stable IDs for profile-level game settings migrated from legacy profiles.
-    private static final UUID LEGACY_GAME_SETTINGS_ID_NAMESPACE =
-            UUIDs.generateV5(UUIDs.NAMESPACE_URL, "hmcl:legacy-game-settings");
+    @VisibleForTesting
+    static final UUID LEGACY_GAME_SETTINGS_ID_NAMESPACE = new UUID(0x4ba56ddd06b45aa7L, 0xb4da9e3c9707f873L);
 
     /// The legacy built-in profile name for the current workspace game directory.
     private static final String LEGACY_DEFAULT_PROFILE = "Default";
