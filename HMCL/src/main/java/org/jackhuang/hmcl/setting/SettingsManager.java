@@ -19,13 +19,14 @@ package org.jackhuang.hmcl.setting;
 
 import com.google.gson.JsonParseException;
 import com.google.gson.JsonObject;
+import javafx.beans.Observable;
 import javafx.beans.property.ObjectProperty;
+import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.collections.ObservableMap;
 import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.auth.authlibinjector.AuthlibInjectorServer;
 import org.jackhuang.hmcl.util.FileSaver;
-import org.jackhuang.hmcl.util.PortablePath;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.i18n.I18n;
 import org.jackhuang.hmcl.util.io.FileUtils;
@@ -37,7 +38,6 @@ import org.jetbrains.annotations.UnknownNullability;
 import java.io.IOException;
 import java.io.Reader;
 import java.nio.file.*;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -162,11 +162,14 @@ public final class SettingsManager {
     /// The loaded user settings instance.
     private static @UnknownNullability UserSettings userSettingsInstance;
 
-    /// The loaded detached game directory store.
-    private static @UnknownNullability GameDirectories gameDirectories;
+    /// The loaded per-workspace game directory file.
+    private static @UnknownNullability GameDirectories localGameDirectories;
 
-    /// Original storage location and path for loaded game directories.
-    private static final Map<SettingId, GameDirectorySource> gameDirectorySources = new HashMap<>();
+    /// The loaded user game directory file.
+    private static @UnknownNullability GameDirectories userGameDirectories;
+
+    /// The merged runtime game directory list.
+    private static @UnknownNullability ObservableList<Profile> gameDirectories;
 
     /// Whether the per-workspace game directories file may be overwritten.
     private static boolean allowSaveLocalGameDirectories = false;
@@ -281,8 +284,8 @@ public final class SettingsManager {
         return USER_GAME_ACCOUNTS_LOCATION;
     }
 
-    /// Returns the loaded detached game directory store.
-    public static GameDirectories gameDirectories() {
+    /// Returns the merged runtime game directory list.
+    private static ObservableList<Profile> gameDirectories() {
         if (gameDirectories == null) {
             throw new IllegalStateException("Game directories haven't been loaded");
         }
@@ -335,7 +338,7 @@ public final class SettingsManager {
 
     /// Returns the merged game directories.
     public static ObservableList<Profile> getGameDirectories() {
-        return gameDirectories().getGameDirectories();
+        return gameDirectories();
     }
 
     /// Returns the selected game directory ID property.
@@ -562,11 +565,15 @@ public final class SettingsManager {
         JsonSettingFile.LoadResult<GameDirectories> userResult = USER_GAME_DIRECTORIES_FILE.load(null);
         JsonSettingFile.LoadResult<GameDirectories> localResult = LOCAL_GAME_DIRECTORIES_FILE.load(fallbackGameDirectories);
 
-        gameDirectories = mergeGameDirectories(userResult.value(), localResult.value());
+        userGameDirectories = userResult.value();
+        userGameDirectories.setUserFile(true);
+        localGameDirectories = localResult.value();
+        localGameDirectories.setUserFile(false);
+        gameDirectories = mergeGameDirectories(userGameDirectories, localGameDirectories);
         allowSaveLocalGameDirectories = allowSave && localResult.allowSave();
         allowSaveUserGameDirectories = allowSave && userResult.allowSave();
         if (allowSaveLocalGameDirectories || allowSaveUserGameDirectories) {
-            gameDirectories.addListener(source -> saveGameDirectories());
+            gameDirectories.addListener((javafx.beans.InvalidationListener) source -> saveGameDirectories());
         }
 
         if (newlyCreatedLocal && allowSaveLocalGameDirectories) {
@@ -581,29 +588,25 @@ public final class SettingsManager {
     }
 
     /// Merges user and per-workspace game directories into the runtime store.
-    private static GameDirectories mergeGameDirectories(GameDirectories user, GameDirectories local) {
-        GameDirectories merged = new GameDirectories();
-        gameDirectorySources.clear();
+    private static ObservableList<Profile> mergeGameDirectories(GameDirectories user, GameDirectories local) {
+        ObservableList<Profile> merged = FXCollections.observableArrayList(profile -> new Observable[] { profile });
         for (Profile profile : user.getGameDirectories()) {
-            addMergedGameDirectory(merged, profile, GameDirectoryScope.USER);
+            addMergedGameDirectory(merged, profile);
         }
         for (Profile profile : local.getGameDirectories()) {
-            addMergedGameDirectory(merged, profile, GameDirectoryScope.LOCAL);
+            addMergedGameDirectory(merged, profile);
         }
         return merged;
     }
 
     /// Adds one profile to the merged game directory store.
-    private static void addMergedGameDirectory(GameDirectories merged, Profile profile, GameDirectoryScope source) {
+    private static void addMergedGameDirectory(ObservableList<Profile> merged, Profile profile) {
         Objects.requireNonNull(merged);
         Objects.requireNonNull(profile);
-        Objects.requireNonNull(source);
 
         SettingId id = profile.getId();
-        merged.getGameDirectories().removeIf(existing -> existing.getId().equals(id));
-        merged.getGameDirectories().add(profile);
-        PortablePath path = profile.getPath();
-        gameDirectorySources.put(id, new GameDirectorySource(source, path.getPath()));
+        merged.removeIf(existing -> existing.getId().equals(id));
+        merged.add(profile);
     }
 
     /// Saves the merged game directory store into the writable backing files.
@@ -614,50 +617,30 @@ public final class SettingsManager {
         if (allowSaveUserGameDirectories) {
             saveUserGameDirectories();
         }
-        updateGameDirectorySources();
     }
 
     /// Saves per-workspace game directories.
     private static void saveLocalGameDirectories() {
-        LOCAL_GAME_DIRECTORIES_FILE.save(createScopedGameDirectories(GameDirectoryScope.LOCAL));
+        localGameDirectories = createScopedGameDirectories(false);
+        LOCAL_GAME_DIRECTORIES_FILE.save(localGameDirectories);
     }
 
     /// Saves user game directories.
     private static void saveUserGameDirectories() {
-        USER_GAME_DIRECTORIES_FILE.save(createScopedGameDirectories(GameDirectoryScope.USER));
+        userGameDirectories = createScopedGameDirectories(true);
+        USER_GAME_DIRECTORIES_FILE.save(userGameDirectories);
     }
 
-    /// Creates a game directory store containing only profiles that belong to the given scope.
-    private static GameDirectories createScopedGameDirectories(GameDirectoryScope scope) {
+    /// Creates a game directory file containing only profiles that belong to the target storage location.
+    private static GameDirectories createScopedGameDirectories(boolean userGameDirectories) {
         GameDirectories result = new GameDirectories();
-        for (Profile profile : gameDirectories().getGameDirectories()) {
-            if (getGameDirectoryScope(profile) == scope) {
+        result.setUserFile(userGameDirectories);
+        for (Profile profile : gameDirectories()) {
+            if (profile.shouldSaveToUserGameDirectory() == userGameDirectories) {
                 result.getGameDirectories().add(profile);
             }
         }
         return result;
-    }
-
-    /// Updates source tracking after saving the current merged directory store.
-    private static void updateGameDirectorySources() {
-        Map<SettingId, GameDirectorySource> updated = new HashMap<>();
-        for (Profile profile : gameDirectories().getGameDirectories()) {
-            PortablePath path = profile.getPath();
-            updated.put(profile.getId(), new GameDirectorySource(getGameDirectoryScope(profile), path.getPath()));
-        }
-        gameDirectorySources.clear();
-        gameDirectorySources.putAll(updated);
-    }
-
-    /// Returns the target storage scope for a profile.
-    private static GameDirectoryScope getGameDirectoryScope(Profile profile) {
-        PortablePath path = profile.getPath();
-        @Nullable GameDirectorySource source = gameDirectorySources.get(profile.getId());
-        if (source != null && Objects.equals(source.path(), path.getPath())) {
-            return source.scope();
-        }
-
-        return path.isAbsolute() ? GameDirectoryScope.USER : GameDirectoryScope.LOCAL;
     }
 
     /// Loads game settings presets and installs the save listener.
@@ -916,22 +899,6 @@ public final class SettingsManager {
             LOG.info("Creating user settings file " + USER_SETTINGS_LOCATION);
             USER_SETTINGS_FILE.save(userSettingsInstance);
         }
-    }
-
-    /// Storage scope for a game directory entry.
-    private enum GameDirectoryScope {
-        /// Stored in `HMCL_LOCAL_HOME/game-directories.json`.
-        LOCAL,
-
-        /// Stored in `HMCL_USER_HOME/user-game-directories.json`.
-        USER
-    }
-
-    /// Original storage metadata for a game directory entry.
-    ///
-    /// @param scope the file where this entry belongs while its path remains unchanged
-    /// @param path  the original serialized path string
-    private record GameDirectorySource(GameDirectoryScope scope, String path) {
     }
 
 }

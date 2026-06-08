@@ -37,7 +37,7 @@ import java.util.Objects;
 /// Stores game directories independently from the main config file.
 ///
 /// The JSON representation is saved as `game-directories.json` under either the current
-/// HMCL directory or the global HMCL directory.
+/// HMCL directory or the user HMCL directory.
 ///
 /// @author Glavo
 @JsonAdapter(GameDirectories.Adapter.class)
@@ -78,9 +78,25 @@ public final class GameDirectories extends ObservableSetting implements JsonSche
     private final ObservableList<Profile> gameDirectories =
             FXCollections.observableArrayList(profile -> new Observable[] { profile });
 
+    /// Whether this store represents `HMCL_USER_HOME/user-game-directories.json`.
+    private transient boolean userFile;
+
     /// Returns the game directories stored in this file.
     public ObservableList<Profile> getGameDirectories() {
         return gameDirectories;
+    }
+
+    /// Sets whether this store represents `HMCL_USER_HOME/user-game-directories.json`.
+    void setUserFile(boolean userFile) {
+        this.userFile = userFile;
+        for (Profile profile : gameDirectories) {
+            profile.setUserGameDirectory(userFile);
+        }
+    }
+
+    /// Returns whether this store represents `HMCL_USER_HOME/user-game-directories.json`.
+    boolean isUserFile() {
+        return userFile;
     }
 
     /// JSON adapter for [GameDirectories].
