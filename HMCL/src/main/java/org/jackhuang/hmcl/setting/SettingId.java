@@ -33,7 +33,7 @@ import java.util.UUID;
 
 /// Stable identifier for profile and game setting preset objects.
 ///
-/// This type wraps a [UUID] so profile and game setting references cannot be
+/// This type wrap a [UUID] so profile and game setting references cannot be
 /// accidentally mixed with unrelated UUID values.
 @JsonAdapter(SettingId.Adapter.class)
 @JsonSerializable
