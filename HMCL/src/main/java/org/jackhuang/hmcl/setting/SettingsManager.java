@@ -428,7 +428,7 @@ public final class SettingsManager {
         loadUserGameAccounts();
         loadGameAccounts(detachedSettingsFallback.accountStorages());
 
-        if (launcherSettings.isSaveable()) {
+        if (launcherSettings.isSavable()) {
             launcherSettings.addListener(source -> {
                 // Back up the invalid on-disk file the first time we are about to overwrite it.
                 if (needBackupSettings) {
@@ -510,9 +510,9 @@ public final class SettingsManager {
     /// Creates a launcher settings load result and stores saveability metadata on the settings object.
     private static LauncherSettingsLoadResult launcherSettingsResult(
             LauncherSettings settings,
-            boolean saveable,
+            boolean savable,
             boolean unsupported) {
-        settings.setSaveable(saveable);
+        settings.setSavable(savable);
         return new LauncherSettingsLoadResult(settings, unsupported);
     }
 
@@ -538,16 +538,16 @@ public final class SettingsManager {
         localGameDirectories = localResult.value();
         localGameDirectories.setUserFile(false);
         gameDirectories = mergeGameDirectories(userGameDirectories, localGameDirectories);
-        if (localGameDirectories.isSaveable() || userGameDirectories.isSaveable()) {
+        if (localGameDirectories.isSavable() || userGameDirectories.isSavable()) {
             gameDirectories.addListener((InvalidationListener) source -> saveGameDirectories());
         }
 
-        if (newlyCreatedLocal && localGameDirectories.isSaveable()) {
+        if (newlyCreatedLocal && localGameDirectories.isSavable()) {
             LOG.info("Creating game directories file " + LOCAL_GAME_DIRECTORIES_LOCATION);
             saveLocalGameDirectories();
         }
 
-        if (newlyCreatedUser && userGameDirectories.isSaveable()) {
+        if (newlyCreatedUser && userGameDirectories.isSavable()) {
             LOG.info("Creating user game directories file " + USER_GAME_DIRECTORIES_LOCATION);
             saveUserGameDirectories();
         }
@@ -577,10 +577,10 @@ public final class SettingsManager {
 
     /// Saves the merged game directory store into the writable backing files.
     private static void saveGameDirectories() {
-        if (localGameDirectories.isSaveable()) {
+        if (localGameDirectories.isSavable()) {
             saveLocalGameDirectories();
         }
-        if (userGameDirectories.isSaveable()) {
+        if (userGameDirectories.isSavable()) {
             saveUserGameDirectories();
         }
     }
@@ -600,7 +600,7 @@ public final class SettingsManager {
     /// Creates a game directory file containing only profiles that belong to the target storage location.
     private static GameDirectories createScopedGameDirectories(boolean userGameDirectories) {
         GameDirectories result = new GameDirectories();
-        result.setSaveable(true);
+        result.setSavable(true);
         result.setUserFile(userGameDirectories);
         for (Profile profile : getGameDirectories()) {
             if (profile.shouldSaveToUserGameDirectory() == userGameDirectories) {
@@ -625,12 +625,12 @@ public final class SettingsManager {
         JsonSettingFile.LoadResult<GameSettingsPresets> result =
                 GAME_SETTINGS_FILE.load(fallbackGameSettingsPresets);
         gameSettingsPresets = result.value();
-        if (gameSettingsPresets.isSaveable()) {
+        if (gameSettingsPresets.isSavable()) {
             GAME_SETTINGS_FILE.installAutoSave(gameSettingsPresets);
         }
         normalizeGameSettingsPresets();
 
-        if (newlyCreated && gameSettingsPresets.isSaveable()) {
+        if (newlyCreated && gameSettingsPresets.isSavable()) {
             LOG.info("Creating game settings file " + GAME_SETTINGS_LOCATION);
             GAME_SETTINGS_FILE.save(gameSettingsPresets);
         }
@@ -660,11 +660,11 @@ public final class SettingsManager {
         JsonSettingFile.LoadResult<LauncherState> result =
                 STATE_FILE.load(fallbackLauncherState);
         launcherState = result.value();
-        if (launcherState.isSaveable()) {
+        if (launcherState.isSavable()) {
             STATE_FILE.installAutoSave(launcherState);
         }
 
-        if (newlyCreated && launcherState.isSaveable()) {
+        if (newlyCreated && launcherState.isSavable()) {
             LOG.info("Creating launcher state file " + STATE_LOCATION);
             STATE_FILE.save(launcherState);
         }
@@ -687,11 +687,11 @@ public final class SettingsManager {
         JsonSettingFile.LoadResult<AuthlibInjectorServerList> result =
                 AUTHLIB_INJECTOR_SERVERS_FILE.load(fallbackAuthlibInjectorServers);
         authlibInjectorServers = result.value();
-        if (authlibInjectorServers.isSaveable()) {
+        if (authlibInjectorServers.isSavable()) {
             AUTHLIB_INJECTOR_SERVERS_FILE.installAutoSave(authlibInjectorServers);
         }
 
-        if (newlyCreated && authlibInjectorServers.isSaveable()) {
+        if (newlyCreated && authlibInjectorServers.isSavable()) {
             LOG.info("Creating authlib-injector servers file " + AUTHLIB_INJECTOR_SERVERS_LOCATION);
             AUTHLIB_INJECTOR_SERVERS_FILE.save(authlibInjectorServers);
         }
@@ -711,11 +711,11 @@ public final class SettingsManager {
         try {
             JsonSettingFile.LoadResult<AccountStorages> result = USER_GAME_ACCOUNTS_FILE.load(migrated);
             userGameAccounts = result.value();
-            if (userGameAccounts.isSaveable()) {
+            if (userGameAccounts.isSavable()) {
                 USER_GAME_ACCOUNTS_FILE.installAutoSave(userGameAccounts);
             }
 
-            if (newlyCreated && userGameAccounts.isSaveable()) {
+            if (newlyCreated && userGameAccounts.isSavable()) {
                 LOG.info("Creating user game accounts file " + USER_GAME_ACCOUNTS_LOCATION);
                 USER_GAME_ACCOUNTS_FILE.save(userGameAccounts);
                 if (migrationResult != null) {
@@ -774,11 +774,11 @@ public final class SettingsManager {
         JsonSettingFile.LoadResult<AccountStorages> result =
                 GAME_ACCOUNTS_FILE.load(fallbackGameAccounts);
         gameAccounts = result.value();
-        if (gameAccounts.isSaveable()) {
+        if (gameAccounts.isSavable()) {
             GAME_ACCOUNTS_FILE.installAutoSave(gameAccounts);
         }
 
-        if (newlyCreated && gameAccounts.isSaveable()) {
+        if (newlyCreated && gameAccounts.isSavable()) {
             LOG.info("Creating game accounts file " + GAME_ACCOUNTS_LOCATION);
             GAME_ACCOUNTS_FILE.save(gameAccounts);
         }
@@ -858,11 +858,11 @@ public final class SettingsManager {
                 : null;
         JsonSettingFile.LoadResult<UserSettings> result = USER_SETTINGS_FILE.load(migratedUserSettings);
         userSettingsInstance = result.value();
-        if (userSettingsInstance.isSaveable()) {
+        if (userSettingsInstance.isSavable()) {
             USER_SETTINGS_FILE.installAutoSave(userSettingsInstance);
         }
 
-        if (newlyCreated && migratedUserSettings != null && userSettingsInstance.isSaveable()) {
+        if (newlyCreated && migratedUserSettings != null && userSettingsInstance.isSavable()) {
             LOG.info("Creating user settings file " + USER_SETTINGS_LOCATION);
             USER_SETTINGS_FILE.save(userSettingsInstance);
         }
@@ -883,11 +883,11 @@ public final class SettingsManager {
                 : null;
         JsonSettingFile.LoadResult<UserState> result = USER_STATE_FILE.load(migratedUserState);
         userStateInstance = result.value();
-        if (userStateInstance.isSaveable()) {
+        if (userStateInstance.isSavable()) {
             USER_STATE_FILE.installAutoSave(userStateInstance);
         }
 
-        if (newlyCreated && userStateInstance.isSaveable()) {
+        if (newlyCreated && userStateInstance.isSavable()) {
             LOG.info("Creating user state file " + USER_STATE_LOCATION);
             USER_STATE_FILE.save(userStateInstance);
         }

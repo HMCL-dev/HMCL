@@ -71,18 +71,18 @@ public final class GameDirectories extends ObservableSetting implements JsonSche
     }
 
     /// Whether this game directory store may be saved back to its JSON file.
-    private transient boolean saveable = true;
+    private transient boolean savable = true;
 
     /// Returns whether this game directory store may be saved back to its JSON file.
     @Override
-    public boolean isSaveable() {
-        return saveable;
+    public boolean isSavable() {
+        return savable;
     }
 
     /// Sets whether this game directory store may be saved back to its JSON file.
     @Override
-    public void setSaveable(boolean saveable) {
-        this.saveable = saveable;
+    public void setSavable(boolean savable) {
+        this.savable = savable;
     }
 
     /// Game directories stored in this file.

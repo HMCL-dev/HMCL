@@ -116,8 +116,8 @@ final class JsonSettingFile<T extends ObservableSetting & JsonSchemaSetting> {
     }
 
     /// Creates a load result and stores the saveability metadata on the settings object.
-    private LoadResult<T> result(T value, boolean saveable) {
-        value.setSaveable(saveable);
+    private LoadResult<T> result(T value, boolean savable) {
+        value.setSavable(savable);
         return new LoadResult<>(value);
     }
 

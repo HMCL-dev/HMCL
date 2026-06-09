@@ -74,18 +74,18 @@ public final class LauncherState extends ObservableSetting implements JsonSchema
     }
 
     /// Whether this launcher state may be saved back to `launcher-state.json`.
-    private transient boolean saveable = true;
+    private transient boolean savable = true;
 
     /// Returns whether this launcher state may be saved back to `launcher-state.json`.
     @Override
-    public boolean isSaveable() {
-        return saveable;
+    public boolean isSavable() {
+        return savable;
     }
 
     /// Sets whether this launcher state may be saved back to `launcher-state.json`.
     @Override
-    public void setSaveable(boolean saveable) {
-        this.saveable = saveable;
+    public void setSavable(boolean savable) {
+        this.savable = savable;
     }
 
     /// The normalized launcher window content X position.

@@ -81,18 +81,18 @@ public final class GameSettingsPresets extends ObservableSetting implements Json
     }
 
     /// Whether this preset store may be saved back to `game-settings.json`.
-    private transient boolean saveable = true;
+    private transient boolean savable = true;
 
     /// Returns whether this preset store may be saved back to `game-settings.json`.
     @Override
-    public boolean isSaveable() {
-        return saveable;
+    public boolean isSavable() {
+        return savable;
     }
 
     /// Sets whether this preset store may be saved back to `game-settings.json`.
     @Override
-    public void setSaveable(boolean saveable) {
-        this.saveable = saveable;
+    public void setSavable(boolean savable) {
+        this.savable = savable;
     }
 
     /// Reusable game setting presets.

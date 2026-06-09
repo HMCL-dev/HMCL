@@ -108,18 +108,18 @@ public sealed abstract class GameSettings extends ObservableSetting {
         }
 
         /// Whether this instance setting may be saved back to its JSON file.
-        private transient boolean saveable = true;
+        private transient boolean savable = true;
 
         /// Returns whether this instance setting may be saved back to its JSON file.
         @Override
-        public boolean isSaveable() {
-            return saveable;
+        public boolean isSavable() {
+            return savable;
         }
 
         /// Sets whether this instance setting may be saved back to its JSON file.
         @Override
-        public void setSaveable(boolean saveable) {
-            this.saveable = saveable;
+        public void setSavable(boolean savable) {
+            this.savable = savable;
         }
 
         /// The parent preset ID.

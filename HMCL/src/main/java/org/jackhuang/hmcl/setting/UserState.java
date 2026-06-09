@@ -83,18 +83,18 @@ public final class UserState extends ObservableSetting implements JsonSchemaSett
     }
 
     /// Whether this user state store may be saved back to `user-state.json`.
-    private transient boolean saveable = true;
+    private transient boolean savable = true;
 
     /// Returns whether this user state store may be saved back to `user-state.json`.
     @Override
-    public boolean isSaveable() {
-        return saveable;
+    public boolean isSavable() {
+        return savable;
     }
 
     /// Sets whether this user state store may be saved back to `user-state.json`.
     @Override
-    public void setSaveable(boolean saveable) {
-        this.saveable = saveable;
+    public void setSavable(boolean savable) {
+        this.savable = savable;
     }
 
     /// The accepted launcher agreement version.

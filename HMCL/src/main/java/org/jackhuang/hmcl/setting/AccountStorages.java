@@ -82,18 +82,18 @@ final class AccountStorages extends ObservableSetting implements JsonSchemaSetti
     }
 
     /// Whether this account storage list may be saved back to its JSON file.
-    private transient boolean saveable = true;
+    private transient boolean savable = true;
 
     /// Returns whether this account storage list may be saved back to its JSON file.
     @Override
-    public boolean isSaveable() {
-        return saveable;
+    public boolean isSavable() {
+        return savable;
     }
 
     /// Sets whether this account storage list may be saved back to its JSON file.
     @Override
-    public void setSaveable(boolean saveable) {
-        this.saveable = saveable;
+    public void setSavable(boolean savable) {
+        this.savable = savable;
     }
 
     /// Serialized account entries.

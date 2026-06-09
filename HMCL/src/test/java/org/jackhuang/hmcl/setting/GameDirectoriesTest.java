@@ -281,7 +281,7 @@ public final class GameDirectoriesTest {
                 GameDirectories::new);
 
         JsonSettingFile.LoadResult<GameDirectories> result = file.load(null);
-        assertTrue(result.value().isSaveable());
+        assertTrue(result.value().isSavable());
         assertEquals(new JsonSchema("https://schemas.glavo.site/hmcl/game-directories/1.0.1"),
                 result.value().getSchema());
 
@@ -308,7 +308,7 @@ public final class GameDirectoriesTest {
 
         JsonSettingFile.LoadResult<GameDirectories> result = file.load(null);
 
-        assertFalse(result.value().isSaveable());
+        assertFalse(result.value().isSavable());
         assertEquals("{", Files.readString(location));
     }
 

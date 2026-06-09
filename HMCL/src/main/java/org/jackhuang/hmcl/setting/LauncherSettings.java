@@ -122,18 +122,18 @@ public final class LauncherSettings extends ObservableSetting implements JsonSch
     }
 
     /// Whether this launcher settings object may be saved back to `settings.json`.
-    private transient boolean saveable = true;
+    private transient boolean savable = true;
 
     /// Returns whether this launcher settings object may be saved back to `settings.json`.
     @Override
-    public boolean isSaveable() {
-        return saveable;
+    public boolean isSavable() {
+        return savable;
     }
 
     /// Sets whether this launcher settings object may be saved back to `settings.json`.
     @Override
-    public void setSaveable(boolean saveable) {
-        this.saveable = saveable;
+    public void setSavable(boolean savable) {
+        this.savable = savable;
     }
 
     /// The launcher UI language.
