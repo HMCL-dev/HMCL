@@ -19,6 +19,7 @@ package org.jackhuang.hmcl.setting;
 
 import com.google.gson.JsonParseException;
 import com.google.gson.JsonObject;
+import javafx.beans.InvalidationListener;
 import javafx.beans.Observable;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
@@ -520,7 +521,7 @@ public final class SettingsManager {
         allowSaveLocalGameDirectories = allowSave && localResult.allowSave();
         allowSaveUserGameDirectories = allowSave && userResult.allowSave();
         if (allowSaveLocalGameDirectories || allowSaveUserGameDirectories) {
-            gameDirectories.addListener((javafx.beans.InvalidationListener) source -> saveGameDirectories());
+            gameDirectories.addListener((InvalidationListener) source -> saveGameDirectories());
         }
 
         if (newlyCreatedLocal && allowSaveLocalGameDirectories) {
