@@ -98,10 +98,13 @@ public final class HMCLGameRepository extends DefaultGameRepository {
 
     @Override
     public Path getRunDirectory(String id) {
+        if (beingModpackVersions.contains(id) || isModpack(id)) {
+            return getVersionRoot(id);
+        }
+
         GameSettings.Instance localSetting = getLocalGameSettings(id);
-        boolean useInstanceRunningDirectory = beingModpackVersions.contains(id)
-                || isModpack(id)
-                || (localSetting != null && localSetting.getOverrideProperties().contains(GameSettings.PROPERTY_RUNNING_DIR));
+        boolean useInstanceRunningDirectory =
+                localSetting != null && localSetting.getOverrideProperties().contains(GameSettings.PROPERTY_RUNNING_DIR);
 
         String runningDirectory = getSelectedRunningDirectory(localSetting, useInstanceRunningDirectory);
         if (StringUtils.isBlank(runningDirectory)) {

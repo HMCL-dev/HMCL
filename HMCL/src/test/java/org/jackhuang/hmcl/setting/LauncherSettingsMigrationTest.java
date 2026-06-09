@@ -236,6 +236,35 @@ public final class LauncherSettingsMigrationTest {
         assertEquals("Alex", selectedAccount.get("username").getAsString());
     }
 
+    /// Tests migrating the legacy selected account marker into a structured account reference.
+    @Test
+    public void migratesLegacySelectedAccountMarkerToReference() {
+        JsonObject settings = JsonParser.parseString("""
+                {
+                  "accounts": [
+                    {
+                      "type": "offline",
+                      "username": "Steve"
+                    },
+                    {
+                      "type": "offline",
+                      "username": "Alex",
+                      "selected": true
+                    }
+                  ]
+                }
+                """).getAsJsonObject();
+
+        AccountStorages accountStorages = Objects.requireNonNull(LegacyConfigMigrator.extractAccountStorages(settings));
+        assertTrue(LegacyConfigMigrator.migrateLegacySelectedAccount(settings, accountStorages));
+
+        JsonObject selectedAccount = settings.getAsJsonObject("selectedAccount");
+        assertEquals("local", selectedAccount.get("storage").getAsString());
+        assertEquals("offline", selectedAccount.get("type").getAsString());
+        assertEquals("Alex", selectedAccount.get("username").getAsString());
+        assertFalse(accountStorages.getAccounts().get(1).containsKey("selected"));
+    }
+
     /// Tests migrating older selected account values that store only the username.
     @Test
     public void migratesLegacySelectedAccountUsernameToReference() {

@@ -345,8 +345,24 @@ public final class LegacyConfigMigrator {
         Objects.requireNonNull(localAccounts);
 
         JsonElement selectedAccount = json.get("selectedAccount");
+        @Nullable JsonObject selectedMarkerReference = null;
+        boolean changed = false;
+        for (Map<Object, Object> account : localAccounts.getAccounts()) {
+            Object selectedMarker = account.remove("selected");
+            if (selectedMarker != null) {
+                changed = true;
+            }
+            if (Boolean.TRUE.equals(selectedMarker) && selectedMarkerReference == null) {
+                selectedMarkerReference = createSelectedAccountReference(account, false);
+            }
+        }
+
         if (selectedAccount == null) {
-            return false;
+            if (selectedMarkerReference != null) {
+                json.add("selectedAccount", selectedMarkerReference);
+                return true;
+            }
+            return changed;
         }
 
         @Nullable String legacyIdentifier = JsonUtils.getString(selectedAccount);
