@@ -32,7 +32,7 @@ import javafx.scene.layout.*;
 import javafx.scene.text.Font;
 import javafx.scene.text.FontSmoothingType;
 import org.jackhuang.hmcl.setting.SettingsManager;
-import org.jackhuang.hmcl.setting.EnumBackgroundImage;
+import org.jackhuang.hmcl.setting.BackgroundType;
 import org.jackhuang.hmcl.setting.FontManager;
 import org.jackhuang.hmcl.setting.UserSettings;
 import org.jackhuang.hmcl.theme.ThemeColor;
@@ -124,30 +124,30 @@ public class PersonalizationPage extends StackPane {
         {
             ComponentList componentList = new ComponentList();
 
-            MultiFileItem<EnumBackgroundImage> backgroundItem = new MultiFileItem<>();
+            MultiFileItem<BackgroundType> backgroundItem = new MultiFileItem<>();
             ComponentSublist backgroundSublist = new ComponentSublist();
             backgroundSublist.getContent().add(backgroundItem);
             backgroundSublist.setTitle(i18n("launcher.background"));
             backgroundSublist.setHasSubtitle(true);
 
             backgroundItem.loadChildren(Arrays.asList(
-                    new MultiFileItem.Option<>(i18n("launcher.background.default"), EnumBackgroundImage.DEFAULT)
+                    new MultiFileItem.Option<>(i18n("launcher.background.default"), BackgroundType.DEFAULT)
                             .setTooltip(i18n("launcher.background.default.tooltip")),
-                    new MultiFileItem.Option<>(i18n("launcher.background.classic"), EnumBackgroundImage.CLASSIC),
-                    new MultiFileItem.FileOption<>(i18n("settings.custom"), EnumBackgroundImage.CUSTOM)
+                    new MultiFileItem.Option<>(i18n("launcher.background.classic"), BackgroundType.CLASSIC),
+                    new MultiFileItem.FileOption<>(i18n("settings.custom"), BackgroundType.CUSTOM)
                             .setChooserTitle(i18n("launcher.background.choose"))
                             .addExtensionFilter(FXUtils.getImageExtensionFilter())
                             .setSelectionMode(FileSelector.SelectionMode.FILE_OR_DIRECTORY)
                             .bindBidirectional(settings().backgroundImageProperty()),
-                    new MultiFileItem.StringOption<>(i18n("launcher.background.network"), EnumBackgroundImage.NETWORK)
+                    new MultiFileItem.StringOption<>(i18n("launcher.background.network"), BackgroundType.NETWORK)
                             .setValidators(new URLValidator(true))
                             .bindBidirectional(settings().backgroundImageUrlProperty()),
-                    new MultiFileItem.PaintOption<>(i18n("launcher.background.paint"), EnumBackgroundImage.PAINT)
+                    new MultiFileItem.PaintOption<>(i18n("launcher.background.paint"), BackgroundType.PAINT)
                             .bindBidirectional(settings().backgroundPaintProperty())
             ));
             backgroundItem.selectedDataProperty().bindBidirectional(settings().backgroundTypeProperty());
             backgroundSublist.descriptionProperty().bind(
-                    new When(backgroundItem.selectedDataProperty().isEqualTo(EnumBackgroundImage.DEFAULT))
+                    new When(backgroundItem.selectedDataProperty().isEqualTo(BackgroundType.DEFAULT))
                             .then(i18n("launcher.background.default"))
                             .otherwise(settings().backgroundImageProperty()));
 

@@ -17,10 +17,23 @@
  */
 package org.jackhuang.hmcl.setting;
 
-public enum EnumBackgroundImage {
+import org.jetbrains.annotations.NotNullByDefault;
+
+/// Selects the source used to render the launcher background.
+@NotNullByDefault
+public enum BackgroundType {
+    /// Uses the built-in default background image or a local fallback image.
     DEFAULT,
+
+    /// Uses a user-selected local image file or a random image from a selected directory.
     CUSTOM,
+
+    /// Uses the built-in classic background image.
     CLASSIC,
+
+    /// Uses an image loaded from a user-provided URL.
     NETWORK,
+
+    /// Uses the configured paint value as a flat background.
     PAINT
 }

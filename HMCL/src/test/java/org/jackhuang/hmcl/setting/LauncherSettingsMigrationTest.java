@@ -96,7 +96,7 @@ public final class LauncherSettingsMigrationTest {
 
         assertEquals("NETWORK", settings.get("backgroundType").getAsString());
         assertEquals("SOCKS", settings.get("proxyType").getAsString());
-        assertEquals(EnumBackgroundImage.NETWORK, launcherSettings.backgroundTypeProperty().get());
+        assertEquals(BackgroundType.NETWORK, launcherSettings.backgroundTypeProperty().get());
         assertEquals(Proxy.Type.SOCKS, launcherSettings.proxyTypeProperty().get());
         assertEquals("NETWORK", serialized.get("backgroundType").getAsString());
         assertEquals("SOCKS", serialized.get("proxyType").getAsString());
@@ -118,7 +118,7 @@ public final class LauncherSettingsMigrationTest {
 
         assertEquals("CUSTOM", settings.get("backgroundType").getAsString());
         assertEquals("DIRECT", settings.get("proxyType").getAsString());
-        assertEquals(EnumBackgroundImage.CUSTOM, launcherSettings.backgroundTypeProperty().get());
+        assertEquals(BackgroundType.CUSTOM, launcherSettings.backgroundTypeProperty().get());
         assertEquals(Proxy.Type.DIRECT, launcherSettings.proxyTypeProperty().get());
     }
 

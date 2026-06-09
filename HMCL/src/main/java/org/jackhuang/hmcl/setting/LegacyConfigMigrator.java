@@ -100,7 +100,7 @@ public final class LegacyConfigMigrator {
     private static final Path SETTINGS_MIGRATION_RECEIPT_LOCATION =
             Metadata.HMCL_LOCAL_HOME.resolve("settings.migration-receipt.json");
 
-    /// Legacy ordinal order for `EnumBackgroundImage` in upstream/main configs.
+    /// Legacy ordinal order for `BackgroundType` in upstream/main configs.
     private static final String[] LEGACY_BACKGROUND_IMAGE_TYPES = {
             "DEFAULT",
             "CUSTOM",
@@ -616,7 +616,7 @@ public final class LegacyConfigMigrator {
         }
 
         if (Objects.equals(JsonUtils.getString(json, "backgroundType"), "TRANSLUCENT")) {
-            json.addProperty("backgroundType", EnumBackgroundImage.PAINT.name());
+            json.addProperty("backgroundType", BackgroundType.PAINT.name());
             json.addProperty("backgroundPaint", "#ffffff");
             json.addProperty("backgroundOpacity", 0.5);
             json.remove("bgpaint");
@@ -862,8 +862,8 @@ public final class LegacyConfigMigrator {
             }
             String backgroundImage = JsonUtils.getString(jsonObject, "bgpath", "");
             jsonObject.addProperty("backgroundType", StringUtils.isNotBlank(backgroundImage)
-                    ? EnumBackgroundImage.CUSTOM.name()
-                    : EnumBackgroundImage.DEFAULT.name());
+                    ? BackgroundType.CUSTOM.name()
+                    : BackgroundType.DEFAULT.name());
             jsonObject.addProperty("hasProxy", StringUtils.isNotBlank(JsonUtils.getString(jsonObject, "proxyHost", "")));
             jsonObject.addProperty("hasProxyAuth", StringUtils.isNotBlank(JsonUtils.getString(jsonObject, "proxyUserName", "")));
 

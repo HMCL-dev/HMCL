@@ -37,7 +37,7 @@ import javafx.util.Duration;
 import org.glavo.url.WebURL;
 import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.auth.authlibinjector.AuthlibInjectorDnD;
-import org.jackhuang.hmcl.setting.EnumBackgroundImage;
+import org.jackhuang.hmcl.setting.BackgroundType;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.ui.Controllers;
@@ -184,9 +184,9 @@ public class DecoratorController {
     }
 
     private Background getBackground() {
-        EnumBackgroundImage imageType = settings().backgroundTypeProperty().get();
+        BackgroundType imageType = settings().backgroundTypeProperty().get();
         if (imageType == null)
-            imageType = EnumBackgroundImage.DEFAULT;
+            imageType = BackgroundType.DEFAULT;
 
         Image image = null;
         switch (imageType) {

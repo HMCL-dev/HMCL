@@ -287,10 +287,10 @@ public final class LauncherSettings extends ObservableSetting implements JsonSch
 
     /// The launcher background source type.
     @SerializedName("backgroundType")
-    private final ObjectProperty<EnumBackgroundImage> backgroundType = new RawPreservingObjectProperty<>(EnumBackgroundImage.DEFAULT);
+    private final ObjectProperty<BackgroundType> backgroundType = new RawPreservingObjectProperty<>(BackgroundType.DEFAULT);
 
     /// Returns the launcher background source type property.
-    public ObjectProperty<EnumBackgroundImage> backgroundTypeProperty() {
+    public ObjectProperty<BackgroundType> backgroundTypeProperty() {
         return backgroundType;
     }
 
