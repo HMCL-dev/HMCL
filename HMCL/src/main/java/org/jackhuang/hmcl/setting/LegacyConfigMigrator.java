@@ -253,20 +253,15 @@ public final class LegacyConfigMigrator {
         moveMember(json, state, "y");
         moveMember(json, state, "width");
         moveMember(json, state, "height");
-        migrateLegacyWindowContentPosition(state, screenWidth, screenHeight);
-        migrateLegacyWindowContentSize(state);
+        migrateLegacyWindowContentPosition(state, "x", screenWidth);
+        migrateLegacyWindowContentPosition(state, "y", screenHeight);
+        migrateLegacyWindowContentSize(state, "width");
+        migrateLegacyWindowContentSize(state, "height");
         moveMember(json, state, "promptedVersion");
         moveMember(json, state, "shownTips");
 
         LauncherState result = JsonUtils.GSON.fromJson(state, LauncherState.class);
         return result != null ? result : new LauncherState();
-    }
-
-    /// Converts legacy launcher window outer positions into normalized content positions.
-    @VisibleForTesting
-    static void migrateLegacyWindowContentPosition(JsonObject state, double screenWidth, double screenHeight) {
-        migrateLegacyWindowContentPosition(state, "x", screenWidth);
-        migrateLegacyWindowContentPosition(state, "y", screenHeight);
     }
 
     /// Converts one legacy launcher window outer position into a normalized content position.
@@ -283,12 +278,6 @@ public final class LegacyConfigMigrator {
         if (Double.isFinite(position)) {
             state.addProperty(name, position);
         }
-    }
-
-    /// Converts legacy launcher window outer sizes into content sizes.
-    private static void migrateLegacyWindowContentSize(JsonObject state) {
-        migrateLegacyWindowContentSize(state, "width");
-        migrateLegacyWindowContentSize(state, "height");
     }
 
     /// Converts one legacy launcher window outer size into a content size.
