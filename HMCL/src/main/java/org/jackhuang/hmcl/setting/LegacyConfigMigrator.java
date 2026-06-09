@@ -204,23 +204,6 @@ public final class LegacyConfigMigrator {
         }
     }
 
-    /// Extracts detached settings data that may still be embedded in a current settings JSON object.
-    ///
-    /// @param json the current settings JSON object
-    /// @return the extracted detached settings and whether the JSON object was changed
-    static CurrentSettingsMigration migrateCurrentSettings(JsonObject json) {
-        Objects.requireNonNull(json);
-
-        @Nullable AccountStorages accountStorages = extractAccountStorages(json);
-        if (accountStorages == null) {
-            return new CurrentSettingsMigration(DetachedSettings.empty(), false);
-        }
-
-        return new CurrentSettingsMigration(
-                new DetachedSettings(null, null, null, null, accountStorages),
-                true);
-    }
-
     /// Migrates user settings from the legacy global config file.
     ///
     /// @param targetLocation the current user settings path used for logging
@@ -920,13 +903,6 @@ public final class LegacyConfigMigrator {
         static DetachedSettings empty() {
             return new DetachedSettings(null, null, null, null, null);
         }
-    }
-
-    /// Result of migrating detached data out of an existing settings file.
-    ///
-    /// @param detachedSettings the detached settings migrated out of the settings JSON object
-    /// @param changed whether the settings JSON object was changed
-    record CurrentSettingsMigration(DetachedSettings detachedSettings, boolean changed) {
     }
 
     /// Result of locating and loading a legacy config file without modifying it.

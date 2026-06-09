@@ -203,9 +203,6 @@ public final class SettingsManager {
     /// before being overwritten by the first successful save.
     private static boolean needBackupSettings = false;
 
-    /// Whether the per-workspace config should be saved after extracting detached data.
-    private static boolean needSaveSettings = false;
-
     /// Detached settings used as fallbacks when detached settings files do not exist yet.
     private static LegacyConfigMigrator.DetachedSettings detachedSettingsFallback =
             LegacyConfigMigrator.DetachedSettings.empty();
@@ -411,8 +408,8 @@ public final class SettingsManager {
         loadUserGameAccounts(!unsupportedVersion);
         loadGameAccounts(detachedSettingsFallback.accountStorages(), !unsupportedVersion);
 
-        if (!unsupportedVersion && (newlyCreated || needSaveSettings)) {
-            LOG.info((newlyCreated ? "Creating" : "Updating") + " config file " + SETTINGS_LOCATION);
+        if (!unsupportedVersion && newlyCreated) {
+            LOG.info("Creating config file " + SETTINGS_LOCATION);
             FileUtils.saveSafely(SETTINGS_LOCATION, configInstance.toJson());
         }
 
@@ -447,13 +444,6 @@ public final class SettingsManager {
             }
             if (!schema.readable()) {
                 return new LauncherSettings();
-            }
-
-            LegacyConfigMigrator.CurrentSettingsMigration migration =
-                    LegacyConfigMigrator.migrateCurrentSettings(jsonObject);
-            detachedSettingsFallback = migration.detachedSettings();
-            if (migration.changed()) {
-                needSaveSettings = true;
             }
 
             try {
