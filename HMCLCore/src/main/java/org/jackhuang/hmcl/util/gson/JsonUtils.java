@@ -196,7 +196,7 @@ public final class JsonUtils {
             if (primitive.isString()) {
                 return Integer.parseInt(primitive.getAsString());
             }
-        } catch (NumberFormatException ignored) {
+        } catch (RuntimeException ignored) {
         }
         return null;
     }
@@ -210,6 +210,24 @@ public final class JsonUtils {
     /// Reads an optional integer member from a JSON object.
     public static @Nullable Integer getNullableInt(@Nullable JsonObject object, String key) {
         return object != null ? getInteger(object.get(key)) : null;
+    }
+
+    /// Reads a JSON element as a double from either a number or a numeric string.
+    public static @Nullable Double getDouble(@Nullable JsonElement element) {
+        if (!(element instanceof JsonPrimitive primitive)) {
+            return null;
+        }
+
+        try {
+            if (primitive.isNumber()) {
+                return primitive.getAsDouble();
+            }
+            if (primitive.isString()) {
+                return Double.parseDouble(primitive.getAsString());
+            }
+        } catch (NumberFormatException ignored) {
+        }
+        return null;
     }
 
     /// Returns a JSON primitive member, or `null` if the object is absent or the member is not primitive.

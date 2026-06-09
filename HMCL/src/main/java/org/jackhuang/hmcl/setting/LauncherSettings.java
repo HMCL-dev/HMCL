@@ -294,13 +294,13 @@ public final class LauncherSettings extends ObservableSetting {
         return backgroundPaint;
     }
 
-    /// The launcher background image opacity percentage.
-    @SerializedName("backgroundImageOpacity")
-    private final IntegerProperty backgroundImageOpacity = new SimpleIntegerProperty(100);
+    /// The launcher background opacity.
+    @SerializedName("backgroundOpacity")
+    private final DoubleProperty backgroundOpacity = new SimpleDoubleProperty(1.0);
 
-    /// Returns the launcher background image opacity property.
-    public IntegerProperty backgroundImageOpacityProperty() {
-        return backgroundImageOpacity;
+    /// Returns the launcher background opacity property.
+    public DoubleProperty backgroundOpacityProperty() {
+        return backgroundOpacity;
     }
 
     // Networks

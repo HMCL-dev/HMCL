@@ -188,7 +188,7 @@ public final class LegacyConfigMigrator {
             renameMember(jsonObject, "bgpath", "backgroundImage");
             renameMember(jsonObject, "bgurl", "backgroundImageUrl");
             renameMember(jsonObject, "bgpaint", "backgroundPaint");
-            renameMember(jsonObject, "bgImageOpacity", "backgroundImageOpacity");
+            migrateBackgroundOpacity(jsonObject);
             renameMember(jsonObject, "proxyUserName", "proxyUser");
             migrateLegacySelectedVersions(jsonObject);
             @Nullable GameDirectories migratedGameDirectories = extractGameDirectoriesFromConfigJson(jsonObject);
@@ -556,6 +556,26 @@ public final class LegacyConfigMigrator {
         if (legacyValue != null) {
             json.add(currentName, legacyValue);
         }
+    }
+
+    /// Migrates the legacy background opacity percentage into the current opacity value.
+    private static void migrateBackgroundOpacity(JsonObject json) {
+        JsonElement legacyValue = json.remove("bgImageOpacity");
+        if (legacyValue == null) {
+            return;
+        }
+
+        if (json.has("backgroundOpacity")) {
+            return;
+        }
+
+        @Nullable Double opacityPercent = JsonUtils.getDouble(legacyValue);
+        if (opacityPercent == null) {
+            return;
+        }
+
+        double opacity = opacityPercent / 100.;
+        json.addProperty("backgroundOpacity", Math.max(0., Math.min(opacity, 1.)));
     }
 
     /// Migrates the legacy `localization` field into the current `language` field.

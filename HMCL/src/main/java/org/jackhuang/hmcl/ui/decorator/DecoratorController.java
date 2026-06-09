@@ -97,7 +97,7 @@ public class DecoratorController {
         settings().backgroundImageProperty().addListener(weakListener);
         settings().backgroundImageUrlProperty().addListener(weakListener);
         settings().backgroundPaintProperty().addListener(weakListener);
-        settings().backgroundImageOpacityProperty().addListener(weakListener);
+        settings().backgroundOpacityProperty().addListener(weakListener);
 
         // pass key events to current dialog / current page
         decorator.addEventFilter(KeyEvent.ANY, e -> {
@@ -219,7 +219,7 @@ public class DecoratorController {
                 return new Background(new BackgroundFill(new Color(1, 1, 1, 0.5), CornerRadii.EMPTY, Insets.EMPTY));
             case PAINT:
                 Paint paint = settings().backgroundPaintProperty().get();
-                double opacity = MathUtils.clamp(settings().backgroundImageOpacityProperty().get(), 0, 100) / 100.;
+                double opacity = MathUtils.clamp(settings().backgroundOpacityProperty().get(), 0., 1.);
                 if (paint instanceof Color || paint == null) {
                     Color color = (Color) paint;
                     if (color == null)
@@ -235,13 +235,13 @@ public class DecoratorController {
         if (image == null) {
             image = loadDefaultBackgroundImage();
         }
-        return createBackgroundWithOpacity(image, settings().backgroundImageOpacityProperty().get());
+        return createBackgroundWithOpacity(image, settings().backgroundOpacityProperty().get());
     }
 
-    private Background createBackgroundWithOpacity(Image image, int opacity) {
+    private Background createBackgroundWithOpacity(Image image, double opacity) {
         if (opacity <= 0) {
             return new Background(new BackgroundFill(new Color(1, 1, 1, 0), CornerRadii.EMPTY, Insets.EMPTY));
-        } else if (opacity >= 100 || image.getPixelReader() == null) {
+        } else if (opacity >= 1. || image.getPixelReader() == null) {
             return new Background(new BackgroundImage(
                     image,
                     BackgroundRepeat.NO_REPEAT,
@@ -256,7 +256,7 @@ public class DecoratorController {
             for (int y = 0; y < image.getHeight(); y++) {
                 for (int x = 0; x < image.getWidth(); x++) {
                     Color color = pixelReader.getColor(x, y);
-                    Color newColor = new Color(color.getRed(), color.getGreen(), color.getBlue(), color.getOpacity() * opacity / 100);
+                    Color newColor = new Color(color.getRed(), color.getGreen(), color.getBlue(), color.getOpacity() * opacity);
                     pixelWriter.setColor(x, y, newColor);
                 }
             }

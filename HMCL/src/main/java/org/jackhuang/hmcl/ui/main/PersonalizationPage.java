@@ -55,18 +55,19 @@ import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 public class PersonalizationPage extends StackPane {
 
-    private static int snapOpacity(double val) {
+    private static double snapOpacity(double val) {
         if (val <= 0) {
-            return 0;
+            return 0.;
         } else if (Double.isNaN(val) || val >= 100.) {
-            return 100;
+            return 1.;
         }
 
         int prevTick = (int) (val / 5);
         int prevTickValue = prevTick * 5;
         int nextTickValue = (prevTick + 1) * 5;
 
-        return (val - prevTickValue) > (nextTickValue - val) ? nextTickValue : prevTickValue;
+        int percent = (val - prevTickValue) > (nextTickValue - val) ? nextTickValue : prevTickValue;
+        return percent / 100.;
     }
 
     public PersonalizationPage() {
@@ -160,7 +161,7 @@ public class PersonalizationPage extends StackPane {
 
                 JFXSlider slider = new JFXSlider(0, 100,
                         settings().backgroundImageTypeProperty().get() != EnumBackgroundImage.TRANSLUCENT
-                                ? settings().backgroundImageOpacityProperty().get() : 50);
+                                ? settings().backgroundOpacityProperty().get() * 100 : 50);
                 slider.setShowTickMarks(true);
                 slider.setMajorTickUnit(10);
                 slider.setMinorTickCount(1);
@@ -191,7 +192,7 @@ public class PersonalizationPage extends StackPane {
                 slider.setValueFactory(s -> valueBinding);
 
                 slider.valueProperty().addListener((observable, oldValue, newValue) ->
-                        settings().backgroundImageOpacityProperty().set(snapOpacity(newValue.doubleValue())));
+                        settings().backgroundOpacityProperty().set(snapOpacity(newValue.doubleValue())));
 
                 opacityItem.getChildren().setAll(label, slider, textOpacity);
             }
