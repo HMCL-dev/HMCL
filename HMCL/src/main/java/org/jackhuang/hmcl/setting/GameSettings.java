@@ -704,31 +704,6 @@ public sealed abstract class GameSettings extends ObservableSetting {
         return useNativeOpenAL;
     }
 
-    static void setRendererForApi(GameSettings setting, Renderer renderer, @Nullable GraphicsAPI fallbackApi) {
-        if (renderer instanceof Renderer.Driver driver) {
-            rendererPropertyForApi(setting, driver.api()).setValue(renderer);
-            if (fallbackApi == null || fallbackApi == GraphicsAPI.DEFAULT) {
-                setting.graphicsBackendProperty().setValue(driver.api());
-            }
-            return;
-        }
-
-        if (fallbackApi == GraphicsAPI.OPENGL || fallbackApi == GraphicsAPI.VULKAN) {
-            rendererPropertyForApi(setting, fallbackApi).setValue(renderer);
-        } else {
-            setting.openGLRendererProperty().setValue(renderer);
-            setting.vulkanRendererProperty().setValue(renderer);
-        }
-    }
-
-    private static InheritableProperty<Renderer> rendererPropertyForApi(GameSettings setting, GraphicsAPI api) {
-        return switch (api) {
-            case OPENGL -> setting.openGLRendererProperty();
-            case VULKAN -> setting.vulkanRendererProperty();
-            case DEFAULT -> throw new IllegalArgumentException("The default graphics API has no renderer property");
-        };
-    }
-
     private static Renderer selectRenderer(GraphicsAPI api, @Nullable Renderer renderer) {
         if (renderer instanceof Renderer.Driver driver && driver.api() != api) {
             return Renderer.DEFAULT;

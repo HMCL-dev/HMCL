@@ -25,6 +25,7 @@ import org.jackhuang.hmcl.game.NativesDirectoryType;
 import org.jackhuang.hmcl.game.ProcessPriority;
 import org.jackhuang.hmcl.game.QuickPlayType;
 import org.jackhuang.hmcl.game.Renderer;
+import org.jackhuang.hmcl.setting.property.InheritableProperty;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.i18n.LocalizedText;
@@ -240,10 +241,7 @@ public final class LegacyGameSettingsMigrator {
         target.processPriorityProperty().setValue(parseEnum(source, "processPriority", ProcessPriority.class, ProcessPriority.NORMAL));
         target.launcherVisibilityProperty().setValue(parseEnum(source, "launcherVisibility", LauncherVisibility.class, LauncherVisibility.HIDE));
         target.gameArgsProperty().setValue(JsonUtils.getString(source, "minecraftArgs", ""));
-        Renderer renderer = parseLegacyRenderer(source);
-        GraphicsAPI graphicsBackend = parseGraphicsBackend(source, renderer);
-        target.graphicsBackendProperty().setValue(graphicsBackend);
-        GameSettings.setRendererForApi(target, renderer, graphicsBackend);
+        migrateLegacyRenderer(source, target);
         target.environmentVariablesProperty().setValue(JsonUtils.getString(source, "environmentVariables", ""));
         target.commandWrapperProperty().setValue(JsonUtils.getString(source, "wrapper", ""));
         target.preLaunchCommandProperty().setValue(JsonUtils.getString(source, "precalledCommand", ""));
@@ -264,6 +262,37 @@ public final class LegacyGameSettingsMigrator {
         target.nativesDirProperty().setValue(JsonUtils.getString(source, "nativesDir", ""));
         target.useNativeGLFWProperty().setValue(JsonUtils.getBoolean(source, "useNativeGLFW", false));
         target.useNativeOpenALProperty().setValue(JsonUtils.getBoolean(source, "useNativeOpenAL", false));
+    }
+
+    /// Migrates the legacy renderer fields into current renderer properties.
+    private static void migrateLegacyRenderer(JsonObject source, GameSettings setting) {
+        Renderer renderer = parseLegacyRenderer(source);
+        GraphicsAPI graphicsBackend = parseGraphicsBackend(source, renderer);
+        setting.graphicsBackendProperty().setValue(graphicsBackend);
+
+        if (renderer instanceof Renderer.Driver driver) {
+            rendererPropertyForApi(setting, driver.api()).setValue(renderer);
+            if (graphicsBackend == GraphicsAPI.DEFAULT) {
+                setting.graphicsBackendProperty().setValue(driver.api());
+            }
+            return;
+        }
+
+        if (graphicsBackend == GraphicsAPI.OPENGL || graphicsBackend == GraphicsAPI.VULKAN) {
+            rendererPropertyForApi(setting, graphicsBackend).setValue(renderer);
+        } else {
+            setting.openGLRendererProperty().setValue(renderer);
+            setting.vulkanRendererProperty().setValue(renderer);
+        }
+    }
+
+    /// Returns the renderer property for the given non-default graphics API.
+    private static InheritableProperty<Renderer> rendererPropertyForApi(GameSettings setting, GraphicsAPI api) {
+        return switch (api) {
+            case OPENGL -> setting.openGLRendererProperty();
+            case VULKAN -> setting.vulkanRendererProperty();
+            case DEFAULT -> throw new IllegalArgumentException("The default graphics API has no renderer property");
+        };
     }
 
     /// Parses the legacy Java selection mode.
