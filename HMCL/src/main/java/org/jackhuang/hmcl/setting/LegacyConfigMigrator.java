@@ -179,8 +179,8 @@ public final class LegacyConfigMigrator {
             migrateLegacySelectedAccount(jsonObject, accountStorages);
             JsonElement legacyAllowAutoAgent = jsonObject.remove("allowAutoAgent");
             JsonElement legacyDisableAutoGameOptions = jsonObject.remove("disableAutoGameOptions");
-            migrateLegacyEnumOrdinals(jsonObject);
             migrateLegacyBackgroundImageType(jsonObject);
+            migrateLegacyProxyType(jsonObject);
             migrateLegacyDownloadSources(jsonObject);
             renameMember(jsonObject, "commonDirType", "commonDirectoryType");
             renameMember(jsonObject, "commonpath", "commonDirectory");
@@ -595,13 +595,6 @@ public final class LegacyConfigMigrator {
         });
     }
 
-    /// Migrates legacy enum ordinal fields into stable enum names.
-    static void migrateLegacyEnumOrdinals(JsonObject json) {
-        Objects.requireNonNull(json);
-
-        migrateLegacyEnumOrdinal(json, "proxyType", "proxyType", LEGACY_PROXY_TYPES);
-    }
-
     /// Migrates the legacy background image type into the current enum values.
     private static void migrateLegacyBackgroundImageType(JsonObject json) {
         JsonElement legacyValue = json.get("backgroundType");
@@ -618,22 +611,15 @@ public final class LegacyConfigMigrator {
         }
     }
 
-    /// Migrates one legacy enum ordinal field into a stable enum name.
-    private static void migrateLegacyEnumOrdinal(
-            JsonObject json,
-            String legacyPropertyName,
-            String currentPropertyName,
-            String[] legacyNames) {
-        JsonElement legacyValue = json.remove(legacyPropertyName);
+    /// Migrates the legacy proxy type ordinal into the current enum value.
+    private static void migrateLegacyProxyType(JsonObject json) {
+        JsonElement legacyValue = json.get("proxyType");
         @Nullable Integer ordinal = JsonUtils.getInteger(legacyValue);
-        if (ordinal == null || ordinal < 0 || ordinal >= legacyNames.length) {
-            if (legacyValue != null) {
-                json.add(currentPropertyName, legacyValue);
-            }
+        if (ordinal == null || ordinal < 0 || ordinal >= LEGACY_PROXY_TYPES.length) {
             return;
         }
 
-        json.addProperty(currentPropertyName, legacyNames[ordinal]);
+        json.addProperty("proxyType", LEGACY_PROXY_TYPES[ordinal]);
     }
 
     /// Migrates legacy download source fields into `versionListSource` and `fileDownloadSource`.
