@@ -258,27 +258,6 @@ public final class GameDirectoriesTest {
                 """, Profile.class));
     }
 
-    /// Tests that game directory files do not preserve the workspace-level selected directory.
-    @Test
-    public void doesNotStoreSelectedGameDirectoryInGameDirectories() {
-        JsonObject serialized = JsonParser.parseString("""
-                {
-                  "$schema": "https://schemas.glavo.site/hmcl/game-directories/1.0.0",
-                  "selectedGameDirectory": "123e4567-e89b-12d3-a456-426614174000",
-                  "directories": []
-                }
-                """).getAsJsonObject();
-
-        GameDirectories gameDirectories = JsonUtils.GSON.fromJson(serialized, GameDirectories.class);
-        JsonObject rewritten = JsonParser.parseString(JsonUtils.GSON.toJson(gameDirectories, GameDirectories.class))
-                .getAsJsonObject();
-
-        assertEquals(GameDirectories.CURRENT_SCHEMA,
-                JsonSchema.readFromMember(rewritten, JsonSchema.PROPERTY_SCHEMA));
-        assertFalse(rewritten.has(LauncherSettings.PROPERTY_SELECTED_GAME_DIRECTORY));
-        assertTrue(rewritten.has("directories"));
-    }
-
     /// Tests that patch-version schemas are preserved together with unknown fields.
     @Test
     public void preservesPatchSchemaAndUnknownFields() throws IOException {

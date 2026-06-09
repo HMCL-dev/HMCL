@@ -672,6 +672,12 @@ public final class LegacyConfigMigrator {
             }
 
             JsonObject migrated = profile.deepCopy();
+            JsonElement legacyGameDir = migrated.remove("gameDir");
+            if (legacyGameDir != null) {
+                migrated.add("path", legacyGameDir);
+            } else if (!migrated.has("path")) {
+                migrated.addProperty("path", "");
+            }
             String name = entry.getKey();
             if (isBuiltInProfileName(name)) {
                 migrated.remove("name");

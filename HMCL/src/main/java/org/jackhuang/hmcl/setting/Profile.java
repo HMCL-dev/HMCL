@@ -37,7 +37,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.lang.reflect.Type;
 import java.util.Objects;
-import java.util.Optional;
 
 import static org.jackhuang.hmcl.ui.FXUtils.onInvalidating;
 
@@ -222,8 +221,7 @@ public final class Profile implements Observable {
             }
             PortablePath path = context.deserialize(obj.get("path"), PortablePath.class);
             if (path == null) {
-                String gameDir = Optional.ofNullable(obj.get("gameDir")).map(JsonElement::getAsString).orElse("");
-                path = PortablePath.of(gameDir);
+                throw new JsonParseException("Profile path cannot be null");
             }
             @Nullable LocalizedText name = context.deserialize(obj.get("name"), LocalizedText.class);
 

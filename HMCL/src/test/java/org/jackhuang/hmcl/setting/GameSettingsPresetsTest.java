@@ -20,7 +20,6 @@ package org.jackhuang.hmcl.setting;
 import com.google.gson.JsonParseException;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
-import org.jackhuang.hmcl.util.gson.JsonSchema;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.i18n.LocaleUtils;
 import org.jackhuang.hmcl.util.i18n.LocalizedText;
@@ -126,28 +125,6 @@ public final class GameSettingsPresetsTest {
 
         assertEquals("Custom", name.getText(List.of(Locale.ENGLISH)));
         assertEquals("自定义", name.getText(List.of(LocaleUtils.LOCALE_ZH_HANS)));
-    }
-
-    /// Tests that preset files do not preserve the workspace-level default preset selection.
-    @Test
-    public void doesNotStoreDefaultGameSettingsPresetInPresets() {
-        JsonObject serialized = JsonParser.parseString("""
-                {
-                  "$schema": "https://schemas.glavo.site/hmcl/game-settings/1.0.0",
-                  "defaultGameSettingsPreset": "123e4567-e89b-12d3-a456-426614174000",
-                  "presets": []
-                }
-                """).getAsJsonObject();
-
-        GameSettingsPresets presets = JsonUtils.GSON.fromJson(serialized, GameSettingsPresets.class);
-        JsonObject rewritten = JsonParser.parseString(JsonUtils.GSON.toJson(presets, GameSettingsPresets.class))
-                .getAsJsonObject();
-
-        assertEquals(GameSettingsPresets.CURRENT_SCHEMA,
-                JsonSchema.readFromMember(rewritten, JsonSchema.PROPERTY_SCHEMA));
-        assertFalse(rewritten.has(LauncherSettings.PROPERTY_DEFAULT_GAME_SETTINGS_PRESET));
-        assertTrue(rewritten.has("presets"));
-        assertFalse(rewritten.has("gameSettings"));
     }
 
     /// Tests that legacy profile-level game settings migrate to IDs separate from profile IDs.

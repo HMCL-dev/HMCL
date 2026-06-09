@@ -17,9 +17,6 @@
  */
 package org.jackhuang.hmcl.setting;
 
-import com.google.gson.JsonDeserializationContext;
-import com.google.gson.JsonElement;
-import com.google.gson.JsonParseException;
 import com.google.gson.annotations.JsonAdapter;
 import com.google.gson.annotations.SerializedName;
 import javafx.beans.Observable;
@@ -33,7 +30,6 @@ import org.jackhuang.hmcl.util.gson.ObservableSetting;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
 
-import java.lang.reflect.Type;
 import java.util.Objects;
 
 /// Stores reusable game settings presets independently from the main config file.
@@ -123,19 +119,6 @@ public final class GameSettingsPresets extends ObservableSetting implements Json
         @Override
         protected GameSettingsPresets createInstance() {
             return new GameSettingsPresets();
-        }
-
-        /// Deserializes presets and drops the workspace-level default preset selection.
-        @Override
-        public @Nullable GameSettingsPresets deserialize(
-                JsonElement json,
-                Type typeOfT,
-                JsonDeserializationContext context) throws JsonParseException {
-            @Nullable GameSettingsPresets result = super.deserialize(json, typeOfT, context);
-            if (result != null) {
-                result.unknownFields.remove(LauncherSettings.PROPERTY_DEFAULT_GAME_SETTINGS_PRESET);
-            }
-            return result;
         }
     }
 }

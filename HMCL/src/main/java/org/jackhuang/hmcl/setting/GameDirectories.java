@@ -17,7 +17,6 @@
  */
 package org.jackhuang.hmcl.setting;
 
-import com.google.gson.*;
 import com.google.gson.annotations.JsonAdapter;
 import com.google.gson.annotations.SerializedName;
 import javafx.beans.Observable;
@@ -29,9 +28,7 @@ import org.jackhuang.hmcl.util.gson.JsonSchema;
 import org.jackhuang.hmcl.util.gson.JsonSerializable;
 import org.jackhuang.hmcl.util.gson.ObservableSetting;
 import org.jetbrains.annotations.NotNullByDefault;
-import org.jetbrains.annotations.Nullable;
 
-import java.lang.reflect.Type;
 import java.util.Objects;
 
 /// Stores game directories independently from the main config file.
@@ -100,24 +97,11 @@ public final class GameDirectories extends ObservableSetting implements JsonSche
     }
 
     /// JSON adapter for [GameDirectories].
-    public static final class Adapter extends ObservableSetting.Adapter<@Nullable GameDirectories> {
+    public static final class Adapter extends ObservableSetting.Adapter<GameDirectories> {
         /// Creates an empty game directory store for deserialization.
         @Override
         protected GameDirectories createInstance() {
             return new GameDirectories();
-        }
-
-        /// Deserializes game directories and drops the workspace-level selected directory.
-        @Override
-        public @Nullable GameDirectories deserialize(
-                JsonElement json,
-                Type typeOfT,
-                JsonDeserializationContext context) throws JsonParseException {
-            @Nullable GameDirectories result = super.deserialize(json, typeOfT, context);
-            if (result != null) {
-                result.unknownFields.remove(LauncherSettings.PROPERTY_SELECTED_GAME_DIRECTORY);
-            }
-            return result;
         }
     }
 }
