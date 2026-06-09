@@ -93,8 +93,10 @@
       ]
     },
     "backgroundPaint": true,
-    "backgroundImageOpacity": {
-      "type": "integer"
+    "backgroundOpacity": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 1
     },
     "autoDownloadThreads": {
       "type": "boolean"
