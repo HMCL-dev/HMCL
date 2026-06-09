@@ -92,6 +92,10 @@ public final class LegacyConfigMigrator {
     /// The legacy user account storage path shared by all workspaces.
     private static final Path LEGACY_USER_ACCOUNTS_LOCATION = Metadata.HMCL_USER_HOME.resolve("accounts.json");
 
+    /// The receipt recording the legacy config migrated to the current per-workspace config.
+    private static final Path SETTINGS_MIGRATION_RECEIPT_LOCATION =
+            Metadata.HMCL_LOCAL_HOME.resolve("settings.migration-receipt.json");
+
     /// Legacy ordinal order for `EnumBackgroundImage` in upstream/main configs.
     private static final String[] LEGACY_BACKGROUND_IMAGE_TYPES = {
             "DEFAULT",
@@ -129,14 +133,12 @@ public final class LegacyConfigMigrator {
     }
 
     /// Looks for a legacy config file and prepares it for writing as the new config file.
-    static @Nullable MigrationResult migrateLegacyConfig(Path receiptLocation) throws IOException {
-        Objects.requireNonNull(receiptLocation);
-
+    static @Nullable MigrationResult migrateLegacyConfig() throws IOException {
         @Nullable Path path = locateLegacyConfig();
         if (path == null) {
             return null;
         }
-        if (MigrationReceipt.matches(receiptLocation, path)) {
+        if (MigrationReceipt.matches(SETTINGS_MIGRATION_RECEIPT_LOCATION, path)) {
             LOG.info("Skipping already migrated legacy config " + path);
             return null;
         }
@@ -214,6 +216,11 @@ public final class LegacyConfigMigrator {
             LOG.warning("Malformed legacy config file: " + path, e);
             return null;
         }
+    }
+
+    /// Records that the given legacy config migration result has been applied.
+    static void saveLegacyConfigMigrationReceipt(MigrationResult migrationResult) throws IOException {
+        MigrationReceipt.save(SETTINGS_MIGRATION_RECEIPT_LOCATION, migrationResult.path());
     }
 
     /// Migrates user settings from the legacy global config file.

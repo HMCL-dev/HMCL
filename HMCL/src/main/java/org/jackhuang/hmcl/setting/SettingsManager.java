@@ -59,10 +59,6 @@ public final class SettingsManager {
     /// The current per-workspace config path.
     private static final Path SETTINGS_LOCATION = Metadata.HMCL_LOCAL_HOME.resolve("settings.json");
 
-    /// The receipt recording the legacy config migrated to the current per-workspace config.
-    private static final Path SETTINGS_MIGRATION_RECEIPT_LOCATION =
-            Metadata.HMCL_LOCAL_HOME.resolve("settings.migration-receipt.json");
-
     /// The current per-workspace launcher state path.
     private static final Path STATE_LOCATION = Metadata.HMCL_LOCAL_HOME.resolve("launcher-state.json");
 
@@ -477,7 +473,7 @@ public final class SettingsManager {
         } else {
             LegacyConfigMigrator.MigrationResult migrationResult;
             try {
-                migrationResult = LegacyConfigMigrator.migrateLegacyConfig(SETTINGS_MIGRATION_RECEIPT_LOCATION);
+                migrationResult = LegacyConfigMigrator.migrateLegacyConfig();
             } catch (LegacyConfigMigrator.UnsupportedLegacyConfigVersionException e) {
                 unsupportedVersion = true;
                 LOG.warning("Legacy config file is newer than this launcher supports.", e);
@@ -487,7 +483,7 @@ public final class SettingsManager {
                 LOG.info("Migrating settings from " + migrationResult.path() + " to " + SETTINGS_LOCATION);
                 detachedSettingsFallback = migrationResult.detachedSettings();
                 FileUtils.saveSafely(SETTINGS_LOCATION, migrationResult.contentForMigration());
-                MigrationReceipt.save(SETTINGS_MIGRATION_RECEIPT_LOCATION, migrationResult.path());
+                LegacyConfigMigrator.saveLegacyConfigMigrationReceipt(migrationResult);
                 return migrationResult.launcherSettings();
             }
         }
