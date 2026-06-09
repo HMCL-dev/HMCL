@@ -390,7 +390,7 @@ public final class Controllers {
         decorator = new DecoratorController(stage, getRootPage());
 
         if (settings().commonDirectoryTypeProperty().get() == EnumCommonDirectory.CUSTOM &&
-                !FileUtils.canCreateDirectory(settings().commonDirectoryProperty().get())) {
+                !FileUtils.canCreateDirectory(settings().getResolvedCommonDirectory())) {
             settings().commonDirectoryTypeProperty().set(EnumCommonDirectory.DEFAULT);
             dialog(i18n("launcher.cache_directory.invalid"));
         }
