@@ -80,6 +80,21 @@ public final class GameSettingsPresets extends ObservableSetting implements Json
         this.schema.set(Objects.requireNonNull(schema));
     }
 
+    /// Whether this preset store may be saved back to `game-settings.json`.
+    private transient boolean saveable = true;
+
+    /// Returns whether this preset store may be saved back to `game-settings.json`.
+    @Override
+    public boolean isSaveable() {
+        return saveable;
+    }
+
+    /// Sets whether this preset store may be saved back to `game-settings.json`.
+    @Override
+    public void setSaveable(boolean saveable) {
+        this.saveable = saveable;
+    }
+
     /// Reusable game setting presets.
     @SerializedName("presets")
     private final ObservableList<GameSettings.Preset> presets =

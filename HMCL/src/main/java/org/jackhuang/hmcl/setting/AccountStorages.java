@@ -81,6 +81,21 @@ final class AccountStorages extends ObservableSetting implements JsonSchemaSetti
         this.schema.set(Objects.requireNonNull(schema));
     }
 
+    /// Whether this account storage list may be saved back to its JSON file.
+    private transient boolean saveable = true;
+
+    /// Returns whether this account storage list may be saved back to its JSON file.
+    @Override
+    public boolean isSaveable() {
+        return saveable;
+    }
+
+    /// Sets whether this account storage list may be saved back to its JSON file.
+    @Override
+    public void setSaveable(boolean saveable) {
+        this.saveable = saveable;
+    }
+
     /// Serialized account entries.
     @SerializedName("accounts")
     private final ObservableList<Map<Object, Object>> accounts = FXCollections.observableArrayList();

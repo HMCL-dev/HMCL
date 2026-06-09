@@ -82,6 +82,21 @@ public final class UserState extends ObservableSetting implements JsonSchemaSett
         this.schema.set(Objects.requireNonNull(schema));
     }
 
+    /// Whether this user state store may be saved back to `user-state.json`.
+    private transient boolean saveable = true;
+
+    /// Returns whether this user state store may be saved back to `user-state.json`.
+    @Override
+    public boolean isSaveable() {
+        return saveable;
+    }
+
+    /// Sets whether this user state store may be saved back to `user-state.json`.
+    @Override
+    public void setSaveable(boolean saveable) {
+        this.saveable = saveable;
+    }
+
     /// The accepted launcher agreement version.
     @SerializedName("agreementVersion")
     private final IntegerProperty agreementVersion = new SimpleIntegerProperty();

@@ -81,6 +81,21 @@ public final class UserSettings extends ObservableSetting implements JsonSchemaS
         this.schema.set(Objects.requireNonNull(schema));
     }
 
+    /// Whether this user settings store may be saved back to `user-settings.json`.
+    private transient boolean saveable = true;
+
+    /// Returns whether this user settings store may be saved back to `user-settings.json`.
+    @Override
+    public boolean isSaveable() {
+        return saveable;
+    }
+
+    /// Sets whether this user settings store may be saved back to `user-settings.json`.
+    @Override
+    public void setSaveable(boolean saveable) {
+        this.saveable = saveable;
+    }
+
     /// The number of launcher log files to retain.
     @SerializedName("logRetention")
     private final IntegerProperty logRetention = new SimpleIntegerProperty(20);

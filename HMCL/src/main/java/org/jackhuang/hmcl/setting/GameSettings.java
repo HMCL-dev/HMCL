@@ -107,6 +107,21 @@ public sealed abstract class GameSettings extends ObservableSetting {
             this.schema.set(Objects.requireNonNull(schema));
         }
 
+        /// Whether this instance setting may be saved back to its JSON file.
+        private transient boolean saveable = true;
+
+        /// Returns whether this instance setting may be saved back to its JSON file.
+        @Override
+        public boolean isSaveable() {
+            return saveable;
+        }
+
+        /// Sets whether this instance setting may be saved back to its JSON file.
+        @Override
+        public void setSaveable(boolean saveable) {
+            this.saveable = saveable;
+        }
+
         /// The parent preset ID.
         @SerializedName("parent")
         private final SettingProperty<@Nullable SettingId> parent = newSettingProperty("parent");

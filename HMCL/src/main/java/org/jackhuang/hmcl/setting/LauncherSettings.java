@@ -50,7 +50,7 @@ import java.util.*;
 /// game settings presets, accounts, launcher state, and authlib-injector servers, are persisted in detached
 /// JSON files managed by [SettingsManager].
 @JsonAdapter(value = LauncherSettings.Adapter.class)
-public final class LauncherSettings extends ObservableSetting {
+public final class LauncherSettings extends ObservableSetting implements JsonSchemaSetting {
 
     /// The JSON schema supported by this launcher settings class.
     public static final JsonSchema CURRENT_SCHEMA = new JsonSchema("settings", new JsonSchema.Version(1, 0, 0));
@@ -107,6 +107,33 @@ public final class LauncherSettings extends ObservableSetting {
     /// Returns the schema property.
     public ObjectProperty<JsonSchema> schemaProperty() {
         return schema;
+    }
+
+    /// Returns the schema used by this launcher settings file.
+    @Override
+    public JsonSchema getSchema() {
+        return schema.get();
+    }
+
+    /// Sets the schema used by this launcher settings file.
+    @Override
+    public void setSchema(JsonSchema schema) {
+        this.schema.set(Objects.requireNonNull(schema));
+    }
+
+    /// Whether this launcher settings object may be saved back to `settings.json`.
+    private transient boolean saveable = true;
+
+    /// Returns whether this launcher settings object may be saved back to `settings.json`.
+    @Override
+    public boolean isSaveable() {
+        return saveable;
+    }
+
+    /// Sets whether this launcher settings object may be saved back to `settings.json`.
+    @Override
+    public void setSaveable(boolean saveable) {
+        this.saveable = saveable;
     }
 
     /// The launcher UI language.

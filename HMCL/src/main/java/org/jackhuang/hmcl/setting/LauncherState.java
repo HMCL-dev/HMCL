@@ -73,6 +73,21 @@ public final class LauncherState extends ObservableSetting implements JsonSchema
         this.schema.set(Objects.requireNonNull(schema));
     }
 
+    /// Whether this launcher state may be saved back to `launcher-state.json`.
+    private transient boolean saveable = true;
+
+    /// Returns whether this launcher state may be saved back to `launcher-state.json`.
+    @Override
+    public boolean isSaveable() {
+        return saveable;
+    }
+
+    /// Sets whether this launcher state may be saved back to `launcher-state.json`.
+    @Override
+    public void setSaveable(boolean saveable) {
+        this.saveable = saveable;
+    }
+
     /// The normalized launcher window content X position.
     @SerializedName("x")
     private final DoubleProperty x = new SimpleDoubleProperty();

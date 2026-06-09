@@ -32,4 +32,12 @@ interface JsonSchemaSetting {
     ///
     /// @param schema the schema to store
     void setSchema(JsonSchema schema);
+
+    /// Returns whether this settings object may be saved back to its JSON file.
+    boolean isSaveable();
+
+    /// Sets whether this settings object may be saved back to its JSON file.
+    ///
+    /// @param saveable whether this settings object may be saved
+    void setSaveable(boolean saveable);
 }

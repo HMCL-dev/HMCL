@@ -70,6 +70,21 @@ public final class GameDirectories extends ObservableSetting implements JsonSche
         this.schema.set(Objects.requireNonNull(schema));
     }
 
+    /// Whether this game directory store may be saved back to its JSON file.
+    private transient boolean saveable = true;
+
+    /// Returns whether this game directory store may be saved back to its JSON file.
+    @Override
+    public boolean isSaveable() {
+        return saveable;
+    }
+
+    /// Sets whether this game directory store may be saved back to its JSON file.
+    @Override
+    public void setSaveable(boolean saveable) {
+        this.saveable = saveable;
+    }
+
     /// Game directories stored in this file.
     @SerializedName("directories")
     private final ObservableList<Profile> gameDirectories =

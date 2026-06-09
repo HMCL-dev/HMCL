@@ -89,6 +89,21 @@ public final class AuthlibInjectorServerList extends ObservableSetting implement
         this.schema.set(Objects.requireNonNull(schema));
     }
 
+    /// Whether this server list may be saved back to `authlib-injector-servers.json`.
+    private transient boolean saveable = true;
+
+    /// Returns whether this server list may be saved back to `authlib-injector-servers.json`.
+    @Override
+    public boolean isSaveable() {
+        return saveable;
+    }
+
+    /// Sets whether this server list may be saved back to `authlib-injector-servers.json`.
+    @Override
+    public void setSaveable(boolean saveable) {
+        this.saveable = saveable;
+    }
+
     /// Authlib-injector authentication servers available for account login.
     @SerializedName("servers")
     private final ObservableList<AuthlibInjectorServer> servers =
