@@ -43,7 +43,7 @@ public final class UserSettingsTest {
     /// Tests that legacy global config content can be read as current user settings.
     @Test
     public void readsLegacyGlobalConfigFormat() {
-        UserSettings settings = Objects.requireNonNull(UserSettings.fromJson("""
+        String legacyUserConfig = """
                 {
                   "agreementVersion": 1,
                   "terracottaAgreementVersion": 2,
@@ -54,12 +54,15 @@ public final class UserSettingsTest {
                   "userJava": ["java-a"],
                   "disabledJava": ["java-b"]
                 }
-                """));
+                """;
+        UserSettings settings = Objects.requireNonNull(UserSettings.fromJson(legacyUserConfig));
+        UserState state = Objects.requireNonNull(UserState.fromJson(legacyUserConfig));
 
         assertEquals(UserSettings.CURRENT_SCHEMA, settings.getSchema());
-        assertEquals(1, settings.agreementVersionProperty().get());
-        assertEquals(2, settings.terracottaAgreementVersionProperty().get());
-        assertEquals(3, settings.platformPromptVersionProperty().get());
+        assertEquals(UserState.CURRENT_SCHEMA, state.getSchema());
+        assertEquals(1, state.agreementVersionProperty().get());
+        assertEquals(2, state.terracottaAgreementVersionProperty().get());
+        assertEquals(3, state.platformPromptVersionProperty().get());
         assertEquals(7, settings.logRetentionProperty().get());
         assertTrue(settings.enableOfflineAccountProperty().get());
         assertEquals("gray", settings.fontAntiAliasingProperty().get());

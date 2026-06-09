@@ -89,17 +89,16 @@ public final class LauncherSettingsMigrationTest {
                 }
                 """).getAsJsonObject();
 
-        LegacyConfigMigrator.migrateLegacyEnumOrdinals(settings);
+        LegacyConfigMigrator.migrateLegacyBackgroundImageType(settings);
+        LegacyConfigMigrator.migrateLegacyProxyType(settings);
         LauncherSettings launcherSettings = Objects.requireNonNull(LauncherSettings.fromJson(settings));
         JsonObject serialized = JsonParser.parseString(launcherSettings.toJson()).getAsJsonObject();
 
-        assertFalse(settings.has("backgroundType"));
-        assertEquals("NETWORK", settings.get("backgroundImageType").getAsString());
+        assertEquals("NETWORK", settings.get("backgroundType").getAsString());
         assertEquals("SOCKS", settings.get("proxyType").getAsString());
-        assertEquals(EnumBackgroundImage.NETWORK, launcherSettings.backgroundImageTypeProperty().get());
+        assertEquals(EnumBackgroundImage.NETWORK, launcherSettings.backgroundTypeProperty().get());
         assertEquals(Proxy.Type.SOCKS, launcherSettings.proxyTypeProperty().get());
-        assertFalse(serialized.has("backgroundType"));
-        assertEquals("NETWORK", serialized.get("backgroundImageType").getAsString());
+        assertEquals("NETWORK", serialized.get("backgroundType").getAsString());
         assertEquals("SOCKS", serialized.get("proxyType").getAsString());
     }
 
@@ -113,13 +112,13 @@ public final class LauncherSettingsMigrationTest {
                 }
                 """).getAsJsonObject();
 
-        LegacyConfigMigrator.migrateLegacyEnumOrdinals(settings);
+        LegacyConfigMigrator.migrateLegacyBackgroundImageType(settings);
+        LegacyConfigMigrator.migrateLegacyProxyType(settings);
         LauncherSettings launcherSettings = Objects.requireNonNull(LauncherSettings.fromJson(settings));
 
-        assertFalse(settings.has("backgroundType"));
-        assertEquals("CUSTOM", settings.get("backgroundImageType").getAsString());
+        assertEquals("CUSTOM", settings.get("backgroundType").getAsString());
         assertEquals("DIRECT", settings.get("proxyType").getAsString());
-        assertEquals(EnumBackgroundImage.CUSTOM, launcherSettings.backgroundImageTypeProperty().get());
+        assertEquals(EnumBackgroundImage.CUSTOM, launcherSettings.backgroundTypeProperty().get());
         assertEquals(Proxy.Type.DIRECT, launcherSettings.proxyTypeProperty().get());
     }
 

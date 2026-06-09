@@ -607,7 +607,8 @@ public final class LegacyConfigMigrator {
     }
 
     /// Migrates the legacy background image type into the current enum values.
-    private static void migrateLegacyBackgroundImageType(JsonObject json) {
+    @VisibleForTesting
+    static void migrateLegacyBackgroundImageType(JsonObject json) {
         JsonElement legacyValue = json.get("backgroundType");
         @Nullable Integer ordinal = JsonUtils.getInteger(legacyValue);
         if (ordinal != null && ordinal >= 0 && ordinal < LEGACY_BACKGROUND_IMAGE_TYPES.length) {
@@ -623,7 +624,8 @@ public final class LegacyConfigMigrator {
     }
 
     /// Migrates the legacy proxy type ordinal into the current enum value.
-    private static void migrateLegacyProxyType(JsonObject json) {
+    @VisibleForTesting
+    static void migrateLegacyProxyType(JsonObject json) {
         JsonElement legacyValue = json.get("proxyType");
         @Nullable Integer ordinal = JsonUtils.getInteger(legacyValue);
         if (ordinal == null || ordinal < 0 || ordinal >= LEGACY_PROXY_TYPES.length) {
