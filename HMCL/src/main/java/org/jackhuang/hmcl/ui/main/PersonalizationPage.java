@@ -23,8 +23,6 @@ import javafx.application.Platform;
 import javafx.beans.binding.Bindings;
 import javafx.beans.binding.StringBinding;
 import javafx.beans.binding.When;
-import javafx.beans.value.ChangeListener;
-import javafx.beans.value.ObservableValue;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.control.ColorPicker;
@@ -159,9 +157,7 @@ public class PersonalizationPage extends StackPane {
 
                 Label label = new Label(i18n("settings.launcher.background.settings.opacity"));
 
-                JFXSlider slider = new JFXSlider(0, 100,
-                        settings().backgroundImageTypeProperty().get() != EnumBackgroundImage.TRANSLUCENT
-                                ? settings().backgroundOpacityProperty().get() * 100 : 50);
+                JFXSlider slider = new JFXSlider(0, 100, settings().backgroundOpacityProperty().get() * 100);
                 slider.setShowTickMarks(true);
                 slider.setMajorTickUnit(10);
                 slider.setMinorTickCount(1);
@@ -169,20 +165,6 @@ public class PersonalizationPage extends StackPane {
                 slider.setSnapToTicks(true);
                 slider.setPadding(new Insets(9, 0, 0, 0));
                 HBox.setHgrow(slider, Priority.ALWAYS);
-
-                if (settings().backgroundImageTypeProperty().get() == EnumBackgroundImage.TRANSLUCENT) {
-                    slider.setDisable(true);
-                    settings().backgroundImageTypeProperty().addListener(new ChangeListener<>() {
-                        @Override
-                        public void changed(ObservableValue<? extends EnumBackgroundImage> observable, EnumBackgroundImage oldValue, EnumBackgroundImage newValue) {
-                            if (newValue != EnumBackgroundImage.TRANSLUCENT) {
-                                settings().backgroundImageTypeProperty().removeListener(this);
-                                slider.setDisable(false);
-                                slider.setValue(100);
-                            }
-                        }
-                    });
-                }
 
                 Label textOpacity = new Label();
                 FXUtils.setLimitWidth(textOpacity, 50);
