@@ -80,6 +80,8 @@ public final class HMCLGameRepository extends DefaultGameRepository {
 
     // local game settings
     private final Map<String, GameSettings.Instance> localGameSettings = new HashMap<>();
+    /// Instance IDs whose local game settings file has already been checked.
+    private final Set<String> loadedLocalGameSettings = new HashSet<>();
     private final Set<String> readOnlyLocalGameSettings = new HashSet<>();
     private final Set<String> beingModpackVersions = new HashSet<>();
 
@@ -141,6 +143,7 @@ public final class HMCLGameRepository extends DefaultGameRepository {
     @Override
     protected void refreshVersionsImpl() {
         localGameSettings.clear();
+        loadedLocalGameSettings.clear();
         readOnlyLocalGameSettings.clear();
         super.refreshVersionsImpl();
         versions.keySet().forEach(this::loadLocalGameSettings);
@@ -238,12 +241,14 @@ public final class HMCLGameRepository extends DefaultGameRepository {
     }
 
     private void loadLocalGameSettings(String id) {
+        loadedLocalGameSettings.add(id);
         InstanceGameSettingsLoadResult result = loadGameSettingsFile(getLocalGameSettingsFile(id));
         if (result.setting() != null) {
             initLocalGameSettings(id, result.setting(), result.allowSave());
             return;
         }
         if (!result.allowSave()) {
+            readOnlyLocalGameSettings.add(id);
             return;
         }
 
@@ -329,6 +334,7 @@ public final class HMCLGameRepository extends DefaultGameRepository {
 
     private GameSettings.Instance initLocalGameSettings(String id, GameSettings.Instance setting, boolean allowSave) {
         normalizeRunningDirectoryOverride(setting);
+        loadedLocalGameSettings.add(id);
         localGameSettings.put(id, setting);
         if (allowSave) {
             readOnlyLocalGameSettings.remove(id);
@@ -348,7 +354,7 @@ public final class HMCLGameRepository extends DefaultGameRepository {
 
     @Nullable
     public GameSettings.Instance getLocalGameSettings(String id) {
-        if (!localGameSettings.containsKey(id)) {
+        if (!loadedLocalGameSettings.contains(id)) {
             loadLocalGameSettings(id);
         }
         return localGameSettings.get(id);

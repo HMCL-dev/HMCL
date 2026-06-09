@@ -321,6 +321,26 @@ public final class LauncherSettingsMigrationTest {
         assertTrue(serialized.get("futureField").getAsBoolean());
     }
 
+    /// Tests migrating legacy custom-decorated window bounds into content bounds.
+    @Test
+    public void migratesLegacyWindowContentBounds() {
+        JsonObject state = JsonParser.parseString("""
+                {
+                  "x": 0.1,
+                  "y": 0.2,
+                  "width": 1280,
+                  "height": 720
+                }
+                """).getAsJsonObject();
+
+        LauncherState launcherState = LegacyConfigMigrator.extractLauncherState(state, 1000, 2000);
+
+        assertEquals(0.108, launcherState.getX(), 1e-9);
+        assertEquals(0.204, launcherState.getY(), 1e-9);
+        assertEquals(1264, launcherState.getWidth(), 1e-9);
+        assertEquals(704, launcherState.getHeight(), 1e-9);
+    }
+
     /// Tests migrating the legacy workspace-wide automatic Java agent permission into game settings.
     @Test
     public void migratesLegacyAllowAutoAgentToGameSettings() {

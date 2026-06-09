@@ -18,6 +18,8 @@
 package org.jackhuang.hmcl.setting;
 
 import com.google.gson.*;
+import javafx.geometry.Rectangle2D;
+import javafx.stage.Screen;
 import org.glavo.uuid.UUIDs;
 import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.util.StringUtils;
@@ -65,6 +67,9 @@ public final class LegacyConfigMigrator {
 
     /// The total transparent custom window shadow size used by legacy launcher window bounds.
     private static final int LEGACY_CUSTOM_DECORATION_SHADOW_EXTENT = 16;
+
+    /// The transparent custom window shadow size on one side used by legacy launcher window bounds.
+    private static final int LEGACY_CUSTOM_DECORATION_SHADOW_SIZE = LEGACY_CUSTOM_DECORATION_SHADOW_EXTENT / 2;
 
     /// The legacy built-in profile name for the user-home game directory.
     private static final String LEGACY_HOME_PROFILE = "Home";
@@ -233,6 +238,13 @@ public final class LegacyConfigMigrator {
 
     /// Extracts launcher state from a legacy config JSON object and removes those members.
     static LauncherState extractLauncherState(JsonObject json) {
+        Rectangle2D screen = Screen.getPrimary().getBounds();
+        return extractLauncherState(json, screen.getWidth(), screen.getHeight());
+    }
+
+    /// Extracts launcher state from a legacy config JSON object using explicit screen bounds.
+    @VisibleForTesting
+    static LauncherState extractLauncherState(JsonObject json, double screenWidth, double screenHeight) {
         Objects.requireNonNull(json);
 
         JsonObject state = new JsonObject();
@@ -241,12 +253,36 @@ public final class LegacyConfigMigrator {
         moveMember(json, state, "y");
         moveMember(json, state, "width");
         moveMember(json, state, "height");
+        migrateLegacyWindowContentPosition(state, screenWidth, screenHeight);
         migrateLegacyWindowContentSize(state);
         moveMember(json, state, "promptedVersion");
         moveMember(json, state, "shownTips");
 
         LauncherState result = JsonUtils.GSON.fromJson(state, LauncherState.class);
         return result != null ? result : new LauncherState();
+    }
+
+    /// Converts legacy launcher window outer positions into normalized content positions.
+    @VisibleForTesting
+    static void migrateLegacyWindowContentPosition(JsonObject state, double screenWidth, double screenHeight) {
+        migrateLegacyWindowContentPosition(state, "x", screenWidth);
+        migrateLegacyWindowContentPosition(state, "y", screenHeight);
+    }
+
+    /// Converts one legacy launcher window outer position into a normalized content position.
+    private static void migrateLegacyWindowContentPosition(JsonObject state, String name, double screenSize) {
+        JsonElement element = state.get(name);
+        if (!(element instanceof JsonPrimitive primitive)
+                || !primitive.isNumber()
+                || !Double.isFinite(screenSize)
+                || screenSize <= 0.0) {
+            return;
+        }
+
+        double position = primitive.getAsDouble() + LEGACY_CUSTOM_DECORATION_SHADOW_SIZE / screenSize;
+        if (Double.isFinite(position)) {
+            state.addProperty(name, position);
+        }
     }
 
     /// Converts legacy launcher window outer sizes into content sizes.
