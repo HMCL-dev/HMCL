@@ -243,6 +243,13 @@ public final class HMCLGameRepository extends DefaultGameRepository {
         return getVersionRoot(id).resolve(LOCAL_GAME_SETTINGS_DIRECTORY).resolve(LOCAL_GAME_SETTINGS_FILENAME);
     }
 
+    /// Returns the migration receipt path for a legacy local game settings file.
+    private Path getLocalGameSettingsMigrationReceiptFile(String id) {
+        return getVersionRoot(id)
+                .resolve(LOCAL_GAME_SETTINGS_DIRECTORY)
+                .resolve("instance-game-settings.migration-receipt.json");
+    }
+
     private void loadLocalGameSettings(String id) {
         loadedLocalGameSettings.add(id);
         InstanceGameSettingsLoadResult result = loadGameSettingsFile(getLocalGameSettingsFile(id));
@@ -255,13 +262,16 @@ public final class HMCLGameRepository extends DefaultGameRepository {
             return;
         }
 
-        GameSettings.Instance legacySetting = LegacyGameSettingsMigrator.migrateInstanceGameSettings(
-                getVersionRoot(id),
-                getBaseDirectory(),
-                getParentGameSettings(null).idProperty().getValue());
-        if (legacySetting != null) {
-            initLocalGameSettings(id, legacySetting);
+        LegacyGameSettingsMigrator.InstanceMigrationResult migrationResult =
+                LegacyGameSettingsMigrator.migrateInstanceGameSettings(
+                        getVersionRoot(id),
+                        getBaseDirectory(),
+                        getParentGameSettings(null).idProperty().getValue(),
+                        getLocalGameSettingsMigrationReceiptFile(id));
+        if (migrationResult != null) {
+            initLocalGameSettings(id, migrationResult.setting());
             saveGameSettings(id);
+            migrationResult.saveReceipt();
             return;
         }
 

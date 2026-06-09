@@ -23,7 +23,12 @@ import org.jackhuang.hmcl.util.gson.JsonSchema;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.junit.jupiter.api.Test;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 
 /// Tests for instance-specific game settings.
 @NotNullByDefault
@@ -39,5 +44,31 @@ public final class GameSettingsInstanceTest {
 
         assertEquals(GameSettings.Instance.CURRENT_SCHEMA.url(),
                 serialized.get(JsonSchema.PROPERTY_SCHEMA).getAsString());
+    }
+
+    /// Tests that matching migration receipts prevent replaying legacy per-version settings migration.
+    @Test
+    public void skipsLegacyInstanceMigrationWhenReceiptMatches() throws IOException {
+        Path tempDir = createInstanceSettingsTestDirectory("receipt");
+        Path versionRoot = tempDir.resolve("version");
+        Files.createDirectories(versionRoot);
+
+        Path legacySetting = versionRoot.resolve("hmclversion.cfg");
+        Path receipt = versionRoot.resolve(".hmcl").resolve("instance-game-settings.migration-receipt.json");
+        Files.writeString(legacySetting, "{\"width\":854}");
+        MigrationReceipt.save(receipt, legacySetting);
+
+        assertNull(LegacyGameSettingsMigrator.migrateInstanceGameSettings(
+                versionRoot,
+                tempDir,
+                null,
+                receipt));
+    }
+
+    /// Creates a temporary directory under Gradle's build directory for instance settings tests.
+    private static Path createInstanceSettingsTestDirectory(String prefix) throws IOException {
+        Path root = Path.of("build", "tmp", "instance-settings-tests");
+        Files.createDirectories(root);
+        return Files.createTempDirectory(root, prefix + "-");
     }
 }

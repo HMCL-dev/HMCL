@@ -100,16 +100,23 @@ public final class LegacyGameSettingsMigrator {
     /// @param versionRoot the root directory of the version being migrated
     /// @param baseDirectory the profile game directory used by legacy `ROOT_FOLDER` settings
     /// @param parent the migrated parent preset ID for the profile
+    /// @param receiptLocation the receipt path used to avoid replaying an unchanged legacy source and to record success
     /// @return the migrated instance setting, or `null` when no legacy file can be migrated
-    public static @Nullable GameSettings.Instance migrateInstanceGameSettings(
+    public static @Nullable InstanceMigrationResult migrateInstanceGameSettings(
             Path versionRoot,
             Path baseDirectory,
-            @Nullable SettingId parent) {
+            @Nullable SettingId parent,
+            Path receiptLocation) {
         Objects.requireNonNull(versionRoot);
         Objects.requireNonNull(baseDirectory);
+        Objects.requireNonNull(receiptLocation);
 
         Path file = versionRoot.resolve(LEGACY_INSTANCE_SETTINGS_FILENAME);
         if (!Files.exists(file)) {
+            return null;
+        }
+        if (MigrationReceipt.matches(receiptLocation, file)) {
+            LOG.info("Skipping already migrated legacy version setting " + file);
             return null;
         }
 
@@ -126,7 +133,7 @@ public final class LegacyGameSettingsMigrator {
             } else {
                 preserveLocalRootRunningDirectory(setting, legacySettingJson, baseDirectory, parent);
             }
-            return setting;
+            return new InstanceMigrationResult(file, receiptLocation, setting);
         } catch (Exception ex) {
             LOG.warning("Failed to migrate legacy version setting " + file, ex);
             return null;
@@ -420,5 +427,20 @@ public final class LegacyGameSettingsMigrator {
     /// Returns an empty string for `null` values.
     private static String empty(@Nullable String value) {
         return value != null ? value : "";
+    }
+
+    /// Result of migrating a legacy per-version game settings file.
+    ///
+    /// @param path the legacy per-version game settings path
+    /// @param receiptLocation the receipt path to write after saving the migrated settings
+    /// @param setting the migrated instance game settings
+    public record InstanceMigrationResult(
+            Path path,
+            Path receiptLocation,
+            GameSettings.Instance setting) {
+        /// Writes the migration receipt when receipt tracking is enabled.
+        public void saveReceipt() {
+            MigrationReceipt.save(receiptLocation, path);
+        }
     }
 }
