@@ -56,6 +56,9 @@ public final class SettingsManager {
     /// The user settings path shared by all workspaces.
     public static final Path USER_SETTINGS_LOCATION = Metadata.HMCL_USER_HOME.resolve("user-settings.json");
 
+    /// The user state path shared by all workspaces.
+    public static final Path USER_STATE_LOCATION = Metadata.HMCL_USER_HOME.resolve("user-state.json");
+
     /// The current per-workspace config path.
     private static final Path SETTINGS_LOCATION = Metadata.HMCL_LOCAL_HOME.resolve("settings.json");
 
@@ -93,10 +96,6 @@ public final class SettingsManager {
     /// The legacy shared account storage path.
     private static final Path LEGACY_USER_ACCOUNTS_LOCATION =
             Metadata.HMCL_USER_HOME.resolve("accounts.json");
-
-    /// The receipt recording the legacy user config migrated to the current user settings.
-    private static final Path USER_SETTINGS_MIGRATION_RECEIPT_LOCATION =
-            Metadata.HMCL_USER_HOME.resolve("user-settings.migration-receipt.json");
 
     /// The per-workspace game directory file helper.
     private static final JsonSettingFile<GameDirectories> LOCAL_GAME_DIRECTORIES_FILE = new JsonSettingFile<>(
@@ -162,11 +161,22 @@ public final class SettingsManager {
             UserSettings.CURRENT_SCHEMA,
             UserSettings::new);
 
+    /// The user state file helper.
+    private static final JsonSettingFile<UserState> USER_STATE_FILE = new JsonSettingFile<>(
+            USER_STATE_LOCATION,
+            "user state",
+            UserState.class,
+            UserState.CURRENT_SCHEMA,
+            UserState::new);
+
     /// The loaded per-workspace launcher settings.
     private static @UnknownNullability LauncherSettings launcherSettings;
 
     /// The loaded user settings instance.
     private static @UnknownNullability UserSettings userSettingsInstance;
+
+    /// The loaded user state instance.
+    private static @UnknownNullability UserState userStateInstance;
 
     /// The loaded per-workspace game directory file.
     private static @UnknownNullability GameDirectories localGameDirectories;
@@ -229,6 +239,14 @@ public final class SettingsManager {
             throw new IllegalStateException("Configuration hasn't been loaded");
         }
         return userSettingsInstance;
+    }
+
+    /// Returns the loaded user state.
+    public static UserState userState() {
+        if (userStateInstance == null) {
+            throw new IllegalStateException("User state hasn't been loaded");
+        }
+        return userStateInstance;
     }
 
     /// Returns the loaded per-workspace launcher state.
@@ -394,7 +412,13 @@ public final class SettingsManager {
 
         launcherSettings = loadConfig();
 
-        loadUserSettings();
+        @Nullable LegacyConfigMigrator.UserSettingsMigrationResult userSettingsMigrationResult =
+                loadLegacyUserSettingsMigration();
+        loadUserSettings(userSettingsMigrationResult);
+        loadUserState(userSettingsMigrationResult);
+        if (userSettingsMigrationResult != null) {
+            LegacyConfigMigrator.saveLegacyUserSettingsMigrationReceipt(userSettingsMigrationResult);
+        }
 
         Locale.setDefault(settings().languageProperty().get().getLocale());
         I18n.setLocale(launcherSettings.languageProperty().get());
@@ -832,8 +856,19 @@ public final class SettingsManager {
         }
     }
 
+    /// Loads migrated legacy user settings when a current user settings file is missing.
+    private static @Nullable LegacyConfigMigrator.UserSettingsMigrationResult loadLegacyUserSettingsMigration()
+            throws IOException {
+        if (Files.exists(USER_SETTINGS_LOCATION) && Files.exists(USER_STATE_LOCATION)) {
+            return null;
+        }
+
+        return LegacyConfigMigrator.migrateLegacyUserSettings();
+    }
+
     /// Loads user settings and installs the save listener.
-    private static void loadUserSettings() throws IOException {
+    private static void loadUserSettings(
+            @Nullable LegacyConfigMigrator.UserSettingsMigrationResult migrationResult) throws IOException {
         if (userSettingsInstance != null) {
             throw new IllegalStateException("User settings are already loaded");
         }
@@ -841,25 +876,43 @@ public final class SettingsManager {
         LOG.info("User settings location: " + USER_SETTINGS_LOCATION);
 
         boolean newlyCreated = !Files.exists(USER_SETTINGS_LOCATION);
-        @Nullable LegacyConfigMigrator.UserSettingsMigrationResult migrationResult = newlyCreated
-                ? LegacyConfigMigrator.migrateLegacyUserSettings(
-                        USER_SETTINGS_LOCATION,
-                        USER_SETTINGS_MIGRATION_RECEIPT_LOCATION)
+        @Nullable UserSettings migratedUserSettings = newlyCreated && migrationResult != null
+                ? migrationResult.userSettings()
                 : null;
-        @Nullable UserSettings migratedUserSettings =
-                migrationResult != null ? migrationResult.userSettings() : null;
         JsonSettingFile.LoadResult<UserSettings> result = USER_SETTINGS_FILE.load(migratedUserSettings);
         userSettingsInstance = result.value();
         if (result.allowSave()) {
             USER_SETTINGS_FILE.installAutoSave(userSettingsInstance);
         }
 
-        if (newlyCreated && result.allowSave()) {
+        if (newlyCreated && migratedUserSettings != null && result.allowSave()) {
             LOG.info("Creating user settings file " + USER_SETTINGS_LOCATION);
             USER_SETTINGS_FILE.save(userSettingsInstance);
-            if (migrationResult != null) {
-                MigrationReceipt.save(USER_SETTINGS_MIGRATION_RECEIPT_LOCATION, migrationResult.path());
-            }
+        }
+    }
+
+    /// Loads user state and installs the save listener.
+    private static void loadUserState(
+            @Nullable LegacyConfigMigrator.UserSettingsMigrationResult migrationResult) throws IOException {
+        if (userStateInstance != null) {
+            throw new IllegalStateException("User state is already loaded");
+        }
+
+        LOG.info("User state location: " + USER_STATE_LOCATION);
+
+        boolean newlyCreated = !Files.exists(USER_STATE_LOCATION);
+        @Nullable UserState migratedUserState = newlyCreated && migrationResult != null
+                ? migrationResult.userState()
+                : null;
+        JsonSettingFile.LoadResult<UserState> result = USER_STATE_FILE.load(migratedUserState);
+        userStateInstance = result.value();
+        if (result.allowSave()) {
+            USER_STATE_FILE.installAutoSave(userStateInstance);
+        }
+
+        if (newlyCreated && result.allowSave()) {
+            LOG.info("Creating user state file " + USER_STATE_LOCATION);
+            USER_STATE_FILE.save(userStateInstance);
         }
     }
 

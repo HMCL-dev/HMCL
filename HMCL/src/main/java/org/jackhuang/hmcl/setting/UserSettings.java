@@ -81,33 +81,6 @@ public final class UserSettings extends ObservableSetting implements JsonSchemaS
         this.schema.set(Objects.requireNonNull(schema));
     }
 
-    /// The accepted launcher agreement version.
-    @SerializedName("agreementVersion")
-    private final IntegerProperty agreementVersion = new SimpleIntegerProperty();
-
-    /// Returns the accepted launcher agreement version property.
-    public IntegerProperty agreementVersionProperty() {
-        return agreementVersion;
-    }
-
-    /// The accepted Terracotta agreement version.
-    @SerializedName("terracottaAgreementVersion")
-    private final IntegerProperty terracottaAgreementVersion = new SimpleIntegerProperty();
-
-    /// Returns the accepted Terracotta agreement version property.
-    public IntegerProperty terracottaAgreementVersionProperty() {
-        return terracottaAgreementVersion;
-    }
-
-    /// The platform prompt version shown to the user.
-    @SerializedName("platformPromptVersion")
-    private final IntegerProperty platformPromptVersion = new SimpleIntegerProperty();
-
-    /// Returns the platform prompt version property.
-    public IntegerProperty platformPromptVersionProperty() {
-        return platformPromptVersion;
-    }
-
     /// The number of launcher log files to retain.
     @SerializedName("logRetention")
     private final IntegerProperty logRetention = new SimpleIntegerProperty(20);

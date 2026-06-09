@@ -15,15 +15,6 @@
     }
   },
   "properties": {
-    "agreementVersion": {
-      "type": "integer"
-    },
-    "terracottaAgreementVersion": {
-      "type": "integer"
-    },
-    "platformPromptVersion": {
-      "type": "integer"
-    },
     "logRetention": {
       "type": "integer"
     },

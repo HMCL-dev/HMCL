@@ -42,7 +42,7 @@ import org.jackhuang.hmcl.ui.versions.Versions;
 import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.StringUtils;
 
-import static org.jackhuang.hmcl.setting.SettingsManager.userSettings;
+import static org.jackhuang.hmcl.setting.SettingsManager.userState;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 public class TerracottaPage extends DecoratorAnimatedPage implements DecoratorPage, PageAware {
@@ -112,10 +112,10 @@ public class TerracottaPage extends DecoratorAnimatedPage implements DecoratorPa
     public void onPageShown() {
         tab.onPageShown();
 
-        if (SettingsManager.userSettings().terracottaAgreementVersionProperty().get() < TERRACOTTA_AGREEMENT_VERSION) {
+        if (SettingsManager.userState().terracottaAgreementVersionProperty().get() < TERRACOTTA_AGREEMENT_VERSION) {
             Controllers.confirmWithCountdown(i18n("terracotta.confirm.desc"), i18n("terracotta.confirm.title"), 5, MessageDialogPane.MessageType.INFO, () -> {
-                UserSettings userSettings = userSettings();
-                userSettings.terracottaAgreementVersionProperty().set(TERRACOTTA_AGREEMENT_VERSION);
+                UserState userState = userState();
+                userState.terracottaAgreementVersionProperty().set(TERRACOTTA_AGREEMENT_VERSION);
             }, () -> fireEvent(new PageCloseEvent()));
         }
     }

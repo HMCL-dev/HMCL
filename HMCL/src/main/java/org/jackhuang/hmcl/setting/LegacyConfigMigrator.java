@@ -89,6 +89,10 @@ public final class LegacyConfigMigrator {
     /// The legacy user settings path shared by all workspaces.
     private static final Path LEGACY_USER_SETTINGS_LOCATION = Metadata.HMCL_USER_HOME.resolve("config.json");
 
+    /// The receipt recording the legacy user config migrated to the current user settings and state.
+    private static final Path USER_SETTINGS_MIGRATION_RECEIPT_LOCATION =
+            Metadata.HMCL_USER_HOME.resolve("user-settings.migration-receipt.json");
+
     /// The legacy user account storage path shared by all workspaces.
     private static final Path LEGACY_USER_ACCOUNTS_LOCATION = Metadata.HMCL_USER_HOME.resolve("accounts.json");
 
@@ -223,20 +227,14 @@ public final class LegacyConfigMigrator {
         MigrationReceipt.save(SETTINGS_MIGRATION_RECEIPT_LOCATION, migrationResult.path());
     }
 
-    /// Migrates user settings from the legacy global config file.
+    /// Migrates user settings and state from the legacy global config file.
     ///
-    /// @param targetLocation the current user settings path used for logging
-    /// @return the migrated user settings, or `null` when no legacy user settings can be used
-    static @Nullable UserSettingsMigrationResult migrateLegacyUserSettings(
-            Path targetLocation,
-            Path receiptLocation) throws IOException {
-        Objects.requireNonNull(targetLocation);
-        Objects.requireNonNull(receiptLocation);
-
+    /// @return the migrated user settings and state, or `null` when no legacy user settings can be used
+    static @Nullable UserSettingsMigrationResult migrateLegacyUserSettings() throws IOException {
         if (!Files.exists(LEGACY_USER_SETTINGS_LOCATION)) {
             return null;
         }
-        if (MigrationReceipt.matches(receiptLocation, LEGACY_USER_SETTINGS_LOCATION)) {
+        if (MigrationReceipt.matches(USER_SETTINGS_MIGRATION_RECEIPT_LOCATION, LEGACY_USER_SETTINGS_LOCATION)) {
             LOG.info("Skipping already migrated user settings " + LEGACY_USER_SETTINGS_LOCATION);
             return null;
         }
@@ -244,17 +242,23 @@ public final class LegacyConfigMigrator {
         try {
             String content = Files.readString(LEGACY_USER_SETTINGS_LOCATION);
             UserSettings deserialized = UserSettings.fromJson(content);
-            if (deserialized == null) {
+            UserState userState = UserState.fromJson(content);
+            if (deserialized == null || userState == null) {
                 LOG.info("Legacy user settings file is empty: " + LEGACY_USER_SETTINGS_LOCATION);
                 return null;
             }
 
-            LOG.info("Migrating user settings from " + LEGACY_USER_SETTINGS_LOCATION + " to " + targetLocation);
-            return new UserSettingsMigrationResult(LEGACY_USER_SETTINGS_LOCATION, deserialized);
+            LOG.info("Migrating user settings from " + LEGACY_USER_SETTINGS_LOCATION);
+            return new UserSettingsMigrationResult(LEGACY_USER_SETTINGS_LOCATION, deserialized, userState);
         } catch (JsonParseException e) {
             LOG.warning("Malformed legacy user settings: " + LEGACY_USER_SETTINGS_LOCATION, e);
             return null;
         }
+    }
+
+    /// Records that the given legacy user settings migration result has been applied.
+    static void saveLegacyUserSettingsMigrationReceipt(UserSettingsMigrationResult migrationResult) throws IOException {
+        MigrationReceipt.save(USER_SETTINGS_MIGRATION_RECEIPT_LOCATION, migrationResult.path());
     }
 
     /// Extracts launcher state from a legacy config JSON object and removes those members.
@@ -1011,7 +1015,8 @@ public final class LegacyConfigMigrator {
     ///
     /// @param path the legacy user settings path
     /// @param userSettings the migrated user settings
-    record UserSettingsMigrationResult(Path path, UserSettings userSettings) {
+    /// @param userState the migrated user state
+    record UserSettingsMigrationResult(Path path, UserSettings userSettings, UserState userState) {
     }
 
     /// Signals that a legacy config file belongs to a newer launcher and must not be overwritten.

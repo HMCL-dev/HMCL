@@ -82,7 +82,7 @@ import java.util.concurrent.CompletableFuture;
 import static org.jackhuang.hmcl.setting.SettingsManager.settings;
 import static org.jackhuang.hmcl.setting.SettingsManager.getAuthlibInjectorServers;
 import static org.jackhuang.hmcl.setting.SettingsManager.state;
-import static org.jackhuang.hmcl.setting.SettingsManager.userSettings;
+import static org.jackhuang.hmcl.setting.SettingsManager.userState;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
@@ -428,10 +428,10 @@ public final class Controllers {
             timeline.play();
         }
 
-        if (!Architecture.SYSTEM_ARCH.isX86() && SettingsManager.userSettings().platformPromptVersionProperty().get() < 1) {
+        if (!Architecture.SYSTEM_ARCH.isX86() && SettingsManager.userState().platformPromptVersionProperty().get() < 1) {
             Runnable continueAction = () -> {
-                UserSettings userSettings = userSettings();
-                userSettings.platformPromptVersionProperty().set(1);
+                UserState userState = userState();
+                userState.platformPromptVersionProperty().set(1);
             };
 
             if (OperatingSystem.CURRENT_OS == OperatingSystem.MACOS && Architecture.SYSTEM_ARCH == Architecture.ARM64) {
@@ -487,7 +487,7 @@ public final class Controllers {
                     .build());
         }
 
-        if (SettingsManager.userSettings().agreementVersionProperty().get() < 1) {
+        if (SettingsManager.userState().agreementVersionProperty().get() < 1) {
             JFXDialogLayout agreementPane = new JFXDialogLayout();
             agreementPane.setHeading(new Label(i18n("launcher.agreement")));
             agreementPane.setBody(new Label(i18n("launcher.agreement.hint")));
@@ -496,8 +496,8 @@ public final class Controllers {
             JFXButton yesButton = new JFXButton(i18n("launcher.agreement.accept"));
             yesButton.getStyleClass().add("dialog-accept");
             yesButton.setOnAction(e -> {
-                UserSettings userSettings = userSettings();
-                userSettings.agreementVersionProperty().set(1);
+                UserState userState = userState();
+                userState.agreementVersionProperty().set(1);
                 agreementPane.fireEvent(new DialogCloseEvent());
             });
             JFXButton noButton = new JFXButton(i18n("launcher.agreement.decline"));
