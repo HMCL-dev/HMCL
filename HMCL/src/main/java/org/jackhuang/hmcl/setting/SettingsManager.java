@@ -413,7 +413,9 @@ public final class SettingsManager {
         launcherSettings = loadLauncherSettings();
 
         @Nullable LegacyConfigMigrator.UserSettingsMigrationResult userSettingsMigrationResult =
-                loadLegacyUserSettingsMigration();
+                Files.exists(USER_SETTINGS_LOCATION) && Files.exists(USER_STATE_LOCATION)
+                        ? null
+                        : LegacyConfigMigrator.migrateLegacyUserSettings();
         loadUserSettings(userSettingsMigrationResult);
         loadUserState(userSettingsMigrationResult);
         if (userSettingsMigrationResult != null) {
@@ -854,16 +856,6 @@ public final class SettingsManager {
                 throw new IOException("Launcher settings at " + location + " is not writable");
             }
         }
-    }
-
-    /// Loads migrated legacy user settings when a current user settings file is missing.
-    private static @Nullable LegacyConfigMigrator.UserSettingsMigrationResult loadLegacyUserSettingsMigration()
-            throws IOException {
-        if (Files.exists(USER_SETTINGS_LOCATION) && Files.exists(USER_STATE_LOCATION)) {
-            return null;
-        }
-
-        return LegacyConfigMigrator.migrateLegacyUserSettings();
     }
 
     /// Loads user settings and installs the save listener.
