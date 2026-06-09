@@ -241,8 +241,8 @@ public final class SettingsManager {
         return authlibInjectorServers;
     }
 
-    /// Returns the current per-workspace config path.
-    public static Path configLocation() {
+    /// Returns the current per-workspace settings path.
+    public static Path settingsLocation() {
         return SETTINGS_LOCATION;
     }
 
@@ -279,14 +279,6 @@ public final class SettingsManager {
     /// Returns the shared account storage path.
     public static Path userGameAccountsLocation() {
         return USER_GAME_ACCOUNTS_LOCATION;
-    }
-
-    /// Returns the merged runtime game directory list.
-    private static ObservableList<Profile> gameDirectories() {
-        if (gameDirectories == null) {
-            throw new IllegalStateException("Game directories haven't been loaded");
-        }
-        return gameDirectories;
     }
 
     /// Returns the loaded detached preset store.
@@ -335,7 +327,10 @@ public final class SettingsManager {
 
     /// Returns the merged game directories.
     public static ObservableList<Profile> getGameDirectories() {
-        return gameDirectories();
+        if (gameDirectories == null) {
+            throw new IllegalStateException("Game directories haven't been loaded");
+        }
+        return gameDirectories;
     }
 
     /// Returns the reusable game setting presets.
@@ -587,7 +582,7 @@ public final class SettingsManager {
     private static GameDirectories createScopedGameDirectories(boolean userGameDirectories) {
         GameDirectories result = new GameDirectories();
         result.setUserFile(userGameDirectories);
-        for (Profile profile : gameDirectories()) {
+        for (Profile profile : getGameDirectories()) {
             if (profile.shouldSaveToUserGameDirectory() == userGameDirectories) {
                 result.getGameDirectories().add(profile);
             }
