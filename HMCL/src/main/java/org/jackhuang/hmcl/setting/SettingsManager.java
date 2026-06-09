@@ -162,8 +162,8 @@ public final class SettingsManager {
             UserSettings.CURRENT_SCHEMA,
             UserSettings::new);
 
-    /// The loaded per-workspace config instance.
-    private static @UnknownNullability LauncherSettings configInstance;
+    /// The loaded per-workspace launcher settings.
+    private static @UnknownNullability LauncherSettings launcherSettings;
 
     /// The loaded user settings instance.
     private static @UnknownNullability UserSettings userSettingsInstance;
@@ -198,7 +198,7 @@ public final class SettingsManager {
     /// The loaded shared account storage store.
     private static @UnknownNullability AccountStorages userGameAccounts;
 
-    /// Whether no current or legacy per-workspace config could be loaded.
+    /// Whether this run appears to be using a new workspace.
     private static boolean newlyCreated;
 
     /// Whether root is reading a per-workspace config owned by another user.
@@ -217,10 +217,10 @@ public final class SettingsManager {
 
     /// Returns the loaded per-workspace launcher settings.
     public static LauncherSettings settings() {
-        if (configInstance == null) {
+        if (launcherSettings == null) {
             throw new IllegalStateException("Configuration hasn't been loaded");
         }
-        return configInstance;
+        return launcherSettings;
     }
 
     /// Returns the loaded user settings.
@@ -386,28 +386,18 @@ public final class SettingsManager {
 
     /// Loads configs, installs save listeners, and applies process-wide settings.
     public static void init() throws IOException {
-        if (configInstance != null) {
+        if (launcherSettings != null) {
             throw new IllegalStateException("Configuration is already loaded");
         }
 
         LOG.info("Launcher settings location: " + SETTINGS_LOCATION);
 
-        configInstance = loadConfig();
-        if (!unsupportedVersion) {
-            configInstance.addListener(source -> {
-                // Back up the invalid on-disk file the first time we are about to overwrite it.
-                if (needBackupSettings) {
-                    needBackupSettings = false;
-                    backupInvalidConfig(SETTINGS_LOCATION);
-                }
-                FileSaver.save(SETTINGS_LOCATION, configInstance.toJson());
-            });
-        }
+        launcherSettings = loadConfig();
 
         loadUserSettings();
 
         Locale.setDefault(settings().languageProperty().get().getLocale());
-        I18n.setLocale(configInstance.languageProperty().get());
+        I18n.setLocale(launcherSettings.languageProperty().get());
         LOG.setLogRetention(userSettings().logRetentionProperty().get());
         loadGameDirectories(detachedSettingsFallback.gameDirectories(), !unsupportedVersion);
         loadGameSettingsPresets(detachedSettingsFallback.gameSettingsPresets(), !unsupportedVersion);
@@ -416,12 +406,18 @@ public final class SettingsManager {
         loadUserGameAccounts(!unsupportedVersion);
         loadGameAccounts(detachedSettingsFallback.accountStorages(), !unsupportedVersion);
 
-        if (!unsupportedVersion && newlyCreated) {
-            LOG.info("Creating config file " + SETTINGS_LOCATION);
-            FileUtils.saveSafely(SETTINGS_LOCATION, configInstance.toJson());
+        if (!unsupportedVersion) {
+            launcherSettings.addListener(source -> {
+                // Back up the invalid on-disk file the first time we are about to overwrite it.
+                if (needBackupSettings) {
+                    needBackupSettings = false;
+                    backupInvalidConfig(SETTINGS_LOCATION);
+                }
+                FileSaver.save(SETTINGS_LOCATION, launcherSettings.toJson());
+            });
         }
 
-        if (!unsupportedVersion || Files.exists(SETTINGS_LOCATION)) {
+        if (Files.exists(SETTINGS_LOCATION)) {
             checkWritable(SETTINGS_LOCATION);
         }
     }
@@ -652,6 +648,8 @@ public final class SettingsManager {
             LOG.info("Creating launcher state file " + STATE_LOCATION);
             STATE_FILE.save(launcherState);
         }
+
+        SettingsManager.newlyCreated &= newlyCreated;
     }
 
     /// Loads authlib-injector servers and installs the save listener.
