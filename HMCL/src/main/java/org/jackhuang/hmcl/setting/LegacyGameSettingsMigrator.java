@@ -78,6 +78,16 @@ public final class LegacyGameSettingsMigrator {
             VersionIconType.LEGACY_FABRIC
     };
 
+    /// Legacy `JavaVersionType` ordinal order used by old game settings.
+    private static final JavaVersionType @Unmodifiable [] LEGACY_JAVA_VERSION_TYPES = {
+            // Legacy ordinal 0 was DEFAULT and ordinal 1 was AUTO; both now migrate to AUTO.
+            JavaVersionType.AUTO,
+            JavaVersionType.AUTO,
+            JavaVersionType.VERSION,
+            JavaVersionType.DETECTED,
+            JavaVersionType.CUSTOM
+    };
+
     /// Prevents instantiation.
     private LegacyGameSettingsMigrator() {
     }
@@ -304,13 +314,30 @@ public final class LegacyGameSettingsMigrator {
 
     /// Parses the legacy Java selection mode.
     private static JavaVersionType parseLegacyJavaVersionType(JsonObject source) {
-        if (source.has("javaVersionType")) {
-            return parseEnum(source, "javaVersionType", JavaVersionType.class, JavaVersionType.AUTO);
+        JsonPrimitive primitive = JsonUtils.getPrimitive(source, "javaVersionType");
+        if (primitive != null) {
+            try {
+                if (primitive.isNumber()) {
+                    int index = primitive.getAsInt();
+                    return index >= 0 && index < LEGACY_JAVA_VERSION_TYPES.length
+                            ? LEGACY_JAVA_VERSION_TYPES[index]
+                            : JavaVersionType.AUTO;
+                }
+
+                return switch (primitive.getAsString().toUpperCase(Locale.ROOT)) {
+                    case "DEFAULT", "AUTO" -> JavaVersionType.AUTO;
+                    case "VERSION" -> JavaVersionType.VERSION;
+                    case "DETECTED" -> JavaVersionType.DETECTED;
+                    case "CUSTOM" -> JavaVersionType.CUSTOM;
+                    default -> JavaVersionType.AUTO;
+                };
+            } catch (RuntimeException ignored) {
+                return JavaVersionType.AUTO;
+            }
         }
 
         return switch (JsonUtils.getString(source, "java", "")) {
-            case "Default" -> JavaVersionType.DEFAULT;
-            case "Auto" -> JavaVersionType.AUTO;
+            case "Default", "Auto" -> JavaVersionType.AUTO;
             case "Custom" -> JavaVersionType.CUSTOM;
             default -> JavaVersionType.AUTO;
         };
@@ -319,7 +346,10 @@ public final class LegacyGameSettingsMigrator {
     /// Parses the legacy Java version value.
     private static @Nullable String parseLegacyJavaVersion(JsonObject source) {
         if (source.has("javaVersionType")) {
-            return JsonUtils.getString(source, "java", null);
+            return switch (parseLegacyJavaVersionType(source)) {
+                case VERSION, DETECTED -> JsonUtils.getString(source, "java", null);
+                case AUTO, CUSTOM -> "";
+            };
         }
 
         String java = JsonUtils.getString(source, "java", "");

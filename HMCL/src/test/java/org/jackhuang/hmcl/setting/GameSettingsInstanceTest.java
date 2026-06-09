@@ -65,6 +65,42 @@ public final class GameSettingsInstanceTest {
                 receipt));
     }
 
+    /// Tests that legacy Java default selection is migrated to automatic selection.
+    @Test
+    public void migratesLegacyDefaultJavaSelectionToAuto() {
+        GameSettings.Instance instance = LegacyGameSettingsMigrator.toInstance(null, JsonParser.parseString("""
+                {
+                  "java": "Default"
+                }
+                """).getAsJsonObject(), true);
+
+        assertEquals(JavaVersionType.AUTO, instance.javaTypeProperty().getValue());
+    }
+
+    /// Tests that legacy Java selection ordinals keep their old meaning after removing DEFAULT.
+    @Test
+    public void migratesLegacyDefaultJavaSelectionOrdinalToAuto() {
+        GameSettings.Instance instance = LegacyGameSettingsMigrator.toInstance(null, JsonParser.parseString("""
+                {
+                  "javaVersionType": 0
+                }
+                """).getAsJsonObject(), true);
+
+        assertEquals(JavaVersionType.AUTO, instance.javaTypeProperty().getValue());
+    }
+
+    /// Tests that legacy Java DEFAULT enum names are migrated to automatic selection.
+    @Test
+    public void migratesLegacyDefaultJavaSelectionNameToAuto() {
+        GameSettings.Instance instance = LegacyGameSettingsMigrator.toInstance(null, JsonParser.parseString("""
+                {
+                  "javaVersionType": "DEFAULT"
+                }
+                """).getAsJsonObject(), true);
+
+        assertEquals(JavaVersionType.AUTO, instance.javaTypeProperty().getValue());
+    }
+
     /// Creates a temporary directory under Gradle's build directory for instance settings tests.
     private static Path createInstanceSettingsTestDirectory(String prefix) throws IOException {
         Path root = Path.of("build", "tmp", "instance-settings-tests");

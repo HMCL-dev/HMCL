@@ -830,8 +830,6 @@ public sealed abstract class GameSettings extends ObservableSetting {
         public @Nullable JavaRuntime getJava(@Nullable GameVersionNumber gameVersion, @Nullable Version version) throws InterruptedException {
             JavaVersionType javaVersionType = getInheritable(GameSettings::javaTypeProperty);
             switch (javaVersionType) {
-                case DEFAULT:
-                    return JavaRuntime.getDefault();
                 case AUTO:
                     return JavaManager.findSuitableJava(gameVersion, version);
                 case CUSTOM:
