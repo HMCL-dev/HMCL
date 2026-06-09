@@ -17,7 +17,6 @@
  */
 package org.jackhuang.hmcl.setting;
 
-import com.google.gson.JsonObject;
 import com.google.gson.JsonParseException;
 import org.jackhuang.hmcl.util.DigestUtils;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
@@ -35,27 +34,19 @@ import java.util.Objects;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 /// Records successful legacy migrations so deleting a current file does not replay an unchanged legacy source.
+///
+/// @param source the absolute legacy source path, or `null` when a malformed receipt omits it
+/// @param sourceSize the legacy source file size, or `null` when a malformed receipt omits it
+/// @param sourceLastModified the legacy source last-modified time, or `null` when a malformed receipt omits it
+/// @param sourceSha256 the legacy source SHA-256 hash, or `null` when a malformed receipt omits it
+/// @param migratedAt when the migration receipt was written, or `null` before saving or when omitted
 @NotNullByDefault
-final class MigrationReceipt {
-    /// The JSON member storing the absolute legacy source path.
-    private static final String PROPERTY_SOURCE = "source";
-
-    /// The JSON member storing the legacy source file size.
-    private static final String PROPERTY_SOURCE_SIZE = "sourceSize";
-
-    /// The JSON member storing the legacy source last-modified time.
-    private static final String PROPERTY_SOURCE_LAST_MODIFIED = "sourceLastModified";
-
-    /// The JSON member storing the legacy source SHA-256 hash.
-    private static final String PROPERTY_SOURCE_SHA256 = "sourceSha256";
-
-    /// The JSON member storing when the migration receipt was written.
-    private static final String PROPERTY_MIGRATED_AT = "migratedAt";
-
-    /// Prevents instantiation.
-    private MigrationReceipt() {
-    }
-
+record MigrationReceipt(
+        @Nullable String source,
+        @Nullable Long sourceSize,
+        @Nullable String sourceLastModified,
+        @Nullable String sourceSha256,
+        @Nullable String migratedAt) {
     /// Returns whether the receipt records the current state of the legacy source file.
     static boolean matches(Path receipt, Path source) {
         Objects.requireNonNull(receipt);
@@ -66,8 +57,8 @@ final class MigrationReceipt {
         }
 
         try {
-            JsonObject object = JsonUtils.fromJsonFile(receipt, JsonObject.class);
-            return object != null && matches(object, source);
+            @Nullable MigrationReceipt object = JsonUtils.fromJsonFile(receipt, MigrationReceipt.class);
+            return object != null && object.matches(create(source));
         } catch (IOException | JsonParseException | IllegalStateException e) {
             LOG.warning("Failed to read migration receipt " + receipt, e);
             return false;
@@ -80,44 +71,33 @@ final class MigrationReceipt {
         Objects.requireNonNull(source);
 
         try {
-            JsonObject object = create(source);
-            object.addProperty(PROPERTY_MIGRATED_AT, Instant.now().toString());
-            FileUtils.saveSafely(receipt, JsonUtils.GSON.toJson(object));
+            FileUtils.saveSafely(receipt, JsonUtils.GSON.toJson(create(source, Instant.now().toString())));
         } catch (IOException e) {
             LOG.warning("Failed to write migration receipt " + receipt, e);
         }
     }
 
-    /// Returns whether a parsed receipt matches the current source file state.
-    private static boolean matches(JsonObject object, Path source) throws IOException {
-        JsonObject current = create(source);
-        return Objects.equals(JsonUtils.getString(object, PROPERTY_SOURCE),
-                        JsonUtils.getString(current, PROPERTY_SOURCE))
-                && Objects.equals(getSourceSize(object), getSourceSize(current))
-                && Objects.equals(JsonUtils.getString(object, PROPERTY_SOURCE_LAST_MODIFIED),
-                        JsonUtils.getString(current, PROPERTY_SOURCE_LAST_MODIFIED))
-                && Objects.equals(JsonUtils.getString(object, PROPERTY_SOURCE_SHA256),
-                        JsonUtils.getString(current, PROPERTY_SOURCE_SHA256));
-    }
-
-    /// Reads the source file size from a receipt object.
-    private static @Nullable Long getSourceSize(JsonObject object) {
-        try {
-            return object.get(PROPERTY_SOURCE_SIZE).getAsLong();
-        } catch (RuntimeException e) {
-            return null;
-        }
+    /// Returns whether this receipt matches another source file state.
+    private boolean matches(MigrationReceipt current) {
+        return Objects.equals(source, current.source)
+                && Objects.equals(sourceSize, current.sourceSize)
+                && Objects.equals(sourceLastModified, current.sourceLastModified)
+                && Objects.equals(sourceSha256, current.sourceSha256);
     }
 
     /// Creates receipt content for the current source file state.
-    private static JsonObject create(Path source) throws IOException {
-        BasicFileAttributes attributes = Files.readAttributes(source, BasicFileAttributes.class);
+    private static MigrationReceipt create(Path source) throws IOException {
+        return create(source, null);
+    }
 
-        JsonObject object = new JsonObject();
-        object.addProperty(PROPERTY_SOURCE, source.toAbsolutePath().normalize().toString());
-        object.addProperty(PROPERTY_SOURCE_SIZE, attributes.size());
-        object.addProperty(PROPERTY_SOURCE_LAST_MODIFIED, attributes.lastModifiedTime().toString());
-        object.addProperty(PROPERTY_SOURCE_SHA256, DigestUtils.digestToString("SHA-256", source));
-        return object;
+    /// Creates receipt content for the current source file state and migration time.
+    private static MigrationReceipt create(Path source, @Nullable String migratedAt) throws IOException {
+        BasicFileAttributes attributes = Files.readAttributes(source, BasicFileAttributes.class);
+        return new MigrationReceipt(
+                source.toAbsolutePath().normalize().toString(),
+                attributes.size(),
+                attributes.lastModifiedTime().toString(),
+                DigestUtils.digestToString("SHA-256", source),
+                migratedAt);
     }
 }
