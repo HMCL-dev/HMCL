@@ -93,7 +93,7 @@ public class DecoratorController {
         decorator.setContentBackground(getBackground());
         changeBackgroundListener = o -> updateBackground();
         WeakInvalidationListener weakListener = new WeakInvalidationListener(changeBackgroundListener);
-        settings().backgroundImageTypeProperty().addListener(weakListener);
+        settings().backgroundTypeProperty().addListener(weakListener);
         settings().backgroundImageProperty().addListener(weakListener);
         settings().backgroundImageUrlProperty().addListener(weakListener);
         settings().backgroundPaintProperty().addListener(weakListener);
@@ -184,7 +184,7 @@ public class DecoratorController {
     }
 
     private Background getBackground() {
-        EnumBackgroundImage imageType = settings().backgroundImageTypeProperty().get();
+        EnumBackgroundImage imageType = settings().backgroundTypeProperty().get();
         if (imageType == null)
             imageType = EnumBackgroundImage.DEFAULT;
 

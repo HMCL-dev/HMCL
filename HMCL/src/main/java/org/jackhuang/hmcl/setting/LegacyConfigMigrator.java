@@ -604,22 +604,18 @@ public final class LegacyConfigMigrator {
 
     /// Migrates the legacy background image type into the current enum values.
     private static void migrateLegacyBackgroundImageType(JsonObject json) {
-        JsonElement legacyValue = json.remove("backgroundType");
+        JsonElement legacyValue = json.get("backgroundType");
         @Nullable Integer ordinal = JsonUtils.getInteger(legacyValue);
         if (ordinal != null && ordinal >= 0 && ordinal < LEGACY_BACKGROUND_IMAGE_TYPES.length) {
-            json.addProperty("backgroundImageType", LEGACY_BACKGROUND_IMAGE_TYPES[ordinal]);
-        } else if (legacyValue != null) {
-            json.add("backgroundImageType", legacyValue);
+            json.addProperty("backgroundType", LEGACY_BACKGROUND_IMAGE_TYPES[ordinal]);
         }
 
-        if (!Objects.equals(JsonUtils.getString(json, "backgroundImageType"), "TRANSLUCENT")) {
-            return;
+        if (Objects.equals(JsonUtils.getString(json, "backgroundType"), "TRANSLUCENT")) {
+            json.addProperty("backgroundType", EnumBackgroundImage.PAINT.name());
+            json.addProperty("backgroundPaint", "#ffffff");
+            json.addProperty("backgroundOpacity", 0.5);
+            json.remove("bgpaint");
         }
-
-        json.addProperty("backgroundImageType", EnumBackgroundImage.PAINT.name());
-        json.addProperty("backgroundPaint", "#ffffff");
-        json.addProperty("backgroundOpacity", 0.5);
-        json.remove("bgpaint");
     }
 
     /// Migrates one legacy enum ordinal field into a stable enum name.

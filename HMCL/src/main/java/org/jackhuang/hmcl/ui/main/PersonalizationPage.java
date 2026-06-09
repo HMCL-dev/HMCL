@@ -145,7 +145,7 @@ public class PersonalizationPage extends StackPane {
                     new MultiFileItem.PaintOption<>(i18n("launcher.background.paint"), EnumBackgroundImage.PAINT)
                             .bindBidirectional(settings().backgroundPaintProperty())
             ));
-            backgroundItem.selectedDataProperty().bindBidirectional(settings().backgroundImageTypeProperty());
+            backgroundItem.selectedDataProperty().bindBidirectional(settings().backgroundTypeProperty());
             backgroundSublist.descriptionProperty().bind(
                     new When(backgroundItem.selectedDataProperty().isEqualTo(EnumBackgroundImage.DEFAULT))
                             .then(i18n("launcher.background.default"))

@@ -124,7 +124,7 @@ public final class ExportWizardProvider implements WizardProvider {
                 try (Zipper zip = new Zipper(modpackFile)) {
                     LauncherSettings exported = new LauncherSettings();
 
-                    exported.backgroundImageTypeProperty().set(settings().backgroundImageTypeProperty().get());
+                    exported.backgroundTypeProperty().set(settings().backgroundTypeProperty().get());
                     exported.backgroundImageProperty().set(settings().backgroundImageProperty().get());
                     exported.themeColorProperty().set(settings().themeColorProperty().get());
                     exported.versionListSourceProperty().set(settings().versionListSourceProperty().get());

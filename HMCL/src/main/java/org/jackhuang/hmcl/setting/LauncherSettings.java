@@ -258,13 +258,13 @@ public final class LauncherSettings extends ObservableSetting {
         return titleTransparent;
     }
 
-    /// The launcher background image source type.
-    @SerializedName("backgroundImageType")
-    private final ObjectProperty<EnumBackgroundImage> backgroundImageType = new RawPreservingObjectProperty<>(EnumBackgroundImage.DEFAULT);
+    /// The launcher background source type.
+    @SerializedName("backgroundType")
+    private final ObjectProperty<EnumBackgroundImage> backgroundType = new RawPreservingObjectProperty<>(EnumBackgroundImage.DEFAULT);
 
-    /// Returns the launcher background image source type property.
-    public ObjectProperty<EnumBackgroundImage> backgroundImageTypeProperty() {
-        return backgroundImageType;
+    /// Returns the launcher background source type property.
+    public ObjectProperty<EnumBackgroundImage> backgroundTypeProperty() {
+        return backgroundType;
     }
 
     /// The local launcher background image path.
