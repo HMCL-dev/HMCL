@@ -129,9 +129,15 @@ public final class LegacyConfigMigrator {
     }
 
     /// Looks for a legacy config file and prepares it for writing as the new config file.
-    static @Nullable MigrationResult migrateLegacyConfig() throws IOException {
+    static @Nullable MigrationResult migrateLegacyConfig(Path receiptLocation) throws IOException {
+        Objects.requireNonNull(receiptLocation);
+
         @Nullable Path path = locateLegacyConfig();
         if (path == null) {
+            return null;
+        }
+        if (MigrationReceipt.matches(receiptLocation, path)) {
+            LOG.info("Skipping already migrated legacy config " + path);
             return null;
         }
 
@@ -213,10 +219,17 @@ public final class LegacyConfigMigrator {
     ///
     /// @param targetLocation the current user settings path used for logging
     /// @return the migrated user settings, or `null` when no legacy user settings can be used
-    static @Nullable UserSettings migrateLegacyUserSettings(Path targetLocation) throws IOException {
+    static @Nullable UserSettingsMigrationResult migrateLegacyUserSettings(
+            Path targetLocation,
+            Path receiptLocation) throws IOException {
         Objects.requireNonNull(targetLocation);
+        Objects.requireNonNull(receiptLocation);
 
         if (!Files.exists(LEGACY_USER_SETTINGS_LOCATION)) {
+            return null;
+        }
+        if (MigrationReceipt.matches(receiptLocation, LEGACY_USER_SETTINGS_LOCATION)) {
+            LOG.info("Skipping already migrated user settings " + LEGACY_USER_SETTINGS_LOCATION);
             return null;
         }
 
@@ -229,7 +242,7 @@ public final class LegacyConfigMigrator {
             }
 
             LOG.info("Migrating user settings from " + LEGACY_USER_SETTINGS_LOCATION + " to " + targetLocation);
-            return deserialized;
+            return new UserSettingsMigrationResult(LEGACY_USER_SETTINGS_LOCATION, deserialized);
         } catch (JsonParseException e) {
             LOG.warning("Malformed legacy user settings: " + LEGACY_USER_SETTINGS_LOCATION, e);
             return null;
@@ -963,6 +976,13 @@ public final class LegacyConfigMigrator {
             LauncherSettings launcherSettings,
             DetachedSettings detachedSettings,
             String contentForMigration) {
+    }
+
+    /// Result of migrating the legacy user settings file.
+    ///
+    /// @param path the legacy user settings path
+    /// @param userSettings the migrated user settings
+    record UserSettingsMigrationResult(Path path, UserSettings userSettings) {
     }
 
     /// Signals that a legacy config file belongs to a newer launcher and must not be overwritten.

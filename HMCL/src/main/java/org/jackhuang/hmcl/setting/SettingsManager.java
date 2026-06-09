@@ -59,6 +59,10 @@ public final class SettingsManager {
     /// The current per-workspace config path.
     private static final Path SETTINGS_LOCATION = Metadata.HMCL_LOCAL_HOME.resolve("settings.json");
 
+    /// The receipt recording the legacy config migrated to the current per-workspace config.
+    private static final Path SETTINGS_MIGRATION_RECEIPT_LOCATION =
+            Metadata.HMCL_LOCAL_HOME.resolve("settings.migration-receipt.json");
+
     /// The current per-workspace launcher state path.
     private static final Path STATE_LOCATION = Metadata.HMCL_LOCAL_HOME.resolve("launcher-state.json");
 
@@ -86,9 +90,17 @@ public final class SettingsManager {
     private static final Path USER_GAME_ACCOUNTS_LOCATION =
             Metadata.HMCL_USER_HOME.resolve("user-game-accounts.json");
 
+    /// The receipt recording the legacy shared accounts migrated to the shared account storage.
+    private static final Path USER_GAME_ACCOUNTS_MIGRATION_RECEIPT_LOCATION =
+            Metadata.HMCL_USER_HOME.resolve("user-game-accounts.migration-receipt.json");
+
     /// The legacy shared account storage path.
     private static final Path LEGACY_USER_ACCOUNTS_LOCATION =
             Metadata.HMCL_USER_HOME.resolve("accounts.json");
+
+    /// The receipt recording the legacy user config migrated to the current user settings.
+    private static final Path USER_SETTINGS_MIGRATION_RECEIPT_LOCATION =
+            Metadata.HMCL_USER_HOME.resolve("user-settings.migration-receipt.json");
 
     /// The per-workspace game directory file helper.
     private static final JsonSettingFile<GameDirectories> LOCAL_GAME_DIRECTORIES_FILE = new JsonSettingFile<>(
@@ -465,7 +477,7 @@ public final class SettingsManager {
         } else {
             LegacyConfigMigrator.MigrationResult migrationResult;
             try {
-                migrationResult = LegacyConfigMigrator.migrateLegacyConfig();
+                migrationResult = LegacyConfigMigrator.migrateLegacyConfig(SETTINGS_MIGRATION_RECEIPT_LOCATION);
             } catch (LegacyConfigMigrator.UnsupportedLegacyConfigVersionException e) {
                 unsupportedVersion = true;
                 LOG.warning("Legacy config file is newer than this launcher supports.", e);
@@ -475,6 +487,7 @@ public final class SettingsManager {
                 LOG.info("Migrating settings from " + migrationResult.path() + " to " + SETTINGS_LOCATION);
                 detachedSettingsFallback = migrationResult.detachedSettings();
                 FileUtils.saveSafely(SETTINGS_LOCATION, migrationResult.contentForMigration());
+                MigrationReceipt.save(SETTINGS_MIGRATION_RECEIPT_LOCATION, migrationResult.path());
                 return migrationResult.launcherSettings();
             }
         }
@@ -683,7 +696,8 @@ public final class SettingsManager {
         LOG.info("User game accounts location: " + USER_GAME_ACCOUNTS_LOCATION);
 
         boolean newlyCreated = !Files.exists(USER_GAME_ACCOUNTS_LOCATION);
-        @Nullable AccountStorages migrated = newlyCreated ? loadLegacyUserGameAccounts() : null;
+        @Nullable UserGameAccountsMigrationResult migrationResult = newlyCreated ? loadLegacyUserGameAccounts() : null;
+        @Nullable AccountStorages migrated = migrationResult != null ? migrationResult.accountStorages() : null;
         try {
             JsonSettingFile.LoadResult<AccountStorages> result = USER_GAME_ACCOUNTS_FILE.load(migrated);
             userGameAccounts = result.value();
@@ -694,6 +708,9 @@ public final class SettingsManager {
             if (newlyCreated && allowSave && result.allowSave()) {
                 LOG.info("Creating user game accounts file " + USER_GAME_ACCOUNTS_LOCATION);
                 USER_GAME_ACCOUNTS_FILE.save(userGameAccounts);
+                if (migrationResult != null) {
+                    MigrationReceipt.save(USER_GAME_ACCOUNTS_MIGRATION_RECEIPT_LOCATION, migrationResult.path());
+                }
             }
         } catch (IOException e) {
             LOG.warning("Failed to load user game accounts", e);
@@ -705,8 +722,12 @@ public final class SettingsManager {
     }
 
     /// Loads the legacy shared account storage file for first-time detached account migration.
-    private static @Nullable AccountStorages loadLegacyUserGameAccounts() {
+    private static @Nullable UserGameAccountsMigrationResult loadLegacyUserGameAccounts() {
         if (!Files.exists(LEGACY_USER_ACCOUNTS_LOCATION)) {
+            return null;
+        }
+        if (MigrationReceipt.matches(USER_GAME_ACCOUNTS_MIGRATION_RECEIPT_LOCATION, LEGACY_USER_ACCOUNTS_LOCATION)) {
+            LOG.info("Skipping already migrated user accounts " + LEGACY_USER_ACCOUNTS_LOCATION);
             return null;
         }
 
@@ -722,7 +743,9 @@ public final class SettingsManager {
 
             LOG.info("Migrating user accounts from " + LEGACY_USER_ACCOUNTS_LOCATION
                     + " to " + USER_GAME_ACCOUNTS_LOCATION);
-            return AccountStorages.fromAccounts(accounts);
+            return new UserGameAccountsMigrationResult(
+                    LEGACY_USER_ACCOUNTS_LOCATION,
+                    AccountStorages.fromAccounts(accounts));
         } catch (Throwable e) {
             LOG.warning("Failed to load legacy user accounts", e);
             return null;
@@ -824,9 +847,13 @@ public final class SettingsManager {
         LOG.info("User settings location: " + USER_SETTINGS_LOCATION);
 
         boolean newlyCreated = !Files.exists(USER_SETTINGS_LOCATION);
-        @Nullable UserSettings migratedUserSettings = newlyCreated
-                ? LegacyConfigMigrator.migrateLegacyUserSettings(USER_SETTINGS_LOCATION)
+        @Nullable LegacyConfigMigrator.UserSettingsMigrationResult migrationResult = newlyCreated
+                ? LegacyConfigMigrator.migrateLegacyUserSettings(
+                        USER_SETTINGS_LOCATION,
+                        USER_SETTINGS_MIGRATION_RECEIPT_LOCATION)
                 : null;
+        @Nullable UserSettings migratedUserSettings =
+                migrationResult != null ? migrationResult.userSettings() : null;
         JsonSettingFile.LoadResult<UserSettings> result = USER_SETTINGS_FILE.load(migratedUserSettings);
         userSettingsInstance = result.value();
         if (result.allowSave()) {
@@ -836,7 +863,17 @@ public final class SettingsManager {
         if (newlyCreated && result.allowSave()) {
             LOG.info("Creating user settings file " + USER_SETTINGS_LOCATION);
             USER_SETTINGS_FILE.save(userSettingsInstance);
+            if (migrationResult != null) {
+                MigrationReceipt.save(USER_SETTINGS_MIGRATION_RECEIPT_LOCATION, migrationResult.path());
+            }
         }
+    }
+
+    /// Result of migrating the legacy shared accounts file.
+    ///
+    /// @param path the legacy account storage path
+    /// @param accountStorages the migrated account storage
+    private record UserGameAccountsMigrationResult(Path path, AccountStorages accountStorages) {
     }
 
 }
