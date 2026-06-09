@@ -410,7 +410,7 @@ public final class SettingsManager {
 
         LOG.info("Launcher settings location: " + SETTINGS_LOCATION);
 
-        launcherSettings = loadConfig();
+        launcherSettings = loadLauncherSettings();
 
         @Nullable LegacyConfigMigrator.UserSettingsMigrationResult userSettingsMigrationResult =
                 loadLegacyUserSettingsMigration();
@@ -446,8 +446,8 @@ public final class SettingsManager {
         }
     }
 
-    /// Loads the current per-workspace config or migrates a legacy config when needed.
-    private static LauncherSettings loadConfig() throws IOException {
+    /// Loads the current per-workspace settings or migrates a legacy config when needed.
+    private static LauncherSettings loadLauncherSettings() throws IOException {
         if (Files.exists(SETTINGS_LOCATION)) {
             checkOwner(SETTINGS_LOCATION);
 
