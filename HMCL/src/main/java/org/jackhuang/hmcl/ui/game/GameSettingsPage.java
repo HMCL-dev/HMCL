@@ -71,6 +71,7 @@ import java.util.Locale;
 import java.util.Objects;
 import java.util.function.Function;
 
+import static org.jackhuang.hmcl.setting.SettingsManager.settings;
 import static org.jackhuang.hmcl.util.Pair.pair;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
@@ -1198,7 +1199,7 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
         });
 
         SettingsManager.getGameSettings().addListener(refresh);
-        SettingsManager.defaultGameSettingsPresetProperty().addListener(refresh);
+        settings().defaultGameSettingsPresetProperty().addListener(refresh);
 
         S setting = currentSetting.get();
         if (setting != null) {
@@ -1274,7 +1275,7 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
         });
 
         SettingsManager.getGameSettings().addListener(refresh);
-        SettingsManager.defaultGameSettingsPresetProperty().addListener(refresh);
+        settings().defaultGameSettingsPresetProperty().addListener(refresh);
 
         S setting = currentSetting.get();
         if (setting != null) {
@@ -1441,7 +1442,7 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
         });
 
         SettingsManager.getGameSettings().addListener(refresh);
-        SettingsManager.defaultGameSettingsPresetProperty().addListener(refresh);
+        settings().defaultGameSettingsPresetProperty().addListener(refresh);
 
         S setting = currentSetting.get();
         if (setting instanceof GameSettings.Instance instance) {
@@ -1573,7 +1574,7 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
             propertyListener.invalidated(newProperty);
         });
         SettingsManager.getGameSettings().addListener(propertyListener);
-        SettingsManager.defaultGameSettingsPresetProperty().addListener(propertyListener);
+        settings().defaultGameSettingsPresetProperty().addListener(propertyListener);
 
         S setting = currentSetting.get();
         if (setting != null) {
@@ -1693,7 +1694,7 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
         });
 
         SettingsManager.getGameSettings().addListener(propertyListener);
-        SettingsManager.defaultGameSettingsPresetProperty().addListener(propertyListener);
+        settings().defaultGameSettingsPresetProperty().addListener(propertyListener);
 
         S setting = currentSetting.get();
         if (setting != null) {
@@ -1755,7 +1756,7 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
             initInheritableSublistDescription(sublist, propertyGetter, converter);
         });
         SettingsManager.getGameSettings().addListener(propertyListener);
-        SettingsManager.defaultGameSettingsPresetProperty().addListener(propertyListener);
+        settings().defaultGameSettingsPresetProperty().addListener(propertyListener);
 
         S setting = currentSetting.get();
         if (setting != null) {
@@ -1977,7 +1978,7 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
         });
 
         SettingsManager.getGameSettings().addListener(refresh);
-        SettingsManager.defaultGameSettingsPresetProperty().addListener(refresh);
+        settings().defaultGameSettingsPresetProperty().addListener(refresh);
 
         S setting = currentSetting.get();
         if (setting != null) {
@@ -2063,7 +2064,7 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
         });
 
         SettingsManager.getGameSettings().addListener(refresh);
-        SettingsManager.defaultGameSettingsPresetProperty().addListener(refresh);
+        settings().defaultGameSettingsPresetProperty().addListener(refresh);
 
         S setting = currentSetting.get();
         if (setting != null) {

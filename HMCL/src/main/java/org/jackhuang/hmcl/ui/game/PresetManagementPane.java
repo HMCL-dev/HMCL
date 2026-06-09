@@ -48,6 +48,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.function.Consumer;
 
+import static org.jackhuang.hmcl.setting.SettingsManager.settings;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 /// Displays and edits global game setting presets.
@@ -262,13 +263,13 @@ final class PresetManagementPane extends ComponentSublist {
         boolean removedCurrentPreset = Objects.equals(getCurrentPreset(), setting);
         GameSettings.Preset next = settings.get(index == 0 ? 1 : index - 1);
         SettingId removedId = setting.idProperty().getValue();
-        if (Objects.equals(SettingsManager.getDefaultGameSettingsPreset(), removedId)) {
-            SettingsManager.setDefaultGameSettingsPreset(next.idProperty().getValue());
+        if (Objects.equals(settings().defaultGameSettingsPresetProperty().get(), removedId)) {
+            settings().defaultGameSettingsPresetProperty().set(next.idProperty().getValue());
         }
 
         settings.remove(index);
-        if (SettingsManager.getGameSettings(SettingsManager.getDefaultGameSettingsPreset()) == null) {
-            SettingsManager.setDefaultGameSettingsPreset(next.idProperty().getValue());
+        if (SettingsManager.getGameSettings(settings().defaultGameSettingsPresetProperty().get()) == null) {
+            settings().defaultGameSettingsPresetProperty().set(next.idProperty().getValue());
         }
         if (removedCurrentPreset) {
             selectPreset.accept(next);

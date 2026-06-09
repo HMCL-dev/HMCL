@@ -35,6 +35,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Consumer;
 
+import static org.jackhuang.hmcl.setting.SettingsManager.settings;
 import static org.jackhuang.hmcl.ui.FXUtils.onInvalidating;
 import static org.jackhuang.hmcl.ui.FXUtils.runInFX;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
@@ -127,7 +128,7 @@ public final class Profiles {
             }
         }
 
-        SettingsManager.setSelectedGameDirectory(profile == null ? null : profile.getId());
+        settings().selectedGameDirectoryProperty().set(profile == null ? null : profile.getId());
         if (profile != null) {
             if (profile.getRepository().isLoaded()) {
                 refreshSelectedVersion(profile);
@@ -142,14 +143,14 @@ public final class Profiles {
     }
 
     private static void refreshSelectedVersion(Profile profile) {
-        String version = SettingsManager.getSelectedInstance(profile.getId());
+        String version = settings().getSelectedInstance(profile.getId());
         if (!profile.getRepository().hasVersion(version)) {
             Optional<String> fallback = profile.getRepository().getVersions().stream()
                     .findFirst()
                     .map(Version::getId);
             version = fallback.orElse(null);
-            if (!Objects.equals(SettingsManager.getSelectedInstance(profile.getId()), version)) {
-                SettingsManager.setSelectedInstance(profile.getId(), version);
+            if (!Objects.equals(settings().getSelectedInstance(profile.getId()), version)) {
+                settings().setSelectedInstance(profile.getId(), version);
             }
         }
         selectedVersion.set(version);
@@ -194,7 +195,7 @@ public final class Profiles {
 
         profilesWrapper.set(SettingsManager.getGameDirectories());
         SettingsManager.getGameDirectories().addListener(onInvalidating(Profiles::refreshSelectedProfile));
-        SettingsManager.getSelectedInstance().addListener(onInvalidating(() -> {
+        settings().getSelectedInstance().addListener(onInvalidating(() -> {
             Profile profile = selectedProfile.get();
             if (profile != null && profile.getRepository().isLoaded()) {
                 refreshSelectedVersion(profile);
@@ -204,7 +205,7 @@ public final class Profiles {
 
         initialized = true;
 
-        @Nullable SettingId selectedId = SettingsManager.getSelectedGameDirectory();
+        @Nullable SettingId selectedId = settings().selectedGameDirectoryProperty().get();
         selectedProfile.set(
                 SettingsManager.getGameDirectories().stream()
                         .filter(it -> it.getId().equals(selectedId))
@@ -263,7 +264,7 @@ public final class Profiles {
 
     /// Returns the selected instance ID for the given profile.
     public static @Nullable String getSelectedInstance(Profile profile) {
-        return SettingsManager.getSelectedInstance(profile.getId());
+        return settings().getSelectedInstance(profile.getId());
     }
 
     /// Sets the selected instance ID for the currently selected profile.
@@ -276,9 +277,9 @@ public final class Profiles {
 
     /// Sets the selected instance ID for the given profile.
     public static void setSelectedInstance(Profile profile, @Nullable String instance) {
-        SettingsManager.setSelectedInstance(profile.getId(), instance);
+        settings().setSelectedInstance(profile.getId(), instance);
         if (profile == selectedProfile.get()) {
-            selectedVersion.set(SettingsManager.getSelectedInstance(profile.getId()));
+            selectedVersion.set(settings().getSelectedInstance(profile.getId()));
         }
     }
 

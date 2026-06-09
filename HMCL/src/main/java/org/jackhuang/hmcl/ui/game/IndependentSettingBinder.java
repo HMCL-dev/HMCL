@@ -48,6 +48,7 @@ import java.util.function.BiConsumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
+import static org.jackhuang.hmcl.setting.SettingsManager.settings;
 import static org.jackhuang.hmcl.util.DataSizeUnit.GIGABYTES;
 import static org.jackhuang.hmcl.util.DataSizeUnit.MEGABYTES;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
@@ -426,7 +427,7 @@ final class IndependentSettingBinder {
             refresh.invalidated(newValue);
         });
         SettingsManager.getGameSettings().addListener(refresh);
-        SettingsManager.defaultGameSettingsPresetProperty().addListener(refresh);
+        settings().defaultGameSettingsPresetProperty().addListener(refresh);
         memoryStatusBar.memoryStatusProperty().addListener(observable -> {
             GameSettings setting = currentSetting.get();
             if (setting == null) {
@@ -713,7 +714,7 @@ final class IndependentSettingBinder {
             refresh.invalidated(newProperty);
         });
         SettingsManager.getGameSettings().addListener(refresh);
-        SettingsManager.defaultGameSettingsPresetProperty().addListener(refresh);
+        settings().defaultGameSettingsPresetProperty().addListener(refresh);
 
         GameSettings setting = currentSetting.get();
         if (setting != null) {

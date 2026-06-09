@@ -20,10 +20,8 @@ package org.jackhuang.hmcl.setting;
 import com.google.gson.JsonParseException;
 import com.google.gson.JsonObject;
 import javafx.beans.Observable;
-import javafx.beans.property.ObjectProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
-import javafx.collections.ObservableMap;
 import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.auth.authlibinjector.AuthlibInjectorServer;
 import org.jackhuang.hmcl.util.FileSaver;
@@ -340,54 +338,9 @@ public final class SettingsManager {
         return gameDirectories();
     }
 
-    /// Returns the selected game directory ID property.
-    public static ObjectProperty<@Nullable SettingId> selectedGameDirectoryProperty() {
-        return settings().selectedGameDirectoryProperty();
-    }
-
-    /// Returns the selected game directory ID.
-    public static @Nullable SettingId getSelectedGameDirectory() {
-        return settings().selectedGameDirectoryProperty().get();
-    }
-
-    /// Sets the selected game directory ID.
-    public static void setSelectedGameDirectory(@Nullable SettingId selectedGameDirectory) {
-        settings().selectedGameDirectoryProperty().set(selectedGameDirectory);
-    }
-
-    /// Returns selected instance IDs keyed by game directory ID.
-    public static ObservableMap<SettingId, String> getSelectedInstance() {
-        return settings().getSelectedInstance();
-    }
-
-    /// Returns the selected instance ID for the given game directory ID.
-    public static @Nullable String getSelectedInstance(@Nullable SettingId gameDirectoryId) {
-        return settings().getSelectedInstance(gameDirectoryId);
-    }
-
-    /// Sets the selected instance ID for the given game directory ID.
-    public static void setSelectedInstance(@Nullable SettingId gameDirectoryId, @Nullable String selectedInstance) {
-        settings().setSelectedInstance(gameDirectoryId, selectedInstance);
-    }
-
     /// Returns the reusable game setting presets.
     public static ObservableList<GameSettings.Preset> getGameSettings() {
         return gameSettingsPresets().getPresets();
-    }
-
-    /// Returns the default game setting preset ID property.
-    public static ObjectProperty<@Nullable SettingId> defaultGameSettingsPresetProperty() {
-        return settings().defaultGameSettingsPresetProperty();
-    }
-
-    /// Returns the default game setting preset ID.
-    public static @Nullable SettingId getDefaultGameSettingsPreset() {
-        return settings().defaultGameSettingsPresetProperty().get();
-    }
-
-    /// Sets the default game setting preset ID.
-    public static void setDefaultGameSettingsPreset(@Nullable SettingId defaultGameSettingsPreset) {
-        settings().defaultGameSettingsPresetProperty().set(defaultGameSettingsPreset);
     }
 
     /// Returns the game setting preset with the given ID.
@@ -397,21 +350,21 @@ public final class SettingsManager {
 
     /// Returns the default game setting preset, creating one when needed.
     public static GameSettings.Preset getDefaultGameSettingsPresetOrCreate() {
-        GameSettings.Preset setting = getGameSettings(getDefaultGameSettingsPreset());
+        GameSettings.Preset setting = getGameSettings(settings().defaultGameSettingsPresetProperty().get());
         if (setting != null) {
             return setting;
         }
 
         if (!getGameSettings().isEmpty()) {
             setting = getGameSettings().get(0);
-            setDefaultGameSettingsPreset(setting.idProperty().getValue());
+            settings().defaultGameSettingsPresetProperty().set(setting.idProperty().getValue());
             return setting;
         }
 
         setting = new GameSettings.Preset(gameSettingsPresets().newPresetId());
         setting.autoNameNumberProperty().setValue(1);
         getGameSettings().add(setting);
-        setDefaultGameSettingsPreset(setting.idProperty().getValue());
+        settings().defaultGameSettingsPresetProperty().set(setting.idProperty().getValue());
         return setting;
     }
 
@@ -674,8 +627,8 @@ public final class SettingsManager {
     private static void normalizeGameSettingsPresets() {
         if (getGameSettings().isEmpty()) {
             getDefaultGameSettingsPresetOrCreate();
-        } else if (getGameSettings(getDefaultGameSettingsPreset()) == null) {
-            setDefaultGameSettingsPreset(getGameSettings().get(0).idProperty().getValue());
+        } else if (getGameSettings(settings().defaultGameSettingsPresetProperty().get()) == null) {
+            settings().defaultGameSettingsPresetProperty().set(getGameSettings().get(0).idProperty().getValue());
         }
     }
 
