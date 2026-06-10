@@ -407,7 +407,6 @@ public final class SettingsManager {
             throw new IllegalStateException("Configuration is already loaded");
         }
 
-        LOG.info("Launcher settings location: " + SETTINGS_LOCATION);
         checkLocalConfigOwner();
 
         LauncherSettingsLoadResult launcherSettingsResult = loadLauncherSettings();
@@ -529,9 +528,6 @@ public final class SettingsManager {
             throw new IllegalStateException("Game directories are already loaded");
         }
 
-        LOG.info("Game directories location: " + LOCAL_GAME_DIRECTORIES_LOCATION);
-        LOG.info("User game directories location: " + USER_GAME_DIRECTORIES_LOCATION);
-
         boolean newlyCreatedLocal = !Files.exists(LOCAL_GAME_DIRECTORIES_LOCATION);
         boolean newlyCreatedUser = !Files.exists(USER_GAME_DIRECTORIES_LOCATION);
         JsonSettingFile.LoadResult<GameDirectories> userResult = USER_GAME_DIRECTORIES_FILE.load(null);
@@ -547,12 +543,10 @@ public final class SettingsManager {
         }
 
         if (newlyCreatedLocal && localGameDirectories.isSavable()) {
-            LOG.info("Creating game directories file " + LOCAL_GAME_DIRECTORIES_LOCATION);
             saveLocalGameDirectories();
         }
 
         if (newlyCreatedUser && userGameDirectories.isSavable()) {
-            LOG.info("Creating user game directories file " + USER_GAME_DIRECTORIES_LOCATION);
             saveUserGameDirectories();
         }
     }
@@ -623,8 +617,6 @@ public final class SettingsManager {
             throw new IllegalStateException("Game settings presets are already loaded");
         }
 
-        LOG.info("Game settings location: " + GAME_SETTINGS_LOCATION);
-
         boolean newlyCreated = !Files.exists(GAME_SETTINGS_LOCATION);
         JsonSettingFile.LoadResult<GameSettingsPresets> result =
                 GAME_SETTINGS_FILE.load(fallbackGameSettingsPresets);
@@ -635,7 +627,6 @@ public final class SettingsManager {
         normalizeGameSettingsPresets();
 
         if (newlyCreated && gameSettingsPresets.isSavable()) {
-            LOG.info("Creating game settings file " + GAME_SETTINGS_LOCATION);
             GAME_SETTINGS_FILE.save(gameSettingsPresets);
         }
     }
@@ -658,8 +649,6 @@ public final class SettingsManager {
             throw new IllegalStateException("Launcher state is already loaded");
         }
 
-        LOG.info("Launcher state location: " + STATE_LOCATION);
-
         boolean newlyCreated = !Files.exists(STATE_LOCATION);
         JsonSettingFile.LoadResult<LauncherState> result =
                 STATE_FILE.load(fallbackLauncherState);
@@ -669,7 +658,6 @@ public final class SettingsManager {
         }
 
         if (newlyCreated && launcherState.isSavable()) {
-            LOG.info("Creating launcher state file " + STATE_LOCATION);
             STATE_FILE.save(launcherState);
         }
 
@@ -685,8 +673,6 @@ public final class SettingsManager {
             throw new IllegalStateException("Authlib-injector servers are already loaded");
         }
 
-        LOG.info("Authlib-injector servers location: " + AUTHLIB_INJECTOR_SERVERS_LOCATION);
-
         boolean newlyCreated = !Files.exists(AUTHLIB_INJECTOR_SERVERS_LOCATION);
         JsonSettingFile.LoadResult<AuthlibInjectorServerList> result =
                 AUTHLIB_INJECTOR_SERVERS_FILE.load(fallbackAuthlibInjectorServers);
@@ -696,7 +682,6 @@ public final class SettingsManager {
         }
 
         if (newlyCreated && authlibInjectorServers.isSavable()) {
-            LOG.info("Creating authlib-injector servers file " + AUTHLIB_INJECTOR_SERVERS_LOCATION);
             AUTHLIB_INJECTOR_SERVERS_FILE.save(authlibInjectorServers);
         }
     }
@@ -706,8 +691,6 @@ public final class SettingsManager {
         if (userGameAccounts != null) {
             throw new IllegalStateException("User game accounts are already loaded");
         }
-
-        LOG.info("User game accounts location: " + USER_GAME_ACCOUNTS_LOCATION);
 
         boolean newlyCreated = !Files.exists(USER_GAME_ACCOUNTS_LOCATION);
         @Nullable UserGameAccountsMigrationResult migrationResult = newlyCreated ? loadLegacyUserGameAccounts() : null;
@@ -720,7 +703,6 @@ public final class SettingsManager {
             }
 
             if (newlyCreated && userGameAccounts.isSavable()) {
-                LOG.info("Creating user game accounts file " + USER_GAME_ACCOUNTS_LOCATION);
                 USER_GAME_ACCOUNTS_FILE.save(userGameAccounts);
                 if (migrationResult != null) {
                     MigrationReceipt.save(USER_GAME_ACCOUNTS_MIGRATION_RECEIPT_LOCATION, migrationResult.path());
@@ -772,8 +754,6 @@ public final class SettingsManager {
             throw new IllegalStateException("Game accounts are already loaded");
         }
 
-        LOG.info("Game accounts location: " + GAME_ACCOUNTS_LOCATION);
-
         boolean newlyCreated = !Files.exists(GAME_ACCOUNTS_LOCATION);
         JsonSettingFile.LoadResult<AccountStorages> result =
                 GAME_ACCOUNTS_FILE.load(fallbackGameAccounts);
@@ -783,7 +763,6 @@ public final class SettingsManager {
         }
 
         if (newlyCreated && gameAccounts.isSavable()) {
-            LOG.info("Creating game accounts file " + GAME_ACCOUNTS_LOCATION);
             GAME_ACCOUNTS_FILE.save(gameAccounts);
         }
     }
@@ -869,8 +848,6 @@ public final class SettingsManager {
             throw new IllegalStateException("User settings are already loaded");
         }
 
-        LOG.info("User settings location: " + USER_SETTINGS_LOCATION);
-
         boolean newlyCreated = !Files.exists(USER_SETTINGS_LOCATION);
         @Nullable UserSettings migratedUserSettings = newlyCreated && migrationResult != null
                 ? migrationResult.userSettings()
@@ -882,7 +859,6 @@ public final class SettingsManager {
         }
 
         if (newlyCreated && migratedUserSettings != null && userSettingsInstance.isSavable()) {
-            LOG.info("Creating user settings file " + USER_SETTINGS_LOCATION);
             USER_SETTINGS_FILE.save(userSettingsInstance);
         }
     }
@@ -893,8 +869,6 @@ public final class SettingsManager {
         if (userStateInstance != null) {
             throw new IllegalStateException("User state is already loaded");
         }
-
-        LOG.info("User state location: " + USER_STATE_LOCATION);
 
         boolean newlyCreated = !Files.exists(USER_STATE_LOCATION);
         @Nullable UserState migratedUserState = newlyCreated && migrationResult != null
@@ -907,7 +881,6 @@ public final class SettingsManager {
         }
 
         if (newlyCreated && userStateInstance.isSavable()) {
-            LOG.info("Creating user state file " + USER_STATE_LOCATION);
             USER_STATE_FILE.save(userStateInstance);
         }
     }
