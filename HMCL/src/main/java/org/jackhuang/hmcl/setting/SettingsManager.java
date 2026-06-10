@@ -259,6 +259,11 @@ public final class SettingsManager {
         return authlibInjectorServers;
     }
 
+    /// Returns the current per-workspace config directory path.
+    public static Path localConfigDirectory() {
+        return Metadata.HMCL_LOCAL_HOME;
+    }
+
     /// Returns the current per-workspace settings path.
     public static Path settingsLocation() {
         return SETTINGS_LOCATION;
@@ -403,6 +408,7 @@ public final class SettingsManager {
         }
 
         LOG.info("Launcher settings location: " + SETTINGS_LOCATION);
+        checkLocalConfigOwner();
 
         LauncherSettingsLoadResult launcherSettingsResult = loadLauncherSettings();
         launcherSettings = launcherSettingsResult.settings();
@@ -439,16 +445,14 @@ public final class SettingsManager {
             });
         }
 
-        if (Files.exists(SETTINGS_LOCATION)) {
-            checkWritable(SETTINGS_LOCATION);
+        if (Files.exists(Metadata.HMCL_LOCAL_HOME)) {
+            checkWritable(Metadata.HMCL_LOCAL_HOME);
         }
     }
 
     /// Loads the current per-workspace settings or migrates a legacy config when needed.
     private static LauncherSettingsLoadResult loadLauncherSettings() throws IOException {
         if (Files.exists(SETTINGS_LOCATION)) {
-            checkOwner(SETTINGS_LOCATION);
-
             JsonObject jsonObject;
             try {
                 jsonObject = JsonUtils.fromJsonFile(SETTINGS_LOCATION, JsonObject.class);
@@ -813,8 +817,23 @@ public final class SettingsManager {
         }
     }
 
-    /// Checks whether root is reading a config file owned by another user.
+    /// Checks whether root is reading per-workspace config data owned by another user.
+    private static void checkLocalConfigOwner() {
+        checkOwner(Metadata.HMCL_LOCAL_HOME);
+        checkOwner(SETTINGS_LOCATION);
+        checkOwner(STATE_LOCATION);
+        checkOwner(AUTHLIB_INJECTOR_SERVERS_LOCATION);
+        checkOwner(LOCAL_GAME_DIRECTORIES_LOCATION);
+        checkOwner(GAME_SETTINGS_LOCATION);
+        checkOwner(GAME_ACCOUNTS_LOCATION);
+    }
+
+    /// Checks whether root is reading a config path owned by another user.
     private static void checkOwner(Path location) {
+        if (!Files.exists(location)) {
+            return;
+        }
+
         try {
             if (OperatingSystem.CURRENT_OS != OperatingSystem.WINDOWS
                     && "root".equals(System.getProperty("user.name"))
@@ -826,19 +845,19 @@ public final class SettingsManager {
         }
     }
 
-    /// Checks that the given config file is writable.
+    /// Checks that the given config path is writable.
     private static void checkWritable(Path location) throws IOException {
         if (!Files.isWritable(location)) {
             if (OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS
                     && location.getFileSystem() == FileSystems.getDefault()
                     && location.toFile().canWrite()) {
-                LOG.warning("Launcher settings at " + location + " is not writable, but it seems to be a Samba share or OpenJDK bug");
+                LOG.warning("Launcher config path " + location + " is not writable, but it seems to be a Samba share or OpenJDK bug");
                 // There are some serious problems with the implementation of Samba or OpenJDK
                 throw new SambaException();
             } else {
                 // the config cannot be saved
                 // throw up the error now to prevent further data loss
-                throw new IOException("Launcher settings at " + location + " is not writable");
+                throw new IOException("Launcher config path " + location + " is not writable");
             }
         }
     }

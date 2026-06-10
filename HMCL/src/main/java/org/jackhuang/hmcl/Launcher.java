@@ -113,7 +113,7 @@ public final class Launcher extends Application {
                 LOG.error("Failed to load config", e);
                 checkConfigInTempDir();
                 checkConfigOwner();
-                showAlert(AlertType.ERROR, i18n("fatal.config_loading_failure", SettingsManager.settingsLocation().getParent()));
+                showAlert(AlertType.ERROR, i18n("fatal.config_loading_failure", SettingsManager.localConfigDirectory()));
                 EntryPoint.exit(1);
             }
 
@@ -237,7 +237,7 @@ public final class Launcher extends Application {
     }
 
     private static boolean isConfigInTempDir() {
-        String configPath = SettingsManager.settingsLocation().toString();
+        String configPath = SettingsManager.localConfigDirectory().toString();
 
         String tmpdir = System.getProperty("java.io.tmpdir");
         if (StringUtils.isNotBlank(tmpdir) && configPath.startsWith(tmpdir))
@@ -285,23 +285,26 @@ public final class Launcher extends Application {
             return;
 
         String userName = System.getProperty("user.name");
+        Path configDirectory = SettingsManager.localConfigDirectory();
+        if (!Files.exists(configDirectory)) {
+            return;
+        }
+
         String owner;
         try {
-            owner = Files.getOwner(SettingsManager.settingsLocation()).getName();
+            owner = Files.getOwner(configDirectory).getName();
         } catch (IOException ioe) {
             LOG.warning("Failed to get file owner", ioe);
             return;
         }
 
-        if (Files.isWritable(SettingsManager.settingsLocation()) || userName.equals("root") || userName.equals(owner))
+        if (Files.isWritable(configDirectory) || userName.equals("root") || userName.equals(owner))
             return;
 
         ArrayList<String> files = new ArrayList<>();
-        files.add(SettingsManager.settingsLocation().toString());
+        files.add(configDirectory.toString());
         if (Files.exists(Metadata.HMCL_USER_HOME))
             files.add(Metadata.HMCL_USER_HOME.toString());
-        if (Files.exists(Metadata.HMCL_LOCAL_HOME))
-            files.add(Metadata.HMCL_LOCAL_HOME.toString());
 
         Path mcDir = Paths.get(".minecraft").toAbsolutePath().normalize();
         if (Files.exists(mcDir))
