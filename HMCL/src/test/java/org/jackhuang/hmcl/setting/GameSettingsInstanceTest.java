@@ -28,7 +28,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNull;
 
 /// Tests for instance-specific game settings.
@@ -100,54 +99,6 @@ public final class GameSettingsInstanceTest {
                 """).getAsJsonObject(), true);
 
         assertEquals(JavaVersionType.AUTO, instance.javaTypeProperty().getValue());
-    }
-
-    /// Tests that legacy serialized Java version fields are migrated to custom Java version fields.
-    @Test
-    public void migratesSerializedJavaVersionFieldToCustomJavaVersion() {
-        GameSettings.Instance instance = LauncherSettings.SETTINGS_GSON.fromJson("""
-                {
-                  "javaType": "VERSION",
-                  "javaVersion": "17"
-                }
-                """, GameSettings.Instance.class);
-
-        assertEquals(JavaVersionType.VERSION, instance.javaTypeProperty().getValue());
-        assertEquals("17", instance.customJavaVersionProperty().getValue());
-
-        JsonObject serialized = JsonParser.parseString(
-                LauncherSettings.SETTINGS_GSON.toJson(instance, GameSettings.Instance.class)
-        ).getAsJsonObject();
-        assertEquals("17", serialized.get("customJavaVersion").getAsString());
-        assertFalse(serialized.has("javaVersion"));
-    }
-
-    /// Tests that legacy serialized detected Java fields are migrated to a detected Java reference.
-    @Test
-    public void migratesSerializedDetectedJavaFields() throws IOException {
-        Path tempDir = createInstanceSettingsTestDirectory("detected-java");
-        Path javaBinary = tempDir.resolve("java.exe");
-        Files.writeString(javaBinary, "");
-
-        JsonObject source = new JsonObject();
-        source.addProperty("javaType", "DETECTED");
-        source.addProperty("javaVersion", "17.0.11+9");
-        source.addProperty("defaultJavaPath", javaBinary.toString());
-
-        GameSettings.Instance instance = LauncherSettings.SETTINGS_GSON.fromJson(source, GameSettings.Instance.class);
-
-        assertEquals(JavaVersionType.DETECTED, instance.javaTypeProperty().getValue());
-        assertEquals("17.0.11+9", instance.detectedJavaProperty().getValue().version());
-        assertEquals(GameSettings.DetectedJava.hashExistingPath(javaBinary), instance.detectedJavaProperty().getValue().pathHash());
-
-        JsonObject serialized = JsonParser.parseString(
-                LauncherSettings.SETTINGS_GSON.toJson(instance, GameSettings.Instance.class)
-        ).getAsJsonObject();
-        assertEquals("17.0.11+9", serialized.getAsJsonObject("detectedJava").get("version").getAsString());
-        assertEquals(GameSettings.DetectedJava.hashExistingPath(javaBinary),
-                serialized.getAsJsonObject("detectedJava").get("pathHash").getAsString());
-        assertFalse(serialized.has("javaVersion"));
-        assertFalse(serialized.has("defaultJavaPath"));
     }
 
     /// Tests that legacy detected Java selection is migrated to a detected Java reference.

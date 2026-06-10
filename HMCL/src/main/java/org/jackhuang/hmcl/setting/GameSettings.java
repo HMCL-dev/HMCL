@@ -38,7 +38,6 @@ import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.gson.JsonSchema;
 import org.jackhuang.hmcl.util.gson.JsonSerializable;
-import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.gson.ObservableSetting;
 import org.jackhuang.hmcl.util.i18n.LocalizedText;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
@@ -166,11 +165,7 @@ public sealed abstract class GameSettings extends ObservableSetting {
                     JsonElement json,
                     Type typeOfT,
                     JsonDeserializationContext context) throws JsonParseException {
-                @Nullable Instance result = super.deserialize(json, typeOfT, context);
-                if (result != null) {
-                    result.migrateLegacyJavaSelectionFields();
-                }
-                return result;
+                return super.deserialize(json, typeOfT, context);
             }
         }
     }
@@ -239,9 +234,6 @@ public sealed abstract class GameSettings extends ObservableSetting {
                     Type typeOfT,
                     JsonDeserializationContext context) throws JsonParseException {
                 @Nullable Preset result = super.deserialize(json, typeOfT, context);
-                if (result != null) {
-                    result.migrateLegacyJavaSelectionFields();
-                }
                 if (result != null && SettingId.NIL.equals(result.idProperty().getValue())) {
                     throw new JsonParseException("Preset ID cannot be nil");
                 }
@@ -372,34 +364,6 @@ public sealed abstract class GameSettings extends ObservableSetting {
     /// Returns the detected Java runtime reference property.
     public SettingProperty<DetectedJava> detectedJavaProperty() {
         return detectedJava;
-    }
-
-    /// Migrates legacy Java selection fields preserved as unknown JSON fields.
-    protected final void migrateLegacyJavaSelectionFields() {
-        @Nullable JsonElement legacyJavaVersion = unknownFields.remove("javaVersion");
-        @Nullable JsonElement legacyDefaultJavaPath = unknownFields.remove("defaultJavaPath");
-        @Nullable String javaVersion = JsonUtils.getString(legacyJavaVersion);
-
-        if (StringUtils.isBlank(javaVersion)) {
-            return;
-        }
-
-        switch (javaTypeProperty().getValue()) {
-            case VERSION:
-                if (StringUtils.isBlank(customJavaVersionProperty().getValue())) {
-                    customJavaVersionProperty().setValue(javaVersion);
-                }
-                break;
-            case DETECTED:
-                if (detectedJavaProperty().getValue().isEmpty()) {
-                    detectedJavaProperty().setValue(DetectedJava.ofLegacyPath(
-                            javaVersion,
-                            Objects.requireNonNullElse(JsonUtils.getString(legacyDefaultJavaPath), "")));
-                }
-                break;
-            case AUTO, CUSTOM:
-                break;
-        }
     }
 
     /// Property name for customized JVM options.
