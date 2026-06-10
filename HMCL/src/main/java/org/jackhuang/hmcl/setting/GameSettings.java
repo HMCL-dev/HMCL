@@ -33,12 +33,15 @@ import org.jackhuang.hmcl.setting.property.InheritableProperty;
 import org.jackhuang.hmcl.setting.property.SettingProperty;
 import org.jackhuang.hmcl.setting.property.SimpleInheritableProperty;
 import org.jackhuang.hmcl.setting.property.SimpleSettingProperty;
+import org.jackhuang.hmcl.util.DigestUtils;
 import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.gson.JsonSchema;
 import org.jackhuang.hmcl.util.gson.JsonSerializable;
+import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.gson.ObservableSetting;
 import org.jackhuang.hmcl.util.i18n.LocalizedText;
+import org.jackhuang.hmcl.util.platform.OperatingSystem;
 import org.jackhuang.hmcl.util.platform.SystemInfo;
 import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
 import org.jetbrains.annotations.NotNullByDefault;
@@ -47,9 +50,12 @@ import org.jetbrains.annotations.UnknownNullability;
 
 import java.io.IOException;
 import java.lang.reflect.Type;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
 import java.util.Collection;
+import java.util.HexFormat;
+import java.util.Locale;
 import java.util.Objects;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -155,6 +161,18 @@ public sealed abstract class GameSettings extends ObservableSetting {
             protected Instance createInstance() {
                 return new Instance();
             }
+
+            @Override
+            public @Nullable Instance deserialize(
+                    JsonElement json,
+                    Type typeOfT,
+                    JsonDeserializationContext context) throws JsonParseException {
+                @Nullable Instance result = super.deserialize(json, typeOfT, context);
+                if (result != null) {
+                    result.migrateLegacyJavaSelectionFields();
+                }
+                return result;
+            }
         }
     }
 
@@ -222,11 +240,84 @@ public sealed abstract class GameSettings extends ObservableSetting {
                     Type typeOfT,
                     JsonDeserializationContext context) throws JsonParseException {
                 @Nullable Preset result = super.deserialize(json, typeOfT, context);
+                if (result != null) {
+                    result.migrateLegacyJavaSelectionFields();
+                }
                 if (result != null && SettingId.NIL.equals(result.idProperty().getValue())) {
                     throw new JsonParseException("Preset ID cannot be nil");
                 }
                 return result;
             }
+        }
+    }
+
+    /// Reference to a Java runtime selected from HMCL's detected Java list.
+    ///
+    /// @param version the runtime version reported by the detected Java executable
+    /// @param pathHash the SHA-256 hash of the normalized Java executable path, or an empty string when unavailable
+    @NotNullByDefault
+    public record DetectedJava(String version, String pathHash) {
+        /// Empty detected Java reference.
+        public static final DetectedJava EMPTY = new DetectedJava("", "");
+
+        /// Creates a detected Java reference.
+        public DetectedJava {
+            version = Objects.requireNonNull(version);
+            pathHash = Objects.requireNonNull(pathHash);
+        }
+
+        /// Returns the runtime version reported by the detected Java executable.
+        public String version() {
+            return version;
+        }
+
+        /// Returns the SHA-256 hash of the normalized Java executable path.
+        public String pathHash() {
+            return pathHash;
+        }
+
+        /// Returns a detected Java reference for the given runtime.
+        public static DetectedJava of(JavaRuntime java) {
+            return new DetectedJava(java.getVersion(), hashExistingPath(java.getBinary()));
+        }
+
+        /// Returns a detected Java reference migrated from legacy persisted fields.
+        public static DetectedJava ofLegacyPath(String version, String javaBinaryPath) {
+            String pathHash = "";
+            if (StringUtils.isNotBlank(javaBinaryPath)) {
+                try {
+                    pathHash = hashExistingPath(Path.of(javaBinaryPath));
+                } catch (InvalidPathException ignored) {
+                }
+
+                if (StringUtils.isBlank(pathHash)) {
+                    pathHash = hashPathText(javaBinaryPath);
+                }
+            }
+            return new DetectedJava(version, pathHash);
+        }
+
+        /// Returns the path hash for an executable that is expected to exist on this machine.
+        public static String hashExistingPath(Path javaBinary) {
+            try {
+                return hashPathText(javaBinary.toRealPath().toString());
+            } catch (IOException | InvalidPathException e) {
+                return "";
+            }
+        }
+
+        /// Returns the path hash for a Java executable path string.
+        public static String hashPathText(String javaBinaryPath) {
+            String normalizedPath = javaBinaryPath.replace('\\', '/');
+            if (OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS) {
+                normalizedPath = normalizedPath.toLowerCase(Locale.ROOT);
+            }
+            return HexFormat.of().formatHex(DigestUtils.digest("SHA-256", normalizedPath.getBytes(StandardCharsets.UTF_8)));
+        }
+
+        /// Returns whether this reference has no usable runtime information.
+        public boolean isEmpty() {
+            return StringUtils.isBlank(version) && StringUtils.isBlank(pathHash);
         }
     }
 
@@ -257,13 +348,13 @@ public sealed abstract class GameSettings extends ObservableSetting {
         return javaType;
     }
 
-    /// The custom or detected Java version string.
-    @SerializedName("javaVersion")
-    private final SettingProperty<String> javaVersion = newSettingProperty("javaVersion", "");
+    /// User input used by `VERSION` Java selection mode.
+    @SerializedName("customJavaVersion")
+    private final SettingProperty<String> customJavaVersion = newSettingProperty("customJavaVersion", "");
 
-    /// Returns the Java version property.
-    public SettingProperty<String> javaVersionProperty() {
-        return javaVersion;
+    /// Returns the user input used by `VERSION` Java selection mode.
+    public SettingProperty<String> customJavaVersionProperty() {
+        return customJavaVersion;
     }
 
     /// User customized Java executable path.
@@ -275,13 +366,41 @@ public sealed abstract class GameSettings extends ObservableSetting {
         return customJavaPath;
     }
 
-    /// Resolved Java executable path used to disambiguate detected Java runtimes.
-    @SerializedName("defaultJavaPath")
-    private final SettingProperty<String> defaultJavaPath = newSettingProperty("defaultJavaPath", "");
+    /// Detected Java runtime reference used by `DETECTED` Java selection mode.
+    @SerializedName("detectedJava")
+    private final SettingProperty<DetectedJava> detectedJava = newSettingProperty("detectedJava", DetectedJava.EMPTY);
 
-    /// Returns the default Java executable path property.
-    public SettingProperty<String> defaultJavaPathProperty() {
-        return defaultJavaPath;
+    /// Returns the detected Java runtime reference property.
+    public SettingProperty<DetectedJava> detectedJavaProperty() {
+        return detectedJava;
+    }
+
+    /// Migrates legacy Java selection fields preserved as unknown JSON fields.
+    protected final void migrateLegacyJavaSelectionFields() {
+        @Nullable JsonElement legacyJavaVersion = unknownFields.remove("javaVersion");
+        @Nullable JsonElement legacyDefaultJavaPath = unknownFields.remove("defaultJavaPath");
+        @Nullable String javaVersion = JsonUtils.getString(legacyJavaVersion);
+
+        if (StringUtils.isBlank(javaVersion)) {
+            return;
+        }
+
+        switch (javaTypeProperty().getValue()) {
+            case VERSION:
+                if (StringUtils.isBlank(customJavaVersionProperty().getValue())) {
+                    customJavaVersionProperty().setValue(javaVersion);
+                }
+                break;
+            case DETECTED:
+                if (detectedJavaProperty().getValue().isEmpty()) {
+                    detectedJavaProperty().setValue(DetectedJava.ofLegacyPath(
+                            javaVersion,
+                            Objects.requireNonNullElse(JsonUtils.getString(legacyDefaultJavaPath), "")));
+                }
+                break;
+            case AUTO, CUSTOM:
+                break;
+        }
     }
 
     /// Property name for customized JVM options.
@@ -821,9 +940,6 @@ public sealed abstract class GameSettings extends ObservableSetting {
         public void setJavaAutoSelected() {
             GameSettings target = instance != null && isOverridden(instance, instance.javaTypeProperty()) ? instance : preset;
             target.javaTypeProperty().setValue(JavaVersionType.AUTO);
-            target.javaVersionProperty().setValue("");
-            target.customJavaPathProperty().setValue("");
-            target.defaultJavaPathProperty().setValue("");
         }
 
         /// Finds the effective Java runtime.
@@ -839,7 +955,7 @@ public sealed abstract class GameSettings extends ObservableSetting {
                         return null;
                     }
                 case VERSION: {
-                    String javaVersion = get(GameSettings::javaVersionProperty, GameSettings::javaTypeProperty);
+                    String javaVersion = get(GameSettings::customJavaVersionProperty, GameSettings::javaTypeProperty);
                     if (StringUtils.isBlank(javaVersion)) {
                         return JavaManager.findSuitableJava(gameVersion, version);
                     }
@@ -862,20 +978,19 @@ public sealed abstract class GameSettings extends ObservableSetting {
                     return JavaManager.findSuitableJava(allJava, gameVersion, version);
                 }
                 case DETECTED: {
-                    String javaVersion = get(GameSettings::javaVersionProperty, GameSettings::javaTypeProperty);
+                    DetectedJava detectedJava = get(GameSettings::detectedJavaProperty, GameSettings::javaTypeProperty);
+                    String javaVersion = detectedJava.version();
                     if (StringUtils.isBlank(javaVersion)) {
                         return JavaManager.findSuitableJava(gameVersion, version);
                     }
 
-                    try {
-                        String defaultJavaPath = get(GameSettings::defaultJavaPathProperty, GameSettings::javaTypeProperty);
-                        if (StringUtils.isNotBlank(defaultJavaPath)) {
-                            JavaRuntime java = JavaManager.getJava(Path.of(defaultJavaPath).toRealPath());
-                            if (java.getVersion().equals(javaVersion)) {
+                    if (StringUtils.isNotBlank(detectedJava.pathHash())) {
+                        for (JavaRuntime java : JavaManager.getAllJava()) {
+                            if (java.getVersion().equals(javaVersion)
+                                    && detectedJava.pathHash().equals(DetectedJava.hashExistingPath(java.getBinary()))) {
                                 return java;
                             }
                         }
-                    } catch (IOException | InvalidPathException ignored) {
                     }
 
                     for (JavaRuntime java : JavaManager.getAllJava()) {

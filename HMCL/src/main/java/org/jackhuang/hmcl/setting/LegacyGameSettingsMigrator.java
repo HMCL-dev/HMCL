@@ -232,10 +232,16 @@ public final class LegacyGameSettingsMigrator {
     /// Copies shared legacy properties into the target setting.
     private static void copyCommonProperties(JsonObject source, GameSettings target) {
         JavaVersionType javaVersionType = parseLegacyJavaVersionType(source);
+        String legacyJavaVersion = empty(parseLegacyJavaVersion(source));
         target.javaTypeProperty().setValue(javaVersionType);
-        target.javaVersionProperty().setValue(empty(parseLegacyJavaVersion(source)));
+        if (javaVersionType == JavaVersionType.VERSION) {
+            target.customJavaVersionProperty().setValue(legacyJavaVersion);
+        } else if (javaVersionType == JavaVersionType.DETECTED && StringUtils.isNotBlank(legacyJavaVersion)) {
+            target.detectedJavaProperty().setValue(GameSettings.DetectedJava.ofLegacyPath(
+                    legacyJavaVersion,
+                    JsonUtils.getString(source, "defaultJavaPath", "")));
+        }
         target.customJavaPathProperty().setValue(JsonUtils.getString(source, "javaDir", ""));
-        target.defaultJavaPathProperty().setValue(JsonUtils.getString(source, "defaultJavaPath", ""));
 
         target.jvmOptionsProperty().setValue(JsonUtils.getString(source, "javaArgs", ""));
         target.noJVMOptionsProperty().setValue(JsonUtils.getBoolean(source, "noJVMArgs", false));

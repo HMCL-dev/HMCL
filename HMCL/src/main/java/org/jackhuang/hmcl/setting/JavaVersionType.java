@@ -22,8 +22,8 @@ import org.jetbrains.annotations.NotNullByDefault;
 /// Selects how HMCL resolves the Java runtime used to launch a game.
 ///
 /// Additional payload for these modes is stored in `GameSettings`:
-/// - [VERSION] uses `javaVersion` as a Java major version string.
-/// - [DETECTED] uses `javaVersion` as the detected runtime version and `defaultJavaPath` as the remembered executable path.
+/// - [VERSION] uses `customJavaVersion` as the user-entered Java version selector.
+/// - [DETECTED] uses `detectedJava` as the detected runtime reference.
 /// - [CUSTOM] uses `customJavaPath` as the executable path selected by the user.
 ///
 /// @author Glavo

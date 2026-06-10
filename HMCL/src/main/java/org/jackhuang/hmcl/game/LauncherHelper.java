@@ -412,7 +412,7 @@ public final class LauncherHelper {
                 GameJavaVersion targetJavaVersion = null;
                 if (javaVersionType == JavaVersionType.VERSION) {
                     try {
-                        int targetJavaVersionMajor = Integer.parseInt(setting.get(GameSettings::javaVersionProperty, GameSettings::javaTypeProperty));
+                        int targetJavaVersionMajor = Integer.parseInt(setting.get(GameSettings::customJavaVersionProperty, GameSettings::javaTypeProperty));
                         GameJavaVersion minimumJavaVersion = null;
                         if (gameVersion.compareTo("1.12.2") == 0) {
                             Optional<String> cleanroomVersion = analyzer.getVersion(LibraryAnalyzer.LibraryType.CLEANROOM);
