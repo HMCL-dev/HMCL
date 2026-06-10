@@ -74,7 +74,7 @@ public final class DigestUtils {
         return updateDigest(digest, data).digest();
     }
 
-    public static String digestToString(String algorithm, byte[] data) throws IOException {
+    public static String digestToString(String algorithm, byte[] data) {
         return HexFormat.of().formatHex(digest(algorithm, data));
     }
 

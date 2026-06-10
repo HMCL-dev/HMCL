@@ -54,7 +54,6 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
 import java.util.Collection;
-import java.util.HexFormat;
 import java.util.Locale;
 import java.util.Objects;
 import java.util.function.Function;
@@ -312,7 +311,7 @@ public sealed abstract class GameSettings extends ObservableSetting {
             if (OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS) {
                 normalizedPath = normalizedPath.toLowerCase(Locale.ROOT);
             }
-            return HexFormat.of().formatHex(DigestUtils.digest("SHA-256", normalizedPath.getBytes(StandardCharsets.UTF_8)));
+            return DigestUtils.digestToString("SHA-256", normalizedPath.getBytes(StandardCharsets.UTF_8));
         }
 
         /// Returns whether this reference has no usable runtime information.
