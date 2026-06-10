@@ -186,7 +186,7 @@ public class DownloadPage extends DecoratorAnimatedPage implements DecoratorPage
         listenerHolder = new WeakListenerHolder();
         runInFX(() -> {
             if (profile == Profiles.getSelectedProfile()) {
-                listenerHolder.add(FXUtils.onWeakChangeAndOperate(Profiles.selectedVersionProperty(), version -> {
+                listenerHolder.add(FXUtils.onWeakChangeAndOperate(Profiles.selectedInstanceProperty(), version -> {
                     if (modTab.isInitialized()) {
                         modTab.getNode().loadVersion(profile, null);
                     }

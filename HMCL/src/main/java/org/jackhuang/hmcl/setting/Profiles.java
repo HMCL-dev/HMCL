@@ -133,12 +133,12 @@ public final class Profiles {
             if (profile.getRepository().isLoaded()) {
                 refreshSelectedVersion(profile);
             } else {
-                selectedVersion.set(null);
+                selectedInstance.set(null);
                 // bind when repository was reloaded.
                 profile.getRepository().refreshVersionsAsync().start();
             }
         } else {
-            selectedVersion.set(null);
+            selectedInstance.set(null);
         }
     }
 
@@ -153,7 +153,7 @@ public final class Profiles {
                 settings().setSelectedInstance(profile.getId(), version);
             }
         }
-        selectedVersion.set(version);
+        selectedInstance.set(version);
     }
 
     /// Creates the built-in game directories only when no profile exists.
@@ -251,15 +251,15 @@ public final class Profiles {
         return selectedProfile;
     }
 
-    private static final ReadOnlyStringWrapper selectedVersion = new ReadOnlyStringWrapper();
+    private static final ReadOnlyStringWrapper selectedInstance = new ReadOnlyStringWrapper();
 
-    public static ReadOnlyStringProperty selectedVersionProperty() {
-        return selectedVersion.getReadOnlyProperty();
+    public static ReadOnlyStringProperty selectedInstanceProperty() {
+        return selectedInstance.getReadOnlyProperty();
     }
 
     // Guaranteed that the repository is loaded.
     public static @Nullable String getSelectedInstance() {
-        return selectedVersion.get();
+        return selectedInstance.get();
     }
 
     /// Returns the selected instance ID for the given profile.
@@ -279,7 +279,7 @@ public final class Profiles {
     public static void setSelectedInstance(Profile profile, @Nullable String instance) {
         settings().setSelectedInstance(profile.getId(), instance);
         if (profile == selectedProfile.get()) {
-            selectedVersion.set(settings().getSelectedInstance(profile.getId()));
+            selectedInstance.set(settings().getSelectedInstance(profile.getId()));
         }
     }
 

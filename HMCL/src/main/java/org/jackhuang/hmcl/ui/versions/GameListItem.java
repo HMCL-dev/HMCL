@@ -36,7 +36,7 @@ public class GameListItem extends GameItem {
         selected.bind(Bindings.createBooleanBinding(
                 () -> profile == Profiles.getSelectedProfile() && Objects.equals(Profiles.getSelectedInstance(profile), id),
                 Profiles.selectedProfileProperty(),
-                Profiles.selectedVersionProperty()));
+                Profiles.selectedInstanceProperty()));
     }
 
     public ReadOnlyBooleanProperty selectedProperty() {

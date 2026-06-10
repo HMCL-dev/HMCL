@@ -44,7 +44,7 @@ public class GameAdvancedListItem extends AdvancedListItem {
         AdvancedListItem.setAlignment(imageContainer, Pos.CENTER);
         setLeftGraphic(imageContainer);
 
-        holder.add(FXUtils.onWeakChangeAndOperate(Profiles.selectedVersionProperty(), this::loadVersion));
+        holder.add(FXUtils.onWeakChangeAndOperate(Profiles.selectedInstanceProperty(), this::loadVersion));
     }
 
     private void loadVersion(String version) {

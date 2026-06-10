@@ -119,7 +119,7 @@ public class RootPage extends DecoratorAnimatedPage implements DecoratorPage {
                         }
                     });
 
-            FXUtils.onChangeAndOperate(Profiles.selectedVersionProperty(), mainPage::setCurrentGame);
+            FXUtils.onChangeAndOperate(Profiles.selectedInstanceProperty(), mainPage::setCurrentGame);
             mainPage.showUpdateProperty().bind(UpdateChecker.outdatedProperty());
             mainPage.latestVersionProperty().bind(UpdateChecker.latestVersionProperty());
 

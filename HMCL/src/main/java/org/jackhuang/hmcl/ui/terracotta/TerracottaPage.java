@@ -84,7 +84,7 @@ public class TerracottaPage extends DecoratorAnimatedPage implements DecoratorPa
                         launcherHelper.setDisableOfflineSkin();
                     });
                 }, item -> {
-                    instanceChangeListenerHolder = FXUtils.onWeakChangeAndOperate(Profiles.selectedVersionProperty(),
+                    instanceChangeListenerHolder = FXUtils.onWeakChangeAndOperate(Profiles.selectedInstanceProperty(),
                             instanceName -> item.setSubtitle(StringUtils.isNotBlank(instanceName) ? instanceName : i18n("version.empty"))
                     );
 
