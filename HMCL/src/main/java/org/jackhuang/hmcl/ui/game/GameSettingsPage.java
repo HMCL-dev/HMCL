@@ -175,7 +175,7 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
                 parentGameSettingsPane.setTitle(i18n("settings.type.global.preset"));
                 parentGameSettingsPane.setConverter(setting -> setting != null
                         ? PresetManagementPane.getPresetDisplayName(setting)
-                        : i18n("settings.type.global.preset.default"));
+                        : getImplicitParentGameSettingsDisplayName());
                 bindInstanceParentSetting(parentGameSettingsPane);
             }
 
@@ -368,7 +368,7 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
                         autoMemoryButton,
                         maxMemoryButton,
                         GameSettingsPage::updateInheritanceButton,
-                        this::getParentGameSettings);
+                        this::getEffectiveParentGameSettings);
 
                 return List.of(memoryItem, memoryStatusPane);
             });
@@ -741,6 +741,7 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
             @Nullable GameSettings.Preset selected = button.getValue();
             items.setAll((GameSettings.Preset) null);
             items.addAll(SettingsManager.getGameSettings());
+            refreshInstanceParentSettingConverter(button);
             if (selected != null && SettingsManager.getGameSettings(selected.idProperty().getValue()) == null) {
                 button.setValue(null);
             }
@@ -748,6 +749,7 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
         updateItems.invalidated(SettingsManager.getGameSettings());
         SettingsManager.getGameSettings().addListener(updateItems);
         button.setItems(items);
+        refreshInstanceParentSettingConverter(button);
 
         button.valueProperty().addListener((observable, oldValue, newValue) -> {
             if (updatingParentSetting || !(currentSetting.get() instanceof GameSettings.Instance setting)) {
@@ -760,6 +762,7 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
             if (newValue instanceof GameSettings.Instance setting) {
                 updatingParentSetting = true;
                 try {
+                    refreshInstanceParentSettingConverter(button);
                     SettingId parent = setting.parentProperty().getValue();
                     button.setValue(parent != null ? SettingsManager.getGameSettings(parent) : null);
                 } finally {
@@ -767,6 +770,30 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
                 }
             }
         });
+    }
+
+    /// Refreshes parent preset display text because the implicit parent depends on the current profile.
+    private void refreshInstanceParentSettingConverter(LineSelectButton<GameSettings.@Nullable Preset> button) {
+        button.setConverter(setting -> setting != null
+                ? PresetManagementPane.getPresetDisplayName(setting)
+                : getImplicitParentGameSettingsDisplayName());
+    }
+
+    /// Returns the label for the implicit parent preset selected by a null instance parent.
+    private String getImplicitParentGameSettingsDisplayName() {
+        GameSettings.Preset legacyParent = getProfileLegacyGameSettings();
+        return legacyParent != null
+                ? PresetManagementPane.getPresetDisplayName(legacyParent)
+                : i18n("settings.type.global.preset.default");
+    }
+
+    /// Returns the migrated profile-level parent preset, or null when this profile uses the default preset.
+    private @Nullable GameSettings.Preset getProfileLegacyGameSettings() {
+        if (profile == null || profile.getLegacyGameSettings() == null) {
+            return null;
+        }
+
+        return SettingsManager.getGameSettings(profile.getLegacyGameSettings());
     }
 
     /// Adds the title-line inheritance button for the Java selection sublist.
@@ -841,7 +868,7 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
                 propertyGetter,
                 this::createInheritanceButton,
                 GameSettingsPage::updateInheritanceButton,
-                this::getParentGameSettings);
+                this::getEffectiveParentGameSettings);
     }
 
     /// Binds an integer text field to a setting property with independent override state.
@@ -857,7 +884,7 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
                 propertyGetter,
                 this::createInheritanceButton,
                 GameSettingsPage::updateInheritanceButton,
-                this::getParentGameSettings);
+                this::getEffectiveParentGameSettings);
     }
 
     private void bindWindowSizeComboBox(JFXComboBox<String> comboBox) {
@@ -1457,7 +1484,7 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
             InvalidationListener listener) {
         InheritableProperty<T> oldParentProperty = activeParentProperty.get();
         InheritableProperty<T> newParentProperty = setting instanceof GameSettings.Instance instance
-                ? propertyGetter.apply(getParentGameSettings(instance))
+                ? propertyGetter.apply(getEffectiveParentGameSettings(instance))
                 : null;
         if (oldParentProperty == newParentProperty) {
             return;
@@ -1845,7 +1872,7 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
         button.setOverriddenTooltip(i18n("settings.game.override_global"));
         button.setInheritAvailable(!isPresetSetting);
 
-        IndependentSettingBinder.bindToggleButton(currentSetting, button, propertyGetter, this::getParentGameSettings);
+        IndependentSettingBinder.bindToggleButton(currentSetting, button, propertyGetter, this::getEffectiveParentGameSettings);
         return button;
     }
 
@@ -1858,7 +1885,7 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
         button.setOverriddenTooltip(i18n("settings.game.override_global"));
         button.setInheritAvailable(!isPresetSetting);
 
-        IndependentSettingBinder.bindNativesDirTypeButton(currentSetting, button, this::getParentGameSettings);
+        IndependentSettingBinder.bindNativesDirTypeButton(currentSetting, button, this::getEffectiveParentGameSettings);
         return button;
     }
 
@@ -2075,7 +2102,7 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
         }
 
         if (setting instanceof GameSettings.Instance instance) {
-            return GameSettings.resolve(getParentGameSettings(instance), instance);
+            return GameSettings.resolve(getEffectiveParentGameSettings(instance), instance);
         }
 
         throw new AssertionError("Unknown game setting type: " + setting.getClass());
@@ -2101,9 +2128,7 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
     private <T> T getParentValue(
             GameSettings.Instance instance,
             Function<GameSettings, InheritableProperty<T>> propertyGetter) {
-        GameSettings.Preset parent = profile != null
-                ? profile.getRepository().getParentGameSettings(instance)
-                : getParentGameSettings(instance);
+        GameSettings.Preset parent = getEffectiveParentGameSettings(instance);
         return getDirectValue(propertyGetter.apply(parent));
     }
 
@@ -2115,13 +2140,20 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
             return setting;
         }
 
-        return profile != null
-                ? profile.getRepository().getParentGameSettings(instance)
-                : getParentGameSettings(instance);
+        return getEffectiveParentGameSettings(instance);
     }
 
-    /// Returns the configured parent preset for an instance.
-    private GameSettings.Preset getParentGameSettings(GameSettings.Instance instance) {
+    /// Returns the runtime parent preset for an instance, including profile-level legacy migration fallback.
+    private GameSettings.Preset getEffectiveParentGameSettings(GameSettings.Instance instance) {
+        if (profile != null) {
+            return profile.getRepository().getParentGameSettings(instance);
+        }
+
+        return getExplicitParentGameSettings(instance);
+    }
+
+    /// Returns the explicitly configured parent preset for an instance, falling back to the default preset.
+    private GameSettings.Preset getExplicitParentGameSettings(GameSettings.Instance instance) {
         SettingId parent = instance.parentProperty().getValue();
         GameSettings.Preset parentSetting = SettingsManager.getGameSettings(parent);
         return parentSetting != null ? parentSetting : SettingsManager.getDefaultGameSettingsPresetOrCreate();
