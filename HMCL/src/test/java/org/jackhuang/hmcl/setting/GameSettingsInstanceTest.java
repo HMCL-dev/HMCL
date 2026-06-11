@@ -28,6 +28,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNull;
 
 /// Tests for instance-specific game settings.
@@ -53,7 +54,7 @@ public final class GameSettingsInstanceTest {
                 {
                   "java": "Default"
                 }
-                """).getAsJsonObject(), true);
+                """).getAsJsonObject(), false);
 
         assertEquals(JavaVersionType.AUTO, instance.javaTypeProperty().getValue());
     }
@@ -65,7 +66,7 @@ public final class GameSettingsInstanceTest {
                 {
                   "javaVersionType": 0
                 }
-                """).getAsJsonObject(), true);
+                """).getAsJsonObject(), false);
 
         assertEquals(JavaVersionType.AUTO, instance.javaTypeProperty().getValue());
     }
@@ -77,7 +78,7 @@ public final class GameSettingsInstanceTest {
                 {
                   "javaVersionType": "DEFAULT"
                 }
-                """).getAsJsonObject(), true);
+                """).getAsJsonObject(), false);
 
         assertEquals(JavaVersionType.AUTO, instance.javaTypeProperty().getValue());
     }
@@ -94,7 +95,7 @@ public final class GameSettingsInstanceTest {
         source.addProperty("java", "17.0.11+9");
         source.addProperty("defaultJavaPath", javaBinary.toString());
 
-        GameSettings.Instance instance = LegacyGameSettingsMigrator.toInstance(null, source, true);
+        GameSettings.Instance instance = LegacyGameSettingsMigrator.toInstance(null, source, false);
 
         assertEquals(JavaVersionType.DETECTED, instance.javaTypeProperty().getValue());
         assertEquals("17.0.11+9", instance.detectedJavaProperty().getValue().version());
@@ -109,10 +110,27 @@ public final class GameSettingsInstanceTest {
                   "javaVersionType": "VERSION",
                   "java": "17"
                 }
-                """).getAsJsonObject(), true);
+                """).getAsJsonObject(), false);
 
         assertEquals(JavaVersionType.VERSION, instance.javaTypeProperty().getValue());
         assertEquals("17", instance.customJavaVersionProperty().getValue());
+    }
+
+    /// Tests that inheriting a legacy parent keeps copied fields unset on the instance itself.
+    @Test
+    public void preservesLegacyParentInheritanceWithoutCopyingValues() {
+        GameSettings.Instance instance = LegacyGameSettingsMigrator.toInstance(null, JsonParser.parseString("""
+                {
+                  "javaVersionType": "VERSION",
+                  "java": "17",
+                  "maxMemory": 4096
+                }
+                """).getAsJsonObject(), true);
+
+        assertEquals(JavaVersionType.AUTO, instance.javaTypeProperty().getValue());
+        assertEquals("", instance.customJavaVersionProperty().getValue());
+        assertEquals(GameSettings.SUGGESTED_MEMORY, instance.maxMemoryProperty().getValue());
+        assertNull(instance.minMemoryProperty().getValue());
     }
 
     /// Creates a temporary directory under Gradle's build directory for instance settings tests.

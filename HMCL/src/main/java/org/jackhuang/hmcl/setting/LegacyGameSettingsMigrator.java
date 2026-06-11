@@ -131,14 +131,8 @@ public final class LegacyGameSettingsMigrator {
             }
 
             boolean inheritsLegacyParent = JsonUtils.getBoolean(legacySettingJson, "usesGlobal", false);
-            GameSettings.Instance setting = toInstance(parent, legacySettingJson, !inheritsLegacyParent);
-            if (inheritsLegacyParent) {
-                GameSettings.Preset parentSetting = SettingsManager.getGameSettings(parent);
-                if (parentSetting != null && parentSetting.defaultIsolationTypeProperty().getValue() == DefaultIsolationType.ALWAYS) {
-                    setting.runningDirProperty().setValue("");
-                    setting.getOverrideProperties().add(GameSettings.PROPERTY_RUNNING_DIR);
-                }
-            } else {
+            GameSettings.Instance setting = toInstance(parent, legacySettingJson, inheritsLegacyParent);
+            if (!inheritsLegacyParent) {
                 Path baseDirectory = repository.getBaseDirectory();
                 GameSettings.Preset parentSetting = SettingsManager.getGameSettings(parent);
                 if (parentSetting != null
@@ -161,11 +155,19 @@ public final class LegacyGameSettingsMigrator {
     }
 
     /// Converts a legacy local setting JSON object into an instance game setting.
-    public static GameSettings.Instance toInstance(@Nullable SettingId parent, @Nullable JsonObject source, boolean copyValues) {
+    ///
+    /// @param parent the migrated parent preset ID for the instance
+    /// @param source the legacy local setting JSON object
+    /// @param inheritsLegacyParent whether the legacy instance inherits its parent preset instead of
+    ///                             carrying its own copied values
+    public static GameSettings.Instance toInstance(
+            @Nullable SettingId parent,
+            @Nullable JsonObject source,
+            boolean inheritsLegacyParent) {
         GameSettings.Instance target = new GameSettings.Instance();
         target.parentProperty().setValue(parent);
         target.iconProperty().setValue(parseLegacyVersionIconType(source));
-        if (source != null && copyValues) {
+        if (source != null && !inheritsLegacyParent) {
             copyCommonProperties(source, target);
             if (getLegacyGameDirType(source, GameDirectoryType.ROOT_FOLDER) != GameDirectoryType.ROOT_FOLDER) {
                 target.getOverrideProperties().add(GameSettings.PROPERTY_RUNNING_DIR);
