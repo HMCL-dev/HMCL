@@ -46,24 +46,6 @@ public final class GameSettingsInstanceTest {
                 serialized.get(JsonSchema.PROPERTY_SCHEMA).getAsString());
     }
 
-    /// Tests that matching migration receipts prevent replaying legacy per-version settings migration.
-    @Test
-    public void skipsLegacyInstanceMigrationWhenReceiptMatches() throws IOException {
-        Path tempDir = createInstanceSettingsTestDirectory("receipt");
-        Path versionRoot = tempDir.resolve("version");
-        Files.createDirectories(versionRoot);
-
-        Path legacySetting = versionRoot.resolve("hmclversion.cfg");
-        Path receipt = versionRoot.resolve(".hmcl").resolve("instance-game-settings.migration-receipt.json");
-        Files.writeString(legacySetting, "{\"width\":854}");
-        MigrationReceipt.save(receipt, legacySetting);
-
-        assertNull(LegacyGameSettingsMigrator.migrateInstanceGameSettings(
-                versionRoot,
-                tempDir
-        ));
-    }
-
     /// Tests that legacy Java default selection is migrated to automatic selection.
     @Test
     public void migratesLegacyDefaultJavaSelectionToAuto() {
