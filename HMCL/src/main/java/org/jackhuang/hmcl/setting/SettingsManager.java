@@ -499,10 +499,10 @@ public final class SettingsManager {
             try {
                 LauncherSettings settings = LauncherSettings.fromJson(jsonObject);
                 if (settings == null) {
-                    LauncherSettings settings1 = new LauncherSettings();
-                    settings1.setSavable(false);
-                    settings1.setBackupOnNextSave(false);
-                    return new LauncherSettingsLoadResult(settings1, true, null);
+                    settings = new LauncherSettings();
+                    settings.setSavable(false);
+                    settings.setBackupOnNextSave(false);
+                    return new LauncherSettingsLoadResult(settings, true, null);
                 }
 
                 if (!schemaResult.preserveSchema() && !LauncherSettings.CURRENT_SCHEMA.equals(settings.schemaProperty().get())) {
