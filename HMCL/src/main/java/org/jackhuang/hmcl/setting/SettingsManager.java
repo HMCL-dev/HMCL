@@ -527,9 +527,9 @@ public final class SettingsManager {
             } catch (LegacyConfigMigrator.UnsupportedLegacyConfigVersionException e) {
                 LOG.warning("Legacy config file is newer than this launcher supports.", e);
                 LauncherSettings settings = new LauncherSettings();
-                settings.setSavable(false);
+                settings.setSavable(true);
                 settings.setBackupOnNextSave(false);
-                return new LauncherSettingsLoadResult(settings, true, null);
+                return new LauncherSettingsLoadResult(settings, false, null);
             }
             if (migration != null) {
                 detachedSettingsFallback = migration.detachedSettings();
