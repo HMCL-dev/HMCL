@@ -257,8 +257,8 @@ public final class HMCLGameRepository extends DefaultGameRepository {
 
         LegacyGameSettingsMigrator.InstanceMigrationResult migrationResult =
                 LegacyGameSettingsMigrator.migrateInstanceGameSettings(
+                        this, id,
                         getVersionRoot(id),
-                        getBaseDirectory(),
                         getParentGameSettings(null).idProperty().getValue());
         if (migrationResult != null) {
             initInstanceGameSettings(id, migrationResult.setting());

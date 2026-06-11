@@ -20,11 +20,7 @@ package org.jackhuang.hmcl.setting;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonPrimitive;
-import org.jackhuang.hmcl.game.GraphicsAPI;
-import org.jackhuang.hmcl.game.NativesDirectoryType;
-import org.jackhuang.hmcl.game.ProcessPriority;
-import org.jackhuang.hmcl.game.QuickPlayType;
-import org.jackhuang.hmcl.game.Renderer;
+import org.jackhuang.hmcl.game.*;
 import org.jackhuang.hmcl.setting.property.InheritableProperty;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
@@ -111,22 +107,18 @@ public final class LegacyGameSettingsMigrator {
 
     /// Migrates a legacy per-version game setting file into an instance setting.
     ///
-    /// @param versionRoot the root directory of the version being migrated
-    /// @param baseDirectory the profile game directory used by legacy `ROOT_FOLDER` settings
     /// @param parent the migrated parent preset ID for the profile
     /// @return the migrated instance setting, or `null` when no legacy file can be migrated
     public static @Nullable InstanceMigrationResult migrateInstanceGameSettings(
-            Path versionRoot,
-            Path baseDirectory,
+            HMCLGameRepository repository,
+            String instanceId,
             @Nullable SettingId parent) {
-        Objects.requireNonNull(versionRoot);
-        Objects.requireNonNull(baseDirectory);
-
-        Path file = versionRoot.resolve(LEGACY_INSTANCE_SETTINGS_FILENAME);
-        Path receiptLocation = getMigrationReceiptLocation(versionRoot);
+        Path instanceRoot = repository.getVersionRoot(instanceId);
+        Path file = instanceRoot.resolve(LEGACY_INSTANCE_SETTINGS_FILENAME);
         if (!Files.exists(file)) {
             return null;
         }
+        Path receiptLocation = getMigrationReceiptLocation(instanceRoot);
         if (MigrationReceipt.matches(receiptLocation, file)) {
             LOG.info("Skipping already migrated legacy version setting " + file);
             return null;
@@ -141,9 +133,20 @@ public final class LegacyGameSettingsMigrator {
             boolean inheritsLegacyParent = JsonUtils.getBoolean(legacySettingJson, "usesGlobal", false);
             GameSettings.Instance setting = toInstance(parent, legacySettingJson, !inheritsLegacyParent);
             if (inheritsLegacyParent) {
-                preserveInheritedRunningDirectory(setting, parent);
+                GameSettings.Preset parentSetting = SettingsManager.getGameSettings(parent);
+                if (parentSetting != null && parentSetting.defaultIsolationTypeProperty().getValue() == DefaultIsolationType.ALWAYS) {
+                    setting.runningDirProperty().setValue("");
+                    setting.getOverrideProperties().add(GameSettings.PROPERTY_RUNNING_DIR);
+                }
             } else {
-                preserveLocalRootRunningDirectory(setting, legacySettingJson, baseDirectory, parent);
+                Path baseDirectory = repository.getBaseDirectory();
+                GameSettings.Preset parentSetting = SettingsManager.getGameSettings(parent);
+                if (parentSetting != null
+                        && getLegacyGameDirType(legacySettingJson, GameDirectoryType.ROOT_FOLDER) == GameDirectoryType.ROOT_FOLDER
+                        && StringUtils.isNotBlank(parentSetting.runningDirProperty().getValue())) {
+                    setting.runningDirProperty().setValue(baseDirectory.toString());
+                    setting.getOverrideProperties().add(GameSettings.PROPERTY_RUNNING_DIR);
+                }
             }
             return new InstanceMigrationResult(file, receiptLocation, setting);
         } catch (Exception ex) {
@@ -205,30 +208,6 @@ public final class LegacyGameSettingsMigrator {
             ));
         }
         return target;
-    }
-
-    /// Preserves inherited legacy `VERSION_FOLDER` semantics for local settings that inherit parent values.
-    private static void preserveInheritedRunningDirectory(GameSettings.Instance setting, @Nullable SettingId parent) {
-        GameSettings.Preset parentSetting = SettingsManager.getGameSettings(parent);
-        if (parentSetting != null && parentSetting.defaultIsolationTypeProperty().getValue() == DefaultIsolationType.ALWAYS) {
-            setting.runningDirProperty().setValue("");
-            setting.getOverrideProperties().add(GameSettings.PROPERTY_RUNNING_DIR);
-        }
-    }
-
-    /// Preserves explicit legacy `ROOT_FOLDER` local settings when the parent uses a custom directory.
-    private static void preserveLocalRootRunningDirectory(
-            GameSettings.Instance setting,
-            JsonObject legacySettingJson,
-            Path baseDirectory,
-            @Nullable SettingId parent) {
-        GameSettings.Preset parentSetting = SettingsManager.getGameSettings(parent);
-        if (parentSetting != null
-                && getLegacyGameDirType(legacySettingJson, GameDirectoryType.ROOT_FOLDER) == GameDirectoryType.ROOT_FOLDER
-                && StringUtils.isNotBlank(parentSetting.runningDirProperty().getValue())) {
-            setting.runningDirProperty().setValue(baseDirectory.toString());
-            setting.getOverrideProperties().add(GameSettings.PROPERTY_RUNNING_DIR);
-        }
     }
 
     /// Returns the legacy game directory type from a setting JSON object.

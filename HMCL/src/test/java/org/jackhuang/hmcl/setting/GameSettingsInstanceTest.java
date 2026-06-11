@@ -60,8 +60,8 @@ public final class GameSettingsInstanceTest {
 
         assertNull(LegacyGameSettingsMigrator.migrateInstanceGameSettings(
                 versionRoot,
-                tempDir,
-                null));
+                tempDir
+        ));
     }
 
     /// Tests that legacy Java default selection is migrated to automatic selection.
