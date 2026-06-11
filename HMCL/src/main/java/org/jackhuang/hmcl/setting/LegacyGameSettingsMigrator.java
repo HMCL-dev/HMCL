@@ -118,7 +118,7 @@ public final class LegacyGameSettingsMigrator {
         if (!Files.exists(file)) {
             return null;
         }
-        Path receiptLocation = getMigrationReceiptLocation(instanceRoot);
+        Path receiptLocation = instanceRoot.resolve(".hmcl").resolve(LEGACY_INSTANCE_SETTINGS_MIGRATION_RECEIPT_FILENAME);
         if (MigrationReceipt.matches(receiptLocation, file)) {
             LOG.info("Skipping already migrated legacy version setting " + file);
             return null;
@@ -147,11 +147,6 @@ public final class LegacyGameSettingsMigrator {
             LOG.warning("Failed to migrate legacy version setting " + file, ex);
             return null;
         }
-    }
-
-    /// Returns the migration receipt path for a legacy per-version game settings file.
-    private static Path getMigrationReceiptLocation(Path versionRoot) {
-        return versionRoot.resolve(".hmcl").resolve(LEGACY_INSTANCE_SETTINGS_MIGRATION_RECEIPT_FILENAME);
     }
 
     /// Converts a legacy local setting JSON object into an instance game setting.
