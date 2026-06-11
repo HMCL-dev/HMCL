@@ -143,10 +143,10 @@ public sealed abstract class GameSettings extends ObservableSetting {
 
         /// The parent preset ID.
         @SerializedName("parent")
-        private final SettingProperty<@Nullable SettingId> parent = newSettingProperty("parent");
+        private final SettingProperty<@Nullable SettingID> parent = newSettingProperty("parent");
 
         /// Returns the parent preset ID property.
-        public SettingProperty<@Nullable SettingId> parentProperty() {
+        public SettingProperty<@Nullable SettingID> parentProperty() {
             return parent;
         }
 
@@ -190,7 +190,7 @@ public sealed abstract class GameSettings extends ObservableSetting {
     @JsonSerializable
     public static final class Preset extends GameSettings {
         /// Creates a preset with the given identity.
-        public Preset(SettingId id) {
+        public Preset(SettingID id) {
             register();
             this.id.setValue(Objects.requireNonNull(id));
         }
@@ -202,10 +202,10 @@ public sealed abstract class GameSettings extends ObservableSetting {
 
         /// The stable preset ID.
         @SerializedName("id")
-        private final SettingProperty<SettingId> id = newSettingProperty("id", SettingId.NIL);
+        private final SettingProperty<SettingID> id = newSettingProperty("id", SettingID.NIL);
 
         /// Returns the preset ID property.
-        public SettingProperty<SettingId> idProperty() {
+        public SettingProperty<SettingID> idProperty() {
             return id;
         }
 
@@ -249,7 +249,7 @@ public sealed abstract class GameSettings extends ObservableSetting {
                     Type typeOfT,
                     JsonDeserializationContext context) throws JsonParseException {
                 @Nullable Preset result = super.deserialize(json, typeOfT, context);
-                if (result != null && SettingId.NIL.equals(result.idProperty().getValue())) {
+                if (result != null && SettingID.NIL.equals(result.idProperty().getValue())) {
                     throw new JsonParseException("Preset ID cannot be nil");
                 }
                 return result;

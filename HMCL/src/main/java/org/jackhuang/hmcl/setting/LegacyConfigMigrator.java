@@ -75,10 +75,10 @@ public final class LegacyConfigMigrator {
     private static final String LEGACY_HOME_PROFILE = "Home";
 
     /// The legacy built-in current-workspace profile ID.
-    private static final SettingId LEGACY_DEFAULT_PROFILE_ID = getLegacyProfileId(LEGACY_DEFAULT_PROFILE);
+    private static final SettingID LEGACY_DEFAULT_PROFILE_ID = getLegacyProfileId(LEGACY_DEFAULT_PROFILE);
 
     /// The legacy built-in user-home profile ID.
-    private static final SettingId LEGACY_HOME_PROFILE_ID = getLegacyProfileId(LEGACY_HOME_PROFILE);
+    private static final SettingID LEGACY_HOME_PROFILE_ID = getLegacyProfileId(LEGACY_HOME_PROFILE);
 
     /// The legacy Windows and portable configuration file name used through HMCL 3.15.0.345.
     private static final String LEGACY_CONFIG_FILENAME = "hmcl.json";
@@ -122,12 +122,12 @@ public final class LegacyConfigMigrator {
     }
 
     /// Returns the stable profile ID for a migrated legacy profile.
-    static SettingId getLegacyProfileId(String profileName) {
+    static SettingID getLegacyProfileId(String profileName) {
         return createLegacySettingId(LEGACY_PROFILE_ID_NAMESPACE, profileName);
     }
 
     /// Returns the stable game settings preset ID for a migrated legacy profile.
-    static SettingId getLegacyGameSettingsId(String profileName) {
+    static SettingID getLegacyGameSettingsId(String profileName) {
         return createLegacySettingId(LEGACY_GAME_SETTINGS_ID_NAMESPACE, profileName);
     }
 
@@ -137,8 +137,8 @@ public final class LegacyConfigMigrator {
     }
 
     /// Creates a deterministic setting ID for legacy migration data.
-    private static SettingId createLegacySettingId(UUID namespace, String name) {
-        return new SettingId(UUIDs.generateV5(namespace, name));
+    private static SettingID createLegacySettingId(UUID namespace, String name) {
+        return new SettingID(UUIDs.generateV5(namespace, name));
     }
 
     /// Looks for a legacy config file and prepares it for writing as the new config file.
@@ -900,7 +900,7 @@ public final class LegacyConfigMigrator {
         @Nullable String selectedName = JsonUtils.getString(lastElement);
         if (selectedName != null) {
             json.add(LauncherSettings.PROPERTY_SELECTED_GAME_DIRECTORY,
-                    JsonUtils.GSON.toJsonTree(getLegacyProfileId(selectedName), SettingId.class));
+                    JsonUtils.GSON.toJsonTree(getLegacyProfileId(selectedName), SettingID.class));
         }
         return true;
     }
@@ -952,7 +952,7 @@ public final class LegacyConfigMigrator {
         }
 
         for (Profile profile : gameDirectories.getGameDirectories()) {
-            @Nullable SettingId legacyGameSettings = profile.getLegacyGameSettings();
+            @Nullable SettingID legacyGameSettings = profile.getLegacyGameSettings();
             if (legacyGameSettings == null) {
                 continue;
             }

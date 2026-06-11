@@ -35,26 +35,26 @@ import java.util.UUID;
 ///
 /// This type wraps a [UUID] so profile and game setting references cannot be
 /// accidentally mixed with unrelated UUID values.
-@JsonAdapter(SettingId.Adapter.class)
+@JsonAdapter(SettingID.Adapter.class)
 @JsonSerializable
 @NotNullByDefault
-public record SettingId(UUID uuid) {
+public record SettingID(UUID uuid) {
     /// The nil identifier value.
-    public static final SettingId NIL = new SettingId(UUIDs.NIL);
+    public static final SettingID NIL = new SettingID(UUIDs.NIL);
 
     /// Creates a setting ID.
-    public SettingId {
+    public SettingID {
         Objects.requireNonNull(uuid);
     }
 
     /// Parses a setting ID from a UUID string.
-    public static SettingId parse(String value) {
-        return new SettingId(UUIDs.parse(value));
+    public static SettingID parse(String value) {
+        return new SettingID(UUIDs.parse(value));
     }
 
     /// Generates a new time-ordered setting ID.
-    public static SettingId generate() {
-        return new SettingId(UUIDs.generateV7());
+    public static SettingID generate() {
+        return new SettingID(UUIDs.generateV7());
     }
 
     /// Returns the canonical UUID string.
@@ -63,15 +63,15 @@ public record SettingId(UUID uuid) {
         return uuid.toString();
     }
 
-    /// Gson adapter for [SettingId].
-    public static final class Adapter extends TypeAdapter<@Nullable SettingId> {
+    /// Gson adapter for [SettingID].
+    public static final class Adapter extends TypeAdapter<@Nullable SettingID> {
         /// Creates a setting ID adapter.
         public Adapter() {
         }
 
         /// Writes the setting ID as a canonical UUID string, or JSON null.
         @Override
-        public void write(JsonWriter out, @Nullable SettingId value) throws IOException {
+        public void write(JsonWriter out, @Nullable SettingID value) throws IOException {
             if (value == null) {
                 out.nullValue();
             } else {
@@ -81,7 +81,7 @@ public record SettingId(UUID uuid) {
 
         /// Reads a setting ID from a UUID string, or JSON null.
         @Override
-        public @Nullable SettingId read(JsonReader in) throws IOException {
+        public @Nullable SettingID read(JsonReader in) throws IOException {
             if (in.peek() == JsonToken.NULL) {
                 in.nextNull();
                 return null;

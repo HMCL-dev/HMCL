@@ -52,16 +52,16 @@ public final class Profiles {
     }
 
     /// Creates a profile ID that does not collide with existing profiles.
-    public static SettingId newProfileId() {
-        SettingId id;
+    public static SettingID newProfileId() {
+        SettingID id;
         do {
-            id = SettingId.generate();
+            id = SettingID.generate();
         } while (hasProfileId(id));
         return id;
     }
 
     /// Returns whether an existing profile uses the given ID.
-    private static boolean hasProfileId(SettingId id) {
+    private static boolean hasProfileId(SettingID id) {
         for (Profile profile : SettingsManager.getGameDirectories()) {
             if (id.equals(profile.getId())) {
                 return true;
@@ -163,11 +163,11 @@ public final class Profiles {
             return;
         }
 
-        SettingId currentId = newProfileId();
-        SettingId homeId;
+        SettingID currentId = newProfileId();
+        SettingID homeId;
 
         do {
-            homeId = SettingId.generate();
+            homeId = SettingID.generate();
         } while (homeId.equals(currentId));
 
         profiles.addAll(List.of(
@@ -205,7 +205,7 @@ public final class Profiles {
 
         initialized = true;
 
-        @Nullable SettingId selectedId = settings().selectedGameDirectoryProperty().get();
+        @Nullable SettingID selectedId = settings().selectedGameDirectoryProperty().get();
         selectedProfile.set(
                 SettingsManager.getGameDirectories().stream()
                         .filter(it -> it.getId().equals(selectedId))

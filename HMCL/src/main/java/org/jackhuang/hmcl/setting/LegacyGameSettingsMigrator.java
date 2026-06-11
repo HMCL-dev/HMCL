@@ -93,7 +93,7 @@ public final class LegacyGameSettingsMigrator {
     }
 
     /// Converts a legacy profile-level setting JSON object into a preset with the given ID.
-    public static GameSettings.Preset toPreset(SettingId id, String name, @Nullable JsonObject source) {
+    public static GameSettings.Preset toPreset(SettingID id, String name, @Nullable JsonObject source) {
         GameSettings.Preset target = new GameSettings.Preset(id);
         target.nameProperty().setValue(LocalizedText.plain(name));
         if (getLegacyGameDirType(source, GameDirectoryType.ROOT_FOLDER) == GameDirectoryType.VERSION_FOLDER) {
@@ -112,7 +112,7 @@ public final class LegacyGameSettingsMigrator {
     public static @Nullable InstanceMigrationResult migrateInstanceGameSettings(
             HMCLGameRepository repository,
             String instanceId,
-            @Nullable SettingId parent) {
+            @Nullable SettingID parent) {
         Path instanceRoot = repository.getVersionRoot(instanceId);
         Path file = instanceRoot.resolve(LEGACY_INSTANCE_SETTINGS_FILENAME);
         if (!Files.exists(file)) {
@@ -157,7 +157,7 @@ public final class LegacyGameSettingsMigrator {
     /// @param inheritsLegacyParent whether the legacy instance inherits its parent preset instead of
     ///                             carrying its own copied values
     public static GameSettings.Instance toInstance(
-            @Nullable SettingId parent,
+            @Nullable SettingID parent,
             @Nullable JsonObject source,
             boolean inheritsLegacyParent) {
         GameSettings.Instance target = new GameSettings.Instance();

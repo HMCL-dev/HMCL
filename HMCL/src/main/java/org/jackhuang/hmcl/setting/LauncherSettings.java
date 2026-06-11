@@ -457,40 +457,40 @@ public final class LauncherSettings extends ObservableSetting implements JsonSch
 
     /// The selected game directory ID.
     @SerializedName(PROPERTY_SELECTED_GAME_DIRECTORY)
-    private final ObjectProperty<@Nullable SettingId> selectedGameDirectory =
+    private final ObjectProperty<@Nullable SettingID> selectedGameDirectory =
             new SimpleObjectProperty<>(this, PROPERTY_SELECTED_GAME_DIRECTORY);
 
     /// Returns the selected game directory ID property.
-    public ObjectProperty<@Nullable SettingId> selectedGameDirectoryProperty() {
+    public ObjectProperty<@Nullable SettingID> selectedGameDirectoryProperty() {
         return selectedGameDirectory;
     }
 
     /// The default game setting preset ID.
     @SerializedName(PROPERTY_DEFAULT_GAME_SETTINGS_PRESET)
-    private final ObjectProperty<@Nullable SettingId> defaultGameSettingsPreset =
+    private final ObjectProperty<@Nullable SettingID> defaultGameSettingsPreset =
             new SimpleObjectProperty<>(this, PROPERTY_DEFAULT_GAME_SETTINGS_PRESET);
 
     /// Returns the default game setting preset ID property.
-    public ObjectProperty<@Nullable SettingId> defaultGameSettingsPresetProperty() {
+    public ObjectProperty<@Nullable SettingID> defaultGameSettingsPresetProperty() {
         return defaultGameSettingsPreset;
     }
 
     /// Selected instance IDs keyed by game directory ID.
     @SerializedName(PROPERTY_SELECTED_INSTANCE)
-    private final ObservableMap<SettingId, String> selectedInstance = FXCollections.observableHashMap();
+    private final ObservableMap<SettingID, String> selectedInstance = FXCollections.observableHashMap();
 
     /// Returns selected instance IDs keyed by game directory ID.
-    public ObservableMap<SettingId, String> getSelectedInstance() {
+    public ObservableMap<SettingID, String> getSelectedInstance() {
         return selectedInstance;
     }
 
     /// Returns the selected instance ID for the given game directory ID.
-    public @Nullable String getSelectedInstance(@Nullable SettingId gameDirectoryId) {
+    public @Nullable String getSelectedInstance(@Nullable SettingID gameDirectoryId) {
         return gameDirectoryId != null ? selectedInstance.get(gameDirectoryId) : null;
     }
 
     /// Sets the selected instance ID for the given game directory ID.
-    public void setSelectedInstance(@Nullable SettingId gameDirectoryId, @Nullable String selectedInstance) {
+    public void setSelectedInstance(@Nullable SettingID gameDirectoryId, @Nullable String selectedInstance) {
         if (gameDirectoryId == null) {
             return;
         }

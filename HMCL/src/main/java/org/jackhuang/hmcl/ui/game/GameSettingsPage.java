@@ -763,7 +763,7 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
                 updatingParentSetting = true;
                 try {
                     refreshInstanceParentSettingConverter(button);
-                    SettingId parent = setting.parentProperty().getValue();
+                    SettingID parent = setting.parentProperty().getValue();
                     button.setValue(parent != null ? SettingsManager.getGameSettings(parent) : null);
                 } finally {
                     updatingParentSetting = false;
@@ -2154,7 +2154,7 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
 
     /// Returns the explicitly configured parent preset for an instance, falling back to the default preset.
     private GameSettings.Preset getExplicitParentGameSettings(GameSettings.Instance instance) {
-        SettingId parent = instance.parentProperty().getValue();
+        SettingID parent = instance.parentProperty().getValue();
         GameSettings.Preset parentSetting = SettingsManager.getGameSettings(parent);
         return parentSetting != null ? parentSetting : SettingsManager.getDefaultGameSettingsPresetOrCreate();
     }

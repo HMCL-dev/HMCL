@@ -50,10 +50,10 @@ public final class Profile implements Observable {
     private final HMCLGameRepository repository;
 
     /// The stable profile ID.
-    private final SettingId id;
+    private final SettingID id;
 
     /// Returns the stable profile ID.
-    public SettingId getId() {
+    public SettingID getId() {
         return id;
     }
 
@@ -107,30 +107,30 @@ public final class Profile implements Observable {
     }
 
     /// The migrated legacy game settings preset ID, or `null` when this profile uses the default preset.
-    private final ObjectProperty<@Nullable SettingId> legacyGameSettings;
+    private final ObjectProperty<@Nullable SettingID> legacyGameSettings;
 
     /// Returns the migrated legacy game settings preset ID property.
-    public ObjectProperty<@Nullable SettingId> legacyGameSettingsProperty() {
+    public ObjectProperty<@Nullable SettingID> legacyGameSettingsProperty() {
         return legacyGameSettings;
     }
 
     /// Returns the migrated legacy game settings preset ID, or `null` when this profile uses the default preset.
-    public @Nullable SettingId getLegacyGameSettings() {
+    public @Nullable SettingID getLegacyGameSettings() {
         return legacyGameSettings.get();
     }
 
     /// Sets the migrated legacy game settings preset ID.
-    public void setLegacyGameSettings(@Nullable SettingId legacyGameSettings) {
+    public void setLegacyGameSettings(@Nullable SettingID legacyGameSettings) {
         this.legacyGameSettings.set(legacyGameSettings);
     }
 
     /// Creates a profile.
-    public Profile(SettingId id, @Nullable LocalizedText name, PortablePath path) {
+    public Profile(SettingID id, @Nullable LocalizedText name, PortablePath path) {
         this(id, name, path, null);
     }
 
     /// Creates a profile.
-    public Profile(SettingId id, @Nullable LocalizedText name, PortablePath path, @Nullable SettingId legacyGameSettings) {
+    public Profile(SettingID id, @Nullable LocalizedText name, PortablePath path, @Nullable SettingID legacyGameSettings) {
         this.id = Objects.requireNonNull(id);
         this.name = new SimpleObjectProperty<>(this, "name", name);
         this.path = new SimpleObjectProperty<>(this, "path", Objects.requireNonNull(path));
@@ -195,7 +195,7 @@ public final class Profile implements Observable {
                 return JsonNull.INSTANCE;
 
             JsonObject jsonObject = new JsonObject();
-            jsonObject.add("id", context.serialize(src.getId(), SettingId.class));
+            jsonObject.add("id", context.serialize(src.getId(), SettingID.class));
             if (src.getName() != null) {
                 JsonElement name = context.serialize(src.getName(), LocalizedText.class);
                 if (name != null && !name.isJsonNull()) {
@@ -204,7 +204,7 @@ public final class Profile implements Observable {
             }
             jsonObject.add("path", context.serialize(src.getPath(), PortablePath.class));
             if (src.getLegacyGameSettings() != null) {
-                jsonObject.add("legacyGameSettings", context.serialize(src.getLegacyGameSettings(), SettingId.class));
+                jsonObject.add("legacyGameSettings", context.serialize(src.getLegacyGameSettings(), SettingID.class));
             }
 
             return jsonObject;
@@ -213,10 +213,10 @@ public final class Profile implements Observable {
         @Override
         public @Nullable Profile deserialize(@Nullable JsonElement json, Type typeOfT, JsonDeserializationContext context) throws JsonParseException {
             if (!(json instanceof JsonObject obj)) return null;
-            SettingId id = context.deserialize(obj.get("id"), SettingId.class);
+            SettingID id = context.deserialize(obj.get("id"), SettingID.class);
             if (id == null) {
                 throw new JsonParseException("Profile ID cannot be null");
-            } else if (SettingId.NIL.equals(id)) {
+            } else if (SettingID.NIL.equals(id)) {
                 throw new JsonParseException("Profile ID cannot be nil");
             }
             PortablePath path = context.deserialize(obj.get("path"), PortablePath.class);
@@ -228,7 +228,7 @@ public final class Profile implements Observable {
             return new Profile(id,
                     name,
                     path,
-                    context.deserialize(obj.get("legacyGameSettings"), SettingId.class));
+                    context.deserialize(obj.get("legacyGameSettings"), SettingID.class));
         }
 
     }

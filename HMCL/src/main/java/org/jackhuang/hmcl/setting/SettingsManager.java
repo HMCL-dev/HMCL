@@ -359,7 +359,7 @@ public final class SettingsManager {
     }
 
     /// Returns the game setting preset with the given ID.
-    public static GameSettings.@Nullable Preset getGameSettings(@Nullable SettingId id) {
+    public static GameSettings.@Nullable Preset getGameSettings(@Nullable SettingID id) {
         return gameSettingsPresets().getPreset(id);
     }
 
@@ -613,7 +613,7 @@ public final class SettingsManager {
         Objects.requireNonNull(merged);
         Objects.requireNonNull(profile);
 
-        SettingId id = profile.getId();
+        SettingID id = profile.getId();
         merged.removeIf(existing -> existing.getId().equals(id));
         merged.add(profile);
     }

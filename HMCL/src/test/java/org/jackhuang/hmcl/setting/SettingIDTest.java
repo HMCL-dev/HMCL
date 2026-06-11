@@ -28,11 +28,11 @@ import static org.junit.jupiter.api.Assertions.*;
 
 /// Tests for setting object identifiers.
 @NotNullByDefault
-public final class SettingIdTest {
+public final class SettingIDTest {
     /// Tests parsing and canonical string serialization.
     @Test
     public void parsesCanonicalUuidString() {
-        SettingId id = SettingId.parse("123e4567-e89b-12d3-a456-426614174000");
+        SettingID id = SettingID.parse("123e4567-e89b-12d3-a456-426614174000");
 
         assertEquals("123e4567-e89b-12d3-a456-426614174000", id.toString());
     }
@@ -40,11 +40,11 @@ public final class SettingIdTest {
     /// Tests JSON serialization through the standard HMCL Gson instance.
     @Test
     public void serializesAsUuidString() {
-        SettingId id = SettingId.parse("123e4567-e89b-12d3-a456-426614174000");
+        SettingID id = SettingID.parse("123e4567-e89b-12d3-a456-426614174000");
 
-        String serialized = LauncherSettings.SETTINGS_GSON.toJson(id, SettingId.class);
-        SettingId deserialized = Objects.requireNonNull(
-                LauncherSettings.SETTINGS_GSON.fromJson(serialized, SettingId.class));
+        String serialized = LauncherSettings.SETTINGS_GSON.toJson(id, SettingID.class);
+        SettingID deserialized = Objects.requireNonNull(
+                LauncherSettings.SETTINGS_GSON.fromJson(serialized, SettingID.class));
 
         assertEquals("\"123e4567-e89b-12d3-a456-426614174000\"", serialized);
         assertEquals(id, deserialized);
@@ -53,22 +53,22 @@ public final class SettingIdTest {
     /// Tests null JSON handling in the setting ID adapter.
     @Test
     public void readsJsonNullAsNull() {
-        assertNull(LauncherSettings.SETTINGS_GSON.fromJson("null", SettingId.class));
+        assertNull(LauncherSettings.SETTINGS_GSON.fromJson("null", SettingID.class));
     }
 
     /// Tests generated IDs are version 7 IDs and not nil.
     @Test
     public void generatesVersion7Ids() {
-        SettingId id = SettingId.generate();
+        SettingID id = SettingID.generate();
 
-        assertNotEquals(SettingId.NIL, id);
+        assertNotEquals(SettingID.NIL, id);
         assertEquals(7, id.uuid().version());
     }
 
     /// Tests setting IDs work as JSON object map keys in launcher settings.
     @Test
     public void serializesLauncherSettingsMapKeysAsUuidStrings() {
-        SettingId id = SettingId.parse("123e4567-e89b-12d3-a456-426614174000");
+        SettingID id = SettingID.parse("123e4567-e89b-12d3-a456-426614174000");
         LauncherSettings settings = new LauncherSettings();
 
         settings.setSelectedInstance(id, "1.20.1");
