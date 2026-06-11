@@ -24,7 +24,7 @@ terracotta = "0.4.2"
 nayuki-qrcodegen = "1.8.0"
 jwebp = "0.2.0"
 weburl = "0.2.0"
-uuid-tools = "0.1.0"
+uuid-tools = "0.2.0"
 
 # testing
 junit = "6.0.1"
