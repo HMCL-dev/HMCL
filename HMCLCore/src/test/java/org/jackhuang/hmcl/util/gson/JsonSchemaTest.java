@@ -23,8 +23,6 @@ import com.google.gson.JsonParser;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.junit.jupiter.api.Test;
 
-import java.nio.file.Path;
-
 import static org.junit.jupiter.api.Assertions.*;
 
 /// Tests for JSON schema URL parsing and compatibility checks.
@@ -99,49 +97,62 @@ public final class JsonSchemaTest {
     @Test
     public void checksCompatibility() {
         JsonSchema expected = new JsonSchema("settings", new JsonSchema.Version(3, 0, 1));
-        Path location = Path.of("settings.json");
         JsonObject object = new JsonObject();
 
-        assertEquals(JsonSchema.CompatibilityResult.UNREADABLE,
-                JsonSchema.check(location, "settings file", object, expected));
+        JsonSchema.CompatibilityResult missing = JsonSchema.check(object, expected);
+        assertEquals(JsonSchema.CompatibilityResult.Status.MISSING, missing.status());
+        assertFalse(missing.readable());
 
         object.addProperty(JsonSchema.PROPERTY_SCHEMA, "hmcl.config/3.x");
-        assertEquals(JsonSchema.CompatibilityResult.UNREADABLE,
-                JsonSchema.check(location, "settings file", object, expected));
+        JsonSchema.CompatibilityResult unparseable = JsonSchema.check(object, expected);
+        assertEquals(JsonSchema.CompatibilityResult.Status.UNPARSEABLE, unparseable.status());
+        assertEquals("hmcl.config/3.x", unparseable.actual().url());
 
         object.add(JsonSchema.PROPERTY_SCHEMA, new JsonObject());
-        assertEquals(JsonSchema.CompatibilityResult.UNREADABLE,
-                JsonSchema.check(location, "settings file", object, expected));
+        JsonSchema.CompatibilityResult invalid = JsonSchema.check(object, expected);
+        assertEquals(JsonSchema.CompatibilityResult.Status.INVALID, invalid.status());
+        assertEquals("{}", invalid.invalidValue());
 
         object.addProperty(JsonSchema.PROPERTY_SCHEMA, schemaUrl("settings", "3.x"));
-        assertEquals(JsonSchema.CompatibilityResult.UNREADABLE,
-                JsonSchema.check(location, "settings file", object, expected));
+        JsonSchema.CompatibilityResult invalidVersion = JsonSchema.check(object, expected);
+        assertEquals(JsonSchema.CompatibilityResult.Status.UNPARSEABLE, invalidVersion.status());
+        assertEquals(schemaUrl("settings", "3.x"), invalidVersion.actual().url());
 
         object.addProperty(JsonSchema.PROPERTY_SCHEMA, schemaUrl("game-settings", "1.0.0"));
-        assertEquals(JsonSchema.CompatibilityResult.UNREADABLE,
-                JsonSchema.check(location, "settings file", object, expected));
+        JsonSchema.CompatibilityResult unexpected = JsonSchema.check(object, expected);
+        assertEquals(JsonSchema.CompatibilityResult.Status.UNEXPECTED_ID, unexpected.status());
+        assertEquals("game-settings", unexpected.actual().id());
 
         object.addProperty(JsonSchema.PROPERTY_SCHEMA, schemaUrl("settings", "4.0.0"));
-        assertEquals(JsonSchema.CompatibilityResult.UNREADABLE,
-                JsonSchema.check(location, "settings file", object, expected));
+        JsonSchema.CompatibilityResult newerMajor = JsonSchema.check(object, expected);
+        assertEquals(JsonSchema.CompatibilityResult.Status.UNSUPPORTED_MAJOR, newerMajor.status());
+        assertFalse(newerMajor.readable());
 
         object.addProperty(JsonSchema.PROPERTY_SCHEMA, schemaUrl("settings", "3.1.0"));
-        assertEquals(JsonSchema.CompatibilityResult.READ_ONLY_PRESERVE_SCHEMA,
-                JsonSchema.check(location, "settings file", object, expected));
+        JsonSchema.CompatibilityResult newerMinor = JsonSchema.check(object, expected);
+        assertEquals(JsonSchema.CompatibilityResult.Status.READ_ONLY_PRESERVE_SCHEMA, newerMinor.status());
+        assertTrue(newerMinor.readable());
+        assertFalse(newerMinor.allowSave());
+        assertTrue(newerMinor.preserveSchema());
 
         object.addProperty(JsonSchema.PROPERTY_SCHEMA, schemaUrl("settings", "3.0"));
-        assertEquals(JsonSchema.CompatibilityResult.READ_WRITE_PRESERVE_SCHEMA,
-                JsonSchema.check(location, "settings file", object, expected));
+        JsonSchema.CompatibilityResult patchless = JsonSchema.check(object, expected);
+        assertEquals(JsonSchema.CompatibilityResult.Status.READ_WRITE_PRESERVE_SCHEMA, patchless.status());
+        assertTrue(patchless.allowSave());
+        assertTrue(patchless.preserveSchema());
 
         object.addProperty(JsonSchema.PROPERTY_SCHEMA, schemaUrl("settings", "3.0.2"));
-        assertEquals(JsonSchema.CompatibilityResult.READ_WRITE_PRESERVE_SCHEMA,
-                JsonSchema.check(location, "settings file", object, expected));
+        JsonSchema.CompatibilityResult newerPatch = JsonSchema.check(object, expected);
+        assertEquals(JsonSchema.CompatibilityResult.Status.READ_WRITE_PRESERVE_SCHEMA, newerPatch.status());
+        assertTrue(newerPatch.allowSave());
+        assertTrue(newerPatch.preserveSchema());
 
         JsonSchema expectedLater = new JsonSchema("settings", new JsonSchema.Version(3, 1, 1));
         object.addProperty(JsonSchema.PROPERTY_SCHEMA, schemaUrl("settings", "3.0.9"));
-        JsonSchema.CompatibilityResult olderMinor =
-                JsonSchema.check(location, "settings file", object, expectedLater);
-        assertEquals(JsonSchema.CompatibilityResult.READ_WRITE, olderMinor);
+        JsonSchema.CompatibilityResult olderMinor = JsonSchema.check(object, expectedLater);
+        assertEquals(JsonSchema.CompatibilityResult.Status.READ_WRITE, olderMinor.status());
+        assertTrue(olderMinor.readable());
+        assertTrue(olderMinor.allowSave());
         assertFalse(olderMinor.preserveSchema());
     }
 

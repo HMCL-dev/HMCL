@@ -87,20 +87,33 @@ final class JsonSettingFile<T extends ObservableSetting & JsonSchemaSetting> {
                 if (jsonObject == null) {
                     LOG.warning(displayName + " are empty: " + location);
                 } else {
-                    JsonSchema.CompatibilityResult checkResult =
-                            JsonSchema.check(location, displayName, jsonObject, expectedSchema);
-                    if (!checkResult.readable()) {
+                    JsonSchema.CompatibilityResult schemaResult =
+                            JsonSchema.check(jsonObject, expectedSchema);
+                    switch (schemaResult.status()) {
+                        case MISSING -> LOG.warning("Missing schema in " + displayName + ": " + location);
+                        case INVALID -> LOG.warning("Invalid schema in " + displayName + ": "
+                                + location + ", Actual: " + schemaResult.invalidValue());
+                        case UNPARSEABLE -> LOG.warning("Unparseable schema in " + displayName + ": "
+                                + location + ", Actual: " + schemaResult.actual());
+                        case UNEXPECTED_ID -> LOG.warning("Unexpected " + displayName + " schema. Expected: "
+                                + expectedSchema + ", Actual: " + schemaResult.actual());
+                        case UNSUPPORTED_MAJOR, READ_ONLY_PRESERVE_SCHEMA -> LOG.warning("Unsupported " + displayName
+                                + " schema. Expected: " + expectedSchema + ", Actual: " + schemaResult.actual());
+                        case READ_WRITE, READ_WRITE_PRESERVE_SCHEMA -> {
+                        }
+                    }
+                    if (!schemaResult.readable()) {
                         return result(createDefault.get(), false);
                     }
 
                     T deserialized = LauncherSettings.SETTINGS_GSON.<@Nullable T>fromJson(jsonObject, type);
                     if (deserialized != null) {
                         // Patch-compatible files keep their original schema because unknown members are preserved.
-                        if (!checkResult.preserveSchema() && !expectedSchema.equals(deserialized.getSchema())) {
+                        if (!schemaResult.preserveSchema() && !expectedSchema.equals(deserialized.getSchema())) {
                             deserialized.setSchema(expectedSchema);
                         }
 
-                        return result(deserialized, checkResult.allowSave());
+                        return result(deserialized, schemaResult.allowSave());
                     }
 
                     LOG.warning(displayName + " deserialized to null: " + location);

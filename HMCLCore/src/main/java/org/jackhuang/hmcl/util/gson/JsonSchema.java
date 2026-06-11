@@ -30,10 +30,7 @@ import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
-import java.nio.file.Path;
 import java.util.Objects;
-
-import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 /// Stores a raw JSON schema string and, when possible, its parsed HMCL schema identifier.
 ///
@@ -120,14 +117,15 @@ public record JsonSchema(String value, @Nullable Parsed parsed) {
 
     /// Checks whether a JSON object schema marker is compatible with the expected schema.
     ///
-    /// @param location the file location used in logs
-    /// @param displayName the human-readable file type name used in logs
+    /// This method only inspects the `$schema` member and returns structured compatibility
+    /// information. It does not log, mutate the input object, or apply any caller-specific
+    /// recovery policy.
+    ///
     /// @param object the JSON object that contains the schema marker
     /// @param expected the JSON schema supported by the current code
-    /// @return the compatibility result
-    public static CompatibilityResult check(Path location, String displayName, JsonObject object, JsonSchema expected) {
-        Objects.requireNonNull(location);
-        Objects.requireNonNull(displayName);
+    /// @return the compatibility result, including the resolved status and the parsed
+    ///         schema value when one is available
+    public static CompatibilityResult check(JsonObject object, JsonSchema expected) {
         Objects.requireNonNull(object);
         Objects.requireNonNull(expected);
         if (!expected.isParsed()) {
@@ -135,50 +133,39 @@ public record JsonSchema(String value, @Nullable Parsed parsed) {
         }
 
         if (!object.has(PROPERTY_SCHEMA)) {
-            LOG.warning("Missing schema in " + displayName + ": " + location);
-            return CompatibilityResult.UNREADABLE;
+            return CompatibilityResult.missing();
         }
 
         JsonSchema actual;
         try {
             actual = readFromMember(object);
         } catch (JsonParseException e) {
-            LOG.warning("Invalid schema in " + displayName + ": "
-                    + location + ", Actual: " + object.get(PROPERTY_SCHEMA));
-            return CompatibilityResult.UNREADABLE;
+            return CompatibilityResult.invalid(String.valueOf(object.get(PROPERTY_SCHEMA)));
         }
 
         @Nullable Parsed actualParsed = actual.parsed;
         @Nullable Parsed expectedParsed = expected.parsed();
         if (actualParsed == null) {
-            LOG.warning("Unparseable schema in " + displayName + ": "
-                    + location + ", Actual: " + actual);
-            return CompatibilityResult.UNREADABLE;
+            return CompatibilityResult.unparseable(actual);
         }
 
         if (!actualParsed.id().equals(expectedParsed.id())) {
-            LOG.warning("Unexpected " + displayName + " schema. Expected: "
-                    + expected + ", Actual: " + actual);
-            return CompatibilityResult.UNREADABLE;
+            return CompatibilityResult.unexpectedId(actual);
         }
 
         if (actualParsed.version().major() != expectedParsed.version().major()) {
-            LOG.warning("Unsupported " + displayName + " schema. Expected: "
-                    + expected + ", Actual: " + actual);
-            return CompatibilityResult.UNREADABLE;
+            return CompatibilityResult.unsupportedMajor(actual);
         }
 
         if (actualParsed.version().minor() > expectedParsed.version().minor()) {
-            LOG.warning("Unsupported " + displayName + " schema. Expected: "
-                    + expected + ", Actual: " + actual);
-            return CompatibilityResult.READ_ONLY_PRESERVE_SCHEMA;
+            return CompatibilityResult.readOnlyPreserveSchema(actual);
         }
 
         if (actualParsed.version().minor() == expectedParsed.version().minor()) {
-            return CompatibilityResult.READ_WRITE_PRESERVE_SCHEMA;
+            return CompatibilityResult.readWritePreserveSchema(actual);
         }
 
-        return CompatibilityResult.READ_WRITE;
+        return CompatibilityResult.readWrite(actual);
     }
 
     /// Parses a schema string from a JSON element.
@@ -306,21 +293,115 @@ public record JsonSchema(String value, @Nullable Parsed parsed) {
 
     /// Result of checking whether a JSON file can be read and safely saved.
     ///
-    /// @param readable whether the file may be deserialized
-    /// @param allowSave whether the file may be overwritten
-    /// @param preserveSchema whether saving should keep the original schema value
-    public record CompatibilityResult(boolean readable, boolean allowSave, boolean preserveSchema) {
-        /// Result used when a file is compatible, may be saved, and should be upgraded to the expected schema.
-        public static final CompatibilityResult READ_WRITE = new CompatibilityResult(true, true, false);
+    /// @param actual the parsed schema marker read from the file, or `null` when the
+    ///               marker is missing or invalid as JSON
+    /// @param status the compatibility status derived from comparing the actual and
+    ///               expected schema markers
+    /// @param invalidValue the raw invalid `$schema` value text when the marker exists
+    ///                     but is not a JSON string, otherwise `null`
+    public record CompatibilityResult(
+            @Nullable JsonSchema actual,
+            Status status,
+            @Nullable String invalidValue) {
+        /// Detailed compatibility status.
+        ///
+        /// Each status carries the read/save behavior expected by callers:
+        ///
+        /// - `READ_WRITE`: the file matches an older compatible schema and may be rewritten.
+        /// - `READ_WRITE_PRESERVE_SCHEMA`: the file may be rewritten, but the original schema
+        ///   marker should be preserved.
+        /// - `READ_ONLY_PRESERVE_SCHEMA`: the file may be read, but it must not be overwritten.
+        /// - other values: the file must be rejected.
+        public enum Status {
+            READ_WRITE(true, true, false),
+            READ_WRITE_PRESERVE_SCHEMA(true, true, true),
+            READ_ONLY_PRESERVE_SCHEMA(true, false, true),
+            MISSING(false, false, false),
+            INVALID(false, false, false),
+            UNPARSEABLE(false, false, false),
+            UNEXPECTED_ID(false, false, false),
+            UNSUPPORTED_MAJOR(false, false, false);
 
-        /// Result used when a file is compatible, may be saved, and should preserve the original schema and unknown members.
-        public static final CompatibilityResult READ_WRITE_PRESERVE_SCHEMA = new CompatibilityResult(true, true, true);
+            private final boolean readable;
+            private final boolean allowSave;
+            private final boolean preserveSchema;
 
-        /// Result used when a file is readable but must not be overwritten.
-        public static final CompatibilityResult READ_ONLY_PRESERVE_SCHEMA = new CompatibilityResult(true, false, true);
+            Status(boolean readable, boolean allowSave, boolean preserveSchema) {
+                this.readable = readable;
+                this.allowSave = allowSave;
+                this.preserveSchema = preserveSchema;
+            }
 
-        /// Result used when a file must not be read or overwritten.
-        public static final CompatibilityResult UNREADABLE = new CompatibilityResult(false, false, false);
+            /// Returns whether a file with this status may be deserialized.
+            public boolean readable() {
+                return readable;
+            }
+
+            /// Returns whether a file with this status may be overwritten.
+            public boolean allowSave() {
+                return allowSave;
+            }
+
+            /// Returns whether saving should preserve the original `$schema` marker.
+            public boolean preserveSchema() {
+                return preserveSchema;
+            }
+        }
+
+        /// Creates a readable and writable compatibility result.
+        public static CompatibilityResult readWrite(JsonSchema actual) {
+            return new CompatibilityResult(actual, Status.READ_WRITE, null);
+        }
+
+        /// Creates a readable and writable compatibility result that preserves the original schema string.
+        public static CompatibilityResult readWritePreserveSchema(JsonSchema actual) {
+            return new CompatibilityResult(actual, Status.READ_WRITE_PRESERVE_SCHEMA, null);
+        }
+
+        /// Creates a read-only compatibility result that preserves the original schema string.
+        public static CompatibilityResult readOnlyPreserveSchema(JsonSchema actual) {
+            return new CompatibilityResult(actual, Status.READ_ONLY_PRESERVE_SCHEMA, null);
+        }
+
+        /// Creates a missing-schema compatibility result.
+        public static CompatibilityResult missing() {
+            return new CompatibilityResult(null, Status.MISSING, null);
+        }
+
+        /// Creates an invalid-schema compatibility result.
+        public static CompatibilityResult invalid(String invalidValue) {
+            return new CompatibilityResult(null, Status.INVALID, invalidValue);
+        }
+
+        /// Creates an unparseable-schema compatibility result.
+        public static CompatibilityResult unparseable(JsonSchema actual) {
+            return new CompatibilityResult(actual, Status.UNPARSEABLE, null);
+        }
+
+        /// Creates an unexpected-schema-id compatibility result.
+        public static CompatibilityResult unexpectedId(JsonSchema actual) {
+            return new CompatibilityResult(actual, Status.UNEXPECTED_ID, null);
+        }
+
+        /// Creates an unsupported-major-version compatibility result.
+        public static CompatibilityResult unsupportedMajor(JsonSchema actual) {
+            return new CompatibilityResult(actual, Status.UNSUPPORTED_MAJOR, null);
+        }
+
+        /// Returns whether the file may be deserialized.
+        public boolean readable() {
+            return status.readable();
+        }
+
+        /// Returns whether the file may be overwritten.
+        public boolean allowSave() {
+            return status.allowSave();
+        }
+
+        /// Returns whether saving should preserve the original schema string.
+        public boolean preserveSchema() {
+            return status.preserveSchema();
+        }
     }
 
     /// Semantic version marker for a serialized JSON schema.

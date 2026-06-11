@@ -289,12 +289,22 @@ public final class HMCLGameRepository extends DefaultGameRepository {
                 return new InstanceGameSettingsLoadResult(null, false);
             }
 
-            JsonSchema.CompatibilityResult schema = JsonSchema.check(
-                    file,
-                    "instance game settings",
-                    jsonObject,
-                    GameSettings.Instance.CURRENT_SCHEMA);
-            if (!schema.readable()) {
+            JsonSchema.CompatibilityResult schemaResult =
+                    JsonSchema.check(jsonObject, GameSettings.Instance.CURRENT_SCHEMA);
+            switch (schemaResult.status()) {
+                case MISSING -> LOG.warning("Missing schema in instance game settings: " + file);
+                case INVALID -> LOG.warning("Invalid schema in instance game settings: "
+                        + file + ", Actual: " + schemaResult.invalidValue());
+                case UNPARSEABLE -> LOG.warning("Unparseable schema in instance game settings: "
+                        + file + ", Actual: " + schemaResult.actual());
+                case UNEXPECTED_ID -> LOG.warning("Unexpected instance game settings schema. Expected: "
+                        + GameSettings.Instance.CURRENT_SCHEMA + ", Actual: " + schemaResult.actual());
+                case UNSUPPORTED_MAJOR, READ_ONLY_PRESERVE_SCHEMA -> LOG.warning("Unsupported instance game settings schema. Expected: "
+                        + GameSettings.Instance.CURRENT_SCHEMA + ", Actual: " + schemaResult.actual());
+                case READ_WRITE, READ_WRITE_PRESERVE_SCHEMA -> {
+                }
+            }
+            if (!schemaResult.readable()) {
                 return new InstanceGameSettingsLoadResult(null, false);
             }
 
@@ -304,10 +314,10 @@ public final class HMCLGameRepository extends DefaultGameRepository {
                 LOG.warning("Instance game settings deserialized to null: " + file);
                 return new InstanceGameSettingsLoadResult(null, false);
             }
-            if (!schema.preserveSchema() && !GameSettings.Instance.CURRENT_SCHEMA.equals(setting.getSchema())) {
+            if (!schemaResult.preserveSchema() && !GameSettings.Instance.CURRENT_SCHEMA.equals(setting.getSchema())) {
                 setting.setSchema(GameSettings.Instance.CURRENT_SCHEMA);
             }
-            return new InstanceGameSettingsLoadResult(setting, schema.allowSave());
+            return new InstanceGameSettingsLoadResult(setting, schemaResult.allowSave());
         } catch (Exception ex) {
             LOG.warning("Failed to load game setting " + file, ex);
             return new InstanceGameSettingsLoadResult(null, false);
@@ -532,7 +542,7 @@ public final class HMCLGameRepository extends DefaultGameRepository {
                 .setVersionType(Metadata.TITLE)
                 .setVersionName(version)
                 .setProfileName(Metadata.TITLE)
-                .setGameArguments(StringUtils.tokenize(vs.get(GameSettings::gameArgsProperty)))
+                .setGameArguments(StringUtils.tokenize(vs.get(GameSettings::gameArgumentsProperty)))
                 .setOverrideJavaArguments(StringUtils.tokenize(vs.get(GameSettings::jvmOptionsProperty)))
                 .setMaxMemory(noJVMOptions && autoMemory ? null : (int) (getAllocatedMemory(
                         vs.getMaxMemory() * 1024L * 1024L,

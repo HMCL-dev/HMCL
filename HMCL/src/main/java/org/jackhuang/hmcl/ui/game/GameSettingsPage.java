@@ -519,7 +519,7 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
                     txtGameArgs.setPromptText(i18n("settings.advanced.minecraft_arguments.prompt"));
                     txtGameArgs.setPrefWidth(400);
                     gameArgsPane.setRight(txtGameArgs);
-                    bindIndependentTextField(gameArgsPane, txtGameArgs, GameSettings::gameArgsProperty);
+                    bindIndependentTextField(gameArgsPane, txtGameArgs, GameSettings::gameArgumentsProperty);
                 }
 
                 var environmentVariablesPane = new LinePane();

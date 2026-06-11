@@ -472,9 +472,22 @@ public final class SettingsManager {
                 return launcherSettingsResult(new LauncherSettings(), true, false, null);
             }
 
-            JsonSchema.CompatibilityResult schema =
-                    JsonSchema.check(SETTINGS_LOCATION, "settings file", jsonObject, LauncherSettings.CURRENT_SCHEMA);
-            if (!schema.readable()) {
+            JsonSchema.CompatibilityResult schemaResult =
+                    JsonSchema.check(jsonObject, LauncherSettings.CURRENT_SCHEMA);
+            switch (schemaResult.status()) {
+                case MISSING -> LOG.warning("Missing schema in settings file: " + SETTINGS_LOCATION);
+                case INVALID -> LOG.warning("Invalid schema in settings file: "
+                        + SETTINGS_LOCATION + ", Actual: " + schemaResult.invalidValue());
+                case UNPARSEABLE -> LOG.warning("Unparseable schema in settings file: "
+                        + SETTINGS_LOCATION + ", Actual: " + schemaResult.actual());
+                case UNEXPECTED_ID -> LOG.warning("Unexpected settings file schema. Expected: "
+                        + LauncherSettings.CURRENT_SCHEMA + ", Actual: " + schemaResult.actual());
+                case UNSUPPORTED_MAJOR, READ_ONLY_PRESERVE_SCHEMA -> LOG.warning("Unsupported settings file schema. Expected: "
+                        + LauncherSettings.CURRENT_SCHEMA + ", Actual: " + schemaResult.actual());
+                case READ_WRITE, READ_WRITE_PRESERVE_SCHEMA -> {
+                }
+            }
+            if (!schemaResult.readable()) {
                 return launcherSettingsResult(new LauncherSettings(), false, true, null);
             }
 
@@ -484,11 +497,11 @@ public final class SettingsManager {
                     return launcherSettingsResult(new LauncherSettings(), false, true, null);
                 }
 
-                if (!schema.preserveSchema() && !LauncherSettings.CURRENT_SCHEMA.equals(settings.schemaProperty().get())) {
+                if (!schemaResult.preserveSchema() && !LauncherSettings.CURRENT_SCHEMA.equals(settings.schemaProperty().get())) {
                     settings.schemaProperty().set(LauncherSettings.CURRENT_SCHEMA);
                 }
 
-                return launcherSettingsResult(settings, schema.allowSave(), !schema.allowSave(), null);
+                return launcherSettingsResult(settings, schemaResult.allowSave(), !schemaResult.allowSave(), null);
             } catch (JsonParseException e) {
                 needBackupSettings = true;
                 LOG.warning("Failed to parse settings file: " + SETTINGS_LOCATION, e);

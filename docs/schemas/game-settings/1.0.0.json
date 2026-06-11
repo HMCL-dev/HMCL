@@ -161,7 +161,7 @@
         "disableAutoGameOptions": {
           "type": "boolean"
         },
-        "gameArgs": {
+        "gameArguments": {
           "type": "string"
         },
         "graphicsBackend": {

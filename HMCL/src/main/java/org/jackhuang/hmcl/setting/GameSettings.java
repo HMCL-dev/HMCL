@@ -572,15 +572,15 @@ public sealed abstract class GameSettings extends ObservableSetting {
     }
 
     /// Property name for customized game arguments.
-    public static final String PROPERTY_GAME_ARGS = "gameArgs";
+    public static final String PROPERTY_GAME_ARGS = "gameArguments";
 
     /// User customized arguments passed to the game.
     @SerializedName(PROPERTY_GAME_ARGS)
-    private final SettingProperty<String> gameArgs = newSettingProperty(PROPERTY_GAME_ARGS, "");
+    private final SettingProperty<String> gameArguments = newSettingProperty(PROPERTY_GAME_ARGS, "");
 
     /// Returns the customized game arguments property.
-    public SettingProperty<String> gameArgsProperty() {
-        return gameArgs;
+    public SettingProperty<String> gameArgumentsProperty() {
+        return gameArguments;
     }
 
     /// Property name for the requested graphics API.

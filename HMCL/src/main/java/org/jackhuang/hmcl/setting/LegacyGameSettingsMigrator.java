@@ -239,7 +239,7 @@ public final class LegacyGameSettingsMigrator {
     /// Copies shared legacy properties into the target setting.
     private static void copyCommonProperties(JsonObject source, GameSettings target) {
         JavaVersionType javaVersionType = parseLegacyJavaVersionType(source);
-        String legacyJavaVersion = empty(parseLegacyJavaVersion(source));
+        String legacyJavaVersion = Objects.requireNonNullElse(parseLegacyJavaVersion(source), "");
         target.javaTypeProperty().setValue(javaVersionType);
         if (javaVersionType == JavaVersionType.VERSION) {
             target.customJavaVersionProperty().setValue(legacyJavaVersion);
@@ -256,21 +256,21 @@ public final class LegacyGameSettingsMigrator {
         target.notCheckJVMProperty().setValue(JsonUtils.getBoolean(source, "notCheckJVM", false));
         target.notCheckGameProperty().setValue(JsonUtils.getBoolean(source, "notCheckGame", false));
 
-        int maxMemory = JsonUtils.getInt(source, "maxMemory", GameSettings.SUGGESTED_MEMORY);
         target.autoMemoryProperty().setValue(JsonUtils.getBoolean(source, "autoMemory", true));
         target.minMemoryProperty().setValue(JsonUtils.getNullableInt(source, "minMemory"));
-        target.maxMemoryProperty().setValue(maxMemory > 0 ? maxMemory : GameSettings.SUGGESTED_MEMORY);
+        target.maxMemoryProperty().setValue(JsonUtils.getInt(source, "maxMemory", GameSettings.SUGGESTED_MEMORY));
         target.permSizeProperty().setValue(JsonUtils.getString(source, "permSize", ""));
 
         target.windowTypeProperty().setValue(JsonUtils.getBoolean(source, "fullscreen", false) ? GameWindowType.FULLSCREEN : GameWindowType.WINDOWED);
         target.widthProperty().setValue((double) JsonUtils.getInt(source, "width", 0));
         target.heightProperty().setValue((double) JsonUtils.getInt(source, "height", 0));
-        GameDirectoryType legacyGameDirType = getLegacyGameDirType(source, GameDirectoryType.ROOT_FOLDER);
-        target.runningDirProperty().setValue(legacyGameDirType == GameDirectoryType.CUSTOM ? JsonUtils.getString(source, "gameDir", "") : "");
+        target.runningDirProperty().setValue(getLegacyGameDirType(source, GameDirectoryType.ROOT_FOLDER) == GameDirectoryType.CUSTOM
+                ? JsonUtils.getString(source, "gameDir", "")
+                : "");
 
         target.processPriorityProperty().setValue(parseEnum(source, "processPriority", ProcessPriority.class, ProcessPriority.NORMAL));
         target.launcherVisibilityProperty().setValue(parseEnum(source, "launcherVisibility", LauncherVisibility.class, LauncherVisibility.HIDE));
-        target.gameArgsProperty().setValue(JsonUtils.getString(source, "minecraftArgs", ""));
+        target.gameArgumentsProperty().setValue(JsonUtils.getString(source, "minecraftArgs", ""));
         migrateLegacyRenderer(source, target);
         target.environmentVariablesProperty().setValue(JsonUtils.getString(source, "environmentVariables", ""));
         target.commandWrapperProperty().setValue(JsonUtils.getString(source, "wrapper", ""));
@@ -465,11 +465,6 @@ public final class LegacyGameSettingsMigrator {
         }
 
         return defaultValue;
-    }
-
-    /// Returns an empty string for `null` values.
-    private static String empty(@Nullable String value) {
-        return value != null ? value : "";
     }
 
     /// Result of migrating a legacy per-version game settings file.
