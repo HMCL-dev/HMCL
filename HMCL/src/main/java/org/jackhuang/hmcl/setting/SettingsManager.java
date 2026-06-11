@@ -408,6 +408,7 @@ public final class SettingsManager {
         }
 
         checkLocalConfigOwner();
+        newlyCreated = isNewWorkspace();
 
         LauncherSettingsLoadResult launcherSettingsResult = loadLauncherSettings();
         launcherSettings = launcherSettingsResult.settings();
@@ -433,6 +434,14 @@ public final class SettingsManager {
         loadUserGameAccounts();
         loadGameAccounts(detachedSettingsFallback.accountStorages());
 
+        if (Files.exists(Metadata.HMCL_LOCAL_HOME)) {
+            checkWritable(Metadata.HMCL_LOCAL_HOME);
+        }
+
+        if (launcherSettingsResult.pendingMigration() != null) {
+            commitLegacyConfigMigration(launcherSettingsResult.pendingMigration());
+        }
+
         if (launcherSettings.isSavable()) {
             launcherSettings.addListener(source -> {
                 // Back up the invalid on-disk file the first time we are about to overwrite it.
@@ -442,10 +451,6 @@ public final class SettingsManager {
                 }
                 FileSaver.save(SETTINGS_LOCATION, launcherSettings.toJson());
             });
-        }
-
-        if (Files.exists(Metadata.HMCL_LOCAL_HOME)) {
-            checkWritable(Metadata.HMCL_LOCAL_HOME);
         }
     }
 
@@ -458,35 +463,35 @@ public final class SettingsManager {
             } catch (Exception e) {
                 needBackupSettings = true;
                 LOG.warning("Failed to read settings file: " + SETTINGS_LOCATION, e);
-                return launcherSettingsResult(new LauncherSettings(), true, false);
+                return launcherSettingsResult(new LauncherSettings(), true, false, null);
             }
 
             if (jsonObject == null) {
                 LOG.warning("Settings file is empty: " + SETTINGS_LOCATION);
-                return launcherSettingsResult(new LauncherSettings(), true, false);
+                return launcherSettingsResult(new LauncherSettings(), true, false, null);
             }
 
             JsonSchemaPolicy.Result schema =
                     JsonSchemaPolicy.check(SETTINGS_LOCATION, "settings file", jsonObject, LauncherSettings.CURRENT_SCHEMA);
             if (!schema.readable()) {
-                return launcherSettingsResult(new LauncherSettings(), false, true);
+                return launcherSettingsResult(new LauncherSettings(), false, true, null);
             }
 
             try {
                 LauncherSettings settings = LauncherSettings.fromJson(jsonObject);
                 if (settings == null) {
-                    return launcherSettingsResult(new LauncherSettings(), false, true);
+                    return launcherSettingsResult(new LauncherSettings(), false, true, null);
                 }
 
                 if (!schema.preserveSchema() && !LauncherSettings.CURRENT_SCHEMA.equals(settings.schemaProperty().get())) {
                     settings.schemaProperty().set(LauncherSettings.CURRENT_SCHEMA);
                 }
 
-                return launcherSettingsResult(settings, schema.allowSave(), !schema.allowSave());
+                return launcherSettingsResult(settings, schema.allowSave(), !schema.allowSave(), null);
             } catch (JsonParseException e) {
                 needBackupSettings = true;
                 LOG.warning("Failed to parse settings file: " + SETTINGS_LOCATION, e);
-                return launcherSettingsResult(new LauncherSettings(), true, false);
+                return launcherSettingsResult(new LauncherSettings(), true, false, null);
             }
         } else {
             LegacyConfigMigrator.LegacyConfigMigration migration;
@@ -494,29 +499,44 @@ public final class SettingsManager {
                 migration = LegacyConfigMigrator.migrateLegacyConfig();
             } catch (LegacyConfigMigrator.UnsupportedLegacyConfigVersionException e) {
                 LOG.warning("Legacy config file is newer than this launcher supports.", e);
-                return launcherSettingsResult(new LauncherSettings(), false, true);
+                return launcherSettingsResult(new LauncherSettings(), false, true, null);
             }
             if (migration != null) {
-                LOG.info("Migrating settings from " + migration.path() + " to " + SETTINGS_LOCATION);
                 detachedSettingsFallback = migration.detachedSettings();
-                FileUtils.saveSafely(SETTINGS_LOCATION, migration.contentForMigration());
-                LegacyConfigMigrator.saveLegacyConfigMigrationReceipt(migration);
-                return launcherSettingsResult(migration.launcherSettings(), true, false);
+                return launcherSettingsResult(migration.launcherSettings(), true, false, migration);
             }
         }
 
         var newSettings = new LauncherSettings();
-        newlyCreated = true;
-        return launcherSettingsResult(newSettings, true, false);
+        return launcherSettingsResult(newSettings, true, false, null);
     }
 
     /// Creates a launcher settings load result and stores saveability metadata on the settings object.
     private static LauncherSettingsLoadResult launcherSettingsResult(
             LauncherSettings settings,
             boolean savable,
-            boolean unsupported) {
+            boolean unsupported,
+            @Nullable LegacyConfigMigrator.LegacyConfigMigration pendingMigration) {
         settings.setSavable(savable);
-        return new LauncherSettingsLoadResult(settings, unsupported);
+        return new LauncherSettingsLoadResult(settings, unsupported, pendingMigration);
+    }
+
+    /// Returns whether the current workspace already has any local configuration footprint.
+    private static boolean isNewWorkspace() {
+        return !(Files.exists(SETTINGS_LOCATION)
+                || Files.exists(STATE_LOCATION)
+                || Files.exists(AUTHLIB_INJECTOR_SERVERS_LOCATION)
+                || Files.exists(LOCAL_GAME_DIRECTORIES_LOCATION)
+                || Files.exists(GAME_SETTINGS_LOCATION)
+                || Files.exists(GAME_ACCOUNTS_LOCATION)
+                || LegacyConfigMigrator.hasLegacyConfig());
+    }
+
+    /// Commits a prepared legacy config migration after detached settings have been initialized successfully.
+    private static void commitLegacyConfigMigration(LegacyConfigMigrator.LegacyConfigMigration migration) throws IOException {
+        LOG.info("Migrating settings from " + migration.path() + " to " + SETTINGS_LOCATION);
+        FileUtils.saveSafely(SETTINGS_LOCATION, migration.contentForMigration());
+        LegacyConfigMigrator.saveLegacyConfigMigrationReceipt(migration);
     }
 
     /// Loads game directories and installs the save listener.
@@ -661,7 +681,6 @@ public final class SettingsManager {
             STATE_FILE.save(launcherState);
         }
 
-        SettingsManager.newlyCreated &= newlyCreated;
     }
 
     /// Loads authlib-injector servers and installs the save listener.
@@ -889,7 +908,10 @@ public final class SettingsManager {
     ///
     /// @param settings the loaded launcher settings
     /// @param unsupported whether the loaded launcher settings are not fully supported
-    private record LauncherSettingsLoadResult(LauncherSettings settings, boolean unsupported) {
+    private record LauncherSettingsLoadResult(
+            LauncherSettings settings,
+            boolean unsupported,
+            @Nullable LegacyConfigMigrator.LegacyConfigMigration pendingMigration) {
     }
 
     /// Result of migrating the legacy shared accounts file.

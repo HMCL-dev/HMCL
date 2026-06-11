@@ -131,6 +131,11 @@ public final class LegacyConfigMigrator {
         return createLegacySettingId(LEGACY_GAME_SETTINGS_ID_NAMESPACE, profileName);
     }
 
+    /// Returns whether any legacy workspace config file is present.
+    static boolean hasLegacyConfig() {
+        return locateLegacyConfig() != null;
+    }
+
     /// Creates a deterministic setting ID for legacy migration data.
     private static SettingId createLegacySettingId(UUID namespace, String name) {
         return new SettingId(UUIDs.generateV5(namespace, name));
