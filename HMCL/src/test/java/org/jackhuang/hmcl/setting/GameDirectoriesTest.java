@@ -43,7 +43,7 @@ public final class GameDirectoriesTest {
     /// Tests extracting legacy configuration data into a detached game directory store.
     @Test
     public void extractsConfigurationsFromLegacyConfigJson() {
-        SettingID id = LegacyConfigMigrator.getLegacyProfileId("Dev");
+        SettingID id = LegacyConfigMigrator.getLegacyProfileID("Dev");
         JsonObject settings = JsonParser.parseString("""
                 {
                   "configurations": {
@@ -68,8 +68,8 @@ public final class GameDirectoriesTest {
     /// Tests extracting the migrated legacy game settings ID from a legacy profile.
     @Test
     public void extractsLegacyGameSettingsIdFromLegacyProfileGlobalSettings() {
-        SettingID profileId = LegacyConfigMigrator.getLegacyProfileId("Dev");
-        SettingID legacyGameSettings = LegacyConfigMigrator.getLegacyGameSettingsId("Dev");
+        SettingID profileId = LegacyConfigMigrator.getLegacyProfileID("Dev");
+        SettingID legacyGameSettings = LegacyConfigMigrator.getLegacyGameSettingsID("Dev");
         JsonObject settings = JsonParser.parseString("""
                 {
                   "configurations": {
@@ -112,8 +112,8 @@ public final class GameDirectoriesTest {
 
         GameDirectories gameDirectories = Objects.requireNonNull(LegacyConfigMigrator.extractGameDirectoriesFromConfigJson(settings));
 
-        SettingID defaultProfileId = LegacyConfigMigrator.getLegacyProfileId("Default");
-        SettingID homeProfileId = LegacyConfigMigrator.getLegacyProfileId("Home");
+        SettingID defaultProfileId = LegacyConfigMigrator.getLegacyProfileID("Default");
+        SettingID homeProfileId = LegacyConfigMigrator.getLegacyProfileID("Home");
         Profile defaultProfile = gameDirectories.getGameDirectories().stream()
                 .filter(profile -> defaultProfileId.equals(profile.getId()))
                 .findFirst()
@@ -135,7 +135,7 @@ public final class GameDirectoriesTest {
     /// Tests migrating upstream/main selected version fields into the main config.
     @Test
     public void migratesLegacySelectedVersionsFromConfigurations() {
-        SettingID id = LegacyConfigMigrator.getLegacyProfileId("Dev");
+        SettingID id = LegacyConfigMigrator.getLegacyProfileID("Dev");
         assertEquals(5, id.uuid().version());
         JsonObject settings = JsonParser.parseString("""
                 {
