@@ -23,6 +23,8 @@ import com.google.gson.JsonParser;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.junit.jupiter.api.Test;
 
+import java.nio.file.Path;
+
 import static org.junit.jupiter.api.Assertions.*;
 
 /// Tests for JSON schema URL parsing and compatibility checks.
@@ -91,6 +93,56 @@ public final class JsonSchemaTest {
 
         assertEquals("custom-schema", serialized.getAsString());
         assertEquals(schema, JsonUtils.GSON.fromJson(serialized, JsonSchema.class));
+    }
+
+    /// Tests schema compatibility policy decisions.
+    @Test
+    public void checksCompatibility() {
+        JsonSchema expected = new JsonSchema("settings", new JsonSchema.Version(3, 0, 1));
+        Path location = Path.of("settings.json");
+        JsonObject object = new JsonObject();
+
+        assertEquals(JsonSchema.CompatibilityResult.UNREADABLE,
+                JsonSchema.check(location, "settings file", object, expected));
+
+        object.addProperty(JsonSchema.PROPERTY_SCHEMA, "hmcl.config/3.x");
+        assertEquals(JsonSchema.CompatibilityResult.UNREADABLE,
+                JsonSchema.check(location, "settings file", object, expected));
+
+        object.add(JsonSchema.PROPERTY_SCHEMA, new JsonObject());
+        assertEquals(JsonSchema.CompatibilityResult.UNREADABLE,
+                JsonSchema.check(location, "settings file", object, expected));
+
+        object.addProperty(JsonSchema.PROPERTY_SCHEMA, schemaUrl("settings", "3.x"));
+        assertEquals(JsonSchema.CompatibilityResult.UNREADABLE,
+                JsonSchema.check(location, "settings file", object, expected));
+
+        object.addProperty(JsonSchema.PROPERTY_SCHEMA, schemaUrl("game-settings", "1.0.0"));
+        assertEquals(JsonSchema.CompatibilityResult.UNREADABLE,
+                JsonSchema.check(location, "settings file", object, expected));
+
+        object.addProperty(JsonSchema.PROPERTY_SCHEMA, schemaUrl("settings", "4.0.0"));
+        assertEquals(JsonSchema.CompatibilityResult.UNREADABLE,
+                JsonSchema.check(location, "settings file", object, expected));
+
+        object.addProperty(JsonSchema.PROPERTY_SCHEMA, schemaUrl("settings", "3.1.0"));
+        assertEquals(JsonSchema.CompatibilityResult.READ_ONLY_PRESERVE_SCHEMA,
+                JsonSchema.check(location, "settings file", object, expected));
+
+        object.addProperty(JsonSchema.PROPERTY_SCHEMA, schemaUrl("settings", "3.0"));
+        assertEquals(JsonSchema.CompatibilityResult.READ_WRITE_PRESERVE_SCHEMA,
+                JsonSchema.check(location, "settings file", object, expected));
+
+        object.addProperty(JsonSchema.PROPERTY_SCHEMA, schemaUrl("settings", "3.0.2"));
+        assertEquals(JsonSchema.CompatibilityResult.READ_WRITE_PRESERVE_SCHEMA,
+                JsonSchema.check(location, "settings file", object, expected));
+
+        JsonSchema expectedLater = new JsonSchema("settings", new JsonSchema.Version(3, 1, 1));
+        object.addProperty(JsonSchema.PROPERTY_SCHEMA, schemaUrl("settings", "3.0.9"));
+        JsonSchema.CompatibilityResult olderMinor =
+                JsonSchema.check(location, "settings file", object, expectedLater);
+        assertEquals(JsonSchema.CompatibilityResult.READ_WRITE, olderMinor);
+        assertFalse(olderMinor.preserveSchema());
     }
 
     /// Creates a schema URL string.

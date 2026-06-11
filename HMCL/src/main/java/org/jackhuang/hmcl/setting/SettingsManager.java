@@ -26,6 +26,7 @@ import javafx.collections.ObservableList;
 import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.auth.authlibinjector.AuthlibInjectorServer;
 import org.jackhuang.hmcl.util.FileSaver;
+import org.jackhuang.hmcl.util.gson.JsonSchema;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.i18n.I18n;
 import org.jackhuang.hmcl.util.io.FileUtils;
@@ -471,8 +472,8 @@ public final class SettingsManager {
                 return launcherSettingsResult(new LauncherSettings(), true, false, null);
             }
 
-            JsonSchemaPolicy.Result schema =
-                    JsonSchemaPolicy.check(SETTINGS_LOCATION, "settings file", jsonObject, LauncherSettings.CURRENT_SCHEMA);
+            JsonSchema.CompatibilityResult schema =
+                    JsonSchema.check(SETTINGS_LOCATION, "settings file", jsonObject, LauncherSettings.CURRENT_SCHEMA);
             if (!schema.readable()) {
                 return launcherSettingsResult(new LauncherSettings(), false, true, null);
             }

@@ -87,8 +87,8 @@ final class JsonSettingFile<T extends ObservableSetting & JsonSchemaSetting> {
                 if (jsonObject == null) {
                     LOG.warning(displayName + " are empty: " + location);
                 } else {
-                    JsonSchemaPolicy.Result checkResult =
-                            JsonSchemaPolicy.check(location, displayName, jsonObject, expectedSchema);
+                    JsonSchema.CompatibilityResult checkResult =
+                            JsonSchema.check(location, displayName, jsonObject, expectedSchema);
                     if (!checkResult.readable()) {
                         return result(createDefault.get(), false);
                     }

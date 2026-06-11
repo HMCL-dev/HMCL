@@ -35,7 +35,6 @@ import org.jackhuang.hmcl.setting.SettingsManager;
 import org.jackhuang.hmcl.setting.DefaultIsolationType;
 import org.jackhuang.hmcl.setting.GameSettings;
 import org.jackhuang.hmcl.setting.GameWindowType;
-import org.jackhuang.hmcl.setting.JsonSchemaPolicy;
 import org.jackhuang.hmcl.setting.LegacyGameSettingsMigrator;
 import org.jackhuang.hmcl.setting.Profile;
 import org.jackhuang.hmcl.setting.SettingId;
@@ -43,6 +42,7 @@ import org.jackhuang.hmcl.setting.VersionIconType;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.util.FileSaver;
 import org.jackhuang.hmcl.util.Lang;
+import org.jackhuang.hmcl.util.gson.JsonSchema;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
@@ -289,7 +289,7 @@ public final class HMCLGameRepository extends DefaultGameRepository {
                 return new InstanceGameSettingsLoadResult(null, false);
             }
 
-            JsonSchemaPolicy.Result schema = JsonSchemaPolicy.check(
+            JsonSchema.CompatibilityResult schema = JsonSchema.check(
                     file,
                     "instance game settings",
                     jsonObject,
