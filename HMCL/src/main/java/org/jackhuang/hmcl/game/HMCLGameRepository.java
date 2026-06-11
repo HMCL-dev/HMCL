@@ -70,8 +70,8 @@ import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 /// HMCL game repository implementation backed by a profile and per-instance game settings.
 @NotNullByDefault
 public final class HMCLGameRepository extends DefaultGameRepository {
-    /// Directory under the version root that stores HMCL instance metadata.
-    private static final String INSTANCE_GAME_SETTINGS_DIRECTORY = ".hmcl";
+    /// Directory under the version root that stores HMCL-managed instance metadata.
+    private static final String INSTANCE_METADATA_DIRECTORY = ".hmcl";
 
     /// Current file name for instance-specific game settings.
     private static final String INSTANCE_GAME_SETTINGS_FILENAME = "instance-game-settings.json";
@@ -238,9 +238,17 @@ public final class HMCLGameRepository extends DefaultGameRepository {
         return copied;
     }
 
-    /// Returns the current local game settings path under the version root metadata directory.
+    /// Returns the HMCL-managed metadata directory under the version root.
+    ///
+    /// This directory stores instance-scoped files owned by HMCL, such as game settings,
+    /// migration receipts, and other launcher metadata.
+    public Path getInstanceMetadataDirectory(String id) {
+        return getVersionRoot(id).resolve(INSTANCE_METADATA_DIRECTORY);
+    }
+
+    /// Returns the current local game settings path under the instance metadata directory.
     private Path getInstanceGameSettingsFile(String id) {
-        return getVersionRoot(id).resolve(INSTANCE_GAME_SETTINGS_DIRECTORY).resolve(INSTANCE_GAME_SETTINGS_FILENAME);
+        return getInstanceMetadataDirectory(id).resolve(INSTANCE_GAME_SETTINGS_FILENAME);
     }
 
     private void loadInstanceGameSettings(String id) {
