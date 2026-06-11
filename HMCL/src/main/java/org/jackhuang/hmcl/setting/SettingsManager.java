@@ -489,19 +489,19 @@ public final class SettingsManager {
                 return launcherSettingsResult(new LauncherSettings(), true, false);
             }
         } else {
-            LegacyConfigMigrator.MigrationResult migrationResult;
+            LegacyConfigMigrator.LegacyConfigMigration migration;
             try {
-                migrationResult = LegacyConfigMigrator.migrateLegacyConfig();
+                migration = LegacyConfigMigrator.migrateLegacyConfig();
             } catch (LegacyConfigMigrator.UnsupportedLegacyConfigVersionException e) {
                 LOG.warning("Legacy config file is newer than this launcher supports.", e);
                 return launcherSettingsResult(new LauncherSettings(), false, true);
             }
-            if (migrationResult != null) {
-                LOG.info("Migrating settings from " + migrationResult.path() + " to " + SETTINGS_LOCATION);
-                detachedSettingsFallback = migrationResult.detachedSettings();
-                FileUtils.saveSafely(SETTINGS_LOCATION, migrationResult.contentForMigration());
-                LegacyConfigMigrator.saveLegacyConfigMigrationReceipt(migrationResult);
-                return launcherSettingsResult(migrationResult.launcherSettings(), true, false);
+            if (migration != null) {
+                LOG.info("Migrating settings from " + migration.path() + " to " + SETTINGS_LOCATION);
+                detachedSettingsFallback = migration.detachedSettings();
+                FileUtils.saveSafely(SETTINGS_LOCATION, migration.contentForMigration());
+                LegacyConfigMigrator.saveLegacyConfigMigrationReceipt(migration);
+                return launcherSettingsResult(migration.launcherSettings(), true, false);
             }
         }
 
