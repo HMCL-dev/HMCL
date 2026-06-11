@@ -18,7 +18,9 @@
 package org.jackhuang.hmcl.setting;
 
 import com.google.gson.JsonObject;
+import com.google.gson.JsonParseException;
 import org.jackhuang.hmcl.util.gson.JsonSchema;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NotNullByDefault;
 
 import java.nio.file.Path;
@@ -42,35 +44,55 @@ public final class JsonSchemaPolicy {
     /// @param expected the JSON schema supported by the current code
     /// @return the compatibility result
     public static Result check(Path location, String displayName, JsonObject object, JsonSchema expected) {
-        JsonSchema.CheckResult schema = JsonSchema.check(object, expected);
-        if (schema.isMissing()) {
+        if (!expected.isParsed()) {
+            throw new IllegalArgumentException("Expected JSON schema must be parseable: " + expected);
+        }
+
+        if (!object.has(JsonSchema.PROPERTY_SCHEMA)) {
             LOG.warning("Missing schema in " + displayName + ": " + location);
             return Result.UNREADABLE;
-        } else if (schema.isInvalid()) {
-            LOG.warning("Invalid schema in " + displayName + ": "
-                    + location + ", Actual: " + schema.invalidValue());
-            return Result.UNREADABLE;
-        } else if (schema.isUnparseable()) {
-            LOG.warning("Unparseable schema in " + displayName + ": "
-                    + location + ", Actual: " + schema.actual());
-            return Result.UNREADABLE;
-        } else if (schema.isUnexpectedId()) {
-            LOG.warning("Unexpected " + displayName + " schema. Expected: "
-                    + expected + ", Actual: " + schema.actual());
-            return Result.UNREADABLE;
-        } else if (schema.hasUnsupportedMajorVersion()) {
-            LOG.warning("Unsupported " + displayName + " schema. Expected: "
-                    + expected + ", Actual: " + schema.actual());
-            return Result.UNREADABLE;
-        } else if (schema.hasNewerMinorVersion()) {
-            LOG.warning("Unsupported " + displayName + " schema. Expected: "
-                    + expected + ", Actual: " + schema.actual());
-            return Result.READ_ONLY_PRESERVE_SCHEMA;
-        } else if (schema.hasSameMajorAndMinorVersion()) {
-            return Result.READ_WRITE_PRESERVE_SCHEMA;
-        } else {
-            return Result.READ_WRITE;
         }
+
+        JsonSchema actual;
+        try {
+            actual = JsonSchema.readFromMember(object);
+        } catch (JsonParseException e) {
+            LOG.warning("Invalid schema in " + displayName + ": "
+                    + location + ", Actual: " + object.get(JsonSchema.PROPERTY_SCHEMA));
+            return Result.UNREADABLE;
+        }
+
+        @Nullable JsonSchema.Parsed actualParsed = actual.parsed();
+        @Nullable JsonSchema.Parsed expectedParsed = expected.parsed();
+        if (actualParsed == null) {
+            LOG.warning("Unparseable schema in " + displayName + ": "
+                    + location + ", Actual: " + actual);
+            return Result.UNREADABLE;
+        }
+
+        if (!actualParsed.id().equals(expectedParsed.id())) {
+            LOG.warning("Unexpected " + displayName + " schema. Expected: "
+                    + expected + ", Actual: " + actual);
+            return Result.UNREADABLE;
+        }
+
+        if (actualParsed.version().major() != expectedParsed.version().major()) {
+            LOG.warning("Unsupported " + displayName + " schema. Expected: "
+                    + expected + ", Actual: " + actual);
+            return Result.UNREADABLE;
+        }
+
+        if (actualParsed.version().minor() > expectedParsed.version().minor()) {
+            LOG.warning("Unsupported " + displayName + " schema. Expected: "
+                    + expected + ", Actual: " + actual);
+            return Result.READ_ONLY_PRESERVE_SCHEMA;
+        }
+
+        if (actualParsed.version().minor() == expectedParsed.version().minor()) {
+            return Result.READ_WRITE_PRESERVE_SCHEMA;
+        }
+
+        return Result.READ_WRITE;
     }
 
     /// Result of checking whether a JSON file can be read and safely saved.

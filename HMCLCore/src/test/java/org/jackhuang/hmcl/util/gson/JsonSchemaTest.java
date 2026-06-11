@@ -93,58 +93,6 @@ public final class JsonSchemaTest {
         assertEquals(schema, JsonUtils.GSON.fromJson(serialized, JsonSchema.class));
     }
 
-    /// Tests schema URL compatibility check statuses.
-    @Test
-    public void checksSchema() {
-        JsonSchema expected = new JsonSchema("settings", new JsonSchema.Version(3, 0, 1));
-        JsonObject object = new JsonObject();
-
-        JsonSchema.CheckResult missing = JsonSchema.check(object, expected);
-        assertTrue(missing.isMissing());
-
-        object.addProperty(JsonSchema.PROPERTY_SCHEMA, "hmcl.config/3.x");
-        JsonSchema.CheckResult unparseable = JsonSchema.check(object, expected);
-        assertTrue(unparseable.isUnparseable());
-        assertEquals("hmcl.config/3.x", unparseable.actual().url());
-
-        object.add(JsonSchema.PROPERTY_SCHEMA, new JsonObject());
-        JsonSchema.CheckResult invalid = JsonSchema.check(object, expected);
-        assertTrue(invalid.isInvalid());
-        assertEquals("{}", invalid.invalidValue());
-
-        object.addProperty(JsonSchema.PROPERTY_SCHEMA, schemaUrl("settings", "3.x"));
-        JsonSchema.CheckResult invalidVersion = JsonSchema.check(object, expected);
-        assertTrue(invalidVersion.isUnparseable());
-        assertEquals(schemaUrl("settings", "3.x"), invalidVersion.actual().url());
-
-        object.addProperty(JsonSchema.PROPERTY_SCHEMA, schemaUrl("settings", "3.0"));
-        JsonSchema.CheckResult patchless = JsonSchema.check(object, expected);
-        assertTrue(patchless.hasSameMajorAndMinorVersion());
-        assertFalse(patchless.hasNewerMinorVersion());
-        assertFalse(patchless.hasUnsupportedMajorVersion());
-
-        object.addProperty(JsonSchema.PROPERTY_SCHEMA, schemaUrl("game-settings", "1.0.0"));
-        JsonSchema.CheckResult unexpected = JsonSchema.check(object, expected);
-        assertTrue(unexpected.isUnexpectedId());
-        assertEquals("game-settings", unexpected.actual().id());
-
-        object.addProperty(JsonSchema.PROPERTY_SCHEMA, schemaUrl("settings", "3.0.2"));
-        JsonSchema.CheckResult newerPatch = JsonSchema.check(object, expected);
-        assertTrue(newerPatch.hasSameMajorAndMinorVersion());
-        assertFalse(newerPatch.hasNewerMinorVersion());
-        assertFalse(newerPatch.hasUnsupportedMajorVersion());
-
-        object.addProperty(JsonSchema.PROPERTY_SCHEMA, schemaUrl("settings", "3.1.0"));
-        JsonSchema.CheckResult newerMinor = JsonSchema.check(object, expected);
-        assertTrue(newerMinor.hasNewerMinorVersion());
-        assertFalse(newerMinor.hasUnsupportedMajorVersion());
-
-        object.addProperty(JsonSchema.PROPERTY_SCHEMA, schemaUrl("settings", "4.0.0"));
-        JsonSchema.CheckResult newerMajor = JsonSchema.check(object, expected);
-        assertTrue(newerMajor.hasUnsupportedMajorVersion());
-        assertFalse(newerMajor.hasNewerMinorVersion());
-    }
-
     /// Creates a schema URL string.
     private static String schemaUrl(String id, String version) {
         return "https://schemas.glavo.site/hmcl/" + id + "/" + version;

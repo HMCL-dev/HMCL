@@ -84,7 +84,7 @@ public final class LegacyGameSettingsMigrator {
 
     /// Legacy `JavaVersionType` ordinal order used by old game settings.
     private static final JavaVersionType @Unmodifiable [] LEGACY_JAVA_VERSION_TYPES = {
-            // Legacy ordinal 0 was DEFAULT and ordinal 1 was AUTO; both now migrate to AUTO.
+            // Legacy ordinal 0 was DEFAULT and ordinal 1 was AUTO; both now migrate to  AUTO.
             JavaVersionType.AUTO,
             JavaVersionType.AUTO,
             JavaVersionType.VERSION,
