@@ -48,7 +48,7 @@ public class VersionIconDialog extends DialogPane {
         this.profile = profile;
         this.versionId = versionId;
         this.onFinish = onFinish;
-        this.setting = profile.getRepository().getLocalGameSettingsOrCreate(versionId);
+        this.setting = profile.getRepository().getInstanceGameSettingsOrCreate(versionId);
 
         setTitle(i18n("settings.icon"));
         FlowPane pane = new FlowPane();

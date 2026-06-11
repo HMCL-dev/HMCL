@@ -162,7 +162,7 @@ public final class ModpackHelper {
         ExceptionalRunnable<?> success = () -> {
             HMCLGameRepository repository = profile.getRepository();
             repository.refreshVersions();
-            GameSettings.Instance setting = repository.getLocalGameSettingsOrCreate(name);
+            GameSettings.Instance setting = repository.getInstanceGameSettingsOrCreate(name);
             repository.undoMark(name);
             if (setting != null) {
                 setting.getOverrideProperties().add(GameSettings.PROPERTY_RUNNING_DIR);
@@ -207,7 +207,7 @@ public final class ModpackHelper {
         ExceptionalRunnable<?> success = () -> {
             HMCLGameRepository repository = profile.getRepository();
             repository.refreshVersions();
-            GameSettings.Instance setting = repository.getLocalGameSettingsOrCreate(name);
+            GameSettings.Instance setting = repository.getInstanceGameSettingsOrCreate(name);
             repository.undoMark(name);
             if (setting != null) {
                 setting.getOverrideProperties().add(GameSettings.PROPERTY_RUNNING_DIR);
@@ -336,14 +336,14 @@ public final class ModpackHelper {
 
     private static Task<Void> createMultiMCPostUpdateTask(Profile profile, MultiMCInstanceConfiguration manifest, String version) {
         return Task.runAsync(Schedulers.javafx(), () -> {
-            GameSettings.Instance setting = Objects.requireNonNull(profile.getRepository().getLocalGameSettingsOrCreate(version));
+            GameSettings.Instance setting = Objects.requireNonNull(profile.getRepository().getInstanceGameSettingsOrCreate(version));
             ModpackHelper.applyCommandAndJvmSettings(manifest, setting);
         });
     }
 
     private static Task<Void> createMultiMCPostInstallTask(Profile profile, MultiMCInstanceConfiguration manifest, String version) {
         return Task.runAsync(Schedulers.javafx(), () -> {
-            GameSettings.Instance setting = Objects.requireNonNull(profile.getRepository().getLocalGameSettingsOrCreate(version));
+            GameSettings.Instance setting = Objects.requireNonNull(profile.getRepository().getInstanceGameSettingsOrCreate(version));
             ModpackHelper.toGameSettings(manifest, setting);
         });
     }
@@ -353,7 +353,7 @@ public final class ModpackHelper {
             HMCLGameRepository repository = profile.getRepository();
             GameSettings.Effective effective = repository.getEffectiveGameSettings(version);
             if (manifest.getLaunchInfo().getMinMemory() > effective.getMaxMemory()) {
-                GameSettings.Instance setting = Objects.requireNonNull(repository.getLocalGameSettingsOrCreate(version));
+                GameSettings.Instance setting = Objects.requireNonNull(repository.getInstanceGameSettingsOrCreate(version));
                 setting.getOverrideProperties().addAll(List.of(
                         GameSettings.PROPERTY_AUTO_MEMORY,
                         GameSettings.PROPERTY_MIN_MEMORY,

@@ -2193,7 +2193,7 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
         assert isPresetSetting == (instanceId == null);
 
         if (instanceId != null) {
-            this.currentSetting.set((S) profile.getRepository().getLocalGameSettingsOrCreate(instanceId));
+            this.currentSetting.set((S) profile.getRepository().getInstanceGameSettingsOrCreate(instanceId));
             loadIcon();
         } else {
             this.currentSetting.set((S) SettingsManager.getDefaultGameSettingsPresetOrCreate());
@@ -2325,7 +2325,7 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
             return;
 
         profile.getRepository().deleteIconFile(instanceId);
-        GameSettings.Instance localGameSettings = profile.getRepository().getLocalGameSettingsOrCreate(instanceId);
+        GameSettings.Instance localGameSettings = profile.getRepository().getInstanceGameSettingsOrCreate(instanceId);
         if (localGameSettings != null) {
             localGameSettings.iconProperty().setValue(VersionIconType.DEFAULT);
         }
