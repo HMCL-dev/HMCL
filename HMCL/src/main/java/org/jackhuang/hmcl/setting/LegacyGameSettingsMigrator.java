@@ -47,6 +47,10 @@ public final class LegacyGameSettingsMigrator {
     /// Legacy file name used by old per-version `VersionSetting` data.
     private static final String LEGACY_INSTANCE_SETTINGS_FILENAME = "hmclversion.cfg";
 
+    /// Receipt file name used to record successful legacy per-version settings migration.
+    private static final String LEGACY_INSTANCE_SETTINGS_MIGRATION_RECEIPT_FILENAME =
+            "instance-game-settings.migration-receipt.json";
+
     /// Legacy game directory modes stored by old configuration files.
     private enum GameDirectoryType {
         /// Use the root `.minecraft` folder.
@@ -110,18 +114,16 @@ public final class LegacyGameSettingsMigrator {
     /// @param versionRoot the root directory of the version being migrated
     /// @param baseDirectory the profile game directory used by legacy `ROOT_FOLDER` settings
     /// @param parent the migrated parent preset ID for the profile
-    /// @param receiptLocation the receipt path used to avoid replaying an unchanged legacy source and to record success
     /// @return the migrated instance setting, or `null` when no legacy file can be migrated
     public static @Nullable InstanceMigrationResult migrateInstanceGameSettings(
             Path versionRoot,
             Path baseDirectory,
-            @Nullable SettingId parent,
-            Path receiptLocation) {
+            @Nullable SettingId parent) {
         Objects.requireNonNull(versionRoot);
         Objects.requireNonNull(baseDirectory);
-        Objects.requireNonNull(receiptLocation);
 
         Path file = versionRoot.resolve(LEGACY_INSTANCE_SETTINGS_FILENAME);
+        Path receiptLocation = getMigrationReceiptLocation(versionRoot);
         if (!Files.exists(file)) {
             return null;
         }
@@ -148,6 +150,11 @@ public final class LegacyGameSettingsMigrator {
             LOG.warning("Failed to migrate legacy version setting " + file, ex);
             return null;
         }
+    }
+
+    /// Returns the migration receipt path for a legacy per-version game settings file.
+    private static Path getMigrationReceiptLocation(Path versionRoot) {
+        return versionRoot.resolve(".hmcl").resolve(LEGACY_INSTANCE_SETTINGS_MIGRATION_RECEIPT_FILENAME);
     }
 
     /// Converts a legacy local setting JSON object into an instance game setting.
