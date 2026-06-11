@@ -73,6 +73,9 @@ public final class GameDirectories extends ObservableSetting implements JsonSche
     /// Whether this game directory store may be saved back to its JSON file.
     private transient boolean savable = true;
 
+    /// Whether the next successful save should back up the current on-disk file first.
+    private transient boolean backupOnNextSave;
+
     /// Returns whether this game directory store may be saved back to its JSON file.
     @Override
     public boolean isSavable() {
@@ -83,6 +86,18 @@ public final class GameDirectories extends ObservableSetting implements JsonSche
     @Override
     public void setSavable(boolean savable) {
         this.savable = savable;
+    }
+
+    /// Returns whether the next successful save should back up the current on-disk file first.
+    @Override
+    public boolean isBackupOnNextSave() {
+        return backupOnNextSave;
+    }
+
+    /// Sets whether the next successful save should back up the current on-disk file first.
+    @Override
+    public void setBackupOnNextSave(boolean backupOnNextSave) {
+        this.backupOnNextSave = backupOnNextSave;
     }
 
     /// Game directories stored in this file.

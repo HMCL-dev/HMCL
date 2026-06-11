@@ -83,6 +83,9 @@ public final class GameSettingsPresets extends ObservableSetting implements Json
     /// Whether this preset store may be saved back to `game-settings.json`.
     private transient boolean savable = true;
 
+    /// Whether the next successful save should back up the current `game-settings.json` first.
+    private transient boolean backupOnNextSave;
+
     /// Returns whether this preset store may be saved back to `game-settings.json`.
     @Override
     public boolean isSavable() {
@@ -93,6 +96,18 @@ public final class GameSettingsPresets extends ObservableSetting implements Json
     @Override
     public void setSavable(boolean savable) {
         this.savable = savable;
+    }
+
+    /// Returns whether the next successful save should back up the current `game-settings.json` first.
+    @Override
+    public boolean isBackupOnNextSave() {
+        return backupOnNextSave;
+    }
+
+    /// Sets whether the next successful save should back up the current `game-settings.json` first.
+    @Override
+    public void setBackupOnNextSave(boolean backupOnNextSave) {
+        this.backupOnNextSave = backupOnNextSave;
     }
 
     /// Reusable game setting presets.

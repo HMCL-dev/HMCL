@@ -86,6 +86,7 @@ final class JsonSettingFile<T extends ObservableSetting & JsonSchemaSetting> {
                 JsonObject jsonObject = JsonUtils.fromJsonFile(location, JsonObject.class);
                 if (jsonObject == null) {
                     LOG.warning(displayName + " are empty: " + location);
+                    return result(createDefault.get(), true, true);
                 } else {
                     JsonSchema.CompatibilityResult schemaResult =
                             JsonSchema.check(jsonObject, expectedSchema);
@@ -120,6 +121,7 @@ final class JsonSettingFile<T extends ObservableSetting & JsonSchemaSetting> {
                 }
             } catch (JsonParseException e) {
                 LOG.warning("Malformed " + displayName + ".", e);
+                return result(createDefault.get(), true, true);
             }
 
             return result(createDefault.get(), false);
@@ -130,7 +132,13 @@ final class JsonSettingFile<T extends ObservableSetting & JsonSchemaSetting> {
 
     /// Creates a load result and stores the saveability metadata on the settings object.
     private LoadResult<T> result(T value, boolean savable) {
+        return result(value, savable, false);
+    }
+
+    /// Creates a load result and stores the saveability metadata on the settings object.
+    private LoadResult<T> result(T value, boolean savable, boolean backupOnNextSave) {
         value.setSavable(savable);
+        value.setBackupOnNextSave(backupOnNextSave);
         return new LoadResult<>(value);
     }
 
@@ -145,6 +153,10 @@ final class JsonSettingFile<T extends ObservableSetting & JsonSchemaSetting> {
     ///
     /// @param value the settings object to save
     void save(T value) {
+        if (value.isBackupOnNextSave()) {
+            value.setBackupOnNextSave(false);
+            SettingFileUtils.backupInvalidConfig(location);
+        }
         FileSaver.save(location, JsonUtils.GSON.toJson(value, type));
     }
 

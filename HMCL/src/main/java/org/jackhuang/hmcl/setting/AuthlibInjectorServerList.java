@@ -92,6 +92,9 @@ public final class AuthlibInjectorServerList extends ObservableSetting implement
     /// Whether this server list may be saved back to `authlib-injector-servers.json`.
     private transient boolean savable = true;
 
+    /// Whether the next successful save should back up the current `authlib-injector-servers.json` first.
+    private transient boolean backupOnNextSave;
+
     /// Returns whether this server list may be saved back to `authlib-injector-servers.json`.
     @Override
     public boolean isSavable() {
@@ -102,6 +105,18 @@ public final class AuthlibInjectorServerList extends ObservableSetting implement
     @Override
     public void setSavable(boolean savable) {
         this.savable = savable;
+    }
+
+    /// Returns whether the next successful save should back up the current `authlib-injector-servers.json` first.
+    @Override
+    public boolean isBackupOnNextSave() {
+        return backupOnNextSave;
+    }
+
+    /// Sets whether the next successful save should back up the current `authlib-injector-servers.json` first.
+    @Override
+    public void setBackupOnNextSave(boolean backupOnNextSave) {
+        this.backupOnNextSave = backupOnNextSave;
     }
 
     /// Authlib-injector authentication servers available for account login.

@@ -212,10 +212,6 @@ public final class SettingsManager {
     /// Whether launcher settings could not be safely overwritten because of an unsupported schema or legacy config.
     private static boolean unsupportedVersion = false;
 
-    /// Whether the per-workspace config file on disk is invalid and must be backed up
-    /// before being overwritten by the first successful save.
-    private static boolean needBackupSettings = false;
-
     /// Detached settings used as fallbacks when detached settings files do not exist yet.
     private static LegacyConfigMigrator.DetachedSettings detachedSettingsFallback =
             LegacyConfigMigrator.DetachedSettings.empty();
@@ -445,10 +441,9 @@ public final class SettingsManager {
 
         if (launcherSettings.isSavable()) {
             launcherSettings.addListener(source -> {
-                // Back up the invalid on-disk file the first time we are about to overwrite it.
-                if (needBackupSettings) {
-                    needBackupSettings = false;
-                    backupInvalidConfig(SETTINGS_LOCATION);
+                if (launcherSettings.isBackupOnNextSave()) {
+                    launcherSettings.setBackupOnNextSave(false);
+                    SettingFileUtils.backupInvalidConfig(SETTINGS_LOCATION);
                 }
                 FileSaver.save(SETTINGS_LOCATION, launcherSettings.toJson());
             });
@@ -462,14 +457,13 @@ public final class SettingsManager {
             try {
                 jsonObject = JsonUtils.fromJsonFile(SETTINGS_LOCATION, JsonObject.class);
             } catch (Exception e) {
-                needBackupSettings = true;
                 LOG.warning("Failed to read settings file: " + SETTINGS_LOCATION, e);
-                return launcherSettingsResult(new LauncherSettings(), true, false, null);
+                return launcherSettingsResult(new LauncherSettings(), true, false, true, null);
             }
 
             if (jsonObject == null) {
                 LOG.warning("Settings file is empty: " + SETTINGS_LOCATION);
-                return launcherSettingsResult(new LauncherSettings(), true, false, null);
+                return launcherSettingsResult(new LauncherSettings(), true, false, true, null);
             }
 
             JsonSchema.CompatibilityResult schemaResult =
@@ -488,24 +482,23 @@ public final class SettingsManager {
                 }
             }
             if (!schemaResult.readable()) {
-                return launcherSettingsResult(new LauncherSettings(), false, true, null);
+                return launcherSettingsResult(new LauncherSettings(), false, true, false, null);
             }
 
             try {
                 LauncherSettings settings = LauncherSettings.fromJson(jsonObject);
                 if (settings == null) {
-                    return launcherSettingsResult(new LauncherSettings(), false, true, null);
+                    return launcherSettingsResult(new LauncherSettings(), false, true, false, null);
                 }
 
                 if (!schemaResult.preserveSchema() && !LauncherSettings.CURRENT_SCHEMA.equals(settings.schemaProperty().get())) {
                     settings.schemaProperty().set(LauncherSettings.CURRENT_SCHEMA);
                 }
 
-                return launcherSettingsResult(settings, schemaResult.allowSave(), !schemaResult.allowSave(), null);
+                return launcherSettingsResult(settings, schemaResult.allowSave(), !schemaResult.allowSave(), false, null);
             } catch (JsonParseException e) {
-                needBackupSettings = true;
                 LOG.warning("Failed to parse settings file: " + SETTINGS_LOCATION, e);
-                return launcherSettingsResult(new LauncherSettings(), true, false, null);
+                return launcherSettingsResult(new LauncherSettings(), true, false, true, null);
             }
         } else {
             LegacyConfigMigrator.LegacyConfigMigration migration;
@@ -513,16 +506,16 @@ public final class SettingsManager {
                 migration = LegacyConfigMigrator.migrateLegacyConfig();
             } catch (LegacyConfigMigrator.UnsupportedLegacyConfigVersionException e) {
                 LOG.warning("Legacy config file is newer than this launcher supports.", e);
-                return launcherSettingsResult(new LauncherSettings(), false, true, null);
+                return launcherSettingsResult(new LauncherSettings(), false, true, false, null);
             }
             if (migration != null) {
                 detachedSettingsFallback = migration.detachedSettings();
-                return launcherSettingsResult(migration.launcherSettings(), true, false, migration);
+                return launcherSettingsResult(migration.launcherSettings(), true, false, false, migration);
             }
         }
 
         var newSettings = new LauncherSettings();
-        return launcherSettingsResult(newSettings, true, false, null);
+        return launcherSettingsResult(newSettings, true, false, false, null);
     }
 
     /// Creates a launcher settings load result and stores saveability metadata on the settings object.
@@ -530,8 +523,10 @@ public final class SettingsManager {
             LauncherSettings settings,
             boolean savable,
             boolean unsupported,
+            boolean backupOnNextSave,
             @Nullable LegacyConfigMigrator.LegacyConfigMigration pendingMigration) {
         settings.setSavable(savable);
+        settings.setBackupOnNextSave(backupOnNextSave);
         return new LauncherSettingsLoadResult(settings, unsupported, pendingMigration);
     }
 
@@ -797,35 +792,6 @@ public final class SettingsManager {
 
         if (newlyCreated && gameAccounts.isSavable()) {
             GAME_ACCOUNTS_FILE.save(gameAccounts);
-        }
-    }
-
-    /// Moves an invalid config file to a numbered backup path (e.g. {@code settings.json.1},
-    /// {@code settings.json.2}, …) so the original data is preserved for diagnosis.
-    /// This is called synchronously from the save listener, immediately before the first
-    /// successful write overwrites the invalid file.
-    /// Does nothing and logs a warning when the move fails.
-    ///
-    /// @param location the invalid config file to back up
-    private static void backupInvalidConfig(Path location) {
-        try {
-            // Find the first unused backup index: settings.json.1, settings.json.2, …
-            Path backup = null;
-            for (int i = 1; i < Integer.MAX_VALUE; i++) {
-                Path candidate = location.resolveSibling(location.getFileName() + "." + i);
-                if (!Files.exists(candidate)) {
-                    backup = candidate;
-                    break;
-                }
-            }
-            if (backup == null) {
-                LOG.warning("Could not find an available backup path for " + location);
-                return;
-            }
-            LOG.info("Backed up invalid config to " + backup);
-            Files.move(location, backup);
-        } catch (IOException e) {
-            LOG.warning("Failed to back up invalid config " + location, e);
         }
     }
 

@@ -37,6 +37,7 @@ import org.jackhuang.hmcl.setting.GameSettings;
 import org.jackhuang.hmcl.setting.GameWindowType;
 import org.jackhuang.hmcl.setting.LegacyGameSettingsMigrator;
 import org.jackhuang.hmcl.setting.Profile;
+import org.jackhuang.hmcl.setting.SettingFileUtils;
 import org.jackhuang.hmcl.setting.SettingId;
 import org.jackhuang.hmcl.setting.VersionIconType;
 import org.jackhuang.hmcl.ui.FXUtils;
@@ -293,7 +294,9 @@ public final class HMCLGameRepository extends DefaultGameRepository {
             JsonObject jsonObject = JsonUtils.fromJsonFile(LauncherSettings.SETTINGS_GSON, file, JsonObject.class);
             if (jsonObject == null) {
                 LOG.warning("Instance game settings are empty: " + file);
-                return new InstanceGameSettingsLoadResult(null, false);
+                GameSettings.Instance fallback = new GameSettings.Instance();
+                fallback.setBackupOnNextSave(true);
+                return new InstanceGameSettingsLoadResult(fallback, true);
             }
 
             JsonSchema.CompatibilityResult schemaResult =
@@ -319,12 +322,19 @@ public final class HMCLGameRepository extends DefaultGameRepository {
                     LauncherSettings.SETTINGS_GSON.fromJson(jsonObject, GameSettings.Instance.class);
             if (setting == null) {
                 LOG.warning("Instance game settings deserialized to null: " + file);
-                return new InstanceGameSettingsLoadResult(null, false);
+                GameSettings.Instance fallback = new GameSettings.Instance();
+                fallback.setBackupOnNextSave(true);
+                return new InstanceGameSettingsLoadResult(fallback, true);
             }
             if (!schemaResult.preserveSchema() && !GameSettings.Instance.CURRENT_SCHEMA.equals(setting.getSchema())) {
                 setting.setSchema(GameSettings.Instance.CURRENT_SCHEMA);
             }
             return new InstanceGameSettingsLoadResult(setting, schemaResult.allowSave());
+        } catch (JsonParseException ex) {
+            LOG.warning("Failed to parse game setting " + file, ex);
+            GameSettings.Instance fallback = new GameSettings.Instance();
+            fallback.setBackupOnNextSave(true);
+            return new InstanceGameSettingsLoadResult(fallback, true);
         } catch (Exception ex) {
             LOG.warning("Failed to load game setting " + file, ex);
             return new InstanceGameSettingsLoadResult(null, false);
@@ -519,6 +529,10 @@ public final class HMCLGameRepository extends DefaultGameRepository {
     public void saveGameSettings(String id) {
         if (!instanceGameSettings.containsKey(id) || readOnlyInstanceGameSettings.contains(id))
             return;
+        GameSettings.Instance setting = instanceGameSettings.get(id);
+        if (setting == null) {
+            return;
+        }
         Path file = getInstanceGameSettingsFile(id).toAbsolutePath().normalize();
         try {
             Files.createDirectories(file.getParent());
@@ -526,7 +540,11 @@ public final class HMCLGameRepository extends DefaultGameRepository {
             LOG.warning("Failed to create directory: " + file.getParent(), e);
         }
 
-        FileSaver.save(file, LauncherSettings.SETTINGS_GSON.toJson(instanceGameSettings.get(id)));
+        if (setting.isBackupOnNextSave()) {
+            setting.setBackupOnNextSave(false);
+            SettingFileUtils.backupInvalidConfig(file);
+        }
+        FileSaver.save(file, LauncherSettings.SETTINGS_GSON.toJson(setting));
     }
 
     /// Result of loading an instance-specific game settings file.

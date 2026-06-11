@@ -292,9 +292,9 @@ public final class GameDirectoriesTest {
         assertTrue(rewritten.getAsJsonObject("futureField").get("enabled").getAsBoolean());
     }
 
-    /// Tests that malformed detached files are not allowed to be overwritten by fallback defaults.
+    /// Tests that malformed detached files are backed up before fallback defaults overwrite them.
     @Test
-    public void rejectsSavingFallbackForMalformedDetachedFile() throws IOException {
+    public void backsUpMalformedDetachedFileBeforeSavingFallback() throws IOException {
         Path tempDir = createJsonSettingFileTestDirectory("malformed");
         Path location = tempDir.resolve("game-directories.json");
         Files.writeString(location, "{");
@@ -308,8 +308,13 @@ public final class GameDirectoriesTest {
 
         JsonSettingFile.LoadResult<GameDirectories> result = file.load(null);
 
-        assertFalse(result.value().isSavable());
-        assertEquals("{", Files.readString(location));
+        assertTrue(result.value().isSavable());
+        assertTrue(result.value().isBackupOnNextSave());
+        file.save(result.value());
+
+        Path backup = location.resolveSibling("game-directories.json.1");
+        assertEquals("{", Files.readString(backup));
+        assertFalse(result.value().isBackupOnNextSave());
     }
 
     /// Creates a temporary directory under Gradle's build directory for JsonSettingFile tests.

@@ -76,6 +76,9 @@ public final class LauncherState extends ObservableSetting implements JsonSchema
     /// Whether this launcher state may be saved back to `launcher-state.json`.
     private transient boolean savable = true;
 
+    /// Whether the next successful save should back up the current `launcher-state.json` first.
+    private transient boolean backupOnNextSave;
+
     /// Returns whether this launcher state may be saved back to `launcher-state.json`.
     @Override
     public boolean isSavable() {
@@ -86,6 +89,18 @@ public final class LauncherState extends ObservableSetting implements JsonSchema
     @Override
     public void setSavable(boolean savable) {
         this.savable = savable;
+    }
+
+    /// Returns whether the next successful save should back up the current `launcher-state.json` first.
+    @Override
+    public boolean isBackupOnNextSave() {
+        return backupOnNextSave;
+    }
+
+    /// Sets whether the next successful save should back up the current `launcher-state.json` first.
+    @Override
+    public void setBackupOnNextSave(boolean backupOnNextSave) {
+        this.backupOnNextSave = backupOnNextSave;
     }
 
     /// The normalized launcher window content X position.

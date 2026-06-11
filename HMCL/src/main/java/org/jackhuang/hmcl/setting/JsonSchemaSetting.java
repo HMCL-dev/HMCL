@@ -40,4 +40,12 @@ interface JsonSchemaSetting {
     ///
     /// @param savable whether this settings object may be saved
     void setSavable(boolean savable);
+
+    /// Returns whether the next successful save should back up the current on-disk file first.
+    boolean isBackupOnNextSave();
+
+    /// Sets whether the next successful save should back up the current on-disk file first.
+    ///
+    /// @param backupOnNextSave whether the next successful save should back up the current on-disk file first
+    void setBackupOnNextSave(boolean backupOnNextSave);
 }

@@ -114,6 +114,9 @@ public sealed abstract class GameSettings extends ObservableSetting {
         /// Whether this instance setting may be saved back to its JSON file.
         private transient boolean savable = true;
 
+        /// Whether the next successful save should back up the current on-disk file first.
+        private transient boolean backupOnNextSave;
+
         /// Returns whether this instance setting may be saved back to its JSON file.
         @Override
         public boolean isSavable() {
@@ -124,6 +127,18 @@ public sealed abstract class GameSettings extends ObservableSetting {
         @Override
         public void setSavable(boolean savable) {
             this.savable = savable;
+        }
+
+        /// Returns whether the next successful save should back up the current on-disk file first.
+        @Override
+        public boolean isBackupOnNextSave() {
+            return backupOnNextSave;
+        }
+
+        /// Sets whether the next successful save should back up the current on-disk file first.
+        @Override
+        public void setBackupOnNextSave(boolean backupOnNextSave) {
+            this.backupOnNextSave = backupOnNextSave;
         }
 
         /// The parent preset ID.
