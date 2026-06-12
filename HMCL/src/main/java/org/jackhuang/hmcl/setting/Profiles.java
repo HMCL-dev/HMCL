@@ -202,6 +202,7 @@ public final class Profiles {
         localGameDirectories.addListener(onInvalidating(Profiles::rebuildProfiles));
         userGameDirectories.addListener(onInvalidating(Profiles::rebuildProfiles));
         rebuildProfiles();
+        createDefaultProfilesIfEmpty();
     }
 
     /// Rebuilds the merged runtime profile view from the two backing stores.
