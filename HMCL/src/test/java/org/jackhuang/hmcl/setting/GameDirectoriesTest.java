@@ -25,6 +25,7 @@ import com.google.gson.JsonParser;
 import javafx.beans.property.ReadOnlyListWrapper;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
+import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.util.PortablePath;
 import org.jackhuang.hmcl.util.FileSaver;
 import org.jackhuang.hmcl.util.gson.JsonSchema;
@@ -297,7 +298,7 @@ public final class GameDirectoriesTest {
         mergedProfiles.clear();
         profilesWrapper.set(FXCollections.emptyObservableList());
         try {
-            Profiles.loadGameDirectories(localDirectories, userDirectories);
+            Profiles.loadGameDirectories(localDirectories, userDirectories, false, false);
             ObservableList<Profile> gameDirectories = Profiles.getProfiles();
 
             assertEquals(List.of(localProfile), gameDirectories);
@@ -356,11 +357,17 @@ public final class GameDirectoriesTest {
         mergedProfiles.clear();
         profilesWrapper.set(FXCollections.emptyObservableList());
         try {
-            Profiles.loadGameDirectories(localDirectories, userDirectories);
+            Profiles.loadGameDirectories(localDirectories, userDirectories, true, true);
 
-            assertTrue(localDirectories.getGameDirectories().stream()
-                    .anyMatch(profile -> ".minecraft".equals(profile.getPath().getPath())));
-            assertFalse(Profiles.getProfiles().isEmpty());
+            Profile localProfile = assertSingleDefaultProfile(localDirectories, PortablePath.of(".minecraft"));
+            Profile userProfile = assertSingleDefaultProfile(
+                    userDirectories,
+                    PortablePath.fromPath(Metadata.MINECRAFT_DIRECTORY));
+            assertFalse(localProfile.shouldSaveToUserGameDirectory());
+            assertTrue(userProfile.shouldSaveToUserGameDirectory());
+            assertEquals(2, Profiles.getProfiles().size());
+            assertTrue(Profiles.getProfiles().contains(localProfile));
+            assertTrue(Profiles.getProfiles().contains(userProfile));
         } finally {
             localGameDirectoriesField.set(null, previousLocalGameDirectories);
             userGameDirectoriesField.set(null, previousUserGameDirectories);
@@ -368,6 +375,67 @@ public final class GameDirectoriesTest {
             mergedProfiles.setAll(previousMergedProfiles);
             profilesWrapper.set(previousProfilesWrapperValue);
         }
+    }
+
+    /// Tests that default profiles are created when both loaded stores are empty.
+    @Test
+    public void createsDefaultProfilesWhenMergedProfilesAreEmpty() throws ReflectiveOperationException {
+        GameDirectories userDirectories = new GameDirectories();
+        userDirectories.setUserFile(true);
+        GameDirectories localDirectories = new GameDirectories();
+        localDirectories.setUserFile(false);
+
+        Field localGameDirectoriesField = SettingsManager.class.getDeclaredField("localGameDirectories");
+        Field userGameDirectoriesField = SettingsManager.class.getDeclaredField("userGameDirectories");
+        localGameDirectoriesField.setAccessible(true);
+        userGameDirectoriesField.setAccessible(true);
+        Field profilesLoadedField = Profiles.class.getDeclaredField("gameDirectoriesLoaded");
+        Field profilesWrapperField = Profiles.class.getDeclaredField("profilesWrapper");
+        Field mergedProfilesField = Profiles.class.getDeclaredField("mergedProfiles");
+        profilesLoadedField.setAccessible(true);
+        profilesWrapperField.setAccessible(true);
+        mergedProfilesField.setAccessible(true);
+        Object previousLocalGameDirectories = localGameDirectoriesField.get(null);
+        Object previousUserGameDirectories = userGameDirectoriesField.get(null);
+        boolean previousProfilesLoaded = profilesLoadedField.getBoolean(null);
+        @SuppressWarnings("unchecked")
+        ReadOnlyListWrapper<Profile> profilesWrapper =
+                (ReadOnlyListWrapper<Profile>) profilesWrapperField.get(null);
+        ObservableList<Profile> previousProfilesWrapperValue = profilesWrapper.get();
+        @SuppressWarnings("unchecked")
+        ObservableList<Profile> mergedProfiles = (ObservableList<Profile>) mergedProfilesField.get(null);
+        List<Profile> previousMergedProfiles = List.copyOf(mergedProfiles);
+        localGameDirectoriesField.set(null, localDirectories);
+        userGameDirectoriesField.set(null, userDirectories);
+        profilesLoadedField.setBoolean(null, false);
+        mergedProfiles.clear();
+        profilesWrapper.set(FXCollections.emptyObservableList());
+        try {
+            Profiles.loadGameDirectories(localDirectories, userDirectories, false, false);
+
+            Profile localProfile = assertSingleDefaultProfile(localDirectories, PortablePath.of(".minecraft"));
+            Profile userProfile = assertSingleDefaultProfile(
+                    userDirectories,
+                    PortablePath.fromPath(Metadata.MINECRAFT_DIRECTORY));
+            assertEquals(2, Profiles.getProfiles().size());
+            assertTrue(Profiles.getProfiles().contains(localProfile));
+            assertTrue(Profiles.getProfiles().contains(userProfile));
+        } finally {
+            localGameDirectoriesField.set(null, previousLocalGameDirectories);
+            userGameDirectoriesField.set(null, previousUserGameDirectories);
+            profilesLoadedField.setBoolean(null, previousProfilesLoaded);
+            mergedProfiles.setAll(previousMergedProfiles);
+            profilesWrapper.set(previousProfilesWrapperValue);
+        }
+    }
+
+    /// Returns the only default profile in the given store, asserting its path.
+    private static Profile assertSingleDefaultProfile(GameDirectories gameDirectories, PortablePath path) {
+        assertEquals(1, gameDirectories.getGameDirectories().size());
+        Profile profile = gameDirectories.getGameDirectories().get(0);
+        assertEquals(path.isAbsolute(), profile.getPath().isAbsolute());
+        assertEquals(path.getPath(), profile.getPath().getPath());
+        return profile;
     }
 
     /// Tests that profiles must be deserialized with a non-nil ID.

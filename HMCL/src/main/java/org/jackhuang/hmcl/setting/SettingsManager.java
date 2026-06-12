@@ -551,7 +551,7 @@ public final class SettingsManager {
         if (userGameDirectories.isSavable()) {
             USER_GAME_DIRECTORIES_FILE.installAutoSave(userGameDirectories);
         }
-        Profiles.loadGameDirectories(localGameDirectories, userGameDirectories);
+        Profiles.loadGameDirectories(localGameDirectories, userGameDirectories, newlyCreatedLocal, newlyCreatedUser);
 
         if (newlyCreatedLocal && localGameDirectories.isSavable()) {
             LOCAL_GAME_DIRECTORIES_FILE.save(localGameDirectories);

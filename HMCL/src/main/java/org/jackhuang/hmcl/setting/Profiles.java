@@ -27,6 +27,7 @@ import org.jackhuang.hmcl.game.Version;
 import org.jackhuang.hmcl.util.PortablePath;
 import org.jackhuang.hmcl.util.i18n.I18n;
 import org.jackhuang.hmcl.util.i18n.LocalizedText;
+import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.UnmodifiableView;
 
@@ -43,6 +44,7 @@ import static org.jackhuang.hmcl.ui.FXUtils.onInvalidating;
 import static org.jackhuang.hmcl.ui.FXUtils.runInFX;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
+@NotNullByDefault
 public final class Profiles {
 
     /// The default current-workspace game directory path.
@@ -65,7 +67,10 @@ public final class Profiles {
 
     /// Returns whether an existing profile uses the given ID.
     private static boolean hasProfileId(SettingID id) {
-        return getProfiles().stream().anyMatch(profile -> profile.getId().equals(id));
+        return SettingsManager.localGameDirectories().getGameDirectories().stream()
+                .anyMatch(profile -> profile.getId().equals(id))
+                || SettingsManager.userGameDirectories().getGameDirectories().stream()
+                .anyMatch(profile -> profile.getId().equals(id));
     }
 
     public static String getProfileDisplayName(Profile profile) {
@@ -163,20 +168,37 @@ public final class Profiles {
 
     /// Creates the built-in game directories only when no profile exists.
     private static void createDefaultProfilesIfEmpty() {
-        ObservableList<Profile> profiles = getProfiles();
-        if (!profiles.isEmpty()) {
+        rebuildProfiles();
+        if (!mergedProfiles.isEmpty()) {
             return;
         }
 
-        SettingID currentId = newProfileId();
-        SettingID homeId;
+        createDefaultLocalProfile();
+        createDefaultUserProfile();
+        rebuildProfiles();
+    }
 
-        do {
-            homeId = SettingID.generate();
-        } while (homeId.equals(currentId));
+    /// Creates the default current-workspace game directory in the local store.
+    private static void createDefaultLocalProfile() {
+        createDefaultProfile(SettingsManager.localGameDirectories(), CURRENT_PROFILE_PATH);
+    }
 
-        addProfile(new Profile(currentId, null, CURRENT_PROFILE_PATH));
-        addProfile(new Profile(homeId, null, HOME_PROFILE_PATH));
+    /// Creates the default user-home game directory in the user store.
+    private static void createDefaultUserProfile() {
+        createDefaultProfile(SettingsManager.userGameDirectories(), HOME_PROFILE_PATH);
+    }
+
+    /// Creates a built-in profile in the given game directory store.
+    private static void createDefaultProfile(GameDirectories gameDirectories, PortablePath path) {
+        for (Profile profile : gameDirectories.getGameDirectories()) {
+            if (isProfilePath(profile, path)) {
+                return;
+            }
+        }
+
+        Profile profile = new Profile(newProfileId(), null, path);
+        profile.setUserGameDirectory(gameDirectories.isUserFile());
+        gameDirectories.getGameDirectories().add(profile);
     }
 
     /**
@@ -192,7 +214,11 @@ public final class Profiles {
     }
 
     /// Loads the two game directory stores and builds the merged runtime profile view.
-    static void loadGameDirectories(GameDirectories localGameDirectories, GameDirectories userGameDirectories) {
+    static void loadGameDirectories(
+            GameDirectories localGameDirectories,
+            GameDirectories userGameDirectories,
+            boolean createLocalDefaultProfile,
+            boolean createUserDefaultProfile) {
         if (gameDirectoriesLoaded) {
             throw new IllegalStateException("Game directories are already loaded");
         }
@@ -202,6 +228,12 @@ public final class Profiles {
         localGameDirectories.addListener(onInvalidating(Profiles::rebuildProfiles));
         userGameDirectories.addListener(onInvalidating(Profiles::rebuildProfiles));
         rebuildProfiles();
+        if (createLocalDefaultProfile) {
+            createDefaultLocalProfile();
+        }
+        if (createUserDefaultProfile) {
+            createDefaultUserProfile();
+        }
         createDefaultProfilesIfEmpty();
     }
 
