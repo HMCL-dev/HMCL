@@ -174,14 +174,6 @@ public sealed abstract class GameSettings extends ObservableSetting {
             protected Instance createInstance() {
                 return new Instance();
             }
-
-            @Override
-            public @Nullable Instance deserialize(
-                    JsonElement json,
-                    Type typeOfT,
-                    JsonDeserializationContext context) throws JsonParseException {
-                return super.deserialize(json, typeOfT, context);
-            }
         }
     }
 
