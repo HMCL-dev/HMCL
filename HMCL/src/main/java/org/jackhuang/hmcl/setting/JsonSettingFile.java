@@ -104,7 +104,7 @@ final class JsonSettingFile<T extends ObservableSetting & JsonSchemaSetting> {
                         }
                     }
                     if (!schemaResult.readable()) {
-                        return result(createDefault.get(), false);
+                        return result(createDefault.get(), false, false, true);
                     }
 
                     T deserialized = LauncherSettings.SETTINGS_GSON.<@Nullable T>fromJson(jsonObject, type);
@@ -114,7 +114,7 @@ final class JsonSettingFile<T extends ObservableSetting & JsonSchemaSetting> {
                             deserialized.setSchema(expectedSchema);
                         }
 
-                        return result(deserialized, schemaResult.allowSave());
+                        return result(deserialized, schemaResult.allowSave(), false, !schemaResult.allowSave());
                     }
 
                     LOG.warning(displayName + " deserialized to null: " + location);
@@ -124,7 +124,7 @@ final class JsonSettingFile<T extends ObservableSetting & JsonSchemaSetting> {
                 return result(createDefault.get(), true, true);
             }
 
-            return result(createDefault.get(), false);
+            return result(createDefault.get(), false, false, true);
         }
 
         return result(Objects.requireNonNullElseGet(migrated, createDefault), true);
@@ -132,14 +132,19 @@ final class JsonSettingFile<T extends ObservableSetting & JsonSchemaSetting> {
 
     /// Creates a load result and stores the saveability metadata on the settings object.
     private LoadResult<T> result(T value, boolean savable) {
-        return result(value, savable, false);
+        return result(value, savable, false, false);
     }
 
     /// Creates a load result and stores the saveability metadata on the settings object.
     private LoadResult<T> result(T value, boolean savable, boolean backupOnNextSave) {
+        return result(value, savable, backupOnNextSave, false);
+    }
+
+    /// Creates a load result and stores the saveability metadata on the settings object.
+    private LoadResult<T> result(T value, boolean savable, boolean backupOnNextSave, boolean unsupported) {
         value.setSavable(savable);
         value.setBackupOnNextSave(backupOnNextSave);
-        return new LoadResult<>(value);
+        return new LoadResult<>(value, unsupported);
     }
 
     /// Installs an automatic save listener on a settings object.
@@ -163,6 +168,7 @@ final class JsonSettingFile<T extends ObservableSetting & JsonSchemaSetting> {
     /// Result of loading a detached JSON settings file.
     ///
     /// @param value the loaded settings object
-    record LoadResult<T extends ObservableSetting & JsonSchemaSetting>(T value) {
+    /// @param unsupported whether the file could not be safely overwritten because of an unsupported schema
+    record LoadResult<T extends ObservableSetting & JsonSchemaSetting>(T value, boolean unsupported) {
     }
 }

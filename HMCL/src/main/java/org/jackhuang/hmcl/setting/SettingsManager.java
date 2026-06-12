@@ -198,7 +198,7 @@ public final class SettingsManager {
     /// Whether root is reading a per-workspace config owned by another user.
     private static boolean ownerChanged = false;
 
-    /// Whether launcher settings could not be safely overwritten because of an unsupported schema or legacy config.
+    /// Whether launcher settings or state could not be safely overwritten because of an unsupported schema.
     private static boolean unsupportedVersion = false;
 
     /// Detached settings used as fallbacks when detached settings files do not exist yet.
@@ -382,7 +382,7 @@ public final class SettingsManager {
         return ownerChanged;
     }
 
-    /// Returns whether launcher settings could not be safely overwritten.
+    /// Returns whether launcher settings or state could not be safely overwritten.
     public static boolean isUnsupportedVersion() {
         return unsupportedVersion;
     }
@@ -415,7 +415,7 @@ public final class SettingsManager {
         LOG.setLogRetention(userSettings().logRetentionProperty().get());
         loadGameDirectories(detachedSettingsFallback.gameDirectories());
         loadGameSettingsPresets(detachedSettingsFallback.gameSettingsPresets());
-        loadLauncherState(detachedSettingsFallback.launcherState());
+        unsupportedVersion |= loadLauncherState(detachedSettingsFallback.launcherState());
         loadAuthlibInjectorServers(detachedSettingsFallback.authlibInjectorServers());
         loadUserGameAccounts();
         loadGameAccounts(detachedSettingsFallback.accountStorages());
@@ -663,7 +663,8 @@ public final class SettingsManager {
     /// Loads launcher state and installs the save listener.
     ///
     /// @param fallbackLauncherState the fallback state used when the launcher state file does not exist
-    private static void loadLauncherState(
+    /// @return whether the launcher state file could not be safely overwritten because of an unsupported schema
+    private static boolean loadLauncherState(
             @Nullable LauncherState fallbackLauncherState) throws IOException {
         if (launcherState != null) {
             throw new IllegalStateException("Launcher state is already loaded");
@@ -681,6 +682,7 @@ public final class SettingsManager {
             STATE_FILE.save(launcherState);
         }
 
+        return result.unsupported();
     }
 
     /// Loads authlib-injector servers and installs the save listener.

@@ -287,6 +287,7 @@ public final class GameDirectoriesTest {
 
             JsonSettingFile.LoadResult<GameDirectories> result = file.load(null);
             assertTrue(result.value().isSavable());
+            assertFalse(result.unsupported());
             assertEquals(new JsonSchema("https://schemas.glavo.site/hmcl/game-directories/1.0.1"),
                     result.value().getSchema());
 
@@ -295,6 +296,36 @@ public final class GameDirectoriesTest {
             assertEquals("https://schemas.glavo.site/hmcl/game-directories/1.0.1",
                     rewritten.get(JsonSchema.PROPERTY_SCHEMA).getAsString());
             assertTrue(rewritten.getAsJsonObject("futureField").get("enabled").getAsBoolean());
+        }
+    }
+
+    /// Tests that newer minor-version schemas are reported as unsupported.
+    @Test
+    public void reportsNewerMinorSchemaAsUnsupported() throws IOException {
+        try (FileSystem fileSystem = Jimfs.newFileSystem(Configuration.unix())) {
+            Path tempDir = createJsonSettingFileTestDirectory(fileSystem, "newer-minor-schema");
+            Path location = tempDir.resolve("game-directories.json");
+            Files.writeString(location, """
+                    {
+                      "$schema": "https://schemas.glavo.site/hmcl/game-directories/1.1.0",
+                      "directories": []
+                    }
+                    """);
+
+            JsonSettingFile<GameDirectories> file = new JsonSettingFile<>(
+                    location,
+                    "game directories",
+                    GameDirectories.class,
+                    GameDirectories.CURRENT_SCHEMA,
+                    GameDirectories::new);
+
+            JsonSettingFile.LoadResult<GameDirectories> result = file.load(null);
+
+            assertTrue(result.unsupported());
+            assertFalse(result.value().isSavable());
+            assertFalse(result.value().isBackupOnNextSave());
+            assertEquals(new JsonSchema("https://schemas.glavo.site/hmcl/game-directories/1.1.0"),
+                    result.value().getSchema());
         }
     }
 
@@ -317,6 +348,7 @@ public final class GameDirectoriesTest {
 
             assertTrue(result.value().isSavable());
             assertTrue(result.value().isBackupOnNextSave());
+            assertFalse(result.unsupported());
             file.save(result.value());
             FileSaver.waitForAllSaves();
 
