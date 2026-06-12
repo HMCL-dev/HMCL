@@ -541,24 +541,19 @@ public final class SettingsManager {
         JsonSettingFile.LoadResult<GameDirectories> userResult = USER_GAME_DIRECTORIES_FILE.load(null);
         JsonSettingFile.LoadResult<GameDirectories> localResult = LOCAL_GAME_DIRECTORIES_FILE.load(fallbackGameDirectories);
 
-        userGameDirectories = userResult.value();
-        userGameDirectories.setUserFile(true);
         localGameDirectories = localResult.value();
         localGameDirectories.setUserFile(false);
+        localGameDirectories.setNewlyCreated(newlyCreatedLocal);
+
+        userGameDirectories = userResult.value();
+        userGameDirectories.setUserFile(true);
+        userGameDirectories.setNewlyCreated(newlyCreatedUser);
+
         if (localGameDirectories.isSavable()) {
             LOCAL_GAME_DIRECTORIES_FILE.installAutoSave(localGameDirectories);
         }
         if (userGameDirectories.isSavable()) {
             USER_GAME_DIRECTORIES_FILE.installAutoSave(userGameDirectories);
-        }
-        Profiles.loadGameDirectories(localGameDirectories, userGameDirectories, newlyCreatedLocal, newlyCreatedUser);
-
-        if (newlyCreatedLocal && localGameDirectories.isSavable()) {
-            LOCAL_GAME_DIRECTORIES_FILE.save(localGameDirectories);
-        }
-
-        if (newlyCreatedUser && userGameDirectories.isSavable()) {
-            USER_GAME_DIRECTORIES_FILE.save(userGameDirectories);
         }
     }
 

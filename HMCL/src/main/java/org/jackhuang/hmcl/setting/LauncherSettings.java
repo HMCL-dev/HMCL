@@ -485,12 +485,12 @@ public final class LauncherSettings extends ObservableSetting implements JsonSch
     }
 
     /// Returns the selected instance ID for the given game directory ID.
-    public @Nullable String getSelectedInstance(@Nullable SettingID gameDirectoryId) {
+    @Nullable String getSelectedInstance(@Nullable SettingID gameDirectoryId) {
         return gameDirectoryId != null ? selectedInstance.get(gameDirectoryId) : null;
     }
 
     /// Sets the selected instance ID for the given game directory ID.
-    public void setSelectedInstance(@Nullable SettingID gameDirectoryId, @Nullable String selectedInstance) {
+    void setSelectedInstance(@Nullable SettingID gameDirectoryId, @Nullable String selectedInstance) {
         if (gameDirectoryId == null) {
             return;
         }

@@ -75,19 +75,6 @@ public final class Profile implements Observable {
         this.path.set(Objects.requireNonNull(path));
     }
 
-    /// Whether this profile belongs to `HMCL_USER_HOME/user-game-directories.json`.
-    private transient boolean userGameDirectory;
-
-    /// Records the game directory file that currently stores this profile.
-    void setUserGameDirectory(boolean userGameDirectory) {
-        this.userGameDirectory = userGameDirectory;
-    }
-
-    /// Returns whether this profile should be stored in `HMCL_USER_HOME/user-game-directories.json`.
-    boolean shouldSaveToUserGameDirectory() {
-        return userGameDirectory;
-    }
-
     /// The custom localized profile name, or `null` for profiles without a stored name.
     private final ObjectProperty<@Nullable LocalizedText> name;
 
@@ -135,7 +122,6 @@ public final class Profile implements Observable {
         this.name = new SimpleObjectProperty<>(this, "name", name);
         this.path = new SimpleObjectProperty<>(this, "path", Objects.requireNonNull(path));
         this.legacyGameSettings = new SimpleObjectProperty<>(this, "legacyGameSettings", legacyGameSettings);
-        this.userGameDirectory = path.isAbsolute();
         repository = new HMCLGameRepository(this, path.toPath());
 
         this.path.addListener((a, b, newValue) -> repository.changeDirectory(newValue.toPath()));

@@ -112,7 +112,7 @@ public final class Controllers {
     private static Lazy<GameListPage> gameListPage = new Lazy<>(() -> {
         GameListPage gameListPage = new GameListPage();
         gameListPage.selectedProfileProperty().bindBidirectional(Profiles.selectedProfileProperty());
-        gameListPage.profilesProperty().bindContent(Profiles.profilesProperty());
+        gameListPage.profilesProperty().bindContent(Profiles.getProfiles());
         FXUtils.applyDragListener(gameListPage, file -> ModpackHelper.isFileModpackByExtension(file) || "json".equalsIgnoreCase(FileUtils.getNameWithoutExtension(file)), files -> {
             Path file = files.get(0);
 

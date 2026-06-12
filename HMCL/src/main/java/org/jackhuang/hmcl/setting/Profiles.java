@@ -29,6 +29,7 @@ import org.jackhuang.hmcl.util.i18n.I18n;
 import org.jackhuang.hmcl.util.i18n.LocalizedText;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.UnknownNullability;
 import org.jetbrains.annotations.UnmodifiableView;
 
 import java.util.ArrayList;
@@ -39,8 +40,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Consumer;
 
-import static org.jackhuang.hmcl.setting.SettingsManager.settings;
-import static org.jackhuang.hmcl.ui.FXUtils.onInvalidating;
+import static org.jackhuang.hmcl.setting.SettingsManager.*;
 import static org.jackhuang.hmcl.ui.FXUtils.runInFX;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
@@ -67,9 +67,9 @@ public final class Profiles {
 
     /// Returns whether an existing profile uses the given ID.
     private static boolean hasProfileId(SettingID id) {
-        return SettingsManager.localGameDirectories().getGameDirectories().stream()
+        return localGameDirectories().getGameDirectories().stream()
                 .anyMatch(profile -> profile.getId().equals(id))
-                || SettingsManager.userGameDirectories().getGameDirectories().stream()
+                || userGameDirectories().getGameDirectories().stream()
                 .anyMatch(profile -> profile.getId().equals(id));
     }
 
@@ -102,46 +102,73 @@ public final class Profiles {
                 && actualPath.getPath().equals(expectedPath.getPath());
     }
 
-    private static final ReadOnlyListWrapper<Profile> mergedProfilesWrapper =
-            new ReadOnlyListWrapper<>(FXCollections.observableArrayList(
-                    profile -> new javafx.beans.Observable[] { profile }));
+    private static final ObservableList<Profile> mergedProfiles =
+            FXCollections.observableArrayList(profile -> new javafx.beans.Observable[]{profile});
 
-    /// Whether the game directory stores have been loaded.
-    private static boolean gameDirectoriesLoaded;
+    private static final @UnmodifiableView ObservableList<Profile> mergedProfilesUnmodifiable =
+            FXCollections.unmodifiableObservableList(mergedProfiles);
 
     /// The selected profile, or `null` before the fallback profile is resolved.
-    private static final ObjectProperty<@Nullable Profile> selectedProfile = new SimpleObjectProperty<>() {
-        @Override
-        protected void invalidated() {
-            refreshSelectedProfile();
+    private static final ObjectProperty<@UnknownNullability Profile> selectedProfile = new SimpleObjectProperty<>();
+
+    /// Called when it's ready to load profiles from [SettingsManager].
+    public static void init() {
+        if (initialized)
+            throw new IllegalStateException("Already initialized");
+
+        initialized = true;
+
+        rebuildProfiles();
+
+        boolean needRebuildProfiles = false;
+        if (localGameDirectories().isNewlyCreated()) {
+            needRebuildProfiles = true;
+            GameDirectories gameDirectories = localGameDirectories();
+            gameDirectories.getGameDirectories().add(new Profile(newProfileId(), null, CURRENT_PROFILE_PATH));
         }
-    };
-
-    private static void refreshSelectedProfile() {
-        if (!initialized)
-            return;
-
-        createDefaultProfilesIfEmpty();
-        ObservableList<Profile> profiles = getProfiles();
-        if (profiles.isEmpty()) {
-            throw new IllegalStateException("No profile is available");
+        if (userGameDirectories().isNewlyCreated()) {
+            needRebuildProfiles = true;
+            GameDirectories gameDirectories = userGameDirectories();
+            gameDirectories.getGameDirectories().add(new Profile(newProfileId(), null, HOME_PROFILE_PATH));
         }
 
-        @Nullable Profile profile = selectedProfile.get();
-
-        if (profile == null || !profiles.contains(profile)) {
-            selectedProfile.set(profiles.get(0));
-            return;
+        needRebuildProfiles |= createDefaultProfilesIfEmpty();
+        if (needRebuildProfiles) {
+            rebuildProfiles();
         }
 
-        settings().selectedGameDirectoryProperty().set(profile.getId());
-        if (profile.getRepository().isLoaded()) {
-            refreshSelectedVersion(profile);
+        assert !mergedProfiles.isEmpty();
+
+        @Nullable SettingID selectedId = settings().selectedGameDirectoryProperty().get();
+        Profile currentProfile = null;
+
+        if (selectedId != null) {
+            for (Profile profile : mergedProfiles) {
+                if (profile.getId().equals(selectedId)) {
+                    currentProfile = profile;
+                    break;
+                }
+            }
+        }
+
+        if (currentProfile != null) {
+            selectedProfile.set(currentProfile);
         } else {
-            selectedInstance.set(null);
-            // bind when repository was reloaded.
-            profile.getRepository().refreshVersionsAsync().start();
+            Profile firstProfile = mergedProfiles.get(0);
+            selectedProfile.set(firstProfile);
+            settings().selectedGameDirectoryProperty().set(firstProfile.getId());
         }
+
+        EventBus.EVENT_BUS.channel(RefreshedVersionsEvent.class).registerWeak(event -> {
+            runInFX(() -> {
+                @Nullable Profile profile = selectedProfile.get();
+                if (profile != null && profile.getRepository() == event.getSource()) {
+                    refreshSelectedVersion(profile);
+                    for (Consumer<Profile> listener : versionsListeners)
+                        listener.accept(profile);
+                }
+            });
+        });
     }
 
     private static void refreshSelectedVersion(Profile profile) {
@@ -159,38 +186,17 @@ public final class Profiles {
     }
 
     /// Creates the built-in game directories only when no profile exists.
-    private static void createDefaultProfilesIfEmpty() {
-        rebuildProfiles();
-        if (!mergedProfilesWrapper.isEmpty()) {
-            return;
+    private static boolean createDefaultProfilesIfEmpty() {
+        if (localGameDirectories().getGameDirectories().isEmpty()
+                && userGameDirectories().getGameDirectories().isEmpty()) {
+            localGameDirectories().getGameDirectories()
+                    .add(new Profile(newProfileId(), null, CURRENT_PROFILE_PATH));
+            userGameDirectories().getGameDirectories()
+                    .add(new Profile(newProfileId(), null, HOME_PROFILE_PATH));
+            return true;
+        } else {
+            return false;
         }
-
-        createDefaultLocalProfile();
-        createDefaultUserProfile();
-        rebuildProfiles();
-    }
-
-    /// Creates the default current-workspace game directory in the local store.
-    private static void createDefaultLocalProfile() {
-        createDefaultProfile(SettingsManager.localGameDirectories(), CURRENT_PROFILE_PATH);
-    }
-
-    /// Creates the default user-home game directory in the user store.
-    private static void createDefaultUserProfile() {
-        createDefaultProfile(SettingsManager.userGameDirectories(), HOME_PROFILE_PATH);
-    }
-
-    /// Creates a built-in profile in the given game directory store.
-    private static void createDefaultProfile(GameDirectories gameDirectories, PortablePath path) {
-        for (Profile profile : gameDirectories.getGameDirectories()) {
-            if (isProfilePath(profile, path)) {
-                return;
-            }
-        }
-
-        Profile profile = new Profile(newProfileId(), null, path);
-        profile.setUserGameDirectory(gameDirectories.isUserFile());
-        gameDirectories.getGameDirectories().add(profile);
     }
 
     /**
@@ -205,33 +211,10 @@ public final class Profiles {
         });
     }
 
-    /// Loads the two game directory stores and builds the merged runtime profile view.
-    static void loadGameDirectories(
-            GameDirectories localGameDirectories,
-            GameDirectories userGameDirectories,
-            boolean createLocalDefaultProfile,
-            boolean createUserDefaultProfile) {
-        if (gameDirectoriesLoaded) {
-            throw new IllegalStateException("Game directories are already loaded");
-        }
-
-        gameDirectoriesLoaded = true;
-        localGameDirectories.addListener(onInvalidating(Profiles::rebuildProfiles));
-        userGameDirectories.addListener(onInvalidating(Profiles::rebuildProfiles));
-        rebuildProfiles();
-        if (createLocalDefaultProfile) {
-            createDefaultLocalProfile();
-        }
-        if (createUserDefaultProfile) {
-            createDefaultUserProfile();
-        }
-        createDefaultProfilesIfEmpty();
-    }
-
     /// Rebuilds the merged runtime profile view from the two backing stores.
     private static void rebuildProfiles() {
-        GameDirectories userGameDirectories = SettingsManager.userGameDirectories();
-        GameDirectories localGameDirectories = SettingsManager.localGameDirectories();
+        GameDirectories userGameDirectories = userGameDirectories();
+        GameDirectories localGameDirectories = localGameDirectories();
         Map<SettingID, Profile> visibleProfiles = new LinkedHashMap<>();
 
         for (Profile profile : localGameDirectories.getGameDirectories()) {
@@ -243,111 +226,57 @@ public final class Profiles {
             visibleProfiles.putIfAbsent(id, profile);
         }
 
-        mergedProfilesWrapper.setAll(visibleProfiles.values());
-    }
-
-    /// Called when it's ready to load profiles from [SettingsManager].
-    public static void init() {
-        if (initialized)
-            throw new IllegalStateException("Already initialized");
-
-        getProfiles().addListener(onInvalidating(Profiles::refreshSelectedProfile));
-        settings().getSelectedInstance().addListener(onInvalidating(() -> {
-            @Nullable Profile profile = selectedProfile.get();
-            if (profile != null && profile.getRepository().isLoaded()) {
-                refreshSelectedVersion(profile);
-            }
-        }));
-        createDefaultProfilesIfEmpty();
-
-        initialized = true;
-
-        @Nullable SettingID selectedId = settings().selectedGameDirectoryProperty().get();
-        selectedProfile.set(
-                getProfiles().stream()
-                        .filter(it -> it.getId().equals(selectedId))
-                        .findFirst()
-                        .orElseGet(Profiles::getFirstProfileOrCreate));
-
-        EventBus.EVENT_BUS.channel(RefreshedVersionsEvent.class).registerWeak(event -> {
-            runInFX(() -> {
-                @Nullable Profile profile = selectedProfile.get();
-                if (profile != null && profile.getRepository() == event.getSource()) {
-                    refreshSelectedVersion(profile);
-                    for (Consumer<Profile> listener : versionsListeners)
-                        listener.accept(profile);
-                }
-            });
-        });
+        mergedProfiles.setAll(visibleProfiles.values());
     }
 
     /// Returns the read-only merged profile list.
     public static @UnmodifiableView ObservableList<Profile> getProfiles() {
-        if (!gameDirectoriesLoaded) {
-            throw new IllegalStateException("Game directories haven't been loaded");
-        }
-        return FXCollections.unmodifiableObservableList(mergedProfilesWrapper.get());
+        return mergedProfilesUnmodifiable;
     }
 
     /// Adds a profile to the per-workspace game directory store.
     public static void addProfile(Profile profile) {
         Objects.requireNonNull(profile);
-        profile.setUserGameDirectory(false);
-        ObservableList<Profile> profiles = SettingsManager.localGameDirectories().getGameDirectories();
+        ObservableList<Profile> profiles = localGameDirectories().getGameDirectories();
         SettingID id = profile.getId();
         for (int i = 0; i < profiles.size(); i++) {
             if (profiles.get(i).getId().equals(id)) {
                 profiles.set(i, profile);
+                rebuildProfiles();
                 return;
             }
         }
 
         profiles.add(profile);
+        rebuildProfiles();
     }
 
     /// Removes a profile and recreates the built-in game directories when the list becomes empty.
     public static void removeProfile(Profile profile) {
-        GameDirectories owner = profile.shouldSaveToUserGameDirectory()
-                ? SettingsManager.userGameDirectories()
-                : SettingsManager.localGameDirectories();
-        owner.getGameDirectories().remove(profile);
+        userGameDirectories().getGameDirectories().remove(profile);
+        localGameDirectories().getGameDirectories().remove(profile);
         createDefaultProfilesIfEmpty();
-    }
-
-    public static ReadOnlyListProperty<Profile> profilesProperty() {
-        return mergedProfilesWrapper.getReadOnlyProperty();
+        rebuildProfiles();
     }
 
     /// Returns the selected profile, creating built-in profiles first if the profile list is empty.
     public static Profile getSelectedProfile() {
-        @Nullable Profile profile = selectedProfile.get();
-        if (profile != null && getProfiles().contains(profile)) {
-            return profile;
+        Profile profile = selectedProfile.get();
+        if (profile == null) {
+            throw new IllegalStateException("Selected profile cannot be null");
         }
-
-        profile = getFirstProfileOrCreate();
-        selectedProfile.set(profile);
         return profile;
     }
 
     /// Sets the selected profile.
     public static void setSelectedProfile(Profile profile) {
+        assert mergedProfiles.contains(profile);
         selectedProfile.set(Objects.requireNonNull(profile));
     }
 
     /// Returns the selected profile property.
     public static ObjectProperty<Profile> selectedProfileProperty() {
         return selectedProfile;
-    }
-
-    /// Returns the first available profile, creating built-in profiles first if needed.
-    private static Profile getFirstProfileOrCreate() {
-        createDefaultProfilesIfEmpty();
-        ObservableList<Profile> profiles = getProfiles();
-        if (profiles.isEmpty()) {
-            throw new IllegalStateException("No profile is available");
-        }
-        return profiles.get(0);
     }
 
     private static final ReadOnlyStringWrapper selectedInstance = new ReadOnlyStringWrapper();

@@ -126,6 +126,16 @@ public final class GameDirectories extends ObservableSetting implements JsonSche
         return userFile;
     }
 
+    private transient boolean newlyCreated;
+
+    boolean isNewlyCreated() {
+        return newlyCreated;
+    }
+
+    void setNewlyCreated(boolean newlyCreated) {
+        this.newlyCreated = newlyCreated;
+    }
+
     /// JSON adapter for [GameDirectories].
     public static final class Adapter extends ObservableSetting.Adapter<GameDirectories> {
         /// Creates an empty game directory store for deserialization.
