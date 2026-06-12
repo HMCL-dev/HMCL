@@ -96,6 +96,10 @@ public final class LegacyConfigMigrator {
     /// The legacy user account storage path shared by all workspaces.
     private static final Path LEGACY_USER_ACCOUNTS_LOCATION = Metadata.HMCL_USER_HOME.resolve("accounts.json");
 
+    /// The receipt recording the legacy shared accounts migrated to the shared account storage.
+    private static final Path USER_ACCOUNTS_MIGRATION_RECEIPT_LOCATION =
+            Metadata.HMCL_USER_HOME.resolve("user-game-accounts.migration-receipt.json");
+
     /// The receipt recording the legacy config migrated to the current per-workspace config.
     private static final Path SETTINGS_MIGRATION_RECEIPT_LOCATION =
             Metadata.HMCL_LOCAL_HOME.resolve("settings.migration-receipt.json");
@@ -274,6 +278,43 @@ public final class LegacyConfigMigrator {
     /// Records that the given legacy user settings migration result has been applied.
     static void saveLegacyUserSettingsMigrationReceipt(UserSettingsMigrationResult migrationResult) throws IOException {
         MigrationReceipt.save(USER_SETTINGS_MIGRATION_RECEIPT_LOCATION, migrationResult.path());
+    }
+
+    /// Migrates account storages from the legacy shared account file.
+    ///
+    /// @return the migrated shared account storages, or `null` when no legacy shared accounts can be used
+    static @Nullable UserAccountsMigrationResult migrateLegacyUserAccounts() {
+        if (!Files.exists(LEGACY_USER_ACCOUNTS_LOCATION)) {
+            return null;
+        }
+        if (MigrationReceipt.matches(USER_ACCOUNTS_MIGRATION_RECEIPT_LOCATION, LEGACY_USER_ACCOUNTS_LOCATION)) {
+            LOG.info("Skipping already migrated user accounts " + LEGACY_USER_ACCOUNTS_LOCATION);
+            return null;
+        }
+
+        try {
+            List<Map<Object, Object>> accounts = JsonUtils.fromJsonFile(
+                    LauncherSettings.SETTINGS_GSON,
+                    LEGACY_USER_ACCOUNTS_LOCATION,
+                    JsonUtils.listTypeOf(JsonUtils.mapTypeOf(Object.class, Object.class))
+            );
+            if (accounts == null) {
+                return null;
+            }
+
+            LOG.info("Migrating user accounts from " + LEGACY_USER_ACCOUNTS_LOCATION);
+            return new UserAccountsMigrationResult(
+                    LEGACY_USER_ACCOUNTS_LOCATION,
+                    AccountStorages.fromAccounts(accounts));
+        } catch (Throwable e) {
+            LOG.warning("Failed to load legacy user accounts", e);
+            return null;
+        }
+    }
+
+    /// Records that the given legacy shared account migration result has been applied.
+    static void saveLegacyUserAccountsMigrationReceipt(UserAccountsMigrationResult migrationResult) {
+        MigrationReceipt.save(USER_ACCOUNTS_MIGRATION_RECEIPT_LOCATION, migrationResult.path());
     }
 
     /// Extracts launcher state from a legacy config JSON object and removes those members.
@@ -1034,5 +1075,12 @@ public final class LegacyConfigMigrator {
     /// @param userSettings the migrated user settings
     /// @param userState the migrated user state
     record UserSettingsMigrationResult(Path path, UserSettings userSettings, UserState userState) {
+    }
+
+    /// Result of migrating the legacy shared accounts file.
+    ///
+    /// @param path the legacy account storage path
+    /// @param accountStorages the migrated account storage
+    record UserAccountsMigrationResult(Path path, AccountStorages accountStorages) {
     }
 }
