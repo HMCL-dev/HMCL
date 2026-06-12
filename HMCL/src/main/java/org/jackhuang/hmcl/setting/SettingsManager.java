@@ -521,16 +521,7 @@ public final class SettingsManager {
                 return new LauncherSettingsLoadResult(settings, false, null);
             }
         } else {
-            LegacyConfigMigrator.LegacyConfigMigration migration;
-            try {
-                migration = LegacyConfigMigrator.migrateLegacyConfig();
-            } catch (LegacyConfigMigrator.UnsupportedLegacyConfigVersionException e) {
-                LOG.warning("Legacy config file is newer than this launcher supports.", e);
-                LauncherSettings settings = new LauncherSettings();
-                settings.setSavable(true);
-                settings.setBackupOnNextSave(false);
-                return new LauncherSettingsLoadResult(settings, false, null);
-            }
+            LegacyConfigMigrator.LegacyConfigMigration migration = LegacyConfigMigrator.migrateLegacyConfig();
             if (migration != null) {
                 detachedSettingsFallback = migration.detachedSettings();
                 LauncherSettings settings = migration.launcherSettings();

@@ -152,6 +152,17 @@ public final class LegacyConfigMigrator {
             return null;
         }
 
+        return migrateLegacyConfig(path);
+    }
+
+    /// Prepares a legacy config file for writing as the new config file.
+    ///
+    /// @param path the legacy config path to read
+    /// @return the prepared migration result, or `null` when the file is not a supported legacy config
+    @VisibleForTesting
+    static @Nullable LegacyConfigMigration migrateLegacyConfig(Path path) throws IOException {
+        Objects.requireNonNull(path);
+
         try {
             JsonObject jsonObject = JsonUtils.fromJsonFile(path, JsonObject.class);
             if (jsonObject == null) {
@@ -168,10 +179,9 @@ public final class LegacyConfigMigrator {
                     : 0;
 
             if (configVersion > LEGACY_CURRENT_CONFIG_VERSION) {
-                throw new UnsupportedLegacyConfigVersionException(
-                        path,
-                        configVersion,
-                        LEGACY_CURRENT_CONFIG_VERSION);
+                LOG.warning("Ignoring non-legacy config file with unsupported legacy version "
+                        + configVersion + ": " + path);
+                return null;
             }
 
             if (configVersion < LEGACY_CURRENT_CONFIG_VERSION) {
@@ -1024,20 +1034,5 @@ public final class LegacyConfigMigrator {
     /// @param userSettings the migrated user settings
     /// @param userState the migrated user state
     record UserSettingsMigrationResult(Path path, UserSettings userSettings, UserState userState) {
-    }
-
-    /// Signals that a legacy config file belongs to a newer launcher and must not be overwritten.
-    static final class UnsupportedLegacyConfigVersionException extends IOException {
-
-        /// Creates an unsupported legacy config version exception.
-        ///
-        /// @param path the legacy config path
-        /// @param actualVersion the version found in the legacy config file
-        /// @param supportedVersion the newest legacy config version supported by this launcher
-        UnsupportedLegacyConfigVersionException(Path path, int actualVersion, int supportedVersion) {
-            super("Unsupported legacy config version " + actualVersion
-                    + " in " + path
-                    + ", latest supported version is " + supportedVersion);
-        }
     }
 }

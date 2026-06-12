@@ -25,7 +25,10 @@ import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.junit.jupiter.api.Test;
 
+import java.io.IOException;
 import java.net.Proxy;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.Objects;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -41,6 +44,22 @@ public final class LauncherSettingsMigrationTest {
 
         assertEquals(LegacyConfigMigrator.LEGACY_PROFILE_ID_NAMESPACE,
                 UUIDs.generateV5(UUIDs.NAMESPACE_URL, "hmcl:legacy-profile"));
+    }
+
+    /// Tests ignoring config files with numeric versions outside the legacy format range.
+    @Test
+    public void ignoresUnsupportedLegacyConfigVersion() throws IOException {
+        Path root = Path.of("build", "tmp", "launcher-settings-migration-tests");
+        Files.createDirectories(root);
+        Path config = Files.createTempFile(root, "unsupported-legacy-config-", ".json");
+        Files.writeString(config, """
+                {
+                  "_version": 3,
+                  "language": "en"
+                }
+                """);
+
+        assertNull(LegacyConfigMigrator.migrateLegacyConfig(config));
     }
 
     /// Tests migrating legacy language fields into the current launcher settings field.
