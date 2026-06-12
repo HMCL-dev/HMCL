@@ -200,10 +200,6 @@ public final class SettingsManager {
     /// Whether launcher settings or state could not be safely overwritten because of an unsupported schema.
     private static boolean unsupportedVersion = false;
 
-    /// Detached settings used as fallbacks when detached settings files do not exist yet.
-    private static LegacyConfigMigrator.DetachedSettings detachedSettingsFallback =
-            LegacyConfigMigrator.DetachedSettings.empty();
-
     /// Returns the loaded per-workspace launcher settings.
     public static LauncherSettings settings() {
         if (launcherSettings == null) {
@@ -395,9 +391,13 @@ public final class SettingsManager {
         checkLocalConfigOwner();
         newlyCreated = isNewWorkspace();
 
-        LauncherSettingsLoadResult launcherSettingsResult = loadLauncherSettings();
+        LoadedLauncherSettings launcherSettingsResult = loadLauncherSettings();
         launcherSettings = launcherSettingsResult.settings();
         unsupportedVersion = !launcherSettings.isSavable();
+        @Nullable LegacyConfigMigrator.LegacyConfigMigration pendingMigration = launcherSettingsResult.pendingMigration();
+        LegacyConfigMigrator.DetachedSettings detachedSettings = pendingMigration != null
+                ? pendingMigration.detachedSettings()
+                : LegacyConfigMigrator.DetachedSettings.empty();
 
         @Nullable LegacyConfigMigrator.UserSettingsMigrationResult userSettingsMigrationResult =
                 Files.exists(USER_SETTINGS_LOCATION) && Files.exists(USER_STATE_LOCATION)
@@ -412,19 +412,19 @@ public final class SettingsManager {
         Locale.setDefault(settings().languageProperty().get().getLocale());
         I18n.setLocale(launcherSettings.languageProperty().get());
         LOG.setLogRetention(userSettings().logRetentionProperty().get());
-        loadGameDirectories(detachedSettingsFallback.gameDirectories());
-        loadGameSettingsPresets(detachedSettingsFallback.gameSettingsPresets());
-        unsupportedVersion |= loadLauncherState(detachedSettingsFallback.launcherState());
-        loadAuthlibInjectorServers(detachedSettingsFallback.authlibInjectorServers());
+        loadGameDirectories(detachedSettings.gameDirectories());
+        loadGameSettingsPresets(detachedSettings.gameSettingsPresets());
+        unsupportedVersion |= loadLauncherState(detachedSettings.launcherState());
+        loadAuthlibInjectorServers(detachedSettings.authlibInjectorServers());
         loadUserGameAccounts();
-        loadGameAccounts(detachedSettingsFallback.accountStorages());
+        loadGameAccounts(detachedSettings.accountStorages());
 
         if (Files.exists(Metadata.HMCL_LOCAL_HOME)) {
             checkWritable(Metadata.HMCL_LOCAL_HOME);
         }
 
-        if (launcherSettingsResult.pendingMigration() != null) {
-            LegacyConfigMigrator.completeLegacyConfigMigration(launcherSettingsResult.pendingMigration(), SETTINGS_LOCATION);
+        if (pendingMigration != null) {
+            LegacyConfigMigrator.completeLegacyConfigMigration(pendingMigration, SETTINGS_LOCATION);
         }
 
         if (launcherSettings.isSavable()) {
@@ -439,7 +439,7 @@ public final class SettingsManager {
     }
 
     /// Loads the current per-workspace settings or migrates a legacy config when needed.
-    private static LauncherSettingsLoadResult loadLauncherSettings() throws IOException {
+    private static LoadedLauncherSettings loadLauncherSettings() throws IOException {
         if (Files.exists(SETTINGS_LOCATION)) {
             JsonObject jsonObject;
             try {
@@ -450,7 +450,7 @@ public final class SettingsManager {
                 LauncherSettings settings = new LauncherSettings();
                 settings.setSavable(true);
                 settings.setBackupOnNextSave(true);
-                return new LauncherSettingsLoadResult(settings, null);
+                return new LoadedLauncherSettings(settings, null);
             }
 
             if (jsonObject == null) {
@@ -459,7 +459,7 @@ public final class SettingsManager {
                 LauncherSettings settings = new LauncherSettings();
                 settings.setSavable(true);
                 settings.setBackupOnNextSave(true);
-                return new LauncherSettingsLoadResult(settings, null);
+                return new LoadedLauncherSettings(settings, null);
             }
 
             JsonSchema.CompatibilityResult schemaResult =
@@ -481,7 +481,7 @@ public final class SettingsManager {
                 LauncherSettings settings = new LauncherSettings();
                 settings.setSavable(false);
                 settings.setBackupOnNextSave(false);
-                return new LauncherSettingsLoadResult(settings, null);
+                return new LoadedLauncherSettings(settings, null);
             }
 
             try {
@@ -490,7 +490,7 @@ public final class SettingsManager {
                     settings = new LauncherSettings();
                     settings.setSavable(false);
                     settings.setBackupOnNextSave(false);
-                    return new LauncherSettingsLoadResult(settings, null);
+                    return new LoadedLauncherSettings(settings, null);
                 }
 
                 if (!schemaResult.preserveSchema() && !LauncherSettings.CURRENT_SCHEMA.equals(settings.schemaProperty().get())) {
@@ -499,29 +499,28 @@ public final class SettingsManager {
 
                 settings.setSavable(schemaResult.allowSave());
                 settings.setBackupOnNextSave(false);
-                return new LauncherSettingsLoadResult(settings, null);
+                return new LoadedLauncherSettings(settings, null);
             } catch (JsonParseException e) {
                 LOG.warning("Failed to parse settings file: " + SETTINGS_LOCATION, e);
                 LauncherSettings settings = new LauncherSettings();
                 settings.setSavable(true);
                 settings.setBackupOnNextSave(true);
-                return new LauncherSettingsLoadResult(settings, null);
+                return new LoadedLauncherSettings(settings, null);
             }
         } else {
             LegacyConfigMigrator.LegacyConfigMigration migration = LegacyConfigMigrator.migrateLegacyConfig();
             if (migration != null) {
-                detachedSettingsFallback = migration.detachedSettings();
                 LauncherSettings settings = migration.launcherSettings();
                 settings.setSavable(true);
                 settings.setBackupOnNextSave(false);
-                return new LauncherSettingsLoadResult(settings, migration);
+                return new LoadedLauncherSettings(settings, migration);
             }
         }
 
         var newSettings = new LauncherSettings();
         newSettings.setSavable(true);
         newSettings.setBackupOnNextSave(false);
-        return new LauncherSettingsLoadResult(newSettings, null);
+        return new LoadedLauncherSettings(newSettings, null);
     }
 
     /// Returns whether the current workspace already has any local configuration footprint.
@@ -846,7 +845,8 @@ public final class SettingsManager {
     /// Result of loading per-workspace launcher settings.
     ///
     /// @param settings the loaded launcher settings
-    private record LauncherSettingsLoadResult(
+    /// @param pendingMigration the pending legacy config migration, or `null` when no legacy config was migrated
+    private record LoadedLauncherSettings(
             LauncherSettings settings,
             @Nullable LegacyConfigMigrator.LegacyConfigMigration pendingMigration) {
     }
