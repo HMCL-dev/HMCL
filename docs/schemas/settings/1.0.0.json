@@ -147,10 +147,10 @@
       ]
     },
     "selectedGameDirectory": {
-      "$ref": "#/$defs/guidOrNull"
+      "$ref": "#/$defs/uuidOrNull"
     },
     "defaultGameSettingsPreset": {
-      "$ref": "#/$defs/guidOrNull"
+      "$ref": "#/$defs/uuidOrNull"
     },
     "selectedInstance": {
       "type": "object",
@@ -180,7 +180,7 @@
         "MIRROR"
       ]
     },
-    "guidOrNull": {
+    "uuidOrNull": {
       "type": [
         "string",
         "null"

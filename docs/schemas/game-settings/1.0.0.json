@@ -36,7 +36,7 @@
           ],
           "properties": {
             "id": {
-              "$ref": "#/$defs/guid"
+              "$ref": "#/$defs/uuid"
             },
             "name": {
               "$ref": "#/$defs/localizedTextOrNull"
@@ -232,7 +232,7 @@
         }
       }
     },
-    "guid": {
+    "uuid": {
       "type": "string",
       "pattern": "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$"
     },

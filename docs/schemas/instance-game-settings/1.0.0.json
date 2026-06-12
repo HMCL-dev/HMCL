@@ -21,7 +21,7 @@
       },
       "properties": {
         "parent": {
-          "$ref": "#/$defs/guidOrNull"
+          "$ref": "#/$defs/uuidOrNull"
         },
         "icon": {
           "enum": [
@@ -226,7 +226,7 @@
         }
       }
     },
-    "guidOrNull": {
+    "uuidOrNull": {
       "type": [
         "string",
         "null"
