@@ -109,7 +109,8 @@ public final class Profiles {
     /// Whether the game directory stores have been loaded.
     private static boolean gameDirectoriesLoaded;
 
-    private static final ObjectProperty<Profile> selectedProfile = new SimpleObjectProperty<>() {
+    /// The selected profile, or `null` before the fallback profile is resolved.
+    private static final ObjectProperty<@Nullable Profile> selectedProfile = new SimpleObjectProperty<>() {
         @Override
         protected void invalidated() {
             refreshSelectedProfile();
@@ -120,32 +121,26 @@ public final class Profiles {
         if (!initialized)
             return;
 
+        createDefaultProfilesIfEmpty();
         ObservableList<Profile> profiles = getProfiles();
-        Profile profile = selectedProfile.get();
-
         if (profiles.isEmpty()) {
-            if (profile != null) {
-                selectedProfile.set(null);
-                return;
-            }
-        } else {
-            if (!profiles.contains(profile)) {
-                selectedProfile.set(profiles.get(0));
-                return;
-            }
+            throw new IllegalStateException("No profile is available");
         }
 
-        settings().selectedGameDirectoryProperty().set(profile == null ? null : profile.getId());
-        if (profile != null) {
-            if (profile.getRepository().isLoaded()) {
-                refreshSelectedVersion(profile);
-            } else {
-                selectedInstance.set(null);
-                // bind when repository was reloaded.
-                profile.getRepository().refreshVersionsAsync().start();
-            }
+        @Nullable Profile profile = selectedProfile.get();
+
+        if (profile == null || !profiles.contains(profile)) {
+            selectedProfile.set(profiles.get(0));
+            return;
+        }
+
+        settings().selectedGameDirectoryProperty().set(profile.getId());
+        if (profile.getRepository().isLoaded()) {
+            refreshSelectedVersion(profile);
         } else {
             selectedInstance.set(null);
+            // bind when repository was reloaded.
+            profile.getRepository().refreshVersionsAsync().start();
         }
     }
 
@@ -241,13 +236,11 @@ public final class Profiles {
 
         for (Profile profile : localGameDirectories.getGameDirectories()) {
             SettingID id = profile.getId();
-            visibleProfiles.remove(id);
             visibleProfiles.put(id, profile);
         }
         for (Profile profile : userGameDirectories.getGameDirectories()) {
             SettingID id = profile.getId();
-            visibleProfiles.remove(id);
-            visibleProfiles.put(id, profile);
+            visibleProfiles.putIfAbsent(id, profile);
         }
 
         mergedProfilesWrapper.setAll(visibleProfiles.values());
@@ -260,7 +253,7 @@ public final class Profiles {
 
         getProfiles().addListener(onInvalidating(Profiles::refreshSelectedProfile));
         settings().getSelectedInstance().addListener(onInvalidating(() -> {
-            Profile profile = selectedProfile.get();
+            @Nullable Profile profile = selectedProfile.get();
             if (profile != null && profile.getRepository().isLoaded()) {
                 refreshSelectedVersion(profile);
             }
@@ -274,11 +267,11 @@ public final class Profiles {
                 getProfiles().stream()
                         .filter(it -> it.getId().equals(selectedId))
                         .findFirst()
-                        .orElse(getProfiles().isEmpty() ? null : getProfiles().get(0)));
+                        .orElseGet(Profiles::getFirstProfileOrCreate));
 
         EventBus.EVENT_BUS.channel(RefreshedVersionsEvent.class).registerWeak(event -> {
             runInFX(() -> {
-                Profile profile = selectedProfile.get();
+                @Nullable Profile profile = selectedProfile.get();
                 if (profile != null && profile.getRepository() == event.getSource()) {
                     refreshSelectedVersion(profile);
                     for (Consumer<Profile> listener : versionsListeners)
@@ -293,7 +286,7 @@ public final class Profiles {
         if (!gameDirectoriesLoaded) {
             throw new IllegalStateException("Game directories haven't been loaded");
         }
-        return mergedProfilesWrapper.get();
+        return FXCollections.unmodifiableObservableList(mergedProfilesWrapper.get());
     }
 
     /// Adds a profile to the per-workspace game directory store.
@@ -325,16 +318,36 @@ public final class Profiles {
         return mergedProfilesWrapper.getReadOnlyProperty();
     }
 
+    /// Returns the selected profile, creating built-in profiles first if the profile list is empty.
     public static Profile getSelectedProfile() {
-        return selectedProfile.get();
-    }
+        @Nullable Profile profile = selectedProfile.get();
+        if (profile != null && getProfiles().contains(profile)) {
+            return profile;
+        }
 
-    public static void setSelectedProfile(Profile profile) {
+        profile = getFirstProfileOrCreate();
         selectedProfile.set(profile);
+        return profile;
     }
 
+    /// Sets the selected profile.
+    public static void setSelectedProfile(Profile profile) {
+        selectedProfile.set(Objects.requireNonNull(profile));
+    }
+
+    /// Returns the selected profile property.
     public static ObjectProperty<Profile> selectedProfileProperty() {
         return selectedProfile;
+    }
+
+    /// Returns the first available profile, creating built-in profiles first if needed.
+    private static Profile getFirstProfileOrCreate() {
+        createDefaultProfilesIfEmpty();
+        ObservableList<Profile> profiles = getProfiles();
+        if (profiles.isEmpty()) {
+            throw new IllegalStateException("No profile is available");
+        }
+        return profiles.get(0);
     }
 
     private static final ReadOnlyStringWrapper selectedInstance = new ReadOnlyStringWrapper();
@@ -355,7 +368,7 @@ public final class Profiles {
 
     /// Sets the selected instance ID for the currently selected profile.
     public static void setSelectedInstance(@Nullable String instance) {
-        Profile profile = selectedProfile.get();
+        @Nullable Profile profile = selectedProfile.get();
         if (profile != null) {
             setSelectedInstance(profile, instance);
         }
@@ -373,7 +386,7 @@ public final class Profiles {
 
     public static void registerVersionsListener(Consumer<Profile> listener) {
         Profile profile = getSelectedProfile();
-        if (profile != null && profile.getRepository().isLoaded())
+        if (profile.getRepository().isLoaded())
             listener.accept(profile);
         versionsListeners.add(listener);
     }

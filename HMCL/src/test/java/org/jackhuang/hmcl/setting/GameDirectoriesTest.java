@@ -22,8 +22,8 @@ import com.google.common.jimfs.Jimfs;
 import com.google.gson.JsonParseException;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
+import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.ReadOnlyListWrapper;
-import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.util.PortablePath;
@@ -277,26 +277,21 @@ public final class GameDirectoriesTest {
         localGameDirectoriesField.setAccessible(true);
         userGameDirectoriesField.setAccessible(true);
         Field profilesLoadedField = Profiles.class.getDeclaredField("gameDirectoriesLoaded");
-        Field profilesWrapperField = Profiles.class.getDeclaredField("profilesWrapper");
-        Field mergedProfilesField = Profiles.class.getDeclaredField("mergedProfiles");
+        Field mergedProfilesWrapperField = Profiles.class.getDeclaredField("mergedProfilesWrapper");
         profilesLoadedField.setAccessible(true);
-        profilesWrapperField.setAccessible(true);
-        mergedProfilesField.setAccessible(true);
+        mergedProfilesWrapperField.setAccessible(true);
         Object previousLocalGameDirectories = localGameDirectoriesField.get(null);
         Object previousUserGameDirectories = userGameDirectoriesField.get(null);
         boolean previousProfilesLoaded = profilesLoadedField.getBoolean(null);
         @SuppressWarnings("unchecked")
-        ReadOnlyListWrapper<Profile> profilesWrapper =
-                (ReadOnlyListWrapper<Profile>) profilesWrapperField.get(null);
-        ObservableList<Profile> previousProfilesWrapperValue = profilesWrapper.get();
-        @SuppressWarnings("unchecked")
-        ObservableList<Profile> mergedProfiles = (ObservableList<Profile>) mergedProfilesField.get(null);
+        ReadOnlyListWrapper<Profile> mergedProfilesWrapper =
+                (ReadOnlyListWrapper<Profile>) mergedProfilesWrapperField.get(null);
+        ObservableList<Profile> mergedProfiles = mergedProfilesWrapper.get();
         List<Profile> previousMergedProfiles = List.copyOf(mergedProfiles);
         localGameDirectoriesField.set(null, localDirectories);
         userGameDirectoriesField.set(null, userDirectories);
         profilesLoadedField.setBoolean(null, false);
         mergedProfiles.clear();
-        profilesWrapper.set(FXCollections.emptyObservableList());
         try {
             Profiles.loadGameDirectories(localDirectories, userDirectories, false, false);
             ObservableList<Profile> gameDirectories = Profiles.getProfiles();
@@ -312,14 +307,13 @@ public final class GameDirectoriesTest {
             assertTrue(localDirectories.getGameDirectories().isEmpty());
 
             Profiles.addProfile(addedProfile);
-            assertEquals(List.of(userProfile, addedProfile), Profiles.getProfiles());
+            assertEquals(List.of(addedProfile, userProfile), Profiles.getProfiles());
             assertEquals(List.of(addedProfile), localDirectories.getGameDirectories());
         } finally {
             localGameDirectoriesField.set(null, previousLocalGameDirectories);
             userGameDirectoriesField.set(null, previousUserGameDirectories);
             profilesLoadedField.setBoolean(null, previousProfilesLoaded);
             mergedProfiles.setAll(previousMergedProfiles);
-            profilesWrapper.set(previousProfilesWrapperValue);
         }
     }
 
@@ -336,26 +330,21 @@ public final class GameDirectoriesTest {
         localGameDirectoriesField.setAccessible(true);
         userGameDirectoriesField.setAccessible(true);
         Field profilesLoadedField = Profiles.class.getDeclaredField("gameDirectoriesLoaded");
-        Field profilesWrapperField = Profiles.class.getDeclaredField("profilesWrapper");
-        Field mergedProfilesField = Profiles.class.getDeclaredField("mergedProfiles");
+        Field mergedProfilesWrapperField = Profiles.class.getDeclaredField("mergedProfilesWrapper");
         profilesLoadedField.setAccessible(true);
-        profilesWrapperField.setAccessible(true);
-        mergedProfilesField.setAccessible(true);
+        mergedProfilesWrapperField.setAccessible(true);
         Object previousLocalGameDirectories = localGameDirectoriesField.get(null);
         Object previousUserGameDirectories = userGameDirectoriesField.get(null);
         boolean previousProfilesLoaded = profilesLoadedField.getBoolean(null);
         @SuppressWarnings("unchecked")
-        ReadOnlyListWrapper<Profile> profilesWrapper =
-                (ReadOnlyListWrapper<Profile>) profilesWrapperField.get(null);
-        ObservableList<Profile> previousProfilesWrapperValue = profilesWrapper.get();
-        @SuppressWarnings("unchecked")
-        ObservableList<Profile> mergedProfiles = (ObservableList<Profile>) mergedProfilesField.get(null);
+        ReadOnlyListWrapper<Profile> mergedProfilesWrapper =
+                (ReadOnlyListWrapper<Profile>) mergedProfilesWrapperField.get(null);
+        ObservableList<Profile> mergedProfiles = mergedProfilesWrapper.get();
         List<Profile> previousMergedProfiles = List.copyOf(mergedProfiles);
         localGameDirectoriesField.set(null, localDirectories);
         userGameDirectoriesField.set(null, userDirectories);
         profilesLoadedField.setBoolean(null, false);
         mergedProfiles.clear();
-        profilesWrapper.set(FXCollections.emptyObservableList());
         try {
             Profiles.loadGameDirectories(localDirectories, userDirectories, true, true);
 
@@ -373,7 +362,6 @@ public final class GameDirectoriesTest {
             userGameDirectoriesField.set(null, previousUserGameDirectories);
             profilesLoadedField.setBoolean(null, previousProfilesLoaded);
             mergedProfiles.setAll(previousMergedProfiles);
-            profilesWrapper.set(previousProfilesWrapperValue);
         }
     }
 
@@ -390,26 +378,21 @@ public final class GameDirectoriesTest {
         localGameDirectoriesField.setAccessible(true);
         userGameDirectoriesField.setAccessible(true);
         Field profilesLoadedField = Profiles.class.getDeclaredField("gameDirectoriesLoaded");
-        Field profilesWrapperField = Profiles.class.getDeclaredField("profilesWrapper");
-        Field mergedProfilesField = Profiles.class.getDeclaredField("mergedProfiles");
+        Field mergedProfilesWrapperField = Profiles.class.getDeclaredField("mergedProfilesWrapper");
         profilesLoadedField.setAccessible(true);
-        profilesWrapperField.setAccessible(true);
-        mergedProfilesField.setAccessible(true);
+        mergedProfilesWrapperField.setAccessible(true);
         Object previousLocalGameDirectories = localGameDirectoriesField.get(null);
         Object previousUserGameDirectories = userGameDirectoriesField.get(null);
         boolean previousProfilesLoaded = profilesLoadedField.getBoolean(null);
         @SuppressWarnings("unchecked")
-        ReadOnlyListWrapper<Profile> profilesWrapper =
-                (ReadOnlyListWrapper<Profile>) profilesWrapperField.get(null);
-        ObservableList<Profile> previousProfilesWrapperValue = profilesWrapper.get();
-        @SuppressWarnings("unchecked")
-        ObservableList<Profile> mergedProfiles = (ObservableList<Profile>) mergedProfilesField.get(null);
+        ReadOnlyListWrapper<Profile> mergedProfilesWrapper =
+                (ReadOnlyListWrapper<Profile>) mergedProfilesWrapperField.get(null);
+        ObservableList<Profile> mergedProfiles = mergedProfilesWrapper.get();
         List<Profile> previousMergedProfiles = List.copyOf(mergedProfiles);
         localGameDirectoriesField.set(null, localDirectories);
         userGameDirectoriesField.set(null, userDirectories);
         profilesLoadedField.setBoolean(null, false);
         mergedProfiles.clear();
-        profilesWrapper.set(FXCollections.emptyObservableList());
         try {
             Profiles.loadGameDirectories(localDirectories, userDirectories, false, false);
 
@@ -425,7 +408,57 @@ public final class GameDirectoriesTest {
             userGameDirectoriesField.set(null, previousUserGameDirectories);
             profilesLoadedField.setBoolean(null, previousProfilesLoaded);
             mergedProfiles.setAll(previousMergedProfiles);
-            profilesWrapper.set(previousProfilesWrapperValue);
+        }
+    }
+
+    /// Tests that the selected profile getter restores a valid selection instead of returning null.
+    @Test
+    public void selectedProfileGetterNeverReturnsNullWhenProfilesAreLoaded() throws ReflectiveOperationException {
+        GameDirectories userDirectories = new GameDirectories();
+        userDirectories.setUserFile(true);
+        GameDirectories localDirectories = new GameDirectories();
+        localDirectories.setUserFile(false);
+
+        Field localGameDirectoriesField = SettingsManager.class.getDeclaredField("localGameDirectories");
+        Field userGameDirectoriesField = SettingsManager.class.getDeclaredField("userGameDirectories");
+        localGameDirectoriesField.setAccessible(true);
+        userGameDirectoriesField.setAccessible(true);
+        Field profilesLoadedField = Profiles.class.getDeclaredField("gameDirectoriesLoaded");
+        Field mergedProfilesWrapperField = Profiles.class.getDeclaredField("mergedProfilesWrapper");
+        Field selectedProfileField = Profiles.class.getDeclaredField("selectedProfile");
+        profilesLoadedField.setAccessible(true);
+        mergedProfilesWrapperField.setAccessible(true);
+        selectedProfileField.setAccessible(true);
+        Object previousLocalGameDirectories = localGameDirectoriesField.get(null);
+        Object previousUserGameDirectories = userGameDirectoriesField.get(null);
+        boolean previousProfilesLoaded = profilesLoadedField.getBoolean(null);
+        @SuppressWarnings("unchecked")
+        ReadOnlyListWrapper<Profile> mergedProfilesWrapper =
+                (ReadOnlyListWrapper<Profile>) mergedProfilesWrapperField.get(null);
+        ObservableList<Profile> mergedProfiles = mergedProfilesWrapper.get();
+        @SuppressWarnings("unchecked")
+        ObjectProperty<Profile> selectedProfile =
+                (ObjectProperty<Profile>) selectedProfileField.get(null);
+        Profile previousSelectedProfile = selectedProfile.get();
+        List<Profile> previousMergedProfiles = List.copyOf(mergedProfiles);
+        localGameDirectoriesField.set(null, localDirectories);
+        userGameDirectoriesField.set(null, userDirectories);
+        profilesLoadedField.setBoolean(null, false);
+        selectedProfile.set(null);
+        mergedProfiles.clear();
+        try {
+            Profiles.loadGameDirectories(localDirectories, userDirectories, false, false);
+
+            Profile selected = Profiles.getSelectedProfile();
+            assertNotNull(selected);
+            assertSame(selected, Profiles.getSelectedProfile());
+            assertTrue(Profiles.getProfiles().contains(selected));
+        } finally {
+            localGameDirectoriesField.set(null, previousLocalGameDirectories);
+            userGameDirectoriesField.set(null, previousUserGameDirectories);
+            profilesLoadedField.setBoolean(null, previousProfilesLoaded);
+            selectedProfile.set(previousSelectedProfile);
+            mergedProfiles.setAll(previousMergedProfiles);
         }
     }
 
