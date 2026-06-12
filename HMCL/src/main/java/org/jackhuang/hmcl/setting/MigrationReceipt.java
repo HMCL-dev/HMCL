@@ -33,21 +33,19 @@ import java.util.Objects;
 
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
-/// Records successful legacy migrations so deleting a current file does not replay an unchanged legacy source.
+/// Records successful legacy migrations so deleting a current file does not replay unchanged legacy content.
 ///
-/// @param source the absolute legacy source path, or `null` when a malformed receipt omits it
-/// @param sourceSize the legacy source file size, or `null` when a malformed receipt omits it
-/// @param sourceLastModified the legacy source last-modified time, or `null` when a malformed receipt omits it
+/// @param sourceSize the legacy source file size recorded for diagnostics, or `null` when omitted
+/// @param sourceLastModified the legacy source last-modified time recorded for diagnostics, or `null` when omitted
 /// @param sourceSha256 the legacy source SHA-256 hash, or `null` when a malformed receipt omits it
 /// @param migratedAt when the migration receipt was written, or `null` before saving or when omitted
 @NotNullByDefault
 record MigrationReceipt(
-        @Nullable String source,
         @Nullable Long sourceSize,
         @Nullable String sourceLastModified,
         @Nullable String sourceSha256,
         @Nullable String migratedAt) {
-    /// Returns whether the receipt records the current state of the legacy source file.
+    /// Returns whether the receipt records the current legacy source content.
     static boolean matches(Path receipt, Path source) {
         Objects.requireNonNull(receipt);
         Objects.requireNonNull(source);
@@ -77,12 +75,9 @@ record MigrationReceipt(
         }
     }
 
-    /// Returns whether this receipt matches another source file state.
+    /// Returns whether this receipt matches another legacy source content fingerprint.
     private boolean matches(MigrationReceipt current) {
-        return Objects.equals(source, current.source)
-                && Objects.equals(sourceSize, current.sourceSize)
-                && Objects.equals(sourceLastModified, current.sourceLastModified)
-                && Objects.equals(sourceSha256, current.sourceSha256);
+        return sourceSha256 != null && Objects.equals(sourceSha256, current.sourceSha256);
     }
 
     /// Creates receipt content for the current source file state.
@@ -94,7 +89,6 @@ record MigrationReceipt(
     private static MigrationReceipt create(Path source, @Nullable String migratedAt) throws IOException {
         BasicFileAttributes attributes = Files.readAttributes(source, BasicFileAttributes.class);
         return new MigrationReceipt(
-                source.toAbsolutePath().normalize().toString(),
                 attributes.size(),
                 attributes.lastModifiedTime().toString(),
                 DigestUtils.digestToString("SHA-256", source),
