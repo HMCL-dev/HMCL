@@ -204,11 +204,11 @@ public class PersonalizationPage extends StackPane {
                         hBox.setSpacing(3);
 
                         FontComboBox cboLogFont = new FontComboBox();
-                        cboLogFont.valueProperty().bindBidirectional(settings().fontFamilyProperty());
+                        cboLogFont.valueProperty().bindBidirectional(settings().logFontFamilyProperty());
 
                         JFXTextField txtLogFontSize = new JFXTextField();
                         FXUtils.setLimitWidth(txtLogFontSize, 50);
-                        FXUtils.bind(txtLogFontSize, settings().fontSizeProperty(), SafeStringConverter.fromFiniteDouble()
+                        FXUtils.bind(txtLogFontSize, settings().logFontSizeProperty(), SafeStringConverter.fromFiniteDouble()
                                 .restrict(it -> it > 0)
                                 .fallbackTo(12.0)
                                 .asPredicate(Validator.addTo(txtLogFontSize)));
@@ -226,8 +226,8 @@ public class PersonalizationPage extends StackPane {
 
                 Label lblLogFontDisplay = new Label("[23:33:33] [Client Thread/INFO] [WaterPower]: Loaded mod WaterPower.");
                 lblLogFontDisplay.fontProperty().bind(Bindings.createObjectBinding(
-                        () -> Font.font(Lang.requireNonNullElse(settings().fontFamilyProperty().get(), FXUtils.DEFAULT_MONOSPACE_FONT), settings().fontSizeProperty().get()),
-                        settings().fontFamilyProperty(), settings().fontSizeProperty()));
+                        () -> Font.font(Lang.requireNonNullElse(settings().logFontFamilyProperty().get(), FXUtils.DEFAULT_MONOSPACE_FONT), settings().logFontSizeProperty().get()),
+                        settings().logFontFamilyProperty(), settings().logFontSizeProperty()));
 
                 fontPane.getChildren().add(lblLogFontDisplay);
 

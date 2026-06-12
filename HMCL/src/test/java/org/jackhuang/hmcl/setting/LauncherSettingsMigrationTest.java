@@ -103,6 +103,20 @@ public final class LauncherSettingsMigrationTest {
         assertEquals("zh-Hant", launcherSettings.languageProperty().get().getName());
     }
 
+    /// Tests serializing log font settings with log-specific names.
+    @Test
+    public void serializesLogFontSettings() {
+        LauncherSettings launcherSettings = new LauncherSettings();
+        launcherSettings.logFontFamilyProperty().set("Fira Code");
+        launcherSettings.logFontSizeProperty().set(13.5);
+        JsonObject serialized = JsonParser.parseString(launcherSettings.toJson()).getAsJsonObject();
+
+        assertFalse(serialized.has("fontFamily"));
+        assertFalse(serialized.has("fontSize"));
+        assertEquals("Fira Code", serialized.get("logFontFamily").getAsString());
+        assertEquals(13.5, serialized.get("logFontSize").getAsDouble(), 1e-9);
+    }
+
     /// Tests migrating legacy enum ordinal fields into stable enum names.
     @Test
     public void migratesLegacyEnumOrdinals() {

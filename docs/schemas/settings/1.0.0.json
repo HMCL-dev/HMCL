@@ -49,13 +49,13 @@
       "type": "string"
     },
     "themeColor": true,
-    "fontFamily": {
+    "logFontFamily": {
       "type": [
         "string",
         "null"
       ]
     },
-    "fontSize": {
+    "logFontSize": {
       "type": "number"
     },
     "launcherFontFamily": {

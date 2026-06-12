@@ -251,22 +251,22 @@ public final class LauncherSettings extends ObservableSetting implements JsonSch
         return themeColor;
     }
 
-    /// The font family used by launcher content.
-    @SerializedName("fontFamily")
-    private final StringProperty fontFamily = new SimpleStringProperty();
+    /// The font family used by launcher log views.
+    @SerializedName("logFontFamily")
+    private final StringProperty logFontFamily = new SimpleStringProperty();
 
-    /// Returns the launcher content font family property.
-    public StringProperty fontFamilyProperty() {
-        return fontFamily;
+    /// Returns the launcher log font family property.
+    public StringProperty logFontFamilyProperty() {
+        return logFontFamily;
     }
 
-    /// The launcher UI font size.
-    @SerializedName("fontSize")
-    private final DoubleProperty fontSize = new SimpleDoubleProperty(12);
+    /// The launcher log font size.
+    @SerializedName("logFontSize")
+    private final DoubleProperty logFontSize = new SimpleDoubleProperty(12);
 
-    /// Returns the launcher UI font size property.
-    public DoubleProperty fontSizeProperty() {
-        return fontSize;
+    /// Returns the launcher log font size property.
+    public DoubleProperty logFontSizeProperty() {
+        return logFontSize;
     }
 
     /// The font family used by launcher chrome.

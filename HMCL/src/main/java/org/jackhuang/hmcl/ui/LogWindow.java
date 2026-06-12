@@ -310,8 +310,8 @@ public final class LogWindow extends Stage {
                         listView.scrollTo(listView.getItems().size() - 1);
                 });
 
-                listView.setStyle("-fx-font-family: \"" + Lang.requireNonNullElse(settings().fontFamilyProperty().get(), FXUtils.DEFAULT_MONOSPACE_FONT)
-                        + "\"; -fx-font-size: " + settings().fontSizeProperty().get() + "px;");
+                listView.setStyle("-fx-font-family: \"" + Lang.requireNonNullElse(settings().logFontFamilyProperty().get(), FXUtils.DEFAULT_MONOSPACE_FONT)
+                        + "\"; -fx-font-size: " + settings().logFontSizeProperty().get() + "px;");
                 listView.setCellFactory(x -> new ListCell<>() {
                     {
                         getStyleClass().add("log-window-list-cell");

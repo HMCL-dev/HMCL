@@ -216,7 +216,7 @@ public class MicrosoftAccountLoginPane extends JFXDialogLayout implements Dialog
 
             var lblCode = new Label(wait.userCode());
             lblCode.getStyleClass().add("code-label");
-            lblCode.setStyle("-fx-font-family: \"" + Lang.requireNonNullElse(settings().fontFamilyProperty().get(), FXUtils.DEFAULT_MONOSPACE_FONT) + "\";");
+            lblCode.setStyle("-fx-font-family: \"" + Lang.requireNonNullElse(settings().logFontFamilyProperty().get(), FXUtils.DEFAULT_MONOSPACE_FONT) + "\";");
 
             var codeBox = new StackPane(lblCode);
             codeBox.getStyleClass().add("code-box");
@@ -333,4 +333,3 @@ public class MicrosoftAccountLoginPane extends JFXDialogLayout implements Dialog
     }
 
 }
-
