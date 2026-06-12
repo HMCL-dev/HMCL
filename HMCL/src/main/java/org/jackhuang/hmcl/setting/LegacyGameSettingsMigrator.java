@@ -140,9 +140,9 @@ public final class LegacyGameSettingsMigrator {
                 GameSettings.Preset parentSetting = SettingsManager.getGameSettings(parent);
                 if (parentSetting != null
                         && getLegacyGameDirType(legacySettingJson, GameDirectoryType.ROOT_FOLDER) == GameDirectoryType.ROOT_FOLDER
-                        && StringUtils.isNotBlank(parentSetting.runningDirProperty().getValue())) {
-                    setting.runningDirProperty().setValue(baseDirectory.toString());
-                    setting.getOverrideProperties().add(GameSettings.PROPERTY_RUNNING_DIR);
+                        && StringUtils.isNotBlank(parentSetting.runningDirectoryProperty().getValue())) {
+                    setting.runningDirectoryProperty().setValue(baseDirectory.toString());
+                    setting.getOverrideProperties().add(GameSettings.PROPERTY_RUNNING_DIRECTORY);
                 }
             }
             return new InstanceMigrationResult(file, receiptLocation, setting);
@@ -186,7 +186,7 @@ public final class LegacyGameSettingsMigrator {
         if (source != null && !inheritsLegacyParent) {
             copyCommonProperties(source, target, detectedJavaFactory);
             if (getLegacyGameDirType(source, GameDirectoryType.ROOT_FOLDER) != GameDirectoryType.ROOT_FOLDER) {
-                target.getOverrideProperties().add(GameSettings.PROPERTY_RUNNING_DIR);
+                target.getOverrideProperties().add(GameSettings.PROPERTY_RUNNING_DIRECTORY);
             }
             target.getOverrideProperties().addAll(List.of(
                     GameSettings.PROPERTY_JAVA_TYPE,
@@ -219,8 +219,8 @@ public final class LegacyGameSettingsMigrator {
                     GameSettings.PROPERTY_SHOW_LOGS,
                     GameSettings.PROPERTY_ENABLE_DEBUG_LOG_OUTPUT,
                     GameSettings.PROPERTY_NOT_PATCH_NATIVES,
-                    GameSettings.PROPERTY_NATIVES_DIR_TYPE,
-                    GameSettings.PROPERTY_NATIVES_DIR,
+                    GameSettings.PROPERTY_NATIVES_DIRECTORY_TYPE,
+                    GameSettings.PROPERTY_NATIVES_DIRECTORY,
                     GameSettings.PROPERTY_USE_NATIVE_GLFW,
                     GameSettings.PROPERTY_USE_NATIVE_OPENAL
             ));
@@ -264,7 +264,7 @@ public final class LegacyGameSettingsMigrator {
         target.windowTypeProperty().setValue(JsonUtils.getBoolean(source, "fullscreen", false) ? GameWindowType.FULLSCREEN : GameWindowType.WINDOWED);
         target.widthProperty().setValue((double) JsonUtils.getInt(source, "width", 0));
         target.heightProperty().setValue((double) JsonUtils.getInt(source, "height", 0));
-        target.runningDirProperty().setValue(getLegacyGameDirType(source, GameDirectoryType.ROOT_FOLDER) == GameDirectoryType.CUSTOM
+        target.runningDirectoryProperty().setValue(getLegacyGameDirType(source, GameDirectoryType.ROOT_FOLDER) == GameDirectoryType.CUSTOM
                 ? JsonUtils.getString(source, "gameDir", "")
                 : "");
 
@@ -288,8 +288,8 @@ public final class LegacyGameSettingsMigrator {
         target.showLogsProperty().setValue(JsonUtils.getBoolean(source, "showLogs", false));
         target.enableDebugLogOutputProperty().setValue(JsonUtils.getBoolean(source, "enableDebugLogOutput", false));
         target.notPatchNativesProperty().setValue(JsonUtils.getBoolean(source, "notPatchNatives", false));
-        target.nativesDirTypeProperty().setValue(parseEnum(source, "nativesDirType", NativesDirectoryType.class, NativesDirectoryType.VERSION_FOLDER));
-        target.nativesDirProperty().setValue(JsonUtils.getString(source, "nativesDir", ""));
+        target.nativesDirectoryTypeProperty().setValue(parseEnum(source, "nativesDirType", NativesDirectoryType.class, NativesDirectoryType.VERSION_FOLDER));
+        target.nativesDirectoryProperty().setValue(JsonUtils.getString(source, "nativesDir", ""));
         target.useNativeGLFWProperty().setValue(JsonUtils.getBoolean(source, "useNativeGLFW", false));
         target.useNativeOpenALProperty().setValue(JsonUtils.getBoolean(source, "useNativeOpenAL", false));
     }

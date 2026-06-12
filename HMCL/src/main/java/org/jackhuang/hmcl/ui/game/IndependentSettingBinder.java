@@ -541,7 +541,7 @@ final class IndependentSettingBinder {
             try {
                 boolean overridden = isOverridden(setting, property);
                 NativesDirectoryType rawValue = getDirectValue(property);
-                NativesDirectoryType effectiveValue = getEffectiveValue(setting, GameSettings::nativesDirTypeProperty, parentGetter);
+                NativesDirectoryType effectiveValue = getEffectiveValue(setting, GameSettings::nativesDirectoryTypeProperty, parentGetter);
                 button.setRawValue((overridden ? rawValue : effectiveValue) == NativesDirectoryType.CUSTOM);
                 button.setOverridden(overridden);
                 button.setEffectiveValue(effectiveValue == NativesDirectoryType.CUSTOM);
@@ -561,7 +561,7 @@ final class IndependentSettingBinder {
             try {
                 setOverridden(setting, property, true);
                 property.setValue(newValue ? NativesDirectoryType.CUSTOM : NativesDirectoryType.VERSION_FOLDER);
-                button.setEffectiveValue(getEffectiveValue(setting, GameSettings::nativesDirTypeProperty, parentGetter) == NativesDirectoryType.CUSTOM);
+                button.setEffectiveValue(getEffectiveValue(setting, GameSettings::nativesDirectoryTypeProperty, parentGetter) == NativesDirectoryType.CUSTOM);
             } finally {
                 updating.value = false;
             }
@@ -580,13 +580,13 @@ final class IndependentSettingBinder {
                 if (newValue) {
                     property.setValue(button.getRawValue() ? NativesDirectoryType.CUSTOM : NativesDirectoryType.VERSION_FOLDER);
                 }
-                button.setEffectiveValue(getEffectiveValue(setting, GameSettings::nativesDirTypeProperty, parentGetter) == NativesDirectoryType.CUSTOM);
+                button.setEffectiveValue(getEffectiveValue(setting, GameSettings::nativesDirectoryTypeProperty, parentGetter) == NativesDirectoryType.CUSTOM);
             } finally {
                 updating.value = false;
             }
         });
 
-        bindActiveProperty(currentSetting, activeProperty, GameSettings::nativesDirTypeProperty, refresh);
+        bindActiveProperty(currentSetting, activeProperty, GameSettings::nativesDirectoryTypeProperty, refresh);
     }
 
     private static int sliderValueToMaxMemory(double value, int totalMemoryMiB) {

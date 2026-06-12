@@ -105,7 +105,7 @@ public final class HMCLGameRepository extends DefaultGameRepository {
 
         GameSettings.Instance localSetting = getInstanceGameSettings(id);
         boolean useInstanceRunningDirectory =
-                localSetting != null && localSetting.getOverrideProperties().contains(GameSettings.PROPERTY_RUNNING_DIR);
+                localSetting != null && localSetting.getOverrideProperties().contains(GameSettings.PROPERTY_RUNNING_DIRECTORY);
 
         String runningDirectory = getSelectedRunningDirectory(localSetting, useInstanceRunningDirectory);
         if (StringUtils.isBlank(runningDirectory)) {
@@ -129,12 +129,12 @@ public final class HMCLGameRepository extends DefaultGameRepository {
             }
 
             //noinspection DataFlowIssue
-            return Objects.requireNonNullElse(localSetting.runningDirProperty().getValue(), "");
+            return Objects.requireNonNullElse(localSetting.runningDirectoryProperty().getValue(), "");
         }
 
         GameSettings.Preset parent = getParentGameSettings(localSetting);
         //noinspection DataFlowIssue
-        return Objects.requireNonNullElse(parent.runningDirProperty().getValue(), "");
+        return Objects.requireNonNullElse(parent.runningDirectoryProperty().getValue(), "");
     }
 
     public Stream<Version> getDisplayVersions() {
@@ -217,8 +217,8 @@ public final class HMCLGameRepository extends DefaultGameRepository {
         Path srcGameDir = getRunDirectory(srcId);
 
         GameSettings.Instance newGameSettings = copyInstanceGameSettings(srcId);
-        newGameSettings.getOverrideProperties().add(GameSettings.PROPERTY_RUNNING_DIR);
-        newGameSettings.runningDirProperty().setValue("");
+        newGameSettings.getOverrideProperties().add(GameSettings.PROPERTY_RUNNING_DIRECTORY);
+        newGameSettings.runningDirectoryProperty().setValue("");
         initInstanceGameSettings(dstId, newGameSettings);
         saveGameSettings(dstId);
 
@@ -278,7 +278,7 @@ public final class HMCLGameRepository extends DefaultGameRepository {
         GameSettings.Preset profilePreset = getProfileGameSettingsPreset();
         if (profilePreset != null && profilePreset.defaultIsolationTypeProperty().getValue() == DefaultIsolationType.ALWAYS) {
             GameSettings.Instance setting = new GameSettings.Instance();
-            setting.getOverrideProperties().add(GameSettings.PROPERTY_RUNNING_DIR);
+            setting.getOverrideProperties().add(GameSettings.PROPERTY_RUNNING_DIRECTORY);
             initInstanceGameSettings(id, setting);
             saveGameSettings(id);
         }
@@ -379,8 +379,8 @@ public final class HMCLGameRepository extends DefaultGameRepository {
 
     /// Keeps old local custom running directories effective under the new source-selection model.
     private void normalizeRunningDirectoryOverride(GameSettings.Instance setting) {
-        if (StringUtils.isNotBlank(setting.runningDirProperty().getValue())) {
-            setting.getOverrideProperties().add(GameSettings.PROPERTY_RUNNING_DIR);
+        if (StringUtils.isNotBlank(setting.runningDirectoryProperty().getValue())) {
+            setting.getOverrideProperties().add(GameSettings.PROPERTY_RUNNING_DIRECTORY);
         }
     }
 
@@ -430,7 +430,7 @@ public final class HMCLGameRepository extends DefaultGameRepository {
         if (isolated) {
             GameSettings.Instance setting = getInstanceGameSettingsOrCreate(id);
             if (setting != null) {
-                setting.getOverrideProperties().add(GameSettings.PROPERTY_RUNNING_DIR);
+                setting.getOverrideProperties().add(GameSettings.PROPERTY_RUNNING_DIRECTORY);
             }
         }
     }
@@ -595,8 +595,8 @@ public final class HMCLGameRepository extends DefaultGameRepository {
                 .setPostExitCommand(vs.getInheritable(GameSettings::postExitCommandProperty))
                 .setNoGeneratedJVMArgs(noJVMOptions)
                 .setNoGeneratedOptimizingJVMArgs(vs.getInheritable(GameSettings::noOptimizingJVMOptionsProperty))
-                .setNativesDirType(vs.get(GameSettings::nativesDirTypeProperty))
-                .setNativesDir(vs.get(GameSettings::nativesDirProperty))
+                .setNativesDirType(vs.get(GameSettings::nativesDirectoryTypeProperty))
+                .setNativesDir(vs.get(GameSettings::nativesDirectoryProperty))
                 .setProcessPriority(vs.getInheritable(GameSettings::processPriorityProperty))
                 .setGraphicsBackend(vs.getInheritable(GameSettings::graphicsBackendProperty))
                 .setRenderer(vs.getRenderer())

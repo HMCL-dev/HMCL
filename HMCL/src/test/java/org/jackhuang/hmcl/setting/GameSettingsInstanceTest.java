@@ -21,6 +21,7 @@ import com.google.common.jimfs.Configuration;
 import com.google.common.jimfs.Jimfs;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
+import org.jackhuang.hmcl.game.NativesDirectoryType;
 import org.jackhuang.hmcl.util.gson.JsonSchema;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.junit.jupiter.api.Test;
@@ -31,7 +32,9 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /// Tests for instance-specific game settings.
 @NotNullByDefault
@@ -47,6 +50,26 @@ public final class GameSettingsInstanceTest {
 
         assertEquals(GameSettings.Instance.CURRENT_SCHEMA.url(),
                 serialized.get(JsonSchema.PROPERTY_SCHEMA).getAsString());
+    }
+
+    /// Tests that directory settings are serialized with full `Directory` property names.
+    @Test
+    public void storesDirectoryPropertyNames() {
+        GameSettings.Instance instance = new GameSettings.Instance();
+        instance.runningDirectoryProperty().setValue("run");
+        instance.nativesDirectoryTypeProperty().setValue(NativesDirectoryType.CUSTOM);
+        instance.nativesDirectoryProperty().setValue("natives");
+
+        JsonObject serialized = JsonParser.parseString(
+                LauncherSettings.SETTINGS_GSON.toJson(instance, GameSettings.Instance.class)
+        ).getAsJsonObject();
+
+        assertEquals("run", serialized.get("runningDirectory").getAsString());
+        assertEquals(NativesDirectoryType.CUSTOM.name(), serialized.get("nativesDirectoryType").getAsString());
+        assertEquals("natives", serialized.get("nativesDirectory").getAsString());
+        assertFalse(serialized.has("runningDir"));
+        assertFalse(serialized.has("nativesDirType"));
+        assertFalse(serialized.has("nativesDir"));
     }
 
     /// Tests that legacy Java default selection is migrated to automatic selection.
@@ -121,6 +144,22 @@ public final class GameSettingsInstanceTest {
 
         assertEquals(JavaVersionType.VERSION, instance.javaTypeProperty().getValue());
         assertEquals("17", instance.customJavaVersionProperty().getValue());
+    }
+
+    /// Tests that upstream/main native directory fields migrate to the renamed game setting properties.
+    @Test
+    public void migratesLegacyNativeDirectoryFields() {
+        GameSettings.Instance instance = LegacyGameSettingsMigrator.toInstance(null, JsonParser.parseString("""
+                {
+                  "nativesDirType": "CUSTOM",
+                  "nativesDir": "natives"
+                }
+                """).getAsJsonObject(), false);
+
+        assertEquals(NativesDirectoryType.CUSTOM, instance.nativesDirectoryTypeProperty().getValue());
+        assertEquals("natives", instance.nativesDirectoryProperty().getValue());
+        assertTrue(instance.getOverrideProperties().contains(GameSettings.PROPERTY_NATIVES_DIRECTORY_TYPE));
+        assertTrue(instance.getOverrideProperties().contains(GameSettings.PROPERTY_NATIVES_DIRECTORY));
     }
 
     /// Tests that inheriting a legacy parent keeps copied fields unset on the instance itself.

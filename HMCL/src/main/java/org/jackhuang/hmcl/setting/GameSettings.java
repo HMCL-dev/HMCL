@@ -518,15 +518,15 @@ public sealed abstract class GameSettings extends ObservableSetting {
     }
 
     /// Property name for the custom run directory.
-    public static final String PROPERTY_RUNNING_DIR = "runningDir";
+    public static final String PROPERTY_RUNNING_DIRECTORY = "runningDirectory";
 
     /// The custom run directory.
-    @SerializedName(PROPERTY_RUNNING_DIR)
-    private final InheritableProperty<String> runningDir = newInheritableProperty(PROPERTY_RUNNING_DIR, "");
+    @SerializedName(PROPERTY_RUNNING_DIRECTORY)
+    private final InheritableProperty<String> runningDirectory = newInheritableProperty(PROPERTY_RUNNING_DIRECTORY, "");
 
     /// Returns the custom run directory property.
-    public InheritableProperty<String> runningDirProperty() {
-        return runningDir;
+    public InheritableProperty<String> runningDirectoryProperty() {
+        return runningDirectory;
     }
 
     /// Property name for the process priority.
@@ -761,27 +761,27 @@ public sealed abstract class GameSettings extends ObservableSetting {
     }
 
     /// Property name for the native library directory mode.
-    public static final String PROPERTY_NATIVES_DIR_TYPE = "nativesDirType";
+    public static final String PROPERTY_NATIVES_DIRECTORY_TYPE = "nativesDirectoryType";
 
     /// The native library directory mode.
-    @SerializedName(PROPERTY_NATIVES_DIR_TYPE)
-    private final SettingProperty<NativesDirectoryType> nativesDirType = newSettingProperty(PROPERTY_NATIVES_DIR_TYPE, NativesDirectoryType.VERSION_FOLDER);
+    @SerializedName(PROPERTY_NATIVES_DIRECTORY_TYPE)
+    private final SettingProperty<NativesDirectoryType> nativesDirectoryType = newSettingProperty(PROPERTY_NATIVES_DIRECTORY_TYPE, NativesDirectoryType.VERSION_FOLDER);
 
     /// Returns the native library directory mode property.
-    public SettingProperty<NativesDirectoryType> nativesDirTypeProperty() {
-        return nativesDirType;
+    public SettingProperty<NativesDirectoryType> nativesDirectoryTypeProperty() {
+        return nativesDirectoryType;
     }
 
     /// Property name for the native library directory path.
-    public static final String PROPERTY_NATIVES_DIR = "nativesDir";
+    public static final String PROPERTY_NATIVES_DIRECTORY = "nativesDirectory";
 
     /// The path to the native library directory.
-    @SerializedName(PROPERTY_NATIVES_DIR)
-    private final SettingProperty<String> nativesDir = newSettingProperty(PROPERTY_NATIVES_DIR, "");
+    @SerializedName(PROPERTY_NATIVES_DIRECTORY)
+    private final SettingProperty<String> nativesDirectory = newSettingProperty(PROPERTY_NATIVES_DIRECTORY, "");
 
     /// Returns the native library directory property.
-    public SettingProperty<String> nativesDirProperty() {
-        return nativesDir;
+    public SettingProperty<String> nativesDirectoryProperty() {
+        return nativesDirectory;
     }
 
     /// Property name for using native GLFW.

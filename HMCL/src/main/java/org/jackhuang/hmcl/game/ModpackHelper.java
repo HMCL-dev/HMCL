@@ -165,7 +165,7 @@ public final class ModpackHelper {
             GameSettings.Instance setting = repository.getInstanceGameSettingsOrCreate(name);
             repository.undoMark(name);
             if (setting != null) {
-                setting.getOverrideProperties().add(GameSettings.PROPERTY_RUNNING_DIR);
+                setting.getOverrideProperties().add(GameSettings.PROPERTY_RUNNING_DIRECTORY);
             }
         };
 
@@ -210,7 +210,7 @@ public final class ModpackHelper {
             GameSettings.Instance setting = repository.getInstanceGameSettingsOrCreate(name);
             repository.undoMark(name);
             if (setting != null) {
-                setting.getOverrideProperties().add(GameSettings.PROPERTY_RUNNING_DIR);
+                setting.getOverrideProperties().add(GameSettings.PROPERTY_RUNNING_DIRECTORY);
             }
         };
 
@@ -264,7 +264,7 @@ public final class ModpackHelper {
     }
 
     public static void toGameSettings(MultiMCInstanceConfiguration c, GameSettings.Instance setting) {
-        setting.getOverrideProperties().add(GameSettings.PROPERTY_RUNNING_DIR);
+        setting.getOverrideProperties().add(GameSettings.PROPERTY_RUNNING_DIRECTORY);
 
         if (c.isOverrideJavaLocation()) {
             setting.getOverrideProperties().add(GameSettings.PROPERTY_JAVA_TYPE);

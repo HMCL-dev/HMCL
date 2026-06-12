@@ -708,7 +708,7 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
                 var txtNativesDir = new JFXTextField();
                 txtNativesDir.setPrefWidth(400);
                 nativesDirPane.setRight(txtNativesDir);
-                bindIndependentTextField(nativesDirPane, txtNativesDir, GameSettings::nativesDirProperty);
+                bindIndependentTextField(nativesDirPane, txtNativesDir, GameSettings::nativesDirectoryProperty);
             }
 
             var noNativesPatchPane = createIndependentBooleanButton(GameSettings::notPatchNativesProperty);
@@ -1322,7 +1322,7 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
             try {
                 boolean forceIsolated = isCurrentInstanceModpack();
                 button.setSelected(forceIsolated
-                        || instance.getOverrideProperties().contains(GameSettings.PROPERTY_RUNNING_DIR));
+                        || instance.getOverrideProperties().contains(GameSettings.PROPERTY_RUNNING_DIRECTORY));
                 button.setDisable(forceIsolated);
             } finally {
                 updating.value = false;
@@ -1338,10 +1338,10 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
             updating.value = true;
             try {
                 if (newValue) {
-                    instance.runningDirProperty().setValue("");
-                    instance.getOverrideProperties().add(GameSettings.PROPERTY_RUNNING_DIR);
+                    instance.runningDirectoryProperty().setValue("");
+                    instance.getOverrideProperties().add(GameSettings.PROPERTY_RUNNING_DIRECTORY);
                 } else {
-                    instance.getOverrideProperties().remove(GameSettings.PROPERTY_RUNNING_DIR);
+                    instance.getOverrideProperties().remove(GameSettings.PROPERTY_RUNNING_DIRECTORY);
                 }
             } finally {
                 updating.value = false;
@@ -1373,7 +1373,7 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
             Property<String> textProperty,
             Node editor) {
         if (isPresetSetting) {
-            bindInheritableStringProperty(line, textProperty, GameSettings::runningDirProperty);
+            bindInheritableStringProperty(line, textProperty, GameSettings::runningDirectoryProperty);
             return;
         }
 
@@ -1385,7 +1385,7 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
 
         InvalidationListener refresh = observable -> {
             GameSettings setting = currentSetting.get();
-            updateParentInheritablePropertyListener(setting, activeParentProperty, GameSettings::runningDirProperty, refreshHolder.value);
+            updateParentInheritablePropertyListener(setting, activeParentProperty, GameSettings::runningDirectoryProperty, refreshHolder.value);
             if (!(setting instanceof GameSettings.Instance instance) || updating.value) {
                 return;
             }
@@ -1393,13 +1393,13 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
             updating.value = true;
             try {
                 boolean useInstanceRunningDirectory = isCurrentInstanceModpack()
-                        || instance.getOverrideProperties().contains(GameSettings.PROPERTY_RUNNING_DIR);
+                        || instance.getOverrideProperties().contains(GameSettings.PROPERTY_RUNNING_DIRECTORY);
                 String runningDirectory;
                 if (useInstanceRunningDirectory) {
-                    String value = instance.runningDirProperty().getValue();
-                    runningDirectory = value != null ? value : instance.runningDirProperty().defaultValue();
+                    String value = instance.runningDirectoryProperty().getValue();
+                    runningDirectory = value != null ? value : instance.runningDirectoryProperty().defaultValue();
                 } else {
-                    runningDirectory = getParentValue(instance, GameSettings::runningDirProperty);
+                    runningDirectory = getParentValue(instance, GameSettings::runningDirectoryProperty);
                 }
 
                 textProperty.setValue(runningDirectory);
@@ -1420,11 +1420,11 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
 
             updating.value = true;
             try {
-                if (instance.getOverrideProperties().contains(GameSettings.PROPERTY_RUNNING_DIR)) {
-                    instance.getOverrideProperties().remove(GameSettings.PROPERTY_RUNNING_DIR);
+                if (instance.getOverrideProperties().contains(GameSettings.PROPERTY_RUNNING_DIRECTORY)) {
+                    instance.getOverrideProperties().remove(GameSettings.PROPERTY_RUNNING_DIRECTORY);
                 } else {
-                    instance.runningDirProperty().setValue("");
-                    instance.getOverrideProperties().add(GameSettings.PROPERTY_RUNNING_DIR);
+                    instance.runningDirectoryProperty().setValue("");
+                    instance.getOverrideProperties().add(GameSettings.PROPERTY_RUNNING_DIRECTORY);
                 }
             } finally {
                 updating.value = false;
@@ -1438,14 +1438,14 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
             if (!(setting instanceof GameSettings.Instance instance)
                     || updating.value
                     || (!isCurrentInstanceModpack()
-                    && !instance.getOverrideProperties().contains(GameSettings.PROPERTY_RUNNING_DIR))) {
+                    && !instance.getOverrideProperties().contains(GameSettings.PROPERTY_RUNNING_DIRECTORY))) {
                 return;
             }
 
             updating.value = true;
             try {
-                instance.getOverrideProperties().add(GameSettings.PROPERTY_RUNNING_DIR);
-                instance.runningDirProperty().setValue(newValue != null ? newValue : "");
+                instance.getOverrideProperties().add(GameSettings.PROPERTY_RUNNING_DIRECTORY);
+                instance.runningDirectoryProperty().setValue(newValue != null ? newValue : "");
             } finally {
                 updating.value = false;
             }

@@ -135,7 +135,7 @@
         "height": {
           "type": "number"
         },
-        "runningDir": {
+        "runningDirectory": {
           "type": "string"
         },
         "processPriority": {
@@ -215,13 +215,13 @@
         "notPatchNatives": {
           "type": "boolean"
         },
-        "nativesDirType": {
+        "nativesDirectoryType": {
           "enum": [
             "VERSION_FOLDER",
             "CUSTOM"
           ]
         },
-        "nativesDir": {
+        "nativesDirectory": {
           "type": "string"
         },
         "useNativeGLFW": {

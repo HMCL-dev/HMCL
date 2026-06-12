@@ -540,7 +540,7 @@ public final class LauncherHelper {
                         }
 
                         if (violatedMandatoryConstraints.contains(JavaVersionConstraint.VANILLA_LINUX_JAVA_8)) {
-                            if (setting.get(GameSettings::nativesDirTypeProperty) == NativesDirectoryType.VERSION_FOLDER) {
+                            if (setting.get(GameSettings::nativesDirectoryTypeProperty) == NativesDirectoryType.VERSION_FOLDER) {
                                 FXUtils.runInFX(() -> Controllers.dialog(i18n("launch.advice.vanilla_linux_java_8"), i18n("message.error"), MessageType.ERROR, breakAction));
                                 return result;
                             } else {
@@ -624,7 +624,7 @@ public final class LauncherHelper {
                             suggestions.add(i18n("launch.advice.modlauncher8"));
                             break;
                         case VANILLA_X86:
-                            if (setting.get(GameSettings::nativesDirTypeProperty) == NativesDirectoryType.VERSION_FOLDER
+                            if (setting.get(GameSettings::nativesDirectoryTypeProperty) == NativesDirectoryType.VERSION_FOLDER
                                     && Platform.isSupportedTranslationX86_64()) {
                                 suggestions.add(i18n("launch.advice.vanilla_x86.translation"));
                             }

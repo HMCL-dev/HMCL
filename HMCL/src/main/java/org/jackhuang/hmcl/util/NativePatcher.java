@@ -78,7 +78,7 @@ public final class NativePatcher {
                                       JavaRuntime javaVersion,
                                       GameSettings.Effective settings,
                                       List<String> javaArguments) {
-        if (settings.get(GameSettings::nativesDirTypeProperty) == NativesDirectoryType.CUSTOM) {
+        if (settings.get(GameSettings::nativesDirectoryTypeProperty) == NativesDirectoryType.CUSTOM) {
             if (gameVersion != null && GameVersionNumber.compare(gameVersion, "1.19") < 0)
                 return version;
 
