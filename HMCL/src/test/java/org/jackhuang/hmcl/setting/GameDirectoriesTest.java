@@ -439,14 +439,15 @@ public final class GameDirectoriesTest {
             userGameDirectoriesField.set(null, userDirectories);
             launcherSettingsField.set(null, new LauncherSettings());
             initializedField.setBoolean(null, false);
-            selectedProfile.set(null);
             mergedProfiles.clear();
         }
 
         /// Restores the previous static state.
         @Override
         public void close() throws ReflectiveOperationException {
-            selectedProfile.set(previousSelectedProfile);
+            if (previousSelectedProfile != null) {
+                selectedProfile.set(previousSelectedProfile);
+            }
             mergedProfiles.setAll(previousMergedProfiles);
             localGameDirectoriesField.set(null, previousLocalGameDirectories);
             userGameDirectoriesField.set(null, previousUserGameDirectories);
