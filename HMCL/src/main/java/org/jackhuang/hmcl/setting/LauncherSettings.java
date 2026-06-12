@@ -456,11 +456,16 @@ public final class LauncherSettings extends ObservableSetting implements JsonSch
     }
 
     /// The selected game directory ID.
+    ///
+    /// This field is owned by [Profiles]. Code outside [Profiles] should not modify it directly.
     @SerializedName(PROPERTY_SELECTED_GAME_DIRECTORY)
     private final ObjectProperty<@Nullable SettingID> selectedGameDirectory =
             new SimpleObjectProperty<>(this, PROPERTY_SELECTED_GAME_DIRECTORY);
 
     /// Returns the selected game directory ID property.
+    ///
+    /// This property is exposed for persistence and [Profiles] integration. Code outside [Profiles]
+    /// should use `Profiles.setSelectedProfile` instead of modifying this property directly.
     public ObjectProperty<@Nullable SettingID> selectedGameDirectoryProperty() {
         return selectedGameDirectory;
     }
@@ -476,20 +481,29 @@ public final class LauncherSettings extends ObservableSetting implements JsonSch
     }
 
     /// Selected instance IDs keyed by game directory ID.
+    ///
+    /// This field is owned by [Profiles]. Code outside [Profiles] should not modify it directly.
     @SerializedName(PROPERTY_SELECTED_INSTANCE)
     private final ObservableMap<SettingID, String> selectedInstance = FXCollections.observableHashMap();
 
     /// Returns selected instance IDs keyed by game directory ID.
+    ///
+    /// This map is exposed for persistence and migration code. Runtime code outside [Profiles] should
+    /// use `Profiles.getSelectedInstance` and `Profiles.setSelectedInstance` instead of mutating it.
     public ObservableMap<SettingID, String> getSelectedInstance() {
         return selectedInstance;
     }
 
     /// Returns the selected instance ID for the given game directory ID.
+    ///
+    /// This method is intended for [Profiles].
     @Nullable String getSelectedInstance(@Nullable SettingID gameDirectoryId) {
         return gameDirectoryId != null ? selectedInstance.get(gameDirectoryId) : null;
     }
 
     /// Sets the selected instance ID for the given game directory ID.
+    ///
+    /// This method is intended for [Profiles].
     void setSelectedInstance(@Nullable SettingID gameDirectoryId, @Nullable String selectedInstance) {
         if (gameDirectoryId == null) {
             return;

@@ -44,6 +44,12 @@ import static org.jackhuang.hmcl.setting.SettingsManager.*;
 import static org.jackhuang.hmcl.ui.FXUtils.runInFX;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
+/// Manages the merged runtime view of local and user game directory profiles.
+///
+/// Local profiles take precedence over user profiles with the same ID. This class is
+/// the only owner of the currently selected profile and selected instance bookkeeping;
+/// callers should use this API instead of mutating the profile-related fields in
+/// [LauncherSettings] directly.
 @NotNullByDefault
 public final class Profiles {
 
@@ -73,6 +79,7 @@ public final class Profiles {
                 .anyMatch(profile -> profile.getId().equals(id));
     }
 
+    /// Returns the display name for the given profile.
     public static String getProfileDisplayName(Profile profile) {
         String name = getProfileCustomName(profile);
         if (name != null) {
@@ -102,6 +109,9 @@ public final class Profiles {
                 && actualPath.getPath().equals(expectedPath.getPath());
     }
 
+    /// True if [#init()] hasn't been called.
+    private static boolean initialized = false;
+
     private static final ObservableList<Profile> mergedProfiles =
             FXCollections.observableArrayList(profile -> new javafx.beans.Observable[]{profile});
 
@@ -109,9 +119,14 @@ public final class Profiles {
             FXCollections.unmodifiableObservableList(mergedProfiles);
 
     /// The selected profile, or `null` before the fallback profile is resolved.
-    private static final ObjectProperty<@UnknownNullability Profile> selectedProfile = new SimpleObjectProperty<>();
+    private static final ObjectProperty<@UnknownNullability Profile> selectedProfile = new SimpleObjectProperty<>(Profiles.class, "selectedProfile");
 
-    /// Called when it's ready to load profiles from [SettingsManager].
+    private static final ReadOnlyStringWrapper selectedInstance = new ReadOnlyStringWrapper(Profiles.class, "selectedInstance");
+
+    /// Initializes profile state from the game directory stores loaded by [SettingsManager].
+    ///
+    /// This method creates the built-in local and user-home profiles when required, rebuilds
+    /// the merged profile view, and restores the selected profile from [LauncherSettings].
     public static void init() {
         if (initialized)
             throw new IllegalStateException("Already initialized");
@@ -151,13 +166,16 @@ public final class Profiles {
             }
         }
 
-        if (currentProfile != null) {
-            selectedProfile.set(currentProfile);
-        } else {
-            Profile firstProfile = mergedProfiles.get(0);
-            selectedProfile.set(firstProfile);
-            settings().selectedGameDirectoryProperty().set(firstProfile.getId());
-        }
+        selectedProfile.addListener((a, b, newValue) -> {
+            if (newValue == null) {
+                throw new IllegalStateException("selectedProfile cannot be null");
+            }
+
+            settings().selectedGameDirectoryProperty().set(newValue.getId());
+            selectedInstance.set(settings().getSelectedInstance(newValue.getId()));
+            newValue.getRepository().refreshVersionsAsync().start();
+        });
+        selectedProfile.set(currentProfile != null ? currentProfile : mergedProfiles.get(0));
 
         EventBus.EVENT_BUS.channel(RefreshedVersionsEvent.class).registerWeak(event -> {
             runInFX(() -> {
@@ -197,18 +215,6 @@ public final class Profiles {
         } else {
             return false;
         }
-    }
-
-    /**
-     * True if {@link #init()} hasn't been called.
-     */
-    private static boolean initialized = false;
-
-    static {
-        selectedProfile.addListener((a, b, newValue) -> {
-            if (newValue != null)
-                newValue.getRepository().refreshVersionsAsync().start();
-        });
     }
 
     /// Rebuilds the merged runtime profile view from the two backing stores.
@@ -257,6 +263,10 @@ public final class Profiles {
         localGameDirectories().getGameDirectories().remove(profile);
         createDefaultProfilesIfEmpty();
         rebuildProfiles();
+
+        if (!mergedProfiles.contains(selectedProfile.get())) {
+            setSelectedProfile(mergedProfiles.get(0));
+        }
     }
 
     /// Returns the selected profile, creating built-in profiles first if the profile list is empty.
@@ -270,22 +280,28 @@ public final class Profiles {
 
     /// Sets the selected profile.
     public static void setSelectedProfile(Profile profile) {
-        assert mergedProfiles.contains(profile);
-        selectedProfile.set(Objects.requireNonNull(profile));
+        Objects.requireNonNull(profile);
+        if (!mergedProfiles.contains(profile)) {
+            throw new IllegalArgumentException("Unknown profile: " + profile);
+        }
+        selectedProfile.set(profile);
     }
 
     /// Returns the selected profile property.
+    ///
+    /// The property is exposed for UI binding. Values should be changed through
+    /// [#setSelectedProfile(Profile)] or by bidirectional bindings that only select
+    /// profiles from [#getProfiles()].
     public static ObjectProperty<Profile> selectedProfileProperty() {
         return selectedProfile;
     }
 
-    private static final ReadOnlyStringWrapper selectedInstance = new ReadOnlyStringWrapper();
-
+    /// Returns the selected instance property for the selected profile.
     public static ReadOnlyStringProperty selectedInstanceProperty() {
         return selectedInstance.getReadOnlyProperty();
     }
 
-    // Guaranteed that the repository is loaded.
+    /// Returns the selected instance ID for the selected profile.
     public static @Nullable String getSelectedInstance() {
         return selectedInstance.get();
     }
@@ -313,6 +329,7 @@ public final class Profiles {
 
     private static final List<Consumer<Profile>> versionsListeners = new ArrayList<>(4);
 
+    /// Registers a listener that is notified when the selected profile's versions are available.
     public static void registerVersionsListener(Consumer<Profile> listener) {
         Profile profile = getSelectedProfile();
         if (profile.getRepository().isLoaded())

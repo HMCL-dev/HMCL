@@ -116,9 +116,6 @@ public final class GameDirectories extends ObservableSetting implements JsonSche
     /// Sets whether this store represents `HMCL_USER_HOME/user-game-directories.json`.
     void setUserFile(boolean userFile) {
         this.userFile = userFile;
-        for (Profile profile : gameDirectories) {
-            profile.setUserGameDirectory(userFile);
-        }
     }
 
     /// Returns whether this store represents `HMCL_USER_HOME/user-game-directories.json`.
@@ -126,12 +123,15 @@ public final class GameDirectories extends ObservableSetting implements JsonSche
         return userFile;
     }
 
+    /// Whether this store was created because its JSON file did not exist.
     private transient boolean newlyCreated;
 
+    /// Returns whether this store was created because its JSON file did not exist.
     boolean isNewlyCreated() {
         return newlyCreated;
     }
 
+    /// Sets whether this store was created because its JSON file did not exist.
     void setNewlyCreated(boolean newlyCreated) {
         this.newlyCreated = newlyCreated;
     }

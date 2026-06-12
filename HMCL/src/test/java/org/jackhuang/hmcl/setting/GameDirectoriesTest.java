@@ -272,48 +272,32 @@ public final class GameDirectoriesTest {
         localDirectories.getGameDirectories().add(localProfile);
         localDirectories.setUserFile(false);
 
-        Field localGameDirectoriesField = SettingsManager.class.getDeclaredField("localGameDirectories");
-        Field userGameDirectoriesField = SettingsManager.class.getDeclaredField("userGameDirectories");
-        localGameDirectoriesField.setAccessible(true);
-        userGameDirectoriesField.setAccessible(true);
-        Field profilesLoadedField = Profiles.class.getDeclaredField("gameDirectoriesLoaded");
-        Field mergedProfilesWrapperField = Profiles.class.getDeclaredField("mergedProfilesWrapper");
-        profilesLoadedField.setAccessible(true);
-        mergedProfilesWrapperField.setAccessible(true);
-        Object previousLocalGameDirectories = localGameDirectoriesField.get(null);
-        Object previousUserGameDirectories = userGameDirectoriesField.get(null);
-        boolean previousProfilesLoaded = profilesLoadedField.getBoolean(null);
-        @SuppressWarnings("unchecked")
-        ReadOnlyListWrapper<Profile> mergedProfilesWrapper =
-                (ReadOnlyListWrapper<Profile>) mergedProfilesWrapperField.get(null);
-        ObservableList<Profile> mergedProfiles = mergedProfilesWrapper.get();
-        List<Profile> previousMergedProfiles = List.copyOf(mergedProfiles);
-        localGameDirectoriesField.set(null, localDirectories);
-        userGameDirectoriesField.set(null, userDirectories);
-        profilesLoadedField.setBoolean(null, false);
-        mergedProfiles.clear();
-        try {
-            Profiles.loadGameDirectories(localDirectories, userDirectories, false, false);
+        try (ProfileEnvironment ignored = new ProfileEnvironment(localDirectories, userDirectories)) {
+            Profiles.init();
             ObservableList<Profile> gameDirectories = Profiles.getProfiles();
 
             assertEquals(List.of(localProfile), gameDirectories);
             assertThrows(UnsupportedOperationException.class, () -> gameDirectories.add(addedProfile));
+            assertSame(localProfile, Profiles.getSelectedProfile());
+            assertEquals(localProfile.getId(), SettingsManager.settings().selectedGameDirectoryProperty().get());
             assertEquals(List.of(userProfile), userDirectories.getGameDirectories());
             assertEquals(List.of(localProfile), localDirectories.getGameDirectories());
 
             Profiles.removeProfile(localProfile);
             assertEquals(List.of(userProfile), Profiles.getProfiles());
+            assertSame(userProfile, Profiles.getSelectedProfile());
+            assertEquals(userProfile.getId(), SettingsManager.settings().selectedGameDirectoryProperty().get());
             assertEquals(List.of(userProfile), userDirectories.getGameDirectories());
             assertTrue(localDirectories.getGameDirectories().isEmpty());
 
             Profiles.addProfile(addedProfile);
             assertEquals(List.of(addedProfile, userProfile), Profiles.getProfiles());
             assertEquals(List.of(addedProfile), localDirectories.getGameDirectories());
-        } finally {
-            localGameDirectoriesField.set(null, previousLocalGameDirectories);
-            userGameDirectoriesField.set(null, previousUserGameDirectories);
-            profilesLoadedField.setBoolean(null, previousProfilesLoaded);
-            mergedProfiles.setAll(previousMergedProfiles);
+            assertSame(userProfile, Profiles.getSelectedProfile());
+
+            Profiles.setSelectedProfile(addedProfile);
+            assertSame(addedProfile, Profiles.getSelectedProfile());
+            assertEquals(addedProfile.getId(), SettingsManager.settings().selectedGameDirectoryProperty().get());
         }
     }
 
@@ -324,44 +308,19 @@ public final class GameDirectoriesTest {
         userDirectories.setUserFile(true);
         GameDirectories localDirectories = new GameDirectories();
         localDirectories.setUserFile(false);
+        userDirectories.setNewlyCreated(true);
+        localDirectories.setNewlyCreated(true);
 
-        Field localGameDirectoriesField = SettingsManager.class.getDeclaredField("localGameDirectories");
-        Field userGameDirectoriesField = SettingsManager.class.getDeclaredField("userGameDirectories");
-        localGameDirectoriesField.setAccessible(true);
-        userGameDirectoriesField.setAccessible(true);
-        Field profilesLoadedField = Profiles.class.getDeclaredField("gameDirectoriesLoaded");
-        Field mergedProfilesWrapperField = Profiles.class.getDeclaredField("mergedProfilesWrapper");
-        profilesLoadedField.setAccessible(true);
-        mergedProfilesWrapperField.setAccessible(true);
-        Object previousLocalGameDirectories = localGameDirectoriesField.get(null);
-        Object previousUserGameDirectories = userGameDirectoriesField.get(null);
-        boolean previousProfilesLoaded = profilesLoadedField.getBoolean(null);
-        @SuppressWarnings("unchecked")
-        ReadOnlyListWrapper<Profile> mergedProfilesWrapper =
-                (ReadOnlyListWrapper<Profile>) mergedProfilesWrapperField.get(null);
-        ObservableList<Profile> mergedProfiles = mergedProfilesWrapper.get();
-        List<Profile> previousMergedProfiles = List.copyOf(mergedProfiles);
-        localGameDirectoriesField.set(null, localDirectories);
-        userGameDirectoriesField.set(null, userDirectories);
-        profilesLoadedField.setBoolean(null, false);
-        mergedProfiles.clear();
-        try {
-            Profiles.loadGameDirectories(localDirectories, userDirectories, true, true);
+        try (ProfileEnvironment ignored = new ProfileEnvironment(localDirectories, userDirectories)) {
+            Profiles.init();
 
             Profile localProfile = assertSingleDefaultProfile(localDirectories, PortablePath.of(".minecraft"));
             Profile userProfile = assertSingleDefaultProfile(
                     userDirectories,
                     PortablePath.fromPath(Metadata.MINECRAFT_DIRECTORY));
-            assertFalse(localProfile.shouldSaveToUserGameDirectory());
-            assertTrue(userProfile.shouldSaveToUserGameDirectory());
             assertEquals(2, Profiles.getProfiles().size());
             assertTrue(Profiles.getProfiles().contains(localProfile));
             assertTrue(Profiles.getProfiles().contains(userProfile));
-        } finally {
-            localGameDirectoriesField.set(null, previousLocalGameDirectories);
-            userGameDirectoriesField.set(null, previousUserGameDirectories);
-            profilesLoadedField.setBoolean(null, previousProfilesLoaded);
-            mergedProfiles.setAll(previousMergedProfiles);
         }
     }
 
@@ -373,28 +332,8 @@ public final class GameDirectoriesTest {
         GameDirectories localDirectories = new GameDirectories();
         localDirectories.setUserFile(false);
 
-        Field localGameDirectoriesField = SettingsManager.class.getDeclaredField("localGameDirectories");
-        Field userGameDirectoriesField = SettingsManager.class.getDeclaredField("userGameDirectories");
-        localGameDirectoriesField.setAccessible(true);
-        userGameDirectoriesField.setAccessible(true);
-        Field profilesLoadedField = Profiles.class.getDeclaredField("gameDirectoriesLoaded");
-        Field mergedProfilesWrapperField = Profiles.class.getDeclaredField("mergedProfilesWrapper");
-        profilesLoadedField.setAccessible(true);
-        mergedProfilesWrapperField.setAccessible(true);
-        Object previousLocalGameDirectories = localGameDirectoriesField.get(null);
-        Object previousUserGameDirectories = userGameDirectoriesField.get(null);
-        boolean previousProfilesLoaded = profilesLoadedField.getBoolean(null);
-        @SuppressWarnings("unchecked")
-        ReadOnlyListWrapper<Profile> mergedProfilesWrapper =
-                (ReadOnlyListWrapper<Profile>) mergedProfilesWrapperField.get(null);
-        ObservableList<Profile> mergedProfiles = mergedProfilesWrapper.get();
-        List<Profile> previousMergedProfiles = List.copyOf(mergedProfiles);
-        localGameDirectoriesField.set(null, localDirectories);
-        userGameDirectoriesField.set(null, userDirectories);
-        profilesLoadedField.setBoolean(null, false);
-        mergedProfiles.clear();
-        try {
-            Profiles.loadGameDirectories(localDirectories, userDirectories, false, false);
+        try (ProfileEnvironment ignored = new ProfileEnvironment(localDirectories, userDirectories)) {
+            Profiles.init();
 
             Profile localProfile = assertSingleDefaultProfile(localDirectories, PortablePath.of(".minecraft"));
             Profile userProfile = assertSingleDefaultProfile(
@@ -403,11 +342,6 @@ public final class GameDirectoriesTest {
             assertEquals(2, Profiles.getProfiles().size());
             assertTrue(Profiles.getProfiles().contains(localProfile));
             assertTrue(Profiles.getProfiles().contains(userProfile));
-        } finally {
-            localGameDirectoriesField.set(null, previousLocalGameDirectories);
-            userGameDirectoriesField.set(null, previousUserGameDirectories);
-            profilesLoadedField.setBoolean(null, previousProfilesLoaded);
-            mergedProfiles.setAll(previousMergedProfiles);
         }
     }
 
@@ -419,46 +353,105 @@ public final class GameDirectoriesTest {
         GameDirectories localDirectories = new GameDirectories();
         localDirectories.setUserFile(false);
 
-        Field localGameDirectoriesField = SettingsManager.class.getDeclaredField("localGameDirectories");
-        Field userGameDirectoriesField = SettingsManager.class.getDeclaredField("userGameDirectories");
-        localGameDirectoriesField.setAccessible(true);
-        userGameDirectoriesField.setAccessible(true);
-        Field profilesLoadedField = Profiles.class.getDeclaredField("gameDirectoriesLoaded");
-        Field mergedProfilesWrapperField = Profiles.class.getDeclaredField("mergedProfilesWrapper");
-        Field selectedProfileField = Profiles.class.getDeclaredField("selectedProfile");
-        profilesLoadedField.setAccessible(true);
-        mergedProfilesWrapperField.setAccessible(true);
-        selectedProfileField.setAccessible(true);
-        Object previousLocalGameDirectories = localGameDirectoriesField.get(null);
-        Object previousUserGameDirectories = userGameDirectoriesField.get(null);
-        boolean previousProfilesLoaded = profilesLoadedField.getBoolean(null);
-        @SuppressWarnings("unchecked")
-        ReadOnlyListWrapper<Profile> mergedProfilesWrapper =
-                (ReadOnlyListWrapper<Profile>) mergedProfilesWrapperField.get(null);
-        ObservableList<Profile> mergedProfiles = mergedProfilesWrapper.get();
-        @SuppressWarnings("unchecked")
-        ObjectProperty<Profile> selectedProfile =
-                (ObjectProperty<Profile>) selectedProfileField.get(null);
-        Profile previousSelectedProfile = selectedProfile.get();
-        List<Profile> previousMergedProfiles = List.copyOf(mergedProfiles);
-        localGameDirectoriesField.set(null, localDirectories);
-        userGameDirectoriesField.set(null, userDirectories);
-        profilesLoadedField.setBoolean(null, false);
-        selectedProfile.set(null);
-        mergedProfiles.clear();
-        try {
-            Profiles.loadGameDirectories(localDirectories, userDirectories, false, false);
+        try (ProfileEnvironment ignored = new ProfileEnvironment(localDirectories, userDirectories)) {
+            Profiles.init();
 
             Profile selected = Profiles.getSelectedProfile();
             assertNotNull(selected);
             assertSame(selected, Profiles.getSelectedProfile());
             assertTrue(Profiles.getProfiles().contains(selected));
-        } finally {
-            localGameDirectoriesField.set(null, previousLocalGameDirectories);
-            userGameDirectoriesField.set(null, previousUserGameDirectories);
-            profilesLoadedField.setBoolean(null, previousProfilesLoaded);
+            assertEquals(selected.getId(), SettingsManager.settings().selectedGameDirectoryProperty().get());
+        }
+    }
+
+    /// Temporary static state override for profile tests.
+    private static final class ProfileEnvironment implements AutoCloseable {
+        /// The reflected SettingsManager local game directories field.
+        private final Field localGameDirectoriesField;
+
+        /// The reflected SettingsManager user game directories field.
+        private final Field userGameDirectoriesField;
+
+        /// The reflected SettingsManager launcher settings field.
+        private final Field launcherSettingsField;
+
+        /// The reflected Profiles initialized field.
+        private final Field initializedField;
+
+        /// The reflected Profiles selected profile property.
+        private final ObjectProperty<Profile> selectedProfile;
+
+        /// The merged profile list used by Profiles.
+        private final ObservableList<Profile> mergedProfiles;
+
+        /// The previous local game directories instance.
+        private final Object previousLocalGameDirectories;
+
+        /// The previous user game directories instance.
+        private final Object previousUserGameDirectories;
+
+        /// The previous launcher settings instance.
+        private final Object previousLauncherSettings;
+
+        /// The previous Profiles initialization state.
+        private final boolean previousInitialized;
+
+        /// The previous selected profile.
+        private final Profile previousSelectedProfile;
+
+        /// The previous merged profiles.
+        private final List<Profile> previousMergedProfiles;
+
+        /// Replaces profile-related static state with the given stores.
+        private ProfileEnvironment(GameDirectories localDirectories, GameDirectories userDirectories)
+                throws ReflectiveOperationException {
+            localGameDirectoriesField = SettingsManager.class.getDeclaredField("localGameDirectories");
+            userGameDirectoriesField = SettingsManager.class.getDeclaredField("userGameDirectories");
+            launcherSettingsField = SettingsManager.class.getDeclaredField("launcherSettings");
+            initializedField = Profiles.class.getDeclaredField("initialized");
+            Field selectedProfileField = Profiles.class.getDeclaredField("selectedProfile");
+            Field mergedProfilesField = Profiles.class.getDeclaredField("mergedProfiles");
+            localGameDirectoriesField.setAccessible(true);
+            userGameDirectoriesField.setAccessible(true);
+            launcherSettingsField.setAccessible(true);
+            initializedField.setAccessible(true);
+            selectedProfileField.setAccessible(true);
+            mergedProfilesField.setAccessible(true);
+
+            previousLocalGameDirectories = localGameDirectoriesField.get(null);
+            previousUserGameDirectories = userGameDirectoriesField.get(null);
+            previousLauncherSettings = launcherSettingsField.get(null);
+            previousInitialized = initializedField.getBoolean(null);
+
+            @SuppressWarnings("unchecked")
+            ObjectProperty<Profile> selectedProfile =
+                    (ObjectProperty<Profile>) selectedProfileField.get(null);
+            this.selectedProfile = selectedProfile;
+            previousSelectedProfile = selectedProfile.get();
+
+            @SuppressWarnings("unchecked")
+            ObservableList<Profile> mergedProfiles =
+                    (ObservableList<Profile>) mergedProfilesField.get(null);
+            this.mergedProfiles = mergedProfiles;
+            previousMergedProfiles = List.copyOf(mergedProfiles);
+
+            localGameDirectoriesField.set(null, localDirectories);
+            userGameDirectoriesField.set(null, userDirectories);
+            launcherSettingsField.set(null, new LauncherSettings());
+            initializedField.setBoolean(null, false);
+            selectedProfile.set(null);
+            mergedProfiles.clear();
+        }
+
+        /// Restores the previous static state.
+        @Override
+        public void close() throws ReflectiveOperationException {
             selectedProfile.set(previousSelectedProfile);
             mergedProfiles.setAll(previousMergedProfiles);
+            localGameDirectoriesField.set(null, previousLocalGameDirectories);
+            userGameDirectoriesField.set(null, previousUserGameDirectories);
+            launcherSettingsField.set(null, previousLauncherSettings);
+            initializedField.setBoolean(null, previousInitialized);
         }
     }
 
