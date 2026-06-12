@@ -29,6 +29,7 @@ import org.jackhuang.hmcl.util.FileSaver;
 import org.jackhuang.hmcl.util.gson.JsonSchema;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.i18n.I18n;
+import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
@@ -424,7 +425,9 @@ public final class SettingsManager {
         }
 
         if (pendingMigration != null) {
-            LegacyConfigMigrator.completeLegacyConfigMigration(pendingMigration, SETTINGS_LOCATION);
+            LOG.info("Migrating settings from " + pendingMigration.path() + " to " + SETTINGS_LOCATION);
+            FileUtils.saveSafely(SETTINGS_LOCATION, pendingMigration.launcherSettings().toJson());
+            LegacyConfigMigrator.completeLegacyConfigMigration(pendingMigration);
         }
 
         if (launcherSettings.isSavable()) {

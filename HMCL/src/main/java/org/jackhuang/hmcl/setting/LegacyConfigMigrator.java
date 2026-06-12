@@ -26,7 +26,6 @@ import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.gson.JsonSchema;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.gson.UUIDTypeAdapter;
-import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.io.JarUtils;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
@@ -242,13 +241,10 @@ public final class LegacyConfigMigrator {
         }
     }
 
-    /// Saves the migrated launcher settings and records that the legacy config migration has been applied.
+    /// Records that the legacy config migration has been applied.
     ///
     /// @param migration the completed legacy config migration
-    /// @param target the current settings file path
-    static void completeLegacyConfigMigration(LegacyConfigMigration migration, Path target) throws IOException {
-        LOG.info("Migrating settings from " + migration.path() + " to " + target);
-        FileUtils.saveSafely(target, migration.launcherSettings().toJson());
+    static void completeLegacyConfigMigration(LegacyConfigMigration migration) {
         MigrationReceipt.save(SETTINGS_MIGRATION_RECEIPT_LOCATION, migration.path());
     }
 
