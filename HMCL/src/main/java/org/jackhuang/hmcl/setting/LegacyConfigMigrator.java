@@ -234,7 +234,7 @@ public final class LegacyConfigMigrator {
             migrateLegacyDisableAutoGameOptions(deserialized, gameSettingsPresets, legacyDisableAutoGameOptions);
             DetachedSettings detachedSettings = new DetachedSettings(gameDirectories, gameSettingsPresets,
                     launcherState, authlibInjectorServers, accountStorages);
-            return new LegacyConfigMigration(path, deserialized, detachedSettings, deserialized.toJson());
+            return new LegacyConfigMigration(path, deserialized, detachedSettings);
         } catch (JsonParseException e) {
             LOG.warning("Malformed legacy config file: " + path, e);
             return null;
@@ -1061,12 +1061,10 @@ public final class LegacyConfigMigrator {
     /// @param path the legacy config path
     /// @param launcherSettings the parsed launcher settings
     /// @param detachedSettings the detached settings migrated from legacy config fields
-    /// @param contentForMigration the content to save when migrating to settings.json
     record LegacyConfigMigration(
             Path path,
             LauncherSettings launcherSettings,
-            DetachedSettings detachedSettings,
-            String contentForMigration) {
+            DetachedSettings detachedSettings) {
     }
 
     /// Result of migrating the legacy user settings file.

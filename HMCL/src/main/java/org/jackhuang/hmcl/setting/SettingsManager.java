@@ -426,7 +426,7 @@ public final class SettingsManager {
 
         if (launcherSettingsResult.pendingMigration() != null) {
             LOG.info("Migrating settings from " + launcherSettingsResult.pendingMigration().path() + " to " + SETTINGS_LOCATION);
-            FileUtils.saveSafely(SETTINGS_LOCATION, launcherSettingsResult.pendingMigration().contentForMigration());
+            FileUtils.saveSafely(SETTINGS_LOCATION, launcherSettings.toJson());
             LegacyConfigMigrator.saveLegacyConfigMigrationReceipt(launcherSettingsResult.pendingMigration());
         }
 
