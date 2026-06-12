@@ -289,7 +289,7 @@ public final class GameDirectoriesTest {
             assertEquals(List.of(userProfile), userDirectories.getGameDirectories());
             assertTrue(localDirectories.getGameDirectories().isEmpty());
 
-            Profiles.addProfile(addedProfile);
+            Profiles.addLocalProfile(addedProfile);
             assertEquals(List.of(addedProfile, userProfile), Profiles.getProfiles());
             assertEquals(List.of(addedProfile), localDirectories.getGameDirectories());
             assertSame(userProfile, Profiles.getSelectedProfile());

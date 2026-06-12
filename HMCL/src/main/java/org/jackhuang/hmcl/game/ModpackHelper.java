@@ -196,7 +196,7 @@ public final class ModpackHelper {
                             Profiles.newProfileId(),
                             LocalizedText.plain(name),
                             PortablePath.fromPath(location));
-                    Profiles.addProfile(newProfile);
+                    Profiles.addLocalProfile(newProfile);
                     Profiles.setSelectedProfile(newProfile);
                 });
     }

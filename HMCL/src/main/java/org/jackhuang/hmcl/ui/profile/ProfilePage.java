@@ -42,6 +42,7 @@ import org.jackhuang.hmcl.util.PortablePath;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.i18n.LocalizedText;
 import org.jackhuang.hmcl.util.io.FileUtils;
+import org.jetbrains.annotations.Nullable;
 
 import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
@@ -53,7 +54,7 @@ import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 public final class ProfilePage extends BorderPane implements DecoratorPage {
     private final ReadOnlyObjectWrapper<State> state = new ReadOnlyObjectWrapper<>();
     private final StringProperty location;
-    private final Profile profile;
+    private final @Nullable Profile profile;
     private final JFXTextField txtProfileName;
     private final LineFileChooserButton gameDir;
     private final LineToggleButton toggleUseRelativePath;
@@ -197,7 +198,11 @@ public final class ProfilePage extends BorderPane implements DecoratorPage {
                     Profiles.newProfileId(),
                     LocalizedText.plain(txtProfileName.getText()),
                     createPortableLocation());
-            Profiles.addProfile(newProfile);
+            if (newProfile.getPath().isAbsolute()) {
+                Profiles.addUserProfile(newProfile);
+            } else {
+                Profiles.addLocalProfile(newProfile);
+            }
         }
 
         fireEvent(new PageCloseEvent());

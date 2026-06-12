@@ -241,9 +241,19 @@ public final class Profiles {
     }
 
     /// Adds a profile to the per-workspace game directory store.
-    public static void addProfile(Profile profile) {
+    public static void addLocalProfile(Profile profile) {
+        addProfile(localGameDirectories(), profile);
+    }
+
+    /// Adds a profile to the user game directory store.
+    public static void addUserProfile(Profile profile) {
+        addProfile(userGameDirectories(), profile);
+    }
+
+    /// Adds a profile to the given game directory store, replacing a profile with the same ID in that store.
+    private static void addProfile(GameDirectories gameDirectories, Profile profile) {
         Objects.requireNonNull(profile);
-        ObservableList<Profile> profiles = localGameDirectories().getGameDirectories();
+        ObservableList<Profile> profiles = gameDirectories.getGameDirectories();
         SettingID id = profile.getId();
         for (int i = 0; i < profiles.size(); i++) {
             if (profiles.get(i).getId().equals(id)) {
