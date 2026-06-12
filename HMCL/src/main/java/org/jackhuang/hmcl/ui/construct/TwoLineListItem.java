@@ -176,8 +176,8 @@ public class TwoLineListItem extends VBox {
             // Clip overflow tags, matching the previous ScrollPane behavior.
             var clip = new Rectangle();
             tagsBox.setClip(clip);
-            tagsBox.widthProperty().addListener((obs, old, val) -> clip.setWidth(val.doubleValue()));
-            tagsBox.heightProperty().addListener((obs, old, val) -> clip.setHeight(val.doubleValue()));
+            clip.widthProperty().bind(tagsBox.widthProperty());
+            clip.heightProperty().bind(tagsBox.heightProperty());
 
             lblTitle.setMinWidth(Label.USE_PREF_SIZE);
             firstLine.getChildren().setAll(lblTitle, tagsBox);
