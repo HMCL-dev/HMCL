@@ -448,7 +448,6 @@ public final class SettingsManager {
                 LOG.warning("Failed to read settings file: " + SETTINGS_LOCATION, e);
 
                 LauncherSettings settings = new LauncherSettings();
-                settings.setSavable(true);
                 settings.setBackupOnNextSave(true);
                 return new LoadedLauncherSettings(settings, null);
             }
@@ -456,10 +455,7 @@ public final class SettingsManager {
             if (jsonObject == null) {
                 LOG.warning("Settings file is empty: " + SETTINGS_LOCATION);
 
-                LauncherSettings settings = new LauncherSettings();
-                settings.setSavable(true);
-                settings.setBackupOnNextSave(true);
-                return new LoadedLauncherSettings(settings, null);
+                return new LoadedLauncherSettings(new LauncherSettings(), null);
             }
 
             JsonSchema.CompatibilityResult schemaResult =
@@ -480,7 +476,6 @@ public final class SettingsManager {
             if (!schemaResult.readable()) {
                 LauncherSettings settings = new LauncherSettings();
                 settings.setSavable(false);
-                settings.setBackupOnNextSave(false);
                 return new LoadedLauncherSettings(settings, null);
             }
 
@@ -489,7 +484,6 @@ public final class SettingsManager {
                 if (settings == null) {
                     settings = new LauncherSettings();
                     settings.setSavable(false);
-                    settings.setBackupOnNextSave(false);
                     return new LoadedLauncherSettings(settings, null);
                 }
 
@@ -498,29 +492,21 @@ public final class SettingsManager {
                 }
 
                 settings.setSavable(schemaResult.allowSave());
-                settings.setBackupOnNextSave(false);
                 return new LoadedLauncherSettings(settings, null);
             } catch (JsonParseException e) {
                 LOG.warning("Failed to parse settings file: " + SETTINGS_LOCATION, e);
                 LauncherSettings settings = new LauncherSettings();
-                settings.setSavable(true);
                 settings.setBackupOnNextSave(true);
                 return new LoadedLauncherSettings(settings, null);
             }
         } else {
             LegacyConfigMigrator.LegacyConfigMigration migration = LegacyConfigMigrator.migrateLegacyConfig();
             if (migration != null) {
-                LauncherSettings settings = migration.launcherSettings();
-                settings.setSavable(true);
-                settings.setBackupOnNextSave(false);
-                return new LoadedLauncherSettings(settings, migration);
+                return new LoadedLauncherSettings(migration.launcherSettings(), migration);
             }
         }
 
-        var newSettings = new LauncherSettings();
-        newSettings.setSavable(true);
-        newSettings.setBackupOnNextSave(false);
-        return new LoadedLauncherSettings(newSettings, null);
+        return new LoadedLauncherSettings(new LauncherSettings(), null);
     }
 
     /// Returns whether the current workspace already has any local configuration footprint.

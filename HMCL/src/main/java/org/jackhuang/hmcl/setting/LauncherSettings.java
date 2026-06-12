@@ -125,7 +125,7 @@ public final class LauncherSettings extends ObservableSetting implements JsonSch
     private transient boolean savable = true;
 
     /// Whether the next successful save should back up the current `settings.json` first.
-    private transient boolean backupOnNextSave;
+    private transient boolean backupOnNextSave = false;
 
     /// Returns whether this launcher settings object may be saved back to `settings.json`.
     @Override
