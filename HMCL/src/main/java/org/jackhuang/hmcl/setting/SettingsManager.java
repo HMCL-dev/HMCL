@@ -436,7 +436,10 @@ public final class SettingsManager {
         }
 
         if (launcherSettingsResult.pendingMigration() != null) {
-            commitLegacyConfigMigration(launcherSettingsResult.pendingMigration());
+            LegacyConfigMigrator.LegacyConfigMigration migration = launcherSettingsResult.pendingMigration();
+            LOG.info("Migrating settings from " + migration.path() + " to " + SETTINGS_LOCATION);
+            FileUtils.saveSafely(SETTINGS_LOCATION, migration.contentForMigration());
+            LegacyConfigMigrator.saveLegacyConfigMigrationReceipt(migration);
         }
 
         if (launcherSettings.isSavable()) {
@@ -546,13 +549,6 @@ public final class SettingsManager {
                 || Files.exists(GAME_SETTINGS_LOCATION)
                 || Files.exists(GAME_ACCOUNTS_LOCATION)
                 || LegacyConfigMigrator.hasLegacyConfig());
-    }
-
-    /// Commits a prepared legacy config migration after detached settings have been initialized successfully.
-    private static void commitLegacyConfigMigration(LegacyConfigMigrator.LegacyConfigMigration migration) throws IOException {
-        LOG.info("Migrating settings from " + migration.path() + " to " + SETTINGS_LOCATION);
-        FileUtils.saveSafely(SETTINGS_LOCATION, migration.contentForMigration());
-        LegacyConfigMigrator.saveLegacyConfigMigrationReceipt(migration);
     }
 
     /// Loads game directories and installs the save listener.
