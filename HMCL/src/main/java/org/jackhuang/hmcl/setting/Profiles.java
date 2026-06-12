@@ -136,12 +136,12 @@ public final class Profiles {
         rebuildProfiles();
 
         boolean needRebuildProfiles = false;
-        if (localGameDirectories().isNewlyCreated()) {
+        if (localGameDirectories().isNewlyCreated() && localGameDirectories().getGameDirectories().isEmpty()) {
             needRebuildProfiles = true;
             GameDirectories gameDirectories = localGameDirectories();
             gameDirectories.getGameDirectories().add(new Profile(newProfileId(), null, CURRENT_PROFILE_PATH));
         }
-        if (userGameDirectories().isNewlyCreated()) {
+        if (userGameDirectories().isNewlyCreated() && userGameDirectories().getGameDirectories().isEmpty()) {
             needRebuildProfiles = true;
             GameDirectories gameDirectories = userGameDirectories();
             gameDirectories.getGameDirectories().add(new Profile(newProfileId(), null, HOME_PROFILE_PATH));
