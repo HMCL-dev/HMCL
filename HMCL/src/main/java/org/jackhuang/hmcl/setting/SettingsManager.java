@@ -436,10 +436,9 @@ public final class SettingsManager {
         }
 
         if (launcherSettingsResult.pendingMigration() != null) {
-            LegacyConfigMigrator.LegacyConfigMigration migration = launcherSettingsResult.pendingMigration();
-            LOG.info("Migrating settings from " + migration.path() + " to " + SETTINGS_LOCATION);
-            FileUtils.saveSafely(SETTINGS_LOCATION, migration.contentForMigration());
-            LegacyConfigMigrator.saveLegacyConfigMigrationReceipt(migration);
+            LOG.info("Migrating settings from " + launcherSettingsResult.pendingMigration().path() + " to " + SETTINGS_LOCATION);
+            FileUtils.saveSafely(SETTINGS_LOCATION, launcherSettingsResult.pendingMigration().contentForMigration());
+            LegacyConfigMigrator.saveLegacyConfigMigrationReceipt(launcherSettingsResult.pendingMigration());
         }
 
         if (launcherSettings.isSavable()) {
