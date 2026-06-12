@@ -28,6 +28,7 @@ import org.jackhuang.hmcl.util.PortablePath;
 import org.jackhuang.hmcl.util.i18n.I18n;
 import org.jackhuang.hmcl.util.i18n.LocalizedText;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.UnmodifiableView;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -62,12 +63,7 @@ public final class Profiles {
 
     /// Returns whether an existing profile uses the given ID.
     private static boolean hasProfileId(SettingID id) {
-        for (Profile profile : SettingsManager.getGameDirectories()) {
-            if (id.equals(profile.getId())) {
-                return true;
-            }
-        }
-        return false;
+        return SettingsManager.hasGameDirectoryId(id);
     }
 
     public static String getProfileDisplayName(Profile profile) {
@@ -170,10 +166,8 @@ public final class Profiles {
             homeId = SettingID.generate();
         } while (homeId.equals(currentId));
 
-        profiles.addAll(List.of(
-                new Profile(currentId, null, CURRENT_PROFILE_PATH),
-                new Profile(homeId, null, HOME_PROFILE_PATH)
-        ));
+        addProfile(new Profile(currentId, null, CURRENT_PROFILE_PATH));
+        addProfile(new Profile(homeId, null, HOME_PROFILE_PATH));
     }
 
     /**
@@ -224,14 +218,19 @@ public final class Profiles {
         });
     }
 
-    public static ObservableList<Profile> getProfiles() {
+    /// Returns the read-only merged profile list.
+    public static @UnmodifiableView ObservableList<Profile> getProfiles() {
         return SettingsManager.getGameDirectories();
+    }
+
+    /// Adds a profile to the per-workspace game directory store.
+    public static void addProfile(Profile profile) {
+        SettingsManager.addGameDirectory(profile);
     }
 
     /// Removes a profile and recreates the built-in game directories when the list becomes empty.
     public static void removeProfile(Profile profile) {
-        ObservableList<Profile> profiles = SettingsManager.getGameDirectories();
-        profiles.remove(profile);
+        SettingsManager.removeGameDirectory(profile);
         createDefaultProfilesIfEmpty();
     }
 

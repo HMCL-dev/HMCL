@@ -197,7 +197,7 @@ public final class ProfilePage extends BorderPane implements DecoratorPage {
                     Profiles.newProfileId(),
                     LocalizedText.plain(txtProfileName.getText()),
                     createPortableLocation());
-            Profiles.getProfiles().add(newProfile);
+            Profiles.addProfile(newProfile);
         }
 
         fireEvent(new PageCloseEvent());

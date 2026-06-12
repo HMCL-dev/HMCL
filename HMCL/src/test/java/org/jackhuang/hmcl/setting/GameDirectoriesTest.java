@@ -22,6 +22,8 @@ import com.google.common.jimfs.Jimfs;
 import com.google.gson.JsonParseException;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
+import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
 import org.jackhuang.hmcl.util.PortablePath;
 import org.jackhuang.hmcl.util.FileSaver;
 import org.jackhuang.hmcl.util.gson.JsonSchema;
@@ -32,6 +34,8 @@ import org.jetbrains.annotations.NotNullByDefault;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
+import java.lang.reflect.Field;
+import java.lang.reflect.Method;
 import java.nio.file.FileSystem;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -250,6 +254,66 @@ public final class GameDirectoriesTest {
         assertEquals("Custom Default", Profiles.getProfileDisplayName(profile));
     }
 
+    /// Tests that the merged profile view is read-only and does not own the backing profile data.
+    @Test
+    public void keepsShadowedUserProfileInBackingStore() throws ReflectiveOperationException {
+        SettingID id = SettingID.parse("123e4567-e89b-12d3-a456-426614174000");
+        Profile userProfile = new Profile(id, LocalizedText.plain("User"), PortablePath.of("user/Dev"));
+        Profile localProfile = new Profile(id, LocalizedText.plain("Local"), PortablePath.of("local/Dev"));
+        Profile addedProfile = new Profile(
+                SettingID.parse("123e4567-e89b-12d3-a456-426614174001"),
+                LocalizedText.plain("Added"),
+                PortablePath.of("local/Added"));
+        GameDirectories userDirectories = new GameDirectories();
+        userDirectories.getGameDirectories().add(userProfile);
+        userDirectories.setUserFile(true);
+        GameDirectories localDirectories = new GameDirectories();
+        localDirectories.getGameDirectories().add(localProfile);
+        localDirectories.setUserFile(false);
+
+        Field gameDirectoriesField = SettingsManager.class.getDeclaredField("gameDirectories");
+        Field mergedGameDirectoriesField = SettingsManager.class.getDeclaredField("mergedGameDirectories");
+        Field localGameDirectoriesField = SettingsManager.class.getDeclaredField("localGameDirectories");
+        Field userGameDirectoriesField = SettingsManager.class.getDeclaredField("userGameDirectories");
+        gameDirectoriesField.setAccessible(true);
+        mergedGameDirectoriesField.setAccessible(true);
+        localGameDirectoriesField.setAccessible(true);
+        userGameDirectoriesField.setAccessible(true);
+        Object previousGameDirectories = gameDirectoriesField.get(null);
+        Object previousMergedGameDirectories = mergedGameDirectoriesField.get(null);
+        Object previousLocalGameDirectories = localGameDirectoriesField.get(null);
+        Object previousUserGameDirectories = userGameDirectoriesField.get(null);
+        ObservableList<Profile> merged = FXCollections.observableArrayList();
+        ObservableList<Profile> readOnlyMerged = FXCollections.unmodifiableObservableList(merged);
+        mergedGameDirectoriesField.set(null, merged);
+        gameDirectoriesField.set(null, readOnlyMerged);
+        localGameDirectoriesField.set(null, localDirectories);
+        userGameDirectoriesField.set(null, userDirectories);
+        try {
+            invokeRebuildGameDirectories();
+            ObservableList<Profile> gameDirectories = SettingsManager.getGameDirectories();
+
+            assertEquals(List.of(localProfile), gameDirectories);
+            assertThrows(UnsupportedOperationException.class, () -> gameDirectories.add(addedProfile));
+            assertEquals(List.of(userProfile), userDirectories.getGameDirectories());
+            assertEquals(List.of(localProfile), localDirectories.getGameDirectories());
+
+            SettingsManager.removeGameDirectory(localProfile);
+            assertEquals(List.of(userProfile), SettingsManager.getGameDirectories());
+            assertEquals(List.of(userProfile), userDirectories.getGameDirectories());
+            assertTrue(localDirectories.getGameDirectories().isEmpty());
+
+            SettingsManager.addGameDirectory(addedProfile);
+            assertEquals(List.of(userProfile, addedProfile), SettingsManager.getGameDirectories());
+            assertEquals(List.of(addedProfile), localDirectories.getGameDirectories());
+        } finally {
+            gameDirectoriesField.set(null, previousGameDirectories);
+            mergedGameDirectoriesField.set(null, previousMergedGameDirectories);
+            localGameDirectoriesField.set(null, previousLocalGameDirectories);
+            userGameDirectoriesField.set(null, previousUserGameDirectories);
+        }
+    }
+
     /// Tests that profiles must be deserialized with a non-nil ID.
     @Test
     public void rejectsNilProfileId() {
@@ -356,6 +420,13 @@ public final class GameDirectoriesTest {
             assertEquals("{", Files.readString(backup));
             assertFalse(result.value().isBackupOnNextSave());
         }
+    }
+
+    /// Invokes the private game directory view rebuild helper.
+    private static void invokeRebuildGameDirectories() throws ReflectiveOperationException {
+        Method method = SettingsManager.class.getDeclaredMethod("rebuildGameDirectories");
+        method.setAccessible(true);
+        method.invoke(null);
     }
 
     /// Creates a temporary directory in an in-memory file system for JsonSettingFile tests.
