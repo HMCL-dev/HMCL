@@ -17,6 +17,8 @@
  */
 package org.jackhuang.hmcl.setting;
 
+import com.google.common.jimfs.Configuration;
+import com.google.common.jimfs.Jimfs;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import org.glavo.uuid.UUIDs;
@@ -27,6 +29,7 @@ import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
 import java.net.Proxy;
+import java.nio.file.FileSystem;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Objects;
@@ -49,17 +52,19 @@ public final class LauncherSettingsMigrationTest {
     /// Tests ignoring config files with numeric versions outside the legacy format range.
     @Test
     public void ignoresUnsupportedLegacyConfigVersion() throws IOException {
-        Path root = Path.of("build", "tmp", "launcher-settings-migration-tests");
-        Files.createDirectories(root);
-        Path config = Files.createTempFile(root, "unsupported-legacy-config-", ".json");
-        Files.writeString(config, """
-                {
-                  "_version": 3,
-                  "language": "en"
-                }
-                """);
+        try (FileSystem fileSystem = Jimfs.newFileSystem(Configuration.unix())) {
+            Path root = fileSystem.getPath("/launcher-settings-migration-tests");
+            Files.createDirectories(root);
+            Path config = Files.createTempFile(root, "unsupported-legacy-config-", ".json");
+            Files.writeString(config, """
+                    {
+                      "_version": 3,
+                      "language": "en"
+                    }
+                    """);
 
-        assertNull(LegacyConfigMigrator.migrateLegacyConfig(config));
+            assertNull(LegacyConfigMigrator.migrateLegacyConfig(config));
+        }
     }
 
     /// Tests migrating legacy language fields into the current launcher settings field.

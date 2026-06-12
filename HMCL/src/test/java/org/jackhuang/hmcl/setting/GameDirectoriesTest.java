@@ -17,10 +17,13 @@
  */
 package org.jackhuang.hmcl.setting;
 
+import com.google.common.jimfs.Configuration;
+import com.google.common.jimfs.Jimfs;
 import com.google.gson.JsonParseException;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import org.jackhuang.hmcl.util.PortablePath;
+import org.jackhuang.hmcl.util.FileSaver;
 import org.jackhuang.hmcl.util.gson.JsonSchema;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.i18n.LocaleUtils;
@@ -29,6 +32,7 @@ import org.jetbrains.annotations.NotNullByDefault;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
+import java.nio.file.FileSystem;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
@@ -261,65 +265,70 @@ public final class GameDirectoriesTest {
     /// Tests that patch-version schemas are preserved together with unknown fields.
     @Test
     public void preservesPatchSchemaAndUnknownFields() throws IOException {
-        Path tempDir = createJsonSettingFileTestDirectory("patch-schema");
-        Path location = tempDir.resolve("game-directories.json");
-        Files.writeString(location, """
-                {
-                  "$schema": "https://schemas.glavo.site/hmcl/game-directories/1.0.1",
-                  "futureField": {
-                    "enabled": true
-                  },
-                  "directories": []
-                }
-                """);
+        try (FileSystem fileSystem = Jimfs.newFileSystem(Configuration.unix())) {
+            Path tempDir = createJsonSettingFileTestDirectory(fileSystem, "patch-schema");
+            Path location = tempDir.resolve("game-directories.json");
+            Files.writeString(location, """
+                    {
+                      "$schema": "https://schemas.glavo.site/hmcl/game-directories/1.0.1",
+                      "futureField": {
+                        "enabled": true
+                      },
+                      "directories": []
+                    }
+                    """);
 
-        JsonSettingFile<GameDirectories> file = new JsonSettingFile<>(
-                location,
-                "game directories",
-                GameDirectories.class,
-                GameDirectories.CURRENT_SCHEMA,
-                GameDirectories::new);
+            JsonSettingFile<GameDirectories> file = new JsonSettingFile<>(
+                    location,
+                    "game directories",
+                    GameDirectories.class,
+                    GameDirectories.CURRENT_SCHEMA,
+                    GameDirectories::new);
 
-        JsonSettingFile.LoadResult<GameDirectories> result = file.load(null);
-        assertTrue(result.value().isSavable());
-        assertEquals(new JsonSchema("https://schemas.glavo.site/hmcl/game-directories/1.0.1"),
-                result.value().getSchema());
+            JsonSettingFile.LoadResult<GameDirectories> result = file.load(null);
+            assertTrue(result.value().isSavable());
+            assertEquals(new JsonSchema("https://schemas.glavo.site/hmcl/game-directories/1.0.1"),
+                    result.value().getSchema());
 
-        JsonObject rewritten = JsonParser.parseString(JsonUtils.GSON.toJson(result.value(), GameDirectories.class))
-                .getAsJsonObject();
-        assertEquals("https://schemas.glavo.site/hmcl/game-directories/1.0.1",
-                rewritten.get(JsonSchema.PROPERTY_SCHEMA).getAsString());
-        assertTrue(rewritten.getAsJsonObject("futureField").get("enabled").getAsBoolean());
+            JsonObject rewritten = JsonParser.parseString(JsonUtils.GSON.toJson(result.value(), GameDirectories.class))
+                    .getAsJsonObject();
+            assertEquals("https://schemas.glavo.site/hmcl/game-directories/1.0.1",
+                    rewritten.get(JsonSchema.PROPERTY_SCHEMA).getAsString());
+            assertTrue(rewritten.getAsJsonObject("futureField").get("enabled").getAsBoolean());
+        }
     }
 
     /// Tests that malformed detached files are backed up before fallback defaults overwrite them.
     @Test
-    public void backsUpMalformedDetachedFileBeforeSavingFallback() throws IOException {
-        Path tempDir = createJsonSettingFileTestDirectory("malformed");
-        Path location = tempDir.resolve("game-directories.json");
-        Files.writeString(location, "{");
+    public void backsUpMalformedDetachedFileBeforeSavingFallback() throws IOException, InterruptedException {
+        try (FileSystem fileSystem = Jimfs.newFileSystem(Configuration.unix())) {
+            Path tempDir = createJsonSettingFileTestDirectory(fileSystem, "malformed");
+            Path location = tempDir.resolve("game-directories.json");
+            Files.writeString(location, "{");
 
-        JsonSettingFile<GameDirectories> file = new JsonSettingFile<>(
-                location,
-                "game directories",
-                GameDirectories.class,
-                GameDirectories.CURRENT_SCHEMA,
-                GameDirectories::new);
+            JsonSettingFile<GameDirectories> file = new JsonSettingFile<>(
+                    location,
+                    "game directories",
+                    GameDirectories.class,
+                    GameDirectories.CURRENT_SCHEMA,
+                    GameDirectories::new);
 
-        JsonSettingFile.LoadResult<GameDirectories> result = file.load(null);
+            JsonSettingFile.LoadResult<GameDirectories> result = file.load(null);
 
-        assertTrue(result.value().isSavable());
-        assertTrue(result.value().isBackupOnNextSave());
-        file.save(result.value());
+            assertTrue(result.value().isSavable());
+            assertTrue(result.value().isBackupOnNextSave());
+            file.save(result.value());
+            FileSaver.waitForAllSaves();
 
-        Path backup = location.resolveSibling("game-directories.json.1");
-        assertEquals("{", Files.readString(backup));
-        assertFalse(result.value().isBackupOnNextSave());
+            Path backup = location.resolveSibling("game-directories.json.1");
+            assertEquals("{", Files.readString(backup));
+            assertFalse(result.value().isBackupOnNextSave());
+        }
     }
 
-    /// Creates a temporary directory under Gradle's build directory for JsonSettingFile tests.
-    private static Path createJsonSettingFileTestDirectory(String prefix) throws IOException {
-        Path root = Path.of("build", "tmp", "json-setting-file-tests");
+    /// Creates a temporary directory in an in-memory file system for JsonSettingFile tests.
+    private static Path createJsonSettingFileTestDirectory(FileSystem fileSystem, String prefix) throws IOException {
+        Path root = fileSystem.getPath("/json-setting-file-tests");
         Files.createDirectories(root);
         return Files.createTempDirectory(root, prefix + "-");
     }

@@ -17,10 +17,13 @@
  */
 package org.jackhuang.hmcl.setting;
 
+import com.google.common.jimfs.Configuration;
+import com.google.common.jimfs.Jimfs;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
+import java.nio.file.FileSystem;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
@@ -34,35 +37,39 @@ public final class MigrationReceiptTest {
     /// Tests that a receipt matches the source file state that was recorded.
     @Test
     public void matchesSavedSourceState() throws IOException {
-        Path tempDir = createMigrationReceiptTestDirectory("matches");
-        Path source = tempDir.resolve("hmcl.json");
-        Path receipt = tempDir.resolve("settings.migration-receipt.json");
-        Files.writeString(source, "{\"language\":\"en\"}");
+        try (FileSystem fileSystem = Jimfs.newFileSystem(Configuration.unix())) {
+            Path tempDir = createMigrationReceiptTestDirectory(fileSystem, "matches");
+            Path source = tempDir.resolve("hmcl.json");
+            Path receipt = tempDir.resolve("settings.migration-receipt.json");
+            Files.writeString(source, "{\"language\":\"en\"}");
 
-        assertFalse(MigrationReceipt.matches(receipt, source));
+            assertFalse(MigrationReceipt.matches(receipt, source));
 
-        MigrationReceipt.save(receipt, source);
+            MigrationReceipt.save(receipt, source);
 
-        assertTrue(MigrationReceipt.matches(receipt, source));
+            assertTrue(MigrationReceipt.matches(receipt, source));
+        }
     }
 
     /// Tests that a receipt stops matching after the legacy source file changes.
     @Test
     public void rejectsChangedSourceState() throws IOException {
-        Path tempDir = createMigrationReceiptTestDirectory("changed");
-        Path source = tempDir.resolve("config.json");
-        Path receipt = tempDir.resolve("user-settings.migration-receipt.json");
-        Files.writeString(source, "{\"logRetention\":30}");
+        try (FileSystem fileSystem = Jimfs.newFileSystem(Configuration.unix())) {
+            Path tempDir = createMigrationReceiptTestDirectory(fileSystem, "changed");
+            Path source = tempDir.resolve("config.json");
+            Path receipt = tempDir.resolve("user-settings.migration-receipt.json");
+            Files.writeString(source, "{\"logRetention\":30}");
 
-        MigrationReceipt.save(receipt, source);
-        Files.writeString(source, "{\"logRetention\":31}");
+            MigrationReceipt.save(receipt, source);
+            Files.writeString(source, "{\"logRetention\":31}");
 
-        assertFalse(MigrationReceipt.matches(receipt, source));
+            assertFalse(MigrationReceipt.matches(receipt, source));
+        }
     }
 
-    /// Creates a temporary directory under Gradle's build directory for migration receipt tests.
-    private static Path createMigrationReceiptTestDirectory(String prefix) throws IOException {
-        Path root = Path.of("build", "tmp", "migration-receipt-tests");
+    /// Creates a temporary directory in an in-memory file system for migration receipt tests.
+    private static Path createMigrationReceiptTestDirectory(FileSystem fileSystem, String prefix) throws IOException {
+        Path root = fileSystem.getPath("/migration-receipt-tests");
         Files.createDirectories(root);
         return Files.createTempDirectory(root, prefix + "-");
     }

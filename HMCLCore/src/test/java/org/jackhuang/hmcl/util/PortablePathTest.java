@@ -17,10 +17,14 @@
  */
 package org.jackhuang.hmcl.util;
 
+import com.google.common.jimfs.Configuration;
+import com.google.common.jimfs.Jimfs;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.junit.jupiter.api.Test;
 
+import java.io.IOException;
+import java.nio.file.FileSystem;
 import java.nio.file.Path;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -68,23 +72,27 @@ public final class PortablePathTest {
 
     /// Tests conversion from and to relative [Path] values.
     @Test
-    public void convertsRelativePath() {
-        Path path = Path.of("versions", "1.20.1");
-        PortablePath portablePath = PortablePath.fromPath(path);
+    public void convertsRelativePath() throws IOException {
+        try (FileSystem fileSystem = Jimfs.newFileSystem(Configuration.unix())) {
+            Path path = fileSystem.getPath("versions", "1.20.1");
+            PortablePath portablePath = PortablePath.fromPath(path);
 
-        assertEquals("versions/1.20.1", portablePath.getPath());
-        assertFalse(portablePath.isAbsolute());
-        assertEquals(path, portablePath.toPath());
+            assertEquals("versions/1.20.1", portablePath.getPath());
+            assertFalse(portablePath.isAbsolute());
+            assertEquals(path, fileSystem.getPath(portablePath.getPath()));
+        }
     }
 
     /// Tests conversion from and to absolute [Path] values.
     @Test
-    public void convertsAbsolutePath() {
-        Path path = Path.of(".").toAbsolutePath();
-        PortablePath portablePath = PortablePath.fromPath(path);
+    public void convertsAbsolutePath() throws IOException {
+        try (FileSystem fileSystem = Jimfs.newFileSystem(Configuration.unix())) {
+            Path path = fileSystem.getPath("/workspace").toAbsolutePath();
+            PortablePath portablePath = PortablePath.fromPath(path);
 
-        assertEquals(path.toString(), portablePath.getPath());
-        assertTrue(portablePath.isAbsolute());
-        assertEquals(path, portablePath.toPath());
+            assertEquals(path.toString(), portablePath.getPath());
+            assertTrue(portablePath.isAbsolute());
+            assertEquals(path, fileSystem.getPath(portablePath.getPath()));
+        }
     }
 }

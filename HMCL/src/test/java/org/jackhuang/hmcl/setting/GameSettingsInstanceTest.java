@@ -17,6 +17,8 @@
  */
 package org.jackhuang.hmcl.setting;
 
+import com.google.common.jimfs.Configuration;
+import com.google.common.jimfs.Jimfs;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import org.jackhuang.hmcl.util.gson.JsonSchema;
@@ -24,6 +26,7 @@ import org.jetbrains.annotations.NotNullByDefault;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
+import java.nio.file.FileSystem;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
@@ -85,20 +88,25 @@ public final class GameSettingsInstanceTest {
     /// Tests that legacy detected Java selection is migrated to a detected Java reference.
     @Test
     public void migratesLegacyDetectedJavaSelection() throws IOException {
-        Path tempDir = createInstanceSettingsTestDirectory("legacy-detected-java");
-        Path javaBinary = tempDir.resolve("java.exe");
-        Files.writeString(javaBinary, "");
+        try (FileSystem fileSystem = Jimfs.newFileSystem(Configuration.unix())) {
+            Path tempDir = createInstanceSettingsTestDirectory(fileSystem, "legacy-detected-java");
+            Path javaBinary = tempDir.resolve("java.exe");
+            Files.writeString(javaBinary, "");
 
-        JsonObject source = new JsonObject();
-        source.addProperty("javaVersionType", "DETECTED");
-        source.addProperty("java", "17.0.11+9");
-        source.addProperty("defaultJavaPath", javaBinary.toString());
+            JsonObject source = new JsonObject();
+            source.addProperty("javaVersionType", "DETECTED");
+            source.addProperty("java", "17.0.11+9");
+            source.addProperty("defaultJavaPath", javaBinary.toString());
 
-        GameSettings.Instance instance = LegacyGameSettingsMigrator.toInstance(null, source, false);
+            GameSettings.Instance instance = LegacyGameSettingsMigrator.toInstance(null, source, false, (version, javaBinaryPath) -> {
+                assertEquals(javaBinary.toString(), javaBinaryPath);
+                return new GameSettings.DetectedJava(version, GameSettings.DetectedJava.hashExistingPath(javaBinary));
+            });
 
-        assertEquals(JavaVersionType.DETECTED, instance.javaTypeProperty().getValue());
-        assertEquals("17.0.11+9", instance.detectedJavaProperty().getValue().version());
-        assertEquals(GameSettings.DetectedJava.hashExistingPath(javaBinary), instance.detectedJavaProperty().getValue().pathHash());
+            assertEquals(JavaVersionType.DETECTED, instance.javaTypeProperty().getValue());
+            assertEquals("17.0.11+9", instance.detectedJavaProperty().getValue().version());
+            assertEquals(GameSettings.DetectedJava.hashExistingPath(javaBinary), instance.detectedJavaProperty().getValue().pathHash());
+        }
     }
 
     /// Tests that legacy Java version selection is migrated to the custom Java version field.
@@ -132,9 +140,9 @@ public final class GameSettingsInstanceTest {
         assertNull(instance.minMemoryProperty().getValue());
     }
 
-    /// Creates a temporary directory under Gradle's build directory for instance settings tests.
-    private static Path createInstanceSettingsTestDirectory(String prefix) throws IOException {
-        Path root = Path.of("build", "tmp", "instance-settings-tests");
+    /// Creates a temporary directory in an in-memory file system for instance settings tests.
+    private static Path createInstanceSettingsTestDirectory(FileSystem fileSystem, String prefix) throws IOException {
+        Path root = fileSystem.getPath("/instance-settings-tests");
         Files.createDirectories(root);
         return Files.createTempDirectory(root, prefix + "-");
     }
