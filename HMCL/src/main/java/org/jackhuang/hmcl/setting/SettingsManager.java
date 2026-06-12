@@ -392,18 +392,20 @@ public final class SettingsManager {
         checkLocalConfigOwner();
         newlyCreated = isNewWorkspace();
 
-        LoadedLauncherSettings launcherSettingsResult = loadLauncherSettings();
-        launcherSettings = launcherSettingsResult.settings();
-        unsupportedVersion = !launcherSettings.isSavable();
-        @Nullable LegacyConfigMigrator.LegacyConfigMigration pendingMigration = launcherSettingsResult.pendingMigration();
-        LegacyConfigMigrator.DetachedSettings detachedSettings = pendingMigration != null
-                ? pendingMigration.detachedSettings()
-                : LegacyConfigMigrator.DetachedSettings.empty();
+        LoadedLauncherSettings loadedLauncherSettings = loadLauncherSettings();
+        launcherSettings = loadedLauncherSettings.settings();
+        boolean unsupportedLauncherSettings = !launcherSettings.isSavable();
 
-        @Nullable LegacyConfigMigrator.UserSettingsMigrationResult userSettingsMigrationResult =
-                Files.exists(USER_SETTINGS_LOCATION) && Files.exists(USER_STATE_LOCATION)
-                        ? null
-                        : LegacyConfigMigrator.migrateLegacyUserSettings();
+        @Nullable LegacyConfigMigrator.LegacyConfigMigration legacyConfigMigration =
+                loadedLauncherSettings.pendingMigration();
+        LegacyConfigMigrator.DetachedSettings migratedDetachedSettings = legacyConfigMigration == null
+                ? LegacyConfigMigrator.DetachedSettings.empty()
+                : legacyConfigMigration.detachedSettings();
+
+        boolean currentUserSettingsExist = Files.exists(USER_SETTINGS_LOCATION) && Files.exists(USER_STATE_LOCATION);
+        @Nullable LegacyConfigMigrator.UserSettingsMigrationResult userSettingsMigrationResult = currentUserSettingsExist
+                ? null
+                : LegacyConfigMigrator.migrateLegacyUserSettings();
         loadUserSettings(userSettingsMigrationResult);
         loadUserState(userSettingsMigrationResult);
         if (userSettingsMigrationResult != null) {
@@ -413,21 +415,22 @@ public final class SettingsManager {
         Locale.setDefault(settings().languageProperty().get().getLocale());
         I18n.setLocale(launcherSettings.languageProperty().get());
         LOG.setLogRetention(userSettings().logRetentionProperty().get());
-        loadGameDirectories(detachedSettings.gameDirectories());
-        loadGameSettingsPresets(detachedSettings.gameSettingsPresets());
-        unsupportedVersion |= loadLauncherState(detachedSettings.launcherState());
-        loadAuthlibInjectorServers(detachedSettings.authlibInjectorServers());
+        loadGameDirectories(migratedDetachedSettings.gameDirectories());
+        loadGameSettingsPresets(migratedDetachedSettings.gameSettingsPresets());
+        boolean unsupportedLauncherState = loadLauncherState(migratedDetachedSettings.launcherState());
+        loadAuthlibInjectorServers(migratedDetachedSettings.authlibInjectorServers());
         loadUserGameAccounts();
-        loadGameAccounts(detachedSettings.accountStorages());
+        loadGameAccounts(migratedDetachedSettings.accountStorages());
+        unsupportedVersion = unsupportedLauncherSettings || unsupportedLauncherState;
 
         if (Files.exists(Metadata.HMCL_LOCAL_HOME)) {
             checkWritable(Metadata.HMCL_LOCAL_HOME);
         }
 
-        if (pendingMigration != null) {
-            LOG.info("Migrating settings from " + pendingMigration.path() + " to " + SETTINGS_LOCATION);
-            FileUtils.saveSafely(SETTINGS_LOCATION, pendingMigration.launcherSettings().toJson());
-            LegacyConfigMigrator.completeLegacyConfigMigration(pendingMigration);
+        if (legacyConfigMigration != null) {
+            LOG.info("Migrating settings from " + legacyConfigMigration.path() + " to " + SETTINGS_LOCATION);
+            FileUtils.saveSafely(SETTINGS_LOCATION, legacyConfigMigration.launcherSettings().toJson());
+            LegacyConfigMigrator.completeLegacyConfigMigration(legacyConfigMigration);
         }
 
         if (launcherSettings.isSavable()) {
