@@ -22,6 +22,7 @@ import com.google.common.jimfs.Jimfs;
 import com.google.gson.JsonParseException;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
+import javafx.beans.property.ReadOnlyListWrapper;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import org.jackhuang.hmcl.util.PortablePath;
@@ -35,7 +36,6 @@ import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
 import java.lang.reflect.Field;
-import java.lang.reflect.Method;
 import java.nio.file.FileSystem;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -271,46 +271,54 @@ public final class GameDirectoriesTest {
         localDirectories.getGameDirectories().add(localProfile);
         localDirectories.setUserFile(false);
 
-        Field gameDirectoriesField = SettingsManager.class.getDeclaredField("gameDirectories");
-        Field mergedGameDirectoriesField = SettingsManager.class.getDeclaredField("mergedGameDirectories");
         Field localGameDirectoriesField = SettingsManager.class.getDeclaredField("localGameDirectories");
         Field userGameDirectoriesField = SettingsManager.class.getDeclaredField("userGameDirectories");
-        gameDirectoriesField.setAccessible(true);
-        mergedGameDirectoriesField.setAccessible(true);
         localGameDirectoriesField.setAccessible(true);
         userGameDirectoriesField.setAccessible(true);
-        Object previousGameDirectories = gameDirectoriesField.get(null);
-        Object previousMergedGameDirectories = mergedGameDirectoriesField.get(null);
+        Field profilesLoadedField = Profiles.class.getDeclaredField("gameDirectoriesLoaded");
+        Field profilesWrapperField = Profiles.class.getDeclaredField("profilesWrapper");
+        Field mergedProfilesField = Profiles.class.getDeclaredField("mergedProfiles");
+        profilesLoadedField.setAccessible(true);
+        profilesWrapperField.setAccessible(true);
+        mergedProfilesField.setAccessible(true);
         Object previousLocalGameDirectories = localGameDirectoriesField.get(null);
         Object previousUserGameDirectories = userGameDirectoriesField.get(null);
-        ObservableList<Profile> merged = FXCollections.observableArrayList();
-        ObservableList<Profile> readOnlyMerged = FXCollections.unmodifiableObservableList(merged);
-        mergedGameDirectoriesField.set(null, merged);
-        gameDirectoriesField.set(null, readOnlyMerged);
+        boolean previousProfilesLoaded = profilesLoadedField.getBoolean(null);
+        @SuppressWarnings("unchecked")
+        ReadOnlyListWrapper<Profile> profilesWrapper =
+                (ReadOnlyListWrapper<Profile>) profilesWrapperField.get(null);
+        ObservableList<Profile> previousProfilesWrapperValue = profilesWrapper.get();
+        @SuppressWarnings("unchecked")
+        ObservableList<Profile> mergedProfiles = (ObservableList<Profile>) mergedProfilesField.get(null);
+        List<Profile> previousMergedProfiles = List.copyOf(mergedProfiles);
         localGameDirectoriesField.set(null, localDirectories);
         userGameDirectoriesField.set(null, userDirectories);
+        profilesLoadedField.setBoolean(null, false);
+        mergedProfiles.clear();
+        profilesWrapper.set(FXCollections.emptyObservableList());
         try {
-            invokeRebuildGameDirectories();
-            ObservableList<Profile> gameDirectories = SettingsManager.getGameDirectories();
+            Profiles.loadGameDirectories(localDirectories, userDirectories);
+            ObservableList<Profile> gameDirectories = Profiles.getProfiles();
 
             assertEquals(List.of(localProfile), gameDirectories);
             assertThrows(UnsupportedOperationException.class, () -> gameDirectories.add(addedProfile));
             assertEquals(List.of(userProfile), userDirectories.getGameDirectories());
             assertEquals(List.of(localProfile), localDirectories.getGameDirectories());
 
-            SettingsManager.removeGameDirectory(localProfile);
-            assertEquals(List.of(userProfile), SettingsManager.getGameDirectories());
+            Profiles.removeProfile(localProfile);
+            assertEquals(List.of(userProfile), Profiles.getProfiles());
             assertEquals(List.of(userProfile), userDirectories.getGameDirectories());
             assertTrue(localDirectories.getGameDirectories().isEmpty());
 
-            SettingsManager.addGameDirectory(addedProfile);
-            assertEquals(List.of(userProfile, addedProfile), SettingsManager.getGameDirectories());
+            Profiles.addProfile(addedProfile);
+            assertEquals(List.of(userProfile, addedProfile), Profiles.getProfiles());
             assertEquals(List.of(addedProfile), localDirectories.getGameDirectories());
         } finally {
-            gameDirectoriesField.set(null, previousGameDirectories);
-            mergedGameDirectoriesField.set(null, previousMergedGameDirectories);
             localGameDirectoriesField.set(null, previousLocalGameDirectories);
             userGameDirectoriesField.set(null, previousUserGameDirectories);
+            profilesLoadedField.setBoolean(null, previousProfilesLoaded);
+            mergedProfiles.setAll(previousMergedProfiles);
+            profilesWrapper.set(previousProfilesWrapperValue);
         }
     }
 
@@ -420,13 +428,6 @@ public final class GameDirectoriesTest {
             assertEquals("{", Files.readString(backup));
             assertFalse(result.value().isBackupOnNextSave());
         }
-    }
-
-    /// Invokes the private game directory view rebuild helper.
-    private static void invokeRebuildGameDirectories() throws ReflectiveOperationException {
-        Method method = SettingsManager.class.getDeclaredMethod("rebuildGameDirectories");
-        method.setAccessible(true);
-        method.invoke(null);
     }
 
     /// Creates a temporary directory in an in-memory file system for JsonSettingFile tests.

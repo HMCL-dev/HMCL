@@ -19,9 +19,6 @@ package org.jackhuang.hmcl.setting;
 
 import com.google.gson.JsonParseException;
 import com.google.gson.JsonObject;
-import javafx.beans.InvalidationListener;
-import javafx.beans.Observable;
-import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.auth.authlibinjector.AuthlibInjectorServer;
@@ -34,11 +31,9 @@ import org.jackhuang.hmcl.util.platform.OperatingSystem;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.UnknownNullability;
-import org.jetbrains.annotations.UnmodifiableView;
 
 import java.io.IOException;
 import java.nio.file.*;
-import java.util.LinkedHashMap;
 import java.util.Locale;
 import java.util.Map;
 
@@ -174,12 +169,6 @@ public final class SettingsManager {
 
     /// The loaded user game directory file.
     private static @UnknownNullability GameDirectories userGameDirectories;
-
-    /// The mutable backing list for the merged runtime game directory view.
-    private static @UnknownNullability ObservableList<Profile> mergedGameDirectories;
-
-    /// The read-only merged runtime game directory view.
-    private static @UnknownNullability @UnmodifiableView ObservableList<Profile> gameDirectories;
 
     /// The loaded detached preset store.
     private static @UnknownNullability GameSettingsPresets gameSettingsPresets;
@@ -334,56 +323,20 @@ public final class SettingsManager {
         return JsonUtils.GSON.toJson(gameAccounts(), AccountStorages.class);
     }
 
-    /// Returns the merged game directories.
-    public static @UnmodifiableView ObservableList<Profile> getGameDirectories() {
-        if (gameDirectories == null) {
-            throw new IllegalStateException("Game directories haven't been loaded");
-        }
-        return gameDirectories;
-    }
-
-    /// Adds a profile to the per-workspace game directory store.
-    static void addGameDirectory(Profile profile) {
+    /// Returns the loaded per-workspace game directory store.
+    static GameDirectories localGameDirectories() {
         if (localGameDirectories == null) {
             throw new IllegalStateException("Game directories haven't been loaded");
         }
-
-        profile.setUserGameDirectory(false);
-        ObservableList<Profile> profiles = localGameDirectories.getGameDirectories();
-        SettingID id = profile.getId();
-        for (int i = 0; i < profiles.size(); i++) {
-            if (profiles.get(i).getId().equals(id)) {
-                profiles.set(i, profile);
-                rebuildGameDirectories();
-                return;
-            }
-        }
-
-        profiles.add(profile);
-        rebuildGameDirectories();
+        return localGameDirectories;
     }
 
-    /// Removes a profile from the game directory store that owns it.
-    static void removeGameDirectory(Profile profile) {
-        GameDirectories owner = profile.shouldSaveToUserGameDirectory()
-                ? userGameDirectories
-                : localGameDirectories;
-        if (owner == null) {
+    /// Returns the loaded user game directory store.
+    static GameDirectories userGameDirectories() {
+        if (userGameDirectories == null) {
             throw new IllegalStateException("Game directories haven't been loaded");
         }
-
-        owner.getGameDirectories().remove(profile);
-        rebuildGameDirectories();
-    }
-
-    /// Returns whether either game directory store contains a profile with the given ID.
-    static boolean hasGameDirectoryId(SettingID id) {
-        if (localGameDirectories == null || userGameDirectories == null) {
-            throw new IllegalStateException("Game directories haven't been loaded");
-        }
-
-        return localGameDirectories.getGameDirectories().stream().anyMatch(profile -> profile.getId().equals(id))
-                || userGameDirectories.getGameDirectories().stream().anyMatch(profile -> profile.getId().equals(id));
+        return userGameDirectories;
     }
 
     /// Returns the reusable game setting presets.
@@ -579,7 +532,7 @@ public final class SettingsManager {
     /// @param fallbackGameDirectories the fallback store used when the local game directory file does not exist
     private static void loadGameDirectories(
             @Nullable GameDirectories fallbackGameDirectories) throws IOException {
-        if (gameDirectories != null) {
+        if (localGameDirectories != null || userGameDirectories != null) {
             throw new IllegalStateException("Game directories are already loaded");
         }
 
@@ -592,54 +545,21 @@ public final class SettingsManager {
         userGameDirectories.setUserFile(true);
         localGameDirectories = localResult.value();
         localGameDirectories.setUserFile(false);
-        mergedGameDirectories = FXCollections.observableArrayList(profile -> new Observable[] { profile });
-        gameDirectories = FXCollections.unmodifiableObservableList(mergedGameDirectories);
-        rebuildGameDirectories();
         if (localGameDirectories.isSavable()) {
-            localGameDirectories.addListener((InvalidationListener) source -> saveLocalGameDirectories());
+            LOCAL_GAME_DIRECTORIES_FILE.installAutoSave(localGameDirectories);
         }
         if (userGameDirectories.isSavable()) {
-            userGameDirectories.addListener((InvalidationListener) source -> saveUserGameDirectories());
+            USER_GAME_DIRECTORIES_FILE.installAutoSave(userGameDirectories);
         }
+        Profiles.loadGameDirectories(localGameDirectories, userGameDirectories);
 
         if (newlyCreatedLocal && localGameDirectories.isSavable()) {
-            saveLocalGameDirectories();
+            LOCAL_GAME_DIRECTORIES_FILE.save(localGameDirectories);
         }
 
         if (newlyCreatedUser && userGameDirectories.isSavable()) {
-            saveUserGameDirectories();
+            USER_GAME_DIRECTORIES_FILE.save(userGameDirectories);
         }
-    }
-
-    /// Rebuilds the merged runtime game directory view from the two backing stores.
-    private static void rebuildGameDirectories() {
-        if (mergedGameDirectories == null || userGameDirectories == null || localGameDirectories == null) {
-            throw new IllegalStateException("Game directories haven't been loaded");
-        }
-
-        Map<SettingID, Profile> visibleProfiles = new LinkedHashMap<>();
-        for (Profile profile : userGameDirectories.getGameDirectories()) {
-            SettingID id = profile.getId();
-            visibleProfiles.remove(id);
-            visibleProfiles.put(id, profile);
-        }
-        for (Profile profile : localGameDirectories.getGameDirectories()) {
-            SettingID id = profile.getId();
-            visibleProfiles.remove(id);
-            visibleProfiles.put(id, profile);
-        }
-
-        mergedGameDirectories.setAll(visibleProfiles.values());
-    }
-
-    /// Saves per-workspace game directories.
-    private static void saveLocalGameDirectories() {
-        LOCAL_GAME_DIRECTORIES_FILE.save(localGameDirectories);
-    }
-
-    /// Saves user game directories.
-    private static void saveUserGameDirectories() {
-        USER_GAME_DIRECTORIES_FILE.save(userGameDirectories);
     }
 
     /// Loads game settings presets and installs the save listener.
