@@ -29,7 +29,6 @@ import org.jackhuang.hmcl.util.FileSaver;
 import org.jackhuang.hmcl.util.gson.JsonSchema;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.i18n.I18n;
-import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
@@ -407,7 +406,7 @@ public final class SettingsManager {
         loadUserSettings(userSettingsMigrationResult);
         loadUserState(userSettingsMigrationResult);
         if (userSettingsMigrationResult != null) {
-            LegacyConfigMigrator.saveLegacyUserSettingsMigrationReceipt(userSettingsMigrationResult);
+            LegacyConfigMigrator.completeLegacyUserSettingsMigration(userSettingsMigrationResult);
         }
 
         Locale.setDefault(settings().languageProperty().get().getLocale());
@@ -425,9 +424,7 @@ public final class SettingsManager {
         }
 
         if (launcherSettingsResult.pendingMigration() != null) {
-            LOG.info("Migrating settings from " + launcherSettingsResult.pendingMigration().path() + " to " + SETTINGS_LOCATION);
-            FileUtils.saveSafely(SETTINGS_LOCATION, launcherSettings.toJson());
-            LegacyConfigMigrator.saveLegacyConfigMigrationReceipt(launcherSettingsResult.pendingMigration());
+            LegacyConfigMigrator.completeLegacyConfigMigration(launcherSettingsResult.pendingMigration(), SETTINGS_LOCATION);
         }
 
         if (launcherSettings.isSavable()) {
@@ -726,7 +723,7 @@ public final class SettingsManager {
             if (newlyCreated && userGameAccounts.isSavable()) {
                 USER_GAME_ACCOUNTS_FILE.save(userGameAccounts);
                 if (migrationResult != null) {
-                    LegacyConfigMigrator.saveLegacyUserAccountsMigrationReceipt(migrationResult);
+                    LegacyConfigMigrator.completeLegacyUserAccountsMigration(migrationResult);
                 }
             }
         } catch (IOException e) {

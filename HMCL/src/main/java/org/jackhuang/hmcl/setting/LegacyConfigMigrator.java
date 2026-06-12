@@ -26,6 +26,7 @@ import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.gson.JsonSchema;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.gson.UUIDTypeAdapter;
+import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.io.JarUtils;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
@@ -241,8 +242,13 @@ public final class LegacyConfigMigrator {
         }
     }
 
-    /// Records that the given legacy config migration result has been applied.
-    static void saveLegacyConfigMigrationReceipt(LegacyConfigMigration migration) throws IOException {
+    /// Saves the migrated launcher settings and records that the legacy config migration has been applied.
+    ///
+    /// @param migration the completed legacy config migration
+    /// @param target the current settings file path
+    static void completeLegacyConfigMigration(LegacyConfigMigration migration, Path target) throws IOException {
+        LOG.info("Migrating settings from " + migration.path() + " to " + target);
+        FileUtils.saveSafely(target, migration.launcherSettings().toJson());
         MigrationReceipt.save(SETTINGS_MIGRATION_RECEIPT_LOCATION, migration.path());
     }
 
@@ -276,7 +282,7 @@ public final class LegacyConfigMigrator {
     }
 
     /// Records that the given legacy user settings migration result has been applied.
-    static void saveLegacyUserSettingsMigrationReceipt(UserSettingsMigrationResult migrationResult) throws IOException {
+    static void completeLegacyUserSettingsMigration(UserSettingsMigrationResult migrationResult) {
         MigrationReceipt.save(USER_SETTINGS_MIGRATION_RECEIPT_LOCATION, migrationResult.path());
     }
 
@@ -313,7 +319,7 @@ public final class LegacyConfigMigrator {
     }
 
     /// Records that the given legacy shared account migration result has been applied.
-    static void saveLegacyUserAccountsMigrationReceipt(UserAccountsMigrationResult migrationResult) {
+    static void completeLegacyUserAccountsMigration(UserAccountsMigrationResult migrationResult) {
         MigrationReceipt.save(USER_ACCOUNTS_MIGRATION_RECEIPT_LOCATION, migrationResult.path());
     }
 
