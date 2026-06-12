@@ -45,7 +45,7 @@ import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 /// Migrates legacy per-workspace config files into the current settings.json file.
 ///
-/// HMCL used hmcl.json and .hmcl.json as the main per-workspace config files through HMCL 3.15.0.345.
+/// HMCL used hmcl.json and .hmcl.json as the main per-workspace config files before HMCL 3.16.
 /// Those files are now legacy inputs only: migration reads them, writes a new settings.json, and leaves the original files unchanged.
 ///
 /// @author Glavo
@@ -80,10 +80,10 @@ public final class LegacyConfigMigrator {
     /// The legacy built-in user-home profile ID.
     private static final SettingID LEGACY_HOME_PROFILE_ID = getLegacyProfileID(LEGACY_HOME_PROFILE);
 
-    /// The legacy Windows and portable configuration file name used through HMCL 3.15.0.345.
+    /// The legacy Windows and portable configuration file name used before HMCL 3.16.
     private static final String LEGACY_CONFIG_FILENAME = "hmcl.json";
 
-    /// The legacy Linux configuration file name used through HMCL 3.15.0.345.
+    /// The legacy Linux configuration file name used before HMCL 3.16.
     private static final String LEGACY_CONFIG_FILENAME_LINUX = ".hmcl.json";
 
     /// The legacy user settings path shared by all workspaces.
@@ -997,7 +997,7 @@ public final class LegacyConfigMigrator {
         return changed;
     }
 
-    /// Migrates profile-global game settings from HMCL 3.15.0.345 and older config files.
+    /// Migrates profile-global game settings from config files used before HMCL 3.16.
     static void migrateLegacyPresetSettings(
             GameDirectories gameDirectories,
             GameSettingsPresets gameSettingsPresets,

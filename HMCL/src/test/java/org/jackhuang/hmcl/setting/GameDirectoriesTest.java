@@ -23,7 +23,6 @@ import com.google.gson.JsonParseException;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import javafx.beans.property.ObjectProperty;
-import javafx.beans.property.ReadOnlyListWrapper;
 import javafx.collections.ObservableList;
 import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.util.PortablePath;
