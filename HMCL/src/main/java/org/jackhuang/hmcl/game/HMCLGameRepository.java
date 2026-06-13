@@ -270,8 +270,12 @@ public final class HMCLGameRepository extends DefaultGameRepository {
                         getParentGameSettings(null).idProperty().getValue());
         if (migrationResult != null) {
             initInstanceGameSettings(id, migrationResult.setting());
-            saveGameSettings(id);
-            migrationResult.saveReceipt();
+            try {
+                saveGameSettingsSync(id);
+                migrationResult.saveReceipt();
+            } catch (IOException e) {
+                LOG.warning("Failed to save migrated instance game settings for " + id, e);
+            }
             return;
         }
 
@@ -588,6 +592,29 @@ public final class HMCLGameRepository extends DefaultGameRepository {
             SettingFileUtils.backupInvalidConfig(file);
         }
         FileSaver.save(file, LauncherSettings.SETTINGS_GSON.toJson(setting));
+    }
+
+    /// Saves instance-specific game settings synchronously.
+    ///
+    /// @param id the instance ID
+    /// @throws IOException if saving the file fails
+    private void saveGameSettingsSync(String id) throws IOException {
+        if (!instanceGameSettings.containsKey(id) || readOnlyInstanceGameSettings.contains(id)) {
+            return;
+        }
+
+        GameSettings.Instance setting = instanceGameSettings.get(id);
+        if (setting == null) {
+            return;
+        }
+
+        Path file = getInstanceGameSettingsFile(id).toAbsolutePath().normalize();
+        Files.createDirectories(file.getParent());
+        if (setting.isBackupOnNextSave()) {
+            setting.setBackupOnNextSave(false);
+            SettingFileUtils.backupInvalidConfig(file);
+        }
+        FileUtils.saveSafely(file, LauncherSettings.SETTINGS_GSON.toJson(setting));
     }
 
     /// Result of loading an instance-specific game settings file.

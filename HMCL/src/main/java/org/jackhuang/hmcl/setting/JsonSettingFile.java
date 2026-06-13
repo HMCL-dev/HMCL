@@ -23,6 +23,7 @@ import org.jackhuang.hmcl.util.FileSaver;
 import org.jackhuang.hmcl.util.gson.JsonSchema;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.gson.ObservableSetting;
+import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
 
@@ -167,6 +168,18 @@ final class JsonSettingFile<T extends ObservableSetting & JsonSchemaSetting> {
             SettingFileUtils.backupInvalidConfig(location);
         }
         FileSaver.save(location, LauncherSettings.SETTINGS_GSON.toJson(value, type));
+    }
+
+    /// Saves a settings object synchronously.
+    ///
+    /// @param value the settings object to save
+    /// @throws IOException if saving the file fails
+    void saveSync(T value) throws IOException {
+        if (value.isBackupOnNextSave()) {
+            value.setBackupOnNextSave(false);
+            SettingFileUtils.backupInvalidConfig(location);
+        }
+        FileUtils.saveSafely(location, LauncherSettings.SETTINGS_GSON.toJson(value, type));
     }
 
     /// Backs up the current file and overwrites it with the given value using the current schema.

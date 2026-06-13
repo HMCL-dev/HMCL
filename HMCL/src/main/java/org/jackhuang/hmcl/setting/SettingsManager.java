@@ -676,10 +676,10 @@ public final class SettingsManager {
         }
 
         if (newlyCreatedLocal && localGameDirectories.isSavable()) {
-            LOCAL_GAME_DIRECTORIES_FILE.save(localGameDirectories);
+            LOCAL_GAME_DIRECTORIES_FILE.saveSync(localGameDirectories);
         }
         if (newlyCreatedUser && userGameDirectories.isSavable()) {
-            USER_GAME_DIRECTORIES_FILE.save(userGameDirectories);
+            USER_GAME_DIRECTORIES_FILE.saveSync(userGameDirectories);
         }
 
         localGameDirectoriesAccess = localResult.access();
@@ -706,7 +706,7 @@ public final class SettingsManager {
         normalizeGameSettingsPresets();
 
         if (newlyCreated && gameSettingsPresets.isSavable()) {
-            GAME_SETTINGS_FILE.save(gameSettingsPresets);
+            GAME_SETTINGS_FILE.saveSync(gameSettingsPresets);
         }
 
         return result.access();
@@ -740,7 +740,7 @@ public final class SettingsManager {
         }
 
         if (newlyCreated && launcherState.isSavable()) {
-            STATE_FILE.save(launcherState);
+            STATE_FILE.saveSync(launcherState);
         }
 
         return result.access();
@@ -765,7 +765,7 @@ public final class SettingsManager {
         }
 
         if (newlyCreated && authlibInjectorServers.isSavable()) {
-            AUTHLIB_INJECTOR_SERVERS_FILE.save(authlibInjectorServers);
+            AUTHLIB_INJECTOR_SERVERS_FILE.saveSync(authlibInjectorServers);
         }
 
         return result.access();
@@ -791,7 +791,7 @@ public final class SettingsManager {
             }
 
             if (newlyCreated && userGameAccounts.isSavable()) {
-                USER_GAME_ACCOUNTS_FILE.save(userGameAccounts);
+                USER_GAME_ACCOUNTS_FILE.saveSync(userGameAccounts);
                 if (migrationResult != null) {
                     LegacyConfigMigrator.completeLegacyUserAccountsMigration(migrationResult);
                 }
@@ -801,7 +801,8 @@ public final class SettingsManager {
         } catch (IOException e) {
             LOG.warning("Failed to load user game accounts", e);
             userGameAccounts = migrated != null ? migrated : new AccountStorages();
-            return SettingFileAccess.READ_WRITE;
+            userGameAccounts.setSavable(false);
+            return SettingFileAccess.UNREADABLE;
         }
     }
 
@@ -824,7 +825,7 @@ public final class SettingsManager {
         }
 
         if (newlyCreated && gameAccounts.isSavable()) {
-            GAME_ACCOUNTS_FILE.save(gameAccounts);
+            GAME_ACCOUNTS_FILE.saveSync(gameAccounts);
         }
 
         return result.access();
@@ -895,7 +896,7 @@ public final class SettingsManager {
         }
 
         if (newlyCreated && migratedUserSettings != null && userSettingsInstance.isSavable()) {
-            USER_SETTINGS_FILE.save(userSettingsInstance);
+            USER_SETTINGS_FILE.saveSync(userSettingsInstance);
         }
 
         return result.access();
@@ -921,7 +922,7 @@ public final class SettingsManager {
         }
 
         if (newlyCreated && userStateInstance.isSavable()) {
-            USER_STATE_FILE.save(userStateInstance);
+            USER_STATE_FILE.saveSync(userStateInstance);
         }
 
         return result.access();
