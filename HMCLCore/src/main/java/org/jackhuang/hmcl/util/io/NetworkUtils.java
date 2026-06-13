@@ -26,7 +26,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.*;
 import java.net.*;
-import java.net.http.HttpRequest;
 import java.nio.charset.Charset;
 import java.time.Duration;
 import java.util.*;
@@ -173,7 +172,7 @@ public final class NetworkUtils {
     public static java.net.http.HttpRequest.Builder newRequestBuilder(URI uri) {
         String host = uri.getHost().toLowerCase(Locale.ROOT);
         String apiKey;
-        var builder = HttpRequest.newBuilder(uri);
+        var builder = java.net.http.HttpRequest.newBuilder(uri);
         if (StringUtils.isNotBlank((apiKey = apiKeys.get(host))))
             builder.header("x-api-key", apiKey);
         return builder;
