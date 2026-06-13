@@ -708,7 +708,7 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
                 nativeLibrarySettings
         );
         {
-            var useCustomNativesDirPane = createIndependentNativesDirTypeButton();
+            var useCustomNativesDirPane = createIndependentBooleanButton(GameSettings::useCustomNativesProperty);
             nativeLibrarySettings.getContent().add(useCustomNativesDirPane);
             useCustomNativesDirPane.setTitle(i18n("settings.advanced.natives_directory.custom.enabled"));
 
@@ -1884,19 +1884,6 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
         button.setInheritAvailable(!isPresetSetting);
 
         IndependentSettingBinder.bindToggleButton(currentSetting, button, propertyGetter, this::getEffectiveParentGameSettings);
-        return button;
-    }
-
-    /// Creates the native directory mode editor with independent override state.
-    private LineInheritableToggleButton createIndependentNativesDirTypeButton() {
-        var button = new LineInheritableToggleButton();
-        button.setInheritedText(i18n("settings.game.inherit"));
-        button.setOverriddenText(i18n("settings.game.override"));
-        button.setInheritTooltip(i18n("settings.game.inherit_global"));
-        button.setOverriddenTooltip(i18n("settings.game.override_global"));
-        button.setInheritAvailable(!isPresetSetting);
-
-        IndependentSettingBinder.bindNativesDirTypeButton(currentSetting, button, this::getEffectiveParentGameSettings);
         return button;
     }
 

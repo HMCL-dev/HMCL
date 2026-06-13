@@ -28,7 +28,6 @@ import javafx.scene.control.Label;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.BorderPane;
 import org.jackhuang.hmcl.game.HMCLGameRepository;
-import org.jackhuang.hmcl.game.NativesDirectoryType;
 import org.jackhuang.hmcl.setting.SettingsManager;
 import org.jackhuang.hmcl.setting.GameSettings;
 import org.jackhuang.hmcl.setting.property.SettingProperty;
@@ -520,73 +519,6 @@ final class IndependentSettingBinder {
         });
 
         bindActiveProperty(currentSetting, activeProperty, propertyGetter, refresh);
-    }
-
-    /// Binds the native directory mode to a boolean toggle editor.
-    static void bindNativesDirTypeButton(
-            ObjectProperty<? extends GameSettings> currentSetting,
-            LineInheritableToggleButton button,
-            Function<GameSettings.Instance, GameSettings.Preset> parentGetter) {
-        ObjectProperty<@Nullable SettingProperty<NativesDirectoryType>> activeProperty = new SimpleObjectProperty<>();
-        final Holder<Boolean> updating = new Holder<>(false);
-
-        InvalidationListener refresh = observable -> {
-            GameSettings setting = currentSetting.get();
-            SettingProperty<NativesDirectoryType> property = activeProperty.get();
-            if (setting == null || property == null || updating.value) {
-                return;
-            }
-
-            updating.value = true;
-            try {
-                boolean overridden = isOverridden(setting, property);
-                NativesDirectoryType rawValue = getDirectValue(property);
-                NativesDirectoryType effectiveValue = getEffectiveValue(setting, GameSettings::nativesDirectoryTypeProperty, parentGetter);
-                button.setRawValue((overridden ? rawValue : effectiveValue) == NativesDirectoryType.CUSTOM);
-                button.setOverridden(overridden);
-                button.setEffectiveValue(effectiveValue == NativesDirectoryType.CUSTOM);
-            } finally {
-                updating.value = false;
-            }
-        };
-
-        button.rawValueProperty().addListener((observable, oldValue, newValue) -> {
-            GameSettings setting = currentSetting.get();
-            SettingProperty<NativesDirectoryType> property = activeProperty.get();
-            if (setting == null || property == null || updating.value) {
-                return;
-            }
-
-            updating.value = true;
-            try {
-                setOverridden(setting, property, true);
-                property.setValue(newValue ? NativesDirectoryType.CUSTOM : NativesDirectoryType.VERSION_FOLDER);
-                button.setEffectiveValue(getEffectiveValue(setting, GameSettings::nativesDirectoryTypeProperty, parentGetter) == NativesDirectoryType.CUSTOM);
-            } finally {
-                updating.value = false;
-            }
-        });
-
-        button.overriddenProperty().addListener((observable, oldValue, newValue) -> {
-            GameSettings setting = currentSetting.get();
-            SettingProperty<NativesDirectoryType> property = activeProperty.get();
-            if (setting == null || property == null || updating.value) {
-                return;
-            }
-
-            updating.value = true;
-            try {
-                setOverridden(setting, property, newValue);
-                if (newValue) {
-                    property.setValue(button.getRawValue() ? NativesDirectoryType.CUSTOM : NativesDirectoryType.VERSION_FOLDER);
-                }
-                button.setEffectiveValue(getEffectiveValue(setting, GameSettings::nativesDirectoryTypeProperty, parentGetter) == NativesDirectoryType.CUSTOM);
-            } finally {
-                updating.value = false;
-            }
-        });
-
-        bindActiveProperty(currentSetting, activeProperty, GameSettings::nativesDirectoryTypeProperty, refresh);
     }
 
     private static int sliderValueToMaxMemory(double value, int totalMemoryMiB) {

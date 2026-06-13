@@ -90,6 +90,12 @@ public final class LegacyGameSettingsMigrator {
             JavaVersionType.CUSTOM
     };
 
+    /// Legacy native library mode ordinal order used by old game settings.
+    private static final String @Unmodifiable [] LEGACY_NATIVES_DIRECTORY_TYPES = {
+            "VERSION_FOLDER",
+            "CUSTOM"
+    };
+
     /// Prevents instantiation.
     private LegacyGameSettingsMigrator() {
     }
@@ -219,7 +225,7 @@ public final class LegacyGameSettingsMigrator {
                     GameSettings.PROPERTY_SHOW_LOGS,
                     GameSettings.PROPERTY_ENABLE_DEBUG_LOG_OUTPUT,
                     GameSettings.PROPERTY_NOT_PATCH_NATIVES,
-                    GameSettings.PROPERTY_NATIVES_DIRECTORY_TYPE,
+                    GameSettings.PROPERTY_USE_CUSTOM_NATIVES,
                     GameSettings.PROPERTY_NATIVES_DIRECTORY,
                     GameSettings.PROPERTY_USE_NATIVE_GLFW,
                     GameSettings.PROPERTY_USE_NATIVE_OPENAL
@@ -288,10 +294,32 @@ public final class LegacyGameSettingsMigrator {
         target.showLogsProperty().setValue(JsonUtils.getBoolean(source, "showLogs", false));
         target.enableDebugLogOutputProperty().setValue(JsonUtils.getBoolean(source, "enableDebugLogOutput", false));
         target.notPatchNativesProperty().setValue(JsonUtils.getBoolean(source, "notPatchNatives", false));
-        target.nativesDirectoryTypeProperty().setValue(parseEnum(source, "nativesDirType", NativesDirectoryType.class, NativesDirectoryType.VERSION_FOLDER));
-        target.nativesDirectoryProperty().setValue(JsonUtils.getString(source, "nativesDir", ""));
+        boolean useCustomNatives = isLegacyCustomNativesDirectory(source);
+        target.useCustomNativesProperty().setValue(useCustomNatives);
+        target.nativesDirectoryProperty().setValue(useCustomNatives ? JsonUtils.getString(source, "nativesDir", "") : "");
         target.useNativeGLFWProperty().setValue(JsonUtils.getBoolean(source, "useNativeGLFW", false));
         target.useNativeOpenALProperty().setValue(JsonUtils.getBoolean(source, "useNativeOpenAL", false));
+    }
+
+    /// Returns whether old game settings selected user-managed native libraries.
+    private static boolean isLegacyCustomNativesDirectory(JsonObject source) {
+        JsonPrimitive primitive = JsonUtils.getPrimitive(source, "nativesDirType");
+        if (primitive == null) {
+            return false;
+        }
+
+        try {
+            if (primitive.isNumber()) {
+                int index = primitive.getAsInt();
+                return index >= 0
+                        && index < LEGACY_NATIVES_DIRECTORY_TYPES.length
+                        && "CUSTOM".equals(LEGACY_NATIVES_DIRECTORY_TYPES[index]);
+            }
+
+            return "CUSTOM".equalsIgnoreCase(primitive.getAsString());
+        } catch (RuntimeException ignored) {
+            return false;
+        }
     }
 
     /// Migrates the legacy renderer fields into current renderer properties.

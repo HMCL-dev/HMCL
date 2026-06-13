@@ -665,7 +665,7 @@ public final class HMCLGameRepository extends DefaultGameRepository {
                 .setPostExitCommand(vs.getInheritable(GameSettings::postExitCommandProperty))
                 .setNoGeneratedJVMArgs(noJVMOptions)
                 .setNoGeneratedOptimizingJVMArgs(vs.getInheritable(GameSettings::noOptimizingJVMOptionsProperty))
-                .setNativesDirType(vs.get(GameSettings::nativesDirectoryTypeProperty))
+                .setUseCustomNatives(vs.get(GameSettings::useCustomNativesProperty))
                 .setNativesDir(vs.get(GameSettings::nativesDirectoryProperty))
                 .setProcessPriority(vs.getInheritable(GameSettings::processPriorityProperty))
                 .setGraphicsBackend(vs.getInheritable(GameSettings::graphicsBackendProperty))

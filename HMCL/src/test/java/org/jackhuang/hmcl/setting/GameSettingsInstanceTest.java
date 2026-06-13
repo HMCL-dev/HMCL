@@ -21,7 +21,6 @@ import com.google.common.jimfs.Configuration;
 import com.google.common.jimfs.Jimfs;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
-import org.jackhuang.hmcl.game.NativesDirectoryType;
 import org.jackhuang.hmcl.util.gson.JsonSchema;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.junit.jupiter.api.Test;
@@ -57,7 +56,7 @@ public final class GameSettingsInstanceTest {
     public void storesDirectoryPropertyNames() {
         GameSettings.Instance instance = new GameSettings.Instance();
         instance.runningDirectoryProperty().setValue("run");
-        instance.nativesDirectoryTypeProperty().setValue(NativesDirectoryType.CUSTOM);
+        instance.useCustomNativesProperty().setValue(true);
         instance.nativesDirectoryProperty().setValue("natives");
 
         JsonObject serialized = JsonParser.parseString(
@@ -65,9 +64,10 @@ public final class GameSettingsInstanceTest {
         ).getAsJsonObject();
 
         assertEquals("run", serialized.get("runningDirectory").getAsString());
-        assertEquals(NativesDirectoryType.CUSTOM.name(), serialized.get("nativesDirectoryType").getAsString());
+        assertTrue(serialized.get("useCustomNatives").getAsBoolean());
         assertEquals("natives", serialized.get("nativesDirectory").getAsString());
         assertFalse(serialized.has("runningDir"));
+        assertFalse(serialized.has("nativesDirectoryType"));
         assertFalse(serialized.has("nativesDirType"));
         assertFalse(serialized.has("nativesDir"));
     }
@@ -156,10 +156,24 @@ public final class GameSettingsInstanceTest {
                 }
                 """).getAsJsonObject(), false);
 
-        assertEquals(NativesDirectoryType.CUSTOM, instance.nativesDirectoryTypeProperty().getValue());
+        assertTrue(instance.useCustomNativesProperty().getValue());
         assertEquals("natives", instance.nativesDirectoryProperty().getValue());
-        assertTrue(instance.getOverrideProperties().contains(GameSettings.PROPERTY_NATIVES_DIRECTORY_TYPE));
+        assertTrue(instance.getOverrideProperties().contains(GameSettings.PROPERTY_USE_CUSTOM_NATIVES));
         assertTrue(instance.getOverrideProperties().contains(GameSettings.PROPERTY_NATIVES_DIRECTORY));
+    }
+
+    /// Tests that legacy native library mode ordinals keep their old meaning.
+    @Test
+    public void migratesLegacyNativeDirectoryOrdinal() {
+        GameSettings.Instance instance = LegacyGameSettingsMigrator.toInstance(null, JsonParser.parseString("""
+                {
+                  "nativesDirType": 1,
+                  "nativesDir": "natives"
+                }
+                """).getAsJsonObject(), false);
+
+        assertTrue(instance.useCustomNativesProperty().getValue());
+        assertEquals("natives", instance.nativesDirectoryProperty().getValue());
     }
 
     /// Tests that inheriting a legacy parent keeps copied fields unset on the instance itself.

@@ -760,22 +760,22 @@ public sealed abstract class GameSettings extends ObservableSetting {
         return notPatchNatives;
     }
 
-    /// Property name for the native library directory mode.
-    public static final String PROPERTY_NATIVES_DIRECTORY_TYPE = "nativesDirectoryType";
+    /// Property name for using custom native libraries.
+    public static final String PROPERTY_USE_CUSTOM_NATIVES = "useCustomNatives";
 
-    /// The native library directory mode.
-    @SerializedName(PROPERTY_NATIVES_DIRECTORY_TYPE)
-    private final SettingProperty<NativesDirectoryType> nativesDirectoryType = newSettingProperty(PROPERTY_NATIVES_DIRECTORY_TYPE, NativesDirectoryType.VERSION_FOLDER);
+    /// If `true`, HMCL leaves native library management to the user.
+    @SerializedName(PROPERTY_USE_CUSTOM_NATIVES)
+    private final SettingProperty<Boolean> useCustomNatives = newSettingProperty(PROPERTY_USE_CUSTOM_NATIVES, false);
 
-    /// Returns the native library directory mode property.
-    public SettingProperty<NativesDirectoryType> nativesDirectoryTypeProperty() {
-        return nativesDirectoryType;
+    /// Returns the custom native libraries property.
+    public SettingProperty<Boolean> useCustomNativesProperty() {
+        return useCustomNatives;
     }
 
     /// Property name for the native library directory path.
     public static final String PROPERTY_NATIVES_DIRECTORY = "nativesDirectory";
 
-    /// The path to the native library directory.
+    /// The path to the native library directory, or an empty string for the default path.
     @SerializedName(PROPERTY_NATIVES_DIRECTORY)
     private final SettingProperty<String> nativesDirectory = newSettingProperty(PROPERTY_NATIVES_DIRECTORY, "");
 

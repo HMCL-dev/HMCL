@@ -553,14 +553,18 @@ public class DefaultLauncher extends Launcher {
         );
     }
 
+    /// Returns the native library directory selected by the launch options.
+    private Path getNativeFolder() {
+        if (StringUtils.isBlank(options.getNativesDir())) {
+            return repository.getNativeDirectory(version.getId(), options.getJava().getPlatform());
+        }
+
+        return Path.of(options.getNativesDir());
+    }
+
     @Override
     public ManagedProcess launch() throws IOException, InterruptedException {
-        Path nativeFolder;
-        if (options.getNativesDirType() == NativesDirectoryType.VERSION_FOLDER) {
-            nativeFolder = repository.getNativeDirectory(version.getId(), options.getJava().getPlatform());
-        } else {
-            nativeFolder = Path.of(options.getNativesDir());
-        }
+        Path nativeFolder = getNativeFolder();
 
         final Command command = generateCommandLine(nativeFolder);
 
@@ -576,7 +580,7 @@ public class DefaultLauncher extends Launcher {
             throw new IllegalStateException("Illegal command line " + rawCommandLine);
         }
 
-        if (options.getNativesDirType() == NativesDirectoryType.VERSION_FOLDER) {
+        if (!options.isUseCustomNatives()) {
             decompressNatives(command.javaNativeFolder);
         }
 
@@ -711,12 +715,7 @@ public class DefaultLauncher extends Launcher {
     public void makeLaunchScript(Path scriptFile) throws IOException {
         boolean isWindows = OperatingSystem.WINDOWS == OperatingSystem.CURRENT_OS;
 
-        Path nativeFolder;
-        if (options.getNativesDirType() == NativesDirectoryType.VERSION_FOLDER) {
-            nativeFolder = repository.getNativeDirectory(version.getId(), options.getJava().getPlatform());
-        } else {
-            nativeFolder = Path.of(options.getNativesDir());
-        }
+        Path nativeFolder = getNativeFolder();
 
         String scriptExtension = FileUtils.getExtension(scriptFile);
         boolean usePowerShell = "ps1".equals(scriptExtension);
@@ -743,7 +742,7 @@ public class DefaultLauncher extends Launcher {
         if (isUsingLog4j())
             extractLog4jConfigurationFile();
 
-        if (options.getNativesDirType() == NativesDirectoryType.VERSION_FOLDER)
+        if (!options.isUseCustomNatives())
             decompressNatives(commandLine.javaNativeFolder);
 
         Files.createDirectories(scriptFile.getParent());

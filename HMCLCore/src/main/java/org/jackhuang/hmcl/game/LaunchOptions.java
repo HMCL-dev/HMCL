@@ -53,7 +53,7 @@ public class LaunchOptions implements Serializable {
     private boolean noGeneratedOptimizingJVMArgs;
     private String preLaunchCommand;
     private String postExitCommand;
-    private NativesDirectoryType nativesDirType;
+    private boolean useCustomNatives;
     private String nativesDir;
     private ProcessPriority processPriority = ProcessPriority.NORMAL;
     private GraphicsAPI graphicsBackend = GraphicsAPI.DEFAULT;
@@ -225,17 +225,12 @@ public class LaunchOptions implements Serializable {
         return postExitCommand;
     }
 
-    /**
-     * 0 - ./minecraft/versions/&lt;version&gt;/natives
-     * 1 - custom natives directory
-     */
-    public NativesDirectoryType getNativesDirType() {
-        return nativesDirType;
+    /// Whether native libraries are supplied and managed outside HMCL.
+    public boolean isUseCustomNatives() {
+        return useCustomNatives;
     }
 
-    /**
-     * Path to the natives directory, optional
-     */
+    /// Path to the natives directory, or blank for the default directory.
     public String getNativesDir() {
         return nativesDir;
     }
@@ -436,8 +431,8 @@ public class LaunchOptions implements Serializable {
             return this;
         }
 
-        public Builder setNativesDirType(NativesDirectoryType nativesDirType) {
-            options.nativesDirType = nativesDirType;
+        public Builder setUseCustomNatives(boolean useCustomNatives) {
+            options.useCustomNatives = useCustomNatives;
             return this;
         }
 

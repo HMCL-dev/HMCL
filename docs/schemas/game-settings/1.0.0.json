@@ -215,11 +215,8 @@
         "notPatchNatives": {
           "type": "boolean"
         },
-        "nativesDirectoryType": {
-          "enum": [
-            "VERSION_FOLDER",
-            "CUSTOM"
-          ]
+        "useCustomNatives": {
+          "type": "boolean"
         },
         "nativesDirectory": {
           "type": "string"
