@@ -95,8 +95,6 @@ public final class LineInheritableToggleButton extends LineButtonBase {
         overridden.addListener(observable -> refresh());
         effectiveValue.addListener(observable -> refresh());
         inheritAvailable.addListener(observable -> refresh());
-        inheritedText.addListener(observable -> refresh());
-        overriddenText.addListener(observable -> refresh());
         inheritedTooltip.addListener(observable -> refresh());
         overriddenTooltip.addListener(observable -> refresh());
         refresh();
@@ -194,42 +192,6 @@ public final class LineInheritableToggleButton extends LineButtonBase {
     /// Sets whether inherited mode can be selected.
     public void setInheritAvailable(boolean inheritAvailable) {
         inheritAvailableProperty().set(inheritAvailable);
-    }
-
-    /// The text that describes inherited mode.
-    private final StringProperty inheritedText = new SimpleStringProperty(this, "inheritedText", "");
-
-    /// Returns the text that describes inherited mode.
-    public StringProperty inheritedTextProperty() {
-        return inheritedText;
-    }
-
-    /// Returns the text that describes inherited mode.
-    public String getInheritedText() {
-        return inheritedTextProperty().get();
-    }
-
-    /// Sets the text that describes inherited mode.
-    public void setInheritedText(String inheritedText) {
-        inheritedTextProperty().set(inheritedText);
-    }
-
-    /// The text that describes overridden mode.
-    private final StringProperty overriddenText = new SimpleStringProperty(this, "overriddenText", "");
-
-    /// Returns the text that describes overridden mode.
-    public StringProperty overriddenTextProperty() {
-        return overriddenText;
-    }
-
-    /// Returns the text that describes overridden mode.
-    public String getOverriddenText() {
-        return overriddenTextProperty().get();
-    }
-
-    /// Sets the text that describes overridden mode.
-    public void setOverriddenText(String overriddenText) {
-        overriddenTextProperty().set(overriddenText);
     }
 
     /// The tooltip displayed while inheriting the parent value.

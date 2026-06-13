@@ -1877,8 +1877,6 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
     private LineInheritableToggleButton createIndependentBooleanButton(
             Function<GameSettings, SettingProperty<Boolean>> propertyGetter) {
         var button = new LineInheritableToggleButton();
-        button.setInheritedText(i18n("settings.game.inherit"));
-        button.setOverriddenText(i18n("settings.game.override"));
         button.setInheritTooltip(i18n("settings.game.inherit_global"));
         button.setOverriddenTooltip(i18n("settings.game.override_global"));
         button.setInheritAvailable(!isPresetSetting);
@@ -1891,8 +1889,6 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
     private LineInheritableToggleButton createInheritableBooleanButton(
             Function<GameSettings, InheritableProperty<Boolean>> propertyGetter) {
         var button = new LineInheritableToggleButton();
-        button.setInheritedText(i18n("settings.game.inherit"));
-        button.setOverriddenText(i18n("settings.game.override"));
         button.setInheritTooltip(i18n("settings.game.inherit_global"));
         button.setOverriddenTooltip(i18n("settings.game.override_global"));
         button.setInheritAvailable(!isPresetSetting);
