@@ -675,6 +675,13 @@ public final class SettingsManager {
             USER_GAME_DIRECTORIES_FILE.installAutoSave(userGameDirectories);
         }
 
+        if (newlyCreatedLocal && localGameDirectories.isSavable()) {
+            LOCAL_GAME_DIRECTORIES_FILE.save(localGameDirectories);
+        }
+        if (newlyCreatedUser && userGameDirectories.isSavable()) {
+            USER_GAME_DIRECTORIES_FILE.save(userGameDirectories);
+        }
+
         localGameDirectoriesAccess = localResult.access();
         userGameDirectoriesAccess = userResult.access();
     }
