@@ -47,8 +47,9 @@ import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 public final class CurseForgeRemoteModRepository implements RemoteModRepository {
 
     private static final String PREFIX = "https://api.curseforge.com";
-    private static final String apiKey = System.getProperty("hmcl.curseforge.apikey", JarUtils.getAttribute("hmcl.curseforge.apikey", ""));
     private static final Semaphore SEMAPHORE = new Semaphore(16);
+
+    public static final String apiKey = System.getProperty("hmcl.curseforge.apikey", JarUtils.getAttribute("hmcl.curseforge.apikey", ""));
 
     private static final int WORD_PERFECT_MATCH_WEIGHT = 5;
 

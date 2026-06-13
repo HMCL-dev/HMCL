@@ -18,6 +18,7 @@
 package org.jackhuang.hmcl.util.io;
 
 import org.glavo.url.WebURL;
+import org.jackhuang.hmcl.mod.curse.CurseForgeRemoteModRepository;
 import org.jackhuang.hmcl.util.Pair;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jetbrains.annotations.NotNull;
@@ -25,6 +26,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.*;
 import java.net.*;
+import java.net.http.HttpRequest;
 import java.nio.charset.Charset;
 import java.time.Duration;
 import java.util.*;
@@ -161,6 +163,20 @@ public final class NetworkUtils {
         } catch (URISyntaxException e) {
             throw new AssertionError("Unreachable", e);
         }
+    }
+
+    private static final Map<String, String> apiKeys = Map.of(
+            "api.curseforge.com", CurseForgeRemoteModRepository.apiKey,
+            "edge.forgecdn.net", CurseForgeRemoteModRepository.apiKey
+    );
+
+    public static java.net.http.HttpRequest.Builder newRequestBuilder(URI uri) {
+        String host = uri.getHost().toLowerCase(Locale.ROOT);
+        String apiKey;
+        var builder = HttpRequest.newBuilder(uri);
+        if (StringUtils.isNotBlank((apiKey = apiKeys.get(host))))
+            builder.header("x-api-key", apiKey);
+        return builder;
     }
 
     public static URLConnection createConnection(WebURL url) throws IOException {
