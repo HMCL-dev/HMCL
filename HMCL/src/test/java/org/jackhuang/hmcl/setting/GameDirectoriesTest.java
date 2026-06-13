@@ -501,7 +501,7 @@ public final class GameDirectoriesTest {
 
             JsonSettingFile.LoadResult<GameDirectories> result = file.load(null);
             assertTrue(result.value().isSavable());
-            assertFalse(result.unsupported());
+            assertEquals(SettingFileAccess.READ_WRITE, result.access());
             assertEquals(new JsonSchema("https://schemas.glavo.site/hmcl/game-directories/1.0.1"),
                     result.value().getSchema());
 
@@ -535,7 +535,7 @@ public final class GameDirectoriesTest {
 
             JsonSettingFile.LoadResult<GameDirectories> result = file.load(null);
 
-            assertTrue(result.unsupported());
+            assertEquals(SettingFileAccess.READ_ONLY, result.access());
             assertFalse(result.value().isSavable());
             assertFalse(result.value().isBackupOnNextSave());
             assertEquals(new JsonSchema("https://schemas.glavo.site/hmcl/game-directories/1.1.0"),
@@ -562,7 +562,7 @@ public final class GameDirectoriesTest {
 
             assertTrue(result.value().isSavable());
             assertTrue(result.value().isBackupOnNextSave());
-            assertFalse(result.unsupported());
+            assertEquals(SettingFileAccess.READ_WRITE, result.access());
             file.save(result.value());
             FileSaver.waitForAllSaves();
 

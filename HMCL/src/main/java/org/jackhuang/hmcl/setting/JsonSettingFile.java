@@ -104,7 +104,7 @@ final class JsonSettingFile<T extends ObservableSetting & JsonSchemaSetting> {
                         }
                     }
                     if (!schemaResult.readable()) {
-                        return result(createDefault.get(), false, false, true);
+                        return result(createDefault.get(), SettingFileAccess.UNREADABLE);
                     }
 
                     T deserialized = LauncherSettings.SETTINGS_GSON.<@Nullable T>fromJson(jsonObject, type);
@@ -114,7 +114,9 @@ final class JsonSettingFile<T extends ObservableSetting & JsonSchemaSetting> {
                             deserialized.setSchema(expectedSchema);
                         }
 
-                        return result(deserialized, schemaResult.allowSave(), false, !schemaResult.allowSave());
+                        return result(deserialized, schemaResult.allowSave()
+                                ? SettingFileAccess.READ_WRITE
+                                : SettingFileAccess.READ_ONLY);
                     }
 
                     LOG.warning(displayName + " deserialized to null: " + location);
@@ -124,7 +126,7 @@ final class JsonSettingFile<T extends ObservableSetting & JsonSchemaSetting> {
                 return result(createDefault.get(), true, true);
             }
 
-            return result(createDefault.get(), false, false, true);
+            return result(createDefault.get(), SettingFileAccess.UNREADABLE);
         }
 
         return result(Objects.requireNonNullElseGet(migrated, createDefault), true);
@@ -132,19 +134,21 @@ final class JsonSettingFile<T extends ObservableSetting & JsonSchemaSetting> {
 
     /// Creates a load result and stores the saveability metadata on the settings object.
     private LoadResult<T> result(T value, boolean savable) {
-        return result(value, savable, false, false);
+        return result(value, savable, false);
     }
 
     /// Creates a load result and stores the saveability metadata on the settings object.
     private LoadResult<T> result(T value, boolean savable, boolean backupOnNextSave) {
-        return result(value, savable, backupOnNextSave, false);
-    }
-
-    /// Creates a load result and stores the saveability metadata on the settings object.
-    private LoadResult<T> result(T value, boolean savable, boolean backupOnNextSave, boolean unsupported) {
         value.setSavable(savable);
         value.setBackupOnNextSave(backupOnNextSave);
-        return new LoadResult<>(value, unsupported);
+        return new LoadResult<>(value, SettingFileAccess.READ_WRITE);
+    }
+
+    /// Creates a load result and stores the access metadata on the settings object.
+    private LoadResult<T> result(T value, SettingFileAccess access) {
+        value.setSavable(access.canSave());
+        value.setBackupOnNextSave(false);
+        return new LoadResult<>(value, access);
     }
 
     /// Installs an automatic save listener on a settings object.
@@ -165,10 +169,21 @@ final class JsonSettingFile<T extends ObservableSetting & JsonSchemaSetting> {
         FileSaver.save(location, LauncherSettings.SETTINGS_GSON.toJson(value, type));
     }
 
+    /// Backs up the current file and overwrites it with the given value using the current schema.
+    ///
+    /// @param value the replacement settings object
+    void backupAndOverwrite(T value) {
+        SettingFileUtils.backupInvalidConfig(location);
+        value.setSchema(expectedSchema);
+        value.setSavable(true);
+        value.setBackupOnNextSave(false);
+        save(value);
+    }
+
     /// Result of loading a detached JSON settings file.
     ///
     /// @param value the loaded settings object
-    /// @param unsupported whether the file could not be safely overwritten because of an unsupported schema
-    record LoadResult<T extends ObservableSetting & JsonSchemaSetting>(T value, boolean unsupported) {
+    /// @param access whether the source file may be read and overwritten
+    record LoadResult<T extends ObservableSetting & JsonSchemaSetting>(T value, SettingFileAccess access) {
     }
 }

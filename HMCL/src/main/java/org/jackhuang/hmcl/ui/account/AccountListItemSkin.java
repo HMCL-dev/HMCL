@@ -41,6 +41,7 @@ import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
+import org.jackhuang.hmcl.ui.construct.MessageDialogPane;
 import org.jackhuang.hmcl.ui.construct.SpinnerPane;
 import org.jackhuang.hmcl.util.javafx.BindingMapping;
 
@@ -95,6 +96,14 @@ public final class AccountListItemSkin extends SkinBase<AccountListItem> {
         spinnerMove.getStyleClass().add("small-spinner-pane");
         btnMove.setOnAction(e -> {
             Account account = skinnable.getAccount();
+            if (!Accounts.canMoveAccount(account)) {
+                Controllers.dialog(
+                        i18n("account.storage.read_only"),
+                        i18n("message.warning"),
+                        MessageDialogPane.MessageType.WARNING);
+                return;
+            }
+
             Accounts.getAccounts().remove(account);
             if (account.isPortable()) {
                 account.setPortable(false);

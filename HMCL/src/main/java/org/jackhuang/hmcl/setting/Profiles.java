@@ -242,11 +242,17 @@ public final class Profiles {
 
     /// Adds a profile to the per-workspace game directory store.
     public static void addLocalProfile(Profile profile) {
+        if (SettingsManager.isLocalGameDirectoriesReadOnly()) {
+            throw new IllegalStateException("Local game directories are read-only");
+        }
         addProfile(localGameDirectories(), profile);
     }
 
     /// Adds a profile to the user game directory store.
     public static void addUserProfile(Profile profile) {
+        if (SettingsManager.isUserGameDirectoriesReadOnly()) {
+            throw new IllegalStateException("User game directories are read-only");
+        }
         addProfile(userGameDirectories(), profile);
     }
 

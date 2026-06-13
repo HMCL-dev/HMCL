@@ -132,7 +132,7 @@ public final class Launcher extends Application {
                     return;
             }
 
-            if (SettingsManager.isUnsupportedVersion()) {
+            if (SettingsManager.hasReadOnlyCoreSettings()) {
                 showAlert(AlertType.WARNING, i18n("fatal.config_unsupported_version"));
             }
 

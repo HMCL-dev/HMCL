@@ -224,6 +224,13 @@ public class CreateAccountPane extends JFXDialogLayout implements DialogAware {
 
             loginTask = Task.supplyAsync(() -> factory.create(new DialogCharacterSelector(), username, password, null, additionalData))
                     .whenComplete(Schedulers.javafx(), account -> {
+                        if (Accounts.isAccountStorageReadOnly(account)) {
+                            lblErrorMessage.setText(i18n("account.storage.read_only"));
+                            body.setDisable(false);
+                            spinner.hideSpinner();
+                            return;
+                        }
+
                         int oldIndex = Accounts.getAccounts().indexOf(account);
                         if (oldIndex == -1) {
                             Accounts.getAccounts().add(account);

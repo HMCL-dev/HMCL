@@ -35,6 +35,8 @@ import javafx.scene.layout.VBox;
 import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.setting.Profile;
 import org.jackhuang.hmcl.setting.Profiles;
+import org.jackhuang.hmcl.setting.SettingsManager;
+import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.construct.*;
 import org.jackhuang.hmcl.ui.decorator.DecoratorPage;
@@ -62,7 +64,7 @@ public final class ProfilePage extends BorderPane implements DecoratorPage {
     /**
      * @param profile null if creating a new profile.
      */
-    public ProfilePage(Profile profile) {
+    public ProfilePage(@Nullable Profile profile) {
         getStyleClass().add("gray-background");
 
         this.profile = profile;
@@ -199,8 +201,22 @@ public final class ProfilePage extends BorderPane implements DecoratorPage {
                     LocalizedText.plain(txtProfileName.getText()),
                     createPortableLocation());
             if (newProfile.getPath().isAbsolute()) {
+                if (SettingsManager.isUserGameDirectoriesReadOnly()) {
+                    Controllers.dialog(
+                            i18n("settings.game_directories.read_only"),
+                            i18n("message.warning"),
+                            MessageDialogPane.MessageType.WARNING);
+                    return;
+                }
                 Profiles.addUserProfile(newProfile);
             } else {
+                if (SettingsManager.isLocalGameDirectoriesReadOnly()) {
+                    Controllers.dialog(
+                            i18n("settings.game_directories.read_only"),
+                            i18n("message.warning"),
+                            MessageDialogPane.MessageType.WARNING);
+                    return;
+                }
                 Profiles.addLocalProfile(newProfile);
             }
         }

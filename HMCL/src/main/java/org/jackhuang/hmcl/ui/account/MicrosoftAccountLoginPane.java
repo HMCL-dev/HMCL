@@ -280,6 +280,14 @@ public class MicrosoftAccountLoginPane extends JFXDialogLayout implements Dialog
 
     private void onLoginCompleted(MicrosoftAccount account, Exception exception) {
         if (exception == null) {
+            boolean storageReadOnly = accountToRelogin != null
+                    ? Accounts.isAccountStorageReadOnly(accountToRelogin)
+                    : Accounts.isAccountStorageReadOnly(account);
+            if (storageReadOnly) {
+                this.step.set(new Step.LoginFailed(i18n("account.storage.read_only")));
+                return;
+            }
+
             if (accountToRelogin != null) Accounts.getAccounts().remove(accountToRelogin);
 
             int oldIndex = Accounts.getAccounts().indexOf(account);

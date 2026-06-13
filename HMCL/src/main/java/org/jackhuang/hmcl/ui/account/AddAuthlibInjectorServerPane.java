@@ -23,8 +23,10 @@ import com.jfoenix.controls.JFXTextField;
 import javafx.scene.control.Label;
 import javafx.scene.layout.*;
 import org.jackhuang.hmcl.auth.authlibinjector.AuthlibInjectorServer;
+import org.jackhuang.hmcl.setting.SettingsManager;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
+import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.animation.ContainerAnimations;
 import org.jackhuang.hmcl.ui.animation.TransitionPane;
@@ -221,6 +223,14 @@ public final class AddAuthlibInjectorServerPane extends TransitionPane implement
     }
 
     private void onAddFinish() {
+        if (SettingsManager.isAuthlibInjectorServersReadOnly()) {
+            Controllers.dialog(
+                    i18n("account.injector.server.storage.read_only"),
+                    i18n("message.warning"),
+                    MessageDialogPane.MessageType.WARNING);
+            return;
+        }
+
         if (!getAuthlibInjectorServers().contains(serverBeingAdded)) {
             getAuthlibInjectorServers().add(serverBeingAdded);
         }

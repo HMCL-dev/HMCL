@@ -181,6 +181,14 @@ public class AccountListItem extends RadioButton {
     }
 
     public void remove() {
+        if (!Accounts.canRemoveAccount(account)) {
+            Controllers.dialog(
+                    i18n("account.storage.read_only"),
+                    i18n("message.warning"),
+                    MessageType.WARNING);
+            return;
+        }
+
         Accounts.getAccounts().remove(account);
     }
 

@@ -191,8 +191,35 @@ public final class SettingsManager {
     /// Whether root is reading a per-workspace config owned by another user.
     private static boolean ownerChanged = false;
 
-    /// Whether any loaded settings file could not be safely overwritten because of an unsupported schema.
-    private static boolean unsupportedVersion = false;
+    /// Access status for `settings.json`.
+    private static SettingFileAccess launcherSettingsAccess = SettingFileAccess.READ_WRITE;
+
+    /// Access status for `launcher-state.json`.
+    private static SettingFileAccess launcherStateAccess = SettingFileAccess.READ_WRITE;
+
+    /// Access status for `authlib-injector-servers.json`.
+    private static SettingFileAccess authlibInjectorServersAccess = SettingFileAccess.READ_WRITE;
+
+    /// Access status for local `game-directories.json`.
+    private static SettingFileAccess localGameDirectoriesAccess = SettingFileAccess.READ_WRITE;
+
+    /// Access status for user `user-game-directories.json`.
+    private static SettingFileAccess userGameDirectoriesAccess = SettingFileAccess.READ_WRITE;
+
+    /// Access status for `game-settings.json`.
+    private static SettingFileAccess gameSettingsAccess = SettingFileAccess.READ_WRITE;
+
+    /// Access status for local `game-accounts.json`.
+    private static SettingFileAccess gameAccountsAccess = SettingFileAccess.READ_WRITE;
+
+    /// Access status for user `user-game-accounts.json`.
+    private static SettingFileAccess userGameAccountsAccess = SettingFileAccess.READ_WRITE;
+
+    /// Access status for `user-settings.json`.
+    private static SettingFileAccess userSettingsAccess = SettingFileAccess.READ_WRITE;
+
+    /// Access status for `user-state.json`.
+    private static SettingFileAccess userStateAccess = SettingFileAccess.READ_WRITE;
 
     /// Returns the loaded per-workspace launcher settings.
     public static LauncherSettings settings() {
@@ -379,9 +406,99 @@ public final class SettingsManager {
         return ownerChanged;
     }
 
-    /// Returns whether launcher settings or state could not be safely overwritten.
-    public static boolean isUnsupportedVersion() {
-        return unsupportedVersion;
+    /// Returns whether the core launcher settings cannot be safely overwritten.
+    public static boolean hasReadOnlyCoreSettings() {
+        return launcherSettingsAccess.blocksEditing() || launcherStateAccess.blocksEditing();
+    }
+
+    /// Returns whether game settings presets cannot be safely overwritten.
+    public static boolean isGameSettingsReadOnly() {
+        return gameSettingsAccess.blocksEditing();
+    }
+
+    /// Returns whether the local game directory store cannot be safely overwritten.
+    public static boolean isLocalGameDirectoriesReadOnly() {
+        return localGameDirectoriesAccess.blocksEditing();
+    }
+
+    /// Returns whether the user game directory store cannot be safely overwritten.
+    public static boolean isUserGameDirectoriesReadOnly() {
+        return userGameDirectoriesAccess.blocksEditing();
+    }
+
+    /// Returns whether the local account store cannot be safely overwritten.
+    public static boolean isGameAccountsReadOnly() {
+        return gameAccountsAccess.blocksEditing();
+    }
+
+    /// Returns whether the user account store cannot be safely overwritten.
+    public static boolean isUserGameAccountsReadOnly() {
+        return userGameAccountsAccess.blocksEditing();
+    }
+
+    /// Returns whether the authlib-injector server list cannot be safely overwritten.
+    public static boolean isAuthlibInjectorServersReadOnly() {
+        return authlibInjectorServersAccess.blocksEditing();
+    }
+
+    /// Backs up and overwrites `game-settings.json` with the currently loaded presets.
+    public static void forceOverwriteGameSettings() {
+        boolean installAutoSave = !gameSettingsPresets().isSavable();
+        GAME_SETTINGS_FILE.backupAndOverwrite(gameSettingsPresets());
+        if (installAutoSave) {
+            GAME_SETTINGS_FILE.installAutoSave(gameSettingsPresets());
+        }
+        gameSettingsAccess = SettingFileAccess.READ_WRITE;
+    }
+
+    /// Backs up and overwrites local `game-directories.json` with the currently loaded profiles.
+    public static void forceOverwriteLocalGameDirectories() {
+        boolean installAutoSave = !localGameDirectories().isSavable();
+        LOCAL_GAME_DIRECTORIES_FILE.backupAndOverwrite(localGameDirectories());
+        if (installAutoSave) {
+            LOCAL_GAME_DIRECTORIES_FILE.installAutoSave(localGameDirectories());
+        }
+        localGameDirectoriesAccess = SettingFileAccess.READ_WRITE;
+    }
+
+    /// Backs up and overwrites user `user-game-directories.json` with the currently loaded profiles.
+    public static void forceOverwriteUserGameDirectories() {
+        boolean installAutoSave = !userGameDirectories().isSavable();
+        USER_GAME_DIRECTORIES_FILE.backupAndOverwrite(userGameDirectories());
+        if (installAutoSave) {
+            USER_GAME_DIRECTORIES_FILE.installAutoSave(userGameDirectories());
+        }
+        userGameDirectoriesAccess = SettingFileAccess.READ_WRITE;
+    }
+
+    /// Backs up and overwrites local `game-accounts.json` with the currently loaded accounts.
+    public static void forceOverwriteGameAccounts() {
+        boolean installAutoSave = !gameAccounts().isSavable();
+        GAME_ACCOUNTS_FILE.backupAndOverwrite(gameAccounts());
+        if (installAutoSave) {
+            GAME_ACCOUNTS_FILE.installAutoSave(gameAccounts());
+        }
+        gameAccountsAccess = SettingFileAccess.READ_WRITE;
+    }
+
+    /// Backs up and overwrites user `user-game-accounts.json` with the currently loaded accounts.
+    public static void forceOverwriteUserGameAccounts() {
+        boolean installAutoSave = !userGameAccounts().isSavable();
+        USER_GAME_ACCOUNTS_FILE.backupAndOverwrite(userGameAccounts());
+        if (installAutoSave) {
+            USER_GAME_ACCOUNTS_FILE.installAutoSave(userGameAccounts());
+        }
+        userGameAccountsAccess = SettingFileAccess.READ_WRITE;
+    }
+
+    /// Backs up and overwrites `authlib-injector-servers.json` with the current server list.
+    public static void forceOverwriteAuthlibInjectorServers() {
+        boolean installAutoSave = !authlibInjectorServers().isSavable();
+        AUTHLIB_INJECTOR_SERVERS_FILE.backupAndOverwrite(authlibInjectorServers());
+        if (installAutoSave) {
+            AUTHLIB_INJECTOR_SERVERS_FILE.installAutoSave(authlibInjectorServers());
+        }
+        authlibInjectorServersAccess = SettingFileAccess.READ_WRITE;
     }
 
     /// Loads configs, installs save listeners, and applies process-wide settings.
@@ -395,7 +512,7 @@ public final class SettingsManager {
 
         LoadedLauncherSettings loadedLauncherSettings = loadLauncherSettings();
         launcherSettings = loadedLauncherSettings.settings();
-        boolean unsupportedLauncherSettings = !launcherSettings.isSavable();
+        launcherSettingsAccess = loadedLauncherSettings.access();
 
         @Nullable LegacyConfigMigrator.LegacyConfigMigration legacyConfigMigration =
                 loadedLauncherSettings.pendingMigration();
@@ -407,8 +524,8 @@ public final class SettingsManager {
         @Nullable LegacyConfigMigrator.UserSettingsMigrationResult userSettingsMigrationResult = currentUserSettingsExist
                 ? null
                 : LegacyConfigMigrator.migrateLegacyUserSettings();
-        boolean unsupportedUserSettings = loadUserSettings(userSettingsMigrationResult);
-        boolean unsupportedUserState = loadUserState(userSettingsMigrationResult);
+        userSettingsAccess = loadUserSettings(userSettingsMigrationResult);
+        userStateAccess = loadUserState(userSettingsMigrationResult);
         if (userSettingsMigrationResult != null) {
             LegacyConfigMigrator.completeLegacyUserSettingsMigration(userSettingsMigrationResult);
         }
@@ -416,22 +533,13 @@ public final class SettingsManager {
         Locale.setDefault(settings().languageProperty().get().getLocale());
         I18n.setLocale(launcherSettings.languageProperty().get());
         LOG.setLogRetention(userSettings().logRetentionProperty().get());
-        boolean unsupportedGameDirectories = loadGameDirectories(migratedDetachedSettings.gameDirectories());
-        boolean unsupportedGameSettings = loadGameSettingsPresets(migratedDetachedSettings.gameSettingsPresets());
-        boolean unsupportedLauncherState = loadLauncherState(migratedDetachedSettings.launcherState());
-        boolean unsupportedAuthlibInjectorServers =
+        loadGameDirectories(migratedDetachedSettings.gameDirectories());
+        gameSettingsAccess = loadGameSettingsPresets(migratedDetachedSettings.gameSettingsPresets());
+        launcherStateAccess = loadLauncherState(migratedDetachedSettings.launcherState());
+        authlibInjectorServersAccess =
                 loadAuthlibInjectorServers(migratedDetachedSettings.authlibInjectorServers());
-        boolean unsupportedUserGameAccounts = loadUserGameAccounts();
-        boolean unsupportedGameAccounts = loadGameAccounts(migratedDetachedSettings.accountStorages());
-        unsupportedVersion = unsupportedLauncherSettings
-                || unsupportedUserSettings
-                || unsupportedUserState
-                || unsupportedGameDirectories
-                || unsupportedGameSettings
-                || unsupportedLauncherState
-                || unsupportedAuthlibInjectorServers
-                || unsupportedUserGameAccounts
-                || unsupportedGameAccounts;
+        userGameAccountsAccess = loadUserGameAccounts();
+        gameAccountsAccess = loadGameAccounts(migratedDetachedSettings.accountStorages());
 
         if (Files.exists(Metadata.HMCL_LOCAL_HOME)) {
             checkWritable(Metadata.HMCL_LOCAL_HOME);
@@ -465,13 +573,13 @@ public final class SettingsManager {
 
                 LauncherSettings settings = new LauncherSettings();
                 settings.setBackupOnNextSave(true);
-                return new LoadedLauncherSettings(settings, null);
+                return new LoadedLauncherSettings(settings, null, SettingFileAccess.READ_WRITE);
             }
 
             if (jsonObject == null) {
                 LOG.warning("Settings file is empty: " + SETTINGS_LOCATION);
 
-                return new LoadedLauncherSettings(new LauncherSettings(), null);
+                return new LoadedLauncherSettings(new LauncherSettings(), null, SettingFileAccess.READ_WRITE);
             }
 
             JsonSchema.CompatibilityResult schemaResult =
@@ -492,7 +600,7 @@ public final class SettingsManager {
             if (!schemaResult.readable()) {
                 LauncherSettings settings = new LauncherSettings();
                 settings.setSavable(false);
-                return new LoadedLauncherSettings(settings, null);
+                return new LoadedLauncherSettings(settings, null, SettingFileAccess.UNREADABLE);
             }
 
             try {
@@ -500,7 +608,7 @@ public final class SettingsManager {
                 if (settings == null) {
                     settings = new LauncherSettings();
                     settings.setSavable(false);
-                    return new LoadedLauncherSettings(settings, null);
+                    return new LoadedLauncherSettings(settings, null, SettingFileAccess.UNREADABLE);
                 }
 
                 if (!schemaResult.preserveSchema() && !LauncherSettings.CURRENT_SCHEMA.equals(settings.schemaProperty().get())) {
@@ -508,21 +616,23 @@ public final class SettingsManager {
                 }
 
                 settings.setSavable(schemaResult.allowSave());
-                return new LoadedLauncherSettings(settings, null);
+                return new LoadedLauncherSettings(settings, null, schemaResult.allowSave()
+                        ? SettingFileAccess.READ_WRITE
+                        : SettingFileAccess.READ_ONLY);
             } catch (JsonParseException e) {
                 LOG.warning("Failed to parse settings file: " + SETTINGS_LOCATION, e);
                 LauncherSettings settings = new LauncherSettings();
                 settings.setBackupOnNextSave(true);
-                return new LoadedLauncherSettings(settings, null);
+                return new LoadedLauncherSettings(settings, null, SettingFileAccess.READ_WRITE);
             }
         } else {
             LegacyConfigMigrator.LegacyConfigMigration migration = LegacyConfigMigrator.migrateLegacyConfig();
             if (migration != null) {
-                return new LoadedLauncherSettings(migration.launcherSettings(), migration);
+                return new LoadedLauncherSettings(migration.launcherSettings(), migration, SettingFileAccess.READ_WRITE);
             }
         }
 
-        return new LoadedLauncherSettings(new LauncherSettings(), null);
+        return new LoadedLauncherSettings(new LauncherSettings(), null, SettingFileAccess.READ_WRITE);
     }
 
     /// Returns whether the current workspace already has any local configuration footprint.
@@ -539,8 +649,7 @@ public final class SettingsManager {
     /// Loads game directories and installs the save listener.
     ///
     /// @param fallbackGameDirectories the fallback store used when the local game directory file does not exist
-    /// @return whether either game directory file could not be safely overwritten because of an unsupported schema
-    private static boolean loadGameDirectories(
+    private static void loadGameDirectories(
             @Nullable GameDirectories fallbackGameDirectories) throws IOException {
         if (localGameDirectories != null || userGameDirectories != null) {
             throw new IllegalStateException("Game directories are already loaded");
@@ -566,14 +675,15 @@ public final class SettingsManager {
             USER_GAME_DIRECTORIES_FILE.installAutoSave(userGameDirectories);
         }
 
-        return localResult.unsupported() || userResult.unsupported();
+        localGameDirectoriesAccess = localResult.access();
+        userGameDirectoriesAccess = userResult.access();
     }
 
     /// Loads game settings presets and installs the save listener.
     ///
     /// @param fallbackGameSettingsPresets the fallback store used when the preset file does not exist
-    /// @return whether the preset file could not be safely overwritten because of an unsupported schema
-    private static boolean loadGameSettingsPresets(
+    /// @return the preset file access status
+    private static SettingFileAccess loadGameSettingsPresets(
             @Nullable GameSettingsPresets fallbackGameSettingsPresets) throws IOException {
         if (gameSettingsPresets != null) {
             throw new IllegalStateException("Game settings presets are already loaded");
@@ -592,7 +702,7 @@ public final class SettingsManager {
             GAME_SETTINGS_FILE.save(gameSettingsPresets);
         }
 
-        return result.unsupported();
+        return result.access();
     }
 
     /// Ensures there is a valid default game settings preset.
@@ -607,8 +717,8 @@ public final class SettingsManager {
     /// Loads launcher state and installs the save listener.
     ///
     /// @param fallbackLauncherState the fallback state used when the launcher state file does not exist
-    /// @return whether the launcher state file could not be safely overwritten because of an unsupported schema
-    private static boolean loadLauncherState(
+    /// @return the launcher state file access status
+    private static SettingFileAccess loadLauncherState(
             @Nullable LauncherState fallbackLauncherState) throws IOException {
         if (launcherState != null) {
             throw new IllegalStateException("Launcher state is already loaded");
@@ -626,14 +736,14 @@ public final class SettingsManager {
             STATE_FILE.save(launcherState);
         }
 
-        return result.unsupported();
+        return result.access();
     }
 
     /// Loads authlib-injector servers and installs the save listener.
     ///
     /// @param fallbackAuthlibInjectorServers the fallback list used when the server list file does not exist
-    /// @return whether the server list file could not be safely overwritten because of an unsupported schema
-    private static boolean loadAuthlibInjectorServers(
+    /// @return the server list file access status
+    private static SettingFileAccess loadAuthlibInjectorServers(
             @Nullable AuthlibInjectorServerList fallbackAuthlibInjectorServers) throws IOException {
         if (authlibInjectorServers != null) {
             throw new IllegalStateException("Authlib-injector servers are already loaded");
@@ -651,13 +761,13 @@ public final class SettingsManager {
             AUTHLIB_INJECTOR_SERVERS_FILE.save(authlibInjectorServers);
         }
 
-        return result.unsupported();
+        return result.access();
     }
 
     /// Loads shared account storages and installs the save listener.
     ///
-    /// @return whether the shared account storage file could not be safely overwritten because of an unsupported schema
-    private static boolean loadUserGameAccounts() {
+    /// @return the shared account storage file access status
+    private static SettingFileAccess loadUserGameAccounts() {
         if (userGameAccounts != null) {
             throw new IllegalStateException("User game accounts are already loaded");
         }
@@ -680,19 +790,19 @@ public final class SettingsManager {
                 }
             }
 
-            return result.unsupported();
+            return result.access();
         } catch (IOException e) {
             LOG.warning("Failed to load user game accounts", e);
             userGameAccounts = migrated != null ? migrated : new AccountStorages();
-            return false;
+            return SettingFileAccess.READ_WRITE;
         }
     }
 
     /// Loads account storages and installs the save listener.
     ///
     /// @param fallbackGameAccounts the fallback store used when the account storage file does not exist
-    /// @return whether the account storage file could not be safely overwritten because of an unsupported schema
-    private static boolean loadGameAccounts(
+    /// @return the account storage file access status
+    private static SettingFileAccess loadGameAccounts(
             @Nullable AccountStorages fallbackGameAccounts) throws IOException {
         if (gameAccounts != null) {
             throw new IllegalStateException("Game accounts are already loaded");
@@ -710,7 +820,7 @@ public final class SettingsManager {
             GAME_ACCOUNTS_FILE.save(gameAccounts);
         }
 
-        return result.unsupported();
+        return result.access();
     }
 
     /// Checks whether root is reading per-workspace config data owned by another user.
@@ -760,8 +870,8 @@ public final class SettingsManager {
 
     /// Loads user settings and installs the save listener.
     ///
-    /// @return whether the user settings file could not be safely overwritten because of an unsupported schema
-    private static boolean loadUserSettings(
+    /// @return the user settings file access status
+    private static SettingFileAccess loadUserSettings(
             @Nullable LegacyConfigMigrator.UserSettingsMigrationResult migrationResult) throws IOException {
         if (userSettingsInstance != null) {
             throw new IllegalStateException("User settings are already loaded");
@@ -781,13 +891,13 @@ public final class SettingsManager {
             USER_SETTINGS_FILE.save(userSettingsInstance);
         }
 
-        return result.unsupported();
+        return result.access();
     }
 
     /// Loads user state and installs the save listener.
     ///
-    /// @return whether the user state file could not be safely overwritten because of an unsupported schema
-    private static boolean loadUserState(
+    /// @return the user state file access status
+    private static SettingFileAccess loadUserState(
             @Nullable LegacyConfigMigrator.UserSettingsMigrationResult migrationResult) throws IOException {
         if (userStateInstance != null) {
             throw new IllegalStateException("User state is already loaded");
@@ -807,7 +917,7 @@ public final class SettingsManager {
             USER_STATE_FILE.save(userStateInstance);
         }
 
-        return result.unsupported();
+        return result.access();
     }
 
     /// Result of loading per-workspace launcher settings.
@@ -816,7 +926,8 @@ public final class SettingsManager {
     /// @param pendingMigration the pending legacy config migration, or `null` when no legacy config was migrated
     private record LoadedLauncherSettings(
             LauncherSettings settings,
-            @Nullable LegacyConfigMigrator.LegacyConfigMigration pendingMigration) {
+            @Nullable LegacyConfigMigrator.LegacyConfigMigration pendingMigration,
+            SettingFileAccess access) {
     }
 
 }

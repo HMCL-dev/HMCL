@@ -181,10 +181,32 @@ public final class Accounts {
         }
 
         ObservableList<Map<Object, Object>> globalStorages = getUserAccountStorages();
-        if (!global.equals(globalStorages))
+        if (!SettingsManager.isUserGameAccountsReadOnly() && !global.equals(globalStorages))
             globalStorages.setAll(global);
-        if (!portable.equals(getAccountStorages()))
+        if (!SettingsManager.isGameAccountsReadOnly() && !portable.equals(getAccountStorages()))
             getAccountStorages().setAll(portable);
+    }
+
+    /// Returns whether the account storage file selected by the portability flag is read-only.
+    ///
+    /// @param portable whether the account is stored in the local account file
+    public static boolean isAccountStorageReadOnly(boolean portable) {
+        return portable ? SettingsManager.isGameAccountsReadOnly() : SettingsManager.isUserGameAccountsReadOnly();
+    }
+
+    /// Returns whether the storage file containing the given account is read-only.
+    public static boolean isAccountStorageReadOnly(Account account) {
+        return isAccountStorageReadOnly(account.isPortable());
+    }
+
+    /// Returns whether the given account may be removed from its current storage file.
+    public static boolean canRemoveAccount(Account account) {
+        return !isAccountStorageReadOnly(account);
+    }
+
+    /// Returns whether the given account may be moved between local and user storage files.
+    public static boolean canMoveAccount(Account account) {
+        return !SettingsManager.isGameAccountsReadOnly() && !SettingsManager.isUserGameAccountsReadOnly();
     }
 
     private static Account parseAccount(Map<Object, Object> storage) {
@@ -368,7 +390,9 @@ public final class Accounts {
                 .findFirst()
                 .orElseGet(() -> {
                     AuthlibInjectorServer server = new AuthlibInjectorServer(url);
-                    getAuthlibInjectorServers().add(server);
+                    if (!SettingsManager.isAuthlibInjectorServersReadOnly()) {
+                        getAuthlibInjectorServers().add(server);
+                    }
                     return server;
                 });
     }
@@ -382,6 +406,7 @@ public final class Accounts {
                 .filter(AuthlibInjectorAccount.class::isInstance)
                 .map(AuthlibInjectorAccount.class::cast)
                 .filter(it -> !getAuthlibInjectorServers().contains(it.getServer()))
+                .filter(Accounts::canRemoveAccount)
                 .collect(toList())
                 .forEach(accounts::remove);
     }

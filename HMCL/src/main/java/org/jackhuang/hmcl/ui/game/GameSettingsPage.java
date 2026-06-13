@@ -106,7 +106,7 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
     // GUI
     private final ScrollPane scrollPane;
     private final VBox rootPane;
-    private final HintPane readOnlyInstanceSettingsHint;
+    private final HintPane readOnlySettingsHint;
 
     private final @UnknownNullability ImagePickerItem iconPickerItem;
 
@@ -135,11 +135,10 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
         rootPane.getStyleClass().add("card-list");
         scrollPane.setContent(rootPane);
 
-        readOnlyInstanceSettingsHint = new HintPane(MessageDialogPane.MessageType.WARNING);
-        readOnlyInstanceSettingsHint.setText(i18n("settings.game.instance_settings.unsupported"));
-        readOnlyInstanceSettingsHint.setVisible(false);
-        readOnlyInstanceSettingsHint.setManaged(false);
-        rootPane.getChildren().add(readOnlyInstanceSettingsHint);
+        readOnlySettingsHint = new HintPane(MessageDialogPane.MessageType.WARNING);
+        readOnlySettingsHint.setVisible(false);
+        readOnlySettingsHint.setManaged(false);
+        rootPane.getChildren().add(readOnlySettingsHint);
 
         var basicSettings = new ComponentList();
         var gameSettings = new ComponentList();
@@ -2203,23 +2202,29 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
             HMCLGameRepository repository = profile.getRepository();
             @Nullable GameSettings.Instance setting = repository.getInstanceGameSettingsOrCreate(instanceId);
             this.currentSetting.set((S) setting);
-            setInstanceSettingsReadOnly(setting == null || repository.isInstanceGameSettingsReadOnly(instanceId));
+            setSettingsReadOnly(
+                    setting == null || repository.isInstanceGameSettingsReadOnly(instanceId),
+                    i18n("settings.game.instance_settings.unsupported"));
             loadIcon();
         } else {
-            setInstanceSettingsReadOnly(false);
             this.currentSetting.set((S) SettingsManager.getDefaultGameSettingsPresetOrCreate());
+            setSettingsReadOnly(
+                    SettingsManager.isGameSettingsReadOnly(),
+                    i18n("settings.game.presets.unsupported"));
         }
     }
 
-    /// Updates the page read-only state used when instance settings cannot be saved safely.
+    /// Updates the page read-only state used when settings cannot be saved safely.
     ///
-    /// @param readOnly whether the current instance settings should be displayed read-only
-    private void setInstanceSettingsReadOnly(boolean readOnly) {
-        readOnlyInstanceSettingsHint.setVisible(readOnly);
-        readOnlyInstanceSettingsHint.setManaged(readOnly);
+    /// @param readOnly whether the current settings should be displayed read-only
+    /// @param message the warning message shown when the page is read-only
+    private void setSettingsReadOnly(boolean readOnly, String message) {
+        readOnlySettingsHint.setText(message);
+        readOnlySettingsHint.setVisible(readOnly);
+        readOnlySettingsHint.setManaged(readOnly);
 
         for (Node child : rootPane.getChildren()) {
-            if (child != readOnlyInstanceSettingsHint) {
+            if (child != readOnlySettingsHint) {
                 child.setDisable(readOnly);
             }
         }

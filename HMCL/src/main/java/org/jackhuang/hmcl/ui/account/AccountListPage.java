@@ -44,6 +44,7 @@ import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
 import org.jackhuang.hmcl.ui.construct.AdvancedListItem;
 import org.jackhuang.hmcl.ui.construct.ClassTitle;
+import org.jackhuang.hmcl.ui.construct.MessageDialogPane;
 import org.jackhuang.hmcl.ui.decorator.DecoratorAnimatedPage;
 import org.jackhuang.hmcl.ui.decorator.DecoratorPage;
 import org.jackhuang.hmcl.util.i18n.LocaleUtils;
@@ -131,23 +132,47 @@ public final class AccountListPage extends DecoratorAnimatedPage implements Deco
                     microsoftItem.getStyleClass().add("navigation-drawer-item");
                     microsoftItem.setTitle(i18n("account.methods.microsoft"));
                     microsoftItem.setLeftIcon(SVG.MICROSOFT);
-                    microsoftItem.setOnAction(e -> Controllers.dialog(new MicrosoftAccountLoginPane()));
+                    microsoftItem.setOnAction(e -> {
+                        if (SettingsManager.isUserGameAccountsReadOnly()) {
+                            showReadOnlyWarning("account.storage.read_only");
+                        } else {
+                            Controllers.dialog(new MicrosoftAccountLoginPane());
+                        }
+                    });
 
                     AdvancedListItem offlineItem = new AdvancedListItem();
                     offlineItem.getStyleClass().add("navigation-drawer-item");
                     offlineItem.setTitle(i18n("account.methods.offline"));
                     offlineItem.setLeftIcon(SVG.PERSON);
-                    offlineItem.setOnAction(e -> Controllers.dialog(new CreateAccountPane(Accounts.FACTORY_OFFLINE)));
+                    offlineItem.setOnAction(e -> {
+                        if (SettingsManager.isUserGameAccountsReadOnly()) {
+                            showReadOnlyWarning("account.storage.read_only");
+                        } else {
+                            Controllers.dialog(new CreateAccountPane(Accounts.FACTORY_OFFLINE));
+                        }
+                    });
 
                     VBox boxAuthServers = new VBox();
                     authServerItems = MappedObservableList.create(skinnable.authServersProperty(), server -> {
                         AdvancedListItem item = new AdvancedListItem();
                         item.getStyleClass().add("navigation-drawer-item");
                         item.setLeftIcon(SVG.DRESSER);
-                        item.setOnAction(e -> Controllers.dialog(new CreateAccountPane(server)));
-                        item.setRightAction(SVG.CLOSE, () -> Controllers.confirm(i18n("button.remove.confirm"), i18n("button.remove"), () -> {
-                            skinnable.authServersProperty().remove(server);
-                        }, null));
+                        item.setOnAction(e -> {
+                            if (SettingsManager.isUserGameAccountsReadOnly()) {
+                                showReadOnlyWarning("account.storage.read_only");
+                            } else {
+                                Controllers.dialog(new CreateAccountPane(server));
+                            }
+                        });
+                        item.setRightAction(SVG.CLOSE, () -> {
+                            if (SettingsManager.isAuthlibInjectorServersReadOnly()) {
+                                showReadOnlyWarning("account.injector.server.storage.read_only");
+                            } else {
+                                Controllers.confirm(i18n("button.remove.confirm"), i18n("button.remove"), () -> {
+                                    skinnable.authServersProperty().remove(server);
+                                }, null);
+                            }
+                        });
 
                         ObservableValue<String> title = BindingMapping.of(server, AuthlibInjectorServer::getName);
                         item.titleProperty().bind(title);
@@ -196,7 +221,13 @@ public final class AccountListPage extends DecoratorAnimatedPage implements Deco
                     addAuthServerItem.setTitle(i18n("account.injector.add"));
                     addAuthServerItem.setSubtitle(i18n("account.methods.authlib_injector"));
                     addAuthServerItem.setLeftIcon(SVG.ADD_CIRCLE);
-                    addAuthServerItem.setOnAction(e -> Controllers.dialog(new AddAuthlibInjectorServerPane()));
+                    addAuthServerItem.setOnAction(e -> {
+                        if (SettingsManager.isAuthlibInjectorServersReadOnly()) {
+                            showReadOnlyWarning("account.injector.server.storage.read_only");
+                        } else {
+                            Controllers.dialog(new AddAuthlibInjectorServerPane());
+                        }
+                    });
                     VBox.setMargin(addAuthServerItem, new Insets(0, 0, 12, 0));
                 }
 
@@ -221,6 +252,14 @@ public final class AccountListPage extends DecoratorAnimatedPage implements Deco
 
                 setCenter(scrollPane);
             }
+        }
+
+        /// Shows a warning that the target settings file cannot be modified.
+        private static void showReadOnlyWarning(String messageKey) {
+            Controllers.dialog(
+                    i18n(messageKey),
+                    i18n("message.warning"),
+                    MessageDialogPane.MessageType.WARNING);
         }
     }
 }
