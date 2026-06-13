@@ -109,21 +109,7 @@ public final class Controllers {
     private static Scene scene;
     private static Stage stage;
     private static VersionPage versionPage;
-    private static Lazy<GameListPage> gameListPage = new Lazy<>(() -> {
-        GameListPage gameListPage = new GameListPage();
-        gameListPage.selectedProfileProperty().bindBidirectional(Profiles.selectedProfileProperty());
-        gameListPage.profilesProperty().bindContent(Profiles.getProfiles());
-        FXUtils.applyDragListener(gameListPage, file -> ModpackHelper.isFileModpackByExtension(file) || "json".equalsIgnoreCase(FileUtils.getNameWithoutExtension(file)), files -> {
-            Path file = files.get(0);
-
-            if (ModpackHelper.isFileModpackByExtension(file)) {
-                Controllers.getDecorator().startWizard(new ModpackInstallWizardProvider(Profiles.getSelectedProfile(), file), i18n("install.modpack"));
-            } else if ("json".equalsIgnoreCase(FileUtils.getExtension(file))) {
-                Versions.installFromJson(Profiles.getSelectedProfile(), file);
-            }
-        });
-        return gameListPage;
-    });
+    private static Lazy<GameListPage> gameListPage = new Lazy<>(GameListPage::new);
     private static Lazy<RootPage> rootPage = new Lazy<>(RootPage::new);
     private static DecoratorController decorator;
     private static DownloadPage downloadPage;

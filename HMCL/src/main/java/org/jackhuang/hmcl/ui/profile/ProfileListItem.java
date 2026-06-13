@@ -17,6 +17,7 @@
  */
 package org.jackhuang.hmcl.ui.profile;
 
+import javafx.beans.binding.Bindings;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.property.StringProperty;
 import javafx.scene.control.RadioButton;
@@ -37,6 +38,8 @@ public class ProfileListItem extends RadioButton {
 
         title.set(Profiles.getProfileDisplayName(profile));
         subtitle.set(profile.getPath().toString());
+
+        this.selectedProperty().bind(Bindings.equal(profile, Profiles.selectedProfileProperty()));
     }
 
     @Override
