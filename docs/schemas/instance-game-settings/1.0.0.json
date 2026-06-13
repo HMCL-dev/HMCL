@@ -21,7 +21,7 @@
       },
       "properties": {
         "parent": {
-          "$ref": "#/$defs/uuidOrNull"
+          "$ref": "#/$defs/uuid"
         },
         "icon": {
           "enum": [
@@ -102,16 +102,10 @@
           "type": "boolean"
         },
         "minMemory": {
-          "type": [
-            "integer",
-            "null"
-          ]
+          "type": "integer"
         },
         "maxMemory": {
-          "type": [
-            "integer",
-            "null"
-          ]
+          "type": "integer"
         },
         "permSize": {
           "type": "string"
@@ -223,11 +217,8 @@
         }
       }
     },
-    "uuidOrNull": {
-      "type": [
-        "string",
-        "null"
-      ],
+    "uuid": {
+      "type": "string",
       "pattern": "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$"
     }
   }

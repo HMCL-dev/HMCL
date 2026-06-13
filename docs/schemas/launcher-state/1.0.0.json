@@ -28,10 +28,7 @@
       "type": "number"
     },
     "promptedVersion": {
-      "type": [
-        "string",
-        "null"
-      ]
+      "type": "string"
     },
     "shownTips": {
       "type": "object",

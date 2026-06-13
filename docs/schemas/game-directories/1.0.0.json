@@ -35,13 +35,13 @@
           "$ref": "#/$defs/uuid"
         },
         "name": {
-          "$ref": "#/$defs/localizedTextOrNull"
+          "$ref": "#/$defs/localizedText"
         },
         "path": {
           "type": "string"
         },
         "legacyGameSettings": {
-          "$ref": "#/$defs/uuidOrNull"
+          "$ref": "#/$defs/uuid"
         }
       }
     },
@@ -49,14 +49,7 @@
       "type": "string",
       "pattern": "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$"
     },
-    "uuidOrNull": {
-      "type": [
-        "string",
-        "null"
-      ],
-      "pattern": "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$"
-    },
-    "localizedTextOrNull": {
+    "localizedText": {
       "oneOf": [
         {
           "type": "string"
@@ -66,9 +59,6 @@
           "additionalProperties": {
             "type": "string"
           }
-        },
-        {
-          "type": "null"
         }
       ]
     }

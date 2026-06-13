@@ -22,10 +22,7 @@
       "type": "boolean"
     },
     "fontAntiAliasing": {
-      "type": [
-        "string",
-        "null"
-      ]
+      "type": "string"
     },
     "userJava": {
       "type": "array",

@@ -34,35 +34,23 @@
       ]
     },
     "commonDirectory": {
-      "type": [
-        "string",
-        "null"
-      ]
+      "type": "string"
     },
     "logLines": {
-      "type": [
-        "integer",
-        "null"
-      ]
+      "type": "integer"
     },
     "themeBrightness": {
       "type": "string"
     },
     "themeColor": true,
     "logFontFamily": {
-      "type": [
-        "string",
-        "null"
-      ]
+      "type": "string"
     },
     "logFontSize": {
       "type": "number"
     },
     "launcherFontFamily": {
-      "type": [
-        "string",
-        "null"
-      ]
+      "type": "string"
     },
     "animationDisabled": {
       "type": "boolean"
@@ -80,16 +68,10 @@
       ]
     },
     "backgroundImage": {
-      "type": [
-        "string",
-        "null"
-      ]
+      "type": "string"
     },
     "backgroundImageUrl": {
-      "type": [
-        "string",
-        "null"
-      ]
+      "type": "string"
     },
     "backgroundPaint": true,
     "backgroundOpacity": {
@@ -126,31 +108,22 @@
       ]
     },
     "proxyHost": {
-      "type": [
-        "string",
-        "null"
-      ]
+      "type": "string"
     },
     "proxyPort": {
       "type": "integer"
     },
     "proxyUser": {
-      "type": [
-        "string",
-        "null"
-      ]
+      "type": "string"
     },
     "proxyPassword": {
-      "type": [
-        "string",
-        "null"
-      ]
+      "type": "string"
     },
     "selectedGameDirectory": {
-      "$ref": "#/$defs/uuidOrNull"
+      "$ref": "#/$defs/uuid"
     },
     "defaultGameSettingsPreset": {
-      "$ref": "#/$defs/uuidOrNull"
+      "$ref": "#/$defs/uuid"
     },
     "selectedInstance": {
       "type": "object",
@@ -159,16 +132,10 @@
       }
     },
     "preferredLoginType": {
-      "type": [
-        "string",
-        "null"
-      ]
+      "type": "string"
     },
     "selectedAccount": {
-      "type": [
-        "object",
-        "null"
-      ],
+      "type": "object",
       "additionalProperties": true
     }
   },
@@ -180,11 +147,8 @@
         "MIRROR"
       ]
     },
-    "uuidOrNull": {
-      "type": [
-        "string",
-        "null"
-      ],
+    "uuid": {
+      "type": "string",
       "pattern": "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$"
     }
   }
