@@ -210,7 +210,6 @@ public final class LineInheritableToggleButton extends LineButtonBase {
     /// Sets the tooltip displayed while inheriting the parent value.
     public void setInheritedTooltip(String inheritedTooltip) {
         inheritedTooltipProperty().set(inheritedTooltip);
-        refresh();
     }
 
     /// The tooltip displayed while overriding the parent value.
@@ -229,7 +228,6 @@ public final class LineInheritableToggleButton extends LineButtonBase {
     /// Sets the tooltip displayed while overriding the parent value.
     public void setOverriddenTooltip(String overriddenTooltip) {
         overriddenTooltipProperty().set(overriddenTooltip);
-        refresh();
     }
 
     /// Sets the tooltip displayed on the inherit button in inherited mode.
