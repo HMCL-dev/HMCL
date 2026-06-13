@@ -49,7 +49,6 @@ import org.jackhuang.hmcl.ui.decorator.DecoratorPage;
 import org.jackhuang.hmcl.util.*;
 import org.jackhuang.hmcl.util.i18n.I18n;
 import org.jackhuang.hmcl.util.io.FileUtils;
-import org.jackhuang.hmcl.util.javafx.BindingMapping;
 import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
 import org.jetbrains.annotations.Nullable;
 
@@ -568,8 +567,8 @@ public class DownloadPage extends Control implements DecoratorPage {
                 this.setActions(downloadButton, saveAsButton, cancelButton);
             }
 
-            this.prefWidthProperty().bind(BindingMapping.of(Controllers.getStage().widthProperty()).map(w -> w.doubleValue() * 0.7));
-            this.prefHeightProperty().bind(BindingMapping.of(Controllers.getStage().heightProperty()).map(w -> w.doubleValue() * 0.8));
+            this.prefWidthProperty().bind(Controllers.getStage().widthProperty().multiply(0.7));
+            this.prefHeightProperty().bind(Controllers.getStage().heightProperty().multiply(0.8));
 
             onEscPressed(this, cancelButton::fire);
         }
@@ -662,7 +661,7 @@ public class DownloadPage extends Control implements DecoratorPage {
             setActions(closeButton);
 
             this.prefWidthProperty().bind(Controllers.getStage().widthProperty().multiply(0.7));
-            this.prefHeightProperty().bind(Controllers.getStage().heightProperty().multiply(0.7));
+            this.prefHeightProperty().bind(Controllers.getStage().heightProperty().multiply(0.8));
 
             onEscPressed(this, closeButton::fire);
         }

@@ -44,7 +44,6 @@ import org.jackhuang.hmcl.ui.decorator.DecoratorPage;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.TaskCancellationAction;
 import org.jackhuang.hmcl.util.io.CSVTable;
-import org.jackhuang.hmcl.util.javafx.BindingMapping;
 
 import java.io.IOException;
 import java.nio.file.Path;
@@ -105,11 +104,8 @@ public class AddonUpdatesPage<F extends LocalAddonFile> extends BorderPane imple
                 TableCell<AddonUpdateObject, String> cell = oldCellFactory.call(param);
                 cell.getStyleClass().add("addon-changelog-table-cell");
                 cell.setOnMouseClicked(event -> {
-                    List<AddonUpdateObject> items = cell.getTableColumn().getTableView().getItems();
-                    if (cell.getIndex() >= items.size() || cell.getIndex() < 0) {
-                        return;
-                    }
-                    AddonUpdateObject object = items.get(cell.getIndex());
+                    AddonUpdateObject object;
+                    if (cell.isEmpty() || cell.getTableRow() == null || (object = cell.getTableRow().getItem()) == null) return;
                     Controllers.dialog(new AddonChangelog(object));
                 });
                 return cell;
@@ -336,8 +332,8 @@ public class AddonUpdatesPage<F extends LocalAddonFile> extends BorderPane imple
 
             setActions(versionPageBtn, closeButton);
 
-            this.prefWidthProperty().bind(BindingMapping.of(Controllers.getStage().widthProperty()).map(w -> w.doubleValue() * 0.7));
-            this.prefHeightProperty().bind(BindingMapping.of(Controllers.getStage().heightProperty()).map(w -> w.doubleValue() * 0.7));
+            this.prefWidthProperty().bind(Controllers.getStage().widthProperty().multiply(0.7));
+            this.prefHeightProperty().bind(Controllers.getStage().heightProperty().multiply(0.7));
 
             onEscPressed(this, closeButton::fire);
         }

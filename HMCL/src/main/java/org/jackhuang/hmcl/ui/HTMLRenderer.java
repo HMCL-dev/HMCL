@@ -48,11 +48,6 @@ import static org.jackhuang.hmcl.util.logging.Logger.LOG;
  */
 public final class HTMLRenderer {
 
-    private static final Map<String, String> cssPropertyMapping = Map.of(
-            "color", "-fx-fill",
-            "font-size", "-fx-font-size"
-    );
-
     private static URI resolveLink(Node linkNode) {
         String href = linkNode.absUrl("href");
         if (href.isEmpty())
@@ -132,7 +127,7 @@ public final class HTMLRenderer {
         hyperlink = null;
         fxStyle = null;
 
-        var declarations = new SimpleCssDeclarations(cssPropertyMapping);
+        var declarations = new SimpleCssDeclarations();
         for (Node node : stack) {
             String nodeName = node.nodeName();
             switch (nodeName) {
@@ -529,12 +524,12 @@ public final class HTMLRenderer {
 
     private static final class SimpleCssDeclarations {
 
-        private final Map<String, String> declarations = new HashMap<>();
-        private final Map<String, String> mapping;
+        private static final Map<String, String> cssPropertyMapping = Map.of(
+                "color", "-fx-fill",
+                "font-size", "-fx-font-size"
+        );
 
-        public SimpleCssDeclarations(Map<String, String> mapping) {
-            this.mapping = Map.copyOf(mapping);
-        }
+        private final Map<String, String> declarations = new HashMap<>();
 
         public void add(String inlineCss) {
             if (StringUtils.isBlank(inlineCss)) return;
@@ -543,7 +538,9 @@ public final class HTMLRenderer {
                 if (declaration.length != 2) return;
                 declaration[0] = declaration[0].trim();
                 declaration[1] = declaration[1].trim();
-                declarations.put(mapping.getOrDefault(declaration[0], declaration[0]), declaration[1]);
+                if (cssPropertyMapping.containsKey(declaration[0])) {
+                    declarations.put(cssPropertyMapping.get(declaration[0]), declaration[1]);
+                } // Ignore unsupported fields
             });
         }
 
