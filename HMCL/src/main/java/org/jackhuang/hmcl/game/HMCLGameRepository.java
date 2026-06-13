@@ -279,7 +279,7 @@ public final class HMCLGameRepository extends DefaultGameRepository {
             return;
         }
 
-        GameSettings.Preset profilePreset = getProfileGameSettingsPreset();
+        GameSettings.Preset profilePreset = SettingsManager.getGameSettings(profile.getLegacyGameSettings());
         if (profilePreset != null && profilePreset.defaultIsolationTypeProperty().getValue() == DefaultIsolationType.ALWAYS) {
             GameSettings.Instance setting = new GameSettings.Instance();
             setting.getOverrideProperties().add(GameSettings.PROPERTY_RUNNING_DIRECTORY);
@@ -345,10 +345,6 @@ public final class HMCLGameRepository extends DefaultGameRepository {
             LOG.warning("Failed to load game setting " + file, ex);
             return new InstanceGameSettingsLoadResult(null, false);
         }
-    }
-
-    private GameSettings.@Nullable Preset getProfileGameSettingsPreset() {
-        return SettingsManager.getGameSettings(profile.getLegacyGameSettings());
     }
 
     public @Nullable GameSettings.Instance createInstanceGameSettings(String id) {
