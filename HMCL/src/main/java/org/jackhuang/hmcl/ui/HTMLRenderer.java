@@ -538,8 +538,9 @@ public final class HTMLRenderer {
                 if (declaration.length != 2) return;
                 declaration[0] = declaration[0].trim();
                 declaration[1] = declaration[1].trim();
-                if (cssPropertyMapping.containsKey(declaration[0])) {
-                    declarations.put(cssPropertyMapping.get(declaration[0]), declaration[1]);
+                String mappedKey = cssPropertyMapping.get(declaration[0]);
+                if (mappedKey != null) {
+                    declarations.put(mappedKey, declaration[1]);
                 } // Ignore unsupported fields
             });
         }
