@@ -106,6 +106,7 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
     // GUI
     private final ScrollPane scrollPane;
     private final VBox rootPane;
+    private final HintPane readOnlyInstanceSettingsHint;
 
     private final @UnknownNullability ImagePickerItem iconPickerItem;
 
@@ -133,6 +134,12 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
         FXUtils.smoothScrolling(scrollPane);
         rootPane.getStyleClass().add("card-list");
         scrollPane.setContent(rootPane);
+
+        readOnlyInstanceSettingsHint = new HintPane(MessageDialogPane.MessageType.WARNING);
+        readOnlyInstanceSettingsHint.setText(i18n("settings.game.instance_settings.unsupported"));
+        readOnlyInstanceSettingsHint.setVisible(false);
+        readOnlyInstanceSettingsHint.setManaged(false);
+        rootPane.getChildren().add(readOnlyInstanceSettingsHint);
 
         var basicSettings = new ComponentList();
         var gameSettings = new ComponentList();
@@ -2193,10 +2200,28 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
         assert isPresetSetting == (instanceId == null);
 
         if (instanceId != null) {
-            this.currentSetting.set((S) profile.getRepository().getInstanceGameSettingsOrCreate(instanceId));
+            HMCLGameRepository repository = profile.getRepository();
+            @Nullable GameSettings.Instance setting = repository.getInstanceGameSettingsOrCreate(instanceId);
+            this.currentSetting.set((S) setting);
+            setInstanceSettingsReadOnly(setting == null || repository.isInstanceGameSettingsReadOnly(instanceId));
             loadIcon();
         } else {
+            setInstanceSettingsReadOnly(false);
             this.currentSetting.set((S) SettingsManager.getDefaultGameSettingsPresetOrCreate());
+        }
+    }
+
+    /// Updates the page read-only state used when instance settings cannot be saved safely.
+    ///
+    /// @param readOnly whether the current instance settings should be displayed read-only
+    private void setInstanceSettingsReadOnly(boolean readOnly) {
+        readOnlyInstanceSettingsHint.setVisible(readOnly);
+        readOnlyInstanceSettingsHint.setManaged(readOnly);
+
+        for (Node child : rootPane.getChildren()) {
+            if (child != readOnlyInstanceSettingsHint) {
+                child.setDisable(readOnly);
+            }
         }
     }
 

@@ -315,7 +315,9 @@ public final class HMCLGameRepository extends DefaultGameRepository {
                 }
             }
             if (!schemaResult.readable()) {
-                return new InstanceGameSettingsLoadResult(null, false);
+                GameSettings.Instance fallback = new GameSettings.Instance();
+                fallback.setSavable(false);
+                return new InstanceGameSettingsLoadResult(fallback, false);
             }
 
             GameSettings.Instance setting =
@@ -366,6 +368,7 @@ public final class HMCLGameRepository extends DefaultGameRepository {
 
     private GameSettings.Instance initInstanceGameSettings(String id, GameSettings.Instance setting, boolean allowSave) {
         normalizeRunningDirectoryOverride(setting);
+        setting.setSavable(allowSave);
         loadedInstanceGameSettings.add(id);
         instanceGameSettings.put(id, setting);
         if (allowSave) {
@@ -399,6 +402,18 @@ public final class HMCLGameRepository extends DefaultGameRepository {
             setting = createInstanceGameSettings(id);
         }
         return setting;
+    }
+
+    /// Returns whether the instance-specific game settings file cannot be overwritten safely.
+    ///
+    /// @param id the instance ID
+    /// @return whether the instance settings are loaded in read-only mode
+    public boolean isInstanceGameSettingsReadOnly(String id) {
+        if (!loadedInstanceGameSettings.contains(id)) {
+            loadInstanceGameSettings(id);
+        }
+
+        return readOnlyInstanceGameSettings.contains(id);
     }
 
     public GameSettings.Preset getParentGameSettings(@Nullable GameSettings.Instance instance) {
