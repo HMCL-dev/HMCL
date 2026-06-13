@@ -61,7 +61,7 @@ public final class SchemFile extends Schematic {
             short width = tryGetShort(widthTag);
             short height = tryGetShort(heightTag);
             short length = tryGetShort(lengthTag);
-            if (width >= 0 && height >= 0 && length >= 0) {
+            if (width > 0 && height > 0 && length > 0) {
                 enclosingSize = new Point3I(width, height, length);
             }
         }
@@ -86,7 +86,9 @@ public final class SchemFile extends Schematic {
             int width = tryGetShort(widthTag) & 0xFFFF;
             int height = tryGetShort(heightTag) & 0xFFFF;
             int length = tryGetShort(lengthTag) & 0xFFFF;
-            enclosingSize = new Point3I(width, height, length);
+            if (width > 0 && height > 0 && length > 0) {
+                enclosingSize = new Point3I(width, height, length);
+            }
         }
 
         return new SchemFile(file, null, dataVersion, ((IntTag) versionTag).getValue(), enclosingSize);

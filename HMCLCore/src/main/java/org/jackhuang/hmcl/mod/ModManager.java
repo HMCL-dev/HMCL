@@ -185,10 +185,8 @@ public final class ModManager extends LocalAddonManager<LocalModFile> {
             var resolved = getRepository().getResolvedPreservingPatchesVersion(id);
             gameVersion = repository.getGameVersion(resolved).orElse(null);
             analyzer = LibraryAnalyzer.analyze(resolved, gameVersion);
-
-            updateSupportedLoaders();
         } finally {
-            lock.lock();
+            lock.unlock();
         }
     }
 
@@ -219,6 +217,9 @@ public final class ModManager extends LocalAddonManager<LocalModFile> {
                     }
                 }
             }
+
+            updateSupportedLoaders();
+
             loaded = true;
         } finally {
             lock.unlock();

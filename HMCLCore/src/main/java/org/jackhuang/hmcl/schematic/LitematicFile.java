@@ -21,7 +21,6 @@ import org.glavo.nbt.tag.CompoundTag;
 import org.glavo.nbt.tag.IntArrayTag;
 import org.glavo.nbt.tag.IntTag;
 import org.glavo.nbt.tag.Tag;
-import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.Point3I;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jetbrains.annotations.NotNull;
@@ -30,6 +29,7 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.time.Instant;
 import java.util.OptionalInt;
+import java.util.OptionalLong;
 
 import static org.jackhuang.hmcl.util.NBTUtils.*;
 
@@ -126,7 +126,7 @@ public final class LitematicFile extends Schematic {
 
     @Override
     public OptionalInt getSubVersion() {
-        return Lang.wrapWithMinValue(subVersion, 0);
+        return subVersion >= 0 ? OptionalInt.of(subVersion) : OptionalInt.empty();
     }
 
     @Override
@@ -160,17 +160,17 @@ public final class LitematicFile extends Schematic {
 
     @Override
     public OptionalInt getTotalBlocks() {
-        return Lang.wrapWithMinValue(totalBlocks, 1);
+        return totalBlocks >= 1 ? OptionalInt.of(totalBlocks) : OptionalInt.empty();
     }
 
     @Override
-    public OptionalInt getTotalVolume() {
-        return Lang.wrapWithMinValue(totalVolume, 1);
+    public OptionalLong getTotalVolume() {
+        return totalVolume >= 1 ? OptionalLong.of(totalVolume) : OptionalLong.empty();
     }
 
     @Override
     public OptionalInt getRegionCount() {
-        return Lang.wrapWithMinValue(regionCount, 1);
+        return regionCount >= 1 ? OptionalInt.of(regionCount) : OptionalInt.empty();
     }
 
 }

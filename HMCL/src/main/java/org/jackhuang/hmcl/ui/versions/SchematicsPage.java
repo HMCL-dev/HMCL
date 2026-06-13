@@ -170,11 +170,13 @@ public final class SchematicsPage extends ListPageBase<SchematicsPage.Item> impl
         if (schematicsDirectory == null) return;
 
         setLoading(true);
+        String currentInstanceId = this.instanceId;
         Task.supplyAsync(Schedulers.io(), () -> {
             DirItem target = loadRoot(schematicsDirectory);
-            if (currentDirectoryProperty().get() != null) {
+            DirItem currentDir = currentDirectoryProperty().get();
+            if (currentDir != null) {
                 loop:
-                for (String dirName : currentDirectoryProperty().get().relativePath) {
+                for (String dirName : currentDir.relativePath) {
                     target.preLoad();
                     for (var dirChild : target.dirChildren) {
                         if (dirChild.getName().equals(dirName)) {
@@ -187,6 +189,7 @@ public final class SchematicsPage extends ListPageBase<SchematicsPage.Item> impl
             }
             return target;
         }).whenComplete(Schedulers.javafx(), (result, exception) -> {
+            if (!Objects.equals(currentInstanceId, this.instanceId)) return;
             if (exception == null) {
                 navigateTo(result);
             } else {
@@ -198,7 +201,7 @@ public final class SchematicsPage extends ListPageBase<SchematicsPage.Item> impl
         Task.supplyAsync(Schedulers.io(), () -> {
             var modManager = profile.getRepository().getModManager(instanceId);
             modManager.analyze();
-            var modLoaders = modManager.getLibraryAnalyzer().getModLoaders();
+            var modLoaders = modManager.getLibraryAnalyzer().getModLoaders(); // We don't care about kilt or connector
             boolean shouldUseForgematica = (modLoaders.contains(ModLoaderType.FORGE) || modLoaders.contains(ModLoaderType.NEO_FORGE))
                     && GameVersionNumber.asGameVersion(Optional.ofNullable(modManager.getGameVersion())).isAtLeast("1.16.4", "20w45a");
             var res = Objects.requireNonNullElse(fetchResult.get(), new LitematicaFetchResult(null, null, false));
@@ -251,7 +254,7 @@ public final class SchematicsPage extends ListPageBase<SchematicsPage.Item> impl
         FileChooser fileChooser = new FileChooser();
         fileChooser.setTitle(i18n("schematics.add.title"));
         fileChooser.getExtensionFilters().add(new FileChooser.ExtensionFilter(
-                i18n("extension.schematic"), "*.litematic"));
+                i18n("extension.schematic"), "*.litematic", "*.nbt", "*.schematic", "*.schem"));
         List<Path> files = FileUtils.toPaths(fileChooser.showOpenMultipleDialog(Controllers.getStage()));
         if (files != null && !files.isEmpty()) {
             addFiles(files);
@@ -395,6 +398,8 @@ public final class SchematicsPage extends ListPageBase<SchematicsPage.Item> impl
 
         void preLoad() throws IOException {
             if (this.preLoaded) return;
+            this.size = 0;
+            this.dirChildren.clear();
             try (Stream<Path> stream = Files.list(path)) {
                 stream.forEach(p -> {
                     boolean b1 = Files.isDirectory(p);
@@ -411,7 +416,7 @@ public final class SchematicsPage extends ListPageBase<SchematicsPage.Item> impl
 
         void load() {
             if (this.loaded) return;
-
+            this.children.clear();
             try {
                 preLoad();
                 try (Stream<Path> stream = Files.list(path)) {
@@ -582,7 +587,7 @@ public final class SchematicsPage extends ListPageBase<SchematicsPage.Item> impl
                 if (file.getRegionCount().isPresent())
                     addDetailItem(i18n("schematics.info.region_count"), String.valueOf(file.getRegionCount().getAsInt()));
                 if (file.getTotalVolume().isPresent())
-                    addDetailItem(i18n("schematics.info.total_volume"), file.getTotalVolume().getAsInt());
+                    addDetailItem(i18n("schematics.info.total_volume"), file.getTotalVolume().getAsLong());
                 if (file.getTotalBlocks().isPresent())
                     addDetailItem(i18n("schematics.info.total_blocks"), file.getTotalBlocks().getAsInt());
                 if (file.getEnclosingSize() != null)

@@ -17,7 +17,6 @@
  */
 package org.jackhuang.hmcl.schematic;
 
-import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.Point3I;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jetbrains.annotations.NotNull;
@@ -27,6 +26,7 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.time.Instant;
 import java.util.OptionalInt;
+import java.util.OptionalLong;
 
 public sealed abstract class Schematic permits LitematicFile, SchemFile, NBTStructureFile {
 
@@ -73,7 +73,8 @@ public sealed abstract class Schematic permits LitematicFile, SchemFile, NBTStru
 
     /// At least 100, otherwise empty
     public OptionalInt getMinecraftDataVersion() {
-        return Lang.wrapWithMinValue(dataVersion, /* 15w32a */ 100);
+        /* 15w32a */
+        return dataVersion >= 100 ? OptionalInt.of(dataVersion) : OptionalInt.empty();
     }
 
     @Nullable
@@ -114,10 +115,10 @@ public sealed abstract class Schematic permits LitematicFile, SchemFile, NBTStru
         return enclosingSize;
     }
 
-    public OptionalInt getTotalVolume() {
+    public OptionalLong getTotalVolume() {
         var enclosingSize = getEnclosingSize();
-        if (enclosingSize != null) return OptionalInt.of(enclosingSize.x() * enclosingSize.y() * enclosingSize.z());
-        return OptionalInt.empty();
+        if (enclosingSize != null) return OptionalLong.of((long) enclosingSize.x() * enclosingSize.y() * enclosingSize.z());
+        return OptionalLong.empty();
     }
 
     public int @Nullable [] getPreviewImageData() {
