@@ -140,10 +140,15 @@ public final class LegacyGameSettingsMigrator {
             }
 
             boolean inheritsLegacyParent = JsonUtils.getBoolean(legacySettingJson, "usesGlobal", false);
-            GameSettings.Instance setting = toInstance(parent, legacySettingJson, inheritsLegacyParent);
+            GameSettings.Preset parentSetting = SettingsManager.getGameSettings(parent);
+            GameSettings.Instance setting = toInstance(
+                    parent,
+                    parentSetting,
+                    legacySettingJson,
+                    inheritsLegacyParent,
+                    GameSettings.DetectedJava::ofLegacyPath);
             if (!inheritsLegacyParent) {
                 Path baseDirectory = repository.getBaseDirectory();
-                GameSettings.Preset parentSetting = SettingsManager.getGameSettings(parent);
                 if (parentSetting != null
                         && getLegacyGameDirType(legacySettingJson, GameDirectoryType.ROOT_FOLDER) == GameDirectoryType.ROOT_FOLDER
                         && StringUtils.isNotBlank(parentSetting.runningDirectoryProperty().getValue())) {
@@ -186,9 +191,34 @@ public final class LegacyGameSettingsMigrator {
             @Nullable JsonObject source,
             boolean inheritsLegacyParent,
             BiFunction<String, String, GameSettings.DetectedJava> detectedJavaFactory) {
+        return toInstance(parent, null, source, inheritsLegacyParent, detectedJavaFactory);
+    }
+
+    /// Converts a legacy local setting JSON object into an instance game setting with parent context.
+    ///
+    /// @param parent the migrated parent preset ID for the instance
+    /// @param parentSetting the migrated parent preset, if available during migration
+    /// @param source the legacy local setting JSON object
+    /// @param inheritsLegacyParent whether the legacy instance inherits its parent preset instead of
+    ///                             carrying its own copied values
+    /// @param detectedJavaFactory converts legacy detected Java version and path fields into the new
+    ///                            detected Java reference
+    @VisibleForTesting
+    static GameSettings.Instance toInstance(
+            @Nullable SettingID parent,
+            @Nullable GameSettings.Preset parentSetting,
+            @Nullable JsonObject source,
+            boolean inheritsLegacyParent,
+            BiFunction<String, String, GameSettings.DetectedJava> detectedJavaFactory) {
         GameSettings.Instance target = new GameSettings.Instance();
         target.parentProperty().setValue(parent);
         target.iconProperty().setValue(parseLegacyVersionIconType(source));
+        if (inheritsLegacyParent
+                && parentSetting != null
+                && parentSetting.defaultIsolationTypeProperty().getValue() == DefaultIsolationType.ALWAYS
+                && StringUtils.isBlank(parentSetting.runningDirectoryProperty().getValue())) {
+            target.getOverrideProperties().add(GameSettings.PROPERTY_RUNNING_DIRECTORY);
+        }
         if (source != null && !inheritsLegacyParent) {
             copyCommonProperties(source, target, detectedJavaFactory);
             if (getLegacyGameDirType(source, GameDirectoryType.ROOT_FOLDER) != GameDirectoryType.ROOT_FOLDER) {

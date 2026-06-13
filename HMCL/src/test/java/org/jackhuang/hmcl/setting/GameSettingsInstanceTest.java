@@ -193,6 +193,29 @@ public final class GameSettingsInstanceTest {
         assertNull(instance.minMemoryProperty().getValue());
     }
 
+    /// Tests that legacy global version-folder isolation is preserved for inherited instance settings.
+    @Test
+    public void preservesInheritedLegacyVersionFolderIsolation() {
+        SettingID parentId = SettingID.parse("123e4567-e89b-12d3-a456-426614174000");
+        GameSettings.Preset parent = new GameSettings.Preset(parentId);
+        parent.defaultIsolationTypeProperty().setValue(DefaultIsolationType.ALWAYS);
+
+        GameSettings.Instance instance = LegacyGameSettingsMigrator.toInstance(
+                parentId,
+                parent,
+                JsonParser.parseString("""
+                        {
+                          "usesGlobal": true
+                        }
+                        """).getAsJsonObject(),
+                true,
+                GameSettings.DetectedJava::ofLegacyPath);
+
+        assertEquals(parentId, instance.parentProperty().getValue());
+        assertTrue(instance.getOverrideProperties().contains(GameSettings.PROPERTY_RUNNING_DIRECTORY));
+        assertEquals("", instance.runningDirectoryProperty().getValue());
+    }
+
     /// Creates a temporary directory in an in-memory file system for instance settings tests.
     private static Path createInstanceSettingsTestDirectory(FileSystem fileSystem, String prefix) throws IOException {
         Path root = fileSystem.getPath("/instance-settings-tests");
