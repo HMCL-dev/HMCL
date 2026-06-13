@@ -2204,7 +2204,8 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
             this.currentSetting.set((S) setting);
             setSettingsReadOnly(
                     setting == null || repository.isInstanceGameSettingsReadOnly(instanceId),
-                    i18n("settings.game.instance_settings.unsupported"));
+                    i18n("settings.game.instance_settings.unsupported"),
+                    setting != null ? this::forceOverwriteInstanceGameSettings : null);
             loadIcon();
         } else {
             this.currentSetting.set((S) SettingsManager.getDefaultGameSettingsPresetOrCreate());
@@ -2250,6 +2251,18 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
                 child.setDisable(readOnly);
             }
         }
+    }
+
+    /// Backs up and overwrites the current instance's `instance-game-settings.json`.
+    private void forceOverwriteInstanceGameSettings() {
+        if (profile == null || instanceId == null) {
+            return;
+        }
+
+        Controllers.confirmBackupAndOverwrite(i18n("settings.game.instance_settings.unsupported"), () -> {
+            profile.getRepository().forceOverwriteInstanceGameSettings(instanceId);
+            setSettingsReadOnly(false, "");
+        });
     }
 
     /// Backs up and overwrites `game-settings.json` using the currently loaded presets.

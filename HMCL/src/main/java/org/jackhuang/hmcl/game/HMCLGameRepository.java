@@ -416,6 +416,34 @@ public final class HMCLGameRepository extends DefaultGameRepository {
         return readOnlyInstanceGameSettings.contains(id);
     }
 
+    /// Backs up and overwrites the instance-specific game settings file with the currently loaded settings.
+    ///
+    /// @param id the instance ID
+    public void forceOverwriteInstanceGameSettings(String id) {
+        if (!loadedInstanceGameSettings.contains(id)) {
+            loadInstanceGameSettings(id);
+        }
+
+        GameSettings.Instance setting = instanceGameSettings.get(id);
+        if (setting == null) {
+            setting = new GameSettings.Instance();
+            instanceGameSettings.put(id, setting);
+            loadedInstanceGameSettings.add(id);
+        }
+
+        boolean installAutoSave = !setting.isSavable();
+        Path file = getInstanceGameSettingsFile(id).toAbsolutePath().normalize();
+        SettingFileUtils.backupInvalidConfig(file);
+        setting.setSchema(GameSettings.Instance.CURRENT_SCHEMA);
+        setting.setSavable(true);
+        setting.setBackupOnNextSave(false);
+        readOnlyInstanceGameSettings.remove(id);
+        saveGameSettings(id);
+        if (installAutoSave) {
+            setting.addListener(a -> saveGameSettings(id));
+        }
+    }
+
     public GameSettings.Preset getParentGameSettings(@Nullable GameSettings.Instance instance) {
         @Nullable SettingID parent = instance != null && instance.parentProperty().getValue() != null
                 ? instance.parentProperty().getValue()
