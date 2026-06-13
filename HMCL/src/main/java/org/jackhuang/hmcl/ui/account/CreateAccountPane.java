@@ -33,6 +33,7 @@ import javafx.scene.control.Hyperlink;
 import javafx.scene.control.Label;
 import javafx.scene.control.TextInputControl;
 import javafx.scene.layout.*;
+import org.jackhuang.hmcl.auth.Account;
 import org.jackhuang.hmcl.auth.AccountFactory;
 import org.jackhuang.hmcl.auth.CharacterSelector;
 import org.jackhuang.hmcl.auth.NoSelectedCharacterException;
@@ -225,27 +226,16 @@ public class CreateAccountPane extends JFXDialogLayout implements DialogAware {
             loginTask = Task.supplyAsync(() -> factory.create(new DialogCharacterSelector(), username, password, null, additionalData))
                     .whenComplete(Schedulers.javafx(), account -> {
                         if (Accounts.isAccountStorageReadOnly(account)) {
-                            lblErrorMessage.setText(i18n("account.storage.read_only"));
                             body.setDisable(false);
                             spinner.hideSpinner();
+                            Controllers.confirmBackupAndOverwrite(i18n("account.storage.read_only"), () -> {
+                                Accounts.forceOverwriteAccountStorage(account);
+                                completeLogin(account);
+                            });
                             return;
                         }
 
-                        int oldIndex = Accounts.getAccounts().indexOf(account);
-                        if (oldIndex == -1) {
-                            Accounts.getAccounts().add(account);
-                        } else {
-                            // adding an already-added account
-                            // instead of discarding the new account, we first remove the existing one then add the new one
-                            Accounts.getAccounts().remove(oldIndex);
-                            Accounts.getAccounts().add(oldIndex, account);
-                        }
-
-                        // select the new account
-                        Accounts.setSelectedAccount(account);
-
-                        spinner.hideSpinner();
-                        fireEvent(new DialogCloseEvent());
+                        completeLogin(account);
                     }, exception -> {
                         if (exception instanceof NoSelectedCharacterException) {
                             fireEvent(new DialogCloseEvent());
@@ -267,6 +257,23 @@ public class CreateAccountPane extends JFXDialogLayout implements DialogAware {
         } else {
             doCreate.run();
         }
+    }
+
+    /// Adds the logged-in account, selects it, and closes the dialog.
+    private void completeLogin(Account account) {
+        int oldIndex = Accounts.getAccounts().indexOf(account);
+        if (oldIndex == -1) {
+            Accounts.getAccounts().add(account);
+        } else {
+            // Add an already-added account by replacing the existing entry with the new credentials.
+            Accounts.getAccounts().remove(oldIndex);
+            Accounts.getAccounts().add(oldIndex, account);
+        }
+
+        Accounts.setSelectedAccount(account);
+
+        spinner.hideSpinner();
+        fireEvent(new DialogCloseEvent());
     }
 
     private void onCancel() {

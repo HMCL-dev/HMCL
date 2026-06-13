@@ -44,7 +44,6 @@ import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
 import org.jackhuang.hmcl.ui.construct.AdvancedListItem;
 import org.jackhuang.hmcl.ui.construct.ClassTitle;
-import org.jackhuang.hmcl.ui.construct.MessageDialogPane;
 import org.jackhuang.hmcl.ui.decorator.DecoratorAnimatedPage;
 import org.jackhuang.hmcl.ui.decorator.DecoratorPage;
 import org.jackhuang.hmcl.util.i18n.LocaleUtils;
@@ -134,7 +133,7 @@ public final class AccountListPage extends DecoratorAnimatedPage implements Deco
                     microsoftItem.setLeftIcon(SVG.MICROSOFT);
                     microsoftItem.setOnAction(e -> {
                         if (SettingsManager.isUserGameAccountsReadOnly()) {
-                            showReadOnlyWarning("account.storage.read_only");
+                            confirmOverwriteUserAccounts(() -> Controllers.dialog(new MicrosoftAccountLoginPane()));
                         } else {
                             Controllers.dialog(new MicrosoftAccountLoginPane());
                         }
@@ -146,7 +145,7 @@ public final class AccountListPage extends DecoratorAnimatedPage implements Deco
                     offlineItem.setLeftIcon(SVG.PERSON);
                     offlineItem.setOnAction(e -> {
                         if (SettingsManager.isUserGameAccountsReadOnly()) {
-                            showReadOnlyWarning("account.storage.read_only");
+                            confirmOverwriteUserAccounts(() -> Controllers.dialog(new CreateAccountPane(Accounts.FACTORY_OFFLINE)));
                         } else {
                             Controllers.dialog(new CreateAccountPane(Accounts.FACTORY_OFFLINE));
                         }
@@ -159,18 +158,16 @@ public final class AccountListPage extends DecoratorAnimatedPage implements Deco
                         item.setLeftIcon(SVG.DRESSER);
                         item.setOnAction(e -> {
                             if (SettingsManager.isUserGameAccountsReadOnly()) {
-                                showReadOnlyWarning("account.storage.read_only");
+                                confirmOverwriteUserAccounts(() -> Controllers.dialog(new CreateAccountPane(server)));
                             } else {
                                 Controllers.dialog(new CreateAccountPane(server));
                             }
                         });
                         item.setRightAction(SVG.CLOSE, () -> {
                             if (SettingsManager.isAuthlibInjectorServersReadOnly()) {
-                                showReadOnlyWarning("account.injector.server.storage.read_only");
+                                confirmOverwriteAuthlibInjectorServers(() -> confirmRemoveAuthlibInjectorServer(skinnable, server));
                             } else {
-                                Controllers.confirm(i18n("button.remove.confirm"), i18n("button.remove"), () -> {
-                                    skinnable.authServersProperty().remove(server);
-                                }, null);
+                                confirmRemoveAuthlibInjectorServer(skinnable, server);
                             }
                         });
 
@@ -223,7 +220,8 @@ public final class AccountListPage extends DecoratorAnimatedPage implements Deco
                     addAuthServerItem.setLeftIcon(SVG.ADD_CIRCLE);
                     addAuthServerItem.setOnAction(e -> {
                         if (SettingsManager.isAuthlibInjectorServersReadOnly()) {
-                            showReadOnlyWarning("account.injector.server.storage.read_only");
+                            confirmOverwriteAuthlibInjectorServers(
+                                    () -> Controllers.dialog(new AddAuthlibInjectorServerPane()));
                         } else {
                             Controllers.dialog(new AddAuthlibInjectorServerPane());
                         }
@@ -254,12 +252,29 @@ public final class AccountListPage extends DecoratorAnimatedPage implements Deco
             }
         }
 
-        /// Shows a warning that the target settings file cannot be modified.
-        private static void showReadOnlyWarning(String messageKey) {
-            Controllers.dialog(
-                    i18n(messageKey),
-                    i18n("message.warning"),
-                    MessageDialogPane.MessageType.WARNING);
+        /// Confirms overwriting the user account storage before continuing the account operation.
+        private static void confirmOverwriteUserAccounts(Runnable action) {
+            Controllers.confirmBackupAndOverwrite(i18n("account.storage.read_only"), () -> {
+                SettingsManager.forceOverwriteUserGameAccounts();
+                action.run();
+            });
+        }
+
+        /// Confirms overwriting the authlib-injector server list before continuing the server operation.
+        private static void confirmOverwriteAuthlibInjectorServers(Runnable action) {
+            Controllers.confirmBackupAndOverwrite(i18n("account.injector.server.storage.read_only"), () -> {
+                SettingsManager.forceOverwriteAuthlibInjectorServers();
+                action.run();
+            });
+        }
+
+        /// Asks the user to confirm removing an authlib-injector server.
+        private static void confirmRemoveAuthlibInjectorServer(
+                AccountListPage skinnable,
+                AuthlibInjectorServer server) {
+            Controllers.confirm(i18n("button.remove.confirm"), i18n("button.remove"), () -> {
+                skinnable.authServersProperty().remove(server);
+            }, null);
         }
     }
 }

@@ -41,7 +41,6 @@ import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
-import org.jackhuang.hmcl.ui.construct.MessageDialogPane;
 import org.jackhuang.hmcl.ui.construct.SpinnerPane;
 import org.jackhuang.hmcl.util.javafx.BindingMapping;
 
@@ -97,31 +96,14 @@ public final class AccountListItemSkin extends SkinBase<AccountListItem> {
         btnMove.setOnAction(e -> {
             Account account = skinnable.getAccount();
             if (!Accounts.canMoveAccount(account)) {
-                Controllers.dialog(
-                        i18n("account.storage.read_only"),
-                        i18n("message.warning"),
-                        MessageDialogPane.MessageType.WARNING);
+                Controllers.confirmBackupAndOverwrite(i18n("account.storage.read_only"), () -> {
+                    Accounts.forceOverwriteAccountStorages();
+                    moveAccount(skinnable);
+                });
                 return;
             }
 
-            Accounts.getAccounts().remove(account);
-            if (account.isPortable()) {
-                account.setPortable(false);
-                if (!Accounts.getAccounts().contains(account))
-                    Accounts.getAccounts().add(account);
-            } else {
-                account.setPortable(true);
-                if (!Accounts.getAccounts().contains(account)) {
-                    int idx = 0;
-                    for (int i = Accounts.getAccounts().size() - 1; i >= 0; i--) {
-                        if (Accounts.getAccounts().get(i).isPortable()) {
-                            idx = i + 1;
-                            break;
-                        }
-                    }
-                    Accounts.getAccounts().add(idx, account);
-                }
-            }
+            moveAccount(skinnable);
         });
         btnMove.getStyleClass().add("toggle-icon4");
         if (skinnable.getAccount().isPortable()) {
@@ -194,5 +176,28 @@ public final class AccountListItemSkin extends SkinBase<AccountListItem> {
         JFXDepthManager.setDepth(root, 1);
 
         getChildren().setAll(root);
+    }
+
+    /// Moves the account between local and user account storage.
+    private static void moveAccount(AccountListItem skinnable) {
+        Account account = skinnable.getAccount();
+        Accounts.getAccounts().remove(account);
+        if (account.isPortable()) {
+            account.setPortable(false);
+            if (!Accounts.getAccounts().contains(account))
+                Accounts.getAccounts().add(account);
+        } else {
+            account.setPortable(true);
+            if (!Accounts.getAccounts().contains(account)) {
+                int idx = 0;
+                for (int i = Accounts.getAccounts().size() - 1; i >= 0; i--) {
+                    if (Accounts.getAccounts().get(i).isPortable()) {
+                        idx = i + 1;
+                        break;
+                    }
+                }
+                Accounts.getAccounts().add(idx, account);
+            }
+        }
     }
 }

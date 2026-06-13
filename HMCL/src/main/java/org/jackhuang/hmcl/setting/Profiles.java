@@ -232,7 +232,76 @@ public final class Profiles {
             visibleProfiles.putIfAbsent(id, profile);
         }
 
-        mergedProfiles.setAll(visibleProfiles.values());
+        List<Profile> profiles = new ArrayList<>(visibleProfiles.values());
+        syncMergedProfiles(profiles);
+        preserveSelectedProfile(profiles);
+        removeInvisibleProfiles(profiles);
+    }
+
+    /// Synchronizes visible profiles without clearing the list and invalidating the current UI selection.
+    private static void syncMergedProfiles(List<Profile> profiles) {
+        for (int i = 0; i < profiles.size(); i++) {
+            Profile profile = profiles.get(i);
+            if (i < mergedProfiles.size() && mergedProfiles.get(i) == profile) {
+                continue;
+            }
+
+            int existingIndex = indexOfProfile(profile);
+            if (existingIndex >= 0) {
+                Profile existingProfile = mergedProfiles.remove(existingIndex);
+                mergedProfiles.add(i, existingProfile);
+            } else {
+                mergedProfiles.add(i, profile);
+            }
+        }
+    }
+
+    /// Keeps the selected profile valid before obsolete profile objects are removed.
+    private static void preserveSelectedProfile(List<Profile> profiles) {
+        @Nullable Profile selected = selectedProfile.get();
+        if (selected == null || containsProfile(profiles, selected)) {
+            return;
+        }
+
+        @Nullable Profile replacement = profiles.stream()
+                .filter(profile -> profile.getId().equals(selected.getId()))
+                .findFirst()
+                .orElse(null);
+        if (replacement == null && !profiles.isEmpty()) {
+            replacement = profiles.get(0);
+        }
+        if (replacement != null) {
+            selectedProfile.set(replacement);
+        }
+    }
+
+    /// Removes profile objects that are no longer visible after local/user profile merging.
+    private static void removeInvisibleProfiles(List<Profile> profiles) {
+        for (int i = mergedProfiles.size() - 1; i >= 0; i--) {
+            if (!containsProfile(profiles, mergedProfiles.get(i))) {
+                mergedProfiles.remove(i);
+            }
+        }
+    }
+
+    /// Returns the index of the exact profile object in the merged list.
+    private static int indexOfProfile(Profile profile) {
+        for (int i = 0; i < mergedProfiles.size(); i++) {
+            if (mergedProfiles.get(i) == profile) {
+                return i;
+            }
+        }
+        return -1;
+    }
+
+    /// Returns whether the list contains the exact profile object.
+    private static boolean containsProfile(List<Profile> profiles, Profile profile) {
+        for (Profile current : profiles) {
+            if (current == profile) {
+                return true;
+            }
+        }
+        return false;
     }
 
     /// Returns the read-only merged profile list.

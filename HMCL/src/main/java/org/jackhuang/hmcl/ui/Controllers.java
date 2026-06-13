@@ -584,6 +584,20 @@ public final class Controllers {
         dialog(new MessageDialogPane.Builder(text, title, type).yesOrNo(yes, no).build());
     }
 
+    /// Shows a warning that confirms backing up a read-only settings file before overwriting it.
+    ///
+    /// @param text the file-specific read-only warning
+    /// @param overwrite the action that backs up and overwrites the file
+    public static void confirmBackupAndOverwrite(String text, Runnable overwrite) {
+        dialog(new MessageDialogPane.Builder(
+                text + "\n\n" + i18n("settings.file.force_write.confirm"),
+                i18n("message.warning"),
+                MessageType.WARNING)
+                .addAction(i18n("settings.file.force_write"), overwrite)
+                .addCancel(null)
+                .build());
+    }
+
     public static void confirmAction(String text, String title, MessageType type, ButtonBase actionButton) {
         dialog(new MessageDialogPane.Builder(text, title, type).actionOrCancel(actionButton, null).build());
     }

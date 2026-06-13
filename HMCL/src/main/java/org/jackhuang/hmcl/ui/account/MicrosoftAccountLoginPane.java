@@ -44,6 +44,7 @@ import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.task.TaskExecutor;
 import org.jackhuang.hmcl.theme.Themes;
+import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.WeakListenerHolder;
 import org.jackhuang.hmcl.ui.construct.*;
@@ -284,34 +285,42 @@ public class MicrosoftAccountLoginPane extends JFXDialogLayout implements Dialog
                     ? Accounts.isAccountStorageReadOnly(accountToRelogin)
                     : Accounts.isAccountStorageReadOnly(account);
             if (storageReadOnly) {
-                this.step.set(new Step.LoginFailed(i18n("account.storage.read_only")));
+                Controllers.confirmBackupAndOverwrite(i18n("account.storage.read_only"), () -> {
+                    Accounts.forceOverwriteAccountStorage(accountToRelogin != null ? accountToRelogin : account);
+                    completeLogin(account);
+                });
                 return;
             }
 
-            if (accountToRelogin != null) Accounts.getAccounts().remove(accountToRelogin);
-
-            int oldIndex = Accounts.getAccounts().indexOf(account);
-            if (oldIndex == -1) {
-                Accounts.getAccounts().add(account);
-            } else {
-                Accounts.getAccounts().remove(oldIndex);
-                Accounts.getAccounts().add(oldIndex, account);
-            }
-
-            Accounts.setSelectedAccount(account);
-
-            if (loginCallback != null) {
-                try {
-                    loginCallback.accept(account.logIn());
-                } catch (AuthenticationException e) {
-                    this.step.set(new Step.LoginFailed(Accounts.localizeErrorMessage(e)));
-                    return;
-                }
-            }
-            fireEvent(new DialogCloseEvent());
+            completeLogin(account);
         } else if (!(exception instanceof CancellationException)) {
             this.step.set(new Step.LoginFailed(Accounts.localizeErrorMessage(exception)));
         }
+    }
+
+    /// Adds the logged-in account, selects it, and completes the login callback.
+    private void completeLogin(MicrosoftAccount account) {
+        if (accountToRelogin != null) Accounts.getAccounts().remove(accountToRelogin);
+
+        int oldIndex = Accounts.getAccounts().indexOf(account);
+        if (oldIndex == -1) {
+            Accounts.getAccounts().add(account);
+        } else {
+            Accounts.getAccounts().remove(oldIndex);
+            Accounts.getAccounts().add(oldIndex, account);
+        }
+
+        Accounts.setSelectedAccount(account);
+
+        if (loginCallback != null) {
+            try {
+                loginCallback.accept(account.logIn());
+            } catch (AuthenticationException e) {
+                this.step.set(new Step.LoginFailed(Accounts.localizeErrorMessage(e)));
+                return;
+            }
+        }
+        fireEvent(new DialogCloseEvent());
     }
 
     private sealed interface Step {

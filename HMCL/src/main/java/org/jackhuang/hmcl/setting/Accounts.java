@@ -209,6 +209,32 @@ public final class Accounts {
         return !SettingsManager.isGameAccountsReadOnly() && !SettingsManager.isUserGameAccountsReadOnly();
     }
 
+    /// Backs up and overwrites the account storage file selected by the portability flag.
+    ///
+    /// @param portable whether the target storage is the local account file
+    public static void forceOverwriteAccountStorage(boolean portable) {
+        if (portable) {
+            SettingsManager.forceOverwriteGameAccounts();
+        } else {
+            SettingsManager.forceOverwriteUserGameAccounts();
+        }
+    }
+
+    /// Backs up and overwrites the storage file containing the given account.
+    public static void forceOverwriteAccountStorage(Account account) {
+        forceOverwriteAccountStorage(account.isPortable());
+    }
+
+    /// Backs up and overwrites both local and user account storage files.
+    public static void forceOverwriteAccountStorages() {
+        if (SettingsManager.isGameAccountsReadOnly()) {
+            SettingsManager.forceOverwriteGameAccounts();
+        }
+        if (SettingsManager.isUserGameAccountsReadOnly()) {
+            SettingsManager.forceOverwriteUserGameAccounts();
+        }
+    }
+
     private static Account parseAccount(Map<Object, Object> storage) {
         AccountFactory<?> factory = type2factory.get(storage.get("type"));
         if (factory == null) {

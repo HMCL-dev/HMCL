@@ -202,19 +202,21 @@ public final class ProfilePage extends BorderPane implements DecoratorPage {
                     createPortableLocation());
             if (newProfile.getPath().isAbsolute()) {
                 if (SettingsManager.isUserGameDirectoriesReadOnly()) {
-                    Controllers.dialog(
-                            i18n("settings.game_directories.read_only"),
-                            i18n("message.warning"),
-                            MessageDialogPane.MessageType.WARNING);
+                    Controllers.confirmBackupAndOverwrite(i18n("settings.game_directories.read_only"), () -> {
+                        SettingsManager.forceOverwriteUserGameDirectories();
+                        Profiles.addUserProfile(newProfile);
+                        fireEvent(new PageCloseEvent());
+                    });
                     return;
                 }
                 Profiles.addUserProfile(newProfile);
             } else {
                 if (SettingsManager.isLocalGameDirectoriesReadOnly()) {
-                    Controllers.dialog(
-                            i18n("settings.game_directories.read_only"),
-                            i18n("message.warning"),
-                            MessageDialogPane.MessageType.WARNING);
+                    Controllers.confirmBackupAndOverwrite(i18n("settings.game_directories.read_only"), () -> {
+                        SettingsManager.forceOverwriteLocalGameDirectories();
+                        Profiles.addLocalProfile(newProfile);
+                        fireEvent(new PageCloseEvent());
+                    });
                     return;
                 }
                 Profiles.addLocalProfile(newProfile);

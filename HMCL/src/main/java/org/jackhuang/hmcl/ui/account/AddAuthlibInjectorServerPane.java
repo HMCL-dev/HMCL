@@ -224,13 +224,18 @@ public final class AddAuthlibInjectorServerPane extends TransitionPane implement
 
     private void onAddFinish() {
         if (SettingsManager.isAuthlibInjectorServersReadOnly()) {
-            Controllers.dialog(
-                    i18n("account.injector.server.storage.read_only"),
-                    i18n("message.warning"),
-                    MessageDialogPane.MessageType.WARNING);
+            Controllers.confirmBackupAndOverwrite(i18n("account.injector.server.storage.read_only"), () -> {
+                SettingsManager.forceOverwriteAuthlibInjectorServers();
+                addServerAndClose();
+            });
             return;
         }
 
+        addServerAndClose();
+    }
+
+    /// Adds the resolved authlib-injector server and closes the dialog.
+    private void addServerAndClose() {
         if (!getAuthlibInjectorServers().contains(serverBeingAdded)) {
             getAuthlibInjectorServers().add(serverBeingAdded);
         }

@@ -2210,7 +2210,8 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
             this.currentSetting.set((S) SettingsManager.getDefaultGameSettingsPresetOrCreate());
             setSettingsReadOnly(
                     SettingsManager.isGameSettingsReadOnly(),
-                    i18n("settings.game.presets.unsupported"));
+                    i18n("settings.game.presets.unsupported"),
+                    this::forceOverwriteGameSettings);
         }
     }
 
@@ -2219,7 +2220,28 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
     /// @param readOnly whether the current settings should be displayed read-only
     /// @param message the warning message shown when the page is read-only
     private void setSettingsReadOnly(boolean readOnly, String message) {
-        readOnlySettingsHint.setText(message);
+        setSettingsReadOnly(readOnly, message, null);
+    }
+
+    /// Updates the page read-only state used when settings cannot be saved safely.
+    ///
+    /// @param readOnly whether the current settings should be displayed read-only
+    /// @param message the warning message shown when the page is read-only
+    /// @param forceOverwrite the action used to back up and overwrite the read-only file
+    private void setSettingsReadOnly(boolean readOnly, String message, @Nullable Runnable forceOverwrite) {
+        if (readOnly && forceOverwrite != null) {
+            readOnlySettingsHint.setSegment(
+                    message + "<br/><a href=\"force-overwrite\">" + i18n("settings.file.force_write") + "</a>",
+                    href -> {
+                        if ("force-overwrite".equals(href)) {
+                            forceOverwrite.run();
+                        } else {
+                            Controllers.onHyperlinkAction(href);
+                        }
+                    });
+        } else {
+            readOnlySettingsHint.setSegment(message);
+        }
         readOnlySettingsHint.setVisible(readOnly);
         readOnlySettingsHint.setManaged(readOnly);
 
@@ -2228,6 +2250,14 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
                 child.setDisable(readOnly);
             }
         }
+    }
+
+    /// Backs up and overwrites `game-settings.json` using the currently loaded presets.
+    private void forceOverwriteGameSettings() {
+        Controllers.confirmBackupAndOverwrite(i18n("settings.game.presets.unsupported"), () -> {
+            SettingsManager.forceOverwriteGameSettings();
+            setSettingsReadOnly(false, "");
+        });
     }
 
     private void loadIcon() {
