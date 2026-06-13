@@ -221,7 +221,7 @@ public sealed abstract class GameSettings extends ObservableSetting {
 
         /// Whether to enable the version isolation strategy when installing a new instance.
         @SerializedName("defaultIsolationType")
-        private final SettingProperty<DefaultIsolationType> defaultIsolationType = newSettingProperty("defaultIsolationType", DefaultIsolationType.MODED);
+        private final SettingProperty<DefaultIsolationType> defaultIsolationType = newSettingProperty("defaultIsolationType", DefaultIsolationType.MODDED);
 
         /// Returns the default isolation type property.
         public SettingProperty<DefaultIsolationType> defaultIsolationTypeProperty() {

@@ -19,12 +19,12 @@ package org.jackhuang.hmcl.setting;
 
 /// @author Glavo
 public enum DefaultIsolationType {
-    /// No instances are isolated by default.
-    NEVER,
-
     /// Default to isolate all instances.
     ALWAYS,
 
     /// Default to isolate instances with any modloader.
-    MODED,
+    MODDED,
+
+    /// No instances are isolated by default.
+    NEVER,
 }

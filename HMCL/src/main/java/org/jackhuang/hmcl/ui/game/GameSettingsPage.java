@@ -307,13 +307,18 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
                 var defaultIsolationTypePane = new LineSelectButton<DefaultIsolationType>();
                 basicSettings.getContent().add(defaultIsolationTypePane);
                 defaultIsolationTypePane.setTitle(i18n("settings.game.default_isolation"));
+                defaultIsolationTypePane.setSubtitle(i18n("settings.game.default_isolation.subtitle"));
                 defaultIsolationTypePane.setItems(DefaultIsolationType.values());
                 defaultIsolationTypePane.setNullSafeConverter(type -> switch (type) {
                         case NEVER -> i18n("settings.game.default_isolation.never");
                         case ALWAYS -> i18n("settings.game.default_isolation.always");
-                        case MODED -> i18n("settings.game.default_isolation.modded");
+                        case MODDED -> i18n("settings.game.default_isolation.modded");
                     });
-
+                defaultIsolationTypePane.setDescriptionConverter(type -> switch (type) {
+                    case NEVER -> i18n("settings.game.default_isolation.never.desc");
+                    case ALWAYS -> i18n("settings.game.default_isolation.always.desc");
+                    case MODDED -> i18n("settings.game.default_isolation.modded.desc");
+                });
                 bindPresetBidirectional(defaultIsolationTypePane.valueProperty(), GameSettings.Preset::defaultIsolationTypeProperty);
             } else {
                 var isolationButton = new LineToggleButton();

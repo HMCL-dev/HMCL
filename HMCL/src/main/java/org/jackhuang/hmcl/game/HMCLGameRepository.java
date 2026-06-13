@@ -467,11 +467,11 @@ public final class HMCLGameRepository extends DefaultGameRepository {
         }
 
         GameSettings.Preset preset = getParentGameSettings(null);
-        DefaultIsolationType type = Lang.requireNonNullElse(preset.defaultIsolationTypeProperty().getValue(), DefaultIsolationType.MODED);
+        DefaultIsolationType type = Lang.requireNonNullElse(preset.defaultIsolationTypeProperty().getValue(), DefaultIsolationType.MODDED);
         boolean isolated = switch (type) {
             case NEVER -> false;
             case ALWAYS -> true;
-            case MODED -> LibraryAnalyzer.isModded(this, getVersion(id).resolve(this));
+            case MODDED -> LibraryAnalyzer.isModded(this, getVersion(id).resolve(this));
         };
 
         if (isolated) {
