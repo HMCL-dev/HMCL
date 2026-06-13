@@ -191,7 +191,7 @@ public final class SettingsManager {
     /// Whether root is reading a per-workspace config owned by another user.
     private static boolean ownerChanged = false;
 
-    /// Whether launcher settings or state could not be safely overwritten because of an unsupported schema.
+    /// Whether any loaded settings file could not be safely overwritten because of an unsupported schema.
     private static boolean unsupportedVersion = false;
 
     /// Returns the loaded per-workspace launcher settings.
@@ -407,8 +407,8 @@ public final class SettingsManager {
         @Nullable LegacyConfigMigrator.UserSettingsMigrationResult userSettingsMigrationResult = currentUserSettingsExist
                 ? null
                 : LegacyConfigMigrator.migrateLegacyUserSettings();
-        loadUserSettings(userSettingsMigrationResult);
-        loadUserState(userSettingsMigrationResult);
+        boolean unsupportedUserSettings = loadUserSettings(userSettingsMigrationResult);
+        boolean unsupportedUserState = loadUserState(userSettingsMigrationResult);
         if (userSettingsMigrationResult != null) {
             LegacyConfigMigrator.completeLegacyUserSettingsMigration(userSettingsMigrationResult);
         }
@@ -416,13 +416,22 @@ public final class SettingsManager {
         Locale.setDefault(settings().languageProperty().get().getLocale());
         I18n.setLocale(launcherSettings.languageProperty().get());
         LOG.setLogRetention(userSettings().logRetentionProperty().get());
-        loadGameDirectories(migratedDetachedSettings.gameDirectories());
-        loadGameSettingsPresets(migratedDetachedSettings.gameSettingsPresets());
+        boolean unsupportedGameDirectories = loadGameDirectories(migratedDetachedSettings.gameDirectories());
+        boolean unsupportedGameSettings = loadGameSettingsPresets(migratedDetachedSettings.gameSettingsPresets());
         boolean unsupportedLauncherState = loadLauncherState(migratedDetachedSettings.launcherState());
-        loadAuthlibInjectorServers(migratedDetachedSettings.authlibInjectorServers());
-        loadUserGameAccounts();
-        loadGameAccounts(migratedDetachedSettings.accountStorages());
-        unsupportedVersion = unsupportedLauncherSettings || unsupportedLauncherState;
+        boolean unsupportedAuthlibInjectorServers =
+                loadAuthlibInjectorServers(migratedDetachedSettings.authlibInjectorServers());
+        boolean unsupportedUserGameAccounts = loadUserGameAccounts();
+        boolean unsupportedGameAccounts = loadGameAccounts(migratedDetachedSettings.accountStorages());
+        unsupportedVersion = unsupportedLauncherSettings
+                || unsupportedUserSettings
+                || unsupportedUserState
+                || unsupportedGameDirectories
+                || unsupportedGameSettings
+                || unsupportedLauncherState
+                || unsupportedAuthlibInjectorServers
+                || unsupportedUserGameAccounts
+                || unsupportedGameAccounts;
 
         if (Files.exists(Metadata.HMCL_LOCAL_HOME)) {
             checkWritable(Metadata.HMCL_LOCAL_HOME);
@@ -530,7 +539,8 @@ public final class SettingsManager {
     /// Loads game directories and installs the save listener.
     ///
     /// @param fallbackGameDirectories the fallback store used when the local game directory file does not exist
-    private static void loadGameDirectories(
+    /// @return whether either game directory file could not be safely overwritten because of an unsupported schema
+    private static boolean loadGameDirectories(
             @Nullable GameDirectories fallbackGameDirectories) throws IOException {
         if (localGameDirectories != null || userGameDirectories != null) {
             throw new IllegalStateException("Game directories are already loaded");
@@ -555,12 +565,15 @@ public final class SettingsManager {
         if (userGameDirectories.isSavable()) {
             USER_GAME_DIRECTORIES_FILE.installAutoSave(userGameDirectories);
         }
+
+        return localResult.unsupported() || userResult.unsupported();
     }
 
     /// Loads game settings presets and installs the save listener.
     ///
     /// @param fallbackGameSettingsPresets the fallback store used when the preset file does not exist
-    private static void loadGameSettingsPresets(
+    /// @return whether the preset file could not be safely overwritten because of an unsupported schema
+    private static boolean loadGameSettingsPresets(
             @Nullable GameSettingsPresets fallbackGameSettingsPresets) throws IOException {
         if (gameSettingsPresets != null) {
             throw new IllegalStateException("Game settings presets are already loaded");
@@ -578,6 +591,8 @@ public final class SettingsManager {
         if (newlyCreated && gameSettingsPresets.isSavable()) {
             GAME_SETTINGS_FILE.save(gameSettingsPresets);
         }
+
+        return result.unsupported();
     }
 
     /// Ensures there is a valid default game settings preset.
@@ -617,7 +632,8 @@ public final class SettingsManager {
     /// Loads authlib-injector servers and installs the save listener.
     ///
     /// @param fallbackAuthlibInjectorServers the fallback list used when the server list file does not exist
-    private static void loadAuthlibInjectorServers(
+    /// @return whether the server list file could not be safely overwritten because of an unsupported schema
+    private static boolean loadAuthlibInjectorServers(
             @Nullable AuthlibInjectorServerList fallbackAuthlibInjectorServers) throws IOException {
         if (authlibInjectorServers != null) {
             throw new IllegalStateException("Authlib-injector servers are already loaded");
@@ -634,10 +650,14 @@ public final class SettingsManager {
         if (newlyCreated && authlibInjectorServers.isSavable()) {
             AUTHLIB_INJECTOR_SERVERS_FILE.save(authlibInjectorServers);
         }
+
+        return result.unsupported();
     }
 
     /// Loads shared account storages and installs the save listener.
-    private static void loadUserGameAccounts() {
+    ///
+    /// @return whether the shared account storage file could not be safely overwritten because of an unsupported schema
+    private static boolean loadUserGameAccounts() {
         if (userGameAccounts != null) {
             throw new IllegalStateException("User game accounts are already loaded");
         }
@@ -659,16 +679,20 @@ public final class SettingsManager {
                     LegacyConfigMigrator.completeLegacyUserAccountsMigration(migrationResult);
                 }
             }
+
+            return result.unsupported();
         } catch (IOException e) {
             LOG.warning("Failed to load user game accounts", e);
             userGameAccounts = migrated != null ? migrated : new AccountStorages();
+            return false;
         }
     }
 
     /// Loads account storages and installs the save listener.
     ///
     /// @param fallbackGameAccounts the fallback store used when the account storage file does not exist
-    private static void loadGameAccounts(
+    /// @return whether the account storage file could not be safely overwritten because of an unsupported schema
+    private static boolean loadGameAccounts(
             @Nullable AccountStorages fallbackGameAccounts) throws IOException {
         if (gameAccounts != null) {
             throw new IllegalStateException("Game accounts are already loaded");
@@ -685,6 +709,8 @@ public final class SettingsManager {
         if (newlyCreated && gameAccounts.isSavable()) {
             GAME_ACCOUNTS_FILE.save(gameAccounts);
         }
+
+        return result.unsupported();
     }
 
     /// Checks whether root is reading per-workspace config data owned by another user.
@@ -733,7 +759,9 @@ public final class SettingsManager {
     }
 
     /// Loads user settings and installs the save listener.
-    private static void loadUserSettings(
+    ///
+    /// @return whether the user settings file could not be safely overwritten because of an unsupported schema
+    private static boolean loadUserSettings(
             @Nullable LegacyConfigMigrator.UserSettingsMigrationResult migrationResult) throws IOException {
         if (userSettingsInstance != null) {
             throw new IllegalStateException("User settings are already loaded");
@@ -752,10 +780,14 @@ public final class SettingsManager {
         if (newlyCreated && migratedUserSettings != null && userSettingsInstance.isSavable()) {
             USER_SETTINGS_FILE.save(userSettingsInstance);
         }
+
+        return result.unsupported();
     }
 
     /// Loads user state and installs the save listener.
-    private static void loadUserState(
+    ///
+    /// @return whether the user state file could not be safely overwritten because of an unsupported schema
+    private static boolean loadUserState(
             @Nullable LegacyConfigMigrator.UserSettingsMigrationResult migrationResult) throws IOException {
         if (userStateInstance != null) {
             throw new IllegalStateException("User state is already loaded");
@@ -774,6 +806,8 @@ public final class SettingsManager {
         if (newlyCreated && userStateInstance.isSavable()) {
             USER_STATE_FILE.save(userStateInstance);
         }
+
+        return result.unsupported();
     }
 
     /// Result of loading per-workspace launcher settings.

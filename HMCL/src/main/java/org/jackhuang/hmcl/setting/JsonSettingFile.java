@@ -162,7 +162,7 @@ final class JsonSettingFile<T extends ObservableSetting & JsonSchemaSetting> {
             value.setBackupOnNextSave(false);
             SettingFileUtils.backupInvalidConfig(location);
         }
-        FileSaver.save(location, JsonUtils.GSON.toJson(value, type));
+        FileSaver.save(location, LauncherSettings.SETTINGS_GSON.toJson(value, type));
     }
 
     /// Result of loading a detached JSON settings file.

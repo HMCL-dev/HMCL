@@ -20,6 +20,7 @@ package org.jackhuang.hmcl.ui.construct;
 import javafx.animation.*;
 import javafx.application.Platform;
 import javafx.beans.InvalidationListener;
+import javafx.beans.WeakInvalidationListener;
 import javafx.css.PseudoClass;
 import javafx.scene.Node;
 import javafx.scene.Parent;
@@ -42,6 +43,7 @@ import java.util.Map;
 final class ComponentSublistWrapper extends VBox implements NoPaddingComponent {
     private VBox container;
     private final Map<Node, InvalidationListener> contentLayoutListeners = new IdentityHashMap<>();
+    private final Map<Node, WeakInvalidationListener> weakContentLayoutListeners = new IdentityHashMap<>();
 
     private Animation expandAnimation;
     private boolean expanded = false;
@@ -195,9 +197,12 @@ final class ComponentSublistWrapper extends VBox implements NoPaddingComponent {
                 return false;
             }
 
-            node.layoutBoundsProperty().removeListener(entry.getValue());
-            if (node instanceof Parent parent) {
-                parent.needsLayoutProperty().removeListener(entry.getValue());
+            WeakInvalidationListener weakListener = weakContentLayoutListeners.remove(node);
+            if (weakListener != null) {
+                node.layoutBoundsProperty().removeListener(weakListener);
+                if (node instanceof Parent parent) {
+                    parent.needsLayoutProperty().removeListener(weakListener);
+                }
             }
             return true;
         });
@@ -208,11 +213,13 @@ final class ComponentSublistWrapper extends VBox implements NoPaddingComponent {
             }
 
             InvalidationListener listener = observable -> updateExpandedContentHeight(sublist);
-            node.layoutBoundsProperty().addListener(listener);
+            WeakInvalidationListener weakListener = new WeakInvalidationListener(listener);
+            node.layoutBoundsProperty().addListener(weakListener);
             if (node instanceof Parent parent) {
-                parent.needsLayoutProperty().addListener(listener);
+                parent.needsLayoutProperty().addListener(weakListener);
             }
             contentLayoutListeners.put(node, listener);
+            weakContentLayoutListeners.put(node, weakListener);
         }
     }
 
