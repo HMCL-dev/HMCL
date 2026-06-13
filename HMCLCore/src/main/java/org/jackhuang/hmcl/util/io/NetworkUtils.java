@@ -164,16 +164,15 @@ public final class NetworkUtils {
         }
     }
 
-    private static final Map<String, String> apiKeys = Map.of(
-            "api.curseforge.com", CurseForgeRemoteModRepository.apiKey,
-            "edge.forgecdn.net", CurseForgeRemoteModRepository.apiKey
+    private static final Map<String, String> API_KEYS = Map.of(
+            "api.curseforge.com", CurseForgeRemoteModRepository.API_KEY,
+            "edge.forgecdn.net", CurseForgeRemoteModRepository.API_KEY
     );
 
     public static java.net.http.HttpRequest.Builder newRequestBuilder(URI uri) {
-        String host = uri.getHost().toLowerCase(Locale.ROOT);
-        String apiKey;
         var builder = java.net.http.HttpRequest.newBuilder(uri);
-        if (StringUtils.isNotBlank((apiKey = apiKeys.get(host))))
+        var apiKey = API_KEYS.get(uri.getHost().toLowerCase(Locale.ROOT));
+        if (StringUtils.isNotBlank(apiKey))
             builder.header("x-api-key", apiKey);
         return builder;
     }

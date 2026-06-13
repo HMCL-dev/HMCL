@@ -49,19 +49,19 @@ public final class CurseForgeRemoteModRepository implements RemoteModRepository 
     private static final String PREFIX = "https://api.curseforge.com";
     private static final Semaphore SEMAPHORE = new Semaphore(16);
 
-    public static final String apiKey = System.getProperty("hmcl.curseforge.apikey", JarUtils.getAttribute("hmcl.curseforge.apikey", ""));
+    public static final String API_KEY = System.getProperty("hmcl.curseforge.apikey", JarUtils.getAttribute("hmcl.curseforge.apikey", ""));
 
     private static final int WORD_PERFECT_MATCH_WEIGHT = 5;
 
     private static <R extends HttpRequest> R withApiKey(R request) {
-        if (request.getUrl().startsWith(PREFIX) && !apiKey.isEmpty()) {
-            request.header("X-API-KEY", apiKey);
+        if (request.getUrl().startsWith(PREFIX) && !API_KEY.isEmpty()) {
+            request.header("X-API-KEY", API_KEY);
         }
         return request;
     }
 
     public static boolean isAvailable() {
-        return !apiKey.isEmpty();
+        return !API_KEY.isEmpty();
     }
 
     private final Type type;
