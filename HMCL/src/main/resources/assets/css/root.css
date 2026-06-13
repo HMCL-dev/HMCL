@@ -968,6 +968,10 @@
     -fx-padding: 0;
 }
 
+.no-padding .combo-box-popup > .list-view > .virtual-flow > .clipped-container > .sheet > .list-cell {
+    -fx-padding: 4 0 4 5;
+}
+
 .jfx-list-cell, .list-cell {
     -fx-background-color: transparent;
 }
