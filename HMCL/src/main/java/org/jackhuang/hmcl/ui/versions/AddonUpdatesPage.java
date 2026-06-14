@@ -34,6 +34,7 @@ import javafx.scene.layout.VBox;
 import org.jackhuang.hmcl.mod.LocalAddonFile;
 import org.jackhuang.hmcl.mod.LocalAddonManager;
 import org.jackhuang.hmcl.mod.RemoteMod;
+import org.jackhuang.hmcl.mod.RemoteModRepository;
 import org.jackhuang.hmcl.task.FileDownloadTask;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
@@ -340,16 +341,18 @@ public class AddonUpdatesPage<F extends LocalAddonFile> extends BorderPane imple
 
         private void loadChangelog(AddonUpdateObject object, SpinnerPane spinnerPane, ScrollPane scrollPane) {
             spinnerPane.setLoading(true);
+            RemoteModRepository repo = object.data.source().getRepoForType(object.data.repoType());
             Task.supplyAsync(() -> {
                 if (object.changelog != null) {
                     return object.changelog;
                 }
                 RemoteMod.Version version = object.data.targetVersion();
-                return StringUtils.convertToHtml(object.data.repository().getModChangelog(version.getModid(), version.getVersionId()));
+                if (repo == null) return null;
+                return StringUtils.convertToHtml(repo.getModChangelog(version.getModid(), version.getVersionId()));
             }).whenComplete(Schedulers.javafx(), (result, exception) -> {
                 if (exception == null) {
                     object.changelog = StringUtils.isNotBlank(result) ? result : i18n("mods.changelog.empty");
-                    scrollPane.setContent(FXUtils.renderAddonChangelog(object.changelog, object.data.repository().getBaseUrl()));
+                    scrollPane.setContent(FXUtils.renderAddonChangelog(object.changelog, repo == null ? "" : repo.getBaseUrl()));
                     FXUtils.smoothScrolling(scrollPane);
                     spinnerPane.setFailedReason(null);
                 } else {
@@ -360,7 +363,10 @@ public class AddonUpdatesPage<F extends LocalAddonFile> extends BorderPane imple
         }
 
         private void loadVersionPageUrl(AddonUpdateObject object, JFXHyperlink button) {
-            Task.supplyAsync(() -> object.data.repository().getVersionPageUrl(object.data.targetVersion()))
+            Task.supplyAsync(() -> {
+                        RemoteModRepository repo = object.data.source().getRepoForType(object.data.repoType());
+                        return repo == null ? null : repo.getVersionPageUrl(object.data.targetVersion());
+                    })
                     .whenComplete(Schedulers.javafx(), (result, exception) -> {
                         if (exception == null && StringUtils.isNotBlank(result)) {
                             button.setOnAction(__ -> Controllers.openUriInBrowser(result));

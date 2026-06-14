@@ -18,7 +18,9 @@
 package org.jackhuang.hmcl.resourcepack;
 
 import javafx.scene.image.Image;
+import org.jackhuang.hmcl.download.DownloadProvider;
 import org.jackhuang.hmcl.mod.LocalAddonFile;
+import org.jackhuang.hmcl.mod.RemoteMod;
 import org.jackhuang.hmcl.mod.modinfo.PackMcMeta;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;

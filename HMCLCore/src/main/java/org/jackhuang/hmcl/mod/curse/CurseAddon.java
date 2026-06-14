@@ -212,7 +212,7 @@ public class CurseAddon implements RemoteMod.IMod {
         return modRepository.getRemoteVersionsById(downloadProvider, Integer.toString(id));
     }
 
-    public RemoteMod toMod(RemoteModRepository.Type type) {
+    public RemoteMod toMod() {
         String iconUrl = "";
         if (logo != null) {
             if (StringUtils.isNotBlank(logo.getThumbnailUrl()))
@@ -221,6 +221,14 @@ public class CurseAddon implements RemoteMod.IMod {
                 iconUrl = logo.getUrl();
         }
 
+        RemoteModRepository.Type repoType = switch (classId) {
+            case CurseForgeRemoteModRepository.SECTION_MODPACK -> RemoteModRepository.Type.MODPACK;
+            case CurseForgeRemoteModRepository.SECTION_RESOURCE_PACK -> RemoteModRepository.Type.RESOURCE_PACK;
+            case CurseForgeRemoteModRepository.SECTION_WORLD -> RemoteModRepository.Type.WORLD;
+            case CurseForgeRemoteModRepository.SECTION_CUSTOMIZATION -> RemoteModRepository.Type.CUSTOMIZATION;
+            case CurseForgeRemoteModRepository.SECTION_SHADER -> RemoteModRepository.Type.SHADER_PACK;
+            default -> RemoteModRepository.Type.MOD;
+        };
         return new RemoteMod(
                 slug,
                 "",
@@ -230,7 +238,7 @@ public class CurseAddon implements RemoteMod.IMod {
                 links.websiteUrl,
                 iconUrl,
                 this,
-                type
+                repoType
         );
     }
 
@@ -558,8 +566,8 @@ public class CurseAddon implements RemoteMod.IMod {
         }
 
         @Override
-        public RemoteMod.Type getType() {
-            return RemoteMod.Type.CURSEFORGE;
+        public RemoteMod.Source getType() {
+            return RemoteMod.Source.CURSEFORGE;
         }
 
         public RemoteMod.Version toVersion() {

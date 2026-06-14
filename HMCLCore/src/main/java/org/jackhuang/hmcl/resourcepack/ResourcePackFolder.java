@@ -78,8 +78,4 @@ final class ResourcePackFolder extends ResourcePackFile {
         FileUtils.deleteDirectory(file);
     }
 
-    @Override
-    public AddonUpdate checkUpdates(DownloadProvider downloadProvider, String gameVersion, RemoteMod.Type type) {
-        return null;
-    }
 }

@@ -90,8 +90,8 @@ final class ResourcePackZipFile extends ResourcePackFile {
     }
 
     @Override
-    public AddonUpdate checkUpdates(DownloadProvider downloadProvider, String gameVersion, RemoteMod.Type type) throws IOException {
-        RemoteModRepository repository = type.getRepoForType(RemoteModRepository.Type.RESOURCE_PACK);
+    public AddonUpdate checkUpdates(DownloadProvider downloadProvider, String gameVersion, RemoteMod.Source source) throws IOException {
+        RemoteModRepository repository = source.getRepoForType(RemoteModRepository.Type.RESOURCE_PACK);
         if (repository == null) return null;
         Optional<RemoteMod.Version> currentVersion = repository.getRemoteVersionByLocalFile(file);
         if (currentVersion.isEmpty()) return null;
@@ -101,7 +101,7 @@ final class ResourcePackZipFile extends ResourcePackFile {
                 .sorted(Comparator.comparing(RemoteMod.Version::getDatePublished).reversed())
                 .toList();
         if (remoteVersions.isEmpty()) return null;
-        return new AddonUpdate(repository, this, currentVersion.get(), remoteVersions.get(0), false);
+        return new AddonUpdate(source, RemoteModRepository.Type.RESOURCE_PACK, this, currentVersion.get(), remoteVersions.get(0), false);
     }
 }
 

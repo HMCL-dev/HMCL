@@ -191,8 +191,8 @@ public final class LocalModFile extends LocalAddonFile implements Comparable<Loc
     }
 
     @Override
-    public AddonUpdate checkUpdates(DownloadProvider downloadProvider, String gameVersion, RemoteMod.Type type) throws IOException {
-        RemoteModRepository repository = type.getRepoForType(RemoteModRepository.Type.MOD);
+    public AddonUpdate checkUpdates(DownloadProvider downloadProvider, String gameVersion, RemoteMod.Source source) throws IOException {
+        RemoteModRepository repository = source.getRepoForType(RemoteModRepository.Type.MOD);
         if (repository == null) return null;
         Optional<RemoteMod.Version> currentVersion = repository.getRemoteVersionByLocalFile(file);
         if (currentVersion.isEmpty()) return null;
@@ -203,7 +203,7 @@ public final class LocalModFile extends LocalAddonFile implements Comparable<Loc
                 .sorted(Comparator.comparing(RemoteMod.Version::getDatePublished).reversed())
                 .toList();
         if (remoteVersions.isEmpty()) return null;
-        return new AddonUpdate(repository, this, currentVersion.get(), remoteVersions.get(0), true);
+        return new AddonUpdate(source, RemoteModRepository.Type.MOD, this, currentVersion.get(), remoteVersions.get(0), true);
     }
 
     @Override

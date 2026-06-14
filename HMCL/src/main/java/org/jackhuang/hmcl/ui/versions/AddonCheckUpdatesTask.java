@@ -39,10 +39,10 @@ public class AddonCheckUpdatesTask<T extends LocalAddonFile> extends Task<List<L
         dependents = addons.stream().map(addon ->
                 Task.supplyAsync(Schedulers.io(), () -> {
                     LocalAddonFile.AddonUpdate candidate = null;
-                    for (RemoteMod.Type type : RemoteMod.Type.values()) {
+                    for (RemoteMod.Source source : RemoteMod.Source.values()) {
                         LocalAddonFile.AddonUpdate update = null;
                         try {
-                            update = addon.checkUpdates(downloadProvider, gameVersion, type);
+                            update = addon.checkUpdates(downloadProvider, gameVersion, source);
                         } catch (IOException e) {
                             LOG.warning(String.format("Cannot check update for addon %s.", addon.getFileName()), e);
                         }

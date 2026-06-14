@@ -194,7 +194,7 @@ public final class RemoteMod {
         }
     }
 
-    public enum Type {
+    public enum Source {
         CURSEFORGE(
                 CurseForgeRemoteModRepository.MODS,
                 CurseForgeRemoteModRepository.RESOURCE_PACKS,
@@ -231,7 +231,7 @@ public final class RemoteMod {
             };
         }
 
-        Type(
+        Source(
                 RemoteModRepository modRepo,
                 RemoteModRepository resourcePackRepo,
                 RemoteModRepository shaderPackRepo,
@@ -255,7 +255,7 @@ public final class RemoteMod {
     }
 
     public interface IVersion {
-        Type getType();
+        Source getType();
     }
 
     public static class Version {

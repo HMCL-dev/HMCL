@@ -153,7 +153,7 @@ public final class CurseForgeRemoteModRepository implements RemoteModRepository 
                     response = withApiKey(HttpRequest.GET(candidate.toString()))
                             .getJson(Response.typeOf(listTypeOf(CurseAddon.class)));
                     if (searchFilter.isEmpty()) {
-                        return new SearchResult(response.getData().stream().map(addon -> addon.toMod(type)), calculateTotalPages(response, pageSize));
+                        return new SearchResult(response.getData().stream().map(CurseAddon::toMod), calculateTotalPages(response, pageSize));
                     }
                     break;
                 } catch (IOException e) {
@@ -182,7 +182,7 @@ public final class CurseForgeRemoteModRepository implements RemoteModRepository 
 
             StringUtils.LevCalculator levCalculator = new StringUtils.LevCalculator();
 
-            return new SearchResult(response.getData().stream().map(addon -> addon.toMod(type)).map(remoteMod -> {
+            return new SearchResult(response.getData().stream().map(CurseAddon::toMod).map(remoteMod -> {
                 String lowerCaseResult = remoteMod.getTitle().toLowerCase(Locale.ROOT);
                 int diff = levCalculator.calc(lowerCaseSearchFilter, lowerCaseResult);
 
@@ -193,7 +193,7 @@ public final class CurseForgeRemoteModRepository implements RemoteModRepository 
                 }
 
                 return pair(remoteMod, diff);
-            }).sorted(Comparator.comparingInt(Pair::getValue)).map(Pair::getKey), response.getData().stream().map(addon -> addon.toMod(type)), calculateTotalPages(response, pageSize));
+            }).sorted(Comparator.comparingInt(Pair::getValue)).map(Pair::getKey), response.getData().stream().map(CurseAddon::toMod), calculateTotalPages(response, pageSize));
         } finally {
             SEMAPHORE.release();
         }
@@ -242,7 +242,7 @@ public final class CurseForgeRemoteModRepository implements RemoteModRepository 
         try {
             Response<CurseAddon> response = withApiKey(HttpRequest.GET(PREFIX + "/v1/mods/" + id))
                     .getJson(Response.typeOf(CurseAddon.class));
-            return response.data.toMod(type);
+            return response.data.toMod();
         } finally {
             SEMAPHORE.release();
         }

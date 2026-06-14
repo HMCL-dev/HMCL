@@ -659,8 +659,8 @@ public final class ModrinthRemoteModRepository implements RemoteModRepository {
         }
 
         @Override
-        public RemoteMod.Type getType() {
-            return RemoteMod.Type.MODRINTH;
+        public RemoteMod.Source getType() {
+            return RemoteMod.Source.MODRINTH;
         }
 
         public Optional<RemoteMod.Version> toVersion() {
