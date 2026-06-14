@@ -23,6 +23,7 @@ import javafx.beans.binding.BooleanBinding;
 import javafx.beans.property.*;
 import javafx.beans.value.ObservableBooleanValue;
 import org.jackhuang.hmcl.Metadata;
+import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.io.NetworkUtils;
 import org.jackhuang.hmcl.util.versioning.VersionNumber;
 
@@ -30,12 +31,16 @@ import java.io.IOException;
 import java.util.LinkedHashMap;
 
 import static org.jackhuang.hmcl.setting.ConfigHolder.config;
-import static org.jackhuang.hmcl.util.Lang.*;
+import static org.jackhuang.hmcl.util.Lang.thread;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 public final class UpdateChecker {
     private UpdateChecker() {
     }
+
+    public static final String PACKAGE_MANAGER_PROPERTY = System.getProperty("hmcl.update.packageManager", "");
+    public static final String DISABLE_UPDATE_PROPERTY = System.getProperty("hmcl.update.disable", "");
+    public static final boolean SHOULD_CHECK_UPDATE = shouldCheckUpdate();
 
     private static final ObjectProperty<RemoteVersion> latestVersion = new SimpleObjectProperty<>();
     private static final BooleanBinding outdated = Bindings.createBooleanBinding(
@@ -54,6 +59,13 @@ public final class UpdateChecker {
             },
             latestVersion);
     private static final ReadOnlyBooleanWrapper checkingUpdate = new ReadOnlyBooleanWrapper(false);
+
+    private static boolean shouldCheckUpdate() {
+        if (DISABLE_UPDATE_PROPERTY.equalsIgnoreCase("true")) return false;
+        else if (StringUtils.isNotBlank(PACKAGE_MANAGER_PROPERTY)) return false;
+        else if (!IntegrityChecker.DISABLE_SELF_INTEGRITY_CHECK && !IntegrityChecker.isSelfVerified()) return false;
+        else return true;
+    }
 
     public static void init() {
         requestCheckUpdate(UpdateChannel.getChannel(), config().isAcceptPreviewUpdate());
@@ -102,6 +114,8 @@ public final class UpdateChecker {
     }
 
     public static void requestCheckUpdate(UpdateChannel channel, boolean preview) {
+        if (!shouldCheckUpdate()) return;
+
         Platform.runLater(() -> {
             if (isCheckingUpdate())
                 return;
