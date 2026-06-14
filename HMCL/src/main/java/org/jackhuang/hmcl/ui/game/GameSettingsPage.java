@@ -2253,7 +2253,7 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
         });
     }
 
-    /// Backs up and overwrites `game-settings.json` using the currently loaded presets.
+    /// Backs up and overwrites `config/game-settings.json` using the currently loaded presets.
     private void forceOverwriteGameSettings() {
         Controllers.confirmBackupAndOverwrite(i18n("settings.game.presets.unsupported"), () -> {
             SettingsManager.forceOverwriteGameSettings();

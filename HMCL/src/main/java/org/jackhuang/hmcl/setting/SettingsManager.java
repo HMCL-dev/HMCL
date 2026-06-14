@@ -50,45 +50,73 @@ public final class SettingsManager {
     private SettingsManager() {
     }
 
+    /// The local directory storing per-workspace configuration files.
+    private static final Path LOCAL_CONFIG_FILES_DIRECTORY = Metadata.HMCL_LOCAL_HOME.resolve("config");
+
+    /// The local directory storing per-workspace account files.
+    private static final Path LOCAL_ACCOUNTS_DIRECTORY = Metadata.HMCL_LOCAL_HOME.resolve("accounts");
+
+    /// The local directory storing per-workspace state files.
+    private static final Path LOCAL_STATE_DIRECTORY = Metadata.HMCL_LOCAL_HOME.resolve("state");
+
+    /// The local directory storing per-workspace cache files.
+    private static final Path LOCAL_CACHE_DIRECTORY = Metadata.HMCL_LOCAL_HOME.resolve("cache");
+
+    /// The user directory storing shared configuration files.
+    private static final Path USER_CONFIG_FILES_DIRECTORY = Metadata.HMCL_USER_HOME.resolve("config");
+
+    /// The user directory storing shared account files.
+    private static final Path USER_ACCOUNTS_DIRECTORY = Metadata.HMCL_USER_HOME.resolve("accounts");
+
+    /// The user directory storing shared state files.
+    private static final Path USER_STATE_DIRECTORY = Metadata.HMCL_USER_HOME.resolve("state");
+
+    /// The upstream/main per-workspace settings path used as a migration input.
+    private static final Path UPSTREAM_SETTINGS_LOCATION = Metadata.HMCL_LOCAL_HOME.resolve("settings.json");
+
     /// The user settings path shared by all workspaces.
-    public static final Path USER_SETTINGS_LOCATION = Metadata.HMCL_USER_HOME.resolve("user-settings.json");
+    public static final Path USER_SETTINGS_LOCATION =
+            USER_CONFIG_FILES_DIRECTORY.resolve("user-settings.json");
 
     /// The user state path shared by all workspaces.
-    public static final Path USER_STATE_LOCATION = Metadata.HMCL_USER_HOME.resolve("user-state.json");
+    public static final Path USER_STATE_LOCATION =
+            USER_STATE_DIRECTORY.resolve("user-state.json");
 
-    /// The current per-workspace config path.
-    private static final Path SETTINGS_LOCATION = Metadata.HMCL_LOCAL_HOME.resolve("settings.json");
+    /// The current per-workspace launcher settings path.
+    private static final Path SETTINGS_LOCATION =
+            LOCAL_CONFIG_FILES_DIRECTORY.resolve("launcher-settings.json");
 
     /// The current per-workspace launcher state path.
-    private static final Path STATE_LOCATION = Metadata.HMCL_LOCAL_HOME.resolve("launcher-state.json");
+    private static final Path STATE_LOCATION =
+            LOCAL_STATE_DIRECTORY.resolve("launcher-state.json");
 
     /// The current per-workspace authlib-injector server list path.
     private static final Path AUTHLIB_INJECTOR_SERVERS_LOCATION =
-            Metadata.HMCL_LOCAL_HOME.resolve("authlib-injector-servers.json");
+            LOCAL_CONFIG_FILES_DIRECTORY.resolve("authlib-injector-servers.json");
 
     /// The current per-workspace authlib-injector server metadata cache path.
     private static final Path AUTHLIB_INJECTOR_SERVER_METADATA_CACHE_LOCATION =
-            Metadata.HMCL_LOCAL_HOME.resolve("cache").resolve("authlib-injector-server-metadata.json");
+            LOCAL_CACHE_DIRECTORY.resolve("authlib-injector-server-metadata.json");
 
     /// The current per-workspace game directories path.
     private static final Path LOCAL_GAME_DIRECTORIES_LOCATION =
-            Metadata.HMCL_LOCAL_HOME.resolve("game-directories.json");
+            LOCAL_CONFIG_FILES_DIRECTORY.resolve("game-directories.json");
 
     /// The current user game directories path.
     private static final Path USER_GAME_DIRECTORIES_LOCATION =
-            Metadata.HMCL_USER_HOME.resolve("user-game-directories.json");
+            USER_CONFIG_FILES_DIRECTORY.resolve("user-game-directories.json");
 
     /// The current per-workspace game settings path.
     private static final Path GAME_SETTINGS_LOCATION =
-            Metadata.HMCL_LOCAL_HOME.resolve("game-settings.json");
+            LOCAL_CONFIG_FILES_DIRECTORY.resolve("game-settings.json");
 
     /// The current per-workspace account storage path.
     private static final Path GAME_ACCOUNTS_LOCATION =
-            Metadata.HMCL_LOCAL_HOME.resolve("game-accounts.json");
+            LOCAL_ACCOUNTS_DIRECTORY.resolve("game-accounts.json");
 
     /// The shared account storage path.
     private static final Path USER_GAME_ACCOUNTS_LOCATION =
-            Metadata.HMCL_USER_HOME.resolve("user-game-accounts.json");
+            USER_ACCOUNTS_DIRECTORY.resolve("user-game-accounts.json");
 
     /// The per-workspace game directory file helper.
     private static final JsonSettingFile<GameDirectories> LOCAL_GAME_DIRECTORIES_FILE = new JsonSettingFile<>(
@@ -214,34 +242,34 @@ public final class SettingsManager {
     /// Whether root is reading a per-workspace config owned by another user.
     private static boolean ownerChanged = false;
 
-    /// Access status for `settings.json`.
+    /// Access status for `config/launcher-settings.json`.
     private static SettingFileAccess launcherSettingsAccess = SettingFileAccess.READ_WRITE;
 
-    /// Access status for `launcher-state.json`.
+    /// Access status for `state/launcher-state.json`.
     private static SettingFileAccess launcherStateAccess = SettingFileAccess.READ_WRITE;
 
-    /// Access status for `authlib-injector-servers.json`.
+    /// Access status for `config/authlib-injector-servers.json`.
     private static SettingFileAccess authlibInjectorServersAccess = SettingFileAccess.READ_WRITE;
 
-    /// Access status for local `game-directories.json`.
+    /// Access status for local `config/game-directories.json`.
     private static SettingFileAccess localGameDirectoriesAccess = SettingFileAccess.READ_WRITE;
 
-    /// Access status for user `user-game-directories.json`.
+    /// Access status for user `config/user-game-directories.json`.
     private static SettingFileAccess userGameDirectoriesAccess = SettingFileAccess.READ_WRITE;
 
-    /// Access status for `game-settings.json`.
+    /// Access status for `config/game-settings.json`.
     private static SettingFileAccess gameSettingsAccess = SettingFileAccess.READ_WRITE;
 
-    /// Access status for local `game-accounts.json`.
+    /// Access status for local `accounts/game-accounts.json`.
     private static SettingFileAccess gameAccountsAccess = SettingFileAccess.READ_WRITE;
 
-    /// Access status for user `user-game-accounts.json`.
+    /// Access status for user `accounts/user-game-accounts.json`.
     private static SettingFileAccess userGameAccountsAccess = SettingFileAccess.READ_WRITE;
 
-    /// Access status for `user-settings.json`.
+    /// Access status for `config/user-settings.json`.
     private static SettingFileAccess userSettingsAccess = SettingFileAccess.READ_WRITE;
 
-    /// Access status for `user-state.json`.
+    /// Access status for `state/user-state.json`.
     private static SettingFileAccess userStateAccess = SettingFileAccess.READ_WRITE;
 
     /// Returns the loaded per-workspace launcher settings.
@@ -472,7 +500,7 @@ public final class SettingsManager {
         return authlibInjectorServersAccess.blocksEditing();
     }
 
-    /// Backs up and overwrites `game-settings.json` with the currently loaded presets.
+    /// Backs up and overwrites `config/game-settings.json` with the currently loaded presets.
     public static void forceOverwriteGameSettings() {
         boolean installAutoSave = !gameSettingsPresets().isSavable();
         GAME_SETTINGS_FILE.backupAndOverwrite(gameSettingsPresets());
@@ -482,7 +510,7 @@ public final class SettingsManager {
         gameSettingsAccess = SettingFileAccess.READ_WRITE;
     }
 
-    /// Backs up and overwrites local `game-directories.json` with the currently loaded profiles.
+    /// Backs up and overwrites local `config/game-directories.json` with the currently loaded profiles.
     public static void forceOverwriteLocalGameDirectories() {
         boolean installAutoSave = !localGameDirectories().isSavable();
         LOCAL_GAME_DIRECTORIES_FILE.backupAndOverwrite(localGameDirectories());
@@ -492,7 +520,7 @@ public final class SettingsManager {
         localGameDirectoriesAccess = SettingFileAccess.READ_WRITE;
     }
 
-    /// Backs up and overwrites user `user-game-directories.json` with the currently loaded profiles.
+    /// Backs up and overwrites user `config/user-game-directories.json` with the currently loaded profiles.
     public static void forceOverwriteUserGameDirectories() {
         boolean installAutoSave = !userGameDirectories().isSavable();
         USER_GAME_DIRECTORIES_FILE.backupAndOverwrite(userGameDirectories());
@@ -502,7 +530,7 @@ public final class SettingsManager {
         userGameDirectoriesAccess = SettingFileAccess.READ_WRITE;
     }
 
-    /// Backs up and overwrites local `game-accounts.json` with the currently loaded accounts.
+    /// Backs up and overwrites local `accounts/game-accounts.json` with the currently loaded accounts.
     public static void forceOverwriteGameAccounts() {
         boolean installAutoSave = !gameAccounts().isSavable();
         GAME_ACCOUNTS_FILE.backupAndOverwrite(gameAccounts());
@@ -512,7 +540,7 @@ public final class SettingsManager {
         gameAccountsAccess = SettingFileAccess.READ_WRITE;
     }
 
-    /// Backs up and overwrites user `user-game-accounts.json` with the currently loaded accounts.
+    /// Backs up and overwrites user `accounts/user-game-accounts.json` with the currently loaded accounts.
     public static void forceOverwriteUserGameAccounts() {
         boolean installAutoSave = !userGameAccounts().isSavable();
         USER_GAME_ACCOUNTS_FILE.backupAndOverwrite(userGameAccounts());
@@ -522,7 +550,7 @@ public final class SettingsManager {
         userGameAccountsAccess = SettingFileAccess.READ_WRITE;
     }
 
-    /// Backs up and overwrites `authlib-injector-servers.json` with the current server list.
+    /// Backs up and overwrites `config/authlib-injector-servers.json` with the current server list.
     public static void forceOverwriteAuthlibInjectorServers() {
         boolean installAutoSave = !authlibInjectorServers().isSavable();
         AUTHLIB_INJECTOR_SERVERS_FILE.backupAndOverwrite(authlibInjectorServers());
@@ -601,7 +629,7 @@ public final class SettingsManager {
             try {
                 jsonObject = JsonUtils.fromJsonFile(SETTINGS_LOCATION, JsonObject.class);
             } catch (Exception e) {
-                LOG.warning("Failed to read settings file: " + SETTINGS_LOCATION, e);
+                LOG.warning("Failed to read launcher settings file: " + SETTINGS_LOCATION, e);
 
                 LauncherSettings settings = new LauncherSettings();
                 settings.setBackupOnNextSave(true);
@@ -609,7 +637,7 @@ public final class SettingsManager {
             }
 
             if (jsonObject == null) {
-                LOG.warning("Settings file is empty: " + SETTINGS_LOCATION);
+                LOG.warning("Launcher settings file is empty: " + SETTINGS_LOCATION);
 
                 return new LoadedLauncherSettings(new LauncherSettings(), null, SettingFileAccess.READ_WRITE);
             }
@@ -617,14 +645,14 @@ public final class SettingsManager {
             JsonSchema.CompatibilityResult schemaResult =
                     JsonSchema.check(jsonObject, LauncherSettings.CURRENT_SCHEMA);
             switch (schemaResult.status()) {
-                case MISSING -> LOG.warning("Missing schema in settings file: " + SETTINGS_LOCATION);
-                case INVALID -> LOG.warning("Invalid schema in settings file: "
+                case MISSING -> LOG.warning("Missing schema in launcher settings file: " + SETTINGS_LOCATION);
+                case INVALID -> LOG.warning("Invalid schema in launcher settings file: "
                         + SETTINGS_LOCATION + ", Actual: " + schemaResult.invalidValue());
-                case UNPARSEABLE -> LOG.warning("Unparseable schema in settings file: "
+                case UNPARSEABLE -> LOG.warning("Unparseable schema in launcher settings file: "
                         + SETTINGS_LOCATION + ", Actual: " + schemaResult.actual());
-                case UNEXPECTED_ID -> LOG.warning("Unexpected settings file schema. Expected: "
+                case UNEXPECTED_ID -> LOG.warning("Unexpected launcher settings file schema. Expected: "
                         + LauncherSettings.CURRENT_SCHEMA + ", Actual: " + schemaResult.actual());
-                case UNSUPPORTED_MAJOR, READ_ONLY_PRESERVE_SCHEMA -> LOG.warning("Unsupported settings file schema. Expected: "
+                case UNSUPPORTED_MAJOR, READ_ONLY_PRESERVE_SCHEMA -> LOG.warning("Unsupported launcher settings file schema. Expected: "
                         + LauncherSettings.CURRENT_SCHEMA + ", Actual: " + schemaResult.actual());
                 case READ_WRITE, READ_WRITE_PRESERVE_SCHEMA -> {
                 }
@@ -652,19 +680,51 @@ public final class SettingsManager {
                         ? SettingFileAccess.READ_WRITE
                         : SettingFileAccess.READ_ONLY);
             } catch (JsonParseException e) {
-                LOG.warning("Failed to parse settings file: " + SETTINGS_LOCATION, e);
+                LOG.warning("Failed to parse launcher settings file: " + SETTINGS_LOCATION, e);
                 LauncherSettings settings = new LauncherSettings();
                 settings.setBackupOnNextSave(true);
                 return new LoadedLauncherSettings(settings, null, SettingFileAccess.READ_WRITE);
             }
         } else {
-            LegacyConfigMigrator.LegacyConfigMigration migration = LegacyConfigMigrator.migrateLegacyConfig();
+            LegacyConfigMigrator.LegacyConfigMigration migration = migrateUpstreamSettings();
+            if (migration != null) {
+                return new LoadedLauncherSettings(migration.launcherSettings(), migration, SettingFileAccess.READ_WRITE);
+            }
+
+            migration = LegacyConfigMigrator.migrateLegacyConfig();
             if (migration != null) {
                 return new LoadedLauncherSettings(migration.launcherSettings(), migration, SettingFileAccess.READ_WRITE);
             }
         }
 
         return new LoadedLauncherSettings(new LauncherSettings(), null, SettingFileAccess.READ_WRITE);
+    }
+
+    /// Migrates the upstream/main root `settings.json` file when it is present.
+    private static LegacyConfigMigrator.@Nullable LegacyConfigMigration migrateUpstreamSettings() throws IOException {
+        if (!Files.isRegularFile(UPSTREAM_SETTINGS_LOCATION)) {
+            return null;
+        }
+
+        JsonObject jsonObject;
+        try {
+            jsonObject = JsonUtils.fromJsonFile(UPSTREAM_SETTINGS_LOCATION, JsonObject.class);
+        } catch (JsonParseException e) {
+            LOG.warning("Malformed upstream/main settings file: " + UPSTREAM_SETTINGS_LOCATION, e);
+            return null;
+        }
+
+        if (jsonObject == null) {
+            LOG.info("Upstream/main settings file is empty: " + UPSTREAM_SETTINGS_LOCATION);
+            return null;
+        }
+
+        if (jsonObject.has(JsonSchema.PROPERTY_SCHEMA)) {
+            LOG.info("Ignoring root settings file with schema: " + UPSTREAM_SETTINGS_LOCATION);
+            return null;
+        }
+
+        return LegacyConfigMigrator.migrateLegacyConfigIfNeeded(UPSTREAM_SETTINGS_LOCATION);
     }
 
     /// Returns whether the current workspace already has any local configuration footprint.
@@ -675,6 +735,7 @@ public final class SettingsManager {
                 || Files.exists(LOCAL_GAME_DIRECTORIES_LOCATION)
                 || Files.exists(GAME_SETTINGS_LOCATION)
                 || Files.exists(GAME_ACCOUNTS_LOCATION)
+                || Files.exists(UPSTREAM_SETTINGS_LOCATION)
                 || LegacyConfigMigrator.hasLegacyConfig());
     }
 
@@ -940,6 +1001,7 @@ public final class SettingsManager {
     private static void checkLocalConfigOwner() {
         checkOwner(Metadata.HMCL_LOCAL_HOME);
         checkOwner(SETTINGS_LOCATION);
+        checkOwner(UPSTREAM_SETTINGS_LOCATION);
         checkOwner(STATE_LOCATION);
         checkOwner(AUTHLIB_INJECTOR_SERVERS_LOCATION);
         checkOwner(LOCAL_GAME_DIRECTORIES_LOCATION);

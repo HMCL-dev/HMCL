@@ -34,7 +34,7 @@ import java.util.Objects;
 
 /// Stores reusable game settings presets independently from the main config file.
 ///
-/// The JSON representation is saved as `game-settings.json` under the current HMCL
+/// The JSON representation is saved as `config/game-settings.json` under the current HMCL
 /// directory.
 ///
 /// @author Glavo
@@ -80,31 +80,31 @@ public final class GameSettingsPresets extends ObservableSetting implements Json
         this.schema.set(Objects.requireNonNull(schema));
     }
 
-    /// Whether this preset store may be saved back to `game-settings.json`.
+    /// Whether this preset store may be saved back to `config/game-settings.json`.
     private transient boolean savable = true;
 
-    /// Whether the next successful save should back up the current `game-settings.json` first.
+    /// Whether the next successful save should back up the current `config/game-settings.json` first.
     private transient boolean backupOnNextSave;
 
-    /// Returns whether this preset store may be saved back to `game-settings.json`.
+    /// Returns whether this preset store may be saved back to `config/game-settings.json`.
     @Override
     public boolean isSavable() {
         return savable;
     }
 
-    /// Sets whether this preset store may be saved back to `game-settings.json`.
+    /// Sets whether this preset store may be saved back to `config/game-settings.json`.
     @Override
     public void setSavable(boolean savable) {
         this.savable = savable;
     }
 
-    /// Returns whether the next successful save should back up the current `game-settings.json` first.
+    /// Returns whether the next successful save should back up the current `config/game-settings.json` first.
     @Override
     public boolean isBackupOnNextSave() {
         return backupOnNextSave;
     }
 
-    /// Sets whether the next successful save should back up the current `game-settings.json` first.
+    /// Sets whether the next successful save should back up the current `config/game-settings.json` first.
     @Override
     public void setBackupOnNextSave(boolean backupOnNextSave) {
         this.backupOnNextSave = backupOnNextSave;

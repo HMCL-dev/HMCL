@@ -34,7 +34,7 @@ import java.util.Objects;
 
 /// Stores account storage maps in a detached JSON file.
 ///
-/// The JSON representation is saved as `game-accounts.json` and stores account entries in the `accounts` list.
+/// The JSON representation is saved under the `accounts` directory and stores account entries in the `accounts` list.
 @JsonAdapter(AccountStorages.Adapter.class)
 @NotNullByDefault
 @JsonSerializable

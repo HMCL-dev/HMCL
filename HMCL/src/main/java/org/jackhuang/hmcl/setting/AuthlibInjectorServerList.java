@@ -33,7 +33,8 @@ import java.util.Objects;
 
 /// Stores per-workspace authlib-injector authentication servers.
 ///
-/// The JSON representation is saved as `authlib-injector-servers.json` under the current HMCL directory.
+/// The JSON representation is saved as `config/authlib-injector-servers.json`
+/// under the current HMCL directory.
 ///
 /// @author Glavo
 @JsonAdapter(AuthlibInjectorServerList.Adapter.class)
@@ -88,31 +89,31 @@ public final class AuthlibInjectorServerList extends ObservableSetting implement
         this.schema.set(Objects.requireNonNull(schema));
     }
 
-    /// Whether this server list may be saved back to `authlib-injector-servers.json`.
+    /// Whether this server list may be saved back to `config/authlib-injector-servers.json`.
     private transient boolean savable = true;
 
-    /// Whether the next successful save should back up the current `authlib-injector-servers.json` first.
+    /// Whether the next successful save should back up the current `config/authlib-injector-servers.json` first.
     private transient boolean backupOnNextSave;
 
-    /// Returns whether this server list may be saved back to `authlib-injector-servers.json`.
+    /// Returns whether this server list may be saved back to `config/authlib-injector-servers.json`.
     @Override
     public boolean isSavable() {
         return savable;
     }
 
-    /// Sets whether this server list may be saved back to `authlib-injector-servers.json`.
+    /// Sets whether this server list may be saved back to `config/authlib-injector-servers.json`.
     @Override
     public void setSavable(boolean savable) {
         this.savable = savable;
     }
 
-    /// Returns whether the next successful save should back up the current `authlib-injector-servers.json` first.
+    /// Returns whether the next successful save should back up the current `config/authlib-injector-servers.json` first.
     @Override
     public boolean isBackupOnNextSave() {
         return backupOnNextSave;
     }
 
-    /// Sets whether the next successful save should back up the current `authlib-injector-servers.json` first.
+    /// Sets whether the next successful save should back up the current `config/authlib-injector-servers.json` first.
     @Override
     public void setBackupOnNextSave(boolean backupOnNextSave) {
         this.backupOnNextSave = backupOnNextSave;

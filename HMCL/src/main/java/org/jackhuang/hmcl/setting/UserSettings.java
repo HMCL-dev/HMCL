@@ -81,31 +81,31 @@ public final class UserSettings extends ObservableSetting implements JsonSchemaS
         this.schema.set(Objects.requireNonNull(schema));
     }
 
-    /// Whether this user settings store may be saved back to `user-settings.json`.
+    /// Whether this user settings store may be saved back to `config/user-settings.json`.
     private transient boolean savable = true;
 
-    /// Whether the next successful save should back up the current `user-settings.json` first.
+    /// Whether the next successful save should back up the current `config/user-settings.json` first.
     private transient boolean backupOnNextSave;
 
-    /// Returns whether this user settings store may be saved back to `user-settings.json`.
+    /// Returns whether this user settings store may be saved back to `config/user-settings.json`.
     @Override
     public boolean isSavable() {
         return savable;
     }
 
-    /// Sets whether this user settings store may be saved back to `user-settings.json`.
+    /// Sets whether this user settings store may be saved back to `config/user-settings.json`.
     @Override
     public void setSavable(boolean savable) {
         this.savable = savable;
     }
 
-    /// Returns whether the next successful save should back up the current `user-settings.json` first.
+    /// Returns whether the next successful save should back up the current `config/user-settings.json` first.
     @Override
     public boolean isBackupOnNextSave() {
         return backupOnNextSave;
     }
 
-    /// Sets whether the next successful save should back up the current `user-settings.json` first.
+    /// Sets whether the next successful save should back up the current `config/user-settings.json` first.
     @Override
     public void setBackupOnNextSave(boolean backupOnNextSave) {
         this.backupOnNextSave = backupOnNextSave;

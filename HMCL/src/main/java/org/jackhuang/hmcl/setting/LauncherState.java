@@ -37,7 +37,7 @@ import java.util.Objects;
 
 /// Stores per-workspace launcher runtime state independently from the main settings file.
 ///
-/// The JSON representation is saved as `launcher-state.json` under the current HMCL directory.
+/// The JSON representation is saved as `state/launcher-state.json` under the current HMCL directory.
 ///
 /// @author Glavo
 @JsonAdapter(LauncherState.Adapter.class)
@@ -73,31 +73,31 @@ public final class LauncherState extends ObservableSetting implements JsonSchema
         this.schema.set(Objects.requireNonNull(schema));
     }
 
-    /// Whether this launcher state may be saved back to `launcher-state.json`.
+    /// Whether this launcher state may be saved back to `state/launcher-state.json`.
     private transient boolean savable = true;
 
-    /// Whether the next successful save should back up the current `launcher-state.json` first.
+    /// Whether the next successful save should back up the current `state/launcher-state.json` first.
     private transient boolean backupOnNextSave;
 
-    /// Returns whether this launcher state may be saved back to `launcher-state.json`.
+    /// Returns whether this launcher state may be saved back to `state/launcher-state.json`.
     @Override
     public boolean isSavable() {
         return savable;
     }
 
-    /// Sets whether this launcher state may be saved back to `launcher-state.json`.
+    /// Sets whether this launcher state may be saved back to `state/launcher-state.json`.
     @Override
     public void setSavable(boolean savable) {
         this.savable = savable;
     }
 
-    /// Returns whether the next successful save should back up the current `launcher-state.json` first.
+    /// Returns whether the next successful save should back up the current `state/launcher-state.json` first.
     @Override
     public boolean isBackupOnNextSave() {
         return backupOnNextSave;
     }
 
-    /// Sets whether the next successful save should back up the current `launcher-state.json` first.
+    /// Sets whether the next successful save should back up the current `state/launcher-state.json` first.
     @Override
     public void setBackupOnNextSave(boolean backupOnNextSave) {
         this.backupOnNextSave = backupOnNextSave;

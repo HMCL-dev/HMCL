@@ -82,31 +82,31 @@ public final class UserState extends ObservableSetting implements JsonSchemaSett
         this.schema.set(Objects.requireNonNull(schema));
     }
 
-    /// Whether this user state store may be saved back to `user-state.json`.
+    /// Whether this user state store may be saved back to `state/user-state.json`.
     private transient boolean savable = true;
 
-    /// Whether the next successful save should back up the current `user-state.json` first.
+    /// Whether the next successful save should back up the current `state/user-state.json` first.
     private transient boolean backupOnNextSave;
 
-    /// Returns whether this user state store may be saved back to `user-state.json`.
+    /// Returns whether this user state store may be saved back to `state/user-state.json`.
     @Override
     public boolean isSavable() {
         return savable;
     }
 
-    /// Sets whether this user state store may be saved back to `user-state.json`.
+    /// Sets whether this user state store may be saved back to `state/user-state.json`.
     @Override
     public void setSavable(boolean savable) {
         this.savable = savable;
     }
 
-    /// Returns whether the next successful save should back up the current `user-state.json` first.
+    /// Returns whether the next successful save should back up the current `state/user-state.json` first.
     @Override
     public boolean isBackupOnNextSave() {
         return backupOnNextSave;
     }
 
-    /// Sets whether the next successful save should back up the current `user-state.json` first.
+    /// Sets whether the next successful save should back up the current `state/user-state.json` first.
     @Override
     public void setBackupOnNextSave(boolean backupOnNextSave) {
         this.backupOnNextSave = backupOnNextSave;

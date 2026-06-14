@@ -375,14 +375,14 @@ public final class LauncherSettingsMigrationTest {
     public void preservesPatchSchemaAndUnknownFields() {
         LauncherSettings launcherSettings = Objects.requireNonNull(LauncherSettings.fromJson(JsonParser.parseString("""
                 {
-                  "$schema": "https://schemas.glavo.site/hmcl/settings/1.0.1",
+                  "$schema": "https://schemas.glavo.site/hmcl/launcher-settings/1.0.1",
                   "futureField": true
                 }
                 """).getAsJsonObject()));
 
         JsonObject serialized = JsonParser.parseString(launcherSettings.toJson()).getAsJsonObject();
 
-        assertEquals("https://schemas.glavo.site/hmcl/settings/1.0.1",
+        assertEquals("https://schemas.glavo.site/hmcl/launcher-settings/1.0.1",
                 serialized.get(JsonSchema.PROPERTY_SCHEMA).getAsString());
         assertTrue(serialized.get("futureField").getAsBoolean());
     }

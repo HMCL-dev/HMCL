@@ -43,10 +43,11 @@ import java.util.UUID;
 
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
-/// Migrates legacy per-workspace config files into the current settings.json file.
+/// Migrates legacy per-workspace config files into the current launcher settings file.
 ///
 /// HMCL used hmcl.json and .hmcl.json as the main per-workspace config files before HMCL 3.16.
-/// Those files are now legacy inputs only: migration reads them, writes a new settings.json, and leaves the original files unchanged.
+/// Those files are now legacy inputs only: migration reads them, writes a new launcher settings file,
+/// and leaves the original files unchanged.
 ///
 /// @author Glavo
 @NotNullByDefault
@@ -91,18 +92,18 @@ public final class LegacyConfigMigrator {
 
     /// The receipt recording the legacy user config migrated to the current user settings and state.
     private static final Path USER_SETTINGS_MIGRATION_RECEIPT_LOCATION =
-            Metadata.HMCL_USER_HOME.resolve("user-settings.migration-receipt.json");
+            Metadata.HMCL_USER_HOME.resolve("state").resolve("user-settings.migration-receipt.json");
 
     /// The legacy user account storage path shared by all workspaces.
     private static final Path LEGACY_USER_ACCOUNTS_LOCATION = Metadata.HMCL_USER_HOME.resolve("accounts.json");
 
     /// The receipt recording the legacy shared accounts migrated to the shared account storage.
     private static final Path USER_ACCOUNTS_MIGRATION_RECEIPT_LOCATION =
-            Metadata.HMCL_USER_HOME.resolve("user-game-accounts.migration-receipt.json");
+            Metadata.HMCL_USER_HOME.resolve("state").resolve("user-game-accounts.migration-receipt.json");
 
     /// The receipt recording the legacy config migrated to the current per-workspace config.
     private static final Path SETTINGS_MIGRATION_RECEIPT_LOCATION =
-            Metadata.HMCL_LOCAL_HOME.resolve("settings.migration-receipt.json");
+            Metadata.HMCL_LOCAL_HOME.resolve("state").resolve("launcher-settings.migration-receipt.json");
 
     /// Legacy ordinal order for `BackgroundType` in upstream/main configs.
     private static final String[] LEGACY_BACKGROUND_IMAGE_TYPES = {
@@ -151,6 +152,14 @@ public final class LegacyConfigMigrator {
         if (path == null) {
             return null;
         }
+        return migrateLegacyConfigIfNeeded(path);
+    }
+
+    /// Looks for a legacy config migration receipt before preparing the given file for migration.
+    ///
+    /// @param path the legacy config path to read
+    /// @return the prepared migration result, or `null` when the file was already migrated or is unsupported
+    static @Nullable LegacyConfigMigration migrateLegacyConfigIfNeeded(Path path) throws IOException {
         if (MigrationReceipt.matches(SETTINGS_MIGRATION_RECEIPT_LOCATION, path)) {
             LOG.info("Skipping already migrated legacy config " + path);
             return null;
@@ -174,10 +183,10 @@ public final class LegacyConfigMigrator {
                 return null;
             }
 
-            // _version belongs to the legacy file format only. The current settings.json format will use
+            // _version belongs to the legacy file format only. The current launcher settings format will use
             // a separate versioning scheme and must not depend on this numeric value.
             // Older configs may not contain _version; historically those should be treated as the last
-            // pre-settings.json schema unless older-field probes below prove they need extra upgrades.
+            // pre-launcher-settings schema unless older-field probes below prove they need extra upgrades.
             int configVersion = jsonObject.remove("_version") instanceof JsonPrimitive version && version.isNumber()
                     ? version.getAsInt()
                     : 0;
@@ -787,7 +796,7 @@ public final class LegacyConfigMigrator {
 
     /// Extracts game directory data from a legacy config JSON object and removes the legacy members.
     ///
-    /// This supports migrating the upstream/main `configurations` map into `game-directories.json`.
+    /// This supports migrating the upstream/main `configurations` map into `config/game-directories.json`.
     ///
     /// @param json the legacy config JSON object
     /// @return the extracted game directory store, or `null` when the object contains no game directory data

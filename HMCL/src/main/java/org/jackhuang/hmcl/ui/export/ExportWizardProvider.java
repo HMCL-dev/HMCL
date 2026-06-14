@@ -131,13 +131,13 @@ public final class ExportWizardProvider implements WizardProvider {
                     exported.fileDownloadSourceProperty().set(settings().fileDownloadSourceProperty().get());
                     exported.preferredLoginTypeProperty().set(settings().preferredLoginTypeProperty().get());
 
-                    zip.putTextFile(exported.toJson(), ".hmcl/settings.json");
+                    zip.putTextFile(exported.toJson(), ".hmcl/config/launcher-settings.json");
                     AuthlibInjectorServerList exportedServers = new AuthlibInjectorServerList();
                     exportedServers.getServers().setAll(SettingsManager.getAuthlibInjectorServers());
                     zip.putTextFile(
                             JsonUtils.GSON.toJson(exportedServers, AuthlibInjectorServerList.class),
-                            ".hmcl/authlib-injector-servers.json");
-                    zip.putTextFile(SettingsManager.gameAccountsToJson(), ".hmcl/game-accounts.json");
+                            ".hmcl/config/authlib-injector-servers.json");
+                    zip.putTextFile(SettingsManager.gameAccountsToJson(), ".hmcl/accounts/game-accounts.json");
                     zip.putFile(tempModpack, ModpackTypeSelectionPage.MODPACK_TYPE_MODRINTH.equals(modpackType)
                             ? "modpack.mrpack"
                             : "modpack.zip");

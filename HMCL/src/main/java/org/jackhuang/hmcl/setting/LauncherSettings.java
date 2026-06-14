@@ -53,7 +53,7 @@ import java.util.*;
 public final class LauncherSettings extends ObservableSetting implements JsonSchemaSetting {
 
     /// The JSON schema supported by this launcher settings class.
-    public static final JsonSchema CURRENT_SCHEMA = new JsonSchema("settings", new JsonSchema.Version(1, 0, 0));
+    public static final JsonSchema CURRENT_SCHEMA = new JsonSchema("launcher-settings", new JsonSchema.Version(1, 0, 0));
 
     /// The JSON property name for the default game setting preset ID.
     static final String PROPERTY_DEFAULT_GAME_SETTINGS_PRESET = "defaultGameSettingsPreset";
@@ -121,31 +121,31 @@ public final class LauncherSettings extends ObservableSetting implements JsonSch
         this.schema.set(Objects.requireNonNull(schema));
     }
 
-    /// Whether this launcher settings object may be saved back to `settings.json`.
+    /// Whether this launcher settings object may be saved back to `config/launcher-settings.json`.
     private transient boolean savable = true;
 
-    /// Whether the next successful save should back up the current `settings.json` first.
+    /// Whether the next successful save should back up the current `config/launcher-settings.json` first.
     private transient boolean backupOnNextSave = false;
 
-    /// Returns whether this launcher settings object may be saved back to `settings.json`.
+    /// Returns whether this launcher settings object may be saved back to `config/launcher-settings.json`.
     @Override
     public boolean isSavable() {
         return savable;
     }
 
-    /// Sets whether this launcher settings object may be saved back to `settings.json`.
+    /// Sets whether this launcher settings object may be saved back to `config/launcher-settings.json`.
     @Override
     public void setSavable(boolean savable) {
         this.savable = savable;
     }
 
-    /// Returns whether the next successful save should back up the current `settings.json` first.
+    /// Returns whether the next successful save should back up the current `config/launcher-settings.json` first.
     @Override
     public boolean isBackupOnNextSave() {
         return backupOnNextSave;
     }
 
-    /// Sets whether the next successful save should back up the current `settings.json` first.
+    /// Sets whether the next successful save should back up the current `config/launcher-settings.json` first.
     @Override
     public void setBackupOnNextSave(boolean backupOnNextSave) {
         this.backupOnNextSave = backupOnNextSave;
