@@ -23,17 +23,31 @@ import com.google.gson.JsonParser;
 import org.jackhuang.hmcl.util.gson.JsonSchema;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jetbrains.annotations.NotNullByDefault;
+import org.jetbrains.annotations.Nullable;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-/// Tests for detached account storage lists.
+/// Tests for detached account metadata lists.
 @NotNullByDefault
 public final class AccountStoragesTest {
-    /// Tests that account storages serialize as an object containing an accounts list.
+    /// Restores a system property to its previous value.
+    ///
+    /// @param name the system property name
+    /// @param previous the previous system property value
+    private static void restoreSystemProperty(String name, @Nullable String previous) {
+        if (previous == null) {
+            System.clearProperty(name);
+        } else {
+            System.setProperty(name, previous);
+        }
+    }
+
+    /// Tests that account metadata serializes as an object containing an accounts list.
     @Test
     public void serializesAccountsAsObjectList() {
         AccountStorages accountStorages = AccountStorages.fromAccounts(List.of(Map.<Object, Object>of(
@@ -56,7 +70,7 @@ public final class AccountStoragesTest {
                 .getAsString());
     }
 
-    /// Tests wrapping legacy account list content in the current `game-accounts.json` model.
+    /// Tests wrapping legacy account list content in the current `accounts.json` model.
     @Test
     public void wrapsLegacyAccountListInCurrentModel() {
         AccountStorages storages = AccountStorages.fromAccounts(List.of(
@@ -73,7 +87,7 @@ public final class AccountStoragesTest {
         assertEquals("Steve", accounts.get(0).getAsJsonObject().get("username").getAsString());
     }
 
-    /// Tests extracting account storages from a main config object.
+    /// Tests extracting account metadata from a main config object.
     @Test
     public void extractsAccountsFromConfigJson() {
         JsonObject settings = JsonParser.parseString("""
@@ -96,5 +110,147 @@ public final class AccountStoragesTest {
         assertEquals(1, accountStorages.getAccounts().size());
         assertEquals("offline", accountStorages.getAccounts().get(0).get("type"));
         assertEquals(AccountStorages.CURRENT_SCHEMA, accountStorages.getSchema());
+    }
+
+    /// Tests moving token fields from account metadata into the credential store.
+    @Test
+    public void extractsTokenFieldsIntoCredentials() {
+        AccountCredentials credentials = new AccountCredentials();
+        List<Map<Object, Object>> metadataAccounts = credentials.replaceFromAccountStorages(List.of(Map.of(
+                "type", "microsoft",
+                "uuid", "00000000-0000-0000-0000-000000000001",
+                "displayName", "Steve",
+                "accessToken", "access-token",
+                "refreshToken", "refresh-token"
+        )));
+        Map<Object, Object> metadata = metadataAccounts.get(0);
+        JsonObject identifier = Objects.requireNonNull(AccountCredentials.identifier(metadata));
+
+        assertEquals("microsoft", metadata.get("type"));
+        assertEquals("Steve", metadata.get("displayName"));
+        assertFalse(metadata.containsKey("id"));
+        assertFalse(metadata.containsKey("accessToken"));
+        assertFalse(metadata.containsKey("refreshToken"));
+        assertEquals("access-token", credentials.getCredentials().get(identifier).get("accessToken"));
+        assertEquals("refresh-token", credentials.getCredentials().get(identifier).get("refreshToken"));
+    }
+
+    /// Tests restoring token fields from the credential store into account metadata.
+    @Test
+    public void mergesCredentialsIntoAccountMetadata() {
+        AccountCredentials credentials = new AccountCredentials();
+        List<Map<Object, Object>> metadataAccounts = credentials.replaceFromAccountStorages(List.of(Map.of(
+                "type", "microsoft",
+                "uuid", "00000000-0000-0000-0000-000000000001",
+                "displayName", "Steve",
+                "accessToken", "access-token",
+                "refreshToken", "refresh-token"
+        )));
+        AccountStorages accountStorages = AccountStorages.fromAccounts(metadataAccounts);
+
+        credentials.mergeInto(accountStorages);
+        Map<Object, Object> account = accountStorages.getAccounts().get(0);
+
+        assertEquals("access-token", account.get("accessToken"));
+        assertEquals("refresh-token", account.get("refreshToken"));
+    }
+
+    /// Tests that account credentials serialize as one protected payload.
+    @Test
+    public void serializesCredentialsAsProtectedPayload() {
+        @Nullable String previous = System.getProperty(AccountCredentials.PROTECTION_PROPERTY);
+        System.clearProperty(AccountCredentials.PROTECTION_PROPERTY);
+        try {
+            AccountCredentials credentials = new AccountCredentials();
+            credentials.replaceFromAccountStorages(List.of(Map.of(
+                    "type", "microsoft",
+                    "uuid", "00000000-0000-0000-0000-000000000001",
+                    "displayName", "Steve",
+                    "accessToken", "access-token",
+                    "refreshToken", "refresh-token"
+            )));
+
+            JsonObject serialized = JsonParser.parseString(
+                    LauncherSettings.SETTINGS_GSON.toJson(credentials, AccountCredentials.class)).getAsJsonObject();
+
+            assertEquals(AccountCredentials.CURRENT_SCHEMA.url(),
+                    serialized.get(JsonSchema.PROPERTY_SCHEMA).getAsString());
+            assertEquals("hmcl-obfuscated-v1", serialized.get("protection").getAsString());
+            assertTrue(serialized.has("nonce"));
+            assertTrue(serialized.has("payload"));
+            assertFalse(serialized.toString().contains("access-token"));
+            assertFalse(serialized.toString().contains("refresh-token"));
+        } finally {
+            restoreSystemProperty(AccountCredentials.PROTECTION_PROPERTY, previous);
+        }
+    }
+
+    /// Tests that account credentials can serialize as plain JSON payloads for development.
+    @Test
+    public void serializesCredentialsAsPlainPayloadWhenEnabled() {
+        @Nullable String previous = System.getProperty(AccountCredentials.PROTECTION_PROPERTY);
+        System.setProperty(AccountCredentials.PROTECTION_PROPERTY, "plain");
+        try {
+            AccountCredentials credentials = new AccountCredentials();
+            List<Map<Object, Object>> metadataAccounts = credentials.replaceFromAccountStorages(List.of(Map.of(
+                    "type", "microsoft",
+                    "uuid", "00000000-0000-0000-0000-000000000001",
+                    "displayName", "Steve",
+                    "accessToken", "access-token",
+                    "refreshToken", "refresh-token"
+            )));
+            JsonObject identifier = Objects.requireNonNull(AccountCredentials.identifier(metadataAccounts.get(0)));
+
+            JsonObject serialized = JsonParser.parseString(
+                    LauncherSettings.SETTINGS_GSON.toJson(credentials, AccountCredentials.class)).getAsJsonObject();
+            JsonObject payload = serialized.getAsJsonObject("payload");
+            JsonObject item = payload.getAsJsonArray("credentials").get(0).getAsJsonObject();
+            JsonObject tokens = item.getAsJsonObject("tokens");
+            JsonObject serializedIdentifier = item.getAsJsonObject("identifier");
+
+            assertEquals(AccountCredentials.CURRENT_SCHEMA.url(),
+                    serialized.get(JsonSchema.PROPERTY_SCHEMA).getAsString());
+            assertEquals("plain", serialized.get("protection").getAsString());
+            assertFalse(serialized.has("nonce"));
+            assertEquals(identifier, serializedIdentifier);
+            assertEquals("access-token", tokens.get("accessToken").getAsString());
+            assertEquals("refresh-token", tokens.get("refreshToken").getAsString());
+
+            AccountCredentials deserialized = Objects.requireNonNull(
+                    LauncherSettings.SETTINGS_GSON.fromJson(serialized, AccountCredentials.class));
+
+            assertEquals("access-token", deserialized.getCredentials().get(identifier).get("accessToken"));
+            assertEquals("refresh-token", deserialized.getCredentials().get(identifier).get("refreshToken"));
+        } finally {
+            restoreSystemProperty(AccountCredentials.PROTECTION_PROPERTY, previous);
+        }
+    }
+
+    /// Tests reading account credentials from one protected payload.
+    @Test
+    public void deserializesCredentialsFromProtectedPayload() {
+        @Nullable String previous = System.getProperty(AccountCredentials.PROTECTION_PROPERTY);
+        System.clearProperty(AccountCredentials.PROTECTION_PROPERTY);
+        try {
+            AccountCredentials credentials = new AccountCredentials();
+            List<Map<Object, Object>> metadataAccounts = credentials.replaceFromAccountStorages(List.of(Map.of(
+                    "type", "microsoft",
+                    "uuid", "00000000-0000-0000-0000-000000000001",
+                    "displayName", "Steve",
+                    "accessToken", "access-token",
+                    "refreshToken", "refresh-token"
+            )));
+            JsonObject identifier = Objects.requireNonNull(AccountCredentials.identifier(metadataAccounts.get(0)));
+            JsonObject serialized = JsonParser.parseString(
+                    LauncherSettings.SETTINGS_GSON.toJson(credentials, AccountCredentials.class)).getAsJsonObject();
+
+            AccountCredentials deserialized = Objects.requireNonNull(
+                    LauncherSettings.SETTINGS_GSON.fromJson(serialized, AccountCredentials.class));
+
+            assertEquals("access-token", deserialized.getCredentials().get(identifier).get("accessToken"));
+            assertEquals("refresh-token", deserialized.getCredentials().get(identifier).get("refreshToken"));
+        } finally {
+            restoreSystemProperty(AccountCredentials.PROTECTION_PROPERTY, previous);
+        }
     }
 }

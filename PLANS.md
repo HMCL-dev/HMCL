@@ -9,8 +9,10 @@
 - `.hmcl/config/game-directories.json`: workspace game directory profiles in the `directories` list.
 - `HMCL_USER_HOME/config/user-game-directories.json`: shared game directory profiles in the `directories` list.
 - `.hmcl/config/game-settings.json`: workspace `GameSettings.Preset` entries.
-- `.hmcl/accounts/game-accounts.json`: workspace portable account storages in the `accounts` list.
-- `HMCL_USER_HOME/accounts/user-game-accounts.json`: shared account storages in the `accounts` list.
+- `.hmcl/config/accounts.json`: workspace portable account metadata in the `accounts` list.
+- `HMCL_USER_HOME/config/user-accounts.json`: shared account metadata in the `accounts` list.
+- `.hmcl/credentials/account-credentials.json`: protected workspace account token credentials.
+- `HMCL_USER_HOME/credentials/user-account-credentials.json`: protected shared account token credentials.
 - `versions/<id>/.hmcl/instance-game-settings.json`: instance-specific game settings.
 - `HMCL_USER_HOME/state/*.migration-receipt.json` and `.hmcl/state/*.migration-receipt.json`: migration receipts.
 
@@ -18,6 +20,7 @@
 
 - Only configuration formats used by `upstream/main` need migration support.
 - File formats introduced by this branch are still unstable and do not need compatibility with earlier revisions of this branch.
+- Do not add schema versions, migration paths, or compatibility shims only for intermediate file shapes produced by this branch.
 - Legacy config files are read as migration inputs and must not be rewritten.
 - Detached settings files should be created and saved only through the new storage model.
 - Do not encode `upstream/main` wording in production code, comments, logs, schemas, or tests; keep that local baseline note in this file only.
@@ -25,8 +28,8 @@
 ## Migration Rules
 
 - Legacy `hmcl.json` and `.hmcl.json` are read as workspace migration inputs.
-- Legacy `accounts` fields in the workspace config are extracted into `game-accounts.json`.
-- Legacy shared `accounts.json` is used only as a migration input when `user-game-accounts.json` does not exist.
+- Legacy `accounts` fields in the workspace config are extracted into `accounts.json` and `account-credentials.json`.
+- Legacy shared `accounts.json` is used only as a migration input when `user-accounts.json` does not exist.
 - Legacy `authlibInjectorServers` and `addedLittleSkin` fields are extracted into `authlib-injector-servers.json`.
 - Legacy profile data from `configurations` is converted into `game-directories.json`.
 - Legacy profile global settings are converted into `GameSettings.Preset` entries.
@@ -49,6 +52,6 @@
 ## Verification Focus
 
 - Loading an old config should create detached files without losing selected account, selected directory, or selected instance state.
-- Editing accounts should update `game-accounts.json`, not `settings.json`.
-- Existing shared `accounts.json` should migrate to `user-game-accounts.json`.
+- Editing accounts should update `accounts.json` and `account-credentials.json`, not `settings.json`.
+- Existing shared `accounts.json` should migrate to `user-accounts.json` and `user-account-credentials.json`.
 - Launch, export, install, and settings UI flows should read effective `GameSettings` values.

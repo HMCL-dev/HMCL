@@ -187,7 +187,7 @@ public final class Accounts {
             getAccountStorages().setAll(portable);
     }
 
-    /// Returns whether the account storage file selected by the portability flag is read-only.
+    /// Returns whether the account metadata and credential files selected by the portability flag are read-only.
     ///
     /// @param portable whether the account is stored in the local account file
     public static boolean isAccountStorageReadOnly(boolean portable) {
@@ -209,7 +209,7 @@ public final class Accounts {
         return !SettingsManager.isGameAccountsReadOnly() && !SettingsManager.isUserGameAccountsReadOnly();
     }
 
-    /// Backs up and overwrites the account storage file selected by the portability flag.
+    /// Backs up and overwrites the account metadata and credential files selected by the portability flag.
     ///
     /// @param portable whether the target storage is the local account file
     public static void forceOverwriteAccountStorage(boolean portable) {
@@ -225,7 +225,7 @@ public final class Accounts {
         forceOverwriteAccountStorage(account.isPortable());
     }
 
-    /// Backs up and overwrites both local and user account storage files.
+    /// Backs up and overwrites both local and user account metadata and credential files.
     public static void forceOverwriteAccountStorages() {
         if (SettingsManager.isGameAccountsReadOnly()) {
             SettingsManager.forceOverwriteGameAccounts();
@@ -238,14 +238,14 @@ public final class Accounts {
     private static Account parseAccount(Map<Object, Object> storage) {
         AccountFactory<?> factory = type2factory.get(storage.get("type"));
         if (factory == null) {
-            LOG.warning("Unrecognized account type: " + storage);
+            LOG.warning("Unrecognized account type: " + AccountCredentials.redact(storage));
             return null;
         }
 
         try {
             return factory.fromStorage(storage);
         } catch (Exception e) {
-            LOG.warning("Failed to load account: " + storage, e);
+            LOG.warning("Failed to load account: " + AccountCredentials.redact(storage), e);
             return null;
         }
     }

@@ -1,0 +1,110 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.glavo.site/hmcl/account-credentials/1.0.0",
+  "title": "HMCL Account Credentials",
+  "type": "object",
+  "additionalProperties": true,
+  "required": [
+    "$schema",
+    "protection",
+    "payload"
+  ],
+  "oneOf": [
+    {
+      "required": [
+        "protection",
+        "nonce",
+        "payload"
+      ],
+      "properties": {
+        "protection": {
+          "const": "hmcl-obfuscated-v1"
+        },
+        "nonce": {
+          "type": "string"
+        },
+        "payload": {
+          "type": "string"
+        }
+      }
+    },
+    {
+      "required": [
+        "protection",
+        "payload"
+      ],
+      "not": {
+        "required": [
+          "nonce"
+        ]
+      },
+      "properties": {
+        "protection": {
+          "const": "plain"
+        },
+        "payload": {
+          "$ref": "#/$defs/plainPayload"
+        }
+      }
+    }
+  ],
+  "patternProperties": {
+    "^\\$schema$": {
+      "enum": [
+        "https://schemas.glavo.site/hmcl/account-credentials/1.0.0"
+      ]
+    }
+  },
+  "properties": {
+    "protection": {
+      "enum": [
+        "hmcl-obfuscated-v1",
+        "plain"
+      ]
+    },
+    "nonce": {
+      "type": "string"
+    },
+    "payload": {}
+  },
+  "$defs": {
+    "plainPayload": {
+      "type": "object",
+      "additionalProperties": true,
+      "required": [
+        "credentials"
+      ],
+      "properties": {
+        "credentials": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": true,
+            "required": [
+              "identifier",
+              "tokens"
+            ],
+            "properties": {
+              "identifier": {
+                "type": "object",
+                "additionalProperties": true,
+                "required": [
+                  "type"
+                ],
+                "properties": {
+                  "type": {
+                    "type": "string"
+                  }
+                }
+              },
+              "tokens": {
+                "type": "object",
+                "additionalProperties": true
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

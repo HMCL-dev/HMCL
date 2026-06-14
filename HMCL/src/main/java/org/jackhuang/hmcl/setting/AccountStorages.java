@@ -32,35 +32,48 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 
-/// Stores account storage maps in a detached JSON file.
+/// Stores account metadata maps in a detached JSON file.
 ///
-/// The JSON representation is saved under the `accounts` directory and stores account entries in the `accounts` list.
+/// The JSON representation is saved under the `config` directory and stores non-token account entries in the
+/// `accounts` list. Token credentials are persisted separately in [AccountCredentials].
 @JsonAdapter(AccountStorages.Adapter.class)
 @NotNullByDefault
 @JsonSerializable
 final class AccountStorages extends ObservableSetting implements JsonSchemaSetting {
-    /// The JSON schema supported by this account storage list.
+    /// The JSON schema supported by this account metadata list.
     static final JsonSchema CURRENT_SCHEMA =
-            new JsonSchema("game-accounts", new JsonSchema.Version(1, 0, 0));
+            new JsonSchema("accounts", new JsonSchema.Version(1, 0, 0));
 
-    /// Creates an empty account storage list.
+    /// Creates an empty account metadata list.
     AccountStorages() {
         tracker.markDirty(schema);
         tracker.markDirty(accounts);
         register();
     }
 
-    /// Creates an account storage list from already serialized account entries.
+    /// Creates an account metadata list from already serialized account entries.
     ///
     /// @param accounts the serialized account entries
-    /// @return an account storage list containing the given entries
+    /// @return an account metadata list containing the given entries
     static AccountStorages fromAccounts(List<Map<Object, Object>> accounts) {
         AccountStorages result = new AccountStorages();
         result.getAccounts().setAll(accounts);
         return result;
     }
 
-    /// The schema used by this account storage list file.
+    /// Creates a copy of this account metadata store with replacement account entries.
+    ///
+    /// @param accounts the replacement account entries
+    /// @return a copy preserving this store's schema and unknown top-level members
+    AccountStorages copyWithAccounts(List<Map<Object, Object>> accounts) {
+        AccountStorages result = new AccountStorages();
+        result.setSchema(getSchema());
+        result.getAccounts().setAll(accounts);
+        result.unknownFields.putAll(unknownFields);
+        return result;
+    }
+
+    /// The schema used by this account metadata list file.
     @SerializedName(JsonSchema.PROPERTY_SCHEMA)
     private final ObjectProperty<JsonSchema> schema = new SimpleObjectProperty<>(CURRENT_SCHEMA);
 
@@ -69,31 +82,31 @@ final class AccountStorages extends ObservableSetting implements JsonSchemaSetti
         return schema;
     }
 
-    /// Returns the schema used by this account storage list file.
+    /// Returns the schema used by this account metadata list file.
     @Override
     public JsonSchema getSchema() {
         return schema.get();
     }
 
-    /// Sets the schema used by this account storage list file.
+    /// Sets the schema used by this account metadata list file.
     @Override
     public void setSchema(JsonSchema schema) {
         this.schema.set(Objects.requireNonNull(schema));
     }
 
-    /// Whether this account storage list may be saved back to its JSON file.
+    /// Whether this account metadata list may be saved back to its JSON file.
     private transient boolean savable = true;
 
     /// Whether the next successful save should back up the current on-disk file first.
     private transient boolean backupOnNextSave;
 
-    /// Returns whether this account storage list may be saved back to its JSON file.
+    /// Returns whether this account metadata list may be saved back to its JSON file.
     @Override
     public boolean isSavable() {
         return savable;
     }
 
-    /// Sets whether this account storage list may be saved back to its JSON file.
+    /// Sets whether this account metadata list may be saved back to its JSON file.
     @Override
     public void setSavable(boolean savable) {
         this.savable = savable;
@@ -122,7 +135,7 @@ final class AccountStorages extends ObservableSetting implements JsonSchemaSetti
 
     /// JSON adapter for [AccountStorages].
     static final class Adapter extends ObservableSetting.Adapter<AccountStorages> {
-        /// Creates an empty account storage list for deserialization.
+        /// Creates an empty account metadata list for deserialization.
         @Override
         protected AccountStorages createInstance() {
             return new AccountStorages();

@@ -97,9 +97,9 @@ public final class LegacyConfigMigrator {
     /// The legacy user account storage path shared by all workspaces.
     private static final Path LEGACY_USER_ACCOUNTS_LOCATION = Metadata.HMCL_USER_HOME.resolve("accounts.json");
 
-    /// The receipt recording the legacy shared accounts migrated to the shared account storage.
+    /// The receipt recording the legacy shared accounts migrated to the shared account metadata.
     private static final Path USER_ACCOUNTS_MIGRATION_RECEIPT_LOCATION =
-            Metadata.HMCL_USER_HOME.resolve("state").resolve("user-game-accounts.migration-receipt.json");
+            Metadata.HMCL_USER_HOME.resolve("state").resolve("user-accounts.migration-receipt.json");
 
     /// The receipt recording the legacy config migrated to the current per-workspace config.
     private static final Path SETTINGS_MIGRATION_RECEIPT_LOCATION =

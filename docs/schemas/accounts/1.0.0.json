@@ -1,0 +1,50 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.glavo.site/hmcl/accounts/1.0.0",
+  "title": "HMCL Accounts",
+  "type": "object",
+  "additionalProperties": true,
+  "required": [
+    "$schema"
+  ],
+  "patternProperties": {
+    "^\\$schema$": {
+      "enum": [
+        "https://schemas.glavo.site/hmcl/accounts/1.0.0"
+      ]
+    }
+  },
+  "properties": {
+    "accounts": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": true,
+        "properties": {
+          "id": {
+            "type": "string"
+          }
+        },
+        "not": {
+          "anyOf": [
+            {
+              "required": [
+                "accessToken"
+              ]
+            },
+            {
+              "required": [
+                "refreshToken"
+              ]
+            },
+            {
+              "required": [
+                "clientToken"
+              ]
+            }
+          ]
+        }
+      }
+    }
+  }
+}
