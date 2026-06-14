@@ -20,7 +20,6 @@ package org.jackhuang.hmcl.mod.mcbbs;
 import com.google.gson.stream.JsonWriter;
 import org.jackhuang.hmcl.download.LibraryAnalyzer;
 import org.jackhuang.hmcl.game.DefaultGameRepository;
-import org.jackhuang.hmcl.game.Library;
 import org.jackhuang.hmcl.mod.ModAdviser;
 import org.jackhuang.hmcl.mod.Modpack;
 import org.jackhuang.hmcl.mod.ModpackExportInfo;
@@ -191,24 +190,25 @@ public class McbbsModpackExportTask extends Task<Void> {
                 writer.endArray();
 
                 writer.name("files").beginArray();
-                Files.walk(runDirectory)
-                        .filter(Files::isRegularFile)
-                        .forEach(file -> {
-                            try {
-                                Path relative = runDirectory.relativize(file);
-                                String relativePath = relative.toString().replace(File.separatorChar, '/');
-                                if (Modpack.acceptFile(relativePath, blackList, info.getWhitelist())) {
-                                    String sha1 = DigestUtils.digestToString("SHA-1", file);
-                                    writer.beginObject();
-                                    writer.name("type").value(true);
-                                    writer.name("path").value(relativePath);
-                                    writer.name("hash").value(sha1);
-                                    writer.endObject();
+                try (var stream = Files.walk(runDirectory)) {
+                    stream.filter(Files::isRegularFile)
+                            .forEach(file -> {
+                                try {
+                                    Path relative = runDirectory.relativize(file);
+                                    String relativePath = relative.toString().replace(File.separatorChar, '/');
+                                    if (Modpack.acceptFile(relativePath, blackList, info.getWhitelist())) {
+                                        String sha1 = DigestUtils.digestToString("SHA-1", file);
+                                        writer.beginObject();
+                                        writer.name("type").value(true);
+                                        writer.name("path").value(relativePath);
+                                        writer.name("hash").value(sha1);
+                                        writer.endObject();
+                                    }
+                                } catch (IOException e) {
+                                    throw new RuntimeException(e);
                                 }
-                            } catch (IOException e) {
-                                throw new RuntimeException(e);
-                            }
-                        });
+                            });
+                }
                 writer.endArray();
 
                 writer.name("settings").beginObject();
@@ -216,13 +216,13 @@ public class McbbsModpackExportTask extends Task<Void> {
 
                 writer.name("launchInfo").beginObject();
                 writer.name("minMemory").value(info.getMinMemory());
-                
                 writer.name("supportedJavaVersions").beginArray();
-                for (int ver : info.getSupportedJavaVersions()) {
-                    writer.value(ver);
+                if (info.getSupportedJavaVersions() != null) {
+                    for (int ver : info.getSupportedJavaVersions()) {
+                        writer.value(ver);
+                    }
                 }
                 writer.endArray();
-
                 writer.name("launchArguments").beginArray();
                 for (String arg : StringUtils.tokenize(info.getLaunchArguments())) {
                     writer.value(arg);

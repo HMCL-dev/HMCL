@@ -28,6 +28,7 @@ import org.jackhuang.hmcl.mod.curse.CurseForgeRemoteModRepository;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.util.DigestUtils;
 import org.jackhuang.hmcl.util.io.Zipper;
+
 import java.io.File;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
@@ -157,48 +158,49 @@ public class ModrinthModpackExportTask extends Task<Void> {
                 for (String dir : resourceDirs) {
                     Path dirPath = runDirectory.resolve(dir);
                     if (Files.exists(dirPath)) {
-                        Files.walk(dirPath)
-                                .filter(Files::isRegularFile)
-                                .forEach(file -> {
-                                    try {
-                                        String relativePath = runDirectory.relativize(file).normalize().toString().replace(File.separatorChar, '/');
-                                        if (!info.getWhitelist().contains(relativePath)) {
-                                            return;
-                                        }
-                                        if (processedPaths.contains(relativePath)) {
-                                            return;
-                                        }
-                                        processedPaths.add(relativePath);
-
-                                        ModrinthManifest.File fileEntry = tryGetRemoteFile(file, relativePath);
-                                        if (fileEntry != null) {
-                                            remoteFilePaths.add(relativePath);
-                                            writer.beginObject();
-                                            writer.name("path").value(fileEntry.getPath());
-                                            writer.name("hashes").beginObject();
-                                            for (Map.Entry<String, String> hash : fileEntry.getHashes().entrySet()) {
-                                                writer.name(hash.getKey()).value(hash.getValue());
+                        try (var stream = Files.walk(dirPath)) {
+                            stream.filter(Files::isRegularFile)
+                                    .forEach(file -> {
+                                        try {
+                                            String relativePath = runDirectory.relativize(file).normalize().toString().replace(File.separatorChar, '/');
+                                            if (!info.getWhitelist().contains(relativePath)) {
+                                                return;
                                             }
-                                            writer.endObject();
-                                            if (fileEntry.getEnv() != null) {
-                                                writer.name("env").beginObject();
-                                                for (Map.Entry<String, String> env : fileEntry.getEnv().entrySet()) {
-                                                    writer.name(env.getKey()).value(env.getValue());
+                                            if (processedPaths.contains(relativePath)) {
+                                                return;
+                                            }
+                                            processedPaths.add(relativePath);
+
+                                            ModrinthManifest.File fileEntry = tryGetRemoteFile(file, relativePath);
+                                            if (fileEntry != null) {
+                                                remoteFilePaths.add(relativePath);
+                                                writer.beginObject();
+                                                writer.name("path").value(fileEntry.getPath());
+                                                writer.name("hashes").beginObject();
+                                                for (Map.Entry<String, String> hash : fileEntry.getHashes().entrySet()) {
+                                                    writer.name(hash.getKey()).value(hash.getValue());
                                                 }
                                                 writer.endObject();
+                                                if (fileEntry.getEnv() != null) {
+                                                    writer.name("env").beginObject();
+                                                    for (Map.Entry<String, String> env : fileEntry.getEnv().entrySet()) {
+                                                        writer.name(env.getKey()).value(env.getValue());
+                                                    }
+                                                    writer.endObject();
+                                                }
+                                                writer.name("downloads").beginArray();
+                                                for (String url : fileEntry.getDownloads()) {
+                                                    writer.value(url);
+                                                }
+                                                writer.endArray();
+                                                writer.name("fileSize").value(fileEntry.getFileSize());
+                                                writer.endObject();
                                             }
-                                            writer.name("downloads").beginArray();
-                                            for (String url : fileEntry.getDownloads()) {
-                                                writer.value(url);
-                                            }
-                                            writer.endArray();
-                                            writer.name("fileSize").value(fileEntry.getFileSize());
-                                            writer.endObject();
+                                        } catch (IOException e) {
+                                            throw new RuntimeException(e);
                                         }
-                                    } catch (IOException e) {
-                                        throw new RuntimeException(e);
-                                    }
-                                });
+                                    });
+                        }
                     }
                 }
 
