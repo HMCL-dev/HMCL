@@ -19,8 +19,11 @@ package org.jackhuang.hmcl.setting;
 
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
+import org.jackhuang.hmcl.auth.authlibinjector.AuthlibInjectorServer;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.junit.jupiter.api.Test;
+
+import java.util.Objects;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -34,6 +37,49 @@ public final class AuthlibInjectorServerListTest {
 
         assertEquals(1, list.getServers().size());
         assertEquals(AuthlibInjectorServerList.LITTLE_SKIN_URL, list.getServers().get(0).getUrl());
+    }
+
+    /// Tests that server list serialization does not include derived metadata.
+    @Test
+    public void serializesServerListWithoutMetadata() {
+        AuthlibInjectorServer server = new AuthlibInjectorServer("https://example.com/api/yggdrasil/");
+        server.restoreMetadataCache("""
+                {"meta":{"serverName":"Example"}}
+                """, 123L);
+        AuthlibInjectorServerList list = new AuthlibInjectorServerList();
+        list.getServers().add(server);
+
+        JsonObject serialized = JsonParser.parseString(
+                LauncherSettings.SETTINGS_GSON.toJson(list, AuthlibInjectorServerList.class)).getAsJsonObject();
+        JsonObject serializedServer = serialized.getAsJsonArray("servers").get(0).getAsJsonObject();
+
+        assertEquals("https://example.com/api/yggdrasil/", serializedServer.get("url").getAsString());
+        assertFalse(serializedServer.has("name"));
+        assertFalse(serializedServer.has("metadataResponse"));
+        assertFalse(serializedServer.has("metadataTimestamp"));
+    }
+
+    /// Tests that temporary metadata fields in server list files are ignored instead of being migrated.
+    @Test
+    public void ignoresTemporaryMetadataFieldsInServerList() {
+        AuthlibInjectorServerList list = Objects.requireNonNull(LauncherSettings.SETTINGS_GSON.fromJson("""
+                {
+                  "servers": [
+                    {
+                      "url": "https://example.com/api/yggdrasil/",
+                      "name": "Example",
+                      "metadataResponse": "{\\"meta\\":{\\"serverName\\":\\"Example\\"}}",
+                      "metadataTimestamp": 123
+                    }
+                  ]
+                }
+                """, AuthlibInjectorServerList.class));
+        AuthlibInjectorServer server = list.getServers().get(0);
+
+        assertEquals("https://example.com/api/yggdrasil/", server.getUrl());
+        assertEquals(server.getUrl(), server.getName());
+        assertTrue(server.getMetadataResponse().isEmpty());
+        assertEquals(0L, server.getMetadataTimestamp());
     }
 
     /// Tests extracting authlib-injector servers from an upstream/main config object.

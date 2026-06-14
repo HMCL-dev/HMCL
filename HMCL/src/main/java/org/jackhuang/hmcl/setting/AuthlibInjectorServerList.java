@@ -19,7 +19,6 @@ package org.jackhuang.hmcl.setting;
 
 import com.google.gson.annotations.JsonAdapter;
 import com.google.gson.annotations.SerializedName;
-import javafx.beans.Observable;
 import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.collections.FXCollections;
@@ -122,7 +121,7 @@ public final class AuthlibInjectorServerList extends ObservableSetting implement
     /// Authlib-injector authentication servers available for account login.
     @SerializedName("servers")
     private final ObservableList<AuthlibInjectorServer> servers =
-            FXCollections.observableArrayList(server -> new Observable[]{server});
+            FXCollections.observableArrayList();
 
     /// Returns authlib-injector authentication servers available for account login.
     public ObservableList<AuthlibInjectorServer> getServers() {

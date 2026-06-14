@@ -19,6 +19,8 @@ package org.jackhuang.hmcl.setting;
 
 import com.google.gson.JsonParseException;
 import com.google.gson.JsonObject;
+import javafx.beans.InvalidationListener;
+import javafx.collections.ListChangeListener;
 import javafx.collections.ObservableList;
 import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.auth.authlibinjector.AuthlibInjectorServer;
@@ -34,6 +36,7 @@ import org.jetbrains.annotations.UnknownNullability;
 
 import java.io.IOException;
 import java.nio.file.*;
+import java.util.IdentityHashMap;
 import java.util.Locale;
 import java.util.Map;
 
@@ -62,6 +65,10 @@ public final class SettingsManager {
     /// The current per-workspace authlib-injector server list path.
     private static final Path AUTHLIB_INJECTOR_SERVERS_LOCATION =
             Metadata.HMCL_LOCAL_HOME.resolve("authlib-injector-servers.json");
+
+    /// The current per-workspace authlib-injector server metadata cache path.
+    private static final Path AUTHLIB_INJECTOR_SERVER_METADATA_CACHE_LOCATION =
+            Metadata.HMCL_LOCAL_HOME.resolve("cache").resolve("authlib-injector-server-metadata.json");
 
     /// The current per-workspace game directories path.
     private static final Path LOCAL_GAME_DIRECTORIES_LOCATION =
@@ -139,6 +146,15 @@ public final class SettingsManager {
             AuthlibInjectorServerList.CURRENT_SCHEMA,
             AuthlibInjectorServerList::createDefault);
 
+    /// The authlib-injector server metadata cache file helper.
+    private static final JsonSettingFile<AuthlibInjectorServerMetadataCache> AUTHLIB_INJECTOR_SERVER_METADATA_CACHE_FILE =
+            new JsonSettingFile<>(
+                    AUTHLIB_INJECTOR_SERVER_METADATA_CACHE_LOCATION,
+                    "authlib-injector server metadata cache",
+                    AuthlibInjectorServerMetadataCache.class,
+                    AuthlibInjectorServerMetadataCache.CURRENT_SCHEMA,
+                    AuthlibInjectorServerMetadataCache::new);
+
     /// The user settings file helper.
     private static final JsonSettingFile<UserSettings> USER_SETTINGS_FILE = new JsonSettingFile<>(
             USER_SETTINGS_LOCATION,
@@ -178,6 +194,13 @@ public final class SettingsManager {
 
     /// The loaded detached authlib-injector server list store.
     private static @UnknownNullability AuthlibInjectorServerList authlibInjectorServers;
+
+    /// The loaded authlib-injector server metadata cache.
+    private static @UnknownNullability AuthlibInjectorServerMetadataCache authlibInjectorServerMetadataCache;
+
+    /// Metadata cache listeners installed on loaded authlib-injector servers.
+    private static final Map<AuthlibInjectorServer, InvalidationListener> authlibInjectorServerMetadataListeners =
+            new IdentityHashMap<>();
 
     /// The loaded detached account storage store.
     private static @UnknownNullability AccountStorages gameAccounts;
@@ -259,6 +282,14 @@ public final class SettingsManager {
             throw new IllegalStateException("Authlib-injector servers haven't been loaded");
         }
         return authlibInjectorServers;
+    }
+
+    /// Returns the loaded per-workspace authlib-injector server metadata cache.
+    private static AuthlibInjectorServerMetadataCache authlibInjectorServerMetadataCache() {
+        if (authlibInjectorServerMetadataCache == null) {
+            throw new IllegalStateException("Authlib-injector server metadata cache hasn't been loaded");
+        }
+        return authlibInjectorServerMetadataCache;
     }
 
     /// Returns the current per-workspace config directory path.
@@ -538,6 +569,7 @@ public final class SettingsManager {
         launcherStateAccess = loadLauncherState(migratedDetachedSettings.launcherState());
         authlibInjectorServersAccess =
                 loadAuthlibInjectorServers(migratedDetachedSettings.authlibInjectorServers());
+        loadAuthlibInjectorServerMetadataCache();
         userGameAccountsAccess = loadUserGameAccounts();
         gameAccountsAccess = loadGameAccounts(migratedDetachedSettings.accountStorages());
 
@@ -769,6 +801,79 @@ public final class SettingsManager {
         }
 
         return result.access();
+    }
+
+    /// Loads authlib-injector server metadata cache and installs the save listener.
+    private static void loadAuthlibInjectorServerMetadataCache() {
+        if (authlibInjectorServerMetadataCache != null) {
+            throw new IllegalStateException("Authlib-injector server metadata cache is already loaded");
+        }
+
+        try {
+            JsonSettingFile.LoadResult<AuthlibInjectorServerMetadataCache> result =
+                    AUTHLIB_INJECTOR_SERVER_METADATA_CACHE_FILE.load(null);
+            authlibInjectorServerMetadataCache = result.value();
+        } catch (IOException e) {
+            LOG.warning("Failed to load authlib-injector server metadata cache", e);
+            authlibInjectorServerMetadataCache = new AuthlibInjectorServerMetadataCache();
+            authlibInjectorServerMetadataCache.setSavable(false);
+        }
+
+        if (authlibInjectorServerMetadataCache.isSavable()) {
+            try {
+                Files.createDirectories(AUTHLIB_INJECTOR_SERVER_METADATA_CACHE_LOCATION.getParent());
+                AUTHLIB_INJECTOR_SERVER_METADATA_CACHE_FILE.installAutoSave(authlibInjectorServerMetadataCache);
+            } catch (IOException e) {
+                LOG.warning("Failed to prepare authlib-injector server metadata cache directory", e);
+                authlibInjectorServerMetadataCache.setSavable(false);
+            }
+        }
+
+        bindAuthlibInjectorServerMetadataCache();
+    }
+
+    /// Restores cached metadata for loaded servers and keeps the cache in sync with metadata refreshes.
+    private static void bindAuthlibInjectorServerMetadataCache() {
+        for (AuthlibInjectorServer server : authlibInjectorServers().getServers()) {
+            bindAuthlibInjectorServerMetadataCache(server, false);
+        }
+
+        authlibInjectorServers().getServers().addListener((ListChangeListener<AuthlibInjectorServer>) change -> {
+            while (change.next()) {
+                for (AuthlibInjectorServer server : change.getRemoved()) {
+                    unbindAuthlibInjectorServerMetadataCache(server);
+                }
+                for (AuthlibInjectorServer server : change.getAddedSubList()) {
+                    bindAuthlibInjectorServerMetadataCache(server, true);
+                }
+            }
+        });
+    }
+
+    /// Connects one server to the metadata cache.
+    private static void bindAuthlibInjectorServerMetadataCache(
+            AuthlibInjectorServer server,
+            boolean storeExistingMetadata) {
+        if (authlibInjectorServerMetadataListeners.containsKey(server)) {
+            return;
+        }
+
+        AuthlibInjectorServerMetadataCache cache = authlibInjectorServerMetadataCache();
+        cache.initialize(server, storeExistingMetadata);
+
+        InvalidationListener listener = ignored -> cache.store(server);
+        server.addListener(listener);
+        authlibInjectorServerMetadataListeners.put(server, listener);
+    }
+
+    /// Disconnects one server from the metadata cache and removes its cached metadata.
+    private static void unbindAuthlibInjectorServerMetadataCache(AuthlibInjectorServer server) {
+        InvalidationListener listener = authlibInjectorServerMetadataListeners.remove(server);
+        if (listener != null) {
+            server.removeListener(listener);
+        }
+
+        authlibInjectorServerMetadataCache().remove(server);
     }
 
     /// Loads shared account storages and installs the save listener.
