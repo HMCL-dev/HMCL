@@ -477,17 +477,23 @@
     -fx-fill: -monet-on-primary-container;
 }
 
-.simple-ui-menu-transparent {
+.simple-ui-menu {
+    -fx-background-color: -monet-surface-container;
+    -fx-background-radius: 8;
+    -fx-padding: 8;
+}
+
+.simple-ui-menu-translucent {
     -fx-background-color: rgba(255, 255, 255, 0.25);
     -fx-background-radius: 8;
     -fx-padding: 8;
     
 }
 
-.simple-ui-menu {
-    -fx-background-color: -monet-surface-container;
+.simple-ui-menu-transparent {
     -fx-background-radius: 8;
     -fx-padding: 8;
+    
 }
 
 /*******************************************************************************

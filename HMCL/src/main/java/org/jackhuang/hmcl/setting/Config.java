@@ -351,6 +351,21 @@ public final class Config extends ObservableSetting {
         simpleUI.set(v);
     }
 
+    @SerializedName("simpleUITranslucent")
+    private final BooleanProperty simpleUITranslucent = new SimpleBooleanProperty(false);
+
+    public BooleanProperty simpleUITranslucentProperty() {
+        return simpleUITranslucent;
+    }
+
+    public boolean isSimpleUITranslucent() {
+        return simpleUITranslucent.get();
+    }
+
+    public void setSimpleUITranslucent(boolean v) {
+        simpleUITranslucent.set(v);
+    }
+
     @SerializedName("simpleUITransparent")
     private final BooleanProperty simpleUITransparent = new SimpleBooleanProperty(false);
 

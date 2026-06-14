@@ -216,11 +216,15 @@ public final class MainPage extends StackPane implements DecoratorPage {
                 Region.USE_PREF_SIZE
             );
 
-            if (ConfigHolder.config().isSimpleUITransparent()) {
-                bottomMenuPane.getStyleClass().add("simple-ui-menu-transparent");
+            if (ConfigHolder.config().isSimpleUITranslucent()) {
+                bottomMenuPane.getStyleClass().add("simple-ui-menu-translucent");
             } else {
-                bottomMenuPane.getStyleClass().add("simple-ui-menu");
-            }
+                if (ConfigHolder.config().isSimpleUITransparent()) {
+                    bottomMenuPane.getStyleClass().add("simple-ui-menu-transparent");
+                } else {
+                    bottomMenuPane.getStyleClass().add("simple-ui-menu");
+                }
+            } 
 
             StackPane.setAlignment(bottomMenuPane, Pos.BOTTOM_LEFT);
 

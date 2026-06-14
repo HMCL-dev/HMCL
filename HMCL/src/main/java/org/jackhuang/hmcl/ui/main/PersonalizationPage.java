@@ -111,15 +111,33 @@ public class PersonalizationPage extends StackPane {
             simpleUIButton.setTitle(i18n("settings.launcher.simple_ui"));
             simpleUIButton.setSubtitle(i18n("settings.take_effect_after_restart"));
 
+            LineToggleButton simpleUITranslucentButton = new LineToggleButton();
+            themeList.getContent().add(simpleUITranslucentButton);
+            simpleUITranslucentButton.selectedProperty().bindBidirectional(config().simpleUITranslucentProperty());
+            simpleUITranslucentButton.setTitle(i18n("settings.launcher.simple_ui_translucent"));
+            simpleUITranslucentButton.setSubtitle(i18n("settings.take_effect_after_restart"));
+
             LineToggleButton simpleUITransparentButton = new LineToggleButton();
             themeList.getContent().add(simpleUITransparentButton);
             simpleUITransparentButton.selectedProperty().bindBidirectional(config().simpleUITransparentProperty());
             simpleUITransparentButton.setTitle(i18n("settings.launcher.simple_ui_transparent"));
             simpleUITransparentButton.setSubtitle(i18n("settings.take_effect_after_restart"));
 
-            simpleUITransparentButton.disableProperty().bind(
-                    simpleUIButton.selectedProperty().not()
+            simpleUITranslucentButton.disableProperty().bind(
+                simpleUIButton.selectedProperty().not()
             );
+
+            simpleUITransparentButton.disableProperty().bind(
+                simpleUIButton.selectedProperty().not()
+            );
+
+            simpleUITranslucentButton.selectedProperty().addListener((obs, oldV, newV) -> {
+                if (newV) config().setSimpleUITransparent(false);
+            });
+
+            simpleUITransparentButton.selectedProperty().addListener((obs, oldV, newV) -> {
+                if (newV) config().setSimpleUITranslucent(false);
+            });
         }
         {
             LineToggleButton titleTransparentButton = new LineToggleButton();
