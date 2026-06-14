@@ -59,6 +59,7 @@ import java.util.stream.Stream;
 
 import static org.jackhuang.hmcl.ui.FXUtils.onEscPressed;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
+import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 public class DownloadPage extends Control implements DecoratorPage {
 
@@ -625,6 +626,8 @@ public class DownloadPage extends Control implements DecoratorPage {
                         if (exception == null && StringUtils.isNotBlank(result)) {
                             button.setOnAction(__ -> Controllers.openUriInBrowser(result));
                             button.setDisable(false);
+                        } else {
+                            LOG.warning("Failed to load addon version page url", exception);
                         }
                     })
                     .start();
