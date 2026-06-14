@@ -17,11 +17,11 @@
  */
 package org.jackhuang.hmcl.ui.versions;
 
-import org.jackhuang.hmcl.game.LocalizedRemoteModRepository;
-import org.jackhuang.hmcl.mod.RemoteModRepository;
-import org.jackhuang.hmcl.mod.curse.CurseAddon;
-import org.jackhuang.hmcl.mod.curse.CurseForgeRemoteModRepository;
-import org.jackhuang.hmcl.mod.modrinth.ModrinthRemoteModRepository;
+import org.jackhuang.hmcl.game.LocalizedRemoteAddonRepository;
+import org.jackhuang.hmcl.addon.RemoteAddonRepository;
+import org.jackhuang.hmcl.addon.curse.CurseAddon;
+import org.jackhuang.hmcl.addon.curse.CurseForgeRemoteAddonRepository;
+import org.jackhuang.hmcl.addon.modrinth.ModrinthRemoteAddonRepository;
 import org.jackhuang.hmcl.util.i18n.I18n;
 
 import java.util.MissingResourceException;
@@ -32,47 +32,47 @@ import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 public final class HMCLLocalizedDownloadListPage extends DownloadListPage {
     public static DownloadListPage ofMod(DownloadPage.DownloadCallback callback, boolean versionSelection) {
-        return new HMCLLocalizedDownloadListPage(callback, versionSelection, RemoteModRepository.Type.MOD, CurseForgeRemoteModRepository.MODS, ModrinthRemoteModRepository.MODS);
+        return new HMCLLocalizedDownloadListPage(callback, versionSelection, RemoteAddonRepository.Type.MOD, CurseForgeRemoteAddonRepository.MODS, ModrinthRemoteAddonRepository.MODS);
     }
 
     public static DownloadListPage ofCurseForgeMod(DownloadPage.DownloadCallback callback, boolean versionSelection) {
-        return new HMCLLocalizedDownloadListPage(callback, versionSelection, RemoteModRepository.Type.MOD, CurseForgeRemoteModRepository.MODS, null);
+        return new HMCLLocalizedDownloadListPage(callback, versionSelection, RemoteAddonRepository.Type.MOD, CurseForgeRemoteAddonRepository.MODS, null);
     }
 
     public static DownloadListPage ofModrinthMod(DownloadPage.DownloadCallback callback, boolean versionSelection) {
-        return new HMCLLocalizedDownloadListPage(callback, versionSelection, RemoteModRepository.Type.MOD, null, ModrinthRemoteModRepository.MODS);
+        return new HMCLLocalizedDownloadListPage(callback, versionSelection, RemoteAddonRepository.Type.MOD, null, ModrinthRemoteAddonRepository.MODS);
     }
 
     public static DownloadListPage ofModPack(DownloadPage.DownloadCallback callback, boolean versionSelection) {
-        return new HMCLLocalizedDownloadListPage(callback, versionSelection, RemoteModRepository.Type.MODPACK, CurseForgeRemoteModRepository.MODPACKS, ModrinthRemoteModRepository.MODPACKS);
+        return new HMCLLocalizedDownloadListPage(callback, versionSelection, RemoteAddonRepository.Type.MODPACK, CurseForgeRemoteAddonRepository.MODPACKS, ModrinthRemoteAddonRepository.MODPACKS);
     }
 
     public static DownloadListPage ofResourcePack(DownloadPage.DownloadCallback callback, boolean versionSelection) {
-        return new HMCLLocalizedDownloadListPage(callback, versionSelection, RemoteModRepository.Type.RESOURCE_PACK, CurseForgeRemoteModRepository.RESOURCE_PACKS, ModrinthRemoteModRepository.RESOURCE_PACKS);
+        return new HMCLLocalizedDownloadListPage(callback, versionSelection, RemoteAddonRepository.Type.RESOURCE_PACK, CurseForgeRemoteAddonRepository.RESOURCE_PACKS, ModrinthRemoteAddonRepository.RESOURCE_PACKS);
     }
 
     public static DownloadListPage ofCurseForgeResourcePack(DownloadPage.DownloadCallback callback, boolean versionSelection) {
-        return new HMCLLocalizedDownloadListPage(callback, versionSelection, RemoteModRepository.Type.RESOURCE_PACK, CurseForgeRemoteModRepository.RESOURCE_PACKS, null);
+        return new HMCLLocalizedDownloadListPage(callback, versionSelection, RemoteAddonRepository.Type.RESOURCE_PACK, CurseForgeRemoteAddonRepository.RESOURCE_PACKS, null);
     }
 
     public static DownloadListPage ofModrinthResourcePack(DownloadPage.DownloadCallback callback, boolean versionSelection) {
-        return new HMCLLocalizedDownloadListPage(callback, versionSelection, RemoteModRepository.Type.RESOURCE_PACK, null, ModrinthRemoteModRepository.RESOURCE_PACKS);
+        return new HMCLLocalizedDownloadListPage(callback, versionSelection, RemoteAddonRepository.Type.RESOURCE_PACK, null, ModrinthRemoteAddonRepository.RESOURCE_PACKS);
     }
 
     public static DownloadListPage ofShaderPack(DownloadPage.DownloadCallback callback, boolean versionSelection) {
-        var page = new HMCLLocalizedDownloadListPage(callback, versionSelection, RemoteModRepository.Type.SHADER_PACK, CurseForgeRemoteModRepository.SHADERS, ModrinthRemoteModRepository.SHADER_PACKS);
+        var page = new HMCLLocalizedDownloadListPage(callback, versionSelection, RemoteAddonRepository.Type.SHADER_PACK, CurseForgeRemoteAddonRepository.SHADERS, ModrinthRemoteAddonRepository.SHADER_PACKS);
         page.supportChinese.set(false);
         return page;
     }
 
-    private HMCLLocalizedDownloadListPage(DownloadPage.DownloadCallback callback, boolean versionSelection, RemoteModRepository.Type type, CurseForgeRemoteModRepository curseForge, ModrinthRemoteModRepository modrinth) {
+    private HMCLLocalizedDownloadListPage(DownloadPage.DownloadCallback callback, boolean versionSelection, RemoteAddonRepository.Type type, CurseForgeRemoteAddonRepository curseForge, ModrinthRemoteAddonRepository modrinth) {
         super(null, callback, versionSelection);
 
         repository = new Repository(type, curseForge, modrinth);
 
         supportChinese.set(true);
 
-        boolean supportedCurseForge = CurseForgeRemoteModRepository.isAvailable() && curseForge != null;
+        boolean supportedCurseForge = CurseForgeRemoteAddonRepository.isAvailable() && curseForge != null;
 
         downloadSources.setAll("mods.modrinth");
         if (supportedCurseForge) {
@@ -98,19 +98,19 @@ public final class HMCLLocalizedDownloadListPage extends DownloadListPage {
         }
     }
 
-    private class Repository extends LocalizedRemoteModRepository {
-        private final RemoteModRepository.Type type;
-        private final CurseForgeRemoteModRepository curseForge;
-        private final ModrinthRemoteModRepository modrinth;
+    private class Repository extends LocalizedRemoteAddonRepository {
+        private final RemoteAddonRepository.Type      type;
+        private final CurseForgeRemoteAddonRepository curseForge;
+        private final ModrinthRemoteAddonRepository   modrinth;
 
-        public Repository(Type type, CurseForgeRemoteModRepository curseForge, ModrinthRemoteModRepository modrinth) {
+        public Repository(Type type, CurseForgeRemoteAddonRepository curseForge, ModrinthRemoteAddonRepository modrinth) {
             this.type = type;
             this.curseForge = curseForge;
             this.modrinth = modrinth;
         }
 
         @Override
-        protected RemoteModRepository getBackedRemoteModRepository() {
+        protected RemoteAddonRepository getBackedRemoteModRepository() {
             if ("mods.modrinth".equals(downloadSource.get())) {
                 return modrinth;
             } else {

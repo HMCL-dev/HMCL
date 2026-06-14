@@ -19,8 +19,8 @@ package org.jackhuang.hmcl.ui.download;
 
 import javafx.application.Platform;
 import org.jackhuang.hmcl.game.HMCLGameRepository;
-import org.jackhuang.hmcl.mod.Modpack;
-import org.jackhuang.hmcl.mod.server.ServerModpackManifest;
+import org.jackhuang.hmcl.addon.modpack.Modpack;
+import org.jackhuang.hmcl.addon.server.ServerModpackManifest;
 import org.jackhuang.hmcl.setting.Profile;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.WebPage;

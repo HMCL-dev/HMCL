@@ -20,7 +20,7 @@ package org.jackhuang.hmcl.ui.versions;
 import javafx.beans.property.*;
 import javafx.scene.image.Image;
 import org.jackhuang.hmcl.download.LibraryAnalyzer;
-import org.jackhuang.hmcl.mod.ModpackConfiguration;
+import org.jackhuang.hmcl.addon.modpack.ModpackConfiguration;
 import org.jackhuang.hmcl.setting.Profile;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.util.i18n.I18n;

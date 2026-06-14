@@ -28,7 +28,7 @@ import org.jackhuang.hmcl.download.game.GameAssetDownloadTask;
 import org.jackhuang.hmcl.download.game.GameDownloadTask;
 import org.jackhuang.hmcl.download.game.GameLibrariesTask;
 import org.jackhuang.hmcl.game.*;
-import org.jackhuang.hmcl.mod.RemoteMod;
+import org.jackhuang.hmcl.addon.RemoteAddon;
 import org.jackhuang.hmcl.setting.*;
 import org.jackhuang.hmcl.task.FileDownloadTask;
 import org.jackhuang.hmcl.task.Schedulers;
@@ -76,7 +76,7 @@ public final class Versions {
         }
     }
 
-    public static void downloadModpackImpl(DownloadProvider downloadProvider, Profile profile, String version, RemoteMod mod, RemoteMod.Version file) {
+    public static void downloadModpackImpl(DownloadProvider downloadProvider, Profile profile, String version, RemoteAddon mod, RemoteAddon.Version file) {
         Path modpack;
         List<URI> downloadURLs;
         try {

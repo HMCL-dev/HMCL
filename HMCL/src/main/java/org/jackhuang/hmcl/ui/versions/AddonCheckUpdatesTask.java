@@ -18,8 +18,8 @@
 package org.jackhuang.hmcl.ui.versions;
 
 import org.jackhuang.hmcl.download.DownloadProvider;
-import org.jackhuang.hmcl.mod.LocalAddonFile;
-import org.jackhuang.hmcl.mod.RemoteMod;
+import org.jackhuang.hmcl.addon.LocalAddonFile;
+import org.jackhuang.hmcl.addon.RemoteAddon;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
 
@@ -39,7 +39,7 @@ public class AddonCheckUpdatesTask<T extends LocalAddonFile> extends Task<List<L
         dependents = addons.stream().map(addon ->
                 Task.supplyAsync(Schedulers.io(), () -> {
                     LocalAddonFile.AddonUpdate candidate = null;
-                    for (RemoteMod.Type type : RemoteMod.Type.values()) {
+                    for (RemoteAddon.Type type : RemoteAddon.Type.values()) {
                         LocalAddonFile.AddonUpdate update = null;
                         try {
                             update = addon.checkUpdates(downloadProvider, gameVersion, type);

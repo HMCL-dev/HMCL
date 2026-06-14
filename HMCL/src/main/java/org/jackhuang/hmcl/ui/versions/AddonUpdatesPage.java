@@ -29,9 +29,9 @@ import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
-import org.jackhuang.hmcl.mod.LocalAddonFile;
-import org.jackhuang.hmcl.mod.LocalAddonManager;
-import org.jackhuang.hmcl.mod.RemoteMod;
+import org.jackhuang.hmcl.addon.LocalAddonFile;
+import org.jackhuang.hmcl.addon.LocalAddonManager;
+import org.jackhuang.hmcl.addon.RemoteAddon;
 import org.jackhuang.hmcl.task.FileDownloadTask;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
@@ -290,9 +290,9 @@ public class AddonUpdatesPage<F extends LocalAddonFile> extends BorderPane imple
 
             this.dependents = new ArrayList<>();
             for (LocalAddonFile.AddonUpdate addon : addons) {
-                LocalAddonFile local = addon.localAddonFile();
-                RemoteMod.Version remote = addon.targetVersion();
-                boolean isDisabled = local.isDisabled();
+                LocalAddonFile      local      = addon.localAddonFile();
+                RemoteAddon.Version remote     = addon.targetVersion();
+                boolean             isDisabled = local.isDisabled();
                 String originalFileName = local.getFile().getFileName().toString();
 
                 dependents.add(Task

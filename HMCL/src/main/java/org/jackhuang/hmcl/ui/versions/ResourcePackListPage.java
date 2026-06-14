@@ -37,11 +37,11 @@ import javafx.scene.layout.StackPane;
 import javafx.stage.FileChooser;
 import javafx.stage.Stage;
 import javafx.util.Duration;
-import org.jackhuang.hmcl.mod.*;
-import org.jackhuang.hmcl.mod.curse.CurseForgeRemoteModRepository;
-import org.jackhuang.hmcl.mod.modrinth.ModrinthRemoteModRepository;
-import org.jackhuang.hmcl.resourcepack.ResourcePackFile;
-import org.jackhuang.hmcl.resourcepack.ResourcePackManager;
+import org.jackhuang.hmcl.addon.*;
+import org.jackhuang.hmcl.addon.curse.CurseForgeRemoteAddonRepository;
+import org.jackhuang.hmcl.addon.modrinth.ModrinthRemoteAddonRepository;
+import org.jackhuang.hmcl.addon.resourcepack.ResourcePackFile;
+import org.jackhuang.hmcl.addon.resourcepack.ResourcePackManager;
 import org.jackhuang.hmcl.setting.ConfigHolder;
 import org.jackhuang.hmcl.setting.DownloadProviders;
 import org.jackhuang.hmcl.setting.Profile;
@@ -601,24 +601,24 @@ public final class ResourcePackListPage extends ListPageBase<ResourcePackListPag
 
             setBody(descriptionPane);
 
-            for (Pair<String, ? extends RemoteModRepository> item : Arrays.asList(
-                    pair("mods.curseforge", CurseForgeRemoteModRepository.RESOURCE_PACKS),
-                    pair("mods.modrinth", ModrinthRemoteModRepository.RESOURCE_PACKS)
+            for (Pair<String, ? extends RemoteAddonRepository> item : Arrays.asList(
+                    pair("mods.curseforge", CurseForgeRemoteAddonRepository.RESOURCE_PACKS),
+                    pair("mods.modrinth", ModrinthRemoteAddonRepository.RESOURCE_PACKS)
             )) {
-                RemoteModRepository repository = item.getValue();
+                RemoteAddonRepository repository = item.getValue();
                 JFXHyperlink button = new JFXHyperlink(i18n(item.getKey()));
                 Task.runAsync(() -> {
-                    Optional<RemoteMod.Version> versionOptional = repository.getRemoteVersionByLocalFile(packInfoObject.getFile().getFile());
+                    Optional<RemoteAddon.Version> versionOptional = repository.getRemoteVersionByLocalFile(packInfoObject.getFile().getFile());
                     if (versionOptional.isPresent()) {
-                        RemoteMod remoteMod = repository.getModById(DownloadProviders.getDownloadProvider(), versionOptional.get().getModid());
+                        RemoteAddon remoteAddon = repository.getModById(DownloadProviders.getDownloadProvider(), versionOptional.get().getModid());
                         FXUtils.runInFX(() -> {
                             button.setOnAction(e -> {
                                 fireEvent(new DialogCloseEvent());
                                 Controllers.navigate(new DownloadPage(
-                                        repository instanceof CurseForgeRemoteModRepository
+                                        repository instanceof CurseForgeRemoteAddonRepository
                                                 ? HMCLLocalizedDownloadListPage.ofCurseForgeResourcePack(null, false)
                                                 : HMCLLocalizedDownloadListPage.ofModrinthResourcePack(null, false),
-                                        remoteMod,
+                                        remoteAddon,
                                         new Profile.ProfileVersion(page.profile, page.instanceId),
                                         org.jackhuang.hmcl.ui.download.DownloadPage.FOR_RESOURCE_PACK
                                 ));

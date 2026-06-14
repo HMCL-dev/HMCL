@@ -37,12 +37,11 @@ import javafx.scene.layout.Priority;
 import javafx.scene.layout.StackPane;
 import javafx.stage.Stage;
 import javafx.util.Duration;
-import org.jackhuang.hmcl.mod.LocalModFile;
-import org.jackhuang.hmcl.mod.ModLoaderType;
-import org.jackhuang.hmcl.mod.RemoteMod;
-import org.jackhuang.hmcl.mod.RemoteModRepository;
-import org.jackhuang.hmcl.mod.curse.CurseForgeRemoteModRepository;
-import org.jackhuang.hmcl.mod.modrinth.ModrinthRemoteModRepository;
+import org.jackhuang.hmcl.addon.*;
+import org.jackhuang.hmcl.addon.curse.CurseForgeRemoteAddonRepository;
+import org.jackhuang.hmcl.addon.mod.LocalModFile;
+import org.jackhuang.hmcl.addon.mod.ModLoaderType;
+import org.jackhuang.hmcl.addon.modrinth.ModrinthRemoteAddonRepository;
 import org.jackhuang.hmcl.setting.DownloadProviders;
 import org.jackhuang.hmcl.setting.Profile;
 import org.jackhuang.hmcl.setting.VersionIconType;
@@ -467,16 +466,16 @@ final class ModListPageSkin extends SkinBase<ModListPage> {
             setBody(descriptionPane);
 
             if (StringUtils.isNotBlank(modInfo.getModInfo().getId())) {
-                for (Pair<String, ? extends RemoteModRepository> item : Arrays.asList(
-                        pair("mods.curseforge", CurseForgeRemoteModRepository.MODS),
-                        pair("mods.modrinth", ModrinthRemoteModRepository.MODS)
+                for (Pair<String, ? extends RemoteAddonRepository> item : Arrays.asList(
+                        pair("mods.curseforge", CurseForgeRemoteAddonRepository.MODS),
+                        pair("mods.modrinth", ModrinthRemoteAddonRepository.MODS)
                 )) {
-                    RemoteModRepository repository = item.getValue();
+                    RemoteAddonRepository repository = item.getValue();
                     JFXHyperlink button = new JFXHyperlink(i18n(item.getKey()));
                     Task.runAsync(() -> {
-                        Optional<RemoteMod.Version> versionOptional = repository.getRemoteVersionByLocalFile(modInfo.getModInfo().getFile());
+                        Optional<RemoteAddon.Version> versionOptional = repository.getRemoteVersionByLocalFile(modInfo.getModInfo().getFile());
                         if (versionOptional.isPresent()) {
-                            RemoteMod remoteMod = repository.getModById(DownloadProviders.getDownloadProvider(), versionOptional.get().getModid());
+                            RemoteAddon remoteAddon = repository.getModById(DownloadProviders.getDownloadProvider(), versionOptional.get().getModid());
                             FXUtils.runInFX(() -> {
                                 for (ModLoaderType modLoaderType : versionOptional.get().getLoaders()) {
                                     String loaderName = switch (modLoaderType) {
@@ -501,8 +500,8 @@ final class ModListPageSkin extends SkinBase<ModListPage> {
                                 button.setOnAction(e -> {
                                     fireEvent(new DialogCloseEvent());
                                     Controllers.navigate(new DownloadPage(
-                                            repository instanceof CurseForgeRemoteModRepository ? HMCLLocalizedDownloadListPage.ofCurseForgeMod(null, false) : HMCLLocalizedDownloadListPage.ofModrinthMod(null, false),
-                                            remoteMod,
+                                            repository instanceof CurseForgeRemoteAddonRepository ? HMCLLocalizedDownloadListPage.ofCurseForgeMod(null, false) : HMCLLocalizedDownloadListPage.ofModrinthMod(null, false),
+                                            remoteAddon,
                                             new Profile.ProfileVersion(ModListPageSkin.this.getSkinnable().getProfile(), ModListPageSkin.this.getSkinnable().getInstanceId()),
                                             org.jackhuang.hmcl.ui.download.DownloadPage.FOR_MOD
                                     ));

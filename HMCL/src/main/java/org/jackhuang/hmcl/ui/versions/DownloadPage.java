@@ -34,9 +34,9 @@ import org.jackhuang.hmcl.download.DownloadProvider;
 import org.jackhuang.hmcl.download.LibraryAnalyzer;
 import org.jackhuang.hmcl.game.HMCLGameRepository;
 import org.jackhuang.hmcl.game.Version;
-import org.jackhuang.hmcl.mod.ModLoaderType;
-import org.jackhuang.hmcl.mod.RemoteMod;
-import org.jackhuang.hmcl.mod.RemoteModRepository;
+import org.jackhuang.hmcl.addon.mod.ModLoaderType;
+import org.jackhuang.hmcl.addon.RemoteAddon;
+import org.jackhuang.hmcl.addon.RemoteAddonRepository;
 import org.jackhuang.hmcl.setting.Profile;
 import org.jackhuang.hmcl.task.FileDownloadTask;
 import org.jackhuang.hmcl.task.Schedulers;
@@ -66,18 +66,18 @@ public class DownloadPage extends Control implements DecoratorPage {
     private final BooleanProperty loaded = new SimpleBooleanProperty(false);
     private final BooleanProperty loading = new SimpleBooleanProperty(false);
     private final BooleanProperty failed = new SimpleBooleanProperty(false);
-    private final RemoteModRepository repository;
-    private final ModTranslations translations;
-    private final RemoteMod addon;
+    private final RemoteAddonRepository repository;
+    private final ModTranslations     translations;
+    private final RemoteAddon         addon;
     private final ModTranslations.Mod mod;
     private final Profile.ProfileVersion version;
     private final DownloadCallback callback;
     private final DownloadListPage page;
-    private final RemoteModRepository.Type type;
+    private final RemoteAddonRepository.Type type;
 
-    private SimpleMultimap<String, RemoteMod.Version, List<RemoteMod.Version>> versions;
+    private SimpleMultimap<String, RemoteAddon.Version, List<RemoteAddon.Version>> versions;
 
-    public DownloadPage(DownloadListPage page, RemoteMod addon, Profile.ProfileVersion version, @Nullable DownloadCallback callback) {
+    public DownloadPage(DownloadListPage page, RemoteAddon addon, Profile.ProfileVersion version, @Nullable DownloadCallback callback) {
         this.page = page;
         this.repository = page.repository;
         this.addon = addon;
@@ -96,7 +96,7 @@ public class DownloadPage extends Control implements DecoratorPage {
         setFailed(false);
 
         Task.supplyAsync(() -> {
-            Stream<RemoteMod.Version> versions = addon.getData().loadVersions(repository, page.getDownloadProvider());
+            Stream<RemoteAddon.Version> versions = addon.getData().loadVersions(repository, page.getDownloadProvider());
             return sortVersions(versions);
         }).whenComplete(Schedulers.javafx(), (result, exception) -> {
             if (exception == null) {
@@ -111,8 +111,8 @@ public class DownloadPage extends Control implements DecoratorPage {
         }).start();
     }
 
-    private SimpleMultimap<String, RemoteMod.Version, List<RemoteMod.Version>> sortVersions(Stream<RemoteMod.Version> versions) {
-        SimpleMultimap<String, RemoteMod.Version, List<RemoteMod.Version>> classifiedVersions
+    private SimpleMultimap<String, RemoteAddon.Version, List<RemoteAddon.Version>> sortVersions(Stream<RemoteAddon.Version> versions) {
+        SimpleMultimap<String, RemoteAddon.Version, List<RemoteAddon.Version>> classifiedVersions
                 = new SimpleMultimap<>(HashMap::new, ArrayList::new);
         versions.forEach(version -> {
             for (String gameVersion : version.getGameVersions()) {
@@ -121,13 +121,13 @@ public class DownloadPage extends Control implements DecoratorPage {
         });
 
         for (String gameVersion : classifiedVersions.keys()) {
-            List<RemoteMod.Version> versionList = classifiedVersions.get(gameVersion);
-            versionList.sort(Comparator.comparing(RemoteMod.Version::getDatePublished).reversed());
+            List<RemoteAddon.Version> versionList = classifiedVersions.get(gameVersion);
+            versionList.sort(Comparator.comparing(RemoteAddon.Version::getDatePublished).reversed());
         }
         return classifiedVersions;
     }
 
-    public RemoteMod getAddon() {
+    public RemoteAddon getAddon() {
         return addon;
     }
 
@@ -159,7 +159,7 @@ public class DownloadPage extends Control implements DecoratorPage {
         this.failed.set(failed);
     }
 
-    public void download(RemoteMod mod, RemoteMod.Version file) {
+    public void download(RemoteAddon mod, RemoteAddon.Version file) {
         if (this.callback == null) {
             saveAs(file);
         } else {
@@ -167,7 +167,7 @@ public class DownloadPage extends Control implements DecoratorPage {
         }
     }
 
-    public void saveAs(RemoteMod.Version file) {
+    public void saveAs(RemoteAddon.Version file) {
         String extension = StringUtils.substringAfterLast(file.getFile().getFilename(), '.');
 
         FileChooser fileChooser = new FileChooser();
@@ -278,13 +278,13 @@ public class DownloadPage extends Control implements DecoratorPage {
                         String gameVersion = repository.getGameVersion(game).orElse(null);
 
                         if (gameVersion != null && control.versions.containsKey(gameVersion)) {
-                            List<RemoteMod.Version> modVersions = control.versions.get(gameVersion);
+                            List<RemoteAddon.Version> modVersions = control.versions.get(gameVersion);
                             if (modVersions != null && !modVersions.isEmpty()) {
                                 Set<ModLoaderType> targetLoaders = LibraryAnalyzer.analyze(game, gameVersion).getModLoaders();
 
                                 resolve:
-                                for (RemoteMod.Version modVersion : modVersions) {
-                                    if (getSkinnable().type == RemoteModRepository.Type.MOD) {
+                                for (RemoteAddon.Version modVersion : modVersions) {
+                                    if (getSkinnable().type == RemoteAddonRepository.Type.MOD) {
                                         for (ModLoaderType loader : modVersion.getLoaders()) {
                                             if (targetLoaders.contains(loader)) {
                                                 list.getContent().addAll(
@@ -311,9 +311,9 @@ public class DownloadPage extends Control implements DecoratorPage {
                             var sublist = new ComponentSublist(() -> {
                                 ArrayList<ModItem> items = new ArrayList<>();
                                 for (String gv : target) {
-                                    List<RemoteMod.Version> versions = control.versions.get(gv);
+                                    List<RemoteAddon.Version> versions = control.versions.get(gv);
                                     if (versions != null) {
-                                        for (RemoteMod.Version v : versions) {
+                                        for (RemoteAddon.Version v : versions) {
                                             items.add(new ModItem(control.addon, v, control));
                                         }
                                     }
@@ -364,17 +364,17 @@ public class DownloadPage extends Control implements DecoratorPage {
     }
 
     private static final class DependencyModItem extends LineButton {
-        public static final EnumMap<RemoteMod.DependencyType, String> I18N_KEY = new EnumMap<>(Lang.mapOf(
-                Pair.pair(RemoteMod.DependencyType.EMBEDDED, "mods.dependency.embedded"),
-                Pair.pair(RemoteMod.DependencyType.OPTIONAL, "mods.dependency.optional"),
-                Pair.pair(RemoteMod.DependencyType.REQUIRED, "mods.dependency.required"),
-                Pair.pair(RemoteMod.DependencyType.TOOL, "mods.dependency.tool"),
-                Pair.pair(RemoteMod.DependencyType.INCLUDE, "mods.dependency.include"),
-                Pair.pair(RemoteMod.DependencyType.INCOMPATIBLE, "mods.dependency.incompatible"),
-                Pair.pair(RemoteMod.DependencyType.BROKEN, "mods.dependency.broken")
+        public static final EnumMap<RemoteAddon.DependencyType, String> I18N_KEY = new EnumMap<>(Lang.mapOf(
+                Pair.pair(RemoteAddon.DependencyType.EMBEDDED, "mods.dependency.embedded"),
+                Pair.pair(RemoteAddon.DependencyType.OPTIONAL, "mods.dependency.optional"),
+                Pair.pair(RemoteAddon.DependencyType.REQUIRED, "mods.dependency.required"),
+                Pair.pair(RemoteAddon.DependencyType.TOOL, "mods.dependency.tool"),
+                Pair.pair(RemoteAddon.DependencyType.INCLUDE, "mods.dependency.include"),
+                Pair.pair(RemoteAddon.DependencyType.INCOMPATIBLE, "mods.dependency.incompatible"),
+                Pair.pair(RemoteAddon.DependencyType.BROKEN, "mods.dependency.broken")
         ));
 
-        DependencyModItem(DownloadListPage page, RemoteMod addon, Profile.ProfileVersion version) {
+        DependencyModItem(DownloadListPage page, RemoteAddon addon, Profile.ProfileVersion version) {
             HBox pane = new HBox(8);
             pane.setPadding(new Insets(0, 8, 0, 8));
             pane.setAlignment(Pos.CENTER_LEFT);
@@ -385,7 +385,7 @@ public class DownloadPage extends Control implements DecoratorPage {
             pane.getChildren().setAll(imageView, content);
             FXUtils.setLimitHeight(this, 60);
 
-            RemoteModRepository.Type type = addon.getRepositoryType();
+            RemoteAddonRepository.Type type = addon.getRepositoryType();
             DownloadCallback callback = switch (type) {
                 case MOD -> org.jackhuang.hmcl.ui.download.DownloadPage.FOR_MOD;
                 case RESOURCE_PACK -> org.jackhuang.hmcl.ui.download.DownloadPage.FOR_RESOURCE_PACK;
@@ -398,7 +398,7 @@ public class DownloadPage extends Control implements DecoratorPage {
             });
             setNode(IDX_LEADING, pane);
 
-            if (addon != RemoteMod.BROKEN) {
+            if (addon != RemoteAddon.BROKEN) {
                 ModTranslations.Mod mod = ModTranslations.getTranslationsByRepositoryType(type).getModByCurseForgeId(addon.getSlug());
                 content.setTitle(mod != null && I18n.isUseChinese() ? mod.getDisplayName() : addon.getTitle());
                 content.setSubtitle(addon.getDescription());
@@ -419,7 +419,7 @@ public class DownloadPage extends Control implements DecoratorPage {
 
     private static final class ModItem extends StackPane {
 
-        ModItem(RemoteMod mod, RemoteMod.Version dataItem, DownloadPage selfPage) {
+        ModItem(RemoteAddon mod, RemoteAddon.Version dataItem, DownloadPage selfPage) {
             VBox pane = new VBox(8);
             pane.setPadding(new Insets(8, 0, 8, 0));
 
@@ -490,8 +490,8 @@ public class DownloadPage extends Control implements DecoratorPage {
     }
 
     private static final class ModVersion extends JFXDialogLayout {
-        public ModVersion(RemoteMod mod, RemoteMod.Version version, DownloadPage selfPage) {
-            RemoteModRepository.Type type = selfPage.type;
+        public ModVersion(RemoteAddon mod, RemoteAddon.Version version, DownloadPage selfPage) {
+            RemoteAddonRepository.Type type = selfPage.type;
 
             String title = switch (type) {
                 case WORLD -> "world.download.title";
@@ -527,10 +527,10 @@ public class DownloadPage extends Control implements DecoratorPage {
 
             JFXButton downloadButton = null;
             if (selfPage.callback != null) {
-                downloadButton = new JFXButton(type == RemoteModRepository.Type.MODPACK ? i18n("install.modpack") : i18n("mods.install"));
+                downloadButton = new JFXButton(type == RemoteAddonRepository.Type.MODPACK ? i18n("install.modpack") : i18n("mods.install"));
                 downloadButton.getStyleClass().add("dialog-accept");
                 downloadButton.setOnAction(e -> {
-                    if (type == RemoteModRepository.Type.MODPACK || !spinnerPane.isLoading() && spinnerPane.getFailedReason() == null) {
+                    if (type == RemoteAddonRepository.Type.MODPACK || !spinnerPane.isLoading() && spinnerPane.getFailedReason() == null) {
                         fireEvent(new DialogCloseEvent());
                     }
                     selfPage.download(mod, version);
@@ -562,14 +562,14 @@ public class DownloadPage extends Control implements DecoratorPage {
             onEscPressed(this, cancelButton::fire);
         }
 
-        private void loadDependencies(RemoteMod.Version version, DownloadPage selfPage, SpinnerPane spinnerPane, ComponentList dependenciesList) {
+        private void loadDependencies(RemoteAddon.Version version, DownloadPage selfPage, SpinnerPane spinnerPane, ComponentList dependenciesList) {
             spinnerPane.setLoading(true);
             Task.composeAsync(() -> {
                 // TODO: Massive tasks may cause OOM.
-                EnumMap<RemoteMod.DependencyType, List<Node>> dependencies = new EnumMap<>(RemoteMod.DependencyType.class);
-                List<Task<?>> queue = new ArrayList<>(version.getDependencies().size());
-                for (RemoteMod.Dependency dependency : version.getDependencies()) {
-                    if (dependency.getType() == RemoteMod.DependencyType.INCOMPATIBLE || dependency.getType() == RemoteMod.DependencyType.BROKEN) {
+                EnumMap<RemoteAddon.DependencyType, List<Node>> dependencies = new EnumMap<>(RemoteAddon.DependencyType.class);
+                List<Task<?>>                                   queue        = new ArrayList<>(version.getDependencies().size());
+                for (RemoteAddon.Dependency dependency : version.getDependencies()) {
+                    if (dependency.getType() == RemoteAddon.DependencyType.INCOMPATIBLE || dependency.getType() == RemoteAddon.DependencyType.BROKEN) {
                         continue;
                     }
 
@@ -584,7 +584,7 @@ public class DownloadPage extends Control implements DecoratorPage {
                     queue.add(Task.supplyAsync(Schedulers.io(), () -> dependency.load(selfPage.page.getDownloadProvider()))
                             .setSignificance(Task.TaskSignificance.MINOR)
                             .thenAcceptAsync(Schedulers.javafx(), dep -> {
-                                if (dep == RemoteMod.BROKEN) {
+                                if (dep == RemoteAddon.BROKEN) {
                                     return;
                                 }
                                 DependencyModItem dependencyModItem = new DependencyModItem(selfPage.page, dep, selfPage.version);
@@ -611,6 +611,6 @@ public class DownloadPage extends Control implements DecoratorPage {
 
     @FunctionalInterface
     public interface DownloadCallback {
-        void download(DownloadProvider downloadProvider, Profile profile, @Nullable String version, RemoteMod mod, RemoteMod.Version file);
+        void download(DownloadProvider downloadProvider, Profile profile, @Nullable String version, RemoteAddon mod, RemoteAddon.Version file);
     }
 }
