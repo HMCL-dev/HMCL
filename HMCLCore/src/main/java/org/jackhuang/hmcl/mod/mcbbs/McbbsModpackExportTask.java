@@ -41,6 +41,7 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 
 import static org.jackhuang.hmcl.download.LibraryAnalyzer.LibraryType.*;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
@@ -96,7 +97,7 @@ public class McbbsModpackExportTask extends Task<Void> {
                 writer.name("url").value(info.getUrl());
                 writer.name("forceUpdate").value(info.isForceUpdate());
 
-                writer.name("origins").beginArray();
+                writer.name("origin").beginArray();
                 writer.endArray();
 
                 writer.name("addons").beginArray();
@@ -104,86 +105,19 @@ public class McbbsModpackExportTask extends Task<Void> {
                 writer.name("id").value(MINECRAFT.getPatchId());
                 writer.name("version").value(gameVersion);
                 writer.endObject();
-                analyzer.getVersion(FORGE).ifPresent(forgeVersion -> {
-                    try {
+
+                LibraryAnalyzer.LibraryType[] addonTypes = {
+                        FORGE, CLEANROOM, NEO_FORGE, LITELOADER, OPTIFINE, FABRIC, QUILT, LEGACY_FABRIC
+                };
+                for (LibraryAnalyzer.LibraryType type : addonTypes) {
+                    Optional<String> addonVersion = analyzer.getVersion(type);
+                    if (addonVersion.isPresent()) {
                         writer.beginObject();
-                        writer.name("id").value(FORGE.getPatchId());
-                        writer.name("version").value(forgeVersion);
+                        writer.name("id").value(type.getPatchId());
+                        writer.name("version").value(addonVersion.get());
                         writer.endObject();
-                    } catch (IOException e) {
-                        throw new RuntimeException(e);
                     }
-                });
-                analyzer.getVersion(CLEANROOM).ifPresent(cleanroomVersion -> {
-                    try {
-                        writer.beginObject();
-                        writer.name("id").value(CLEANROOM.getPatchId());
-                        writer.name("version").value(cleanroomVersion);
-                        writer.endObject();
-                    } catch (IOException e) {
-                        throw new RuntimeException(e);
-                    }
-                });
-                analyzer.getVersion(NEO_FORGE).ifPresent(neoForgeVersion -> {
-                    try {
-                        writer.beginObject();
-                        writer.name("id").value(NEO_FORGE.getPatchId());
-                        writer.name("version").value(neoForgeVersion);
-                        writer.endObject();
-                    } catch (IOException e) {
-                        throw new RuntimeException(e);
-                    }
-                });
-                analyzer.getVersion(LITELOADER).ifPresent(liteLoaderVersion -> {
-                    try {
-                        writer.beginObject();
-                        writer.name("id").value(LITELOADER.getPatchId());
-                        writer.name("version").value(liteLoaderVersion);
-                        writer.endObject();
-                    } catch (IOException e) {
-                        throw new RuntimeException(e);
-                    }
-                });
-                analyzer.getVersion(OPTIFINE).ifPresent(optifineVersion -> {
-                    try {
-                        writer.beginObject();
-                        writer.name("id").value(OPTIFINE.getPatchId());
-                        writer.name("version").value(optifineVersion);
-                        writer.endObject();
-                    } catch (IOException e) {
-                        throw new RuntimeException(e);
-                    }
-                });
-                analyzer.getVersion(FABRIC).ifPresent(fabricVersion -> {
-                    try {
-                        writer.beginObject();
-                        writer.name("id").value(FABRIC.getPatchId());
-                        writer.name("version").value(fabricVersion);
-                        writer.endObject();
-                    } catch (IOException e) {
-                        throw new RuntimeException(e);
-                    }
-                });
-                analyzer.getVersion(QUILT).ifPresent(quiltVersion -> {
-                    try {
-                        writer.beginObject();
-                        writer.name("id").value(QUILT.getPatchId());
-                        writer.name("version").value(quiltVersion);
-                        writer.endObject();
-                    } catch (IOException e) {
-                        throw new RuntimeException(e);
-                    }
-                });
-                analyzer.getVersion(LEGACY_FABRIC).ifPresent(legacyfabricVersion -> {
-                    try {
-                        writer.beginObject();
-                        writer.name("id").value(LEGACY_FABRIC.getPatchId());
-                        writer.name("version").value(legacyfabricVersion);
-                        writer.endObject();
-                    } catch (IOException e) {
-                        throw new RuntimeException(e);
-                    }
-                });
+                }
                 writer.endArray();
 
                 writer.name("libraries").beginArray();
@@ -194,12 +128,13 @@ public class McbbsModpackExportTask extends Task<Void> {
                     stream.filter(Files::isRegularFile)
                             .forEach(file -> {
                                 try {
-                                    Path relative = runDirectory.relativize(file);
+                                    Path relative = runDirectory.relativize(file).normalize();
                                     String relativePath = relative.toString().replace(File.separatorChar, '/');
                                     if (Modpack.acceptFile(relativePath, blackList, info.getWhitelist())) {
                                         String sha1 = DigestUtils.digestToString("SHA-1", file);
                                         writer.beginObject();
-                                        writer.name("type").value(true);
+                                        writer.name("type").value("addon");
+                                        writer.name("force").value(true);
                                         writer.name("path").value(relativePath);
                                         writer.name("hash").value(sha1);
                                         writer.endObject();
@@ -212,23 +147,25 @@ public class McbbsModpackExportTask extends Task<Void> {
                 writer.endArray();
 
                 writer.name("settings").beginObject();
+                writer.name("install_mods").value(true);
+                writer.name("install_resourcepack").value(true);
                 writer.endObject();
 
                 writer.name("launchInfo").beginObject();
                 writer.name("minMemory").value(info.getMinMemory());
-                writer.name("supportedJavaVersions").beginArray();
+                writer.name("supportJava").beginArray();
                 if (info.getSupportedJavaVersions() != null) {
                     for (int ver : info.getSupportedJavaVersions()) {
                         writer.value(ver);
                     }
                 }
                 writer.endArray();
-                writer.name("launchArguments").beginArray();
+                writer.name("launchArgument").beginArray();
                 for (String arg : StringUtils.tokenize(info.getLaunchArguments())) {
                     writer.value(arg);
                 }
                 writer.endArray();
-                writer.name("javaArguments").beginArray();
+                writer.name("javaArgument").beginArray();
                 for (String arg : StringUtils.tokenize(info.getJavaArguments())) {
                     writer.value(arg);
                 }

@@ -197,9 +197,11 @@ public class ModrinthModpackExportTask extends Task<Void> {
                                                 writer.endObject();
                                             }
                                         } catch (IOException e) {
-                                            throw new RuntimeException(e);
+                                            LOG.warning("Failed to process file: " + file, e);
                                         }
                                     });
+                        } catch (IOException e) {
+                            LOG.warning("Failed to walk directory: " + dirPath, e);
                         }
                     }
                 }
@@ -208,34 +210,22 @@ public class ModrinthModpackExportTask extends Task<Void> {
 
                 writer.name("dependencies").beginObject();
                 writer.name("minecraft").value(gameVersion);
-                analyzer.getVersion(FORGE).ifPresent(forgeVersion -> {
-                    try {
-                        writer.name("forge").value(forgeVersion);
-                    } catch (IOException e) {
-                        throw new RuntimeException(e);
-                    }
-                });
-                analyzer.getVersion(NEO_FORGE).ifPresent(neoForgeVersion -> {
-                    try {
-                        writer.name("neoforge").value(neoForgeVersion);
-                    } catch (IOException e) {
-                        throw new RuntimeException(e);
-                    }
-                });
-                analyzer.getVersion(FABRIC).ifPresent(fabricVersion -> {
-                    try {
-                        writer.name("fabric-loader").value(fabricVersion);
-                    } catch (IOException e) {
-                        throw new RuntimeException(e);
-                    }
-                });
-                analyzer.getVersion(QUILT).ifPresent(quiltVersion -> {
-                    try {
-                        writer.name("quilt-loader").value(quiltVersion);
-                    } catch (IOException e) {
-                        throw new RuntimeException(e);
-                    }
-                });
+                Optional<String> forgeVersion = analyzer.getVersion(FORGE);
+                if (forgeVersion.isPresent()) {
+                    writer.name("forge").value(forgeVersion.get());
+                }
+                Optional<String> neoForgeVersion = analyzer.getVersion(NEO_FORGE);
+                if (neoForgeVersion.isPresent()) {
+                    writer.name("neoforge").value(neoForgeVersion.get());
+                }
+                Optional<String> fabricVersion = analyzer.getVersion(FABRIC);
+                if (fabricVersion.isPresent()) {
+                    writer.name("fabric-loader").value(fabricVersion.get());
+                }
+                Optional<String> quiltVersion = analyzer.getVersion(QUILT);
+                if (quiltVersion.isPresent()) {
+                    writer.name("quilt-loader").value(quiltVersion.get());
+                }
                 writer.endObject();
 
                 writer.endObject();
