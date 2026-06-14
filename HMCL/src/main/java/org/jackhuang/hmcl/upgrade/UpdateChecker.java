@@ -63,8 +63,7 @@ public final class UpdateChecker {
     private static boolean shouldCheckUpdate() {
         if (DISABLE_UPDATE_PROPERTY.equalsIgnoreCase("true")) return false;
         else if (StringUtils.isNotBlank(PACKAGE_MANAGER_PROPERTY)) return false;
-        else if (!IntegrityChecker.DISABLE_SELF_INTEGRITY_CHECK && !IntegrityChecker.isSelfVerified()) return false;
-        else return true;
+        else return IntegrityChecker.DISABLE_SELF_INTEGRITY_CHECK || IntegrityChecker.isSelfVerified();
     }
 
     public static void init() {
