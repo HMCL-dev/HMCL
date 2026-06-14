@@ -161,29 +161,29 @@ public final class SettingsPage extends ScrollPane {
                     updatePaneList.getContent().add(disableAutoShowUpdateDialogPane);
                 }
             } else {
-                var alretLineButton = new LineButton();
-                alretLineButton.setLargeTitle(true);
-                alretLineButton.setLeading(SVG.INFO, 32);
+                var alertLineButton = new LineButton();
+                alertLineButton.setLargeTitle(true);
+                alertLineButton.setLeading(SVG.INFO, 32);
 
                 if (UpdateChecker.DISABLE_UPDATE_PROPERTY.equalsIgnoreCase("true")) {
-                    alretLineButton.setTitle(i18n("update.disabled.title"));
-                    alretLineButton.setSubtitle(i18n("update.disabled.subtitle"));
+                    alertLineButton.setTitle(i18n("update.disabled.title"));
+                    alertLineButton.setSubtitle(i18n("update.disabled.subtitle"));
                 } else if (StringUtils.isNotBlank(UpdateChecker.PACKAGE_MANAGER_PROPERTY)) {
-                    alretLineButton.setTitle(i18n("update.packagemanager.title"));
-                    alretLineButton.setSubtitle(i18n("update.packagemanager.subtitle", UpdateChecker.PACKAGE_MANAGER_PROPERTY));
+                    alertLineButton.setTitle(i18n("update.packagemanager.title"));
+                    alertLineButton.setSubtitle(i18n("update.packagemanager.subtitle", UpdateChecker.PACKAGE_MANAGER_PROPERTY));
                 } else if (!IntegrityChecker.DISABLE_SELF_INTEGRITY_CHECK && !IntegrityChecker.isSelfVerified()) {
-                    alretLineButton.setLeading(SVG.WARNING, 32);
+                    alertLineButton.setLeading(SVG.WARNING, 32);
 
-                    alretLineButton.setTitle(i18n("update.unofficial.title"));
-                    alretLineButton.setSubtitle(i18n("update.unofficial.subtitle"));
+                    alertLineButton.setTitle(i18n("update.unofficial.title"));
+                    alertLineButton.setSubtitle(i18n("update.unofficial.subtitle"));
 
-                    alretLineButton.setTrailingIcon(SVG.OPEN_IN_NEW);
-                    alretLineButton.setOnAction(event -> FXUtils.openLink(Metadata.DOWNLOAD_URL));
+                    alertLineButton.setTrailingIcon(SVG.OPEN_IN_NEW);
+                    alertLineButton.setOnAction(event -> FXUtils.openLink(Metadata.DOWNLOAD_URL));
                 } else {
                     // should not happen
                 }
 
-                updatePaneList.getContent().add(alretLineButton);
+                updatePaneList.getContent().add(alertLineButton);
             }
 
             rootPane.getChildren().addAll(ComponentList.createComponentListTitle(i18n("update")), updatePaneList);

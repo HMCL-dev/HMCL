@@ -102,6 +102,6 @@ HMCL 提供了一系列调试选项，用于控制启动器的行为。
 |                             | `-Dhmcl.curseforge.apikey=<Api Key>`         | 指定 CurseForge API 密钥           | 使用 HMCL 内置的 CurseForge API 密钥                                                                                |                                      |
 |                             | `-Dhmcl.native.backend=<auto/jna/none>`      | 指定HMCL使用的本机后端                  | `auto`                                                                                                       |
 |                             | `-Dhmcl.hardware.fastfetch=<true/false>`     | 指定是否使用 fastfetch 检测硬件信息        | `true`                                                                                                       |
-|                             | `-Dhmcl.uptate.disable=<true/false>`         | 指定是否禁用 HMCL 更新检测               | `false`                                                                                                      |
-|                             | `-Dhmcl.uptate.packageManager=<name>`        | 指定管理 HMCL 更新的包管理器名称            |                                                                                                              |
+|                             | `-Dhmcl.update.disable=<true/false>`         | 指定是否禁用 HMCL 更新检测               | `false`                                                                                                      |
+|                             | `-Dhmcl.update.packageManager=<name>`        | 指定管理 HMCL 更新的包管理器名称            |                                                                                                              |
 

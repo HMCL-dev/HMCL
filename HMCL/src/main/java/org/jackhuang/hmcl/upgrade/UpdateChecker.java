@@ -113,7 +113,7 @@ public final class UpdateChecker {
     }
 
     public static void requestCheckUpdate(UpdateChannel channel, boolean preview) {
-        if (!shouldCheckUpdate()) return;
+        if (!SHOULD_CHECK_UPDATE) return;
 
         Platform.runLater(() -> {
             if (isCheckingUpdate())
