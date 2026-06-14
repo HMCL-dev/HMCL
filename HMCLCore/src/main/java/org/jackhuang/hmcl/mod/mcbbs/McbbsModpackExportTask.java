@@ -178,14 +178,22 @@ public class McbbsModpackExportTask extends Task<Void> {
                     }
                 }
                 writer.endArray();
+
                 writer.name("launchArgument").beginArray();
-                for (String arg : StringUtils.tokenize(info.getLaunchArguments())) {
-                    writer.value(arg);
+                List<String> launchArgs = StringUtils.tokenize(info.getLaunchArguments());
+                if (launchArgs != null) {
+                    for (String arg : launchArgs) {
+                        writer.value(arg);
+                    }
                 }
                 writer.endArray();
+
                 writer.name("javaArgument").beginArray();
-                for (String arg : StringUtils.tokenize(info.getJavaArguments())) {
-                    writer.value(arg);
+                List<String> javaArgs = StringUtils.tokenize(info.getJavaArguments());
+                if (javaArgs != null) {
+                    for (String arg : javaArgs) {
+                        writer.value(arg);
+                    }
                 }
                 writer.endArray();
                 writer.endObject();

@@ -139,6 +139,9 @@ public class ModrinthModpackExportTask extends Task<Void> {
                 .orElseThrow(() -> new IOException("Cannot parse the version of " + version));
         LibraryAnalyzer analyzer = LibraryAnalyzer.analyze(repository.getResolvedPreservingPatchesVersion(version), gameVersion);
 
+        // Convert whitelist List to HashSet for O(1) lookups
+        Set<String> whitelistSet = new HashSet<>(info.getWhitelist());
+
         String[] resourceDirs = {"resourcepacks", "shaderpacks", "mods"};
         Set<String> remoteFilePaths = new HashSet<>();
 
@@ -167,7 +170,7 @@ public class ModrinthModpackExportTask extends Task<Void> {
                             @Override
                             public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
                                 String relativePath = runDirectory.relativize(file).normalize().toString().replace(File.separatorChar, '/');
-                                if (!info.getWhitelist().contains(relativePath)) {
+                                if (!whitelistSet.contains(relativePath)) {
                                     return FileVisitResult.CONTINUE;
                                 }
                                 if (processedPaths.contains(relativePath)) {
