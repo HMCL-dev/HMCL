@@ -13,7 +13,7 @@
 - `HMCL_USER_HOME/config/user-accounts.json`: shared account metadata in the `accounts` list.
 - `.hmcl/credentials/account-credentials.json`: protected workspace account token credentials.
 - `HMCL_USER_HOME/credentials/user-account-credentials.json`: protected shared account token credentials.
-- `versions/<id>/.hmcl/instance-game-settings.json`: instance-specific game settings.
+- `versions/<id>/.hmcl/config/instance-game-settings.json`: instance-specific game settings.
 - `HMCL_USER_HOME/state/*.migration-receipt.json` and `.hmcl/state/*.migration-receipt.json`: migration receipts.
 
 ## Migration Scope
@@ -52,6 +52,6 @@
 ## Verification Focus
 
 - Loading an old config should create detached files without losing selected account, selected directory, or selected instance state.
-- Editing accounts should update `accounts.json` and `account-credentials.json`, not `settings.json`.
+- Editing accounts should update `accounts.json` and `account-credentials.json`, not `launcher-settings.json`.
 - Existing shared `accounts.json` should migrate to `user-accounts.json` and `user-account-credentials.json`.
 - Launch, export, install, and settings UI flows should read effective `GameSettings` values.

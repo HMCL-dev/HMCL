@@ -33,7 +33,7 @@ public final class SettingFileUtils {
     private SettingFileUtils() {
     }
 
-    /// Moves an invalid config file to a numbered backup path (for example `settings.json.1`)
+    /// Moves an invalid config file to a numbered backup path (for example `launcher-settings.json.1`)
     /// so the original bytes are preserved for diagnosis before the next successful overwrite.
     public static void backupInvalidConfig(Path location) {
         try {
