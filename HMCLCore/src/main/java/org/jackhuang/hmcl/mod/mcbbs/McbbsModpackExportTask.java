@@ -36,8 +36,11 @@ import java.io.File;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.SimpleFileVisitor;
+import java.nio.file.attribute.BasicFileAttributes;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -93,11 +96,21 @@ public class McbbsModpackExportTask extends Task<Void> {
                 writer.name("version").value(info.getVersion());
                 writer.name("author").value(info.getAuthor());
                 writer.name("description").value(info.getDescription());
-                writer.name("fileApi").value(info.getFileApi() == null ? null : StringUtils.removeSuffix(info.getFileApi(), "/"));
+                if (info.getFileApi() != null) {
+                    writer.name("fileApi").value(StringUtils.removeSuffix(info.getFileApi(), "/"));
+                }
                 writer.name("url").value(info.getUrl());
                 writer.name("forceUpdate").value(info.isForceUpdate());
 
                 writer.name("origin").beginArray();
+                if (info.getOrigins() != null) {
+                    for (McbbsModpackManifest.Origin origin : info.getOrigins()) {
+                        writer.beginObject();
+                        writer.name("type").value(origin.getType());
+                        writer.name("id").value(origin.getId());
+                        writer.endObject();
+                    }
+                }
                 writer.endArray();
 
                 writer.name("addons").beginArray();
@@ -124,26 +137,31 @@ public class McbbsModpackExportTask extends Task<Void> {
                 writer.endArray();
 
                 writer.name("files").beginArray();
-                try (var stream = Files.walk(runDirectory)) {
-                    stream.filter(Files::isRegularFile)
-                            .forEach(file -> {
-                                try {
-                                    Path relative = runDirectory.relativize(file).normalize();
-                                    String relativePath = relative.toString().replace(File.separatorChar, '/');
-                                    if (Modpack.acceptFile(relativePath, blackList, info.getWhitelist())) {
-                                        String sha1 = DigestUtils.digestToString("SHA-1", file);
-                                        writer.beginObject();
-                                        writer.name("type").value("addon");
-                                        writer.name("force").value(true);
-                                        writer.name("path").value(relativePath);
-                                        writer.name("hash").value(sha1);
-                                        writer.endObject();
-                                    }
-                                } catch (IOException e) {
-                                    throw new RuntimeException(e);
-                                }
-                            });
-                }
+                Files.walkFileTree(runDirectory, new SimpleFileVisitor<Path>() {
+                    @Override
+                    public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) throws IOException {
+                        String relativePath = runDirectory.relativize(dir).normalize().toString().replace(File.separatorChar, '/');
+                        if (!Modpack.acceptFile(relativePath, blackList, info.getWhitelist())) {
+                            return FileVisitResult.SKIP_SUBTREE;
+                        }
+                        return FileVisitResult.CONTINUE;
+                    }
+
+                    @Override
+                    public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
+                        String relativePath = runDirectory.relativize(file).normalize().toString().replace(File.separatorChar, '/');
+                        if (Modpack.acceptFile(relativePath, blackList, info.getWhitelist())) {
+                            String sha1 = DigestUtils.digestToString("SHA-1", file);
+                            writer.beginObject();
+                            writer.name("type").value("addon");
+                            writer.name("force").value(true);
+                            writer.name("path").value(relativePath);
+                            writer.name("hash").value(sha1);
+                            writer.endObject();
+                        }
+                        return FileVisitResult.CONTINUE;
+                    }
+                });
                 writer.endArray();
 
                 writer.name("settings").beginObject();

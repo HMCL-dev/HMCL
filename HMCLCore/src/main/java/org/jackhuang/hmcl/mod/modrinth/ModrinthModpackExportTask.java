@@ -33,9 +33,12 @@ import java.io.File;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.nio.file.SimpleFileVisitor;
+import java.nio.file.attribute.BasicFileAttributes;
 import java.util.*;
 
 import static org.jackhuang.hmcl.download.LibraryAnalyzer.LibraryType.*;
@@ -149,7 +152,9 @@ public class ModrinthModpackExportTask extends Task<Void> {
                 writer.name("game").value("minecraft");
                 writer.name("versionId").value(info.getVersion());
                 writer.name("name").value(info.getName());
-                writer.name("summary").value(info.getDescription());
+                if (info.getDescription() != null) {
+                    writer.name("summary").value(info.getDescription());
+                }
 
                 writer.name("files").beginArray();
 
@@ -158,51 +163,46 @@ public class ModrinthModpackExportTask extends Task<Void> {
                 for (String dir : resourceDirs) {
                     Path dirPath = runDirectory.resolve(dir);
                     if (Files.exists(dirPath)) {
-                        try (var stream = Files.walk(dirPath)) {
-                            stream.filter(Files::isRegularFile)
-                                    .forEach(file -> {
-                                        try {
-                                            String relativePath = runDirectory.relativize(file).normalize().toString().replace(File.separatorChar, '/');
-                                            if (!info.getWhitelist().contains(relativePath)) {
-                                                return;
-                                            }
-                                            if (processedPaths.contains(relativePath)) {
-                                                return;
-                                            }
-                                            processedPaths.add(relativePath);
+                        Files.walkFileTree(dirPath, new SimpleFileVisitor<Path>() {
+                            @Override
+                            public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
+                                String relativePath = runDirectory.relativize(file).normalize().toString().replace(File.separatorChar, '/');
+                                if (!info.getWhitelist().contains(relativePath)) {
+                                    return FileVisitResult.CONTINUE;
+                                }
+                                if (processedPaths.contains(relativePath)) {
+                                    return FileVisitResult.CONTINUE;
+                                }
+                                processedPaths.add(relativePath);
 
-                                            ModrinthManifest.File fileEntry = tryGetRemoteFile(file, relativePath);
-                                            if (fileEntry != null) {
-                                                remoteFilePaths.add(relativePath);
-                                                writer.beginObject();
-                                                writer.name("path").value(fileEntry.getPath());
-                                                writer.name("hashes").beginObject();
-                                                for (Map.Entry<String, String> hash : fileEntry.getHashes().entrySet()) {
-                                                    writer.name(hash.getKey()).value(hash.getValue());
-                                                }
-                                                writer.endObject();
-                                                if (fileEntry.getEnv() != null) {
-                                                    writer.name("env").beginObject();
-                                                    for (Map.Entry<String, String> env : fileEntry.getEnv().entrySet()) {
-                                                        writer.name(env.getKey()).value(env.getValue());
-                                                    }
-                                                    writer.endObject();
-                                                }
-                                                writer.name("downloads").beginArray();
-                                                for (String url : fileEntry.getDownloads()) {
-                                                    writer.value(url);
-                                                }
-                                                writer.endArray();
-                                                writer.name("fileSize").value(fileEntry.getFileSize());
-                                                writer.endObject();
-                                            }
-                                        } catch (IOException e) {
-                                            LOG.warning("Failed to process file: " + file, e);
+                                ModrinthManifest.File fileEntry = tryGetRemoteFile(file, relativePath);
+                                if (fileEntry != null) {
+                                    remoteFilePaths.add(relativePath);
+                                    writer.beginObject();
+                                    writer.name("path").value(fileEntry.getPath());
+                                    writer.name("hashes").beginObject();
+                                    for (Map.Entry<String, String> hash : fileEntry.getHashes().entrySet()) {
+                                        writer.name(hash.getKey()).value(hash.getValue());
+                                    }
+                                    writer.endObject();
+                                    if (fileEntry.getEnv() != null) {
+                                        writer.name("env").beginObject();
+                                        for (Map.Entry<String, String> env : fileEntry.getEnv().entrySet()) {
+                                            writer.name(env.getKey()).value(env.getValue());
                                         }
-                                    });
-                        } catch (IOException e) {
-                            LOG.warning("Failed to walk directory: " + dirPath, e);
-                        }
+                                        writer.endObject();
+                                    }
+                                    writer.name("downloads").beginArray();
+                                    for (String url : fileEntry.getDownloads()) {
+                                        writer.value(url);
+                                    }
+                                    writer.endArray();
+                                    writer.name("fileSize").value(fileEntry.getFileSize());
+                                    writer.endObject();
+                                }
+                                return FileVisitResult.CONTINUE;
+                            }
+                        });
                     }
                 }
 
