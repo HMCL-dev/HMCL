@@ -29,7 +29,7 @@ import static org.junit.jupiter.api.Assertions.*;
 /// Tests for detached launcher state migration.
 @NotNullByDefault
 public final class LauncherStateTest {
-    /// Tests extracting runtime state fields from an upstream/main config object.
+    /// Tests extracting runtime state fields from a legacy config object.
     @Test
     public void extractsLauncherStateFromLegacyConfigJson() {
         JsonObject settings = JsonParser.parseString("""

@@ -71,8 +71,8 @@ public final class SettingsManager {
     /// The user directory storing shared state files.
     private static final Path USER_STATE_DIRECTORY = Metadata.HMCL_USER_HOME.resolve("state");
 
-    /// The upstream/main per-workspace settings path used as a migration input.
-    private static final Path UPSTREAM_SETTINGS_LOCATION = Metadata.HMCL_LOCAL_HOME.resolve("settings.json");
+    /// The legacy settings path used as a migration input.
+    private static final Path LEGACY_SETTINGS_LOCATION = Metadata.HMCL_LOCAL_HOME.resolve("settings.json");
 
     /// The user settings path shared by all workspaces.
     public static final Path USER_SETTINGS_LOCATION =
@@ -686,7 +686,7 @@ public final class SettingsManager {
                 return new LoadedLauncherSettings(settings, null, SettingFileAccess.READ_WRITE);
             }
         } else {
-            LegacyConfigMigrator.LegacyConfigMigration migration = migrateUpstreamSettings();
+            LegacyConfigMigrator.LegacyConfigMigration migration = migrateLegacySettings();
             if (migration != null) {
                 return new LoadedLauncherSettings(migration.launcherSettings(), migration, SettingFileAccess.READ_WRITE);
             }
@@ -700,31 +700,31 @@ public final class SettingsManager {
         return new LoadedLauncherSettings(new LauncherSettings(), null, SettingFileAccess.READ_WRITE);
     }
 
-    /// Migrates the upstream/main root `settings.json` file when it is present.
-    private static LegacyConfigMigrator.@Nullable LegacyConfigMigration migrateUpstreamSettings() throws IOException {
-        if (!Files.isRegularFile(UPSTREAM_SETTINGS_LOCATION)) {
+    /// Migrates the legacy `settings.json` file when it is present.
+    private static LegacyConfigMigrator.@Nullable LegacyConfigMigration migrateLegacySettings() throws IOException {
+        if (!Files.isRegularFile(LEGACY_SETTINGS_LOCATION)) {
             return null;
         }
 
         JsonObject jsonObject;
         try {
-            jsonObject = JsonUtils.fromJsonFile(UPSTREAM_SETTINGS_LOCATION, JsonObject.class);
+            jsonObject = JsonUtils.fromJsonFile(LEGACY_SETTINGS_LOCATION, JsonObject.class);
         } catch (JsonParseException e) {
-            LOG.warning("Malformed upstream/main settings file: " + UPSTREAM_SETTINGS_LOCATION, e);
+            LOG.warning("Malformed legacy settings file: " + LEGACY_SETTINGS_LOCATION, e);
             return null;
         }
 
         if (jsonObject == null) {
-            LOG.info("Upstream/main settings file is empty: " + UPSTREAM_SETTINGS_LOCATION);
+            LOG.info("Legacy settings file is empty: " + LEGACY_SETTINGS_LOCATION);
             return null;
         }
 
         if (jsonObject.has(JsonSchema.PROPERTY_SCHEMA)) {
-            LOG.info("Ignoring root settings file with schema: " + UPSTREAM_SETTINGS_LOCATION);
+            LOG.info("Ignoring schematized legacy settings file: " + LEGACY_SETTINGS_LOCATION);
             return null;
         }
 
-        return LegacyConfigMigrator.migrateLegacyConfigIfNeeded(UPSTREAM_SETTINGS_LOCATION);
+        return LegacyConfigMigrator.migrateLegacyConfigIfNeeded(LEGACY_SETTINGS_LOCATION);
     }
 
     /// Returns whether the current workspace already has any local configuration footprint.
@@ -735,7 +735,7 @@ public final class SettingsManager {
                 || Files.exists(LOCAL_GAME_DIRECTORIES_LOCATION)
                 || Files.exists(GAME_SETTINGS_LOCATION)
                 || Files.exists(GAME_ACCOUNTS_LOCATION)
-                || Files.exists(UPSTREAM_SETTINGS_LOCATION)
+                || Files.exists(LEGACY_SETTINGS_LOCATION)
                 || LegacyConfigMigrator.hasLegacyConfig());
     }
 
@@ -1001,7 +1001,7 @@ public final class SettingsManager {
     private static void checkLocalConfigOwner() {
         checkOwner(Metadata.HMCL_LOCAL_HOME);
         checkOwner(SETTINGS_LOCATION);
-        checkOwner(UPSTREAM_SETTINGS_LOCATION);
+        checkOwner(LEGACY_SETTINGS_LOCATION);
         checkOwner(STATE_LOCATION);
         checkOwner(AUTHLIB_INJECTOR_SERVERS_LOCATION);
         checkOwner(LOCAL_GAME_DIRECTORIES_LOCATION);

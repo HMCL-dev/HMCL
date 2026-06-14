@@ -105,7 +105,7 @@ public final class LegacyConfigMigrator {
     private static final Path SETTINGS_MIGRATION_RECEIPT_LOCATION =
             Metadata.HMCL_LOCAL_HOME.resolve("state").resolve("launcher-settings.migration-receipt.json");
 
-    /// Legacy ordinal order for `BackgroundType` in upstream/main configs.
+    /// Legacy ordinal order for `BackgroundType` in legacy settings.
     private static final String[] LEGACY_BACKGROUND_IMAGE_TYPES = {
             "DEFAULT",
             "CUSTOM",
@@ -115,7 +115,7 @@ public final class LegacyConfigMigrator {
             "PAINT"
     };
 
-    /// Legacy ordinal order for `Proxy.Type` in upstream/main configs.
+    /// Legacy ordinal order for `Proxy.Type` in legacy settings.
     private static final String[] LEGACY_PROXY_TYPES = {
             "DIRECT",
             "HTTP",
@@ -796,7 +796,7 @@ public final class LegacyConfigMigrator {
 
     /// Extracts game directory data from a legacy config JSON object and removes the legacy members.
     ///
-    /// This supports migrating the upstream/main `configurations` map into `config/game-directories.json`.
+    /// This supports migrating the legacy `configurations` map into `config/game-directories.json`.
     ///
     /// @param json the legacy config JSON object
     /// @return the extracted game directory store, or `null` when the object contains no game directory data

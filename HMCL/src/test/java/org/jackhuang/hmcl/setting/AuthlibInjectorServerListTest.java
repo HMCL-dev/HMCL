@@ -82,7 +82,7 @@ public final class AuthlibInjectorServerListTest {
         assertEquals(0L, server.getMetadataTimestamp());
     }
 
-    /// Tests extracting authlib-injector servers from an upstream/main config object.
+    /// Tests extracting authlib-injector servers from a legacy config object.
     @Test
     public void extractsAuthlibInjectorServersFromLegacyConfigJson() {
         JsonObject settings = JsonParser.parseString("""

@@ -2,15 +2,17 @@
 
 ## Storage Layout
 
-- `settings.json`: workspace launcher settings.
-- `launcher-state.json`: workspace UI/runtime state.
-- `authlib-injector-servers.json`: workspace authlib-injector server list.
-- `game-directories.json`: workspace game directory profiles in the `directories` list.
-- `user-game-directories.json`: shared game directory profiles in the `directories` list.
-- `game-settings.json`: workspace `GameSettings.Preset` entries.
-- `game-accounts.json`: workspace portable account storages in the `accounts` list.
-- `user-game-accounts.json`: shared account storages in the `accounts` list.
+- `.hmcl/config/launcher-settings.json`: workspace launcher settings.
+- `.hmcl/state/launcher-state.json`: workspace UI/runtime state.
+- `.hmcl/config/authlib-injector-servers.json`: workspace authlib-injector server list.
+- `.hmcl/cache/authlib-injector-server-metadata.json`: workspace authlib-injector server metadata cache.
+- `.hmcl/config/game-directories.json`: workspace game directory profiles in the `directories` list.
+- `HMCL_USER_HOME/config/user-game-directories.json`: shared game directory profiles in the `directories` list.
+- `.hmcl/config/game-settings.json`: workspace `GameSettings.Preset` entries.
+- `.hmcl/accounts/game-accounts.json`: workspace portable account storages in the `accounts` list.
+- `HMCL_USER_HOME/accounts/user-game-accounts.json`: shared account storages in the `accounts` list.
 - `versions/<id>/.hmcl/instance-game-settings.json`: instance-specific game settings.
+- `HMCL_USER_HOME/state/*.migration-receipt.json` and `.hmcl/state/*.migration-receipt.json`: migration receipts.
 
 ## Migration Scope
 
@@ -18,6 +20,7 @@
 - File formats introduced by this branch are still unstable and do not need compatibility with earlier revisions of this branch.
 - Legacy config files are read as migration inputs and must not be rewritten.
 - Detached settings files should be created and saved only through the new storage model.
+- Do not encode `upstream/main` wording in production code, comments, logs, schemas, or tests; keep that local baseline note in this file only.
 
 ## Migration Rules
 

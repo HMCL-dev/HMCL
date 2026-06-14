@@ -140,7 +140,7 @@ public final class GameDirectoriesTest {
         assertEquals("Dev", Profiles.getProfileCustomName(devProfile));
     }
 
-    /// Tests migrating upstream/main selected version fields into the main config.
+    /// Tests migrating legacy selected version fields into the main config.
     @Test
     public void migratesLegacySelectedVersionsFromConfigurations() {
         SettingID id = LegacyConfigMigrator.getLegacyProfileID("Dev");

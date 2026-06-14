@@ -146,7 +146,7 @@ public final class GameSettingsInstanceTest {
         assertEquals("17", instance.customJavaVersionProperty().getValue());
     }
 
-    /// Tests that upstream/main native directory fields migrate to the renamed game setting properties.
+    /// Tests that legacy native directory fields migrate to the renamed game setting properties.
     @Test
     public void migratesLegacyNativeDirectoryFields() {
         GameSettings.Instance instance = LegacyGameSettingsMigrator.toInstance(null, JsonParser.parseString("""
