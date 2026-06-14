@@ -26,6 +26,7 @@ import org.jetbrains.annotations.Nullable;
 import java.io.*;
 import java.net.*;
 import java.nio.charset.Charset;
+import java.time.Duration;
 import java.util.*;
 import java.util.Map.Entry;
 import java.util.regex.Matcher;
@@ -45,7 +46,9 @@ public final class NetworkUtils {
 
     public static final String PARAMETER_SEPARATOR = "&";
     public static final String NAME_VALUE_SEPARATOR = "=";
-    public static final int TIME_OUT = 8000;
+
+    public static final Duration TIMEOUT = Duration.ofSeconds(30);
+    public static final int TIMEOUT_MILLIS = (int) TIMEOUT.toMillis();
 
     private NetworkUtils() {
     }
@@ -167,8 +170,8 @@ public final class NetworkUtils {
         } catch (IllegalArgumentException | MalformedURLException e) {
             throw new IOException(e);
         }
-        connection.setConnectTimeout(TIME_OUT);
-        connection.setReadTimeout(TIME_OUT);
+        connection.setConnectTimeout(TIMEOUT_MILLIS);
+        connection.setReadTimeout(TIMEOUT_MILLIS);
         if (connection instanceof HttpURLConnection httpConnection) {
             httpConnection.setRequestProperty("Accept-Language", Locale.getDefault().toLanguageTag());
             httpConnection.setRequestProperty("User-Agent", USER_AGENT);
@@ -276,8 +279,8 @@ public final class NetworkUtils {
         int redirect = 0;
         while (true) {
             conn.setUseCaches(useCache);
-            conn.setConnectTimeout(TIME_OUT);
-            conn.setReadTimeout(TIME_OUT);
+            conn.setConnectTimeout(TIMEOUT_MILLIS);
+            conn.setReadTimeout(TIMEOUT_MILLIS);
             conn.setInstanceFollowRedirects(false);
             Map<String, List<String>> properties = conn.getRequestProperties();
             String method = conn.getRequestMethod();
