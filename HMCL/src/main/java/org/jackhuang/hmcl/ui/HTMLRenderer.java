@@ -358,7 +358,7 @@ public final class HTMLRenderer {
         if (hasFoot)
             rows.add(Lang.copyWithSize(foot, columnCount, null));
 
-        TableView<List<Element>> tableView = FXUtils.autoSizeTable(FXCollections.observableList(rows));
+        TableView<List<Element>> tableView = FXUtils.newAutoSizeTable(FXCollections.observableList(rows));
         for (int i = 0; i < columnCount; i++) {
             int finalI = i;
             TableColumn<List<Element>, javafx.scene.Node> c = new TableColumn<>();
@@ -503,14 +503,13 @@ public final class HTMLRenderer {
         textFlow.getChildren().setAll(children);
         for (javafx.scene.Node node : children) {
             if (node instanceof ImageView img) {
-                InvalidationListener listener = __ ->
-                        img.setFitWidth(Math.min(textFlow.getWidth() - 20D, img.getImage() == null ? 0D : img.getImage().getWidth()));
+                InvalidationListener listener = __ -> img.setFitWidth(Math.min(textFlow.getWidth() * 0.8, img.getImage() == null ? 0D : img.getImage().getWidth()));
                 textFlow.widthProperty().addListener(listener);
                 img.imageProperty().addListener(listener);
             } else if (node instanceof TableView<?> table) {
-                table.prefWidthProperty().bind(textFlow.widthProperty().add(-20D));
+                table.prefWidthProperty().bind(textFlow.widthProperty().multiply(0.8));
             } else if (node instanceof TextFlow codeFlow) {
-                codeFlow.maxWidthProperty().bind(textFlow.widthProperty().add(-20D));
+                codeFlow.maxWidthProperty().bind(textFlow.widthProperty().multiply(0.8));
             }
         }
         return textFlow;
@@ -538,7 +537,7 @@ public final class HTMLRenderer {
                 if (declaration.length != 2) return;
                 declaration[0] = declaration[0].trim();
                 declaration[1] = declaration[1].trim();
-                String mappedKey = cssPropertyMapping.get(declaration[0]);
+                String mappedKey = cssPropertyMapping.get(declaration[0].toLowerCase(Locale.ROOT));
                 if (mappedKey != null) {
                     declarations.put(mappedKey, declaration[1]);
                 } // Ignore unsupported fields

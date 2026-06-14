@@ -1715,7 +1715,7 @@ public final class FXUtils {
     }
 
     /// Be cautious when dealing with large amounts of data
-    public static <S> TableView<S> autoSizeTable(ObservableList<S> items) {
+    public static <S> TableView<S> newAutoSizeTable(ObservableList<S> items) {
         return new AutoSizeTableView<>(items);
     }
 
