@@ -24,7 +24,7 @@ import org.commonmark.ext.ins.InsExtension;
 import org.commonmark.parser.Parser;
 import org.commonmark.renderer.html.HtmlRenderer;
 import org.jsoup.Jsoup;
-import org.jsoup.nodes.Node;
+import org.jsoup.nodes.Document;
 import org.jsoup.safety.Safelist;
 
 import org.jackhuang.hmcl.util.gson.JsonUtils;
@@ -631,8 +631,6 @@ public final class StringUtils {
     private static final Safelist all = Safelist.relaxed()
             .addAttributes("a", "rel", "target");
 
-    private static final Set<String> mdParsableTags = Set.of("#text", "img");
-
     private static final HtmlRenderer HTML_RENDERER = HtmlRenderer.builder().extensions(List.of(
             InsExtension.create(), StrikethroughExtension.create(), TablesExtension.create()
     )).build();
@@ -641,13 +639,24 @@ public final class StringUtils {
             AutolinkExtension.create(), InsExtension.create(), StrikethroughExtension.create(), TablesExtension.create()
     )).build();
 
-    public static String convertToHtml(String md) {
-        if (md == null) return null;
-        if (isBlank(md)) return "";
-        if (md.startsWith("<!DOCTYPE html>") || md.startsWith("<html>") || md.startsWith("<body>")
-                || (Jsoup.isValid(md, all) && !Jsoup.parse(md).body().childNodes().stream().map(Node::normalName).allMatch(mdParsableTags::contains)))
-            return md;
-        return HTML_RENDERER.render(MD_PARSER.parse(md));
+    public static String convertToHtml(String str) {
+        if (str == null) return null;
+        if (isBlank(str)) return "";
+
+        /*
+        Firstly, we check if the string could be seen as HTML.
+
+        If so, we convert it to HTML document, then re-print it to a string to normalize spaces
+        (otherwise the parser may parse the HTML code as code blocks, which is not intended).
+        This will (hopefully) not break Markdown formats.
+
+        If not, we assume that the string is pure Markdown.
+         */
+        String either = Jsoup.isValid(str, all)
+                ? Jsoup.parse(str).outputSettings(new Document.OutputSettings().prettyPrint(false)).body().html()
+                : str;
+
+        return HTML_RENDERER.render(MD_PARSER.parse(either));
     }
 
     public static class LevCalculator {
