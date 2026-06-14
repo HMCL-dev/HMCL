@@ -137,10 +137,6 @@ public final class ExportWizardProvider implements WizardProvider {
                     zip.putTextFile(
                             JsonUtils.GSON.toJson(exportedServers, AuthlibInjectorServerList.class),
                             ".hmcl/config/authlib-injector-servers.json");
-                    zip.putTextFile(SettingsManager.gameAccountsToJson(), ".hmcl/config/accounts.json");
-                    zip.putTextFile(
-                            SettingsManager.gameAccountCredentialsToJson(),
-                            ".hmcl/credentials/account-credentials.json");
                     zip.putFile(tempModpack, ModpackTypeSelectionPage.MODPACK_TYPE_MODRINTH.equals(modpackType)
                             ? "modpack.mrpack"
                             : "modpack.zip");

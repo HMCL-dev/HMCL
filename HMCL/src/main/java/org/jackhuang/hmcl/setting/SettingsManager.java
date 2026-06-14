@@ -456,16 +456,6 @@ public final class SettingsManager {
         return userGameAccounts().getAccounts();
     }
 
-    /// Serializes the per-workspace account metadata file content.
-    public static String gameAccountsToJson() {
-        return JsonUtils.GSON.toJson(createAccountStoreSnapshot(gameAccounts()).metadata(), AccountStorages.class);
-    }
-
-    /// Serializes the per-workspace account credential file content.
-    public static String gameAccountCredentialsToJson() {
-        return JsonUtils.GSON.toJson(createAccountStoreSnapshot(gameAccounts()).credentials(), AccountCredentials.class);
-    }
-
     /// Creates a metadata/credential snapshot from a full in-memory account store.
     ///
     /// @param accounts the full in-memory account store
