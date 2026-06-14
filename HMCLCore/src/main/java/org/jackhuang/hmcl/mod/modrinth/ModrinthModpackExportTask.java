@@ -75,6 +75,7 @@ public class ModrinthModpackExportTask extends Task<Void> {
         boolean isDisabled = repository.getModManager(version).isDisabled(file);
         if (isDisabled) {
             relativePath = repository.getModManager(version).enableMod(Paths.get(relativePath)).toString();
+            file = repository.getRunDirectory(version).resolve(relativePath);
         }
 
         Optional<RemoteMod.Version> modrinthVersion = Optional.empty();
@@ -245,7 +246,6 @@ public class ModrinthModpackExportTask extends Task<Void> {
                     String relativePath = path.replace(File.separatorChar, '/');
                     Path resolved = runDirectory.resolve(relativePath);
                     if (Files.isDirectory(resolved)) {
-                        // For directories, only check blacklist, never skip due to whitelist
                         return !ModAdviser.match(blackList, relativePath, false);
                     }
                     if (remoteFilePaths.contains(relativePath)) {
