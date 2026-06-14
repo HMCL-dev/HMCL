@@ -110,6 +110,8 @@ public final class HTMLRenderer {
 
     private final Consumer<URI> onClickHyperlink;
 
+    private boolean rendered;
+
     public HTMLRenderer(Consumer<URI> onClickHyperlink) {
         this.onClickHyperlink = onClickHyperlink;
     }
@@ -498,6 +500,7 @@ public final class HTMLRenderer {
     }
 
     public TextFlow render() {
+        if (rendered) throw new IllegalStateException("Should not render twice");
         TextFlow textFlow = new TextFlow();
         textFlow.getStyleClass().add("html");
         textFlow.getChildren().setAll(children);
@@ -512,6 +515,7 @@ public final class HTMLRenderer {
                 codeFlow.maxWidthProperty().bind(textFlow.widthProperty().multiply(0.8));
             }
         }
+        rendered = true;
         return textFlow;
     }
 
