@@ -27,7 +27,6 @@ import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 
-import org.jackhuang.hmcl.setting.ConfigHolder;
 import org.jackhuang.hmcl.ui.FXUtils;
 
 public class DecoratorAnimatedPage extends Control {
