@@ -213,9 +213,11 @@ public final class JavaManager {
 
                     String pathString = javaRuntime.getBinary().toString();
 
-                    SettingsManager.userSettings().getDisabledJava().remove(pathString);
-                    if (SettingsManager.userSettings().getUserJava().add(pathString)) {
-                        addJava(javaRuntime);
+                    if (!SettingsManager.isUserSettingsReadOnly()) {
+                        SettingsManager.userSettings().getDisabledJava().remove(pathString);
+                        if (SettingsManager.userSettings().getUserJava().add(pathString)) {
+                            addJava(javaRuntime);
+                        }
                     }
                     return javaRuntime;
                 });

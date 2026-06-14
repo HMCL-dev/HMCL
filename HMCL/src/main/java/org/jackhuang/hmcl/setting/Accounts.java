@@ -289,7 +289,8 @@ public final class Accounts {
             selected = accounts.get(0);
         }
 
-        if (!SettingsManager.userSettings().enableOfflineAccountProperty().get())
+        if (!SettingsManager.isUserSettingsReadOnly()
+                && !SettingsManager.userSettings().enableOfflineAccountProperty().get())
             for (Account account : accounts) {
                 if (account instanceof MicrosoftAccount) {
                     UserSettings userSettings = userSettings();
@@ -298,7 +299,8 @@ public final class Accounts {
                 }
             }
 
-        if (!SettingsManager.userSettings().enableOfflineAccountProperty().get())
+        if (!SettingsManager.isUserSettingsReadOnly()
+                && !SettingsManager.userSettings().enableOfflineAccountProperty().get())
             accounts.addListener(new ListChangeListener<Account>() {
                 @Override
                 public void onChanged(Change<? extends Account> change) {

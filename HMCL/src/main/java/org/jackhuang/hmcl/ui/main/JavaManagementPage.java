@@ -126,6 +126,9 @@ public final class JavaManagementPage extends ListPageBase<JavaRuntime> {
     }
 
     void onShowRestoreJavaPage() {
+        if (SettingsManager.isUserSettingsReadOnly()) {
+            return;
+        }
         Controllers.navigateForward(new JavaRestorePage(SettingsManager.userSettings().getDisabledJava()));
     }
 
@@ -200,10 +203,16 @@ public final class JavaManagementPage extends ListPageBase<JavaRuntime> {
             if (skinnable.onInstallJava != null) {
                 res.add(createToolbarButton2(i18n("java.download"), SVG.DOWNLOAD, skinnable.onInstallJava));
             }
-            res.add(createToolbarButton2(i18n("java.add"), SVG.ADD, skinnable::onAddJava));
+            JFXButton addJava = createToolbarButton2(i18n("java.add"), SVG.ADD, skinnable::onAddJava);
+            addJava.setDisable(SettingsManager.isUserSettingsReadOnly());
+            res.add(addJava);
 
             JFXButton disableJava = createToolbarButton2(i18n("java.disabled.management"), SVG.FORMAT_LIST_BULLETED, skinnable::onShowRestoreJavaPage);
-            disableJava.disableProperty().bind(Bindings.isEmpty(SettingsManager.userSettings().getDisabledJava()));
+            if (SettingsManager.isUserSettingsReadOnly()) {
+                disableJava.setDisable(true);
+            } else {
+                disableJava.disableProperty().bind(Bindings.isEmpty(SettingsManager.userSettings().getDisabledJava()));
+            }
             res.add(disableJava);
 
             return res;
@@ -220,6 +229,7 @@ public final class JavaManagementPage extends ListPageBase<JavaRuntime> {
         private final TwoLineListItem content;
 
         private SVG removeIcon;
+        private final JFXButton removeButton;
         private final StackPane removeIconPane;
         private final Tooltip removeTooltip = new Tooltip();
 
@@ -249,7 +259,7 @@ public final class JavaManagementPage extends ListPageBase<JavaRuntime> {
                 });
                 FXUtils.installFastTooltip(revealButton, i18n("reveal.in_file_manager"));
 
-                JFXButton removeButton = new JFXButton();
+                removeButton = new JFXButton();
                 removeButton.getStyleClass().add("toggle-icon4");
                 removeButton.setOnAction(e -> {
                     JavaRuntime java = getItem();
@@ -297,6 +307,7 @@ public final class JavaManagementPage extends ListPageBase<JavaRuntime> {
                     removeIconPane.getChildren().setAll(removeIcon.createIcon(24));
                     removeTooltip.setText(item.isManaged() ? i18n("java.uninstall") : i18n("java.disable"));
                 }
+                removeButton.setDisable(!item.isManaged() && SettingsManager.isUserSettingsReadOnly());
 
                 setGraphic(graphic);
             }
@@ -327,6 +338,9 @@ public final class JavaManagementPage extends ListPageBase<JavaRuntime> {
                         null
                 );
             } else {
+                if (SettingsManager.isUserSettingsReadOnly()) {
+                    return;
+                }
                 Controllers.confirm(
                         i18n("java.disable.confirm"),
                         i18n("message.warning"),

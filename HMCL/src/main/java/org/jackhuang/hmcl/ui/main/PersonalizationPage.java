@@ -300,9 +300,13 @@ public class PersonalizationPage extends StackPane {
                 } else {
                     fontAntiAliasingPane.setValue(Optional.empty());
                 }
+                fontAntiAliasingPane.setDisable(SettingsManager.isUserSettingsReadOnly());
 
                 FXUtils.onChange(fontAntiAliasingPane.valueProperty(), value ->
                 {
+                    if (SettingsManager.isUserSettingsReadOnly()) {
+                        return;
+                    }
                     UserSettings userSettings = userSettings();
                     userSettings.fontAntiAliasingProperty().set(value.map(it -> it.name().toLowerCase(Locale.ROOT))
                                             .orElse(null));

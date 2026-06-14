@@ -632,6 +632,11 @@ public final class SettingsManager {
         return authlibInjectorServersAccess.blocksEditing();
     }
 
+    /// Returns whether the user settings store cannot be safely overwritten.
+    public static boolean isUserSettingsReadOnly() {
+        return userSettingsAccess.blocksEditing();
+    }
+
     /// Backs up and overwrites `config/game-settings.json` with the currently loaded presets.
     public static void forceOverwriteGameSettings() {
         boolean installAutoSave = !gameSettingsPresets().isSavable();
