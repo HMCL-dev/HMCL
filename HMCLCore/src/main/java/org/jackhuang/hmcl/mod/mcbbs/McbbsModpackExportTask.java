@@ -141,7 +141,11 @@ public class McbbsModpackExportTask extends Task<Void> {
                     @Override
                     public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) throws IOException {
                         String relativePath = runDirectory.relativize(dir).normalize().toString().replace(File.separatorChar, '/');
-                        if (!Modpack.acceptFile(relativePath, blackList, info.getWhitelist())) {
+                        if (relativePath.isEmpty()) {
+                            return FileVisitResult.CONTINUE;
+                        }
+                        // Only skip directories that match blacklist (e.g., assets, libraries)
+                        if (ModAdviser.match(blackList, relativePath, false)) {
                             return FileVisitResult.SKIP_SUBTREE;
                         }
                         return FileVisitResult.CONTINUE;
@@ -212,7 +216,13 @@ public class McbbsModpackExportTask extends Task<Void> {
                 zip.putTextFile(JsonUtils.GSON.toJson(curseManifest), "manifest.json");
 
                 zip.putDirectory(runDirectory, "overrides", path -> {
-                    return Modpack.acceptFile(path, blackList, info.getWhitelist());
+                    Path resolved = runDirectory.resolve(path);
+                    if (Files.isDirectory(resolved)) {
+                        // For directories, only check blacklist, never skip because of whitelist
+                        return !ModAdviser.match(blackList, path, false);
+                    } else {
+                        return Modpack.acceptFile(path, blackList, info.getWhitelist());
+                    }
                 });
             }
         } finally {
