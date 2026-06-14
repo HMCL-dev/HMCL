@@ -248,7 +248,7 @@ public final class HTMLRenderer {
                         return;
                     }
                     if (res == null) {
-                        LOG.warning("Failed to load image: " + src, new AssertionError("Image loading task returned null"));
+                        LOG.warning("Failed to load image: " + src, new AssertionError("Image loading task returned null, which should never happen"));
                     }
                     imageView.setImage(res);
                 }).start();
