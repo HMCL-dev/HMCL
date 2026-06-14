@@ -175,7 +175,12 @@ public class ModrinthModpackExportTask extends Task<Void> {
                                 }
                                 processedPaths.add(relativePath);
 
-                                ModrinthManifest.File fileEntry = tryGetRemoteFile(file, relativePath);
+                                ModrinthManifest.File fileEntry = null;
+                                try {
+                                    fileEntry = tryGetRemoteFile(file, relativePath);
+                                } catch (IOException e) {
+                                    LOG.warning("Failed to process file: " + file, e);
+                                }
                                 if (fileEntry != null) {
                                     remoteFilePaths.add(relativePath);
                                     writer.beginObject();
