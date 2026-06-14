@@ -110,6 +110,16 @@ public class PersonalizationPage extends StackPane {
             simpleUIButton.selectedProperty().bindBidirectional(config().simpleUIProperty());
             simpleUIButton.setTitle(i18n("settings.launcher.simple_ui"));
             simpleUIButton.setSubtitle(i18n("settings.take_effect_after_restart"));
+
+            LineToggleButton simpleUITransparentButton = new LineToggleButton();
+            themeList.getContent().add(simpleUITransparentButton);
+            simpleUITransparentButton.selectedProperty().bindBidirectional(config().simpleUITransparentProperty());
+            simpleUITransparentButton.setTitle(i18n("settings.launcher.simple_ui_transparent"));
+            simpleUITransparentButton.setSubtitle(i18n("settings.take_effect_after_restart"));
+
+            simpleUITransparentButton.disableProperty().bind(
+                    simpleUIButton.selectedProperty().not()
+            );
         }
         {
             LineToggleButton titleTransparentButton = new LineToggleButton();

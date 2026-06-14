@@ -216,11 +216,11 @@ public final class MainPage extends StackPane implements DecoratorPage {
                 Region.USE_PREF_SIZE
             );
 
-            bottomMenuPane.setStyle(
-                "-fx-background-color: rgba(255, 255, 255, 0.25);" +
-                "-fx-background-radius: 8;" +
-                "-fx-padding: 8;"
-            );
+            if (ConfigHolder.config().isSimpleUITransparent()) {
+                bottomMenuPane.getStyleClass().add("simple-ui-menu-transparent");
+            } else {
+                bottomMenuPane.getStyleClass().add("simple-ui-menu");
+            }
 
             StackPane.setAlignment(bottomMenuPane, Pos.BOTTOM_LEFT);
 
