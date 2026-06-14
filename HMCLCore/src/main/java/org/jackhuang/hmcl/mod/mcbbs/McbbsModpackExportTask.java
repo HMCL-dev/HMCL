@@ -17,6 +17,7 @@
  */
 package org.jackhuang.hmcl.mod.mcbbs;
 
+import com.google.gson.stream.JsonWriter;
 import org.jackhuang.hmcl.download.LibraryAnalyzer;
 import org.jackhuang.hmcl.game.DefaultGameRepository;
 import org.jackhuang.hmcl.game.Library;
@@ -34,6 +35,8 @@ import org.jackhuang.hmcl.util.io.Zipper;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.OutputStreamWriter;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -72,66 +75,185 @@ public class McbbsModpackExportTask extends Task<Void> {
         blackList.add(version + ".jar");
         blackList.add(version + ".json");
         LOG.info("Compressing game files without some files in blacklist, including files or directories: usernamecache.json, asm, logs, backups, versions, assets, usercache.json, libraries, crash-reports, launcher_profiles.json, NVIDIA, TCNodeTracker");
-        try (var zip = new Zipper(modpackFile)) {
-            Path runDirectory = repository.getRunDirectory(version);
-            List<McbbsModpackManifest.File> files = new ArrayList<>();
-            zip.putDirectory(runDirectory, "overrides", path -> {
-                if (Modpack.acceptFile(path, blackList, info.getWhitelist())) {
-                    Path file = runDirectory.resolve(path);
-                    if (Files.isRegularFile(file)) {
-                        String relativePath = runDirectory.relativize(file).normalize().toString().replace(File.separatorChar, '/');
-                        files.add(new McbbsModpackManifest.AddonFile(true, relativePath, DigestUtils.digestToString("SHA-1", file)));
+
+        Path runDirectory = repository.getRunDirectory(version);
+        String gameVersion = repository.getGameVersion(version)
+                .orElseThrow(() -> new IOException("Cannot parse the version of " + version));
+        LibraryAnalyzer analyzer = LibraryAnalyzer.analyze(repository.getResolvedPreservingPatchesVersion(version), gameVersion);
+
+        Path tempManifest = Files.createTempFile("mcbbs_packmeta_", ".json");
+        try {
+            try (JsonWriter writer = new JsonWriter(new OutputStreamWriter(Files.newOutputStream(tempManifest), StandardCharsets.UTF_8))) {
+                writer.setIndent("  ");
+                writer.beginObject();
+
+                writer.name("manifestType").value(McbbsModpackManifest.MANIFEST_TYPE);
+                writer.name("manifestVersion").value(2);
+                writer.name("name").value(info.getName());
+                writer.name("version").value(info.getVersion());
+                writer.name("author").value(info.getAuthor());
+                writer.name("description").value(info.getDescription());
+                writer.name("fileApi").value(info.getFileApi() == null ? null : StringUtils.removeSuffix(info.getFileApi(), "/"));
+                writer.name("url").value(info.getUrl());
+                writer.name("forceUpdate").value(info.isForceUpdate());
+
+                writer.name("origins").beginArray();
+                writer.endArray();
+
+                writer.name("addons").beginArray();
+                writer.beginObject();
+                writer.name("id").value(MINECRAFT.getPatchId());
+                writer.name("version").value(gameVersion);
+                writer.endObject();
+                analyzer.getVersion(FORGE).ifPresent(forgeVersion -> {
+                    try {
+                        writer.beginObject();
+                        writer.name("id").value(FORGE.getPatchId());
+                        writer.name("version").value(forgeVersion);
+                        writer.endObject();
+                    } catch (IOException e) {
+                        throw new RuntimeException(e);
                     }
-                    return true;
-                } else {
-                    return false;
+                });
+                analyzer.getVersion(CLEANROOM).ifPresent(cleanroomVersion -> {
+                    try {
+                        writer.beginObject();
+                        writer.name("id").value(CLEANROOM.getPatchId());
+                        writer.name("version").value(cleanroomVersion);
+                        writer.endObject();
+                    } catch (IOException e) {
+                        throw new RuntimeException(e);
+                    }
+                });
+                analyzer.getVersion(NEO_FORGE).ifPresent(neoForgeVersion -> {
+                    try {
+                        writer.beginObject();
+                        writer.name("id").value(NEO_FORGE.getPatchId());
+                        writer.name("version").value(neoForgeVersion);
+                        writer.endObject();
+                    } catch (IOException e) {
+                        throw new RuntimeException(e);
+                    }
+                });
+                analyzer.getVersion(LITELOADER).ifPresent(liteLoaderVersion -> {
+                    try {
+                        writer.beginObject();
+                        writer.name("id").value(LITELOADER.getPatchId());
+                        writer.name("version").value(liteLoaderVersion);
+                        writer.endObject();
+                    } catch (IOException e) {
+                        throw new RuntimeException(e);
+                    }
+                });
+                analyzer.getVersion(OPTIFINE).ifPresent(optifineVersion -> {
+                    try {
+                        writer.beginObject();
+                        writer.name("id").value(OPTIFINE.getPatchId());
+                        writer.name("version").value(optifineVersion);
+                        writer.endObject();
+                    } catch (IOException e) {
+                        throw new RuntimeException(e);
+                    }
+                });
+                analyzer.getVersion(FABRIC).ifPresent(fabricVersion -> {
+                    try {
+                        writer.beginObject();
+                        writer.name("id").value(FABRIC.getPatchId());
+                        writer.name("version").value(fabricVersion);
+                        writer.endObject();
+                    } catch (IOException e) {
+                        throw new RuntimeException(e);
+                    }
+                });
+                analyzer.getVersion(QUILT).ifPresent(quiltVersion -> {
+                    try {
+                        writer.beginObject();
+                        writer.name("id").value(QUILT.getPatchId());
+                        writer.name("version").value(quiltVersion);
+                        writer.endObject();
+                    } catch (IOException e) {
+                        throw new RuntimeException(e);
+                    }
+                });
+                analyzer.getVersion(LEGACY_FABRIC).ifPresent(legacyfabricVersion -> {
+                    try {
+                        writer.beginObject();
+                        writer.name("id").value(LEGACY_FABRIC.getPatchId());
+                        writer.name("version").value(legacyfabricVersion);
+                        writer.endObject();
+                    } catch (IOException e) {
+                        throw new RuntimeException(e);
+                    }
+                });
+                writer.endArray();
+
+                writer.name("libraries").beginArray();
+                writer.endArray();
+
+                writer.name("files").beginArray();
+                Files.walk(runDirectory)
+                        .filter(Files::isRegularFile)
+                        .forEach(file -> {
+                            try {
+                                Path relative = runDirectory.relativize(file);
+                                String relativePath = relative.toString().replace(File.separatorChar, '/');
+                                if (Modpack.acceptFile(relativePath, blackList, info.getWhitelist())) {
+                                    String sha1 = DigestUtils.digestToString("SHA-1", file);
+                                    writer.beginObject();
+                                    writer.name("type").value(true);
+                                    writer.name("path").value(relativePath);
+                                    writer.name("hash").value(sha1);
+                                    writer.endObject();
+                                }
+                            } catch (IOException e) {
+                                throw new RuntimeException(e);
+                            }
+                        });
+                writer.endArray();
+
+                writer.name("settings").beginObject();
+                writer.endObject();
+
+                writer.name("launchInfo").beginObject();
+                writer.name("minMemory").value(info.getMinMemory());
+                
+                writer.name("supportedJavaVersions").beginArray();
+                for (int ver : info.getSupportedJavaVersions()) {
+                    writer.value(ver);
                 }
-            });
+                writer.endArray();
 
-            String gameVersion = repository.getGameVersion(version)
-                    .orElseThrow(() -> new IOException("Cannot parse the version of " + version));
-            LibraryAnalyzer analyzer = LibraryAnalyzer.analyze(repository.getResolvedPreservingPatchesVersion(version), gameVersion);
+                writer.name("launchArguments").beginArray();
+                for (String arg : StringUtils.tokenize(info.getLaunchArguments())) {
+                    writer.value(arg);
+                }
+                writer.endArray();
+                writer.name("javaArguments").beginArray();
+                for (String arg : StringUtils.tokenize(info.getJavaArguments())) {
+                    writer.value(arg);
+                }
+                writer.endArray();
+                writer.endObject();
 
-            // Mcbbs manifest
-            List<McbbsModpackManifest.Addon> addons = new ArrayList<>();
-            addons.add(new McbbsModpackManifest.Addon(MINECRAFT.getPatchId(), gameVersion));
-            analyzer.getVersion(FORGE).ifPresent(forgeVersion ->
-                    addons.add(new McbbsModpackManifest.Addon(FORGE.getPatchId(), forgeVersion)));
-            analyzer.getVersion(CLEANROOM).ifPresent(cleanroomVersion ->
-                    addons.add(new McbbsModpackManifest.Addon(CLEANROOM.getPatchId(), cleanroomVersion)));
-            analyzer.getVersion(NEO_FORGE).ifPresent(neoForgeVersion ->
-                    addons.add(new McbbsModpackManifest.Addon(NEO_FORGE.getPatchId(), neoForgeVersion)));
-            analyzer.getVersion(LITELOADER).ifPresent(liteLoaderVersion ->
-                    addons.add(new McbbsModpackManifest.Addon(LITELOADER.getPatchId(), liteLoaderVersion)));
-            analyzer.getVersion(OPTIFINE).ifPresent(optifineVersion ->
-                    addons.add(new McbbsModpackManifest.Addon(OPTIFINE.getPatchId(), optifineVersion)));
-            analyzer.getVersion(FABRIC).ifPresent(fabricVersion ->
-                    addons.add(new McbbsModpackManifest.Addon(FABRIC.getPatchId(), fabricVersion)));
-            analyzer.getVersion(QUILT).ifPresent(quiltVersion ->
-                    addons.add(new McbbsModpackManifest.Addon(QUILT.getPatchId(), quiltVersion)));
-            analyzer.getVersion(LEGACY_FABRIC).ifPresent(legacyfabricVersion ->
-                    addons.add(new McbbsModpackManifest.Addon(LEGACY_FABRIC.getPatchId(), legacyfabricVersion)));
+                writer.endObject();
+            }
 
-            List<Library> libraries = new ArrayList<>();
-            // TODO libraries
+            try (var zip = new Zipper(modpackFile)) {
+                zip.putFile(tempManifest, "mcbbs.packmeta");
 
-            List<McbbsModpackManifest.Origin> origins = new ArrayList<>();
-            // TODO origins
+                List<CurseManifestModLoader> modLoaders = new ArrayList<>();
+                analyzer.getVersion(FORGE).ifPresent(forgeVersion -> modLoaders.add(new CurseManifestModLoader("forge-" + forgeVersion, true)));
+                analyzer.getVersion(NEO_FORGE).ifPresent(neoForgeVersion -> modLoaders.add(new CurseManifestModLoader("neoforge-" + neoForgeVersion, true)));
+                analyzer.getVersion(FABRIC).ifPresent(fabricVersion -> modLoaders.add(new CurseManifestModLoader("fabric-" + fabricVersion, true)));
+                CurseManifest curseManifest = new CurseManifest(CurseManifest.MINECRAFT_MODPACK, 1, info.getName(), info.getVersion(), info.getAuthor(), "overrides", new CurseManifestMinecraft(gameVersion, modLoaders), Collections.emptyList());
+                zip.putTextFile(JsonUtils.GSON.toJson(curseManifest), "manifest.json");
 
-            McbbsModpackManifest.Settings settings = new McbbsModpackManifest.Settings();
-            McbbsModpackManifest.LaunchInfo launchInfo = new McbbsModpackManifest.LaunchInfo(info.getMinMemory(), info.getSupportedJavaVersions(), StringUtils.tokenize(info.getLaunchArguments()), StringUtils.tokenize(info.getJavaArguments()));
-
-            McbbsModpackManifest mcbbsManifest = new McbbsModpackManifest(McbbsModpackManifest.MANIFEST_TYPE, 2, info.getName(), info.getVersion(), info.getAuthor(), info.getDescription(), info.getFileApi() == null ? null : StringUtils.removeSuffix(info.getFileApi(), "/"), info.getUrl(), info.isForceUpdate(), origins, addons, libraries, files, settings, launchInfo);
-            zip.putTextFile(JsonUtils.GSON.toJson(mcbbsManifest), "mcbbs.packmeta");
-
-            // CurseForge manifest
-            List<CurseManifestModLoader> modLoaders = new ArrayList<>();
-            analyzer.getVersion(FORGE).ifPresent(forgeVersion -> modLoaders.add(new CurseManifestModLoader("forge-" + forgeVersion, true)));
-            analyzer.getVersion(NEO_FORGE).ifPresent(forgeVersion -> modLoaders.add(new CurseManifestModLoader("neoforge-" + forgeVersion, true)));
-            analyzer.getVersion(FABRIC).ifPresent(fabricVersion -> modLoaders.add(new CurseManifestModLoader("fabric-" + fabricVersion, true)));
-            // OptiFine and LiteLoader are not supported by CurseForge modpack.
-            CurseManifest curseManifest = new CurseManifest(CurseManifest.MINECRAFT_MODPACK, 1, info.getName(), info.getVersion(), info.getAuthor(), "overrides", new CurseManifestMinecraft(gameVersion, modLoaders), Collections.emptyList());
-            zip.putTextFile(JsonUtils.GSON.toJson(curseManifest), "manifest.json");
+                zip.putDirectory(runDirectory, "overrides", path -> {
+                    return Modpack.acceptFile(path, blackList, info.getWhitelist());
+                });
+            }
+        } finally {
+            Files.deleteIfExists(tempManifest);
         }
     }
 
@@ -145,5 +267,4 @@ public class McbbsModpackExportTask extends Task<Void> {
             .requireLaunchArguments()
             .requireOrigins()
             .requireAuthor();
-
 }
