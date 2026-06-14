@@ -99,9 +99,9 @@ public final class HMCLLocalizedDownloadListPage extends DownloadListPage {
     }
 
     private class Repository extends LocalizedRemoteAddonRepository {
-        private final RemoteAddonRepository.Type      type;
+        private final RemoteAddonRepository.Type type;
         private final CurseForgeRemoteAddonRepository curseForge;
-        private final ModrinthRemoteAddonRepository   modrinth;
+        private final ModrinthRemoteAddonRepository modrinth;
 
         public Repository(Type type, CurseForgeRemoteAddonRepository curseForge, ModrinthRemoteAddonRepository modrinth) {
             this.type = type;
