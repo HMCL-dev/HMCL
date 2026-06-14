@@ -171,7 +171,9 @@ public final class NetworkUtils {
 
     public static java.net.http.HttpRequest.Builder newRequestBuilder(URI uri) {
         var builder = java.net.http.HttpRequest.newBuilder(uri);
-        var apiKey = API_KEYS.get(uri.getHost().toLowerCase(Locale.ROOT));
+        var host = uri.getHost();
+        if (host == null) return builder;
+        var apiKey = API_KEYS.get(host.toLowerCase(Locale.ROOT));
         if (StringUtils.isNotBlank(apiKey))
             builder.header("x-api-key", apiKey);
         return builder;
