@@ -74,6 +74,12 @@ public final class HMCLGameRepository extends DefaultGameRepository {
     /// Directory under the version root that stores HMCL-managed instance metadata.
     private static final String INSTANCE_METADATA_DIRECTORY = ".hmcl";
 
+    /// Directory under the instance metadata directory that stores instance configuration files.
+    private static final String INSTANCE_CONFIG_DIRECTORY = "config";
+
+    /// Directory under the instance metadata directory that stores instance state files.
+    private static final String INSTANCE_STATE_DIRECTORY = "state";
+
     /// Current file name for instance-specific game settings.
     private static final String INSTANCE_GAME_SETTINGS_FILENAME = "instance-game-settings.json";
 
@@ -241,15 +247,24 @@ public final class HMCLGameRepository extends DefaultGameRepository {
 
     /// Returns the HMCL-managed metadata directory under the version root.
     ///
-    /// This directory stores instance-scoped files owned by HMCL, such as game settings,
-    /// migration receipts, and other launcher metadata.
+    /// This directory stores instance-scoped files owned by HMCL.
     public Path getInstanceMetadataDirectory(String id) {
         return getVersionRoot(id).resolve(INSTANCE_METADATA_DIRECTORY);
     }
 
-    /// Returns the current local game settings path under the instance metadata directory.
+    /// Returns the HMCL-managed configuration directory under the instance metadata directory.
+    public Path getInstanceConfigDirectory(String id) {
+        return getInstanceMetadataDirectory(id).resolve(INSTANCE_CONFIG_DIRECTORY);
+    }
+
+    /// Returns the HMCL-managed state directory under the instance metadata directory.
+    public Path getInstanceStateDirectory(String id) {
+        return getInstanceMetadataDirectory(id).resolve(INSTANCE_STATE_DIRECTORY);
+    }
+
+    /// Returns the current local game settings path under the instance configuration directory.
     private Path getInstanceGameSettingsFile(String id) {
-        return getInstanceMetadataDirectory(id).resolve(INSTANCE_GAME_SETTINGS_FILENAME);
+        return getInstanceConfigDirectory(id).resolve(INSTANCE_GAME_SETTINGS_FILENAME);
     }
 
     private void loadInstanceGameSettings(String id) {
