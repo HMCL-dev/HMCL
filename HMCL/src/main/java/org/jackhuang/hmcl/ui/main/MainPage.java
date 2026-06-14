@@ -206,21 +206,24 @@ public final class MainPage extends StackPane implements DecoratorPage {
             updatePane.getChildren().setAll(hBox, closeUpdateButton);
         }
 
-        HBox bottomMenuPane = new HBox();
+        HBox bottomMenuPane = null;
 
-        bottomMenuPane.setMaxSize(
-            Region.USE_PREF_SIZE,
-            Region.USE_PREF_SIZE
-        );
+        if (ConfigHolder.config().isSimpleUI()) {
+            bottomMenuPane = new HBox();
 
-        bottomMenuPane.setStyle(
-            "-fx-background-color: rgba(255, 255, 255, 0.25);" +
-            "-fx-background-radius: 8;" +
-            "-fx-padding: 8;"
-        );
+            bottomMenuPane.setMaxSize(
+                Region.USE_PREF_SIZE,
+                Region.USE_PREF_SIZE
+            );
 
-        StackPane.setAlignment(bottomMenuPane, Pos.BOTTOM_LEFT);
-        {
+            bottomMenuPane.setStyle(
+                "-fx-background-color: rgba(255, 255, 255, 0.25);" +
+                "-fx-background-radius: 8;" +
+                "-fx-padding: 8;"
+            );
+
+            StackPane.setAlignment(bottomMenuPane, Pos.BOTTOM_LEFT);
+
             JFXButton accountButton = new JFXButton();
             JFXButton gameListButton = new JFXButton();
             JFXButton gameButton = new JFXButton();
@@ -230,11 +233,13 @@ public final class MainPage extends StackPane implements DecoratorPage {
             JFXButton contactButton = new JFXButton();
 
             accountButton.setGraphic(SVG.PERSON.createIcon());
+            FXUtils.installFastTooltip(accountButton, i18n("account"));
             accountButton.setOnAction(e -> {
                 Controllers.navigate(Controllers.getAccountListPage());
             });
 
             gameListButton.setGraphic(SVG.GAMEPAD.createIcon());
+            FXUtils.installFastTooltip(gameListButton, i18n("version"));
             gameListButton.setOnAction(e -> {
                 Profile profile = Profiles.getSelectedProfile();
                 String version = Profiles.getSelectedVersion();
@@ -246,23 +251,27 @@ public final class MainPage extends StackPane implements DecoratorPage {
             });
 
             gameButton.setGraphic(SVG.FORMAT_LIST_BULLETED.createIcon());
+            FXUtils.installFastTooltip(gameButton, i18n("version.manage"));
             gameButton.setOnAction(e -> {
                 Controllers.navigate(Controllers.getGameListPage());
             });
 
             downloadButton.setGraphic(SVG.DOWNLOAD.createIcon());
+            FXUtils.installFastTooltip(downloadButton, i18n("download"));
             downloadButton.setOnAction(e -> {
                 Controllers.getDownloadPage().showGameDownloads();
                 Controllers.navigate(Controllers.getDownloadPage());
             });
 
             launcherSettingsButton.setGraphic(SVG.SETTINGS.createIcon());
+            FXUtils.installFastTooltip(launcherSettingsButton, i18n("settings"));
             launcherSettingsButton.setOnAction(e -> {
                 Controllers.getSettingsPage().showGameSettings(Profiles.getSelectedProfile());
                 Controllers.navigate(Controllers.getSettingsPage());
             });
 
             terracottaButton.setGraphic(SVG.GRAPH2.createIcon());
+            FXUtils.installFastTooltip(terracottaButton, i18n("terracotta"));
             terracottaButton.setOnAction(e -> {
                 if (TerracottaMetadata.PROVIDER != null) {
                     Controllers.navigate(Controllers.getTerracottaPage());
@@ -283,6 +292,7 @@ public final class MainPage extends StackPane implements DecoratorPage {
             });
 
             contactButton.setGraphic(SVG.CHAT.createIcon());
+            FXUtils.installFastTooltip(contactButton, i18n("contact.chat"));
             contactButton.setOnAction(e -> {
                 Controllers.getSettingsPage().showFeedback();
                 Controllers.navigate(Controllers.getSettingsPage());
@@ -371,7 +381,7 @@ public final class MainPage extends StackPane implements DecoratorPage {
             launchPane.getChildren().setAll(launchButton, menuButton);
         }
 
-        if (ConfigHolder.config().isSimpleUI()) {
+        if (bottomMenuPane != null) {
             getChildren().addAll(updatePane, bottomMenuPane, launchPane);
         } else {
             getChildren().addAll(updatePane, launchPane);
