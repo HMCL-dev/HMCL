@@ -36,6 +36,7 @@ import javafx.scene.input.MouseButton;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
+import javafx.scene.layout.Region;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.scene.text.TextFlow;
@@ -45,11 +46,13 @@ import org.jackhuang.hmcl.download.DefaultDependencyManager;
 import org.jackhuang.hmcl.download.DownloadProvider;
 import org.jackhuang.hmcl.download.VersionList;
 import org.jackhuang.hmcl.game.Version;
+import org.jackhuang.hmcl.setting.ConfigHolder;
 import org.jackhuang.hmcl.setting.DownloadProviders;
 import org.jackhuang.hmcl.setting.Profile;
 import org.jackhuang.hmcl.setting.Profiles;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
+import org.jackhuang.hmcl.terracotta.TerracottaMetadata;
 import org.jackhuang.hmcl.theme.Themes;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.FXUtils;
@@ -68,6 +71,9 @@ import org.jackhuang.hmcl.upgrade.UpdateHandler;
 import org.jackhuang.hmcl.util.*;
 import org.jackhuang.hmcl.util.i18n.I18n;
 import org.jackhuang.hmcl.util.javafx.BindingMapping;
+import org.jackhuang.hmcl.util.platform.Architecture;
+import org.jackhuang.hmcl.util.platform.Bits;
+import org.jackhuang.hmcl.util.platform.OSVersion;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
 import org.jackhuang.hmcl.util.platform.Platform;
 import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
@@ -200,6 +206,99 @@ public final class MainPage extends StackPane implements DecoratorPage {
             updatePane.getChildren().setAll(hBox, closeUpdateButton);
         }
 
+        HBox bottomMenuPane = new HBox();
+
+        bottomMenuPane.setMaxSize(
+            Region.USE_PREF_SIZE,
+            Region.USE_PREF_SIZE
+        );
+
+        bottomMenuPane.setStyle(
+            "-fx-background-color: rgba(255, 255, 255, 0.25);" +
+            "-fx-background-radius: 8;" +
+            "-fx-padding: 8;"
+        );
+
+        StackPane.setAlignment(bottomMenuPane, Pos.BOTTOM_LEFT);
+        {
+            JFXButton accountButton = new JFXButton();
+            JFXButton gameListButton = new JFXButton();
+            JFXButton gameButton = new JFXButton();
+            JFXButton downloadButton = new JFXButton();
+            JFXButton launcherSettingsButton = new JFXButton();
+            JFXButton terracottaButton = new JFXButton();
+            JFXButton contactButton = new JFXButton();
+
+            accountButton.setGraphic(SVG.PERSON.createIcon());
+            accountButton.setOnAction(e -> {
+                Controllers.navigate(Controllers.getAccountListPage());
+            });
+
+            gameListButton.setGraphic(SVG.GAMEPAD.createIcon());
+            gameListButton.setOnAction(e -> {
+                Profile profile = Profiles.getSelectedProfile();
+                String version = Profiles.getSelectedVersion();
+                if (version == null) {
+                    Controllers.navigate(Controllers.getGameListPage());
+                } else {
+                    Versions.modifyGameSettings(profile, version);
+                }
+            });
+
+            gameButton.setGraphic(SVG.FORMAT_LIST_BULLETED.createIcon());
+            gameButton.setOnAction(e -> {
+                Controllers.navigate(Controllers.getGameListPage());
+            });
+
+            downloadButton.setGraphic(SVG.DOWNLOAD.createIcon());
+            downloadButton.setOnAction(e -> {
+                Controllers.getDownloadPage().showGameDownloads();
+                Controllers.navigate(Controllers.getDownloadPage());
+            });
+
+            launcherSettingsButton.setGraphic(SVG.SETTINGS.createIcon());
+            launcherSettingsButton.setOnAction(e -> {
+                Controllers.getSettingsPage().showGameSettings(Profiles.getSelectedProfile());
+                Controllers.navigate(Controllers.getSettingsPage());
+            });
+
+            terracottaButton.setGraphic(SVG.GRAPH2.createIcon());
+            terracottaButton.setOnAction(e -> {
+                if (TerracottaMetadata.PROVIDER != null) {
+                    Controllers.navigate(Controllers.getTerracottaPage());
+                } else {
+                    String message;
+                    if (Architecture.SYSTEM_ARCH.getBits() == Bits.BIT_32)
+                        message = i18n("terracotta.unsupported.arch.32bit");
+                    else if (OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS
+                            && !OperatingSystem.SYSTEM_VERSION.isAtLeast(OSVersion.WINDOWS_10))
+                        message = i18n("terracotta.unsupported.os.windows.old");
+                    else if (Platform.SYSTEM_PLATFORM.equals(OperatingSystem.LINUX, Architecture.LOONGARCH64_OW))
+                        message = i18n("terracotta.unsupported.arch.loongarch64_ow");
+                    else
+                        message = i18n("terracotta.unsupported");
+
+                    Controllers.dialog(message, null, MessageDialogPane.MessageType.WARNING);
+                }
+            });
+
+            contactButton.setGraphic(SVG.CHAT.createIcon());
+            contactButton.setOnAction(e -> {
+                Controllers.getSettingsPage().showFeedback();
+                Controllers.navigate(Controllers.getSettingsPage());
+            });
+
+            bottomMenuPane.getChildren().addAll(
+                accountButton,
+                gameListButton,
+                gameButton,
+                downloadButton,
+                launcherSettingsButton,
+                terracottaButton,
+                contactButton
+            );
+        }
+
         HBox launchPane = new HBox();
         launchPane.getStyleClass().add("launch-pane");
         FXUtils.onScroll(launchPane, versions, list -> {
@@ -272,8 +371,11 @@ public final class MainPage extends StackPane implements DecoratorPage {
             launchPane.getChildren().setAll(launchButton, menuButton);
         }
 
-        getChildren().addAll(updatePane, launchPane);
-
+        if (ConfigHolder.config().isSimpleUI()) {
+            getChildren().addAll(updatePane, bottomMenuPane, launchPane);
+        } else {
+            getChildren().addAll(updatePane, launchPane);
+        }
     }
 
     private void showUpdate(boolean show) {

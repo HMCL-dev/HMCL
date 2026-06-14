@@ -17,6 +17,8 @@
  */
 package org.jackhuang.hmcl.ui.decorator;
 
+import javafx.beans.property.BooleanProperty;
+import javafx.beans.property.SimpleBooleanProperty;
 import javafx.scene.Node;
 import javafx.scene.control.Control;
 import javafx.scene.control.Skin;
@@ -24,12 +26,15 @@ import javafx.scene.control.SkinBase;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
+
+import org.jackhuang.hmcl.setting.ConfigHolder;
 import org.jackhuang.hmcl.ui.FXUtils;
 
 public class DecoratorAnimatedPage extends Control {
 
     protected final VBox left = new VBox();
     protected final StackPane center = new StackPane();
+    protected final BooleanProperty showLeft = new SimpleBooleanProperty(true);
 
     {
         getStyleClass().add("gray-background");
@@ -51,6 +56,18 @@ public class DecoratorAnimatedPage extends Control {
         return center;
     }
 
+    public BooleanProperty showLeftProperty() {
+        return showLeft;
+    }
+
+    public boolean isShowLeft() {
+        return showLeft.get();
+    }
+
+    public void setShowLeft(boolean v) {
+        showLeft.set(v);
+    }
+
     @Override
     protected Skin<?> createDefaultSkin() {
         return new DecoratorAnimatedPageSkin<>(this);
@@ -66,6 +83,16 @@ public class DecoratorAnimatedPage extends Control {
             FXUtils.setLimitWidth(control.left, 200);
             pane.setCenter(control.center);
             getChildren().setAll(pane);
+
+            Runnable apply = () -> {
+                boolean show = control.isShowLeft();
+                control.left.setVisible(show);
+                control.left.setManaged(show);
+            };
+
+            apply.run();
+
+            control.showLeftProperty().addListener((obs, o, n) -> apply.run());
         }
 
         protected void setLeft(Node... children) {

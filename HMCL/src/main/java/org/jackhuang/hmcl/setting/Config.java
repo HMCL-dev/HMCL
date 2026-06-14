@@ -336,6 +336,21 @@ public final class Config extends ObservableSetting {
         this.themeColor.set(themeColor);
     }
 
+    @SerializedName("simpleUI")
+    private final BooleanProperty simpleUI = new SimpleBooleanProperty(false);
+
+    public BooleanProperty simpleUIProperty() {
+        return simpleUI;
+    }
+
+    public boolean isSimpleUI() {
+        return simpleUI.get();
+    }
+
+    public void setSimpleUI(boolean v) {
+        simpleUI.set(v);
+    }
+
     @SerializedName("fontFamily")
     private final StringProperty fontFamily = new SimpleStringProperty();
 
