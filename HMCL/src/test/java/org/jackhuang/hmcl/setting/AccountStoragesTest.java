@@ -20,6 +20,7 @@ package org.jackhuang.hmcl.setting;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
+import org.jackhuang.hmcl.auth.Account;
 import org.jackhuang.hmcl.util.gson.JsonSchema;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jetbrains.annotations.NotNullByDefault;
@@ -124,7 +125,7 @@ public final class AccountStoragesTest {
                 "refreshToken", "refresh-token"
         )));
         Map<Object, Object> metadata = metadataAccounts.get(0);
-        JsonObject identifier = Objects.requireNonNull(AccountCredentials.identifier(metadata));
+        JsonObject identifier = Objects.requireNonNull(Account.identifier(metadata));
 
         assertEquals("microsoft", metadata.get("type"));
         assertEquals("Steve", metadata.get("displayName"));
@@ -133,6 +134,26 @@ public final class AccountStoragesTest {
         assertFalse(metadata.containsKey("refreshToken"));
         assertEquals("access-token", credentials.getCredentials().get(identifier).get("accessToken"));
         assertEquals("refresh-token", credentials.getCredentials().get(identifier).get("refreshToken"));
+    }
+
+    /// Tests moving Yggdrasil token fields from account metadata into the credential store.
+    @Test
+    public void extractsYggdrasilTokenFieldsIntoCredentials() {
+        AccountCredentials credentials = new AccountCredentials();
+        List<Map<Object, Object>> metadataAccounts = credentials.replaceFromAccountStorages(List.of(Map.of(
+                "type", "yggdrasil",
+                "username", "Steve",
+                "uuid", "00000000-0000-0000-0000-000000000001",
+                "accessToken", "access-token",
+                "clientToken", "client-token"
+        )));
+        Map<Object, Object> metadata = metadataAccounts.get(0);
+        JsonObject identifier = Objects.requireNonNull(Account.identifier(metadata));
+
+        assertFalse(metadata.containsKey("accessToken"));
+        assertFalse(metadata.containsKey("clientToken"));
+        assertEquals("access-token", credentials.getCredentials().get(identifier).get("accessToken"));
+        assertEquals("client-token", credentials.getCredentials().get(identifier).get("clientToken"));
     }
 
     /// Tests restoring token fields from the credential store into account metadata.
@@ -198,7 +219,7 @@ public final class AccountStoragesTest {
                     "accessToken", "access-token",
                     "refreshToken", "refresh-token"
             )));
-            JsonObject identifier = Objects.requireNonNull(AccountCredentials.identifier(metadataAccounts.get(0)));
+            JsonObject identifier = Objects.requireNonNull(Account.identifier(metadataAccounts.get(0)));
 
             JsonObject serialized = JsonParser.parseString(
                     LauncherSettings.SETTINGS_GSON.toJson(credentials, AccountCredentials.class)).getAsJsonObject();
@@ -238,7 +259,7 @@ public final class AccountStoragesTest {
                     "accessToken", "access-token",
                     "refreshToken", "refresh-token"
             )));
-            JsonObject identifier = Objects.requireNonNull(AccountCredentials.identifier(metadataAccounts.get(0)));
+            JsonObject identifier = Objects.requireNonNull(Account.identifier(metadataAccounts.get(0)));
             JsonObject serialized = JsonParser.parseString(
                     LauncherSettings.SETTINGS_GSON.toJson(credentials, AccountCredentials.class)).getAsJsonObject();
 

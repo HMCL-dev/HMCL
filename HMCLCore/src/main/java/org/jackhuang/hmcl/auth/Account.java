@@ -30,8 +30,11 @@ import javafx.beans.property.SimpleBooleanProperty;
 import org.jackhuang.hmcl.auth.yggdrasil.Texture;
 import org.jackhuang.hmcl.auth.yggdrasil.TextureType;
 import org.jackhuang.hmcl.util.ToStringBuilder;
+import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.javafx.ObservableHelper;
 import org.jetbrains.annotations.Contract;
+import org.jetbrains.annotations.NotNullByDefault;
+import org.jetbrains.annotations.Nullable;
 
 import java.nio.file.Path;
 import java.util.Map;
@@ -43,6 +46,7 @@ import java.util.UUID;
  *
  * @author huangyuhui
  */
+@NotNullByDefault
 public abstract class Account implements Observable {
 
     /**
@@ -127,6 +131,66 @@ public abstract class Account implements Observable {
         return true;
     }
 
+    /// Returns the stable account identifier for the given account storage.
+    ///
+    /// The returned object includes the account type and the same stable fields written by account implementations.
+    ///
+    /// @param storage the account storage map
+    /// @return the stable account identifier, or `null` if the account cannot be identified
+    public static @Nullable JsonObject identifier(Map<?, ?> storage) {
+        @Nullable String type = JsonUtils.getString(storage, "type");
+        if (type == null) {
+            return null;
+        }
+
+        JsonObject identifier = new JsonObject();
+        identifier.addProperty("type", type);
+        switch (type) {
+            case "offline" -> {
+                if (!addIdentifierProperty(identifier, storage, "username")) {
+                    return null;
+                }
+            }
+            case "microsoft" -> {
+                if (!addIdentifierProperty(identifier, storage, "uuid")) {
+                    return null;
+                }
+            }
+            case "yggdrasil" -> {
+                if (!addIdentifierProperty(identifier, storage, "username")
+                        || !addIdentifierProperty(identifier, storage, "uuid")) {
+                    return null;
+                }
+            }
+            case "authlibInjector" -> {
+                if (!addIdentifierProperty(identifier, storage, "serverBaseURL")
+                        || !addIdentifierProperty(identifier, storage, "username")
+                        || !addIdentifierProperty(identifier, storage, "uuid")) {
+                    return null;
+                }
+            }
+            default -> {
+                return null;
+            }
+        }
+        return identifier;
+    }
+
+    /// Adds a string member from an account storage map to an identifier object.
+    ///
+    /// @param identifier the identifier object to update
+    /// @param storage the account storage map
+    /// @param key the member key
+    /// @return whether the member exists and was added
+    private static boolean addIdentifierProperty(JsonObject identifier, Map<?, ?> storage, String key) {
+        @Nullable String value = JsonUtils.getString(storage, key);
+        if (value == null) {
+            return false;
+        }
+        identifier.addProperty(key, value);
+        return true;
+    }
+
     private final ObservableHelper helper = new ObservableHelper(this);
 
     @Override
@@ -157,7 +221,7 @@ public abstract class Account implements Observable {
     }
 
     @Override
-    public boolean equals(Object obj) {
+    public boolean equals(@Nullable Object obj) {
         if (this == obj)
             return true;
         if (!(obj instanceof Account))

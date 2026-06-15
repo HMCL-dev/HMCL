@@ -69,7 +69,7 @@ final class ProtectedPayload {
                 if (envelope.get(PROPERTY_PAYLOAD) instanceof JsonObject payload)
                     return payload.deepCopy();
                 else
-                    throw new JsonParseException("Missing protected payload member: " + PROPERTY_PAYLOAD);
+                    throw new JsonParseException("Missing payload or payload is not a object");
             }
         },
 
@@ -100,7 +100,7 @@ final class ProtectedPayload {
                 try {
                     String encodedPayload = JsonUtils.getString(envelope, PROPERTY_PAYLOAD);
                     if (encodedPayload == null) {
-                        throw new JsonParseException("Missing protected payload member: " + PROPERTY_PAYLOAD);
+                        throw new JsonParseException("Missing payload or payload is not a string");
                     }
 
                     byte[] compressedBytes = Base64.getDecoder().decode(encodedPayload);

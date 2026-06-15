@@ -30,9 +30,9 @@ import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableMap;
+import org.jackhuang.hmcl.auth.Account;
 import org.jackhuang.hmcl.util.gson.JsonSchema;
 import org.jackhuang.hmcl.util.gson.JsonSerializable;
-import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.gson.ObservableSetting;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
@@ -139,7 +139,7 @@ final class AccountCredentials extends ObservableSetting implements JsonSchemaSe
     /// @param accountStorages account storages to update in place
     void mergeInto(AccountStorages accountStorages) {
         for (Map<Object, Object> account : accountStorages.getAccounts()) {
-            @Nullable JsonObject identifier = identifier(account);
+            @Nullable JsonObject identifier = Account.identifier(account);
             if (identifier == null) {
                 continue;
             }
@@ -161,7 +161,7 @@ final class AccountCredentials extends ObservableSetting implements JsonSchemaSe
 
         for (Map<Object, Object> account : accountStorages) {
             Map<Object, Object> metadata = new LinkedHashMap<>(account);
-            @Nullable JsonObject identifier = identifier(metadata);
+            @Nullable JsonObject identifier = Account.identifier(metadata);
 
             Map<Object, Object> accountCredentials = new LinkedHashMap<>();
             if (identifier != null) {
@@ -209,58 +209,6 @@ final class AccountCredentials extends ObservableSetting implements JsonSchemaSe
             }
         }
         return result;
-    }
-
-    /// Returns the stable account identifier for the given account storage.
-    ///
-    /// @param storage the account storage map
-    /// @return the stable account identifier, or `null` if the account cannot be identified
-    static @Nullable JsonObject identifier(Map<?, ?> storage) {
-        @Nullable String type = JsonUtils.getString(storage, "type");
-        if (type == null) {
-            return null;
-        }
-
-        JsonObject identifier = new JsonObject();
-        identifier.addProperty("type", type);
-        switch (type) {
-            case "offline" -> {
-                if (!addIdentifierProperty(identifier, storage, "username")) {
-                    return null;
-                }
-            }
-            case "microsoft" -> {
-                if (!addIdentifierProperty(identifier, storage, "uuid")) {
-                    return null;
-                }
-            }
-            case "authlibInjector" -> {
-                if (!addIdentifierProperty(identifier, storage, "serverBaseURL")
-                        || !addIdentifierProperty(identifier, storage, "username")
-                        || !addIdentifierProperty(identifier, storage, "uuid")) {
-                    return null;
-                }
-            }
-            default -> {
-                return null;
-            }
-        }
-        return identifier;
-    }
-
-    /// Adds a string member from an account storage map to an identifier object.
-    ///
-    /// @param identifier the identifier object to update
-    /// @param storage the account storage map
-    /// @param key the member key
-    /// @return whether the member exists and was added
-    private static boolean addIdentifierProperty(JsonObject identifier, Map<?, ?> storage, String key) {
-        @Nullable String value = JsonUtils.getString(storage, key);
-        if (value == null) {
-            return false;
-        }
-        identifier.addProperty(key, value);
-        return true;
     }
 
     /// JSON adapter for [AccountCredentials].
