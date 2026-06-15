@@ -218,15 +218,13 @@ public final class MainPage extends StackPane implements DecoratorPage {
 
             String barStyle = ConfigHolder.config().getCompactModeNavigationBarStyle();
 
-            if (barStyle.equals("translucent")) {
+            if ("translucent".equals(barStyle)) {
                 bottomMenuPane.getStyleClass().add("compact-mode-navigation-bar-translucent");
+            } else if ("transparent".equals(barStyle)) {
+                bottomMenuPane.getStyleClass().add("compact-mode-navigation-bar-transparent");
             } else {
-                if (barStyle.equals("transparent")) {
-                    bottomMenuPane.getStyleClass().add("compact-mode-navigation-baru-transparent");
-                } else {
-                    bottomMenuPane.getStyleClass().add("compact-mode-navigation-bar");
-                }
-            } 
+                bottomMenuPane.getStyleClass().add("compact-mode-navigation-bar");
+            }
 
             StackPane.setAlignment(bottomMenuPane, Pos.BOTTOM_LEFT);
 
