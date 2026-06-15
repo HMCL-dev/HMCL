@@ -37,6 +37,8 @@ public class DecoratorAnimatedPage extends Control {
 
     {
         getStyleClass().add("gray-background");
+        left.visibleProperty().bind(showLeft);
+        left.managedProperty().bind(showLeft);
     }
 
     protected void setLeft(Node... children) {
@@ -82,21 +84,6 @@ public class DecoratorAnimatedPage extends Control {
             FXUtils.setLimitWidth(control.left, 200);
             pane.setCenter(control.center);
             getChildren().setAll(pane);
-
-            control.left.setVisible(control.isShowLeft());
-            control.left.setManaged(control.isShowLeft());
-
-            control.showLeftProperty().addListener(new javafx.beans.value.ChangeListener<Boolean>() {
-                @Override
-                public void changed(javafx.beans.value.ObservableValue<? extends Boolean> obs, Boolean o, Boolean n) {
-                    if (control.getSkin() != DecoratorAnimatedPageSkin.this) {
-                        control.showLeftProperty().removeListener(this);
-                    } else {
-                        control.left.setVisible(n);
-                        control.left.setManaged(n);
-                    }
-                }
-            });
         }
 
         protected void setLeft(Node... children) {
