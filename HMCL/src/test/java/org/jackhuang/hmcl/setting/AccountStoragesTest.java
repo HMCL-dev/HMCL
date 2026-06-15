@@ -176,7 +176,6 @@ public final class AccountStoragesTest {
             assertEquals(AccountCredentials.CURRENT_SCHEMA.url(),
                     serialized.get(JsonSchema.PROPERTY_SCHEMA).getAsString());
             assertEquals("hmcl-obfuscated-v1", serialized.get("protection").getAsString());
-            assertTrue(serialized.has("nonce"));
             assertTrue(serialized.has("payload"));
             assertFalse(serialized.toString().contains("access-token"));
             assertFalse(serialized.toString().contains("refresh-token"));
@@ -211,7 +210,6 @@ public final class AccountStoragesTest {
             assertEquals(AccountCredentials.CURRENT_SCHEMA.url(),
                     serialized.get(JsonSchema.PROPERTY_SCHEMA).getAsString());
             assertEquals("plain", serialized.get("protection").getAsString());
-            assertFalse(serialized.has("nonce"));
             assertEquals(identifier, serializedIdentifier);
             assertEquals("access-token", tokens.get("accessToken").getAsString());
             assertEquals("refresh-token", tokens.get("refreshToken").getAsString());

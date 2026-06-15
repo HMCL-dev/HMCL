@@ -21,17 +21,17 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParseException;
 import com.google.gson.JsonParser;
-import org.jackhuang.hmcl.util.DigestUtils;
+import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
 
-import javax.crypto.Cipher;
-import javax.crypto.spec.GCMParameterSpec;
-import javax.crypto.spec.SecretKeySpec;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.nio.charset.StandardCharsets;
-import java.security.GeneralSecurityException;
-import java.security.SecureRandom;
 import java.util.Base64;
+import java.util.zip.GZIPInputStream;
+import java.util.zip.GZIPOutputStream;
 
 /// Stores a JSON payload using HMCL's portable protection envelope.
 ///
@@ -39,29 +39,12 @@ import java.util.Base64;
 /// protected payload can move between machines, but it should not be treated as device-bound secret storage.
 @NotNullByDefault
 final class ProtectedPayload {
-    /// The protection marker for obfuscated envelope objects.
-    static final String PROTECTION_OBFUSCATED = "hmcl-obfuscated-v1";
-
-    /// The protection marker for plain envelope objects.
-    static final String PROTECTION_PLAIN = "plain";
 
     /// The JSON member containing the protection marker.
     static final String PROPERTY_PROTECTION = "protection";
 
-    /// The JSON member containing the random nonce.
-    static final String PROPERTY_NONCE = "nonce";
-
     /// The JSON member containing the envelope payload.
     static final String PROPERTY_PAYLOAD = "payload";
-
-    /// The portable obfuscation key embedded in the launcher.
-    private static final SecretKeySpec KEY = new SecretKeySpec(
-            DigestUtils.digest("SHA-256", "org.jackhuang.hmcl.protected-payload.v1"
-                    .getBytes(StandardCharsets.UTF_8)),
-            "AES");
-
-    /// Secure random source used for GCM nonces.
-    private static final SecureRandom RANDOM = new SecureRandom();
 
     /// Base64 encoder used for JSON-safe binary data.
     private static final Base64.Encoder ENCODER = Base64.getUrlEncoder().withoutPadding();
@@ -69,35 +52,14 @@ final class ProtectedPayload {
     /// Base64 decoder used for JSON-safe binary data.
     private static final Base64.Decoder DECODER = Base64.getUrlDecoder();
 
-    /// The byte length of AES-GCM nonces.
-    private static final int NONCE_LENGTH = 12;
-
-    /// The AES-GCM authentication tag length in bits.
-    private static final int TAG_LENGTH = 128;
-
     /// Prevents instantiation.
     private ProtectedPayload() {
     }
 
     /// Selects how a protected payload is stored in its JSON envelope.
     enum ProtectionMode {
-        /// Stores the payload as a portable obfuscated AES-GCM envelope.
-        OBFUSCATED_V1(PROTECTION_OBFUSCATED) {
-            /// Writes the payload into the given envelope.
-            @Override
-            void write(JsonObject envelope, JsonElement payload) {
-                writeObfuscated(envelope, payload);
-            }
-
-            /// Reads the payload from the given envelope.
-            @Override
-            JsonElement read(JsonObject envelope) {
-                return readObfuscated(envelope);
-            }
-        },
-
         /// Stores the payload as plain JSON for development and diagnostics.
-        PLAIN(PROTECTION_PLAIN) {
+        PLAIN("plain") {
             /// Writes the payload into the given envelope.
             @Override
             void write(JsonObject envelope, JsonElement payload) {
@@ -114,7 +76,42 @@ final class ProtectedPayload {
                 }
                 return payload.deepCopy();
             }
+        },
+
+        /// Stores the payload as a portable obfuscated envelope.
+        OBFUSCATED_V1("hmcl-obfuscated-v1") {
+            /// Writes the payload into the given envelope.
+            @Override
+            void write(JsonObject envelope, JsonElement payload) {
+                try {
+                    envelope.addProperty(PROPERTY_PROTECTION, id());
+                    String json = payload.toString();
+                    ByteArrayOutputStream output = new ByteArrayOutputStream(json.length());
+                    try (GZIPOutputStream gzip = new GZIPOutputStream(output)) {
+                        gzip.write(json.getBytes(StandardCharsets.UTF_8));
+                    }
+                    envelope.addProperty(PROPERTY_PAYLOAD, ENCODER.encodeToString(output.toByteArray()));
+                } catch (IOException e) {
+                    throw new JsonParseException("Failed to protect JSON payload", e);
+                }
+            }
+
+            /// Reads the payload from the given envelope.
+            @Override
+            JsonElement read(JsonObject envelope) {
+                try {
+                    String result;
+                    byte[] bytes = DECODER.decode(readString(envelope, PROPERTY_PAYLOAD));
+                    try (GZIPInputStream gzip = new GZIPInputStream(new ByteArrayInputStream(bytes))) {
+                        result = new String(gzip.readAllBytes(), StandardCharsets.UTF_8);
+                    }
+                    return JsonParser.parseString(result);
+                } catch (IllegalArgumentException | IOException e) {
+                    throw new JsonParseException("Failed to reveal protected JSON payload", e);
+                }
+            }
         };
+
 
         /// The serialized protection marker.
         private final String id;
@@ -154,7 +151,12 @@ final class ProtectedPayload {
         /// @param id the configured protection marker
         /// @return the selected write mode
         static ProtectionMode fromConfiguredId(@Nullable String id) {
-            return PROTECTION_PLAIN.equals(id) ? PLAIN : OBFUSCATED_V1;
+            for (ProtectionMode mode : values()) {
+                if (mode.id.equals(id)) {
+                    return mode;
+                }
+            }
+            return OBFUSCATED_V1;
         }
 
         /// Reads the protection mode from an envelope.
@@ -163,7 +165,11 @@ final class ProtectedPayload {
         /// @return the protection mode declared by the envelope
         /// @throws JsonParseException if the declared protection mode is unsupported
         static ProtectionMode fromEnvelope(JsonObject envelope) {
-            String protection = readString(envelope, PROPERTY_PROTECTION);
+            String protection = JsonUtils.getString(envelope, PROPERTY_PROTECTION);
+            if (protection == null) {
+                throw new JsonParseException("Missing protected payload member: protection");
+            }
+
             for (ProtectionMode mode : values()) {
                 if (mode.id.equals(protection)) {
                     return mode;
@@ -183,29 +189,6 @@ final class ProtectedPayload {
         protectionMode.write(envelope, payload);
     }
 
-    /// Writes a JSON payload as an obfuscated envelope.
-    ///
-    /// @param envelope the envelope object to write into
-    /// @param payload the plain JSON payload
-    /// @throws JsonParseException if the payload cannot be protected
-    private static void writeObfuscated(JsonObject envelope, JsonElement payload) {
-        byte[] nonce = new byte[NONCE_LENGTH];
-        RANDOM.nextBytes(nonce);
-
-        try {
-            Cipher cipher = Cipher.getInstance("AES/GCM/NoPadding");
-            cipher.init(Cipher.ENCRYPT_MODE, KEY, new GCMParameterSpec(TAG_LENGTH, nonce));
-            cipher.updateAAD(PROTECTION_OBFUSCATED.getBytes(StandardCharsets.UTF_8));
-            byte[] encrypted = cipher.doFinal(payload.toString().getBytes(StandardCharsets.UTF_8));
-
-            envelope.addProperty(PROPERTY_PROTECTION, PROTECTION_OBFUSCATED);
-            envelope.addProperty(PROPERTY_NONCE, ENCODER.encodeToString(nonce));
-            envelope.addProperty(PROPERTY_PAYLOAD, ENCODER.encodeToString(encrypted));
-        } catch (GeneralSecurityException e) {
-            throw new JsonParseException("Failed to protect JSON payload", e);
-        }
-    }
-
     /// Reads and reveals a protected JSON payload from an envelope object.
     ///
     /// @param envelope the envelope object to read from
@@ -213,24 +196,6 @@ final class ProtectedPayload {
     /// @throws JsonParseException if the envelope is malformed or cannot be revealed
     static JsonElement read(JsonObject envelope) throws JsonParseException {
         return ProtectionMode.fromEnvelope(envelope).read(envelope);
-    }
-
-    /// Reads and reveals an obfuscated JSON payload from an envelope object.
-    ///
-    /// @param envelope the envelope object to read from
-    /// @return the revealed JSON payload
-    /// @throws JsonParseException if the envelope is malformed or cannot be revealed
-    private static JsonElement readObfuscated(JsonObject envelope) throws JsonParseException {
-        try {
-            Cipher cipher = Cipher.getInstance("AES/GCM/NoPadding");
-            cipher.init(Cipher.DECRYPT_MODE, KEY,
-                    new GCMParameterSpec(TAG_LENGTH, DECODER.decode(readString(envelope, PROPERTY_NONCE))));
-            cipher.updateAAD(PROTECTION_OBFUSCATED.getBytes(StandardCharsets.UTF_8));
-            byte[] decrypted = cipher.doFinal(DECODER.decode(readString(envelope, PROPERTY_PAYLOAD)));
-            return JsonParser.parseString(new String(decrypted, StandardCharsets.UTF_8));
-        } catch (GeneralSecurityException | IllegalArgumentException e) {
-            throw new JsonParseException("Failed to reveal protected JSON payload", e);
-        }
     }
 
     /// Reads a required string member from a JSON object.

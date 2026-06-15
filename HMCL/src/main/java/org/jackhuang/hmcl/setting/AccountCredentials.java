@@ -359,7 +359,6 @@ final class AccountCredentials extends ObservableSetting implements JsonSchemaSe
                 accountCredentials.setSchema(new JsonSchema(schema.getAsString()));
             }
             values.remove(ProtectedPayload.PROPERTY_PROTECTION);
-            values.remove(ProtectedPayload.PROPERTY_NONCE);
             values.remove(ProtectedPayload.PROPERTY_PAYLOAD);
             accountCredentials.unknownFields.putAll(values);
 
