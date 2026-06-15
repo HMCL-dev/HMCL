@@ -82,7 +82,7 @@ final class ProtectedPayload {
     /// Selects how a protected payload is stored in its JSON envelope.
     enum ProtectionMode {
         /// Stores the payload as a portable obfuscated AES-GCM envelope.
-        OBFUSCATED(PROTECTION_OBFUSCATED) {
+        OBFUSCATED_V1(PROTECTION_OBFUSCATED) {
             /// Writes the payload into the given envelope.
             @Override
             void write(JsonObject envelope, JsonElement payload) {
@@ -154,7 +154,7 @@ final class ProtectedPayload {
         /// @param id the configured protection marker
         /// @return the selected write mode
         static ProtectionMode fromConfiguredId(@Nullable String id) {
-            return PROTECTION_PLAIN.equals(id) ? PLAIN : OBFUSCATED;
+            return PROTECTION_PLAIN.equals(id) ? PLAIN : OBFUSCATED_V1;
         }
 
         /// Reads the protection mode from an envelope.
