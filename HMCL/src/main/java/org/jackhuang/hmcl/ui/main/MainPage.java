@@ -46,7 +46,6 @@ import org.jackhuang.hmcl.download.DefaultDependencyManager;
 import org.jackhuang.hmcl.download.DownloadProvider;
 import org.jackhuang.hmcl.download.VersionList;
 import org.jackhuang.hmcl.game.Version;
-import org.jackhuang.hmcl.setting.ConfigHolder;
 import org.jackhuang.hmcl.setting.DownloadProviders;
 import org.jackhuang.hmcl.setting.Profile;
 import org.jackhuang.hmcl.setting.Profiles;
@@ -208,7 +207,7 @@ public final class MainPage extends StackPane implements DecoratorPage {
 
         HBox bottomMenuPane = null;
 
-        if (ConfigHolder.config().isCompactMode()) {
+        if (config().isCompactMode()) {
             bottomMenuPane = new HBox();
 
             bottomMenuPane.setMaxSize(
@@ -216,7 +215,7 @@ public final class MainPage extends StackPane implements DecoratorPage {
                 Region.USE_PREF_SIZE
             );
 
-            String barStyle = ConfigHolder.config().getCompactModeNavigationBarStyle();
+            String barStyle = config().getCompactModeNavigationBarStyle();
 
             if ("translucent".equals(barStyle)) {
                 bottomMenuPane.getStyleClass().add("compact-mode-navigation-bar-translucent");

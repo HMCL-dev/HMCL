@@ -83,15 +83,20 @@ public class DecoratorAnimatedPage extends Control {
             pane.setCenter(control.center);
             getChildren().setAll(pane);
 
-            Runnable apply = () -> {
-                boolean show = control.isShowLeft();
-                control.left.setVisible(show);
-                control.left.setManaged(show);
-            };
+            control.left.setVisible(control.isShowLeft());
+            control.left.setManaged(control.isShowLeft());
 
-            apply.run();
-
-            control.showLeftProperty().addListener((obs, o, n) -> apply.run());
+            control.showLeftProperty().addListener(new javafx.beans.value.ChangeListener<Boolean>() {
+                @Override
+                public void changed(javafx.beans.value.ObservableValue<? extends Boolean> obs, Boolean o, Boolean n) {
+                    if (control.getSkin() != DecoratorAnimatedPageSkin.this) {
+                        control.showLeftProperty().removeListener(this);
+                    } else {
+                        control.left.setVisible(n);
+                        control.left.setManaged(n);
+                    }
+                }
+            });
         }
 
         protected void setLeft(Node... children) {
