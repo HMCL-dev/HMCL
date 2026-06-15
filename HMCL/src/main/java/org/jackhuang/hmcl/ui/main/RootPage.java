@@ -27,7 +27,6 @@ import org.jackhuang.hmcl.game.HMCLGameRepository;
 import org.jackhuang.hmcl.game.ModpackHelper;
 import org.jackhuang.hmcl.game.Version;
 import org.jackhuang.hmcl.setting.Accounts;
-import org.jackhuang.hmcl.setting.ConfigHolder;
 import org.jackhuang.hmcl.setting.Profile;
 import org.jackhuang.hmcl.setting.Profiles;
 import org.jackhuang.hmcl.task.Schedulers;
@@ -67,6 +66,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.stream.Collectors;
 
+import static org.jackhuang.hmcl.setting.ConfigHolder.config;
 import static org.jackhuang.hmcl.ui.FXUtils.runInFX;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
@@ -85,7 +85,7 @@ public class RootPage extends DecoratorAnimatedPage implements DecoratorPage {
         getStyleClass().remove("gray-background");
         getLeft().getStyleClass().add("gray-background");
 
-        setShowLeft(!ConfigHolder.config().isCompactMode());
+        setShowLeft(!config().isCompactMode());
     }
 
     @Override
