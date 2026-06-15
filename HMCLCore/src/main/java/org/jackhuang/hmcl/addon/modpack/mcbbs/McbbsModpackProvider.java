@@ -23,7 +23,6 @@ import kala.compress.archivers.zip.ZipArchiveReader;
 import org.jackhuang.hmcl.addon.modpack.*;
 import org.jackhuang.hmcl.download.DefaultDependencyManager;
 import org.jackhuang.hmcl.game.LaunchOptions;
-import org.jackhuang.hmcl.modpack.*;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 

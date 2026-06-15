@@ -22,7 +22,6 @@ import org.jackhuang.hmcl.addon.modpack.*;
 import org.jackhuang.hmcl.download.DefaultDependencyManager;
 import org.jackhuang.hmcl.download.GameBuilder;
 import org.jackhuang.hmcl.game.DefaultGameRepository;
-import org.jackhuang.hmcl.modpack.*;
 import org.jackhuang.hmcl.task.CacheFileTask;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.util.StringUtils;
