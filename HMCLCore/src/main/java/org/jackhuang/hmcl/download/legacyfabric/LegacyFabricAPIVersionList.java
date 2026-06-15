@@ -20,7 +20,7 @@ package org.jackhuang.hmcl.download.legacyfabric;
 import org.jackhuang.hmcl.download.DownloadProvider;
 import org.jackhuang.hmcl.download.VersionList;
 import org.jackhuang.hmcl.addon.RemoteAddon;
-import org.jackhuang.hmcl.addon.modrinth.ModrinthRemoteAddonRepository;
+import org.jackhuang.hmcl.addon.repository.ModrinthRemoteAddonRepository;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.util.Lang;
 
@@ -43,9 +43,9 @@ public class LegacyFabricAPIVersionList extends VersionList<LegacyFabricAPIRemot
     public Task<?> refreshAsync() {
         return Task.runAsync(() -> {
             for (RemoteAddon.Version modVersion : Lang.toIterable(ModrinthRemoteAddonRepository.MODS.getRemoteVersionsById(downloadProvider, "legacy-fabric-api"))) {
-                for (String gameVersion : modVersion.getGameVersions()) {
-                    versions.put(gameVersion, new LegacyFabricAPIRemoteVersion(gameVersion, modVersion.getVersion(), modVersion.getName(), modVersion.getDatePublished(), modVersion,
-                            Collections.singletonList(modVersion.getFile().getUrl())));
+                for (String gameVersion : modVersion.gameVersions()) {
+                    versions.put(gameVersion, new LegacyFabricAPIRemoteVersion(gameVersion, modVersion.version(), modVersion.name(), modVersion.datePublished(), modVersion,
+                            Collections.singletonList(modVersion.file().url())));
                 }
             }
         });

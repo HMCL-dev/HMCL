@@ -79,7 +79,7 @@ final class ResourcePackFolder extends ResourcePackFile {
     }
 
     @Override
-    public AddonUpdate checkUpdates(DownloadProvider downloadProvider, String gameVersion, RemoteAddon.Type type) {
+    public AddonUpdate checkUpdates(DownloadProvider downloadProvider, String gameVersion, RemoteAddon.Source source) {
         return null;
     }
 }

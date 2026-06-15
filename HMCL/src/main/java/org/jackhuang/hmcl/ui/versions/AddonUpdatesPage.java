@@ -204,9 +204,9 @@ public class AddonUpdatesPage<F extends LocalAddonFile> extends BorderPane imple
 
             enabled.set(!data.localAddonFile().isDisabled());
             fileName.set(data.localAddonFile().getFileName());
-            currentVersion.set(data.currentVersion().getVersion());
-            targetVersion.set(data.targetVersion().getVersion());
-            switch (data.currentVersion().getSelf().getType()) {
+            currentVersion.set(data.currentVersion().version());
+            targetVersion.set(data.targetVersion().version());
+            switch (data.currentVersion().self().getType()) {
                 case CURSEFORGE:
                     source.set(i18n("mods.curseforge"));
                     break;
@@ -298,16 +298,16 @@ public class AddonUpdatesPage<F extends LocalAddonFile> extends BorderPane imple
                 dependents.add(Task
                         .runAsync(Schedulers.javafx(), () -> local.setOld(true))
                         .thenComposeAsync(() -> {
-                            String fileName = addon.useRemoteFileName() ? remote.getFile().getFilename() : originalFileName;
+                            String fileName = addon.useRemoteFileName() ? remote.file().filename() : originalFileName;
                             if (isDisabled)
                                 fileName = StringUtils.addSuffix(fileName, LocalAddonManager.DISABLED_EXTENSION);
 
                             var task = new FileDownloadTask(
-                                    remote.getFile().getUrl(),
+                                    remote.file().url(),
                                     addonDirectory.resolve(fileName)
                             );
 
-                            task.setName(remote.getName());
+                            task.setName(remote.name());
                             return task;
                         })
                         .whenComplete(Schedulers.javafx(), exception -> {

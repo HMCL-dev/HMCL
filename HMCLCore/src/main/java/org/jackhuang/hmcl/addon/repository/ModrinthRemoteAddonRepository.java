@@ -1,6 +1,6 @@
 /*
  * Hello Minecraft! Launcher
- * Copyright (C) 2021  huangyuhui <huanghongxun2008@126.com> and contributors
+ * Copyright (C) 2026 huangyuhui <huanghongxun2008@126.com> and contributors
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -15,14 +15,14 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-package org.jackhuang.hmcl.addon.modrinth;
+package org.jackhuang.hmcl.addon.repository;
 
 import com.google.gson.annotations.SerializedName;
 import com.google.gson.reflect.TypeToken;
-import org.jackhuang.hmcl.download.DownloadProvider;
-import org.jackhuang.hmcl.addon.mod.ModLoaderType;
 import org.jackhuang.hmcl.addon.RemoteAddon;
 import org.jackhuang.hmcl.addon.RemoteAddonRepository;
+import org.jackhuang.hmcl.addon.mod.ModLoaderType;
+import org.jackhuang.hmcl.download.DownloadProvider;
 import org.jackhuang.hmcl.util.*;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.io.HttpRequest;
@@ -294,41 +294,16 @@ public final class ModrinthRemoteAddonRepository implements RemoteAddonRepositor
         try {
             List<Category> categories = HttpRequest.GET(PREFIX + "/v2/tag/category").getJson(listTypeOf(Category.class));
             return categories.stream()
-                    .filter(category -> category.getProjectType().equals(projectType))
+                    .filter(category -> category.projectType().equals(projectType))
                     .map(Category::toCategory);
         } finally {
             SEMAPHORE.release();
         }
     }
 
-    public static class Category {
-        private final String icon;
-
-        private final String name;
-
-        @SerializedName("project_type")
-        private final String projectType;
-
+    public record Category(String icon, String name, @SerializedName("project_type") String projectType) {
         public Category() {
             this("", "", "");
-        }
-
-        public Category(String icon, String name, String projectType) {
-            this.icon = icon;
-            this.name = name;
-            this.projectType = projectType;
-        }
-
-        public String getIcon() {
-            return icon;
-        }
-
-        public String getName() {
-            return name;
-        }
-
-        public String getProjectType() {
-            return projectType;
         }
 
         public RemoteAddonRepository.Category toCategory() {
@@ -339,110 +314,18 @@ public final class ModrinthRemoteAddonRepository implements RemoteAddonRepositor
         }
     }
 
-    public static class Project implements RemoteAddon.IMod {
-        private final String slug;
-
-        private final String title;
-
-        private final String description;
-
-        private final List<String> categories;
-
-        /**
-         * A long body describing project in detail.
-         */
-        private final String body;
-
-        @SerializedName("project_type")
-        private final String projectType;
-
-        private final int downloads;
-
-        @SerializedName("icon_url")
-        private final String iconUrl;
-
-        private final String id;
-
-        private final String team;
-
-        private final Instant published;
-
-        private final Instant updated;
-
-        private final List<String> versions;
-
-        public Project(String slug, String title, String description, List<String> categories, String body, String projectType, int downloads, String iconUrl, String id, String team, Instant published, Instant updated, List<String> versions) {
-            this.slug = slug;
-            this.title = title;
-            this.description = description;
-            this.categories = categories;
-            this.body = body;
-            this.projectType = projectType;
-            this.downloads = downloads;
-            this.iconUrl = iconUrl;
-            this.id = id;
-            this.team = team;
-            this.published = published;
-            this.updated = updated;
-            this.versions = versions;
-        }
-
-        public String getSlug() {
-            return slug;
-        }
-
-        public String getTitle() {
-            return title;
-        }
-
-        public String getDescription() {
-            return description;
-        }
-
-        public List<String> getCategories() {
-            return categories;
-        }
-
-        public String getBody() {
-            return body;
-        }
-
-        public String getProjectType() {
-            return projectType;
-        }
-
-        public int getDownloads() {
-            return downloads;
-        }
-
-        public String getIconUrl() {
-            return iconUrl;
-        }
-
-        public String getId() {
-            return id;
-        }
-
-        public String getTeam() {
-            return team;
-        }
-
-        public Instant getPublished() {
-            return published;
-        }
-
-        public Instant getUpdated() {
-            return updated;
-        }
-
-        public List<String> getVersions() {
-            return versions;
-        }
+    /**
+     * @param body A long body describing project in detail.
+     */
+    public record Project(String slug, String title, String description, List<String> categories, String body,
+                          @SerializedName("project_type") String projectType, int downloads,
+                          @SerializedName("icon_url") String iconUrl, String id, String team, Instant published,
+                          Instant updated, List<String> versions) implements RemoteAddon.IMod {
 
         @Override
         public List<RemoteAddon> loadDependencies(RemoteAddonRepository modRepository, DownloadProvider downloadProvider) throws IOException {
-            Set<RemoteAddon.Dependency> dependencies = modRepository.getRemoteVersionsById(downloadProvider, getId())
-                    .flatMap(version -> version.getDependencies().stream())
+            Set<RemoteAddon.Dependency> dependencies = modRepository.getRemoteVersionsById(downloadProvider, id())
+                    .flatMap(version -> version.dependencies().stream())
                     .collect(Collectors.toSet());
             List<RemoteAddon> mods = new ArrayList<>();
             for (RemoteAddon.Dependency dependency : dependencies) {
@@ -453,15 +336,15 @@ public final class ModrinthRemoteAddonRepository implements RemoteAddonRepositor
 
         @Override
         public Stream<RemoteAddon.Version> loadVersions(RemoteAddonRepository modRepository, DownloadProvider downloadProvider) throws IOException {
-            return modRepository.getRemoteVersionsById(downloadProvider, getId());
+            return modRepository.getRemoteVersionsById(downloadProvider, id());
         }
 
         public RemoteAddon toMod() {
-            RemoteAddonRepository.Type type = switch (projectType) {
-                case "modpack" -> RemoteAddonRepository.Type.MODPACK;
-                case "resourcepack" -> RemoteAddonRepository.Type.RESOURCE_PACK;
-                case "shader" -> RemoteAddonRepository.Type.SHADER_PACK;
-                default -> RemoteAddonRepository.Type.MOD;
+            Type type = switch (projectType) {
+                case "modpack" -> Type.MODPACK;
+                case "resourcepack" -> Type.RESOURCE_PACK;
+                case "shader" -> Type.SHADER_PACK;
+                default -> Type.MOD;
             };
             return new RemoteAddon(
                     slug,
@@ -478,161 +361,30 @@ public final class ModrinthRemoteAddonRepository implements RemoteAddonRepositor
     }
 
     @Immutable
-    public static class Dependency {
-        @SerializedName("version_id")
-        private final String versionId;
-
-        @SerializedName("project_id")
-        private final String projectId;
-
-        @SerializedName("dependency_type")
-        private final String dependencyType;
-
-        public Dependency(String versionId, String projectId, String dependencyType) {
-            this.versionId = versionId;
-            this.projectId = projectId;
-            this.dependencyType = dependencyType;
-        }
-
-        public String getVersionId() {
-            return versionId;
-        }
-
-        public String getProjectId() {
-            return projectId;
-        }
-
-        public String getDependencyType() {
-            return dependencyType;
-        }
+    public record Dependency(@SerializedName("version_id") String versionId,
+                             @SerializedName("project_id") String projectId,
+                             @SerializedName("dependency_type") String dependencyType) {
     }
 
-    public static class ProjectVersion implements RemoteAddon.IVersion {
-        private static final Map<String, RemoteAddon.@Nullable DependencyType> DEPENDENCY_TYPE = Lang.mapOf(
-                Pair.pair("required", RemoteAddon.DependencyType.REQUIRED),
-                Pair.pair("optional", RemoteAddon.DependencyType.OPTIONAL),
-                Pair.pair("embedded", RemoteAddon.DependencyType.EMBEDDED),
-                Pair.pair("incompatible", RemoteAddon.DependencyType.INCOMPATIBLE)
+    public record ProjectVersion(String name, @SerializedName("version_number") String versionNumber, String changelog,
+                                 List<Dependency> dependencies,
+                                 @SerializedName("game_versions") List<String> gameVersions,
+                                 @SerializedName("version_type") String versionType, List<String> loaders,
+                                 boolean featured, String id, @SerializedName("project_id") String projectId,
+                                 @SerializedName("author_id") String authorId,
+                                 @SerializedName("date_published") Instant datePublished, int downloads,
+                                 @SerializedName("changelog_url") String changelogUrl,
+                                 List<ProjectVersionFile> files) implements RemoteAddon.IVersion {
+        private static final Map<String, RemoteAddon.@Nullable DependencyType> DEPENDENCY_TYPE = mapOf(
+                pair("required", RemoteAddon.DependencyType.REQUIRED),
+                pair("optional", RemoteAddon.DependencyType.OPTIONAL),
+                pair("embedded", RemoteAddon.DependencyType.EMBEDDED),
+                pair("incompatible", RemoteAddon.DependencyType.INCOMPATIBLE)
         );
 
-        private final String name;
-
-        @SerializedName("version_number")
-        private final String versionNumber;
-
-        private final String changelog;
-
-        private final List<Dependency> dependencies;
-
-        @SerializedName("game_versions")
-        private final List<String> gameVersions;
-
-        @SerializedName("version_type")
-        private final String versionType;
-
-        private final List<String> loaders;
-
-        private final boolean featured;
-
-        private final String id;
-
-        @SerializedName("project_id")
-        private final String projectId;
-
-        @SerializedName("author_id")
-        private final String authorId;
-
-        @SerializedName("date_published")
-        private final Instant datePublished;
-
-        private final int downloads;
-
-        @SerializedName("changelog_url")
-        private final String changelogUrl;
-
-        private final List<ProjectVersionFile> files;
-
-        public ProjectVersion(String name, String versionNumber, String changelog, List<Dependency> dependencies, List<String> gameVersions, String versionType, List<String> loaders, boolean featured, String id, String projectId, String authorId, Instant datePublished, int downloads, String changelogUrl, List<ProjectVersionFile> files) {
-            this.name = name;
-            this.versionNumber = versionNumber;
-            this.changelog = changelog;
-            this.dependencies = dependencies;
-            this.gameVersions = gameVersions;
-            this.versionType = versionType;
-            this.loaders = loaders;
-            this.featured = featured;
-            this.id = id;
-            this.projectId = projectId;
-            this.authorId = authorId;
-            this.datePublished = datePublished;
-            this.downloads = downloads;
-            this.changelogUrl = changelogUrl;
-            this.files = files;
-        }
-
-        public String getName() {
-            return name;
-        }
-
-        public String getVersionNumber() {
-            return versionNumber;
-        }
-
-        public String getChangelog() {
-            return changelog;
-        }
-
-        public List<Dependency> getDependencies() {
-            return dependencies;
-        }
-
-        public List<String> getGameVersions() {
-            return gameVersions;
-        }
-
-        public String getVersionType() {
-            return versionType;
-        }
-
-        public List<String> getLoaders() {
-            return loaders;
-        }
-
-        public boolean isFeatured() {
-            return featured;
-        }
-
-        public String getId() {
-            return id;
-        }
-
-        public String getProjectId() {
-            return projectId;
-        }
-
-        public String getAuthorId() {
-            return authorId;
-        }
-
-        public Instant getDatePublished() {
-            return datePublished;
-        }
-
-        public int getDownloads() {
-            return downloads;
-        }
-
-        public String getChangelogUrl() {
-            return changelogUrl;
-        }
-
-        public List<ProjectVersionFile> getFiles() {
-            return files;
-        }
-
         @Override
-        public RemoteAddon.Type getType() {
-            return RemoteAddon.Type.MODRINTH;
+        public RemoteAddon.Source getType() {
+            return RemoteAddon.Source.MODRINTH;
         }
 
         public Optional<RemoteAddon.Version> toVersion() {
@@ -647,7 +399,7 @@ public final class ModrinthRemoteAddonRepository implements RemoteAddonRepositor
                 type = RemoteAddon.VersionType.Release;
             }
 
-            if (files.size() == 0) {
+            if (files.isEmpty()) {
                 return Optional.empty();
             }
 
@@ -684,159 +436,27 @@ public final class ModrinthRemoteAddonRepository implements RemoteAddonRepositor
         }
     }
 
-    public static class ProjectVersionFile {
-        private final Map<String, String> hashes;
-        private final String url;
-        private final String filename;
-        private final boolean primary;
-        private final int size;
-
-        public ProjectVersionFile(Map<String, String> hashes, String url, String filename, boolean primary, int size) {
-            this.hashes = hashes;
-            this.url = url;
-            this.filename = filename;
-            this.primary = primary;
-            this.size = size;
-        }
-
-        public Map<String, String> getHashes() {
-            return hashes;
-        }
-
-        public String getUrl() {
-            return url;
-        }
-
-        public String getFilename() {
-            return filename;
-        }
-
-        public boolean isPrimary() {
-            return primary;
-        }
-
-        public int getSize() {
-            return size;
-        }
+    public record ProjectVersionFile(Map<String, String> hashes, String url, String filename, boolean primary,
+                                     int size) {
 
         public RemoteAddon.File toFile() {
             return new RemoteAddon.File(hashes, url, filename);
         }
     }
 
-    public static class ProjectSearchResult implements RemoteAddon.IMod {
-        private final String slug;
-
-        private final String title;
-
-        private final String description;
-
-        private final List<String> categories;
-
-        @SerializedName("display_categories")
-        private final List<String> displayCategories;
-
-        @SerializedName("project_type")
-        private final String projectType;
-
-        private final int downloads;
-
-        @SerializedName("icon_url")
-        private final String iconUrl;
-
-        @SerializedName("project_id")
-        private final String projectId;
-
-        private final String author;
-
-        private final List<String> versions;
-
-        @SerializedName("date_created")
-        private final Instant dateCreated;
-
-        @SerializedName("date_modified")
-        private final Instant dateModified;
-
-        @SerializedName("latest_version")
-        private final String latestVersion;
-
-        public ProjectSearchResult(String slug, String title, String description, List<String> categories, List<String> displayCategories, String projectType, int downloads, String iconUrl, String projectId, String author, List<String> versions, Instant dateCreated, Instant dateModified, String latestVersion) {
-            this.slug = slug;
-            this.title = title;
-            this.description = description;
-            this.categories = categories;
-            this.displayCategories = displayCategories;
-            this.projectType = projectType;
-            this.downloads = downloads;
-            this.iconUrl = iconUrl;
-            this.projectId = projectId;
-            this.author = author;
-            this.versions = versions;
-            this.dateCreated = dateCreated;
-            this.dateModified = dateModified;
-            this.latestVersion = latestVersion;
-        }
-
-        public String getSlug() {
-            return slug;
-        }
-
-        public String getTitle() {
-            return title;
-        }
-
-        public String getDescription() {
-            return description;
-        }
-
-        public List<String> getCategories() {
-            return categories;
-        }
-
-        public List<String> getDisplayCategories() {
-            return displayCategories;
-        }
-
-        public String getProjectType() {
-            return projectType;
-        }
-
-        public int getDownloads() {
-            return downloads;
-        }
-
-        public String getIconUrl() {
-            return iconUrl;
-        }
-
-        public String getProjectId() {
-            return projectId;
-        }
-
-        public String getAuthor() {
-            return author;
-        }
-
-        public List<String> getVersions() {
-            return versions;
-        }
-
-        public Instant getDateCreated() {
-            return dateCreated;
-        }
-
-        public Instant getDateModified() {
-            return dateModified;
-        }
-
-        public String getLatestVersion() {
-            return latestVersion;
-        }
+    public record ProjectSearchResult(String slug, String title, String description, List<String> categories,
+                                      @SerializedName("display_categories") List<String> displayCategories,
+                                      @SerializedName("project_type") String projectType, int downloads,
+                                      @SerializedName("icon_url") String iconUrl,
+                                      @SerializedName("project_id") String projectId, String author,
+                                      List<String> versions, @SerializedName("date_created") Instant dateCreated,
+                                      @SerializedName("date_modified") Instant dateModified,
+                                      @SerializedName("latest_version") String latestVersion) implements RemoteAddon.IMod {
 
         @Override
         public List<RemoteAddon> loadDependencies(RemoteAddonRepository modRepository, DownloadProvider downloadProvider) throws IOException {
-            Set<RemoteAddon.Dependency> dependencies = modRepository.getRemoteVersionsById(downloadProvider, getProjectId())
-                    .flatMap(version -> version.getDependencies().stream())
+            Set<RemoteAddon.Dependency> dependencies = modRepository.getRemoteVersionsById(downloadProvider, projectId())
+                    .flatMap(version -> version.dependencies().stream())
                     .collect(Collectors.toSet());
             List<RemoteAddon> mods = new ArrayList<>();
             for (RemoteAddon.Dependency dependency : dependencies) {
@@ -847,15 +467,15 @@ public final class ModrinthRemoteAddonRepository implements RemoteAddonRepositor
 
         @Override
         public Stream<RemoteAddon.Version> loadVersions(RemoteAddonRepository modRepository, DownloadProvider downloadProvider) throws IOException {
-            return modRepository.getRemoteVersionsById(downloadProvider, getProjectId());
+            return modRepository.getRemoteVersionsById(downloadProvider, projectId());
         }
 
         public RemoteAddon toMod() {
-            RemoteAddonRepository.Type type = switch (projectType) {
-                case "modpack" -> RemoteAddonRepository.Type.MODPACK;
-                case "resourcepack" -> RemoteAddonRepository.Type.RESOURCE_PACK;
-                case "shader" -> RemoteAddonRepository.Type.SHADER_PACK;
-                default -> RemoteAddonRepository.Type.MOD;
+            Type type = switch (projectType) {
+                case "modpack" -> Type.MODPACK;
+                case "resourcepack" -> Type.RESOURCE_PACK;
+                case "shader" -> Type.SHADER_PACK;
+                default -> Type.MOD;
             };
             return new RemoteAddon(
                     slug,

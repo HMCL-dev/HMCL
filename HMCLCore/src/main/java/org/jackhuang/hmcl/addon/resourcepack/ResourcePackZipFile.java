@@ -90,15 +90,15 @@ final class ResourcePackZipFile extends ResourcePackFile {
     }
 
     @Override
-    public AddonUpdate checkUpdates(DownloadProvider downloadProvider, String gameVersion, RemoteAddon.Type type) throws IOException {
-        RemoteAddonRepository repository = type.getRepoForType(RemoteAddonRepository.Type.RESOURCE_PACK);
+    public AddonUpdate checkUpdates(DownloadProvider downloadProvider, String gameVersion, RemoteAddon.Source source) throws IOException {
+        RemoteAddonRepository repository = source.getRepoForType(RemoteAddonRepository.Type.RESOURCE_PACK);
         if (repository == null) return null;
         Optional<RemoteAddon.Version> currentVersion = repository.getRemoteVersionByLocalFile(file);
         if (currentVersion.isEmpty()) return null;
-        List<RemoteAddon.Version> remoteVersions = repository.getRemoteVersionsById(downloadProvider, currentVersion.get().getModid())
-                .filter(version -> version.getGameVersions().contains(gameVersion))
-                .filter(version -> version.getDatePublished().compareTo(currentVersion.get().getDatePublished()) > 0)
-                .sorted(Comparator.comparing(RemoteAddon.Version::getDatePublished).reversed())
+        List<RemoteAddon.Version> remoteVersions = repository.getRemoteVersionsById(downloadProvider, currentVersion.get().modid())
+                .filter(version -> version.gameVersions().contains(gameVersion))
+                .filter(version -> version.datePublished().compareTo(currentVersion.get().datePublished()) > 0)
+                .sorted(Comparator.comparing(RemoteAddon.Version::datePublished).reversed())
                 .toList();
         if (remoteVersions.isEmpty()) return null;
         return new AddonUpdate(this, currentVersion.get(), remoteVersions.get(0), false);

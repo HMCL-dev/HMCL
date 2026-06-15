@@ -20,7 +20,7 @@ package org.jackhuang.hmcl.download.fabric;
 import org.jackhuang.hmcl.download.DownloadProvider;
 import org.jackhuang.hmcl.download.VersionList;
 import org.jackhuang.hmcl.addon.RemoteAddon;
-import org.jackhuang.hmcl.addon.modrinth.ModrinthRemoteAddonRepository;
+import org.jackhuang.hmcl.addon.repository.ModrinthRemoteAddonRepository;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.util.Lang;
 
@@ -43,9 +43,9 @@ public class FabricAPIVersionList extends VersionList<FabricAPIRemoteVersion> {
     public Task<?> refreshAsync() {
         return Task.runAsync(() -> {
             for (RemoteAddon.Version modVersion : Lang.toIterable(ModrinthRemoteAddonRepository.MODS.getRemoteVersionsById(downloadProvider, "P7dR8mSH"))) {
-                for (String gameVersion : modVersion.getGameVersions()) {
-                    versions.put(gameVersion, new FabricAPIRemoteVersion(gameVersion, modVersion.getVersion(), modVersion.getName(), modVersion.getDatePublished(), modVersion,
-                            Collections.singletonList(modVersion.getFile().getUrl())));
+                for (String gameVersion : modVersion.gameVersions()) {
+                    versions.put(gameVersion, new FabricAPIRemoteVersion(gameVersion, modVersion.version(), modVersion.name(), modVersion.datePublished(), modVersion,
+                            Collections.singletonList(modVersion.file().url())));
                 }
             }
         });

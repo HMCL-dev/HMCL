@@ -38,8 +38,8 @@ import javafx.stage.FileChooser;
 import javafx.stage.Stage;
 import javafx.util.Duration;
 import org.jackhuang.hmcl.addon.*;
-import org.jackhuang.hmcl.addon.curse.CurseForgeRemoteAddonRepository;
-import org.jackhuang.hmcl.addon.modrinth.ModrinthRemoteAddonRepository;
+import org.jackhuang.hmcl.addon.repository.CurseForgeRemoteAddonRepository;
+import org.jackhuang.hmcl.addon.repository.ModrinthRemoteAddonRepository;
 import org.jackhuang.hmcl.addon.resourcepack.ResourcePackFile;
 import org.jackhuang.hmcl.addon.resourcepack.ResourcePackManager;
 import org.jackhuang.hmcl.setting.ConfigHolder;
@@ -610,7 +610,7 @@ public final class ResourcePackListPage extends ListPageBase<ResourcePackListPag
                 Task.runAsync(() -> {
                     Optional<RemoteAddon.Version> versionOptional = repository.getRemoteVersionByLocalFile(packInfoObject.getFile().getFile());
                     if (versionOptional.isPresent()) {
-                        RemoteAddon remoteAddon = repository.getModById(DownloadProviders.getDownloadProvider(), versionOptional.get().getModid());
+                        RemoteAddon remoteAddon = repository.getModById(DownloadProviders.getDownloadProvider(), versionOptional.get().modid());
                         FXUtils.runInFX(() -> {
                             button.setOnAction(e -> {
                                 fireEvent(new DialogCloseEvent());

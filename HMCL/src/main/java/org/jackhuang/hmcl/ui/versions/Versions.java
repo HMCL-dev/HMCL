@@ -80,11 +80,11 @@ public final class Versions {
         Path modpack;
         List<URI> downloadURLs;
         try {
-            downloadURLs = downloadProvider.injectURLWithCandidates(file.getFile().getUrl());
+            downloadURLs = downloadProvider.injectURLWithCandidates(file.file().url());
             modpack = Files.createTempFile("modpack", ".zip");
         } catch (IOException | IllegalArgumentException e) {
             Controllers.dialog(
-                    i18n("install.failed.downloading.detail", file.getFile().getUrl()) + "\n" + StringUtils.getStackTrace(e),
+                    i18n("install.failed.downloading.detail", file.file().url()) + "\n" + StringUtils.getStackTrace(e),
                     i18n("download.failed.no_code"), MessageDialogPane.MessageType.ERROR);
             return;
         }
@@ -104,7 +104,7 @@ public final class Versions {
                                 Controllers.showToast(i18n("message.cancelled"));
                             } else {
                                 Controllers.dialog(
-                                        i18n("install.failed.downloading.detail", file.getFile().getUrl()) + "\n" + StringUtils.getStackTrace(e),
+                                        i18n("install.failed.downloading.detail", file.file().url()) + "\n" + StringUtils.getStackTrace(e),
                                         i18n("download.failed.no_code"), MessageDialogPane.MessageType.ERROR);
                             }
                         }),

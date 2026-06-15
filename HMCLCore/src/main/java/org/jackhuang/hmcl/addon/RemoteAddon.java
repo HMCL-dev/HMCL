@@ -18,9 +18,9 @@
 package org.jackhuang.hmcl.addon;
 
 import org.jackhuang.hmcl.addon.mod.ModLoaderType;
+import org.jackhuang.hmcl.addon.repository.CurseForgeRemoteAddonRepository;
+import org.jackhuang.hmcl.addon.repository.ModrinthRemoteAddonRepository;
 import org.jackhuang.hmcl.download.DownloadProvider;
-import org.jackhuang.hmcl.addon.curse.CurseForgeRemoteAddonRepository;
-import org.jackhuang.hmcl.addon.modrinth.ModrinthRemoteAddonRepository;
 import org.jackhuang.hmcl.task.FileDownloadTask;
 import org.jetbrains.annotations.Nullable;
 
@@ -195,7 +195,7 @@ public final class RemoteAddon {
         }
     }
 
-    public enum Type {
+    public enum Source {
         CURSEFORGE(
                 CurseForgeRemoteAddonRepository.MODS,
                 CurseForgeRemoteAddonRepository.RESOURCE_PACKS,
@@ -232,7 +232,7 @@ public final class RemoteAddon {
             };
         }
 
-        Type(
+        Source(
                 RemoteAddonRepository modRepo,
                 RemoteAddonRepository resourcePackRepo,
                 RemoteAddonRepository shaderPackRepo,
@@ -256,95 +256,15 @@ public final class RemoteAddon {
     }
 
     public interface IVersion {
-        Type getType();
+        Source getType();
     }
 
-    public static class Version {
-        private final IVersion self;
-        private final String modid;
-        private final String name;
-        private final String version;
-        private final String changelog;
-        private final Instant datePublished;
-        private final VersionType versionType;
-        private final File file;
-        private final List<Dependency> dependencies;
-        private final List<String> gameVersions;
-        private final List<ModLoaderType> loaders;
-
-        public Version(IVersion self, String modid, String name, String version, String changelog, Instant datePublished, VersionType versionType, File file, List<Dependency> dependencies, List<String> gameVersions, List<ModLoaderType> loaders) {
-            this.self = self;
-            this.modid = modid;
-            this.name = name;
-            this.version = version;
-            this.changelog = changelog;
-            this.datePublished = datePublished;
-            this.versionType = versionType;
-            this.file = file;
-            this.dependencies = dependencies;
-            this.gameVersions = gameVersions;
-            this.loaders = loaders;
-        }
-
-        public IVersion getSelf() {
-            return self;
-        }
-
-        public String getModid() {
-            return modid;
-        }
-
-        public String getName() {
-            return name;
-        }
-
-        public String getVersion() {
-            return version;
-        }
-
-        public String getChangelog() {
-            return changelog;
-        }
-
-        public Instant getDatePublished() {
-            return datePublished;
-        }
-
-        public VersionType getVersionType() {
-            return versionType;
-        }
-
-        public File getFile() {
-            return file;
-        }
-
-        public List<Dependency> getDependencies() {
-            return dependencies;
-        }
-
-        public List<String> getGameVersions() {
-            return gameVersions;
-        }
-
-        public List<ModLoaderType> getLoaders() {
-            return loaders;
-        }
+    public record Version(IVersion self, String modid, String name, String version, String changelog,
+                          Instant datePublished, VersionType versionType, File file, List<Dependency> dependencies,
+                          List<String> gameVersions, List<ModLoaderType> loaders) {
     }
 
-    public static class File {
-        private final Map<String, String> hashes;
-        private final String url;
-        private final String filename;
-
-        public File(Map<String, String> hashes, String url, String filename) {
-            this.hashes = hashes;
-            this.url = url;
-            this.filename = filename;
-        }
-
-        public Map<String, String> getHashes() {
-            return hashes;
-        }
+    public record File(Map<String, String> hashes, String url, String filename) {
 
         public FileDownloadTask.IntegrityCheck getIntegrityCheck() {
             if (hashes.containsKey("md5")) {
@@ -358,14 +278,6 @@ public final class RemoteAddon {
             } else {
                 return null;
             }
-        }
-
-        public String getUrl() {
-            return url;
-        }
-
-        public String getFilename() {
-            return filename;
         }
     }
 }

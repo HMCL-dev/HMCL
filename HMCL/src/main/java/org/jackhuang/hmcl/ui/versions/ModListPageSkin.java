@@ -38,10 +38,10 @@ import javafx.scene.layout.StackPane;
 import javafx.stage.Stage;
 import javafx.util.Duration;
 import org.jackhuang.hmcl.addon.*;
-import org.jackhuang.hmcl.addon.curse.CurseForgeRemoteAddonRepository;
+import org.jackhuang.hmcl.addon.repository.CurseForgeRemoteAddonRepository;
 import org.jackhuang.hmcl.addon.mod.LocalModFile;
 import org.jackhuang.hmcl.addon.mod.ModLoaderType;
-import org.jackhuang.hmcl.addon.modrinth.ModrinthRemoteAddonRepository;
+import org.jackhuang.hmcl.addon.repository.ModrinthRemoteAddonRepository;
 import org.jackhuang.hmcl.setting.DownloadProviders;
 import org.jackhuang.hmcl.setting.Profile;
 import org.jackhuang.hmcl.setting.VersionIconType;
@@ -475,9 +475,9 @@ final class ModListPageSkin extends SkinBase<ModListPage> {
                     Task.runAsync(() -> {
                         Optional<RemoteAddon.Version> versionOptional = repository.getRemoteVersionByLocalFile(modInfo.getModInfo().getFile());
                         if (versionOptional.isPresent()) {
-                            RemoteAddon remoteAddon = repository.getModById(DownloadProviders.getDownloadProvider(), versionOptional.get().getModid());
+                            RemoteAddon remoteAddon = repository.getModById(DownloadProviders.getDownloadProvider(), versionOptional.get().modid());
                             FXUtils.runInFX(() -> {
-                                for (ModLoaderType modLoaderType : versionOptional.get().getLoaders()) {
+                                for (ModLoaderType modLoaderType : versionOptional.get().loaders()) {
                                     String loaderName = switch (modLoaderType) {
                                         case FORGE -> i18n("install.installer.forge");
                                         case CLEANROOM -> i18n("install.installer.cleanroom");

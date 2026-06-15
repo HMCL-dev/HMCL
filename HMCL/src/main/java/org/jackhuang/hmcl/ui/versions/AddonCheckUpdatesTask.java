@@ -39,10 +39,10 @@ public class AddonCheckUpdatesTask<T extends LocalAddonFile> extends Task<List<L
         dependents = addons.stream().map(addon ->
                 Task.supplyAsync(Schedulers.io(), () -> {
                     LocalAddonFile.AddonUpdate candidate = null;
-                    for (RemoteAddon.Type type : RemoteAddon.Type.values()) {
+                    for (RemoteAddon.Source source : RemoteAddon.Source.values()) {
                         LocalAddonFile.AddonUpdate update = null;
                         try {
-                            update = addon.checkUpdates(downloadProvider, gameVersion, type);
+                            update = addon.checkUpdates(downloadProvider, gameVersion, source);
                         } catch (IOException e) {
                             LOG.warning(String.format("Cannot check update for addon %s.", addon.getFileName()), e);
                         }
@@ -50,7 +50,7 @@ public class AddonCheckUpdatesTask<T extends LocalAddonFile> extends Task<List<L
                             continue;
                         }
 
-                        if (candidate == null || candidate.targetVersion().getDatePublished().isBefore(update.targetVersion().getDatePublished())) {
+                        if (candidate == null || candidate.targetVersion().datePublished().isBefore(update.targetVersion().datePublished())) {
                             candidate = update;
                         }
                     }

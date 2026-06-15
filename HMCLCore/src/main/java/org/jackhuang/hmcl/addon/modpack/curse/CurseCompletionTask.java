@@ -18,8 +18,7 @@
 package org.jackhuang.hmcl.addon.modpack.curse;
 
 import com.google.gson.JsonParseException;
-import org.jackhuang.hmcl.addon.curse.CurseAddon;
-import org.jackhuang.hmcl.addon.curse.CurseForgeRemoteAddonRepository;
+import org.jackhuang.hmcl.addon.repository.CurseForgeRemoteAddonRepository;
 import org.jackhuang.hmcl.download.DefaultDependencyManager;
 import org.jackhuang.hmcl.download.DownloadProvider;
 import org.jackhuang.hmcl.game.DefaultGameRepository;
@@ -124,7 +123,7 @@ public final class CurseCompletionTask extends Task<Void> {
                             if (StringUtils.isBlank(file.fileName()) || file.url() == null) {
                                 try {
                                     RemoteAddon.File remoteFile = CurseForgeRemoteAddonRepository.MODS.getModFile(Integer.toString(file.projectID()), Integer.toString(file.fileID()));
-                                    return file.withFileName(remoteFile.getFilename()).withURL(remoteFile.getUrl());
+                                    return file.withFileName(remoteFile.filename()).withURL(remoteFile.url());
                                 } catch (FileNotFoundException fof) {
                                     LOG.warning("Could not query api.curseforge.com for deleted mods: " + file.projectID() + ", " + file.fileID(), fof);
                                     notFound.set(true);
@@ -186,7 +185,7 @@ public final class CurseCompletionTask extends Task<Void> {
      */
     private Path guessFilePath(CurseManifestFile file, DownloadProvider downloadProvider, Path resourcePacksRoot, Path shaderPacksRoot) throws IOException {
         RemoteAddon mod = CurseForgeRemoteAddonRepository.MODS.getModById(downloadProvider, Integer.toString(file.projectID()));
-        int classID = ((CurseAddon) mod.getData()).classId();
+        int classID = ((CurseForgeRemoteAddonRepository.CurseAddon) mod.getData()).classId();
         String fileName = file.fileName();
         return switch (classID) {
             case 12,       // Resource pack

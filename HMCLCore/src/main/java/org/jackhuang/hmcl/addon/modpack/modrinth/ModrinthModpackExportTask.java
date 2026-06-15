@@ -24,7 +24,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
 
-import org.jackhuang.hmcl.addon.modrinth.ModrinthRemoteAddonRepository;
+import org.jackhuang.hmcl.addon.repository.ModrinthRemoteAddonRepository;
 import org.jackhuang.hmcl.download.LibraryAnalyzer;
 import org.jackhuang.hmcl.game.DefaultGameRepository;
 import org.jackhuang.hmcl.addon.modpack.ModAdviser;
@@ -36,7 +36,7 @@ import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.io.Zipper;
 import org.jackhuang.hmcl.addon.mod.LocalModFile;
 import org.jackhuang.hmcl.addon.RemoteAddon;
-import org.jackhuang.hmcl.addon.curse.CurseForgeRemoteAddonRepository;
+import org.jackhuang.hmcl.addon.repository.CurseForgeRemoteAddonRepository;
 
 import static org.jackhuang.hmcl.download.LibraryAnalyzer.LibraryType.*;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
@@ -108,9 +108,9 @@ public class ModrinthModpackExportTask extends Task<Void> {
 
         List<String> downloads = new ArrayList<>();
         if (modrinthVersion.isPresent())
-            downloads.add(modrinthVersion.get().getFile().getUrl());
+            downloads.add(modrinthVersion.get().file().url());
         if (curseForgeVersion.isPresent())
-            downloads.add(curseForgeVersion.get().getFile().getUrl());
+            downloads.add(curseForgeVersion.get().file().url());
 
         long fileSize = Files.size(file);
         if (fileSize > Integer.MAX_VALUE) {

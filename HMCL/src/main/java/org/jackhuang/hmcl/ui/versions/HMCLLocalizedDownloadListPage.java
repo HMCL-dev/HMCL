@@ -19,9 +19,8 @@ package org.jackhuang.hmcl.ui.versions;
 
 import org.jackhuang.hmcl.game.LocalizedRemoteAddonRepository;
 import org.jackhuang.hmcl.addon.RemoteAddonRepository;
-import org.jackhuang.hmcl.addon.curse.CurseAddon;
-import org.jackhuang.hmcl.addon.curse.CurseForgeRemoteAddonRepository;
-import org.jackhuang.hmcl.addon.modrinth.ModrinthRemoteAddonRepository;
+import org.jackhuang.hmcl.addon.repository.CurseForgeRemoteAddonRepository;
+import org.jackhuang.hmcl.addon.repository.ModrinthRemoteAddonRepository;
 import org.jackhuang.hmcl.util.i18n.I18n;
 
 import java.util.MissingResourceException;
@@ -144,7 +143,7 @@ public final class HMCLLocalizedDownloadListPage extends DownloadListPage {
             return I18n.getResourceBundle().getString(key);
         } catch (MissingResourceException e) {
             LOG.warning("Cannot find key " + key + " in resource bundle");
-            if (self instanceof CurseAddon.Category curseCategory) {
+            if (self instanceof CurseForgeRemoteAddonRepository.Category curseCategory) {
                 return curseCategory.getName();
             }
             return category;

@@ -53,7 +53,7 @@ public abstract class LocalAddonFile {
     public abstract void delete() throws IOException;
 
     @Nullable
-    public abstract AddonUpdate checkUpdates(DownloadProvider downloadProvider, String gameVersion, RemoteAddon.Type type) throws IOException;
+    public abstract AddonUpdate checkUpdates(DownloadProvider downloadProvider, String gameVersion, RemoteAddon.Source source) throws IOException;
 
     public record AddonUpdate(
             LocalAddonFile localAddonFile,
