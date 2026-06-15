@@ -86,12 +86,12 @@ public class DownloadPage extends Control implements DecoratorPage {
         this.mod = translations.getModByCurseForgeId(addon.getSlug());
         this.version = version;
         this.callback = callback;
-        loadModVersions();
+        loadAddonVersions();
 
         this.state.set(State.fromTitle(addon.getTitle()));
     }
 
-    private void loadModVersions() {
+    private void loadAddonVersions() {
         setLoading(true);
         setFailed(false);
 
@@ -159,11 +159,11 @@ public class DownloadPage extends Control implements DecoratorPage {
         this.failed.set(failed);
     }
 
-    public void download(RemoteAddon mod, RemoteAddon.Version file) {
+    public void download(RemoteAddon addon, RemoteAddon.Version file) {
         if (this.callback == null) {
             saveAs(file);
         } else {
-            this.callback.download(page.getDownloadProvider(), version.getProfile(), version.getVersion(), mod, file);
+            this.callback.download(page.getDownloadProvider(), version.getProfile(), version.getVersion(), addon, file);
         }
     }
 
@@ -196,12 +196,12 @@ public class DownloadPage extends Control implements DecoratorPage {
 
     @Override
     protected Skin<?> createDefaultSkin() {
-        return new ModDownloadPageSkin(this);
+        return new DownloadPageSkin(this);
     }
 
-    private static class ModDownloadPageSkin extends SkinBase<DownloadPage> {
+    private static class DownloadPageSkin extends SkinBase<DownloadPage> {
 
-        protected ModDownloadPageSkin(DownloadPage control) {
+        protected DownloadPageSkin(DownloadPage control) {
             super(control);
 
             VBox pane = new VBox(8);
@@ -258,7 +258,7 @@ public class DownloadPage extends Control implements DecoratorPage {
                         return null;
                     }
                 }, getSkinnable().failedProperty()));
-                spinnerPane.setOnFailedAction(e -> getSkinnable().loadModVersions());
+                spinnerPane.setOnFailedAction(e -> getSkinnable().loadAddonVersions());
 
                 ComponentList list = new ComponentList();
                 ScrollPane scrollPane = new ScrollPane(list);
@@ -289,7 +289,7 @@ public class DownloadPage extends Control implements DecoratorPage {
                                             if (targetLoaders.contains(loader)) {
                                                 list.getContent().addAll(
                                                         ComponentList.createComponentListTitle(i18n("mods.download.recommend", gameVersion)),
-                                                        new ModItem(control.addon, modVersion, control)
+                                                        new AddonItem(control.addon, modVersion, control)
                                                 );
                                                 break resolve;
                                             }
@@ -297,7 +297,7 @@ public class DownloadPage extends Control implements DecoratorPage {
                                     } else {
                                         list.getContent().addAll(
                                                 ComponentList.createComponentListTitle(i18n("mods.download.recommend", gameVersion)),
-                                                new ModItem(control.addon, modVersion, control)
+                                                new AddonItem(control.addon, modVersion, control)
                                         );
                                         break;
                                     }
@@ -309,12 +309,12 @@ public class DownloadPage extends Control implements DecoratorPage {
                     final class Versions {
                         static ComponentSublist createSublist(DownloadPage control, String title, List<String> target) {
                             var sublist = new ComponentSublist(() -> {
-                                ArrayList<ModItem> items = new ArrayList<>();
+                                ArrayList<AddonItem> items = new ArrayList<>();
                                 for (String gv : target) {
                                     List<RemoteAddon.Version> versions = control.versions.get(gv);
                                     if (versions != null) {
                                         for (RemoteAddon.Version v : versions) {
-                                            items.add(new ModItem(control.addon, v, control));
+                                            items.add(new AddonItem(control.addon, v, control));
                                         }
                                     }
                                 }
@@ -363,7 +363,7 @@ public class DownloadPage extends Control implements DecoratorPage {
         }
     }
 
-    private static final class DependencyModItem extends LineButton {
+    private static final class DependencyAddonItem extends LineButton {
         public static final EnumMap<RemoteAddon.DependencyType, String> I18N_KEY = new EnumMap<>(Lang.mapOf(
                 Pair.pair(RemoteAddon.DependencyType.EMBEDDED, "mods.dependency.embedded"),
                 Pair.pair(RemoteAddon.DependencyType.OPTIONAL, "mods.dependency.optional"),
@@ -374,7 +374,7 @@ public class DownloadPage extends Control implements DecoratorPage {
                 Pair.pair(RemoteAddon.DependencyType.BROKEN, "mods.dependency.broken")
         ));
 
-        DependencyModItem(DownloadListPage page, RemoteAddon addon, Profile.ProfileVersion version) {
+        DependencyAddonItem(DownloadListPage page, RemoteAddon addon, Profile.ProfileVersion version) {
             HBox pane = new HBox(8);
             pane.setPadding(new Insets(0, 8, 0, 8));
             pane.setAlignment(Pos.CENTER_LEFT);
@@ -417,9 +417,9 @@ public class DownloadPage extends Control implements DecoratorPage {
         }
     }
 
-    private static final class ModItem extends StackPane {
+    private static final class AddonItem extends StackPane {
 
-        ModItem(RemoteAddon mod, RemoteAddon.Version dataItem, DownloadPage selfPage) {
+        AddonItem(RemoteAddon mod, RemoteAddon.Version dataItem, DownloadPage selfPage) {
             VBox pane = new VBox(8);
             pane.setPadding(new Insets(8, 0, 8, 0));
 
@@ -481,7 +481,7 @@ public class DownloadPage extends Control implements DecoratorPage {
             }
 
             RipplerContainer container = new RipplerContainer(pane);
-            FXUtils.onClicked(container, () -> Controllers.dialog(new ModVersion(mod, dataItem, selfPage)));
+            FXUtils.onClicked(container, () -> Controllers.dialog(new AddonVersion(mod, dataItem, selfPage)));
             getChildren().setAll(container);
 
             // Workaround for https://github.com/HMCL-dev/HMCL/issues/2129
@@ -489,8 +489,8 @@ public class DownloadPage extends Control implements DecoratorPage {
         }
     }
 
-    private static final class ModVersion extends JFXDialogLayout {
-        public ModVersion(RemoteAddon mod, RemoteAddon.Version version, DownloadPage selfPage) {
+    private static final class AddonVersion extends JFXDialogLayout {
+        public AddonVersion(RemoteAddon mod, RemoteAddon.Version version, DownloadPage selfPage) {
             RemoteAddonRepository.Type type = selfPage.type;
 
             String title = switch (type) {
@@ -504,9 +504,9 @@ public class DownloadPage extends Control implements DecoratorPage {
 
             VBox box = new VBox(8);
             box.setPadding(new Insets(8));
-            ModItem modItem = new ModItem(mod, version, selfPage);
-            modItem.setMouseTransparent(true); // Item is displayed for info, clicking shouldn't open the dialog again
-            box.getChildren().setAll(modItem);
+            AddonItem addonItem = new AddonItem(mod, version, selfPage);
+            addonItem.setMouseTransparent(true); // Item is displayed for info, clicking shouldn't open the dialog again
+            box.getChildren().setAll(addonItem);
             SpinnerPane spinnerPane = new SpinnerPane();
             ScrollPane scrollPane = new ScrollPane();
             ComponentList dependenciesList = new ComponentList();
@@ -575,7 +575,7 @@ public class DownloadPage extends Control implements DecoratorPage {
 
                     if (!dependencies.containsKey(dependency.getType())) {
                         List<Node> list = new ArrayList<>();
-                        Label title = new Label(i18n(DependencyModItem.I18N_KEY.get(dependency.getType())));
+                        Label title = new Label(i18n(DependencyAddonItem.I18N_KEY.get(dependency.getType())));
                         title.setPadding(new Insets(0, 8, 0, 8));
                         list.add(title);
                         dependencies.put(dependency.getType(), list);
@@ -587,8 +587,8 @@ public class DownloadPage extends Control implements DecoratorPage {
                                 if (dep == RemoteAddon.BROKEN) {
                                     return;
                                 }
-                                DependencyModItem dependencyModItem = new DependencyModItem(selfPage.page, dep, selfPage.version);
-                                dependencies.get(dependency.getType()).add(dependencyModItem);
+                                DependencyAddonItem dependencyAddonItem = new DependencyAddonItem(selfPage.page, dep, selfPage.version);
+                                dependencies.get(dependency.getType()).add(dependencyAddonItem);
                             })
                             .setSignificance(Task.TaskSignificance.MINOR));
                 }
@@ -611,6 +611,6 @@ public class DownloadPage extends Control implements DecoratorPage {
 
     @FunctionalInterface
     public interface DownloadCallback {
-        void download(DownloadProvider downloadProvider, Profile profile, @Nullable String version, RemoteAddon mod, RemoteAddon.Version file);
+        void download(DownloadProvider downloadProvider, Profile profile, @Nullable String version, RemoteAddon addon, RemoteAddon.Version file);
     }
 }
