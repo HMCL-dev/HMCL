@@ -336,49 +336,34 @@ public final class Config extends ObservableSetting {
         this.themeColor.set(themeColor);
     }
 
-    @SerializedName("simpleUI")
-    private final BooleanProperty simpleUI = new SimpleBooleanProperty(false);
+    @SerializedName("compactMode")
+    private final BooleanProperty compactMode = new SimpleBooleanProperty(false);
 
-    public BooleanProperty simpleUIProperty() {
-        return simpleUI;
+    public BooleanProperty compactModeProperty() {
+        return compactMode;
     }
 
-    public boolean isSimpleUI() {
-        return simpleUI.get();
+    public boolean isCompactMode() {
+        return compactMode.get();
     }
 
-    public void setSimpleUI(boolean v) {
-        simpleUI.set(v);
+    public void setCompactMode(boolean v) {
+        compactMode.set(v);
     }
 
-    @SerializedName("simpleUITranslucent")
-    private final BooleanProperty simpleUITranslucent = new SimpleBooleanProperty(false);
+    @SerializedName("compactModeNavigationBarStyle")
+    private final StringProperty compactModeNavigationBarStyle = new SimpleStringProperty("auto");
 
-    public BooleanProperty simpleUITranslucentProperty() {
-        return simpleUITranslucent;
+    public StringProperty compactModeNavigationBarStyleProperty() {
+        return compactModeNavigationBarStyle;
     }
 
-    public boolean isSimpleUITranslucent() {
-        return simpleUITranslucent.get();
+    public String getCompactModeNavigationBarStyle() {
+        return compactModeNavigationBarStyle.get();
     }
 
-    public void setSimpleUITranslucent(boolean v) {
-        simpleUITranslucent.set(v);
-    }
-
-    @SerializedName("simpleUITransparent")
-    private final BooleanProperty simpleUITransparent = new SimpleBooleanProperty(false);
-
-    public BooleanProperty simpleUITransparentProperty() {
-        return simpleUITransparent;
-    }
-
-    public boolean isSimpleUITransparent() {
-        return simpleUITransparent.get();
-    }
-
-    public void setSimpleUITransparent(boolean v) {
-        simpleUITransparent.set(v);
+    public void setCompactModeNavigationBarStyle(String v) {
+        this.compactModeNavigationBarStyle.set(v);
     }
 
     @SerializedName("fontFamily")

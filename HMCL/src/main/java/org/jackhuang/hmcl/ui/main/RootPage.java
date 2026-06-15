@@ -85,7 +85,7 @@ public class RootPage extends DecoratorAnimatedPage implements DecoratorPage {
         getStyleClass().remove("gray-background");
         getLeft().getStyleClass().add("gray-background");
 
-        setShowLeft(!ConfigHolder.config().isSimpleUI());
+        setShowLeft(!ConfigHolder.config().isCompactMode());
     }
 
     @Override

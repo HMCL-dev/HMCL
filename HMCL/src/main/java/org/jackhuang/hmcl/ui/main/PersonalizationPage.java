@@ -105,39 +105,24 @@ public class PersonalizationPage extends StackPane {
             Platform.runLater(() -> JFXDepthManager.setDepth(picker, 0));
         }
         {
-            LineToggleButton simpleUIButton = new LineToggleButton();
-            themeList.getContent().add(simpleUIButton);
-            simpleUIButton.selectedProperty().bindBidirectional(config().simpleUIProperty());
-            simpleUIButton.setTitle(i18n("settings.launcher.simple_ui"));
-            simpleUIButton.setSubtitle(i18n("settings.take_effect_after_restart"));
+            LineToggleButton compactModeButton = new LineToggleButton();
+            themeList.getContent().add(compactModeButton);
+            compactModeButton.selectedProperty().bindBidirectional(config().compactModeProperty());
+            compactModeButton.setTitle(i18n("settings.launcher.compact_mode"));
+            compactModeButton.setSubtitle(i18n("settings.take_effect_after_restart"));
+            
+            var compactModeNavigationBarStylePane = new LineSelectButton<String>();
+            compactModeNavigationBarStylePane.setTitle(i18n("settings.launcher.compact_mode_navigation_bar_style"));
+            compactModeNavigationBarStylePane.setSubtitle(i18n("settings.take_effect_after_restart"));
+            compactModeNavigationBarStylePane.setNullSafeConverter(name -> i18n("settings.launcher.compact_mode_navigation_bar_style." + name));
+            compactModeNavigationBarStylePane.setItems("auto", "translucent", "transparent");
+            compactModeNavigationBarStylePane.valueProperty().bindBidirectional(config().compactModeNavigationBarStyleProperty());
 
-            LineToggleButton simpleUITranslucentButton = new LineToggleButton();
-            themeList.getContent().add(simpleUITranslucentButton);
-            simpleUITranslucentButton.selectedProperty().bindBidirectional(config().simpleUITranslucentProperty());
-            simpleUITranslucentButton.setTitle(i18n("settings.launcher.simple_ui_translucent"));
-            simpleUITranslucentButton.setSubtitle(i18n("settings.take_effect_after_restart"));
+            themeList.getContent().add(compactModeNavigationBarStylePane);
 
-            LineToggleButton simpleUITransparentButton = new LineToggleButton();
-            themeList.getContent().add(simpleUITransparentButton);
-            simpleUITransparentButton.selectedProperty().bindBidirectional(config().simpleUITransparentProperty());
-            simpleUITransparentButton.setTitle(i18n("settings.launcher.simple_ui_transparent"));
-            simpleUITransparentButton.setSubtitle(i18n("settings.take_effect_after_restart"));
-
-            simpleUITranslucentButton.disableProperty().bind(
-                simpleUIButton.selectedProperty().not()
+            compactModeNavigationBarStylePane.disableProperty().bind(
+                compactModeButton.selectedProperty().not()
             );
-
-            simpleUITransparentButton.disableProperty().bind(
-                simpleUIButton.selectedProperty().not()
-            );
-
-            simpleUITranslucentButton.selectedProperty().addListener((obs, oldV, newV) -> {
-                if (newV) config().setSimpleUITransparent(false);
-            });
-
-            simpleUITransparentButton.selectedProperty().addListener((obs, oldV, newV) -> {
-                if (newV) config().setSimpleUITranslucent(false);
-            });
         }
         {
             LineToggleButton titleTransparentButton = new LineToggleButton();

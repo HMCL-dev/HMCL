@@ -208,7 +208,7 @@ public final class MainPage extends StackPane implements DecoratorPage {
 
         HBox bottomMenuPane = null;
 
-        if (ConfigHolder.config().isSimpleUI()) {
+        if (ConfigHolder.config().isCompactMode()) {
             bottomMenuPane = new HBox();
 
             bottomMenuPane.setMaxSize(
@@ -216,13 +216,15 @@ public final class MainPage extends StackPane implements DecoratorPage {
                 Region.USE_PREF_SIZE
             );
 
-            if (ConfigHolder.config().isSimpleUITranslucent()) {
-                bottomMenuPane.getStyleClass().add("simple-ui-menu-translucent");
+            String barStyle = ConfigHolder.config().getCompactModeNavigationBarStyle();
+
+            if (barStyle.equals("translucent")) {
+                bottomMenuPane.getStyleClass().add("compact-mode-navigation-bar-translucent");
             } else {
-                if (ConfigHolder.config().isSimpleUITransparent()) {
-                    bottomMenuPane.getStyleClass().add("simple-ui-menu-transparent");
+                if (barStyle.equals("transparent")) {
+                    bottomMenuPane.getStyleClass().add("compact-mode-navigation-baru-transparent");
                 } else {
-                    bottomMenuPane.getStyleClass().add("simple-ui-menu");
+                    bottomMenuPane.getStyleClass().add("compact-mode-navigation-bar");
                 }
             } 
 
