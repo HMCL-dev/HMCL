@@ -36,7 +36,9 @@ import org.jetbrains.annotations.UnknownNullability;
 
 import java.io.IOException;
 import java.nio.file.*;
+import java.util.ArrayList;
 import java.util.IdentityHashMap;
+import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 
@@ -461,76 +463,172 @@ public final class SettingsManager {
     /// @param accounts the full in-memory account store
     /// @return the split account store snapshot
     private static AccountStoreSnapshot createAccountStoreSnapshot(AccountStorages accounts) {
+        AccountCredentials.ExtractedCredentials extracted =
+                AccountCredentials.extractFromAccountStorages(accounts.getAccounts());
         AccountCredentials credentials = new AccountCredentials();
-        AccountStorages metadata = accounts.copyWithAccounts(
-                credentials.replaceFromAccountStorages(accounts.getAccounts()));
+        extracted.credentials().forEach(credentials::putCredentials);
+        AccountStorages metadata = accounts.copyWithAccounts(extracted.metadataAccounts());
         return new AccountStoreSnapshot(metadata, credentials);
     }
 
     /// Saves the per-workspace account metadata and credentials.
     private static void saveGameAccounts() {
-        saveAccountStore(gameAccounts(), gameAccountCredentials(), GAME_ACCOUNTS_FILE, GAME_ACCOUNT_CREDENTIALS_FILE);
+        saveAccountStore(
+                gameAccounts(),
+                GAME_ACCOUNTS_FILE,
+                new AccountCredentialStore(gameAccountCredentials(), GAME_ACCOUNT_CREDENTIALS_FILE),
+                List.of(
+                        new AccountCredentialStore(gameAccountCredentials(), GAME_ACCOUNT_CREDENTIALS_FILE),
+                        new AccountCredentialStore(userGameAccountCredentials(), USER_GAME_ACCOUNT_CREDENTIALS_FILE)));
     }
 
     /// Saves the shared account metadata and credentials.
     private static void saveUserGameAccounts() {
         saveAccountStore(
                 userGameAccounts(),
-                userGameAccountCredentials(),
                 USER_GAME_ACCOUNTS_FILE,
-                USER_GAME_ACCOUNT_CREDENTIALS_FILE);
+                new AccountCredentialStore(userGameAccountCredentials(), USER_GAME_ACCOUNT_CREDENTIALS_FILE),
+                List.of(
+                        new AccountCredentialStore(userGameAccountCredentials(), USER_GAME_ACCOUNT_CREDENTIALS_FILE),
+                        new AccountCredentialStore(gameAccountCredentials(), GAME_ACCOUNT_CREDENTIALS_FILE)));
     }
 
     /// Saves account metadata and credentials.
     ///
     /// @param accounts the full in-memory account store
-    /// @param credentials the credential store to update and save
     /// @param accountsFile the account metadata file helper
-    /// @param credentialsFile the account credential file helper
+    /// @param defaultCredentials the default credential store used for new account credentials
+    /// @param credentialStores credential stores searched and updated for existing account credentials
     private static void saveAccountStore(
             AccountStorages accounts,
-            AccountCredentials credentials,
             JsonSettingFile<AccountStorages> accountsFile,
-            JsonSettingFile<AccountCredentials> credentialsFile) {
-        AccountStoreSnapshot snapshot = createAccountStoreSnapshot(accounts);
-        boolean backupOnNextSave = accounts.isBackupOnNextSave() || credentials.isBackupOnNextSave();
+            AccountCredentialStore defaultCredentials,
+            List<AccountCredentialStore> credentialStores) {
+        AccountCredentials.ExtractedCredentials extracted =
+                AccountCredentials.extractFromAccountStorages(accounts.getAccounts());
+        List<AccountCredentialStore> changedCredentialStores =
+                distributeAccountCredentials(extracted, defaultCredentials, credentialStores);
+
+        boolean backupOnNextSave = accounts.isBackupOnNextSave();
         accounts.setBackupOnNextSave(false);
-        credentials.setBackupOnNextSave(backupOnNextSave);
-        credentials.replaceWith(snapshot.credentials());
 
         if (accounts.isSavable()) {
-            snapshot.metadata().setBackupOnNextSave(backupOnNextSave);
-            accountsFile.save(snapshot.metadata());
+            AccountStorages metadata = accounts.copyWithAccounts(extracted.metadataAccounts());
+            metadata.setBackupOnNextSave(backupOnNextSave);
+            accountsFile.save(metadata);
         }
-        if (credentials.isSavable()) {
-            credentialsFile.save(credentials);
+
+        for (AccountCredentialStore credentialStore : changedCredentialStores) {
+            if (credentialStore.credentials().isSavable()) {
+                credentialStore.credentials().setBackupOnNextSave(
+                        backupOnNextSave || credentialStore.credentials().isBackupOnNextSave());
+                credentialStore.file().save(credentialStore.credentials());
+            }
         }
     }
 
     /// Saves account metadata and credentials synchronously.
     ///
     /// @param accounts the full in-memory account store
-    /// @param credentials the credential store to update and save
     /// @param accountsFile the account metadata file helper
-    /// @param credentialsFile the account credential file helper
+    /// @param defaultCredentials the default credential store used for new account credentials
+    /// @param credentialStores credential stores searched and updated for existing account credentials
     /// @throws IOException if saving either file fails
     private static void saveAccountStoreSync(
             AccountStorages accounts,
-            AccountCredentials credentials,
             JsonSettingFile<AccountStorages> accountsFile,
-            JsonSettingFile<AccountCredentials> credentialsFile) throws IOException {
-        AccountStoreSnapshot snapshot = createAccountStoreSnapshot(accounts);
-        boolean backupOnNextSave = accounts.isBackupOnNextSave() || credentials.isBackupOnNextSave();
+            AccountCredentialStore defaultCredentials,
+            List<AccountCredentialStore> credentialStores) throws IOException {
+        AccountCredentials.ExtractedCredentials extracted =
+                AccountCredentials.extractFromAccountStorages(accounts.getAccounts());
+        List<AccountCredentialStore> changedCredentialStores =
+                distributeAccountCredentials(extracted, defaultCredentials, credentialStores);
+        addIfAbsent(changedCredentialStores, defaultCredentials);
+
+        boolean backupOnNextSave = accounts.isBackupOnNextSave();
         accounts.setBackupOnNextSave(false);
-        credentials.setBackupOnNextSave(backupOnNextSave);
-        credentials.replaceWith(snapshot.credentials());
 
         if (accounts.isSavable()) {
-            snapshot.metadata().setBackupOnNextSave(backupOnNextSave);
-            accountsFile.saveSync(snapshot.metadata());
+            AccountStorages metadata = accounts.copyWithAccounts(extracted.metadataAccounts());
+            metadata.setBackupOnNextSave(backupOnNextSave);
+            accountsFile.saveSync(metadata);
         }
-        if (credentials.isSavable()) {
-            credentialsFile.saveSync(credentials);
+
+        for (AccountCredentialStore credentialStore : changedCredentialStores) {
+            if (credentialStore.credentials().isSavable()) {
+                credentialStore.credentials().setBackupOnNextSave(
+                        backupOnNextSave || credentialStore.credentials().isBackupOnNextSave());
+                credentialStore.file().saveSync(credentialStore.credentials());
+            }
+        }
+    }
+
+    /// Distributes extracted token credentials back into their existing credential stores.
+    ///
+    /// @param extracted the extracted account metadata and credentials
+    /// @param defaultCredentials the default credential store used when no existing store has the account token
+    /// @param credentialStores credential stores searched and updated in order
+    /// @return credential stores whose content or backup state should be saved
+    private static List<AccountCredentialStore> distributeAccountCredentials(
+            AccountCredentials.ExtractedCredentials extracted,
+            AccountCredentialStore defaultCredentials,
+            List<AccountCredentialStore> credentialStores) {
+        List<AccountCredentialStore> changedCredentialStores = new ArrayList<>();
+        for (JsonObject identifier : extracted.identifiers()) {
+            AccountCredentialStore targetCredentials =
+                    findAccountCredentialStore(identifier, defaultCredentials, credentialStores);
+
+            for (AccountCredentialStore credentialStore : credentialStores) {
+                if (credentialStore.credentials().isSavable()
+                        && credentialStore.credentials().removeCredentials(identifier)) {
+                    addIfAbsent(changedCredentialStores, credentialStore);
+                }
+            }
+
+            @Nullable Map<Object, Object> accountCredentials = extracted.credentials().get(identifier);
+            if (accountCredentials != null && targetCredentials.credentials().isSavable()) {
+                targetCredentials.credentials().putCredentials(identifier, accountCredentials);
+                addIfAbsent(changedCredentialStores, targetCredentials);
+            }
+        }
+
+        for (AccountCredentialStore credentialStore : credentialStores) {
+            if (credentialStore.credentials().isBackupOnNextSave()) {
+                addIfAbsent(changedCredentialStores, credentialStore);
+            }
+        }
+        return changedCredentialStores;
+    }
+
+    /// Finds the credential store that should receive updated token credentials.
+    ///
+    /// @param identifier the stable account identifier
+    /// @param defaultCredentials the default credential store used when no existing writable store has the account token
+    /// @param credentialStores credential stores searched in order
+    /// @return the credential store that should receive updated token credentials
+    private static AccountCredentialStore findAccountCredentialStore(
+            JsonObject identifier,
+            AccountCredentialStore defaultCredentials,
+            List<AccountCredentialStore> credentialStores) {
+        for (AccountCredentialStore credentialStore : credentialStores) {
+            if (credentialStore.credentials().isSavable()
+                    && credentialStore.credentials().containsCredentials(identifier)) {
+                return credentialStore;
+            }
+        }
+
+        return defaultCredentials;
+    }
+
+    /// Adds a credential store to a list unless it is already present.
+    ///
+    /// @param credentialStores the target list
+    /// @param credentialStore the credential store to add
+    private static void addIfAbsent(
+            List<AccountCredentialStore> credentialStores,
+            AccountCredentialStore credentialStore) {
+        if (!credentialStores.contains(credentialStore)) {
+            credentialStores.add(credentialStore);
         }
     }
 
@@ -539,6 +637,15 @@ public final class SettingsManager {
     /// @param metadata the metadata-only account store
     /// @param credentials the account credential store
     private record AccountStoreSnapshot(AccountStorages metadata, AccountCredentials credentials) {
+    }
+
+    /// Account credential store and its backing JSON file.
+    ///
+    /// @param credentials the loaded account credential store
+    /// @param file the JSON setting file helper backing the credential store
+    private record AccountCredentialStore(
+            AccountCredentials credentials,
+            JsonSettingFile<AccountCredentials> file) {
     }
 
     /// Returns the loaded per-workspace game directory store.
@@ -1150,7 +1257,9 @@ public final class SettingsManager {
         try {
             JsonSettingFile.LoadResult<AccountStorages> result = USER_GAME_ACCOUNTS_FILE.load(migrated);
             userGameAccounts = result.value();
-            userGameAccountCredentials().mergeInto(userGameAccounts);
+            AccountCredentials.mergeInto(
+                    userGameAccounts,
+                    List.of(userGameAccountCredentials(), gameAccountCredentials()));
             if (userGameAccounts.isSavable()) {
                 userGameAccounts.addListener(source -> saveUserGameAccounts());
             }
@@ -1158,9 +1267,12 @@ public final class SettingsManager {
             if (newlyCreated && userGameAccounts.isSavable()) {
                 saveAccountStoreSync(
                         userGameAccounts,
-                        userGameAccountCredentials(),
                         USER_GAME_ACCOUNTS_FILE,
-                        USER_GAME_ACCOUNT_CREDENTIALS_FILE);
+                        new AccountCredentialStore(userGameAccountCredentials(), USER_GAME_ACCOUNT_CREDENTIALS_FILE),
+                        List.of(
+                                new AccountCredentialStore(userGameAccountCredentials(),
+                                        USER_GAME_ACCOUNT_CREDENTIALS_FILE),
+                                new AccountCredentialStore(gameAccountCredentials(), GAME_ACCOUNT_CREDENTIALS_FILE)));
                 if (migrationResult != null) {
                     LegacyConfigMigrator.completeLegacyUserAccountsMigration(migrationResult);
                 }
@@ -1170,7 +1282,9 @@ public final class SettingsManager {
         } catch (IOException e) {
             LOG.warning("Failed to load user game accounts", e);
             userGameAccounts = migrated != null ? migrated : new AccountStorages();
-            userGameAccountCredentials().mergeInto(userGameAccounts);
+            AccountCredentials.mergeInto(
+                    userGameAccounts,
+                    List.of(userGameAccountCredentials(), gameAccountCredentials()));
             userGameAccounts.setSavable(false);
             return SettingFileAccess.UNREADABLE;
         }
@@ -1190,7 +1304,9 @@ public final class SettingsManager {
         JsonSettingFile.LoadResult<AccountStorages> result =
                 GAME_ACCOUNTS_FILE.load(fallbackGameAccounts);
         gameAccounts = result.value();
-        gameAccountCredentials().mergeInto(gameAccounts);
+        AccountCredentials.mergeInto(
+                gameAccounts,
+                List.of(gameAccountCredentials(), userGameAccountCredentials()));
         if (gameAccounts.isSavable()) {
             gameAccounts.addListener(source -> saveGameAccounts());
         }
@@ -1198,9 +1314,11 @@ public final class SettingsManager {
         if (newlyCreated && gameAccounts.isSavable()) {
             saveAccountStoreSync(
                     gameAccounts,
-                    gameAccountCredentials(),
                     GAME_ACCOUNTS_FILE,
-                    GAME_ACCOUNT_CREDENTIALS_FILE);
+                    new AccountCredentialStore(gameAccountCredentials(), GAME_ACCOUNT_CREDENTIALS_FILE),
+                    List.of(
+                            new AccountCredentialStore(gameAccountCredentials(), GAME_ACCOUNT_CREDENTIALS_FILE),
+                            new AccountCredentialStore(userGameAccountCredentials(), USER_GAME_ACCOUNT_CREDENTIALS_FILE)));
         }
 
         return result.access();

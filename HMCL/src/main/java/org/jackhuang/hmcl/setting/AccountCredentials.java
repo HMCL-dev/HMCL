@@ -134,21 +134,42 @@ final class AccountCredentials extends ObservableSetting implements JsonSchemaSe
         this.backupOnNextSave = backupOnNextSave;
     }
 
-    /// Merges stored credentials into the given account storages.
+    /// Merges credentials from the given credential stores into account storages.
+    ///
+    /// Credential stores are searched in order, so callers can prefer the credential file paired with the account
+    /// metadata file while still accepting credentials from other stores.
     ///
     /// @param accountStorages account storages to update in place
-    void mergeInto(AccountStorages accountStorages) {
+    /// @param credentialStores credential stores searched for matching token fields
+    static void mergeInto(AccountStorages accountStorages, List<AccountCredentials> credentialStores) {
         for (Map<Object, Object> account : accountStorages.getAccounts()) {
             @Nullable JsonObject identifier = Account.identifier(account);
             if (identifier == null) {
                 continue;
             }
 
-            @Nullable Map<Object, Object> accountCredentials = credentials.get(identifier);
+            @Nullable Map<Object, Object> accountCredentials = findCredentials(identifier, credentialStores);
             if (accountCredentials != null) {
                 account.putAll(accountCredentials);
             }
         }
+    }
+
+    /// Finds the first credential entry matching an account identifier.
+    ///
+    /// @param identifier the stable account identifier
+    /// @param credentialStores credential stores searched in order
+    /// @return the first matching token map, or `null` if no store contains one
+    private static @Nullable Map<Object, Object> findCredentials(
+            JsonObject identifier,
+            List<AccountCredentials> credentialStores) {
+        for (AccountCredentials credentialStore : credentialStores) {
+            @Nullable Map<Object, Object> accountCredentials = credentialStore.credentials.get(identifier);
+            if (accountCredentials != null) {
+                return accountCredentials;
+            }
+        }
+        return null;
     }
 
     /// Replaces this credential store from full account storages and returns metadata-only account entries.
@@ -156,8 +177,20 @@ final class AccountCredentials extends ObservableSetting implements JsonSchemaSe
     /// @param accountStorages full account storages containing both metadata and credentials
     /// @return metadata-only account storages
     List<Map<Object, Object>> replaceFromAccountStorages(List<Map<Object, Object>> accountStorages) {
+        ExtractedCredentials extracted = extractFromAccountStorages(accountStorages);
+        credentials.clear();
+        credentials.putAll(extracted.credentials());
+        return extracted.metadataAccounts();
+    }
+
+    /// Extracts token credentials from full account storages.
+    ///
+    /// @param accountStorages full account storages containing both metadata and credentials
+    /// @return extracted metadata, account identifiers, and token credentials
+    static ExtractedCredentials extractFromAccountStorages(List<Map<Object, Object>> accountStorages) {
         List<Map<Object, Object>> metadataAccounts = new ArrayList<>(accountStorages.size());
-        Map<JsonObject, Map<Object, Object>> updatedCredentials = new LinkedHashMap<>();
+        List<JsonObject> identifiers = new ArrayList<>(accountStorages.size());
+        Map<JsonObject, Map<Object, Object>> extractedCredentials = new LinkedHashMap<>();
 
         for (Map<Object, Object> account : accountStorages) {
             Map<Object, Object> metadata = new LinkedHashMap<>(account);
@@ -165,6 +198,7 @@ final class AccountCredentials extends ObservableSetting implements JsonSchemaSe
 
             Map<Object, Object> accountCredentials = new LinkedHashMap<>();
             if (identifier != null) {
+                identifiers.add(identifier);
                 for (String field : CREDENTIAL_FIELDS) {
                     @Nullable Object value = metadata.remove(field);
                     if (value != null) {
@@ -174,14 +208,36 @@ final class AccountCredentials extends ObservableSetting implements JsonSchemaSe
             }
 
             if (identifier != null && !accountCredentials.isEmpty()) {
-                updatedCredentials.put(identifier, accountCredentials);
+                extractedCredentials.put(identifier, accountCredentials);
             }
             metadataAccounts.add(metadata);
         }
 
-        credentials.clear();
-        credentials.putAll(updatedCredentials);
-        return metadataAccounts;
+        return new ExtractedCredentials(metadataAccounts, identifiers, extractedCredentials);
+    }
+
+    /// Returns whether this store contains credentials for the account identifier.
+    ///
+    /// @param identifier the stable account identifier
+    /// @return whether this store contains credentials for the identifier
+    boolean containsCredentials(JsonObject identifier) {
+        return credentials.containsKey(identifier);
+    }
+
+    /// Removes credentials for the account identifier.
+    ///
+    /// @param identifier the stable account identifier
+    /// @return whether credentials were removed
+    boolean removeCredentials(JsonObject identifier) {
+        return credentials.remove(identifier) != null;
+    }
+
+    /// Stores token credentials for the account identifier.
+    ///
+    /// @param identifier the stable account identifier
+    /// @param accountCredentials the token credentials
+    void putCredentials(JsonObject identifier, Map<Object, Object> accountCredentials) {
+        credentials.put(identifier.deepCopy(), new LinkedHashMap<>(accountCredentials));
     }
 
     /// Replaces this credential store with another store.
@@ -192,6 +248,17 @@ final class AccountCredentials extends ObservableSetting implements JsonSchemaSe
         for (Map.Entry<JsonObject, Map<Object, Object>> entry : other.credentials.entrySet()) {
             credentials.put(entry.getKey().deepCopy(), new LinkedHashMap<>(entry.getValue()));
         }
+    }
+
+    /// Token credentials extracted from full account storages.
+    ///
+    /// @param metadataAccounts account entries with token fields removed
+    /// @param identifiers identifiers for all account entries that can be matched to credentials
+    /// @param credentials extracted token credentials by account identifier
+    record ExtractedCredentials(
+            List<Map<Object, Object>> metadataAccounts,
+            List<JsonObject> identifiers,
+            Map<JsonObject, Map<Object, Object>> credentials) {
     }
 
     /// JSON adapter for [AccountCredentials].

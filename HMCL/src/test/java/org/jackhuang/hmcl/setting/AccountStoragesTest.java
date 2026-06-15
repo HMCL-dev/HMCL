@@ -169,11 +169,42 @@ public final class AccountStoragesTest {
         )));
         AccountStorages accountStorages = AccountStorages.fromAccounts(metadataAccounts);
 
-        credentials.mergeInto(accountStorages);
+        AccountCredentials.mergeInto(accountStorages, List.of(credentials));
         Map<Object, Object> account = accountStorages.getAccounts().get(0);
 
         assertEquals("access-token", account.get("accessToken"));
         assertEquals("refresh-token", account.get("refreshToken"));
+    }
+
+    /// Tests restoring token fields from the first matching credential store.
+    @Test
+    public void mergesCredentialsFromMultipleStoresInOrder() {
+        AccountCredentials preferredCredentials = new AccountCredentials();
+        preferredCredentials.replaceFromAccountStorages(List.of(Map.of(
+                "type", "microsoft",
+                "uuid", "00000000-0000-0000-0000-000000000001",
+                "displayName", "Steve",
+                "accessToken", "preferred-token"
+        )));
+
+        AccountCredentials fallbackCredentials = new AccountCredentials();
+        List<Map<Object, Object>> metadataAccounts = fallbackCredentials.replaceFromAccountStorages(List.of(Map.of(
+                "type", "microsoft",
+                "uuid", "00000000-0000-0000-0000-000000000001",
+                "displayName", "Steve",
+                "accessToken", "fallback-token"
+        )));
+
+        AccountStorages accountStorages = AccountStorages.fromAccounts(metadataAccounts);
+        AccountCredentials.mergeInto(accountStorages, List.of(new AccountCredentials(), fallbackCredentials));
+
+        Map<Object, Object> account = accountStorages.getAccounts().get(0);
+        assertEquals("fallback-token", account.get("accessToken"));
+
+        account.remove("accessToken");
+        AccountCredentials.mergeInto(accountStorages, List.of(preferredCredentials, fallbackCredentials));
+
+        assertEquals("preferred-token", account.get("accessToken"));
     }
 
     /// Tests that account credentials serialize as one protected payload.
