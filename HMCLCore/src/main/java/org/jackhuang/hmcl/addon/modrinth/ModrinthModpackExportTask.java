@@ -73,8 +73,8 @@ public class ModrinthModpackExportTask extends Task<Void> {
             relativePath = repository.getModManager(version).enableMod(Paths.get(relativePath)).toString();
         }
 
-        LocalModFile                  localModFile      = null;
-        Optional<RemoteAddon.Version> modrinthVersion   = Optional.empty();
+        LocalModFile localModFile = null;
+        Optional<RemoteAddon.Version> modrinthVersion = Optional.empty();
         Optional<RemoteAddon.Version> curseForgeVersion = Optional.empty();
 
         try {

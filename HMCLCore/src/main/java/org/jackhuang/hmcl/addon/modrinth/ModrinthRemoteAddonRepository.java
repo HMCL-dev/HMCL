@@ -47,10 +47,10 @@ import static org.jackhuang.hmcl.util.gson.JsonUtils.listTypeOf;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 public final class ModrinthRemoteAddonRepository implements RemoteAddonRepository {
-    public static final ModrinthRemoteAddonRepository MODS           = new ModrinthRemoteAddonRepository("mod");
-    public static final ModrinthRemoteAddonRepository MODPACKS       = new ModrinthRemoteAddonRepository("modpack");
+    public static final ModrinthRemoteAddonRepository MODS = new ModrinthRemoteAddonRepository("mod");
+    public static final ModrinthRemoteAddonRepository MODPACKS = new ModrinthRemoteAddonRepository("modpack");
     public static final ModrinthRemoteAddonRepository RESOURCE_PACKS = new ModrinthRemoteAddonRepository("resourcepack");
-    public static final ModrinthRemoteAddonRepository SHADER_PACKS   = new ModrinthRemoteAddonRepository("shader");
+    public static final ModrinthRemoteAddonRepository SHADER_PACKS = new ModrinthRemoteAddonRepository("shader");
 
     private static final Comparator<String> TAG_COMPARATOR = PriorityComparator.of(
             List.of("babric",

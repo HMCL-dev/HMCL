@@ -290,9 +290,9 @@ public class AddonUpdatesPage<F extends LocalAddonFile> extends BorderPane imple
 
             this.dependents = new ArrayList<>();
             for (LocalAddonFile.AddonUpdate addon : addons) {
-                LocalAddonFile      local      = addon.localAddonFile();
-                RemoteAddon.Version remote     = addon.targetVersion();
-                boolean             isDisabled = local.isDisabled();
+                LocalAddonFile local = addon.localAddonFile();
+                RemoteAddon.Version remote = addon.targetVersion();
+                boolean isDisabled = local.isDisabled();
                 String originalFileName = local.getFile().getFileName().toString();
 
                 dependents.add(Task

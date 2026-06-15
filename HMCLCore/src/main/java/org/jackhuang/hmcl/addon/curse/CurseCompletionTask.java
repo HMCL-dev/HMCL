@@ -183,8 +183,8 @@ public final class CurseCompletionTask extends Task<Void> {
      * @throws IOException If IOException was encountered during getting data from CurseForge.
      */
     private Path guessFilePath(CurseManifestFile file, DownloadProvider downloadProvider, Path resourcePacksRoot, Path shaderPacksRoot) throws IOException {
-        RemoteAddon mod     = CurseForgeRemoteAddonRepository.MODS.getModById(downloadProvider, Integer.toString(file.projectID()));
-        int         classID = ((CurseAddon) mod.getData()).getClassId();
+        RemoteAddon mod = CurseForgeRemoteAddonRepository.MODS.getModById(downloadProvider, Integer.toString(file.projectID()));
+        int classID = ((CurseAddon) mod.getData()).getClassId();
         String fileName = file.fileName();
         return switch (classID) {
             case 12,       // Resource pack

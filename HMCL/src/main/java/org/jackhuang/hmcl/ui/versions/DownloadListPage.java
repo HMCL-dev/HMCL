@@ -73,9 +73,9 @@ public class DownloadListPage extends Control implements DecoratorPage, VersionP
     private final boolean versionSelection;
     private final ObjectProperty<Profile.ProfileVersion> version = new SimpleObjectProperty<>();
     private final IntegerProperty pageOffset = new SimpleIntegerProperty(0);
-    private final IntegerProperty           pageCount = new SimpleIntegerProperty(-1);
-    private final ListProperty<RemoteAddon> items     = new SimpleListProperty<>(this, "items", FXCollections.observableArrayList());
-    private final ObservableList<String>    versions  = FXCollections.observableArrayList();
+    private final IntegerProperty pageCount = new SimpleIntegerProperty(-1);
+    private final ListProperty<RemoteAddon> items = new SimpleListProperty<>(this, "items", FXCollections.observableArrayList());
+    private final ObservableList<String> versions = FXCollections.observableArrayList();
     private final StringProperty selectedVersion = new SimpleStringProperty();
     private final DownloadPage.DownloadCallback callback;
     private boolean searchInitialized = false;
@@ -237,7 +237,7 @@ public class DownloadListPage extends Control implements DecoratorPage, VersionP
 
     private static class ModDownloadListPageSkin extends SkinBase<DownloadListPage> {
         private final JFXListView<RemoteAddon> listView = new JFXListView<>();
-        private final RemoteImageLoader        iconLoader;
+        private final RemoteImageLoader iconLoader;
 
         protected ModDownloadListPageSkin(DownloadListPage control) {
             super(control);

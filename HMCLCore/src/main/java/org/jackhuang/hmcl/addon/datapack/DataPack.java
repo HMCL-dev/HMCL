@@ -247,9 +247,9 @@ public class DataPack {
         private final boolean isDirectory;
         private Path statusFile;
         private final BooleanProperty activeProperty;
-        private final String                     id;
+        private final String id;
         private final LocalAddonFile.Description description;
-        private final DataPack                   parentDataPack;
+        private final DataPack parentDataPack;
 
         public Pack(Path path, boolean isDirectory, String id, LocalAddonFile.Description description, DataPack parentDataPack) {
             this.path = path;

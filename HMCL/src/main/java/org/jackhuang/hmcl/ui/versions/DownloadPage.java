@@ -67,8 +67,8 @@ public class DownloadPage extends Control implements DecoratorPage {
     private final BooleanProperty loading = new SimpleBooleanProperty(false);
     private final BooleanProperty failed = new SimpleBooleanProperty(false);
     private final RemoteAddonRepository repository;
-    private final ModTranslations     translations;
-    private final RemoteAddon         addon;
+    private final ModTranslations translations;
+    private final RemoteAddon addon;
     private final ModTranslations.Mod mod;
     private final Profile.ProfileVersion version;
     private final DownloadCallback callback;
@@ -567,7 +567,7 @@ public class DownloadPage extends Control implements DecoratorPage {
             Task.composeAsync(() -> {
                 // TODO: Massive tasks may cause OOM.
                 EnumMap<RemoteAddon.DependencyType, List<Node>> dependencies = new EnumMap<>(RemoteAddon.DependencyType.class);
-                List<Task<?>>                                   queue        = new ArrayList<>(version.getDependencies().size());
+                List<Task<?>> queue = new ArrayList<>(version.getDependencies().size());
                 for (RemoteAddon.Dependency dependency : version.getDependencies()) {
                     if (dependency.getType() == RemoteAddon.DependencyType.INCOMPATIBLE || dependency.getType() == RemoteAddon.DependencyType.BROKEN) {
                         continue;

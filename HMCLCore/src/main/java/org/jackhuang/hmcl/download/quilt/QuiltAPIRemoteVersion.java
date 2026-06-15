@@ -28,7 +28,7 @@ import java.time.Instant;
 import java.util.List;
 
 public class QuiltAPIRemoteVersion extends RemoteVersion {
-    private final String              fullVersion;
+    private final String fullVersion;
     private final RemoteAddon.Version version;
 
     /**
