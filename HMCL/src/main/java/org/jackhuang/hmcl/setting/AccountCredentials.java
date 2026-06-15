@@ -23,6 +23,7 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParseException;
 import com.google.gson.JsonSerializationContext;
+import com.google.gson.JsonSerializer;
 import com.google.gson.annotations.JsonAdapter;
 import com.google.gson.annotations.SerializedName;
 import javafx.beans.property.ObjectProperty;
@@ -263,7 +264,7 @@ final class AccountCredentials extends ObservableSetting implements JsonSchemaSe
     }
 
     /// JSON adapter for [AccountCredentials].
-    static final class Adapter implements com.google.gson.JsonSerializer<AccountCredentials>,
+    static final class Adapter implements JsonSerializer<AccountCredentials>,
             com.google.gson.JsonDeserializer<AccountCredentials> {
         /// Creates the JSON payload protected inside an account credential file.
         ///
@@ -334,7 +335,7 @@ final class AccountCredentials extends ObservableSetting implements JsonSchemaSe
                 JsonSerializationContext context) {
             JsonObject result = new JsonObject();
             result.addProperty(JsonSchema.PROPERTY_SCHEMA, accountCredentials.getSchema().url());
-            ProtectedPayload.write(result, createPayload(accountCredentials, context), protectionMode());
+            protectionMode().write(result, createPayload(accountCredentials, context));
             accountCredentials.unknownFields.forEach(result::add);
             return result;
         }

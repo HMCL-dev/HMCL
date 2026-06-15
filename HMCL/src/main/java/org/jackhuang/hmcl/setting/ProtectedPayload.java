@@ -20,18 +20,19 @@ package org.jackhuang.hmcl.setting;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParseException;
-import com.google.gson.JsonParser;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
+import org.tukaani.xz.LZMA2Options;
+import org.tukaani.xz.XZInputStream;
+import org.tukaani.xz.XZOutputStream;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
 import java.util.Base64;
-import java.util.zip.GZIPInputStream;
-import java.util.zip.GZIPOutputStream;
 
 /// Stores a JSON payload using HMCL's portable protection envelope.
 ///
@@ -46,35 +47,29 @@ final class ProtectedPayload {
     /// The JSON member containing the envelope payload.
     static final String PROPERTY_PAYLOAD = "payload";
 
-    /// Base64 encoder used for JSON-safe binary data.
-    private static final Base64.Encoder ENCODER = Base64.getUrlEncoder().withoutPadding();
-
-    /// Base64 decoder used for JSON-safe binary data.
-    private static final Base64.Decoder DECODER = Base64.getUrlDecoder();
-
     /// Prevents instantiation.
     private ProtectedPayload() {
     }
 
     /// Selects how a protected payload is stored in its JSON envelope.
+    @NotNullByDefault
     enum ProtectionMode {
         /// Stores the payload as plain JSON for development and diagnostics.
         PLAIN("plain") {
             /// Writes the payload into the given envelope.
             @Override
-            void write(JsonObject envelope, JsonElement payload) {
+            public void write(JsonObject envelope, JsonObject payload) {
                 envelope.addProperty(PROPERTY_PROTECTION, id());
                 envelope.add(PROPERTY_PAYLOAD, payload.deepCopy());
             }
 
             /// Reads the payload from the given envelope.
             @Override
-            JsonElement read(JsonObject envelope) {
-                JsonElement payload = envelope.get(PROPERTY_PAYLOAD);
-                if (payload == null) {
+            public JsonObject read(JsonObject envelope) {
+                if (envelope.get(PROPERTY_PAYLOAD) instanceof JsonObject payload)
+                    return payload.deepCopy();
+                else
                     throw new JsonParseException("Missing protected payload member: " + PROPERTY_PAYLOAD);
-                }
-                return payload.deepCopy();
             }
         },
 
@@ -82,30 +77,37 @@ final class ProtectedPayload {
         OBFUSCATED_V1("hmcl-obfuscated-v1") {
             /// Writes the payload into the given envelope.
             @Override
-            void write(JsonObject envelope, JsonElement payload) {
+            public void write(JsonObject envelope, JsonObject payload) {
+                String actualPayload;
                 try {
-                    envelope.addProperty(PROPERTY_PROTECTION, id());
-                    String json = payload.toString();
-                    ByteArrayOutputStream output = new ByteArrayOutputStream(json.length());
-                    try (GZIPOutputStream gzip = new GZIPOutputStream(output)) {
-                        gzip.write(json.getBytes(StandardCharsets.UTF_8));
+                    byte[] payloadBytes = JsonUtils.UGLY_GSON.toJson(payload).getBytes(StandardCharsets.UTF_8);
+                    var buffer = new ByteArrayOutputStream(payloadBytes.length);
+                    try (var compressStream = new XZOutputStream(buffer, new LZMA2Options())) {
+                        compressStream.write(payloadBytes);
                     }
-                    envelope.addProperty(PROPERTY_PAYLOAD, ENCODER.encodeToString(output.toByteArray()));
+                    actualPayload = Base64.getEncoder().encodeToString(buffer.toByteArray());
                 } catch (IOException e) {
                     throw new JsonParseException("Failed to protect JSON payload", e);
                 }
+
+                envelope.addProperty(PROPERTY_PROTECTION, id());
+                envelope.addProperty(PROPERTY_PAYLOAD, actualPayload);
             }
 
             /// Reads the payload from the given envelope.
             @Override
-            JsonElement read(JsonObject envelope) {
+            public JsonObject read(JsonObject envelope) {
                 try {
-                    String result;
-                    byte[] bytes = DECODER.decode(readString(envelope, PROPERTY_PAYLOAD));
-                    try (GZIPInputStream gzip = new GZIPInputStream(new ByteArrayInputStream(bytes))) {
-                        result = new String(gzip.readAllBytes(), StandardCharsets.UTF_8);
+                    String encodedPayload = JsonUtils.getString(envelope, PROPERTY_PAYLOAD);
+                    if (encodedPayload == null) {
+                        throw new JsonParseException("Missing protected payload member: " + PROPERTY_PAYLOAD);
                     }
-                    return JsonParser.parseString(result);
+
+                    byte[] compressedBytes = Base64.getDecoder().decode(encodedPayload);
+                    try (var decompressStream = new XZInputStream(new ByteArrayInputStream(compressedBytes));
+                         var reader = new InputStreamReader(decompressStream, StandardCharsets.UTF_8)) {
+                        return JsonUtils.GSON.fromJson(reader, JsonObject.class);
+                    }
                 } catch (IllegalArgumentException | IOException e) {
                     throw new JsonParseException("Failed to reveal protected JSON payload", e);
                 }
@@ -133,16 +135,16 @@ final class ProtectedPayload {
         /// Writes the payload into the given envelope.
         ///
         /// @param envelope the envelope object to write into
-        /// @param payload the plain JSON payload
+        /// @param payload  the plain JSON payload
         /// @throws JsonParseException if the payload cannot be protected
-        abstract void write(JsonObject envelope, JsonElement payload);
+        public abstract void write(JsonObject envelope, JsonObject payload);
 
         /// Reads the payload from the given envelope.
         ///
         /// @param envelope the envelope object to read from
         /// @return the revealed JSON payload
         /// @throws JsonParseException if the envelope is malformed or cannot be revealed
-        abstract JsonElement read(JsonObject envelope);
+        public abstract JsonObject read(JsonObject envelope);
 
         /// Returns the write mode selected by a configuration value.
         ///
@@ -179,16 +181,6 @@ final class ProtectedPayload {
         }
     }
 
-    /// Writes a JSON payload into an envelope object.
-    ///
-    /// @param envelope the envelope object to write into
-    /// @param payload the plain JSON payload
-    /// @param protectionMode the protection mode used for writing the payload
-    /// @throws JsonParseException if the payload cannot be protected
-    static void write(JsonObject envelope, JsonElement payload, ProtectionMode protectionMode) {
-        protectionMode.write(envelope, payload);
-    }
-
     /// Reads and reveals a protected JSON payload from an envelope object.
     ///
     /// @param envelope the envelope object to read from
@@ -198,17 +190,4 @@ final class ProtectedPayload {
         return ProtectionMode.fromEnvelope(envelope).read(envelope);
     }
 
-    /// Reads a required string member from a JSON object.
-    ///
-    /// @param object the JSON object to read
-    /// @param name the member name
-    /// @return the string value
-    /// @throws JsonParseException if the member is missing or is not a string
-    private static String readString(JsonObject object, String name) throws JsonParseException {
-        JsonElement value = object.get(name);
-        if (value == null || !value.isJsonPrimitive() || !value.getAsJsonPrimitive().isString()) {
-            throw new JsonParseException("Missing protected payload member: " + name);
-        }
-        return value.getAsString();
-    }
 }
