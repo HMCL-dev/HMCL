@@ -194,23 +194,6 @@ final class AccountCredentials extends ObservableSetting implements JsonSchemaSe
         }
     }
 
-    /// Returns a copy of an account storage map with sensitive fields redacted for logging.
-    ///
-    /// @param storage the account storage map to redact
-    /// @return a redacted copy of the given account storage map
-    static Map<Object, Object> redact(Map<?, ?> storage) {
-        Map<Object, Object> result = new LinkedHashMap<>();
-        for (Map.Entry<?, ?> entry : storage.entrySet()) {
-            Object key = entry.getKey();
-            if (key instanceof String field && CREDENTIAL_FIELDS.contains(field) && entry.getValue() != null) {
-                result.put(key, "<redacted>");
-            } else {
-                result.put(key, entry.getValue());
-            }
-        }
-        return result;
-    }
-
     /// JSON adapter for [AccountCredentials].
     static final class Adapter implements JsonSerializer<AccountCredentials>,
             com.google.gson.JsonDeserializer<AccountCredentials> {

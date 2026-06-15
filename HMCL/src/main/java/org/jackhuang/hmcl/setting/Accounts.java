@@ -238,16 +238,27 @@ public final class Accounts {
     private static Account parseAccount(Map<Object, Object> storage) {
         AccountFactory<?> factory = type2factory.get(storage.get("type"));
         if (factory == null) {
-            LOG.warning("Unrecognized account type: " + AccountCredentials.redact(storage));
+            LOG.warning("Unrecognized account type: " + accountIdentifier(storage));
             return null;
         }
 
         try {
             return factory.fromStorage(storage);
         } catch (Exception e) {
-            LOG.warning("Failed to load account: " + AccountCredentials.redact(storage), e);
+            LOG.warning("Failed to load account: " + accountIdentifier(storage), e);
             return null;
         }
+    }
+
+    /// Returns a safe account identifier string for diagnostics.
+    private static String accountIdentifier(Map<Object, Object> storage) {
+        JsonObject identifier = Account.identifier(storage);
+        if (identifier != null) {
+            return identifier.toString();
+        }
+
+        Object type = storage.get("type");
+        return type != null ? "{type=" + type + "}" : "<unknown>";
     }
 
     /// Called when it's ready to load accounts from [SettingsManager#settings()].
