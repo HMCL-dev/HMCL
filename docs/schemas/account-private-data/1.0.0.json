@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://schemas.glavo.site/hmcl/account-credentials/1.0.0",
-  "title": "HMCL Account Credentials",
+  "$id": "https://schemas.glavo.site/hmcl/account-private-data/1.0.0",
+  "title": "HMCL Account Private Data",
   "type": "object",
   "additionalProperties": true,
   "required": [
@@ -42,7 +42,7 @@
   "patternProperties": {
     "^\\$schema$": {
       "enum": [
-        "https://schemas.glavo.site/hmcl/account-credentials/1.0.0"
+        "https://schemas.glavo.site/hmcl/account-private-data/1.0.0"
       ]
     }
   },
@@ -60,17 +60,17 @@
       "type": "object",
       "additionalProperties": true,
       "required": [
-        "credentials"
+        "entries"
       ],
       "properties": {
-        "credentials": {
+        "entries": {
           "type": "array",
           "items": {
             "type": "object",
             "additionalProperties": true,
             "required": [
               "identifier",
-              "tokens"
+              "privateData"
             ],
             "properties": {
               "identifier": {
@@ -85,7 +85,7 @@
                   }
                 }
               },
-              "tokens": {
+              "privateData": {
                 "type": "object",
                 "additionalProperties": true
               }

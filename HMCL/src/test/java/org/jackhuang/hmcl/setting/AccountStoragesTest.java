@@ -113,16 +113,19 @@ public final class AccountStoragesTest {
         assertEquals(AccountStorages.CURRENT_SCHEMA, accountStorages.getSchema());
     }
 
-    /// Tests moving token fields from account metadata into the credential store.
+    /// Tests moving private fields from account metadata into the private data store.
     @Test
-    public void extractsTokenFieldsIntoCredentials() {
-        AccountCredentials credentials = new AccountCredentials();
-        List<Map<Object, Object>> metadataAccounts = credentials.replaceFromAccountStorages(List.of(Map.of(
+    public void extractsPrivateFieldsIntoPrivateData() {
+        AccountPrivateData privateData = new AccountPrivateData();
+        List<Map<Object, Object>> metadataAccounts = privateData.replaceFromAccountStorages(List.of(Map.of(
                 "type", "microsoft",
                 "uuid", "00000000-0000-0000-0000-000000000001",
                 "displayName", "Steve",
                 "accessToken", "access-token",
-                "refreshToken", "refresh-token"
+                "refreshToken", "refresh-token",
+                "tokenType", "Bearer",
+                "notAfter", 1234L,
+                "userid", "user-id"
         )));
         Map<Object, Object> metadata = metadataAccounts.get(0);
         JsonObject identifier = Objects.requireNonNull(Account.identifier(metadata));
@@ -132,35 +135,65 @@ public final class AccountStoragesTest {
         assertFalse(metadata.containsKey("id"));
         assertFalse(metadata.containsKey("accessToken"));
         assertFalse(metadata.containsKey("refreshToken"));
-        assertEquals("access-token", credentials.getCredentials().get(identifier).get("accessToken"));
-        assertEquals("refresh-token", credentials.getCredentials().get(identifier).get("refreshToken"));
+        assertFalse(metadata.containsKey("tokenType"));
+        assertFalse(metadata.containsKey("notAfter"));
+        assertFalse(metadata.containsKey("userid"));
+        assertEquals("access-token", privateData.getPrivateData().get(identifier).get("accessToken"));
+        assertEquals("refresh-token", privateData.getPrivateData().get(identifier).get("refreshToken"));
+        assertEquals("Bearer", privateData.getPrivateData().get(identifier).get("tokenType"));
+        assertEquals(1234L, privateData.getPrivateData().get(identifier).get("notAfter"));
+        assertEquals("user-id", privateData.getPrivateData().get(identifier).get("userid"));
     }
 
-    /// Tests moving Yggdrasil token fields from account metadata into the credential store.
+    /// Tests moving Yggdrasil private fields from account metadata into the private data store.
     @Test
-    public void extractsYggdrasilTokenFieldsIntoCredentials() {
-        AccountCredentials credentials = new AccountCredentials();
-        List<Map<Object, Object>> metadataAccounts = credentials.replaceFromAccountStorages(List.of(Map.of(
+    public void extractsYggdrasilPrivateFieldsIntoPrivateData() {
+        AccountPrivateData privateData = new AccountPrivateData();
+        List<Map<Object, Object>> metadataAccounts = privateData.replaceFromAccountStorages(List.of(Map.of(
                 "type", "yggdrasil",
                 "username", "Steve",
                 "uuid", "00000000-0000-0000-0000-000000000001",
                 "accessToken", "access-token",
-                "clientToken", "client-token"
+                "clientToken", "client-token",
+                "userProperties", Map.of("preferredLanguage", "en_US")
         )));
         Map<Object, Object> metadata = metadataAccounts.get(0);
         JsonObject identifier = Objects.requireNonNull(Account.identifier(metadata));
 
         assertFalse(metadata.containsKey("accessToken"));
         assertFalse(metadata.containsKey("clientToken"));
-        assertEquals("access-token", credentials.getCredentials().get(identifier).get("accessToken"));
-        assertEquals("client-token", credentials.getCredentials().get(identifier).get("clientToken"));
+        assertFalse(metadata.containsKey("userProperties"));
+        assertEquals("access-token", privateData.getPrivateData().get(identifier).get("accessToken"));
+        assertEquals("client-token", privateData.getPrivateData().get(identifier).get("clientToken"));
+        assertEquals(
+                Map.of("preferredLanguage", "en_US"),
+                privateData.getPrivateData().get(identifier).get("userProperties"));
     }
 
-    /// Tests restoring token fields from the credential store into account metadata.
+    /// Tests moving authlib-injector profile cache fields into the private data store.
     @Test
-    public void mergesCredentialsIntoAccountMetadata() {
-        AccountCredentials credentials = new AccountCredentials();
-        List<Map<Object, Object>> metadataAccounts = credentials.replaceFromAccountStorages(List.of(Map.of(
+    public void extractsAuthlibInjectorProfilePropertiesIntoPrivateData() {
+        AccountPrivateData privateData = new AccountPrivateData();
+        List<Map<Object, Object>> metadataAccounts = privateData.replaceFromAccountStorages(List.of(Map.of(
+                "type", "authlibInjector",
+                "serverBaseURL", "https://example.invalid/api/yggdrasil",
+                "username", "Steve",
+                "uuid", "00000000-0000-0000-0000-000000000001",
+                "profileProperties", Map.of("textures", "texture-data")
+        )));
+        Map<Object, Object> metadata = metadataAccounts.get(0);
+        JsonObject identifier = Objects.requireNonNull(Account.identifier(metadata));
+
+        assertFalse(metadata.containsKey("profileProperties"));
+        assertEquals(Map.of("textures", "texture-data"),
+                privateData.getPrivateData().get(identifier).get("profileProperties"));
+    }
+
+    /// Tests restoring private fields from the private data store into account metadata.
+    @Test
+    public void mergesPrivateDataIntoAccountMetadata() {
+        AccountPrivateData privateData = new AccountPrivateData();
+        List<Map<Object, Object>> metadataAccounts = privateData.replaceFromAccountStorages(List.of(Map.of(
                 "type", "microsoft",
                 "uuid", "00000000-0000-0000-0000-000000000001",
                 "displayName", "Steve",
@@ -169,26 +202,26 @@ public final class AccountStoragesTest {
         )));
         AccountStorages accountStorages = AccountStorages.fromAccounts(metadataAccounts);
 
-        AccountCredentials.mergeInto(accountStorages, List.of(credentials));
+        AccountPrivateData.mergeInto(accountStorages, List.of(privateData));
         Map<Object, Object> account = accountStorages.getAccounts().get(0);
 
         assertEquals("access-token", account.get("accessToken"));
         assertEquals("refresh-token", account.get("refreshToken"));
     }
 
-    /// Tests restoring token fields from the first matching credential store.
+    /// Tests restoring private fields from the first matching private data store.
     @Test
-    public void mergesCredentialsFromMultipleStoresInOrder() {
-        AccountCredentials preferredCredentials = new AccountCredentials();
-        preferredCredentials.replaceFromAccountStorages(List.of(Map.of(
+    public void mergesPrivateDataFromMultipleStoresInOrder() {
+        AccountPrivateData preferredPrivateData = new AccountPrivateData();
+        preferredPrivateData.replaceFromAccountStorages(List.of(Map.of(
                 "type", "microsoft",
                 "uuid", "00000000-0000-0000-0000-000000000001",
                 "displayName", "Steve",
                 "accessToken", "preferred-token"
         )));
 
-        AccountCredentials fallbackCredentials = new AccountCredentials();
-        List<Map<Object, Object>> metadataAccounts = fallbackCredentials.replaceFromAccountStorages(List.of(Map.of(
+        AccountPrivateData fallbackPrivateData = new AccountPrivateData();
+        List<Map<Object, Object>> metadataAccounts = fallbackPrivateData.replaceFromAccountStorages(List.of(Map.of(
                 "type", "microsoft",
                 "uuid", "00000000-0000-0000-0000-000000000001",
                 "displayName", "Steve",
@@ -196,25 +229,25 @@ public final class AccountStoragesTest {
         )));
 
         AccountStorages accountStorages = AccountStorages.fromAccounts(metadataAccounts);
-        AccountCredentials.mergeInto(accountStorages, List.of(new AccountCredentials(), fallbackCredentials));
+        AccountPrivateData.mergeInto(accountStorages, List.of(new AccountPrivateData(), fallbackPrivateData));
 
         Map<Object, Object> account = accountStorages.getAccounts().get(0);
         assertEquals("fallback-token", account.get("accessToken"));
 
         account.remove("accessToken");
-        AccountCredentials.mergeInto(accountStorages, List.of(preferredCredentials, fallbackCredentials));
+        AccountPrivateData.mergeInto(accountStorages, List.of(preferredPrivateData, fallbackPrivateData));
 
         assertEquals("preferred-token", account.get("accessToken"));
     }
 
-    /// Tests that account credentials serialize as one protected payload.
+    /// Tests that account private data serializes as one protected payload.
     @Test
-    public void serializesCredentialsAsProtectedPayload() {
-        @Nullable String previous = System.getProperty(AccountCredentials.PROTECTION_PROPERTY);
-        System.clearProperty(AccountCredentials.PROTECTION_PROPERTY);
+    public void serializesPrivateDataAsProtectedPayload() {
+        @Nullable String previous = System.getProperty(AccountPrivateData.PROTECTION_PROPERTY);
+        System.clearProperty(AccountPrivateData.PROTECTION_PROPERTY);
         try {
-            AccountCredentials credentials = new AccountCredentials();
-            credentials.replaceFromAccountStorages(List.of(Map.of(
+            AccountPrivateData privateData = new AccountPrivateData();
+            privateData.replaceFromAccountStorages(List.of(Map.of(
                     "type", "microsoft",
                     "uuid", "00000000-0000-0000-0000-000000000001",
                     "displayName", "Steve",
@@ -223,27 +256,27 @@ public final class AccountStoragesTest {
             )));
 
             JsonObject serialized = JsonParser.parseString(
-                    LauncherSettings.SETTINGS_GSON.toJson(credentials, AccountCredentials.class)).getAsJsonObject();
+                    LauncherSettings.SETTINGS_GSON.toJson(privateData, AccountPrivateData.class)).getAsJsonObject();
 
-            assertEquals(AccountCredentials.CURRENT_SCHEMA.url(),
+            assertEquals(AccountPrivateData.CURRENT_SCHEMA.url(),
                     serialized.get(JsonSchema.PROPERTY_SCHEMA).getAsString());
             assertEquals("hmcl-obfuscated-v1", serialized.get("protection").getAsString());
             assertTrue(serialized.has("payload"));
             assertFalse(serialized.toString().contains("access-token"));
             assertFalse(serialized.toString().contains("refresh-token"));
         } finally {
-            restoreSystemProperty(AccountCredentials.PROTECTION_PROPERTY, previous);
+            restoreSystemProperty(AccountPrivateData.PROTECTION_PROPERTY, previous);
         }
     }
 
-    /// Tests that account credentials can serialize as plain JSON payloads for development.
+    /// Tests that account private data can serialize as plain JSON payloads for development.
     @Test
-    public void serializesCredentialsAsPlainPayloadWhenEnabled() {
-        @Nullable String previous = System.getProperty(AccountCredentials.PROTECTION_PROPERTY);
-        System.setProperty(AccountCredentials.PROTECTION_PROPERTY, "plain");
+    public void serializesPrivateDataAsPlainPayloadWhenEnabled() {
+        @Nullable String previous = System.getProperty(AccountPrivateData.PROTECTION_PROPERTY);
+        System.setProperty(AccountPrivateData.PROTECTION_PROPERTY, "plain");
         try {
-            AccountCredentials credentials = new AccountCredentials();
-            List<Map<Object, Object>> metadataAccounts = credentials.replaceFromAccountStorages(List.of(Map.of(
+            AccountPrivateData privateData = new AccountPrivateData();
+            List<Map<Object, Object>> metadataAccounts = privateData.replaceFromAccountStorages(List.of(Map.of(
                     "type", "microsoft",
                     "uuid", "00000000-0000-0000-0000-000000000001",
                     "displayName", "Steve",
@@ -253,37 +286,37 @@ public final class AccountStoragesTest {
             JsonObject identifier = Objects.requireNonNull(Account.identifier(metadataAccounts.get(0)));
 
             JsonObject serialized = JsonParser.parseString(
-                    LauncherSettings.SETTINGS_GSON.toJson(credentials, AccountCredentials.class)).getAsJsonObject();
+                    LauncherSettings.SETTINGS_GSON.toJson(privateData, AccountPrivateData.class)).getAsJsonObject();
             JsonObject payload = serialized.getAsJsonObject("payload");
-            JsonObject item = payload.getAsJsonArray("credentials").get(0).getAsJsonObject();
-            JsonObject tokens = item.getAsJsonObject("tokens");
+            JsonObject item = payload.getAsJsonArray("entries").get(0).getAsJsonObject();
+            JsonObject entryPrivateData = item.getAsJsonObject("privateData");
             JsonObject serializedIdentifier = item.getAsJsonObject("identifier");
 
-            assertEquals(AccountCredentials.CURRENT_SCHEMA.url(),
+            assertEquals(AccountPrivateData.CURRENT_SCHEMA.url(),
                     serialized.get(JsonSchema.PROPERTY_SCHEMA).getAsString());
             assertEquals("plain", serialized.get("protection").getAsString());
             assertEquals(identifier, serializedIdentifier);
-            assertEquals("access-token", tokens.get("accessToken").getAsString());
-            assertEquals("refresh-token", tokens.get("refreshToken").getAsString());
+            assertEquals("access-token", entryPrivateData.get("accessToken").getAsString());
+            assertEquals("refresh-token", entryPrivateData.get("refreshToken").getAsString());
 
-            AccountCredentials deserialized = Objects.requireNonNull(
-                    LauncherSettings.SETTINGS_GSON.fromJson(serialized, AccountCredentials.class));
+            AccountPrivateData deserialized = Objects.requireNonNull(
+                    LauncherSettings.SETTINGS_GSON.fromJson(serialized, AccountPrivateData.class));
 
-            assertEquals("access-token", deserialized.getCredentials().get(identifier).get("accessToken"));
-            assertEquals("refresh-token", deserialized.getCredentials().get(identifier).get("refreshToken"));
+            assertEquals("access-token", deserialized.getPrivateData().get(identifier).get("accessToken"));
+            assertEquals("refresh-token", deserialized.getPrivateData().get(identifier).get("refreshToken"));
         } finally {
-            restoreSystemProperty(AccountCredentials.PROTECTION_PROPERTY, previous);
+            restoreSystemProperty(AccountPrivateData.PROTECTION_PROPERTY, previous);
         }
     }
 
-    /// Tests reading account credentials from one protected payload.
+    /// Tests reading account private data from one protected payload.
     @Test
-    public void deserializesCredentialsFromProtectedPayload() {
-        @Nullable String previous = System.getProperty(AccountCredentials.PROTECTION_PROPERTY);
-        System.clearProperty(AccountCredentials.PROTECTION_PROPERTY);
+    public void deserializesPrivateDataFromProtectedPayload() {
+        @Nullable String previous = System.getProperty(AccountPrivateData.PROTECTION_PROPERTY);
+        System.clearProperty(AccountPrivateData.PROTECTION_PROPERTY);
         try {
-            AccountCredentials credentials = new AccountCredentials();
-            List<Map<Object, Object>> metadataAccounts = credentials.replaceFromAccountStorages(List.of(Map.of(
+            AccountPrivateData privateData = new AccountPrivateData();
+            List<Map<Object, Object>> metadataAccounts = privateData.replaceFromAccountStorages(List.of(Map.of(
                     "type", "microsoft",
                     "uuid", "00000000-0000-0000-0000-000000000001",
                     "displayName", "Steve",
@@ -292,15 +325,15 @@ public final class AccountStoragesTest {
             )));
             JsonObject identifier = Objects.requireNonNull(Account.identifier(metadataAccounts.get(0)));
             JsonObject serialized = JsonParser.parseString(
-                    LauncherSettings.SETTINGS_GSON.toJson(credentials, AccountCredentials.class)).getAsJsonObject();
+                    LauncherSettings.SETTINGS_GSON.toJson(privateData, AccountPrivateData.class)).getAsJsonObject();
 
-            AccountCredentials deserialized = Objects.requireNonNull(
-                    LauncherSettings.SETTINGS_GSON.fromJson(serialized, AccountCredentials.class));
+            AccountPrivateData deserialized = Objects.requireNonNull(
+                    LauncherSettings.SETTINGS_GSON.fromJson(serialized, AccountPrivateData.class));
 
-            assertEquals("access-token", deserialized.getCredentials().get(identifier).get("accessToken"));
-            assertEquals("refresh-token", deserialized.getCredentials().get(identifier).get("refreshToken"));
+            assertEquals("access-token", deserialized.getPrivateData().get(identifier).get("accessToken"));
+            assertEquals("refresh-token", deserialized.getPrivateData().get(identifier).get("refreshToken"));
         } finally {
-            restoreSystemProperty(AccountCredentials.PROTECTION_PROPERTY, previous);
+            restoreSystemProperty(AccountPrivateData.PROTECTION_PROPERTY, previous);
         }
     }
 }

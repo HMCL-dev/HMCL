@@ -61,8 +61,8 @@ public final class SettingsManager {
     /// The local directory storing per-workspace cache files.
     private static final Path LOCAL_CACHE_DIRECTORY = Metadata.HMCL_LOCAL_HOME.resolve("cache");
 
-    /// The local directory storing per-workspace credential files.
-    private static final Path LOCAL_CREDENTIALS_DIRECTORY = Metadata.HMCL_LOCAL_HOME.resolve("credentials");
+    /// The local directory storing per-workspace private data files.
+    private static final Path LOCAL_PRIVATE_DIRECTORY = Metadata.HMCL_LOCAL_HOME.resolve("private");
 
     /// The user directory storing shared configuration files.
     private static final Path USER_CONFIG_FILES_DIRECTORY = Metadata.HMCL_USER_HOME.resolve("config");
@@ -70,8 +70,8 @@ public final class SettingsManager {
     /// The user directory storing shared state files.
     private static final Path USER_STATE_DIRECTORY = Metadata.HMCL_USER_HOME.resolve("state");
 
-    /// The user directory storing shared credential files.
-    private static final Path USER_CREDENTIALS_DIRECTORY = Metadata.HMCL_USER_HOME.resolve("credentials");
+    /// The user directory storing shared private data files.
+    private static final Path USER_PRIVATE_DIRECTORY = Metadata.HMCL_USER_HOME.resolve("private");
 
     /// The legacy settings path used as a migration input.
     private static final Path LEGACY_SETTINGS_LOCATION = Metadata.HMCL_LOCAL_HOME.resolve("settings.json");
@@ -120,13 +120,13 @@ public final class SettingsManager {
     private static final Path USER_GAME_ACCOUNTS_LOCATION =
             USER_CONFIG_FILES_DIRECTORY.resolve("user-accounts.json");
 
-    /// The current per-workspace account credential path.
-    private static final Path GAME_ACCOUNT_CREDENTIALS_LOCATION =
-            LOCAL_CREDENTIALS_DIRECTORY.resolve("account-credentials.json");
+    /// The current per-workspace account private data path.
+    private static final Path GAME_ACCOUNT_PRIVATE_DATA_LOCATION =
+            LOCAL_PRIVATE_DIRECTORY.resolve("account-private-data.json");
 
-    /// The shared account credential path.
-    private static final Path USER_GAME_ACCOUNT_CREDENTIALS_LOCATION =
-            USER_CREDENTIALS_DIRECTORY.resolve("user-account-credentials.json");
+    /// The shared account private data path.
+    private static final Path USER_GAME_ACCOUNT_PRIVATE_DATA_LOCATION =
+            USER_PRIVATE_DIRECTORY.resolve("user-account-private-data.json");
 
     /// The per-workspace game directory file helper.
     private static final JsonSettingFile<GameDirectories> LOCAL_GAME_DIRECTORIES_FILE = new JsonSettingFile<>(
@@ -168,21 +168,21 @@ public final class SettingsManager {
             AccountStorages.CURRENT_SCHEMA,
             AccountStorages::new);
 
-    /// The detached account credential file helper.
-    private static final JsonSettingFile<AccountCredentials> GAME_ACCOUNT_CREDENTIALS_FILE = new JsonSettingFile<>(
-            GAME_ACCOUNT_CREDENTIALS_LOCATION,
-            "game account credentials",
-            AccountCredentials.class,
-            AccountCredentials.CURRENT_SCHEMA,
-            AccountCredentials::new);
+    /// The detached account private data file helper.
+    private static final JsonSettingFile<AccountPrivateData> GAME_ACCOUNT_PRIVATE_DATA_FILE = new JsonSettingFile<>(
+            GAME_ACCOUNT_PRIVATE_DATA_LOCATION,
+            "game account private data",
+            AccountPrivateData.class,
+            AccountPrivateData.CURRENT_SCHEMA,
+            AccountPrivateData::new);
 
-    /// The shared account credential file helper.
-    private static final JsonSettingFile<AccountCredentials> USER_GAME_ACCOUNT_CREDENTIALS_FILE = new JsonSettingFile<>(
-            USER_GAME_ACCOUNT_CREDENTIALS_LOCATION,
-            "user game account credentials",
-            AccountCredentials.class,
-            AccountCredentials.CURRENT_SCHEMA,
-            AccountCredentials::new);
+    /// The shared account private data file helper.
+    private static final JsonSettingFile<AccountPrivateData> USER_GAME_ACCOUNT_PRIVATE_DATA_FILE = new JsonSettingFile<>(
+            USER_GAME_ACCOUNT_PRIVATE_DATA_LOCATION,
+            "user game account private data",
+            AccountPrivateData.class,
+            AccountPrivateData.CURRENT_SCHEMA,
+            AccountPrivateData::new);
 
     /// The detached launcher state file helper.
     private static final JsonSettingFile<LauncherState> STATE_FILE = new JsonSettingFile<>(
@@ -262,11 +262,11 @@ public final class SettingsManager {
     /// The loaded shared account metadata store.
     private static @UnknownNullability AccountStorages userGameAccounts;
 
-    /// The loaded detached account credential store.
-    private static @UnknownNullability AccountCredentials gameAccountCredentials;
+    /// The loaded detached account private data store.
+    private static @UnknownNullability AccountPrivateData gameAccountPrivateData;
 
-    /// The loaded shared account credential store.
-    private static @UnknownNullability AccountCredentials userGameAccountCredentials;
+    /// The loaded shared account private data store.
+    private static @UnknownNullability AccountPrivateData userGameAccountPrivateData;
 
     /// Whether this run appears to be using a new workspace.
     private static boolean newlyCreated;
@@ -298,11 +298,11 @@ public final class SettingsManager {
     /// Access status for user `config/user-accounts.json`.
     private static SettingFileAccess userGameAccountsAccess = SettingFileAccess.READ_WRITE;
 
-    /// Access status for local `credentials/account-credentials.json`.
-    private static SettingFileAccess gameAccountCredentialsAccess = SettingFileAccess.READ_WRITE;
+    /// Access status for local `private/account-private-data.json`.
+    private static SettingFileAccess gameAccountPrivateDataAccess = SettingFileAccess.READ_WRITE;
 
-    /// Access status for user `credentials/user-account-credentials.json`.
-    private static SettingFileAccess userGameAccountCredentialsAccess = SettingFileAccess.READ_WRITE;
+    /// Access status for user `private/user-account-private-data.json`.
+    private static SettingFileAccess userGameAccountPrivateDataAccess = SettingFileAccess.READ_WRITE;
 
     /// Access status for `config/user-settings.json`.
     private static SettingFileAccess userSettingsAccess = SettingFileAccess.READ_WRITE;
@@ -427,20 +427,20 @@ public final class SettingsManager {
         return userGameAccounts;
     }
 
-    /// Returns the loaded detached account credential store.
-    private static AccountCredentials gameAccountCredentials() {
-        if (gameAccountCredentials == null) {
-            throw new IllegalStateException("Game account credentials haven't been loaded");
+    /// Returns the loaded detached account private data store.
+    private static AccountPrivateData gameAccountPrivateData() {
+        if (gameAccountPrivateData == null) {
+            throw new IllegalStateException("Game account private data hasn't been loaded");
         }
-        return gameAccountCredentials;
+        return gameAccountPrivateData;
     }
 
-    /// Returns the loaded shared account credential store.
-    private static AccountCredentials userGameAccountCredentials() {
-        if (userGameAccountCredentials == null) {
-            throw new IllegalStateException("User game account credentials haven't been loaded");
+    /// Returns the loaded shared account private data store.
+    private static AccountPrivateData userGameAccountPrivateData() {
+        if (userGameAccountPrivateData == null) {
+            throw new IllegalStateException("User game account private data hasn't been loaded");
         }
-        return userGameAccountCredentials;
+        return userGameAccountPrivateData;
     }
 
     /// Returns the per-workspace authlib-injector servers.
@@ -448,66 +448,66 @@ public final class SettingsManager {
         return authlibInjectorServers().getServers();
     }
 
-    /// Returns the per-workspace account metadata storages merged with credentials in memory.
+    /// Returns the per-workspace account metadata storages merged with private data in memory.
     public static ObservableList<Map<Object, Object>> getAccountStorages() {
         return gameAccounts().getAccounts();
     }
 
-    /// Returns the shared account metadata storages merged with credentials in memory.
+    /// Returns the shared account metadata storages merged with private data in memory.
     public static ObservableList<Map<Object, Object>> getUserAccountStorages() {
         return userGameAccounts().getAccounts();
     }
 
-    /// Creates a metadata/credential snapshot from a full in-memory account store.
+    /// Creates a metadata/private data snapshot from a full in-memory account store.
     ///
     /// @param accounts the full in-memory account store
     /// @return the split account store snapshot
     private static AccountStoreSnapshot createAccountStoreSnapshot(AccountStorages accounts) {
-        AccountCredentials.ExtractedCredentials extracted =
-                AccountCredentials.extractFromAccountStorages(accounts.getAccounts());
-        AccountCredentials credentials = new AccountCredentials();
-        extracted.credentials().forEach(credentials::putCredentials);
+        AccountPrivateData.ExtractedPrivateData extracted =
+                AccountPrivateData.extractFromAccountStorages(accounts.getAccounts());
+        AccountPrivateData privateData = new AccountPrivateData();
+        extracted.privateData().forEach(privateData::putPrivateData);
         AccountStorages metadata = accounts.copyWithAccounts(extracted.metadataAccounts());
-        return new AccountStoreSnapshot(metadata, credentials);
+        return new AccountStoreSnapshot(metadata, privateData);
     }
 
-    /// Saves the per-workspace account metadata and credentials.
+    /// Saves the per-workspace account metadata and private data.
     private static void saveGameAccounts() {
         saveAccountStore(
                 gameAccounts(),
                 GAME_ACCOUNTS_FILE,
-                new AccountCredentialStore(gameAccountCredentials(), GAME_ACCOUNT_CREDENTIALS_FILE),
+                new AccountPrivateDataStore(gameAccountPrivateData(), GAME_ACCOUNT_PRIVATE_DATA_FILE),
                 List.of(
-                        new AccountCredentialStore(gameAccountCredentials(), GAME_ACCOUNT_CREDENTIALS_FILE),
-                        new AccountCredentialStore(userGameAccountCredentials(), USER_GAME_ACCOUNT_CREDENTIALS_FILE)));
+                        new AccountPrivateDataStore(gameAccountPrivateData(), GAME_ACCOUNT_PRIVATE_DATA_FILE),
+                        new AccountPrivateDataStore(userGameAccountPrivateData(), USER_GAME_ACCOUNT_PRIVATE_DATA_FILE)));
     }
 
-    /// Saves the shared account metadata and credentials.
+    /// Saves the shared account metadata and private data.
     private static void saveUserGameAccounts() {
         saveAccountStore(
                 userGameAccounts(),
                 USER_GAME_ACCOUNTS_FILE,
-                new AccountCredentialStore(userGameAccountCredentials(), USER_GAME_ACCOUNT_CREDENTIALS_FILE),
+                new AccountPrivateDataStore(userGameAccountPrivateData(), USER_GAME_ACCOUNT_PRIVATE_DATA_FILE),
                 List.of(
-                        new AccountCredentialStore(userGameAccountCredentials(), USER_GAME_ACCOUNT_CREDENTIALS_FILE),
-                        new AccountCredentialStore(gameAccountCredentials(), GAME_ACCOUNT_CREDENTIALS_FILE)));
+                        new AccountPrivateDataStore(userGameAccountPrivateData(), USER_GAME_ACCOUNT_PRIVATE_DATA_FILE),
+                        new AccountPrivateDataStore(gameAccountPrivateData(), GAME_ACCOUNT_PRIVATE_DATA_FILE)));
     }
 
-    /// Saves account metadata and credentials.
+    /// Saves account metadata and private data.
     ///
     /// @param accounts the full in-memory account store
     /// @param accountsFile the account metadata file helper
-    /// @param defaultCredentials the default credential store used for new account credentials
-    /// @param credentialStores credential stores searched and updated for existing account credentials
+    /// @param defaultPrivateData the default private data store used for new account private data
+    /// @param privateDataStores private data stores searched and updated for existing account private data
     private static void saveAccountStore(
             AccountStorages accounts,
             JsonSettingFile<AccountStorages> accountsFile,
-            AccountCredentialStore defaultCredentials,
-            List<AccountCredentialStore> credentialStores) {
-        AccountCredentials.ExtractedCredentials extracted =
-                AccountCredentials.extractFromAccountStorages(accounts.getAccounts());
-        List<AccountCredentialStore> changedCredentialStores =
-                distributeAccountCredentials(extracted, defaultCredentials, credentialStores);
+            AccountPrivateDataStore defaultPrivateData,
+            List<AccountPrivateDataStore> privateDataStores) {
+        AccountPrivateData.ExtractedPrivateData extracted =
+                AccountPrivateData.extractFromAccountStorages(accounts.getAccounts());
+        List<AccountPrivateDataStore> changedPrivateDataStores =
+                distributeAccountPrivateData(extracted, defaultPrivateData, privateDataStores);
 
         boolean backupOnNextSave = accounts.isBackupOnNextSave();
         accounts.setBackupOnNextSave(false);
@@ -518,32 +518,32 @@ public final class SettingsManager {
             accountsFile.save(metadata);
         }
 
-        for (AccountCredentialStore credentialStore : changedCredentialStores) {
-            if (credentialStore.credentials().isSavable()) {
-                credentialStore.credentials().setBackupOnNextSave(
-                        backupOnNextSave || credentialStore.credentials().isBackupOnNextSave());
-                credentialStore.file().save(credentialStore.credentials());
+        for (AccountPrivateDataStore privateDataStore : changedPrivateDataStores) {
+            if (privateDataStore.privateData().isSavable()) {
+                privateDataStore.privateData().setBackupOnNextSave(
+                        backupOnNextSave || privateDataStore.privateData().isBackupOnNextSave());
+                privateDataStore.file().save(privateDataStore.privateData());
             }
         }
     }
 
-    /// Saves account metadata and credentials synchronously.
+    /// Saves account metadata and private data synchronously.
     ///
     /// @param accounts the full in-memory account store
     /// @param accountsFile the account metadata file helper
-    /// @param defaultCredentials the default credential store used for new account credentials
-    /// @param credentialStores credential stores searched and updated for existing account credentials
+    /// @param defaultPrivateData the default private data store used for new account private data
+    /// @param privateDataStores private data stores searched and updated for existing account private data
     /// @throws IOException if saving either file fails
     private static void saveAccountStoreSync(
             AccountStorages accounts,
             JsonSettingFile<AccountStorages> accountsFile,
-            AccountCredentialStore defaultCredentials,
-            List<AccountCredentialStore> credentialStores) throws IOException {
-        AccountCredentials.ExtractedCredentials extracted =
-                AccountCredentials.extractFromAccountStorages(accounts.getAccounts());
-        List<AccountCredentialStore> changedCredentialStores =
-                distributeAccountCredentials(extracted, defaultCredentials, credentialStores);
-        addIfAbsent(changedCredentialStores, defaultCredentials);
+            AccountPrivateDataStore defaultPrivateData,
+            List<AccountPrivateDataStore> privateDataStores) throws IOException {
+        AccountPrivateData.ExtractedPrivateData extracted =
+                AccountPrivateData.extractFromAccountStorages(accounts.getAccounts());
+        List<AccountPrivateDataStore> changedPrivateDataStores =
+                distributeAccountPrivateData(extracted, defaultPrivateData, privateDataStores);
+        addIfAbsent(changedPrivateDataStores, defaultPrivateData);
 
         boolean backupOnNextSave = accounts.isBackupOnNextSave();
         accounts.setBackupOnNextSave(false);
@@ -554,98 +554,98 @@ public final class SettingsManager {
             accountsFile.saveSync(metadata);
         }
 
-        for (AccountCredentialStore credentialStore : changedCredentialStores) {
-            if (credentialStore.credentials().isSavable()) {
-                credentialStore.credentials().setBackupOnNextSave(
-                        backupOnNextSave || credentialStore.credentials().isBackupOnNextSave());
-                credentialStore.file().saveSync(credentialStore.credentials());
+        for (AccountPrivateDataStore privateDataStore : changedPrivateDataStores) {
+            if (privateDataStore.privateData().isSavable()) {
+                privateDataStore.privateData().setBackupOnNextSave(
+                        backupOnNextSave || privateDataStore.privateData().isBackupOnNextSave());
+                privateDataStore.file().saveSync(privateDataStore.privateData());
             }
         }
     }
 
-    /// Distributes extracted token credentials back into their existing credential stores.
+    /// Distributes extracted private data back into its existing private data stores.
     ///
-    /// @param extracted the extracted account metadata and credentials
-    /// @param defaultCredentials the default credential store used when no existing store has the account token
-    /// @param credentialStores credential stores searched and updated in order
-    /// @return credential stores whose content or backup state should be saved
-    private static List<AccountCredentialStore> distributeAccountCredentials(
-            AccountCredentials.ExtractedCredentials extracted,
-            AccountCredentialStore defaultCredentials,
-            List<AccountCredentialStore> credentialStores) {
-        List<AccountCredentialStore> changedCredentialStores = new ArrayList<>();
+    /// @param extracted the extracted account metadata and private data
+    /// @param defaultPrivateData the default private data store used when no existing store has the account private data
+    /// @param privateDataStores private data stores searched and updated in order
+    /// @return private data stores whose content or backup state should be saved
+    private static List<AccountPrivateDataStore> distributeAccountPrivateData(
+            AccountPrivateData.ExtractedPrivateData extracted,
+            AccountPrivateDataStore defaultPrivateData,
+            List<AccountPrivateDataStore> privateDataStores) {
+        List<AccountPrivateDataStore> changedPrivateDataStores = new ArrayList<>();
         for (JsonObject identifier : extracted.identifiers()) {
-            AccountCredentialStore targetCredentials =
-                    findAccountCredentialStore(identifier, defaultCredentials, credentialStores);
+            AccountPrivateDataStore targetPrivateData =
+                    findAccountPrivateDataStore(identifier, defaultPrivateData, privateDataStores);
 
-            for (AccountCredentialStore credentialStore : credentialStores) {
-                if (credentialStore.credentials().isSavable()
-                        && credentialStore.credentials().removeCredentials(identifier)) {
-                    addIfAbsent(changedCredentialStores, credentialStore);
+            for (AccountPrivateDataStore privateDataStore : privateDataStores) {
+                if (privateDataStore.privateData().isSavable()
+                        && privateDataStore.privateData().removePrivateData(identifier)) {
+                    addIfAbsent(changedPrivateDataStores, privateDataStore);
                 }
             }
 
-            @Nullable Map<Object, Object> accountCredentials = extracted.credentials().get(identifier);
-            if (accountCredentials != null && targetCredentials.credentials().isSavable()) {
-                targetCredentials.credentials().putCredentials(identifier, accountCredentials);
-                addIfAbsent(changedCredentialStores, targetCredentials);
+            @Nullable Map<Object, Object> accountPrivateData = extracted.privateData().get(identifier);
+            if (accountPrivateData != null && targetPrivateData.privateData().isSavable()) {
+                targetPrivateData.privateData().putPrivateData(identifier, accountPrivateData);
+                addIfAbsent(changedPrivateDataStores, targetPrivateData);
             }
         }
 
-        for (AccountCredentialStore credentialStore : credentialStores) {
-            if (credentialStore.credentials().isBackupOnNextSave()) {
-                addIfAbsent(changedCredentialStores, credentialStore);
+        for (AccountPrivateDataStore privateDataStore : privateDataStores) {
+            if (privateDataStore.privateData().isBackupOnNextSave()) {
+                addIfAbsent(changedPrivateDataStores, privateDataStore);
             }
         }
-        return changedCredentialStores;
+        return changedPrivateDataStores;
     }
 
-    /// Finds the credential store that should receive updated token credentials.
+    /// Finds the private data store that should receive updated private data.
     ///
     /// @param identifier the stable account identifier
-    /// @param defaultCredentials the default credential store used when no existing writable store has the account token
-    /// @param credentialStores credential stores searched in order
-    /// @return the credential store that should receive updated token credentials
-    private static AccountCredentialStore findAccountCredentialStore(
+    /// @param defaultPrivateData the default private data store used when no existing writable store has the account private data
+    /// @param privateDataStores private data stores searched in order
+    /// @return the private data store that should receive updated private data
+    private static AccountPrivateDataStore findAccountPrivateDataStore(
             JsonObject identifier,
-            AccountCredentialStore defaultCredentials,
-            List<AccountCredentialStore> credentialStores) {
-        for (AccountCredentialStore credentialStore : credentialStores) {
-            if (credentialStore.credentials().isSavable()
-                    && credentialStore.credentials().containsCredentials(identifier)) {
-                return credentialStore;
+            AccountPrivateDataStore defaultPrivateData,
+            List<AccountPrivateDataStore> privateDataStores) {
+        for (AccountPrivateDataStore privateDataStore : privateDataStores) {
+            if (privateDataStore.privateData().isSavable()
+                    && privateDataStore.privateData().containsPrivateData(identifier)) {
+                return privateDataStore;
             }
         }
 
-        return defaultCredentials;
+        return defaultPrivateData;
     }
 
-    /// Adds a credential store to a list unless it is already present.
+    /// Adds a private data store to a list unless it is already present.
     ///
-    /// @param credentialStores the target list
-    /// @param credentialStore the credential store to add
+    /// @param privateDataStores the target list
+    /// @param privateDataStore the private data store to add
     private static void addIfAbsent(
-            List<AccountCredentialStore> credentialStores,
-            AccountCredentialStore credentialStore) {
-        if (!credentialStores.contains(credentialStore)) {
-            credentialStores.add(credentialStore);
+            List<AccountPrivateDataStore> privateDataStores,
+            AccountPrivateDataStore privateDataStore) {
+        if (!privateDataStores.contains(privateDataStore)) {
+            privateDataStores.add(privateDataStore);
         }
     }
 
-    /// Split account metadata and credentials ready to be saved.
+    /// Split account metadata and private data ready to be saved.
     ///
     /// @param metadata the metadata-only account store
-    /// @param credentials the account credential store
-    private record AccountStoreSnapshot(AccountStorages metadata, AccountCredentials credentials) {
+    /// @param privateData the account private data store
+    private record AccountStoreSnapshot(AccountStorages metadata, AccountPrivateData privateData) {
     }
 
-    /// Account credential store and its backing JSON file.
+    /// Account private data store and its backing JSON file.
     ///
-    /// @param credentials the loaded account credential store
-    /// @param file the JSON setting file helper backing the credential store
-    private record AccountCredentialStore(
-            AccountCredentials credentials,
-            JsonSettingFile<AccountCredentials> file) {
+    /// @param privateData the loaded account private data store
+    /// @param file the JSON setting file helper backing the private data store
+    private record AccountPrivateDataStore(
+            AccountPrivateData privateData,
+            JsonSettingFile<AccountPrivateData> file) {
     }
 
     /// Returns the loaded per-workspace game directory store.
@@ -726,12 +726,12 @@ public final class SettingsManager {
 
     /// Returns whether the local account store cannot be safely overwritten.
     public static boolean isGameAccountsReadOnly() {
-        return gameAccountsAccess.blocksEditing() || gameAccountCredentialsAccess.blocksEditing();
+        return gameAccountsAccess.blocksEditing() || gameAccountPrivateDataAccess.blocksEditing();
     }
 
     /// Returns whether the user account store cannot be safely overwritten.
     public static boolean isUserGameAccountsReadOnly() {
-        return userGameAccountsAccess.blocksEditing() || userGameAccountCredentialsAccess.blocksEditing();
+        return userGameAccountsAccess.blocksEditing() || userGameAccountPrivateDataAccess.blocksEditing();
     }
 
     /// Returns whether the authlib-injector server list cannot be safely overwritten.
@@ -774,40 +774,40 @@ public final class SettingsManager {
         userGameDirectoriesAccess = SettingFileAccess.READ_WRITE;
     }
 
-    /// Backs up and overwrites local account metadata and credentials with the currently loaded accounts.
+    /// Backs up and overwrites local account metadata and private data with the currently loaded accounts.
     public static void forceOverwriteGameAccounts() {
         boolean installAutoSave = !gameAccounts().isSavable();
         AccountStoreSnapshot snapshot = createAccountStoreSnapshot(gameAccounts());
         GAME_ACCOUNTS_FILE.backupAndOverwrite(snapshot.metadata());
-        GAME_ACCOUNT_CREDENTIALS_FILE.backupAndOverwrite(snapshot.credentials());
+        GAME_ACCOUNT_PRIVATE_DATA_FILE.backupAndOverwrite(snapshot.privateData());
         gameAccounts().setSavable(true);
         gameAccounts().setBackupOnNextSave(false);
-        gameAccountCredentials().replaceWith(snapshot.credentials());
-        gameAccountCredentials().setSavable(true);
-        gameAccountCredentials().setBackupOnNextSave(false);
+        gameAccountPrivateData().replaceWith(snapshot.privateData());
+        gameAccountPrivateData().setSavable(true);
+        gameAccountPrivateData().setBackupOnNextSave(false);
         if (installAutoSave) {
             gameAccounts().addListener(source -> saveGameAccounts());
         }
         gameAccountsAccess = SettingFileAccess.READ_WRITE;
-        gameAccountCredentialsAccess = SettingFileAccess.READ_WRITE;
+        gameAccountPrivateDataAccess = SettingFileAccess.READ_WRITE;
     }
 
-    /// Backs up and overwrites user account metadata and credentials with the currently loaded accounts.
+    /// Backs up and overwrites user account metadata and private data with the currently loaded accounts.
     public static void forceOverwriteUserGameAccounts() {
         boolean installAutoSave = !userGameAccounts().isSavable();
         AccountStoreSnapshot snapshot = createAccountStoreSnapshot(userGameAccounts());
         USER_GAME_ACCOUNTS_FILE.backupAndOverwrite(snapshot.metadata());
-        USER_GAME_ACCOUNT_CREDENTIALS_FILE.backupAndOverwrite(snapshot.credentials());
+        USER_GAME_ACCOUNT_PRIVATE_DATA_FILE.backupAndOverwrite(snapshot.privateData());
         userGameAccounts().setSavable(true);
         userGameAccounts().setBackupOnNextSave(false);
-        userGameAccountCredentials().replaceWith(snapshot.credentials());
-        userGameAccountCredentials().setSavable(true);
-        userGameAccountCredentials().setBackupOnNextSave(false);
+        userGameAccountPrivateData().replaceWith(snapshot.privateData());
+        userGameAccountPrivateData().setSavable(true);
+        userGameAccountPrivateData().setBackupOnNextSave(false);
         if (installAutoSave) {
             userGameAccounts().addListener(source -> saveUserGameAccounts());
         }
         userGameAccountsAccess = SettingFileAccess.READ_WRITE;
-        userGameAccountCredentialsAccess = SettingFileAccess.READ_WRITE;
+        userGameAccountPrivateDataAccess = SettingFileAccess.READ_WRITE;
     }
 
     /// Backs up and overwrites `config/authlib-injector-servers.json` with the current server list.
@@ -858,8 +858,8 @@ public final class SettingsManager {
         authlibInjectorServersAccess =
                 loadAuthlibInjectorServers(migratedDetachedSettings.authlibInjectorServers());
         loadAuthlibInjectorServerMetadataCache();
-        userGameAccountCredentialsAccess = loadUserGameAccountCredentials();
-        gameAccountCredentialsAccess = loadGameAccountCredentials();
+        userGameAccountPrivateDataAccess = loadUserGameAccountPrivateData();
+        gameAccountPrivateDataAccess = loadGameAccountPrivateData();
         userGameAccountsAccess = loadUserGameAccounts();
         gameAccountsAccess = loadGameAccounts(migratedDetachedSettings.accountStorages());
 
@@ -997,7 +997,7 @@ public final class SettingsManager {
                 || Files.exists(LOCAL_GAME_DIRECTORIES_LOCATION)
                 || Files.exists(GAME_SETTINGS_LOCATION)
                 || Files.exists(GAME_ACCOUNTS_LOCATION)
-                || Files.exists(GAME_ACCOUNT_CREDENTIALS_LOCATION)
+                || Files.exists(GAME_ACCOUNT_PRIVATE_DATA_LOCATION)
                 || Files.exists(LEGACY_SETTINGS_LOCATION)
                 || LegacyConfigMigrator.hasLegacyConfig());
     }
@@ -1200,49 +1200,49 @@ public final class SettingsManager {
         authlibInjectorServerMetadataCache().remove(server);
     }
 
-    /// Loads shared account credentials.
+    /// Loads shared account private data.
     ///
-    /// @return the shared account credential file access status
-    private static SettingFileAccess loadUserGameAccountCredentials() {
-        if (userGameAccountCredentials != null) {
-            throw new IllegalStateException("User game account credentials are already loaded");
+    /// @return the shared account private data file access status
+    private static SettingFileAccess loadUserGameAccountPrivateData() {
+        if (userGameAccountPrivateData != null) {
+            throw new IllegalStateException("User game account private data is already loaded");
         }
 
         try {
-            JsonSettingFile.LoadResult<AccountCredentials> result =
-                    USER_GAME_ACCOUNT_CREDENTIALS_FILE.load(null);
-            userGameAccountCredentials = result.value();
+            JsonSettingFile.LoadResult<AccountPrivateData> result =
+                    USER_GAME_ACCOUNT_PRIVATE_DATA_FILE.load(null);
+            userGameAccountPrivateData = result.value();
             return result.access();
         } catch (IOException e) {
-            LOG.warning("Failed to load user game account credentials", e);
-            userGameAccountCredentials = new AccountCredentials();
-            userGameAccountCredentials.setSavable(false);
+            LOG.warning("Failed to load user game account private data", e);
+            userGameAccountPrivateData = new AccountPrivateData();
+            userGameAccountPrivateData.setSavable(false);
             return SettingFileAccess.UNREADABLE;
         }
     }
 
-    /// Loads per-workspace account credentials.
+    /// Loads per-workspace account private data.
     ///
-    /// @return the per-workspace account credential file access status
-    private static SettingFileAccess loadGameAccountCredentials() {
-        if (gameAccountCredentials != null) {
-            throw new IllegalStateException("Game account credentials are already loaded");
+    /// @return the per-workspace account private data file access status
+    private static SettingFileAccess loadGameAccountPrivateData() {
+        if (gameAccountPrivateData != null) {
+            throw new IllegalStateException("Game account private data is already loaded");
         }
 
         try {
-            JsonSettingFile.LoadResult<AccountCredentials> result =
-                    GAME_ACCOUNT_CREDENTIALS_FILE.load(null);
-            gameAccountCredentials = result.value();
+            JsonSettingFile.LoadResult<AccountPrivateData> result =
+                    GAME_ACCOUNT_PRIVATE_DATA_FILE.load(null);
+            gameAccountPrivateData = result.value();
             return result.access();
         } catch (IOException e) {
-            LOG.warning("Failed to load game account credentials", e);
-            gameAccountCredentials = new AccountCredentials();
-            gameAccountCredentials.setSavable(false);
+            LOG.warning("Failed to load game account private data", e);
+            gameAccountPrivateData = new AccountPrivateData();
+            gameAccountPrivateData.setSavable(false);
             return SettingFileAccess.UNREADABLE;
         }
     }
 
-    /// Loads shared account metadata, merges credentials, and installs the save listener.
+    /// Loads shared account metadata, merges private data, and installs the save listener.
     ///
     /// @return the shared account metadata file access status
     private static SettingFileAccess loadUserGameAccounts() {
@@ -1257,9 +1257,9 @@ public final class SettingsManager {
         try {
             JsonSettingFile.LoadResult<AccountStorages> result = USER_GAME_ACCOUNTS_FILE.load(migrated);
             userGameAccounts = result.value();
-            AccountCredentials.mergeInto(
+            AccountPrivateData.mergeInto(
                     userGameAccounts,
-                    List.of(userGameAccountCredentials(), gameAccountCredentials()));
+                    List.of(userGameAccountPrivateData(), gameAccountPrivateData()));
             if (userGameAccounts.isSavable()) {
                 userGameAccounts.addListener(source -> saveUserGameAccounts());
             }
@@ -1268,11 +1268,11 @@ public final class SettingsManager {
                 saveAccountStoreSync(
                         userGameAccounts,
                         USER_GAME_ACCOUNTS_FILE,
-                        new AccountCredentialStore(userGameAccountCredentials(), USER_GAME_ACCOUNT_CREDENTIALS_FILE),
+                        new AccountPrivateDataStore(userGameAccountPrivateData(), USER_GAME_ACCOUNT_PRIVATE_DATA_FILE),
                         List.of(
-                                new AccountCredentialStore(userGameAccountCredentials(),
-                                        USER_GAME_ACCOUNT_CREDENTIALS_FILE),
-                                new AccountCredentialStore(gameAccountCredentials(), GAME_ACCOUNT_CREDENTIALS_FILE)));
+                                new AccountPrivateDataStore(userGameAccountPrivateData(),
+                                        USER_GAME_ACCOUNT_PRIVATE_DATA_FILE),
+                                new AccountPrivateDataStore(gameAccountPrivateData(), GAME_ACCOUNT_PRIVATE_DATA_FILE)));
                 if (migrationResult != null) {
                     LegacyConfigMigrator.completeLegacyUserAccountsMigration(migrationResult);
                 }
@@ -1282,15 +1282,15 @@ public final class SettingsManager {
         } catch (IOException e) {
             LOG.warning("Failed to load user game accounts", e);
             userGameAccounts = migrated != null ? migrated : new AccountStorages();
-            AccountCredentials.mergeInto(
+            AccountPrivateData.mergeInto(
                     userGameAccounts,
-                    List.of(userGameAccountCredentials(), gameAccountCredentials()));
+                    List.of(userGameAccountPrivateData(), gameAccountPrivateData()));
             userGameAccounts.setSavable(false);
             return SettingFileAccess.UNREADABLE;
         }
     }
 
-    /// Loads account metadata, merges credentials, and installs the save listener.
+    /// Loads account metadata, merges private data, and installs the save listener.
     ///
     /// @param fallbackGameAccounts the fallback store used when the account metadata file does not exist
     /// @return the account metadata file access status
@@ -1304,9 +1304,9 @@ public final class SettingsManager {
         JsonSettingFile.LoadResult<AccountStorages> result =
                 GAME_ACCOUNTS_FILE.load(fallbackGameAccounts);
         gameAccounts = result.value();
-        AccountCredentials.mergeInto(
+        AccountPrivateData.mergeInto(
                 gameAccounts,
-                List.of(gameAccountCredentials(), userGameAccountCredentials()));
+                List.of(gameAccountPrivateData(), userGameAccountPrivateData()));
         if (gameAccounts.isSavable()) {
             gameAccounts.addListener(source -> saveGameAccounts());
         }
@@ -1315,10 +1315,10 @@ public final class SettingsManager {
             saveAccountStoreSync(
                     gameAccounts,
                     GAME_ACCOUNTS_FILE,
-                    new AccountCredentialStore(gameAccountCredentials(), GAME_ACCOUNT_CREDENTIALS_FILE),
+                    new AccountPrivateDataStore(gameAccountPrivateData(), GAME_ACCOUNT_PRIVATE_DATA_FILE),
                     List.of(
-                            new AccountCredentialStore(gameAccountCredentials(), GAME_ACCOUNT_CREDENTIALS_FILE),
-                            new AccountCredentialStore(userGameAccountCredentials(), USER_GAME_ACCOUNT_CREDENTIALS_FILE)));
+                            new AccountPrivateDataStore(gameAccountPrivateData(), GAME_ACCOUNT_PRIVATE_DATA_FILE),
+                            new AccountPrivateDataStore(userGameAccountPrivateData(), USER_GAME_ACCOUNT_PRIVATE_DATA_FILE)));
         }
 
         return result.access();
@@ -1334,7 +1334,7 @@ public final class SettingsManager {
         checkOwner(LOCAL_GAME_DIRECTORIES_LOCATION);
         checkOwner(GAME_SETTINGS_LOCATION);
         checkOwner(GAME_ACCOUNTS_LOCATION);
-        checkOwner(GAME_ACCOUNT_CREDENTIALS_LOCATION);
+        checkOwner(GAME_ACCOUNT_PRIVATE_DATA_LOCATION);
     }
 
     /// Checks whether root is reading a config path owned by another user.

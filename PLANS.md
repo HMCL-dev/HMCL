@@ -11,8 +11,8 @@
 - `.hmcl/config/game-settings.json`: workspace `GameSettings.Preset` entries.
 - `.hmcl/config/accounts.json`: workspace portable account metadata in the `accounts` list.
 - `HMCL_USER_HOME/config/user-accounts.json`: shared account metadata in the `accounts` list.
-- `.hmcl/credentials/account-credentials.json`: protected workspace account token credentials.
-- `HMCL_USER_HOME/credentials/user-account-credentials.json`: protected shared account token credentials.
+- `.hmcl/private/account-private-data.json`: protected workspace account private data.
+- `HMCL_USER_HOME/private/user-account-private-data.json`: protected shared account private data.
 - `versions/<id>/.hmcl/config/instance-game-settings.json`: instance-specific game settings.
 - `HMCL_USER_HOME/state/*.migration-receipt.json` and `.hmcl/state/*.migration-receipt.json`: migration receipts.
 
@@ -28,7 +28,7 @@
 ## Migration Rules
 
 - Legacy `hmcl.json` and `.hmcl.json` are read as workspace migration inputs.
-- Legacy `accounts` fields in the workspace config are extracted into `accounts.json` and `account-credentials.json`.
+- Legacy `accounts` fields in the workspace config are extracted into `accounts.json` and `account-private-data.json`.
 - Legacy shared `accounts.json` is used only as a migration input when `user-accounts.json` does not exist.
 - Legacy `authlibInjectorServers` and `addedLittleSkin` fields are extracted into `authlib-injector-servers.json`.
 - Legacy profile data from `configurations` is converted into `game-directories.json`.
@@ -52,6 +52,6 @@
 ## Verification Focus
 
 - Loading an old config should create detached files without losing selected account, selected directory, or selected instance state.
-- Editing accounts should update `accounts.json` and `account-credentials.json`, not `launcher-settings.json`.
-- Existing shared `accounts.json` should migrate to `user-accounts.json` and `user-account-credentials.json`.
+- Editing accounts should update `accounts.json` and `account-private-data.json`, not `launcher-settings.json`.
+- Existing shared `accounts.json` should migrate to `user-accounts.json` and `user-account-private-data.json`.
 - Launch, export, install, and settings UI flows should read effective `GameSettings` values.

@@ -34,8 +34,8 @@ import java.util.Objects;
 
 /// Stores account metadata maps in a detached JSON file.
 ///
-/// The JSON representation is saved under the `config` directory and stores non-token account entries in the
-/// `accounts` list. Token credentials are persisted separately in [AccountCredentials].
+/// The JSON representation is saved under the `config` directory and stores account metadata in the `accounts` list.
+/// Private account data is persisted separately in [AccountPrivateData].
 @JsonAdapter(AccountStorages.Adapter.class)
 @NotNullByDefault
 @JsonSerializable
