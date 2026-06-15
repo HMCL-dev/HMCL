@@ -41,14 +41,14 @@ public class ModrinthInstallTask extends Task<Void> {
 
     private final DefaultDependencyManager dependencyManager;
     private final DefaultGameRepository repository;
-    private final Path                                   zipFile;
-    private final Modpack                                modpack;
-    private final ModrinthManifest                       manifest;
+    private final Path zipFile;
+    private final Modpack modpack;
+    private final ModrinthManifest manifest;
     private final String name;
     private final String iconUrl;
-    private final Path                                   run;
+    private final Path run;
     private final ModpackConfiguration<ModrinthManifest> config;
-    private       String                                 iconExt;
+    private String iconExt;
     private Task<Path> downloadIconTask;
     private final List<Task<?>> dependents = new ArrayList<>(4);
     private final List<Task<?>> dependencies = new ArrayList<>(1);
