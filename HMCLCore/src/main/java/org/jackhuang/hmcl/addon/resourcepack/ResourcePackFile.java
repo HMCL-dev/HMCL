@@ -19,7 +19,7 @@ package org.jackhuang.hmcl.addon.resourcepack;
 
 import javafx.scene.image.Image;
 import org.jackhuang.hmcl.addon.LocalAddonFile;
-import org.jackhuang.hmcl.addon.modinfo.PackMcMeta;
+import org.jackhuang.hmcl.addon.meta.PackMcMeta;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jetbrains.annotations.Contract;

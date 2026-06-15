@@ -28,7 +28,7 @@ import javafx.scene.layout.VBox;
 import javafx.scene.shape.SVGPath;
 import javafx.stage.FileChooser;
 import org.jackhuang.hmcl.game.ModpackHelper;
-import org.jackhuang.hmcl.addon.server.ServerModpackManifest;
+import org.jackhuang.hmcl.addon.modpack.server.ServerModpackManifest;
 import org.jackhuang.hmcl.task.FileDownloadTask;
 import org.jackhuang.hmcl.task.GetTask;
 import org.jackhuang.hmcl.task.Schedulers;

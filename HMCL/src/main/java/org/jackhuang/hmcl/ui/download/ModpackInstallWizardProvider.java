@@ -24,7 +24,7 @@ import org.jackhuang.hmcl.addon.modpack.MismatchedModpackTypeException;
 import org.jackhuang.hmcl.addon.modpack.Modpack;
 import org.jackhuang.hmcl.addon.modpack.ModpackCompletionException;
 import org.jackhuang.hmcl.addon.modpack.UnsupportedModpackException;
-import org.jackhuang.hmcl.addon.server.ServerModpackManifest;
+import org.jackhuang.hmcl.addon.modpack.server.ServerModpackManifest;
 import org.jackhuang.hmcl.setting.Profile;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;

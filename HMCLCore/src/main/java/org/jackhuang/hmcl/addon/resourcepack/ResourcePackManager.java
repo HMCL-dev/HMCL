@@ -20,7 +20,7 @@ package org.jackhuang.hmcl.addon.resourcepack;
 import com.google.gson.annotations.SerializedName;
 import org.jackhuang.hmcl.game.GameRepository;
 import org.jackhuang.hmcl.addon.LocalAddonManager;
-import org.jackhuang.hmcl.addon.modinfo.PackMcMeta;
+import org.jackhuang.hmcl.addon.meta.PackMcMeta;
 import org.jackhuang.hmcl.util.Pair;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.gson.JsonSerializable;

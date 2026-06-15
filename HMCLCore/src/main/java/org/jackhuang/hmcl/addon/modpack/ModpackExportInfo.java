@@ -17,7 +17,7 @@
  */
 package org.jackhuang.hmcl.addon.modpack;
 
-import org.jackhuang.hmcl.addon.mcbbs.McbbsModpackManifest;
+import org.jackhuang.hmcl.addon.modpack.mcbbs.McbbsModpackManifest;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
