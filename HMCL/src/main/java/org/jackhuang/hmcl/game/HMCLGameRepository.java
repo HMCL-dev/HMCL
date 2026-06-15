@@ -275,15 +275,41 @@ public final class HMCLGameRepository extends DefaultGameRepository {
         return Optional.empty();
     }
 
+    // Fix: copy before delete to avoid losing source file when it's inside version directory
     public void setVersionIconFile(String id, Path iconFile) throws IOException {
         String ext = FileUtils.getExtension(iconFile).toLowerCase(Locale.ROOT);
         if (!FXUtils.IMAGE_EXTENSIONS.contains(ext)) {
             throw new IllegalArgumentException("Unsupported icon file: " + ext);
         }
 
-        deleteIconFile(id);
+        Path target = getVersionRoot(id).resolve("icon." + ext);
 
-        FileUtils.copyFile(iconFile, getVersionRoot(id).resolve("icon." + ext));
+        if (Files.isSameFile(iconFile, target)) {
+            Path root = getVersionRoot(id);
+            for (String extension : FXUtils.IMAGE_EXTENSIONS) {
+                if (extension.equals(ext)) continue;
+                Path file = root.resolve("icon." + extension);
+                try {
+                    Files.deleteIfExists(file);
+                } catch (IOException e) {
+                    LOG.warning("Failed to delete icon file: " + file, e);
+                }
+            }
+            return;
+        }
+
+        FileUtils.copyFile(iconFile, target);
+
+        Path root = getVersionRoot(id);
+        for (String extension : FXUtils.IMAGE_EXTENSIONS) {
+            if (extension.equals(ext)) continue;
+            Path file = root.resolve("icon." + extension);
+            try {
+                Files.deleteIfExists(file);
+            } catch (IOException e) {
+                LOG.warning("Failed to delete icon file: " + file, e);
+            }
+        }
     }
 
     public void deleteIconFile(String id) {
