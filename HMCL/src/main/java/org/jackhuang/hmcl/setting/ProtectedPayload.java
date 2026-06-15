@@ -23,6 +23,7 @@ import com.google.gson.JsonParseException;
 import com.google.gson.JsonParser;
 import org.jackhuang.hmcl.util.DigestUtils;
 import org.jetbrains.annotations.NotNullByDefault;
+import org.jetbrains.annotations.Nullable;
 
 import javax.crypto.Cipher;
 import javax.crypto.spec.GCMParameterSpec;
@@ -78,19 +79,116 @@ final class ProtectedPayload {
     private ProtectedPayload() {
     }
 
+    /// Selects how a protected payload is stored in its JSON envelope.
+    enum ProtectionMode {
+        /// Stores the payload as a portable obfuscated AES-GCM envelope.
+        OBFUSCATED(PROTECTION_OBFUSCATED) {
+            /// Writes the payload into the given envelope.
+            @Override
+            void write(JsonObject envelope, JsonElement payload) {
+                writeObfuscated(envelope, payload);
+            }
+
+            /// Reads the payload from the given envelope.
+            @Override
+            JsonElement read(JsonObject envelope) {
+                return readObfuscated(envelope);
+            }
+        },
+
+        /// Stores the payload as plain JSON for development and diagnostics.
+        PLAIN(PROTECTION_PLAIN) {
+            /// Writes the payload into the given envelope.
+            @Override
+            void write(JsonObject envelope, JsonElement payload) {
+                envelope.addProperty(PROPERTY_PROTECTION, id());
+                envelope.add(PROPERTY_PAYLOAD, payload.deepCopy());
+            }
+
+            /// Reads the payload from the given envelope.
+            @Override
+            JsonElement read(JsonObject envelope) {
+                JsonElement payload = envelope.get(PROPERTY_PAYLOAD);
+                if (payload == null) {
+                    throw new JsonParseException("Missing protected payload member: " + PROPERTY_PAYLOAD);
+                }
+                return payload.deepCopy();
+            }
+        };
+
+        /// The serialized protection marker.
+        private final String id;
+
+        /// Creates a protection mode.
+        ///
+        /// @param id the serialized protection marker
+        ProtectionMode(String id) {
+            this.id = id;
+        }
+
+        /// Returns the serialized protection marker.
+        ///
+        /// @return the serialized protection marker
+        String id() {
+            return id;
+        }
+
+        /// Writes the payload into the given envelope.
+        ///
+        /// @param envelope the envelope object to write into
+        /// @param payload the plain JSON payload
+        /// @throws JsonParseException if the payload cannot be protected
+        abstract void write(JsonObject envelope, JsonElement payload);
+
+        /// Reads the payload from the given envelope.
+        ///
+        /// @param envelope the envelope object to read from
+        /// @return the revealed JSON payload
+        /// @throws JsonParseException if the envelope is malformed or cannot be revealed
+        abstract JsonElement read(JsonObject envelope);
+
+        /// Returns the write mode selected by a configuration value.
+        ///
+        /// Unknown values intentionally fall back to obfuscation so opt-in plain storage cannot be enabled by typos.
+        ///
+        /// @param id the configured protection marker
+        /// @return the selected write mode
+        static ProtectionMode fromConfiguredId(@Nullable String id) {
+            return PROTECTION_PLAIN.equals(id) ? PLAIN : OBFUSCATED;
+        }
+
+        /// Reads the protection mode from an envelope.
+        ///
+        /// @param envelope the envelope object to inspect
+        /// @return the protection mode declared by the envelope
+        /// @throws JsonParseException if the declared protection mode is unsupported
+        static ProtectionMode fromEnvelope(JsonObject envelope) {
+            String protection = readString(envelope, PROPERTY_PROTECTION);
+            for (ProtectionMode mode : values()) {
+                if (mode.id.equals(protection)) {
+                    return mode;
+                }
+            }
+            throw new JsonParseException("Unsupported protected payload: " + protection);
+        }
+    }
+
     /// Writes a JSON payload into an envelope object.
     ///
     /// @param envelope the envelope object to write into
     /// @param payload the plain JSON payload
-    /// @param plainJson whether to store the payload as plain JSON
+    /// @param protectionMode the protection mode used for writing the payload
     /// @throws JsonParseException if the payload cannot be protected
-    static void write(JsonObject envelope, JsonElement payload, boolean plainJson) {
-        if (plainJson) {
-            envelope.addProperty(PROPERTY_PROTECTION, PROTECTION_PLAIN);
-            envelope.add(PROPERTY_PAYLOAD, payload.deepCopy());
-            return;
-        }
+    static void write(JsonObject envelope, JsonElement payload, ProtectionMode protectionMode) {
+        protectionMode.write(envelope, payload);
+    }
 
+    /// Writes a JSON payload as an obfuscated envelope.
+    ///
+    /// @param envelope the envelope object to write into
+    /// @param payload the plain JSON payload
+    /// @throws JsonParseException if the payload cannot be protected
+    private static void writeObfuscated(JsonObject envelope, JsonElement payload) {
         byte[] nonce = new byte[NONCE_LENGTH];
         RANDOM.nextBytes(nonce);
 
@@ -114,19 +212,15 @@ final class ProtectedPayload {
     /// @return the revealed JSON payload
     /// @throws JsonParseException if the envelope is malformed or cannot be revealed
     static JsonElement read(JsonObject envelope) throws JsonParseException {
-        String protection = readString(envelope, PROPERTY_PROTECTION);
-        if (PROTECTION_PLAIN.equals(protection)) {
-            JsonElement payload = envelope.get(PROPERTY_PAYLOAD);
-            if (payload == null) {
-                throw new JsonParseException("Missing protected payload member: " + PROPERTY_PAYLOAD);
-            }
-            return payload.deepCopy();
-        }
+        return ProtectionMode.fromEnvelope(envelope).read(envelope);
+    }
 
-        if (!PROTECTION_OBFUSCATED.equals(protection)) {
-            throw new JsonParseException("Unsupported protected payload: " + protection);
-        }
-
+    /// Reads and reveals an obfuscated JSON payload from an envelope object.
+    ///
+    /// @param envelope the envelope object to read from
+    /// @return the revealed JSON payload
+    /// @throws JsonParseException if the envelope is malformed or cannot be revealed
+    private static JsonElement readObfuscated(JsonObject envelope) throws JsonParseException {
         try {
             Cipher cipher = Cipher.getInstance("AES/GCM/NoPadding");
             cipher.init(Cipher.DECRYPT_MODE, KEY,

@@ -104,9 +104,9 @@ final class AccountCredentials extends ObservableSetting implements JsonSchemaSe
         return credentials;
     }
 
-    /// Returns whether credentials should be written as plain JSON payloads.
-    static boolean isPlainProtectionEnabled() {
-        return ProtectedPayload.PROTECTION_PLAIN.equals(System.getProperty(PROTECTION_PROPERTY));
+    /// Returns the protection mode selected for writing account credentials.
+    private static ProtectedPayload.ProtectionMode protectionMode() {
+        return ProtectedPayload.ProtectionMode.fromConfiguredId(System.getProperty(PROTECTION_PROPERTY));
     }
 
     /// Returns whether this account credential store may be saved back to its JSON file.
@@ -334,7 +334,7 @@ final class AccountCredentials extends ObservableSetting implements JsonSchemaSe
                 JsonSerializationContext context) {
             JsonObject result = new JsonObject();
             result.addProperty(JsonSchema.PROPERTY_SCHEMA, accountCredentials.getSchema().url());
-            ProtectedPayload.write(result, createPayload(accountCredentials, context), isPlainProtectionEnabled());
+            ProtectedPayload.write(result, createPayload(accountCredentials, context), protectionMode());
             accountCredentials.unknownFields.forEach(result::add);
             return result;
         }
