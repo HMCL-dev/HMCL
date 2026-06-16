@@ -273,8 +273,8 @@ public final class LauncherSettingsMigrationTest {
                 }
                 """).getAsJsonObject();
 
-        AccountStorages accountStorages = Objects.requireNonNull(LegacyConfigMigrator.extractAccountStorages(settings));
-        assertTrue(LegacyConfigMigrator.migrateLegacySelectedAccount(settings, accountStorages));
+        AccountMetadataStore accountMetadata = Objects.requireNonNull(LegacyConfigMigrator.extractAccountMetadataStore(settings));
+        assertTrue(LegacyConfigMigrator.migrateLegacySelectedAccount(settings, accountMetadata));
         LauncherSettings launcherSettings = Objects.requireNonNull(LauncherSettings.fromJson(settings));
 
         assertEquals(offlineAccountID("Alex"),
@@ -300,11 +300,11 @@ public final class LauncherSettingsMigrationTest {
                 }
                 """).getAsJsonObject();
 
-        AccountStorages accountStorages = Objects.requireNonNull(LegacyConfigMigrator.extractAccountStorages(settings));
-        assertTrue(LegacyConfigMigrator.migrateLegacySelectedAccount(settings, accountStorages));
+        AccountMetadataStore accountMetadata = Objects.requireNonNull(LegacyConfigMigrator.extractAccountMetadataStore(settings));
+        assertTrue(LegacyConfigMigrator.migrateLegacySelectedAccount(settings, accountMetadata));
 
         assertEquals(offlineAccountID("Alex"), settings.get("selectedAccount").getAsString());
-        assertFalse(accountStorages.getAccounts().get(1).containsKey("selected"));
+        assertFalse(accountMetadata.getAccounts().get(1).containsKey("selected"));
     }
 
     /// Tests migrating legacy selected Microsoft account identifiers with hyphenated UUIDs.
@@ -323,10 +323,10 @@ public final class LauncherSettingsMigrationTest {
                 }
                 """).getAsJsonObject();
 
-        AccountStorages accountStorages = Objects.requireNonNull(LegacyConfigMigrator.extractAccountStorages(settings));
-        assertTrue(LegacyConfigMigrator.migrateLegacySelectedAccount(settings, accountStorages));
+        AccountMetadataStore accountMetadata = Objects.requireNonNull(LegacyConfigMigrator.extractAccountMetadataStore(settings));
+        assertTrue(LegacyConfigMigrator.migrateLegacySelectedAccount(settings, accountMetadata));
 
-        assertEquals(accountStorages.getAccounts().get(0).get("accountID"),
+        assertEquals(accountMetadata.getAccounts().get(0).get("accountID"),
                 settings.get("selectedAccount").getAsString());
     }
 

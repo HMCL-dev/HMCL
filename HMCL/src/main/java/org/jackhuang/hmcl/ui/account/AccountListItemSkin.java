@@ -97,7 +97,7 @@ public final class AccountListItemSkin extends SkinBase<AccountListItem> {
             Account account = skinnable.getAccount();
             if (!Accounts.canMoveAccount(account)) {
                 Controllers.confirmBackupAndOverwrite(i18n("account.storage.read_only"), () -> {
-                    Accounts.forceOverwriteAccountStorages();
+                    Accounts.forceOverwriteAccountFiles();
                     moveAccount(skinnable);
                 });
                 return;
@@ -178,7 +178,7 @@ public final class AccountListItemSkin extends SkinBase<AccountListItem> {
         getChildren().setAll(root);
     }
 
-    /// Moves the account between local and user account storage.
+    /// Moves the account between local and user account files.
     private static void moveAccount(AccountListItem skinnable) {
         Account account = skinnable.getAccount();
         Accounts.getAccounts().remove(account);

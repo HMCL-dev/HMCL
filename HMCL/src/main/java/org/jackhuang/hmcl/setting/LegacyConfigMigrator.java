@@ -105,10 +105,10 @@ public final class LegacyConfigMigrator {
     private static final Path USER_SETTINGS_MIGRATION_RECEIPT_LOCATION =
             Metadata.HMCL_USER_HOME.resolve("state").resolve("user-settings.migration-receipt.json");
 
-    /// The legacy user account storage path shared by all workspaces.
+    /// The legacy user account file path shared by all workspaces.
     private static final Path LEGACY_USER_ACCOUNTS_LOCATION = Metadata.HMCL_USER_HOME.resolve("accounts.json");
 
-    /// Prefix used by legacy selected account strings for shared account storage entries.
+    /// Prefix used by legacy selected account strings for shared account entries.
     private static final String LEGACY_GLOBAL_ACCOUNT_PREFIX = "$GLOBAL:";
 
     /// The receipt recording the legacy shared accounts migrated to the shared account metadata.
@@ -216,10 +216,10 @@ public final class LegacyConfigMigrator {
 
             LauncherState launcherState = extractLauncherState(jsonObject);
             AuthlibInjectorServerList authlibInjectorServers = extractAuthlibInjectorServers(jsonObject);
-            AccountStorages accountStorages = Objects.requireNonNullElseGet(
-                    extractAccountStorages(jsonObject),
-                    AccountStorages::new);
-            migrateLegacySelectedAccount(jsonObject, accountStorages);
+            AccountMetadataStore accountMetadata = Objects.requireNonNullElseGet(
+                    extractAccountMetadataStore(jsonObject),
+                    AccountMetadataStore::new);
+            migrateLegacySelectedAccount(jsonObject, accountMetadata);
             JsonElement legacyAllowAutoAgent = jsonObject.remove("allowAutoAgent");
             JsonElement legacyDisableAutoGameOptions = jsonObject.remove("disableAutoGameOptions");
             migrateLegacyBackgroundImageType(jsonObject);
@@ -253,7 +253,7 @@ public final class LegacyConfigMigrator {
             migrateLegacyAllowAutoAgent(deserialized, gameSettingsPresets, legacyAllowAutoAgent);
             migrateLegacyDisableAutoGameOptions(deserialized, gameSettingsPresets, legacyDisableAutoGameOptions);
             DetachedSettings detachedSettings = new DetachedSettings(gameDirectories, gameSettingsPresets,
-                    launcherState, authlibInjectorServers, accountStorages);
+                    launcherState, authlibInjectorServers, accountMetadata);
             return new LegacyConfigMigration(path, deserialized, detachedSettings);
         } catch (JsonParseException e) {
             LOG.warning("Malformed legacy config file: " + path, e);
@@ -302,9 +302,9 @@ public final class LegacyConfigMigrator {
         MigrationReceipt.save(USER_SETTINGS_MIGRATION_RECEIPT_LOCATION, migrationResult.path());
     }
 
-    /// Migrates account storages from the legacy shared account file.
+    /// Migrates account records from the legacy shared account file.
     ///
-    /// @return the migrated shared account storages, or `null` when no legacy shared accounts can be used
+    /// @return the migrated shared account metadata store, or `null` when no legacy shared accounts can be used
     static @Nullable UserAccountsMigrationResult migrateLegacyUserAccounts() {
         if (!Files.exists(LEGACY_USER_ACCOUNTS_LOCATION)) {
             return null;
@@ -327,7 +327,7 @@ public final class LegacyConfigMigrator {
             LOG.info("Migrating user accounts from " + LEGACY_USER_ACCOUNTS_LOCATION);
             return new UserAccountsMigrationResult(
                     LEGACY_USER_ACCOUNTS_LOCATION,
-                    migrateLegacyAccountStorages(accounts, true));
+                    migrateLegacyAccountMetadataStore(accounts, true));
         } catch (Throwable e) {
             LOG.warning("Failed to load legacy user accounts", e);
             return null;
@@ -422,8 +422,8 @@ public final class LegacyConfigMigrator {
         return result;
     }
 
-    /// Extracts account storages from a config JSON object and removes the legacy member.
-    static @Nullable AccountStorages extractAccountStorages(JsonObject json) {
+    /// Extracts account metadata from a config JSON object and removes the legacy member.
+    static @Nullable AccountMetadataStore extractAccountMetadataStore(JsonObject json) {
         Objects.requireNonNull(json);
 
         JsonElement accounts = json.remove("accounts");
@@ -433,43 +433,43 @@ public final class LegacyConfigMigrator {
 
         JsonObject object = new JsonObject();
         object.add(JsonSchema.PROPERTY_SCHEMA,
-                JsonUtils.GSON.toJsonTree(AccountStorages.CURRENT_SCHEMA, JsonSchema.class));
+                JsonUtils.GSON.toJsonTree(AccountMetadataStore.CURRENT_SCHEMA, JsonSchema.class));
         if (accounts instanceof JsonArray) {
             object.add("accounts", accounts);
         }
 
-        AccountStorages result = JsonUtils.GSON.fromJson(object, AccountStorages.class);
+        AccountMetadataStore result = JsonUtils.GSON.fromJson(object, AccountMetadataStore.class);
         if (result == null) {
-            result = new AccountStorages();
+            result = new AccountMetadataStore();
         }
-        normalizeLegacyAccountStorages(result);
+        normalizeLegacyAccountMetadataStore(result);
         assignLegacyAccountIDs(result, false);
         return result;
     }
 
-    /// Creates current account storages from legacy serialized account entries.
+    /// Creates the current account metadata store from legacy serialized account records.
     ///
-    /// @param accounts legacy account entries
-    /// @return current account storages with legacy field names normalized
+    /// @param accounts legacy account records
+    /// @return current account metadata store with legacy field names normalized
     @VisibleForTesting
-    static AccountStorages migrateLegacyAccountStorages(List<Map<Object, Object>> accounts) {
-        return migrateLegacyAccountStorages(accounts, false);
+    static AccountMetadataStore migrateLegacyAccountMetadataStore(List<Map<Object, Object>> accounts) {
+        return migrateLegacyAccountMetadataStore(accounts, false);
     }
 
-    /// Creates current account storages from legacy serialized account entries.
+    /// Creates the current account metadata store from legacy serialized account records.
     ///
-    /// @param accounts legacy account entries
+    /// @param accounts legacy account records
     /// @param userStorage whether the legacy entries come from the shared user account file
-    /// @return current account storages with legacy field names normalized
+    /// @return current account metadata store with legacy field names normalized
     @VisibleForTesting
-    static AccountStorages migrateLegacyAccountStorages(List<Map<Object, Object>> accounts, boolean userStorage) {
+    static AccountMetadataStore migrateLegacyAccountMetadataStore(List<Map<Object, Object>> accounts, boolean userStorage) {
         List<Map<Object, Object>> migratedAccounts = new ArrayList<>(accounts.size());
         for (Map<Object, Object> account : accounts) {
             migratedAccounts.add(new LinkedHashMap<>(account));
         }
 
-        AccountStorages result = AccountStorages.fromAccounts(migratedAccounts);
-        normalizeLegacyAccountStorages(result);
+        AccountMetadataStore result = AccountMetadataStore.fromRecords(migratedAccounts);
+        normalizeLegacyAccountMetadataStore(result);
         assignLegacyAccountIDs(result, userStorage);
         return result;
     }
@@ -478,19 +478,19 @@ public final class LegacyConfigMigrator {
     ///
     /// Missing or duplicate account IDs are replaced with deterministic IDs derived from the legacy selected-account
     /// reference string.
-    private static void assignLegacyAccountIDs(AccountStorages accountStorages, boolean userStorage) {
-        assignAccountIDs(accountStorages, new HashSet<>(), userStorage);
+    private static void assignLegacyAccountIDs(AccountMetadataStore accountMetadata, boolean userStorage) {
+        assignAccountIDs(accountMetadata, new HashSet<>(), userStorage);
     }
 
-    /// Ensures account IDs in one account storage do not collide with IDs already used by earlier storages.
+    /// Ensures account IDs in one account metadata store do not collide with IDs already used by earlier stores.
     ///
-    /// @param accountStorages the account storage to update
-    /// @param usedAccountIDs canonical account ID strings already reserved by earlier storages
-    /// @param userStorage whether the account storage is shared across workspaces
-    static void assignAccountIDs(AccountStorages accountStorages, Set<String> usedAccountIDs, boolean userStorage) {
-        List<Map<Object, Object>> updatedAccounts = new ArrayList<>(accountStorages.getAccounts().size());
+    /// @param accountMetadata the account metadata store to update
+    /// @param usedAccountIDs canonical account ID strings already reserved by earlier stores
+    /// @param userStorage whether the account metadata store is shared across workspaces
+    static void assignAccountIDs(AccountMetadataStore accountMetadata, Set<String> usedAccountIDs, boolean userStorage) {
+        List<Map<Object, Object>> updatedAccounts = new ArrayList<>(accountMetadata.getAccounts().size());
         boolean changed = false;
-        for (Map<Object, Object> account : accountStorages.getAccounts()) {
+        for (Map<Object, Object> account : accountMetadata.getAccounts()) {
             Map<Object, Object> updatedAccount = new LinkedHashMap<>(account);
             @Nullable AccountID existing = parseAccountID(JsonUtils.getString(account, Account.PROPERTY_ACCOUNT_ID));
             if (existing != null && usedAccountIDs.add(existing.toString())) {
@@ -507,7 +507,7 @@ public final class LegacyConfigMigrator {
         }
 
         if (changed) {
-            accountStorages.getAccounts().setAll(updatedAccounts);
+            accountMetadata.getAccounts().setAll(updatedAccounts);
         }
     }
 
@@ -574,14 +574,14 @@ public final class LegacyConfigMigrator {
     }
 
     /// Renames legacy account fields to the current account metadata and private data field names.
-    private static void normalizeLegacyAccountStorages(AccountStorages accountStorages) {
-        for (Map<Object, Object> account : accountStorages.getAccounts()) {
-            normalizeLegacyAccountStorage(account);
+    private static void normalizeLegacyAccountMetadataStore(AccountMetadataStore accountMetadata) {
+        for (Map<Object, Object> account : accountMetadata.getAccounts()) {
+            normalizeLegacyAccountRecord(account);
         }
     }
 
     /// Renames legacy fields in one account entry to the current serialized names.
-    private static void normalizeLegacyAccountStorage(Map<Object, Object> account) {
+    private static void normalizeLegacyAccountRecord(Map<Object, Object> account) {
         @Nullable String type = JsonUtils.getString(account, "type");
         if (type == null) {
             return;
@@ -630,13 +630,13 @@ public final class LegacyConfigMigrator {
         }
     }
 
-    /// Migrates the legacy selected account string into a structured selected account reference.
-    static boolean migrateLegacySelectedAccount(JsonObject json, AccountStorages localAccounts) {
+    /// Migrates the legacy selected account string into a selected account ID.
+    static boolean migrateLegacySelectedAccount(JsonObject json, AccountMetadataStore localAccounts) {
         Objects.requireNonNull(json);
         Objects.requireNonNull(localAccounts);
 
         JsonElement selectedAccount = json.get("selectedAccount");
-        @Nullable AccountID selectedMarkerReference = null;
+        @Nullable AccountID selectedMarkerAccountID = null;
         boolean changed = false;
         Set<String> usedAccountIDs = new HashSet<>();
         assignAccountIDs(localAccounts, usedAccountIDs, false);
@@ -645,14 +645,14 @@ public final class LegacyConfigMigrator {
             if (selectedMarker != null) {
                 changed = true;
             }
-            if (Boolean.TRUE.equals(selectedMarker) && selectedMarkerReference == null) {
-                selectedMarkerReference = createSelectedAccountReference(account);
+            if (Boolean.TRUE.equals(selectedMarker) && selectedMarkerAccountID == null) {
+                selectedMarkerAccountID = getSelectedAccountID(account);
             }
         }
 
         if (selectedAccount == null) {
-            if (selectedMarkerReference != null) {
-                json.addProperty("selectedAccount", selectedMarkerReference.toString());
+            if (selectedMarkerAccountID != null) {
+                json.addProperty("selectedAccount", selectedMarkerAccountID.toString());
                 return true;
             }
             return changed;
@@ -664,24 +664,24 @@ public final class LegacyConfigMigrator {
             return true;
         }
 
-        @Nullable AccountID reference = findLegacySelectedAccountReference(legacyIdentifier, localAccounts, false);
-        if (reference == null) {
-            AccountStorages userAccounts = loadLegacyUserAccountStoragesForSelectedAccount(usedAccountIDs);
+        @Nullable AccountID accountID = findLegacySelectedAccountID(legacyIdentifier, localAccounts, false);
+        if (accountID == null) {
+            AccountMetadataStore userAccounts = loadLegacyUserAccountMetadataStoreForSelectedAccount(usedAccountIDs);
             if (userAccounts != null) {
-                reference = findLegacySelectedAccountReference(legacyIdentifier, userAccounts, true);
+                accountID = findLegacySelectedAccountID(legacyIdentifier, userAccounts, true);
             }
         }
 
-        if (reference != null) {
-            json.addProperty("selectedAccount", reference.toString());
+        if (accountID != null) {
+            json.addProperty("selectedAccount", accountID.toString());
         } else {
             json.remove("selectedAccount");
         }
         return true;
     }
 
-    /// Loads legacy user account storages only for resolving a selected account reference during migration.
-    private static @Nullable AccountStorages loadLegacyUserAccountStoragesForSelectedAccount(Set<String> usedAccountIDs) {
+    /// Loads legacy user account records only for resolving a selected account ID during migration.
+    private static @Nullable AccountMetadataStore loadLegacyUserAccountMetadataStoreForSelectedAccount(Set<String> usedAccountIDs) {
         if (!Files.exists(LEGACY_USER_ACCOUNTS_LOCATION)) {
             return null;
         }
@@ -693,19 +693,19 @@ public final class LegacyConfigMigrator {
             if (accounts == null) {
                 return null;
             }
-            AccountStorages accountStorages = migrateLegacyAccountStorages(accounts, true);
-            assignAccountIDs(accountStorages, usedAccountIDs, true);
-            return accountStorages;
+            AccountMetadataStore accountMetadata = migrateLegacyAccountMetadataStore(accounts, true);
+            assignAccountIDs(accountMetadata, usedAccountIDs, true);
+            return accountMetadata;
         } catch (Exception e) {
             LOG.warning("Failed to load legacy user accounts for selected account migration", e);
             return null;
         }
     }
 
-    /// Finds the structured selected account reference matching a legacy selected account string.
-    private static @Nullable AccountID findLegacySelectedAccountReference(
+    /// Finds the selected account ID matching a legacy selected account string.
+    private static @Nullable AccountID findLegacySelectedAccountID(
             String legacyIdentifier,
-            AccountStorages accounts,
+            AccountMetadataStore accounts,
             boolean userStorage) {
         String identifier = legacyIdentifier;
         boolean selectedUserStorage = false;
@@ -719,7 +719,7 @@ public final class LegacyConfigMigrator {
 
         for (Map<Object, Object> account : accounts.getAccounts()) {
             if (matchesLegacySelectedAccountIdentifier(identifier, account)) {
-                return createSelectedAccountReference(account);
+                return getSelectedAccountID(account);
             }
         }
         return null;
@@ -730,9 +730,9 @@ public final class LegacyConfigMigrator {
         return Objects.equals(identifier, getLegacyAccountIdentifier(account));
     }
 
-    /// Creates the selected account reference for a serialized account entry.
-    private static @Nullable AccountID createSelectedAccountReference(Map<Object, Object> account) {
-        return Account.identifier(account);
+    /// Returns the selected account ID for a serialized account entry.
+    private static @Nullable AccountID getSelectedAccountID(Map<Object, Object> account) {
+        return Account.getAccountID(account);
     }
 
     /// Returns the legacy string identifier for a serialized account entry.
@@ -1215,13 +1215,13 @@ public final class LegacyConfigMigrator {
     /// @param gameSettingsPresets the detached preset store, or `null` when none was migrated
     /// @param launcherState the detached launcher state, or `null` when none was migrated
     /// @param authlibInjectorServers the detached authlib-injector servers, or `null` when none was migrated
-    /// @param accountStorages the detached account storages, or `null` when none was migrated
+    /// @param accountMetadata the detached account metadata store, or `null` when none was migrated
     record DetachedSettings(
             @Nullable GameDirectories gameDirectories,
             @Nullable GameSettingsPresets gameSettingsPresets,
             @Nullable LauncherState launcherState,
             @Nullable AuthlibInjectorServerList authlibInjectorServers,
-            @Nullable AccountStorages accountStorages) {
+            @Nullable AccountMetadataStore accountMetadata) {
         /// Returns an empty detached settings migration result.
         static DetachedSettings empty() {
             return new DetachedSettings(null, null, null, null, null);
@@ -1249,8 +1249,8 @@ public final class LegacyConfigMigrator {
 
     /// Result of migrating the legacy shared accounts file.
     ///
-    /// @param path the legacy account storage path
-    /// @param accountStorages the migrated account storage
-    record UserAccountsMigrationResult(Path path, AccountStorages accountStorages) {
+    /// @param path the legacy account file path
+    /// @param accountMetadata the migrated account metadata store
+    record UserAccountsMigrationResult(Path path, AccountMetadataStore accountMetadata) {
     }
 }

@@ -282,11 +282,11 @@ public class MicrosoftAccountLoginPane extends JFXDialogLayout implements Dialog
     private void onLoginCompleted(MicrosoftAccount account, Exception exception) {
         if (exception == null) {
             boolean storageReadOnly = accountToRelogin != null
-                    ? Accounts.isAccountStorageReadOnly(accountToRelogin)
-                    : Accounts.isAccountStorageReadOnly(account);
+                    ? Accounts.isAccountFilesReadOnly(accountToRelogin)
+                    : Accounts.isAccountFilesReadOnly(account);
             if (storageReadOnly) {
                 Controllers.confirmBackupAndOverwrite(i18n("account.storage.read_only"), () -> {
-                    Accounts.forceOverwriteAccountStorage(accountToRelogin != null ? accountToRelogin : account);
+                    Accounts.forceOverwriteAccountFiles(accountToRelogin != null ? accountToRelogin : account);
                     completeLogin(account);
                 });
                 return;

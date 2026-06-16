@@ -186,7 +186,7 @@ public class AccountListItem extends RadioButton {
     public void remove() {
         if (!Accounts.canRemoveAccount(account)) {
             Controllers.confirmBackupAndOverwrite(i18n("account.storage.read_only"), () -> {
-                Accounts.forceOverwriteAccountStorage(account);
+                Accounts.forceOverwriteAccountFiles(account);
                 Accounts.getAccounts().remove(account);
             });
             return;

@@ -225,11 +225,11 @@ public class CreateAccountPane extends JFXDialogLayout implements DialogAware {
 
             loginTask = Task.supplyAsync(() -> factory.create(new DialogCharacterSelector(), username, password, null, additionalData))
                     .whenComplete(Schedulers.javafx(), account -> {
-                        if (Accounts.isAccountStorageReadOnly(account)) {
+                        if (Accounts.isAccountFilesReadOnly(account)) {
                             body.setDisable(false);
                             spinner.hideSpinner();
                             Controllers.confirmBackupAndOverwrite(i18n("account.storage.read_only"), () -> {
-                                Accounts.forceOverwriteAccountStorage(account);
+                                Accounts.forceOverwriteAccountFiles(account);
                                 completeLogin(account);
                             });
                             return;

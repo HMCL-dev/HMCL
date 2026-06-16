@@ -45,9 +45,9 @@ import java.util.*;
 import static java.util.stream.Collectors.toList;
 import static javafx.collections.FXCollections.observableArrayList;
 import static org.jackhuang.hmcl.setting.SettingsManager.settings;
-import static org.jackhuang.hmcl.setting.SettingsManager.getAccountStorages;
+import static org.jackhuang.hmcl.setting.SettingsManager.getAccountMetadataRecords;
 import static org.jackhuang.hmcl.setting.SettingsManager.getAuthlibInjectorServers;
-import static org.jackhuang.hmcl.setting.SettingsManager.getUserAccountStorages;
+import static org.jackhuang.hmcl.setting.SettingsManager.getUserAccountMetadataRecords;
 import static org.jackhuang.hmcl.setting.SettingsManager.userSettings;
 import static org.jackhuang.hmcl.ui.FXUtils.onInvalidating;
 import static org.jackhuang.hmcl.util.Lang.immutableListOf;
@@ -124,80 +124,80 @@ public final class Accounts {
      */
     private static boolean initialized = false;
 
-    private static Map<Object, Object> getAccountStorage(Account account) {
-        Map<Object, Object> storage = account.toStorage();
-        storage.put("type", getLoginType(getAccountFactory(account)));
-        return storage;
+    private static Map<Object, Object> serializeAccount(Account account) {
+        Map<Object, Object> record = account.toStorage();
+        record.put("type", getLoginType(getAccountFactory(account)));
+        return record;
     }
 
-    /// Creates the selected-account reference stored in launcher settings.
-    private static AccountID toSelectedAccountReference(Account account) {
-        return account.toIdentifier();
+    /// Returns the selected account ID stored in launcher settings.
+    private static AccountID selectedAccountID(Account account) {
+        return account.getAccountID();
     }
 
-    /// Returns whether the given account is identified by a selected-account reference.
-    private static boolean matchesSelectedAccountReference(Account account, AccountID reference) {
-        return account.matchIdentifier(reference);
+    /// Returns whether the given account matches the selected account ID.
+    private static boolean matchesSelectedAccountID(Account account, AccountID accountID) {
+        return account.matchesAccountID(accountID);
     }
 
-    /// Ensures account IDs are unique across local and shared account storages before accounts are instantiated.
+    /// Ensures account IDs are unique across local and shared account metadata records before accounts are instantiated.
     private static void ensureUniqueAccountIDs() {
         Set<String> usedAccountIDs = new HashSet<>();
         LegacyConfigMigrator.assignAccountIDs(SettingsManager.gameAccounts(), usedAccountIDs, false);
         LegacyConfigMigrator.assignAccountIDs(SettingsManager.userGameAccounts(), usedAccountIDs, true);
     }
 
-    private static void updateAccountStorages() {
-        // don't update the underlying storage before data loading is completed
+    private static void updateAccountMetadataRecords() {
+        // don't update the underlying account records before data loading is completed
         // otherwise it might cause data loss
         if (!initialized)
             return;
-        // update storage
+        // update account records
 
         ArrayList<Map<Object, Object>> global = new ArrayList<>();
         ArrayList<Map<Object, Object>> portable = new ArrayList<>();
 
         for (Account account : accounts) {
-            Map<Object, Object> storage = getAccountStorage(account);
+            Map<Object, Object> record = serializeAccount(account);
             if (account.isPortable())
-                portable.add(storage);
+                portable.add(record);
             else
-                global.add(storage);
+                global.add(record);
         }
 
-        ObservableList<Map<Object, Object>> globalStorages = getUserAccountStorages();
-        if (!SettingsManager.isUserGameAccountsReadOnly() && !global.equals(globalStorages))
-            globalStorages.setAll(global);
-        if (!SettingsManager.isGameAccountsReadOnly() && !portable.equals(getAccountStorages()))
-            getAccountStorages().setAll(portable);
+        ObservableList<Map<Object, Object>> globalRecords = getUserAccountMetadataRecords();
+        if (!SettingsManager.isUserGameAccountsReadOnly() && !global.equals(globalRecords))
+            globalRecords.setAll(global);
+        if (!SettingsManager.isGameAccountsReadOnly() && !portable.equals(getAccountMetadataRecords()))
+            getAccountMetadataRecords().setAll(portable);
     }
 
     /// Returns whether the account metadata and credential files selected by the portability flag are read-only.
     ///
     /// @param portable whether the account is stored in the local account file
-    public static boolean isAccountStorageReadOnly(boolean portable) {
+    public static boolean isAccountFilesReadOnly(boolean portable) {
         return portable ? SettingsManager.isGameAccountsReadOnly() : SettingsManager.isUserGameAccountsReadOnly();
     }
 
-    /// Returns whether the storage file containing the given account is read-only.
-    public static boolean isAccountStorageReadOnly(Account account) {
-        return isAccountStorageReadOnly(account.isPortable());
+    /// Returns whether the files containing the given account are read-only.
+    public static boolean isAccountFilesReadOnly(Account account) {
+        return isAccountFilesReadOnly(account.isPortable());
     }
 
-    /// Returns whether the given account may be removed from its current storage file.
+    /// Returns whether the given account may be removed from its current account files.
     public static boolean canRemoveAccount(Account account) {
-        return !isAccountStorageReadOnly(account);
+        return !isAccountFilesReadOnly(account);
     }
 
-    /// Returns whether the given account may be moved between local and user storage files.
+    /// Returns whether the given account may be moved between local and user account files.
     public static boolean canMoveAccount(Account account) {
         return !SettingsManager.isGameAccountsReadOnly() && !SettingsManager.isUserGameAccountsReadOnly();
     }
 
     /// Backs up and overwrites the account metadata and credential files selected by the portability flag.
     ///
-    /// @param portable whether the target storage is the local account file
-    public static void forceOverwriteAccountStorage(boolean portable) {
+    /// @param portable whether the target account files are local
+    public static void forceOverwriteAccountFiles(boolean portable) {
         if (portable) {
             SettingsManager.forceOverwriteGameAccounts();
         } else {
@@ -205,13 +205,13 @@ public final class Accounts {
         }
     }
 
-    /// Backs up and overwrites the storage file containing the given account.
-    public static void forceOverwriteAccountStorage(Account account) {
-        forceOverwriteAccountStorage(account.isPortable());
+    /// Backs up and overwrites the account files containing the given account.
+    public static void forceOverwriteAccountFiles(Account account) {
+        forceOverwriteAccountFiles(account.isPortable());
     }
 
     /// Backs up and overwrites both local and user account metadata and credential files.
-    public static void forceOverwriteAccountStorages() {
+    public static void forceOverwriteAccountFiles() {
         if (SettingsManager.isGameAccountsReadOnly()) {
             SettingsManager.forceOverwriteGameAccounts();
         }
@@ -220,29 +220,29 @@ public final class Accounts {
         }
     }
 
-    private static Account parseAccount(Map<Object, Object> storage) {
-        AccountFactory<?> factory = type2factory.get(storage.get("type"));
+    private static Account parseAccount(Map<Object, Object> record) {
+        AccountFactory<?> factory = type2factory.get(record.get("type"));
         if (factory == null) {
-            LOG.warning("Unrecognized account type: " + accountIdentifier(storage));
+            LOG.warning("Unrecognized account type: " + describeAccountRecord(record));
             return null;
         }
 
         try {
-            return factory.fromStorage(storage);
+            return factory.fromStorage(record);
         } catch (Exception e) {
-            LOG.warning("Failed to load account: " + accountIdentifier(storage), e);
+            LOG.warning("Failed to load account: " + describeAccountRecord(record), e);
             return null;
         }
     }
 
-    /// Returns a safe account identifier string for diagnostics.
-    private static String accountIdentifier(Map<Object, Object> storage) {
-        AccountID identifier = Account.identifier(storage);
-        if (identifier != null) {
-            return identifier.toString();
+    /// Returns a safe account record description for diagnostics.
+    private static String describeAccountRecord(Map<Object, Object> record) {
+        AccountID accountID = Account.getAccountID(record);
+        if (accountID != null) {
+            return accountID.toString();
         }
 
-        Object type = storage.get("type");
+        Object type = record.get("type");
         return type != null ? "{type=" + type + "}" : "<unknown>";
     }
 
@@ -255,28 +255,28 @@ public final class Accounts {
 
         // load accounts
         Account selected = null;
-        for (Map<Object, Object> storage : getAccountStorages()) {
-            Account account = parseAccount(storage);
+        for (Map<Object, Object> record : getAccountMetadataRecords()) {
+            Account account = parseAccount(record);
             if (account != null) {
                 account.setPortable(true);
                 accounts.add(account);
-                if (Boolean.TRUE.equals(storage.get("selected"))) {
+                if (Boolean.TRUE.equals(record.get("selected"))) {
                     selected = account;
                 }
             }
         }
 
-        for (Map<Object, Object> storage : getUserAccountStorages()) {
-            Account account = parseAccount(storage);
+        for (Map<Object, Object> record : getUserAccountMetadataRecords()) {
+            Account account = parseAccount(record);
             if (account != null) {
                 accounts.add(account);
             }
         }
 
-        AccountID selectedAccountReference = settings().selectedAccountProperty().get();
-        if (selected == null && selectedAccountReference != null) {
+        AccountID selectedAccountID = settings().selectedAccountProperty().get();
+        if (selected == null && selectedAccountID != null) {
             for (Account account : accounts) {
-                if (matchesSelectedAccountReference(account, selectedAccountReference)) {
+                if (matchesSelectedAccountID(account, selectedAccountID)) {
                     selected = account;
                     break;
                 }
@@ -319,7 +319,7 @@ public final class Accounts {
 
         InvalidationListener listener = o -> {
             // this method first checks whether the current selection is valid
-            // if it's valid, the underlying storage will be updated
+            // if it's valid, the underlying account records will be updated
             // otherwise, the first account will be selected as an alternative(or null if accounts is empty)
             Account account = selectedAccount.get();
             if (accounts.isEmpty()) {
@@ -342,12 +342,12 @@ public final class Accounts {
         selectedAccount.addListener(onInvalidating(() -> {
             Account account = selectedAccount.get();
             if (account != null)
-                settings().selectedAccountProperty().set(toSelectedAccountReference(account));
+                settings().selectedAccountProperty().set(selectedAccountID(account));
             else
                 settings().selectedAccountProperty().set(null);
         }));
         accounts.addListener(listener);
-        accounts.addListener(onInvalidating(Accounts::updateAccountStorages));
+        accounts.addListener(onInvalidating(Accounts::updateAccountMetadataRecords));
 
         initialized = true;
 

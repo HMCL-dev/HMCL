@@ -252,7 +252,7 @@ public final class AccountListPage extends DecoratorAnimatedPage implements Deco
             }
         }
 
-        /// Confirms overwriting the user account storage before continuing the account operation.
+        /// Confirms overwriting the user account files before continuing the account operation.
         private static void confirmOverwriteUserAccounts(Runnable action) {
             Controllers.confirmBackupAndOverwrite(i18n("account.storage.read_only"), () -> {
                 SettingsManager.forceOverwriteUserGameAccounts();
