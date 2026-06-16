@@ -28,7 +28,6 @@ import org.jackhuang.hmcl.auth.offline.OfflineAccountFactory;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.gson.JsonSchema;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
-import org.jackhuang.hmcl.util.gson.UUIDTypeAdapter;
 import org.jackhuang.hmcl.util.io.JarUtils;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
@@ -637,7 +636,7 @@ public final class LegacyConfigMigrator {
     /// Returns the current stored UUID string form, or `null` when the value is malformed.
     private static @Nullable String normalizeUUID(String uuid) {
         try {
-            return UUIDTypeAdapter.fromString(uuid).toString();
+            return UUIDs.parse(uuid).toString();
         } catch (IllegalArgumentException e) {
             return null;
         }

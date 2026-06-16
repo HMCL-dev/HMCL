@@ -1,6 +1,6 @@
 /*
  * Hello Minecraft! Launcher
- * Copyright (C) 2020  huangyuhui <huanghongxun2008@126.com> and contributors
+ * Copyright (C) 2026 huangyuhui <huanghongxun2008@126.com> and contributors
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -29,16 +29,16 @@ import org.jetbrains.annotations.Nullable;
 import java.io.IOException;
 import java.util.UUID;
 
-/// Gson adapter for standard UUID strings.
+/// Gson adapter for Mojang/Yggdrasil compact UUID strings without hyphens.
 @NotNullByDefault
-public final class UUIDTypeAdapter extends TypeAdapter<@Nullable UUID> {
+public final class UnhyphenatedUUIDTypeAdapter extends TypeAdapter<@Nullable UUID> {
     /// Shared adapter instance.
-    public static final UUIDTypeAdapter INSTANCE = new UUIDTypeAdapter();
+    public static final UnhyphenatedUUIDTypeAdapter INSTANCE = new UnhyphenatedUUIDTypeAdapter();
 
-    /// Writes a UUID as a standard lowercase string with hyphens.
+    /// Writes a UUID as a lowercase string without hyphens.
     @Override
     public void write(JsonWriter writer, @Nullable UUID value) throws IOException {
-        writer.value(value == null ? null : value.toString());
+        writer.value(value == null ? null : UUIDs.toCompactString(value));
     }
 
     /// Reads a UUID from a standard or unhyphenated UUID string.
@@ -57,6 +57,6 @@ public final class UUIDTypeAdapter extends TypeAdapter<@Nullable UUID> {
     }
 
     /// Prevents instantiation outside the shared instance.
-    private UUIDTypeAdapter() {
+    private UnhyphenatedUUIDTypeAdapter() {
     }
 }

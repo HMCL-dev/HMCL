@@ -33,6 +33,7 @@ import javafx.scene.control.Hyperlink;
 import javafx.scene.control.Label;
 import javafx.scene.control.TextInputControl;
 import javafx.scene.layout.*;
+import org.glavo.uuid.UUIDs;
 import org.jackhuang.hmcl.auth.Account;
 import org.jackhuang.hmcl.auth.AccountFactory;
 import org.jackhuang.hmcl.auth.CharacterSelector;
@@ -55,7 +56,6 @@ import org.jackhuang.hmcl.ui.SVG;
 import org.jackhuang.hmcl.ui.construct.*;
 import org.jackhuang.hmcl.upgrade.IntegrityChecker;
 import org.jackhuang.hmcl.util.StringUtils;
-import org.jackhuang.hmcl.util.gson.UUIDTypeAdapter;
 import org.jackhuang.hmcl.util.javafx.BindingMapping;
 import org.jetbrains.annotations.Nullable;
 
@@ -549,7 +549,7 @@ public class CreateAccountPane extends JFXDialogLayout implements DialogAware {
             if (factory instanceof AuthlibInjectorAccountFactory) {
                 return getAuthServer();
             } else if (factory instanceof OfflineAccountFactory) {
-                UUID uuid = txtUUID == null ? null : StringUtils.isBlank(txtUUID.getText()) ? null : UUIDTypeAdapter.fromString(txtUUID.getText());
+                UUID uuid = txtUUID == null ? null : StringUtils.isBlank(txtUUID.getText()) ? null : UUIDs.parse(txtUUID.getText());
                 return new OfflineAccountFactory.AdditionalData(uuid, null);
             } else {
                 return null;
@@ -670,7 +670,7 @@ public class CreateAccountPane extends JFXDialogLayout implements DialogAware {
             }
 
             try {
-                UUIDTypeAdapter.fromString(textField.getText());
+                UUIDs.parse(textField.getText());
                 hasErrors.set(false);
             } catch (IllegalArgumentException ignored) {
                 hasErrors.set(true);

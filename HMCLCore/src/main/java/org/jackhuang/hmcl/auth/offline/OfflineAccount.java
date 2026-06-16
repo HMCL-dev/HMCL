@@ -20,6 +20,7 @@ package org.jackhuang.hmcl.auth.offline;
 import com.google.gson.JsonNull;
 import com.google.gson.JsonObject;
 import javafx.beans.binding.ObjectBinding;
+import org.glavo.uuid.UUIDs;
 import org.jackhuang.hmcl.auth.Account;
 import org.jackhuang.hmcl.auth.AccountID;
 import org.jackhuang.hmcl.auth.AuthInfo;
@@ -33,7 +34,6 @@ import org.jackhuang.hmcl.game.Arguments;
 import org.jackhuang.hmcl.game.LaunchOptions;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.ToStringBuilder;
-import org.jackhuang.hmcl.util.gson.UUIDTypeAdapter;
 
 import java.io.IOException;
 import java.util.Map;
@@ -102,7 +102,7 @@ public class OfflineAccount extends Account {
 
     public AuthInfo logInWithoutSkin() throws AuthenticationException {
         // Using "legacy" user type here because "mojang" user type may cause "invalid session token" or "disconnected" when connecting to a game server.
-        return new AuthInfo(profileName, profileID, UUIDTypeAdapter.fromUUID(UUID.randomUUID()), AuthInfo.USER_TYPE_MSA, "{}");
+        return new AuthInfo(profileName, profileID, UUIDs.toCompactString(UUID.randomUUID()), AuthInfo.USER_TYPE_MSA, "{}");
     }
 
     @Override

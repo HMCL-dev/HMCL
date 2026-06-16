@@ -19,12 +19,12 @@ package org.jackhuang.hmcl.auth.yggdrasil;
 
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
+import org.glavo.uuid.UUIDs;
 import org.jackhuang.hmcl.auth.AuthInfo;
 import org.jackhuang.hmcl.util.Immutable;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.logging.Logger;
-import org.jackhuang.hmcl.util.gson.UUIDTypeAdapter;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
@@ -88,7 +88,7 @@ public class YggdrasilSession {
         if (profileIDText == null) {
             throw new IllegalArgumentException("profileID is missing");
         }
-        UUID profileID = UUIDTypeAdapter.fromString(profileIDText);
+        UUID profileID = UUIDs.parse(profileIDText);
         String profileName = JsonUtils.getString(privateData, "profileName", "");
         String clientToken = requireStorageString(privateData, "clientToken");
         String accessToken = requireStorageString(privateData, "accessToken");

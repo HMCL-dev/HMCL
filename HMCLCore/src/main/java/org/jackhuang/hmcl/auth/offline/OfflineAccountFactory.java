@@ -18,13 +18,13 @@
 package org.jackhuang.hmcl.auth.offline;
 
 import com.google.gson.JsonObject;
+import org.glavo.uuid.UUIDs;
 import org.jackhuang.hmcl.auth.Account;
 import org.jackhuang.hmcl.auth.AccountFactory;
 import org.jackhuang.hmcl.auth.AccountID;
 import org.jackhuang.hmcl.auth.CharacterSelector;
 import org.jackhuang.hmcl.auth.authlibinjector.AuthlibInjectorArtifactProvider;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
-import org.jackhuang.hmcl.util.gson.UUIDTypeAdapter;
 
 import java.util.UUID;
 
@@ -75,7 +75,7 @@ public final class OfflineAccountFactory extends AccountFactory<OfflineAccount> 
         }
         String profileIDText = JsonUtils.getString(metadata, "profileID");
         UUID profileID = profileIDText != null
-                ? UUIDTypeAdapter.fromString(profileIDText)
+                ? UUIDs.parse(profileIDText)
                 : getUUIDFromUserName(profileName);
         Skin skin = Skin.fromStorage(metadata.get("skin") instanceof JsonObject skinObject ? skinObject : null);
 

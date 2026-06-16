@@ -19,10 +19,10 @@ package org.jackhuang.hmcl.auth.microsoft;
 
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
+import org.glavo.uuid.UUIDs;
 import org.jackhuang.hmcl.auth.AuthInfo;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
-import org.jackhuang.hmcl.util.gson.UUIDTypeAdapter;
 import org.jackhuang.hmcl.util.logging.Logger;
 
 import java.util.UUID;
@@ -87,7 +87,7 @@ public class MicrosoftSession {
         if (profileIDText == null) {
             throw new IllegalArgumentException("profileID is missing");
         }
-        UUID profileID = UUIDTypeAdapter.fromString(profileIDText);
+        UUID profileID = UUIDs.parse(profileIDText);
         String profileName = JsonUtils.getString(privateData, "profileName", "");
         String tokenType = requireStorageString(privateData, "tokenType");
         String accessToken = requireStorageString(privateData, "accessToken");

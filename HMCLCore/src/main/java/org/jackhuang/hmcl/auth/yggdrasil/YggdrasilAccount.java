@@ -19,9 +19,9 @@ package org.jackhuang.hmcl.auth.yggdrasil;
 
 import com.google.gson.JsonObject;
 import javafx.beans.binding.ObjectBinding;
+import org.glavo.uuid.UUIDs;
 import org.jackhuang.hmcl.auth.*;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
-import org.jackhuang.hmcl.util.gson.UUIDTypeAdapter;
 import org.jackhuang.hmcl.util.javafx.BindingMapping;
 
 import java.nio.file.Path;
@@ -225,7 +225,7 @@ public abstract class YggdrasilAccount extends ClassicAccount {
     }
 
     private static String randomClientToken() {
-        return UUIDTypeAdapter.fromUUID(UUID.randomUUID());
+        return UUIDs.toCompactString(UUID.randomUUID());
     }
 
     @Override
