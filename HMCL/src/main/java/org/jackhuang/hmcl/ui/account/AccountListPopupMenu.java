@@ -66,7 +66,8 @@ public final class AccountListPopupMenu extends StackPane {
                 box.add(item);
             }
 
-            Platform.runLater(() -> box.setVvalue(Double.MIN_VALUE));
+            // https://github.com/HMCL-dev/HMCL/issues/5343
+            Platform.runLater(() -> box.setVvalue(0.0));
         };
         listener.invalidated(null);
         Accounts.getAccounts().addListener(new WeakInvalidationListener(listener));
