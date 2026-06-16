@@ -124,17 +124,32 @@ public final class Accounts {
      */
     private static boolean initialized = false;
 
-    private static Map<Object, Object> serializeAccount(Account account) {
-        Map<Object, Object> record = account.toStorage();
-        record.put("type", getLoginType(getAccountFactory(account)));
-        return record;
+    private static SerializedAccount serializeAccount(Account account) {
+        Map<Object, Object> metadata = new LinkedHashMap<>();
+        metadata.put("type", getLoginType(getAccountFactory(account)));
+        metadata.putAll(account.toMetadata());
+        return new SerializedAccount(metadata, new LinkedHashMap<>(account.toPrivateData()));
     }
 
     /// Ensures account IDs are unique across local and shared account metadata records before accounts are instantiated.
-    private static void ensureUniqueAccountIDs() {
+    private static AccountIDNormalization ensureUniqueAccountIDs() {
         Set<String> usedAccountIDs = new HashSet<>();
-        LegacyConfigMigrator.assignAccountIDs(SettingsManager.gameAccounts(), usedAccountIDs, false);
-        LegacyConfigMigrator.assignAccountIDs(SettingsManager.userGameAccounts(), usedAccountIDs, true);
+        boolean localChanged = LegacyConfigMigrator.assignAccountIDs(
+                SettingsManager.gameAccounts(),
+                usedAccountIDs,
+                false);
+        boolean sharedChanged = LegacyConfigMigrator.assignAccountIDs(
+                SettingsManager.userGameAccounts(),
+                usedAccountIDs,
+                true);
+        return new AccountIDNormalization(localChanged, sharedChanged);
+    }
+
+    /// Result of normalizing account IDs across loaded metadata stores.
+    ///
+    /// @param localChanged whether the per-workspace account metadata changed
+    /// @param sharedChanged whether the shared account metadata changed
+    private record AccountIDNormalization(boolean localChanged, boolean sharedChanged) {
     }
 
     private static void updateAccountMetadataRecords() {
@@ -142,24 +157,26 @@ public final class Accounts {
         // otherwise it might cause data loss
         if (!initialized)
             return;
-        // update account records
-
-        ArrayList<Map<Object, Object>> global = new ArrayList<>();
-        ArrayList<Map<Object, Object>> portable = new ArrayList<>();
+        ArrayList<Map<Object, Object>> globalMetadata = new ArrayList<>();
+        LinkedHashMap<AccountID, Map<Object, Object>> globalPrivateData = new LinkedHashMap<>();
+        ArrayList<Map<Object, Object>> portableMetadata = new ArrayList<>();
+        LinkedHashMap<AccountID, Map<Object, Object>> portablePrivateData = new LinkedHashMap<>();
 
         for (Account account : accounts) {
-            Map<Object, Object> record = serializeAccount(account);
-            if (account.isPortable())
-                portable.add(record);
-            else
-                global.add(record);
+            SerializedAccount serialized = serializeAccount(account);
+            if (account.isPortable()) {
+                portableMetadata.add(serialized.metadata());
+                portablePrivateData.put(account.getAccountID(), serialized.privateData());
+            } else {
+                globalMetadata.add(serialized.metadata());
+                globalPrivateData.put(account.getAccountID(), serialized.privateData());
+            }
         }
 
-        ObservableList<Map<Object, Object>> globalRecords = getUserAccountMetadataRecords();
-        if (!SettingsManager.isUserGameAccountsReadOnly() && !global.equals(globalRecords))
-            globalRecords.setAll(global);
-        if (!SettingsManager.isGameAccountsReadOnly() && !portable.equals(getAccountMetadataRecords()))
-            getAccountMetadataRecords().setAll(portable);
+        if (!SettingsManager.isUserGameAccountsReadOnly())
+            SettingsManager.updateUserGameAccounts(globalMetadata, globalPrivateData);
+        if (!SettingsManager.isGameAccountsReadOnly())
+            SettingsManager.updateGameAccounts(portableMetadata, portablePrivateData);
     }
 
     /// Returns whether the account metadata and credential files selected by the portability flag are read-only.
@@ -215,7 +232,7 @@ public final class Accounts {
         }
     }
 
-    private static Account parseAccount(Map<Object, Object> record) {
+    private static Account parseAccount(Map<Object, Object> record, boolean portable) {
         AccountFactory<?> factory = type2factory.get(record.get("type"));
         if (factory == null) {
             LOG.warning("Unrecognized account type: " + describeAccountRecord(record));
@@ -223,11 +240,19 @@ public final class Accounts {
         }
 
         try {
-            return factory.fromStorage(record);
+            AccountID accountID = Account.readAccountID(record);
+            return factory.fromStorage(record, SettingsManager.getAccountPrivateData(accountID, portable));
         } catch (Exception e) {
             LOG.warning("Failed to load account: " + describeAccountRecord(record), e);
             return null;
         }
+    }
+
+    /// Serialized account metadata and private data.
+    ///
+    /// @param metadata public metadata stored in `accounts.json`
+    /// @param privateData private account data stored in account private data
+    private record SerializedAccount(Map<Object, Object> metadata, Map<Object, Object> privateData) {
     }
 
     /// Returns a safe account record description for diagnostics.
@@ -246,12 +271,18 @@ public final class Accounts {
         if (initialized)
             throw new IllegalStateException("Already initialized");
 
-        ensureUniqueAccountIDs();
+        AccountIDNormalization accountIDNormalization = ensureUniqueAccountIDs();
+        if (accountIDNormalization.localChanged()) {
+            SettingsManager.saveGameAccountMetadataRecords();
+        }
+        if (accountIDNormalization.sharedChanged()) {
+            SettingsManager.saveUserGameAccountMetadataRecords();
+        }
 
         // load accounts
         Account selected = null;
         for (Map<Object, Object> record : getAccountMetadataRecords()) {
-            Account account = parseAccount(record);
+            Account account = parseAccount(record, true);
             if (account != null) {
                 account.setPortable(true);
                 accounts.add(account);
@@ -262,7 +293,7 @@ public final class Accounts {
         }
 
         for (Map<Object, Object> record : getUserAccountMetadataRecords()) {
-            Account account = parseAccount(record);
+            Account account = parseAccount(record, false);
             if (account != null) {
                 accounts.add(account);
             }

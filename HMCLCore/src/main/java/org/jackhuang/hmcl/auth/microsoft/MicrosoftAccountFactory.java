@@ -46,10 +46,11 @@ public class MicrosoftAccountFactory extends AccountFactory<MicrosoftAccount> {
     }
 
     @Override
-    public MicrosoftAccount fromStorage(Map<Object, Object> storage) {
-        Objects.requireNonNull(storage);
-        AccountID accountID = Account.readAccountID(storage);
-        MicrosoftSession session = MicrosoftSession.fromStorage(storage);
+    public MicrosoftAccount fromStorage(Map<Object, Object> metadata, Map<Object, Object> privateData) {
+        Objects.requireNonNull(metadata);
+        Objects.requireNonNull(privateData);
+        AccountID accountID = Account.readAccountID(metadata);
+        MicrosoftSession session = MicrosoftSession.fromStorage(metadata, privateData);
         return new MicrosoftAccount(accountID, service, session);
     }
 }

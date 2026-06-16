@@ -487,7 +487,7 @@ public final class LegacyConfigMigrator {
     /// @param accountMetadata the account metadata store to update
     /// @param usedAccountIDs canonical account ID strings already reserved by earlier stores
     /// @param userStorage whether the account metadata store is shared across workspaces
-    static void assignAccountIDs(AccountMetadataStore accountMetadata, Set<String> usedAccountIDs, boolean userStorage) {
+    static boolean assignAccountIDs(AccountMetadataStore accountMetadata, Set<String> usedAccountIDs, boolean userStorage) {
         List<Map<Object, Object>> updatedAccounts = new ArrayList<>(accountMetadata.getAccounts().size());
         boolean changed = false;
         for (Map<Object, Object> account : accountMetadata.getAccounts()) {
@@ -509,6 +509,7 @@ public final class LegacyConfigMigrator {
         if (changed) {
             accountMetadata.getAccounts().setAll(updatedAccounts);
         }
+        return changed;
     }
 
     /// Parses an account ID, returning `null` for missing or malformed values.

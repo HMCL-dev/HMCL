@@ -34,6 +34,7 @@ import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
 
 import java.nio.file.Path;
+import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
@@ -95,7 +96,27 @@ public abstract class Account implements Observable {
         throw new UnsupportedOperationException("Unsupported Operation");
     }
 
-    public abstract Map<Object, Object> toStorage();
+    /// Serializes public account metadata.
+    ///
+    /// Metadata is stored in `accounts.json` and must not contain credentials or cached private profile data.
+    public final Map<Object, Object> toMetadata() {
+        Map<Object, Object> metadata = new LinkedHashMap<>();
+        addAccountID(metadata);
+        writeMetadata(metadata);
+        return metadata;
+    }
+
+    /// Writes account-type specific public metadata.
+    ///
+    /// @param metadata the metadata map to update
+    protected abstract void writeMetadata(Map<Object, Object> metadata);
+
+    /// Serializes private account data.
+    ///
+    /// Private data is stored outside `accounts.json` and may contain credentials or cached profile data.
+    public Map<Object, Object> toPrivateData() {
+        return Map.of();
+    }
 
     /// Adds this account ID to a serialized account storage map.
     ///

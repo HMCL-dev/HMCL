@@ -55,7 +55,7 @@ public class BoundAuthlibInjectorAccountFactory extends AccountFactory<AuthlibIn
     }
 
     @Override
-    public AuthlibInjectorAccount fromStorage(Map<Object, Object> storage) {
-        return AuthlibInjectorAccountFactory.fromStorage(storage, downloader, server);
+    public AuthlibInjectorAccount fromStorage(Map<Object, Object> metadata, Map<Object, Object> privateData) {
+        return AuthlibInjectorAccountFactory.fromStorage(metadata, privateData, downloader, server);
     }
 }

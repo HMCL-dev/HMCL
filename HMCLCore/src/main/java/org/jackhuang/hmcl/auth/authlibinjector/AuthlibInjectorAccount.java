@@ -142,10 +142,9 @@ public class AuthlibInjectorAccount extends YggdrasilAccount {
     }
 
     @Override
-    public Map<Object, Object> toStorage() {
-        Map<Object, Object> map = super.toStorage();
-        map.put("serverBaseURL", server.getUrl());
-        return map;
+    protected void writeMetadata(Map<Object, Object> metadata) {
+        super.writeMetadata(metadata);
+        metadata.put("serverBaseURL", server.getUrl());
     }
 
     @Override

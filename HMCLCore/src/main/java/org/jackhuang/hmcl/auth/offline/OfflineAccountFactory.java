@@ -67,14 +67,14 @@ public final class OfflineAccountFactory extends AccountFactory<OfflineAccount> 
     }
 
     @Override
-    public OfflineAccount fromStorage(Map<Object, Object> storage) {
-        AccountID accountID = Account.readAccountID(storage);
-        String profileName = tryCast(storage.get("profileName"), String.class)
+    public OfflineAccount fromStorage(Map<Object, Object> metadata, Map<Object, Object> privateData) {
+        AccountID accountID = Account.readAccountID(metadata);
+        String profileName = tryCast(metadata.get("profileName"), String.class)
                 .orElseThrow(() -> new IllegalStateException("Offline account configuration malformed."));
-        UUID profileID = tryCast(storage.get("profileID"), String.class)
+        UUID profileID = tryCast(metadata.get("profileID"), String.class)
                 .map(UUIDTypeAdapter::fromString)
                 .orElse(getUUIDFromUserName(profileName));
-        Skin skin = Skin.fromStorage(tryCast(storage.get("skin"), Map.class).orElse(null));
+        Skin skin = Skin.fromStorage(tryCast(metadata.get("skin"), Map.class).orElse(null));
 
         return new OfflineAccount(accountID, downloader, profileName, profileID, skin);
     }

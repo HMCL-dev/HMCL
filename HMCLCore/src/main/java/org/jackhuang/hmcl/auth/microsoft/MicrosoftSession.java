@@ -82,30 +82,29 @@ public class MicrosoftSession {
         return profile != null && StringUtils.isNotBlank(profile.getName());
     }
 
-    /// Loads a Microsoft session from the current account storage format.
-    public static MicrosoftSession fromStorage(Map<?, ?> storage) {
-        UUID profileID = tryCast(storage.get("profileID"), String.class).map(UUIDTypeAdapter::fromString)
+    /// Loads a Microsoft session from persisted account metadata and private data.
+    public static MicrosoftSession fromStorage(Map<?, ?> metadata, Map<?, ?> privateData) {
+        UUID profileID = tryCast(metadata.get("profileID"), String.class).map(UUIDTypeAdapter::fromString)
                 .orElseThrow(() -> new IllegalArgumentException("profileID is missing"));
-        String profileName = tryCast(storage.get("profileName"), String.class).orElse("");
-        String tokenType = tryCast(storage.get("tokenType"), String.class)
+        String profileName = tryCast(privateData.get("profileName"), String.class).orElse("");
+        String tokenType = tryCast(privateData.get("tokenType"), String.class)
                 .orElseThrow(() -> new IllegalArgumentException("tokenType is missing"));
-        String accessToken = tryCast(storage.get("accessToken"), String.class)
+        String accessToken = tryCast(privateData.get("accessToken"), String.class)
                 .orElseThrow(() -> new IllegalArgumentException("accessToken is missing"));
-        String refreshToken = tryCast(storage.get("refreshToken"), String.class)
+        String refreshToken = tryCast(privateData.get("refreshToken"), String.class)
                 .orElseThrow(() -> new IllegalArgumentException("refreshToken is missing"));
-        Long notAfter = tryCast(storage.get("notAfter"), Number.class).map(Number::longValue).orElse(0L);
-        String userId = tryCast(storage.get("userid"), String.class)
+        Long notAfter = tryCast(privateData.get("notAfter"), Number.class).map(Number::longValue).orElse(0L);
+        String userId = tryCast(privateData.get("userid"), String.class)
                 .orElseThrow(() -> new IllegalArgumentException("userid is missing"));
         return new MicrosoftSession(tokenType, accessToken, notAfter, refreshToken, new User(userId), new GameProfile(profileID, profileName));
     }
 
-    /// Converts this session to the current account storage format.
-    public Map<Object, Object> toStorage() {
+    /// Converts this session to persisted private account data.
+    public Map<Object, Object> toPrivateData() {
         requireNonNull(profile);
         requireNonNull(user);
 
         return mapOf(
-                pair("profileID", UUIDTypeAdapter.fromUUID(profile.getId())),
                 pair("profileName", profile.getName()),
                 pair("tokenType", tokenType),
                 pair("accessToken", accessToken),

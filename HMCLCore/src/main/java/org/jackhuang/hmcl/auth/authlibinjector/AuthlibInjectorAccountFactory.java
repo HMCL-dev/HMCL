@@ -63,23 +63,28 @@ public class AuthlibInjectorAccountFactory extends AccountFactory<AuthlibInjecto
     }
 
     @Override
-    public AuthlibInjectorAccount fromStorage(Map<Object, Object> storage) {
-        Objects.requireNonNull(storage);
+    public AuthlibInjectorAccount fromStorage(Map<Object, Object> metadata, Map<Object, Object> privateData) {
+        Objects.requireNonNull(metadata);
+        Objects.requireNonNull(privateData);
 
-        String apiRoot = tryCast(storage.get("serverBaseURL"), String.class)
+        String apiRoot = tryCast(metadata.get("serverBaseURL"), String.class)
                 .orElseThrow(() -> new IllegalArgumentException("storage does not have API root."));
         AuthlibInjectorServer server = serverLookup.apply(apiRoot);
-        return fromStorage(storage, downloader, server);
+        return fromStorage(metadata, privateData, downloader, server);
     }
 
-    static AuthlibInjectorAccount fromStorage(Map<Object, Object> storage, AuthlibInjectorArtifactProvider downloader, AuthlibInjectorServer server) {
-        AccountID accountID = Account.readAccountID(storage);
-        YggdrasilSession session = YggdrasilSession.fromStorage(storage);
+    static AuthlibInjectorAccount fromStorage(
+            Map<Object, Object> metadata,
+            Map<Object, Object> privateData,
+            AuthlibInjectorArtifactProvider downloader,
+            AuthlibInjectorServer server) {
+        AccountID accountID = Account.readAccountID(metadata);
+        YggdrasilSession session = YggdrasilSession.fromStorage(metadata, privateData);
 
-        String loginName = tryCast(storage.get("loginName"), String.class)
+        String loginName = tryCast(metadata.get("loginName"), String.class)
                 .orElseThrow(() -> new IllegalArgumentException("storage does not have loginName"));
 
-        tryCast(storage.get("profileProperties"), Map.class).ifPresent(
+        tryCast(privateData.get("profileProperties"), Map.class).ifPresent(
                 it -> {
                     @SuppressWarnings("unchecked")
                     Map<String, String> properties = it;

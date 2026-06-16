@@ -99,18 +99,16 @@ public final class AccountMetadataStoreTest {
         return constructor.newInstance(privateData, file);
     }
 
-    /// Returns the reflected synchronous account metadata save method.
-    ///
-    /// @param accountPrivateDataStoreClass the private data store record class
-    /// @return the reflected save method
-    private static Method saveAccountMetadataStoreSyncMethod(Class<?> accountPrivateDataStoreClass)
+    /// Returns the reflected account metadata save method.
+    private static Method saveAccountMetadataStoreMethod()
             throws ReflectiveOperationException {
         Method method = SettingsManager.class.getDeclaredMethod(
-                "saveAccountMetadataStoreSync",
+                "saveAccountMetadataStore",
                 AccountMetadataStore.class,
                 JsonSettingFile.class,
-                accountPrivateDataStoreClass,
-                List.class);
+                List.class,
+                boolean.class,
+                boolean.class);
         method.setAccessible(true);
         return method;
     }
@@ -171,11 +169,15 @@ public final class AccountMetadataStoreTest {
             AccountMetadataStore accountMetadata = AccountMetadataStore.fromRecords(List.of(Map.<Object, Object>of(
                     "type", "microsoft",
                     "accountID", accountID(1),
-                    "profileID", "123456781234123412341234567890ab",
-                    "profileName", "Steve",
-                    "accessToken", "access-token",
-                    "refreshToken", "refresh-token"
+                    "profileID", "123456781234123412341234567890ab"
             )));
+            AccountPrivateData privateData = new AccountPrivateData();
+            privateData.putPrivateData(
+                    AccountID.parse(accountID(1)),
+                    Map.of(
+                            "profileName", "Steve",
+                            "accessToken", "access-token",
+                            "refreshToken", "refresh-token"));
             JsonSettingFile<AccountMetadataStore> metadataFile = new JsonSettingFile<>(
                     metadataPath,
                     "test account metadata",
@@ -188,16 +190,17 @@ public final class AccountMetadataStoreTest {
                     AccountPrivateData.class,
                     AccountPrivateData.CURRENT_SCHEMA,
                     AccountPrivateData::new);
-            Object privateDataStore = accountPrivateDataStore(new AccountPrivateData(), privateDataFile);
-            Method saveMethod = saveAccountMetadataStoreSyncMethod(privateDataStore.getClass());
+            Object privateDataStore = accountPrivateDataStore(privateData, privateDataFile);
+            Method saveMethod = saveAccountMetadataStoreMethod();
 
             InvocationTargetException exception = assertThrows(InvocationTargetException.class,
                     () -> saveMethod.invoke(
                             null,
                             accountMetadata,
                             metadataFile,
-                            privateDataStore,
-                            List.of(privateDataStore)));
+                            List.of(privateDataStore),
+                            true,
+                            true));
 
             assertInstanceOf(IOException.class, exception.getCause());
             assertFalse(Files.exists(metadataPath));
@@ -493,7 +496,8 @@ public final class AccountMetadataStoreTest {
     @Test
     public void loadsOnlineSessionsWithoutProfileNameAsRefreshRequired() {
         MicrosoftSession microsoftSession = MicrosoftSession.fromStorage(Map.of(
-                "profileID", "00000000000000000000000000000001",
+                "profileID", "00000000000000000000000000000001"
+        ), Map.of(
                 "tokenType", "Bearer",
                 "accessToken", "access-token",
                 "refreshToken", "refresh-token",
@@ -502,16 +506,17 @@ public final class AccountMetadataStoreTest {
         assertFalse(microsoftSession.hasProfileName());
 
         YggdrasilSession yggdrasilSession = YggdrasilSession.fromStorage(Map.of(
-                "profileID", "00000000000000000000000000000001",
+                "profileID", "00000000000000000000000000000001"
+        ), Map.of(
                 "accessToken", "access-token",
                 "clientToken", "client-token"
         ));
         assertFalse(yggdrasilSession.hasProfileName());
     }
 
-    /// Tests restoring private fields from the private data store into account metadata.
+    /// Tests finding private fields by account ID.
     @Test
-    public void mergesPrivateDataIntoAccountMetadata() {
+    public void findsPrivateDataByAccountID() {
         AccountPrivateData privateData = new AccountPrivateData();
         List<Map<Object, Object>> metadataAccounts = privateData.replaceFromAccountRecords(List.of(Map.of(
                 "type", "microsoft",
@@ -521,18 +526,20 @@ public final class AccountMetadataStoreTest {
                 "accessToken", "access-token",
                 "refreshToken", "refresh-token"
         )));
-        AccountMetadataStore accountMetadata = AccountMetadataStore.fromRecords(metadataAccounts);
+        Map<Object, Object> account = metadataAccounts.get(0);
+        AccountID accountID = Objects.requireNonNull(Account.getAccountID(account));
 
-        AccountPrivateData.mergeInto(accountMetadata, List.of(privateData));
-        Map<Object, Object> account = accountMetadata.getAccounts().get(0);
+        Map<Object, Object> accountPrivateData =
+                Objects.requireNonNull(AccountPrivateData.findPrivateData(accountID, List.of(privateData)));
 
-        assertEquals("access-token", account.get("accessToken"));
-        assertEquals("refresh-token", account.get("refreshToken"));
+        assertFalse(account.containsKey("accessToken"));
+        assertEquals("access-token", accountPrivateData.get("accessToken"));
+        assertEquals("refresh-token", accountPrivateData.get("refreshToken"));
     }
 
-    /// Tests restoring private fields from the first matching private data store.
+    /// Tests finding private fields from the first matching private data store.
     @Test
-    public void mergesPrivateDataFromMultipleStoresInOrder() {
+    public void findsPrivateDataFromMultipleStoresInOrder() {
         AccountPrivateData preferredPrivateData = new AccountPrivateData();
         preferredPrivateData.replaceFromAccountRecords(List.of(Map.of(
                 "type", "microsoft",
@@ -551,16 +558,20 @@ public final class AccountMetadataStoreTest {
                 "accessToken", "fallback-token"
         )));
 
-        AccountMetadataStore accountMetadata = AccountMetadataStore.fromRecords(metadataAccounts);
-        AccountPrivateData.mergeInto(accountMetadata, List.of(new AccountPrivateData(), fallbackPrivateData));
+        AccountID accountID = Objects.requireNonNull(Account.getAccountID(metadataAccounts.get(0)));
+        Map<Object, Object> fallback =
+                Objects.requireNonNull(AccountPrivateData.findPrivateData(
+                        accountID,
+                        List.of(new AccountPrivateData(), fallbackPrivateData)));
 
-        Map<Object, Object> account = accountMetadata.getAccounts().get(0);
-        assertEquals("fallback-token", account.get("accessToken"));
+        assertEquals("fallback-token", fallback.get("accessToken"));
 
-        account.remove("accessToken");
-        AccountPrivateData.mergeInto(accountMetadata, List.of(preferredPrivateData, fallbackPrivateData));
+        Map<Object, Object> preferred =
+                Objects.requireNonNull(AccountPrivateData.findPrivateData(
+                        accountID,
+                        List.of(preferredPrivateData, fallbackPrivateData)));
 
-        assertEquals("preferred-token", account.get("accessToken"));
+        assertEquals("preferred-token", preferred.get("accessToken"));
     }
 
     /// Tests that account private data serializes as one protected payload.

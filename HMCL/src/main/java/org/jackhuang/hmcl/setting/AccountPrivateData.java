@@ -144,33 +144,12 @@ final class AccountPrivateData extends ObservableSetting implements JsonSchemaSe
         this.backupOnNextSave = backupOnNextSave;
     }
 
-    /// Merges private data from the given private data stores into account metadata records.
-    ///
-    /// Private data stores are searched in order, so callers can prefer the file paired with the account metadata
-    /// file while still accepting private data from other stores.
-    ///
-    /// @param accountMetadata account metadata records to update in place
-    /// @param privateDataStores private data stores searched for matching private fields
-    static void mergeInto(AccountMetadataStore accountMetadata, List<AccountPrivateData> privateDataStores) {
-        for (Map<Object, Object> account : accountMetadata.getAccounts()) {
-            @Nullable AccountID accountID = Account.getAccountID(account);
-            if (accountID == null) {
-                continue;
-            }
-
-            @Nullable Map<Object, Object> accountPrivateData = findPrivateData(accountID, privateDataStores);
-            if (accountPrivateData != null) {
-                account.putAll(accountPrivateData);
-            }
-        }
-    }
-
     /// Finds the first private data entry matching an account ID.
     ///
     /// @param accountID the stable account ID
     /// @param privateDataStores private data stores searched in order
     /// @return the first matching private data map, or `null` if no store contains one
-    private static @Nullable Map<Object, Object> findPrivateData(
+    static @Nullable Map<Object, Object> findPrivateData(
             AccountID accountID,
             List<AccountPrivateData> privateDataStores) {
         for (AccountPrivateData privateDataStore : privateDataStores) {
@@ -182,9 +161,9 @@ final class AccountPrivateData extends ObservableSetting implements JsonSchemaSe
         return null;
     }
 
-    /// Replaces this private data store from full account records and returns metadata-only records.
+    /// Replaces this private data store from legacy full account records and returns metadata-only records.
     ///
-    /// @param accountRecords full account records containing both metadata and private data
+    /// @param accountRecords legacy full account records containing both metadata and private data
     /// @return metadata-only account records
     List<Map<Object, Object>> replaceFromAccountRecords(List<Map<Object, Object>> accountRecords) {
         ExtractedPrivateData extracted = extractFromAccountRecords(accountRecords);
@@ -193,9 +172,9 @@ final class AccountPrivateData extends ObservableSetting implements JsonSchemaSe
         return extracted.metadataAccounts();
     }
 
-    /// Extracts private data from full account records.
+    /// Extracts private data from legacy full account records.
     ///
-    /// @param accountRecords full account records containing both metadata and private data
+    /// @param accountRecords legacy full account records containing both metadata and private data
     /// @return extracted metadata, account IDs, and private data
     static ExtractedPrivateData extractFromAccountRecords(List<Map<Object, Object>> accountRecords) {
         List<Map<Object, Object>> metadataAccounts = new ArrayList<>(accountRecords.size());
@@ -269,7 +248,7 @@ final class AccountPrivateData extends ObservableSetting implements JsonSchemaSe
         }
     }
 
-    /// Private data extracted from full account records.
+    /// Private data extracted from legacy full account records.
     ///
     /// @param metadataAccounts account entries with private fields removed
     /// @param accountIDs account IDs for all account entries that can be matched to private data

@@ -82,26 +82,26 @@ public class YggdrasilSession {
         return selectedProfile != null && StringUtils.isNotBlank(selectedProfile.getName());
     }
 
-    public static YggdrasilSession fromStorage(Map<?, ?> storage) {
-        Objects.requireNonNull(storage);
+    public static YggdrasilSession fromStorage(Map<?, ?> metadata, Map<?, ?> privateData) {
+        Objects.requireNonNull(metadata);
+        Objects.requireNonNull(privateData);
 
-        UUID profileID = tryCast(storage.get("profileID"), String.class).map(UUIDTypeAdapter::fromString).orElseThrow(() -> new IllegalArgumentException("profileID is missing"));
-        String profileName = tryCast(storage.get("profileName"), String.class).orElse("");
-        String clientToken = tryCast(storage.get("clientToken"), String.class).orElseThrow(() -> new IllegalArgumentException("clientToken is missing"));
-        String accessToken = tryCast(storage.get("accessToken"), String.class).orElseThrow(() -> new IllegalArgumentException("accessToken is missing"));
+        UUID profileID = tryCast(metadata.get("profileID"), String.class).map(UUIDTypeAdapter::fromString).orElseThrow(() -> new IllegalArgumentException("profileID is missing"));
+        String profileName = tryCast(privateData.get("profileName"), String.class).orElse("");
+        String clientToken = tryCast(privateData.get("clientToken"), String.class).orElseThrow(() -> new IllegalArgumentException("clientToken is missing"));
+        String accessToken = tryCast(privateData.get("accessToken"), String.class).orElseThrow(() -> new IllegalArgumentException("accessToken is missing"));
         @SuppressWarnings("unchecked")
-        Map<String, String> userProperties = tryCast(storage.get("userProperties"), Map.class).orElse(null);
+        Map<String, String> userProperties = tryCast(privateData.get("userProperties"), Map.class).orElse(null);
         return new YggdrasilSession(clientToken, accessToken, new GameProfile(profileID, profileName), null, userProperties);
     }
 
-    public Map<Object, Object> toStorage() {
+    public Map<Object, Object> toPrivateData() {
         if (selectedProfile == null)
             throw new IllegalStateException("No character is selected");
 
         return mapOf(
                 pair("clientToken", clientToken),
                 pair("accessToken", accessToken),
-                pair("profileID", UUIDTypeAdapter.fromUUID(selectedProfile.getId())),
                 pair("profileName", selectedProfile.getName()),
                 pair("userProperties", userProperties));
     }

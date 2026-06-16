@@ -42,8 +42,6 @@ import java.util.concurrent.CompletionException;
 import java.util.concurrent.ExecutionException;
 
 import static java.util.Objects.requireNonNull;
-import static org.jackhuang.hmcl.util.Lang.mapOf;
-import static org.jackhuang.hmcl.util.Pair.pair;
 
 /**
  *
@@ -189,14 +187,10 @@ public class OfflineAccount extends Account {
     }
 
     @Override
-    public Map<Object, Object> toStorage() {
-        Map<Object, Object> storage = mapOf(
-                pair("profileID", UUIDTypeAdapter.fromUUID(profileID)),
-                pair("profileName", profileName),
-                pair("skin", skin == null ? null : skin.toStorage())
-        );
-        addAccountID(storage);
-        return storage;
+    protected void writeMetadata(Map<Object, Object> metadata) {
+        metadata.put("profileID", UUIDTypeAdapter.fromUUID(profileID));
+        metadata.put("profileName", profileName);
+        metadata.put("skin", skin == null ? null : skin.toStorage());
     }
 
     @Override

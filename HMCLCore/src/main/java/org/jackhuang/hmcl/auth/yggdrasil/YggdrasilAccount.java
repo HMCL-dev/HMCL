@@ -174,14 +174,17 @@ public abstract class YggdrasilAccount extends ClassicAccount {
     }
 
     @Override
-    public Map<Object, Object> toStorage() {
-        Map<Object, Object> storage = new HashMap<>();
-        storage.put("loginName", loginName);
-        storage.putAll(session.toStorage());
+    protected void writeMetadata(Map<Object, Object> metadata) {
+        metadata.put("loginName", loginName);
+        metadata.put("profileID", UUIDTypeAdapter.fromUUID(profileID));
+    }
+
+    @Override
+    public Map<Object, Object> toPrivateData() {
+        Map<Object, Object> privateData = new HashMap<>(session.toPrivateData());
         service.getProfileRepository().getImmediately(profileID).ifPresent(profile ->
-                storage.put("profileProperties", profile.getProperties()));
-        addAccountID(storage);
-        return storage;
+                privateData.put("profileProperties", profile.getProperties()));
+        return privateData;
     }
 
     public YggdrasilService getYggdrasilService() {

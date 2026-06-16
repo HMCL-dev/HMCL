@@ -22,6 +22,7 @@ import org.jackhuang.hmcl.auth.*;
 import org.jackhuang.hmcl.auth.yggdrasil.Texture;
 import org.jackhuang.hmcl.auth.yggdrasil.TextureType;
 import org.jackhuang.hmcl.auth.yggdrasil.YggdrasilService;
+import org.jackhuang.hmcl.util.gson.UUIDTypeAdapter;
 import org.jackhuang.hmcl.util.javafx.BindingMapping;
 
 import java.nio.file.Path;
@@ -136,10 +137,13 @@ public final class MicrosoftAccount extends OAuthAccount {
     }
 
     @Override
-    public Map<Object, Object> toStorage() {
-        Map<Object, Object> storage = session.toStorage();
-        addAccountID(storage);
-        return storage;
+    protected void writeMetadata(Map<Object, Object> metadata) {
+        metadata.put("profileID", UUIDTypeAdapter.fromUUID(getProfileID()));
+    }
+
+    @Override
+    public Map<Object, Object> toPrivateData() {
+        return session.toPrivateData();
     }
 
     public MicrosoftService getService() {
