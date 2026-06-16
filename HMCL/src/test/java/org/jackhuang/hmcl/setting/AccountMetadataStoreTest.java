@@ -205,10 +205,10 @@ public final class AccountMetadataStoreTest {
 
         AccountPrivateData.ExtractedPrivateData extracted =
                 AccountPrivateData.extractFromAccountRecords(accountMetadata.getAccounts());
-        assertEquals(3, extracted.identifiers().size());
-        AccountID microsoftIdentifier = Objects.requireNonNull(Account.getAccountID(microsoftAccount));
-        assertEquals(microsoftAccount.get("accountID"), microsoftIdentifier.toString());
-        assertEquals("access-token", extracted.privateData().get(microsoftIdentifier).get("accessToken"));
+        assertEquals(3, extracted.accountIDs().size());
+        AccountID microsoftAccountID = Objects.requireNonNull(Account.getAccountID(microsoftAccount));
+        assertEquals(microsoftAccount.get("accountID"), microsoftAccountID.toString());
+        assertEquals("access-token", extracted.privateData().get(microsoftAccountID).get("accessToken"));
     }
 
     /// Tests replacing duplicate account IDs across local and shared account metadata stores.
@@ -266,7 +266,7 @@ public final class AccountMetadataStoreTest {
                 "userid", "user-id"
         )));
         Map<Object, Object> metadata = metadataAccounts.get(0);
-        AccountID identifier = Objects.requireNonNull(Account.getAccountID(metadata));
+        AccountID accountID = Objects.requireNonNull(Account.getAccountID(metadata));
 
         assertEquals("microsoft", metadata.get("type"));
         assertEquals("00000000000000000000000000000001", metadata.get("profileID"));
@@ -277,12 +277,12 @@ public final class AccountMetadataStoreTest {
         assertFalse(metadata.containsKey("tokenType"));
         assertFalse(metadata.containsKey("notAfter"));
         assertFalse(metadata.containsKey("userid"));
-        assertEquals("access-token", privateData.getPrivateData().get(identifier).get("accessToken"));
-        assertEquals("refresh-token", privateData.getPrivateData().get(identifier).get("refreshToken"));
-        assertEquals("Steve", privateData.getPrivateData().get(identifier).get("profileName"));
-        assertEquals("Bearer", privateData.getPrivateData().get(identifier).get("tokenType"));
-        assertEquals(1234L, privateData.getPrivateData().get(identifier).get("notAfter"));
-        assertEquals("user-id", privateData.getPrivateData().get(identifier).get("userid"));
+        assertEquals("access-token", privateData.getPrivateData().get(accountID).get("accessToken"));
+        assertEquals("refresh-token", privateData.getPrivateData().get(accountID).get("refreshToken"));
+        assertEquals("Steve", privateData.getPrivateData().get(accountID).get("profileName"));
+        assertEquals("Bearer", privateData.getPrivateData().get(accountID).get("tokenType"));
+        assertEquals(1234L, privateData.getPrivateData().get(accountID).get("notAfter"));
+        assertEquals("user-id", privateData.getPrivateData().get(accountID).get("userid"));
     }
 
     /// Tests moving Yggdrasil private fields from account metadata into the private data store.
@@ -300,18 +300,18 @@ public final class AccountMetadataStoreTest {
                 "userProperties", Map.of("preferredLanguage", "en_US")
         )));
         Map<Object, Object> metadata = metadataAccounts.get(0);
-        AccountID identifier = Objects.requireNonNull(Account.getAccountID(metadata));
+        AccountID accountID = Objects.requireNonNull(Account.getAccountID(metadata));
 
         assertFalse(metadata.containsKey("accessToken"));
         assertFalse(metadata.containsKey("clientToken"));
         assertFalse(metadata.containsKey("profileName"));
         assertFalse(metadata.containsKey("userProperties"));
-        assertEquals("access-token", privateData.getPrivateData().get(identifier).get("accessToken"));
-        assertEquals("client-token", privateData.getPrivateData().get(identifier).get("clientToken"));
-        assertEquals("Steve", privateData.getPrivateData().get(identifier).get("profileName"));
+        assertEquals("access-token", privateData.getPrivateData().get(accountID).get("accessToken"));
+        assertEquals("client-token", privateData.getPrivateData().get(accountID).get("clientToken"));
+        assertEquals("Steve", privateData.getPrivateData().get(accountID).get("profileName"));
         assertEquals(
                 Map.of("preferredLanguage", "en_US"),
-                privateData.getPrivateData().get(identifier).get("userProperties"));
+                privateData.getPrivateData().get(accountID).get("userProperties"));
     }
 
     /// Tests moving authlib-injector profile cache fields into the private data store.
@@ -328,13 +328,13 @@ public final class AccountMetadataStoreTest {
                 "profileProperties", Map.of("textures", "texture-data")
         )));
         Map<Object, Object> metadata = metadataAccounts.get(0);
-        AccountID identifier = Objects.requireNonNull(Account.getAccountID(metadata));
+        AccountID accountID = Objects.requireNonNull(Account.getAccountID(metadata));
 
         assertFalse(metadata.containsKey("profileProperties"));
         assertFalse(metadata.containsKey("profileName"));
         assertEquals(Map.of("textures", "texture-data"),
-                privateData.getPrivateData().get(identifier).get("profileProperties"));
-        assertEquals("Steve", privateData.getPrivateData().get(identifier).get("profileName"));
+                privateData.getPrivateData().get(accountID).get("profileProperties"));
+        assertEquals("Steve", privateData.getPrivateData().get(accountID).get("profileName"));
     }
 
     /// Tests loading online account sessions that must refresh because their profile name is missing.
@@ -456,19 +456,19 @@ public final class AccountMetadataStoreTest {
                     "accessToken", "access-token",
                     "refreshToken", "refresh-token"
             )));
-            AccountID identifier = Objects.requireNonNull(Account.getAccountID(metadataAccounts.get(0)));
+            AccountID accountID = Objects.requireNonNull(Account.getAccountID(metadataAccounts.get(0)));
 
             JsonObject serialized = JsonParser.parseString(
                     LauncherSettings.SETTINGS_GSON.toJson(privateData, AccountPrivateData.class)).getAsJsonObject();
             JsonObject payload = serialized.getAsJsonObject("payload");
             JsonObject item = payload.getAsJsonArray("entries").get(0).getAsJsonObject();
             JsonObject entryPrivateData = item.getAsJsonObject("privateData");
-            JsonElement serializedIdentifier = item.get("identifier");
+            JsonElement serializedAccountID = item.get("accountID");
 
             assertEquals(AccountPrivateData.CURRENT_SCHEMA.url(),
                     serialized.get(JsonSchema.PROPERTY_SCHEMA).getAsString());
             assertEquals("plain", serialized.get("protection").getAsString());
-            assertEquals(identifier.toString(), serializedIdentifier.getAsString());
+            assertEquals(accountID.toString(), serializedAccountID.getAsString());
             assertEquals("access-token", entryPrivateData.get("accessToken").getAsString());
             assertEquals("refresh-token", entryPrivateData.get("refreshToken").getAsString());
             assertEquals("Steve", entryPrivateData.get("profileName").getAsString());
@@ -476,8 +476,8 @@ public final class AccountMetadataStoreTest {
             AccountPrivateData deserialized = Objects.requireNonNull(
                     LauncherSettings.SETTINGS_GSON.fromJson(serialized, AccountPrivateData.class));
 
-            assertEquals("access-token", deserialized.getPrivateData().get(identifier).get("accessToken"));
-            assertEquals("refresh-token", deserialized.getPrivateData().get(identifier).get("refreshToken"));
+            assertEquals("access-token", deserialized.getPrivateData().get(accountID).get("accessToken"));
+            assertEquals("refresh-token", deserialized.getPrivateData().get(accountID).get("refreshToken"));
         } finally {
             restoreSystemProperty(AccountPrivateData.PROTECTION_PROPERTY, previous);
         }
@@ -498,16 +498,16 @@ public final class AccountMetadataStoreTest {
                     "accessToken", "access-token",
                     "refreshToken", "refresh-token"
             )));
-            AccountID identifier = Objects.requireNonNull(Account.getAccountID(metadataAccounts.get(0)));
+            AccountID accountID = Objects.requireNonNull(Account.getAccountID(metadataAccounts.get(0)));
             JsonObject serialized = JsonParser.parseString(
                     LauncherSettings.SETTINGS_GSON.toJson(privateData, AccountPrivateData.class)).getAsJsonObject();
 
             AccountPrivateData deserialized = Objects.requireNonNull(
                     LauncherSettings.SETTINGS_GSON.fromJson(serialized, AccountPrivateData.class));
 
-            assertEquals("access-token", deserialized.getPrivateData().get(identifier).get("accessToken"));
-            assertEquals("refresh-token", deserialized.getPrivateData().get(identifier).get("refreshToken"));
-            assertEquals("Steve", deserialized.getPrivateData().get(identifier).get("profileName"));
+            assertEquals("access-token", deserialized.getPrivateData().get(accountID).get("accessToken"));
+            assertEquals("refresh-token", deserialized.getPrivateData().get(accountID).get("refreshToken"));
+            assertEquals("Steve", deserialized.getPrivateData().get(accountID).get("profileName"));
         } finally {
             restoreSystemProperty(AccountPrivateData.PROTECTION_PROPERTY, previous);
         }

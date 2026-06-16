@@ -121,21 +121,11 @@ public abstract class Account implements Observable {
         this.portable.set(value);
     }
 
-    /// Returns the stable account identifier.
-    public final AccountID toIdentifier() {
-        return accountID;
-    }
-
-    /// Returns whether the given identifier matches this account.
-    public boolean matchIdentifier(AccountID accountID) {
-        return this.accountID.equals(accountID);
-    }
-
-    /// Returns the stable account identifier for the given account storage.
+    /// Returns the stable account ID for the given serialized account record.
     ///
-    /// @param storage the account storage map
-    /// @return the stable account identifier, or `null` if the account cannot be identified
-    public static @Nullable AccountID identifier(Map<?, ?> storage) {
+    /// @param storage the serialized account record
+    /// @return the stable account ID, or `null` if the account record has no valid account ID
+    public static @Nullable AccountID getAccountID(Map<?, ?> storage) {
         @Nullable String accountID = JsonUtils.getString(storage, PROPERTY_ACCOUNT_ID);
         if (accountID == null) {
             return null;

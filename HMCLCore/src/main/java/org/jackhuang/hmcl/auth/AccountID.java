@@ -26,7 +26,7 @@ import org.jetbrains.annotations.NotNullByDefault;
 import java.util.Objects;
 import java.util.UUID;
 
-/// Stable identifier for a persisted account entry.
+/// Stable ID for a persisted account entry.
 ///
 /// This ID identifies the launcher account record itself. It must not be confused with a Minecraft profile ID,
 /// login name, server URL, or any other authentication detail that may be shared by more than one account record.

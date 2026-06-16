@@ -130,16 +130,6 @@ public final class Accounts {
         return record;
     }
 
-    /// Returns the selected account ID stored in launcher settings.
-    private static AccountID selectedAccountID(Account account) {
-        return account.getAccountID();
-    }
-
-    /// Returns whether the given account matches the selected account ID.
-    private static boolean matchesSelectedAccountID(Account account, AccountID accountID) {
-        return account.matchesAccountID(accountID);
-    }
-
     /// Ensures account IDs are unique across local and shared account metadata records before accounts are instantiated.
     private static void ensureUniqueAccountIDs() {
         Set<String> usedAccountIDs = new HashSet<>();
@@ -276,7 +266,7 @@ public final class Accounts {
         AccountID selectedAccountID = settings().selectedAccountProperty().get();
         if (selected == null && selectedAccountID != null) {
             for (Account account : accounts) {
-                if (matchesSelectedAccountID(account, selectedAccountID)) {
+                if (account.getAccountID().equals(selectedAccountID)) {
                     selected = account;
                     break;
                 }
@@ -342,7 +332,7 @@ public final class Accounts {
         selectedAccount.addListener(onInvalidating(() -> {
             Account account = selectedAccount.get();
             if (account != null)
-                settings().selectedAccountProperty().set(selectedAccountID(account));
+                settings().selectedAccountProperty().set(account.getAccountID());
             else
                 settings().selectedAccountProperty().set(null);
         }));
