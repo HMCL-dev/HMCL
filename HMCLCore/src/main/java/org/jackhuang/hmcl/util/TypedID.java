@@ -65,52 +65,7 @@ public interface TypedID {
             throw new IllegalArgumentException("Expected typed ID prefix '" + expectedPrefix + "'");
         }
 
-        String uuid = value.substring(expectedPrefix.length());
-        if (!isCanonicalUUID(uuid)) {
-            throw new IllegalArgumentException("Expected canonical UUID payload");
-        }
-
-        return UUIDs.parse(uuid);
-    }
-
-    /// Returns whether the string is a canonical hyphenated UUID.
-    ///
-    /// @param uuid the UUID string to validate
-    /// @return whether the string has the canonical UUID layout
-    private static boolean isCanonicalUUID(String uuid) {
-        if (uuid.length() != 36) {
-            return false;
-        }
-
-        for (int i = 0; i < uuid.length(); i++) {
-            char ch = uuid.charAt(i);
-            if (isUUIDHyphenIndex(i)) {
-                if (ch != '-') {
-                    return false;
-                }
-            } else if (!isHexDigit(ch)) {
-                return false;
-            }
-        }
-        return true;
-    }
-
-    /// Returns whether a canonical UUID has a hyphen at the given index.
-    ///
-    /// @param index the UUID string index
-    /// @return whether the index must contain a hyphen
-    private static boolean isUUIDHyphenIndex(int index) {
-        return index == 8 || index == 13 || index == 18 || index == 23;
-    }
-
-    /// Returns whether the character is an ASCII hexadecimal digit.
-    ///
-    /// @param ch the character to test
-    /// @return whether the character is a hexadecimal digit
-    private static boolean isHexDigit(char ch) {
-        return ch >= '0' && ch <= '9'
-                || ch >= 'a' && ch <= 'f'
-                || ch >= 'A' && ch <= 'F';
+        return UUIDs.parse(value.substring(expectedPrefix.length()));
     }
 
     /// Gson adapter for typed IDs with a fixed prefix.
