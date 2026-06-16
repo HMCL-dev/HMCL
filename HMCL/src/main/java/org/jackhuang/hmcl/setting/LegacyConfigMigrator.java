@@ -595,8 +595,9 @@ public final class LegacyConfigMigrator {
                 if (!account.has("profileID")) {
                     @Nullable String profileName = JsonUtils.getString(account, "profileName");
                     if (profileName != null) {
-                        account.addProperty("profileID", UUIDTypeAdapter.fromUUID(
-                                OfflineAccountFactory.getUUIDFromUserName(profileName)));
+                        account.addProperty(
+                                "profileID",
+                                OfflineAccountFactory.getUUIDFromUserName(profileName).toString());
                     }
                 }
             }
@@ -616,6 +617,29 @@ public final class LegacyConfigMigrator {
             }
             default -> {
             }
+        }
+        normalizeProfileID(account);
+    }
+
+    /// Normalizes a profile UUID member to the current stored UUID string form.
+    private static void normalizeProfileID(JsonObject account) {
+        @Nullable String profileID = JsonUtils.getString(account, "profileID");
+        if (profileID == null) {
+            return;
+        }
+
+        @Nullable String normalized = normalizeUUID(profileID);
+        if (normalized != null) {
+            account.addProperty("profileID", normalized);
+        }
+    }
+
+    /// Returns the current stored UUID string form, or `null` when the value is malformed.
+    private static @Nullable String normalizeUUID(String uuid) {
+        try {
+            return UUIDTypeAdapter.fromString(uuid).toString();
+        } catch (IllegalArgumentException e) {
+            return null;
         }
     }
 
@@ -776,11 +800,7 @@ public final class LegacyConfigMigrator {
 
     /// Formats a stored UUID the same way legacy account identifiers did.
     private static @Nullable String formatLegacyUUID(String uuid) {
-        try {
-            return UUIDTypeAdapter.fromString(uuid).toString();
-        } catch (IllegalArgumentException e) {
-            return null;
-        }
+        return normalizeUUID(uuid);
     }
 
     /// Moves one JSON member from the source object to the target object.

@@ -31,7 +31,6 @@ import org.jackhuang.hmcl.auth.offline.OfflineAccountFactory;
 import org.jackhuang.hmcl.auth.yggdrasil.YggdrasilSession;
 import org.jackhuang.hmcl.util.gson.JsonSchema;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
-import org.jackhuang.hmcl.util.gson.UUIDTypeAdapter;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
 import org.junit.jupiter.api.Test;
@@ -148,7 +147,7 @@ public final class AccountMetadataStoreTest {
                 "type", "offline",
                 "accountID", accountID(1),
                 "profileName", "Steve",
-                "profileID", "5627dd98e6be3c21b8a8e92344183641"
+                "profileID", "5627dd98-e6be-3c21-b8a8-e92344183641"
         )));
 
         JsonObject serialized = JsonParser.parseString(
@@ -185,7 +184,7 @@ public final class AccountMetadataStoreTest {
             AccountMetadataStore accountMetadata = AccountMetadataStore.fromRecords(List.of(jsonObject(
                     "type", "microsoft",
                     "accountID", accountID(1),
-                    "profileID", "123456781234123412341234567890ab"
+                    "profileID", "12345678-1234-1234-1234-1234567890ab"
             )));
             AccountPrivateData privateData = new AccountPrivateData();
             privateData.putPrivateData(
@@ -241,7 +240,7 @@ public final class AccountMetadataStoreTest {
             AccountMetadataStore accountMetadata = AccountMetadataStore.fromRecords(List.of(jsonObject(
                     "type", "microsoft",
                     "accountID", accountID(1),
-                    "profileID", "123456781234123412341234567890ab",
+                    "profileID", "12345678-1234-1234-1234-1234567890ab",
                     "profileName", "Steve",
                     "accessToken", "access-token",
                     "refreshToken", "refresh-token"
@@ -285,7 +284,7 @@ public final class AccountMetadataStoreTest {
                         "type", "offline",
                         "accountID", accountID(1),
                         "profileName", "Steve",
-                        "profileID", "5627dd98e6be3c21b8a8e92344183641")
+                        "profileID", "5627dd98-e6be-3c21-b8a8-e92344183641")
         ));
 
         JsonObject serialized = JsonParser.parseString(
@@ -297,7 +296,7 @@ public final class AccountMetadataStoreTest {
         assertEquals("offline", accounts.get(0).getAsJsonObject().get("type").getAsString());
         assertEquals(accountID(1), accounts.get(0).getAsJsonObject().get("accountID").getAsString());
         assertEquals("Steve", accounts.get(0).getAsJsonObject().get("profileName").getAsString());
-        assertEquals("5627dd98e6be3c21b8a8e92344183641",
+        assertEquals("5627dd98-e6be-3c21-b8a8-e92344183641",
                 accounts.get(0).getAsJsonObject().get("profileID").getAsString());
     }
 
@@ -324,7 +323,7 @@ public final class AccountMetadataStoreTest {
         assertEquals(1, accountMetadata.getAccounts().size());
         assertEquals("offline", JsonUtils.getString(accountMetadata.getAccounts().get(0), "type"));
         assertEquals("Alex", JsonUtils.getString(accountMetadata.getAccounts().get(0), "profileName"));
-        assertEquals(UUIDTypeAdapter.fromUUID(OfflineAccountFactory.getUUIDFromUserName("Alex")),
+        assertEquals(OfflineAccountFactory.getUUIDFromUserName("Alex").toString(),
                 JsonUtils.getString(accountMetadata.getAccounts().get(0), "profileID"));
         assertEquals(legacyAccountID(false, "Alex:Alex"),
                 JsonUtils.getString(accountMetadata.getAccounts().get(0), "accountID"));
@@ -352,24 +351,26 @@ public final class AccountMetadataStoreTest {
 
         JsonObject offlineAccount = accountMetadata.getAccounts().get(0);
         assertEquals("Alex", JsonUtils.getString(offlineAccount, "profileName"));
-        assertEquals(UUIDTypeAdapter.fromUUID(OfflineAccountFactory.getUUIDFromUserName("Alex")),
+        assertEquals(OfflineAccountFactory.getUUIDFromUserName("Alex").toString(),
                 JsonUtils.getString(offlineAccount, "profileID"));
         assertEquals(legacyAccountID(false, "Alex:Alex"), JsonUtils.getString(offlineAccount, "accountID"));
         assertFalse(offlineAccount.has("username"));
         assertFalse(offlineAccount.has("uuid"));
 
         JsonObject microsoftAccount = accountMetadata.getAccounts().get(1);
-        assertEquals("00000000000000000000000000000001", JsonUtils.getString(microsoftAccount, "profileID"));
+        assertEquals("00000000-0000-0000-0000-000000000001", JsonUtils.getString(microsoftAccount, "profileID"));
         assertEquals("Steve", JsonUtils.getString(microsoftAccount, "profileName"));
-        assertNotNull(JsonUtils.getString(microsoftAccount, "accountID"));
+        assertEquals(legacyAccountID(false, "microsoft:00000000-0000-0000-0000-000000000001"),
+                JsonUtils.getString(microsoftAccount, "accountID"));
         assertFalse(microsoftAccount.has("uuid"));
         assertFalse(microsoftAccount.has("displayName"));
 
         JsonObject yggdrasilAccount = accountMetadata.getAccounts().get(2);
         assertEquals("steve@example.com", JsonUtils.getString(yggdrasilAccount, "loginName"));
-        assertEquals("00000000000000000000000000000002", JsonUtils.getString(yggdrasilAccount, "profileID"));
+        assertEquals("00000000-0000-0000-0000-000000000002", JsonUtils.getString(yggdrasilAccount, "profileID"));
         assertEquals("Steve", JsonUtils.getString(yggdrasilAccount, "profileName"));
-        assertNotNull(JsonUtils.getString(yggdrasilAccount, "accountID"));
+        assertEquals(legacyAccountID(false, "steve@example.com:00000000-0000-0000-0000-000000000002"),
+                JsonUtils.getString(yggdrasilAccount, "accountID"));
         assertFalse(yggdrasilAccount.has("username"));
         assertFalse(yggdrasilAccount.has("uuid"));
         assertFalse(yggdrasilAccount.has("displayName"));
@@ -390,13 +391,13 @@ public final class AccountMetadataStoreTest {
                 "type", "offline",
                 "accountID", duplicateAccountID,
                 "profileName", "Alex",
-                "profileID", UUIDTypeAdapter.fromUUID(OfflineAccountFactory.getUUIDFromUserName("Alex"))
+                "profileID", OfflineAccountFactory.getUUIDFromUserName("Alex").toString()
         )));
         AccountMetadataStore userAccounts = AccountMetadataStore.fromRecords(List.of(jsonObject(
                 "type", "offline",
                 "accountID", duplicateAccountID,
                 "profileName", "Alex",
-                "profileID", UUIDTypeAdapter.fromUUID(OfflineAccountFactory.getUUIDFromUserName("Alex"))
+                "profileID", OfflineAccountFactory.getUUIDFromUserName("Alex").toString()
         )));
 
         Set<String> usedAccountIDs = new HashSet<>();
@@ -429,7 +430,7 @@ public final class AccountMetadataStoreTest {
         List<JsonObject> metadataAccounts = privateData.replaceFromAccountRecords(List.of(jsonObject(
                 "type", "microsoft",
                 "accountID", accountID(1),
-                "profileID", "00000000000000000000000000000001",
+                "profileID", "00000000-0000-0000-0000-000000000001",
                 "profileName", "Steve",
                 "accessToken", "access-token",
                 "refreshToken", "refresh-token",
@@ -441,7 +442,7 @@ public final class AccountMetadataStoreTest {
         AccountID accountID = Objects.requireNonNull(Account.getAccountID(metadata));
 
         assertEquals("microsoft", JsonUtils.getString(metadata, "type"));
-        assertEquals("00000000000000000000000000000001", JsonUtils.getString(metadata, "profileID"));
+        assertEquals("00000000-0000-0000-0000-000000000001", JsonUtils.getString(metadata, "profileID"));
         assertFalse(metadata.has("profileName"));
         assertFalse(metadata.has("id"));
         assertFalse(metadata.has("accessToken"));
@@ -466,7 +467,7 @@ public final class AccountMetadataStoreTest {
                 "type", "yggdrasil",
                 "accountID", accountID(1),
                 "loginName", "steve@example.com",
-                "profileID", "00000000000000000000000000000001",
+                "profileID", "00000000-0000-0000-0000-000000000001",
                 "profileName", "Steve",
                 "accessToken", "access-token",
                 "clientToken", "client-token",
@@ -496,7 +497,7 @@ public final class AccountMetadataStoreTest {
                 "accountID", accountID(1),
                 "serverBaseURL", "https://example.invalid/api/yggdrasil",
                 "loginName", "steve@example.com",
-                "profileID", "00000000000000000000000000000001",
+                "profileID", "00000000-0000-0000-0000-000000000001",
                 "profileName", "Steve",
                 "profileProperties", Map.of("textures", "texture-data")
         )));
@@ -515,7 +516,7 @@ public final class AccountMetadataStoreTest {
     @Test
     public void loadsOnlineSessionsWithoutProfileNameAsRefreshRequired() {
         MicrosoftSession microsoftSession = MicrosoftSession.fromStorage(jsonObject(
-                "profileID", "00000000000000000000000000000001"
+                "profileID", "00000000-0000-0000-0000-000000000001"
         ), jsonObject(
                 "tokenType", "Bearer",
                 "accessToken", "access-token",
@@ -525,7 +526,7 @@ public final class AccountMetadataStoreTest {
         assertFalse(microsoftSession.hasProfileName());
 
         YggdrasilSession yggdrasilSession = YggdrasilSession.fromStorage(jsonObject(
-                "profileID", "00000000000000000000000000000001"
+                "profileID", "00000000-0000-0000-0000-000000000001"
         ), jsonObject(
                 "accessToken", "access-token",
                 "clientToken", "client-token"
@@ -540,7 +541,7 @@ public final class AccountMetadataStoreTest {
         List<JsonObject> metadataAccounts = privateData.replaceFromAccountRecords(List.of(jsonObject(
                 "type", "microsoft",
                 "accountID", accountID(1),
-                "profileID", "00000000000000000000000000000001",
+                "profileID", "00000000-0000-0000-0000-000000000001",
                 "profileName", "Steve",
                 "accessToken", "access-token",
                 "refreshToken", "refresh-token"
@@ -563,7 +564,7 @@ public final class AccountMetadataStoreTest {
         preferredPrivateData.replaceFromAccountRecords(List.of(jsonObject(
                 "type", "microsoft",
                 "accountID", accountID(1),
-                "profileID", "00000000000000000000000000000001",
+                "profileID", "00000000-0000-0000-0000-000000000001",
                 "profileName", "Steve",
                 "accessToken", "preferred-token"
         )));
@@ -572,7 +573,7 @@ public final class AccountMetadataStoreTest {
         List<JsonObject> metadataAccounts = fallbackPrivateData.replaceFromAccountRecords(List.of(jsonObject(
                 "type", "microsoft",
                 "accountID", accountID(1),
-                "profileID", "00000000000000000000000000000001",
+                "profileID", "00000000-0000-0000-0000-000000000001",
                 "profileName", "Steve",
                 "accessToken", "fallback-token"
         )));
@@ -603,7 +604,7 @@ public final class AccountMetadataStoreTest {
             privateData.replaceFromAccountRecords(List.of(jsonObject(
                     "type", "microsoft",
                     "accountID", accountID(1),
-                    "profileID", "00000000000000000000000000000001",
+                    "profileID", "00000000-0000-0000-0000-000000000001",
                     "profileName", "Steve",
                     "accessToken", "access-token",
                     "refreshToken", "refresh-token"
@@ -633,7 +634,7 @@ public final class AccountMetadataStoreTest {
             List<JsonObject> metadataAccounts = privateData.replaceFromAccountRecords(List.of(jsonObject(
                     "type", "microsoft",
                     "accountID", accountID(1),
-                    "profileID", "00000000000000000000000000000001",
+                    "profileID", "00000000-0000-0000-0000-000000000001",
                     "profileName", "Steve",
                     "accessToken", "access-token",
                     "refreshToken", "refresh-token"
@@ -676,7 +677,7 @@ public final class AccountMetadataStoreTest {
             List<JsonObject> metadataAccounts = privateData.replaceFromAccountRecords(List.of(jsonObject(
                     "type", "microsoft",
                     "accountID", accountID(1),
-                    "profileID", "00000000000000000000000000000001",
+                    "profileID", "00000000-0000-0000-0000-000000000001",
                     "profileName", "Steve",
                     "accessToken", "access-token",
                     "refreshToken", "refresh-token"

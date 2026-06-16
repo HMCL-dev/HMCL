@@ -23,7 +23,6 @@ import org.jackhuang.hmcl.auth.*;
 import org.jackhuang.hmcl.auth.yggdrasil.Texture;
 import org.jackhuang.hmcl.auth.yggdrasil.TextureType;
 import org.jackhuang.hmcl.auth.yggdrasil.YggdrasilService;
-import org.jackhuang.hmcl.util.gson.UUIDTypeAdapter;
 import org.jackhuang.hmcl.util.javafx.BindingMapping;
 
 import java.nio.file.Path;
@@ -140,7 +139,7 @@ public final class MicrosoftAccount extends OAuthAccount {
     @Override
     public void writeMetadata(JsonObject metadata) {
         super.writeMetadata(metadata);
-        metadata.addProperty("profileID", UUIDTypeAdapter.fromUUID(getProfileID()));
+        metadata.addProperty("profileID", getProfileID().toString());
     }
 
     @Override

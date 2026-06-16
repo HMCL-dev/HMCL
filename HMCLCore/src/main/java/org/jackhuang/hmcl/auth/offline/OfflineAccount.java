@@ -191,7 +191,7 @@ public class OfflineAccount extends Account {
     @Override
     public void writeMetadata(JsonObject metadata) {
         super.writeMetadata(metadata);
-        metadata.addProperty("profileID", UUIDTypeAdapter.fromUUID(profileID));
+        metadata.addProperty("profileID", profileID.toString());
         metadata.addProperty("profileName", profileName);
         if (skin == null) {
             metadata.add("skin", JsonNull.INSTANCE);

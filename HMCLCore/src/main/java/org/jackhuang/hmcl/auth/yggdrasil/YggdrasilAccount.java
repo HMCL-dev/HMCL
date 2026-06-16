@@ -179,7 +179,7 @@ public abstract class YggdrasilAccount extends ClassicAccount {
     public void writeMetadata(JsonObject metadata) {
         super.writeMetadata(metadata);
         metadata.addProperty("loginName", loginName);
-        metadata.addProperty("profileID", UUIDTypeAdapter.fromUUID(profileID));
+        metadata.addProperty("profileID", profileID.toString());
     }
 
     @Override
