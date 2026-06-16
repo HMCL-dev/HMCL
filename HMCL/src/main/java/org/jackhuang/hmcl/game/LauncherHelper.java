@@ -34,6 +34,9 @@ import org.jackhuang.hmcl.launch.*;
 import org.jackhuang.hmcl.mod.ModpackCompletionException;
 import org.jackhuang.hmcl.mod.ModpackConfiguration;
 import org.jackhuang.hmcl.mod.ModpackProvider;
+import org.jackhuang.hmcl.mod.modrinth.ModrinthCheckServerPackUpdateTask;
+import org.jackhuang.hmcl.mod.modrinth.ModrinthManifest;
+import org.jackhuang.hmcl.mod.modrinth.ModrinthModpackProvider;
 import org.jackhuang.hmcl.setting.*;
 import org.jackhuang.hmcl.task.*;
 import org.jackhuang.hmcl.ui.*;
@@ -43,6 +46,7 @@ import org.jackhuang.hmcl.ui.construct.MessageDialogPane.MessageType;
 import org.jackhuang.hmcl.ui.construct.PromptDialogPane;
 import org.jackhuang.hmcl.ui.construct.TaskExecutorDialogPane;
 import org.jackhuang.hmcl.util.*;
+import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.i18n.I18n;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.io.ResponseCodeException;
@@ -56,6 +60,7 @@ import java.lang.ref.WeakReference;
 import java.net.SocketTimeoutException;
 import java.net.URI;
 import java.nio.file.AccessDeniedException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
 import java.util.concurrent.*;
@@ -157,6 +162,43 @@ public final class LauncherHelper {
                 .thenComposeAsync(java -> {
                     javaVersionRef.set(Objects.requireNonNull(java));
                     version.set(NativePatcher.patchNative(repository, version.get(), gameVersion.orElse(null), java, setting, javaArguments));
+                    return null;
+                })
+                .thenComposeAsync(() -> {
+                    try {
+                        ModpackConfiguration<?> configuration = ModpackHelper.readModpackConfiguration(repository.getModpackConfiguration(selectedVersion));
+                        if (ModrinthModpackProvider.INSTANCE.getName().equals(configuration.getType())) {
+                            Path manifestFile = repository.getVersionRoot(selectedVersion).resolve("modrinth.index.json");
+                            if (Files.exists(manifestFile)) {
+                                ModrinthManifest manifest = JsonUtils.fromJsonFile(manifestFile, ModrinthManifest.class);
+                                if (StringUtils.isNotBlank(manifest.getFileApi())) {
+                                    return new ModrinthCheckServerPackUpdateTask(manifest.getVersionId(), manifest.getFileApi());
+                                }
+                            }
+                        }
+                    } catch (IOException ignored) {
+                    }
+                    return null;
+                })
+                .thenComposeAsync(hasUpdate -> {
+                    if (hasUpdate == null || !hasUpdate) return null;
+
+                    CompletableFuture<Void> future = new CompletableFuture<>();
+                    runInFX(() -> {
+                        Controllers.confirm(i18n("modpack.update.found"), i18n("modpack.update"), MessageType.QUESTION, () -> {
+                            try {
+                                ModpackConfiguration<?> config = ModpackHelper.readModpackConfiguration(repository.getModpackConfiguration(selectedVersion));
+                                Task<?> updateTask = ModpackHelper.getUpdateTask(profile, ModrinthCheckServerPackUpdateTask.getUpdateFile(), java.nio.charset.StandardCharsets.UTF_8, selectedVersion, config);
+                                Controllers.taskDialog(updateTask, i18n("modpack.update"), TaskCancellationAction.NORMAL);
+                            } catch (Exception e) {
+                                Controllers.dialog(StringUtils.getStackTrace(e), i18n("message.error"), MessageType.ERROR);
+                            }
+                            future.completeExceptionally(new CancellationException());
+                        }, () -> future.complete(null));
+                    });
+                    return Task.fromCompletableFuture(future);
+                })
+                .thenComposeAsync(() -> {
                     if (setting.isNotCheckGame())
                         return null;
                     return Task.allOf(
@@ -177,7 +219,7 @@ public final class LauncherHelper {
                                         || renderer.mesaDriverName() == null)
                                     return null;
 
-                                Library lib = NativePatcher.getWindowsMesaLoader(java, renderer, OperatingSystem.SYSTEM_VERSION);
+                                Library lib = NativePatcher.getWindowsMesaLoader(javaVersionRef.get(), renderer, OperatingSystem.SYSTEM_VERSION);
                                 if (lib == null)
                                     return null;
                                 Path file = dependencyManager.getGameRepository().getLibraryFile(version.get(), lib);

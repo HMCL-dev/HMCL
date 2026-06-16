@@ -90,16 +90,6 @@ public class ModrinthInstallTask extends Task<Void> {
                     throw new IllegalStateException("Unsupported mod loader " + modLoader.getKey());
             }
         }
-        dependents.add(builder.buildAsync());
-
-        onDone().register(event -> {
-            Exception ex = event.getTask().getException();
-            if (event.isFailed()) {
-                if (!(ex instanceof ModpackCompletionException)) {
-                    repository.removeVersionFromDisk(name);
-                }
-            }
-        });
 
         ModpackConfiguration<ModrinthManifest> config = null;
         try {
@@ -111,8 +101,21 @@ public class ModrinthInstallTask extends Task<Void> {
             }
         } catch (JsonParseException | IOException ignore) {
         }
-
         this.config = config;
+
+        if (config == null || !config.getManifest().getDependencies().equals(manifest.getDependencies())) {
+            dependents.add(builder.buildAsync());
+        }
+
+        onDone().register(event -> {
+            Exception ex = event.getTask().getException();
+            if (event.isFailed()) {
+                if (!(ex instanceof ModpackCompletionException)) {
+                    repository.removeVersionFromDisk(name);
+                }
+            }
+        });
+
         List<String> subDirectories = Arrays.asList("/client-overrides", "/overrides");
         dependents.add(new ModpackInstallTask<>(zipFile, run, modpack.getEncoding(), subDirectories, any -> true, config).withStage("hmcl.modpack"));
         dependents.add(new MinecraftInstanceTask<>(zipFile, modpack.getEncoding(), subDirectories, manifest, ModrinthModpackProvider.INSTANCE, manifest.getName(), manifest.getVersionId(), repository.getModpackConfiguration(name)).withStage("hmcl.modpack"));
@@ -148,6 +151,15 @@ public class ModrinthInstallTask extends Task<Void> {
                 if (!Files.exists(oldFile)) continue;
                 if (manifest.getFiles().stream().noneMatch(oldManifestFile::equals)) {
                     Files.deleteIfExists(oldFile);
+                }
+            }
+            // For local files which is already in new manifest, remove them
+            for (ModrinthManifest.File newManifestFile : manifest.getFiles()) {
+                if (config.getManifest().getFiles().stream().noneMatch(newManifestFile::equals)) {
+                    Path newFile = run.resolve(newManifestFile.getPath());
+                    if (Files.exists(newFile)) {
+                        Files.deleteIfExists(newFile);
+                    }
                 }
             }
         }

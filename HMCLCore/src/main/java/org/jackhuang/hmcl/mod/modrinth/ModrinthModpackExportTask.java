@@ -23,6 +23,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
+import java.util.stream.Stream;
 
 import org.jackhuang.hmcl.download.LibraryAnalyzer;
 import org.jackhuang.hmcl.game.DefaultGameRepository;
@@ -31,7 +32,9 @@ import org.jackhuang.hmcl.mod.Modpack;
 import org.jackhuang.hmcl.mod.ModpackExportInfo;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.util.DigestUtils;
+import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
+import org.jackhuang.hmcl.util.io.NetworkUtils;
 import org.jackhuang.hmcl.util.io.Zipper;
 import org.jackhuang.hmcl.mod.LocalModFile;
 import org.jackhuang.hmcl.mod.RemoteMod;
@@ -133,31 +136,55 @@ public class ModrinthModpackExportTask extends Task<Void> {
         try (var zip = new Zipper(modpackFile)) {
             Path runDirectory = repository.getRunDirectory(version);
             List<ModrinthManifest.File> files = new ArrayList<>();
-            Set<String> filesInManifest = new HashSet<>();
+            Set<String> filesInManifest = new HashSet<>(); // a set contains the value of key "path" in every element of files
 
             String[] resourceDirs = {"resourcepacks", "shaderpacks", "mods"};
-            for (String dir : resourceDirs) {
-                Path dirPath = runDirectory.resolve(dir);
-                if (Files.exists(dirPath)) {
-                    Files.walk(dirPath)
-                            .filter(Files::isRegularFile)
-                            .forEach(file -> {
-                                try {
-                                    String relativePath = runDirectory.relativize(file).normalize().toString().replace(File.separatorChar, '/');
+            String fileApi = StringUtils.isBlank(info.getFileApi()) ? null : StringUtils.removeSuffix(info.getFileApi(), "/");
+            try (Stream<Path> stream = Files.list(runDirectory)) {
+                for (Path dirPath : (Iterable<Path>) stream::iterator) {
+                    if (Files.exists(dirPath)) {
+                        boolean isValidDir = Arrays.asList(resourceDirs).contains(dirPath.getFileName().toString()); // allow remote file match
+                        Files.walk(dirPath)
+                                .filter(Files::isRegularFile)
+                                .forEach(file -> {
+                                    try {
+                                        String relativePath = runDirectory.relativize(file).normalize().toString().replace(File.separatorChar, '/');
 
-                                    if (!info.getWhitelist().contains(relativePath)) {
-                                        return;
-                                    }
+                                        if (!info.getWhitelist().contains(relativePath)) {
+                                            return;
+                                        }
 
-                                    ModrinthManifest.File fileEntry = tryGetRemoteFile(file, relativePath);
-                                    if (fileEntry != null) {
-                                        files.add(fileEntry);
-                                        filesInManifest.add(relativePath);
+                                        ModrinthManifest.File fileEntry = null;
+                                        if (isValidDir) {
+                                            fileEntry = tryGetRemoteFile(file, relativePath);
+                                        }
+                                        if (fileEntry != null) {
+                                            files.add(fileEntry);
+                                            filesInManifest.add(relativePath);
+                                        } else {
+                                            if (fileApi != null) {
+                                                Map<String, String> hashes = new HashMap<>();
+                                                hashes.put("sha1", DigestUtils.digestToString("SHA-1", file));
+                                                hashes.put("sha512", DigestUtils.digestToString("SHA-512", file));
+
+                                                long fileSize = Files.size(file);
+                                                if (fileSize > Integer.MAX_VALUE) {
+                                                    LOG.warning("File " + relativePath + " is too large (size: " + fileSize + " bytes), precision may be lost when converting to int");
+                                                }
+                                                files.add(new ModrinthManifest.File(
+                                                        relativePath,
+                                                        hashes,
+                                                        null,
+                                                        Collections.singletonList(fileApi + "/" + NetworkUtils.encodeLocation(relativePath)),
+                                                        (int) fileSize
+                                                ));
+                                            }
+                                        }
+                                    } catch (IOException e) {
+                                        LOG.warning("Failed to process file: " + file, e);
                                     }
-                                } catch (IOException e) {
-                                    LOG.warning("Failed to process file: " + file, e);
-                                }
-                            });
+                                });
+                    }
                 }
             }
 
@@ -200,6 +227,7 @@ public class ModrinthModpackExportTask extends Task<Void> {
     }
 
     public static final ModpackExportInfo.Options OPTION = new ModpackExportInfo.Options()
+            .requireFileApi(true)
             .requireNoCreateRemoteFiles()
             .requireSkipCurseForgeRemoteFiles();
 }
