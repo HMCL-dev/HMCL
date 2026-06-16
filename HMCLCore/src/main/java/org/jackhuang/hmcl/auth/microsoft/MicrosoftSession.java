@@ -18,6 +18,7 @@
 package org.jackhuang.hmcl.auth.microsoft;
 
 import org.jackhuang.hmcl.auth.AuthInfo;
+import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.gson.UUIDTypeAdapter;
 import org.jackhuang.hmcl.util.logging.Logger;
 
@@ -76,11 +77,16 @@ public class MicrosoftSession {
         return profile;
     }
 
+    /// Returns whether the stored session contains a usable Minecraft profile name.
+    public boolean hasProfileName() {
+        return profile != null && StringUtils.isNotBlank(profile.getName());
+    }
+
+    /// Loads a Microsoft session from the current account storage format.
     public static MicrosoftSession fromStorage(Map<?, ?> storage) {
-        UUID uuid = tryCast(storage.get("uuid"), String.class).map(UUIDTypeAdapter::fromString)
-                .orElseThrow(() -> new IllegalArgumentException("uuid is missing"));
-        String name = tryCast(storage.get("displayName"), String.class)
-                .orElseThrow(() -> new IllegalArgumentException("displayName is missing"));
+        UUID profileID = tryCast(storage.get("profileID"), String.class).map(UUIDTypeAdapter::fromString)
+                .orElseThrow(() -> new IllegalArgumentException("profileID is missing"));
+        String profileName = tryCast(storage.get("profileName"), String.class).orElse("");
         String tokenType = tryCast(storage.get("tokenType"), String.class)
                 .orElseThrow(() -> new IllegalArgumentException("tokenType is missing"));
         String accessToken = tryCast(storage.get("accessToken"), String.class)
@@ -90,16 +96,17 @@ public class MicrosoftSession {
         Long notAfter = tryCast(storage.get("notAfter"), Number.class).map(Number::longValue).orElse(0L);
         String userId = tryCast(storage.get("userid"), String.class)
                 .orElseThrow(() -> new IllegalArgumentException("userid is missing"));
-        return new MicrosoftSession(tokenType, accessToken, notAfter, refreshToken, new User(userId), new GameProfile(uuid, name));
+        return new MicrosoftSession(tokenType, accessToken, notAfter, refreshToken, new User(userId), new GameProfile(profileID, profileName));
     }
 
+    /// Converts this session to the current account storage format.
     public Map<Object, Object> toStorage() {
         requireNonNull(profile);
         requireNonNull(user);
 
         return mapOf(
-                pair("uuid", UUIDTypeAdapter.fromUUID(profile.getId())),
-                pair("displayName", profile.getName()),
+                pair("profileID", UUIDTypeAdapter.fromUUID(profile.getId())),
+                pair("profileName", profile.getName()),
                 pair("tokenType", tokenType),
                 pair("accessToken", accessToken),
                 pair("refreshToken", refreshToken),

@@ -52,18 +52,18 @@ import static org.jackhuang.hmcl.util.Pair.pair;
 public class OfflineAccount extends Account {
 
     private final AuthlibInjectorArtifactProvider downloader;
-    private final String username;
-    private final UUID uuid;
+    private final String profileName;
+    private final UUID profileID;
     private Skin skin;
 
-    protected OfflineAccount(AuthlibInjectorArtifactProvider downloader, String username, UUID uuid, Skin skin) {
+    protected OfflineAccount(AuthlibInjectorArtifactProvider downloader, String profileName, UUID profileID, Skin skin) {
         this.downloader = requireNonNull(downloader);
-        this.username = requireNonNull(username);
-        this.uuid = requireNonNull(uuid);
+        this.profileName = requireNonNull(profileName);
+        this.profileID = requireNonNull(profileID);
         this.skin = skin;
 
-        if (StringUtils.isBlank(username)) {
-            throw new IllegalArgumentException("Username cannot be blank");
+        if (StringUtils.isBlank(profileName)) {
+            throw new IllegalArgumentException("Profile name cannot be blank");
         }
     }
 
@@ -73,23 +73,19 @@ public class OfflineAccount extends Account {
 
     @Override
     public UUID getProfileID() {
-        return uuid;
-    }
-
-    @Override
-    public String getUsername() {
-        return username;
+        return profileID;
     }
 
     @Override
     public String getProfileName() {
-        return username;
+        return profileName;
     }
 
-    /// Writes the offline username used to identify this account.
+    /// Writes the offline profile identity used to identify this account.
     @Override
     public void toIdentifier(JsonObject json) {
-        json.addProperty("username", username);
+        json.addProperty("profileName", profileName);
+        json.addProperty("profileID", UUIDTypeAdapter.fromUUID(profileID));
     }
 
     public Skin getSkin() {
@@ -107,7 +103,7 @@ public class OfflineAccount extends Account {
 
     public AuthInfo logInWithoutSkin() throws AuthenticationException {
         // Using "legacy" user type here because "mojang" user type may cause "invalid session token" or "disconnected" when connecting to a game server.
-        return new AuthInfo(username, uuid, UUIDTypeAdapter.fromUUID(UUID.randomUUID()), AuthInfo.USER_TYPE_MSA, "{}");
+        return new AuthInfo(profileName, profileID, UUIDTypeAdapter.fromUUID(UUID.randomUUID()), AuthInfo.USER_TYPE_MSA, "{}");
     }
 
     @Override
@@ -165,8 +161,8 @@ public class OfflineAccount extends Account {
             server.start();
 
             try {
-                server.addCharacter(new YggdrasilServer.Character(uuid, username,
-                        skin != null ? skin.load(username).run() : null));
+                server.addCharacter(new YggdrasilServer.Character(profileID, profileName,
+                        skin != null ? skin.load(profileName).run() : null));
             } catch (IOException e) {
                 // ignore
             } catch (Exception e) {
@@ -196,8 +192,8 @@ public class OfflineAccount extends Account {
     @Override
     public Map<Object, Object> toStorage() {
         return mapOf(
-                pair("uuid", UUIDTypeAdapter.fromUUID(uuid)),
-                pair("username", username),
+                pair("profileID", UUIDTypeAdapter.fromUUID(profileID)),
+                pair("profileName", profileName),
                 pair("skin", skin == null ? null : skin.toStorage())
         );
     }
@@ -210,14 +206,14 @@ public class OfflineAccount extends Account {
     @Override
     public String toString() {
         return new ToStringBuilder(this)
-                .append("username", username)
-                .append("profileID", uuid)
+                .append("profileName", profileName)
+                .append("profileID", profileID)
                 .toString();
     }
 
     @Override
     public int hashCode() {
-        return username.hashCode();
+        return profileName.hashCode();
     }
 
     @Override
@@ -225,6 +221,6 @@ public class OfflineAccount extends Account {
         if (!(obj instanceof OfflineAccount))
             return false;
         OfflineAccount another = (OfflineAccount) obj;
-        return isPortable() == another.isPortable() && username.equals(another.username);
+        return isPortable() == another.isPortable() && profileName.equals(another.profileName);
     }
 }

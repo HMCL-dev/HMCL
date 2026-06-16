@@ -179,7 +179,7 @@ public class AuthlibInjectorAccount extends YggdrasilAccount {
     public String toString() {
         return new ToStringBuilder(this)
                 .append("profileID", profileID)
-                .append("username", getUsername())
+                .append("loginName", getLoginName())
                 .append("server", getServer().getUrl())
                 .toString();
     }

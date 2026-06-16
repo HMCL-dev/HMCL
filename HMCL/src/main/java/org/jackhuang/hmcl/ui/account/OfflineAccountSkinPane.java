@@ -140,7 +140,7 @@ public class OfflineAccountSkinPane extends StackPane {
         PauseTransition pauseTransition = new PauseTransition(Duration.seconds(1));
 
         Runnable loadSkin = () -> {
-            getSkin().load(account.getUsername())
+            getSkin().load(account.getProfileName())
                     .whenComplete(Schedulers.javafx(), (result, exception) -> {
                         if (exception != null) {
                             LOG.warning("Failed to load skin", exception);

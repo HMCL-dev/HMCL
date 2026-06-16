@@ -73,8 +73,8 @@ public class AuthlibInjectorAccountFactory extends AccountFactory<AuthlibInjecto
     static AuthlibInjectorAccount fromStorage(Map<Object, Object> storage, AuthlibInjectorArtifactProvider downloader, AuthlibInjectorServer server) {
         YggdrasilSession session = YggdrasilSession.fromStorage(storage);
 
-        String username = tryCast(storage.get("username"), String.class)
-                .orElseThrow(() -> new IllegalArgumentException("storage does not have username"));
+        String loginName = tryCast(storage.get("loginName"), String.class)
+                .orElseThrow(() -> new IllegalArgumentException("storage does not have loginName"));
 
         tryCast(storage.get("profileProperties"), Map.class).ifPresent(
                 it -> {
@@ -86,6 +86,6 @@ public class AuthlibInjectorAccountFactory extends AccountFactory<AuthlibInjecto
                     profileRepository.invalidate(selected.getId());
                 });
 
-        return new AuthlibInjectorAccount(server, downloader, username, session);
+        return new AuthlibInjectorAccount(server, downloader, loginName, session);
     }
 }

@@ -30,6 +30,7 @@ import org.jackhuang.hmcl.game.TexturesLoader;
 import org.jackhuang.hmcl.setting.Accounts;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.construct.AdvancedListItem;
+import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.javafx.BindingMapping;
 
 import static javafx.beans.binding.Bindings.createStringBinding;
@@ -59,7 +60,10 @@ public class AccountAdvancedListItem extends AdvancedListItem {
                 TexturesLoader.drawAvatar(canvas, TexturesLoader.getDefaultSkinImage());
 
             } else {
-                titleProperty().bind(BindingMapping.of(account, Account::getProfileName));
+                titleProperty().bind(createStringBinding(() -> {
+                    String profileName = account.getProfileName();
+                    return StringUtils.isBlank(profileName) ? account.getProfileID().toString() : profileName;
+                }, account));
                 subtitleProperty().bind(accountSubtitle(account));
                 uninstallTooltip();
                 TexturesLoader.bindAvatar(canvas, account);

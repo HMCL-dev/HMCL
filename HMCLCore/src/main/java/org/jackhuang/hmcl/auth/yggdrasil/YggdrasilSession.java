@@ -20,6 +20,7 @@ package org.jackhuang.hmcl.auth.yggdrasil;
 import com.google.gson.Gson;
 import org.jackhuang.hmcl.auth.AuthInfo;
 import org.jackhuang.hmcl.util.Immutable;
+import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.logging.Logger;
 import org.jackhuang.hmcl.util.gson.UUIDTypeAdapter;
 import org.jetbrains.annotations.Nullable;
@@ -77,16 +78,20 @@ public class YggdrasilSession {
         return userProperties;
     }
 
+    public boolean hasProfileName() {
+        return selectedProfile != null && StringUtils.isNotBlank(selectedProfile.getName());
+    }
+
     public static YggdrasilSession fromStorage(Map<?, ?> storage) {
         Objects.requireNonNull(storage);
 
-        UUID uuid = tryCast(storage.get("uuid"), String.class).map(UUIDTypeAdapter::fromString).orElseThrow(() -> new IllegalArgumentException("uuid is missing"));
-        String name = tryCast(storage.get("displayName"), String.class).orElseThrow(() -> new IllegalArgumentException("displayName is missing"));
+        UUID profileID = tryCast(storage.get("profileID"), String.class).map(UUIDTypeAdapter::fromString).orElseThrow(() -> new IllegalArgumentException("profileID is missing"));
+        String profileName = tryCast(storage.get("profileName"), String.class).orElse("");
         String clientToken = tryCast(storage.get("clientToken"), String.class).orElseThrow(() -> new IllegalArgumentException("clientToken is missing"));
         String accessToken = tryCast(storage.get("accessToken"), String.class).orElseThrow(() -> new IllegalArgumentException("accessToken is missing"));
         @SuppressWarnings("unchecked")
         Map<String, String> userProperties = tryCast(storage.get("userProperties"), Map.class).orElse(null);
-        return new YggdrasilSession(clientToken, accessToken, new GameProfile(uuid, name), null, userProperties);
+        return new YggdrasilSession(clientToken, accessToken, new GameProfile(profileID, profileName), null, userProperties);
     }
 
     public Map<Object, Object> toStorage() {
@@ -96,8 +101,8 @@ public class YggdrasilSession {
         return mapOf(
                 pair("clientToken", clientToken),
                 pair("accessToken", accessToken),
-                pair("uuid", UUIDTypeAdapter.fromUUID(selectedProfile.getId())),
-                pair("displayName", selectedProfile.getName()),
+                pair("profileID", UUIDTypeAdapter.fromUUID(selectedProfile.getId())),
+                pair("profileName", selectedProfile.getName()),
                 pair("userProperties", userProperties));
     }
 

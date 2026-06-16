@@ -22,6 +22,7 @@ import javafx.geometry.Rectangle2D;
 import javafx.stage.Screen;
 import org.glavo.uuid.UUIDs;
 import org.jackhuang.hmcl.Metadata;
+import org.jackhuang.hmcl.auth.offline.OfflineAccountFactory;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.gson.JsonSchema;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
@@ -430,7 +431,68 @@ public final class LegacyConfigMigrator {
         }
 
         AccountStorages result = JsonUtils.GSON.fromJson(object, AccountStorages.class);
-        return result != null ? result : new AccountStorages();
+        if (result == null) {
+            result = new AccountStorages();
+        }
+        normalizeLegacyAccountStorages(result);
+        return result;
+    }
+
+    /// Renames legacy account fields to the current account metadata and private data field names.
+    private static void normalizeLegacyAccountStorages(AccountStorages accountStorages) {
+        for (Map<Object, Object> account : accountStorages.getAccounts()) {
+            normalizeLegacyAccountStorage(account);
+        }
+    }
+
+    /// Renames legacy fields in one account entry to the current serialized names.
+    private static void normalizeLegacyAccountStorage(Map<Object, Object> account) {
+        @Nullable String type = JsonUtils.getString(account, "type");
+        if (type == null) {
+            return;
+        }
+
+        switch (type) {
+            case "offline" -> {
+                renameMapMember(account, "username", "profileName");
+                renameMapMember(account, "uuid", "profileID");
+                if (!account.containsKey("profileID")) {
+                    @Nullable String profileName = JsonUtils.getString(account, "profileName");
+                    if (profileName != null) {
+                        account.put("profileID", UUIDTypeAdapter.fromUUID(
+                                OfflineAccountFactory.getUUIDFromUserName(profileName)));
+                    }
+                }
+            }
+            case "microsoft" -> {
+                renameMapMember(account, "uuid", "profileID");
+                renameMapMember(account, "displayName", "profileName");
+            }
+            case "yggdrasil" -> {
+                renameMapMember(account, "username", "loginName");
+                renameMapMember(account, "uuid", "profileID");
+                renameMapMember(account, "displayName", "profileName");
+            }
+            case "authlibInjector" -> {
+                renameMapMember(account, "username", "loginName");
+                renameMapMember(account, "uuid", "profileID");
+                renameMapMember(account, "displayName", "profileName");
+            }
+            default -> {
+            }
+        }
+    }
+
+    /// Renames one map member to the current name.
+    private static void renameMapMember(Map<Object, Object> map, String legacyName, String currentName) {
+        @Nullable Object legacyValue = map.remove(legacyName);
+        if (map.containsKey(currentName)) {
+            return;
+        }
+
+        if (legacyValue != null) {
+            map.put(currentName, legacyValue);
+        }
     }
 
     /// Migrates the legacy selected account string into a structured selected account reference.
@@ -491,7 +553,12 @@ public final class LegacyConfigMigrator {
             List<Map<Object, Object>> accounts = JsonUtils.fromJsonFile(
                     LEGACY_USER_ACCOUNTS_LOCATION,
                     JsonUtils.listTypeOf(JsonUtils.mapTypeOf(Object.class, Object.class)));
-            return accounts != null ? AccountStorages.fromAccounts(accounts) : null;
+            if (accounts == null) {
+                return null;
+            }
+            AccountStorages storages = AccountStorages.fromAccounts(accounts);
+            normalizeLegacyAccountStorages(storages);
+            return storages;
         } catch (Exception e) {
             LOG.warning("Failed to load legacy user accounts for selected account migration", e);
             return null;
@@ -530,8 +597,9 @@ public final class LegacyConfigMigrator {
             return true;
         }
 
-        // Older legacy configs may store only the username for offline and Yggdrasil accounts.
-        return Objects.equals(identifier, JsonUtils.getString(account, "username"));
+        // Older legacy configs may store only the login/profile name for offline and Yggdrasil accounts.
+        return Objects.equals(identifier, JsonUtils.getString(account, "profileName"))
+                || Objects.equals(identifier, JsonUtils.getString(account, "loginName"));
     }
 
     /// Creates the structured selected account reference for a serialized account entry.
@@ -547,33 +615,40 @@ public final class LegacyConfigMigrator {
 
         switch (type) {
             case "offline" -> {
-                @Nullable String username = JsonUtils.getString(account, "username");
-                if (username == null) {
+                @Nullable String profileName = JsonUtils.getString(account, "profileName");
+                @Nullable String profileID = JsonUtils.getString(account, "profileID");
+                if (profileName == null || profileID == null) {
                     return null;
                 }
-                reference.addProperty("username", username);
+                reference.addProperty("profileName", profileName);
+                reference.addProperty("profileID", profileID);
             }
             case "microsoft" -> {
-                @Nullable String uuid = JsonUtils.getString(account, "uuid");
-                if (uuid == null) {
+                @Nullable String profileID = JsonUtils.getString(account, "profileID");
+                if (profileID == null) {
                     return null;
                 }
-                reference.addProperty("uuid", uuid);
-                @Nullable String userId = JsonUtils.getString(account, "userid");
-                if (userId != null) {
-                    reference.addProperty("userid", userId);
+                reference.addProperty("profileID", profileID);
+            }
+            case "yggdrasil" -> {
+                @Nullable String loginName = JsonUtils.getString(account, "loginName");
+                @Nullable String profileID = JsonUtils.getString(account, "profileID");
+                if (loginName == null || profileID == null) {
+                    return null;
                 }
+                reference.addProperty("loginName", loginName);
+                reference.addProperty("profileID", profileID);
             }
             case "authlibInjector" -> {
                 @Nullable String serverBaseURL = JsonUtils.getString(account, "serverBaseURL");
-                @Nullable String username = JsonUtils.getString(account, "username");
-                @Nullable String uuid = JsonUtils.getString(account, "uuid");
-                if (serverBaseURL == null || username == null || uuid == null) {
+                @Nullable String loginName = JsonUtils.getString(account, "loginName");
+                @Nullable String profileID = JsonUtils.getString(account, "profileID");
+                if (serverBaseURL == null || loginName == null || profileID == null) {
                     return null;
                 }
                 reference.addProperty("serverBaseURL", serverBaseURL);
-                reference.addProperty("username", username);
-                reference.addProperty("uuid", uuid);
+                reference.addProperty("loginName", loginName);
+                reference.addProperty("profileID", profileID);
             }
             default -> {
                 return null;
@@ -591,19 +666,26 @@ public final class LegacyConfigMigrator {
 
         return switch (type) {
             case "offline" -> {
-                @Nullable String username = JsonUtils.getString(account, "username");
-                yield username != null ? username + ":" + username : null;
+                @Nullable String profileName = JsonUtils.getString(account, "profileName");
+                yield profileName != null ? profileName + ":" + profileName : null;
             }
             case "microsoft" -> {
-                @Nullable String uuid = JsonUtils.getString(account, "uuid");
-                yield uuid != null ? "microsoft:" + formatLegacyUUID(uuid, compactUuid) : null;
+                @Nullable String profileID = JsonUtils.getString(account, "profileID");
+                yield profileID != null ? "microsoft:" + formatLegacyUUID(profileID, compactUuid) : null;
+            }
+            case "yggdrasil" -> {
+                @Nullable String loginName = JsonUtils.getString(account, "loginName");
+                @Nullable String profileID = JsonUtils.getString(account, "profileID");
+                yield loginName != null && profileID != null
+                        ? loginName + ":" + formatLegacyUUID(profileID, compactUuid)
+                        : null;
             }
             case "authlibInjector" -> {
                 @Nullable String serverBaseURL = JsonUtils.getString(account, "serverBaseURL");
-                @Nullable String username = JsonUtils.getString(account, "username");
-                @Nullable String uuid = JsonUtils.getString(account, "uuid");
-                yield serverBaseURL != null && username != null && uuid != null
-                        ? serverBaseURL + ":" + username + ":" + formatLegacyUUID(uuid, compactUuid)
+                @Nullable String loginName = JsonUtils.getString(account, "loginName");
+                @Nullable String profileID = JsonUtils.getString(account, "profileID");
+                yield serverBaseURL != null && loginName != null && profileID != null
+                        ? serverBaseURL + ":" + loginName + ":" + formatLegacyUUID(profileID, compactUuid)
                         : null;
             }
             default -> null;

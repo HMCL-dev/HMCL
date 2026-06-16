@@ -33,6 +33,7 @@ import javafx.collections.ObservableMap;
 import org.jackhuang.hmcl.auth.Account;
 import org.jackhuang.hmcl.util.gson.JsonSchema;
 import org.jackhuang.hmcl.util.gson.JsonSerializable;
+import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.gson.ObservableSetting;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
@@ -64,6 +65,7 @@ final class AccountPrivateData extends ObservableSetting implements JsonSchemaSe
             "refreshToken",
             "clientToken",
             "profileProperties",
+            "profileName",
             "userProperties",
             "tokenType",
             "notAfter",
@@ -201,12 +203,16 @@ final class AccountPrivateData extends ObservableSetting implements JsonSchemaSe
 
         for (Map<Object, Object> account : accountStorages) {
             Map<Object, Object> metadata = new LinkedHashMap<>(account);
+            @Nullable String type = JsonUtils.getString(metadata, "type");
             @Nullable JsonObject identifier = Account.identifier(metadata);
 
             Map<Object, Object> accountPrivateData = new LinkedHashMap<>();
             if (identifier != null) {
                 identifiers.add(identifier);
                 for (String field : PRIVATE_DATA_FIELDS) {
+                    if (!isPrivateDataField(type, field)) {
+                        continue;
+                    }
                     @Nullable Object value = metadata.remove(field);
                     if (value != null) {
                         accountPrivateData.put(field, value);
@@ -221,6 +227,11 @@ final class AccountPrivateData extends ObservableSetting implements JsonSchemaSe
         }
 
         return new ExtractedPrivateData(metadataAccounts, identifiers, extractedPrivateData);
+    }
+
+    /// Returns whether the field should be stored in private data for this account type.
+    private static boolean isPrivateDataField(@Nullable String type, String field) {
+        return !"profileName".equals(field) || !"offline".equals(type);
     }
 
     /// Returns whether this store contains private data for the account identifier.

@@ -20,6 +20,11 @@ package org.jackhuang.hmcl.auth;
 public abstract class ClassicAccount extends Account {
 
     /**
+     * @return the login name used by the remote authentication service
+     */
+    public abstract String getLoginName();
+
+    /**
      * Login with specified password.
      *
      * When credentials expired, the auth server will ask you to login with password to refresh

@@ -64,12 +64,6 @@ public final class MicrosoftAccount extends OAuthAccount {
     }
 
     @Override
-    public String getUsername() {
-        // TODO: email of Microsoft account is blocked by oauth.
-        return "";
-    }
-
-    @Override
     public String getProfileName() {
         return session.getProfile().getName();
     }
@@ -82,18 +76,22 @@ public final class MicrosoftAccount extends OAuthAccount {
     /// Writes the Minecraft profile ID used to identify this Microsoft account.
     @Override
     public void toIdentifier(JsonObject json) {
-        json.addProperty("uuid", UUIDTypeAdapter.fromUUID(getProfileID()));
+        json.addProperty("profileID", UUIDTypeAdapter.fromUUID(getProfileID()));
     }
 
     @Override
     public AuthInfo logIn() throws AuthenticationException {
-        if (!authenticated || System.currentTimeMillis() > session.getNotAfter()) {
-            if (service.validate(session.getNotAfter(), session.getTokenType(), session.getAccessToken())) {
+        if (!authenticated || !session.hasProfileName() || System.currentTimeMillis() > session.getNotAfter()) {
+            if (session.hasProfileName()
+                    && service.validate(session.getNotAfter(), session.getTokenType(), session.getAccessToken())) {
                 authenticated = true;
             } else {
                 MicrosoftSession acquiredSession = service.refresh(session);
                 if (!Objects.equals(acquiredSession.getProfile().getId(), session.getProfile().getId())) {
                     throw new ServerResponseMalformedException("Selected profile changed");
+                }
+                if (!acquiredSession.hasProfileName()) {
+                    throw new ServerResponseMalformedException("Profile name is missing");
                 }
 
                 session = acquiredSession;
@@ -125,7 +123,11 @@ public final class MicrosoftAccount extends OAuthAccount {
     }
 
     @Override
-    public AuthInfo playOffline() {
+    public AuthInfo playOffline() throws AuthenticationException {
+        if (!session.hasProfileName()) {
+            throw new CredentialExpiredException("Profile name is missing");
+        }
+
         return session.toAuthInfo();
     }
 

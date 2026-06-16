@@ -21,8 +21,12 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import org.jackhuang.hmcl.auth.Account;
+import org.jackhuang.hmcl.auth.microsoft.MicrosoftSession;
+import org.jackhuang.hmcl.auth.offline.OfflineAccountFactory;
+import org.jackhuang.hmcl.auth.yggdrasil.YggdrasilSession;
 import org.jackhuang.hmcl.util.gson.JsonSchema;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
+import org.jackhuang.hmcl.util.gson.UUIDTypeAdapter;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
 import org.junit.jupiter.api.Test;
@@ -53,7 +57,8 @@ public final class AccountStoragesTest {
     public void serializesAccountsAsObjectList() {
         AccountStorages accountStorages = AccountStorages.fromAccounts(List.of(Map.<Object, Object>of(
                 "type", "offline",
-                "username", "Steve"
+                "profileName", "Steve",
+                "profileID", "5627dd98e6be3c21b8a8e92344183641"
         )));
 
         JsonObject serialized = JsonParser.parseString(
@@ -75,7 +80,10 @@ public final class AccountStoragesTest {
     @Test
     public void wrapsLegacyAccountListInCurrentModel() {
         AccountStorages storages = AccountStorages.fromAccounts(List.of(
-                Map.of("type", "offline", "username", "Steve")
+                Map.of(
+                        "type", "offline",
+                        "profileName", "Steve",
+                        "profileID", "5627dd98e6be3c21b8a8e92344183641")
         ));
 
         JsonObject serialized = JsonParser.parseString(
@@ -85,7 +93,9 @@ public final class AccountStoragesTest {
         JsonArray accounts = serialized.getAsJsonArray("accounts");
         assertEquals(1, accounts.size());
         assertEquals("offline", accounts.get(0).getAsJsonObject().get("type").getAsString());
-        assertEquals("Steve", accounts.get(0).getAsJsonObject().get("username").getAsString());
+        assertEquals("Steve", accounts.get(0).getAsJsonObject().get("profileName").getAsString());
+        assertEquals("5627dd98e6be3c21b8a8e92344183641",
+                accounts.get(0).getAsJsonObject().get("profileID").getAsString());
     }
 
     /// Tests extracting account metadata from a main config object.
@@ -110,6 +120,9 @@ public final class AccountStoragesTest {
         assertTrue(settings.has("selectedAccount"));
         assertEquals(1, accountStorages.getAccounts().size());
         assertEquals("offline", accountStorages.getAccounts().get(0).get("type"));
+        assertEquals("Alex", accountStorages.getAccounts().get(0).get("profileName"));
+        assertEquals(UUIDTypeAdapter.fromUUID(OfflineAccountFactory.getUUIDFromUserName("Alex")),
+                accountStorages.getAccounts().get(0).get("profileID"));
         assertEquals(AccountStorages.CURRENT_SCHEMA, accountStorages.getSchema());
     }
 
@@ -119,8 +132,8 @@ public final class AccountStoragesTest {
         AccountPrivateData privateData = new AccountPrivateData();
         List<Map<Object, Object>> metadataAccounts = privateData.replaceFromAccountStorages(List.of(Map.of(
                 "type", "microsoft",
-                "uuid", "00000000-0000-0000-0000-000000000001",
-                "displayName", "Steve",
+                "profileID", "00000000000000000000000000000001",
+                "profileName", "Steve",
                 "accessToken", "access-token",
                 "refreshToken", "refresh-token",
                 "tokenType", "Bearer",
@@ -131,7 +144,8 @@ public final class AccountStoragesTest {
         JsonObject identifier = Objects.requireNonNull(Account.identifier(metadata));
 
         assertEquals("microsoft", metadata.get("type"));
-        assertEquals("Steve", metadata.get("displayName"));
+        assertEquals("00000000000000000000000000000001", metadata.get("profileID"));
+        assertFalse(metadata.containsKey("profileName"));
         assertFalse(metadata.containsKey("id"));
         assertFalse(metadata.containsKey("accessToken"));
         assertFalse(metadata.containsKey("refreshToken"));
@@ -140,6 +154,7 @@ public final class AccountStoragesTest {
         assertFalse(metadata.containsKey("userid"));
         assertEquals("access-token", privateData.getPrivateData().get(identifier).get("accessToken"));
         assertEquals("refresh-token", privateData.getPrivateData().get(identifier).get("refreshToken"));
+        assertEquals("Steve", privateData.getPrivateData().get(identifier).get("profileName"));
         assertEquals("Bearer", privateData.getPrivateData().get(identifier).get("tokenType"));
         assertEquals(1234L, privateData.getPrivateData().get(identifier).get("notAfter"));
         assertEquals("user-id", privateData.getPrivateData().get(identifier).get("userid"));
@@ -151,8 +166,9 @@ public final class AccountStoragesTest {
         AccountPrivateData privateData = new AccountPrivateData();
         List<Map<Object, Object>> metadataAccounts = privateData.replaceFromAccountStorages(List.of(Map.of(
                 "type", "yggdrasil",
-                "username", "Steve",
-                "uuid", "00000000-0000-0000-0000-000000000001",
+                "loginName", "steve@example.com",
+                "profileID", "00000000000000000000000000000001",
+                "profileName", "Steve",
                 "accessToken", "access-token",
                 "clientToken", "client-token",
                 "userProperties", Map.of("preferredLanguage", "en_US")
@@ -162,9 +178,11 @@ public final class AccountStoragesTest {
 
         assertFalse(metadata.containsKey("accessToken"));
         assertFalse(metadata.containsKey("clientToken"));
+        assertFalse(metadata.containsKey("profileName"));
         assertFalse(metadata.containsKey("userProperties"));
         assertEquals("access-token", privateData.getPrivateData().get(identifier).get("accessToken"));
         assertEquals("client-token", privateData.getPrivateData().get(identifier).get("clientToken"));
+        assertEquals("Steve", privateData.getPrivateData().get(identifier).get("profileName"));
         assertEquals(
                 Map.of("preferredLanguage", "en_US"),
                 privateData.getPrivateData().get(identifier).get("userProperties"));
@@ -177,16 +195,39 @@ public final class AccountStoragesTest {
         List<Map<Object, Object>> metadataAccounts = privateData.replaceFromAccountStorages(List.of(Map.of(
                 "type", "authlibInjector",
                 "serverBaseURL", "https://example.invalid/api/yggdrasil",
-                "username", "Steve",
-                "uuid", "00000000-0000-0000-0000-000000000001",
+                "loginName", "steve@example.com",
+                "profileID", "00000000000000000000000000000001",
+                "profileName", "Steve",
                 "profileProperties", Map.of("textures", "texture-data")
         )));
         Map<Object, Object> metadata = metadataAccounts.get(0);
         JsonObject identifier = Objects.requireNonNull(Account.identifier(metadata));
 
         assertFalse(metadata.containsKey("profileProperties"));
+        assertFalse(metadata.containsKey("profileName"));
         assertEquals(Map.of("textures", "texture-data"),
                 privateData.getPrivateData().get(identifier).get("profileProperties"));
+        assertEquals("Steve", privateData.getPrivateData().get(identifier).get("profileName"));
+    }
+
+    /// Tests loading online account sessions that must refresh because their profile name is missing.
+    @Test
+    public void loadsOnlineSessionsWithoutProfileNameAsRefreshRequired() {
+        MicrosoftSession microsoftSession = MicrosoftSession.fromStorage(Map.of(
+                "profileID", "00000000000000000000000000000001",
+                "tokenType", "Bearer",
+                "accessToken", "access-token",
+                "refreshToken", "refresh-token",
+                "userid", "user-id"
+        ));
+        assertFalse(microsoftSession.hasProfileName());
+
+        YggdrasilSession yggdrasilSession = YggdrasilSession.fromStorage(Map.of(
+                "profileID", "00000000000000000000000000000001",
+                "accessToken", "access-token",
+                "clientToken", "client-token"
+        ));
+        assertFalse(yggdrasilSession.hasProfileName());
     }
 
     /// Tests restoring private fields from the private data store into account metadata.
@@ -195,8 +236,8 @@ public final class AccountStoragesTest {
         AccountPrivateData privateData = new AccountPrivateData();
         List<Map<Object, Object>> metadataAccounts = privateData.replaceFromAccountStorages(List.of(Map.of(
                 "type", "microsoft",
-                "uuid", "00000000-0000-0000-0000-000000000001",
-                "displayName", "Steve",
+                "profileID", "00000000000000000000000000000001",
+                "profileName", "Steve",
                 "accessToken", "access-token",
                 "refreshToken", "refresh-token"
         )));
@@ -215,16 +256,16 @@ public final class AccountStoragesTest {
         AccountPrivateData preferredPrivateData = new AccountPrivateData();
         preferredPrivateData.replaceFromAccountStorages(List.of(Map.of(
                 "type", "microsoft",
-                "uuid", "00000000-0000-0000-0000-000000000001",
-                "displayName", "Steve",
+                "profileID", "00000000000000000000000000000001",
+                "profileName", "Steve",
                 "accessToken", "preferred-token"
         )));
 
         AccountPrivateData fallbackPrivateData = new AccountPrivateData();
         List<Map<Object, Object>> metadataAccounts = fallbackPrivateData.replaceFromAccountStorages(List.of(Map.of(
                 "type", "microsoft",
-                "uuid", "00000000-0000-0000-0000-000000000001",
-                "displayName", "Steve",
+                "profileID", "00000000000000000000000000000001",
+                "profileName", "Steve",
                 "accessToken", "fallback-token"
         )));
 
@@ -249,8 +290,8 @@ public final class AccountStoragesTest {
             AccountPrivateData privateData = new AccountPrivateData();
             privateData.replaceFromAccountStorages(List.of(Map.of(
                     "type", "microsoft",
-                    "uuid", "00000000-0000-0000-0000-000000000001",
-                    "displayName", "Steve",
+                    "profileID", "00000000000000000000000000000001",
+                    "profileName", "Steve",
                     "accessToken", "access-token",
                     "refreshToken", "refresh-token"
             )));
@@ -278,8 +319,8 @@ public final class AccountStoragesTest {
             AccountPrivateData privateData = new AccountPrivateData();
             List<Map<Object, Object>> metadataAccounts = privateData.replaceFromAccountStorages(List.of(Map.of(
                     "type", "microsoft",
-                    "uuid", "00000000-0000-0000-0000-000000000001",
-                    "displayName", "Steve",
+                    "profileID", "00000000000000000000000000000001",
+                    "profileName", "Steve",
                     "accessToken", "access-token",
                     "refreshToken", "refresh-token"
             )));
@@ -298,6 +339,7 @@ public final class AccountStoragesTest {
             assertEquals(identifier, serializedIdentifier);
             assertEquals("access-token", entryPrivateData.get("accessToken").getAsString());
             assertEquals("refresh-token", entryPrivateData.get("refreshToken").getAsString());
+            assertEquals("Steve", entryPrivateData.get("profileName").getAsString());
 
             AccountPrivateData deserialized = Objects.requireNonNull(
                     LauncherSettings.SETTINGS_GSON.fromJson(serialized, AccountPrivateData.class));
@@ -318,8 +360,8 @@ public final class AccountStoragesTest {
             AccountPrivateData privateData = new AccountPrivateData();
             List<Map<Object, Object>> metadataAccounts = privateData.replaceFromAccountStorages(List.of(Map.of(
                     "type", "microsoft",
-                    "uuid", "00000000-0000-0000-0000-000000000001",
-                    "displayName", "Steve",
+                    "profileID", "00000000000000000000000000000001",
+                    "profileName", "Steve",
                     "accessToken", "access-token",
                     "refreshToken", "refresh-token"
             )));
@@ -332,6 +374,7 @@ public final class AccountStoragesTest {
 
             assertEquals("access-token", deserialized.getPrivateData().get(identifier).get("accessToken"));
             assertEquals("refresh-token", deserialized.getPrivateData().get(identifier).get("refreshToken"));
+            assertEquals("Steve", deserialized.getPrivateData().get(identifier).get("profileName"));
         } finally {
             restoreSystemProperty(AccountPrivateData.PROTECTION_PROPERTY, previous);
         }

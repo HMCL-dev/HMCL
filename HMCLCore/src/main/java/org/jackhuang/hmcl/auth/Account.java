@@ -50,11 +50,6 @@ import java.util.UUID;
 public abstract class Account implements Observable {
 
     /**
-     * @return the account login name when the account type exposes one
-     */
-    public abstract String getUsername();
-
-    /**
      * @return the profile name
      */
     public abstract String getProfileName();
@@ -147,25 +142,26 @@ public abstract class Account implements Observable {
         identifier.addProperty("type", type);
         switch (type) {
             case "offline" -> {
-                if (!addIdentifierProperty(identifier, storage, "username")) {
+                if (!addIdentifierProperty(identifier, storage, "profileName")
+                        || !addIdentifierProperty(identifier, storage, "profileID")) {
                     return null;
                 }
             }
             case "microsoft" -> {
-                if (!addIdentifierProperty(identifier, storage, "uuid")) {
+                if (!addIdentifierProperty(identifier, storage, "profileID")) {
                     return null;
                 }
             }
             case "yggdrasil" -> {
-                if (!addIdentifierProperty(identifier, storage, "username")
-                        || !addIdentifierProperty(identifier, storage, "uuid")) {
+                if (!addIdentifierProperty(identifier, storage, "loginName")
+                        || !addIdentifierProperty(identifier, storage, "profileID")) {
                     return null;
                 }
             }
             case "authlibInjector" -> {
                 if (!addIdentifierProperty(identifier, storage, "serverBaseURL")
-                        || !addIdentifierProperty(identifier, storage, "username")
-                        || !addIdentifierProperty(identifier, storage, "uuid")) {
+                        || !addIdentifierProperty(identifier, storage, "loginName")
+                        || !addIdentifierProperty(identifier, storage, "profileID")) {
                     return null;
                 }
             }
@@ -234,7 +230,6 @@ public abstract class Account implements Observable {
     @Override
     public String toString() {
         return new ToStringBuilder(this)
-                .append("username", getUsername())
                 .append("profileName", getProfileName())
                 .append("profileID", getProfileID())
                 .append("portable", isPortable())

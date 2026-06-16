@@ -29,6 +29,7 @@ import javafx.scene.image.Image;
 import javafx.stage.FileChooser;
 import org.jackhuang.hmcl.auth.Account;
 import org.jackhuang.hmcl.auth.AuthenticationException;
+import org.jackhuang.hmcl.auth.ClassicAccount;
 import org.jackhuang.hmcl.auth.CredentialExpiredException;
 import org.jackhuang.hmcl.auth.authlibinjector.AuthlibInjectorAccount;
 import org.jackhuang.hmcl.auth.authlibinjector.AuthlibInjectorServer;
@@ -41,6 +42,7 @@ import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.DialogController;
 import org.jackhuang.hmcl.ui.construct.MessageDialogPane.MessageType;
+import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.skin.InvalidSkinException;
 import org.jackhuang.hmcl.util.skin.NormalizedSkin;
@@ -80,13 +82,14 @@ public class AccountListItem extends RadioButton {
             subtitle.set(loginTypeName + portableSuffix);
         }
 
-        StringBinding profileName = Bindings.createStringBinding(account::getProfileName, account);
-        if (account instanceof OfflineAccount) {
-            title.bind(profileName);
+        StringBinding profileName = Bindings.createStringBinding(() -> {
+            String name = account.getProfileName();
+            return StringUtils.isBlank(name) ? account.getProfileID().toString() : name;
+        }, account);
+        if (account instanceof ClassicAccount classicAccount && !(account instanceof OfflineAccount)) {
+            title.bind(Bindings.concat(classicAccount.getLoginName(), " - ", profileName));
         } else {
-            title.bind(
-                    account.getUsername().isEmpty() ? profileName :
-                            Bindings.concat(account.getUsername(), " - ", profileName));
+            title.bind(profileName);
         }
     }
 

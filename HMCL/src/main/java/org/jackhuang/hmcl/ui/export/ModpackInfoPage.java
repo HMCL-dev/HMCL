@@ -98,7 +98,7 @@ public final class ModpackInfoPage extends Control implements WizardPage {
             throw new IllegalArgumentException("Settings.MODPACK_INFO_OPTION is required");
 
         name.set(version);
-        author.set(Optional.ofNullable(Accounts.getSelectedAccount()).map(Account::getUsername).orElse(""));
+        author.set(Optional.ofNullable(Accounts.getSelectedAccount()).map(Account::getProfileName).orElse(""));
 
         GameSettings.Effective versionSetting = gameRepository.getEffectiveGameSettings(versionName);
         minMemory.set(Optional.ofNullable(versionSetting.get(GameSettings::minMemoryProperty)).orElse(0));

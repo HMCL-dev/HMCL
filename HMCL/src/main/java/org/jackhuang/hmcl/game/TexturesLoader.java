@@ -202,11 +202,11 @@ public final class TexturesLoader {
             SimpleObjectProperty<LoadedTexture> binding = new SimpleObjectProperty<>();
             InvalidationListener listener = o -> {
                 Skin skin = offlineAccount.getSkin();
-                String username = offlineAccount.getUsername();
+                String profileName = offlineAccount.getProfileName();
 
                 binding.set(uuidFallback);
                 if (skin != null) {
-                    skin.load(username).setExecutor(POOL).whenComplete(Schedulers.javafx(), (result, exception) -> {
+                    skin.load(profileName).setExecutor(POOL).whenComplete(Schedulers.javafx(), (result, exception) -> {
                         if (exception != null) {
                             LOG.warning("Failed to load texture", exception);
                         } else if (result != null && result.getSkin() != null && result.getSkin().getImage() != null) {
