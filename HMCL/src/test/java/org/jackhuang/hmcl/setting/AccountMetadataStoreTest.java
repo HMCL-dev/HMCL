@@ -115,6 +115,18 @@ public final class AccountMetadataStoreTest {
         return method;
     }
 
+    /// Returns the reflected synchronous forced account metadata overwrite method.
+    private static Method backupAndOverwriteAccountMetadataStoreMethod() throws ReflectiveOperationException {
+        Method method = SettingsManager.class.getDeclaredMethod(
+                "backupAndOverwriteAccountMetadataStore",
+                AccountMetadataStore.class,
+                JsonSettingFile.class,
+                AccountPrivateData.class,
+                JsonSettingFile.class);
+        method.setAccessible(true);
+        return method;
+    }
+
     /// Tests that account metadata serializes as an object containing an accounts list.
     @Test
     public void serializesAccountsAsObjectList() {
@@ -191,6 +203,58 @@ public final class AccountMetadataStoreTest {
             assertFalse(Files.exists(metadataPath));
             assertTrue(Files.isRegularFile(privateDataParent));
             assertFalse(Files.exists(privateDataPath));
+        }
+    }
+
+    /// Tests that forced overwrite does not update account metadata when private data cannot be written.
+    @Test
+    public void doesNotOverwriteMetadataWhenForcedPrivateDataOverwriteFails()
+            throws ReflectiveOperationException, IOException {
+        try (FileSystem fileSystem = Jimfs.newFileSystem(Configuration.unix())) {
+            Path tempDirectory = fileSystem.getPath("/work");
+            Files.createDirectories(tempDirectory);
+            Path metadataPath = tempDirectory.resolve("accounts.json");
+            String previousMetadata = "{\"old\":true}";
+            Files.writeString(metadataPath, previousMetadata);
+            Path privateDataParent = tempDirectory.resolve("private-parent");
+            Path privateDataPath = privateDataParent.resolve("account-private-data.json");
+            Files.writeString(privateDataParent, "not a directory");
+            AccountMetadataStore accountMetadata = AccountMetadataStore.fromRecords(List.of(Map.<Object, Object>of(
+                    "type", "microsoft",
+                    "accountID", accountID(1),
+                    "profileID", "123456781234123412341234567890ab",
+                    "profileName", "Steve",
+                    "accessToken", "access-token",
+                    "refreshToken", "refresh-token"
+            )));
+            JsonSettingFile<AccountMetadataStore> metadataFile = new JsonSettingFile<>(
+                    metadataPath,
+                    "test account metadata",
+                    AccountMetadataStore.class,
+                    AccountMetadataStore.CURRENT_SCHEMA,
+                    AccountMetadataStore::new);
+            AccountPrivateData privateData = new AccountPrivateData();
+            JsonSettingFile<AccountPrivateData> privateDataFile = new JsonSettingFile<>(
+                    privateDataPath,
+                    "test account private data",
+                    AccountPrivateData.class,
+                    AccountPrivateData.CURRENT_SCHEMA,
+                    AccountPrivateData::new);
+            Method overwriteMethod = backupAndOverwriteAccountMetadataStoreMethod();
+
+            InvocationTargetException exception = assertThrows(InvocationTargetException.class,
+                    () -> overwriteMethod.invoke(
+                            null,
+                            accountMetadata,
+                            metadataFile,
+                            privateData,
+                            privateDataFile));
+
+            assertInstanceOf(IOException.class, exception.getCause());
+            assertEquals(previousMetadata, Files.readString(metadataPath));
+            assertTrue(Files.isRegularFile(privateDataParent));
+            assertFalse(Files.exists(privateDataPath));
+            assertTrue(privateData.getPrivateData().isEmpty());
         }
     }
 

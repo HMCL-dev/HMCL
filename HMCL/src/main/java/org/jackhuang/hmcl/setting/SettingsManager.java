@@ -472,6 +472,34 @@ public final class SettingsManager {
         return new AccountMetadataSnapshot(metadata, privateData);
     }
 
+    /// Backs up and overwrites account metadata and private data synchronously.
+    ///
+    /// Private data is saved before metadata so a failed private-data write cannot leave metadata stripped
+    /// of credentials without a matching private-data file.
+    ///
+    /// @param accounts the loaded account metadata store
+    /// @param accountsFile the account metadata file helper
+    /// @param privateData the loaded account private data store
+    /// @param privateDataFile the account private data file helper
+    /// @throws IOException if saving either file fails
+    private static void backupAndOverwriteAccountMetadataStore(
+            AccountMetadataStore accounts,
+            JsonSettingFile<AccountMetadataStore> accountsFile,
+            AccountPrivateData privateData,
+            JsonSettingFile<AccountPrivateData> privateDataFile) throws IOException {
+        AccountMetadataSnapshot snapshot = createAccountMetadataSnapshot(accounts);
+        privateDataFile.backupAndOverwriteSync(snapshot.privateData());
+        accountsFile.backupAndOverwriteSync(snapshot.metadata());
+
+        accounts.setSchema(AccountMetadataStore.CURRENT_SCHEMA);
+        accounts.setSavable(true);
+        accounts.setBackupOnNextSave(false);
+        privateData.setSchema(AccountPrivateData.CURRENT_SCHEMA);
+        privateData.replaceWith(snapshot.privateData());
+        privateData.setSavable(true);
+        privateData.setBackupOnNextSave(false);
+    }
+
     /// Saves the per-workspace account metadata and private data.
     private static void saveGameAccounts() {
         saveAccountMetadataStore(
@@ -807,16 +835,15 @@ public final class SettingsManager {
     }
 
     /// Backs up and overwrites local account metadata and private data with the currently loaded accounts.
-    public static void forceOverwriteGameAccounts() {
+    ///
+    /// @throws IOException if saving either file fails
+    public static void forceOverwriteGameAccounts() throws IOException {
         boolean installAutoSave = !gameAccounts().isSavable();
-        AccountMetadataSnapshot snapshot = createAccountMetadataSnapshot(gameAccounts());
-        GAME_ACCOUNTS_FILE.backupAndOverwrite(snapshot.metadata());
-        GAME_ACCOUNT_PRIVATE_DATA_FILE.backupAndOverwrite(snapshot.privateData());
-        gameAccounts().setSavable(true);
-        gameAccounts().setBackupOnNextSave(false);
-        gameAccountPrivateData().replaceWith(snapshot.privateData());
-        gameAccountPrivateData().setSavable(true);
-        gameAccountPrivateData().setBackupOnNextSave(false);
+        backupAndOverwriteAccountMetadataStore(
+                gameAccounts(),
+                GAME_ACCOUNTS_FILE,
+                gameAccountPrivateData(),
+                GAME_ACCOUNT_PRIVATE_DATA_FILE);
         if (installAutoSave) {
             gameAccounts().addListener(source -> saveGameAccounts());
         }
@@ -825,16 +852,15 @@ public final class SettingsManager {
     }
 
     /// Backs up and overwrites user account metadata and private data with the currently loaded accounts.
-    public static void forceOverwriteUserGameAccounts() {
+    ///
+    /// @throws IOException if saving either file fails
+    public static void forceOverwriteUserGameAccounts() throws IOException {
         boolean installAutoSave = !userGameAccounts().isSavable();
-        AccountMetadataSnapshot snapshot = createAccountMetadataSnapshot(userGameAccounts());
-        USER_GAME_ACCOUNTS_FILE.backupAndOverwrite(snapshot.metadata());
-        USER_GAME_ACCOUNT_PRIVATE_DATA_FILE.backupAndOverwrite(snapshot.privateData());
-        userGameAccounts().setSavable(true);
-        userGameAccounts().setBackupOnNextSave(false);
-        userGameAccountPrivateData().replaceWith(snapshot.privateData());
-        userGameAccountPrivateData().setSavable(true);
-        userGameAccountPrivateData().setBackupOnNextSave(false);
+        backupAndOverwriteAccountMetadataStore(
+                userGameAccounts(),
+                USER_GAME_ACCOUNTS_FILE,
+                userGameAccountPrivateData(),
+                USER_GAME_ACCOUNT_PRIVATE_DATA_FILE);
         if (installAutoSave) {
             userGameAccounts().addListener(source -> saveUserGameAccounts());
         }

@@ -187,7 +187,8 @@ public final class Accounts {
     /// Backs up and overwrites the account metadata and credential files selected by the portability flag.
     ///
     /// @param portable whether the target account files are local
-    public static void forceOverwriteAccountFiles(boolean portable) {
+    /// @throws IOException if saving either file fails
+    public static void forceOverwriteAccountFiles(boolean portable) throws IOException {
         if (portable) {
             SettingsManager.forceOverwriteGameAccounts();
         } else {
@@ -196,12 +197,16 @@ public final class Accounts {
     }
 
     /// Backs up and overwrites the account files containing the given account.
-    public static void forceOverwriteAccountFiles(Account account) {
+    ///
+    /// @throws IOException if saving either file fails
+    public static void forceOverwriteAccountFiles(Account account) throws IOException {
         forceOverwriteAccountFiles(account.isPortable());
     }
 
     /// Backs up and overwrites both local and user account metadata and credential files.
-    public static void forceOverwriteAccountFiles() {
+    ///
+    /// @throws IOException if saving either file fails
+    public static void forceOverwriteAccountFiles() throws IOException {
         if (SettingsManager.isGameAccountsReadOnly()) {
             SettingsManager.forceOverwriteGameAccounts();
         }

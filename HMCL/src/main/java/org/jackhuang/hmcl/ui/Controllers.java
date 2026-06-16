@@ -123,6 +123,15 @@ public final class Controllers {
     private Controllers() {
     }
 
+    /// Action used by confirmation dialogs that may fail before the confirmed operation is complete.
+    @FunctionalInterface
+    public interface ThrowingRunnable {
+        /// Runs the confirmed action.
+        ///
+        /// @throws Exception if the action fails
+        void run() throws Exception;
+    }
+
     public static Scene getScene() {
         return scene;
     }
@@ -571,12 +580,21 @@ public final class Controllers {
     ///
     /// @param text the file-specific read-only warning
     /// @param overwrite the action that backs up and overwrites the file
-    public static void confirmBackupAndOverwrite(String text, Runnable overwrite) {
+    public static void confirmBackupAndOverwrite(String text, ThrowingRunnable overwrite) {
         dialog(new MessageDialogPane.Builder(
                 text + "\n\n" + i18n("settings.file.force_write.confirm"),
                 i18n("message.warning"),
                 MessageType.WARNING)
-                .addAction(i18n("settings.file.force_write"), overwrite)
+                .addAction(i18n("settings.file.force_write"), () -> {
+                    try {
+                        overwrite.run();
+                    } catch (Exception e) {
+                        LOG.warning("Failed to force overwrite settings file", e);
+                        dialog(i18n("message.failed") + "\n\n" + StringUtils.getStackTrace(e),
+                                i18n("message.error"),
+                                MessageType.ERROR);
+                    }
+                })
                 .addCancel(null)
                 .build());
     }

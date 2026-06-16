@@ -182,15 +182,31 @@ final class JsonSettingFile<T extends ObservableSetting & JsonSchemaSetting> {
         FileUtils.saveSafely(location, LauncherSettings.SETTINGS_GSON.toJson(value, type));
     }
 
-    /// Backs up the current file and overwrites it with the given value using the current schema.
+    /// Prepares a settings object for overwriting a detached settings file.
     ///
     /// @param value the replacement settings object
-    void backupAndOverwrite(T value) {
+    private void prepareOverwrite(T value) {
         SettingFileUtils.backupInvalidConfig(location);
         value.setSchema(expectedSchema);
         value.setSavable(true);
         value.setBackupOnNextSave(false);
+    }
+
+    /// Backs up the current file and overwrites it with the given value using the current schema.
+    ///
+    /// @param value the replacement settings object
+    void backupAndOverwrite(T value) {
+        prepareOverwrite(value);
         save(value);
+    }
+
+    /// Backs up the current file and overwrites it synchronously with the given value using the current schema.
+    ///
+    /// @param value the replacement settings object
+    /// @throws IOException if saving the file fails
+    void backupAndOverwriteSync(T value) throws IOException {
+        prepareOverwrite(value);
+        saveSync(value);
     }
 
     /// Result of loading a detached JSON settings file.
