@@ -73,24 +73,24 @@ public final class HMCLLocalizedDownloadListPage extends DownloadListPage {
 
         boolean supportedCurseForge = CurseForgeRemoteAddonRepository.isAvailable() && curseForge != null;
 
-        downloadSources.setAll("mods.modrinth");
+        downloadSources.setAll("addon.modrinth");
         if (supportedCurseForge) {
-            downloadSources.add("mods.curseforge");
+            downloadSources.add("addon.curseforge");
         }
 
         if ("curseforge".equalsIgnoreCase(config().getDefaultAddonSource())) {
             if (supportedCurseForge) {
-                downloadSource.set("mods.curseforge");
+                downloadSource.set("addon.curseforge");
             } else if (modrinth != null) {
-                downloadSource.set("mods.modrinth");
+                downloadSource.set("addon.modrinth");
             } else {
                 throw new AssertionError("Should not be here.");
             }
         } else {
             if (modrinth != null) {
-                downloadSource.set("mods.modrinth");
+                downloadSource.set("addon.modrinth");
             } else if (supportedCurseForge) {
-                downloadSource.set("mods.curseforge");
+                downloadSource.set("addon.curseforge");
             } else {
                 throw new AssertionError("Should not be here.");
             }
@@ -110,7 +110,7 @@ public final class HMCLLocalizedDownloadListPage extends DownloadListPage {
 
         @Override
         protected RemoteAddonRepository getBackedRemoteModRepository() {
-            if ("mods.modrinth".equals(downloadSource.get())) {
+            if ("addon.modrinth".equals(downloadSource.get())) {
                 return modrinth;
             } else {
                 return curseForge;
@@ -119,7 +119,7 @@ public final class HMCLLocalizedDownloadListPage extends DownloadListPage {
 
         @Override
         protected SortType getBackedRemoteModRepositorySortOrder() {
-            if ("mods.modrinth".equals(downloadSource.get())) {
+            if ("addon.modrinth".equals(downloadSource.get())) {
                 return SortType.NAME;
             } else {
                 return SortType.POPULARITY;
@@ -138,7 +138,7 @@ public final class HMCLLocalizedDownloadListPage extends DownloadListPage {
             return "";
         }
 
-        String key = ("mods.modrinth".equals(downloadSource.get()) ? "modrinth" : "curse") + ".category." + category;
+        String key = ("addon.modrinth".equals(downloadSource.get()) ? "modrinth" : "curse") + ".category." + category;
         try {
             return I18n.getResourceBundle().getString(key);
         } catch (MissingResourceException e) {
@@ -152,10 +152,10 @@ public final class HMCLLocalizedDownloadListPage extends DownloadListPage {
 
     @Override
     protected String getLocalizedOfficialPage() {
-        if ("mods.modrinth".equals(downloadSource.get())) {
-            return i18n("mods.modrinth");
+        if ("addon.modrinth".equals(downloadSource.get())) {
+            return i18n("addon.modrinth");
         } else {
-            return i18n("mods.curseforge");
+            return i18n("addon.curseforge");
         }
     }
 }

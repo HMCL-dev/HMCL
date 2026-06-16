@@ -211,9 +211,9 @@ public class DownloadListPage extends Control implements DecoratorPage, VersionP
 
     protected String getLocalizedOfficialPage() {
         if (repository instanceof ModrinthRemoteAddonRepository) {
-            return i18n("mods.modrinth");
+            return i18n("addon.modrinth");
         } else {
-            return i18n("mods.curseforge");
+            return i18n("addon.curseforge");
         }
     }
 
@@ -341,7 +341,7 @@ public class DownloadListPage extends Control implements DecoratorPage, VersionP
                 categoryStackPane.getChildren().setAll(categoryComboBox);
                 categoryComboBox.prefWidthProperty().bind(categoryStackPane.widthProperty());
                 categoryComboBox.getStyleClass().add("fit-width");
-                categoryComboBox.setPromptText(i18n("mods.category"));
+                categoryComboBox.setPromptText(i18n("addon.category"));
                 categoryComboBox.getSelectionModel().select(0);
                 categoryComboBox.setConverter(stringConverter(getSkinnable()::getLocalizedCategoryIndent));
                 FXUtils.onChangeAndOperate(getSkinnable().downloadSource, downloadSource -> {
@@ -372,7 +372,7 @@ public class DownloadListPage extends Control implements DecoratorPage, VersionP
                 sortComboBox.setConverter(stringConverter(sortType -> i18n("curse.sort." + sortType.name().toLowerCase(Locale.ROOT))));
                 sortComboBox.getItems().setAll(RemoteAddonRepository.SortType.values());
                 sortComboBox.getSelectionModel().select(0);
-                searchPane.addRow(rowIndex++, new Label(i18n("mods.category")), categoryStackPane, new Label(i18n("search.sort")), sortStackPane);
+                searchPane.addRow(rowIndex++, new Label(i18n("addon.category")), categoryStackPane, new Label(i18n("search.sort")), sortStackPane);
 
                 IntegerProperty filterID = new SimpleIntegerProperty(this, "Filter ID", 0);
                 IntegerProperty currentFilterID = new SimpleIntegerProperty(this, "Current Filter ID", -1);

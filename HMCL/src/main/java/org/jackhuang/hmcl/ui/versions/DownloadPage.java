@@ -365,13 +365,13 @@ public class DownloadPage extends Control implements DecoratorPage {
 
     private static final class DependencyAddonItem extends LineButton {
         public static final EnumMap<RemoteAddon.DependencyType, String> I18N_KEY = new EnumMap<>(Lang.mapOf(
-                Pair.pair(RemoteAddon.DependencyType.EMBEDDED, "mods.dependency.embedded"),
-                Pair.pair(RemoteAddon.DependencyType.OPTIONAL, "mods.dependency.optional"),
-                Pair.pair(RemoteAddon.DependencyType.REQUIRED, "mods.dependency.required"),
-                Pair.pair(RemoteAddon.DependencyType.TOOL, "mods.dependency.tool"),
-                Pair.pair(RemoteAddon.DependencyType.INCLUDE, "mods.dependency.include"),
-                Pair.pair(RemoteAddon.DependencyType.INCOMPATIBLE, "mods.dependency.incompatible"),
-                Pair.pair(RemoteAddon.DependencyType.BROKEN, "mods.dependency.broken")
+                Pair.pair(RemoteAddon.DependencyType.EMBEDDED, "addon.dependency.embedded"),
+                Pair.pair(RemoteAddon.DependencyType.OPTIONAL, "addon.dependency.optional"),
+                Pair.pair(RemoteAddon.DependencyType.REQUIRED, "addon.dependency.required"),
+                Pair.pair(RemoteAddon.DependencyType.TOOL, "addon.dependency.tool"),
+                Pair.pair(RemoteAddon.DependencyType.INCLUDE, "addon.dependency.include"),
+                Pair.pair(RemoteAddon.DependencyType.INCOMPATIBLE, "addon.dependency.incompatible"),
+                Pair.pair(RemoteAddon.DependencyType.BROKEN, "addon.dependency.broken")
         ));
 
         DependencyAddonItem(DownloadListPage page, RemoteAddon addon, Profile.ProfileVersion version) {
@@ -410,8 +410,8 @@ public class DownloadPage extends Control implements DecoratorPage {
                     imageView.imageProperty().bind(FXUtils.newRemoteImage(addon.getIconUrl(), 80, 80, true, true));
                 }
             } else {
-                content.setTitle(i18n("mods.broken_dependency.title"));
-                content.setSubtitle(i18n("mods.broken_dependency.desc"));
+                content.setTitle(i18n("addon.broken_dependency.title"));
+                content.setSubtitle(i18n("addon.broken_dependency.desc"));
                 imageView.setImage(FXUtils.newBuiltinImage("/assets/img/icon@4x.png"));
             }
         }
@@ -438,15 +438,15 @@ public class DownloadPage extends Control implements DecoratorPage {
 
                     switch (dataItem.versionType()) {
                         case Alpha:
-                            content.addTag(i18n("mods.channel.alpha"));
+                            content.addTag(i18n("addon.channel.alpha"));
                             graphicPane.getChildren().setAll(SVG.ALPHA_CIRCLE.createIcon(24));
                             break;
                         case Beta:
-                            content.addTag(i18n("mods.channel.beta"));
+                            content.addTag(i18n("addon.channel.beta"));
                             graphicPane.getChildren().setAll(SVG.BETA_CIRCLE.createIcon(24));
                             break;
                         case Release:
-                            content.addTag(i18n("mods.channel.release"));
+                            content.addTag(i18n("addon.channel.release"));
                             graphicPane.getChildren().setAll(SVG.RELEASE_CIRCLE.createIcon(24));
                             break;
                     }
