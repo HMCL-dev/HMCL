@@ -29,7 +29,6 @@ import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.io.NetworkUtils;
 
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.net.URI;
 import java.nio.file.Files;
@@ -140,29 +139,22 @@ public final class CurseInstallTask extends Task<Void> {
     @Override
     public void execute() throws Exception {
         if (config != null) {
-            // For update, remove mods not listed in new manifest
-            // CurseManifestFile only guarantees projectID/fileID are populated. The
-            // fileName field is filled in by CurseCompletionTask after the modpack is
-            // first installed, so we must fall back to querying the API whenever it
-            // is missing so stale files can still be identified and removed.
-            for (CurseManifestFile oldCurseManifestFile : config.getManifest().files()) {
-                String oldFileName = oldCurseManifestFile.fileName();
-                if (StringUtils.isBlank(oldFileName) || oldCurseManifestFile.url() == null) {
-                    try {
-                        RemoteMod.File remoteFile = CurseForgeRemoteModRepository.MODS.getModFile(
-                                Integer.toString(oldCurseManifestFile.projectID()),
-                                Integer.toString(oldCurseManifestFile.fileID()));
-                        oldFileName = remoteFile.getFilename();
-                    } catch (FileNotFoundException fof) {
-                        LOG.warning("Could not query api.curseforge.com for deleted mod: " + oldCurseManifestFile.projectID() + ", " + oldCurseManifestFile.fileID(), fof);
-                        continue;
-                    } catch (IOException | JsonParseException e) {
-                        LOG.warning("Unable to fetch the file name for projectID=" + oldCurseManifestFile.projectID() + ", fileID=" + oldCurseManifestFile.fileID(), e);
-                        continue;
-                    }
+            // For update, remove mods not listed in new manifest.
+            // ModpackConfiguration stored in modpack.json preserves the raw
+            // CurseForge manifest where fileName is missing. CurseCompletionTask
+            // resolves those file names and writes the enriched manifest to
+            // manifest.json, so read from there when available.
+            Path oldManifestFile = repository.getVersionRoot(name).resolve("manifest.json");
+            List<CurseManifestFile> oldFiles = config.getManifest().files();
+            if (Files.exists(oldManifestFile)) {
+                try {
+                    oldFiles = JsonUtils.fromJsonFile(oldManifestFile, CurseManifest.class).files();
+                } catch (IOException | JsonParseException ignored) {
                 }
-                if (StringUtils.isBlank(oldFileName)) continue;
-                Path oldFile = run.resolve("mods/" + oldFileName);
+            }
+            for (CurseManifestFile oldCurseManifestFile : oldFiles) {
+                if (StringUtils.isBlank(oldCurseManifestFile.fileName())) continue;
+                Path oldFile = run.resolve("mods/" + oldCurseManifestFile.fileName());
                 if (Files.notExists(oldFile)) continue;
                 if (manifest.files().stream().noneMatch(oldCurseManifestFile::equals))
                     Files.deleteIfExists(oldFile);
