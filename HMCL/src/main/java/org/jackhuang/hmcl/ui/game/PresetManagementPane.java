@@ -26,7 +26,7 @@ import javafx.geometry.Pos;
 import javafx.scene.Node;
 import javafx.scene.layout.HBox;
 import org.jackhuang.hmcl.setting.GameSettings;
-import org.jackhuang.hmcl.setting.SettingID;
+import org.jackhuang.hmcl.setting.GameSettingsPresetID;
 import org.jackhuang.hmcl.setting.SettingsManager;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.FXUtils;
@@ -262,7 +262,7 @@ final class PresetManagementPane extends ComponentSublist {
 
         boolean removedCurrentPreset = Objects.equals(getCurrentPreset(), setting);
         GameSettings.Preset next = settings.get(index == 0 ? 1 : index - 1);
-        SettingID removedId = setting.idProperty().getValue();
+        GameSettingsPresetID removedId = setting.idProperty().getValue();
         if (Objects.equals(settings().defaultGameSettingsPresetProperty().get(), removedId)) {
             settings().defaultGameSettingsPresetProperty().set(next.idProperty().getValue());
         }

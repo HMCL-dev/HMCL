@@ -49,11 +49,11 @@ import static org.jackhuang.hmcl.ui.FXUtils.onInvalidating;
 public final class Profile implements Observable {
     private final HMCLGameRepository repository;
 
-    /// The stable profile ID.
-    private final SettingID id;
+    /// The stable game directory ID.
+    private final GameDirectoryID id;
 
-    /// Returns the stable profile ID.
-    public SettingID getId() {
+    /// Returns the stable game directory ID.
+    public GameDirectoryID getId() {
         return id;
     }
 
@@ -94,30 +94,34 @@ public final class Profile implements Observable {
     }
 
     /// The migrated legacy game settings preset ID, or `null` when this profile uses the default preset.
-    private final ObjectProperty<@Nullable SettingID> legacyGameSettings;
+    private final ObjectProperty<@Nullable GameSettingsPresetID> legacyGameSettings;
 
     /// Returns the migrated legacy game settings preset ID property.
-    public ObjectProperty<@Nullable SettingID> legacyGameSettingsProperty() {
+    public ObjectProperty<@Nullable GameSettingsPresetID> legacyGameSettingsProperty() {
         return legacyGameSettings;
     }
 
     /// Returns the migrated legacy game settings preset ID, or `null` when this profile uses the default preset.
-    public @Nullable SettingID getLegacyGameSettings() {
+    public @Nullable GameSettingsPresetID getLegacyGameSettings() {
         return legacyGameSettings.get();
     }
 
     /// Sets the migrated legacy game settings preset ID.
-    public void setLegacyGameSettings(@Nullable SettingID legacyGameSettings) {
+    public void setLegacyGameSettings(@Nullable GameSettingsPresetID legacyGameSettings) {
         this.legacyGameSettings.set(legacyGameSettings);
     }
 
     /// Creates a profile.
-    public Profile(SettingID id, @Nullable LocalizedText name, PortablePath path) {
+    public Profile(GameDirectoryID id, @Nullable LocalizedText name, PortablePath path) {
         this(id, name, path, null);
     }
 
     /// Creates a profile.
-    public Profile(SettingID id, @Nullable LocalizedText name, PortablePath path, @Nullable SettingID legacyGameSettings) {
+    public Profile(
+            GameDirectoryID id,
+            @Nullable LocalizedText name,
+            PortablePath path,
+            @Nullable GameSettingsPresetID legacyGameSettings) {
         this.id = Objects.requireNonNull(id);
         this.name = new SimpleObjectProperty<>(this, "name", name);
         this.path = new SimpleObjectProperty<>(this, "path", Objects.requireNonNull(path));
@@ -181,7 +185,7 @@ public final class Profile implements Observable {
                 return JsonNull.INSTANCE;
 
             JsonObject jsonObject = new JsonObject();
-            jsonObject.add("id", context.serialize(src.getId(), SettingID.class));
+            jsonObject.add("id", context.serialize(src.getId(), GameDirectoryID.class));
             if (src.getName() != null) {
                 JsonElement name = context.serialize(src.getName(), LocalizedText.class);
                 if (name != null && !name.isJsonNull()) {
@@ -190,7 +194,7 @@ public final class Profile implements Observable {
             }
             jsonObject.add("path", context.serialize(src.getPath(), PortablePath.class));
             if (src.getLegacyGameSettings() != null) {
-                jsonObject.add("legacyGameSettings", context.serialize(src.getLegacyGameSettings(), SettingID.class));
+                jsonObject.add("legacyGameSettings", context.serialize(src.getLegacyGameSettings(), GameSettingsPresetID.class));
             }
 
             return jsonObject;
@@ -199,11 +203,11 @@ public final class Profile implements Observable {
         @Override
         public @Nullable Profile deserialize(@Nullable JsonElement json, Type typeOfT, JsonDeserializationContext context) throws JsonParseException {
             if (!(json instanceof JsonObject obj)) return null;
-            SettingID id = context.deserialize(obj.get("id"), SettingID.class);
+            GameDirectoryID id = context.deserialize(obj.get("id"), GameDirectoryID.class);
             if (id == null) {
-                throw new JsonParseException("Profile ID cannot be null");
-            } else if (SettingID.NIL.equals(id)) {
-                throw new JsonParseException("Profile ID cannot be nil");
+                throw new JsonParseException("Game directory ID cannot be null");
+            } else if (GameDirectoryID.NIL.equals(id)) {
+                throw new JsonParseException("Game directory ID cannot be nil");
             }
             PortablePath path = context.deserialize(obj.get("path"), PortablePath.class);
             if (path == null) {
@@ -214,7 +218,7 @@ public final class Profile implements Observable {
             return new Profile(id,
                     name,
                     path,
-                    context.deserialize(obj.get("legacyGameSettings"), SettingID.class));
+                    context.deserialize(obj.get("legacyGameSettings"), GameSettingsPresetID.class));
         }
 
     }

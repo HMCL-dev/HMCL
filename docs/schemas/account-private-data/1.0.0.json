@@ -74,7 +74,7 @@
             ],
             "properties": {
               "identifier": {
-                "$ref": "#/$defs/uuid"
+                "$ref": "#/$defs/accountID"
               },
               "privateData": {
                 "type": "object",
@@ -85,9 +85,9 @@
         }
       }
     },
-    "uuid": {
+    "accountID": {
       "type": "string",
-      "pattern": "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$"
+      "pattern": "^account:[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$"
     }
   }
 }

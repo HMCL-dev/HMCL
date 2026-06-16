@@ -460,24 +460,24 @@ public final class LauncherSettings extends ObservableSetting implements JsonSch
     ///
     /// This field is owned by [Profiles]. Code outside [Profiles] should not modify it directly.
     @SerializedName(PROPERTY_SELECTED_GAME_DIRECTORY)
-    private final ObjectProperty<@Nullable SettingID> selectedGameDirectory =
+    private final ObjectProperty<@Nullable GameDirectoryID> selectedGameDirectory =
             new SimpleObjectProperty<>(this, PROPERTY_SELECTED_GAME_DIRECTORY);
 
     /// Returns the selected game directory ID property.
     ///
     /// This property is exposed for persistence and [Profiles] integration. Code outside [Profiles]
     /// should use `Profiles.setSelectedProfile` instead of modifying this property directly.
-    public ObjectProperty<@Nullable SettingID> selectedGameDirectoryProperty() {
+    public ObjectProperty<@Nullable GameDirectoryID> selectedGameDirectoryProperty() {
         return selectedGameDirectory;
     }
 
     /// The default game setting preset ID.
     @SerializedName(PROPERTY_DEFAULT_GAME_SETTINGS_PRESET)
-    private final ObjectProperty<@Nullable SettingID> defaultGameSettingsPreset =
+    private final ObjectProperty<@Nullable GameSettingsPresetID> defaultGameSettingsPreset =
             new SimpleObjectProperty<>(this, PROPERTY_DEFAULT_GAME_SETTINGS_PRESET);
 
     /// Returns the default game setting preset ID property.
-    public ObjectProperty<@Nullable SettingID> defaultGameSettingsPresetProperty() {
+    public ObjectProperty<@Nullable GameSettingsPresetID> defaultGameSettingsPresetProperty() {
         return defaultGameSettingsPreset;
     }
 
@@ -485,27 +485,27 @@ public final class LauncherSettings extends ObservableSetting implements JsonSch
     ///
     /// This field is owned by [Profiles]. Code outside [Profiles] should not modify it directly.
     @SerializedName(PROPERTY_SELECTED_INSTANCE)
-    private final ObservableMap<SettingID, String> selectedInstance = FXCollections.observableHashMap();
+    private final ObservableMap<GameDirectoryID, String> selectedInstance = FXCollections.observableHashMap();
 
     /// Returns selected instance IDs keyed by game directory ID.
     ///
     /// This map is exposed for persistence and migration code. Runtime code outside [Profiles] should
     /// use `Profiles.getSelectedInstance` and `Profiles.setSelectedInstance` instead of mutating it.
-    public ObservableMap<SettingID, String> getSelectedInstance() {
+    public ObservableMap<GameDirectoryID, String> getSelectedInstance() {
         return selectedInstance;
     }
 
     /// Returns the selected instance ID for the given game directory ID.
     ///
     /// This method is intended for [Profiles].
-    @Nullable String getSelectedInstance(@Nullable SettingID gameDirectoryId) {
+    @Nullable String getSelectedInstance(@Nullable GameDirectoryID gameDirectoryId) {
         return gameDirectoryId != null ? selectedInstance.get(gameDirectoryId) : null;
     }
 
     /// Sets the selected instance ID for the given game directory ID.
     ///
     /// This method is intended for [Profiles].
-    void setSelectedInstance(@Nullable SettingID gameDirectoryId, @Nullable String selectedInstance) {
+    void setSelectedInstance(@Nullable GameDirectoryID gameDirectoryId, @Nullable String selectedInstance) {
         if (gameDirectoryId == null) {
             return;
         }

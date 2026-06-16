@@ -196,7 +196,8 @@ public final class GameSettingsInstanceTest {
     /// Tests that legacy global version-folder isolation is preserved for inherited instance settings.
     @Test
     public void preservesInheritedLegacyVersionFolderIsolation() {
-        SettingID parentId = SettingID.parse("123e4567-e89b-12d3-a456-426614174000");
+        GameSettingsPresetID parentId =
+                GameSettingsPresetID.parse("game-settings-preset:123e4567-e89b-12d3-a456-426614174000");
         GameSettings.Preset parent = new GameSettings.Preset(parentId);
         parent.defaultIsolationTypeProperty().setValue(DefaultIsolationType.ALWAYS);
 

@@ -312,11 +312,6 @@ final class AccountPrivateData extends ObservableSetting implements JsonSchemaSe
             }
 
             try {
-                if (identifierElement instanceof JsonObject identifierObject) {
-                    @Nullable String accountID = JsonUtils.getString(identifierObject, Account.PROPERTY_ACCOUNT_ID);
-                    return accountID != null ? AccountID.parse(accountID) : null;
-                }
-
                 return context.deserialize(identifierElement, AccountID.class);
             } catch (JsonParseException | IllegalArgumentException e) {
                 return null;

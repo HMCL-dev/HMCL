@@ -120,13 +120,16 @@
       "type": "string"
     },
     "selectedGameDirectory": {
-      "$ref": "#/$defs/uuid"
+      "$ref": "#/$defs/gameDirectoryID"
     },
     "defaultGameSettingsPreset": {
-      "$ref": "#/$defs/uuid"
+      "$ref": "#/$defs/gameSettingsPresetID"
     },
     "selectedInstance": {
       "type": "object",
+      "propertyNames": {
+        "$ref": "#/$defs/gameDirectoryID"
+      },
       "additionalProperties": {
         "type": "string"
       }
@@ -135,8 +138,8 @@
       "type": "string"
     },
     "selectedAccount": {
-        "$ref": "#/$defs/uuid"
-      }
+      "$ref": "#/$defs/accountID"
+    }
   },
   "$defs": {
     "downloadSource": {
@@ -146,9 +149,17 @@
         "MIRROR"
       ]
     },
-    "uuid": {
+    "accountID": {
       "type": "string",
-      "pattern": "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$"
+      "pattern": "^account:[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$"
+    },
+    "gameDirectoryID": {
+      "type": "string",
+      "pattern": "^game-directory:[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$"
+    },
+    "gameSettingsPresetID": {
+      "type": "string",
+      "pattern": "^game-settings-preset:[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$"
     }
   }
 }

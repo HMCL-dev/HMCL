@@ -42,9 +42,9 @@ import static org.junit.jupiter.api.Assertions.*;
 public final class LauncherSettingsMigrationTest {
     /// Returns the migrated account ID generated for a legacy offline profile name.
     private static String offlineAccountID(String profileName) {
-        return UUIDs.generateV5(
+        return new AccountID(UUIDs.generateV5(
                 LegacyConfigMigrator.LEGACY_ACCOUNT_ID_NAMESPACE,
-                profileName + ":" + profileName).toString();
+                profileName + ":" + profileName)).toString();
     }
 
     @Test
@@ -307,27 +307,6 @@ public final class LauncherSettingsMigrationTest {
         assertFalse(accountStorages.getAccounts().get(1).containsKey("selected"));
     }
 
-    /// Tests migrating older selected account values that store only the username.
-    @Test
-    public void migratesLegacySelectedAccountUsernameToReference() {
-        JsonObject settings = JsonParser.parseString("""
-                {
-                  "accounts": [
-                    {
-                      "type": "offline",
-                      "username": "Alex"
-                    }
-                  ],
-                  "selectedAccount": "Alex"
-                }
-                """).getAsJsonObject();
-
-        AccountStorages accountStorages = Objects.requireNonNull(LegacyConfigMigrator.extractAccountStorages(settings));
-        assertTrue(LegacyConfigMigrator.migrateLegacySelectedAccount(settings, accountStorages));
-
-        assertEquals(offlineAccountID("Alex"), settings.get("selectedAccount").getAsString());
-    }
-
     /// Tests migrating legacy selected Microsoft account identifiers with hyphenated UUIDs.
     @Test
     public void migratesLegacySelectedMicrosoftAccountToReference() {
@@ -356,11 +335,11 @@ public final class LauncherSettingsMigrationTest {
     public void serializesSelectedAccountReferenceAsAccountID() {
         LauncherSettings launcherSettings = new LauncherSettings();
         launcherSettings.selectedAccountProperty().set(
-                AccountID.parse("12345678-1234-1234-1234-1234567890ab"));
+                AccountID.parse("account:12345678-1234-1234-1234-1234567890ab"));
 
         JsonObject serialized = JsonParser.parseString(launcherSettings.toJson()).getAsJsonObject();
 
-        assertEquals("12345678-1234-1234-1234-1234567890ab",
+        assertEquals("account:12345678-1234-1234-1234-1234567890ab",
                 serialized.get("selectedAccount").getAsString());
     }
 

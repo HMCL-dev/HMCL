@@ -32,7 +32,7 @@
       ],
       "properties": {
         "id": {
-          "$ref": "#/$defs/uuid"
+          "$ref": "#/$defs/gameDirectoryID"
         },
         "name": {
           "$ref": "#/$defs/localizedText"
@@ -41,13 +41,17 @@
           "type": "string"
         },
         "legacyGameSettings": {
-          "$ref": "#/$defs/uuid"
+          "$ref": "#/$defs/gameSettingsPresetID"
         }
       }
     },
-    "uuid": {
+    "gameDirectoryID": {
       "type": "string",
-      "pattern": "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$"
+      "pattern": "^game-directory:[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$"
+    },
+    "gameSettingsPresetID": {
+      "type": "string",
+      "pattern": "^game-settings-preset:[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$"
     },
     "localizedText": {
       "oneOf": [

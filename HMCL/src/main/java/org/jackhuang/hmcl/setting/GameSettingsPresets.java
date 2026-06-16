@@ -121,16 +121,16 @@ public final class GameSettingsPresets extends ObservableSetting implements Json
     }
 
     /// Creates a preset ID that does not collide with existing presets.
-    public SettingID newPresetId() {
-        SettingID id;
+    public GameSettingsPresetID newPresetId() {
+        GameSettingsPresetID id;
         do {
-            id = SettingID.generate();
+            id = GameSettingsPresetID.generate();
         } while (getPreset(id) != null);
         return id;
     }
 
     /// Returns the preset with the given ID.
-    public GameSettings.@Nullable Preset getPreset(@Nullable SettingID id) {
+    public GameSettings.@Nullable Preset getPreset(@Nullable GameSettingsPresetID id) {
         if (id == null) {
             return null;
         }

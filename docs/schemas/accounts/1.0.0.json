@@ -25,7 +25,7 @@
         ],
         "properties": {
           "accountID": {
-            "type": "string"
+            "$ref": "#/$defs/accountID"
           }
         },
         "not": {
@@ -48,6 +48,12 @@
           ]
         }
       }
+    }
+  },
+  "$defs": {
+    "accountID": {
+      "type": "string",
+      "pattern": "^account:[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$"
     }
   }
 }

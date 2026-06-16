@@ -15,7 +15,7 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-package org.jackhuang.hmcl.auth;
+package org.jackhuang.hmcl.setting;
 
 import com.google.gson.annotations.JsonAdapter;
 import org.glavo.uuid.UUIDs;
@@ -26,45 +26,45 @@ import org.jetbrains.annotations.NotNullByDefault;
 import java.util.Objects;
 import java.util.UUID;
 
-/// Stable identifier for a persisted account entry.
-///
-/// This ID identifies the launcher account record itself. It must not be confused with a Minecraft profile ID,
-/// login name, server URL, or any other authentication detail that may be shared by more than one account record.
+/// Stable identifier for a persisted game settings preset.
 ///
 /// @param uuid the UUID payload
-@JsonAdapter(AccountID.Adapter.class)
+@JsonAdapter(GameSettingsPresetID.Adapter.class)
 @JsonSerializable
 @NotNullByDefault
-public record AccountID(UUID uuid) implements TypedID {
-    /// The serialized account ID prefix.
-    public static final String PREFIX = "account";
+public record GameSettingsPresetID(UUID uuid) implements TypedID {
+    /// The serialized game settings preset ID prefix.
+    public static final String PREFIX = "game-settings-preset";
 
-    /// Creates an account ID.
-    public AccountID {
+    /// The nil identifier value.
+    public static final GameSettingsPresetID NIL = new GameSettingsPresetID(UUIDs.NIL);
+
+    /// Creates a game settings preset ID.
+    public GameSettingsPresetID {
         Objects.requireNonNull(uuid);
     }
 
-    /// Parses an account ID from a prefixed UUID string.
-    public static AccountID parse(String value) {
-        return new AccountID(TypedID.parseUUID(PREFIX, value));
+    /// Parses a game settings preset ID from a prefixed UUID string.
+    public static GameSettingsPresetID parse(String value) {
+        return new GameSettingsPresetID(TypedID.parseUUID(PREFIX, value));
     }
 
-    /// Generates a new time-ordered account ID.
-    public static AccountID generate() {
-        return new AccountID(UUIDs.generateV7());
+    /// Generates a new time-ordered game settings preset ID.
+    public static GameSettingsPresetID generate() {
+        return new GameSettingsPresetID(UUIDs.generateV7());
     }
 
-    /// Returns the prefixed account ID string.
+    /// Returns the prefixed game settings preset ID string.
     @Override
     public String toString() {
         return TypedID.format(PREFIX, uuid);
     }
 
-    /// Gson adapter for [AccountID].
-    public static final class Adapter extends TypedID.Adapter<AccountID> {
-        /// Creates an account ID adapter.
+    /// Gson adapter for [GameSettingsPresetID].
+    public static final class Adapter extends TypedID.Adapter<GameSettingsPresetID> {
+        /// Creates a game settings preset ID adapter.
         public Adapter() {
-            super(PREFIX, AccountID::new);
+            super(PREFIX, GameSettingsPresetID::new);
         }
     }
 }

@@ -38,7 +38,7 @@ import org.jackhuang.hmcl.setting.GameWindowType;
 import org.jackhuang.hmcl.setting.LegacyGameSettingsMigrator;
 import org.jackhuang.hmcl.setting.Profile;
 import org.jackhuang.hmcl.setting.SettingFileUtils;
-import org.jackhuang.hmcl.setting.SettingID;
+import org.jackhuang.hmcl.setting.GameSettingsPresetID;
 import org.jackhuang.hmcl.setting.VersionIconType;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.util.FileSaver;
@@ -460,7 +460,7 @@ public final class HMCLGameRepository extends DefaultGameRepository {
     }
 
     public GameSettings.Preset getParentGameSettings(@Nullable GameSettings.Instance instance) {
-        @Nullable SettingID parent = instance != null && instance.parentProperty().getValue() != null
+        @Nullable GameSettingsPresetID parent = instance != null && instance.parentProperty().getValue() != null
                 ? instance.parentProperty().getValue()
                 : profile.getLegacyGameSettings();
         GameSettings.Preset parentSetting = SettingsManager.getGameSettings(parent);

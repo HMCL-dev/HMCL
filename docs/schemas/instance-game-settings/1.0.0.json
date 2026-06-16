@@ -21,7 +21,7 @@
       },
       "properties": {
         "parent": {
-          "$ref": "#/$defs/uuid"
+          "$ref": "#/$defs/gameSettingsPresetID"
         },
         "icon": {
           "enum": [
@@ -217,9 +217,9 @@
         }
       }
     },
-    "uuid": {
+    "gameSettingsPresetID": {
       "type": "string",
-      "pattern": "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$"
+      "pattern": "^game-settings-preset:[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$"
     }
   }
 }

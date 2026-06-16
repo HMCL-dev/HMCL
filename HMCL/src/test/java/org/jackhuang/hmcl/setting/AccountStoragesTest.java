@@ -60,9 +60,9 @@ public final class AccountStoragesTest {
     /// Returns a deterministic account ID for tests.
     ///
     /// @param value the numeric suffix
-    /// @return a UUID string with the given numeric suffix
+    /// @return an account ID string with the given numeric suffix
     private static String accountID(int value) {
-        return "00000000-0000-0000-0000-" + String.format("%012d", value);
+        return "account:00000000-0000-0000-0000-" + String.format("%012d", value);
     }
 
     /// Returns the migrated account ID generated from a legacy account reference.
@@ -71,9 +71,9 @@ public final class AccountStoragesTest {
     /// @param legacyIdentifier the legacy account identifier
     /// @return the migrated account ID
     private static String legacyAccountID(boolean userStorage, String legacyIdentifier) {
-        return UUIDs.generateV5(
+        return new AccountID(UUIDs.generateV5(
                 LegacyConfigMigrator.LEGACY_ACCOUNT_ID_NAMESPACE,
-                userStorage ? "$GLOBAL:" + legacyIdentifier : legacyIdentifier).toString();
+                userStorage ? "$GLOBAL:" + legacyIdentifier : legacyIdentifier)).toString();
     }
 
     /// Tests that account metadata serializes as an object containing an accounts list.
@@ -141,7 +141,7 @@ public final class AccountStoragesTest {
                       "username": "Alex"
                     }
                   ],
-                  "selectedAccount": "Alex"
+                  "selectedAccount": "Alex:Alex"
                 }
                 """).getAsJsonObject();
 
@@ -214,7 +214,7 @@ public final class AccountStoragesTest {
     /// Tests replacing duplicate account IDs across local and shared account storages.
     @Test
     public void deduplicatesAccountIDsAcrossStorages() {
-        String duplicateAccountID = OfflineAccountFactory.getUUIDFromUserName("Alex").toString();
+        String duplicateAccountID = new AccountID(OfflineAccountFactory.getUUIDFromUserName("Alex")).toString();
         AccountStorages localAccounts = AccountStorages.fromAccounts(List.of(Map.of(
                 "type", "offline",
                 "accountID", duplicateAccountID,

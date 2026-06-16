@@ -38,7 +38,8 @@ public final class GameSettingsPresetsTest {
     /// Tests that the default preset selection belongs to LauncherSettings.
     @Test
     public void storesDefaultGameSettingsPresetInConfig() {
-        SettingID id = SettingID.parse("123e4567-e89b-12d3-a456-426614174000");
+        GameSettingsPresetID id =
+                GameSettingsPresetID.parse("game-settings-preset:123e4567-e89b-12d3-a456-426614174000");
         LauncherSettings config = new LauncherSettings();
 
         config.defaultGameSettingsPresetProperty().set(id);
@@ -52,7 +53,7 @@ public final class GameSettingsPresetsTest {
     public void rejectsNilPresetId() {
         assertThrows(JsonParseException.class, () -> JsonUtils.GSON.fromJson("""
                 {
-                  "id": "00000000-0000-0000-0000-000000000000"
+                  "id": "game-settings-preset:00000000-0000-0000-0000-000000000000"
                 }
                 """, GameSettings.Preset.class));
 
@@ -63,7 +64,8 @@ public final class GameSettingsPresetsTest {
     /// Tests that automatic preset name numbers are stored separately from custom names.
     @Test
     public void storesAutomaticPresetNameNumber() {
-        GameSettings.Preset preset = new GameSettings.Preset(SettingID.parse("123e4567-e89b-12d3-a456-426614174000"));
+        GameSettings.Preset preset = new GameSettings.Preset(
+                GameSettingsPresetID.parse("game-settings-preset:123e4567-e89b-12d3-a456-426614174000"));
 
         preset.autoNameNumberProperty().setValue(3);
         JsonObject serialized = JsonParser.parseString(JsonUtils.GSON.toJson(preset, GameSettings.Preset.class))
@@ -76,7 +78,8 @@ public final class GameSettingsPresetsTest {
     /// Tests that custom preset names are stored as strings.
     @Test
     public void storesCustomPresetNameAsString() {
-        GameSettings.Preset preset = new GameSettings.Preset(SettingID.parse("123e4567-e89b-12d3-a456-426614174000"));
+        GameSettings.Preset preset = new GameSettings.Preset(
+                GameSettingsPresetID.parse("game-settings-preset:123e4567-e89b-12d3-a456-426614174000"));
 
         preset.nameProperty().setValue(LocalizedText.plain("Custom"));
         JsonObject serialized = JsonParser.parseString(JsonUtils.GSON.toJson(preset, GameSettings.Preset.class))
@@ -91,13 +94,13 @@ public final class GameSettingsPresetsTest {
     public void readsCustomNameAndAutomaticNameNumber() {
         GameSettings.Preset automatic = JsonUtils.GSON.fromJson("""
                 {
-                  "id": "123e4567-e89b-12d3-a456-426614174000",
+                  "id": "game-settings-preset:123e4567-e89b-12d3-a456-426614174000",
                   "autoNameNumber": 4
                 }
                 """, GameSettings.Preset.class);
         GameSettings.Preset custom = JsonUtils.GSON.fromJson("""
                 {
-                  "id": "123e4567-e89b-12d3-a456-426614174001",
+                  "id": "game-settings-preset:123e4567-e89b-12d3-a456-426614174001",
                   "name": "Custom"
                 }
                 """, GameSettings.Preset.class);
@@ -113,7 +116,7 @@ public final class GameSettingsPresetsTest {
     public void readsLocalizedCustomPresetName() {
         GameSettings.Preset custom = JsonUtils.GSON.fromJson("""
                 {
-                  "id": "123e4567-e89b-12d3-a456-426614174001",
+                  "id": "game-settings-preset:123e4567-e89b-12d3-a456-426614174001",
                   "name": {
                     "en": "Custom",
                     "zh-Hans": "自定义"

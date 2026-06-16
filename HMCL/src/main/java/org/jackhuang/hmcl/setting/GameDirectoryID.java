@@ -15,7 +15,7 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-package org.jackhuang.hmcl.auth;
+package org.jackhuang.hmcl.setting;
 
 import com.google.gson.annotations.JsonAdapter;
 import org.glavo.uuid.UUIDs;
@@ -26,45 +26,45 @@ import org.jetbrains.annotations.NotNullByDefault;
 import java.util.Objects;
 import java.util.UUID;
 
-/// Stable identifier for a persisted account entry.
-///
-/// This ID identifies the launcher account record itself. It must not be confused with a Minecraft profile ID,
-/// login name, server URL, or any other authentication detail that may be shared by more than one account record.
+/// Stable identifier for a persisted game directory entry.
 ///
 /// @param uuid the UUID payload
-@JsonAdapter(AccountID.Adapter.class)
+@JsonAdapter(GameDirectoryID.Adapter.class)
 @JsonSerializable
 @NotNullByDefault
-public record AccountID(UUID uuid) implements TypedID {
-    /// The serialized account ID prefix.
-    public static final String PREFIX = "account";
+public record GameDirectoryID(UUID uuid) implements TypedID {
+    /// The serialized game directory ID prefix.
+    public static final String PREFIX = "game-directory";
 
-    /// Creates an account ID.
-    public AccountID {
+    /// The nil identifier value.
+    public static final GameDirectoryID NIL = new GameDirectoryID(UUIDs.NIL);
+
+    /// Creates a game directory ID.
+    public GameDirectoryID {
         Objects.requireNonNull(uuid);
     }
 
-    /// Parses an account ID from a prefixed UUID string.
-    public static AccountID parse(String value) {
-        return new AccountID(TypedID.parseUUID(PREFIX, value));
+    /// Parses a game directory ID from a prefixed UUID string.
+    public static GameDirectoryID parse(String value) {
+        return new GameDirectoryID(TypedID.parseUUID(PREFIX, value));
     }
 
-    /// Generates a new time-ordered account ID.
-    public static AccountID generate() {
-        return new AccountID(UUIDs.generateV7());
+    /// Generates a new time-ordered game directory ID.
+    public static GameDirectoryID generate() {
+        return new GameDirectoryID(UUIDs.generateV7());
     }
 
-    /// Returns the prefixed account ID string.
+    /// Returns the prefixed game directory ID string.
     @Override
     public String toString() {
         return TypedID.format(PREFIX, uuid);
     }
 
-    /// Gson adapter for [AccountID].
-    public static final class Adapter extends TypedID.Adapter<AccountID> {
-        /// Creates an account ID adapter.
+    /// Gson adapter for [GameDirectoryID].
+    public static final class Adapter extends TypedID.Adapter<GameDirectoryID> {
+        /// Creates a game directory ID adapter.
         public Adapter() {
-            super(PREFIX, AccountID::new);
+            super(PREFIX, GameDirectoryID::new);
         }
     }
 }

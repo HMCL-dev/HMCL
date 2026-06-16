@@ -87,10 +87,10 @@ public final class LegacyConfigMigrator {
     private static final String LEGACY_HOME_PROFILE = "Home";
 
     /// The legacy built-in current-workspace profile ID.
-    private static final SettingID LEGACY_DEFAULT_PROFILE_ID = getLegacyProfileID(LEGACY_DEFAULT_PROFILE);
+    private static final GameDirectoryID LEGACY_DEFAULT_PROFILE_ID = getLegacyProfileID(LEGACY_DEFAULT_PROFILE);
 
     /// The legacy built-in user-home profile ID.
-    private static final SettingID LEGACY_HOME_PROFILE_ID = getLegacyProfileID(LEGACY_HOME_PROFILE);
+    private static final GameDirectoryID LEGACY_HOME_PROFILE_ID = getLegacyProfileID(LEGACY_HOME_PROFILE);
 
     /// The legacy Windows and portable configuration file name used before HMCL 3.16.
     private static final String LEGACY_CONFIG_FILENAME = "hmcl.json";
@@ -141,23 +141,18 @@ public final class LegacyConfigMigrator {
     }
 
     /// Returns the stable profile ID for a migrated legacy profile.
-    static SettingID getLegacyProfileID(String profileName) {
-        return createLegacySettingID(LEGACY_PROFILE_ID_NAMESPACE, profileName);
+    static GameDirectoryID getLegacyProfileID(String profileName) {
+        return new GameDirectoryID(UUIDs.generateV5(LEGACY_PROFILE_ID_NAMESPACE, profileName));
     }
 
     /// Returns the stable game settings preset ID for a migrated legacy profile.
-    static SettingID getLegacyGameSettingsID(String profileName) {
-        return createLegacySettingID(LEGACY_GAME_SETTINGS_ID_NAMESPACE, profileName);
+    static GameSettingsPresetID getLegacyGameSettingsID(String profileName) {
+        return new GameSettingsPresetID(UUIDs.generateV5(LEGACY_GAME_SETTINGS_ID_NAMESPACE, profileName));
     }
 
     /// Returns whether any legacy workspace config file is present.
     static boolean hasLegacyConfig() {
         return locateLegacyConfig() != null;
-    }
-
-    /// Creates a deterministic setting ID for legacy migration data.
-    private static SettingID createLegacySettingID(UUID namespace, String name) {
-        return new SettingID(UUIDs.generateV5(namespace, name));
     }
 
     /// Looks for a legacy config file and prepares it for writing as the new config file.
@@ -546,7 +541,7 @@ public final class LegacyConfigMigrator {
 
     /// Returns a deterministic seed built from a legacy account's selected-account reference.
     private static String getLegacyAccountIDSeed(Map<Object, Object> account, boolean userStorage) {
-        @Nullable String legacyIdentifier = getLegacyAccountIdentifier(account, false);
+        @Nullable String legacyIdentifier = getLegacyAccountIdentifier(account);
         if (legacyIdentifier != null) {
             return userStorage ? LEGACY_GLOBAL_ACCOUNT_PREFIX + legacyIdentifier : legacyIdentifier;
         }
@@ -732,16 +727,7 @@ public final class LegacyConfigMigrator {
 
     /// Returns whether a serialized account entry matches a legacy selected account string.
     private static boolean matchesLegacySelectedAccountIdentifier(String identifier, Map<Object, Object> account) {
-        @Nullable String legacyIdentifier = getLegacyAccountIdentifier(account, false);
-        @Nullable String compactLegacyIdentifier = getLegacyAccountIdentifier(account, true);
-        if (Objects.equals(identifier, legacyIdentifier)
-                || Objects.equals(identifier, compactLegacyIdentifier)) {
-            return true;
-        }
-
-        // Older legacy configs may store only the login/profile name for offline and Yggdrasil accounts.
-        return Objects.equals(identifier, JsonUtils.getString(account, "profileName"))
-                || Objects.equals(identifier, JsonUtils.getString(account, "loginName"));
+        return Objects.equals(identifier, getLegacyAccountIdentifier(account));
     }
 
     /// Creates the selected account reference for a serialized account entry.
@@ -750,7 +736,7 @@ public final class LegacyConfigMigrator {
     }
 
     /// Returns the legacy string identifier for a serialized account entry.
-    private static @Nullable String getLegacyAccountIdentifier(Map<Object, Object> account, boolean compactUuid) {
+    private static @Nullable String getLegacyAccountIdentifier(Map<Object, Object> account) {
         @Nullable String type = JsonUtils.getString(account, "type");
         if (type == null) {
             return null;
@@ -763,21 +749,24 @@ public final class LegacyConfigMigrator {
             }
             case "microsoft" -> {
                 @Nullable String profileID = JsonUtils.getString(account, "profileID");
-                yield profileID != null ? "microsoft:" + formatLegacyUUID(profileID, compactUuid) : null;
+                @Nullable String formattedProfileID = profileID != null ? formatLegacyUUID(profileID) : null;
+                yield formattedProfileID != null ? "microsoft:" + formattedProfileID : null;
             }
             case "yggdrasil" -> {
                 @Nullable String loginName = JsonUtils.getString(account, "loginName");
                 @Nullable String profileID = JsonUtils.getString(account, "profileID");
-                yield loginName != null && profileID != null
-                        ? loginName + ":" + formatLegacyUUID(profileID, compactUuid)
+                @Nullable String formattedProfileID = profileID != null ? formatLegacyUUID(profileID) : null;
+                yield loginName != null && formattedProfileID != null
+                        ? loginName + ":" + formattedProfileID
                         : null;
             }
             case "authlibInjector" -> {
                 @Nullable String serverBaseURL = JsonUtils.getString(account, "serverBaseURL");
                 @Nullable String loginName = JsonUtils.getString(account, "loginName");
                 @Nullable String profileID = JsonUtils.getString(account, "profileID");
-                yield serverBaseURL != null && loginName != null && profileID != null
-                        ? serverBaseURL + ":" + loginName + ":" + formatLegacyUUID(profileID, compactUuid)
+                @Nullable String formattedProfileID = profileID != null ? formatLegacyUUID(profileID) : null;
+                yield serverBaseURL != null && loginName != null && formattedProfileID != null
+                        ? serverBaseURL + ":" + loginName + ":" + formattedProfileID
                         : null;
             }
             default -> null;
@@ -785,15 +774,11 @@ public final class LegacyConfigMigrator {
     }
 
     /// Formats a stored UUID the same way legacy account identifiers did.
-    private static String formatLegacyUUID(String uuid, boolean compact) {
-        if (compact) {
-            return uuid;
-        }
-
+    private static @Nullable String formatLegacyUUID(String uuid) {
         try {
             return UUIDTypeAdapter.fromString(uuid).toString();
-        } catch (IllegalArgumentException ignored) {
-            return uuid;
+        } catch (IllegalArgumentException e) {
+            return null;
         }
     }
 
@@ -1138,7 +1123,7 @@ public final class LegacyConfigMigrator {
         @Nullable String selectedName = JsonUtils.getString(lastElement);
         if (selectedName != null) {
             json.add(LauncherSettings.PROPERTY_SELECTED_GAME_DIRECTORY,
-                    JsonUtils.GSON.toJsonTree(getLegacyProfileID(selectedName), SettingID.class));
+                    JsonUtils.GSON.toJsonTree(getLegacyProfileID(selectedName), GameDirectoryID.class));
         }
         return true;
     }
@@ -1190,7 +1175,7 @@ public final class LegacyConfigMigrator {
         }
 
         for (Profile profile : gameDirectories.getGameDirectories()) {
-            @Nullable SettingID legacyGameSettings = profile.getLegacyGameSettings();
+            @Nullable GameSettingsPresetID legacyGameSettings = profile.getLegacyGameSettings();
             if (legacyGameSettings == null) {
                 continue;
             }

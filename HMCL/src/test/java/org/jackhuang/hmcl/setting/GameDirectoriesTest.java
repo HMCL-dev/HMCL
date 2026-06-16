@@ -51,7 +51,7 @@ public final class GameDirectoriesTest {
     /// Tests extracting legacy configuration data into a detached game directory store.
     @Test
     public void extractsConfigurationsFromLegacyConfigJson() {
-        SettingID id = LegacyConfigMigrator.getLegacyProfileID("Dev");
+        GameDirectoryID id = LegacyConfigMigrator.getLegacyProfileID("Dev");
         JsonObject settings = JsonParser.parseString("""
                 {
                   "configurations": {
@@ -76,8 +76,8 @@ public final class GameDirectoriesTest {
     /// Tests extracting the migrated legacy game settings ID from a legacy profile.
     @Test
     public void extractsLegacyGameSettingsIdFromLegacyProfileGlobalSettings() {
-        SettingID profileId = LegacyConfigMigrator.getLegacyProfileID("Dev");
-        SettingID legacyGameSettings = LegacyConfigMigrator.getLegacyGameSettingsID("Dev");
+        GameDirectoryID profileId = LegacyConfigMigrator.getLegacyProfileID("Dev");
+        GameSettingsPresetID legacyGameSettings = LegacyConfigMigrator.getLegacyGameSettingsID("Dev");
         JsonObject settings = JsonParser.parseString("""
                 {
                   "configurations": {
@@ -120,8 +120,8 @@ public final class GameDirectoriesTest {
 
         GameDirectories gameDirectories = Objects.requireNonNull(LegacyConfigMigrator.extractGameDirectoriesFromConfigJson(settings));
 
-        SettingID defaultProfileId = LegacyConfigMigrator.getLegacyProfileID("Default");
-        SettingID homeProfileId = LegacyConfigMigrator.getLegacyProfileID("Home");
+        GameDirectoryID defaultProfileId = LegacyConfigMigrator.getLegacyProfileID("Default");
+        GameDirectoryID homeProfileId = LegacyConfigMigrator.getLegacyProfileID("Home");
         Profile defaultProfile = gameDirectories.getGameDirectories().stream()
                 .filter(profile -> defaultProfileId.equals(profile.getId()))
                 .findFirst()
@@ -143,7 +143,7 @@ public final class GameDirectoriesTest {
     /// Tests migrating legacy selected version fields into the main config.
     @Test
     public void migratesLegacySelectedVersionsFromConfigurations() {
-        SettingID id = LegacyConfigMigrator.getLegacyProfileID("Dev");
+        GameDirectoryID id = LegacyConfigMigrator.getLegacyProfileID("Dev");
         assertEquals(5, id.uuid().version());
         JsonObject settings = JsonParser.parseString("""
                 {
@@ -176,7 +176,7 @@ public final class GameDirectoriesTest {
     /// Tests that profiles store their directory as a portable path.
     @Test
     public void storesProfilePath() {
-        SettingID id = SettingID.parse("123e4567-e89b-12d3-a456-426614174000");
+        GameDirectoryID id = GameDirectoryID.parse("game-directory:123e4567-e89b-12d3-a456-426614174000");
         Profile profile = new Profile(id, LocalizedText.plain("Dev"), PortablePath.of("versions\\Dev"));
 
         JsonObject serialized = JsonUtils.GSON.toJsonTree(profile, Profile.class).getAsJsonObject();
@@ -195,7 +195,7 @@ public final class GameDirectoriesTest {
     public void readsLocalizedProfileName() {
         Profile profile = Objects.requireNonNull(JsonUtils.GSON.fromJson("""
                 {
-                  "id": "123e4567-e89b-12d3-a456-426614174000",
+                  "id": "game-directory:123e4567-e89b-12d3-a456-426614174000",
                   "name": {
                     "en": "Development",
                     "zh-Hans": "开发"
@@ -216,8 +216,9 @@ public final class GameDirectoriesTest {
     /// Tests that profiles preserve migrated legacy game settings IDs.
     @Test
     public void storesLegacyGameSettingsId() {
-        SettingID id = SettingID.parse("123e4567-e89b-12d3-a456-426614174000");
-        SettingID legacyGameSettings = SettingID.parse("123e4567-e89b-12d3-a456-426614174001");
+        GameDirectoryID id = GameDirectoryID.parse("game-directory:123e4567-e89b-12d3-a456-426614174000");
+        GameSettingsPresetID legacyGameSettings =
+                GameSettingsPresetID.parse("game-settings-preset:123e4567-e89b-12d3-a456-426614174001");
         Profile profile = new Profile(
                 id,
                 LocalizedText.plain("Dev"),
@@ -234,7 +235,7 @@ public final class GameDirectoriesTest {
     /// Tests that unnamed profiles are displayed by ID and serialized without a name.
     @Test
     public void displaysUnnamedProfileAsId() {
-        SettingID id = SettingID.parse("123e4567-e89b-12d3-a456-426614174000");
+        GameDirectoryID id = GameDirectoryID.parse("game-directory:123e4567-e89b-12d3-a456-426614174000");
         Profile profile = new Profile(id, null, PortablePath.of("versions\\Dev"));
 
         JsonObject serialized = JsonUtils.GSON.toJsonTree(profile, Profile.class).getAsJsonObject();
@@ -248,7 +249,7 @@ public final class GameDirectoriesTest {
     /// Tests that an explicit name overrides built-in display names.
     @Test
     public void displaysExplicitNameBeforeBuiltInName() {
-        SettingID id = SettingID.parse("123e4567-e89b-12d3-a456-426614174000");
+        GameDirectoryID id = GameDirectoryID.parse("game-directory:123e4567-e89b-12d3-a456-426614174000");
         Profile profile = new Profile(id, LocalizedText.plain("Custom Default"), PortablePath.of(".minecraft"));
 
         assertEquals("Custom Default", Profiles.getProfileDisplayName(profile));
@@ -257,11 +258,11 @@ public final class GameDirectoriesTest {
     /// Tests that the merged profile view is read-only and does not own the backing profile data.
     @Test
     public void keepsShadowedUserProfileInBackingStore() throws ReflectiveOperationException {
-        SettingID id = SettingID.parse("123e4567-e89b-12d3-a456-426614174000");
+        GameDirectoryID id = GameDirectoryID.parse("game-directory:123e4567-e89b-12d3-a456-426614174000");
         Profile userProfile = new Profile(id, LocalizedText.plain("User"), PortablePath.of("user/Dev"));
         Profile localProfile = new Profile(id, LocalizedText.plain("Local"), PortablePath.of("local/Dev"));
         Profile addedProfile = new Profile(
-                SettingID.parse("123e4567-e89b-12d3-a456-426614174001"),
+                GameDirectoryID.parse("game-directory:123e4567-e89b-12d3-a456-426614174001"),
                 LocalizedText.plain("Added"),
                 PortablePath.of("local/Added"));
         GameDirectories userDirectories = new GameDirectories();
@@ -469,7 +470,7 @@ public final class GameDirectoriesTest {
     public void rejectsNilProfileId() {
         assertThrows(JsonParseException.class, () -> JsonUtils.GSON.fromJson("""
                 {
-                  "id": "00000000-0000-0000-0000-000000000000",
+                  "id": "game-directory:00000000-0000-0000-0000-000000000000",
                   "name": "Dev",
                   "path": "versions/Dev"
                 }

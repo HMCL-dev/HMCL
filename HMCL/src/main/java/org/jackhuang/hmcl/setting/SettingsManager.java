@@ -671,7 +671,7 @@ public final class SettingsManager {
     }
 
     /// Returns the game setting preset with the given ID.
-    public static GameSettings.@Nullable Preset getGameSettings(@Nullable SettingID id) {
+    public static GameSettings.@Nullable Preset getGameSettings(@Nullable GameSettingsPresetID id) {
         return gameSettingsPresets().getPreset(id);
     }
 

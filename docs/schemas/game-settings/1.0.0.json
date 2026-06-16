@@ -36,7 +36,7 @@
           ],
           "properties": {
             "id": {
-              "$ref": "#/$defs/uuid"
+              "$ref": "#/$defs/gameSettingsPresetID"
             },
             "name": {
               "$ref": "#/$defs/localizedText"
@@ -220,9 +220,9 @@
         }
       }
     },
-    "uuid": {
+    "gameSettingsPresetID": {
       "type": "string",
-      "pattern": "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$"
+      "pattern": "^game-settings-preset:[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$"
     },
     "localizedText": {
       "oneOf": [

@@ -63,16 +63,16 @@ public final class Profiles {
     }
 
     /// Creates a profile ID that does not collide with existing profiles.
-    public static SettingID newProfileId() {
-        SettingID id;
+    public static GameDirectoryID newProfileId() {
+        GameDirectoryID id;
         do {
-            id = SettingID.generate();
+            id = GameDirectoryID.generate();
         } while (hasProfileId(id));
         return id;
     }
 
     /// Returns whether an existing profile uses the given ID.
-    private static boolean hasProfileId(SettingID id) {
+    private static boolean hasProfileId(GameDirectoryID id) {
         return localGameDirectories().getGameDirectories().stream()
                 .anyMatch(profile -> profile.getId().equals(id))
                 || userGameDirectories().getGameDirectories().stream()
@@ -154,7 +154,7 @@ public final class Profiles {
 
         assert !mergedProfiles.isEmpty();
 
-        @Nullable SettingID selectedId = settings().selectedGameDirectoryProperty().get();
+        @Nullable GameDirectoryID selectedId = settings().selectedGameDirectoryProperty().get();
         Profile currentProfile = null;
 
         if (selectedId != null) {
@@ -221,14 +221,14 @@ public final class Profiles {
     private static void rebuildProfiles() {
         GameDirectories userGameDirectories = userGameDirectories();
         GameDirectories localGameDirectories = localGameDirectories();
-        Map<SettingID, Profile> visibleProfiles = new LinkedHashMap<>();
+        Map<GameDirectoryID, Profile> visibleProfiles = new LinkedHashMap<>();
 
         for (Profile profile : localGameDirectories.getGameDirectories()) {
-            SettingID id = profile.getId();
+            GameDirectoryID id = profile.getId();
             visibleProfiles.put(id, profile);
         }
         for (Profile profile : userGameDirectories.getGameDirectories()) {
-            SettingID id = profile.getId();
+            GameDirectoryID id = profile.getId();
             visibleProfiles.putIfAbsent(id, profile);
         }
 
@@ -260,7 +260,7 @@ public final class Profiles {
     private static void addProfile(GameDirectories gameDirectories, Profile profile) {
         Objects.requireNonNull(profile);
         ObservableList<Profile> profiles = gameDirectories.getGameDirectories();
-        SettingID id = profile.getId();
+        GameDirectoryID id = profile.getId();
         for (int i = 0; i < profiles.size(); i++) {
             if (profiles.get(i).getId().equals(id)) {
                 profiles.set(i, profile);
