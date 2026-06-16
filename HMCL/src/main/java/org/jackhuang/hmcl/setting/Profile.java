@@ -171,8 +171,13 @@ public final class Profile implements Observable {
         observableHelper.removeListener(listener);
     }
 
+    /// Notifies profile observers on the JavaFX thread when the toolkit is available.
     private void invalidate() {
-        Platform.runLater(observableHelper::invalidate);
+        try {
+            Platform.runLater(observableHelper::invalidate);
+        } catch (IllegalStateException e) {
+            observableHelper.invalidate();
+        }
     }
 
     public record ProfileVersion(Profile profile, @Nullable String version) {

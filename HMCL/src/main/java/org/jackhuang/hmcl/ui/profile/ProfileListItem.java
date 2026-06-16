@@ -25,6 +25,9 @@ import javafx.scene.control.Skin;
 
 import org.jackhuang.hmcl.setting.Profile;
 import org.jackhuang.hmcl.setting.Profiles;
+import org.jackhuang.hmcl.ui.Controllers;
+
+import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 public class ProfileListItem extends RadioButton {
     private final Profile profile;
@@ -48,6 +51,14 @@ public class ProfileListItem extends RadioButton {
     }
 
     public void remove() {
+        if (!Profiles.canRemoveProfile(profile)) {
+            Controllers.confirmBackupAndOverwrite(i18n("settings.game_directories.read_only"), () -> {
+                Profiles.forceOverwriteProfileFiles(profile);
+                Profiles.removeProfile(profile);
+            });
+            return;
+        }
+
         Profiles.removeProfile(profile);
     }
 

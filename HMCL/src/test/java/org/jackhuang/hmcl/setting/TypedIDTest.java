@@ -66,6 +66,25 @@ public final class TypedIDTest {
                 () -> GameSettingsPresetID.parse("123e4567-e89b-12d3-a456-426614174000"));
     }
 
+    /// Tests that typed IDs reject non-canonical UUID payloads.
+    @Test
+    public void rejectsNonCanonicalUUIDPayload() {
+        assertThrows(IllegalArgumentException.class,
+                () -> AccountID.parse("account:123e4567e89b12d3a456426614174000"));
+        assertThrows(IllegalArgumentException.class,
+                () -> GameDirectoryID.parse("game-directory:123e4567-e89b-12d3-a456426614174000"));
+        assertThrows(IllegalArgumentException.class,
+                () -> GameSettingsPresetID.parse("game-settings-preset:123e4567-e89b-12d3-a456-42661417400z"));
+    }
+
+    /// Tests that typed IDs accept uppercase hexadecimal digits while serializing canonically.
+    @Test
+    public void acceptsUppercaseUUIDPayload() {
+        AccountID id = AccountID.parse("account:123E4567-E89B-12D3-A456-426614174000");
+
+        assertEquals("account:123e4567-e89b-12d3-a456-426614174000", id.toString());
+    }
+
     /// Tests JSON serialization through the standard HMCL Gson instance.
     @Test
     public void serializesAsPrefixedString() {

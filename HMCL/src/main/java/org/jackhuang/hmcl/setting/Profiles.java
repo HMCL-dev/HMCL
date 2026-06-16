@@ -256,6 +256,77 @@ public final class Profiles {
         addProfile(userGameDirectories(), profile);
     }
 
+    /// Returns whether an existing profile can be updated to the given path.
+    ///
+    /// @param profile the profile to update
+    /// @param path the new profile path
+    /// @return whether both the current and target stores may be edited
+    public static boolean canUpdateProfile(Profile profile, PortablePath path) {
+        GameDirectories source = requireProfileStore(profile);
+        GameDirectories target = getProfileStore(path);
+        return !isGameDirectoriesReadOnly(source) && !isGameDirectoriesReadOnly(target);
+    }
+
+    /// Backs up and overwrites read-only game directory files required to update a profile.
+    ///
+    /// @param profile the profile to update
+    /// @param path the new profile path
+    public static void forceOverwriteProfileFiles(Profile profile, PortablePath path) {
+        GameDirectories source = requireProfileStore(profile);
+        GameDirectories target = getProfileStore(path);
+        forceOverwriteGameDirectoriesIfReadOnly(source);
+        if (target != source) {
+            forceOverwriteGameDirectoriesIfReadOnly(target);
+        }
+    }
+
+    /// Updates a profile, moving it between local and user stores when the path type changes.
+    ///
+    /// @param profile the profile to update
+    /// @param name the new custom profile name, or `null` for an unnamed profile
+    /// @param path the new profile path
+    public static void updateProfile(Profile profile, @Nullable LocalizedText name, PortablePath path) {
+        GameDirectories source = requireProfileStore(profile);
+        GameDirectories target = getProfileStore(path);
+        if (isGameDirectoriesReadOnly(source) || isGameDirectoriesReadOnly(target)) {
+            throw new IllegalStateException("Game directories are read-only");
+        }
+
+        if (source == target) {
+            profile.setName(name);
+            profile.setPath(path);
+            return;
+        }
+
+        source.getGameDirectories().remove(profile);
+        profile.setName(name);
+        profile.setPath(path);
+        addProfile(target, profile);
+    }
+
+    /// Returns whether the profile can be removed from all stores containing it.
+    ///
+    /// @param profile the profile to remove
+    /// @return whether all containing stores may be edited
+    public static boolean canRemoveProfile(Profile profile) {
+        boolean localContains = localGameDirectories().getGameDirectories().contains(profile);
+        boolean userContains = userGameDirectories().getGameDirectories().contains(profile);
+        return (!localContains || !SettingsManager.isLocalGameDirectoriesReadOnly())
+                && (!userContains || !SettingsManager.isUserGameDirectoriesReadOnly());
+    }
+
+    /// Backs up and overwrites read-only game directory files required to remove a profile.
+    ///
+    /// @param profile the profile to remove
+    public static void forceOverwriteProfileFiles(Profile profile) {
+        if (localGameDirectories().getGameDirectories().contains(profile)) {
+            forceOverwriteGameDirectoriesIfReadOnly(localGameDirectories());
+        }
+        if (userGameDirectories().getGameDirectories().contains(profile)) {
+            forceOverwriteGameDirectoriesIfReadOnly(userGameDirectories());
+        }
+    }
+
     /// Adds a profile to the given game directory store, replacing a profile with the same ID in that store.
     private static void addProfile(GameDirectories gameDirectories, Profile profile) {
         Objects.requireNonNull(profile);
@@ -275,6 +346,10 @@ public final class Profiles {
 
     /// Removes a profile and recreates the built-in game directories when the list becomes empty.
     public static void removeProfile(Profile profile) {
+        if (!canRemoveProfile(profile)) {
+            throw new IllegalStateException("Game directories are read-only");
+        }
+
         userGameDirectories().getGameDirectories().remove(profile);
         localGameDirectories().getGameDirectories().remove(profile);
         createDefaultProfilesIfEmpty();
@@ -282,6 +357,53 @@ public final class Profiles {
 
         if (!mergedProfiles.contains(selectedProfile.get())) {
             setSelectedProfile(mergedProfiles.get(0));
+        }
+    }
+
+    /// Returns the store that should own profiles with the given path.
+    private static GameDirectories getProfileStore(PortablePath path) {
+        Objects.requireNonNull(path);
+        return path.isAbsolute() ? userGameDirectories() : localGameDirectories();
+    }
+
+    /// Returns the store currently containing the profile.
+    private static @Nullable GameDirectories findProfileStore(Profile profile) {
+        Objects.requireNonNull(profile);
+        if (localGameDirectories().getGameDirectories().contains(profile)) {
+            return localGameDirectories();
+        }
+        if (userGameDirectories().getGameDirectories().contains(profile)) {
+            return userGameDirectories();
+        }
+        return null;
+    }
+
+    /// Returns the store currently containing the profile, or throws when it is detached.
+    private static GameDirectories requireProfileStore(Profile profile) {
+        @Nullable GameDirectories gameDirectories = findProfileStore(profile);
+        if (gameDirectories == null) {
+            throw new IllegalArgumentException("Profile does not belong to a game directory store");
+        }
+        return gameDirectories;
+    }
+
+    /// Returns whether the given game directory store is read-only.
+    private static boolean isGameDirectoriesReadOnly(GameDirectories gameDirectories) {
+        return gameDirectories.isUserFile()
+                ? SettingsManager.isUserGameDirectoriesReadOnly()
+                : SettingsManager.isLocalGameDirectoriesReadOnly();
+    }
+
+    /// Backs up and overwrites the given game directory store when it is read-only.
+    private static void forceOverwriteGameDirectoriesIfReadOnly(GameDirectories gameDirectories) {
+        if (!isGameDirectoriesReadOnly(gameDirectories)) {
+            return;
+        }
+
+        if (gameDirectories.isUserFile()) {
+            SettingsManager.forceOverwriteUserGameDirectories();
+        } else {
+            SettingsManager.forceOverwriteLocalGameDirectories();
         }
     }
 

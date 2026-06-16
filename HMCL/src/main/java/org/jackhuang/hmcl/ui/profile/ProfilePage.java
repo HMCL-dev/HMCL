@@ -188,10 +188,18 @@ public final class ProfilePage extends BorderPane implements DecoratorPage {
 
     private void onSave() {
         if (profile != null) {
-            profile.setName(LocalizedText.plain(txtProfileName.getText()));
-            if (StringUtils.isNotBlank(getLocation())) {
-                profile.setPath(createPortableLocation());
+            LocalizedText name = LocalizedText.plain(txtProfileName.getText());
+            PortablePath path = StringUtils.isNotBlank(getLocation()) ? createPortableLocation() : profile.getPath();
+            if (!Profiles.canUpdateProfile(profile, path)) {
+                Controllers.confirmBackupAndOverwrite(i18n("settings.game_directories.read_only"), () -> {
+                    Profiles.forceOverwriteProfileFiles(profile, path);
+                    Profiles.updateProfile(profile, name, path);
+                    fireEvent(new PageCloseEvent());
+                });
+                return;
             }
+
+            Profiles.updateProfile(profile, name, path);
         } else {
             if (StringUtils.isBlank(getLocation())) {
                 gameDir.fire();

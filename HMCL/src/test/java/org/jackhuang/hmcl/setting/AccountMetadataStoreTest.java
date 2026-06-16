@@ -17,6 +17,8 @@
  */
 package org.jackhuang.hmcl.setting;
 
+import com.google.common.jimfs.Configuration;
+import com.google.common.jimfs.Jimfs;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
@@ -34,6 +36,13 @@ import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
 import org.junit.jupiter.api.Test;
 
+import java.io.IOException;
+import java.lang.reflect.Constructor;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
+import java.nio.file.FileSystem;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -76,6 +85,36 @@ public final class AccountMetadataStoreTest {
                 userStorage ? "$GLOBAL:" + legacyIdentifier : legacyIdentifier)).toString();
     }
 
+    /// Creates a reflected account private data store for testing private save ordering.
+    ///
+    /// @param privateData the account private data store
+    /// @param file the JSON setting file helper
+    /// @return the reflected private data store record
+    private static Object accountPrivateDataStore(
+            AccountPrivateData privateData,
+            JsonSettingFile<AccountPrivateData> file) throws ReflectiveOperationException {
+        Class<?> type = Class.forName("org.jackhuang.hmcl.setting.SettingsManager$AccountPrivateDataStore");
+        Constructor<?> constructor = type.getDeclaredConstructor(AccountPrivateData.class, JsonSettingFile.class);
+        constructor.setAccessible(true);
+        return constructor.newInstance(privateData, file);
+    }
+
+    /// Returns the reflected synchronous account metadata save method.
+    ///
+    /// @param accountPrivateDataStoreClass the private data store record class
+    /// @return the reflected save method
+    private static Method saveAccountMetadataStoreSyncMethod(Class<?> accountPrivateDataStoreClass)
+            throws ReflectiveOperationException {
+        Method method = SettingsManager.class.getDeclaredMethod(
+                "saveAccountMetadataStoreSync",
+                AccountMetadataStore.class,
+                JsonSettingFile.class,
+                accountPrivateDataStoreClass,
+                List.class);
+        method.setAccessible(true);
+        return method;
+    }
+
     /// Tests that account metadata serializes as an object containing an accounts list.
     @Test
     public void serializesAccountsAsObjectList() {
@@ -104,6 +143,55 @@ public final class AccountMetadataStoreTest {
                 .getAsJsonObject()
                 .get("accountID")
                 .getAsString());
+    }
+
+    /// Tests that private data save failures stop metadata from being saved.
+    @Test
+    public void doesNotSaveMetadataWhenPrivateDataSyncSaveFails()
+            throws ReflectiveOperationException, IOException {
+        try (FileSystem fileSystem = Jimfs.newFileSystem(Configuration.unix())) {
+            Path tempDirectory = fileSystem.getPath("/work");
+            Files.createDirectories(tempDirectory);
+            Path metadataPath = tempDirectory.resolve("accounts.json");
+            Path privateDataParent = tempDirectory.resolve("private-parent");
+            Path privateDataPath = privateDataParent.resolve("account-private-data.json");
+            Files.writeString(privateDataParent, "not a directory");
+            AccountMetadataStore accountMetadata = AccountMetadataStore.fromRecords(List.of(Map.<Object, Object>of(
+                    "type", "microsoft",
+                    "accountID", accountID(1),
+                    "profileID", "123456781234123412341234567890ab",
+                    "profileName", "Steve",
+                    "accessToken", "access-token",
+                    "refreshToken", "refresh-token"
+            )));
+            JsonSettingFile<AccountMetadataStore> metadataFile = new JsonSettingFile<>(
+                    metadataPath,
+                    "test account metadata",
+                    AccountMetadataStore.class,
+                    AccountMetadataStore.CURRENT_SCHEMA,
+                    AccountMetadataStore::new);
+            JsonSettingFile<AccountPrivateData> privateDataFile = new JsonSettingFile<>(
+                    privateDataPath,
+                    "test account private data",
+                    AccountPrivateData.class,
+                    AccountPrivateData.CURRENT_SCHEMA,
+                    AccountPrivateData::new);
+            Object privateDataStore = accountPrivateDataStore(new AccountPrivateData(), privateDataFile);
+            Method saveMethod = saveAccountMetadataStoreSyncMethod(privateDataStore.getClass());
+
+            InvocationTargetException exception = assertThrows(InvocationTargetException.class,
+                    () -> saveMethod.invoke(
+                            null,
+                            accountMetadata,
+                            metadataFile,
+                            privateDataStore,
+                            List.of(privateDataStore)));
+
+            assertInstanceOf(IOException.class, exception.getCause());
+            assertFalse(Files.exists(metadataPath));
+            assertTrue(Files.isRegularFile(privateDataParent));
+            assertFalse(Files.exists(privateDataPath));
+        }
     }
 
     /// Tests wrapping legacy account list content in the current `accounts.json` model.

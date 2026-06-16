@@ -505,26 +505,58 @@ public final class SettingsManager {
             JsonSettingFile<AccountMetadataStore> accountsFile,
             AccountPrivateDataStore defaultPrivateData,
             List<AccountPrivateDataStore> privateDataStores) {
+        try {
+            saveAccountMetadataStore(
+                    accounts,
+                    accountsFile,
+                    defaultPrivateData,
+                    privateDataStores,
+                    false);
+        } catch (IOException e) {
+            LOG.warning("Failed to save account private data; skipped account metadata save", e);
+        }
+    }
+
+    /// Saves account metadata and private data.
+    ///
+    /// Private data is saved before metadata so a failed private-data write cannot leave metadata stripped
+    /// of credentials without a matching private-data file.
+    ///
+    /// @param accounts the full in-memory account records
+    /// @param accountsFile the account metadata file helper
+    /// @param defaultPrivateData the default private data store used for new account private data
+    /// @param privateDataStores private data stores searched and updated for existing account private data
+    /// @param sync whether the metadata file must be saved synchronously
+    /// @throws IOException if saving private data fails, or if synchronous metadata saving fails
+    private static void saveAccountMetadataStore(
+            AccountMetadataStore accounts,
+            JsonSettingFile<AccountMetadataStore> accountsFile,
+            AccountPrivateDataStore defaultPrivateData,
+            List<AccountPrivateDataStore> privateDataStores,
+            boolean sync) throws IOException {
         AccountPrivateData.ExtractedPrivateData extracted =
                 AccountPrivateData.extractFromAccountRecords(accounts.getAccounts());
         List<AccountPrivateDataStore> changedPrivateDataStores =
                 distributeAccountPrivateData(extracted, defaultPrivateData, privateDataStores);
+        if (sync) {
+            addIfAbsent(changedPrivateDataStores, defaultPrivateData);
+        }
 
         boolean backupOnNextSave = accounts.isBackupOnNextSave();
-        accounts.setBackupOnNextSave(false);
+
+        for (AccountPrivateDataStore privateDataStore : changedPrivateDataStores) {
+            saveAccountPrivateDataStore(privateDataStore, backupOnNextSave);
+        }
 
         if (accounts.isSavable()) {
             AccountMetadataStore metadata = accounts.copyWithRecords(extracted.metadataAccounts());
             metadata.setBackupOnNextSave(backupOnNextSave);
-            accountsFile.save(metadata);
-        }
-
-        for (AccountPrivateDataStore privateDataStore : changedPrivateDataStores) {
-            if (privateDataStore.privateData().isSavable()) {
-                privateDataStore.privateData().setBackupOnNextSave(
-                        backupOnNextSave || privateDataStore.privateData().isBackupOnNextSave());
-                privateDataStore.file().save(privateDataStore.privateData());
+            if (sync) {
+                accountsFile.saveSync(metadata);
+            } else {
+                accountsFile.save(metadata);
             }
+            accounts.setBackupOnNextSave(false);
         }
     }
 
@@ -540,27 +572,26 @@ public final class SettingsManager {
             JsonSettingFile<AccountMetadataStore> accountsFile,
             AccountPrivateDataStore defaultPrivateData,
             List<AccountPrivateDataStore> privateDataStores) throws IOException {
-        AccountPrivateData.ExtractedPrivateData extracted =
-                AccountPrivateData.extractFromAccountRecords(accounts.getAccounts());
-        List<AccountPrivateDataStore> changedPrivateDataStores =
-                distributeAccountPrivateData(extracted, defaultPrivateData, privateDataStores);
-        addIfAbsent(changedPrivateDataStores, defaultPrivateData);
+        saveAccountMetadataStore(
+                accounts,
+                accountsFile,
+                defaultPrivateData,
+                privateDataStores,
+                true);
+    }
 
-        boolean backupOnNextSave = accounts.isBackupOnNextSave();
-        accounts.setBackupOnNextSave(false);
-
-        if (accounts.isSavable()) {
-            AccountMetadataStore metadata = accounts.copyWithRecords(extracted.metadataAccounts());
-            metadata.setBackupOnNextSave(backupOnNextSave);
-            accountsFile.saveSync(metadata);
-        }
-
-        for (AccountPrivateDataStore privateDataStore : changedPrivateDataStores) {
-            if (privateDataStore.privateData().isSavable()) {
-                privateDataStore.privateData().setBackupOnNextSave(
-                        backupOnNextSave || privateDataStore.privateData().isBackupOnNextSave());
-                privateDataStore.file().saveSync(privateDataStore.privateData());
-            }
+    /// Saves one account private data store synchronously.
+    ///
+    /// @param privateDataStore the private data store to save
+    /// @param backupOnNextSave whether the account metadata save requested a backup
+    /// @throws IOException if saving the private data file fails
+    private static void saveAccountPrivateDataStore(
+            AccountPrivateDataStore privateDataStore,
+            boolean backupOnNextSave) throws IOException {
+        if (privateDataStore.privateData().isSavable()) {
+            privateDataStore.privateData().setBackupOnNextSave(
+                    backupOnNextSave || privateDataStore.privateData().isBackupOnNextSave());
+            privateDataStore.file().saveSync(privateDataStore.privateData());
         }
     }
 
