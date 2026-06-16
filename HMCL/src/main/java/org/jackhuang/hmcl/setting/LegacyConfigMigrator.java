@@ -36,6 +36,8 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -319,7 +321,7 @@ public final class LegacyConfigMigrator {
             LOG.info("Migrating user accounts from " + LEGACY_USER_ACCOUNTS_LOCATION);
             return new UserAccountsMigrationResult(
                     LEGACY_USER_ACCOUNTS_LOCATION,
-                    AccountStorages.fromAccounts(accounts));
+                    migrateLegacyAccountStorages(accounts));
         } catch (Throwable e) {
             LOG.warning("Failed to load legacy user accounts", e);
             return null;
@@ -434,6 +436,22 @@ public final class LegacyConfigMigrator {
         if (result == null) {
             result = new AccountStorages();
         }
+        normalizeLegacyAccountStorages(result);
+        return result;
+    }
+
+    /// Creates current account storages from legacy serialized account entries.
+    ///
+    /// @param accounts legacy account entries
+    /// @return current account storages with legacy field names normalized
+    @VisibleForTesting
+    static AccountStorages migrateLegacyAccountStorages(List<Map<Object, Object>> accounts) {
+        List<Map<Object, Object>> migratedAccounts = new ArrayList<>(accounts.size());
+        for (Map<Object, Object> account : accounts) {
+            migratedAccounts.add(new LinkedHashMap<>(account));
+        }
+
+        AccountStorages result = AccountStorages.fromAccounts(migratedAccounts);
         normalizeLegacyAccountStorages(result);
         return result;
     }
@@ -556,9 +574,7 @@ public final class LegacyConfigMigrator {
             if (accounts == null) {
                 return null;
             }
-            AccountStorages storages = AccountStorages.fromAccounts(accounts);
-            normalizeLegacyAccountStorages(storages);
-            return storages;
+            return migrateLegacyAccountStorages(accounts);
         } catch (Exception e) {
             LOG.warning("Failed to load legacy user accounts for selected account migration", e);
             return null;

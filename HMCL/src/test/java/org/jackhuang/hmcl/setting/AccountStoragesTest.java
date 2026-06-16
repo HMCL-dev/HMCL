@@ -126,6 +126,53 @@ public final class AccountStoragesTest {
         assertEquals(AccountStorages.CURRENT_SCHEMA, accountStorages.getSchema());
     }
 
+    /// Tests normalizing legacy account list fields before storing migrated shared accounts.
+    @Test
+    public void migratesLegacyAccountListFields() {
+        AccountStorages accountStorages = LegacyConfigMigrator.migrateLegacyAccountStorages(List.of(
+                Map.<Object, Object>of(
+                        "type", "offline",
+                        "username", "Alex"),
+                Map.<Object, Object>of(
+                        "type", "microsoft",
+                        "uuid", "00000000000000000000000000000001",
+                        "displayName", "Steve",
+                        "accessToken", "access-token"),
+                Map.<Object, Object>of(
+                        "type", "yggdrasil",
+                        "username", "steve@example.com",
+                        "uuid", "00000000000000000000000000000002",
+                        "displayName", "Steve"))
+        );
+
+        Map<Object, Object> offlineAccount = accountStorages.getAccounts().get(0);
+        assertEquals("Alex", offlineAccount.get("profileName"));
+        assertEquals(UUIDTypeAdapter.fromUUID(OfflineAccountFactory.getUUIDFromUserName("Alex")),
+                offlineAccount.get("profileID"));
+        assertFalse(offlineAccount.containsKey("username"));
+        assertFalse(offlineAccount.containsKey("uuid"));
+
+        Map<Object, Object> microsoftAccount = accountStorages.getAccounts().get(1);
+        assertEquals("00000000000000000000000000000001", microsoftAccount.get("profileID"));
+        assertEquals("Steve", microsoftAccount.get("profileName"));
+        assertFalse(microsoftAccount.containsKey("uuid"));
+        assertFalse(microsoftAccount.containsKey("displayName"));
+
+        Map<Object, Object> yggdrasilAccount = accountStorages.getAccounts().get(2);
+        assertEquals("steve@example.com", yggdrasilAccount.get("loginName"));
+        assertEquals("00000000000000000000000000000002", yggdrasilAccount.get("profileID"));
+        assertEquals("Steve", yggdrasilAccount.get("profileName"));
+        assertFalse(yggdrasilAccount.containsKey("username"));
+        assertFalse(yggdrasilAccount.containsKey("uuid"));
+        assertFalse(yggdrasilAccount.containsKey("displayName"));
+
+        AccountPrivateData.ExtractedPrivateData extracted =
+                AccountPrivateData.extractFromAccountStorages(accountStorages.getAccounts());
+        assertEquals(3, extracted.identifiers().size());
+        JsonObject microsoftIdentifier = Objects.requireNonNull(Account.identifier(microsoftAccount));
+        assertEquals("access-token", extracted.privateData().get(microsoftIdentifier).get("accessToken"));
+    }
+
     /// Tests moving private fields from account metadata into the private data store.
     @Test
     public void extractsPrivateFieldsIntoPrivateData() {
