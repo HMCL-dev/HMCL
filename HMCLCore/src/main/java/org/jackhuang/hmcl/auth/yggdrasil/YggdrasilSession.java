@@ -18,19 +18,17 @@
 package org.jackhuang.hmcl.auth.yggdrasil;
 
 import com.google.gson.Gson;
+import com.google.gson.JsonObject;
 import org.jackhuang.hmcl.auth.AuthInfo;
 import org.jackhuang.hmcl.util.Immutable;
 import org.jackhuang.hmcl.util.StringUtils;
+import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.logging.Logger;
 import org.jackhuang.hmcl.util.gson.UUIDTypeAdapter;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 import java.util.stream.Collectors;
-
-import static org.jackhuang.hmcl.util.Lang.mapOf;
-import static org.jackhuang.hmcl.util.Lang.tryCast;
-import static org.jackhuang.hmcl.util.Pair.pair;
 
 @Immutable
 public class YggdrasilSession {
@@ -82,28 +80,40 @@ public class YggdrasilSession {
         return selectedProfile != null && StringUtils.isNotBlank(selectedProfile.getName());
     }
 
-    public static YggdrasilSession fromStorage(Map<?, ?> metadata, Map<?, ?> privateData) {
+    public static YggdrasilSession fromStorage(JsonObject metadata, JsonObject privateData) {
         Objects.requireNonNull(metadata);
         Objects.requireNonNull(privateData);
 
-        UUID profileID = tryCast(metadata.get("profileID"), String.class).map(UUIDTypeAdapter::fromString).orElseThrow(() -> new IllegalArgumentException("profileID is missing"));
-        String profileName = tryCast(privateData.get("profileName"), String.class).orElse("");
-        String clientToken = tryCast(privateData.get("clientToken"), String.class).orElseThrow(() -> new IllegalArgumentException("clientToken is missing"));
-        String accessToken = tryCast(privateData.get("accessToken"), String.class).orElseThrow(() -> new IllegalArgumentException("accessToken is missing"));
-        @SuppressWarnings("unchecked")
-        Map<String, String> userProperties = tryCast(privateData.get("userProperties"), Map.class).orElse(null);
+        String profileIDText = JsonUtils.getString(metadata, "profileID");
+        if (profileIDText == null) {
+            throw new IllegalArgumentException("profileID is missing");
+        }
+        UUID profileID = UUIDTypeAdapter.fromString(profileIDText);
+        String profileName = JsonUtils.getString(privateData, "profileName", "");
+        String clientToken = requireStorageString(privateData, "clientToken");
+        String accessToken = requireStorageString(privateData, "accessToken");
+        @Nullable Map<String, String> userProperties = privateData.get("userProperties") instanceof JsonObject userPropertiesObject
+                ? GSON_PROPERTIES.fromJson(userPropertiesObject, JsonUtils.mapTypeOf(String.class, String.class))
+                : null;
         return new YggdrasilSession(clientToken, accessToken, new GameProfile(profileID, profileName), null, userProperties);
     }
 
-    public Map<Object, Object> toPrivateData() {
+    public void writePrivateData(JsonObject privateData) {
         if (selectedProfile == null)
             throw new IllegalStateException("No character is selected");
 
-        return mapOf(
-                pair("clientToken", clientToken),
-                pair("accessToken", accessToken),
-                pair("profileName", selectedProfile.getName()),
-                pair("userProperties", userProperties));
+        privateData.addProperty("clientToken", clientToken);
+        privateData.addProperty("accessToken", accessToken);
+        privateData.addProperty("profileName", selectedProfile.getName());
+        privateData.add("userProperties", GSON_PROPERTIES.toJsonTree(userProperties));
+    }
+
+    private static String requireStorageString(JsonObject storage, String name) {
+        String value = JsonUtils.getString(storage, name);
+        if (value == null) {
+            throw new IllegalArgumentException(name + " is missing");
+        }
+        return value;
     }
 
     public AuthInfo toAuthInfo() {

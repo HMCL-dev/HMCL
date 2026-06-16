@@ -304,7 +304,7 @@ public final class LauncherSettingsMigrationTest {
         assertTrue(LegacyConfigMigrator.migrateLegacySelectedAccount(settings, accountMetadata));
 
         assertEquals(offlineAccountID("Alex"), settings.get("selectedAccount").getAsString());
-        assertFalse(accountMetadata.getAccounts().get(1).containsKey("selected"));
+        assertFalse(accountMetadata.getAccounts().get(1).has("selected"));
     }
 
     /// Tests migrating legacy selected Microsoft account identifiers with hyphenated UUIDs.
@@ -326,7 +326,7 @@ public final class LauncherSettingsMigrationTest {
         AccountMetadataStore accountMetadata = Objects.requireNonNull(LegacyConfigMigrator.extractAccountMetadataStore(settings));
         assertTrue(LegacyConfigMigrator.migrateLegacySelectedAccount(settings, accountMetadata));
 
-        assertEquals(accountMetadata.getAccounts().get(0).get("accountID"),
+        assertEquals(accountMetadata.getAccounts().get(0).get("accountID").getAsString(),
                 settings.get("selectedAccount").getAsString());
     }
 

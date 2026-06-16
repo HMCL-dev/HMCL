@@ -17,6 +17,7 @@
  */
 package org.jackhuang.hmcl.auth.microsoft;
 
+import com.google.gson.JsonObject;
 import javafx.beans.binding.ObjectBinding;
 import org.jackhuang.hmcl.auth.*;
 import org.jackhuang.hmcl.auth.yggdrasil.Texture;
@@ -137,13 +138,15 @@ public final class MicrosoftAccount extends OAuthAccount {
     }
 
     @Override
-    protected void writeMetadata(Map<Object, Object> metadata) {
-        metadata.put("profileID", UUIDTypeAdapter.fromUUID(getProfileID()));
+    public void writeMetadata(JsonObject metadata) {
+        super.writeMetadata(metadata);
+        metadata.addProperty("profileID", UUIDTypeAdapter.fromUUID(getProfileID()));
     }
 
     @Override
-    public Map<Object, Object> toPrivateData() {
-        return session.toPrivateData();
+    public void writePrivateData(JsonObject privateData) {
+        super.writePrivateData(privateData);
+        session.writePrivateData(privateData);
     }
 
     public MicrosoftService getService() {

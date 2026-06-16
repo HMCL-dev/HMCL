@@ -17,18 +17,18 @@
  */
 package org.jackhuang.hmcl.auth.offline;
 
+import com.google.gson.JsonObject;
 import org.jackhuang.hmcl.auth.Account;
 import org.jackhuang.hmcl.auth.AccountFactory;
 import org.jackhuang.hmcl.auth.AccountID;
 import org.jackhuang.hmcl.auth.CharacterSelector;
 import org.jackhuang.hmcl.auth.authlibinjector.AuthlibInjectorArtifactProvider;
+import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.gson.UUIDTypeAdapter;
 
-import java.util.Map;
 import java.util.UUID;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
-import static org.jackhuang.hmcl.util.Lang.tryCast;
 
 /**
  *
@@ -67,14 +67,17 @@ public final class OfflineAccountFactory extends AccountFactory<OfflineAccount> 
     }
 
     @Override
-    public OfflineAccount fromStorage(Map<Object, Object> metadata, Map<Object, Object> privateData) {
+    public OfflineAccount fromStorage(JsonObject metadata, JsonObject privateData) {
         AccountID accountID = Account.readAccountID(metadata);
-        String profileName = tryCast(metadata.get("profileName"), String.class)
-                .orElseThrow(() -> new IllegalStateException("Offline account configuration malformed."));
-        UUID profileID = tryCast(metadata.get("profileID"), String.class)
-                .map(UUIDTypeAdapter::fromString)
-                .orElse(getUUIDFromUserName(profileName));
-        Skin skin = Skin.fromStorage(tryCast(metadata.get("skin"), Map.class).orElse(null));
+        String profileName = JsonUtils.getString(metadata, "profileName");
+        if (profileName == null) {
+            throw new IllegalStateException("Offline account configuration malformed.");
+        }
+        String profileIDText = JsonUtils.getString(metadata, "profileID");
+        UUID profileID = profileIDText != null
+                ? UUIDTypeAdapter.fromString(profileIDText)
+                : getUUIDFromUserName(profileName);
+        Skin skin = Skin.fromStorage(metadata.get("skin") instanceof JsonObject skinObject ? skinObject : null);
 
         return new OfflineAccount(accountID, downloader, profileName, profileID, skin);
     }

@@ -60,14 +60,14 @@ final class ProtectedPayload {
             @Override
             public void write(JsonObject envelope, JsonObject payload) {
                 envelope.addProperty(PROPERTY_PROTECTION, id());
-                envelope.add(PROPERTY_PAYLOAD, payload.deepCopy());
+                envelope.add(PROPERTY_PAYLOAD, payload);
             }
 
             /// Reads the payload from the given envelope.
             @Override
             public JsonObject read(JsonObject envelope) {
                 if (envelope.get(PROPERTY_PAYLOAD) instanceof JsonObject payload)
-                    return payload.deepCopy();
+                    return payload;
                 else
                     throw new JsonParseException("Missing payload or payload is not a object");
             }

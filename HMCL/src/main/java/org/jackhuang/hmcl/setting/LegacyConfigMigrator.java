@@ -315,10 +315,10 @@ public final class LegacyConfigMigrator {
         }
 
         try {
-            List<Map<Object, Object>> accounts = JsonUtils.fromJsonFile(
+            List<JsonObject> accounts = JsonUtils.fromJsonFile(
                     LauncherSettings.SETTINGS_GSON,
                     LEGACY_USER_ACCOUNTS_LOCATION,
-                    JsonUtils.listTypeOf(JsonUtils.mapTypeOf(Object.class, Object.class))
+                    JsonUtils.listTypeOf(JsonObject.class)
             );
             if (accounts == null) {
                 return null;
@@ -452,7 +452,7 @@ public final class LegacyConfigMigrator {
     /// @param accounts legacy account records
     /// @return current account metadata store with legacy field names normalized
     @VisibleForTesting
-    static AccountMetadataStore migrateLegacyAccountMetadataStore(List<Map<Object, Object>> accounts) {
+    static AccountMetadataStore migrateLegacyAccountMetadataStore(List<JsonObject> accounts) {
         return migrateLegacyAccountMetadataStore(accounts, false);
     }
 
@@ -462,10 +462,10 @@ public final class LegacyConfigMigrator {
     /// @param userStorage whether the legacy entries come from the shared user account file
     /// @return current account metadata store with legacy field names normalized
     @VisibleForTesting
-    static AccountMetadataStore migrateLegacyAccountMetadataStore(List<Map<Object, Object>> accounts, boolean userStorage) {
-        List<Map<Object, Object>> migratedAccounts = new ArrayList<>(accounts.size());
-        for (Map<Object, Object> account : accounts) {
-            migratedAccounts.add(new LinkedHashMap<>(account));
+    static AccountMetadataStore migrateLegacyAccountMetadataStore(List<JsonObject> accounts, boolean userStorage) {
+        List<JsonObject> migratedAccounts = new ArrayList<>(accounts.size());
+        for (JsonObject account : accounts) {
+            migratedAccounts.add(account.deepCopy());
         }
 
         AccountMetadataStore result = AccountMetadataStore.fromRecords(migratedAccounts);
@@ -488,21 +488,21 @@ public final class LegacyConfigMigrator {
     /// @param usedAccountIDs canonical account ID strings already reserved by earlier stores
     /// @param userStorage whether the account metadata store is shared across workspaces
     static boolean assignAccountIDs(AccountMetadataStore accountMetadata, Set<String> usedAccountIDs, boolean userStorage) {
-        List<Map<Object, Object>> updatedAccounts = new ArrayList<>(accountMetadata.getAccounts().size());
+        List<JsonObject> updatedAccounts = new ArrayList<>(accountMetadata.getAccounts().size());
         boolean changed = false;
-        for (Map<Object, Object> account : accountMetadata.getAccounts()) {
-            Map<Object, Object> updatedAccount = new LinkedHashMap<>(account);
+        for (JsonObject account : accountMetadata.getAccounts()) {
+            JsonObject updatedAccount = account.deepCopy();
             @Nullable AccountID existing = parseAccountID(JsonUtils.getString(account, Account.PROPERTY_ACCOUNT_ID));
             if (existing != null && usedAccountIDs.add(existing.toString())) {
-                updatedAccount.put(Account.PROPERTY_ACCOUNT_ID, existing.toString());
-                changed |= !Objects.equals(account.get(Account.PROPERTY_ACCOUNT_ID), existing.toString());
+                updatedAccount.addProperty(Account.PROPERTY_ACCOUNT_ID, existing.toString());
+                changed |= !Objects.equals(JsonUtils.getString(account, Account.PROPERTY_ACCOUNT_ID), existing.toString());
                 updatedAccounts.add(updatedAccount);
                 continue;
             }
 
             AccountID accountID = createLegacyAccountID(account, usedAccountIDs, userStorage);
-            updatedAccount.put(Account.PROPERTY_ACCOUNT_ID, accountID.toString());
-            changed |= !Objects.equals(account.get(Account.PROPERTY_ACCOUNT_ID), accountID.toString());
+            updatedAccount.addProperty(Account.PROPERTY_ACCOUNT_ID, accountID.toString());
+            changed |= !Objects.equals(JsonUtils.getString(account, Account.PROPERTY_ACCOUNT_ID), accountID.toString());
             updatedAccounts.add(updatedAccount);
         }
 
@@ -527,7 +527,7 @@ public final class LegacyConfigMigrator {
 
     /// Creates a stable account ID that does not collide with IDs already assigned in the same account list.
     private static AccountID createLegacyAccountID(
-            Map<Object, Object> account,
+            JsonObject account,
             Set<String> usedAccountIDs,
             boolean userStorage) {
         String seed = getLegacyAccountIDSeed(account, userStorage);
@@ -541,7 +541,7 @@ public final class LegacyConfigMigrator {
     }
 
     /// Returns a deterministic seed built from a legacy account's selected-account reference.
-    private static String getLegacyAccountIDSeed(Map<Object, Object> account, boolean userStorage) {
+    private static String getLegacyAccountIDSeed(JsonObject account, boolean userStorage) {
         @Nullable String legacyIdentifier = getLegacyAccountIdentifier(account);
         if (legacyIdentifier != null) {
             return userStorage ? LEGACY_GLOBAL_ACCOUNT_PREFIX + legacyIdentifier : legacyIdentifier;
@@ -570,19 +570,19 @@ public final class LegacyConfigMigrator {
     }
 
     /// Returns one seed component for deterministic legacy account ID generation.
-    private static String accountSeedPart(Map<Object, Object> account, String name) {
+    private static String accountSeedPart(JsonObject account, String name) {
         return Objects.requireNonNullElse(JsonUtils.getString(account, name), "");
     }
 
     /// Renames legacy account fields to the current account metadata and private data field names.
     private static void normalizeLegacyAccountMetadataStore(AccountMetadataStore accountMetadata) {
-        for (Map<Object, Object> account : accountMetadata.getAccounts()) {
+        for (JsonObject account : accountMetadata.getAccounts()) {
             normalizeLegacyAccountRecord(account);
         }
     }
 
     /// Renames legacy fields in one account entry to the current serialized names.
-    private static void normalizeLegacyAccountRecord(Map<Object, Object> account) {
+    private static void normalizeLegacyAccountRecord(JsonObject account) {
         @Nullable String type = JsonUtils.getString(account, "type");
         if (type == null) {
             return;
@@ -590,44 +590,44 @@ public final class LegacyConfigMigrator {
 
         switch (type) {
             case "offline" -> {
-                renameMapMember(account, "username", "profileName");
-                renameMapMember(account, "uuid", "profileID");
-                if (!account.containsKey("profileID")) {
+                renameJsonMember(account, "username", "profileName");
+                renameJsonMember(account, "uuid", "profileID");
+                if (!account.has("profileID")) {
                     @Nullable String profileName = JsonUtils.getString(account, "profileName");
                     if (profileName != null) {
-                        account.put("profileID", UUIDTypeAdapter.fromUUID(
+                        account.addProperty("profileID", UUIDTypeAdapter.fromUUID(
                                 OfflineAccountFactory.getUUIDFromUserName(profileName)));
                     }
                 }
             }
             case "microsoft" -> {
-                renameMapMember(account, "uuid", "profileID");
-                renameMapMember(account, "displayName", "profileName");
+                renameJsonMember(account, "uuid", "profileID");
+                renameJsonMember(account, "displayName", "profileName");
             }
             case "yggdrasil" -> {
-                renameMapMember(account, "username", "loginName");
-                renameMapMember(account, "uuid", "profileID");
-                renameMapMember(account, "displayName", "profileName");
+                renameJsonMember(account, "username", "loginName");
+                renameJsonMember(account, "uuid", "profileID");
+                renameJsonMember(account, "displayName", "profileName");
             }
             case "authlibInjector" -> {
-                renameMapMember(account, "username", "loginName");
-                renameMapMember(account, "uuid", "profileID");
-                renameMapMember(account, "displayName", "profileName");
+                renameJsonMember(account, "username", "loginName");
+                renameJsonMember(account, "uuid", "profileID");
+                renameJsonMember(account, "displayName", "profileName");
             }
             default -> {
             }
         }
     }
 
-    /// Renames one map member to the current name.
-    private static void renameMapMember(Map<Object, Object> map, String legacyName, String currentName) {
-        @Nullable Object legacyValue = map.remove(legacyName);
-        if (map.containsKey(currentName)) {
+    /// Renames one JSON member to the current name.
+    private static void renameJsonMember(JsonObject object, String legacyName, String currentName) {
+        @Nullable JsonElement legacyValue = object.remove(legacyName);
+        if (object.has(currentName)) {
             return;
         }
 
-        if (legacyValue != null) {
-            map.put(currentName, legacyValue);
+        if (legacyValue != null && !legacyValue.isJsonNull()) {
+            object.add(currentName, legacyValue);
         }
     }
 
@@ -641,12 +641,12 @@ public final class LegacyConfigMigrator {
         boolean changed = false;
         Set<String> usedAccountIDs = new HashSet<>();
         assignAccountIDs(localAccounts, usedAccountIDs, false);
-        for (Map<Object, Object> account : localAccounts.getAccounts()) {
-            Object selectedMarker = account.remove("selected");
+        for (JsonObject account : localAccounts.getAccounts()) {
+            JsonElement selectedMarker = account.remove("selected");
             if (selectedMarker != null) {
                 changed = true;
             }
-            if (Boolean.TRUE.equals(selectedMarker) && selectedMarkerAccountID == null) {
+            if (JsonUtils.getBoolean(selectedMarker, false) && selectedMarkerAccountID == null) {
                 selectedMarkerAccountID = getSelectedAccountID(account);
             }
         }
@@ -688,9 +688,9 @@ public final class LegacyConfigMigrator {
         }
 
         try {
-            List<Map<Object, Object>> accounts = JsonUtils.fromJsonFile(
+            List<JsonObject> accounts = JsonUtils.fromJsonFile(
                     LEGACY_USER_ACCOUNTS_LOCATION,
-                    JsonUtils.listTypeOf(JsonUtils.mapTypeOf(Object.class, Object.class)));
+                    JsonUtils.listTypeOf(JsonObject.class));
             if (accounts == null) {
                 return null;
             }
@@ -718,7 +718,7 @@ public final class LegacyConfigMigrator {
             return null;
         }
 
-        for (Map<Object, Object> account : accounts.getAccounts()) {
+        for (JsonObject account : accounts.getAccounts()) {
             if (matchesLegacySelectedAccountIdentifier(identifier, account)) {
                 return getSelectedAccountID(account);
             }
@@ -727,17 +727,17 @@ public final class LegacyConfigMigrator {
     }
 
     /// Returns whether a serialized account entry matches a legacy selected account string.
-    private static boolean matchesLegacySelectedAccountIdentifier(String identifier, Map<Object, Object> account) {
+    private static boolean matchesLegacySelectedAccountIdentifier(String identifier, JsonObject account) {
         return Objects.equals(identifier, getLegacyAccountIdentifier(account));
     }
 
     /// Returns the selected account ID for a serialized account entry.
-    private static @Nullable AccountID getSelectedAccountID(Map<Object, Object> account) {
+    private static @Nullable AccountID getSelectedAccountID(JsonObject account) {
         return Account.getAccountID(account);
     }
 
     /// Returns the legacy string identifier for a serialized account entry.
-    private static @Nullable String getLegacyAccountIdentifier(Map<Object, Object> account) {
+    private static @Nullable String getLegacyAccountIdentifier(JsonObject account) {
         @Nullable String type = JsonUtils.getString(account, "type");
         if (type == null) {
             return null;

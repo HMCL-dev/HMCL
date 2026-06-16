@@ -17,8 +17,10 @@
  */
 package org.jackhuang.hmcl.auth.yggdrasil;
 
+import com.google.gson.JsonObject;
 import javafx.beans.binding.ObjectBinding;
 import org.jackhuang.hmcl.auth.*;
+import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.gson.UUIDTypeAdapter;
 import org.jackhuang.hmcl.util.javafx.BindingMapping;
 
@@ -174,17 +176,18 @@ public abstract class YggdrasilAccount extends ClassicAccount {
     }
 
     @Override
-    protected void writeMetadata(Map<Object, Object> metadata) {
-        metadata.put("loginName", loginName);
-        metadata.put("profileID", UUIDTypeAdapter.fromUUID(profileID));
+    public void writeMetadata(JsonObject metadata) {
+        super.writeMetadata(metadata);
+        metadata.addProperty("loginName", loginName);
+        metadata.addProperty("profileID", UUIDTypeAdapter.fromUUID(profileID));
     }
 
     @Override
-    public Map<Object, Object> toPrivateData() {
-        Map<Object, Object> privateData = new HashMap<>(session.toPrivateData());
+    public void writePrivateData(JsonObject privateData) {
+        super.writePrivateData(privateData);
+        session.writePrivateData(privateData);
         service.getProfileRepository().getImmediately(profileID).ifPresent(profile ->
-                privateData.put("profileProperties", profile.getProperties()));
-        return privateData;
+                privateData.add("profileProperties", JsonUtils.GSON.toJsonTree(profile.getProperties())));
     }
 
     public YggdrasilService getYggdrasilService() {

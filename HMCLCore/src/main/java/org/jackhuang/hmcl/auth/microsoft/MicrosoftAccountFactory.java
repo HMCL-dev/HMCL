@@ -17,6 +17,7 @@
  */
 package org.jackhuang.hmcl.auth.microsoft;
 
+import com.google.gson.JsonObject;
 import org.jackhuang.hmcl.auth.Account;
 import org.jackhuang.hmcl.auth.AccountFactory;
 import org.jackhuang.hmcl.auth.AccountID;
@@ -24,7 +25,6 @@ import org.jackhuang.hmcl.auth.AuthenticationException;
 import org.jackhuang.hmcl.auth.CharacterSelector;
 import org.jackhuang.hmcl.auth.OAuth;
 
-import java.util.Map;
 import java.util.Objects;
 
 public class MicrosoftAccountFactory extends AccountFactory<MicrosoftAccount> {
@@ -46,7 +46,7 @@ public class MicrosoftAccountFactory extends AccountFactory<MicrosoftAccount> {
     }
 
     @Override
-    public MicrosoftAccount fromStorage(Map<Object, Object> metadata, Map<Object, Object> privateData) {
+    public MicrosoftAccount fromStorage(JsonObject metadata, JsonObject privateData) {
         Objects.requireNonNull(metadata);
         Objects.requireNonNull(privateData);
         AccountID accountID = Account.readAccountID(metadata);

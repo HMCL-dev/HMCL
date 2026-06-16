@@ -453,12 +453,12 @@ public final class SettingsManager {
     }
 
     /// Returns the per-workspace account metadata records.
-    public static ObservableList<Map<Object, Object>> getAccountMetadataRecords() {
+    public static ObservableList<JsonObject> getAccountMetadataRecords() {
         return gameAccounts().getAccounts();
     }
 
     /// Returns the shared account metadata records.
-    public static ObservableList<Map<Object, Object>> getUserAccountMetadataRecords() {
+    public static ObservableList<JsonObject> getUserAccountMetadataRecords() {
         return userGameAccounts().getAccounts();
     }
 
@@ -513,8 +513,8 @@ public final class SettingsManager {
     /// @param metadataAccounts metadata-only account records
     /// @param privateData private account data keyed by account ID
     static void updateGameAccounts(
-            List<Map<Object, Object>> metadataAccounts,
-            Map<AccountID, Map<Object, Object>> privateData) {
+            List<JsonObject> metadataAccounts,
+            Map<AccountID, JsonObject> privateData) {
         updateAccountMetadataStore(
                 gameAccounts(),
                 GAME_ACCOUNTS_FILE,
@@ -531,8 +531,8 @@ public final class SettingsManager {
     /// @param metadataAccounts metadata-only account records
     /// @param privateData private account data keyed by account ID
     static void updateUserGameAccounts(
-            List<Map<Object, Object>> metadataAccounts,
-            Map<AccountID, Map<Object, Object>> privateData) {
+            List<JsonObject> metadataAccounts,
+            Map<AccountID, JsonObject> privateData) {
         updateAccountMetadataStore(
                 userGameAccounts(),
                 USER_GAME_ACCOUNTS_FILE,
@@ -572,13 +572,13 @@ public final class SettingsManager {
     ///
     /// @param accountID the account ID
     /// @param portable whether the account metadata belongs to the per-workspace account store
-    /// @return the private account data, or an empty map when none is available
-    static Map<Object, Object> getAccountPrivateData(AccountID accountID, boolean portable) {
+    /// @return the private account data, or an empty object when none is available
+    static JsonObject getAccountPrivateData(AccountID accountID, boolean portable) {
         List<AccountPrivateData> privateDataStores = portable
                 ? List.of(gameAccountPrivateData(), userGameAccountPrivateData())
                 : List.of(userGameAccountPrivateData(), gameAccountPrivateData());
-        @Nullable Map<Object, Object> privateData = AccountPrivateData.findPrivateData(accountID, privateDataStores);
-        return privateData != null ? new LinkedHashMap<>(privateData) : Map.of();
+        @Nullable JsonObject privateData = AccountPrivateData.findPrivateData(accountID, privateDataStores);
+        return privateData != null ? privateData : new JsonObject();
     }
 
     /// Updates account metadata and private data, then saves the changed files.
@@ -594,8 +594,8 @@ public final class SettingsManager {
             JsonSettingFile<AccountMetadataStore> accountsFile,
             AccountPrivateDataStore defaultPrivateData,
             List<AccountPrivateDataStore> privateDataStores,
-            List<Map<Object, Object>> metadataAccounts,
-            Map<AccountID, Map<Object, Object>> privateData) {
+            List<JsonObject> metadataAccounts,
+            Map<AccountID, JsonObject> privateData) {
         try {
             List<AccountID> accountIDs = getAccountIDs(metadataAccounts);
             AccountPrivateData.ExtractedPrivateData serializedAccounts =
@@ -678,9 +678,9 @@ public final class SettingsManager {
     }
 
     /// Returns account IDs from account metadata records.
-    private static List<AccountID> getAccountIDs(List<Map<Object, Object>> metadataAccounts) {
+    private static List<AccountID> getAccountIDs(List<JsonObject> metadataAccounts) {
         List<AccountID> accountIDs = new ArrayList<>(metadataAccounts.size());
-        for (Map<Object, Object> metadata : metadataAccounts) {
+        for (JsonObject metadata : metadataAccounts) {
             @Nullable AccountID accountID = Account.getAccountID(metadata);
             if (accountID != null) {
                 accountIDs.add(accountID);
@@ -716,13 +716,13 @@ public final class SettingsManager {
             List<AccountPrivateDataStore> privateDataStores) {
         List<AccountPrivateDataStore> changedPrivateDataStores = new ArrayList<>();
         for (AccountID accountID : extracted.accountIDs()) {
-            @Nullable Map<Object, Object> accountPrivateData = extracted.privateData().get(accountID);
+            @Nullable JsonObject accountPrivateData = extracted.privateData().get(accountID);
             AccountPrivateDataStore targetPrivateData = accountPrivateData == null
                     ? defaultPrivateData
                     : findAccountPrivateDataStore(accountID, defaultPrivateData, privateDataStores);
 
             for (AccountPrivateDataStore privateDataStore : privateDataStores) {
-                @Nullable Map<Object, Object> currentPrivateData =
+                @Nullable JsonObject currentPrivateData =
                         privateDataStore.privateData().getPrivateData().get(accountID);
                 if (privateDataStore.equals(targetPrivateData) && accountPrivateData != null) {
                     if (!Objects.equals(currentPrivateData, accountPrivateData)) {

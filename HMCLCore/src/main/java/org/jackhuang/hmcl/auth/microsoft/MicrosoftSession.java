@@ -17,18 +17,17 @@
  */
 package org.jackhuang.hmcl.auth.microsoft;
 
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
 import org.jackhuang.hmcl.auth.AuthInfo;
 import org.jackhuang.hmcl.util.StringUtils;
+import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.gson.UUIDTypeAdapter;
 import org.jackhuang.hmcl.util.logging.Logger;
 
-import java.util.Map;
 import java.util.UUID;
 
 import static java.util.Objects.requireNonNull;
-import static org.jackhuang.hmcl.util.Lang.mapOf;
-import static org.jackhuang.hmcl.util.Lang.tryCast;
-import static org.jackhuang.hmcl.util.Pair.pair;
 
 public class MicrosoftSession {
     private final String tokenType;
@@ -83,34 +82,46 @@ public class MicrosoftSession {
     }
 
     /// Loads a Microsoft session from persisted account metadata and private data.
-    public static MicrosoftSession fromStorage(Map<?, ?> metadata, Map<?, ?> privateData) {
-        UUID profileID = tryCast(metadata.get("profileID"), String.class).map(UUIDTypeAdapter::fromString)
-                .orElseThrow(() -> new IllegalArgumentException("profileID is missing"));
-        String profileName = tryCast(privateData.get("profileName"), String.class).orElse("");
-        String tokenType = tryCast(privateData.get("tokenType"), String.class)
-                .orElseThrow(() -> new IllegalArgumentException("tokenType is missing"));
-        String accessToken = tryCast(privateData.get("accessToken"), String.class)
-                .orElseThrow(() -> new IllegalArgumentException("accessToken is missing"));
-        String refreshToken = tryCast(privateData.get("refreshToken"), String.class)
-                .orElseThrow(() -> new IllegalArgumentException("refreshToken is missing"));
-        Long notAfter = tryCast(privateData.get("notAfter"), Number.class).map(Number::longValue).orElse(0L);
-        String userId = tryCast(privateData.get("userid"), String.class)
-                .orElseThrow(() -> new IllegalArgumentException("userid is missing"));
+    public static MicrosoftSession fromStorage(JsonObject metadata, JsonObject privateData) {
+        String profileIDText = JsonUtils.getString(metadata, "profileID");
+        if (profileIDText == null) {
+            throw new IllegalArgumentException("profileID is missing");
+        }
+        UUID profileID = UUIDTypeAdapter.fromString(profileIDText);
+        String profileName = JsonUtils.getString(privateData, "profileName", "");
+        String tokenType = requireStorageString(privateData, "tokenType");
+        String accessToken = requireStorageString(privateData, "accessToken");
+        String refreshToken = requireStorageString(privateData, "refreshToken");
+        JsonElement notAfterElement = privateData.get("notAfter");
+        long notAfter = notAfterElement != null
+                && notAfterElement.isJsonPrimitive()
+                && notAfterElement.getAsJsonPrimitive().isNumber()
+                ? notAfterElement.getAsLong()
+                : 0L;
+        String userId = requireStorageString(privateData, "userid");
         return new MicrosoftSession(tokenType, accessToken, notAfter, refreshToken, new User(userId), new GameProfile(profileID, profileName));
     }
 
-    /// Converts this session to persisted private account data.
-    public Map<Object, Object> toPrivateData() {
+    /// Writes this session to persisted private account data.
+    public void writePrivateData(JsonObject privateData) {
         requireNonNull(profile);
         requireNonNull(user);
 
-        return mapOf(
-                pair("profileName", profile.getName()),
-                pair("tokenType", tokenType),
-                pair("accessToken", accessToken),
-                pair("refreshToken", refreshToken),
-                pair("notAfter", notAfter),
-                pair("userid", user.id));
+        privateData.addProperty("profileName", profile.getName());
+        privateData.addProperty("tokenType", tokenType);
+        privateData.addProperty("accessToken", accessToken);
+        privateData.addProperty("refreshToken", refreshToken);
+        privateData.addProperty("notAfter", notAfter);
+        privateData.addProperty("userid", user.id);
+    }
+
+    /// Reads a required string member from account storage.
+    private static String requireStorageString(JsonObject storage, String name) {
+        String value = JsonUtils.getString(storage, name);
+        if (value == null) {
+            throw new IllegalArgumentException(name + " is missing");
+        }
+        return value;
     }
 
     public AuthInfo toAuthInfo() {

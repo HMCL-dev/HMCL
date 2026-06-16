@@ -17,6 +17,7 @@
  */
 package org.jackhuang.hmcl.setting;
 
+import com.google.gson.JsonObject;
 import javafx.beans.InvalidationListener;
 import javafx.beans.Observable;
 import javafx.beans.property.ObjectProperty;
@@ -34,6 +35,7 @@ import org.jackhuang.hmcl.auth.offline.OfflineAccountFactory;
 import org.jackhuang.hmcl.auth.yggdrasil.RemoteAuthenticationException;
 import org.jackhuang.hmcl.game.OAuthServer;
 import org.jackhuang.hmcl.task.Schedulers;
+import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.io.JarUtils;
 import org.jackhuang.hmcl.util.skin.InvalidSkinException;
 
@@ -125,10 +127,12 @@ public final class Accounts {
     private static boolean initialized = false;
 
     private static SerializedAccount serializeAccount(Account account) {
-        Map<Object, Object> metadata = new LinkedHashMap<>();
-        metadata.put("type", getLoginType(getAccountFactory(account)));
-        metadata.putAll(account.toMetadata());
-        return new SerializedAccount(metadata, new LinkedHashMap<>(account.toPrivateData()));
+        JsonObject metadata = new JsonObject();
+        metadata.addProperty("type", getLoginType(getAccountFactory(account)));
+        account.writeMetadata(metadata);
+        JsonObject privateData = new JsonObject();
+        account.writePrivateData(privateData);
+        return new SerializedAccount(metadata, privateData);
     }
 
     /// Ensures account IDs are unique across local and shared account metadata records before accounts are instantiated.
@@ -157,10 +161,10 @@ public final class Accounts {
         // otherwise it might cause data loss
         if (!initialized)
             return;
-        ArrayList<Map<Object, Object>> globalMetadata = new ArrayList<>();
-        LinkedHashMap<AccountID, Map<Object, Object>> globalPrivateData = new LinkedHashMap<>();
-        ArrayList<Map<Object, Object>> portableMetadata = new ArrayList<>();
-        LinkedHashMap<AccountID, Map<Object, Object>> portablePrivateData = new LinkedHashMap<>();
+        ArrayList<JsonObject> globalMetadata = new ArrayList<>();
+        LinkedHashMap<AccountID, JsonObject> globalPrivateData = new LinkedHashMap<>();
+        ArrayList<JsonObject> portableMetadata = new ArrayList<>();
+        LinkedHashMap<AccountID, JsonObject> portablePrivateData = new LinkedHashMap<>();
 
         for (Account account : accounts) {
             SerializedAccount serialized = serializeAccount(account);
@@ -232,8 +236,8 @@ public final class Accounts {
         }
     }
 
-    private static Account parseAccount(Map<Object, Object> record, boolean portable) {
-        AccountFactory<?> factory = type2factory.get(record.get("type"));
+    private static Account parseAccount(JsonObject record, boolean portable) {
+        AccountFactory<?> factory = type2factory.get(JsonUtils.getString(record, "type"));
         if (factory == null) {
             LOG.warning("Unrecognized account type: " + describeAccountRecord(record));
             return null;
@@ -252,17 +256,17 @@ public final class Accounts {
     ///
     /// @param metadata public metadata stored in `accounts.json`
     /// @param privateData private account data stored in account private data
-    private record SerializedAccount(Map<Object, Object> metadata, Map<Object, Object> privateData) {
+    private record SerializedAccount(JsonObject metadata, JsonObject privateData) {
     }
 
     /// Returns a safe account record description for diagnostics.
-    private static String describeAccountRecord(Map<Object, Object> record) {
+    private static String describeAccountRecord(JsonObject record) {
         AccountID accountID = Account.getAccountID(record);
         if (accountID != null) {
             return accountID.toString();
         }
 
-        Object type = record.get("type");
+        String type = JsonUtils.getString(record, "type");
         return type != null ? "{type=" + type + "}" : "<unknown>";
     }
 
@@ -281,18 +285,18 @@ public final class Accounts {
 
         // load accounts
         Account selected = null;
-        for (Map<Object, Object> record : getAccountMetadataRecords()) {
+        for (JsonObject record : getAccountMetadataRecords()) {
             Account account = parseAccount(record, true);
             if (account != null) {
                 account.setPortable(true);
                 accounts.add(account);
-                if (Boolean.TRUE.equals(record.get("selected"))) {
+                if (JsonUtils.getBoolean(record, "selected", false)) {
                     selected = account;
                 }
             }
         }
 
-        for (Map<Object, Object> record : getUserAccountMetadataRecords()) {
+        for (JsonObject record : getUserAccountMetadataRecords()) {
             Account account = parseAccount(record, false);
             if (account != null) {
                 accounts.add(account);

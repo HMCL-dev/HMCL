@@ -17,6 +17,8 @@
  */
 package org.jackhuang.hmcl.auth.offline;
 
+import com.google.gson.JsonNull;
+import com.google.gson.JsonObject;
 import javafx.beans.binding.ObjectBinding;
 import org.jackhuang.hmcl.auth.Account;
 import org.jackhuang.hmcl.auth.AccountID;
@@ -187,10 +189,17 @@ public class OfflineAccount extends Account {
     }
 
     @Override
-    protected void writeMetadata(Map<Object, Object> metadata) {
-        metadata.put("profileID", UUIDTypeAdapter.fromUUID(profileID));
-        metadata.put("profileName", profileName);
-        metadata.put("skin", skin == null ? null : skin.toStorage());
+    public void writeMetadata(JsonObject metadata) {
+        super.writeMetadata(metadata);
+        metadata.addProperty("profileID", UUIDTypeAdapter.fromUUID(profileID));
+        metadata.addProperty("profileName", profileName);
+        if (skin == null) {
+            metadata.add("skin", JsonNull.INSTANCE);
+        } else {
+            JsonObject skinStorage = new JsonObject();
+            skin.writeStorage(skinStorage);
+            metadata.add("skin", skinStorage);
+        }
     }
 
     @Override

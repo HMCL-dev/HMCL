@@ -17,6 +17,7 @@
  */
 package org.jackhuang.hmcl.setting;
 
+import com.google.gson.JsonObject;
 import com.google.gson.annotations.JsonAdapter;
 import com.google.gson.annotations.SerializedName;
 import javafx.beans.property.ObjectProperty;
@@ -29,7 +30,6 @@ import org.jackhuang.hmcl.util.gson.ObservableSetting;
 import org.jetbrains.annotations.NotNullByDefault;
 
 import java.util.List;
-import java.util.Map;
 import java.util.Objects;
 
 /// Stores account metadata records in a detached JSON file.
@@ -55,7 +55,7 @@ final class AccountMetadataStore extends ObservableSetting implements JsonSchema
     ///
     /// @param records the serialized account records
     /// @return an account metadata store containing the given records
-    static AccountMetadataStore fromRecords(List<Map<Object, Object>> records) {
+    static AccountMetadataStore fromRecords(List<JsonObject> records) {
         AccountMetadataStore result = new AccountMetadataStore();
         result.getAccounts().setAll(records);
         return result;
@@ -65,7 +65,7 @@ final class AccountMetadataStore extends ObservableSetting implements JsonSchema
     ///
     /// @param records the replacement account records
     /// @return a copy preserving this store's schema and unknown top-level members
-    AccountMetadataStore copyWithRecords(List<Map<Object, Object>> records) {
+    AccountMetadataStore copyWithRecords(List<JsonObject> records) {
         AccountMetadataStore result = new AccountMetadataStore();
         result.setSchema(getSchema());
         result.getAccounts().setAll(records);
@@ -126,10 +126,10 @@ final class AccountMetadataStore extends ObservableSetting implements JsonSchema
 
     /// Serialized account records.
     @SerializedName("accounts")
-    private final ObservableList<Map<Object, Object>> accounts = FXCollections.observableArrayList();
+    private final ObservableList<JsonObject> accounts = FXCollections.observableArrayList();
 
     /// Returns serialized account records.
-    public ObservableList<Map<Object, Object>> getAccounts() {
+    public ObservableList<JsonObject> getAccounts() {
         return accounts;
     }
 

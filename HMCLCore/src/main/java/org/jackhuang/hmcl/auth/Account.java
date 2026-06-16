@@ -17,6 +17,7 @@
  */
 package org.jackhuang.hmcl.auth;
 
+import com.google.gson.JsonObject;
 import javafx.application.Platform;
 import javafx.beans.InvalidationListener;
 import javafx.beans.Observable;
@@ -30,11 +31,11 @@ import org.jackhuang.hmcl.auth.yggdrasil.TextureType;
 import org.jackhuang.hmcl.util.ToStringBuilder;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.javafx.ObservableHelper;
+import org.jetbrains.annotations.MustBeInvokedByOverriders;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
 
 import java.nio.file.Path;
-import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
@@ -96,33 +97,25 @@ public abstract class Account implements Observable {
         throw new UnsupportedOperationException("Unsupported Operation");
     }
 
-    /// Serializes public account metadata.
+    /// Writes public account metadata into the target JSON object.
     ///
     /// Metadata is stored in `accounts.json` and must not contain credentials or cached private profile data.
-    public final Map<Object, Object> toMetadata() {
-        Map<Object, Object> metadata = new LinkedHashMap<>();
-        addAccountID(metadata);
-        writeMetadata(metadata);
-        return metadata;
+    ///
+    /// The target object is owned by the caller. Implementations may only mutate it during this method call and must
+    /// not retain a reference to it.
+    @MustBeInvokedByOverriders
+    public void writeMetadata(JsonObject metadata) {
+        metadata.addProperty(PROPERTY_ACCOUNT_ID, accountID.toString());
     }
 
-    /// Writes account-type specific public metadata.
-    ///
-    /// @param metadata the metadata map to update
-    protected abstract void writeMetadata(Map<Object, Object> metadata);
-
-    /// Serializes private account data.
+    /// Writes private account data into the target JSON object.
     ///
     /// Private data is stored outside `accounts.json` and may contain credentials or cached profile data.
-    public Map<Object, Object> toPrivateData() {
-        return Map.of();
-    }
-
-    /// Adds this account ID to a serialized account storage map.
     ///
-    /// @param storage the serialized account storage map
-    protected final void addAccountID(Map<Object, Object> storage) {
-        storage.put(PROPERTY_ACCOUNT_ID, accountID.toString());
+    /// The target object is owned by the caller. Implementations may only mutate it during this method call and must
+    /// not retain a reference to it.
+    @MustBeInvokedByOverriders
+    public void writePrivateData(JsonObject privateData) {
     }
 
     public void clearCache() {
@@ -146,7 +139,7 @@ public abstract class Account implements Observable {
     ///
     /// @param storage the serialized account record
     /// @return the stable account ID, or `null` if the account record has no valid account ID
-    public static @Nullable AccountID getAccountID(Map<?, ?> storage) {
+    public static @Nullable AccountID getAccountID(JsonObject storage) {
         @Nullable String accountID = JsonUtils.getString(storage, PROPERTY_ACCOUNT_ID);
         if (accountID == null) {
             return null;
@@ -161,10 +154,10 @@ public abstract class Account implements Observable {
 
     /// Reads an account ID from serialized account storage.
     ///
-    /// @param storage the account storage map
+    /// @param storage the account storage object
     /// @return the parsed account ID
     /// @throws IllegalArgumentException if the storage has no valid account ID
-    public static AccountID readAccountID(Map<?, ?> storage) {
+    public static AccountID readAccountID(JsonObject storage) {
         @Nullable String accountID = JsonUtils.getString(storage, PROPERTY_ACCOUNT_ID);
         if (accountID == null) {
             throw new IllegalArgumentException("accountID is missing");
