@@ -18,7 +18,6 @@
 package org.jackhuang.hmcl.ui;
 
 import com.jfoenix.controls.JFXButton;
-import com.jfoenix.controls.JFXDialogLayout;
 import com.jfoenix.validation.base.ValidatorBase;
 import javafx.animation.KeyFrame;
 import javafx.animation.KeyValue;
@@ -33,7 +32,6 @@ import javafx.geometry.Rectangle2D;
 import javafx.scene.Node;
 import javafx.scene.Scene;
 import javafx.scene.control.ButtonBase;
-import javafx.scene.control.Label;
 import javafx.scene.layout.Region;
 import javafx.scene.paint.Color;
 import javafx.stage.Screen;
@@ -443,22 +441,19 @@ public final class Controllers {
                     .build());
         }
 
-        if (globalConfig().getAgreementVersion() < 1) {
-            JFXDialogLayout agreementPane = new JFXDialogLayout();
-            agreementPane.setHeading(new Label(i18n("launcher.agreement")));
-            agreementPane.setBody(new Label(i18n("launcher.agreement.hint")));
-            JFXHyperlink agreementLink = new JFXHyperlink(i18n("launcher.agreement"));
-            agreementLink.setExternalLink(Metadata.EULA_URL);
-            JFXButton yesButton = new JFXButton(i18n("launcher.agreement.accept"));
-            yesButton.getStyleClass().add("dialog-accept");
-            yesButton.setOnAction(e -> {
-                globalConfig().setAgreementVersion(1);
-                agreementPane.fireEvent(new DialogCloseEvent());
-            });
-            JFXButton noButton = new JFXButton(i18n("launcher.agreement.decline"));
-            noButton.getStyleClass().add("dialog-cancel");
-            noButton.setOnAction(e -> javafx.application.Platform.exit());
-            agreementPane.setActions(agreementLink, yesButton, noButton);
+        if (globalConfig().getAgreementVersion() < 2 ) {
+            MessageDialogPane agreementPane = new MessageDialogPane.Builder(
+                    i18n("launcher.agreement.hint"),
+                    i18n("launcher.agreement"),
+                    MessageDialogPane.MessageType.INFO
+            )
+                    .addHyperLink(i18n("launcher.agreement"), Metadata.EULA_URL)
+                    .addAction(i18n("launcher.agreement.accept"), () -> {
+                        globalConfig().setAgreementVersion(2);
+                    })
+                    .addCancel(i18n("launcher.agreement.decline"), Platform::exit)
+                    .build();
+
             Controllers.dialog(agreementPane);
         }
 
