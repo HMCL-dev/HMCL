@@ -17,8 +17,6 @@
  */
 package org.jackhuang.hmcl.auth;
 
-import com.google.gson.JsonElement;
-import com.google.gson.JsonObject;
 import javafx.application.Platform;
 import javafx.beans.InvalidationListener;
 import javafx.beans.Observable;
@@ -32,7 +30,6 @@ import org.jackhuang.hmcl.auth.yggdrasil.TextureType;
 import org.jackhuang.hmcl.util.ToStringBuilder;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.javafx.ObservableHelper;
-import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
 
@@ -48,6 +45,23 @@ import java.util.UUID;
  */
 @NotNullByDefault
 public abstract class Account implements Observable {
+    /// The serialized account ID property name.
+    public static final String PROPERTY_ACCOUNT_ID = "accountID";
+
+    /// The stable ID of this account entry.
+    private final AccountID accountID;
+
+    /// Creates an account.
+    ///
+    /// @param accountID the stable account entry ID
+    protected Account(AccountID accountID) {
+        this.accountID = Objects.requireNonNull(accountID);
+    }
+
+    /// Returns the stable ID of this account entry.
+    public AccountID getAccountID() {
+        return accountID;
+    }
 
     /**
      * @return the profile name
@@ -83,6 +97,13 @@ public abstract class Account implements Observable {
 
     public abstract Map<Object, Object> toStorage();
 
+    /// Adds this account ID to a serialized account storage map.
+    ///
+    /// @param storage the serialized account storage map
+    protected final void addAccountID(Map<Object, Object> storage) {
+        storage.put(PROPERTY_ACCOUNT_ID, accountID.toString());
+    }
+
     public void clearCache() {
     }
 
@@ -100,91 +121,45 @@ public abstract class Account implements Observable {
         this.portable.set(value);
     }
 
-    /// Writes stable fields that identify this account into the given JSON object.
-    ///
-    /// The identifier object must not contain credentials or other secrets. It is used only to find the
-    /// same account again after account storages have been reloaded.
-    @Contract(mutates = "param1")
-    public abstract void toIdentifier(JsonObject json);
+    /// Returns the stable account identifier.
+    public final AccountID toIdentifier() {
+        return accountID;
+    }
 
-    /// Returns whether the given identifier object matches the stable identifier fields of this account.
-    ///
-    /// Extra members in the given object are ignored by this method so callers can add storage or type metadata.
-    @Contract(pure = true)
-    public boolean matchIdentifier(JsonObject json) {
-        JsonObject identifier = new JsonObject();
-        toIdentifier(identifier);
-
-        for (Map.Entry<String, JsonElement> entry : identifier.asMap().entrySet()) {
-            String key = entry.getKey();
-            JsonElement value = entry.getValue();
-
-            if (!value.equals(json.get(key)))
-                return false;
-        }
-
-        return true;
+    /// Returns whether the given identifier matches this account.
+    public boolean matchIdentifier(AccountID accountID) {
+        return this.accountID.equals(accountID);
     }
 
     /// Returns the stable account identifier for the given account storage.
     ///
-    /// The returned object includes the account type and the same stable fields written by account implementations.
-    ///
     /// @param storage the account storage map
     /// @return the stable account identifier, or `null` if the account cannot be identified
-    public static @Nullable JsonObject identifier(Map<?, ?> storage) {
-        @Nullable String type = JsonUtils.getString(storage, "type");
-        if (type == null) {
+    public static @Nullable AccountID identifier(Map<?, ?> storage) {
+        @Nullable String accountID = JsonUtils.getString(storage, PROPERTY_ACCOUNT_ID);
+        if (accountID == null) {
             return null;
         }
 
-        JsonObject identifier = new JsonObject();
-        identifier.addProperty("type", type);
-        switch (type) {
-            case "offline" -> {
-                if (!addIdentifierProperty(identifier, storage, "profileName")
-                        || !addIdentifierProperty(identifier, storage, "profileID")) {
-                    return null;
-                }
-            }
-            case "microsoft" -> {
-                if (!addIdentifierProperty(identifier, storage, "profileID")) {
-                    return null;
-                }
-            }
-            case "yggdrasil" -> {
-                if (!addIdentifierProperty(identifier, storage, "loginName")
-                        || !addIdentifierProperty(identifier, storage, "profileID")) {
-                    return null;
-                }
-            }
-            case "authlibInjector" -> {
-                if (!addIdentifierProperty(identifier, storage, "serverBaseURL")
-                        || !addIdentifierProperty(identifier, storage, "loginName")
-                        || !addIdentifierProperty(identifier, storage, "profileID")) {
-                    return null;
-                }
-            }
-            default -> {
-                return null;
-            }
+        try {
+            return AccountID.parse(accountID);
+        } catch (IllegalArgumentException e) {
+            return null;
         }
-        return identifier;
     }
 
-    /// Adds a string member from an account storage map to an identifier object.
+    /// Reads an account ID from serialized account storage.
     ///
-    /// @param identifier the identifier object to update
     /// @param storage the account storage map
-    /// @param key the member key
-    /// @return whether the member exists and was added
-    private static boolean addIdentifierProperty(JsonObject identifier, Map<?, ?> storage, String key) {
-        @Nullable String value = JsonUtils.getString(storage, key);
-        if (value == null) {
-            return false;
+    /// @return the parsed account ID
+    /// @throws IllegalArgumentException if the storage has no valid account ID
+    public static AccountID readAccountID(Map<?, ?> storage) {
+        @Nullable String accountID = JsonUtils.getString(storage, PROPERTY_ACCOUNT_ID);
+        if (accountID == null) {
+            throw new IllegalArgumentException("accountID is missing");
         }
-        identifier.addProperty(key, value);
-        return true;
+
+        return AccountID.parse(accountID);
     }
 
     private final ObservableHelper helper = new ObservableHelper(this);
@@ -212,24 +187,25 @@ public abstract class Account implements Observable {
     }
 
     @Override
-    public int hashCode() {
-        return Objects.hash(portable);
+    public final int hashCode() {
+        return Objects.hash(portable.get(), accountID);
     }
 
     @Override
-    public boolean equals(@Nullable Object obj) {
+    public final boolean equals(@Nullable Object obj) {
         if (this == obj)
             return true;
         if (!(obj instanceof Account))
             return false;
 
         Account another = (Account) obj;
-        return isPortable() == another.isPortable();
+        return isPortable() == another.isPortable() && accountID.equals(another.accountID);
     }
 
     @Override
     public String toString() {
         return new ToStringBuilder(this)
+                .append("accountID", accountID)
                 .append("profileName", getProfileName())
                 .append("profileID", getProfileID())
                 .append("portable", isPortable())

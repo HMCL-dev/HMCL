@@ -20,8 +20,11 @@
       "items": {
         "type": "object",
         "additionalProperties": true,
+        "required": [
+          "accountID"
+        ],
         "properties": {
-          "id": {
+          "accountID": {
             "type": "string"
           }
         },

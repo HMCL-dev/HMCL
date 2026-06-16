@@ -17,7 +17,6 @@
  */
 package org.jackhuang.hmcl.setting;
 
-import com.google.gson.JsonObject;
 import javafx.beans.InvalidationListener;
 import javafx.beans.Observable;
 import javafx.beans.property.ObjectProperty;
@@ -35,7 +34,6 @@ import org.jackhuang.hmcl.auth.offline.OfflineAccountFactory;
 import org.jackhuang.hmcl.auth.yggdrasil.RemoteAuthenticationException;
 import org.jackhuang.hmcl.game.OAuthServer;
 import org.jackhuang.hmcl.task.Schedulers;
-import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.io.JarUtils;
 import org.jackhuang.hmcl.util.skin.InvalidSkinException;
 
@@ -118,11 +116,6 @@ public final class Accounts {
             throw new IllegalArgumentException("Failed to determine account type: " + account);
     }
 
-    private static final String SELECTED_ACCOUNT_STORAGE = "storage";
-    private static final String SELECTED_ACCOUNT_STORAGE_LOCAL = "local";
-    private static final String SELECTED_ACCOUNT_STORAGE_USER = "user";
-    private static final String SELECTED_ACCOUNT_TYPE = "type";
-
     private static final ObservableList<Account> accounts = observableArrayList(account -> new Observable[]{account});
     private static final ObjectProperty<Account> selectedAccount = new SimpleObjectProperty<>(Accounts.class, "selectedAccount");
 
@@ -137,29 +130,21 @@ public final class Accounts {
         return storage;
     }
 
-    /// Creates the structured selected-account reference stored in launcher settings.
-    private static JsonObject toSelectedAccountReference(Account account) {
-        JsonObject reference = new JsonObject();
-        reference.addProperty(SELECTED_ACCOUNT_STORAGE,
-                account.isPortable() ? SELECTED_ACCOUNT_STORAGE_LOCAL : SELECTED_ACCOUNT_STORAGE_USER);
-        reference.addProperty(SELECTED_ACCOUNT_TYPE, getLoginType(getAccountFactory(account)));
-        account.toIdentifier(reference);
-        return reference;
+    /// Creates the selected-account reference stored in launcher settings.
+    private static AccountID toSelectedAccountReference(Account account) {
+        return account.toIdentifier();
     }
 
     /// Returns whether the given account is identified by a selected-account reference.
-    private static boolean matchesSelectedAccountReference(Account account, JsonObject reference) {
-        String storage = account.isPortable() ? SELECTED_ACCOUNT_STORAGE_LOCAL : SELECTED_ACCOUNT_STORAGE_USER;
-        if (!storage.equals(JsonUtils.getString(reference, SELECTED_ACCOUNT_STORAGE))) {
-            return false;
-        }
-
-        String type = getLoginType(getAccountFactory(account));
-        if (!type.equals(JsonUtils.getString(reference, SELECTED_ACCOUNT_TYPE))) {
-            return false;
-        }
-
+    private static boolean matchesSelectedAccountReference(Account account, AccountID reference) {
         return account.matchIdentifier(reference);
+    }
+
+    /// Ensures account IDs are unique across local and shared account storages before accounts are instantiated.
+    private static void ensureUniqueAccountIDs() {
+        Set<String> usedAccountIDs = new HashSet<>();
+        LegacyConfigMigrator.assignAccountIDs(SettingsManager.gameAccounts(), usedAccountIDs, false);
+        LegacyConfigMigrator.assignAccountIDs(SettingsManager.userGameAccounts(), usedAccountIDs, true);
     }
 
     private static void updateAccountStorages() {
@@ -252,7 +237,7 @@ public final class Accounts {
 
     /// Returns a safe account identifier string for diagnostics.
     private static String accountIdentifier(Map<Object, Object> storage) {
-        JsonObject identifier = Account.identifier(storage);
+        AccountID identifier = Account.identifier(storage);
         if (identifier != null) {
             return identifier.toString();
         }
@@ -265,6 +250,8 @@ public final class Accounts {
     public static void init() {
         if (initialized)
             throw new IllegalStateException("Already initialized");
+
+        ensureUniqueAccountIDs();
 
         // load accounts
         Account selected = null;
@@ -286,7 +273,7 @@ public final class Accounts {
             }
         }
 
-        JsonObject selectedAccountReference = settings().selectedAccountProperty().get();
+        AccountID selectedAccountReference = settings().selectedAccountProperty().get();
         if (selected == null && selectedAccountReference != null) {
             for (Account account : accounts) {
                 if (matchesSelectedAccountReference(account, selectedAccountReference)) {

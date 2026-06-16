@@ -17,7 +17,9 @@
  */
 package org.jackhuang.hmcl.auth.offline;
 
+import org.jackhuang.hmcl.auth.Account;
 import org.jackhuang.hmcl.auth.AccountFactory;
+import org.jackhuang.hmcl.auth.AccountID;
 import org.jackhuang.hmcl.auth.CharacterSelector;
 import org.jackhuang.hmcl.auth.authlibinjector.AuthlibInjectorArtifactProvider;
 import org.jackhuang.hmcl.util.gson.UUIDTypeAdapter;
@@ -45,7 +47,7 @@ public final class OfflineAccountFactory extends AccountFactory<OfflineAccount> 
     }
 
     public OfflineAccount create(String username, UUID uuid) {
-        return new OfflineAccount(downloader, username, uuid, null);
+        return new OfflineAccount(AccountID.generate(), downloader, username, uuid, null);
     }
 
     @Override
@@ -61,11 +63,12 @@ public final class OfflineAccountFactory extends AccountFactory<OfflineAccount> 
             uuid = getUUIDFromUserName(username);
             skin = null;
         }
-        return new OfflineAccount(downloader, username, uuid, skin);
+        return new OfflineAccount(AccountID.generate(), downloader, username, uuid, skin);
     }
 
     @Override
     public OfflineAccount fromStorage(Map<Object, Object> storage) {
+        AccountID accountID = Account.readAccountID(storage);
         String profileName = tryCast(storage.get("profileName"), String.class)
                 .orElseThrow(() -> new IllegalStateException("Offline account configuration malformed."));
         UUID profileID = tryCast(storage.get("profileID"), String.class)
@@ -73,7 +76,7 @@ public final class OfflineAccountFactory extends AccountFactory<OfflineAccount> 
                 .orElse(getUUIDFromUserName(profileName));
         Skin skin = Skin.fromStorage(tryCast(storage.get("skin"), Map.class).orElse(null));
 
-        return new OfflineAccount(downloader, profileName, profileID, skin);
+        return new OfflineAccount(accountID, downloader, profileName, profileID, skin);
     }
 
     public static UUID getUUIDFromUserName(String username) {

@@ -17,7 +17,6 @@
  */
 package org.jackhuang.hmcl.auth.yggdrasil;
 
-import com.google.gson.JsonObject;
 import javafx.beans.binding.ObjectBinding;
 import org.jackhuang.hmcl.auth.*;
 import org.jackhuang.hmcl.util.gson.UUIDTypeAdapter;
@@ -38,7 +37,8 @@ public abstract class YggdrasilAccount extends ClassicAccount {
     private boolean authenticated = false;
     private YggdrasilSession session;
 
-    protected YggdrasilAccount(YggdrasilService service, String loginName, YggdrasilSession session) {
+    protected YggdrasilAccount(AccountID accountID, YggdrasilService service, String loginName, YggdrasilSession session) {
+        super(accountID);
         this.service = requireNonNull(service);
         this.loginName = requireNonNull(loginName);
         this.profileID = requireNonNull(session.getSelectedProfile().getId());
@@ -48,6 +48,7 @@ public abstract class YggdrasilAccount extends ClassicAccount {
     }
 
     protected YggdrasilAccount(YggdrasilService service, String loginName, String password, CharacterSelector selector) throws AuthenticationException {
+        super(AccountID.generate());
         this.service = requireNonNull(service);
         this.loginName = requireNonNull(loginName);
 
@@ -96,13 +97,6 @@ public abstract class YggdrasilAccount extends ClassicAccount {
     @Override
     public UUID getProfileID() {
         return session.getSelectedProfile().getId();
-    }
-
-    /// Writes the login name and selected profile ID used to identify this Yggdrasil account.
-    @Override
-    public void toIdentifier(JsonObject json) {
-        json.addProperty("loginName", getLoginName());
-        json.addProperty("profileID", UUIDTypeAdapter.fromUUID(getProfileID()));
     }
 
     @Override
@@ -186,6 +180,7 @@ public abstract class YggdrasilAccount extends ClassicAccount {
         storage.putAll(session.toStorage());
         service.getProfileRepository().getImmediately(profileID).ifPresent(profile ->
                 storage.put("profileProperties", profile.getProperties()));
+        addAccountID(storage);
         return storage;
     }
 
@@ -229,20 +224,7 @@ public abstract class YggdrasilAccount extends ClassicAccount {
 
     @Override
     public String toString() {
-        return "YggdrasilAccount[profileID=" + profileID + ", loginName=" + loginName + "]";
-    }
-
-    @Override
-    public int hashCode() {
-        return profileID.hashCode();
-    }
-
-    @Override
-    public boolean equals(Object obj) {
-        if (this == obj) return true;
-        if (obj == null || obj.getClass() != YggdrasilAccount.class)
-            return false;
-        YggdrasilAccount another = (YggdrasilAccount) obj;
-        return isPortable() == another.isPortable() && profileID.equals(another.profileID);
+        return "YggdrasilAccount[accountID=" + getAccountID() + ", profileID=" + profileID
+                + ", loginName=" + loginName + "]";
     }
 }

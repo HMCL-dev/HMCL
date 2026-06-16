@@ -23,6 +23,7 @@ import javafx.beans.InvalidationListener;
 import javafx.collections.ListChangeListener;
 import javafx.collections.ObservableList;
 import org.jackhuang.hmcl.Metadata;
+import org.jackhuang.hmcl.auth.AccountID;
 import org.jackhuang.hmcl.auth.authlibinjector.AuthlibInjectorServer;
 import org.jackhuang.hmcl.util.FileSaver;
 import org.jackhuang.hmcl.util.gson.JsonSchema;
@@ -574,7 +575,7 @@ public final class SettingsManager {
             AccountPrivateDataStore defaultPrivateData,
             List<AccountPrivateDataStore> privateDataStores) {
         List<AccountPrivateDataStore> changedPrivateDataStores = new ArrayList<>();
-        for (JsonObject identifier : extracted.identifiers()) {
+        for (AccountID identifier : extracted.identifiers()) {
             AccountPrivateDataStore targetPrivateData =
                     findAccountPrivateDataStore(identifier, defaultPrivateData, privateDataStores);
 
@@ -607,7 +608,7 @@ public final class SettingsManager {
     /// @param privateDataStores private data stores searched in order
     /// @return the private data store that should receive updated private data
     private static AccountPrivateDataStore findAccountPrivateDataStore(
-            JsonObject identifier,
+            AccountID identifier,
             AccountPrivateDataStore defaultPrivateData,
             List<AccountPrivateDataStore> privateDataStores) {
         for (AccountPrivateDataStore privateDataStore : privateDataStores) {

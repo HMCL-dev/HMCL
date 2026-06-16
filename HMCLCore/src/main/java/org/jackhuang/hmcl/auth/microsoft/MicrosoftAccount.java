@@ -17,13 +17,11 @@
  */
 package org.jackhuang.hmcl.auth.microsoft;
 
-import com.google.gson.JsonObject;
 import javafx.beans.binding.ObjectBinding;
 import org.jackhuang.hmcl.auth.*;
 import org.jackhuang.hmcl.auth.yggdrasil.Texture;
 import org.jackhuang.hmcl.auth.yggdrasil.TextureType;
 import org.jackhuang.hmcl.auth.yggdrasil.YggdrasilService;
-import org.jackhuang.hmcl.util.gson.UUIDTypeAdapter;
 import org.jackhuang.hmcl.util.javafx.BindingMapping;
 
 import java.nio.file.Path;
@@ -43,13 +41,15 @@ public final class MicrosoftAccount extends OAuthAccount {
     private boolean authenticated = false;
     private MicrosoftSession session;
 
-    protected MicrosoftAccount(MicrosoftService service, MicrosoftSession session) {
+    protected MicrosoftAccount(AccountID accountID, MicrosoftService service, MicrosoftSession session) {
+        super(accountID);
         this.service = requireNonNull(service);
         this.session = requireNonNull(session);
         this.profileID = requireNonNull(session.getProfile().getId());
     }
 
     protected MicrosoftAccount(MicrosoftService service, OAuth.GrantFlow flow) throws AuthenticationException {
+        super(AccountID.generate());
         this.service = requireNonNull(service);
 
         MicrosoftSession acquiredSession = service.authenticate(flow);
@@ -71,12 +71,6 @@ public final class MicrosoftAccount extends OAuthAccount {
     @Override
     public UUID getProfileID() {
         return session.getProfile().getId();
-    }
-
-    /// Writes the Minecraft profile ID used to identify this Microsoft account.
-    @Override
-    public void toIdentifier(JsonObject json) {
-        json.addProperty("profileID", UUIDTypeAdapter.fromUUID(getProfileID()));
     }
 
     @Override
@@ -143,7 +137,9 @@ public final class MicrosoftAccount extends OAuthAccount {
 
     @Override
     public Map<Object, Object> toStorage() {
-        return session.toStorage();
+        Map<Object, Object> storage = session.toStorage();
+        addAccountID(storage);
+        return storage;
     }
 
     public MicrosoftService getService() {
@@ -171,19 +167,7 @@ public final class MicrosoftAccount extends OAuthAccount {
 
     @Override
     public String toString() {
-        return "MicrosoftAccount[profileID=" + profileID + ", name=" + getProfileName() + "]";
-    }
-
-    @Override
-    public int hashCode() {
-        return profileID.hashCode();
-    }
-
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-        MicrosoftAccount that = (MicrosoftAccount) o;
-        return this.isPortable() == that.isPortable() && profileID.equals(that.profileID);
+        return "MicrosoftAccount[accountID=" + getAccountID() + ", profileID=" + profileID
+                + ", name=" + getProfileName() + "]";
     }
 }

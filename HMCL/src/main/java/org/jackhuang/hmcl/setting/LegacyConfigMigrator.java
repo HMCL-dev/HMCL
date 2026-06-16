@@ -22,6 +22,8 @@ import javafx.geometry.Rectangle2D;
 import javafx.stage.Screen;
 import org.glavo.uuid.UUIDs;
 import org.jackhuang.hmcl.Metadata;
+import org.jackhuang.hmcl.auth.Account;
+import org.jackhuang.hmcl.auth.AccountID;
 import org.jackhuang.hmcl.auth.offline.OfflineAccountFactory;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.gson.JsonSchema;
@@ -37,11 +39,13 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 import java.util.UUID;
 
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
@@ -65,6 +69,10 @@ public final class LegacyConfigMigrator {
     /// Namespace used to generate stable IDs for profile-level game settings migrated from legacy profiles.
     @VisibleForTesting
     static final UUID LEGACY_GAME_SETTINGS_ID_NAMESPACE = new UUID(0x4ba56ddd06b45aa7L, 0xb4da9e3c9707f873L);
+
+    /// Namespace used to generate stable account IDs from legacy account identity fields.
+    @VisibleForTesting
+    static final UUID LEGACY_ACCOUNT_ID_NAMESPACE = new UUID(0xcdc608bb426e5b93L, 0x948db7965705c9feL);
 
     /// The legacy built-in profile name for the current workspace game directory.
     private static final String LEGACY_DEFAULT_PROFILE = "Default";
@@ -99,6 +107,9 @@ public final class LegacyConfigMigrator {
 
     /// The legacy user account storage path shared by all workspaces.
     private static final Path LEGACY_USER_ACCOUNTS_LOCATION = Metadata.HMCL_USER_HOME.resolve("accounts.json");
+
+    /// Prefix used by legacy selected account strings for shared account storage entries.
+    private static final String LEGACY_GLOBAL_ACCOUNT_PREFIX = "$GLOBAL:";
 
     /// The receipt recording the legacy shared accounts migrated to the shared account metadata.
     private static final Path USER_ACCOUNTS_MIGRATION_RECEIPT_LOCATION =
@@ -321,7 +332,7 @@ public final class LegacyConfigMigrator {
             LOG.info("Migrating user accounts from " + LEGACY_USER_ACCOUNTS_LOCATION);
             return new UserAccountsMigrationResult(
                     LEGACY_USER_ACCOUNTS_LOCATION,
-                    migrateLegacyAccountStorages(accounts));
+                    migrateLegacyAccountStorages(accounts, true));
         } catch (Throwable e) {
             LOG.warning("Failed to load legacy user accounts", e);
             return null;
@@ -437,6 +448,7 @@ public final class LegacyConfigMigrator {
             result = new AccountStorages();
         }
         normalizeLegacyAccountStorages(result);
+        assignLegacyAccountIDs(result, false);
         return result;
     }
 
@@ -446,6 +458,16 @@ public final class LegacyConfigMigrator {
     /// @return current account storages with legacy field names normalized
     @VisibleForTesting
     static AccountStorages migrateLegacyAccountStorages(List<Map<Object, Object>> accounts) {
+        return migrateLegacyAccountStorages(accounts, false);
+    }
+
+    /// Creates current account storages from legacy serialized account entries.
+    ///
+    /// @param accounts legacy account entries
+    /// @param userStorage whether the legacy entries come from the shared user account file
+    /// @return current account storages with legacy field names normalized
+    @VisibleForTesting
+    static AccountStorages migrateLegacyAccountStorages(List<Map<Object, Object>> accounts, boolean userStorage) {
         List<Map<Object, Object>> migratedAccounts = new ArrayList<>(accounts.size());
         for (Map<Object, Object> account : accounts) {
             migratedAccounts.add(new LinkedHashMap<>(account));
@@ -453,7 +475,107 @@ public final class LegacyConfigMigrator {
 
         AccountStorages result = AccountStorages.fromAccounts(migratedAccounts);
         normalizeLegacyAccountStorages(result);
+        assignLegacyAccountIDs(result, userStorage);
         return result;
+    }
+
+    /// Assigns stable account IDs to migrated legacy account entries.
+    ///
+    /// Missing or duplicate account IDs are replaced with deterministic IDs derived from the legacy selected-account
+    /// reference string.
+    private static void assignLegacyAccountIDs(AccountStorages accountStorages, boolean userStorage) {
+        assignAccountIDs(accountStorages, new HashSet<>(), userStorage);
+    }
+
+    /// Ensures account IDs in one account storage do not collide with IDs already used by earlier storages.
+    ///
+    /// @param accountStorages the account storage to update
+    /// @param usedAccountIDs canonical account ID strings already reserved by earlier storages
+    /// @param userStorage whether the account storage is shared across workspaces
+    static void assignAccountIDs(AccountStorages accountStorages, Set<String> usedAccountIDs, boolean userStorage) {
+        List<Map<Object, Object>> updatedAccounts = new ArrayList<>(accountStorages.getAccounts().size());
+        boolean changed = false;
+        for (Map<Object, Object> account : accountStorages.getAccounts()) {
+            Map<Object, Object> updatedAccount = new LinkedHashMap<>(account);
+            @Nullable AccountID existing = parseAccountID(JsonUtils.getString(account, Account.PROPERTY_ACCOUNT_ID));
+            if (existing != null && usedAccountIDs.add(existing.toString())) {
+                updatedAccount.put(Account.PROPERTY_ACCOUNT_ID, existing.toString());
+                changed |= !Objects.equals(account.get(Account.PROPERTY_ACCOUNT_ID), existing.toString());
+                updatedAccounts.add(updatedAccount);
+                continue;
+            }
+
+            AccountID accountID = createLegacyAccountID(account, usedAccountIDs, userStorage);
+            updatedAccount.put(Account.PROPERTY_ACCOUNT_ID, accountID.toString());
+            changed |= !Objects.equals(account.get(Account.PROPERTY_ACCOUNT_ID), accountID.toString());
+            updatedAccounts.add(updatedAccount);
+        }
+
+        if (changed) {
+            accountStorages.getAccounts().setAll(updatedAccounts);
+        }
+    }
+
+    /// Parses an account ID, returning `null` for missing or malformed values.
+    private static @Nullable AccountID parseAccountID(@Nullable String value) {
+        if (value == null) {
+            return null;
+        }
+
+        try {
+            return AccountID.parse(value);
+        } catch (IllegalArgumentException e) {
+            return null;
+        }
+    }
+
+    /// Creates a stable account ID that does not collide with IDs already assigned in the same account list.
+    private static AccountID createLegacyAccountID(
+            Map<Object, Object> account,
+            Set<String> usedAccountIDs,
+            boolean userStorage) {
+        String seed = getLegacyAccountIDSeed(account, userStorage);
+        for (int index = 0; ; index++) {
+            String indexedSeed = index == 0 ? seed : seed + "#" + index;
+            AccountID candidate = new AccountID(UUIDs.generateV5(LEGACY_ACCOUNT_ID_NAMESPACE, indexedSeed));
+            if (usedAccountIDs.add(candidate.toString())) {
+                return candidate;
+            }
+        }
+    }
+
+    /// Returns a deterministic seed built from a legacy account's selected-account reference.
+    private static String getLegacyAccountIDSeed(Map<Object, Object> account, boolean userStorage) {
+        @Nullable String legacyIdentifier = getLegacyAccountIdentifier(account, false);
+        if (legacyIdentifier != null) {
+            return userStorage ? LEGACY_GLOBAL_ACCOUNT_PREFIX + legacyIdentifier : legacyIdentifier;
+        }
+
+        @Nullable String type = JsonUtils.getString(account, "type");
+        String prefix = userStorage ? LEGACY_GLOBAL_ACCOUNT_PREFIX : "";
+        if (type == null) {
+            return prefix + "unknown:" + JsonUtils.GSON.toJson(account);
+        }
+
+        return prefix + switch (type) {
+            case "offline" -> "offline:"
+                    + accountSeedPart(account, "profileName") + ":"
+                    + accountSeedPart(account, "profileID");
+            case "microsoft" -> "microsoft:" + accountSeedPart(account, "profileID");
+            case "yggdrasil" -> "yggdrasil:"
+                    + accountSeedPart(account, "loginName") + ":"
+                    + accountSeedPart(account, "profileID");
+            case "authlibInjector" -> "authlibInjector:"
+                    + accountSeedPart(account, "serverBaseURL") + ":"
+                    + accountSeedPart(account, "loginName") + ":"
+                    + accountSeedPart(account, "profileID");
+            default -> type + ":" + JsonUtils.GSON.toJson(account);
+        };
+    }
+
+    /// Returns one seed component for deterministic legacy account ID generation.
+    private static String accountSeedPart(Map<Object, Object> account, String name) {
+        return Objects.requireNonNullElse(JsonUtils.getString(account, name), "");
     }
 
     /// Renames legacy account fields to the current account metadata and private data field names.
@@ -519,21 +641,23 @@ public final class LegacyConfigMigrator {
         Objects.requireNonNull(localAccounts);
 
         JsonElement selectedAccount = json.get("selectedAccount");
-        @Nullable JsonObject selectedMarkerReference = null;
+        @Nullable AccountID selectedMarkerReference = null;
         boolean changed = false;
+        Set<String> usedAccountIDs = new HashSet<>();
+        assignAccountIDs(localAccounts, usedAccountIDs, false);
         for (Map<Object, Object> account : localAccounts.getAccounts()) {
             Object selectedMarker = account.remove("selected");
             if (selectedMarker != null) {
                 changed = true;
             }
             if (Boolean.TRUE.equals(selectedMarker) && selectedMarkerReference == null) {
-                selectedMarkerReference = createSelectedAccountReference(account, false);
+                selectedMarkerReference = createSelectedAccountReference(account);
             }
         }
 
         if (selectedAccount == null) {
             if (selectedMarkerReference != null) {
-                json.add("selectedAccount", selectedMarkerReference);
+                json.addProperty("selectedAccount", selectedMarkerReference.toString());
                 return true;
             }
             return changed;
@@ -545,16 +669,16 @@ public final class LegacyConfigMigrator {
             return true;
         }
 
-        @Nullable JsonObject reference = findLegacySelectedAccountReference(legacyIdentifier, localAccounts, false);
+        @Nullable AccountID reference = findLegacySelectedAccountReference(legacyIdentifier, localAccounts, false);
         if (reference == null) {
-            AccountStorages userAccounts = loadLegacyUserAccountStoragesForSelectedAccount();
+            AccountStorages userAccounts = loadLegacyUserAccountStoragesForSelectedAccount(usedAccountIDs);
             if (userAccounts != null) {
                 reference = findLegacySelectedAccountReference(legacyIdentifier, userAccounts, true);
             }
         }
 
         if (reference != null) {
-            json.add("selectedAccount", reference);
+            json.addProperty("selectedAccount", reference.toString());
         } else {
             json.remove("selectedAccount");
         }
@@ -562,7 +686,7 @@ public final class LegacyConfigMigrator {
     }
 
     /// Loads legacy user account storages only for resolving a selected account reference during migration.
-    private static @Nullable AccountStorages loadLegacyUserAccountStoragesForSelectedAccount() {
+    private static @Nullable AccountStorages loadLegacyUserAccountStoragesForSelectedAccount(Set<String> usedAccountIDs) {
         if (!Files.exists(LEGACY_USER_ACCOUNTS_LOCATION)) {
             return null;
         }
@@ -574,7 +698,9 @@ public final class LegacyConfigMigrator {
             if (accounts == null) {
                 return null;
             }
-            return migrateLegacyAccountStorages(accounts);
+            AccountStorages accountStorages = migrateLegacyAccountStorages(accounts, true);
+            assignAccountIDs(accountStorages, usedAccountIDs, true);
+            return accountStorages;
         } catch (Exception e) {
             LOG.warning("Failed to load legacy user accounts for selected account migration", e);
             return null;
@@ -582,15 +708,15 @@ public final class LegacyConfigMigrator {
     }
 
     /// Finds the structured selected account reference matching a legacy selected account string.
-    private static @Nullable JsonObject findLegacySelectedAccountReference(
+    private static @Nullable AccountID findLegacySelectedAccountReference(
             String legacyIdentifier,
             AccountStorages accounts,
             boolean userStorage) {
         String identifier = legacyIdentifier;
         boolean selectedUserStorage = false;
-        if (identifier.startsWith("$GLOBAL:")) {
+        if (identifier.startsWith(LEGACY_GLOBAL_ACCOUNT_PREFIX)) {
             selectedUserStorage = true;
-            identifier = identifier.substring("$GLOBAL:".length());
+            identifier = identifier.substring(LEGACY_GLOBAL_ACCOUNT_PREFIX.length());
         }
         if (selectedUserStorage != userStorage) {
             return null;
@@ -598,7 +724,7 @@ public final class LegacyConfigMigrator {
 
         for (Map<Object, Object> account : accounts.getAccounts()) {
             if (matchesLegacySelectedAccountIdentifier(identifier, account)) {
-                return createSelectedAccountReference(account, userStorage);
+                return createSelectedAccountReference(account);
             }
         }
         return null;
@@ -618,59 +744,9 @@ public final class LegacyConfigMigrator {
                 || Objects.equals(identifier, JsonUtils.getString(account, "loginName"));
     }
 
-    /// Creates the structured selected account reference for a serialized account entry.
-    private static @Nullable JsonObject createSelectedAccountReference(Map<Object, Object> account, boolean userStorage) {
-        @Nullable String type = JsonUtils.getString(account, "type");
-        if (type == null) {
-            return null;
-        }
-
-        JsonObject reference = new JsonObject();
-        reference.addProperty("storage", userStorage ? "user" : "local");
-        reference.addProperty("type", type);
-
-        switch (type) {
-            case "offline" -> {
-                @Nullable String profileName = JsonUtils.getString(account, "profileName");
-                @Nullable String profileID = JsonUtils.getString(account, "profileID");
-                if (profileName == null || profileID == null) {
-                    return null;
-                }
-                reference.addProperty("profileName", profileName);
-                reference.addProperty("profileID", profileID);
-            }
-            case "microsoft" -> {
-                @Nullable String profileID = JsonUtils.getString(account, "profileID");
-                if (profileID == null) {
-                    return null;
-                }
-                reference.addProperty("profileID", profileID);
-            }
-            case "yggdrasil" -> {
-                @Nullable String loginName = JsonUtils.getString(account, "loginName");
-                @Nullable String profileID = JsonUtils.getString(account, "profileID");
-                if (loginName == null || profileID == null) {
-                    return null;
-                }
-                reference.addProperty("loginName", loginName);
-                reference.addProperty("profileID", profileID);
-            }
-            case "authlibInjector" -> {
-                @Nullable String serverBaseURL = JsonUtils.getString(account, "serverBaseURL");
-                @Nullable String loginName = JsonUtils.getString(account, "loginName");
-                @Nullable String profileID = JsonUtils.getString(account, "profileID");
-                if (serverBaseURL == null || loginName == null || profileID == null) {
-                    return null;
-                }
-                reference.addProperty("serverBaseURL", serverBaseURL);
-                reference.addProperty("loginName", loginName);
-                reference.addProperty("profileID", profileID);
-            }
-            default -> {
-                return null;
-            }
-        }
-        return reference;
+    /// Creates the selected account reference for a serialized account entry.
+    private static @Nullable AccountID createSelectedAccountReference(Map<Object, Object> account) {
+        return Account.identifier(account);
     }
 
     /// Returns the legacy string identifier for a serialized account entry.

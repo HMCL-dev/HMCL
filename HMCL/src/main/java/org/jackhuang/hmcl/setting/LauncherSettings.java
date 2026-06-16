@@ -31,6 +31,7 @@ import org.hildan.fxgson.creators.ObservableMapCreator;
 import org.hildan.fxgson.creators.ObservableSetCreator;
 import org.hildan.fxgson.factories.JavaFxPropertyTypeAdapterFactory;
 import org.jackhuang.hmcl.Metadata;
+import org.jackhuang.hmcl.auth.AccountID;
 import org.jackhuang.hmcl.java.JavaRuntime;
 import org.jackhuang.hmcl.theme.ThemeColor;
 import org.jackhuang.hmcl.ui.FXUtils;
@@ -529,10 +530,10 @@ public final class LauncherSettings extends ObservableSetting implements JsonSch
 
     /// The selected account reference.
     @SerializedName("selectedAccount")
-    private final ObjectProperty<@Nullable JsonObject> selectedAccount = new SimpleObjectProperty<>();
+    private final ObjectProperty<@Nullable AccountID> selectedAccount = new SimpleObjectProperty<>();
 
     /// Returns the selected account reference property.
-    public ObjectProperty<@Nullable JsonObject> selectedAccountProperty() {
+    public ObjectProperty<@Nullable AccountID> selectedAccountProperty() {
         return selectedAccount;
     }
 

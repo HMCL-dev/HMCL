@@ -74,16 +74,7 @@
             ],
             "properties": {
               "identifier": {
-                "type": "object",
-                "additionalProperties": true,
-                "required": [
-                  "type"
-                ],
-                "properties": {
-                  "type": {
-                    "type": "string"
-                  }
-                }
+                "$ref": "#/$defs/uuid"
               },
               "privateData": {
                 "type": "object",
@@ -93,6 +84,10 @@
           }
         }
       }
+    },
+    "uuid": {
+      "type": "string",
+      "pattern": "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$"
     }
   }
 }

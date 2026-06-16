@@ -31,6 +31,7 @@ import javafx.beans.property.SimpleObjectProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableMap;
 import org.jackhuang.hmcl.auth.Account;
+import org.jackhuang.hmcl.auth.AccountID;
 import org.jackhuang.hmcl.util.gson.JsonSchema;
 import org.jackhuang.hmcl.util.gson.JsonSerializable;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
@@ -83,7 +84,7 @@ final class AccountPrivateData extends ObservableSetting implements JsonSchemaSe
     private final ObjectProperty<JsonSchema> schema = new SimpleObjectProperty<>(CURRENT_SCHEMA);
 
     /// Private account data keyed by account identifier.
-    private final ObservableMap<JsonObject, Map<Object, Object>> privateData =
+    private final ObservableMap<AccountID, Map<Object, Object>> privateData =
             FXCollections.observableMap(new LinkedHashMap<>());
 
     /// Whether this account private data store may be saved back to its JSON file.
@@ -110,7 +111,7 @@ final class AccountPrivateData extends ObservableSetting implements JsonSchemaSe
     }
 
     /// Returns private account data keyed by account identifier.
-    ObservableMap<JsonObject, Map<Object, Object>> getPrivateData() {
+    ObservableMap<AccountID, Map<Object, Object>> getPrivateData() {
         return privateData;
     }
 
@@ -152,7 +153,7 @@ final class AccountPrivateData extends ObservableSetting implements JsonSchemaSe
     /// @param privateDataStores private data stores searched for matching private fields
     static void mergeInto(AccountStorages accountStorages, List<AccountPrivateData> privateDataStores) {
         for (Map<Object, Object> account : accountStorages.getAccounts()) {
-            @Nullable JsonObject identifier = Account.identifier(account);
+            @Nullable AccountID identifier = Account.identifier(account);
             if (identifier == null) {
                 continue;
             }
@@ -170,7 +171,7 @@ final class AccountPrivateData extends ObservableSetting implements JsonSchemaSe
     /// @param privateDataStores private data stores searched in order
     /// @return the first matching private data map, or `null` if no store contains one
     private static @Nullable Map<Object, Object> findPrivateData(
-            JsonObject identifier,
+            AccountID identifier,
             List<AccountPrivateData> privateDataStores) {
         for (AccountPrivateData privateDataStore : privateDataStores) {
             @Nullable Map<Object, Object> accountPrivateData = privateDataStore.privateData.get(identifier);
@@ -198,13 +199,13 @@ final class AccountPrivateData extends ObservableSetting implements JsonSchemaSe
     /// @return extracted metadata, account identifiers, and private data
     static ExtractedPrivateData extractFromAccountStorages(List<Map<Object, Object>> accountStorages) {
         List<Map<Object, Object>> metadataAccounts = new ArrayList<>(accountStorages.size());
-        List<JsonObject> identifiers = new ArrayList<>(accountStorages.size());
-        Map<JsonObject, Map<Object, Object>> extractedPrivateData = new LinkedHashMap<>();
+        List<AccountID> identifiers = new ArrayList<>(accountStorages.size());
+        Map<AccountID, Map<Object, Object>> extractedPrivateData = new LinkedHashMap<>();
 
         for (Map<Object, Object> account : accountStorages) {
             Map<Object, Object> metadata = new LinkedHashMap<>(account);
             @Nullable String type = JsonUtils.getString(metadata, "type");
-            @Nullable JsonObject identifier = Account.identifier(metadata);
+            @Nullable AccountID identifier = Account.identifier(metadata);
 
             Map<Object, Object> accountPrivateData = new LinkedHashMap<>();
             if (identifier != null) {
@@ -238,7 +239,7 @@ final class AccountPrivateData extends ObservableSetting implements JsonSchemaSe
     ///
     /// @param identifier the stable account identifier
     /// @return whether this store contains private data for the identifier
-    boolean containsPrivateData(JsonObject identifier) {
+    boolean containsPrivateData(AccountID identifier) {
         return privateData.containsKey(identifier);
     }
 
@@ -246,7 +247,7 @@ final class AccountPrivateData extends ObservableSetting implements JsonSchemaSe
     ///
     /// @param identifier the stable account identifier
     /// @return whether private data was removed
-    boolean removePrivateData(JsonObject identifier) {
+    boolean removePrivateData(AccountID identifier) {
         return privateData.remove(identifier) != null;
     }
 
@@ -254,8 +255,8 @@ final class AccountPrivateData extends ObservableSetting implements JsonSchemaSe
     ///
     /// @param identifier the stable account identifier
     /// @param accountPrivateData the private account data
-    void putPrivateData(JsonObject identifier, Map<Object, Object> accountPrivateData) {
-        privateData.put(identifier.deepCopy(), new LinkedHashMap<>(accountPrivateData));
+    void putPrivateData(AccountID identifier, Map<Object, Object> accountPrivateData) {
+        privateData.put(identifier, new LinkedHashMap<>(accountPrivateData));
     }
 
     /// Replaces this private data store with another store.
@@ -263,8 +264,8 @@ final class AccountPrivateData extends ObservableSetting implements JsonSchemaSe
     /// @param other the private data store to copy from
     void replaceWith(AccountPrivateData other) {
         privateData.clear();
-        for (Map.Entry<JsonObject, Map<Object, Object>> entry : other.privateData.entrySet()) {
-            privateData.put(entry.getKey().deepCopy(), new LinkedHashMap<>(entry.getValue()));
+        for (Map.Entry<AccountID, Map<Object, Object>> entry : other.privateData.entrySet()) {
+            privateData.put(entry.getKey(), new LinkedHashMap<>(entry.getValue()));
         }
     }
 
@@ -275,8 +276,8 @@ final class AccountPrivateData extends ObservableSetting implements JsonSchemaSe
     /// @param privateData extracted private data by account identifier
     record ExtractedPrivateData(
             List<Map<Object, Object>> metadataAccounts,
-            List<JsonObject> identifiers,
-            Map<JsonObject, Map<Object, Object>> privateData) {
+            List<AccountID> identifiers,
+            Map<AccountID, Map<Object, Object>> privateData) {
     }
 
     /// JSON adapter for [AccountPrivateData].
@@ -292,14 +293,34 @@ final class AccountPrivateData extends ObservableSetting implements JsonSchemaSe
                 JsonSerializationContext context) {
             JsonObject payload = new JsonObject();
             JsonArray entries = new JsonArray();
-            for (Map.Entry<JsonObject, Map<Object, Object>> entry : accountPrivateData.privateData.entrySet()) {
+            for (Map.Entry<AccountID, Map<Object, Object>> entry : accountPrivateData.privateData.entrySet()) {
                 JsonObject item = new JsonObject();
-                item.add("identifier", entry.getKey().deepCopy());
+                item.add("identifier", context.serialize(entry.getKey(), AccountID.class));
                 item.add("privateData", context.serialize(entry.getValue()));
                 entries.add(item);
             }
             payload.add("entries", entries);
             return payload;
+        }
+
+        /// Reads an account identifier from a private data entry.
+        private static @Nullable AccountID readIdentifier(
+                @Nullable JsonElement identifierElement,
+                JsonDeserializationContext context) {
+            if (identifierElement == null || identifierElement.isJsonNull()) {
+                return null;
+            }
+
+            try {
+                if (identifierElement instanceof JsonObject identifierObject) {
+                    @Nullable String accountID = JsonUtils.getString(identifierObject, Account.PROPERTY_ACCOUNT_ID);
+                    return accountID != null ? AccountID.parse(accountID) : null;
+                }
+
+                return context.deserialize(identifierElement, AccountID.class);
+            } catch (JsonParseException | IllegalArgumentException e) {
+                return null;
+            }
         }
 
         /// Reads the protected payload into the given private data store.
@@ -325,8 +346,8 @@ final class AccountPrivateData extends ObservableSetting implements JsonSchemaSe
                     continue;
                 }
 
-                JsonElement identifierElement = item.get("identifier");
-                if (!(identifierElement instanceof JsonObject identifier)) {
+                @Nullable AccountID identifier = readIdentifier(item.get("identifier"), context);
+                if (identifier == null) {
                     continue;
                 }
 
@@ -338,7 +359,7 @@ final class AccountPrivateData extends ObservableSetting implements JsonSchemaSe
                 @SuppressWarnings("unchecked")
                 @Nullable Map<Object, Object> entryPrivateData = context.deserialize(privateDataElement, Map.class);
                 if (entryPrivateData != null) {
-                    accountPrivateData.privateData.put(identifier.deepCopy(), entryPrivateData);
+                    accountPrivateData.privateData.put(identifier, entryPrivateData);
                 }
             }
         }

@@ -22,10 +22,9 @@ import com.google.common.jimfs.Jimfs;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import org.glavo.uuid.UUIDs;
-import org.jackhuang.hmcl.auth.offline.OfflineAccountFactory;
+import org.jackhuang.hmcl.auth.AccountID;
 import org.jackhuang.hmcl.util.gson.JsonSchema;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
-import org.jackhuang.hmcl.util.gson.UUIDTypeAdapter;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.junit.jupiter.api.Test;
 
@@ -41,13 +40,18 @@ import static org.junit.jupiter.api.Assertions.*;
 /// Tests for legacy config migration into current launcher settings.
 @NotNullByDefault
 public final class LauncherSettingsMigrationTest {
-    /// Returns the serialized offline profile ID generated for a legacy offline profile name.
-    private static String offlineProfileID(String profileName) {
-        return UUIDTypeAdapter.fromUUID(OfflineAccountFactory.getUUIDFromUserName(profileName));
+    /// Returns the migrated account ID generated for a legacy offline profile name.
+    private static String offlineAccountID(String profileName) {
+        return UUIDs.generateV5(
+                LegacyConfigMigrator.LEGACY_ACCOUNT_ID_NAMESPACE,
+                profileName + ":" + profileName).toString();
     }
 
     @Test
     public void testNameSpaces() {
+        assertEquals(LegacyConfigMigrator.LEGACY_ACCOUNT_ID_NAMESPACE,
+                UUIDs.generateV5(UUIDs.NAMESPACE_URL, "hmcl:legacy-account"));
+
         assertEquals(LegacyConfigMigrator.LEGACY_GAME_SETTINGS_ID_NAMESPACE,
                 UUIDs.generateV5(UUIDs.NAMESPACE_URL, "hmcl:legacy-game-settings"));
 
@@ -273,11 +277,8 @@ public final class LauncherSettingsMigrationTest {
         assertTrue(LegacyConfigMigrator.migrateLegacySelectedAccount(settings, accountStorages));
         LauncherSettings launcherSettings = Objects.requireNonNull(LauncherSettings.fromJson(settings));
 
-        JsonObject selectedAccount = Objects.requireNonNull(launcherSettings.selectedAccountProperty().get());
-        assertEquals("local", selectedAccount.get("storage").getAsString());
-        assertEquals("offline", selectedAccount.get("type").getAsString());
-        assertEquals("Alex", selectedAccount.get("profileName").getAsString());
-        assertEquals(offlineProfileID("Alex"), selectedAccount.get("profileID").getAsString());
+        assertEquals(offlineAccountID("Alex"),
+                Objects.requireNonNull(launcherSettings.selectedAccountProperty().get()).toString());
     }
 
     /// Tests migrating the legacy selected account marker into a structured account reference.
@@ -302,11 +303,7 @@ public final class LauncherSettingsMigrationTest {
         AccountStorages accountStorages = Objects.requireNonNull(LegacyConfigMigrator.extractAccountStorages(settings));
         assertTrue(LegacyConfigMigrator.migrateLegacySelectedAccount(settings, accountStorages));
 
-        JsonObject selectedAccount = settings.getAsJsonObject("selectedAccount");
-        assertEquals("local", selectedAccount.get("storage").getAsString());
-        assertEquals("offline", selectedAccount.get("type").getAsString());
-        assertEquals("Alex", selectedAccount.get("profileName").getAsString());
-        assertEquals(offlineProfileID("Alex"), selectedAccount.get("profileID").getAsString());
+        assertEquals(offlineAccountID("Alex"), settings.get("selectedAccount").getAsString());
         assertFalse(accountStorages.getAccounts().get(1).containsKey("selected"));
     }
 
@@ -328,11 +325,7 @@ public final class LauncherSettingsMigrationTest {
         AccountStorages accountStorages = Objects.requireNonNull(LegacyConfigMigrator.extractAccountStorages(settings));
         assertTrue(LegacyConfigMigrator.migrateLegacySelectedAccount(settings, accountStorages));
 
-        JsonObject selectedAccount = settings.getAsJsonObject("selectedAccount");
-        assertEquals("local", selectedAccount.get("storage").getAsString());
-        assertEquals("offline", selectedAccount.get("type").getAsString());
-        assertEquals("Alex", selectedAccount.get("profileName").getAsString());
-        assertEquals(offlineProfileID("Alex"), selectedAccount.get("profileID").getAsString());
+        assertEquals(offlineAccountID("Alex"), settings.get("selectedAccount").getAsString());
     }
 
     /// Tests migrating legacy selected Microsoft account identifiers with hyphenated UUIDs.
@@ -354,29 +347,21 @@ public final class LauncherSettingsMigrationTest {
         AccountStorages accountStorages = Objects.requireNonNull(LegacyConfigMigrator.extractAccountStorages(settings));
         assertTrue(LegacyConfigMigrator.migrateLegacySelectedAccount(settings, accountStorages));
 
-        JsonObject selectedAccount = settings.getAsJsonObject("selectedAccount");
-        assertEquals("local", selectedAccount.get("storage").getAsString());
-        assertEquals("microsoft", selectedAccount.get("type").getAsString());
-        assertEquals("123456781234123412341234567890ab", selectedAccount.get("profileID").getAsString());
-        assertFalse(selectedAccount.has("userid"));
+        assertEquals(accountStorages.getAccounts().get(0).get("accountID"),
+                settings.get("selectedAccount").getAsString());
     }
 
-    /// Tests serializing selected account references as JSON objects.
+    /// Tests serializing selected account references as account ID strings.
     @Test
-    public void serializesSelectedAccountReferenceAsObject() {
+    public void serializesSelectedAccountReferenceAsAccountID() {
         LauncherSettings launcherSettings = new LauncherSettings();
-        JsonObject selectedAccount = new JsonObject();
-        selectedAccount.addProperty("storage", "user");
-        selectedAccount.addProperty("type", "microsoft");
-        selectedAccount.addProperty("profileID", "123456781234123412341234567890ab");
-        launcherSettings.selectedAccountProperty().set(selectedAccount);
+        launcherSettings.selectedAccountProperty().set(
+                AccountID.parse("12345678-1234-1234-1234-1234567890ab"));
 
         JsonObject serialized = JsonParser.parseString(launcherSettings.toJson()).getAsJsonObject();
 
-        JsonObject serializedSelectedAccount = serialized.getAsJsonObject("selectedAccount");
-        assertEquals("user", serializedSelectedAccount.get("storage").getAsString());
-        assertEquals("microsoft", serializedSelectedAccount.get("type").getAsString());
-        assertEquals("123456781234123412341234567890ab", serializedSelectedAccount.get("profileID").getAsString());
+        assertEquals("12345678-1234-1234-1234-1234567890ab",
+                serialized.get("selectedAccount").getAsString());
     }
 
     /// Tests that launcher settings serialization preserves a patch-version schema and unknown fields.

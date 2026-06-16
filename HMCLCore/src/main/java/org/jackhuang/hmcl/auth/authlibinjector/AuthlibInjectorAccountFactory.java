@@ -17,6 +17,8 @@
  */
 package org.jackhuang.hmcl.auth.authlibinjector;
 
+import org.jackhuang.hmcl.auth.Account;
+import org.jackhuang.hmcl.auth.AccountID;
 import org.jackhuang.hmcl.auth.AccountFactory;
 import org.jackhuang.hmcl.auth.AuthenticationException;
 import org.jackhuang.hmcl.auth.CharacterSelector;
@@ -71,6 +73,7 @@ public class AuthlibInjectorAccountFactory extends AccountFactory<AuthlibInjecto
     }
 
     static AuthlibInjectorAccount fromStorage(Map<Object, Object> storage, AuthlibInjectorArtifactProvider downloader, AuthlibInjectorServer server) {
+        AccountID accountID = Account.readAccountID(storage);
         YggdrasilSession session = YggdrasilSession.fromStorage(storage);
 
         String loginName = tryCast(storage.get("loginName"), String.class)
@@ -86,6 +89,6 @@ public class AuthlibInjectorAccountFactory extends AccountFactory<AuthlibInjecto
                     profileRepository.invalidate(selected.getId());
                 });
 
-        return new AuthlibInjectorAccount(server, downloader, loginName, session);
+        return new AuthlibInjectorAccount(accountID, server, downloader, loginName, session);
     }
 }

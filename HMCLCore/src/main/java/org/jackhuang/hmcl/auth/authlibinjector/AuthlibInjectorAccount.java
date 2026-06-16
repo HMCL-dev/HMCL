@@ -17,7 +17,6 @@
  */
 package org.jackhuang.hmcl.auth.authlibinjector;
 
-import com.google.gson.JsonObject;
 import org.jackhuang.hmcl.auth.*;
 import org.jackhuang.hmcl.auth.yggdrasil.CompleteGameProfile;
 import org.jackhuang.hmcl.auth.yggdrasil.TextureType;
@@ -47,8 +46,13 @@ public class AuthlibInjectorAccount extends YggdrasilAccount {
         this.downloader = downloader;
     }
 
-    public AuthlibInjectorAccount(AuthlibInjectorServer server, AuthlibInjectorArtifactProvider downloader, String username, YggdrasilSession session) {
-        super(server.getYggdrasilService(), username, session);
+    public AuthlibInjectorAccount(
+            AccountID accountID,
+            AuthlibInjectorServer server,
+            AuthlibInjectorArtifactProvider downloader,
+            String username,
+            YggdrasilSession session) {
+        super(accountID, server.getYggdrasilService(), username, session);
         this.server = server;
         this.downloader = downloader;
     }
@@ -154,30 +158,10 @@ public class AuthlibInjectorAccount extends YggdrasilAccount {
         return server;
     }
 
-    /// Writes the authlib-injector server URL and inherited Yggdrasil account identifier fields.
-    @Override
-    public void toIdentifier(JsonObject json) {
-        json.addProperty("serverBaseURL", server.getUrl());
-        super.toIdentifier(json);
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hash(super.hashCode(), server.hashCode());
-    }
-
-    @Override
-    public boolean equals(Object obj) {
-        if (obj == null || obj.getClass() != AuthlibInjectorAccount.class)
-            return false;
-        AuthlibInjectorAccount another = (AuthlibInjectorAccount) obj;
-        return isPortable() == another.isPortable()
-                && profileID.equals(another.profileID) && server.equals(another.server);
-    }
-
     @Override
     public String toString() {
         return new ToStringBuilder(this)
+                .append("accountID", getAccountID())
                 .append("profileID", profileID)
                 .append("loginName", getLoginName())
                 .append("server", getServer().getUrl())

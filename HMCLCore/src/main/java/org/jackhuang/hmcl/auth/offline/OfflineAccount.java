@@ -17,9 +17,9 @@
  */
 package org.jackhuang.hmcl.auth.offline;
 
-import com.google.gson.JsonObject;
 import javafx.beans.binding.ObjectBinding;
 import org.jackhuang.hmcl.auth.Account;
+import org.jackhuang.hmcl.auth.AccountID;
 import org.jackhuang.hmcl.auth.AuthInfo;
 import org.jackhuang.hmcl.auth.AuthenticationException;
 import org.jackhuang.hmcl.auth.authlibinjector.AuthlibInjectorArtifactInfo;
@@ -56,7 +56,13 @@ public class OfflineAccount extends Account {
     private final UUID profileID;
     private Skin skin;
 
-    protected OfflineAccount(AuthlibInjectorArtifactProvider downloader, String profileName, UUID profileID, Skin skin) {
+    protected OfflineAccount(
+            AccountID accountID,
+            AuthlibInjectorArtifactProvider downloader,
+            String profileName,
+            UUID profileID,
+            Skin skin) {
+        super(accountID);
         this.downloader = requireNonNull(downloader);
         this.profileName = requireNonNull(profileName);
         this.profileID = requireNonNull(profileID);
@@ -79,13 +85,6 @@ public class OfflineAccount extends Account {
     @Override
     public String getProfileName() {
         return profileName;
-    }
-
-    /// Writes the offline profile identity used to identify this account.
-    @Override
-    public void toIdentifier(JsonObject json) {
-        json.addProperty("profileName", profileName);
-        json.addProperty("profileID", UUIDTypeAdapter.fromUUID(profileID));
     }
 
     public Skin getSkin() {
@@ -191,11 +190,13 @@ public class OfflineAccount extends Account {
 
     @Override
     public Map<Object, Object> toStorage() {
-        return mapOf(
+        Map<Object, Object> storage = mapOf(
                 pair("profileID", UUIDTypeAdapter.fromUUID(profileID)),
                 pair("profileName", profileName),
                 pair("skin", skin == null ? null : skin.toStorage())
         );
+        addAccountID(storage);
+        return storage;
     }
 
     @Override
@@ -206,21 +207,9 @@ public class OfflineAccount extends Account {
     @Override
     public String toString() {
         return new ToStringBuilder(this)
+                .append("accountID", getAccountID())
                 .append("profileName", profileName)
                 .append("profileID", profileID)
                 .toString();
-    }
-
-    @Override
-    public int hashCode() {
-        return profileName.hashCode();
-    }
-
-    @Override
-    public boolean equals(Object obj) {
-        if (!(obj instanceof OfflineAccount))
-            return false;
-        OfflineAccount another = (OfflineAccount) obj;
-        return isPortable() == another.isPortable() && profileName.equals(another.profileName);
     }
 }
