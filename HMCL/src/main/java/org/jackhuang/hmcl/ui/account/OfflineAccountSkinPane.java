@@ -146,7 +146,7 @@ public class OfflineAccountSkinPane extends StackPane {
                             LOG.warning("Failed to load skin", exception);
                             Controllers.showToast(i18n("message.failed"));
                         } else {
-                            UUID uuid = this.account.getUUID();
+                            UUID uuid = this.account.getProfileID();
                             if (result == null || result.getSkin() == null && result.getCape() == null) {
                                 canvas.updateSkin(
                                         TexturesLoader.getDefaultSkin(uuid).getImage(),

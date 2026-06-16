@@ -59,7 +59,7 @@ public class AccountAdvancedListItem extends AdvancedListItem {
                 TexturesLoader.drawAvatar(canvas, TexturesLoader.getDefaultSkinImage());
 
             } else {
-                titleProperty().bind(BindingMapping.of(account, Account::getCharacter));
+                titleProperty().bind(BindingMapping.of(account, Account::getProfileName));
                 subtitleProperty().bind(accountSubtitle(account));
                 uninstallTooltip();
                 TexturesLoader.bindAvatar(canvas, account);

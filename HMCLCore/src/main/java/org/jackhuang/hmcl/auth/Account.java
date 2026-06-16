@@ -50,19 +50,19 @@ import java.util.UUID;
 public abstract class Account implements Observable {
 
     /**
-     * @return the name of the account who owns the character
+     * @return the account login name when the account type exposes one
      */
     public abstract String getUsername();
 
     /**
-     * @return the character name
+     * @return the profile name
      */
-    public abstract String getCharacter();
+    public abstract String getProfileName();
 
     /**
-     * @return the character UUID
+     * @return the profile ID
      */
-    public abstract UUID getUUID();
+    public abstract UUID getProfileID();
 
     /**
      * Login with stored credentials.
@@ -235,8 +235,8 @@ public abstract class Account implements Observable {
     public String toString() {
         return new ToStringBuilder(this)
                 .append("username", getUsername())
-                .append("character", getCharacter())
-                .append("uuid", getUUID())
+                .append("profileName", getProfileName())
+                .append("profileID", getProfileID())
                 .append("portable", isPortable())
                 .toString();
     }

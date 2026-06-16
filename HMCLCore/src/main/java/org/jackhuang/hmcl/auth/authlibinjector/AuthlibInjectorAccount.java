@@ -172,13 +172,13 @@ public class AuthlibInjectorAccount extends YggdrasilAccount {
             return false;
         AuthlibInjectorAccount another = (AuthlibInjectorAccount) obj;
         return isPortable() == another.isPortable()
-                && characterUUID.equals(another.characterUUID) && server.equals(another.server);
+                && profileID.equals(another.profileID) && server.equals(another.server);
     }
 
     @Override
     public String toString() {
         return new ToStringBuilder(this)
-                .append("uuid", characterUUID)
+                .append("profileID", profileID)
                 .append("username", getUsername())
                 .append("server", getServer().getUrl())
                 .toString();

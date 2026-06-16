@@ -195,7 +195,7 @@ public final class TexturesLoader {
     }
 
     public static ObservableValue<LoadedTexture> skinBinding(Account account) {
-        LoadedTexture uuidFallback = getDefaultSkin(account.getUUID());
+        LoadedTexture uuidFallback = getDefaultSkin(account.getProfileID());
         if (account instanceof OfflineAccount) {
             OfflineAccount offlineAccount = (OfflineAccount) account;
 
@@ -318,7 +318,7 @@ public final class TexturesLoader {
             fxAvatarBinding(canvas, skinBinding(account));
         else {
             unbindAvatar(canvas);
-            drawAvatar(canvas, getDefaultSkin(account.getUUID()).image);
+            drawAvatar(canvas, getDefaultSkin(account.getProfileID()).image);
         }
     }
 

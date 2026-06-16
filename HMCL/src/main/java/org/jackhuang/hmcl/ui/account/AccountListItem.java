@@ -80,13 +80,13 @@ public class AccountListItem extends RadioButton {
             subtitle.set(loginTypeName + portableSuffix);
         }
 
-        StringBinding characterName = Bindings.createStringBinding(account::getCharacter, account);
+        StringBinding profileName = Bindings.createStringBinding(account::getProfileName, account);
         if (account instanceof OfflineAccount) {
-            title.bind(characterName);
+            title.bind(profileName);
         } else {
             title.bind(
-                    account.getUsername().isEmpty() ? characterName :
-                            Bindings.concat(account.getUsername(), " - ", characterName));
+                    account.getUsername().isEmpty() ? profileName :
+                            Bindings.concat(account.getUsername(), " - ", profileName));
         }
     }
 
@@ -118,7 +118,7 @@ public class AccountListItem extends RadioButton {
 
     public ObservableBooleanValue canUploadSkin() {
         if (account instanceof AuthlibInjectorAccount aiAccount) {
-            ObjectBinding<Optional<CompleteGameProfile>> profile = aiAccount.getYggdrasilService().getProfileRepository().binding(aiAccount.getUUID());
+            ObjectBinding<Optional<CompleteGameProfile>> profile = aiAccount.getYggdrasilService().getProfileRepository().binding(aiAccount.getProfileID());
             return createBooleanBinding(() -> {
                 Set<TextureType> uploadableTextures = profile.get()
                         .map(AuthlibInjectorAccount::getUploadableTextures)

@@ -38,7 +38,7 @@ import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 public final class MicrosoftAccount extends OAuthAccount {
 
     protected final MicrosoftService service;
-    protected UUID characterUUID;
+    protected UUID profileID;
 
     private boolean authenticated = false;
     private MicrosoftSession session;
@@ -46,7 +46,7 @@ public final class MicrosoftAccount extends OAuthAccount {
     protected MicrosoftAccount(MicrosoftService service, MicrosoftSession session) {
         this.service = requireNonNull(service);
         this.session = requireNonNull(session);
-        this.characterUUID = requireNonNull(session.getProfile().getId());
+        this.profileID = requireNonNull(session.getProfile().getId());
     }
 
     protected MicrosoftAccount(MicrosoftService service, OAuth.GrantFlow flow) throws AuthenticationException {
@@ -59,7 +59,7 @@ public final class MicrosoftAccount extends OAuthAccount {
             session = acquiredSession;
         }
 
-        characterUUID = session.getProfile().getId();
+        profileID = session.getProfile().getId();
         authenticated = true;
     }
 
@@ -70,19 +70,19 @@ public final class MicrosoftAccount extends OAuthAccount {
     }
 
     @Override
-    public String getCharacter() {
+    public String getProfileName() {
         return session.getProfile().getName();
     }
 
     @Override
-    public UUID getUUID() {
+    public UUID getProfileID() {
         return session.getProfile().getId();
     }
 
-    /// Writes the Minecraft profile UUID used to identify this Microsoft account.
+    /// Writes the Minecraft profile ID used to identify this Microsoft account.
     @Override
     public void toIdentifier(JsonObject json) {
-        json.addProperty("uuid", UUIDTypeAdapter.fromUUID(getUUID()));
+        json.addProperty("uuid", UUIDTypeAdapter.fromUUID(getProfileID()));
     }
 
     @Override
@@ -109,8 +109,8 @@ public final class MicrosoftAccount extends OAuthAccount {
     @Override
     public AuthInfo logInWhenCredentialsExpired() throws AuthenticationException {
         MicrosoftSession acquiredSession = service.authenticate(OAuth.GrantFlow.DEVICE);
-        if (!Objects.equals(characterUUID, acquiredSession.getProfile().getId())) {
-            throw new WrongAccountException(characterUUID, acquiredSession.getProfile().getId());
+        if (!Objects.equals(profileID, acquiredSession.getProfile().getId())) {
+            throw new WrongAccountException(profileID, acquiredSession.getProfile().getId());
         }
 
         if (acquiredSession.getProfile() == null) {
@@ -150,7 +150,7 @@ public final class MicrosoftAccount extends OAuthAccount {
 
     @Override
     public ObjectBinding<Optional<Map<TextureType, Texture>>> getTextures() {
-        return BindingMapping.of(service.getProfileRepository().binding(getUUID()))
+        return BindingMapping.of(service.getProfileRepository().binding(getProfileID()))
                 .map(profile -> profile.flatMap(it -> {
                     try {
                         return YggdrasilService.getTextures(it);
@@ -164,17 +164,17 @@ public final class MicrosoftAccount extends OAuthAccount {
     @Override
     public void clearCache() {
         authenticated = false;
-        service.getProfileRepository().invalidate(characterUUID);
+        service.getProfileRepository().invalidate(profileID);
     }
 
     @Override
     public String toString() {
-        return "MicrosoftAccount[uuid=" + characterUUID + ", name=" + getCharacter() + "]";
+        return "MicrosoftAccount[profileID=" + profileID + ", name=" + getProfileName() + "]";
     }
 
     @Override
     public int hashCode() {
-        return characterUUID.hashCode();
+        return profileID.hashCode();
     }
 
     @Override
@@ -182,6 +182,6 @@ public final class MicrosoftAccount extends OAuthAccount {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         MicrosoftAccount that = (MicrosoftAccount) o;
-        return this.isPortable() == that.isPortable() && characterUUID.equals(that.characterUUID);
+        return this.isPortable() == that.isPortable() && profileID.equals(that.profileID);
     }
 }

@@ -72,7 +72,7 @@ public class OfflineAccount extends Account {
     }
 
     @Override
-    public UUID getUUID() {
+    public UUID getProfileID() {
         return uuid;
     }
 
@@ -82,7 +82,7 @@ public class OfflineAccount extends Account {
     }
 
     @Override
-    public String getCharacter() {
+    public String getProfileName() {
         return username;
     }
 
@@ -211,7 +211,7 @@ public class OfflineAccount extends Account {
     public String toString() {
         return new ToStringBuilder(this)
                 .append("username", username)
-                .append("uuid", uuid)
+                .append("profileID", uuid)
                 .toString();
     }
 
