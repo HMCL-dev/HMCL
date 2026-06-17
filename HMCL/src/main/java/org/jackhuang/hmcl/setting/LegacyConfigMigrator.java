@@ -473,15 +473,13 @@ public final class LegacyConfigMigrator {
             boolean keepSelectedMarker) {
         List<JsonObject> metadataAccounts = new ArrayList<>(accounts.size());
         AccountPrivateData privateData = new AccountPrivateData();
-        Set<String> usedAccountIDs = new HashSet<>();
-
         for (JsonObject account : accounts) {
             MigratedLegacyAccount migrated = migrateLegacyAccountRecord(account);
             JsonObject metadata = migrated.metadata();
             if (keepSelectedMarker) {
                 copyMember(account, metadata, "selected");
             }
-            AccountID accountID = createLegacyAccountID(metadata, usedAccountIDs, userStorage);
+            AccountID accountID = createLegacyAccountID(metadata, userStorage);
             metadata.addProperty(Account.PROPERTY_ACCOUNT_ID, accountID.toString());
 
             if (!migrated.privateData().isEmpty()) {
@@ -511,8 +509,9 @@ public final class LegacyConfigMigrator {
                 continue;
             }
 
-            AccountID accountID = createLegacyAccountID(account, usedAccountIDs, userStorage);
+            AccountID accountID = createLegacyAccountID(account, userStorage);
             updatedAccount.addProperty(Account.PROPERTY_ACCOUNT_ID, accountID.toString());
+            usedAccountIDs.add(accountID.toString());
             changed |= !Objects.equals(JsonUtils.getString(account, Account.PROPERTY_ACCOUNT_ID), accountID.toString());
             updatedAccounts.add(updatedAccount);
         }
@@ -536,57 +535,39 @@ public final class LegacyConfigMigrator {
         }
     }
 
-    /// Creates a stable account ID that does not collide with IDs already assigned in the same account list.
-    private static AccountID createLegacyAccountID(
-            JsonObject account,
-            Set<String> usedAccountIDs,
-            boolean userStorage) {
-        String seed = getLegacyAccountIDSeed(account, userStorage);
-        for (int index = 0; ; index++) {
-            String indexedSeed = index == 0 ? seed : seed + "#" + index;
-            AccountID candidate = new AccountID(UUIDs.generateV5(LEGACY_ACCOUNT_ID_NAMESPACE, indexedSeed));
-            if (usedAccountIDs.add(candidate.toString())) {
-                return candidate;
-            }
-        }
-    }
-
-    /// Returns a deterministic seed built from a legacy account's selected-account reference.
-    private static String getLegacyAccountIDSeed(JsonObject metadata, boolean userStorage) {
-        @Nullable String legacyIdentifier = getLegacyAccountIdentifier(metadata);
-        if (legacyIdentifier != null) {
-            return userStorage ? LEGACY_GLOBAL_ACCOUNT_PREFIX + legacyIdentifier : legacyIdentifier;
-        }
-
-        @Nullable String type = JsonUtils.getString(metadata, "type");
+    /// Creates a stable account ID from the legacy selected-account identifier represented by one account.
+    private static AccountID createLegacyAccountID(JsonObject account, boolean userStorage) {
         String prefix = userStorage ? LEGACY_GLOBAL_ACCOUNT_PREFIX : "";
-        if (type == null) {
-            return prefix + "unknown:" + JsonUtils.GSON.toJson(metadata);
+        @Nullable String legacyIdentifier = getLegacyAccountIdentifier(account);
+        if (legacyIdentifier != null) {
+            return new AccountID(UUIDs.generateV5(LEGACY_ACCOUNT_ID_NAMESPACE, prefix + legacyIdentifier));
         }
 
-        return prefix + switch (type) {
+        @Nullable String type = JsonUtils.getString(account, "type");
+        String uuidName = prefix + (type == null ? "unknown:" + JsonUtils.GSON.toJson(account) : switch (type) {
             case "offline" -> {
-                String profileName = JsonUtils.getString(metadata, "profileName", "");
-                String profileID = JsonUtils.getString(metadata, "profileID", "");
+                String profileName = JsonUtils.getString(account, "profileName", "");
+                String profileID = JsonUtils.getString(account, "profileID", "");
                 yield "offline:" + profileName + ":" + profileID;
             }
             case "microsoft" -> {
-                String profileID = JsonUtils.getString(metadata, "profileID", "");
+                String profileID = JsonUtils.getString(account, "profileID", "");
                 yield "microsoft:" + profileID;
             }
             case "yggdrasil" -> {
-                String loginName = JsonUtils.getString(metadata, "loginName", "");
-                String profileID = JsonUtils.getString(metadata, "profileID", "");
+                String loginName = JsonUtils.getString(account, "loginName", "");
+                String profileID = JsonUtils.getString(account, "profileID", "");
                 yield "yggdrasil:" + loginName + ":" + profileID;
             }
             case "authlibInjector" -> {
-                String serverBaseURL = JsonUtils.getString(metadata, "serverBaseURL", "");
-                String loginName = JsonUtils.getString(metadata, "loginName", "");
-                String profileID = JsonUtils.getString(metadata, "profileID", "");
+                String serverBaseURL = JsonUtils.getString(account, "serverBaseURL", "");
+                String loginName = JsonUtils.getString(account, "loginName", "");
+                String profileID = JsonUtils.getString(account, "profileID", "");
                 yield "authlibInjector:" + serverBaseURL + ":" + loginName + ":" + profileID;
             }
-            default -> type + ":" + JsonUtils.GSON.toJson(metadata);
-        };
+            default -> type + ":" + JsonUtils.GSON.toJson(account);
+        });
+        return new AccountID(UUIDs.generateV5(LEGACY_ACCOUNT_ID_NAMESPACE, uuidName));
     }
 
     /// Creates current metadata and private data records from one legacy account entry.
