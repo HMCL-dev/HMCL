@@ -67,6 +67,7 @@ import java.nio.file.Files;
 import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.util.*;
+import java.util.concurrent.locks.ReentrantLock;
 import java.util.stream.Stream;
 
 import static org.jackhuang.hmcl.ui.FXUtils.*;
@@ -100,7 +101,7 @@ public final class SchematicsPage extends ListPageBase<SchematicsPage.Item> impl
 
     private final ObjectProperty<DirItem> currentDirectory = new SimpleObjectProperty<>(this, "currentDirectory", null);
     private final BooleanProperty isRootProperty = new SimpleBooleanProperty(this, "isRoot", true);
-    private final ObjectProperty<LitematicaFetchResult> fetchResult = new SimpleObjectProperty<>(this, "fetchResult", null);
+    private final ObjectProperty<LitematicaFetchResult> fetchResult = new SimpleObjectProperty<>(this, "fetchResult", LitematicaFetchResult.EMPTY);
     private final ObjectBinding<RemoteMod> downloadTarget = Bindings.createObjectBinding(
             () -> {
                 var result = fetchResult.get();
@@ -177,7 +178,12 @@ public final class SchematicsPage extends ListPageBase<SchematicsPage.Item> impl
             if (currentDir != null) {
                 loop:
                 for (String dirName : currentDir.relativePath) {
-                    target.preLoad();
+                    try {
+                        target.preLoad();
+                    } catch (IOException e) {
+                        LOG.warning("Failed to preload sub-directories in " + target, e);
+                        break;
+                    }
                     for (var dirChild : target.dirChildren) {
                         if (dirChild.getName().equals(dirName)) {
                             target = dirChild;
@@ -201,10 +207,12 @@ public final class SchematicsPage extends ListPageBase<SchematicsPage.Item> impl
         Task.supplyAsync(Schedulers.io(), () -> {
             var modManager = profile.getRepository().getModManager(instanceId);
             modManager.analyze();
+            var analyzer = modManager.getLibraryAnalyzer();
+            if (analyzer == null) return LitematicaFetchResult.EMPTY;
             var modLoaders = modManager.getLibraryAnalyzer().getModLoaders(); // We don't care about kilt or connector
             boolean shouldUseForgematica = (modLoaders.contains(ModLoaderType.FORGE) || modLoaders.contains(ModLoaderType.NEO_FORGE))
                     && GameVersionNumber.asGameVersion(Optional.ofNullable(modManager.getGameVersion())).isAtLeast("1.16.4", "20w45a");
-            var res = Objects.requireNonNullElse(fetchResult.get(), new LitematicaFetchResult(null, null, false));
+            var res = fetchResult.get();
             RemoteMod litematica = res.litematica(), forgematica = res.forgematica();
             if (litematica == null) {
                 try {
@@ -350,6 +358,8 @@ public final class SchematicsPage extends ListPageBase<SchematicsPage.Item> impl
     }
 
     private final class DirItem extends Item {
+        final ReentrantLock lock = new ReentrantLock();
+
         final Path path;
         final @Nullable DirItem parent;
         final List<Item> children = new ArrayList<>();
@@ -398,32 +408,42 @@ public final class SchematicsPage extends ListPageBase<SchematicsPage.Item> impl
 
         void preLoad() throws IOException {
             if (this.preLoaded) return;
-            this.size = 0;
-            this.dirChildren.clear();
-            try (Stream<Path> stream = Files.list(path)) {
-                stream.forEach(p -> {
-                    boolean b1 = Files.isDirectory(p);
-                    boolean b2 = Schematic.isFileSchematic(p);
-                    if (b1 || b2) this.size++;
-                    if (b1) {
-                        var child = new DirItem(p, this);
-                        this.dirChildren.add(child);
-                    }
-                });
+            lock.lock();
+            try {
+                if (this.preLoaded) return;
+                this.size = 0;
+                this.dirChildren.clear();
+                try (Stream<Path> stream = Files.list(path)) {
+                    stream.forEach(p -> {
+                        boolean b1 = Files.isDirectory(p);
+                        boolean b2 = Schematic.isFileSchematic(p);
+                        if (b1 || b2) this.size++;
+                        if (b1) {
+                            var child = new DirItem(p, this);
+                            this.dirChildren.add(child);
+                        }
+                    });
+                }
+                this.preLoaded = true;
+            } finally {
+                lock.unlock();
             }
-            this.preLoaded = true;
         }
 
         void load() {
             if (this.loaded) return;
-            this.children.clear();
+            lock.lock();
             try {
+                if (this.loaded) return;
+
+                this.children.clear();
+
                 preLoad();
+                for (var dir : dirChildren) {
+                    dir.preLoad();
+                    this.children.add(dir);
+                }
                 try (Stream<Path> stream = Files.list(path)) {
-                    for (var dir : dirChildren) {
-                        dir.preLoad();
-                        this.children.add(dir);
-                    }
                     stream.filter(Schematic::isFileSchematic)
                             .forEach(p -> {
                                 try {
@@ -433,13 +453,15 @@ public final class SchematicsPage extends ListPageBase<SchematicsPage.Item> impl
                                 }
                             });
                 }
+
+                this.children.sort(Comparator.naturalOrder());
+                this.loaded = true;
             } catch (NoSuchFileException ignored) {
             } catch (IOException e) {
                 LOG.warning("Failed to load schematics in " + path, e);
+            } finally {
+                lock.unlock();
             }
-
-            this.children.sort(Comparator.naturalOrder());
-            this.loaded = true;
         }
 
         @Override
@@ -848,6 +870,7 @@ public final class SchematicsPage extends ListPageBase<SchematicsPage.Item> impl
     }
 
     private record LitematicaFetchResult(@Nullable RemoteMod litematica, @Nullable RemoteMod forgematica, boolean useForge) {
+        public static final LitematicaFetchResult EMPTY = new LitematicaFetchResult(null, null, false);
     }
 
 }

@@ -78,7 +78,12 @@ public final class ModManager extends LocalAddonManager<LocalModFile> {
     }
 
     public LibraryAnalyzer getLibraryAnalyzer() {
-        return analyzer;
+        lock.lock();
+        try {
+            return analyzer;
+        } finally {
+            lock.unlock();
+        }
     }
 
     public LocalMod getLocalMod(String modId, ModLoaderType modLoaderType) {
@@ -101,11 +106,21 @@ public final class ModManager extends LocalAddonManager<LocalModFile> {
     }
 
     public String getGameVersion() {
-        return gameVersion;
+        lock.lock();
+        try {
+            return gameVersion;
+        } finally {
+            lock.unlock();
+        }
     }
 
     public EnumSet<ModLoaderType> getSupportedLoaders() {
-        return EnumSet.copyOf(supportedLoaders);
+        lock.lock();
+        try {
+            return EnumSet.copyOf(supportedLoaders);
+        } finally {
+            lock.unlock();
+        }
     }
 
     private void addModInfo(Path file) {
