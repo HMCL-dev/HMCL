@@ -134,4 +134,30 @@ public final class TypedIDTest {
                 .getAsString());
         assertEquals("1.20.1", deserialized.getSelectedInstance(id));
     }
+
+    /// Tests invalid typed ID setting fields are ignored without aborting launcher settings deserialization.
+    @Test
+    public void launcherSettingsIgnoresInvalidTypedIDFields() {
+        LauncherSettings settings = Objects.requireNonNull(LauncherSettings.fromJson(JsonParser.parseString("""
+                {
+                  "selectedGameDirectory": "123e4567-e89b-12d3-a456-426614174000",
+                  "defaultGameSettingsPreset": "game-settings-preset:123e4567-e89b-12d3-a456-426614174001",
+                  "selectedInstance": {
+                    "123e4567-e89b-12d3-a456-426614174000": "1.20.1"
+                  },
+                  "preferredLoginType": "offline"
+                }
+                """).getAsJsonObject()));
+        GameSettingsPresetID presetID =
+                GameSettingsPresetID.parse("game-settings-preset:123e4567-e89b-12d3-a456-426614174001");
+        JsonObject serialized = JsonParser.parseString(settings.toJson()).getAsJsonObject();
+
+        assertNull(settings.selectedGameDirectoryProperty().get());
+        assertEquals(presetID, settings.defaultGameSettingsPresetProperty().get());
+        assertTrue(settings.getSelectedInstance().isEmpty());
+        assertEquals("offline", settings.preferredLoginTypeProperty().get());
+        assertFalse(serialized.has(LauncherSettings.PROPERTY_SELECTED_GAME_DIRECTORY));
+        assertEquals(presetID.toString(),
+                serialized.get(LauncherSettings.PROPERTY_DEFAULT_GAME_SETTINGS_PRESET).getAsString());
+    }
 }
