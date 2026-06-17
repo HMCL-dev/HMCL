@@ -24,9 +24,6 @@ import com.google.gson.JsonParseException;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
-import org.tukaani.xz.LZMA2Options;
-import org.tukaani.xz.XZInputStream;
-import org.tukaani.xz.XZOutputStream;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -35,6 +32,8 @@ import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
 import java.util.Base64;
 import java.util.Objects;
+import java.util.zip.GZIPInputStream;
+import java.util.zip.GZIPOutputStream;
 
 /// Stores a JSON payload using HMCL's portable protection envelope.
 ///
@@ -153,7 +152,7 @@ final class ProtectedPayload {
                     String payloadText = JsonUtils.UGLY_GSON.toJson(payload);
                     byte[] payloadBytes = payloadText.getBytes(StandardCharsets.UTF_8);
                     var buffer = new ByteArrayOutputStream(payloadBytes.length);
-                    try (var compressStream = new XZOutputStream(buffer, new LZMA2Options())) {
+                    try (var compressStream = new GZIPOutputStream(buffer)) {
                         compressStream.write(payloadBytes);
                     }
                     actualPayload = Base64.getEncoder().encodeToString(buffer.toByteArray());
@@ -171,9 +170,9 @@ final class ProtectedPayload {
                 try {
                     String encodedPayload = joinObfuscatedPayload(envelope);
                     byte[] compressedBytes = Base64.getDecoder().decode(encodedPayload);
-                    try (var decompressStream = new XZInputStream(new ByteArrayInputStream(compressedBytes));
+                    try (var decompressStream = new GZIPInputStream(new ByteArrayInputStream(compressedBytes));
                          var reader = new InputStreamReader(decompressStream, StandardCharsets.UTF_8)) {
-                        JsonElement payload = JsonUtils.GSON.fromJson(reader, JsonElement.class);
+                        JsonElement payload = JsonUtils.fromJson(reader, JsonElement.class);
                         if (payload == null) {
                             throw new JsonParseException("Missing protected JSON payload");
                         }
