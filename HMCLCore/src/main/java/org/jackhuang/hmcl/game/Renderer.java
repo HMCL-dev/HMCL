@@ -18,6 +18,7 @@
 package org.jackhuang.hmcl.game;
 
 import com.google.gson.TypeAdapter;
+import com.google.gson.annotations.JsonAdapter;
 import com.google.gson.stream.JsonReader;
 import com.google.gson.stream.JsonToken;
 import com.google.gson.stream.JsonWriter;
@@ -46,6 +47,7 @@ import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 /// @author Glavo
 @NotNullByDefault
+@JsonAdapter(Renderer.Adapter.class)
 public sealed interface Renderer permits Renderer.Default, Renderer.Driver, Renderer.Unknown {
 
     /// Default renderer.

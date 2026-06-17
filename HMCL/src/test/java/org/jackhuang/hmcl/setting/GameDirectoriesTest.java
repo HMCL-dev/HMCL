@@ -699,6 +699,34 @@ public final class GameDirectoriesTest {
         }
     }
 
+    /// Tests that empty detached files are overwritten without producing useless backups.
+    @Test
+    public void doesNotBackUpEmptyDetachedFileBeforeSavingFallback() throws IOException, InterruptedException {
+        try (FileSystem fileSystem = Jimfs.newFileSystem(Configuration.unix())) {
+            Path tempDir = createJsonSettingFileTestDirectory(fileSystem, "empty");
+            Path location = tempDir.resolve("game-directories.json");
+            Files.writeString(location, "");
+
+            JsonSettingFile<GameDirectories> file = new JsonSettingFile<>(
+                    location,
+                    "game directories",
+                    GameDirectories.class,
+                    GameDirectories.CURRENT_SCHEMA,
+                    GameDirectories::new);
+
+            JsonSettingFile.LoadResult<GameDirectories> result = file.load(null);
+
+            assertTrue(result.value().isSavable());
+            assertFalse(result.value().isBackupOnNextSave());
+            assertEquals(SettingFileAccess.READ_WRITE, result.access());
+            file.save(result.value());
+            FileSaver.waitForAllSaves();
+
+            assertFalse(Files.exists(location.resolveSibling("game-directories.json.1")));
+            assertFalse(result.value().isBackupOnNextSave());
+        }
+    }
+
     /// Creates a temporary directory in an in-memory file system for JsonSettingFile tests.
     private static Path createJsonSettingFileTestDirectory(FileSystem fileSystem, String prefix) throws IOException {
         Path root = fileSystem.getPath("/json-setting-file-tests");

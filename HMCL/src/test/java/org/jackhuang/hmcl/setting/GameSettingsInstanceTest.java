@@ -21,6 +21,7 @@ import com.google.common.jimfs.Configuration;
 import com.google.common.jimfs.Jimfs;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
+import org.jackhuang.hmcl.game.Renderer;
 import org.jackhuang.hmcl.util.gson.JsonSchema;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.junit.jupiter.api.Test;
@@ -70,6 +71,25 @@ public final class GameSettingsInstanceTest {
         assertFalse(serialized.has("nativesDirectoryType"));
         assertFalse(serialized.has("nativesDirType"));
         assertFalse(serialized.has("nativesDir"));
+    }
+
+    /// Tests that renderer settings are stored as renderer names and restored from them.
+    @Test
+    public void roundTripsRenderers() {
+        GameSettings.Instance instance = new GameSettings.Instance();
+        instance.openGLRendererProperty().setValue(Renderer.OpenGL.LLVMPIPE);
+        instance.vulkanRendererProperty().setValue(Renderer.Vulkan.LAVAPIPE);
+
+        String serialized = LauncherSettings.SETTINGS_GSON.toJson(instance, GameSettings.Instance.class);
+        JsonObject jsonObject = JsonParser.parseString(serialized).getAsJsonObject();
+        assertEquals("LLVMPIPE", jsonObject.get(GameSettings.PROPERTY_OPENGL_RENDERER).getAsString());
+        assertEquals("LAVAPIPE", jsonObject.get(GameSettings.PROPERTY_VULKAN_RENDERER).getAsString());
+
+        GameSettings.Instance deserialized =
+                LauncherSettings.SETTINGS_GSON.fromJson(serialized, GameSettings.Instance.class);
+
+        assertEquals(Renderer.OpenGL.LLVMPIPE, deserialized.openGLRendererProperty().getValue());
+        assertEquals(Renderer.Vulkan.LAVAPIPE, deserialized.vulkanRendererProperty().getValue());
     }
 
     /// Tests that legacy Java default selection is migrated to automatic selection.

@@ -87,7 +87,7 @@ final class JsonSettingFile<T extends ObservableSetting & JsonSchemaSetting> {
                 JsonObject jsonObject = JsonUtils.fromJsonFile(location, JsonObject.class);
                 if (jsonObject == null) {
                     LOG.warning(displayName + " are empty: " + location);
-                    return result(createDefault.get(), true, true);
+                    return result(createDefault.get(), true);
                 } else {
                     JsonSchema.CompatibilityResult schemaResult =
                             JsonSchema.check(jsonObject, expectedSchema);

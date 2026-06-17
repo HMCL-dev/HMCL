@@ -314,7 +314,6 @@ public final class HMCLGameRepository extends DefaultGameRepository {
             if (jsonObject == null) {
                 LOG.warning("Instance game settings are empty: " + file);
                 GameSettings.Instance fallback = new GameSettings.Instance();
-                fallback.setBackupOnNextSave(true);
                 return new InstanceGameSettingsLoadResult(fallback, true);
             }
 
