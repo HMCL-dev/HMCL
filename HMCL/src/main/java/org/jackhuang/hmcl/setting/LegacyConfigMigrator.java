@@ -539,34 +539,7 @@ public final class LegacyConfigMigrator {
     private static AccountID createLegacyAccountID(JsonObject account, boolean userStorage) {
         String prefix = userStorage ? LEGACY_GLOBAL_ACCOUNT_PREFIX : "";
         @Nullable String legacyIdentifier = getLegacyAccountIdentifier(account);
-        if (legacyIdentifier != null) {
-            return new AccountID(UUIDs.generateV5(LEGACY_ACCOUNT_ID_NAMESPACE, prefix + legacyIdentifier));
-        }
-
-        @Nullable String type = JsonUtils.getString(account, "type");
-        String uuidName = prefix + (type == null ? "unknown:" + JsonUtils.GSON.toJson(account) : switch (type) {
-            case "offline" -> {
-                String profileName = JsonUtils.getString(account, "profileName", "");
-                String profileID = JsonUtils.getString(account, "profileID", "");
-                yield "offline:" + profileName + ":" + profileID;
-            }
-            case "microsoft" -> {
-                String profileID = JsonUtils.getString(account, "profileID", "");
-                yield "microsoft:" + profileID;
-            }
-            case "yggdrasil" -> {
-                String loginName = JsonUtils.getString(account, "loginName", "");
-                String profileID = JsonUtils.getString(account, "profileID", "");
-                yield "yggdrasil:" + loginName + ":" + profileID;
-            }
-            case "authlibInjector" -> {
-                String serverBaseURL = JsonUtils.getString(account, "serverBaseURL", "");
-                String loginName = JsonUtils.getString(account, "loginName", "");
-                String profileID = JsonUtils.getString(account, "profileID", "");
-                yield "authlibInjector:" + serverBaseURL + ":" + loginName + ":" + profileID;
-            }
-            default -> type + ":" + JsonUtils.GSON.toJson(account);
-        });
+        String uuidName = prefix + (legacyIdentifier != null ? legacyIdentifier : JsonUtils.GSON.toJson(account));
         return new AccountID(UUIDs.generateV5(LEGACY_ACCOUNT_ID_NAMESPACE, uuidName));
     }
 
