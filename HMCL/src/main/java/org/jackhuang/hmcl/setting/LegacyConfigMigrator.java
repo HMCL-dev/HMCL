@@ -608,22 +608,6 @@ public final class LegacyConfigMigrator {
         };
     }
 
-    /// Creates current metadata and private data for one legacy offline account.
-    private static MigratedLegacyAccount migrateLegacyOfflineAccount(JsonObject account) {
-        JsonObject metadata = createLegacyAccountMetadata("offline");
-        JsonObject privateData = new JsonObject();
-        addStringMember(metadata, "profileName", JsonUtils.getString(account, "username"));
-        addNormalizedUUIDMember(metadata, "profileID", JsonUtils.getString(account, "uuid"));
-        if (!metadata.has("profileID")) {
-            @Nullable String profileName = JsonUtils.getString(metadata, "profileName");
-            if (profileName != null) {
-                metadata.addProperty("profileID", OfflineAccountFactory.getUUIDFromUserName(profileName).toString());
-            }
-        }
-        copyMember(account, metadata, "skin");
-        return new MigratedLegacyAccount(metadata, privateData);
-    }
-
     /// Creates a metadata object with the account type.
     private static JsonObject createLegacyAccountMetadata(String type) {
         JsonObject metadata = new JsonObject();
