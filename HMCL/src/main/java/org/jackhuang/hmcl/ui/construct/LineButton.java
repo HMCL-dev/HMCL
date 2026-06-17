@@ -122,6 +122,7 @@ public class LineButton extends LineButtonBase {
                             trailingTextLabel.setMouseTransparent(true);
                         }
                         trailingTextLabel.setText(message);
+                        trailingTextLabel.setMinWidth(50);
                         setNode(getTrailingTextIndex(), trailingTextLabel);
                     } else if (trailingTextLabel != null) {
                         trailingTextLabel.setText("");
