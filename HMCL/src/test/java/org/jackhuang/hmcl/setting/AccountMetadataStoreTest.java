@@ -643,8 +643,8 @@ public final class AccountMetadataStoreTest {
 
             JsonObject serialized = JsonParser.parseString(
                     LauncherSettings.SETTINGS_GSON.toJson(privateData, AccountPrivateData.class)).getAsJsonObject();
-            JsonObject payload = serialized.getAsJsonObject("payload");
-            JsonObject item = payload.getAsJsonArray("entries").get(0).getAsJsonObject();
+            JsonArray payload = serialized.getAsJsonArray("payload");
+            JsonObject item = payload.get(0).getAsJsonObject();
             JsonObject entryPrivateData = item.getAsJsonObject("privateData");
             JsonElement serializedAccountID = item.get("accountID");
 

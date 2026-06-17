@@ -267,18 +267,16 @@ final class AccountPrivateData extends ObservableSetting implements JsonSchemaSe
         /// @param accountPrivateData the private data store to serialize
         /// @param context the JSON serialization context
         /// @return the plain payload before protection
-        private static JsonObject createPayload(
+        private static JsonArray createPayload(
                 AccountPrivateData accountPrivateData,
                 JsonSerializationContext context) {
-            JsonObject payload = new JsonObject();
-            JsonArray entries = new JsonArray();
+            JsonArray payload = new JsonArray();
             for (Map.Entry<AccountID, JsonObject> entry : accountPrivateData.privateData.entrySet()) {
                 JsonObject item = new JsonObject();
                 item.add("accountID", context.serialize(entry.getKey(), AccountID.class));
                 item.add("privateData", entry.getValue());
-                entries.add(item);
+                payload.add(item);
             }
-            payload.add("entries", entries);
             return payload;
         }
 
@@ -304,18 +302,9 @@ final class AccountPrivateData extends ObservableSetting implements JsonSchemaSe
         /// @param context the JSON deserialization context
         private static void readPayload(
                 AccountPrivateData accountPrivateData,
-                JsonElement payload,
+                JsonArray payload,
                 JsonDeserializationContext context) {
-            if (!(payload instanceof JsonObject object)) {
-                throw new JsonParseException("Account private data payload is not an object");
-            }
-
-            JsonElement entriesElement = object.get("entries");
-            if (!(entriesElement instanceof JsonArray entries)) {
-                return;
-            }
-
-            for (JsonElement itemElement : entries) {
+            for (JsonElement itemElement : payload) {
                 if (!(itemElement instanceof JsonObject item)) {
                     continue;
                 }
@@ -370,7 +359,7 @@ final class AccountPrivateData extends ObservableSetting implements JsonSchemaSe
             values.remove(ProtectedPayload.PROPERTY_PAYLOAD);
             accountPrivateData.unknownFields.putAll(values);
 
-            readPayload(accountPrivateData, ProtectedPayload.read(object), context);
+            readPayload(accountPrivateData, ProtectedPayload.read(object, JsonArray.class), context);
             return accountPrivateData;
         }
     }

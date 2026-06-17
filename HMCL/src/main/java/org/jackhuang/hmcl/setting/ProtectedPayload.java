@@ -33,6 +33,7 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
 import java.util.Base64;
+import java.util.Objects;
 
 /// Stores a JSON payload using HMCL's portable protection envelope.
 ///
@@ -58,18 +59,19 @@ final class ProtectedPayload {
         PLAIN("plain") {
             /// Writes the payload into the given envelope.
             @Override
-            public void write(JsonObject envelope, JsonObject payload) {
+            protected void writePayload(JsonObject envelope, JsonElement payload) {
                 envelope.addProperty(PROPERTY_PROTECTION, id());
                 envelope.add(PROPERTY_PAYLOAD, payload);
             }
 
             /// Reads the payload from the given envelope.
             @Override
-            public JsonObject read(JsonObject envelope) {
-                if (envelope.get(PROPERTY_PAYLOAD) instanceof JsonObject payload)
-                    return payload;
-                else
-                    throw new JsonParseException("Missing payload or payload is not a object");
+            protected JsonElement readPayload(JsonObject envelope) {
+                JsonElement payload = envelope.get(PROPERTY_PAYLOAD);
+                if (payload == null) {
+                    throw new JsonParseException("Missing payload");
+                }
+                return payload;
             }
         },
 
@@ -77,10 +79,11 @@ final class ProtectedPayload {
         OBFUSCATED_V1("hmcl-obfuscated-v1") {
             /// Writes the payload into the given envelope.
             @Override
-            public void write(JsonObject envelope, JsonObject payload) {
+            protected void writePayload(JsonObject envelope, JsonElement payload) {
                 String actualPayload;
                 try {
-                    byte[] payloadBytes = JsonUtils.UGLY_GSON.toJson(payload).getBytes(StandardCharsets.UTF_8);
+                    String payloadText = JsonUtils.UGLY_GSON.toJson(payload);
+                    byte[] payloadBytes = payloadText.getBytes(StandardCharsets.UTF_8);
                     var buffer = new ByteArrayOutputStream(payloadBytes.length);
                     try (var compressStream = new XZOutputStream(buffer, new LZMA2Options())) {
                         compressStream.write(payloadBytes);
@@ -96,7 +99,7 @@ final class ProtectedPayload {
 
             /// Reads the payload from the given envelope.
             @Override
-            public JsonObject read(JsonObject envelope) {
+            protected JsonElement readPayload(JsonObject envelope) {
                 try {
                     String encodedPayload = JsonUtils.getString(envelope, PROPERTY_PAYLOAD);
                     if (encodedPayload == null) {
@@ -106,14 +109,17 @@ final class ProtectedPayload {
                     byte[] compressedBytes = Base64.getDecoder().decode(encodedPayload);
                     try (var decompressStream = new XZInputStream(new ByteArrayInputStream(compressedBytes));
                          var reader = new InputStreamReader(decompressStream, StandardCharsets.UTF_8)) {
-                        return JsonUtils.GSON.fromJson(reader, JsonObject.class);
+                        JsonElement payload = JsonUtils.GSON.fromJson(reader, JsonElement.class);
+                        if (payload == null) {
+                            throw new JsonParseException("Missing protected JSON payload");
+                        }
+                        return payload;
                     }
                 } catch (IllegalArgumentException | IOException e) {
                     throw new JsonParseException("Failed to reveal protected JSON payload", e);
                 }
             }
         };
-
 
         /// The serialized protection marker.
         private final String id;
@@ -136,15 +142,41 @@ final class ProtectedPayload {
         ///
         /// @param envelope the envelope object to write into
         /// @param payload  the plain JSON payload
+        /// @param <T> the JSON payload type
         /// @throws JsonParseException if the payload cannot be protected
-        public abstract void write(JsonObject envelope, JsonObject payload);
+        public final <T extends JsonElement> void write(JsonObject envelope, T payload) {
+            writePayload(envelope, Objects.requireNonNull(payload));
+        }
+
+        /// Writes the payload into the given envelope.
+        ///
+        /// @param envelope the envelope object to write into
+        /// @param payload the plain JSON payload
+        /// @throws JsonParseException if the payload cannot be protected
+        protected abstract void writePayload(JsonObject envelope, JsonElement payload);
 
         /// Reads the payload from the given envelope.
         ///
         /// @param envelope the envelope object to read from
         /// @return the revealed JSON payload
         /// @throws JsonParseException if the envelope is malformed or cannot be revealed
-        public abstract JsonObject read(JsonObject envelope);
+        protected abstract JsonElement readPayload(JsonObject envelope);
+
+        /// Reads the payload from the given envelope and checks its JSON element type.
+        ///
+        /// @param envelope the envelope object to read from
+        /// @param payloadType the expected JSON element type
+        /// @return the revealed JSON payload
+        /// @param <T> the expected JSON element type
+        /// @throws JsonParseException if the envelope is malformed, cannot be revealed, or has the wrong payload type
+        public final <T extends JsonElement> T read(JsonObject envelope, Class<T> payloadType) {
+            Objects.requireNonNull(payloadType);
+            JsonElement payload = readPayload(envelope);
+            if (!payloadType.isInstance(payload)) {
+                throw new JsonParseException("Protected payload is not a " + payloadType.getSimpleName());
+            }
+            return payloadType.cast(payload);
+        }
 
         /// Returns the write mode selected by a configuration value.
         ///
@@ -184,10 +216,12 @@ final class ProtectedPayload {
     /// Reads and reveals a protected JSON payload from an envelope object.
     ///
     /// @param envelope the envelope object to read from
+    /// @param payloadType the expected JSON element type
     /// @return the revealed JSON payload
+    /// @param <T> the expected JSON element type
     /// @throws JsonParseException if the envelope is malformed or cannot be revealed
-    static JsonElement read(JsonObject envelope) throws JsonParseException {
-        return ProtectionMode.fromEnvelope(envelope).read(envelope);
+    static <T extends JsonElement> T read(JsonObject envelope, Class<T> payloadType) throws JsonParseException {
+        return ProtectionMode.fromEnvelope(envelope).read(envelope, payloadType);
     }
 
 }
