@@ -22,6 +22,7 @@ import com.google.gson.JsonObject;
 import org.glavo.uuid.UUIDs;
 import org.jackhuang.hmcl.auth.AuthInfo;
 import org.jackhuang.hmcl.util.StringUtils;
+import org.jackhuang.hmcl.util.gson.JsonSerializable;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.logging.Logger;
 
@@ -78,7 +79,7 @@ public class MicrosoftSession {
 
     /// Returns whether the stored session contains a usable Minecraft profile name.
     public boolean hasProfileName() {
-        return profile != null && StringUtils.isNotBlank(profile.getName());
+        return profile != null && StringUtils.isNotBlank(profile.name());
     }
 
     /// Loads a Microsoft session from persisted account metadata and private data.
@@ -107,7 +108,7 @@ public class MicrosoftSession {
         requireNonNull(profile);
         requireNonNull(user);
 
-        privateData.addProperty("profileName", profile.getName());
+        privateData.addProperty("profileName", profile.name());
         privateData.addProperty("tokenType", tokenType);
         privateData.addProperty("accessToken", accessToken);
         privateData.addProperty("refreshToken", refreshToken);
@@ -127,36 +128,14 @@ public class MicrosoftSession {
     public AuthInfo toAuthInfo() {
         requireNonNull(profile);
 
-        return new AuthInfo(profile.getName(), profile.getId(), accessToken, AuthInfo.USER_TYPE_MSA, "{}");
+        return new AuthInfo(profile.name(), profile.id(), accessToken, AuthInfo.USER_TYPE_MSA, "{}");
     }
 
-    public static class User {
-        private final String id;
-
-        public User(String id) {
-            this.id = id;
-        }
-
-        public String getId() {
-            return id;
-        }
+    @JsonSerializable
+    public record User(String id) {
     }
 
-    public static class GameProfile {
-        private final UUID id;
-        private final String name;
-
-        public GameProfile(UUID id, String name) {
-            this.id = id;
-            this.name = name;
-        }
-
-        public UUID getId() {
-            return id;
-        }
-
-        public String getName() {
-            return name;
-        }
+    @JsonSerializable
+    public record GameProfile(UUID id, String name) {
     }
 }

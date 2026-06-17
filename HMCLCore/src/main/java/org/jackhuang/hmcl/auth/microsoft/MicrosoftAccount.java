@@ -46,7 +46,7 @@ public final class MicrosoftAccount extends OAuthAccount {
         super(accountID);
         this.service = requireNonNull(service);
         this.session = requireNonNull(session);
-        this.profileID = requireNonNull(session.getProfile().getId());
+        this.profileID = requireNonNull(session.getProfile().id());
     }
 
     protected MicrosoftAccount(MicrosoftService service, OAuth.GrantFlow flow) throws AuthenticationException {
@@ -60,18 +60,18 @@ public final class MicrosoftAccount extends OAuthAccount {
             session = acquiredSession;
         }
 
-        profileID = session.getProfile().getId();
+        profileID = session.getProfile().id();
         authenticated = true;
     }
 
     @Override
     public String getProfileName() {
-        return session.getProfile().getName();
+        return session.getProfile().name();
     }
 
     @Override
     public UUID getProfileID() {
-        return session.getProfile().getId();
+        return session.getProfile().id();
     }
 
     @Override
@@ -82,7 +82,7 @@ public final class MicrosoftAccount extends OAuthAccount {
                 authenticated = true;
             } else {
                 MicrosoftSession acquiredSession = service.refresh(session);
-                if (!Objects.equals(acquiredSession.getProfile().getId(), session.getProfile().getId())) {
+                if (!Objects.equals(acquiredSession.getProfile().id(), session.getProfile().id())) {
                     throw new ServerResponseMalformedException("Selected profile changed");
                 }
                 if (!acquiredSession.hasProfileName()) {
@@ -102,8 +102,8 @@ public final class MicrosoftAccount extends OAuthAccount {
     @Override
     public AuthInfo logInWhenCredentialsExpired() throws AuthenticationException {
         MicrosoftSession acquiredSession = service.authenticate(OAuth.GrantFlow.DEVICE);
-        if (!Objects.equals(profileID, acquiredSession.getProfile().getId())) {
-            throw new WrongAccountException(profileID, acquiredSession.getProfile().getId());
+        if (!Objects.equals(profileID, acquiredSession.getProfile().id())) {
+            throw new WrongAccountException(profileID, acquiredSession.getProfile().id());
         }
 
         if (acquiredSession.getProfile() == null) {
