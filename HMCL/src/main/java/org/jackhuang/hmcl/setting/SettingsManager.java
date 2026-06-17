@@ -469,12 +469,9 @@ public final class SettingsManager {
     private static AccountMetadataSnapshot createAccountMetadataSnapshot(
             AccountMetadataStore accounts,
             AccountPrivateData currentPrivateData) {
-        AccountPrivateData.ExtractedPrivateData extracted =
-                AccountPrivateData.extractFromAccountRecords(accounts.getAccounts());
         AccountPrivateData privateData = new AccountPrivateData();
         privateData.replaceWith(currentPrivateData);
-        extracted.privateData().forEach(privateData::putPrivateData);
-        AccountMetadataStore metadata = accounts.copyWithRecords(extracted.metadataAccounts());
+        AccountMetadataStore metadata = accounts.copyWithRecords(accounts.getAccounts());
         return new AccountMetadataSnapshot(metadata, privateData);
     }
 
@@ -596,11 +593,10 @@ public final class SettingsManager {
             List<JsonObject> metadataAccounts,
             Map<AccountID, JsonObject> privateData) {
         try {
-            List<AccountID> accountIDs = getAccountIDs(metadataAccounts);
-            AccountPrivateData.ExtractedPrivateData serializedAccounts =
-                    new AccountPrivateData.ExtractedPrivateData(metadataAccounts, accountIDs, privateData);
+            AccountPrivateDataUpdate accountPrivateData =
+                    new AccountPrivateDataUpdate(getAccountIDs(metadataAccounts), privateData);
             List<AccountPrivateDataStore> changedPrivateDataStores =
-                    distributeAccountPrivateData(serializedAccounts, defaultPrivateData, privateDataStores);
+                    distributeAccountPrivateData(accountPrivateData, defaultPrivateData, privateDataStores);
             boolean metadataChanged = !metadataAccounts.equals(accounts.getAccounts());
             if (metadataChanged) {
                 accounts.getAccounts().setAll(metadataAccounts);
@@ -651,31 +647,6 @@ public final class SettingsManager {
         }
     }
 
-    /// Splits legacy full account records into metadata and private data stores.
-    ///
-    /// @param accounts the loaded account metadata store
-    /// @param defaultPrivateData the default private data store used for new account private data
-    /// @param privateDataStores private data stores searched and updated in order
-    /// @return changed private data stores
-    private static List<AccountPrivateDataStore> splitLegacyAccountPrivateData(
-            AccountMetadataStore accounts,
-            AccountPrivateDataStore defaultPrivateData,
-            List<AccountPrivateDataStore> privateDataStores) {
-        AccountPrivateData.ExtractedPrivateData extracted =
-                AccountPrivateData.extractFromAccountRecords(accounts.getAccounts());
-        if (extracted.privateData().isEmpty()
-                && extracted.metadataAccounts().equals(accounts.getAccounts())) {
-            return List.of();
-        }
-
-        List<AccountPrivateDataStore> changedPrivateDataStores =
-                distributeAccountPrivateData(extracted, defaultPrivateData, privateDataStores);
-        if (!extracted.metadataAccounts().equals(accounts.getAccounts())) {
-            accounts.getAccounts().setAll(extracted.metadataAccounts());
-        }
-        return changedPrivateDataStores;
-    }
-
     /// Returns account IDs from account metadata records.
     private static List<AccountID> getAccountIDs(List<JsonObject> metadataAccounts) {
         List<AccountID> accountIDs = new ArrayList<>(metadataAccounts.size());
@@ -686,6 +657,14 @@ public final class SettingsManager {
             }
         }
         return accountIDs;
+    }
+
+    /// Creates a private data update from migrated account stores.
+    private static AccountPrivateDataUpdate createAccountPrivateDataUpdate(
+            LegacyConfigMigrator.AccountMigrationResult accounts) {
+        return new AccountPrivateDataUpdate(
+                getAccountIDs(accounts.metadata().getAccounts()),
+                accounts.privateData().getPrivateData());
     }
 
     /// Saves one account private data store synchronously.
@@ -705,17 +684,17 @@ public final class SettingsManager {
 
     /// Distributes extracted private data into the selected private data stores.
     ///
-    /// @param extracted the extracted account metadata and private data
+    /// @param update the account IDs and private data to store
     /// @param defaultPrivateData the default private data store used when no existing store has the account private data
     /// @param privateDataStores private data stores searched and updated in order
     /// @return private data stores whose content or backup state should be saved
     private static List<AccountPrivateDataStore> distributeAccountPrivateData(
-            AccountPrivateData.ExtractedPrivateData extracted,
+            AccountPrivateDataUpdate update,
             AccountPrivateDataStore defaultPrivateData,
             List<AccountPrivateDataStore> privateDataStores) {
         List<AccountPrivateDataStore> changedPrivateDataStores = new ArrayList<>();
-        for (AccountID accountID : extracted.accountIDs()) {
-            @Nullable JsonObject accountPrivateData = extracted.privateData().get(accountID);
+        for (AccountID accountID : update.accountIDs()) {
+            @Nullable JsonObject accountPrivateData = update.privateData().get(accountID);
             if (accountPrivateData != null && accountPrivateData.isEmpty()) {
                 accountPrivateData = null;
             }
@@ -792,6 +771,13 @@ public final class SettingsManager {
     /// @param metadata the metadata-only account store
     /// @param privateData the account private data store
     private record AccountMetadataSnapshot(AccountMetadataStore metadata, AccountPrivateData privateData) {
+    }
+
+    /// Account private data update ready to be distributed among private data stores.
+    ///
+    /// @param accountIDs account IDs whose private data should be updated
+    /// @param privateData private account data keyed by account ID
+    private record AccountPrivateDataUpdate(List<AccountID> accountIDs, Map<AccountID, JsonObject> privateData) {
     }
 
     /// Account private data store and its backing JSON file.
@@ -1006,7 +992,7 @@ public final class SettingsManager {
         userGameAccountPrivateDataAccess = loadUserGameAccountPrivateData();
         gameAccountPrivateDataAccess = loadGameAccountPrivateData();
         userGameAccountsAccess = loadUserGameAccounts();
-        gameAccountsAccess = loadGameAccounts(migratedDetachedSettings.accountMetadata());
+        gameAccountsAccess = loadGameAccounts(migratedDetachedSettings.accountMigration());
 
         if (Files.exists(Metadata.HMCL_LOCAL_HOME)) {
             checkWritable(Metadata.HMCL_LOCAL_HOME);
@@ -1387,7 +1373,7 @@ public final class SettingsManager {
         }
     }
 
-    /// Loads shared account metadata and splits legacy private fields.
+    /// Loads shared account metadata.
     ///
     /// @return the shared account metadata file access status
     private static SettingFileAccess loadUserGameAccounts() {
@@ -1398,18 +1384,22 @@ public final class SettingsManager {
         boolean newlyCreated = !Files.exists(USER_GAME_ACCOUNTS_LOCATION);
         @Nullable LegacyConfigMigrator.UserAccountsMigrationResult migrationResult =
                 newlyCreated ? LegacyConfigMigrator.migrateLegacyUserAccounts() : null;
-        @Nullable AccountMetadataStore migrated = migrationResult != null ? migrationResult.accountMetadata() : null;
+        @Nullable LegacyConfigMigrator.AccountMigrationResult migrated =
+                migrationResult != null ? migrationResult.accounts() : null;
         try {
-            JsonSettingFile.LoadResult<AccountMetadataStore> result = USER_GAME_ACCOUNTS_FILE.load(migrated);
+            JsonSettingFile.LoadResult<AccountMetadataStore> result = USER_GAME_ACCOUNTS_FILE.load(
+                    migrated != null ? migrated.metadata() : null);
             userGameAccounts = result.value();
 
-            List<AccountPrivateDataStore> changedPrivateDataStores = splitLegacyAccountPrivateData(
-                    userGameAccounts,
-                    new AccountPrivateDataStore(userGameAccountPrivateData(), USER_GAME_ACCOUNT_PRIVATE_DATA_FILE),
-                    List.of(
-                            new AccountPrivateDataStore(userGameAccountPrivateData(),
-                                    USER_GAME_ACCOUNT_PRIVATE_DATA_FILE),
-                            new AccountPrivateDataStore(gameAccountPrivateData(), GAME_ACCOUNT_PRIVATE_DATA_FILE)));
+            List<AccountPrivateDataStore> changedPrivateDataStores = migrated != null && newlyCreated
+                    ? distributeAccountPrivateData(
+                            createAccountPrivateDataUpdate(migrated),
+                            new AccountPrivateDataStore(userGameAccountPrivateData(), USER_GAME_ACCOUNT_PRIVATE_DATA_FILE),
+                            List.of(
+                                    new AccountPrivateDataStore(userGameAccountPrivateData(),
+                                            USER_GAME_ACCOUNT_PRIVATE_DATA_FILE),
+                                    new AccountPrivateDataStore(gameAccountPrivateData(), GAME_ACCOUNT_PRIVATE_DATA_FILE)))
+                    : List.of();
             if ((newlyCreated || !changedPrivateDataStores.isEmpty() || userGameAccounts.isBackupOnNextSave())
                     && userGameAccounts.isSavable()) {
                 saveAccountMetadataStore(
@@ -1426,40 +1416,45 @@ public final class SettingsManager {
             return result.access();
         } catch (IOException e) {
             LOG.warning("Failed to load user game accounts", e);
-            userGameAccounts = migrated != null ? migrated : new AccountMetadataStore();
-            splitLegacyAccountPrivateData(
-                    userGameAccounts,
-                    new AccountPrivateDataStore(userGameAccountPrivateData(), USER_GAME_ACCOUNT_PRIVATE_DATA_FILE),
-                    List.of(
-                            new AccountPrivateDataStore(userGameAccountPrivateData(),
-                                    USER_GAME_ACCOUNT_PRIVATE_DATA_FILE),
-                            new AccountPrivateDataStore(gameAccountPrivateData(), GAME_ACCOUNT_PRIVATE_DATA_FILE)));
+            userGameAccounts = migrated != null ? migrated.metadata() : new AccountMetadataStore();
+            if (migrated != null) {
+                distributeAccountPrivateData(
+                        createAccountPrivateDataUpdate(migrated),
+                        new AccountPrivateDataStore(userGameAccountPrivateData(), USER_GAME_ACCOUNT_PRIVATE_DATA_FILE),
+                        List.of(
+                                new AccountPrivateDataStore(userGameAccountPrivateData(),
+                                        USER_GAME_ACCOUNT_PRIVATE_DATA_FILE),
+                                new AccountPrivateDataStore(gameAccountPrivateData(), GAME_ACCOUNT_PRIVATE_DATA_FILE)));
+            }
             userGameAccounts.setSavable(false);
             return SettingFileAccess.UNREADABLE;
         }
     }
 
-    /// Loads account metadata and splits legacy private fields.
+    /// Loads account metadata.
     ///
-    /// @param fallbackGameAccounts the fallback store used when the account metadata file does not exist
+    /// @param fallbackGameAccounts the fallback stores used when the account metadata file does not exist
     /// @return the account metadata file access status
     private static SettingFileAccess loadGameAccounts(
-            @Nullable AccountMetadataStore fallbackGameAccounts) throws IOException {
+            @Nullable LegacyConfigMigrator.AccountMigrationResult fallbackGameAccounts) throws IOException {
         if (gameAccounts != null) {
             throw new IllegalStateException("Game accounts are already loaded");
         }
 
         boolean newlyCreated = !Files.exists(GAME_ACCOUNTS_LOCATION);
         JsonSettingFile.LoadResult<AccountMetadataStore> result =
-                GAME_ACCOUNTS_FILE.load(fallbackGameAccounts);
+                GAME_ACCOUNTS_FILE.load(fallbackGameAccounts != null ? fallbackGameAccounts.metadata() : null);
         gameAccounts = result.value();
 
-        List<AccountPrivateDataStore> changedPrivateDataStores = splitLegacyAccountPrivateData(
-                gameAccounts,
-                new AccountPrivateDataStore(gameAccountPrivateData(), GAME_ACCOUNT_PRIVATE_DATA_FILE),
-                List.of(
+        List<AccountPrivateDataStore> changedPrivateDataStores = fallbackGameAccounts != null && newlyCreated
+                ? distributeAccountPrivateData(
+                        createAccountPrivateDataUpdate(fallbackGameAccounts),
                         new AccountPrivateDataStore(gameAccountPrivateData(), GAME_ACCOUNT_PRIVATE_DATA_FILE),
-                        new AccountPrivateDataStore(userGameAccountPrivateData(), USER_GAME_ACCOUNT_PRIVATE_DATA_FILE)));
+                        List.of(
+                                new AccountPrivateDataStore(gameAccountPrivateData(), GAME_ACCOUNT_PRIVATE_DATA_FILE),
+                                new AccountPrivateDataStore(userGameAccountPrivateData(),
+                                        USER_GAME_ACCOUNT_PRIVATE_DATA_FILE)))
+                : List.of();
         if ((newlyCreated || !changedPrivateDataStores.isEmpty() || gameAccounts.isBackupOnNextSave())
                 && gameAccounts.isSavable()) {
             saveAccountMetadataStore(

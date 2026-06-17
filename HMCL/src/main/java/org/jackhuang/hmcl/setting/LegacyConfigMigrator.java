@@ -214,10 +214,10 @@ public final class LegacyConfigMigrator {
 
             LauncherState launcherState = extractLauncherState(jsonObject);
             AuthlibInjectorServerList authlibInjectorServers = extractAuthlibInjectorServers(jsonObject);
-            AccountMetadataStore accountMetadata = Objects.requireNonNullElseGet(
-                    extractAccountMetadataStore(jsonObject),
-                    AccountMetadataStore::new);
-            migrateLegacySelectedAccount(jsonObject, accountMetadata);
+            AccountMigrationResult accountMigration = Objects.requireNonNullElseGet(
+                    extractAccounts(jsonObject),
+                    AccountMigrationResult::empty);
+            migrateLegacySelectedAccount(jsonObject, accountMigration.metadata());
             JsonElement legacyAllowAutoAgent = jsonObject.remove("allowAutoAgent");
             JsonElement legacyDisableAutoGameOptions = jsonObject.remove("disableAutoGameOptions");
             migrateLegacyBackgroundImageType(jsonObject);
@@ -251,7 +251,7 @@ public final class LegacyConfigMigrator {
             migrateLegacyAllowAutoAgent(deserialized, gameSettingsPresets, legacyAllowAutoAgent);
             migrateLegacyDisableAutoGameOptions(deserialized, gameSettingsPresets, legacyDisableAutoGameOptions);
             DetachedSettings detachedSettings = new DetachedSettings(gameDirectories, gameSettingsPresets,
-                    launcherState, authlibInjectorServers, accountMetadata);
+                    launcherState, authlibInjectorServers, accountMigration);
             return new LegacyConfigMigration(path, deserialized, detachedSettings);
         } catch (JsonParseException e) {
             LOG.warning("Malformed legacy config file: " + path, e);
@@ -325,7 +325,7 @@ public final class LegacyConfigMigrator {
             LOG.info("Migrating user accounts from " + LEGACY_USER_ACCOUNTS_LOCATION);
             return new UserAccountsMigrationResult(
                     LEGACY_USER_ACCOUNTS_LOCATION,
-                    migrateLegacyAccountMetadataStore(accounts, true));
+                    migrateLegacyAccounts(accounts, true));
         } catch (Throwable e) {
             LOG.warning("Failed to load legacy user accounts", e);
             return null;
@@ -420,8 +420,8 @@ public final class LegacyConfigMigrator {
         return result;
     }
 
-    /// Extracts account metadata from a config JSON object and removes the legacy member.
-    static @Nullable AccountMetadataStore extractAccountMetadataStore(JsonObject json) {
+    /// Extracts account metadata and private data from a config JSON object and removes the legacy member.
+    static @Nullable AccountMigrationResult extractAccounts(JsonObject json) {
         Objects.requireNonNull(json);
 
         JsonElement accounts = json.remove("accounts");
@@ -429,55 +429,68 @@ public final class LegacyConfigMigrator {
             return null;
         }
 
-        JsonObject object = new JsonObject();
-        object.add(JsonSchema.PROPERTY_SCHEMA,
-                JsonUtils.GSON.toJsonTree(AccountMetadataStore.CURRENT_SCHEMA, JsonSchema.class));
-        if (accounts instanceof JsonArray) {
-            object.add("accounts", accounts);
+        if (accounts instanceof JsonArray array) {
+            List<JsonObject> accountRecords = new ArrayList<>(array.size());
+            for (JsonElement account : array) {
+                if (account instanceof JsonObject object) {
+                    accountRecords.add(object);
+                }
+            }
+            return migrateLegacyAccounts(accountRecords, false, true);
         }
 
-        AccountMetadataStore result = JsonUtils.GSON.fromJson(object, AccountMetadataStore.class);
-        if (result == null) {
-            result = new AccountMetadataStore();
-        }
-        normalizeLegacyAccountMetadataStore(result);
-        assignLegacyAccountIDs(result, false);
-        return result;
+        return AccountMigrationResult.empty();
     }
 
-    /// Creates the current account metadata store from legacy serialized account records.
+    /// Creates the current account stores from legacy serialized account records.
     ///
     /// @param accounts legacy account records
-    /// @return current account metadata store with legacy field names normalized
+    /// @return current account metadata and private data stores
     @VisibleForTesting
-    static AccountMetadataStore migrateLegacyAccountMetadataStore(List<JsonObject> accounts) {
-        return migrateLegacyAccountMetadataStore(accounts, false);
+    static AccountMigrationResult migrateLegacyAccounts(List<JsonObject> accounts) {
+        return migrateLegacyAccounts(accounts, false);
     }
 
-    /// Creates the current account metadata store from legacy serialized account records.
+    /// Creates the current account stores from legacy serialized account records.
     ///
     /// @param accounts legacy account records
     /// @param userStorage whether the legacy entries come from the shared user account file
-    /// @return current account metadata store with legacy field names normalized
+    /// @return current account metadata and private data stores
     @VisibleForTesting
-    static AccountMetadataStore migrateLegacyAccountMetadataStore(List<JsonObject> accounts, boolean userStorage) {
-        List<JsonObject> migratedAccounts = new ArrayList<>(accounts.size());
-        for (JsonObject account : accounts) {
-            migratedAccounts.add(account.deepCopy());
-        }
-
-        AccountMetadataStore result = AccountMetadataStore.fromRecords(migratedAccounts);
-        normalizeLegacyAccountMetadataStore(result);
-        assignLegacyAccountIDs(result, userStorage);
-        return result;
+    static AccountMigrationResult migrateLegacyAccounts(List<JsonObject> accounts, boolean userStorage) {
+        return migrateLegacyAccounts(accounts, userStorage, false);
     }
 
-    /// Assigns stable account IDs to migrated legacy account entries.
+    /// Creates the current account stores from legacy serialized account records.
     ///
-    /// Missing or duplicate account IDs are replaced with deterministic IDs derived from the legacy selected-account
-    /// reference string.
-    private static void assignLegacyAccountIDs(AccountMetadataStore accountMetadata, boolean userStorage) {
-        assignAccountIDs(accountMetadata, new HashSet<>(), userStorage);
+    /// @param accounts legacy account records
+    /// @param userStorage whether the legacy entries come from the shared user account file
+    /// @param keepSelectedMarker whether to keep the legacy selected marker for selected-account migration
+    /// @return current account metadata and private data stores
+    private static AccountMigrationResult migrateLegacyAccounts(
+            List<JsonObject> accounts,
+            boolean userStorage,
+            boolean keepSelectedMarker) {
+        List<JsonObject> metadataAccounts = new ArrayList<>(accounts.size());
+        AccountPrivateData privateData = new AccountPrivateData();
+        Set<String> usedAccountIDs = new HashSet<>();
+
+        for (JsonObject account : accounts) {
+            MigratedLegacyAccount migrated = migrateLegacyAccountRecord(account);
+            JsonObject metadata = migrated.metadata();
+            if (keepSelectedMarker) {
+                copyMember(account, metadata, "selected");
+            }
+            AccountID accountID = createLegacyAccountID(metadata, usedAccountIDs, userStorage);
+            metadata.addProperty(Account.PROPERTY_ACCOUNT_ID, accountID.toString());
+
+            if (!migrated.privateData().isEmpty()) {
+                privateData.putPrivateData(accountID, migrated.privateData());
+            }
+            metadataAccounts.add(metadata);
+        }
+
+        return new AccountMigrationResult(AccountMetadataStore.fromRecords(metadataAccounts), privateData);
     }
 
     /// Ensures account IDs in one account metadata store do not collide with IDs already used by earlier stores.
@@ -539,96 +552,139 @@ public final class LegacyConfigMigrator {
     }
 
     /// Returns a deterministic seed built from a legacy account's selected-account reference.
-    private static String getLegacyAccountIDSeed(JsonObject account, boolean userStorage) {
-        @Nullable String legacyIdentifier = getLegacyAccountIdentifier(account);
+    private static String getLegacyAccountIDSeed(JsonObject metadata, boolean userStorage) {
+        @Nullable String legacyIdentifier = getLegacyAccountIdentifier(metadata);
         if (legacyIdentifier != null) {
             return userStorage ? LEGACY_GLOBAL_ACCOUNT_PREFIX + legacyIdentifier : legacyIdentifier;
         }
 
-        @Nullable String type = JsonUtils.getString(account, "type");
+        @Nullable String type = JsonUtils.getString(metadata, "type");
         String prefix = userStorage ? LEGACY_GLOBAL_ACCOUNT_PREFIX : "";
         if (type == null) {
-            return prefix + "unknown:" + JsonUtils.GSON.toJson(account);
+            return prefix + "unknown:" + JsonUtils.GSON.toJson(metadata);
         }
 
         return prefix + switch (type) {
             case "offline" -> "offline:"
-                    + accountSeedPart(account, "profileName") + ":"
-                    + accountSeedPart(account, "profileID");
-            case "microsoft" -> "microsoft:" + accountSeedPart(account, "profileID");
+                    + accountSeedPart(metadata, "profileName") + ":"
+                    + accountSeedPart(metadata, "profileID");
+            case "microsoft" -> "microsoft:" + accountSeedPart(metadata, "profileID");
             case "yggdrasil" -> "yggdrasil:"
-                    + accountSeedPart(account, "loginName") + ":"
-                    + accountSeedPart(account, "profileID");
+                    + accountSeedPart(metadata, "loginName") + ":"
+                    + accountSeedPart(metadata, "profileID");
             case "authlibInjector" -> "authlibInjector:"
-                    + accountSeedPart(account, "serverBaseURL") + ":"
-                    + accountSeedPart(account, "loginName") + ":"
-                    + accountSeedPart(account, "profileID");
-            default -> type + ":" + JsonUtils.GSON.toJson(account);
+                    + accountSeedPart(metadata, "serverBaseURL") + ":"
+                    + accountSeedPart(metadata, "loginName") + ":"
+                    + accountSeedPart(metadata, "profileID");
+            default -> type + ":" + JsonUtils.GSON.toJson(metadata);
         };
     }
 
     /// Returns one seed component for deterministic legacy account ID generation.
-    private static String accountSeedPart(JsonObject account, String name) {
-        return Objects.requireNonNullElse(JsonUtils.getString(account, name), "");
+    private static String accountSeedPart(JsonObject metadata, String name) {
+        return Objects.requireNonNullElse(JsonUtils.getString(metadata, name), "");
     }
 
-    /// Renames legacy account fields to the current account metadata and private data field names.
-    private static void normalizeLegacyAccountMetadataStore(AccountMetadataStore accountMetadata) {
-        for (JsonObject account : accountMetadata.getAccounts()) {
-            normalizeLegacyAccountRecord(account);
-        }
-    }
-
-    /// Renames legacy fields in one account entry to the current serialized names.
-    private static void normalizeLegacyAccountRecord(JsonObject account) {
+    /// Creates current metadata and private data records from one legacy account entry.
+    private static MigratedLegacyAccount migrateLegacyAccountRecord(JsonObject account) {
         @Nullable String type = JsonUtils.getString(account, "type");
         if (type == null) {
-            return;
+            return new MigratedLegacyAccount(account.deepCopy(), new JsonObject());
         }
 
-        switch (type) {
-            case "offline" -> {
-                renameJsonMember(account, "username", "profileName");
-                renameJsonMember(account, "uuid", "profileID");
-                if (!account.has("profileID")) {
-                    @Nullable String profileName = JsonUtils.getString(account, "profileName");
-                    if (profileName != null) {
-                        account.addProperty(
-                                "profileID",
-                                OfflineAccountFactory.getUUIDFromUserName(profileName).toString());
-                    }
-                }
-            }
-            case "microsoft" -> {
-                renameJsonMember(account, "uuid", "profileID");
-                renameJsonMember(account, "displayName", "profileName");
-            }
-            case "yggdrasil" -> {
-                renameJsonMember(account, "username", "loginName");
-                renameJsonMember(account, "uuid", "profileID");
-                renameJsonMember(account, "displayName", "profileName");
-            }
-            case "authlibInjector" -> {
-                renameJsonMember(account, "username", "loginName");
-                renameJsonMember(account, "uuid", "profileID");
-                renameJsonMember(account, "displayName", "profileName");
-            }
+        return switch (type) {
+            case "offline" -> migrateLegacyOfflineAccount(account);
+            case "microsoft" -> migrateLegacyMicrosoftAccount(account);
+            case "yggdrasil" -> migrateLegacyYggdrasilAccount(account);
+            case "authlibInjector" -> migrateLegacyAuthlibInjectorAccount(account);
             default -> {
+                JsonObject metadata = account.deepCopy();
+                yield new MigratedLegacyAccount(metadata, new JsonObject());
             }
-        }
-        normalizeProfileID(account);
+        };
     }
 
-    /// Normalizes a profile UUID member to the current stored UUID string form.
-    private static void normalizeProfileID(JsonObject account) {
-        @Nullable String profileID = JsonUtils.getString(account, "profileID");
-        if (profileID == null) {
+    /// Creates current metadata and private data for one legacy offline account.
+    private static MigratedLegacyAccount migrateLegacyOfflineAccount(JsonObject account) {
+        JsonObject metadata = createLegacyAccountMetadata("offline");
+        JsonObject privateData = new JsonObject();
+        addStringMember(metadata, "profileName", JsonUtils.getString(account, "username"));
+        addNormalizedUUIDMember(metadata, "profileID", JsonUtils.getString(account, "uuid"));
+        if (!metadata.has("profileID")) {
+            @Nullable String profileName = JsonUtils.getString(metadata, "profileName");
+            if (profileName != null) {
+                metadata.addProperty("profileID", OfflineAccountFactory.getUUIDFromUserName(profileName).toString());
+            }
+        }
+        copyMember(account, metadata, "skin");
+        return new MigratedLegacyAccount(metadata, privateData);
+    }
+
+    /// Creates current metadata and private data for one legacy Microsoft account.
+    private static MigratedLegacyAccount migrateLegacyMicrosoftAccount(JsonObject account) {
+        JsonObject metadata = createLegacyAccountMetadata("microsoft");
+        JsonObject privateData = new JsonObject();
+        addNormalizedUUIDMember(metadata, "profileID", JsonUtils.getString(account, "uuid"));
+        addStringMember(privateData, "profileName", JsonUtils.getString(account, "displayName"));
+        copyMember(account, privateData, "tokenType");
+        copyMember(account, privateData, "accessToken");
+        copyMember(account, privateData, "refreshToken");
+        copyMember(account, privateData, "notAfter");
+        copyMember(account, privateData, "userid");
+        return new MigratedLegacyAccount(metadata, privateData);
+    }
+
+    /// Creates current metadata and private data for one legacy Yggdrasil account.
+    private static MigratedLegacyAccount migrateLegacyYggdrasilAccount(JsonObject account) {
+        JsonObject metadata = createLegacyAccountMetadata("yggdrasil");
+        JsonObject privateData = new JsonObject();
+        addStringMember(metadata, "loginName", JsonUtils.getString(account, "username"));
+        addNormalizedUUIDMember(metadata, "profileID", JsonUtils.getString(account, "uuid"));
+        addStringMember(privateData, "profileName", JsonUtils.getString(account, "displayName"));
+        copyMember(account, privateData, "clientToken");
+        copyMember(account, privateData, "accessToken");
+        copyMember(account, privateData, "userProperties");
+        return new MigratedLegacyAccount(metadata, privateData);
+    }
+
+    /// Creates current metadata and private data for one legacy authlib-injector account.
+    private static MigratedLegacyAccount migrateLegacyAuthlibInjectorAccount(JsonObject account) {
+        JsonObject metadata = createLegacyAccountMetadata("authlibInjector");
+        JsonObject privateData = new JsonObject();
+        copyMember(account, metadata, "serverBaseURL");
+        addStringMember(metadata, "loginName", JsonUtils.getString(account, "username"));
+        addNormalizedUUIDMember(metadata, "profileID", JsonUtils.getString(account, "uuid"));
+        addStringMember(privateData, "profileName", JsonUtils.getString(account, "displayName"));
+        copyMember(account, privateData, "clientToken");
+        copyMember(account, privateData, "accessToken");
+        copyMember(account, privateData, "userProperties");
+        copyMember(account, privateData, "profileProperties");
+        return new MigratedLegacyAccount(metadata, privateData);
+    }
+
+    /// Creates a metadata object with the account type.
+    private static JsonObject createLegacyAccountMetadata(String type) {
+        JsonObject metadata = new JsonObject();
+        metadata.addProperty("type", type);
+        return metadata;
+    }
+
+    /// Adds a string member when the value is present.
+    private static void addStringMember(JsonObject target, String name, @Nullable String value) {
+        if (value != null) {
+            target.addProperty(name, value);
+        }
+    }
+
+    /// Adds a normalized UUID string member when the value is present and valid.
+    private static void addNormalizedUUIDMember(JsonObject target, String name, @Nullable String value) {
+        if (value == null) {
             return;
         }
 
-        @Nullable String normalized = normalizeUUID(profileID);
+        @Nullable String normalized = normalizeUUID(value);
         if (normalized != null) {
-            account.addProperty("profileID", normalized);
+            target.addProperty(name, normalized);
         }
     }
 
@@ -638,18 +694,6 @@ public final class LegacyConfigMigrator {
             return UUIDs.parse(uuid).toString();
         } catch (IllegalArgumentException e) {
             return null;
-        }
-    }
-
-    /// Renames one JSON member to the current name.
-    private static void renameJsonMember(JsonObject object, String legacyName, String currentName) {
-        @Nullable JsonElement legacyValue = object.remove(legacyName);
-        if (object.has(currentName)) {
-            return;
-        }
-
-        if (legacyValue != null && !legacyValue.isJsonNull()) {
-            object.add(currentName, legacyValue);
         }
     }
 
@@ -716,7 +760,7 @@ public final class LegacyConfigMigrator {
             if (accounts == null) {
                 return null;
             }
-            AccountMetadataStore accountMetadata = migrateLegacyAccountMetadataStore(accounts, true);
+            AccountMetadataStore accountMetadata = migrateLegacyAccounts(accounts, true).metadata();
             assignAccountIDs(accountMetadata, usedAccountIDs, true);
             return accountMetadata;
         } catch (Exception e) {
@@ -749,44 +793,44 @@ public final class LegacyConfigMigrator {
     }
 
     /// Returns whether a serialized account entry matches a legacy selected account string.
-    private static boolean matchesLegacySelectedAccountIdentifier(String identifier, JsonObject account) {
-        return Objects.equals(identifier, getLegacyAccountIdentifier(account));
+    private static boolean matchesLegacySelectedAccountIdentifier(String identifier, JsonObject metadata) {
+        return Objects.equals(identifier, getLegacyAccountIdentifier(metadata));
     }
 
     /// Returns the selected account ID for a serialized account entry.
-    private static @Nullable AccountID getSelectedAccountID(JsonObject account) {
-        return Account.getAccountID(account);
+    private static @Nullable AccountID getSelectedAccountID(JsonObject metadata) {
+        return Account.getAccountID(metadata);
     }
 
-    /// Returns the legacy string identifier for a serialized account entry.
-    private static @Nullable String getLegacyAccountIdentifier(JsonObject account) {
-        @Nullable String type = JsonUtils.getString(account, "type");
+    /// Returns the legacy selected-account string represented by a migrated account metadata entry.
+    private static @Nullable String getLegacyAccountIdentifier(JsonObject metadata) {
+        @Nullable String type = JsonUtils.getString(metadata, "type");
         if (type == null) {
             return null;
         }
 
         return switch (type) {
             case "offline" -> {
-                @Nullable String profileName = JsonUtils.getString(account, "profileName");
+                @Nullable String profileName = JsonUtils.getString(metadata, "profileName");
                 yield profileName != null ? profileName + ":" + profileName : null;
             }
             case "microsoft" -> {
-                @Nullable String profileID = JsonUtils.getString(account, "profileID");
+                @Nullable String profileID = JsonUtils.getString(metadata, "profileID");
                 @Nullable String formattedProfileID = profileID != null ? formatLegacyUUID(profileID) : null;
                 yield formattedProfileID != null ? "microsoft:" + formattedProfileID : null;
             }
             case "yggdrasil" -> {
-                @Nullable String loginName = JsonUtils.getString(account, "loginName");
-                @Nullable String profileID = JsonUtils.getString(account, "profileID");
+                @Nullable String loginName = JsonUtils.getString(metadata, "loginName");
+                @Nullable String profileID = JsonUtils.getString(metadata, "profileID");
                 @Nullable String formattedProfileID = profileID != null ? formatLegacyUUID(profileID) : null;
                 yield loginName != null && formattedProfileID != null
                         ? loginName + ":" + formattedProfileID
                         : null;
             }
             case "authlibInjector" -> {
-                @Nullable String serverBaseURL = JsonUtils.getString(account, "serverBaseURL");
-                @Nullable String loginName = JsonUtils.getString(account, "loginName");
-                @Nullable String profileID = JsonUtils.getString(account, "profileID");
+                @Nullable String serverBaseURL = JsonUtils.getString(metadata, "serverBaseURL");
+                @Nullable String loginName = JsonUtils.getString(metadata, "loginName");
+                @Nullable String profileID = JsonUtils.getString(metadata, "profileID");
                 @Nullable String formattedProfileID = profileID != null ? formatLegacyUUID(profileID) : null;
                 yield serverBaseURL != null && loginName != null && formattedProfileID != null
                         ? serverBaseURL + ":" + loginName + ":" + formattedProfileID
@@ -806,6 +850,14 @@ public final class LegacyConfigMigrator {
         JsonElement element = source.remove(name);
         if (element != null) {
             target.add(name, element);
+        }
+    }
+
+    /// Copies one JSON member from the source object to the target object.
+    private static void copyMember(JsonObject source, JsonObject target, String name) {
+        JsonElement element = source.get(name);
+        if (element != null && !element.isJsonNull()) {
+            target.add(name, element.deepCopy());
         }
     }
 
@@ -1234,17 +1286,35 @@ public final class LegacyConfigMigrator {
     /// @param gameSettingsPresets the detached preset store, or `null` when none was migrated
     /// @param launcherState the detached launcher state, or `null` when none was migrated
     /// @param authlibInjectorServers the detached authlib-injector servers, or `null` when none was migrated
-    /// @param accountMetadata the detached account metadata store, or `null` when none was migrated
+    /// @param accountMigration the detached account metadata and private data stores, or `null` when none was migrated
     record DetachedSettings(
             @Nullable GameDirectories gameDirectories,
             @Nullable GameSettingsPresets gameSettingsPresets,
             @Nullable LauncherState launcherState,
             @Nullable AuthlibInjectorServerList authlibInjectorServers,
-            @Nullable AccountMetadataStore accountMetadata) {
+            @Nullable AccountMigrationResult accountMigration) {
         /// Returns an empty detached settings migration result.
         static DetachedSettings empty() {
             return new DetachedSettings(null, null, null, null, null);
         }
+    }
+
+    /// Account stores migrated from legacy account records.
+    ///
+    /// @param metadata the migrated metadata-only account store
+    /// @param privateData the migrated private account data store
+    record AccountMigrationResult(AccountMetadataStore metadata, AccountPrivateData privateData) {
+        /// Returns an empty account migration result.
+        static AccountMigrationResult empty() {
+            return new AccountMigrationResult(new AccountMetadataStore(), new AccountPrivateData());
+        }
+    }
+
+    /// One migrated legacy account entry split into current metadata and private data records.
+    ///
+    /// @param metadata the migrated account metadata
+    /// @param privateData the migrated account private data
+    private record MigratedLegacyAccount(JsonObject metadata, JsonObject privateData) {
     }
 
     /// Prepared migration data for a legacy config file.
@@ -1269,7 +1339,7 @@ public final class LegacyConfigMigrator {
     /// Result of migrating the legacy shared accounts file.
     ///
     /// @param path the legacy account file path
-    /// @param accountMetadata the migrated account metadata store
-    record UserAccountsMigrationResult(Path path, AccountMetadataStore accountMetadata) {
+    /// @param accounts the migrated account metadata and private data stores
+    record UserAccountsMigrationResult(Path path, AccountMigrationResult accounts) {
     }
 }

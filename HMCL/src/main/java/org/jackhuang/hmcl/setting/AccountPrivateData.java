@@ -30,23 +30,18 @@ import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableMap;
-import org.jackhuang.hmcl.auth.Account;
 import org.jackhuang.hmcl.auth.AccountID;
 import org.jackhuang.hmcl.util.gson.JsonSchema;
 import org.jackhuang.hmcl.util.gson.JsonSerializable;
-import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.gson.ObservableSetting;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.Unmodifiable;
 
 import java.lang.reflect.Type;
-import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.Set;
 
 /// Stores private account data in a protected payload.
 @JsonAdapter(AccountPrivateData.Adapter.class)
@@ -59,18 +54,6 @@ final class AccountPrivateData extends ObservableSetting implements JsonSchemaSe
 
     /// JVM system property selecting the account private data protection mode.
     static final String PROTECTION_PROPERTY = "hmcl.account.privateData.protection";
-
-    /// Private account fields moved out of the metadata store.
-    private static final @Unmodifiable Set<String> PRIVATE_DATA_FIELDS = Set.of(
-            "accessToken",
-            "refreshToken",
-            "clientToken",
-            "profileProperties",
-            "profileName",
-            "userProperties",
-            "tokenType",
-            "notAfter",
-            "userid");
 
     /// Creates an empty account private data store.
     AccountPrivateData() {
@@ -161,59 +144,6 @@ final class AccountPrivateData extends ObservableSetting implements JsonSchemaSe
         return null;
     }
 
-    /// Replaces this private data store from legacy full account records and returns metadata-only records.
-    ///
-    /// @param accountRecords legacy full account records containing both metadata and private data
-    /// @return metadata-only account records
-    List<JsonObject> replaceFromAccountRecords(List<JsonObject> accountRecords) {
-        ExtractedPrivateData extracted = extractFromAccountRecords(accountRecords);
-        privateData.clear();
-        privateData.putAll(extracted.privateData());
-        return extracted.metadataAccounts();
-    }
-
-    /// Extracts private data from legacy full account records.
-    ///
-    /// @param accountRecords legacy full account records containing both metadata and private data
-    /// @return extracted metadata, account IDs, and private data
-    static ExtractedPrivateData extractFromAccountRecords(List<JsonObject> accountRecords) {
-        List<JsonObject> metadataAccounts = new ArrayList<>(accountRecords.size());
-        List<AccountID> accountIDs = new ArrayList<>(accountRecords.size());
-        Map<AccountID, JsonObject> extractedPrivateData = new LinkedHashMap<>();
-
-        for (JsonObject account : accountRecords) {
-            JsonObject metadata = account.deepCopy();
-            @Nullable String type = JsonUtils.getString(metadata, "type");
-            @Nullable AccountID accountID = Account.getAccountID(metadata);
-
-            JsonObject accountPrivateData = new JsonObject();
-            if (accountID != null) {
-                accountIDs.add(accountID);
-                for (String field : PRIVATE_DATA_FIELDS) {
-                    if (!isPrivateDataField(type, field)) {
-                        continue;
-                    }
-                    @Nullable JsonElement value = metadata.remove(field);
-                    if (value != null && !value.isJsonNull()) {
-                        accountPrivateData.add(field, value);
-                    }
-                }
-            }
-
-            if (accountID != null && !accountPrivateData.isEmpty()) {
-                extractedPrivateData.put(accountID, accountPrivateData);
-            }
-            metadataAccounts.add(metadata);
-        }
-
-        return new ExtractedPrivateData(metadataAccounts, accountIDs, extractedPrivateData);
-    }
-
-    /// Returns whether the field should be stored in private data for this account type.
-    private static boolean isPrivateDataField(@Nullable String type, String field) {
-        return !"profileName".equals(field) || !"offline".equals(type);
-    }
-
     /// Returns whether this store contains private data for the account ID.
     ///
     /// @param accountID the stable account ID
@@ -250,17 +180,6 @@ final class AccountPrivateData extends ObservableSetting implements JsonSchemaSe
         for (Map.Entry<AccountID, JsonObject> entry : other.privateData.entrySet()) {
             putPrivateData(entry.getKey(), entry.getValue());
         }
-    }
-
-    /// Private data extracted from legacy full account records.
-    ///
-    /// @param metadataAccounts account entries with private fields removed
-    /// @param accountIDs account IDs for all account entries that can be matched to private data
-    /// @param privateData extracted private data by account ID
-    record ExtractedPrivateData(
-            List<JsonObject> metadataAccounts,
-            List<AccountID> accountIDs,
-            Map<AccountID, JsonObject> privateData) {
     }
 
     /// JSON adapter for [AccountPrivateData].

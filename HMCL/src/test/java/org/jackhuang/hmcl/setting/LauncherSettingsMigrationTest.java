@@ -273,7 +273,8 @@ public final class LauncherSettingsMigrationTest {
                 }
                 """).getAsJsonObject();
 
-        AccountMetadataStore accountMetadata = Objects.requireNonNull(LegacyConfigMigrator.extractAccountMetadataStore(settings));
+        AccountMetadataStore accountMetadata =
+                Objects.requireNonNull(LegacyConfigMigrator.extractAccounts(settings)).metadata();
         assertTrue(LegacyConfigMigrator.migrateLegacySelectedAccount(settings, accountMetadata));
         LauncherSettings launcherSettings = Objects.requireNonNull(LauncherSettings.fromJson(settings));
 
@@ -300,7 +301,8 @@ public final class LauncherSettingsMigrationTest {
                 }
                 """).getAsJsonObject();
 
-        AccountMetadataStore accountMetadata = Objects.requireNonNull(LegacyConfigMigrator.extractAccountMetadataStore(settings));
+        AccountMetadataStore accountMetadata =
+                Objects.requireNonNull(LegacyConfigMigrator.extractAccounts(settings)).metadata();
         assertTrue(LegacyConfigMigrator.migrateLegacySelectedAccount(settings, accountMetadata));
 
         assertEquals(offlineAccountID("Alex"), settings.get("selectedAccount").getAsString());
@@ -323,7 +325,8 @@ public final class LauncherSettingsMigrationTest {
                 }
                 """).getAsJsonObject();
 
-        AccountMetadataStore accountMetadata = Objects.requireNonNull(LegacyConfigMigrator.extractAccountMetadataStore(settings));
+        AccountMetadataStore accountMetadata =
+                Objects.requireNonNull(LegacyConfigMigrator.extractAccounts(settings)).metadata();
         assertTrue(LegacyConfigMigrator.migrateLegacySelectedAccount(settings, accountMetadata));
 
         assertEquals(accountMetadata.getAccounts().get(0).get("accountID").getAsString(),
