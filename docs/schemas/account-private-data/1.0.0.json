@@ -20,7 +20,7 @@
           "const": "hmcl-obfuscated-v1"
         },
         "payload": {
-          "type": "string"
+          "$ref": "#/$defs/obfuscatedPayload"
         }
       }
     },
@@ -56,31 +56,30 @@
     "payload": {}
   },
   "$defs": {
+    "obfuscatedPayload": {
+      "type": "array",
+      "minItems": 4,
+      "maxItems": 4,
+      "items": {
+        "type": "string"
+      }
+    },
     "plainPayload": {
-      "type": "object",
-      "additionalProperties": true,
-      "required": [
-        "entries"
-      ],
-      "properties": {
-        "entries": {
-          "type": "array",
-          "items": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": true,
+        "required": [
+          "accountID",
+          "privateData"
+        ],
+        "properties": {
+          "accountID": {
+            "$ref": "#/$defs/accountID"
+          },
+          "privateData": {
             "type": "object",
-            "additionalProperties": true,
-            "required": [
-              "identifier",
-              "privateData"
-            ],
-            "properties": {
-              "identifier": {
-                "$ref": "#/$defs/accountID"
-              },
-              "privateData": {
-                "type": "object",
-                "additionalProperties": true
-              }
-            }
+            "additionalProperties": true
           }
         }
       }

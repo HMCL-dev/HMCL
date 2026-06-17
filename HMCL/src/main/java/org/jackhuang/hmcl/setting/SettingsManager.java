@@ -595,6 +595,11 @@ public final class SettingsManager {
         try {
             AccountPrivateDataUpdate accountPrivateData =
                     new AccountPrivateDataUpdate(getAccountIDs(metadataAccounts), privateData);
+            if (!canSaveAccountPrivateDataUpdate(accountPrivateData, defaultPrivateData, privateDataStores)) {
+                LOG.warning("Skipped account metadata save because account private data is not writable");
+                return;
+            }
+
             List<AccountPrivateDataStore> changedPrivateDataStores =
                     distributeAccountPrivateData(accountPrivateData, defaultPrivateData, privateDataStores);
             boolean metadataChanged = !metadataAccounts.equals(accounts.getAccounts());
@@ -665,6 +670,35 @@ public final class SettingsManager {
         return new AccountPrivateDataUpdate(
                 getAccountIDs(accounts.metadata().getAccounts()),
                 accounts.privateData().getPrivateData());
+    }
+
+    /// Returns whether private data needed by an account metadata update can be persisted.
+    ///
+    /// The check is performed before metadata is saved so credentials are not removed from account metadata unless
+    /// the matching private data can be written to its target store.
+    private static boolean canSaveAccountPrivateDataUpdate(
+            AccountPrivateDataUpdate update,
+            AccountPrivateDataStore defaultPrivateData,
+            List<AccountPrivateDataStore> privateDataStores) {
+        for (AccountID accountID : update.accountIDs()) {
+            @Nullable JsonObject accountPrivateData = update.privateData().get(accountID);
+            if (accountPrivateData == null || accountPrivateData.isEmpty()) {
+                continue;
+            }
+
+            AccountPrivateDataStore targetPrivateData =
+                    findAccountPrivateDataStore(accountID, defaultPrivateData, privateDataStores);
+            if (targetPrivateData.privateData().isSavable()) {
+                continue;
+            }
+
+            @Nullable JsonObject currentPrivateData =
+                    targetPrivateData.privateData().getPrivateData().get(accountID);
+            if (!Objects.equals(currentPrivateData, accountPrivateData)) {
+                return false;
+            }
+        }
+        return true;
     }
 
     /// Saves one account private data store synchronously.
@@ -771,6 +805,13 @@ public final class SettingsManager {
     /// @param metadata the metadata-only account store
     /// @param privateData the account private data store
     private record AccountMetadataSnapshot(AccountMetadataStore metadata, AccountPrivateData privateData) {
+    }
+
+    /// Account metadata load result.
+    ///
+    /// @param access account metadata file access status
+    /// @param migratedAccountsSaved whether migrated account metadata and private data were saved
+    private record AccountMetadataLoadResult(SettingFileAccess access, boolean migratedAccountsSaved) {
     }
 
     /// Account private data update ready to be distributed among private data stores.
@@ -992,16 +1033,20 @@ public final class SettingsManager {
         userGameAccountPrivateDataAccess = loadUserGameAccountPrivateData();
         gameAccountPrivateDataAccess = loadGameAccountPrivateData();
         userGameAccountsAccess = loadUserGameAccounts();
-        gameAccountsAccess = loadGameAccounts(migratedDetachedSettings.accountMigration());
+        AccountMetadataLoadResult loadedGameAccounts =
+                loadGameAccountsWithResult(migratedDetachedSettings.accountMigration());
+        gameAccountsAccess = loadedGameAccounts.access();
 
         if (Files.exists(Metadata.HMCL_LOCAL_HOME)) {
             checkWritable(Metadata.HMCL_LOCAL_HOME);
         }
 
-        if (legacyConfigMigration != null) {
+        if (legacyConfigMigration != null && loadedGameAccounts.migratedAccountsSaved()) {
             LOG.info("Migrating settings from " + legacyConfigMigration.path() + " to " + SETTINGS_LOCATION);
             FileUtils.saveSafely(SETTINGS_LOCATION, legacyConfigMigration.launcherSettings().toJson());
             LegacyConfigMigrator.completeLegacyConfigMigration(legacyConfigMigration);
+        } else if (legacyConfigMigration != null) {
+            LOG.warning("Skipped legacy config migration because migrated account private data was not saved");
         }
 
         if (launcherSettings.isSavable()) {
@@ -1391,17 +1436,22 @@ public final class SettingsManager {
                     migrated != null ? migrated.metadata() : null);
             userGameAccounts = result.value();
 
-            List<AccountPrivateDataStore> changedPrivateDataStores = migrated != null && newlyCreated
-                    ? distributeAccountPrivateData(
-                            createAccountPrivateDataUpdate(migrated),
-                            new AccountPrivateDataStore(userGameAccountPrivateData(), USER_GAME_ACCOUNT_PRIVATE_DATA_FILE),
-                            List.of(
-                                    new AccountPrivateDataStore(userGameAccountPrivateData(),
-                                            USER_GAME_ACCOUNT_PRIVATE_DATA_FILE),
-                                    new AccountPrivateDataStore(gameAccountPrivateData(), GAME_ACCOUNT_PRIVATE_DATA_FILE)))
+            AccountPrivateDataStore defaultPrivateData =
+                    new AccountPrivateDataStore(userGameAccountPrivateData(), USER_GAME_ACCOUNT_PRIVATE_DATA_FILE);
+            List<AccountPrivateDataStore> privateDataStores = List.of(
+                    new AccountPrivateDataStore(userGameAccountPrivateData(), USER_GAME_ACCOUNT_PRIVATE_DATA_FILE),
+                    new AccountPrivateDataStore(gameAccountPrivateData(), GAME_ACCOUNT_PRIVATE_DATA_FILE));
+            @Nullable AccountPrivateDataUpdate privateDataUpdate = migrated != null && newlyCreated
+                    ? createAccountPrivateDataUpdate(migrated)
+                    : null;
+            boolean canSavePrivateData = privateDataUpdate == null
+                    || canSaveAccountPrivateDataUpdate(privateDataUpdate, defaultPrivateData, privateDataStores);
+            List<AccountPrivateDataStore> changedPrivateDataStores = privateDataUpdate != null && canSavePrivateData
+                    ? distributeAccountPrivateData(privateDataUpdate, defaultPrivateData, privateDataStores)
                     : List.of();
             if ((newlyCreated || !changedPrivateDataStores.isEmpty() || userGameAccounts.isBackupOnNextSave())
-                    && userGameAccounts.isSavable()) {
+                    && userGameAccounts.isSavable()
+                    && canSavePrivateData) {
                 saveAccountMetadataStore(
                         userGameAccounts,
                         USER_GAME_ACCOUNTS_FILE,
@@ -1431,11 +1481,11 @@ public final class SettingsManager {
         }
     }
 
-    /// Loads account metadata.
+    /// Loads account metadata and reports whether migrated account data was persisted.
     ///
     /// @param fallbackGameAccounts the fallback stores used when the account metadata file does not exist
-    /// @return the account metadata file access status
-    private static SettingFileAccess loadGameAccounts(
+    /// @return the account metadata file access status and migration persistence result
+    private static AccountMetadataLoadResult loadGameAccountsWithResult(
             @Nullable LegacyConfigMigrator.AccountMigrationResult fallbackGameAccounts) throws IOException {
         if (gameAccounts != null) {
             throw new IllegalStateException("Game accounts are already loaded");
@@ -1446,17 +1496,22 @@ public final class SettingsManager {
                 GAME_ACCOUNTS_FILE.load(fallbackGameAccounts != null ? fallbackGameAccounts.metadata() : null);
         gameAccounts = result.value();
 
-        List<AccountPrivateDataStore> changedPrivateDataStores = fallbackGameAccounts != null && newlyCreated
-                ? distributeAccountPrivateData(
-                        createAccountPrivateDataUpdate(fallbackGameAccounts),
-                        new AccountPrivateDataStore(gameAccountPrivateData(), GAME_ACCOUNT_PRIVATE_DATA_FILE),
-                        List.of(
-                                new AccountPrivateDataStore(gameAccountPrivateData(), GAME_ACCOUNT_PRIVATE_DATA_FILE),
-                                new AccountPrivateDataStore(userGameAccountPrivateData(),
-                                        USER_GAME_ACCOUNT_PRIVATE_DATA_FILE)))
+        AccountPrivateDataStore defaultPrivateData =
+                new AccountPrivateDataStore(gameAccountPrivateData(), GAME_ACCOUNT_PRIVATE_DATA_FILE);
+        List<AccountPrivateDataStore> privateDataStores = List.of(
+                new AccountPrivateDataStore(gameAccountPrivateData(), GAME_ACCOUNT_PRIVATE_DATA_FILE),
+                new AccountPrivateDataStore(userGameAccountPrivateData(), USER_GAME_ACCOUNT_PRIVATE_DATA_FILE));
+        @Nullable AccountPrivateDataUpdate privateDataUpdate = fallbackGameAccounts != null && newlyCreated
+                ? createAccountPrivateDataUpdate(fallbackGameAccounts)
+                : null;
+        boolean canSavePrivateData = privateDataUpdate == null
+                || canSaveAccountPrivateDataUpdate(privateDataUpdate, defaultPrivateData, privateDataStores);
+        List<AccountPrivateDataStore> changedPrivateDataStores = privateDataUpdate != null && canSavePrivateData
+                ? distributeAccountPrivateData(privateDataUpdate, defaultPrivateData, privateDataStores)
                 : List.of();
         if ((newlyCreated || !changedPrivateDataStores.isEmpty() || gameAccounts.isBackupOnNextSave())
-                && gameAccounts.isSavable()) {
+                && gameAccounts.isSavable()
+                && canSavePrivateData) {
             saveAccountMetadataStore(
                     gameAccounts,
                     GAME_ACCOUNTS_FILE,
@@ -1465,7 +1520,7 @@ public final class SettingsManager {
                     true);
         }
 
-        return result.access();
+        return new AccountMetadataLoadResult(result.access(), canSavePrivateData);
     }
 
     /// Checks whether root is reading per-workspace config data owned by another user.

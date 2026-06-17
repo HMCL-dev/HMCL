@@ -128,6 +128,23 @@ public final class AccountMetadataStoreTest {
         return method;
     }
 
+    /// Returns the reflected account metadata update method.
+    private static Method updateAccountMetadataStoreMethod()
+            throws ReflectiveOperationException {
+        Class<?> privateDataStoreType =
+                Class.forName("org.jackhuang.hmcl.setting.SettingsManager$AccountPrivateDataStore");
+        Method method = SettingsManager.class.getDeclaredMethod(
+                "updateAccountMetadataStore",
+                AccountMetadataStore.class,
+                JsonSettingFile.class,
+                privateDataStoreType,
+                List.class,
+                List.class,
+                Map.class);
+        method.setAccessible(true);
+        return method;
+    }
+
     /// Returns the reflected synchronous forced account metadata overwrite method.
     private static Method backupAndOverwriteAccountMetadataStoreMethod() throws ReflectiveOperationException {
         Method method = SettingsManager.class.getDeclaredMethod(
@@ -168,6 +185,56 @@ public final class AccountMetadataStoreTest {
                 .getAsJsonObject()
                 .get("accountID")
                 .getAsString());
+    }
+
+    /// Tests that account metadata is not saved when the target private data store is not writable.
+    @Test
+    public void doesNotSaveMetadataWhenPrivateDataStoreIsNotSavable()
+            throws ReflectiveOperationException, IOException {
+        try (FileSystem fileSystem = Jimfs.newFileSystem(Configuration.unix())) {
+            Path tempDirectory = fileSystem.getPath("/work");
+            Files.createDirectories(tempDirectory);
+            Path metadataPath = tempDirectory.resolve("accounts.json");
+            Path privateDataPath = tempDirectory.resolve("account-private-data.json");
+            AccountID accountID = AccountID.parse(accountID(1));
+            AccountMetadataStore accountMetadata = AccountMetadataStore.fromRecords(List.of());
+            AccountPrivateData privateData = new AccountPrivateData();
+            privateData.setSavable(false);
+            JsonSettingFile<AccountMetadataStore> metadataFile = new JsonSettingFile<>(
+                    metadataPath,
+                    "test account metadata",
+                    AccountMetadataStore.class,
+                    AccountMetadataStore.CURRENT_SCHEMA,
+                    AccountMetadataStore::new);
+            JsonSettingFile<AccountPrivateData> privateDataFile = new JsonSettingFile<>(
+                    privateDataPath,
+                    "test account private data",
+                    AccountPrivateData.class,
+                    AccountPrivateData.CURRENT_SCHEMA,
+                    AccountPrivateData::new);
+            Object privateDataStore = accountPrivateDataStore(privateData, privateDataFile);
+            Method updateMethod = updateAccountMetadataStoreMethod();
+
+            updateMethod.invoke(
+                    null,
+                    accountMetadata,
+                    metadataFile,
+                    privateDataStore,
+                    List.of(privateDataStore),
+                    List.of(jsonObject(
+                            "type", "microsoft",
+                            "accountID", accountID.toString(),
+                            "profileID", "12345678-1234-1234-1234-1234567890ab")),
+                    Map.of(accountID, jsonObject(
+                            "profileName", "Steve",
+                            "accessToken", "access-token",
+                            "refreshToken", "refresh-token")));
+
+            assertFalse(Files.exists(metadataPath));
+            assertFalse(Files.exists(privateDataPath));
+            assertTrue(accountMetadata.getAccounts().isEmpty());
+            assertTrue(privateData.getPrivateData().isEmpty());
+        }
     }
 
     /// Tests that private data save failures stop metadata from being saved.
