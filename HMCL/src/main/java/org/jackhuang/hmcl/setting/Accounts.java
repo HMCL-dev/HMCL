@@ -170,10 +170,14 @@ public final class Accounts {
             SerializedAccount serialized = serializeAccount(account);
             if (account.isPortable()) {
                 portableMetadata.add(serialized.metadata());
-                portablePrivateData.put(account.getAccountID(), serialized.privateData());
+                if (!serialized.privateData().isEmpty()) {
+                    portablePrivateData.put(account.getAccountID(), serialized.privateData());
+                }
             } else {
                 globalMetadata.add(serialized.metadata());
-                globalPrivateData.put(account.getAccountID(), serialized.privateData());
+                if (!serialized.privateData().isEmpty()) {
+                    globalPrivateData.put(account.getAccountID(), serialized.privateData());
+                }
             }
         }
 

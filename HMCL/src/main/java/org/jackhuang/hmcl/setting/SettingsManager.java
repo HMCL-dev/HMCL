@@ -717,6 +717,9 @@ public final class SettingsManager {
         List<AccountPrivateDataStore> changedPrivateDataStores = new ArrayList<>();
         for (AccountID accountID : extracted.accountIDs()) {
             @Nullable JsonObject accountPrivateData = extracted.privateData().get(accountID);
+            if (accountPrivateData != null && accountPrivateData.isEmpty()) {
+                accountPrivateData = null;
+            }
             AccountPrivateDataStore targetPrivateData = accountPrivateData == null
                     ? defaultPrivateData
                     : findAccountPrivateDataStore(accountID, defaultPrivateData, privateDataStores);

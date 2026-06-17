@@ -459,6 +459,36 @@ public final class AccountMetadataStoreTest {
         assertEquals("user-id", JsonUtils.getString(accountPrivateData, "userid"));
     }
 
+    /// Tests keeping offline account fields in metadata without creating private data.
+    @Test
+    public void keepsOfflineAccountOutOfPrivateData() {
+        AccountPrivateData privateData = new AccountPrivateData();
+        List<JsonObject> metadataAccounts = privateData.replaceFromAccountRecords(List.of(jsonObject(
+                "type", "offline",
+                "accountID", accountID(1),
+                "profileID", "00000000-0000-0000-0000-000000000001",
+                "profileName", "Steve"
+        )));
+        JsonObject metadata = metadataAccounts.get(0);
+        AccountID accountID = Objects.requireNonNull(Account.getAccountID(metadata));
+
+        assertEquals("Steve", JsonUtils.getString(metadata, "profileName"));
+        assertTrue(privateData.getPrivateData().isEmpty());
+        assertNull(AccountPrivateData.findPrivateData(accountID, List.of(privateData)));
+    }
+
+    /// Tests that empty private data objects are treated as no private data.
+    @Test
+    public void removesEmptyPrivateDataEntries() {
+        AccountPrivateData privateData = new AccountPrivateData();
+        AccountID accountID = AccountID.parse(accountID(1));
+
+        privateData.putPrivateData(accountID, jsonObject("accessToken", "access-token"));
+        privateData.putPrivateData(accountID, new JsonObject());
+
+        assertFalse(privateData.containsPrivateData(accountID));
+    }
+
     /// Tests moving Yggdrasil private fields from account metadata into the private data store.
     @Test
     public void extractsYggdrasilPrivateFieldsIntoPrivateData() {

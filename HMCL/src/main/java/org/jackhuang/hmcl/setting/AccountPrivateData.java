@@ -230,12 +230,16 @@ final class AccountPrivateData extends ObservableSetting implements JsonSchemaSe
         return privateData.remove(accountID) != null;
     }
 
-    /// Stores private data for the account ID.
+    /// Stores private data for the account ID, or removes existing private data when the object is empty.
     ///
     /// @param accountID the stable account ID
     /// @param accountPrivateData the private account data
     void putPrivateData(AccountID accountID, JsonObject accountPrivateData) {
-        privateData.put(accountID, accountPrivateData);
+        if (accountPrivateData.isEmpty()) {
+            privateData.remove(accountID);
+        } else {
+            privateData.put(accountID, accountPrivateData);
+        }
     }
 
     /// Replaces this private data store with another store.
@@ -244,7 +248,7 @@ final class AccountPrivateData extends ObservableSetting implements JsonSchemaSe
     void replaceWith(AccountPrivateData other) {
         privateData.clear();
         for (Map.Entry<AccountID, JsonObject> entry : other.privateData.entrySet()) {
-            privateData.put(entry.getKey(), entry.getValue());
+            putPrivateData(entry.getKey(), entry.getValue());
         }
     }
 
@@ -319,7 +323,7 @@ final class AccountPrivateData extends ObservableSetting implements JsonSchemaSe
                     continue;
                 }
 
-                accountPrivateData.privateData.put(accountID, privateDataElement.getAsJsonObject());
+                accountPrivateData.putPrivateData(accountID, privateDataElement.getAsJsonObject());
             }
         }
 
