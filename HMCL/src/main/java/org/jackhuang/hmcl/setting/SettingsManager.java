@@ -1084,7 +1084,7 @@ public final class SettingsManager {
                 return new LoadedLauncherSettings(settings, null, schemaResult.allowSave()
                         ? SettingFileAccess.READ_WRITE
                         : SettingFileAccess.READ_ONLY);
-            } catch (JsonParseException e) {
+            } catch (Exception e) {
                 LOG.warning("Failed to parse launcher settings file: " + SETTINGS_LOCATION, e);
                 LauncherSettings settings = new LauncherSettings();
                 settings.setBackupOnNextSave(true);
