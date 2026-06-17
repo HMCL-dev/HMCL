@@ -17,6 +17,7 @@
  */
 package org.jackhuang.hmcl.setting;
 
+import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParseException;
@@ -37,8 +38,8 @@ import java.util.Objects;
 
 /// Stores a JSON payload using HMCL's portable protection envelope.
 ///
-/// This class is intentionally a weak, portable protection layer. The key is embedded in the launcher so the
-/// protected payload can move between machines, but it should not be treated as device-bound secret storage.
+/// This class is responsible for wrapping payloads with a protection marker and revealing them according to that
+/// marker. Protection modes define whether and how a payload is transformed.
 @NotNullByDefault
 final class ProtectedPayload {
 
@@ -48,8 +49,72 @@ final class ProtectedPayload {
     /// The JSON member containing the envelope payload.
     static final String PROPERTY_PAYLOAD = "payload";
 
+    /// The number of interleaved lanes used by the obfuscated payload.
+    private static final int OBFUSCATED_LANE_COUNT = 4;
+
     /// Prevents instantiation.
     private ProtectedPayload() {
+    }
+
+    /// Splits a Base64 payload into interleaved lanes.
+    ///
+    /// @param payload the Base64 payload to split
+    /// @return the interleaved payload lanes
+    private static JsonArray splitObfuscatedPayload(String payload) {
+        StringBuilder[] lanes = new StringBuilder[OBFUSCATED_LANE_COUNT];
+        for (int i = 0; i < lanes.length; i++) {
+            lanes[i] = new StringBuilder((payload.length() + OBFUSCATED_LANE_COUNT - 1) / OBFUSCATED_LANE_COUNT);
+        }
+
+        for (int i = 0; i < payload.length(); i++) {
+            lanes[i % OBFUSCATED_LANE_COUNT].append(payload.charAt(i));
+        }
+
+        JsonArray result = new JsonArray();
+        for (StringBuilder lane : lanes) {
+            result.add(lane.toString());
+        }
+        return result;
+    }
+
+    /// Joins interleaved Base64 payload lanes from the envelope.
+    ///
+    /// @param envelope the envelope object to read from
+    /// @return the restored Base64 payload
+    /// @throws JsonParseException if the payload lanes are missing or malformed
+    private static String joinObfuscatedPayload(JsonObject envelope) {
+        if (!(envelope.get(PROPERTY_PAYLOAD) instanceof JsonArray lanes)
+                || lanes.size() != OBFUSCATED_LANE_COUNT) {
+            throw new JsonParseException("Missing payload or payload is not a 4-lane array");
+        }
+
+        String[] laneTexts = new String[OBFUSCATED_LANE_COUNT];
+        int totalLength = 0;
+        for (int i = 0; i < OBFUSCATED_LANE_COUNT; i++) {
+            JsonElement lane = lanes.get(i);
+            if (!lane.isJsonPrimitive() || !lane.getAsJsonPrimitive().isString()) {
+                throw new JsonParseException("Protected payload lane is not a string");
+            }
+
+            laneTexts[i] = lane.getAsString();
+            totalLength += laneTexts[i].length();
+            if (i > 0 && laneTexts[i - 1].length() < laneTexts[i].length()) {
+                throw new JsonParseException("Protected payload lanes are malformed");
+            }
+            if (laneTexts[0].length() - laneTexts[i].length() > 1) {
+                throw new JsonParseException("Protected payload lanes are malformed");
+            }
+        }
+
+        StringBuilder result = new StringBuilder(totalLength);
+        for (int position = 0; result.length() < totalLength; position++) {
+            for (String lane : laneTexts) {
+                if (position < lane.length()) {
+                    result.append(lane.charAt(position));
+                }
+            }
+        }
+        return result.toString();
     }
 
     /// Selects how a protected payload is stored in its JSON envelope.
@@ -75,7 +140,10 @@ final class ProtectedPayload {
             }
         },
 
-        /// Stores the payload as a portable obfuscated envelope.
+        /// Stores the payload as a portable weakly obfuscated envelope.
+        ///
+        /// The payload is compressed and split into interleaved strings. This avoids storing private data as directly
+        /// readable JSON, but it should not be treated as device-bound secret storage.
         OBFUSCATED_V1("hmcl-obfuscated-v1") {
             /// Writes the payload into the given envelope.
             @Override
@@ -94,18 +162,14 @@ final class ProtectedPayload {
                 }
 
                 envelope.addProperty(PROPERTY_PROTECTION, id());
-                envelope.addProperty(PROPERTY_PAYLOAD, actualPayload);
+                envelope.add(PROPERTY_PAYLOAD, splitObfuscatedPayload(actualPayload));
             }
 
             /// Reads the payload from the given envelope.
             @Override
             protected JsonElement readPayload(JsonObject envelope) {
                 try {
-                    String encodedPayload = JsonUtils.getString(envelope, PROPERTY_PAYLOAD);
-                    if (encodedPayload == null) {
-                        throw new JsonParseException("Missing payload or payload is not a string");
-                    }
-
+                    String encodedPayload = joinObfuscatedPayload(envelope);
                     byte[] compressedBytes = Base64.getDecoder().decode(encodedPayload);
                     try (var decompressStream = new XZInputStream(new ByteArrayInputStream(compressedBytes));
                          var reader = new InputStreamReader(decompressStream, StandardCharsets.UTF_8)) {

@@ -18,6 +18,7 @@
 package org.jackhuang.hmcl.setting;
 
 import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParseException;
 import com.google.gson.JsonPrimitive;
@@ -50,9 +51,25 @@ public final class ProtectedPayloadTest {
         JsonObject envelope = new JsonObject();
 
         ProtectedPayload.ProtectionMode.OBFUSCATED_V1.write(envelope, entries);
+        JsonArray lanes = envelope.getAsJsonArray(ProtectedPayload.PROPERTY_PAYLOAD);
         JsonArray payload = ProtectedPayload.read(envelope, JsonArray.class);
 
+        assertEquals(4, lanes.size());
+        for (JsonElement lane : lanes) {
+            assertTrue(lane.isJsonPrimitive());
+            assertTrue(lane.getAsJsonPrimitive().isString());
+        }
         assertEquals("value", payload.get(0).getAsJsonObject().get("name").getAsString());
+    }
+
+    /// Tests that obfuscated envelopes reject the old single-string payload shape.
+    @Test
+    public void rejectsSingleStringObfuscatedPayload() {
+        JsonObject envelope = new JsonObject();
+        envelope.addProperty(ProtectedPayload.PROPERTY_PROTECTION, "hmcl-obfuscated-v1");
+        envelope.addProperty(ProtectedPayload.PROPERTY_PAYLOAD, "payload");
+
+        assertThrows(JsonParseException.class, () -> ProtectedPayload.read(envelope, JsonArray.class));
     }
 
     /// Tests that typed reads reject mismatched JSON payload types.
