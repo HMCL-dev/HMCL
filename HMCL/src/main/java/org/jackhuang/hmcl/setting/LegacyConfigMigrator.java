@@ -565,24 +565,28 @@ public final class LegacyConfigMigrator {
         }
 
         return prefix + switch (type) {
-            case "offline" -> "offline:"
-                    + accountSeedPart(metadata, "profileName") + ":"
-                    + accountSeedPart(metadata, "profileID");
-            case "microsoft" -> "microsoft:" + accountSeedPart(metadata, "profileID");
-            case "yggdrasil" -> "yggdrasil:"
-                    + accountSeedPart(metadata, "loginName") + ":"
-                    + accountSeedPart(metadata, "profileID");
-            case "authlibInjector" -> "authlibInjector:"
-                    + accountSeedPart(metadata, "serverBaseURL") + ":"
-                    + accountSeedPart(metadata, "loginName") + ":"
-                    + accountSeedPart(metadata, "profileID");
+            case "offline" -> {
+                String profileName = JsonUtils.getString(metadata, "profileName", "");
+                String profileID = JsonUtils.getString(metadata, "profileID", "");
+                yield "offline:" + profileName + ":" + profileID;
+            }
+            case "microsoft" -> {
+                String profileID = JsonUtils.getString(metadata, "profileID", "");
+                yield "microsoft:" + profileID;
+            }
+            case "yggdrasil" -> {
+                String loginName = JsonUtils.getString(metadata, "loginName", "");
+                String profileID = JsonUtils.getString(metadata, "profileID", "");
+                yield "yggdrasil:" + loginName + ":" + profileID;
+            }
+            case "authlibInjector" -> {
+                String serverBaseURL = JsonUtils.getString(metadata, "serverBaseURL", "");
+                String loginName = JsonUtils.getString(metadata, "loginName", "");
+                String profileID = JsonUtils.getString(metadata, "profileID", "");
+                yield "authlibInjector:" + serverBaseURL + ":" + loginName + ":" + profileID;
+            }
             default -> type + ":" + JsonUtils.GSON.toJson(metadata);
         };
-    }
-
-    /// Returns one seed component for deterministic legacy account ID generation.
-    private static String accountSeedPart(JsonObject metadata, String name) {
-        return Objects.requireNonNullElse(JsonUtils.getString(metadata, name), "");
     }
 
     /// Creates current metadata and private data records from one legacy account entry.
@@ -593,10 +597,56 @@ public final class LegacyConfigMigrator {
         }
 
         return switch (type) {
-            case "offline" -> migrateLegacyOfflineAccount(account);
-            case "microsoft" -> migrateLegacyMicrosoftAccount(account);
-            case "yggdrasil" -> migrateLegacyYggdrasilAccount(account);
-            case "authlibInjector" -> migrateLegacyAuthlibInjectorAccount(account);
+            case "offline" -> {
+                JsonObject metadata = createLegacyAccountMetadata("offline");
+                JsonObject privateData = new JsonObject();
+                addStringMember(metadata, "profileName", JsonUtils.getString(account, "username"));
+                addNormalizedUUIDMember(metadata, "profileID", JsonUtils.getString(account, "uuid"));
+                if (!metadata.has("profileID")) {
+                    @Nullable String profileName = JsonUtils.getString(metadata, "profileName");
+                    if (profileName != null) {
+                        metadata.addProperty("profileID", OfflineAccountFactory.getUUIDFromUserName(profileName).toString());
+                    }
+                }
+                copyMember(account, metadata, "skin");
+                yield new MigratedLegacyAccount(metadata, privateData);
+            }
+            case "microsoft" -> {
+                JsonObject metadata = createLegacyAccountMetadata("microsoft");
+                JsonObject privateData = new JsonObject();
+                addNormalizedUUIDMember(metadata, "profileID", JsonUtils.getString(account, "uuid"));
+                addStringMember(privateData, "profileName", JsonUtils.getString(account, "displayName"));
+                copyMember(account, privateData, "tokenType");
+                copyMember(account, privateData, "accessToken");
+                copyMember(account, privateData, "refreshToken");
+                copyMember(account, privateData, "notAfter");
+                copyMember(account, privateData, "userid");
+                yield new MigratedLegacyAccount(metadata, privateData);
+            }
+            case "yggdrasil" -> {
+                JsonObject metadata = createLegacyAccountMetadata("yggdrasil");
+                JsonObject privateData = new JsonObject();
+                addStringMember(metadata, "loginName", JsonUtils.getString(account, "username"));
+                addNormalizedUUIDMember(metadata, "profileID", JsonUtils.getString(account, "uuid"));
+                addStringMember(privateData, "profileName", JsonUtils.getString(account, "displayName"));
+                copyMember(account, privateData, "clientToken");
+                copyMember(account, privateData, "accessToken");
+                copyMember(account, privateData, "userProperties");
+                yield new MigratedLegacyAccount(metadata, privateData);
+            }
+            case "authlibInjector" -> {
+                JsonObject metadata = createLegacyAccountMetadata("authlibInjector");
+                JsonObject privateData = new JsonObject();
+                copyMember(account, metadata, "serverBaseURL");
+                addStringMember(metadata, "loginName", JsonUtils.getString(account, "username"));
+                addNormalizedUUIDMember(metadata, "profileID", JsonUtils.getString(account, "uuid"));
+                addStringMember(privateData, "profileName", JsonUtils.getString(account, "displayName"));
+                copyMember(account, privateData, "clientToken");
+                copyMember(account, privateData, "accessToken");
+                copyMember(account, privateData, "userProperties");
+                copyMember(account, privateData, "profileProperties");
+                yield new MigratedLegacyAccount(metadata, privateData);
+            }
             default -> {
                 JsonObject metadata = account.deepCopy();
                 yield new MigratedLegacyAccount(metadata, new JsonObject());
@@ -617,48 +667,6 @@ public final class LegacyConfigMigrator {
             }
         }
         copyMember(account, metadata, "skin");
-        return new MigratedLegacyAccount(metadata, privateData);
-    }
-
-    /// Creates current metadata and private data for one legacy Microsoft account.
-    private static MigratedLegacyAccount migrateLegacyMicrosoftAccount(JsonObject account) {
-        JsonObject metadata = createLegacyAccountMetadata("microsoft");
-        JsonObject privateData = new JsonObject();
-        addNormalizedUUIDMember(metadata, "profileID", JsonUtils.getString(account, "uuid"));
-        addStringMember(privateData, "profileName", JsonUtils.getString(account, "displayName"));
-        copyMember(account, privateData, "tokenType");
-        copyMember(account, privateData, "accessToken");
-        copyMember(account, privateData, "refreshToken");
-        copyMember(account, privateData, "notAfter");
-        copyMember(account, privateData, "userid");
-        return new MigratedLegacyAccount(metadata, privateData);
-    }
-
-    /// Creates current metadata and private data for one legacy Yggdrasil account.
-    private static MigratedLegacyAccount migrateLegacyYggdrasilAccount(JsonObject account) {
-        JsonObject metadata = createLegacyAccountMetadata("yggdrasil");
-        JsonObject privateData = new JsonObject();
-        addStringMember(metadata, "loginName", JsonUtils.getString(account, "username"));
-        addNormalizedUUIDMember(metadata, "profileID", JsonUtils.getString(account, "uuid"));
-        addStringMember(privateData, "profileName", JsonUtils.getString(account, "displayName"));
-        copyMember(account, privateData, "clientToken");
-        copyMember(account, privateData, "accessToken");
-        copyMember(account, privateData, "userProperties");
-        return new MigratedLegacyAccount(metadata, privateData);
-    }
-
-    /// Creates current metadata and private data for one legacy authlib-injector account.
-    private static MigratedLegacyAccount migrateLegacyAuthlibInjectorAccount(JsonObject account) {
-        JsonObject metadata = createLegacyAccountMetadata("authlibInjector");
-        JsonObject privateData = new JsonObject();
-        copyMember(account, metadata, "serverBaseURL");
-        addStringMember(metadata, "loginName", JsonUtils.getString(account, "username"));
-        addNormalizedUUIDMember(metadata, "profileID", JsonUtils.getString(account, "uuid"));
-        addStringMember(privateData, "profileName", JsonUtils.getString(account, "displayName"));
-        copyMember(account, privateData, "clientToken");
-        copyMember(account, privateData, "accessToken");
-        copyMember(account, privateData, "userProperties");
-        copyMember(account, privateData, "profileProperties");
         return new MigratedLegacyAccount(metadata, privateData);
     }
 
