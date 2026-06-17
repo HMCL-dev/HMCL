@@ -31,77 +31,20 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Stream;
 
-public final class RemoteAddon {
+public record RemoteAddon(String slug, String author, String title, String description, List<String> categories,
+                          String pageUrl, String iconUrl, IMod data, RemoteAddonRepository.Type repoType) {
 
-    public static final RemoteAddon BROKEN = new RemoteAddon("", "", "RemoteAddon.BROKEN", "", Collections.emptyList(), "", "", new RemoteAddon.IMod() {
+    public static final RemoteAddon BROKEN = new RemoteAddon("", "", "RemoteAddon.BROKEN", "", Collections.emptyList(), "", "", new IMod() {
         @Override
         public List<RemoteAddon> loadDependencies(RemoteAddonRepository modRepository, DownloadProvider downloadProvider) throws IOException {
             throw new IOException();
         }
 
         @Override
-        public Stream<RemoteAddon.Version> loadVersions(RemoteAddonRepository modRepository, DownloadProvider downloadProvider) throws IOException {
+        public Stream<Version> loadVersions(RemoteAddonRepository modRepository, DownloadProvider downloadProvider) throws IOException {
             throw new IOException();
         }
     }, RemoteAddonRepository.Type.MOD);
-
-    private final String slug;
-    private final String author;
-    private final String title;
-    private final String description;
-    private final List<String> categories;
-    private final String pageUrl;
-    private final String iconUrl;
-    private final IMod data;
-    private final RemoteAddonRepository.Type repoType;
-
-    public RemoteAddon(String slug, String author, String title, String description, List<String> categories, String pageUrl, String iconUrl, IMod data, RemoteAddonRepository.Type repoType) {
-        this.slug = slug;
-        this.author = author;
-        this.title = title;
-        this.description = description;
-        this.categories = categories;
-        this.pageUrl = pageUrl;
-        this.iconUrl = iconUrl;
-        this.data = data;
-        this.repoType = repoType;
-    }
-
-    public String getSlug() {
-        return slug;
-    }
-
-    public String getAuthor() {
-        return author;
-    }
-
-    public String getTitle() {
-        return title;
-    }
-
-    public String getDescription() {
-        return description;
-    }
-
-    public List<String> getCategories() {
-        return categories;
-    }
-
-    public String getPageUrl() {
-        return pageUrl;
-    }
-
-    public String getIconUrl() {
-        return iconUrl;
-    }
-
-    public IMod getData() {
-        return data;
-    }
-
-    public RemoteAddonRepository.Type getRepositoryType() {
-        return repoType;
-    }
 
     public enum VersionType {
         Release,

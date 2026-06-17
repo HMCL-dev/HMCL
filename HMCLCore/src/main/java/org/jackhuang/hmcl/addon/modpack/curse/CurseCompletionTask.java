@@ -185,7 +185,7 @@ public final class CurseCompletionTask extends Task<Void> {
      */
     private Path guessFilePath(CurseManifestFile file, DownloadProvider downloadProvider, Path resourcePacksRoot, Path shaderPacksRoot) throws IOException {
         RemoteAddon mod = CurseForgeRemoteAddonRepository.MODS.getModById(downloadProvider, Integer.toString(file.projectID()));
-        int classID = ((CurseForgeRemoteAddonRepository.CurseAddon) mod.getData()).classId();
+        int classID = ((CurseForgeRemoteAddonRepository.CurseAddon) mod.data()).classId();
         String fileName = file.fileName();
         return switch (classID) {
             case 12,       // Resource pack

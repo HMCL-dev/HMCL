@@ -97,8 +97,8 @@ public final class Versions {
                                     installWizardProvider = new ModpackInstallWizardProvider(profile, modpack, version);
                                 else
                                     installWizardProvider = new ModpackInstallWizardProvider(profile, modpack);
-                                if (StringUtils.isNotBlank(mod.getIconUrl()))
-                                    installWizardProvider.setIconUrl(mod.getIconUrl());
+                                if (StringUtils.isNotBlank(mod.iconUrl()))
+                                    installWizardProvider.setIconUrl(mod.iconUrl());
                                 Controllers.getDecorator().startWizard(installWizardProvider);
                             } else if (e instanceof CancellationException) {
                                 Controllers.showToast(i18n("message.cancelled"));
