@@ -107,11 +107,21 @@ final class ProtectedPayload {
             /// @return the alphabet index
             /// @throws JsonParseException if the character is outside the supported alphabet
             private static int base64AlphabetIndex(char character) {
-                int index = BASE64_ALPHABET.indexOf(character);
-                if (index < 0) {
-                    throw new JsonParseException("Protected payload lane contains an unsupported character");
+                if ('A' <= character && character <= 'Z') {
+                    return character - 'A';
+                } else if ('a' <= character && character <= 'z') {
+                    return character - 'a' + 26;
+                } else if ('0' <= character && character <= '9') {
+                    return character - '0' + 52;
+                } else if (character == '+') {
+                    return 62;
+                } else if (character == '/') {
+                    return 63;
+                } else if (character == '=') {
+                    return 64;
                 }
-                return index;
+
+                throw new JsonParseException("Protected payload lane contains an unsupported character");
             }
 
             /// Encodes one Base64 character with its lane-specific fixed mapping.
