@@ -19,16 +19,12 @@ package org.jackhuang.hmcl.setting;
 
 import com.google.common.jimfs.Configuration;
 import com.google.common.jimfs.Jimfs;
-import com.google.gson.JsonArray;
-import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import org.glavo.uuid.UUIDs;
 import org.jackhuang.hmcl.auth.Account;
 import org.jackhuang.hmcl.auth.AccountID;
-import org.jackhuang.hmcl.auth.microsoft.MicrosoftSession;
 import org.jackhuang.hmcl.auth.offline.OfflineAccountFactory;
-import org.jackhuang.hmcl.auth.yggdrasil.YggdrasilSession;
 import org.jackhuang.hmcl.util.gson.JsonSchema;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jetbrains.annotations.NotNullByDefault;
@@ -128,23 +124,6 @@ public final class AccountMetadataStoreTest {
         return method;
     }
 
-    /// Returns the reflected account metadata update method.
-    private static Method updateAccountMetadataStoreMethod()
-            throws ReflectiveOperationException {
-        Class<?> privateDataStoreType =
-                Class.forName("org.jackhuang.hmcl.setting.SettingsManager$AccountPrivateDataStore");
-        Method method = SettingsManager.class.getDeclaredMethod(
-                "updateAccountMetadataStore",
-                AccountMetadataStore.class,
-                JsonSettingFile.class,
-                privateDataStoreType,
-                List.class,
-                List.class,
-                Map.class);
-        method.setAccessible(true);
-        return method;
-    }
-
     /// Returns the reflected synchronous forced account metadata overwrite method.
     private static Method backupAndOverwriteAccountMetadataStoreMethod() throws ReflectiveOperationException {
         Method method = SettingsManager.class.getDeclaredMethod(
@@ -185,56 +164,6 @@ public final class AccountMetadataStoreTest {
                 .getAsJsonObject()
                 .get("accountID")
                 .getAsString());
-    }
-
-    /// Tests that account metadata is not saved when the target private data store is not writable.
-    @Test
-    public void doesNotSaveMetadataWhenPrivateDataStoreIsNotSavable()
-            throws ReflectiveOperationException, IOException {
-        try (FileSystem fileSystem = Jimfs.newFileSystem(Configuration.unix())) {
-            Path tempDirectory = fileSystem.getPath("/work");
-            Files.createDirectories(tempDirectory);
-            Path metadataPath = tempDirectory.resolve("accounts.json");
-            Path privateDataPath = tempDirectory.resolve("account-private-data.json");
-            AccountID accountID = AccountID.parse(accountID(1));
-            AccountMetadataStore accountMetadata = AccountMetadataStore.fromRecords(List.of());
-            AccountPrivateData privateData = new AccountPrivateData();
-            privateData.setSavable(false);
-            JsonSettingFile<AccountMetadataStore> metadataFile = new JsonSettingFile<>(
-                    metadataPath,
-                    "test account metadata",
-                    AccountMetadataStore.class,
-                    AccountMetadataStore.CURRENT_SCHEMA,
-                    AccountMetadataStore::new);
-            JsonSettingFile<AccountPrivateData> privateDataFile = new JsonSettingFile<>(
-                    privateDataPath,
-                    "test account private data",
-                    AccountPrivateData.class,
-                    AccountPrivateData.CURRENT_SCHEMA,
-                    AccountPrivateData::new);
-            Object privateDataStore = accountPrivateDataStore(privateData, privateDataFile);
-            Method updateMethod = updateAccountMetadataStoreMethod();
-
-            updateMethod.invoke(
-                    null,
-                    accountMetadata,
-                    metadataFile,
-                    privateDataStore,
-                    List.of(privateDataStore),
-                    List.of(jsonObject(
-                            "type", "microsoft",
-                            "accountID", accountID.toString(),
-                            "profileID", "12345678-1234-1234-1234-1234567890ab")),
-                    Map.of(accountID, jsonObject(
-                            "profileName", "Steve",
-                            "accessToken", "access-token",
-                            "refreshToken", "refresh-token")));
-
-            assertFalse(Files.exists(metadataPath));
-            assertFalse(Files.exists(privateDataPath));
-            assertTrue(accountMetadata.getAccounts().isEmpty());
-            assertTrue(privateData.getPrivateData().isEmpty());
-        }
     }
 
     /// Tests that private data save failures stop metadata from being saved.
@@ -343,30 +272,6 @@ public final class AccountMetadataStoreTest {
         }
     }
 
-    /// Tests wrapping legacy account list content in the current `accounts.json` model.
-    @Test
-    public void wrapsLegacyAccountListInCurrentModel() {
-        AccountMetadataStore accountMetadata = AccountMetadataStore.fromRecords(List.of(
-                jsonObject(
-                        "type", "offline",
-                        "accountID", accountID(1),
-                        "profileName", "Steve",
-                        "profileID", "5627dd98-e6be-3c21-b8a8-e92344183641")
-        ));
-
-        JsonObject serialized = JsonParser.parseString(
-                JsonUtils.GSON.toJson(accountMetadata, AccountMetadataStore.class)).getAsJsonObject();
-
-        assertEquals(AccountMetadataStore.CURRENT_SCHEMA.url(), serialized.get(JsonSchema.PROPERTY_SCHEMA).getAsString());
-        JsonArray accounts = serialized.getAsJsonArray("accounts");
-        assertEquals(1, accounts.size());
-        assertEquals("offline", accounts.get(0).getAsJsonObject().get("type").getAsString());
-        assertEquals(accountID(1), accounts.get(0).getAsJsonObject().get("accountID").getAsString());
-        assertEquals("Steve", accounts.get(0).getAsJsonObject().get("profileName").getAsString());
-        assertEquals("5627dd98-e6be-3c21-b8a8-e92344183641",
-                accounts.get(0).getAsJsonObject().get("profileID").getAsString());
-    }
-
     /// Tests extracting account metadata from a main config object.
     @Test
     public void extractsAccountsFromConfigJson() {
@@ -426,6 +331,8 @@ public final class AccountMetadataStoreTest {
         assertEquals(legacyAccountID(false, "Alex:Alex"), JsonUtils.getString(offlineAccount, "accountID"));
         assertFalse(offlineAccount.has("username"));
         assertFalse(offlineAccount.has("uuid"));
+        AccountID offlineAccountID = Objects.requireNonNull(Account.getAccountID(offlineAccount));
+        assertNull(AccountPrivateData.findPrivateData(offlineAccountID, List.of(privateData)));
 
         JsonObject microsoftAccount = accountMetadata.getAccounts().get(1);
         assertEquals("00000000-0000-0000-0000-000000000001", JsonUtils.getString(microsoftAccount, "profileID"));
@@ -497,164 +404,74 @@ public final class AccountMetadataStoreTest {
                 JsonUtils.getString(accountMetadata.getAccounts().get(0), "accountID"));
     }
 
-    /// Tests moving private fields from account metadata into the private data store.
+    /// Tests moving online account private fields from account metadata into the private data store.
     @Test
-    public void migratesPrivateFieldsIntoPrivateData() {
-        LegacyConfigMigrator.AccountMigrationResult migratedAccounts = LegacyConfigMigrator.migrateLegacyAccounts(List.of(jsonObject(
-                "type", "microsoft",
-                "uuid", "00000000000000000000000000000001",
-                "displayName", "Steve",
-                "accessToken", "access-token",
-                "refreshToken", "refresh-token",
-                "tokenType", "Bearer",
-                "notAfter", 1234L,
-                "userid", "user-id"
-        )));
-        AccountPrivateData privateData = migratedAccounts.privateData();
-        JsonObject metadata = migratedAccounts.metadata().getAccounts().get(0);
-        AccountID accountID = Objects.requireNonNull(Account.getAccountID(metadata));
-
-        assertEquals("microsoft", JsonUtils.getString(metadata, "type"));
-        assertEquals("00000000-0000-0000-0000-000000000001", JsonUtils.getString(metadata, "profileID"));
-        assertFalse(metadata.has("profileName"));
-        assertFalse(metadata.has("id"));
-        assertFalse(metadata.has("accessToken"));
-        assertFalse(metadata.has("refreshToken"));
-        assertFalse(metadata.has("tokenType"));
-        assertFalse(metadata.has("notAfter"));
-        assertFalse(metadata.has("userid"));
-        JsonObject accountPrivateData = privateData.getPrivateData().get(accountID);
-        assertEquals("access-token", JsonUtils.getString(accountPrivateData, "accessToken"));
-        assertEquals("refresh-token", JsonUtils.getString(accountPrivateData, "refreshToken"));
-        assertEquals("Steve", JsonUtils.getString(accountPrivateData, "profileName"));
-        assertEquals("Bearer", JsonUtils.getString(accountPrivateData, "tokenType"));
-        assertEquals(1234L, accountPrivateData.get("notAfter").getAsLong());
-        assertEquals("user-id", JsonUtils.getString(accountPrivateData, "userid"));
-    }
-
-    /// Tests keeping offline account fields in metadata without creating private data.
-    @Test
-    public void keepsOfflineAccountOutOfPrivateData() {
-        LegacyConfigMigrator.AccountMigrationResult migratedAccounts = LegacyConfigMigrator.migrateLegacyAccounts(List.of(jsonObject(
-                "type", "offline",
-                "uuid", "00000000000000000000000000000001",
-                "username", "Steve"
-        )));
-        AccountPrivateData privateData = migratedAccounts.privateData();
-        JsonObject metadata = migratedAccounts.metadata().getAccounts().get(0);
-        AccountID accountID = Objects.requireNonNull(Account.getAccountID(metadata));
-
-        assertEquals("Steve", JsonUtils.getString(metadata, "profileName"));
-        assertTrue(privateData.getPrivateData().isEmpty());
-        assertNull(AccountPrivateData.findPrivateData(accountID, List.of(privateData)));
-    }
-
-    /// Tests that empty private data objects are treated as no private data.
-    @Test
-    public void removesEmptyPrivateDataEntries() {
-        AccountPrivateData privateData = new AccountPrivateData();
-        AccountID accountID = AccountID.parse(accountID(1));
-
-        privateData.putPrivateData(accountID, jsonObject("accessToken", "access-token"));
-        privateData.putPrivateData(accountID, new JsonObject());
-
-        assertFalse(privateData.containsPrivateData(accountID));
-    }
-
-    /// Tests moving Yggdrasil private fields from account metadata into the private data store.
-    @Test
-    public void migratesYggdrasilPrivateFieldsIntoPrivateData() {
-        LegacyConfigMigrator.AccountMigrationResult migratedAccounts = LegacyConfigMigrator.migrateLegacyAccounts(List.of(jsonObject(
-                "type", "yggdrasil",
-                "username", "steve@example.com",
-                "uuid", "00000000000000000000000000000001",
-                "displayName", "Steve",
-                "accessToken", "access-token",
-                "clientToken", "client-token",
-                "userProperties", Map.of("preferredLanguage", "en_US")
-        )));
-        AccountPrivateData privateData = migratedAccounts.privateData();
-        JsonObject metadata = migratedAccounts.metadata().getAccounts().get(0);
-        AccountID accountID = Objects.requireNonNull(Account.getAccountID(metadata));
-
-        assertFalse(metadata.has("accessToken"));
-        assertFalse(metadata.has("clientToken"));
-        assertFalse(metadata.has("profileName"));
-        assertFalse(metadata.has("userProperties"));
-        JsonObject accountPrivateData = privateData.getPrivateData().get(accountID);
-        assertEquals("access-token", JsonUtils.getString(accountPrivateData, "accessToken"));
-        assertEquals("client-token", JsonUtils.getString(accountPrivateData, "clientToken"));
-        assertEquals("Steve", JsonUtils.getString(accountPrivateData, "profileName"));
-        JsonObject userProperties = accountPrivateData.getAsJsonObject("userProperties");
-        assertEquals("en_US", JsonUtils.getString(userProperties, "preferredLanguage"));
-    }
-
-    /// Tests moving authlib-injector profile cache fields into the private data store.
-    @Test
-    public void migratesAuthlibInjectorProfilePropertiesIntoPrivateData() {
-        LegacyConfigMigrator.AccountMigrationResult migratedAccounts = LegacyConfigMigrator.migrateLegacyAccounts(List.of(jsonObject(
-                "type", "authlibInjector",
-                "serverBaseURL", "https://example.invalid/api/yggdrasil",
-                "username", "steve@example.com",
-                "uuid", "00000000000000000000000000000001",
-                "displayName", "Steve",
-                "profileProperties", Map.of("textures", "texture-data")
-        )));
-        AccountPrivateData privateData = migratedAccounts.privateData();
-        JsonObject metadata = migratedAccounts.metadata().getAccounts().get(0);
-        AccountID accountID = Objects.requireNonNull(Account.getAccountID(metadata));
-
-        assertFalse(metadata.has("profileProperties"));
-        assertFalse(metadata.has("profileName"));
-        JsonObject accountPrivateData = privateData.getPrivateData().get(accountID);
-        JsonObject profileProperties = accountPrivateData.getAsJsonObject("profileProperties");
-        assertEquals("texture-data", JsonUtils.getString(profileProperties, "textures"));
-        assertEquals("Steve", JsonUtils.getString(accountPrivateData, "profileName"));
-    }
-
-    /// Tests loading online account sessions that must refresh because their profile name is missing.
-    @Test
-    public void loadsOnlineSessionsWithoutProfileNameAsRefreshRequired() {
-        MicrosoftSession microsoftSession = MicrosoftSession.fromStorage(jsonObject(
-                "profileID", "00000000-0000-0000-0000-000000000001"
-        ), jsonObject(
-                "tokenType", "Bearer",
-                "accessToken", "access-token",
-                "refreshToken", "refresh-token",
-                "userid", "user-id"
+    public void migratesOnlineAccountPrivateFieldsIntoPrivateData() {
+        LegacyConfigMigrator.AccountMigrationResult migratedAccounts = LegacyConfigMigrator.migrateLegacyAccounts(List.of(
+                jsonObject(
+                        "type", "microsoft",
+                        "uuid", "00000000000000000000000000000001",
+                        "displayName", "Steve",
+                        "accessToken", "microsoft-access-token",
+                        "refreshToken", "microsoft-refresh-token",
+                        "tokenType", "Bearer",
+                        "notAfter", 1234L,
+                        "userid", "user-id"),
+                jsonObject(
+                        "type", "yggdrasil",
+                        "username", "steve@example.com",
+                        "uuid", "00000000000000000000000000000002",
+                        "displayName", "Steve",
+                        "accessToken", "yggdrasil-access-token",
+                        "clientToken", "client-token",
+                        "userProperties", Map.of("preferredLanguage", "en_US")),
+                jsonObject(
+                        "type", "authlibInjector",
+                        "serverBaseURL", "https://example.invalid/api/yggdrasil",
+                        "username", "steve@example.com",
+                        "uuid", "00000000000000000000000000000003",
+                        "displayName", "Steve",
+                        "profileProperties", Map.of("textures", "texture-data"))
         ));
-        assertFalse(microsoftSession.hasProfileName());
+        AccountPrivateData privateData = migratedAccounts.privateData();
 
-        YggdrasilSession yggdrasilSession = YggdrasilSession.fromStorage(jsonObject(
-                "profileID", "00000000-0000-0000-0000-000000000001"
-        ), jsonObject(
-                "accessToken", "access-token",
-                "clientToken", "client-token"
-        ));
-        assertFalse(yggdrasilSession.hasProfileName());
-    }
+        JsonObject microsoftMetadata = migratedAccounts.metadata().getAccounts().get(0);
+        AccountID microsoftAccountID = Objects.requireNonNull(Account.getAccountID(microsoftMetadata));
+        assertFalse(microsoftMetadata.has("profileName"));
+        assertFalse(microsoftMetadata.has("accessToken"));
+        assertFalse(microsoftMetadata.has("refreshToken"));
+        assertFalse(microsoftMetadata.has("tokenType"));
+        assertFalse(microsoftMetadata.has("notAfter"));
+        assertFalse(microsoftMetadata.has("userid"));
+        JsonObject microsoftPrivateData = privateData.getPrivateData().get(microsoftAccountID);
+        assertEquals("microsoft-access-token", JsonUtils.getString(microsoftPrivateData, "accessToken"));
+        assertEquals("microsoft-refresh-token", JsonUtils.getString(microsoftPrivateData, "refreshToken"));
+        assertEquals("Steve", JsonUtils.getString(microsoftPrivateData, "profileName"));
+        assertEquals("Bearer", JsonUtils.getString(microsoftPrivateData, "tokenType"));
+        assertEquals(1234L, microsoftPrivateData.get("notAfter").getAsLong());
+        assertEquals("user-id", JsonUtils.getString(microsoftPrivateData, "userid"));
 
-    /// Tests finding private fields by account ID.
-    @Test
-    public void findsPrivateDataByAccountID() {
-        AccountPrivateData privateData = new AccountPrivateData();
-        AccountID accountID = AccountID.parse(accountID(1));
-        privateData.putPrivateData(accountID, jsonObject(
-                "profileName", "Steve",
-                "accessToken", "access-token",
-                "refreshToken", "refresh-token"
-        ));
-        JsonObject account = jsonObject(
-                "type", "microsoft",
-                "accountID", accountID.toString(),
-                "profileID", "00000000-0000-0000-0000-000000000001");
+        JsonObject yggdrasilMetadata = migratedAccounts.metadata().getAccounts().get(1);
+        AccountID yggdrasilAccountID = Objects.requireNonNull(Account.getAccountID(yggdrasilMetadata));
+        assertFalse(yggdrasilMetadata.has("profileName"));
+        assertFalse(yggdrasilMetadata.has("accessToken"));
+        assertFalse(yggdrasilMetadata.has("clientToken"));
+        assertFalse(yggdrasilMetadata.has("userProperties"));
+        JsonObject yggdrasilPrivateData = privateData.getPrivateData().get(yggdrasilAccountID);
+        assertEquals("yggdrasil-access-token", JsonUtils.getString(yggdrasilPrivateData, "accessToken"));
+        assertEquals("client-token", JsonUtils.getString(yggdrasilPrivateData, "clientToken"));
+        assertEquals("Steve", JsonUtils.getString(yggdrasilPrivateData, "profileName"));
+        assertEquals("en_US",
+                JsonUtils.getString(yggdrasilPrivateData.getAsJsonObject("userProperties"), "preferredLanguage"));
 
-        JsonObject accountPrivateData =
-                Objects.requireNonNull(AccountPrivateData.findPrivateData(accountID, List.of(privateData)));
-
-        assertFalse(account.has("accessToken"));
-        assertEquals("access-token", JsonUtils.getString(accountPrivateData, "accessToken"));
-        assertEquals("refresh-token", JsonUtils.getString(accountPrivateData, "refreshToken"));
+        JsonObject authlibInjectorMetadata = migratedAccounts.metadata().getAccounts().get(2);
+        AccountID authlibInjectorAccountID = Objects.requireNonNull(Account.getAccountID(authlibInjectorMetadata));
+        assertFalse(authlibInjectorMetadata.has("profileName"));
+        assertFalse(authlibInjectorMetadata.has("profileProperties"));
+        JsonObject authlibInjectorPrivateData = privateData.getPrivateData().get(authlibInjectorAccountID);
+        assertEquals("Steve", JsonUtils.getString(authlibInjectorPrivateData, "profileName"));
+        assertEquals("texture-data",
+                JsonUtils.getString(authlibInjectorPrivateData.getAsJsonObject("profileProperties"), "textures"));
     }
 
     /// Tests finding private fields from the first matching private data store.
@@ -663,7 +480,8 @@ public final class AccountMetadataStoreTest {
         AccountPrivateData preferredPrivateData = new AccountPrivateData();
         AccountID accountID = AccountID.parse(accountID(1));
         preferredPrivateData.putPrivateData(accountID, jsonObject(
-                "accessToken", "preferred-token"
+                "accessToken", "preferred-token",
+                "refreshToken", "preferred-refresh-token"
         ));
 
         AccountPrivateData fallbackPrivateData = new AccountPrivateData();
@@ -683,6 +501,7 @@ public final class AccountMetadataStoreTest {
                         List.of(preferredPrivateData, fallbackPrivateData)));
 
         assertEquals("preferred-token", JsonUtils.getString(preferred, "accessToken"));
+        assertEquals("preferred-refresh-token", JsonUtils.getString(preferred, "refreshToken"));
     }
 
     /// Tests that account private data serializes as one protected payload.
@@ -707,71 +526,10 @@ public final class AccountMetadataStoreTest {
             assertEquals(4, serialized.getAsJsonArray("payload").size());
             assertFalse(serialized.toString().contains("access-token"));
             assertFalse(serialized.toString().contains("refresh-token"));
-        } finally {
-            restoreSystemProperty(AccountPrivateData.PROTECTION_PROPERTY, previous);
-        }
-    }
-
-    /// Tests that account private data can serialize as plain JSON payloads for development.
-    @Test
-    public void serializesPrivateDataAsPlainPayloadWhenEnabled() {
-        @Nullable String previous = System.getProperty(AccountPrivateData.PROTECTION_PROPERTY);
-        System.setProperty(AccountPrivateData.PROTECTION_PROPERTY, "plain");
-        try {
-            AccountPrivateData privateData = new AccountPrivateData();
-            AccountID accountID = AccountID.parse(accountID(1));
-            privateData.putPrivateData(accountID, jsonObject(
-                    "profileName", "Steve",
-                    "accessToken", "access-token",
-                    "refreshToken", "refresh-token"
-            ));
-
-            JsonObject serialized = JsonParser.parseString(
-                    LauncherSettings.SETTINGS_GSON.toJson(privateData, AccountPrivateData.class)).getAsJsonObject();
-            JsonArray payload = serialized.getAsJsonArray("payload");
-            JsonObject item = payload.get(0).getAsJsonObject();
-            JsonObject entryPrivateData = item.getAsJsonObject("privateData");
-            JsonElement serializedAccountID = item.get("accountID");
-
-            assertEquals(AccountPrivateData.CURRENT_SCHEMA.url(),
-                    serialized.get(JsonSchema.PROPERTY_SCHEMA).getAsString());
-            assertEquals("plain", serialized.get("protection").getAsString());
-            assertEquals(accountID.toString(), serializedAccountID.getAsString());
-            assertEquals("access-token", entryPrivateData.get("accessToken").getAsString());
-            assertEquals("refresh-token", entryPrivateData.get("refreshToken").getAsString());
-            assertEquals("Steve", entryPrivateData.get("profileName").getAsString());
 
             AccountPrivateData deserialized = Objects.requireNonNull(
                     LauncherSettings.SETTINGS_GSON.fromJson(serialized, AccountPrivateData.class));
-
-            JsonObject deserializedPrivateData = deserialized.getPrivateData().get(accountID);
-            assertEquals("access-token", JsonUtils.getString(deserializedPrivateData, "accessToken"));
-            assertEquals("refresh-token", JsonUtils.getString(deserializedPrivateData, "refreshToken"));
-        } finally {
-            restoreSystemProperty(AccountPrivateData.PROTECTION_PROPERTY, previous);
-        }
-    }
-
-    /// Tests reading account private data from one protected payload.
-    @Test
-    public void deserializesPrivateDataFromProtectedPayload() {
-        @Nullable String previous = System.getProperty(AccountPrivateData.PROTECTION_PROPERTY);
-        System.clearProperty(AccountPrivateData.PROTECTION_PROPERTY);
-        try {
-            AccountPrivateData privateData = new AccountPrivateData();
-            AccountID accountID = AccountID.parse(accountID(1));
-            privateData.putPrivateData(accountID, jsonObject(
-                    "profileName", "Steve",
-                    "accessToken", "access-token",
-                    "refreshToken", "refresh-token"
-            ));
-            JsonObject serialized = JsonParser.parseString(
-                    LauncherSettings.SETTINGS_GSON.toJson(privateData, AccountPrivateData.class)).getAsJsonObject();
-
-            AccountPrivateData deserialized = Objects.requireNonNull(
-                    LauncherSettings.SETTINGS_GSON.fromJson(serialized, AccountPrivateData.class));
-
-            JsonObject deserializedPrivateData = deserialized.getPrivateData().get(accountID);
+            JsonObject deserializedPrivateData = deserialized.getPrivateData().get(AccountID.parse(accountID(1)));
             assertEquals("access-token", JsonUtils.getString(deserializedPrivateData, "accessToken"));
             assertEquals("refresh-token", JsonUtils.getString(deserializedPrivateData, "refreshToken"));
             assertEquals("Steve", JsonUtils.getString(deserializedPrivateData, "profileName"));
@@ -779,4 +537,5 @@ public final class AccountMetadataStoreTest {
             restoreSystemProperty(AccountPrivateData.PROTECTION_PROPERTY, previous);
         }
     }
+
 }

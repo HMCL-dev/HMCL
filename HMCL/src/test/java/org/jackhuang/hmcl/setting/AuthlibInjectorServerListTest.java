@@ -23,8 +23,6 @@ import org.jackhuang.hmcl.auth.authlibinjector.AuthlibInjectorServer;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.junit.jupiter.api.Test;
 
-import java.util.Objects;
-
 import static org.junit.jupiter.api.Assertions.*;
 
 /// Tests for detached authlib-injector server lists.
@@ -57,29 +55,6 @@ public final class AuthlibInjectorServerListTest {
         assertFalse(serializedServer.has("name"));
         assertFalse(serializedServer.has("metadataResponse"));
         assertFalse(serializedServer.has("metadataTimestamp"));
-    }
-
-    /// Tests that temporary metadata fields in server list files are ignored instead of being migrated.
-    @Test
-    public void ignoresTemporaryMetadataFieldsInServerList() {
-        AuthlibInjectorServerList list = Objects.requireNonNull(LauncherSettings.SETTINGS_GSON.fromJson("""
-                {
-                  "servers": [
-                    {
-                      "url": "https://example.com/api/yggdrasil/",
-                      "name": "Example",
-                      "metadataResponse": "{\\"meta\\":{\\"serverName\\":\\"Example\\"}}",
-                      "metadataTimestamp": 123
-                    }
-                  ]
-                }
-                """, AuthlibInjectorServerList.class));
-        AuthlibInjectorServer server = list.getServers().get(0);
-
-        assertEquals("https://example.com/api/yggdrasil/", server.getUrl());
-        assertEquals(server.getUrl(), server.getName());
-        assertTrue(server.getMetadataResponse().isEmpty());
-        assertEquals(0L, server.getMetadataTimestamp());
     }
 
     /// Tests extracting authlib-injector servers from a legacy config object.

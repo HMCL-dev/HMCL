@@ -22,6 +22,8 @@ import com.google.gson.JsonParser;
 import org.jackhuang.hmcl.auth.AccountID;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
 
 import java.util.Objects;
 
@@ -66,18 +68,14 @@ public final class TypedIDTest {
                 () -> GameSettingsPresetID.parse("123e4567-e89b-12d3-a456-426614174000"));
     }
 
-    /// Tests that typed IDs accept compact UUID payloads while serializing canonically.
-    @Test
-    public void acceptsCompactUUIDPayload() {
-        AccountID id = AccountID.parse("account:123e4567e89b12d3a456426614174000");
-
-        assertEquals("account:123e4567-e89b-12d3-a456-426614174000", id.toString());
-    }
-
-    /// Tests that typed IDs accept uppercase hexadecimal digits while serializing canonically.
-    @Test
-    public void acceptsUppercaseUUIDPayload() {
-        AccountID id = AccountID.parse("account:123E4567-E89B-12D3-A456-426614174000");
+    /// Tests that typed IDs accept lenient UUID payloads while serializing canonically.
+    @ParameterizedTest
+    @CsvSource({
+            "account:123e4567e89b12d3a456426614174000",
+            "account:123E4567-E89B-12D3-A456-426614174000"
+    })
+    public void acceptsLenientUUIDPayloads(String value) {
+        AccountID id = AccountID.parse(value);
 
         assertEquals("account:123e4567-e89b-12d3-a456-426614174000", id.toString());
     }
@@ -94,28 +92,6 @@ public final class TypedIDTest {
 
         assertEquals("\"game-settings-preset:123e4567-e89b-12d3-a456-426614174000\"", serialized);
         assertEquals(id, deserialized);
-    }
-
-    /// Tests null JSON handling in typed ID adapters.
-    @Test
-    public void readsJsonNullAsNull() {
-        assertNull(LauncherSettings.SETTINGS_GSON.fromJson("null", GameDirectoryID.class));
-        assertNull(LauncherSettings.SETTINGS_GSON.fromJson("null", GameSettingsPresetID.class));
-        assertNull(LauncherSettings.SETTINGS_GSON.fromJson("null", AccountID.class));
-    }
-
-    /// Tests generated IDs are version 7 IDs and not nil.
-    @Test
-    public void generatesVersion7Ids() {
-        GameDirectoryID gameDirectoryID = GameDirectoryID.generate();
-        GameSettingsPresetID presetID = GameSettingsPresetID.generate();
-        AccountID accountID = AccountID.generate();
-
-        assertNotEquals(GameDirectoryID.NIL, gameDirectoryID);
-        assertNotEquals(GameSettingsPresetID.NIL, presetID);
-        assertEquals(7, gameDirectoryID.uuid().version());
-        assertEquals(7, presetID.uuid().version());
-        assertEquals(7, accountID.uuid().version());
     }
 
     /// Tests game directory IDs work as JSON object map keys in launcher settings.

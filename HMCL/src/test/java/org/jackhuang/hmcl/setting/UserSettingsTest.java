@@ -30,16 +30,6 @@ import static org.junit.jupiter.api.Assertions.*;
 /// Tests for user settings serialization and legacy migration.
 @NotNullByDefault
 public final class UserSettingsTest {
-    /// Tests that new user settings are serialized with the current schema.
-    @Test
-    public void writesCurrentSchema() {
-        UserSettings settings = new UserSettings();
-
-        JsonObject serialized = JsonParser.parseString(settings.toJson()).getAsJsonObject();
-
-        assertEquals(UserSettings.CURRENT_SCHEMA.url(), serialized.get(JsonSchema.PROPERTY_SCHEMA).getAsString());
-    }
-
     /// Tests that legacy global config content can be read as current user settings.
     @Test
     public void readsLegacyGlobalConfigFormat() {

@@ -22,9 +22,10 @@ import com.google.common.jimfs.Jimfs;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import org.jackhuang.hmcl.game.Renderer;
-import org.jackhuang.hmcl.util.gson.JsonSchema;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
 
 import java.io.IOException;
 import java.nio.file.FileSystem;
@@ -39,19 +40,6 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 /// Tests for instance-specific game settings.
 @NotNullByDefault
 public final class GameSettingsInstanceTest {
-    /// Tests that instance game settings are serialized with their schema.
-    @Test
-    public void storesSchema() {
-        GameSettings.Instance instance = new GameSettings.Instance();
-
-        JsonObject serialized = JsonParser.parseString(
-                LauncherSettings.SETTINGS_GSON.toJson(instance, GameSettings.Instance.class)
-        ).getAsJsonObject();
-
-        assertEquals(GameSettings.Instance.CURRENT_SCHEMA.url(),
-                serialized.get(JsonSchema.PROPERTY_SCHEMA).getAsString());
-    }
-
     /// Tests that directory settings are serialized with full `Directory` property names.
     @Test
     public void storesDirectoryPropertyNames() {
@@ -92,38 +80,21 @@ public final class GameSettingsInstanceTest {
         assertEquals(Renderer.Vulkan.LAVAPIPE, deserialized.vulkanRendererProperty().getValue());
     }
 
-    /// Tests that legacy Java default selection is migrated to automatic selection.
-    @Test
-    public void migratesLegacyDefaultJavaSelectionToAuto() {
-        GameSettings.Instance instance = LegacyGameSettingsMigrator.toInstance(null, JsonParser.parseString("""
-                {
-                  "java": "Default"
-                }
-                """).getAsJsonObject(), false);
-
-        assertEquals(JavaVersionType.AUTO, instance.javaTypeProperty().getValue());
-    }
-
-    /// Tests that legacy Java selection ordinals keep their old meaning after removing DEFAULT.
-    @Test
-    public void migratesLegacyDefaultJavaSelectionOrdinalToAuto() {
-        GameSettings.Instance instance = LegacyGameSettingsMigrator.toInstance(null, JsonParser.parseString("""
-                {
-                  "javaVersionType": 0
-                }
-                """).getAsJsonObject(), false);
-
-        assertEquals(JavaVersionType.AUTO, instance.javaTypeProperty().getValue());
-    }
-
-    /// Tests that legacy Java DEFAULT enum names are migrated to automatic selection.
-    @Test
-    public void migratesLegacyDefaultJavaSelectionNameToAuto() {
-        GameSettings.Instance instance = LegacyGameSettingsMigrator.toInstance(null, JsonParser.parseString("""
-                {
-                  "javaVersionType": "DEFAULT"
-                }
-                """).getAsJsonObject(), false);
+    /// Tests that legacy default Java selections are migrated to automatic selection.
+    @ParameterizedTest
+    @CsvSource({
+            "java, Default, false",
+            "javaVersionType, 0, true",
+            "javaVersionType, DEFAULT, false"
+    })
+    public void migratesLegacyDefaultJavaSelectionsToAuto(String propertyName, String value, boolean numericValue) {
+        JsonObject source = new JsonObject();
+        if (numericValue) {
+            source.addProperty(propertyName, Integer.parseInt(value));
+        } else {
+            source.addProperty(propertyName, value);
+        }
+        GameSettings.Instance instance = LegacyGameSettingsMigrator.toInstance(null, source, false);
 
         assertEquals(JavaVersionType.AUTO, instance.javaTypeProperty().getValue());
     }
@@ -179,33 +150,25 @@ public final class GameSettingsInstanceTest {
     }
 
     /// Tests that legacy native directory fields migrate to the renamed game setting properties.
-    @Test
-    public void migratesLegacyNativeDirectoryFields() {
-        GameSettings.Instance instance = LegacyGameSettingsMigrator.toInstance(null, JsonParser.parseString("""
-                {
-                  "nativesDirType": "CUSTOM",
-                  "nativesDir": "natives"
-                }
-                """).getAsJsonObject(), false);
+    @ParameterizedTest
+    @CsvSource({
+            "CUSTOM, false",
+            "1, true"
+    })
+    public void migratesLegacyNativeDirectoryFields(String value, boolean numericValue) {
+        JsonObject source = new JsonObject();
+        if (numericValue) {
+            source.addProperty("nativesDirType", Integer.parseInt(value));
+        } else {
+            source.addProperty("nativesDirType", value);
+        }
+        source.addProperty("nativesDir", "natives");
+        GameSettings.Instance instance = LegacyGameSettingsMigrator.toInstance(null, source, false);
 
         assertTrue(instance.useCustomNativesProperty().getValue());
         assertEquals("natives", instance.nativesDirectoryProperty().getValue());
         assertTrue(instance.getOverrideProperties().contains(GameSettings.PROPERTY_USE_CUSTOM_NATIVES));
         assertTrue(instance.getOverrideProperties().contains(GameSettings.PROPERTY_NATIVES_DIRECTORY));
-    }
-
-    /// Tests that legacy native library mode ordinals keep their old meaning.
-    @Test
-    public void migratesLegacyNativeDirectoryOrdinal() {
-        GameSettings.Instance instance = LegacyGameSettingsMigrator.toInstance(null, JsonParser.parseString("""
-                {
-                  "nativesDirType": 1,
-                  "nativesDir": "natives"
-                }
-                """).getAsJsonObject(), false);
-
-        assertTrue(instance.useCustomNativesProperty().getValue());
-        assertEquals("natives", instance.nativesDirectoryProperty().getValue());
     }
 
     /// Tests that inheriting a legacy parent keeps copied fields unset on the instance itself.

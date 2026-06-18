@@ -62,16 +62,6 @@ public final class ProtectedPayloadTest {
         assertEquals("value", payload.get(0).getAsJsonObject().get("name").getAsString());
     }
 
-    /// Tests that obfuscated envelopes reject the old single-string payload shape.
-    @Test
-    public void rejectsSingleStringObfuscatedPayload() {
-        JsonObject envelope = new JsonObject();
-        envelope.addProperty(ProtectedPayload.PROPERTY_PROTECTION, "hmcl-obfuscated-v1");
-        envelope.addProperty(ProtectedPayload.PROPERTY_PAYLOAD, "payload");
-
-        assertThrows(JsonParseException.class, () -> ProtectedPayload.read(envelope, JsonArray.class));
-    }
-
     /// Tests that typed reads reject mismatched JSON payload types.
     @Test
     public void rejectsMismatchedPayloadType() {

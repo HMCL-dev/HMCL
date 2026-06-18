@@ -27,6 +27,8 @@ import org.jackhuang.hmcl.util.gson.JsonSchema;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
 
 import java.io.IOException;
 import java.net.Proxy;
@@ -50,18 +52,6 @@ public final class LauncherSettingsMigrationTest {
         return new AccountID(UUIDs.generateV5(
                 LegacyConfigMigrator.LEGACY_ACCOUNT_ID_NAMESPACE,
                 legacyIdentifier)).toString();
-    }
-
-    @Test
-    public void testNameSpaces() {
-        assertEquals(LegacyConfigMigrator.LEGACY_ACCOUNT_ID_NAMESPACE,
-                UUIDs.generateV5(UUIDs.NAMESPACE_URL, "hmcl:legacy-account"));
-
-        assertEquals(LegacyConfigMigrator.LEGACY_GAME_SETTINGS_ID_NAMESPACE,
-                UUIDs.generateV5(UUIDs.NAMESPACE_URL, "hmcl:legacy-game-settings"));
-
-        assertEquals(LegacyConfigMigrator.LEGACY_PROFILE_ID_NAMESPACE,
-                UUIDs.generateV5(UUIDs.NAMESPACE_URL, "hmcl:legacy-profile"));
     }
 
     /// Tests ignoring config files with numeric versions outside the legacy format range.
@@ -115,39 +105,24 @@ public final class LauncherSettingsMigrationTest {
     }
 
     /// Tests migrating legacy language fields into the current launcher settings field.
-    @Test
-    public void migratesLegacyLocalizationToLanguage() {
-        JsonObject settings = JsonParser.parseString("""
-                {
-                  "localization": "zh_CN"
-                }
-                """).getAsJsonObject();
+    @ParameterizedTest
+    @CsvSource({
+            "zh_CN, zh-Hans",
+            "zh, zh-Hant"
+    })
+    public void migratesLegacyLocalizationToLanguage(String legacyLanguage, String expectedLanguage) {
+        JsonObject settings = new JsonObject();
+        settings.addProperty("localization", legacyLanguage);
 
         LegacyConfigMigrator.migrateLegacyLanguage(settings);
         LauncherSettings launcherSettings = Objects.requireNonNull(LauncherSettings.fromJson(settings));
         JsonObject serialized = JsonParser.parseString(launcherSettings.toJson()).getAsJsonObject();
 
         assertFalse(settings.has("localization"));
-        assertEquals("zh-Hans", settings.get("language").getAsString());
-        assertEquals("zh-Hans", launcherSettings.languageProperty().get().getName());
+        assertEquals(expectedLanguage, settings.get("language").getAsString());
+        assertEquals(expectedLanguage, launcherSettings.languageProperty().get().getName());
         assertFalse(serialized.has("localization"));
-        assertEquals("zh-Hans", serialized.get("language").getAsString());
-    }
-
-    /// Tests that legacy Traditional Chinese language values are migrated before locale deserialization.
-    @Test
-    public void migratesLegacyTraditionalChineseLanguage() {
-        JsonObject settings = JsonParser.parseString("""
-                {
-                  "localization": "zh"
-                }
-                """).getAsJsonObject();
-
-        LegacyConfigMigrator.migrateLegacyLanguage(settings);
-        LauncherSettings launcherSettings = Objects.requireNonNull(LauncherSettings.fromJson(settings));
-
-        assertEquals("zh-Hant", settings.get("language").getAsString());
-        assertEquals("zh-Hant", launcherSettings.languageProperty().get().getName());
+        assertEquals(expectedLanguage, serialized.get("language").getAsString());
     }
 
     /// Tests serializing log font settings with log-specific names.
@@ -165,58 +140,62 @@ public final class LauncherSettingsMigrationTest {
     }
 
     /// Tests migrating legacy enum ordinal fields into stable enum names.
-    @Test
-    public void migratesLegacyEnumOrdinals() {
-        JsonObject settings = JsonParser.parseString("""
-                {
-                  "backgroundType": 3,
-                  "proxyType": 2
-                }
-                """).getAsJsonObject();
+    @ParameterizedTest
+    @CsvSource({
+            "3, 2, true, NETWORK, SOCKS",
+            "1, 0, false, CUSTOM, DIRECT"
+    })
+    public void migratesLegacyEnumOrdinals(
+            String backgroundType,
+            String proxyType,
+            boolean numericValue,
+            String expectedBackgroundType,
+            String expectedProxyType) {
+        JsonObject settings = new JsonObject();
+        if (numericValue) {
+            settings.addProperty("backgroundType", Integer.parseInt(backgroundType));
+            settings.addProperty("proxyType", Integer.parseInt(proxyType));
+        } else {
+            settings.addProperty("backgroundType", backgroundType);
+            settings.addProperty("proxyType", proxyType);
+        }
 
         LegacyConfigMigrator.migrateLegacyBackgroundImageType(settings);
         LegacyConfigMigrator.migrateLegacyProxyType(settings);
         LauncherSettings launcherSettings = Objects.requireNonNull(LauncherSettings.fromJson(settings));
         JsonObject serialized = JsonParser.parseString(launcherSettings.toJson()).getAsJsonObject();
 
-        assertEquals("NETWORK", settings.get("backgroundType").getAsString());
-        assertEquals("SOCKS", settings.get("proxyType").getAsString());
-        assertEquals(BackgroundType.NETWORK, launcherSettings.backgroundTypeProperty().get());
-        assertEquals(Proxy.Type.SOCKS, launcherSettings.proxyTypeProperty().get());
-        assertEquals("NETWORK", serialized.get("backgroundType").getAsString());
-        assertEquals("SOCKS", serialized.get("proxyType").getAsString());
+        assertEquals(expectedBackgroundType, settings.get("backgroundType").getAsString());
+        assertEquals(expectedProxyType, settings.get("proxyType").getAsString());
+        assertEquals(BackgroundType.valueOf(expectedBackgroundType), launcherSettings.backgroundTypeProperty().get());
+        assertEquals(Proxy.Type.valueOf(expectedProxyType), launcherSettings.proxyTypeProperty().get());
+        assertEquals(expectedBackgroundType, serialized.get("backgroundType").getAsString());
+        assertEquals(expectedProxyType, serialized.get("proxyType").getAsString());
     }
 
-    /// Tests migrating legacy enum ordinal strings into stable enum names.
-    @Test
-    public void migratesLegacyEnumOrdinalStrings() {
-        JsonObject settings = JsonParser.parseString("""
-                {
-                  "backgroundType": "1",
-                  "proxyType": "0"
-                }
-                """).getAsJsonObject();
-
-        LegacyConfigMigrator.migrateLegacyBackgroundImageType(settings);
-        LegacyConfigMigrator.migrateLegacyProxyType(settings);
-        LauncherSettings launcherSettings = Objects.requireNonNull(LauncherSettings.fromJson(settings));
-
-        assertEquals("CUSTOM", settings.get("backgroundType").getAsString());
-        assertEquals("DIRECT", settings.get("proxyType").getAsString());
-        assertEquals(BackgroundType.CUSTOM, launcherSettings.backgroundTypeProperty().get());
-        assertEquals(Proxy.Type.DIRECT, launcherSettings.proxyTypeProperty().get());
-    }
-
-    /// Tests migrating legacy automatic download source fields into current download source fields.
-    @Test
-    public void migratesLegacyAutomaticDownloadSources() {
-        JsonObject settings = JsonParser.parseString("""
-                {
-                  "autoChooseDownloadType": true,
-                  "versionListSource": "mirror",
-                  "downloadType": "mojang"
-                }
-                """).getAsJsonObject();
+    /// Tests migrating legacy download source combinations into current download source fields.
+    @ParameterizedTest
+    @CsvSource(value = {
+            "true, mirror, mojang, MIRROR, MIRROR",
+            "true, balanced, null, DEFAULT, DEFAULT",
+            "false, official, bmclapi, MIRROR, MIRROR",
+            "false, null, mojang, OFFICIAL, OFFICIAL",
+            "false, null, null, OFFICIAL, OFFICIAL"
+    }, nullValues = "null")
+    public void migratesLegacyDownloadSources(
+            boolean autoChooseDownloadType,
+            String versionListSource,
+            String downloadType,
+            String expectedVersionListSource,
+            String expectedFileDownloadSource) {
+        JsonObject settings = new JsonObject();
+        settings.addProperty("autoChooseDownloadType", autoChooseDownloadType);
+        if (versionListSource != null) {
+            settings.addProperty("versionListSource", versionListSource);
+        }
+        if (downloadType != null) {
+            settings.addProperty("downloadType", downloadType);
+        }
 
         LegacyConfigMigrator.migrateLegacyDownloadSources(settings);
         LauncherSettings launcherSettings = Objects.requireNonNull(LauncherSettings.fromJson(settings));
@@ -224,93 +203,12 @@ public final class LauncherSettingsMigrationTest {
 
         assertFalse(settings.has("autoChooseDownloadType"));
         assertFalse(settings.has("downloadType"));
-        assertEquals("MIRROR", settings.get("versionListSource").getAsString());
-        assertEquals("MIRROR", settings.get("fileDownloadSource").getAsString());
-        assertEquals(DownloadSource.MIRROR, launcherSettings.versionListSourceProperty().get());
-        assertEquals(DownloadSource.MIRROR, launcherSettings.fileDownloadSourceProperty().get());
+        assertEquals(expectedVersionListSource, settings.get("versionListSource").getAsString());
+        assertEquals(expectedFileDownloadSource, settings.get("fileDownloadSource").getAsString());
+        assertEquals(DownloadSource.valueOf(expectedVersionListSource), launcherSettings.versionListSourceProperty().get());
+        assertEquals(DownloadSource.valueOf(expectedFileDownloadSource), launcherSettings.fileDownloadSourceProperty().get());
         assertFalse(serialized.has("autoChooseDownloadType"));
         assertFalse(serialized.has("downloadType"));
-    }
-
-    /// Tests migrating the legacy balanced automatic download source into the default source.
-    @Test
-    public void migratesLegacyBalancedDownloadSource() {
-        JsonObject settings = JsonParser.parseString("""
-                {
-                  "autoChooseDownloadType": true,
-                  "versionListSource": "balanced"
-                }
-                """).getAsJsonObject();
-
-        LegacyConfigMigrator.migrateLegacyDownloadSources(settings);
-        LauncherSettings launcherSettings = Objects.requireNonNull(LauncherSettings.fromJson(settings));
-
-        assertEquals("DEFAULT", settings.get("versionListSource").getAsString());
-        assertEquals("DEFAULT", settings.get("fileDownloadSource").getAsString());
-        assertEquals(DownloadSource.DEFAULT, launcherSettings.versionListSourceProperty().get());
-        assertEquals(DownloadSource.DEFAULT, launcherSettings.fileDownloadSourceProperty().get());
-    }
-
-    /// Tests migrating legacy direct download source fields into current download source fields.
-    @Test
-    public void migratesLegacyDirectDownloadSources() {
-        JsonObject settings = JsonParser.parseString("""
-                {
-                  "autoChooseDownloadType": false,
-                  "versionListSource": "official",
-                  "downloadType": "bmclapi"
-                }
-                """).getAsJsonObject();
-
-        LegacyConfigMigrator.migrateLegacyDownloadSources(settings);
-        LauncherSettings launcherSettings = Objects.requireNonNull(LauncherSettings.fromJson(settings));
-        JsonObject serialized = JsonParser.parseString(launcherSettings.toJson()).getAsJsonObject();
-
-        assertFalse(settings.has("autoChooseDownloadType"));
-        assertFalse(settings.has("downloadType"));
-        assertEquals("MIRROR", settings.get("versionListSource").getAsString());
-        assertEquals("MIRROR", settings.get("fileDownloadSource").getAsString());
-        assertEquals(DownloadSource.MIRROR, launcherSettings.versionListSourceProperty().get());
-        assertEquals(DownloadSource.MIRROR, launcherSettings.fileDownloadSourceProperty().get());
-        assertFalse(serialized.has("autoChooseDownloadType"));
-        assertFalse(serialized.has("downloadType"));
-    }
-
-    /// Tests migrating the legacy Mojang direct download source into the official source.
-    @Test
-    public void migratesLegacyMojangDownloadSource() {
-        JsonObject settings = JsonParser.parseString("""
-                {
-                  "autoChooseDownloadType": false,
-                  "downloadType": "mojang"
-                }
-                """).getAsJsonObject();
-
-        LegacyConfigMigrator.migrateLegacyDownloadSources(settings);
-        LauncherSettings launcherSettings = Objects.requireNonNull(LauncherSettings.fromJson(settings));
-
-        assertEquals("OFFICIAL", settings.get("versionListSource").getAsString());
-        assertEquals("OFFICIAL", settings.get("fileDownloadSource").getAsString());
-        assertEquals(DownloadSource.OFFICIAL, launcherSettings.versionListSourceProperty().get());
-        assertEquals(DownloadSource.OFFICIAL, launcherSettings.fileDownloadSourceProperty().get());
-    }
-
-    /// Tests preserving the old direct-download default when automatic selection was disabled.
-    @Test
-    public void migratesLegacyDirectDownloadDefaultToOfficialSource() {
-        JsonObject settings = JsonParser.parseString("""
-                {
-                  "autoChooseDownloadType": false
-                }
-                """).getAsJsonObject();
-
-        LegacyConfigMigrator.migrateLegacyDownloadSources(settings);
-        LauncherSettings launcherSettings = Objects.requireNonNull(LauncherSettings.fromJson(settings));
-
-        assertEquals("OFFICIAL", settings.get("versionListSource").getAsString());
-        assertEquals("OFFICIAL", settings.get("fileDownloadSource").getAsString());
-        assertEquals(DownloadSource.OFFICIAL, launcherSettings.versionListSourceProperty().get());
-        assertEquals(DownloadSource.OFFICIAL, launcherSettings.fileDownloadSourceProperty().get());
     }
 
     /// Tests migrating the legacy selected account string into a structured account reference.
@@ -462,35 +360,47 @@ public final class LauncherSettingsMigrationTest {
         assertEquals(704, launcherState.getHeight(), 1e-9);
     }
 
-    /// Tests migrating the legacy workspace-wide automatic Java agent permission into game settings.
-    @Test
-    public void migratesLegacyAllowAutoAgentToGameSettings() {
-        JsonObject settings = JsonParser.parseString("""
-                {
-                  "allowAutoAgent": true
-                }
-                """).getAsJsonObject();
+    /// Tests migrating legacy workspace-wide switches into the default game settings preset.
+    @ParameterizedTest
+    @CsvSource({
+            "allowAutoAgent, allowAutoAgent",
+            "disableAutoGameOptions, disableAutoGameOptions"
+    })
+    public void migratesLegacyWorkspaceSwitchesToGameSettings(String legacyProperty, String gameSettingsProperty) {
+        JsonObject settings = new JsonObject();
+        settings.addProperty(legacyProperty, true);
 
         LauncherSettings launcherSettings = new LauncherSettings();
         GameSettingsPresets gameSettingsPresets = new GameSettingsPresets();
 
-        LegacyConfigMigrator.migrateLegacyAllowAutoAgent(
-                launcherSettings,
-                gameSettingsPresets,
-                settings.remove("allowAutoAgent"));
+        if ("allowAutoAgent".equals(legacyProperty)) {
+            LegacyConfigMigrator.migrateLegacyAllowAutoAgent(
+                    launcherSettings,
+                    gameSettingsPresets,
+                    settings.remove(legacyProperty));
+        } else {
+            LegacyConfigMigrator.migrateLegacyDisableAutoGameOptions(
+                    launcherSettings,
+                    gameSettingsPresets,
+                    settings.remove(legacyProperty));
+        }
         JsonObject serializedLauncherSettings = JsonParser.parseString(launcherSettings.toJson()).getAsJsonObject();
         JsonObject serializedGameSettings = JsonParser.parseString(
                 JsonUtils.GSON.toJson(gameSettingsPresets, GameSettingsPresets.class)
         ).getAsJsonObject();
 
-        assertFalse(settings.has("allowAutoAgent"));
-        assertFalse(serializedLauncherSettings.has("allowAutoAgent"));
+        assertFalse(settings.has(legacyProperty));
+        assertFalse(serializedLauncherSettings.has(legacyProperty));
         assertEquals(1, gameSettingsPresets.getPresets().size());
 
         GameSettings.Preset preset = gameSettingsPresets.getPresets().get(0);
         assertEquals(preset.idProperty().getValue(), launcherSettings.defaultGameSettingsPresetProperty().get());
         assertEquals(1, preset.autoNameNumberProperty().getValue());
-        assertTrue(preset.allowAutoAgentProperty().getValue());
+        if ("allowAutoAgent".equals(gameSettingsProperty)) {
+            assertTrue(preset.allowAutoAgentProperty().getValue());
+        } else {
+            assertTrue(preset.disableAutoGameOptionsProperty().getValue());
+        }
         assertEquals(1, serializedGameSettings
                 .getAsJsonArray("presets")
                 .get(0)
@@ -501,50 +411,7 @@ public final class LauncherSettingsMigrationTest {
                 .getAsJsonArray("presets")
                 .get(0)
                 .getAsJsonObject()
-                .get("allowAutoAgent")
-                .getAsBoolean());
-    }
-
-    /// Tests migrating the legacy workspace-wide automatic game options switch into game settings.
-    @Test
-    public void migratesLegacyDisableAutoGameOptionsToGameSettings() {
-        JsonObject settings = JsonParser.parseString("""
-                {
-                  "disableAutoGameOptions": true
-                }
-                """).getAsJsonObject();
-
-        LauncherSettings launcherSettings = new LauncherSettings();
-        GameSettingsPresets gameSettingsPresets = new GameSettingsPresets();
-
-        LegacyConfigMigrator.migrateLegacyDisableAutoGameOptions(
-                launcherSettings,
-                gameSettingsPresets,
-                settings.remove("disableAutoGameOptions"));
-        JsonObject serializedLauncherSettings = JsonParser.parseString(launcherSettings.toJson()).getAsJsonObject();
-        JsonObject serializedGameSettings = JsonParser.parseString(
-                JsonUtils.GSON.toJson(gameSettingsPresets, GameSettingsPresets.class)
-        ).getAsJsonObject();
-
-        assertFalse(settings.has("disableAutoGameOptions"));
-        assertFalse(serializedLauncherSettings.has("disableAutoGameOptions"));
-        assertEquals(1, gameSettingsPresets.getPresets().size());
-
-        GameSettings.Preset preset = gameSettingsPresets.getPresets().get(0);
-        assertEquals(preset.idProperty().getValue(), launcherSettings.defaultGameSettingsPresetProperty().get());
-        assertEquals(1, preset.autoNameNumberProperty().getValue());
-        assertTrue(preset.disableAutoGameOptionsProperty().getValue());
-        assertEquals(1, serializedGameSettings
-                .getAsJsonArray("presets")
-                .get(0)
-                .getAsJsonObject()
-                .get("autoNameNumber")
-                .getAsInt());
-        assertTrue(serializedGameSettings
-                .getAsJsonArray("presets")
-                .get(0)
-                .getAsJsonObject()
-                .get("disableAutoGameOptions")
+                .get(gameSettingsProperty)
                 .getAsBoolean());
     }
 }

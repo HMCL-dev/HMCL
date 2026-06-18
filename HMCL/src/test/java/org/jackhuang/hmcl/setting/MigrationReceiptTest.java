@@ -65,25 +65,11 @@ public final class MigrationReceiptTest {
 
             MigrationReceipt.save(receipt, source);
             Files.writeString(copied, Files.readString(source));
-
-            assertTrue(MigrationReceipt.matches(receipt, copied));
-        }
-    }
-
-    /// Tests that a receipt does not store the legacy source path.
-    @Test
-    public void doesNotStoreSourcePath() throws IOException {
-        try (FileSystem fileSystem = Jimfs.newFileSystem(Configuration.unix())) {
-            Path tempDir = createMigrationReceiptTestDirectory(fileSystem, "pathless");
-            Path source = tempDir.resolve("hmcl.json");
-            Path receipt = tempDir.resolve("settings.migration-receipt.json");
-            Files.writeString(source, "{\"language\":\"en\"}");
-
-            MigrationReceipt.save(receipt, source);
-
             JsonObject receiptObject = JsonUtils.fromJsonFile(receipt, JsonObject.class);
+
             assertFalse(receiptObject.has("source"));
             assertTrue(receiptObject.has("sourceSha256"));
+            assertTrue(MigrationReceipt.matches(receipt, copied));
         }
     }
 

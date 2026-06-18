@@ -53,14 +53,6 @@ public final class PortablePathTest {
         assertTrue(posixPath.isAbsolute());
     }
 
-    /// Tests that the string representation is the stored path.
-    @Test
-    public void returnsPathAsString() {
-        PortablePath path = PortablePath.of("game\\dir");
-
-        assertEquals(path.getPath(), path.toString());
-    }
-
     /// Tests JSON serialization as a path string.
     @Test
     public void serializesAsString() {

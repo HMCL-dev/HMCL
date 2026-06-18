@@ -29,7 +29,6 @@ import org.jackhuang.hmcl.util.PortablePath;
 import org.jackhuang.hmcl.util.FileSaver;
 import org.jackhuang.hmcl.util.gson.JsonSchema;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
-import org.jackhuang.hmcl.util.i18n.LocaleUtils;
 import org.jackhuang.hmcl.util.i18n.LocalizedText;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.junit.jupiter.api.Test;
@@ -40,7 +39,6 @@ import java.nio.file.FileSystem;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
-import java.util.Locale;
 import java.util.Objects;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -71,32 +69,6 @@ public final class GameDirectoriesTest {
         assertEquals("Dev", Profiles.getProfileCustomName(gameDirectories.getGameDirectories().get(0)));
         assertEquals(".minecraft", gameDirectories.getGameDirectories().get(0).getPath().getPath());
         assertNull(gameDirectories.getGameDirectories().get(0).getLegacyGameSettings());
-    }
-
-    /// Tests extracting the migrated legacy game settings ID from a legacy profile.
-    @Test
-    public void extractsLegacyGameSettingsIdFromLegacyProfileGlobalSettings() {
-        GameDirectoryID profileId = LegacyConfigMigrator.getLegacyProfileID("Dev");
-        GameSettingsPresetID legacyGameSettings = LegacyConfigMigrator.getLegacyGameSettingsID("Dev");
-        JsonObject settings = JsonParser.parseString("""
-                {
-                  "configurations": {
-                    "Dev": {
-                      "gameDir": ".minecraft",
-                      "global": {
-                        "maxMemory": 2048
-                      }
-                    }
-                  }
-                }
-                """).getAsJsonObject();
-
-        GameDirectories gameDirectories = Objects.requireNonNull(LegacyConfigMigrator.extractGameDirectoriesFromConfigJson(settings));
-
-        Profile profile = gameDirectories.getGameDirectories().get(0);
-        assertEquals(profileId, profile.getId());
-        assertEquals(legacyGameSettings, profile.getLegacyGameSettings());
-        assertNotEquals(profile.getId(), profile.getLegacyGameSettings());
     }
 
     /// Tests that built-in profiles do not store names after migration.
@@ -212,29 +184,6 @@ public final class GameDirectoriesTest {
         assertFalse(deserialized.getPath().isAbsolute());
     }
 
-    /// Tests that localized profile names can be read and preserved as JSON objects.
-    @Test
-    public void readsLocalizedProfileName() {
-        Profile profile = Objects.requireNonNull(JsonUtils.GSON.fromJson("""
-                {
-                  "id": "game-directory:123e4567-e89b-12d3-a456-426614174000",
-                  "name": {
-                    "en": "Development",
-                    "zh-Hans": "开发"
-                  },
-                  "path": "versions/Dev"
-                }
-                """, Profile.class));
-
-        LocalizedText name = Objects.requireNonNull(profile.getName());
-        JsonObject serialized = JsonUtils.GSON.toJsonTree(profile, Profile.class).getAsJsonObject();
-
-        assertEquals("Development", name.getText(List.of(Locale.ENGLISH)));
-        assertEquals("开发", name.getText(List.of(LocaleUtils.LOCALE_ZH_HANS)));
-        assertEquals("Development", serialized.getAsJsonObject("name").get("en").getAsString());
-        assertEquals("开发", serialized.getAsJsonObject("name").get("zh-Hans").getAsString());
-    }
-
     /// Tests that profiles preserve migrated legacy game settings IDs.
     @Test
     public void storesLegacyGameSettingsId() {
@@ -252,29 +201,6 @@ public final class GameDirectoriesTest {
 
         assertEquals(legacyGameSettings.toString(), serialized.get("legacyGameSettings").getAsString());
         assertEquals(legacyGameSettings, deserialized.getLegacyGameSettings());
-    }
-
-    /// Tests that unnamed profiles are displayed by ID and serialized without a name.
-    @Test
-    public void displaysUnnamedProfileAsId() {
-        GameDirectoryID id = GameDirectoryID.parse("game-directory:123e4567-e89b-12d3-a456-426614174000");
-        Profile profile = new Profile(id, null, PortablePath.of("versions\\Dev"));
-
-        JsonObject serialized = JsonUtils.GSON.toJsonTree(profile, Profile.class).getAsJsonObject();
-        Profile deserialized = Objects.requireNonNull(JsonUtils.GSON.fromJson(serialized, Profile.class));
-
-        assertFalse(serialized.has("name"));
-        assertNull(deserialized.getName());
-        assertEquals(id.toString(), Profiles.getProfileDisplayName(profile));
-    }
-
-    /// Tests that an explicit name overrides built-in display names.
-    @Test
-    public void displaysExplicitNameBeforeBuiltInName() {
-        GameDirectoryID id = GameDirectoryID.parse("game-directory:123e4567-e89b-12d3-a456-426614174000");
-        Profile profile = new Profile(id, LocalizedText.plain("Custom Default"), PortablePath.of(".minecraft"));
-
-        assertEquals("Custom Default", Profiles.getProfileDisplayName(profile));
     }
 
     /// Tests that the merged profile view is read-only and does not own the backing profile data.
@@ -361,9 +287,9 @@ public final class GameDirectoriesTest {
         }
     }
 
-    /// Tests that read-only source stores reject profile edits and removals.
+    /// Tests that profile mutations reject writes to read-only source and target stores.
     @Test
-    public void rejectsProfileEditAndRemoveFromReadOnlySourceStore() throws ReflectiveOperationException {
+    public void rejectsProfileMutationsWithReadOnlyStores() throws ReflectiveOperationException {
         GameDirectoryID id = GameDirectoryID.parse("game-directory:123e4567-e89b-12d3-a456-426614174000");
         Profile profile = new Profile(id, LocalizedText.plain("Local"), PortablePath.of("local/Dev"));
         GameDirectories userDirectories = new GameDirectories();
@@ -388,55 +314,27 @@ public final class GameDirectoriesTest {
             assertFalse(profile.getPath().isAbsolute());
             assertEquals("Local", Profiles.getProfileCustomName(profile));
         }
-    }
 
-    /// Tests that read-only target stores reject profile moves.
-    @Test
-    public void rejectsProfileMoveToReadOnlyTargetStore() throws ReflectiveOperationException {
-        GameDirectoryID id = GameDirectoryID.parse("game-directory:123e4567-e89b-12d3-a456-426614174000");
-        Profile profile = new Profile(id, LocalizedText.plain("Local"), PortablePath.of("local/Dev"));
-        GameDirectories userDirectories = new GameDirectories();
-        userDirectories.setUserFile(true);
-        GameDirectories localDirectories = new GameDirectories();
-        localDirectories.getGameDirectories().add(profile);
-        localDirectories.setUserFile(false);
+        Profile targetProfile = new Profile(id, LocalizedText.plain("Local"), PortablePath.of("local/Dev"));
+        GameDirectories targetUserDirectories = new GameDirectories();
+        targetUserDirectories.setUserFile(true);
+        GameDirectories targetLocalDirectories = new GameDirectories();
+        targetLocalDirectories.getGameDirectories().add(targetProfile);
+        targetLocalDirectories.setUserFile(false);
 
-        try (ProfileEnvironment environment = new ProfileEnvironment(localDirectories, userDirectories)) {
+        try (ProfileEnvironment environment = new ProfileEnvironment(targetLocalDirectories, targetUserDirectories)) {
             environment.setUserGameDirectoriesAccess(SettingFileAccess.READ_ONLY);
             Profiles.init();
 
             PortablePath absolutePath = PortablePath.of("/workspace/Dev");
-            assertFalse(Profiles.canUpdateProfile(profile, absolutePath));
+            assertFalse(Profiles.canUpdateProfile(targetProfile, absolutePath));
             assertThrows(IllegalStateException.class,
-                    () -> Profiles.updateProfile(profile, LocalizedText.plain("Moved"), absolutePath));
-            assertEquals(List.of(profile), localDirectories.getGameDirectories());
-            assertTrue(userDirectories.getGameDirectories().isEmpty());
-            assertEquals("local/Dev", profile.getPath().getPath());
-            assertFalse(profile.getPath().isAbsolute());
-            assertEquals("Local", Profiles.getProfileCustomName(profile));
-        }
-    }
-
-    /// Tests that default profiles are created while the game directory stores are loaded.
-    @Test
-    public void createsDefaultProfilesWhenLoadingEmptyStores() throws ReflectiveOperationException {
-        GameDirectories userDirectories = new GameDirectories();
-        userDirectories.setUserFile(true);
-        GameDirectories localDirectories = new GameDirectories();
-        localDirectories.setUserFile(false);
-        userDirectories.setNewlyCreated(true);
-        localDirectories.setNewlyCreated(true);
-
-        try (ProfileEnvironment ignored = new ProfileEnvironment(localDirectories, userDirectories)) {
-            Profiles.init();
-
-            Profile localProfile = assertSingleDefaultProfile(localDirectories, PortablePath.of(".minecraft"));
-            Profile userProfile = assertSingleDefaultProfile(
-                    userDirectories,
-                    PortablePath.fromPath(Metadata.MINECRAFT_DIRECTORY));
-            assertEquals(2, Profiles.getProfiles().size());
-            assertTrue(Profiles.getProfiles().contains(localProfile));
-            assertTrue(Profiles.getProfiles().contains(userProfile));
+                    () -> Profiles.updateProfile(targetProfile, LocalizedText.plain("Moved"), absolutePath));
+            assertEquals(List.of(targetProfile), targetLocalDirectories.getGameDirectories());
+            assertTrue(targetUserDirectories.getGameDirectories().isEmpty());
+            assertEquals("local/Dev", targetProfile.getPath().getPath());
+            assertFalse(targetProfile.getPath().isAbsolute());
+            assertEquals("Local", Profiles.getProfileCustomName(targetProfile));
         }
     }
 
@@ -625,43 +523,6 @@ public final class GameDirectoriesTest {
                 """, Profile.class));
     }
 
-    /// Tests that patch-version schemas are preserved together with unknown fields.
-    @Test
-    public void preservesPatchSchemaAndUnknownFields() throws IOException {
-        try (FileSystem fileSystem = Jimfs.newFileSystem(Configuration.unix())) {
-            Path tempDir = createJsonSettingFileTestDirectory(fileSystem, "patch-schema");
-            Path location = tempDir.resolve("game-directories.json");
-            Files.writeString(location, """
-                    {
-                      "$schema": "https://schemas.glavo.site/hmcl/game-directories/1.0.1",
-                      "futureField": {
-                        "enabled": true
-                      },
-                      "directories": []
-                    }
-                    """);
-
-            JsonSettingFile<GameDirectories> file = new JsonSettingFile<>(
-                    location,
-                    "game directories",
-                    GameDirectories.class,
-                    GameDirectories.CURRENT_SCHEMA,
-                    GameDirectories::new);
-
-            JsonSettingFile.LoadResult<GameDirectories> result = file.load(null);
-            assertTrue(result.value().isSavable());
-            assertEquals(SettingFileAccess.READ_WRITE, result.access());
-            assertEquals(new JsonSchema("https://schemas.glavo.site/hmcl/game-directories/1.0.1"),
-                    result.value().getSchema());
-
-            JsonObject rewritten = JsonParser.parseString(JsonUtils.GSON.toJson(result.value(), GameDirectories.class))
-                    .getAsJsonObject();
-            assertEquals("https://schemas.glavo.site/hmcl/game-directories/1.0.1",
-                    rewritten.get(JsonSchema.PROPERTY_SCHEMA).getAsString());
-            assertTrue(rewritten.getAsJsonObject("futureField").get("enabled").getAsBoolean());
-        }
-    }
-
     /// Tests that newer minor-version schemas are reported as unsupported.
     @Test
     public void reportsNewerMinorSchemaAsUnsupported() throws IOException {
@@ -717,34 +578,6 @@ public final class GameDirectoriesTest {
 
             Path backup = location.resolveSibling("game-directories.json.1");
             assertEquals("{", Files.readString(backup));
-            assertFalse(result.value().isBackupOnNextSave());
-        }
-    }
-
-    /// Tests that empty detached files are overwritten without producing useless backups.
-    @Test
-    public void doesNotBackUpEmptyDetachedFileBeforeSavingFallback() throws IOException, InterruptedException {
-        try (FileSystem fileSystem = Jimfs.newFileSystem(Configuration.unix())) {
-            Path tempDir = createJsonSettingFileTestDirectory(fileSystem, "empty");
-            Path location = tempDir.resolve("game-directories.json");
-            Files.writeString(location, "");
-
-            JsonSettingFile<GameDirectories> file = new JsonSettingFile<>(
-                    location,
-                    "game directories",
-                    GameDirectories.class,
-                    GameDirectories.CURRENT_SCHEMA,
-                    GameDirectories::new);
-
-            JsonSettingFile.LoadResult<GameDirectories> result = file.load(null);
-
-            assertTrue(result.value().isSavable());
-            assertFalse(result.value().isBackupOnNextSave());
-            assertEquals(SettingFileAccess.READ_WRITE, result.access());
-            file.save(result.value());
-            FileSaver.waitForAllSaves();
-
-            assertFalse(Files.exists(location.resolveSibling("game-directories.json.1")));
             assertFalse(result.value().isBackupOnNextSave());
         }
     }

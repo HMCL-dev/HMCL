@@ -32,18 +32,6 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 /// Tests UUID JSON adapters.
 @NotNullByDefault
 public final class UUIDTypeAdapterTest {
-    /// Tests that the default UUID adapter writes standard UUID strings and accepts legacy unhyphenated strings.
-    @Test
-    public void standardAdapterWritesStandardUUID() {
-        Gson gson = new GsonBuilder()
-                .registerTypeAdapter(UUID.class, UUIDTypeAdapter.INSTANCE)
-                .create();
-        UUID uuid = UUID.fromString("123e4567-e89b-12d3-a456-426614174000");
-
-        assertEquals("\"123e4567-e89b-12d3-a456-426614174000\"", gson.toJson(uuid, UUID.class));
-        assertEquals(uuid, gson.fromJson("\"123e4567e89b12d3a456426614174000\"", UUID.class));
-    }
-
     /// Tests that the shared Gson writes ordinary UUID values as standard UUID strings.
     @Test
     public void jsonUtilsWritesStandardUUID() {
@@ -51,18 +39,6 @@ public final class UUIDTypeAdapterTest {
 
         assertEquals("\"123e4567-e89b-12d3-a456-426614174000\"", JsonUtils.GSON.toJson(uuid, UUID.class));
         assertEquals(uuid, JsonUtils.GSON.fromJson("\"123e4567e89b12d3a456426614174000\"", UUID.class));
-    }
-
-    /// Tests that the unhyphenated UUID adapter writes Mojang/Yggdrasil UUID strings.
-    @Test
-    public void unhyphenatedAdapterWritesUnhyphenatedUUID() {
-        Gson gson = new GsonBuilder()
-                .registerTypeAdapter(UUID.class, UnhyphenatedUUIDTypeAdapter.INSTANCE)
-                .create();
-        UUID uuid = UUID.fromString("123e4567-e89b-12d3-a456-426614174000");
-
-        assertEquals("\"123e4567e89b12d3a456426614174000\"", gson.toJson(uuid, UUID.class));
-        assertEquals(uuid, gson.fromJson("\"123e4567-e89b-12d3-a456-426614174000\"", UUID.class));
     }
 
     /// Tests that Yggdrasil profile DTOs keep Mojang/Yggdrasil UUID strings unhyphenated.

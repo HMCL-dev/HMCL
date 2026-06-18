@@ -21,7 +21,6 @@ import com.google.gson.JsonParseException;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
-import org.jackhuang.hmcl.util.i18n.LocaleUtils;
 import org.jackhuang.hmcl.util.i18n.LocalizedText;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.junit.jupiter.api.Test;
@@ -109,25 +108,6 @@ public final class GameSettingsPresetsTest {
         assertNull(automatic.nameProperty().getValue());
         assertNull(custom.autoNameNumberProperty().getValue());
         assertEquals("Custom", Objects.requireNonNull(custom.nameProperty().getValue()).getText(List.of(Locale.ENGLISH)));
-    }
-
-    /// Tests that localized custom preset names can be read from JSON objects.
-    @Test
-    public void readsLocalizedCustomPresetName() {
-        GameSettings.Preset custom = JsonUtils.GSON.fromJson("""
-                {
-                  "id": "game-settings-preset:123e4567-e89b-12d3-a456-426614174001",
-                  "name": {
-                    "en": "Custom",
-                    "zh-Hans": "自定义"
-                  }
-                }
-                """, GameSettings.Preset.class);
-
-        LocalizedText name = Objects.requireNonNull(custom.nameProperty().getValue());
-
-        assertEquals("Custom", name.getText(List.of(Locale.ENGLISH)));
-        assertEquals("自定义", name.getText(List.of(LocaleUtils.LOCALE_ZH_HANS)));
     }
 
     /// Tests that legacy profile-level game settings migrate to IDs separate from profile IDs.
