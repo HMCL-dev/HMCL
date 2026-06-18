@@ -72,14 +72,14 @@ public final class LegacyConfigMigrator {
     @VisibleForTesting
     static final UUID LEGACY_ACCOUNT_ID_NAMESPACE = new UUID(0xcdc608bb426e5b93L, 0x948db7965705c9feL);
 
-    /// The legacy built-in profile name for the current workspace game directory.
-    private static final String LEGACY_DEFAULT_PROFILE = "Default";
-
     /// The total transparent custom window shadow size used by legacy launcher window bounds.
     private static final int LEGACY_CUSTOM_DECORATION_SHADOW_EXTENT = 16;
 
     /// The transparent custom window shadow size on one side used by legacy launcher window bounds.
     private static final int LEGACY_CUSTOM_DECORATION_SHADOW_SIZE = LEGACY_CUSTOM_DECORATION_SHADOW_EXTENT / 2;
+
+    /// The legacy built-in profile name for the current workspace game directory.
+    private static final String LEGACY_DEFAULT_PROFILE = "Default";
 
     /// The legacy built-in profile name for the user-home game directory.
     private static final String LEGACY_HOME_PROFILE = "Home";
