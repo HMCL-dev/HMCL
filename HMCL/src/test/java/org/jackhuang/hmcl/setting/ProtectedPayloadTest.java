@@ -93,7 +93,7 @@ public final class ProtectedPayloadTest {
             String payloadJson, String lane0, String lane1, String lane2, String lane3) {
         JsonElement payload = JsonParser.parseString(payloadJson);
         JsonObject envelope = new JsonObject();
-        ProtectedPayload.ProtectionMode.OBFUSCATED_V1.writeWithNonce(
+        ProtectedPayload.ProtectionMode.OBFUSCATED_V1.writePayload(
                 envelope,
                 payload,
                 Base64.getDecoder().decode(FIXED_NONCE));
@@ -116,7 +116,7 @@ public final class ProtectedPayloadTest {
     public void storesPlainPrimitivePayload() {
         JsonObject envelope = new JsonObject();
 
-        ProtectedPayload.ProtectionMode.PLAIN.write(envelope, new JsonPrimitive("payload"));
+        ProtectedPayload.ProtectionMode.PLAIN.writePayload(envelope, new JsonPrimitive("payload"));
         JsonPrimitive payload = ProtectedPayload.read(envelope, JsonPrimitive.class);
 
         assertEquals("payload", payload.getAsString());
@@ -149,7 +149,7 @@ public final class ProtectedPayloadTest {
         entries.add(entry);
         JsonObject envelope = new JsonObject();
 
-        ProtectedPayload.ProtectionMode.OBFUSCATED_V1.write(envelope, entries);
+        ProtectedPayload.ProtectionMode.OBFUSCATED_V1.writePayload(envelope, entries);
         JsonArray lanes = envelope.getAsJsonArray(ProtectedPayload.PROPERTY_PAYLOAD);
 
         assertTrue(envelope.get(ProtectedPayload.PROPERTY_NONCE).isJsonPrimitive());
@@ -187,7 +187,7 @@ public final class ProtectedPayloadTest {
         assertEquals("value", payload.get(0).getAsJsonObject().get("name").getAsString());
 
         JsonObject secondEnvelope = new JsonObject();
-        ProtectedPayload.ProtectionMode.OBFUSCATED_V1.write(secondEnvelope, entries);
+        ProtectedPayload.ProtectionMode.OBFUSCATED_V1.writePayload(secondEnvelope, entries);
         assertNotEquals(
                 envelope.get(ProtectedPayload.PROPERTY_NONCE).getAsString(),
                 secondEnvelope.get(ProtectedPayload.PROPERTY_NONCE).getAsString());
@@ -248,7 +248,7 @@ public final class ProtectedPayloadTest {
     public void rejectsMismatchedPayloadType() {
         JsonObject envelope = new JsonObject();
 
-        ProtectedPayload.ProtectionMode.PLAIN.write(envelope, new JsonPrimitive("payload"));
+        ProtectedPayload.ProtectionMode.PLAIN.writePayload(envelope, new JsonPrimitive("payload"));
 
         assertThrows(JsonParseException.class, () -> ProtectedPayload.read(envelope, JsonArray.class));
     }

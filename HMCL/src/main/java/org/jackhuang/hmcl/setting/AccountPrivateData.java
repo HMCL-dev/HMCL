@@ -254,7 +254,7 @@ final class AccountPrivateData extends ObservableSetting implements JsonSchemaSe
                 JsonSerializationContext context) {
             JsonObject result = new JsonObject();
             result.addProperty(JsonSchema.PROPERTY_SCHEMA, accountPrivateData.getSchema().url());
-            protectionMode().write(result, createPayload(accountPrivateData, context));
+            protectionMode().writePayload(result, createPayload(accountPrivateData, context));
             accountPrivateData.unknownFields.forEach(result::add);
             return result;
         }

@@ -276,27 +276,6 @@ final class ProtectedPayload {
         /// Writes the payload into the given envelope.
         ///
         /// @param envelope the envelope object to write into
-        /// @param payload  the plain JSON payload
-        /// @param <T> the JSON payload type
-        /// @throws JsonParseException if the payload cannot be protected
-        public final <T extends JsonElement> void write(JsonObject envelope, T payload) {
-            writePayload(envelope, Objects.requireNonNull(payload));
-        }
-
-        /// Writes the payload into the given envelope with a caller-provided nonce.
-        ///
-        /// @param envelope the envelope object to write into
-        /// @param payload the plain JSON payload
-        /// @param nonce the nonce to use for modes that require one
-        /// @param <T> the JSON payload type
-        /// @throws JsonParseException if the payload cannot be protected
-        final <T extends JsonElement> void writeWithNonce(JsonObject envelope, T payload, byte[] nonce) {
-            writePayload(envelope, Objects.requireNonNull(payload), Objects.requireNonNull(nonce));
-        }
-
-        /// Writes the payload into the given envelope.
-        ///
-        /// @param envelope the envelope object to write into
         /// @param payload the plain JSON payload
         /// @throws JsonParseException if the payload cannot be protected
         protected abstract void writePayload(JsonObject envelope, JsonElement payload);
