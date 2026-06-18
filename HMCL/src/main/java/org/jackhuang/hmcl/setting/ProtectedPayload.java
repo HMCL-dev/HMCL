@@ -92,8 +92,7 @@ final class ProtectedPayload {
             private static final int LANE_PADDING_COUNT = 63;
 
             /// The number of elements written in an obfuscated payload array.
-            private static final int WRITTEN_OBFUSCATED_PAYLOAD_SIZE =
-                    OBFUSCATED_LANE_COUNT * (LANE_PADDING_COUNT + 1);
+            private static final int WRITTEN_OBFUSCATED_PAYLOAD_SIZE = 256;
 
             /// The JCA transformation used for payload encryption.
             private static final String CIPHER_TRANSFORMATION = "ChaCha20-Poly1305";
