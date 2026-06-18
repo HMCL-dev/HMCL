@@ -228,8 +228,8 @@ final class ProtectedPayload {
                 String actualPayload = Base64.getEncoder().encodeToString(encryptedPayload);
 
                 envelope.addProperty(PROPERTY_PROTECTION, id());
-                envelope.addProperty(PROPERTY_NONCE, Base64.getEncoder().encodeToString(nonce));
                 envelope.add(PROPERTY_PAYLOAD, splitObfuscatedPayload(actualPayload));
+                envelope.addProperty(PROPERTY_NONCE, Base64.getEncoder().encodeToString(nonce));
             }
 
             /// Reads the payload from the given envelope.
