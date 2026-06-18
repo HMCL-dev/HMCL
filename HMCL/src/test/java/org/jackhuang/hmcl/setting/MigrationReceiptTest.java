@@ -68,7 +68,7 @@ public final class MigrationReceiptTest {
             JsonObject receiptObject = JsonUtils.fromJsonFile(receipt, JsonObject.class);
 
             assertFalse(receiptObject.has("source"));
-            assertTrue(receiptObject.has("sourceSha256"));
+            assertTrue(receiptObject.has("sourceSHA256"));
             assertTrue(MigrationReceipt.matches(receipt, copied));
         }
     }

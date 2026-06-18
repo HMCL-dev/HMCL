@@ -37,13 +37,13 @@ import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 ///
 /// @param sourceSize the legacy source file size recorded for diagnostics, or `null` when omitted
 /// @param sourceLastModified the legacy source last-modified time recorded for diagnostics, or `null` when omitted
-/// @param sourceSha256 the legacy source SHA-256 hash, or `null` when a malformed receipt omits it
+/// @param sourceSHA256 the legacy source SHA-256 hash, or `null` when a malformed receipt omits it
 /// @param migratedAt when the migration receipt was written, or `null` before saving or when omitted
 @NotNullByDefault
 record MigrationReceipt(
         @Nullable Long sourceSize,
         @Nullable String sourceLastModified,
-        @Nullable String sourceSha256,
+        @Nullable String sourceSHA256,
         @Nullable String migratedAt) {
     /// Returns whether the receipt records the current legacy source content.
     static boolean matches(Path receipt, Path source) {
@@ -77,7 +77,7 @@ record MigrationReceipt(
 
     /// Returns whether this receipt matches another legacy source content fingerprint.
     private boolean matches(MigrationReceipt current) {
-        return sourceSha256 != null && Objects.equals(sourceSha256, current.sourceSha256);
+        return sourceSHA256 != null && Objects.equals(sourceSHA256, current.sourceSHA256);
     }
 
     /// Creates receipt content for the current source file state.
