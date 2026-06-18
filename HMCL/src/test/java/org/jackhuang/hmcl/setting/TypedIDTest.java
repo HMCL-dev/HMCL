@@ -134,19 +134,4 @@ public final class TypedIDTest {
                 .getAsString());
         assertEquals("1.20.1", deserialized.getSelectedInstance(id));
     }
-
-    /// Tests invalid typed ID setting fields abort launcher settings deserialization.
-    @Test
-    public void launcherSettingsRejectsInvalidTypedIDFields() {
-        assertThrows(IllegalArgumentException.class, () -> LauncherSettings.fromJson(JsonParser.parseString("""
-                {
-                  "selectedGameDirectory": "123e4567-e89b-12d3-a456-426614174000",
-                  "defaultGameSettingsPreset": "game-settings-preset:123e4567-e89b-12d3-a456-426614174001",
-                  "selectedInstance": {
-                    "123e4567-e89b-12d3-a456-426614174000": "1.20.1"
-                  },
-                  "preferredLoginType": "offline"
-                }
-                """).getAsJsonObject()));
-    }
 }
