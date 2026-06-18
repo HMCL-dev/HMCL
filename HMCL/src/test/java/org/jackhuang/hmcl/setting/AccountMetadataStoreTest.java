@@ -25,6 +25,7 @@ import org.glavo.uuid.UUIDs;
 import org.jackhuang.hmcl.auth.Account;
 import org.jackhuang.hmcl.auth.AccountID;
 import org.jackhuang.hmcl.auth.offline.OfflineAccountFactory;
+import org.jackhuang.hmcl.util.FileSaver;
 import org.jackhuang.hmcl.util.gson.JsonSchema;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jetbrains.annotations.NotNullByDefault;
@@ -96,6 +97,11 @@ public final class AccountMetadataStoreTest {
                 userStorage ? "$GLOBAL:" + legacyIdentifier : legacyIdentifier)).toString();
     }
 
+    /// Returns the reflected account private data store type.
+    private static Class<?> accountPrivateDataStoreType() throws ClassNotFoundException {
+        return Class.forName("org.jackhuang.hmcl.setting.SettingsManager$AccountPrivateDataStore");
+    }
+
     /// Creates a reflected account private data store for testing private save ordering.
     ///
     /// @param privateData the account private data store
@@ -104,7 +110,7 @@ public final class AccountMetadataStoreTest {
     private static Object accountPrivateDataStore(
             AccountPrivateData privateData,
             JsonSettingFile<AccountPrivateData> file) throws ReflectiveOperationException {
-        Class<?> type = Class.forName("org.jackhuang.hmcl.setting.SettingsManager$AccountPrivateDataStore");
+        Class<?> type = accountPrivateDataStoreType();
         Constructor<?> constructor = type.getDeclaredConstructor(AccountPrivateData.class, JsonSettingFile.class);
         constructor.setAccessible(true);
         return constructor.newInstance(privateData, file);
@@ -119,6 +125,22 @@ public final class AccountMetadataStoreTest {
                 JsonSettingFile.class,
                 List.class,
                 boolean.class,
+                boolean.class);
+        method.setAccessible(true);
+        return method;
+    }
+
+    /// Returns the reflected account metadata update method.
+    private static Method updateAccountMetadataStoreMethod()
+            throws ReflectiveOperationException {
+        Method method = SettingsManager.class.getDeclaredMethod(
+                "updateAccountMetadataStore",
+                AccountMetadataStore.class,
+                JsonSettingFile.class,
+                accountPrivateDataStoreType(),
+                List.class,
+                List.class,
+                Map.class,
                 boolean.class);
         method.setAccessible(true);
         return method;
@@ -269,6 +291,68 @@ public final class AccountMetadataStoreTest {
             assertTrue(Files.isRegularFile(privateDataParent));
             assertFalse(Files.exists(privateDataPath));
             assertTrue(privateData.getPrivateData().isEmpty());
+        }
+    }
+
+    /// Tests moving private data into the default store when account metadata changes storage.
+    @Test
+    public void movesPrivateDataToDefaultStoreWhenRequested()
+            throws ReflectiveOperationException, IOException, InterruptedException {
+        try (FileSystem fileSystem = Jimfs.newFileSystem(Configuration.unix())) {
+            Path tempDirectory = fileSystem.getPath("/work");
+            Files.createDirectories(tempDirectory);
+            AccountID accountID = AccountID.parse(accountID(1));
+            JsonObject metadata = jsonObject(
+                    "type", "microsoft",
+                    "accountID", accountID.toString(),
+                    "profileID", "12345678-1234-1234-1234-1234567890ab");
+            JsonObject accountPrivateData = jsonObject(
+                    "profileName", "Steve",
+                    "accessToken", "access-token",
+                    "refreshToken", "refresh-token");
+
+            AccountMetadataStore localMetadata = new AccountMetadataStore();
+            JsonSettingFile<AccountMetadataStore> localMetadataFile = new JsonSettingFile<>(
+                    tempDirectory.resolve("accounts.json"),
+                    "test local account metadata",
+                    AccountMetadataStore.class,
+                    AccountMetadataStore.CURRENT_SCHEMA,
+                    AccountMetadataStore::new);
+
+            AccountPrivateData localPrivateData = new AccountPrivateData();
+            JsonSettingFile<AccountPrivateData> localPrivateDataFile = new JsonSettingFile<>(
+                    tempDirectory.resolve("local-account-private-data.json"),
+                    "test local account private data",
+                    AccountPrivateData.class,
+                    AccountPrivateData.CURRENT_SCHEMA,
+                    AccountPrivateData::new);
+            Object localPrivateDataStore = accountPrivateDataStore(localPrivateData, localPrivateDataFile);
+
+            AccountPrivateData userPrivateData = new AccountPrivateData();
+            userPrivateData.putPrivateData(accountID, accountPrivateData);
+            JsonSettingFile<AccountPrivateData> userPrivateDataFile = new JsonSettingFile<>(
+                    tempDirectory.resolve("user-account-private-data.json"),
+                    "test user account private data",
+                    AccountPrivateData.class,
+                    AccountPrivateData.CURRENT_SCHEMA,
+                    AccountPrivateData::new);
+            Object userPrivateDataStore = accountPrivateDataStore(userPrivateData, userPrivateDataFile);
+            Method updateMethod = updateAccountMetadataStoreMethod();
+
+            updateMethod.invoke(
+                    null,
+                    localMetadata,
+                    localMetadataFile,
+                    localPrivateDataStore,
+                    List.of(localPrivateDataStore, userPrivateDataStore),
+                    List.of(metadata),
+                    Map.of(accountID, accountPrivateData),
+                    true);
+            FileSaver.waitForAllSaves();
+
+            assertEquals(List.of(metadata), localMetadata.getAccounts());
+            assertEquals(accountPrivateData, localPrivateData.getPrivateData().get(accountID));
+            assertFalse(userPrivateData.containsPrivateData(accountID));
         }
     }
 

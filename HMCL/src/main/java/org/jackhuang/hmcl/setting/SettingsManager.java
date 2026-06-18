@@ -519,7 +519,8 @@ public final class SettingsManager {
                         new AccountPrivateDataStore(gameAccountPrivateData(), GAME_ACCOUNT_PRIVATE_DATA_FILE),
                         new AccountPrivateDataStore(userGameAccountPrivateData(), USER_GAME_ACCOUNT_PRIVATE_DATA_FILE)),
                 metadataAccounts,
-                privateData);
+                privateData,
+                true);
     }
 
     /// Updates the shared account metadata and private data stores.
@@ -537,7 +538,8 @@ public final class SettingsManager {
                         new AccountPrivateDataStore(userGameAccountPrivateData(), USER_GAME_ACCOUNT_PRIVATE_DATA_FILE),
                         new AccountPrivateDataStore(gameAccountPrivateData(), GAME_ACCOUNT_PRIVATE_DATA_FILE)),
                 metadataAccounts,
-                privateData);
+                privateData,
+                true);
     }
 
     /// Saves the loaded per-workspace account metadata store.
@@ -585,23 +587,27 @@ public final class SettingsManager {
     /// @param privateDataStores private data stores searched and updated in order
     /// @param metadataAccounts metadata-only account records
     /// @param privateData private account data keyed by account ID
+    /// @param movePrivateDataToDefaultStore whether private data should be moved to the metadata store's default private data store
     private static void updateAccountMetadataStore(
             AccountMetadataStore accounts,
             JsonSettingFile<AccountMetadataStore> accountsFile,
             AccountPrivateDataStore defaultPrivateData,
             List<AccountPrivateDataStore> privateDataStores,
             List<JsonObject> metadataAccounts,
-            Map<AccountID, JsonObject> privateData) {
+            Map<AccountID, JsonObject> privateData,
+            boolean movePrivateDataToDefaultStore) {
         try {
             AccountPrivateDataUpdate accountPrivateData =
                     new AccountPrivateDataUpdate(getAccountIDs(metadataAccounts), privateData);
-            if (!canSaveAccountPrivateDataUpdate(accountPrivateData, defaultPrivateData, privateDataStores)) {
+            if (!canSaveAccountPrivateDataUpdate(
+                    accountPrivateData, defaultPrivateData, privateDataStores, movePrivateDataToDefaultStore)) {
                 LOG.warning("Skipped account metadata save because account private data is not writable");
                 return;
             }
 
             List<AccountPrivateDataStore> changedPrivateDataStores =
-                    distributeAccountPrivateData(accountPrivateData, defaultPrivateData, privateDataStores);
+                    distributeAccountPrivateData(
+                            accountPrivateData, defaultPrivateData, privateDataStores, movePrivateDataToDefaultStore);
             boolean metadataChanged = !metadataAccounts.equals(accounts.getAccounts());
             if (metadataChanged) {
                 accounts.getAccounts().setAll(metadataAccounts);
@@ -676,18 +682,26 @@ public final class SettingsManager {
     ///
     /// The check is performed before metadata is saved so credentials are not removed from account metadata unless
     /// the matching private data can be written to its target store.
+    ///
+    /// @param update the account IDs and private data to store
+    /// @param defaultPrivateData the default private data store used when no existing store has the account private data
+    /// @param privateDataStores private data stores searched in order
+    /// @param movePrivateDataToDefaultStore whether private data should be moved to the metadata store's default private data store
+    /// @return whether all changed private data can be saved
     private static boolean canSaveAccountPrivateDataUpdate(
             AccountPrivateDataUpdate update,
             AccountPrivateDataStore defaultPrivateData,
-            List<AccountPrivateDataStore> privateDataStores) {
+            List<AccountPrivateDataStore> privateDataStores,
+            boolean movePrivateDataToDefaultStore) {
         for (AccountID accountID : update.accountIDs()) {
             @Nullable JsonObject accountPrivateData = update.privateData().get(accountID);
             if (accountPrivateData == null || accountPrivateData.isEmpty()) {
                 continue;
             }
 
-            AccountPrivateDataStore targetPrivateData =
-                    findAccountPrivateDataStore(accountID, defaultPrivateData, privateDataStores);
+            AccountPrivateDataStore targetPrivateData = movePrivateDataToDefaultStore
+                    ? defaultPrivateData
+                    : findAccountPrivateDataStore(accountID, defaultPrivateData, privateDataStores);
             if (targetPrivateData.privateData().isSavable()) {
                 continue;
             }
@@ -721,20 +735,25 @@ public final class SettingsManager {
     /// @param update the account IDs and private data to store
     /// @param defaultPrivateData the default private data store used when no existing store has the account private data
     /// @param privateDataStores private data stores searched and updated in order
+    /// @param movePrivateDataToDefaultStore whether private data should be moved to the metadata store's default private data store
     /// @return private data stores whose content or backup state should be saved
     private static List<AccountPrivateDataStore> distributeAccountPrivateData(
             AccountPrivateDataUpdate update,
             AccountPrivateDataStore defaultPrivateData,
-            List<AccountPrivateDataStore> privateDataStores) {
+            List<AccountPrivateDataStore> privateDataStores,
+            boolean movePrivateDataToDefaultStore) {
         List<AccountPrivateDataStore> changedPrivateDataStores = new ArrayList<>();
         for (AccountID accountID : update.accountIDs()) {
             @Nullable JsonObject accountPrivateData = update.privateData().get(accountID);
             if (accountPrivateData != null && accountPrivateData.isEmpty()) {
                 accountPrivateData = null;
             }
-            AccountPrivateDataStore targetPrivateData = accountPrivateData == null
-                    ? defaultPrivateData
-                    : findAccountPrivateDataStore(accountID, defaultPrivateData, privateDataStores);
+            AccountPrivateDataStore targetPrivateData;
+            if (accountPrivateData == null || movePrivateDataToDefaultStore) {
+                targetPrivateData = defaultPrivateData;
+            } else {
+                targetPrivateData = findAccountPrivateDataStore(accountID, defaultPrivateData, privateDataStores);
+            }
 
             for (AccountPrivateDataStore privateDataStore : privateDataStores) {
                 @Nullable JsonObject currentPrivateData =
@@ -1445,9 +1464,9 @@ public final class SettingsManager {
                     ? createAccountPrivateDataUpdate(migrated)
                     : null;
             boolean canSavePrivateData = privateDataUpdate == null
-                    || canSaveAccountPrivateDataUpdate(privateDataUpdate, defaultPrivateData, privateDataStores);
+                    || canSaveAccountPrivateDataUpdate(privateDataUpdate, defaultPrivateData, privateDataStores, false);
             List<AccountPrivateDataStore> changedPrivateDataStores = privateDataUpdate != null && canSavePrivateData
-                    ? distributeAccountPrivateData(privateDataUpdate, defaultPrivateData, privateDataStores)
+                    ? distributeAccountPrivateData(privateDataUpdate, defaultPrivateData, privateDataStores, false)
                     : List.of();
             if ((newlyCreated || !changedPrivateDataStores.isEmpty() || userGameAccounts.isBackupOnNextSave())
                     && userGameAccounts.isSavable()
@@ -1474,7 +1493,8 @@ public final class SettingsManager {
                         List.of(
                                 new AccountPrivateDataStore(userGameAccountPrivateData(),
                                         USER_GAME_ACCOUNT_PRIVATE_DATA_FILE),
-                                new AccountPrivateDataStore(gameAccountPrivateData(), GAME_ACCOUNT_PRIVATE_DATA_FILE)));
+                                new AccountPrivateDataStore(gameAccountPrivateData(), GAME_ACCOUNT_PRIVATE_DATA_FILE)),
+                        false);
             }
             userGameAccounts.setSavable(false);
             return SettingFileAccess.UNREADABLE;
@@ -1505,9 +1525,9 @@ public final class SettingsManager {
                 ? createAccountPrivateDataUpdate(fallbackGameAccounts)
                 : null;
         boolean canSavePrivateData = privateDataUpdate == null
-                || canSaveAccountPrivateDataUpdate(privateDataUpdate, defaultPrivateData, privateDataStores);
+                || canSaveAccountPrivateDataUpdate(privateDataUpdate, defaultPrivateData, privateDataStores, false);
         List<AccountPrivateDataStore> changedPrivateDataStores = privateDataUpdate != null && canSavePrivateData
-                ? distributeAccountPrivateData(privateDataUpdate, defaultPrivateData, privateDataStores)
+                ? distributeAccountPrivateData(privateDataUpdate, defaultPrivateData, privateDataStores, false)
                 : List.of();
         if ((newlyCreated || !changedPrivateDataStores.isEmpty() || gameAccounts.isBackupOnNextSave())
                 && gameAccounts.isSavable()
