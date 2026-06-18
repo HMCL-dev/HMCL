@@ -540,7 +540,12 @@ public final class LegacyConfigMigrator {
         String prefix = userStorage ? LEGACY_GLOBAL_ACCOUNT_PREFIX : "";
         @Nullable String legacyIdentifier = getLegacyAccountIdentifier(account);
         String uuidName = prefix + (legacyIdentifier != null ? legacyIdentifier : JsonUtils.GSON.toJson(account));
-        return new AccountID(UUIDs.generateV5(LEGACY_ACCOUNT_ID_NAMESPACE, uuidName));
+        return createLegacyAccountID(uuidName);
+    }
+
+    /// Creates a stable account ID from a legacy selected-account identifier string.
+    private static AccountID createLegacyAccountID(String legacyIdentifier) {
+        return new AccountID(UUIDs.generateV5(LEGACY_ACCOUNT_ID_NAMESPACE, legacyIdentifier));
     }
 
     /// Creates current metadata and private data records from one legacy account entry.
@@ -651,8 +656,7 @@ public final class LegacyConfigMigrator {
         JsonElement selectedAccount = json.get("selectedAccount");
         @Nullable AccountID selectedMarkerAccountID = null;
         boolean changed = false;
-        Set<String> usedAccountIDs = new HashSet<>();
-        assignAccountIDs(localAccounts, usedAccountIDs, false);
+        assignAccountIDs(localAccounts, new HashSet<>(), false);
         for (JsonObject account : localAccounts.getAccounts()) {
             JsonElement selectedMarker = account.remove("selected");
             if (selectedMarker != null) {
@@ -678,82 +682,8 @@ public final class LegacyConfigMigrator {
             return true;
         }
 
-        @Nullable AccountMetadataStore userAccounts = loadLegacyUserAccountMetadataStoreForSelectedAccount(usedAccountIDs);
-        @Nullable AccountID accountID = findLegacySelectedAccountID(legacyIdentifier, localAccounts, userAccounts);
-
-        if (accountID != null) {
-            json.addProperty("selectedAccount", accountID.toString());
-        } else {
-            json.remove("selectedAccount");
-        }
+        json.addProperty("selectedAccount", createLegacyAccountID(legacyIdentifier).toString());
         return true;
-    }
-
-    /// Loads legacy user account records only for resolving a selected account ID during migration.
-    private static @Nullable AccountMetadataStore loadLegacyUserAccountMetadataStoreForSelectedAccount(Set<String> usedAccountIDs) {
-        if (!Files.exists(LEGACY_USER_ACCOUNTS_LOCATION)) {
-            return null;
-        }
-
-        try {
-            List<JsonObject> accounts = JsonUtils.fromJsonFile(
-                    LEGACY_USER_ACCOUNTS_LOCATION,
-                    JsonUtils.listTypeOf(JsonObject.class));
-            if (accounts == null) {
-                return null;
-            }
-            AccountMetadataStore accountMetadata = migrateLegacyAccounts(accounts, true).metadata();
-            assignAccountIDs(accountMetadata, usedAccountIDs, true);
-            return accountMetadata;
-        } catch (Exception e) {
-            LOG.warning("Failed to load legacy user accounts for selected account migration", e);
-            return null;
-        }
-    }
-
-    /// Finds the selected account ID matching a legacy selected account string.
-    @VisibleForTesting
-    static @Nullable AccountID findLegacySelectedAccountID(
-            String legacyIdentifier,
-            AccountMetadataStore localAccounts,
-            @Nullable AccountMetadataStore userAccounts) {
-        String identifier = legacyIdentifier;
-        boolean selectedUserStorage = false;
-        if (identifier.startsWith(LEGACY_GLOBAL_ACCOUNT_PREFIX)) {
-            selectedUserStorage = true;
-            identifier = identifier.substring(LEGACY_GLOBAL_ACCOUNT_PREFIX.length());
-        }
-
-        @Nullable AccountID preferred;
-        if (selectedUserStorage && userAccounts != null) {
-            preferred = findLegacySelectedAccountID(identifier, userAccounts);
-        } else if (!selectedUserStorage) {
-            preferred = findLegacySelectedAccountID(identifier, localAccounts);
-        } else {
-            preferred = null;
-        }
-        if (preferred != null) {
-            return preferred;
-        }
-
-        return selectedUserStorage || userAccounts == null
-                ? findLegacySelectedAccountID(identifier, localAccounts)
-                : findLegacySelectedAccountID(identifier, userAccounts);
-    }
-
-    /// Finds the selected account ID matching a legacy selected account identifier in one storage.
-    private static @Nullable AccountID findLegacySelectedAccountID(String identifier, AccountMetadataStore accounts) {
-        for (JsonObject account : accounts.getAccounts()) {
-            if (matchesLegacySelectedAccountIdentifier(identifier, account)) {
-                return getSelectedAccountID(account);
-            }
-        }
-        return null;
-    }
-
-    /// Returns whether a serialized account entry matches a legacy selected account string.
-    private static boolean matchesLegacySelectedAccountIdentifier(String identifier, JsonObject metadata) {
-        return Objects.equals(identifier, getLegacyAccountIdentifier(metadata));
     }
 
     /// Returns the selected account ID for a serialized account entry.

@@ -33,7 +33,6 @@ import java.net.Proxy;
 import java.nio.file.FileSystem;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.List;
 import java.util.Objects;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -43,17 +42,14 @@ import static org.junit.jupiter.api.Assertions.*;
 public final class LauncherSettingsMigrationTest {
     /// Returns the migrated account ID generated for a legacy offline profile name.
     private static String offlineAccountID(String profileName) {
-        return new AccountID(UUIDs.generateV5(
-                LegacyConfigMigrator.LEGACY_ACCOUNT_ID_NAMESPACE,
-                profileName + ":" + profileName)).toString();
+        return accountIDFromLegacyIdentifier(profileName + ":" + profileName);
     }
 
-    /// Returns a serialized legacy offline account with the given profile name.
-    private static JsonObject legacyOfflineAccount(String profileName) {
-        JsonObject account = new JsonObject();
-        account.addProperty("type", "offline");
-        account.addProperty("username", profileName);
-        return account;
+    /// Returns the migrated account ID generated from one legacy selected-account identifier.
+    private static String accountIDFromLegacyIdentifier(String legacyIdentifier) {
+        return new AccountID(UUIDs.generateV5(
+                LegacyConfigMigrator.LEGACY_ACCOUNT_ID_NAMESPACE,
+                legacyIdentifier)).toString();
     }
 
     @Test
@@ -416,33 +412,27 @@ public final class LauncherSettingsMigrationTest {
                 settings.get("selectedAccount").getAsString());
     }
 
-    /// Tests that `$GLOBAL:` selected-account references prefer shared accounts and fall back to local accounts.
+    /// Tests migrating a `$GLOBAL:` selected-account string by directly deriving the account ID from it.
     @Test
-    public void resolvesLegacyGlobalSelectedAccountWithFallback() {
-        AccountMetadataStore localAccounts = LegacyConfigMigrator.migrateLegacyAccounts(List.of(
-                legacyOfflineAccount("Alex")
-        )).metadata();
-        AccountMetadataStore userAccounts = LegacyConfigMigrator.migrateLegacyAccounts(List.of(
-                legacyOfflineAccount("Alex")
-        ), true).metadata();
+    public void migratesLegacyGlobalSelectedAccountStringDirectly() {
+        JsonObject settings = JsonParser.parseString("""
+                {
+                  "accounts": [
+                    {
+                      "type": "offline",
+                      "username": "Alex"
+                    }
+                  ],
+                  "selectedAccount": "$GLOBAL:Alex:Alex"
+                }
+                """).getAsJsonObject();
 
-        AccountID accountID = Objects.requireNonNull(LegacyConfigMigrator.findLegacySelectedAccountID(
-                "$GLOBAL:Alex:Alex",
-                localAccounts,
-                userAccounts));
+        AccountMetadataStore accountMetadata =
+                Objects.requireNonNull(LegacyConfigMigrator.extractAccounts(settings)).metadata();
+        assertTrue(LegacyConfigMigrator.migrateLegacySelectedAccount(settings, accountMetadata));
 
-        assertEquals(userAccounts.getAccounts().get(0).get("accountID").getAsString(), accountID.toString());
-
-        AccountMetadataStore otherUserAccounts = LegacyConfigMigrator.migrateLegacyAccounts(List.of(
-                legacyOfflineAccount("Steve")
-        ), true).metadata();
-
-        AccountID fallbackAccountID = Objects.requireNonNull(LegacyConfigMigrator.findLegacySelectedAccountID(
-                "$GLOBAL:Alex:Alex",
-                localAccounts,
-                otherUserAccounts));
-
-        assertEquals(localAccounts.getAccounts().get(0).get("accountID").getAsString(), fallbackAccountID.toString());
+        assertEquals(accountIDFromLegacyIdentifier("$GLOBAL:Alex:Alex"),
+                settings.get("selectedAccount").getAsString());
     }
 
     /// Tests serializing selected account references as account ID strings.
