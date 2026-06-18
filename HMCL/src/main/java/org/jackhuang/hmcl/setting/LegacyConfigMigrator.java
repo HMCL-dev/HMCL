@@ -235,11 +235,11 @@ public final class LegacyConfigMigrator {
             migrateBackgroundOpacity(jsonObject);
             renameMember(jsonObject, "proxyUserName", "proxyUser");
             migrateLegacySelectedVersions(jsonObject);
+            migrateLegacySelectedGameDirectory(jsonObject);
             @Nullable GameDirectories migratedGameDirectories = extractGameDirectoriesFromConfigJson(jsonObject);
             GameDirectories gameDirectories = migratedGameDirectories != null
                     ? migratedGameDirectories
                     : new GameDirectories();
-            migrateLegacySelectedGameDirectory(jsonObject);
 
             LauncherSettings deserialized = LauncherSettings.fromJson(jsonObject);
             if (deserialized == null) {
@@ -663,11 +663,12 @@ public final class LegacyConfigMigrator {
             }
         }
 
+        if (selectedMarkerAccountID != null) {
+            json.addProperty("selectedAccount", selectedMarkerAccountID.toString());
+            return true;
+        }
+
         if (selectedAccount == null) {
-            if (selectedMarkerAccountID != null) {
-                json.addProperty("selectedAccount", selectedMarkerAccountID.toString());
-                return true;
-            }
             return changed;
         }
 
@@ -677,13 +678,8 @@ public final class LegacyConfigMigrator {
             return true;
         }
 
-        @Nullable AccountID accountID = findLegacySelectedAccountID(legacyIdentifier, localAccounts, false);
-        if (accountID == null) {
-            AccountMetadataStore userAccounts = loadLegacyUserAccountMetadataStoreForSelectedAccount(usedAccountIDs);
-            if (userAccounts != null) {
-                accountID = findLegacySelectedAccountID(legacyIdentifier, userAccounts, true);
-            }
-        }
+        @Nullable AccountMetadataStore userAccounts = loadLegacyUserAccountMetadataStoreForSelectedAccount(usedAccountIDs);
+        @Nullable AccountID accountID = findLegacySelectedAccountID(legacyIdentifier, localAccounts, userAccounts);
 
         if (accountID != null) {
             json.addProperty("selectedAccount", accountID.toString());
@@ -716,20 +712,37 @@ public final class LegacyConfigMigrator {
     }
 
     /// Finds the selected account ID matching a legacy selected account string.
-    private static @Nullable AccountID findLegacySelectedAccountID(
+    @VisibleForTesting
+    static @Nullable AccountID findLegacySelectedAccountID(
             String legacyIdentifier,
-            AccountMetadataStore accounts,
-            boolean userStorage) {
+            AccountMetadataStore localAccounts,
+            @Nullable AccountMetadataStore userAccounts) {
         String identifier = legacyIdentifier;
         boolean selectedUserStorage = false;
         if (identifier.startsWith(LEGACY_GLOBAL_ACCOUNT_PREFIX)) {
             selectedUserStorage = true;
             identifier = identifier.substring(LEGACY_GLOBAL_ACCOUNT_PREFIX.length());
         }
-        if (selectedUserStorage != userStorage) {
-            return null;
+
+        @Nullable AccountID preferred;
+        if (selectedUserStorage && userAccounts != null) {
+            preferred = findLegacySelectedAccountID(identifier, userAccounts);
+        } else if (!selectedUserStorage) {
+            preferred = findLegacySelectedAccountID(identifier, localAccounts);
+        } else {
+            preferred = null;
+        }
+        if (preferred != null) {
+            return preferred;
         }
 
+        return selectedUserStorage || userAccounts == null
+                ? findLegacySelectedAccountID(identifier, localAccounts)
+                : findLegacySelectedAccountID(identifier, userAccounts);
+    }
+
+    /// Finds the selected account ID matching a legacy selected account identifier in one storage.
+    private static @Nullable AccountID findLegacySelectedAccountID(String identifier, AccountMetadataStore accounts) {
         for (JsonObject account : accounts.getAccounts()) {
             if (matchesLegacySelectedAccountIdentifier(identifier, account)) {
                 return getSelectedAccountID(account);
@@ -893,7 +906,7 @@ public final class LegacyConfigMigrator {
 
         DownloadSource source = JsonUtils.getBoolean(autoChooseDownloadType, true)
                 ? parseLegacyDownloadSource(legacyVersionListSource, DownloadSource.DEFAULT)
-                : parseLegacyDownloadSource(legacyDownloadType, DownloadSource.DEFAULT);
+                : parseLegacyDownloadSource(legacyDownloadType, DownloadSource.OFFICIAL);
 
         json.addProperty("versionListSource", source.name());
         json.addProperty("fileDownloadSource", source.name());
@@ -1138,11 +1151,17 @@ public final class LegacyConfigMigrator {
         }
 
         @Nullable String selectedName = JsonUtils.getString(lastElement);
-        if (selectedName != null) {
+        if (StringUtils.isNotBlank(selectedName) && hasLegacyProfile(json, selectedName)) {
             json.add(LauncherSettings.PROPERTY_SELECTED_GAME_DIRECTORY,
                     JsonUtils.GSON.toJsonTree(getLegacyProfileID(selectedName), GameDirectoryID.class));
         }
         return true;
+    }
+
+    /// Returns whether a legacy profile name will be migrated into the detached game directory store.
+    private static boolean hasLegacyProfile(JsonObject json, String name) {
+        return json.get("configurations") instanceof JsonObject configurations
+                && configurations.get(name) instanceof JsonObject;
     }
 
     /// Migrates legacy per-profile selected versions into the current selected version map.

@@ -33,6 +33,7 @@ import java.net.Proxy;
 import java.nio.file.FileSystem;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.List;
 import java.util.Objects;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -45,6 +46,14 @@ public final class LauncherSettingsMigrationTest {
         return new AccountID(UUIDs.generateV5(
                 LegacyConfigMigrator.LEGACY_ACCOUNT_ID_NAMESPACE,
                 profileName + ":" + profileName)).toString();
+    }
+
+    /// Returns a serialized legacy offline account with the given profile name.
+    private static JsonObject legacyOfflineAccount(String profileName) {
+        JsonObject account = new JsonObject();
+        account.addProperty("type", "offline");
+        account.addProperty("username", profileName);
+        return account;
     }
 
     @Test
@@ -258,6 +267,24 @@ public final class LauncherSettingsMigrationTest {
         assertEquals(DownloadSource.OFFICIAL, launcherSettings.fileDownloadSourceProperty().get());
     }
 
+    /// Tests preserving the old direct-download default when automatic selection was disabled.
+    @Test
+    public void migratesLegacyDirectDownloadDefaultToOfficialSource() {
+        JsonObject settings = JsonParser.parseString("""
+                {
+                  "autoChooseDownloadType": false
+                }
+                """).getAsJsonObject();
+
+        LegacyConfigMigrator.migrateLegacyDownloadSources(settings);
+        LauncherSettings launcherSettings = Objects.requireNonNull(LauncherSettings.fromJson(settings));
+
+        assertEquals("OFFICIAL", settings.get("versionListSource").getAsString());
+        assertEquals("OFFICIAL", settings.get("fileDownloadSource").getAsString());
+        assertEquals(DownloadSource.OFFICIAL, launcherSettings.versionListSourceProperty().get());
+        assertEquals(DownloadSource.OFFICIAL, launcherSettings.fileDownloadSourceProperty().get());
+    }
+
     /// Tests migrating the legacy selected account string into a structured account reference.
     @Test
     public void migratesLegacySelectedAccountToReference() {
@@ -309,6 +336,62 @@ public final class LauncherSettingsMigrationTest {
         assertFalse(accountMetadata.getAccounts().get(1).has("selected"));
     }
 
+    /// Tests that a blank selected account string does not override the legacy selected marker.
+    @Test
+    public void migratesLegacySelectedAccountMarkerWhenSelectedAccountIsBlank() {
+        JsonObject settings = JsonParser.parseString("""
+                {
+                  "accounts": [
+                    {
+                      "type": "offline",
+                      "username": "Steve"
+                    },
+                    {
+                      "type": "offline",
+                      "username": "Alex",
+                      "selected": true
+                    }
+                  ],
+                  "selectedAccount": ""
+                }
+                """).getAsJsonObject();
+
+        AccountMetadataStore accountMetadata =
+                Objects.requireNonNull(LegacyConfigMigrator.extractAccounts(settings)).metadata();
+        assertTrue(LegacyConfigMigrator.migrateLegacySelectedAccount(settings, accountMetadata));
+
+        assertEquals(offlineAccountID("Alex"), settings.get("selectedAccount").getAsString());
+        assertFalse(accountMetadata.getAccounts().get(1).has("selected"));
+    }
+
+    /// Tests that the legacy selected marker takes priority over a selected account string.
+    @Test
+    public void migratesLegacySelectedAccountMarkerBeforeSelectedAccountString() {
+        JsonObject settings = JsonParser.parseString("""
+                {
+                  "accounts": [
+                    {
+                      "type": "offline",
+                      "username": "Steve"
+                    },
+                    {
+                      "type": "offline",
+                      "username": "Alex",
+                      "selected": true
+                    }
+                  ],
+                  "selectedAccount": "Steve:Steve"
+                }
+                """).getAsJsonObject();
+
+        AccountMetadataStore accountMetadata =
+                Objects.requireNonNull(LegacyConfigMigrator.extractAccounts(settings)).metadata();
+        assertTrue(LegacyConfigMigrator.migrateLegacySelectedAccount(settings, accountMetadata));
+
+        assertEquals(offlineAccountID("Alex"), settings.get("selectedAccount").getAsString());
+        assertFalse(accountMetadata.getAccounts().get(1).has("selected"));
+    }
+
     /// Tests migrating legacy selected Microsoft account identifiers with hyphenated UUIDs.
     @Test
     public void migratesLegacySelectedMicrosoftAccountToReference() {
@@ -331,6 +414,35 @@ public final class LauncherSettingsMigrationTest {
 
         assertEquals(accountMetadata.getAccounts().get(0).get("accountID").getAsString(),
                 settings.get("selectedAccount").getAsString());
+    }
+
+    /// Tests that `$GLOBAL:` selected-account references prefer shared accounts and fall back to local accounts.
+    @Test
+    public void resolvesLegacyGlobalSelectedAccountWithFallback() {
+        AccountMetadataStore localAccounts = LegacyConfigMigrator.migrateLegacyAccounts(List.of(
+                legacyOfflineAccount("Alex")
+        )).metadata();
+        AccountMetadataStore userAccounts = LegacyConfigMigrator.migrateLegacyAccounts(List.of(
+                legacyOfflineAccount("Alex")
+        ), true).metadata();
+
+        AccountID accountID = Objects.requireNonNull(LegacyConfigMigrator.findLegacySelectedAccountID(
+                "$GLOBAL:Alex:Alex",
+                localAccounts,
+                userAccounts));
+
+        assertEquals(userAccounts.getAccounts().get(0).get("accountID").getAsString(), accountID.toString());
+
+        AccountMetadataStore otherUserAccounts = LegacyConfigMigrator.migrateLegacyAccounts(List.of(
+                legacyOfflineAccount("Steve")
+        ), true).metadata();
+
+        AccountID fallbackAccountID = Objects.requireNonNull(LegacyConfigMigrator.findLegacySelectedAccountID(
+                "$GLOBAL:Alex:Alex",
+                localAccounts,
+                otherUserAccounts));
+
+        assertEquals(localAccounts.getAccounts().get(0).get("accountID").getAsString(), fallbackAccountID.toString());
     }
 
     /// Tests serializing selected account references as account ID strings.

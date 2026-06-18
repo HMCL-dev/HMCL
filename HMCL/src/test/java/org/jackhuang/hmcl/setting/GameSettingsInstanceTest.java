@@ -166,6 +166,18 @@ public final class GameSettingsInstanceTest {
         assertEquals("17", instance.customJavaVersionProperty().getValue());
     }
 
+    /// Tests that legacy non-positive maximum memory values are normalized to the suggested memory.
+    @Test
+    public void normalizesLegacyNonPositiveMaxMemory() {
+        GameSettings.Instance instance = LegacyGameSettingsMigrator.toInstance(null, JsonParser.parseString("""
+                {
+                  "maxMemory": 0
+                }
+                """).getAsJsonObject(), false);
+
+        assertEquals(GameSettings.SUGGESTED_MEMORY, instance.maxMemoryProperty().getValue());
+    }
+
     /// Tests that legacy native directory fields migrate to the renamed game setting properties.
     @Test
     public void migratesLegacyNativeDirectoryFields() {

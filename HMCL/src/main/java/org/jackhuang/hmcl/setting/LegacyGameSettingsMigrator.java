@@ -294,7 +294,8 @@ public final class LegacyGameSettingsMigrator {
 
         target.autoMemoryProperty().setValue(JsonUtils.getBoolean(source, "autoMemory", true));
         target.minMemoryProperty().setValue(JsonUtils.getNullableInt(source, "minMemory"));
-        target.maxMemoryProperty().setValue(JsonUtils.getInt(source, "maxMemory", GameSettings.SUGGESTED_MEMORY));
+        int maxMemory = JsonUtils.getInt(source, "maxMemory", GameSettings.SUGGESTED_MEMORY);
+        target.maxMemoryProperty().setValue(maxMemory > 0 ? maxMemory : GameSettings.SUGGESTED_MEMORY);
         target.permSizeProperty().setValue(JsonUtils.getString(source, "permSize", ""));
 
         target.windowTypeProperty().setValue(JsonUtils.getBoolean(source, "fullscreen", false) ? GameWindowType.FULLSCREEN : GameWindowType.WINDOWED);

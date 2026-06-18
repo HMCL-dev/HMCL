@@ -158,8 +158,8 @@ public final class GameDirectoriesTest {
                 """).getAsJsonObject();
 
         assertTrue(LegacyConfigMigrator.migrateLegacySelectedVersions(settings));
-        GameDirectories gameDirectories = Objects.requireNonNull(LegacyConfigMigrator.extractGameDirectoriesFromConfigJson(settings));
         assertTrue(LegacyConfigMigrator.migrateLegacySelectedGameDirectory(settings));
+        GameDirectories gameDirectories = Objects.requireNonNull(LegacyConfigMigrator.extractGameDirectoriesFromConfigJson(settings));
         LauncherSettings config = Objects.requireNonNull(LauncherSettings.fromJson(settings));
 
         assertFalse(settings.has("configurations"));
@@ -171,6 +171,28 @@ public final class GameDirectoriesTest {
                 .getAsJsonObject(LauncherSettings.PROPERTY_SELECTED_INSTANCE)
                 .get(id.toString())
                 .getAsString());
+    }
+
+    /// Tests that an unknown legacy selected profile name is not migrated into an invalid ID.
+    @Test
+    public void ignoresUnknownLegacySelectedGameDirectory() {
+        JsonObject settings = JsonParser.parseString("""
+                {
+                  "last": "Missing",
+                  "configurations": {
+                    "Dev": {
+                      "gameDir": ".minecraft"
+                    }
+                  }
+                }
+                """).getAsJsonObject();
+
+        assertTrue(LegacyConfigMigrator.migrateLegacySelectedGameDirectory(settings));
+        LauncherSettings config = Objects.requireNonNull(LauncherSettings.fromJson(settings));
+
+        assertFalse(settings.has("last"));
+        assertFalse(settings.has(LauncherSettings.PROPERTY_SELECTED_GAME_DIRECTORY));
+        assertNull(config.selectedGameDirectoryProperty().get());
     }
 
     /// Tests that profiles store their directory as a portable path.
