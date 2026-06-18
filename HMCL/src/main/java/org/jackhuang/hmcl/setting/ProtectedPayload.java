@@ -106,9 +106,6 @@ final class ProtectedPayload {
             /// The digest algorithm used to derive the built-in application key.
             private static final String KEY_DIGEST_ALGORITHM = "SHA-256";
 
-            /// The stable seed used to derive the built-in application key.
-            private static final String KEY_SEED = "hmcl-obfuscated-v1";
-
             /// The ChaCha20-Poly1305 nonce size in bytes.
             private static final int NONCE_SIZE = 12;
 
@@ -118,16 +115,17 @@ final class ProtectedPayload {
             /// The random source used to create payload nonces.
             private static final SecureRandom SECURE_RANDOM = new SecureRandom();
 
-            /// The built-in application key used by the weak portable protection format.
-            private static final SecretKeySpec PROTECTION_KEY = createProtectionKey();
+            /// The built-in application key used by this weak portable protection mode.
+            private final SecretKeySpec protectionKey = createProtectionKey(id());
 
             /// Creates the built-in application key.
             ///
+            /// @param keySeed the stable seed used to derive the key
             /// @return the built-in application key
-            private static SecretKeySpec createProtectionKey() {
+            private static SecretKeySpec createProtectionKey(String keySeed) {
                 try {
                     MessageDigest digest = MessageDigest.getInstance(KEY_DIGEST_ALGORITHM);
-                    byte[] key = digest.digest(KEY_SEED.getBytes(StandardCharsets.UTF_8));
+                    byte[] key = digest.digest(keySeed.getBytes(StandardCharsets.UTF_8));
                     return new SecretKeySpec(key, CIPHER_KEY_ALGORITHM);
                 } catch (NoSuchAlgorithmException e) {
                     throw new ExceptionInInitializerError(e);
@@ -140,10 +138,10 @@ final class ProtectedPayload {
             /// @param nonce the encryption nonce
             /// @return the encrypted payload bytes with the authentication tag appended
             /// @throws JsonParseException if the cipher is not available
-            private static byte[] encryptPayload(byte[] payload, byte[] nonce) {
+            private byte[] encryptPayload(byte[] payload, byte[] nonce) {
                 try {
                     Cipher cipher = Cipher.getInstance(CIPHER_TRANSFORMATION);
-                    cipher.init(Cipher.ENCRYPT_MODE, PROTECTION_KEY, new IvParameterSpec(nonce));
+                    cipher.init(Cipher.ENCRYPT_MODE, protectionKey, new IvParameterSpec(nonce));
                     return cipher.doFinal(payload);
                 } catch (GeneralSecurityException e) {
                     throw new JsonParseException("Failed to protect JSON payload", e);
@@ -156,10 +154,10 @@ final class ProtectedPayload {
             /// @param nonce the encryption nonce
             /// @return the plain payload bytes
             /// @throws JsonParseException if the payload cannot be decrypted
-            private static byte[] decryptPayload(byte[] payload, byte[] nonce) {
+            private byte[] decryptPayload(byte[] payload, byte[] nonce) {
                 try {
                     Cipher cipher = Cipher.getInstance(CIPHER_TRANSFORMATION);
-                    cipher.init(Cipher.DECRYPT_MODE, PROTECTION_KEY, new IvParameterSpec(nonce));
+                    cipher.init(Cipher.DECRYPT_MODE, protectionKey, new IvParameterSpec(nonce));
                     return cipher.doFinal(payload);
                 } catch (GeneralSecurityException e) {
                     throw new JsonParseException("Failed to reveal protected JSON payload", e);
