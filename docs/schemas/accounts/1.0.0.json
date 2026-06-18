@@ -21,11 +21,19 @@
         "type": "object",
         "additionalProperties": true,
         "required": [
-          "accountID"
+          "accountID",
+          "type"
         ],
         "properties": {
           "accountID": {
             "$ref": "#/$defs/accountID"
+          },
+          "type": {
+            "enum": [
+              "offline",
+              "microsoft",
+              "authlibInjector"
+            ]
           }
         },
         "not": {
