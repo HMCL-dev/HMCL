@@ -35,25 +35,6 @@
               "authlibInjector"
             ]
           }
-        },
-        "not": {
-          "anyOf": [
-            {
-              "required": [
-                "accessToken"
-              ]
-            },
-            {
-              "required": [
-                "refreshToken"
-              ]
-            },
-            {
-              "required": [
-                "clientToken"
-              ]
-            }
-          ]
         }
       }
     }
