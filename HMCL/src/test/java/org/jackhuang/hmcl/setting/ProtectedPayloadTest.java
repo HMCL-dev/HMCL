@@ -36,13 +36,16 @@ import static org.junit.jupiter.api.Assertions.*;
 public final class ProtectedPayloadTest {
     /// Joins interleaved payload lanes without reversing lane-specific character mappings.
     ///
-    /// @param lanes the transformed payload lanes
+    /// @param lanes the padded transformed payload lanes
     /// @return the direct interleaving of the lane strings
     private static String joinTransformedLanes(JsonArray lanes) {
-        String[] laneTexts = new String[lanes.size()];
+        int laneCount = 4;
+        int lanePaddingCount = 63;
+        int laneStride = lanePaddingCount + 1;
+        String[] laneTexts = new String[laneCount];
         int totalLength = 0;
-        for (int i = 0; i < lanes.size(); i++) {
-            laneTexts[i] = lanes.get(i).getAsString();
+        for (int i = 0; i < laneCount; i++) {
+            laneTexts[i] = lanes.get(i * laneStride + lanePaddingCount).getAsString();
             totalLength += laneTexts[i].length();
         }
 
@@ -81,10 +84,15 @@ public final class ProtectedPayloadTest {
         JsonArray lanes = envelope.getAsJsonArray(ProtectedPayload.PROPERTY_PAYLOAD);
         JsonArray payload = ProtectedPayload.read(envelope, JsonArray.class);
 
-        assertEquals(4, lanes.size());
-        for (JsonElement lane : lanes) {
-            assertTrue(lane.isJsonPrimitive());
-            assertTrue(lane.getAsJsonPrimitive().isString());
+        assertEquals(256, lanes.size());
+        for (int i = 0; i < lanes.size(); i++) {
+            JsonElement lane = lanes.get(i);
+            if ((i + 1) % 64 == 0) {
+                assertTrue(lane.isJsonPrimitive());
+                assertTrue(lane.getAsJsonPrimitive().isString());
+            } else {
+                assertTrue(lane.isJsonNull());
+            }
         }
         String directBase64 = Base64.getEncoder()
                 .encodeToString(JsonUtils.UGLY_GSON.toJson(entries).getBytes(StandardCharsets.UTF_8));

@@ -523,7 +523,7 @@ public final class AccountMetadataStoreTest {
             assertEquals(AccountPrivateData.CURRENT_SCHEMA.url(),
                     serialized.get(JsonSchema.PROPERTY_SCHEMA).getAsString());
             assertEquals("hmcl-obfuscated-v1", serialized.get("protection").getAsString());
-            assertEquals(4, serialized.getAsJsonArray("payload").size());
+            assertEquals(256, serialized.getAsJsonArray("payload").size());
             assertFalse(serialized.toString().contains("access-token"));
             assertFalse(serialized.toString().contains("refresh-token"));
 

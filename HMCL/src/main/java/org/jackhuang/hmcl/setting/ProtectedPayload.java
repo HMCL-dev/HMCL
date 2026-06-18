@@ -19,6 +19,7 @@ package org.jackhuang.hmcl.setting;
 
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
+import com.google.gson.JsonNull;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParseException;
 import com.google.gson.JsonParser;
@@ -80,6 +81,13 @@ final class ProtectedPayload {
             /// The number of interleaved lanes used by the obfuscated payload.
             private static final int OBFUSCATED_LANE_COUNT = 4;
 
+            /// The number of null placeholders stored before each lane.
+            private static final int LANE_PADDING_COUNT = 63;
+
+            /// The total number of elements stored in an obfuscated payload array.
+            private static final int OBFUSCATED_PAYLOAD_SIZE =
+                    OBFUSCATED_LANE_COUNT * (LANE_PADDING_COUNT + 1);
+
             /// The character alphabet produced by standard Base64 encoding.
             private static final String BASE64_ALPHABET =
                     "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=";
@@ -135,6 +143,25 @@ final class ProtectedPayload {
                 return BASE64_ALPHABET.charAt(transformedIndex);
             }
 
+            /// Returns the payload array index storing one lane.
+            ///
+            /// @param laneIndex the lane index
+            /// @return the payload array index
+            private static int lanePayloadIndex(int laneIndex) {
+                return laneIndex * (LANE_PADDING_COUNT + 1) + LANE_PADDING_COUNT;
+            }
+
+            /// Checks that one payload array index contains a null placeholder.
+            ///
+            /// @param payload the payload array
+            /// @param index the payload array index
+            /// @throws JsonParseException if the element is not a null placeholder
+            private static void requireNullPlaceholder(JsonArray payload, int index) {
+                if (!payload.get(index).isJsonNull()) {
+                    throw new JsonParseException("Protected payload placeholder is not null");
+                }
+            }
+
             /// Splits a Base64 payload into interleaved lanes.
             ///
             /// @param payload the Base64 payload to split
@@ -152,6 +179,9 @@ final class ProtectedPayload {
 
                 JsonArray result = new JsonArray();
                 for (StringBuilder lane : lanes) {
+                    for (int i = 0; i < LANE_PADDING_COUNT; i++) {
+                        result.add(JsonNull.INSTANCE);
+                    }
                     result.add(lane.toString());
                 }
                 return result;
@@ -164,14 +194,21 @@ final class ProtectedPayload {
             /// @throws JsonParseException if the payload lanes are missing or malformed
             private static String joinObfuscatedPayload(JsonObject envelope) {
                 if (!(envelope.get(PROPERTY_PAYLOAD) instanceof JsonArray lanes)
-                        || lanes.size() != OBFUSCATED_LANE_COUNT) {
-                    throw new JsonParseException("Missing payload or payload is not a 4-lane array");
+                        || lanes.size() != OBFUSCATED_PAYLOAD_SIZE) {
+                    throw new JsonParseException("Missing payload or payload is not a padded 4-lane array");
                 }
 
                 String[] laneTexts = new String[OBFUSCATED_LANE_COUNT];
                 int totalLength = 0;
                 for (int i = 0; i < OBFUSCATED_LANE_COUNT; i++) {
-                    JsonElement lane = lanes.get(i);
+                    int payloadIndex = lanePayloadIndex(i);
+                    for (int placeholderIndex = payloadIndex - LANE_PADDING_COUNT;
+                         placeholderIndex < payloadIndex;
+                         placeholderIndex++) {
+                        requireNullPlaceholder(lanes, placeholderIndex);
+                    }
+
+                    JsonElement lane = lanes.get(payloadIndex);
                     if (!lane.isJsonPrimitive() || !lane.getAsJsonPrimitive().isString()) {
                         throw new JsonParseException("Protected payload lane is not a string");
                     }
