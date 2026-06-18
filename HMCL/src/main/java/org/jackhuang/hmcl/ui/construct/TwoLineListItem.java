@@ -44,6 +44,8 @@ public class TwoLineListItem extends VBox {
         getStyleClass().add(DEFAULT_STYLE_CLASS);
         setMouseTransparent(true);
 
+        setAlignment(Pos.CENTER);
+
         lblTitle = new Label();
         lblTitle.getStyleClass().add("title");
 
