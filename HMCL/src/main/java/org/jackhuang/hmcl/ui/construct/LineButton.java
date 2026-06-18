@@ -20,9 +20,11 @@ package org.jackhuang.hmcl.ui.construct;
 import javafx.beans.property.*;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
+import javafx.geometry.Pos;
 import javafx.scene.Node;
 import javafx.scene.control.Label;
 import javafx.scene.control.OverrunStyle;
+import javafx.scene.layout.HBox;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
 
@@ -123,6 +125,7 @@ public class LineButton extends LineButtonBase {
                         }
                         trailingTextLabel.setText(message);
                         trailingTextLabel.setMinWidth(50);
+                        trailingTextLabel.setAlignment(Pos.CENTER_RIGHT);
                         setNode(getTrailingTextIndex(), trailingTextLabel);
                     } else if (trailingTextLabel != null) {
                         trailingTextLabel.setText("");
