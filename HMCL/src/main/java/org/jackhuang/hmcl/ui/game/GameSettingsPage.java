@@ -257,14 +257,12 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
                     if (javaCustomOption.isSelected()) {
                         setPropertyOverridden(setting, setting.javaTypeProperty(), true);
                         setting.javaTypeProperty().setValue(JavaVersionType.CUSTOM);
-                        setting.customJavaPathProperty().setValue(javaCustomOption.getPath());
                     } else if (javaAutoDeterminedOption.isSelected()) {
                         setPropertyOverridden(setting, setting.javaTypeProperty(), true);
                         setting.javaTypeProperty().setValue(JavaVersionType.AUTO);
                     } else if (javaVersionOption.isSelected()) {
                         setPropertyOverridden(setting, setting.javaTypeProperty(), true);
                         setting.javaTypeProperty().setValue(JavaVersionType.VERSION);
-                        setting.customJavaVersionProperty().setValue(javaVersionOption.getText());
                     } else if (newChoice != null) {
                         @Nullable Pair<@Nullable JavaVersionType, @Nullable JavaRuntime> selectedJava = newChoice.getValue();
                         if (selectedJava != null
@@ -272,6 +270,7 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
                                 && selectedJava.getValue() != null) {
                             JavaRuntime java = selectedJava.getValue();
                             setPropertyOverridden(setting, setting.javaTypeProperty(), true);
+                            setPropertyOverridden(setting, setting.detectedJavaProperty(), true);
                             setting.javaTypeProperty().setValue(JavaVersionType.DETECTED);
                             setting.detectedJavaProperty().setValue(GameSettings.DetectedJava.of(java));
                         }
@@ -286,6 +285,7 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
                 S setting = currentSetting.get();
                 if (setting != null && javaVersionOption.isSelected() && !updatingSelectedJava) {
                     setPropertyOverridden(setting, setting.javaTypeProperty(), true);
+                    setPropertyOverridden(setting, setting.customJavaVersionProperty(), true);
                     setting.javaTypeProperty().setValue(JavaVersionType.VERSION);
                     setting.customJavaVersionProperty().setValue(newValue);
                     initJavaSubtitle();
@@ -296,6 +296,7 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
                 S setting = currentSetting.get();
                 if (setting != null && javaCustomOption.isSelected() && !updatingSelectedJava) {
                     setPropertyOverridden(setting, setting.javaTypeProperty(), true);
+                    setPropertyOverridden(setting, setting.customJavaPathProperty(), true);
                     setting.javaTypeProperty().setValue(JavaVersionType.CUSTOM);
                     setting.customJavaPathProperty().setValue(newValue);
                     initJavaSubtitle();
@@ -830,11 +831,7 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
             updatingJavaSetting = true;
             try {
                 if (!isPropertyOverridden(setting, setting.javaTypeProperty())) {
-                    GameSettings source = getEffectiveInheritableSource(setting, GameSettings::javaTypeProperty);
                     setting.javaTypeProperty().setValue(getEffectiveValue(setting, GameSettings::javaTypeProperty));
-                    setting.customJavaVersionProperty().setValue(source.customJavaVersionProperty().getValue());
-                    setting.customJavaPathProperty().setValue(source.customJavaPathProperty().getValue());
-                    setting.detectedJavaProperty().setValue(source.detectedJavaProperty().getValue());
                     setPropertyOverridden(setting, setting.javaTypeProperty(), true);
                 } else {
                     setPropertyOverridden(setting, setting.javaTypeProperty(), false);
@@ -2275,16 +2272,15 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
             return;
 
         updatingSelectedJava = true;
-        GameSettings source = getEffectiveInheritableSource(setting, GameSettings::javaTypeProperty);
         JavaVersionType javaType = getEffectiveValue(setting, GameSettings::javaTypeProperty);
         switch (javaType) {
             case CUSTOM:
                 javaCustomOption.setSelected(true);
-                javaCustomOption.setPath(source.customJavaPathProperty().getValue());
+                javaCustomOption.setPath(getEffectiveValue(setting, GameSettings::customJavaPathProperty));
                 break;
             case VERSION:
                 javaVersionOption.setSelected(true);
-                javaVersionOption.setText(source.customJavaVersionProperty().getValue());
+                javaVersionOption.setText(getEffectiveValue(setting, GameSettings::customJavaVersionProperty));
                 break;
             case AUTO:
                 javaAutoDeterminedOption.setSelected(true);

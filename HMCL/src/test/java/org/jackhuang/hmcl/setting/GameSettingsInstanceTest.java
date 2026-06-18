@@ -120,6 +120,8 @@ public final class GameSettingsInstanceTest {
             assertEquals(JavaVersionType.DETECTED, instance.javaTypeProperty().getValue());
             assertEquals("17.0.11+9", instance.detectedJavaProperty().getValue().version());
             assertEquals(GameSettings.DetectedJava.hashExistingPath(javaBinary), instance.detectedJavaProperty().getValue().pathHash());
+            assertTrue(instance.getOverrideProperties().contains(GameSettings.PROPERTY_JAVA_TYPE));
+            assertTrue(instance.getOverrideProperties().contains(GameSettings.PROPERTY_DETECTED_JAVA));
         }
     }
 
@@ -135,6 +137,34 @@ public final class GameSettingsInstanceTest {
 
         assertEquals(JavaVersionType.VERSION, instance.javaTypeProperty().getValue());
         assertEquals("17", instance.customJavaVersionProperty().getValue());
+        assertTrue(instance.getOverrideProperties().contains(GameSettings.PROPERTY_JAVA_TYPE));
+        assertTrue(instance.getOverrideProperties().contains(GameSettings.PROPERTY_CUSTOM_JAVA_VERSION));
+    }
+
+    /// Tests that Java payload settings inherit independently from the Java selection mode.
+    @Test
+    public void inheritsJavaPayloadPropertiesIndependently() {
+        GameSettings.Preset parent = new GameSettings.Preset(
+                GameSettingsPresetID.parse("game-settings-preset:123e4567-e89b-12d3-a456-426614174000"));
+        parent.javaTypeProperty().setValue(JavaVersionType.VERSION);
+        parent.customJavaVersionProperty().setValue("17");
+        parent.customJavaPathProperty().setValue("/parent/java");
+        parent.detectedJavaProperty().setValue(new GameSettings.DetectedJava("17.0.11+9", "parent-hash"));
+
+        GameSettings.Instance instance = new GameSettings.Instance();
+        instance.javaTypeProperty().setValue(JavaVersionType.CUSTOM);
+        instance.customJavaVersionProperty().setValue("21");
+        instance.customJavaPathProperty().setValue("/instance/java");
+        instance.detectedJavaProperty().setValue(new GameSettings.DetectedJava("21.0.1+12", "instance-hash"));
+        instance.getOverrideProperties().add(GameSettings.PROPERTY_JAVA_TYPE);
+        instance.getOverrideProperties().add(GameSettings.PROPERTY_CUSTOM_JAVA_PATH);
+
+        GameSettings.Effective effective = GameSettings.resolve(parent, instance);
+
+        assertEquals(JavaVersionType.CUSTOM, effective.getInheritable(GameSettings::javaTypeProperty));
+        assertEquals("17", effective.getInheritable(GameSettings::customJavaVersionProperty));
+        assertEquals("/instance/java", effective.getInheritable(GameSettings::customJavaPathProperty));
+        assertEquals("17.0.11+9", effective.getInheritable(GameSettings::detectedJavaProperty).version());
     }
 
     /// Tests that legacy non-positive maximum memory values are normalized to the suggested memory.

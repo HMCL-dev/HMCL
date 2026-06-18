@@ -268,6 +268,7 @@ public final class ModpackHelper {
 
         if (c.isOverrideJavaLocation()) {
             setting.getOverrideProperties().add(GameSettings.PROPERTY_JAVA_TYPE);
+            setting.getOverrideProperties().add(GameSettings.PROPERTY_CUSTOM_JAVA_PATH);
             setting.javaTypeProperty().setValue(JavaVersionType.CUSTOM);
             setting.customJavaPathProperty().setValue(Objects.requireNonNullElse(c.getJavaPath(), ""));
         }

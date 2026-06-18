@@ -347,30 +347,39 @@ public sealed abstract class GameSettings extends ObservableSetting {
         return javaType;
     }
 
+    /// Property name for the user input used by `VERSION` Java selection mode.
+    public static final String PROPERTY_CUSTOM_JAVA_VERSION = "customJavaVersion";
+
     /// User input used by `VERSION` Java selection mode.
-    @SerializedName("customJavaVersion")
-    private final SettingProperty<String> customJavaVersion = newSettingProperty("customJavaVersion", "");
+    @SerializedName(PROPERTY_CUSTOM_JAVA_VERSION)
+    private final InheritableProperty<String> customJavaVersion = newInheritableProperty(PROPERTY_CUSTOM_JAVA_VERSION, "");
 
     /// Returns the user input used by `VERSION` Java selection mode.
-    public SettingProperty<String> customJavaVersionProperty() {
+    public InheritableProperty<String> customJavaVersionProperty() {
         return customJavaVersion;
     }
 
+    /// Property name for the user customized Java executable path.
+    public static final String PROPERTY_CUSTOM_JAVA_PATH = "customJavaPath";
+
     /// User customized Java executable path.
-    @SerializedName("customJavaPath")
-    private final SettingProperty<String> customJavaPath = newSettingProperty("customJavaPath", "");
+    @SerializedName(PROPERTY_CUSTOM_JAVA_PATH)
+    private final InheritableProperty<String> customJavaPath = newInheritableProperty(PROPERTY_CUSTOM_JAVA_PATH, "");
 
     /// Returns the custom Java executable path property.
-    public SettingProperty<String> customJavaPathProperty() {
+    public InheritableProperty<String> customJavaPathProperty() {
         return customJavaPath;
     }
 
+    /// Property name for the detected Java runtime reference.
+    public static final String PROPERTY_DETECTED_JAVA = "detectedJava";
+
     /// Detected Java runtime reference used by `DETECTED` Java selection mode.
-    @SerializedName("detectedJava")
-    private final SettingProperty<DetectedJava> detectedJava = newSettingProperty("detectedJava", DetectedJava.EMPTY);
+    @SerializedName(PROPERTY_DETECTED_JAVA)
+    private final InheritableProperty<DetectedJava> detectedJava = newInheritableProperty(PROPERTY_DETECTED_JAVA, DetectedJava.EMPTY);
 
     /// Returns the detected Java runtime reference property.
-    public SettingProperty<DetectedJava> detectedJavaProperty() {
+    public InheritableProperty<DetectedJava> detectedJavaProperty() {
         return detectedJava;
     }
 
@@ -894,13 +903,6 @@ public sealed abstract class GameSettings extends ObservableSetting {
             return inherited(preset, instance, propertyGetter);
         }
 
-        /// Returns the effective value for a property whose override state is tracked by another property.
-        public <T extends @UnknownNullability Object> T get(
-                Function<GameSettings, SettingProperty<T>> propertyGetter,
-                Function<GameSettings, ? extends SettingProperty<?>> overridePropertyGetter) {
-            return inherited(preset, instance, propertyGetter, overridePropertyGetter);
-        }
-
         /// Returns the effective value for an inheritable property.
         public <T extends @UnknownNullability Object> T getInheritable(
                 Function<GameSettings, InheritableProperty<T>> propertyGetter) {
@@ -921,12 +923,12 @@ public sealed abstract class GameSettings extends ObservableSetting {
                     return JavaManager.findSuitableJava(gameVersion, version);
                 case CUSTOM:
                     try {
-                        return JavaManager.getJava(Path.of(get(GameSettings::customJavaPathProperty, GameSettings::javaTypeProperty)));
+                        return JavaManager.getJava(Path.of(getInheritable(GameSettings::customJavaPathProperty)));
                     } catch (IOException | InvalidPathException e) {
                         return null;
                     }
                 case VERSION: {
-                    String javaVersion = get(GameSettings::customJavaVersionProperty, GameSettings::javaTypeProperty);
+                    String javaVersion = getInheritable(GameSettings::customJavaVersionProperty);
                     if (StringUtils.isBlank(javaVersion)) {
                         return JavaManager.findSuitableJava(gameVersion, version);
                     }
@@ -949,7 +951,7 @@ public sealed abstract class GameSettings extends ObservableSetting {
                     return JavaManager.findSuitableJava(allJava, gameVersion, version);
                 }
                 case DETECTED: {
-                    DetectedJava detectedJava = get(GameSettings::detectedJavaProperty, GameSettings::javaTypeProperty);
+                    DetectedJava detectedJava = getInheritable(GameSettings::detectedJavaProperty);
                     String javaVersion = detectedJava.version();
                     if (StringUtils.isBlank(javaVersion)) {
                         return JavaManager.findSuitableJava(gameVersion, version);

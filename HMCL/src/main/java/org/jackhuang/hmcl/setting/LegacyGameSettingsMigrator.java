@@ -226,6 +226,9 @@ public final class LegacyGameSettingsMigrator {
             }
             target.getOverrideProperties().addAll(List.of(
                     GameSettings.PROPERTY_JAVA_TYPE,
+                    GameSettings.PROPERTY_CUSTOM_JAVA_VERSION,
+                    GameSettings.PROPERTY_CUSTOM_JAVA_PATH,
+                    GameSettings.PROPERTY_DETECTED_JAVA,
                     GameSettings.PROPERTY_JVM_OPTIONS,
                     GameSettings.PROPERTY_NO_JVM_OPTIONS,
                     GameSettings.PROPERTY_NO_OPTIMIZING_JVM_OPTIONS,
