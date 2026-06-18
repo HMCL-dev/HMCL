@@ -21,6 +21,7 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParseException;
+import com.google.gson.JsonParser;
 import com.google.gson.JsonPrimitive;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jetbrains.annotations.NotNullByDefault;
@@ -58,6 +59,41 @@ public final class ProtectedPayloadTest {
             }
         }
         return result.toString();
+    }
+
+    /// Asserts that one fixed JSON payload keeps the same obfuscated lane output and can be decoded from it.
+    ///
+    /// @param payloadJson the fixed compact JSON payload
+    /// @param lane0 the first transformed lane
+    /// @param lane1 the second transformed lane
+    /// @param lane2 the third transformed lane
+    /// @param lane3 the fourth transformed lane
+    private static void assertStableObfuscatedPayloadFormat(
+            String payloadJson, String lane0, String lane1, String lane2, String lane3) {
+        JsonElement fixedPayload = JsonParser.parseString(payloadJson);
+        JsonObject envelope = new JsonObject();
+
+        ProtectedPayload.ProtectionMode.OBFUSCATED_V1.write(envelope, fixedPayload);
+        JsonArray lanes = envelope.getAsJsonArray(ProtectedPayload.PROPERTY_PAYLOAD);
+
+        assertEquals(lane0, lanes.get(63).getAsString());
+        assertEquals(lane1, lanes.get(127).getAsString());
+        assertEquals(lane2, lanes.get(191).getAsString());
+        assertEquals(lane3, lanes.get(255).getAsString());
+
+        JsonObject fixedEnvelope = new JsonObject();
+        fixedEnvelope.addProperty(
+                ProtectedPayload.PROPERTY_PROTECTION,
+                ProtectedPayload.ProtectionMode.OBFUSCATED_V1.id());
+        JsonArray compactLanes = new JsonArray(4);
+        compactLanes.add(lane0);
+        compactLanes.add(lane1);
+        compactLanes.add(lane2);
+        compactLanes.add(lane3);
+        fixedEnvelope.add(ProtectedPayload.PROPERTY_PAYLOAD, compactLanes);
+
+        JsonElement decodedPayload = ProtectedPayload.read(fixedEnvelope, JsonElement.class);
+        assertEquals(payloadJson, JsonUtils.UGLY_GSON.toJson(decodedPayload));
     }
 
     /// Tests that plain envelopes can store non-object JSON payloads.
@@ -114,6 +150,41 @@ public final class ProtectedPayloadTest {
         compactLanes.add(new JsonPrimitive("ignored trailing payload"));
         payload = ProtectedPayload.read(envelope, JsonArray.class);
         assertEquals("value", payload.get(0).getAsJsonObject().get("name").getAsString());
+    }
+
+    /// Tests that obfuscated payload encoding and decoding stay stable for fixed data.
+    @Test
+    public void preservesObfuscatedPayloadFormat() {
+        assertStableObfuscatedPayloadFormat(
+                "[{\"name\":\"alpha\",\"value\":1},{\"name\":\"beta\",\"enabled\":true,\"items\":[\"x\",\"y\"]}]",
+                "lH6EOEVVuZH6EVZHHEOZVOlEcj",
+                "x5g5eN5LYp5g5ez5eYDze77NgA",
+                "J9v9RM949J9v=s=9IXI=Iv=M=P",
+                "x/ysexsxqx/ypxpxWBp0/yMxTi");
+        assertStableObfuscatedPayloadFormat(
+                "{\"accessToken\":\"abc123+/=\",\"refreshToken\":\"refresh-456\",\"selected\":true,\"version\":2}",
+                "czOHHEzg1E6OHHE6OnEO66uVEOHu",
+                "7mxmN5F7gDDmmNDDm+NmLLDLDDmY",
+                "=CCav9sJv==Rav==A4MIC1F4LCS=",
+                "eprpyxckspprpypp/nxsBxcsp0xq");
+        assertStableObfuscatedPayloadFormat(
+                "\"plain-secret-token\"",
+                "EzZzVHH",
+                "DLWxzmN",
+                "6UC=gav",
+                "sRppBpi");
+        assertStableObfuscatedPayloadFormat(
+                "[]",
+                "l",
+                "b",
+                "P",
+                "i");
+        assertStableObfuscatedPayloadFormat(
+                "{\"empty\":{},\"list\":[1,2,3],\"flag\":false}",
+                "cHccEOuZgEzuHj",
+                "7Wgx5xu+b5L5pK",
+                "=6vPd1JvPL+LCY",
+                "pBys0xJsssxepi");
     }
 
     /// Tests that typed reads reject mismatched JSON payload types.
