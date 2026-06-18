@@ -101,9 +101,6 @@ final class ProtectedPayload {
             /// The ChaCha20-Poly1305 nonce size in bytes.
             private static final int NONCE_SIZE = 12;
 
-            /// The Poly1305 authentication tag size in bytes.
-            private static final int AUTHENTICATION_TAG_SIZE = 16;
-
             /// The random source used to create payload nonces.
             private static final SecureRandom SECURE_RANDOM = new SecureRandom();
 
@@ -243,10 +240,6 @@ final class ProtectedPayload {
 
                     String encodedPayload = joinObfuscatedPayload(envelope);
                     byte[] encryptedPayload = Base64.getDecoder().decode(encodedPayload);
-                    if (encryptedPayload.length < AUTHENTICATION_TAG_SIZE) {
-                        throw new JsonParseException("Protected payload is too small");
-                    }
-
                     byte[] payloadBytes = decryptPayload(encryptedPayload, nonce);
                     return JsonParser.parseString(new String(payloadBytes, StandardCharsets.UTF_8));
                 } catch (IllegalArgumentException e) {
