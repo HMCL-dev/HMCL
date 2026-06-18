@@ -84,8 +84,8 @@ final class ProtectedPayload {
             /// The number of padding elements stored before each lane.
             private static final int LANE_PADDING_COUNT = 63;
 
-            /// The total number of elements stored in an obfuscated payload array.
-            private static final int OBFUSCATED_PAYLOAD_SIZE =
+            /// The number of elements written in an obfuscated payload array.
+            private static final int WRITTEN_OBFUSCATED_PAYLOAD_SIZE =
                     OBFUSCATED_LANE_COUNT * (LANE_PADDING_COUNT + 1);
 
             /// The character alphabet produced by standard Base64 encoding.
@@ -143,12 +143,14 @@ final class ProtectedPayload {
                 return BASE64_ALPHABET.charAt(transformedIndex);
             }
 
-            /// Returns the payload array index storing one lane.
+            /// Returns the payload array index storing one lane in an effective payload window.
             ///
             /// @param laneIndex the lane index
+            /// @param payloadSize the effective payload window size
             /// @return the payload array index
-            private static int lanePayloadIndex(int laneIndex) {
-                return laneIndex * (LANE_PADDING_COUNT + 1) + LANE_PADDING_COUNT;
+            private static int lanePayloadIndex(int laneIndex, int payloadSize) {
+                int segmentSize = payloadSize / OBFUSCATED_LANE_COUNT;
+                return (laneIndex + 1) * segmentSize - 1;
             }
 
             /// Splits a Base64 payload into interleaved lanes.
@@ -166,7 +168,7 @@ final class ProtectedPayload {
                     lanes[laneIndex].append(encodeCharacter(payload.charAt(i), laneIndex));
                 }
 
-                JsonArray result = new JsonArray();
+                JsonArray result = new JsonArray(WRITTEN_OBFUSCATED_PAYLOAD_SIZE);
                 for (StringBuilder lane : lanes) {
                     for (int i = 0; i < LANE_PADDING_COUNT; i++) {
                         result.add(JsonNull.INSTANCE);
@@ -183,14 +185,15 @@ final class ProtectedPayload {
             /// @throws JsonParseException if the payload lanes are missing or malformed
             private static String joinObfuscatedPayload(JsonObject envelope) {
                 if (!(envelope.get(PROPERTY_PAYLOAD) instanceof JsonArray lanes)
-                        || lanes.size() != OBFUSCATED_PAYLOAD_SIZE) {
-                    throw new JsonParseException("Missing payload or payload is not a padded 4-lane array");
+                        || lanes.size() < OBFUSCATED_LANE_COUNT) {
+                    throw new JsonParseException("Missing payload or payload array is too small");
                 }
 
+                int effectivePayloadSize = Integer.highestOneBit(lanes.size());
                 String[] laneTexts = new String[OBFUSCATED_LANE_COUNT];
                 int totalLength = 0;
                 for (int i = 0; i < OBFUSCATED_LANE_COUNT; i++) {
-                    int payloadIndex = lanePayloadIndex(i);
+                    int payloadIndex = lanePayloadIndex(i, effectivePayloadSize);
                     JsonElement lane = lanes.get(payloadIndex);
                     if (!lane.isJsonPrimitive() || !lane.getAsJsonPrimitive().isString()) {
                         throw new JsonParseException("Protected payload lane is not a string");

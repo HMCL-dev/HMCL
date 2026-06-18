@@ -102,6 +102,18 @@ public final class ProtectedPayloadTest {
 
         JsonArray payload = ProtectedPayload.read(envelope, JsonArray.class);
         assertEquals("value", payload.get(0).getAsJsonObject().get("name").getAsString());
+
+        JsonArray compactLanes = new JsonArray();
+        for (int i = 0; i < 4; i++) {
+            compactLanes.add(lanes.get((i + 1) * 64 - 1));
+        }
+        envelope.add(ProtectedPayload.PROPERTY_PAYLOAD, compactLanes);
+        payload = ProtectedPayload.read(envelope, JsonArray.class);
+        assertEquals("value", payload.get(0).getAsJsonObject().get("name").getAsString());
+
+        compactLanes.add(new JsonPrimitive("ignored trailing payload"));
+        payload = ProtectedPayload.read(envelope, JsonArray.class);
+        assertEquals("value", payload.get(0).getAsJsonObject().get("name").getAsString());
     }
 
     /// Tests that typed reads reject mismatched JSON payload types.
