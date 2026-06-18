@@ -822,16 +822,30 @@ public final class LegacyConfigMigrator {
         }
     }
 
-    /// Migrates the legacy proxy type ordinal into the current enum value.
+    /// Migrates the legacy proxy enable flag and type into the current proxy mode.
     @VisibleForTesting
     static void migrateLegacyProxyType(JsonObject json) {
-        JsonElement legacyValue = json.get("proxyType");
-        @Nullable Integer ordinal = JsonUtils.getInteger(legacyValue);
-        if (ordinal == null || ordinal < 0 || ordinal >= LEGACY_PROXY_TYPES.length) {
+        boolean hasProxy = JsonUtils.getBoolean(json.remove("hasProxy"), false);
+        if (!hasProxy) {
+            json.addProperty("proxyType", ProxyType.SYSTEM.name());
             return;
         }
 
-        json.addProperty("proxyType", LEGACY_PROXY_TYPES[ordinal]);
+        JsonElement legacyValue = json.get("proxyType");
+        @Nullable Integer ordinal = JsonUtils.getInteger(legacyValue);
+        if (ordinal != null) {
+            json.addProperty("proxyType", ordinal >= 0 && ordinal < LEGACY_PROXY_TYPES.length
+                    ? LEGACY_PROXY_TYPES[ordinal]
+                    : ProxyType.HTTP.name());
+            return;
+        }
+
+        String type = JsonUtils.getString(legacyValue);
+        if (!Objects.equals(type, ProxyType.DIRECT.name())
+                && !Objects.equals(type, ProxyType.HTTP.name())
+                && !Objects.equals(type, ProxyType.SOCKS.name())) {
+            json.addProperty("proxyType", ProxyType.HTTP.name());
+        }
     }
 
     /// Migrates legacy download source fields into `versionListSource` and `fileDownloadSource`.

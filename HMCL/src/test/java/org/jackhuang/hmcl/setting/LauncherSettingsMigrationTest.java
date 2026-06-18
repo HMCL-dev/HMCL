@@ -31,7 +31,6 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
 
 import java.io.IOException;
-import java.net.Proxy;
 import java.nio.file.FileSystem;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -142,16 +141,19 @@ public final class LauncherSettingsMigrationTest {
     /// Tests migrating legacy enum ordinal fields into stable enum names.
     @ParameterizedTest
     @CsvSource({
-            "3, 2, true, NETWORK, SOCKS",
-            "1, 0, false, CUSTOM, DIRECT"
+            "3, 2, true, true, NETWORK, SOCKS",
+            "1, DIRECT, false, true, CUSTOM, DIRECT",
+            "1, 1, true, false, CUSTOM, SYSTEM"
     })
     public void migratesLegacyEnumOrdinals(
             String backgroundType,
             String proxyType,
             boolean numericValue,
+            boolean hasProxy,
             String expectedBackgroundType,
             String expectedProxyType) {
         JsonObject settings = new JsonObject();
+        settings.addProperty("hasProxy", hasProxy);
         if (numericValue) {
             settings.addProperty("backgroundType", Integer.parseInt(backgroundType));
             settings.addProperty("proxyType", Integer.parseInt(proxyType));
@@ -167,10 +169,12 @@ public final class LauncherSettingsMigrationTest {
 
         assertEquals(expectedBackgroundType, settings.get("backgroundType").getAsString());
         assertEquals(expectedProxyType, settings.get("proxyType").getAsString());
+        assertFalse(settings.has("hasProxy"));
         assertEquals(BackgroundType.valueOf(expectedBackgroundType), launcherSettings.backgroundTypeProperty().get());
-        assertEquals(Proxy.Type.valueOf(expectedProxyType), launcherSettings.proxyTypeProperty().get());
+        assertEquals(ProxyType.valueOf(expectedProxyType), launcherSettings.proxyTypeProperty().get());
         assertEquals(expectedBackgroundType, serialized.get("backgroundType").getAsString());
         assertEquals(expectedProxyType, serialized.get("proxyType").getAsString());
+        assertFalse(serialized.has("hasProxy"));
     }
 
     /// Tests migrating legacy download source combinations into current download source fields.

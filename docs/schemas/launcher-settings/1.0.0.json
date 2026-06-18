@@ -94,14 +94,12 @@
     "defaultAddonSource": {
       "type": "string"
     },
-    "hasProxy": {
-      "type": "boolean"
-    },
     "hasProxyAuth": {
       "type": "boolean"
     },
     "proxyType": {
       "enum": [
+        "SYSTEM",
         "DIRECT",
         "HTTP",
         "SOCKS"

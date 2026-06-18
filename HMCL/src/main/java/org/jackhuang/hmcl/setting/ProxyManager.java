@@ -48,26 +48,30 @@ public final class ProxyManager {
     private static volatile @Nullable SimpleAuthenticator defaultAuthenticator = null;
 
     private static ProxySelector getProxySelector() {
-        if (settings().hasProxyProperty().get()) {
-            Proxy.Type proxyType = settings().proxyTypeProperty().get();
-            String host = settings().proxyHostProperty().get();
-            int port = settings().proxyPortProperty().get();
+        ProxyType proxyType = settings().proxyTypeProperty().get();
+        return switch (proxyType) {
+            case SYSTEM -> ProxyManager.SYSTEM_DEFAULT;
+            case DIRECT -> NO_PROXY;
+            case HTTP, SOCKS -> {
+                String host = settings().proxyHostProperty().get();
+                int port = settings().proxyPortProperty().get();
 
-            if (proxyType == Proxy.Type.DIRECT || StringUtils.isBlank(host)) {
-                return NO_PROXY;
-            } else if (port < 0 || port > 0xFFFF) {
-                LOG.warning("Illegal proxy port: " + port);
-                return NO_PROXY;
-            } else {
-                return new ProxySelectorWrapper(new SimpleProxySelector(new Proxy(proxyType, new InetSocketAddress(host, port))));
+                if (StringUtils.isBlank(host)) {
+                    yield NO_PROXY;
+                } else if (port < 0 || port > 0xFFFF) {
+                    LOG.warning("Illegal proxy port: " + port);
+                    yield NO_PROXY;
+                } else {
+                    yield new ProxySelectorWrapper(new SimpleProxySelector(new Proxy(
+                            Objects.requireNonNull(proxyType.jdkType()),
+                            new InetSocketAddress(host, port))));
+                }
             }
-        } else {
-            return ProxyManager.SYSTEM_DEFAULT;
-        }
+        };
     }
 
     private static SimpleAuthenticator getAuthenticator() {
-        if (settings().hasProxyProperty().get() && settings().hasProxyAuthProperty().get()) {
+        if (settings().proxyTypeProperty().get().usesCustomAddress() && settings().hasProxyAuthProperty().get()) {
             String username = settings().proxyUserProperty().get();
             String password = settings().proxyPasswordProperty().get();
 
@@ -108,11 +112,10 @@ public final class ProxyManager {
         settings().proxyTypeProperty().addListener(updateProxySelector);
         settings().proxyHostProperty().addListener(updateProxySelector);
         settings().proxyPortProperty().addListener(updateProxySelector);
-        settings().hasProxyProperty().addListener(updateProxySelector);
 
         defaultAuthenticator = getAuthenticator();
         InvalidationListener updateAuthenticator = observable -> defaultAuthenticator = getAuthenticator();
-        settings().hasProxyProperty().addListener(updateAuthenticator);
+        settings().proxyTypeProperty().addListener(updateAuthenticator);
         settings().hasProxyAuthProperty().addListener(updateAuthenticator);
         settings().proxyUserProperty().addListener(updateAuthenticator);
         settings().proxyPasswordProperty().addListener(updateAuthenticator);

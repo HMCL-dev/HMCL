@@ -28,6 +28,7 @@ import javafx.scene.control.ToggleGroup;
 import javafx.scene.layout.*;
 import org.jackhuang.hmcl.setting.DownloadSource;
 import org.jackhuang.hmcl.setting.EnumCommonDirectory;
+import org.jackhuang.hmcl.setting.ProxyType;
 import org.jackhuang.hmcl.task.FetchTask;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.WeakListenerHolder;
@@ -36,7 +37,6 @@ import org.jackhuang.hmcl.util.i18n.I18n;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.javafx.SafeStringConverter;
 
-import java.net.Proxy;
 import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.Optional;
@@ -201,51 +201,37 @@ public class DownloadSettingsPage extends StackPane {
 
                 ToggleGroup proxyConfigurationGroup = new ToggleGroup();
 
-                JFXRadioButton chkProxyDefault = new JFXRadioButton(i18n("settings.launcher.proxy.default"));
-                chkProxyDefault.setUserData(null);
-                chkProxyDefault.setToggleGroup(proxyConfigurationGroup);
+                JFXRadioButton chkProxySystem = new JFXRadioButton(i18n("settings.launcher.proxy.default"));
+                chkProxySystem.setUserData(ProxyType.SYSTEM);
+                chkProxySystem.setToggleGroup(proxyConfigurationGroup);
 
                 JFXRadioButton chkProxyNone = new JFXRadioButton(i18n("settings.launcher.proxy.none"));
-                chkProxyNone.setUserData(Proxy.Type.DIRECT);
+                chkProxyNone.setUserData(ProxyType.DIRECT);
                 chkProxyNone.setToggleGroup(proxyConfigurationGroup);
 
                 JFXRadioButton chkProxyHttp = new JFXRadioButton(i18n("settings.launcher.proxy.http"));
-                chkProxyHttp.setUserData(Proxy.Type.HTTP);
+                chkProxyHttp.setUserData(ProxyType.HTTP);
                 chkProxyHttp.setToggleGroup(proxyConfigurationGroup);
 
 
                 JFXRadioButton chkProxySocks = new JFXRadioButton(i18n("settings.launcher.proxy.socks"));
-                chkProxySocks.setUserData(Proxy.Type.SOCKS);
+                chkProxySocks.setUserData(ProxyType.SOCKS);
                 chkProxySocks.setToggleGroup(proxyConfigurationGroup);
 
-                if (settings().hasProxyProperty().get()) {
-                    Proxy.Type proxyType = settings().proxyTypeProperty().get();
-                    if (proxyType == Proxy.Type.DIRECT) {
-                        chkProxyNone.setSelected(true);
-                    } else if (proxyType == Proxy.Type.HTTP) {
-                        chkProxyHttp.setSelected(true);
-                    } else if (proxyType == Proxy.Type.SOCKS) {
-                        chkProxySocks.setSelected(true);
-                    } else {
-                        chkProxyNone.setSelected(true);
-                    }
-                } else {
-                    chkProxyDefault.setSelected(true);
+                switch (settings().proxyTypeProperty().get()) {
+                    case DIRECT -> chkProxyNone.setSelected(true);
+                    case HTTP -> chkProxyHttp.setSelected(true);
+                    case SOCKS -> chkProxySocks.setSelected(true);
+                    case SYSTEM -> chkProxySystem.setSelected(true);
                 }
 
                 holder.add(FXUtils.onWeakChange(proxyConfigurationGroup.selectedToggleProperty(), toggle -> {
-                    Proxy.Type proxyType = toggle != null ? (Proxy.Type) toggle.getUserData() : null;
-
-                    if (proxyType == null) {
-                        settings().hasProxyProperty().set(false);
-                        settings().proxyTypeProperty().set(null);
-                    } else {
-                        settings().hasProxyProperty().set(true);
-                        settings().proxyTypeProperty().set(proxyType);
-                    }
+                    settings().proxyTypeProperty().set(toggle != null
+                            ? (ProxyType) toggle.getUserData()
+                            : ProxyType.SYSTEM);
                 }));
 
-                proxyTypePane.getChildren().setAll(chkProxyDefault, chkProxyNone, chkProxyHttp, chkProxySocks);
+                proxyTypePane.getChildren().setAll(chkProxySystem, chkProxyNone, chkProxyHttp, chkProxySocks);
                 proxyList.getChildren().add(proxyTypePane);
             }
 
@@ -253,8 +239,7 @@ public class DownloadSettingsPage extends StackPane {
             {
                 proxyPane.disableProperty().bind(
                         Bindings.createBooleanBinding(() ->
-                                        !settings().hasProxyProperty().get() || settings().proxyTypeProperty().get() == null || settings().proxyTypeProperty().get() == Proxy.Type.DIRECT,
-                                settings().hasProxyProperty(),
+                                        !settings().proxyTypeProperty().get().usesCustomAddress(),
                                 settings().proxyTypeProperty()));
 
                 ColumnConstraints colHgrow = new ColumnConstraints();

@@ -37,6 +37,7 @@ import org.jackhuang.hmcl.setting.GameSettings;
 import org.jackhuang.hmcl.setting.GameWindowType;
 import org.jackhuang.hmcl.setting.LegacyGameSettingsMigrator;
 import org.jackhuang.hmcl.setting.Profile;
+import org.jackhuang.hmcl.setting.ProxyType;
 import org.jackhuang.hmcl.setting.SettingFileUtils;
 import org.jackhuang.hmcl.setting.GameSettingsPresetID;
 import org.jackhuang.hmcl.setting.VersionIconType;
@@ -55,7 +56,6 @@ import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
-import java.net.Proxy;
 import java.nio.file.Files;
 import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
@@ -801,11 +801,8 @@ public final class HMCLGameRepository extends DefaultGameRepository {
     }
 
     public static ProxyOption getProxyOption() {
-        if (!settings().hasProxyProperty().get() || settings().proxyTypeProperty().get() == null) {
-            return ProxyOption.Default.INSTANCE;
-        }
-
         return switch (settings().proxyTypeProperty().get()) {
+            case SYSTEM -> ProxyOption.Default.INSTANCE;
             case DIRECT -> ProxyOption.Direct.INSTANCE;
             case HTTP, SOCKS -> {
                 String proxyHost = settings().proxyHostProperty().get();
@@ -825,13 +822,12 @@ public final class HMCLGameRepository extends DefaultGameRepository {
                     proxyPass = "";
                 }
 
-                if (settings().proxyTypeProperty().get() == Proxy.Type.HTTP) {
+                if (settings().proxyTypeProperty().get() == ProxyType.HTTP) {
                     yield new ProxyOption.Http(proxyHost, proxyPort, proxyUser, proxyPass);
                 } else {
                     yield new ProxyOption.Socks(proxyHost, proxyPort, proxyUser, proxyPass);
                 }
             }
-            default -> ProxyOption.Default.INSTANCE;
         };
     }
 }

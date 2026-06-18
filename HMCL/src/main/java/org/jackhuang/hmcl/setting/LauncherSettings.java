@@ -40,7 +40,6 @@ import org.jackhuang.hmcl.util.gson.*;
 import org.jackhuang.hmcl.util.i18n.SupportedLocale;
 import org.jetbrains.annotations.Nullable;
 
-import java.net.Proxy;
 import java.nio.file.Path;
 import java.util.*;
 
@@ -393,15 +392,6 @@ public final class LauncherSettings extends ObservableSetting implements JsonSch
         return defaultAddonSource;
     }
 
-    /// Whether a network proxy is enabled.
-    @SerializedName("hasProxy")
-    private final BooleanProperty hasProxy = new SimpleBooleanProperty();
-
-    /// Returns the network proxy enable property.
-    public BooleanProperty hasProxyProperty() {
-        return hasProxy;
-    }
-
     /// Whether proxy authentication is enabled.
     @SerializedName("hasProxyAuth")
     private final BooleanProperty hasProxyAuth = new SimpleBooleanProperty();
@@ -411,12 +401,12 @@ public final class LauncherSettings extends ObservableSetting implements JsonSch
         return hasProxyAuth;
     }
 
-    /// The configured network proxy type.
+    /// The configured network proxy selection mode.
     @SerializedName("proxyType")
-    private final ObjectProperty<Proxy.Type> proxyType = new SimpleObjectProperty<>(Proxy.Type.HTTP);
+    private final ObjectProperty<ProxyType> proxyType = new SimpleObjectProperty<>(ProxyType.SYSTEM);
 
-    /// Returns the network proxy type property.
-    public ObjectProperty<Proxy.Type> proxyTypeProperty() {
+    /// Returns the network proxy selection mode property.
+    public ObjectProperty<ProxyType> proxyTypeProperty() {
         return proxyType;
     }
 
