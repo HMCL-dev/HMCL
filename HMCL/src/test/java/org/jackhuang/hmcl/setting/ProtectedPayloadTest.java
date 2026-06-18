@@ -35,64 +35,59 @@ import static org.junit.jupiter.api.Assertions.*;
 /// Tests for protected JSON payload envelopes.
 @NotNullByDefault
 public final class ProtectedPayloadTest {
-    /// Joins interleaved payload lanes without reversing lane-specific character mappings.
+    /// Joins padded payload lanes in storage order.
     ///
-    /// @param lanes the padded transformed payload lanes
-    /// @return the direct interleaving of the lane strings
-    private static String joinTransformedLanes(JsonArray lanes) {
+    /// @param lanes the padded payload lanes
+    /// @return the direct concatenation of the lane strings
+    private static String joinPayloadLanes(JsonArray lanes) {
         int laneCount = 4;
         int lanePaddingCount = 63;
         int laneStride = lanePaddingCount + 1;
-        String[] laneTexts = new String[laneCount];
         int totalLength = 0;
         for (int i = 0; i < laneCount; i++) {
-            laneTexts[i] = lanes.get(i * laneStride + lanePaddingCount).getAsString();
-            totalLength += laneTexts[i].length();
+            totalLength += lanes.get(i * laneStride + lanePaddingCount).getAsString().length();
         }
 
         StringBuilder result = new StringBuilder(totalLength);
-        for (int position = 0; result.length() < totalLength; position++) {
-            for (String laneText : laneTexts) {
-                if (position < laneText.length()) {
-                    result.append(laneText.charAt(position));
-                }
-            }
+        for (int i = 0; i < laneCount; i++) {
+            result.append(lanes.get(i * laneStride + lanePaddingCount).getAsString());
         }
         return result.toString();
     }
 
-    /// Asserts that one fixed JSON payload keeps the same obfuscated lane output and can be decoded from it.
+    /// Creates a compact obfuscated envelope from four payload lanes.
     ///
-    /// @param payloadJson the fixed compact JSON payload
-    /// @param lane0 the first transformed lane
-    /// @param lane1 the second transformed lane
-    /// @param lane2 the third transformed lane
-    /// @param lane3 the fourth transformed lane
-    private static void assertStableObfuscatedPayloadFormat(
-            String payloadJson, String lane0, String lane1, String lane2, String lane3) {
-        JsonElement fixedPayload = JsonParser.parseString(payloadJson);
+    /// @param lane0 the first encrypted lane
+    /// @param lane1 the second encrypted lane
+    /// @param lane2 the third encrypted lane
+    /// @param lane3 the fourth encrypted lane
+    /// @return the compact obfuscated envelope
+    private static JsonObject compactObfuscatedEnvelope(String lane0, String lane1, String lane2, String lane3) {
         JsonObject envelope = new JsonObject();
-
-        ProtectedPayload.ProtectionMode.OBFUSCATED_V1.write(envelope, fixedPayload);
-        JsonArray lanes = envelope.getAsJsonArray(ProtectedPayload.PROPERTY_PAYLOAD);
-
-        assertEquals(lane0, lanes.get(63).getAsString());
-        assertEquals(lane1, lanes.get(127).getAsString());
-        assertEquals(lane2, lanes.get(191).getAsString());
-        assertEquals(lane3, lanes.get(255).getAsString());
-
-        JsonObject fixedEnvelope = new JsonObject();
-        fixedEnvelope.addProperty(
+        envelope.addProperty(
                 ProtectedPayload.PROPERTY_PROTECTION,
                 ProtectedPayload.ProtectionMode.OBFUSCATED_V1.id());
-        JsonArray compactLanes = new JsonArray(4);
-        compactLanes.add(lane0);
-        compactLanes.add(lane1);
-        compactLanes.add(lane2);
-        compactLanes.add(lane3);
-        fixedEnvelope.add(ProtectedPayload.PROPERTY_PAYLOAD, compactLanes);
+        JsonArray lanes = new JsonArray(4);
+        lanes.add(lane0);
+        lanes.add(lane1);
+        lanes.add(lane2);
+        lanes.add(lane3);
+        envelope.add(ProtectedPayload.PROPERTY_PAYLOAD, lanes);
+        return envelope;
+    }
 
-        JsonElement decodedPayload = ProtectedPayload.read(fixedEnvelope, JsonElement.class);
+    /// Asserts that one fixed encrypted payload can be decoded.
+    ///
+    /// @param payloadJson the fixed compact JSON payload
+    /// @param lane0 the first encrypted lane
+    /// @param lane1 the second encrypted lane
+    /// @param lane2 the third encrypted lane
+    /// @param lane3 the fourth encrypted lane
+    private static void assertDecodesStableObfuscatedPayloadFormat(
+            String payloadJson, String lane0, String lane1, String lane2, String lane3) {
+        JsonElement decodedPayload = ProtectedPayload.read(
+                compactObfuscatedEnvelope(lane0, lane1, lane2, lane3),
+                JsonElement.class);
         assertEquals(payloadJson, JsonUtils.UGLY_GSON.toJson(decodedPayload));
     }
 
@@ -129,7 +124,7 @@ public final class ProtectedPayloadTest {
         }
         String directBase64 = Base64.getEncoder()
                 .encodeToString(JsonUtils.UGLY_GSON.toJson(entries).getBytes(StandardCharsets.UTF_8));
-        assertNotEquals(directBase64, joinTransformedLanes(lanes));
+        assertNotEquals(directBase64, joinPayloadLanes(lanes));
 
         lanes.set(0, new JsonPrimitive("ignored"));
         JsonObject ignoredPadding = new JsonObject();
@@ -150,41 +145,59 @@ public final class ProtectedPayloadTest {
         compactLanes.add(new JsonPrimitive("ignored trailing payload"));
         payload = ProtectedPayload.read(envelope, JsonArray.class);
         assertEquals("value", payload.get(0).getAsJsonObject().get("name").getAsString());
+
+        JsonObject secondEnvelope = new JsonObject();
+        ProtectedPayload.ProtectionMode.OBFUSCATED_V1.write(secondEnvelope, entries);
+        assertNotEquals(
+                joinPayloadLanes(lanes),
+                joinPayloadLanes(secondEnvelope.getAsJsonArray(ProtectedPayload.PROPERTY_PAYLOAD)));
     }
 
     /// Tests that obfuscated payload encoding and decoding stay stable for fixed data.
     @Test
     public void preservesObfuscatedPayloadFormat() {
-        assertStableObfuscatedPayloadFormat(
+        assertDecodesStableObfuscatedPayloadFormat(
                 "[{\"name\":\"alpha\",\"value\":1},{\"name\":\"beta\",\"enabled\":true,\"items\":[\"x\",\"y\"]}]",
-                "lH6EOEVVuZH6EVZHHEOZVOlEcj",
-                "x5g5eN5LYp5g5ez5eYDze77NgA",
-                "J9v9RM949J9v=s=9IXI=Iv=M=P",
-                "x/ysexsxqx/ypxpxWBp0/yMxTi");
-        assertStableObfuscatedPayloadFormat(
+                "AAECAwQFBgcICQoLb7DMUDzzpXJNPWg7Ngl",
+                "VWmXCtP39wCuWthXBv7OtEp40MHQ0FbaWEl",
+                "WpXmEAnTz5CibOv6O6Wer8DrI4jXzuy9MTC",
+                "Y4Dm7qLSib6Rx6FAgv9HDTFy3cLIu+WcmKs");
+        assertDecodesStableObfuscatedPayloadFormat(
                 "{\"accessToken\":\"abc123+/=\",\"refreshToken\":\"refresh-456\",\"selected\":true,\"version\":2}",
-                "czOHHEzg1E6OHHE6OnEO66uVEOHu",
-                "7mxmN5F7gDDmmNDDm+NmLLDLDDmY",
-                "=CCav9sJv==Rav==A4MIC1F4LCS=",
-                "eprpyxckspprpypp/nxsBxcsp0xq");
-        assertStableObfuscatedPayloadFormat(
+                "AAECAwQFBgcICQoLT+mPXT77syMjcGIyKEMOWi",
+                "iCoa2jhmWbsQaQsbrqGo08Jj5aWL+WCBaxUDEA",
+                "lS/+FSuHqaz4CbO7UfU9nHr33ZULaNgJzPOFEX",
+                "LCSDC1BrUO6GvMlafz4hpWVjifRoOwY9SpYw==");
+        assertDecodesStableObfuscatedPayloadFormat(
                 "\"plain-secret-token\"",
-                "EzZzVHH",
-                "DLWxzmN",
-                "6UC=gav",
-                "sRppBpi");
-        assertStableObfuscatedPayloadFormat(
+                "AAECAwQFBgcICQoL",
+                "FruCXzTw7SMSfHsy",
+                "MkxAFyKFrL4hYh6O",
+                "yLITJti5GVewJKau");
+        assertDecodesStableObfuscatedPayloadFormat(
                 "[]",
-                "l",
-                "b",
-                "P",
-                "i");
-        assertStableObfuscatedPayloadFormat(
+                "AAECAwQFBg",
+                "cICQoLb5bz",
+                "59UboWWpnr",
+                "Oc/SK1tHGt");
+        assertDecodesStableObfuscatedPayloadFormat(
                 "{\"empty\":{},\"list\":[1,2,3],\"flag\":false}",
-                "cHccEOuZgEzuHj",
-                "7Wgx5xu+b5L5pK",
-                "=6vPd1JvPL+LCY",
-                "pBys0xJsssxepi");
+                "AAECAwQFBgcICQoLT+mLUy3",
+                "quXJNZHR7ZA1dCz3C+MegmX",
+                "yYv3mQsa7jHZh7bzBvW6eWG",
+                "/tzD9z9PN9vZxp8HQ1de2M=");
+    }
+
+    /// Tests that tampered encrypted payloads are rejected.
+    @Test
+    public void rejectsTamperedObfuscatedPayload() {
+        JsonObject envelope = compactObfuscatedEnvelope(
+                "AAECAwQFBg",
+                "cICQoLb5bz",
+                "59UboWWpnr",
+                "Oc/SK1tHG9");
+
+        assertThrows(JsonParseException.class, () -> ProtectedPayload.read(envelope, JsonArray.class));
     }
 
     /// Tests that typed reads reject mismatched JSON payload types.

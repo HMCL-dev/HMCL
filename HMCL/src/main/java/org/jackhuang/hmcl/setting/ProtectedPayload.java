@@ -26,16 +26,23 @@ import com.google.gson.JsonParser;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.Unmodifiable;
 
+import javax.crypto.Cipher;
+import javax.crypto.spec.IvParameterSpec;
+import javax.crypto.spec.SecretKeySpec;
 import java.nio.charset.StandardCharsets;
+import java.security.GeneralSecurityException;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
+import java.security.SecureRandom;
+import java.util.Arrays;
 import java.util.Base64;
 import java.util.Objects;
 
 /// Stores a JSON payload using HMCL's portable protection envelope.
 ///
 /// This class is responsible for wrapping payloads with a protection marker and revealing them according to that
-/// marker. Protection modes define whether and how a payload is transformed.
+/// marker. Protection modes define whether and how a payload is stored.
 @NotNullByDefault
 final class ProtectedPayload {
 
@@ -72,13 +79,14 @@ final class ProtectedPayload {
             }
         },
 
-        /// Stores the payload as a portable weakly obfuscated envelope.
+        /// Stores the payload as a portable weakly encrypted envelope.
         ///
-        /// The payload is Base64-encoded, split into interleaved strings, and transformed with lane-specific character
-        /// mappings. This avoids storing private data as directly readable JSON, but it should not be treated as
-        /// device-bound secret storage.
+        /// The payload is encrypted with a built-in application key, Base64-encoded, and split into padded strings. This
+        /// avoids storing private data as directly readable JSON, but it should not be treated as device-bound secret
+        /// storage. The Base64 payload stores `nonce || ciphertext || authentication tag`, with the nonce occupying the
+        /// first 12 decoded bytes.
         OBFUSCATED_V1("hmcl-obfuscated-v1") {
-            /// The number of interleaved lanes used by the obfuscated payload.
+            /// The number of lanes used by the obfuscated payload.
             private static final int OBFUSCATED_LANE_COUNT = 4;
 
             /// The number of padding elements stored before each lane.
@@ -88,69 +96,73 @@ final class ProtectedPayload {
             private static final int WRITTEN_OBFUSCATED_PAYLOAD_SIZE =
                     OBFUSCATED_LANE_COUNT * (LANE_PADDING_COUNT + 1);
 
-            /// The character alphabet produced by standard Base64 encoding.
-            private static final String BASE64_ALPHABET =
-                    "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=";
+            /// The JCA transformation used for payload encryption.
+            private static final String CIPHER_TRANSFORMATION = "ChaCha20-Poly1305";
 
-            /// Lane-specific multipliers used by the fixed Base64 character mapping.
-            private static final int @Unmodifiable [] LANE_MULTIPLIERS = {7, 11, 17, 19};
+            /// The JCA key algorithm used by the payload cipher.
+            private static final String CIPHER_KEY_ALGORITHM = "ChaCha20";
 
-            /// Modular inverses of [LANE_MULTIPLIERS] modulo `BASE64_ALPHABET.length()`.
-            private static final int @Unmodifiable [] LANE_INVERSE_MULTIPLIERS = {28, 6, 23, 24};
+            /// The digest algorithm used to derive the built-in application key.
+            private static final String KEY_DIGEST_ALGORITHM = "SHA-256";
 
-            /// Lane-specific offsets used by the fixed Base64 character mapping.
-            private static final int @Unmodifiable [] LANE_OFFSETS = {13, 29, 41, 53};
+            /// The stable seed used to derive the built-in application key.
+            private static final String KEY_SEED = "hmcl-obfuscated-v1";
 
-            /// Returns the alphabet index of one Base64 character.
+            /// The ChaCha20-Poly1305 nonce size in bytes.
+            private static final int NONCE_SIZE = 12;
+
+            /// The Poly1305 authentication tag size in bytes.
+            private static final int AUTHENTICATION_TAG_SIZE = 16;
+
+            /// The random source used to create payload nonces.
+            private static final SecureRandom SECURE_RANDOM = new SecureRandom();
+
+            /// The built-in application key used by the weak portable protection format.
+            private static final SecretKeySpec PROTECTION_KEY = createProtectionKey();
+
+            /// Creates the built-in application key.
             ///
-            /// @param character the Base64 character to inspect
-            /// @return the alphabet index
-            /// @throws JsonParseException if the character is outside the supported alphabet
-            private static int base64AlphabetIndex(char character) {
-                if ('A' <= character && character <= 'Z') {
-                    return character - 'A';
-                } else if ('a' <= character && character <= 'z') {
-                    return character - 'a' + 26;
-                } else if ('0' <= character && character <= '9') {
-                    return character - '0' + 52;
-                } else if (character == '+') {
-                    return 62;
-                } else if (character == '/') {
-                    return 63;
-                } else if (character == '=') {
-                    return 64;
+            /// @return the built-in application key
+            private static SecretKeySpec createProtectionKey() {
+                try {
+                    MessageDigest digest = MessageDigest.getInstance(KEY_DIGEST_ALGORITHM);
+                    byte[] key = digest.digest(KEY_SEED.getBytes(StandardCharsets.UTF_8));
+                    return new SecretKeySpec(key, CIPHER_KEY_ALGORITHM);
+                } catch (NoSuchAlgorithmException e) {
+                    throw new ExceptionInInitializerError(e);
                 }
-
-                throw new JsonParseException("Protected payload lane contains an unsupported character");
             }
 
-            /// Encodes one Base64 character with its lane-specific fixed mapping.
+            /// Encrypts the plain payload bytes.
             ///
-            /// @param character the Base64 character to encode
-            /// @param laneIndex the lane index
-            /// @return the encoded character
-            /// @throws JsonParseException if the character is outside the supported alphabet
-            private static char encodeCharacter(char character, int laneIndex) {
-                int alphabetLength = BASE64_ALPHABET.length();
-                int transformedIndex =
-                        (base64AlphabetIndex(character) * LANE_MULTIPLIERS[laneIndex] + LANE_OFFSETS[laneIndex])
-                                % alphabetLength;
-                return BASE64_ALPHABET.charAt(transformedIndex);
+            /// @param payload the plain payload bytes
+            /// @param nonce the encryption nonce
+            /// @return the encrypted payload bytes with the authentication tag appended
+            /// @throws JsonParseException if the cipher is not available
+            private static byte[] encryptPayload(byte[] payload, byte[] nonce) {
+                try {
+                    Cipher cipher = Cipher.getInstance(CIPHER_TRANSFORMATION);
+                    cipher.init(Cipher.ENCRYPT_MODE, PROTECTION_KEY, new IvParameterSpec(nonce));
+                    return cipher.doFinal(payload);
+                } catch (GeneralSecurityException e) {
+                    throw new JsonParseException("Failed to protect JSON payload", e);
+                }
             }
 
-            /// Decodes one Base64 character with its lane-specific inverse mapping.
+            /// Decrypts the protected payload bytes.
             ///
-            /// @param character the encoded character to decode
-            /// @param laneIndex the lane index
-            /// @return the decoded Base64 character
-            /// @throws JsonParseException if the character is outside the supported alphabet
-            private static char decodeCharacter(char character, int laneIndex) {
-                int alphabetLength = BASE64_ALPHABET.length();
-                int transformedIndex = Math.floorMod(
-                        (base64AlphabetIndex(character) - LANE_OFFSETS[laneIndex])
-                                * LANE_INVERSE_MULTIPLIERS[laneIndex],
-                        alphabetLength);
-                return BASE64_ALPHABET.charAt(transformedIndex);
+            /// @param payload the encrypted payload bytes with the authentication tag appended
+            /// @param nonce the encryption nonce
+            /// @return the plain payload bytes
+            /// @throws JsonParseException if the payload cannot be decrypted
+            private static byte[] decryptPayload(byte[] payload, byte[] nonce) {
+                try {
+                    Cipher cipher = Cipher.getInstance(CIPHER_TRANSFORMATION);
+                    cipher.init(Cipher.DECRYPT_MODE, PROTECTION_KEY, new IvParameterSpec(nonce));
+                    return cipher.doFinal(payload);
+                } catch (GeneralSecurityException e) {
+                    throw new JsonParseException("Failed to reveal protected JSON payload", e);
+                }
             }
 
             /// Returns the payload array index storing one lane in an effective payload window.
@@ -163,32 +175,26 @@ final class ProtectedPayload {
                 return (laneIndex + 1) * segmentSize - 1;
             }
 
-            /// Splits a Base64 payload into interleaved lanes.
+            /// Splits a Base64 payload into padded lanes.
             ///
             /// @param payload the Base64 payload to split
-            /// @return the interleaved payload lanes
+            /// @return the padded payload lanes
             private static JsonArray splitObfuscatedPayload(String payload) {
-                StringBuilder[] lanes = new StringBuilder[OBFUSCATED_LANE_COUNT];
-                for (int i = 0; i < lanes.length; i++) {
-                    lanes[i] = new StringBuilder((payload.length() + OBFUSCATED_LANE_COUNT - 1) / OBFUSCATED_LANE_COUNT);
-                }
-
-                for (int i = 0; i < payload.length(); i++) {
-                    int laneIndex = i % OBFUSCATED_LANE_COUNT;
-                    lanes[laneIndex].append(encodeCharacter(payload.charAt(i), laneIndex));
-                }
-
+                int laneLength = (payload.length() + OBFUSCATED_LANE_COUNT - 1) / OBFUSCATED_LANE_COUNT;
                 JsonArray result = new JsonArray(WRITTEN_OBFUSCATED_PAYLOAD_SIZE);
-                for (StringBuilder lane : lanes) {
+                for (int laneIndex = 0; laneIndex < OBFUSCATED_LANE_COUNT; laneIndex++) {
+                    int start = laneIndex * laneLength;
+                    int end = Math.min(start + laneLength, payload.length());
+                    String lane = start < payload.length() ? payload.substring(start, end) : "";
                     for (int i = 0; i < LANE_PADDING_COUNT; i++) {
                         result.add(JsonNull.INSTANCE);
                     }
-                    result.add(lane.toString());
+                    result.add(lane);
                 }
                 return result;
             }
 
-            /// Joins interleaved Base64 payload lanes from the envelope.
+            /// Joins Base64 payload lanes from the envelope.
             ///
             /// @param envelope the envelope object to read from
             /// @return the restored Base64 payload
@@ -211,19 +217,11 @@ final class ProtectedPayload {
 
                     laneTexts[i] = lane.getAsString();
                     totalLength += laneTexts[i].length();
-                    if (i > 0 && laneTexts[i].length() != laneTexts[0].length()) {
-                        throw new JsonParseException("Protected payload lanes are malformed");
-                    }
                 }
 
                 StringBuilder result = new StringBuilder(totalLength);
-                for (int position = 0; result.length() < totalLength; position++) {
-                    for (int laneIndex = 0; laneIndex < laneTexts.length; laneIndex++) {
-                        String lane = laneTexts[laneIndex];
-                        if (position < lane.length()) {
-                            result.append(decodeCharacter(lane.charAt(position), laneIndex));
-                        }
-                    }
+                for (String laneText : laneTexts) {
+                    result.append(laneText);
                 }
                 return result.toString();
             }
@@ -233,7 +231,13 @@ final class ProtectedPayload {
             protected void writePayload(JsonObject envelope, JsonElement payload) {
                 String payloadText = JsonUtils.UGLY_GSON.toJson(payload);
                 byte[] payloadBytes = payloadText.getBytes(StandardCharsets.UTF_8);
-                String actualPayload = Base64.getEncoder().encodeToString(payloadBytes);
+                byte[] nonce = new byte[NONCE_SIZE];
+                SECURE_RANDOM.nextBytes(nonce);
+                byte[] encryptedPayload = encryptPayload(payloadBytes, nonce);
+                byte[] protectedPayload = new byte[NONCE_SIZE + encryptedPayload.length];
+                System.arraycopy(nonce, 0, protectedPayload, 0, NONCE_SIZE);
+                System.arraycopy(encryptedPayload, 0, protectedPayload, NONCE_SIZE, encryptedPayload.length);
+                String actualPayload = Base64.getEncoder().encodeToString(protectedPayload);
 
                 envelope.addProperty(PROPERTY_PROTECTION, id());
                 envelope.add(PROPERTY_PAYLOAD, splitObfuscatedPayload(actualPayload));
@@ -244,7 +248,14 @@ final class ProtectedPayload {
             protected JsonElement readPayload(JsonObject envelope) {
                 try {
                     String encodedPayload = joinObfuscatedPayload(envelope);
-                    byte[] payloadBytes = Base64.getDecoder().decode(encodedPayload);
+                    byte[] protectedPayload = Base64.getDecoder().decode(encodedPayload);
+                    if (protectedPayload.length < NONCE_SIZE + AUTHENTICATION_TAG_SIZE) {
+                        throw new JsonParseException("Protected payload is too small");
+                    }
+
+                    byte[] nonce = Arrays.copyOfRange(protectedPayload, 0, NONCE_SIZE);
+                    byte[] encryptedPayload = Arrays.copyOfRange(protectedPayload, NONCE_SIZE, protectedPayload.length);
+                    byte[] payloadBytes = decryptPayload(encryptedPayload, nonce);
                     return JsonParser.parseString(new String(payloadBytes, StandardCharsets.UTF_8));
                 } catch (IllegalArgumentException e) {
                     throw new JsonParseException("Failed to reveal protected JSON payload", e);
