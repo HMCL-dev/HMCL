@@ -82,6 +82,34 @@ public final class LauncherSettingsMigrationTest {
         }
     }
 
+    /// Tests migrating the HMCL 2.x selected offline account username into the current account ID.
+    @Test
+    public void migratesLegacyHMCL2SelectedOfflineAccount() {
+        JsonObject settings = JsonParser.parseString("""
+                {
+                  "_version": 0,
+                  "auth": {
+                    "offline": {
+                      "IAuthenticator_UserName": "Alex",
+                      "uuidMap": {
+                        "Alex": "00000000000000000000000000000001"
+                      }
+                    }
+                  }
+                }
+                """).getAsJsonObject();
+
+        LegacyConfigMigrator.upgradeConfig(settings, 0);
+        AccountMetadataStore accountMetadata =
+                Objects.requireNonNull(LegacyConfigMigrator.extractAccounts(settings)).metadata();
+        assertTrue(LegacyConfigMigrator.migrateLegacySelectedAccount(settings));
+        LauncherSettings launcherSettings = Objects.requireNonNull(LauncherSettings.fromJson(settings));
+
+        assertFalse(accountMetadata.getAccounts().get(0).has("selected"));
+        assertEquals(offlineAccountID("Alex"),
+                Objects.requireNonNull(launcherSettings.selectedAccountProperty().get()).toString());
+    }
+
     /// Tests migrating legacy language fields into the current launcher settings field.
     @Test
     public void migratesLegacyLocalizationToLanguage() {
@@ -298,7 +326,7 @@ public final class LauncherSettingsMigrationTest {
 
         AccountMetadataStore accountMetadata =
                 Objects.requireNonNull(LegacyConfigMigrator.extractAccounts(settings)).metadata();
-        assertTrue(LegacyConfigMigrator.migrateLegacySelectedAccount(settings, accountMetadata));
+        assertTrue(LegacyConfigMigrator.migrateLegacySelectedAccount(settings));
         LauncherSettings launcherSettings = Objects.requireNonNull(LauncherSettings.fromJson(settings));
 
         assertEquals(offlineAccountID("Alex"),
@@ -326,66 +354,11 @@ public final class LauncherSettingsMigrationTest {
 
         AccountMetadataStore accountMetadata =
                 Objects.requireNonNull(LegacyConfigMigrator.extractAccounts(settings)).metadata();
-        assertTrue(LegacyConfigMigrator.migrateLegacySelectedAccount(settings, accountMetadata));
 
-        assertEquals(offlineAccountID("Alex"), settings.get("selectedAccount").getAsString());
+        assertEquals("Alex:Alex", settings.get("selectedAccount").getAsString());
         assertFalse(accountMetadata.getAccounts().get(1).has("selected"));
-    }
-
-    /// Tests that a blank selected account string does not override the legacy selected marker.
-    @Test
-    public void migratesLegacySelectedAccountMarkerWhenSelectedAccountIsBlank() {
-        JsonObject settings = JsonParser.parseString("""
-                {
-                  "accounts": [
-                    {
-                      "type": "offline",
-                      "username": "Steve"
-                    },
-                    {
-                      "type": "offline",
-                      "username": "Alex",
-                      "selected": true
-                    }
-                  ],
-                  "selectedAccount": ""
-                }
-                """).getAsJsonObject();
-
-        AccountMetadataStore accountMetadata =
-                Objects.requireNonNull(LegacyConfigMigrator.extractAccounts(settings)).metadata();
-        assertTrue(LegacyConfigMigrator.migrateLegacySelectedAccount(settings, accountMetadata));
-
+        assertTrue(LegacyConfigMigrator.migrateLegacySelectedAccount(settings));
         assertEquals(offlineAccountID("Alex"), settings.get("selectedAccount").getAsString());
-        assertFalse(accountMetadata.getAccounts().get(1).has("selected"));
-    }
-
-    /// Tests that the legacy selected marker takes priority over a selected account string.
-    @Test
-    public void migratesLegacySelectedAccountMarkerBeforeSelectedAccountString() {
-        JsonObject settings = JsonParser.parseString("""
-                {
-                  "accounts": [
-                    {
-                      "type": "offline",
-                      "username": "Steve"
-                    },
-                    {
-                      "type": "offline",
-                      "username": "Alex",
-                      "selected": true
-                    }
-                  ],
-                  "selectedAccount": "Steve:Steve"
-                }
-                """).getAsJsonObject();
-
-        AccountMetadataStore accountMetadata =
-                Objects.requireNonNull(LegacyConfigMigrator.extractAccounts(settings)).metadata();
-        assertTrue(LegacyConfigMigrator.migrateLegacySelectedAccount(settings, accountMetadata));
-
-        assertEquals(offlineAccountID("Alex"), settings.get("selectedAccount").getAsString());
-        assertFalse(accountMetadata.getAccounts().get(1).has("selected"));
     }
 
     /// Tests migrating legacy selected Microsoft account identifiers with hyphenated UUIDs.
@@ -406,7 +379,7 @@ public final class LauncherSettingsMigrationTest {
 
         AccountMetadataStore accountMetadata =
                 Objects.requireNonNull(LegacyConfigMigrator.extractAccounts(settings)).metadata();
-        assertTrue(LegacyConfigMigrator.migrateLegacySelectedAccount(settings, accountMetadata));
+        assertTrue(LegacyConfigMigrator.migrateLegacySelectedAccount(settings));
 
         assertEquals(accountMetadata.getAccounts().get(0).get("accountID").getAsString(),
                 settings.get("selectedAccount").getAsString());
@@ -429,7 +402,7 @@ public final class LauncherSettingsMigrationTest {
 
         AccountMetadataStore accountMetadata =
                 Objects.requireNonNull(LegacyConfigMigrator.extractAccounts(settings)).metadata();
-        assertTrue(LegacyConfigMigrator.migrateLegacySelectedAccount(settings, accountMetadata));
+        assertTrue(LegacyConfigMigrator.migrateLegacySelectedAccount(settings));
 
         assertEquals(accountIDFromLegacyIdentifier("$GLOBAL:Alex:Alex"),
                 settings.get("selectedAccount").getAsString());

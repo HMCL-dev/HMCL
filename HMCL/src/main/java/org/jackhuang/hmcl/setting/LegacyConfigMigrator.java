@@ -38,7 +38,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -217,7 +216,7 @@ public final class LegacyConfigMigrator {
             AccountMigrationResult accountMigration = Objects.requireNonNullElseGet(
                     extractAccounts(jsonObject),
                     AccountMigrationResult::empty);
-            migrateLegacySelectedAccount(jsonObject, accountMigration.metadata());
+            migrateLegacySelectedAccount(jsonObject);
             JsonElement legacyAllowAutoAgent = jsonObject.remove("allowAutoAgent");
             JsonElement legacyDisableAutoGameOptions = jsonObject.remove("disableAutoGameOptions");
             migrateLegacyBackgroundImageType(jsonObject);
@@ -431,12 +430,21 @@ public final class LegacyConfigMigrator {
 
         if (accounts instanceof JsonArray array) {
             List<JsonObject> accountRecords = new ArrayList<>(array.size());
+            @Nullable String selectedAccount = null;
             for (JsonElement account : array) {
                 if (account instanceof JsonObject object) {
+                    if (!json.has("selectedAccount")
+                            && selectedAccount == null
+                            && JsonUtils.getBoolean(object.get("selected"), false)) {
+                        selectedAccount = getLegacyAccountIdentifierFromStorage(object);
+                    }
                     accountRecords.add(object);
                 }
             }
-            return migrateLegacyAccounts(accountRecords, false, true);
+            if (selectedAccount != null) {
+                json.addProperty("selectedAccount", selectedAccount);
+            }
+            return migrateLegacyAccounts(accountRecords, false);
         }
 
         return AccountMigrationResult.empty();
@@ -458,27 +466,12 @@ public final class LegacyConfigMigrator {
     /// @return current account metadata and private data stores
     @VisibleForTesting
     static AccountMigrationResult migrateLegacyAccounts(List<JsonObject> accounts, boolean userStorage) {
-        return migrateLegacyAccounts(accounts, userStorage, false);
-    }
-
-    /// Creates the current account stores from legacy serialized account records.
-    ///
-    /// @param accounts legacy account records
-    /// @param userStorage whether the legacy entries come from the shared user account file
-    /// @param keepSelectedMarker whether to keep the legacy selected marker for selected-account migration
-    /// @return current account metadata and private data stores
-    private static AccountMigrationResult migrateLegacyAccounts(
-            List<JsonObject> accounts,
-            boolean userStorage,
-            boolean keepSelectedMarker) {
         List<JsonObject> metadataAccounts = new ArrayList<>(accounts.size());
         AccountPrivateData privateData = new AccountPrivateData();
         for (JsonObject account : accounts) {
             MigratedLegacyAccount migrated = migrateLegacyAccountRecord(account);
             JsonObject metadata = migrated.metadata();
-            if (keepSelectedMarker) {
-                copyMember(account, metadata, "selected");
-            }
+            metadata.remove("selected");
             AccountID accountID = createLegacyAccountID(metadata, userStorage);
             metadata.addProperty(Account.PROPERTY_ACCOUNT_ID, accountID.toString());
 
@@ -649,31 +642,12 @@ public final class LegacyConfigMigrator {
     }
 
     /// Migrates the legacy selected account string into a selected account ID.
-    static boolean migrateLegacySelectedAccount(JsonObject json, AccountMetadataStore localAccounts) {
+    static boolean migrateLegacySelectedAccount(JsonObject json) {
         Objects.requireNonNull(json);
-        Objects.requireNonNull(localAccounts);
 
         JsonElement selectedAccount = json.get("selectedAccount");
-        @Nullable AccountID selectedMarkerAccountID = null;
-        boolean changed = false;
-        assignAccountIDs(localAccounts, new HashSet<>(), false);
-        for (JsonObject account : localAccounts.getAccounts()) {
-            JsonElement selectedMarker = account.remove("selected");
-            if (selectedMarker != null) {
-                changed = true;
-            }
-            if (JsonUtils.getBoolean(selectedMarker, false) && selectedMarkerAccountID == null) {
-                selectedMarkerAccountID = getSelectedAccountID(account);
-            }
-        }
-
-        if (selectedMarkerAccountID != null) {
-            json.addProperty("selectedAccount", selectedMarkerAccountID.toString());
-            return true;
-        }
-
         if (selectedAccount == null) {
-            return changed;
+            return false;
         }
 
         @Nullable String legacyIdentifier = JsonUtils.getString(selectedAccount);
@@ -684,11 +658,6 @@ public final class LegacyConfigMigrator {
 
         json.addProperty("selectedAccount", createLegacyAccountID(legacyIdentifier).toString());
         return true;
-    }
-
-    /// Returns the selected account ID for a serialized account entry.
-    private static @Nullable AccountID getSelectedAccountID(JsonObject metadata) {
-        return Account.getAccountID(metadata);
     }
 
     /// Returns the legacy selected-account string represented by a migrated account metadata entry.
@@ -723,6 +692,44 @@ public final class LegacyConfigMigrator {
                 @Nullable String formattedProfileID = profileID != null ? formatLegacyUUID(profileID) : null;
                 yield serverBaseURL != null && loginName != null && formattedProfileID != null
                         ? serverBaseURL + ":" + loginName + ":" + formattedProfileID
+                        : null;
+            }
+            default -> null;
+        };
+    }
+
+    /// Returns the legacy selected-account string represented by a raw legacy account storage entry.
+    private static @Nullable String getLegacyAccountIdentifierFromStorage(JsonObject storage) {
+        @Nullable String type = JsonUtils.getString(storage, "type");
+        if (type == null) {
+            return null;
+        }
+
+        return switch (type) {
+            case "offline" -> {
+                @Nullable String username = JsonUtils.getString(storage, "username");
+                yield username != null ? username + ":" + username : null;
+            }
+            case "microsoft" -> {
+                @Nullable String uuid = JsonUtils.getString(storage, "uuid");
+                @Nullable String formattedUUID = uuid != null ? formatLegacyUUID(uuid) : null;
+                yield formattedUUID != null ? "microsoft:" + formattedUUID : null;
+            }
+            case "yggdrasil" -> {
+                @Nullable String username = JsonUtils.getString(storage, "username");
+                @Nullable String uuid = JsonUtils.getString(storage, "uuid");
+                @Nullable String formattedUUID = uuid != null ? formatLegacyUUID(uuid) : null;
+                yield username != null && formattedUUID != null
+                        ? username + ":" + formattedUUID
+                        : null;
+            }
+            case "authlibInjector" -> {
+                @Nullable String serverBaseURL = JsonUtils.getString(storage, "serverBaseURL");
+                @Nullable String username = JsonUtils.getString(storage, "username");
+                @Nullable String uuid = JsonUtils.getString(storage, "uuid");
+                @Nullable String formattedUUID = uuid != null ? formatLegacyUUID(uuid) : null;
+                yield serverBaseURL != null && username != null && formattedUUID != null
+                        ? serverBaseURL + ":" + username + ":" + formattedUUID
                         : null;
             }
             default -> null;
@@ -1015,7 +1022,8 @@ public final class LegacyConfigMigrator {
     }
 
     /// Upgrades old config fields in the raw JSON object to the current schema.
-    private static void upgradeConfig(JsonObject jsonObject, int configVersion) {
+    @VisibleForTesting
+    static void upgradeConfig(JsonObject jsonObject, int configVersion) {
         LOG.info(String.format("Updating legacy configuration from %d to %d.", configVersion, LEGACY_CURRENT_CONFIG_VERSION));
         if (configVersion < 1) {
             // Upgrade configuration of HMCL 2.x: Convert OfflineAccounts whose stored uuid is important.
@@ -1033,7 +1041,7 @@ public final class LegacyConfigMigrator {
                     storage.addProperty("username", entry.getKey());
                     storage.add("uuid", entry.getValue());
                     if (entry.getKey().equals(selected)) {
-                        storage.addProperty("selected", true);
+                        jsonObject.addProperty("selectedAccount", entry.getKey() + ":" + entry.getKey());
                     }
                     accounts.add(storage);
                 }
