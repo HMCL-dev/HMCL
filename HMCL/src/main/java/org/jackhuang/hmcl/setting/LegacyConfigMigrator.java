@@ -18,8 +18,6 @@
 package org.jackhuang.hmcl.setting;
 
 import com.google.gson.*;
-import javafx.geometry.Rectangle2D;
-import javafx.stage.Screen;
 import org.glavo.uuid.UUIDs;
 import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.auth.Account;
@@ -73,9 +71,6 @@ public final class LegacyConfigMigrator {
 
     /// The total transparent custom window shadow size used by legacy launcher window bounds.
     private static final int LEGACY_CUSTOM_DECORATION_SHADOW_EXTENT = 16;
-
-    /// The transparent custom window shadow size on one side used by legacy launcher window bounds.
-    private static final int LEGACY_CUSTOM_DECORATION_SHADOW_SIZE = LEGACY_CUSTOM_DECORATION_SHADOW_EXTENT / 2;
 
     /// The legacy built-in profile name for the current workspace game directory.
     private static final String LEGACY_DEFAULT_PROFILE = "Default";
@@ -336,15 +331,8 @@ public final class LegacyConfigMigrator {
         MigrationReceipt.save(USER_ACCOUNTS_MIGRATION_RECEIPT_LOCATION, migrationResult.path());
     }
 
-    /// Extracts launcher state from a legacy config JSON object and removes those members.
+    /// Extracts launcher state from a legacy config JSON object without using live screen bounds.
     static LauncherState extractLauncherState(JsonObject json) {
-        Rectangle2D screen = Screen.getPrimary().getBounds();
-        return extractLauncherState(json, screen.getWidth(), screen.getHeight());
-    }
-
-    /// Extracts launcher state from a legacy config JSON object using explicit screen bounds.
-    @VisibleForTesting
-    static LauncherState extractLauncherState(JsonObject json, double screenWidth, double screenHeight) {
         Objects.requireNonNull(json);
 
         JsonObject state = new JsonObject();
@@ -353,8 +341,6 @@ public final class LegacyConfigMigrator {
         moveMember(json, state, "y");
         moveMember(json, state, "width");
         moveMember(json, state, "height");
-        migrateLegacyWindowContentPosition(state, "x", screenWidth);
-        migrateLegacyWindowContentPosition(state, "y", screenHeight);
         migrateLegacyWindowContentSize(state, "width");
         migrateLegacyWindowContentSize(state, "height");
         moveMember(json, state, "promptedVersion");
@@ -362,22 +348,6 @@ public final class LegacyConfigMigrator {
 
         LauncherState result = JsonUtils.GSON.fromJson(state, LauncherState.class);
         return result != null ? result : new LauncherState();
-    }
-
-    /// Converts one legacy launcher window outer position into a normalized content position.
-    private static void migrateLegacyWindowContentPosition(JsonObject state, String name, double screenSize) {
-        JsonElement element = state.get(name);
-        if (!(element instanceof JsonPrimitive primitive)
-                || !primitive.isNumber()
-                || !Double.isFinite(screenSize)
-                || screenSize <= 0.0) {
-            return;
-        }
-
-        double position = primitive.getAsDouble() + LEGACY_CUSTOM_DECORATION_SHADOW_SIZE / screenSize;
-        if (Double.isFinite(position)) {
-            state.addProperty(name, position);
-        }
     }
 
     /// Converts one legacy launcher window outer size into a content size.
@@ -1022,8 +992,7 @@ public final class LegacyConfigMigrator {
     }
 
     /// Upgrades old config fields in the raw JSON object to the current schema.
-    @VisibleForTesting
-    static void upgradeConfig(JsonObject jsonObject, int configVersion) {
+    private static void upgradeConfig(JsonObject jsonObject, int configVersion) {
         LOG.info(String.format("Updating legacy configuration from %d to %d.", configVersion, LEGACY_CURRENT_CONFIG_VERSION));
         if (configVersion < 1) {
             // Upgrade configuration of HMCL 2.x: Convert OfflineAccounts whose stored uuid is important.

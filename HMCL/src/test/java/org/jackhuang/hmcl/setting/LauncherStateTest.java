@@ -47,7 +47,7 @@ public final class LauncherStateTest {
                 }
                 """).getAsJsonObject();
 
-        LauncherState state = LegacyConfigMigrator.extractLauncherState(settings, 1000, 2000);
+        LauncherState state = LegacyConfigMigrator.extractLauncherState(settings);
 
         assertFalse(settings.has("x"));
         assertFalse(settings.has("y"));
@@ -58,8 +58,8 @@ public final class LauncherStateTest {
         assertTrue(settings.has("logLines"));
         assertTrue(settings.has("localization"));
 
-        assertEquals(0.258, state.getX(), 1e-9);
-        assertEquals(0.504, state.getY(), 1e-9);
+        assertEquals(0.25, state.getX(), 1e-9);
+        assertEquals(0.5, state.getY(), 1e-9);
         assertEquals(1264.0, state.getWidth());
         assertEquals(704.0, state.getHeight());
         assertEquals("3.6.15", state.getPromptedVersion());

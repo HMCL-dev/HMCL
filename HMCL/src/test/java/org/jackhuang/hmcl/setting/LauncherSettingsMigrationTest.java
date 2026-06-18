@@ -84,30 +84,34 @@ public final class LauncherSettingsMigrationTest {
 
     /// Tests migrating the HMCL 2.x selected offline account username into the current account ID.
     @Test
-    public void migratesLegacyHMCL2SelectedOfflineAccount() {
-        JsonObject settings = JsonParser.parseString("""
-                {
-                  "_version": 0,
-                  "auth": {
-                    "offline": {
-                      "IAuthenticator_UserName": "Alex",
-                      "uuidMap": {
-                        "Alex": "00000000000000000000000000000001"
+    public void migratesLegacyHMCL2SelectedOfflineAccount() throws IOException {
+        try (FileSystem fileSystem = Jimfs.newFileSystem(Configuration.unix())) {
+            Path root = fileSystem.getPath("/launcher-settings-migration-tests");
+            Files.createDirectories(root);
+            Path config = Files.createTempFile(root, "hmcl2-selected-account-", ".json");
+            Files.writeString(config, """
+                    {
+                      "_version": 0,
+                      "auth": {
+                        "offline": {
+                          "IAuthenticator_UserName": "Alex",
+                          "uuidMap": {
+                            "Alex": "00000000000000000000000000000001"
+                          }
+                        }
                       }
                     }
-                  }
-                }
-                """).getAsJsonObject();
+                    """);
 
-        LegacyConfigMigrator.upgradeConfig(settings, 0);
-        AccountMetadataStore accountMetadata =
-                Objects.requireNonNull(LegacyConfigMigrator.extractAccounts(settings)).metadata();
-        assertTrue(LegacyConfigMigrator.migrateLegacySelectedAccount(settings));
-        LauncherSettings launcherSettings = Objects.requireNonNull(LauncherSettings.fromJson(settings));
+            LegacyConfigMigrator.LegacyConfigMigration migration =
+                    Objects.requireNonNull(LegacyConfigMigrator.migrateLegacyConfig(config));
 
-        assertFalse(accountMetadata.getAccounts().get(0).has("selected"));
-        assertEquals(offlineAccountID("Alex"),
-                Objects.requireNonNull(launcherSettings.selectedAccountProperty().get()).toString());
+            LegacyConfigMigrator.AccountMigrationResult accountMigration =
+                    Objects.requireNonNull(migration.detachedSettings().accountMigration());
+            assertFalse(accountMigration.metadata().getAccounts().get(0).has("selected"));
+            assertEquals(offlineAccountID("Alex"),
+                    Objects.requireNonNull(migration.launcherSettings().selectedAccountProperty().get()).toString());
+        }
     }
 
     /// Tests migrating legacy language fields into the current launcher settings field.
@@ -450,10 +454,10 @@ public final class LauncherSettingsMigrationTest {
                 }
                 """).getAsJsonObject();
 
-        LauncherState launcherState = LegacyConfigMigrator.extractLauncherState(state, 1000, 2000);
+        LauncherState launcherState = LegacyConfigMigrator.extractLauncherState(state);
 
-        assertEquals(0.108, launcherState.getX(), 1e-9);
-        assertEquals(0.204, launcherState.getY(), 1e-9);
+        assertEquals(0.1, launcherState.getX(), 1e-9);
+        assertEquals(0.2, launcherState.getY(), 1e-9);
         assertEquals(1264, launcherState.getWidth(), 1e-9);
         assertEquals(704, launcherState.getHeight(), 1e-9);
     }
