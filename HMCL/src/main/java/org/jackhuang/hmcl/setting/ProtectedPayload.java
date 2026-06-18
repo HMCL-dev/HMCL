@@ -32,8 +32,6 @@ import javax.crypto.spec.IvParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
 import java.nio.charset.StandardCharsets;
 import java.security.GeneralSecurityException;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
 import java.util.Base64;
 import java.util.Objects;
@@ -100,12 +98,6 @@ final class ProtectedPayload {
             /// The JCA transformation used for payload encryption.
             private static final String CIPHER_TRANSFORMATION = "ChaCha20-Poly1305";
 
-            /// The JCA key algorithm used by the payload cipher.
-            private static final String CIPHER_KEY_ALGORITHM = "ChaCha20";
-
-            /// The digest algorithm used to derive the built-in application key.
-            private static final String KEY_DIGEST_ALGORITHM = "SHA-256";
-
             /// The ChaCha20-Poly1305 nonce size in bytes.
             private static final int NONCE_SIZE = 12;
 
@@ -116,21 +108,16 @@ final class ProtectedPayload {
             private static final SecureRandom SECURE_RANDOM = new SecureRandom();
 
             /// The built-in application key used by this weak portable protection mode.
-            private final SecretKeySpec protectionKey = createProtectionKey(id());
-
-            /// Creates the built-in application key.
-            ///
-            /// @param keySeed the stable seed used to derive the key
-            /// @return the built-in application key
-            private static SecretKeySpec createProtectionKey(String keySeed) {
-                try {
-                    MessageDigest digest = MessageDigest.getInstance(KEY_DIGEST_ALGORITHM);
-                    byte[] key = digest.digest(keySeed.getBytes(StandardCharsets.UTF_8));
-                    return new SecretKeySpec(key, CIPHER_KEY_ALGORITHM);
-                } catch (NoSuchAlgorithmException e) {
-                    throw new ExceptionInInitializerError(e);
-                }
-            }
+            static final SecretKeySpec PROTECTION_KEY = new SecretKeySpec(new byte[]{
+                    (byte) 0x3c, (byte) 0xd8, (byte) 0xa2, (byte) 0x22,
+                    (byte) 0x11, (byte) 0xd2, (byte) 0x8d, (byte) 0x89,
+                    (byte) 0xb4, (byte) 0xf7, (byte) 0xd9, (byte) 0xb0,
+                    (byte) 0x65, (byte) 0xbc, (byte) 0x14, (byte) 0x8a,
+                    (byte) 0x6e, (byte) 0xb0, (byte) 0xa9, (byte) 0x4d,
+                    (byte) 0xeb, (byte) 0x93, (byte) 0x99, (byte) 0x6f,
+                    (byte) 0x84, (byte) 0x07, (byte) 0x5a, (byte) 0x9e,
+                    (byte) 0xbd, (byte) 0xc8, (byte) 0xd1, (byte) 0xeb
+            }, "ChaCha20");
 
             /// Encrypts the plain payload bytes.
             ///
@@ -141,7 +128,7 @@ final class ProtectedPayload {
             private byte[] encryptPayload(byte[] payload, byte[] nonce) {
                 try {
                     Cipher cipher = Cipher.getInstance(CIPHER_TRANSFORMATION);
-                    cipher.init(Cipher.ENCRYPT_MODE, protectionKey, new IvParameterSpec(nonce));
+                    cipher.init(Cipher.ENCRYPT_MODE, PROTECTION_KEY, new IvParameterSpec(nonce));
                     return cipher.doFinal(payload);
                 } catch (GeneralSecurityException e) {
                     throw new JsonParseException("Failed to protect JSON payload", e);
@@ -157,7 +144,7 @@ final class ProtectedPayload {
             private byte[] decryptPayload(byte[] payload, byte[] nonce) {
                 try {
                     Cipher cipher = Cipher.getInstance(CIPHER_TRANSFORMATION);
-                    cipher.init(Cipher.DECRYPT_MODE, protectionKey, new IvParameterSpec(nonce));
+                    cipher.init(Cipher.DECRYPT_MODE, PROTECTION_KEY, new IvParameterSpec(nonce));
                     return cipher.doFinal(payload);
                 } catch (GeneralSecurityException e) {
                     throw new JsonParseException("Failed to reveal protected JSON payload", e);

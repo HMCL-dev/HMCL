@@ -28,6 +28,8 @@ import org.jetbrains.annotations.NotNullByDefault;
 import org.junit.jupiter.api.Test;
 
 import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.util.Base64;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -104,6 +106,24 @@ public final class ProtectedPayloadTest {
         JsonPrimitive payload = ProtectedPayload.read(envelope, JsonPrimitive.class);
 
         assertEquals("payload", payload.getAsString());
+    }
+
+    /// Tests that the fixed payload key is the SHA-256 digest of the protection ID.
+    @Test
+    public void precomputedProtectionKeyUsesProtectionID() throws NoSuchAlgorithmException {
+        byte[] key = MessageDigest.getInstance("SHA-256").digest(
+                ProtectedPayload.ProtectionMode.OBFUSCATED_V1.id().getBytes(StandardCharsets.UTF_8));
+
+        assertArrayEquals(new byte[]{
+                (byte) 0x3c, (byte) 0xd8, (byte) 0xa2, (byte) 0x22,
+                (byte) 0x11, (byte) 0xd2, (byte) 0x8d, (byte) 0x89,
+                (byte) 0xb4, (byte) 0xf7, (byte) 0xd9, (byte) 0xb0,
+                (byte) 0x65, (byte) 0xbc, (byte) 0x14, (byte) 0x8a,
+                (byte) 0x6e, (byte) 0xb0, (byte) 0xa9, (byte) 0x4d,
+                (byte) 0xeb, (byte) 0x93, (byte) 0x99, (byte) 0x6f,
+                (byte) 0x84, (byte) 0x07, (byte) 0x5a, (byte) 0x9e,
+                (byte) 0xbd, (byte) 0xc8, (byte) 0xd1, (byte) 0xeb
+        }, key);
     }
 
     /// Tests that obfuscated envelopes can store array JSON payloads.
