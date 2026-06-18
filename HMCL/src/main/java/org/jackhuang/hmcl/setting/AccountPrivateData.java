@@ -279,6 +279,7 @@ final class AccountPrivateData extends ObservableSetting implements JsonSchemaSe
                 accountPrivateData.setSchema(new JsonSchema(schema.getAsString()));
             }
             values.remove(ProtectedPayload.PROPERTY_PROTECTION);
+            values.remove(ProtectedPayload.PROPERTY_NONCE);
             values.remove(ProtectedPayload.PROPERTY_PAYLOAD);
             accountPrivateData.unknownFields.putAll(values);
 

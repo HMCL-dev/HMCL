@@ -13,11 +13,15 @@
     {
       "required": [
         "protection",
+        "nonce",
         "payload"
       ],
       "properties": {
         "protection": {
           "const": "hmcl-obfuscated-v1"
+        },
+        "nonce": {
+          "type": "string"
         },
         "payload": {
           "$ref": "#/$defs/obfuscatedPayload"
@@ -52,6 +56,9 @@
         "hmcl-obfuscated-v1",
         "plain"
       ]
+    },
+    "nonce": {
+      "type": "string"
     },
     "payload": {}
   },

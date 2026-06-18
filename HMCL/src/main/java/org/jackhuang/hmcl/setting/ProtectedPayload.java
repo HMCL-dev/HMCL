@@ -35,7 +35,6 @@ import java.security.GeneralSecurityException;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
-import java.util.Arrays;
 import java.util.Base64;
 import java.util.Objects;
 
@@ -51,6 +50,9 @@ final class ProtectedPayload {
 
     /// The JSON member containing the envelope payload.
     static final String PROPERTY_PAYLOAD = "payload";
+
+    /// The JSON member containing the Base64-encoded encryption nonce.
+    static final String PROPERTY_NONCE = "nonce";
 
     /// Prevents instantiation.
     private ProtectedPayload() {
@@ -83,8 +85,7 @@ final class ProtectedPayload {
         ///
         /// The payload is encrypted with a built-in application key, Base64-encoded, and split into padded strings. This
         /// avoids storing private data as directly readable JSON, but it should not be treated as device-bound secret
-        /// storage. The Base64 payload stores `nonce || ciphertext || authentication tag`, with the nonce occupying the
-        /// first 12 decoded bytes.
+        /// storage. The nonce is stored separately, while the payload lanes store `ciphertext || authentication tag`.
         OBFUSCATED_V1("hmcl-obfuscated-v1") {
             /// The number of lanes used by the obfuscated payload.
             private static final int OBFUSCATED_LANE_COUNT = 4;
@@ -234,12 +235,10 @@ final class ProtectedPayload {
                 byte[] nonce = new byte[NONCE_SIZE];
                 SECURE_RANDOM.nextBytes(nonce);
                 byte[] encryptedPayload = encryptPayload(payloadBytes, nonce);
-                byte[] protectedPayload = new byte[NONCE_SIZE + encryptedPayload.length];
-                System.arraycopy(nonce, 0, protectedPayload, 0, NONCE_SIZE);
-                System.arraycopy(encryptedPayload, 0, protectedPayload, NONCE_SIZE, encryptedPayload.length);
-                String actualPayload = Base64.getEncoder().encodeToString(protectedPayload);
+                String actualPayload = Base64.getEncoder().encodeToString(encryptedPayload);
 
                 envelope.addProperty(PROPERTY_PROTECTION, id());
+                envelope.addProperty(PROPERTY_NONCE, Base64.getEncoder().encodeToString(nonce));
                 envelope.add(PROPERTY_PAYLOAD, splitObfuscatedPayload(actualPayload));
             }
 
@@ -247,14 +246,22 @@ final class ProtectedPayload {
             @Override
             protected JsonElement readPayload(JsonObject envelope) {
                 try {
+                    String encodedNonce = JsonUtils.getString(envelope, PROPERTY_NONCE);
+                    if (encodedNonce == null) {
+                        throw new JsonParseException("Missing protected payload member: nonce");
+                    }
+
+                    byte[] nonce = Base64.getDecoder().decode(encodedNonce);
+                    if (nonce.length != NONCE_SIZE) {
+                        throw new JsonParseException("Protected payload nonce has invalid length");
+                    }
+
                     String encodedPayload = joinObfuscatedPayload(envelope);
-                    byte[] protectedPayload = Base64.getDecoder().decode(encodedPayload);
-                    if (protectedPayload.length < NONCE_SIZE + AUTHENTICATION_TAG_SIZE) {
+                    byte[] encryptedPayload = Base64.getDecoder().decode(encodedPayload);
+                    if (encryptedPayload.length < AUTHENTICATION_TAG_SIZE) {
                         throw new JsonParseException("Protected payload is too small");
                     }
 
-                    byte[] nonce = Arrays.copyOfRange(protectedPayload, 0, NONCE_SIZE);
-                    byte[] encryptedPayload = Arrays.copyOfRange(protectedPayload, NONCE_SIZE, protectedPayload.length);
                     byte[] payloadBytes = decryptPayload(encryptedPayload, nonce);
                     return JsonParser.parseString(new String(payloadBytes, StandardCharsets.UTF_8));
                 } catch (IllegalArgumentException e) {

@@ -35,6 +35,9 @@ import static org.junit.jupiter.api.Assertions.*;
 /// Tests for protected JSON payload envelopes.
 @NotNullByDefault
 public final class ProtectedPayloadTest {
+    /// Stable Base64 nonce used by fixed encrypted payload vectors.
+    private static final String FIXED_NONCE = "AAECAwQFBgcICQoL";
+
     /// Joins padded payload lanes in storage order.
     ///
     /// @param lanes the padded payload lanes
@@ -67,6 +70,7 @@ public final class ProtectedPayloadTest {
         envelope.addProperty(
                 ProtectedPayload.PROPERTY_PROTECTION,
                 ProtectedPayload.ProtectionMode.OBFUSCATED_V1.id());
+        envelope.addProperty(ProtectedPayload.PROPERTY_NONCE, FIXED_NONCE);
         JsonArray lanes = new JsonArray(4);
         lanes.add(lane0);
         lanes.add(lane1);
@@ -114,6 +118,8 @@ public final class ProtectedPayloadTest {
         ProtectedPayload.ProtectionMode.OBFUSCATED_V1.write(envelope, entries);
         JsonArray lanes = envelope.getAsJsonArray(ProtectedPayload.PROPERTY_PAYLOAD);
 
+        assertTrue(envelope.get(ProtectedPayload.PROPERTY_NONCE).isJsonPrimitive());
+        assertTrue(envelope.get(ProtectedPayload.PROPERTY_NONCE).getAsJsonPrimitive().isString());
         assertEquals(256, lanes.size());
         for (int i = 0; i < lanes.size(); i++) {
             JsonElement lane = lanes.get(i);
@@ -149,6 +155,9 @@ public final class ProtectedPayloadTest {
         JsonObject secondEnvelope = new JsonObject();
         ProtectedPayload.ProtectionMode.OBFUSCATED_V1.write(secondEnvelope, entries);
         assertNotEquals(
+                envelope.get(ProtectedPayload.PROPERTY_NONCE).getAsString(),
+                secondEnvelope.get(ProtectedPayload.PROPERTY_NONCE).getAsString());
+        assertNotEquals(
                 joinPayloadLanes(lanes),
                 joinPayloadLanes(secondEnvelope.getAsJsonArray(ProtectedPayload.PROPERTY_PAYLOAD)));
     }
@@ -158,44 +167,44 @@ public final class ProtectedPayloadTest {
     public void preservesObfuscatedPayloadFormat() {
         assertDecodesStableObfuscatedPayloadFormat(
                 "[{\"name\":\"alpha\",\"value\":1},{\"name\":\"beta\",\"enabled\":true,\"items\":[\"x\",\"y\"]}]",
-                "AAECAwQFBgcICQoLb7DMUDzzpXJNPWg7Ngl",
-                "VWmXCtP39wCuWthXBv7OtEp40MHQ0FbaWEl",
-                "WpXmEAnTz5CibOv6O6Wer8DrI4jXzuy9MTC",
-                "Y4Dm7qLSib6Rx6FAgv9HDTFy3cLIu+WcmKs");
+                "b7DMUDzzpXJNPWg7NglVWmXCtP39wCu",
+                "WthXBv7OtEp40MHQ0FbaWElWpXmEAnT",
+                "z5CibOv6O6Wer8DrI4jXzuy9MTCY4Dm",
+                "7qLSib6Rx6FAgv9HDTFy3cLIu+WcmKs");
         assertDecodesStableObfuscatedPayloadFormat(
                 "{\"accessToken\":\"abc123+/=\",\"refreshToken\":\"refresh-456\",\"selected\":true,\"version\":2}",
-                "AAECAwQFBgcICQoLT+mPXT77syMjcGIyKEMOWi",
-                "iCoa2jhmWbsQaQsbrqGo08Jj5aWL+WCBaxUDEA",
-                "lS/+FSuHqaz4CbO7UfU9nHr33ZULaNgJzPOFEX",
-                "LCSDC1BrUO6GvMlafz4hpWVjifRoOwY9SpYw==");
+                "T+mPXT77syMjcGIyKEMOWiiCoa2jhmWbsQ",
+                "aQsbrqGo08Jj5aWL+WCBaxUDEAlS/+FSuH",
+                "qaz4CbO7UfU9nHr33ZULaNgJzPOFEXLCSD",
+                "C1BrUO6GvMlafz4hpWVjifRoOwY9SpYw==");
         assertDecodesStableObfuscatedPayloadFormat(
                 "\"plain-secret-token\"",
-                "AAECAwQFBgcICQoL",
-                "FruCXzTw7SMSfHsy",
-                "MkxAFyKFrL4hYh6O",
-                "yLITJti5GVewJKau");
+                "FruCXzTw7SMS",
+                "fHsyMkxAFyKF",
+                "rL4hYh6OyLIT",
+                "Jti5GVewJKau");
         assertDecodesStableObfuscatedPayloadFormat(
                 "[]",
-                "AAECAwQFBg",
-                "cICQoLb5bz",
-                "59UboWWpnr",
-                "Oc/SK1tHGt");
+                "b5bz59",
+                "UboWWp",
+                "nrOc/S",
+                "K1tHGt");
         assertDecodesStableObfuscatedPayloadFormat(
                 "{\"empty\":{},\"list\":[1,2,3],\"flag\":false}",
-                "AAECAwQFBgcICQoLT+mLUy3",
-                "quXJNZHR7ZA1dCz3C+MegmX",
-                "yYv3mQsa7jHZh7bzBvW6eWG",
-                "/tzD9z9PN9vZxp8HQ1de2M=");
+                "T+mLUy3quXJNZHR7ZA1",
+                "dCz3C+MegmXyYv3mQsa",
+                "7jHZh7bzBvW6eWG/tzD",
+                "9z9PN9vZxp8HQ1de2M=");
     }
 
     /// Tests that tampered encrypted payloads are rejected.
     @Test
     public void rejectsTamperedObfuscatedPayload() {
         JsonObject envelope = compactObfuscatedEnvelope(
-                "AAECAwQFBg",
-                "cICQoLb5bz",
-                "59UboWWpnr",
-                "Oc/SK1tHG9");
+                "b5bz59",
+                "UboWWp",
+                "nrOc/S",
+                "K1tHG9");
 
         assertThrows(JsonParseException.class, () -> ProtectedPayload.read(envelope, JsonArray.class));
     }
