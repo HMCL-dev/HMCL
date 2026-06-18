@@ -272,21 +272,55 @@ public final class LegacyConfigMigrator {
             return null;
         }
 
+        return migrateLegacyUserSettings(LEGACY_USER_SETTINGS_LOCATION);
+    }
+
+    /// Migrates user settings and state from one legacy global config file.
+    ///
+    /// @param path the legacy global config path
+    /// @return the migrated user settings and state, or `null` when no legacy user settings can be used
+    @VisibleForTesting
+    static @Nullable UserSettingsMigrationResult migrateLegacyUserSettings(Path path) throws IOException {
+        Objects.requireNonNull(path);
+
         try {
-            String content = Files.readString(LEGACY_USER_SETTINGS_LOCATION);
-            UserSettings deserialized = UserSettings.fromJson(content);
-            UserState userState = UserState.fromJson(content);
-            if (deserialized == null || userState == null) {
-                LOG.info("Legacy user settings file is empty: " + LEGACY_USER_SETTINGS_LOCATION);
+            JsonObject legacy = JsonUtils.fromJsonFile(path, JsonObject.class);
+            if (legacy == null) {
+                LOG.info("Legacy user settings file is empty: " + path);
                 return null;
             }
 
-            LOG.info("Migrating user settings from " + LEGACY_USER_SETTINGS_LOCATION);
-            return new UserSettingsMigrationResult(LEGACY_USER_SETTINGS_LOCATION, deserialized, userState);
+            LOG.info("Migrating user settings from " + path);
+            return new UserSettingsMigrationResult(
+                    path,
+                    extractLegacyUserSettings(legacy),
+                    extractLegacyUserState(legacy));
         } catch (JsonParseException e) {
-            LOG.warning("Malformed legacy user settings: " + LEGACY_USER_SETTINGS_LOCATION, e);
+            LOG.warning("Malformed legacy user settings: " + path, e);
             return null;
         }
+    }
+
+    /// Extracts the user settings fields from one legacy global config object.
+    private static UserSettings extractLegacyUserSettings(JsonObject legacy) {
+        JsonObject current = new JsonObject();
+        current.add(JsonSchema.PROPERTY_SCHEMA, JsonUtils.GSON.toJsonTree(UserSettings.CURRENT_SCHEMA, JsonSchema.class));
+        copyMember(legacy, current, "logRetention");
+        copyMember(legacy, current, "enableOfflineAccount");
+        copyMember(legacy, current, "fontAntiAliasing");
+        copyMember(legacy, current, "userJava");
+        copyMember(legacy, current, "disabledJava");
+        return Objects.requireNonNull(JsonUtils.GSON.fromJson(current, UserSettings.class));
+    }
+
+    /// Extracts the user state fields from one legacy global config object.
+    private static UserState extractLegacyUserState(JsonObject legacy) {
+        JsonObject current = new JsonObject();
+        current.add(JsonSchema.PROPERTY_SCHEMA, JsonUtils.GSON.toJsonTree(UserState.CURRENT_SCHEMA, JsonSchema.class));
+        copyMember(legacy, current, "agreementVersion");
+        copyMember(legacy, current, "terracottaAgreementVersion");
+        copyMember(legacy, current, "platformPromptVersion");
+        return Objects.requireNonNull(JsonUtils.GSON.fromJson(current, UserState.class));
     }
 
     /// Records that the given legacy user settings migration result has been applied.
