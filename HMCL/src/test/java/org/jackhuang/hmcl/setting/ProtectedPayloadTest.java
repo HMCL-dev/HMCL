@@ -22,14 +22,41 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParseException;
 import com.google.gson.JsonPrimitive;
+import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.junit.jupiter.api.Test;
+
+import java.nio.charset.StandardCharsets;
+import java.util.Base64;
 
 import static org.junit.jupiter.api.Assertions.*;
 
 /// Tests for protected JSON payload envelopes.
 @NotNullByDefault
 public final class ProtectedPayloadTest {
+    /// Joins interleaved payload lanes without reversing lane-specific character mappings.
+    ///
+    /// @param lanes the transformed payload lanes
+    /// @return the direct interleaving of the lane strings
+    private static String joinTransformedLanes(JsonArray lanes) {
+        String[] laneTexts = new String[lanes.size()];
+        int totalLength = 0;
+        for (int i = 0; i < lanes.size(); i++) {
+            laneTexts[i] = lanes.get(i).getAsString();
+            totalLength += laneTexts[i].length();
+        }
+
+        StringBuilder result = new StringBuilder(totalLength);
+        for (int position = 0; result.length() < totalLength; position++) {
+            for (String laneText : laneTexts) {
+                if (position < laneText.length()) {
+                    result.append(laneText.charAt(position));
+                }
+            }
+        }
+        return result.toString();
+    }
+
     /// Tests that plain envelopes can store non-object JSON payloads.
     @Test
     public void storesPlainPrimitivePayload() {
@@ -59,6 +86,9 @@ public final class ProtectedPayloadTest {
             assertTrue(lane.isJsonPrimitive());
             assertTrue(lane.getAsJsonPrimitive().isString());
         }
+        String directBase64 = Base64.getEncoder()
+                .encodeToString(JsonUtils.UGLY_GSON.toJson(entries).getBytes(StandardCharsets.UTF_8));
+        assertNotEquals(directBase64, joinTransformedLanes(lanes));
         assertEquals("value", payload.get(0).getAsJsonObject().get("name").getAsString());
     }
 

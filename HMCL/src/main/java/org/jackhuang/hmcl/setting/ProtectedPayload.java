@@ -21,19 +21,15 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParseException;
+import com.google.gson.JsonParser;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
 import java.util.Base64;
 import java.util.Objects;
-import java.util.zip.GZIPInputStream;
-import java.util.zip.GZIPOutputStream;
 
 /// Stores a JSON payload using HMCL's portable protection envelope.
 ///
@@ -77,11 +73,67 @@ final class ProtectedPayload {
 
         /// Stores the payload as a portable weakly obfuscated envelope.
         ///
-        /// The payload is compressed and split into interleaved strings. This avoids storing private data as directly
-        /// readable JSON, but it should not be treated as device-bound secret storage.
+        /// The payload is Base64-encoded, split into interleaved strings, and transformed with lane-specific character
+        /// mappings. This avoids storing private data as directly readable JSON, but it should not be treated as
+        /// device-bound secret storage.
         OBFUSCATED_V1("hmcl-obfuscated-v1") {
             /// The number of interleaved lanes used by the obfuscated payload.
             private static final int OBFUSCATED_LANE_COUNT = 4;
+
+            /// The character alphabet produced by standard Base64 encoding.
+            private static final String BASE64_ALPHABET =
+                    "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=";
+
+            /// Lane-specific multipliers used by the fixed Base64 character mapping.
+            private static final int @Unmodifiable [] LANE_MULTIPLIERS = {7, 11, 17, 19};
+
+            /// Modular inverses of [LANE_MULTIPLIERS] modulo `BASE64_ALPHABET.length()`.
+            private static final int @Unmodifiable [] LANE_INVERSE_MULTIPLIERS = {28, 6, 23, 24};
+
+            /// Lane-specific offsets used by the fixed Base64 character mapping.
+            private static final int @Unmodifiable [] LANE_OFFSETS = {13, 29, 41, 53};
+
+            /// Returns the alphabet index of one Base64 character.
+            ///
+            /// @param character the Base64 character to inspect
+            /// @return the alphabet index
+            /// @throws JsonParseException if the character is outside the supported alphabet
+            private static int base64AlphabetIndex(char character) {
+                int index = BASE64_ALPHABET.indexOf(character);
+                if (index < 0) {
+                    throw new JsonParseException("Protected payload lane contains an unsupported character");
+                }
+                return index;
+            }
+
+            /// Encodes one Base64 character with its lane-specific fixed mapping.
+            ///
+            /// @param character the Base64 character to encode
+            /// @param laneIndex the lane index
+            /// @return the encoded character
+            /// @throws JsonParseException if the character is outside the supported alphabet
+            private static char encodeCharacter(char character, int laneIndex) {
+                int alphabetLength = BASE64_ALPHABET.length();
+                int transformedIndex =
+                        (base64AlphabetIndex(character) * LANE_MULTIPLIERS[laneIndex] + LANE_OFFSETS[laneIndex])
+                                % alphabetLength;
+                return BASE64_ALPHABET.charAt(transformedIndex);
+            }
+
+            /// Decodes one Base64 character with its lane-specific inverse mapping.
+            ///
+            /// @param character the encoded character to decode
+            /// @param laneIndex the lane index
+            /// @return the decoded Base64 character
+            /// @throws JsonParseException if the character is outside the supported alphabet
+            private static char decodeCharacter(char character, int laneIndex) {
+                int alphabetLength = BASE64_ALPHABET.length();
+                int transformedIndex = Math.floorMod(
+                        (base64AlphabetIndex(character) - LANE_OFFSETS[laneIndex])
+                                * LANE_INVERSE_MULTIPLIERS[laneIndex],
+                        alphabetLength);
+                return BASE64_ALPHABET.charAt(transformedIndex);
+            }
 
             /// Splits a Base64 payload into interleaved lanes.
             ///
@@ -94,7 +146,8 @@ final class ProtectedPayload {
                 }
 
                 for (int i = 0; i < payload.length(); i++) {
-                    lanes[i % OBFUSCATED_LANE_COUNT].append(payload.charAt(i));
+                    int laneIndex = i % OBFUSCATED_LANE_COUNT;
+                    lanes[laneIndex].append(encodeCharacter(payload.charAt(i), laneIndex));
                 }
 
                 JsonArray result = new JsonArray();
@@ -135,9 +188,10 @@ final class ProtectedPayload {
 
                 StringBuilder result = new StringBuilder(totalLength);
                 for (int position = 0; result.length() < totalLength; position++) {
-                    for (String lane : laneTexts) {
+                    for (int laneIndex = 0; laneIndex < laneTexts.length; laneIndex++) {
+                        String lane = laneTexts[laneIndex];
                         if (position < lane.length()) {
-                            result.append(lane.charAt(position));
+                            result.append(decodeCharacter(lane.charAt(position), laneIndex));
                         }
                     }
                 }
@@ -147,18 +201,9 @@ final class ProtectedPayload {
             /// Writes the payload into the given envelope.
             @Override
             protected void writePayload(JsonObject envelope, JsonElement payload) {
-                String actualPayload;
-                try {
-                    String payloadText = JsonUtils.UGLY_GSON.toJson(payload);
-                    byte[] payloadBytes = payloadText.getBytes(StandardCharsets.UTF_8);
-                    var buffer = new ByteArrayOutputStream(payloadBytes.length);
-                    try (var compressStream = new GZIPOutputStream(buffer)) {
-                        compressStream.write(payloadBytes);
-                    }
-                    actualPayload = Base64.getEncoder().encodeToString(buffer.toByteArray());
-                } catch (IOException e) {
-                    throw new JsonParseException("Failed to protect JSON payload", e);
-                }
+                String payloadText = JsonUtils.UGLY_GSON.toJson(payload);
+                byte[] payloadBytes = payloadText.getBytes(StandardCharsets.UTF_8);
+                String actualPayload = Base64.getEncoder().encodeToString(payloadBytes);
 
                 envelope.addProperty(PROPERTY_PROTECTION, id());
                 envelope.add(PROPERTY_PAYLOAD, splitObfuscatedPayload(actualPayload));
@@ -169,16 +214,9 @@ final class ProtectedPayload {
             protected JsonElement readPayload(JsonObject envelope) {
                 try {
                     String encodedPayload = joinObfuscatedPayload(envelope);
-                    byte[] compressedBytes = Base64.getDecoder().decode(encodedPayload);
-                    try (var decompressStream = new GZIPInputStream(new ByteArrayInputStream(compressedBytes));
-                         var reader = new InputStreamReader(decompressStream, StandardCharsets.UTF_8)) {
-                        JsonElement payload = JsonUtils.fromJson(reader, JsonElement.class);
-                        if (payload == null) {
-                            throw new JsonParseException("Missing protected JSON payload");
-                        }
-                        return payload;
-                    }
-                } catch (IllegalArgumentException | IOException e) {
+                    byte[] payloadBytes = Base64.getDecoder().decode(encodedPayload);
+                    return JsonParser.parseString(new String(payloadBytes, StandardCharsets.UTF_8));
+                } catch (IllegalArgumentException e) {
                     throw new JsonParseException("Failed to reveal protected JSON payload", e);
                 }
             }
