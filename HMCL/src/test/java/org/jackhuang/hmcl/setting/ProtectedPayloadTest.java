@@ -82,19 +82,33 @@ public final class ProtectedPayloadTest {
         return envelope;
     }
 
-    /// Asserts that one fixed encrypted payload can be decoded.
+    /// Asserts that one fixed compact JSON payload keeps the same obfuscated format and can be decoded.
     ///
     /// @param payloadJson the fixed compact JSON payload
     /// @param lane0 the first encrypted lane
     /// @param lane1 the second encrypted lane
     /// @param lane2 the third encrypted lane
     /// @param lane3 the fourth encrypted lane
-    private static void assertDecodesStableObfuscatedPayloadFormat(
+    private static void assertStableObfuscatedPayloadFormat(
             String payloadJson, String lane0, String lane1, String lane2, String lane3) {
+        JsonElement payload = JsonParser.parseString(payloadJson);
+        JsonObject envelope = new JsonObject();
+        ProtectedPayload.ProtectionMode.OBFUSCATED_V1.writeWithNonce(
+                envelope,
+                payload,
+                Base64.getDecoder().decode(FIXED_NONCE));
+        JsonArray lanes = envelope.getAsJsonArray(ProtectedPayload.PROPERTY_PAYLOAD);
+
+        assertEquals(FIXED_NONCE, envelope.get(ProtectedPayload.PROPERTY_NONCE).getAsString());
+        assertEquals(lane0, lanes.get(63).getAsString());
+        assertEquals(lane1, lanes.get(127).getAsString());
+        assertEquals(lane2, lanes.get(191).getAsString());
+        assertEquals(lane3, lanes.get(255).getAsString());
+
         JsonElement decodedPayload = ProtectedPayload.read(
                 compactObfuscatedEnvelope(lane0, lane1, lane2, lane3),
                 JsonElement.class);
-        assertEquals(payloadJson, JsonUtils.UGLY_GSON.toJson(decodedPayload));
+        assertEquals(payload, decodedPayload);
     }
 
     /// Tests that plain envelopes can store non-object JSON payloads.
@@ -185,31 +199,31 @@ public final class ProtectedPayloadTest {
     /// Tests that obfuscated payload encoding and decoding stay stable for fixed data.
     @Test
     public void preservesObfuscatedPayloadFormat() {
-        assertDecodesStableObfuscatedPayloadFormat(
+        assertStableObfuscatedPayloadFormat(
                 "[{\"name\":\"alpha\",\"value\":1},{\"name\":\"beta\",\"enabled\":true,\"items\":[\"x\",\"y\"]}]",
                 "b7DMUDzzpXJNPWg7NglVWmXCtP39wCu",
                 "WthXBv7OtEp40MHQ0FbaWElWpXmEAnT",
                 "z5CibOv6O6Wer8DrI4jXzuy9MTCY4Dm",
                 "7qLSib6Rx6FAgv9HDTFy3cLIu+WcmKs");
-        assertDecodesStableObfuscatedPayloadFormat(
+        assertStableObfuscatedPayloadFormat(
                 "{\"accessToken\":\"abc123+/=\",\"refreshToken\":\"refresh-456\",\"selected\":true,\"version\":2}",
-                "T+mPXT77syMjcGIyKEMOWiiCoa2jhmWbsQ",
-                "aQsbrqGo08Jj5aWL+WCBaxUDEAlS/+FSuH",
-                "qaz4CbO7UfU9nHr33ZULaNgJzPOFEXLCSD",
-                "C1BrUO6GvMlafz4hpWVjifRoOwY9SpYw==");
-        assertDecodesStableObfuscatedPayloadFormat(
+                "T+mPXT77syMjcGIyKEMOWiiCoa2jhmWb0FG",
+                "Mo/vrXtN7JzNoRbGADmDkGSYL0We5FCbM7/",
+                "y9Q7KtF6Zz1Tvw3Z1MMdge3bSTR3bSX2/+H",
+                "75eoTDeQfoB+Ld7DBDOxZQt8VNPbq0+URc3");
+        assertStableObfuscatedPayloadFormat(
                 "\"plain-secret-token\"",
                 "FruCXzTw7SMS",
                 "fHsyMkxAFyKF",
                 "rL4hYh6OyLIT",
                 "Jti5GVewJKau");
-        assertDecodesStableObfuscatedPayloadFormat(
+        assertStableObfuscatedPayloadFormat(
                 "[]",
                 "b5bz59",
                 "UboWWp",
                 "nrOc/S",
                 "K1tHGt");
-        assertDecodesStableObfuscatedPayloadFormat(
+        assertStableObfuscatedPayloadFormat(
                 "{\"empty\":{},\"list\":[1,2,3],\"flag\":false}",
                 "T+mLUy3quXJNZHR7ZA1",
                 "dCz3C+MegmXyYv3mQsa",
