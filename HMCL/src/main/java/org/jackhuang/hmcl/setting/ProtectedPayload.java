@@ -162,12 +162,11 @@ final class ProtectedPayload {
             /// @param payload the Base64 payload to split
             /// @return the padded payload lanes
             private static JsonArray splitObfuscatedPayload(String payload) {
-                int laneLength = (payload.length() + OBFUSCATED_LANE_COUNT - 1) / OBFUSCATED_LANE_COUNT;
+                int laneLength = payload.length() / OBFUSCATED_LANE_COUNT;
                 JsonArray result = new JsonArray(WRITTEN_OBFUSCATED_PAYLOAD_SIZE);
                 for (int laneIndex = 0; laneIndex < OBFUSCATED_LANE_COUNT; laneIndex++) {
                     int start = laneIndex * laneLength;
-                    int end = Math.min(start + laneLength, payload.length());
-                    String lane = start < payload.length() ? payload.substring(start, end) : "";
+                    String lane = payload.substring(start, start + laneLength);
                     for (int i = 0; i < LANE_PADDING_COUNT; i++) {
                         result.add(JsonNull.INSTANCE);
                     }
