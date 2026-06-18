@@ -178,10 +178,7 @@ final class ProtectedPayload {
 
                     laneTexts[i] = lane.getAsString();
                     totalLength += laneTexts[i].length();
-                    if (i > 0 && laneTexts[i - 1].length() < laneTexts[i].length()) {
-                        throw new JsonParseException("Protected payload lanes are malformed");
-                    }
-                    if (laneTexts[0].length() - laneTexts[i].length() > 1) {
+                    if (i > 0 && laneTexts[i].length() != laneTexts[0].length()) {
                         throw new JsonParseException("Protected payload lanes are malformed");
                     }
                 }
