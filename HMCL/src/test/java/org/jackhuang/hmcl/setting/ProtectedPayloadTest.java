@@ -82,7 +82,6 @@ public final class ProtectedPayloadTest {
 
         ProtectedPayload.ProtectionMode.OBFUSCATED_V1.write(envelope, entries);
         JsonArray lanes = envelope.getAsJsonArray(ProtectedPayload.PROPERTY_PAYLOAD);
-        JsonArray payload = ProtectedPayload.read(envelope, JsonArray.class);
 
         assertEquals(256, lanes.size());
         for (int i = 0; i < lanes.size(); i++) {
@@ -90,13 +89,18 @@ public final class ProtectedPayloadTest {
             if ((i + 1) % 64 == 0) {
                 assertTrue(lane.isJsonPrimitive());
                 assertTrue(lane.getAsJsonPrimitive().isString());
-            } else {
-                assertTrue(lane.isJsonNull());
             }
         }
         String directBase64 = Base64.getEncoder()
                 .encodeToString(JsonUtils.UGLY_GSON.toJson(entries).getBytes(StandardCharsets.UTF_8));
         assertNotEquals(directBase64, joinTransformedLanes(lanes));
+
+        lanes.set(0, new JsonPrimitive("ignored"));
+        JsonObject ignoredPadding = new JsonObject();
+        ignoredPadding.addProperty("ignored", true);
+        lanes.set(1, ignoredPadding);
+
+        JsonArray payload = ProtectedPayload.read(envelope, JsonArray.class);
         assertEquals("value", payload.get(0).getAsJsonObject().get("name").getAsString());
     }
 

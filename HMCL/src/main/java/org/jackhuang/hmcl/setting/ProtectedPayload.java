@@ -81,7 +81,7 @@ final class ProtectedPayload {
             /// The number of interleaved lanes used by the obfuscated payload.
             private static final int OBFUSCATED_LANE_COUNT = 4;
 
-            /// The number of null placeholders stored before each lane.
+            /// The number of padding elements stored before each lane.
             private static final int LANE_PADDING_COUNT = 63;
 
             /// The total number of elements stored in an obfuscated payload array.
@@ -151,17 +151,6 @@ final class ProtectedPayload {
                 return laneIndex * (LANE_PADDING_COUNT + 1) + LANE_PADDING_COUNT;
             }
 
-            /// Checks that one payload array index contains a null placeholder.
-            ///
-            /// @param payload the payload array
-            /// @param index the payload array index
-            /// @throws JsonParseException if the element is not a null placeholder
-            private static void requireNullPlaceholder(JsonArray payload, int index) {
-                if (!payload.get(index).isJsonNull()) {
-                    throw new JsonParseException("Protected payload placeholder is not null");
-                }
-            }
-
             /// Splits a Base64 payload into interleaved lanes.
             ///
             /// @param payload the Base64 payload to split
@@ -202,12 +191,6 @@ final class ProtectedPayload {
                 int totalLength = 0;
                 for (int i = 0; i < OBFUSCATED_LANE_COUNT; i++) {
                     int payloadIndex = lanePayloadIndex(i);
-                    for (int placeholderIndex = payloadIndex - LANE_PADDING_COUNT;
-                         placeholderIndex < payloadIndex;
-                         placeholderIndex++) {
-                        requireNullPlaceholder(lanes, placeholderIndex);
-                    }
-
                     JsonElement lane = lanes.get(payloadIndex);
                     if (!lane.isJsonPrimitive() || !lane.getAsJsonPrimitive().isString()) {
                         throw new JsonParseException("Protected payload lane is not a string");
