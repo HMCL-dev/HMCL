@@ -172,9 +172,9 @@ public final class SchematicsPage extends ListPageBase<SchematicsPage.Item> impl
 
         setLoading(true);
         String currentInstanceId = this.instanceId;
+        DirItem currentDir = currentDirectoryProperty().get();
         Task.supplyAsync(Schedulers.io(), () -> {
             DirItem target = loadRoot(schematicsDirectory);
-            DirItem currentDir = currentDirectoryProperty().get();
             if (currentDir != null) {
                 loop:
                 for (String dirName : currentDir.relativePath) {
@@ -204,6 +204,7 @@ public final class SchematicsPage extends ListPageBase<SchematicsPage.Item> impl
             setLoading(false);
         }).start();
 
+        var oldRes = fetchResult.get();
         Task.supplyAsync(Schedulers.io(), () -> {
             var modManager = profile.getRepository().getModManager(instanceId);
             modManager.analyze();
@@ -212,8 +213,7 @@ public final class SchematicsPage extends ListPageBase<SchematicsPage.Item> impl
             var modLoaders = modManager.getLibraryAnalyzer().getModLoaders(); // We don't care about kilt or connector
             boolean shouldUseForgematica = (modLoaders.contains(ModLoaderType.FORGE) || modLoaders.contains(ModLoaderType.NEO_FORGE))
                     && GameVersionNumber.asGameVersion(Optional.ofNullable(modManager.getGameVersion())).isAtLeast("1.16.4", "20w45a");
-            var res = fetchResult.get();
-            RemoteMod litematica = res.litematica(), forgematica = res.forgematica();
+            RemoteMod litematica = oldRes.litematica(), forgematica = oldRes.forgematica();
             if (litematica == null) {
                 try {
                     litematica = ModrinthRemoteModRepository.MODS.getModById(DownloadProviders.getDownloadProvider(), "litematica");
@@ -233,7 +233,7 @@ public final class SchematicsPage extends ListPageBase<SchematicsPage.Item> impl
             if (exception == null) {
                 fetchResult.set(result);
             } else {
-                fetchResult.set(null);
+                fetchResult.set(LitematicaFetchResult.EMPTY);
                 LOG.warning("Failed to fetch litematica", exception);
             }
         }).start();
@@ -407,7 +407,6 @@ public final class SchematicsPage extends ListPageBase<SchematicsPage.Item> impl
         }
 
         void preLoad() throws IOException {
-            if (this.preLoaded) return;
             lock.lock();
             try {
                 if (this.preLoaded) return;
@@ -431,7 +430,6 @@ public final class SchematicsPage extends ListPageBase<SchematicsPage.Item> impl
         }
 
         void load() {
-            if (this.loaded) return;
             lock.lock();
             try {
                 if (this.loaded) return;
