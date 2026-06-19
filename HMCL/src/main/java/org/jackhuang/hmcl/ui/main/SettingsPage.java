@@ -163,7 +163,7 @@ public final class SettingsPage extends ScrollPane {
                     LineToggleButton autoDownloadUpdatePane = new LineToggleButton();
                     autoDownloadUpdatePane.setTitle(i18n("update.auto_download"));
                     autoDownloadUpdatePane.setSubtitle(i18n("update.auto_download.subtitle"));
-                    autoDownloadUpdatePane.selectedProperty().bindBidirectional(config().autoDownloadUpdateProperty());
+                    autoDownloadUpdatePane.selectedProperty().bindBidirectional(settings().autoDownloadUpdateProperty());
                     autoDownloadUpdate = autoDownloadUpdatePane.selectedProperty();
 
                     updatePaneList.getContent().add(autoDownloadUpdatePane);

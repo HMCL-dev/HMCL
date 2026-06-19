@@ -185,14 +185,6 @@ public final class LauncherSettings extends ObservableSetting implements JsonSch
         return autoDownloadUpdate;
     }
 
-    public boolean isAutoDownloadUpdate() {
-        return autoDownloadUpdate.get();
-    }
-
-    public void setAutoDownloadUpdate(boolean autoDownloadUpdate) {
-        this.autoDownloadUpdate.set(autoDownloadUpdate);
-    }
-
     /// Whether April Fools features are disabled.
     @SerializedName("disableAprilFools")
     private final BooleanProperty disableAprilFools = new SimpleBooleanProperty(false);

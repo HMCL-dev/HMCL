@@ -23,6 +23,7 @@ import javafx.beans.binding.BooleanBinding;
 import javafx.beans.property.*;
 import javafx.beans.value.ObservableBooleanValue;
 import org.jackhuang.hmcl.Metadata;
+import org.jackhuang.hmcl.setting.SettingsManager;
 import org.jackhuang.hmcl.util.io.NetworkUtils;
 import org.jackhuang.hmcl.util.versioning.VersionNumber;
 
@@ -56,7 +57,7 @@ public final class UpdateChecker {
     private static final ReadOnlyBooleanWrapper checkingUpdate = new ReadOnlyBooleanWrapper(false);
 
     public static void init() {
-        requestCheckUpdate(UpdateChannel.getChannel(), settings().acceptPreviewUpdateProperty().get(), settings().isAutoDownloadUpdate());
+        requestCheckUpdate(UpdateChannel.getChannel(), settings().acceptPreviewUpdateProperty().get(), settings().autoDownloadUpdateProperty().get());
     }
 
     public static RemoteVersion getLatestVersion() {
