@@ -40,7 +40,7 @@ import java.net.URI;
 import java.util.*;
 import java.util.function.Consumer;
 
-import static org.jackhuang.hmcl.setting.ConfigHolder.config;
+import static org.jackhuang.hmcl.setting.SettingsManager.settings;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 /**
@@ -186,7 +186,7 @@ public final class HTMLRenderer {
 
         if (code) {
             text.getStyleClass().add("html-code");
-            styleBuilder.append("-fx-font-family: \"%s\";".formatted(Lang.requireNonNullElse(config().getFontFamily(), FXUtils.DEFAULT_MONOSPACE_FONT)));
+            styleBuilder.append("-fx-font-family: \"%s\";".formatted(Lang.requireNonNullElse(settings().logFontFamilyProperty().get(), FXUtils.DEFAULT_MONOSPACE_FONT)));
         }
 
         if (headerLevel != null)
