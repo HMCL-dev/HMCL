@@ -508,9 +508,11 @@ public final class SettingsManager {
     ///
     /// @param metadataAccounts metadata-only account records
     /// @param privateData private account data keyed by account ID
+    /// @param retainedAccountIDs account IDs that should keep private data
     static void updateGameAccounts(
             List<JsonObject> metadataAccounts,
-            Map<AccountID, JsonObject> privateData) {
+            Map<AccountID, JsonObject> privateData,
+            List<AccountID> retainedAccountIDs) {
         updateAccountMetadataStore(
                 gameAccounts(),
                 GAME_ACCOUNTS_FILE,
@@ -520,6 +522,7 @@ public final class SettingsManager {
                         new AccountPrivateDataStore(userGameAccountPrivateData(), USER_GAME_ACCOUNT_PRIVATE_DATA_FILE)),
                 metadataAccounts,
                 privateData,
+                retainedAccountIDs,
                 true);
     }
 
@@ -527,9 +530,11 @@ public final class SettingsManager {
     ///
     /// @param metadataAccounts metadata-only account records
     /// @param privateData private account data keyed by account ID
+    /// @param retainedAccountIDs account IDs that should keep private data
     static void updateUserGameAccounts(
             List<JsonObject> metadataAccounts,
-            Map<AccountID, JsonObject> privateData) {
+            Map<AccountID, JsonObject> privateData,
+            List<AccountID> retainedAccountIDs) {
         updateAccountMetadataStore(
                 userGameAccounts(),
                 USER_GAME_ACCOUNTS_FILE,
@@ -539,6 +544,7 @@ public final class SettingsManager {
                         new AccountPrivateDataStore(gameAccountPrivateData(), GAME_ACCOUNT_PRIVATE_DATA_FILE)),
                 metadataAccounts,
                 privateData,
+                retainedAccountIDs,
                 true);
     }
 
@@ -587,6 +593,7 @@ public final class SettingsManager {
     /// @param privateDataStores private data stores searched and updated in order
     /// @param metadataAccounts metadata-only account records
     /// @param privateData private account data keyed by account ID
+    /// @param retainedAccountIDs account IDs that should keep private data
     /// @param movePrivateDataToDefaultStore whether private data should be moved to the metadata store's default private data store
     private static void updateAccountMetadataStore(
             AccountMetadataStore accounts,
@@ -595,10 +602,12 @@ public final class SettingsManager {
             List<AccountPrivateDataStore> privateDataStores,
             List<JsonObject> metadataAccounts,
             Map<AccountID, JsonObject> privateData,
+            List<AccountID> retainedAccountIDs,
             boolean movePrivateDataToDefaultStore) {
         try {
+            List<AccountID> accountIDs = getAccountIDs(metadataAccounts);
             AccountPrivateDataUpdate accountPrivateData =
-                    new AccountPrivateDataUpdate(getAccountIDs(metadataAccounts), privateData);
+                    new AccountPrivateDataUpdate(accountIDs, mergeAccountIDs(accountIDs, retainedAccountIDs), privateData);
             if (!canSaveAccountPrivateDataUpdate(
                     accountPrivateData, defaultPrivateData, privateDataStores, movePrivateDataToDefaultStore)) {
                 LOG.warning("Skipped account metadata save because account private data is not writable");
@@ -607,7 +616,7 @@ public final class SettingsManager {
 
             List<AccountPrivateDataStore> changedPrivateDataStores =
                     distributeAccountPrivateData(
-                            accountPrivateData, defaultPrivateData, privateDataStores, movePrivateDataToDefaultStore);
+                            accountPrivateData, defaultPrivateData, privateDataStores, movePrivateDataToDefaultStore, true);
             boolean metadataChanged = !metadataAccounts.equals(accounts.getAccounts());
             if (metadataChanged) {
                 accounts.getAccounts().setAll(metadataAccounts);
@@ -670,11 +679,33 @@ public final class SettingsManager {
         return accountIDs;
     }
 
+    /// Returns account IDs from two sources without duplicates.
+    ///
+    /// @param first the first account ID source
+    /// @param second the second account ID source
+    /// @return the merged account IDs
+    private static List<AccountID> mergeAccountIDs(List<AccountID> first, List<AccountID> second) {
+        List<AccountID> accountIDs = new ArrayList<>(first.size() + second.size());
+        for (AccountID accountID : first) {
+            if (!accountIDs.contains(accountID)) {
+                accountIDs.add(accountID);
+            }
+        }
+        for (AccountID accountID : second) {
+            if (!accountIDs.contains(accountID)) {
+                accountIDs.add(accountID);
+            }
+        }
+        return accountIDs;
+    }
+
     /// Creates a private data update from migrated account stores.
     private static AccountPrivateDataUpdate createAccountPrivateDataUpdate(
             LegacyConfigMigrator.AccountMigrationResult accounts) {
+        List<AccountID> accountIDs = getAccountIDs(accounts.metadata().getAccounts());
         return new AccountPrivateDataUpdate(
-                getAccountIDs(accounts.metadata().getAccounts()),
+                accountIDs,
+                accountIDs,
                 accounts.privateData().getPrivateData());
     }
 
@@ -736,12 +767,14 @@ public final class SettingsManager {
     /// @param defaultPrivateData the default private data store used when no existing store has the account private data
     /// @param privateDataStores private data stores searched and updated in order
     /// @param movePrivateDataToDefaultStore whether private data should be moved to the metadata store's default private data store
+    /// @param removeStalePrivateData whether private data for unretained account IDs should be removed
     /// @return private data stores whose content or backup state should be saved
     private static List<AccountPrivateDataStore> distributeAccountPrivateData(
             AccountPrivateDataUpdate update,
             AccountPrivateDataStore defaultPrivateData,
             List<AccountPrivateDataStore> privateDataStores,
-            boolean movePrivateDataToDefaultStore) {
+            boolean movePrivateDataToDefaultStore,
+            boolean removeStalePrivateData) {
         List<AccountPrivateDataStore> changedPrivateDataStores = new ArrayList<>();
         for (AccountID accountID : update.accountIDs()) {
             @Nullable JsonObject accountPrivateData = update.privateData().get(accountID);
@@ -775,6 +808,25 @@ public final class SettingsManager {
                 targetPrivateData.privateData().putPrivateData(accountID, accountPrivateData);
                 if (targetPrivateData.privateData().isSavable()) {
                     addIfAbsent(changedPrivateDataStores, targetPrivateData);
+                }
+            }
+        }
+
+        if (removeStalePrivateData) {
+            for (AccountPrivateDataStore privateDataStore : privateDataStores) {
+                if (!privateDataStore.privateData().isSavable()) {
+                    continue;
+                }
+
+                List<AccountID> staleAccountIDs = new ArrayList<>();
+                for (AccountID accountID : privateDataStore.privateData().getPrivateData().keySet()) {
+                    if (!update.retainedAccountIDs().contains(accountID)) {
+                        staleAccountIDs.add(accountID);
+                    }
+                }
+                for (AccountID accountID : staleAccountIDs) {
+                    privateDataStore.privateData().removePrivateData(accountID);
+                    addIfAbsent(changedPrivateDataStores, privateDataStore);
                 }
             }
         }
@@ -836,8 +888,12 @@ public final class SettingsManager {
     /// Account private data update ready to be distributed among private data stores.
     ///
     /// @param accountIDs account IDs whose private data should be updated
+    /// @param retainedAccountIDs account IDs whose private data should be kept
     /// @param privateData private account data keyed by account ID
-    private record AccountPrivateDataUpdate(List<AccountID> accountIDs, Map<AccountID, JsonObject> privateData) {
+    private record AccountPrivateDataUpdate(
+            List<AccountID> accountIDs,
+            List<AccountID> retainedAccountIDs,
+            Map<AccountID, JsonObject> privateData) {
     }
 
     /// Account private data store and its backing JSON file.
@@ -1466,7 +1522,7 @@ public final class SettingsManager {
             boolean canSavePrivateData = privateDataUpdate == null
                     || canSaveAccountPrivateDataUpdate(privateDataUpdate, defaultPrivateData, privateDataStores, false);
             List<AccountPrivateDataStore> changedPrivateDataStores = privateDataUpdate != null && canSavePrivateData
-                    ? distributeAccountPrivateData(privateDataUpdate, defaultPrivateData, privateDataStores, false)
+                    ? distributeAccountPrivateData(privateDataUpdate, defaultPrivateData, privateDataStores, false, false)
                     : List.of();
             if ((newlyCreated || !changedPrivateDataStores.isEmpty() || userGameAccounts.isBackupOnNextSave())
                     && userGameAccounts.isSavable()
@@ -1494,6 +1550,7 @@ public final class SettingsManager {
                                 new AccountPrivateDataStore(userGameAccountPrivateData(),
                                         USER_GAME_ACCOUNT_PRIVATE_DATA_FILE),
                                 new AccountPrivateDataStore(gameAccountPrivateData(), GAME_ACCOUNT_PRIVATE_DATA_FILE)),
+                        false,
                         false);
             }
             userGameAccounts.setSavable(false);
@@ -1527,7 +1584,7 @@ public final class SettingsManager {
         boolean canSavePrivateData = privateDataUpdate == null
                 || canSaveAccountPrivateDataUpdate(privateDataUpdate, defaultPrivateData, privateDataStores, false);
         List<AccountPrivateDataStore> changedPrivateDataStores = privateDataUpdate != null && canSavePrivateData
-                ? distributeAccountPrivateData(privateDataUpdate, defaultPrivateData, privateDataStores, false)
+                ? distributeAccountPrivateData(privateDataUpdate, defaultPrivateData, privateDataStores, false, false)
                 : List.of();
         if ((newlyCreated || !changedPrivateDataStores.isEmpty() || gameAccounts.isBackupOnNextSave())
                 && gameAccounts.isSavable()

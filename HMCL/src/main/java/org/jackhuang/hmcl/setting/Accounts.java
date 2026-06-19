@@ -38,6 +38,7 @@ import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.io.JarUtils;
 import org.jackhuang.hmcl.util.skin.InvalidSkinException;
+import org.jetbrains.annotations.Nullable;
 
 import javax.net.ssl.SSLException;
 import java.io.IOException;
@@ -156,6 +157,31 @@ public final class Accounts {
     private record AccountIDNormalization(boolean localChanged, boolean sharedChanged) {
     }
 
+    /// Returns account IDs from metadata records.
+    ///
+    /// @param first the first metadata record list
+    /// @param second the second metadata record list
+    /// @return account IDs found in the metadata records
+    private static List<AccountID> getAccountIDs(List<JsonObject> first, List<JsonObject> second) {
+        ArrayList<AccountID> accountIDs = new ArrayList<>(first.size() + second.size());
+        addAccountIDs(accountIDs, first);
+        addAccountIDs(accountIDs, second);
+        return accountIDs;
+    }
+
+    /// Adds account IDs from metadata records to a target list.
+    ///
+    /// @param accountIDs the target account ID list
+    /// @param metadataRecords the metadata records to read
+    private static void addAccountIDs(List<AccountID> accountIDs, List<JsonObject> metadataRecords) {
+        for (JsonObject metadata : metadataRecords) {
+            @Nullable AccountID accountID = Account.getAccountID(metadata);
+            if (accountID != null && !accountIDs.contains(accountID)) {
+                accountIDs.add(accountID);
+            }
+        }
+    }
+
     private static void updateAccountMetadataRecords() {
         // don't update the underlying account records before data loading is completed
         // otherwise it might cause data loss
@@ -181,10 +207,11 @@ public final class Accounts {
             }
         }
 
+        List<AccountID> retainedAccountIDs = getAccountIDs(globalMetadata, portableMetadata);
         if (!SettingsManager.isUserGameAccountsReadOnly())
-            SettingsManager.updateUserGameAccounts(globalMetadata, globalPrivateData);
+            SettingsManager.updateUserGameAccounts(globalMetadata, globalPrivateData, retainedAccountIDs);
         if (!SettingsManager.isGameAccountsReadOnly())
-            SettingsManager.updateGameAccounts(portableMetadata, portablePrivateData);
+            SettingsManager.updateGameAccounts(portableMetadata, portablePrivateData, retainedAccountIDs);
     }
 
     /// Returns whether the account metadata and credential files selected by the portability flag are read-only.

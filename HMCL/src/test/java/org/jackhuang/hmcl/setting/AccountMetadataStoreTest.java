@@ -102,6 +102,11 @@ public final class AccountMetadataStoreTest {
         return Class.forName("org.jackhuang.hmcl.setting.SettingsManager$AccountPrivateDataStore");
     }
 
+    /// Returns the reflected account private data update type.
+    private static Class<?> accountPrivateDataUpdateType() throws ClassNotFoundException {
+        return Class.forName("org.jackhuang.hmcl.setting.SettingsManager$AccountPrivateDataUpdate");
+    }
+
     /// Creates a reflected account private data store for testing private save ordering.
     ///
     /// @param privateData the account private data store
@@ -114,6 +119,22 @@ public final class AccountMetadataStoreTest {
         Constructor<?> constructor = type.getDeclaredConstructor(AccountPrivateData.class, JsonSettingFile.class);
         constructor.setAccessible(true);
         return constructor.newInstance(privateData, file);
+    }
+
+    /// Creates a reflected account private data update.
+    ///
+    /// @param accountIDs account IDs whose private data should be updated
+    /// @param retainedAccountIDs account IDs whose private data should be retained
+    /// @param privateData private account data keyed by account ID
+    /// @return the reflected private data update record
+    private static Object accountPrivateDataUpdate(
+            List<AccountID> accountIDs,
+            List<AccountID> retainedAccountIDs,
+            Map<AccountID, JsonObject> privateData) throws ReflectiveOperationException {
+        Class<?> type = accountPrivateDataUpdateType();
+        Constructor<?> constructor = type.getDeclaredConstructor(List.class, List.class, Map.class);
+        constructor.setAccessible(true);
+        return constructor.newInstance(accountIDs, retainedAccountIDs, privateData);
     }
 
     /// Returns the reflected account metadata save method.
@@ -141,6 +162,21 @@ public final class AccountMetadataStoreTest {
                 List.class,
                 List.class,
                 Map.class,
+                List.class,
+                boolean.class);
+        method.setAccessible(true);
+        return method;
+    }
+
+    /// Returns the reflected account private data distribution method.
+    private static Method distributeAccountPrivateDataMethod()
+            throws ReflectiveOperationException {
+        Method method = SettingsManager.class.getDeclaredMethod(
+                "distributeAccountPrivateData",
+                accountPrivateDataUpdateType(),
+                accountPrivateDataStoreType(),
+                List.class,
+                boolean.class,
                 boolean.class);
         method.setAccessible(true);
         return method;
@@ -347,12 +383,119 @@ public final class AccountMetadataStoreTest {
                     List.of(localPrivateDataStore, userPrivateDataStore),
                     List.of(metadata),
                     Map.of(accountID, accountPrivateData),
+                    List.of(accountID),
                     true);
             FileSaver.waitForAllSaves();
 
             assertEquals(List.of(metadata), localMetadata.getAccounts());
             assertEquals(accountPrivateData, localPrivateData.getPrivateData().get(accountID));
             assertFalse(userPrivateData.containsPrivateData(accountID));
+        }
+    }
+
+    /// Tests removing private data when an account is removed from metadata.
+    @Test
+    public void removesDeletedAccountPrivateData()
+            throws ReflectiveOperationException, IOException, InterruptedException {
+        try (FileSystem fileSystem = Jimfs.newFileSystem(Configuration.unix())) {
+            Path tempDirectory = fileSystem.getPath("/work");
+            Files.createDirectories(tempDirectory);
+            AccountID deletedAccountID = AccountID.parse(accountID(1));
+            JsonObject deletedMetadata = jsonObject(
+                    "type", "microsoft",
+                    "accountID", deletedAccountID.toString(),
+                    "profileID", "12345678-1234-1234-1234-1234567890ab");
+            JsonObject deletedPrivateData = jsonObject(
+                    "profileName", "Steve",
+                    "accessToken", "access-token",
+                    "refreshToken", "refresh-token");
+
+            AccountMetadataStore metadata = AccountMetadataStore.fromRecords(List.of(deletedMetadata));
+            JsonSettingFile<AccountMetadataStore> metadataFile = new JsonSettingFile<>(
+                    tempDirectory.resolve("accounts.json"),
+                    "test account metadata",
+                    AccountMetadataStore.class,
+                    AccountMetadataStore.CURRENT_SCHEMA,
+                    AccountMetadataStore::new);
+
+            AccountPrivateData privateData = new AccountPrivateData();
+            privateData.putPrivateData(deletedAccountID, deletedPrivateData);
+            JsonSettingFile<AccountPrivateData> privateDataFile = new JsonSettingFile<>(
+                    tempDirectory.resolve("account-private-data.json"),
+                    "test account private data",
+                    AccountPrivateData.class,
+                    AccountPrivateData.CURRENT_SCHEMA,
+                    AccountPrivateData::new);
+            Object privateDataStore = accountPrivateDataStore(privateData, privateDataFile);
+            Method updateMethod = updateAccountMetadataStoreMethod();
+
+            updateMethod.invoke(
+                    null,
+                    metadata,
+                    metadataFile,
+                    privateDataStore,
+                    List.of(privateDataStore),
+                    List.of(),
+                    Map.of(),
+                    List.of(),
+                    true);
+            FileSaver.waitForAllSaves();
+
+            assertTrue(metadata.getAccounts().isEmpty());
+            assertFalse(privateData.containsPrivateData(deletedAccountID));
+        }
+    }
+
+    /// Tests that migration private data distribution does not remove unrelated private data from another store.
+    @Test
+    public void migrationDistributionKeepsOtherStorePrivateData()
+            throws ReflectiveOperationException, IOException {
+        try (FileSystem fileSystem = Jimfs.newFileSystem(Configuration.unix())) {
+            Path tempDirectory = fileSystem.getPath("/work");
+            Files.createDirectories(tempDirectory);
+            AccountID migratedAccountID = AccountID.parse(accountID(1));
+            AccountID existingAccountID = AccountID.parse(accountID(2));
+            JsonObject migratedPrivateData = jsonObject(
+                    "profileName", "Steve",
+                    "accessToken", "migrated-token");
+            JsonObject existingPrivateData = jsonObject(
+                    "profileName", "Alex",
+                    "accessToken", "existing-token");
+
+            AccountPrivateData userPrivateData = new AccountPrivateData();
+            JsonSettingFile<AccountPrivateData> userPrivateDataFile = new JsonSettingFile<>(
+                    tempDirectory.resolve("user-account-private-data.json"),
+                    "test user account private data",
+                    AccountPrivateData.class,
+                    AccountPrivateData.CURRENT_SCHEMA,
+                    AccountPrivateData::new);
+            Object userPrivateDataStore = accountPrivateDataStore(userPrivateData, userPrivateDataFile);
+
+            AccountPrivateData localPrivateData = new AccountPrivateData();
+            localPrivateData.putPrivateData(existingAccountID, existingPrivateData);
+            JsonSettingFile<AccountPrivateData> localPrivateDataFile = new JsonSettingFile<>(
+                    tempDirectory.resolve("account-private-data.json"),
+                    "test account private data",
+                    AccountPrivateData.class,
+                    AccountPrivateData.CURRENT_SCHEMA,
+                    AccountPrivateData::new);
+            Object localPrivateDataStore = accountPrivateDataStore(localPrivateData, localPrivateDataFile);
+            Object update = accountPrivateDataUpdate(
+                    List.of(migratedAccountID),
+                    List.of(migratedAccountID),
+                    Map.of(migratedAccountID, migratedPrivateData));
+            Method distributeMethod = distributeAccountPrivateDataMethod();
+
+            distributeMethod.invoke(
+                    null,
+                    update,
+                    userPrivateDataStore,
+                    List.of(userPrivateDataStore, localPrivateDataStore),
+                    false,
+                    false);
+
+            assertEquals(migratedPrivateData, userPrivateData.getPrivateData().get(migratedAccountID));
+            assertEquals(existingPrivateData, localPrivateData.getPrivateData().get(existingAccountID));
         }
     }
 
