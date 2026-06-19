@@ -37,7 +37,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
 
-import static org.jackhuang.hmcl.setting.ConfigHolder.config;
+import static org.jackhuang.hmcl.setting.SettingsManager.settings;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 /**
@@ -56,17 +56,17 @@ public final class FontManager {
 
         // Recommended
 
-        font = tryLoadLocalizedFont(Metadata.HMCL_CURRENT_DIRECTORY.resolve("font"));
+        font = tryLoadLocalizedFont(Metadata.HMCL_LOCAL_HOME.resolve("font"));
         if (font != null)
             return font;
 
-        font = tryLoadLocalizedFont(Metadata.HMCL_GLOBAL_DIRECTORY.resolve("font"));
+        font = tryLoadLocalizedFont(Metadata.HMCL_USER_HOME.resolve("font"));
         if (font != null)
             return font;
 
         // Legacy
 
-        font = tryLoadDefaultFont(Metadata.HMCL_CURRENT_DIRECTORY);
+        font = tryLoadDefaultFont(Metadata.HMCL_LOCAL_HOME);
         if (font != null)
             return font;
 
@@ -74,7 +74,7 @@ public final class FontManager {
         if (font != null)
             return font;
 
-        font = tryLoadDefaultFont(Metadata.HMCL_GLOBAL_DIRECTORY);
+        font = tryLoadDefaultFont(Metadata.HMCL_USER_HOME);
         if (font != null)
             return font;
 
@@ -103,7 +103,7 @@ public final class FontManager {
     }
 
     private static void updateFont() {
-        String fontFamily = config().getLauncherFontFamily();
+        String fontFamily = settings().launcherFontFamilyProperty().get();
         if (fontFamily == null)
             fontFamily = System.getProperty("hmcl.font.override");
         if (fontFamily == null)
@@ -236,7 +236,7 @@ public final class FontManager {
     }
 
     public static void setFontFamily(String fontFamily) {
-        config().setLauncherFontFamily(fontFamily);
+        settings().launcherFontFamilyProperty().set(fontFamily);
         updateFont();
     }
 

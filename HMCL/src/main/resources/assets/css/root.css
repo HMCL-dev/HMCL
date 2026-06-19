@@ -968,6 +968,10 @@
     -fx-padding: 0;
 }
 
+.no-padding .combo-box-popup > .list-view > .virtual-flow > .clipped-container > .sheet > .list-cell {
+    -fx-padding: 4 0 4 5;
+}
+
 .jfx-list-cell, .list-cell {
     -fx-background-color: transparent;
 }
@@ -1316,6 +1320,7 @@
     -fx-pref-height: -fx-toggle-icon-tiny-size;
     -fx-max-height: -fx-toggle-icon-tiny-size;
     -fx-min-height: -fx-toggle-icon-tiny-size;
+    -fx-padding: 0;
     -fx-background-radius: 25px;
     -fx-background-color: transparent;
     -jfx-toggle-color: -monet-primary;
@@ -1324,7 +1329,11 @@
 
 .toggle-icon-tiny .icon {
     -fx-fill: rgb(204.0, 204.0, 51.0);
-    -fx-padding: 5.0;
+    -fx-padding: 0;
+}
+
+.toggle-icon-tiny:overridden .svg {
+    -fx-fill: -monet-primary;
 }
 
 .toggle-icon-tiny .jfx-rippler {

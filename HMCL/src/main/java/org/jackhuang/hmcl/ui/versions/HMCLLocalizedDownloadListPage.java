@@ -25,7 +25,7 @@ import org.jackhuang.hmcl.util.i18n.I18n;
 
 import java.util.MissingResourceException;
 
-import static org.jackhuang.hmcl.setting.ConfigHolder.config;
+import static org.jackhuang.hmcl.setting.SettingsManager.settings;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
@@ -78,7 +78,7 @@ public final class HMCLLocalizedDownloadListPage extends DownloadListPage {
             downloadSources.add("addon.curseforge");
         }
 
-        if ("curseforge".equalsIgnoreCase(config().getDefaultAddonSource())) {
+        if ("curseforge".equalsIgnoreCase(settings().defaultAddonSourceProperty().get())) {
             if (supportedCurseForge) {
                 downloadSource.set("addon.curseforge");
             } else if (modrinth != null) {

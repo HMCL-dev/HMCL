@@ -114,7 +114,8 @@ public final class Versions {
     }
 
     public static void deleteVersion(Profile profile, String version) {
-        boolean isIndependent = profile.getVersionSetting(version).getGameDirType() == GameDirectoryType.VERSION_FOLDER;
+        boolean isIndependent = profile.getRepository().getRunDirectory(version).toAbsolutePath().normalize()
+                .equals(profile.getRepository().getVersionRoot(version).toAbsolutePath().normalize());
         String message = isIndependent ? i18n("version.manage.remove.confirm.independent", version) :
                 i18n("version.manage.remove.confirm.trash", version, version + "_removed");
 
@@ -143,7 +144,7 @@ public final class Versions {
                 profile.getRepository().refreshVersionsAsync()
                         .thenRunAsync(Schedulers.javafx(), () -> {
                             if (profile.getRepository().hasVersion(newName)) {
-                                profile.setSelectedVersion(newName);
+                                Profiles.setSelectedInstance(profile, newName);
                             }
                         }).start();
             } else {
@@ -190,7 +191,7 @@ public final class Versions {
                             .thenRunAsync(repository::refreshVersions)
                             .whenComplete(Schedulers.javafx(), (exception) -> {
                                 if (exception == null) {
-                                    profile.setSelectedVersion(result);
+                                    Profiles.setSelectedInstance(profile, result);
                                 } else {
                                     Controllers.dialog(
                                             DownloadProviders.localizeErrorMessage(exception), i18n("install.failed"), MessageDialogPane.MessageType.ERROR);
@@ -338,7 +339,7 @@ public final class Versions {
 
     private static void ensureSelectedAccount(Consumer<Account> action) {
         Account account = Accounts.getSelectedAccount();
-        if (ConfigHolder.isNewlyCreated() && !AuthlibInjectorServers.getServers().isEmpty() &&
+        if (SettingsManager.isNewlyCreated() && !AuthlibInjectorServers.getServers().isEmpty() &&
                 !(account instanceof AuthlibInjectorAccount && AuthlibInjectorServers.getServers().contains(((AuthlibInjectorAccount) account).getServer()))) {
             CreateAccountPane dialog = new CreateAccountPane(AuthlibInjectorServers.getServers().iterator().next());
             dialog.addEventHandler(DialogCloseEvent.CLOSE, e -> {

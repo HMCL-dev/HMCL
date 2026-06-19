@@ -21,6 +21,7 @@ import com.jfoenix.controls.JFXButton;
 import javafx.beans.property.ReadOnlyObjectProperty;
 import javafx.beans.property.ReadOnlyObjectWrapper;
 import javafx.scene.Node;
+import org.jackhuang.hmcl.addon.RemoteAddon;
 import org.jackhuang.hmcl.download.*;
 import org.jackhuang.hmcl.download.game.GameRemoteVersion;
 import org.jackhuang.hmcl.addon.RemoteAddon;
@@ -142,7 +143,7 @@ public class DownloadPage extends DecoratorAnimatedPage implements DecoratorPage
     }
 
     public static void download(DownloadProvider downloadProvider, Profile profile, @Nullable String version, RemoteAddon.Version file, String subdirectoryName) {
-        if (version == null) version = profile.getSelectedVersion();
+        if (version == null) version = Profiles.getSelectedInstance(profile);
 
         Path runDirectory = profile.getRepository().hasVersion(version) ? profile.getRepository().getRunDirectory(version) : profile.getRepository().getBaseDirectory();
 
@@ -186,7 +187,7 @@ public class DownloadPage extends DecoratorAnimatedPage implements DecoratorPage
         listenerHolder = new WeakListenerHolder();
         runInFX(() -> {
             if (profile == Profiles.getSelectedProfile()) {
-                listenerHolder.add(FXUtils.onWeakChangeAndOperate(profile.selectedVersionProperty(), version -> {
+                listenerHolder.add(FXUtils.onWeakChangeAndOperate(Profiles.selectedInstanceProperty(), version -> {
                     if (modTab.isInitialized()) {
                         modTab.getNode().loadVersion(profile, null);
                     }
@@ -317,8 +318,10 @@ public class DownloadPage extends DecoratorAnimatedPage implements DecoratorPage
                     builder.version(remoteVersion);
             });
 
-            return builder.buildAsync().whenComplete(any -> profile.getRepository().refreshVersions())
-                    .thenRunAsync(Schedulers.javafx(), () -> profile.setSelectedVersion(name));
+            return builder.buildAsync().whenComplete(any -> {
+                profile.getRepository().refreshVersions();
+                profile.getRepository().applyDefaultIsolationSetting(name);
+            }).thenRunAsync(Schedulers.javafx(), () -> Profiles.setSelectedInstance(profile, name));
         }
 
         @Override

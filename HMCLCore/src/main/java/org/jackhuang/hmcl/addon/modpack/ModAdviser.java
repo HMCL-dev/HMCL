@@ -50,7 +50,7 @@ public interface ModAdviser {
         "launcher_profiles.json", "launcher.pack.lzma", // Old Minecraft Launcher
         "launcher_accounts.json", "launcher_cef_log.txt", "launcher_log.txt", "launcher_msa_credentials.bin", "launcher_settings.json", "launcher_ui_state.json", "realms_persistence.json", "webcache2", "treatment_tags.json", // New Minecraft Launcher
         "clientId.txt", "PCL.ini", // Plain Craft Launcher
-        "backup", "pack.json", "launcher.jar", "cache", "modpack.cfg", "log4j2.xml", "hmclversion.cfg", // HMCL
+        ".hmcl", "backup", "pack.json", "launcher.jar", "cache", "modpack.cfg", "log4j2.xml", "hmclversion.cfg", "instance-game-settings.json", // HMCL
         "manifest.json", "minecraftinstance.json", ".curseclient", // Curse
         "modrinth.index.json", // Modrinth
         ".fabric", ".mixin.out", ".optifine", // Fabric/OptiFine

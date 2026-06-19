@@ -42,7 +42,7 @@ import org.jackhuang.hmcl.addon.repository.CurseForgeRemoteAddonRepository;
 import org.jackhuang.hmcl.addon.repository.ModrinthRemoteAddonRepository;
 import org.jackhuang.hmcl.addon.resourcepack.ResourcePackFile;
 import org.jackhuang.hmcl.addon.resourcepack.ResourcePackManager;
-import org.jackhuang.hmcl.setting.ConfigHolder;
+import org.jackhuang.hmcl.setting.SettingsManager;
 import org.jackhuang.hmcl.setting.DownloadProviders;
 import org.jackhuang.hmcl.setting.Profile;
 import org.jackhuang.hmcl.task.Schedulers;
@@ -194,13 +194,13 @@ public final class ResourcePackListPage extends ListPageBase<ResourcePackListPag
     }
 
     private void setSelectedEnabled(List<ResourcePackInfoObject> selectedItems, boolean enabled) {
-        if (!Boolean.TRUE.equals(ConfigHolder.config().getShownTips().get(TIP_KEY)) && enabled && !selectedItems.stream().map(ResourcePackInfoObject::getFile).allMatch(ResourcePackFile::isCompatible)) {
+        if (!Boolean.TRUE.equals(SettingsManager.state().getShownTips().get(TIP_KEY)) && enabled && !selectedItems.stream().map(ResourcePackInfoObject::getFile).allMatch(ResourcePackFile::isCompatible)) {
             Controllers.confirm(
                     i18n("resourcepack.warning.manipulate"),
                     i18n("message.warning"),
                     MessageDialogPane.MessageType.WARNING,
                     () -> {
-                        ConfigHolder.config().getShownTips().put(TIP_KEY, true);
+                        SettingsManager.state().getShownTips().put(TIP_KEY, true);
                         setSelectedEnabled(selectedItems, true);
                     }, null);
         } else {
@@ -493,14 +493,14 @@ public final class ResourcePackListPage extends ListPageBase<ResourcePackListPag
             checkBox = new JFXCheckBox() {
                 @Override
                 public void fire() {
-                    if (!Boolean.TRUE.equals(ConfigHolder.config().getShownTips().get(TIP_KEY)) && !isSelected() && object != null && !object.getFile().isCompatible()) {
+                    if (!Boolean.TRUE.equals(SettingsManager.state().getShownTips().get(TIP_KEY)) && !isSelected() && object != null && !object.getFile().isCompatible()) {
                         Controllers.confirm(
                                 i18n("resourcepack.warning.manipulate"),
                                 i18n("message.info"),
                                 MessageDialogPane.MessageType.INFO,
                                 () -> {
                                     super.fire();
-                                    ConfigHolder.config().getShownTips().put(TIP_KEY, true);
+                                    SettingsManager.state().getShownTips().put(TIP_KEY, true);
                                 }, null);
                     } else {
                         super.fire();

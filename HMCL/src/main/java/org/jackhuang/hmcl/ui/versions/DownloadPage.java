@@ -163,7 +163,7 @@ public class DownloadPage extends Control implements DecoratorPage {
         if (this.callback == null) {
             saveAs(file);
         } else {
-            this.callback.download(page.getDownloadProvider(), version.getProfile(), version.getVersion(), addon, file);
+            this.callback.download(page.getDownloadProvider(), version.profile(), version.version(), addon, file);
         }
     }
 
@@ -272,9 +272,9 @@ public class DownloadPage extends Control implements DecoratorPage {
                 FXUtils.onChangeAndOperate(control.loaded, loaded -> {
                     if (control.versions == null) return;
 
-                    if (control.version.getProfile() != null && control.version.getVersion() != null) {
-                        HMCLGameRepository repository = control.version.getProfile().getRepository();
-                        Version game = repository.getResolvedPreservingPatchesVersion(control.version.getVersion());
+                    if (control.version.profile() != null && control.version.version() != null) {
+                        HMCLGameRepository repository = control.version.profile().getRepository();
+                        Version game = repository.getResolvedPreservingPatchesVersion(control.version.version());
                         String gameVersion = repository.getGameVersion(game).orElse(null);
 
                         if (gameVersion != null && control.versions.containsKey(gameVersion)) {

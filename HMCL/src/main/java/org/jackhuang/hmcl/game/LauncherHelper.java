@@ -65,7 +65,7 @@ import java.util.stream.Collectors;
 
 import static javafx.application.Platform.runLater;
 import static javafx.application.Platform.setImplicitExit;
-import static org.jackhuang.hmcl.setting.ConfigHolder.config;
+import static org.jackhuang.hmcl.setting.SettingsManager.state;
 import static org.jackhuang.hmcl.ui.FXUtils.runInFX;
 import static org.jackhuang.hmcl.util.DataSizeUnit.MEGABYTES;
 import static org.jackhuang.hmcl.util.Lang.resolveException;
@@ -81,7 +81,7 @@ public final class LauncherHelper {
     private Account account;
     private final String selectedVersion;
     private Path scriptFile;
-    private final VersionSetting setting;
+    private final GameSettings.Effective setting;
     private LauncherVisibility launcherVisibility;
     private boolean showLogs;
     private QuickPlayOption quickPlayOption;
@@ -91,9 +91,9 @@ public final class LauncherHelper {
         this.profile = Objects.requireNonNull(profile);
         this.account = Objects.requireNonNull(account);
         this.selectedVersion = Objects.requireNonNull(selectedVersion);
-        this.setting = profile.getVersionSetting(selectedVersion);
-        this.launcherVisibility = setting.getLauncherVisibility();
-        this.showLogs = setting.isShowLogs();
+        this.setting = profile.getRepository().getEffectiveGameSettings(selectedVersion);
+        this.launcherVisibility = setting.getInheritable(GameSettings::launcherVisibilityProperty);
+        this.showLogs = setting.getInheritable(GameSettings::showLogsProperty);
         this.launchingStepsPane.setTitle(i18n("version.launch"));
     }
 
@@ -157,7 +157,7 @@ public final class LauncherHelper {
                 .thenComposeAsync(java -> {
                     javaVersionRef.set(Objects.requireNonNull(java));
                     version.set(NativePatcher.patchNative(repository, version.get(), gameVersion.orElse(null), java, setting, javaArguments));
-                    if (setting.isNotCheckGame())
+                    if (setting.getInheritable(GameSettings::notCheckGameProperty))
                         return null;
                     return Task.allOf(
                             dependencyManager.checkGameCompletionAsync(version.get(), integrityCheck),
@@ -200,21 +200,21 @@ public final class LauncherHelper {
                 }).withStage("launch.state.dependencies")
                 .thenComposeAsync(() -> gameVersion.map(s -> new GameVerificationFixTask(dependencyManager, s, version.get())).orElse(null))
                 .thenComposeAsync(() -> {
-                    if (config().getAllowAutoAgent()
-                            || setting.isNoJVMArgs()
-                            || setting.isNoOptimizingJVMArgs()
-                            || Boolean.TRUE.equals(config().getShownTips().get(LWJGL_3_4_1_TIP))
+                    if (setting.getInheritable(GameSettings::allowAutoAgentProperty)
+                            || setting.getInheritable(GameSettings::noJVMOptionsProperty)
+                            || setting.getInheritable(GameSettings::noOptimizingJVMOptionsProperty)
+                            || Boolean.TRUE.equals(state().getShownTips().get(LWJGL_3_4_1_TIP))
                             || !NativePatcher.needPatchMemoryUtil(version.get(), javaVersionRef.get().getParsedVersion())) {
                         return Task.completed(null);
                     } else {
                         CompletableFuture<Void> future = new CompletableFuture<>();
                         runInFX(() -> {
                             Controllers.confirm(i18n("launch.advice.lwjgl_3_4_1"), i18n("launch.advice.lwjgl_3_4_1.title"), MessageType.QUESTION, () -> {
-                                config().getShownTips().put(LWJGL_3_4_1_TIP, true);
-                                config().setAllowAutoAgent(true);
+                                state().getShownTips().put(LWJGL_3_4_1_TIP, true);
+                                enableAutoAgentForCurrentSetting();
                                 future.complete(null);
                             }, () -> {
-                                config().getShownTips().put(LWJGL_3_4_1_TIP, true);
+                                state().getShownTips().put(LWJGL_3_4_1_TIP, true);
                                 future.complete(null);
                             });
                         });
@@ -224,7 +224,7 @@ public final class LauncherHelper {
                 .thenComposeAsync(() -> logIn(account).withStage("launch.state.logging_in"))
                 .thenComposeAsync(authInfo -> Task.supplyAsync(() -> {
                     LaunchOptions.Builder launchOptionsBuilder = repository.getLaunchOptions(
-                            selectedVersion, javaVersionRef.get(), profile.getGameDir(), javaAgents, javaArguments, scriptFile != null);
+                            selectedVersion, javaVersionRef.get(), profile.getPath().toPath(), javaAgents, javaArguments, scriptFile != null);
                     if (disableOfflineSkin) {
                         launchOptionsBuilder.setDaemon(false);
                     }
@@ -382,7 +382,7 @@ public final class LauncherHelper {
         executor.start();
     }
 
-    private static Task<JavaRuntime> checkGameState(Profile profile, VersionSetting setting, Version version) {
+    private static Task<JavaRuntime> checkGameState(Profile profile, GameSettings.Effective setting, Version version) {
         LibraryAnalyzer analyzer = LibraryAnalyzer.analyze(version, profile.getRepository().getGameVersion(version).orElse(null));
         GameVersionNumber gameVersion = GameVersionNumber.asGameVersion(analyzer.getVersion(LibraryAnalyzer.LibraryType.MINECRAFT));
 
@@ -394,9 +394,10 @@ public final class LauncherHelper {
             }
         });
         Task<JavaRuntime> task;
-        if (setting.isNotCheckJVM()) {
+        JavaVersionType javaVersionType = setting.getInheritable(GameSettings::javaTypeProperty);
+        if (setting.getInheritable(GameSettings::notCheckJVMProperty)) {
             task = getJavaTask.thenApplyAsync(java -> Lang.requireNonNullElse(java, JavaRuntime.getDefault()));
-        } else if (setting.getJavaVersionType() == JavaVersionType.AUTO || setting.getJavaVersionType() == JavaVersionType.VERSION) {
+        } else if (javaVersionType == JavaVersionType.AUTO || javaVersionType == JavaVersionType.VERSION) {
             task = getJavaTask.thenComposeAsync(Schedulers.javafx(), java -> {
                 if (java != null) {
                     return Task.completed(java);
@@ -409,9 +410,9 @@ public final class LauncherHelper {
                 List<GameJavaVersion> supportedVersions = GameJavaVersion.getSupportedVersions(SYSTEM_PLATFORM);
 
                 GameJavaVersion targetJavaVersion = null;
-                if (setting.getJavaVersionType() == JavaVersionType.VERSION) {
+                if (javaVersionType == JavaVersionType.VERSION) {
                     try {
-                        int targetJavaVersionMajor = Integer.parseInt(setting.getJavaVersion());
+                        int targetJavaVersionMajor = Integer.parseInt(setting.getInheritable(GameSettings::customJavaVersionProperty));
                         GameJavaVersion minimumJavaVersion = null;
                         if (gameVersion.compareTo("1.12.2") == 0) {
                             Optional<String> cleanroomVersion = analyzer.getVersion(LibraryAnalyzer.LibraryType.CLEANROOM);
@@ -539,7 +540,7 @@ public final class LauncherHelper {
                         }
 
                         if (violatedMandatoryConstraints.contains(JavaVersionConstraint.VANILLA_LINUX_JAVA_8)) {
-                            if (setting.getNativesDirType() == NativesDirectoryType.VERSION_FOLDER) {
+                            if (!setting.get(GameSettings::useCustomNativesProperty)) {
                                 FXUtils.runInFX(() -> Controllers.dialog(i18n("launch.advice.vanilla_linux_java_8"), i18n("message.error"), MessageType.ERROR, breakAction));
                                 return result;
                             } else {
@@ -623,7 +624,7 @@ public final class LauncherHelper {
                             suggestions.add(i18n("launch.advice.modlauncher8"));
                             break;
                         case VANILLA_X86:
-                            if (setting.getNativesDirType() == NativesDirectoryType.VERSION_FOLDER
+                            if (!setting.get(GameSettings::useCustomNativesProperty)
                                     && Platform.isSupportedTranslationX86_64()) {
                                 suggestions.add(i18n("launch.advice.vanilla_x86.translation"));
                             }
@@ -771,6 +772,16 @@ public final class LauncherHelper {
                     Launcher.stopWithoutPlatform();
                 });
                 break;
+        }
+    }
+
+    private void enableAutoAgentForCurrentSetting() {
+        GameSettings.Instance instance = setting.getInstance();
+        if (instance != null
+                && instance.getOverrideProperties().contains(GameSettings.PROPERTY_ALLOW_AUTO_AGENT)) {
+            instance.allowAutoAgentProperty().setValue(true);
+        } else {
+            setting.getPreset().allowAutoAgentProperty().setValue(true);
         }
     }
 
