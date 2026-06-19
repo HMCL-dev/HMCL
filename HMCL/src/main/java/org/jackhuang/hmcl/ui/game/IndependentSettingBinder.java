@@ -599,11 +599,11 @@ final class IndependentSettingBinder {
         allocatedMemoryLabel.setText(i18n(
                 memoryStatus.hasAvailable() && maxMemoryBytes > memoryStatus.getAvailable()
                         ? (autoMemoryEnabled
-                                ? "settings.memory.allocate.auto.exceeded"
-                                : "settings.memory.allocate.manual.exceeded")
+                           ? "settings.memory.allocate.auto.exceeded"
+                           : "settings.memory.allocate.manual.exceeded")
                         : (autoMemoryEnabled
-                                ? "settings.memory.allocate.auto"
-                                : "settings.memory.allocate.manual"),
+                           ? "settings.memory.allocate.auto"
+                           : "settings.memory.allocate.manual"),
                 GIGABYTES.convertFromBytes(maxMemoryBytes),
                 GIGABYTES.convertFromBytes(HMCLGameRepository.getAllocatedMemory(
                         maxMemoryBytes,
