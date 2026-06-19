@@ -17,13 +17,28 @@
  */
 package org.jackhuang.hmcl.mod;
 
+import org.jetbrains.annotations.Nullable;
+
 public enum ModLoaderType {
-    UNKNOWN,
-    FORGE,
-    CLEANROOM,
-    NEO_FORGE,
-    FABRIC,
-    QUILT,
-    LITE_LOADER,
-    LEGACY_FABRIC
+    UNKNOWN(null),
+    FORGE("FORGE"),
+    CLEANROOM("CLEANROOM"),
+    NEO_FORGE("NEOFORGE"),
+    FABRIC("FABRIC"),
+    QUILT("QUILT"),
+    LITE_LOADER("LITELOADER"),
+    LEGACY_FABRIC("LEGACYFABRIC"),
+    PACK(null);
+
+    @Nullable
+    private final String id;
+
+    ModLoaderType(@Nullable String id) {
+        this.id = id;
+    }
+
+    @Nullable
+    public String getId() {
+        return id;
+    }
 }
