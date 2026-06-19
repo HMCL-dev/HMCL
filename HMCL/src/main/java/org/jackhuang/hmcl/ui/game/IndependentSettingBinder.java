@@ -32,6 +32,7 @@ import org.jackhuang.hmcl.setting.SettingsManager;
 import org.jackhuang.hmcl.setting.GameSettings;
 import org.jackhuang.hmcl.setting.property.SettingProperty;
 import org.jackhuang.hmcl.ui.MemoryStatusBar;
+import org.jackhuang.hmcl.ui.WeakListenerHolder;
 import org.jackhuang.hmcl.ui.construct.LineComponent;
 import org.jackhuang.hmcl.ui.construct.LineInheritableToggleButton;
 import org.jackhuang.hmcl.ui.construct.RadioChoiceList;
@@ -67,6 +68,7 @@ final class IndependentSettingBinder {
             Function<GameSettings, SettingProperty<String>> propertyGetter,
             Supplier<JFXButton> inheritanceButtonFactory,
             BiConsumer<JFXButton, Boolean> inheritanceButtonUpdater,
+            WeakListenerHolder listenerHolder,
             Function<GameSettings.Instance, GameSettings.Preset> parentGetter) {
         ObjectProperty<@Nullable SettingProperty<String>> activeProperty = new SimpleObjectProperty<>();
         ObjectProperty<@Nullable SettingProperty<String>> activeParentProperty = new SimpleObjectProperty<>();
@@ -100,7 +102,8 @@ final class IndependentSettingBinder {
                 updating.value = false;
             }
         };
-        refreshHolder.value = refresh;
+        InvalidationListener weakRefresh = listenerHolder.weak(refresh);
+        refreshHolder.value = weakRefresh;
 
         textField.textProperty().addListener((observable, oldValue, newValue) -> {
             GameSettings setting = currentSetting.get();
@@ -145,7 +148,7 @@ final class IndependentSettingBinder {
             });
         }
 
-        bindActiveProperty(currentSetting, activeProperty, propertyGetter, refresh);
+        bindActiveProperty(currentSetting, activeProperty, propertyGetter, refresh, weakRefresh);
     }
 
     /// Binds an integer text field to a setting property with independent override state.
@@ -157,6 +160,7 @@ final class IndependentSettingBinder {
             Function<GameSettings, ? extends SettingProperty<Integer>> propertyGetter,
             Supplier<JFXButton> inheritanceButtonFactory,
             BiConsumer<JFXButton, Boolean> inheritanceButtonUpdater,
+            WeakListenerHolder listenerHolder,
             Function<GameSettings.Instance, GameSettings.Preset> parentGetter) {
         ObjectProperty<@Nullable SettingProperty<Integer>> activeProperty = new SimpleObjectProperty<>();
         final Holder<Boolean> updating = new Holder<>(false);
@@ -188,6 +192,7 @@ final class IndependentSettingBinder {
                 updating.value = false;
             }
         };
+        InvalidationListener weakRefresh = listenerHolder.weak(refresh);
 
         textField.textProperty().addListener((observable, oldValue, newValue) -> {
             GameSettings setting = currentSetting.get();
@@ -236,7 +241,8 @@ final class IndependentSettingBinder {
                 currentSetting,
                 activeProperty,
                 setting -> (SettingProperty<Integer>) propertyGetter.apply(setting),
-                refresh);
+                refresh,
+                weakRefresh);
     }
 
     /// Binds the game memory radio options and manual memory slider.
@@ -250,6 +256,7 @@ final class IndependentSettingBinder {
             @Nullable JFXButton autoMemoryButton,
             @Nullable JFXButton maxMemoryButton,
             BiConsumer<JFXButton, Boolean> inheritanceButtonUpdater,
+            WeakListenerHolder listenerHolder,
             Function<GameSettings.Instance, GameSettings.Preset> parentGetter) {
         ObjectProperty<@Nullable SettingProperty<Boolean>> activeAutoMemoryProperty = new SimpleObjectProperty<>();
         ObjectProperty<@Nullable SettingProperty<Integer>> activeMaxMemoryProperty = new SimpleObjectProperty<>();
@@ -291,6 +298,7 @@ final class IndependentSettingBinder {
                 updating.value = false;
             }
         };
+        InvalidationListener weakRefresh = listenerHolder.weak(refresh);
 
         choiceList.selectedValueProperty().addListener((observable, oldValue, newValue) -> {
             GameSettings setting = currentSetting.get();
@@ -397,17 +405,17 @@ final class IndependentSettingBinder {
 
         currentSetting.addListener((observable, oldValue, newValue) -> {
             if (oldValue != null) {
-                oldValue.removeListener(refresh);
+                oldValue.removeListener(weakRefresh);
             }
 
             SettingProperty<Boolean> oldAutoMemoryProperty = activeAutoMemoryProperty.get();
             if (oldAutoMemoryProperty != null) {
-                oldAutoMemoryProperty.removeListener(refresh);
+                oldAutoMemoryProperty.removeListener(weakRefresh);
             }
 
             SettingProperty<Integer> oldMaxMemoryProperty = activeMaxMemoryProperty.get();
             if (oldMaxMemoryProperty != null) {
-                oldMaxMemoryProperty.removeListener(refresh);
+                oldMaxMemoryProperty.removeListener(weakRefresh);
             }
 
             SettingProperty<Boolean> newAutoMemoryProperty = newValue != null ? newValue.autoMemoryProperty() : null;
@@ -415,18 +423,18 @@ final class IndependentSettingBinder {
             activeAutoMemoryProperty.set(newAutoMemoryProperty);
             activeMaxMemoryProperty.set(newMaxMemoryProperty);
             if (newValue != null) {
-                newValue.addListener(refresh);
+                newValue.addListener(weakRefresh);
             }
             if (newAutoMemoryProperty != null) {
-                newAutoMemoryProperty.addListener(refresh);
+                newAutoMemoryProperty.addListener(weakRefresh);
             }
             if (newMaxMemoryProperty != null) {
-                newMaxMemoryProperty.addListener(refresh);
+                newMaxMemoryProperty.addListener(weakRefresh);
             }
             refresh.invalidated(newValue);
         });
-        SettingsManager.getGameSettings().addListener(refresh);
-        settings().defaultGameSettingsPresetProperty().addListener(refresh);
+        SettingsManager.getGameSettings().addListener(weakRefresh);
+        settings().defaultGameSettingsPresetProperty().addListener(weakRefresh);
         memoryStatusBar.memoryStatusProperty().addListener(observable -> {
             GameSettings setting = currentSetting.get();
             if (setting == null) {
@@ -447,9 +455,9 @@ final class IndependentSettingBinder {
             SettingProperty<Integer> maxMemoryProperty = setting.maxMemoryProperty();
             activeAutoMemoryProperty.set(autoMemoryProperty);
             activeMaxMemoryProperty.set(maxMemoryProperty);
-            setting.addListener(refresh);
-            autoMemoryProperty.addListener(refresh);
-            maxMemoryProperty.addListener(refresh);
+            setting.addListener(weakRefresh);
+            autoMemoryProperty.addListener(weakRefresh);
+            maxMemoryProperty.addListener(weakRefresh);
             refresh.invalidated(setting);
         }
     }
@@ -459,6 +467,7 @@ final class IndependentSettingBinder {
             ObjectProperty<? extends @Nullable GameSettings> currentSetting,
             LineInheritableToggleButton button,
             Function<GameSettings, SettingProperty<Boolean>> propertyGetter,
+            WeakListenerHolder listenerHolder,
             Function<GameSettings.Instance, GameSettings.Preset> parentGetter) {
         ObjectProperty<@Nullable SettingProperty<Boolean>> activeProperty = new SimpleObjectProperty<>();
         final Holder<Boolean> updating = new Holder<>(false);
@@ -481,6 +490,7 @@ final class IndependentSettingBinder {
                 updating.value = false;
             }
         };
+        InvalidationListener weakRefresh = listenerHolder.weak(refresh);
 
         button.rawValueProperty().addListener((observable, oldValue, newValue) -> {
             GameSettings setting = currentSetting.get();
@@ -518,7 +528,7 @@ final class IndependentSettingBinder {
             }
         });
 
-        bindActiveProperty(currentSetting, activeProperty, propertyGetter, refresh);
+        bindActiveProperty(currentSetting, activeProperty, propertyGetter, refresh, weakRefresh);
     }
 
     private static int sliderValueToMaxMemory(double value, int totalMemoryMiB) {
@@ -624,36 +634,37 @@ final class IndependentSettingBinder {
             ObjectProperty<? extends GameSettings> currentSetting,
             ObjectProperty<@Nullable SettingProperty<T>> activeProperty,
             Function<GameSettings, SettingProperty<T>> propertyGetter,
-            InvalidationListener refresh) {
+            InvalidationListener refresh,
+            InvalidationListener weakRefresh) {
         currentSetting.addListener((observable, oldValue, newValue) -> {
             if (oldValue != null) {
-                oldValue.removeListener(refresh);
+                oldValue.removeListener(weakRefresh);
             }
 
             SettingProperty<T> oldProperty = activeProperty.get();
             if (oldProperty != null) {
-                oldProperty.removeListener(refresh);
+                oldProperty.removeListener(weakRefresh);
             }
 
             SettingProperty<T> newProperty = newValue != null ? propertyGetter.apply(newValue) : null;
             activeProperty.set(newProperty);
             if (newValue != null) {
-                newValue.addListener(refresh);
+                newValue.addListener(weakRefresh);
             }
             if (newProperty != null) {
-                newProperty.addListener(refresh);
+                newProperty.addListener(weakRefresh);
             }
             refresh.invalidated(newProperty);
         });
-        SettingsManager.getGameSettings().addListener(refresh);
-        settings().defaultGameSettingsPresetProperty().addListener(refresh);
+        SettingsManager.getGameSettings().addListener(weakRefresh);
+        settings().defaultGameSettingsPresetProperty().addListener(weakRefresh);
 
         GameSettings setting = currentSetting.get();
         if (setting != null) {
             SettingProperty<T> property = propertyGetter.apply(setting);
             activeProperty.set(property);
-            setting.addListener(refresh);
-            property.addListener(refresh);
+            setting.addListener(weakRefresh);
+            property.addListener(weakRefresh);
             refresh.invalidated(property);
         }
     }

@@ -122,6 +122,7 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
     private final ObjectProperty<@Nullable InheritableProperty<String>> activeParentCustomJavaPathProperty = new SimpleObjectProperty<>();
     private final ObjectProperty<@Nullable InheritableProperty<GameSettings.DetectedJava>> activeParentDetectedJavaProperty = new SimpleObjectProperty<>();
     private final InvalidationListener javaListener = o -> refreshJavaSettings();
+    private final InvalidationListener weakJavaListener = holder.weak(javaListener);
 
     public GameSettingsPage(Class<S> settingType) {
         assert settingType == GameSettings.Preset.class || settingType == GameSettings.Instance.class;
@@ -247,29 +248,29 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
             }
             currentSetting.addListener((o, oldSetting, newSetting) -> {
                 if (oldSetting != null) {
-                    oldSetting.javaTypeProperty().removeListener(javaListener);
-                    oldSetting.detectedJavaProperty().removeListener(javaListener);
-                    oldSetting.customJavaPathProperty().removeListener(javaListener);
-                    oldSetting.customJavaVersionProperty().removeListener(javaListener);
+                    oldSetting.javaTypeProperty().removeListener(weakJavaListener);
+                    oldSetting.detectedJavaProperty().removeListener(weakJavaListener);
+                    oldSetting.customJavaPathProperty().removeListener(weakJavaListener);
+                    oldSetting.customJavaVersionProperty().removeListener(weakJavaListener);
                     if (oldSetting instanceof GameSettings.Instance oldInstance) {
-                        oldInstance.parentProperty().removeListener(javaListener);
+                        oldInstance.parentProperty().removeListener(weakJavaListener);
                     }
                 }
 
                 if (newSetting != null) {
-                    newSetting.javaTypeProperty().addListener(javaListener);
-                    newSetting.detectedJavaProperty().addListener(javaListener);
-                    newSetting.customJavaPathProperty().addListener(javaListener);
-                    newSetting.customJavaVersionProperty().addListener(javaListener);
+                    newSetting.javaTypeProperty().addListener(weakJavaListener);
+                    newSetting.detectedJavaProperty().addListener(weakJavaListener);
+                    newSetting.customJavaPathProperty().addListener(weakJavaListener);
+                    newSetting.customJavaVersionProperty().addListener(weakJavaListener);
                     if (newSetting instanceof GameSettings.Instance newInstance) {
-                        newInstance.parentProperty().addListener(javaListener);
+                        newInstance.parentProperty().addListener(weakJavaListener);
                     }
                 }
 
                 refreshJavaSettings();
             });
-            SettingsManager.getGameSettings().addListener(javaListener);
-            settings().defaultGameSettingsPresetProperty().addListener(javaListener);
+            SettingsManager.getGameSettings().addListener(weakJavaListener);
+            settings().defaultGameSettingsPresetProperty().addListener(weakJavaListener);
 
             javaItem.selectedChoiceProperty().addListener((observable, oldChoice, newChoice) -> {
                 S setting = currentSetting.get();
@@ -411,6 +412,7 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
                         autoMemoryButton,
                         maxMemoryButton,
                         GameSettingsPage::updateInheritanceButton,
+                        holder,
                         this::getEffectiveParentGameSettings);
 
                 return List.of(memoryItem, memoryStatusPane);
@@ -808,8 +810,9 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
                 button.setValue(null);
             }
         };
+        InvalidationListener weakUpdateItems = holder.weak(updateItems);
         updateItems.invalidated(SettingsManager.getGameSettings());
-        SettingsManager.getGameSettings().addListener(updateItems);
+        SettingsManager.getGameSettings().addListener(weakUpdateItems);
         button.setItems(items);
         refreshInstanceParentSettingConverter(button);
 
@@ -871,6 +874,7 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
             S setting = currentSetting.get();
             updateInheritanceButton(button, setting == null || !isPropertyOverridden(setting, setting.javaTypeProperty()));
         };
+        InvalidationListener weakRefresh = holder.weak(refresh);
 
         button.addEventFilter(MouseEvent.MOUSE_CLICKED, event -> {
             S setting = currentSetting.get();
@@ -898,17 +902,17 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
 
         currentSetting.addListener((observable, oldValue, newValue) -> {
             if (oldValue != null) {
-                oldValue.removeListener(refresh);
+                oldValue.removeListener(weakRefresh);
             }
             if (newValue != null) {
-                newValue.addListener(refresh);
+                newValue.addListener(weakRefresh);
             }
             refresh.invalidated(newValue);
         });
 
         S setting = currentSetting.get();
         if (setting != null) {
-            setting.addListener(refresh);
+            setting.addListener(weakRefresh);
         }
         refresh.invalidated(setting);
     }
@@ -938,6 +942,7 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
             InheritableProperty<T> property = activeProperty.get();
             updateInheritanceButton(button, setting == null || property == null || !isPropertyOverridden(setting, property));
         };
+        InvalidationListener weakRefresh = holder.weak(refresh);
 
         button.addEventFilter(MouseEvent.MOUSE_CLICKED, event -> {
             S setting = currentSetting.get();
@@ -966,21 +971,21 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
 
         currentSetting.addListener((observable, oldValue, newValue) -> {
             if (oldValue != null) {
-                oldValue.removeListener(refresh);
+                oldValue.removeListener(weakRefresh);
             }
 
             InheritableProperty<T> oldProperty = activeProperty.get();
             if (oldProperty != null) {
-                oldProperty.removeListener(refresh);
+                oldProperty.removeListener(weakRefresh);
             }
 
             InheritableProperty<T> newProperty = newValue != null ? propertyGetter.apply(newValue) : null;
             activeProperty.set(newProperty);
             if (newValue != null) {
-                newValue.addListener(refresh);
+                newValue.addListener(weakRefresh);
             }
             if (newProperty != null) {
-                newProperty.addListener(refresh);
+                newProperty.addListener(weakRefresh);
             }
             refresh.invalidated(newValue);
         });
@@ -989,8 +994,8 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
         if (setting != null) {
             InheritableProperty<T> property = propertyGetter.apply(setting);
             activeProperty.set(property);
-            setting.addListener(refresh);
-            property.addListener(refresh);
+            setting.addListener(weakRefresh);
+            property.addListener(weakRefresh);
         }
         refresh.invalidated(setting);
     }
@@ -1008,6 +1013,7 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
                 propertyGetter,
                 this::createInheritanceButton,
                 GameSettingsPage::updateInheritanceButton,
+                holder,
                 this::getEffectiveParentGameSettings);
     }
 
@@ -1024,6 +1030,7 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
                 propertyGetter,
                 this::createInheritanceButton,
                 GameSettingsPage::updateInheritanceButton,
+                holder,
                 this::getEffectiveParentGameSettings);
     }
 
@@ -1065,7 +1072,8 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
                 updating.value = false;
             }
         };
-        refreshHolder.value = propertyListener;
+        InvalidationListener weakPropertyListener = holder.weak(propertyListener);
+        refreshHolder.value = weakPropertyListener;
 
         ChangeListener<@Nullable Boolean> focusedListener = (observable, oldValue, newValue) -> {
             if (!newValue) {
@@ -1113,16 +1121,16 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
 
         currentSetting.addListener((observable, oldValue, newValue) -> {
             if (oldValue != null) {
-                oldValue.removeListener(propertyListener);
+                oldValue.removeListener(weakPropertyListener);
             }
 
             InheritableProperty<Double> oldWidthProperty = activeWidthProperty.get();
             InheritableProperty<Double> oldHeightProperty = activeHeightProperty.get();
             if (oldWidthProperty != null) {
-                oldWidthProperty.removeListener(propertyListener);
+                oldWidthProperty.removeListener(weakPropertyListener);
             }
             if (oldHeightProperty != null) {
-                oldHeightProperty.removeListener(propertyListener);
+                oldHeightProperty.removeListener(weakPropertyListener);
             }
 
             InheritableProperty<Double> newWidthProperty = newValue != null ? newValue.widthProperty() : null;
@@ -1130,13 +1138,13 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
             activeWidthProperty.set(newWidthProperty);
             activeHeightProperty.set(newHeightProperty);
             if (newValue != null) {
-                newValue.addListener(propertyListener);
+                newValue.addListener(weakPropertyListener);
             }
             if (newWidthProperty != null) {
-                newWidthProperty.addListener(propertyListener);
+                newWidthProperty.addListener(weakPropertyListener);
             }
             if (newHeightProperty != null) {
-                newHeightProperty.addListener(propertyListener);
+                newHeightProperty.addListener(weakPropertyListener);
             }
             propertyListener.invalidated(newWidthProperty);
         });
@@ -1147,12 +1155,12 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
             InheritableProperty<Double> heightProperty = setting.heightProperty();
             activeWidthProperty.set(widthProperty);
             activeHeightProperty.set(heightProperty);
-            setting.addListener(propertyListener);
-            widthProperty.addListener(propertyListener);
-            heightProperty.addListener(propertyListener);
+            setting.addListener(weakPropertyListener);
+            widthProperty.addListener(weakPropertyListener);
+            heightProperty.addListener(weakPropertyListener);
         }
-        SettingsManager.getGameSettings().addListener(propertyListener);
-        settings().defaultGameSettingsPresetProperty().addListener(propertyListener);
+        SettingsManager.getGameSettings().addListener(weakPropertyListener);
+        settings().defaultGameSettingsPresetProperty().addListener(weakPropertyListener);
         propertyListener.invalidated(setting);
     }
 
@@ -1304,17 +1312,62 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
     }
 
     private <T> void bindSettingBidirectional(Property<T> property, Function<S, Property<T>> propertyGetter) {
-        currentSetting.addListener((observable, oldValue, newValue) -> {
-            if (oldValue != null)
-                property.unbindBidirectional(propertyGetter.apply(oldValue));
+        final Holder<Boolean> updating = new Holder<>(false);
+        ChangeListener<T> settingListener = (observable, oldValue, newValue) -> {
+            if (updating.value) {
+                return;
+            }
 
-            if (newValue != null)
-                property.bindBidirectional(propertyGetter.apply(newValue));
+            updating.value = true;
+            try {
+                property.setValue(newValue);
+            } finally {
+                updating.value = false;
+            }
+        };
+        ChangeListener<T> weakSettingListener = holder.weak(settingListener);
+
+        property.addListener((observable, oldValue, newValue) -> {
+            S setting = currentSetting.get();
+            if (setting == null || updating.value) {
+                return;
+            }
+
+            updating.value = true;
+            try {
+                propertyGetter.apply(setting).setValue(newValue);
+            } finally {
+                updating.value = false;
+            }
+        });
+
+        currentSetting.addListener((observable, oldValue, newValue) -> {
+            if (oldValue != null) {
+                propertyGetter.apply(oldValue).removeListener(weakSettingListener);
+            }
+
+            if (newValue != null) {
+                Property<T> settingProperty = propertyGetter.apply(newValue);
+                settingProperty.addListener(weakSettingListener);
+                updating.value = true;
+                try {
+                    property.setValue(settingProperty.getValue());
+                } finally {
+                    updating.value = false;
+                }
+            }
         });
 
         S setting = currentSetting.get();
         if (setting != null) {
-            property.bindBidirectional(propertyGetter.apply(setting));
+            Property<T> settingProperty = propertyGetter.apply(setting);
+            settingProperty.addListener(weakSettingListener);
+            updating.value = true;
+            try {
+                property.setValue(settingProperty.getValue());
+            } finally {
+                updating.value = false;
+            }
         }
     }
 
@@ -1360,7 +1413,8 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
                 updating.value = false;
             }
         };
-        refreshHolder.value = refresh;
+        InvalidationListener weakRefresh = holder.weak(refresh);
+        refreshHolder.value = weakRefresh;
 
         textProperty.addListener((observable, oldValue, newValue) -> {
             GameSettings setting = currentSetting.get();
@@ -1407,34 +1461,34 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
 
         currentSetting.addListener((observable, oldValue, newValue) -> {
             if (oldValue != null) {
-                oldValue.removeListener(refresh);
+                oldValue.removeListener(weakRefresh);
             }
 
             InheritableProperty<String> oldProperty = activeProperty.get();
             if (oldProperty != null) {
-                oldProperty.removeListener(refresh);
+                oldProperty.removeListener(weakRefresh);
             }
 
             InheritableProperty<String> newProperty = newValue != null ? propertyGetter.apply(newValue) : null;
             activeProperty.set(newProperty);
             if (newValue != null) {
-                newValue.addListener(refresh);
+                newValue.addListener(weakRefresh);
             }
             if (newProperty != null) {
-                newProperty.addListener(refresh);
+                newProperty.addListener(weakRefresh);
             }
             refresh.invalidated(newValue);
         });
 
-        SettingsManager.getGameSettings().addListener(refresh);
-        settings().defaultGameSettingsPresetProperty().addListener(refresh);
+        SettingsManager.getGameSettings().addListener(weakRefresh);
+        settings().defaultGameSettingsPresetProperty().addListener(weakRefresh);
 
         S setting = currentSetting.get();
         if (setting != null) {
             InheritableProperty<String> property = propertyGetter.apply(setting);
             activeProperty.set(property);
-            setting.addListener(refresh);
-            property.addListener(refresh);
+            setting.addListener(weakRefresh);
+            property.addListener(weakRefresh);
             refresh.invalidated(setting);
         }
     }
@@ -1467,7 +1521,8 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
                 updating.value = false;
             }
         };
-        refreshHolder.value = refresh;
+        InvalidationListener weakRefresh = holder.weak(refresh);
+        refreshHolder.value = weakRefresh;
 
         textProperty.addListener((observable, oldValue, newValue) -> {
             GameSettings setting = currentSetting.get();
@@ -1514,34 +1569,34 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
 
         currentSetting.addListener((observable, oldValue, newValue) -> {
             if (oldValue != null) {
-                oldValue.removeListener(refresh);
+                oldValue.removeListener(weakRefresh);
             }
 
             InheritableProperty<String> oldProperty = activeProperty.get();
             if (oldProperty != null) {
-                oldProperty.removeListener(refresh);
+                oldProperty.removeListener(weakRefresh);
             }
 
             InheritableProperty<String> newProperty = newValue != null ? propertyGetter.apply(newValue) : null;
             activeProperty.set(newProperty);
             if (newValue != null) {
-                newValue.addListener(refresh);
+                newValue.addListener(weakRefresh);
             }
             if (newProperty != null) {
-                newProperty.addListener(refresh);
+                newProperty.addListener(weakRefresh);
             }
             refresh.invalidated(newValue);
         });
 
-        SettingsManager.getGameSettings().addListener(refresh);
-        settings().defaultGameSettingsPresetProperty().addListener(refresh);
+        SettingsManager.getGameSettings().addListener(weakRefresh);
+        settings().defaultGameSettingsPresetProperty().addListener(weakRefresh);
 
         S setting = currentSetting.get();
         if (setting != null) {
             InheritableProperty<String> property = propertyGetter.apply(setting);
             activeProperty.set(property);
-            setting.addListener(refresh);
-            property.addListener(refresh);
+            setting.addListener(weakRefresh);
+            property.addListener(weakRefresh);
             refresh.invalidated(setting);
         }
     }
@@ -1566,6 +1621,7 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
                 updating.value = false;
             }
         };
+        InvalidationListener weakRefresh = holder.weak(refresh);
 
         button.selectedProperty().addListener((observable, oldValue, newValue) -> {
             S setting = currentSetting.get();
@@ -1589,18 +1645,18 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
 
         currentSetting.addListener((observable, oldValue, newValue) -> {
             if (oldValue instanceof GameSettings.Instance oldInstance) {
-                oldInstance.removeListener(refresh);
+                oldInstance.removeListener(weakRefresh);
             }
 
             if (newValue instanceof GameSettings.Instance instance) {
-                instance.addListener(refresh);
+                instance.addListener(weakRefresh);
             }
             refresh.invalidated(newValue);
         });
 
         S setting = currentSetting.get();
         if (setting instanceof GameSettings.Instance instance) {
-            instance.addListener(refresh);
+            instance.addListener(weakRefresh);
             refresh.invalidated(setting);
         }
     }
@@ -1651,7 +1707,8 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
                 updating.value = false;
             }
         };
-        refreshHolder.value = refresh;
+        InvalidationListener weakRefresh = holder.weak(refresh);
+        refreshHolder.value = weakRefresh;
 
         inheritButton.addEventFilter(MouseEvent.MOUSE_CLICKED, event -> {
             GameSettings setting = currentSetting.get();
@@ -1694,21 +1751,21 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
 
         currentSetting.addListener((observable, oldValue, newValue) -> {
             if (oldValue instanceof GameSettings.Instance oldInstance) {
-                oldInstance.removeListener(refresh);
+                oldInstance.removeListener(weakRefresh);
             }
 
             if (newValue instanceof GameSettings.Instance newInstance) {
-                newInstance.addListener(refresh);
+                newInstance.addListener(weakRefresh);
             }
             refresh.invalidated(newValue);
         });
 
-        SettingsManager.getGameSettings().addListener(refresh);
-        settings().defaultGameSettingsPresetProperty().addListener(refresh);
+        SettingsManager.getGameSettings().addListener(weakRefresh);
+        settings().defaultGameSettingsPresetProperty().addListener(weakRefresh);
 
         S setting = currentSetting.get();
         if (setting instanceof GameSettings.Instance instance) {
-            instance.addListener(refresh);
+            instance.addListener(weakRefresh);
             refresh.invalidated(setting);
         }
     }
@@ -1780,6 +1837,7 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
                 updating.value = false;
             }
         };
+        InvalidationListener weakPropertyListener = holder.weak(propertyListener);
 
         ChangeListener<@Nullable T> itemListener = (observable, oldValue, newValue) -> {
             GameSettings setting = currentSetting.get();
@@ -1826,33 +1884,33 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
         }
         currentSetting.addListener((observable, oldValue, newValue) -> {
             if (oldValue != null) {
-                oldValue.removeListener(propertyListener);
+                oldValue.removeListener(weakPropertyListener);
             }
 
             InheritableProperty<T> oldProperty = activeProperty.get();
             if (oldProperty != null) {
-                oldProperty.removeListener(propertyListener);
+                oldProperty.removeListener(weakPropertyListener);
             }
 
             InheritableProperty<T> newProperty = newValue != null ? propertyGetter.apply(newValue) : null;
             activeProperty.set(newProperty);
             if (newValue != null) {
-                newValue.addListener(propertyListener);
+                newValue.addListener(weakPropertyListener);
             }
             if (newProperty != null) {
-                newProperty.addListener(propertyListener);
+                newProperty.addListener(weakPropertyListener);
             }
             propertyListener.invalidated(newProperty);
         });
-        SettingsManager.getGameSettings().addListener(propertyListener);
-        settings().defaultGameSettingsPresetProperty().addListener(propertyListener);
+        SettingsManager.getGameSettings().addListener(weakPropertyListener);
+        settings().defaultGameSettingsPresetProperty().addListener(weakPropertyListener);
 
         S setting = currentSetting.get();
         if (setting != null) {
             InheritableProperty<T> property = propertyGetter.apply(setting);
             activeProperty.set(property);
-            setting.addListener(propertyListener);
-            property.addListener(propertyListener);
+            setting.addListener(weakPropertyListener);
+            property.addListener(weakPropertyListener);
             propertyListener.invalidated(property);
         }
     }
@@ -1885,6 +1943,7 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
                 updating.value = false;
             }
         };
+        InvalidationListener weakPropertyListener = holder.weak(propertyListener);
 
         item.selectedValueProperty().addListener((observable, oldValue, newValue) -> {
             GameSettings setting = currentSetting.get();
@@ -1925,33 +1984,33 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
 
         currentSetting.addListener((observable, oldValue, newValue) -> {
             if (oldValue != null) {
-                oldValue.removeListener(propertyListener);
+                oldValue.removeListener(weakPropertyListener);
             }
 
             InheritableProperty<GameWindowType> oldWindowTypeProperty = activeWindowTypeProperty.get();
             if (oldWindowTypeProperty != null) {
-                oldWindowTypeProperty.removeListener(propertyListener);
+                oldWindowTypeProperty.removeListener(weakPropertyListener);
             }
 
             InheritableProperty<GameWindowType> newWindowTypeProperty = newValue != null ? newValue.windowTypeProperty() : null;
             activeWindowTypeProperty.set(newWindowTypeProperty);
             if (newValue != null) {
-                newValue.addListener(propertyListener);
+                newValue.addListener(weakPropertyListener);
             }
             if (newWindowTypeProperty != null) {
-                newWindowTypeProperty.addListener(propertyListener);
+                newWindowTypeProperty.addListener(weakPropertyListener);
             }
             propertyListener.invalidated(newValue);
         });
 
-        SettingsManager.getGameSettings().addListener(propertyListener);
-        settings().defaultGameSettingsPresetProperty().addListener(propertyListener);
+        SettingsManager.getGameSettings().addListener(weakPropertyListener);
+        settings().defaultGameSettingsPresetProperty().addListener(weakPropertyListener);
 
         S setting = currentSetting.get();
         if (setting != null) {
             activeWindowTypeProperty.set(setting.windowTypeProperty());
-            setting.addListener(propertyListener);
-            setting.windowTypeProperty().addListener(propertyListener);
+            setting.addListener(weakPropertyListener);
+            setting.windowTypeProperty().addListener(weakPropertyListener);
         }
         propertyListener.invalidated(setting);
     }
@@ -1980,24 +2039,25 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
                                                        Function<GameSettings, InheritableProperty<T>> propertyGetter,
                                                        Function<T, String> converter) {
         InvalidationListener propertyListener = observable -> initInheritableSublistDescription(sublist, propertyGetter, converter);
+        InvalidationListener weakPropertyListener = holder.weak(propertyListener);
 
         currentSetting.addListener((observable, oldValue, newValue) -> {
             if (oldValue != null) {
-                propertyGetter.apply(oldValue).removeListener(propertyListener);
+                propertyGetter.apply(oldValue).removeListener(weakPropertyListener);
             }
 
             if (newValue != null) {
-                propertyGetter.apply(newValue).addListener(propertyListener);
+                propertyGetter.apply(newValue).addListener(weakPropertyListener);
             }
 
             initInheritableSublistDescription(sublist, propertyGetter, converter);
         });
-        SettingsManager.getGameSettings().addListener(propertyListener);
-        settings().defaultGameSettingsPresetProperty().addListener(propertyListener);
+        SettingsManager.getGameSettings().addListener(weakPropertyListener);
+        settings().defaultGameSettingsPresetProperty().addListener(weakPropertyListener);
 
         S setting = currentSetting.get();
         if (setting != null) {
-            propertyGetter.apply(setting).addListener(propertyListener);
+            propertyGetter.apply(setting).addListener(weakPropertyListener);
         }
         initInheritableSublistDescription(sublist, propertyGetter, converter);
     }
@@ -2060,7 +2120,7 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
         button.setOverriddenTooltip(i18n("settings.game.override_global"));
         button.setInheritAvailable(!isPresetSetting);
 
-        IndependentSettingBinder.bindToggleButton(currentSetting, button, propertyGetter, this::getEffectiveParentGameSettings);
+        IndependentSettingBinder.bindToggleButton(currentSetting, button, propertyGetter, holder, this::getEffectiveParentGameSettings);
         return button;
     }
 
@@ -2106,6 +2166,7 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
                 updating.value = false;
             }
         };
+        InvalidationListener weakRefresh = holder.weak(refresh);
 
         button.valueProperty().addListener((observable, oldValue, newValue) -> {
             GameSettings setting = currentSetting.get();
@@ -2152,33 +2213,33 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
 
         currentSetting.addListener((observable, oldValue, newValue) -> {
             if (oldValue != null) {
-                oldValue.removeListener(refresh);
+                oldValue.removeListener(weakRefresh);
             }
 
             InheritableProperty<T> oldProperty = activeProperty.get();
             if (oldProperty != null) {
-                oldProperty.removeListener(refresh);
+                oldProperty.removeListener(weakRefresh);
             }
 
             InheritableProperty<T> newProperty = newValue != null ? propertyGetter.apply(newValue) : null;
             activeProperty.set(newProperty);
             if (newValue != null) {
-                newValue.addListener(refresh);
+                newValue.addListener(weakRefresh);
             }
             if (newProperty != null) {
-                newProperty.addListener(refresh);
+                newProperty.addListener(weakRefresh);
             }
             refresh.invalidated(newValue);
         });
 
-        SettingsManager.getGameSettings().addListener(refresh);
-        settings().defaultGameSettingsPresetProperty().addListener(refresh);
+        SettingsManager.getGameSettings().addListener(weakRefresh);
+        settings().defaultGameSettingsPresetProperty().addListener(weakRefresh);
 
         S setting = currentSetting.get();
         if (setting != null) {
             activeProperty.set(propertyGetter.apply(setting));
-            setting.addListener(refresh);
-            activeProperty.get().addListener(refresh);
+            setting.addListener(weakRefresh);
+            activeProperty.get().addListener(weakRefresh);
             refresh.invalidated(setting);
         }
     }
@@ -2207,6 +2268,7 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
                 updating.value = false;
             }
         };
+        InvalidationListener weakRefresh = holder.weak(refresh);
 
         button.rawValueProperty().addListener((observable, oldValue, newValue) -> {
             InheritableProperty<Boolean> property = activeProperty.get();
@@ -2246,24 +2308,24 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
 
         currentSetting.addListener((observable, oldValue, newValue) -> {
             if (oldValue != null) {
-                oldValue.removeListener(refresh);
+                oldValue.removeListener(weakRefresh);
             }
 
             InheritableProperty<Boolean> newProperty = newValue != null ? propertyGetter.apply(newValue) : null;
             activeProperty.set(newProperty);
             if (newValue != null) {
-                newValue.addListener(refresh);
+                newValue.addListener(weakRefresh);
             }
             refresh.invalidated(newValue);
         });
 
-        SettingsManager.getGameSettings().addListener(refresh);
-        settings().defaultGameSettingsPresetProperty().addListener(refresh);
+        SettingsManager.getGameSettings().addListener(weakRefresh);
+        settings().defaultGameSettingsPresetProperty().addListener(weakRefresh);
 
         S setting = currentSetting.get();
         if (setting != null) {
             activeProperty.set(propertyGetter.apply(setting));
-            setting.addListener(refresh);
+            setting.addListener(weakRefresh);
             refresh.invalidated(setting);
         }
     }
@@ -2450,10 +2512,10 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
     /// Refreshes Java selection controls and keeps inherited parent Java properties observed.
     private void refreshJavaSettings() {
         S setting = currentSetting.get();
-        updateParentInheritablePropertyListener(setting, activeParentJavaTypeProperty, GameSettings::javaTypeProperty, javaListener);
-        updateParentInheritablePropertyListener(setting, activeParentCustomJavaVersionProperty, GameSettings::customJavaVersionProperty, javaListener);
-        updateParentInheritablePropertyListener(setting, activeParentCustomJavaPathProperty, GameSettings::customJavaPathProperty, javaListener);
-        updateParentInheritablePropertyListener(setting, activeParentDetectedJavaProperty, GameSettings::detectedJavaProperty, javaListener);
+        updateParentInheritablePropertyListener(setting, activeParentJavaTypeProperty, GameSettings::javaTypeProperty, weakJavaListener);
+        updateParentInheritablePropertyListener(setting, activeParentCustomJavaVersionProperty, GameSettings::customJavaVersionProperty, weakJavaListener);
+        updateParentInheritablePropertyListener(setting, activeParentCustomJavaPathProperty, GameSettings::customJavaPathProperty, weakJavaListener);
+        updateParentInheritablePropertyListener(setting, activeParentDetectedJavaProperty, GameSettings::detectedJavaProperty, weakJavaListener);
         initJavaSubtitle();
     }
 
