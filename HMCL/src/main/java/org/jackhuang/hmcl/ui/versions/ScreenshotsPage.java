@@ -126,15 +126,16 @@ public final class ScreenshotsPage extends ListPageBase<ScreenshotsPage.Screensh
 
     private void selectDate(JFXListView<Screenshot> listView) {
         FXUtils.chooseDateRange(pair -> {
-            Instant from = pair.key().atStartOfDay().atZone(ZoneId.systemDefault()).toInstant();
-            Instant to = pair.value().plusDays(1).atStartOfDay().atZone(ZoneId.systemDefault()).toInstant();
+            Instant from = pair.key() != null ? pair.key().atStartOfDay().atZone(ZoneId.systemDefault()).toInstant() : Instant.MIN;
+            Instant to = pair.value() != null ? pair.value().plusDays(1).atStartOfDay().atZone(ZoneId.systemDefault()).toInstant() : Instant.MAX;
             if (from.compareTo(to) >= 0) return;
             List<Screenshot> items = listView.getItems();
             int start = -1, end = -1;
             for (int i = 0; i < items.size(); i++) {
                 // Reversed order
-                if (items.get(i).getCreationTime().compareTo(from) < 0 && end < 0) end = i;
-                if (items.get(i).getCreationTime().compareTo(to) < 0 && start < 0) start = i;
+                var creationTime = items.get(i).getCreationTime();
+                if ((creationTime == null || creationTime.compareTo(from) < 0) && end < 0) end = i;
+                if ((creationTime == null || creationTime.compareTo(to) < 0) && start < 0) start = i;
             }
             if (start < 0) return;
             if (end < 0) end = items.size();
@@ -159,7 +160,7 @@ public final class ScreenshotsPage extends ListPageBase<ScreenshotsPage.Screensh
             try {
                 attr = Files.readAttributes(path, BasicFileAttributes.class);
             } catch (IOException e) {
-                LOG.warning("Failed to read screenshot creation time at: " + path, e);
+                LOG.warning("Failed to read screenshot attributes at: " + path, e);
             }
             return new Screenshot(path, FileUtils.getName(path), attr);
         }
@@ -183,10 +184,12 @@ public final class ScreenshotsPage extends ListPageBase<ScreenshotsPage.Screensh
         }
 
         public Instant getCreationTime() {
+            if (attributes == null) return null;
             return attributes.creationTime().toInstant();
         }
 
         public long getFileSize() {
+            if (attributes == null) return -1;
             return attributes.size();
         }
 
@@ -313,7 +316,8 @@ public final class ScreenshotsPage extends ListPageBase<ScreenshotsPage.Screensh
             }
 
             content.setTitle(item.getFileName());
-            content.setSubtitle(I18n.formatDateTime(item.getCreationTime()));
+            var creationTime = item.getCreationTime();
+            if (creationTime != null) content.setSubtitle(I18n.formatDateTime(creationTime));
         }
     }
 
@@ -327,13 +331,17 @@ public final class ScreenshotsPage extends ListPageBase<ScreenshotsPage.Screensh
             var image = screenshot.getFullImage();
             if (image == null) {
                 setBody(SVG.SCREENSHOT_MONITOR.createIcon(360));
-                head.setSubtitle(I18n.formatDateTime(screenshot.getCreationTime()) + "    " + FileUtils.parseFileSize(screenshot.getFileSize()));
+                if (screenshot.getAttributes() != null)
+                    head.setSubtitle(I18n.formatDateTime(screenshot.getCreationTime()) + "    " + FileUtils.parseFileSize(screenshot.getFileSize()));
             } else {
                 setBody(new ImageContainer(image, Math.min(Controllers.getScene().getWidth() * 0.8, image.getWidth()), Controllers.getScene().getHeight() * 0.57));
-                head.setSubtitle(I18n.formatDateTime(screenshot.getCreationTime())
-                        + "    " + FileUtils.parseFileSize(screenshot.getFileSize())
-                        + "    " + (int) image.getWidth() + " * " + (int) image.getHeight()
-                );
+                if (screenshot.getAttributes() != null)
+                    head.setSubtitle(
+                            I18n.formatDateTime(screenshot.getCreationTime())
+                                    + "    " + FileUtils.parseFileSize(screenshot.getFileSize())
+                                    + "    " + (int) image.getWidth() + " * " + (int) image.getHeight()
+                    );
+                else head.setSubtitle((int) image.getWidth() + " * " + (int) image.getHeight());
             }
 
             JFXButton setAsBgButton = new JFXButton(i18n("screenshots.set_as_bg"));

@@ -125,6 +125,7 @@ public class JFXDatePickerContent extends VBox {
             });
         }
     };
+    final DateTimeFormatter fullFormatter = DateTimeFormatter.ofPattern("EEE, MMM yyyy");
     final DateTimeFormatter monthFormatter = DateTimeFormatter.ofPattern("MMMM");
     final DateTimeFormatter yearFormatter = DateTimeFormatter.ofPattern("y");
     final DateTimeFormatter weekNumberFormatter = DateTimeFormatter.ofPattern("w");
@@ -530,7 +531,7 @@ public class JFXDatePickerContent extends VBox {
 
     protected void updateMonthYearPane() {
         YearMonth yearMonth = this.selectedYearMonth.get();
-        this.selectedDateLabel.setText(DateTimeFormatter.ofPattern("EEE, MMM yyyy").format(Objects.requireNonNullElseGet(valueProperty.get(), LocalDate::now)));
+        this.selectedDateLabel.setText(fullFormatter.withLocale(this.getLocale()).format(Objects.requireNonNullElseGet(valueProperty.get(), LocalDate::now)));
 
         this.selectedYearLabel.setText(this.formatYear(yearMonth));
         this.monthYearLabel.setText(this.formatMonth(yearMonth) + " " + this.formatYear(yearMonth));

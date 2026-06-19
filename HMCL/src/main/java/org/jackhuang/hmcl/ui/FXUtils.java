@@ -82,6 +82,7 @@ import org.jackhuang.hmcl.util.javafx.ExtendedProperties;
 import org.jackhuang.hmcl.util.javafx.SafeStringConverter;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
 import org.jackhuang.hmcl.util.platform.SystemUtils;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
@@ -1744,7 +1745,7 @@ public final class FXUtils {
         });
     }
 
-    public static void chooseDateRange(Consumer<Pair<LocalDate, LocalDate>> onConfirm) {
+    public static void chooseDateRange(Consumer<@NotNull Pair<@Nullable LocalDate, @Nullable LocalDate>> onConfirm) {
         Controllers.dialog(new DateRangeDialog(onConfirm));
     }
 

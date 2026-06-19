@@ -46,11 +46,12 @@ public class JFXDatePickerSkin extends DatePickerSkin {
             ChangeListener<Boolean>[] changeListeners = ReflectionHelper.getFieldContent(expressionHelper, "changeListeners");
 
             int i = changeListeners.length - 1;
-            while (changeListeners[i] == null) {
-                --i;
+            if (i >= 0) {
+                while (i >= 0 && changeListeners[i] == null) {
+                    --i;
+                }
+                if (i >= 0) datePicker.focusedProperty().removeListener(changeListeners[i]);
             }
-
-            datePicker.focusedProperty().removeListener(changeListeners[i]);
         } catch (NullPointerException e) {
             LOG.warning("Cannot remove focusedProperty listener", e);
         }
