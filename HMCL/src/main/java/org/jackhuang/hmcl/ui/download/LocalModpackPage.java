@@ -72,7 +72,10 @@ public final class LocalModpackPage extends ModpackPage {
                 } else {
                     txtModpackName.getValidators().setAll(
                             new RequiredValidator(),
-                            new Validator(i18n("install.new_game.already_exists"), str -> !ModpackHelper.isExternalGameNameConflicts(str) && Profiles.getProfiles().stream().noneMatch(p -> p.getName().equals(str))),
+                            new Validator(i18n("install.new_game.already_exists"), str -> !ModpackHelper.isExternalGameNameConflicts(str)
+                                    && Profiles.getProfiles().stream()
+                                            .noneMatch(existingProfile ->
+                                                    str.equals(Profiles.getProfileCustomName(existingProfile)))),
                             new Validator(i18n("install.new_game.malformed"), HMCLGameRepository::isValidVersionId));
                 }
             });

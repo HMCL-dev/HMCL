@@ -34,8 +34,12 @@ import javafx.scene.control.Skin;
 import javafx.scene.control.SkinBase;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
-import javafx.scene.layout.*;
+import javafx.scene.layout.HBox;
+import javafx.scene.layout.Priority;
+import javafx.scene.layout.StackPane;
+import javafx.scene.layout.VBox;
 import javafx.util.Duration;
+import org.jackhuang.hmcl.game.ModpackHelper;
 import org.jackhuang.hmcl.setting.Profile;
 import org.jackhuang.hmcl.setting.Profiles;
 import org.jackhuang.hmcl.ui.*;
@@ -47,11 +51,14 @@ import org.jackhuang.hmcl.ui.construct.ComponentList;
 import org.jackhuang.hmcl.ui.construct.SpinnerPane;
 import org.jackhuang.hmcl.ui.decorator.DecoratorAnimatedPage;
 import org.jackhuang.hmcl.ui.decorator.DecoratorPage;
+import org.jackhuang.hmcl.ui.download.ModpackInstallWizardProvider;
 import org.jackhuang.hmcl.ui.profile.ProfileListItem;
 import org.jackhuang.hmcl.ui.profile.ProfilePage;
 import org.jackhuang.hmcl.util.FXThread;
+import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.javafx.MappedObservableList;
 
+import java.nio.file.Path;
 import java.util.List;
 import java.util.Locale;
 import java.util.function.Predicate;
@@ -61,22 +68,18 @@ import java.util.regex.PatternSyntaxException;
 import static org.jackhuang.hmcl.ui.FXUtils.*;
 import static org.jackhuang.hmcl.ui.ToolbarListPageSkin.createToolbarButton2;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
-import static org.jackhuang.hmcl.util.javafx.ExtendedProperties.createSelectedItemPropertyFor;
 
 public class GameListPage extends DecoratorAnimatedPage implements DecoratorPage {
     private final ReadOnlyObjectWrapper<State> state = new ReadOnlyObjectWrapper<>(State.fromTitle(i18n("version.manage")));
-    private final ListProperty<Profile> profiles = new SimpleListProperty<>(FXCollections.observableArrayList());
     @SuppressWarnings("FieldCanBeLocal")
     private final ObservableList<ProfileListItem> profileListItems;
-    private final ObjectProperty<Profile> selectedProfile;
 
     public GameListPage() {
-        profileListItems = MappedObservableList.create(profilesProperty(), profile -> {
+        profileListItems = MappedObservableList.create(Profiles.getProfiles(), profile -> {
             ProfileListItem item = new ProfileListItem(profile);
             FXUtils.setLimitWidth(item, 200);
             return item;
         });
-        selectedProfile = createSelectedItemPropertyFor(profileListItems, Profile.class);
 
         {
             ScrollPane pane = new ScrollPane();
@@ -107,22 +110,16 @@ public class GameListPage extends DecoratorAnimatedPage implements DecoratorPage
         }
 
         setCenter(new GameList());
-    }
 
-    public ObjectProperty<Profile> selectedProfileProperty() {
-        return selectedProfile;
-    }
+        FXUtils.applyDragListener(this, file -> ModpackHelper.isFileModpackByExtension(file) || "json".equalsIgnoreCase(FileUtils.getNameWithoutExtension(file)), files -> {
+            Path file = files.get(0);
 
-    public ObservableList<Profile> getProfiles() {
-        return profiles.get();
-    }
-
-    public ListProperty<Profile> profilesProperty() {
-        return profiles;
-    }
-
-    public void setProfiles(ObservableList<Profile> profiles) {
-        this.profiles.set(profiles);
+            if (ModpackHelper.isFileModpackByExtension(file)) {
+                Controllers.getDecorator().startWizard(new ModpackInstallWizardProvider(Profiles.getSelectedProfile(), file), i18n("install.modpack"));
+            } else if ("json".equalsIgnoreCase(FileUtils.getExtension(file))) {
+                Versions.installFromJson(Profiles.getSelectedProfile(), file);
+            }
+        });
     }
 
     public void modifyGlobalGameSettings() {
@@ -240,6 +237,8 @@ public class GameListPage extends DecoratorAnimatedPage implements DecoratorPage
                     toolbarNormal.getChildren().setAll(createToolbarButton2(i18n("button.refresh"), SVG.REFRESH, skinnable::refreshList), createToolbarButton2(i18n("search"), SVG.SEARCH, () -> changeToolbar(searchBar)));
 
                     toolbarPane.setContent(toolbarNormal, ContainerAnimations.FADE);
+
+                    FXUtils.setOverflowHidden(toolbarPane, 8);
 
                     root.getContent().add(toolbarPane);
                 }

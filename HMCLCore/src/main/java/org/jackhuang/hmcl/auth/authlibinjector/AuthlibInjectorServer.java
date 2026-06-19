@@ -33,6 +33,7 @@ import org.jackhuang.hmcl.auth.yggdrasil.YggdrasilService;
 import org.jackhuang.hmcl.util.io.HttpRequest;
 import org.jackhuang.hmcl.util.io.NetworkUtils;
 import org.jackhuang.hmcl.util.javafx.ObservableHelper;
+import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
 
 import com.google.gson.Gson;
@@ -50,6 +51,7 @@ import javafx.beans.InvalidationListener;
 import javafx.beans.Observable;
 
 @JsonAdapter(AuthlibInjectorServer.Deserializer.class)
+@NotNullByDefault
 public class AuthlibInjectorServer implements Observable {
 
     private static final Gson GSON = new GsonBuilder().create();
@@ -99,8 +101,8 @@ public class AuthlibInjectorServer implements Observable {
 
     private final String url;
     @Nullable
-    private String metadataResponse;
-    private long metadataTimestamp;
+    private transient String metadataResponse;
+    private transient long metadataTimestamp;
 
     @Nullable
     private transient String name;
@@ -199,6 +201,11 @@ public class AuthlibInjectorServer implements Observable {
         }
     }
 
+    /// Restores a cached metadata response without marking it as freshly fetched.
+    public void restoreMetadataCache(String metadataResponse, long metadataTimestamp) throws JsonParseException {
+        setMetadataResponse(metadataResponse, metadataTimestamp);
+    }
+
     public void invalidateMetadataCache() {
         metadataRefreshed = false;
     }
@@ -209,7 +216,7 @@ public class AuthlibInjectorServer implements Observable {
     }
 
     @Override
-    public boolean equals(Object obj) {
+    public boolean equals(@Nullable Object obj) {
         if (obj == this)
             return true;
         if (!(obj instanceof AuthlibInjectorServer))
@@ -233,24 +240,12 @@ public class AuthlibInjectorServer implements Observable {
         helper.removeListener(listener);
     }
 
+    @NotNullByDefault
     public static class Deserializer implements JsonDeserializer<AuthlibInjectorServer> {
         @Override
         public AuthlibInjectorServer deserialize(JsonElement json, Type type, JsonDeserializationContext ctx) throws JsonParseException {
             JsonObject jsonObj = json.getAsJsonObject();
-            AuthlibInjectorServer instance = new AuthlibInjectorServer(jsonObj.get("url").getAsString());
-
-            if (jsonObj.has("name")) {
-                instance.name = jsonObj.get("name").getAsString();
-            }
-
-            if (jsonObj.has("metadataResponse")) {
-                try {
-                    instance.setMetadataResponse(jsonObj.get("metadataResponse").getAsString(), jsonObj.get("metadataTimestamp").getAsLong());
-                } catch (JsonParseException e) {
-                    LOG.warning("Ignoring malformed metadata response cache: " + jsonObj.get("metadataResponse"), e);
-                }
-            }
-            return instance;
+            return new AuthlibInjectorServer(jsonObj.get("url").getAsString());
         }
 
     }

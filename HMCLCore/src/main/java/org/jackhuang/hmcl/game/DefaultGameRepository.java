@@ -110,17 +110,9 @@ public class DefaultGameRepository implements GameRepository {
         return artifact.getPath(getBaseDirectory().resolve("libraries"));
     }
 
-    public GameDirectoryType getGameDirectoryType(String id) {
-        return GameDirectoryType.ROOT_FOLDER;
-    }
-
     @Override
     public Path getRunDirectory(String id) {
-        return switch (getGameDirectoryType(id)) {
-            case VERSION_FOLDER -> getVersionRoot(id);
-            case ROOT_FOLDER -> getBaseDirectory();
-            default -> throw new IllegalStateException();
-        };
+        return getBaseDirectory();
     }
 
     @Override
@@ -152,6 +144,11 @@ public class DefaultGameRepository implements GameRepository {
     @Override
     public Path getModsDirectory(String id) {
         return getRunDirectory(id).resolve("mods");
+    }
+
+    @Override
+    public Path getResourcePackDirectory(String id) {
+        return getRunDirectory(id).resolve("resourcepacks");
     }
 
     @Override
@@ -563,9 +560,5 @@ public class DefaultGameRepository implements GameRepository {
                 .append("versions", versions == null ? null : versions.keySet())
                 .append("baseDirectory", baseDirectory)
                 .toString();
-    }
-
-    public Path getResourcepacksDirectory(String id) {
-        return getRunDirectory(id).resolve("resourcepacks");
     }
 }
