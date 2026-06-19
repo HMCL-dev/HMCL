@@ -1,0 +1,553 @@
+/*
+ * Hello Minecraft! Launcher
+ * Copyright (C) 2021  huangyuhui <huanghongxun2008@126.com> and contributors
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
+package org.jackhuang.hmcl.setting;
+
+import com.google.gson.*;
+import com.google.gson.annotations.JsonAdapter;
+import com.google.gson.annotations.SerializedName;
+import javafx.beans.property.*;
+import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
+import javafx.collections.ObservableMap;
+import javafx.collections.ObservableSet;
+import javafx.scene.paint.Paint;
+import org.hildan.fxgson.creators.ObservableListCreator;
+import org.hildan.fxgson.creators.ObservableMapCreator;
+import org.hildan.fxgson.creators.ObservableSetCreator;
+import org.hildan.fxgson.factories.JavaFxPropertyTypeAdapterFactory;
+import org.jackhuang.hmcl.Metadata;
+import org.jackhuang.hmcl.auth.AccountID;
+import org.jackhuang.hmcl.java.JavaRuntime;
+import org.jackhuang.hmcl.theme.ThemeColor;
+import org.jackhuang.hmcl.ui.FXUtils;
+import org.jackhuang.hmcl.util.StringUtils;
+import org.jackhuang.hmcl.util.gson.*;
+import org.jackhuang.hmcl.util.i18n.SupportedLocale;
+import org.jetbrains.annotations.Nullable;
+
+import java.nio.file.Path;
+import java.util.*;
+
+/// Stores the current workspace's main launcher settings.
+///
+/// This file keeps launcher-level choices such as UI preferences, network settings, selected game directory,
+/// selected instances, and account selection. Larger domain-specific stores, such as game directories,
+/// game settings presets, accounts, launcher state, and authlib-injector servers, are persisted in detached
+/// JSON files managed by [SettingsManager].
+@JsonAdapter(value = LauncherSettings.Adapter.class)
+public final class LauncherSettings extends ObservableSetting implements JsonSchemaSetting {
+
+    /// The JSON schema supported by this launcher settings class.
+    public static final JsonSchema CURRENT_SCHEMA = new JsonSchema("launcher-settings", new JsonSchema.Version(1, 0, 0));
+
+    /// The JSON property name for the default game setting preset ID.
+    static final String PROPERTY_DEFAULT_GAME_SETTINGS_PRESET = "defaultGameSettingsPreset";
+
+    /// The JSON property name for the selected game directory ID.
+    static final String PROPERTY_SELECTED_GAME_DIRECTORY = "selectedGameDirectory";
+
+    /// The JSON property name for selected instance IDs keyed by game directory ID.
+    static final String PROPERTY_SELECTED_INSTANCE = "selectedInstance";
+
+    /// Gson instance used for launcher settings and related settings objects that depend on JavaFX properties.
+    public static final Gson SETTINGS_GSON = new GsonBuilder()
+            .registerTypeAdapter(Path.class, PathTypeAdapter.INSTANCE)
+            .registerTypeAdapter(UUID.class, UUIDTypeAdapter.INSTANCE)
+            .registerTypeAdapter(ObservableList.class, new ObservableListCreator())
+            .registerTypeAdapter(ObservableSet.class, new ObservableSetCreator())
+            .registerTypeAdapter(ObservableMap.class, new ObservableMapCreator())
+            .registerTypeAdapterFactory(new JavaFxPropertyTypeAdapterFactory(true, true))
+            .registerTypeAdapter(Paint.class, new PaintAdapter())
+            .setPrettyPrinting()
+            .setObjectToNumberStrategy(ToNumberPolicy.LONG_OR_DOUBLE)
+            .create();
+
+    /// Deserializes launcher settings from JSON.
+    ///
+    /// @param json the JSON object to read
+    /// @return the deserialized launcher settings, or `null` if the JSON represents `null`
+    /// @throws JsonParseException if the JSON cannot be deserialized as launcher settings
+    @Nullable
+    public static LauncherSettings fromJson(JsonObject json) throws JsonParseException {
+        return SETTINGS_GSON.fromJson(json, LauncherSettings.class);
+    }
+
+    /// Creates empty launcher settings using current defaults.
+    public LauncherSettings() {
+        tracker.markDirty(schema);
+        register();
+    }
+
+    /// Serializes these launcher settings to formatted JSON.
+    public String toJson() {
+        return SETTINGS_GSON.toJson(this);
+    }
+
+    // Properties
+
+    /// The schema used by this launcher settings file.
+    @SerializedName(JsonSchema.PROPERTY_SCHEMA)
+    private final ObjectProperty<JsonSchema> schema = new SimpleObjectProperty<>(CURRENT_SCHEMA);
+
+    /// Returns the schema property.
+    public ObjectProperty<JsonSchema> schemaProperty() {
+        return schema;
+    }
+
+    /// Returns the schema used by this launcher settings file.
+    @Override
+    public JsonSchema getSchema() {
+        return schema.get();
+    }
+
+    /// Sets the schema used by this launcher settings file.
+    @Override
+    public void setSchema(JsonSchema schema) {
+        this.schema.set(Objects.requireNonNull(schema));
+    }
+
+    /// Whether this launcher settings object may be saved back to `config/launcher-settings.json`.
+    private transient boolean savable = true;
+
+    /// Whether the next successful save should back up the current `config/launcher-settings.json` first.
+    private transient boolean backupOnNextSave = false;
+
+    /// Returns whether this launcher settings object may be saved back to `config/launcher-settings.json`.
+    @Override
+    public boolean isSavable() {
+        return savable;
+    }
+
+    /// Sets whether this launcher settings object may be saved back to `config/launcher-settings.json`.
+    @Override
+    public void setSavable(boolean savable) {
+        this.savable = savable;
+    }
+
+    /// Returns whether the next successful save should back up the current `config/launcher-settings.json` first.
+    @Override
+    public boolean isBackupOnNextSave() {
+        return backupOnNextSave;
+    }
+
+    /// Sets whether the next successful save should back up the current `config/launcher-settings.json` first.
+    @Override
+    public void setBackupOnNextSave(boolean backupOnNextSave) {
+        this.backupOnNextSave = backupOnNextSave;
+    }
+
+    /// The launcher UI language.
+    @SerializedName("language")
+    private final ObjectProperty<SupportedLocale> language = new SimpleObjectProperty<>(SupportedLocale.DEFAULT);
+
+    /// Returns the launcher UI language property.
+    public ObjectProperty<SupportedLocale> languageProperty() {
+        return language;
+    }
+
+    /// Whether preview builds are accepted by update checks.
+    @SerializedName("acceptPreviewUpdate")
+    private final BooleanProperty acceptPreviewUpdate = new SimpleBooleanProperty(false);
+
+    /// Returns the preview update opt-in property.
+    public BooleanProperty acceptPreviewUpdateProperty() {
+        return acceptPreviewUpdate;
+    }
+
+    /// Whether automatic update dialogs are disabled.
+    @SerializedName("disableAutoShowUpdateDialog")
+    private final BooleanProperty disableAutoShowUpdateDialog = new SimpleBooleanProperty(false);
+
+    /// Returns the automatic update dialog disable property.
+    public BooleanProperty disableAutoShowUpdateDialogProperty() {
+        return disableAutoShowUpdateDialog;
+    }
+
+    @SerializedName("autoDownloadUpdate")
+    private final BooleanProperty autoDownloadUpdate = new SimpleBooleanProperty(false);
+
+    public BooleanProperty autoDownloadUpdateProperty() {
+        return autoDownloadUpdate;
+    }
+
+    public boolean isAutoDownloadUpdate() {
+        return autoDownloadUpdate.get();
+    }
+
+    public void setAutoDownloadUpdate(boolean autoDownloadUpdate) {
+        this.autoDownloadUpdate.set(autoDownloadUpdate);
+    }
+
+    /// Whether April Fools features are disabled.
+    @SerializedName("disableAprilFools")
+    private final BooleanProperty disableAprilFools = new SimpleBooleanProperty(false);
+
+    /// Returns the April Fools disable property.
+    public BooleanProperty disableAprilFoolsProperty() {
+        return disableAprilFools;
+    }
+
+    /// The common Minecraft directory selection mode.
+    @SerializedName("commonDirectoryType")
+    private final ObjectProperty<EnumCommonDirectory> commonDirectoryType = new RawPreservingObjectProperty<>(EnumCommonDirectory.DEFAULT);
+
+    /// Returns the common Minecraft directory selection mode property.
+    public ObjectProperty<EnumCommonDirectory> commonDirectoryTypeProperty() {
+        return commonDirectoryType;
+    }
+
+    /// The custom common Minecraft directory path.
+    @SerializedName("commonDirectory")
+    private final StringProperty commonDirectory = new SimpleStringProperty();
+
+    /// Returns the custom common Minecraft directory property.
+    public StringProperty commonDirectoryProperty() {
+        return commonDirectory;
+    }
+
+    /// Returns the default common Minecraft directory path.
+    public static String getDefaultCommonDirectory() {
+        return Metadata.MINECRAFT_DIRECTORY.toString();
+    }
+
+    /// Resolves the effective common Minecraft directory from the current directory settings.
+    ///
+    /// @return the effective directory path, or `null` when the configured mode is not recognized
+    public String getResolvedCommonDirectory() {
+        EnumCommonDirectory type = commonDirectoryType.get();
+        String customPath = commonDirectory.get();
+
+        return type == EnumCommonDirectory.CUSTOM && StringUtils.isNotBlank(customPath)
+                ? customPath
+                : getDefaultCommonDirectory();
+    }
+
+    /// The maximum number of log lines kept in log views.
+    @SerializedName("logLines")
+    private final ObjectProperty<@Nullable Integer> logLines = new SimpleObjectProperty<>();
+
+    /// Returns the log line limit property.
+    public ObjectProperty<@Nullable Integer> logLinesProperty() {
+        return logLines;
+    }
+
+    // UI
+
+    /// The configured theme brightness identifier.
+    @SerializedName("themeBrightness")
+    private final StringProperty themeBrightness = new SimpleStringProperty("light");
+
+    /// Returns the theme brightness property.
+    public StringProperty themeBrightnessProperty() {
+        return themeBrightness;
+    }
+
+    /// The selected launcher theme color.
+    @SerializedName("themeColor")
+    private final ObjectProperty<ThemeColor> themeColor = new SimpleObjectProperty<>(ThemeColor.DEFAULT);
+
+    /// Returns the launcher theme color property.
+    public ObjectProperty<ThemeColor> themeColorProperty() {
+        return themeColor;
+    }
+
+    /// The font family used by launcher log views.
+    @SerializedName("logFontFamily")
+    private final StringProperty logFontFamily = new SimpleStringProperty();
+
+    /// Returns the launcher log font family property.
+    public StringProperty logFontFamilyProperty() {
+        return logFontFamily;
+    }
+
+    /// The launcher log font size.
+    @SerializedName("logFontSize")
+    private final DoubleProperty logFontSize = new SimpleDoubleProperty(12);
+
+    /// Returns the launcher log font size property.
+    public DoubleProperty logFontSizeProperty() {
+        return logFontSize;
+    }
+
+    /// The font family used by launcher chrome.
+    @SerializedName("launcherFontFamily")
+    private final StringProperty launcherFontFamily = new SimpleStringProperty();
+
+    /// Returns the launcher chrome font family property.
+    public StringProperty launcherFontFamilyProperty() {
+        return launcherFontFamily;
+    }
+
+    /// Whether UI animations are disabled.
+    @SerializedName("animationDisabled")
+    private final BooleanProperty animationDisabled = new SimpleBooleanProperty(
+            FXUtils.REDUCED_MOTION == Boolean.TRUE
+                    || !JavaRuntime.CURRENT_JIT_ENABLED
+                    || !FXUtils.GPU_ACCELERATION_ENABLED
+    );
+
+    /// Returns the UI animation disable property.
+    public BooleanProperty animationDisabledProperty() {
+        return animationDisabled;
+    }
+
+    /// Whether the launcher title area is transparent.
+    @SerializedName("titleTransparent")
+    private final BooleanProperty titleTransparent = new SimpleBooleanProperty(false);
+
+    /// Returns the transparent title area property.
+    public BooleanProperty titleTransparentProperty() {
+        return titleTransparent;
+    }
+
+    /// The launcher background source type.
+    @SerializedName("backgroundType")
+    private final ObjectProperty<BackgroundType> backgroundType = new RawPreservingObjectProperty<>(BackgroundType.DEFAULT);
+
+    /// Returns the launcher background source type property.
+    public ObjectProperty<BackgroundType> backgroundTypeProperty() {
+        return backgroundType;
+    }
+
+    /// The local launcher background image path.
+    @SerializedName("backgroundImage")
+    private final StringProperty backgroundImage = new SimpleStringProperty();
+
+    /// Returns the local launcher background image path property.
+    public StringProperty backgroundImageProperty() {
+        return backgroundImage;
+    }
+
+    /// The remote launcher background image URL.
+    @SerializedName("backgroundImageUrl")
+    private final StringProperty backgroundImageUrl = new SimpleStringProperty();
+
+    /// Returns the remote launcher background image URL property.
+    public StringProperty backgroundImageUrlProperty() {
+        return backgroundImageUrl;
+    }
+
+    /// The launcher background paint.
+    @SerializedName("backgroundPaint")
+    private final ObjectProperty<Paint> backgroundPaint = new SimpleObjectProperty<>();
+
+    /// Returns the launcher background paint property.
+    public ObjectProperty<Paint> backgroundPaintProperty() {
+        return backgroundPaint;
+    }
+
+    /// The launcher background opacity.
+    @SerializedName("backgroundOpacity")
+    private final DoubleProperty backgroundOpacity = new SimpleDoubleProperty(1.0);
+
+    /// Returns the launcher background opacity property.
+    public DoubleProperty backgroundOpacityProperty() {
+        return backgroundOpacity;
+    }
+
+    // Networks
+
+    /// Whether HMCL automatically selects the number of download threads.
+    @SerializedName("autoDownloadThreads")
+    private final BooleanProperty autoDownloadThreads = new SimpleBooleanProperty(true);
+
+    /// Returns the automatic download thread count property.
+    public BooleanProperty autoDownloadThreadsProperty() {
+        return autoDownloadThreads;
+    }
+
+    /// The configured number of download threads.
+    @SerializedName("downloadThreads")
+    private final IntegerProperty downloadThreads = new SimpleIntegerProperty(64);
+
+    /// Returns the download thread count property.
+    public IntegerProperty downloadThreadsProperty() {
+        return downloadThreads;
+    }
+
+    /// The selected game version list download source.
+    @SerializedName("versionListSource")
+    private final ObjectProperty<DownloadSource> versionListSource = new RawPreservingObjectProperty<>(DownloadSource.DEFAULT);
+
+    /// Returns the selected game version list download source property.
+    public ObjectProperty<DownloadSource> versionListSourceProperty() {
+        return versionListSource;
+    }
+
+    /// The selected file download source.
+    @SerializedName("fileDownloadSource")
+    private final ObjectProperty<DownloadSource> fileDownloadSource = new RawPreservingObjectProperty<>(DownloadSource.DEFAULT);
+
+    /// Returns the selected file download source property.
+    public ObjectProperty<DownloadSource> fileDownloadSourceProperty() {
+        return fileDownloadSource;
+    }
+
+    /// The selected default add-on source ID.
+    @SerializedName("defaultAddonSource")
+    private final StringProperty defaultAddonSource = new SimpleStringProperty("modrinth");
+
+    /// Returns the selected default add-on source ID property.
+    public StringProperty defaultAddonSourceProperty() {
+        return defaultAddonSource;
+    }
+
+    /// Whether proxy authentication is enabled.
+    @SerializedName("hasProxyAuth")
+    private final BooleanProperty hasProxyAuth = new SimpleBooleanProperty();
+
+    /// Returns the proxy authentication enable property.
+    public BooleanProperty hasProxyAuthProperty() {
+        return hasProxyAuth;
+    }
+
+    /// The configured network proxy selection mode.
+    @SerializedName("proxyType")
+    private final ObjectProperty<ProxyType> proxyType = new SimpleObjectProperty<>(ProxyType.SYSTEM);
+
+    /// Returns the network proxy selection mode property.
+    public ObjectProperty<ProxyType> proxyTypeProperty() {
+        return proxyType;
+    }
+
+    /// The configured network proxy host.
+    @SerializedName("proxyHost")
+    private final StringProperty proxyHost = new SimpleStringProperty();
+
+    /// Returns the network proxy host property.
+    public StringProperty proxyHostProperty() {
+        return proxyHost;
+    }
+
+    /// The configured network proxy port.
+    @SerializedName("proxyPort")
+    private final IntegerProperty proxyPort = new SimpleIntegerProperty();
+
+    /// Returns the network proxy port property.
+    public IntegerProperty proxyPortProperty() {
+        return proxyPort;
+    }
+
+    /// The configured proxy authentication username.
+    @SerializedName("proxyUser")
+    private final StringProperty proxyUser = new SimpleStringProperty();
+
+    /// Returns the proxy authentication username property.
+    public StringProperty proxyUserProperty() {
+        return proxyUser;
+    }
+
+    /// The configured proxy authentication password.
+    @SerializedName("proxyPassword")
+    private final StringProperty proxyPassword = new SimpleStringProperty();
+
+    /// Returns the proxy authentication password property.
+    public StringProperty proxyPasswordProperty() {
+        return proxyPassword;
+    }
+
+    /// The selected game directory ID.
+    ///
+    /// This field is owned by [Profiles]. Code outside [Profiles] should not modify it directly.
+    @SerializedName(PROPERTY_SELECTED_GAME_DIRECTORY)
+    private final ObjectProperty<@Nullable GameDirectoryID> selectedGameDirectory =
+            new SimpleObjectProperty<>(this, PROPERTY_SELECTED_GAME_DIRECTORY);
+
+    /// Returns the selected game directory ID property.
+    ///
+    /// This property is exposed for persistence and [Profiles] integration. Code outside [Profiles]
+    /// should use `Profiles.setSelectedProfile` instead of modifying this property directly.
+    public ObjectProperty<@Nullable GameDirectoryID> selectedGameDirectoryProperty() {
+        return selectedGameDirectory;
+    }
+
+    /// The default game setting preset ID.
+    @SerializedName(PROPERTY_DEFAULT_GAME_SETTINGS_PRESET)
+    private final ObjectProperty<@Nullable GameSettingsPresetID> defaultGameSettingsPreset =
+            new SimpleObjectProperty<>(this, PROPERTY_DEFAULT_GAME_SETTINGS_PRESET);
+
+    /// Returns the default game setting preset ID property.
+    public ObjectProperty<@Nullable GameSettingsPresetID> defaultGameSettingsPresetProperty() {
+        return defaultGameSettingsPreset;
+    }
+
+    /// Selected instance IDs keyed by game directory ID.
+    ///
+    /// This field is owned by [Profiles]. Code outside [Profiles] should not modify it directly.
+    @SerializedName(PROPERTY_SELECTED_INSTANCE)
+    private final ObservableMap<GameDirectoryID, String> selectedInstance = FXCollections.observableHashMap();
+
+    /// Returns selected instance IDs keyed by game directory ID.
+    ///
+    /// This map is exposed for persistence and migration code. Runtime code outside [Profiles] should
+    /// use `Profiles.getSelectedInstance` and `Profiles.setSelectedInstance` instead of mutating it.
+    public ObservableMap<GameDirectoryID, String> getSelectedInstance() {
+        return selectedInstance;
+    }
+
+    /// Returns the selected instance ID for the given game directory ID.
+    ///
+    /// This method is intended for [Profiles].
+    @Nullable String getSelectedInstance(@Nullable GameDirectoryID gameDirectoryId) {
+        return gameDirectoryId != null ? selectedInstance.get(gameDirectoryId) : null;
+    }
+
+    /// Sets the selected instance ID for the given game directory ID.
+    ///
+    /// This method is intended for [Profiles].
+    void setSelectedInstance(@Nullable GameDirectoryID gameDirectoryId, @Nullable String selectedInstance) {
+        if (gameDirectoryId == null) {
+            return;
+        }
+
+        if (StringUtils.isBlank(selectedInstance)) {
+            this.selectedInstance.remove(gameDirectoryId);
+        } else {
+            this.selectedInstance.put(gameDirectoryId, selectedInstance);
+        }
+    }
+
+    // Accounts
+
+    /// The preferred login type to use when the user wants to add an account.
+    @SerializedName("preferredLoginType")
+    private final StringProperty preferredLoginType = new SimpleStringProperty();
+
+    /// Returns the preferred login type property.
+    public StringProperty preferredLoginTypeProperty() {
+        return preferredLoginType;
+    }
+
+    /// The selected account reference.
+    @SerializedName("selectedAccount")
+    private final ObjectProperty<@Nullable AccountID> selectedAccount = new SimpleObjectProperty<>();
+
+    /// Returns the selected account reference property.
+    public ObjectProperty<@Nullable AccountID> selectedAccountProperty() {
+        return selectedAccount;
+    }
+
+    /// JSON adapter for [LauncherSettings].
+    public static final class Adapter extends ObservableSetting.Adapter<LauncherSettings> {
+        /// Creates empty launcher settings for deserialization.
+        @Override
+        protected LauncherSettings createInstance() {
+            return new LauncherSettings();
+        }
+    }
+}

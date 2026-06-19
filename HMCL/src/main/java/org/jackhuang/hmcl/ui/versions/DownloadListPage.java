@@ -44,6 +44,7 @@ import org.jackhuang.hmcl.mod.RemoteModRepository;
 import org.jackhuang.hmcl.mod.modrinth.ModrinthRemoteModRepository;
 import org.jackhuang.hmcl.setting.DownloadProviders;
 import org.jackhuang.hmcl.setting.Profile;
+import org.jackhuang.hmcl.setting.Profiles;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.ui.Controllers;
@@ -125,7 +126,7 @@ public class DownloadListPage extends Control implements DecoratorPage, VersionP
             versions.setAll(profile.getRepository().getDisplayVersions()
                     .map(Version::getId)
                     .collect(Collectors.toList()));
-            selectedVersion.set(profile.getSelectedVersion());
+            selectedVersion.set(Profiles.getSelectedInstance(profile));
         }
     }
 
@@ -165,11 +166,11 @@ public class DownloadListPage extends Control implements DecoratorPage, VersionP
         int currentSearchID = searchID = searchID + 1;
         Task.supplyAsync(() -> {
             Profile.ProfileVersion version = this.version.get();
-            if (StringUtils.isBlank(version.getVersion())) {
+            if (StringUtils.isBlank(version.version())) {
                 return userGameVersion;
             } else {
-                return StringUtils.isNotBlank(version.getVersion())
-                        ? version.getProfile().getRepository().getGameVersion(version.getVersion()).orElse("")
+                return StringUtils.isNotBlank(version.version())
+                        ? version.profile().getRepository().getGameVersion(version.version()).orElse("")
                         : "";
             }
         }).thenApplyAsync(
@@ -192,7 +193,7 @@ public class DownloadListPage extends Control implements DecoratorPage, VersionP
         }).executor(true);
     }
 
-    protected String getLocalizedCategory(String category) {
+    protected String getLocalizedCategory(String category, Object self) {
         return repository instanceof ModrinthRemoteModRepository
                 ? i18n("modrinth.category." + category)
                 : i18n("curse.category." + category);
@@ -204,9 +205,9 @@ public class DownloadListPage extends Control implements DecoratorPage, VersionP
 
     private String getLocalizedCategoryIndent(ModDownloadListPageSkin.CategoryIndented category) {
         return StringUtils.repeats(' ', category.indent * 4) +
-                (category.getCategory() == null
+                (category.category() == null
                         ? i18n("curse.category.0")
-                        : getLocalizedCategory(category.getCategory().getId()));
+                        : getLocalizedCategory(category.category().id(), category.category().self()));
     }
 
     protected String getLocalizedOfficialPage() {
@@ -219,7 +220,7 @@ public class DownloadListPage extends Control implements DecoratorPage, VersionP
 
     protected Profile.ProfileVersion getProfileVersion() {
         if (versionSelection) {
-            return new Profile.ProfileVersion(version.get().getProfile(), selectedVersion.get());
+            return new Profile.ProfileVersion(version.get().profile(), selectedVersion.get());
         } else {
             return version.get();
         }
@@ -320,7 +321,7 @@ public class DownloadListPage extends Control implements DecoratorPage, VersionP
                 searchPane.addRow(rowIndex++, new Label(i18n("mods.name")), nameField, lblGameVersion, gameVersionField);
 
                 ObjectBinding<Boolean> hasVersion = BindingMapping.of(getSkinnable().version)
-                        .map(version -> version.getVersion() == null);
+                        .map(version -> version.version() == null);
                 lblGameVersion.managedProperty().bind(hasVersion);
                 lblGameVersion.visibleProperty().bind(hasVersion);
                 gameVersionField.managedProperty().bind(hasVersion);
@@ -328,7 +329,7 @@ public class DownloadListPage extends Control implements DecoratorPage, VersionP
                 FXUtils.installFastTooltip(gameVersionField, i18n("search.enter"));
 
                 FXUtils.onChangeAndOperate(getSkinnable().version, version -> {
-                    if (StringUtils.isNotBlank(version.getVersion())) {
+                    if (StringUtils.isNotBlank(version.version())) {
                         GridPane.setColumnSpan(nameField, 3);
                     } else {
                         GridPane.setColumnSpan(nameField, 1);
@@ -386,7 +387,7 @@ public class DownloadListPage extends Control implements DecoratorPage, VersionP
                     int pageOffset = control.pageOffset.get();
                     getSkinnable().search(gameVersionField.getSelectionModel().getSelectedItem(),
                             Optional.ofNullable(categoryComboBox.getSelectionModel().getSelectedItem())
-                                    .map(CategoryIndented::getCategory)
+                                    .map(CategoryIndented::category)
                                     .orElse(null),
                             pageOffset == -1 ? 0 : pageOffset,
                             nameField.getText(),
@@ -585,7 +586,7 @@ public class DownloadListPage extends Control implements DecoratorPage, VersionP
                             content.getTags().clear();
                             for (String category : item.getCategories()) {
                                 if (getSkinnable().shouldDisplayCategory(category))
-                                    content.addTag(getSkinnable().getLocalizedCategory(category));
+                                    content.addTag(getSkinnable().getLocalizedCategory(category, null));
                             }
                             iconLoader.load(imageContainer.imageProperty(), item.getIconUrl());
                             setGraphic(wrapper);
@@ -597,29 +598,13 @@ public class DownloadListPage extends Control implements DecoratorPage, VersionP
             getChildren().setAll(pane);
         }
 
-        private static class CategoryIndented {
+        private record CategoryIndented(int indent, RemoteModRepository.Category category) {
             private static final CategoryIndented ALL = new CategoryIndented(0, null);
-
-            private final int indent;
-            private final RemoteModRepository.Category category;
-
-            public CategoryIndented(int indent, RemoteModRepository.Category category) {
-                this.indent = indent;
-                this.category = category;
-            }
-
-            public int getIndent() {
-                return indent;
-            }
-
-            public RemoteModRepository.Category getCategory() {
-                return category;
-            }
         }
 
         private static void resolveCategory(RemoteModRepository.Category category, int indent, List<CategoryIndented> result) {
             result.add(new CategoryIndented(indent, category));
-            for (RemoteModRepository.Category subcategory : category.getSubcategories()) {
+            for (RemoteModRepository.Category subcategory : category.subcategories()) {
                 resolveCategory(subcategory, indent + 1, result);
             }
         }

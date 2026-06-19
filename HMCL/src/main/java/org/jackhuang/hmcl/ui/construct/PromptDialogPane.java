@@ -73,7 +73,7 @@ public class PromptDialogPane extends DialogPane {
                 if (StringUtils.isNotBlank(question.question.get())) {
                     body.addRow(rowIndex++, new Label(question.question.get()), textField);
                 } else {
-                    GridPane.setColumnSpan(textField, 1);
+                    GridPane.setColumnSpan(textField, 2);
                     body.addRow(rowIndex++, textField);
                 }
                 GridPane.setMargin(textField, new Insets(0, 0, 20, 0));
@@ -96,12 +96,12 @@ public class PromptDialogPane extends DialogPane {
                 if (StringUtils.isNotBlank(question.question.get())) {
                     body.addRow(rowIndex++, new Label(question.question.get()), comboBox);
                 } else {
-                    GridPane.setColumnSpan(comboBox, 1);
+                    GridPane.setColumnSpan(comboBox, 2);
                     body.addRow(rowIndex++, comboBox);
                 }
             } else if (question instanceof Builder.HintQuestion) {
                 HintPane pane = new HintPane();
-                GridPane.setColumnSpan(pane, 1);
+                GridPane.setColumnSpan(pane, 2);
                 pane.textProperty().bind(question.question);
                 body.addRow(rowIndex++, pane);
             }

@@ -66,7 +66,7 @@ import java.util.zip.GZIPInputStream;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
-import static org.jackhuang.hmcl.setting.ConfigHolder.config;
+import static org.jackhuang.hmcl.setting.SettingsManager.settings;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
@@ -144,7 +144,7 @@ public final class SettingsPage extends ScrollPane {
                     LineToggleButton previewPane = new LineToggleButton();
                     previewPane.setTitle(i18n("update.preview"));
                     previewPane.setSubtitle(i18n("update.preview.subtitle"));
-                    previewPane.selectedProperty().bindBidirectional(config().acceptPreviewUpdateProperty());
+                    previewPane.selectedProperty().bindBidirectional(settings().acceptPreviewUpdateProperty());
                     preview = previewPane.selectedProperty();
 
                     updatePaneList.getContent().add(previewPane);
@@ -154,7 +154,7 @@ public final class SettingsPage extends ScrollPane {
                     LineToggleButton disableAutoShowUpdateDialogPane = new LineToggleButton();
                     disableAutoShowUpdateDialogPane.setTitle(i18n("update.disable_auto_show_update_dialog"));
                     disableAutoShowUpdateDialogPane.setSubtitle(i18n("update.disable_auto_show_update_dialog.subtitle"));
-                    disableAutoShowUpdateDialogPane.selectedProperty().bindBidirectional(config().disableAutoShowUpdateDialogProperty());
+                    disableAutoShowUpdateDialogPane.selectedProperty().bindBidirectional(settings().disableAutoShowUpdateDialogProperty());
                     updatePaneList.getContent().add(disableAutoShowUpdateDialogPane);
                 }
 
@@ -199,15 +199,10 @@ public final class SettingsPage extends ScrollPane {
                             return locale.getDisplayName(currentLocale) + " - " + locale.getDisplayName(locale);
                     });
                     chooseLanguagePane.setItems(SupportedLocale.getSupportedLocales());
-                    chooseLanguagePane.valueProperty().bindBidirectional(config().localizationProperty());
+                    chooseLanguagePane.valueProperty().bindBidirectional(settings().languageProperty());
 
                     languagePaneList.getContent().add(chooseLanguagePane);
 
-                    LineToggleButton disableAutoGameOptionsPane = new LineToggleButton();
-                    disableAutoGameOptionsPane.setTitle(i18n("settings.launcher.disable_auto_game_options"));
-                    disableAutoGameOptionsPane.selectedProperty().bindBidirectional(config().disableAutoGameOptionsProperty());
-
-                    languagePaneList.getContent().add(disableAutoGameOptionsPane);
                 }
 
                 rootPane.getChildren().addAll(ComponentList.createComponentListTitle(i18n("settings.launcher.language")), languagePaneList);
@@ -220,17 +215,8 @@ public final class SettingsPage extends ScrollPane {
                     LineToggleButton disableAprilFools = new LineToggleButton();
                     disableAprilFools.setTitle(i18n("settings.launcher.disable_april_fools"));
                     disableAprilFools.setSubtitle(i18n("settings.take_effect_after_restart"));
-                    disableAprilFools.selectedProperty().bindBidirectional(config().disableAprilFoolsProperty());
+                    disableAprilFools.selectedProperty().bindBidirectional(settings().disableAprilFoolsProperty());
                     miscPaneList.getContent().add(disableAprilFools);
-                }
-
-                {
-                    LineToggleButton allowAutoAgentPane = new LineToggleButton();
-                    allowAutoAgentPane.setTitle(i18n("settings.launcher.allow_auto_agent"));
-                    allowAutoAgentPane.setSubtitle(i18n("settings.launcher.allow_auto_agent.subtitle"));
-                    allowAutoAgentPane.selectedProperty().bindBidirectional(config().allowAutoAgentProperty());
-
-                    miscPaneList.getContent().add(allowAutoAgentPane);
                 }
 
                 {
