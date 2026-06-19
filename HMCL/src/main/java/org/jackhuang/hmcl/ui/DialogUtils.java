@@ -46,12 +46,12 @@ public final class DialogUtils {
     public static final String PROPERTY_PARENT_DIALOG_REF = DialogUtils.class.getName() + ".dialog.parentDialogRef";
 
     public static void show(Decorator decorator, Node content) {
-        if (decorator.getDrawerWrapper() == null) {
+        if (decorator.getDrawerWrapper() == null || decorator.getDialogOverlayPane() == null) {
             Platform.runLater(() -> show(decorator, content));
             return;
         }
 
-        show(decorator.getDrawerWrapper(), content, (dialog) -> {
+        show(decorator.getDrawerWrapper(), content, decorator.getDialogOverlayPane(), (dialog) -> {
             JFXDialogPane pane = (JFXDialogPane) dialog.getContent();
             decorator.capableDraggingWindow(dialog);
             decorator.forbidDraggingWindow(pane);
@@ -60,24 +60,24 @@ public final class DialogUtils {
     }
 
     public static void show(StackPane container, Node content) {
-        show(container, content, null);
+        show(container, content, null, null);
     }
 
-    public static void show(StackPane container, Node content, @Nullable Consumer<JFXDialog> onDialogCreated) {
+    public static void show(StackPane container, Node content, @Nullable StackPane overlayPane, @Nullable Consumer<JFXDialog> onDialogCreated) {
         FXUtils.checkFxUserThread();
 
         JFXDialog dialog = (JFXDialog) container.getProperties().get(PROPERTY_DIALOG_INSTANCE);
         JFXDialogPane dialogPane = (JFXDialogPane) container.getProperties().get(PROPERTY_DIALOG_PANE_INSTANCE);
 
         if (dialog == null) {
-            dialog = new JFXDialog(AnimationUtils.isAnimationEnabled()
-                    ? JFXDialog.DialogTransition.CENTER
-                    : JFXDialog.DialogTransition.NONE);
             dialogPane = new JFXDialogPane();
-
-            dialog.setContent(dialogPane);
-            dialog.setDialogContainer(container);
-            dialog.setOverlayClose(false);
+            dialog = new JFXDialog(
+                    container,
+                    dialogPane,
+                    AnimationUtils.isAnimationEnabled() ? JFXDialog.DialogTransition.CENTER : JFXDialog.DialogTransition.NONE,
+                    false
+            );
+            if (overlayPane != null) dialog.setOverlayPane(overlayPane);
 
             container.getProperties().put(PROPERTY_DIALOG_INSTANCE, dialog);
             container.getProperties().put(PROPERTY_DIALOG_PANE_INSTANCE, dialogPane);

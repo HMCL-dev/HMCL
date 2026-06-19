@@ -61,7 +61,7 @@ public class Decorator extends Control {
     private final BooleanProperty titleTransparent = new SimpleBooleanProperty(false);
     private final Stage primaryStage;
     private Navigation.NavigationDirection navigationDirection = Navigation.NavigationDirection.START;
-    private StackPane drawerWrapper;
+    private StackPane drawerWrapper, dialogOverlayPane;
     private final JFXSnackbar snackbar = new JFXSnackbar();
 
     private final ReadOnlyBooleanWrapper allowMove = new ReadOnlyBooleanWrapper();
@@ -113,6 +113,14 @@ public class Decorator extends Control {
 
     public void setDrawerWrapper(StackPane drawerWrapper) {
         this.drawerWrapper = drawerWrapper;
+    }
+
+    public StackPane getDialogOverlayPane() {
+        return dialogOverlayPane;
+    }
+
+    public void setDialogOverlayPane(StackPane overlayPane) {
+        this.dialogOverlayPane = overlayPane;
     }
 
     public ObservableList<Node> getContent() {

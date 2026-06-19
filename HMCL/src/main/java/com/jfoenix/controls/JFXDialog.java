@@ -25,10 +25,7 @@ import com.jfoenix.effects.JFXDepthManager;
 import com.jfoenix.transitions.CachedTransition;
 import javafx.animation.*;
 import javafx.beans.DefaultProperty;
-import javafx.beans.property.BooleanProperty;
-import javafx.beans.property.ObjectProperty;
-import javafx.beans.property.ObjectPropertyBase;
-import javafx.beans.property.SimpleBooleanProperty;
+import javafx.beans.property.*;
 import javafx.css.*;
 import javafx.event.Event;
 import javafx.event.EventHandler;
@@ -45,6 +42,7 @@ import javafx.scene.layout.Region;
 import javafx.scene.layout.StackPane;
 import javafx.scene.paint.Color;
 import javafx.util.Duration;
+import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.animation.Motion;
 
 import java.util.ArrayList;
@@ -128,22 +126,44 @@ public class JFXDialog extends StackPane {
         initChangeListeners();
     }
 
+    public JFXDialog(StackPane dialogContainer, Region content, StackPane overlayPane, DialogTransition transitionType, boolean overlayClose) {
+        setOverlayClose(overlayClose);
+        setOverlayPane(overlayPane);
+        initialize();
+        setContent(content);
+        setDialogContainer(dialogContainer);
+        this.transitionType.set(transitionType);
+        // init change listeners
+        initChangeListeners();
+    }
+
     private void initChangeListeners() {
-        overlayCloseProperty().addListener((o, oldVal, newVal) -> {
-            if (newVal) {
-                this.addEventHandler(MouseEvent.MOUSE_PRESSED, closeHandler);
+        FXUtils.onChange(overlayCloseProperty(), b -> {
+            if (b) {
+                getOverlayPane().addEventHandler(MouseEvent.MOUSE_PRESSED, closeHandler);
             } else {
-                this.removeEventHandler(MouseEvent.MOUSE_PRESSED, closeHandler);
+                getOverlayPane().removeEventHandler(MouseEvent.MOUSE_PRESSED, closeHandler);
+            }
+        });
+        this.overlayPaneProperty().addListener((observable, oldValue, newValue) -> {
+            oldValue.getStyleClass().remove("jfx-dialog-overlay-pane");
+            oldValue.setBackground(null);
+            oldValue.removeEventHandler(MouseEvent.MOUSE_PRESSED, closeHandler);
+            newValue.getStyleClass().add("jfx-dialog-overlay-pane");
+            newValue.setBackground(new Background(new BackgroundFill(Color.rgb(0, 0, 0, 0.1), null, null)));
+            // close the dialog if clicked on the overlay pane
+            if (overlayClose.get()) {
+                newValue.addEventHandler(MouseEvent.MOUSE_PRESSED, closeHandler);
             }
         });
     }
 
     private void initialize() {
-        this.setVisible(false);
+        //this.setVisible(false);
         this.getStyleClass().add(DEFAULT_STYLE_CLASS);
-        this.transitionType.addListener((o, oldVal, newVal) -> {
-            animation = getShowAnimation(transitionType.get());
-        });
+
+        FXUtils.onChange(overlayPane, t -> animation = getShowAnimation(transitionType.get()));
+        FXUtils.onChange(transitionType, t -> animation = getShowAnimation(transitionType.get()));
 
         contentHolder = new StackPane();
         JFXDepthManager.setDepth(contentHolder, 4);
@@ -151,13 +171,17 @@ public class JFXDialog extends StackPane {
         // ensure stackpane is never resized beyond it's preferred size
         contentHolder.setMaxSize(Region.USE_PREF_SIZE, Region.USE_PREF_SIZE);
         this.getChildren().add(contentHolder);
-        this.getStyleClass().add("jfx-dialog-overlay-pane");
         StackPane.setAlignment(contentHolder, Pos.CENTER);
-        this.setBackground(new Background(new BackgroundFill(Color.rgb(0, 0, 0, 0.1), null, null)));
+
+        this.setPickOnBounds(false);
+
+        getOverlayPane().getStyleClass().add("jfx-dialog-overlay-pane");
+        getOverlayPane().setBackground(new Background(new BackgroundFill(Color.rgb(0, 0, 0, 0.1), null, null)));
         // close the dialog if clicked on the overlay pane
         if (overlayClose.get()) {
-            this.addEventHandler(MouseEvent.MOUSE_PRESSED, closeHandler);
+            getOverlayPane().addEventHandler(MouseEvent.MOUSE_PRESSED, closeHandler);
         }
+
         // prevent propagating the events to overlay pane
         contentHolder.addEventHandler(MouseEvent.ANY, Event::consume);
     }
@@ -212,6 +236,20 @@ public class JFXDialog extends StackPane {
 
     public final void setOverlayClose(final boolean overlayClose) {
         this.overlayCloseProperty().set(overlayClose);
+    }
+
+    private final ObjectProperty<StackPane> overlayPane = new SimpleObjectProperty<>(this);
+
+    public final ObjectProperty<StackPane> overlayPaneProperty() {
+        return this.overlayPane;
+    }
+
+    public final StackPane getOverlayPane() {
+        return this.overlayPaneProperty().get();
+    }
+
+    public final void setOverlayPane(final StackPane overlayPane) {
+        this.overlayPaneProperty().set(overlayPane);
     }
 
     /// if sets to true, the content of dialog container will be cached and replaced with an image
@@ -291,8 +329,10 @@ public class JFXDialog extends StackPane {
                 closeDialog();
             });
         } else {
-            setOpacity(0);
-            setVisible(false);
+            contentHolder.setOpacity(0);
+            contentHolder.setVisible(false);
+            getOverlayPane().setOpacity(0);
+            getOverlayPane().setVisible(false);
             closeDialog();
         }
     }
@@ -339,7 +379,8 @@ public class JFXDialog extends StackPane {
     }
 
     private void resetProperties() {
-        this.setVisible(false);
+        contentHolder.setVisible(false);
+        getOverlayPane().setVisible(false);
         contentHolder.setTranslateX(0);
         contentHolder.setTranslateY(0);
         contentHolder.setScaleX(1);
@@ -354,17 +395,22 @@ public class JFXDialog extends StackPane {
                     new KeyFrame(Duration.ZERO,
                             new KeyValue(contentHolder.scaleXProperty(), INITIAL_SCALE, INTERPOLATOR),
                             new KeyValue(contentHolder.scaleYProperty(), INITIAL_SCALE, INTERPOLATOR),
-                            new KeyValue(JFXDialog.this.visibleProperty(), false, Motion.LINEAR)
+                            new KeyValue(contentHolder.visibleProperty(), false, Motion.LINEAR),
+                            new KeyValue(getOverlayPane().visibleProperty(), false, Motion.LINEAR)
                     ),
                     new KeyFrame(Duration.millis(10),
-                            new KeyValue(JFXDialog.this.visibleProperty(), true, Motion.LINEAR),
-                            new KeyValue(JFXDialog.this.opacityProperty(), 0, INTERPOLATOR)
+                            new KeyValue(contentHolder.visibleProperty(), true, Motion.LINEAR),
+                            new KeyValue(contentHolder.opacityProperty(), 0, INTERPOLATOR),
+                            new KeyValue(getOverlayPane().visibleProperty(), true, Motion.LINEAR),
+                            new KeyValue(getOverlayPane().opacityProperty(), 0, INTERPOLATOR)
                     ),
                     new KeyFrame(Motion.EXTRA_LONG4,
                             new KeyValue(contentHolder.scaleXProperty(), 1, INTERPOLATOR),
                             new KeyValue(contentHolder.scaleYProperty(), 1, INTERPOLATOR),
-                            new KeyValue(JFXDialog.this.visibleProperty(), true, Motion.LINEAR),
-                            new KeyValue(JFXDialog.this.opacityProperty(), 1, INTERPOLATOR)
+                            new KeyValue(contentHolder.visibleProperty(), true, Motion.LINEAR),
+                            new KeyValue(contentHolder.opacityProperty(), 1, INTERPOLATOR),
+                            new KeyValue(getOverlayPane().visibleProperty(), true, Motion.LINEAR),
+                            new KeyValue(getOverlayPane().opacityProperty(), 1, INTERPOLATOR)
                     ))
             );
             // reduce the number to increase the shifting , increase number to reduce shifting

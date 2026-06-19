@@ -227,6 +227,13 @@ public class DecoratorSkin extends SkinBase<Decorator> {
         frame.setTop(titleContainer);
 
         {
+            StackPane overlayPane = new StackPane();
+            overlayPane.setVisible(false);
+            wrapper.getChildren().add(overlayPane);
+            skinnable.setDialogOverlayPane(overlayPane);
+        }
+
+        {
             HBox buttonsContainer = new HBox();
             buttonsContainer.setAlignment(Pos.TOP_RIGHT);
             buttonsContainer.setMaxHeight(40);
