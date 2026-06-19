@@ -17,6 +17,7 @@ NVIDIA
 minecraft-exported-crash-info*
 hmcl-exported-logs-*
 terracotta-log-*
+PLANS.md
 /.java/
 /.local/
 /.cache/
@@ -73,5 +74,3 @@ language-subtag-registry
 .codex
 /.gradle-*/
 
-# https://github.com/HMCL-dev/HMCL/pull/6198/
-[Pp][Ll][Aa][Nn][Ss].[Mm][Dd]
