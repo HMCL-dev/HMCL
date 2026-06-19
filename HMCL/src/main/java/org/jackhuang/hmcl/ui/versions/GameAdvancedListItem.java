@@ -44,7 +44,7 @@ public class GameAdvancedListItem extends AdvancedListItem {
         AdvancedListItem.setAlignment(imageContainer, Pos.CENTER);
         setLeftGraphic(imageContainer);
 
-        holder.add(FXUtils.onWeakChangeAndOperate(Profiles.selectedVersionProperty(), this::loadVersion));
+        holder.add(FXUtils.onWeakChangeAndOperate(Profiles.selectedInstanceProperty(), this::loadVersion));
     }
 
     private void loadVersion(String version) {
@@ -52,7 +52,7 @@ public class GameAdvancedListItem extends AdvancedListItem {
             profile = Profiles.getSelectedProfile();
             if (profile != null) {
                 onVersionIconChangedListener = profile.getRepository().onVersionIconChanged.registerWeak(event -> {
-                    this.loadVersion(Profiles.getSelectedVersion());
+                    this.loadVersion(Profiles.getSelectedInstance());
                 });
             }
         }

@@ -26,6 +26,7 @@ import org.jackhuang.hmcl.mod.ModpackCompletionException;
 import org.jackhuang.hmcl.mod.UnsupportedModpackException;
 import org.jackhuang.hmcl.mod.server.ServerModpackManifest;
 import org.jackhuang.hmcl.setting.Profile;
+import org.jackhuang.hmcl.setting.Profiles;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.ui.Controllers;
@@ -120,10 +121,10 @@ public final class ModpackInstallWizardProvider implements WizardProvider {
         } else {
             if (serverModpackManifest != null) {
                 return ModpackHelper.getInstallTask(profile, serverModpackManifest, name, modpack)
-                        .thenRunAsync(Schedulers.javafx(), () -> profile.setSelectedVersion(name));
+                        .thenRunAsync(Schedulers.javafx(), () -> Profiles.setSelectedInstance(profile, name));
             } else {
                 return ModpackHelper.getInstallTask(profile, selected, name, modpack, iconUrl)
-                        .thenRunAsync(Schedulers.javafx(), () -> profile.setSelectedVersion(name));
+                        .thenRunAsync(Schedulers.javafx(), () -> Profiles.setSelectedInstance(profile, name));
             }
         }
     }
