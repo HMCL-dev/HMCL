@@ -62,6 +62,7 @@ import org.jackhuang.hmcl.ui.terracotta.TerracottaPage;
 import org.jackhuang.hmcl.ui.versions.GameListPage;
 import org.jackhuang.hmcl.ui.versions.VersionPage;
 import org.jackhuang.hmcl.ui.versions.Versions;
+import org.jackhuang.hmcl.ui.versions.WorldManagePage;
 import org.jackhuang.hmcl.util.*;
 import org.jackhuang.hmcl.util.i18n.I18n;
 import org.jackhuang.hmcl.util.i18n.SupportedLocale;
@@ -119,6 +120,7 @@ public final class Controllers {
     });
     private static LauncherSettingsPage settingsPage;
     private static Lazy<TerracottaPage> terracottaPage = new Lazy<>(TerracottaPage::new);
+    private static Lazy<WorldManagePage> worldManagePage = new Lazy<>(WorldManagePage::new);
 
     private Controllers() {
     }
@@ -206,6 +208,11 @@ public final class Controllers {
     // FXThread
     public static Node getTerracottaPage() {
         return terracottaPage.get();
+    }
+
+    // FXThread
+    public static WorldManagePage getWorldManagePage() {
+        return worldManagePage.get();
     }
 
     // FXThread
@@ -711,6 +718,7 @@ public final class Controllers {
         accountListPage = null;
         settingsPage = null;
         terracottaPage = null;
+        worldManagePage = null;
         decorator = null;
         stage = null;
         scene = null;

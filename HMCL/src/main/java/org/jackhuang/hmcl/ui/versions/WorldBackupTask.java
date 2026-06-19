@@ -23,7 +23,6 @@ import org.jackhuang.hmcl.task.Task;
 import java.io.BufferedOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
-import java.nio.channels.FileChannel;
 import java.nio.file.*;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.time.LocalDateTime;
@@ -37,17 +36,15 @@ public final class WorldBackupTask extends Task<Path> {
 
     private final World world;
     private final Path backupsDir;
-    private final boolean needLock;
 
-    public WorldBackupTask(World world, Path backupsDir, boolean needLock) {
+    public WorldBackupTask(World world, Path backupsDir) {
         this.world = world;
         this.backupsDir = backupsDir;
-        this.needLock = needLock;
     }
 
     @Override
     public void execute() throws Exception {
-        try (FileChannel lockChannel = needLock ? world.lock() : null) {
+        try (World.WorldLock.Guard guard = world.getWorldLock().guard()) {
             Files.createDirectories(backupsDir);
             String time = LocalDateTime.now().format(WorldBackupsPage.TIME_FORMATTER);
             String baseName = time + "_" + world.getFileName();

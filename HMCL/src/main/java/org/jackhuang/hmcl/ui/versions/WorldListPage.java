@@ -42,12 +42,12 @@ import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.ui.*;
 import org.jackhuang.hmcl.ui.construct.*;
 import org.jackhuang.hmcl.util.ChunkBaseApp;
+import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.i18n.I18n;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
 
-import java.io.IOException;
-import java.nio.file.FileAlreadyExistsException;
+import java.nio.file.Files;
 import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
 import java.time.Instant;
@@ -73,8 +73,8 @@ public final class WorldListPage extends ListPageBase<World> implements VersionP
     private int refreshCount = 0;
 
     public WorldListPage() {
-        FXUtils.applyDragListener(this, it -> "zip".equals(FileUtils.getExtension(it)), modpacks -> {
-            installWorld(modpacks.get(0));
+        FXUtils.applyDragListener(this, it -> "zip".equals(FileUtils.getExtension(it)) || Files.isDirectory(it), worlds -> {
+            installWorld(worlds.get(0));
         });
 
         showAll.addListener(e -> updateWorldList());
@@ -124,7 +124,7 @@ public final class WorldListPage extends ListPageBase<World> implements VersionP
             }
 
             Optional<String> gameVersion = profile.getRepository().getGameVersion(instanceId);
-            supportQuickPlay.set(World.supportQuickPlay(GameVersionNumber.asGameVersion(gameVersion)));
+            supportQuickPlay.set(World.supportsQuickPlay(GameVersionNumber.asGameVersion(gameVersion)));
 
             worlds = result;
             updateWorldList();
@@ -151,33 +151,33 @@ public final class WorldListPage extends ListPageBase<World> implements VersionP
         Controllers.navigate(Controllers.getDownloadPage());
     }
 
-    private void installWorld(Path zipFile) {
+    private void installWorld(Path worldPath) {
         // Only accept one world file because user is required to confirm the new world name
         // Or too many input dialogs are popped.
-        Task.supplyAsync(() -> new World(zipFile))
+        Task.supplyAsync(() -> ImportableWorld.fromPath(worldPath))
                 .whenComplete(Schedulers.javafx(), world -> {
                     Controllers.prompt(i18n("world.name.enter"), (name, handler) -> {
-                        Task.runAsync(() -> world.install(savesDir, name))
+                        String finalName = StringUtils.isBlank(name) ? i18n("world.name.default") : name;
+                        Task.runAsync(() -> world.install(savesDir, finalName))
                                 .whenComplete(Schedulers.javafx(), () -> {
                                     handler.resolve();
                                     refresh();
                                 }, e -> {
-                                    if (e instanceof FileAlreadyExistsException)
-                                        handler.reject(i18n("world.add.failed", i18n("world.add.already_exists")));
-                                    else if (e instanceof IOException && e.getCause() instanceof InvalidPathException)
+                                    if (e instanceof InvalidPathException)
                                         handler.reject(i18n("world.add.failed", i18n("install.new_game.malformed")));
                                     else
                                         handler.reject(i18n("world.add.failed", e.getClass().getName() + ": " + e.getLocalizedMessage()));
                                 }).start();
-                    }, world.getWorldName(), new Validator(i18n("install.new_game.malformed"), FileUtils::isNameValid));
+                    }, world.worldName());
                 }, e -> {
-                    LOG.warning("Unable to parse world file " + zipFile, e);
+                    LOG.warning("Unable to parse world file " + worldPath, e);
                     Controllers.dialog(i18n("world.add.invalid"));
                 }).start();
     }
 
     private void showManagePage(World world) {
-        Controllers.navigate(new WorldManagePage(world, profile, instanceId));
+        //Controllers.navigate(new WorldManagePage(world, profile, instanceId));
+        Controllers.navigate(Controllers.getWorldManagePage().setWorld(world, profile, instanceId));
     }
 
     public void export(World world) {
@@ -190,6 +190,10 @@ public final class WorldListPage extends ListPageBase<World> implements VersionP
 
     public void copy(World world) {
         WorldManageUIUtils.copyWorld(world, this::refresh);
+    }
+
+    public void rename(World world) {
+        WorldManageUIUtils.renameWorld(world, this::refresh);
     }
 
     public void reveal(World world) {
@@ -331,7 +335,7 @@ public final class WorldListPage extends ListPageBase<World> implements VersionP
 
                 if (world.getGameVersion() != null)
                     content.addTag(I18n.getDisplayVersion(world.getGameVersion()));
-                if (world.isLocked()) {
+                if (world.getWorldLock().getLockState() == World.WorldLock.LockState.LOCKED_BY_OTHER) {
                     content.addTag(i18n("world.locked"));
                     btnLaunch.setDisable(true);
                 } else {
@@ -347,7 +351,7 @@ public final class WorldListPage extends ListPageBase<World> implements VersionP
         // Popup Menu
 
         public void showPopupMenu(World world, boolean supportQuickPlay, JFXPopup.PopupHPosition hPosition, double initOffsetX, double initOffsetY) {
-            boolean worldLocked = world.isLocked();
+            boolean worldLocked = world.getWorldLock().getLockState() == World.WorldLock.LockState.LOCKED_BY_OTHER;
 
             PopupMenu popupMenu = new PopupMenu();
             JFXPopup popup = new JFXPopup(popupMenu);
@@ -388,10 +392,14 @@ public final class WorldListPage extends ListPageBase<World> implements VersionP
             IconedMenuItem duplicateMenuItem = new IconedMenuItem(SVG.CONTENT_COPY, i18n("world.duplicate"), () -> page.copy(world), popup);
             duplicateMenuItem.setDisable(worldLocked);
 
+            IconedMenuItem renameMenuItem = new IconedMenuItem(SVG.EDIT, i18n("world.rename"), () -> page.rename(world), popup);
+            renameMenuItem.setDisable(worldLocked);
+
             popupMenu.getContent().addAll(
                     new MenuSeparator(),
                     exportMenuItem,
                     deleteMenuItem,
+                    renameMenuItem,
                     duplicateMenuItem
             );
 

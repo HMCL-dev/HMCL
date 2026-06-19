@@ -176,6 +176,9 @@ public class DataPack {
 
     private void loadFromDir(Path dir) throws IOException {
         List<Pack> discoveredPacks;
+        if (!Files.exists(dir)) {
+            Files.createDirectories(dir);
+        }
         try (Stream<Path> stream = Files.list(dir)) {
             discoveredPacks = stream
                     .parallel()
