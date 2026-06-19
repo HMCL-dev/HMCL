@@ -30,7 +30,7 @@ import javafx.scene.paint.Color;
 import javafx.scene.text.Font;
 import javafx.scene.text.FontWeight;
 import javafx.util.Duration;
-import org.jackhuang.hmcl.setting.ConfigHolder;
+import org.jackhuang.hmcl.setting.SettingsManager;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
 import org.jackhuang.hmcl.ui.SVGContainer;
@@ -692,7 +692,7 @@ public class JFXDatePickerContent extends VBox {
     }
 
     protected Locale getLocale() {
-        return ConfigHolder.config().getLocalization().getLocale();
+        return SettingsManager.settings().languageProperty().get().getLocale();
     }
 
     protected boolean isValidDate(Chronology chrono, LocalDate date, int offset, ChronoUnit unit) {

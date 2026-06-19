@@ -30,9 +30,9 @@ import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.StackPane;
-import org.jackhuang.hmcl.setting.ConfigHolder;
-import org.jackhuang.hmcl.setting.EnumBackgroundImage;
+import org.jackhuang.hmcl.setting.BackgroundType;
 import org.jackhuang.hmcl.setting.Profile;
+import org.jackhuang.hmcl.setting.SettingsManager;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.ui.*;
@@ -339,8 +339,8 @@ public final class ScreenshotsPage extends ListPageBase<ScreenshotsPage.Screensh
             JFXButton setAsBgButton = new JFXButton(i18n("screenshots.set_as_bg"));
             setAsBgButton.getStyleClass().add("dialog-accept");
             setAsBgButton.setOnAction(e -> {
-                ConfigHolder.config().setBackgroundImage(screenshot.getPath().toString());
-                ConfigHolder.config().setBackgroundImageType(EnumBackgroundImage.CUSTOM);
+                SettingsManager.settings().backgroundImageProperty().set(screenshot.getPath().toString());
+                SettingsManager.settings().backgroundTypeProperty().set(BackgroundType.CUSTOM);
             });
 
             JFXButton copyButton = new JFXButton(i18n("menu.copy"));
