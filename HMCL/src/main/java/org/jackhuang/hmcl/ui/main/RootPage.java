@@ -119,7 +119,7 @@ public class RootPage extends DecoratorAnimatedPage implements DecoratorPage {
                         }
                     });
 
-            FXUtils.onChangeAndOperate(Profiles.selectedVersionProperty(), mainPage::setCurrentGame);
+            FXUtils.onChangeAndOperate(Profiles.selectedInstanceProperty(), mainPage::setCurrentGame);
             mainPage.showUpdateProperty().bind(UpdateChecker.outdatedProperty());
             mainPage.latestVersionProperty().bind(UpdateChecker.latestVersionProperty());
 
@@ -156,7 +156,7 @@ public class RootPage extends DecoratorAnimatedPage implements DecoratorPage {
             GameAdvancedListItem gameListItem = new GameAdvancedListItem();
             gameListItem.setOnAction(e -> {
                 Profile profile = Profiles.getSelectedProfile();
-                String version = Profiles.getSelectedVersion();
+                String version = Profiles.getSelectedInstance();
                 if (version == null) {
                     Controllers.navigate(Controllers.getGameListPage());
                 } else {
@@ -166,7 +166,7 @@ public class RootPage extends DecoratorAnimatedPage implements DecoratorPage {
             FXUtils.onScroll(gameListItem, getSkinnable().getMainPage().getVersions(), list -> {
                 String currentId = getSkinnable().getMainPage().getCurrentGame();
                 return Lang.indexWhere(list, instance -> instance.getId().equals(currentId));
-            }, it -> getSkinnable().getMainPage().getProfile().setSelectedVersion(it.getId()));
+            }, it -> Profiles.setSelectedInstance(getSkinnable().getMainPage().getProfile(), it.getId()));
             if (AnimationUtils.isAnimationEnabled()) {
                 FXUtils.prepareOnMouseEnter(gameListItem, Controllers::prepareVersionPage);
             }

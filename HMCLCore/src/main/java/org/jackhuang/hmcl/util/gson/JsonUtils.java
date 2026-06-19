@@ -17,11 +17,9 @@
  */
 package org.jackhuang.hmcl.util.gson;
 
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
-import com.google.gson.JsonParseException;
-import com.google.gson.JsonSyntaxException;
+import com.google.gson.*;
 import com.google.gson.reflect.TypeToken;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.UnknownNullability;
@@ -45,7 +43,7 @@ import java.util.UUID;
 /// - [GSON] — pretty-printing instance with all standard HMCL type adapters registered.
 /// - [UGLY_GSON] — compact (non-pretty) instance with the same adapter set minus
 ///   complex-map-key serialization and the built-in type adapters for [java.time.Instant],
-///   [java.util.UUID], and [java.nio.file.Path].
+///   [java.util.UUID] and [java.nio.file.Path].
 ///
 /// All `fromJson` / `fromJsonFile` / `fromJsonFully` overloads return `null` when the
 /// JSON literal `null` is encountered.  The `fromNonNull*` variants throw
@@ -126,6 +124,115 @@ public final class JsonUtils {
     public static <K, V extends @UnknownNullability Object> TypeToken<Map<K, V>> mapTypeOf(
             Class<K> keyType, TypeToken<V> valueType) {
         return (TypeToken<Map<K, V>>) TypeToken.getParameterized(Map.class, keyType, valueType.getType());
+    }
+
+    /// Reads a JSON primitive element as a string.
+    ///
+    /// @return the string value, or `null` if the element is absent or not primitive
+    public static @Nullable String getString(@Nullable JsonElement element) {
+        if (!(element instanceof JsonPrimitive primitive)) {
+            return null;
+        }
+
+        try {
+            return primitive.getAsString();
+        } catch (RuntimeException ignored) {
+            return null;
+        }
+    }
+
+    /// Reads a string member from a JSON object.
+    ///
+    /// @return the string value, or `null` if the key is missing or not a string
+    public static @Nullable String getString(@Nullable JsonObject object, String key) {
+        return object != null ? getString(object.get(key)) : null;
+    }
+
+    /// Reads a string member from a JSON object.
+    ///
+    /// @return the string value, or `defaultValue` if the key is missing or not a string
+    @Contract("_,_,!null->!null")
+    public static @Nullable String getString(@Nullable JsonObject object, String key, @Nullable String defaultValue) {
+        @Nullable String value = getString(object, key);
+        return value != null ? value : defaultValue;
+    }
+
+    /// Reads a string value from a map decoded from JSON.
+    ///
+    /// @return the string value, or `null` if the key is missing or not a string
+    public static @Nullable String getString(Map<?, ?> map, String key) {
+        Object value = map.get(key);
+        return value instanceof String string ? string : null;
+    }
+
+    /// Reads a JSON primitive element as a boolean.
+    public static boolean getBoolean(@Nullable JsonElement element, boolean defaultValue) {
+        if (!(element instanceof JsonPrimitive primitive)) {
+            return defaultValue;
+        }
+
+        try {
+            return primitive.getAsBoolean();
+        } catch (RuntimeException ignored) {
+            return defaultValue;
+        }
+    }
+
+    /// Reads a boolean member from a JSON object.
+    public static boolean getBoolean(@Nullable JsonObject object, String key, boolean defaultValue) {
+        return object != null ? getBoolean(object.get(key), defaultValue) : defaultValue;
+    }
+
+    /// Reads a JSON element as an integer from either a number or a numeric string.
+    public static @Nullable Integer getInteger(@Nullable JsonElement element) {
+        if (!(element instanceof JsonPrimitive primitive)) {
+            return null;
+        }
+
+        try {
+            if (primitive.isNumber()) {
+                return primitive.getAsInt();
+            }
+            if (primitive.isString()) {
+                return Integer.parseInt(primitive.getAsString());
+            }
+        } catch (RuntimeException ignored) {
+        }
+        return null;
+    }
+
+    /// Reads an integer member from a JSON object.
+    public static int getInt(@Nullable JsonObject object, String key, int defaultValue) {
+        @Nullable Integer value = object != null ? getInteger(object.get(key)) : null;
+        return value != null ? value : defaultValue;
+    }
+
+    /// Reads an optional integer member from a JSON object.
+    public static @Nullable Integer getNullableInt(@Nullable JsonObject object, String key) {
+        return object != null ? getInteger(object.get(key)) : null;
+    }
+
+    /// Reads a JSON element as a double from either a number or a numeric string.
+    public static @Nullable Double getDouble(@Nullable JsonElement element) {
+        if (!(element instanceof JsonPrimitive primitive)) {
+            return null;
+        }
+
+        try {
+            if (primitive.isNumber()) {
+                return primitive.getAsDouble();
+            }
+            if (primitive.isString()) {
+                return Double.parseDouble(primitive.getAsString());
+            }
+        } catch (NumberFormatException ignored) {
+        }
+        return null;
+    }
+
+    /// Returns a JSON primitive member, or `null` if the object is absent or the member is not primitive.
+    public static @Nullable JsonPrimitive getPrimitive(@Nullable JsonObject object, String key) {
+        return object != null && object.get(key) instanceof JsonPrimitive primitive ? primitive : null;
     }
 
     /// Deserializes the JSON string into an object of the given class using the provided [Gson]
@@ -501,6 +608,39 @@ public final class JsonUtils {
         try (var writer = Files.newBufferedWriter(file)) {
             GSON.toJson(value, writer);
         }
+    }
+
+    /// Performs a deep clone of `value` by round-tripping it through JSON serialization using
+    /// the provided [Gson] instance.
+    ///
+    /// The value is first serialized to a [com.google.gson.JsonElement] via
+    /// [Gson#toJsonTree], then immediately deserialized back into a new instance of `T`.
+    /// The result is therefore structurally equal to `value` but is an independent copy with
+    /// no shared mutable state.
+    ///
+    /// @param <T>   the type of the value to clone; may be `null` (see return)
+    /// @param gson  the [Gson] instance to use for serialization and deserialization
+    /// @param value the object to clone, or `null`
+    /// @param type  a [TypeToken] describing the runtime type of `value`
+    /// @return a deep clone of `value`, or `null` if `value` is `null`
+    public static <T extends @UnknownNullability Object> T clone(Gson gson, T value, TypeToken<T> type) {
+        if (value == null)
+            return null;
+
+        return gson.fromJson(gson.toJsonTree(value), type);
+    }
+
+    /// Performs a deep clone of `value` by round-tripping it through JSON serialization using
+    /// [GSON].
+    ///
+    /// Delegates to [#clone(Gson, Object, TypeToken)] with [GSON] as the serializer.
+    ///
+    /// @param <T>   the type of the value to clone; may be `null` (see return)
+    /// @param value the object to clone, or `null`
+    /// @param type  a [TypeToken] describing the runtime type of `value`
+    /// @return a deep clone of `value`, or `null` if `value` is `null`
+    public static <T extends @UnknownNullability Object> T clone(T value, TypeToken<T> type) {
+        return clone(GSON, value, type);
     }
 
     /// Creates and returns a pre-configured [GsonBuilder] used to construct [GSON].
