@@ -56,7 +56,6 @@ import org.jackhuang.hmcl.util.i18n.I18n;
 import org.jackhuang.hmcl.util.i18n.LocaleUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.io.Zipper;
-import org.jackhuang.hmcl.util.logging.Logger;
 
 import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
@@ -71,6 +70,7 @@ import java.util.concurrent.ThreadLocalRandom;
 
 import static org.jackhuang.hmcl.setting.SettingsManager.state;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
+import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 public class TerracottaControllerPage extends StackPane {
     private static final String FEEDBACK_TIP = "terracotta-feedback";
@@ -460,7 +460,7 @@ public class TerracottaControllerPage extends StackPane {
                         try (Zipper zipper = new Zipper(path)) {
                             zipper.putTextFile(data, StandardCharsets.UTF_8, "terracotta.log");
                             try (OutputStream os = zipper.putStream("hmcl-latest.log")) {
-                                Logger.LOG.exportLogs(os);
+                                LOG.exportLogs(os);
                             }
                         }
                         FXUtils.showFileInExplorer(path);

@@ -20,36 +20,19 @@ package org.jackhuang.hmcl.mod.multimc;
 import com.google.gson.JsonParseException;
 import com.google.gson.annotations.SerializedName;
 import org.jackhuang.hmcl.download.LibraryAnalyzer;
-import org.jackhuang.hmcl.game.Argument;
-import org.jackhuang.hmcl.game.Arguments;
-import org.jackhuang.hmcl.game.Artifact;
-import org.jackhuang.hmcl.game.AssetIndexInfo;
-import org.jackhuang.hmcl.game.CompatibilityRule;
-import org.jackhuang.hmcl.game.DownloadType;
-import org.jackhuang.hmcl.game.GameJavaVersion;
-import org.jackhuang.hmcl.game.Library;
-import org.jackhuang.hmcl.game.OSRestriction;
-import org.jackhuang.hmcl.game.RuledArgument;
-import org.jackhuang.hmcl.game.StringArgument;
-import org.jackhuang.hmcl.game.Version;
+import org.jackhuang.hmcl.game.*;
 import org.jackhuang.hmcl.util.Immutable;
 import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.gson.JsonMap;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.io.NetworkUtils;
-import org.jackhuang.hmcl.util.logging.Logger;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
+
+import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 /**
  * @author huangyuhui
@@ -443,7 +426,7 @@ public final class MultiMCInstancePatch {
             if (message.charAt(message.length() - 1) == '\n') {
                 message.setLength(message.length() - 1);
             }
-            Logger.LOG.warning("Cannot fully parse MultiMC modpack with following unsupported features: \n" + message);
+            LOG.warning("Cannot fully parse MultiMC modpack with following unsupported features: \n" + message);
         }
         return new ResolvedInstance(version, gameVersion, mainJar, jarModFileNames, mavenOnlyFiles);
     }
