@@ -117,7 +117,11 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
     private final RadioChoiceList.Choice<@Nullable Pair<@Nullable JavaVersionType, @Nullable JavaRuntime>> javaCustomOption;
     private final JFXTextField javaVersionTextField;
     private final FileSelector javaCustomSelector;
-    private final InvalidationListener javaListener = o -> initializeSelectedJava();
+    private final ObjectProperty<@Nullable InheritableProperty<JavaVersionType>> activeParentJavaTypeProperty = new SimpleObjectProperty<>();
+    private final ObjectProperty<@Nullable InheritableProperty<String>> activeParentCustomJavaVersionProperty = new SimpleObjectProperty<>();
+    private final ObjectProperty<@Nullable InheritableProperty<String>> activeParentCustomJavaPathProperty = new SimpleObjectProperty<>();
+    private final ObjectProperty<@Nullable InheritableProperty<GameSettings.DetectedJava>> activeParentDetectedJavaProperty = new SimpleObjectProperty<>();
+    private final InvalidationListener javaListener = o -> refreshJavaSettings();
 
     public GameSettingsPage(Class<S> settingType) {
         assert settingType == GameSettings.Preset.class || settingType == GameSettings.Instance.class;
@@ -247,6 +251,9 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
                     oldSetting.detectedJavaProperty().removeListener(javaListener);
                     oldSetting.customJavaPathProperty().removeListener(javaListener);
                     oldSetting.customJavaVersionProperty().removeListener(javaListener);
+                    if (oldSetting instanceof GameSettings.Instance oldInstance) {
+                        oldInstance.parentProperty().removeListener(javaListener);
+                    }
                 }
 
                 if (newSetting != null) {
@@ -254,10 +261,15 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
                     newSetting.detectedJavaProperty().addListener(javaListener);
                     newSetting.customJavaPathProperty().addListener(javaListener);
                     newSetting.customJavaVersionProperty().addListener(javaListener);
+                    if (newSetting instanceof GameSettings.Instance newInstance) {
+                        newInstance.parentProperty().addListener(javaListener);
+                    }
                 }
 
-                initJavaSubtitle();
+                refreshJavaSettings();
             });
+            SettingsManager.getGameSettings().addListener(javaListener);
+            settings().defaultGameSettingsPresetProperty().addListener(javaListener);
 
             javaItem.selectedChoiceProperty().addListener((observable, oldChoice, newChoice) -> {
                 S setting = currentSetting.get();
@@ -2356,6 +2368,16 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
             return;
 
         iconPickerItem.setImage(profile.getRepository().getVersionIconImage(instanceId));
+    }
+
+    /// Refreshes Java selection controls and keeps inherited parent Java properties observed.
+    private void refreshJavaSettings() {
+        S setting = currentSetting.get();
+        updateParentInheritablePropertyListener(setting, activeParentJavaTypeProperty, GameSettings::javaTypeProperty, javaListener);
+        updateParentInheritablePropertyListener(setting, activeParentCustomJavaVersionProperty, GameSettings::customJavaVersionProperty, javaListener);
+        updateParentInheritablePropertyListener(setting, activeParentCustomJavaPathProperty, GameSettings::customJavaPathProperty, javaListener);
+        updateParentInheritablePropertyListener(setting, activeParentDetectedJavaProperty, GameSettings::detectedJavaProperty, javaListener);
+        initJavaSubtitle();
     }
 
     private void initializeSelectedJava() {
