@@ -18,10 +18,7 @@
 package org.jackhuang.hmcl.upgrade;
 
 import javafx.application.Platform;
-import javafx.beans.binding.Bindings;
-import javafx.beans.binding.BooleanBinding;
 import javafx.beans.property.*;
-import javafx.beans.value.ObservableBooleanValue;
 import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.util.io.NetworkUtils;
 import org.jackhuang.hmcl.util.versioning.VersionNumber;
@@ -38,21 +35,7 @@ public final class UpdateChecker {
     }
 
     private static final ObjectProperty<RemoteVersion> latestVersion = new SimpleObjectProperty<>();
-    private static final BooleanBinding outdated = Bindings.createBooleanBinding(
-            () -> {
-                RemoteVersion latest = latestVersion.get();
-                if (latest == null || isDevelopmentVersion(Metadata.VERSION)) {
-                    return false;
-                } else if (latest.force()
-                        || Metadata.isNightly()
-                        || latest.channel() == UpdateChannel.NIGHTLY
-                        || latest.channel() != UpdateChannel.getChannel()) {
-                    return !latest.version().equals(Metadata.VERSION);
-                } else {
-                    return VersionNumber.compare(Metadata.VERSION, latest.version()) < 0;
-                }
-            },
-            latestVersion);
+    private static final ReadOnlyBooleanWrapper outdated = new ReadOnlyBooleanWrapper(false);
     private static final ReadOnlyBooleanWrapper checkingUpdate = new ReadOnlyBooleanWrapper(false);
 
     public static void init() {
@@ -71,7 +54,7 @@ public final class UpdateChecker {
         return outdated.get();
     }
 
-    public static ObservableBooleanValue outdatedProperty() {
+    public static ReadOnlyBooleanProperty outdatedProperty() {
         return outdated;
     }
 
@@ -101,6 +84,19 @@ public final class UpdateChecker {
                 version.contains("SNAPSHOT"); // eg. 3.5.SNAPSHOT
     }
 
+    private static boolean checkOutdated(RemoteVersion latest) {
+        if (latest == null || isDevelopmentVersion(Metadata.VERSION)) {
+            return false;
+        } else if (latest.force()
+                || Metadata.isNightly()
+                || latest.channel() == UpdateChannel.NIGHTLY
+                || latest.channel() != UpdateChannel.getChannel()) {
+            return !latest.version().equals(Metadata.VERSION);
+        } else {
+            return VersionNumber.compare(Metadata.VERSION, latest.version()) < 0;
+        }
+    }
+
     public static void requestCheckUpdate(UpdateChannel channel, boolean preview, boolean download) {
         Platform.runLater(() -> {
             if (isCheckingUpdate())
@@ -121,7 +117,9 @@ public final class UpdateChecker {
                 Platform.runLater(() -> {
                     checkingUpdate.set(false);
                     if (finalResult != null) {
+                        boolean isOutdated = checkOutdated(finalResult);
                         latestVersion.set(finalResult);
+                        outdated.set(isOutdated);
                     }
                 });
             }, "Update Checker", true);

@@ -576,7 +576,7 @@ public final class FileUtils {
     }
 
     public static boolean verifyHash(Path file, String algorithm, String hash) {
-        if (Files.exists(file)) {
+        if (Files.isRegularFile(file)) {
             try {
                 return DigestUtils.digestToString(algorithm, file).equalsIgnoreCase(hash);
             } catch (IOException e) {

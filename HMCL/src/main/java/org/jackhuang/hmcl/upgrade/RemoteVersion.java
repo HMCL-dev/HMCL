@@ -29,16 +29,16 @@ import org.jetbrains.annotations.NotNull;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.ConcurrentHashMap;
 
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 public record RemoteVersion(UpdateChannel channel, String version, String url, Type type, IntegrityCheck integrityCheck,
                             boolean preview, boolean force) {
 
-    public static final Map<RemoteVersion, Path> downloadCache = new HashMap<>();
+    public static final Map<RemoteVersion, Path> downloadCache = new ConcurrentHashMap<>();
 
     public static RemoteVersion fetch(UpdateChannel channel, boolean preview, String url) throws IOException {
         try {
