@@ -1715,17 +1715,17 @@ public final class FXUtils {
     }
 
     /// Be cautious when dealing with large amounts of data
-    public static <S> TableView<S> newAutoSizeTable(ObservableList<S> items) {
-        return new AutoSizeTableView<>(items);
+    public static <S> TableView<S> newAutoHeightTable(ObservableList<S> items) {
+        return new AutoHeightTableView<>(items);
     }
 
-    private static final class AutoSizeTableView<S> extends TableView<S> {
+    private static final class AutoHeightTableView<S> extends TableView<S> {
 
-        public AutoSizeTableView() {
+        public AutoHeightTableView() {
             super();
         }
 
-        public AutoSizeTableView(ObservableList<S> items) {
+        public AutoHeightTableView(ObservableList<S> items) {
             super(items);
         }
 
@@ -1754,7 +1754,7 @@ public final class FXUtils {
                 if (fixedCellSize > 0 || itemCount == 0) return prefHeight + fixedCellSize * itemCount;
                 int i = 0;
                 TableRow<S> r;
-                while (!(r = flow.getCell(i)).isEmpty() && r.getItem() != null) {
+                while (i < itemCount && !(r = flow.getCell(i)).isEmpty() && r.getItem() != null) {
                     prefHeight += r.prefHeight(w);
                     i++;
                 }

@@ -360,7 +360,8 @@ public final class HTMLRenderer {
         if (hasFoot)
             rows.add(Lang.copyWithSize(foot, columnCount, null));
 
-        TableView<List<Element>> tableView = FXUtils.newAutoSizeTable(FXCollections.observableList(rows));
+        TableView<List<Element>> tableView = FXUtils.newAutoHeightTable(FXCollections.observableList(rows));
+        tableView.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
         for (int i = 0; i < columnCount; i++) {
             int finalI = i;
             TableColumn<List<Element>, javafx.scene.Node> c = new TableColumn<>();
