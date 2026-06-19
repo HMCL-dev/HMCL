@@ -565,9 +565,6 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
             var advancedLaunchSublist = new ComponentSublist(() -> {
                 var runningDirPane = new LinePane();
                 runningDirPane.setTitle(i18n("settings.game.running_directory"));
-                runningDirPane.setSubtitle(i18n(isPresetSetting
-                        ? "settings.game.running_directory.subtitle"
-                        : "settings.game.running_directory.subtitle.instance"));
                 {
                     var runningDirSelector = new FileSelector()
                             .setChooserTitle(i18n("settings.game.working_directory.choose"))
