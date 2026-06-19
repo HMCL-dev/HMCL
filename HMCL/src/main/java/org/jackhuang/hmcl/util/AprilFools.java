@@ -23,7 +23,7 @@ import java.time.LocalDate;
 import java.time.Month;
 import java.util.List;
 
-import static org.jackhuang.hmcl.setting.ConfigHolder.config;
+import static org.jackhuang.hmcl.setting.SettingsManager.settings;
 
 /// April Fools' Day utilities.
 ///
@@ -57,7 +57,7 @@ public final class AprilFools {
         else
             aprilFoolsMode = date.getMonth() == Month.APRIL && date.getDayOfMonth() == 1;
 
-        ENABLED = aprilFoolsMode && !config().isDisableAprilFools();
+        ENABLED = aprilFoolsMode && !settings().disableAprilFoolsProperty().get();
         SHOW_APRIL_FOOLS_SETTINGS = aprilFoolsMode || supportedRegion && date.getMonth() == Month.MARCH && date.getDayOfMonth() > 30;
     }
 

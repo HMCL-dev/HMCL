@@ -63,6 +63,9 @@ dependencies {
     implementation(libs.java.info)
     implementation(libs.monet.fx)
     implementation(libs.nayuki.qrcodegen)
+    implementation(libs.uuid.tools)
+
+    testImplementation(libs.jimfs)
 
     if (launcherExe.isBlank()) {
         implementation(libs.hmclauncher)
