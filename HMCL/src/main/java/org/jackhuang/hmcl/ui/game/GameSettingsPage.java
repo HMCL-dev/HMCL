@@ -457,11 +457,16 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
                 cboWindowSize.setEditable(true);
                 cboWindowSize.setPromptText("854x480");
                 cboWindowSize.getItems().setAll(getSupportedResolutions());
-                bindWindowSizeComboBox(cboWindowSize);
+                @Nullable JFXButton windowSizeInheritanceButton = !isPresetSetting ? createInheritanceButton() : null;
+                bindWindowSizeComboBox(cboWindowSize, windowSizeInheritanceButton);
 
                 for (GameWindowType type : GameWindowType.values()) {
                     if (type == GameWindowType.WINDOWED) {
-                        windowTypeOptions.add(new WindowedWindowTypeOption(cboWindowSize));
+                        windowTypeOptions.add(new EditorChoice<>(
+                                getWindowTypeDisplayName(GameWindowType.WINDOWED),
+                                GameWindowType.WINDOWED,
+                                cboWindowSize,
+                                windowSizeInheritanceButton));
                     } else {
                         windowTypeOptions.add(new RadioChoiceList.Choice<>(getWindowTypeDisplayName(type), type));
                     }
@@ -497,9 +502,8 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
 
                 var noneOption = new RadioChoiceList.Choice<>(i18n("settings.game.quick_play.none"), QuickPlayType.NONE);
 
-                var multiplayerOption = new RadioChoiceList.TextChoice<>(
-                        i18n("settings.game.quick_play.multiplayer"), QuickPlayType.MULTIPLAYER);
-                multiplayerOption.setValidators(new Validator(str -> {
+                var multiplayerTextField = new JFXTextField();
+                multiplayerTextField.setValidators(new Validator(str -> {
                     if (StringUtils.isBlank(str))
                         return true;
                     try {
@@ -509,17 +513,35 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
                         return false;
                     }
                 }));
+                FXUtils.setValidateWhileTextChanged(multiplayerTextField, true);
+                @Nullable JFXButton multiplayerInheritanceButton = !isPresetSetting ? createInheritanceButton() : null;
+                var multiplayerOption = new EditorChoice<>(
+                        i18n("settings.game.quick_play.multiplayer"),
+                        QuickPlayType.MULTIPLAYER,
+                        multiplayerTextField,
+                        multiplayerInheritanceButton);
 
-                var singleplayerOption = new RadioChoiceList.TextChoice<>(
-                        i18n("settings.game.quick_play.singleplayer"), QuickPlayType.SINGLEPLAYER);
-                singleplayerOption.setValidators(new Validator(str -> {
+                var singleplayerTextField = new JFXTextField();
+                singleplayerTextField.setValidators(new Validator(str -> {
                     if (StringUtils.isBlank(str))
                         return true;
                     return FileUtils.isNameValid(str);
                 }));
+                FXUtils.setValidateWhileTextChanged(singleplayerTextField, true);
+                @Nullable JFXButton singleplayerInheritanceButton = !isPresetSetting ? createInheritanceButton() : null;
+                var singleplayerOption = new EditorChoice<>(
+                        i18n("settings.game.quick_play.singleplayer"),
+                        QuickPlayType.SINGLEPLAYER,
+                        singleplayerTextField,
+                        singleplayerInheritanceButton);
 
-                var realmsOption = new RadioChoiceList.TextChoice<>(
-                        i18n("settings.game.quick_play.realms"), QuickPlayType.REALMS);
+                var realmsTextField = new JFXTextField();
+                @Nullable JFXButton realmsInheritanceButton = !isPresetSetting ? createInheritanceButton() : null;
+                var realmsOption = new EditorChoice<>(
+                        i18n("settings.game.quick_play.realms"),
+                        QuickPlayType.REALMS,
+                        realmsTextField,
+                        realmsInheritanceButton);
 
                 quickPlayItem.setFallbackValue(QuickPlayType.NONE);
                 quickPlayItem.setChoices(List.of(
@@ -530,9 +552,9 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
                 ));
 
                 bindInheritableRadioChoiceList(quickSublist, quickPlayItem, GameSettings::quickPlayProperty);
-                bindInheritableStringValue(multiplayerOption.textProperty(), GameSettings::quickPlayMultiplayerProperty);
-                bindInheritableStringValue(singleplayerOption.textProperty(), GameSettings::quickPlaySingleplayerProperty);
-                bindInheritableStringValue(realmsOption.textProperty(), GameSettings::quickPlayRealmsProperty);
+                bindInheritableStringValue(multiplayerTextField.textProperty(), GameSettings::quickPlayMultiplayerProperty, multiplayerInheritanceButton);
+                bindInheritableStringValue(singleplayerTextField.textProperty(), GameSettings::quickPlaySingleplayerProperty, singleplayerInheritanceButton);
+                bindInheritableStringValue(realmsTextField.textProperty(), GameSettings::quickPlayRealmsProperty, realmsInheritanceButton);
                 quickSublist.getContent().setAll(quickPlayItem);
             }
             gameSettings.getContent().add(quickSublist);
@@ -1008,31 +1030,45 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
                 this::getEffectiveParentGameSettings);
     }
 
-    private void bindWindowSizeComboBox(JFXComboBox<String> comboBox) {
-        ObjectProperty<@Nullable Property<Double>> activeWidthProperty = new SimpleObjectProperty<>();
-        ObjectProperty<@Nullable Property<Double>> activeHeightProperty = new SimpleObjectProperty<>();
+    /// Binds the windowed resolution selector to the width and height settings.
+    private void bindWindowSizeComboBox(JFXComboBox<String> comboBox, @Nullable JFXButton inheritButton) {
+        ObjectProperty<@Nullable InheritableProperty<Double>> activeWidthProperty = new SimpleObjectProperty<>();
+        ObjectProperty<@Nullable InheritableProperty<Double>> activeHeightProperty = new SimpleObjectProperty<>();
+        ObjectProperty<@Nullable InheritableProperty<Double>> activeParentWidthProperty = new SimpleObjectProperty<>();
+        ObjectProperty<@Nullable InheritableProperty<Double>> activeParentHeightProperty = new SimpleObjectProperty<>();
         final Holder<@Nullable String> committedValue = new Holder<>();
         final Holder<Boolean> updating = new Holder<>(false);
+        final Holder<InvalidationListener> refreshHolder = new Holder<>();
 
         InvalidationListener propertyListener = observable -> {
-            @Nullable Property<Double> widthProperty = activeWidthProperty.get();
-            @Nullable Property<Double> heightProperty = activeHeightProperty.get();
+            S setting = currentSetting.get();
+            updateParentInheritablePropertyListener(setting, activeParentWidthProperty, GameSettings::widthProperty, refreshHolder.value);
+            updateParentInheritablePropertyListener(setting, activeParentHeightProperty, GameSettings::heightProperty, refreshHolder.value);
+
+            @Nullable InheritableProperty<Double> widthProperty = activeWidthProperty.get();
+            @Nullable InheritableProperty<Double> heightProperty = activeHeightProperty.get();
             if (widthProperty == null || heightProperty == null || updating.value) {
+                if (inheritButton != null && !updating.value) {
+                    updateInheritanceButton(inheritButton, true);
+                }
                 return;
             }
 
             updating.value = true;
             try {
-                S setting = currentSetting.get();
                 Double width = setting != null ? getEffectiveValue(setting, GameSettings::widthProperty) : widthProperty.getValue();
                 Double height = setting != null ? getEffectiveValue(setting, GameSettings::heightProperty) : heightProperty.getValue();
                 String value = isSpecifiedWindowSize(width, height) ? formatWindowSize(width, height) : null;
                 committedValue.value = value;
                 comboBox.setValue(value);
+                if (inheritButton != null) {
+                    updateInheritanceButton(inheritButton, setting == null || !isWindowSizeOverridden(setting));
+                }
             } finally {
                 updating.value = false;
             }
         };
+        refreshHolder.value = propertyListener;
 
         ChangeListener<@Nullable Boolean> focusedListener = (observable, oldValue, newValue) -> {
             if (!newValue) {
@@ -1060,9 +1096,31 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
 
         comboBox.focusedProperty().addListener(focusedListener);
         comboBox.sceneProperty().addListener(sceneListener);
+        if (inheritButton != null) {
+            inheritButton.addEventFilter(MouseEvent.MOUSE_CLICKED, event -> {
+                GameSettings setting = currentSetting.get();
+                if (setting == null || updating.value) {
+                    return;
+                }
+
+                updating.value = true;
+                try {
+                    setWindowSizeOverridden(setting, !isWindowSizeOverridden(setting));
+                } finally {
+                    updating.value = false;
+                }
+                propertyListener.invalidated(setting);
+                event.consume();
+            });
+        }
+
         currentSetting.addListener((observable, oldValue, newValue) -> {
-            Property<Double> oldWidthProperty = activeWidthProperty.get();
-            Property<Double> oldHeightProperty = activeHeightProperty.get();
+            if (oldValue != null) {
+                oldValue.removeListener(propertyListener);
+            }
+
+            InheritableProperty<Double> oldWidthProperty = activeWidthProperty.get();
+            InheritableProperty<Double> oldHeightProperty = activeHeightProperty.get();
             if (oldWidthProperty != null) {
                 oldWidthProperty.removeListener(propertyListener);
             }
@@ -1070,10 +1128,13 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
                 oldHeightProperty.removeListener(propertyListener);
             }
 
-            Property<Double> newWidthProperty = newValue != null ? newValue.widthProperty() : null;
-            Property<Double> newHeightProperty = newValue != null ? newValue.heightProperty() : null;
+            InheritableProperty<Double> newWidthProperty = newValue != null ? newValue.widthProperty() : null;
+            InheritableProperty<Double> newHeightProperty = newValue != null ? newValue.heightProperty() : null;
             activeWidthProperty.set(newWidthProperty);
             activeHeightProperty.set(newHeightProperty);
+            if (newValue != null) {
+                newValue.addListener(propertyListener);
+            }
             if (newWidthProperty != null) {
                 newWidthProperty.addListener(propertyListener);
             }
@@ -1085,20 +1146,23 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
 
         S setting = currentSetting.get();
         if (setting != null) {
-            Property<Double> widthProperty = setting.widthProperty();
-            Property<Double> heightProperty = setting.heightProperty();
+            InheritableProperty<Double> widthProperty = setting.widthProperty();
+            InheritableProperty<Double> heightProperty = setting.heightProperty();
             activeWidthProperty.set(widthProperty);
             activeHeightProperty.set(heightProperty);
+            setting.addListener(propertyListener);
             widthProperty.addListener(propertyListener);
             heightProperty.addListener(propertyListener);
-            propertyListener.invalidated(widthProperty);
         }
+        SettingsManager.getGameSettings().addListener(propertyListener);
+        settings().defaultGameSettingsPresetProperty().addListener(propertyListener);
+        propertyListener.invalidated(setting);
     }
 
     private void applyWindowSizeComboBoxValue(JFXComboBox<String> comboBox,
                                               @Nullable GameSettings setting,
-                                              @Nullable Property<Double> widthProperty,
-                                              @Nullable Property<Double> heightProperty,
+                                              @Nullable InheritableProperty<Double> widthProperty,
+                                              @Nullable InheritableProperty<Double> heightProperty,
                                               Holder<@Nullable String> committedValue,
                                               Holder<Boolean> updating) {
         if (widthProperty == null || heightProperty == null || updating.value) {
@@ -1152,7 +1216,32 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
         if (setting == null) {
             return;
         }
-        setWindowSettingsOverridden(setting, true);
+        setWindowSizeOverridden(setting, true);
+    }
+
+    /// Returns whether the windowed resolution uses direct width or height values.
+    private static boolean isWindowSizeOverridden(GameSettings setting) {
+        return isPropertyOverridden(setting, setting.widthProperty())
+                || isPropertyOverridden(setting, setting.heightProperty());
+    }
+
+    /// Updates whether the windowed resolution uses direct width and height values.
+    private void setWindowSizeOverridden(GameSettings setting, boolean overridden) {
+        if (!(setting instanceof GameSettings.Instance)) {
+            return;
+        }
+
+        if (overridden) {
+            if (!isPropertyOverridden(setting, setting.widthProperty())) {
+                setting.widthProperty().setValue(getEffectiveValue(setting, GameSettings::widthProperty));
+            }
+            if (!isPropertyOverridden(setting, setting.heightProperty())) {
+                setting.heightProperty().setValue(getEffectiveValue(setting, GameSettings::heightProperty));
+            }
+        }
+
+        setPropertyOverridden(setting, setting.widthProperty(), overridden);
+        setPropertyOverridden(setting, setting.heightProperty(), overridden);
     }
 
     private static boolean isSpecifiedWindowSize(@Nullable Double width, @Nullable Double height) {
@@ -1353,10 +1442,11 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
         }
     }
 
-    /// Binds a string value to an inheritable setting without adding a separate inheritance button.
+    /// Binds a string value to an inheritable setting with an optional inheritance button.
     private void bindInheritableStringValue(
             Property<String> textProperty,
-            Function<GameSettings, InheritableProperty<String>> propertyGetter) {
+            Function<GameSettings, InheritableProperty<String>> propertyGetter,
+            @Nullable JFXButton inheritButton) {
         ObjectProperty<@Nullable InheritableProperty<String>> activeProperty = new SimpleObjectProperty<>();
         ObjectProperty<@Nullable InheritableProperty<String>> activeParentProperty = new SimpleObjectProperty<>();
         final Holder<Boolean> updating = new Holder<>(false);
@@ -1373,6 +1463,9 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
             updating.value = true;
             try {
                 textProperty.setValue(getEffectiveValue(setting, propertyGetter));
+                if (inheritButton != null) {
+                    updateInheritanceButton(inheritButton, !isPropertyOverridden(setting, property));
+                }
             } finally {
                 updating.value = false;
             }
@@ -1390,10 +1483,37 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
             try {
                 setPropertyOverridden(setting, property, true);
                 property.setValue(newValue != null ? newValue : "");
+                if (inheritButton != null) {
+                    updateInheritanceButton(inheritButton, false);
+                }
             } finally {
                 updating.value = false;
             }
         });
+
+        if (inheritButton != null) {
+            inheritButton.addEventFilter(MouseEvent.MOUSE_CLICKED, event -> {
+                GameSettings setting = currentSetting.get();
+                InheritableProperty<String> property = activeProperty.get();
+                if (setting == null || property == null || updating.value) {
+                    return;
+                }
+
+                updating.value = true;
+                try {
+                    if (!isPropertyOverridden(setting, property)) {
+                        property.setValue(getEffectiveValue(setting, propertyGetter));
+                        setPropertyOverridden(setting, property, true);
+                    } else {
+                        setPropertyOverridden(setting, property, false);
+                    }
+                } finally {
+                    updating.value = false;
+                }
+                refresh.invalidated(property);
+                event.consume();
+            });
+        }
 
         currentSetting.addListener((observable, oldValue, newValue) -> {
             if (oldValue != null) {
@@ -1728,11 +1848,9 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
         }
     }
 
-    /// Binds the window type and size editor as one inheritable setting group.
+    /// Binds the window type editor to the window type setting.
     private void bindWindowSettings(ComponentSublist sublist, RadioChoiceList<GameWindowType> item) {
         ObjectProperty<@Nullable InheritableProperty<GameWindowType>> activeWindowTypeProperty = new SimpleObjectProperty<>();
-        ObjectProperty<@Nullable InheritableProperty<Double>> activeWidthProperty = new SimpleObjectProperty<>();
-        ObjectProperty<@Nullable InheritableProperty<Double>> activeHeightProperty = new SimpleObjectProperty<>();
         final Holder<Boolean> updating = new Holder<>(false);
         @Nullable JFXButton inheritButton = null;
         if (!isPresetSetting) {
@@ -1805,32 +1923,14 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
             if (oldWindowTypeProperty != null) {
                 oldWindowTypeProperty.removeListener(propertyListener);
             }
-            InheritableProperty<Double> oldWidthProperty = activeWidthProperty.get();
-            if (oldWidthProperty != null) {
-                oldWidthProperty.removeListener(propertyListener);
-            }
-            InheritableProperty<Double> oldHeightProperty = activeHeightProperty.get();
-            if (oldHeightProperty != null) {
-                oldHeightProperty.removeListener(propertyListener);
-            }
 
             InheritableProperty<GameWindowType> newWindowTypeProperty = newValue != null ? newValue.windowTypeProperty() : null;
-            InheritableProperty<Double> newWidthProperty = newValue != null ? newValue.widthProperty() : null;
-            InheritableProperty<Double> newHeightProperty = newValue != null ? newValue.heightProperty() : null;
             activeWindowTypeProperty.set(newWindowTypeProperty);
-            activeWidthProperty.set(newWidthProperty);
-            activeHeightProperty.set(newHeightProperty);
             if (newValue != null) {
                 newValue.addListener(propertyListener);
             }
             if (newWindowTypeProperty != null) {
                 newWindowTypeProperty.addListener(propertyListener);
-            }
-            if (newWidthProperty != null) {
-                newWidthProperty.addListener(propertyListener);
-            }
-            if (newHeightProperty != null) {
-                newHeightProperty.addListener(propertyListener);
             }
             propertyListener.invalidated(newValue);
         });
@@ -1841,24 +1941,18 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
         S setting = currentSetting.get();
         if (setting != null) {
             activeWindowTypeProperty.set(setting.windowTypeProperty());
-            activeWidthProperty.set(setting.widthProperty());
-            activeHeightProperty.set(setting.heightProperty());
             setting.addListener(propertyListener);
             setting.windowTypeProperty().addListener(propertyListener);
-            setting.widthProperty().addListener(propertyListener);
-            setting.heightProperty().addListener(propertyListener);
         }
         propertyListener.invalidated(setting);
     }
 
-    /// Returns whether any property in the window settings group uses a direct value.
+    /// Returns whether the window type uses a direct value.
     private static boolean isWindowSettingsOverridden(GameSettings setting) {
-        return isPropertyOverridden(setting, setting.windowTypeProperty())
-                || isPropertyOverridden(setting, setting.widthProperty())
-                || isPropertyOverridden(setting, setting.heightProperty());
+        return isPropertyOverridden(setting, setting.windowTypeProperty());
     }
 
-    /// Updates whether the window settings group uses direct property values.
+    /// Updates whether the window type uses a direct property value.
     private void setWindowSettingsOverridden(GameSettings setting, boolean overridden) {
         if (!(setting instanceof GameSettings.Instance)) {
             return;
@@ -1868,17 +1962,9 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
             if (!isPropertyOverridden(setting, setting.windowTypeProperty())) {
                 setting.windowTypeProperty().setValue(getEffectiveValue(setting, GameSettings::windowTypeProperty));
             }
-            if (!isPropertyOverridden(setting, setting.widthProperty())) {
-                setting.widthProperty().setValue(getEffectiveValue(setting, GameSettings::widthProperty));
-            }
-            if (!isPropertyOverridden(setting, setting.heightProperty())) {
-                setting.heightProperty().setValue(getEffectiveValue(setting, GameSettings::heightProperty));
-            }
         }
 
         setPropertyOverridden(setting, setting.windowTypeProperty(), overridden);
-        setPropertyOverridden(setting, setting.widthProperty(), overridden);
-        setPropertyOverridden(setting, setting.heightProperty(), overridden);
     }
 
     private <T> void bindInheritableSublistDescription(ComponentSublist sublist,
@@ -1947,24 +2033,6 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
         @Override
         protected Node createRightNode() {
             return rightNode;
-        }
-    }
-
-    /// Windowed game window mode option with the window size selector on the same row.
-    private static final class WindowedWindowTypeOption extends RadioChoiceList.Choice<GameWindowType> {
-        /// The selector used to edit the initial game window size.
-        private final JFXComboBox<String> windowSizeComboBox;
-
-        /// Creates the windowed option.
-        private WindowedWindowTypeOption(JFXComboBox<String> windowSizeComboBox) {
-            super(getWindowTypeDisplayName(GameWindowType.WINDOWED), GameWindowType.WINDOWED);
-            this.windowSizeComboBox = windowSizeComboBox;
-        }
-
-        /// Creates the right-side size selector.
-        @Override
-        protected Node createRightNode() {
-            return windowSizeComboBox;
         }
     }
 
