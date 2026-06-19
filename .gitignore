@@ -72,3 +72,6 @@ language-subtag-registry
 !/.gemini/config.yaml
 .codex
 /.gradle-*/
+
+# https://github.com/HMCL-dev/HMCL/pull/6198/
+[Pp][Ll][Aa][Nn][Ss].[Mm][Dd]
