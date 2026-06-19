@@ -22,7 +22,7 @@ import org.jackhuang.hmcl.Metadata;
 public enum UpdateChannel {
     STABLE("stable"),
     DEVELOPMENT("dev"),
-    NIGHTLY("dev");
+    NIGHTLY("nightly");
 
     public final String channelName;
 
