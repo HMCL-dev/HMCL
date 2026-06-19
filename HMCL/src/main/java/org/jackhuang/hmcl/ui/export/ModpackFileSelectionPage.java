@@ -130,7 +130,7 @@ public final class ModpackFileSelectionPage extends BorderPane implements Wizard
         if (isDirectory) {
             try (var stream = Files.list(file)) {
                 stream.map(path -> Pair.pair(path, Files.isDirectory(path))).sorted((p1, p2) -> {
-                    if (p1.value() == p2.value()) return FileUtils.getName(p1.key()).compareToIgnoreCase(FileUtils.getName(p2.key()));
+                    if (p1.value().equals(p2.value())) return FileUtils.getName(p1.key()).compareToIgnoreCase(FileUtils.getName(p2.key()));
                     return p1.value() ? -1 : 1;
                 }).map(Pair::key).forEach(it -> {
                     ModpackFileTreeItem subNode = getTreeItem(it, basePath + "/" + FileUtils.getName(it), level + 1);
