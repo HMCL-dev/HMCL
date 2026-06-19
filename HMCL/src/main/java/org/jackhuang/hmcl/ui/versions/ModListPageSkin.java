@@ -91,7 +91,7 @@ final class ModListPageSkin extends SkinBase<ModListPage> {
     private final JFXListView<ModInfoObject> listView;
     private final JFXTextField searchField;
 
-    // FXThread
+    @FXThread
     private boolean isSearching = false;
 
     ModListPageSkin(ModListPage skinnable) {
