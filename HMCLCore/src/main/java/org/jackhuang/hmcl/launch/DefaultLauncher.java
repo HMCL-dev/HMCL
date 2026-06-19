@@ -683,7 +683,10 @@ public class DefaultLauncher extends Launcher {
         }
 
         for (ModLoaderType type : analyzer.getModLoaders()) {
-            if (type.getId() != null) env.put("INST_" + type.getId(), "1");
+            if (type == ModLoaderType.NEO_FORGE) env.put("INST_NEOFORGE", "1");
+            else if (type == ModLoaderType.LEGACY_FABRIC) env.put("INST_LEGACYFABRIC", "1");
+            else if (type == ModLoaderType.LITE_LOADER) env.put("INST_LITELOADER", "1");
+            else env.put("INST_" + type.name().toUpperCase(Locale.ROOT), "1");
         }
 
         if (analyzer.has(LibraryAnalyzer.LibraryType.OPTIFINE)) {
