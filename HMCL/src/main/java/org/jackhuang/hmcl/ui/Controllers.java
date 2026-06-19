@@ -385,7 +385,7 @@ public final class Controllers {
         getRootPage().getMainPage().showUpdateDialogProperty().bind(
                 decorator.backableProperty().not()
                         .and(getRootPage().getMainPage().showUpdateProperty())
-                        .and(config().disableAutoShowUpdateDialogProperty().not())
+                        .and(settings().disableAutoShowUpdateDialogProperty().not())
         );
 
         if (settings().commonDirectoryTypeProperty().get() == EnumCommonDirectory.CUSTOM &&
