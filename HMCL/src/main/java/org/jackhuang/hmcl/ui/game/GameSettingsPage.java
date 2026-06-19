@@ -113,8 +113,10 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
     private final ComponentSublist javaSublist;
     private final RadioChoiceList<@Nullable Pair<@Nullable JavaVersionType, @Nullable JavaRuntime>> javaItem;
     private final RadioChoiceList.Choice<@Nullable Pair<@Nullable JavaVersionType, @Nullable JavaRuntime>> javaAutoDeterminedOption;
-    private final RadioChoiceList.TextChoice<@Nullable Pair<@Nullable JavaVersionType, @Nullable JavaRuntime>> javaVersionOption;
-    private final RadioChoiceList.FileChoice<@Nullable Pair<@Nullable JavaVersionType, @Nullable JavaRuntime>> javaCustomOption;
+    private final RadioChoiceList.Choice<@Nullable Pair<@Nullable JavaVersionType, @Nullable JavaRuntime>> javaVersionOption;
+    private final RadioChoiceList.Choice<@Nullable Pair<@Nullable JavaVersionType, @Nullable JavaRuntime>> javaCustomOption;
+    private final JFXTextField javaVersionTextField;
+    private final FileSelector javaCustomSelector;
     private final InvalidationListener javaListener = o -> initializeSelectedJava();
 
     public GameSettingsPage(Class<S> settingType) {
@@ -196,14 +198,25 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
                 bindJavaInheritanceButton(javaSublist);
 
                 javaAutoDeterminedOption = new RadioChoiceList.Choice<>(i18n("settings.game.java_directory.auto"), pair(JavaVersionType.AUTO, null));
-                javaVersionOption = new RadioChoiceList.TextChoice<>(i18n("settings.game.java_directory.version"), pair(JavaVersionType.VERSION, null));
-                javaVersionOption.setValidators(new NumberValidator(true));
-                FXUtils.setLimitWidth(javaVersionOption.getTextField(), 40);
+                javaVersionTextField = new JFXTextField();
+                javaVersionTextField.setValidators(new NumberValidator(true));
+                FXUtils.setValidateWhileTextChanged(javaVersionTextField, true);
+                FXUtils.setLimitWidth(javaVersionTextField, 40);
+                javaVersionOption = createJavaPayloadChoice(
+                        i18n("settings.game.java_directory.version"),
+                        pair(JavaVersionType.VERSION, null),
+                        javaVersionTextField,
+                        GameSettings::customJavaVersionProperty);
 
-                javaCustomOption = new RadioChoiceList.FileChoice<@Nullable Pair<@Nullable JavaVersionType, @Nullable JavaRuntime>>(i18n("settings.custom"), pair(JavaVersionType.CUSTOM, null))
+                javaCustomSelector = new FileSelector()
                         .setChooserTitle(i18n("settings.game.java_directory.choose"));
+                javaCustomOption = createJavaPayloadChoice(
+                        i18n("settings.custom"),
+                        pair(JavaVersionType.CUSTOM, null),
+                        javaCustomSelector,
+                        GameSettings::customJavaPathProperty);
                 if (OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS)
-                    javaCustomOption.addExtensionFilter(new FileChooser.ExtensionFilter(i18n("settings.game.java_directory"), "java.exe"));
+                    javaCustomSelector.getExtensionFilters().add(new FileChooser.ExtensionFilter(i18n("settings.game.java_directory"), "java.exe"));
 
                 holder.add(FXUtils.onWeakChangeAndOperate(JavaManager.getAllJavaProperty(), allJava -> {
                     var options = new ArrayList<RadioChoiceList.Choice<@Nullable Pair<@Nullable JavaVersionType, @Nullable JavaRuntime>>>();
@@ -281,7 +294,7 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
                 }
             });
 
-            javaVersionOption.textProperty().addListener((observable, oldValue, newValue) -> {
+            javaVersionTextField.textProperty().addListener((observable, oldValue, newValue) -> {
                 S setting = currentSetting.get();
                 if (setting != null && javaVersionOption.isSelected() && !updatingSelectedJava) {
                     setPropertyOverridden(setting, setting.javaTypeProperty(), true);
@@ -292,7 +305,7 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
                 }
             });
 
-            javaCustomOption.pathProperty().addListener((observable, oldValue, newValue) -> {
+            javaCustomSelector.valueProperty().addListener((observable, oldValue, newValue) -> {
                 S setting = currentSetting.get();
                 if (setting != null && javaCustomOption.isSelected() && !updatingSelectedJava) {
                     setPropertyOverridden(setting, setting.javaTypeProperty(), true);
@@ -352,7 +365,13 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
 
                 var options = new ArrayList<RadioChoiceList.Choice<Boolean>>();
                 options.add(new RadioChoiceList.Choice<>(i18n("settings.memory.auto_allocate"), true));
-                options.add(new ManualMemoryChoice(maxMemorySlider, maxMemoryTextField, maxMemoryButton));
+                var manualMemoryEditor = new HBox(8);
+                manualMemoryEditor.setAlignment(Pos.CENTER_RIGHT);
+                manualMemoryEditor.getChildren().setAll(
+                        maxMemorySlider,
+                        maxMemoryTextField,
+                        new Label(i18n("settings.memory.unit.mib")));
+                options.add(new EditorChoice<>(i18n("settings.memory.manual_allocate"), false, manualMemoryEditor, maxMemoryButton));
                 memoryItem.setChoices(options);
 
                 var memoryStatusBar = new MemoryStatusBar();
@@ -859,6 +878,88 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
         S setting = currentSetting.get();
         if (setting != null) {
             setting.addListener(refresh);
+        }
+        refresh.invalidated(setting);
+    }
+
+    /// Creates a Java payload option with a right-side editor and its own inheritance button.
+    private <T> RadioChoiceList.Choice<@Nullable Pair<@Nullable JavaVersionType, @Nullable JavaRuntime>> createJavaPayloadChoice(
+            String title,
+            @Nullable Pair<@Nullable JavaVersionType, @Nullable JavaRuntime> value,
+            Node rightNode,
+            Function<GameSettings, InheritableProperty<T>> propertyGetter) {
+        @Nullable JFXButton inheritButton = null;
+        if (!isPresetSetting) {
+            inheritButton = createInheritanceButton();
+            bindJavaPayloadInheritanceButton(inheritButton, propertyGetter);
+        }
+        return new EditorChoice<>(title, value, rightNode, inheritButton);
+    }
+
+    /// Binds an inheritance button to a Java selection payload property.
+    private <T> void bindJavaPayloadInheritanceButton(
+            JFXButton button,
+            Function<GameSettings, InheritableProperty<T>> propertyGetter) {
+        ObjectProperty<@Nullable InheritableProperty<T>> activeProperty = new SimpleObjectProperty<>();
+
+        InvalidationListener refresh = observable -> {
+            S setting = currentSetting.get();
+            InheritableProperty<T> property = activeProperty.get();
+            updateInheritanceButton(button, setting == null || property == null || !isPropertyOverridden(setting, property));
+        };
+
+        button.addEventFilter(MouseEvent.MOUSE_CLICKED, event -> {
+            S setting = currentSetting.get();
+            InheritableProperty<T> property = activeProperty.get();
+            if (setting == null || property == null) {
+                return;
+            }
+
+            updatingJavaSetting = true;
+            try {
+                if (!isPropertyOverridden(setting, property)) {
+                    property.setValue(getEffectiveValue(setting, propertyGetter));
+                    setPropertyOverridden(setting, property, true);
+                } else {
+                    setPropertyOverridden(setting, property, false);
+                }
+            } finally {
+                updatingJavaSetting = false;
+            }
+
+            initializeSelectedJava();
+            initJavaSubtitle();
+            refresh.invalidated(property);
+            event.consume();
+        });
+
+        currentSetting.addListener((observable, oldValue, newValue) -> {
+            if (oldValue != null) {
+                oldValue.removeListener(refresh);
+            }
+
+            InheritableProperty<T> oldProperty = activeProperty.get();
+            if (oldProperty != null) {
+                oldProperty.removeListener(refresh);
+            }
+
+            InheritableProperty<T> newProperty = newValue != null ? propertyGetter.apply(newValue) : null;
+            activeProperty.set(newProperty);
+            if (newValue != null) {
+                newValue.addListener(refresh);
+            }
+            if (newProperty != null) {
+                newProperty.addListener(refresh);
+            }
+            refresh.invalidated(newValue);
+        });
+
+        S setting = currentSetting.get();
+        if (setting != null) {
+            InheritableProperty<T> property = propertyGetter.apply(setting);
+            activeProperty.set(property);
+            setting.addListener(refresh);
+            property.addListener(refresh);
         }
         refresh.invalidated(setting);
     }
@@ -1814,31 +1915,23 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
         };
     }
 
-    /// Manual memory option with the maximum memory slider on the same row.
-    private static final class ManualMemoryChoice extends RadioChoiceList.Choice<Boolean> {
-        /// The right-side editor used to select maximum memory.
-        private final HBox rightNode;
+    /// Choice with a right-side editor and an optional inheritance button beside the title.
+    private static final class EditorChoice<T extends @UnknownNullability Object> extends RadioChoiceList.Choice<T> {
+        /// The right-side editor owned by this option.
+        private final Node rightNode;
 
-        /// Creates the manual memory option.
-        private ManualMemoryChoice(
-                JFXSlider maxMemorySlider,
-                JFXTextField maxMemoryTextField,
-                @Nullable JFXButton inheritButton) {
-            super(i18n("settings.memory.manual_allocate"), false);
-            this.rightNode = new HBox(8);
-            rightNode.setAlignment(Pos.CENTER_RIGHT);
+        /// Creates an editor choice.
+        private EditorChoice(String title, T value, Node rightNode, @Nullable JFXButton inheritButton) {
+            super(title, value);
+            this.rightNode = rightNode;
             if (inheritButton != null) {
                 radioButton.setGraphic(inheritButton);
                 radioButton.setContentDisplay(ContentDisplay.RIGHT);
                 radioButton.setGraphicTextGap(4);
             }
-            rightNode.getChildren().setAll(
-                    maxMemorySlider,
-                    maxMemoryTextField,
-                    new Label(i18n("settings.memory.unit.mib")));
         }
 
-        /// Creates the right-side memory slider.
+        /// Creates the right-side editor.
         @Override
         protected Node createRightNode() {
             return rightNode;
@@ -2276,11 +2369,11 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
         switch (javaType) {
             case CUSTOM:
                 javaCustomOption.setSelected(true);
-                javaCustomOption.setPath(getEffectiveValue(setting, GameSettings::customJavaPathProperty));
+                javaCustomSelector.setValue(getEffectiveValue(setting, GameSettings::customJavaPathProperty));
                 break;
             case VERSION:
                 javaVersionOption.setSelected(true);
-                javaVersionOption.setText(getEffectiveValue(setting, GameSettings::customJavaVersionProperty));
+                javaVersionTextField.setText(getEffectiveValue(setting, GameSettings::customJavaVersionProperty));
                 break;
             case AUTO:
                 javaAutoDeterminedOption.setSelected(true);
