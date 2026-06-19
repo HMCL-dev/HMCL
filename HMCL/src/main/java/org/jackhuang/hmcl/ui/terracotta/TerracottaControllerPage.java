@@ -69,7 +69,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.concurrent.ThreadLocalRandom;
 
-import static org.jackhuang.hmcl.setting.ConfigHolder.config;
+import static org.jackhuang.hmcl.setting.SettingsManager.state;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 public class TerracottaControllerPage extends StackPane {
@@ -162,11 +162,11 @@ public class TerracottaControllerPage extends StackPane {
                     }
 
                     if (uninitialized.hasLegacy() && I18n.isUseChinese()) {
-                        Object feedback = config().getShownTips().get(FEEDBACK_TIP);
+                        Object feedback = state().getShownTips().get(FEEDBACK_TIP);
                         if (!(feedback instanceof Number number) || number.intValue() < 1) {
                             Controllers.confirm(i18n("terracotta.feedback.desc.update"), i18n("terracotta.feedback.title"), () -> {
                                 FXUtils.openLink(TerracottaMetadata.FEEDBACK_LINK);
-                                config().getShownTips().put(FEEDBACK_TIP, 1);
+                                state().getShownTips().put(FEEDBACK_TIP, 1);
                             }, () -> {
                             });
                         }
@@ -212,7 +212,7 @@ public class TerracottaControllerPage extends StackPane {
                                 MessageDialogPane.MessageType.QUESTION
                         ).addAction(i18n("version.launch"), () -> {
                             Profile profile = Profiles.getSelectedProfile();
-                            Versions.launch(profile, profile.getSelectedVersion(), launcherHelper -> {
+                            Versions.launch(profile, Profiles.getSelectedInstance(profile), launcherHelper -> {
                                 launcherHelper.setKeep();
                                 launcherHelper.setDisableOfflineSkin();
                             });

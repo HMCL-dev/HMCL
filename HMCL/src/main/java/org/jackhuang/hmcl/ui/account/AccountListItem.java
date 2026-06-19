@@ -29,6 +29,7 @@ import javafx.scene.image.Image;
 import javafx.stage.FileChooser;
 import org.jackhuang.hmcl.auth.Account;
 import org.jackhuang.hmcl.auth.AuthenticationException;
+import org.jackhuang.hmcl.auth.ClassicAccount;
 import org.jackhuang.hmcl.auth.CredentialExpiredException;
 import org.jackhuang.hmcl.auth.authlibinjector.AuthlibInjectorAccount;
 import org.jackhuang.hmcl.auth.authlibinjector.AuthlibInjectorServer;
@@ -41,6 +42,7 @@ import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.DialogController;
 import org.jackhuang.hmcl.ui.construct.MessageDialogPane.MessageType;
+import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.skin.InvalidSkinException;
 import org.jackhuang.hmcl.util.skin.NormalizedSkin;
@@ -80,13 +82,14 @@ public class AccountListItem extends RadioButton {
             subtitle.set(loginTypeName + portableSuffix);
         }
 
-        StringBinding characterName = Bindings.createStringBinding(account::getCharacter, account);
-        if (account instanceof OfflineAccount) {
-            title.bind(characterName);
+        StringBinding profileName = Bindings.createStringBinding(() -> {
+            String name = account.getProfileName();
+            return StringUtils.isBlank(name) ? account.getProfileID().toString() : name;
+        }, account);
+        if (account instanceof ClassicAccount classicAccount && !(account instanceof OfflineAccount)) {
+            title.bind(Bindings.concat(classicAccount.getLoginName(), " - ", profileName));
         } else {
-            title.bind(
-                    account.getUsername().isEmpty() ? characterName :
-                            Bindings.concat(account.getUsername(), " - ", characterName));
+            title.bind(profileName);
         }
     }
 
@@ -118,7 +121,7 @@ public class AccountListItem extends RadioButton {
 
     public ObservableBooleanValue canUploadSkin() {
         if (account instanceof AuthlibInjectorAccount aiAccount) {
-            ObjectBinding<Optional<CompleteGameProfile>> profile = aiAccount.getYggdrasilService().getProfileRepository().binding(aiAccount.getUUID());
+            ObjectBinding<Optional<CompleteGameProfile>> profile = aiAccount.getYggdrasilService().getProfileRepository().binding(aiAccount.getProfileID());
             return createBooleanBinding(() -> {
                 Set<TextureType> uploadableTextures = profile.get()
                         .map(AuthlibInjectorAccount::getUploadableTextures)
@@ -181,6 +184,14 @@ public class AccountListItem extends RadioButton {
     }
 
     public void remove() {
+        if (!Accounts.canRemoveAccount(account)) {
+            Controllers.confirmBackupAndOverwrite(i18n("account.storage.read_only"), () -> {
+                Accounts.forceOverwriteAccountFiles(account);
+                Accounts.getAccounts().remove(account);
+            });
+            return;
+        }
+
         Accounts.getAccounts().remove(account);
     }
 
