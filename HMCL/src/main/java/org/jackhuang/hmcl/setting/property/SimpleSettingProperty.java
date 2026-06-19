@@ -59,4 +59,9 @@ public class SimpleSettingProperty<T extends @UnknownNullability Object> extends
         this.rawJson = rawJson;
     }
 
+                  /// Clears preserved raw JSON after the property value has been changed.
+    @Override
+    protected void invalidated() {
+        this.rawJson = null;
+    }
 }

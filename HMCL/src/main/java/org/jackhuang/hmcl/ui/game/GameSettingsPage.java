@@ -1630,10 +1630,13 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
 
             updating.value = true;
             try {
-                boolean useInstanceRunningDirectory = isCurrentInstanceModpack()
-                        || instance.getOverrideProperties().contains(GameSettings.PROPERTY_RUNNING_DIRECTORY);
+                boolean currentInstanceModpack = isCurrentInstanceModpack();
+                boolean useInstanceRunningDirectory = !currentInstanceModpack
+                        && instance.getOverrideProperties().contains(GameSettings.PROPERTY_RUNNING_DIRECTORY);
                 String runningDirectory;
-                if (useInstanceRunningDirectory) {
+                if (currentInstanceModpack) {
+                    runningDirectory = getCurrentInstanceVersionRoot();
+                } else if (useInstanceRunningDirectory) {
                     String value = instance.runningDirectoryProperty().getValue();
                     runningDirectory = value != null ? value : instance.runningDirectoryProperty().defaultValue();
                 } else {
@@ -1641,9 +1644,9 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
                 }
 
                 textProperty.setValue(runningDirectory);
-                editor.setDisable(!useInstanceRunningDirectory);
+                editor.setDisable(currentInstanceModpack || !useInstanceRunningDirectory);
                 updateInheritanceButton(inheritButton, !useInstanceRunningDirectory);
-                inheritButton.setDisable(isCurrentInstanceModpack());
+                inheritButton.setDisable(currentInstanceModpack);
             } finally {
                 updating.value = false;
             }
@@ -1675,8 +1678,8 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
             GameSettings setting = currentSetting.get();
             if (!(setting instanceof GameSettings.Instance instance)
                     || updating.value
-                    || (!isCurrentInstanceModpack()
-                    && !instance.getOverrideProperties().contains(GameSettings.PROPERTY_RUNNING_DIRECTORY))) {
+                    || isCurrentInstanceModpack()
+                    || !instance.getOverrideProperties().contains(GameSettings.PROPERTY_RUNNING_DIRECTORY)) {
                 return;
             }
 
@@ -1712,6 +1715,15 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
 
     private boolean isCurrentInstanceModpack() {
         return profile != null && instanceId != null && profile.getRepository().isModpack(instanceId);
+    }
+
+    /// Returns the current instance version root displayed for modpack running directories.
+    private String getCurrentInstanceVersionRoot() {
+        if (profile == null || instanceId == null) {
+            return "";
+        }
+
+        return profile.getRepository().getVersionRoot(instanceId).toString();
     }
 
     /// Keeps a listener attached to the current instance's parent preset property.

@@ -450,9 +450,7 @@ public final class Accounts {
                 .findFirst()
                 .orElseGet(() -> {
                     AuthlibInjectorServer server = new AuthlibInjectorServer(url);
-                    if (!SettingsManager.isAuthlibInjectorServersReadOnly()) {
-                        getAuthlibInjectorServers().add(server);
-                    }
+                    getAuthlibInjectorServers().add(server);
                     return server;
                 });
     }
