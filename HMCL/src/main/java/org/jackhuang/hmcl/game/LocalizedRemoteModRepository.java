@@ -18,7 +18,6 @@
 package org.jackhuang.hmcl.game;
 
 import org.jackhuang.hmcl.download.DownloadProvider;
-import org.jackhuang.hmcl.mod.LocalModFile;
 import org.jackhuang.hmcl.mod.RemoteMod;
 import org.jackhuang.hmcl.mod.RemoteModRepository;
 import org.jackhuang.hmcl.ui.versions.ModTranslations;
@@ -47,33 +46,42 @@ public abstract class LocalizedRemoteModRepository implements RemoteModRepositor
             return getBackedRemoteModRepository().search(downloadProvider, gameVersion, category, pageOffset, pageSize, searchFilter, sort, sortOrder);
         }
 
-        Set<String> englishSearchFiltersSet = new HashSet<>(INITIAL_CAPACITY);
+        Set<String> englishSearchFiltersSet = new LinkedHashSet<>(INITIAL_CAPACITY);
 
         int count = 0;
         for (ModTranslations.Mod mod : ModTranslations.getTranslationsByRepositoryType(getType()).searchMod(searchFilter)) {
-            for (String englishWord : StringUtils.tokenize(StringUtils.isNotBlank(mod.getSubname()) ? mod.getSubname() : mod.getName())) {
-                if (englishSearchFiltersSet.contains(englishWord)) {
-                    continue;
-                }
-
-                englishSearchFiltersSet.add(englishWord);
+            String englishSearchFilter = String.join(" ", StringUtils.tokenize(StringUtils.isNotBlank(mod.getSubname()) ? mod.getSubname() : mod.getName()));
+            if (StringUtils.isNotBlank(englishSearchFilter)) {
+                englishSearchFiltersSet.add(englishSearchFilter);
             }
 
             count++;
             if (count >= 3) break;
         }
 
+        if (englishSearchFiltersSet.isEmpty()) {
+            return getBackedRemoteModRepository().search(downloadProvider, gameVersion, category, pageOffset, pageSize, searchFilter, sort, sortOrder);
+        }
+
         RemoteMod[] searchResultArray = new RemoteMod[pageSize];
         int totalPages, chineseIndex = 0, englishIndex = pageSize - 1;
         {
-            SearchResult searchResult = getBackedRemoteModRepository().search(downloadProvider, gameVersion, category, pageOffset, pageSize, String.join(" ", englishSearchFiltersSet), getBackedRemoteModRepositorySortOrder(), sortOrder);
-            for (Iterator<RemoteMod> iterator = searchResult.getUnsortedResults().iterator(); iterator.hasNext(); ) {
+            SearchResult searchResult = null;
+            List<RemoteMod> remoteMods = List.of();
+            for (String englishSearchFilter : englishSearchFiltersSet) {
+                searchResult = getBackedRemoteModRepository().search(downloadProvider, gameVersion, category, pageOffset, pageSize, englishSearchFilter, getBackedRemoteModRepositorySortOrder(), sortOrder);
+                remoteMods = searchResult.getUnsortedResults().toList();
+                if (!remoteMods.isEmpty()) {
+                    break;
+                }
+            }
+
+            for (RemoteMod remoteMod : remoteMods) {
                 if (chineseIndex > englishIndex) {
                     LOG.warning("Too many search results! Are the backed remote mod repository broken? Or are the API broken?");
                     continue;
                 }
 
-                RemoteMod remoteMod = iterator.next();
                 ModTranslations.Mod chineseTranslation = ModTranslations.getTranslationsByRepositoryType(getType()).getModByCurseForgeId(remoteMod.getSlug());
                 if (chineseTranslation != null && !StringUtils.isBlank(chineseTranslation.getName()) && StringUtils.containsChinese(chineseTranslation.getName())) {
                     searchResultArray[chineseIndex++] = remoteMod;
@@ -110,8 +118,8 @@ public abstract class LocalizedRemoteModRepository implements RemoteModRepositor
     }
 
     @Override
-    public Optional<RemoteMod.Version> getRemoteVersionByLocalFile(LocalModFile localModFile, Path file) throws IOException {
-        return getBackedRemoteModRepository().getRemoteVersionByLocalFile(localModFile, file);
+    public Optional<RemoteMod.Version> getRemoteVersionByLocalFile(Path file) throws IOException {
+        return getBackedRemoteModRepository().getRemoteVersionByLocalFile(file);
     }
 
     @Override

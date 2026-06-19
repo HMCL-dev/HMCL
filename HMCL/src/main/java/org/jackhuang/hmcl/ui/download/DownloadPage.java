@@ -68,6 +68,13 @@ import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 public class DownloadPage extends DecoratorAnimatedPage implements DecoratorPage {
+    public static final org.jackhuang.hmcl.ui.versions.DownloadPage.DownloadCallback FOR_MOD =
+            (downloadProvider, profile, version, mod, file) -> download(downloadProvider, profile, version, file, "mods");
+    public static final org.jackhuang.hmcl.ui.versions.DownloadPage.DownloadCallback FOR_RESOURCE_PACK =
+            (downloadProvider, profile, version, mod, file) -> download(downloadProvider, profile, version, file, "resourcepacks");
+    public static final org.jackhuang.hmcl.ui.versions.DownloadPage.DownloadCallback FOR_SHADER =
+            (downloadProvider, profile, version, mod, file) -> download(downloadProvider, profile, version, file, "shaderpacks");
+
     private final ReadOnlyObjectWrapper<DecoratorPage.State> state = new ReadOnlyObjectWrapper<>(DecoratorPage.State.fromTitle(i18n("download"), -1));
     private final TabHeader tab;
     private final TabHeader.Tab<VersionsPage> newGameTab = new TabHeader.Tab<>("newGameTab");
@@ -99,9 +106,9 @@ public class DownloadPage extends DecoratorAnimatedPage implements DecoratorPage
             page.getActions().add(installLocalModpackButton);
             return page;
         }));
-        modTab.setNodeSupplier(loadVersionFor(() -> HMCLLocalizedDownloadListPage.ofMod((downloadProvider, profile, version, mod, file) -> download(downloadProvider, profile, version, file, "mods"), true)));
-        resourcePackTab.setNodeSupplier(loadVersionFor(() -> HMCLLocalizedDownloadListPage.ofResourcePack((downloadProvider, profile, version, mod, file) -> download(downloadProvider, profile, version, file, "resourcepacks"), true)));
-        shaderTab.setNodeSupplier(loadVersionFor(() -> HMCLLocalizedDownloadListPage.ofShaderPack((downloadProvider, profile, version, mod, file) -> download(downloadProvider, profile, version, file, "shaderpacks"), true)));
+        modTab.setNodeSupplier(loadVersionFor(() -> HMCLLocalizedDownloadListPage.ofMod(FOR_MOD, true)));
+        resourcePackTab.setNodeSupplier(loadVersionFor(() -> HMCLLocalizedDownloadListPage.ofResourcePack(FOR_RESOURCE_PACK, true)));
+        shaderTab.setNodeSupplier(loadVersionFor(() -> HMCLLocalizedDownloadListPage.ofShaderPack(FOR_SHADER, true)));
         worldTab.setNodeSupplier(loadVersionFor(() -> new DownloadListPage(CurseForgeRemoteModRepository.WORLDS)));
         tab = new TabHeader(transitionPane, newGameTab, modpackTab, modTab, resourcePackTab, shaderTab, worldTab);
 
@@ -135,7 +142,7 @@ public class DownloadPage extends DecoratorAnimatedPage implements DecoratorPage
     }
 
     public static void download(DownloadProvider downloadProvider, Profile profile, @Nullable String version, RemoteMod.Version file, String subdirectoryName) {
-        if (version == null) version = profile.getSelectedVersion();
+        if (version == null) version = Profiles.getSelectedInstance(profile);
 
         Path runDirectory = profile.getRepository().hasVersion(version) ? profile.getRepository().getRunDirectory(version) : profile.getRepository().getBaseDirectory();
 
@@ -179,7 +186,7 @@ public class DownloadPage extends DecoratorAnimatedPage implements DecoratorPage
         listenerHolder = new WeakListenerHolder();
         runInFX(() -> {
             if (profile == Profiles.getSelectedProfile()) {
-                listenerHolder.add(FXUtils.onWeakChangeAndOperate(profile.selectedVersionProperty(), version -> {
+                listenerHolder.add(FXUtils.onWeakChangeAndOperate(Profiles.selectedInstanceProperty(), version -> {
                     if (modTab.isInitialized()) {
                         modTab.getNode().loadVersion(profile, null);
                     }
@@ -213,8 +220,9 @@ public class DownloadPage extends DecoratorAnimatedPage implements DecoratorPage
         tab.select(modpackTab, false);
     }
 
-    public void showResourcepackDownloads() {
+    public DownloadListPage showResourcePackDownloads() {
         tab.select(resourcePackTab, false);
+        return resourcePackTab.getNode();
     }
 
     public DownloadListPage showModDownloads() {
@@ -309,8 +317,10 @@ public class DownloadPage extends DecoratorAnimatedPage implements DecoratorPage
                     builder.version(remoteVersion);
             });
 
-            return builder.buildAsync().whenComplete(any -> profile.getRepository().refreshVersions())
-                    .thenRunAsync(Schedulers.javafx(), () -> profile.setSelectedVersion(name));
+            return builder.buildAsync().whenComplete(any -> {
+                profile.getRepository().refreshVersions();
+                profile.getRepository().applyDefaultIsolationSetting(name);
+            }).thenRunAsync(Schedulers.javafx(), () -> Profiles.setSelectedInstance(profile, name));
         }
 
         @Override

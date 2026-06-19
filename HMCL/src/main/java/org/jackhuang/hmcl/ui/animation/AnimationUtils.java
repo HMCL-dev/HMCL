@@ -18,7 +18,7 @@
 package org.jackhuang.hmcl.ui.animation;
 
 import javafx.scene.Node;
-import org.jackhuang.hmcl.setting.ConfigHolder;
+import org.jackhuang.hmcl.setting.SettingsManager;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
 
 /**
@@ -31,13 +31,12 @@ public final class AnimationUtils {
 
     /**
      * Trigger initialization of this class.
-     * Should be called from {@link org.jackhuang.hmcl.setting.Settings#init()}.
+     * Should be called after settings have been loaded.
      */
-    @SuppressWarnings("JavadocReference")
     public static void init() {
     }
 
-    private static final boolean ENABLED = !ConfigHolder.config().isAnimationDisabled();
+    private static final boolean ENABLED = !SettingsManager.settings().animationDisabledProperty().get();
     private static final boolean PLAY_WINDOW_ANIMATION = ENABLED && !OperatingSystem.CURRENT_OS.isLinuxOrBSD();
 
     public static boolean isAnimationEnabled() {

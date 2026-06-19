@@ -26,16 +26,14 @@ import org.jackhuang.hmcl.mod.modrinth.ModrinthModpackExportTask;
 import org.jackhuang.hmcl.mod.multimc.MultiMCInstanceConfiguration;
 import org.jackhuang.hmcl.mod.multimc.MultiMCModpackExportTask;
 import org.jackhuang.hmcl.mod.server.ServerModpackExportTask;
-import org.jackhuang.hmcl.setting.Config;
-import org.jackhuang.hmcl.setting.FontManager;
-import org.jackhuang.hmcl.setting.Profile;
-import org.jackhuang.hmcl.setting.VersionSetting;
+import org.jackhuang.hmcl.setting.*;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.wizard.WizardController;
 import org.jackhuang.hmcl.ui.wizard.WizardProvider;
 import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.SettingsMap;
+import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.io.JarUtils;
 import org.jackhuang.hmcl.util.io.Zipper;
 
@@ -45,7 +43,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
-import static org.jackhuang.hmcl.setting.ConfigHolder.config;
+import static org.jackhuang.hmcl.setting.SettingsManager.settings;
 
 public final class ExportWizardProvider implements WizardProvider {
     private final Profile profile;
@@ -124,21 +122,26 @@ public final class ExportWizardProvider implements WizardProvider {
             public void execute() throws Exception {
                 if (!packWithLauncher) return;
                 try (Zipper zip = new Zipper(modpackFile)) {
-                    Config exported = new Config();
+                    LauncherSettings exported = new LauncherSettings();
 
-                    exported.setBackgroundImageType(config().getBackgroundImageType());
-                    exported.setBackgroundImage(config().getBackgroundImage());
-                    exported.setThemeColor(config().getThemeColor());
-                    exported.setDownloadType(config().getDownloadType());
-                    exported.setPreferredLoginType(config().getPreferredLoginType());
-                    exported.getAuthlibInjectorServers().setAll(config().getAuthlibInjectorServers());
+                    exported.backgroundTypeProperty().set(settings().backgroundTypeProperty().get());
+                    exported.backgroundImageProperty().set(settings().backgroundImageProperty().get());
+                    exported.themeColorProperty().set(settings().themeColorProperty().get());
+                    exported.versionListSourceProperty().set(settings().versionListSourceProperty().get());
+                    exported.fileDownloadSourceProperty().set(settings().fileDownloadSourceProperty().get());
+                    exported.preferredLoginTypeProperty().set(settings().preferredLoginTypeProperty().get());
 
-                    zip.putTextFile(exported.toJson(), ".hmcl/hmcl.json");
+                    zip.putTextFile(exported.toJson(), ".hmcl/config/launcher-settings.json");
+                    AuthlibInjectorServerList exportedServers = new AuthlibInjectorServerList();
+                    exportedServers.getServers().setAll(SettingsManager.getAuthlibInjectorServers());
+                    zip.putTextFile(
+                            JsonUtils.GSON.toJson(exportedServers, AuthlibInjectorServerList.class),
+                            ".hmcl/config/authlib-injector-servers.json");
                     zip.putFile(tempModpack, ModpackTypeSelectionPage.MODPACK_TYPE_MODRINTH.equals(modpackType)
                             ? "modpack.mrpack"
                             : "modpack.zip");
 
-                    Path bg = Metadata.HMCL_CURRENT_DIRECTORY.resolve("background");
+                    Path bg = Metadata.HMCL_LOCAL_HOME.resolve("background");
                     if (!Files.isDirectory(bg))
                         bg = Metadata.CURRENT_DIRECTORY.resolve("bg");
                     if (Files.isDirectory(bg))
@@ -146,7 +149,7 @@ public final class ExportWizardProvider implements WizardProvider {
 
                     for (String extension : FXUtils.IMAGE_EXTENSIONS) {
                         String fileName = "background." + extension;
-                        Path background = Metadata.HMCL_CURRENT_DIRECTORY.resolve(fileName);
+                        Path background = Metadata.HMCL_LOCAL_HOME.resolve(fileName);
                         if (!Files.isRegularFile(background))
                             background = Metadata.CURRENT_DIRECTORY.resolve(fileName);
                         if (Files.isRegularFile(background))
@@ -155,7 +158,7 @@ public final class ExportWizardProvider implements WizardProvider {
 
                     for (String extension : FontManager.FONT_EXTENSIONS) {
                         String fileName = "font." + extension;
-                        Path font = Metadata.HMCL_CURRENT_DIRECTORY.resolve(fileName);
+                        Path font = Metadata.HMCL_LOCAL_HOME.resolve(fileName);
                         if (!Files.isRegularFile(font))
                             font = Metadata.CURRENT_DIRECTORY.resolve(fileName);
                         if (Files.isRegularFile(font))
@@ -198,25 +201,25 @@ public final class ExportWizardProvider implements WizardProvider {
 
             @Override
             public void execute() {
-                VersionSetting vs = profile.getVersionSetting(version);
+                GameSettings.Effective setting = profile.getRepository().getEffectiveGameSettings(version);
                 dependency = new MultiMCModpackExportTask(profile.getRepository(), version, exportInfo.getWhitelist(),
                         new MultiMCInstanceConfiguration(
                                 "OneSix",
                                 exportInfo.getName() + "-" + exportInfo.getVersion(),
                                 null,
-                                Lang.toIntOrNull(vs.getPermSize()),
-                                vs.getWrapper(),
-                                vs.getPreLaunchCommand(),
+                                Lang.toIntOrNull(setting.get(GameSettings::permSizeProperty)),
+                                setting.getInheritable(GameSettings::commandWrapperProperty),
+                                setting.getInheritable(GameSettings::preLaunchCommandProperty),
                                 null,
                                 exportInfo.getDescription(),
                                 null,
                                 exportInfo.getJavaArguments(),
-                                vs.isFullscreen(),
-                                vs.getWidth(),
-                                vs.getHeight(),
+                                setting.getInheritable(GameSettings::windowTypeProperty) == GameWindowType.FULLSCREEN,
+                                setting.getWidth(),
+                                setting.getHeight(),
                                 null,
                                 exportInfo.getMinMemory(),
-                                vs.isShowLogs(),
+                                setting.getInheritable(GameSettings::showLogsProperty),
                                 /* showConsoleOnError */ true,
                                 /* autoCloseConsole */ false,
                                 /* overrideMemory */ true,
