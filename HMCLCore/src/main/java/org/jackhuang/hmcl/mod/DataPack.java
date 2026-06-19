@@ -247,10 +247,10 @@ public class DataPack {
         private Path statusFile;
         private final BooleanProperty activeProperty;
         private final String id;
-        private final LocalModFile.Description description;
+        private final LocalAddonFile.Description description;
         private final DataPack parentDataPack;
 
-        public Pack(Path path, boolean isDirectory, String id, LocalModFile.Description description, DataPack parentDataPack) {
+        public Pack(Path path, boolean isDirectory, String id, LocalAddonFile.Description description, DataPack parentDataPack) {
             this.path = path;
             this.isDirectory = isDirectory;
             this.id = id;
@@ -309,7 +309,7 @@ public class DataPack {
             return id;
         }
 
-        public LocalModFile.Description getDescription() {
+        public LocalAddonFile.Description getDescription() {
             return description;
         }
 

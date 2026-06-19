@@ -31,17 +31,22 @@ import org.jackhuang.hmcl.mod.multimc.MultiMCModpackProvider;
 import org.jackhuang.hmcl.mod.server.ServerModpackManifest;
 import org.jackhuang.hmcl.mod.server.ServerModpackProvider;
 import org.jackhuang.hmcl.mod.server.ServerModpackRemoteInstallTask;
+import org.jackhuang.hmcl.setting.GameSettings;
+import org.jackhuang.hmcl.setting.GameWindowType;
+import org.jackhuang.hmcl.setting.JavaVersionType;
 import org.jackhuang.hmcl.setting.Profile;
 import org.jackhuang.hmcl.setting.Profiles;
-import org.jackhuang.hmcl.setting.VersionSetting;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.util.Lang;
+import org.jackhuang.hmcl.util.PortablePath;
 import org.jackhuang.hmcl.util.function.ExceptionalConsumer;
 import org.jackhuang.hmcl.util.function.ExceptionalRunnable;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
+import org.jackhuang.hmcl.util.i18n.LocalizedText;
 import org.jackhuang.hmcl.util.io.CompressingUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
+import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.FileNotFoundException;
@@ -61,6 +66,8 @@ import static org.jackhuang.hmcl.util.Lang.mapOf;
 import static org.jackhuang.hmcl.util.Lang.toIterable;
 import static org.jackhuang.hmcl.util.Pair.pair;
 
+/// Utilities for reading, installing, and applying modpack-specific game settings.
+@NotNullByDefault
 public final class ModpackHelper {
     private ModpackHelper() {
     }
@@ -155,10 +162,11 @@ public final class ModpackHelper {
         ExceptionalRunnable<?> success = () -> {
             HMCLGameRepository repository = profile.getRepository();
             repository.refreshVersions();
-            VersionSetting vs = repository.specializeVersionSetting(name);
+            GameSettings.Instance setting = repository.getInstanceGameSettingsOrCreate(name);
             repository.undoMark(name);
-            if (vs != null)
-                vs.setGameDirType(GameDirectoryType.VERSION_FOLDER);
+            if (setting != null) {
+                setting.getOverrideProperties().add(GameSettings.PROPERTY_RUNNING_DIRECTORY);
+            }
         };
 
         ExceptionalConsumer<Exception, ?> failure = ex -> {
@@ -184,9 +192,11 @@ public final class ModpackHelper {
 
         return new ManuallyCreatedModpackInstallTask(profile, zipFile, charset, name)
                 .thenAcceptAsync(Schedulers.javafx(), location -> {
-                    Profile newProfile = new Profile(name, location);
-                    newProfile.setUseRelativePath(true);
-                    Profiles.getProfiles().add(newProfile);
+                    Profile newProfile = new Profile(
+                            Profiles.newProfileId(),
+                            LocalizedText.plain(name),
+                            PortablePath.fromPath(location));
+                    Profiles.addLocalProfile(newProfile);
                     Profiles.setSelectedProfile(newProfile);
                 });
     }
@@ -197,10 +207,11 @@ public final class ModpackHelper {
         ExceptionalRunnable<?> success = () -> {
             HMCLGameRepository repository = profile.getRepository();
             repository.refreshVersions();
-            VersionSetting vs = repository.specializeVersionSetting(name);
+            GameSettings.Instance setting = repository.getInstanceGameSettingsOrCreate(name);
             repository.undoMark(name);
-            if (vs != null)
-                vs.setGameDirType(GameDirectoryType.VERSION_FOLDER);
+            if (setting != null) {
+                setting.getOverrideProperties().add(GameSettings.PROPERTY_RUNNING_DIRECTORY);
+            }
         };
 
         ExceptionalConsumer<Exception, ?> failure = ex -> {
@@ -252,73 +263,109 @@ public final class ModpackHelper {
                     .thenComposeAsync(profile.getRepository().refreshVersionsAsync());
     }
 
-    public static void toVersionSetting(MultiMCInstanceConfiguration c, VersionSetting vs) {
-        vs.setUsesGlobal(false);
-        vs.setGameDirType(GameDirectoryType.VERSION_FOLDER);
+    public static void toGameSettings(MultiMCInstanceConfiguration c, GameSettings.Instance setting) {
+        setting.getOverrideProperties().add(GameSettings.PROPERTY_RUNNING_DIRECTORY);
 
         if (c.isOverrideJavaLocation()) {
-            vs.setJavaDir(Lang.nonNull(c.getJavaPath(), ""));
+            setting.getOverrideProperties().add(GameSettings.PROPERTY_JAVA_TYPE);
+            setting.getOverrideProperties().add(GameSettings.PROPERTY_CUSTOM_JAVA_PATH);
+            setting.javaTypeProperty().setValue(JavaVersionType.CUSTOM);
+            setting.customJavaPathProperty().setValue(Objects.requireNonNullElse(c.getJavaPath(), ""));
         }
 
         if (c.isOverrideMemory()) {
-            vs.setPermSize(Optional.ofNullable(c.getPermGen()).map(Object::toString).orElse(""));
+            setting.getOverrideProperties().addAll(List.of(
+                    GameSettings.PROPERTY_AUTO_MEMORY,
+                    GameSettings.PROPERTY_PERM_SIZE,
+                    GameSettings.PROPERTY_MAX_MEMORY,
+                    GameSettings.PROPERTY_MIN_MEMORY
+            ));
+            setting.permSizeProperty().setValue(Optional.ofNullable(c.getPermGen()).map(Object::toString).orElse(""));
             if (c.getMaxMemory() != null)
-                vs.setMaxMemory(c.getMaxMemory());
-            vs.setMinMemory(c.getMinMemory());
+                setting.maxMemoryProperty().setValue(c.getMaxMemory());
+            setting.minMemoryProperty().setValue(c.getMinMemory());
         }
 
         if (c.isOverrideCommands()) {
-            vs.setWrapper(Lang.nonNull(c.getWrapperCommand(), ""));
-            vs.setPreLaunchCommand(Lang.nonNull(c.getPreLaunchCommand(), ""));
+            setting.getOverrideProperties().addAll(List.of(
+                    GameSettings.PROPERTY_COMMAND_WRAPPER,
+                    GameSettings.PROPERTY_PRE_LAUNCH_COMMAND
+            ));
+            setting.commandWrapperProperty().setValue(Objects.requireNonNullElse(c.getWrapperCommand(), ""));
+            setting.preLaunchCommandProperty().setValue(Objects.requireNonNullElse(c.getPreLaunchCommand(), ""));
         }
 
         if (c.isOverrideJavaArgs()) {
-            vs.setJavaArgs(Lang.nonNull(c.getJvmArgs(), ""));
+            setting.getOverrideProperties().add(GameSettings.PROPERTY_JVM_OPTIONS);
+            setting.jvmOptionsProperty().setValue(Objects.requireNonNullElse(c.getJvmArgs(), ""));
         }
 
         if (c.isOverrideConsole()) {
-            vs.setShowLogs(c.isShowConsole());
+            setting.getOverrideProperties().add(GameSettings.PROPERTY_SHOW_LOGS);
+            setting.showLogsProperty().setValue(c.isShowConsole());
         }
 
         if (c.isOverrideWindow()) {
-            vs.setFullscreen(c.isFullscreen());
+            setting.getOverrideProperties().addAll(List.of(
+                    GameSettings.PROPERTY_WINDOW_TYPE,
+                    GameSettings.PROPERTY_WIDTH,
+                    GameSettings.PROPERTY_HEIGHT
+            ));
+            setting.windowTypeProperty().setValue(c.isFullscreen() ? GameWindowType.FULLSCREEN : GameWindowType.WINDOWED);
             if (c.getWidth() != null)
-                vs.setWidth(c.getWidth());
+                setting.widthProperty().setValue(c.getWidth().doubleValue());
             if (c.getHeight() != null)
-                vs.setHeight(c.getHeight());
+                setting.heightProperty().setValue(c.getHeight().doubleValue());
         }
     }
 
-    private static void applyCommandAndJvmSettings(MultiMCInstanceConfiguration c, VersionSetting vs) {
+    private static void applyCommandAndJvmSettings(MultiMCInstanceConfiguration c, GameSettings.Instance setting) {
         if (c.isOverrideCommands()) {
-            vs.setWrapper(Lang.nonNull(c.getWrapperCommand(), ""));
-            vs.setPreLaunchCommand(Lang.nonNull(c.getPreLaunchCommand(), ""));
+            setting.getOverrideProperties().addAll(List.of(
+                    GameSettings.PROPERTY_COMMAND_WRAPPER,
+                    GameSettings.PROPERTY_PRE_LAUNCH_COMMAND
+            ));
+            setting.commandWrapperProperty().setValue(Lang.nonNull(c.getWrapperCommand(), ""));
+            setting.preLaunchCommandProperty().setValue(Lang.nonNull(c.getPreLaunchCommand(), ""));
         }
 
         if (c.isOverrideJavaArgs()) {
-            vs.setJavaArgs(Lang.nonNull(c.getJvmArgs(), ""));
+            setting.getOverrideProperties().add(GameSettings.PROPERTY_JVM_OPTIONS);
+            setting.jvmOptionsProperty().setValue(Lang.nonNull(c.getJvmArgs(), ""));
         }
     }
 
     private static Task<Void> createMultiMCPostUpdateTask(Profile profile, MultiMCInstanceConfiguration manifest, String version) {
         return Task.runAsync(Schedulers.javafx(), () -> {
-            VersionSetting vs = Objects.requireNonNull(profile.getRepository().specializeVersionSetting(version));
-            ModpackHelper.applyCommandAndJvmSettings(manifest, vs);
+            GameSettings.Instance setting = Objects.requireNonNull(profile.getRepository().getInstanceGameSettingsOrCreate(version));
+            ModpackHelper.applyCommandAndJvmSettings(manifest, setting);
         });
     }
 
     private static Task<Void> createMultiMCPostInstallTask(Profile profile, MultiMCInstanceConfiguration manifest, String version) {
         return Task.runAsync(Schedulers.javafx(), () -> {
-            VersionSetting vs = Objects.requireNonNull(profile.getRepository().specializeVersionSetting(version));
-            ModpackHelper.toVersionSetting(manifest, vs);
+            GameSettings.Instance setting = Objects.requireNonNull(profile.getRepository().getInstanceGameSettingsOrCreate(version));
+            ModpackHelper.toGameSettings(manifest, setting);
         });
     }
 
     private static Task<Void> createMcbbsPostInstallTask(Profile profile, McbbsModpackManifest manifest, String version) {
         return Task.runAsync(Schedulers.javafx(), () -> {
-            VersionSetting vs = Objects.requireNonNull(profile.getRepository().specializeVersionSetting(version));
-            if (manifest.getLaunchInfo().getMinMemory() > vs.getMaxMemory())
-                vs.setMaxMemory(manifest.getLaunchInfo().getMinMemory());
+            HMCLGameRepository repository = profile.getRepository();
+            GameSettings.Effective effective = repository.getEffectiveGameSettings(version);
+            if (manifest.getLaunchInfo().getMinMemory() > effective.getMaxMemory()) {
+                GameSettings.Instance setting = Objects.requireNonNull(repository.getInstanceGameSettingsOrCreate(version));
+                setting.getOverrideProperties().addAll(List.of(
+                        GameSettings.PROPERTY_AUTO_MEMORY,
+                        GameSettings.PROPERTY_MIN_MEMORY,
+                        GameSettings.PROPERTY_MAX_MEMORY,
+                        GameSettings.PROPERTY_PERM_SIZE
+                ));
+                setting.autoMemoryProperty().setValue(effective.get(GameSettings::autoMemoryProperty));
+                setting.minMemoryProperty().setValue(effective.get(GameSettings::minMemoryProperty));
+                setting.maxMemoryProperty().setValue(manifest.getLaunchInfo().getMinMemory());
+                setting.permSizeProperty().setValue(effective.get(GameSettings::permSizeProperty));
+            }
         });
     }
 }

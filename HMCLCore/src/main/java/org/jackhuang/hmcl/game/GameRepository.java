@@ -137,6 +137,12 @@ public interface GameRepository extends VersionProvider {
     /// @return the mods directory
     Path getModsDirectory(String id);
 
+    /// Get the directory for placing resource packs.
+    ///
+    /// @param id instance id
+    /// @return the resource pack directory
+    Path getResourcePackDirectory(String id);
+
     /**
      * Get minecraft jar
      *
