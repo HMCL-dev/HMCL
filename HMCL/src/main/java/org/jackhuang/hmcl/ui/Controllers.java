@@ -141,7 +141,7 @@ public final class Controllers {
         return stage;
     }
 
-    // FXThread
+    @FXThread
     public static VersionPage getVersionPage() {
         if (versionPage == null) {
             versionPage = new VersionPage();
@@ -157,17 +157,17 @@ public final class Controllers {
         }
     }
 
-    // FXThread
+    @FXThread
     public static GameListPage getGameListPage() {
         return gameListPage.get();
     }
 
-    // FXThread
+    @FXThread
     public static RootPage getRootPage() {
         return rootPage.get();
     }
 
-    // FXThread
+    @FXThread
     public static LauncherSettingsPage getSettingsPage() {
         if (settingsPage == null) {
             settingsPage = new LauncherSettingsPage();
@@ -183,12 +183,12 @@ public final class Controllers {
         }
     }
 
-    // FXThread
+    @FXThread
     public static AccountListPage getAccountListPage() {
         return accountListPage.get();
     }
 
-    // FXThread
+    @FXThread
     public static DownloadPage getDownloadPage() {
         if (downloadPage == null) {
             downloadPage = new DownloadPage();
@@ -204,12 +204,12 @@ public final class Controllers {
         }
     }
 
-    // FXThread
+    @FXThread
     public static Node getTerracottaPage() {
         return terracottaPage.get();
     }
 
-    // FXThread
+    @FXThread
     public static DecoratorController getDecorator() {
         return decorator;
     }
