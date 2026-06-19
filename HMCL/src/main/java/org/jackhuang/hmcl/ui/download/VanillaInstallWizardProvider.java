@@ -24,6 +24,7 @@ import org.jackhuang.hmcl.download.GameBuilder;
 import org.jackhuang.hmcl.download.RemoteVersion;
 import org.jackhuang.hmcl.setting.DownloadProviders;
 import org.jackhuang.hmcl.setting.Profile;
+import org.jackhuang.hmcl.setting.Profiles;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.ui.wizard.WizardController;
@@ -60,8 +61,11 @@ public final class VanillaInstallWizardProvider implements WizardProvider {
                 builder.version(remoteVersion);
         });
 
-        return builder.buildAsync().whenComplete(any -> profile.getRepository().refreshVersions())
-                .thenRunAsync(Schedulers.javafx(), () -> profile.setSelectedVersion(name));
+        return builder.buildAsync().whenComplete(any -> {
+            profile.getRepository().refreshVersions();
+            profile.getRepository().applyDefaultIsolationSetting(name);
+        })
+                .thenRunAsync(Schedulers.javafx(), () -> Profiles.setSelectedInstance(profile, name));
     }
 
     @Override

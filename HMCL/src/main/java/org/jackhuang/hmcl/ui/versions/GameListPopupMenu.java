@@ -31,11 +31,11 @@ import javafx.scene.control.Label;
 import javafx.scene.control.ListCell;
 import javafx.scene.control.ListView;
 import javafx.scene.layout.BorderPane;
-import javafx.scene.layout.HBox;
 import javafx.scene.layout.Region;
 import javafx.scene.layout.StackPane;
 import org.jackhuang.hmcl.game.Version;
 import org.jackhuang.hmcl.setting.Profile;
+import org.jackhuang.hmcl.setting.Profiles;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.construct.ImageContainer;
 import org.jackhuang.hmcl.ui.construct.RipplerContainer;
@@ -53,7 +53,10 @@ public final class GameListPopupMenu extends StackPane {
                             double initOffsetX, double initOffsetY,
                             Profile profile, List<Version> versions) {
         GameListPopupMenu menu = new GameListPopupMenu();
-        menu.getItems().setAll(versions.stream().map(it -> new GameItem(profile, it.getId())).toList());
+        menu.getItems().setAll(versions.stream()
+                .filter(it -> profile.getRepository().hasVersion(it.getId()))
+                .map(it -> new GameItem(profile, it.getId()))
+                .toList());
         JFXPopup popup = new JFXPopup(menu);
         popup.show(owner, vAlign, hAlign, initOffsetX, initOffsetY);
     }
@@ -66,10 +69,11 @@ public final class GameListPopupMenu extends StackPane {
         this.getStyleClass().add("popup-menu-content");
 
         listView.setCellFactory(Cell::new);
-        listView.setFixedCellSize(60);
+
+        listView.setFixedCellSize(50);
         listView.setPrefWidth(300);
 
-        listView.prefHeightProperty().bind(Bindings.size(getItems()).multiply(60).add(2));
+        listView.prefHeightProperty().bind(Bindings.size(getItems()).multiply(50).add(2));
 
         Label placeholder = new Label(i18n("version.empty"));
         placeholder.setStyle("-fx-padding: 10px; -fx-text-fill: -monet-on-surface-variant; -fx-font-style: italic;");
@@ -94,44 +98,43 @@ public final class GameListPopupMenu extends StackPane {
 
         public Cell(ListView<GameItem> listView) {
             this.setPadding(Insets.EMPTY);
-            HBox root = new HBox();
-
-            root.setSpacing(8);
-            root.setAlignment(Pos.CENTER_LEFT);
-
-            StackPane imageViewContainer = new StackPane();
-            FXUtils.setLimitWidth(imageViewContainer, 32);
-            FXUtils.setLimitHeight(imageViewContainer, 32);
 
             this.imageView = new ImageContainer(32);
-            imageViewContainer.getChildren().setAll(imageView);
+            this.imageView.setMouseTransparent(true);
+            BorderPane.setAlignment(imageView, Pos.CENTER);
 
             this.content = new TwoLineListItem();
+            this.content.setMouseTransparent(true);
             FXUtils.onChangeAndOperate(tag, tag -> {
                 content.getTags().clear();
                 if (StringUtils.isNotBlank(tag)) {
                     content.addTag(tag);
                 }
             });
-            BorderPane.setAlignment(content, Pos.CENTER);
-            root.getChildren().setAll(imageView, content);
 
-            StackPane pane = new StackPane();
-            pane.getChildren().setAll(root);
-            pane.getStyleClass().add("menu-container");
-            root.setMouseTransparent(true);
+            BorderPane container = new BorderPane();
+            container.getStyleClass().add("container");
+            container.setPickOnBounds(false);
+            container.setLeft(imageView);
+            container.setCenter(content);
 
-            RipplerContainer ripplerContainer = new RipplerContainer(pane);
-            FXUtils.onClicked(ripplerContainer, () -> {
+            RipplerContainer ripplerContainer = new RipplerContainer(container);
+
+            StackPane rootPane = new StackPane();
+            rootPane.getStyleClass().add("advanced-list-item");
+            rootPane.getChildren().setAll(ripplerContainer);
+            rootPane.maxWidthProperty().bind(listView.widthProperty().subtract(5));
+
+            FXUtils.onClicked(rootPane, () -> {
                 GameItem item = getItem();
                 if (item != null) {
-                    item.getProfile().setSelectedVersion(item.getId());
+                    Profiles.setSelectedInstance(item.getProfile(), item.getId());
                     if (getScene().getWindow() instanceof JFXPopup popup)
                         popup.hide();
                 }
             });
-            this.graphic = ripplerContainer;
-            ripplerContainer.maxWidthProperty().bind(listView.widthProperty().subtract(5));
+
+            this.graphic = rootPane;
         }
 
         @Override

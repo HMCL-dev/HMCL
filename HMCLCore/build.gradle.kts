@@ -28,6 +28,7 @@ dependencies {
     api(libs.pci.ids)
     api(libs.hello.nbt)
     api(libs.weburl)
+    api(libs.uuid.tools)
     api(libs.commonmark)
     api(libs.commonmark.autolink)
     api(libs.commonmark.underline)

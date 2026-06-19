@@ -42,6 +42,8 @@ import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.util.*;
 
+import static org.jackhuang.hmcl.util.logging.Logger.LOG;
+
 /// Represents a settings object with multiple [Observable] fields.
 ///
 /// All instance fields in this object, unless marked as `transient`, are considered observable fields.
@@ -358,7 +360,12 @@ public abstract class ObservableSetting implements Observable {
 
                 if (value != null) {
                     setting.tracker.markDirty(field.get(setting));
-                    field.deserialize(setting, value, context);
+                    try {
+                        field.deserialize(setting, value, context);
+                    } catch (RuntimeException e) {
+                        LOG.warning("Ignoring invalid setting field "
+                                + setting.getClass().getName() + "." + field.getSerializedName(), e);
+                    }
                 }
             }
 
