@@ -253,6 +253,17 @@ public class ModrinthModpackExportTask extends Task<Void> {
                 writer.endObject();
             }
 
+            // CRITICAL: Restore disabled mods BEFORE zipping, so they remain .disabled in the final pack
+            for (Path enabledPath : temporarilyEnabledFiles) {
+                try {
+                    repository.getModManager(version).disableMod(enabledPath);
+                    LOG.info("Restored disabled mod: " + enabledPath);
+                } catch (IOException e) {
+                    LOG.warning("Failed to restore disabled mod: " + enabledPath, e);
+                }
+            }
+            temporarilyEnabledFiles.clear();
+
             try (var zip = new Zipper(modpackFile)) {
                 zip.putFile(tempIndex, "modrinth.index.json");
 
@@ -272,15 +283,16 @@ public class ModrinthModpackExportTask extends Task<Void> {
             }
         } finally {
             Files.deleteIfExists(tempIndex);
-            // Restore disabled mods using the ModManager API
+            // Safety net: restore any mods that might still be enabled if an exception occurred after enabling but before restoration
             for (Path enabledPath : temporarilyEnabledFiles) {
                 try {
                     repository.getModManager(version).disableMod(enabledPath);
-                    LOG.info("Restored disabled mod: " + enabledPath);
+                    LOG.info("Restored disabled mod (finally): " + enabledPath);
                 } catch (IOException e) {
-                    LOG.warning("Failed to restore disabled mod: " + enabledPath, e);
+                    LOG.warning("Failed to restore disabled mod (finally): " + enabledPath, e);
                 }
             }
+            temporarilyEnabledFiles.clear();
         }
     }
 
