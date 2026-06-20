@@ -140,7 +140,7 @@ public final class ThemePackExporterTest {
     private static ThemePackManifest createManifest() {
         return ThemePackManifest.fromJson("""
                 {
-                  "formatVersion": 1,
+                  "$schema": "https://schemas.glavo.site/hmcl/theme-pack/1.0.0",
                   "id": "user.current-theme",
                   "version": "1.0.0",
                   "name": "Current Theme",

@@ -36,7 +36,6 @@ import java.util.Set;
 
 /// Parsed metadata and themes from a theme-pack manifest.
 ///
-/// @param formatVersion the theme-pack manifest format version
 /// @param id the stable package identifier
 /// @param version the package version string
 /// @param name the display name
@@ -45,7 +44,6 @@ import java.util.Set;
 /// @param themes selectable themes declared by the package
 @NotNullByDefault
 public record ThemePackManifest(
-        int formatVersion,
         String id,
         String version,
         String name,
@@ -53,14 +51,8 @@ public record ThemePackManifest(
         @Nullable String description,
         @Unmodifiable List<ThemePreset> themes) {
 
-    /// The manifest format supported by this implementation.
-    public static final int CURRENT_FORMAT_VERSION = 1;
-
     /// JSON Schema URL for the current manifest format.
     public static final String SCHEMA_URL = "https://schemas.glavo.site/hmcl/theme-pack/1.0.0";
-
-    /// JSON member name for the format version.
-    private static final String FIELD_FORMAT_VERSION = "formatVersion";
 
     /// JSON member name for the package ID.
     private static final String FIELD_ID = "id";
@@ -80,13 +72,12 @@ public record ThemePackManifest(
     /// JSON member name for theme declarations.
     private static final String FIELD_THEMES = "themes";
 
-    /// JSON member name for an optional schema marker.
+    /// JSON member name for the schema marker.
     private static final String FIELD_SCHEMA = "$schema";
 
     /// Manifest fields accepted by this parser.
     private static final Set<String> FIELDS = Set.of(
             FIELD_SCHEMA,
-            FIELD_FORMAT_VERSION,
             FIELD_ID,
             FIELD_VERSION,
             FIELD_NAME,
@@ -96,7 +87,6 @@ public record ThemePackManifest(
 
     /// Creates a theme-pack manifest.
     ///
-    /// @param formatVersion the theme-pack manifest format version
     /// @param id the stable package identifier
     /// @param version the package version string
     /// @param name the display name
@@ -104,9 +94,6 @@ public record ThemePackManifest(
     /// @param description the optional package description
     /// @param themes selectable themes declared by the package
     public ThemePackManifest {
-        if (formatVersion != CURRENT_FORMAT_VERSION) {
-            throw new IllegalArgumentException("Unsupported theme-pack format version: " + formatVersion);
-        }
         id = requireNonBlank(id, FIELD_ID);
         version = requireNonBlank(version, FIELD_VERSION);
         name = requireNonBlank(name, FIELD_NAME);
@@ -143,14 +130,9 @@ public record ThemePackManifest(
     public static ThemePackManifest fromJson(JsonObject object) throws JsonParseException {
         Objects.requireNonNull(object);
         checkUnknownFields(object);
-
-        int formatVersion = readFormatVersion(object);
-        if (formatVersion != CURRENT_FORMAT_VERSION) {
-            throw new JsonParseException("Unsupported theme-pack format version: " + formatVersion);
-        }
+        checkSchema(object);
 
         return new ThemePackManifest(
-                formatVersion,
                 requireMemberString(object, FIELD_ID),
                 requireMemberString(object, FIELD_VERSION),
                 requireMemberString(object, FIELD_NAME),
@@ -180,7 +162,6 @@ public record ThemePackManifest(
     public JsonObject toJsonObject() {
         JsonObject object = new JsonObject();
         object.addProperty(FIELD_SCHEMA, SCHEMA_URL);
-        object.addProperty(FIELD_FORMAT_VERSION, formatVersion);
         object.addProperty(FIELD_ID, id);
         object.addProperty(FIELD_VERSION, version);
         object.addProperty(FIELD_NAME, name);
@@ -220,13 +201,17 @@ public record ThemePackManifest(
         }
     }
 
-    /// Reads the required manifest format version.
-    private static int readFormatVersion(JsonObject object) {
-        JsonElement element = object.get(FIELD_FORMAT_VERSION);
-        if (!(element instanceof JsonPrimitive primitive) || !primitive.isNumber()) {
-            throw new JsonParseException("Theme-pack manifest is missing numeric formatVersion");
+    /// Checks that the manifest declares the supported schema.
+    private static void checkSchema(JsonObject object) {
+        JsonElement element = object.get(FIELD_SCHEMA);
+        if (!(element instanceof JsonPrimitive primitive) || !primitive.isString()) {
+            throw new JsonParseException("Theme-pack manifest is missing string $schema");
         }
-        return primitive.getAsInt();
+
+        String schema = primitive.getAsString();
+        if (!SCHEMA_URL.equals(schema)) {
+            throw new JsonParseException("Unsupported theme-pack schema: " + schema);
+        }
     }
 
     /// Reads the required authors list.

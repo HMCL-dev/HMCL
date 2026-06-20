@@ -35,7 +35,7 @@ public final class ThemePackManifestTest {
     /// A representative theme-pack manifest containing default appearance fields and conditional overrides.
     private static final String MANIFEST = """
             {
-              "formatVersion": 1,
+              "$schema": "https://schemas.glavo.site/hmcl/theme-pack/1.0.0",
               "id": "example.nature",
               "version": "1.0.0",
               "name": "Nature",
@@ -141,7 +141,7 @@ public final class ThemePackManifestTest {
     public void testEmptyConditionMatchesEveryContext() {
         ThemePackManifest manifest = ThemePackManifest.fromJson("""
                 {
-                  "formatVersion": 1,
+                  "$schema": "https://schemas.glavo.site/hmcl/theme-pack/1.0.0",
                   "id": "example.empty-condition",
                   "version": "1.0.0",
                   "name": "Empty Condition",

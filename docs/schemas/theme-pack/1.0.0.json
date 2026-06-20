@@ -6,21 +6,22 @@
   "additionalProperties": false,
   "required": [
     "$schema",
-    "formatVersion",
     "id",
     "version",
     "name",
     "themes"
   ],
-  "properties": {
-    "$schema": {
+  "patternProperties": {
+    "^\\$schema$": {
       "enum": [
         "https://schemas.glavo.site/hmcl/theme-pack/1.0.0"
       ]
     },
-    "formatVersion": {
-      "const": 1
-    },
+    "^description$": {
+      "$ref": "#/$defs/nonEmptyString"
+    }
+  },
+  "properties": {
     "id": {
       "$ref": "#/$defs/nonEmptyString"
     },
@@ -36,9 +37,6 @@
         "$ref": "#/$defs/nonEmptyString"
       },
       "uniqueItems": true
-    },
-    "description": {
-      "$ref": "#/$defs/nonEmptyString"
     },
     "themes": {
       "type": "array",
@@ -62,6 +60,11 @@
     "theme": {
       "type": "object",
       "additionalProperties": false,
+      "patternProperties": {
+        "^description$": {
+          "$ref": "#/$defs/nonEmptyString"
+        }
+      },
       "required": [
         "id",
         "name"
@@ -71,9 +74,6 @@
           "$ref": "#/$defs/nonEmptyString"
         },
         "name": {
-          "$ref": "#/$defs/nonEmptyString"
-        },
-        "description": {
           "$ref": "#/$defs/nonEmptyString"
         },
         "thumbnail": {
@@ -214,15 +214,17 @@
     "background": {
       "type": "object",
       "additionalProperties": false,
-      "properties": {
-        "type": {
+      "patternProperties": {
+        "^type$": {
           "enum": [
             "default",
             "image",
             "network",
             "paint"
           ]
-        },
+        }
+      },
+      "properties": {
         "path": {
           "$ref": "#/$defs/assetPath"
         },
