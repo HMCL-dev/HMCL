@@ -45,7 +45,9 @@ public final class ThemePackExporterTest {
         Path wallpaper = tempDir.resolve("wallpaper.txt");
         Files.writeString(wallpaper, "wallpaper", StandardCharsets.UTF_8);
 
-        Path output = tempDir.resolve("theme-pack.zip");
+        assertEquals(".hmcl-theme", ThemePackExporter.FILE_EXTENSION);
+
+        Path output = tempDir.resolve("theme-pack" + ThemePackExporter.FILE_EXTENSION);
         ThemePackExporter.export(
                 createManifest(),
                 List.of(new ThemePackAsset(wallpaper, "assets/wallpapers/wallpaper.txt")),

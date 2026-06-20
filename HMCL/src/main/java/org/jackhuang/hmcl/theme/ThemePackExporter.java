@@ -31,9 +31,12 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 
-/// Writes theme-pack manifests and assets into zip files.
+/// Writes theme-pack manifests and assets into zip-compatible files.
 @NotNullByDefault
 public final class ThemePackExporter {
+
+    /// Recommended file extension for theme-pack files.
+    public static final String FILE_EXTENSION = ".hmcl-theme";
 
     /// Manifest entry name used by every exported theme pack.
     public static final String MANIFEST_ENTRY = "theme-pack.json";
@@ -42,11 +45,11 @@ public final class ThemePackExporter {
     private ThemePackExporter() {
     }
 
-    /// Exports a theme pack to a zip file.
+    /// Exports a theme pack to a zip-compatible file.
     ///
     /// @param manifest the manifest to write
     /// @param assets asset files to copy into the zip
-    /// @param outputFile the target zip file
+    /// @param outputFile the target theme-pack file
     /// @throws IOException if a source file cannot be read or the zip cannot be written
     /// @throws IllegalArgumentException if an asset entry is duplicated or unsafe
     public static void export(
