@@ -35,7 +35,6 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.*;
@@ -82,11 +81,12 @@ public class ModrinthModpackExportTask extends Task<Void> {
 
         boolean isDisabled = repository.getModManager(version).isDisabled(file);
         if (isDisabled) {
-            // Enable the mod and record the new path for later restoration
-            Path enabledPath = repository.getModManager(version).enableMod(Paths.get(relativePath));
+            // Use absolute path to avoid working directory issues
+            Path enabledPath = repository.getModManager(version).enableMod(file);
             temporarilyEnabledFiles.add(enabledPath);
-            relativePath = enabledPath.toString();
-            file = repository.getRunDirectory(version).resolve(relativePath).normalize();
+            file = enabledPath;
+            relativePath = repository.getRunDirectory(version).relativize(file)
+                    .normalize().toString().replace(File.separatorChar, '/');
         }
 
         Optional<RemoteMod.Version> modrinthVersion = Optional.empty();
@@ -156,24 +156,10 @@ public class ModrinthModpackExportTask extends Task<Void> {
 
         String[] resourceDirs = {"resourcepacks", "shaderpacks", "mods"};
         Set<String> remoteFilePaths = new HashSet<>();
-        Set<Path> temporarilyEnabledFiles = new HashSet<>(); // store enabled file paths
-
-        // First, collect all files to avoid modifying directory structure during walkFileTree
-        List<Path> allFiles = new ArrayList<>();
-        for (String dir : resourceDirs) {
-            Path dirPath = runDirectory.resolve(dir);
-            if (Files.exists(dirPath)) {
-                Files.walkFileTree(dirPath, new SimpleFileVisitor<Path>() {
-                    @Override
-                    public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
-                        allFiles.add(file);
-                        return FileVisitResult.CONTINUE;
-                    }
-                });
-            }
-        }
+        Set<Path> temporarilyEnabledFiles = new HashSet<>();
 
         Path tempIndex = Files.createTempFile("modrinth_index_", ".json");
+        tempIndex.toFile().deleteOnExit(); // final backup cleanup
         try {
             try (JsonWriter writer = new JsonWriter(Files.newBufferedWriter(tempIndex, StandardCharsets.UTF_8))) {
                 writer.setIndent("  ");
@@ -191,46 +177,54 @@ public class ModrinthModpackExportTask extends Task<Void> {
 
                 Set<String> processedPaths = new HashSet<>();
 
-                // Now process the collected files safely
-                for (Path file : allFiles) {
-                    String relativePath = runDirectory.relativize(file).normalize().toString().replace(File.separatorChar, '/');
-                    if (!whitelistSet.contains(relativePath)) {
-                        continue;
-                    }
-                    if (processedPaths.contains(relativePath)) {
-                        continue;
-                    }
-                    processedPaths.add(relativePath);
+                for (String dir : resourceDirs) {
+                    Path dirPath = runDirectory.resolve(dir);
+                    if (Files.exists(dirPath)) {
+                        Files.walkFileTree(dirPath, new SimpleFileVisitor<Path>() {
+                            @Override
+                            public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
+                                String relativePath = runDirectory.relativize(file).normalize().toString().replace(File.separatorChar, '/');
+                                if (!whitelistSet.contains(relativePath)) {
+                                    return FileVisitResult.CONTINUE;
+                                }
+                                if (processedPaths.contains(relativePath)) {
+                                    return FileVisitResult.CONTINUE;
+                                }
+                                processedPaths.add(relativePath);
 
-                    ModrinthManifest.File fileEntry = null;
-                    try {
-                        fileEntry = tryGetRemoteFile(file, relativePath, temporarilyEnabledFiles);
-                    } catch (IOException e) {
-                        LOG.warning("Failed to process file: " + file, e);
-                    }
-                    if (fileEntry != null) {
-                        remoteFilePaths.add(relativePath);
-                        writer.beginObject();
-                        writer.name("path").value(fileEntry.getPath());
-                        writer.name("hashes").beginObject();
-                        for (Map.Entry<String, String> hash : fileEntry.getHashes().entrySet()) {
-                            writer.name(hash.getKey()).value(hash.getValue());
-                        }
-                        writer.endObject();
-                        if (fileEntry.getEnv() != null) {
-                            writer.name("env").beginObject();
-                            for (Map.Entry<String, String> env : fileEntry.getEnv().entrySet()) {
-                                writer.name(env.getKey()).value(env.getValue());
+                                ModrinthManifest.File fileEntry = null;
+                                try {
+                                    fileEntry = tryGetRemoteFile(file, relativePath, temporarilyEnabledFiles);
+                                } catch (IOException e) {
+                                    LOG.warning("Failed to process file: " + file, e);
+                                }
+                                if (fileEntry != null) {
+                                    remoteFilePaths.add(relativePath);
+                                    writer.beginObject();
+                                    writer.name("path").value(fileEntry.getPath());
+                                    writer.name("hashes").beginObject();
+                                    for (Map.Entry<String, String> hash : fileEntry.getHashes().entrySet()) {
+                                        writer.name(hash.getKey()).value(hash.getValue());
+                                    }
+                                    writer.endObject();
+                                    if (fileEntry.getEnv() != null) {
+                                        writer.name("env").beginObject();
+                                        for (Map.Entry<String, String> env : fileEntry.getEnv().entrySet()) {
+                                            writer.name(env.getKey()).value(env.getValue());
+                                        }
+                                        writer.endObject();
+                                    }
+                                    writer.name("downloads").beginArray();
+                                    for (String url : fileEntry.getDownloads()) {
+                                        writer.value(url);
+                                    }
+                                    writer.endArray();
+                                    writer.name("fileSize").value(fileEntry.getFileSize());
+                                    writer.endObject();
+                                }
+                                return FileVisitResult.CONTINUE;
                             }
-                            writer.endObject();
-                        }
-                        writer.name("downloads").beginArray();
-                        for (String url : fileEntry.getDownloads()) {
-                            writer.value(url);
-                        }
-                        writer.endArray();
-                        writer.name("fileSize").value(fileEntry.getFileSize());
-                        writer.endObject();
+                        });
                     }
                 }
 

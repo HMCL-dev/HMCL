@@ -38,6 +38,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.ArrayList;
@@ -98,7 +99,7 @@ public class McbbsModpackExportTask extends Task<Void> {
         LibraryAnalyzer analyzer = LibraryAnalyzer.analyze(repository.getResolvedPreservingPatchesVersion(version), gameVersion);
 
         Path tempManifest = Files.createTempFile("mcbbs_packmeta_", ".json");
-        
+        tempManifest.toFile().deleteOnExit(); // final backup cleanup
         try {
             try (JsonWriter writer = new JsonWriter(Files.newBufferedWriter(tempManifest, StandardCharsets.UTF_8))) {
                 writer.setIndent("  ");
@@ -235,11 +236,13 @@ public class McbbsModpackExportTask extends Task<Void> {
                     if (path == null || path.isEmpty()) {
                         return true;
                     }
-                    Path resolved = runDirectory.resolve(path);
+                    // Normalize path for consistency with other parts
+                    String normalizedPath = Paths.get(path).normalize().toString().replace(File.separatorChar, '/');
+                    Path resolved = runDirectory.resolve(normalizedPath);
                     if (Files.isDirectory(resolved)) {
-                        return !ModAdviser.match(blackList, path, false);
+                        return !ModAdviser.match(blackList, normalizedPath, false);
                     } else {
-                        return Modpack.acceptFile(path, blackList, info.getWhitelist());
+                        return Modpack.acceptFile(normalizedPath, blackList, info.getWhitelist());
                     }
                 });
             }
