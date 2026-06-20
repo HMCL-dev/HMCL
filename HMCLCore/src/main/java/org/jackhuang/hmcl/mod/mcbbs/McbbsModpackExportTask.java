@@ -98,7 +98,7 @@ public class McbbsModpackExportTask extends Task<Void> {
         LibraryAnalyzer analyzer = LibraryAnalyzer.analyze(repository.getResolvedPreservingPatchesVersion(version), gameVersion);
 
         Path tempManifest = Files.createTempFile("mcbbs_packmeta_", ".json");
-        tempManifest.toFile().deleteOnExit();
+        
         try {
             try (JsonWriter writer = new JsonWriter(Files.newBufferedWriter(tempManifest, StandardCharsets.UTF_8))) {
                 writer.setIndent("  ");

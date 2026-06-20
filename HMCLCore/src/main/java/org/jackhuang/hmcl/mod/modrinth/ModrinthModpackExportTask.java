@@ -156,7 +156,6 @@ public class ModrinthModpackExportTask extends Task<Void> {
         Set<Path> temporarilyEnabledFiles = new HashSet<>(); // track disabled mods that were temporarily enabled
 
         Path tempIndex = Files.createTempFile("modrinth_index_", ".json");
-        tempIndex.toFile().deleteOnExit();
         try {
             try (JsonWriter writer = new JsonWriter(Files.newBufferedWriter(tempIndex, StandardCharsets.UTF_8))) {
                 writer.setIndent("  ");
