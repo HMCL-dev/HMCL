@@ -76,9 +76,6 @@
         "description": {
           "$ref": "#/$defs/nonEmptyString"
         },
-        "family": {
-          "$ref": "#/$defs/nonEmptyString"
-        },
         "thumbnail": {
           "$ref": "#/$defs/assetPath"
         },

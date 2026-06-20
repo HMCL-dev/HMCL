@@ -44,7 +44,6 @@ public final class ThemePackManifestTest {
                 {
                   "id": "forest",
                   "name": "Forest",
-                  "family": "forest",
                   "thumbnail": "assets/thumbnails/forest.png",
                   "color": "#4D7C3A",
                   "brightness": "adaptive",

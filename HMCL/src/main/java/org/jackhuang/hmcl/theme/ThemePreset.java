@@ -39,7 +39,6 @@ import java.util.Set;
 /// @param id the stable theme identifier inside its pack
 /// @param name the display name
 /// @param description the optional description
-/// @param family the optional family identifier used to group related themes
 /// @param thumbnail the optional theme-pack relative thumbnail path
 /// @param appearance the default appearance fields
 /// @param overrides conditional appearance patches applied in declaration order
@@ -48,7 +47,6 @@ public record ThemePreset(
         String id,
         String name,
         @Nullable String description,
-        @Nullable String family,
         @Nullable String thumbnail,
         ThemeAppearance appearance,
         @Unmodifiable List<ThemeOverride> overrides) {
@@ -62,9 +60,6 @@ public record ThemePreset(
     /// JSON member name for the optional description.
     private static final String FIELD_DESCRIPTION = "description";
 
-    /// JSON member name for the optional theme family.
-    private static final String FIELD_FAMILY = "family";
-
     /// JSON member name for the optional thumbnail path.
     private static final String FIELD_THUMBNAIL = "thumbnail";
 
@@ -76,7 +71,6 @@ public record ThemePreset(
             FIELD_ID,
             FIELD_NAME,
             FIELD_DESCRIPTION,
-            FIELD_FAMILY,
             FIELD_THUMBNAIL,
             FIELD_OVERRIDES);
 
@@ -85,7 +79,6 @@ public record ThemePreset(
     /// @param id the stable theme identifier inside its pack
     /// @param name the display name
     /// @param description the optional description
-    /// @param family the optional family identifier used to group related themes
     /// @param thumbnail the optional theme-pack relative thumbnail path
     /// @param appearance the default appearance fields
     /// @param overrides conditional appearance patches applied in declaration order
@@ -94,9 +87,6 @@ public record ThemePreset(
         name = requireNonBlank(name, FIELD_NAME);
         if (description != null) {
             description = requireNonBlank(description, FIELD_DESCRIPTION);
-        }
-        if (family != null) {
-            family = requireNonBlank(family, FIELD_FAMILY);
         }
         if (thumbnail != null) {
             thumbnail = requireNonBlank(thumbnail, FIELD_THUMBNAIL);
@@ -121,7 +111,6 @@ public record ThemePreset(
                 id,
                 name,
                 readString(object, FIELD_DESCRIPTION),
-                readString(object, FIELD_FAMILY),
                 readString(object, FIELD_THUMBNAIL),
                 appearance,
                 readOverrides(object));
@@ -152,9 +141,6 @@ public record ThemePreset(
         object.addProperty(FIELD_NAME, name);
         if (description != null) {
             object.addProperty(FIELD_DESCRIPTION, description);
-        }
-        if (family != null) {
-            object.addProperty(FIELD_FAMILY, family);
         }
         if (thumbnail != null) {
             object.addProperty(FIELD_THUMBNAIL, thumbnail);
