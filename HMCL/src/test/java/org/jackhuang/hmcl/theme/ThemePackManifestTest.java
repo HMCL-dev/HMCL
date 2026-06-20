@@ -137,6 +137,39 @@ public final class ThemePackManifestTest {
         assertEquals(0.8, background.opacity());
     }
 
+    /// Tests that an empty condition matches every resolution context.
+    @Test
+    public void testEmptyConditionMatchesEveryContext() {
+        ThemePackManifest manifest = ThemePackManifest.fromJson("""
+                {
+                  "formatVersion": 1,
+                  "id": "example.empty-condition",
+                  "version": "1.0.0",
+                  "name": "Empty Condition",
+                  "themes": [
+                    {
+                      "id": "current",
+                      "name": "Current",
+                      "primaryColor": "#111111",
+                      "overrides": [
+                        {
+                          "condition": {},
+                          "primaryColor": "#222222"
+                        }
+                      ]
+                    }
+                  ]
+                }
+                """);
+        ThemePreset preset = manifest.findTheme("current");
+        assertNotNull(preset);
+
+        ThemeAppearance appearance = preset.resolve(
+                new ThemeResolveContext(Brightness.LIGHT, "light", "linux", "x86_64", "en"));
+
+        assertEquals(ThemeColor.of("#222222"), appearance.primaryColor());
+    }
+
     /// Tests that unsupported override fields are rejected.
     @Test
     public void testRejectUnsupportedOverrideField() {
@@ -147,14 +180,23 @@ public final class ThemePackManifestTest {
         assertThrows(JsonParseException.class, () -> ThemePackManifest.fromJson(json));
     }
 
-    /// Tests that unsupported condition keys are rejected.
+    /// Tests that unknown condition keys are accepted but do not match the current context.
     @Test
-    public void testRejectUnsupportedConditionKey() {
+    public void testUnknownConditionKeyDoesNotMatchCurrentContext() {
         String json = MANIFEST.replace(
                 "\"brightness\": \"dark\"",
-                "\"unsupported\": \"dark\"");
+                "\"futureCondition\": \"dark\"");
+        ThemePreset preset = ThemePackManifest.fromJson(json).findTheme("forest");
+        assertNotNull(preset);
 
-        assertThrows(JsonParseException.class, () -> ThemePackManifest.fromJson(json));
+        ThemeAppearance appearance = preset.resolve(
+                new ThemeResolveContext(Brightness.DARK, "auto", "windows", "x86_64", "en"));
+        ThemeBackground background = appearance.background();
+        assertNotNull(background);
+
+        assertEquals(ThemeColor.of("#4D7C3A"), appearance.primaryColor());
+        assertEquals(Contrast.DEFAULT, appearance.contrast());
+        assertEquals("assets/wallpapers/forest.webp", background.path());
     }
 
     /// Tests that numeric contrast values are parsed as MonetFX contrast levels.

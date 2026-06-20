@@ -64,4 +64,11 @@ public enum ThemeBrightness {
             case ADAPTIVE -> contextBrightness;
         };
     }
+
+    /// Returns the canonical JSON value for this brightness directive.
+    ///
+    /// @return the serialized brightness value
+    public String toJsonValue() {
+        return name().toLowerCase(Locale.ROOT);
+    }
 }

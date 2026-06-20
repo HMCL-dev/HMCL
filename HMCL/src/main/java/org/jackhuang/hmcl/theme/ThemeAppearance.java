@@ -127,6 +127,41 @@ public record ThemeAppearance(
                 && titleTransparent == null;
     }
 
+    /// Adds this appearance patch's concrete fields to a JSON object.
+    ///
+    /// @param object the target JSON object
+    void addToJsonObject(JsonObject object) {
+        Objects.requireNonNull(object);
+
+        if (primaryColor != null) {
+            object.addProperty(FIELD_PRIMARY_COLOR, primaryColor.name());
+        }
+        if (brightness != null) {
+            object.addProperty(FIELD_BRIGHTNESS, brightness.toJsonValue());
+        }
+        if (colorStyle != null) {
+            object.addProperty(FIELD_COLOR_STYLE, colorStyle.name().toLowerCase(Locale.ROOT));
+        }
+        if (contrast != null) {
+            addContrast(object, contrast);
+        }
+        if (background != null) {
+            object.add(FIELD_BACKGROUND, background.toJsonObject());
+        }
+        if (titleTransparent != null) {
+            object.addProperty(FIELD_TITLE_TRANSPARENT, titleTransparent);
+        }
+    }
+
+    /// Converts this appearance patch to its JSON representation.
+    ///
+    /// @return the JSON object representing this appearance patch
+    public JsonObject toJsonObject() {
+        JsonObject object = new JsonObject();
+        addToJsonObject(object);
+        return object;
+    }
+
     /// Applies the given patch over this appearance.
     ///
     /// @param patch the patch to apply
@@ -291,6 +326,21 @@ public record ThemeAppearance(
             return Contrast.of(value);
         } catch (IllegalArgumentException e) {
             throw new JsonParseException("Theme contrast value must be between -1 and 1: " + value, e);
+        }
+    }
+
+    /// Adds a canonical contrast value to a JSON object.
+    private static void addContrast(JsonObject object, Contrast contrast) {
+        if (contrast.equals(Contrast.LOW)) {
+            object.addProperty(FIELD_CONTRAST, "low");
+        } else if (contrast.equals(Contrast.DEFAULT)) {
+            object.addProperty(FIELD_CONTRAST, "default");
+        } else if (contrast.equals(Contrast.MEDIUM)) {
+            object.addProperty(FIELD_CONTRAST, "medium");
+        } else if (contrast.equals(Contrast.HIGH)) {
+            object.addProperty(FIELD_CONTRAST, "high");
+        } else {
+            object.addProperty(FIELD_CONTRAST, contrast.getValue());
         }
     }
 }

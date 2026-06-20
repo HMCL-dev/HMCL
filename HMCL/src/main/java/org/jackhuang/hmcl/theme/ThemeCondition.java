@@ -25,6 +25,7 @@ import com.google.gson.JsonPrimitive;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Unmodifiable;
 
+import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.Locale;
@@ -35,7 +36,9 @@ import java.util.Set;
 /// A simple JSON-object condition used by theme-pack overrides.
 ///
 /// A condition is an AND of all members. A string value requires equality, and
-/// an array value requires the context value to match any listed value.
+/// an array value requires the context value to match any listed value. Unknown
+/// condition keys are accepted for forward compatibility, but they do not match
+/// contexts produced by this implementation.
 ///
 /// @param requirements normalized accepted values keyed by condition name
 @NotNullByDefault
@@ -88,9 +91,9 @@ public record ThemeCondition(@Unmodifiable Map<String, @Unmodifiable Set<String>
             for (String value : values) {
                 valueCopy.add(normalizeValue(key, value));
             }
-            copy.put(key, Set.copyOf(valueCopy));
+            copy.put(key, Collections.unmodifiableSet(valueCopy));
         }
-        requirements = Map.copyOf(copy);
+        requirements = Collections.unmodifiableMap(copy);
     }
 
     /// Parses a theme condition from a JSON object.
@@ -125,6 +128,25 @@ public record ThemeCondition(@Unmodifiable Map<String, @Unmodifiable Set<String>
         return true;
     }
 
+    /// Converts this condition to its JSON representation.
+    ///
+    /// @return the JSON object representing this condition
+    public JsonObject toJsonObject() {
+        JsonObject object = new JsonObject();
+        for (Map.Entry<String, Set<String>> entry : requirements.entrySet()) {
+            if (entry.getValue().size() == 1) {
+                object.addProperty(entry.getKey(), entry.getValue().iterator().next());
+            } else {
+                JsonArray array = new JsonArray();
+                for (String value : entry.getValue()) {
+                    array.add(value);
+                }
+                object.add(entry.getKey(), array);
+            }
+        }
+        return object;
+    }
+
     /// Reads one condition field value.
     private static Set<String> readAcceptedValues(String key, JsonElement element) throws JsonParseException {
         LinkedHashSet<String> values = new LinkedHashSet<>();
@@ -151,10 +173,11 @@ public record ThemeCondition(@Unmodifiable Map<String, @Unmodifiable Set<String>
     private static String normalizeKey(String key) {
         Objects.requireNonNull(key);
 
-        return switch (key) {
-            case KEY_BRIGHTNESS, KEY_BRIGHTNESS_MODE, KEY_OS, KEY_ARCH, KEY_LANGUAGE -> key;
-            default -> throw new JsonParseException("Unsupported theme condition key: " + key);
-        };
+        String normalized = key.trim();
+        if (normalized.isEmpty()) {
+            throw new JsonParseException("Theme condition key is blank");
+        }
+        return normalized;
     }
 
     /// Normalizes and validates one condition value.
@@ -162,10 +185,11 @@ public record ThemeCondition(@Unmodifiable Map<String, @Unmodifiable Set<String>
         Objects.requireNonNull(key);
         Objects.requireNonNull(value);
 
-        String normalized = value.trim().toLowerCase(Locale.ROOT);
-        if (normalized.isEmpty()) {
+        String trimmed = value.trim();
+        if (trimmed.isEmpty()) {
             throw new JsonParseException("Empty theme condition value for " + key);
         }
+        String normalized = trimmed.toLowerCase(Locale.ROOT);
 
         return switch (key) {
             case KEY_BRIGHTNESS -> switch (normalized) {
@@ -179,7 +203,7 @@ public record ThemeCondition(@Unmodifiable Map<String, @Unmodifiable Set<String>
             case KEY_OS -> normalizeOperatingSystemValue(normalized, value);
             case KEY_ARCH -> normalizeArchitectureValue(normalized, value);
             case KEY_LANGUAGE -> normalized;
-            default -> throw new JsonParseException("Unsupported theme condition key: " + key);
+            default -> trimmed;
         };
     }
 

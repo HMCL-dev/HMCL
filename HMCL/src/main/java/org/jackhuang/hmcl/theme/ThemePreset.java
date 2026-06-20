@@ -143,6 +143,34 @@ public record ThemePreset(
         return resolved;
     }
 
+    /// Converts this theme preset to its JSON representation.
+    ///
+    /// @return the JSON object representing this theme preset
+    public JsonObject toJsonObject() {
+        JsonObject object = new JsonObject();
+        object.addProperty(FIELD_ID, id);
+        object.addProperty(FIELD_NAME, name);
+        if (description != null) {
+            object.addProperty(FIELD_DESCRIPTION, description);
+        }
+        if (family != null) {
+            object.addProperty(FIELD_FAMILY, family);
+        }
+        if (thumbnail != null) {
+            object.addProperty(FIELD_THUMBNAIL, thumbnail);
+        }
+        appearance.addToJsonObject(object);
+
+        if (!overrides.isEmpty()) {
+            JsonArray array = new JsonArray();
+            for (ThemeOverride override : overrides) {
+                array.add(override.toJsonObject());
+            }
+            object.add(FIELD_OVERRIDES, array);
+        }
+        return object;
+    }
+
     /// Resolves this preset and converts it to the existing launcher [Theme] model.
     ///
     /// @param context the resolution context

@@ -23,6 +23,7 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParseException;
 import com.google.gson.JsonParser;
 import com.google.gson.JsonPrimitive;
+import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Unmodifiable;
@@ -54,6 +55,9 @@ public record ThemePackManifest(
 
     /// The manifest format supported by this implementation.
     public static final int CURRENT_FORMAT_VERSION = 1;
+
+    /// JSON Schema URL for the current manifest format.
+    public static final String SCHEMA_URL = "https://schemas.glavo.site/hmcl/theme-pack/1.0.0";
 
     /// JSON member name for the format version.
     private static final String FIELD_FORMAT_VERSION = "formatVersion";
@@ -168,6 +172,43 @@ public record ThemePackManifest(
             }
         }
         return null;
+    }
+
+    /// Converts this manifest to its JSON object representation.
+    ///
+    /// @return the JSON object representing this manifest
+    public JsonObject toJsonObject() {
+        JsonObject object = new JsonObject();
+        object.addProperty(FIELD_SCHEMA, SCHEMA_URL);
+        object.addProperty(FIELD_FORMAT_VERSION, formatVersion);
+        object.addProperty(FIELD_ID, id);
+        object.addProperty(FIELD_VERSION, version);
+        object.addProperty(FIELD_NAME, name);
+
+        if (!authors.isEmpty()) {
+            JsonArray array = new JsonArray();
+            for (String author : authors) {
+                array.add(author);
+            }
+            object.add(FIELD_AUTHORS, array);
+        }
+        if (description != null) {
+            object.addProperty(FIELD_DESCRIPTION, description);
+        }
+
+        JsonArray themeArray = new JsonArray();
+        for (ThemePreset theme : themes) {
+            themeArray.add(theme.toJsonObject());
+        }
+        object.add(FIELD_THEMES, themeArray);
+        return object;
+    }
+
+    /// Serializes this manifest to formatted JSON.
+    ///
+    /// @return the formatted manifest JSON
+    public String toJson() {
+        return JsonUtils.GSON.toJson(toJsonObject());
     }
 
     /// Checks that no unsupported manifest fields are present.

@@ -77,4 +77,13 @@ public record ThemeOverride(ThemeCondition condition, ThemeAppearance appearance
     public boolean matches(ThemeResolveContext context) {
         return condition.matches(context);
     }
+
+    /// Converts this override to its JSON representation.
+    ///
+    /// @return the JSON object representing this override
+    public JsonObject toJsonObject() {
+        JsonObject object = appearance.toJsonObject();
+        object.add(FIELD_CONDITION, condition.toJsonObject());
+        return object;
+    }
 }

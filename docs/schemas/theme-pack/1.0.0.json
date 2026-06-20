@@ -1,0 +1,419 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.glavo.site/hmcl/theme-pack/1.0.0",
+  "title": "HMCL Theme Pack",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "$schema",
+    "formatVersion",
+    "id",
+    "version",
+    "name",
+    "themes"
+  ],
+  "properties": {
+    "$schema": {
+      "enum": [
+        "https://schemas.glavo.site/hmcl/theme-pack/1.0.0"
+      ]
+    },
+    "formatVersion": {
+      "const": 1
+    },
+    "id": {
+      "$ref": "#/$defs/nonEmptyString"
+    },
+    "version": {
+      "$ref": "#/$defs/nonEmptyString"
+    },
+    "name": {
+      "$ref": "#/$defs/nonEmptyString"
+    },
+    "authors": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/nonEmptyString"
+      },
+      "uniqueItems": true
+    },
+    "description": {
+      "$ref": "#/$defs/nonEmptyString"
+    },
+    "themes": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "$ref": "#/$defs/theme"
+      }
+    }
+  },
+  "$defs": {
+    "nonEmptyString": {
+      "type": "string",
+      "minLength": 1,
+      "pattern": "\\S"
+    },
+    "assetPath": {
+      "type": "string",
+      "minLength": 1,
+      "pattern": "^assets/.+"
+    },
+    "theme": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "name"
+      ],
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "name": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "description": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "family": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "thumbnail": {
+          "$ref": "#/$defs/assetPath"
+        },
+        "primaryColor": {
+          "$ref": "#/$defs/primaryColor"
+        },
+        "brightness": {
+          "$ref": "#/$defs/brightness"
+        },
+        "colorStyle": {
+          "$ref": "#/$defs/colorStyle"
+        },
+        "contrast": {
+          "$ref": "#/$defs/contrast"
+        },
+        "background": {
+          "$ref": "#/$defs/background"
+        },
+        "titleTransparent": {
+          "type": "boolean"
+        },
+        "overrides": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/override"
+          }
+        }
+      }
+    },
+    "override": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "condition"
+      ],
+      "anyOf": [
+        {
+          "required": [
+            "primaryColor"
+          ]
+        },
+        {
+          "required": [
+            "brightness"
+          ]
+        },
+        {
+          "required": [
+            "colorStyle"
+          ]
+        },
+        {
+          "required": [
+            "contrast"
+          ]
+        },
+        {
+          "required": [
+            "background"
+          ]
+        },
+        {
+          "required": [
+            "titleTransparent"
+          ]
+        }
+      ],
+      "properties": {
+        "condition": {
+          "$ref": "#/$defs/condition"
+        },
+        "primaryColor": {
+          "$ref": "#/$defs/primaryColor"
+        },
+        "brightness": {
+          "$ref": "#/$defs/brightness"
+        },
+        "colorStyle": {
+          "$ref": "#/$defs/colorStyle"
+        },
+        "contrast": {
+          "$ref": "#/$defs/contrast"
+        },
+        "background": {
+          "$ref": "#/$defs/background"
+        },
+        "titleTransparent": {
+          "type": "boolean"
+        }
+      }
+    },
+    "primaryColor": {
+      "type": "string",
+      "minLength": 1
+    },
+    "brightness": {
+      "enum": [
+        "light",
+        "dark",
+        "adaptive",
+        "auto"
+      ]
+    },
+    "colorStyle": {
+      "enum": [
+        "tonal_spot",
+        "fidelity",
+        "monochrome",
+        "neutral",
+        "vibrant",
+        "expressive",
+        "content",
+        "rainbow",
+        "fruit_salad",
+        "default"
+      ]
+    },
+    "contrast": {
+      "oneOf": [
+        {
+          "enum": [
+            "low",
+            "standard",
+            "default",
+            "medium",
+            "high"
+          ]
+        },
+        {
+          "type": "number",
+          "minimum": -1,
+          "maximum": 1
+        }
+      ]
+    },
+    "background": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "type": {
+          "enum": [
+            "default",
+            "image",
+            "network",
+            "paint"
+          ]
+        },
+        "path": {
+          "$ref": "#/$defs/assetPath"
+        },
+        "url": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "paint": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "opacity": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        }
+      }
+    },
+    "condition": {
+      "type": "object",
+      "additionalProperties": {
+        "$ref": "#/$defs/stringOrStringArrayNonEmpty"
+      },
+      "properties": {
+        "brightness": {
+          "$ref": "#/$defs/brightnessCondition"
+        },
+        "brightnessMode": {
+          "$ref": "#/$defs/brightnessModeCondition"
+        },
+        "os": {
+          "$ref": "#/$defs/osCondition"
+        },
+        "arch": {
+          "$ref": "#/$defs/archCondition"
+        },
+        "language": {
+          "$ref": "#/$defs/languageCondition"
+        }
+      }
+    },
+    "brightnessCondition": {
+      "$ref": "#/$defs/stringOrStringArrayBrightness"
+    },
+    "brightnessModeCondition": {
+      "$ref": "#/$defs/stringOrStringArrayBrightnessMode"
+    },
+    "osCondition": {
+      "$ref": "#/$defs/stringOrStringArrayOs"
+    },
+    "archCondition": {
+      "$ref": "#/$defs/stringOrStringArrayArch"
+    },
+    "languageCondition": {
+      "$ref": "#/$defs/stringOrStringArrayNonEmpty"
+    },
+    "stringOrStringArrayBrightness": {
+      "oneOf": [
+        {
+          "$ref": "#/$defs/brightnessConditionValue"
+        },
+        {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "#/$defs/brightnessConditionValue"
+          },
+          "uniqueItems": true
+        }
+      ]
+    },
+    "stringOrStringArrayBrightnessMode": {
+      "oneOf": [
+        {
+          "$ref": "#/$defs/brightnessModeConditionValue"
+        },
+        {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "#/$defs/brightnessModeConditionValue"
+          },
+          "uniqueItems": true
+        }
+      ]
+    },
+    "stringOrStringArrayOs": {
+      "oneOf": [
+        {
+          "$ref": "#/$defs/osConditionValue"
+        },
+        {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "#/$defs/osConditionValue"
+          },
+          "uniqueItems": true
+        }
+      ]
+    },
+    "stringOrStringArrayArch": {
+      "oneOf": [
+        {
+          "$ref": "#/$defs/archConditionValue"
+        },
+        {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "#/$defs/archConditionValue"
+          },
+          "uniqueItems": true
+        }
+      ]
+    },
+    "stringOrStringArrayNonEmpty": {
+      "oneOf": [
+        {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "#/$defs/nonEmptyString"
+          },
+          "uniqueItems": true
+        }
+      ]
+    },
+    "brightnessConditionValue": {
+      "enum": [
+        "light",
+        "dark"
+      ]
+    },
+    "brightnessModeConditionValue": {
+      "enum": [
+        "auto",
+        "light",
+        "dark"
+      ]
+    },
+    "osConditionValue": {
+      "enum": [
+        "win",
+        "windows",
+        "mac",
+        "macos",
+        "osx",
+        "linux",
+        "freebsd",
+        "unknown",
+        "universal"
+      ]
+    },
+    "archConditionValue": {
+      "enum": [
+        "amd64",
+        "x64",
+        "x86_32",
+        "x86",
+        "x86_64",
+        "ia32",
+        "ia64",
+        "sparc",
+        "sparcv9",
+        "arm",
+        "arm32",
+        "aarch64",
+        "arm64",
+        "mips",
+        "mips64",
+        "mipsel",
+        "mips64el",
+        "ppc",
+        "ppc64",
+        "ppcle",
+        "ppc64le",
+        "s390",
+        "s390x",
+        "riscv",
+        "riscv32",
+        "riscv64",
+        "loongarch32",
+        "loongarch64",
+        "loongarch64_ow",
+        "unknown"
+      ]
+    }
+  }
+}

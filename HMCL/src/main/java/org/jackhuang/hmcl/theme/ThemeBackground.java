@@ -138,6 +138,29 @@ public record ThemeBackground(
         return Type.DEFAULT;
     }
 
+    /// Converts this background patch to its JSON representation.
+    ///
+    /// @return the JSON object representing this background patch
+    public JsonObject toJsonObject() {
+        JsonObject object = new JsonObject();
+        if (type != null) {
+            object.addProperty(FIELD_TYPE, type.name().toLowerCase(Locale.ROOT));
+        }
+        if (path != null) {
+            object.addProperty(FIELD_PATH, path);
+        }
+        if (url != null) {
+            object.addProperty(FIELD_URL, url);
+        }
+        if (paint != null) {
+            object.addProperty(FIELD_PAINT, paint);
+        }
+        if (opacity != null) {
+            object.addProperty(FIELD_OPACITY, opacity);
+        }
+        return object;
+    }
+
     /// Returns whether this background object contains no concrete fields.
     ///
     /// @return `true` when every field is inherited
