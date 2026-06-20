@@ -34,7 +34,6 @@ import org.jackhuang.hmcl.util.io.Zipper;
 
 import java.io.File;
 import java.io.IOException;
-import java.io.OutputStreamWriter;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
@@ -101,7 +100,7 @@ public class McbbsModpackExportTask extends Task<Void> {
         Path tempManifest = Files.createTempFile("mcbbs_packmeta_", ".json");
         tempManifest.toFile().deleteOnExit();
         try {
-            try (JsonWriter writer = new JsonWriter(new OutputStreamWriter(Files.newOutputStream(tempManifest), StandardCharsets.UTF_8))) {
+            try (JsonWriter writer = new JsonWriter(Files.newBufferedWriter(tempManifest, StandardCharsets.UTF_8))) {
                 writer.setIndent("  ");
                 writer.beginObject();
 
@@ -192,8 +191,10 @@ public class McbbsModpackExportTask extends Task<Void> {
                 writer.name("minMemory").value(info.getMinMemory());
                 writer.name("supportJava").beginArray();
                 if (info.getSupportedJavaVersions() != null) {
-                    for (int ver : info.getSupportedJavaVersions()) {
-                        writer.value(ver);
+                    for (Integer ver : info.getSupportedJavaVersions()) {
+                        if (ver != null) {
+                            writer.value(ver);
+                        }
                     }
                 }
                 writer.endArray();

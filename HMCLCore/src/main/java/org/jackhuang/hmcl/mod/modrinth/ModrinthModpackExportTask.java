@@ -31,7 +31,6 @@ import org.jackhuang.hmcl.util.io.Zipper;
 
 import java.io.File;
 import java.io.IOException;
-import java.io.OutputStreamWriter;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
@@ -76,13 +75,14 @@ public class ModrinthModpackExportTask extends Task<Void> {
         });
     }
 
-    private ModrinthManifest.File tryGetRemoteFile(Path file, String relativePath) throws IOException {
+    private ModrinthManifest.File tryGetRemoteFile(Path file, String relativePath, Set<Path> temporarilyEnabledFiles) throws IOException {
         if (info.isNoCreateRemoteFiles()) {
             return null;
         }
 
         boolean isDisabled = repository.getModManager(version).isDisabled(file);
         if (isDisabled) {
+            temporarilyEnabledFiles.add(file); // record original disabled file
             relativePath = repository.getModManager(version).enableMod(Paths.get(relativePath)).toString();
             file = repository.getRunDirectory(version).resolve(relativePath).normalize();
         }
@@ -153,11 +153,12 @@ public class ModrinthModpackExportTask extends Task<Void> {
 
         String[] resourceDirs = {"resourcepacks", "shaderpacks", "mods"};
         Set<String> remoteFilePaths = new HashSet<>();
+        Set<Path> temporarilyEnabledFiles = new HashSet<>(); // track disabled mods that were temporarily enabled
 
         Path tempIndex = Files.createTempFile("modrinth_index_", ".json");
         tempIndex.toFile().deleteOnExit();
         try {
-            try (JsonWriter writer = new JsonWriter(new OutputStreamWriter(Files.newOutputStream(tempIndex), StandardCharsets.UTF_8))) {
+            try (JsonWriter writer = new JsonWriter(Files.newBufferedWriter(tempIndex, StandardCharsets.UTF_8))) {
                 writer.setIndent("  ");
                 writer.beginObject();
 
@@ -190,7 +191,7 @@ public class ModrinthModpackExportTask extends Task<Void> {
 
                                 ModrinthManifest.File fileEntry = null;
                                 try {
-                                    fileEntry = tryGetRemoteFile(file, relativePath);
+                                    fileEntry = tryGetRemoteFile(file, relativePath, temporarilyEnabledFiles);
                                 } catch (IOException e) {
                                     LOG.warning("Failed to process file: " + file, e);
                                 }
@@ -268,6 +269,27 @@ public class ModrinthModpackExportTask extends Task<Void> {
             }
         } finally {
             Files.deleteIfExists(tempIndex);
+            // Restore disabled mods to their original disabled state
+            for (Path disabledFile : temporarilyEnabledFiles) {
+                try {
+                    // disabledFile is the original .disabled file path (e.g., mods/SomeMod.jar.disabled)
+                    // The enabled version is the same path without the .disabled suffix
+                    String fileName = disabledFile.getFileName().toString();
+                    if (fileName.endsWith(".disabled")) {
+                        String enabledName = fileName.substring(0, fileName.length() - 9); // remove ".disabled"
+                        Path enabledFile = disabledFile.resolveSibling(enabledName);
+                        if (Files.exists(enabledFile)) {
+                            // Move enabled file back to .disabled (overwrite if exists)
+                            Files.move(enabledFile, disabledFile, java.nio.file.StandardCopyOption.REPLACE_EXISTING);
+                            LOG.info("Restored disabled mod: " + disabledFile);
+                        } else {
+                            LOG.warning("Enabled file not found, cannot restore: " + enabledFile);
+                        }
+                    }
+                } catch (IOException e) {
+                    LOG.warning("Failed to restore disabled mod: " + disabledFile, e);
+                }
+            }
         }
     }
 
