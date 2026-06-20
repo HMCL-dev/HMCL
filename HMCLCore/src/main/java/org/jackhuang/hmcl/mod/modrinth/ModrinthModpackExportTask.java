@@ -82,8 +82,10 @@ public class ModrinthModpackExportTask extends Task<Void> {
 
         boolean isDisabled = repository.getModManager(version).isDisabled(file);
         if (isDisabled) {
-            temporarilyEnabledFiles.add(file);
-            relativePath = repository.getModManager(version).enableMod(Paths.get(relativePath)).toString();
+            // Enable the mod and record the new path for later restoration
+            Path enabledPath = repository.getModManager(version).enableMod(Paths.get(relativePath));
+            temporarilyEnabledFiles.add(enabledPath);
+            relativePath = enabledPath.toString();
             file = repository.getRunDirectory(version).resolve(relativePath).normalize();
         }
 
@@ -149,11 +151,12 @@ public class ModrinthModpackExportTask extends Task<Void> {
                 .orElseThrow(() -> new IOException("Cannot parse the version of " + version));
         LibraryAnalyzer analyzer = LibraryAnalyzer.analyze(repository.getResolvedPreservingPatchesVersion(version), gameVersion);
 
-        Set<String> whitelistSet = new HashSet<>(info.getWhitelist());
+        // Defensive handling: if whitelist is null, treat as empty
+        Set<String> whitelistSet = info.getWhitelist() != null ? new HashSet<>(info.getWhitelist()) : Collections.emptySet();
 
         String[] resourceDirs = {"resourcepacks", "shaderpacks", "mods"};
         Set<String> remoteFilePaths = new HashSet<>();
-        Set<Path> temporarilyEnabledFiles = new HashSet<>();
+        Set<Path> temporarilyEnabledFiles = new HashSet<>(); // store enabled file paths
 
         // First, collect all files to avoid modifying directory structure during walkFileTree
         List<Path> allFiles = new ArrayList<>();
@@ -275,22 +278,13 @@ public class ModrinthModpackExportTask extends Task<Void> {
             }
         } finally {
             Files.deleteIfExists(tempIndex);
-            // Restore disabled mods to their original disabled state
-            for (Path disabledFile : temporarilyEnabledFiles) {
+            // Restore disabled mods using the ModManager API
+            for (Path enabledPath : temporarilyEnabledFiles) {
                 try {
-                    String fileName = disabledFile.getFileName().toString();
-                    if (fileName.endsWith(".disabled")) {
-                        String enabledName = fileName.substring(0, fileName.length() - 9);
-                        Path enabledFile = disabledFile.resolveSibling(enabledName);
-                        if (Files.exists(enabledFile)) {
-                            Files.move(enabledFile, disabledFile, java.nio.file.StandardCopyOption.REPLACE_EXISTING);
-                            LOG.info("Restored disabled mod: " + disabledFile);
-                        } else {
-                            LOG.warning("Enabled file not found, cannot restore: " + enabledFile);
-                        }
-                    }
+                    repository.getModManager(version).disableMod(enabledPath);
+                    LOG.info("Restored disabled mod: " + enabledPath);
                 } catch (IOException e) {
-                    LOG.warning("Failed to restore disabled mod: " + disabledFile, e);
+                    LOG.warning("Failed to restore disabled mod: " + enabledPath, e);
                 }
             }
         }
