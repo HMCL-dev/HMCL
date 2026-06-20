@@ -39,7 +39,7 @@ public final class ThemePackExporter {
     public static final String FILE_EXTENSION = ".hmcl-theme";
 
     /// Manifest entry name used by every exported theme pack.
-    public static final String MANIFEST_ENTRY = "theme-pack.json";
+    public static final String MANIFEST_ENTRY = "manifest.json";
 
     /// Prevents instantiation.
     private ThemePackExporter() {

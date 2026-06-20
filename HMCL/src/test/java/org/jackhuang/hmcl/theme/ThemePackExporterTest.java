@@ -34,13 +34,13 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-/// Tests for exporting theme-pack zip files.
+/// Tests for exporting theme-pack files.
 @NotNullByDefault
 public final class ThemePackExporterTest {
 
-    /// Tests exporting a manifest and one asset into a readable zip file.
+    /// Tests exporting a manifest and one asset into a readable theme-pack file.
     @Test
-    public void testExportThemePackZip() throws IOException {
+    public void testExportThemePackFile() throws IOException {
         Path tempDir = createTestDirectory("export");
         Path wallpaper = tempDir.resolve("wallpaper.txt");
         Files.writeString(wallpaper, "wallpaper", StandardCharsets.UTF_8);
@@ -79,7 +79,7 @@ public final class ThemePackExporterTest {
         Path wallpaper = tempDir.resolve("wallpaper.txt");
 
         assertThrows(IllegalArgumentException.class, () -> new ThemePackAsset(wallpaper, "../wallpaper.txt"));
-        assertThrows(IllegalArgumentException.class, () -> new ThemePackAsset(wallpaper, "theme-pack.json"));
+        assertThrows(IllegalArgumentException.class, () -> new ThemePackAsset(wallpaper, "manifest.json"));
         assertThrows(IllegalArgumentException.class, () -> new ThemePackAsset(wallpaper, "assets/../wallpaper.txt"));
     }
 
@@ -94,7 +94,10 @@ public final class ThemePackExporterTest {
         ThemePackAsset second = new ThemePackAsset(wallpaper, "assets/wallpapers/wallpaper.txt");
 
         assertThrows(IllegalArgumentException.class,
-                () -> ThemePackExporter.export(createManifest(), List.of(first, second), tempDir.resolve("theme-pack.zip")));
+                () -> ThemePackExporter.export(
+                        createManifest(),
+                        List.of(first, second),
+                        tempDir.resolve("theme-pack" + ThemePackExporter.FILE_EXTENSION)));
     }
 
     /// Tests rejecting missing asset source files.
@@ -104,7 +107,10 @@ public final class ThemePackExporterTest {
         ThemePackAsset asset = new ThemePackAsset(tempDir.resolve("missing.txt"), "assets/wallpapers/missing.txt");
 
         assertThrows(IOException.class,
-                () -> ThemePackExporter.export(createManifest(), List.of(asset), tempDir.resolve("theme-pack.zip")));
+                () -> ThemePackExporter.export(
+                        createManifest(),
+                        List.of(asset),
+                        tempDir.resolve("theme-pack" + ThemePackExporter.FILE_EXTENSION)));
     }
 
     /// Creates a test directory under the build directory.
@@ -143,7 +149,7 @@ public final class ThemePackExporterTest {
                     {
                       "id": "current",
                       "name": "Current",
-                      "primaryColor": "#5C6BC0",
+                      "color": "#5C6BC0",
                       "brightness": "adaptive",
                       "colorStyle": "fidelity",
                       "contrast": "default",

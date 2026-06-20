@@ -37,7 +37,7 @@ import java.util.Set;
 /// All fields are optional so the same type can represent both a default appearance
 /// and a conditional patch.
 ///
-/// @param primaryColor the primary color seed, or `null` when inherited
+/// @param color the color seed, or `null` when inherited
 /// @param brightness the brightness directive, or `null` when inherited
 /// @param colorStyle the MonetFX color style, or `null` when inherited
 /// @param contrast the MonetFX contrast level, or `null` when inherited
@@ -45,15 +45,15 @@ import java.util.Set;
 /// @param titleTransparent whether the title area should be transparent, or `null` when inherited
 @NotNullByDefault
 public record ThemeAppearance(
-        @Nullable ThemeColor primaryColor,
+        @Nullable ThemeColor color,
         @Nullable ThemeBrightness brightness,
         @Nullable ColorStyle colorStyle,
         @Nullable Contrast contrast,
         @Nullable ThemeBackground background,
         @Nullable Boolean titleTransparent) {
 
-    /// JSON member name for the primary color seed.
-    static final String FIELD_PRIMARY_COLOR = "primaryColor";
+    /// JSON member name for the color seed.
+    static final String FIELD_COLOR = "color";
 
     /// JSON member name for the brightness directive.
     static final String FIELD_BRIGHTNESS = "brightness";
@@ -72,7 +72,7 @@ public record ThemeAppearance(
 
     /// Field names accepted as appearance fields.
     static final Set<String> FIELDS = Set.of(
-            FIELD_PRIMARY_COLOR,
+            FIELD_COLOR,
             FIELD_BRIGHTNESS,
             FIELD_COLOR_STYLE,
             FIELD_CONTRAST,
@@ -81,7 +81,7 @@ public record ThemeAppearance(
 
     /// Creates an appearance patch.
     ///
-    /// @param primaryColor the primary color seed, or `null` when inherited
+    /// @param color the color seed, or `null` when inherited
     /// @param brightness the brightness directive, or `null` when inherited
     /// @param colorStyle the MonetFX color style, or `null` when inherited
     /// @param contrast the MonetFX contrast level, or `null` when inherited
@@ -107,7 +107,7 @@ public record ThemeAppearance(
         checkUnknownFields(object, ignoredFields, sourceName);
 
         return new ThemeAppearance(
-                readPrimaryColor(object),
+                readColor(object),
                 readBrightness(object),
                 readColorStyle(object),
                 readContrast(object),
@@ -119,7 +119,7 @@ public record ThemeAppearance(
     ///
     /// @return `true` when every appearance field is inherited
     public boolean isEmpty() {
-        return primaryColor == null
+        return color == null
                 && brightness == null
                 && colorStyle == null
                 && contrast == null
@@ -133,8 +133,8 @@ public record ThemeAppearance(
     void addToJsonObject(JsonObject object) {
         Objects.requireNonNull(object);
 
-        if (primaryColor != null) {
-            object.addProperty(FIELD_PRIMARY_COLOR, primaryColor.name());
+        if (color != null) {
+            object.addProperty(FIELD_COLOR, color.name());
         }
         if (brightness != null) {
             object.addProperty(FIELD_BRIGHTNESS, brightness.toJsonValue());
@@ -170,7 +170,7 @@ public record ThemeAppearance(
         Objects.requireNonNull(patch);
 
         return new ThemeAppearance(
-                patch.primaryColor != null ? patch.primaryColor : primaryColor,
+                patch.color != null ? patch.color : color,
                 patch.brightness != null ? patch.brightness : brightness,
                 patch.colorStyle != null ? patch.colorStyle : colorStyle,
                 patch.contrast != null ? patch.contrast : contrast,
@@ -187,14 +187,14 @@ public record ThemeAppearance(
     public Theme toTheme(ThemeResolveContext context) {
         Objects.requireNonNull(context);
 
-        ThemeColor resolvedPrimaryColor = primaryColor != null ? primaryColor : Theme.DEFAULT.primaryColorSeed();
+        ThemeColor resolvedColor = color != null ? color : Theme.DEFAULT.primaryColorSeed();
         Brightness resolvedBrightness = brightness != null
                 ? brightness.resolve(context.brightness())
                 : context.brightness();
         ColorStyle resolvedColorStyle = colorStyle != null ? colorStyle : Theme.DEFAULT.colorStyle();
         Contrast resolvedContrast = contrast != null ? contrast : Contrast.DEFAULT;
 
-        return new Theme(resolvedPrimaryColor, resolvedBrightness, resolvedColorStyle, resolvedContrast);
+        return new Theme(resolvedColor, resolvedBrightness, resolvedColorStyle, resolvedContrast);
     }
 
     /// Checks that no unsupported fields are present.
@@ -207,16 +207,16 @@ public record ThemeAppearance(
         }
     }
 
-    /// Reads the optional primary color field.
-    private static @Nullable ThemeColor readPrimaryColor(JsonObject object) {
-        @Nullable String value = readString(object, FIELD_PRIMARY_COLOR);
+    /// Reads the optional color field.
+    private static @Nullable ThemeColor readColor(JsonObject object) {
+        @Nullable String value = readString(object, FIELD_COLOR);
         if (value == null) {
             return null;
         }
 
         @Nullable ThemeColor color = ThemeColor.of(value);
         if (color == null) {
-            throw new JsonParseException("Invalid theme primary color: " + value);
+            throw new JsonParseException("Invalid theme color: " + value);
         }
         return color;
     }

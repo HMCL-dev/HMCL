@@ -82,8 +82,8 @@
         "thumbnail": {
           "$ref": "#/$defs/assetPath"
         },
-        "primaryColor": {
-          "$ref": "#/$defs/primaryColor"
+        "color": {
+          "$ref": "#/$defs/color"
         },
         "brightness": {
           "$ref": "#/$defs/brightness"
@@ -117,7 +117,7 @@
       "anyOf": [
         {
           "required": [
-            "primaryColor"
+            "color"
           ]
         },
         {
@@ -150,8 +150,8 @@
         "condition": {
           "$ref": "#/$defs/condition"
         },
-        "primaryColor": {
-          "$ref": "#/$defs/primaryColor"
+        "color": {
+          "$ref": "#/$defs/color"
         },
         "brightness": {
           "$ref": "#/$defs/brightness"
@@ -170,7 +170,7 @@
         }
       }
     },
-    "primaryColor": {
+    "color": {
       "type": "string",
       "minLength": 1
     },

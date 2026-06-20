@@ -46,7 +46,7 @@ public final class ThemePackManifestTest {
                   "name": "Forest",
                   "family": "forest",
                   "thumbnail": "assets/thumbnails/forest.png",
-                  "primaryColor": "#4D7C3A",
+                  "color": "#4D7C3A",
                   "brightness": "adaptive",
                   "colorStyle": "fidelity",
                   "contrast": "default",
@@ -60,7 +60,7 @@ public final class ThemePackManifestTest {
                       "condition": {
                         "brightness": "dark"
                       },
-                      "primaryColor": "#6FA65A",
+                      "color": "#6FA65A",
                       "background": {
                         "path": "assets/wallpapers/forest-dark.webp"
                       }
@@ -98,7 +98,7 @@ public final class ThemePackManifestTest {
         ThemeBackground background = appearance.background();
         assertNotNull(background);
 
-        assertEquals(ThemeColor.of("#6FA65A"), appearance.primaryColor());
+        assertEquals(ThemeColor.of("#6FA65A"), appearance.color());
         assertEquals(Brightness.DARK, theme.brightness());
         assertEquals(ColorStyle.FIDELITY, theme.colorStyle());
         assertEquals(Contrast.HIGH, theme.contrast());
@@ -130,7 +130,7 @@ public final class ThemePackManifestTest {
         ThemeBackground background = appearance.background();
         assertNotNull(background);
 
-        assertEquals(ThemeColor.of("#4D7C3A"), appearance.primaryColor());
+        assertEquals(ThemeColor.of("#4D7C3A"), appearance.color());
         assertEquals(ColorStyle.FIDELITY, appearance.colorStyle());
         assertEquals(Contrast.DEFAULT, appearance.contrast());
         assertEquals("assets/wallpapers/forest.webp", background.path());
@@ -150,11 +150,11 @@ public final class ThemePackManifestTest {
                     {
                       "id": "current",
                       "name": "Current",
-                      "primaryColor": "#111111",
+                      "color": "#111111",
                       "overrides": [
                         {
                           "condition": {},
-                          "primaryColor": "#222222"
+                          "color": "#222222"
                         }
                       ]
                     }
@@ -167,15 +167,15 @@ public final class ThemePackManifestTest {
         ThemeAppearance appearance = preset.resolve(
                 new ThemeResolveContext(Brightness.LIGHT, "light", "linux", "x86_64", "en"));
 
-        assertEquals(ThemeColor.of("#222222"), appearance.primaryColor());
+        assertEquals(ThemeColor.of("#222222"), appearance.color());
     }
 
     /// Tests that unsupported override fields are rejected.
     @Test
     public void testRejectUnsupportedOverrideField() {
         String json = MANIFEST.replace(
-                "\"primaryColor\": \"#6FA65A\"",
-                "\"primaryColor\": \"#6FA65A\", \"unknownAppearance\": true");
+                "\"color\": \"#6FA65A\"",
+                "\"color\": \"#6FA65A\", \"unknownAppearance\": true");
 
         assertThrows(JsonParseException.class, () -> ThemePackManifest.fromJson(json));
     }
@@ -194,7 +194,7 @@ public final class ThemePackManifestTest {
         ThemeBackground background = appearance.background();
         assertNotNull(background);
 
-        assertEquals(ThemeColor.of("#4D7C3A"), appearance.primaryColor());
+        assertEquals(ThemeColor.of("#4D7C3A"), appearance.color());
         assertEquals(Contrast.DEFAULT, appearance.contrast());
         assertEquals("assets/wallpapers/forest.webp", background.path());
     }
