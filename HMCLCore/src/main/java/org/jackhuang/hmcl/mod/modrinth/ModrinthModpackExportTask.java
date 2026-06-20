@@ -29,10 +29,8 @@ import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.util.DigestUtils;
 import org.jackhuang.hmcl.util.io.Zipper;
 
-import java.io.File;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
-import java.nio.charset.StandardCharsets;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
@@ -257,15 +255,14 @@ public class ModrinthModpackExportTask extends Task<Void> {
                     if (path == null || path.isEmpty()) {
                         return true;
                     }
-                    String normalizedPath = Path.of(path).normalize().toString().replace(File.separatorChar, '/');
-                    Path resolved = runDirectory.resolve(normalizedPath);
+                    Path resolved = runDirectory.resolve(path);
                     if (Files.isDirectory(resolved)) {
-                        return !ModAdviser.match(blackList, normalizedPath, false);
+                        return !ModAdviser.match(blackList, path, false);
                     }
-                    if (remoteFilePaths.contains(normalizedPath)) {
+                    if (remoteFilePaths.contains(path)) {
                         return false;
                     }
-                    return Modpack.acceptFile(normalizedPath, blackList, info.getWhitelist());
+                    return Modpack.acceptFile(path, blackList, info.getWhitelist());
                 });
             }
         } finally {

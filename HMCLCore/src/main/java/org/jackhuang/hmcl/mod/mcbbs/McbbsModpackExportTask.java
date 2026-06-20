@@ -36,7 +36,6 @@ import java.io.File;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.Paths;
 import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -233,14 +232,13 @@ public class McbbsModpackExportTask extends Task<Void> {
 
                 zip.putDirectory(runDirectory, "overrides", path -> {
                     if (path == null || path.isEmpty()) {
-                        return true; // Root directory, always include
+                        return true;
                     }
-                    String normalizedPath = Path.of(path).normalize().toString().replace(File.separatorChar, '/');
-                    Path resolved = runDirectory.resolve(normalizedPath);
+                    Path resolved = runDirectory.resolve(path);
                     if (Files.isDirectory(resolved)) {
-                        return !ModAdviser.match(blackList, normalizedPath, false);
+                        return !ModAdviser.match(blackList, path, false);
                     } else {
-                        return Modpack.acceptFile(normalizedPath, blackList, info.getWhitelist());
+                        return Modpack.acceptFile(path, blackList, info.getWhitelist());
                     }
                 });
             }
