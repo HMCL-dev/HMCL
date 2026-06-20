@@ -99,7 +99,7 @@ public class McbbsModpackExportTask extends Task<Void> {
         LibraryAnalyzer analyzer = LibraryAnalyzer.analyze(repository.getResolvedPreservingPatchesVersion(version), gameVersion);
 
         Path tempManifest = Files.createTempFile("mcbbs_packmeta_", ".json");
-        tempManifest.toFile().deleteOnExit(); // final backup cleanup
+        tempManifest.toFile().deleteOnExit();
         try {
             try (JsonWriter writer = new JsonWriter(Files.newBufferedWriter(tempManifest, StandardCharsets.UTF_8))) {
                 writer.setIndent("  ");
@@ -107,14 +107,14 @@ public class McbbsModpackExportTask extends Task<Void> {
 
                 writer.name("manifestType").value(McbbsModpackManifest.MANIFEST_TYPE);
                 writer.name("manifestVersion").value(2);
-                writer.name("name").value(info.getName());
-                writer.name("version").value(info.getVersion());
-                writer.name("author").value(info.getAuthor());
-                writer.name("description").value(info.getDescription());
+                if (info.getName() != null) writer.name("name").value(info.getName());
+                if (info.getVersion() != null) writer.name("version").value(info.getVersion());
+                if (info.getAuthor() != null) writer.name("author").value(info.getAuthor());
+                if (info.getDescription() != null) writer.name("description").value(info.getDescription());
                 if (info.getFileApi() != null) {
                     writer.name("fileApi").value(StringUtils.removeSuffix(info.getFileApi(), "/"));
                 }
-                writer.name("url").value(info.getUrl());
+                if (info.getUrl() != null) writer.name("url").value(info.getUrl());
                 writer.name("forceUpdate").value(info.isForceUpdate());
 
                 writer.name("origin").beginArray();
@@ -236,7 +236,6 @@ public class McbbsModpackExportTask extends Task<Void> {
                     if (path == null || path.isEmpty()) {
                         return true;
                     }
-                    // Normalize path for consistency with other parts
                     String normalizedPath = Paths.get(path).normalize().toString().replace(File.separatorChar, '/');
                     Path resolved = runDirectory.resolve(normalizedPath);
                     if (Files.isDirectory(resolved)) {

@@ -1,6 +1,6 @@
 /*
  * Hello Minecraft! Launcher
- * Copyright (C) 2026 huangyuhui <huanghongxun2008@126.com> and contributors
+ * Copyright (C) 2020  huangyuhui <huanghongxun2008@126.com> and contributors
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -15,7 +15,7 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-package org.jackhuang.hmcl.mod.modrinth;
+package org.jackhuang.hmcl.mod.mcbbs;
 
 import com.google.gson.stream.JsonWriter;
 import org.jackhuang.hmcl.download.LibraryAnalyzer;
@@ -23,10 +23,13 @@ import org.jackhuang.hmcl.game.DefaultGameRepository;
 import org.jackhuang.hmcl.mod.ModAdviser;
 import org.jackhuang.hmcl.mod.Modpack;
 import org.jackhuang.hmcl.mod.ModpackExportInfo;
-import org.jackhuang.hmcl.mod.RemoteMod;
-import org.jackhuang.hmcl.mod.curse.CurseForgeRemoteModRepository;
+import org.jackhuang.hmcl.mod.curse.CurseManifest;
+import org.jackhuang.hmcl.mod.curse.CurseManifestMinecraft;
+import org.jackhuang.hmcl.mod.curse.CurseManifestModLoader;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.util.DigestUtils;
+import org.jackhuang.hmcl.util.StringUtils;
+import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.io.Zipper;
 
 import java.io.File;
@@ -35,29 +38,38 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Optional;
 
 import static org.jackhuang.hmcl.download.LibraryAnalyzer.LibraryType.*;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 /**
- * Export task for Modrinth modpack format.
+ * Export task for MCBBS modpack format.
  * <p>
- * This implementation streams the index JSON directly to a temporary file using {@link JsonWriter},
- * keeping memory usage low regardless of file count.
+ * Note: This implementation performs two passes over the game directory:
+ * 1. First pass: walks the file tree to generate the manifest JSON (calculating SHA‑1 hashes).
+ * 2. Second pass: compresses the files into the final ZIP.
  * <p>
- * SHA‑1 and SHA‑512 hashes are computed using {@link DigestUtils#digestToString(String, Path)}
- * which uses a streaming {@code DigestInputStream}, safe for large files without OOM risk.
+ * This double traversal is a deliberate trade‑off to avoid holding all file information in memory,
+ * which would cause OutOfMemoryError on very large modpacks. The streaming JSON writer writes the
+ * manifest to a temporary file, keeping memory usage constant regardless of file count.
+ * <p>
+ * SHA‑1 hashes are computed using {@link DigestUtils#digestToString(String, Path)} which uses
+ * a streaming {@code DigestInputStream}, making it safe for large files without OOM risk.
  */
-public class ModrinthModpackExportTask extends Task<Void> {
+public class McbbsModpackExportTask extends Task<Void> {
     private final DefaultGameRepository repository;
     private final String version;
     private final ModpackExportInfo info;
     private final Path modpackFile;
 
-    public ModrinthModpackExportTask(DefaultGameRepository repository, String version, ModpackExportInfo info, Path modpackFile) {
+    public McbbsModpackExportTask(DefaultGameRepository repository, String version, ModpackExportInfo info, Path modpackFile) {
         this.repository = repository;
         this.version = version;
         this.info = info.validate();
@@ -74,71 +86,6 @@ public class ModrinthModpackExportTask extends Task<Void> {
         });
     }
 
-    private ModrinthManifest.File tryGetRemoteFile(Path file, String relativePath, Set<Path> temporarilyEnabledFiles) throws IOException {
-        if (info.isNoCreateRemoteFiles()) {
-            return null;
-        }
-
-        boolean isDisabled = repository.getModManager(version).isDisabled(file);
-        if (isDisabled) {
-            // Use absolute path to avoid working directory issues
-            Path enabledPath = repository.getModManager(version).enableMod(file);
-            temporarilyEnabledFiles.add(enabledPath);
-            file = enabledPath;
-            relativePath = repository.getRunDirectory(version).relativize(file)
-                    .normalize().toString().replace(File.separatorChar, '/');
-        }
-
-        Optional<RemoteMod.Version> modrinthVersion = Optional.empty();
-        Optional<RemoteMod.Version> curseForgeVersion = Optional.empty();
-
-        try {
-            modrinthVersion = ModrinthRemoteModRepository.MODS.getRemoteVersionByLocalFile(file);
-        } catch (IOException e) {
-            LOG.warning("Failed to get remote file from Modrinth for: " + file, e);
-        }
-
-        if (!info.isSkipCurseForgeRemoteFiles() && CurseForgeRemoteModRepository.isAvailable()) {
-            try {
-                curseForgeVersion = CurseForgeRemoteModRepository.MODS.getRemoteVersionByLocalFile(file);
-            } catch (IOException e) {
-                LOG.warning("Failed to get remote file from CurseForge for: " + file, e);
-            }
-        }
-
-        if (modrinthVersion.isEmpty() && curseForgeVersion.isEmpty()) {
-            return null;
-        }
-
-        Map<String, String> hashes = new HashMap<>();
-        hashes.put("sha1", DigestUtils.digestToString("SHA-1", file));
-        hashes.put("sha512", DigestUtils.digestToString("SHA-512", file));
-
-        Map<String, String> env = null;
-        if (isDisabled) {
-            env = new HashMap<>();
-            env.put("client", "optional");
-        }
-
-        List<String> downloads = new ArrayList<>();
-        if (modrinthVersion.isPresent())
-            downloads.add(modrinthVersion.get().getFile().getUrl());
-        if (curseForgeVersion.isPresent())
-            downloads.add(curseForgeVersion.get().getFile().getUrl());
-
-        long fileSize = Files.size(file);
-        if (fileSize > Integer.MAX_VALUE) {
-            LOG.warning("File " + relativePath + " is too large (size: " + fileSize + " bytes), precision may be lost when converting to int");
-        }
-        return new ModrinthManifest.File(
-                relativePath,
-                hashes,
-                env,
-                downloads,
-                (int) fileSize
-        );
-    }
-
     @Override
     public void execute() throws Exception {
         ArrayList<String> blackList = new ArrayList<>(ModAdviser.MODPACK_BLACK_LIST);
@@ -151,152 +98,166 @@ public class ModrinthModpackExportTask extends Task<Void> {
                 .orElseThrow(() -> new IOException("Cannot parse the version of " + version));
         LibraryAnalyzer analyzer = LibraryAnalyzer.analyze(repository.getResolvedPreservingPatchesVersion(version), gameVersion);
 
-        // Defensive handling: if whitelist is null, treat as empty
-        Set<String> whitelistSet = info.getWhitelist() != null ? new HashSet<>(info.getWhitelist()) : Collections.emptySet();
-
-        String[] resourceDirs = {"resourcepacks", "shaderpacks", "mods"};
-        Set<String> remoteFilePaths = new HashSet<>();
-        Set<Path> temporarilyEnabledFiles = new HashSet<>();
-
-        Path tempIndex = Files.createTempFile("modrinth_index_", ".json");
-        tempIndex.toFile().deleteOnExit(); // final backup cleanup
+        Path tempManifest = Files.createTempFile("mcbbs_packmeta_", ".json");
+        tempManifest.toFile().deleteOnExit();
         try {
-            try (JsonWriter writer = new JsonWriter(Files.newBufferedWriter(tempIndex, StandardCharsets.UTF_8))) {
+            try (JsonWriter writer = new JsonWriter(Files.newBufferedWriter(tempManifest, StandardCharsets.UTF_8))) {
                 writer.setIndent("  ");
                 writer.beginObject();
 
-                writer.name("formatVersion").value(1);
-                writer.name("game").value("minecraft");
-                writer.name("versionId").value(info.getVersion());
-                writer.name("name").value(info.getName());
-                if (info.getDescription() != null) {
-                    writer.name("summary").value(info.getDescription());
+                writer.name("manifestType").value(McbbsModpackManifest.MANIFEST_TYPE);
+                writer.name("manifestVersion").value(2);
+                if (info.getName() != null) writer.name("name").value(info.getName());
+                if (info.getVersion() != null) writer.name("version").value(info.getVersion());
+                if (info.getAuthor() != null) writer.name("author").value(info.getAuthor());
+                if (info.getDescription() != null) writer.name("description").value(info.getDescription());
+                if (info.getFileApi() != null) {
+                    writer.name("fileApi").value(StringUtils.removeSuffix(info.getFileApi(), "/"));
                 }
+                if (info.getUrl() != null) writer.name("url").value(info.getUrl());
+                writer.name("forceUpdate").value(info.isForceUpdate());
 
-                writer.name("files").beginArray();
-
-                Set<String> processedPaths = new HashSet<>();
-
-                for (String dir : resourceDirs) {
-                    Path dirPath = runDirectory.resolve(dir);
-                    if (Files.exists(dirPath)) {
-                        Files.walkFileTree(dirPath, new SimpleFileVisitor<Path>() {
-                            @Override
-                            public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
-                                String relativePath = runDirectory.relativize(file).normalize().toString().replace(File.separatorChar, '/');
-                                if (!whitelistSet.contains(relativePath)) {
-                                    return FileVisitResult.CONTINUE;
-                                }
-                                if (processedPaths.contains(relativePath)) {
-                                    return FileVisitResult.CONTINUE;
-                                }
-                                processedPaths.add(relativePath);
-
-                                ModrinthManifest.File fileEntry = null;
-                                try {
-                                    fileEntry = tryGetRemoteFile(file, relativePath, temporarilyEnabledFiles);
-                                } catch (IOException e) {
-                                    LOG.warning("Failed to process file: " + file, e);
-                                }
-                                if (fileEntry != null) {
-                                    remoteFilePaths.add(relativePath);
-                                    writer.beginObject();
-                                    writer.name("path").value(fileEntry.getPath());
-                                    writer.name("hashes").beginObject();
-                                    for (Map.Entry<String, String> hash : fileEntry.getHashes().entrySet()) {
-                                        writer.name(hash.getKey()).value(hash.getValue());
-                                    }
-                                    writer.endObject();
-                                    if (fileEntry.getEnv() != null) {
-                                        writer.name("env").beginObject();
-                                        for (Map.Entry<String, String> env : fileEntry.getEnv().entrySet()) {
-                                            writer.name(env.getKey()).value(env.getValue());
-                                        }
-                                        writer.endObject();
-                                    }
-                                    writer.name("downloads").beginArray();
-                                    for (String url : fileEntry.getDownloads()) {
-                                        writer.value(url);
-                                    }
-                                    writer.endArray();
-                                    writer.name("fileSize").value(fileEntry.getFileSize());
-                                    writer.endObject();
-                                }
-                                return FileVisitResult.CONTINUE;
-                            }
-                        });
+                writer.name("origin").beginArray();
+                if (info.getOrigins() != null) {
+                    for (McbbsModpackManifest.Origin origin : info.getOrigins()) {
+                        writer.beginObject();
+                        writer.name("type").value(origin.getType());
+                        writer.name("id").value(origin.getId());
+                        writer.endObject();
                     }
                 }
-
                 writer.endArray();
 
-                writer.name("dependencies").beginObject();
-                writer.name("minecraft").value(gameVersion);
-                Optional<String> forgeVersion = analyzer.getVersion(FORGE);
-                if (forgeVersion.isPresent()) {
-                    writer.name("forge").value(forgeVersion.get());
+                writer.name("addons").beginArray();
+                writer.beginObject();
+                writer.name("id").value(MINECRAFT.getPatchId());
+                writer.name("version").value(gameVersion);
+                writer.endObject();
+
+                LibraryAnalyzer.LibraryType[] addonTypes = {
+                        FORGE, CLEANROOM, NEO_FORGE, LITELOADER, OPTIFINE, FABRIC, QUILT, LEGACY_FABRIC
+                };
+                for (LibraryAnalyzer.LibraryType type : addonTypes) {
+                    Optional<String> addonVersion = analyzer.getVersion(type);
+                    if (addonVersion.isPresent()) {
+                        writer.beginObject();
+                        writer.name("id").value(type.getPatchId());
+                        writer.name("version").value(addonVersion.get());
+                        writer.endObject();
+                    }
                 }
-                Optional<String> neoForgeVersion = analyzer.getVersion(NEO_FORGE);
-                if (neoForgeVersion.isPresent()) {
-                    writer.name("neoforge").value(neoForgeVersion.get());
+                writer.endArray();
+
+                writer.name("libraries").beginArray();
+                writer.endArray();
+
+                writer.name("files").beginArray();
+                Files.walkFileTree(runDirectory, new SimpleFileVisitor<Path>() {
+                    @Override
+                    public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) throws IOException {
+                        String relativePath = runDirectory.relativize(dir).normalize().toString().replace(File.separatorChar, '/');
+                        if (relativePath.isEmpty()) {
+                            return FileVisitResult.CONTINUE;
+                        }
+                        // Consistent with zip.putDirectory filter: only skip blacklisted directories
+                        if (ModAdviser.match(blackList, relativePath, false)) {
+                            return FileVisitResult.SKIP_SUBTREE;
+                        }
+                        return FileVisitResult.CONTINUE;
+                    }
+
+                    @Override
+                    public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
+                        String relativePath = runDirectory.relativize(file).normalize().toString().replace(File.separatorChar, '/');
+                        if (Modpack.acceptFile(relativePath, blackList, info.getWhitelist())) {
+                            String sha1 = DigestUtils.digestToString("SHA-1", file);
+                            writer.beginObject();
+                            writer.name("type").value("addon");
+                            writer.name("force").value(true);
+                            writer.name("path").value(relativePath);
+                            writer.name("hash").value(sha1);
+                            writer.endObject();
+                        }
+                        return FileVisitResult.CONTINUE;
+                    }
+                });
+                writer.endArray();
+
+                writer.name("settings").beginObject();
+                writer.name("install_mods").value(true);
+                writer.name("install_resourcepack").value(true);
+                writer.endObject();
+
+                writer.name("launchInfo").beginObject();
+                writer.name("minMemory").value(info.getMinMemory());
+                writer.name("supportJava").beginArray();
+                if (info.getSupportedJavaVersions() != null) {
+                    for (Integer ver : info.getSupportedJavaVersions()) {
+                        if (ver != null) {
+                            writer.value(ver);
+                        }
+                    }
                 }
-                Optional<String> fabricVersion = analyzer.getVersion(FABRIC);
-                if (fabricVersion.isPresent()) {
-                    writer.name("fabric-loader").value(fabricVersion.get());
+                writer.endArray();
+
+                writer.name("launchArgument").beginArray();
+                List<String> launchArgs = StringUtils.tokenize(info.getLaunchArguments());
+                if (launchArgs != null) {
+                    for (String arg : launchArgs) {
+                        writer.value(arg);
+                    }
                 }
-                Optional<String> quiltVersion = analyzer.getVersion(QUILT);
-                if (quiltVersion.isPresent()) {
-                    writer.name("quilt-loader").value(quiltVersion.get());
+                writer.endArray();
+
+                writer.name("javaArgument").beginArray();
+                List<String> javaArgs = StringUtils.tokenize(info.getJavaArguments());
+                if (javaArgs != null) {
+                    for (String arg : javaArgs) {
+                        writer.value(arg);
+                    }
                 }
+                writer.endArray();
                 writer.endObject();
 
                 writer.endObject();
             }
-
-            // CRITICAL: Restore disabled mods BEFORE zipping, so they remain .disabled in the final pack
-            for (Path enabledPath : temporarilyEnabledFiles) {
-                try {
-                    repository.getModManager(version).disableMod(enabledPath);
-                    LOG.info("Restored disabled mod: " + enabledPath);
-                } catch (IOException e) {
-                    LOG.warning("Failed to restore disabled mod: " + enabledPath, e);
-                }
-            }
-            temporarilyEnabledFiles.clear();
 
             try (var zip = new Zipper(modpackFile)) {
-                zip.putFile(tempIndex, "modrinth.index.json");
+                zip.putFile(tempManifest, "mcbbs.packmeta");
 
-                zip.putDirectory(runDirectory, "client-overrides", path -> {
+                List<CurseManifestModLoader> modLoaders = new ArrayList<>();
+                analyzer.getVersion(FORGE).ifPresent(forgeVersion -> modLoaders.add(new CurseManifestModLoader("forge-" + forgeVersion, true)));
+                analyzer.getVersion(NEO_FORGE).ifPresent(neoForgeVersion -> modLoaders.add(new CurseManifestModLoader("neoforge-" + neoForgeVersion, true)));
+                analyzer.getVersion(FABRIC).ifPresent(fabricVersion -> modLoaders.add(new CurseManifestModLoader("fabric-" + fabricVersion, true)));
+                CurseManifest curseManifest = new CurseManifest(CurseManifest.MINECRAFT_MODPACK, 1, info.getName(), info.getVersion(), info.getAuthor(), "overrides", new CurseManifestMinecraft(gameVersion, modLoaders), Collections.emptyList());
+                zip.putTextFile(JsonUtils.GSON.toJson(curseManifest), "manifest.json");
+
+                zip.putDirectory(runDirectory, "overrides", path -> {
                     if (path == null || path.isEmpty()) {
                         return true;
                     }
-                    Path resolved = runDirectory.resolve(path);
+                    String normalizedPath = Paths.get(path).normalize().toString().replace(File.separatorChar, '/');
+                    Path resolved = runDirectory.resolve(normalizedPath);
                     if (Files.isDirectory(resolved)) {
-                        return !ModAdviser.match(blackList, path, false);
+                        return !ModAdviser.match(blackList, normalizedPath, false);
+                    } else {
+                        return Modpack.acceptFile(normalizedPath, blackList, info.getWhitelist());
                     }
-                    if (remoteFilePaths.contains(path)) {
-                        return false;
-                    }
-                    return Modpack.acceptFile(path, blackList, info.getWhitelist());
                 });
             }
         } finally {
-            Files.deleteIfExists(tempIndex);
-            // Safety net: restore any mods that might still be enabled if an exception occurred after enabling but before restoration
-            for (Path enabledPath : temporarilyEnabledFiles) {
-                try {
-                    repository.getModManager(version).disableMod(enabledPath);
-                    LOG.info("Restored disabled mod (finally): " + enabledPath);
-                } catch (IOException e) {
-                    LOG.warning("Failed to restore disabled mod (finally): " + enabledPath, e);
-                }
-            }
-            temporarilyEnabledFiles.clear();
+            Files.deleteIfExists(tempManifest);
         }
     }
 
     public static final ModpackExportInfo.Options OPTION = new ModpackExportInfo.Options()
-            .requireNoCreateRemoteFiles()
-            .requireSkipCurseForgeRemoteFiles();
+            .requireFileApi(true)
+            .requireUrl()
+            .requireForceUpdate()
+            .requireMinMemory()
+            .requireAuthlibInjectorServer()
+            .requireJavaArguments()
+            .requireLaunchArguments()
+            .requireOrigins()
+            .requireAuthor();
 }
