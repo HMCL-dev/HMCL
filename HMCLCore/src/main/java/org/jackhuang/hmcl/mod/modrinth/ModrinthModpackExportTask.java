@@ -33,6 +33,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.nio.charset.StandardCharsets;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -44,6 +45,15 @@ import java.util.*;
 import static org.jackhuang.hmcl.download.LibraryAnalyzer.LibraryType.*;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
+/**
+ * Export task for Modrinth modpack format.
+ * <p>
+ * This implementation streams the index JSON directly to a temporary file using {@link JsonWriter},
+ * keeping memory usage low regardless of file count.
+ * <p>
+ * SHA‑1 and SHA‑512 hashes are computed using {@link DigestUtils#digestToString(String, Path)}
+ * which uses a streaming {@code DigestInputStream}, safe for large files without OOM risk.
+ */
 public class ModrinthModpackExportTask extends Task<Void> {
     private final DefaultGameRepository repository;
     private final String version;
@@ -75,7 +85,7 @@ public class ModrinthModpackExportTask extends Task<Void> {
         boolean isDisabled = repository.getModManager(version).isDisabled(file);
         if (isDisabled) {
             relativePath = repository.getModManager(version).enableMod(Paths.get(relativePath)).toString();
-            file = repository.getRunDirectory(version).resolve(relativePath);
+            file = repository.getRunDirectory(version).resolve(relativePath).normalize();
         }
 
         Optional<RemoteMod.Version> modrinthVersion = Optional.empty();
@@ -146,6 +156,7 @@ public class ModrinthModpackExportTask extends Task<Void> {
         Set<String> remoteFilePaths = new HashSet<>();
 
         Path tempIndex = Files.createTempFile("modrinth_index_", ".json");
+        tempIndex.toFile().deleteOnExit();
         try {
             try (JsonWriter writer = new JsonWriter(new OutputStreamWriter(Files.newOutputStream(tempIndex), StandardCharsets.UTF_8))) {
                 writer.setIndent("  ");
@@ -243,15 +254,18 @@ public class ModrinthModpackExportTask extends Task<Void> {
                 zip.putFile(tempIndex, "modrinth.index.json");
 
                 zip.putDirectory(runDirectory, "client-overrides", path -> {
-                    String relativePath = path.replace(File.separatorChar, '/');
-                    Path resolved = runDirectory.resolve(relativePath);
-                    if (Files.isDirectory(resolved)) {
-                        return !ModAdviser.match(blackList, relativePath, false);
+                    if (path == null || path.isEmpty()) {
+                        return true;
                     }
-                    if (remoteFilePaths.contains(relativePath)) {
+                    String normalizedPath = Path.of(path).normalize().toString().replace(File.separatorChar, '/');
+                    Path resolved = runDirectory.resolve(normalizedPath);
+                    if (Files.isDirectory(resolved)) {
+                        return !ModAdviser.match(blackList, normalizedPath, false);
+                    }
+                    if (remoteFilePaths.contains(normalizedPath)) {
                         return false;
                     }
-                    return Modpack.acceptFile(relativePath, blackList, info.getWhitelist());
+                    return Modpack.acceptFile(normalizedPath, blackList, info.getWhitelist());
                 });
             }
         } finally {

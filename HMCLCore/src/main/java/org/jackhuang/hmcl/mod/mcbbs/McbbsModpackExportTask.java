@@ -36,6 +36,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Paths;
 import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -49,6 +50,20 @@ import java.util.Optional;
 import static org.jackhuang.hmcl.download.LibraryAnalyzer.LibraryType.*;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
+/**
+ * Export task for MCBBS modpack format.
+ * <p>
+ * Note: This implementation performs two passes over the game directory:
+ * 1. First pass: walks the file tree to generate the manifest JSON (calculating SHA‑1 hashes).
+ * 2. Second pass: compresses the files into the final ZIP.
+ * <p>
+ * This double traversal is a deliberate trade‑off to avoid holding all file information in memory,
+ * which would cause OutOfMemoryError on very large modpacks. The streaming JSON writer writes the
+ * manifest to a temporary file, keeping memory usage constant regardless of file count.
+ * <p>
+ * SHA‑1 hashes are computed using {@link DigestUtils#digestToString(String, Path)} which uses
+ * a streaming {@code DigestInputStream}, making it safe for large files without OOM risk.
+ */
 public class McbbsModpackExportTask extends Task<Void> {
     private final DefaultGameRepository repository;
     private final String version;
@@ -85,6 +100,7 @@ public class McbbsModpackExportTask extends Task<Void> {
         LibraryAnalyzer analyzer = LibraryAnalyzer.analyze(repository.getResolvedPreservingPatchesVersion(version), gameVersion);
 
         Path tempManifest = Files.createTempFile("mcbbs_packmeta_", ".json");
+        tempManifest.toFile().deleteOnExit();
         try {
             try (JsonWriter writer = new JsonWriter(new OutputStreamWriter(Files.newOutputStream(tempManifest), StandardCharsets.UTF_8))) {
                 writer.setIndent("  ");
@@ -144,6 +160,7 @@ public class McbbsModpackExportTask extends Task<Void> {
                         if (relativePath.isEmpty()) {
                             return FileVisitResult.CONTINUE;
                         }
+                        // Consistent with zip.putDirectory filter: only skip blacklisted directories
                         if (ModAdviser.match(blackList, relativePath, false)) {
                             return FileVisitResult.SKIP_SUBTREE;
                         }
@@ -215,11 +232,15 @@ public class McbbsModpackExportTask extends Task<Void> {
                 zip.putTextFile(JsonUtils.GSON.toJson(curseManifest), "manifest.json");
 
                 zip.putDirectory(runDirectory, "overrides", path -> {
-                    Path resolved = runDirectory.resolve(path);
+                    if (path == null || path.isEmpty()) {
+                        return true; // Root directory, always include
+                    }
+                    String normalizedPath = Path.of(path).normalize().toString().replace(File.separatorChar, '/');
+                    Path resolved = runDirectory.resolve(normalizedPath);
                     if (Files.isDirectory(resolved)) {
-                        return !ModAdviser.match(blackList, path, false);
+                        return !ModAdviser.match(blackList, normalizedPath, false);
                     } else {
-                        return Modpack.acceptFile(path, blackList, info.getWhitelist());
+                        return Modpack.acceptFile(normalizedPath, blackList, info.getWhitelist());
                     }
                 });
             }
