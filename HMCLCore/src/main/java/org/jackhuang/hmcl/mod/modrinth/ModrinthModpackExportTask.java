@@ -82,7 +82,7 @@ public class ModrinthModpackExportTask extends Task<Void> {
 
         boolean isDisabled = repository.getModManager(version).isDisabled(file);
         if (isDisabled) {
-            temporarilyEnabledFiles.add(file); // record original disabled file
+            temporarilyEnabledFiles.add(file);
             relativePath = repository.getModManager(version).enableMod(Paths.get(relativePath)).toString();
             file = repository.getRunDirectory(version).resolve(relativePath).normalize();
         }
@@ -153,7 +153,22 @@ public class ModrinthModpackExportTask extends Task<Void> {
 
         String[] resourceDirs = {"resourcepacks", "shaderpacks", "mods"};
         Set<String> remoteFilePaths = new HashSet<>();
-        Set<Path> temporarilyEnabledFiles = new HashSet<>(); // track disabled mods that were temporarily enabled
+        Set<Path> temporarilyEnabledFiles = new HashSet<>();
+
+        // First, collect all files to avoid modifying directory structure during walkFileTree
+        List<Path> allFiles = new ArrayList<>();
+        for (String dir : resourceDirs) {
+            Path dirPath = runDirectory.resolve(dir);
+            if (Files.exists(dirPath)) {
+                Files.walkFileTree(dirPath, new SimpleFileVisitor<Path>() {
+                    @Override
+                    public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
+                        allFiles.add(file);
+                        return FileVisitResult.CONTINUE;
+                    }
+                });
+            }
+        }
 
         Path tempIndex = Files.createTempFile("modrinth_index_", ".json");
         try {
@@ -173,54 +188,46 @@ public class ModrinthModpackExportTask extends Task<Void> {
 
                 Set<String> processedPaths = new HashSet<>();
 
-                for (String dir : resourceDirs) {
-                    Path dirPath = runDirectory.resolve(dir);
-                    if (Files.exists(dirPath)) {
-                        Files.walkFileTree(dirPath, new SimpleFileVisitor<Path>() {
-                            @Override
-                            public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
-                                String relativePath = runDirectory.relativize(file).normalize().toString().replace(File.separatorChar, '/');
-                                if (!whitelistSet.contains(relativePath)) {
-                                    return FileVisitResult.CONTINUE;
-                                }
-                                if (processedPaths.contains(relativePath)) {
-                                    return FileVisitResult.CONTINUE;
-                                }
-                                processedPaths.add(relativePath);
+                // Now process the collected files safely
+                for (Path file : allFiles) {
+                    String relativePath = runDirectory.relativize(file).normalize().toString().replace(File.separatorChar, '/');
+                    if (!whitelistSet.contains(relativePath)) {
+                        continue;
+                    }
+                    if (processedPaths.contains(relativePath)) {
+                        continue;
+                    }
+                    processedPaths.add(relativePath);
 
-                                ModrinthManifest.File fileEntry = null;
-                                try {
-                                    fileEntry = tryGetRemoteFile(file, relativePath, temporarilyEnabledFiles);
-                                } catch (IOException e) {
-                                    LOG.warning("Failed to process file: " + file, e);
-                                }
-                                if (fileEntry != null) {
-                                    remoteFilePaths.add(relativePath);
-                                    writer.beginObject();
-                                    writer.name("path").value(fileEntry.getPath());
-                                    writer.name("hashes").beginObject();
-                                    for (Map.Entry<String, String> hash : fileEntry.getHashes().entrySet()) {
-                                        writer.name(hash.getKey()).value(hash.getValue());
-                                    }
-                                    writer.endObject();
-                                    if (fileEntry.getEnv() != null) {
-                                        writer.name("env").beginObject();
-                                        for (Map.Entry<String, String> env : fileEntry.getEnv().entrySet()) {
-                                            writer.name(env.getKey()).value(env.getValue());
-                                        }
-                                        writer.endObject();
-                                    }
-                                    writer.name("downloads").beginArray();
-                                    for (String url : fileEntry.getDownloads()) {
-                                        writer.value(url);
-                                    }
-                                    writer.endArray();
-                                    writer.name("fileSize").value(fileEntry.getFileSize());
-                                    writer.endObject();
-                                }
-                                return FileVisitResult.CONTINUE;
+                    ModrinthManifest.File fileEntry = null;
+                    try {
+                        fileEntry = tryGetRemoteFile(file, relativePath, temporarilyEnabledFiles);
+                    } catch (IOException e) {
+                        LOG.warning("Failed to process file: " + file, e);
+                    }
+                    if (fileEntry != null) {
+                        remoteFilePaths.add(relativePath);
+                        writer.beginObject();
+                        writer.name("path").value(fileEntry.getPath());
+                        writer.name("hashes").beginObject();
+                        for (Map.Entry<String, String> hash : fileEntry.getHashes().entrySet()) {
+                            writer.name(hash.getKey()).value(hash.getValue());
+                        }
+                        writer.endObject();
+                        if (fileEntry.getEnv() != null) {
+                            writer.name("env").beginObject();
+                            for (Map.Entry<String, String> env : fileEntry.getEnv().entrySet()) {
+                                writer.name(env.getKey()).value(env.getValue());
                             }
-                        });
+                            writer.endObject();
+                        }
+                        writer.name("downloads").beginArray();
+                        for (String url : fileEntry.getDownloads()) {
+                            writer.value(url);
+                        }
+                        writer.endArray();
+                        writer.name("fileSize").value(fileEntry.getFileSize());
+                        writer.endObject();
                     }
                 }
 
@@ -271,14 +278,11 @@ public class ModrinthModpackExportTask extends Task<Void> {
             // Restore disabled mods to their original disabled state
             for (Path disabledFile : temporarilyEnabledFiles) {
                 try {
-                    // disabledFile is the original .disabled file path (e.g., mods/SomeMod.jar.disabled)
-                    // The enabled version is the same path without the .disabled suffix
                     String fileName = disabledFile.getFileName().toString();
                     if (fileName.endsWith(".disabled")) {
-                        String enabledName = fileName.substring(0, fileName.length() - 9); // remove ".disabled"
+                        String enabledName = fileName.substring(0, fileName.length() - 9);
                         Path enabledFile = disabledFile.resolveSibling(enabledName);
                         if (Files.exists(enabledFile)) {
-                            // Move enabled file back to .disabled (overwrite if exists)
                             Files.move(enabledFile, disabledFile, java.nio.file.StandardCopyOption.REPLACE_EXISTING);
                             LOG.info("Restored disabled mod: " + disabledFile);
                         } else {
