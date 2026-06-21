@@ -57,8 +57,8 @@ import java.util.concurrent.CancellationException;
 
 import static java.util.Collections.emptySet;
 import static javafx.beans.binding.Bindings.createBooleanBinding;
-import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
+import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 public class AccountListItem extends RadioButton {
 
@@ -86,8 +86,8 @@ public class AccountListItem extends RadioButton {
             String name = account.getProfileName();
             return StringUtils.isBlank(name) ? account.getProfileID().toString() : name;
         }, account);
-        if (account instanceof ClassicAccount classicAccount && !(account instanceof OfflineAccount)) {
-            title.bind(Bindings.concat(classicAccount.getLoginName(), " - ", profileName));
+        if (account instanceof ClassicAccount classicAccount) {
+            title.bind(Bindings.concat(profileName, " - ", classicAccount.getLoginName()));
         } else {
             title.bind(profileName);
         }
