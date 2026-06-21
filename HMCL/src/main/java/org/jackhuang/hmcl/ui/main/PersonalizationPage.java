@@ -28,11 +28,13 @@ import javafx.scene.control.ColorPicker;
 import javafx.scene.control.Label;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.layout.*;
+import javafx.scene.paint.Paint;
 import javafx.scene.text.Font;
 import javafx.scene.text.FontSmoothingType;
 import org.jackhuang.hmcl.setting.SettingsManager;
 import org.jackhuang.hmcl.setting.BackgroundType;
 import org.jackhuang.hmcl.setting.FontManager;
+import org.jackhuang.hmcl.setting.ThemeColorType;
 import org.jackhuang.hmcl.setting.UserSettings;
 import org.jackhuang.hmcl.theme.Theme;
 import org.jackhuang.hmcl.theme.ThemeColor;
@@ -149,6 +151,17 @@ public class PersonalizationPage extends StackPane {
             themeColorPickerContainer.getChildren().setAll(picker);
             Platform.runLater(() -> JFXDepthManager.setDepth(picker, 0));
         }
+        {
+            var themeColorTypePane = new LineSelectButton<ThemeColorType>();
+            themeColorTypePane.setTitle(i18n("settings.launcher.theme_color_type"));
+            themeColorTypePane.setNullSafeConverter(type ->
+                    i18n("settings.launcher.theme_color_type." + type.name().toLowerCase(Locale.ROOT)));
+            themeColorTypePane.setDescriptionConverter(type ->
+                    i18n("settings.launcher.theme_color_type." + type.name().toLowerCase(Locale.ROOT) + ".description"));
+            themeColorTypePane.setItems(ThemeColorType.CUSTOM, ThemeColorType.BACKGROUND);
+            themeColorTypePane.valueProperty().bindBidirectional(settings().themeColorTypeProperty());
+            themeList.getContent().add(themeColorTypePane);
+        }
 
         {
             MultiFileItem<BackgroundType> backgroundItem = new MultiFileItem<>();
@@ -182,9 +195,10 @@ public class PersonalizationPage extends StackPane {
                             case CLASSIC -> i18n("launcher.background.classic");
                             case CUSTOM -> settings().backgroundImageProperty().get();
                             case NETWORK -> settings().backgroundImageUrlProperty().get();
-                            case PAINT -> settings().backgroundPaintProperty().get() != null
-                                    ? settings().backgroundPaintProperty().get().toString()
-                                    : i18n("launcher.background.paint");
+                            case PAINT -> {
+                                @Nullable Paint backgroundPaint = settings().backgroundPaintProperty().get();
+                                yield backgroundPaint != null ? backgroundPaint.toString() : i18n("launcher.background.paint");
+                            }
                         };
                     },
                     backgroundItem.selectedDataProperty(),
@@ -245,60 +259,6 @@ public class PersonalizationPage extends StackPane {
         }
 
         {
-            ComponentList logPane = new ComponentList();
-
-            {
-                VBox fontPane = new VBox();
-                fontPane.setSpacing(5);
-
-                {
-                    BorderPane borderPane = new BorderPane();
-                    fontPane.getChildren().add(borderPane);
-                    {
-                        Label left = new Label(i18n("settings.launcher.log.font"));
-                        BorderPane.setAlignment(left, Pos.CENTER_LEFT);
-                        borderPane.setLeft(left);
-                    }
-
-                    {
-                        HBox hBox = new HBox();
-                        hBox.setSpacing(3);
-
-                        FontComboBox cboLogFont = new FontComboBox();
-                        cboLogFont.valueProperty().bindBidirectional(settings().logFontFamilyProperty());
-
-                        JFXTextField txtLogFontSize = new JFXTextField();
-                        FXUtils.setLimitWidth(txtLogFontSize, 50);
-                        FXUtils.bind(txtLogFontSize, settings().logFontSizeProperty(), SafeStringConverter.fromFiniteDouble()
-                                .restrict(it -> it > 0)
-                                .fallbackTo(12.0)
-                                .asPredicate(Validator.addTo(txtLogFontSize)));
-
-                        JFXButton clearButton = FXUtils.newToggleButton4(SVG.RESTORE);
-                        clearButton.setOnAction(e -> cboLogFont.setValue(null));
-
-                        FXUtils.installFastTooltip(clearButton, i18n("button.reset"));
-
-                        hBox.getChildren().setAll(cboLogFont, txtLogFontSize, clearButton);
-
-                        borderPane.setRight(hBox);
-                    }
-                }
-
-                Label lblLogFontDisplay = new Label("[23:33:33] [Client Thread/INFO] [WaterPower]: Loaded mod WaterPower.");
-                lblLogFontDisplay.fontProperty().bind(Bindings.createObjectBinding(
-                        () -> Font.font(Lang.requireNonNullElse(settings().logFontFamilyProperty().get(), FXUtils.DEFAULT_MONOSPACE_FONT), settings().logFontSizeProperty().get()),
-                        settings().logFontFamilyProperty(), settings().logFontSizeProperty()));
-
-                fontPane.getChildren().add(lblLogFontDisplay);
-
-                logPane.getContent().add(fontPane);
-            }
-
-            content.getChildren().addAll(ComponentList.createComponentListTitle(i18n("settings.launcher.log")), logPane);
-        }
-
-        {
             ComponentList fontPane = new ComponentList();
 
             {
@@ -339,6 +299,54 @@ public class PersonalizationPage extends StackPane {
             }
 
             {
+                VBox logFontPane = new VBox();
+                logFontPane.setSpacing(5);
+
+                {
+                    BorderPane borderPane = new BorderPane();
+                    logFontPane.getChildren().add(borderPane);
+                    {
+                        Label left = new Label(i18n("settings.launcher.log.font"));
+                        BorderPane.setAlignment(left, Pos.CENTER_LEFT);
+                        borderPane.setLeft(left);
+                    }
+
+                    {
+                        HBox hBox = new HBox();
+                        hBox.setSpacing(3);
+
+                        FontComboBox cboLogFont = new FontComboBox();
+                        cboLogFont.valueProperty().bindBidirectional(settings().logFontFamilyProperty());
+
+                        JFXTextField txtLogFontSize = new JFXTextField();
+                        FXUtils.setLimitWidth(txtLogFontSize, 50);
+                        FXUtils.bind(txtLogFontSize, settings().logFontSizeProperty(), SafeStringConverter.fromFiniteDouble()
+                                .restrict(it -> it > 0)
+                                .fallbackTo(12.0)
+                                .asPredicate(Validator.addTo(txtLogFontSize)));
+
+                        JFXButton clearButton = FXUtils.newToggleButton4(SVG.RESTORE);
+                        clearButton.setOnAction(e -> cboLogFont.setValue(null));
+
+                        FXUtils.installFastTooltip(clearButton, i18n("button.reset"));
+
+                        hBox.getChildren().setAll(cboLogFont, txtLogFontSize, clearButton);
+
+                        borderPane.setRight(hBox);
+                    }
+                }
+
+                Label lblLogFontDisplay = new Label("[23:33:33] [Client Thread/INFO] [WaterPower]: Loaded mod WaterPower.");
+                lblLogFontDisplay.fontProperty().bind(Bindings.createObjectBinding(
+                        () -> Font.font(Lang.requireNonNullElse(settings().logFontFamilyProperty().get(), FXUtils.DEFAULT_MONOSPACE_FONT), settings().logFontSizeProperty().get()),
+                        settings().logFontFamilyProperty(), settings().logFontSizeProperty()));
+
+                logFontPane.getChildren().add(lblLogFontDisplay);
+
+                fontPane.getContent().add(logFontPane);
+            }
+
+            {
                 var fontAntiAliasingPane = new LineSelectButton<Optional<FontSmoothingType>>();
                 fontAntiAliasingPane.setTitle(i18n("settings.launcher.font.anti_aliasing"));
                 fontAntiAliasingPane.setSubtitle(i18n("settings.take_effect_after_restart"));
@@ -376,7 +384,7 @@ public class PersonalizationPage extends StackPane {
                 fontPane.getContent().add(fontAntiAliasingPane);
             }
 
-            content.getChildren().addAll(ComponentList.createComponentListTitle(i18n("settings.launcher.font")), fontPane);
+            content.getChildren().addAll(ComponentList.createComponentListTitle(i18n("settings.launcher.fonts")), fontPane);
         }
     }
 }

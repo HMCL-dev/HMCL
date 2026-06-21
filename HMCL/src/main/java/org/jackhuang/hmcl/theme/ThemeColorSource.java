@@ -32,10 +32,10 @@ import java.util.Set;
 /// Describes how a theme-pack appearance chooses its Monet seed color.
 ///
 /// @param type the color source type
-/// @param fixedColor the fixed color for [Type#FIXED], or `null` otherwise
+/// @param customColor the custom color for [Type#CUSTOM], or `null` otherwise
 /// @param fallback the fallback color for [Type#WALLPAPER], or `null` to use the launcher default
 @NotNullByDefault
-public record ThemeColorSource(Type type, @Nullable ThemeColor fixedColor, @Nullable ThemeColor fallback) {
+public record ThemeColorSource(Type type, @Nullable ThemeColor customColor, @Nullable ThemeColor fallback) {
     /// JSON member name for the source type.
     private static final String FIELD_SOURCE = "source";
 
@@ -47,8 +47,8 @@ public record ThemeColorSource(Type type, @Nullable ThemeColor fixedColor, @Null
 
     /// Supported color source types.
     public enum Type {
-        /// Use a fixed manifest color.
-        FIXED,
+        /// Uses a custom manifest color.
+        CUSTOM,
 
         /// Extract the seed color from the effective wallpaper image.
         WALLPAPER
@@ -57,24 +57,24 @@ public record ThemeColorSource(Type type, @Nullable ThemeColor fixedColor, @Null
     /// Creates a color source.
     ///
     /// @param type the color source type
-    /// @param fixedColor the fixed color for [Type#FIXED], or `null` otherwise
+    /// @param customColor the custom color for [Type#CUSTOM], or `null` otherwise
     /// @param fallback the fallback color for [Type#WALLPAPER], or `null` to use the launcher default
     public ThemeColorSource {
         Objects.requireNonNull(type);
-        if (type == Type.FIXED) {
-            Objects.requireNonNull(fixedColor);
+        if (type == Type.CUSTOM) {
+            Objects.requireNonNull(customColor);
             fallback = null;
         } else {
-            fixedColor = null;
+            customColor = null;
         }
     }
 
-    /// Creates a fixed color source.
+    /// Creates a custom color source.
     ///
-    /// @param color the fixed color
-    /// @return the fixed color source
-    public static ThemeColorSource fixed(ThemeColor color) {
-        return new ThemeColorSource(Type.FIXED, color, null);
+    /// @param color the custom color
+    /// @return the custom color source
+    public static ThemeColorSource custom(ThemeColor color) {
+        return new ThemeColorSource(Type.CUSTOM, color, null);
     }
 
     /// Creates a wallpaper color source.
@@ -93,7 +93,7 @@ public record ThemeColorSource(Type type, @Nullable ThemeColor fixedColor, @Null
     static ThemeColorSource fromJson(JsonElement element) throws JsonParseException {
         Objects.requireNonNull(element);
         if (element instanceof JsonPrimitive primitive && primitive.isString()) {
-            return fixed(parseColor(primitive.getAsString(), "color"));
+            return custom(parseColor(primitive.getAsString(), "color"));
         }
         if (!(element instanceof JsonObject object)) {
             throw new JsonParseException("Theme color must be a string or object");
@@ -112,8 +112,8 @@ public record ThemeColorSource(Type type, @Nullable ThemeColor fixedColor, @Null
     ///
     /// @return the color source JSON value
     public JsonElement toJsonElement() {
-        if (type == Type.FIXED) {
-            return new JsonPrimitive(Objects.requireNonNull(fixedColor).name());
+        if (type == Type.CUSTOM) {
+            return new JsonPrimitive(Objects.requireNonNull(customColor).name());
         }
 
         JsonObject object = new JsonObject();
@@ -126,10 +126,10 @@ public record ThemeColorSource(Type type, @Nullable ThemeColor fixedColor, @Null
 
     /// Returns the best available color without accessing wallpaper pixels.
     ///
-    /// @return the fixed color, fallback color, or launcher default color
+    /// @return the custom color, fallback color, or launcher default color
     public ThemeColor resolveFallback() {
         return switch (type) {
-            case FIXED -> Objects.requireNonNull(fixedColor);
+            case CUSTOM -> Objects.requireNonNull(customColor);
             case WALLPAPER -> Objects.requireNonNullElse(fallback, ThemeColor.DEFAULT);
         };
     }

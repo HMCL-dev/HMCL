@@ -22,6 +22,7 @@ import org.glavo.monetfx.Brightness;
 import org.jackhuang.hmcl.setting.BackgroundType;
 import org.jackhuang.hmcl.setting.LauncherSettings;
 import org.jackhuang.hmcl.setting.SettingsManager;
+import org.jackhuang.hmcl.setting.ThemeColorType;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
 import org.junit.jupiter.api.Test;
@@ -35,6 +36,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Stream;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -90,6 +92,7 @@ public final class ThemePackManagerTest {
 
             LauncherSettings settings = SettingsManager.settings();
             assertEquals(ThemeColor.of("#248C44"), settings.themeColorProperty().get());
+            assertEquals(ThemeColorType.BACKGROUND, settings.themeColorTypeProperty().get());
             assertEquals("dark", settings.themeBrightnessProperty().get());
             assertEquals(new ThemeSelection("example.ui", "1.0.0", null), settings.themeProperty().get());
             JsonObject themeJson = LauncherSettings.SETTINGS_GSON.toJsonTree(settings)
@@ -120,7 +123,9 @@ public final class ThemePackManagerTest {
     public void testExportCurrentThemePack() throws Exception {
         try (SettingsScope ignored = new SettingsScope()) {
             LauncherSettings settings = SettingsManager.settings();
-            settings.themeColorProperty().set(ThemeColor.of("#663399"));
+            ThemeColor themeColor = Objects.requireNonNull(ThemeColor.of("#663399"));
+            settings.themeColorProperty().set(themeColor);
+            settings.themeColorTypeProperty().set(ThemeColorType.BACKGROUND);
             settings.themeBrightnessProperty().set("dark");
             settings.titleTransparentProperty().set(true);
             settings.backgroundTypeProperty().set(BackgroundType.CLASSIC);
@@ -141,7 +146,7 @@ public final class ThemePackManagerTest {
             assertEquals("com.example.hmcl-theme-pack.test", manifest.id());
             assertEquals("Current Pack", manifest.name());
             assertEquals("Current Theme", theme.name());
-            assertEquals(ThemeColorSource.fixed(ThemeColor.of("#663399")), appearance.color());
+            assertEquals(ThemeColorSource.wallpaper(themeColor), appearance.color());
             assertEquals(ThemeBrightness.DARK, appearance.brightness());
             assertEquals(true, appearance.titleTransparent());
             assertEquals(ThemeBackground.Type.CLASSIC, background.effectiveType());

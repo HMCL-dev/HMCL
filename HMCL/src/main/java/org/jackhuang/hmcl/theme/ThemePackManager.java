@@ -25,6 +25,7 @@ import org.glavo.monetfx.Contrast;
 import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.setting.BackgroundType;
 import org.jackhuang.hmcl.setting.LauncherSettings;
+import org.jackhuang.hmcl.setting.ThemeColorType;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jetbrains.annotations.NotNullByDefault;
@@ -321,6 +322,7 @@ public final class ThemePackManager {
             applyBackground(manifest, themePackDirectory.toAbsolutePath().normalize(), appearance.background());
         }
         if (appearance.color() != null) {
+            currentSettings.themeColorTypeProperty().set(toThemeColorType(appearance.color()));
             currentSettings.themeColorProperty().set(resolveThemeColor(themePackDirectory, appearance));
         }
 
@@ -351,7 +353,7 @@ public final class ThemePackManager {
     public static ExportedThemePack createCurrent(String packId, String packName, String themeName) throws IOException {
         List<ThemePackAsset> assets = new ArrayList<>();
         ThemeAppearance appearance = new ThemeAppearance(
-                ThemeColorSource.fixed(Objects.requireNonNullElse(settings().themeColorProperty().get(), ThemeColor.DEFAULT)),
+                currentThemeColorSource(),
                 currentThemeBrightness(),
                 ColorStyle.FIDELITY,
                 Contrast.DEFAULT,
@@ -373,6 +375,22 @@ public final class ThemePackManager {
                 List.of(theme));
 
         return new ExportedThemePack(manifest, assets);
+    }
+
+    /// Returns the current launcher theme color source as a theme-pack directive.
+    private static ThemeColorSource currentThemeColorSource() {
+        ThemeColor fallback = Objects.requireNonNullElse(settings().themeColorProperty().get(), ThemeColor.DEFAULT);
+        ThemeColorType themeColorType = Objects.requireNonNullElse(settings().themeColorTypeProperty().get(), ThemeColorType.CUSTOM);
+        return themeColorType == ThemeColorType.BACKGROUND
+                ? ThemeColorSource.wallpaper(fallback)
+                : ThemeColorSource.custom(fallback);
+    }
+
+    /// Converts a theme-pack color directive into the launcher setting source type.
+    private static ThemeColorType toThemeColorType(ThemeColorSource color) {
+        return color.type() == ThemeColorSource.Type.WALLPAPER
+                ? ThemeColorType.BACKGROUND
+                : ThemeColorType.CUSTOM;
     }
 
     /// Returns the current condition resolution context.
@@ -433,7 +451,7 @@ public final class ThemePackManager {
     /// Resolves a concrete launcher color from a theme appearance.
     private static ThemeColor resolveThemeColor(Path themePackDirectory, ThemeAppearance appearance) throws IOException {
         ThemeColorSource color = Objects.requireNonNull(appearance.color());
-        if (color.type() == ThemeColorSource.Type.FIXED) {
+        if (color.type() == ThemeColorSource.Type.CUSTOM) {
             return color.resolveFallback();
         }
 
@@ -582,10 +600,7 @@ public final class ThemePackManager {
 
     /// Creates the background model for the current launcher settings.
     private static ThemeBackground createCurrentBackground(List<ThemePackAsset> assets) throws IOException {
-        BackgroundType type = settings().backgroundTypeProperty().get();
-        if (type == null) {
-            type = BackgroundType.DEFAULT;
-        }
+        BackgroundType type = Objects.requireNonNullElse(settings().backgroundTypeProperty().get(), BackgroundType.DEFAULT);
 
         Double opacity = currentBackgroundOpacity();
         return switch (type) {

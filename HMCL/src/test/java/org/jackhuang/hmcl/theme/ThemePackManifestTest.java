@@ -132,6 +132,7 @@ public final class ThemePackManifestTest {
         assertNotNull(background);
 
         assertNotNull(appearance.color());
+        assertEquals(ThemeColorSource.Type.CUSTOM, appearance.color().type());
         assertEquals(ThemeColor.of("#4D7C3A"), appearance.color().resolveFallback());
         assertEquals(ColorStyle.FIDELITY, appearance.colorStyle());
         assertEquals(Contrast.DEFAULT, appearance.contrast());

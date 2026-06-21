@@ -39,6 +39,7 @@ import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.gson.*;
 import org.jackhuang.hmcl.util.i18n.SupportedLocale;
+import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
 
 import java.nio.file.Path;
@@ -51,6 +52,7 @@ import java.util.*;
 /// game settings presets, accounts, launcher state, and authlib-injector servers, are persisted in detached
 /// JSON files managed by [SettingsManager].
 @JsonAdapter(value = LauncherSettings.Adapter.class)
+@NotNullByDefault
 public final class LauncherSettings extends ObservableSetting implements JsonSchemaSetting {
 
     /// The JSON schema supported by this launcher settings class.
@@ -81,9 +83,8 @@ public final class LauncherSettings extends ObservableSetting implements JsonSch
     /// Deserializes launcher settings from JSON.
     ///
     /// @param json the JSON object to read
-    /// @return the deserialized launcher settings, or `null` if the JSON represents `null`
+    /// @return the deserialized launcher settings
     /// @throws JsonParseException if the JSON cannot be deserialized as launcher settings
-    @Nullable
     public static LauncherSettings fromJson(JsonObject json) throws JsonParseException {
         return SETTINGS_GSON.fromJson(json, LauncherSettings.class);
     }
@@ -261,6 +262,15 @@ public final class LauncherSettings extends ObservableSetting implements JsonSch
         return themeColor;
     }
 
+    /// The source used to choose the launcher Monet theme color seed.
+    @SerializedName("themeColorType")
+    private final ObjectProperty<ThemeColorType> themeColorType = new RawPreservingObjectProperty<>(ThemeColorType.CUSTOM);
+
+    /// Returns the launcher theme color source type property.
+    public ObjectProperty<ThemeColorType> themeColorTypeProperty() {
+        return themeColorType;
+    }
+
     /// The font family used by launcher log views.
     @SerializedName("logFontFamily")
     private final StringProperty logFontFamily = new SimpleStringProperty();
@@ -339,10 +349,10 @@ public final class LauncherSettings extends ObservableSetting implements JsonSch
 
     /// The launcher background paint.
     @SerializedName("backgroundPaint")
-    private final ObjectProperty<Paint> backgroundPaint = new SimpleObjectProperty<>();
+    private final ObjectProperty<@Nullable Paint> backgroundPaint = new SimpleObjectProperty<>();
 
     /// Returns the launcher background paint property.
-    public ObjectProperty<Paint> backgroundPaintProperty() {
+    public ObjectProperty<@Nullable Paint> backgroundPaintProperty() {
         return backgroundPaint;
     }
 

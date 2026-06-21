@@ -43,6 +43,12 @@
       "type": "string"
     },
     "themeColor": true,
+    "themeColorType": {
+      "enum": [
+        "CUSTOM",
+        "BACKGROUND"
+      ]
+    },
     "logFontFamily": {
       "type": "string"
     },
