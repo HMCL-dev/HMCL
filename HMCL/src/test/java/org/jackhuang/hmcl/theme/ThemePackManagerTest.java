@@ -133,7 +133,7 @@ public final class ThemePackManagerTest {
 
             Path tempDir = createTestDirectory("export-current");
             Path output = tempDir.resolve("current" + ThemePackExporter.FILE_EXTENSION);
-            ThemePackManager.exportCurrent(output, "com.example.hmcl-theme-pack.test", "Current Pack", "Current Theme");
+            ThemePackManager.exportCurrent(output, "com.example.hmcl-theme-pack.test", "Current Pack", "Test Author");
 
             ThemePackManifest manifest = ThemePackManager.load(output).manifest();
             Theme theme = manifest.findTheme("current");
@@ -145,7 +145,8 @@ public final class ThemePackManagerTest {
 
             assertEquals("com.example.hmcl-theme-pack.test", manifest.id());
             assertEquals("Current Pack", manifest.name());
-            assertEquals("Current Theme", theme.name());
+            assertEquals(List.of("Test Author"), manifest.authors());
+            assertEquals("Current Pack", theme.name());
             assertEquals(ThemeColorSource.wallpaper(themeColor), appearance.color());
             assertEquals(ThemeBrightness.DARK, appearance.brightness());
             assertEquals(true, appearance.titleTransparent());

@@ -61,9 +61,6 @@ public final class ThemePackManager {
     /// Identifier used by the single theme exported from the current launcher appearance.
     private static final String CURRENT_THEME_ID = "current";
 
-    /// Default author used when exporting the current launcher appearance.
-    private static final String CURRENT_THEME_AUTHOR = "User";
-
     /// Prevents instantiation.
     private ThemePackManager() {
     }
@@ -334,12 +331,12 @@ public final class ThemePackManager {
     /// @param outputFile the target theme-pack file
     /// @param packId the exported package identifier
     /// @param packName the exported package display name
-    /// @param themeName the exported theme display name
+    /// @param authorName the exported package author name
     /// @throws IOException if the current appearance cannot be exported
-    public static void exportCurrent(Path outputFile, String packId, String packName, String themeName) throws IOException {
+    public static void exportCurrent(Path outputFile, String packId, String packName, String authorName) throws IOException {
         Objects.requireNonNull(outputFile);
 
-        ExportedThemePack themePack = createCurrent(packId, packName, themeName);
+        ExportedThemePack themePack = createCurrent(packId, packName, authorName);
         ThemePackExporter.export(themePack.manifest(), themePack.assets(), outputFile);
     }
 
@@ -347,10 +344,12 @@ public final class ThemePackManager {
     ///
     /// @param packId the exported package identifier
     /// @param packName the exported package display name
-    /// @param themeName the exported theme display name
+    /// @param authorName the exported package author name
     /// @return the exportable theme-pack descriptor
     /// @throws IOException if the current appearance cannot be represented as a theme pack
-    public static ExportedThemePack createCurrent(String packId, String packName, String themeName) throws IOException {
+    public static ExportedThemePack createCurrent(String packId, String packName, String authorName) throws IOException {
+        packName = requireNonBlank(packName, "packName");
+
         List<ThemePackAsset> assets = new ArrayList<>();
         ThemeAppearance appearance = new ThemeAppearance(
                 currentThemeColorSource(),
@@ -361,7 +360,7 @@ public final class ThemePackManager {
                 settings().titleTransparentProperty().get());
         Theme theme = new Theme(
                 CURRENT_THEME_ID,
-                requireNonBlank(themeName, "themeName"),
+                packName,
                 null,
                 null,
                 appearance,
@@ -369,8 +368,8 @@ public final class ThemePackManager {
         ThemePackManifest manifest = new ThemePackManifest(
                 requireNonBlank(packId, "packId"),
                 CURRENT_THEME_PACK_VERSION,
-                requireNonBlank(packName, "packName"),
-                List.of(CURRENT_THEME_AUTHOR),
+                packName,
+                List.of(requireNonBlank(authorName, "authorName")),
                 null,
                 List.of(theme));
 

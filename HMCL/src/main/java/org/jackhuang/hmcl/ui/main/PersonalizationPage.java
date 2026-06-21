@@ -173,6 +173,18 @@ public class PersonalizationPage extends StackPane {
         return "com.example.hmcl.theme-pack." + UUIDs.toBase62String(UUIDs.generateV7());
     }
 
+    /// Returns the default author name used by the theme-pack export dialog.
+    private static String getDefaultThemePackAuthorName() {
+        String userName = System.getProperty("user.name").trim();
+        return StringUtils.isBlank(userName) ? "Unknown" : userName;
+    }
+
+    /// Returns a trimmed prompt value or falls back to the provided default value when blank.
+    private static String getPromptValueOrDefault(PromptDialogPane.Builder.StringQuestion question, String defaultValue) {
+        String value = question.getValue();
+        return StringUtils.isBlank(value) ? defaultValue : value.trim();
+    }
+
     /// Ensures the selected output file uses the theme-pack extension.
     private static Path ensureThemePackExtension(Path output) {
         String fileName = output.getFileName().toString();
@@ -264,20 +276,36 @@ public class PersonalizationPage extends StackPane {
         }
     }
 
-    /// Asks for the theme-pack name and then saves the current launcher appearance as a theme-pack file.
+    /// Asks for theme-pack metadata and then saves the current launcher appearance as a theme-pack file.
     private void exportCurrentThemePack() {
+        String defaultPackId = newExportedThemePackId();
+        String defaultPackName = i18n("theme_pack.export.default_name");
+        String defaultAuthorName = getDefaultThemePackAuthorName();
+
+        PromptDialogPane.Builder.StringQuestion packIdQuestion = new PromptDialogPane.Builder.StringQuestion(
+                i18n("theme_pack.export.id"),
+                "")
+                .setPromptText(defaultPackId);
         PromptDialogPane.Builder.StringQuestion packNameQuestion = new PromptDialogPane.Builder.StringQuestion(
                 i18n("theme_pack.export.name"),
-                i18n("theme_pack.export.default_name"),
-                new RequiredValidator());
+                "")
+                .setPromptText(defaultPackName);
+        PromptDialogPane.Builder.StringQuestion authorNameQuestion = new PromptDialogPane.Builder.StringQuestion(
+                i18n("theme_pack.export.author"),
+                "")
+                .setPromptText(defaultAuthorName);
 
         Controllers.prompt(new PromptDialogPane.Builder(i18n("theme_pack.export.title"), (questions, handler) -> handler.resolve())
-                .addQuestion(packNameQuestion)).thenAccept(questions -> exportCurrentThemePack(
-                packNameQuestion.getValue().trim()));
+                .addQuestion(packIdQuestion)
+                .addQuestion(packNameQuestion)
+                .addQuestion(authorNameQuestion)).thenAccept(questions -> exportCurrentThemePack(
+                getPromptValueOrDefault(packIdQuestion, defaultPackId),
+                getPromptValueOrDefault(packNameQuestion, defaultPackName),
+                getPromptValueOrDefault(authorNameQuestion, defaultAuthorName)));
     }
 
-    /// Saves current launcher appearance as a theme-pack file with the given package name.
-    private void exportCurrentThemePack(String packName) {
+    /// Saves current launcher appearance as a theme-pack file with the given package metadata.
+    private void exportCurrentThemePack(String packId, String packName, String authorName) {
         FileChooser chooser = new FileChooser();
         chooser.setTitle(i18n("theme_pack.export.title"));
         chooser.setInitialFileName("current-theme" + ThemePackExporter.FILE_EXTENSION);
@@ -292,9 +320,9 @@ public class PersonalizationPage extends StackPane {
         try {
             ThemePackManager.exportCurrent(
                     output,
-                    newExportedThemePackId(),
+                    packId,
                     packName,
-                    packName);
+                    authorName);
             Controllers.dialog(
                     i18n("theme_pack.export.success", output),
                     i18n("message.success"),
