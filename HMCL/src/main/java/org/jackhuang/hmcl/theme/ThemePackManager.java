@@ -22,6 +22,7 @@ import javafx.scene.paint.Color;
 import javafx.scene.paint.Paint;
 import org.glavo.monetfx.ColorStyle;
 import org.glavo.monetfx.Contrast;
+import org.glavo.uuid.UUIDs;
 import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.setting.BackgroundType;
 import org.jackhuang.hmcl.setting.LauncherSettings;
@@ -41,6 +42,7 @@ import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.List;
 import java.util.Objects;
+import java.util.UUID;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
@@ -52,8 +54,8 @@ public final class ThemePackManager {
     /// Directory where imported theme packs are stored for the launcher UI.
     public static final Path THEME_PACKS_DIRECTORY = Metadata.HMCL_LOCAL_HOME.resolve("theme-packs");
 
-    /// Default identifier used when exporting the current launcher appearance.
-    private static final String CURRENT_THEME_PACK_ID = "user.current-theme";
+    /// Namespace used for default exported theme-pack identifiers.
+    private static final String EXPORTED_THEME_PACK_ID_NAMESPACE = "com.example.hmcl-theme-pack";
 
     /// Default version used when exporting the current launcher appearance.
     private static final String CURRENT_THEME_PACK_VERSION = "1.0.0";
@@ -289,7 +291,7 @@ public final class ThemePackManager {
                 appearance,
                 List.of());
         ThemePackManifest manifest = new ThemePackManifest(
-                CURRENT_THEME_PACK_ID,
+                newExportedThemePackId(),
                 CURRENT_THEME_PACK_VERSION,
                 requireNonBlank(packName, "packName"),
                 List.of(CURRENT_THEME_AUTHOR),
@@ -297,6 +299,11 @@ public final class ThemePackManager {
                 List.of(theme));
 
         return new ExportedThemePack(manifest, assets);
+    }
+
+    /// Generates a default theme-pack identifier for an exported launcher appearance.
+    private static String newExportedThemePackId() {
+        return EXPORTED_THEME_PACK_ID_NAMESPACE + "." + UUIDs.toBase62String(UUIDs.generateV7());
     }
 
     /// Returns the current condition resolution context.
