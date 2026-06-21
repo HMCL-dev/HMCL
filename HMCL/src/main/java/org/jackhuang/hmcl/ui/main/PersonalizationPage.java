@@ -123,6 +123,9 @@ public class PersonalizationPage extends StackPane {
                     settings().themeProperty()));
             currentThemeButton.setOnAction(event -> Controllers.navigateForward(new ThemePackManagementPage()));
         }
+        content.getChildren().addAll(ComponentList.createComponentListTitle(i18n("settings.launcher.theme")), themeList);
+
+        ComponentList themeAppearanceList = new ComponentList();
 
         {
             var brightnessPane = new LineSelectButton<String>();
@@ -131,7 +134,7 @@ public class PersonalizationPage extends StackPane {
             brightnessPane.setItems("auto", "light", "dark");
             brightnessPane.valueProperty().bindBidirectional(settings().themeBrightnessProperty());
 
-            themeList.getContent().add(brightnessPane);
+            themeAppearanceList.getContent().add(brightnessPane);
         }
 
         {
@@ -171,7 +174,7 @@ public class PersonalizationPage extends StackPane {
             themeColorChoiceList.selectedValueProperty().bindBidirectional(settings().themeColorTypeProperty());
 
             themeColorSublist.getContent().setAll(themeColorChoiceList);
-            themeList.getContent().add(themeColorSublist);
+            themeAppearanceList.getContent().add(themeColorSublist);
         }
 
         {
@@ -246,16 +249,16 @@ public class PersonalizationPage extends StackPane {
             }
 
             backgroundSublist.getContent().setAll(backgroundItem);
-            themeList.getContent().addAll(backgroundSublist, opacityItem);
+            themeAppearanceList.getContent().addAll(backgroundSublist, opacityItem);
         }
 
         {
             LineToggleButton titleTransparentButton = new LineToggleButton();
-            themeList.getContent().add(titleTransparentButton);
+            themeAppearanceList.getContent().add(titleTransparentButton);
             titleTransparentButton.selectedProperty().bindBidirectional(settings().titleTransparentProperty());
             titleTransparentButton.setTitle(i18n("settings.launcher.title_transparent"));
         }
-        content.getChildren().addAll(ComponentList.createComponentListTitle(i18n("settings.launcher.theme")), themeList);
+        content.getChildren().addAll(ComponentList.createComponentListTitle(i18n("settings.launcher.theme_appearance")), themeAppearanceList);
 
         {
             ComponentList appearanceList = new ComponentList();
