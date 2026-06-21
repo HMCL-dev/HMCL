@@ -51,7 +51,6 @@ import org.jetbrains.annotations.Nullable;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.CancellationException;
@@ -88,10 +87,7 @@ public class AccountListItem extends RadioButton {
             return StringUtils.isBlank(name) ? account.getProfileID().toString() : name;
         }, account);
         if (account instanceof ClassicAccount classicAccount) {
-            title.bind(Bindings.createStringBinding(() -> {
-                if (Objects.equals(profileName.get(), classicAccount.getLoginName())) return profileName.get();
-                else return profileName.get() + " - " + classicAccount.getLoginName();
-            }, profileName));
+            title.bind(Bindings.concat(profileName, " - ", classicAccount.getLoginName()));
         } else {
             title.bind(profileName);
         }
