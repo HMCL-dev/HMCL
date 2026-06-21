@@ -89,18 +89,18 @@ public final class ThemePackManifestTest {
     /// Tests that matching overrides are applied in declaration order and deeply merge backgrounds.
     @Test
     public void testResolveMatchingOverrides() {
-        ThemePreset preset = parseForestPreset();
+        Theme theme = parseForestTheme();
         ThemeResolveContext context = new ThemeResolveContext(Brightness.DARK, "auto", "windows", "x86_64", "en");
 
-        ThemeAppearance appearance = preset.resolve(context);
-        Theme theme = appearance.toTheme(context);
+        ThemeAppearance appearance = theme.resolve(context);
+        ResolvedTheme resolvedTheme = appearance.toResolvedTheme(context);
         ThemeBackground background = appearance.background();
         assertNotNull(background);
 
         assertEquals(ThemeColor.of("#6FA65A"), appearance.color());
-        assertEquals(Brightness.DARK, theme.brightness());
-        assertEquals(ColorStyle.FIDELITY, theme.colorStyle());
-        assertEquals(Contrast.HIGH, theme.contrast());
+        assertEquals(Brightness.DARK, resolvedTheme.brightness());
+        assertEquals(ColorStyle.FIDELITY, resolvedTheme.colorStyle());
+        assertEquals(Contrast.HIGH, resolvedTheme.contrast());
         assertEquals(ThemeBackground.Type.IMAGE, background.effectiveType());
         assertEquals("assets/wallpapers/forest-dark.webp", background.path());
         assertEquals(0.9, background.opacity());
@@ -109,23 +109,23 @@ public final class ThemePackManifestTest {
     /// Tests that array condition values match any listed value.
     @Test
     public void testConditionArrayMatchesAnyValue() {
-        ThemePreset preset = parseForestPreset();
+        Theme theme = parseForestTheme();
         ThemeResolveContext context = new ThemeResolveContext(Brightness.LIGHT, "light", "linux", "arm64", "en");
 
-        Theme theme = preset.toTheme(context);
+        ResolvedTheme resolvedTheme = theme.toResolvedTheme(context);
 
-        assertEquals(Brightness.LIGHT, theme.brightness());
-        assertEquals(ColorStyle.TONAL_SPOT, theme.colorStyle());
-        assertEquals(Contrast.DEFAULT, theme.contrast());
+        assertEquals(Brightness.LIGHT, resolvedTheme.brightness());
+        assertEquals(ColorStyle.TONAL_SPOT, resolvedTheme.colorStyle());
+        assertEquals(Contrast.DEFAULT, resolvedTheme.contrast());
     }
 
     /// Tests that non-matching overrides leave default fields unchanged.
     @Test
     public void testNonMatchingOverridesAreIgnored() {
-        ThemePreset preset = parseForestPreset();
+        Theme theme = parseForestTheme();
         ThemeResolveContext context = new ThemeResolveContext(Brightness.LIGHT, "light", "linux", "x86_64", "en");
 
-        ThemeAppearance appearance = preset.resolve(context);
+        ThemeAppearance appearance = theme.resolve(context);
         ThemeBackground background = appearance.background();
         assertNotNull(background);
 
@@ -160,10 +160,10 @@ public final class ThemePackManifestTest {
                   ]
                 }
                 """);
-        ThemePreset preset = manifest.findTheme("current");
-        assertNotNull(preset);
+        Theme theme = manifest.findTheme("current");
+        assertNotNull(theme);
 
-        ThemeAppearance appearance = preset.resolve(
+        ThemeAppearance appearance = theme.resolve(
                 new ThemeResolveContext(Brightness.LIGHT, "light", "linux", "x86_64", "en"));
 
         assertEquals(ThemeColor.of("#222222"), appearance.color());
@@ -185,10 +185,10 @@ public final class ThemePackManifestTest {
         String json = MANIFEST.replace(
                 "\"brightness\": \"dark\"",
                 "\"futureCondition\": \"dark\"");
-        ThemePreset preset = ThemePackManifest.fromJson(json).findTheme("forest");
-        assertNotNull(preset);
+        Theme theme = ThemePackManifest.fromJson(json).findTheme("forest");
+        assertNotNull(theme);
 
-        ThemeAppearance appearance = preset.resolve(
+        ThemeAppearance appearance = theme.resolve(
                 new ThemeResolveContext(Brightness.DARK, "auto", "windows", "x86_64", "en"));
         ThemeBackground background = appearance.background();
         assertNotNull(background);
@@ -203,21 +203,21 @@ public final class ThemePackManifestTest {
     public void testParseNumericContrast() {
         String json = MANIFEST.replace("\"contrast\": \"default\"", "\"contrast\": 0.5");
 
-        ThemePreset preset = ThemePackManifest.fromJson(json).findTheme("forest");
-        assertNotNull(preset);
+        Theme theme = ThemePackManifest.fromJson(json).findTheme("forest");
+        assertNotNull(theme);
 
-        assertEquals(Contrast.MEDIUM, preset.appearance().contrast());
+        assertEquals(Contrast.MEDIUM, theme.appearance().contrast());
     }
 
     /// Parses the forest theme from the shared manifest.
-    private static ThemePreset parseForestPreset() {
+    private static Theme parseForestTheme() {
         ThemePackManifest manifest = ThemePackManifest.fromJson(MANIFEST);
 
         assertEquals("example.nature", manifest.id());
         assertEquals("Nature", manifest.name());
         assertEquals("Example", manifest.authors().get(0));
-        ThemePreset preset = manifest.findTheme("forest");
-        assertNotNull(preset);
-        return preset;
+        Theme theme = manifest.findTheme("forest");
+        assertNotNull(theme);
+        return theme;
     }
 }

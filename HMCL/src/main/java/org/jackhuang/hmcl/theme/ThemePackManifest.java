@@ -49,7 +49,7 @@ public record ThemePackManifest(
         String name,
         @Unmodifiable List<String> authors,
         @Nullable String description,
-        @Unmodifiable List<ThemePreset> themes) {
+        @Unmodifiable List<Theme> themes) {
 
     /// JSON Schema URL for the current manifest format.
     public static final String SCHEMA_URL = "https://schemas.glavo.site/hmcl/theme-pack/1.0.0";
@@ -145,10 +145,10 @@ public record ThemePackManifest(
     ///
     /// @param themeId the theme ID to find
     /// @return the matching theme, or `null` when no theme has that ID
-    public @Nullable ThemePreset findTheme(String themeId) {
+    public @Nullable Theme findTheme(String themeId) {
         Objects.requireNonNull(themeId);
 
-        for (ThemePreset theme : themes) {
+        for (Theme theme : themes) {
             if (theme.id().equals(themeId)) {
                 return theme;
             }
@@ -178,7 +178,7 @@ public record ThemePackManifest(
         }
 
         JsonArray themeArray = new JsonArray();
-        for (ThemePreset theme : themes) {
+        for (Theme theme : themes) {
             themeArray.add(theme.toJsonObject());
         }
         object.add(FIELD_THEMES, themeArray);
@@ -235,7 +235,7 @@ public record ThemePackManifest(
     }
 
     /// Reads the required themes list.
-    private static List<ThemePreset> readThemes(JsonObject object) {
+    private static List<Theme> readThemes(JsonObject object) {
         JsonElement element = object.get(FIELD_THEMES);
         if (!(element instanceof JsonArray array)) {
             throw new JsonParseException("Theme-pack manifest is missing themes array");
@@ -244,12 +244,12 @@ public record ThemePackManifest(
             throw new JsonParseException("Theme-pack manifest must declare at least one theme");
         }
 
-        ArrayList<ThemePreset> themes = new ArrayList<>(array.size());
+        ArrayList<Theme> themes = new ArrayList<>(array.size());
         for (JsonElement item : array) {
             if (!(item instanceof JsonObject themeObject)) {
                 throw new JsonParseException("Theme-pack theme must be an object");
             }
-            themes.add(ThemePreset.fromJson(themeObject));
+            themes.add(Theme.fromJson(themeObject));
         }
         return themes;
     }

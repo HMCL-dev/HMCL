@@ -32,7 +32,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 
-/// Appearance values contributed by a theme preset or override.
+/// Appearance values contributed by a theme or override.
 ///
 /// All fields are optional so the same type can represent both a default appearance
 /// and a conditional patch.
@@ -180,21 +180,21 @@ public record ThemeAppearance(
                 patch.titleTransparent != null ? patch.titleTransparent : titleTransparent);
     }
 
-    /// Converts this appearance to the existing launcher [Theme] model.
+    /// Converts this appearance to concrete launcher theme values.
     ///
     /// @param context the resolution context that provides adaptive brightness
     /// @return the concrete theme used by MonetFX
-    public Theme toTheme(ThemeResolveContext context) {
+    public ResolvedTheme toResolvedTheme(ThemeResolveContext context) {
         Objects.requireNonNull(context);
 
-        ThemeColor resolvedColor = color != null ? color : Theme.DEFAULT.primaryColorSeed();
+        ThemeColor resolvedColor = color != null ? color : ResolvedTheme.DEFAULT.primaryColorSeed();
         Brightness resolvedBrightness = brightness != null
                 ? brightness.resolve(context.brightness())
                 : context.brightness();
-        ColorStyle resolvedColorStyle = colorStyle != null ? colorStyle : Theme.DEFAULT.colorStyle();
+        ColorStyle resolvedColorStyle = colorStyle != null ? colorStyle : ResolvedTheme.DEFAULT.colorStyle();
         Contrast resolvedContrast = contrast != null ? contrast : Contrast.DEFAULT;
 
-        return new Theme(resolvedColor, resolvedBrightness, resolvedColorStyle, resolvedContrast);
+        return new ResolvedTheme(resolvedColor, resolvedBrightness, resolvedColorStyle, resolvedContrast);
     }
 
     /// Checks that no unsupported fields are present.

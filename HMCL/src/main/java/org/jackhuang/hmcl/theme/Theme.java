@@ -1,6 +1,6 @@
 /*
  * Hello Minecraft! Launcher
- * Copyright (C) 2025 huangyuhui <huanghongxun2008@126.com> and contributors
+ * Copyright (C) 2026 huangyuhui <huanghongxun2008@126.com> and contributors
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -17,78 +17,201 @@
  */
 package org.jackhuang.hmcl.theme;
 
-import org.glavo.monetfx.*;
+import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParseException;
+import com.google.gson.JsonPrimitive;
+import org.jetbrains.annotations.NotNullByDefault;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Objects;
+import java.util.Set;
 
-/// @author Glavo
-public final class Theme {
+/// One selectable theme inside a theme pack.
+///
+/// The theme object's top-level appearance fields provide default values. Each
+/// matching override is applied in array order to produce the resolved appearance.
+///
+/// @param id the stable theme identifier inside its pack
+/// @param name the display name
+/// @param description the optional description
+/// @param thumbnail the optional theme-pack relative thumbnail path
+/// @param appearance the default appearance fields
+/// @param overrides conditional appearance patches applied in declaration order
+@NotNullByDefault
+public record Theme(
+        String id,
+        String name,
+        @Nullable String description,
+        @Nullable String thumbnail,
+        ThemeAppearance appearance,
+        @Unmodifiable List<ThemeOverride> overrides) {
 
-    public static final Theme DEFAULT = new Theme(ThemeColor.DEFAULT, Brightness.DEFAULT, ColorStyle.FIDELITY, Contrast.DEFAULT);
+    /// JSON member name for the theme ID.
+    private static final String FIELD_ID = "id";
 
-    private final ThemeColor primaryColorSeed;
-    private final Brightness brightness;
-    private final ColorStyle colorStyle;
-    private final Contrast contrast;
+    /// JSON member name for the display name.
+    private static final String FIELD_NAME = "name";
 
-    public Theme(ThemeColor primaryColorSeed,
-                 Brightness brightness,
-                 ColorStyle colorStyle,
-                 Contrast contrast
-    ) {
-        this.primaryColorSeed = primaryColorSeed;
-        this.brightness = brightness;
-        this.colorStyle = colorStyle;
-        this.contrast = contrast;
+    /// JSON member name for the optional description.
+    private static final String FIELD_DESCRIPTION = "description";
+
+    /// JSON member name for the optional thumbnail path.
+    private static final String FIELD_THUMBNAIL = "thumbnail";
+
+    /// JSON member name for conditional overrides.
+    private static final String FIELD_OVERRIDES = "overrides";
+
+    /// Non-appearance fields accepted by a theme object.
+    private static final Set<String> IGNORED_FIELDS = Set.of(
+            FIELD_ID,
+            FIELD_NAME,
+            FIELD_DESCRIPTION,
+            FIELD_THUMBNAIL,
+            FIELD_OVERRIDES);
+
+    /// Creates a theme.
+    ///
+    /// @param id the stable theme identifier inside its pack
+    /// @param name the display name
+    /// @param description the optional description
+    /// @param thumbnail the optional theme-pack relative thumbnail path
+    /// @param appearance the default appearance fields
+    /// @param overrides conditional appearance patches applied in declaration order
+    public Theme {
+        id = requireNonBlank(id, FIELD_ID);
+        name = requireNonBlank(name, FIELD_NAME);
+        if (description != null) {
+            description = requireNonBlank(description, FIELD_DESCRIPTION);
+        }
+        if (thumbnail != null) {
+            thumbnail = requireNonBlank(thumbnail, FIELD_THUMBNAIL);
+        }
+        Objects.requireNonNull(appearance);
+        overrides = List.copyOf(overrides);
     }
 
-    public ColorScheme toColorScheme() {
-        return ColorScheme.newBuilder()
-                .setPrimaryColorSeed(primaryColorSeed.color())
-                .setColorStyle(colorStyle)
-                .setBrightness(brightness)
-                .setSpecVersion(ColorSpecVersion.SPEC_2025)
-                .setContrast(contrast)
-                .build();
+    /// Parses a theme from JSON.
+    ///
+    /// @param object the theme JSON object
+    /// @return the parsed theme
+    /// @throws JsonParseException if the theme object is malformed
+    static Theme fromJson(JsonObject object) throws JsonParseException {
+        Objects.requireNonNull(object);
+
+        String id = requireMemberString(object, FIELD_ID);
+        String name = requireMemberString(object, FIELD_NAME);
+        ThemeAppearance appearance = ThemeAppearance.fromJson(object, IGNORED_FIELDS, "definition");
+
+        return new Theme(
+                id,
+                name,
+                readString(object, FIELD_DESCRIPTION),
+                readString(object, FIELD_THUMBNAIL),
+                appearance,
+                readOverrides(object));
     }
 
-    public ThemeColor primaryColorSeed() {
-        return primaryColorSeed;
+    /// Resolves this theme against a context by applying matching overrides.
+    ///
+    /// @param context the resolution context
+    /// @return the resolved appearance
+    public ThemeAppearance resolve(ThemeResolveContext context) {
+        Objects.requireNonNull(context);
+
+        ThemeAppearance resolved = appearance;
+        for (ThemeOverride override : overrides) {
+            if (override.matches(context)) {
+                resolved = resolved.merge(override.appearance());
+            }
+        }
+        return resolved;
     }
 
-    public Brightness brightness() {
-        return brightness;
+    /// Converts this theme to its JSON representation.
+    ///
+    /// @return the JSON object representing this theme
+    public JsonObject toJsonObject() {
+        JsonObject object = new JsonObject();
+        object.addProperty(FIELD_ID, id);
+        object.addProperty(FIELD_NAME, name);
+        if (description != null) {
+            object.addProperty(FIELD_DESCRIPTION, description);
+        }
+        if (thumbnail != null) {
+            object.addProperty(FIELD_THUMBNAIL, thumbnail);
+        }
+        appearance.addToJsonObject(object);
+
+        if (!overrides.isEmpty()) {
+            JsonArray array = new JsonArray();
+            for (ThemeOverride override : overrides) {
+                array.add(override.toJsonObject());
+            }
+            object.add(FIELD_OVERRIDES, array);
+        }
+        return object;
     }
 
-    public ColorStyle colorStyle() {
-        return colorStyle;
+    /// Resolves this theme and converts it to concrete launcher theme values.
+    ///
+    /// @param context the resolution context
+    /// @return the concrete theme used by MonetFX
+    public ResolvedTheme toResolvedTheme(ThemeResolveContext context) {
+        return resolve(context).toResolvedTheme(context);
     }
 
-    public Contrast contrast() {
-        return contrast;
+    /// Reads all conditional override objects.
+    private static List<ThemeOverride> readOverrides(JsonObject object) {
+        JsonElement element = object.get(FIELD_OVERRIDES);
+        if (element == null) {
+            return List.of();
+        }
+        if (!(element instanceof JsonArray array)) {
+            throw new JsonParseException("Theme overrides must be an array");
+        }
+
+        ArrayList<ThemeOverride> overrides = new ArrayList<>(array.size());
+        for (JsonElement item : array) {
+            if (!(item instanceof JsonObject overrideObject)) {
+                throw new JsonParseException("Theme override must be an object");
+            }
+            overrides.add(ThemeOverride.fromJson(overrideObject));
+        }
+        return overrides;
     }
 
-    @Override
-    public boolean equals(Object obj) {
-        return obj == this || obj instanceof Theme that
-                && this.primaryColorSeed.color().equals(that.primaryColorSeed.color())
-                && this.brightness.equals(that.brightness)
-                && this.colorStyle.equals(that.colorStyle)
-                && this.contrast.equals(that.contrast);
+    /// Reads a required string member.
+    private static String requireMemberString(JsonObject object, String field) {
+        @Nullable String value = readString(object, field);
+        if (value == null) {
+            throw new JsonParseException("Theme is missing required string field: " + field);
+        }
+        return value;
     }
 
-    @Override
-    public int hashCode() {
-        return Objects.hash(primaryColorSeed, brightness, colorStyle, contrast);
+    /// Reads an optional string member.
+    private static @Nullable String readString(JsonObject object, String field) {
+        JsonElement element = object.get(field);
+        if (element == null) {
+            return null;
+        }
+        if (!(element instanceof JsonPrimitive primitive) || !primitive.isString()) {
+            throw new JsonParseException("Theme field must be a string: " + field);
+        }
+        return primitive.getAsString();
     }
 
-    @Override
-    public String toString() {
-        return "Theme[" +
-                "primaryColorSeed=" + primaryColorSeed + ", " +
-                "brightness=" + brightness + ", " +
-                "colorStyle=" + colorStyle + ", " +
-                "contrast=" + contrast + ']';
+    /// Returns a non-blank string value.
+    private static String requireNonBlank(String value, String field) {
+        String trimmed = value.trim();
+        if (trimmed.isEmpty()) {
+            throw new IllegalArgumentException("Theme field is blank: " + field);
+        }
+        return trimmed;
     }
-
 }

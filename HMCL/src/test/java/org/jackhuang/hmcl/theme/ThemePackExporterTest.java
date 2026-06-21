@@ -62,7 +62,7 @@ public final class ThemePackExporterTest {
             String exportedManifest = readEntry(zipFile, manifestEntry);
             assertTrue(exportedManifest.contains(ThemePackManifest.SCHEMA_URL));
             ThemePackManifest parsed = ThemePackManifest.fromJson(exportedManifest);
-            ThemePreset theme = parsed.findTheme("current");
+            Theme theme = parsed.findTheme("current");
             assertNotNull(theme);
             assertEquals("user.current-theme", parsed.id());
             assertEquals("assets/wallpapers/wallpaper.txt", theme.appearance().background().path());
