@@ -159,7 +159,7 @@ public final class ThemePackManager {
     public static @Nullable InstalledThemePack findInstalled(ThemeSelection selection) throws IOException {
         Objects.requireNonNull(selection);
 
-        Path directory = installedThemePackDirectory(selection.packId(), selection.version());
+        Path directory = installedThemePackDirectory(selection.packId());
         if (!Files.isDirectory(directory)) {
             return null;
         }
@@ -168,7 +168,7 @@ public final class ThemePackManager {
 
     /// Lists all installed theme packs.
     ///
-    /// @return installed theme packs sorted by display name, package ID, and version
+    /// @return installed theme packs sorted by display name and package ID
     /// @throws IOException if installed theme-pack metadata cannot be listed or parsed
     public static @Unmodifiable List<InstalledThemePack> listInstalled() throws IOException {
         if (!Files.isDirectory(THEME_PACKS_DIRECTORY)) {
@@ -176,32 +176,24 @@ public final class ThemePackManager {
         }
 
         ArrayList<InstalledThemePack> result = new ArrayList<>();
-        try (Stream<Path> packIdDirectories = Files.list(THEME_PACKS_DIRECTORY)) {
-            for (Path packIdDirectory : packIdDirectories
+        try (Stream<Path> themePackDirectories = Files.list(THEME_PACKS_DIRECTORY)) {
+            for (Path themePackDirectory : themePackDirectories
                     .filter(Files::isDirectory)
                     .filter(path -> !path.getFileName().toString().startsWith("."))
                     .toList()) {
-                try (Stream<Path> versionDirectories = Files.list(packIdDirectory)) {
-                    for (Path versionDirectory : versionDirectories
-                            .filter(Files::isDirectory)
-                            .filter(path -> !path.getFileName().toString().startsWith("."))
-                            .toList()) {
-                        result.add(loadInstalled(versionDirectory));
-                    }
-                }
+                result.add(loadInstalled(themePackDirectory));
             }
         }
 
         result.sort(Comparator
                 .comparing((InstalledThemePack themePack) -> themePack.manifest().name(), String.CASE_INSENSITIVE_ORDER)
-                .thenComparing(themePack -> themePack.manifest().id(), String.CASE_INSENSITIVE_ORDER)
-                .thenComparing(themePack -> themePack.manifest().version(), String.CASE_INSENSITIVE_ORDER));
+                .thenComparing(themePack -> themePack.manifest().id(), String.CASE_INSENSITIVE_ORDER));
         return List.copyOf(result);
     }
 
     /// Installs a theme-pack file under the launcher's local theme-pack directory.
     ///
-    /// Existing files for the same package ID and version are replaced.
+    /// Existing files for the same package ID are replaced.
     ///
     /// @param file the theme-pack file
     /// @return the installed theme pack
@@ -246,13 +238,11 @@ public final class ThemePackManager {
         }
 
         deleteIfExists(targetDirectory);
-        deleteDirectoryIfEmpty(targetDirectory.getParent());
 
         @Nullable ThemeSelection selection = settings().themeProperty().get();
         ThemePackManifest manifest = themePack.manifest();
         if (selection != null
-                && selection.packId().equals(manifest.id())
-                && selection.version().equals(manifest.version())) {
+                && selection.packId().equals(manifest.id())) {
             settings().themeProperty().set(null);
         }
     }
@@ -323,7 +313,7 @@ public final class ThemePackManager {
             currentSettings.customThemeColorProperty().set(resolveThemeColor(themePackDirectory, appearance));
         }
 
-        currentSettings.themeProperty().set(new ThemeSelection(manifest.id(), manifest.version(), theme.id()));
+        currentSettings.themeProperty().set(new ThemeSelection(manifest.id(), theme.id()));
     }
 
     /// Exports the current launcher appearance to a theme-pack file.
@@ -501,14 +491,13 @@ public final class ThemePackManager {
 
     /// Returns the directory used for one installed theme pack.
     private static Path installedThemePackDirectory(ThemePackManifest manifest) {
-        return installedThemePackDirectory(manifest.id(), manifest.version());
+        return installedThemePackDirectory(manifest.id());
     }
 
     /// Returns the directory used for one installed theme pack.
-    static Path installedThemePackDirectory(String packId, String version) {
+    static Path installedThemePackDirectory(String packId) {
         return THEME_PACKS_DIRECTORY
                 .resolve(sanitizePathSegment(packId))
-                .resolve(sanitizePathSegment(version))
                 .toAbsolutePath()
                 .normalize();
     }
@@ -587,18 +576,6 @@ public final class ThemePackManager {
     private static void deleteIfExists(Path path) throws IOException {
         if (Files.exists(path) || Files.isSymbolicLink(path)) {
             FileUtils.forceDelete(path);
-        }
-    }
-
-    /// Deletes a directory only when it exists and contains no entries.
-    private static void deleteDirectoryIfEmpty(@Nullable Path path) throws IOException {
-        if (path == null || !Files.isDirectory(path)) {
-            return;
-        }
-        try (Stream<Path> entries = Files.list(path)) {
-            if (entries.findAny().isEmpty()) {
-                Files.delete(path);
-            }
         }
     }
 

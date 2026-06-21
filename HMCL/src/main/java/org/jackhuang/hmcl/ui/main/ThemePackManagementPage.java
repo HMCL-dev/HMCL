@@ -195,8 +195,7 @@ public final class ThemePackManagementPage extends ListPageBase<ThemePackManager
         @Nullable ThemeSelection selection = settings().themeProperty().get();
         ThemePackManifest manifest = themePack.manifest();
         return selection != null
-                && selection.packId().equals(manifest.id())
-                && selection.version().equals(manifest.version());
+                && selection.packId().equals(manifest.id());
     }
 
     /// Returns a display name for one theme-pack theme.

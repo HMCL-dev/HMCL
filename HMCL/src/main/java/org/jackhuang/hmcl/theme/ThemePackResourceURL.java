@@ -27,14 +27,13 @@ import java.util.Objects;
 
 /// URL reference to a resource stored in an installed theme pack.
 ///
-/// The serialized form is `hmcl://theme-pack/<pack-id>/<version>/<asset-entry>`.
+/// The serialized form is `hmcl://theme-pack/<pack-id>/<asset-entry>`.
 /// The asset entry must use the same `assets/...` layout as theme-pack zip entries.
 ///
 /// @param packId the theme-pack identifier
-/// @param version the installed theme-pack version
 /// @param entryName the normalized theme-pack asset entry name
 @NotNullByDefault
-public record ThemePackResourceURL(String packId, String version, String entryName) {
+public record ThemePackResourceURL(String packId, String entryName) {
     /// URL scheme used for installed theme-pack resources.
     public static final String SCHEME = "hmcl";
 
@@ -44,11 +43,9 @@ public record ThemePackResourceURL(String packId, String version, String entryNa
     /// Creates a theme-pack resource URL.
     ///
     /// @param packId the theme-pack identifier
-    /// @param version the installed theme-pack version
     /// @param entryName the theme-pack asset entry name
     public ThemePackResourceURL {
         packId = requirePathSegment(packId, "packId");
-        version = requirePathSegment(version, "version");
         entryName = ThemePackAsset.normalizeEntryName(entryName);
     }
 
@@ -59,7 +56,7 @@ public record ThemePackResourceURL(String packId, String version, String entryNa
     /// @return the theme-pack resource URL
     public static ThemePackResourceURL of(ThemePackManifest manifest, String entryName) {
         Objects.requireNonNull(manifest);
-        return new ThemePackResourceURL(manifest.id(), manifest.version(), entryName);
+        return new ThemePackResourceURL(manifest.id(), entryName);
     }
 
     /// Parses a theme-pack resource URL.
@@ -89,12 +86,12 @@ public record ThemePackResourceURL(String packId, String version, String entryNa
             throw new IllegalArgumentException("Invalid theme-pack resource URL: " + value);
         }
 
-        String[] segments = path.substring(1).split("/", 3);
-        if (segments.length != 3) {
+        String[] segments = path.substring(1).split("/", 2);
+        if (segments.length != 2) {
             throw new IllegalArgumentException("Invalid theme-pack resource URL: " + value);
         }
 
-        return new ThemePackResourceURL(segments[0], segments[1], segments[2]);
+        return new ThemePackResourceURL(segments[0], segments[1]);
     }
 
     /// Resolves this URL to the installed local file.
@@ -103,7 +100,7 @@ public record ThemePackResourceURL(String packId, String version, String entryNa
     /// @throws IOException if the referenced installed resource does not exist
     public Path resolve() throws IOException {
         return ThemePackManager.resolveInstalledAsset(
-                ThemePackManager.installedThemePackDirectory(packId, version),
+                ThemePackManager.installedThemePackDirectory(packId),
                 entryName);
     }
 
@@ -115,7 +112,7 @@ public record ThemePackResourceURL(String packId, String version, String entryNa
         return WebURL.newBuilder()
                 .setScheme(SCHEME)
                 .setHost(HOST)
-                .setPath("/" + packId + "/" + version + "/" + entryName)
+                .setPath("/" + packId + "/" + entryName)
                 .build()
                 .href();
     }

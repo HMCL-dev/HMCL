@@ -26,22 +26,18 @@ import java.util.Objects;
 /// Identifies one installed theme selected by the launcher.
 ///
 /// @param packId the theme-pack identifier
-/// @param version the theme-pack version
 /// @param themeId the selected theme identifier inside the pack, or `null` for an unnamed single-theme pack
 @NotNullByDefault
 public record ThemeSelection(
         @SerializedName("packId") String packId,
-        @SerializedName("version") String version,
         @SerializedName("themeId") @Nullable String themeId) {
 
     /// Creates a theme selection reference.
     ///
     /// @param packId the theme-pack identifier
-    /// @param version the theme-pack version
     /// @param themeId the selected theme identifier inside the pack, or `null` for an unnamed single-theme pack
     public ThemeSelection {
         packId = requireNonBlank(packId, "packId");
-        version = requireNonBlank(version, "version");
         if (themeId != null) {
             themeId = requireNonBlank(themeId, "themeId");
         }

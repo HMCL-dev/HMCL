@@ -54,9 +54,8 @@ public final class ThemePackManagerTest {
     @Test
     public void testApplyImageThemePack() throws Exception {
         Path installedDirectory = ThemePackManager.THEME_PACKS_DIRECTORY
-                .resolve("example.ui")
-                .resolve("1.0.0");
-        deleteRecursively(installedDirectory.getParent());
+                .resolve("example.ui");
+        deleteRecursively(installedDirectory);
 
         try (SettingsScope ignored = new SettingsScope()) {
             Path tempDir = createTestDirectory("apply-image");
@@ -96,12 +95,11 @@ public final class ThemePackManagerTest {
             assertEquals(ThemeColorType.BACKGROUND, settings.themeColorTypeProperty().get());
             assertEquals(ColorStyle.EXPRESSIVE, settings.themeColorStyleProperty().get());
             assertEquals("dark", settings.themeBrightnessProperty().get());
-            assertEquals(new ThemeSelection("example.ui", "1.0.0", null), settings.themeProperty().get());
+            assertEquals(new ThemeSelection("example.ui", null), settings.themeProperty().get());
             JsonObject themeJson = LauncherSettings.SETTINGS_GSON.toJsonTree(settings)
                     .getAsJsonObject()
                     .getAsJsonObject("theme");
             assertEquals("example.ui", themeJson.get("packId").getAsString());
-            assertEquals("1.0.0", themeJson.get("version").getAsString());
             assertFalse(themeJson.has("themeId"));
             assertTrue(settings.titleTransparentProperty().get());
             assertEquals(BackgroundType.CUSTOM, settings.backgroundTypeProperty().get());
@@ -112,11 +110,48 @@ public final class ThemePackManagerTest {
             ThemePackResourceURL backgroundResource = ThemePackResourceURL.parse(settings.backgroundImageProperty().get());
             assertNotNull(backgroundResource);
             assertEquals("example.ui", backgroundResource.packId());
-            assertEquals("1.0.0", backgroundResource.version());
             assertEquals("assets/wallpapers/wallpaper.png", backgroundResource.entryName());
             assertEquals(installedDirectory.resolve("assets/wallpapers/wallpaper.png"), backgroundResource.resolve());
         } finally {
-            deleteRecursively(installedDirectory.getParent());
+            deleteRecursively(installedDirectory);
+        }
+    }
+
+    /// Tests installing a package replaces an existing version with the same package ID.
+    @Test
+    public void testInstallReplacesSamePackageId() throws Exception {
+        Path installedDirectory = ThemePackManager.THEME_PACKS_DIRECTORY
+                .resolve("example.replace");
+        deleteRecursively(installedDirectory);
+
+        try (SettingsScope ignored = new SettingsScope()) {
+            Path tempDir = createTestDirectory("replace-package");
+            Path firstThemePackFile = tempDir.resolve("first" + ThemePackExporter.FILE_EXTENSION);
+            ThemePackExporter.export(
+                    createMinimalManifest("example.replace", "1.0.0", "Replace Example"),
+                    List.of(),
+                    firstThemePackFile);
+
+            Path secondThemePackFile = tempDir.resolve("second" + ThemePackExporter.FILE_EXTENSION);
+            ThemePackExporter.export(
+                    createMinimalManifest("example.replace", "2.0.0", "Replace Example"),
+                    List.of(),
+                    secondThemePackFile);
+
+            ThemePackManager.InstalledThemePack firstInstalledThemePack = ThemePackManager.install(firstThemePackFile);
+            assertEquals(installedDirectory, firstInstalledThemePack.directory());
+            assertEquals("1.0.0", firstInstalledThemePack.manifest().version());
+
+            Path staleFile = installedDirectory.resolve("stale.txt");
+            Files.writeString(staleFile, "stale", StandardCharsets.UTF_8);
+
+            ThemePackManager.InstalledThemePack secondInstalledThemePack = ThemePackManager.install(secondThemePackFile);
+            assertEquals(installedDirectory, secondInstalledThemePack.directory());
+            assertEquals("2.0.0", secondInstalledThemePack.manifest().version());
+            assertFalse(Files.exists(staleFile));
+            assertFalse(Files.isDirectory(installedDirectory.resolve("1.0.0")));
+        } finally {
+            deleteRecursively(installedDirectory);
         }
     }
 
@@ -165,12 +200,11 @@ public final class ThemePackManagerTest {
     public void testThemePackResourceURLRoundTrip() {
         ThemePackResourceURL resource = new ThemePackResourceURL(
                 "example.pack",
-                "1.0.0",
                 "assets/wall papers/a+b.png");
 
         String serialized = resource.toString();
 
-        assertEquals("hmcl://theme-pack/example.pack/1.0.0/assets/wall%20papers/a+b.png", serialized);
+        assertEquals("hmcl://theme-pack/example.pack/assets/wall%20papers/a+b.png", serialized);
         assertEquals(resource, ThemePackResourceURL.parse(serialized));
         assertNull(ThemePackResourceURL.parse("/tmp/background.png"));
         assertNull(ThemePackResourceURL.parse("C:\\background.png"));
@@ -246,6 +280,25 @@ public final class ThemePackManagerTest {
                   }
                 }
                 """);
+    }
+
+    /// Creates a minimal single-theme manifest.
+    ///
+    /// @param id the package ID
+    /// @param version the package version
+    /// @param name the package display name
+    /// @return the parsed manifest
+    private static ThemePackManifest createMinimalManifest(String id, String version, String name) {
+        return ThemePackManifest.fromJson("""
+                {
+                  "$schema": "https://schemas.glavo.site/hmcl/theme-pack/1.0.0",
+                  "id": "%s",
+                  "version": "%s",
+                  "name": "%s",
+                  "authors": ["Example"],
+                  "theme": {}
+                }
+                """.formatted(id, version, name));
     }
 
     /// Temporarily replaces the launcher settings singleton used by theme-pack code.

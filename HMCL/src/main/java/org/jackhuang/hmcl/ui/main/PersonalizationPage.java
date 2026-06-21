@@ -82,7 +82,7 @@ import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 public class PersonalizationPage extends StackPane {
     /// Internal selection reference for the built-in default theme.
     private static final ThemeSelection DEFAULT_THEME_SELECTION =
-            new ThemeSelection("hmcl.builtin.default", "1.0.0", null);
+            new ThemeSelection("hmcl.builtin.default", null);
 
     /// Time format used by default exported theme names.
     private static final DateTimeFormatter EXPORTED_THEME_NAME_FORMATTER =
@@ -180,9 +180,9 @@ public class PersonalizationPage extends StackPane {
     /// Returns a subtitle for a missing theme selection.
     private static String getMissingThemeChoiceDescription(ThemeSelection selection) {
         if (selection.themeId() == null) {
-            return selection.packId() + " - " + selection.version();
+            return selection.packId();
         }
-        return selection.packId() + " - " + selection.version() + " - " + selection.themeId();
+        return selection.packId() + " - " + selection.themeId();
     }
 
     /// Returns the file chooser filter for HMCL theme-pack files.
@@ -324,7 +324,6 @@ public class PersonalizationPage extends StackPane {
         private static ThemeChoice installed(ThemePackManager.InstalledThemePack themePack, Theme theme) {
             ThemeSelection selection = new ThemeSelection(
                     themePack.manifest().id(),
-                    themePack.manifest().version(),
                     theme.id());
             return new ThemeChoice(
                     getThemeChoiceTitle(themePack, theme),
