@@ -51,14 +51,15 @@ import org.jetbrains.annotations.Nullable;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.CancellationException;
 
 import static java.util.Collections.emptySet;
 import static javafx.beans.binding.Bindings.createBooleanBinding;
-import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
+import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 public class AccountListItem extends RadioButton {
 
@@ -86,8 +87,11 @@ public class AccountListItem extends RadioButton {
             String name = account.getProfileName();
             return StringUtils.isBlank(name) ? account.getProfileID().toString() : name;
         }, account);
-        if (account instanceof ClassicAccount classicAccount && !(account instanceof OfflineAccount)) {
-            title.bind(Bindings.concat(classicAccount.getLoginName(), " - ", profileName));
+        if (account instanceof ClassicAccount classicAccount) {
+            title.bind(Bindings.createStringBinding(() -> {
+                if (Objects.equals(profileName.get(), classicAccount.getLoginName())) return profileName.get();
+                else return classicAccount.getLoginName() + " - " + profileName.get();
+            }, profileName));
         } else {
             title.bind(profileName);
         }
