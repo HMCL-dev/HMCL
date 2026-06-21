@@ -38,9 +38,11 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.Enumeration;
 import java.util.List;
 import java.util.Objects;
+import java.util.stream.Stream;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
@@ -154,6 +156,39 @@ public final class ThemePackManager {
         }
     }
 
+    /// Lists all installed theme packs.
+    ///
+    /// @return installed theme packs sorted by display name, package ID, and version
+    /// @throws IOException if installed theme-pack metadata cannot be listed or parsed
+    public static @Unmodifiable List<InstalledThemePack> listInstalled() throws IOException {
+        if (!Files.isDirectory(THEME_PACKS_DIRECTORY)) {
+            return List.of();
+        }
+
+        ArrayList<InstalledThemePack> result = new ArrayList<>();
+        try (Stream<Path> packIdDirectories = Files.list(THEME_PACKS_DIRECTORY)) {
+            for (Path packIdDirectory : packIdDirectories
+                    .filter(Files::isDirectory)
+                    .filter(path -> !path.getFileName().toString().startsWith("."))
+                    .toList()) {
+                try (Stream<Path> versionDirectories = Files.list(packIdDirectory)) {
+                    for (Path versionDirectory : versionDirectories
+                            .filter(Files::isDirectory)
+                            .filter(path -> !path.getFileName().toString().startsWith("."))
+                            .toList()) {
+                        result.add(loadInstalled(versionDirectory));
+                    }
+                }
+            }
+        }
+
+        result.sort(Comparator
+                .comparing((InstalledThemePack themePack) -> themePack.manifest().name(), String.CASE_INSENSITIVE_ORDER)
+                .thenComparing(themePack -> themePack.manifest().id(), String.CASE_INSENSITIVE_ORDER)
+                .thenComparing(themePack -> themePack.manifest().version(), String.CASE_INSENSITIVE_ORDER));
+        return List.copyOf(result);
+    }
+
     /// Installs a theme-pack file under the launcher's local theme-pack directory.
     ///
     /// Existing files for the same package ID and version are replaced.
@@ -182,6 +217,33 @@ public final class ThemePackManager {
                 e.addSuppressed(suppressed);
             }
             throw e;
+        }
+    }
+
+    /// Removes an installed theme pack from the launcher's local theme-pack directory.
+    ///
+    /// If the removed package is currently selected, the stored theme selection is cleared.
+    ///
+    /// @param themePack the installed theme pack to remove
+    /// @throws IOException if the installed package cannot be removed
+    public static void uninstall(InstalledThemePack themePack) throws IOException {
+        Objects.requireNonNull(themePack);
+
+        Path rootDirectory = THEME_PACKS_DIRECTORY.toAbsolutePath().normalize();
+        Path targetDirectory = themePack.directory().toAbsolutePath().normalize();
+        if (!targetDirectory.startsWith(rootDirectory) || targetDirectory.equals(rootDirectory)) {
+            throw new IOException("Theme-pack directory is outside the managed directory: " + targetDirectory);
+        }
+
+        deleteIfExists(targetDirectory);
+        deleteDirectoryIfEmpty(targetDirectory.getParent());
+
+        @Nullable ThemeSelection selection = settings().themeProperty().get();
+        ThemePackManifest manifest = themePack.manifest();
+        if (selection != null
+                && selection.packId().equals(manifest.id())
+                && selection.version().equals(manifest.version())) {
+            settings().themeProperty().set(null);
         }
     }
 
@@ -488,6 +550,18 @@ public final class ThemePackManager {
     private static void deleteIfExists(Path path) throws IOException {
         if (Files.exists(path) || Files.isSymbolicLink(path)) {
             FileUtils.forceDelete(path);
+        }
+    }
+
+    /// Deletes a directory only when it exists and contains no entries.
+    private static void deleteDirectoryIfEmpty(@Nullable Path path) throws IOException {
+        if (path == null || !Files.isDirectory(path)) {
+            return;
+        }
+        try (Stream<Path> entries = Files.list(path)) {
+            if (entries.findAny().isEmpty()) {
+                Files.delete(path);
+            }
         }
     }
 
