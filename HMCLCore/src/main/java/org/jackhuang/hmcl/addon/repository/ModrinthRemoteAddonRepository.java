@@ -111,20 +111,13 @@ public final class ModrinthRemoteAddonRepository implements RemoteAddonRepositor
     }
 
     private static String convertSortType(SortType sortType) {
-        switch (sortType) {
-            case DATE_CREATED:
-                return "newest";
-            case POPULARITY:
-            case NAME:
-            case AUTHOR:
-                return "relevance";
-            case LAST_UPDATED:
-                return "updated";
-            case TOTAL_DOWNLOADS:
-                return "downloads";
-            default:
-                throw new IllegalArgumentException("Unsupported sort type " + sortType);
-        }
+        return switch (sortType) {
+            case DATE_CREATED -> "newest";
+            case POPULARITY, NAME, AUTHOR -> "relevance";
+            case LAST_UPDATED -> "updated";
+            case TOTAL_DOWNLOADS -> "downloads";
+            default -> throw new IllegalArgumentException("Unsupported sort type " + sortType);
+        };
     }
 
     static List<String> sortDisplayCategories(List<String> displayCategories) {
