@@ -25,7 +25,7 @@ import org.jetbrains.annotations.NotNullByDefault;
 import java.util.Objects;
 import java.util.Set;
 
-/// A conditional appearance patch in a theme preset.
+/// A conditional appearance patch in a theme.
 ///
 /// @param condition the condition required for this override to apply
 /// @param appearance the appearance fields applied when the condition matches

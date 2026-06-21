@@ -37,15 +37,6 @@ public record ResolvedTheme(ThemeColor primaryColorSeed,
     /// Default launcher theme used when no custom theme values are configured.
     public static final ResolvedTheme DEFAULT = new ResolvedTheme(ThemeColor.DEFAULT, Brightness.DEFAULT, ColorStyle.FIDELITY, Contrast.DEFAULT);
 
-    /// Creates resolved launcher theme values.
-    ///
-    /// @param primaryColorSeed color seed used to generate the MonetFX color scheme
-    /// @param brightness       brightness used by the generated color scheme
-    /// @param colorStyle       MonetFX color style used by the generated color scheme
-    /// @param contrast         MonetFX contrast level used by the generated color scheme
-    public ResolvedTheme {
-    }
-
     /// Converts these resolved values to a MonetFX color scheme.
     ///
     /// @return the generated color scheme
@@ -57,38 +48,6 @@ public record ResolvedTheme(ThemeColor primaryColorSeed,
                 .setSpecVersion(ColorSpecVersion.SPEC_2025)
                 .setContrast(contrast)
                 .build();
-    }
-
-    /// Returns the color seed used to generate the MonetFX color scheme.
-    ///
-    /// @return the color seed
-    @Override
-    public ThemeColor primaryColorSeed() {
-        return primaryColorSeed;
-    }
-
-    /// Returns the brightness used by the generated color scheme.
-    ///
-    /// @return the brightness
-    @Override
-    public Brightness brightness() {
-        return brightness;
-    }
-
-    /// Returns the MonetFX color style used by the generated color scheme.
-    ///
-    /// @return the color style
-    @Override
-    public ColorStyle colorStyle() {
-        return colorStyle;
-    }
-
-    /// Returns the MonetFX contrast level used by the generated color scheme.
-    ///
-    /// @return the contrast level
-    @Override
-    public Contrast contrast() {
-        return contrast;
     }
 
 }
