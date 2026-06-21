@@ -17,6 +17,7 @@
  */
 package org.jackhuang.hmcl.theme;
 
+import com.google.gson.JsonObject;
 import org.glavo.monetfx.Brightness;
 import org.jackhuang.hmcl.setting.BackgroundType;
 import org.jackhuang.hmcl.setting.LauncherSettings;
@@ -89,6 +90,13 @@ public final class ThemePackManagerTest {
             LauncherSettings settings = SettingsManager.settings();
             assertEquals(ThemeColor.of("#336699"), settings.themeColorProperty().get());
             assertEquals("dark", settings.themeBrightnessProperty().get());
+            assertEquals(new ThemeSelection("example.ui", "1.0.0", "forest"), settings.themeProperty().get());
+            JsonObject themeJson = LauncherSettings.SETTINGS_GSON.toJsonTree(settings)
+                    .getAsJsonObject()
+                    .getAsJsonObject("theme");
+            assertEquals("example.ui", themeJson.get("packId").getAsString());
+            assertEquals("1.0.0", themeJson.get("version").getAsString());
+            assertEquals("forest", themeJson.get("themeId").getAsString());
             assertTrue(settings.titleTransparentProperty().get());
             assertEquals(BackgroundType.CUSTOM, settings.backgroundTypeProperty().get());
             assertEquals(0.75, settings.backgroundOpacityProperty().get());

@@ -34,6 +34,7 @@ import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.auth.AccountID;
 import org.jackhuang.hmcl.java.JavaRuntime;
 import org.jackhuang.hmcl.theme.ThemeColor;
+import org.jackhuang.hmcl.theme.ThemeSelection;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.gson.*;
@@ -232,6 +233,15 @@ public final class LauncherSettings extends ObservableSetting implements JsonSch
     }
 
     // UI
+
+    /// The installed theme selected by the launcher, or `null` when no installed theme is active.
+    @SerializedName("theme")
+    private final ObjectProperty<@Nullable ThemeSelection> theme = new SimpleObjectProperty<>();
+
+    /// Returns the selected installed theme property.
+    public ObjectProperty<@Nullable ThemeSelection> themeProperty() {
+        return theme;
+    }
 
     /// The configured theme brightness identifier.
     @SerializedName("themeBrightness")

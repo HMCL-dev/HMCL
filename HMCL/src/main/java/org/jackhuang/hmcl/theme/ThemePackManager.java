@@ -251,6 +251,8 @@ public final class ThemePackManager {
         if (appearance.background() != null) {
             applyBackground(themePackDirectory.toAbsolutePath().normalize(), appearance.background());
         }
+
+        currentSettings.themeProperty().set(new ThemeSelection(manifest.id(), manifest.version(), theme.id()));
     }
 
     /// Exports the current launcher appearance to a theme-pack file.
