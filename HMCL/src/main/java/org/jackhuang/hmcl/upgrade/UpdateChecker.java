@@ -115,12 +115,12 @@ public final class UpdateChecker {
 
                 RemoteVersion finalResult = result;
                 Platform.runLater(() -> {
-                    checkingUpdate.set(false);
                     if (finalResult != null) {
                         boolean isOutdated = checkOutdated(finalResult);
                         latestVersion.set(finalResult);
                         outdated.set(isOutdated);
                     }
+                    checkingUpdate.set(false);
                 });
             }, "Update Checker", true);
         });
