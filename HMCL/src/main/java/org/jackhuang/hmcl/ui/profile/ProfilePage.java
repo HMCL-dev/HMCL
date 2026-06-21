@@ -40,7 +40,6 @@ import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.setting.Profile;
 import org.jackhuang.hmcl.setting.Profiles;
 import org.jackhuang.hmcl.setting.SettingsManager;
-import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.construct.*;
@@ -55,7 +54,6 @@ import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.concurrent.CompletableFuture;
 
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
@@ -153,7 +151,7 @@ public final class ProfilePage extends BorderPane implements DecoratorPage {
             BorderPane.setAlignment(savePane, Pos.BOTTOM_RIGHT);
             StackPane.setAlignment(saveButton, Pos.BOTTOM_RIGHT);
             saveButton.setPrefSize(100, 40);
-            saveButton.setOnAction(e -> Task.runAsync(this::onSave).start());
+            saveButton.setOnAction(e -> onSave());
             saveButton.disableProperty().bind(Bindings.createBooleanBinding(
                     () -> !txtProfileName.validate() || StringUtils.isBlank(getLocation()),
                     txtProfileName.textProperty(), location));
@@ -193,63 +191,57 @@ public final class ProfilePage extends BorderPane implements DecoratorPage {
     }
 
     private void onSave() {
-        if (Path.of(getLocation()).getRoot().equals(Path.of(getLocation()))) {
-            CompletableFuture<Boolean> future = new CompletableFuture<>();
+        if (Objects.equals(Path.of(getLocation()).getRoot(), Path.of(getLocation()))) {
+            Platform.runLater(() -> Controllers.confirm(i18n("profile.root"), i18n("message.warning"), MessageDialogPane.MessageType.WARNING,
+                    () -> {
+                        if (profile != null) {
+                            LocalizedText name = LocalizedText.plain(txtProfileName.getText());
+                            PortablePath path = StringUtils.isNotBlank(getLocation()) ? createPortableLocation() : profile.getPath();
+                            if (!Profiles.canUpdateProfile(profile, path)) {
+                                Controllers.confirmBackupAndOverwrite(i18n("settings.game_directories.read_only"), () -> {
+                                    Profiles.forceOverwriteProfileFiles(profile, path);
+                                    Profiles.updateProfile(profile, name, path);
+                                    fireEvent(new PageCloseEvent());
+                                });
+                                return;
+                            }
 
-            Platform.runLater(() -> Controllers.confirm(i18n("profile.root"), i18n("message.warning"), MessageDialogPane.MessageType.WARNING, () -> future.complete(true), () -> future.complete(false)));
+                            Profiles.updateProfile(profile, name, path);
+                        } else {
+                            if (StringUtils.isBlank(getLocation())) {
+                                gameDir.fire();
+                            }
+                            Profile newProfile = new Profile(
+                                    Profiles.newProfileId(),
+                                    LocalizedText.plain(txtProfileName.getText()),
+                                    createPortableLocation());
+                            if (newProfile.getPath().isAbsolute()) {
+                                if (SettingsManager.isUserGameDirectoriesReadOnly()) {
+                                    Controllers.confirmBackupAndOverwrite(i18n("settings.game_directories.read_only"), () -> {
+                                        SettingsManager.forceOverwriteUserGameDirectories();
+                                        Profiles.addUserProfile(newProfile);
+                                        fireEvent(new PageCloseEvent());
+                                    });
+                                    return;
+                                }
+                                Profiles.addUserProfile(newProfile);
+                            } else {
+                                if (SettingsManager.isLocalGameDirectoriesReadOnly()) {
+                                    Controllers.confirmBackupAndOverwrite(i18n("settings.game_directories.read_only"), () -> {
+                                        SettingsManager.forceOverwriteLocalGameDirectories();
+                                        Profiles.addLocalProfile(newProfile);
+                                        fireEvent(new PageCloseEvent());
+                                    });
+                                    return;
+                                }
+                                Profiles.addLocalProfile(newProfile);
+                            }
+                        }
 
-            try {
-                if (!future.get()) return;
-            } catch (Exception ignored) {
-            }
-        }
-        Platform.runLater(() -> {
-            if (profile != null) {
-                LocalizedText name = LocalizedText.plain(txtProfileName.getText());
-                PortablePath path = StringUtils.isNotBlank(getLocation()) ? createPortableLocation() : profile.getPath();
-                if (!Profiles.canUpdateProfile(profile, path)) {
-                    Controllers.confirmBackupAndOverwrite(i18n("settings.game_directories.read_only"), () -> {
-                        Profiles.forceOverwriteProfileFiles(profile, path);
-                        Profiles.updateProfile(profile, name, path);
                         fireEvent(new PageCloseEvent());
-                    });
-                    return;
-                }
+                    }, null));
 
-                Profiles.updateProfile(profile, name, path);
-            } else {
-                if (StringUtils.isBlank(getLocation())) {
-                    gameDir.fire();
-                }
-                Profile newProfile = new Profile(
-                        Profiles.newProfileId(),
-                        LocalizedText.plain(txtProfileName.getText()),
-                        createPortableLocation());
-                if (newProfile.getPath().isAbsolute()) {
-                    if (SettingsManager.isUserGameDirectoriesReadOnly()) {
-                        Controllers.confirmBackupAndOverwrite(i18n("settings.game_directories.read_only"), () -> {
-                            SettingsManager.forceOverwriteUserGameDirectories();
-                            Profiles.addUserProfile(newProfile);
-                            fireEvent(new PageCloseEvent());
-                        });
-                        return;
-                    }
-                    Profiles.addUserProfile(newProfile);
-                } else {
-                    if (SettingsManager.isLocalGameDirectoriesReadOnly()) {
-                        Controllers.confirmBackupAndOverwrite(i18n("settings.game_directories.read_only"), () -> {
-                            SettingsManager.forceOverwriteLocalGameDirectories();
-                            Profiles.addLocalProfile(newProfile);
-                            fireEvent(new PageCloseEvent());
-                        });
-                        return;
-                    }
-                    Profiles.addLocalProfile(newProfile);
-                }
-            }
-
-            fireEvent(new PageCloseEvent());
-        });
+        }
     }
 
     /// Creates the portable path for the current location according to the relative-path toggle.
