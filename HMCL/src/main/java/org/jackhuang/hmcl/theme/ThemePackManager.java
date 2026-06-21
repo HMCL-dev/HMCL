@@ -246,7 +246,7 @@ public final class ThemePackManager {
             currentSettings.titleTransparentProperty().set(appearance.titleTransparent());
         }
         if (appearance.background() != null) {
-            applyBackground(themePackDirectory.toAbsolutePath().normalize(), appearance.background());
+            applyBackground(manifest, themePackDirectory.toAbsolutePath().normalize(), appearance.background());
         }
         if (appearance.color() != null) {
             currentSettings.themeColorProperty().set(resolveThemeColor(themePackDirectory, appearance));
@@ -314,8 +314,11 @@ public final class ThemePackManager {
 
     /// Applies background fields from a resolved theme appearance.
     private static void applyBackground(
+            ThemePackManifest manifest,
             Path themePackDirectory,
             ThemeBackground background) throws IOException {
+        Objects.requireNonNull(manifest);
+
         LauncherSettings currentSettings = settings();
         if (background.opacity() != null) {
             currentSettings.backgroundOpacityProperty().set(background.opacity());
@@ -332,9 +335,9 @@ public final class ThemePackManager {
             }
             case IMAGE -> {
                 String path = requireNonBlank(background.path(), "background.path");
-                Path extractedAsset = resolveInstalledAsset(themePackDirectory, path);
+                resolveInstalledAsset(themePackDirectory, path);
                 currentSettings.backgroundTypeProperty().set(BackgroundType.CUSTOM);
-                currentSettings.backgroundImageProperty().set(extractedAsset.toString());
+                currentSettings.backgroundImageProperty().set(ThemePackResourceURL.of(manifest, path).toString());
                 currentSettings.backgroundImageUrlProperty().set(null);
                 currentSettings.backgroundPaintProperty().set(null);
             }
@@ -387,7 +390,7 @@ public final class ThemePackManager {
     }
 
     /// Resolves one asset referenced by an installed theme.
-    private static Path resolveInstalledAsset(Path themePackDirectory, String entryName) throws IOException {
+    static Path resolveInstalledAsset(Path themePackDirectory, String entryName) throws IOException {
         String normalizedEntryName = ThemePackAsset.normalizeEntryName(entryName);
         Path installedDirectory = themePackDirectory.toAbsolutePath().normalize();
         Path target = installedDirectory.resolve(normalizedEntryName).normalize();
@@ -402,9 +405,14 @@ public final class ThemePackManager {
 
     /// Returns the directory used for one installed theme pack.
     private static Path installedThemePackDirectory(ThemePackManifest manifest) {
+        return installedThemePackDirectory(manifest.id(), manifest.version());
+    }
+
+    /// Returns the directory used for one installed theme pack.
+    static Path installedThemePackDirectory(String packId, String version) {
         return INSTALLED_THEME_PACKS_DIRECTORY
-                .resolve(sanitizePathSegment(manifest.id()))
-                .resolve(sanitizePathSegment(manifest.version()))
+                .resolve(sanitizePathSegment(packId))
+                .resolve(sanitizePathSegment(version))
                 .toAbsolutePath()
                 .normalize();
     }
@@ -516,7 +524,7 @@ public final class ThemePackManager {
     /// Creates the image background model for the current launcher settings.
     private static ThemeBackground createCurrentImageBackground(List<ThemePackAsset> assets, Double opacity) throws IOException {
         String backgroundImage = requireNonBlank(settings().backgroundImageProperty().get(), "backgroundImage");
-        Path source = Path.of(backgroundImage).toAbsolutePath().normalize();
+        Path source = resolveBackgroundImageSource(backgroundImage);
         if (Files.isDirectory(source)) {
             throw new IOException("Cannot export a background directory as a theme-pack asset: " + source);
         }
@@ -527,6 +535,15 @@ public final class ThemePackManager {
         String entryName = "assets/background/" + sanitizePathSegment(source.getFileName().toString());
         assets.add(new ThemePackAsset(source, entryName));
         return new ThemeBackground(ThemeBackground.Type.IMAGE, entryName, null, null, opacity);
+    }
+
+    /// Resolves a launcher background image value to a local file.
+    private static Path resolveBackgroundImageSource(String backgroundImage) throws IOException {
+        @Nullable ThemePackResourceURL resourceURL = ThemePackResourceURL.parse(backgroundImage);
+        if (resourceURL != null) {
+            return resourceURL.resolve();
+        }
+        return Path.of(backgroundImage).toAbsolutePath().normalize();
     }
 
     /// Returns the current launcher background opacity.

@@ -40,6 +40,7 @@ import org.jackhuang.hmcl.auth.authlibinjector.AuthlibInjectorDnD;
 import org.jackhuang.hmcl.setting.BackgroundType;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
+import org.jackhuang.hmcl.theme.ThemePackResourceURL;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.DialogUtils;
 import org.jackhuang.hmcl.ui.FXUtils;
@@ -194,7 +195,7 @@ public class DecoratorController {
                 String backgroundImage = settings().backgroundImageProperty().get();
                 if (backgroundImage != null)
                     try {
-                        Path path = Path.of(backgroundImage);
+                        Path path = resolveCustomBackground(backgroundImage);
                         image = Files.isDirectory(path)
                                 ? randomImageIn(path)
                                 : tryLoadImage(path);
@@ -234,6 +235,14 @@ public class DecoratorController {
             image = loadDefaultBackgroundImage();
         }
         return createBackgroundWithOpacity(image, settings().backgroundOpacityProperty().get());
+    }
+
+    /// Resolves a custom background setting to a local file or directory.
+    private Path resolveCustomBackground(String backgroundImage) throws IOException {
+        ThemePackResourceURL resourceURL = ThemePackResourceURL.parse(backgroundImage);
+        if (resourceURL != null)
+            return resourceURL.resolve();
+        return Path.of(backgroundImage);
     }
 
     private Background createBackgroundWithOpacity(Image image, double opacity) {

@@ -104,8 +104,12 @@ public final class ThemePackManagerTest {
             assertNull(settings.backgroundImageUrlProperty().get());
             assertNull(settings.backgroundPaintProperty().get());
 
-            Path extractedWallpaper = Path.of(settings.backgroundImageProperty().get());
-            assertEquals(installedDirectory.resolve("assets/wallpapers/wallpaper.png"), extractedWallpaper);
+            ThemePackResourceURL backgroundResource = ThemePackResourceURL.parse(settings.backgroundImageProperty().get());
+            assertNotNull(backgroundResource);
+            assertEquals("example.ui", backgroundResource.packId());
+            assertEquals("1.0.0", backgroundResource.version());
+            assertEquals("assets/wallpapers/wallpaper.png", backgroundResource.entryName());
+            assertEquals(installedDirectory.resolve("assets/wallpapers/wallpaper.png"), backgroundResource.resolve());
         } finally {
             deleteRecursively(installedDirectory.getParent());
         }
@@ -143,6 +147,22 @@ public final class ThemePackManagerTest {
             assertEquals(ThemeBackground.Type.CLASSIC, background.effectiveType());
             assertEquals(0.5, background.opacity());
         }
+    }
+
+    /// Tests theme-pack resource URL serialization and parsing.
+    @Test
+    public void testThemePackResourceURLRoundTrip() {
+        ThemePackResourceURL resource = new ThemePackResourceURL(
+                "example.pack",
+                "1.0.0",
+                "assets/wall papers/a+b.png");
+
+        String serialized = resource.toString();
+
+        assertEquals("hmcl://theme-pack/example.pack/1.0.0/assets/wall%20papers/a+b.png", serialized);
+        assertEquals(resource, ThemePackResourceURL.parse(serialized));
+        assertNull(ThemePackResourceURL.parse("/tmp/background.png"));
+        assertNull(ThemePackResourceURL.parse("C:\\background.png"));
     }
 
     /// Creates a test directory under the build directory.
