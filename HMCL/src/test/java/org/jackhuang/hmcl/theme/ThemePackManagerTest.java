@@ -26,6 +26,8 @@ import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
 import org.junit.jupiter.api.Test;
 
+import javax.imageio.ImageIO;
+import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.lang.reflect.Field;
 import java.nio.charset.StandardCharsets;
@@ -55,9 +57,9 @@ public final class ThemePackManagerTest {
 
         try (SettingsScope ignored = new SettingsScope()) {
             Path tempDir = createTestDirectory("apply-image");
-            Path wallpaper = tempDir.resolve("wallpaper.txt");
+            Path wallpaper = tempDir.resolve("wallpaper.png");
             Path thumbnail = tempDir.resolve("thumbnail.txt");
-            Files.writeString(wallpaper, "wallpaper", StandardCharsets.UTF_8);
+            writeSolidImage(wallpaper, 0xFF248C44);
             Files.writeString(thumbnail, "thumbnail", StandardCharsets.UTF_8);
 
             ThemePackManifest manifest = createImageManifest();
@@ -65,16 +67,14 @@ public final class ThemePackManagerTest {
             ThemePackExporter.export(
                     manifest,
                     List.of(
-                            new ThemePackAsset(wallpaper, "assets/wallpapers/wallpaper.txt"),
+                            new ThemePackAsset(wallpaper, "assets/wallpapers/wallpaper.png"),
                             new ThemePackAsset(thumbnail, "assets/thumbnails/thumbnail.txt")),
                     themePackFile);
 
             ThemePackManager.InstalledThemePack installedThemePack = ThemePackManager.install(themePackFile);
             assertEquals(installedDirectory, installedThemePack.directory());
             assertTrue(Files.isRegularFile(installedDirectory.resolve(ThemePackExporter.MANIFEST_ENTRY)));
-            assertEquals("wallpaper", Files.readString(
-                    installedDirectory.resolve("assets/wallpapers/wallpaper.txt"),
-                    StandardCharsets.UTF_8));
+            assertTrue(Files.isRegularFile(installedDirectory.resolve("assets/wallpapers/wallpaper.png")));
             assertEquals("thumbnail", Files.readString(
                     installedDirectory.resolve("assets/thumbnails/thumbnail.txt"),
                     StandardCharsets.UTF_8));
@@ -89,7 +89,7 @@ public final class ThemePackManagerTest {
                     new ThemeResolveContext(Brightness.LIGHT, "light", "linux", "x86_64", "en"));
 
             LauncherSettings settings = SettingsManager.settings();
-            assertEquals(ThemeColor.of("#336699"), settings.themeColorProperty().get());
+            assertEquals(ThemeColor.of("#248C44"), settings.themeColorProperty().get());
             assertEquals("dark", settings.themeBrightnessProperty().get());
             assertEquals(new ThemeSelection("example.ui", "1.0.0", null), settings.themeProperty().get());
             JsonObject themeJson = LauncherSettings.SETTINGS_GSON.toJsonTree(settings)
@@ -105,8 +105,7 @@ public final class ThemePackManagerTest {
             assertNull(settings.backgroundPaintProperty().get());
 
             Path extractedWallpaper = Path.of(settings.backgroundImageProperty().get());
-            assertEquals(installedDirectory.resolve("assets/wallpapers/wallpaper.txt"), extractedWallpaper);
-            assertEquals("wallpaper", Files.readString(extractedWallpaper, StandardCharsets.UTF_8));
+            assertEquals(installedDirectory.resolve("assets/wallpapers/wallpaper.png"), extractedWallpaper);
         } finally {
             deleteRecursively(installedDirectory.getParent());
         }
@@ -138,7 +137,7 @@ public final class ThemePackManagerTest {
             assertEquals("user.current-theme", manifest.id());
             assertEquals("Current Pack", manifest.name());
             assertEquals("Current Theme", theme.name());
-            assertEquals(ThemeColor.of("#663399"), appearance.color());
+            assertEquals(ThemeColorSource.fixed(ThemeColor.of("#663399")), appearance.color());
             assertEquals(ThemeBrightness.DARK, appearance.brightness());
             assertEquals(true, appearance.titleTransparent());
             assertEquals(ThemeBackground.Type.CLASSIC, background.effectiveType());
@@ -156,6 +155,20 @@ public final class ThemePackManagerTest {
                 .normalize();
         Files.createDirectories(directory);
         return directory;
+    }
+
+    /// Writes a small solid-color PNG image.
+    ///
+    /// @param output the image file to write
+    /// @param argb the ARGB color used for every pixel
+    private static void writeSolidImage(Path output, int argb) throws IOException {
+        BufferedImage image = new BufferedImage(8, 8, BufferedImage.TYPE_INT_ARGB);
+        for (int y = 0; y < image.getHeight(); y++) {
+            for (int x = 0; x < image.getWidth(); x++) {
+                image.setRGB(x, y, argb);
+            }
+        }
+        ImageIO.write(image, "png", output.toFile());
     }
 
     /// Deletes a path tree if it exists.
@@ -188,12 +201,15 @@ public final class ThemePackManagerTest {
                     {
                       "name": "Forest",
                       "thumbnail": "assets/thumbnails/thumbnail.txt",
-                      "color": "#336699",
+                      "color": {
+                        "source": "wallpaper",
+                        "fallback": "#336699"
+                      },
                       "brightness": "dark",
                       "titleTransparent": true,
                       "background": {
                         "type": "image",
-                        "path": "assets/wallpapers/wallpaper.txt",
+                        "path": "assets/wallpapers/wallpaper.png",
                         "opacity": 0.75
                       }
                     }

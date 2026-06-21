@@ -37,7 +37,7 @@ import java.util.Set;
 /// All fields are optional so the same type can represent both a default appearance
 /// and a conditional patch.
 ///
-/// @param color the color seed, or `null` when inherited
+/// @param color the color seed source, or `null` when inherited
 /// @param brightness the brightness directive, or `null` when inherited
 /// @param colorStyle the MonetFX color style, or `null` when inherited
 /// @param contrast the MonetFX contrast level, or `null` when inherited
@@ -45,7 +45,7 @@ import java.util.Set;
 /// @param titleTransparent whether the title area should be transparent, or `null` when inherited
 @NotNullByDefault
 public record ThemeAppearance(
-        @Nullable ThemeColor color,
+        @Nullable ThemeColorSource color,
         @Nullable ThemeBrightness brightness,
         @Nullable ColorStyle colorStyle,
         @Nullable Contrast contrast,
@@ -81,7 +81,7 @@ public record ThemeAppearance(
 
     /// Creates an appearance patch.
     ///
-    /// @param color the color seed, or `null` when inherited
+    /// @param color the color seed source, or `null` when inherited
     /// @param brightness the brightness directive, or `null` when inherited
     /// @param colorStyle the MonetFX color style, or `null` when inherited
     /// @param contrast the MonetFX contrast level, or `null` when inherited
@@ -134,7 +134,7 @@ public record ThemeAppearance(
         Objects.requireNonNull(object);
 
         if (color != null) {
-            object.addProperty(FIELD_COLOR, color.name());
+            object.add(FIELD_COLOR, color.toJsonElement());
         }
         if (brightness != null) {
             object.addProperty(FIELD_BRIGHTNESS, brightness.toJsonValue());
@@ -187,7 +187,7 @@ public record ThemeAppearance(
     public ResolvedTheme toResolvedTheme(ThemeResolveContext context) {
         Objects.requireNonNull(context);
 
-        ThemeColor resolvedColor = color != null ? color : ResolvedTheme.DEFAULT.primaryColorSeed();
+        ThemeColor resolvedColor = color != null ? color.resolveFallback() : ResolvedTheme.DEFAULT.primaryColorSeed();
         Brightness resolvedBrightness = brightness != null
                 ? brightness.resolve(context.brightness())
                 : context.brightness();
@@ -208,17 +208,12 @@ public record ThemeAppearance(
     }
 
     /// Reads the optional color field.
-    private static @Nullable ThemeColor readColor(JsonObject object) {
-        @Nullable String value = readString(object, FIELD_COLOR);
-        if (value == null) {
+    private static @Nullable ThemeColorSource readColor(JsonObject object) {
+        JsonElement element = object.get(FIELD_COLOR);
+        if (element == null) {
             return null;
         }
-
-        @Nullable ThemeColor color = ThemeColor.of(value);
-        if (color == null) {
-            throw new JsonParseException("Invalid theme color: " + value);
-        }
-        return color;
+        return ThemeColorSource.fromJson(element);
     }
 
     /// Reads the optional brightness directive field.

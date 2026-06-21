@@ -188,9 +188,33 @@
         }
       }
     },
-    "color": {
+    "colorValue": {
       "type": "string",
       "minLength": 1
+    },
+    "color": {
+      "oneOf": [
+        {
+          "$ref": "#/$defs/colorValue"
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "source"
+          ],
+          "properties": {
+            "source": {
+              "enum": [
+                "wallpaper"
+              ]
+            },
+            "fallback": {
+              "$ref": "#/$defs/colorValue"
+            }
+          }
+        }
+      ]
     },
     "brightness": {
       "enum": [

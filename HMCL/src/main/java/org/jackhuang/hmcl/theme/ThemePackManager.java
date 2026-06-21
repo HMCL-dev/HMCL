@@ -239,9 +239,6 @@ public final class ThemePackManager {
         ThemeAppearance appearance = theme.resolve(context);
         LauncherSettings currentSettings = settings();
 
-        if (appearance.color() != null) {
-            currentSettings.themeColorProperty().set(appearance.color());
-        }
         if (appearance.brightness() != null) {
             currentSettings.themeBrightnessProperty().set(toLauncherBrightness(appearance.brightness()));
         }
@@ -250,6 +247,9 @@ public final class ThemePackManager {
         }
         if (appearance.background() != null) {
             applyBackground(themePackDirectory.toAbsolutePath().normalize(), appearance.background());
+        }
+        if (appearance.color() != null) {
+            currentSettings.themeColorProperty().set(resolveThemeColor(themePackDirectory, appearance));
         }
 
         currentSettings.themeProperty().set(new ThemeSelection(manifest.id(), manifest.version(), theme.id()));
@@ -277,7 +277,7 @@ public final class ThemePackManager {
     public static ExportedThemePack createCurrent(String packName, String themeName) throws IOException {
         List<ThemePackAsset> assets = new ArrayList<>();
         ThemeAppearance appearance = new ThemeAppearance(
-                Objects.requireNonNullElse(settings().themeColorProperty().get(), ThemeColor.DEFAULT),
+                ThemeColorSource.fixed(Objects.requireNonNullElse(settings().themeColorProperty().get(), ThemeColor.DEFAULT)),
                 currentThemeBrightness(),
                 ColorStyle.FIDELITY,
                 Contrast.DEFAULT,
@@ -351,6 +351,32 @@ public final class ThemePackManager {
                 currentSettings.backgroundImageUrlProperty().set(null);
             }
         }
+    }
+
+    /// Resolves a concrete launcher color from a theme appearance.
+    private static ThemeColor resolveThemeColor(Path themePackDirectory, ThemeAppearance appearance) throws IOException {
+        ThemeColorSource color = Objects.requireNonNull(appearance.color());
+        if (color.type() == ThemeColorSource.Type.FIXED) {
+            return color.resolveFallback();
+        }
+
+        ThemeColor fallback = color.resolveFallback();
+        ThemeBackground background = appearance.background();
+        if (background == null) {
+            return fallback;
+        }
+
+        return switch (background.effectiveType()) {
+            case IMAGE -> {
+                String path = requireNonBlank(background.path(), "background.path");
+                yield WallpaperColorExtractor.extract(resolveInstalledAsset(themePackDirectory, path), fallback);
+            }
+            case PAINT -> {
+                Paint paint = parsePaint(requireNonBlank(background.paint(), "background.paint"));
+                yield paint instanceof Color paintColor ? ThemeColor.of(paintColor) : fallback;
+            }
+            case DEFAULT, CLASSIC, NETWORK -> fallback;
+        };
     }
 
     /// Clears background source fields that are irrelevant for built-in backgrounds.

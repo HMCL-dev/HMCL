@@ -98,7 +98,8 @@ public final class ThemePackManifestTest {
         ThemeBackground background = appearance.background();
         assertNotNull(background);
 
-        assertEquals(ThemeColor.of("#6FA65A"), appearance.color());
+        assertNotNull(appearance.color());
+        assertEquals(ThemeColor.of("#6FA65A"), appearance.color().resolveFallback());
         assertEquals(Brightness.DARK, resolvedTheme.brightness());
         assertEquals(ColorStyle.FIDELITY, resolvedTheme.colorStyle());
         assertEquals(Contrast.HIGH, resolvedTheme.contrast());
@@ -130,7 +131,8 @@ public final class ThemePackManifestTest {
         ThemeBackground background = appearance.background();
         assertNotNull(background);
 
-        assertEquals(ThemeColor.of("#4D7C3A"), appearance.color());
+        assertNotNull(appearance.color());
+        assertEquals(ThemeColor.of("#4D7C3A"), appearance.color().resolveFallback());
         assertEquals(ColorStyle.FIDELITY, appearance.colorStyle());
         assertEquals(Contrast.DEFAULT, appearance.contrast());
         assertEquals("assets/wallpapers/forest.webp", background.path());
@@ -167,7 +169,8 @@ public final class ThemePackManifestTest {
         ThemeAppearance appearance = theme.resolve(
                 new ThemeResolveContext(Brightness.LIGHT, "light", "linux", "x86_64", "en"));
 
-        assertEquals(ThemeColor.of("#222222"), appearance.color());
+        assertNotNull(appearance.color());
+        assertEquals(ThemeColor.of("#222222"), appearance.color().resolveFallback());
     }
 
     /// Tests that a single-theme manifest can omit the theme ID.
@@ -242,7 +245,8 @@ public final class ThemePackManifestTest {
         ThemeBackground background = appearance.background();
         assertNotNull(background);
 
-        assertEquals(ThemeColor.of("#4D7C3A"), appearance.color());
+        assertNotNull(appearance.color());
+        assertEquals(ThemeColor.of("#4D7C3A"), appearance.color().resolveFallback());
         assertEquals(Contrast.DEFAULT, appearance.contrast());
         assertEquals("assets/wallpapers/forest.webp", background.path());
     }
