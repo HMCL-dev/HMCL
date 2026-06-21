@@ -301,7 +301,7 @@ public final class ModrinthRemoteModRepository implements RemoteModRepository {
     }
 
     @Override
-    public String getModChangelog(String modId, String versionId) throws IOException {
+    public String getModChangelog(DownloadProvider downloadProvider, String modId, String versionId) throws IOException {
         SEMAPHORE.acquireUninterruptibly();
         try {
             ProjectVersion version = HttpRequest.GET(PREFIX + "/v2/version/" + versionId).getJson(ProjectVersion.class);

@@ -35,6 +35,7 @@ import org.jackhuang.hmcl.mod.LocalAddonFile;
 import org.jackhuang.hmcl.mod.LocalAddonManager;
 import org.jackhuang.hmcl.mod.RemoteMod;
 import org.jackhuang.hmcl.mod.RemoteModRepository;
+import org.jackhuang.hmcl.setting.DownloadProviders;
 import org.jackhuang.hmcl.task.FileDownloadTask;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
@@ -348,7 +349,7 @@ public class AddonUpdatesPage<F extends LocalAddonFile> extends BorderPane imple
                 }
                 RemoteMod.Version version = object.data.targetVersion();
                 if (repo == null) return null;
-                return StringUtils.convertToHtml(repo.getModChangelog(version.getModid(), version.getVersionId()));
+                return StringUtils.convertToHtml(repo.getModChangelog(DownloadProviders.getDownloadProvider(), version.getModid(), version.getVersionId()));
             }).whenComplete(Schedulers.javafx(), (result, exception) -> {
                 if (exception == null) {
                     object.changelog = StringUtils.isNotBlank(result) ? result : i18n("mods.changelog.empty");

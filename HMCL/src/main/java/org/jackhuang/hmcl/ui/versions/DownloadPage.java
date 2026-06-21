@@ -510,7 +510,7 @@ public class DownloadPage extends Control implements DecoratorPage {
             box.getChildren().setAll(addonItem);
 
             JFXHyperlink changelogButton = new JFXHyperlink(i18n("mods.changelog"));
-            changelogButton.setOnAction(__ -> Controllers.dialog(new AddonChangelog(version, selfPage.repository)));
+            changelogButton.setOnAction(__ -> Controllers.dialog(new AddonChangelog(version, selfPage.repository, selfPage.page.getDownloadProvider())));
 
             JFXHyperlink versionPageBtn = new JFXHyperlink(i18n("mods.url"));
             versionPageBtn.setDisable(true);
@@ -636,7 +636,7 @@ public class DownloadPage extends Control implements DecoratorPage {
 
     private static final class AddonChangelog extends JFXDialogLayout {
 
-        public AddonChangelog(RemoteMod.Version version, RemoteModRepository repo) {
+        public AddonChangelog(RemoteMod.Version version, RemoteModRepository repo, DownloadProvider provider) {
             setHeading(new HBox(new Label(i18n("mods.changelog") + " - " + version.getName())));
 
             VBox box = new VBox(8);
@@ -648,8 +648,8 @@ public class DownloadPage extends Control implements DecoratorPage {
             scrollPane.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
             FXUtils.setOverflowHidden(scrollPane, 8);
 
-            loadChangelog(version, repo, spinnerPane, scrollPane);
-            spinnerPane.setOnFailedAction(e -> loadChangelog(version, repo, spinnerPane, scrollPane));
+            loadChangelog(version, repo, provider, spinnerPane, scrollPane);
+            spinnerPane.setOnFailedAction(e -> loadChangelog(version, repo, provider, spinnerPane, scrollPane));
 
             spinnerPane.setContent(scrollPane);
             box.getChildren().add(spinnerPane);
@@ -669,10 +669,10 @@ public class DownloadPage extends Control implements DecoratorPage {
             onEscPressed(this, closeButton::fire);
         }
 
-        private void loadChangelog(RemoteMod.Version version, RemoteModRepository repo, SpinnerPane spinnerPane, ScrollPane scrollPane) {
+        private void loadChangelog(RemoteMod.Version version, RemoteModRepository repo, DownloadProvider provider, SpinnerPane spinnerPane, ScrollPane scrollPane) {
             spinnerPane.setLoading(true);
             Task.supplyAsync(() ->
-                    StringUtils.convertToHtml(repo.getModChangelog(version.getModid(), version.getVersionId()))
+                    StringUtils.convertToHtml(repo.getModChangelog(provider, version.getModid(), version.getVersionId()))
             ).whenComplete(Schedulers.javafx(), (result, exception) -> {
                 if (exception == null) {
                     String changelog = StringUtils.isNotBlank(result) ? result : i18n("mods.changelog.empty");

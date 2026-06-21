@@ -274,7 +274,7 @@ public final class CurseForgeRemoteModRepository implements RemoteModRepository 
     }
 
     @Override
-    public String getModChangelog(String modId, String versionId) throws IOException {
+    public String getModChangelog(DownloadProvider downloadProvider, String modId, String versionId) throws IOException {
         SEMAPHORE.acquireUninterruptibly();
         try {
             Response<String> response = withApiKey(HttpRequest.GET(String.format("%s/v1/mods/%s/files/%s/changelog", PREFIX, modId, versionId)))

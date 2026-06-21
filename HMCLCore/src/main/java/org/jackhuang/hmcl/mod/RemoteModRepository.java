@@ -104,7 +104,7 @@ public interface RemoteModRepository {
 
     Stream<RemoteMod.Version> getRemoteVersionsById(DownloadProvider downloadProvider, String id) throws IOException;
 
-    String getModChangelog(String modId, String versionId) throws IOException;
+    String getModChangelog(DownloadProvider downloadProvider, String modId, String versionId) throws IOException;
 
     String getVersionPageUrl(RemoteMod.Version version) throws IOException;
 
