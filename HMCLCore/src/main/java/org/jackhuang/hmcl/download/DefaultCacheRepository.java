@@ -181,7 +181,7 @@ public class DefaultCacheRepository extends CacheRepository {
      */
     public Path cacheLibrary(Library library, Path path, boolean forge) throws IOException {
         String hash = library.getDownload().getSha1();
-        if (hash == null)
+        if (!DigestUtils.isSha1Digest(hash))
             hash = DigestUtils.digestToString(SHA1, path);
 
         Path cache = getFile(SHA1, hash);
