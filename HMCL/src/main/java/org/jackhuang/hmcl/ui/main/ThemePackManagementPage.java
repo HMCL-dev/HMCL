@@ -33,7 +33,6 @@ import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.stage.FileChooser;
-import org.glavo.uuid.UUIDs;
 import org.jackhuang.hmcl.theme.Theme;
 import org.jackhuang.hmcl.theme.ThemePackExporter;
 import org.jackhuang.hmcl.theme.ThemePackManager;
@@ -46,7 +45,6 @@ import org.jackhuang.hmcl.ui.ToolbarListPageSkin;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.construct.MessageDialogPane.MessageType;
 import org.jackhuang.hmcl.ui.construct.PromptDialogPane;
-import org.jackhuang.hmcl.ui.construct.RequiredValidator;
 import org.jackhuang.hmcl.ui.construct.RipplerContainer;
 import org.jackhuang.hmcl.ui.construct.TwoLineListItem;
 import org.jackhuang.hmcl.ui.decorator.DecoratorPage;
@@ -59,7 +57,6 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Locale;
 
 import static org.jackhuang.hmcl.setting.SettingsManager.settings;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
@@ -166,58 +163,6 @@ public final class ThemePackManagementPage extends ListPageBase<ThemePackManager
         }
     }
 
-    /// Asks for export metadata and then saves the current launcher appearance as a theme-pack file.
-    private void exportCurrentThemePack() {
-        PromptDialogPane.Builder.StringQuestion packIdQuestion = new PromptDialogPane.Builder.StringQuestion(
-                i18n("theme_pack.export.id"),
-                newExportedThemePackId(),
-                new RequiredValidator());
-        PromptDialogPane.Builder.StringQuestion packNameQuestion = new PromptDialogPane.Builder.StringQuestion(
-                i18n("theme_pack.export.name"),
-                i18n("theme_pack.export.default_name"),
-                new RequiredValidator());
-        PromptDialogPane.Builder.StringQuestion themeNameQuestion = new PromptDialogPane.Builder.StringQuestion(
-                i18n("theme_pack.export.theme_name"),
-                i18n("theme_pack.export.default_theme_name"),
-                new RequiredValidator());
-
-        Controllers.prompt(new PromptDialogPane.Builder(i18n("theme_pack.export.title"), (questions, handler) -> handler.resolve())
-                .addQuestion(packIdQuestion)
-                .addQuestion(packNameQuestion)
-                .addQuestion(themeNameQuestion)).thenAccept(questions -> exportCurrentThemePack(
-                packIdQuestion.getValue().trim(),
-                packNameQuestion.getValue().trim(),
-                themeNameQuestion.getValue().trim()));
-    }
-
-    /// Saves current launcher appearance as a theme-pack file with the given metadata.
-    private void exportCurrentThemePack(String packId, String packName, String themeName) {
-        FileChooser chooser = new FileChooser();
-        chooser.setTitle(i18n("theme_pack.export.title"));
-        chooser.setInitialFileName("current-theme" + ThemePackExporter.FILE_EXTENSION);
-        chooser.getExtensionFilters().setAll(getThemePackExtensionFilter());
-
-        @Nullable Path output = FileUtils.toPath(chooser.showSaveDialog(Controllers.getStage()));
-        if (output == null) {
-            return;
-        }
-
-        output = ensureThemePackExtension(output);
-        try {
-            ThemePackManager.exportCurrent(
-                    output,
-                    packId,
-                    packName,
-                    themeName);
-            Controllers.dialog(
-                    i18n("theme_pack.export.success", output),
-                    i18n("message.success"),
-                    MessageType.SUCCESS);
-        } catch (IOException | RuntimeException e) {
-            showThemePackError(i18n("theme_pack.export.failed"), e);
-        }
-    }
-
     /// Shows the installed package directory in the platform file manager.
     private static void revealThemePack(ThemePackManager.InstalledThemePack themePack) {
         FXUtils.showFileInExplorer(themePack.directory());
@@ -253,11 +198,6 @@ public final class ThemePackManagementPage extends ListPageBase<ThemePackManager
                 && selection.version().equals(manifest.version());
     }
 
-    /// Generates a default theme-pack identifier for the export dialog.
-    private static String newExportedThemePackId() {
-        return "com.example.hmcl.theme-pack." + UUIDs.toBase62String(UUIDs.generateV7());
-    }
-
     /// Returns a display name for one theme-pack theme.
     private static String getThemeDisplayName(Theme theme) {
         if (StringUtils.isBlank(theme.description())) {
@@ -272,15 +212,6 @@ public final class ThemePackManagementPage extends ListPageBase<ThemePackManager
             return manifest.id();
         }
         return manifest.description();
-    }
-
-    /// Ensures the selected output file uses the theme-pack extension.
-    private static Path ensureThemePackExtension(Path output) {
-        String fileName = output.getFileName().toString();
-        if (fileName.toLowerCase(Locale.ROOT).endsWith(ThemePackExporter.FILE_EXTENSION)) {
-            return output;
-        }
-        return output.resolveSibling(fileName + ThemePackExporter.FILE_EXTENSION);
     }
 
     /// Shows a theme-pack operation error dialog.
@@ -304,10 +235,9 @@ public final class ThemePackManagementPage extends ListPageBase<ThemePackManager
         /// Creates toolbar buttons for page-level theme-pack actions.
         @Override
         protected List<Node> initializeToolbar(ThemePackManagementPage skinnable) {
-            ArrayList<Node> result = new ArrayList<>(4);
+            ArrayList<Node> result = new ArrayList<>(3);
             result.add(createToolbarButton2(i18n("button.refresh"), SVG.REFRESH, skinnable::refreshThemePacks));
             result.add(createToolbarButton2(i18n("theme_pack.import"), SVG.FILE_OPEN, skinnable::importThemePack));
-            result.add(createToolbarButton2(i18n("theme_pack.export"), SVG.ARCHIVE, skinnable::exportCurrentThemePack));
             result.add(createToolbarButton2(i18n("theme_pack.directory"), SVG.FOLDER_OPEN, skinnable::openThemePackDirectory));
             return result;
         }
