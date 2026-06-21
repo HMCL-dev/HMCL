@@ -19,6 +19,7 @@ package org.jackhuang.hmcl.theme;
 
 import com.google.gson.annotations.SerializedName;
 import org.jetbrains.annotations.NotNullByDefault;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Objects;
 
@@ -26,22 +27,24 @@ import java.util.Objects;
 ///
 /// @param packId the theme-pack identifier
 /// @param version the theme-pack version
-/// @param themeId the selected theme identifier inside the pack
+/// @param themeId the selected theme identifier inside the pack, or `null` for an unnamed single-theme pack
 @NotNullByDefault
 public record ThemeSelection(
         @SerializedName("packId") String packId,
         @SerializedName("version") String version,
-        @SerializedName("themeId") String themeId) {
+        @SerializedName("themeId") @Nullable String themeId) {
 
     /// Creates a theme selection reference.
     ///
     /// @param packId the theme-pack identifier
     /// @param version the theme-pack version
-    /// @param themeId the selected theme identifier inside the pack
+    /// @param themeId the selected theme identifier inside the pack, or `null` for an unnamed single-theme pack
     public ThemeSelection {
         packId = requireNonBlank(packId, "packId");
         version = requireNonBlank(version, "version");
-        themeId = requireNonBlank(themeId, "themeId");
+        if (themeId != null) {
+            themeId = requireNonBlank(themeId, "themeId");
+        }
     }
 
     /// Returns a non-blank identifier value.

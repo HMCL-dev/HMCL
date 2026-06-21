@@ -105,6 +105,7 @@ public record ThemePackManifest(
         if (themes.isEmpty()) {
             throw new IllegalArgumentException("Theme pack must declare at least one theme");
         }
+        checkThemeIds(themes);
     }
 
     /// Parses a theme-pack manifest from a JSON string.
@@ -143,13 +144,17 @@ public record ThemePackManifest(
 
     /// Returns the first theme with the given ID.
     ///
-    /// @param themeId the theme ID to find
-    /// @return the matching theme, or `null` when no theme has that ID
-    public @Nullable Theme findTheme(String themeId) {
-        Objects.requireNonNull(themeId);
+    /// A `null` theme ID matches only a single-theme manifest.
+    ///
+    /// @param themeId the theme ID to find, or `null` for an unnamed single-theme manifest
+    /// @return the matching theme, or `null` when no theme matches
+    public @Nullable Theme findTheme(@Nullable String themeId) {
+        if (themeId == null) {
+            return themes.size() == 1 ? themes.get(0) : null;
+        }
 
         for (Theme theme : themes) {
-            if (theme.id().equals(themeId)) {
+            if (themeId.equals(theme.id())) {
                 return theme;
             }
         }
@@ -245,13 +250,27 @@ public record ThemePackManifest(
         }
 
         ArrayList<Theme> themes = new ArrayList<>(array.size());
+        boolean requireThemeId = array.size() > 1;
         for (JsonElement item : array) {
             if (!(item instanceof JsonObject themeObject)) {
                 throw new JsonParseException("Theme-pack theme must be an object");
             }
-            themes.add(Theme.fromJson(themeObject));
+            themes.add(Theme.fromJson(themeObject, requireThemeId));
         }
         return themes;
+    }
+
+    /// Checks that theme IDs are present whenever the manifest needs them for disambiguation.
+    private static void checkThemeIds(List<Theme> themes) {
+        if (themes.size() <= 1) {
+            return;
+        }
+
+        for (Theme theme : themes) {
+            if (theme.id() == null) {
+                throw new IllegalArgumentException("Theme ID is required when a theme pack declares multiple themes");
+            }
+        }
     }
 
     /// Reads a required string member.

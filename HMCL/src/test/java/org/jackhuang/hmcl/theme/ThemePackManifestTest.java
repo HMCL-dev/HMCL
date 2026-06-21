@@ -26,6 +26,7 @@ import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 /// Tests for theme-pack manifest parsing and conditional override resolution.
@@ -167,6 +168,54 @@ public final class ThemePackManifestTest {
                 new ThemeResolveContext(Brightness.LIGHT, "light", "linux", "x86_64", "en"));
 
         assertEquals(ThemeColor.of("#222222"), appearance.color());
+    }
+
+    /// Tests that a single-theme manifest can omit the theme ID.
+    @Test
+    public void testSingleThemeCanOmitThemeId() {
+        ThemePackManifest manifest = ThemePackManifest.fromJson("""
+                {
+                  "$schema": "https://schemas.glavo.site/hmcl/theme-pack/1.0.0",
+                  "id": "example.single",
+                  "version": "1.0.0",
+                  "name": "Single",
+                  "themes": [
+                    {
+                      "name": "Single",
+                      "color": "#111111"
+                    }
+                  ]
+                }
+                """);
+
+        Theme theme = manifest.findTheme(null);
+        assertNotNull(theme);
+        assertNull(theme.id());
+        assertEquals("Single", theme.name());
+    }
+
+    /// Tests that multi-theme manifests must provide explicit theme IDs.
+    @Test
+    public void testMultiThemeRequiresThemeIds() {
+        assertThrows(JsonParseException.class, () -> ThemePackManifest.fromJson("""
+                {
+                  "$schema": "https://schemas.glavo.site/hmcl/theme-pack/1.0.0",
+                  "id": "example.multi",
+                  "version": "1.0.0",
+                  "name": "Multi",
+                  "themes": [
+                    {
+                      "name": "First",
+                      "color": "#111111"
+                    },
+                    {
+                      "id": "second",
+                      "name": "Second",
+                      "color": "#222222"
+                    }
+                  ]
+                }
+                """));
     }
 
     /// Tests that unsupported override fields are rejected.

@@ -46,6 +46,28 @@
       }
     }
   },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "themes": {
+            "minItems": 2
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "themes": {
+            "items": {
+              "required": [
+                "id"
+              ]
+            }
+          }
+        }
+      }
+    }
+  ],
   "$defs": {
     "nonEmptyString": {
       "type": "string",
@@ -66,7 +88,6 @@
         }
       },
       "required": [
-        "id",
         "name"
       ],
       "properties": {

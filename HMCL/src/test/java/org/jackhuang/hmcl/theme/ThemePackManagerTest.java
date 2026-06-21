@@ -36,6 +36,7 @@ import java.util.List;
 import java.util.stream.Stream;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -78,7 +79,7 @@ public final class ThemePackManagerTest {
                     installedDirectory.resolve("assets/thumbnails/thumbnail.txt"),
                     StandardCharsets.UTF_8));
 
-            Theme theme = installedThemePack.manifest().findTheme("forest");
+            Theme theme = installedThemePack.manifest().findTheme(null);
             assertNotNull(theme);
 
             ThemePackManager.apply(
@@ -90,13 +91,13 @@ public final class ThemePackManagerTest {
             LauncherSettings settings = SettingsManager.settings();
             assertEquals(ThemeColor.of("#336699"), settings.themeColorProperty().get());
             assertEquals("dark", settings.themeBrightnessProperty().get());
-            assertEquals(new ThemeSelection("example.ui", "1.0.0", "forest"), settings.themeProperty().get());
+            assertEquals(new ThemeSelection("example.ui", "1.0.0", null), settings.themeProperty().get());
             JsonObject themeJson = LauncherSettings.SETTINGS_GSON.toJsonTree(settings)
                     .getAsJsonObject()
                     .getAsJsonObject("theme");
             assertEquals("example.ui", themeJson.get("packId").getAsString());
             assertEquals("1.0.0", themeJson.get("version").getAsString());
-            assertEquals("forest", themeJson.get("themeId").getAsString());
+            assertFalse(themeJson.has("themeId"));
             assertTrue(settings.titleTransparentProperty().get());
             assertEquals(BackgroundType.CUSTOM, settings.backgroundTypeProperty().get());
             assertEquals(0.75, settings.backgroundOpacityProperty().get());
@@ -185,7 +186,6 @@ public final class ThemePackManagerTest {
                   "authors": ["Example"],
                   "themes": [
                     {
-                      "id": "forest",
                       "name": "Forest",
                       "thumbnail": "assets/thumbnails/thumbnail.txt",
                       "color": "#336699",
