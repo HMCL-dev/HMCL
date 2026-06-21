@@ -323,7 +323,7 @@ public final class ThemePackManager {
         }
         if (appearance.color() != null) {
             currentSettings.themeColorTypeProperty().set(toThemeColorType(appearance.color()));
-            currentSettings.themeColorProperty().set(resolveThemeColor(themePackDirectory, appearance));
+            currentSettings.customThemeColorProperty().set(resolveThemeColor(themePackDirectory, appearance));
         }
 
         currentSettings.themeProperty().set(new ThemeSelection(manifest.id(), manifest.version(), theme.id()));
@@ -379,7 +379,7 @@ public final class ThemePackManager {
 
     /// Returns the current launcher theme color source as a theme-pack directive.
     private static ThemeColorSource currentThemeColorSource() {
-        ThemeColor fallback = Objects.requireNonNullElse(settings().themeColorProperty().get(), ThemeColor.DEFAULT);
+        ThemeColor fallback = Objects.requireNonNullElse(settings().customThemeColorProperty().get(), ThemeColor.DEFAULT);
         ThemeColorType themeColorType = Objects.requireNonNullElse(settings().themeColorTypeProperty().get(), ThemeColorType.CUSTOM);
         return themeColorType == ThemeColorType.BACKGROUND
                 ? ThemeColorSource.wallpaper(fallback)

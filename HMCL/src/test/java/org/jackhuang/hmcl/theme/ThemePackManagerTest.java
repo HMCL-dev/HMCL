@@ -91,7 +91,7 @@ public final class ThemePackManagerTest {
                     new ThemeResolveContext(Brightness.LIGHT, "light", "linux", "x86_64", "en"));
 
             LauncherSettings settings = SettingsManager.settings();
-            assertEquals(ThemeColor.of("#248C44"), settings.themeColorProperty().get());
+            assertEquals(ThemeColor.of("#248C44"), settings.customThemeColorProperty().get());
             assertEquals(ThemeColorType.BACKGROUND, settings.themeColorTypeProperty().get());
             assertEquals("dark", settings.themeBrightnessProperty().get());
             assertEquals(new ThemeSelection("example.ui", "1.0.0", null), settings.themeProperty().get());
@@ -124,7 +124,7 @@ public final class ThemePackManagerTest {
         try (SettingsScope ignored = new SettingsScope()) {
             LauncherSettings settings = SettingsManager.settings();
             ThemeColor themeColor = Objects.requireNonNull(ThemeColor.of("#663399"));
-            settings.themeColorProperty().set(themeColor);
+            settings.customThemeColorProperty().set(themeColor);
             settings.themeColorTypeProperty().set(ThemeColorType.BACKGROUND);
             settings.themeBrightnessProperty().set("dark");
             settings.titleTransparentProperty().set(true);

@@ -24,6 +24,7 @@ import javafx.beans.binding.Bindings;
 import javafx.beans.binding.StringBinding;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
+import javafx.scene.Node;
 import javafx.scene.control.ColorPicker;
 import javafx.scene.control.Label;
 import javafx.scene.control.ScrollPane;
@@ -134,33 +135,43 @@ public class PersonalizationPage extends StackPane {
         }
 
         {
-            BorderPane themePane = new BorderPane();
-            themeList.getContent().add(themePane);
-
-            Label left = new Label(i18n("settings.launcher.theme"));
-            BorderPane.setAlignment(left, Pos.CENTER_LEFT);
-            themePane.setLeft(left);
-
-            StackPane themeColorPickerContainer = new StackPane();
-            themeColorPickerContainer.setMinHeight(30);
-            themePane.setRight(themeColorPickerContainer);
+            ComponentSublist themeColorSublist = new ComponentSublist();
+            themeColorSublist.setTitle(i18n("settings.launcher.theme"));
+            themeColorSublist.setHasSubtitle(true);
+            themeColorSublist.descriptionProperty().bind(Bindings.createStringBinding(() -> {
+                        ThemeColorType type = Lang.requireNonNullElse(
+                                settings().themeColorTypeProperty().get(),
+                                ThemeColorType.CUSTOM);
+                        return i18n("settings.launcher.theme_color_type." + type.name().toLowerCase(Locale.ROOT));
+                    },
+                    settings().themeColorTypeProperty()));
 
             ColorPicker picker = new JFXColorPicker();
             picker.getCustomColors().setAll(ThemeColor.STANDARD_COLORS.stream().map(ThemeColor::color).toList());
-            ThemeColor.bindBidirectional(picker, settings().themeColorProperty());
-            themeColorPickerContainer.getChildren().setAll(picker);
+            ThemeColor.bindBidirectional(picker, settings().customThemeColorProperty());
             Platform.runLater(() -> JFXDepthManager.setDepth(picker, 0));
-        }
-        {
-            var themeColorTypePane = new LineSelectButton<ThemeColorType>();
-            themeColorTypePane.setTitle(i18n("settings.launcher.theme_color_type"));
-            themeColorTypePane.setNullSafeConverter(type ->
-                    i18n("settings.launcher.theme_color_type." + type.name().toLowerCase(Locale.ROOT)));
-            themeColorTypePane.setDescriptionConverter(type ->
-                    i18n("settings.launcher.theme_color_type." + type.name().toLowerCase(Locale.ROOT) + ".description"));
-            themeColorTypePane.setItems(ThemeColorType.CUSTOM, ThemeColorType.BACKGROUND);
-            themeColorTypePane.valueProperty().bindBidirectional(settings().themeColorTypeProperty());
-            themeList.getContent().add(themeColorTypePane);
+
+            var customColorChoice = new RadioChoiceList.Choice<>(
+                    i18n("settings.launcher.theme_color_type.custom"),
+                    ThemeColorType.CUSTOM) {
+                @Override
+                protected Node createRightNode() {
+                    return picker;
+                }
+            };
+            customColorChoice.setSubtitle(i18n("settings.launcher.theme_color_type.custom.description"));
+
+            var backgroundColorChoice = new RadioChoiceList.Choice<>(
+                    i18n("settings.launcher.theme_color_type.background"),
+                    ThemeColorType.BACKGROUND);
+
+            var themeColorChoiceList = new RadioChoiceList<ThemeColorType>();
+            themeColorChoiceList.setFallbackValue(ThemeColorType.CUSTOM);
+            themeColorChoiceList.setChoices(Arrays.asList(customColorChoice, backgroundColorChoice));
+            themeColorChoiceList.selectedValueProperty().bindBidirectional(settings().themeColorTypeProperty());
+
+            themeColorSublist.getContent().setAll(themeColorChoiceList);
+            themeList.getContent().add(themeColorSublist);
         }
 
         {

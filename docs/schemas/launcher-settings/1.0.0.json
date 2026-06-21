@@ -42,7 +42,7 @@
     "themeBrightness": {
       "type": "string"
     },
-    "themeColor": true,
+    "customThemeColor": true,
     "themeColorType": {
       "enum": [
         "CUSTOM",

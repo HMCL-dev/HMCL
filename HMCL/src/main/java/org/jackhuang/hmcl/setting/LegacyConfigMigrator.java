@@ -220,7 +220,7 @@ public final class LegacyConfigMigrator {
             renameMember(jsonObject, "commonDirType", "commonDirectoryType");
             renameMember(jsonObject, "commonpath", "commonDirectory");
             migrateLegacyLanguage(jsonObject);
-            renameMember(jsonObject, "theme", "themeColor");
+            renameMember(jsonObject, "theme", "customThemeColor");
             renameMember(jsonObject, "fontFamily", "logFontFamily");
             renameMember(jsonObject, "fontSize", "logFontSize");
             renameMember(jsonObject, "bgpath", "backgroundImage");

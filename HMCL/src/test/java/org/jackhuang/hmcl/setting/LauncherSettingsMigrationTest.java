@@ -23,6 +23,7 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import org.glavo.uuid.UUIDs;
 import org.jackhuang.hmcl.auth.AccountID;
+import org.jackhuang.hmcl.theme.ThemeColor;
 import org.jackhuang.hmcl.util.gson.JsonSchema;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jetbrains.annotations.NotNullByDefault;
@@ -136,6 +137,32 @@ public final class LauncherSettingsMigrationTest {
         assertFalse(serialized.has("fontSize"));
         assertEquals("Fira Code", serialized.get("logFontFamily").getAsString());
         assertEquals(13.5, serialized.get("logFontSize").getAsDouble(), 1e-9);
+    }
+
+    /// Tests migrating the legacy theme color field into the custom theme color field.
+    @Test
+    public void migratesLegacyThemeToCustomThemeColor() throws IOException {
+        try (FileSystem fileSystem = Jimfs.newFileSystem(Configuration.unix())) {
+            Path root = fileSystem.getPath("/launcher-settings-migration-tests");
+            Files.createDirectories(root);
+            Path config = Files.createTempFile(root, "theme-color-", ".json");
+            Files.writeString(config, """
+                    {
+                      "_version": 2,
+                      "theme": "#336699"
+                    }
+                    """);
+
+            LegacyConfigMigrator.LegacyConfigMigration migration =
+                    Objects.requireNonNull(LegacyConfigMigrator.migrateLegacyConfig(config));
+            LauncherSettings launcherSettings = migration.launcherSettings();
+            JsonObject serialized = JsonParser.parseString(launcherSettings.toJson()).getAsJsonObject();
+
+            assertFalse(serialized.has("theme"));
+            assertFalse(serialized.has("themeColor"));
+            assertEquals(ThemeColor.of("#336699"), launcherSettings.customThemeColorProperty().get());
+            assertEquals("#336699", serialized.get("customThemeColor").getAsString());
+        }
     }
 
     /// Tests migrating legacy enum ordinal fields into stable enum names.

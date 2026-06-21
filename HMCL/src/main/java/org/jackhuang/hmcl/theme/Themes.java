@@ -72,7 +72,7 @@ public final class Themes {
             List<Observable> observables = new ArrayList<>();
 
             observables.add(settings().themeBrightnessProperty());
-            observables.add(settings().themeColorProperty());
+            observables.add(settings().customThemeColorProperty());
             observables.add(settings().themeColorTypeProperty());
             observables.add(settings().backgroundTypeProperty());
             observables.add(settings().backgroundImageProperty());
@@ -105,7 +105,7 @@ public final class Themes {
 
         /// Returns the effective theme color for the current launcher settings.
         private ThemeColor getThemeColor() {
-            ThemeColor fallback = Objects.requireNonNullElse(settings().themeColorProperty().get(), ThemeColor.DEFAULT);
+            ThemeColor fallback = Objects.requireNonNullElse(settings().customThemeColorProperty().get(), ThemeColor.DEFAULT);
             ThemeColorType themeColorType = Objects.requireNonNullElse(settings().themeColorTypeProperty().get(), ThemeColorType.CUSTOM);
             if (themeColorType != ThemeColorType.BACKGROUND) {
                 return fallback;
