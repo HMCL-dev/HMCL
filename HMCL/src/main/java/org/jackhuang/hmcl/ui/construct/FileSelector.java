@@ -26,6 +26,7 @@ import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.geometry.Pos;
 import javafx.scene.layout.HBox;
+import javafx.scene.layout.Priority;
 import javafx.stage.DirectoryChooser;
 import javafx.stage.FileChooser;
 import org.jackhuang.hmcl.ui.Controllers;
@@ -88,6 +89,8 @@ public class FileSelector extends HBox {
 
     public FileSelector() {
         JFXTextField customField = new JFXTextField();
+        customField.setMaxWidth(Double.MAX_VALUE);
+        HBox.setHgrow(customField, Priority.ALWAYS);
         FXUtils.bindString(customField, valueProperty());
 
         selectButton.setOnAction(e -> {
