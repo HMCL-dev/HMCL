@@ -30,6 +30,7 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -61,11 +62,15 @@ public final class ThemePackExporterTest {
 
             String exportedManifest = readEntry(zipFile, manifestEntry);
             assertTrue(exportedManifest.contains(ThemePackManifest.CURRENT_SCHEMA.url()));
+            assertTrue(exportedManifest.contains("\"theme\""));
+            assertFalse(exportedManifest.contains("\"themes\""));
             ThemePackManifest parsed = ThemePackManifest.fromJson(exportedManifest);
-            Theme theme = parsed.findTheme("current");
+            Theme theme = parsed.findTheme(null);
             assertNotNull(theme);
+            ThemeBackground background = theme.appearance().background();
+            assertNotNull(background);
             assertEquals("user.current-theme", parsed.id());
-            assertEquals("assets/wallpapers/wallpaper.txt", theme.appearance().background().path());
+            assertEquals("assets/wallpapers/wallpaper.txt", background.path());
 
             String exportedWallpaper = readEntry(zipFile, wallpaperEntry);
             assertEquals("wallpaper", exportedWallpaper);
@@ -145,20 +150,16 @@ public final class ThemePackExporterTest {
                   "version": "1.0.0",
                   "name": "Current Theme",
                   "authors": ["User"],
-                  "themes": [
-                    {
-                      "id": "current",
-                      "name": "Current",
-                      "color": "#5C6BC0",
-                      "brightness": "adaptive",
-                      "colorStyle": "fidelity",
-                      "contrast": "default",
-                      "background": {
-                        "type": "image",
-                        "path": "assets/wallpapers/wallpaper.txt"
-                      }
+                  "theme": {
+                    "color": "#5C6BC0",
+                    "brightness": "adaptive",
+                    "colorStyle": "fidelity",
+                    "contrast": "default",
+                    "background": {
+                      "type": "image",
+                      "path": "assets/wallpapers/wallpaper.txt"
                     }
-                  ]
+                  }
                 }
                 """);
     }

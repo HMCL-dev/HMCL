@@ -224,23 +224,21 @@ public final class ThemePackManagerTest {
                   "version": "1.0.0",
                   "name": "Example UI",
                   "authors": ["Example"],
-                  "themes": [
-                    {
-                      "name": "Forest",
-                      "thumbnail": "assets/thumbnails/thumbnail.txt",
-                      "color": {
-                        "source": "wallpaper",
-                        "fallback": "#336699"
-                      },
-                      "brightness": "dark",
-                      "titleTransparent": true,
-                      "background": {
-                        "type": "image",
-                        "path": "assets/wallpapers/wallpaper.png",
-                        "opacity": 0.75
-                      }
+                  "theme": {
+                    "name": "Forest",
+                    "thumbnail": "assets/thumbnails/thumbnail.txt",
+                    "color": {
+                      "source": "wallpaper",
+                      "fallback": "#336699"
+                    },
+                    "brightness": "dark",
+                    "titleTransparent": true,
+                    "background": {
+                      "type": "image",
+                      "path": "assets/wallpapers/wallpaper.png",
+                      "opacity": 0.75
                     }
-                  ]
+                  }
                 }
                 """);
     }

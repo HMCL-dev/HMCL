@@ -41,49 +41,47 @@ public final class ThemePackManifestTest {
               "version": "1.0.0",
               "name": "Nature",
               "authors": ["Example"],
-              "themes": [
-                {
-                  "id": "forest",
-                  "name": "Forest",
-                  "thumbnail": "assets/thumbnails/forest.png",
-                  "color": "#4D7C3A",
-                  "brightness": "adaptive",
-                  "colorStyle": "fidelity",
-                  "contrast": "default",
-                  "background": {
-                    "type": "image",
-                    "path": "assets/wallpapers/forest.webp",
-                    "opacity": 0.8
-                  },
-                  "overrides": [
-                    {
-                      "condition": {
-                        "brightness": "dark"
-                      },
-                      "color": "#6FA65A",
-                      "background": {
-                        "path": "assets/wallpapers/forest-dark.webp"
-                      }
+              "theme": {
+                "id": "forest",
+                "name": "Forest",
+                "thumbnail": "assets/thumbnails/forest.png",
+                "color": "#4D7C3A",
+                "brightness": "adaptive",
+                "colorStyle": "fidelity",
+                "contrast": "default",
+                "background": {
+                  "type": "image",
+                  "path": "assets/wallpapers/forest.webp",
+                  "opacity": 0.8
+                },
+                "overrides": [
+                  {
+                    "condition": {
+                      "brightness": "dark"
                     },
-                    {
-                      "condition": {
-                        "brightness": "dark",
-                        "os": "windows"
-                      },
-                      "contrast": "high",
-                      "background": {
-                        "opacity": 0.9
-                      }
-                    },
-                    {
-                      "condition": {
-                        "arch": ["arm64", "riscv64"]
-                      },
-                      "colorStyle": "tonal_spot"
+                    "color": "#6FA65A",
+                    "background": {
+                      "path": "assets/wallpapers/forest-dark.webp"
                     }
-                  ]
-                }
-              ]
+                  },
+                  {
+                    "condition": {
+                      "brightness": "dark",
+                      "os": "windows"
+                    },
+                    "contrast": "high",
+                    "background": {
+                      "opacity": 0.9
+                    }
+                  },
+                  {
+                    "condition": {
+                      "arch": ["arm64", "riscv64"]
+                    },
+                    "colorStyle": "tonal_spot"
+                  }
+                ]
+              }
             }
             """;
 
@@ -149,19 +147,17 @@ public final class ThemePackManifestTest {
                   "id": "example.empty-condition",
                   "version": "1.0.0",
                   "name": "Empty Condition",
-                  "themes": [
-                    {
-                      "id": "current",
-                      "name": "Current",
-                      "color": "#111111",
-                      "overrides": [
-                        {
-                          "condition": {},
-                          "color": "#222222"
-                        }
-                      ]
-                    }
-                  ]
+                  "theme": {
+                    "id": "current",
+                    "name": "Current",
+                    "color": "#111111",
+                    "overrides": [
+                      {
+                        "condition": {},
+                        "color": "#222222"
+                      }
+                    ]
+                  }
                 }
                 """);
         Theme theme = manifest.findTheme("current");
@@ -183,11 +179,9 @@ public final class ThemePackManifestTest {
                   "id": "example.single",
                   "version": "1.0.0",
                   "name": "Single",
-                  "themes": [
-                    {
-                      "color": "#111111"
-                    }
-                  ]
+                  "theme": {
+                    "color": "#111111"
+                  }
                 }
                 """);
 
@@ -233,6 +227,77 @@ public final class ThemePackManifestTest {
                   "themes": [
                     {
                       "id": "first",
+                      "color": "#111111"
+                    },
+                    {
+                      "id": "second",
+                      "name": "Second",
+                      "color": "#222222"
+                    }
+                  ]
+                }
+                """));
+    }
+
+    /// Tests that the `themes` array can also represent a single-theme manifest.
+    @Test
+    public void testThemesArrayCanContainOneTheme() {
+        ThemePackManifest manifest = ThemePackManifest.fromJson("""
+                {
+                  "$schema": "https://schemas.glavo.site/hmcl/theme-pack/1.0.0",
+                  "id": "example.single-array",
+                  "version": "1.0.0",
+                  "name": "Single Array",
+                  "themes": [
+                    {
+                      "id": "single",
+                      "name": "Single",
+                      "color": "#111111"
+                    }
+                  ]
+                }
+                """);
+
+        Theme theme = manifest.findTheme(null);
+        assertNotNull(theme);
+        assertEquals("single", theme.id());
+        assertEquals("Single", theme.name());
+    }
+
+    /// Tests that `themes` array entries must provide explicit theme identities even with one entry.
+    @Test
+    public void testThemesArrayRequiresThemeIdentityForSingleEntry() {
+        assertThrows(JsonParseException.class, () -> ThemePackManifest.fromJson("""
+                {
+                  "$schema": "https://schemas.glavo.site/hmcl/theme-pack/1.0.0",
+                  "id": "example.single-array",
+                  "version": "1.0.0",
+                  "name": "Single Array",
+                  "themes": [
+                    {
+                      "color": "#111111"
+                    }
+                  ]
+                }
+                """));
+    }
+
+    /// Tests that single-theme and multi-theme declarations are mutually exclusive.
+    @Test
+    public void testRejectBothThemeAndThemes() {
+        assertThrows(JsonParseException.class, () -> ThemePackManifest.fromJson("""
+                {
+                  "$schema": "https://schemas.glavo.site/hmcl/theme-pack/1.0.0",
+                  "id": "example.both",
+                  "version": "1.0.0",
+                  "name": "Both",
+                  "theme": {
+                    "color": "#111111"
+                  },
+                  "themes": [
+                    {
+                      "id": "first",
+                      "name": "First",
                       "color": "#111111"
                     },
                     {

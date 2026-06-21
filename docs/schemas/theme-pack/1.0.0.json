@@ -8,8 +8,7 @@
     "$schema",
     "id",
     "version",
-    "name",
-    "themes"
+    "name"
   ],
   "patternProperties": {
     "^\\$schema$": {
@@ -38,34 +37,46 @@
       },
       "uniqueItems": true
     },
+    "theme": {
+      "$ref": "#/$defs/theme"
+    },
     "themes": {
       "type": "array",
       "minItems": 1,
       "items": {
-        "$ref": "#/$defs/theme"
+        "allOf": [
+          {
+            "$ref": "#/$defs/theme"
+          },
+          {
+            "required": [
+              "id",
+              "name"
+            ]
+          }
+        ]
       }
     }
   },
-  "allOf": [
+  "oneOf": [
     {
-      "if": {
-        "properties": {
-          "themes": {
-            "minItems": 2
-          }
-        }
-      },
-      "then": {
-        "properties": {
-          "themes": {
-            "items": {
-              "required": [
-                "id",
-                "name"
-              ]
-            }
-          }
-        }
+      "required": [
+        "theme"
+      ],
+      "not": {
+        "required": [
+          "themes"
+        ]
+      }
+    },
+    {
+      "required": [
+        "themes"
+      ],
+      "not": {
+        "required": [
+          "theme"
+        ]
       }
     }
   ],

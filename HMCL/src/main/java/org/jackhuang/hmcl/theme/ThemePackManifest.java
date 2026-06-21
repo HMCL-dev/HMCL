@@ -71,7 +71,10 @@ public record ThemePackManifest(
     /// JSON member name for the package description.
     private static final String FIELD_DESCRIPTION = "description";
 
-    /// JSON member name for theme declarations.
+    /// JSON member name for a single theme declaration.
+    private static final String FIELD_THEME = "theme";
+
+    /// JSON member name for multiple theme declarations.
     private static final String FIELD_THEMES = "themes";
 
     /// Manifest fields accepted by this parser.
@@ -82,6 +85,7 @@ public record ThemePackManifest(
             FIELD_NAME,
             FIELD_AUTHORS,
             FIELD_DESCRIPTION,
+            FIELD_THEME,
             FIELD_THEMES);
 
     /// Creates a theme-pack manifest.
@@ -181,11 +185,15 @@ public record ThemePackManifest(
             object.addProperty(FIELD_DESCRIPTION, description);
         }
 
-        JsonArray themeArray = new JsonArray();
-        for (Theme theme : themes) {
-            themeArray.add(theme.toJsonObject());
+        if (themes.size() == 1) {
+            object.add(FIELD_THEME, themes.get(0).toJsonObject());
+        } else {
+            JsonArray themeArray = new JsonArray();
+            for (Theme theme : themes) {
+                themeArray.add(theme.toJsonObject());
+            }
+            object.add(FIELD_THEMES, themeArray);
         }
-        object.add(FIELD_THEMES, themeArray);
         return object;
     }
 
@@ -244,23 +252,36 @@ public record ThemePackManifest(
         return authors;
     }
 
-    /// Reads the required themes list.
+    /// Reads the required theme declaration.
     private static List<Theme> readThemes(JsonObject object) {
+        boolean hasSingleTheme = object.has(FIELD_THEME);
+        boolean hasMultipleThemes = object.has(FIELD_THEMES);
+        if (hasSingleTheme == hasMultipleThemes) {
+            throw new JsonParseException("Theme-pack manifest must declare exactly one of theme or themes");
+        }
+
+        if (hasSingleTheme) {
+            JsonElement element = object.get(FIELD_THEME);
+            if (!(element instanceof JsonObject themeObject)) {
+                throw new JsonParseException("Theme-pack theme must be an object");
+            }
+            return List.of(Theme.fromJson(themeObject, false));
+        }
+
         JsonElement element = object.get(FIELD_THEMES);
         if (!(element instanceof JsonArray array)) {
             throw new JsonParseException("Theme-pack manifest is missing themes array");
         }
         if (array.isEmpty()) {
-            throw new JsonParseException("Theme-pack manifest must declare at least one theme");
+            throw new JsonParseException("Theme-pack themes array must declare at least one theme");
         }
 
         ArrayList<Theme> themes = new ArrayList<>(array.size());
-        boolean requireThemeIdentity = array.size() > 1;
         for (JsonElement item : array) {
             if (!(item instanceof JsonObject themeObject)) {
                 throw new JsonParseException("Theme-pack theme must be an object");
             }
-            themes.add(Theme.fromJson(themeObject, requireThemeIdentity));
+            themes.add(Theme.fromJson(themeObject, true));
         }
         return themes;
     }
