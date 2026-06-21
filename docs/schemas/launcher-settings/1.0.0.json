@@ -49,6 +49,20 @@
         "BACKGROUND"
       ]
     },
+    "themeColorStyle": {
+      "enum": [
+        "TONAL_SPOT",
+        "FIDELITY",
+        "MONOCHROME",
+        "NEUTRAL",
+        "VIBRANT",
+        "EXPRESSIVE",
+        "CONTENT",
+        "RAINBOW",
+        "FRUIT_SALAD",
+        "DEFAULT"
+      ]
+    },
     "logFontFamily": {
       "type": "string"
     },

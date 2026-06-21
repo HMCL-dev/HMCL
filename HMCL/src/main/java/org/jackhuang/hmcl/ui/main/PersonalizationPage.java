@@ -33,6 +33,7 @@ import javafx.scene.paint.Paint;
 import javafx.scene.text.Font;
 import javafx.scene.text.FontSmoothingType;
 import javafx.stage.FileChooser;
+import org.glavo.monetfx.ColorStyle;
 import org.glavo.uuid.UUIDs;
 import org.jackhuang.hmcl.setting.SettingsManager;
 import org.jackhuang.hmcl.setting.BackgroundType;
@@ -460,6 +461,17 @@ public class PersonalizationPage extends StackPane {
 
             themeColorSublist.getContent().setAll(themeColorChoiceList);
             themeAppearanceList.getContent().add(themeColorSublist);
+        }
+
+        {
+            var colorStylePane = new LineSelectButton<ColorStyle>();
+            colorStylePane.setTitle(i18n("settings.launcher.theme_color_style"));
+            colorStylePane.setNullSafeConverter(style ->
+                    i18n("settings.launcher.theme_color_style." + style.name().toLowerCase(Locale.ROOT)));
+            colorStylePane.setItems(ColorStyle.values());
+            colorStylePane.valueProperty().bindBidirectional(settings().themeColorStyleProperty());
+
+            themeAppearanceList.getContent().add(colorStylePane);
         }
 
         {

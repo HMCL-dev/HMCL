@@ -19,6 +19,7 @@ package org.jackhuang.hmcl.theme;
 
 import com.google.gson.JsonObject;
 import org.glavo.monetfx.Brightness;
+import org.glavo.monetfx.ColorStyle;
 import org.jackhuang.hmcl.setting.BackgroundType;
 import org.jackhuang.hmcl.setting.LauncherSettings;
 import org.jackhuang.hmcl.setting.SettingsManager;
@@ -93,6 +94,7 @@ public final class ThemePackManagerTest {
             LauncherSettings settings = SettingsManager.settings();
             assertEquals(ThemeColor.of("#248C44"), settings.customThemeColorProperty().get());
             assertEquals(ThemeColorType.BACKGROUND, settings.themeColorTypeProperty().get());
+            assertEquals(ColorStyle.EXPRESSIVE, settings.themeColorStyleProperty().get());
             assertEquals("dark", settings.themeBrightnessProperty().get());
             assertEquals(new ThemeSelection("example.ui", "1.0.0", null), settings.themeProperty().get());
             JsonObject themeJson = LauncherSettings.SETTINGS_GSON.toJsonTree(settings)
@@ -126,6 +128,7 @@ public final class ThemePackManagerTest {
             ThemeColor themeColor = Objects.requireNonNull(ThemeColor.of("#663399"));
             settings.customThemeColorProperty().set(themeColor);
             settings.themeColorTypeProperty().set(ThemeColorType.BACKGROUND);
+            settings.themeColorStyleProperty().set(ColorStyle.MONOCHROME);
             settings.themeBrightnessProperty().set("dark");
             settings.titleTransparentProperty().set(true);
             settings.backgroundTypeProperty().set(BackgroundType.CLASSIC);
@@ -149,6 +152,7 @@ public final class ThemePackManagerTest {
             assertNull(theme.id());
             assertNull(theme.name());
             assertEquals(ThemeColorSource.wallpaper(themeColor), appearance.color());
+            assertEquals(ColorStyle.MONOCHROME, appearance.colorStyle());
             assertEquals(ThemeBrightness.DARK, appearance.brightness());
             assertEquals(true, appearance.titleTransparent());
             assertEquals(ThemeBackground.Type.CLASSIC, background.effectiveType());
@@ -232,6 +236,7 @@ public final class ThemePackManagerTest {
                       "fallback": "#336699"
                     },
                     "brightness": "dark",
+                    "colorStyle": "expressive",
                     "titleTransparent": true,
                     "background": {
                       "type": "image",

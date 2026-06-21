@@ -32,6 +32,7 @@ import javafx.stage.Stage;
 import javafx.stage.WindowEvent;
 import org.glavo.monetfx.Brightness;
 import org.glavo.monetfx.ColorScheme;
+import org.glavo.monetfx.ColorStyle;
 import org.glavo.monetfx.Contrast;
 import org.glavo.monetfx.beans.property.ColorSchemeProperty;
 import org.glavo.monetfx.beans.property.ReadOnlyColorSchemeProperty;
@@ -74,6 +75,7 @@ public final class Themes {
             observables.add(settings().themeBrightnessProperty());
             observables.add(settings().customThemeColorProperty());
             observables.add(settings().themeColorTypeProperty());
+            observables.add(settings().themeColorStyleProperty());
             observables.add(settings().backgroundTypeProperty());
             observables.add(settings().backgroundImageProperty());
             observables.add(settings().backgroundPaintProperty());
@@ -113,6 +115,11 @@ public final class Themes {
             return getBackgroundThemeColor(fallback);
         }
 
+        /// Returns the configured MonetFX color style.
+        private ColorStyle getColorStyle() {
+            return Objects.requireNonNullElse(settings().themeColorStyleProperty().get(), ResolvedTheme.DEFAULT.colorStyle());
+        }
+
         /// Returns a Monet seed color extracted from the current background when possible.
         private ThemeColor getBackgroundThemeColor(ThemeColor fallback) {
             BackgroundType backgroundType = Objects.requireNonNullElse(settings().backgroundTypeProperty().get(), BackgroundType.DEFAULT);
@@ -150,7 +157,7 @@ public final class Themes {
         /// Computes the resolved launcher theme.
         @Override
         protected ResolvedTheme computeValue() {
-            return new ResolvedTheme(getThemeColor(), getBrightness(), ResolvedTheme.DEFAULT.colorStyle(), Contrast.DEFAULT);
+            return new ResolvedTheme(getThemeColor(), getBrightness(), getColorStyle(), Contrast.DEFAULT);
         }
     };
 

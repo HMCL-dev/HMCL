@@ -26,6 +26,7 @@ import javafx.collections.ObservableList;
 import javafx.collections.ObservableMap;
 import javafx.collections.ObservableSet;
 import javafx.scene.paint.Paint;
+import org.glavo.monetfx.ColorStyle;
 import org.hildan.fxgson.creators.ObservableListCreator;
 import org.hildan.fxgson.creators.ObservableMapCreator;
 import org.hildan.fxgson.creators.ObservableSetCreator;
@@ -269,6 +270,15 @@ public final class LauncherSettings extends ObservableSetting implements JsonSch
     /// Returns the launcher theme color source type property.
     public ObjectProperty<ThemeColorType> themeColorTypeProperty() {
         return themeColorType;
+    }
+
+    /// The MonetFX color style used to generate the launcher color scheme.
+    @SerializedName("themeColorStyle")
+    private final ObjectProperty<ColorStyle> themeColorStyle = new RawPreservingObjectProperty<>(ColorStyle.FIDELITY);
+
+    /// Returns the launcher theme color style property.
+    public ObjectProperty<ColorStyle> themeColorStyleProperty() {
+        return themeColorStyle;
     }
 
     /// The font family used by launcher log views.

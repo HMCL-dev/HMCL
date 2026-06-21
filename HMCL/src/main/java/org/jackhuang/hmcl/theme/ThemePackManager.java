@@ -315,6 +315,9 @@ public final class ThemePackManager {
         if (appearance.background() != null) {
             applyBackground(manifest, themePackDirectory.toAbsolutePath().normalize(), appearance.background());
         }
+        if (appearance.colorStyle() != null) {
+            currentSettings.themeColorStyleProperty().set(appearance.colorStyle());
+        }
         if (appearance.color() != null) {
             currentSettings.themeColorTypeProperty().set(toThemeColorType(appearance.color()));
             currentSettings.customThemeColorProperty().set(resolveThemeColor(themePackDirectory, appearance));
@@ -351,7 +354,7 @@ public final class ThemePackManager {
         ThemeAppearance appearance = new ThemeAppearance(
                 currentThemeColorSource(),
                 currentThemeBrightness(),
-                ColorStyle.FIDELITY,
+                currentColorStyle(),
                 Contrast.DEFAULT,
                 createCurrentBackground(assets),
                 settings().titleTransparentProperty().get());
@@ -380,6 +383,11 @@ public final class ThemePackManager {
         return themeColorType == ThemeColorType.BACKGROUND
                 ? ThemeColorSource.wallpaper(fallback)
                 : ThemeColorSource.custom(fallback);
+    }
+
+    /// Returns the current launcher color style as a theme-pack directive.
+    private static ColorStyle currentColorStyle() {
+        return Objects.requireNonNullElse(settings().themeColorStyleProperty().get(), ResolvedTheme.DEFAULT.colorStyle());
     }
 
     /// Converts a theme-pack color directive into the launcher setting source type.
