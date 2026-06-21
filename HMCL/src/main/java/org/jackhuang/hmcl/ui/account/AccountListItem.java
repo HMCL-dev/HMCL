@@ -90,7 +90,7 @@ public class AccountListItem extends RadioButton {
         if (account instanceof ClassicAccount classicAccount) {
             title.bind(Bindings.createStringBinding(() -> {
                 if (Objects.equals(profileName.get(), classicAccount.getLoginName())) return profileName.get();
-                else return classicAccount.getLoginName() + " - " + profileName.get();
+                else return profileName.get() + " - " + classicAccount.getLoginName();
             }, profileName));
         } else {
             title.bind(profileName);
