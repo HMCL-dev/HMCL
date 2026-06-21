@@ -188,6 +188,45 @@ public class PersonalizationPage extends StackPane {
         return StringUtils.isBlank(value) ? defaultValue : value.trim();
     }
 
+    /// Returns a safe theme-pack file name derived from the package name.
+    private static String getThemePackFileName(String packName) {
+        String fileName = sanitizeThemePackFileName(packName) + ThemePackExporter.FILE_EXTENSION;
+        return FileUtils.isNameValid(fileName) ? fileName : "theme-pack" + ThemePackExporter.FILE_EXTENSION;
+    }
+
+    /// Sanitizes a package name for use as a file name without changing the package metadata.
+    private static String sanitizeThemePackFileName(String value) {
+        StringBuilder builder = new StringBuilder(value.length());
+        value.trim().codePoints().forEach(codePoint -> {
+            if (isUnsafeThemePackFileNameCodePoint(codePoint)) {
+                builder.append('_');
+            } else {
+                builder.appendCodePoint(codePoint);
+            }
+        });
+
+        String sanitized = builder.toString().replaceAll("[.\\s]+$", "");
+        return sanitized.isBlank() ? "theme-pack" : sanitized;
+    }
+
+    /// Returns `true` when the code point is unsafe in cross-platform file names.
+    private static boolean isUnsafeThemePackFileNameCodePoint(int codePoint) {
+        return !Character.isValidCodePoint(codePoint)
+                || Character.isISOControl(codePoint)
+                || codePoint == '/'
+                || codePoint == '\\'
+                || codePoint == ':'
+                || codePoint == '<'
+                || codePoint == '>'
+                || codePoint == '"'
+                || codePoint == '|'
+                || codePoint == '?'
+                || codePoint == '*'
+                || codePoint == 0xfffd
+                || codePoint == 0xfffe
+                || codePoint == 0xffff;
+    }
+
     /// Ensures the selected output file uses the theme-pack extension.
     private static Path ensureThemePackExtension(Path output) {
         String fileName = output.getFileName().toString();
@@ -314,7 +353,7 @@ public class PersonalizationPage extends StackPane {
     private void exportCurrentThemePack(String packId, String packName, String authorName) {
         FileChooser chooser = new FileChooser();
         chooser.setTitle(i18n("theme_pack.export.title"));
-        chooser.setInitialFileName("current-theme" + ThemePackExporter.FILE_EXTENSION);
+        chooser.setInitialFileName(getThemePackFileName(packName));
         chooser.getExtensionFilters().setAll(getThemePackExtensionFilter());
 
         @Nullable Path output = FileUtils.toPath(chooser.showSaveDialog(Controllers.getStage()));
