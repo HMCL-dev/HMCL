@@ -60,7 +60,7 @@ public final class ThemePackExporterTest {
             assertNotNull(wallpaperEntry);
 
             String exportedManifest = readEntry(zipFile, manifestEntry);
-            assertTrue(exportedManifest.contains(ThemePackManifest.SCHEMA_URL));
+            assertTrue(exportedManifest.contains(ThemePackManifest.CURRENT_SCHEMA.url()));
             ThemePackManifest parsed = ThemePackManifest.fromJson(exportedManifest);
             Theme theme = parsed.findTheme("current");
             assertNotNull(theme);

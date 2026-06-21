@@ -23,6 +23,7 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParseException;
 import com.google.gson.JsonParser;
 import com.google.gson.JsonPrimitive;
+import org.jackhuang.hmcl.util.gson.JsonSchema;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
@@ -51,8 +52,9 @@ public record ThemePackManifest(
         @Nullable String description,
         @Unmodifiable List<Theme> themes) {
 
-    /// JSON Schema URL for the current manifest format.
-    public static final String SCHEMA_URL = "https://schemas.glavo.site/hmcl/theme-pack/1.0.0";
+    /// JSON schema for the current manifest format.
+    public static final JsonSchema CURRENT_SCHEMA =
+            new JsonSchema("theme-pack", new JsonSchema.Version(1, 0, 0));
 
     /// JSON member name for the package ID.
     private static final String FIELD_ID = "id";
@@ -72,12 +74,9 @@ public record ThemePackManifest(
     /// JSON member name for theme declarations.
     private static final String FIELD_THEMES = "themes";
 
-    /// JSON member name for the schema marker.
-    private static final String FIELD_SCHEMA = "$schema";
-
     /// Manifest fields accepted by this parser.
     private static final Set<String> FIELDS = Set.of(
-            FIELD_SCHEMA,
+            JsonSchema.PROPERTY_SCHEMA,
             FIELD_ID,
             FIELD_VERSION,
             FIELD_NAME,
@@ -166,7 +165,7 @@ public record ThemePackManifest(
     /// @return the JSON object representing this manifest
     public JsonObject toJsonObject() {
         JsonObject object = new JsonObject();
-        object.addProperty(FIELD_SCHEMA, SCHEMA_URL);
+        object.addProperty(JsonSchema.PROPERTY_SCHEMA, CURRENT_SCHEMA.url());
         object.addProperty(FIELD_ID, id);
         object.addProperty(FIELD_VERSION, version);
         object.addProperty(FIELD_NAME, name);
@@ -208,15 +207,21 @@ public record ThemePackManifest(
 
     /// Checks that the manifest declares the supported schema.
     private static void checkSchema(JsonObject object) {
-        JsonElement element = object.get(FIELD_SCHEMA);
-        if (!(element instanceof JsonPrimitive primitive) || !primitive.isString()) {
-            throw new JsonParseException("Theme-pack manifest is missing string $schema");
+        JsonSchema.CompatibilityResult result = JsonSchema.check(object, CURRENT_SCHEMA);
+        if (!result.readable()) {
+            throw new JsonParseException("Unsupported theme-pack schema: " + schemaDescription(result));
         }
+    }
 
-        String schema = primitive.getAsString();
-        if (!SCHEMA_URL.equals(schema)) {
-            throw new JsonParseException("Unsupported theme-pack schema: " + schema);
+    /// Returns a compact schema description for parse errors.
+    private static String schemaDescription(JsonSchema.CompatibilityResult result) {
+        if (result.actual() != null) {
+            return result.actual().url();
         }
+        if (result.invalidValue() != null) {
+            return result.invalidValue();
+        }
+        return result.status().name();
     }
 
     /// Reads the required authors list.
