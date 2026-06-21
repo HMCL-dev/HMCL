@@ -22,7 +22,6 @@ import com.jfoenix.effects.JFXDepthManager;
 import javafx.application.Platform;
 import javafx.beans.binding.Bindings;
 import javafx.beans.binding.StringBinding;
-import javafx.beans.binding.When;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.control.ColorPicker;
@@ -31,19 +30,30 @@ import javafx.scene.control.ScrollPane;
 import javafx.scene.layout.*;
 import javafx.scene.text.Font;
 import javafx.scene.text.FontSmoothingType;
+import javafx.stage.FileChooser;
 import org.jackhuang.hmcl.setting.SettingsManager;
 import org.jackhuang.hmcl.setting.BackgroundType;
 import org.jackhuang.hmcl.setting.FontManager;
 import org.jackhuang.hmcl.setting.UserSettings;
+import org.jackhuang.hmcl.theme.Theme;
 import org.jackhuang.hmcl.theme.ThemeColor;
+import org.jackhuang.hmcl.theme.ThemePackExporter;
+import org.jackhuang.hmcl.theme.ThemePackManager;
+import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
 import org.jackhuang.hmcl.ui.construct.*;
+import org.jackhuang.hmcl.ui.construct.MessageDialogPane.MessageType;
 import org.jackhuang.hmcl.util.Lang;
+import org.jackhuang.hmcl.util.StringUtils;
+import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.javafx.SafeStringConverter;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.IOException;
+import java.nio.file.Path;
 import java.util.Arrays;
+import java.util.List;
 import java.util.Locale;
 import java.util.Optional;
 
@@ -52,6 +62,11 @@ import static org.jackhuang.hmcl.setting.SettingsManager.userSettings;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 public class PersonalizationPage extends StackPane {
+
+    /// File chooser filter for HMCL theme-pack files.
+    private static FileChooser.ExtensionFilter getThemePackExtensionFilter() {
+        return new FileChooser.ExtensionFilter(i18n("theme_pack.file"), "*" + ThemePackExporter.FILE_EXTENSION);
+    }
 
     private static double snapOpacity(double val) {
         if (val <= 0) {
@@ -119,6 +134,22 @@ public class PersonalizationPage extends StackPane {
             animationButton.setTitle(i18n("settings.launcher.turn_off_animations"));
             animationButton.setSubtitle(i18n("settings.take_effect_after_restart"));
         }
+        {
+            LineButton importThemePackButton = new LineButton();
+            themeList.getContent().add(importThemePackButton);
+            importThemePackButton.setTitle(i18n("theme_pack.import"));
+            importThemePackButton.setSubtitle(i18n("theme_pack.import.subtitle"));
+            importThemePackButton.setTrailingIcon(SVG.FILE_OPEN);
+            importThemePackButton.setOnAction(event -> importThemePack());
+        }
+        {
+            LineButton exportThemePackButton = new LineButton();
+            themeList.getContent().add(exportThemePackButton);
+            exportThemePackButton.setTitle(i18n("theme_pack.export"));
+            exportThemePackButton.setSubtitle(i18n("theme_pack.export.subtitle"));
+            exportThemePackButton.setTrailingIcon(SVG.ARCHIVE);
+            exportThemePackButton.setOnAction(event -> exportCurrentThemePack());
+        }
         content.getChildren().addAll(ComponentList.createComponentListTitle(i18n("settings.launcher.appearance")), themeList);
 
         {
@@ -146,10 +177,26 @@ public class PersonalizationPage extends StackPane {
                             .bindBidirectional(settings().backgroundPaintProperty())
             ));
             backgroundItem.selectedDataProperty().bindBidirectional(settings().backgroundTypeProperty());
-            backgroundSublist.descriptionProperty().bind(
-                    new When(backgroundItem.selectedDataProperty().isEqualTo(BackgroundType.DEFAULT))
-                            .then(i18n("launcher.background.default"))
-                            .otherwise(settings().backgroundImageProperty()));
+            backgroundSublist.descriptionProperty().bind(Bindings.createStringBinding(() -> {
+                        BackgroundType type = backgroundItem.selectedDataProperty().get();
+                        if (type == null) {
+                            type = BackgroundType.DEFAULT;
+                        }
+
+                        return switch (type) {
+                            case DEFAULT -> i18n("launcher.background.default");
+                            case CLASSIC -> i18n("launcher.background.classic");
+                            case CUSTOM -> settings().backgroundImageProperty().get();
+                            case NETWORK -> settings().backgroundImageUrlProperty().get();
+                            case PAINT -> settings().backgroundPaintProperty().get() != null
+                                    ? settings().backgroundPaintProperty().get().toString()
+                                    : i18n("launcher.background.paint");
+                        };
+                    },
+                    backgroundItem.selectedDataProperty(),
+                    settings().backgroundImageProperty(),
+                    settings().backgroundImageUrlProperty(),
+                    settings().backgroundPaintProperty()));
 
             HBox opacityItem = new HBox(8);
             {
@@ -317,5 +364,104 @@ public class PersonalizationPage extends StackPane {
 
             content.getChildren().addAll(ComponentList.createComponentListTitle(i18n("settings.launcher.font")), fontPane);
         }
+    }
+
+    /// Opens a theme-pack file and applies one theme from it.
+    private void importThemePack() {
+        FileChooser chooser = new FileChooser();
+        chooser.setTitle(i18n("theme_pack.import.title"));
+        chooser.getExtensionFilters().setAll(getThemePackExtensionFilter());
+
+        Path file = FileUtils.toPath(chooser.showOpenDialog(Controllers.getStage()));
+        if (file == null) {
+            return;
+        }
+
+        ThemePackManager.LoadedThemePack themePack;
+        try {
+            themePack = ThemePackManager.load(file);
+        } catch (IOException | RuntimeException e) {
+            showThemePackError(i18n("theme_pack.import.failed"), e);
+            return;
+        }
+
+        List<Theme> themes = themePack.manifest().themes();
+        if (themes.size() == 1) {
+            applyThemePack(themePack, themes.get(0));
+            return;
+        }
+
+        String[] themeNames = themes.stream()
+                .map(this::getThemeDisplayName)
+                .toArray(String[]::new);
+        PromptDialogPane.Builder.CandidatesQuestion question =
+                new PromptDialogPane.Builder.CandidatesQuestion(i18n("theme_pack.select.theme"), themeNames);
+        Controllers.prompt(new PromptDialogPane.Builder(i18n("theme_pack.select"), (questions, handler) -> handler.resolve())
+                .addQuestion(question)).thenAccept(questions -> {
+                    int selectedIndex = ((PromptDialogPane.Builder.CandidatesQuestion) questions.get(0)).getValue();
+                    applyThemePack(themePack, themes.get(selectedIndex));
+                });
+    }
+
+    /// Saves current launcher appearance as a theme-pack file.
+    private void exportCurrentThemePack() {
+        FileChooser chooser = new FileChooser();
+        chooser.setTitle(i18n("theme_pack.export.title"));
+        chooser.setInitialFileName("current-theme" + ThemePackExporter.FILE_EXTENSION);
+        chooser.getExtensionFilters().setAll(getThemePackExtensionFilter());
+
+        Path output = FileUtils.toPath(chooser.showSaveDialog(Controllers.getStage()));
+        if (output == null) {
+            return;
+        }
+
+        output = ensureThemePackExtension(output);
+        try {
+            ThemePackManager.exportCurrent(
+                    output,
+                    i18n("theme_pack.export.default_name"),
+                    i18n("theme_pack.export.default_theme_name"));
+            Controllers.dialog(
+                    i18n("theme_pack.export.success", output),
+                    i18n("message.success"),
+                    MessageType.SUCCESS);
+        } catch (IOException | RuntimeException e) {
+            showThemePackError(i18n("theme_pack.export.failed"), e);
+        }
+    }
+
+    /// Applies a selected theme and reports the result.
+    private void applyThemePack(ThemePackManager.LoadedThemePack themePack, Theme theme) {
+        try {
+            ThemePackManager.apply(themePack, theme);
+            Controllers.showToast(i18n("theme_pack.import.success", theme.name()));
+        } catch (IOException | RuntimeException e) {
+            showThemePackError(i18n("theme_pack.import.failed"), e);
+        }
+    }
+
+    /// Returns a display name for one theme-pack theme.
+    private String getThemeDisplayName(Theme theme) {
+        if (StringUtils.isBlank(theme.description())) {
+            return theme.name();
+        }
+        return theme.name() + " - " + theme.description();
+    }
+
+    /// Ensures the selected output file uses the theme-pack extension.
+    private static Path ensureThemePackExtension(Path output) {
+        String fileName = output.getFileName().toString();
+        if (fileName.toLowerCase(Locale.ROOT).endsWith(ThemePackExporter.FILE_EXTENSION)) {
+            return output;
+        }
+        return output.resolveSibling(fileName + ThemePackExporter.FILE_EXTENSION);
+    }
+
+    /// Shows a theme-pack import or export error dialog.
+    private static void showThemePackError(String title, Exception exception) {
+        Controllers.dialog(
+                title + "\n\n" + StringUtils.getStackTrace(exception),
+                i18n("message.error"),
+                MessageType.ERROR);
     }
 }

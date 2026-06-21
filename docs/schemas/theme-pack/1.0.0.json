@@ -218,6 +218,7 @@
         "^type$": {
           "enum": [
             "default",
+            "classic",
             "image",
             "network",
             "paint"

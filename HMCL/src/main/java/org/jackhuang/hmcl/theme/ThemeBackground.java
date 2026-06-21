@@ -70,6 +70,9 @@ public record ThemeBackground(
         /// Use the launcher default background.
         DEFAULT,
 
+        /// Use the launcher classic background.
+        CLASSIC,
+
         /// Use an image stored inside the theme pack.
         IMAGE,
 
