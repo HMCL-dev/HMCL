@@ -31,6 +31,7 @@ import javafx.scene.layout.*;
 import javafx.scene.text.Font;
 import javafx.scene.text.FontSmoothingType;
 import javafx.stage.FileChooser;
+import org.glavo.uuid.UUIDs;
 import org.jackhuang.hmcl.setting.SettingsManager;
 import org.jackhuang.hmcl.setting.BackgroundType;
 import org.jackhuang.hmcl.setting.FontManager;
@@ -62,6 +63,8 @@ import static org.jackhuang.hmcl.setting.SettingsManager.userSettings;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 public class PersonalizationPage extends StackPane {
+    /// Namespace used for default exported theme-pack identifiers.
+    private static final String EXPORTED_THEME_PACK_ID_NAMESPACE = "com.example.hmcl-theme-pack";
 
     /// File chooser filter for HMCL theme-pack files.
     private static FileChooser.ExtensionFilter getThemePackExtensionFilter() {
@@ -405,6 +408,30 @@ public class PersonalizationPage extends StackPane {
 
     /// Saves current launcher appearance as a theme-pack file.
     private void exportCurrentThemePack() {
+        PromptDialogPane.Builder.StringQuestion packIdQuestion = new PromptDialogPane.Builder.StringQuestion(
+                i18n("theme_pack.export.id"),
+                newExportedThemePackId(),
+                new RequiredValidator());
+        PromptDialogPane.Builder.StringQuestion packNameQuestion = new PromptDialogPane.Builder.StringQuestion(
+                i18n("theme_pack.export.name"),
+                i18n("theme_pack.export.default_name"),
+                new RequiredValidator());
+        PromptDialogPane.Builder.StringQuestion themeNameQuestion = new PromptDialogPane.Builder.StringQuestion(
+                i18n("theme_pack.export.theme_name"),
+                i18n("theme_pack.export.default_theme_name"),
+                new RequiredValidator());
+
+        Controllers.prompt(new PromptDialogPane.Builder(i18n("theme_pack.export.title"), (questions, handler) -> handler.resolve())
+                .addQuestion(packIdQuestion)
+                .addQuestion(packNameQuestion)
+                .addQuestion(themeNameQuestion)).thenAccept(questions -> exportCurrentThemePack(
+                packIdQuestion.getValue().trim(),
+                packNameQuestion.getValue().trim(),
+                themeNameQuestion.getValue().trim()));
+    }
+
+    /// Saves current launcher appearance as a theme-pack file with the given metadata.
+    private void exportCurrentThemePack(String packId, String packName, String themeName) {
         FileChooser chooser = new FileChooser();
         chooser.setTitle(i18n("theme_pack.export.title"));
         chooser.setInitialFileName("current-theme" + ThemePackExporter.FILE_EXTENSION);
@@ -419,8 +446,9 @@ public class PersonalizationPage extends StackPane {
         try {
             ThemePackManager.exportCurrent(
                     output,
-                    i18n("theme_pack.export.default_name"),
-                    i18n("theme_pack.export.default_theme_name"));
+                    packId,
+                    packName,
+                    themeName);
             Controllers.dialog(
                     i18n("theme_pack.export.success", output),
                     i18n("message.success"),
@@ -428,6 +456,11 @@ public class PersonalizationPage extends StackPane {
         } catch (IOException | RuntimeException e) {
             showThemePackError(i18n("theme_pack.export.failed"), e);
         }
+    }
+
+    /// Generates a default theme-pack identifier for the export dialog.
+    private static String newExportedThemePackId() {
+        return EXPORTED_THEME_PACK_ID_NAMESPACE + "." + UUIDs.toBase62String(UUIDs.generateV7());
     }
 
     /// Applies a selected theme and reports the result.

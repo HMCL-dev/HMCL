@@ -39,7 +39,6 @@ import java.util.stream.Stream;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -129,7 +128,7 @@ public final class ThemePackManagerTest {
 
             Path tempDir = createTestDirectory("export-current");
             Path output = tempDir.resolve("current" + ThemePackExporter.FILE_EXTENSION);
-            ThemePackManager.exportCurrent(output, "Current Pack", "Current Theme");
+            ThemePackManager.exportCurrent(output, "com.example.hmcl-theme-pack.test", "Current Pack", "Current Theme");
 
             ThemePackManifest manifest = ThemePackManager.load(output).manifest();
             Theme theme = manifest.findTheme("current");
@@ -139,11 +138,7 @@ public final class ThemePackManagerTest {
             ThemeBackground background = appearance.background();
             assertNotNull(background);
 
-            assertTrue(manifest.id().matches(
-                    "com\\.example\\.hmcl-theme-pack\\.[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"));
-            assertNotEquals(
-                    manifest.id(),
-                    ThemePackManager.createCurrent("Current Pack", "Current Theme").manifest().id());
+            assertEquals("com.example.hmcl-theme-pack.test", manifest.id());
             assertEquals("Current Pack", manifest.name());
             assertEquals("Current Theme", theme.name());
             assertEquals(ThemeColorSource.fixed(ThemeColor.of("#663399")), appearance.color());

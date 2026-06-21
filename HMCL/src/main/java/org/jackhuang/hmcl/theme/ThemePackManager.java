@@ -22,7 +22,6 @@ import javafx.scene.paint.Color;
 import javafx.scene.paint.Paint;
 import org.glavo.monetfx.ColorStyle;
 import org.glavo.monetfx.Contrast;
-import org.glavo.uuid.UUIDs;
 import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.setting.BackgroundType;
 import org.jackhuang.hmcl.setting.LauncherSettings;
@@ -42,7 +41,6 @@ import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.List;
 import java.util.Objects;
-import java.util.UUID;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
@@ -53,9 +51,6 @@ import static org.jackhuang.hmcl.setting.SettingsManager.settings;
 public final class ThemePackManager {
     /// Directory where imported theme packs are stored for the launcher UI.
     public static final Path THEME_PACKS_DIRECTORY = Metadata.HMCL_LOCAL_HOME.resolve("theme-packs");
-
-    /// Namespace used for default exported theme-pack identifiers.
-    private static final String EXPORTED_THEME_PACK_ID_NAMESPACE = "com.example.hmcl-theme-pack";
 
     /// Default version used when exporting the current launcher appearance.
     private static final String CURRENT_THEME_PACK_VERSION = "1.0.0";
@@ -258,23 +253,25 @@ public final class ThemePackManager {
     /// Exports the current launcher appearance to a theme-pack file.
     ///
     /// @param outputFile the target theme-pack file
+    /// @param packId the exported package identifier
     /// @param packName the exported package display name
     /// @param themeName the exported theme display name
     /// @throws IOException if the current appearance cannot be exported
-    public static void exportCurrent(Path outputFile, String packName, String themeName) throws IOException {
+    public static void exportCurrent(Path outputFile, String packId, String packName, String themeName) throws IOException {
         Objects.requireNonNull(outputFile);
 
-        ExportedThemePack themePack = createCurrent(packName, themeName);
+        ExportedThemePack themePack = createCurrent(packId, packName, themeName);
         ThemePackExporter.export(themePack.manifest(), themePack.assets(), outputFile);
     }
 
     /// Creates an exportable theme pack from the current launcher appearance.
     ///
+    /// @param packId the exported package identifier
     /// @param packName the exported package display name
     /// @param themeName the exported theme display name
     /// @return the exportable theme-pack descriptor
     /// @throws IOException if the current appearance cannot be represented as a theme pack
-    public static ExportedThemePack createCurrent(String packName, String themeName) throws IOException {
+    public static ExportedThemePack createCurrent(String packId, String packName, String themeName) throws IOException {
         List<ThemePackAsset> assets = new ArrayList<>();
         ThemeAppearance appearance = new ThemeAppearance(
                 ThemeColorSource.fixed(Objects.requireNonNullElse(settings().themeColorProperty().get(), ThemeColor.DEFAULT)),
@@ -291,7 +288,7 @@ public final class ThemePackManager {
                 appearance,
                 List.of());
         ThemePackManifest manifest = new ThemePackManifest(
-                newExportedThemePackId(),
+                requireNonBlank(packId, "packId"),
                 CURRENT_THEME_PACK_VERSION,
                 requireNonBlank(packName, "packName"),
                 List.of(CURRENT_THEME_AUTHOR),
@@ -299,11 +296,6 @@ public final class ThemePackManager {
                 List.of(theme));
 
         return new ExportedThemePack(manifest, assets);
-    }
-
-    /// Generates a default theme-pack identifier for an exported launcher appearance.
-    private static String newExportedThemePackId() {
-        return EXPORTED_THEME_PACK_ID_NAMESPACE + "." + UUIDs.toBase62String(UUIDs.generateV7());
     }
 
     /// Returns the current condition resolution context.
