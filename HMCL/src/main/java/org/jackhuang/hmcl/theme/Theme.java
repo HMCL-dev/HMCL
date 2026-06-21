@@ -37,7 +37,7 @@ import java.util.Set;
 /// matching override is applied in array order to produce the resolved appearance.
 ///
 /// @param id the stable theme identifier inside its pack, or `null` for an unnamed single-theme pack
-/// @param name the display name
+/// @param name the display name, or `null` for an unnamed single-theme pack
 /// @param description the optional description
 /// @param thumbnail the optional theme-pack relative thumbnail path
 /// @param appearance the default appearance fields
@@ -45,7 +45,7 @@ import java.util.Set;
 @NotNullByDefault
 public record Theme(
         @Nullable String id,
-        String name,
+        @Nullable String name,
         @Nullable String description,
         @Nullable String thumbnail,
         ThemeAppearance appearance,
@@ -77,7 +77,7 @@ public record Theme(
     /// Creates a theme.
     ///
     /// @param id the stable theme identifier inside its pack, or `null` for an unnamed single-theme pack
-    /// @param name the display name
+    /// @param name the display name, or `null` for an unnamed single-theme pack
     /// @param description the optional description
     /// @param thumbnail the optional theme-pack relative thumbnail path
     /// @param appearance the default appearance fields
@@ -86,7 +86,9 @@ public record Theme(
         if (id != null) {
             id = requireNonBlank(id, FIELD_ID);
         }
-        name = requireNonBlank(name, FIELD_NAME);
+        if (name != null) {
+            name = requireNonBlank(name, FIELD_NAME);
+        }
         if (description != null) {
             description = requireNonBlank(description, FIELD_DESCRIPTION);
         }
@@ -100,17 +102,20 @@ public record Theme(
     /// Parses a theme from JSON.
     ///
     /// @param object the theme JSON object
-    /// @param requireId whether the theme must declare an explicit ID
+    /// @param requireIdentity whether the theme must declare an explicit ID and name
     /// @return the parsed theme
     /// @throws JsonParseException if the theme object is malformed
-    static Theme fromJson(JsonObject object, boolean requireId) throws JsonParseException {
+    static Theme fromJson(JsonObject object, boolean requireIdentity) throws JsonParseException {
         Objects.requireNonNull(object);
 
         @Nullable String id = readString(object, FIELD_ID);
-        if (id == null && requireId) {
+        if (id == null && requireIdentity) {
             throw new JsonParseException("Theme is missing required string field: " + FIELD_ID);
         }
-        String name = requireMemberString(object, FIELD_NAME);
+        @Nullable String name = readString(object, FIELD_NAME);
+        if (name == null && requireIdentity) {
+            throw new JsonParseException("Theme is missing required string field: " + FIELD_NAME);
+        }
         ThemeAppearance appearance = ThemeAppearance.fromJson(object, IGNORED_FIELDS, "definition");
 
         return new Theme(
@@ -146,7 +151,9 @@ public record Theme(
         if (id != null) {
             object.addProperty(FIELD_ID, id);
         }
-        object.addProperty(FIELD_NAME, name);
+        if (name != null) {
+            object.addProperty(FIELD_NAME, name);
+        }
         if (description != null) {
             object.addProperty(FIELD_DESCRIPTION, description);
         }
@@ -191,15 +198,6 @@ public record Theme(
             overrides.add(ThemeOverride.fromJson(overrideObject));
         }
         return overrides;
-    }
-
-    /// Reads a required string member.
-    private static String requireMemberString(JsonObject object, String field) {
-        @Nullable String value = readString(object, field);
-        if (value == null) {
-            throw new JsonParseException("Theme is missing required string field: " + field);
-        }
-        return value;
     }
 
     /// Reads an optional string member.

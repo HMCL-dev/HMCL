@@ -60,7 +60,8 @@
           "themes": {
             "items": {
               "required": [
-                "id"
+                "id",
+                "name"
               ]
             }
           }
@@ -87,9 +88,6 @@
           "$ref": "#/$defs/nonEmptyString"
         }
       },
-      "required": [
-        "name"
-      ],
       "properties": {
         "id": {
           "$ref": "#/$defs/nonEmptyString"

@@ -140,8 +140,9 @@ public final class ThemePackManagementPage extends ListPageBase<ThemePackManager
             return;
         }
 
+        ThemePackManifest manifest = themePack.manifest();
         String[] themeNames = themes.stream()
-                .map(ThemePackManagementPage::getThemeDisplayName)
+                .map(theme -> getThemeDisplayName(manifest, theme))
                 .toArray(String[]::new);
         PromptDialogPane.Builder.CandidatesQuestion question =
                 new PromptDialogPane.Builder.CandidatesQuestion(i18n("theme_pack.select.theme"), themeNames);
@@ -157,7 +158,7 @@ public final class ThemePackManagementPage extends ListPageBase<ThemePackManager
         try {
             ThemePackManager.apply(themePack, theme);
             refreshThemePacks();
-            Controllers.showToast(i18n("theme_pack.apply.success", theme.name()));
+            Controllers.showToast(i18n("theme_pack.apply.success", getThemeDisplayName(themePack.manifest(), theme)));
         } catch (IOException | RuntimeException e) {
             showThemePackError(i18n("theme_pack.apply.failed"), e);
         }
@@ -199,11 +200,12 @@ public final class ThemePackManagementPage extends ListPageBase<ThemePackManager
     }
 
     /// Returns a display name for one theme-pack theme.
-    private static String getThemeDisplayName(Theme theme) {
+    private static String getThemeDisplayName(ThemePackManifest manifest, Theme theme) {
+        String name = theme.name() != null ? theme.name() : manifest.name();
         if (StringUtils.isBlank(theme.description())) {
-            return theme.name();
+            return name;
         }
-        return theme.name() + " - " + theme.description();
+        return name + " - " + theme.description();
     }
 
     /// Returns a subtitle for one installed theme pack.

@@ -42,6 +42,7 @@ import org.jackhuang.hmcl.setting.UserSettings;
 import org.jackhuang.hmcl.theme.Theme;
 import org.jackhuang.hmcl.theme.ThemeColor;
 import org.jackhuang.hmcl.theme.ThemePackExporter;
+import org.jackhuang.hmcl.theme.ThemePackManifest;
 import org.jackhuang.hmcl.theme.ThemePackManager;
 import org.jackhuang.hmcl.theme.ThemeSelection;
 import org.jackhuang.hmcl.ui.Controllers;
@@ -141,7 +142,7 @@ public class PersonalizationPage extends StackPane {
         if (themePack.manifest().themes().size() == 1) {
             return themePack.manifest().name();
         }
-        return themePack.manifest().name() + " - " + theme.name();
+        return themePack.manifest().name() + " - " + getThemeDisplayName(themePack.manifest(), theme);
     }
 
     /// Returns a subtitle for a theme choice from an installed theme pack.
@@ -153,6 +154,11 @@ public class PersonalizationPage extends StackPane {
             return themePack.manifest().description();
         }
         return themePack.manifest().id();
+    }
+
+    /// Returns the effective display name for a theme.
+    private static String getThemeDisplayName(ThemePackManifest manifest, Theme theme) {
+        return theme.name() != null ? theme.name() : manifest.name();
     }
 
     /// Returns a subtitle for a missing theme selection.
@@ -272,7 +278,7 @@ public class PersonalizationPage extends StackPane {
 
         /// Returns a display name for apply-result messages.
         private String applyDisplayName() {
-            return theme != null ? theme.name() : title;
+            return theme != null && themePack != null ? getThemeDisplayName(themePack.manifest(), theme) : title;
         }
     }
 

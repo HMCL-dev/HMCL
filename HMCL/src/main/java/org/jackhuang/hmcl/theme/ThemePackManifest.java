@@ -104,7 +104,7 @@ public record ThemePackManifest(
         if (themes.isEmpty()) {
             throw new IllegalArgumentException("Theme pack must declare at least one theme");
         }
-        checkThemeIds(themes);
+        checkThemeIdentities(themes);
     }
 
     /// Parses a theme-pack manifest from a JSON string.
@@ -255,18 +255,18 @@ public record ThemePackManifest(
         }
 
         ArrayList<Theme> themes = new ArrayList<>(array.size());
-        boolean requireThemeId = array.size() > 1;
+        boolean requireThemeIdentity = array.size() > 1;
         for (JsonElement item : array) {
             if (!(item instanceof JsonObject themeObject)) {
                 throw new JsonParseException("Theme-pack theme must be an object");
             }
-            themes.add(Theme.fromJson(themeObject, requireThemeId));
+            themes.add(Theme.fromJson(themeObject, requireThemeIdentity));
         }
         return themes;
     }
 
-    /// Checks that theme IDs are present whenever the manifest needs them for disambiguation.
-    private static void checkThemeIds(List<Theme> themes) {
+    /// Checks that theme IDs and names are present whenever the manifest needs them for disambiguation.
+    private static void checkThemeIdentities(List<Theme> themes) {
         if (themes.size() <= 1) {
             return;
         }
@@ -274,6 +274,9 @@ public record ThemePackManifest(
         for (Theme theme : themes) {
             if (theme.id() == null) {
                 throw new IllegalArgumentException("Theme ID is required when a theme pack declares multiple themes");
+            }
+            if (theme.name() == null) {
+                throw new IllegalArgumentException("Theme name is required when a theme pack declares multiple themes");
             }
         }
     }

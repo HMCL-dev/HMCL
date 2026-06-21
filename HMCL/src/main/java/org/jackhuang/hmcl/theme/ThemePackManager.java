@@ -58,9 +58,6 @@ public final class ThemePackManager {
     /// Default version used when exporting the current launcher appearance.
     private static final String CURRENT_THEME_PACK_VERSION = "1.0.0";
 
-    /// Identifier used by the single theme exported from the current launcher appearance.
-    private static final String CURRENT_THEME_ID = "current";
-
     /// Prevents instantiation.
     private ThemePackManager() {
     }
@@ -359,8 +356,8 @@ public final class ThemePackManager {
                 createCurrentBackground(assets),
                 settings().titleTransparentProperty().get());
         Theme theme = new Theme(
-                CURRENT_THEME_ID,
-                packName,
+                null,
+                null,
                 null,
                 null,
                 appearance,

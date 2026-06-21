@@ -174,9 +174,9 @@ public final class ThemePackManifestTest {
         assertEquals(ThemeColor.of("#222222"), appearance.color().resolveFallback());
     }
 
-    /// Tests that a single-theme manifest can omit the theme ID.
+    /// Tests that a single-theme manifest can omit the theme ID and name.
     @Test
-    public void testSingleThemeCanOmitThemeId() {
+    public void testSingleThemeCanOmitThemeIdAndName() {
         ThemePackManifest manifest = ThemePackManifest.fromJson("""
                 {
                   "$schema": "https://schemas.glavo.site/hmcl/theme-pack/1.0.0",
@@ -185,7 +185,6 @@ public final class ThemePackManifestTest {
                   "name": "Single",
                   "themes": [
                     {
-                      "name": "Single",
                       "color": "#111111"
                     }
                   ]
@@ -195,7 +194,7 @@ public final class ThemePackManifestTest {
         Theme theme = manifest.findTheme(null);
         assertNotNull(theme);
         assertNull(theme.id());
-        assertEquals("Single", theme.name());
+        assertNull(theme.name());
     }
 
     /// Tests that multi-theme manifests must provide explicit theme IDs.
@@ -210,6 +209,30 @@ public final class ThemePackManifestTest {
                   "themes": [
                     {
                       "name": "First",
+                      "color": "#111111"
+                    },
+                    {
+                      "id": "second",
+                      "name": "Second",
+                      "color": "#222222"
+                    }
+                  ]
+                }
+                """));
+    }
+
+    /// Tests that multi-theme manifests must provide explicit theme names.
+    @Test
+    public void testMultiThemeRequiresThemeNames() {
+        assertThrows(JsonParseException.class, () -> ThemePackManifest.fromJson("""
+                {
+                  "$schema": "https://schemas.glavo.site/hmcl/theme-pack/1.0.0",
+                  "id": "example.multi",
+                  "version": "1.0.0",
+                  "name": "Multi",
+                  "themes": [
+                    {
+                      "id": "first",
                       "color": "#111111"
                     },
                     {
