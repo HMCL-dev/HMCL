@@ -156,6 +156,21 @@ public final class ThemePackManager {
         }
     }
 
+    /// Loads the installed theme pack referenced by a theme selection.
+    ///
+    /// @param selection the selected installed theme
+    /// @return the installed theme pack, or `null` if the selected package directory does not exist
+    /// @throws IOException if the installed manifest cannot be read or parsed
+    public static @Nullable InstalledThemePack findInstalled(ThemeSelection selection) throws IOException {
+        Objects.requireNonNull(selection);
+
+        Path directory = installedThemePackDirectory(selection.packId(), selection.version());
+        if (!Files.isDirectory(directory)) {
+            return null;
+        }
+        return loadInstalled(directory);
+    }
+
     /// Lists all installed theme packs.
     ///
     /// @return installed theme packs sorted by display name, package ID, and version

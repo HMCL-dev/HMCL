@@ -34,7 +34,10 @@ import org.jackhuang.hmcl.setting.SettingsManager;
 import org.jackhuang.hmcl.setting.BackgroundType;
 import org.jackhuang.hmcl.setting.FontManager;
 import org.jackhuang.hmcl.setting.UserSettings;
+import org.jackhuang.hmcl.theme.Theme;
 import org.jackhuang.hmcl.theme.ThemeColor;
+import org.jackhuang.hmcl.theme.ThemePackManager;
+import org.jackhuang.hmcl.theme.ThemeSelection;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
@@ -44,6 +47,7 @@ import org.jackhuang.hmcl.util.javafx.SafeStringConverter;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.IOException;
 import java.util.Arrays;
 import java.util.Locale;
 import java.util.Optional;
@@ -72,6 +76,30 @@ public class PersonalizationPage extends StackPane {
         return percent / 100.;
     }
 
+    /// Returns a display name for the theme currently selected from an installed theme pack.
+    private static String getCurrentThemeDisplayName() {
+        @Nullable ThemeSelection selection = settings().themeProperty().get();
+        if (selection == null) {
+            return i18n("theme_pack.current.custom");
+        }
+
+        try {
+            @Nullable ThemePackManager.InstalledThemePack themePack = ThemePackManager.findInstalled(selection);
+            if (themePack == null) {
+                return i18n("theme_pack.current.missing");
+            }
+
+            @Nullable Theme theme = themePack.manifest().findTheme(selection.themeId());
+            if (theme == null) {
+                return i18n("theme_pack.current.missing");
+            }
+
+            return themePack.manifest().name() + " - " + theme.name();
+        } catch (IOException | RuntimeException e) {
+            return i18n("theme_pack.current.missing");
+        }
+    }
+
     /// Creates the launcher appearance settings page.
     public PersonalizationPage() {
         VBox content = new VBox(10);
@@ -83,6 +111,16 @@ public class PersonalizationPage extends StackPane {
         getChildren().setAll(scrollPane);
 
         ComponentList themeList = new ComponentList();
+        {
+            LineButton currentThemeButton = LineButton.createNavigationButton();
+            themeList.getContent().add(currentThemeButton);
+            currentThemeButton.setTitle(i18n("theme_pack.current.title"));
+            currentThemeButton.subtitleProperty().bind(Bindings.createStringBinding(
+                    PersonalizationPage::getCurrentThemeDisplayName,
+                    settings().themeProperty()));
+            currentThemeButton.setOnAction(event -> Controllers.navigateForward(new ThemePackManagementPage()));
+        }
+
         {
             var brightnessPane = new LineSelectButton<String>();
             brightnessPane.setTitle(i18n("settings.launcher.brightness"));
@@ -111,34 +149,10 @@ public class PersonalizationPage extends StackPane {
             themeColorPickerContainer.getChildren().setAll(picker);
             Platform.runLater(() -> JFXDepthManager.setDepth(picker, 0));
         }
-        {
-            LineToggleButton titleTransparentButton = new LineToggleButton();
-            themeList.getContent().add(titleTransparentButton);
-            titleTransparentButton.selectedProperty().bindBidirectional(settings().titleTransparentProperty());
-            titleTransparentButton.setTitle(i18n("settings.launcher.title_transparent"));
-        }
-        {
-            LineToggleButton animationButton = new LineToggleButton();
-            themeList.getContent().add(animationButton);
-            animationButton.selectedProperty().bindBidirectional(settings().animationDisabledProperty());
-            animationButton.setTitle(i18n("settings.launcher.turn_off_animations"));
-            animationButton.setSubtitle(i18n("settings.take_effect_after_restart"));
-        }
-        {
-            LineButton themePackManagementButton = LineButton.createNavigationButton();
-            themeList.getContent().add(themePackManagementButton);
-            themePackManagementButton.setTitle(i18n("theme_pack.manage"));
-            themePackManagementButton.setSubtitle(i18n("theme_pack.manage.subtitle"));
-            themePackManagementButton.setOnAction(event -> Controllers.navigateForward(new ThemePackManagementPage()));
-        }
-        content.getChildren().addAll(ComponentList.createComponentListTitle(i18n("settings.launcher.appearance")), themeList);
 
         {
-            ComponentList componentList = new ComponentList();
-
             MultiFileItem<BackgroundType> backgroundItem = new MultiFileItem<>();
             ComponentSublist backgroundSublist = new ComponentSublist();
-            backgroundSublist.getContent().add(backgroundItem);
             backgroundSublist.setTitle(i18n("launcher.background"));
             backgroundSublist.setHasSubtitle(true);
 
@@ -206,8 +220,28 @@ public class PersonalizationPage extends StackPane {
                 opacityItem.getChildren().setAll(label, slider, textOpacity);
             }
 
-            componentList.getContent().setAll(backgroundItem, opacityItem);
-            content.getChildren().addAll(ComponentList.createComponentListTitle(i18n("launcher.background")), componentList);
+            backgroundSublist.getContent().setAll(backgroundItem);
+            themeList.getContent().addAll(backgroundSublist, opacityItem);
+        }
+
+        {
+            LineToggleButton titleTransparentButton = new LineToggleButton();
+            themeList.getContent().add(titleTransparentButton);
+            titleTransparentButton.selectedProperty().bindBidirectional(settings().titleTransparentProperty());
+            titleTransparentButton.setTitle(i18n("settings.launcher.title_transparent"));
+        }
+        content.getChildren().addAll(ComponentList.createComponentListTitle(i18n("settings.launcher.theme")), themeList);
+
+        {
+            ComponentList appearanceList = new ComponentList();
+
+            LineToggleButton animationButton = new LineToggleButton();
+            appearanceList.getContent().add(animationButton);
+            animationButton.selectedProperty().bindBidirectional(settings().animationDisabledProperty());
+            animationButton.setTitle(i18n("settings.launcher.turn_off_animations"));
+            animationButton.setSubtitle(i18n("settings.take_effect_after_restart"));
+
+            content.getChildren().addAll(ComponentList.createComponentListTitle(i18n("settings.launcher.appearance")), appearanceList);
         }
 
         {
