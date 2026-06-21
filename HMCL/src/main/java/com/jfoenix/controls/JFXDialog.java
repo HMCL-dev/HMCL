@@ -44,6 +44,7 @@ import javafx.scene.paint.Color;
 import javafx.util.Duration;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.animation.Motion;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -238,12 +239,13 @@ public class JFXDialog extends StackPane {
         this.overlayCloseProperty().set(overlayClose);
     }
 
-    private final ObjectProperty<StackPane> overlayPane = new SimpleObjectProperty<>(this);
+    private final ObjectProperty<@NotNull StackPane> overlayPane = new SimpleObjectProperty<>(this);
 
     public final ObjectProperty<StackPane> overlayPaneProperty() {
         return this.overlayPane;
     }
 
+    @NotNull
     public final StackPane getOverlayPane() {
         return this.overlayPaneProperty().get();
     }
@@ -312,8 +314,10 @@ public class JFXDialog extends StackPane {
         if (animation != null) {
             animation.play();
         } else {
-            setVisible(true);
-            setOpacity(1);
+            contentHolder.setVisible(true);
+            contentHolder.setOpacity(1);
+            getOverlayPane().setVisible(true);
+            getOverlayPane().setOpacity(1);
             Event.fireEvent(JFXDialog.this, new JFXDialogEvent(JFXDialogEvent.OPENED));
         }
     }
