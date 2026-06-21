@@ -249,7 +249,7 @@ public class JFXDialog extends StackPane {
     }
 
     public final void setOverlayPane(final StackPane overlayPane) {
-        this.overlayPaneProperty().set(overlayPane);
+        this.overlayPaneProperty().set(overlayPane == null ? this : overlayPane);
     }
 
     /// if sets to true, the content of dialog container will be cached and replaced with an image
