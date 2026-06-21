@@ -50,7 +50,7 @@ public final class ThemePackManagerTest {
     /// Tests applying an image-background theme pack to launcher settings.
     @Test
     public void testApplyImageThemePack() throws Exception {
-        Path installedDirectory = ThemePackManager.INSTALLED_THEME_PACKS_DIRECTORY
+        Path installedDirectory = ThemePackManager.THEME_PACKS_DIRECTORY
                 .resolve("example.ui")
                 .resolve("1.0.0");
         deleteRecursively(installedDirectory.getParent());

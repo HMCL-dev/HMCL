@@ -49,10 +49,8 @@ import static org.jackhuang.hmcl.setting.SettingsManager.settings;
 /// Imports, applies, and exports launcher theme packs.
 @NotNullByDefault
 public final class ThemePackManager {
-    /// Directory where imported theme packs are installed for the launcher UI.
-    public static final Path INSTALLED_THEME_PACKS_DIRECTORY = Metadata.HMCL_LOCAL_HOME
-            .resolve("theme-packs")
-            .resolve("installed");
+    /// Directory where imported theme packs are stored for the launcher UI.
+    public static final Path THEME_PACKS_DIRECTORY = Metadata.HMCL_LOCAL_HOME.resolve("theme-packs");
 
     /// Default identifier used when exporting the current launcher appearance.
     private static final String CURRENT_THEME_PACK_ID = "user.current-theme";
@@ -410,7 +408,7 @@ public final class ThemePackManager {
 
     /// Returns the directory used for one installed theme pack.
     static Path installedThemePackDirectory(String packId, String version) {
-        return INSTALLED_THEME_PACKS_DIRECTORY
+        return THEME_PACKS_DIRECTORY
                 .resolve(sanitizePathSegment(packId))
                 .resolve(sanitizePathSegment(version))
                 .toAbsolutePath()
