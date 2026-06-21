@@ -46,28 +46,43 @@ public final class ThemePackManagerTest {
     /// Tests applying an image-background theme pack to launcher settings.
     @Test
     public void testApplyImageThemePack() throws Exception {
-        Path installedDirectory = ThemePackManager.INSTALLED_ASSETS_DIRECTORY.resolve("example.ui");
-        deleteRecursively(installedDirectory);
+        Path installedDirectory = ThemePackManager.INSTALLED_THEME_PACKS_DIRECTORY
+                .resolve("example.ui")
+                .resolve("1.0.0");
+        deleteRecursively(installedDirectory.getParent());
 
         try (SettingsScope ignored = new SettingsScope()) {
             Path tempDir = createTestDirectory("apply-image");
             Path wallpaper = tempDir.resolve("wallpaper.txt");
+            Path thumbnail = tempDir.resolve("thumbnail.txt");
             Files.writeString(wallpaper, "wallpaper", StandardCharsets.UTF_8);
+            Files.writeString(thumbnail, "thumbnail", StandardCharsets.UTF_8);
 
             ThemePackManifest manifest = createImageManifest();
             Path themePackFile = tempDir.resolve("example" + ThemePackExporter.FILE_EXTENSION);
             ThemePackExporter.export(
                     manifest,
-                    List.of(new ThemePackAsset(wallpaper, "assets/wallpapers/wallpaper.txt")),
+                    List.of(
+                            new ThemePackAsset(wallpaper, "assets/wallpapers/wallpaper.txt"),
+                            new ThemePackAsset(thumbnail, "assets/thumbnails/thumbnail.txt")),
                     themePackFile);
 
-            ThemePackManager.LoadedThemePack loadedThemePack = ThemePackManager.load(themePackFile);
-            Theme theme = loadedThemePack.manifest().findTheme("forest");
+            ThemePackManager.InstalledThemePack installedThemePack = ThemePackManager.install(themePackFile);
+            assertEquals(installedDirectory, installedThemePack.directory());
+            assertTrue(Files.isRegularFile(installedDirectory.resolve(ThemePackExporter.MANIFEST_ENTRY)));
+            assertEquals("wallpaper", Files.readString(
+                    installedDirectory.resolve("assets/wallpapers/wallpaper.txt"),
+                    StandardCharsets.UTF_8));
+            assertEquals("thumbnail", Files.readString(
+                    installedDirectory.resolve("assets/thumbnails/thumbnail.txt"),
+                    StandardCharsets.UTF_8));
+
+            Theme theme = installedThemePack.manifest().findTheme("forest");
             assertNotNull(theme);
 
             ThemePackManager.apply(
-                    loadedThemePack.file(),
-                    loadedThemePack.manifest(),
+                    installedThemePack.directory(),
+                    installedThemePack.manifest(),
                     theme,
                     new ThemeResolveContext(Brightness.LIGHT, "light", "linux", "x86_64", "en"));
 
@@ -81,10 +96,10 @@ public final class ThemePackManagerTest {
             assertNull(settings.backgroundPaintProperty().get());
 
             Path extractedWallpaper = Path.of(settings.backgroundImageProperty().get());
-            assertTrue(extractedWallpaper.startsWith(installedDirectory.resolve("1.0.0").resolve("forest")));
+            assertEquals(installedDirectory.resolve("assets/wallpapers/wallpaper.txt"), extractedWallpaper);
             assertEquals("wallpaper", Files.readString(extractedWallpaper, StandardCharsets.UTF_8));
         } finally {
-            deleteRecursively(installedDirectory);
+            deleteRecursively(installedDirectory.getParent());
         }
     }
 
@@ -164,6 +179,7 @@ public final class ThemePackManagerTest {
                     {
                       "id": "forest",
                       "name": "Forest",
+                      "thumbnail": "assets/thumbnails/thumbnail.txt",
                       "color": "#336699",
                       "brightness": "dark",
                       "titleTransparent": true,

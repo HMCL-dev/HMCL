@@ -26,6 +26,7 @@ import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.setting.BackgroundType;
 import org.jackhuang.hmcl.setting.LauncherSettings;
 import org.jackhuang.hmcl.util.StringUtils;
+import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Unmodifiable;
@@ -37,6 +38,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
+import java.util.Enumeration;
 import java.util.List;
 import java.util.Objects;
 import java.util.zip.ZipEntry;
@@ -47,8 +49,10 @@ import static org.jackhuang.hmcl.setting.SettingsManager.settings;
 /// Imports, applies, and exports launcher theme packs.
 @NotNullByDefault
 public final class ThemePackManager {
-    /// Directory where imported theme-pack assets are extracted for the launcher UI.
-    public static final Path INSTALLED_ASSETS_DIRECTORY = Metadata.HMCL_LOCAL_HOME.resolve("theme-packs");
+    /// Directory where imported theme packs are installed for the launcher UI.
+    public static final Path INSTALLED_THEME_PACKS_DIRECTORY = Metadata.HMCL_LOCAL_HOME
+            .resolve("theme-packs")
+            .resolve("installed");
 
     /// Default identifier used when exporting the current launcher appearance.
     private static final String CURRENT_THEME_PACK_ID = "user.current-theme";
@@ -77,6 +81,21 @@ public final class ThemePackManager {
         /// @param manifest the parsed manifest
         public LoadedThemePack {
             file = Objects.requireNonNull(file).toAbsolutePath().normalize();
+            Objects.requireNonNull(manifest);
+        }
+    }
+
+    /// A theme pack installed under the launcher's local theme-pack directory.
+    ///
+    /// @param directory the installed theme-pack directory
+    /// @param manifest the parsed manifest
+    public record InstalledThemePack(Path directory, ThemePackManifest manifest) {
+        /// Creates an installed theme-pack descriptor.
+        ///
+        /// @param directory the installed theme-pack directory
+        /// @param manifest the parsed manifest
+        public InstalledThemePack {
+            directory = Objects.requireNonNull(directory).toAbsolutePath().normalize();
             Objects.requireNonNull(manifest);
         }
     }
@@ -121,31 +140,98 @@ public final class ThemePackManager {
         }
     }
 
+    /// Loads a manifest from an installed theme-pack directory.
+    ///
+    /// @param directory the installed theme-pack directory
+    /// @return the installed theme pack
+    /// @throws IOException if the installed manifest cannot be read or parsed
+    public static InstalledThemePack loadInstalled(Path directory) throws IOException {
+        Objects.requireNonNull(directory);
+
+        Path normalizedDirectory = directory.toAbsolutePath().normalize();
+        Path manifestFile = normalizedDirectory.resolve(ThemePackExporter.MANIFEST_ENTRY);
+        try {
+            return new InstalledThemePack(
+                    normalizedDirectory,
+                    ThemePackManifest.fromJson(Files.readString(manifestFile, StandardCharsets.UTF_8)));
+        } catch (JsonParseException | IllegalArgumentException e) {
+            throw new IOException("Invalid installed theme-pack manifest", e);
+        }
+    }
+
+    /// Installs a theme-pack file under the launcher's local theme-pack directory.
+    ///
+    /// Existing files for the same package ID and version are replaced.
+    ///
+    /// @param file the theme-pack file
+    /// @return the installed theme pack
+    /// @throws IOException if the theme pack cannot be validated or extracted
+    public static InstalledThemePack install(Path file) throws IOException {
+        LoadedThemePack loadedThemePack = load(file);
+        Path targetDirectory = installedThemePackDirectory(loadedThemePack.manifest());
+        Path temporaryDirectory = temporaryInstallDirectory(targetDirectory);
+
+        Files.createDirectories(Objects.requireNonNull(targetDirectory.getParent()));
+        deleteIfExists(temporaryDirectory);
+        Files.createDirectories(temporaryDirectory);
+
+        try {
+            extractThemePack(loadedThemePack.file(), temporaryDirectory);
+            deleteIfExists(targetDirectory);
+            Files.move(temporaryDirectory, targetDirectory, StandardCopyOption.REPLACE_EXISTING);
+            return new InstalledThemePack(targetDirectory, loadedThemePack.manifest());
+        } catch (IOException | RuntimeException e) {
+            try {
+                deleteIfExists(temporaryDirectory);
+            } catch (IOException suppressed) {
+                e.addSuppressed(suppressed);
+            }
+            throw e;
+        }
+    }
+
     /// Applies one theme from a loaded theme pack to current launcher settings.
     ///
     /// @param themePack the loaded theme pack
     /// @param theme the theme to apply
-    /// @throws IOException if referenced assets cannot be extracted or settings cannot be applied
+    /// @throws IOException if the pack cannot be installed, referenced assets cannot be read, or settings cannot be applied
     public static void apply(LoadedThemePack themePack, Theme theme) throws IOException {
         Objects.requireNonNull(themePack);
         Objects.requireNonNull(theme);
 
-        apply(themePack.file(), themePack.manifest(), theme, currentResolveContext());
+        InstalledThemePack installedThemePack = install(themePack.file());
+        @Nullable Theme installedTheme = installedThemePack.manifest().findTheme(theme.id());
+        if (installedTheme == null) {
+            throw new IOException("Installed theme pack does not contain theme: " + theme.id());
+        }
+        apply(installedThemePack, installedTheme);
     }
 
-    /// Applies one theme from a theme-pack file to current launcher settings.
+    /// Applies one theme from an installed theme pack to current launcher settings.
     ///
-    /// @param themePackFile the source theme-pack file
+    /// @param themePack the installed theme pack
+    /// @param theme the theme to apply
+    /// @throws IOException if referenced assets cannot be read or settings cannot be applied
+    public static void apply(InstalledThemePack themePack, Theme theme) throws IOException {
+        Objects.requireNonNull(themePack);
+        Objects.requireNonNull(theme);
+
+        apply(themePack.directory(), themePack.manifest(), theme, currentResolveContext());
+    }
+
+    /// Applies one theme from an installed theme-pack directory to current launcher settings.
+    ///
+    /// @param themePackDirectory the installed theme-pack directory
     /// @param manifest the parsed manifest
     /// @param theme the theme to apply
     /// @param context the condition resolution context
-    /// @throws IOException if referenced assets cannot be extracted or settings cannot be applied
+    /// @throws IOException if referenced assets cannot be read or settings cannot be applied
     public static void apply(
-            Path themePackFile,
+            Path themePackDirectory,
             ThemePackManifest manifest,
             Theme theme,
             ThemeResolveContext context) throws IOException {
-        Objects.requireNonNull(themePackFile);
+        Objects.requireNonNull(themePackDirectory);
         Objects.requireNonNull(manifest);
         Objects.requireNonNull(theme);
         Objects.requireNonNull(context);
@@ -163,7 +249,7 @@ public final class ThemePackManager {
             currentSettings.titleTransparentProperty().set(appearance.titleTransparent());
         }
         if (appearance.background() != null) {
-            applyBackground(themePackFile.toAbsolutePath().normalize(), manifest, theme, appearance.background());
+            applyBackground(themePackDirectory.toAbsolutePath().normalize(), appearance.background());
         }
     }
 
@@ -226,9 +312,7 @@ public final class ThemePackManager {
 
     /// Applies background fields from a resolved theme appearance.
     private static void applyBackground(
-            Path themePackFile,
-            ThemePackManifest manifest,
-            Theme theme,
+            Path themePackDirectory,
             ThemeBackground background) throws IOException {
         LauncherSettings currentSettings = settings();
         if (background.opacity() != null) {
@@ -246,7 +330,7 @@ public final class ThemePackManager {
             }
             case IMAGE -> {
                 String path = requireNonBlank(background.path(), "background.path");
-                Path extractedAsset = extractAsset(themePackFile, manifest, theme, path);
+                Path extractedAsset = resolveInstalledAsset(themePackDirectory, path);
                 currentSettings.backgroundTypeProperty().set(BackgroundType.CUSTOM);
                 currentSettings.backgroundImageProperty().set(extractedAsset.toString());
                 currentSettings.backgroundImageUrlProperty().set(null);
@@ -274,41 +358,104 @@ public final class ThemePackManager {
         settings().backgroundPaintProperty().set(null);
     }
 
-    /// Extracts one asset referenced by an imported theme.
-    private static Path extractAsset(
-            Path themePackFile,
-            ThemePackManifest manifest,
-            Theme theme,
-            String entryName) throws IOException {
+    /// Resolves one asset referenced by an installed theme.
+    private static Path resolveInstalledAsset(Path themePackDirectory, String entryName) throws IOException {
         String normalizedEntryName = ThemePackAsset.normalizeEntryName(entryName);
-        Path targetDirectory = installedAssetDirectory(manifest, theme);
-        Path target = targetDirectory.resolve(normalizedEntryName).normalize();
-        if (!target.startsWith(targetDirectory)) {
-            throw new IOException("Theme-pack asset escapes the target directory: " + entryName);
+        Path installedDirectory = themePackDirectory.toAbsolutePath().normalize();
+        Path target = installedDirectory.resolve(normalizedEntryName).normalize();
+        if (!target.startsWith(installedDirectory)) {
+            throw new IOException("Theme-pack asset escapes the installed directory: " + entryName);
         }
-
-        try (ZipFile zipFile = new ZipFile(themePackFile.toFile(), StandardCharsets.UTF_8)) {
-            ZipEntry entry = zipFile.getEntry(normalizedEntryName);
-            if (entry == null || entry.isDirectory()) {
-                throw new IOException("Theme-pack asset is missing: " + normalizedEntryName);
-            }
-
-            Files.createDirectories(Objects.requireNonNull(target.getParent()));
-            try (InputStream input = zipFile.getInputStream(entry)) {
-                Files.copy(input, target, StandardCopyOption.REPLACE_EXISTING);
-            }
+        if (!Files.isRegularFile(target)) {
+            throw new IOException("Installed theme-pack asset is missing: " + normalizedEntryName);
         }
         return target;
     }
 
-    /// Returns the directory used for assets extracted from one theme.
-    private static Path installedAssetDirectory(ThemePackManifest manifest, Theme theme) {
-        return INSTALLED_ASSETS_DIRECTORY
+    /// Returns the directory used for one installed theme pack.
+    private static Path installedThemePackDirectory(ThemePackManifest manifest) {
+        return INSTALLED_THEME_PACKS_DIRECTORY
                 .resolve(sanitizePathSegment(manifest.id()))
                 .resolve(sanitizePathSegment(manifest.version()))
-                .resolve(sanitizePathSegment(theme.id()))
                 .toAbsolutePath()
                 .normalize();
+    }
+
+    /// Returns the temporary installation directory for one target directory.
+    private static Path temporaryInstallDirectory(Path targetDirectory) {
+        return targetDirectory.resolveSibling("." + targetDirectory.getFileName() + ".tmp");
+    }
+
+    /// Extracts a validated theme pack into a clean target directory.
+    private static void extractThemePack(Path themePackFile, Path targetDirectory) throws IOException {
+        Path normalizedTargetDirectory = targetDirectory.toAbsolutePath().normalize();
+        try (ZipFile zipFile = new ZipFile(themePackFile.toFile(), StandardCharsets.UTF_8)) {
+            Enumeration<? extends ZipEntry> entries = zipFile.entries();
+            while (entries.hasMoreElements()) {
+                ZipEntry entry = entries.nextElement();
+                String entryName = normalizeThemePackEntryName(entry.getName());
+                checkSupportedThemePackEntry(entryName);
+
+                Path target = normalizedTargetDirectory.resolve(entryName).normalize();
+                if (!target.startsWith(normalizedTargetDirectory)) {
+                    throw new IOException("Theme-pack entry escapes the installation directory: " + entry.getName());
+                }
+
+                if (entry.isDirectory()) {
+                    Files.createDirectories(target);
+                } else {
+                    Files.createDirectories(Objects.requireNonNull(target.getParent()));
+                    try (InputStream input = zipFile.getInputStream(entry)) {
+                        Files.copy(input, target, StandardCopyOption.REPLACE_EXISTING);
+                    }
+                }
+            }
+        }
+    }
+
+    /// Returns a normalized and safe theme-pack zip entry name.
+    private static String normalizeThemePackEntryName(String entryName) throws IOException {
+        Objects.requireNonNull(entryName);
+
+        String normalized = entryName.trim().replace('\\', '/');
+        if (normalized.endsWith("/")) {
+            normalized = normalized.substring(0, normalized.length() - 1);
+        }
+        if (normalized.isEmpty()) {
+            throw new IOException("Theme-pack entry is empty");
+        }
+        if (normalized.startsWith("/") || normalized.matches("^[A-Za-z]:.*")) {
+            throw new IOException("Theme-pack entry must be relative: " + entryName);
+        }
+
+        for (String segment : normalized.split("/")) {
+            if (segment.isEmpty() || ".".equals(segment) || "..".equals(segment)) {
+                throw new IOException("Theme-pack entry contains an unsafe segment: " + entryName);
+            }
+            for (int i = 0; i < segment.length(); i++) {
+                char ch = segment.charAt(i);
+                if (Character.isISOControl(ch) || ch == '\0') {
+                    throw new IOException("Theme-pack entry contains a control character: " + entryName);
+                }
+            }
+        }
+        return normalized;
+    }
+
+    /// Checks that a theme-pack zip entry belongs to the current file layout.
+    private static void checkSupportedThemePackEntry(String entryName) throws IOException {
+        if (!ThemePackExporter.MANIFEST_ENTRY.equals(entryName)
+                && !"assets".equals(entryName)
+                && !entryName.startsWith("assets/")) {
+            throw new IOException("Unsupported theme-pack entry: " + entryName);
+        }
+    }
+
+    /// Deletes an existing file, symbolic link, or directory tree.
+    private static void deleteIfExists(Path path) throws IOException {
+        if (Files.exists(path) || Files.isSymbolicLink(path)) {
+            FileUtils.forceDelete(path);
+        }
     }
 
     /// Creates the background model for the current launcher settings.
@@ -402,7 +549,7 @@ public final class ThemePackManager {
         return value.trim();
     }
 
-    /// Sanitizes one path segment used for stored theme-pack assets.
+    /// Sanitizes one path segment used for installed theme packs.
     private static String sanitizePathSegment(String value) {
         String sanitized = value.trim().replaceAll("[^A-Za-z0-9._-]", "_");
         if (sanitized.isBlank()) {

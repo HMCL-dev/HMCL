@@ -377,9 +377,9 @@ public class PersonalizationPage extends StackPane {
             return;
         }
 
-        ThemePackManager.LoadedThemePack themePack;
+        ThemePackManager.InstalledThemePack themePack;
         try {
-            themePack = ThemePackManager.load(file);
+            themePack = ThemePackManager.install(file);
         } catch (IOException | RuntimeException e) {
             showThemePackError(i18n("theme_pack.import.failed"), e);
             return;
@@ -431,7 +431,7 @@ public class PersonalizationPage extends StackPane {
     }
 
     /// Applies a selected theme and reports the result.
-    private void applyThemePack(ThemePackManager.LoadedThemePack themePack, Theme theme) {
+    private void applyThemePack(ThemePackManager.InstalledThemePack themePack, Theme theme) {
         try {
             ThemePackManager.apply(themePack, theme);
             Controllers.showToast(i18n("theme_pack.import.success", theme.name()));
