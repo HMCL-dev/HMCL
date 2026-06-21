@@ -136,7 +136,7 @@ public class PersonalizationPage extends StackPane {
 
         {
             ComponentSublist themeColorSublist = new ComponentSublist();
-            themeColorSublist.setTitle(i18n("settings.launcher.theme"));
+            themeColorSublist.setTitle(i18n("settings.launcher.theme_color"));
             themeColorSublist.setHasSubtitle(true);
             themeColorSublist.descriptionProperty().bind(Bindings.createStringBinding(() -> {
                         ThemeColorType type = Lang.requireNonNullElse(
