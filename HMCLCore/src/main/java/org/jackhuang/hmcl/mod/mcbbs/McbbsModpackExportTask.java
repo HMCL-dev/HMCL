@@ -99,7 +99,7 @@ public class McbbsModpackExportTask extends Task<Void> {
         LibraryAnalyzer analyzer = LibraryAnalyzer.analyze(repository.getResolvedPreservingPatchesVersion(version), gameVersion);
 
         Path tempManifest = Files.createTempFile("mcbbs_packmeta_", ".json");
-        tempManifest.toFile().deleteOnExit();
+        final boolean hasWhitelist = info.getWhitelist() != null && !info.getWhitelist().isEmpty();
         try {
             try (JsonWriter writer = new JsonWriter(Files.newBufferedWriter(tempManifest, StandardCharsets.UTF_8))) {
                 writer.setIndent("  ");
@@ -159,7 +159,12 @@ public class McbbsModpackExportTask extends Task<Void> {
                         if (relativePath.isEmpty()) {
                             return FileVisitResult.CONTINUE;
                         }
-                        // Consistent with zip.putDirectory filter: only skip blacklisted directories
+                        // If whitelist is used, we must not skip any directory based on blacklist,
+                        // because files inside blacklisted directories might be whitelisted.
+                        if (hasWhitelist) {
+                            return FileVisitResult.CONTINUE;
+                        }
+                        // Otherwise, skip blacklisted directories for performance.
                         if (ModAdviser.match(blackList, relativePath, false)) {
                             return FileVisitResult.SKIP_SUBTREE;
                         }
@@ -232,6 +237,8 @@ public class McbbsModpackExportTask extends Task<Void> {
                 CurseManifest curseManifest = new CurseManifest(CurseManifest.MINECRAFT_MODPACK, 1, info.getName(), info.getVersion(), info.getAuthor(), "overrides", new CurseManifestMinecraft(gameVersion, modLoaders), Collections.emptyList());
                 zip.putTextFile(JsonUtils.GSON.toJson(curseManifest), "manifest.json");
 
+                // Directory filter for zipping: if whitelist is used, always allow directories to enter.
+                // File-level filtering is handled by Modpack.acceptFile inside the filter.
                 zip.putDirectory(runDirectory, "overrides", path -> {
                     if (path == null || path.isEmpty()) {
                         return true;
@@ -239,6 +246,10 @@ public class McbbsModpackExportTask extends Task<Void> {
                     String normalizedPath = Paths.get(path).normalize().toString().replace(File.separatorChar, '/');
                     Path resolved = runDirectory.resolve(normalizedPath);
                     if (Files.isDirectory(resolved)) {
+                        // If whitelist is non-empty, we must not skip any directory.
+                        if (hasWhitelist) {
+                            return true;
+                        }
                         return !ModAdviser.match(blackList, normalizedPath, false);
                     } else {
                         return Modpack.acceptFile(normalizedPath, blackList, info.getWhitelist());
