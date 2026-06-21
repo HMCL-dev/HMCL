@@ -61,6 +61,10 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.nio.file.Path;
+import java.time.Instant;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -75,6 +79,9 @@ import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 /// Configures launcher appearance, background, and launcher font settings.
 @NotNullByDefault
 public class PersonalizationPage extends StackPane {
+    /// Time format used by default exported theme names.
+    private static final DateTimeFormatter EXPORTED_THEME_NAME_FORMATTER =
+            DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss", Locale.ROOT);
 
     /// Snaps a percent value to the nearest 5% opacity tick.
     private static double snapOpacity(double val) {
@@ -173,17 +180,6 @@ public class PersonalizationPage extends StackPane {
     /// Returns the file chooser filter for HMCL theme-pack files.
     private static FileChooser.ExtensionFilter getThemePackExtensionFilter() {
         return new FileChooser.ExtensionFilter(i18n("theme_pack.file"), "*" + ThemePackExporter.FILE_EXTENSION);
-    }
-
-    /// Generates a default theme-pack identifier for the export dialog.
-    private static String newExportedThemePackId() {
-        return "com.example.hmcl.theme-pack." + UUIDs.toBase62String(UUIDs.generateV7());
-    }
-
-    /// Returns the default author name used by the theme-pack export dialog.
-    private static String getDefaultThemePackAuthorName() {
-        String userName = System.getProperty("user.name").trim();
-        return StringUtils.isBlank(userName) ? "Unknown" : userName;
     }
 
     /// Returns a trimmed prompt value or falls back to the provided default value when blank.
@@ -285,9 +281,12 @@ public class PersonalizationPage extends StackPane {
 
     /// Asks for theme-pack metadata and then saves the current launcher appearance as a theme-pack file.
     private void exportCurrentThemePack() {
-        String defaultPackId = newExportedThemePackId();
-        String defaultPackName = i18n("theme_pack.export.default_name");
-        String defaultAuthorName = getDefaultThemePackAuthorName();
+        Instant exportTimestamp = Instant.now();
+        String defaultPackId = UUIDs.toCompactString(UUIDs.generateV7(exportTimestamp));
+        String defaultPackName = LocalDateTime.ofInstant(exportTimestamp, ZoneId.systemDefault()).format(EXPORTED_THEME_NAME_FORMATTER);
+
+        String userName = System.getProperty("user.name").trim();
+        String defaultAuthorName = StringUtils.isBlank(userName) ? "Unknown" : userName;
 
         PromptDialogPane.Builder.StringQuestion packIdQuestion = new PromptDialogPane.Builder.StringQuestion(
                 i18n("theme_pack.export.id"),
