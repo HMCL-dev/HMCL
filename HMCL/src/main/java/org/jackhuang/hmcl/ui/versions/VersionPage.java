@@ -239,6 +239,16 @@ public class VersionPage extends DecoratorAnimatedPage implements DecoratorPage 
         Versions.generateLaunchScript(getProfile(), getVersion());
     }
 
+    /// Launches the current instance with RenderDoc capture enabled.
+    private void launchWithRenderDoc() {
+        Versions.launchWithRenderDoc(getProfile(), getVersion());
+    }
+
+    /// Starts the RenderDoc UI.
+    private void startRenderDocUI() {
+        Versions.startRenderDocUI();
+    }
+
     private void export() {
         Versions.exportVersion(getProfile(), getVersion());
     }
@@ -314,6 +324,8 @@ public class VersionPage extends DecoratorAnimatedPage implements DecoratorPage 
                 managementList.getContent().setAll(
                         new IconedMenuItem(SVG.ROCKET_LAUNCH, i18n("version.launch.test"), control::testGame, managementPopup),
                         new IconedMenuItem(SVG.SCRIPT, i18n("version.launch_script"), control::generateLaunchScript, managementPopup),
+                        new IconedMenuItem(SVG.ROCKET_LAUNCH, i18n("version.launch.renderdoc"), control::launchWithRenderDoc, managementPopup),
+                        new IconedMenuItem(SVG.ROCKET_LAUNCH, i18n("version.launch.renderdoc.ui"), control::startRenderDocUI, managementPopup),
                         new MenuSeparator(),
                         new IconedMenuItem(SVG.EDIT, i18n("version.manage.rename"), control::rename, managementPopup),
                         new IconedMenuItem(SVG.FOLDER_COPY, i18n("version.manage.duplicate"), control::duplicate, managementPopup),

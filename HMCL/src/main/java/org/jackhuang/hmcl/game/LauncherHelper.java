@@ -86,6 +86,8 @@ public final class LauncherHelper {
     private boolean showLogs;
     private QuickPlayOption quickPlayOption;
     private boolean disableOfflineSkin = false;
+    /// Whether this launch should be wrapped by RenderDoc.
+    private boolean renderDocMode = false;
 
     public LauncherHelper(Profile profile, Account account, String selectedVersion) {
         this.profile = Objects.requireNonNull(profile);
@@ -124,6 +126,13 @@ public final class LauncherHelper {
         disableOfflineSkin = true;
     }
 
+    /// Enables RenderDoc capture mode for this launch.
+    public void setRenderDocMode() {
+        renderDocMode = true;
+        launcherVisibility = LauncherVisibility.KEEP;
+        showLogs = true;
+    }
+
     public void launch() {
         FXUtils.checkFxUserThread();
 
@@ -152,6 +161,7 @@ public final class LauncherHelper {
         List<String> javaArguments = new ArrayList<>(0);
 
         AtomicReference<JavaRuntime> javaVersionRef = new AtomicReference<>();
+        AtomicReference<Path> renderDocExecutableRef = new AtomicReference<>();
 
         TaskExecutor executor = checkGameState(profile, setting, version.get())
                 .thenComposeAsync(java -> {
@@ -199,6 +209,10 @@ public final class LauncherHelper {
                     );
                 }).withStage("launch.state.dependencies")
                 .thenComposeAsync(() -> gameVersion.map(s -> new GameVerificationFixTask(dependencyManager, s, version.get())).orElse(null))
+                .thenComposeAsync(() -> renderDocMode
+                        ? RenderDoc.prepare()
+                                .thenAcceptAsync(renderDocExecutableRef::set)
+                        : null)
                 .thenComposeAsync(() -> {
                     if (setting.getInheritable(GameSettings::allowAutoAgentProperty)
                             || setting.getInheritable(GameSettings::noJVMOptionsProperty)
@@ -230,6 +244,11 @@ public final class LauncherHelper {
                     }
                     if (quickPlayOption != null) {
                         launchOptionsBuilder.setQuickPlayOption(quickPlayOption);
+                    }
+                    if (renderDocMode) {
+                        Path renderDocExecutable = Objects.requireNonNull(renderDocExecutableRef.get());
+                        Path workingDirectory = repository.getRunDirectory(selectedVersion);
+                        launchOptionsBuilder.setWrapper(RenderDoc.prependWrapper(setting.getWrapper(), renderDocExecutable, workingDirectory));
                     }
 
                     LaunchOptions launchOptions = launchOptionsBuilder.create();
@@ -277,6 +296,7 @@ public final class LauncherHelper {
                 .withStagesHints(
                         new Task.StagesHint("launch.state.java"),
                         new Task.StagesHint("launch.state.dependencies", List.of("hmcl.install.assets", "hmcl.install.libraries", "hmcl.modpack.download")),
+                        new Task.StagesHint("renderdoc.download"),
                         new Task.StagesHint("launch.state.logging_in"),
                         new Task.StagesHint("launch.state.waiting_launching"))
                 .executor();

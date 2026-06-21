@@ -28,6 +28,7 @@ import org.jackhuang.hmcl.download.game.GameAssetDownloadTask;
 import org.jackhuang.hmcl.download.game.GameDownloadTask;
 import org.jackhuang.hmcl.download.game.GameLibrariesTask;
 import org.jackhuang.hmcl.game.*;
+import org.jackhuang.hmcl.launch.ProcessCreationException;
 import org.jackhuang.hmcl.mod.RemoteMod;
 import org.jackhuang.hmcl.setting.*;
 import org.jackhuang.hmcl.task.FileDownloadTask;
@@ -309,6 +310,48 @@ public final class Versions {
 
     public static void testGame(Profile profile, String id) {
         launch(profile, id, LauncherHelper::setTestMode);
+    }
+
+    /// Launches the selected instance through RenderDoc, downloading RenderDoc first when needed.
+    public static void launchWithRenderDoc(Profile profile, String id) {
+        if (!RenderDoc.isSupported()) {
+            Controllers.dialog(
+                    i18n("version.launch.renderdoc.unsupported"),
+                    i18n("message.error"),
+                    MessageDialogPane.MessageType.ERROR);
+            return;
+        }
+
+        launch(profile, id, LauncherHelper::setRenderDocMode);
+    }
+
+    /// Starts the RenderDoc UI, downloading RenderDoc first when needed.
+    public static void startRenderDocUI() {
+        if (!RenderDoc.isSupported()) {
+            Controllers.dialog(
+                    i18n("version.launch.renderdoc.unsupported"),
+                    i18n("message.error"),
+                    MessageDialogPane.MessageType.ERROR);
+            return;
+        }
+
+        Controllers.taskDialog(
+                RenderDoc.prepareUI()
+                        .whenComplete(Schedulers.javafx(), executable -> {
+                            try {
+                                RenderDoc.startUI(executable);
+                            } catch (ProcessCreationException e) {
+                                Controllers.dialog(
+                                        i18n("launch.failed.creating_process") + "\n" + e.getLocalizedMessage(),
+                                        i18n("message.error"),
+                                        MessageDialogPane.MessageType.ERROR);
+                            }
+                        }, exception -> Controllers.dialog(
+                                DownloadProviders.localizeErrorMessage(exception),
+                                i18n("install.failed"),
+                                MessageDialogPane.MessageType.ERROR)),
+                i18n("renderdoc.download"),
+                TaskCancellationAction.NORMAL);
     }
 
     public static void launchAndEnterWorld(Profile profile, String id, String worldFolderName) {
