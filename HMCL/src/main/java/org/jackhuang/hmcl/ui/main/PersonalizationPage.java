@@ -63,8 +63,6 @@ import static org.jackhuang.hmcl.setting.SettingsManager.userSettings;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 public class PersonalizationPage extends StackPane {
-    /// Namespace used for default exported theme-pack identifiers.
-    private static final String EXPORTED_THEME_PACK_ID_NAMESPACE = "com.example.hmcl-theme-pack";
 
     /// File chooser filter for HMCL theme-pack files.
     private static FileChooser.ExtensionFilter getThemePackExtensionFilter() {
@@ -460,7 +458,7 @@ public class PersonalizationPage extends StackPane {
 
     /// Generates a default theme-pack identifier for the export dialog.
     private static String newExportedThemePackId() {
-        return EXPORTED_THEME_PACK_ID_NAMESPACE + "." + UUIDs.toBase62String(UUIDs.generateV7());
+        return "com.example.hmcl.theme-pack." + UUIDs.toBase62String(UUIDs.generateV7());
     }
 
     /// Applies a selected theme and reports the result.
