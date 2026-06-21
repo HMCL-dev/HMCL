@@ -45,14 +45,20 @@ import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
 import org.jackhuang.hmcl.ui.construct.*;
+import org.jackhuang.hmcl.ui.construct.MessageDialogPane.MessageType;
+import org.jackhuang.hmcl.util.Holder;
 import org.jackhuang.hmcl.util.Lang;
+import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.javafx.SafeStringConverter;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 import java.util.Locale;
+import java.util.Objects;
 import java.util.Optional;
 
 import static org.jackhuang.hmcl.setting.SettingsManager.settings;
@@ -79,27 +85,158 @@ public class PersonalizationPage extends StackPane {
         return percent / 100.;
     }
 
-    /// Returns a display name for the theme currently selected from an installed theme pack.
-    private static String getCurrentThemeDisplayName() {
-        @Nullable ThemeSelection selection = settings().themeProperty().get();
-        if (selection == null) {
-            return i18n("theme_pack.current.custom");
-        }
+    /// Loads all theme choices shown by the theme selector.
+    private static List<ThemeChoice> loadThemeChoices() {
+        ArrayList<ThemeChoice> choices = new ArrayList<>();
+        choices.add(ThemeChoice.custom());
 
         try {
-            @Nullable ThemePackManager.InstalledThemePack themePack = ThemePackManager.findInstalled(selection);
-            if (themePack == null) {
-                return i18n("theme_pack.current.missing");
+            for (ThemePackManager.InstalledThemePack themePack : ThemePackManager.listInstalled()) {
+                for (Theme theme : themePack.manifest().themes()) {
+                    choices.add(ThemeChoice.installed(themePack, theme));
+                }
             }
-
-            @Nullable Theme theme = themePack.manifest().findTheme(selection.themeId());
-            if (theme == null) {
-                return i18n("theme_pack.current.missing");
-            }
-
-            return themePack.manifest().name() + " - " + theme.name();
         } catch (IOException | RuntimeException e) {
-            return i18n("theme_pack.current.missing");
+            showThemePackError(i18n("theme_pack.load.failed"), e);
+        }
+
+        @Nullable ThemeSelection selection = settings().themeProperty().get();
+        if (selection != null && findThemeChoice(choices, selection) == null) {
+            choices.add(ThemeChoice.missing(selection));
+        }
+
+        return choices;
+    }
+
+    /// Returns the choice that matches the current launcher theme selection.
+    private static ThemeChoice getSelectedThemeChoice(List<ThemeChoice> choices) {
+        @Nullable ThemeSelection selection = settings().themeProperty().get();
+        if (selection != null) {
+            @Nullable ThemeChoice choice = findThemeChoice(choices, selection);
+            if (choice != null) {
+                return choice;
+            }
+        }
+
+        return choices.get(0);
+    }
+
+    /// Finds a selectable theme choice by selection reference.
+    private static @Nullable ThemeChoice findThemeChoice(List<ThemeChoice> choices, ThemeSelection selection) {
+        for (ThemeChoice choice : choices) {
+            if (Objects.equals(choice.selection(), selection)) {
+                return choice;
+            }
+        }
+        return null;
+    }
+
+    /// Returns a concise title for a theme choice from an installed theme pack.
+    private static String getThemeChoiceTitle(ThemePackManager.InstalledThemePack themePack, Theme theme) {
+        if (themePack.manifest().themes().size() == 1) {
+            return themePack.manifest().name();
+        }
+        return themePack.manifest().name() + " - " + theme.name();
+    }
+
+    /// Returns a subtitle for a theme choice from an installed theme pack.
+    private static String getThemeChoiceDescription(ThemePackManager.InstalledThemePack themePack, Theme theme) {
+        if (!StringUtils.isBlank(theme.description())) {
+            return theme.description();
+        }
+        if (!StringUtils.isBlank(themePack.manifest().description())) {
+            return themePack.manifest().description();
+        }
+        return themePack.manifest().id();
+    }
+
+    /// Returns a subtitle for a missing theme selection.
+    private static String getMissingThemeChoiceDescription(ThemeSelection selection) {
+        if (selection.themeId() == null) {
+            return selection.packId() + " - " + selection.version();
+        }
+        return selection.packId() + " - " + selection.version() + " - " + selection.themeId();
+    }
+
+    /// Shows a theme-pack operation error dialog.
+    private static void showThemePackError(String title, Exception exception) {
+        Controllers.dialog(
+                title + "\n\n" + StringUtils.getStackTrace(exception),
+                i18n("message.error"),
+                MessageType.ERROR);
+    }
+
+    /// A selectable launcher theme or the local custom appearance.
+    ///
+    /// @param title the label shown by the selector
+    /// @param description the optional secondary text shown in the selector popup
+    /// @param customAppearance whether this item represents the local custom appearance
+    /// @param themePack the installed theme pack, or `null` for non-pack choices
+    /// @param theme the installed theme, or `null` for non-pack choices
+    /// @param selection the stored selection reference, or `null` for the local custom appearance
+    private record ThemeChoice(
+            String title,
+            @Nullable String description,
+            boolean customAppearance,
+            @Nullable ThemePackManager.InstalledThemePack themePack,
+            @Nullable Theme theme,
+            @Nullable ThemeSelection selection) {
+        /// Creates a theme selector choice.
+        private ThemeChoice {
+            Objects.requireNonNull(title);
+        }
+
+        /// Creates the local custom appearance choice.
+        private static ThemeChoice custom() {
+            return new ThemeChoice(i18n("theme_pack.current.custom"), null, true, null, null, null);
+        }
+
+        /// Creates a choice for an installed theme-pack theme.
+        private static ThemeChoice installed(ThemePackManager.InstalledThemePack themePack, Theme theme) {
+            ThemeSelection selection = new ThemeSelection(
+                    themePack.manifest().id(),
+                    themePack.manifest().version(),
+                    theme.id());
+            return new ThemeChoice(
+                    getThemeChoiceTitle(themePack, theme),
+                    getThemeChoiceDescription(themePack, theme),
+                    false,
+                    themePack,
+                    theme,
+                    selection);
+        }
+
+        /// Creates the placeholder shown when the stored theme selection cannot be resolved.
+        private static ThemeChoice missing(ThemeSelection selection) {
+            return new ThemeChoice(
+                    i18n("theme_pack.current.missing"),
+                    getMissingThemeChoiceDescription(selection),
+                    false,
+                    null,
+                    null,
+                    selection);
+        }
+
+        /// Applies this choice to launcher settings.
+        ///
+        /// @return `true` if a selection was applied, otherwise `false`
+        /// @throws IOException if an installed theme cannot be applied
+        private boolean apply() throws IOException {
+            if (customAppearance) {
+                settings().themeProperty().set(null);
+                return true;
+            }
+            if (themePack == null || theme == null) {
+                return false;
+            }
+
+            ThemePackManager.apply(themePack, theme);
+            return true;
+        }
+
+        /// Returns a display name for apply-result messages.
+        private String applyDisplayName() {
+            return theme != null ? theme.name() : title;
         }
     }
 
@@ -115,13 +252,56 @@ public class PersonalizationPage extends StackPane {
 
         ComponentList themeList = new ComponentList();
         {
-            LineButton currentThemeButton = LineButton.createNavigationButton();
-            themeList.getContent().add(currentThemeButton);
-            currentThemeButton.setTitle(i18n("theme_pack.current.title"));
-            currentThemeButton.subtitleProperty().bind(Bindings.createStringBinding(
-                    PersonalizationPage::getCurrentThemeDisplayName,
-                    settings().themeProperty()));
-            currentThemeButton.setOnAction(event -> Controllers.navigateForward(new ThemePackManagementPage()));
+            Holder<List<ThemeChoice>> themeChoices = new Holder<>(List.of(ThemeChoice.custom()));
+            var themeSelectButton = new LineSelectButton<ThemeChoice>();
+            themeSelectButton.setTitle(i18n("theme_pack.current.title"));
+            themeSelectButton.setNullSafeConverter(ThemeChoice::title);
+            themeSelectButton.setDescriptionConverter(choice -> Objects.toString(choice.description(), ""));
+
+            boolean[] updatingThemeChoice = {false};
+            Runnable refreshSelectedTheme = () -> {
+                updatingThemeChoice[0] = true;
+                try {
+                    themeSelectButton.setValue(getSelectedThemeChoice(themeChoices.value));
+                } finally {
+                    updatingThemeChoice[0] = false;
+                }
+            };
+            Runnable reloadThemeChoices = () -> {
+                updatingThemeChoice[0] = true;
+                try {
+                    themeChoices.value = loadThemeChoices();
+                    themeSelectButton.setItems(themeChoices.value);
+                    themeSelectButton.setValue(getSelectedThemeChoice(themeChoices.value));
+                } finally {
+                    updatingThemeChoice[0] = false;
+                }
+            };
+            FXUtils.onChange(themeSelectButton.valueProperty(), choice -> {
+                if (updatingThemeChoice[0]) {
+                    return;
+                }
+
+                try {
+                    boolean applied = choice.apply();
+                    if (applied && !choice.customAppearance()) {
+                        Controllers.showToast(i18n("theme_pack.apply.success", choice.applyDisplayName()));
+                    }
+                } catch (IOException | RuntimeException e) {
+                    showThemePackError(i18n("theme_pack.apply.failed"), e);
+                } finally {
+                    refreshSelectedTheme.run();
+                }
+            });
+            FXUtils.onChange(settings().themeProperty(), ignored -> reloadThemeChoices.run());
+            reloadThemeChoices.run();
+            themeList.getContent().add(themeSelectButton);
+
+            LineButton manageThemeButton = LineButton.createNavigationButton();
+            manageThemeButton.setTitle(i18n("theme_pack.manage"));
+            manageThemeButton.setSubtitle(i18n("theme_pack.manage.subtitle"));
+            manageThemeButton.setOnAction(event -> Controllers.navigateForward(new ThemePackManagementPage()));
+            themeList.getContent().add(manageThemeButton);
         }
         content.getChildren().addAll(ComponentList.createComponentListTitle(i18n("settings.launcher.theme")), themeList);
 
