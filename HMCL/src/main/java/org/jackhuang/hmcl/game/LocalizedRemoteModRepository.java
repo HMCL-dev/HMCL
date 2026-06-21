@@ -148,8 +148,8 @@ public abstract class LocalizedRemoteModRepository implements RemoteModRepositor
     }
 
     @Override
-    public String getModChangelog(DownloadProvider downloadProvider, String modId, String versionId) throws IOException {
-        return getBackedRemoteModRepository().getModChangelog(downloadProvider, modId, versionId);
+    public String getAddonChangelog(DownloadProvider downloadProvider, String addonId, String versionId) throws IOException {
+        return getBackedRemoteModRepository().getAddonChangelog(downloadProvider, addonId, versionId);
     }
 
     @Override

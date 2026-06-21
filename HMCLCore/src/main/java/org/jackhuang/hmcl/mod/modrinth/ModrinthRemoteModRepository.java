@@ -301,11 +301,30 @@ public final class ModrinthRemoteModRepository implements RemoteModRepository {
     }
 
     @Override
-    public String getModChangelog(DownloadProvider downloadProvider, String modId, String versionId) throws IOException {
+    public String getAddonChangelog(DownloadProvider downloadProvider, String addonId, String versionId) throws IOException {
         SEMAPHORE.acquireUninterruptibly();
         try {
-            ProjectVersion version = HttpRequest.GET(PREFIX + "/v2/version/" + versionId).getJson(ProjectVersion.class);
-            return version.getChangelog();
+            List<URI> candidates = downloadProvider.injectURLWithCandidates(PREFIX + "/v2/version/" + versionId);
+            IOException exception = null;
+
+            for (URI uri : candidates) {
+                try {
+                    ProjectVersion version = HttpRequest.GET(uri.toString()).getJson(ProjectVersion.class);
+                    return version.getChangelog();
+                } catch (IOException e) {
+                    IOException wrapper = new IOException("Failed to get addon changelog: " + uri, e);
+                    if (candidates.size() == 1) {
+                        exception = wrapper;
+                    } else {
+                        if (exception == null) {
+                            exception = new IOException("Failed to get addon changelog");
+                        }
+                        exception.addSuppressed(wrapper);
+                    }
+                }
+            }
+
+            throw exception != null ? exception : new IOException("No candidates found");
         } finally {
             SEMAPHORE.release();
         }

@@ -349,7 +349,7 @@ public class AddonUpdatesPage<F extends LocalAddonFile> extends BorderPane imple
                 }
                 RemoteMod.Version version = object.data.targetVersion();
                 if (repo == null) return null;
-                return StringUtils.convertToHtml(repo.getModChangelog(DownloadProviders.getDownloadProvider(), version.getModid(), version.getVersionId()));
+                return StringUtils.convertToHtml(repo.getAddonChangelog(DownloadProviders.getDownloadProvider(), version.getModid(), version.getVersionId()));
             }).whenComplete(Schedulers.javafx(), (result, exception) -> {
                 if (exception == null) {
                     object.changelog = StringUtils.isNotBlank(result) ? result : i18n("mods.changelog.empty");

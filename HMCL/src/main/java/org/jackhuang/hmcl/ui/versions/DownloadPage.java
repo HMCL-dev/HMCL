@@ -672,7 +672,7 @@ public class DownloadPage extends Control implements DecoratorPage {
         private void loadChangelog(RemoteMod.Version version, RemoteModRepository repo, DownloadProvider provider, SpinnerPane spinnerPane, ScrollPane scrollPane) {
             spinnerPane.setLoading(true);
             Task.supplyAsync(() ->
-                    StringUtils.convertToHtml(repo.getModChangelog(provider, version.getModid(), version.getVersionId()))
+                    StringUtils.convertToHtml(repo.getAddonChangelog(provider, version.getModid(), version.getVersionId()))
             ).whenComplete(Schedulers.javafx(), (result, exception) -> {
                 if (exception == null) {
                     String changelog = StringUtils.isNotBlank(result) ? result : i18n("mods.changelog.empty");
