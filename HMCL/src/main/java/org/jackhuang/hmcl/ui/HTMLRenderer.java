@@ -26,12 +26,14 @@ import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.Pane;
+import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.scene.text.Text;
 import javafx.scene.text.TextFlow;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.StringUtils;
+import org.jetbrains.annotations.Nullable;
 import org.jsoup.nodes.Element;
 import org.jsoup.nodes.Node;
 import org.jsoup.nodes.TextNode;
@@ -254,16 +256,19 @@ public final class HTMLRenderer {
                     }
                     imageView.setImage(res);
                 }).start();
+                imageView.setPreserveRatio(true);
+
+                ImagePane imagePane = new ImagePane(imageView, alt);
 
                 if (hyperlink != null) {
                     URI target = resolveLink(hyperlink);
                     if (target != null) {
-                        FXUtils.onClicked(imageView, () -> onClickHyperlink.accept(target));
-                        imageView.setCursor(Cursor.HAND);
+                        FXUtils.onClicked(imagePane, () -> onClickHyperlink.accept(target));
+                        imagePane.setCursor(Cursor.HAND);
                     }
                 }
-                imageView.setPreserveRatio(true);
-                children.add(imageView);
+
+                children.add(imagePane);
                 return;
             } catch (Throwable e) {
                 LOG.warning("Failed to load image: " + src, e);
@@ -506,8 +511,9 @@ public final class HTMLRenderer {
         textFlow.getStyleClass().add("html");
         textFlow.getChildren().setAll(children);
         for (javafx.scene.Node node : children) {
-            if (node instanceof ImageView img) {
-                InvalidationListener listener = __ -> img.setFitWidth(Math.min(textFlow.getWidth() * 0.8, img.getImage() == null ? 0D : img.getImage().getWidth()));
+            if (node instanceof ImagePane imgPane) {
+                ImageView img = imgPane.imageView;
+                InvalidationListener listener = __ -> img.setFitWidth(Math.min(textFlow.getWidth() * 0.9, img.getImage() == null ? 0D : img.getImage().getWidth()));
                 textFlow.widthProperty().addListener(listener);
                 img.imageProperty().addListener(listener);
             } else if (node instanceof TableView<?> table) {
@@ -524,6 +530,20 @@ public final class HTMLRenderer {
         public AutoLineBreak(String text) {
             super(text);
         }
+    }
+
+    private static final class ImagePane extends StackPane {
+
+        public final ImageView imageView;
+
+        public ImagePane(ImageView imageView, @Nullable String alt) {
+            super();
+            this.imageView = imageView;
+
+            if (StringUtils.isNotBlank(alt)) getChildren().add(new Text(alt));
+            getChildren().add(imageView);
+        }
+
     }
 
     private static final class SimpleCssDeclarations {
