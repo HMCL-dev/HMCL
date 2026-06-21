@@ -264,32 +264,20 @@ public class PersonalizationPage extends StackPane {
         }
     }
 
-    /// Asks for export metadata and then saves the current launcher appearance as a theme-pack file.
+    /// Asks for the theme-pack name and then saves the current launcher appearance as a theme-pack file.
     private void exportCurrentThemePack() {
-        PromptDialogPane.Builder.StringQuestion packIdQuestion = new PromptDialogPane.Builder.StringQuestion(
-                i18n("theme_pack.export.id"),
-                newExportedThemePackId(),
-                new RequiredValidator());
         PromptDialogPane.Builder.StringQuestion packNameQuestion = new PromptDialogPane.Builder.StringQuestion(
                 i18n("theme_pack.export.name"),
                 i18n("theme_pack.export.default_name"),
                 new RequiredValidator());
-        PromptDialogPane.Builder.StringQuestion themeNameQuestion = new PromptDialogPane.Builder.StringQuestion(
-                i18n("theme_pack.export.theme_name"),
-                i18n("theme_pack.export.default_theme_name"),
-                new RequiredValidator());
 
         Controllers.prompt(new PromptDialogPane.Builder(i18n("theme_pack.export.title"), (questions, handler) -> handler.resolve())
-                .addQuestion(packIdQuestion)
-                .addQuestion(packNameQuestion)
-                .addQuestion(themeNameQuestion)).thenAccept(questions -> exportCurrentThemePack(
-                packIdQuestion.getValue().trim(),
-                packNameQuestion.getValue().trim(),
-                themeNameQuestion.getValue().trim()));
+                .addQuestion(packNameQuestion)).thenAccept(questions -> exportCurrentThemePack(
+                packNameQuestion.getValue().trim()));
     }
 
-    /// Saves current launcher appearance as a theme-pack file with the given metadata.
-    private void exportCurrentThemePack(String packId, String packName, String themeName) {
+    /// Saves current launcher appearance as a theme-pack file with the given package name.
+    private void exportCurrentThemePack(String packName) {
         FileChooser chooser = new FileChooser();
         chooser.setTitle(i18n("theme_pack.export.title"));
         chooser.setInitialFileName("current-theme" + ThemePackExporter.FILE_EXTENSION);
@@ -304,9 +292,9 @@ public class PersonalizationPage extends StackPane {
         try {
             ThemePackManager.exportCurrent(
                     output,
-                    packId,
+                    newExportedThemePackId(),
                     packName,
-                    themeName);
+                    packName);
             Controllers.dialog(
                     i18n("theme_pack.export.success", output),
                     i18n("message.success"),
