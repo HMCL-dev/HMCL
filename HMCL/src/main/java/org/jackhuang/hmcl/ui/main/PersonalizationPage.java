@@ -20,6 +20,7 @@ package org.jackhuang.hmcl.ui.main;
 import com.jfoenix.controls.*;
 import com.jfoenix.effects.JFXDepthManager;
 import javafx.application.Platform;
+import javafx.beans.InvalidationListener;
 import javafx.beans.binding.Bindings;
 import javafx.beans.binding.StringBinding;
 import javafx.geometry.Insets;
@@ -79,9 +80,16 @@ import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 /// Configures launcher appearance, background, and launcher font settings.
 @NotNullByDefault
 public class PersonalizationPage extends StackPane {
+    /// Internal selection reference for the built-in default theme.
+    private static final ThemeSelection DEFAULT_THEME_SELECTION =
+            new ThemeSelection("hmcl.builtin.default", "1.0.0", null);
+
     /// Time format used by default exported theme names.
     private static final DateTimeFormatter EXPORTED_THEME_NAME_FORMATTER =
             DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss", Locale.ROOT);
+
+    /// Whether launcher theme fields are currently being changed by applying a theme.
+    private static boolean applyingTheme = false;
 
     /// Snaps a percent value to the nearest 5% opacity tick.
     private static double snapOpacity(double val) {
@@ -102,7 +110,7 @@ public class PersonalizationPage extends StackPane {
     /// Loads all theme choices shown by the theme selector.
     private static List<ThemeChoice> loadThemeChoices() {
         ArrayList<ThemeChoice> choices = new ArrayList<>();
-        choices.add(ThemeChoice.custom());
+        choices.add(ThemeChoice.defaultTheme());
 
         try {
             for (ThemePackManager.InstalledThemePack themePack : ThemePackManager.listInstalled()) {
@@ -132,7 +140,7 @@ public class PersonalizationPage extends StackPane {
             }
         }
 
-        return choices.get(0);
+        return selection != null ? ThemeChoice.missing(selection) : ThemeChoice.custom();
     }
 
     /// Finds a selectable theme choice by selection reference.
@@ -244,11 +252,41 @@ public class PersonalizationPage extends StackPane {
                 MessageType.ERROR);
     }
 
+    /// Applies the built-in default launcher theme.
+    private static void applyDefaultTheme() {
+        settings().themeBrightnessProperty().set("light");
+        settings().customThemeColorProperty().set(ThemeColor.DEFAULT);
+        settings().themeColorTypeProperty().set(ThemeColorType.CUSTOM);
+        settings().themeColorStyleProperty().set(ColorStyle.FIDELITY);
+        settings().backgroundTypeProperty().set(BackgroundType.DEFAULT);
+        settings().backgroundImageProperty().set(null);
+        settings().backgroundImageUrlProperty().set(null);
+        settings().backgroundPaintProperty().set(null);
+        settings().backgroundOpacityProperty().set(1.0);
+        settings().titleTransparentProperty().set(false);
+        settings().themeProperty().set(DEFAULT_THEME_SELECTION);
+    }
+
+    /// Registers a listener for fields that are controlled by launcher themes.
+    private static void installThemeCustomizationListener(InvalidationListener listener) {
+        settings().themeBrightnessProperty().addListener(listener);
+        settings().customThemeColorProperty().addListener(listener);
+        settings().themeColorTypeProperty().addListener(listener);
+        settings().themeColorStyleProperty().addListener(listener);
+        settings().backgroundTypeProperty().addListener(listener);
+        settings().backgroundImageProperty().addListener(listener);
+        settings().backgroundImageUrlProperty().addListener(listener);
+        settings().backgroundPaintProperty().addListener(listener);
+        settings().backgroundOpacityProperty().addListener(listener);
+        settings().titleTransparentProperty().addListener(listener);
+    }
+
     /// A selectable launcher theme or the local custom appearance.
     ///
     /// @param title the label shown by the selector
     /// @param description the optional secondary text shown in the selector popup
     /// @param customAppearance whether this item represents the local custom appearance
+    /// @param defaultAppearance whether this item represents the built-in default appearance
     /// @param themePack the installed theme pack, or `null` for non-pack choices
     /// @param theme the installed theme, or `null` for non-pack choices
     /// @param selection the stored selection reference, or `null` for the local custom appearance
@@ -256,6 +294,7 @@ public class PersonalizationPage extends StackPane {
             String title,
             @Nullable String description,
             boolean customAppearance,
+            boolean defaultAppearance,
             @Nullable ThemePackManager.InstalledThemePack themePack,
             @Nullable Theme theme,
             @Nullable ThemeSelection selection) {
@@ -266,7 +305,19 @@ public class PersonalizationPage extends StackPane {
 
         /// Creates the local custom appearance choice.
         private static ThemeChoice custom() {
-            return new ThemeChoice(i18n("theme_pack.current.custom"), null, true, null, null, null);
+            return new ThemeChoice(i18n("theme_pack.current.custom"), null, true, false, null, null, null);
+        }
+
+        /// Creates the built-in default theme choice.
+        private static ThemeChoice defaultTheme() {
+            return new ThemeChoice(
+                    i18n("theme_pack.default"),
+                    i18n("theme_pack.default.description"),
+                    false,
+                    true,
+                    null,
+                    null,
+                    DEFAULT_THEME_SELECTION);
         }
 
         /// Creates a choice for an installed theme-pack theme.
@@ -279,6 +330,7 @@ public class PersonalizationPage extends StackPane {
                     getThemeChoiceTitle(themePack, theme),
                     getThemeChoiceDescription(themePack, theme),
                     false,
+                    false,
                     themePack,
                     theme,
                     selection);
@@ -289,6 +341,7 @@ public class PersonalizationPage extends StackPane {
             return new ThemeChoice(
                     i18n("theme_pack.current.missing"),
                     getMissingThemeChoiceDescription(selection),
+                    false,
                     false,
                     null,
                     null,
@@ -302,6 +355,10 @@ public class PersonalizationPage extends StackPane {
         private boolean apply() throws IOException {
             if (customAppearance) {
                 settings().themeProperty().set(null);
+                return true;
+            }
+            if (defaultAppearance) {
+                applyDefaultTheme();
                 return true;
             }
             if (themePack == null || theme == null) {
@@ -389,7 +446,7 @@ public class PersonalizationPage extends StackPane {
 
         ComponentList themeList = new ComponentList();
         {
-            Holder<List<ThemeChoice>> themeChoices = new Holder<>(List.of(ThemeChoice.custom()));
+            Holder<List<ThemeChoice>> themeChoices = new Holder<>(List.of(ThemeChoice.defaultTheme()));
             var themeSelectButton = new LineSelectButton<ThemeChoice>();
             themeSelectButton.setTitle(i18n("theme_pack.current.title"));
             themeSelectButton.setNullSafeConverter(ThemeChoice::title);
@@ -420,6 +477,7 @@ public class PersonalizationPage extends StackPane {
                 }
 
                 try {
+                    applyingTheme = true;
                     boolean applied = choice.apply();
                     if (applied && !choice.customAppearance()) {
                         Controllers.showToast(i18n("theme_pack.apply.success", choice.applyDisplayName()));
@@ -427,6 +485,7 @@ public class PersonalizationPage extends StackPane {
                 } catch (IOException | RuntimeException e) {
                     showThemePackError(i18n("theme_pack.apply.failed"), e);
                 } finally {
+                    applyingTheme = false;
                     refreshSelectedTheme.run();
                 }
             });
@@ -593,6 +652,11 @@ public class PersonalizationPage extends StackPane {
             titleTransparentButton.selectedProperty().bindBidirectional(settings().titleTransparentProperty());
             titleTransparentButton.setTitle(i18n("settings.launcher.title_transparent"));
         }
+        installThemeCustomizationListener(ignored -> {
+            if (!applyingTheme && settings().themeProperty().get() != null) {
+                settings().themeProperty().set(null);
+            }
+        });
         content.getChildren().addAll(ComponentList.createComponentListTitle(i18n("settings.launcher.theme_appearance")), themeAppearanceList);
 
         {
