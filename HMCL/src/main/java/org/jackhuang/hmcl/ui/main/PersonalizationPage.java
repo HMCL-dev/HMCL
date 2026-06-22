@@ -22,6 +22,7 @@ import com.jfoenix.effects.JFXDepthManager;
 import javafx.application.Platform;
 import javafx.beans.InvalidationListener;
 import javafx.beans.binding.Bindings;
+import javafx.beans.binding.BooleanBinding;
 import javafx.beans.binding.StringBinding;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
@@ -188,6 +189,13 @@ public class PersonalizationPage extends StackPane {
         return selection.packId() + " - " + selection.themeId();
     }
 
+    /// Returns the display name for one built-in background.
+    private static String getBuiltinBackgroundName(String name) {
+        return BackgroundType.BUILTIN_CLASSIC.equals(name)
+                ? i18n("launcher.background.builtin.classic")
+                : i18n("launcher.background.builtin.default");
+    }
+
     /// Returns the file chooser filter for HMCL theme-pack files.
     private static FileChooser.ExtensionFilter getThemePackExtensionFilter() {
         return new FileChooser.ExtensionFilter(i18n("theme_pack.file"), "*" + ThemePackExporter.FILE_EXTENSION);
@@ -261,8 +269,8 @@ public class PersonalizationPage extends StackPane {
         settings().customThemeColorProperty().set(ThemeColor.DEFAULT);
         settings().themeColorTypeProperty().set(ThemeColorType.CUSTOM);
         settings().themeColorStyleProperty().set(ColorStyle.FIDELITY);
-        settings().backgroundThemeProperty().set(null);
         settings().backgroundTypeProperty().set(BackgroundType.DEFAULT);
+        settings().builtinBackgroundNameProperty().set(BackgroundType.BUILTIN_DEFAULT);
         settings().customBackgroundImagePathProperty().set(null);
         settings().networkBackgroundImageUrlProperty().set(null);
         settings().customBackgroundPaintProperty().set(null);
@@ -277,6 +285,7 @@ public class PersonalizationPage extends StackPane {
         settings().themeColorTypeProperty().addListener(listener);
         settings().themeColorStyleProperty().addListener(listener);
         settings().backgroundTypeProperty().addListener(listener);
+        settings().builtinBackgroundNameProperty().addListener(listener);
         settings().customBackgroundImagePathProperty().addListener(listener);
         settings().networkBackgroundImageUrlProperty().addListener(listener);
         settings().customBackgroundPaintProperty().addListener(listener);
@@ -591,8 +600,7 @@ public class PersonalizationPage extends StackPane {
             backgroundItem.loadChildren(Arrays.asList(
                     new MultiFileItem.Option<>(i18n("launcher.background.default"), BackgroundType.DEFAULT)
                             .setTooltip(i18n("launcher.background.default.tooltip")),
-                    new MultiFileItem.Option<>(i18n("launcher.background.theme"), BackgroundType.THEME),
-                    new MultiFileItem.Option<>(i18n("launcher.background.classic"), BackgroundType.CLASSIC),
+                    new MultiFileItem.Option<>(i18n("launcher.background.builtin"), BackgroundType.BUILTIN),
                     new MultiFileItem.Option<>(i18n("launcher.background.theme_color"), BackgroundType.THEME_COLOR),
                     new MultiFileItem.FileOption<>(i18n("settings.custom"), BackgroundType.CUSTOM)
                             .setChooserTitle(i18n("launcher.background.choose"))
@@ -606,21 +614,30 @@ public class PersonalizationPage extends StackPane {
                             .bindBidirectional(settings().customBackgroundPaintProperty())
             ));
             backgroundItem.selectedDataProperty().bindBidirectional(settings().backgroundTypeProperty());
+
+            var builtinBackgroundPane = new LineSelectButton<String>();
+            builtinBackgroundPane.setTitle(i18n("launcher.background.builtin"));
+            builtinBackgroundPane.setNullSafeConverter(PersonalizationPage::getBuiltinBackgroundName);
+            builtinBackgroundPane.setItems(BackgroundType.BUILTIN_DEFAULT, BackgroundType.BUILTIN_CLASSIC);
+            builtinBackgroundPane.valueProperty().bindBidirectional(settings().builtinBackgroundNameProperty());
+            BooleanBinding builtinBackgroundSelected = backgroundItem.selectedDataProperty().isEqualTo(BackgroundType.BUILTIN);
+            builtinBackgroundPane.visibleProperty().bind(builtinBackgroundSelected);
+            builtinBackgroundPane.managedProperty().bind(builtinBackgroundSelected);
+
             backgroundSublist.descriptionProperty().bind(Bindings.createStringBinding(() -> {
                         BackgroundType type = Lang.requireNonNullElse(
                                 backgroundItem.selectedDataProperty().get(),
                                 BackgroundType.DEFAULT);
 
                         return switch (type) {
-                            case THEME -> {
-                                @Nullable ThemeSelection backgroundTheme = settings().backgroundThemeProperty().get();
-                                yield backgroundTheme != null
-                                        ? getMissingThemeChoiceDescription(backgroundTheme)
-                                        : i18n("launcher.background.theme");
+                            case DEFAULT -> {
+                                @Nullable ThemeSelection selectedTheme = settings().themeProperty().get();
+                                yield selectedTheme != null && !DEFAULT_THEME_SELECTION.equals(selectedTheme)
+                                        ? getMissingThemeChoiceDescription(selectedTheme)
+                                        : i18n("launcher.background.default");
                             }
                             case THEME_COLOR -> i18n("launcher.background.theme_color");
-                            case DEFAULT -> i18n("launcher.background.default");
-                            case CLASSIC -> i18n("launcher.background.classic");
+                            case BUILTIN -> getBuiltinBackgroundName(settings().builtinBackgroundNameProperty().get());
                             case CUSTOM -> settings().customBackgroundImagePathProperty().get();
                             case NETWORK -> settings().networkBackgroundImageUrlProperty().get();
                             case PAINT -> {
@@ -630,7 +647,8 @@ public class PersonalizationPage extends StackPane {
                         };
                     },
                     backgroundItem.selectedDataProperty(),
-                    settings().backgroundThemeProperty(),
+                    settings().themeProperty(),
+                    settings().builtinBackgroundNameProperty(),
                     settings().customBackgroundImagePathProperty(),
                     settings().networkBackgroundImageUrlProperty(),
                     settings().customBackgroundPaintProperty()));
@@ -663,7 +681,7 @@ public class PersonalizationPage extends StackPane {
                 opacityItem.getChildren().setAll(label, slider, textOpacity);
             }
 
-            backgroundSublist.getContent().setAll(backgroundItem);
+            backgroundSublist.getContent().setAll(backgroundItem, builtinBackgroundPane);
             themeAppearanceList.getContent().addAll(backgroundSublist, opacityItem);
         }
 

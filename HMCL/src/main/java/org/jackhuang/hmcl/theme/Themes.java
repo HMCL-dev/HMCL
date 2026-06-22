@@ -72,11 +72,11 @@ public final class Themes {
         {
             List<Observable> observables = new ArrayList<>();
 
+            observables.add(settings().themeProperty());
             observables.add(settings().themeBrightnessProperty());
             observables.add(settings().customThemeColorProperty());
             observables.add(settings().themeColorTypeProperty());
             observables.add(settings().themeColorStyleProperty());
-            observables.add(settings().backgroundThemeProperty());
             observables.add(settings().backgroundTypeProperty());
             observables.add(settings().customBackgroundImagePathProperty());
             observables.add(settings().customBackgroundPaintProperty());
@@ -133,7 +133,7 @@ public final class Themes {
                 case CUSTOM -> getImageThemeColor(background.imagePath(), fallback);
                 case PAINT -> background.paint() instanceof Color color ? ThemeColor.of(color) : fallback;
                 case THEME_COLOR -> ThemeColor.DEFAULT;
-                case THEME, DEFAULT, CLASSIC, NETWORK -> fallback;
+                case DEFAULT, BUILTIN, NETWORK -> fallback;
             };
         } catch (IOException | RuntimeException e) {
             return fallback;

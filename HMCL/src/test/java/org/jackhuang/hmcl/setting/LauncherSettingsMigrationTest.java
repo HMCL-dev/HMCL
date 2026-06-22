@@ -236,6 +236,32 @@ public final class LauncherSettingsMigrationTest {
         assertFalse(serialized.has("hasProxy"));
     }
 
+    /// Tests migrating the removed classic background type to the named built-in background setting.
+    @ParameterizedTest
+    @CsvSource({
+            "CLASSIC, false",
+            "2, true"
+    })
+    public void migratesLegacyClassicBackgroundType(String backgroundType, boolean numericValue) {
+        JsonObject settings = new JsonObject();
+        if (numericValue) {
+            settings.addProperty("backgroundType", Integer.parseInt(backgroundType));
+        } else {
+            settings.addProperty("backgroundType", backgroundType);
+        }
+
+        LegacyConfigMigrator.migrateLegacyBackgroundImageType(settings);
+        LauncherSettings launcherSettings = Objects.requireNonNull(LauncherSettings.fromJson(settings));
+        JsonObject serialized = JsonParser.parseString(launcherSettings.toJson()).getAsJsonObject();
+
+        assertEquals(BackgroundType.BUILTIN.name(), settings.get("backgroundType").getAsString());
+        assertEquals(BackgroundType.BUILTIN_CLASSIC, settings.get("builtinBackgroundName").getAsString());
+        assertEquals(BackgroundType.BUILTIN, launcherSettings.backgroundTypeProperty().get());
+        assertEquals(BackgroundType.BUILTIN_CLASSIC, launcherSettings.builtinBackgroundNameProperty().get());
+        assertEquals(BackgroundType.BUILTIN.name(), serialized.get("backgroundType").getAsString());
+        assertEquals(BackgroundType.BUILTIN_CLASSIC, serialized.get("builtinBackgroundName").getAsString());
+    }
+
     /// Tests migrating legacy download source combinations into current download source fields.
     @ParameterizedTest
     @CsvSource(value = {

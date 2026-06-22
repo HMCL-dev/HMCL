@@ -115,7 +115,7 @@ public final class LegacyConfigMigrator {
     private static final String[] LEGACY_BACKGROUND_IMAGE_TYPES = {
             "DEFAULT",
             "CUSTOM",
-            "CLASSIC",
+            "BUILTIN",
             "NETWORK",
             "TRANSLUCENT",
             "PAINT"
@@ -815,6 +815,14 @@ public final class LegacyConfigMigrator {
         @Nullable Integer ordinal = JsonUtils.getInteger(legacyValue);
         if (ordinal != null && ordinal >= 0 && ordinal < LEGACY_BACKGROUND_IMAGE_TYPES.length) {
             json.addProperty("backgroundType", LEGACY_BACKGROUND_IMAGE_TYPES[ordinal]);
+            if (ordinal == 2) {
+                json.addProperty("builtinBackgroundName", BackgroundType.BUILTIN_CLASSIC);
+            }
+        }
+
+        if (Objects.equals(JsonUtils.getString(json, "backgroundType"), "CLASSIC")) {
+            json.addProperty("backgroundType", BackgroundType.BUILTIN.name());
+            json.addProperty("builtinBackgroundName", BackgroundType.BUILTIN_CLASSIC);
         }
 
         if (Objects.equals(JsonUtils.getString(json, "backgroundType"), "TRANSLUCENT")) {

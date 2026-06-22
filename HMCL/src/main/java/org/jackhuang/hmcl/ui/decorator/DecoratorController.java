@@ -42,7 +42,6 @@ import org.jackhuang.hmcl.setting.BackgroundType;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.theme.ThemePackManager;
-import org.jackhuang.hmcl.theme.ThemeSelection;
 import org.jackhuang.hmcl.theme.Themes;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.DialogUtils;
@@ -97,8 +96,9 @@ public class DecoratorController {
         decorator.setContentBackground(getBackground());
         changeBackgroundListener = o -> updateBackground();
         WeakInvalidationListener weakListener = new WeakInvalidationListener(changeBackgroundListener);
-        settings().backgroundThemeProperty().addListener(weakListener);
+        settings().themeProperty().addListener(weakListener);
         settings().backgroundTypeProperty().addListener(weakListener);
+        settings().builtinBackgroundNameProperty().addListener(weakListener);
         settings().customBackgroundImagePathProperty().addListener(weakListener);
         settings().networkBackgroundImageUrlProperty().addListener(weakListener);
         settings().customBackgroundPaintProperty().addListener(weakListener);
@@ -196,19 +196,15 @@ public class DecoratorController {
 
         Image image = null;
         switch (imageType) {
-            case THEME:
+            case DEFAULT:
                 try {
-                    @Nullable ThemeSelection backgroundTheme = settings().backgroundThemeProperty().get();
-                    if (backgroundTheme != null) {
-                        @Nullable ThemePackManager.ResolvedBackground resolvedBackground =
-                                ThemePackManager.resolveThemeBackground(backgroundTheme, ThemePackManager.currentResolveContext());
-                        if (resolvedBackground != null) {
-                            return getResolvedBackground(resolvedBackground);
-                        }
-                    }
+                    return getResolvedBackground(ThemePackManager.resolveCurrentBackground(ThemePackManager.currentResolveContext()));
                 } catch (IOException | RuntimeException e) {
-                    LOG.warning("Couldn't resolve selected theme background", e);
+                    LOG.warning("Couldn't resolve default background", e);
                 }
+                break;
+            case BUILTIN:
+                image = loadBuiltinBackgroundImage(settings().builtinBackgroundNameProperty().get());
                 break;
             case CUSTOM:
                 String customBackgroundImagePath = settings().customBackgroundImagePathProperty().get();
@@ -232,15 +228,10 @@ public class DecoratorController {
                     }
                 }
                 break;
-            case CLASSIC:
-                image = newBuiltinImage("/assets/img/background-classic.jpg");
-                break;
             case PAINT:
                 return createPaintBackground(settings().customBackgroundPaintProperty().get(), settings().backgroundOpacityProperty().get());
             case THEME_COLOR:
                 return createThemeColorBackground(settings().backgroundOpacityProperty().get());
-            case DEFAULT:
-                break;
         }
         if (image == null) {
             image = loadDefaultBackgroundImage();
@@ -273,14 +264,13 @@ public class DecoratorController {
                     }
                 }
                 break;
-            case CLASSIC:
-                image = newBuiltinImage("/assets/img/background-classic.jpg");
+            case BUILTIN:
+                image = loadBuiltinBackgroundImage(settings().builtinBackgroundNameProperty().get());
                 break;
             case PAINT:
                 return createPaintBackground(resolvedBackground.paint(), resolvedBackground.opacity());
             case THEME_COLOR:
                 return createPaintBackground(resolvedBackground.paint(), resolvedBackground.opacity());
-            case THEME:
             case DEFAULT:
                 break;
         }
@@ -368,6 +358,14 @@ public class DecoratorController {
                 return image;
         }
 
+        return newBuiltinImage("/assets/img/background.jpg");
+    }
+
+    /// Loads one named built-in launcher background.
+    private Image loadBuiltinBackgroundImage(String name) {
+        if (BackgroundType.BUILTIN_CLASSIC.equals(name)) {
+            return newBuiltinImage("/assets/img/background-classic.jpg");
+        }
         return newBuiltinImage("/assets/img/background.jpg");
     }
 

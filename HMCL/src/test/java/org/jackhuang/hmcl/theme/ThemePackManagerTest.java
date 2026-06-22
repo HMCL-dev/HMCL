@@ -108,19 +108,13 @@ public final class ThemePackManagerTest {
             assertEquals(ColorStyle.EXPRESSIVE, settings.themeColorStyleProperty().get());
             assertEquals("dark", settings.themeBrightnessProperty().get());
             assertEquals(new ThemeSelection("example.ui", null), settings.themeProperty().get());
-            assertEquals(new ThemeSelection("example.ui", null), settings.backgroundThemeProperty().get());
             JsonObject themeJson = LauncherSettings.SETTINGS_GSON.toJsonTree(settings)
                     .getAsJsonObject()
                     .getAsJsonObject("theme");
             assertEquals("example.ui", themeJson.get("packId").getAsString());
             assertFalse(themeJson.has("themeId"));
-            JsonObject backgroundThemeJson = LauncherSettings.SETTINGS_GSON.toJsonTree(settings)
-                    .getAsJsonObject()
-                    .getAsJsonObject("backgroundTheme");
-            assertEquals("example.ui", backgroundThemeJson.get("packId").getAsString());
-            assertFalse(backgroundThemeJson.has("themeId"));
             assertTrue(settings.titleTransparentProperty().get());
-            assertEquals(BackgroundType.THEME, settings.backgroundTypeProperty().get());
+            assertEquals(BackgroundType.DEFAULT, settings.backgroundTypeProperty().get());
             assertEquals(0.75, settings.backgroundOpacityProperty().get());
             assertNull(settings.customBackgroundImagePathProperty().get());
             assertNull(settings.networkBackgroundImageUrlProperty().get());
@@ -254,7 +248,7 @@ public final class ThemePackManagerTest {
             assertEquals(selection, settings.themeProperty().get());
             assertEquals(ColorStyle.EXPRESSIVE, settings.themeColorStyleProperty().get());
             assertTrue(settings.titleTransparentProperty().get());
-            assertEquals(BackgroundType.THEME, settings.backgroundTypeProperty().get());
+            assertEquals(BackgroundType.DEFAULT, settings.backgroundTypeProperty().get());
             assertEquals(0.25, settings.backgroundOpacityProperty().get());
 
             ThemePackManager.ResolvedBackground background = ThemePackManager.resolveCurrentBackground(
@@ -334,19 +328,20 @@ public final class ThemePackManagerTest {
         }
     }
 
-    /// Tests that the classic launcher background cannot be exported as a theme-pack background.
+    /// Tests that non-default built-in launcher backgrounds cannot be exported as theme-pack backgrounds.
     @Test
-    public void testExportCurrentThemePackRejectsClassicBackground() throws Exception {
+    public void testExportCurrentThemePackRejectsNonDefaultBuiltinBackground() throws Exception {
         try (SettingsScope ignored = new SettingsScope()) {
             LauncherSettings settings = SettingsManager.settings();
-            settings.backgroundTypeProperty().set(BackgroundType.CLASSIC);
+            settings.backgroundTypeProperty().set(BackgroundType.BUILTIN);
+            settings.builtinBackgroundNameProperty().set(BackgroundType.BUILTIN_CLASSIC);
 
             Path tempDir = createTestDirectory("export-classic");
             Path output = tempDir.resolve("classic" + ThemePackExporter.FILE_EXTENSION);
             IOException exception = assertThrows(IOException.class,
                     () -> ThemePackManager.exportCurrent(output, "com.example.classic", "Classic", "Test Author"));
 
-            assertTrue(exception.getMessage().contains("classic built-in background"));
+            assertTrue(exception.getMessage().contains("built-in background: classic"));
         }
     }
 
