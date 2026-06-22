@@ -705,8 +705,8 @@ public class PersonalizationPage extends StackPane {
                 opacityItem.getChildren().setAll(label, slider, textOpacity);
             }
 
-            backgroundSublist.getContent().setAll(backgroundItem, builtinBackgroundPane, networkBackgroundCachePane);
-            themeAppearanceList.getContent().addAll(backgroundSublist, opacityItem);
+            backgroundSublist.getContent().setAll(backgroundItem, builtinBackgroundPane);
+            themeAppearanceList.getContent().addAll(backgroundSublist, networkBackgroundCachePane, opacityItem);
         }
 
         {
