@@ -189,9 +189,9 @@ public final class ThemePackManagementPage extends ListPageBase<ThemePackManager
         Controllers.showToast(i18n("theme_pack.import.success", themePack.manifest().displayName()));
     }
 
-    /// Shows the installed package directory in the platform file manager.
+    /// Shows the installed package file in the platform file manager.
     private static void revealThemePack(ThemePackManager.InstalledThemePack themePack) {
-        FXUtils.showFileInExplorer(themePack.directory());
+        FXUtils.showFileInExplorer(themePack.file());
     }
 
     /// Asks for confirmation and deletes an installed theme pack.
@@ -461,7 +461,7 @@ public final class ThemePackManagementPage extends ListPageBase<ThemePackManager
         /// Right-side action container.
         private final HBox right = new HBox();
 
-        /// Shows the package directory.
+        /// Shows the package file.
         private final JFXButton revealButton;
 
         /// Deletes the package.

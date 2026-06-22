@@ -56,9 +56,13 @@ public final class ThemePackManagerTest {
     /// Tests applying an image-background theme pack to launcher settings.
     @Test
     public void testApplyImageThemePack() throws Exception {
-        Path installedDirectory = ThemePackManager.THEME_PACKS_DIRECTORY
+        Path installedFile = ThemePackManager.THEME_PACKS_DIRECTORY
+                .resolve("example.ui" + ThemePackExporter.FILE_EXTENSION);
+        Path installedCacheDirectory = ThemePackManager.THEME_PACKS_DIRECTORY
+                .resolve(".cache")
                 .resolve("example.ui");
-        deleteRecursively(installedDirectory);
+        deleteRecursively(installedFile);
+        deleteRecursively(installedCacheDirectory);
 
         try (SettingsScope ignored = new SettingsScope()) {
             Path tempDir = createTestDirectory("apply-image");
@@ -77,18 +81,22 @@ public final class ThemePackManagerTest {
                     themePackFile);
 
             ThemePackManager.InstalledThemePack installedThemePack = ThemePackManager.install(themePackFile);
-            assertEquals(installedDirectory, installedThemePack.directory());
-            assertTrue(Files.isRegularFile(installedDirectory.resolve(ThemePackExporter.MANIFEST_ENTRY)));
-            assertTrue(Files.isRegularFile(installedDirectory.resolve("assets/wallpapers/wallpaper.png")));
+            assertEquals(installedFile.toAbsolutePath().normalize(), installedThemePack.file());
+            assertTrue(Files.isRegularFile(installedFile));
+            assertFalse(Files.isDirectory(installedFile));
+            Path cachedWallpaper = ThemePackManager.resolveInstalledAsset(
+                    installedFile,
+                    "assets/wallpapers/wallpaper.png");
+            assertTrue(Files.isRegularFile(cachedWallpaper));
             assertEquals("thumbnail", Files.readString(
-                    installedDirectory.resolve("assets/thumbnails/thumbnail.txt"),
+                    ThemePackManager.resolveInstalledAsset(installedFile, "assets/thumbnails/thumbnail.txt"),
                     StandardCharsets.UTF_8));
 
             Theme theme = installedThemePack.manifest().findTheme(null);
             assertNotNull(theme);
 
             ThemePackManager.apply(
-                    installedThemePack.directory(),
+                    installedThemePack.file(),
                     installedThemePack.manifest(),
                     theme,
                     new ThemeResolveContext(Brightness.LIGHT, "linux", "en"));
@@ -120,19 +128,24 @@ public final class ThemePackManagerTest {
             ThemePackManager.ResolvedBackground resolvedBackground = ThemePackManager.resolveCurrentBackground(
                     new ThemeResolveContext(Brightness.LIGHT, "linux", "en"));
             assertEquals(BackgroundType.CUSTOM, resolvedBackground.type());
-            assertEquals(installedDirectory.resolve("assets/wallpapers/wallpaper.png"), resolvedBackground.imagePath());
+            assertEquals(cachedWallpaper, resolvedBackground.imagePath());
             assertEquals(0.75, resolvedBackground.opacity());
         } finally {
-            deleteRecursively(installedDirectory);
+            deleteRecursively(installedFile);
+            deleteRecursively(installedCacheDirectory);
         }
     }
 
     /// Tests installing a package replaces an existing version with the same package ID.
     @Test
     public void testInstallReplacesSamePackageId() throws Exception {
-        Path installedDirectory = ThemePackManager.THEME_PACKS_DIRECTORY
+        Path installedFile = ThemePackManager.THEME_PACKS_DIRECTORY
+                .resolve("example.replace" + ThemePackExporter.FILE_EXTENSION);
+        Path installedCacheDirectory = ThemePackManager.THEME_PACKS_DIRECTORY
+                .resolve(".cache")
                 .resolve("example.replace");
-        deleteRecursively(installedDirectory);
+        deleteRecursively(installedFile);
+        deleteRecursively(installedCacheDirectory);
 
         try (SettingsScope ignored = new SettingsScope()) {
             Path tempDir = createTestDirectory("replace-package");
@@ -149,29 +162,35 @@ public final class ThemePackManagerTest {
                     secondThemePackFile);
 
             ThemePackManager.InstalledThemePack firstInstalledThemePack = ThemePackManager.install(firstThemePackFile);
-            assertEquals(installedDirectory, firstInstalledThemePack.directory());
+            assertEquals(installedFile.toAbsolutePath().normalize(), firstInstalledThemePack.file());
             assertEquals("1.0.0", firstInstalledThemePack.manifest().version());
 
-            Path staleFile = installedDirectory.resolve("stale.txt");
-            Files.writeString(staleFile, "stale", StandardCharsets.UTF_8);
+            Files.writeString(installedFile, "stale", StandardCharsets.UTF_8);
 
             ThemePackManager.InstalledThemePack secondInstalledThemePack = ThemePackManager.install(secondThemePackFile);
-            assertEquals(installedDirectory, secondInstalledThemePack.directory());
+            assertEquals(installedFile.toAbsolutePath().normalize(), secondInstalledThemePack.file());
             assertEquals("2.0.0", secondInstalledThemePack.manifest().version());
-            assertFalse(Files.exists(staleFile));
-            assertFalse(Files.isDirectory(installedDirectory.resolve("1.0.0")));
+            assertEquals("2.0.0", ThemePackManager.loadInstalled(installedFile).manifest().version());
+            assertFalse(Files.isDirectory(installedFile));
         } finally {
-            deleteRecursively(installedDirectory);
+            deleteRecursively(installedFile);
+            deleteRecursively(installedCacheDirectory);
         }
     }
 
     /// Tests that one broken installed package does not prevent listing other packages.
     @Test
     public void testListInstalledSkipsBrokenThemePacks() throws Exception {
-        Path validDirectory = ThemePackManager.THEME_PACKS_DIRECTORY.resolve("example.list-valid");
-        Path brokenDirectory = ThemePackManager.THEME_PACKS_DIRECTORY.resolve("example.list-broken");
-        deleteRecursively(validDirectory);
-        deleteRecursively(brokenDirectory);
+        Path validFile = ThemePackManager.THEME_PACKS_DIRECTORY
+                .resolve("example.list-valid" + ThemePackExporter.FILE_EXTENSION);
+        Path brokenFile = ThemePackManager.THEME_PACKS_DIRECTORY
+                .resolve("example.list-broken" + ThemePackExporter.FILE_EXTENSION);
+        Path validCacheDirectory = ThemePackManager.THEME_PACKS_DIRECTORY
+                .resolve(".cache")
+                .resolve("example.list-valid");
+        deleteRecursively(validFile);
+        deleteRecursively(brokenFile);
+        deleteRecursively(validCacheDirectory);
 
         try {
             Path tempDir = createTestDirectory("list-installed");
@@ -182,24 +201,29 @@ public final class ThemePackManagerTest {
                     themePackFile);
             ThemePackManager.install(themePackFile);
 
-            Files.createDirectories(brokenDirectory);
-            Files.writeString(brokenDirectory.resolve(ThemePackExporter.MANIFEST_ENTRY), "{", StandardCharsets.UTF_8);
+            Files.createDirectories(ThemePackManager.THEME_PACKS_DIRECTORY);
+            Files.writeString(brokenFile, "{", StandardCharsets.UTF_8);
 
             List<ThemePackManager.InstalledThemePack> installedThemePacks = ThemePackManager.listInstalled();
             assertTrue(installedThemePacks.stream()
                     .anyMatch(themePack -> "example.list-valid".equals(themePack.manifest().id())));
         } finally {
-            deleteRecursively(validDirectory);
-            deleteRecursively(brokenDirectory);
+            deleteRecursively(validFile);
+            deleteRecursively(brokenFile);
+            deleteRecursively(validCacheDirectory);
         }
     }
 
     /// Tests refreshing the selected theme when the brightness condition context changes.
     @Test
     public void testRefreshCurrentThemeForBrightnessCondition() throws Exception {
-        Path installedDirectory = ThemePackManager.THEME_PACKS_DIRECTORY
+        Path installedFile = ThemePackManager.THEME_PACKS_DIRECTORY
+                .resolve("example.refresh" + ThemePackExporter.FILE_EXTENSION);
+        Path installedCacheDirectory = ThemePackManager.THEME_PACKS_DIRECTORY
+                .resolve(".cache")
                 .resolve("example.refresh");
-        deleteRecursively(installedDirectory);
+        deleteRecursively(installedFile);
+        deleteRecursively(installedCacheDirectory);
 
         try (SettingsScope ignored = new SettingsScope()) {
             Path tempDir = createTestDirectory("refresh-brightness");
@@ -211,7 +235,7 @@ public final class ThemePackManagerTest {
             assertNotNull(theme);
 
             ThemePackManager.apply(
-                    installedThemePack.directory(),
+                    installedThemePack.file(),
                     installedThemePack.manifest(),
                     theme,
                     new ThemeResolveContext(Brightness.LIGHT, "linux", "en"));
@@ -237,7 +261,8 @@ public final class ThemePackManagerTest {
             assertEquals(BackgroundType.PAINT, background.type());
             assertEquals(Color.BLACK, background.paint());
         } finally {
-            deleteRecursively(installedDirectory);
+            deleteRecursively(installedFile);
+            deleteRecursively(installedCacheDirectory);
         }
     }
 

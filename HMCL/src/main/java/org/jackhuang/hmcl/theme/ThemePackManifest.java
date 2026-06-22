@@ -36,6 +36,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.regex.Pattern;
 
 /// Parsed metadata and themes from a theme-pack manifest.
 ///
@@ -79,6 +80,9 @@ public record ThemePackManifest(
     /// JSON member name for multiple theme declarations.
     private static final String FIELD_THEMES = "themes";
 
+    /// Package ID format that can be used directly as an installed theme-pack file name.
+    private static final Pattern PACKAGE_ID_PATTERN = Pattern.compile("[A-Za-z0-9][A-Za-z0-9._-]*");
+
     /// Creates a theme-pack manifest.
     ///
     /// @param id the stable package identifier
@@ -88,7 +92,7 @@ public record ThemePackManifest(
     /// @param description the optional localized package description
     /// @param themes selectable themes declared by the package
     public ThemePackManifest {
-        id = requireNonBlank(id, FIELD_ID);
+        id = requirePackageId(id);
         version = requireNonBlank(version, FIELD_VERSION);
         name = requireLocalizedText(name, FIELD_NAME);
         authors = List.copyOf(authors);
@@ -386,5 +390,14 @@ public record ThemePackManifest(
             throw new IllegalArgumentException("Theme-pack manifest field is blank: " + field);
         }
         return trimmed;
+    }
+
+    /// Returns a package ID that can be used directly as an installed theme-pack file name.
+    static String requirePackageId(String value) {
+        String id = requireNonBlank(value, FIELD_ID);
+        if (!PACKAGE_ID_PATTERN.matcher(id).matches()) {
+            throw new IllegalArgumentException("Theme-pack manifest ID cannot be used as a file name: " + value);
+        }
+        return id;
     }
 }

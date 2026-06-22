@@ -22,7 +22,7 @@
   },
   "properties": {
     "id": {
-      "$ref": "#/$defs/nonEmptyString"
+      "$ref": "#/$defs/packId"
     },
     "version": {
       "$ref": "#/$defs/nonEmptyString"
@@ -85,6 +85,10 @@
       "type": "string",
       "minLength": 1,
       "pattern": "\\S"
+    },
+    "packId": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]*$"
     },
     "assetPath": {
       "type": "string",

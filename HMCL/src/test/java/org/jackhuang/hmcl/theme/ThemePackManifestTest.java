@@ -297,6 +297,20 @@ public final class ThemePackManifestTest {
         assertNull(theme.name());
     }
 
+    /// Tests that a package ID must be safe to use as an installed theme-pack file name.
+    @Test
+    public void testPackageIdMustBeFileNameSafe() {
+        assertThrows(IllegalArgumentException.class, () -> ThemePackManifest.fromJson("""
+                {
+                  "$schema": "https://schemas.glavo.site/hmcl/theme-pack/1.0.0",
+                  "id": "example/unsafe",
+                  "version": "1.0.0",
+                  "name": "Unsafe",
+                  "theme": {}
+                }
+                """));
+    }
+
     /// Tests that display names and descriptions accept localized text objects.
     @Test
     public void testLocalizedTextFields() {
