@@ -596,15 +596,10 @@ public class DownloadPage extends Control implements DecoratorPage {
 
                 return Task.allOf(queue).thenSupplyAsync(() ->
                         dependencies.values().stream().flatMap(nodes ->
-                                Stream.concat(Stream.of(nodes.key()), nodes.value().stream().sorted((n1, n2) -> {
-                                    if (n1 == n2) return 0;
-                                    RemoteMod a1 = n1.addon, a2 = n2.addon;
-                                    boolean b1 = a1 == RemoteMod.BROKEN, b2 = a2 == RemoteMod.BROKEN;
-                                    if (b1 && b2) return 0;
-                                    if (b1) return 1;
-                                    if (b2) return -1;
-                                    return a1.getSlug().compareTo(a2.getSlug());
-                                }))).toList()
+                                Stream.concat(
+                                        Stream.of(nodes.key()),
+                                        nodes.value().stream().sorted(Comparator.comparing(item -> item.addon.getSlug())))
+                        ).toList()
                 );
             }).whenComplete(Schedulers.javafx(), (result, exception) -> {
                 spinnerPane.setLoading(false);
