@@ -564,7 +564,17 @@ public class PersonalizationPage extends StackPane {
             colorStylePane.setTitle(i18n("settings.launcher.theme_color_style"));
             colorStylePane.setNullSafeConverter(style ->
                     i18n("settings.launcher.theme_color_style." + style.name().toLowerCase(Locale.ROOT)));
-            colorStylePane.setItems(ColorStyle.values());
+            colorStylePane.setItems(
+                    ColorStyle.FIDELITY,
+                    ColorStyle.TONAL_SPOT,
+                    ColorStyle.FRUIT_SALAD,
+                    ColorStyle.RAINBOW,
+                    ColorStyle.NEUTRAL,
+                    ColorStyle.VIBRANT,
+                    ColorStyle.EXPRESSIVE,
+                    ColorStyle.CONTENT,
+                    ColorStyle.MONOCHROME
+            );
             colorStylePane.valueProperty().bindBidirectional(settings().themeColorStyleProperty());
 
             themeAppearanceList.getContent().add(colorStylePane);
