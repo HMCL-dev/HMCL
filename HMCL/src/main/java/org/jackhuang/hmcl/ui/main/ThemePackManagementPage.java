@@ -19,7 +19,6 @@ package org.jackhuang.hmcl.ui.main;
 
 import com.jfoenix.controls.JFXButton;
 import com.jfoenix.controls.JFXListView;
-import com.jfoenix.controls.JFXPopup;
 import com.jfoenix.controls.JFXRadioButton;
 import com.jfoenix.controls.JFXTextField;
 import javafx.animation.PauseTransition;
@@ -59,10 +58,7 @@ import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.animation.ContainerAnimations;
 import org.jackhuang.hmcl.ui.animation.TransitionPane;
 import org.jackhuang.hmcl.ui.construct.ComponentList;
-import org.jackhuang.hmcl.ui.construct.IconedMenuItem;
-import org.jackhuang.hmcl.ui.construct.MenuSeparator;
 import org.jackhuang.hmcl.ui.construct.MessageDialogPane.MessageType;
-import org.jackhuang.hmcl.ui.construct.PopupMenu;
 import org.jackhuang.hmcl.ui.construct.PromptDialogPane;
 import org.jackhuang.hmcl.ui.construct.RipplerContainer;
 import org.jackhuang.hmcl.ui.construct.SpinnerPane;
@@ -80,7 +76,6 @@ import java.util.Locale;
 import java.util.function.Predicate;
 
 import static org.jackhuang.hmcl.setting.SettingsManager.settings;
-import static org.jackhuang.hmcl.ui.FXUtils.determineOptimalPopupPosition;
 import static org.jackhuang.hmcl.ui.FXUtils.ignoreEvent;
 import static org.jackhuang.hmcl.ui.FXUtils.onEscPressed;
 import static org.jackhuang.hmcl.ui.FXUtils.runInFX;
@@ -404,11 +399,11 @@ public final class ThemePackManagementPage extends ListPageBase<ThemePackManager
         /// Right-side action container.
         private final HBox right = new HBox();
 
-        /// Applies one theme from this package.
-        private final JFXButton applyButton;
+        /// Shows the package directory.
+        private final JFXButton revealButton;
 
-        /// Opens package actions.
-        private final JFXButton manageButton;
+        /// Deletes the package.
+        private final JFXButton deleteButton;
 
         /// Creates a reusable theme-pack list cell.
         ///
@@ -450,28 +445,23 @@ public final class ThemePackManagementPage extends ListPageBase<ThemePackManager
             right.setAlignment(Pos.CENTER_RIGHT);
             root.setRight(right);
 
-            applyButton = FXUtils.newToggleButton4(SVG.CHECK);
-            applyButton.setOnAction(event -> {
+            revealButton = FXUtils.newToggleButton4(SVG.FOLDER_OPEN);
+            revealButton.setOnAction(event -> {
                 ThemePackManager.InstalledThemePack themePack = getItem();
                 if (themePack != null) {
-                    page.selectAndApplyThemePack(themePack);
+                    revealThemePack(themePack);
                 }
             });
-            FXUtils.installFastTooltip(applyButton, i18n("theme_pack.apply"));
+            FXUtils.installFastTooltip(revealButton, i18n("reveal.in_file_manager"));
 
-            manageButton = FXUtils.newToggleButton4(SVG.MORE_VERT);
-            manageButton.setOnAction(event -> {
+            deleteButton = FXUtils.newToggleButton4(SVG.DELETE);
+            deleteButton.setOnAction(event -> {
                 ThemePackManager.InstalledThemePack themePack = getItem();
-                if (themePack == null) {
-                    return;
+                if (themePack != null) {
+                    page.deleteThemePack(themePack);
                 }
-
-                JFXPopup popup = getPopup(page, themePack);
-                JFXPopup.PopupVPosition vPosition = determineOptimalPopupPosition(root, popup);
-                popup.show(root, vPosition, JFXPopup.PopupHPosition.RIGHT, 0,
-                        vPosition == JFXPopup.PopupVPosition.TOP ? root.getHeight() : -root.getHeight());
             });
-            FXUtils.installFastTooltip(manageButton, i18n("settings.game.management"));
+            FXUtils.installFastTooltip(deleteButton, i18n("theme_pack.delete"));
 
             root.setCursor(Cursor.HAND);
             container.setOnMouseClicked(event -> {
@@ -482,11 +472,6 @@ public final class ThemePackManagementPage extends ListPageBase<ThemePackManager
 
                 if (event.getButton() == MouseButton.PRIMARY && event.getClickCount() == 1) {
                     page.selectAndApplyThemePack(themePack);
-                } else if (event.getButton() == MouseButton.SECONDARY) {
-                    JFXPopup popup = getPopup(page, themePack);
-                    JFXPopup.PopupVPosition vPosition = determineOptimalPopupPosition(root, popup);
-                    popup.show(root, vPosition, JFXPopup.PopupHPosition.LEFT, event.getX(),
-                            vPosition == JFXPopup.PopupVPosition.TOP ? event.getY() : event.getY() - root.getHeight());
                 }
             });
         }
@@ -509,24 +494,9 @@ public final class ThemePackManagementPage extends ListPageBase<ThemePackManager
             content.setSubtitle(getThemePackSubtitle(manifest));
             content.addTag(i18n("theme_pack.version", manifest.version()));
             content.addTag(i18n("theme_pack.themes", manifest.themes().size()));
-            if (isCurrentThemePack(themePack)) {
-                content.addTag(i18n("theme_pack.current"));
-            }
             selectedButton.setSelected(isCurrentThemePack(themePack));
 
-            right.getChildren().setAll(applyButton, manageButton);
-        }
-
-        /// Creates the package action popup.
-        private static JFXPopup getPopup(ThemePackManagementPage page, ThemePackManager.InstalledThemePack themePack) {
-            PopupMenu menu = new PopupMenu();
-            JFXPopup popup = new JFXPopup(menu);
-            menu.getContent().setAll(
-                    new IconedMenuItem(SVG.CHECK, i18n("theme_pack.apply"), () -> page.selectAndApplyThemePack(themePack), popup),
-                    new MenuSeparator(),
-                    new IconedMenuItem(SVG.FOLDER_OPEN, i18n("reveal.in_file_manager"), () -> revealThemePack(themePack), popup),
-                    new IconedMenuItem(SVG.DELETE, i18n("theme_pack.delete"), () -> page.deleteThemePack(themePack), popup));
-            return popup;
+            right.getChildren().setAll(revealButton, deleteButton);
         }
     }
 }
