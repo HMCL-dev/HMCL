@@ -55,7 +55,7 @@ import org.glavo.monetfx.beans.property.ReadOnlyColorSchemeProperty;
 import org.glavo.monetfx.beans.property.SimpleColorSchemeProperty;
 import org.glavo.url.WebURL;
 import org.jackhuang.hmcl.Metadata;
-import org.jackhuang.hmcl.setting.BackgroundLoadBehavior;
+import org.jackhuang.hmcl.setting.BackgroundLoadPolicy;
 import org.jackhuang.hmcl.setting.BackgroundType;
 import org.jackhuang.hmcl.setting.NetworkBackgroundImageCachePolicy;
 import org.jackhuang.hmcl.setting.ThemeColorType;
@@ -412,7 +412,7 @@ public final class Themes {
     private static void startBackgroundUpdates() {
         if (!backgroundUpdatesStarted) {
             backgroundUpdatesStarted = true;
-            if (getBackgroundLoadBehavior() == BackgroundLoadBehavior.WAIT) {
+            if (getBackgroundLoadPolicy() == BackgroundLoadPolicy.WAIT_FOR_BACKGROUND) {
                 loadInitialBackground();
             } else {
                 refreshBackground();
@@ -420,11 +420,11 @@ public final class Themes {
         }
     }
 
-    /// Returns the configured launcher background loading behavior.
-    private static BackgroundLoadBehavior getBackgroundLoadBehavior() {
+    /// Returns the configured launcher background loading policy.
+    private static BackgroundLoadPolicy getBackgroundLoadPolicy() {
         return Objects.requireNonNullElse(
-                settings().backgroundLoadBehaviorProperty().get(),
-                BackgroundLoadBehavior.FALLBACK_THEN_LOAD);
+                settings().backgroundLoadPolicyProperty().get(),
+                BackgroundLoadPolicy.SHOW_FALLBACK_WHILE_LOADING);
     }
 
     /// Loads the initial JavaFX launcher background synchronously before the UI uses it.
@@ -438,7 +438,7 @@ public final class Themes {
     public static void refreshBackground() {
         final int currentCount = ++backgroundUpdateCount;
         wallpaperThemeColor.set(null);
-        if (getBackgroundLoadBehavior() == BackgroundLoadBehavior.FALLBACK_THEN_LOAD) {
+        if (getBackgroundLoadPolicy() == BackgroundLoadPolicy.SHOW_FALLBACK_WHILE_LOADING) {
             applyLoadedBackground(loadFallbackBackground(), currentCount);
         }
         Task.supplyAsync(Schedulers.io(), Themes::loadBackground)

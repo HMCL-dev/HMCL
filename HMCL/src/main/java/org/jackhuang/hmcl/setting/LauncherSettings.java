@@ -406,13 +406,13 @@ public final class LauncherSettings extends ObservableSetting implements JsonSch
     }
 
     /// How the launcher displays its window while the selected background is loading.
-    @SerializedName("backgroundLoadBehavior")
-    private final ObjectProperty<BackgroundLoadBehavior> backgroundLoadBehavior =
-            new RawPreservingObjectProperty<>(BackgroundLoadBehavior.FALLBACK_THEN_LOAD);
+    @SerializedName("backgroundLoadPolicy")
+    private final ObjectProperty<BackgroundLoadPolicy> backgroundLoadPolicy =
+            new RawPreservingObjectProperty<>(BackgroundLoadPolicy.SHOW_FALLBACK_WHILE_LOADING);
 
-    /// Returns the launcher background loading behavior property.
-    public ObjectProperty<BackgroundLoadBehavior> backgroundLoadBehaviorProperty() {
-        return backgroundLoadBehavior;
+    /// Returns the launcher background loading policy property.
+    public ObjectProperty<BackgroundLoadPolicy> backgroundLoadPolicyProperty() {
+        return backgroundLoadPolicy;
     }
 
     /// The launcher background opacity.

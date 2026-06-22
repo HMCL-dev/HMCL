@@ -121,10 +121,10 @@
       ]
     },
     "backgroundFallbackPaint": true,
-    "backgroundLoadBehavior": {
+    "backgroundLoadPolicy": {
       "enum": [
-        "WAIT",
-        "FALLBACK_THEN_LOAD"
+        "WAIT_FOR_BACKGROUND",
+        "SHOW_FALLBACK_WHILE_LOADING"
       ]
     },
     "backgroundOpacity": {

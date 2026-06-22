@@ -21,7 +21,7 @@ import com.google.gson.JsonParseException;
 import org.glavo.monetfx.Brightness;
 import org.glavo.monetfx.ColorStyle;
 import org.glavo.monetfx.Contrast;
-import org.jackhuang.hmcl.setting.BackgroundLoadBehavior;
+import org.jackhuang.hmcl.setting.BackgroundLoadPolicy;
 import org.jackhuang.hmcl.setting.NetworkBackgroundImageCachePolicy;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.junit.jupiter.api.Test;
@@ -257,7 +257,7 @@ public final class ThemePackManifestTest {
                         "type": "paint",
                         "paint": "#123456"
                       },
-                      "loadBehavior": "wait"
+                      "loadPolicy": "wait_for_background"
                     }
                   }
                 }
@@ -269,7 +269,7 @@ public final class ThemePackManifestTest {
 
         ThemeBackground.Paint fallback = assertInstanceOf(ThemeBackground.Paint.class, background.fallback());
         assertEquals("#123456", fallback.paint());
-        assertEquals(BackgroundLoadBehavior.WAIT, background.loadBehavior());
+        assertEquals(BackgroundLoadPolicy.WAIT_FOR_BACKGROUND, background.loadPolicy());
     }
 
     /// Tests that unsupported background types fall back to the inherited/default background.

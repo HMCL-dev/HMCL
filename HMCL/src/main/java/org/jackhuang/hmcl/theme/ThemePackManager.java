@@ -24,7 +24,7 @@ import org.glavo.monetfx.Brightness;
 import org.glavo.monetfx.ColorRole;
 import org.glavo.monetfx.ColorStyle;
 import org.jackhuang.hmcl.Metadata;
-import org.jackhuang.hmcl.setting.BackgroundLoadBehavior;
+import org.jackhuang.hmcl.setting.BackgroundLoadPolicy;
 import org.jackhuang.hmcl.setting.BackgroundType;
 import org.jackhuang.hmcl.setting.LauncherSettings;
 import org.jackhuang.hmcl.setting.NetworkBackgroundImageCachePolicy;
@@ -719,8 +719,8 @@ public final class ThemePackManager {
         if (background.fallback() != null) {
             applyBackgroundFallback(background.fallback());
         }
-        if (background.loadBehavior() != null) {
-            currentSettings.backgroundLoadBehaviorProperty().set(background.loadBehavior());
+        if (background.loadPolicy() != null) {
+            currentSettings.backgroundLoadPolicyProperty().set(background.loadPolicy());
         }
         currentSettings.backgroundTypeProperty().set(BackgroundType.DEFAULT);
     }
@@ -1061,8 +1061,8 @@ public final class ThemePackManager {
                 backgroundSettings.opacity(),
                 createCurrentBackgroundFallback(),
                 Objects.requireNonNullElse(
-                        settings().backgroundLoadBehaviorProperty().get(),
-                        BackgroundLoadBehavior.FALLBACK_THEN_LOAD));
+                        settings().backgroundLoadPolicyProperty().get(),
+                        BackgroundLoadPolicy.SHOW_FALLBACK_WHILE_LOADING));
     }
 
     /// Creates the fallback background model for the current launcher settings.

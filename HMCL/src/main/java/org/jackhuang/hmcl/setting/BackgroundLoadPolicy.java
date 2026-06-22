@@ -19,12 +19,12 @@ package org.jackhuang.hmcl.setting;
 
 import org.jetbrains.annotations.NotNullByDefault;
 
-/// Controls how the launcher window is shown while the configured background is loading.
+/// Controls how the launcher window is shown while the selected background is loading.
 @NotNullByDefault
-public enum BackgroundLoadBehavior {
-    /// Loads the configured background before the launcher background property is first exposed to the UI.
-    WAIT,
+public enum BackgroundLoadPolicy {
+    /// Loads the selected background before the launcher background property is first exposed to the UI.
+    WAIT_FOR_BACKGROUND,
 
-    /// Shows the configured fallback background immediately, then replaces it when the configured background loads.
-    FALLBACK_THEN_LOAD
+    /// Shows the fallback background immediately, then replaces it when the selected background loads.
+    SHOW_FALLBACK_WHILE_LOADING
 }

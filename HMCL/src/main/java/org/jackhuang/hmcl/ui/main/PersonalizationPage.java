@@ -37,7 +37,7 @@ import javafx.scene.text.FontSmoothingType;
 import javafx.stage.FileChooser;
 import org.glavo.monetfx.ColorStyle;
 import org.glavo.uuid.UUIDs;
-import org.jackhuang.hmcl.setting.BackgroundLoadBehavior;
+import org.jackhuang.hmcl.setting.BackgroundLoadPolicy;
 import org.jackhuang.hmcl.setting.BackgroundType;
 import org.jackhuang.hmcl.setting.FontManager;
 import org.jackhuang.hmcl.setting.NetworkBackgroundImageCachePolicy;
@@ -680,14 +680,14 @@ public class PersonalizationPage extends StackPane {
                 backgroundFallbackPaintItem.managedProperty().bind(paintFallbackSelected);
             }
 
-            var backgroundLoadBehaviorPane = new LineSelectButton<BackgroundLoadBehavior>();
-            backgroundLoadBehaviorPane.setTitle(i18n("launcher.background.load_behavior"));
-            backgroundLoadBehaviorPane.setNullSafeConverter(behavior ->
-                    i18n("launcher.background.load_behavior." + behavior.name().toLowerCase(Locale.ROOT)));
-            backgroundLoadBehaviorPane.setItems(
-                    BackgroundLoadBehavior.FALLBACK_THEN_LOAD,
-                    BackgroundLoadBehavior.WAIT);
-            backgroundLoadBehaviorPane.valueProperty().bindBidirectional(settings().backgroundLoadBehaviorProperty());
+            var backgroundLoadPolicyPane = new LineSelectButton<BackgroundLoadPolicy>();
+            backgroundLoadPolicyPane.setTitle(i18n("launcher.background.load_policy"));
+            backgroundLoadPolicyPane.setNullSafeConverter(policy ->
+                    i18n("launcher.background.load_policy." + policy.name().toLowerCase(Locale.ROOT)));
+            backgroundLoadPolicyPane.setItems(
+                    BackgroundLoadPolicy.SHOW_FALLBACK_WHILE_LOADING,
+                    BackgroundLoadPolicy.WAIT_FOR_BACKGROUND);
+            backgroundLoadPolicyPane.valueProperty().bindBidirectional(settings().backgroundLoadPolicyProperty());
 
             backgroundSublist.descriptionProperty().bind(Bindings.createStringBinding(() -> {
                         BackgroundType type = Lang.requireNonNullElse(
@@ -752,7 +752,7 @@ public class PersonalizationPage extends StackPane {
                     networkBackgroundCachePane,
                     backgroundFallbackPane,
                     backgroundFallbackPaintItem,
-                    backgroundLoadBehaviorPane,
+                    backgroundLoadPolicyPane,
                     opacityItem);
         }
 

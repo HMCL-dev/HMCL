@@ -327,10 +327,10 @@
         "fallback": {
           "$ref": "#/$defs/backgroundFallback"
         },
-        "loadBehavior": {
+        "loadPolicy": {
           "enum": [
-            "wait",
-            "fallback_then_load"
+            "wait_for_background",
+            "show_fallback_while_loading"
           ]
         }
       }

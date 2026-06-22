@@ -22,7 +22,7 @@ import javafx.scene.paint.Color;
 import org.glavo.monetfx.Brightness;
 import org.glavo.monetfx.ColorRole;
 import org.glavo.monetfx.ColorStyle;
-import org.jackhuang.hmcl.setting.BackgroundLoadBehavior;
+import org.jackhuang.hmcl.setting.BackgroundLoadPolicy;
 import org.jackhuang.hmcl.setting.BackgroundType;
 import org.jackhuang.hmcl.setting.LauncherSettings;
 import org.jackhuang.hmcl.setting.NetworkBackgroundImageCachePolicy;
@@ -123,7 +123,7 @@ public final class ThemePackManagerTest {
             assertEquals(0.75, settings.backgroundOpacityProperty().get());
             assertEquals(BackgroundType.PAINT, settings.backgroundFallbackTypeProperty().get());
             assertEquals(Color.web("#112233"), settings.backgroundFallbackPaintProperty().get());
-            assertEquals(BackgroundLoadBehavior.WAIT, settings.backgroundLoadBehaviorProperty().get());
+            assertEquals(BackgroundLoadPolicy.WAIT_FOR_BACKGROUND, settings.backgroundLoadPolicyProperty().get());
             assertNull(settings.customBackgroundImagePathProperty().get());
             assertNull(settings.networkBackgroundImageUrlProperty().get());
             assertNull(settings.customBackgroundPaintProperty().get());
@@ -293,7 +293,7 @@ public final class ThemePackManagerTest {
             settings.backgroundOpacityProperty().set(0.5);
             settings.backgroundFallbackTypeProperty().set(BackgroundType.PAINT);
             settings.backgroundFallbackPaintProperty().set(Color.web("#112233"));
-            settings.backgroundLoadBehaviorProperty().set(BackgroundLoadBehavior.WAIT);
+            settings.backgroundLoadPolicyProperty().set(BackgroundLoadPolicy.WAIT_FOR_BACKGROUND);
 
             Path tempDir = createTestDirectory("export-current");
             Path output = tempDir.resolve("current" + ThemePackExporter.FILE_EXTENSION);
@@ -321,7 +321,7 @@ public final class ThemePackManagerTest {
             assertEquals(0.5, background.opacity());
             ThemeBackground.Paint fallback = assertInstanceOf(ThemeBackground.Paint.class, background.fallback());
             assertEquals("0x112233ff", fallback.paint());
-            assertEquals(BackgroundLoadBehavior.WAIT, background.loadBehavior());
+            assertEquals(BackgroundLoadPolicy.WAIT_FOR_BACKGROUND, background.loadPolicy());
         }
     }
 
@@ -571,7 +571,7 @@ public final class ThemePackManagerTest {
                         "type": "paint",
                         "paint": "#112233"
                       },
-                      "loadBehavior": "wait"
+                      "loadPolicy": "wait_for_background"
                     }
                   }
                 }
