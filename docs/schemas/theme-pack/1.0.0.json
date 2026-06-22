@@ -299,60 +299,21 @@
     "condition": {
       "type": "object",
       "additionalProperties": {
-        "$ref": "#/$defs/stringOrStringArrayNonEmpty"
+        "$ref": "#/$defs/stringOrStringArray"
       },
       "properties": {
         "brightness": {
-          "$ref": "#/$defs/brightnessCondition"
+          "$ref": "#/$defs/stringOrStringArray"
         },
         "os": {
-          "$ref": "#/$defs/osCondition"
+          "$ref": "#/$defs/stringOrStringArray"
         },
         "language": {
-          "$ref": "#/$defs/languageCondition"
+          "$ref": "#/$defs/stringOrStringArray"
         }
       }
     },
-    "brightnessCondition": {
-      "$ref": "#/$defs/stringOrStringArrayBrightness"
-    },
-    "osCondition": {
-      "$ref": "#/$defs/stringOrStringArrayOs"
-    },
-    "languageCondition": {
-      "$ref": "#/$defs/stringOrStringArrayNonEmpty"
-    },
-    "stringOrStringArrayBrightness": {
-      "oneOf": [
-        {
-          "$ref": "#/$defs/brightnessConditionValue"
-        },
-        {
-          "type": "array",
-          "minItems": 1,
-          "items": {
-            "$ref": "#/$defs/brightnessConditionValue"
-          },
-          "uniqueItems": true
-        }
-      ]
-    },
-    "stringOrStringArrayOs": {
-      "oneOf": [
-        {
-          "$ref": "#/$defs/osConditionValue"
-        },
-        {
-          "type": "array",
-          "minItems": 1,
-          "items": {
-            "$ref": "#/$defs/osConditionValue"
-          },
-          "uniqueItems": true
-        }
-      ]
-    },
-    "stringOrStringArrayNonEmpty": {
+    "stringOrStringArray": {
       "oneOf": [
         {
           "$ref": "#/$defs/nonEmptyString"
@@ -365,25 +326,6 @@
           },
           "uniqueItems": true
         }
-      ]
-    },
-    "brightnessConditionValue": {
-      "enum": [
-        "light",
-        "dark"
-      ]
-    },
-    "osConditionValue": {
-      "enum": [
-        "win",
-        "windows",
-        "mac",
-        "macos",
-        "osx",
-        "linux",
-        "freebsd",
-        "unknown",
-        "universal"
       ]
     }
   }
