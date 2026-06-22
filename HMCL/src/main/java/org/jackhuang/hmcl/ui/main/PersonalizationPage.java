@@ -76,6 +76,7 @@ import java.util.Optional;
 import static org.jackhuang.hmcl.setting.SettingsManager.settings;
 import static org.jackhuang.hmcl.setting.SettingsManager.userSettings;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
+import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 /// Configures launcher appearance, background, and launcher font settings.
 @NotNullByDefault
@@ -119,7 +120,7 @@ public class PersonalizationPage extends StackPane {
                 }
             }
         } catch (IOException | RuntimeException e) {
-            showThemePackError(i18n("theme_pack.load.failed"), e);
+            LOG.warning("Failed to load installed theme packs", e);
         }
 
         @Nullable ThemeSelection selection = settings().themeProperty().get();

@@ -204,7 +204,7 @@ public final class ThemePackManager {
     /// Lists all installed theme packs.
     ///
     /// @return installed theme packs sorted by display name and package ID
-    /// @throws IOException if installed theme-pack metadata cannot be listed or parsed
+    /// @throws IOException if installed theme-pack directories cannot be listed
     public static @Unmodifiable List<InstalledThemePack> listInstalled() throws IOException {
         if (!Files.isDirectory(THEME_PACKS_DIRECTORY)) {
             return List.of();
@@ -216,7 +216,11 @@ public final class ThemePackManager {
                     .filter(Files::isDirectory)
                     .filter(path -> !path.getFileName().toString().startsWith("."))
                     .toList()) {
-                result.add(loadInstalled(themePackDirectory));
+                try {
+                    result.add(loadInstalled(themePackDirectory));
+                } catch (IOException | RuntimeException e) {
+                    LOG.warning("Failed to load installed theme pack: " + themePackDirectory, e);
+                }
             }
         }
 

@@ -165,6 +165,35 @@ public final class ThemePackManagerTest {
         }
     }
 
+    /// Tests that one broken installed package does not prevent listing other packages.
+    @Test
+    public void testListInstalledSkipsBrokenThemePacks() throws Exception {
+        Path validDirectory = ThemePackManager.THEME_PACKS_DIRECTORY.resolve("example.list-valid");
+        Path brokenDirectory = ThemePackManager.THEME_PACKS_DIRECTORY.resolve("example.list-broken");
+        deleteRecursively(validDirectory);
+        deleteRecursively(brokenDirectory);
+
+        try {
+            Path tempDir = createTestDirectory("list-installed");
+            Path themePackFile = tempDir.resolve("valid" + ThemePackExporter.FILE_EXTENSION);
+            ThemePackExporter.export(
+                    createMinimalManifest("example.list-valid", "1.0.0", "List Valid"),
+                    List.of(),
+                    themePackFile);
+            ThemePackManager.install(themePackFile);
+
+            Files.createDirectories(brokenDirectory);
+            Files.writeString(brokenDirectory.resolve(ThemePackExporter.MANIFEST_ENTRY), "{", StandardCharsets.UTF_8);
+
+            List<ThemePackManager.InstalledThemePack> installedThemePacks = ThemePackManager.listInstalled();
+            assertTrue(installedThemePacks.stream()
+                    .anyMatch(themePack -> "example.list-valid".equals(themePack.manifest().id())));
+        } finally {
+            deleteRecursively(validDirectory);
+            deleteRecursively(brokenDirectory);
+        }
+    }
+
     /// Tests refreshing the selected theme when the brightness condition context changes.
     @Test
     public void testRefreshCurrentThemeForBrightnessCondition() throws Exception {
