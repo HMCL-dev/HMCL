@@ -156,25 +156,27 @@ public class PersonalizationPage extends StackPane {
     /// Returns a concise title for a theme choice from an installed theme pack.
     private static String getThemeChoiceTitle(ThemePackManager.InstalledThemePack themePack, Theme theme) {
         if (themePack.manifest().themes().size() == 1) {
-            return themePack.manifest().name();
+            return themePack.manifest().displayName();
         }
-        return themePack.manifest().name() + " - " + getThemeDisplayName(themePack.manifest(), theme);
+        return themePack.manifest().displayName() + " - " + getThemeDisplayName(themePack.manifest(), theme);
     }
 
     /// Returns a subtitle for a theme choice from an installed theme pack.
     private static String getThemeChoiceDescription(ThemePackManager.InstalledThemePack themePack, Theme theme) {
-        if (!StringUtils.isBlank(theme.description())) {
-            return theme.description();
+        @Nullable String themeDescription = theme.displayDescription();
+        if (!StringUtils.isBlank(themeDescription)) {
+            return themeDescription;
         }
-        if (!StringUtils.isBlank(themePack.manifest().description())) {
-            return themePack.manifest().description();
+        @Nullable String packDescription = themePack.manifest().displayDescription();
+        if (!StringUtils.isBlank(packDescription)) {
+            return packDescription;
         }
         return themePack.manifest().id();
     }
 
     /// Returns the effective display name for a theme.
     private static String getThemeDisplayName(ThemePackManifest manifest, Theme theme) {
-        return theme.name() != null ? theme.name() : manifest.name();
+        return Objects.requireNonNullElse(theme.displayName(), manifest.displayName());
     }
 
     /// Returns a subtitle for a missing theme selection.

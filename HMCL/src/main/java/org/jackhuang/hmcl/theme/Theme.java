@@ -22,6 +22,9 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParseException;
 import com.google.gson.JsonPrimitive;
+import org.jackhuang.hmcl.util.gson.JsonUtils;
+import org.jackhuang.hmcl.util.i18n.I18n;
+import org.jackhuang.hmcl.util.i18n.LocalizedText;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Unmodifiable;
@@ -36,16 +39,16 @@ import java.util.Objects;
 /// matching override is applied in array order to produce the resolved appearance.
 ///
 /// @param id the stable theme identifier inside its pack, or `null` for an unnamed single-theme pack
-/// @param name the display name, or `null` for an unnamed single-theme pack
-/// @param description the optional description
+/// @param name the localized display name, or `null` for an unnamed single-theme pack
+/// @param description the optional localized description
 /// @param thumbnail the optional theme-pack relative thumbnail path
 /// @param appearance the default appearance fields
 /// @param overrides conditional appearance patches applied in declaration order
 @NotNullByDefault
 public record Theme(
         @Nullable String id,
-        @Nullable String name,
-        @Nullable String description,
+        @Nullable LocalizedText name,
+        @Nullable LocalizedText description,
         @Nullable String thumbnail,
         ThemeAppearance appearance,
         @Unmodifiable List<ThemeOverride> overrides) {
@@ -68,8 +71,8 @@ public record Theme(
     /// Creates a theme.
     ///
     /// @param id the stable theme identifier inside its pack, or `null` for an unnamed single-theme pack
-    /// @param name the display name, or `null` for an unnamed single-theme pack
-    /// @param description the optional description
+    /// @param name the localized display name, or `null` for an unnamed single-theme pack
+    /// @param description the optional localized description
     /// @param thumbnail the optional theme-pack relative thumbnail path
     /// @param appearance the default appearance fields
     /// @param overrides conditional appearance patches applied in declaration order
@@ -78,10 +81,10 @@ public record Theme(
             id = requireNonBlank(id, FIELD_ID);
         }
         if (name != null) {
-            name = requireNonBlank(name, FIELD_NAME);
+            name = ThemePackManifest.requireLocalizedText(name, FIELD_NAME);
         }
         if (description != null) {
-            description = requireNonBlank(description, FIELD_DESCRIPTION);
+            description = ThemePackManifest.requireLocalizedText(description, FIELD_DESCRIPTION);
         }
         if (thumbnail != null) {
             thumbnail = requireNonBlank(thumbnail, FIELD_THUMBNAIL);
@@ -103,19 +106,33 @@ public record Theme(
         if (id == null && requireIdentity) {
             throw new JsonParseException("Theme is missing required string field: " + FIELD_ID);
         }
-        @Nullable String name = readString(object, FIELD_NAME);
+        @Nullable LocalizedText name = readLocalizedText(object, FIELD_NAME);
         if (name == null && requireIdentity) {
-            throw new JsonParseException("Theme is missing required string field: " + FIELD_NAME);
+            throw new JsonParseException("Theme is missing required localized text field: " + FIELD_NAME);
         }
         ThemeAppearance appearance = ThemeAppearance.fromJson(object);
 
         return new Theme(
                 id,
                 name,
-                readString(object, FIELD_DESCRIPTION),
+                readLocalizedText(object, FIELD_DESCRIPTION),
                 readString(object, FIELD_THUMBNAIL),
                 appearance,
                 readOverrides(object));
+    }
+
+    /// Returns the theme display name in the current locale.
+    ///
+    /// @return the localized display name, or `null` when this theme has no matching display name
+    public @Nullable String displayName() {
+        return name != null ? name.getText(I18n.getLocale().getCandidateLocales()) : null;
+    }
+
+    /// Returns the theme description in the current locale.
+    ///
+    /// @return the localized description, or `null` when this theme has no matching description
+    public @Nullable String displayDescription() {
+        return description != null ? description.getText(I18n.getLocale().getCandidateLocales()) : null;
     }
 
     /// Resolves this theme against a context by applying matching overrides.
@@ -143,10 +160,10 @@ public record Theme(
             object.addProperty(FIELD_ID, id);
         }
         if (name != null) {
-            object.addProperty(FIELD_NAME, name);
+            object.add(FIELD_NAME, JsonUtils.GSON.toJsonTree(name, LocalizedText.class));
         }
         if (description != null) {
-            object.addProperty(FIELD_DESCRIPTION, description);
+            object.add(FIELD_DESCRIPTION, JsonUtils.GSON.toJsonTree(description, LocalizedText.class));
         }
         if (thumbnail != null) {
             object.addProperty(FIELD_THUMBNAIL, thumbnail);
@@ -201,6 +218,15 @@ public record Theme(
             throw new JsonParseException("Theme field must be a string: " + field);
         }
         return primitive.getAsString();
+    }
+
+    /// Reads an optional localized text member.
+    private static @Nullable LocalizedText readLocalizedText(JsonObject object, String field) {
+        JsonElement element = object.get(field);
+        if (element == null) {
+            return null;
+        }
+        return ThemePackManifest.parseLocalizedText(element, field);
     }
 
     /// Returns a non-blank string value.

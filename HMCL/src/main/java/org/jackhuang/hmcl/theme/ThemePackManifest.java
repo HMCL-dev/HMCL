@@ -25,29 +25,33 @@ import com.google.gson.JsonParser;
 import com.google.gson.JsonPrimitive;
 import org.jackhuang.hmcl.util.gson.JsonSchema;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
+import org.jackhuang.hmcl.util.i18n.I18n;
+import org.jackhuang.hmcl.util.i18n.LocalizedText;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 
 /// Parsed metadata and themes from a theme-pack manifest.
 ///
 /// @param id the stable package identifier
 /// @param version the package version string
-/// @param name the display name
+/// @param name the localized display name
 /// @param authors the package authors
-/// @param description the optional package description
+/// @param description the optional localized package description
 /// @param themes selectable themes declared by the package
 @NotNullByDefault
 public record ThemePackManifest(
         String id,
         String version,
-        String name,
+        LocalizedText name,
         @Unmodifiable List<String> authors,
-        @Nullable String description,
+        @Nullable LocalizedText description,
         @Unmodifiable List<Theme> themes) {
 
     /// JSON schema for the current manifest format.
@@ -79,17 +83,17 @@ public record ThemePackManifest(
     ///
     /// @param id the stable package identifier
     /// @param version the package version string
-    /// @param name the display name
+    /// @param name the localized display name
     /// @param authors the package authors
-    /// @param description the optional package description
+    /// @param description the optional localized package description
     /// @param themes selectable themes declared by the package
     public ThemePackManifest {
         id = requireNonBlank(id, FIELD_ID);
         version = requireNonBlank(version, FIELD_VERSION);
-        name = requireNonBlank(name, FIELD_NAME);
+        name = requireLocalizedText(name, FIELD_NAME);
         authors = List.copyOf(authors);
         if (description != null) {
-            description = requireNonBlank(description, FIELD_DESCRIPTION);
+            description = requireLocalizedText(description, FIELD_DESCRIPTION);
         }
         themes = List.copyOf(themes);
         if (themes.isEmpty()) {
@@ -125,10 +129,24 @@ public record ThemePackManifest(
         return new ThemePackManifest(
                 requireMemberString(object, FIELD_ID),
                 requireMemberString(object, FIELD_VERSION),
-                requireMemberString(object, FIELD_NAME),
+                requireMemberLocalizedText(object, FIELD_NAME),
                 readAuthors(object),
-                readString(object, FIELD_DESCRIPTION),
+                readLocalizedText(object, FIELD_DESCRIPTION),
                 readThemes(object));
+    }
+
+    /// Returns the package display name in the current locale.
+    ///
+    /// @return the localized display name, or the package ID when no localized text matches
+    public String displayName() {
+        return Objects.requireNonNullElse(name.getText(I18n.getLocale().getCandidateLocales()), id);
+    }
+
+    /// Returns the package description in the current locale.
+    ///
+    /// @return the localized description, or `null` when no localized text matches
+    public @Nullable String displayDescription() {
+        return description != null ? description.getText(I18n.getLocale().getCandidateLocales()) : null;
     }
 
     /// Returns the first theme with the given ID.
@@ -158,7 +176,7 @@ public record ThemePackManifest(
         object.addProperty(JsonSchema.PROPERTY_SCHEMA, CURRENT_SCHEMA.url());
         object.addProperty(FIELD_ID, id);
         object.addProperty(FIELD_VERSION, version);
-        object.addProperty(FIELD_NAME, name);
+        object.add(FIELD_NAME, JsonUtils.GSON.toJsonTree(name, LocalizedText.class));
 
         if (!authors.isEmpty()) {
             JsonArray array = new JsonArray();
@@ -168,7 +186,7 @@ public record ThemePackManifest(
             object.add(FIELD_AUTHORS, array);
         }
         if (description != null) {
-            object.addProperty(FIELD_DESCRIPTION, description);
+            object.add(FIELD_DESCRIPTION, JsonUtils.GSON.toJsonTree(description, LocalizedText.class));
         }
 
         if (themes.size() == 1) {
@@ -298,6 +316,57 @@ public record ThemePackManifest(
             throw new JsonParseException("Theme-pack manifest field must be a string: " + field);
         }
         return primitive.getAsString();
+    }
+
+    /// Reads a required localized text member.
+    private static LocalizedText requireMemberLocalizedText(JsonObject object, String field) {
+        @Nullable LocalizedText value = readLocalizedText(object, field);
+        if (value == null) {
+            throw new JsonParseException("Theme-pack manifest is missing required localized text field: " + field);
+        }
+        return value;
+    }
+
+    /// Reads an optional localized text member.
+    private static @Nullable LocalizedText readLocalizedText(JsonObject object, String field) {
+        JsonElement element = object.get(field);
+        if (element == null) {
+            return null;
+        }
+        return parseLocalizedText(element, field);
+    }
+
+    /// Parses a localized text value.
+    static LocalizedText parseLocalizedText(JsonElement element, String field) {
+        if (element instanceof JsonPrimitive primitive && primitive.isString()) {
+            return LocalizedText.plain(requireNonBlank(primitive.getAsString(), field));
+        }
+        if (element instanceof JsonObject localizedObject) {
+            if (localizedObject.isEmpty()) {
+                throw new JsonParseException("Localized text field is empty: " + field);
+            }
+
+            LinkedHashMap<String, String> localizedValues = new LinkedHashMap<>();
+            for (Map.Entry<String, JsonElement> entry : localizedObject.entrySet()) {
+                JsonElement value = entry.getValue();
+                if (!(value instanceof JsonPrimitive primitive) || !primitive.isString()) {
+                    throw new JsonParseException("Localized text values must be strings: " + field);
+                }
+                localizedValues.put(
+                        requireNonBlank(entry.getKey(), field),
+                        requireNonBlank(primitive.getAsString(), field));
+            }
+            return new LocalizedText(localizedValues);
+        }
+        throw new JsonParseException("Theme-pack localized text must be a string or object: " + field);
+    }
+
+    /// Returns a validated localized text value.
+    static LocalizedText requireLocalizedText(LocalizedText value, String field) {
+        Objects.requireNonNull(value);
+
+        JsonElement element = JsonUtils.GSON.toJsonTree(value, LocalizedText.class);
+        return parseLocalizedText(element, field);
     }
 
     /// Returns a non-blank string value.

@@ -152,10 +152,10 @@ public final class ThemePackManagementPage extends ListPageBase<ThemePackManager
         String query = searchText.toLowerCase(Locale.ROOT);
         return themePack -> {
             ThemePackManifest manifest = themePack.manifest();
-            return containsIgnoreCase(manifest.name(), query)
+            return containsIgnoreCase(manifest.displayName(), query)
                     || containsIgnoreCase(manifest.id(), query)
                     || containsIgnoreCase(manifest.version(), query)
-                    || containsIgnoreCase(manifest.description(), query)
+                    || containsIgnoreCase(manifest.displayDescription(), query)
                     || manifest.authors().stream().anyMatch(author -> containsIgnoreCase(author, query));
         };
     }
@@ -186,7 +186,7 @@ public final class ThemePackManagementPage extends ListPageBase<ThemePackManager
         }
 
         onThemePacksChanged.run();
-        Controllers.showToast(i18n("theme_pack.import.success", themePack.manifest().name()));
+        Controllers.showToast(i18n("theme_pack.import.success", themePack.manifest().displayName()));
     }
 
     /// Shows the installed package directory in the platform file manager.
@@ -197,7 +197,7 @@ public final class ThemePackManagementPage extends ListPageBase<ThemePackManager
     /// Asks for confirmation and deletes an installed theme pack.
     private void deleteThemePack(ThemePackManager.InstalledThemePack themePack) {
         Controllers.confirm(
-                i18n("theme_pack.delete.confirm", themePack.manifest().name()),
+                i18n("theme_pack.delete.confirm", themePack.manifest().displayName()),
                 i18n("theme_pack.delete"),
                 MessageType.WARNING,
                 () -> deleteThemePackConfirmed(themePack),
@@ -210,7 +210,7 @@ public final class ThemePackManagementPage extends ListPageBase<ThemePackManager
             ThemePackManager.uninstall(themePack);
             refreshThemePacks();
             onThemePacksChanged.run();
-            Controllers.showToast(i18n("theme_pack.delete.success", themePack.manifest().name()));
+            Controllers.showToast(i18n("theme_pack.delete.success", themePack.manifest().displayName()));
         } catch (IOException | RuntimeException e) {
             showThemePackError(i18n("theme_pack.delete.failed"), e);
         }
@@ -223,20 +223,22 @@ public final class ThemePackManagementPage extends ListPageBase<ThemePackManager
 
     /// Returns a subtitle for one installed theme pack.
     private static String getThemePackSubtitle(ThemePackManifest manifest) {
-        if (StringUtils.isBlank(manifest.description())) {
+        @Nullable String description = manifest.displayDescription();
+        if (StringUtils.isBlank(description)) {
             return manifest.id();
         }
-        return manifest.description();
+        return description;
     }
 
     /// Returns the effective display name for one theme.
     private static String getThemeDisplayName(ThemePackManifest manifest, Theme theme) {
-        return theme.name() != null ? theme.name() : manifest.name();
+        return Objects.requireNonNullElse(theme.displayName(), manifest.displayName());
     }
 
     /// Returns the description shown below one theme in the theme list dialog.
     private static @Nullable String getThemeDescription(Theme theme) {
-        return StringUtils.isBlank(theme.description()) ? null : theme.description();
+        @Nullable String description = theme.displayDescription();
+        return StringUtils.isBlank(description) ? null : description;
     }
 
     /// Creates a read-only theme information row.
@@ -296,7 +298,7 @@ public final class ThemePackManagementPage extends ListPageBase<ThemePackManager
 
             Node icon = SVG.STYLE.createIcon(40);
             TwoLineListItem title = new TwoLineListItem();
-            title.setTitle(manifest.name());
+            title.setTitle(manifest.displayName());
             title.setSubtitle(manifest.id());
             title.addTag(i18n("theme_pack.version", manifest.version()));
             title.addTag(i18n("theme_pack.themes", manifest.themes().size()));
@@ -522,7 +524,7 @@ public final class ThemePackManagementPage extends ListPageBase<ThemePackManager
             setGraphic(graphic);
 
             ThemePackManifest manifest = themePack.manifest();
-            content.setTitle(manifest.name());
+            content.setTitle(manifest.displayName());
             content.setSubtitle(getThemePackSubtitle(manifest));
             content.addTag(i18n("theme_pack.version", manifest.version()));
             content.addTag(i18n("theme_pack.themes", manifest.themes().size()));

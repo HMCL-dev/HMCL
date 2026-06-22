@@ -27,6 +27,7 @@ import org.jackhuang.hmcl.setting.BackgroundType;
 import org.jackhuang.hmcl.setting.LauncherSettings;
 import org.jackhuang.hmcl.setting.ThemeColorType;
 import org.jackhuang.hmcl.util.StringUtils;
+import org.jackhuang.hmcl.util.i18n.LocalizedText;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
@@ -220,7 +221,7 @@ public final class ThemePackManager {
         }
 
         result.sort(Comparator
-                .comparing((InstalledThemePack themePack) -> themePack.manifest().name(), String.CASE_INSENSITIVE_ORDER)
+                .comparing((InstalledThemePack themePack) -> themePack.manifest().displayName(), String.CASE_INSENSITIVE_ORDER)
                 .thenComparing(themePack -> themePack.manifest().id(), String.CASE_INSENSITIVE_ORDER));
         return List.copyOf(result);
     }
@@ -451,7 +452,7 @@ public final class ThemePackManager {
         ThemePackManifest manifest = new ThemePackManifest(
                 requireNonBlank(packId, "packId"),
                 CURRENT_THEME_PACK_VERSION,
-                packName,
+                LocalizedText.plain(packName),
                 List.of(requireNonBlank(authorName, "authorName")),
                 null,
                 List.of(theme));

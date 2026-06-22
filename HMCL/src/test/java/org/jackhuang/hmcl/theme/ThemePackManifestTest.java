@@ -24,6 +24,9 @@ import org.glavo.monetfx.Contrast;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.junit.jupiter.api.Test;
 
+import java.util.List;
+import java.util.Locale;
+
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -48,7 +51,7 @@ public final class ThemePackManifestTest {
                 "thumbnail": "assets/thumbnails/forest.png",
                 "color": "#4D7C3A",
                 "colorStyle": "fidelity",
-                "contrast": "default",
+                "contrast": "standard",
                 "background": {
                   "type": "image",
                   "path": "assets/wallpapers/forest.webp",
@@ -290,6 +293,49 @@ public final class ThemePackManifestTest {
         assertNull(theme.name());
     }
 
+    /// Tests that display names and descriptions accept localized text objects.
+    @Test
+    public void testLocalizedTextFields() {
+        ThemePackManifest manifest = ThemePackManifest.fromJson("""
+                {
+                  "$schema": "https://schemas.glavo.site/hmcl/theme-pack/1.0.0",
+                  "id": "example.localized",
+                  "version": "1.0.0",
+                  "name": {
+                    "default": "Localized Pack",
+                    "zh-Hans": "本地化主题包"
+                  },
+                  "description": {
+                    "default": "Localized pack description"
+                  },
+                  "themes": [
+                    {
+                      "id": "localized",
+                      "name": {
+                        "default": "Localized Theme",
+                        "zh-Hans": "本地化主题"
+                      },
+                      "description": {
+                        "default": "Localized theme description"
+                      },
+                      "color": "#111111"
+                    }
+                  ]
+                }
+                """);
+
+        Theme theme = manifest.findTheme("localized");
+        assertNotNull(theme);
+        List<Locale> rootLocale = List.of(Locale.ROOT);
+        assertEquals("Localized Pack", manifest.name().getText(rootLocale));
+        assertNotNull(manifest.description());
+        assertEquals("Localized pack description", manifest.description().getText(rootLocale));
+        assertNotNull(theme.name());
+        assertEquals("Localized Theme", theme.name().getText(rootLocale));
+        assertNotNull(theme.description());
+        assertEquals("Localized theme description", theme.description().getText(rootLocale));
+    }
+
     /// Tests that multi-theme manifests must provide explicit theme IDs.
     @Test
     public void testMultiThemeRequiresThemeIds() {
@@ -360,7 +406,7 @@ public final class ThemePackManifestTest {
         Theme theme = manifest.findTheme(null);
         assertNotNull(theme);
         assertEquals("single", theme.id());
-        assertEquals("Single", theme.name());
+        assertEquals("Single", theme.displayName());
     }
 
     /// Tests that `themes` array entries must provide explicit theme identities even with one entry.
@@ -485,7 +531,7 @@ public final class ThemePackManifestTest {
     /// Tests that numeric contrast values are parsed as MonetFX contrast levels.
     @Test
     public void testParseNumericContrast() {
-        String json = MANIFEST.replace("\"contrast\": \"default\"", "\"contrast\": 0.5");
+        String json = MANIFEST.replace("\"contrast\": \"standard\"", "\"contrast\": 0.5");
 
         Theme theme = ThemePackManifest.fromJson(json).findTheme("forest");
         assertNotNull(theme);
@@ -498,7 +544,7 @@ public final class ThemePackManifestTest {
         ThemePackManifest manifest = ThemePackManifest.fromJson(MANIFEST);
 
         assertEquals("example.nature", manifest.id());
-        assertEquals("Nature", manifest.name());
+        assertEquals("Nature", manifest.displayName());
         assertEquals("Example", manifest.authors().get(0));
         Theme theme = manifest.findTheme("forest");
         assertNotNull(theme);

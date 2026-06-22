@@ -239,7 +239,7 @@ public final class ThemePackManagerTest {
             assertNotNull(background);
 
             assertEquals("com.example.hmcl-theme-pack.test", manifest.id());
-            assertEquals("Current Pack", manifest.name());
+            assertEquals("Current Pack", manifest.displayName());
             assertEquals(List.of("Test Author"), manifest.authors());
             assertNull(theme.id());
             assertNull(theme.name());
