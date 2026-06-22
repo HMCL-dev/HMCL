@@ -673,7 +673,7 @@ public class PersonalizationPage extends StackPane {
                 settings().themeProperty().set(null);
             }
         });
-        content.getChildren().addAll(ComponentList.createComponentListTitle(i18n("settings.launcher.theme_appearance")), themeAppearanceList);
+        content.getChildren().addAll(ComponentList.createComponentListTitle(i18n("settings.launcher.appearance")), themeAppearanceList);
 
         {
             ComponentList appearanceList = new ComponentList();
@@ -684,7 +684,7 @@ public class PersonalizationPage extends StackPane {
             animationButton.setTitle(i18n("settings.launcher.turn_off_animations"));
             animationButton.setSubtitle(i18n("settings.take_effect_after_restart"));
 
-            content.getChildren().addAll(ComponentList.createComponentListTitle(i18n("settings.launcher.appearance")), appearanceList);
+            content.getChildren().addAll(ComponentList.createComponentListTitle(i18n("settings.launcher.animation")), appearanceList);
         }
 
         {
