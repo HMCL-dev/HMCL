@@ -323,6 +323,31 @@
           "type": "number",
           "minimum": 0,
           "maximum": 1
+        },
+        "fallback": {
+          "$ref": "#/$defs/backgroundFallback"
+        },
+        "loadBehavior": {
+          "enum": [
+            "wait",
+            "fallback_then_load"
+          ]
+        }
+      }
+    },
+    "backgroundFallback": {
+      "type": "object",
+      "patternProperties": {
+        "^type$": {
+          "enum": [
+            "builtin",
+            "paint"
+          ]
+        }
+      },
+      "properties": {
+        "paint": {
+          "$ref": "#/$defs/nonEmptyString"
         }
       }
     },

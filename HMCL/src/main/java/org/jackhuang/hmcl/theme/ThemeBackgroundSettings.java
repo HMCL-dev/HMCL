@@ -21,9 +21,11 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParseException;
 import com.google.gson.JsonPrimitive;
+import org.jackhuang.hmcl.setting.BackgroundLoadBehavior;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Locale;
 import java.util.Objects;
 
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
@@ -32,18 +34,43 @@ import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 ///
 /// @param source the background source, or `null` when inherited
 /// @param opacity the background opacity override, or `null` when inherited
+/// @param fallback the fallback background source, or `null` when inherited
+/// @param loadBehavior the background loading behavior, or `null` when inherited
 @NotNullByDefault
-public record ThemeBackgroundSettings(@Nullable ThemeBackground source, @Nullable Double opacity) {
+public record ThemeBackgroundSettings(
+        @Nullable ThemeBackground source,
+        @Nullable Double opacity,
+        @Nullable ThemeBackground fallback,
+        @Nullable BackgroundLoadBehavior loadBehavior) {
     /// JSON member name for the background opacity.
     private static final String FIELD_OPACITY = "opacity";
+
+    /// JSON member name for the fallback background source.
+    private static final String FIELD_FALLBACK = "fallback";
+
+    /// JSON member name for the background loading behavior.
+    private static final String FIELD_LOAD_BEHAVIOR = "loadBehavior";
+
+    /// Creates background settings with only source and opacity values.
+    ///
+    /// @param source the background source, or `null` when inherited
+    /// @param opacity the background opacity override, or `null` when inherited
+    public ThemeBackgroundSettings(@Nullable ThemeBackground source, @Nullable Double opacity) {
+        this(source, opacity, null, null);
+    }
 
     /// Creates background settings.
     ///
     /// @param source the background source, or `null` when inherited
     /// @param opacity the background opacity override, or `null` when inherited
+    /// @param fallback the fallback background source, or `null` when inherited
+    /// @param loadBehavior the background loading behavior, or `null` when inherited
     public ThemeBackgroundSettings {
         if (source != null && source.isEmpty()) {
             source = null;
+        }
+        if (fallback != null && fallback.isEmpty()) {
+            fallback = null;
         }
         opacity = validateOpacity(opacity);
     }
@@ -62,7 +89,11 @@ public record ThemeBackgroundSettings(@Nullable ThemeBackground source, @Nullabl
             LOG.warning("Ignored invalid theme background source: " + e.getMessage(), e);
         }
 
-        return new ThemeBackgroundSettings(source, readOpacity(object));
+        return new ThemeBackgroundSettings(
+                source,
+                readOpacity(object),
+                readFallback(object),
+                readLoadBehavior(object));
     }
 
     /// Converts these settings to their JSON representation.
@@ -73,14 +104,20 @@ public record ThemeBackgroundSettings(@Nullable ThemeBackground source, @Nullabl
         if (opacity != null) {
             object.addProperty(FIELD_OPACITY, opacity);
         }
+        if (fallback != null) {
+            object.add(FIELD_FALLBACK, fallback.toJsonObject());
+        }
+        if (loadBehavior != null) {
+            object.addProperty(FIELD_LOAD_BEHAVIOR, toJsonLoadBehavior(loadBehavior));
+        }
         return object;
     }
 
     /// Returns whether these settings contain no concrete fields.
     ///
-    /// @return `true` when the source and opacity are both inherited
+    /// @return `true` when every background setting is inherited
     public boolean isEmpty() {
-        return source == null && opacity == null;
+        return source == null && opacity == null && fallback == null && loadBehavior == null;
     }
 
     /// Returns settings that apply the given patch over these settings.
@@ -94,7 +131,53 @@ public record ThemeBackgroundSettings(@Nullable ThemeBackground source, @Nullabl
                 ? source.merge(patch.source)
                 : patch.source != null ? patch.source : source;
         @Nullable Double mergedOpacity = patch.opacity != null ? patch.opacity : opacity;
-        return new ThemeBackgroundSettings(mergedSource, mergedOpacity);
+        @Nullable ThemeBackground mergedFallback = fallback != null && patch.fallback != null
+                ? fallback.merge(patch.fallback)
+                : patch.fallback != null ? patch.fallback : fallback;
+        @Nullable BackgroundLoadBehavior mergedLoadBehavior =
+                patch.loadBehavior != null ? patch.loadBehavior : loadBehavior;
+        return new ThemeBackgroundSettings(mergedSource, mergedOpacity, mergedFallback, mergedLoadBehavior);
+    }
+
+    /// Reads the optional fallback background source field.
+    private static @Nullable ThemeBackground readFallback(JsonObject object) {
+        JsonElement element = object.get(FIELD_FALLBACK);
+        if (element == null) {
+            return null;
+        }
+        if (!(element instanceof JsonObject fallback)) {
+            LOG.warning("Ignored invalid theme background fallback: expected an object, got " + element);
+            return null;
+        }
+        try {
+            return ThemeBackground.fromJson(fallback);
+        } catch (JsonParseException | IllegalArgumentException e) {
+            LOG.warning("Ignored invalid theme background fallback: " + e.getMessage(), e);
+            return null;
+        }
+    }
+
+    /// Reads the optional background loading behavior field.
+    private static @Nullable BackgroundLoadBehavior readLoadBehavior(JsonObject object) {
+        JsonElement element = object.get(FIELD_LOAD_BEHAVIOR);
+        if (element == null) {
+            return null;
+        }
+        if (!(element instanceof JsonPrimitive primitive) || !primitive.isString()) {
+            LOG.warning("Ignored invalid theme background loadBehavior: expected a string, got " + element);
+            return null;
+        }
+
+        String value = primitive.getAsString();
+        String normalized = value.trim().replace('-', '_').replace(' ', '_').toUpperCase(Locale.ROOT);
+        return switch (normalized) {
+            case "WAIT" -> BackgroundLoadBehavior.WAIT;
+            case "FALLBACK_THEN_LOAD" -> BackgroundLoadBehavior.FALLBACK_THEN_LOAD;
+            default -> {
+                LOG.warning("Ignored invalid theme background loadBehavior: unsupported value `" + value + "`");
+                yield null;
+            }
+        };
     }
 
     /// Reads the optional opacity field.
@@ -128,5 +211,13 @@ public record ThemeBackgroundSettings(@Nullable ThemeBackground source, @Nullabl
             throw new IllegalArgumentException("Theme background opacity must be between 0 and 1: " + opacity);
         }
         return opacity;
+    }
+
+    /// Converts a background loading behavior to its theme-pack JSON value.
+    private static String toJsonLoadBehavior(BackgroundLoadBehavior loadBehavior) {
+        return switch (loadBehavior) {
+            case WAIT -> "wait";
+            case FALLBACK_THEN_LOAD -> "fallback_then_load";
+        };
     }
 }

@@ -37,10 +37,11 @@ import javafx.scene.text.FontSmoothingType;
 import javafx.stage.FileChooser;
 import org.glavo.monetfx.ColorStyle;
 import org.glavo.uuid.UUIDs;
-import org.jackhuang.hmcl.setting.SettingsManager;
+import org.jackhuang.hmcl.setting.BackgroundLoadBehavior;
 import org.jackhuang.hmcl.setting.BackgroundType;
 import org.jackhuang.hmcl.setting.FontManager;
 import org.jackhuang.hmcl.setting.NetworkBackgroundImageCachePolicy;
+import org.jackhuang.hmcl.setting.SettingsManager;
 import org.jackhuang.hmcl.setting.ThemeColorType;
 import org.jackhuang.hmcl.setting.UserSettings;
 import org.jackhuang.hmcl.theme.Theme;
@@ -648,6 +649,46 @@ public class PersonalizationPage extends StackPane {
             networkBackgroundCachePane.visibleProperty().bind(networkBackgroundSelected);
             networkBackgroundCachePane.managedProperty().bind(networkBackgroundSelected);
 
+            var backgroundFallbackPane = new LineSelectButton<BackgroundType>();
+            backgroundFallbackPane.setTitle(i18n("launcher.background.fallback"));
+            backgroundFallbackPane.setNullSafeConverter(type -> i18n("launcher.background.fallback." + switch (type) {
+                case PAINT -> "paint";
+                default -> "builtin";
+            }));
+            backgroundFallbackPane.setItems(
+                    BackgroundType.BUILTIN,
+                    BackgroundType.PAINT);
+            backgroundFallbackPane.valueProperty().bindBidirectional(settings().backgroundFallbackTypeProperty());
+
+            HBox backgroundFallbackPaintItem = new HBox(8);
+            {
+                backgroundFallbackPaintItem.setAlignment(Pos.CENTER);
+
+                Label label = new Label(i18n("launcher.background.fallback.paint.value"));
+
+                ColorPicker picker = new JFXColorPicker();
+                FXUtils.bindPaint(picker, settings().backgroundFallbackPaintProperty());
+                Platform.runLater(() -> JFXDepthManager.setDepth(picker, 0));
+
+                Region spacer = new Region();
+                HBox.setHgrow(spacer, Priority.ALWAYS);
+                backgroundFallbackPaintItem.getChildren().setAll(label, spacer, picker);
+
+                BooleanBinding paintFallbackSelected = settings().backgroundFallbackTypeProperty()
+                        .isEqualTo(BackgroundType.PAINT);
+                backgroundFallbackPaintItem.visibleProperty().bind(paintFallbackSelected);
+                backgroundFallbackPaintItem.managedProperty().bind(paintFallbackSelected);
+            }
+
+            var backgroundLoadBehaviorPane = new LineSelectButton<BackgroundLoadBehavior>();
+            backgroundLoadBehaviorPane.setTitle(i18n("launcher.background.load_behavior"));
+            backgroundLoadBehaviorPane.setNullSafeConverter(behavior ->
+                    i18n("launcher.background.load_behavior." + behavior.name().toLowerCase(Locale.ROOT)));
+            backgroundLoadBehaviorPane.setItems(
+                    BackgroundLoadBehavior.FALLBACK_THEN_LOAD,
+                    BackgroundLoadBehavior.WAIT);
+            backgroundLoadBehaviorPane.valueProperty().bindBidirectional(settings().backgroundLoadBehaviorProperty());
+
             backgroundSublist.descriptionProperty().bind(Bindings.createStringBinding(() -> {
                         BackgroundType type = Lang.requireNonNullElse(
                                 backgroundItem.selectedDataProperty().get(),
@@ -706,7 +747,13 @@ public class PersonalizationPage extends StackPane {
             }
 
             backgroundSublist.getContent().setAll(backgroundItem, builtinBackgroundPane);
-            themeAppearanceList.getContent().addAll(backgroundSublist, networkBackgroundCachePane, opacityItem);
+            themeAppearanceList.getContent().addAll(
+                    backgroundSublist,
+                    networkBackgroundCachePane,
+                    backgroundFallbackPane,
+                    backgroundFallbackPaintItem,
+                    backgroundLoadBehaviorPane,
+                    opacityItem);
         }
 
         {

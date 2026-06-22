@@ -25,6 +25,7 @@ import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.collections.ObservableMap;
 import javafx.collections.ObservableSet;
+import javafx.scene.paint.Color;
 import javafx.scene.paint.Paint;
 import org.glavo.monetfx.ColorStyle;
 import org.hildan.fxgson.creators.ObservableListCreator;
@@ -383,6 +384,35 @@ public final class LauncherSettings extends ObservableSetting implements JsonSch
     /// Returns the custom launcher background paint property.
     public ObjectProperty<@Nullable Paint> customBackgroundPaintProperty() {
         return customBackgroundPaint;
+    }
+
+    /// The fallback source used when the selected launcher background cannot be loaded.
+    @SerializedName("backgroundFallbackType")
+    private final ObjectProperty<BackgroundType> backgroundFallbackType =
+            new RawPreservingObjectProperty<>(BackgroundType.BUILTIN);
+
+    /// Returns the launcher background fallback source type property.
+    public ObjectProperty<BackgroundType> backgroundFallbackTypeProperty() {
+        return backgroundFallbackType;
+    }
+
+    /// The fallback paint used when the selected launcher background cannot be loaded.
+    @SerializedName("backgroundFallbackPaint")
+    private final ObjectProperty<@Nullable Paint> backgroundFallbackPaint = new SimpleObjectProperty<>(Color.WHITE);
+
+    /// Returns the launcher background fallback paint property.
+    public ObjectProperty<@Nullable Paint> backgroundFallbackPaintProperty() {
+        return backgroundFallbackPaint;
+    }
+
+    /// How the launcher displays its window while the selected background is loading.
+    @SerializedName("backgroundLoadBehavior")
+    private final ObjectProperty<BackgroundLoadBehavior> backgroundLoadBehavior =
+            new RawPreservingObjectProperty<>(BackgroundLoadBehavior.FALLBACK_THEN_LOAD);
+
+    /// Returns the launcher background loading behavior property.
+    public ObjectProperty<BackgroundLoadBehavior> backgroundLoadBehaviorProperty() {
+        return backgroundLoadBehavior;
     }
 
     /// The launcher background opacity.

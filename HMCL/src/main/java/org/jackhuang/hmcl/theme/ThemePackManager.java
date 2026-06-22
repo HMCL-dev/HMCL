@@ -24,6 +24,7 @@ import org.glavo.monetfx.Brightness;
 import org.glavo.monetfx.ColorRole;
 import org.glavo.monetfx.ColorStyle;
 import org.jackhuang.hmcl.Metadata;
+import org.jackhuang.hmcl.setting.BackgroundLoadBehavior;
 import org.jackhuang.hmcl.setting.BackgroundType;
 import org.jackhuang.hmcl.setting.LauncherSettings;
 import org.jackhuang.hmcl.setting.NetworkBackgroundImageCachePolicy;
@@ -715,7 +716,40 @@ public final class ThemePackManager {
         if (opacity != null) {
             currentSettings.backgroundOpacityProperty().set(opacity);
         }
+        if (background.fallback() != null) {
+            applyBackgroundFallback(background.fallback());
+        }
+        if (background.loadBehavior() != null) {
+            currentSettings.backgroundLoadBehaviorProperty().set(background.loadBehavior());
+        }
         currentSettings.backgroundTypeProperty().set(BackgroundType.DEFAULT);
+    }
+
+    /// Applies a resolved theme-pack fallback background to launcher settings.
+    private static void applyBackgroundFallback(ThemeBackground fallback) {
+        LauncherSettings currentSettings = settings();
+        if (fallback instanceof ThemeBackground.Builtin) {
+            currentSettings.backgroundFallbackTypeProperty().set(BackgroundType.BUILTIN);
+            return;
+        }
+        try {
+            if (fallback instanceof ThemeBackground.Paint paint) {
+                currentSettings.backgroundFallbackTypeProperty().set(BackgroundType.PAINT);
+                currentSettings.backgroundFallbackPaintProperty().set(
+                        parsePaint(requireNonBlank(paint.paint(), "background.fallback.paint")));
+                return;
+            }
+            if (fallback instanceof ThemeBackground.Patch patch && patch.paint() != null) {
+                currentSettings.backgroundFallbackTypeProperty().set(BackgroundType.PAINT);
+                currentSettings.backgroundFallbackPaintProperty().set(
+                        parsePaint(requireNonBlank(patch.paint(), "background.fallback.paint")));
+                return;
+            }
+        } catch (IOException e) {
+            LOG.warning("Ignored invalid theme background fallback: " + e.getMessage(), e);
+            return;
+        }
+        LOG.warning("Ignored unsupported theme background fallback: " + fallback);
     }
 
     /// Resolves a concrete launcher background from a theme-pack background object.
@@ -1007,7 +1041,7 @@ public final class ThemePackManager {
     private static ThemeBackgroundSettings createCurrentBackground(List<ThemePackAsset> assets) throws IOException {
         ResolvedBackground background = resolveCurrentBackground(currentResolveContext());
         Double opacity = background.opacity();
-        return switch (background.type()) {
+        ThemeBackgroundSettings backgroundSettings = switch (background.type()) {
             case DEFAULT -> new ThemeBackgroundSettings(new ThemeBackground.Builtin(), opacity);
             case BUILTIN -> createCurrentBuiltinBackground(opacity);
             case CUSTOM -> createCurrentImageBackground(assets, background.imagePath(), opacity);
@@ -1021,6 +1055,27 @@ public final class ThemePackManager {
             case PAINT, THEME_COLOR -> new ThemeBackgroundSettings(
                     new ThemeBackground.Paint(Objects.requireNonNullElse(background.paint(), Color.WHITE).toString()),
                     opacity);
+        };
+        return new ThemeBackgroundSettings(
+                backgroundSettings.source(),
+                backgroundSettings.opacity(),
+                createCurrentBackgroundFallback(),
+                Objects.requireNonNullElse(
+                        settings().backgroundLoadBehaviorProperty().get(),
+                        BackgroundLoadBehavior.FALLBACK_THEN_LOAD));
+    }
+
+    /// Creates the fallback background model for the current launcher settings.
+    private static ThemeBackground createCurrentBackgroundFallback() throws IOException {
+        BackgroundType fallbackType = Objects.requireNonNullElse(
+                settings().backgroundFallbackTypeProperty().get(),
+                BackgroundType.BUILTIN);
+        return switch (fallbackType) {
+            case BUILTIN, DEFAULT -> new ThemeBackground.Builtin();
+            case PAINT -> new ThemeBackground.Paint(
+                    Objects.requireNonNullElse(settings().backgroundFallbackPaintProperty().get(), Color.WHITE).toString());
+            case CUSTOM, NETWORK, THEME_COLOR -> throw new IOException(
+                    "Theme packs cannot use background fallback type: " + fallbackType);
         };
     }
 

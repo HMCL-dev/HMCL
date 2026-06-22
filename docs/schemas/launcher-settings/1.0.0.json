@@ -86,13 +86,16 @@
     },
     "backgroundType": {
       "enum": [
-        "THEME",
         "DEFAULT",
+        "BUILTIN",
         "CUSTOM",
-        "CLASSIC",
         "NETWORK",
-        "PAINT"
+        "PAINT",
+        "THEME_COLOR"
       ]
+    },
+    "builtinBackgroundName": {
+      "type": "string"
     },
     "customBackgroundImagePath": {
       "type": "string"
@@ -100,7 +103,30 @@
     "networkBackgroundImageUrl": {
       "type": "string"
     },
+    "networkBackgroundImageCachePolicy": {
+      "enum": [
+        "ENABLED",
+        "DISABLED"
+      ]
+    },
     "customBackgroundPaint": true,
+    "backgroundFallbackType": {
+      "enum": [
+        "DEFAULT",
+        "BUILTIN",
+        "CUSTOM",
+        "NETWORK",
+        "PAINT",
+        "THEME_COLOR"
+      ]
+    },
+    "backgroundFallbackPaint": true,
+    "backgroundLoadBehavior": {
+      "enum": [
+        "WAIT",
+        "FALLBACK_THEN_LOAD"
+      ]
+    },
     "backgroundOpacity": {
       "type": "number",
       "minimum": 0,

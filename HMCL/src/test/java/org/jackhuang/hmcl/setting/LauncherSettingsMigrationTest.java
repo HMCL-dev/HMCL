@@ -21,6 +21,7 @@ import com.google.common.jimfs.Configuration;
 import com.google.common.jimfs.Jimfs;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
+import javafx.scene.paint.Color;
 import org.glavo.uuid.UUIDs;
 import org.jackhuang.hmcl.auth.AccountID;
 import org.jackhuang.hmcl.theme.ThemeColor;
@@ -137,6 +138,25 @@ public final class LauncherSettingsMigrationTest {
         assertFalse(serialized.has("fontSize"));
         assertEquals("Fira Code", serialized.get("logFontFamily").getAsString());
         assertEquals(13.5, serialized.get("logFontSize").getAsDouble(), 1e-9);
+    }
+
+    /// Tests serializing background fallback and loading controls.
+    @Test
+    public void serializesBackgroundLoadingControls() {
+        LauncherSettings launcherSettings = new LauncherSettings();
+        launcherSettings.backgroundFallbackTypeProperty().set(BackgroundType.PAINT);
+        launcherSettings.backgroundFallbackPaintProperty().set(Color.web("#123456"));
+        launcherSettings.backgroundLoadBehaviorProperty().set(BackgroundLoadBehavior.WAIT);
+        JsonObject serialized = JsonParser.parseString(launcherSettings.toJson()).getAsJsonObject();
+
+        assertEquals(BackgroundType.PAINT.name(), serialized.get("backgroundFallbackType").getAsString());
+        assertEquals("#123456", serialized.get("backgroundFallbackPaint").getAsString());
+        assertEquals(BackgroundLoadBehavior.WAIT.name(), serialized.get("backgroundLoadBehavior").getAsString());
+
+        LauncherSettings deserialized = Objects.requireNonNull(LauncherSettings.fromJson(serialized));
+        assertEquals(BackgroundType.PAINT, deserialized.backgroundFallbackTypeProperty().get());
+        assertEquals(Color.web("#123456"), deserialized.backgroundFallbackPaintProperty().get());
+        assertEquals(BackgroundLoadBehavior.WAIT, deserialized.backgroundLoadBehaviorProperty().get());
     }
 
     /// Tests migrating the legacy theme color field into the custom theme color field.
