@@ -494,7 +494,6 @@ public class PersonalizationPage extends StackPane {
 
             LineButton manageThemeButton = LineButton.createNavigationButton();
             manageThemeButton.setTitle(i18n("theme_pack.manage"));
-            manageThemeButton.setSubtitle(i18n("theme_pack.manage.subtitle"));
             manageThemeButton.setOnAction(event -> Controllers.navigateForward(new ThemePackManagementPage()));
             themeList.getContent().add(manageThemeButton);
 
