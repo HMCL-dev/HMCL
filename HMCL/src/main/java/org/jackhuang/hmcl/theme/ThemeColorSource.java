@@ -33,9 +33,6 @@ public sealed interface ThemeColorSource permits ThemeColorSource.Custom, ThemeC
     /// JSON member name for the source type.
     String FIELD_SOURCE = "source";
 
-    /// JSON member name for the fallback color.
-    String FIELD_FALLBACK = "fallback";
-
     /// Creates a custom color source.
     ///
     /// @param color the custom color
@@ -46,10 +43,9 @@ public sealed interface ThemeColorSource permits ThemeColorSource.Custom, ThemeC
 
     /// Creates a wallpaper color source.
     ///
-    /// @param fallback the fallback color, or `null` to use the launcher default
     /// @return the wallpaper color source
-    static ThemeColorSource wallpaper(@Nullable ThemeColor fallback) {
-        return new Wallpaper(fallback);
+    static ThemeColorSource wallpaper() {
+        return new Wallpaper();
     }
 
     /// Parses a color source from a manifest JSON value.
@@ -69,7 +65,10 @@ public sealed interface ThemeColorSource permits ThemeColorSource.Custom, ThemeC
         String source = readRequiredSource(object);
         String normalized = source.trim().replace('-', '_').toUpperCase(Locale.ROOT);
         if ("WALLPAPER".equals(normalized)) {
-            return wallpaper(readFallbackColor(object));
+            if (object.has("fallback")) {
+                throw new JsonParseException("Theme wallpaper color source does not support fallback");
+            }
+            return wallpaper();
         }
         throw new JsonParseException("Unsupported theme color source: " + source);
     }
@@ -81,7 +80,7 @@ public sealed interface ThemeColorSource permits ThemeColorSource.Custom, ThemeC
 
     /// Returns the best available color without accessing wallpaper pixels.
     ///
-    /// @return the custom color, fallback color, or launcher default color
+    /// @return the custom color or launcher default color
     ThemeColor resolveFallback();
 
     /// Reads the required source field.
@@ -91,12 +90,6 @@ public sealed interface ThemeColorSource permits ThemeColorSource.Custom, ThemeC
             throw new JsonParseException("Theme color source is missing required field: " + FIELD_SOURCE);
         }
         return value;
-    }
-
-    /// Reads the optional fallback color field.
-    private static @Nullable ThemeColor readFallbackColor(JsonObject object) {
-        @Nullable String value = readString(object, FIELD_FALLBACK);
-        return value != null ? parseColor(value, FIELD_FALLBACK) : null;
     }
 
     /// Reads an optional string field.
@@ -146,13 +139,9 @@ public sealed interface ThemeColorSource permits ThemeColorSource.Custom, ThemeC
     }
 
     /// A dynamic seed color extracted from the effective wallpaper.
-    ///
-    /// @param fallback the fallback color, or `null` to use the launcher default
     @NotNullByDefault
-    record Wallpaper(@Nullable ThemeColor fallback) implements ThemeColorSource {
+    record Wallpaper() implements ThemeColorSource {
         /// Creates a wallpaper color source.
-        ///
-        /// @param fallback the fallback color, or `null` to use the launcher default
         public Wallpaper {
         }
 
@@ -161,16 +150,13 @@ public sealed interface ThemeColorSource permits ThemeColorSource.Custom, ThemeC
         public JsonElement toJsonElement() {
             JsonObject object = new JsonObject();
             object.addProperty(FIELD_SOURCE, "wallpaper");
-            if (fallback != null) {
-                object.addProperty(FIELD_FALLBACK, fallback.name());
-            }
             return object;
         }
 
-        /// Returns the fallback color used before wallpaper pixels are available.
+        /// Returns the launcher default color used before wallpaper pixels are available.
         @Override
         public ThemeColor resolveFallback() {
-            return Objects.requireNonNullElse(fallback, ThemeColor.DEFAULT);
+            return ThemeColor.DEFAULT;
         }
     }
 }

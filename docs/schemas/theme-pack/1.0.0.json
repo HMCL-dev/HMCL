@@ -255,9 +255,6 @@
               "enum": [
                 "wallpaper"
               ]
-            },
-            "fallback": {
-              "$ref": "#/$defs/colorValue"
             }
           }
         }

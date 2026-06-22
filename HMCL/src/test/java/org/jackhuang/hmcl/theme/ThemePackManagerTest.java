@@ -297,7 +297,7 @@ public final class ThemePackManagerTest {
             assertEquals("Test Author", manifest.authors().get(0).displayName());
             assertNull(theme.id());
             assertNull(theme.name());
-            assertEquals(ThemeColorSource.wallpaper(themeColor), appearance.color());
+            assertEquals(ThemeColorSource.wallpaper(), appearance.color());
             assertEquals(Brightness.DARK, appearance.brightness());
             assertEquals(ColorStyle.MONOCHROME, appearance.colorStyle());
             assertNotNull(appearance.titleBar());
@@ -383,8 +383,7 @@ public final class ThemePackManagerTest {
                     "name": "Forest",
                     "thumbnail": "assets/thumbnails/thumbnail.txt",
                     "color": {
-                      "source": "wallpaper",
-                      "fallback": "#336699"
+                      "source": "wallpaper"
                     },
                     "brightness": "dark",
                     "colorStyle": "expressive",

@@ -487,7 +487,6 @@ public final class ThemePackManifestTest {
                     "futureThemeField": "ignored",
                     "color": {
                       "source": "wallpaper",
-                      "fallback": "#4D7C3A",
                       "futureColorField": "ignored"
                     },
                     "background": {
@@ -523,6 +522,25 @@ public final class ThemePackManifestTest {
         assertEquals(ThemeColor.of("#6FA65A"), appearance.color().resolveFallback());
         ThemeBackground.Image image = assertInstanceOf(ThemeBackground.Image.class, background.source());
         assertEquals("assets/wallpapers/forest.webp", image.path());
+    }
+
+    /// Tests that wallpaper color sources cannot declare a fallback color.
+    @Test
+    public void testWallpaperColorRejectsFallback() {
+        assertThrows(JsonParseException.class, () -> ThemePackManifest.fromJson("""
+                {
+                  "$schema": "https://schemas.glavo.site/hmcl/theme-pack/1.0.0",
+                  "id": "example.wallpaper-fallback",
+                  "version": "1.0.0",
+                  "name": "Wallpaper Fallback",
+                  "theme": {
+                    "color": {
+                      "source": "wallpaper",
+                      "fallback": "#4D7C3A"
+                    }
+                  }
+                }
+                """));
     }
 
     /// Tests that unknown condition keys are accepted but do not match the current context.

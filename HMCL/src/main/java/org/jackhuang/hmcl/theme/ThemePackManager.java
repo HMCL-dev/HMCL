@@ -464,11 +464,13 @@ public final class ThemePackManager {
 
     /// Returns the current launcher theme color source as a theme-pack directive.
     private static ThemeColorSource currentThemeColorSource() {
-        ThemeColor fallback = Objects.requireNonNullElse(settings().customThemeColorProperty().get(), ThemeColor.DEFAULT);
         ThemeColorType themeColorType = Objects.requireNonNullElse(settings().themeColorTypeProperty().get(), ThemeColorType.CUSTOM);
-        return themeColorType == ThemeColorType.BACKGROUND
-                ? ThemeColorSource.wallpaper(fallback)
-                : ThemeColorSource.custom(fallback);
+        if (themeColorType == ThemeColorType.BACKGROUND) {
+            return ThemeColorSource.wallpaper();
+        }
+
+        ThemeColor color = Objects.requireNonNullElse(settings().customThemeColorProperty().get(), ThemeColor.DEFAULT);
+        return ThemeColorSource.custom(color);
     }
 
     /// Returns the current launcher color style as a theme-pack directive.
