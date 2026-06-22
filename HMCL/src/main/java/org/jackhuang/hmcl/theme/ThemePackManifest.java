@@ -250,7 +250,7 @@ public record ThemePackManifest(
             return List.of();
         }
         if (!(element instanceof JsonArray array)) {
-            logInvalidField(FIELD_AUTHORS, new JsonParseException("Theme-pack authors must be an array"));
+            LOG.warning("Ignored invalid theme-pack authors: expected an array, got " + element);
             return List.of();
         }
 
@@ -266,7 +266,7 @@ public record ThemePackManifest(
                     authors.add(author);
                 }
             } else {
-                logInvalidField(field, new JsonParseException("Theme-pack authors must contain only objects"));
+                LOG.warning("Ignored invalid theme-pack author `" + field + "`: expected an object, got " + item);
             }
             index++;
         }
@@ -417,20 +417,9 @@ public record ThemePackManifest(
         try {
             return reader.get();
         } catch (JsonParseException | IllegalArgumentException e) {
-            logInvalidField(field, e);
+            LOG.warning("Ignored invalid theme-pack field `" + field + "`: " + e.getMessage(), e);
             return null;
         }
-    }
-
-    /// Logs one malformed theme-pack field that is ignored during parsing.
-    ///
-    /// @param field the ignored field name
-    /// @param exception the parse problem
-    static void logInvalidField(String field, RuntimeException exception) {
-        Objects.requireNonNull(field);
-        Objects.requireNonNull(exception);
-
-        LOG.warning("Ignored invalid theme-pack field: " + field, exception);
     }
 
     /// Returns a non-blank string value.

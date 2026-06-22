@@ -33,6 +33,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
+import static org.jackhuang.hmcl.util.logging.Logger.LOG;
+
 /// One selectable theme inside a theme pack.
 ///
 /// The theme object's top-level appearance fields provide default values. Each
@@ -199,7 +201,7 @@ public record Theme(
             return List.of();
         }
         if (!(element instanceof JsonArray array)) {
-            ThemePackManifest.logInvalidField(FIELD_OVERRIDES, new JsonParseException("Theme overrides must be an array"));
+            LOG.warning("Ignored invalid theme overrides: expected an array, got " + element);
             return List.of();
         }
 
@@ -215,7 +217,7 @@ public record Theme(
                     overrides.add(override);
                 }
             } else {
-                ThemePackManifest.logInvalidField(field, new JsonParseException("Theme override must be an object"));
+                LOG.warning("Ignored invalid theme override `" + field + "`: expected an object, got " + item);
             }
             index++;
         }
