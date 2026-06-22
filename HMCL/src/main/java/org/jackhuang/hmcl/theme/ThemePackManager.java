@@ -22,7 +22,6 @@ import javafx.scene.paint.Color;
 import javafx.scene.paint.Paint;
 import org.glavo.monetfx.Brightness;
 import org.glavo.monetfx.ColorStyle;
-import org.glavo.monetfx.Contrast;
 import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.setting.BackgroundType;
 import org.jackhuang.hmcl.setting.LauncherSettings;
@@ -439,7 +438,7 @@ public final class ThemePackManager {
                 currentThemeColorSource(),
                 currentControlledBrightness(),
                 currentColorStyle(),
-                Contrast.DEFAULT,
+                null,
                 createCurrentBackground(assets),
                 new ThemeTitleBar(settings().titleTransparentProperty().get()));
         Theme theme = new Theme(

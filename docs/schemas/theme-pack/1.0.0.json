@@ -249,8 +249,7 @@
         "expressive",
         "content",
         "rainbow",
-        "fruit_salad",
-        "default"
+        "fruit_salad"
       ]
     },
     "contrast": {
@@ -259,7 +258,6 @@
           "enum": [
             "low",
             "standard",
-            "default",
             "medium",
             "high"
           ]

@@ -126,10 +126,10 @@ public record ThemeAppearance(
         if (brightness != null) {
             object.addProperty(FIELD_BRIGHTNESS, toJsonBrightness(brightness));
         }
-        if (colorStyle != null) {
+        if (colorStyle != null && !"DEFAULT".equals(colorStyle.name())) {
             object.addProperty(FIELD_COLOR_STYLE, colorStyle.name().toLowerCase(Locale.ROOT));
         }
-        if (contrast != null) {
+        if (contrast != null && !contrast.equals(Contrast.DEFAULT)) {
             addContrast(object, contrast);
         }
         if (background != null) {
@@ -215,6 +215,9 @@ public record ThemeAppearance(
         }
 
         String normalized = value.trim().replace('-', '_').replace(' ', '_').toUpperCase(Locale.ROOT);
+        if ("DEFAULT".equals(normalized)) {
+            throw new JsonParseException("Theme colorStyle must be omitted to use the default value");
+        }
         try {
             return ColorStyle.valueOf(normalized);
         } catch (IllegalArgumentException e) {
@@ -243,7 +246,7 @@ public record ThemeAppearance(
         String normalized = value.trim().toLowerCase(Locale.ROOT);
         return switch (normalized) {
             case "low" -> Contrast.LOW;
-            case "standard", "default" -> Contrast.DEFAULT;
+            case "standard" -> Contrast.DEFAULT;
             case "medium" -> Contrast.MEDIUM;
             case "high" -> Contrast.HIGH;
             default -> {
@@ -306,7 +309,7 @@ public record ThemeAppearance(
         if (contrast.equals(Contrast.LOW)) {
             object.addProperty(FIELD_CONTRAST, "low");
         } else if (contrast.equals(Contrast.DEFAULT)) {
-            object.addProperty(FIELD_CONTRAST, "default");
+            object.addProperty(FIELD_CONTRAST, "standard");
         } else if (contrast.equals(Contrast.MEDIUM)) {
             object.addProperty(FIELD_CONTRAST, "medium");
         } else if (contrast.equals(Contrast.HIGH)) {
