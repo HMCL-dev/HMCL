@@ -90,10 +90,10 @@
     "customBackgroundImagePath": {
       "type": "string"
     },
-    "backgroundImageUrl": {
+    "networkBackgroundImageUrl": {
       "type": "string"
     },
-    "backgroundPaint": true,
+    "customBackgroundPaint": true,
     "backgroundOpacity": {
       "type": "number",
       "minimum": 0,

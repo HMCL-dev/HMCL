@@ -348,22 +348,22 @@ public final class LauncherSettings extends ObservableSetting implements JsonSch
         return customBackgroundImagePath;
     }
 
-    /// The remote launcher background image URL.
-    @SerializedName("backgroundImageUrl")
-    private final StringProperty backgroundImageUrl = new SimpleStringProperty();
+    /// The remote network launcher background image URL.
+    @SerializedName("networkBackgroundImageUrl")
+    private final StringProperty networkBackgroundImageUrl = new SimpleStringProperty();
 
-    /// Returns the remote launcher background image URL property.
-    public StringProperty backgroundImageUrlProperty() {
-        return backgroundImageUrl;
+    /// Returns the remote network launcher background image URL property.
+    public StringProperty networkBackgroundImageUrlProperty() {
+        return networkBackgroundImageUrl;
     }
 
-    /// The launcher background paint.
-    @SerializedName("backgroundPaint")
-    private final ObjectProperty<@Nullable Paint> backgroundPaint = new SimpleObjectProperty<>();
+    /// The custom launcher background paint.
+    @SerializedName("customBackgroundPaint")
+    private final ObjectProperty<@Nullable Paint> customBackgroundPaint = new SimpleObjectProperty<>();
 
-    /// Returns the launcher background paint property.
-    public ObjectProperty<@Nullable Paint> backgroundPaintProperty() {
-        return backgroundPaint;
+    /// Returns the custom launcher background paint property.
+    public ObjectProperty<@Nullable Paint> customBackgroundPaintProperty() {
+        return customBackgroundPaint;
     }
 
     /// The launcher background opacity.

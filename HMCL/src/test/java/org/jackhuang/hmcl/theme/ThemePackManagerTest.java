@@ -104,8 +104,8 @@ public final class ThemePackManagerTest {
             assertTrue(settings.titleTransparentProperty().get());
             assertEquals(BackgroundType.CUSTOM, settings.backgroundTypeProperty().get());
             assertEquals(0.75, settings.backgroundOpacityProperty().get());
-            assertNull(settings.backgroundImageUrlProperty().get());
-            assertNull(settings.backgroundPaintProperty().get());
+            assertNull(settings.networkBackgroundImageUrlProperty().get());
+            assertNull(settings.customBackgroundPaintProperty().get());
 
             ThemePackResourceURL backgroundResource = ThemePackResourceURL.parse(settings.customBackgroundImagePathProperty().get());
             assertNotNull(backgroundResource);

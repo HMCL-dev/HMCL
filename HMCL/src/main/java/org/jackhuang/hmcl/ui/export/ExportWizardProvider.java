@@ -126,6 +126,8 @@ public final class ExportWizardProvider implements WizardProvider {
 
                     exported.backgroundTypeProperty().set(settings().backgroundTypeProperty().get());
                     exported.customBackgroundImagePathProperty().set(settings().customBackgroundImagePathProperty().get());
+                    exported.networkBackgroundImageUrlProperty().set(settings().networkBackgroundImageUrlProperty().get());
+                    exported.customBackgroundPaintProperty().set(settings().customBackgroundPaintProperty().get());
                     exported.customThemeColorProperty().set(settings().customThemeColorProperty().get());
                     exported.versionListSourceProperty().set(settings().versionListSourceProperty().get());
                     exported.fileDownloadSourceProperty().set(settings().fileDownloadSourceProperty().get());

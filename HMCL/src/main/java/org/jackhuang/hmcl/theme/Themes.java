@@ -78,7 +78,7 @@ public final class Themes {
             observables.add(settings().themeColorStyleProperty());
             observables.add(settings().backgroundTypeProperty());
             observables.add(settings().customBackgroundImagePathProperty());
-            observables.add(settings().backgroundPaintProperty());
+            observables.add(settings().customBackgroundPaintProperty());
             if (FXUtils.DARK_MODE != null) {
                 observables.add(FXUtils.DARK_MODE);
             }
@@ -126,7 +126,7 @@ public final class Themes {
             return switch (backgroundType) {
                 case CUSTOM -> getImageThemeColor(fallback);
                 case PAINT -> {
-                    @Nullable Paint paint = settings().backgroundPaintProperty().get();
+                    @Nullable Paint paint = settings().customBackgroundPaintProperty().get();
                     yield paint instanceof Color color ? ThemeColor.of(color) : fallback;
                 }
                 case DEFAULT, CLASSIC, NETWORK -> fallback;

@@ -165,9 +165,9 @@ public final class LauncherSettingsMigrationTest {
         }
     }
 
-    /// Tests migrating the legacy custom background image path field.
+    /// Tests migrating legacy background source fields.
     @Test
-    public void migratesLegacyBackgroundImageToCustomBackgroundImagePath() throws IOException {
+    public void migratesLegacyBackgroundSourceFields() throws IOException {
         try (FileSystem fileSystem = Jimfs.newFileSystem(Configuration.unix())) {
             Path root = fileSystem.getPath("/launcher-settings-migration-tests");
             Files.createDirectories(root);
@@ -175,7 +175,9 @@ public final class LauncherSettingsMigrationTest {
             Files.writeString(config, """
                     {
                       "_version": 2,
-                      "backgroundImage": "/pictures/background.png"
+                      "backgroundImage": "/pictures/background.png",
+                      "backgroundImageUrl": "https://example.com/background.png",
+                      "backgroundPaint": "#336699"
                     }
                     """);
 
@@ -185,8 +187,13 @@ public final class LauncherSettingsMigrationTest {
             JsonObject serialized = JsonParser.parseString(launcherSettings.toJson()).getAsJsonObject();
 
             assertFalse(serialized.has("backgroundImage"));
+            assertFalse(serialized.has("backgroundImageUrl"));
+            assertFalse(serialized.has("backgroundPaint"));
             assertEquals("/pictures/background.png", launcherSettings.customBackgroundImagePathProperty().get());
+            assertEquals("https://example.com/background.png", launcherSettings.networkBackgroundImageUrlProperty().get());
             assertEquals("/pictures/background.png", serialized.get("customBackgroundImagePath").getAsString());
+            assertEquals("https://example.com/background.png", serialized.get("networkBackgroundImageUrl").getAsString());
+            assertEquals("#336699", serialized.get("customBackgroundPaint").getAsString());
         }
     }
 

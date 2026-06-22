@@ -225,8 +225,10 @@ public final class LegacyConfigMigrator {
             renameMember(jsonObject, "fontSize", "logFontSize");
             renameMember(jsonObject, "bgpath", "customBackgroundImagePath");
             renameMember(jsonObject, "backgroundImage", "customBackgroundImagePath");
-            renameMember(jsonObject, "bgurl", "backgroundImageUrl");
-            renameMember(jsonObject, "bgpaint", "backgroundPaint");
+            renameMember(jsonObject, "bgurl", "networkBackgroundImageUrl");
+            renameMember(jsonObject, "backgroundImageUrl", "networkBackgroundImageUrl");
+            renameMember(jsonObject, "bgpaint", "customBackgroundPaint");
+            renameMember(jsonObject, "backgroundPaint", "customBackgroundPaint");
             migrateBackgroundOpacity(jsonObject);
             renameMember(jsonObject, "proxyUserName", "proxyUser");
             migrateLegacySelectedVersions(jsonObject);
@@ -817,7 +819,7 @@ public final class LegacyConfigMigrator {
 
         if (Objects.equals(JsonUtils.getString(json, "backgroundType"), "TRANSLUCENT")) {
             json.addProperty("backgroundType", BackgroundType.PAINT.name());
-            json.addProperty("backgroundPaint", "#ffffff");
+            json.addProperty("customBackgroundPaint", "#ffffff");
             json.addProperty("backgroundOpacity", 0.5);
             json.remove("bgpaint");
         }

@@ -420,20 +420,20 @@ public final class ThemePackManager {
                 resolveInstalledAsset(themePackDirectory, path);
                 currentSettings.backgroundTypeProperty().set(BackgroundType.CUSTOM);
                 currentSettings.customBackgroundImagePathProperty().set(ThemePackResourceURL.of(manifest, path).toString());
-                currentSettings.backgroundImageUrlProperty().set(null);
-                currentSettings.backgroundPaintProperty().set(null);
+                currentSettings.networkBackgroundImageUrlProperty().set(null);
+                currentSettings.customBackgroundPaintProperty().set(null);
             }
             case NETWORK -> {
                 currentSettings.backgroundTypeProperty().set(BackgroundType.NETWORK);
-                currentSettings.backgroundImageUrlProperty().set(requireNonBlank(background.url(), "background.url"));
+                currentSettings.networkBackgroundImageUrlProperty().set(requireNonBlank(background.url(), "background.url"));
                 currentSettings.customBackgroundImagePathProperty().set(null);
-                currentSettings.backgroundPaintProperty().set(null);
+                currentSettings.customBackgroundPaintProperty().set(null);
             }
             case PAINT -> {
                 currentSettings.backgroundTypeProperty().set(BackgroundType.PAINT);
-                currentSettings.backgroundPaintProperty().set(parsePaint(requireNonBlank(background.paint(), "background.paint")));
+                currentSettings.customBackgroundPaintProperty().set(parsePaint(requireNonBlank(background.paint(), "background.paint")));
                 currentSettings.customBackgroundImagePathProperty().set(null);
-                currentSettings.backgroundImageUrlProperty().set(null);
+                currentSettings.networkBackgroundImageUrlProperty().set(null);
             }
         }
     }
@@ -467,8 +467,8 @@ public final class ThemePackManager {
     /// Clears background source fields that are irrelevant for built-in backgrounds.
     private static void clearBackgroundSources() {
         settings().customBackgroundImagePathProperty().set(null);
-        settings().backgroundImageUrlProperty().set(null);
-        settings().backgroundPaintProperty().set(null);
+        settings().networkBackgroundImageUrlProperty().set(null);
+        settings().customBackgroundPaintProperty().set(null);
     }
 
     /// Resolves one asset referenced by an installed theme.
@@ -587,14 +587,14 @@ public final class ThemePackManager {
             case NETWORK -> new ThemeBackground(
                     ThemeBackground.Type.NETWORK,
                     null,
-                    requireNonBlank(settings().backgroundImageUrlProperty().get(), "backgroundImageUrl"),
+                    requireNonBlank(settings().networkBackgroundImageUrlProperty().get(), "networkBackgroundImageUrl"),
                     null,
                     opacity);
             case PAINT -> new ThemeBackground(
                     ThemeBackground.Type.PAINT,
                     null,
                     null,
-                    Objects.requireNonNullElse(settings().backgroundPaintProperty().get(), Color.WHITE).toString(),
+                    Objects.requireNonNullElse(settings().customBackgroundPaintProperty().get(), Color.WHITE).toString(),
                     opacity);
         };
     }

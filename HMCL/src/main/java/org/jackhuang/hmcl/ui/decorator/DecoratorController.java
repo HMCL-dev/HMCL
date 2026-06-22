@@ -96,8 +96,8 @@ public class DecoratorController {
         WeakInvalidationListener weakListener = new WeakInvalidationListener(changeBackgroundListener);
         settings().backgroundTypeProperty().addListener(weakListener);
         settings().customBackgroundImagePathProperty().addListener(weakListener);
-        settings().backgroundImageUrlProperty().addListener(weakListener);
-        settings().backgroundPaintProperty().addListener(weakListener);
+        settings().networkBackgroundImageUrlProperty().addListener(weakListener);
+        settings().customBackgroundPaintProperty().addListener(weakListener);
         settings().backgroundOpacityProperty().addListener(weakListener);
 
         // pass key events to current dialog / current page
@@ -204,10 +204,10 @@ public class DecoratorController {
                     }
                 break;
             case NETWORK:
-                String backgroundImageUrl = settings().backgroundImageUrlProperty().get();
-                if (backgroundImageUrl != null) {
+                String networkBackgroundImageUrl = settings().networkBackgroundImageUrlProperty().get();
+                if (networkBackgroundImageUrl != null) {
                     try {
-                        image = FXUtils.loadImage(WebURL.parseBrowserInput(backgroundImageUrl));
+                        image = FXUtils.loadImage(WebURL.parseBrowserInput(networkBackgroundImageUrl));
                     } catch (Exception e) {
                         LOG.warning("Couldn't load background image", e);
                     }
@@ -217,7 +217,7 @@ public class DecoratorController {
                 image = newBuiltinImage("/assets/img/background-classic.jpg");
                 break;
             case PAINT:
-                Paint paint = settings().backgroundPaintProperty().get();
+                Paint paint = settings().customBackgroundPaintProperty().get();
                 double opacity = MathUtils.clamp(settings().backgroundOpacityProperty().get(), 0., 1.);
                 if (paint instanceof Color || paint == null) {
                     Color color = (Color) paint;

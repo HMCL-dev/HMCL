@@ -260,8 +260,8 @@ public class PersonalizationPage extends StackPane {
         settings().themeColorStyleProperty().set(ColorStyle.FIDELITY);
         settings().backgroundTypeProperty().set(BackgroundType.DEFAULT);
         settings().customBackgroundImagePathProperty().set(null);
-        settings().backgroundImageUrlProperty().set(null);
-        settings().backgroundPaintProperty().set(null);
+        settings().networkBackgroundImageUrlProperty().set(null);
+        settings().customBackgroundPaintProperty().set(null);
         settings().backgroundOpacityProperty().set(1.0);
         settings().titleTransparentProperty().set(false);
         settings().themeProperty().set(DEFAULT_THEME_SELECTION);
@@ -275,8 +275,8 @@ public class PersonalizationPage extends StackPane {
         settings().themeColorStyleProperty().addListener(listener);
         settings().backgroundTypeProperty().addListener(listener);
         settings().customBackgroundImagePathProperty().addListener(listener);
-        settings().backgroundImageUrlProperty().addListener(listener);
-        settings().backgroundPaintProperty().addListener(listener);
+        settings().networkBackgroundImageUrlProperty().addListener(listener);
+        settings().customBackgroundPaintProperty().addListener(listener);
         settings().backgroundOpacityProperty().addListener(listener);
         settings().titleTransparentProperty().addListener(listener);
     }
@@ -587,9 +587,9 @@ public class PersonalizationPage extends StackPane {
                             .bindBidirectional(settings().customBackgroundImagePathProperty()),
                     new MultiFileItem.StringOption<>(i18n("launcher.background.network"), BackgroundType.NETWORK)
                             .setValidators(new URLValidator(true))
-                            .bindBidirectional(settings().backgroundImageUrlProperty()),
+                            .bindBidirectional(settings().networkBackgroundImageUrlProperty()),
                     new MultiFileItem.PaintOption<>(i18n("launcher.background.paint"), BackgroundType.PAINT)
-                            .bindBidirectional(settings().backgroundPaintProperty())
+                            .bindBidirectional(settings().customBackgroundPaintProperty())
             ));
             backgroundItem.selectedDataProperty().bindBidirectional(settings().backgroundTypeProperty());
             backgroundSublist.descriptionProperty().bind(Bindings.createStringBinding(() -> {
@@ -601,17 +601,17 @@ public class PersonalizationPage extends StackPane {
                             case DEFAULT -> i18n("launcher.background.default");
                             case CLASSIC -> i18n("launcher.background.classic");
                             case CUSTOM -> settings().customBackgroundImagePathProperty().get();
-                            case NETWORK -> settings().backgroundImageUrlProperty().get();
+                            case NETWORK -> settings().networkBackgroundImageUrlProperty().get();
                             case PAINT -> {
-                                @Nullable Paint backgroundPaint = settings().backgroundPaintProperty().get();
-                                yield backgroundPaint != null ? backgroundPaint.toString() : i18n("launcher.background.paint");
+                                @Nullable Paint customBackgroundPaint = settings().customBackgroundPaintProperty().get();
+                                yield customBackgroundPaint != null ? customBackgroundPaint.toString() : i18n("launcher.background.paint");
                             }
                         };
                     },
                     backgroundItem.selectedDataProperty(),
                     settings().customBackgroundImagePathProperty(),
-                    settings().backgroundImageUrlProperty(),
-                    settings().backgroundPaintProperty()));
+                    settings().networkBackgroundImageUrlProperty(),
+                    settings().customBackgroundPaintProperty()));
 
             HBox opacityItem = new HBox(8);
             {
