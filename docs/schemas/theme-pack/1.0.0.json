@@ -236,9 +236,7 @@
     "brightness": {
       "enum": [
         "light",
-        "dark",
-        "adaptive",
-        "auto"
+        "dark"
       ]
     },
     "colorStyle": {

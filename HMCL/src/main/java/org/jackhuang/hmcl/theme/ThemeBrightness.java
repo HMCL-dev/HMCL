@@ -23,22 +23,19 @@ import org.jetbrains.annotations.NotNullByDefault;
 import java.util.Locale;
 import java.util.Objects;
 
-/// Describes how a theme-pack appearance chooses its effective MonetFX brightness.
+/// Describes a theme-pack appearance's explicit brightness control.
 @NotNullByDefault
 public enum ThemeBrightness {
-    /// Always resolves to the light color scheme.
+    /// Forces the launcher to use the light color scheme.
     LIGHT,
 
-    /// Always resolves to the dark color scheme.
-    DARK,
+    /// Forces the launcher to use the dark color scheme.
+    DARK;
 
-    /// Resolves to the brightness provided by the current theme resolution context.
-    ADAPTIVE;
-
-    /// Parses a serialized theme brightness directive.
+    /// Parses a serialized theme brightness value.
     ///
     /// @param value the serialized brightness value
-    /// @return the parsed brightness directive
+    /// @return the parsed brightness value
     /// @throws IllegalArgumentException if the value is not supported
     public static ThemeBrightness parse(String value) {
         Objects.requireNonNull(value);
@@ -46,28 +43,23 @@ public enum ThemeBrightness {
         return switch (value.trim().toLowerCase(Locale.ROOT)) {
             case "light" -> LIGHT;
             case "dark" -> DARK;
-            case "adaptive", "auto" -> ADAPTIVE;
             default -> throw new IllegalArgumentException("Unsupported theme brightness: " + value);
         };
     }
 
-    /// Resolves this directive to a concrete MonetFX brightness.
+    /// Converts this value to a MonetFX brightness.
     ///
-    /// @param contextBrightness the brightness resolved from the current launcher or system mode
-    /// @return the concrete brightness to use for a color scheme
-    public Brightness resolve(Brightness contextBrightness) {
-        Objects.requireNonNull(contextBrightness);
-
+    /// @return the MonetFX brightness
+    public Brightness toMonetBrightness() {
         return switch (this) {
             case LIGHT -> Brightness.LIGHT;
             case DARK -> Brightness.DARK;
-            case ADAPTIVE -> contextBrightness;
         };
     }
 
-    /// Returns the canonical JSON value for this brightness directive.
+    /// Returns the canonical JSON value.
     ///
-    /// @return the serialized brightness value
+    /// @return the serialized JSON value
     public String toJsonValue() {
         return name().toLowerCase(Locale.ROOT);
     }

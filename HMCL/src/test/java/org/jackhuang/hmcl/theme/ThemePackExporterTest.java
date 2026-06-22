@@ -152,7 +152,6 @@ public final class ThemePackExporterTest {
                   "authors": ["User"],
                   "theme": {
                     "color": "#5C6BC0",
-                    "brightness": "adaptive",
                     "colorStyle": "fidelity",
                     "contrast": "default",
                     "background": {

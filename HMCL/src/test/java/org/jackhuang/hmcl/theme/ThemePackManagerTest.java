@@ -242,8 +242,8 @@ public final class ThemePackManagerTest {
             assertNull(theme.id());
             assertNull(theme.name());
             assertEquals(ThemeColorSource.wallpaper(themeColor), appearance.color());
-            assertEquals(ColorStyle.MONOCHROME, appearance.colorStyle());
             assertEquals(ThemeBrightness.DARK, appearance.brightness());
+            assertEquals(ColorStyle.MONOCHROME, appearance.colorStyle());
             assertNotNull(appearance.titleBar());
             assertEquals(true, appearance.titleBar().transparent());
             assertEquals(ThemeBackground.Type.CLASSIC, background.effectiveType());

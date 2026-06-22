@@ -46,7 +46,6 @@ public final class ThemePackManifestTest {
                 "name": "Forest",
                 "thumbnail": "assets/thumbnails/forest.png",
                 "color": "#4D7C3A",
-                "brightness": "adaptive",
                 "colorStyle": "fidelity",
                 "contrast": "default",
                 "background": {
@@ -136,6 +135,60 @@ public final class ThemePackManifestTest {
         assertEquals(Contrast.DEFAULT, appearance.contrast());
         assertEquals("assets/wallpapers/forest.webp", background.path());
         assertEquals(0.8, background.opacity());
+    }
+
+    /// Tests that an explicit theme brightness controls the resolved launcher brightness.
+    @Test
+    public void testExplicitBrightnessControlsResolvedTheme() {
+        ThemePackManifest manifest = ThemePackManifest.fromJson("""
+                {
+                  "$schema": "https://schemas.glavo.site/hmcl/theme-pack/1.0.0",
+                  "id": "example.brightness",
+                  "version": "1.0.0",
+                  "name": "Brightness",
+                  "theme": {
+                    "brightness": "dark"
+                  }
+                }
+                """);
+        Theme theme = manifest.findTheme(null);
+        assertNotNull(theme);
+
+        ThemeResolveContext context = new ThemeResolveContext(Brightness.LIGHT, "linux", "en");
+        ThemeAppearance appearance = theme.resolve(context);
+        ResolvedTheme resolvedTheme = appearance.toResolvedTheme(context);
+
+        assertEquals(ThemeBrightness.DARK, appearance.brightness());
+        assertEquals(Brightness.DARK, resolvedTheme.brightness());
+    }
+
+    /// Tests that a theme without brightness keeps the brightness supplied by the resolution context.
+    @Test
+    public void testMissingBrightnessUsesResolutionContext() {
+        Theme theme = parseForestTheme();
+        ThemeResolveContext context = new ThemeResolveContext(Brightness.LIGHT, "linux", "en");
+
+        ThemeAppearance appearance = theme.resolve(context);
+        ResolvedTheme resolvedTheme = appearance.toResolvedTheme(context);
+
+        assertNull(appearance.brightness());
+        assertEquals(Brightness.LIGHT, resolvedTheme.brightness());
+    }
+
+    /// Tests that the removed adaptive theme brightness value is rejected.
+    @Test
+    public void testRejectAdaptiveThemeBrightness() {
+        assertThrows(JsonParseException.class, () -> ThemePackManifest.fromJson("""
+                {
+                  "$schema": "https://schemas.glavo.site/hmcl/theme-pack/1.0.0",
+                  "id": "example.adaptive-brightness",
+                  "version": "1.0.0",
+                  "name": "Adaptive Brightness",
+                  "theme": {
+                    "brightness": "adaptive"
+                  }
+                }
+                """));
     }
 
     /// Tests that an empty condition matches every resolution context.

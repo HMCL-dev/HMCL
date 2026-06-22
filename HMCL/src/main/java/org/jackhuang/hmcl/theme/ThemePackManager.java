@@ -326,12 +326,13 @@ public final class ThemePackManager {
             ThemePackManifest manifest,
             Theme theme,
             ThemeResolveContext context) throws IOException {
-        apply(themePackDirectory, manifest, theme, context, false);
+        applyTheme(themePackDirectory, manifest, theme, context);
     }
 
     /// Reapplies the selected theme against the current condition context.
     ///
-    /// The current brightness setting is preserved because it is the condition input that triggered the refresh.
+    /// A selected theme is resolved again with the latest condition inputs. If the resolved appearance contains
+    /// a non-null brightness directive, that directive is written back to launcher settings.
     public static void refreshCurrentThemeForContext() {
         if (applyingTheme) {
             return;
@@ -353,7 +354,7 @@ public final class ThemePackManager {
                 return;
             }
 
-            apply(themePack.directory(), themePack.manifest(), theme, currentResolveContext(), true);
+            applyTheme(themePack.directory(), themePack.manifest(), theme, currentResolveContext());
         } catch (IOException | RuntimeException e) {
             LOG.warning("Failed to refresh selected theme", e);
         }
@@ -367,12 +368,11 @@ public final class ThemePackManager {
     }
 
     /// Applies one theme from an installed theme-pack directory to current launcher settings.
-    private static void apply(
+    private static void applyTheme(
             Path themePackDirectory,
             ThemePackManifest manifest,
             Theme theme,
-            ThemeResolveContext context,
-            boolean preserveBrightness) throws IOException {
+            ThemeResolveContext context) throws IOException {
         Objects.requireNonNull(themePackDirectory);
         Objects.requireNonNull(manifest);
         Objects.requireNonNull(theme);
@@ -385,7 +385,7 @@ public final class ThemePackManager {
             ThemeAppearance appearance = theme.resolve(context);
             LauncherSettings currentSettings = settings();
 
-            if (!preserveBrightness && appearance.brightness() != null) {
+            if (appearance.brightness() != null) {
                 currentSettings.themeBrightnessProperty().set(toLauncherBrightness(appearance.brightness()));
             }
             if (appearance.titleBar() != null && appearance.titleBar().transparent() != null) {
@@ -472,6 +472,19 @@ public final class ThemePackManager {
         return Objects.requireNonNullElse(settings().themeColorStyleProperty().get(), ResolvedTheme.DEFAULT.colorStyle());
     }
 
+    /// Returns the current launcher brightness as an explicit theme-pack directive, or `null` for auto mode.
+    private static @Nullable ThemeBrightness currentThemeBrightness() {
+        String brightness = settings().themeBrightnessProperty().get();
+        if (StringUtils.isBlank(brightness)) {
+            return null;
+        }
+        try {
+            return ThemeBrightness.parse(brightness);
+        } catch (IllegalArgumentException e) {
+            return null;
+        }
+    }
+
     /// Converts a theme-pack color directive into the launcher setting source type.
     private static ThemeColorType toThemeColorType(ThemeColorSource color) {
         return color.type() == ThemeColorSource.Type.WALLPAPER
@@ -519,8 +532,7 @@ public final class ThemePackManager {
         BackgroundType type = Objects.requireNonNullElse(settings().backgroundTypeProperty().get(), BackgroundType.DEFAULT);
         double opacity = currentBackgroundOpacity();
         return switch (type) {
-            case THEME -> new ResolvedBackground(BackgroundType.DEFAULT, null, null, null, opacity);
-            case DEFAULT -> new ResolvedBackground(BackgroundType.DEFAULT, null, null, null, opacity);
+            case THEME, DEFAULT -> new ResolvedBackground(BackgroundType.DEFAULT, null, null, null, opacity);
             case CLASSIC -> new ResolvedBackground(BackgroundType.CLASSIC, null, null, null, opacity);
             case CUSTOM -> {
                 @Nullable String customBackgroundImagePath = settings().customBackgroundImagePathProperty().get();
@@ -805,16 +817,12 @@ public final class ThemePackManager {
         return Math.max(0.0, Math.min(1.0, opacity));
     }
 
-    /// Returns the current launcher brightness as a theme-pack directive.
-    private static ThemeBrightness currentThemeBrightness() {
-        String brightness = settings().themeBrightnessProperty().get();
-        if (StringUtils.isBlank(brightness)) {
-            return ThemeBrightness.ADAPTIVE;
-        }
+    /// Parses a serialized JavaFX paint value.
+    private static Paint parsePaint(String value) throws IOException {
         try {
-            return ThemeBrightness.parse(brightness);
+            return Paint.valueOf(value);
         } catch (IllegalArgumentException e) {
-            return ThemeBrightness.ADAPTIVE;
+            throw new IOException("Invalid theme background paint: " + value, e);
         }
     }
 
@@ -823,17 +831,7 @@ public final class ThemePackManager {
         return switch (brightness) {
             case LIGHT -> "light";
             case DARK -> "dark";
-            case ADAPTIVE -> "auto";
         };
-    }
-
-    /// Parses a serialized JavaFX paint value.
-    private static Paint parsePaint(String value) throws IOException {
-        try {
-            return Paint.valueOf(value);
-        } catch (IllegalArgumentException e) {
-            throw new IOException("Invalid theme background paint: " + value, e);
-        }
     }
 
     /// Returns a non-blank string value.

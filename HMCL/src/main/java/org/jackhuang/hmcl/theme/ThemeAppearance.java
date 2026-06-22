@@ -36,7 +36,7 @@ import java.util.Objects;
 /// and a conditional patch.
 ///
 /// @param color the color seed source, or `null` when inherited
-/// @param brightness the brightness directive, or `null` when inherited
+/// @param brightness the controlled brightness, or `null` when inherited by a patch or not controlled by a resolved appearance
 /// @param colorStyle the MonetFX color style, or `null` when inherited
 /// @param contrast the MonetFX contrast level, or `null` when inherited
 /// @param background the background settings, or `null` when inherited
@@ -53,7 +53,7 @@ public record ThemeAppearance(
     /// JSON member name for the color seed.
     static final String FIELD_COLOR = "color";
 
-    /// JSON member name for the brightness directive.
+    /// JSON member name for the controlled launcher brightness.
     static final String FIELD_BRIGHTNESS = "brightness";
 
     /// JSON member name for the MonetFX color style.
@@ -71,7 +71,7 @@ public record ThemeAppearance(
     /// Creates an appearance patch.
     ///
     /// @param color the color seed source, or `null` when inherited
-    /// @param brightness the brightness directive, or `null` when inherited
+    /// @param brightness the controlled brightness, or `null` when inherited by a patch or not controlled by a resolved appearance
     /// @param colorStyle the MonetFX color style, or `null` when inherited
     /// @param contrast the MonetFX contrast level, or `null` when inherited
     /// @param background the background settings, or `null` when inherited
@@ -171,14 +171,14 @@ public record ThemeAppearance(
 
     /// Converts this appearance to concrete launcher theme values.
     ///
-    /// @param context the resolution context that provides adaptive brightness
+    /// @param context the resolution context that provides fallback brightness when this appearance does not control it
     /// @return the concrete theme used by MonetFX
     public ResolvedTheme toResolvedTheme(ThemeResolveContext context) {
         Objects.requireNonNull(context);
 
         ThemeColor resolvedColor = color != null ? color.resolveFallback() : ResolvedTheme.DEFAULT.primaryColorSeed();
         Brightness resolvedBrightness = brightness != null
-                ? brightness.resolve(context.brightness())
+                ? brightness.toMonetBrightness()
                 : context.brightness();
         ColorStyle resolvedColorStyle = colorStyle != null ? colorStyle : ResolvedTheme.DEFAULT.colorStyle();
         Contrast resolvedContrast = contrast != null ? contrast : Contrast.DEFAULT;
@@ -195,7 +195,7 @@ public record ThemeAppearance(
         return ThemeColorSource.fromJson(element);
     }
 
-    /// Reads the optional brightness directive field.
+    /// Reads the optional controlled brightness field.
     private static @Nullable ThemeBrightness readBrightness(JsonObject object) {
         @Nullable String value = readString(object, FIELD_BRIGHTNESS);
         if (value == null) {
