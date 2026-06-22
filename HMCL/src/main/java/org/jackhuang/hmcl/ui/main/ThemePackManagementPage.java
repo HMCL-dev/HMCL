@@ -33,6 +33,7 @@ import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.stage.FileChooser;
+import org.jackhuang.hmcl.setting.BackgroundType;
 import org.jackhuang.hmcl.theme.Theme;
 import org.jackhuang.hmcl.theme.ThemePackExporter;
 import org.jackhuang.hmcl.theme.ThemePackManager;
@@ -193,9 +194,11 @@ public final class ThemePackManagementPage extends ListPageBase<ThemePackManager
     /// Returns whether a package contains the currently selected launcher theme.
     private static boolean isCurrentThemePack(ThemePackManager.InstalledThemePack themePack) {
         @Nullable ThemeSelection selection = settings().themeProperty().get();
+        @Nullable ThemeSelection backgroundSelection = settings().backgroundThemeProperty().get();
         ThemePackManifest manifest = themePack.manifest();
-        return selection != null
-                && selection.packId().equals(manifest.id());
+        return selection != null && selection.packId().equals(manifest.id())
+                || settings().backgroundTypeProperty().get() == BackgroundType.THEME
+                && backgroundSelection != null && backgroundSelection.packId().equals(manifest.id());
     }
 
     /// Returns a display name for one theme-pack theme.

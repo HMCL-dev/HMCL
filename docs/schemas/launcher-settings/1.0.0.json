@@ -39,6 +39,12 @@
     "logLines": {
       "type": "integer"
     },
+    "theme": {
+      "$ref": "#/$defs/themeSelection"
+    },
+    "backgroundTheme": {
+      "$ref": "#/$defs/themeSelection"
+    },
     "themeBrightness": {
       "type": "string"
     },
@@ -80,6 +86,7 @@
     },
     "backgroundType": {
       "enum": [
+        "THEME",
         "DEFAULT",
         "CUSTOM",
         "CLASSIC",
@@ -166,6 +173,23 @@
         "OFFICIAL",
         "MIRROR"
       ]
+    },
+    "themeSelection": {
+      "type": "object",
+      "additionalProperties": true,
+      "required": [
+        "packId"
+      ],
+      "properties": {
+        "packId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "themeId": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
     },
     "accountID": {
       "type": "string",

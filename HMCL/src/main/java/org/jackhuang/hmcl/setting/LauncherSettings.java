@@ -245,6 +245,15 @@ public final class LauncherSettings extends ObservableSetting implements JsonSch
         return theme;
     }
 
+    /// The installed theme whose resolved background is used, or `null` when the background is local custom state.
+    @SerializedName("backgroundTheme")
+    private final ObjectProperty<@Nullable ThemeSelection> backgroundTheme = new SimpleObjectProperty<>();
+
+    /// Returns the selected installed background theme property.
+    public ObjectProperty<@Nullable ThemeSelection> backgroundThemeProperty() {
+        return backgroundTheme;
+    }
+
     /// The configured theme brightness identifier.
     @SerializedName("themeBrightness")
     private final StringProperty themeBrightness = new SimpleStringProperty("light");

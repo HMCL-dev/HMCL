@@ -258,6 +258,7 @@ public class PersonalizationPage extends StackPane {
         settings().customThemeColorProperty().set(ThemeColor.DEFAULT);
         settings().themeColorTypeProperty().set(ThemeColorType.CUSTOM);
         settings().themeColorStyleProperty().set(ColorStyle.FIDELITY);
+        settings().backgroundThemeProperty().set(null);
         settings().backgroundTypeProperty().set(BackgroundType.DEFAULT);
         settings().customBackgroundImagePathProperty().set(null);
         settings().networkBackgroundImageUrlProperty().set(null);
@@ -577,6 +578,7 @@ public class PersonalizationPage extends StackPane {
             backgroundSublist.setHasSubtitle(true);
 
             backgroundItem.loadChildren(Arrays.asList(
+                    new MultiFileItem.Option<>(i18n("launcher.background.theme"), BackgroundType.THEME),
                     new MultiFileItem.Option<>(i18n("launcher.background.default"), BackgroundType.DEFAULT)
                             .setTooltip(i18n("launcher.background.default.tooltip")),
                     new MultiFileItem.Option<>(i18n("launcher.background.classic"), BackgroundType.CLASSIC),
@@ -598,6 +600,12 @@ public class PersonalizationPage extends StackPane {
                                 BackgroundType.DEFAULT);
 
                         return switch (type) {
+                            case THEME -> {
+                                @Nullable ThemeSelection backgroundTheme = settings().backgroundThemeProperty().get();
+                                yield backgroundTheme != null
+                                        ? getMissingThemeChoiceDescription(backgroundTheme)
+                                        : i18n("launcher.background.theme");
+                            }
                             case DEFAULT -> i18n("launcher.background.default");
                             case CLASSIC -> i18n("launcher.background.classic");
                             case CUSTOM -> settings().customBackgroundImagePathProperty().get();
@@ -609,6 +617,7 @@ public class PersonalizationPage extends StackPane {
                         };
                     },
                     backgroundItem.selectedDataProperty(),
+                    settings().backgroundThemeProperty(),
                     settings().customBackgroundImagePathProperty(),
                     settings().networkBackgroundImageUrlProperty(),
                     settings().customBackgroundPaintProperty()));

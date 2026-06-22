@@ -27,7 +27,6 @@ import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
 import javafx.event.EventHandler;
 import javafx.scene.paint.Color;
-import javafx.scene.paint.Paint;
 import javafx.stage.Stage;
 import javafx.stage.WindowEvent;
 import org.glavo.monetfx.Brightness;
@@ -37,7 +36,6 @@ import org.glavo.monetfx.Contrast;
 import org.glavo.monetfx.beans.property.ColorSchemeProperty;
 import org.glavo.monetfx.beans.property.ReadOnlyColorSchemeProperty;
 import org.glavo.monetfx.beans.property.SimpleColorSchemeProperty;
-import org.jackhuang.hmcl.setting.BackgroundType;
 import org.jackhuang.hmcl.setting.ThemeColorType;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.MacOSNativeUtils;
@@ -76,6 +74,7 @@ public final class Themes {
             observables.add(settings().customThemeColorProperty());
             observables.add(settings().themeColorTypeProperty());
             observables.add(settings().themeColorStyleProperty());
+            observables.add(settings().backgroundThemeProperty());
             observables.add(settings().backgroundTypeProperty());
             observables.add(settings().customBackgroundImagePathProperty());
             observables.add(settings().customBackgroundPaintProperty());
@@ -122,29 +121,26 @@ public final class Themes {
 
         /// Returns a Monet seed color extracted from the current background when possible.
         private ThemeColor getBackgroundThemeColor(ThemeColor fallback) {
-            BackgroundType backgroundType = Objects.requireNonNullElse(settings().backgroundTypeProperty().get(), BackgroundType.DEFAULT);
-            return switch (backgroundType) {
-                case CUSTOM -> getImageThemeColor(fallback);
-                case PAINT -> {
-                    @Nullable Paint paint = settings().customBackgroundPaintProperty().get();
-                    yield paint instanceof Color color ? ThemeColor.of(color) : fallback;
-                }
-                case DEFAULT, CLASSIC, NETWORK -> fallback;
-            };
+            try {
+                ThemePackManager.ResolvedBackground background =
+                        ThemePackManager.resolveCurrentBackground(ThemeResolveContext.current(getBrightness()));
+                return switch (background.type()) {
+                    case CUSTOM -> getImageThemeColor(background.imagePath(), fallback);
+                    case PAINT -> background.paint() instanceof Color color ? ThemeColor.of(color) : fallback;
+                    case THEME, DEFAULT, CLASSIC, NETWORK -> fallback;
+                };
+            } catch (IOException | RuntimeException e) {
+                return fallback;
+            }
         }
 
         /// Returns a Monet seed color extracted from the current custom background image.
-        private ThemeColor getImageThemeColor(ThemeColor fallback) {
-            @Nullable String customBackgroundImagePath = settings().customBackgroundImagePathProperty().get();
-            if (customBackgroundImagePath == null || customBackgroundImagePath.isBlank()) {
+        private ThemeColor getImageThemeColor(@Nullable Path imageFile, ThemeColor fallback) {
+            if (imageFile == null) {
                 return fallback;
             }
 
             try {
-                @Nullable ThemePackResourceURL resourceURL = ThemePackResourceURL.parse(customBackgroundImagePath);
-                Path imageFile = resourceURL != null
-                        ? resourceURL.resolve()
-                        : Path.of(customBackgroundImagePath).toAbsolutePath().normalize();
                 if (!Files.isRegularFile(imageFile)) {
                     return fallback;
                 }

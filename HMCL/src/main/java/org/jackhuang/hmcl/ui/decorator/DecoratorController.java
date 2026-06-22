@@ -40,7 +40,7 @@ import org.jackhuang.hmcl.auth.authlibinjector.AuthlibInjectorDnD;
 import org.jackhuang.hmcl.setting.BackgroundType;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
-import org.jackhuang.hmcl.theme.ThemePackResourceURL;
+import org.jackhuang.hmcl.theme.ThemePackManager;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.DialogUtils;
 import org.jackhuang.hmcl.ui.FXUtils;
@@ -94,6 +94,7 @@ public class DecoratorController {
         decorator.setContentBackground(getBackground());
         changeBackgroundListener = o -> updateBackground();
         WeakInvalidationListener weakListener = new WeakInvalidationListener(changeBackgroundListener);
+        settings().backgroundThemeProperty().addListener(weakListener);
         settings().backgroundTypeProperty().addListener(weakListener);
         settings().customBackgroundImagePathProperty().addListener(weakListener);
         settings().networkBackgroundImageUrlProperty().addListener(weakListener);
@@ -185,26 +186,36 @@ public class DecoratorController {
     }
 
     private Background getBackground() {
-        BackgroundType imageType = settings().backgroundTypeProperty().get();
+        ThemePackManager.ResolvedBackground resolvedBackground;
+        try {
+            resolvedBackground = ThemePackManager.resolveCurrentBackground(ThemePackManager.currentResolveContext());
+        } catch (IOException | RuntimeException e) {
+            LOG.warning("Couldn't resolve selected background", e);
+            resolvedBackground = ThemePackManager.resolveCustomBackground();
+        }
+
+        BackgroundType imageType = resolvedBackground.type();
         if (imageType == null)
             imageType = BackgroundType.DEFAULT;
 
         Image image = null;
         switch (imageType) {
+            case THEME:
+            case DEFAULT:
+                break;
             case CUSTOM:
-                String customBackgroundImagePath = settings().customBackgroundImagePathProperty().get();
-                if (customBackgroundImagePath != null)
+                Path imagePath = resolvedBackground.imagePath();
+                if (imagePath != null)
                     try {
-                        Path path = resolveCustomBackground(customBackgroundImagePath);
-                        image = Files.isDirectory(path)
-                                ? randomImageIn(path)
-                                : tryLoadImage(path);
+                        image = Files.isDirectory(imagePath)
+                                ? randomImageIn(imagePath)
+                                : tryLoadImage(imagePath);
                     } catch (Exception e) {
                         LOG.warning("Couldn't load background image", e);
                     }
                 break;
             case NETWORK:
-                String networkBackgroundImageUrl = settings().networkBackgroundImageUrlProperty().get();
+                String networkBackgroundImageUrl = resolvedBackground.networkImageUrl();
                 if (networkBackgroundImageUrl != null) {
                     try {
                         image = FXUtils.loadImage(WebURL.parseBrowserInput(networkBackgroundImageUrl));
@@ -217,8 +228,8 @@ public class DecoratorController {
                 image = newBuiltinImage("/assets/img/background-classic.jpg");
                 break;
             case PAINT:
-                Paint paint = settings().customBackgroundPaintProperty().get();
-                double opacity = MathUtils.clamp(settings().backgroundOpacityProperty().get(), 0., 1.);
+                Paint paint = resolvedBackground.paint();
+                double opacity = MathUtils.clamp(resolvedBackground.opacity(), 0., 1.);
                 if (paint instanceof Color || paint == null) {
                     Color color = (Color) paint;
                     if (color == null)
@@ -234,15 +245,7 @@ public class DecoratorController {
         if (image == null) {
             image = loadDefaultBackgroundImage();
         }
-        return createBackgroundWithOpacity(image, settings().backgroundOpacityProperty().get());
-    }
-
-    /// Resolves a custom background setting to a local file or directory.
-    private Path resolveCustomBackground(String customBackgroundImagePath) throws IOException {
-        ThemePackResourceURL resourceURL = ThemePackResourceURL.parse(customBackgroundImagePath);
-        if (resourceURL != null)
-            return resourceURL.resolve();
-        return Path.of(customBackgroundImagePath);
+        return createBackgroundWithOpacity(image, resolvedBackground.opacity());
     }
 
     private Background createBackgroundWithOpacity(Image image, double opacity) {

@@ -96,22 +96,29 @@ public final class ThemePackManagerTest {
             assertEquals(ColorStyle.EXPRESSIVE, settings.themeColorStyleProperty().get());
             assertEquals("dark", settings.themeBrightnessProperty().get());
             assertEquals(new ThemeSelection("example.ui", null), settings.themeProperty().get());
+            assertEquals(new ThemeSelection("example.ui", null), settings.backgroundThemeProperty().get());
             JsonObject themeJson = LauncherSettings.SETTINGS_GSON.toJsonTree(settings)
                     .getAsJsonObject()
                     .getAsJsonObject("theme");
             assertEquals("example.ui", themeJson.get("packId").getAsString());
             assertFalse(themeJson.has("themeId"));
+            JsonObject backgroundThemeJson = LauncherSettings.SETTINGS_GSON.toJsonTree(settings)
+                    .getAsJsonObject()
+                    .getAsJsonObject("backgroundTheme");
+            assertEquals("example.ui", backgroundThemeJson.get("packId").getAsString());
+            assertFalse(backgroundThemeJson.has("themeId"));
             assertTrue(settings.titleTransparentProperty().get());
-            assertEquals(BackgroundType.CUSTOM, settings.backgroundTypeProperty().get());
+            assertEquals(BackgroundType.THEME, settings.backgroundTypeProperty().get());
             assertEquals(0.75, settings.backgroundOpacityProperty().get());
+            assertNull(settings.customBackgroundImagePathProperty().get());
             assertNull(settings.networkBackgroundImageUrlProperty().get());
             assertNull(settings.customBackgroundPaintProperty().get());
 
-            ThemePackResourceURL backgroundResource = ThemePackResourceURL.parse(settings.customBackgroundImagePathProperty().get());
-            assertNotNull(backgroundResource);
-            assertEquals("example.ui", backgroundResource.packId());
-            assertEquals("assets/wallpapers/wallpaper.png", backgroundResource.entryName());
-            assertEquals(installedDirectory.resolve("assets/wallpapers/wallpaper.png"), backgroundResource.resolve());
+            ThemePackManager.ResolvedBackground resolvedBackground = ThemePackManager.resolveCurrentBackground(
+                    new ThemeResolveContext(Brightness.LIGHT, "linux", "en"));
+            assertEquals(BackgroundType.CUSTOM, resolvedBackground.type());
+            assertEquals(installedDirectory.resolve("assets/wallpapers/wallpaper.png"), resolvedBackground.imagePath());
+            assertEquals(0.75, resolvedBackground.opacity());
         } finally {
             deleteRecursively(installedDirectory);
         }
@@ -194,21 +201,6 @@ public final class ThemePackManagerTest {
             assertEquals(ThemeBackground.Type.CLASSIC, background.effectiveType());
             assertEquals(0.5, background.opacity());
         }
-    }
-
-    /// Tests theme-pack resource URL serialization and parsing.
-    @Test
-    public void testThemePackResourceURLRoundTrip() {
-        ThemePackResourceURL resource = new ThemePackResourceURL(
-                "example.pack",
-                "assets/wall papers/a+b.png");
-
-        String serialized = resource.toString();
-
-        assertEquals("hmcl://theme-pack/example.pack/assets/wall%20papers/a+b.png", serialized);
-        assertEquals(resource, ThemePackResourceURL.parse(serialized));
-        assertNull(ThemePackResourceURL.parse("/tmp/background.png"));
-        assertNull(ThemePackResourceURL.parse("C:\\background.png"));
     }
 
     /// Creates a test directory under the build directory.

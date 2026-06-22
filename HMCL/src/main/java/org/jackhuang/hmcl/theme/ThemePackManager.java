@@ -107,6 +107,35 @@ public final class ThemePackManager {
         }
     }
 
+    /// A concrete launcher background resolved from either custom settings or a selected theme.
+    ///
+    /// @param type the launcher background source type
+    /// @param imagePath the resolved local image file or directory, or `null` when not using a local image
+    /// @param networkImageUrl the remote image URL, or `null` when not using a network image
+    /// @param paint the resolved background paint, or `null` when not using a paint background
+    /// @param opacity the background opacity clamped to `[0, 1]`
+    public record ResolvedBackground(
+            BackgroundType type,
+            @Nullable Path imagePath,
+            @Nullable String networkImageUrl,
+            @Nullable Paint paint,
+            double opacity) {
+        /// Creates a resolved launcher background.
+        ///
+        /// @param type the launcher background source type
+        /// @param imagePath the resolved local image file or directory, or `null` when not using a local image
+        /// @param networkImageUrl the remote image URL, or `null` when not using a network image
+        /// @param paint the resolved background paint, or `null` when not using a paint background
+        /// @param opacity the background opacity clamped to `[0, 1]`
+        public ResolvedBackground {
+            Objects.requireNonNull(type);
+            if (!Double.isFinite(opacity)) {
+                opacity = 1.0;
+            }
+            opacity = Math.max(0.0, Math.min(1.0, opacity));
+        }
+    }
+
     /// Loads and parses a theme-pack file.
     ///
     /// @param file the theme-pack file
@@ -245,6 +274,11 @@ public final class ThemePackManager {
                 && selection.packId().equals(manifest.id())) {
             settings().themeProperty().set(null);
         }
+        @Nullable ThemeSelection backgroundSelection = settings().backgroundThemeProperty().get();
+        if (backgroundSelection != null
+                && backgroundSelection.packId().equals(manifest.id())) {
+            settings().backgroundThemeProperty().set(null);
+        }
     }
 
     /// Applies one theme from a loaded theme pack to current launcher settings.
@@ -293,6 +327,7 @@ public final class ThemePackManager {
         Objects.requireNonNull(theme);
         Objects.requireNonNull(context);
 
+        ThemeSelection selection = new ThemeSelection(manifest.id(), theme.id());
         ThemeAppearance appearance = theme.resolve(context);
         LauncherSettings currentSettings = settings();
 
@@ -303,7 +338,7 @@ public final class ThemePackManager {
             currentSettings.titleTransparentProperty().set(appearance.titleBar().transparent());
         }
         if (appearance.background() != null) {
-            applyBackground(manifest, themePackDirectory.toAbsolutePath().normalize(), appearance.background());
+            applyBackground(selection, themePackDirectory.toAbsolutePath().normalize(), appearance.background());
         }
         if (appearance.colorStyle() != null) {
             currentSettings.themeColorStyleProperty().set(appearance.colorStyle());
@@ -313,7 +348,7 @@ public final class ThemePackManager {
             currentSettings.customThemeColorProperty().set(resolveThemeColor(themePackDirectory, appearance));
         }
 
-        currentSettings.themeProperty().set(new ThemeSelection(manifest.id(), theme.id()));
+        currentSettings.themeProperty().set(selection);
     }
 
     /// Exports the current launcher appearance to a theme-pack file.
@@ -394,48 +429,140 @@ public final class ThemePackManager {
         return ThemeResolveContext.current(Themes.getTheme().brightness());
     }
 
+    /// Resolves the background currently selected by launcher settings.
+    ///
+    /// When [LauncherSettings#backgroundTypeProperty()] is [BackgroundType#THEME], this resolves the selected
+    /// background theme first. Other background types are resolved from the launcher custom background fields.
+    ///
+    /// @param context the condition resolution context
+    /// @return the currently effective launcher background
+    /// @throws IOException if the referenced theme pack exists but its background cannot be resolved
+    public static ResolvedBackground resolveCurrentBackground(ThemeResolveContext context) throws IOException {
+        Objects.requireNonNull(context);
+
+        BackgroundType type = Objects.requireNonNullElse(settings().backgroundTypeProperty().get(), BackgroundType.DEFAULT);
+        if (type == BackgroundType.THEME) {
+            @Nullable ThemeSelection selection = settings().backgroundThemeProperty().get();
+            if (selection != null) {
+                @Nullable ResolvedBackground resolved = resolveThemeBackground(selection, context);
+                if (resolved != null) {
+                    return resolved;
+                }
+            }
+            return new ResolvedBackground(BackgroundType.DEFAULT, null, null, null, currentBackgroundOpacity());
+        }
+
+        return resolveCustomBackground();
+    }
+
+    /// Resolves the launcher custom background fields without considering theme-pack background references.
+    ///
+    /// @return the custom launcher background settings
+    public static ResolvedBackground resolveCustomBackground() {
+        BackgroundType type = Objects.requireNonNullElse(settings().backgroundTypeProperty().get(), BackgroundType.DEFAULT);
+        double opacity = currentBackgroundOpacity();
+        return switch (type) {
+            case THEME -> new ResolvedBackground(BackgroundType.DEFAULT, null, null, null, opacity);
+            case DEFAULT -> new ResolvedBackground(BackgroundType.DEFAULT, null, null, null, opacity);
+            case CLASSIC -> new ResolvedBackground(BackgroundType.CLASSIC, null, null, null, opacity);
+            case CUSTOM -> {
+                @Nullable String customBackgroundImagePath = settings().customBackgroundImagePathProperty().get();
+                @Nullable Path imagePath = StringUtils.isBlank(customBackgroundImagePath)
+                        ? null
+                        : Path.of(customBackgroundImagePath).toAbsolutePath().normalize();
+                yield new ResolvedBackground(BackgroundType.CUSTOM, imagePath, null, null, opacity);
+            }
+            case NETWORK -> {
+                @Nullable String networkBackgroundImageUrl = settings().networkBackgroundImageUrlProperty().get();
+                yield new ResolvedBackground(
+                        BackgroundType.NETWORK,
+                        null,
+                        StringUtils.isBlank(networkBackgroundImageUrl) ? null : networkBackgroundImageUrl.trim(),
+                        null,
+                        opacity);
+            }
+            case PAINT -> new ResolvedBackground(
+                    BackgroundType.PAINT,
+                    null,
+                    null,
+                    settings().customBackgroundPaintProperty().get(),
+                    opacity);
+        };
+    }
+
+    /// Resolves the background contributed by a selected installed theme.
+    ///
+    /// @param selection the selected theme reference
+    /// @param context the condition resolution context
+    /// @return the resolved background, or `null` when the theme or background is not available
+    /// @throws IOException if the installed theme pack exists but its background cannot be resolved
+    public static @Nullable ResolvedBackground resolveThemeBackground(
+            ThemeSelection selection,
+            ThemeResolveContext context) throws IOException {
+        Objects.requireNonNull(selection);
+        Objects.requireNonNull(context);
+
+        @Nullable InstalledThemePack themePack = findInstalled(selection);
+        if (themePack == null) {
+            return null;
+        }
+
+        @Nullable Theme theme = themePack.manifest().findTheme(selection.themeId());
+        if (theme == null) {
+            return null;
+        }
+
+        ThemeAppearance appearance = theme.resolve(context);
+        @Nullable ThemeBackground background = appearance.background();
+        if (background == null) {
+            return null;
+        }
+        return resolveBackground(themePack.directory(), background, currentBackgroundOpacity());
+    }
+
     /// Applies background fields from a resolved theme appearance.
     private static void applyBackground(
-            ThemePackManifest manifest,
+            ThemeSelection selection,
             Path themePackDirectory,
             ThemeBackground background) throws IOException {
-        Objects.requireNonNull(manifest);
+        Objects.requireNonNull(selection);
 
+        resolveBackground(themePackDirectory, background, currentBackgroundOpacity());
         LauncherSettings currentSettings = settings();
         if (background.opacity() != null) {
             currentSettings.backgroundOpacityProperty().set(background.opacity());
         }
+        currentSettings.backgroundThemeProperty().set(selection);
+        currentSettings.backgroundTypeProperty().set(BackgroundType.THEME);
+    }
 
-        switch (background.effectiveType()) {
-            case DEFAULT -> {
-                currentSettings.backgroundTypeProperty().set(BackgroundType.DEFAULT);
-                clearBackgroundSources();
-            }
-            case CLASSIC -> {
-                currentSettings.backgroundTypeProperty().set(BackgroundType.CLASSIC);
-                clearBackgroundSources();
-            }
-            case IMAGE -> {
-                String path = requireNonBlank(background.path(), "background.path");
-                resolveInstalledAsset(themePackDirectory, path);
-                currentSettings.backgroundTypeProperty().set(BackgroundType.CUSTOM);
-                currentSettings.customBackgroundImagePathProperty().set(ThemePackResourceURL.of(manifest, path).toString());
-                currentSettings.networkBackgroundImageUrlProperty().set(null);
-                currentSettings.customBackgroundPaintProperty().set(null);
-            }
-            case NETWORK -> {
-                currentSettings.backgroundTypeProperty().set(BackgroundType.NETWORK);
-                currentSettings.networkBackgroundImageUrlProperty().set(requireNonBlank(background.url(), "background.url"));
-                currentSettings.customBackgroundImagePathProperty().set(null);
-                currentSettings.customBackgroundPaintProperty().set(null);
-            }
-            case PAINT -> {
-                currentSettings.backgroundTypeProperty().set(BackgroundType.PAINT);
-                currentSettings.customBackgroundPaintProperty().set(parsePaint(requireNonBlank(background.paint(), "background.paint")));
-                currentSettings.customBackgroundImagePathProperty().set(null);
-                currentSettings.networkBackgroundImageUrlProperty().set(null);
-            }
-        }
+    /// Resolves a concrete launcher background from a theme-pack background object.
+    private static ResolvedBackground resolveBackground(
+            Path themePackDirectory,
+            ThemeBackground background,
+            double opacity) throws IOException {
+        return switch (background.effectiveType()) {
+            case DEFAULT -> new ResolvedBackground(BackgroundType.DEFAULT, null, null, null, opacity);
+            case CLASSIC -> new ResolvedBackground(BackgroundType.CLASSIC, null, null, null, opacity);
+            case IMAGE -> new ResolvedBackground(
+                    BackgroundType.CUSTOM,
+                    resolveInstalledAsset(themePackDirectory, requireNonBlank(background.path(), "background.path")),
+                    null,
+                    null,
+                    opacity);
+            case NETWORK -> new ResolvedBackground(
+                    BackgroundType.NETWORK,
+                    null,
+                    requireNonBlank(background.url(), "background.url"),
+                    null,
+                    opacity);
+            case PAINT -> new ResolvedBackground(
+                    BackgroundType.PAINT,
+                    null,
+                    null,
+                    parsePaint(requireNonBlank(background.paint(), "background.paint")),
+                    opacity);
+        };
     }
 
     /// Resolves a concrete launcher color from a theme appearance.
@@ -462,13 +589,6 @@ public final class ThemePackManager {
             }
             case DEFAULT, CLASSIC, NETWORK -> fallback;
         };
-    }
-
-    /// Clears background source fields that are irrelevant for built-in backgrounds.
-    private static void clearBackgroundSources() {
-        settings().customBackgroundImagePathProperty().set(null);
-        settings().networkBackgroundImageUrlProperty().set(null);
-        settings().customBackgroundPaintProperty().set(null);
     }
 
     /// Resolves one asset referenced by an installed theme.
@@ -577,34 +697,36 @@ public final class ThemePackManager {
 
     /// Creates the background model for the current launcher settings.
     private static ThemeBackground createCurrentBackground(List<ThemePackAsset> assets) throws IOException {
-        BackgroundType type = Objects.requireNonNullElse(settings().backgroundTypeProperty().get(), BackgroundType.DEFAULT);
-
-        Double opacity = currentBackgroundOpacity();
-        return switch (type) {
-            case DEFAULT -> new ThemeBackground(ThemeBackground.Type.DEFAULT, null, null, null, opacity);
+        ResolvedBackground background = resolveCurrentBackground(currentResolveContext());
+        Double opacity = background.opacity();
+        return switch (background.type()) {
+            case THEME, DEFAULT -> new ThemeBackground(ThemeBackground.Type.DEFAULT, null, null, null, opacity);
             case CLASSIC -> new ThemeBackground(ThemeBackground.Type.CLASSIC, null, null, null, opacity);
-            case CUSTOM -> createCurrentImageBackground(assets, opacity);
+            case CUSTOM -> createCurrentImageBackground(assets, background.imagePath(), opacity);
             case NETWORK -> new ThemeBackground(
                     ThemeBackground.Type.NETWORK,
                     null,
-                    requireNonBlank(settings().networkBackgroundImageUrlProperty().get(), "networkBackgroundImageUrl"),
+                    requireNonBlank(background.networkImageUrl(), "networkBackgroundImageUrl"),
                     null,
                     opacity);
             case PAINT -> new ThemeBackground(
                     ThemeBackground.Type.PAINT,
                     null,
                     null,
-                    Objects.requireNonNullElse(settings().customBackgroundPaintProperty().get(), Color.WHITE).toString(),
+                    Objects.requireNonNullElse(background.paint(), Color.WHITE).toString(),
                     opacity);
         };
     }
 
     /// Creates the image background model for the current launcher settings.
-    private static ThemeBackground createCurrentImageBackground(List<ThemePackAsset> assets, Double opacity) throws IOException {
-        String customBackgroundImagePath = requireNonBlank(
-                settings().customBackgroundImagePathProperty().get(),
-                "customBackgroundImagePath");
-        Path source = resolveCustomBackgroundImageSource(customBackgroundImagePath);
+    private static ThemeBackground createCurrentImageBackground(
+            List<ThemePackAsset> assets,
+            @Nullable Path imagePath,
+            Double opacity) throws IOException {
+        if (imagePath == null) {
+            throw new IOException("Theme background image path is not configured");
+        }
+        Path source = imagePath.toAbsolutePath().normalize();
         if (Files.isDirectory(source)) {
             throw new IOException("Cannot export a background directory as a theme-pack asset: " + source);
         }
@@ -615,15 +737,6 @@ public final class ThemePackManager {
         String entryName = "assets/background/" + sanitizePathSegment(source.getFileName().toString());
         assets.add(new ThemePackAsset(source, entryName));
         return new ThemeBackground(ThemeBackground.Type.IMAGE, entryName, null, null, opacity);
-    }
-
-    /// Resolves a launcher custom background image path to a local file.
-    private static Path resolveCustomBackgroundImageSource(String customBackgroundImagePath) throws IOException {
-        @Nullable ThemePackResourceURL resourceURL = ThemePackResourceURL.parse(customBackgroundImagePath);
-        if (resourceURL != null) {
-            return resourceURL.resolve();
-        }
-        return Path.of(customBackgroundImagePath).toAbsolutePath().normalize();
     }
 
     /// Returns the current launcher background opacity.
