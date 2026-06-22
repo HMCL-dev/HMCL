@@ -104,7 +104,7 @@ public final class ThemePackManagerTest {
 
             LauncherSettings settings = SettingsManager.settings();
             assertEquals(ThemeColor.of("#248C44"), settings.customThemeColorProperty().get());
-            assertEquals(ThemeColorType.BACKGROUND, settings.themeColorTypeProperty().get());
+            assertEquals(ThemeColorType.DEFAULT, settings.themeColorTypeProperty().get());
             assertEquals(ColorStyle.EXPRESSIVE, settings.themeColorStyleProperty().get());
             assertEquals("dark", settings.themeBrightnessProperty().get());
             assertEquals(new ThemeSelection("example.ui", null), settings.themeProperty().get());
@@ -125,6 +125,15 @@ public final class ThemePackManagerTest {
             assertEquals(BackgroundType.CUSTOM, resolvedBackground.type());
             assertEquals(cachedWallpaper, resolvedBackground.imagePath());
             assertEquals(0.75, resolvedBackground.opacity());
+
+            settings.customThemeColorProperty().set(Objects.requireNonNull(ThemeColor.of("#663399")));
+            assertEquals(ThemeColor.of("#248C44"), Themes.resolveCurrentThemeColor());
+
+            Path exportedThemePackFile = tempDir.resolve("exported" + ThemePackExporter.FILE_EXTENSION);
+            ThemePackManager.exportCurrent(exportedThemePackFile, "com.example.exported", "Exported", "Test Author");
+            Theme exportedTheme = ThemePackManager.load(exportedThemePackFile).manifest().findTheme(null);
+            assertNotNull(exportedTheme);
+            assertEquals(ThemeColorSource.wallpaper(), exportedTheme.appearance().color());
         } finally {
             deleteRecursively(installedFile);
             deleteRecursively(installedCacheDirectory);
@@ -302,6 +311,25 @@ public final class ThemePackManagerTest {
         }
     }
 
+    /// Tests exporting the default theme color without a selected theme uses the launcher default seed.
+    @Test
+    public void testExportDefaultThemeColorWithoutSelectedThemeUsesLauncherDefault() throws Exception {
+        try (SettingsScope ignored = new SettingsScope()) {
+            LauncherSettings settings = SettingsManager.settings();
+            settings.customThemeColorProperty().set(Objects.requireNonNull(ThemeColor.of("#663399")));
+            settings.themeColorTypeProperty().set(ThemeColorType.DEFAULT);
+
+            Path tempDir = createTestDirectory("export-default-theme-color");
+            Path output = tempDir.resolve("default-theme-color" + ThemePackExporter.FILE_EXTENSION);
+            ThemePackManager.exportCurrent(output, "com.example.default-theme-color", "Default Theme Color", "Test Author");
+
+            ThemePackManifest manifest = ThemePackManager.load(output).manifest();
+            Theme theme = manifest.findTheme(null);
+            assertNotNull(theme);
+            assertEquals(ThemeColorSource.custom(ThemeColor.DEFAULT), theme.appearance().color());
+        }
+    }
+
     /// Tests exporting the theme-color background option with wallpaper theme colors uses the default seed.
     @Test
     public void testExportCurrentThemeColorBackgroundUsesDefaultThemeColor() throws Exception {
@@ -373,6 +401,19 @@ public final class ThemePackManagerTest {
                         Objects.requireNonNull(ThemeColor.of("#663399")),
                         ThemeColorType.BACKGROUND,
                         BackgroundType.THEME_COLOR));
+    }
+
+    /// Tests that the default theme color type falls back to the launcher default seed without a selected theme.
+    @Test
+    public void testDefaultThemeColorWithoutSelectedThemeUsesLauncherDefault() throws Exception {
+        try (SettingsScope ignored = new SettingsScope()) {
+            LauncherSettings settings = SettingsManager.settings();
+            settings.customThemeColorProperty().set(Objects.requireNonNull(ThemeColor.of("#663399")));
+            settings.themeColorTypeProperty().set(ThemeColorType.DEFAULT);
+            settings.themeProperty().set(null);
+
+            assertEquals(ThemeColor.DEFAULT, Themes.resolveCurrentThemeColor());
+        }
     }
 
     /// Creates a test directory under the build directory.

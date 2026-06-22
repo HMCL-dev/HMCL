@@ -267,7 +267,7 @@ public class PersonalizationPage extends StackPane {
     private static void applyDefaultTheme() {
         settings().themeBrightnessProperty().set("light");
         settings().customThemeColorProperty().set(ThemeColor.DEFAULT);
-        settings().themeColorTypeProperty().set(ThemeColorType.CUSTOM);
+        settings().themeColorTypeProperty().set(ThemeColorType.DEFAULT);
         settings().themeColorStyleProperty().set(ColorStyle.FIDELITY);
         settings().backgroundTypeProperty().set(BackgroundType.DEFAULT);
         settings().builtinBackgroundNameProperty().set(BackgroundType.BUILTIN_DEFAULT);
@@ -537,7 +537,7 @@ public class PersonalizationPage extends StackPane {
             themeColorSublist.descriptionProperty().bind(Bindings.createStringBinding(() -> {
                         ThemeColorType type = Lang.requireNonNullElse(
                                 settings().themeColorTypeProperty().get(),
-                                ThemeColorType.CUSTOM);
+                                ThemeColorType.DEFAULT);
                         return i18n("settings.launcher.theme_color_type." + type.name().toLowerCase(Locale.ROOT));
                     },
                     settings().themeColorTypeProperty()));
@@ -546,6 +546,10 @@ public class PersonalizationPage extends StackPane {
             picker.getCustomColors().setAll(ThemeColor.STANDARD_COLORS.stream().map(ThemeColor::color).toList());
             ThemeColor.bindBidirectional(picker, settings().customThemeColorProperty());
             Platform.runLater(() -> JFXDepthManager.setDepth(picker, 0));
+
+            var defaultColorChoice = new RadioChoiceList.Choice<>(
+                    i18n("settings.launcher.theme_color_type.default"),
+                    ThemeColorType.DEFAULT);
 
             var customColorChoice = new RadioChoiceList.Choice<>(
                     i18n("settings.launcher.theme_color_type.custom"),
@@ -562,8 +566,8 @@ public class PersonalizationPage extends StackPane {
                     ThemeColorType.BACKGROUND);
 
             var themeColorChoiceList = new RadioChoiceList<ThemeColorType>();
-            themeColorChoiceList.setFallbackValue(ThemeColorType.CUSTOM);
-            themeColorChoiceList.setChoices(Arrays.asList(customColorChoice, backgroundColorChoice));
+            themeColorChoiceList.setFallbackValue(ThemeColorType.DEFAULT);
+            themeColorChoiceList.setChoices(Arrays.asList(defaultColorChoice, customColorChoice, backgroundColorChoice));
             themeColorChoiceList.selectedValueProperty().bindBidirectional(settings().themeColorTypeProperty());
 
             themeColorSublist.getContent().setAll(themeColorChoiceList);

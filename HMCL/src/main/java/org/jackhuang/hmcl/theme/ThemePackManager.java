@@ -398,7 +398,7 @@ public final class ThemePackManager {
                 currentSettings.themeColorStyleProperty().set(appearance.colorStyle());
             }
             if (appearance.color() != null) {
-                currentSettings.themeColorTypeProperty().set(toThemeColorType(appearance.color()));
+                currentSettings.themeColorTypeProperty().set(ThemeColorType.DEFAULT);
                 currentSettings.customThemeColorProperty().set(resolveThemeColor(themePackFile, appearance));
             }
 
@@ -459,10 +459,21 @@ public final class ThemePackManager {
     }
 
     /// Returns the current launcher theme color source as a theme-pack directive.
-    private static ThemeColorSource currentThemeColorSource() {
-        ThemeColorType themeColorType = Objects.requireNonNullElse(settings().themeColorTypeProperty().get(), ThemeColorType.CUSTOM);
+    private static ThemeColorSource currentThemeColorSource() throws IOException {
+        ThemeColorType themeColorType = Objects.requireNonNullElse(settings().themeColorTypeProperty().get(), ThemeColorType.DEFAULT);
+        BackgroundType backgroundType = Objects.requireNonNullElse(settings().backgroundTypeProperty().get(), BackgroundType.DEFAULT);
+        if (themeColorType == ThemeColorType.DEFAULT) {
+            @Nullable ThemeColorSource colorSource = resolveCurrentThemeColorSource(currentResolveContext());
+            if (colorSource != null) {
+                if (colorSource instanceof ThemeColorSource.Wallpaper && backgroundType == BackgroundType.THEME_COLOR) {
+                    return ThemeColorSource.custom(ThemeColor.DEFAULT);
+                }
+                return colorSource;
+            }
+            return ThemeColorSource.custom(ThemeColor.DEFAULT);
+        }
         if (themeColorType == ThemeColorType.BACKGROUND) {
-            if (settings().backgroundTypeProperty().get() == BackgroundType.THEME_COLOR) {
+            if (backgroundType == BackgroundType.THEME_COLOR) {
                 return ThemeColorSource.custom(ThemeColor.DEFAULT);
             }
             return ThemeColorSource.wallpaper();
@@ -490,11 +501,71 @@ public final class ThemePackManager {
         };
     }
 
-    /// Converts a theme-pack color directive into the launcher setting source type.
-    private static ThemeColorType toThemeColorType(ThemeColorSource color) {
-        return color instanceof ThemeColorSource.Wallpaper
-                ? ThemeColorType.BACKGROUND
-                : ThemeColorType.CUSTOM;
+    /// Resolves the current selected theme color source into a concrete launcher theme color.
+    ///
+    /// @param context the condition resolution context
+    /// @param fallback the color used when no selected theme color source is available
+    /// @param backgroundType the current launcher background type
+    /// @return the resolved theme color
+    /// @throws IOException if the selected theme pack exists but its referenced color assets cannot be read
+    static ThemeColor resolveCurrentThemeColor(
+            ThemeResolveContext context,
+            ThemeColor fallback,
+            BackgroundType backgroundType) throws IOException {
+        Objects.requireNonNull(context);
+        Objects.requireNonNull(fallback);
+        Objects.requireNonNull(backgroundType);
+
+        @Nullable ThemeSelection selection = settings().themeProperty().get();
+        if (selection == null) {
+            return fallback;
+        }
+
+        @Nullable InstalledThemePack themePack = findInstalled(selection);
+        if (themePack == null) {
+            return fallback;
+        }
+
+        @Nullable Theme theme = themePack.manifest().findTheme(selection.themeId());
+        if (theme == null) {
+            return fallback;
+        }
+
+        ThemeAppearance appearance = theme.resolve(context);
+        @Nullable ThemeColorSource color = appearance.color();
+        if (color == null) {
+            return fallback;
+        }
+        if (color instanceof ThemeColorSource.Wallpaper && backgroundType == BackgroundType.THEME_COLOR) {
+            return ThemeColor.DEFAULT;
+        }
+        return resolveThemeColor(themePack.file(), appearance);
+    }
+
+    /// Resolves the current selected theme color source without extracting any wallpaper pixels.
+    ///
+    /// @param context the condition resolution context
+    /// @return the selected theme color source, or `null` when unavailable
+    /// @throws IOException if the selected theme pack manifest cannot be read
+    private static @Nullable ThemeColorSource resolveCurrentThemeColorSource(ThemeResolveContext context) throws IOException {
+        Objects.requireNonNull(context);
+
+        @Nullable ThemeSelection selection = settings().themeProperty().get();
+        if (selection == null) {
+            return null;
+        }
+
+        @Nullable InstalledThemePack themePack = findInstalled(selection);
+        if (themePack == null) {
+            return null;
+        }
+
+        @Nullable Theme theme = themePack.manifest().findTheme(selection.themeId());
+        if (theme == null) {
+            return null;
+        }
+
+        return theme.resolve(context).color();
     }
 
     /// Returns the current condition resolution context.

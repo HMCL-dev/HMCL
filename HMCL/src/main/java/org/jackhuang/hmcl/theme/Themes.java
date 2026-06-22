@@ -100,8 +100,10 @@ public final class Themes {
 
     /// Returns the effective theme color for the current launcher settings.
     static ThemeColor resolveCurrentThemeColor() {
-        ThemeColor fallback = Objects.requireNonNullElse(settings().customThemeColorProperty().get(), ThemeColor.DEFAULT);
-        ThemeColorType themeColorType = Objects.requireNonNullElse(settings().themeColorTypeProperty().get(), ThemeColorType.CUSTOM);
+        ThemeColorType themeColorType = Objects.requireNonNullElse(settings().themeColorTypeProperty().get(), ThemeColorType.DEFAULT);
+        ThemeColor fallback = themeColorType == ThemeColorType.DEFAULT
+                ? ThemeColor.DEFAULT
+                : Objects.requireNonNullElse(settings().customThemeColorProperty().get(), ThemeColor.DEFAULT);
         BackgroundType backgroundType = Objects.requireNonNullElse(settings().backgroundTypeProperty().get(), BackgroundType.DEFAULT);
         return resolveThemeColor(fallback, themeColorType, backgroundType);
     }
@@ -115,6 +117,16 @@ public final class Themes {
         Objects.requireNonNull(themeColorType);
         Objects.requireNonNull(backgroundType);
 
+        if (themeColorType == ThemeColorType.DEFAULT) {
+            try {
+                return ThemePackManager.resolveCurrentThemeColor(
+                        ThemeResolveContext.current(getCurrentBrightness()),
+                        fallback,
+                        backgroundType);
+            } catch (IOException | RuntimeException e) {
+                return fallback;
+            }
+        }
         if (themeColorType != ThemeColorType.BACKGROUND) {
             return fallback;
         }
