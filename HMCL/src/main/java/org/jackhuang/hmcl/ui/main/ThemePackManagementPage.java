@@ -18,8 +18,8 @@
 package org.jackhuang.hmcl.ui.main;
 
 import com.jfoenix.controls.JFXButton;
+import com.jfoenix.controls.JFXDialogLayout;
 import com.jfoenix.controls.JFXListView;
-import com.jfoenix.controls.JFXRadioButton;
 import com.jfoenix.controls.JFXTextField;
 import javafx.animation.PauseTransition;
 import javafx.beans.property.ObjectProperty;
@@ -33,24 +33,23 @@ import javafx.geometry.Pos;
 import javafx.scene.Cursor;
 import javafx.scene.Node;
 import javafx.scene.control.ListCell;
+import javafx.scene.control.ScrollPane;
 import javafx.scene.control.Skin;
 import javafx.scene.control.SkinBase;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
-import javafx.scene.input.MouseButton;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.Region;
 import javafx.scene.layout.StackPane;
 import javafx.stage.FileChooser;
+import javafx.stage.Stage;
 import javafx.util.Duration;
-import org.jackhuang.hmcl.setting.BackgroundType;
 import org.jackhuang.hmcl.theme.Theme;
 import org.jackhuang.hmcl.theme.ThemePackExporter;
 import org.jackhuang.hmcl.theme.ThemePackManager;
 import org.jackhuang.hmcl.theme.ThemePackManifest;
-import org.jackhuang.hmcl.theme.ThemeSelection;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.ListPageBase;
 import org.jackhuang.hmcl.ui.SVG;
@@ -58,9 +57,8 @@ import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.animation.ContainerAnimations;
 import org.jackhuang.hmcl.ui.animation.TransitionPane;
 import org.jackhuang.hmcl.ui.construct.ComponentList;
+import org.jackhuang.hmcl.ui.construct.DialogCloseEvent;
 import org.jackhuang.hmcl.ui.construct.MessageDialogPane.MessageType;
-import org.jackhuang.hmcl.ui.construct.PromptDialogPane;
-import org.jackhuang.hmcl.ui.construct.RipplerContainer;
 import org.jackhuang.hmcl.ui.construct.SpinnerPane;
 import org.jackhuang.hmcl.ui.construct.TwoLineListItem;
 import org.jackhuang.hmcl.ui.decorator.DecoratorPage;
@@ -73,9 +71,9 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Locale;
+import java.util.Objects;
 import java.util.function.Predicate;
 
-import static org.jackhuang.hmcl.setting.SettingsManager.settings;
 import static org.jackhuang.hmcl.ui.FXUtils.ignoreEvent;
 import static org.jackhuang.hmcl.ui.FXUtils.onEscPressed;
 import static org.jackhuang.hmcl.ui.FXUtils.runInFX;
@@ -96,8 +94,20 @@ public final class ThemePackManagementPage extends ListPageBase<ThemePackManager
     /// Filtered list shown by the current search query.
     private final FilteredList<ThemePackManager.InstalledThemePack> filteredList = new FilteredList<>(sourceList);
 
+    /// Callback invoked after the installed theme-pack set changes.
+    private final Runnable onThemePacksChanged;
+
     /// Creates the theme-pack management page and loads installed packages.
     public ThemePackManagementPage() {
+        this(() -> {
+        });
+    }
+
+    /// Creates the theme-pack management page and loads installed packages.
+    ///
+    /// @param onThemePacksChanged callback invoked after importing or deleting a theme pack
+    public ThemePackManagementPage(Runnable onThemePacksChanged) {
+        this.onThemePacksChanged = Objects.requireNonNull(onThemePacksChanged);
         setItems(filteredList);
         setOnFailedAction(event -> refreshThemePacks());
         refreshThemePacks();
@@ -155,7 +165,7 @@ public final class ThemePackManagementPage extends ListPageBase<ThemePackManager
         FXUtils.openFolder(ThemePackManager.THEME_PACKS_DIRECTORY);
     }
 
-    /// Opens a theme-pack file, installs it, and applies one theme from it.
+    /// Opens a theme-pack file and installs it.
     private void importThemePack() {
         FileChooser chooser = new FileChooser();
         chooser.setTitle(i18n("theme_pack.import.title"));
@@ -175,39 +185,8 @@ public final class ThemePackManagementPage extends ListPageBase<ThemePackManager
             return;
         }
 
-        selectAndApplyThemePack(themePack);
-    }
-
-    /// Prompts for a theme when needed and applies it.
-    private void selectAndApplyThemePack(ThemePackManager.InstalledThemePack themePack) {
-        List<Theme> themes = themePack.manifest().themes();
-        if (themes.size() == 1) {
-            applyThemePack(themePack, themes.get(0));
-            return;
-        }
-
-        ThemePackManifest manifest = themePack.manifest();
-        String[] themeNames = themes.stream()
-                .map(theme -> getThemeDisplayName(manifest, theme))
-                .toArray(String[]::new);
-        PromptDialogPane.Builder.CandidatesQuestion question =
-                new PromptDialogPane.Builder.CandidatesQuestion(i18n("theme_pack.select.theme"), themeNames);
-        Controllers.prompt(new PromptDialogPane.Builder(i18n("theme_pack.select"), (questions, handler) -> handler.resolve())
-                .addQuestion(question)).thenAccept(questions -> {
-                    int selectedIndex = ((PromptDialogPane.Builder.CandidatesQuestion) questions.get(0)).getValue();
-                    applyThemePack(themePack, themes.get(selectedIndex));
-                });
-    }
-
-    /// Applies a selected theme and reports the result.
-    private void applyThemePack(ThemePackManager.InstalledThemePack themePack, Theme theme) {
-        try {
-            ThemePackManager.apply(themePack, theme);
-            refreshThemePacks();
-            Controllers.showToast(i18n("theme_pack.apply.success", getThemeDisplayName(themePack.manifest(), theme)));
-        } catch (IOException | RuntimeException e) {
-            showThemePackError(i18n("theme_pack.apply.failed"), e);
-        }
+        onThemePacksChanged.run();
+        Controllers.showToast(i18n("theme_pack.import.success", themePack.manifest().name()));
     }
 
     /// Shows the installed package directory in the platform file manager.
@@ -230,29 +209,16 @@ public final class ThemePackManagementPage extends ListPageBase<ThemePackManager
         try {
             ThemePackManager.uninstall(themePack);
             refreshThemePacks();
+            onThemePacksChanged.run();
             Controllers.showToast(i18n("theme_pack.delete.success", themePack.manifest().name()));
         } catch (IOException | RuntimeException e) {
             showThemePackError(i18n("theme_pack.delete.failed"), e);
         }
     }
 
-    /// Returns whether a package contains the currently selected launcher theme.
-    private static boolean isCurrentThemePack(ThemePackManager.InstalledThemePack themePack) {
-        @Nullable ThemeSelection selection = settings().themeProperty().get();
-        @Nullable ThemeSelection backgroundSelection = settings().backgroundThemeProperty().get();
-        ThemePackManifest manifest = themePack.manifest();
-        return selection != null && selection.packId().equals(manifest.id())
-                || settings().backgroundTypeProperty().get() == BackgroundType.THEME
-                && backgroundSelection != null && backgroundSelection.packId().equals(manifest.id());
-    }
-
-    /// Returns a display name for one theme-pack theme.
-    private static String getThemeDisplayName(ThemePackManifest manifest, Theme theme) {
-        String name = theme.name() != null ? theme.name() : manifest.name();
-        if (StringUtils.isBlank(theme.description())) {
-            return name;
-        }
-        return name + " - " + theme.description();
+    /// Shows all themes declared by an installed theme pack.
+    private void showThemePackInfo(ThemePackManager.InstalledThemePack themePack) {
+        Controllers.dialog(new ThemePackInfoDialog(themePack));
     }
 
     /// Returns a subtitle for one installed theme pack.
@@ -261,6 +227,32 @@ public final class ThemePackManagementPage extends ListPageBase<ThemePackManager
             return manifest.id();
         }
         return manifest.description();
+    }
+
+    /// Returns the effective display name for one theme.
+    private static String getThemeDisplayName(ThemePackManifest manifest, Theme theme) {
+        return theme.name() != null ? theme.name() : manifest.name();
+    }
+
+    /// Returns the description shown below one theme in the theme list dialog.
+    private static @Nullable String getThemeDescription(Theme theme) {
+        return StringUtils.isBlank(theme.description()) ? null : theme.description();
+    }
+
+    /// Creates a read-only theme information row.
+    private static TwoLineListItem createThemeInfoItem(ThemePackManifest manifest, Theme theme) {
+        TwoLineListItem item = new TwoLineListItem();
+        item.setTitle(getThemeDisplayName(manifest, theme));
+        item.setSubtitle(getThemeDescription(theme));
+        addThemeTags(item, theme);
+        return item;
+    }
+
+    /// Adds metadata tags for one theme.
+    private static void addThemeTags(TwoLineListItem item, Theme theme) {
+        if (theme.id() != null) {
+            item.addTag(i18n("theme_pack.theme.id", theme.id()));
+        }
     }
 
     /// Returns whether a nullable value contains the lower-cased query.
@@ -274,6 +266,68 @@ public final class ThemePackManagementPage extends ListPageBase<ThemePackManager
                 title + "\n\n" + StringUtils.getStackTrace(exception),
                 i18n("message.error"),
                 MessageType.ERROR);
+    }
+
+    /// Dialog showing all themes declared by one installed theme pack.
+    @NotNullByDefault
+    private static final class ThemePackInfoDialog extends JFXDialogLayout {
+        /// Creates the theme-pack information dialog.
+        ///
+        /// @param themePack the installed theme pack to display
+        private ThemePackInfoDialog(ThemePackManager.InstalledThemePack themePack) {
+            ThemePackManifest manifest = themePack.manifest();
+            Stage stage = Controllers.getStage();
+            maxWidthProperty().bind(stage.widthProperty().multiply(0.7));
+
+            setHeading(createHeading(manifest));
+            setBody(createBody(manifest));
+
+            JFXButton okButton = new JFXButton(i18n("button.ok"));
+            okButton.getStyleClass().add("dialog-accept");
+            okButton.setOnAction(event -> fireEvent(new DialogCloseEvent()));
+            setActions(okButton);
+            onEscPressed(this, okButton::fire);
+        }
+
+        /// Creates the dialog heading.
+        private static HBox createHeading(ThemePackManifest manifest) {
+            HBox heading = new HBox(8);
+            heading.setAlignment(Pos.CENTER_LEFT);
+
+            Node icon = SVG.STYLE.createIcon(40);
+            TwoLineListItem title = new TwoLineListItem();
+            title.setTitle(manifest.name());
+            title.setSubtitle(manifest.id());
+            title.addTag(i18n("theme_pack.version", manifest.version()));
+            title.addTag(i18n("theme_pack.themes", manifest.themes().size()));
+            if (!manifest.authors().isEmpty()) {
+                title.addTag(i18n("archive.author") + ": " + String.join(", ", manifest.authors()));
+            }
+
+            heading.getChildren().setAll(icon, title);
+            return heading;
+        }
+
+        /// Creates the scrollable dialog body.
+        private static StackPane createBody(ThemePackManifest manifest) {
+            ComponentList themes = new ComponentList();
+            for (Theme theme : manifest.themes()) {
+                themes.getContent().add(createThemeInfoItem(manifest, theme));
+            }
+
+            ScrollPane scrollPane = new ScrollPane(themes);
+            FXUtils.smoothScrolling(scrollPane);
+            scrollPane.setFitToWidth(true);
+            scrollPane.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
+            scrollPane.setVbarPolicy(ScrollPane.ScrollBarPolicy.AS_NEEDED);
+            scrollPane.setPrefViewportWidth(520);
+            scrollPane.setPrefViewportHeight(Math.min(360, manifest.themes().size() * 86));
+            scrollPane.maxHeightProperty().bind(Controllers.getStage().heightProperty().multiply(0.55));
+
+            StackPane body = new StackPane(scrollPane);
+            body.setPadding(new Insets(10, 0, 0, 0));
+            return body;
+        }
     }
 
     /// Skin for the theme-pack management list page.
@@ -390,9 +444,6 @@ public final class ThemePackManagementPage extends ListPageBase<ThemePackManager
         /// Root graphic reused by this cell.
         private final Region graphic;
 
-        /// Radio marker showing whether the package is currently active.
-        private final JFXRadioButton selectedButton;
-
         /// The text content shown for the current theme pack.
         private final TwoLineListItem content = new TwoLineListItem();
 
@@ -413,25 +464,10 @@ public final class ThemePackManagementPage extends ListPageBase<ThemePackManager
 
             BorderPane root = new BorderPane();
             root.getStyleClass().add("md-list-cell");
-            root.setPadding(new Insets(8, 8, 8, 0));
-
-            RipplerContainer container = new RipplerContainer(root);
-            this.graphic = container;
-
-            selectedButton = new JFXRadioButton() {
-                @Override
-                public void fire() {
-                    ThemePackManager.InstalledThemePack themePack = ThemePackItemCell.this.getItem();
-                    if (!isDisable() && !isSelected() && themePack != null) {
-                        page.selectAndApplyThemePack(themePack);
-                    }
-                }
-            };
-            root.setLeft(selectedButton);
-            BorderPane.setAlignment(selectedButton, Pos.CENTER);
+            root.setPadding(new Insets(8));
+            this.graphic = root;
 
             HBox center = new HBox();
-            center.setMouseTransparent(true);
             center.setSpacing(8);
             center.setAlignment(Pos.CENTER_LEFT);
             root.setCenter(center);
@@ -441,6 +477,14 @@ public final class ThemePackManagementPage extends ListPageBase<ThemePackManager
             BorderPane.setAlignment(content, Pos.CENTER);
             content.setMouseTransparent(true);
             center.getChildren().setAll(icon, content);
+            HBox.setHgrow(content, Priority.ALWAYS);
+            center.setCursor(Cursor.HAND);
+            FXUtils.onClicked(center, () -> {
+                ThemePackManager.InstalledThemePack themePack = getItem();
+                if (themePack != null) {
+                    page.showThemePackInfo(themePack);
+                }
+            });
 
             right.setAlignment(Pos.CENTER_RIGHT);
             root.setRight(right);
@@ -462,18 +506,6 @@ public final class ThemePackManagementPage extends ListPageBase<ThemePackManager
                 }
             });
             FXUtils.installFastTooltip(deleteButton, i18n("theme_pack.delete"));
-
-            root.setCursor(Cursor.HAND);
-            container.setOnMouseClicked(event -> {
-                ThemePackManager.InstalledThemePack themePack = getItem();
-                if (themePack == null) {
-                    return;
-                }
-
-                if (event.getButton() == MouseButton.PRIMARY && event.getClickCount() == 1) {
-                    page.selectAndApplyThemePack(themePack);
-                }
-            });
         }
 
         /// Updates this cell for one installed theme pack.
@@ -494,7 +526,6 @@ public final class ThemePackManagementPage extends ListPageBase<ThemePackManager
             content.setSubtitle(getThemePackSubtitle(manifest));
             content.addTag(i18n("theme_pack.version", manifest.version()));
             content.addTag(i18n("theme_pack.themes", manifest.themes().size()));
-            selectedButton.setSelected(isCurrentThemePack(themePack));
 
             right.getChildren().setAll(revealButton, deleteButton);
         }
