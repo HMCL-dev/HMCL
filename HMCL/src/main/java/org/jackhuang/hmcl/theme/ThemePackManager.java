@@ -453,7 +453,7 @@ public final class ThemePackManager {
                 requireNonBlank(packId, "packId"),
                 CURRENT_THEME_PACK_VERSION,
                 LocalizedText.plain(packName),
-                List.of(requireNonBlank(authorName, "authorName")),
+                List.of(new ThemePackAuthor(LocalizedText.plain(requireNonBlank(authorName, "authorName")))),
                 null,
                 List.of(theme));
 

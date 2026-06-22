@@ -156,7 +156,7 @@ public final class ThemePackManagementPage extends ListPageBase<ThemePackManager
                     || containsIgnoreCase(manifest.id(), query)
                     || containsIgnoreCase(manifest.version(), query)
                     || containsIgnoreCase(manifest.displayDescription(), query)
-                    || manifest.authors().stream().anyMatch(author -> containsIgnoreCase(author, query));
+                    || manifest.authors().stream().anyMatch(author -> containsIgnoreCase(author.displayName(), query));
         };
     }
 
@@ -302,8 +302,9 @@ public final class ThemePackManagementPage extends ListPageBase<ThemePackManager
             title.setSubtitle(manifest.id());
             title.addTag(i18n("theme_pack.version", manifest.version()));
             title.addTag(i18n("theme_pack.themes", manifest.themes().size()));
-            if (!manifest.authors().isEmpty()) {
-                title.addTag(i18n("archive.author") + ": " + String.join(", ", manifest.authors()));
+            String authors = getAuthorDisplayNames(manifest);
+            if (!StringUtils.isBlank(authors)) {
+                title.addTag(i18n("archive.author") + ": " + authors);
             }
 
             heading.getChildren().setAll(icon, title);
@@ -329,6 +330,14 @@ public final class ThemePackManagementPage extends ListPageBase<ThemePackManager
             StackPane body = new StackPane(scrollPane);
             body.setPadding(new Insets(10, 0, 0, 0));
             return body;
+        }
+
+        /// Returns comma-separated author display names.
+        private static String getAuthorDisplayNames(ThemePackManifest manifest) {
+            return manifest.authors().stream()
+                    .map(author -> author.displayName())
+                    .filter(author -> !StringUtils.isBlank(author))
+                    .collect(java.util.stream.Collectors.joining(", "));
         }
     }
 

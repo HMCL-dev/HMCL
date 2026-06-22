@@ -240,7 +240,7 @@ public final class ThemePackManagerTest {
 
             assertEquals("com.example.hmcl-theme-pack.test", manifest.id());
             assertEquals("Current Pack", manifest.displayName());
-            assertEquals(List.of("Test Author"), manifest.authors());
+            assertEquals("Test Author", manifest.authors().get(0).displayName());
             assertNull(theme.id());
             assertNull(theme.name());
             assertEquals(ThemeColorSource.wallpaper(themeColor), appearance.color());
@@ -320,7 +320,11 @@ public final class ThemePackManagerTest {
                   "id": "example.ui",
                   "version": "1.0.0",
                   "name": "Example UI",
-                  "authors": ["Example"],
+                  "authors": [
+                    {
+                      "name": "Example"
+                    }
+                  ],
                   "theme": {
                     "name": "Forest",
                     "thumbnail": "assets/thumbnails/thumbnail.txt",
@@ -353,7 +357,11 @@ public final class ThemePackManagerTest {
                   "id": "example.refresh",
                   "version": "1.0.0",
                   "name": "Refresh Example",
-                  "authors": ["Example"],
+                  "authors": [
+                    {
+                      "name": "Example"
+                    }
+                  ],
                   "theme": {
                     "colorStyle": "neutral",
                     "titleBar": {
@@ -397,7 +405,11 @@ public final class ThemePackManagerTest {
                   "id": "%s",
                   "version": "%s",
                   "name": "%s",
-                  "authors": ["Example"],
+                  "authors": [
+                    {
+                      "name": "Example"
+                    }
+                  ],
                   "theme": {}
                 }
                 """.formatted(id, version, name));

@@ -151,11 +151,15 @@ public final class ThemePackExporterTest {
                   "id": "user.current-theme",
                   "version": "1.0.0",
                   "name": "Current Theme",
-                  "authors": ["User"],
+                  "authors": [
+                    {
+                      "name": "User"
+                    }
+                  ],
                   "theme": {
                     "color": "#5C6BC0",
                     "colorStyle": "fidelity",
-                    "contrast": "default",
+                    "contrast": "standard",
                     "background": {
                       "type": "image",
                       "path": "assets/wallpapers/wallpaper.txt"

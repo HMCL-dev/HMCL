@@ -33,7 +33,7 @@
     "authors": {
       "type": "array",
       "items": {
-        "$ref": "#/$defs/nonEmptyString"
+        "$ref": "#/$defs/author"
       },
       "uniqueItems": true
     },
@@ -104,6 +104,18 @@
           }
         }
       ]
+    },
+    "author": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "name"
+      ],
+      "properties": {
+        "name": {
+          "$ref": "#/$defs/localizedText"
+        }
+      }
     },
     "theme": {
       "type": "object",

@@ -50,7 +50,7 @@ public record ThemePackManifest(
         String id,
         String version,
         LocalizedText name,
-        @Unmodifiable List<String> authors,
+        @Unmodifiable List<ThemePackAuthor> authors,
         @Nullable LocalizedText description,
         @Unmodifiable List<Theme> themes) {
 
@@ -180,8 +180,8 @@ public record ThemePackManifest(
 
         if (!authors.isEmpty()) {
             JsonArray array = new JsonArray();
-            for (String author : authors) {
-                array.add(author);
+            for (ThemePackAuthor author : authors) {
+                array.add(author.toJsonObject());
             }
             object.add(FIELD_AUTHORS, array);
         }
@@ -228,7 +228,7 @@ public record ThemePackManifest(
     }
 
     /// Reads the required authors list.
-    private static List<String> readAuthors(JsonObject object) {
+    private static List<ThemePackAuthor> readAuthors(JsonObject object) {
         JsonElement element = object.get(FIELD_AUTHORS);
         if (element == null) {
             return List.of();
@@ -237,14 +237,24 @@ public record ThemePackManifest(
             throw new JsonParseException("Theme-pack authors must be an array");
         }
 
-        ArrayList<String> authors = new ArrayList<>(array.size());
+        ArrayList<ThemePackAuthor> authors = new ArrayList<>(array.size());
         for (JsonElement item : array) {
-            if (!(item instanceof JsonPrimitive primitive) || !primitive.isString()) {
-                throw new JsonParseException("Theme-pack authors must contain only strings");
+            if (!(item instanceof JsonObject authorObject)) {
+                throw new JsonParseException("Theme-pack authors must contain only objects");
             }
-            authors.add(requireNonBlank(primitive.getAsString(), FIELD_AUTHORS));
+            authors.add(new ThemePackAuthor(requireAuthorName(authorObject)));
         }
         return authors;
+    }
+
+    /// Reads an author display name.
+    private static LocalizedText requireAuthorName(JsonObject object) {
+        JsonElement element = object.get(ThemePackAuthor.FIELD_NAME);
+        if (element == null) {
+            throw new JsonParseException("Theme-pack author is missing required localized text field: "
+                    + ThemePackAuthor.FIELD_NAME);
+        }
+        return parseLocalizedText(element, ThemePackAuthor.FIELD_NAME);
     }
 
     /// Reads the required theme declaration.

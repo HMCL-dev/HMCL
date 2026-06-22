@@ -44,7 +44,11 @@ public final class ThemePackManifestTest {
               "id": "example.nature",
               "version": "1.0.0",
               "name": "Nature",
-              "authors": ["Example"],
+              "authors": [
+                {
+                  "name": "Example"
+                }
+              ],
               "theme": {
                 "id": "forest",
                 "name": "Forest",
@@ -545,7 +549,7 @@ public final class ThemePackManifestTest {
 
         assertEquals("example.nature", manifest.id());
         assertEquals("Nature", manifest.displayName());
-        assertEquals("Example", manifest.authors().get(0));
+        assertEquals("Example", manifest.authors().get(0).displayName());
         Theme theme = manifest.findTheme("forest");
         assertNotNull(theme);
         return theme;
