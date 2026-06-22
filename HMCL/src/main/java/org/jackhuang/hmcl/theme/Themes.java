@@ -37,6 +37,7 @@ import org.glavo.monetfx.Contrast;
 import org.glavo.monetfx.beans.property.ColorSchemeProperty;
 import org.glavo.monetfx.beans.property.ReadOnlyColorSchemeProperty;
 import org.glavo.monetfx.beans.property.SimpleColorSchemeProperty;
+import org.jackhuang.hmcl.setting.BackgroundType;
 import org.jackhuang.hmcl.setting.ThemeColorType;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.MacOSNativeUtils;
@@ -85,58 +86,75 @@ public final class Themes {
             bind(observables.toArray(new Observable[0]));
         }
 
-        /// Returns the effective theme color for the current launcher settings.
-        private ThemeColor getThemeColor() {
-            ThemeColor fallback = Objects.requireNonNullElse(settings().customThemeColorProperty().get(), ThemeColor.DEFAULT);
-            ThemeColorType themeColorType = Objects.requireNonNullElse(settings().themeColorTypeProperty().get(), ThemeColorType.CUSTOM);
-            if (themeColorType != ThemeColorType.BACKGROUND) {
-                return fallback;
-            }
-            return getBackgroundThemeColor(fallback);
-        }
-
         /// Returns the configured MonetFX color style.
         private ColorStyle getColorStyle() {
             return Objects.requireNonNullElse(settings().themeColorStyleProperty().get(), ResolvedTheme.DEFAULT.colorStyle());
         }
 
-        /// Returns a Monet seed color extracted from the current background when possible.
-        private ThemeColor getBackgroundThemeColor(ThemeColor fallback) {
-            try {
-                ThemePackManager.ResolvedBackground background =
-                        ThemePackManager.resolveCurrentBackground(ThemeResolveContext.current(getCurrentBrightness()));
-                return switch (background.type()) {
-                    case CUSTOM -> getImageThemeColor(background.imagePath(), fallback);
-                    case PAINT -> background.paint() instanceof Color color ? ThemeColor.of(color) : fallback;
-                    case THEME, DEFAULT, CLASSIC, NETWORK -> fallback;
-                };
-            } catch (IOException | RuntimeException e) {
-                return fallback;
-            }
-        }
-
-        /// Returns a Monet seed color extracted from the current custom background image.
-        private ThemeColor getImageThemeColor(@Nullable Path imageFile, ThemeColor fallback) {
-            if (imageFile == null) {
-                return fallback;
-            }
-
-            try {
-                if (!Files.isRegularFile(imageFile)) {
-                    return fallback;
-                }
-                return WallpaperColorExtractor.extract(imageFile, fallback);
-            } catch (IOException | RuntimeException e) {
-                return fallback;
-            }
-        }
-
         /// Computes the resolved launcher theme.
         @Override
         protected ResolvedTheme computeValue() {
-            return new ResolvedTheme(getThemeColor(), getCurrentBrightness(), getColorStyle(), Contrast.DEFAULT);
+            return new ResolvedTheme(resolveCurrentThemeColor(), getCurrentBrightness(), getColorStyle(), Contrast.DEFAULT);
         }
     };
+
+    /// Returns the effective theme color for the current launcher settings.
+    static ThemeColor resolveCurrentThemeColor() {
+        ThemeColor fallback = Objects.requireNonNullElse(settings().customThemeColorProperty().get(), ThemeColor.DEFAULT);
+        ThemeColorType themeColorType = Objects.requireNonNullElse(settings().themeColorTypeProperty().get(), ThemeColorType.CUSTOM);
+        BackgroundType backgroundType = Objects.requireNonNullElse(settings().backgroundTypeProperty().get(), BackgroundType.DEFAULT);
+        return resolveThemeColor(fallback, themeColorType, backgroundType);
+    }
+
+    /// Resolves a Monet seed color from configured theme color and background sources.
+    static ThemeColor resolveThemeColor(
+            ThemeColor fallback,
+            ThemeColorType themeColorType,
+            BackgroundType backgroundType) {
+        Objects.requireNonNull(fallback);
+        Objects.requireNonNull(themeColorType);
+        Objects.requireNonNull(backgroundType);
+
+        if (themeColorType != ThemeColorType.BACKGROUND) {
+            return fallback;
+        }
+        if (backgroundType == BackgroundType.THEME_COLOR) {
+            return ThemeColor.DEFAULT;
+        }
+        return getBackgroundThemeColor(fallback);
+    }
+
+    /// Returns a Monet seed color extracted from the current background when possible.
+    private static ThemeColor getBackgroundThemeColor(ThemeColor fallback) {
+        try {
+            ThemePackManager.ResolvedBackground background =
+                    ThemePackManager.resolveCurrentBackground(ThemeResolveContext.current(getCurrentBrightness()));
+            return switch (background.type()) {
+                case CUSTOM -> getImageThemeColor(background.imagePath(), fallback);
+                case PAINT -> background.paint() instanceof Color color ? ThemeColor.of(color) : fallback;
+                case THEME_COLOR -> ThemeColor.DEFAULT;
+                case THEME, DEFAULT, CLASSIC, NETWORK -> fallback;
+            };
+        } catch (IOException | RuntimeException e) {
+            return fallback;
+        }
+    }
+
+    /// Returns a Monet seed color extracted from the current custom background image.
+    private static ThemeColor getImageThemeColor(@Nullable Path imageFile, ThemeColor fallback) {
+        if (imageFile == null) {
+            return fallback;
+        }
+
+        try {
+            if (!Files.isRegularFile(imageFile)) {
+                return fallback;
+            }
+            return WallpaperColorExtractor.extract(imageFile, fallback);
+        } catch (IOException | RuntimeException e) {
+            return fallback;
+        }
+    }
 
     /// The current MonetFX color scheme generated from [#theme].
     private static final ColorSchemeProperty colorScheme = new SimpleColorSchemeProperty();

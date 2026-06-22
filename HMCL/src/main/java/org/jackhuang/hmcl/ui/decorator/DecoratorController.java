@@ -34,6 +34,7 @@ import javafx.scene.paint.Color;
 import javafx.scene.paint.Paint;
 import javafx.stage.Stage;
 import javafx.util.Duration;
+import org.glavo.monetfx.ColorRole;
 import org.glavo.url.WebURL;
 import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.auth.authlibinjector.AuthlibInjectorDnD;
@@ -42,6 +43,7 @@ import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.theme.ThemePackManager;
 import org.jackhuang.hmcl.theme.ThemeSelection;
+import org.jackhuang.hmcl.theme.Themes;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.DialogUtils;
 import org.jackhuang.hmcl.ui.FXUtils;
@@ -101,6 +103,7 @@ public class DecoratorController {
         settings().networkBackgroundImageUrlProperty().addListener(weakListener);
         settings().customBackgroundPaintProperty().addListener(weakListener);
         settings().backgroundOpacityProperty().addListener(weakListener);
+        Themes.colorSchemeProperty().addListener(weakListener);
 
         // pass key events to current dialog / current page
         decorator.addEventFilter(KeyEvent.ANY, e -> {
@@ -234,6 +237,8 @@ public class DecoratorController {
                 break;
             case PAINT:
                 return createPaintBackground(settings().customBackgroundPaintProperty().get(), settings().backgroundOpacityProperty().get());
+            case THEME_COLOR:
+                return createThemeColorBackground(settings().backgroundOpacityProperty().get());
             case DEFAULT:
                 break;
         }
@@ -273,6 +278,8 @@ public class DecoratorController {
                 break;
             case PAINT:
                 return createPaintBackground(resolvedBackground.paint(), resolvedBackground.opacity());
+            case THEME_COLOR:
+                return createPaintBackground(resolvedBackground.paint(), resolvedBackground.opacity());
             case THEME:
             case DEFAULT:
                 break;
@@ -297,6 +304,11 @@ public class DecoratorController {
             // TODO: Support opacity for non-color paints
             return new Background(new BackgroundFill(paint, CornerRadii.EMPTY, Insets.EMPTY));
         }
+    }
+
+    /// Creates a background using the current theme color scheme surface container.
+    private Background createThemeColorBackground(double opacity) {
+        return createPaintBackground(Themes.getColorScheme().getColor(ColorRole.SURFACE_CONTAINER), opacity);
     }
 
     private Background createBackgroundWithOpacity(Image image, double opacity) {

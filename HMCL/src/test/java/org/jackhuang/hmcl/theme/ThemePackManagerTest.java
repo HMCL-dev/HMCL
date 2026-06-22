@@ -20,6 +20,7 @@ package org.jackhuang.hmcl.theme;
 import com.google.gson.JsonObject;
 import javafx.scene.paint.Color;
 import org.glavo.monetfx.Brightness;
+import org.glavo.monetfx.ColorRole;
 import org.glavo.monetfx.ColorStyle;
 import org.jackhuang.hmcl.setting.BackgroundType;
 import org.jackhuang.hmcl.setting.LauncherSettings;
@@ -307,6 +308,32 @@ public final class ThemePackManagerTest {
         }
     }
 
+    /// Tests exporting the theme-color background option with wallpaper theme colors uses the default seed.
+    @Test
+    public void testExportCurrentThemeColorBackgroundUsesDefaultThemeColor() throws Exception {
+        try (SettingsScope ignored = new SettingsScope()) {
+            LauncherSettings settings = SettingsManager.settings();
+            settings.customThemeColorProperty().set(ThemeColor.of("#663399"));
+            settings.themeColorTypeProperty().set(ThemeColorType.BACKGROUND);
+            settings.backgroundTypeProperty().set(BackgroundType.THEME_COLOR);
+            settings.backgroundOpacityProperty().set(1.0);
+
+            Path tempDir = createTestDirectory("export-theme-color-background");
+            Path output = tempDir.resolve("theme-color-background" + ThemePackExporter.FILE_EXTENSION);
+            ThemePackManager.exportCurrent(output, "com.example.theme-color-background", "Theme Color Background", "Test Author");
+
+            ThemePackManifest manifest = ThemePackManager.load(output).manifest();
+            Theme theme = manifest.findTheme(null);
+            assertNotNull(theme);
+
+            ThemeAppearance appearance = theme.appearance();
+            assertEquals(ThemeColorSource.custom(ThemeColor.DEFAULT), appearance.color());
+            ThemeBackgroundSettings background = appearance.background();
+            assertNotNull(background);
+            assertInstanceOf(ThemeBackground.Paint.class, background.source());
+        }
+    }
+
     /// Tests that the classic launcher background cannot be exported as a theme-pack background.
     @Test
     public void testExportCurrentThemePackRejectsClassicBackground() throws Exception {
@@ -321,6 +348,36 @@ public final class ThemePackManagerTest {
 
             assertTrue(exception.getMessage().contains("classic built-in background"));
         }
+    }
+
+    /// Tests resolving the theme-color background option to the current surface container color.
+    @Test
+    public void testResolveThemeColorBackground() throws Exception {
+        try (SettingsScope ignored = new SettingsScope()) {
+            LauncherSettings settings = SettingsManager.settings();
+            settings.customThemeColorProperty().set(ThemeColor.of("#663399"));
+            settings.themeColorTypeProperty().set(ThemeColorType.CUSTOM);
+            settings.backgroundTypeProperty().set(BackgroundType.THEME_COLOR);
+            settings.backgroundOpacityProperty().set(0.6);
+
+            ThemePackManager.ResolvedBackground background = ThemePackManager.resolveCurrentBackground(
+                    new ThemeResolveContext(Brightness.LIGHT, "linux", "en"));
+
+            assertEquals(BackgroundType.THEME_COLOR, background.type());
+            assertEquals(Themes.getColorScheme().getColor(ColorRole.SURFACE_CONTAINER), background.paint());
+            assertEquals(0.6, background.opacity());
+        }
+    }
+
+    /// Tests that wallpaper theme colors fall back to the default seed when the background follows the theme color.
+    @Test
+    public void testThemeColorBackgroundPreventsWallpaperColorCycle() {
+        assertEquals(
+                ThemeColor.DEFAULT,
+                Themes.resolveThemeColor(
+                        Objects.requireNonNull(ThemeColor.of("#663399")),
+                        ThemeColorType.BACKGROUND,
+                        BackgroundType.THEME_COLOR));
     }
 
     /// Creates a test directory under the build directory.

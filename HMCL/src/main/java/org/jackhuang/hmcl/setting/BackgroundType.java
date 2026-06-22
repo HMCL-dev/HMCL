@@ -22,11 +22,11 @@ import org.jetbrains.annotations.NotNullByDefault;
 /// Selects the source used to render the launcher background.
 @NotNullByDefault
 public enum BackgroundType {
-    /// Uses the background resolved from the selected theme.
-    THEME,
-
     /// Uses the built-in default background image or a local fallback image.
     DEFAULT,
+
+    /// Uses the background resolved from the selected theme.
+    THEME,
 
     /// Uses a user-selected local image file or a random image from a selected directory.
     CUSTOM,
@@ -38,5 +38,8 @@ public enum BackgroundType {
     NETWORK,
 
     /// Uses the configured paint value as a flat background.
-    PAINT
+    PAINT,
+
+    /// Uses the current theme color scheme surface container as a flat background.
+    THEME_COLOR
 }

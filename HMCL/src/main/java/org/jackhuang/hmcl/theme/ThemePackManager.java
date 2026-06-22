@@ -21,6 +21,7 @@ import com.google.gson.JsonParseException;
 import javafx.scene.paint.Color;
 import javafx.scene.paint.Paint;
 import org.glavo.monetfx.Brightness;
+import org.glavo.monetfx.ColorRole;
 import org.glavo.monetfx.ColorStyle;
 import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.setting.BackgroundType;
@@ -466,6 +467,9 @@ public final class ThemePackManager {
     private static ThemeColorSource currentThemeColorSource() {
         ThemeColorType themeColorType = Objects.requireNonNullElse(settings().themeColorTypeProperty().get(), ThemeColorType.CUSTOM);
         if (themeColorType == ThemeColorType.BACKGROUND) {
+            if (settings().backgroundTypeProperty().get() == BackgroundType.THEME_COLOR) {
+                return ThemeColorSource.custom(ThemeColor.DEFAULT);
+            }
             return ThemeColorSource.wallpaper();
         }
 
@@ -561,6 +565,12 @@ public final class ThemePackManager {
                     null,
                     null,
                     settings().customBackgroundPaintProperty().get(),
+                    opacity);
+            case THEME_COLOR -> new ResolvedBackground(
+                    BackgroundType.THEME_COLOR,
+                    null,
+                    null,
+                    getThemeColorBackgroundPaint(),
                     opacity);
         };
     }
@@ -890,10 +900,15 @@ public final class ThemePackManager {
             case NETWORK -> new ThemeBackgroundSettings(
                     new ThemeBackground.Network(requireNonBlank(background.networkImageUrl(), "networkBackgroundImageUrl")),
                     opacity);
-            case PAINT -> new ThemeBackgroundSettings(
+            case PAINT, THEME_COLOR -> new ThemeBackgroundSettings(
                     new ThemeBackground.Paint(Objects.requireNonNullElse(background.paint(), Color.WHITE).toString()),
                     opacity);
         };
+    }
+
+    /// Returns the flat paint used by the theme-color background option.
+    private static Color getThemeColorBackgroundPaint() {
+        return Themes.getColorScheme().getColor(ColorRole.SURFACE_CONTAINER);
     }
 
     /// Creates the image background model for the current launcher settings.

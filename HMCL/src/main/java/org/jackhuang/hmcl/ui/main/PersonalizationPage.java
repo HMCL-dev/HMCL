@@ -589,10 +589,11 @@ public class PersonalizationPage extends StackPane {
             backgroundSublist.setHasSubtitle(true);
 
             backgroundItem.loadChildren(Arrays.asList(
-                    new MultiFileItem.Option<>(i18n("launcher.background.theme"), BackgroundType.THEME),
                     new MultiFileItem.Option<>(i18n("launcher.background.default"), BackgroundType.DEFAULT)
                             .setTooltip(i18n("launcher.background.default.tooltip")),
+                    new MultiFileItem.Option<>(i18n("launcher.background.theme"), BackgroundType.THEME),
                     new MultiFileItem.Option<>(i18n("launcher.background.classic"), BackgroundType.CLASSIC),
+                    new MultiFileItem.Option<>(i18n("launcher.background.theme_color"), BackgroundType.THEME_COLOR),
                     new MultiFileItem.FileOption<>(i18n("settings.custom"), BackgroundType.CUSTOM)
                             .setChooserTitle(i18n("launcher.background.choose"))
                             .addExtensionFilter(FXUtils.getImageExtensionFilter())
@@ -617,6 +618,7 @@ public class PersonalizationPage extends StackPane {
                                         ? getMissingThemeChoiceDescription(backgroundTheme)
                                         : i18n("launcher.background.theme");
                             }
+                            case THEME_COLOR -> i18n("launcher.background.theme_color");
                             case DEFAULT -> i18n("launcher.background.default");
                             case CLASSIC -> i18n("launcher.background.classic");
                             case CUSTOM -> settings().customBackgroundImagePathProperty().get();
