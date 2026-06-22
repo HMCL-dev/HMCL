@@ -167,6 +167,7 @@ public class TwoLineListItem extends VBox {
             var tagsBox = new HBox(8);
             tagsBox.getStyleClass().add("tags");
             tagsBox.setAlignment(Pos.CENTER_LEFT);
+            tagsBox.setMinWidth(0);
             HBox.setHgrow(tagsBox, Priority.ALWAYS);
             Bindings.bindContent(tagsBox.getChildren(), tags);
             var isNotEmpty = Bindings.isNotEmpty(tags);
