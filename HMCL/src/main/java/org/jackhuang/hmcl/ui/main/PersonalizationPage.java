@@ -274,7 +274,7 @@ public class PersonalizationPage extends StackPane {
         settings().builtinBackgroundNameProperty().set(BackgroundType.BUILTIN_DEFAULT);
         settings().customBackgroundImagePathProperty().set(null);
         settings().networkBackgroundImageUrlProperty().set(null);
-        settings().networkBackgroundImageCachePolicyProperty().set(null);
+        settings().networkBackgroundImageCachePolicyProperty().set(NetworkBackgroundImageCachePolicy.ENABLED);
         settings().customBackgroundPaintProperty().set(null);
         settings().backgroundOpacityProperty().set(1.0);
         settings().titleTransparentProperty().set(false);
@@ -641,28 +641,8 @@ public class PersonalizationPage extends StackPane {
             networkBackgroundCachePane.setItems(
                     NetworkBackgroundImageCachePolicy.ENABLED,
                     NetworkBackgroundImageCachePolicy.DISABLED);
-            networkBackgroundCachePane.setValue(Objects.requireNonNullElse(
-                    settings().networkBackgroundImageCachePolicyProperty().get(),
-                    NetworkBackgroundImageCachePolicy.ENABLED));
-            boolean[] updatingNetworkBackgroundCachePane = {false};
-            networkBackgroundCachePane.valueProperty().addListener((observable, oldValue, newValue) -> {
-                if (!updatingNetworkBackgroundCachePane[0] && newValue != null) {
-                    settings().networkBackgroundImageCachePolicyProperty().set(newValue);
-                }
-            });
-            settings().networkBackgroundImageCachePolicyProperty().addListener((observable, oldValue, newValue) -> {
-                NetworkBackgroundImageCachePolicy value = Objects.requireNonNullElse(
-                        newValue,
-                        NetworkBackgroundImageCachePolicy.ENABLED);
-                if (networkBackgroundCachePane.getValue() != value) {
-                    updatingNetworkBackgroundCachePane[0] = true;
-                    try {
-                        networkBackgroundCachePane.setValue(value);
-                    } finally {
-                        updatingNetworkBackgroundCachePane[0] = false;
-                    }
-                }
-            });
+            networkBackgroundCachePane.valueProperty()
+                    .bindBidirectional(settings().networkBackgroundImageCachePolicyProperty());
             BooleanBinding networkBackgroundSelected =
                     backgroundItem.selectedDataProperty().isEqualTo(BackgroundType.NETWORK);
             networkBackgroundCachePane.visibleProperty().bind(networkBackgroundSelected);

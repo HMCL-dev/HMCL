@@ -1014,7 +1014,9 @@ public final class ThemePackManager {
             case NETWORK -> new ThemeBackgroundSettings(
                     new ThemeBackground.Network(
                             requireNonBlank(background.networkImageUrl(), "networkBackgroundImageUrl"),
-                            background.networkImageCachePolicy()),
+                            background.networkImageCachePolicy() == NetworkBackgroundImageCachePolicy.ENABLED
+                                    ? null
+                                    : background.networkImageCachePolicy()),
                     opacity);
             case PAINT, THEME_COLOR -> new ThemeBackgroundSettings(
                     new ThemeBackground.Paint(Objects.requireNonNullElse(background.paint(), Color.WHITE).toString()),
