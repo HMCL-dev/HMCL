@@ -54,6 +54,18 @@ public final class WallpaperColorExtractor {
             throw new IOException("Failed to load wallpaper image: " + imageFile, e);
         }
 
+        return extract(image, fallback);
+    }
+
+    /// Extracts a theme color from a loaded image.
+    ///
+    /// @param image the loaded image
+    /// @param fallback the fallback color used when extraction fails
+    /// @return the extracted color, or `fallback` when no suitable color is found
+    public static ThemeColor extract(Image image, ThemeColor fallback) {
+        Objects.requireNonNull(image);
+        Objects.requireNonNull(fallback);
+
         Color extracted = ColorScheme.extractColor(image, fallback.color());
         return ThemeColor.of(extracted);
     }

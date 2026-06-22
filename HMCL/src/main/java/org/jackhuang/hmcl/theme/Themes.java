@@ -93,6 +93,8 @@ import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 /// Provides the current launcher MonetFX theme and derived color bindings.
 @NotNullByDefault
 public final class Themes {
+    /// The seed color extracted from the last loaded wallpaper image.
+    private static final ReadOnlyObjectWrapper<@Nullable ThemeColor> wallpaperThemeColor = new ReadOnlyObjectWrapper<>();
 
     /// The resolved launcher theme used to build the current MonetFX color scheme.
     private static final ObjectExpression<ResolvedTheme> theme = new ObjectBinding<>() {
@@ -107,6 +109,7 @@ public final class Themes {
             observables.add(settings().backgroundTypeProperty());
             observables.add(settings().customBackgroundImagePathProperty());
             observables.add(settings().customBackgroundPaintProperty());
+            observables.add(wallpaperThemeColor);
             if (FXUtils.DARK_MODE != null) {
                 observables.add(FXUtils.DARK_MODE);
             }
@@ -160,6 +163,10 @@ public final class Themes {
         if (backgroundType == BackgroundType.THEME_COLOR) {
             return ThemeColor.DEFAULT;
         }
+        @Nullable ThemeColor loadedWallpaperColor = wallpaperThemeColor.get();
+        if (loadedWallpaperColor != null) {
+            return loadedWallpaperColor;
+        }
         return getBackgroundThemeColor(fallback);
     }
 
@@ -208,11 +215,42 @@ public final class Themes {
     private static final ReadOnlyObjectWrapper<Background> background = new ReadOnlyObjectWrapper<>(
             new Background(new BackgroundFill(Color.WHITE, CornerRadii.EMPTY, Insets.EMPTY)));
 
+    /// The last loaded background source used to rebuild the JavaFX background without reloading images.
+    private static @Nullable LoadedBackground loadedBackground;
+
     /// Monotonic counter used to ignore obsolete asynchronous background updates.
     private static int backgroundUpdateCount = 0;
 
     /// Whether JavaFX background loading has been requested by the UI.
     private static boolean backgroundUpdatesStarted = false;
+
+    /// A loaded JavaFX background source and the wallpaper color extracted while loading it.
+    ///
+    /// @param background the loaded JavaFX background
+    /// @param image the loaded image used by image backgrounds, or `null` for paint backgrounds
+    /// @param paint the paint used by paint backgrounds, or `null` for image and theme-color backgrounds
+    /// @param paintBackground whether the background should be rebuilt as a paint background
+    /// @param themeColorBackground whether the background should be rebuilt from the current theme color scheme
+    /// @param wallpaperThemeColor the color extracted from the actual wallpaper image, or `null` when unavailable
+    private record LoadedBackground(
+            Background background,
+            @Nullable Image image,
+            @Nullable Paint paint,
+            boolean paintBackground,
+            boolean themeColorBackground,
+            @Nullable ThemeColor wallpaperThemeColor) {
+        /// Creates a loaded background result.
+        ///
+        /// @param background the loaded JavaFX background
+        /// @param image the loaded image used by image backgrounds, or `null` for paint backgrounds
+        /// @param paint the paint used by paint backgrounds, or `null` for image and theme-color backgrounds
+        /// @param paintBackground whether the background should be rebuilt as a paint background
+        /// @param themeColorBackground whether the background should be rebuilt from the current theme color scheme
+        /// @param wallpaperThemeColor the color extracted from the actual wallpaper image, or `null` when unavailable
+        private LoadedBackground {
+            Objects.requireNonNull(background);
+        }
+    }
 
     static {
         ChangeListener<ResolvedTheme> listener = (observable, oldValue, newValue) -> {
@@ -241,8 +279,12 @@ public final class Themes {
         settings().networkBackgroundImageUrlProperty().addListener(backgroundListener);
         settings().networkBackgroundImageCachePolicyProperty().addListener(backgroundListener);
         settings().customBackgroundPaintProperty().addListener(backgroundListener);
-        settings().backgroundOpacityProperty().addListener(backgroundListener);
-        colorSchemeProperty().addListener(backgroundListener);
+        settings().backgroundOpacityProperty().addListener(ignored -> refreshBackgroundOpacity());
+        settings().themeBrightnessProperty().addListener(backgroundListener);
+        if (FXUtils.DARK_MODE != null) {
+            FXUtils.DARK_MODE.addListener(backgroundListener);
+        }
+        colorSchemeProperty().addListener(ignored -> refreshThemeColorBackground());
     }
 
     /// Cached system default brightness.
@@ -371,12 +413,15 @@ public final class Themes {
     /// Refreshes the current JavaFX launcher background asynchronously.
     public static void refreshBackground() {
         final int currentCount = ++backgroundUpdateCount;
+        wallpaperThemeColor.set(null);
         Task.supplyAsync(Schedulers.io(), Themes::loadBackground)
                 .setName("Update background")
-                .whenComplete(Schedulers.javafx(), (newBackground, exception) -> {
+                .whenComplete(Schedulers.javafx(), (loadedBackground, exception) -> {
                     if (exception == null) {
                         if (backgroundUpdateCount == currentCount) {
-                            background.set(newBackground);
+                            Themes.loadedBackground = loadedBackground;
+                            background.set(loadedBackground.background());
+                            wallpaperThemeColor.set(loadedBackground.wallpaperThemeColor());
                         }
                     } else {
                         LOG.warning("Failed to update background", exception);
@@ -385,7 +430,7 @@ public final class Themes {
     }
 
     /// Loads the current JavaFX launcher background.
-    private static Background loadBackground() {
+    private static LoadedBackground loadBackground() {
         BackgroundType backgroundType = Objects.requireNonNullElse(
                 settings().backgroundTypeProperty().get(),
                 BackgroundType.DEFAULT);
@@ -428,18 +473,31 @@ public final class Themes {
                 }
                 break;
             case PAINT:
-                return createPaintBackground(settings().customBackgroundPaintProperty().get(), settings().backgroundOpacityProperty().get());
+                @Nullable Paint paint = settings().customBackgroundPaintProperty().get();
+                return new LoadedBackground(
+                        createPaintBackground(paint, settings().backgroundOpacityProperty().get()),
+                        null,
+                        paint,
+                        true,
+                        false,
+                        paint instanceof Color color ? ThemeColor.of(color) : null);
             case THEME_COLOR:
-                return createThemeColorBackground(settings().backgroundOpacityProperty().get());
+                return new LoadedBackground(
+                        createThemeColorBackground(settings().backgroundOpacityProperty().get()),
+                        null,
+                        null,
+                        true,
+                        true,
+                        null);
         }
         if (image == null) {
             image = loadDefaultBackgroundImage();
         }
-        return createBackgroundWithOpacity(image, settings().backgroundOpacityProperty().get());
+        return createImageBackground(image, settings().backgroundOpacityProperty().get());
     }
 
     /// Creates a JavaFX launcher background from a resolved theme-pack background.
-    private static Background createResolvedBackground(ThemePackManager.ResolvedBackground resolvedBackground) {
+    private static LoadedBackground createResolvedBackground(ThemePackManager.ResolvedBackground resolvedBackground) {
         @Nullable Image image = null;
         switch (resolvedBackground.type()) {
             case CUSTOM:
@@ -470,15 +528,105 @@ public final class Themes {
                 image = loadBuiltinBackgroundImage(settings().builtinBackgroundNameProperty().get());
                 break;
             case PAINT:
+                @Nullable Paint paint = resolvedBackground.paint();
+                return new LoadedBackground(
+                        createPaintBackground(paint, resolvedBackground.opacity()),
+                        null,
+                        paint,
+                        true,
+                        false,
+                        paint instanceof Color color ? ThemeColor.of(color) : null);
             case THEME_COLOR:
-                return createPaintBackground(resolvedBackground.paint(), resolvedBackground.opacity());
+                return new LoadedBackground(
+                        createPaintBackground(resolvedBackground.paint(), resolvedBackground.opacity()),
+                        null,
+                        null,
+                        true,
+                        true,
+                        null);
             case DEFAULT:
                 break;
         }
         if (image == null) {
             image = loadDefaultBackgroundImage();
         }
-        return createBackgroundWithOpacity(image, resolvedBackground.opacity());
+        return createImageBackground(image, resolvedBackground.opacity());
+    }
+
+    /// Updates the background paint when the background explicitly follows the current color scheme.
+    private static void refreshThemeColorBackground() {
+        if (!backgroundUpdatesStarted) {
+            return;
+        }
+        @Nullable LoadedBackground loaded = loadedBackground;
+        if (loaded != null && loaded.themeColorBackground()) {
+            Background newBackground = createThemeColorBackground(settings().backgroundOpacityProperty().get());
+            loadedBackground = new LoadedBackground(newBackground, null, null, true, true, null);
+            background.set(newBackground);
+        }
+    }
+
+    /// Rebuilds the current JavaFX background after opacity changes without reloading its source.
+    private static void refreshBackgroundOpacity() {
+        if (!backgroundUpdatesStarted) {
+            return;
+        }
+        @Nullable LoadedBackground loaded = loadedBackground;
+        if (loaded == null) {
+            return;
+        }
+
+        double opacity = settings().backgroundOpacityProperty().get();
+        Background newBackground;
+        if (loaded.image() != null) {
+            newBackground = createBackgroundWithOpacity(loaded.image(), opacity);
+        } else if (loaded.themeColorBackground()) {
+            newBackground = createThemeColorBackground(opacity);
+        } else if (loaded.paintBackground()) {
+            newBackground = createPaintBackground(loaded.paint(), opacity);
+        } else {
+            return;
+        }
+
+        loadedBackground = new LoadedBackground(
+                newBackground,
+                loaded.image(),
+                loaded.paint(),
+                loaded.paintBackground(),
+                loaded.themeColorBackground(),
+                loaded.wallpaperThemeColor());
+        background.set(newBackground);
+    }
+
+    /// Creates a JavaFX image background and extracts a seed color from the same loaded image.
+    private static LoadedBackground createImageBackground(Image image, double opacity) {
+        return new LoadedBackground(
+                createBackgroundWithOpacity(image, opacity),
+                image,
+                null,
+                false,
+                false,
+                extractWallpaperThemeColor(image));
+    }
+
+    /// Extracts a seed color from a loaded wallpaper image.
+    private static @Nullable ThemeColor extractWallpaperThemeColor(Image image) {
+        try {
+            return WallpaperColorExtractor.extract(image, getWallpaperThemeColorFallback());
+        } catch (RuntimeException e) {
+            LOG.warning("Couldn't extract theme color from background image", e);
+            return null;
+        }
+    }
+
+    /// Returns the fallback seed color used while extracting wallpaper colors.
+    private static ThemeColor getWallpaperThemeColorFallback() {
+        ThemeColorType themeColorType = Objects.requireNonNullElse(
+                settings().themeColorTypeProperty().get(),
+                ThemeColorType.DEFAULT);
+        return themeColorType == ThemeColorType.DEFAULT
+                ? ThemeColor.DEFAULT
+                : Objects.requireNonNullElse(settings().customThemeColorProperty().get(), ThemeColor.DEFAULT);
     }
 
     /// Loads one remote background image using the requested cache policy.

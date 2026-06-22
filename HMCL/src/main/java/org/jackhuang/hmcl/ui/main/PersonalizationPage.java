@@ -634,21 +634,35 @@ public class PersonalizationPage extends StackPane {
             builtinBackgroundPane.visibleProperty().bind(builtinBackgroundSelected);
             builtinBackgroundPane.managedProperty().bind(builtinBackgroundSelected);
 
-            var networkBackgroundCachePane = new LineSelectButton<Optional<NetworkBackgroundImageCachePolicy>>();
+            var networkBackgroundCachePane = new LineSelectButton<NetworkBackgroundImageCachePolicy>();
             networkBackgroundCachePane.setTitle(i18n("launcher.background.network.cache"));
-            networkBackgroundCachePane.setNullSafeConverter(policy -> policy
-                    .map(value -> i18n("launcher.background.network.cache." + value.name().toLowerCase(Locale.ROOT)))
-                    .orElseGet(() -> i18n("launcher.background.network.cache.default")));
+            networkBackgroundCachePane.setNullSafeConverter(policy ->
+                    i18n("launcher.background.network.cache." + policy.name().toLowerCase(Locale.ROOT)));
             networkBackgroundCachePane.setItems(
-                    Optional.empty(),
-                    Optional.of(NetworkBackgroundImageCachePolicy.ENABLED),
-                    Optional.of(NetworkBackgroundImageCachePolicy.DISABLED));
-            networkBackgroundCachePane.setValue(Optional.ofNullable(
-                    settings().networkBackgroundImageCachePolicyProperty().get()));
-            networkBackgroundCachePane.valueProperty().addListener((observable, oldValue, newValue) ->
-                    settings().networkBackgroundImageCachePolicyProperty().set(newValue != null ? newValue.orElse(null) : null));
-            settings().networkBackgroundImageCachePolicyProperty().addListener((observable, oldValue, newValue) ->
-                    networkBackgroundCachePane.setValue(Optional.ofNullable(newValue)));
+                    NetworkBackgroundImageCachePolicy.ENABLED,
+                    NetworkBackgroundImageCachePolicy.DISABLED);
+            networkBackgroundCachePane.setValue(Objects.requireNonNullElse(
+                    settings().networkBackgroundImageCachePolicyProperty().get(),
+                    NetworkBackgroundImageCachePolicy.ENABLED));
+            boolean[] updatingNetworkBackgroundCachePane = {false};
+            networkBackgroundCachePane.valueProperty().addListener((observable, oldValue, newValue) -> {
+                if (!updatingNetworkBackgroundCachePane[0] && newValue != null) {
+                    settings().networkBackgroundImageCachePolicyProperty().set(newValue);
+                }
+            });
+            settings().networkBackgroundImageCachePolicyProperty().addListener((observable, oldValue, newValue) -> {
+                NetworkBackgroundImageCachePolicy value = Objects.requireNonNullElse(
+                        newValue,
+                        NetworkBackgroundImageCachePolicy.ENABLED);
+                if (networkBackgroundCachePane.getValue() != value) {
+                    updatingNetworkBackgroundCachePane[0] = true;
+                    try {
+                        networkBackgroundCachePane.setValue(value);
+                    } finally {
+                        updatingNetworkBackgroundCachePane[0] = false;
+                    }
+                }
+            });
             BooleanBinding networkBackgroundSelected =
                     backgroundItem.selectedDataProperty().isEqualTo(BackgroundType.NETWORK);
             networkBackgroundCachePane.visibleProperty().bind(networkBackgroundSelected);
