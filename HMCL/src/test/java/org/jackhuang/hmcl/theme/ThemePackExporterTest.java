@@ -68,10 +68,10 @@ public final class ThemePackExporterTest {
             ThemePackManifest parsed = ThemePackManifest.fromJson(exportedManifest);
             Theme theme = parsed.findTheme(null);
             assertNotNull(theme);
-            ThemeBackground background = theme.appearance().background();
+            ThemeBackgroundSettings background = theme.appearance().background();
             assertNotNull(background);
             assertEquals("user.current-theme", parsed.id());
-            ThemeBackground.Image image = assertInstanceOf(ThemeBackground.Image.class, background);
+            ThemeBackground.Image image = assertInstanceOf(ThemeBackground.Image.class, background.source());
             assertEquals("assets/wallpapers/wallpaper.txt", image.path());
 
             String exportedWallpaper = readEntry(zipFile, wallpaperEntry);

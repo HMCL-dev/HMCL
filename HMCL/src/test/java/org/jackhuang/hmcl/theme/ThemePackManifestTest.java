@@ -93,7 +93,7 @@ public final class ThemePackManifestTest {
 
         ThemeAppearance appearance = theme.resolve(context);
         ResolvedTheme resolvedTheme = appearance.toResolvedTheme(context);
-        ThemeBackground background = appearance.background();
+        ThemeBackgroundSettings background = appearance.background();
         assertNotNull(background);
 
         assertNotNull(appearance.color());
@@ -101,7 +101,7 @@ public final class ThemePackManifestTest {
         assertEquals(Brightness.DARK, resolvedTheme.brightness());
         assertEquals(ColorStyle.FIDELITY, resolvedTheme.colorStyle());
         assertEquals(Contrast.HIGH, resolvedTheme.contrast());
-        ThemeBackground.Image image = assertInstanceOf(ThemeBackground.Image.class, background);
+        ThemeBackground.Image image = assertInstanceOf(ThemeBackground.Image.class, background.source());
         assertEquals("assets/wallpapers/forest-dark.webp", image.path());
         assertEquals(0.9, background.opacity());
     }
@@ -126,7 +126,7 @@ public final class ThemePackManifestTest {
         ThemeResolveContext context = new ThemeResolveContext(Brightness.LIGHT, "linux", "en");
 
         ThemeAppearance appearance = theme.resolve(context);
-        ThemeBackground background = appearance.background();
+        ThemeBackgroundSettings background = appearance.background();
         assertNotNull(background);
 
         assertNotNull(appearance.color());
@@ -134,7 +134,7 @@ public final class ThemePackManifestTest {
         assertEquals(ThemeColor.of("#4D7C3A"), appearance.color().resolveFallback());
         assertEquals(ColorStyle.FIDELITY, appearance.colorStyle());
         assertEquals(Contrast.DEFAULT, appearance.contrast());
-        ThemeBackground.Image image = assertInstanceOf(ThemeBackground.Image.class, background);
+        ThemeBackground.Image image = assertInstanceOf(ThemeBackground.Image.class, background.source());
         assertEquals("assets/wallpapers/forest.webp", image.path());
         assertEquals(0.8, background.opacity());
     }
@@ -196,10 +196,10 @@ public final class ThemePackManifestTest {
                 """);
         Theme theme = manifest.findTheme(null);
         assertNotNull(theme);
-        ThemeBackground background = theme.appearance().background();
+        ThemeBackgroundSettings background = theme.appearance().background();
         assertNotNull(background);
 
-        assertInstanceOf(ThemeBackground.Builtin.class, background);
+        assertInstanceOf(ThemeBackground.Builtin.class, background.source());
         assertEquals(0.75, background.opacity());
     }
 
@@ -452,12 +452,12 @@ public final class ThemePackManifestTest {
 
         ThemeAppearance appearance = theme.resolve(
                 new ThemeResolveContext(Brightness.DARK, "windows", "en"));
-        ThemeBackground background = appearance.background();
+        ThemeBackgroundSettings background = appearance.background();
         assertNotNull(background);
 
         assertNotNull(appearance.color());
         assertEquals(ThemeColor.of("#6FA65A"), appearance.color().resolveFallback());
-        ThemeBackground.Image image = assertInstanceOf(ThemeBackground.Image.class, background);
+        ThemeBackground.Image image = assertInstanceOf(ThemeBackground.Image.class, background.source());
         assertEquals("assets/wallpapers/forest.webp", image.path());
     }
 
@@ -472,13 +472,13 @@ public final class ThemePackManifestTest {
 
         ThemeAppearance appearance = theme.resolve(
                 new ThemeResolveContext(Brightness.DARK, "windows", "en"));
-        ThemeBackground background = appearance.background();
+        ThemeBackgroundSettings background = appearance.background();
         assertNotNull(background);
 
         assertNotNull(appearance.color());
         assertEquals(ThemeColor.of("#4D7C3A"), appearance.color().resolveFallback());
         assertEquals(Contrast.DEFAULT, appearance.contrast());
-        ThemeBackground.Image image = assertInstanceOf(ThemeBackground.Image.class, background);
+        ThemeBackground.Image image = assertInstanceOf(ThemeBackground.Image.class, background.source());
         assertEquals("assets/wallpapers/forest.webp", image.path());
     }
 

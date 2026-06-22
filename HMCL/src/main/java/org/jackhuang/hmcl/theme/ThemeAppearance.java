@@ -47,7 +47,7 @@ public record ThemeAppearance(
         @Nullable Brightness brightness,
         @Nullable ColorStyle colorStyle,
         @Nullable Contrast contrast,
-        @Nullable ThemeBackground background,
+        @Nullable ThemeBackgroundSettings background,
         @Nullable ThemeTitleBar titleBar) {
 
     /// JSON member name for the color seed.
@@ -257,7 +257,7 @@ public record ThemeAppearance(
     }
 
     /// Reads the optional background object.
-    private static @Nullable ThemeBackground readBackground(JsonObject object) {
+    private static @Nullable ThemeBackgroundSettings readBackground(JsonObject object) {
         JsonElement element = object.get(FIELD_BACKGROUND);
         if (element == null) {
             return null;
@@ -265,7 +265,7 @@ public record ThemeAppearance(
         if (!(element instanceof JsonObject background)) {
             throw new JsonParseException("Theme background must be an object");
         }
-        return ThemeBackground.fromJson(background);
+        return ThemeBackgroundSettings.fromJson(background);
     }
 
     /// Reads the optional title-bar object.

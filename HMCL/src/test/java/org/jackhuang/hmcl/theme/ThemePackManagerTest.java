@@ -235,7 +235,7 @@ public final class ThemePackManagerTest {
             assertNotNull(theme);
 
             ThemeAppearance appearance = theme.appearance();
-            ThemeBackground background = appearance.background();
+            ThemeBackgroundSettings background = appearance.background();
             assertNotNull(background);
 
             assertEquals("com.example.hmcl-theme-pack.test", manifest.id());
@@ -248,7 +248,7 @@ public final class ThemePackManagerTest {
             assertEquals(ColorStyle.MONOCHROME, appearance.colorStyle());
             assertNotNull(appearance.titleBar());
             assertEquals(true, appearance.titleBar().transparent());
-            assertInstanceOf(ThemeBackground.Builtin.class, background);
+            assertInstanceOf(ThemeBackground.Builtin.class, background.source());
             assertEquals(0.5, background.opacity());
         }
     }

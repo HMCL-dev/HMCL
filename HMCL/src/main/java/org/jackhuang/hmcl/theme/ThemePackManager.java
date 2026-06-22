@@ -584,7 +584,7 @@ public final class ThemePackManager {
         }
 
         ThemeAppearance appearance = theme.resolve(context);
-        @Nullable ThemeBackground background = appearance.background();
+        @Nullable ThemeBackgroundSettings background = appearance.background();
         if (background == null) {
             return null;
         }
@@ -595,7 +595,7 @@ public final class ThemePackManager {
     private static void applyBackground(
             ThemeSelection selection,
             Path themePackDirectory,
-            ThemeBackground background) throws IOException {
+            ThemeBackgroundSettings background) throws IOException {
         Objects.requireNonNull(selection);
 
         resolveBackground(themePackDirectory, background, currentBackgroundOpacity());
@@ -611,9 +611,11 @@ public final class ThemePackManager {
     /// Resolves a concrete launcher background from a theme-pack background object.
     private static ResolvedBackground resolveBackground(
             Path themePackDirectory,
-            ThemeBackground background,
-            double opacity) throws IOException {
-        if (background instanceof ThemeBackground.Image image) {
+            ThemeBackgroundSettings background,
+            double fallbackOpacity) throws IOException {
+        double opacity = Objects.requireNonNullElse(background.opacity(), fallbackOpacity);
+        @Nullable ThemeBackground source = background.source();
+        if (source instanceof ThemeBackground.Image image) {
             return new ResolvedBackground(
                     BackgroundType.CUSTOM,
                     resolveInstalledAsset(themePackDirectory, requireNonBlank(image.path(), "background.path")),
@@ -621,7 +623,7 @@ public final class ThemePackManager {
                     null,
                     opacity);
         }
-        if (background instanceof ThemeBackground.Network network) {
+        if (source instanceof ThemeBackground.Network network) {
             return new ResolvedBackground(
                     BackgroundType.NETWORK,
                     null,
@@ -629,7 +631,7 @@ public final class ThemePackManager {
                     null,
                     opacity);
         }
-        if (background instanceof ThemeBackground.Paint paint) {
+        if (source instanceof ThemeBackground.Paint paint) {
             return new ResolvedBackground(
                     BackgroundType.PAINT,
                     null,
@@ -637,7 +639,7 @@ public final class ThemePackManager {
                     parsePaint(requireNonBlank(paint.paint(), "background.paint")),
                     opacity);
         }
-        if (background instanceof ThemeBackground.Patch patch) {
+        if (source instanceof ThemeBackground.Patch patch) {
             return resolvePartialBackground(themePackDirectory, patch, opacity);
         }
         return new ResolvedBackground(BackgroundType.DEFAULT, null, null, null, opacity);
@@ -651,20 +653,21 @@ public final class ThemePackManager {
         }
 
         ThemeColor fallback = color.resolveFallback();
-        ThemeBackground background = appearance.background();
+        ThemeBackgroundSettings background = appearance.background();
         if (background == null) {
             return fallback;
         }
 
-        if (background instanceof ThemeBackground.Image image) {
+        @Nullable ThemeBackground source = background.source();
+        if (source instanceof ThemeBackground.Image image) {
             String path = requireNonBlank(image.path(), "background.path");
             return WallpaperColorExtractor.extract(resolveInstalledAsset(themePackDirectory, path), fallback);
         }
-        if (background instanceof ThemeBackground.Paint paintBackground) {
+        if (source instanceof ThemeBackground.Paint paintBackground) {
             Paint paint = parsePaint(requireNonBlank(paintBackground.paint(), "background.paint"));
             return paint instanceof Color paintColor ? ThemeColor.of(paintColor) : fallback;
         }
-        if (background instanceof ThemeBackground.Patch patch) {
+        if (source instanceof ThemeBackground.Patch patch) {
             if (patch.path() != null) {
                 return WallpaperColorExtractor.extract(resolveInstalledAsset(themePackDirectory, patch.path()), fallback);
             }
@@ -813,24 +816,24 @@ public final class ThemePackManager {
     }
 
     /// Creates the background model for the current launcher settings.
-    private static ThemeBackground createCurrentBackground(List<ThemePackAsset> assets) throws IOException {
+    private static ThemeBackgroundSettings createCurrentBackground(List<ThemePackAsset> assets) throws IOException {
         ResolvedBackground background = resolveCurrentBackground(currentResolveContext());
         Double opacity = background.opacity();
         return switch (background.type()) {
-            case THEME, DEFAULT -> new ThemeBackground.Builtin(opacity);
+            case THEME, DEFAULT -> new ThemeBackgroundSettings(new ThemeBackground.Builtin(), opacity);
             case CLASSIC -> throw new IOException("Theme packs cannot reference the classic built-in background");
             case CUSTOM -> createCurrentImageBackground(assets, background.imagePath(), opacity);
-            case NETWORK -> new ThemeBackground.Network(
-                    requireNonBlank(background.networkImageUrl(), "networkBackgroundImageUrl"),
+            case NETWORK -> new ThemeBackgroundSettings(
+                    new ThemeBackground.Network(requireNonBlank(background.networkImageUrl(), "networkBackgroundImageUrl")),
                     opacity);
-            case PAINT -> new ThemeBackground.Paint(
-                    Objects.requireNonNullElse(background.paint(), Color.WHITE).toString(),
+            case PAINT -> new ThemeBackgroundSettings(
+                    new ThemeBackground.Paint(Objects.requireNonNullElse(background.paint(), Color.WHITE).toString()),
                     opacity);
         };
     }
 
     /// Creates the image background model for the current launcher settings.
-    private static ThemeBackground createCurrentImageBackground(
+    private static ThemeBackgroundSettings createCurrentImageBackground(
             List<ThemePackAsset> assets,
             @Nullable Path imagePath,
             Double opacity) throws IOException {
@@ -847,7 +850,7 @@ public final class ThemePackManager {
 
         String entryName = "assets/background/" + sanitizePathSegment(source.getFileName().toString());
         assets.add(new ThemePackAsset(source, entryName));
-        return new ThemeBackground.Image(entryName, opacity);
+        return new ThemeBackgroundSettings(new ThemeBackground.Image(entryName), opacity);
     }
 
     /// Returns the current launcher background opacity.
