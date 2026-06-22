@@ -419,20 +419,20 @@ public final class ThemePackManager {
                 String path = requireNonBlank(background.path(), "background.path");
                 resolveInstalledAsset(themePackDirectory, path);
                 currentSettings.backgroundTypeProperty().set(BackgroundType.CUSTOM);
-                currentSettings.backgroundImageProperty().set(ThemePackResourceURL.of(manifest, path).toString());
+                currentSettings.customBackgroundImagePathProperty().set(ThemePackResourceURL.of(manifest, path).toString());
                 currentSettings.backgroundImageUrlProperty().set(null);
                 currentSettings.backgroundPaintProperty().set(null);
             }
             case NETWORK -> {
                 currentSettings.backgroundTypeProperty().set(BackgroundType.NETWORK);
                 currentSettings.backgroundImageUrlProperty().set(requireNonBlank(background.url(), "background.url"));
-                currentSettings.backgroundImageProperty().set(null);
+                currentSettings.customBackgroundImagePathProperty().set(null);
                 currentSettings.backgroundPaintProperty().set(null);
             }
             case PAINT -> {
                 currentSettings.backgroundTypeProperty().set(BackgroundType.PAINT);
                 currentSettings.backgroundPaintProperty().set(parsePaint(requireNonBlank(background.paint(), "background.paint")));
-                currentSettings.backgroundImageProperty().set(null);
+                currentSettings.customBackgroundImagePathProperty().set(null);
                 currentSettings.backgroundImageUrlProperty().set(null);
             }
         }
@@ -466,7 +466,7 @@ public final class ThemePackManager {
 
     /// Clears background source fields that are irrelevant for built-in backgrounds.
     private static void clearBackgroundSources() {
-        settings().backgroundImageProperty().set(null);
+        settings().customBackgroundImagePathProperty().set(null);
         settings().backgroundImageUrlProperty().set(null);
         settings().backgroundPaintProperty().set(null);
     }
@@ -601,8 +601,10 @@ public final class ThemePackManager {
 
     /// Creates the image background model for the current launcher settings.
     private static ThemeBackground createCurrentImageBackground(List<ThemePackAsset> assets, Double opacity) throws IOException {
-        String backgroundImage = requireNonBlank(settings().backgroundImageProperty().get(), "backgroundImage");
-        Path source = resolveBackgroundImageSource(backgroundImage);
+        String customBackgroundImagePath = requireNonBlank(
+                settings().customBackgroundImagePathProperty().get(),
+                "customBackgroundImagePath");
+        Path source = resolveCustomBackgroundImageSource(customBackgroundImagePath);
         if (Files.isDirectory(source)) {
             throw new IOException("Cannot export a background directory as a theme-pack asset: " + source);
         }
@@ -615,13 +617,13 @@ public final class ThemePackManager {
         return new ThemeBackground(ThemeBackground.Type.IMAGE, entryName, null, null, opacity);
     }
 
-    /// Resolves a launcher background image value to a local file.
-    private static Path resolveBackgroundImageSource(String backgroundImage) throws IOException {
-        @Nullable ThemePackResourceURL resourceURL = ThemePackResourceURL.parse(backgroundImage);
+    /// Resolves a launcher custom background image path to a local file.
+    private static Path resolveCustomBackgroundImageSource(String customBackgroundImagePath) throws IOException {
+        @Nullable ThemePackResourceURL resourceURL = ThemePackResourceURL.parse(customBackgroundImagePath);
         if (resourceURL != null) {
             return resourceURL.resolve();
         }
-        return Path.of(backgroundImage).toAbsolutePath().normalize();
+        return Path.of(customBackgroundImagePath).toAbsolutePath().normalize();
     }
 
     /// Returns the current launcher background opacity.

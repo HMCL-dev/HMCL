@@ -339,13 +339,13 @@ public final class LauncherSettings extends ObservableSetting implements JsonSch
         return backgroundType;
     }
 
-    /// The local launcher background image path.
-    @SerializedName("backgroundImage")
-    private final StringProperty backgroundImage = new SimpleStringProperty();
+    /// The local custom launcher background image path.
+    @SerializedName("customBackgroundImagePath")
+    private final StringProperty customBackgroundImagePath = new SimpleStringProperty();
 
-    /// Returns the local launcher background image path property.
-    public StringProperty backgroundImageProperty() {
-        return backgroundImage;
+    /// Returns the local custom launcher background image path property.
+    public StringProperty customBackgroundImagePathProperty() {
+        return customBackgroundImagePath;
     }
 
     /// The remote launcher background image URL.

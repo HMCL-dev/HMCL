@@ -223,7 +223,8 @@ public final class LegacyConfigMigrator {
             renameMember(jsonObject, "theme", "customThemeColor");
             renameMember(jsonObject, "fontFamily", "logFontFamily");
             renameMember(jsonObject, "fontSize", "logFontSize");
-            renameMember(jsonObject, "bgpath", "backgroundImage");
+            renameMember(jsonObject, "bgpath", "customBackgroundImagePath");
+            renameMember(jsonObject, "backgroundImage", "customBackgroundImagePath");
             renameMember(jsonObject, "bgurl", "backgroundImageUrl");
             renameMember(jsonObject, "bgpaint", "backgroundPaint");
             migrateBackgroundOpacity(jsonObject);

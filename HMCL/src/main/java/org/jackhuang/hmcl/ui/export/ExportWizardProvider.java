@@ -125,7 +125,7 @@ public final class ExportWizardProvider implements WizardProvider {
                     LauncherSettings exported = new LauncherSettings();
 
                     exported.backgroundTypeProperty().set(settings().backgroundTypeProperty().get());
-                    exported.backgroundImageProperty().set(settings().backgroundImageProperty().get());
+                    exported.customBackgroundImagePathProperty().set(settings().customBackgroundImagePathProperty().get());
                     exported.customThemeColorProperty().set(settings().customThemeColorProperty().get());
                     exported.versionListSourceProperty().set(settings().versionListSourceProperty().get());
                     exported.fileDownloadSourceProperty().set(settings().fileDownloadSourceProperty().get());

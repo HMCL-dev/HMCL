@@ -165,6 +165,31 @@ public final class LauncherSettingsMigrationTest {
         }
     }
 
+    /// Tests migrating the legacy custom background image path field.
+    @Test
+    public void migratesLegacyBackgroundImageToCustomBackgroundImagePath() throws IOException {
+        try (FileSystem fileSystem = Jimfs.newFileSystem(Configuration.unix())) {
+            Path root = fileSystem.getPath("/launcher-settings-migration-tests");
+            Files.createDirectories(root);
+            Path config = Files.createTempFile(root, "background-image-", ".json");
+            Files.writeString(config, """
+                    {
+                      "_version": 2,
+                      "backgroundImage": "/pictures/background.png"
+                    }
+                    """);
+
+            LegacyConfigMigrator.LegacyConfigMigration migration =
+                    Objects.requireNonNull(LegacyConfigMigrator.migrateLegacyConfig(config));
+            LauncherSettings launcherSettings = migration.launcherSettings();
+            JsonObject serialized = JsonParser.parseString(launcherSettings.toJson()).getAsJsonObject();
+
+            assertFalse(serialized.has("backgroundImage"));
+            assertEquals("/pictures/background.png", launcherSettings.customBackgroundImagePathProperty().get());
+            assertEquals("/pictures/background.png", serialized.get("customBackgroundImagePath").getAsString());
+        }
+    }
+
     /// Tests migrating legacy enum ordinal fields into stable enum names.
     @ParameterizedTest
     @CsvSource({

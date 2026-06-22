@@ -95,7 +95,7 @@ public class DecoratorController {
         changeBackgroundListener = o -> updateBackground();
         WeakInvalidationListener weakListener = new WeakInvalidationListener(changeBackgroundListener);
         settings().backgroundTypeProperty().addListener(weakListener);
-        settings().backgroundImageProperty().addListener(weakListener);
+        settings().customBackgroundImagePathProperty().addListener(weakListener);
         settings().backgroundImageUrlProperty().addListener(weakListener);
         settings().backgroundPaintProperty().addListener(weakListener);
         settings().backgroundOpacityProperty().addListener(weakListener);
@@ -192,10 +192,10 @@ public class DecoratorController {
         Image image = null;
         switch (imageType) {
             case CUSTOM:
-                String backgroundImage = settings().backgroundImageProperty().get();
-                if (backgroundImage != null)
+                String customBackgroundImagePath = settings().customBackgroundImagePathProperty().get();
+                if (customBackgroundImagePath != null)
                     try {
-                        Path path = resolveCustomBackground(backgroundImage);
+                        Path path = resolveCustomBackground(customBackgroundImagePath);
                         image = Files.isDirectory(path)
                                 ? randomImageIn(path)
                                 : tryLoadImage(path);
@@ -238,11 +238,11 @@ public class DecoratorController {
     }
 
     /// Resolves a custom background setting to a local file or directory.
-    private Path resolveCustomBackground(String backgroundImage) throws IOException {
-        ThemePackResourceURL resourceURL = ThemePackResourceURL.parse(backgroundImage);
+    private Path resolveCustomBackground(String customBackgroundImagePath) throws IOException {
+        ThemePackResourceURL resourceURL = ThemePackResourceURL.parse(customBackgroundImagePath);
         if (resourceURL != null)
             return resourceURL.resolve();
-        return Path.of(backgroundImage);
+        return Path.of(customBackgroundImagePath);
     }
 
     private Background createBackgroundWithOpacity(Image image, double opacity) {

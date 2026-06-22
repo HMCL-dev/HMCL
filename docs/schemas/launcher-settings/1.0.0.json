@@ -87,7 +87,7 @@
         "PAINT"
       ]
     },
-    "backgroundImage": {
+    "customBackgroundImagePath": {
       "type": "string"
     },
     "backgroundImageUrl": {

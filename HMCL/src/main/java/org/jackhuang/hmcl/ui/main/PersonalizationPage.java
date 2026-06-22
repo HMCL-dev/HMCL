@@ -259,7 +259,7 @@ public class PersonalizationPage extends StackPane {
         settings().themeColorTypeProperty().set(ThemeColorType.CUSTOM);
         settings().themeColorStyleProperty().set(ColorStyle.FIDELITY);
         settings().backgroundTypeProperty().set(BackgroundType.DEFAULT);
-        settings().backgroundImageProperty().set(null);
+        settings().customBackgroundImagePathProperty().set(null);
         settings().backgroundImageUrlProperty().set(null);
         settings().backgroundPaintProperty().set(null);
         settings().backgroundOpacityProperty().set(1.0);
@@ -274,7 +274,7 @@ public class PersonalizationPage extends StackPane {
         settings().themeColorTypeProperty().addListener(listener);
         settings().themeColorStyleProperty().addListener(listener);
         settings().backgroundTypeProperty().addListener(listener);
-        settings().backgroundImageProperty().addListener(listener);
+        settings().customBackgroundImagePathProperty().addListener(listener);
         settings().backgroundImageUrlProperty().addListener(listener);
         settings().backgroundPaintProperty().addListener(listener);
         settings().backgroundOpacityProperty().addListener(listener);
@@ -584,7 +584,7 @@ public class PersonalizationPage extends StackPane {
                             .setChooserTitle(i18n("launcher.background.choose"))
                             .addExtensionFilter(FXUtils.getImageExtensionFilter())
                             .setSelectionMode(FileSelector.SelectionMode.FILE_OR_DIRECTORY)
-                            .bindBidirectional(settings().backgroundImageProperty()),
+                            .bindBidirectional(settings().customBackgroundImagePathProperty()),
                     new MultiFileItem.StringOption<>(i18n("launcher.background.network"), BackgroundType.NETWORK)
                             .setValidators(new URLValidator(true))
                             .bindBidirectional(settings().backgroundImageUrlProperty()),
@@ -600,7 +600,7 @@ public class PersonalizationPage extends StackPane {
                         return switch (type) {
                             case DEFAULT -> i18n("launcher.background.default");
                             case CLASSIC -> i18n("launcher.background.classic");
-                            case CUSTOM -> settings().backgroundImageProperty().get();
+                            case CUSTOM -> settings().customBackgroundImagePathProperty().get();
                             case NETWORK -> settings().backgroundImageUrlProperty().get();
                             case PAINT -> {
                                 @Nullable Paint backgroundPaint = settings().backgroundPaintProperty().get();
@@ -609,7 +609,7 @@ public class PersonalizationPage extends StackPane {
                         };
                     },
                     backgroundItem.selectedDataProperty(),
-                    settings().backgroundImageProperty(),
+                    settings().customBackgroundImagePathProperty(),
                     settings().backgroundImageUrlProperty(),
                     settings().backgroundPaintProperty()));
 

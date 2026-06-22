@@ -77,7 +77,7 @@ public final class Themes {
             observables.add(settings().themeColorTypeProperty());
             observables.add(settings().themeColorStyleProperty());
             observables.add(settings().backgroundTypeProperty());
-            observables.add(settings().backgroundImageProperty());
+            observables.add(settings().customBackgroundImagePathProperty());
             observables.add(settings().backgroundPaintProperty());
             if (FXUtils.DARK_MODE != null) {
                 observables.add(FXUtils.DARK_MODE);
@@ -135,16 +135,16 @@ public final class Themes {
 
         /// Returns a Monet seed color extracted from the current custom background image.
         private ThemeColor getImageThemeColor(ThemeColor fallback) {
-            @Nullable String backgroundImage = settings().backgroundImageProperty().get();
-            if (backgroundImage == null || backgroundImage.isBlank()) {
+            @Nullable String customBackgroundImagePath = settings().customBackgroundImagePathProperty().get();
+            if (customBackgroundImagePath == null || customBackgroundImagePath.isBlank()) {
                 return fallback;
             }
 
             try {
-                @Nullable ThemePackResourceURL resourceURL = ThemePackResourceURL.parse(backgroundImage);
+                @Nullable ThemePackResourceURL resourceURL = ThemePackResourceURL.parse(customBackgroundImagePath);
                 Path imageFile = resourceURL != null
                         ? resourceURL.resolve()
-                        : Path.of(backgroundImage).toAbsolutePath().normalize();
+                        : Path.of(customBackgroundImagePath).toAbsolutePath().normalize();
                 if (!Files.isRegularFile(imageFile)) {
                     return fallback;
                 }

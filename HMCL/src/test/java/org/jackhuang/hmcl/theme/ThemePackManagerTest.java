@@ -107,7 +107,7 @@ public final class ThemePackManagerTest {
             assertNull(settings.backgroundImageUrlProperty().get());
             assertNull(settings.backgroundPaintProperty().get());
 
-            ThemePackResourceURL backgroundResource = ThemePackResourceURL.parse(settings.backgroundImageProperty().get());
+            ThemePackResourceURL backgroundResource = ThemePackResourceURL.parse(settings.customBackgroundImagePathProperty().get());
             assertNotNull(backgroundResource);
             assertEquals("example.ui", backgroundResource.packId());
             assertEquals("assets/wallpapers/wallpaper.png", backgroundResource.entryName());
