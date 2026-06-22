@@ -76,7 +76,7 @@ public final class ThemePackManifestTest {
                   },
                   {
                     "condition": {
-                      "arch": ["arm64", "riscv64"]
+                      "language": ["zh", "ja"]
                     },
                     "colorStyle": "tonal_spot"
                   }
@@ -89,7 +89,7 @@ public final class ThemePackManifestTest {
     @Test
     public void testResolveMatchingOverrides() {
         Theme theme = parseForestTheme();
-        ThemeResolveContext context = new ThemeResolveContext(Brightness.DARK, "auto", "windows", "x86_64", "en");
+        ThemeResolveContext context = new ThemeResolveContext(Brightness.DARK, "auto", "windows", "en");
 
         ThemeAppearance appearance = theme.resolve(context);
         ResolvedTheme resolvedTheme = appearance.toResolvedTheme(context);
@@ -110,7 +110,7 @@ public final class ThemePackManifestTest {
     @Test
     public void testConditionArrayMatchesAnyValue() {
         Theme theme = parseForestTheme();
-        ThemeResolveContext context = new ThemeResolveContext(Brightness.LIGHT, "light", "linux", "arm64", "en");
+        ThemeResolveContext context = new ThemeResolveContext(Brightness.LIGHT, "light", "linux", "zh");
 
         ResolvedTheme resolvedTheme = theme.toResolvedTheme(context);
 
@@ -123,7 +123,7 @@ public final class ThemePackManifestTest {
     @Test
     public void testNonMatchingOverridesAreIgnored() {
         Theme theme = parseForestTheme();
-        ThemeResolveContext context = new ThemeResolveContext(Brightness.LIGHT, "light", "linux", "x86_64", "en");
+        ThemeResolveContext context = new ThemeResolveContext(Brightness.LIGHT, "light", "linux", "en");
 
         ThemeAppearance appearance = theme.resolve(context);
         ThemeBackground background = appearance.background();
@@ -164,7 +164,7 @@ public final class ThemePackManifestTest {
         assertNotNull(theme);
 
         ThemeAppearance appearance = theme.resolve(
-                new ThemeResolveContext(Brightness.LIGHT, "light", "linux", "x86_64", "en"));
+                new ThemeResolveContext(Brightness.LIGHT, "light", "linux", "en"));
 
         assertNotNull(appearance.color());
         assertEquals(ThemeColor.of("#222222"), appearance.color().resolveFallback());
@@ -352,7 +352,7 @@ public final class ThemePackManifestTest {
         assertNotNull(theme);
 
         ThemeAppearance appearance = theme.resolve(
-                new ThemeResolveContext(Brightness.DARK, "auto", "windows", "x86_64", "en"));
+                new ThemeResolveContext(Brightness.DARK, "auto", "windows", "en"));
         ThemeBackground background = appearance.background();
         assertNotNull(background);
 
@@ -361,17 +361,17 @@ public final class ThemePackManifestTest {
         assertEquals("assets/wallpapers/forest.webp", background.path());
     }
 
-    /// Tests that unknown condition keys are accepted but do not match the current context.
+    /// Tests that arch conditions are treated as unknown and do not match the current context.
     @Test
-    public void testUnknownConditionKeyDoesNotMatchCurrentContext() {
+    public void testArchConditionDoesNotMatchCurrentContext() {
         String json = MANIFEST.replace(
                 "\"brightness\": \"dark\"",
-                "\"futureCondition\": \"dark\"");
+                "\"arch\": \"x86_64\"");
         Theme theme = ThemePackManifest.fromJson(json).findTheme("forest");
         assertNotNull(theme);
 
         ThemeAppearance appearance = theme.resolve(
-                new ThemeResolveContext(Brightness.DARK, "auto", "windows", "x86_64", "en"));
+                new ThemeResolveContext(Brightness.DARK, "auto", "windows", "en"));
         ThemeBackground background = appearance.background();
         assertNotNull(background);
 

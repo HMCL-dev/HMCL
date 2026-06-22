@@ -52,26 +52,11 @@ public record ThemeCondition(@Unmodifiable Map<String, @Unmodifiable Set<String>
     /// Condition key for the current operating system.
     static final String KEY_OS = "os";
 
-    /// Condition key for the current system architecture.
-    static final String KEY_ARCH = "arch";
-
     /// Condition key for the current UI language.
     static final String KEY_LANGUAGE = "language";
 
     /// Supported operating system condition values.
     private static final Set<String> SUPPORTED_OS_VALUES = Set.of("windows", "macos", "linux", "freebsd", "unknown");
-
-    /// Supported architecture condition values.
-    private static final Set<String> SUPPORTED_ARCH_VALUES = Set.of(
-            "x86", "x86_64", "ia32", "ia64",
-            "sparc", "sparcv9",
-            "arm32", "arm64",
-            "mips", "mips64", "mipsel", "mips64el",
-            "ppc", "ppc64", "ppcle", "ppc64le",
-            "s390", "s390x",
-            "riscv32", "riscv64",
-            "loongarch32", "loongarch64", "loongarch64_ow",
-            "unknown");
 
     /// Creates a condition from normalized accepted values.
     ///
@@ -100,7 +85,7 @@ public record ThemeCondition(@Unmodifiable Map<String, @Unmodifiable Set<String>
     ///
     /// @param object the condition object
     /// @return the parsed condition
-    /// @throws JsonParseException if the condition contains unsupported keys or malformed values
+    /// @throws JsonParseException if the condition contains malformed values
     public static ThemeCondition fromJson(JsonObject object) throws JsonParseException {
         Objects.requireNonNull(object);
 
@@ -201,7 +186,6 @@ public record ThemeCondition(@Unmodifiable Map<String, @Unmodifiable Set<String>
                     default -> throw new JsonParseException("Unsupported brightnessMode condition value: " + value);
                 };
             case KEY_OS -> normalizeOperatingSystemValue(normalized, value);
-            case KEY_ARCH -> normalizeArchitectureValue(normalized, value);
             case KEY_LANGUAGE -> normalized;
             default -> trimmed;
         };
@@ -224,29 +208,4 @@ public record ThemeCondition(@Unmodifiable Map<String, @Unmodifiable Set<String>
         return value;
     }
 
-    /// Normalizes an architecture condition value.
-    private static String normalizeArchitectureValue(String normalized, String original) {
-        String value = normalized.replace('-', '_');
-        value = switch (value) {
-            case "amd64", "x64" -> "x86_64";
-            case "x86_32" -> "x86";
-            case "x86_64", "ia32", "ia64",
-                    "sparc", "sparcv9",
-                    "arm32", "arm64",
-                    "mips", "mips64", "mipsel", "mips64el",
-                    "ppc", "ppc64", "ppcle", "ppc64le",
-                    "s390", "s390x",
-                    "riscv32", "riscv64",
-                    "loongarch32", "loongarch64", "loongarch64_ow", "unknown" -> value;
-            case "aarch64" -> "arm64";
-            case "arm" -> "arm32";
-            case "riscv" -> "riscv64";
-            default -> normalized;
-        };
-
-        if (!SUPPORTED_ARCH_VALUES.contains(value)) {
-            throw new JsonParseException("Unsupported arch condition value: " + original);
-        }
-        return value;
-    }
 }

@@ -18,7 +18,6 @@
 package org.jackhuang.hmcl.theme;
 
 import org.glavo.monetfx.Brightness;
-import org.jackhuang.hmcl.util.platform.Architecture;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
@@ -31,14 +30,12 @@ import java.util.Objects;
 /// @param brightness the effective light or dark mode after resolving launcher and system settings
 /// @param brightnessMode the configured brightness mode, such as `auto`, `light`, or `dark`
 /// @param os the normalized operating system name used by theme conditions
-/// @param arch the normalized system architecture name used by theme conditions
 /// @param language the normalized UI language subtag used by theme conditions
 @NotNullByDefault
 public record ThemeResolveContext(
         Brightness brightness,
         String brightnessMode,
         String os,
-        String arch,
         String language) {
 
     /// Creates a theme resolution context.
@@ -46,13 +43,11 @@ public record ThemeResolveContext(
     /// @param brightness the effective light or dark mode after resolving launcher and system settings
     /// @param brightnessMode the configured brightness mode, such as `auto`, `light`, or `dark`
     /// @param os the normalized operating system name used by theme conditions
-    /// @param arch the normalized system architecture name used by theme conditions
     /// @param language the normalized UI language subtag used by theme conditions
     public ThemeResolveContext {
         Objects.requireNonNull(brightness);
         brightnessMode = normalizeToken(brightnessMode, "brightnessMode");
         os = normalizeToken(os, "os");
-        arch = normalizeToken(arch, "arch");
         language = normalizeToken(language, "language");
     }
 
@@ -60,13 +55,12 @@ public record ThemeResolveContext(
     ///
     /// @param brightness the effective light or dark mode after resolving launcher and system settings
     /// @param brightnessMode the configured brightness mode, such as `auto`, `light`, or `dark`
-    /// @return a context containing the current OS, system architecture, and default language
+    /// @return a context containing the current OS and default language
     public static ThemeResolveContext current(Brightness brightness, String brightnessMode) {
         return new ThemeResolveContext(
                 brightness,
                 brightnessMode,
                 normalizeOperatingSystem(OperatingSystem.CURRENT_OS),
-                Architecture.SYSTEM_ARCH.getCheckedName(),
                 Locale.getDefault().getLanguage());
     }
 
@@ -79,7 +73,6 @@ public record ThemeResolveContext(
             case ThemeCondition.KEY_BRIGHTNESS -> brightness.name().toLowerCase(Locale.ROOT);
             case ThemeCondition.KEY_BRIGHTNESS_MODE -> brightnessMode;
             case ThemeCondition.KEY_OS -> os;
-            case ThemeCondition.KEY_ARCH -> arch;
             case ThemeCondition.KEY_LANGUAGE -> language;
             default -> null;
         };
