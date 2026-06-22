@@ -44,7 +44,7 @@ import java.util.Objects;
 @NotNullByDefault
 public record ThemeAppearance(
         @Nullable ThemeColorSource color,
-        @Nullable ThemeBrightness brightness,
+        @Nullable Brightness brightness,
         @Nullable ColorStyle colorStyle,
         @Nullable Contrast contrast,
         @Nullable ThemeBackground background,
@@ -124,7 +124,7 @@ public record ThemeAppearance(
             object.add(FIELD_COLOR, color.toJsonElement());
         }
         if (brightness != null) {
-            object.addProperty(FIELD_BRIGHTNESS, brightness.toJsonValue());
+            object.addProperty(FIELD_BRIGHTNESS, toJsonBrightness(brightness));
         }
         if (colorStyle != null) {
             object.addProperty(FIELD_COLOR_STYLE, colorStyle.name().toLowerCase(Locale.ROOT));
@@ -177,9 +177,7 @@ public record ThemeAppearance(
         Objects.requireNonNull(context);
 
         ThemeColor resolvedColor = color != null ? color.resolveFallback() : ResolvedTheme.DEFAULT.primaryColorSeed();
-        Brightness resolvedBrightness = brightness != null
-                ? brightness.toMonetBrightness()
-                : context.brightness();
+        Brightness resolvedBrightness = brightness != null ? brightness : context.brightness();
         ColorStyle resolvedColorStyle = colorStyle != null ? colorStyle : ResolvedTheme.DEFAULT.colorStyle();
         Contrast resolvedContrast = contrast != null ? contrast : Contrast.DEFAULT;
 
@@ -196,14 +194,14 @@ public record ThemeAppearance(
     }
 
     /// Reads the optional controlled brightness field.
-    private static @Nullable ThemeBrightness readBrightness(JsonObject object) {
+    private static @Nullable Brightness readBrightness(JsonObject object) {
         @Nullable String value = readString(object, FIELD_BRIGHTNESS);
         if (value == null) {
             return null;
         }
 
         try {
-            return ThemeBrightness.parse(value);
+            return parseBrightness(value);
         } catch (IllegalArgumentException e) {
             throw new JsonParseException("Invalid theme brightness: " + value, e);
         }
@@ -316,5 +314,22 @@ public record ThemeAppearance(
         } else {
             object.addProperty(FIELD_CONTRAST, contrast.getValue());
         }
+    }
+
+    /// Parses a serialized theme brightness value.
+    private static Brightness parseBrightness(String value) {
+        return switch (value.trim().toLowerCase(Locale.ROOT)) {
+            case "light" -> Brightness.LIGHT;
+            case "dark" -> Brightness.DARK;
+            default -> throw new IllegalArgumentException("Unsupported theme brightness: " + value);
+        };
+    }
+
+    /// Converts a controlled brightness value to its canonical JSON string.
+    private static String toJsonBrightness(Brightness brightness) {
+        return switch (brightness) {
+            case LIGHT -> "light";
+            case DARK -> "dark";
+        };
     }
 }

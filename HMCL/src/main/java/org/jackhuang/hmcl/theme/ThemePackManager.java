@@ -20,6 +20,7 @@ package org.jackhuang.hmcl.theme;
 import com.google.gson.JsonParseException;
 import javafx.scene.paint.Color;
 import javafx.scene.paint.Paint;
+import org.glavo.monetfx.Brightness;
 import org.glavo.monetfx.ColorStyle;
 import org.glavo.monetfx.Contrast;
 import org.jackhuang.hmcl.Metadata;
@@ -42,6 +43,7 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.Enumeration;
 import java.util.List;
+import java.util.Locale;
 import java.util.Objects;
 import java.util.stream.Stream;
 import java.util.zip.ZipEntry;
@@ -435,7 +437,7 @@ public final class ThemePackManager {
         List<ThemePackAsset> assets = new ArrayList<>();
         ThemeAppearance appearance = new ThemeAppearance(
                 currentThemeColorSource(),
-                currentThemeBrightness(),
+                currentControlledBrightness(),
                 currentColorStyle(),
                 Contrast.DEFAULT,
                 createCurrentBackground(assets),
@@ -473,16 +475,16 @@ public final class ThemePackManager {
     }
 
     /// Returns the current launcher brightness as an explicit theme-pack directive, or `null` for auto mode.
-    private static @Nullable ThemeBrightness currentThemeBrightness() {
+    private static @Nullable Brightness currentControlledBrightness() {
         String brightness = settings().themeBrightnessProperty().get();
         if (StringUtils.isBlank(brightness)) {
             return null;
         }
-        try {
-            return ThemeBrightness.parse(brightness);
-        } catch (IllegalArgumentException e) {
-            return null;
-        }
+        return switch (brightness.trim().toLowerCase(Locale.ROOT)) {
+            case "light" -> Brightness.LIGHT;
+            case "dark" -> Brightness.DARK;
+            default -> null;
+        };
     }
 
     /// Converts a theme-pack color directive into the launcher setting source type.
@@ -827,7 +829,7 @@ public final class ThemePackManager {
     }
 
     /// Converts a theme-pack brightness directive to a launcher setting value.
-    private static String toLauncherBrightness(ThemeBrightness brightness) {
+    private static String toLauncherBrightness(Brightness brightness) {
         return switch (brightness) {
             case LIGHT -> "light";
             case DARK -> "dark";

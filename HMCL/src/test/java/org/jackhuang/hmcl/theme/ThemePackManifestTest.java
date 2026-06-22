@@ -158,7 +158,7 @@ public final class ThemePackManifestTest {
         ThemeAppearance appearance = theme.resolve(context);
         ResolvedTheme resolvedTheme = appearance.toResolvedTheme(context);
 
-        assertEquals(ThemeBrightness.DARK, appearance.brightness());
+        assertEquals(Brightness.DARK, appearance.brightness());
         assertEquals(Brightness.DARK, resolvedTheme.brightness());
     }
 
@@ -177,7 +177,7 @@ public final class ThemePackManifestTest {
 
     /// Tests that the removed adaptive theme brightness value is rejected.
     @Test
-    public void testRejectAdaptiveThemeBrightness() {
+    public void testRejectAdaptiveBrightness() {
         assertThrows(JsonParseException.class, () -> ThemePackManifest.fromJson("""
                 {
                   "$schema": "https://schemas.glavo.site/hmcl/theme-pack/1.0.0",
